@@ -41,7 +41,7 @@ function gatewayPlans(billing: BillingPeriod) {
             subheadline={
               <p>
                 {plan.subheadline}
-                {annualNote ? <span className="block text-mist-500">{annualNote}</span> : null}
+                {annualNote ? <span className="block text-mist-600">{annualNote}</span> : null}
               </p>
             }
             badge={plan.badge}
@@ -75,7 +75,7 @@ function idpPlans(billing: BillingPeriod) {
             subheadline={
               <p>
                 {plan.subheadline}
-                {annualNote ? <span className="block text-mist-500">{annualNote}</span> : null}
+                {annualNote ? <span className="block text-mist-600">{annualNote}</span> : null}
               </p>
             }
             badge={plan.badge}
@@ -103,7 +103,7 @@ export default function Page() {
         <div className="flex flex-col gap-6 rounded-xl bg-mist-950/2.5 p-6 sm:flex-row sm:items-center sm:justify-between dark:bg-white/5">
           <div className="max-w-2xl">
             <p className="text-sm/7 text-mist-700 dark:text-mist-400">{pricing.selfHosted.subheadline}</p>
-            <ul className="mt-4 space-y-1 text-sm/7 text-mist-600 dark:text-mist-500">
+            <ul className="mt-4 space-y-1 text-sm/7 text-mist-600 dark:text-mist-600">
               {pricing.selfHosted.features.map((feature) => (
                 <li key={feature}>· {feature}</li>
               ))}
@@ -133,7 +133,7 @@ export default function Page() {
             <div key={bundle.name} className="flex flex-col gap-2 rounded-xl bg-mist-950/2.5 p-5 dark:bg-white/5">
               <h3 className="text-base font-semibold text-mist-950 dark:text-white">{bundle.name}</h3>
               <p className="text-sm/7 text-mist-700 dark:text-mist-400">{bundle.description}</p>
-              <p className="text-xs text-mist-500">Tiers: {bundle.tiers.join(' · ')}</p>
+              <p className="text-xs text-mist-600">Tiers: {bundle.tiers.join(' · ')}</p>
             </div>
           ))}
         </div>
@@ -174,7 +174,7 @@ export default function Page() {
         headline={`${hostedFreeTrial.headline} — no credit card required`}
       >
         <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{hostedFreeTrial.subheadline}</p>
-        <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-500">
+        <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-600">
           Evaluate the full Developer tier — not a crippled sandbox. When the trial ends, continue at{' '}
           {pricing.developer.monthlyPrice}/mo or upgrade to Teams. Prefer zero cost? Self-host the full Apache 2.0 stack
           with no feature restrictions.
@@ -186,7 +186,7 @@ export default function Page() {
 
       <Section id="early-access" eyebrow="IDP tiers" headline="Document processing tiers are onboarding first tenants">
         <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{site.earlyAccess.pricingNote}</p>
-        <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-500">{site.waitlistPromise}</p>
+        <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-600">{site.waitlistPromise}</p>
       </Section>
 
       <CompetitivePricingSection />

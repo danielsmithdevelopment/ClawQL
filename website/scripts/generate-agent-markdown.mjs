@@ -134,8 +134,15 @@ function main() {
   const files = collectMdxFiles(appDir)
   const map = {}
 
+  // Docs home is page.tsx + home-body.mdx — include `/` for Markdown for Agents scans.
+  const homeBody = path.join(appDir, 'home-body.mdx')
+  if (fs.existsSync(homeBody)) {
+    files.unshift(homeBody)
+  }
+
   for (const file of files) {
-    const route = pagePathToRoute(file)
+    const route =
+      file === homeBody ? '/' : pagePathToRoute(file)
     if (!route) continue
     const raw = fs.readFileSync(file, 'utf8')
     const stripped = stripImportsAndExports(raw)

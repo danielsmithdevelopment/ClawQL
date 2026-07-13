@@ -8,7 +8,7 @@ export function ChevronIcon({ className, ...props }: ComponentProps<'svg'>) {
       height={8}
       viewBox="0 0 5 8"
       fill="currentColor"
-      role="image"
+      aria-hidden="true"
       className={clsx('inline-block', className)}
       {...props}
     >

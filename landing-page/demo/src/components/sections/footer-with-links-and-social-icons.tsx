@@ -53,7 +53,7 @@ export function FooterWithLinksAndSocialIcons({
             </nav>
             {socialLinks && <div className="flex items-center justify-center gap-10">{socialLinks}</div>}
           </div>
-          <div className="text-mist-600 dark:text-mist-500">{fineprint}</div>
+          <div className="text-mist-600 dark:text-mist-600">{fineprint}</div>
         </Container>
       </div>
     </footer>

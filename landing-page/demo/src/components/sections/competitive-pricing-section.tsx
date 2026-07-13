@@ -28,7 +28,7 @@ function CellValue({ value }: { value: string | boolean }) {
   }
   if (value === false) {
     return (
-      <span className="inline-flex items-center justify-center gap-1.5 text-mist-500">
+      <span className="inline-flex items-center justify-center gap-1.5 text-mist-600">
         <MinusIcon aria-hidden className="stroke-mist-500" />
         <span>—</span>
       </span>
@@ -49,21 +49,21 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
         <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
           {tcoBenchmarks.map((benchmark) => (
             <div key={benchmark.label} className="flex flex-col gap-3 rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
-              <p className="text-xs font-medium tracking-wide text-mist-500 uppercase dark:text-mist-400">
+              <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
                 {benchmark.label}
               </p>
               <p className="text-sm/7 text-mist-700 dark:text-mist-400">{benchmark.scenario}</p>
               <div className="flex flex-col gap-1 text-sm/7">
                 <p>
-                  <span className="text-mist-500">Incumbent: </span>
+                  <span className="text-mist-600">Incumbent: </span>
                   <span className="font-medium text-mist-950 dark:text-white">{benchmark.incumbent}</span>
                 </p>
                 <p>
-                  <span className="text-mist-500">ClawQL: </span>
+                  <span className="text-mist-600">ClawQL: </span>
                   <span className="font-semibold text-mist-950 dark:text-white">{benchmark.clawql}</span>
                 </p>
               </div>
-              <p className="text-xs/6 text-mist-500 dark:text-mist-400">{benchmark.note}</p>
+              <p className="text-xs/6 text-mist-600 dark:text-mist-400">{benchmark.note}</p>
             </div>
           ))}
         </div>
@@ -75,7 +75,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
           <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">{executorBenchmark.positioning}</p>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-xs font-medium tracking-wide text-mist-500 uppercase">
+              <p className="text-xs font-medium tracking-wide text-mist-600 uppercase">
                 {executorBenchmark.name} pricing
               </p>
               <ul className="mt-2 space-y-1 text-sm/7 text-mist-700 dark:text-mist-400">
@@ -88,7 +88,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
               </ul>
             </div>
             <div>
-              <p className="text-xs font-medium tracking-wide text-mist-500 uppercase">ClawQL gateway tiers</p>
+              <p className="text-xs font-medium tracking-wide text-mist-600 uppercase">ClawQL gateway tiers</p>
               <p className="mt-2 text-sm font-semibold text-mist-950 dark:text-white">
                 {executorBenchmark.clawqlResponse.tiers}
               </p>
@@ -115,7 +115,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
                     <th scope="row" className="py-3 pr-4 font-normal text-mist-700 dark:text-mist-400">
                       {row.dimension}
                     </th>
-                    <td className="px-3 py-3 text-mist-600 dark:text-mist-500">{row.executor}</td>
+                    <td className="px-3 py-3 text-mist-600 dark:text-mist-600">{row.executor}</td>
                     <td className="px-3 py-3 text-mist-700 dark:text-mist-400">{row.clawql}</td>
                   </tr>
                 ))}
@@ -129,7 +129,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
           <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">{realEstateVertical.problem}</p>
           <p className="mt-4 text-sm/7 text-mist-700 dark:text-mist-400">{realEstateVertical.clawqlPitch}</p>
           <p className="mt-4 text-sm font-medium text-mist-950 dark:text-white">{realEstateVertical.recommendedTier}</p>
-          <ul className="mt-4 space-y-2 text-sm/7 text-mist-600 dark:text-mist-500">
+          <ul className="mt-4 space-y-2 text-sm/7 text-mist-600 dark:text-mist-600">
             {realEstateVertical.competitors.map((c) => (
               <li key={c.name}>
                 <span className="font-medium text-mist-800 dark:text-mist-200">{c.name}</span> ({c.pricing}) — {c.gap}
@@ -146,7 +146,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
           <p className="mt-2 text-sm/7 text-mist-600 dark:text-mist-400">{stackReplacementSummary.profile}</p>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-xs font-medium tracking-wide text-mist-500 uppercase">Incumbent stack</p>
+              <p className="text-xs font-medium tracking-wide text-mist-600 uppercase">Incumbent stack</p>
               <p className="mt-1 text-lg font-semibold text-mist-950 dark:text-white">
                 {stackReplacementSummary.incumbentRange}
               </p>
@@ -155,7 +155,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
               </p>
             </div>
             <div>
-              <p className="text-xs font-medium tracking-wide text-mist-500 uppercase">ClawQL Business (IDP bundle)</p>
+              <p className="text-xs font-medium tracking-wide text-mist-600 uppercase">ClawQL Business (IDP bundle)</p>
               <p className="mt-1 text-lg font-semibold text-mist-950 dark:text-white">
                 {stackReplacementSummary.clawqlBusiness}
               </p>
@@ -166,7 +166,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
             </div>
           </div>
         </div>
-        <p className="mt-6 text-xs/6 text-mist-500 dark:text-mist-400">
+        <p className="mt-6 text-xs/6 text-mist-600 dark:text-mist-400">
           Illustrative benchmarks from published competitor pricing bands (July 2026). Your volume and contract terms
           will differ — use these for order-of-magnitude comparison, not procurement quotes.
         </p>
@@ -207,7 +207,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
                     <div className="flex flex-col gap-1">
                       <span>{row.feature}</span>
                       {row.footnote ? (
-                        <span className="text-xs/6 font-normal text-mist-500 dark:text-mist-500">{row.footnote}</span>
+                        <span className="text-xs/6 font-normal text-mist-600 dark:text-mist-600">{row.footnote}</span>
                       ) : null}
                     </div>
                   </th>

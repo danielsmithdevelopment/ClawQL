@@ -63,7 +63,7 @@ export function WorkflowFeedPanel({
       {...props}
     >
       <div className="flex flex-col gap-2">
-        <p className="text-xs font-medium tracking-wide text-mist-500 uppercase dark:text-mist-400">{feed.source}</p>
+        <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">{feed.source}</p>
         <h3 className="text-base font-semibold text-mist-950 dark:text-white">{feed.title}</h3>
       </div>
       <ol className="list-none">

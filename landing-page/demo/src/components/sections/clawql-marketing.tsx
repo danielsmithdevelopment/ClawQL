@@ -36,7 +36,7 @@ export function ToolTierSection({
     <div className={clsx('flex flex-col gap-4', className)} {...props}>
       <div>
         <h3 className="text-base font-semibold text-mist-950 dark:text-white">{label}</h3>
-        <p className="text-sm/7 text-mist-500 dark:text-mist-400">{tagline}</p>
+        <p className="text-sm/7 text-mist-600 dark:text-mist-400">{tagline}</p>
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {tools.map((tool) => (
@@ -69,7 +69,7 @@ export function CaseStudyCard({
       {...props}
     >
       <div className="flex flex-col gap-3">
-        <p className="text-xs font-medium tracking-wide text-mist-500 uppercase dark:text-mist-400">{outcome}</p>
+        <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">{outcome}</p>
         <h3 className="text-base font-semibold text-mist-950 dark:text-white">{title}</h3>
         <p className="text-sm/7 text-mist-700 dark:text-mist-400">{summary}</p>
       </div>
@@ -111,7 +111,7 @@ export function IdpStageCard({
     >
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-sm font-semibold text-mist-950 dark:text-white">{vendor}</span>
-        <span className="text-xs text-mist-500 dark:text-mist-400">{role}</span>
+        <span className="text-xs text-mist-600 dark:text-mist-400">{role}</span>
       </div>
       <p className="text-sm/7 text-mist-700 dark:text-mist-400">{detail}</p>
     </div>

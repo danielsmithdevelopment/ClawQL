@@ -23,12 +23,12 @@ export function WaitlistSignupForm({ className, ...props }: ComponentProps<'form
           name="name"
           autoComplete="name"
           placeholder="Jane Smith"
-          className="rounded-lg border border-mist-950/15 bg-transparent px-3 py-2 text-mist-950 placeholder:text-mist-500 focus:border-mist-950 focus:outline-hidden dark:border-white/20 dark:text-white dark:placeholder:text-mist-400 dark:focus:border-white"
+          className="rounded-lg border border-mist-950/15 bg-transparent px-3 py-2 text-mist-950 placeholder:text-mist-600 focus:border-mist-950 focus:outline-hidden dark:border-white/20 dark:text-white dark:placeholder:text-mist-400 dark:focus:border-white"
         />
       </label>
       <label className="flex flex-col gap-1.5 text-sm/7">
         <span className="font-medium text-mist-950 dark:text-white">
-          Work email <span className="text-mist-500">(required)</span>
+          Work email <span className="text-mist-600">(required)</span>
         </span>
         <input
           type="email"
@@ -36,7 +36,7 @@ export function WaitlistSignupForm({ className, ...props }: ComponentProps<'form
           required
           autoComplete="email"
           placeholder="you@company.com"
-          className="rounded-lg border border-mist-950/15 bg-transparent px-3 py-2 text-mist-950 placeholder:text-mist-500 focus:border-mist-950 focus:outline-hidden dark:border-white/20 dark:text-white dark:placeholder:text-mist-400 dark:focus:border-white"
+          className="rounded-lg border border-mist-950/15 bg-transparent px-3 py-2 text-mist-950 placeholder:text-mist-600 focus:border-mist-950 focus:outline-hidden dark:border-white/20 dark:text-white dark:placeholder:text-mist-400 dark:focus:border-white"
         />
       </label>
       <label className="flex flex-col gap-1.5 text-sm/7">
@@ -46,7 +46,7 @@ export function WaitlistSignupForm({ className, ...props }: ComponentProps<'form
           name="company"
           autoComplete="organization"
           placeholder="Acme Corp"
-          className="rounded-lg border border-mist-950/15 bg-transparent px-3 py-2 text-mist-950 placeholder:text-mist-500 focus:border-mist-950 focus:outline-hidden dark:border-white/20 dark:text-white dark:placeholder:text-mist-400 dark:focus:border-white"
+          className="rounded-lg border border-mist-950/15 bg-transparent px-3 py-2 text-mist-950 placeholder:text-mist-600 focus:border-mist-950 focus:outline-hidden dark:border-white/20 dark:text-white dark:placeholder:text-mist-400 dark:focus:border-white"
         />
       </label>
       <label className="flex flex-col gap-1.5 text-sm/7">
@@ -55,7 +55,7 @@ export function WaitlistSignupForm({ className, ...props }: ComponentProps<'form
           name="message"
           rows={3}
           placeholder="Real estate demo, transaction coordination, IDP pipeline, CRM stack…"
-          className="resize-y rounded-lg border border-mist-950/15 bg-transparent px-3 py-2 text-mist-950 placeholder:text-mist-500 focus:border-mist-950 focus:outline-hidden dark:border-white/20 dark:text-white dark:placeholder:text-mist-400 dark:focus:border-white"
+          className="resize-y rounded-lg border border-mist-950/15 bg-transparent px-3 py-2 text-mist-950 placeholder:text-mist-600 focus:border-mist-950 focus:outline-hidden dark:border-white/20 dark:text-white dark:placeholder:text-mist-400 dark:focus:border-white"
         />
       </label>
       <Button type="submit" color="dark/light" className="self-start">

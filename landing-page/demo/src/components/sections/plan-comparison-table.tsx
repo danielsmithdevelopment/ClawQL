@@ -51,7 +51,7 @@ function FeatureGroup<Plan extends string>({
                     <span>Included</span>
                   </span>
                 ) : value === false ? (
-                  <span className="inline-flex items-center justify-center gap-1.5 text-mist-500 dark:text-mist-500">
+                  <span className="inline-flex items-center justify-center gap-1.5 text-mist-600 dark:text-mist-600">
                     <MinusIcon aria-hidden className="stroke-mist-500" />
                     <span>—</span>
                   </span>
@@ -116,7 +116,7 @@ export function PlanComparisonTable<const Plan extends string>({
                 <button
                   key={plan}
                   type="button"
-                  className="relative -mb-px flex-1 border-b border-b-transparent px-2 py-6 text-sm/5 font-medium text-mist-500 aria-selected:border-mist-950 aria-selected:text-mist-950 dark:aria-selected:border-white dark:aria-selected:text-white"
+                  className="relative -mb-px flex-1 border-b border-b-transparent px-2 py-6 text-sm/5 font-medium text-mist-600 aria-selected:border-mist-950 aria-selected:text-mist-950 dark:aria-selected:border-white dark:aria-selected:text-white"
                 >
                   {plan}
                 </button>

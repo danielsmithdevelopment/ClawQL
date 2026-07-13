@@ -15,16 +15,74 @@ import {
   NavbarLogo,
   NavbarWithLinksActionsAndCenteredLogo,
 } from '@/components/sections/navbar-with-links-actions-and-centered-logo'
+import { SiteStructuredData } from '@/components/SiteStructuredData'
+import { WebMcpRegister } from '@/components/WebMcpRegister'
 import { site } from '@/lib/site'
-import type { Metadata } from 'next'
+import { getSiteOrigin } from '@/lib/site-url'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
+const defaultTitle = 'ClawQL — MCP for API discovery and execution'
+const ogImage = '/ClawQL-logo.jpeg'
+
 export const metadata: Metadata = {
+  metadataBase: getSiteOrigin(),
   title: {
-    default: 'ClawQL — MCP for API discovery and execution',
+    default: defaultTitle,
     template: '%s · ClawQL',
   },
   description: site.description,
+  applicationName: 'ClawQL',
+  authors: [{ name: 'ClawQL', url: site.urls.github }],
+  creator: 'ClawQL',
+  alternates: {
+    canonical: '/',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-snippet': -1,
+      'max-image-preview': 'large',
+      'max-video-preview': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'ClawQL',
+    locale: 'en_US',
+    title: defaultTitle,
+    description: site.description,
+    images: [
+      {
+        url: ogImage,
+        width: 871,
+        height: 890,
+        alt: 'ClawQL — MCP for API discovery and execution',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: defaultTitle,
+    description: site.description,
+    images: [ogImage],
+  },
+  icons: {
+    icon: [{ url: ogImage, type: 'image/jpeg' }],
+    apple: [{ url: ogImage, type: 'image/jpeg' }],
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#faf8f5' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f1419' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({
@@ -48,6 +106,14 @@ export default function RootLayout({
       </head>
       <body>
         <>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-mist-950 focus:px-4 focus:py-2 focus:text-white"
+          >
+            Skip to main content
+          </a>
+          <SiteStructuredData />
+          <WebMcpRegister />
           <NavbarWithLinksActionsAndCenteredLogo
             id="navbar"
             links={
@@ -81,7 +147,7 @@ export default function RootLayout({
             }
           />
 
-          <Main>{children}</Main>
+          <Main id="main-content">{children}</Main>
 
           <FooterWithNewsletterFormCategoriesAndSocialIcons
             id="footer"

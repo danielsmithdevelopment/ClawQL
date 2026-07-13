@@ -60,7 +60,7 @@ function PlannedIndustryStub({ industry }: { industry: Industry }) {
 
       <Section id="overview" eyebrow="Status" headline={`${industry.name} vertical — on the roadmap`}>
         <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{industry.overview}</p>
-        <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-500">
+        <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-600">
           Lending is the most developed vertical today — with W-2 intake, HITL review, and a shipped Docker Compose
           stack. Other industries share the same ClawQL Core (search, execute, memory, IDP) and will register domain
           tools via modularization v2.1 as each package ships.
@@ -145,7 +145,7 @@ export function IndustryPage({ industry }: { industry: Industry }) {
       <Section id="overview" eyebrow="Overview" headline={`ClawQL for ${industry.name.toLowerCase()}`}>
         <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{industry.overview}</p>
         {industry.productionReference ? (
-          <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-500">{industry.productionReference}</p>
+          <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-600">{industry.productionReference}</p>
         ) : null}
       </Section>
 
@@ -190,7 +190,7 @@ export function IndustryPage({ industry }: { industry: Industry }) {
                 className="scroll-mt-24 flex flex-col gap-5 rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 dark:border-white/10 dark:bg-white/5"
               >
                 <div className="flex flex-col gap-2">
-                  <p className="text-xs font-medium tracking-wide text-mist-500 uppercase dark:text-mist-400">
+                  <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
                     {audience.name}
                   </p>
                   <h3 className="text-lg font-semibold text-mist-950 dark:text-white">{audience.headline}</h3>
@@ -404,7 +404,7 @@ export function IndustryPage({ industry }: { industry: Industry }) {
               className="flex flex-col gap-5 rounded-xl bg-mist-950/2.5 p-6 sm:p-8 dark:bg-white/5"
             >
               <div className="flex flex-col gap-2">
-                <p className="text-xs font-medium tracking-wide text-mist-500 uppercase dark:text-mist-400">
+                <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
                   {example.summary}
                 </p>
                 <h3 className="text-base font-semibold text-mist-950 dark:text-white">{example.title}</h3>

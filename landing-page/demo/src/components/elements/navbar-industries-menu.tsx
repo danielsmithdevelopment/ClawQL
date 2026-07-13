@@ -80,7 +80,7 @@ export function NavbarIndustriesMenu() {
                 {industry.name}
               </IndustryMenuLink>
             ))}
-            <IndustryMenuLink href="/industries" className="text-mist-500 dark:text-mist-400" onNavigate={handleNavigate}>
+            <IndustryMenuLink href="/industries" className="text-mist-600 dark:text-mist-400" onNavigate={handleNavigate}>
               All industries
             </IndustryMenuLink>
           </div>
@@ -121,7 +121,7 @@ export function NavbarIndustriesMenu() {
             <Link
               href="/industries"
               onClick={handleNavigate}
-              className="text-2xl/10 font-medium text-mist-500 dark:text-mist-400"
+              className="text-2xl/10 font-medium text-mist-600 dark:text-mist-400"
             >
               All industries
             </Link>

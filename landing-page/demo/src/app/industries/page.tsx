@@ -49,7 +49,7 @@ export default function Page() {
             >
               <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-xs font-medium tracking-wide text-mist-500 uppercase dark:text-mist-400">
+                  <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
                     {industry.packageName}
                   </p>
                   <span className="rounded-full bg-mist-950/5 px-2 py-0.5 text-xs font-medium text-mist-600 dark:bg-white/10 dark:text-mist-300">
@@ -58,7 +58,7 @@ export default function Page() {
                 </div>
                 <h2 className="text-base font-semibold text-mist-950 dark:text-white">{industry.name}</h2>
                 <p className="text-sm/7 text-mist-700 dark:text-mist-400">{industry.headline}</p>
-                <p className="line-clamp-3 text-sm/7 text-mist-600 dark:text-mist-500">{industry.overview}</p>
+                <p className="line-clamp-3 text-sm/7 text-mist-600 dark:text-mist-600">{industry.overview}</p>
               </div>
               <Link href={`/industries/${industry.slug}`}>
                 {industry.status === 'planned' ? 'Notify me when it ships' : 'View use cases'}{' '}
