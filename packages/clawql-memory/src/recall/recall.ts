@@ -406,6 +406,7 @@ export async function executeMemoryRecall(input: MemoryRecallInput): Promise<Mem
 
 /** Public async facade for vault recall (MCP tools, scripts). */
 export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {
-  const { runMemoryEffect, memoryRecallProgram } = await import("../effect/memory-effect-runtime.js");
+  const { runMemoryEffect, memoryRecallProgram } =
+    await import("../effect/memory-effect-runtime.js");
   return runMemoryEffect(memoryRecallProgram(input));
 }

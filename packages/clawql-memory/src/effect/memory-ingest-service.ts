@@ -10,9 +10,7 @@ import { MemoryError } from "./memory-errors.js";
 export class MemoryIngestService extends Context.Tag("clawql/MemoryIngestService")<
   MemoryIngestService,
   {
-    readonly ingest: (
-      input: MemoryIngestInput
-    ) => Effect.Effect<MemoryIngestResult, MemoryError>;
+    readonly ingest: (input: MemoryIngestInput) => Effect.Effect<MemoryIngestResult, MemoryError>;
   }
 >() {}
 

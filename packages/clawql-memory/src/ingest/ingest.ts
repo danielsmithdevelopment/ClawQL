@@ -347,6 +347,7 @@ export async function executeMemoryIngest(input: MemoryIngestInput): Promise<Mem
 
 /** Public async facade for vault ingest (MCP tools, scripts, automation). */
 export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
-  const { runMemoryEffect, memoryIngestProgram } = await import("../effect/memory-effect-runtime.js");
+  const { runMemoryEffect, memoryIngestProgram } =
+    await import("../effect/memory-effect-runtime.js");
   return runMemoryEffect(memoryIngestProgram(input));
 }
