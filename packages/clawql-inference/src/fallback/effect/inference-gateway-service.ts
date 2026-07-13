@@ -5,9 +5,7 @@ import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../.
 export class InferenceGatewayService extends Context.Tag("clawql/InferenceGatewayService")<
   InferenceGatewayService,
   {
-    readonly complete: (
-      request: InferenceRequest
-    ) => Effect.Effect<InferenceResponse, unknown>;
+    readonly complete: (request: InferenceRequest) => Effect.Effect<InferenceResponse, unknown>;
   }
 >() {}
 
