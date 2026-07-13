@@ -161,6 +161,17 @@ export {
 } from "./fallback/config.js";
 export { resolveFallbackChain, normalizeFallbackChain } from "./fallback/resolve.js";
 export type { FallbackAttempt, FallbackChainMap, FallbackConfig } from "./fallback/types.js";
+export {
+  FallbackExhaustedError,
+  FallbackChainService,
+  InferenceGatewayService,
+  completeWithFallbackProgram,
+  fallbackChainLiveLayer,
+  inferenceGatewayLiveLayer,
+  makeFallbackLayer,
+  runFallbackEffect,
+  type FallbackServices,
+} from "./fallback/effect/index.js";
 export { runInferenceFallbackShow, type InferenceFallbackShowOptions } from "./cli/fallback.js";
 export {
   runInferenceKeysCreate,

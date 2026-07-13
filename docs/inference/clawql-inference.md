@@ -229,6 +229,8 @@ export CLAWQL_INFERENCE_FALLBACK_STANDARD=groq/llama-3.3-70b,anthropic/claude-ha
 
 Chains also persist at `$CLAWQL_HOME/Inference/fallback-chains.json` (`byTier` / `byModel`). Responses include `fallback.attempted` and `fallback.succeeded`.
 
+`FallbackChainGateway` keeps the public `InferenceGateway` API (`Promise`-based `complete()`). Internally, retry logic runs through Effect services (`InferenceGatewayService`, `FallbackChainService`) with `runFallbackEffect()` at the async boundary—matching the boundary-only Effect pattern used in `clawql-payments`.
+
 ```bash
 clawql inference fallback
 ```
