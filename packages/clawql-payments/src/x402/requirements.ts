@@ -1,7 +1,9 @@
+import { Effect } from "effect";
 import type { X402Gate } from "./gate.js";
 import type { X402PaymentRequired, X402PaymentRequirements, X402ResourceInfo } from "./types.js";
 import { X402_VERSION } from "./types.js";
-import { loadX402RuntimeConfig, usdcAtomicAmount, type X402RuntimeConfig } from "./config.js";
+import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
+import { usdcAtomicAmount, X402RuntimeConfigService, type X402RuntimeConfig } from "./x402-runtime-config-service.js";
 
 export function buildPaymentRequirements(input: {
   gate: X402Gate;
@@ -56,14 +58,20 @@ export async function buildPaymentRequiredForGate(input: {
   requestUrl: string;
   env?: NodeJS.ProcessEnv;
 }): Promise<X402PaymentRequired> {
-  const config = await loadX402RuntimeConfig(input.env);
-  return buildPaymentRequired({
-    gate: input.gate,
-    config,
-    resource: {
-      url: input.requestUrl,
-      description: `Payment required for ${input.gate.resource}`,
-      mimeType: "application/json",
-    },
-  });
+  return runPaymentsEffect(
+    Effect.gen(function* () {
+      const runtime = yield* X402RuntimeConfigService;
+      const config = yield* runtime.load();
+      return buildPaymentRequired({
+        gate: input.gate,
+        config,
+        resource: {
+          url: input.requestUrl,
+          description: `Payment required for ${input.gate.resource}`,
+          mimeType: "application/json",
+        },
+      });
+    }),
+    input.env
+  );
 }

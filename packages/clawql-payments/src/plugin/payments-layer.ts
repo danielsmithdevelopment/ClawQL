@@ -5,7 +5,8 @@ import type {
 } from "clawql-core";
 import { ClawQLApi } from "clawql-api";
 import { Effect, Layer } from "effect";
-import { PaymentAuditService, paymentAuditLiveLayer } from "./payment-audit-service.js";
+import { paymentsServicesLiveLayer, type PaymentsServices } from "../runtime/payments-effect-runtime.js";
+import { PaymentAuditService } from "./payment-audit-service.js";
 import { createPaymentsX402ProxyPlugin } from "./payments-x402-proxy-plugin.js";
 
 export type PaymentsLayerError =
@@ -18,13 +19,13 @@ export type MakePaymentsLayerOptions = {
 };
 
 /**
- * Horizontal payments Layer: audit service + optional x402 MCP proxy plugin registration.
+ * Horizontal payments Layer: full payments services + optional x402 MCP proxy plugin registration.
  * Prefer sync `defaultPaymentsProxyPlugins()` at the MCP composition root; use this Layer
  * when embedding payments in custom `createClawQLApi({ pluginLayers })` hosts.
  */
 export function makePaymentsLayer(
   options: MakePaymentsLayerOptions = {}
-): Layer.Layer<PaymentAuditService, PaymentsLayerError, ClawQLApi> {
+): Layer.Layer<PaymentsServices, PaymentsLayerError, ClawQLApi> {
   const env = options.env ?? process.env;
   const registerX402 = options.registerX402ProxyPlugin ?? false;
 
@@ -37,5 +38,5 @@ export function makePaymentsLayer(
       )
     : Layer.empty;
 
-  return Layer.mergeAll(paymentAuditLiveLayer(env), registerPluginLayer);
+  return Layer.mergeAll(paymentsServicesLiveLayer(env), registerPluginLayer);
 }

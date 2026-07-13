@@ -1,8 +1,12 @@
+import { getDefaultAuditRingBuffer } from "clawql-core";
 import { Context, Effect, Layer } from "effect";
+import type { PaymentAuditVerifyResult } from "../audit/chain.js";
 import type { PaymentWormEntry } from "../audit/events.js";
-import type { PaymentWormRecord } from "../audit/chain.js";
 import { getPaymentAuditStore } from "../audit/factory.js";
+import { maybePushPaymentAuditEntryToLoki } from "../audit/loki.js";
 import type { PaymentAuditStore } from "../audit/store.js";
+import { isPaymentAuditLokiPushEnabled } from "../audit/store.js";
+import type { PaymentWormRecord } from "../audit/chain.js";
 import { PaymentError } from "../errors/payment-errors.js";
 
 /** Effect service for WORM payment audit persistence. */
@@ -11,6 +15,10 @@ export class PaymentAuditService extends Context.Tag("clawql/PaymentAuditService
   {
     readonly store: PaymentAuditStore;
     readonly append: (entry: PaymentWormEntry) => Effect.Effect<PaymentWormRecord, PaymentError>;
+    /** Persist + mirror to in-process audit ring buffer and optional Loki push. */
+    readonly appendEntry: (entry: PaymentWormEntry) => Effect.Effect<PaymentWormRecord, PaymentError>;
+    readonly list: (limit?: number) => Effect.Effect<PaymentWormEntry[], PaymentError>;
+    readonly verify: () => Effect.Effect<PaymentAuditVerifyResult, PaymentError>;
     readonly reset: () => Effect.Effect<void, PaymentError>;
   }
 >() {}
@@ -19,16 +27,52 @@ export function paymentAuditLiveLayer(
   env: NodeJS.ProcessEnv = process.env
 ): Layer.Layer<PaymentAuditService> {
   const store = getPaymentAuditStore(env);
+
+  const appendRaw = (entry: PaymentWormEntry) =>
+    Effect.tryPromise({
+      try: () => store.append(entry),
+      catch: (cause) =>
+        new PaymentError({
+          reason: "payment audit append failed",
+          cause,
+        }),
+    });
+
   return Layer.succeed(
     PaymentAuditService,
     PaymentAuditService.of({
       store,
-      append: (entry) =>
+      append: appendRaw,
+      appendEntry: (entry) =>
+        Effect.gen(function* () {
+          const record = yield* appendRaw(entry);
+          getDefaultAuditRingBuffer().append({
+            ts: entry.ts,
+            category: entry.category,
+            action: entry.action,
+            summary: entry.summary,
+            correlationId: entry.correlationId,
+          });
+          if (isPaymentAuditLokiPushEnabled(env)) {
+            maybePushPaymentAuditEntryToLoki(entry, env);
+          }
+          return record;
+        }),
+      list: (limit = 100) =>
         Effect.tryPromise({
-          try: () => store.append(entry),
+          try: () => store.list(limit),
           catch: (cause) =>
             new PaymentError({
-              reason: "payment audit append failed",
+              reason: "payment audit list failed",
+              cause,
+            }),
+        }),
+      verify: () =>
+        Effect.tryPromise({
+          try: () => store.verify(),
+          catch: (cause) =>
+            new PaymentError({
+              reason: "payment audit verify failed",
               cause,
             }),
         }),
