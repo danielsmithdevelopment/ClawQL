@@ -50,17 +50,17 @@ Today’s shipped stack is a **practical subset** of the full Memory 2.0 triple-
 
 ```mermaid
 flowchart LR
-  subgraph vault["Vault (source of truth)"]
-    MD["Memory/*.md"]
+  subgraph vault [Vault - source of truth]
+    MD[Memory notes]
   end
-  subgraph tools["MCP tools"]
-    MI["memory_ingest"]
-    MR["memory_recall"]
-    PI["pageindex_*"]
+  subgraph tools [MCP tools]
+    MI[memory_ingest]
+    MR[memory_recall]
+    PI[pageindex tools]
   end
-  subgraph index["Derived index"]
-    DB[("memory.db")]
-    PIT["pageindex.db.json"]
+  subgraph index [Derived index]
+    DB[(memory.db)]
+    PIT[pageindex index]
   end
   MD --> MI
   MI --> MD
