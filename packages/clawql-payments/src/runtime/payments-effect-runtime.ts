@@ -4,7 +4,6 @@ import { paymentsDiscoveryLiveLayer } from "../discovery/payments-discovery-serv
 import { mppOpenApiLiveLayer } from "../mpp/openapi-service.js";
 import { mppVerificationLiveLayer } from "../mpp/verification-service.js";
 import { mppxAdapterLiveLayer } from "../mpp/mppx-adapter.js";
-import { isMppxEnabled } from "../mpp/mppx-adapter.js";
 import { entitlementLiveLayer } from "../plans/entitlement-service.js";
 import { usageStoreLiveLayer } from "../plans/usage-store-service.js";
 import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
@@ -60,7 +59,7 @@ export function paymentsServicesLiveLayer(
   const mppVerification = mppVerificationLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(config, audit, runtimeConfig, facilitator, stripeClient))
   );
-  const mppxAdapter = isMppxEnabled(env) ? mppxAdapterLiveLayer(env) : Layer.empty;
+  const mppxAdapter = mppxAdapterLiveLayer(env);
   const enforcement = x402EnforcementLiveLayer().pipe(
     Layer.provide(Layer.mergeAll(config, audit, gate, runtimeConfig, facilitator, mppVerification))
   );

@@ -58,7 +58,7 @@ export function mppxAdapterLiveLayer(
     }
 
     const mod = yield* Effect.tryPromise({
-      try: () => import("mppx/server") as Promise<MppxModule>,
+      try: () => import("mppx/server") as Promise<unknown>,
       catch: (cause) => {
         cached = null;
         return new ConfigError({
@@ -68,8 +68,8 @@ export function mppxAdapterLiveLayer(
         });
       },
     });
-    cached = mod;
-    return mod;
+    cached = mod as MppxModule;
+    return cached;
   });
 
   return Layer.succeed(
