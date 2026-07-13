@@ -10,7 +10,11 @@ export {
 export { EmbeddingService, embeddingLiveLayer } from "./embedding-service.js";
 export { MemoryDbService, memoryDbLiveLayer, type MemoryDbDocument } from "./memory-db-service.js";
 export { executeMemoryIngestEffect } from "./memory-ingest-effect.js";
-export { executeMemoryRecallEffect, executeMemoryRecallCoreEffect, type MemoryRecallServices } from "./memory-recall-effect.js";
+export {
+  executeMemoryRecallEffect,
+  executeMemoryRecallCoreEffect,
+  type MemoryRecallServices,
+} from "./memory-recall-effect.js";
 export {
   computeRecallVectorScoresEffect,
   loadRecallArtifactsEffect,

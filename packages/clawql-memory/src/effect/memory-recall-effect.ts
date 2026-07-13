@@ -87,7 +87,8 @@ export function executeMemoryRecallCoreEffect(
       return { ok: false, error: "query is required" };
     }
 
-    const limit = input.limit !== undefined ? input.limit : envInt("CLAWQL_MEMORY_RECALL_LIMIT", 10);
+    const limit =
+      input.limit !== undefined ? input.limit : envInt("CLAWQL_MEMORY_RECALL_LIMIT", 10);
     const maxDepth =
       input.maxDepth !== undefined ? input.maxDepth : envInt("CLAWQL_MEMORY_RECALL_MAX_DEPTH", 2);
     const minScore =
@@ -161,15 +162,14 @@ export function executeMemoryRecallCoreEffect(
       return [...new Set([...a, ...b])];
     }
 
-    const { vectorByRel, cuckooVectorChunksDropped, recallArtifacts } = yield* recallVectorPassEffect(
-      {
+    const { vectorByRel, cuckooVectorChunksDropped, recallArtifacts } =
+      yield* recallVectorPassEffect({
         vault,
         query,
         mdFiles,
         topChunks,
         maxDocs,
-      }
-    );
+      });
 
     const vectorBoost = envFloat("CLAWQL_MEMORY_VECTOR_SCORE_BOOST", 50);
     const minVectorSim = envFloat("CLAWQL_MEMORY_VECTOR_MIN_SIM", 0.28);

@@ -98,7 +98,6 @@ export function recallMerkleSnapshotEffect(
   });
 }
 
-
 /** Load recall artifacts (chunks, cuckoo, merkle) when memory.db sync is enabled. */
 export function loadRecallArtifactsEffect(
   vault: string,
@@ -119,18 +118,20 @@ export function loadRecallArtifactsEffect(
       return null;
     }
 
-    return yield* db.loadRecallDbArtifacts(vault, [...mdFiles], {
-      loadChunks: wantChunks,
-      loadCuckoo: wantCuckoo,
-      loadMerkle: wantMerkle,
-    }).pipe(
-      Effect.catchAll((err) =>
-        Effect.sync(() => {
-          console.error(`[clawql-mcp] memory_recall artifact load failed: ${err.reason}`);
-          return null;
-        })
-      )
-    );
+    return yield* db
+      .loadRecallDbArtifacts(vault, [...mdFiles], {
+        loadChunks: wantChunks,
+        loadCuckoo: wantCuckoo,
+        loadMerkle: wantMerkle,
+      })
+      .pipe(
+        Effect.catchAll((err) =>
+          Effect.sync(() => {
+            console.error(`[clawql-mcp] memory_recall artifact load failed: ${err.reason}`);
+            return null;
+          })
+        )
+      );
   });
 }
 
