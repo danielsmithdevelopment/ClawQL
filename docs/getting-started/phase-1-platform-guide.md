@@ -88,15 +88,15 @@ Standalone MIT library for **structural code indexing** — imports, calls, symb
 
 ### MCP tools (opt-in)
 
-| Tool                            | Purpose                                              |
-| ------------------------------- | ---------------------------------------------------- |
-| `codegraph_index`               | Index TS/JS (compiler API) and Python/Go (tree-sitter) |
-| `codegraph_import_graphify`     | Import Graphify `graph.json`                         |
-| `codegraph_query`               | Find symbols by name or concept                      |
-| `codegraph_neighbors`           | List edges for a node                                |
-| `codegraph_path`                | Shortest path between two symbols                    |
-| `codegraph_explain`             | Summarize a symbol and its neighborhood              |
-| `codegraph_subgraph`            | BFS subgraph around a seed query                     |
+| Tool                        | Purpose                                                |
+| --------------------------- | ------------------------------------------------------ |
+| `codegraph_index`           | Index TS/JS (compiler API) and Python/Go (tree-sitter) |
+| `codegraph_import_graphify` | Import Graphify `graph.json`                           |
+| `codegraph_query`           | Find symbols by name or concept                        |
+| `codegraph_neighbors`       | List edges for a node                                  |
+| `codegraph_path`            | Shortest path between two symbols                      |
+| `codegraph_explain`         | Summarize a symbol and its neighborhood                |
+| `codegraph_subgraph`        | BFS subgraph around a seed query                       |
 
 ### Enable
 

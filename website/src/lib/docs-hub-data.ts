@@ -528,7 +528,8 @@ export const optionalToolsHubCards: Array<ReferenceCard> = [
   card({
     href: '/learn/memory',
     name: 'clawql-memory',
-    description: 'Durable memory_ingest / memory_recall, PageIndex, and optional code graph.',
+    description:
+      'Durable memory_ingest / memory_recall, PageIndex, and optional code graph.',
     icon: ChatBubbleIcon,
   }),
 ]
@@ -556,7 +557,8 @@ export const pluginsHubCards: Array<ReferenceCard> = [
   card({
     href: '/plugins/codegraph',
     name: 'Code graph',
-    description: 'codegraph_* — structural AST indexing, Graphify import, hybrid recall.',
+    description:
+      'codegraph_* — structural AST indexing, Graphify import, hybrid recall.',
     icon: ShapesIcon,
   }),
   card({

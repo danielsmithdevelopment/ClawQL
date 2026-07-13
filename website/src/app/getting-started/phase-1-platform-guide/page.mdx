@@ -14,14 +14,14 @@ What shipped in **Phase 1 exit (7.0.0)** and how to turn on auth, PageIndex, cod
 
 ## Delivered in Phase 1
 
-| Capability                          | Enable / path                                         |
-| ----------------------------------- | ----------------------------------------------------- |
-| **Gateway auth** (`clawql-auth`)    | `CLAWQL_AUTH_MODE=apiKey`, `CLAWQL_API_KEY`           |
-| **PageIndex** (`pageindex_*` tools) | Default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide       |
+| Capability                           | Enable / path                                         |
+| ------------------------------------ | ----------------------------------------------------- |
+| **Gateway auth** (`clawql-auth`)     | `CLAWQL_AUTH_MODE=apiKey`, `CLAWQL_API_KEY`           |
+| **PageIndex** (`pageindex_*` tools)  | Default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide       |
 | **Code graph** (`codegraph_*` tools) | Opt in; `CLAWQL_ENABLE_CODEGRAPH=1` + graph paths     |
-| **Presidio hooks**                  | `CLAWQL_ENABLE_PRESIDIO=1` + analyzer/anonymizer URLs |
-| **Tier 1 Compose**                  | `examples/clawql-local-docker-compose`                |
-| **Release manifest**                | `clawql doctor --smoke`, `clawql release *`           |
+| **Presidio hooks**                   | `CLAWQL_ENABLE_PRESIDIO=1` + analyzer/anonymizer URLs |
+| **Tier 1 Compose**                   | `examples/clawql-local-docker-compose`                |
+| **Release manifest**                 | `clawql doctor --smoke`, `clawql release *`           |
 
 OIDC/SAML/RBAC, full Operator NL ops, and vertical packages remain **roadmap** — see [Vision & Roadmap](/vision/roadmap).
 

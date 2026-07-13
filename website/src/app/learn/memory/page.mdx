@@ -63,33 +63,33 @@ Today’s shipped stack is a **practical subset** of the full Memory 2.0 triple-
 
 **Team sync (optional):** pushes and pulls the `Memory/` tree (and related paths) via object storage — see [Team vault sync](/getting-started/team-vault-sync). `memory.db` is rebuilt locally after pull. Code graph storage is local unless you sync **`codegraph.db.json`** yourself.
 
-| Flow                       | Reads from                     | Writes to                        |
-| -------------------------- | ------------------------------ | -------------------------------- |
-| **`memory_ingest`**        | Agent JSON                     | `Memory/*.md` → **`memory.db`**  |
+| Flow                       | Reads from                                                       | Writes to                        |
+| -------------------------- | ---------------------------------------------------------------- | -------------------------------- |
+| **`memory_ingest`**        | Agent JSON                                                       | `Memory/*.md` → **`memory.db`**  |
 | **`memory_recall`**        | `Memory/*.md`, **`memory.db`**, optional **`codegraph.db.json`** | (read-only)                      |
-| **`pageindex_build_tree`** | `Memory/*.md`                  | **`pageindex.db.json`**          |
-| **`codegraph_index`**      | Repo source tree               | **`codegraph.db.json`**          |
-| **`memory_sync`**          | Object bucket ↔ local vault   | `Memory/` (and configured paths) |
+| **`pageindex_build_tree`** | `Memory/*.md`                                                    | **`pageindex.db.json`**          |
+| **`codegraph_index`**      | Repo source tree                                                 | **`codegraph.db.json`**          |
+| **`memory_sync`**          | Object bucket ↔ local vault                                     | `Memory/` (and configured paths) |
 
 **Roadmap (DAOS):** separate encrypted blob vault, typed link ActionTypes, Merkle root on every node at ingest, and recall filtered by signed **ATRClaims** purpose. Optional **Cuckoo** / **Merkle snapshot** env gates exist in **`memory.db`** today for chunk membership experiments — see [hybrid-memory-backends.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/hybrid-memory-backends.md).
 
 ## MCP tools and enablement
 
-| Tool                        | Purpose                                                              |
-| --------------------------- | -------------------------------------------------------------------- |
-| **`memory_ingest`**         | Write or append structured insights, wikilinks, optional tool output |
-| **`memory_recall`**         | Hybrid search over the vault (keyword + links + optional vectors)    |
-| **`memory_sync`**           | Team sync pull/push when object storage is configured                |
-| **`pageindex_build_tree`**  | Build a hierarchical index from Markdown                             |
-| **`pageindex_traverse`**    | Walk the tree under a token budget                                   |
-| **`pageindex_synthesize`**  | Merge selected nodes into agent context                              |
+| Tool                            | Purpose                                                              |
+| ------------------------------- | -------------------------------------------------------------------- |
+| **`memory_ingest`**             | Write or append structured insights, wikilinks, optional tool output |
+| **`memory_recall`**             | Hybrid search over the vault (keyword + links + optional vectors)    |
+| **`memory_sync`**               | Team sync pull/push when object storage is configured                |
+| **`pageindex_build_tree`**      | Build a hierarchical index from Markdown                             |
+| **`pageindex_traverse`**        | Walk the tree under a token budget                                   |
+| **`pageindex_synthesize`**      | Merge selected nodes into agent context                              |
 | **`pageindex_get_content`**     | Read a indexed node’s body                                           |
 | **`codegraph_index`**           | Build structural code graph from repo root (opt-in)                  |
 | **`codegraph_import_graphify`** | Import Graphify `graph.json`                                         |
 | **`codegraph_query`**           | Find symbols by name or concept                                      |
 | **`codegraph_neighbors`**       | List edges (imports, calls, contains)                                |
 | **`codegraph_path`**            | Shortest path between two symbols                                    |
-| **`codegraph_explain`**         | Summarize a symbol and its neighborhood                            |
+| **`codegraph_explain`**         | Summarize a symbol and its neighborhood                              |
 | **`codegraph_subgraph`**        | BFS subgraph around a seed query                                     |
 
 Default **on** for vault + PageIndex; hide all memory + PageIndex tools with **`CLAWQL_ENABLE_MEMORY=0`**. Hide PageIndex only with **`CLAWQL_ENABLE_PAGEINDEX=0`**. Register code graph tools with **`CLAWQL_ENABLE_CODEGRAPH=1`**. Requires a writable **`CLAWQL_OBSIDIAN_VAULT_PATH`** for vault I/O; code graph additionally needs **`CLAWQL_CODEGRAPH_ROOT`** and **`CLAWQL_CODEGRAPH_PATH`**.

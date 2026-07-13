@@ -37,7 +37,7 @@ Retrieve relevant prior context from vault notes before making changes or claims
 
 1. Ensure repo is indexed (`codegraph_index` or Graphify import).
 2. `memory_recall` with `includeCodeGraph: true` (or env hybrid flag).
-3. Use vault snippets for *why* and **`codeGraphHits`** for *where* in source.
+3. Use vault snippets for _why_ and **`codeGraphHits`** for _where_ in source.
 
 ## Tips
 
