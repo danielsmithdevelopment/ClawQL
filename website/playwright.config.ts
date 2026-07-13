@@ -12,6 +12,7 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4173',
     trace: 'on-first-retry',
+    colorScheme: 'light',
   },
   webServer: {
     command: 'npm run build && npm run start -- -p 4173 -H 127.0.0.1',

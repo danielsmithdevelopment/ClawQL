@@ -30,7 +30,7 @@ jobs:
   lighthouse:
     name: Lighthouse (Next production server)
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
@@ -81,21 +81,42 @@ jobs:
             fi
           done
 
-          # 12.8.x treats `Content-Signal:` in robots.txt as invalid (SEO ~0.85).
-          # Newer releases recognize the directive (see googlechrome/lighthouse#16767).
-          npx --yes lighthouse@13.1.0 "http://127.0.0.1:${PORT}/" \
-            --preset=desktop \
-            --only-categories=performance,accessibility,best-practices,seo \
-            --chrome-flags="--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage" \
-            --output=json \
-            --output-path=lighthouse-ci.json \
-            --quiet
+          BASE="http://127.0.0.1:${PORT}"
+          LH_URLS=(
+            "${BASE}/"
+            "${BASE}/quickstart"
+            "${BASE}/inference/clawql-inference"
+            "${BASE}/getting-started/for-teams"
+            "${BASE}/reference/protocol"
+            "${BASE}/security/best-practices"
+          )
 
-          node ../scripts/dev/assert-lighthouse-scores.mjs lighthouse-ci.json
+          run_lighthouse() {
+            local url="$1"
+            local out="$2"
+            shift 2
+            echo "Lighthouse desktop: ${url}"
+            npx --yes lighthouse@13.1.0 "${url}" \
+              --preset=desktop \
+              --only-categories=performance,accessibility,best-practices,seo \
+              --chrome-flags="--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage" \
+              --output=json \
+              --output-path="${out}" \
+              --quiet \
+              "$@"
+            node ../scripts/dev/assert-lighthouse-scores.mjs "${out}"
+          }
+
+          idx=0
+          for url in "${LH_URLS[@]}"; do
+            run_lighthouse "${url}" "lighthouse-ci-${idx}.json"
+            idx=$((idx + 1))
+          done
 
           # Mobile throttling: stricter performance floor; same a11y/SEO/BP gates as desktop.
           # Lighthouse 13+ removed --preset=mobile; use --form-factor=mobile (+ screen emulation).
-          npx --yes lighthouse@13.1.0 "http://127.0.0.1:${PORT}/" \
+          echo "Lighthouse mobile: ${BASE}/"
+          npx --yes lighthouse@13.1.0 "${BASE}/" \
             --form-factor=mobile \
             --screenEmulation.mobile \
             --only-categories=performance,accessibility,best-practices,seo \

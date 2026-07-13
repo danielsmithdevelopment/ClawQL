@@ -233,9 +233,6 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'monthly',
     priority: 0.89,
   },
-  { path: '/cache', changeFrequency: 'monthly', priority: 0.8 },
-  { path: '/schedule', changeFrequency: 'monthly', priority: 0.8 },
-  { path: '/notify', changeFrequency: 'monthly', priority: 0.8 },
   {
     path: '/hitl-label-studio',
     changeFrequency: 'monthly',
