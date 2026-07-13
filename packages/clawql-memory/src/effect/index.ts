@@ -1,4 +1,16 @@
 export { MemoryError } from "./memory-errors.js";
+export { memoryFromPromise, memorySync } from "./memory-effect-utils.js";
+export {
+  VaultConfigService,
+  VaultConfigLive,
+  DEFAULT_OBSIDIAN_VAULT_PATH,
+  createVaultConfigTestLayer,
+  vaultConfigLiveLayer,
+} from "./vault-config-service.js";
+export { EmbeddingService, embeddingLiveLayer } from "./embedding-service.js";
+export { MemoryDbService, memoryDbLiveLayer, type MemoryDbDocument } from "./memory-db-service.js";
+export { executeMemoryIngestEffect } from "./memory-ingest-effect.js";
+export { executeMemoryRecallEffect } from "./memory-recall-effect.js";
 export { MemoryIngestService, memoryIngestLiveLayer } from "./memory-ingest-service.js";
 export { MemoryRecallService, memoryRecallLiveLayer } from "./memory-recall-service.js";
 export {
@@ -6,5 +18,6 @@ export {
   memoryRecallProgram,
   memoryServicesLiveLayer,
   runMemoryEffect,
+  type MemoryInfrastructureServices,
   type MemoryServices,
 } from "./memory-effect-runtime.js";

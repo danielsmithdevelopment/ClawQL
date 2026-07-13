@@ -3,7 +3,6 @@
  * Optional vector seeds when CLAWQL_VECTOR_BACKEND is sqlite (BLOB KNN) or postgres (pgvector).
  */
 
-import { getObsidianVaultPath } from "../vault/config.js";
 import { readVaultTextFile } from "../vault/utils.js";
 import { slugifyTitle } from "../ingest/slug.js";
 import {
@@ -132,16 +131,23 @@ function defaultScanRoot(): string {
   return t === "" ? "" : t;
 }
 
-export async function executeMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {
-  const vault = getObsidianVaultPath();
-  if (!vault) {
-    return {
-      ok: false,
-      error:
-        "Obsidian vault is not configured. Set CLAWQL_OBSIDIAN_VAULT_PATH to a writable directory.",
-    };
-  }
+/** Public async facade for vault recall (MCP tools, scripts). */
+export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {
+  const { runMemoryEffect, memoryRecallProgram } =
+    await import("../effect/memory-effect-runtime.js");
+  return runMemoryEffect(memoryRecallProgram(input));
+}
 
+/** @deprecated Prefer {@link runMemoryRecall} — routes through Effect services. */
+export async function executeMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {
+  return runMemoryRecall(input);
+}
+
+/** Recall scan + ranking body (vault path already resolved). */
+export async function executeMemoryRecallCore(
+  vault: string,
+  input: MemoryRecallInput
+): Promise<MemoryRecallResult> {
   const { runBeforeRecallVaultSync } = await import("../sync/vault-sync-hooks.js");
   await runBeforeRecallVaultSync();
 
@@ -402,11 +408,4 @@ export async function executeMemoryRecall(input: MemoryRecallInput): Promise<Mem
     result.cuckooVectorChunksDropped = cuckooVectorChunksDropped;
   }
   return result;
-}
-
-/** Public async facade for vault recall (MCP tools, scripts). */
-export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {
-  const { runMemoryEffect, memoryRecallProgram } =
-    await import("../effect/memory-effect-runtime.js");
-  return runMemoryEffect(memoryRecallProgram(input));
 }

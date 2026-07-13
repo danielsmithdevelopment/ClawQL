@@ -9,7 +9,6 @@ import {
   stableEnterpriseCitationsPayload,
   type EnterpriseCitation,
 } from "./enterprise-citations.js";
-import { getObsidianVaultPath } from "../vault/config.js";
 import { readToolOutputsFileForIngest } from "../ingest-file.js";
 import { slugifyTitle } from "./slug.js";
 import { extractIngestHashes } from "./hashes.js";
@@ -173,16 +172,23 @@ function buildFrontmatter(title: string): string {
   ].join("\n");
 }
 
-export async function executeMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
-  const vault = getObsidianVaultPath();
-  if (!vault) {
-    return {
-      ok: false,
-      error:
-        "Obsidian vault is not configured. Set CLAWQL_OBSIDIAN_VAULT_PATH to a writable directory.",
-    };
-  }
+/** Public async facade for vault ingest (MCP tools, scripts, automation). */
+export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
+  const { runMemoryEffect, memoryIngestProgram } =
+    await import("../effect/memory-effect-runtime.js");
+  return runMemoryEffect(memoryIngestProgram(input));
+}
 
+/** @deprecated Prefer {@link runMemoryIngest} — routes through Effect services. */
+export async function executeMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
+  return runMemoryIngest(input);
+}
+
+/** Vault write + index sync body (vault path already resolved). */
+export async function executeMemoryIngestCore(
+  vault: string,
+  input: MemoryIngestInput
+): Promise<MemoryIngestResult> {
   const title = input.title?.trim();
   if (!title) {
     return { ok: false, error: "title is required" };
@@ -343,11 +349,4 @@ export async function executeMemoryIngest(input: MemoryIngestInput): Promise<Mem
   }
 
   return result;
-}
-
-/** Public async facade for vault ingest (MCP tools, scripts, automation). */
-export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
-  const { runMemoryEffect, memoryIngestProgram } =
-    await import("../effect/memory-effect-runtime.js");
-  return runMemoryEffect(memoryIngestProgram(input));
 }
