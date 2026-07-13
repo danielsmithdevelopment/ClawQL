@@ -9,6 +9,7 @@ import type {
 } from "../mcp-hooks.js";
 import { OuroborosContextService } from "./ouroboros-context-service.js";
 import { OuroborosEventStoreService } from "./ouroboros-event-store-service.js";
+import { OuroborosLoopService } from "./ouroboros-loop-service.js";
 import { OuroborosError } from "./ouroboros-errors.js";
 import {
   executeCreateSeedFromDocumentEffect,
@@ -40,7 +41,7 @@ export class OuroborosToolsService extends Context.Tag("clawql/OuroborosToolsSer
         ReturnType<typeof import("../mcp-hooks.js").ouroborosMcpTools.runEvolutionaryLoop.handler>
       >,
       OuroborosError,
-      OuroborosContextService
+      OuroborosLoopService
     >;
     readonly getLineageStatus: (
       input: z.infer<typeof GetLineageStatusSchema>
