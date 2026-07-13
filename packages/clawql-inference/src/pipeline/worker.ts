@@ -1,3 +1,4 @@
+import { buildPipelineRunLockKey, tryAcquirePipelineAdvisoryLock } from "./advisory-lock.js";
 import { loadPipelineConfig, savePipelineConfig } from "./config.js";
 import { cronMatchesUtc, toMinuteKey } from "./cron.js";
 import { runPipelineOnce } from "./run.js";
@@ -23,8 +24,14 @@ async function pipelineWorkerTick(env: NodeJS.ProcessEnv): Promise<void> {
     const last = new Date(config.lastRunAt);
     if (!Number.isNaN(last.getTime()) && toMinuteKey(last) === minuteKey) return;
   }
-  if (minuteRunCache.has(`${config.updatedAt}:${minuteKey}`)) return;
-  minuteRunCache.add(`${config.updatedAt}:${minuteKey}`);
+  const dedupeKey = `${config.updatedAt}:${minuteKey}`;
+  if (minuteRunCache.has(dedupeKey)) return;
+
+  const lockKey = buildPipelineRunLockKey(config.schedule, minuteKey);
+  const lock = await tryAcquirePipelineAdvisoryLock(lockKey, env);
+  if (!lock.acquired) return;
+
+  minuteRunCache.add(dedupeKey);
 
   try {
     const result = await runPipelineOnce(config, env);
@@ -45,6 +52,8 @@ async function pipelineWorkerTick(env: NodeJS.ProcessEnv): Promise<void> {
       updatedAt: new Date().toISOString(),
     };
     await savePipelineConfig(updated, env);
+  } finally {
+    await lock.release();
   }
 }
 

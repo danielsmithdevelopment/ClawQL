@@ -437,7 +437,28 @@ When `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED=1`:
 clawql inference policy show [--json]
 ```
 
-`resolveInferencePolicy()` aggregates the effective view from environment: escalation, cache, fallback, keys, store backend, export defaults, pipeline worker, and agent coordination. Manifest YAML overrides are planned; today the source is **`env`**.
+`resolveInferencePolicy()` aggregates the effective view from **manifest YAML** (`$CLAWQL_HOME/Inference/policy.yaml` or `CLAWQL_INFERENCE_POLICY_MANIFEST`) merged with environment variables — **env wins on conflicts**. Source is `manifest+env` when a manifest is loaded, otherwise `env`.
+
+Example manifest:
+
+```yaml
+policyVersion: "2026.07.01"
+inference:
+  escalation:
+    enabled: true
+    tierMap:
+      frugal: ollama/phi4
+  cache:
+    enabled: true
+    threshold: 0.92
+  pipelineWorker:
+    enabled: true
+    pollMs: 60000
+  observability:
+    profile: external
+```
+
+Multi-instance `serve` workers use **Postgres advisory locks** (`pg_try_advisory_lock`) keyed by pipeline schedule + UTC minute when `CLAWQL_INFERENCE_DATABASE_URL` is set, so only one replica runs each cron tick.
 
 ---
 
@@ -452,6 +473,7 @@ All operator state under `$CLAWQL_HOME/Inference/`:
 | `fallback-chains.json` | Fallback config merge                      |
 | `virtual-keys.json`    | `keys create` / `revoke`                   |
 | `pipeline.json`        | `pipeline enable` / worker ticks           |
+| `policy.yaml`          | Operator inference policy manifest         |
 
 Postgres store uses `clawql_inference_calls` (separate from `CLAWQL_INFERENCE_DATABASE_URL`).
 
@@ -518,6 +540,7 @@ clawql inference <subcommand>
 | `CLAWQL_INFERENCE_STORE_PATH`                                   | `$CLAWQL_HOME/Inference/calls.jsonl` | JSONL path override                     |
 | `CLAWQL_INFERENCE_PIPELINE_WORKER`                              | off                                  | Cron worker with serve                  |
 | `CLAWQL_INFERENCE_PIPELINE_POLL_MS`                             | `60000`                              | Worker poll interval                    |
+| `CLAWQL_INFERENCE_POLICY_MANIFEST`                              | `$CLAWQL_HOME/Inference/policy.yaml` | Inference policy YAML path              |
 | `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED`                   | off                                  | Agent coordination                      |
 | `HERMES_BASE_URL`                                               | —                                    | Hermes MoA endpoint                     |
 | `CLAWQL_PAYMENTS_ENFORCE_INFERENCE`                             | off                                  | Plan entitlement gate                   |
@@ -574,11 +597,8 @@ clawql inference <subcommand>
 - **OTLP infra tracing** — `CLAWQL_ENABLE_OTEL_TRACING=1` + `OTEL_EXPORTER_OTLP_*` → Tempo/collector
 - **Langfuse work traces** — ADR 0005 opt-out emission via OTLP to `{LANGFUSE_HOST}/api/public/otel/v1/traces`
 - **Distributed semantic cache** — `clawql_inference_semantic_cache` table with pgvector HNSW index
-
-### Planned (not blockers)
-
-- Manifest YAML inference block overrides for `policy show`
-- Postgres advisory locks for multi-instance pipeline dedup
+- **Manifest YAML policy** — `$CLAWQL_HOME/Inference/policy.yaml` merged into `policy show` (env overrides)
+- **Pipeline advisory locks** — Postgres `pg_try_advisory_lock` dedup across `serve` replicas
 
 ---
 
