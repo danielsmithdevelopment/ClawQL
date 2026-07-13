@@ -45,15 +45,9 @@ export {
   stripeClientLiveLayer,
   isStripeConfigured,
 } from "../stripe/stripe-client-service.js";
-export {
-  StripeWebhookService,
-  stripeWebhookLiveLayer,
-} from "../stripe/stripe-webhook-service.js";
+export { StripeWebhookService, stripeWebhookLiveLayer } from "../stripe/stripe-webhook-service.js";
 export { StripeMeterService, stripeMeterLiveLayer } from "../stripe/stripe-meter-service.js";
-export {
-  StripeBillingService,
-  stripeBillingLiveLayer,
-} from "../stripe/stripe-billing-service.js";
+export { StripeBillingService, stripeBillingLiveLayer } from "../stripe/stripe-billing-service.js";
 export {
   StripeNotConfigured,
   StripeSignatureError,

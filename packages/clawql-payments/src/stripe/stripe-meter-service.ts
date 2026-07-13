@@ -5,7 +5,11 @@ import type { ConfigError } from "../errors/payment-errors.js";
 import type { PaymentError } from "../errors/payment-errors.js";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
 import { StripeApiError, StripeNotConfigured } from "./stripe-errors.js";
-import { StripeClientService, isStripeConfigured, stripeTryPromise } from "./stripe-client-service.js";
+import {
+  StripeClientService,
+  isStripeConfigured,
+  stripeTryPromise,
+} from "./stripe-client-service.js";
 
 export type StripeMeterConfig = {
   customerId: string;
@@ -30,8 +34,7 @@ export type ReportInferenceMeterUsageInput = {
 };
 
 export type ReportInferenceMeterUsageResult =
-  | { reported: true; eventId: string; value: number }
-  | { reported: false; reason: string };
+  { reported: true; eventId: string; value: number } | { reported: false; reason: string };
 
 function parseTruthy(value: string | undefined): boolean {
   if (value === undefined) return false;

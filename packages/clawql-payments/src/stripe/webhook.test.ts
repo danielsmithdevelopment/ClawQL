@@ -76,11 +76,7 @@ describe("stripe webhook verification", () => {
       Effect.gen(function* () {
         const webhook = yield* StripeWebhookService;
         return yield* webhook.verifySignature(payload, signature, secret);
-      }).pipe(
-        Effect.provide(
-          paymentsServicesLiveLayer({ CLAWQL_PAYMENTS_AUDIT_STORE: "memory" })
-        )
-      )
+      }).pipe(Effect.provide(paymentsServicesLiveLayer({ CLAWQL_PAYMENTS_AUDIT_STORE: "memory" })))
     );
     expect(event.type).toBe("invoice.paid");
     expect(verifyFromService(payload, signature, secret).ok).toBe(true);

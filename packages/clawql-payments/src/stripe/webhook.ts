@@ -16,11 +16,7 @@ export type StripeWebhookEvent = {
   payload: Stripe.Event;
 };
 
-export type {
-  ProcessStripeWebhookOptions,
-  ProcessStripeWebhookResult,
-  StripeWebhookVerifyResult,
-};
+export type { ProcessStripeWebhookOptions, ProcessStripeWebhookResult, StripeWebhookVerifyResult };
 
 export { verifyStripeWebhookSignature };
 

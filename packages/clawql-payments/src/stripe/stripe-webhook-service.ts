@@ -1,18 +1,14 @@
 import Stripe from "stripe";
 import { Context, Effect, Layer } from "effect";
 import { PaymentsConfigService } from "../config/payments-config-service.js";
-import {
-  buildPaymentWormEntry,
-  buildStripeInvoicePaidEntry,
-} from "../audit/events.js";
+import { buildPaymentWormEntry, buildStripeInvoicePaidEntry } from "../audit/events.js";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
 import type { ConfigError } from "../errors/payment-errors.js";
 import type { PaymentError } from "../errors/payment-errors.js";
 import { StripeSignatureError } from "./stripe-errors.js";
 
 export type StripeWebhookVerifyResult =
-  | { ok: true; event: Stripe.Event }
-  | { ok: false; reason: string };
+  { ok: true; event: Stripe.Event } | { ok: false; reason: string };
 
 export type ProcessStripeWebhookOptions = {
   tenantId?: string;

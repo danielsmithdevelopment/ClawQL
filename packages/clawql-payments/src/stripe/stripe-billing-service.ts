@@ -106,11 +106,7 @@ export class StripeBillingService extends Context.Tag("clawql/StripeBillingServi
 
 export function stripeBillingLiveLayer(
   env: NodeJS.ProcessEnv = process.env
-): Layer.Layer<
-  StripeBillingService,
-  never,
-  StripeClientService | PaymentsConfigService
-> {
+): Layer.Layer<StripeBillingService, never, StripeClientService | PaymentsConfigService> {
   return Layer.effect(
     StripeBillingService,
     Effect.gen(function* () {
@@ -129,9 +125,9 @@ export function stripeBillingLiveLayer(
           return {
             configured: Boolean(
               isStripeConfigured(runEnv) ||
-                config.stripe.accountId ||
-                config.stripe.publishableKey ||
-                config.stripe.webhookSecret
+              config.stripe.accountId ||
+              config.stripe.publishableKey ||
+              config.stripe.webhookSecret
             ),
             apiKeyConfigured: isStripeConfigured(runEnv),
             path,

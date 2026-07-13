@@ -1,9 +1,6 @@
 import { Effect } from "effect";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
-import {
-  StripeBillingService,
-  type PortalSessionInput,
-} from "./stripe-billing-service.js";
+import { StripeBillingService, type PortalSessionInput } from "./stripe-billing-service.js";
 
 export type { PortalSessionInput };
 
