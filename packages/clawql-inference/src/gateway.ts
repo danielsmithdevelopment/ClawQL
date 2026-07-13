@@ -17,6 +17,7 @@ import { withFallbackChain, type WithFallbackChainOptions } from "./fallback/fal
 import { withEntitlementEnforcement } from "./entitlements/enforced-gateway.js";
 import { withTokenEfficiency } from "./efficiency/efficiency-gateway.js";
 import type { CacheIntent } from "./efficiency/types.js";
+import { resolveInferenceEffectiveEnv } from "./policy/manifest.js";
 
 export type ChatRole = "system" | "user" | "assistant";
 
@@ -108,6 +109,13 @@ export class ConfiguredInferenceGateway implements InferenceGateway {
   }
 }
 
+function withRuntimePolicyEnv(
+  options: CreateInferenceGatewayOptions
+): CreateInferenceGatewayOptions {
+  const env = resolveInferenceEffectiveEnv(options.env ?? process.env);
+  return { ...options, env };
+}
+
 function composeInferenceGateway(
   inner: InferenceGateway,
   options: CreateInferenceGatewayOptions
@@ -152,31 +160,33 @@ function composeInferenceGateway(
 export function createInferenceGateway(
   options: CreateInferenceGatewayOptions = {}
 ): InferenceGateway {
-  const env = options.env;
+  const resolved = withRuntimePolicyEnv(options);
+  const env = resolved.env;
   const providers =
-    options.providers ??
+    resolved.providers ??
     createProviderRegistry({
       env,
-      plugins: options.providerPlugins ?? composeDefaultProviderPlugins(),
+      plugins: resolved.providerPlugins ?? composeDefaultProviderPlugins(),
     });
   const inner = new ConfiguredInferenceGateway(providers);
-  return composeInferenceGateway(inner, options);
+  return composeInferenceGateway(inner, resolved);
 }
 
 /** Async gateway bootstrap — selects Postgres pgvector semantic cache when configured. */
 export async function createInferenceGatewayAsync(
   options: CreateInferenceGatewayOptions = {}
 ): Promise<InferenceGateway> {
-  const env = options.env;
+  const resolved = withRuntimePolicyEnv(options);
+  const env = resolved.env;
   const providers =
-    options.providers ??
+    resolved.providers ??
     createProviderRegistry({
       env,
-      plugins: options.providerPlugins ?? composeDefaultProviderPlugins(),
+      plugins: resolved.providerPlugins ?? composeDefaultProviderPlugins(),
     });
   const inner = new ConfiguredInferenceGateway(providers);
 
-  let semanticOptions = options.semanticCache;
+  let semanticOptions = resolved.semanticCache;
   if (semanticOptions !== false && !semanticOptions?.cache) {
     const config = semanticOptions?.config ?? loadSemanticCacheConfig(env);
     if (config.enabled) {
@@ -188,5 +198,5 @@ export async function createInferenceGatewayAsync(
     }
   }
 
-  return composeInferenceGateway(inner, { ...options, semanticCache: semanticOptions });
+  return composeInferenceGateway(inner, { ...resolved, semanticCache: semanticOptions });
 }

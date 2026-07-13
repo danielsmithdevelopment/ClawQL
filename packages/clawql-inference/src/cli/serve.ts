@@ -3,6 +3,7 @@ import { runInferenceHttpServer } from "../api/server.js";
 import { maybeInitInferenceOtelTracing } from "../observability/otel-tracing.js";
 import { registerInferencePoolShutdownHooks } from "../store/postgres-pool.js";
 import { startPipelineWorker } from "../pipeline/worker.js";
+import { resolveInferenceEffectiveEnv } from "../policy/manifest.js";
 
 function parseTruthy(value: string | undefined): boolean {
   if (value === undefined) return false;
@@ -17,7 +18,7 @@ export type InferenceServeOptions = {
 };
 
 export async function runInferenceServe(options: InferenceServeOptions = {}): Promise<number> {
-  const env = options.env ?? process.env;
+  const env = resolveInferenceEffectiveEnv(options.env ?? process.env);
   registerInferencePoolShutdownHooks();
   await maybeInitInferenceOtelTracing(env);
   const gateway = await createInferenceGatewayAsync({ env });

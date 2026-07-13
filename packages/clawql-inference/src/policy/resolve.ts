@@ -14,7 +14,7 @@ import {
 import { resolveSemanticCacheBackend } from "../cache/postgres-pgvector-store.js";
 import {
   loadInferencePolicyManifestSync,
-  mergeEnvWithPolicyManifest,
+  resolveInferenceEffectiveEnv,
   type InferencePolicyManifestBlock,
 } from "./manifest.js";
 
@@ -88,7 +88,7 @@ function resolveExportDefaults(
 
 export function resolveInferencePolicy(env: NodeJS.ProcessEnv = process.env): InferencePolicyView {
   const loaded = loadInferencePolicyManifestSync(env);
-  const effectiveEnv = mergeEnvWithPolicyManifest(env, loaded?.manifest ?? null);
+  const effectiveEnv = resolveInferenceEffectiveEnv(env);
   const backend = resolveStoreBackend(effectiveEnv);
   const policyVersion =
     env.CLAWQL_RELEASE_MANIFEST?.trim() ||

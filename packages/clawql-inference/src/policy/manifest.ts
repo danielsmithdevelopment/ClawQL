@@ -356,3 +356,11 @@ export function mergeEnvWithPolicyManifest(
   const fromManifest = manifestToEnvOverrides(manifest);
   return { ...fromManifest, ...env };
 }
+
+/** Effective process env for inference runtime (manifest YAML merged under env). */
+export function resolveInferenceEffectiveEnv(
+  env: NodeJS.ProcessEnv = process.env
+): NodeJS.ProcessEnv {
+  const loaded = loadInferencePolicyManifestSync(env);
+  return mergeEnvWithPolicyManifest(env, loaded?.manifest ?? null);
+}
