@@ -4,6 +4,10 @@ import { paymentsDiscoveryLiveLayer } from "../discovery/payments-discovery-serv
 import { entitlementLiveLayer } from "../plans/entitlement-service.js";
 import { usageStoreLiveLayer } from "../plans/usage-store-service.js";
 import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
+import { stripeBillingLiveLayer } from "../stripe/stripe-billing-service.js";
+import { stripeClientLiveLayer } from "../stripe/stripe-client-service.js";
+import { stripeMeterLiveLayer } from "../stripe/stripe-meter-service.js";
+import { stripeWebhookLiveLayer } from "../stripe/stripe-webhook-service.js";
 import { x402EnforcementLiveLayer } from "../x402/x402-enforcement-service.js";
 import { x402FacilitatorLiveLayer } from "../x402/x402-facilitator-service.js";
 import { x402GateLiveLayer } from "../x402/x402-gate-service.js";
@@ -18,7 +22,11 @@ export type PaymentsServices =
   | import("../x402/x402-enforcement-service.js").X402EnforcementService
   | import("../plans/usage-store-service.js").UsageStoreService
   | import("../plans/entitlement-service.js").EntitlementService
-  | import("../discovery/payments-discovery-service.js").PaymentsDiscoveryService;
+  | import("../discovery/payments-discovery-service.js").PaymentsDiscoveryService
+  | import("../stripe/stripe-client-service.js").StripeClientService
+  | import("../stripe/stripe-webhook-service.js").StripeWebhookService
+  | import("../stripe/stripe-meter-service.js").StripeMeterService
+  | import("../stripe/stripe-billing-service.js").StripeBillingService;
 
 const layerCache = new Map<string, Layer.Layer<PaymentsServices>>();
 
@@ -36,6 +44,7 @@ export function paymentsServicesLiveLayer(
   const usage = usageStoreLiveLayer(env);
   const entitlement = entitlementLiveLayer();
   const facilitator = x402FacilitatorLiveLayer(env);
+  const stripeClient = stripeClientLiveLayer(env);
 
   const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
   const enforcement = x402EnforcementLiveLayer().pipe(
@@ -43,6 +52,13 @@ export function paymentsServicesLiveLayer(
   );
   const discovery = paymentsDiscoveryLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(config, runtimeConfig, gate))
+  );
+  const stripeWebhook = stripeWebhookLiveLayer().pipe(Layer.provide(Layer.mergeAll(config, audit)));
+  const stripeMeter = stripeMeterLiveLayer(env).pipe(
+    Layer.provide(Layer.mergeAll(stripeClient, config, audit))
+  );
+  const stripeBilling = stripeBillingLiveLayer(env).pipe(
+    Layer.provide(Layer.mergeAll(stripeClient, config))
   );
 
   const layer = Layer.mergeAll(
@@ -54,7 +70,11 @@ export function paymentsServicesLiveLayer(
     facilitator,
     runtimeConfig,
     enforcement,
-    discovery
+    discovery,
+    stripeClient,
+    stripeWebhook,
+    stripeMeter,
+    stripeBilling
   );
   layerCache.set(key, layer);
   return layer;

@@ -1,23 +1,20 @@
-import { createStripeClient } from "./client.js";
+import { Effect } from "effect";
+import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
+import {
+  StripeBillingService,
+  type PortalSessionInput,
+} from "./stripe-billing-service.js";
 
-export type PortalSessionInput = {
-  customerId: string;
-  returnUrl: string;
-  env?: NodeJS.ProcessEnv;
-};
+export type { PortalSessionInput };
 
 export async function createCustomerPortalSession(
   input: PortalSessionInput
 ): Promise<{ url: string; customerId: string }> {
-  const env = input.env ?? process.env;
-  const stripe = createStripeClient(env);
-  const session = await stripe.billingPortal.sessions.create({
-    customer: input.customerId,
-    return_url: input.returnUrl,
-  });
-
-  return {
-    url: session.url,
-    customerId: input.customerId,
-  };
+  return runPaymentsEffect(
+    Effect.gen(function* () {
+      const billing = yield* StripeBillingService;
+      return yield* billing.createPortalSession(input);
+    }),
+    input.env
+  );
 }
