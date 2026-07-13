@@ -48,8 +48,11 @@ Each `complete()` call passes **outward** through these layers before reaching a
 4. **`TokenEfficiencyGateway`** — Layers 3–8 + 9–11 (terse, compress, route, prompt-cache markers)
 5. **`EntitlementEnforcedGateway`** — plan limit checks via `clawql-payments` (when enforcement enabled)
 6. **`ObservedInferenceGateway`** — appends an `InferenceRecord` to the call store
+7. **`TracedInferenceGateway`** — OTLP spans to infra + Langfuse when configured
 
-Call order from outside in: **Observed → Entitlement → Efficiency → Cache → Fallback → Configured → provider**.
+Call order from outside in: **Traced → Observed → Entitlement → Efficiency → Cache → Fallback → Configured → provider**.
+
+HTTP `clawql inference serve` uses `createInferenceGatewayAsync()` so semantic cache backs onto **Postgres pgvector** when an inference database is configured. Sync `createInferenceGateway()` keeps an in-memory cache for one-shot CLI calls.
 
 ### Backends
 
@@ -518,6 +521,13 @@ clawql inference <subcommand>
 | `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED` | off                                  | Agent coordination                      |
 | `HERMES_BASE_URL`                             | —                                    | Hermes MoA endpoint                     |
 | `CLAWQL_PAYMENTS_ENFORCE_INFERENCE`           | off                                  | Plan entitlement gate                   |
+| `CLAWQL_OBSERVABILITY_PROFILE`                | `external`                           | `bundled` / `external` / `minimal`      |
+| `CLAWQL_ENABLE_OTEL_TRACING`                  | off                                  | Infra OTLP spans (Tempo / collector)    |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`                  | —                                    | OTLP ingest URL                         |
+| `CLAWQL_ENABLE_LANGFUSE`                      | on when keys set                     | Langfuse work-trace OTLP (opt-out `=0`) |
+| `LANGFUSE_HOST` / `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` | —                    | Langfuse OTLP credentials               |
+| `CLAWQL_INFERENCE_SEMANTIC_CACHE_BACKEND`     | `postgres` when DB configured        | `memory` / `postgres` / `pgvector`      |
+| `CLAWQL_EMBEDDING_DIMENSION`                  | `1536`                               | pgvector column width for cache         |
 
 ---
 
@@ -559,11 +569,15 @@ clawql inference <subcommand>
 | P1       | Agent coordination                                                  | ✅     |
 | Adoption | OpenAI REST, semantic cache, fallback, virtual keys, Postgres store | ✅     |
 
+### Shipped observability
+
+- **OTLP infra tracing** — `CLAWQL_ENABLE_OTEL_TRACING=1` + `OTEL_EXPORTER_OTLP_*` → Tempo/collector
+- **Langfuse work traces** — ADR 0005 opt-out emission via OTLP to `{LANGFUSE_HOST}/api/public/otel/v1/traces`
+- **Distributed semantic cache** — `clawql_inference_semantic_cache` table with pgvector HNSW index
+
 ### Planned (not blockers)
 
-- Langfuse / OpenTelemetry full wiring (ADR 0005)
 - Manifest YAML inference block overrides for `policy show`
-- Distributed semantic cache backend (Redis/pgvector) for multi-instance gateways
 - Postgres advisory locks for multi-instance pipeline dedup
 
 ---

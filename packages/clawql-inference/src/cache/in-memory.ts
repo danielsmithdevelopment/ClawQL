@@ -30,12 +30,12 @@ export class InMemorySemanticCacheStore implements SemanticCacheStore {
     this.maxEntries = options.maxEntries ?? 1000;
   }
 
-  lookup(input: {
+  async lookup(input: {
     modelId: string;
     embedding: Float32Array;
     threshold: number;
     now?: number;
-  }): SemanticCacheLookupResult | null {
+  }): Promise<SemanticCacheLookupResult | null> {
     const now = input.now ?? Date.now();
     this.prune(now);
     let best: SemanticCacheLookupResult | null = null;
@@ -56,7 +56,7 @@ export class InMemorySemanticCacheStore implements SemanticCacheStore {
     return null;
   }
 
-  put(entry: SemanticCacheEntry): void {
+  async put(entry: SemanticCacheEntry): Promise<void> {
     this.entries.push(entry);
     if (this.entries.length > this.maxEntries) {
       this.entries.sort((a, b) => a.createdAt - b.createdAt);
@@ -64,7 +64,7 @@ export class InMemorySemanticCacheStore implements SemanticCacheStore {
     }
   }
 
-  invalidateByTags(tags: string[], now: number = Date.now()): number {
+  async invalidateByTags(tags: string[], now: number = Date.now()): Promise<number> {
     if (!tags.length) return 0;
     const tagSet = new Set(tags.map((tag) => tag.toLowerCase()));
     const before = this.entries.length;
@@ -89,7 +89,7 @@ export class InMemorySemanticCacheStore implements SemanticCacheStore {
     };
   }
 
-  prune(now: number = Date.now()): number {
+  async prune(now: number = Date.now()): Promise<number> {
     const before = this.entries.length;
     const kept = this.entries.filter((e) => e.expiresAt > now);
     this.entries.length = 0;

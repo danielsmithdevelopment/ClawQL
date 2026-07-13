@@ -5,6 +5,13 @@ import { loadModelEscalationConfig } from "../routing/config.js";
 import { resolveInferenceStoreBackend, resolveInferenceStorePath } from "../store/create.js";
 import type { InferenceStoreBackend } from "../store/types.js";
 import { loadTokenEfficiencyConfig, listEfficiencyLayerStatus } from "../efficiency/config.js";
+import {
+  inferenceTracingEnabled,
+  langfuseTracingEnabled,
+  otelInfraTracingEnabled,
+  resolveObservabilityProfile,
+} from "../observability/profile.js";
+import { resolveSemanticCacheBackend } from "../cache/postgres-pgvector-store.js";
 
 export type InferencePolicyView = {
   source: "env";
@@ -33,6 +40,13 @@ export type InferencePolicyView = {
   };
   efficiency: ReturnType<typeof loadTokenEfficiencyConfig>;
   layers: ReturnType<typeof listEfficiencyLayerStatus>;
+  observability: {
+    profile: ReturnType<typeof resolveObservabilityProfile>;
+    otelInfra: boolean;
+    langfuse: boolean;
+    tracing: boolean;
+    semanticCacheBackend: ReturnType<typeof resolveSemanticCacheBackend>;
+  };
 };
 
 function parseTruthy(value: string | undefined): boolean {
@@ -85,5 +99,12 @@ export function resolveInferencePolicy(env: NodeJS.ProcessEnv = process.env): In
     },
     efficiency: loadTokenEfficiencyConfig(env),
     layers: listEfficiencyLayerStatus(env),
+    observability: {
+      profile: resolveObservabilityProfile(env),
+      otelInfra: otelInfraTracingEnabled(env),
+      langfuse: langfuseTracingEnabled(env),
+      tracing: inferenceTracingEnabled(env),
+      semanticCacheBackend: resolveSemanticCacheBackend(env),
+    },
   };
 }
