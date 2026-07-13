@@ -23,6 +23,7 @@
 | `.well-known/payments.json` discovery            | ✅     | Dynamic on MCP + inference HTTP; static route on docs site               |
 | MPP `/openapi.json` discovery                    | ✅     | Dynamic on MCP + inference HTTP; canonical `x-payment-info.offers[]`     |
 | MPP HTTP 402 + MCP -32042 runtime                | ✅     | Dual x402 + MPP challenges when `CLAWQL_MPP_ENABLED=1`                   |
+| MPP credential verification + receipts           | ✅     | `MppVerificationService` — x402 facilitator + Stripe SPT (`STRIPE_PROFILE_ID`) |
 
 ## Architecture
 
@@ -331,6 +332,7 @@ Effect entrypoints: `paymentsServicesLiveLayer()` merges all services; `runPayme
 | `EntitlementService`       | Plan limit checks (`EntitlementLimitError`)                       |
 | `PaymentsDiscoveryService` | `/.well-known/payments.json` builder                              |
 | `MppOpenApiService`        | MPP `/openapi.json` builder (`x-payment-info.offers[]`)           |
+| `MppVerificationService`   | MPP credential verify (x402 + Stripe SPT), challenge registry, receipts |
 | `StripeClientService`      | Stripe SDK client lifecycle                                       |
 | `StripeWebhookService`     | Webhook verify + WORM-audited event handling                      |
 | `StripeMeterService`       | Meter events + inference usage reporting                          |
@@ -480,6 +482,15 @@ curl http://localhost:8080/openapi.json   # MCP HTTP or inference HTTP
 Each paid route includes `x-payment-info.offers[]` with `x402` and `stripe` methods when configured. Set `CLAWQL_MPP_OPENAPI=0` to disable the route. See [MPP discovery](https://mpp.dev/advanced/discovery).
 
 When `CLAWQL_X402_ENFORCE=1`, HTTP 402 responses include both x402 `PAYMENT-REQUIRED` and MPP `WWW-Authenticate: Payment` challenges. MCP paid-tool errors surface MPP metadata on tool results (`org.paymentauth/payment-required`) for clients that expect JSON-RPC **-32042**.
+
+**Credential verification** runs through `MppVerificationService` (Effect) inside `X402EnforcementService.enforceGate()`:
+
+- `Authorization: Payment …` — canonical MPP credentials (Stripe SPT or x402 payload in `payload`)
+- `PAYMENT-SIGNATURE` — legacy x402 credentials (still verified when MPP is enabled)
+- Successful verification returns `Payment-Receipt` on HTTP 200 and records settlement in the payment audit WORM
+- Stripe SPT charges require `STRIPE_SECRET_KEY` and optionally `STRIPE_PROFILE_ID` / `STRIPE_NETWORK_ID` for Business Network profiles
+
+Challenge IDs issued on `402` are registered for single-use verification (replay protection). Failed verification surfaces MCP **-32043** metadata on deny paths when applicable.
 
 ### CLI
 

@@ -61,6 +61,13 @@ export function createX402PaymentMiddleware(options: CreateX402PaymentMiddleware
       if (result.action === "allow") {
         if (result.payer) req.x402Payer = result.payer;
         if (result.resource) req.x402Resource = result.resource;
+        if (result.mppReceiptHeader) {
+          res.setHeader("Payment-Receipt", result.mppReceiptHeader);
+          res.setHeader(
+            "Access-Control-Expose-Headers",
+            "PAYMENT-REQUIRED, PAYMENT-RESPONSE, Payment-Required, Payment-Receipt, WWW-Authenticate, Authorization"
+          );
+        }
         next();
         return;
       }
@@ -69,11 +76,13 @@ export function createX402PaymentMiddleware(options: CreateX402PaymentMiddleware
         const stripeEnabled = Boolean(env.STRIPE_SECRET_KEY?.trim());
         if (isMppEnabled(env)) {
           const offers = offersFromX402Required(result.body, stripeEnabled);
-          const challenges = buildChallengesFromOffers({
-            offers,
-            resource: result.resource,
-            x402Body: result.body,
-          });
+          const challenges =
+            result.mppChallenges ??
+            buildChallengesFromOffers({
+              offers,
+              resource: result.resource,
+              x402Body: result.body,
+            });
           const headers = mergePaymentRequiredHeaders({
             x402Body: result.body,
             offers,
@@ -103,6 +112,9 @@ export function createX402PaymentMiddleware(options: CreateX402PaymentMiddleware
         x402Version: 2,
         error: result.reason,
         resource: { url: requestUrl },
+        ...(result.mppVerificationCode
+          ? { mppVerificationCode: result.mppVerificationCode }
+          : {}),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

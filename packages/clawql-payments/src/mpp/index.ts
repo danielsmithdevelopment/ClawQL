@@ -55,3 +55,25 @@ export {
   type MppMcpJsonRpcError,
   type MppMcpToolResult,
 } from "./mcp.js";
+
+export {
+  parseAuthorizationPaymentHeader,
+  parseMppCredentialRaw,
+  extractPaymentCredential,
+  decodeChallengeRequest,
+  type MppCredential,
+  type ParsedPaymentCredential,
+} from "./credential.js";
+
+export { MppVerificationError } from "./verification-errors.js";
+
+export {
+  MppVerificationService,
+  mppVerificationLiveLayer,
+  type MppVerificationSuccess,
+  type VerifyMppCredentialInput,
+} from "./verification-service.js";
+
+export { buildMppPaymentReceipt, mppPaymentReceiptHeader, type MppPaymentReceipt } from "./receipt.js";
+
+export { registerMppChallenges, verifyMppCredential } from "./verify.js";
