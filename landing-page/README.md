@@ -90,7 +90,7 @@ Workflow [`.github/workflows/deploy-landing-page.yml`](../.github/workflows/depl
 
 ### Cloudflare Pages (optional, for full agent score)
 
-When `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repo secrets are set, the same workflow also deploys to **Cloudflare Pages** (`clawql-website`). Wrangler runs from `landing-page/demo/` so the sibling `functions/` directory (Link headers + markdown negotiation) is bundled with `out/`.
+When `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and repo variable **`LANDING_PAGE_CLOUDFLARE_DEPLOY=true`** are set, the same workflow also deploys to **Cloudflare Pages** (`clawql-website`). Wrangler runs from `landing-page/demo/` so the sibling `functions/` directory (Link headers + markdown negotiation) is bundled with `out/`.
 
 **DNS (one-time, when switching):** Point apex `clawql.com` to Cloudflare Pages (not GitHub Pages A records). Attach custom domain `clawql.com` to the Pages project in the Cloudflare dashboard.
 

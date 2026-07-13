@@ -1,6 +1,6 @@
 # Static export of landing-page/demo → GitHub Pages (https://clawql.com) by default.
-# When CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID are set, also deploy to Cloudflare Pages
-# so Link headers, Markdown negotiation, and functions/ work at the edge.
+# Set repo variable LANDING_PAGE_CLOUDFLARE_DEPLOY=true (and Cloudflare secrets) to also
+# deploy to Cloudflare Pages for Link headers, Markdown negotiation, and functions/.
 name: Deploy landing page
 
 on:
@@ -89,25 +89,19 @@ jobs:
   deploy-cloudflare-pages:
     name: Deploy to Cloudflare Pages (optional)
     needs: build
+    if: ${{ vars.LANDING_PAGE_CLOUDFLARE_DEPLOY == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Skip without Cloudflare credentials
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN == '' || secrets.CLOUDFLARE_ACCOUNT_ID == '' }}
-        run: echo "Cloudflare secrets not configured; skipping Pages deploy."
-
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
 
       - name: Download build artifact
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
         uses: actions/download-artifact@v7
         with:
           name: landing-page-out
           path: landing-page/demo/out
 
       - name: Deploy to Cloudflare Pages
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
         uses: cloudflare/wrangler-action@6a6c3a8fbb837218b1a676c348aa5de81a9c3066
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -117,7 +111,6 @@ jobs:
           command: pages deploy out --project-name=clawql-website --branch=main
 
       - name: Ensure DNS-AID records (optional)
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
