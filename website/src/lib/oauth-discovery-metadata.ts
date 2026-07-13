@@ -89,8 +89,45 @@ export function getOpenIdConfiguration(): Record<string, unknown> {
  * OAuth 2.0 Authorization Server metadata (`/.well-known/oauth-authorization-server`).
  * RFC 8414 allows a focused subset; we include the same endpoints and grant/response types.
  */
+function agentAuthGrantTypes(grantTypes: string[] | undefined): string[] {
+  const base = [...(grantTypes ?? [])]
+  const claimGrant = 'urn:workos:agent-auth:grant-type:claim'
+  if (!base.includes(claimGrant)) base.push(claimGrant)
+  return base
+}
+
+function agentAuthBlock(origin: string): Record<string, unknown> {
+  const authBase = envString('AGENT_AUTH_BASE_URL') ?? origin
+  const authOrigin = authBase.replace(/\/$/, '')
+
+  return {
+    skill: `${origin}/auth.md`,
+    identity_endpoint: `${authOrigin}/agent/identity`,
+    claim_endpoint: `${authOrigin}/agent/identity/claim`,
+    events_endpoint: `${authOrigin}/agent/event/notify`,
+    identity_types_supported: [
+      'anonymous',
+      'identity_assertion',
+      'service_auth',
+    ],
+    identity_assertion: {
+      assertion_types_supported: [
+        'urn:ietf:params:oauth:token-type:id-jag',
+      ],
+    },
+    events_supported: [
+      'https://schemas.workos.com/events/agent/auth/identity/assertion/revoked',
+    ],
+  }
+}
+
 export function getOAuthAuthorizationServerMetadata(): Record<string, unknown> {
   const oidc = getOpenIdConfiguration()
+  const origin = getSiteOrigin().origin.replace(/\/$/, '')
+  const grantTypes = agentAuthGrantTypes(
+    oidc.grant_types_supported as string[] | undefined,
+  )
+
   return {
     issuer: oidc.issuer,
     authorization_endpoint: oidc.authorization_endpoint,
@@ -100,10 +137,11 @@ export function getOAuthAuthorizationServerMetadata(): Record<string, unknown> {
     device_authorization_endpoint: oidc.device_authorization_endpoint,
     scopes_supported: oidc.scopes_supported,
     response_types_supported: oidc.response_types_supported,
-    grant_types_supported: oidc.grant_types_supported,
+    grant_types_supported: grantTypes,
     token_endpoint_auth_methods_supported:
       oidc.token_endpoint_auth_methods_supported,
     code_challenge_methods_supported: oidc.code_challenge_methods_supported,
+    agent_auth: agentAuthBlock(origin),
   }
 }
 
