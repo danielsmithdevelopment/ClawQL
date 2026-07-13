@@ -137,9 +137,7 @@ export const codegraphIndexToolSchema = {
   rootPath: z
     .string()
     .optional()
-    .describe(
-      "Repository root to index. Defaults to CLAWQL_CODEGRAPH_ROOT or process cwd."
-    ),
+    .describe("Repository root to index. Defaults to CLAWQL_CODEGRAPH_ROOT or process cwd."),
   graphId: z.string().optional().describe("Stable graph id (defaults from directory name)."),
   maxFiles: z.number().int().positive().optional().describe("Cap indexed source files."),
   storagePath: z.string().optional().describe("Optional JSON storage path override."),
@@ -156,7 +154,9 @@ export const codegraphNeighborsToolSchema = {
   graphId: z.string().min(1),
   nodeId: z.string().min(1).describe("Exact node id from codegraph_query."),
   edgeKinds: z
-    .array(z.enum(["imports", "exports", "contains", "calls", "extends", "implements", "references"]))
+    .array(
+      z.enum(["imports", "exports", "contains", "calls", "extends", "implements", "references"])
+    )
     .optional(),
   limit: z.number().int().positive().optional(),
   storagePath: z.string().optional(),
@@ -289,7 +289,12 @@ export function createMemoryPlugin(): Plugin {
             name: "codegraph_index",
             schema: codegraphIndexToolSchema,
             handler: async (args) => {
-              const params = args as { rootPath?: string; graphId?: string; maxFiles?: number; storagePath?: string };
+              const params = args as {
+                rootPath?: string;
+                graphId?: string;
+                maxFiles?: number;
+                storagePath?: string;
+              };
               logMcpToolShape("codegraph_index", {
                 rootPath: params.rootPath ?? defaultCodeGraphRoot(),
                 graphId: params.graphId,
@@ -300,7 +305,10 @@ export function createMemoryPlugin(): Plugin {
                   {
                     type: "text",
                     text: JSON.stringify(
-                      await codegraphIndex({ ...params, rootPath: params.rootPath ?? defaultCodeGraphRoot() }),
+                      await codegraphIndex({
+                        ...params,
+                        rootPath: params.rootPath ?? defaultCodeGraphRoot(),
+                      }),
                       null,
                       2
                     ),
@@ -313,14 +321,18 @@ export function createMemoryPlugin(): Plugin {
             name: "codegraph_query",
             schema: codegraphQueryToolSchema,
             handler: async (args) => ({
-              content: [{ type: "text", text: JSON.stringify(await codegraphQuery(args), null, 2) }],
+              content: [
+                { type: "text", text: JSON.stringify(await codegraphQuery(args), null, 2) },
+              ],
             }),
           });
           yield* api.registerMcpTool({
             name: "codegraph_neighbors",
             schema: codegraphNeighborsToolSchema,
             handler: async (args) => ({
-              content: [{ type: "text", text: JSON.stringify(await codegraphNeighbors(args), null, 2) }],
+              content: [
+                { type: "text", text: JSON.stringify(await codegraphNeighbors(args), null, 2) },
+              ],
             }),
           });
           yield* api.registerMcpTool({
@@ -334,14 +346,18 @@ export function createMemoryPlugin(): Plugin {
             name: "codegraph_explain",
             schema: codegraphExplainToolSchema,
             handler: async (args) => ({
-              content: [{ type: "text", text: JSON.stringify(await codegraphExplain(args), null, 2) }],
+              content: [
+                { type: "text", text: JSON.stringify(await codegraphExplain(args), null, 2) },
+              ],
             }),
           });
           yield* api.registerMcpTool({
             name: "codegraph_subgraph",
             schema: codegraphSubgraphToolSchema,
             handler: async (args) => ({
-              content: [{ type: "text", text: JSON.stringify(await codegraphSubgraph(args), null, 2) }],
+              content: [
+                { type: "text", text: JSON.stringify(await codegraphSubgraph(args), null, 2) },
+              ],
             }),
           });
         }

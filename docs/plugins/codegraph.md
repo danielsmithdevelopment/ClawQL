@@ -17,35 +17,35 @@ Complements ClawQL vault memory (wikilinks + semantic recall) with **precise str
 
 ## Why add this?
 
-| Layer | ClawQL today | Code graph |
-| ----- | ------------ | ---------- |
-| Narrative knowledge | Obsidian vault, wikilinks, embeddings | — |
-| Document hierarchy | PageIndex (heading trees) | — |
-| **Code structure** | Text chunks + manual wikilinks | AST-derived imports/calls/paths |
+| Layer               | ClawQL today                          | Code graph                      |
+| ------------------- | ------------------------------------- | ------------------------------- |
+| Narrative knowledge | Obsidian vault, wikilinks, embeddings | —                               |
+| Document hierarchy  | PageIndex (heading trees)             | —                               |
+| **Code structure**  | Text chunks + manual wikilinks        | AST-derived imports/calls/paths |
 
 Use **`memory_recall`** for decisions and cross-session narrative context. Use **`codegraph_*`** before grepping or re-reading dozens of files for architecture tracing.
 
 ## MCP tools
 
-| Tool | Purpose |
-| ---- | ------- |
-| **`codegraph_index`** | Index a repository root (defaults to `CLAWQL_CODEGRAPH_ROOT` or cwd) |
-| **`codegraph_query`** | Find symbols by name or concept |
-| **`codegraph_neighbors`** | List edges for a node (`imports`, `calls`, `contains`, …) |
-| **`codegraph_path`** | Shortest path between two symbols |
-| **`codegraph_explain`** | Summarize a symbol and its connections |
-| **`codegraph_subgraph`** | BFS subgraph around a seed query |
+| Tool                      | Purpose                                                              |
+| ------------------------- | -------------------------------------------------------------------- |
+| **`codegraph_index`**     | Index a repository root (defaults to `CLAWQL_CODEGRAPH_ROOT` or cwd) |
+| **`codegraph_query`**     | Find symbols by name or concept                                      |
+| **`codegraph_neighbors`** | List edges for a node (`imports`, `calls`, `contains`, …)            |
+| **`codegraph_path`**      | Shortest path between two symbols                                    |
+| **`codegraph_explain`**   | Summarize a symbol and its connections                               |
+| **`codegraph_subgraph`**  | BFS subgraph around a seed query                                     |
 
 Edges are labeled **`EXTRACTED`**, **`INFERRED`**, or **`AMBIGUOUS`** (aligned with Graphify confidence semantics).
 
 ## Enable
 
-| Env | Default | Effect |
-| --- | ------- | ------ |
-| **`CLAWQL_ENABLE_CODEGRAPH=1`** | off | Register `codegraph_*` tools via memory tier |
-| **`CLAWQL_CODEGRAPH_ROOT`** | cwd | Default repo root for `codegraph_index` |
-| **`CLAWQL_CODEGRAPH_PATH`** | `./data` | Base path for `codegraph.db.json` |
-| **`CLAWQL_CODEGRAPH_MAX_FILES`** | 5000 | Cap indexed source files |
+| Env                              | Default  | Effect                                       |
+| -------------------------------- | -------- | -------------------------------------------- |
+| **`CLAWQL_ENABLE_CODEGRAPH=1`**  | off      | Register `codegraph_*` tools via memory tier |
+| **`CLAWQL_CODEGRAPH_ROOT`**      | cwd      | Default repo root for `codegraph_index`      |
+| **`CLAWQL_CODEGRAPH_PATH`**      | `./data` | Base path for `codegraph.db.json`            |
+| **`CLAWQL_CODEGRAPH_MAX_FILES`** | 5000     | Cap indexed source files                     |
 
 Requires **`CLAWQL_ENABLE_MEMORY`** (memory plugin registers codegraph tools).
 
