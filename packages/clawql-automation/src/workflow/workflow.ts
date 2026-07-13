@@ -297,7 +297,7 @@ async function patchCronSuspend(
   return res as ArgoCronWorkflowObject;
 }
 
-export async function handleWorkflowToolInput(
+export async function executeWorkflowToolCore(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
   if (!workflowToolEnabled()) {
@@ -725,4 +725,13 @@ export async function handleWorkflowToolInput(
     const message = error instanceof Error ? error.message : String(error);
     return jsonResponse({ ok: false, operation: parsed.operation, error: message });
   }
+}
+
+/** Public async facade for workflow MCP tool. */
+export async function handleWorkflowToolInput(
+  params: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const { runAutomationEffect, automationWorkflowProgram } =
+    await import("../effect/automation-effect-runtime.js");
+  return runAutomationEffect(automationWorkflowProgram(params));
 }

@@ -194,7 +194,7 @@ async function getApplication(namespace: string, name: string): Promise<ArgoCdAp
   return res as ArgoCdApplicationObject;
 }
 
-export async function handleArgocdToolInput(
+export async function executeArgocdToolCore(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
   if (!argocdToolEnabled()) {
@@ -283,4 +283,13 @@ export async function handleArgocdToolInput(
     const message = error instanceof Error ? error.message : String(error);
     return jsonResponse({ ok: false, operation: parsed.operation, error: message });
   }
+}
+
+/** Public async facade for argocd MCP tool. */
+export async function handleArgocdToolInput(
+  params: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const { runAutomationEffect, automationArgocdProgram } =
+    await import("../effect/automation-effect-runtime.js");
+  return runAutomationEffect(automationArgocdProgram(params));
 }
