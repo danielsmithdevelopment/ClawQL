@@ -224,6 +224,6 @@ Local validation in this case study **precedes** cluster deploy; the Helm templa
 | [memory-obsidian.md](../memory/memory-obsidian.md)                                            | Vault design                              |
 | [helm.md](../deployment/helm.md)                                                              | OpenClaw / Goose / Hermes opt-ins         |
 | [Learn: OpenClaw with ClawQL](https://docs.clawql.com/learn/openclaw-and-clawql)              | Site walkthrough                          |
-| [Learn: Vault memory between chats](https://docs.clawql.com/learn/vault-memory-between-chats) | `memory_ingest` / `memory_recall` handoff |
+| [Learn: clawql-memory (Memory 2.0)](https://docs.clawql.com/learn/memory) | `memory_ingest` / `memory_recall` handoff |
 
 **Ingest hook:** After publishing, run **`memory_ingest`** with title `OpenClaw agent chat memory_recall validation (June 2026)` and wikilinks to [[OpenClaw Mac mini ClawQL MCP setup]] and this case study so future **`memory_recall`** queries hit it.

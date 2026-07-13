@@ -107,7 +107,7 @@ Users / agents query with permissions enforced by Onyx
 
 1. **`search`** with a natural-language **`query`** (“split pdf with stirling”, “upload document paperless”) to list **`operationId`** candidates.
 2. **`execute`** with **`operationId`**, **`args`**, and optional **`fields`** to keep responses small ([Using search and execute](/learn/search-and-execute-mcp)).
-3. **`memory_ingest`** (or **`ingest_external_knowledge`**) for **operator notes** linking document ids across vendors — use **`enterpriseCitations`** when mixing in Onyx hits ([Vault memory between chats](/learn/vault-memory-between-chats)).
+3. **`memory_ingest`** (or **`ingest_external_knowledge`**) for **operator notes** linking document ids across vendors — use **`enterpriseCitations`** when mixing in Onyx hits ([clawql-memory](/learn/memory)).
 4. **`notify`** for **human-visible** milestones when a long pipeline step finishes ([Schedule & notify workflows](/learn/schedule-notify-workflows)).
 
 No single tool replaces **thinking through state**: pass **explicit** file buffers or URLs each vendor accepts, and handle **errors** between steps (e.g. Gotenberg 413 → Stirling never runs).

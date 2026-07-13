@@ -95,8 +95,8 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: '/inference',
-        destination: '/inference/clawql-inference',
+        source: '/learn/vault-memory-between-chats',
+        destination: '/learn/memory#hands-on-memory-between-chats',
         permanent: true,
       },
     ]
