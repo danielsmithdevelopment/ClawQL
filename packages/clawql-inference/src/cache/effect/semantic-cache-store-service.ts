@@ -1,5 +1,9 @@
 import { Context, Effect, Layer } from "effect";
-import type { SemanticCacheEntry, SemanticCacheLookupResult, SemanticCacheStore } from "../types.js";
+import type {
+  SemanticCacheEntry,
+  SemanticCacheLookupResult,
+  SemanticCacheStore,
+} from "../types.js";
 
 /** Effect wrapper for semantic cache store lookup/put. */
 export class SemanticCacheStoreService extends Context.Tag("clawql/SemanticCacheStoreService")<
