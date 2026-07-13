@@ -39,3 +39,23 @@ ClawQL Memory excels at narrative knowledge (Obsidian vault, wikilinks, embeddin
 ## Hybrid recall
 
 With `CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`, `memory_recall` returns vault hits plus `codeGraphHits` (structural symbol matches) in one response.
+
+## Dogfood tests (index this repo)
+
+Integration tests index real ClawQL packages and assert queries against known symbols.
+
+```bash
+# Scoped (default CI): clawql-codegraph + clawql-memory
+npm run test:dogfood -w clawql-codegraph
+
+# Full monorepo (local)
+CLAWQL_CODEGRAPH_DOGFOOD_FULL=1 npm run test:dogfood -w clawql-codegraph
+```
+
+| File | Role |
+|------|------|
+| `src/test-utils/clawql-repo-root.ts` | Resolve monorepo root from any `cwd` |
+| `src/test-utils/dogfood-graph.ts` | Merge multi-package indexes; temp storage |
+| `src/dogfood/codegraph-dogfood.integration.test.ts` | Index + query + MCP round-trip |
+
+Unit tests (`src/**/*.test.ts`) stay fast with fixtures. Dogfood uses `*.integration.test.ts` with a 120s timeout.
