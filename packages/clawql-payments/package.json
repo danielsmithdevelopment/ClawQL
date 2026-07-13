@@ -1,7 +1,7 @@
 {
   "name": "clawql-payments",
   "version": "7.0.0",
-  "description": "ClawQL payments layer: Stripe billing, x402 micropayments, managed plan entitlements, and WORM-auditable payment events",
+  "description": "ClawQL payments layer: Stripe billing, x402 micropayments, MPP discovery/runtime, managed plan entitlements, and WORM-auditable payment events",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -37,6 +37,11 @@
       "types": "./dist/discovery/index.d.ts",
       "import": "./dist/discovery/index.js",
       "require": "./dist/discovery/index.cjs"
+    },
+    "./mpp": {
+      "types": "./dist/mpp/index.d.ts",
+      "import": "./dist/mpp/index.js",
+      "require": "./dist/mpp/index.cjs"
     },
     "./plugin": {
       "types": "./dist/plugin/index.d.ts",

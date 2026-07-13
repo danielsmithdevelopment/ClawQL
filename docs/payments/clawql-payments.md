@@ -20,7 +20,9 @@
 | Payment WORM audit (hash-chained JSONL)          | ✅     | `$CLAWQL_HOME/Payments/audit.jsonl` + `audit verify`                     |
 | Payment WORM audit (Postgres)                    | ✅     | `CLAWQL_PAYMENTS_AUDIT_STORE=postgres` for multi-node deployments        |
 | Payment audit → Loki/SIEM export                 | ✅     | Fire-and-forget push on append when `CLAWQL_LOKI_PUSH_URL` is set        |
-| `.well-known/payments.json` discovery            | ✅     | Dynamic on MCP + inference HTTP; static placeholder on docs site         |
+| `.well-known/payments.json` discovery            | ✅     | Dynamic on MCP + inference HTTP; static route on docs site               |
+| MPP `/openapi.json` discovery                    | ✅     | Dynamic on MCP + inference HTTP; canonical `x-payment-info.offers[]`       |
+| MPP HTTP 402 + MCP -32042 runtime                | ✅     | Dual x402 + MPP challenges when `CLAWQL_MPP_ENABLED=1`                     |
 
 ## Architecture
 
@@ -328,6 +330,7 @@ Effect entrypoints: `paymentsServicesLiveLayer()` merges all services; `runPayme
 | `UsageStoreService`        | Monthly usage counters                                            |
 | `EntitlementService`       | Plan limit checks (`EntitlementLimitError`)                       |
 | `PaymentsDiscoveryService` | `/.well-known/payments.json` builder                              |
+| `MppOpenApiService`        | MPP `/openapi.json` builder (`x-payment-info.offers[]`)           |
 | `StripeClientService`      | Stripe SDK client lifecycle                                       |
 | `StripeWebhookService`     | Webhook verify + WORM-audited event handling                      |
 | `StripeMeterService`       | Meter events + inference usage reporting                          |
@@ -464,7 +467,19 @@ curl http://localhost:8080/.well-known/payments.json   # MCP HTTP (default PORT)
 curl http://localhost:8080/.well-known/payments.json   # inference HTTP (CLAWQL_INFERENCE_PORT)
 ```
 
-The document lists configured x402 gates (HTTP paths and MCP tools), wallet/facilitator metadata, and Stripe plan/meter info when configured. The static docs site ships a placeholder at `website/public/.well-known/payments.json` for [issue #88](https://github.com/danielsmithdevelopment/ClawQL/issues/88).
+The document lists configured x402 gates (HTTP paths and MCP tools), wallet/facilitator metadata, and Stripe plan/meter info when configured. The docs site serves a static commerce discovery route at `/openapi.json` and `/.well-known/payments.json` for agent readiness scanners.
+
+### MPP discovery (`/openapi.json`)
+
+Self-hosted ClawQL serves a **dynamic** MPP OpenAPI document at:
+
+```bash
+curl http://localhost:8080/openapi.json   # MCP HTTP or inference HTTP
+```
+
+Each paid route includes `x-payment-info.offers[]` with `x402` and `stripe` methods when configured. Set `CLAWQL_MPP_OPENAPI=0` to disable the route. See [MPP discovery](https://mpp.dev/advanced/discovery).
+
+When `CLAWQL_X402_ENFORCE=1`, HTTP 402 responses include both x402 `PAYMENT-REQUIRED` and MPP `WWW-Authenticate: Payment` challenges. MCP paid-tool errors surface MPP metadata on tool results (`org.paymentauth/payment-required`) for clients that expect JSON-RPC **-32042**.
 
 ### CLI
 

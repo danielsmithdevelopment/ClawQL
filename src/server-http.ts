@@ -37,6 +37,7 @@ import { handleLangfuseEvalWebhookRequest } from "./langfuse-eval-webhook.js";
 import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
 import { resolveAtrClaimsFromHeaders } from "clawql-auth";
 import { attachPaymentsWellKnownRoutes } from "clawql-payments/discovery";
+import { attachMppOpenApiRoutes, isMppOpenApiEnabled } from "clawql-payments/mpp";
 import {
   headersFromExpressRequest,
   registerMcpX402TransportHooks,
@@ -161,6 +162,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   app.use(applyCorsIfConfigured);
 
   attachPaymentsWellKnownRoutes(app, { serverName: "ClawQL MCP" });
+  if (isMppOpenApiEnabled(process.env)) {
+    attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });
+  }
 
   /** Gateway auth (Phase 1 `clawql-auth`): enforced on MCP routes when `CLAWQL_AUTH_MODE=apiKey`. */
   function applyGatewayAuth(

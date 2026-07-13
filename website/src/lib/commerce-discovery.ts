@@ -72,36 +72,28 @@ export function encodePaymentRequiredHeader(
   return Buffer.from(JSON.stringify(body), 'utf8').toString('base64')
 }
 
-function x402PaymentInfo(description: string): Record<string, unknown> {
+function mppPaymentInfo(description: string): Record<string, unknown> {
   return {
-    description,
-    authMode: 'paid',
-    protocols: [
+    offers: [
       {
-        x402: {
-          scheme: 'exact',
-          network: getX402Network(),
-          asset: getX402Asset(),
-          payTo: getX402PayTo(),
-        },
+        intent: 'charge',
+        method: 'x402',
+        amount: getX402ProbeAmountAtomic(),
+        currency: getX402Asset(),
+        description,
+      },
+      {
+        intent: 'charge',
+        method: 'stripe',
+        amount: null,
+        currency: 'usd',
+        description: 'Stripe subscription or metered billing for ClawQL plans.',
       },
     ],
-    price: {
-      mode: 'fixed',
-      currency: 'USD',
-      amount: '0.001',
-      min: '0.001',
-      max: '0.001',
-    },
-    network: getX402Network(),
-    asset: getX402Asset(),
-    payTo: getX402PayTo(),
-    retryHeader: 'PAYMENT-SIGNATURE',
-    recommendedClient: '@x402/fetch',
   }
 }
 
-/** OpenAPI 3.1 with MPP `x-payment-info` extensions for agent commerce scanners. */
+/** OpenAPI 3.1 with MPP `x-payment-info.offers[]` for agent commerce scanners. */
 export function getCommerceOpenApi(): Record<string, unknown> {
   const origin = getCommerceOrigin()
 
@@ -111,23 +103,30 @@ export function getCommerceOpenApi(): Record<string, unknown> {
       title: 'ClawQL Commerce Discovery API',
       version: '1.0.0',
       description:
-        'Discovery-only commerce surface for docs.clawql.com. Paid routes demonstrate x402 v2; production settlement runs on self-hosted ClawQL MCP and inference gateways.',
+        'MPP discovery surface for docs.clawql.com. Paid routes advertise x402 and Stripe offers; runtime 402 challenges are authoritative.',
     },
     servers: [{ url: origin }],
+    'x-service-info': {
+      categories: ['developer-tools', 'ai', 'payments'],
+      docs: {
+        homepage: origin,
+        apiReference: `${origin}/tools`,
+        llms: `${origin}/llms.txt`,
+      },
+    },
     paths: {
       '/api/v1': {
         get: {
           operationId: 'commerceProbe',
-          summary: 'x402 commerce discovery probe',
+          summary: 'MPP/x402 commerce discovery probe',
           description:
-            'Returns HTTP 402 with PAYMENT-REQUIRED (x402 v2) for agent readiness scanners.',
-          'x-payment-info': x402PaymentInfo(
+            'Returns HTTP 402 with MPP Payment challenge and x402 v2 PAYMENT-REQUIRED.',
+          'x-payment-info': mppPaymentInfo(
             'Low-cost x402 gateway probe priced at $0.001 USDC on Base Sepolia.',
           ),
           responses: {
-            '402': {
-              description: 'Payment required (x402 v2)',
-            },
+            '200': { description: 'Successful response' },
+            '402': { description: 'Payment Required' },
           },
         },
       },
@@ -137,11 +136,11 @@ export function getCommerceOpenApi(): Record<string, unknown> {
           summary: 'Create agentic checkout session',
           description:
             'UCP/ACP-aligned checkout stub for commerce discovery. Configure live checkout on self-hosted ClawQL.',
-          'x-payment-info': x402PaymentInfo(
+          'x-payment-info': mppPaymentInfo(
             'Agentic checkout for ClawQL Pro/Team plans via x402 or Stripe.',
           ),
           responses: {
-            '402': { description: 'Payment required' },
+            '402': { description: 'Payment Required' },
             '200': { description: 'Checkout session created' },
           },
         },
@@ -152,6 +151,7 @@ export function getCommerceOpenApi(): Record<string, unknown> {
       paymentsDiscovery: `${origin}/.well-known/payments.json`,
       ucp: `${origin}/.well-known/ucp`,
       acp: `${origin}/.well-known/acp.json`,
+      mpp: `${origin}/openapi.json`,
     },
   }
 }

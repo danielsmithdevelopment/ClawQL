@@ -1,4 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
+import { isMppEnabled } from "../mpp/config.js";
+import { buildChallengesFromOffers, buildMppPaymentRequiredBody } from "../mpp/challenge.js";
+import { mergePaymentRequiredHeaders } from "../mpp/headers.js";
+import { offersFromX402Required } from "../mpp/offers.js";
 import { isX402EnforcementActive } from "./config.js";
 import {
   enforceX402Gate,
@@ -62,6 +66,31 @@ export function createX402PaymentMiddleware(options: CreateX402PaymentMiddleware
       }
 
       if (result.action === "require_payment") {
+        const stripeEnabled = Boolean(env.STRIPE_SECRET_KEY?.trim());
+        if (isMppEnabled(env)) {
+          const offers = offersFromX402Required(result.body, stripeEnabled);
+          const challenges = buildChallengesFromOffers({
+            offers,
+            resource: result.resource,
+            x402Body: result.body,
+          });
+          const headers = mergePaymentRequiredHeaders({
+            x402Body: result.body,
+            offers,
+            resource: result.resource,
+          });
+          for (const [key, value] of Object.entries(headers)) {
+            res.setHeader(key, value);
+          }
+          const mppBody = buildMppPaymentRequiredBody({
+            resource: result.resource,
+            challenges,
+            x402Body: result.body,
+          });
+          res.status(402).json(mppBody);
+          return;
+        }
+
         const headers = paymentRequiredHeaders(result.body);
         for (const [key, value] of Object.entries(headers)) {
           res.setHeader(key, value);

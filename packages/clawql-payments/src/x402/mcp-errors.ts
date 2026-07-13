@@ -1,4 +1,7 @@
 import type { X402PaymentRequired } from "./types.js";
+import { isMppEnabled } from "../mpp/config.js";
+import { offersFromX402Required } from "../mpp/offers.js";
+import { enrichMcpToolResultWithMpp, type MppMcpToolResult } from "../mpp/mcp.js";
 
 export type X402McpToolResult = {
   content: Array<{ type: "text"; text: string }>;
@@ -13,8 +16,8 @@ export class X402McpPaymentRequiredError extends Error {
     super("x402 payment required");
   }
 
-  toToolResult(): X402McpToolResult {
-    return {
+  toToolResult(env: NodeJS.ProcessEnv = process.env): MppMcpToolResult {
+    const base: MppMcpToolResult = {
       content: [
         {
           type: "text",
@@ -35,6 +38,20 @@ export class X402McpPaymentRequiredError extends Error {
         "clawql/httpStatus": 402,
       },
     };
+
+    if (!isMppEnabled(env)) {
+      return base;
+    }
+
+    const resource = this.body.resource.url ?? "mcp://tool";
+    return enrichMcpToolResultWithMpp(base, {
+      offers: offersFromX402Required(
+        this.body,
+        Boolean(env.STRIPE_SECRET_KEY?.trim())
+      ),
+      resource,
+      x402Body: this.body,
+    });
   }
 }
 

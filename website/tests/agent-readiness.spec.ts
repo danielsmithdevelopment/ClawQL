@@ -45,13 +45,20 @@ test.describe('agent readiness discovery', () => {
     expect(ap2?.params?.roles).toContain('merchant')
   })
 
-  test('commerce openapi exposes x-payment-info', async ({ request }) => {
+  test('commerce openapi exposes MPP x-payment-info offers', async ({ request }) => {
     const res = await request.get('/openapi.json')
     expect(res.status()).toBe(200)
     const doc = await res.json()
     const probe = doc.paths?.['/api/v1']?.get
-    expect(probe?.['x-payment-info']).toBeTruthy()
-    expect(probe['x-payment-info'].protocols?.[0]?.x402).toBeTruthy()
+    const offers = probe?.['x-payment-info']?.offers
+    expect(offers?.length).toBeGreaterThanOrEqual(2)
+    expect(offers.some((o: { method?: string }) => o.method === 'x402')).toBe(
+      true,
+    )
+    expect(offers.some((o: { method?: string }) => o.method === 'stripe')).toBe(
+      true,
+    )
+    expect(probe?.responses?.['402']).toBeTruthy()
   })
 
   test('x402 probe returns 402 with PAYMENT-REQUIRED', async ({ request }) => {

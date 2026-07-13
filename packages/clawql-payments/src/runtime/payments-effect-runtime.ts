@@ -1,6 +1,7 @@
 import { Cause, Effect, Exit, Layer } from "effect";
 import { paymentsConfigLiveLayer } from "../config/payments-config-service.js";
 import { paymentsDiscoveryLiveLayer } from "../discovery/payments-discovery-service.js";
+import { mppOpenApiLiveLayer } from "../mpp/openapi-service.js";
 import { entitlementLiveLayer } from "../plans/entitlement-service.js";
 import { usageStoreLiveLayer } from "../plans/usage-store-service.js";
 import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
@@ -23,6 +24,7 @@ export type PaymentsServices =
   | import("../plans/usage-store-service.js").UsageStoreService
   | import("../plans/entitlement-service.js").EntitlementService
   | import("../discovery/payments-discovery-service.js").PaymentsDiscoveryService
+  | import("../mpp/openapi-service.js").MppOpenApiService
   | import("../stripe/stripe-client-service.js").StripeClientService
   | import("../stripe/stripe-webhook-service.js").StripeWebhookService
   | import("../stripe/stripe-meter-service.js").StripeMeterService
@@ -53,6 +55,9 @@ export function paymentsServicesLiveLayer(
   const discovery = paymentsDiscoveryLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(config, runtimeConfig, gate))
   );
+  const mppOpenApi = mppOpenApiLiveLayer(env).pipe(
+    Layer.provide(Layer.mergeAll(config, runtimeConfig, gate))
+  );
   const stripeWebhook = stripeWebhookLiveLayer().pipe(Layer.provide(Layer.mergeAll(config, audit)));
   const stripeMeter = stripeMeterLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(stripeClient, config, audit))
@@ -71,6 +76,7 @@ export function paymentsServicesLiveLayer(
     runtimeConfig,
     enforcement,
     discovery,
+    mppOpenApi,
     stripeClient,
     stripeWebhook,
     stripeMeter,
