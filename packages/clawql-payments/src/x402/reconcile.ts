@@ -1,9 +1,6 @@
 import { Effect } from "effect";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
-import {
-  X402EnforcementService,
-  type X402Settlement,
-} from "./x402-enforcement-service.js";
+import { X402EnforcementService, type X402Settlement } from "./x402-enforcement-service.js";
 import type { X402PaymentProof } from "./verify.js";
 
 export type { X402Settlement };

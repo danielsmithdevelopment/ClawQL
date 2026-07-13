@@ -16,7 +16,9 @@ export class PaymentAuditService extends Context.Tag("clawql/PaymentAuditService
     readonly store: PaymentAuditStore;
     readonly append: (entry: PaymentWormEntry) => Effect.Effect<PaymentWormRecord, PaymentError>;
     /** Persist + mirror to in-process audit ring buffer and optional Loki push. */
-    readonly appendEntry: (entry: PaymentWormEntry) => Effect.Effect<PaymentWormRecord, PaymentError>;
+    readonly appendEntry: (
+      entry: PaymentWormEntry
+    ) => Effect.Effect<PaymentWormRecord, PaymentError>;
     readonly list: (limit?: number) => Effect.Effect<PaymentWormEntry[], PaymentError>;
     readonly verify: () => Effect.Effect<PaymentAuditVerifyResult, PaymentError>;
     readonly reset: () => Effect.Effect<void, PaymentError>;

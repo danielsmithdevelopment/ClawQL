@@ -28,8 +28,7 @@ export type X402FacilitatorVerifyResult =
 export type X402FacilitatorSettleInput = X402FacilitatorVerifyInput;
 
 export type X402FacilitatorSettleResult =
-  | { settled: true; transaction: string }
-  | { settled: false; reason: string };
+  { settled: true; transaction: string } | { settled: false; reason: string };
 
 function postFacilitatorJsonEffect<T>(
   url: string,
@@ -69,8 +68,12 @@ function postFacilitatorJsonEffect<T>(
 export class X402FacilitatorService extends Context.Tag("clawql/X402FacilitatorService")<
   X402FacilitatorService,
   {
-    readonly verify: (input: X402FacilitatorVerifyInput) => Effect.Effect<X402FacilitatorVerifyResult, X402Error>;
-    readonly settle: (input: X402FacilitatorSettleInput) => Effect.Effect<X402FacilitatorSettleResult, X402Error>;
+    readonly verify: (
+      input: X402FacilitatorVerifyInput
+    ) => Effect.Effect<X402FacilitatorVerifyResult, X402Error>;
+    readonly settle: (
+      input: X402FacilitatorSettleInput
+    ) => Effect.Effect<X402FacilitatorSettleResult, X402Error>;
   }
 >() {}
 

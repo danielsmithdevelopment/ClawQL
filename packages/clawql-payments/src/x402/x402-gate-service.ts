@@ -4,12 +4,7 @@ import { Context, Effect, Layer } from "effect";
 import { z } from "zod";
 import { resolveX402GatesPath } from "../config/paths.js";
 import { X402Error } from "../errors/payment-errors.js";
-import {
-  X402GateSchema,
-  type X402Gate,
-  type X402GateInput,
-  type X402GatesFile,
-} from "./gate.js";
+import { X402GateSchema, type X402Gate, type X402GateInput, type X402GatesFile } from "./gate.js";
 import type { X402Asset } from "./wallet.js";
 
 /** Effect service for x402 gate configuration (`x402-gates.json`). */
@@ -71,7 +66,9 @@ function saveGatesFileEffect(
   });
 }
 
-export function x402GateLiveLayer(env: NodeJS.ProcessEnv = process.env): Layer.Layer<X402GateService> {
+export function x402GateLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<X402GateService> {
   return Layer.succeed(
     X402GateService,
     X402GateService.of({

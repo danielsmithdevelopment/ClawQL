@@ -41,7 +41,10 @@ function loadUsageFileEffect(env: NodeJS.ProcessEnv): Effect.Effect<UsageFile, P
   });
 }
 
-function saveUsageFileEffect(file: UsageFile, env: NodeJS.ProcessEnv): Effect.Effect<void, PaymentError> {
+function saveUsageFileEffect(
+  file: UsageFile,
+  env: NodeJS.ProcessEnv
+): Effect.Effect<void, PaymentError> {
   return Effect.tryPromise({
     try: async () => {
       const path = resolveUsagePath(env);

@@ -76,14 +76,19 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
         reason: string;
         correlationId?: string;
       }) =>
-        audit.appendEntry(
-          buildX402PaymentFailedEntry({
-            tenantId: input.tenantId,
-            resource: input.resource,
-            reason: input.reason,
-            correlationId: input.correlationId,
-          })
-        ).pipe(Effect.asVoid, Effect.catchAll(() => Effect.void));
+        audit
+          .appendEntry(
+            buildX402PaymentFailedEntry({
+              tenantId: input.tenantId,
+              resource: input.resource,
+              reason: input.reason,
+              correlationId: input.correlationId,
+            })
+          )
+          .pipe(
+            Effect.asVoid,
+            Effect.catchAll(() => Effect.void)
+          );
 
       const reconcileSettlement = (input: {
         tenantId: string;

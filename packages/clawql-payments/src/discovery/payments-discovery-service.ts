@@ -144,11 +144,7 @@ export function paymentsDiscoveryLiveLayer(
           }
 
           const defaultMethod: PaymentsWellKnownDocument["default"] =
-            x402Enabled && x402Resources.length > 0
-              ? "x402"
-              : stripeEnabled
-                ? "stripe"
-                : null;
+            x402Enabled && x402Resources.length > 0 ? "x402" : stripeEnabled ? "stripe" : null;
 
           return {
             version: "1",
@@ -166,9 +162,7 @@ export function paymentsDiscoveryLiveLayer(
       return PaymentsDiscoveryService.of({
         buildDocument,
         renderJson: (options) =>
-          buildDocument(options).pipe(
-            Effect.map((doc) => `${JSON.stringify(doc, null, 2)}\n`)
-          ),
+          buildDocument(options).pipe(Effect.map((doc) => `${JSON.stringify(doc, null, 2)}\n`)),
       });
     })
   );

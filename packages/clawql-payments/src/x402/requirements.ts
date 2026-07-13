@@ -3,7 +3,11 @@ import type { X402Gate } from "./gate.js";
 import type { X402PaymentRequired, X402PaymentRequirements, X402ResourceInfo } from "./types.js";
 import { X402_VERSION } from "./types.js";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
-import { usdcAtomicAmount, X402RuntimeConfigService, type X402RuntimeConfig } from "./x402-runtime-config-service.js";
+import {
+  usdcAtomicAmount,
+  X402RuntimeConfigService,
+  type X402RuntimeConfig,
+} from "./x402-runtime-config-service.js";
 
 export function buildPaymentRequirements(input: {
   gate: X402Gate;

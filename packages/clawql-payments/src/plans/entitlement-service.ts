@@ -11,7 +11,9 @@ export class EntitlementService extends Context.Tag("clawql/EntitlementService")
   EntitlementService,
   {
     readonly checkLimit: (input: LimitEnforcementInput) => Effect.Effect<LimitCheckResult, never>;
-    readonly enforceLimit: (input: LimitEnforcementInput) => Effect.Effect<void, EntitlementLimitError>;
+    readonly enforceLimit: (
+      input: LimitEnforcementInput
+    ) => Effect.Effect<void, EntitlementLimitError>;
   }
 >() {}
 

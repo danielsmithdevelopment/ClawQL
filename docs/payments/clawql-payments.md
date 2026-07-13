@@ -317,17 +317,17 @@ Effect entrypoints: `paymentsServicesLiveLayer()` merges all services; `runPayme
 
 **Effect services** (`clawql-payments/plugin`):
 
-| Service | Responsibility |
-| ------- | -------------- |
-| `PaymentsConfigService` | `payments.json` load/save/merge |
-| `PaymentAuditService` | WORM audit append/list/verify (+ ring buffer + Loki side effects) |
-| `X402GateService` | `x402-gates.json` CRUD |
-| `X402RuntimeConfigService` | Network, facilitator, wallet from config + env |
-| `X402FacilitatorService` | Facilitator verify/settle HTTP |
-| `X402EnforcementService` | Gate enforcement + settlement reconciliation |
-| `UsageStoreService` | Monthly usage counters |
-| `EntitlementService` | Plan limit checks (`EntitlementLimitError`) |
-| `PaymentsDiscoveryService` | `/.well-known/payments.json` builder |
+| Service                    | Responsibility                                                    |
+| -------------------------- | ----------------------------------------------------------------- |
+| `PaymentsConfigService`    | `payments.json` load/save/merge                                   |
+| `PaymentAuditService`      | WORM audit append/list/verify (+ ring buffer + Loki side effects) |
+| `X402GateService`          | `x402-gates.json` CRUD                                            |
+| `X402RuntimeConfigService` | Network, facilitator, wallet from config + env                    |
+| `X402FacilitatorService`   | Facilitator verify/settle HTTP                                    |
+| `X402EnforcementService`   | Gate enforcement + settlement reconciliation                      |
+| `UsageStoreService`        | Monthly usage counters                                            |
+| `EntitlementService`       | Plan limit checks (`EntitlementLimitError`)                       |
+| `PaymentsDiscoveryService` | `/.well-known/payments.json` builder                              |
 
 Public async exports (`loadPaymentsConfig`, `enforceX402Gate`, `appendPaymentWormEntry`, …) delegate to `runPaymentsEffect`. **Stripe billing** modules remain async wrappers (next migration increment).
 

@@ -5,7 +5,10 @@ import type {
 } from "clawql-core";
 import { ClawQLApi } from "clawql-api";
 import { Effect, Layer } from "effect";
-import { paymentsServicesLiveLayer, type PaymentsServices } from "../runtime/payments-effect-runtime.js";
+import {
+  paymentsServicesLiveLayer,
+  type PaymentsServices,
+} from "../runtime/payments-effect-runtime.js";
 import { PaymentAuditService } from "./payment-audit-service.js";
 import { createPaymentsX402ProxyPlugin } from "./payments-x402-proxy-plugin.js";
 
