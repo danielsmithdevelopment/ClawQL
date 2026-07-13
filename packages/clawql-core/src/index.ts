@@ -1,5 +1,6 @@
 export * from "./audit/index.js";
 export * from "./cache/index.js";
+export * from "./config/index.js";
 export * from "./cuckoo/index.js";
 export * from "./errors/index.js";
 export * from "./merkle/index.js";

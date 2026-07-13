@@ -15,3 +15,10 @@ export class McpToolAlreadyRegisteredError extends Data.TaggedError(
 )<{
   readonly toolName: string;
 }> {}
+
+/** Invalid or unreadable configuration (env, file, or schema). */
+export class ConfigError extends Data.TaggedError("ConfigError")<{
+  readonly key?: string;
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
