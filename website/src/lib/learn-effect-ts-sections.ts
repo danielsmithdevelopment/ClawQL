@@ -7,16 +7,16 @@ export const learnEffectTsSections: Array<Section> = [
     id: 'what-effect-ts-actually-provides',
   },
   {
-    title: 'Why this matters for ClawQL’s architecture',
-    id: 'why-this-matters-for-claw-qls-architecture',
+    title: "Why this matters for clawql's architecture",
+    id: 'why-this-matters-for-clawqls-architecture',
   },
   {
     title: 'What would happen without Effect-TS?',
     id: 'what-would-happen-without-effect-ts',
   },
   {
-    title: 'Summary: why Effect-TS is non-negotiable for ClawQL',
-    id: 'summary-why-effect-ts-is-non-negotiable-for-claw-ql',
+    title: 'Summary: why Effect-TS is non-negotiable for clawql',
+    id: 'summary-why-effect-ts-is-non-negotiable-for-clawql',
   },
   {
     title: 'Related guides and references',
