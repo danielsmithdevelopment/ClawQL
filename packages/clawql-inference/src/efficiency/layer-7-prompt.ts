@@ -24,7 +24,10 @@ function dedupeSystem(messages: ChatMessage[]): ChatMessage[] {
 }
 
 function compressMessageContent(content: string, maxChars: number): string {
-  const normalized = content.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  const normalized = content
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
   if (normalized.length <= maxChars) return normalized;
   return `${normalized.slice(0, maxChars - 24)}\n…[clawql:truncated]`;
 }

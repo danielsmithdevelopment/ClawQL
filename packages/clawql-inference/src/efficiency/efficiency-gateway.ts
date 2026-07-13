@@ -1,8 +1,4 @@
-import type {
-  InferenceGateway,
-  InferenceRequest,
-  InferenceResponse,
-} from "../gateway.js";
+import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../gateway.js";
 import { loadTokenEfficiencyConfig, type TokenEfficiencyConfig } from "./config.js";
 import { applyTerseOutput } from "./layer-3-terse.js";
 import { applyPromptCacheMarkers } from "./layer-4-prompt-cache.js";

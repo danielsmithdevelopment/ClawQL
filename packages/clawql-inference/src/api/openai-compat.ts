@@ -88,9 +88,7 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
 
     const cacheIntentHeader = req.header("x-clawql-cache-intent")?.trim().toLowerCase();
     const cacheIntent =
-      cacheIntentHeader === "read" || cacheIntentHeader === "write"
-        ? cacheIntentHeader
-        : undefined;
+      cacheIntentHeader === "read" || cacheIntentHeader === "write" ? cacheIntentHeader : undefined;
 
     const completeOptions = {
       temperature: body.temperature,

@@ -11,20 +11,20 @@
 
 ## What it does
 
-| Capability        | Summary                                                                      |
-| ----------------- | ---------------------------------------------------------------------------- |
-| **Gateway**       | OpenAI-compatible REST (`/v1/chat/completions`, `/v1/models`, SSE streaming) |
-| **Providers**     | Built-in OpenAI, Anthropic, Ollama; extensible plugin registry               |
-| **Routing**       | Frugal → standard → frontier tier escalation with kill switches              |
-| **Cache**         | Embedding similarity semantic cache (cosine threshold + TTL)                 |
+| Capability        | Summary                                                                        |
+| ----------------- | ------------------------------------------------------------------------------ |
+| **Gateway**       | OpenAI-compatible REST (`/v1/chat/completions`, `/v1/models`, SSE streaming)   |
+| **Providers**     | Built-in OpenAI, Anthropic, Ollama; extensible plugin registry                 |
+| **Routing**       | Frugal → standard → frontier tier escalation with kill switches                |
+| **Cache**         | Embedding similarity semantic cache (cosine threshold + TTL)                   |
 | **Efficiency**    | Layers 3–8 + 9–11 (terse, prompt cache, history/prompt compress, HTTP routing) |
-| **Resilience**    | Per-tier / per-model fallback chains before hard failure                     |
-| **Auth**          | Virtual keys (per-team budgets, rate limits)                                 |
-| **Entitlements**  | Optional plan limits via `clawql-payments`                                   |
-| **Observability** | Durable call store, `logs` / `trace` / `spend` CLI                           |
-| **Flywheel**      | Verdict-filtered export → fine-tune → register custom model in tier map      |
-| **Automation**    | Scheduled pipeline worker (cron export when sample threshold met)            |
-| **Ouroboros**     | `model_escalation` + `agent_coordination` audit events in lineage store      |
+| **Resilience**    | Per-tier / per-model fallback chains before hard failure                       |
+| **Auth**          | Virtual keys (per-team budgets, rate limits)                                   |
+| **Entitlements**  | Optional plan limits via `clawql-payments`                                     |
+| **Observability** | Durable call store, `logs` / `trace` / `spend` CLI                             |
+| **Flywheel**      | Verdict-filtered export → fine-tune → register custom model in tier map        |
+| **Automation**    | Scheduled pipeline worker (cron export when sample threshold met)              |
+| **Ouroboros**     | `model_escalation` + `agent_coordination` audit events in lineage store        |
 
 ---
 
@@ -74,14 +74,14 @@ Every successful `complete()` call flows **outward through decorators** and ends
 
 `createInferenceGateway()` composes decorators in this order (inner → outer):
 
-| Layer | Module                       | When active                                          | Behavior                                                      |
-| ----- | ---------------------------- | ---------------------------------------------------- | ------------------------------------------------------------- |
-| 1     | `ConfiguredInferenceGateway` | Always                                               | Resolves `provider/model`, calls provider adapter             |
-| 2     | `FallbackChainGateway`       | `CLAWQL_INFERENCE_FALLBACK_ENABLED=1` or chains file | Tries alternates on primary failure; sets `response.fallback` |
-| 3     | `SemanticCachedGateway`      | embeddings configured or `CLAWQL_INFERENCE_SEMANTIC_CACHE=1` | Read-safe semantic cache; write invalidation |
-| 4     | `TokenEfficiencyGateway`     | Always (per-layer kill switches)                           | Terse, compress, route, prompt-cache markers |
-| 5     | `EntitlementEnforcedGateway` | `CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1`                | Checks plan limits, records usage                             |
-| 6     | `ObservedInferenceGateway`   | Store not `off`                                      | Appends `InferenceRecord` to call store                       |
+| Layer | Module                       | When active                                                  | Behavior                                                      |
+| ----- | ---------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------- |
+| 1     | `ConfiguredInferenceGateway` | Always                                                       | Resolves `provider/model`, calls provider adapter             |
+| 2     | `FallbackChainGateway`       | `CLAWQL_INFERENCE_FALLBACK_ENABLED=1` or chains file         | Tries alternates on primary failure; sets `response.fallback` |
+| 3     | `SemanticCachedGateway`      | embeddings configured or `CLAWQL_INFERENCE_SEMANTIC_CACHE=1` | Read-safe semantic cache; write invalidation                  |
+| 4     | `TokenEfficiencyGateway`     | Always (per-layer kill switches)                             | Terse, compress, route, prompt-cache markers                  |
+| 5     | `EntitlementEnforcedGateway` | `CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1`                        | Checks plan limits, records usage                             |
+| 6     | `ObservedInferenceGateway`   | Store not `off`                                              | Appends `InferenceRecord` to call store                       |
 
 ```typescript
 import { createInferenceGateway } from "clawql-inference";
@@ -492,8 +492,8 @@ clawql inference <subcommand>
 | `CLAWQL_INFERENCE_TERSE`                      | on                                   | Terse output post-processor (Layer 3)   |
 | `CLAWQL_INFERENCE_PROMPT_CACHE`               | on                                   | Provider prompt-cache markers (Layer 4) |
 | `CLAWQL_INFERENCE_HISTORY_COMPRESS`           | off                                  | History distillation (Layer 6)          |
-| `CLAWQL_INFERENCE_HISTORY_MAX_CHARS`            | `48000`                              | History compress threshold              |
-| `CLAWQL_INFERENCE_HISTORY_KEEP_RECENT`          | `6`                                  | Recent messages to keep verbatim        |
+| `CLAWQL_INFERENCE_HISTORY_MAX_CHARS`          | `48000`                              | History compress threshold              |
+| `CLAWQL_INFERENCE_HISTORY_KEEP_RECENT`        | `6`                                  | Recent messages to keep verbatim        |
 | `CLAWQL_INFERENCE_PROMPT_COMPRESS`            | off                                  | Final prompt compression (Layer 7)      |
 | `CLAWQL_INFERENCE_PROMPT_COMPRESS_MAX_CHARS`  | `12000`                              | Per-message cap before send             |
 | `CLAWQL_INFERENCE_HTTP_AUTO_ROUTE`            | on when routing enabled              | HTTP `clawql/auto` aliases (Layer 8)    |

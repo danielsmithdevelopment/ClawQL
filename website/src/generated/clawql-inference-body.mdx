@@ -122,6 +122,8 @@ Disable layers via options: `\{ semanticCache: false \}`, `\{ fallback: false \}
 | `GET`  | `/v1/models/:id`       | Single model                                          |
 | `POST` | `/v1/chat/completions` | Bare `gpt-4o` or `provider/model`; `stream: true` SSE |
 
+When `stream: true`, token chunks are assembled into OpenAI-compatible SSE events via `Effect.Stream` (`openAiCompletionChunkStream`) with `streamCompletionAsOpenAiSseEffect` at the HTTP boundary.
+
 ### Request headers
 
 | Header                                         | Purpose                            |
@@ -165,7 +167,7 @@ Third-party plugins use the same `InferenceProviderPlugin` contract — see [Inf
 
 ## Model tier escalation
 
-`TierEscalationRouter` implements `AdaptiveRouter` with three tiers:
+`TierEscalationRouter` implements `AdaptiveRouter` with three tiers. The public router API remains synchronous; internally, tier decisions run through `ModelEscalationService` with `Effect.sync` and `Effect.runSync` at the boundary (for Ouroboros and other callers that use `AdaptiveRouter` directly).
 
 | Tier         | Default model (env override)                                    | Role                         |
 | ------------ | --------------------------------------------------------------- | ---------------------------- |
@@ -211,6 +213,8 @@ Layer 5 in [token efficiency](/architecture/token-efficiency). Enabled with `CLA
 
 Cache hits return stored responses with `cacheHit: true` on inference records. Embedding failures **fail open** to live inference.
 
+`SemanticCachedGateway` keeps the public `InferenceGateway` API (`Promise`-based `complete()`). Internally, lookup/store logic runs through Effect services (`SemanticCacheService`, `EmbedderService`, `SemanticCacheStoreService`) with `runSemanticCacheEffect()` at the async boundary.
+
 ```bash
 clawql inference cache   # show active config
 ```
@@ -228,6 +232,8 @@ export CLAWQL_INFERENCE_FALLBACK_STANDARD=groq/llama-3.3-70b,anthropic/claude-ha
 ```
 
 Chains also persist at `$CLAWQL_HOME/Inference/fallback-chains.json` (`byTier` / `byModel`). Responses include `fallback.attempted` and `fallback.succeeded`.
+
+`FallbackChainGateway` keeps the public `InferenceGateway` API (`Promise`-based `complete()`). Internally, retry logic runs through Effect services (`InferenceGatewayService`, `FallbackChainService`) with `runFallbackEffect()` at the async boundary—matching the boundary-only Effect pattern used in `clawql-payments`.
 
 ```bash
 clawql inference fallback
@@ -269,6 +275,8 @@ When plan enforcement is enabled, the gateway checks limits before each completi
 3. `$CLAWQL_HOME/Payments/payments.json` default tenant
 
 Limit breaches throw `EntitlementLimitError` (HTTP 402-shaped OpenAI error) and append a WORM payment audit entry.
+
+`EntitlementEnforcedGateway` keeps the public `InferenceGateway` API (`Promise`-based `complete()`). Internally, entitlement checks and billing run through Effect services wired to `clawql-payments` (`EntitlementEnforcementService`, `EntitlementService`, `UsageStoreService`, `StripeMeterService`) with `runEntitlementEffect()` at the async boundary.
 
 **Middleware order** in `createInferenceHttpApp()`: x402 payment middleware → virtual key auth → OpenAI-compat router.
 

@@ -161,29 +161,29 @@ None of these require the infrastructure the eight layers above do — they're p
 
 The inference gateway (`clawql-inference`) adds four more layers on top of the MCP-focused stack above. Inspect effective status with `clawql inference policy show`.
 
-| Layer | Name | Default | Package / scope |
-| ----- | ---- | ------- | ---------------- |
-| **9** | Structured output hints | on | `clawql-inference` — injects concise structured-output guidance |
-| **10** | Token budget signaling | on | `clawql-inference` — derives word budget from `max_tokens` |
-| **11** | Prefill opener | off | `clawql-inference` — optional assistant prefill (`CLAWQL_INFERENCE_PREFILL=1`) |
-| **12** | Flywheel | on | `clawql-inference` export → fine-tune → frugal tier registration |
+| Layer  | Name                    | Default | Package / scope                                                                |
+| ------ | ----------------------- | ------- | ------------------------------------------------------------------------------ |
+| **9**  | Structured output hints | on      | `clawql-inference` — injects concise structured-output guidance                |
+| **10** | Token budget signaling  | on      | `clawql-inference` — derives word budget from `max_tokens`                     |
+| **11** | Prefill opener          | off     | `clawql-inference` — optional assistant prefill (`CLAWQL_INFERENCE_PREFILL=1`) |
+| **12** | Flywheel                | on      | `clawql-inference` export → fine-tune → frugal tier registration               |
 
 Layer 8 HTTP routing accepts `clawql/auto`, `clawql/frugal`, `clawql/standard`, and `clawql/frontier` model aliases when `CLAWQL_INFERENCE_HTTP_AUTO_ROUTE=1` or tier escalation is enabled.
 
 ## Implementation map
 
-| Layer | Implementation |
-| ----- | -------------- |
-| 1 Code Mode | MCP `search` + `execute` (`clawql-api`) — always on |
-| 2 Response trim | `field-projection.ts` on execute output — always on |
-| 3 Terse output | `TokenEfficiencyGateway` post-processor — on (`CLAWQL_INFERENCE_TERSE=0` to disable) |
-| 4 Prompt cache | Anthropic `cache_control` on stable system prefix — on (`CLAWQL_INFERENCE_PROMPT_CACHE=0` to disable) |
-| 5 Semantic cache | `SemanticCachedGateway` with read/write safety — on when embeddings configured |
-| 6 History compress | Rolling transcript distillation — off (`CLAWQL_INFERENCE_HISTORY_COMPRESS=1`) |
-| 7 Prompt compress | Pre-send dedupe + truncation — off (`CLAWQL_INFERENCE_PROMPT_COMPRESS=1`) |
-| 8 Model routing | Ouroboros escalation + HTTP `clawql/*` aliases — off (`CLAWQL_INFERENCE_ROUTING_ENABLED=1`) |
-| 9–11 Extensions | Structured output, token budget, prefill — see env table in [`clawql-inference.md`](../inference/clawql-inference.md) |
-| 12 Flywheel | Export pipeline + `finetune register` |
+| Layer              | Implementation                                                                                                        |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| 1 Code Mode        | MCP `search` + `execute` (`clawql-api`) — always on                                                                   |
+| 2 Response trim    | `field-projection.ts` on execute output — always on                                                                   |
+| 3 Terse output     | `TokenEfficiencyGateway` post-processor — on (`CLAWQL_INFERENCE_TERSE=0` to disable)                                  |
+| 4 Prompt cache     | Anthropic `cache_control` on stable system prefix — on (`CLAWQL_INFERENCE_PROMPT_CACHE=0` to disable)                 |
+| 5 Semantic cache   | `SemanticCachedGateway` with read/write safety — on when embeddings configured                                        |
+| 6 History compress | Rolling transcript distillation — off (`CLAWQL_INFERENCE_HISTORY_COMPRESS=1`)                                         |
+| 7 Prompt compress  | Pre-send dedupe + truncation — off (`CLAWQL_INFERENCE_PROMPT_COMPRESS=1`)                                             |
+| 8 Model routing    | Ouroboros escalation + HTTP `clawql/*` aliases — off (`CLAWQL_INFERENCE_ROUTING_ENABLED=1`)                           |
+| 9–11 Extensions    | Structured output, token budget, prefill — see env table in [`clawql-inference.md`](../inference/clawql-inference.md) |
+| 12 Flywheel        | Export pipeline + `finetune register`                                                                                 |
 
 ## Putting It Together
 

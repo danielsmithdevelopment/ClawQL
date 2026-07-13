@@ -49,9 +49,7 @@ export async function invokeAgentCoordination(input: {
         modelId: input.decision.modelId,
         signals: input.signals,
       }),
-      signal: AbortSignal.timeout(
-        Number.parseInt(env.HERMES_TIMEOUT_MS?.trim() || "15000", 10)
-      ),
+      signal: AbortSignal.timeout(Number.parseInt(env.HERMES_TIMEOUT_MS?.trim() || "15000", 10)),
     });
     if (!res.ok) {
       const detail = await res.text();

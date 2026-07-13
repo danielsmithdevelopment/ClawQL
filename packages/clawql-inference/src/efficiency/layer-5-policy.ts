@@ -30,7 +30,10 @@ export function extractResourceTags(messages: Array<{ content: string }>): strin
   return [...tags];
 }
 
-export function shouldInvalidateEntry(entryTags: string[] | undefined, writeTags: string[]): boolean {
+export function shouldInvalidateEntry(
+  entryTags: string[] | undefined,
+  writeTags: string[]
+): boolean {
   if (!writeTags.length || !entryTags?.length) return false;
   const writeSet = new Set(writeTags);
   return entryTags.some((tag) => writeSet.has(tag));

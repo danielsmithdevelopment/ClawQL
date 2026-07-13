@@ -15,7 +15,9 @@ export function isAutoRouteModel(model?: string): boolean {
   return AUTO_MODEL_ALIASES.has(model.trim().toLowerCase());
 }
 
-export function resolveAutoRouteTier(model: string): "frugal" | "standard" | "frontier" | undefined {
+export function resolveAutoRouteTier(
+  model: string
+): "frugal" | "standard" | "frontier" | undefined {
   const normalized = model.trim().toLowerCase();
   if (normalized === "clawql/standard") return "standard";
   if (normalized === "clawql/frontier") return "frontier";

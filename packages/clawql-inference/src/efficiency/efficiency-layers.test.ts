@@ -50,9 +50,7 @@ describe("token efficiency layers", () => {
       content: `message-${i}-${"x".repeat(5000)}`,
     }));
     const out = compressHistory(messages, { maxChars: 20_000, keepRecentMessages: 4 });
-    expect(out.some((message) => message.content.includes("Distilled session context"))).toBe(
-      true
-    );
+    expect(out.some((message) => message.content.includes("Distilled session context"))).toBe(true);
     expect(out.length).toBeLessThan(messages.length);
   });
 

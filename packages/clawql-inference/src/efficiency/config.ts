@@ -42,18 +42,12 @@ export function loadTokenEfficiencyConfig(
   const semanticCache = loadSemanticCacheConfig(env);
 
   const historyMaxRaw = env.CLAWQL_INFERENCE_HISTORY_MAX_CHARS?.trim();
-  const historyMax = historyMaxRaw
-    ? Number.parseInt(historyMaxRaw, 10)
-    : DEFAULT_HISTORY_MAX_CHARS;
+  const historyMax = historyMaxRaw ? Number.parseInt(historyMaxRaw, 10) : DEFAULT_HISTORY_MAX_CHARS;
   const keepRecentRaw = env.CLAWQL_INFERENCE_HISTORY_KEEP_RECENT?.trim();
-  const keepRecent = keepRecentRaw
-    ? Number.parseInt(keepRecentRaw, 10)
-    : DEFAULT_KEEP_RECENT;
+  const keepRecent = keepRecentRaw ? Number.parseInt(keepRecentRaw, 10) : DEFAULT_KEEP_RECENT;
 
   const maxMsgRaw = env.CLAWQL_INFERENCE_PROMPT_COMPRESS_MAX_CHARS?.trim();
-  const maxMessageChars = maxMsgRaw
-    ? Number.parseInt(maxMsgRaw, 10)
-    : DEFAULT_MAX_MESSAGE_CHARS;
+  const maxMessageChars = maxMsgRaw ? Number.parseInt(maxMsgRaw, 10) : DEFAULT_MAX_MESSAGE_CHARS;
 
   const escalation = loadModelEscalationConfig(env);
   const httpAutoRoute =

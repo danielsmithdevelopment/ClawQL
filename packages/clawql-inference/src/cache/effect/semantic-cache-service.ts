@@ -6,10 +6,7 @@ import { buildCacheSignatureText, hashSystemPrompt } from "../signature.js";
 import type { SemanticCacheConfig } from "../types.js";
 import { EmbedderService } from "./embedder-service.js";
 import { SemanticCacheStoreService } from "./semantic-cache-store-service.js";
-import {
-  extractResourceTags,
-  resolveCacheIntent,
-} from "../../efficiency/layer-5-policy.js";
+import { extractResourceTags, resolveCacheIntent } from "../../efficiency/layer-5-policy.js";
 
 /** Effect service for semantic cache lookup/store around gateway completion. */
 export class SemanticCacheService extends Context.Tag("clawql/SemanticCacheService")<

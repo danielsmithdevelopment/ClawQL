@@ -40,9 +40,7 @@ export function loadSemanticCacheConfig(env: NodeJS.ProcessEnv = process.env): S
   const maxEntries = maxRaw ? Number.parseInt(maxRaw, 10) : DEFAULT_MAX_ENTRIES;
   const explicit = env.CLAWQL_INFERENCE_SEMANTIC_CACHE?.trim();
   const enabled =
-    explicit === undefined
-      ? resolveInferenceEmbeddingConfig(env) !== null
-      : parseTruthy(explicit);
+    explicit === undefined ? resolveInferenceEmbeddingConfig(env) !== null : parseTruthy(explicit);
   return {
     enabled,
     threshold: Number.isFinite(threshold) ? threshold : DEFAULT_THRESHOLD,
