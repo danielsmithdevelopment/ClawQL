@@ -1,57 +1,22 @@
 /**
  * Ephemeral in-process KV for MCP `cache` tool (#75) — distinct from Obsidian `memory_*`.
- * **LRU:** `Map` insertion order — first key is least-recently-used; `get`/`set` move entries to MRU.
- * **Not persisted:** use **`memory_ingest`** / **`memory_recall`** for durable vault memory.
+ * LRU store + config live in `clawql-core`; this module adds MCP/Zod validation.
  */
 
+import {
+  getClawqlCacheMaxEntries,
+  getClawqlCacheMaxValueBytes,
+  resetDefaultLruCacheStoreForTests,
+  runCacheOperation,
+} from "clawql-core";
 import { z } from "zod";
 import { logMcpToolShape } from "./mcp-tool-log.js";
 
-/** In-process store only — cleared on restart; never written to disk. */
-const mem = new Map<string, string>();
-
-/** Exported for tests — `CLAWQL_CACHE_MAX_VALUE_BYTES` (default 1 MiB, max 16 MiB, min 1). */
-export function getClawqlCacheMaxValueBytes(): number {
-  const v = process.env.CLAWQL_CACHE_MAX_VALUE_BYTES?.trim();
-  if (!v) return 1024 * 1024;
-  const n = Number.parseInt(v, 10);
-  if (!Number.isFinite(n)) return 1024 * 1024;
-  return Math.min(Math.max(n, 1), 16 * 1024 * 1024);
-}
-
-/** Exported for tests — `CLAWQL_CACHE_MAX_ENTRIES` (default 10_000, min 1, max 10M). */
-export function getClawqlCacheMaxEntries(): number {
-  const v = process.env.CLAWQL_CACHE_MAX_ENTRIES?.trim();
-  if (!v) return 10_000;
-  const n = Number.parseInt(v, 10);
-  if (!Number.isFinite(n)) return 10_000;
-  return Math.min(Math.max(n, 1), 10_000_000);
-}
-
-/** Move key to most-recently-used (end of iteration order). */
-function touchLru(key: string): void {
-  const v = mem.get(key);
-  if (v === undefined) return;
-  mem.delete(key);
-  mem.set(key, v);
-}
-
-/** Evict least-recently-used (first key) until there is room for one more distinct key. */
-function evictLruUntilRoomForNewKey(maxEntries: number): number {
-  let evicted = 0;
-  while (mem.size >= maxEntries) {
-    const lru = mem.keys().next().value as string | undefined;
-    if (lru === undefined) break;
-    mem.delete(lru);
-    evicted++;
-  }
-  return evicted;
-}
-
-/** Test helper: clear all entries (allows isolated tests in one process). */
-export function resetClawqlCacheForTests(): void {
-  mem.clear();
-}
+export {
+  getClawqlCacheMaxEntries,
+  getClawqlCacheMaxValueBytes,
+  resetDefaultLruCacheStoreForTests as resetClawqlCacheForTests,
+};
 
 export const cacheToolSchema = {
   operation: z
@@ -133,78 +98,44 @@ export async function handleCacheToolInput(
     limit: parsed.limit,
   });
 
-  const maxV = getClawqlCacheMaxValueBytes();
-  const maxEntries = getClawqlCacheMaxEntries();
-  const listLimit = parsed.limit ?? 100;
-  const searchLimit = parsed.limit ?? 50;
-
   switch (parsed.operation) {
-    case "set": {
-      const value = parsed.value!;
-      const key = parsed.key!;
-      const bytes = Buffer.byteLength(value, "utf8");
-      if (bytes > maxV) {
-        return jsonResponse({
-          ok: false,
-          error: `value size ${bytes} exceeds CLAWQL_CACHE_MAX_VALUE_BYTES (${maxV})`,
-        });
-      }
-      const isNew = !mem.has(key);
-      let evicted = 0;
-      if (isNew) {
-        evicted = evictLruUntilRoomForNewKey(maxEntries);
-      }
-      mem.delete(key);
-      mem.set(key, value);
-      return jsonResponse({
-        ok: true,
-        operation: "set",
-        key,
-        ...(evicted > 0 ? { evicted } : {}),
-      });
-    }
-    case "get": {
-      const key = parsed.key!;
-      const v = mem.get(key);
-      if (v === undefined) {
-        return jsonResponse({ ok: true, hit: false, key });
-      }
-      touchLru(key);
-      return jsonResponse({ ok: true, hit: true, key, value: v });
-    }
-    case "delete": {
-      const key = parsed.key!;
-      const existed = mem.has(key);
-      mem.delete(key);
-      return jsonResponse({ ok: true, operation: "delete", key, deleted: existed });
-    }
-    case "list": {
-      const prefix = parsed.prefix ?? "";
-      const keys = [...mem.keys()]
-        .filter((k) => k.startsWith(prefix))
-        .sort()
-        .slice(0, listLimit);
-      return jsonResponse({
-        ok: true,
-        operation: "list",
-        prefix: prefix === "" ? undefined : prefix,
-        count: keys.length,
-        keys,
-      });
-    }
-    case "search": {
-      const q = parsed.query!.toLowerCase();
-      const keys = [...mem.keys()]
-        .filter((k) => k.toLowerCase().includes(q))
-        .sort()
-        .slice(0, searchLimit);
-      return jsonResponse({
-        ok: true,
-        operation: "search",
-        query: parsed.query,
-        count: keys.length,
-        keys,
-      });
-    }
+    case "set":
+      return jsonResponse(
+        await runCacheOperation({
+          operation: "set",
+          key: parsed.key!,
+          value: parsed.value!,
+        })
+      );
+    case "get":
+      return jsonResponse(
+        await runCacheOperation({
+          operation: "get",
+          key: parsed.key!,
+        })
+      );
+    case "delete":
+      return jsonResponse(
+        await runCacheOperation({
+          operation: "delete",
+          key: parsed.key!,
+        })
+      );
+    case "list":
+      return jsonResponse(
+        await runCacheOperation({
+          operation: "list",
+          prefix: parsed.prefix,
+          limit: parsed.limit,
+        })
+      );
+    case "search":
+      return jsonResponse(
+        await runCacheOperation({
+          operation: "search",
+          query: parsed.query!,
+          limit: parsed.limit,
+        })
+      );
   }
 }
