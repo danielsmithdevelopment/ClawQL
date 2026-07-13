@@ -48,29 +48,24 @@ Today’s shipped stack is a **practical subset** of the full Memory 2.0 triple-
 | **PageIndex**      | Vectorless hierarchical tree over Markdown | **`clawql-pageindex`** + **`pageindex_*`** MCP tools             |
 | **Semantic layer** | Optional embedding leg in recall           | OpenAI-compatible **`/embeddings`** + sqlite or postgres vectors |
 
-```mermaid
-flowchart LR
-  subgraph vault [Vault - source of truth]
-    MD[Memory notes]
-  end
-  subgraph tools [MCP tools]
-    MI[memory_ingest]
-    MR[memory_recall]
-    PI[pageindex tools]
-  end
-  subgraph index [Derived index]
-    DB[(memory.db)]
-    PIT[pageindex index]
-  end
-  MD --> MI
-  MI --> MD
-  MI --> DB
-  MD --> MR
-  MR --> DB
-  MR --> MD
-  MD --> PI
-  PI --> PIT
-```
+**How the pieces connect (text overview):**
+
+**Vault (source of truth)** — Markdown files under `Memory/` on disk.
+
+**Ingest path:** `memory_ingest` writes or appends vault notes → triggers a rescan → rebuilds **`memory.db`** (chunk rows + wikilink edges).
+
+**Recall path:** `memory_recall` reads vault Markdown directly for keyword scoring and wikilink hops → optionally merges rows from **`memory.db`** and vector hits when embeddings are configured.
+
+**PageIndex path:** `pageindex_*` tools build and traverse a hierarchical tree from the same Markdown → output stored in **`pageindex.db.json`** (separate from `memory.db`).
+
+**Team sync (optional):** pushes and pulls the `Memory/` tree (and related paths) via object storage — see [Team vault sync](/getting-started/team-vault-sync). `memory.db` is rebuilt locally after pull.
+
+| Flow                       | Reads from                     | Writes to                        |
+| -------------------------- | ------------------------------ | -------------------------------- |
+| **`memory_ingest`**        | Agent JSON                     | `Memory/*.md` → **`memory.db`**  |
+| **`memory_recall`**        | `Memory/*.md`, **`memory.db`** | (read-only)                      |
+| **`pageindex_build_tree`** | `Memory/*.md`                  | **`pageindex.db.json`**          |
+| **`memory_sync`**          | Object bucket ↔ local vault   | `Memory/` (and configured paths) |
 
 **Roadmap (DAOS):** separate encrypted blob vault, typed link ActionTypes, Merkle root on every node at ingest, and recall filtered by signed **ATRClaims** purpose. Optional **Cuckoo** / **Merkle snapshot** env gates exist in **`memory.db`** today for chunk membership experiments — see [hybrid-memory-backends.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/hybrid-memory-backends.md).
 
