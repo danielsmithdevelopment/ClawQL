@@ -2,6 +2,8 @@
 
 **`memory_ingest`** and **`memory_recall`** are the pair you use when context should **survive MCP server restarts**, pod reschedules, or starting a **new chat days later**. They read and write **Markdown under an Obsidian-style vault path** (plus an optional **`memory.db`** sidecar for hybrid recall)—not the in-process **`cache`** map. {{ className: 'lead' }}
 
+**Architecture deep dive** (wikilinks, hybrid vectors, PageIndex, team sync, inference flywheel): [clawql-memory (Memory 2.0)](/learn/memory).
+
 For **same-process** scratch state only, see [Cache handoff between chats](/learn/cache-handoff-between-chats) and [Session cache](/cache).
 
 ## Why this persists (and how it differs from cache)
@@ -100,4 +102,4 @@ Use **`cache`** when everything happens on **one long-lived process** and you on
 
 ---
 
-**See also:** [Cache handoff between chats](/learn/cache-handoff-between-chats) · [Session cache](/cache) · [Tools](/tools) · [ClawQL Learn overview](/learn) · [OpenClaw → `memory_recall` case study](/case-studies/openclaw-clawql-memory-recall-2026-06) · [Cross-thread vault recall](/case-studies/cross-thread-vault-recall)
+**See also:** [clawql-memory (Memory 2.0)](/learn/memory) · [Cache handoff between chats](/learn/cache-handoff-between-chats) · [Session cache](/cache) · [Tools](/tools) · [ClawQL Learn overview](/learn) · [OpenClaw → `memory_recall` case study](/case-studies/openclaw-clawql-memory-recall-2026-06) · [Cross-thread vault recall](/case-studies/cross-thread-vault-recall)

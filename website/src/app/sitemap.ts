@@ -169,6 +169,11 @@ const ENTRIES: Array<Entry> = [
     priority: 0.89,
   },
   {
+    path: '/learn/memory',
+    changeFrequency: 'monthly',
+    priority: 0.89,
+  },
+  {
     path: '/learn/openclaw-and-clawql',
     changeFrequency: 'monthly',
     priority: 0.89,
