@@ -12,9 +12,15 @@ import {
   resolveObservabilityProfile,
 } from "../observability/profile.js";
 import { resolveSemanticCacheBackend } from "../cache/postgres-pgvector-store.js";
+import {
+  loadInferencePolicyManifestSync,
+  mergeEnvWithPolicyManifest,
+  type InferencePolicyManifestBlock,
+} from "./manifest.js";
 
 export type InferencePolicyView = {
-  source: "env";
+  source: "env" | "manifest+env";
+  manifestPath?: string;
   policyVersion?: string;
   escalation: ReturnType<typeof loadModelEscalationConfig>;
   cache: ReturnType<typeof loadSemanticCacheConfig>;
@@ -27,8 +33,8 @@ export type InferencePolicyView = {
   };
   export: {
     defaultVerdict: "passed";
-    piiScrubDefault: true;
-    writeManifestDefault: true;
+    piiScrubDefault: boolean;
+    writeManifestDefault: boolean;
   };
   pipelineWorker: {
     enabled: boolean;
@@ -70,41 +76,59 @@ function postgresConfigured(env: NodeJS.ProcessEnv): boolean {
   );
 }
 
-export function resolveInferencePolicy(env: NodeJS.ProcessEnv = process.env): InferencePolicyView {
-  const backend = resolveStoreBackend(env);
+function resolveExportDefaults(
+  manifestExport: InferencePolicyManifestBlock["export"] | undefined
+): InferencePolicyView["export"] {
   return {
-    source: "env",
-    policyVersion: env.CLAWQL_RELEASE_MANIFEST?.trim() || undefined,
-    escalation: loadModelEscalationConfig(env),
-    cache: loadSemanticCacheConfig(env),
-    fallback: loadFallbackConfig(env),
-    keys: loadKeysConfig(env),
+    defaultVerdict: "passed",
+    piiScrubDefault: manifestExport?.piiScrubDefault ?? true,
+    writeManifestDefault: manifestExport?.writeManifestDefault ?? true,
+  };
+}
+
+export function resolveInferencePolicy(env: NodeJS.ProcessEnv = process.env): InferencePolicyView {
+  const loaded = loadInferencePolicyManifestSync(env);
+  const effectiveEnv = mergeEnvWithPolicyManifest(env, loaded?.manifest ?? null);
+  const backend = resolveStoreBackend(effectiveEnv);
+  const policyVersion =
+    env.CLAWQL_RELEASE_MANIFEST?.trim() ||
+    env.CLAWQL_INFERENCE_POLICY_VERSION?.trim() ||
+    loaded?.manifest.policyVersion ||
+    undefined;
+
+  return {
+    source: loaded ? "manifest+env" : "env",
+    manifestPath: loaded?.path,
+    policyVersion,
+    escalation: loadModelEscalationConfig(effectiveEnv),
+    cache: loadSemanticCacheConfig(effectiveEnv),
+    fallback: loadFallbackConfig(effectiveEnv),
+    keys: loadKeysConfig(effectiveEnv),
     store: {
       backend,
-      path: backend === "jsonl" ? resolveInferenceStorePath(env) : undefined,
-      postgresConfigured: postgresConfigured(env),
+      path: backend === "jsonl" ? resolveInferenceStorePath(effectiveEnv) : undefined,
+      postgresConfigured: postgresConfigured(effectiveEnv),
     },
-    export: {
-      defaultVerdict: "passed",
-      piiScrubDefault: true,
-      writeManifestDefault: true,
-    },
+    export: resolveExportDefaults(loaded?.manifest.inference.export),
     pipelineWorker: {
-      enabled: parseTruthy(env.CLAWQL_INFERENCE_PIPELINE_WORKER),
-      pollMs: Number.parseInt(env.CLAWQL_INFERENCE_PIPELINE_POLL_MS?.trim() || "60000", 10),
+      enabled: parseTruthy(effectiveEnv.CLAWQL_INFERENCE_PIPELINE_WORKER),
+      pollMs: Number.parseInt(
+        effectiveEnv.CLAWQL_INFERENCE_PIPELINE_POLL_MS?.trim() || "60000",
+        10
+      ),
     },
     agentCoordination: {
-      enabled: parseTruthy(env.CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED),
-      hermesBaseUrl: env.HERMES_BASE_URL?.trim() || undefined,
+      enabled: parseTruthy(effectiveEnv.CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED),
+      hermesBaseUrl: effectiveEnv.HERMES_BASE_URL?.trim() || undefined,
     },
-    efficiency: loadTokenEfficiencyConfig(env),
-    layers: listEfficiencyLayerStatus(env),
+    efficiency: loadTokenEfficiencyConfig(effectiveEnv),
+    layers: listEfficiencyLayerStatus(effectiveEnv),
     observability: {
-      profile: resolveObservabilityProfile(env),
-      otelInfra: otelInfraTracingEnabled(env),
-      langfuse: langfuseTracingEnabled(env),
-      tracing: inferenceTracingEnabled(env),
-      semanticCacheBackend: resolveSemanticCacheBackend(env),
+      profile: resolveObservabilityProfile(effectiveEnv),
+      otelInfra: otelInfraTracingEnabled(effectiveEnv),
+      langfuse: langfuseTracingEnabled(effectiveEnv),
+      tracing: inferenceTracingEnabled(effectiveEnv),
+      semanticCacheBackend: resolveSemanticCacheBackend(effectiveEnv),
     },
   };
 }

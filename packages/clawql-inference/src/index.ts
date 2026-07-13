@@ -240,6 +240,12 @@ export { validateVirtualKey, extractPresentedApiKey } from "./keys/validate.js";
 export { createVirtualKeyAuthMiddleware, type VirtualKeyRequest } from "./api/auth.js";
 export type { VirtualKey, VirtualKeyContext, KeysConfig, RateLimitSpec } from "./keys/types.js";
 export { resolveInferencePolicy, type InferencePolicyView } from "./policy/resolve.js";
+export {
+  loadInferencePolicyManifestSync,
+  resolvePolicyManifestPath,
+  parseInferencePolicyManifestText,
+  type InferencePolicyManifest,
+} from "./policy/manifest.js";
 export { runInferencePolicyShow, type InferencePolicyShowOptions } from "./cli/policy.js";
 export {
   evaluateAgentCoordination,
@@ -257,6 +263,11 @@ export {
   closeInferencePgPool,
 } from "./store/postgres-pool.js";
 export { cronMatchesUtc } from "./pipeline/cron.js";
+export {
+  buildPipelineRunLockKey,
+  tryAcquirePipelineAdvisoryLock,
+  pipelineAdvisoryLockId,
+} from "./pipeline/advisory-lock.js";
 export {
   startPipelineWorker,
   stopPipelineWorker,

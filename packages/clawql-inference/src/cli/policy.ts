@@ -17,6 +17,7 @@ export async function runInferencePolicyShow(
   }
 
   console.log(`policy_source: ${policy.source}`);
+  if (policy.manifestPath) console.log(`manifest_path: ${policy.manifestPath}`);
   if (policy.policyVersion) console.log(`policy_version: ${policy.policyVersion}`);
   console.log(`escalation_enabled: ${policy.escalation.enabled}`);
   console.log(`semantic_cache: ${policy.cache.enabled}`);
