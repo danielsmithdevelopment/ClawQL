@@ -1,6 +1,6 @@
 import { Context, Effect, Layer } from "effect";
 import type { MemoryRecallInput, MemoryRecallResult } from "../recall/recall.js";
-import { executeMemoryRecallEffect } from "./memory-recall-effect.js";
+import { executeMemoryRecallEffect, type MemoryRecallServices } from "./memory-recall-effect.js";
 import { MemoryError } from "./memory-errors.js";
 import { VaultConfigService } from "./vault-config-service.js";
 
@@ -10,7 +10,7 @@ export class MemoryRecallService extends Context.Tag("clawql/MemoryRecallService
   {
     readonly recall: (
       input: MemoryRecallInput
-    ) => Effect.Effect<MemoryRecallResult, MemoryError, VaultConfigService>;
+    ) => Effect.Effect<MemoryRecallResult, MemoryError, VaultConfigService | MemoryRecallServices>;
   }
 >() {}
 
