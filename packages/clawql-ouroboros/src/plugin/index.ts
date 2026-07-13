@@ -10,3 +10,19 @@ export {
 export { createOuroborosPlugin, OUROBOROS_PLUGIN_ID } from "./ouroboros-plugin.js";
 
 export { getOuroborosContext, resetOuroborosContextForTests } from "./context.js";
+
+export {
+  OuroborosContextService,
+  OuroborosError,
+  OuroborosToolsService,
+  ouroborosContextLiveLayer,
+  ouroborosCreateSeedProgram,
+  ouroborosLineageProgram,
+  ouroborosMeasureDriftProgram,
+  ouroborosProposeRevisionProgram,
+  ouroborosRunLoopProgram,
+  ouroborosServicesLiveLayer,
+  ouroborosToolsLiveLayer,
+  runOuroborosEffect,
+  type OuroborosServices,
+} from "../effect/index.js";
