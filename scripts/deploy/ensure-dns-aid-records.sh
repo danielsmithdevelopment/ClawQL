@@ -9,7 +9,6 @@
 #
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TOKEN="${CLOUDFLARE_API_TOKEN:-}"
 APEX="${CLAWQL_APEX_DOMAIN:-clawql.com}"
 API="https://api.cloudflare.com/client/v4"
@@ -64,7 +63,6 @@ upsert_https() {
   local target="$2"
   local existing
   existing="$(cf "${API}/zones/${ZONE_ID}/dns_records?type=HTTPS&name=${name}")"
-  local want=". ${target} alpn=h3,h2 ipv4hint= port=443"
   local id
   id="$(echo "$existing" | jq -r --arg t "$target" '.result[] | select(.data.target == $t) | .id' | head -1)"
   if [[ -n "$id" && "$id" != "null" ]]; then
