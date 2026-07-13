@@ -14,6 +14,10 @@ export {
   loadModelEscalationConfigAsync,
   createModelEscalationRouter,
   TierEscalationRouter,
+  ModelEscalationService,
+  modelEscalationLiveLayer,
+  resolveModelEscalationService,
+  runModelEscalationEffect,
   type ModelEscalationConfig,
 } from "./routing/index.js";
 
