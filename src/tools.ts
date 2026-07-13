@@ -20,7 +20,7 @@ import { Effect } from "effect";
 import { ExecuteService, SearchService } from "clawql-api";
 import { getClawqlOptionalToolFlags } from "clawql-api";
 import { z } from "zod";
-import { getClawqlApi, runMcpProxyBeforeCallTool } from "./clawql-api-adapters.js";
+import { getClawqlApi } from "./clawql-api-adapters.js";
 import { getPackageRoot } from "clawql-api";
 import { resolveBundledProvider } from "clawql-api";
 import {
@@ -75,7 +75,6 @@ export async function handleClawqlSearchToolInput(params: {
   query: string;
   limit: number;
 }): Promise<{ content: { type: "text"; text: string }[] }> {
-  await runMcpProxyBeforeCallTool("search", params);
   return getClawqlApi().run(
     Effect.gen(function* () {
       const search = yield* SearchService;
@@ -91,7 +90,6 @@ export async function handleClawqlExecuteToolInput(params: {
   args: Record<string, unknown>;
   fields?: string[];
 }): Promise<{ content: { type: "text"; text: string }[] }> {
-  await runMcpProxyBeforeCallTool("execute", params);
   return getClawqlApi().run(
     Effect.gen(function* () {
       const execute = yield* ExecuteService;

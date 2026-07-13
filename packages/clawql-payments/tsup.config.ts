@@ -8,6 +8,7 @@ export default defineConfig({
     "plans/index": "src/plans/index.ts",
     "audit/index": "src/audit/index.ts",
     "discovery/index": "src/discovery/index.ts",
+    "plugin/index": "src/plugin/index.ts",
   },
   format: ["esm", "cjs"],
   dts: true,
