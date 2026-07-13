@@ -47,9 +47,6 @@ next-env.d.ts
 
 # Generated at prebuild (see scripts/generate-agent-markdown.mjs)
 /public/agent-markdown.json
-# Generated at prebuild (see scripts/generate-agent-discovery-assets.mjs)
-/public/auth.md
-/public/.well-known/agent-card.json
 /public/search-index/
 
 # Legacy search index output (now public/search-index/)
