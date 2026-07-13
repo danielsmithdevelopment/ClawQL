@@ -14,6 +14,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { appendPassthroughWrapper } from './lib/rewrite-doc-links.mjs'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
 const dstRoot = path.join(websiteRoot, 'src/generated/clawql-plugins')
@@ -140,7 +142,7 @@ for (const file of names) {
   plugins.push({
     slug,
     fm: { title, description, status, package: pkg, order: String(order), prev, next },
-    body: rewriteLinksForSite(body.trimStart()),
+    body: appendPassthroughWrapper(rewriteLinksForSite(body.trimStart())),
   })
 }
 

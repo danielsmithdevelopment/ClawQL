@@ -67,3 +67,7 @@ For externally-sourced weights (Module 26's multi-provider weight management), t
 - Detecting a backdoor introduced during training by examining the resulting weights is an open research problem with no general solution — do not represent behavioral monitoring as solving this
 - Behavioral evaluation and output monitoring are real, useful controls for capability regression and production drift — they are not backdoor detectors, and should not be the basis for a claim that backdoored weights will be caught
 - Backdoor risk is addressed by securing the training pipeline itself, not by inspecting its output — apply the same supply chain rigor to training infrastructure as to weight storage
+
+export function wrapper({ children }) {
+  return children
+}

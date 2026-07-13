@@ -187,3 +187,7 @@ Key Takeaways (Memorize These!)
 - Prompt guard libraries add behavioral depth but cannot substitute for structural enforcement at the gateway layer.
 
 You now have a runtime enforcement engine that makes malicious tool execution structurally impossible. Even if the model is fully compromised or the prompt is perfectly injected, the agent cannot perform actions it is not explicitly allowed to do. This is the enforcement layer that turns the rest of the security stack into a complete, working system.
+
+export function wrapper({ children }) {
+  return children
+}

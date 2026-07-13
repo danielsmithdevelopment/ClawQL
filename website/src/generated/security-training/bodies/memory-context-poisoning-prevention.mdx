@@ -141,3 +141,7 @@ Key Takeaways (Memorize These!)
 - WORM storage is the final backstop — no administrative action can destroy the memory history during the retention period.
 
 You now have long-term memory that is redacted at source, cryptographically immutable, GDPR-compliant, and poisoning-resistant. A poisoned entry cannot be written, cannot be modified after the fact, and cannot be silently retrieved later. This closes the last major persistent attack surface in the agentic platform.
+
+export function wrapper({ children }) {
+  return children
+}

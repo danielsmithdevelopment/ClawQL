@@ -155,10 +155,15 @@ export function wrapper({ children }) {
 `
 
 /** @param {string} body */
+export function appendPassthroughWrapper(body) {
+  if (body.includes('export function wrapper')) {
+    return body
+  }
+  return `${body}${MDX_BODY_WRAPPER_EXPORT}`
+}
+
+/** @param {string} body */
 export function prepareMdxBody(body, sourceDocPathFromRepoRoot) {
   const rewritten = rewriteDocLinks(body, sourceDocPathFromRepoRoot)
-  if (rewritten.includes('export function wrapper')) {
-    return rewritten
-  }
-  return `${rewritten}${MDX_BODY_WRAPPER_EXPORT}`
+  return appendPassthroughWrapper(rewritten)
 }

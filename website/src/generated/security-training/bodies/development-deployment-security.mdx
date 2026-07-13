@@ -113,3 +113,7 @@ Key Takeaways (Memorize These!)
 - Staging must enforce the same security controls as production; a staging environment that is more permissive is not a staging environment, it is a gap.
 
 You now have a development and deployment pipeline where security is the path of least resistance. The workstation is hardened, leakage is prevented, and production deployments are secure by default and fully automated. This closes the loop between developer intent and production reality — the entire platform is only as secure as the code and configuration that reaches it.
+
+export function wrapper({ children }) {
+  return children
+}

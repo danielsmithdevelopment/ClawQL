@@ -9,7 +9,6 @@ import {
   paymentsServicesLiveLayer,
   type PaymentsServices,
 } from "../runtime/payments-effect-runtime.js";
-import { PaymentAuditService } from "./payment-audit-service.js";
 import { createPaymentsX402ProxyPlugin } from "./payments-x402-proxy-plugin.js";
 
 export type PaymentsLayerError =
