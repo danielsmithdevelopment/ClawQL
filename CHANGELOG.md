@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Build push announcement** — comprehensive inventory of 7.0.0 and the July 2026 weekend merge wave: [`docs/announcements/7.0-weekend-build-push-2026-07.md`](docs/announcements/7.0-weekend-build-push-2026-07.md) (inference, payments, Effect migration, agent readiness).
+
 - **Team vault sync (`clawql sync`)** — push/pull `~/.ClawQL` shared paths (Memory/, sources/, chats/) to **Cloudflare R2** (default), **AWS S3**, or **GCS** (S3-compatible HMAC interop API); provider profiles for endpoint/path-style; vault keys **`gcsHmacAccessId`** / **`gcsHmacSecret`** for GCS; `sync.json` for bucket/prefix; secrets never uploaded. **Auto sync:** `CLAWQL_SYNC_AUTO=1` debounced push after `memory_ingest`; `CLAWQL_SYNC_AUTO_PULL=1` throttled pull before `memory_recall`. **Helm:** `teamSync.*` values on `charts/clawql-mcp` (GCS auto-sets endpoint). **Docs:** [`docs/getting-started/getting-started-for-teams.md`](docs/getting-started/getting-started-for-teams.md) (teams hub), [`docs/getting-started/team-vault-sync.md`](docs/getting-started/team-vault-sync.md); site: [`/getting-started/for-teams`](https://docs.clawql.com/getting-started/for-teams).
 
 ### Changed
