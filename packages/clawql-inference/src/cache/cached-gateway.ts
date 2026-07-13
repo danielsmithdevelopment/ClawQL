@@ -1,7 +1,10 @@
 import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../gateway.js";
 import { createEmbedder, resolveInferenceEmbeddingConfig, type Embedder } from "./embedding.js";
-import { createSemanticCacheEntry, InMemorySemanticCacheStore } from "./in-memory.js";
-import { buildCacheSignatureText, hashSystemPrompt } from "./signature.js";
+import { InMemorySemanticCacheStore } from "./in-memory.js";
+import {
+  completeWithSemanticCacheProgram,
+  runSemanticCacheEffect,
+} from "./effect/semantic-cache-layer.js";
 import {
   loadSemanticCacheConfig,
   type SemanticCacheConfig,
@@ -21,53 +24,13 @@ export class SemanticCachedGateway implements InferenceGateway {
   }
 
   async complete(request: InferenceRequest): Promise<InferenceResponse> {
-    if (!this.config.enabled) {
-      return this.inner.complete(request);
-    }
-
-    const modelId = request.model ?? request.routing?.modelId;
-    if (!modelId) {
-      return this.inner.complete(request);
-    }
-
-    const signatureText = buildCacheSignatureText(request.messages);
-    let embedding: Float32Array;
-    try {
-      embedding = await this.embedder.embed(signatureText);
-    } catch {
-      return this.inner.complete(request);
-    }
-    if (!embedding.length) {
-      return this.inner.complete(request);
-    }
-
-    const hit = this.cacheStore.lookup({
-      modelId,
-      embedding,
-      threshold: this.config.threshold,
-    });
-    if (hit) {
-      return {
-        ...hit.entry.response,
-        model: hit.entry.response.model || modelId,
-        cacheHit: true,
-        routing: request.routing ?? hit.entry.response.routing,
-        correlationId: request.correlationId ?? hit.entry.response.correlationId,
-      };
-    }
-
-    const response = await this.inner.complete(request);
-    this.cacheStore.put(
-      createSemanticCacheEntry({
-        modelId,
-        signatureText,
-        systemPromptHash: hashSystemPrompt(request.messages),
-        embedding,
-        response: { ...response, cacheHit: false },
-        ttlMs: this.config.ttlMs,
-      })
+    return runSemanticCacheEffect(
+      completeWithSemanticCacheProgram(request),
+      this.inner,
+      this.config,
+      this.cacheStore,
+      this.embedder
     );
-    return response;
   }
 }
 
