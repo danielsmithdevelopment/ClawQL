@@ -148,6 +148,18 @@ export {
 export { cosineSimilarity, resolveInferenceEmbeddingConfig } from "./cache/embedding.js";
 export { buildCacheSignatureText, hashSystemPrompt } from "./cache/signature.js";
 export {
+  EmbedderService,
+  SemanticCacheService,
+  SemanticCacheStoreService,
+  completeWithSemanticCacheProgram,
+  embedderLiveLayer,
+  makeSemanticCacheLayer,
+  runSemanticCacheEffect,
+  semanticCacheLiveLayer,
+  semanticCacheStoreLiveLayer,
+  type SemanticCacheServices,
+} from "./cache/effect/index.js";
+export {
   withFallbackChain,
   FallbackChainGateway,
   isFallbackChainGateway,

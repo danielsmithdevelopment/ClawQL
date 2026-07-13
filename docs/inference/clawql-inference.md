@@ -211,6 +211,8 @@ Layer 5 in [token efficiency](../architecture/clawql-token-efficiency.md). Enabl
 
 Cache hits return stored responses with `cacheHit: true` on inference records. Embedding failures **fail open** to live inference.
 
+`SemanticCachedGateway` keeps the public `InferenceGateway` API (`Promise`-based `complete()`). Internally, lookup/store logic runs through Effect services (`SemanticCacheService`, `EmbedderService`, `SemanticCacheStoreService`) with `runSemanticCacheEffect()` at the async boundary.
+
 ```bash
 clawql inference cache   # show active config
 ```
