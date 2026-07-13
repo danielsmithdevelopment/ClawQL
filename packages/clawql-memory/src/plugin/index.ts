@@ -27,4 +27,11 @@ export {
   executeMemoryRecallEffect,
   type MemoryServices,
   type MemoryInfrastructureServices,
+  memoryIngestPostSyncExtrasEffect,
+  vaultArtifactHintsEffect,
+  vaultDbScanSyncEffect,
+  vaultProviderIndexEffect,
+  vaultWritePostSyncEffect,
+  type VaultArtifactHints,
+  type VaultPostSyncExtras,
 } from "../effect/index.js";
