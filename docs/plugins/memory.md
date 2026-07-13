@@ -35,12 +35,12 @@ Persists durable session knowledge to an **Obsidian-compatible vault** and recal
 
 ## Enable / disable
 
-| Env                             | Default | Effect                                                |
-| ------------------------------- | ------- | ----------------------------------------------------- |
-| **`CLAWQL_ENABLE_MEMORY=0`**    | on      | Omit `MemoryPlugin` and hide memory + PageIndex tools |
-| **`CLAWQL_ENABLE_PAGEINDEX=0`** | on      | Hide `pageindex_*` only (memory ingest/recall remain) |
-| **`CLAWQL_ENABLE_CODEGRAPH=1`** | off     | Register `codegraph_*` tools (structural code graph)  |
-| **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`** | off | Merge code graph symbol hits into `memory_recall` (`codeGraphHits`) |
+| Env                                           | Default | Effect                                                              |
+| --------------------------------------------- | ------- | ------------------------------------------------------------------- |
+| **`CLAWQL_ENABLE_MEMORY=0`**                  | on      | Omit `MemoryPlugin` and hide memory + PageIndex tools               |
+| **`CLAWQL_ENABLE_PAGEINDEX=0`**               | on      | Hide `pageindex_*` only (memory ingest/recall remain)               |
+| **`CLAWQL_ENABLE_CODEGRAPH=1`**               | off     | Register `codegraph_*` tools (structural code graph)                |
+| **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`** | off     | Merge code graph symbol hits into `memory_recall` (`codeGraphHits`) |
 
 ## Prerequisites
 
