@@ -1,16 +1,17 @@
 import type { ComponentType } from 'react'
 
-import Body5 from './bodies/automation.mdx'
-import Body4 from './bodies/bundled-providers.mdx'
+import Body6 from './bodies/automation.mdx'
+import Body5 from './bodies/bundled-providers.mdx'
+import Body3 from './bodies/codegraph.mdx'
 import Body0 from './bodies/core.mdx'
-import Body3 from './bodies/documents.mdx'
-import Body9 from './bodies/hitl-label-studio.mdx'
-import Body7 from './bodies/inference-providers.mdx'
+import Body4 from './bodies/documents.mdx'
+import Body10 from './bodies/hitl-label-studio.mdx'
+import Body8 from './bodies/inference-providers.mdx'
 import Body2 from './bodies/memory.mdx'
-import Body8 from './bodies/ouroboros.mdx'
+import Body9 from './bodies/ouroboros.mdx'
 import Body1 from './bodies/panguard-proxy.mdx'
-import Body6 from './bodies/sandbox.mdx'
-import Body10 from './bodies/third-party.mdx'
+import Body7 from './bodies/sandbox.mdx'
+import Body11 from './bodies/third-party.mdx'
 
 export type PluginPageMeta = {
   slug: string
@@ -51,6 +52,16 @@ export const pluginPages: PluginPageMeta[] = [
     status: 'default-on',
     package: 'clawql-memory',
     prev: 'panguard-proxy',
+    next: 'codegraph',
+  },
+  {
+    slug: 'codegraph',
+    title: 'Code graph (structural)',
+    description:
+      'Graphify-style structural code indexing via codegraph_* MCP tools. Opt-in with CLAWQL_ENABLE_CODEGRAPH=1.',
+    status: 'opt-in',
+    package: 'clawql-codegraph',
+    prev: 'memory',
     next: 'documents',
   },
   {
@@ -60,7 +71,7 @@ export const pluginPages: PluginPageMeta[] = [
       'ingest_external_knowledge, optional Onyx search, and opt-in IDP pipeline tools. Default on; CLAWQL_ENABLE_DOCUMENTS=0 to omit.',
     status: 'default-on',
     package: 'clawql-documents',
-    prev: 'memory',
+    prev: 'codegraph',
     next: 'bundled-providers',
   },
   {
@@ -139,14 +150,15 @@ export const pluginBodies: Record<string, ComponentType> = {
   core: Body0,
   'panguard-proxy': Body1,
   memory: Body2,
-  documents: Body3,
-  'bundled-providers': Body4,
-  automation: Body5,
-  sandbox: Body6,
-  'inference-providers': Body7,
-  ouroboros: Body8,
-  'hitl-label-studio': Body9,
-  'third-party': Body10,
+  codegraph: Body3,
+  documents: Body4,
+  'bundled-providers': Body5,
+  automation: Body6,
+  sandbox: Body7,
+  'inference-providers': Body8,
+  ouroboros: Body9,
+  'hitl-label-studio': Body10,
+  'third-party': Body11,
 }
 
 export function getPluginMeta(slug: string): PluginPageMeta | undefined {

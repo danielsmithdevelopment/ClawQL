@@ -528,7 +528,7 @@ export const optionalToolsHubCards: Array<ReferenceCard> = [
   card({
     href: '/learn/memory',
     name: 'clawql-memory',
-    description: 'Durable memory_ingest / memory_recall across sessions.',
+    description: 'Durable memory_ingest / memory_recall, PageIndex, and optional code graph.',
     icon: ChatBubbleIcon,
   }),
 ]
@@ -552,6 +552,12 @@ export const pluginsHubCards: Array<ReferenceCard> = [
     name: 'Memory (vault)',
     description: 'memory_ingest / memory_recall — default on, Obsidian vault.',
     icon: ChatBubbleIcon,
+  }),
+  card({
+    href: '/plugins/codegraph',
+    name: 'Code graph',
+    description: 'codegraph_* — structural AST indexing, Graphify import, hybrid recall.',
+    icon: ShapesIcon,
   }),
   card({
     href: '/plugins/documents',

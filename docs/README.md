@@ -38,7 +38,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - ClawQL ecosystem (vision deck — core loop, hybrid memory, pipeline, Onyx, Ouroboros, infra, roadmap): [`clawql-ecosystem.md`](clawql-ecosystem.md)
 - Feature tiers (always on / default-on opt-out / default-off opt-in): `readme/configuration.md` § **Feature tiers** — diagram: [`readme/images/clawql-feature-tiers.png`](readme/images/clawql-feature-tiers.png)
 - MCP tools and operator guides: [`mcp/mcp-tools.md`](mcp/mcp-tools.md), [`mcp/external-ingest.md`](mcp/external-ingest.md), [`mcp/cache-tool.md`](mcp/cache-tool.md), [`mcp/enterprise-mcp-tools.md`](mcp/enterprise-mcp-tools.md), [`mcp/notify-tool.md`](mcp/notify-tool.md), [`mcp/hitl-label-studio.md`](mcp/hitl-label-studio.md), [`mcp/langfuse-eval-ouroboros.md`](mcp/langfuse-eval-ouroboros.md), [`mcp/onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md), [`mcp/schedule-synthetic-checks.md`](mcp/schedule-synthetic-checks.md)
-- Memory and vault: [`memory/memory-obsidian.md`](memory/memory-obsidian.md), [`memory/memory-db-schema.md`](memory/memory-db-schema.md), [`memory/memory-db-hybrid-implementation.md`](memory/memory-db-hybrid-implementation.md), [`memory/hybrid-memory-backends.md`](memory/hybrid-memory-backends.md), [`memory/vector-search-design.md`](memory/vector-search-design.md)
+- Memory and vault: [`memory/memory-obsidian.md`](memory/memory-obsidian.md), [`memory/memory-db-schema.md`](memory/memory-db-schema.md), [`memory/memory-db-hybrid-implementation.md`](memory/memory-db-hybrid-implementation.md), [`memory/hybrid-memory-backends.md`](memory/hybrid-memory-backends.md), [`memory/vector-search-design.md`](memory/vector-search-design.md); structural code graph: [`plugins/codegraph.md`](plugins/codegraph.md)
 - Ouroboros library (evolutionary loop — shipped): [`ouroboros/clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)
 - **ClawQL payments** (Stripe, x402, plan entitlements, metered billing): [`payments/clawql-payments.md`](payments/clawql-payments.md)
 - **clawql-inference** (gateway, export/finetune, payments integration): [`inference/clawql-inference.md`](inference/clawql-inference.md)
@@ -55,7 +55,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `getting-started/team-vault-sync.md` — `clawql sync` push/pull (R2 / S3 / GCS), Helm `teamSync.*`
 - `getting-started/golden-host-images.md` — Packer golden hosts for managed AWS/GCP/Cloudflare tiers
 - `getting-started/clawql-7-setup-guide.md` — 7.0 upgrade: default stack, Vault, operator auth
-- `getting-started/phase-1-platform-guide.md` — **teach Phase 1:** clawql-auth, pageindex, Presidio, Tier 1 Compose
+- `getting-started/phase-1-platform-guide.md` — **teach Phase 1:** clawql-auth, pageindex, code graph, Presidio, Tier 1 Compose
 - `getting-started/custom-sources.md` — URL/CLI custom sources (7.0)
 - `design/clawql-desktop-macos.md` — ClawQL Desktop (macOS Electron app)
 - `getting-started/clawql-init-walkthrough-spec.md` — Executor comparison; Phases 1–2b shipped in 7.0.0

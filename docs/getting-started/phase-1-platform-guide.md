@@ -16,6 +16,7 @@
 | Gateway auth (`noAuth` / `apiKey`, ATR claims, provider headers) | `clawql-auth`                          | ✅ Shipped — OIDC/SAML/RBAC 📋 planned                |
 | Vectorless hierarchical indexing                                 | `clawql-pageindex`                     | ✅ Shipped — MIT, zero ClawQL deps                    |
 | PageIndex MCP tools                                              | `clawql-memory` (`MemoryPlugin`)       | ✅ Default on                                         |
+| Code graph MCP tools                                             | `clawql-memory` + `clawql-codegraph`   | ✅ Opt-in (`CLAWQL_ENABLE_CODEGRAPH=1`)               |
 | Presidio redaction on agent I/O                                  | `clawql-api` gateway hooks             | 🚧 Opt-in (`CLAWQL_ENABLE_PRESIDIO=1`)                |
 | Tier 1 local stack (Compose)                                     | `examples/clawql-local-docker-compose` | ✅ Shipped                                            |
 | Release manifest verify                                          | `clawql-release`                       | 🚧 MVP — `clawql doctor --smoke`                      |
@@ -81,7 +82,45 @@ export CLAWQL_ENABLE_PAGEINDEX=0
 
 ---
 
-## 3. Presidio gateway hooks
+## 3. Code graph (`clawql-codegraph`)
+
+Standalone MIT library for **structural code indexing** — imports, calls, symbol containment — complementary to vault narrative memory and PageIndex. Registered as MCP tools by `MemoryPlugin` when enabled.
+
+### MCP tools (opt-in)
+
+| Tool                            | Purpose                                              |
+| ------------------------------- | ---------------------------------------------------- |
+| `codegraph_index`               | Index TS/JS (compiler API) and Python/Go (tree-sitter) |
+| `codegraph_import_graphify`     | Import Graphify `graph.json`                         |
+| `codegraph_query`               | Find symbols by name or concept                      |
+| `codegraph_neighbors`           | List edges for a node                                |
+| `codegraph_path`                | Shortest path between two symbols                    |
+| `codegraph_explain`             | Summarize a symbol and its neighborhood              |
+| `codegraph_subgraph`            | BFS subgraph around a seed query                     |
+
+### Enable
+
+```bash
+export CLAWQL_ENABLE_CODEGRAPH=1
+export CLAWQL_CODEGRAPH_ROOT=/path/to/repo
+export CLAWQL_CODEGRAPH_PATH=/path/to/data   # stores codegraph.db.json
+```
+
+Optional hybrid merge into **`memory_recall`**: **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`**.
+
+### Typical workflow
+
+1. **`codegraph_index`** once per repo (or **`codegraph_import_graphify`** from Graphify export).
+2. **`codegraph_path`** / **`codegraph_query`** instead of re-reading dozens of files.
+3. **`memory_recall`** with hybrid enabled for narrative + structural context.
+4. **`memory_ingest`** architecture decisions with wikilinks.
+
+**Package API:** [`packages/clawql-codegraph/README.md`](../../packages/clawql-codegraph/README.md)  
+**Plugin page:** [Code graph plugin](../plugins/codegraph.md)
+
+---
+
+## 4. Presidio gateway hooks
 
 When enabled, text is redacted **before** persistence on:
 
@@ -110,7 +149,7 @@ docker compose -f docker-compose.yml -f docker-compose.presidio.override.yml up 
 
 ---
 
-## 4. Tier 1 Docker Compose
+## 5. Tier 1 Docker Compose
 
 Single-machine evaluation stack: MCP + Tika + Gotenberg + Paperless + Redis + Postgres (+ optional Presidio override).
 
@@ -131,7 +170,7 @@ docker compose up -d
 
 ---
 
-## 5. Release manifest (Layer 0 MVP)
+## 6. Release manifest (Layer 0 MVP)
 
 Verify the running build against a signed manifest at startup or via doctor:
 
@@ -145,7 +184,7 @@ export CLAWQL_RELEASE_MANIFEST=/path/to/manifest.json
 
 ---
 
-## 6. Where to read next
+## 7. Where to read next
 
 | Topic                                 | Doc                                                                                       |
 | ------------------------------------- | ----------------------------------------------------------------------------------------- |

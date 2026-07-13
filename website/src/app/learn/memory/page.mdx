@@ -37,7 +37,7 @@ Memory turns distilled outcomes — decisions, debugging notes, API quirks, runb
 - **Governance where it matters** — Optional Presidio redaction at the gateway, vault path allowlists, and team sync that **never** uploads API secrets. Full **ATRClaims** filtering on every recall and **WORM** on every memory mutation are **roadmap** (see [DAOS Layer 3](/ouroboros/daos)).
 - **Fail-closed sync** — Team sync failures are logged but do not block ingest/recall locally.
 
-## Architecture: vault, graph index, PageIndex, vectors
+## Architecture: vault, graph index, PageIndex, code graph, vectors
 
 Today’s shipped stack is a **practical subset** of the full Memory 2.0 triple-store in the DAOS spec:
 
@@ -46,6 +46,7 @@ Today’s shipped stack is a **practical subset** of the full Memory 2.0 triple-
 | **Vault**          | Canonical Markdown notes                   | **`CLAWQL_OBSIDIAN_VAULT_PATH`** → `Memory/<slug>.md`            |
 | **Graph index**    | Wikilink edges + chunk rows                | **`memory.db`** (`wikilink_edge`, `vault_chunk`, …)              |
 | **PageIndex**      | Vectorless hierarchical tree over Markdown | **`clawql-pageindex`** + **`pageindex_*`** MCP tools             |
+| **Code graph**     | Structural AST / import-call graph         | **`clawql-codegraph`** + **`codegraph_*`** MCP tools (opt-in)    |
 | **Semantic layer** | Optional embedding leg in recall           | OpenAI-compatible **`/embeddings`** + sqlite or postgres vectors |
 
 **How the pieces connect (text overview):**
@@ -58,13 +59,16 @@ Today’s shipped stack is a **practical subset** of the full Memory 2.0 triple-
 
 **PageIndex path:** `pageindex_*` tools build and traverse a hierarchical tree from the same Markdown → output stored in **`pageindex.db.json`** (separate from `memory.db`).
 
-**Team sync (optional):** pushes and pulls the `Memory/` tree (and related paths) via object storage — see [Team vault sync](/getting-started/team-vault-sync). `memory.db` is rebuilt locally after pull.
+**Code graph path:** `codegraph_index` (or `codegraph_import_graphify`) walks source under **`CLAWQL_CODEGRAPH_ROOT`** → output stored in **`codegraph.db.json`**. Use **`codegraph_query`**, **`codegraph_path`**, and **`codegraph_neighbors`** for import/call tracing. Optional hybrid merge into **`memory_recall`** via **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`**.
+
+**Team sync (optional):** pushes and pulls the `Memory/` tree (and related paths) via object storage — see [Team vault sync](/getting-started/team-vault-sync). `memory.db` is rebuilt locally after pull. Code graph storage is local unless you sync **`codegraph.db.json`** yourself.
 
 | Flow                       | Reads from                     | Writes to                        |
 | -------------------------- | ------------------------------ | -------------------------------- |
 | **`memory_ingest`**        | Agent JSON                     | `Memory/*.md` → **`memory.db`**  |
-| **`memory_recall`**        | `Memory/*.md`, **`memory.db`** | (read-only)                      |
+| **`memory_recall`**        | `Memory/*.md`, **`memory.db`**, optional **`codegraph.db.json`** | (read-only)                      |
 | **`pageindex_build_tree`** | `Memory/*.md`                  | **`pageindex.db.json`**          |
+| **`codegraph_index`**      | Repo source tree               | **`codegraph.db.json`**          |
 | **`memory_sync`**          | Object bucket ↔ local vault   | `Memory/` (and configured paths) |
 
 **Roadmap (DAOS):** separate encrypted blob vault, typed link ActionTypes, Merkle root on every node at ingest, and recall filtered by signed **ATRClaims** purpose. Optional **Cuckoo** / **Merkle snapshot** env gates exist in **`memory.db`** today for chunk membership experiments — see [hybrid-memory-backends.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/hybrid-memory-backends.md).
@@ -79,9 +83,16 @@ Today’s shipped stack is a **practical subset** of the full Memory 2.0 triple-
 | **`pageindex_build_tree`**  | Build a hierarchical index from Markdown                             |
 | **`pageindex_traverse`**    | Walk the tree under a token budget                                   |
 | **`pageindex_synthesize`**  | Merge selected nodes into agent context                              |
-| **`pageindex_get_content`** | Read a indexed node’s body                                           |
+| **`pageindex_get_content`**     | Read a indexed node’s body                                           |
+| **`codegraph_index`**           | Build structural code graph from repo root (opt-in)                  |
+| **`codegraph_import_graphify`** | Import Graphify `graph.json`                                         |
+| **`codegraph_query`**           | Find symbols by name or concept                                      |
+| **`codegraph_neighbors`**       | List edges (imports, calls, contains)                                |
+| **`codegraph_path`**            | Shortest path between two symbols                                    |
+| **`codegraph_explain`**         | Summarize a symbol and its neighborhood                            |
+| **`codegraph_subgraph`**        | BFS subgraph around a seed query                                     |
 
-Default **on**; hide all memory + PageIndex tools with **`CLAWQL_ENABLE_MEMORY=0`**. Hide PageIndex only with **`CLAWQL_ENABLE_PAGEINDEX=0`**. Requires a writable **`CLAWQL_OBSIDIAN_VAULT_PATH`** for real I/O.
+Default **on** for vault + PageIndex; hide all memory + PageIndex tools with **`CLAWQL_ENABLE_MEMORY=0`**. Hide PageIndex only with **`CLAWQL_ENABLE_PAGEINDEX=0`**. Register code graph tools with **`CLAWQL_ENABLE_CODEGRAPH=1`**. Requires a writable **`CLAWQL_OBSIDIAN_VAULT_PATH`** for vault I/O; code graph additionally needs **`CLAWQL_CODEGRAPH_ROOT`** and **`CLAWQL_CODEGRAPH_PATH`**.
 
 For **same-process** scratch state only, see [Cache handoff between chats](/learn/cache-handoff-between-chats).
 
@@ -153,7 +164,7 @@ In a **new** chat (or after a restart), pull vault context **before** planning.
 }
 ```
 
-Responses include **`results[]`** with **`path`**, **`snippet`**, **`score`**, **`reason`** (**`keyword`**, **`link`**, or **`vector`** when embeddings are configured). Turn the snippets into your working set—or ask the agent to quote them and continue.
+Responses include **`results[]`** with **`path`**, **`snippet`**, **`score`**, **`reason`** (**`keyword`**, **`link`**, or **`vector`** when embeddings are configured). When hybrid code graph is enabled, also review **`codeGraphHits[]`** for matching symbols and file paths. Turn the snippets into your working set—or ask the agent to quote them and continue.
 
 Tune **`limit`**, **`maxDepth`**, and **`minScore`** to balance noise vs coverage (see [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) § **`memory_recall`**).
 
@@ -223,7 +234,9 @@ Hits include **`reason`**: **`"keyword"`**, **`"link"`**, or **`"vector"`**. Tun
 
 **PageIndex** complements vectors: hierarchical **traverse + synthesize** gives deterministic, token-budgeted context without embeddings — useful when you want stable section addresses. See [Phase 1 platform guide § PageIndex](/getting-started/phase-1-platform-guide).
 
-**Roadmap:** unified hybrid ranking score across exact PageIndex hits, cosine similarity, and graph proximity with **ATRClaims** classification filters on each node.
+**Code graph** complements vault narrative: AST-derived **imports and calls** give precise architecture traces without pasting entire repos. Index once with **`codegraph_index`**, then **`codegraph_path`** / **`codegraph_query`**. Enable hybrid recall (**`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`**) to merge vault hits and symbol matches in one **`memory_recall`** call. See [Code graph plugin](/plugins/codegraph).
+
+**Roadmap:** unified hybrid ranking score across exact PageIndex hits, cosine similarity, graph proximity, and code-graph symbol relevance with **ATRClaims** classification filters on each node.
 
 ## Team sync: shared vaults across agents and teammates
 
@@ -307,6 +320,7 @@ Treat vault Markdown as **sensitive** if notes contain tokens or PII. Prefer red
 - [Team vault sync](/getting-started/team-vault-sync) — R2/S3/GCS, Helm **`teamSync`**, **`memory_sync`**
 - [clawql-inference](/inference/clawql-inference) — export, fine-tune, semantic cache, flywheel
 - [Memory plugin](/plugins/memory) — env table and tool list
+- [Code graph plugin](/plugins/codegraph) — structural indexing, Graphify import, hybrid recall
 - [hybrid-memory-backends.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/hybrid-memory-backends.md) — sqlite vs postgres vectors
 - [memory-db-schema.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/memory-db-schema.md) — **`wikilink_edge`** and chunks
 - [DAOS Unified Architecture § Layer 3](/ouroboros/daos) — full Memory 2.0 vision
