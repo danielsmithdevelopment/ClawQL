@@ -80,23 +80,29 @@ Signup forms POST to **hello@clawql.com** via [FormSubmit](https://formsubmit.co
 
 For local dev, set `NEXT_PUBLIC_SITE_URL=http://localhost:3000` so the post-submit redirect lands on `/signup/thanks/`.
 
-### Cloudflare Pages (on merge to `main`)
+### Deploy on merge to `main`
 
-A workflow at [`.github/workflows/deploy-landing-page.yml`](../.github/workflows/deploy-landing-page.yml) builds and deploys to **Cloudflare Pages** (`clawql-website` project) when `landing-page/**` changes. Wrangler runs from `landing-page/demo/` so the sibling `functions/` directory (Link headers + markdown negotiation) is bundled with `out/`.
+Workflow [`.github/workflows/deploy-landing-page.yml`](../.github/workflows/deploy-landing-page.yml) builds `landing-page/demo` and deploys to **GitHub Pages** on every push to `main` that touches `landing-page/**`.
 
-**DNS (one-time):** Point apex `clawql.com` to Cloudflare Pages (not GitHub Pages A records). Attach custom domain `clawql.com` to the Pages project in the Cloudflare dashboard.
-
-**Agent readiness:** The prebuild step writes `robots.txt`, `sitemap.xml`, `auth.md`, `/.well-known/*`, `llms.txt`, and `agent-markdown.json`. Cloudflare Pages `functions/` adds **Link** response headers and **Accept: text/markdown** negotiation. Optional CI step `scripts/deploy/ensure-dns-aid-records.sh` creates DNS-AID records when `CLOUDFLARE_API_TOKEN` is set.
+**Agent readiness (GitHub Pages):** The prebuild step writes `robots.txt`, `sitemap.xml`, `auth.md`, `/.well-known/*`, `llms.txt`, and `agent-markdown.json` into the static export. These work on GitHub Pages. **Link** response headers and **Accept: text/markdown** negotiation require Cloudflare Pages `functions/` or edge rules (see below).
 
 **Lighthouse CI:** [`.github/workflows/landing-page-lighthouse.yml`](../.github/workflows/landing-page-lighthouse.yml) asserts accessibility, SEO, and best-practices scores of 1.0 on the static export.
 
-### Staying on GitHub Pages?
+### Cloudflare Pages (optional, for full agent score)
+
+When `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and repo variable **`LANDING_PAGE_CLOUDFLARE_DEPLOY=true`** are set, the same workflow also deploys to **Cloudflare Pages** (`clawql-website`). Wrangler runs from `landing-page/demo/` so the sibling `functions/` directory (Link headers + markdown negotiation) is bundled with `out/`.
+
+**DNS (one-time, when switching):** Point apex `clawql.com` to Cloudflare Pages (not GitHub Pages A records). Attach custom domain `clawql.com` to the Pages project in the Cloudflare dashboard.
+
+Optional CI step `scripts/deploy/ensure-dns-aid-records.sh` creates DNS-AID records when the Cloudflare token is set.
+
+### Staying on GitHub Pages with Cloudflare DNS?
 
 Pure GitHub Pages **cannot** pass **Link headers** or **Markdown for Agents** checks (no custom response headers or content negotiation). You can keep GitHub Pages as the origin if `clawql.com` stays on Cloudflare: enable **Markdown for Agents** on the zone and add a **Transform Rule** (or thin Worker) for `Link` headers. Static `.well-known` files and `robots.txt` work on either host.
 
 ### Legacy GitHub Pages
 
-`public/CNAME` remains `clawql.com` for reference. Production deploy target is Cloudflare Pages so Link headers and Markdown for Agents work without extra edge rules.
+`public/CNAME` remains `clawql.com`. GitHub Pages is the default deploy target until Cloudflare API secrets are configured.
 
 ### Other hosts
 
