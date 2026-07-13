@@ -43,6 +43,18 @@ export {
   resolveInferenceTenantId,
   withEntitlementEnforcement,
 } from "./entitlements/enforced-gateway.js";
+export {
+  EntitlementEnforcementService,
+  assertInferenceEntitlementEffect,
+  completeWithEnforcementProgram,
+  entitlementEnforcementLiveLayer,
+  makeEntitlementLayer,
+  recordInferenceBillingEffect,
+  recordInferenceUsageEffect,
+  resolveInferenceTenantIdEffect,
+  runEntitlementEffect,
+  type EntitlementServices,
+} from "./entitlements/effect/index.js";
 
 export type {
   InferenceRecord,
