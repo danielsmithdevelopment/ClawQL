@@ -280,69 +280,11 @@ export async function executeMemoryIngestCore(
   });
 
   if (result.ok && !result.skipped) {
-    const indexExtras: Pick<
-      MemoryIngestResult,
-      "merkleSnapshotBefore" | "merkleSnapshot" | "merkleRootChanged" | "cuckooMembershipReady"
-    > = {};
-
-    const { syncMemoryDbForVaultScanRoot, loadVaultMerkleSnapshotFromDb, memoryDbSyncEnabled } =
-      await import("../db/memory-db.js");
-
-    const merkleOn = process.env.CLAWQL_MERKLE_ENABLED === "1";
-    let merkleBefore: Awaited<ReturnType<typeof loadVaultMerkleSnapshotFromDb>> | undefined;
-    if (merkleOn && memoryDbSyncEnabled()) {
-      try {
-        merkleBefore = await loadVaultMerkleSnapshotFromDb(vault);
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.error(`[clawql-mcp] memory.db merkle snapshot (before ingest sync) failed: ${msg}`);
-        merkleBefore = null;
-      }
-    }
-
-    let syncOk = false;
-    if (memoryDbSyncEnabled()) {
-      try {
-        await syncMemoryDbForVaultScanRoot(vault);
-        syncOk = true;
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.error(`[clawql-mcp] memory.db sync after ingest failed: ${msg}`);
-      }
-    }
-
-    if (syncOk) {
-      if (process.env.CLAWQL_CUCKOO_ENABLED === "1") {
-        indexExtras.cuckooMembershipReady = true;
-      }
-      if (merkleOn) {
-        try {
-          const merkleAfter = await loadVaultMerkleSnapshotFromDb(vault);
-          const merklePrior = merkleBefore ?? null;
-          indexExtras.merkleSnapshotBefore = merklePrior;
-          indexExtras.merkleSnapshot = merkleAfter;
-          indexExtras.merkleRootChanged =
-            merkleAfter === null
-              ? undefined
-              : merklePrior === null
-                ? true
-                : merklePrior.rootHex !== merkleAfter.rootHex;
-        } catch (e: unknown) {
-          const msg = e instanceof Error ? e.message : String(e);
-          console.error(
-            `[clawql-mcp] memory.db merkle snapshot (after ingest sync) failed: ${msg}`
-          );
-        }
-      }
-    }
-
-    try {
-      const { updateProviderIndexPage } = await import("../vault/provider-index.js");
-      await updateProviderIndexPage(vault);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      console.error(`[clawql-mcp] provider index update after ingest failed: ${msg}`);
-    }
+    const { runMemoryEffect } = await import("../effect/memory-effect-runtime.js");
+    const { memoryIngestPostSyncExtrasEffect, vaultProviderIndexEffect } =
+      await import("../effect/memory-vault-post-sync-effect.js");
+    const indexExtras = await runMemoryEffect(memoryIngestPostSyncExtrasEffect(vault));
+    await runMemoryEffect(vaultProviderIndexEffect(vault));
     const { runAfterIngestVaultSync } = await import("../sync/vault-sync-hooks.js");
     await runAfterIngestVaultSync();
     return { ...result, ...indexExtras };

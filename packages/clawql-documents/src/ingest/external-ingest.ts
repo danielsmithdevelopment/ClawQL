@@ -113,43 +113,13 @@ function defaultPathForUrl(urlStr: string): string {
 async function loadOptionalArtifactHints(
   vault: string
 ): Promise<Pick<ExternalIngestResult, "merkleSnapshot" | "cuckooMembershipReady">> {
-  let merkleSnapshot: ExternalIngestResult["merkleSnapshot"];
-  let cuckooMembershipReady: boolean | undefined;
-  try {
-    const { loadVaultMerkleSnapshotFromDb, memoryDbSyncEnabled } =
-      await import("clawql-memory/db/memory-db");
-    if (memoryDbSyncEnabled()) {
-      if (process.env.CLAWQL_MERKLE_ENABLED === "1") {
-        merkleSnapshot = await loadVaultMerkleSnapshotFromDb(vault);
-      }
-      if (process.env.CLAWQL_CUCKOO_ENABLED === "1") {
-        cuckooMembershipReady = true;
-      }
-    }
-  } catch {
-    /* ignore */
-  }
-  return {
-    ...(merkleSnapshot !== undefined ? { merkleSnapshot } : {}),
-    ...(cuckooMembershipReady !== undefined ? { cuckooMembershipReady } : {}),
-  };
+  const { runMemoryEffect, vaultArtifactHintsEffect } = await import("clawql-memory/plugin");
+  return runMemoryEffect(vaultArtifactHintsEffect(vault));
 }
 
 async function afterImportSync(vault: string): Promise<void> {
-  try {
-    const { syncMemoryDbForVaultScanRoot } = await import("clawql-memory/db/memory-db");
-    await syncMemoryDbForVaultScanRoot(vault);
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error(`[clawql-mcp] memory.db sync after external ingest failed: ${msg}`);
-  }
-  try {
-    const { updateProviderIndexPage } = await import("clawql-memory/vault/provider-index");
-    await updateProviderIndexPage(vault);
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error(`[clawql-mcp] provider index update after external ingest failed: ${msg}`);
-  }
+  const { runMemoryEffect, vaultWritePostSyncEffect } = await import("clawql-memory/plugin");
+  await runMemoryEffect(vaultWritePostSyncEffect(vault));
 }
 
 async function fetchUrlResource(urlStr: string): Promise<{

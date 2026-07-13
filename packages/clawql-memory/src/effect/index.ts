@@ -35,3 +35,12 @@ export {
   type MemoryInfrastructureServices,
   type MemoryServices,
 } from "./memory-effect-runtime.js";
+export {
+  memoryIngestPostSyncExtrasEffect,
+  vaultArtifactHintsEffect,
+  vaultDbScanSyncEffect,
+  vaultProviderIndexEffect,
+  vaultWritePostSyncEffect,
+  type VaultArtifactHints,
+  type VaultPostSyncExtras,
+} from "./memory-vault-post-sync-effect.js";
