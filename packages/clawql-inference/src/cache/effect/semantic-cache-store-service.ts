@@ -16,6 +16,7 @@ export class SemanticCacheStoreService extends Context.Tag("clawql/SemanticCache
       now?: number;
     }) => Effect.Effect<SemanticCacheLookupResult | null>;
     readonly put: (entry: SemanticCacheEntry) => Effect.Effect<void>;
+    readonly invalidateByTags: (tags: string[], now?: number) => Effect.Effect<number>;
   }
 >() {}
 
@@ -27,6 +28,7 @@ export function semanticCacheStoreLiveLayer(
     SemanticCacheStoreService.of({
       lookup: (input) => Effect.sync(() => store.lookup(input)),
       put: (entry) => Effect.sync(() => store.put(entry)),
+      invalidateByTags: (tags, now) => Effect.sync(() => store.invalidateByTags(tags, now)),
     })
   );
 }

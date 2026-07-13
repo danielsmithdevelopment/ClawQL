@@ -6,6 +6,7 @@ import { buildCacheSignatureText, hashSystemPrompt } from "../signature.js";
 import type { SemanticCacheConfig } from "../types.js";
 import { EmbedderService } from "./embedder-service.js";
 import { SemanticCacheStoreService } from "./semantic-cache-store-service.js";
+import { extractResourceTags, resolveCacheIntent } from "../../efficiency/layer-5-policy.js";
 
 /** Effect service for semantic cache lookup/store around gateway completion. */
 export class SemanticCacheService extends Context.Tag("clawql/SemanticCacheService")<
@@ -42,6 +43,16 @@ export function semanticCacheLiveLayer(
             return yield* gateway.complete(request);
           }
 
+          const cacheIntent = resolveCacheIntent({
+            cacheIntent: request.cacheIntent,
+            messages: request.messages,
+          });
+          const resourceTags = extractResourceTags(request.messages);
+          if (cacheIntent === "write") {
+            yield* store.invalidateByTags(resourceTags);
+            return yield* gateway.complete(request);
+          }
+
           const signatureText = buildCacheSignatureText(request.messages);
           const embeddingResult = yield* embedder.embed(signatureText).pipe(Effect.either);
           if (Either.isLeft(embeddingResult) || embeddingResult.right.length === 0) {
@@ -73,6 +84,7 @@ export function semanticCacheLiveLayer(
               embedding,
               response: { ...response, cacheHit: false },
               ttlMs: config.ttlMs,
+              resourceTags,
             })
           );
           return response;

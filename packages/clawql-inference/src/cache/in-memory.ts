@@ -64,6 +64,20 @@ export class InMemorySemanticCacheStore implements SemanticCacheStore {
     }
   }
 
+  invalidateByTags(tags: string[], now: number = Date.now()): number {
+    if (!tags.length) return 0;
+    const tagSet = new Set(tags.map((tag) => tag.toLowerCase()));
+    const before = this.entries.length;
+    const kept = this.entries.filter((entry) => {
+      if (!entry.resourceTags?.length) return true;
+      return !entry.resourceTags.some((tag) => tagSet.has(tag.toLowerCase()));
+    });
+    this.entries.length = 0;
+    this.entries.push(...kept);
+    this.prune(now);
+    return before - this.entries.length;
+  }
+
   stats(): SemanticCacheStats {
     return {
       entries: this.entries.length,
@@ -96,6 +110,7 @@ export function createSemanticCacheEntry(input: {
   embedding: Float32Array;
   response: import("../gateway.js").InferenceResponse;
   ttlMs: number;
+  resourceTags?: string[];
   now?: number;
 }): SemanticCacheEntry {
   const now = input.now ?? Date.now();
@@ -108,5 +123,6 @@ export function createSemanticCacheEntry(input: {
     response: input.response,
     createdAt: now,
     expiresAt: now + input.ttlMs,
+    resourceTags: input.resourceTags,
   };
 }

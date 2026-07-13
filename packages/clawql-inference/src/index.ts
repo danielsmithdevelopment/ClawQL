@@ -244,6 +244,19 @@ export {
   runPipelineWorkerTickOnce,
 } from "./pipeline/worker.js";
 
+export {
+  loadTokenEfficiencyConfig,
+  listEfficiencyLayerStatus,
+  withTokenEfficiency,
+  TokenEfficiencyGateway,
+  applyTerseOutput,
+  resolveCacheIntent,
+  isAutoRouteModel,
+  type TokenEfficiencyConfig,
+  type EfficiencyLayerId,
+  type CacheIntent,
+} from "./efficiency/index.js";
+
 /** Optional context passed to host engines (Wonder / Reflect / Execute). */
 export interface EngineCallContext {
   seedId: string;

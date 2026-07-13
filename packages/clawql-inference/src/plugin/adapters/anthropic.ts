@@ -8,8 +8,11 @@ type AnthropicMessageResponse = {
   usage?: { input_tokens?: number; output_tokens?: number };
 };
 
-function splitSystem(messages: ChatMessage[]): {
-  system?: string;
+function splitSystem(
+  messages: ChatMessage[],
+  promptCacheEnabled?: boolean
+): {
+  system?: string | Array<{ type: "text"; text: string; cache_control?: { type: "ephemeral" } }>;
   messages: Array<{ role: "user" | "assistant"; content: string }>;
 } {
   const systemParts: string[] = [];
@@ -21,10 +24,21 @@ function splitSystem(messages: ChatMessage[]): {
     }
     rest.push({ role: message.role, content: message.content });
   }
-  return {
-    system: systemParts.length ? systemParts.join("\n\n") : undefined,
-    messages: rest,
-  };
+  const systemText = systemParts.length ? systemParts.join("\n\n") : undefined;
+  if (!systemText) return { messages: rest };
+  if (promptCacheEnabled) {
+    return {
+      system: [
+        {
+          type: "text",
+          text: systemText,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: rest,
+    };
+  }
+  return { system: systemText, messages: rest };
 }
 
 export function createAnthropicAdapter(config: ProviderAdapterConfig): InferenceProviderAdapter {
@@ -36,7 +50,10 @@ export function createAnthropicAdapter(config: ProviderAdapterConfig): Inference
       if (!config.apiKey) {
         throw new Error("ANTHROPIC_API_KEY is required for anthropic provider");
       }
-      const { system, messages: anthropicMessages } = splitSystem(messages);
+      const { system, messages: anthropicMessages } = splitSystem(
+        messages,
+        options?.promptCacheEnabled
+      );
       const res = await fetch(`${baseUrl}/messages`, {
         method: "POST",
         headers: {
@@ -46,7 +63,7 @@ export function createAnthropicAdapter(config: ProviderAdapterConfig): Inference
         },
         body: JSON.stringify({
           model,
-          max_tokens: 4096,
+          max_tokens: options?.maxTokens ?? 4096,
           ...(system ? { system } : {}),
           messages: anthropicMessages,
         }),

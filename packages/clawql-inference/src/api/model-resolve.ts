@@ -1,5 +1,6 @@
 import { parseModelId } from "../providers/parse-model-id.js";
 import type { ProviderRegistry } from "../providers/types.js";
+import { isAutoRouteModel } from "../efficiency/layer-8-routing.js";
 
 export type ResolvedModel = {
   provider: string;
@@ -29,6 +30,15 @@ export function resolveRequestModel(
 ): ResolvedModel | null {
   const trimmed = model.trim();
   if (!trimmed) return null;
+
+  if (isAutoRouteModel(trimmed)) {
+    return {
+      provider: "clawql",
+      model: trimmed,
+      gatewayModelId: trimmed,
+      publicModelId: trimmed,
+    };
+  }
 
   if (trimmed.includes("/")) {
     const parsed = parseModelId(trimmed);
