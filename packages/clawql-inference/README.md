@@ -135,12 +135,24 @@ Use `X-Clawql-Tool` to gate MCP tool names over HTTP (`tool:knowledge_search`).
 
 ## Quick start
 
+**Operator policy example:** [`examples/inference/`](../../examples/inference/) — copy `policy.yaml` to `$CLAWQL_HOME/Inference/` and run `clawql inference serve`.
+
+```bash
+export CLAWQL_HOME="${CLAWQL_HOME:-$HOME/.clawql}"
+mkdir -p "$CLAWQL_HOME/Inference"
+cp examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
+
+export OPENAI_API_KEY=sk-...
+clawql inference policy show
+clawql inference serve --port 8080
+```
+
 ```bash
 # One-shot completion (requires provider credentials)
 export OPENAI_API_KEY=sk-...
 clawql inference complete --model openai/gpt-4o --message "Summarize this spec"
 
-# OpenAI-compatible HTTP gateway
+# OpenAI-compatible HTTP gateway (uses policy.yaml when present)
 clawql inference serve --port 8080
 curl -s http://127.0.0.1:8080/v1/chat/completions \
   -H 'Content-Type: application/json' \

@@ -28,6 +28,34 @@
 
 ---
 
+## Quick start
+
+**Example policy + walkthrough:** [`examples/inference/`](../../examples/inference/) (`policy.yaml` + README).
+
+```bash
+export CLAWQL_HOME="${CLAWQL_HOME:-$HOME/.clawql}"
+mkdir -p "$CLAWQL_HOME/Inference"
+cp examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
+
+export OPENAI_API_KEY=sk-...          # and/or OLLAMA_BASE_URL for local frugal tier
+export OLLAMA_BASE_URL=http://127.0.0.1:11434
+
+clawql inference policy show          # expect policy_source: manifest+env
+clawql inference serve --port 8080
+```
+
+Point clients at `OPENAI_BASE_URL=http://127.0.0.1:8080/v1`. Manifest YAML merges at **runtime** (`resolveInferenceEffectiveEnv`); env vars override YAML on conflicts.
+
+One-shot CLI (no HTTP):
+
+```bash
+clawql inference complete --model ollama/phi4 --message "hello"
+```
+
+See [Policy](#policy) for the full manifest schema and [Persistence layout](#persistence-layout) for other files under `$CLAWQL_HOME/Inference/`.
+
+---
+
 ## Architecture overview
 
 ### Entry points
@@ -441,7 +469,7 @@ clawql inference policy show [--json]
 
 `createInferenceGateway()`, `createInferenceGatewayAsync()`, `clawql inference serve`, and the HTTP app use the same merge via `resolveInferenceEffectiveEnv()` so operator YAML governs the live gateway stack (routing, cache, fallback, keys, efficiency layers, observability, pipeline worker) — not only `policy show`.
 
-Example manifest:
+Example manifest (full copy: [`examples/inference/policy.yaml`](../../examples/inference/policy.yaml)):
 
 ```yaml
 policyVersion: "2026.07.01"
