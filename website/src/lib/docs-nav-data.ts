@@ -71,6 +71,7 @@ export const docsNavigation: Array<NavGroup> = [
     title: 'Learn',
     links: [
       { title: 'Learn hub', href: '/learn' },
+      { title: 'Effect-TS in ClawQL', href: '/learn/effect-ts' },
       { title: 'Guides', href: '/guides' },
       { title: 'Token efficiency', href: '/architecture/token-efficiency' },
       { title: 'Security', href: '/security' },
