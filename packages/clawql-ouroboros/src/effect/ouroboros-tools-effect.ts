@@ -9,8 +9,10 @@ import type {
 } from "../mcp-hooks.js";
 import { OuroborosContextService } from "./ouroboros-context-service.js";
 import { OuroborosEventStoreService } from "./ouroboros-event-store-service.js";
+import { OuroborosLoopService } from "./ouroboros-loop-service.js";
 import { OuroborosError } from "./ouroboros-errors.js";
 import { ouroborosFromPromise } from "./ouroboros-effect-utils.js";
+import { executeRunEvolutionaryLoopFromInputEffect } from "./ouroboros-loop-service.js";
 
 export function executeCreateSeedFromDocumentEffect(
   input: z.infer<typeof CreateSeedFromDocumentSchema>
@@ -38,16 +40,9 @@ export function executeRunEvolutionaryLoopEffect(
     ReturnType<typeof import("../mcp-hooks.js").ouroborosMcpTools.runEvolutionaryLoop.handler>
   >,
   OuroborosError,
-  OuroborosContextService
+  OuroborosLoopService
 > {
-  return Effect.gen(function* () {
-    const ctxSvc = yield* OuroborosContextService;
-    const ctx = ctxSvc.getContext();
-    return yield* ouroborosFromPromise(async () => {
-      const { ouroborosMcpTools } = await import("../mcp-hooks.js");
-      return ouroborosMcpTools.runEvolutionaryLoop.handler(input, ctx);
-    });
-  });
+  return executeRunEvolutionaryLoopFromInputEffect(input);
 }
 
 export function executeGetLineageStatusEffect(

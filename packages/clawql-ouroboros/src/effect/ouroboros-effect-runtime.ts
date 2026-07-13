@@ -13,15 +13,20 @@ import {
   ouroborosEventStoreLiveLayer,
 } from "./ouroboros-event-store-service.js";
 import { OuroborosError } from "./ouroboros-errors.js";
+import { OuroborosLoopService, ouroborosLoopLiveLayer } from "./ouroboros-loop-service.js";
 import { OuroborosToolsService, ouroborosToolsLiveLayer } from "./ouroboros-tools-service.js";
 
 export type OuroborosServices =
-  OuroborosContextService | OuroborosToolsService | OuroborosEventStoreService;
+  | OuroborosContextService
+  | OuroborosToolsService
+  | OuroborosEventStoreService
+  | OuroborosLoopService;
 
 /** Merged Effect Layer for Ouroboros domain services. */
 export function ouroborosServicesLiveLayer(): Layer.Layer<OuroborosServices> {
   return Layer.mergeAll(
     ouroborosEventStoreLiveLayer(),
+    ouroborosLoopLiveLayer(),
     ouroborosContextLiveLayer(),
     ouroborosToolsLiveLayer()
   );

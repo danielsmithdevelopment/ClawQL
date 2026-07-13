@@ -6,6 +6,14 @@ export {
   ouroborosEventStoreLiveLayer,
 } from "./ouroboros-event-store-service.js";
 export {
+  OuroborosLoopService,
+  ouroborosLoopLiveLayer,
+  executeRunEvolutionaryLoopFromInputEffect,
+  formatRunEvolutionaryLoopMcpResult,
+  resetOuroborosLoopDepsForTests,
+} from "./ouroboros-loop-service.js";
+export { runEvolutionaryLoopBodyEffect } from "./evolutionary-loop-effect.js";
+export {
   executeCreateSeedFromDocumentEffect,
   executeGetLineageStatusEffect,
   executeMeasureDriftEffect,
