@@ -1,0 +1,62 @@
+{
+  "name": "clawql-codegraph",
+  "version": "7.0.0",
+  "description": "Structural code knowledge graph for ClawQL Memory — Graphify-style tree-sitter/AST indexing without embeddings",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./mcp": {
+      "types": "./dist/mcp/handlers.d.ts",
+      "import": "./dist/mcp/handlers.js",
+      "require": "./dist/mcp/handlers.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsup",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "effect": "^3.21.4",
+    "typescript": "^6.0.3",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsup": "^8.3.0",
+    "vitest": "^4.1.1"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/clawql-codegraph"
+  },
+  "keywords": [
+    "clawql",
+    "codegraph",
+    "knowledge-graph",
+    "memory",
+    "graphify"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

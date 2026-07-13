@@ -108,6 +108,7 @@
     "zod": "4.3.6",
     "clawql-api": "7.0.0",
     "clawql-pageindex": "7.0.0",
+    "clawql-codegraph": "7.0.0",
     "pg": "^8.21.0",
     "sql.js": "^1.14.1"
   },

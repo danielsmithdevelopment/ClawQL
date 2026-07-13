@@ -1,6 +1,14 @@
 import { Effect } from "effect";
 import { z } from "zod";
 import {
+  codegraphExplain,
+  codegraphIndex,
+  codegraphNeighbors,
+  codegraphPath,
+  codegraphQuery,
+  codegraphSubgraph,
+} from "clawql-codegraph/mcp";
+import {
   pageindexBuildTree,
   pageindexGetContent,
   pageindexSynthesize,
@@ -9,6 +17,7 @@ import {
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { runMemoryIngest, type MemoryIngestInput } from "../ingest/ingest.js";
 import { runMemoryRecall, type MemoryRecallInput } from "../recall/recall.js";
+import { codeGraphEnabled, defaultCodeGraphRoot } from "../recall/codegraph-recall.js";
 import { pageIndexEnabled } from "../recall/pageindex-recall.js";
 
 import type { Plugin } from "clawql-core";
@@ -124,6 +133,56 @@ export const pageindexGetContentToolSchema = {
   storagePath: z.string().optional(),
 };
 
+export const codegraphIndexToolSchema = {
+  rootPath: z
+    .string()
+    .optional()
+    .describe(
+      "Repository root to index. Defaults to CLAWQL_CODEGRAPH_ROOT or process cwd."
+    ),
+  graphId: z.string().optional().describe("Stable graph id (defaults from directory name)."),
+  maxFiles: z.number().int().positive().optional().describe("Cap indexed source files."),
+  storagePath: z.string().optional().describe("Optional JSON storage path override."),
+};
+
+export const codegraphQueryToolSchema = {
+  graphId: z.string().min(1),
+  query: z.string().min(1).describe("Symbol name, path fragment, or concept."),
+  limit: z.number().int().positive().optional(),
+  storagePath: z.string().optional(),
+};
+
+export const codegraphNeighborsToolSchema = {
+  graphId: z.string().min(1),
+  nodeId: z.string().min(1).describe("Exact node id from codegraph_query."),
+  edgeKinds: z
+    .array(z.enum(["imports", "exports", "contains", "calls", "extends", "implements", "references"]))
+    .optional(),
+  limit: z.number().int().positive().optional(),
+  storagePath: z.string().optional(),
+};
+
+export const codegraphPathToolSchema = {
+  graphId: z.string().min(1),
+  from: z.string().min(1).describe("Start symbol or concept."),
+  to: z.string().min(1).describe("End symbol or concept."),
+  storagePath: z.string().optional(),
+};
+
+export const codegraphExplainToolSchema = {
+  graphId: z.string().min(1),
+  nodeQuery: z.string().min(1).describe("Symbol or concept to explain."),
+  storagePath: z.string().optional(),
+};
+
+export const codegraphSubgraphToolSchema = {
+  graphId: z.string().min(1),
+  seedQuery: z.string().min(1),
+  maxDepth: z.number().int().min(0).max(6).optional(),
+  maxNodes: z.number().int().positive().optional(),
+  storagePath: z.string().optional(),
+};
+
 export async function handleMemoryIngestToolInput(
   params: MemoryIngestInput
 ): Promise<{ content: { type: "text"; text: string }[] }> {
@@ -221,6 +280,68 @@ export function createMemoryPlugin(): Plugin {
               content: [
                 { type: "text", text: JSON.stringify(await pageindexGetContent(args), null, 2) },
               ],
+            }),
+          });
+        }
+
+        if (codeGraphEnabled()) {
+          yield* api.registerMcpTool({
+            name: "codegraph_index",
+            schema: codegraphIndexToolSchema,
+            handler: async (args) => {
+              const params = args as { rootPath?: string; graphId?: string; maxFiles?: number; storagePath?: string };
+              logMcpToolShape("codegraph_index", {
+                rootPath: params.rootPath ?? defaultCodeGraphRoot(),
+                graphId: params.graphId,
+                maxFiles: params.maxFiles,
+              });
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: JSON.stringify(
+                      await codegraphIndex({ ...params, rootPath: params.rootPath ?? defaultCodeGraphRoot() }),
+                      null,
+                      2
+                    ),
+                  },
+                ],
+              };
+            },
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_query",
+            schema: codegraphQueryToolSchema,
+            handler: async (args) => ({
+              content: [{ type: "text", text: JSON.stringify(await codegraphQuery(args), null, 2) }],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_neighbors",
+            schema: codegraphNeighborsToolSchema,
+            handler: async (args) => ({
+              content: [{ type: "text", text: JSON.stringify(await codegraphNeighbors(args), null, 2) }],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_path",
+            schema: codegraphPathToolSchema,
+            handler: async (args) => ({
+              content: [{ type: "text", text: JSON.stringify(await codegraphPath(args), null, 2) }],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_explain",
+            schema: codegraphExplainToolSchema,
+            handler: async (args) => ({
+              content: [{ type: "text", text: JSON.stringify(await codegraphExplain(args), null, 2) }],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_subgraph",
+            schema: codegraphSubgraphToolSchema,
+            handler: async (args) => ({
+              content: [{ type: "text", text: JSON.stringify(await codegraphSubgraph(args), null, 2) }],
             }),
           });
         }

@@ -39,6 +39,8 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_ONYX: z.string().optional(),
   CLAWQL_ENABLE_OUROBOROS: z.string().optional(),
   CLAWQL_ENABLE_SANDBOX: z.string().optional(),
+  /** Structural code graph MCP tools (`codegraph_*`). Default false — register with `CLAWQL_ENABLE_CODEGRAPH=1`. */
+  CLAWQL_ENABLE_CODEGRAPH: z.string().optional(),
   /** ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)): HITL Label Studio enqueue + webhook path. Default false. */
   CLAWQL_ENABLE_HITL_LABEL_STUDIO: z.string().optional(),
   /** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)): ConeShare webhook + IDP sharing integration. Default false. */
@@ -120,6 +122,10 @@ export type ClawqlOptionalToolFlags = {
    */
   enableSandbox: boolean;
   /**
+   * Structural code knowledge graph (`codegraph_*`) — Graphify-style AST indexing for TypeScript/JavaScript. Default false.
+   */
+  enableCodeGraph: boolean;
+  /**
    * ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)): **`hitl_enqueue_label_studio`** + **`POST /hitl/label-studio/webhook`**. Default false.
    */
   enableHitlLabelStudio: boolean;
@@ -172,6 +178,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
     enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
+    enableCodeGraph: envTruthy(raw.CLAWQL_ENABLE_CODEGRAPH),
     enableHitlLabelStudio: envTruthy(raw.CLAWQL_ENABLE_HITL_LABEL_STUDIO),
     enableConeshare: envTruthy(raw.CLAWQL_ENABLE_CONESHARE),
     enableIdpPipeline: envTruthy(raw.CLAWQL_ENABLE_IDP_PIPELINE),

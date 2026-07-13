@@ -12,6 +12,7 @@ export default defineConfig({
     "ingest/enterprise-citations": "src/ingest/enterprise-citations.ts",
     "ingest/ingest": "src/ingest/ingest.ts",
     "recall/pageindex-recall": "src/recall/pageindex-recall.ts",
+    "recall/codegraph-recall": "src/recall/codegraph-recall.ts",
     "recall/recall": "src/recall/recall.ts",
     "embedding/embedding": "src/embedding/embedding.ts",
     "db/artifacts": "src/db/artifacts.ts",

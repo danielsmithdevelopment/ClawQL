@@ -26,6 +26,12 @@ Persists durable session knowledge to an **Obsidian-compatible vault** and recal
 | **`pageindex_traverse`**    | Walk the PageIndex tree under a token budget                                         |
 | **`pageindex_synthesize`**  | Merge selected nodes into agent context                                              |
 | **`pageindex_get_content`** | Read indexed node content                                                            |
+| **`codegraph_index`**       | Build structural code graph from repo root (`clawql-codegraph`, opt-in)              |
+| **`codegraph_query`**       | Find symbols by name or concept in the code graph                                    |
+| **`codegraph_neighbors`**   | List inbound/outbound edges (imports, calls, contains)                               |
+| **`codegraph_path`**        | Shortest path between two symbols (Graphify-style trace)                             |
+| **`codegraph_explain`**     | Summarize a symbol and its neighborhood                                              |
+| **`codegraph_subgraph`**    | BFS subgraph around a seed query                                                     |
 
 ## Enable / disable
 
@@ -33,6 +39,7 @@ Persists durable session knowledge to an **Obsidian-compatible vault** and recal
 | ------------------------------- | ------- | ----------------------------------------------------- |
 | **`CLAWQL_ENABLE_MEMORY=0`**    | on      | Omit `MemoryPlugin` and hide memory + PageIndex tools |
 | **`CLAWQL_ENABLE_PAGEINDEX=0`** | on      | Hide `pageindex_*` only (memory ingest/recall remain) |
+| **`CLAWQL_ENABLE_CODEGRAPH=1`** | off     | Register `codegraph_*` tools (structural code graph)  |
 
 ## Prerequisites
 
