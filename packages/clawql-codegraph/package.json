@@ -25,7 +25,8 @@
     "build": "npm run clean && tsup",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --config vitest.config.ts"
+    "test": "vitest run --config vitest.config.ts",
+    "test:dogfood": "vitest run --config vitest.config.ts src/dogfood/codegraph-dogfood.integration.test.ts"
   },
   "dependencies": {
     "effect": "^3.21.4",
