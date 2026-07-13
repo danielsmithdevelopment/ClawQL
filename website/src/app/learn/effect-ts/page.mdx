@@ -76,14 +76,14 @@ For a platform whose value proposition is **verifiability, governance, and resil
 
 ## Summary: why Effect-TS is non-negotiable for ClawQL
 
-| Architectural goal | How Effect-TS helps | Without it |
-| --- | --- | --- |
-| Acyclic dependency graph | Compile-time rejection of invalid imports | Easy to violate accidentally |
-| Gateway as single surface | Layers compose only through Gateway definitions | Cross-layer leakage becomes likely |
-| Disabled features ≈ zero overhead | Optional Layers are type-checked | Runtime flags or dead code paths |
-| Fail-closed semantics | Typed, explicit error channels | Swallowed or unexpected errors |
-| Testability and isolation | Mock Layers per concern | Harder to isolate failures |
-| Long-term architectural integrity | Rules live in the type system | Architecture drifts over time |
+| Architectural goal                | How Effect-TS helps                             | Without it                         |
+| --------------------------------- | ----------------------------------------------- | ---------------------------------- |
+| Acyclic dependency graph          | Compile-time rejection of invalid imports       | Easy to violate accidentally       |
+| Gateway as single surface         | Layers compose only through Gateway definitions | Cross-layer leakage becomes likely |
+| Disabled features ≈ zero overhead | Optional Layers are type-checked                | Runtime flags or dead code paths   |
+| Fail-closed semantics             | Typed, explicit error channels                  | Swallowed or unexpected errors     |
+| Testability and isolation         | Mock Layers per concern                         | Harder to isolate failures         |
+| Long-term architectural integrity | Rules live in the type system                   | Architecture drifts over time      |
 
 **Bottom line:** Effect-TS is not merely “the library we use for effects.” It is the **enforcement mechanism** for modularity, verifiable architecture, and reliable failure modes. Without it, the 7-layer model in the spec would be much harder to preserve in practice. With it, the compiler helps protect the design.
 
