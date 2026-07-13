@@ -122,6 +122,8 @@ Disable layers via options: `{ semanticCache: false }`, `{ fallback: false }`, `
 | `GET`  | `/v1/models/:id`       | Single model                                          |
 | `POST` | `/v1/chat/completions` | Bare `gpt-4o` or `provider/model`; `stream: true` SSE |
 
+When `stream: true`, token chunks are assembled into OpenAI-compatible SSE events via `Effect.Stream` (`openAiCompletionChunkStream`) with `streamCompletionAsOpenAiSseEffect` at the HTTP boundary.
+
 ### Request headers
 
 | Header                                         | Purpose                            |
