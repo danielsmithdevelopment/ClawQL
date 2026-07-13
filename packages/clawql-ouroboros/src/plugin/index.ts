@@ -14,8 +14,10 @@ export { getOuroborosContext, resetOuroborosContextForTests } from "./context.js
 export {
   OuroborosContextService,
   OuroborosError,
+  OuroborosEventStoreService,
   OuroborosToolsService,
   ouroborosContextLiveLayer,
+  ouroborosEventStoreLiveLayer,
   ouroborosCreateSeedProgram,
   ouroborosLineageProgram,
   ouroborosMeasureDriftProgram,

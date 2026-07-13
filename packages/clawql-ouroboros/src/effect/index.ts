@@ -2,6 +2,10 @@ export { OuroborosError } from "./ouroboros-errors.js";
 export { ouroborosFromPromise } from "./ouroboros-effect-utils.js";
 export { OuroborosContextService, ouroborosContextLiveLayer } from "./ouroboros-context-service.js";
 export {
+  OuroborosEventStoreService,
+  ouroborosEventStoreLiveLayer,
+} from "./ouroboros-event-store-service.js";
+export {
   executeCreateSeedFromDocumentEffect,
   executeGetLineageStatusEffect,
   executeMeasureDriftEffect,

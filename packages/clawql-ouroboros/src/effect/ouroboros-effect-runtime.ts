@@ -8,14 +8,23 @@ import type {
   RunOuroborosSchema,
 } from "../mcp-hooks.js";
 import { OuroborosContextService, ouroborosContextLiveLayer } from "./ouroboros-context-service.js";
+import {
+  OuroborosEventStoreService,
+  ouroborosEventStoreLiveLayer,
+} from "./ouroboros-event-store-service.js";
 import { OuroborosError } from "./ouroboros-errors.js";
 import { OuroborosToolsService, ouroborosToolsLiveLayer } from "./ouroboros-tools-service.js";
 
-export type OuroborosServices = OuroborosContextService | OuroborosToolsService;
+export type OuroborosServices =
+  OuroborosContextService | OuroborosToolsService | OuroborosEventStoreService;
 
 /** Merged Effect Layer for Ouroboros domain services. */
 export function ouroborosServicesLiveLayer(): Layer.Layer<OuroborosServices> {
-  return Layer.mergeAll(ouroborosContextLiveLayer(), ouroborosToolsLiveLayer());
+  return Layer.mergeAll(
+    ouroborosEventStoreLiveLayer(),
+    ouroborosContextLiveLayer(),
+    ouroborosToolsLiveLayer()
+  );
 }
 
 function throwOuroborosFailure(cause: Cause.Cause<unknown>): never {
