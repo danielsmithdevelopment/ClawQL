@@ -7,7 +7,7 @@ import { Effect } from "effect";
 import { executeOperationGraphQL } from "../graphql/in-process-execute.js";
 import { loadSpec, resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
 import type { Operation } from "../spec/operation-types.js";
-import type { LoadSpecFn } from "../search/search-live.js";
+import type { LoadSpecFn } from "../search/search-core.js";
 import { maybePresidioRedactText, presidioEnabled } from "../presidio/client.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./field-projection.js";
 import { executeNativeGraphQL } from "./native-graphql.js";
