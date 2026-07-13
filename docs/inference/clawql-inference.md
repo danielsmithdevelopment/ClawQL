@@ -439,6 +439,8 @@ clawql inference policy show [--json]
 
 `resolveInferencePolicy()` aggregates the effective view from **manifest YAML** (`$CLAWQL_HOME/Inference/policy.yaml` or `CLAWQL_INFERENCE_POLICY_MANIFEST`) merged with environment variables — **env wins on conflicts**. Source is `manifest+env` when a manifest is loaded, otherwise `env`.
 
+`createInferenceGateway()`, `createInferenceGatewayAsync()`, `clawql inference serve`, and the HTTP app use the same merge via `resolveInferenceEffectiveEnv()` so operator YAML governs the live gateway stack (routing, cache, fallback, keys, efficiency layers, observability, pipeline worker) — not only `policy show`.
+
 Example manifest:
 
 ```yaml
@@ -597,7 +599,7 @@ clawql inference <subcommand>
 - **OTLP infra tracing** — `CLAWQL_ENABLE_OTEL_TRACING=1` + `OTEL_EXPORTER_OTLP_*` → Tempo/collector
 - **Langfuse work traces** — ADR 0005 opt-out emission via OTLP to `{LANGFUSE_HOST}/api/public/otel/v1/traces`
 - **Distributed semantic cache** — `clawql_inference_semantic_cache` table with pgvector HNSW index
-- **Manifest YAML policy** — `$CLAWQL_HOME/Inference/policy.yaml` merged into `policy show` (env overrides)
+- **Manifest YAML policy** — `$CLAWQL_HOME/Inference/policy.yaml` merged at runtime (`resolveInferenceEffectiveEnv`) and in `policy show` (env overrides)
 - **Pipeline advisory locks** — Postgres `pg_try_advisory_lock` dedup across `serve` replicas
 
 ---

@@ -11,6 +11,7 @@ import { createVirtualKeyAuthMiddleware } from "./auth.js";
 import { createOpenAiCompatRouter } from "./openai-compat.js";
 import { maybeInitInferenceOtelTracing } from "../observability/otel-tracing.js";
 import { registerInferencePoolShutdownHooks } from "../store/postgres-pool.js";
+import { resolveInferenceEffectiveEnv } from "../policy/manifest.js";
 
 export type CreateInferenceHttpAppOptions = {
   gateway?: InferenceGateway;
@@ -19,7 +20,7 @@ export type CreateInferenceHttpAppOptions = {
 };
 
 export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = {}): Express {
-  const env = options.env;
+  const env = resolveInferenceEffectiveEnv(options.env ?? process.env);
   const registry =
     options.registry ??
     createProviderRegistry({
@@ -70,7 +71,7 @@ export async function runInferenceHttpServer(
     host?: string;
   } = {}
 ): Promise<{ app: Express; port: number; host: string }> {
-  const env = options.env ?? process.env;
+  const env = resolveInferenceEffectiveEnv(options.env ?? process.env);
   registerInferencePoolShutdownHooks();
   await maybeInitInferenceOtelTracing(env);
   const registry = createProviderRegistry({

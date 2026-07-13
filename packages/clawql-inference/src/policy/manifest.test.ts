@@ -6,6 +6,7 @@ import {
   loadInferencePolicyManifestSync,
   manifestToEnvOverrides,
   mergeEnvWithPolicyManifest,
+  resolveInferenceEffectiveEnv,
   parseInferencePolicyManifestText,
 } from "./manifest.js";
 
@@ -67,5 +68,17 @@ inference:
     const loaded = loadInferencePolicyManifestSync({ CLAWQL_HOME: dir });
     expect(loaded?.path).toContain("policy.yaml");
     expect(loaded?.manifest.inference.fallback?.enabled).toBe(true);
+  });
+
+  it("resolveInferenceEffectiveEnv is mergeEnvWithPolicyManifest from disk", () => {
+    const dir = join(tmpdir(), `clawql-effective-env-${Date.now()}`);
+    mkdirSync(join(dir, "Inference"), { recursive: true });
+    writeFileSync(
+      join(dir, "Inference", "policy.yaml"),
+      `inference:\n  pipelineWorker:\n    enabled: true\n`,
+      "utf8"
+    );
+    const effective = resolveInferenceEffectiveEnv({ CLAWQL_HOME: dir });
+    expect(effective.CLAWQL_INFERENCE_PIPELINE_WORKER).toBe("1");
   });
 });

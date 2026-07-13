@@ -243,6 +243,7 @@ export { resolveInferencePolicy, type InferencePolicyView } from "./policy/resol
 export {
   loadInferencePolicyManifestSync,
   resolvePolicyManifestPath,
+  resolveInferenceEffectiveEnv,
   parseInferencePolicyManifestText,
   type InferencePolicyManifest,
 } from "./policy/manifest.js";
