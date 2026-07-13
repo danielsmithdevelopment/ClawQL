@@ -4,6 +4,7 @@
     "clawql-core",
     "clawql-auth",
     "clawql-pageindex",
+    "clawql-codegraph",
     "clawql-api",
     "clawql-memory",
     "clawql-release",

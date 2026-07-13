@@ -48,7 +48,7 @@ resolve_pkg() {
   return 1
 }
 
-for name in clawql-api clawql-auth clawql-core clawql-memory clawql-pageindex clawql-documents clawql-automation clawql-sandbox clawql-inference clawql-payments clawql-ouroboros clawql-operator clawql-release; do
+for name in clawql-api clawql-auth clawql-core clawql-codegraph clawql-memory clawql-pageindex clawql-documents clawql-automation clawql-sandbox clawql-inference clawql-payments clawql-ouroboros clawql-operator clawql-release; do
   resolve_pkg "${name}"
 done
 
@@ -59,6 +59,7 @@ import "clawql-core";
 import "clawql-memory";
 import "clawql-auth";
 import "clawql-pageindex";
+import "clawql-codegraph";
 console.log("OK: npm pack install resolves separate clawql-* packages");
 NODE
 
