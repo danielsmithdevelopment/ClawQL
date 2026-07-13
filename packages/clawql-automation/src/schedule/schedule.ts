@@ -878,7 +878,7 @@ export function registerScheduleWorkerShutdownHooks(): void {
   process.once("exit", shutdown);
 }
 
-export async function handleScheduleToolInput(
+export async function executeScheduleToolCore(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
   const parsed = scheduleInputSchema.parse(params);
@@ -1008,6 +1008,15 @@ export async function handleScheduleToolInput(
   } finally {
     db.close();
   }
+}
+
+/** Public async facade for schedule MCP tool. */
+export async function handleScheduleToolInput(
+  params: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const { runAutomationEffect, automationScheduleProgram } =
+    await import("../effect/automation-effect-runtime.js");
+  return runAutomationEffect(automationScheduleProgram(params));
 }
 
 /** Test helper. */

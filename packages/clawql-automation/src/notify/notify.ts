@@ -40,7 +40,7 @@ export type NotifySlackInput = {
   fields?: string[];
 };
 
-export async function runNotifySlack(
+export async function executeNotifySlackCore(
   params: NotifySlackInput
 ): Promise<{ content: { type: "text"; text: string }[] }> {
   const auth = mergedAuthHeaders("slack");
@@ -147,4 +147,13 @@ export async function runNotifySlack(
     // non-JSON execute error — return as-is
   }
   return exec;
+}
+
+/** Public async facade for Slack notify (MCP tools, schedule worker). */
+export async function runNotifySlack(
+  params: NotifySlackInput
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const { runAutomationEffect, automationNotifyProgram } =
+    await import("../effect/automation-effect-runtime.js");
+  return runAutomationEffect(automationNotifyProgram(params));
 }

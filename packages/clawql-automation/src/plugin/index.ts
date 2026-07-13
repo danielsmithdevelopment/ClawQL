@@ -19,3 +19,15 @@ export {
 export { workflowToolSchema } from "../workflow/workflow.js";
 export { argocdToolSchema } from "../argocd/argocd.js";
 export { runVaultDailyDigest } from "../workflow/vault-digest/run-vault-digest.js";
+export {
+  AutomationError,
+  AutomationToolsService,
+  automationArgocdProgram,
+  automationNotifyProgram,
+  automationScheduleProgram,
+  automationServicesLiveLayer,
+  automationToolsLiveLayer,
+  automationWorkflowProgram,
+  runAutomationEffect,
+  type AutomationServices,
+} from "../effect/index.js";
