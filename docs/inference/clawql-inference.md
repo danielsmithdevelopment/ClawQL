@@ -274,6 +274,8 @@ When plan enforcement is enabled, the gateway checks limits before each completi
 
 Limit breaches throw `EntitlementLimitError` (HTTP 402-shaped OpenAI error) and append a WORM payment audit entry.
 
+`EntitlementEnforcedGateway` keeps the public `InferenceGateway` API (`Promise`-based `complete()`). Internally, entitlement checks and billing run through Effect services wired to `clawql-payments` (`EntitlementEnforcementService`, `EntitlementService`, `UsageStoreService`, `StripeMeterService`) with `runEntitlementEffect()` at the async boundary.
+
 **Middleware order** in `createInferenceHttpApp()`: x402 payment middleware → virtual key auth → OpenAI-compat router.
 
 **Do not conflate** plan usage (`usage.json`), inference call-store tokens (`clawql inference spend`), and virtual-key USD budgets — see [Three usage systems](../payments/clawql-payments.md#three-usage-systems-do-not-conflate).
