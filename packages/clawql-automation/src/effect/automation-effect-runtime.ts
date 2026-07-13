@@ -10,6 +10,17 @@ export function automationServicesLiveLayer(): Layer.Layer<AutomationServices> {
   return automationToolsLiveLayer();
 }
 
+import { AutomationError } from "./automation-errors.js";
+
+function throwAutomationFailure(cause: Cause.Cause<unknown>): never {
+  const squashed = Cause.squash(cause);
+  if (squashed instanceof AutomationError && squashed.cause != null) {
+    if (squashed.cause instanceof Error) throw squashed.cause;
+    throw new Error(String(squashed.cause));
+  }
+  throw squashed;
+}
+
 /** Run an automation Effect program with default services Layer. */
 export async function runAutomationEffect<A, E>(
   program: Effect.Effect<A, E, AutomationServices>
@@ -20,7 +31,7 @@ export async function runAutomationEffect<A, E>(
   if (Exit.isSuccess(exit)) {
     return exit.value;
   }
-  throw Cause.squash(exit.cause);
+  throwAutomationFailure(exit.cause);
 }
 
 export function automationNotifyProgram(
