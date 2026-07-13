@@ -1,0 +1,96 @@
+# Effect-TS in ClawQL
+
+**Effect-TS is the mechanism that makes ClawQL’s 7-layer architecture enforceable at the type level** — not merely documented. In plain TypeScript, rules like “no vertical may import another vertical” and “all cross-layer communication routes through the Gateway” are conventions that depend on discipline. Effect-TS turns them into **compile-time guarantees**. {{ className: 'lead' }}
+
+**Canonical references:** [Contributor Technical Specification §3](/contributing/technical-specification) · [Modularization](/vision/modularization) · [Architecture](/architecture) · [Effect + plugin plan](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/effect-ts-modularization-rearchitecture-plan.md) · [effect.website](https://effect.website)
+
+## What Effect-TS actually provides
+
+Effect-TS is a TypeScript library that models **effects** — side effects, async work, dependencies, errors, concurrency, and resources — as first-class, composable values. For ClawQL, two features matter most:
+
+- **Layered dependency injection** — Dependencies are typed **`Layer`** values. Layers compose only in controlled ways at the Gateway.
+- **Compile-time dependency enforcement** — The type system rejects invalid dependency graphs before code runs.
+
+This is similar in spirit to ZIO Layers in Scala or strict DI crates in Rust, but tailored for TypeScript.
+
+## Why this matters for ClawQL’s architecture
+
+ClawQL’s design rests on invariants that are hard to maintain with folder discipline alone.
+
+### Strictly acyclic dependency graph (the core rule)
+
+The specification states repeatedly:
+
+> The dependency graph is strictly acyclic. Verticals never import other verticals. All cross-layer and cross-vertical communication routes through the gateway.
+
+In conventional TypeScript, this rule breaks easily — a utility in one layer gets imported by another, a shared helper sneaks in, or a “just this once” shortcut becomes permanent coupling.
+
+**With Effect-TS**, each layer is its own **`Layer`**, composed only through Gateway definitions. The compiler refuses code that bypasses that surface. That is what **compile-time dependency enforcement** means in practice.
+
+### Modularity and disabled features with zero overhead
+
+The architecture claims:
+
+> Disabled features carry negligible runtime overhead.
+
+Effect **`Layer`** composition makes optional capabilities type-safe. Ouroboros coordination, advanced Memory pruning, or security plugins can be **not provided** at startup. Because dependencies are tracked in types, nothing from a disabled layer can leak into the running program.
+
+Without Effect-TS (or an equivalent), you rely on runtime feature flags or conditional imports — more overhead and more risk.
+
+### Fail-closed behavior and structured error handling
+
+ClawQL emphasizes **fail-closed** semantics throughout:
+
+- PEP must halt on invalid Manifest or ATRClaims
+- Circuit Breaker must transition reliably
+- WORM writes must succeed or the action is rejected
+
+Effect-TS requires explicit, typed error handling. You cannot accidentally swallow a failure or let an unexpected error vanish. That aligns with rules like “execution fails-closed if WORM write fails.”
+
+### Testability and isolation of layers
+
+Because each layer’s dependencies are explicit **`Layer`** provisions, you can:
+
+- Test Gateway / PEP in isolation with mock Layers for Memory, Ouroboros, Watchdog, and peers
+- Exercise the Coordinator Watchdog without a live Gateway
+- Rely on types to catch cross-layer breakage when one package changes
+
+That matters for partial-failure scenarios — circuit breaker trips, air-gap breakout, degraded optional plugins.
+
+### Long-term maintainability
+
+ClawQL combines cryptographic verification (Manifest + ActionLeaves), policy enforcement (ATRClaims + two-phase commit), coordination (Ouroboros + Watchdog), observability (LGTMP + WORM), and security redaction. Without structural enforcement, those concerns bleed together over time.
+
+Effect-TS is a **structural contract** that keeps the layered model intact as the codebase and contributor base grow.
+
+## What would happen without Effect-TS?
+
+You would fall back to conventional TypeScript patterns:
+
+- Barrel exports and careful folder naming
+- Runtime checks or DI libraries with weaker compile-time graphs
+- Greater risk of circular dependencies and hidden coupling
+- Harder proof that “acyclic” and “Gateway-only” rules are actually followed
+
+For a platform whose value proposition is **verifiability, governance, and resilience**, relying on discipline alone for core invariants is risky.
+
+## Summary: why Effect-TS is non-negotiable for ClawQL
+
+| Architectural goal | How Effect-TS helps | Without it |
+| --- | --- | --- |
+| Acyclic dependency graph | Compile-time rejection of invalid imports | Easy to violate accidentally |
+| Gateway as single surface | Layers compose only through Gateway definitions | Cross-layer leakage becomes likely |
+| Disabled features ≈ zero overhead | Optional Layers are type-checked | Runtime flags or dead code paths |
+| Fail-closed semantics | Typed, explicit error channels | Swallowed or unexpected errors |
+| Testability and isolation | Mock Layers per concern | Harder to isolate failures |
+| Long-term architectural integrity | Rules live in the type system | Architecture drifts over time |
+
+**Bottom line:** Effect-TS is not merely “the library we use for effects.” It is the **enforcement mechanism** for modularity, verifiable architecture, and reliable failure modes. Without it, the 7-layer model in the spec would be much harder to preserve in practice. With it, the compiler helps protect the design.
+
+## Related guides and references
+
+- [Contributor Technical Specification](/contributing/technical-specification) — §2 architectural constraints, §3 Effect patterns, Layer checklists
+- [Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md) — shipped vs roadmap for Effect Layers
+- [Plugin model & registry](/reference/plugins) — how plugins register today and migrate toward Layers
+- [Architecture & vision](/architecture) — platform layers and DAOS context
+- [Vision & roadmap](/vision/roadmap) — Effect-TS as foundation (honest shipped vs planned)

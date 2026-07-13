@@ -89,6 +89,21 @@ export const learnModuleSiteCards: Array<ReferenceCard> = [
     },
   },
   {
+    href: '/learn/effect-ts',
+    name: 'Effect-TS in ClawQL',
+    description:
+      'Why Effect-TS enforces the 7-layer architecture: Layers, Gateway composition, fail-closed errors, and optional plugins.',
+    icon: CogIcon,
+    pattern: {
+      y: 6,
+      squares: [
+        [0, 0],
+        [1, 2],
+        [2, 1],
+      ],
+    },
+  },
+  {
     href: '/learn/ouroboros-tools',
     name: 'Ouroboros tools',
     description:
