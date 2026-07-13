@@ -10,7 +10,6 @@ import { getClawqlOptionalToolFlags } from "clawql-api";
 import { maybePresidioRedactText, presidioEnabled } from "clawql-api";
 import { buildUrlIngestNote, formatUrlResponseAsMarkdown } from "./url-format.js";
 import { slugifyTitle } from "clawql-memory/ingest/slug";
-import { getObsidianVaultPath } from "clawql-memory/vault/config";
 import {
   resolveVaultPath,
   withVaultWriteLock,
@@ -198,11 +197,13 @@ async function fetchUrlResource(urlStr: string): Promise<{
 
 /**
  * Run external ingest: Markdown documents and/or (opt-in) URL fetch.
+ * Vault path is resolved by the caller (Effect layer or tests).
  */
-export async function runIngestExternalKnowledge(
+export async function executeExternalIngestCore(
+  vault: string | null,
   input: ExternalIngestInput
 ): Promise<ExternalIngestResult> {
-  const vaultConfigured = getObsidianVaultPath() !== null;
+  const vaultConfigured = vault !== null;
   if (!getClawqlOptionalToolFlags().enableDocuments) {
     return {
       ok: false,
@@ -217,7 +218,6 @@ export async function runIngestExternalKnowledge(
   }
   const enabled = externalIngestFeatureEnabled();
   const dryRun = input.dryRun !== false;
-  const vault = getObsidianVaultPath();
 
   if (!enabled) {
     return {
@@ -475,4 +475,13 @@ export async function runIngestExternalKnowledge(
     relatedIssues: [40, 24, 25, 27],
     ...hints,
   };
+}
+
+/** Public async facade for external ingest (MCP tools, scripts). */
+export async function runIngestExternalKnowledge(
+  input: ExternalIngestInput
+): Promise<ExternalIngestResult> {
+  const { runDocumentsEffect, documentsIngestProgram } =
+    await import("../effect/documents-effect-runtime.js");
+  return runDocumentsEffect(documentsIngestProgram(input));
 }
