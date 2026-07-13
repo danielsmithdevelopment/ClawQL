@@ -35,6 +35,7 @@ export {
   UnconfiguredInferenceGateway,
   ConfiguredInferenceGateway,
   createInferenceGateway,
+  createInferenceGatewayAsync,
 } from "./gateway.js";
 
 export {
@@ -75,6 +76,19 @@ export {
 export { InMemoryInferenceStore } from "./store/in-memory.js";
 export { JsonlInferenceStore } from "./store/jsonl.js";
 export { ObservedInferenceGateway, withInferenceStore } from "./observability/observed-gateway.js";
+export { TracedInferenceGateway, withInferenceTracing } from "./observability/traced-gateway.js";
+export {
+  maybeInitInferenceOtelTracing,
+  inferenceTracingFeatureEnabled,
+  withInferenceSpan,
+} from "./observability/otel-tracing.js";
+export {
+  resolveObservabilityProfile,
+  langfuseTracingEnabled,
+  otelInfraTracingEnabled,
+  inferenceTracingEnabled,
+} from "./observability/profile.js";
+export { resolveLangfuseOtlpConfig } from "./observability/langfuse-config.js";
 export { parseSinceDuration } from "./observability/parse-since.js";
 export { runInferenceLogs, runInferenceTrace, runInferenceSpend } from "./cli/observability.js";
 export { runInferenceExportCli, type InferenceExportCliOptions } from "./cli/export.js";
@@ -152,9 +166,14 @@ export {
   withSemanticCache,
   SemanticCachedGateway,
   isSemanticCachedGateway,
-  createSemanticCacheStore,
   type WithSemanticCacheOptions,
 } from "./cache/cached-gateway.js";
+export {
+  createSemanticCacheStore,
+  resolveSemanticCacheBackend,
+  PostgresSemanticCacheStore,
+  type SemanticCacheBackend,
+} from "./cache/postgres-pgvector-store.js";
 export {
   loadSemanticCacheConfig,
   semanticCacheActive,

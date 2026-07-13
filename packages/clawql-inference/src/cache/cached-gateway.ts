@@ -1,6 +1,5 @@
 import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../gateway.js";
 import { createEmbedder, resolveInferenceEmbeddingConfig, type Embedder } from "./embedding.js";
-import { InMemorySemanticCacheStore } from "./in-memory.js";
 import {
   completeWithSemanticCacheProgram,
   runSemanticCacheEffect,
@@ -41,15 +40,6 @@ export type WithSemanticCacheOptions = {
   embedder?: Embedder;
 };
 
-export function createSemanticCacheStore(config: SemanticCacheConfig): InMemorySemanticCacheStore {
-  return new InMemorySemanticCacheStore({
-    enabled: config.enabled,
-    threshold: config.threshold,
-    ttlMs: config.ttlMs,
-    maxEntries: config.maxEntries,
-  });
-}
-
 export function withSemanticCache(
   gateway: InferenceGateway,
   options: WithSemanticCacheOptions = {}
@@ -61,9 +51,15 @@ export function withSemanticCache(
   const embeddingConfig = resolveInferenceEmbeddingConfig(env);
   if (!embeddingConfig && !options.embedder) return gateway;
 
+  if (!options.cache) {
+    console.warn(
+      "[clawql-inference] semantic cache enabled without pre-initialized store; use createSemanticCacheStore() in serve/bootstrap"
+    );
+    return gateway;
+  }
+
   const embedder = options.embedder ?? createEmbedder(embeddingConfig!);
-  const cache = options.cache ?? createSemanticCacheStore(config);
-  return new SemanticCachedGateway(gateway, cache, config, embedder);
+  return new SemanticCachedGateway(gateway, options.cache, config, embedder);
 }
 
 export function isSemanticCachedGateway(

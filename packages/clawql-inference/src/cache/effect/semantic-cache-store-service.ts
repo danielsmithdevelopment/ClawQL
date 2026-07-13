@@ -26,9 +26,9 @@ export function semanticCacheStoreLiveLayer(
   return Layer.succeed(
     SemanticCacheStoreService,
     SemanticCacheStoreService.of({
-      lookup: (input) => Effect.sync(() => store.lookup(input)),
-      put: (entry) => Effect.sync(() => store.put(entry)),
-      invalidateByTags: (tags, now) => Effect.sync(() => store.invalidateByTags(tags, now)),
+      lookup: (input) => Effect.promise(() => store.lookup(input)),
+      put: (entry) => Effect.promise(() => store.put(entry)),
+      invalidateByTags: (tags, now) => Effect.promise(() => store.invalidateByTags(tags, now)),
     })
   );
 }

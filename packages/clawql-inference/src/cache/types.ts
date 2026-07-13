@@ -87,9 +87,9 @@ export interface SemanticCacheStore {
     embedding: Float32Array;
     threshold: number;
     now?: number;
-  }): SemanticCacheLookupResult | null;
-  put(entry: SemanticCacheEntry): void;
-  invalidateByTags(tags: string[], now?: number): number;
+  }): Promise<SemanticCacheLookupResult | null>;
+  put(entry: SemanticCacheEntry): Promise<void>;
+  invalidateByTags(tags: string[], now?: number): Promise<number>;
   stats(): SemanticCacheStats;
-  prune(now?: number): number;
+  prune(now?: number): Promise<number>;
 }

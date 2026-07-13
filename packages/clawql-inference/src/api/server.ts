@@ -2,24 +2,30 @@ import express, { type Express } from "express";
 import { createX402PaymentMiddleware } from "clawql-payments/x402";
 import { attachPaymentsWellKnownRoutes } from "clawql-payments/discovery";
 import { attachMppOpenApiRoutes, isMppOpenApiEnabled } from "clawql-payments/mpp";
-import { createInferenceGateway } from "../gateway.js";
+import { createInferenceGateway, createInferenceGatewayAsync } from "../gateway.js";
 import type { InferenceGateway } from "../gateway.js";
 import { createProviderRegistry } from "../providers/registry.js";
 import { composeDefaultProviderPlugins } from "../plugin/compose.js";
+import type { ProviderRegistry } from "../providers/types.js";
 import { createVirtualKeyAuthMiddleware } from "./auth.js";
 import { createOpenAiCompatRouter } from "./openai-compat.js";
+import { maybeInitInferenceOtelTracing } from "../observability/otel-tracing.js";
+import { registerInferencePoolShutdownHooks } from "../store/postgres-pool.js";
 
 export type CreateInferenceHttpAppOptions = {
   gateway?: InferenceGateway;
+  registry?: ProviderRegistry;
   env?: NodeJS.ProcessEnv;
 };
 
 export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = {}): Express {
   const env = options.env;
-  const registry = createProviderRegistry({
-    env,
-    plugins: composeDefaultProviderPlugins(),
-  });
+  const registry =
+    options.registry ??
+    createProviderRegistry({
+      env,
+      plugins: composeDefaultProviderPlugins(),
+    });
   const gateway = options.gateway ?? createInferenceGateway({ env, providers: registry });
   const app = express();
   app.use(express.json({ limit: "2mb" }));
@@ -65,7 +71,15 @@ export async function runInferenceHttpServer(
   } = {}
 ): Promise<{ app: Express; port: number; host: string }> {
   const env = options.env ?? process.env;
-  const app = createInferenceHttpApp({ gateway: options.gateway, env });
+  registerInferencePoolShutdownHooks();
+  await maybeInitInferenceOtelTracing(env);
+  const registry = createProviderRegistry({
+    env,
+    plugins: composeDefaultProviderPlugins(),
+  });
+  const gateway =
+    options.gateway ?? (await createInferenceGatewayAsync({ env, providers: registry }));
+  const app = createInferenceHttpApp({ gateway, registry, env });
   const port = options.port ?? resolveInferencePort(env);
   const host = options.host ?? resolveInferenceHost(env);
   await new Promise<void>((resolve) => {
