@@ -172,20 +172,6 @@ export const learnModuleSiteCards: Array<ReferenceCard> = [
     },
   },
   {
-    href: '/learn/vault-memory-between-chats',
-    name: 'Vault memory between chats',
-    description:
-      'Durable `memory_ingest` / `memory_recall` across MCP restarts — vault paths, graph depth, and hygiene.',
-    icon: ChatBubbleIcon,
-    pattern: {
-      y: 8,
-      squares: [
-        [1, 2],
-        [2, 0],
-      ],
-    },
-  },
-  {
     href: '/learn/audit-tool-and-observability',
     name: 'Audit tool & observability',
     description:

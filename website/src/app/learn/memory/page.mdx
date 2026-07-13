@@ -2,7 +2,7 @@
 
 **`clawql-memory`** is ClawQL’s durable knowledge layer — the answer to **ephemeral agent state**. Chat threads, in-process **`cache`** keys, and one-shot RAG chunks disappear when a process restarts or a session ends. Memory persists **institutional knowledge** as Markdown in an Obsidian-style vault, indexes it for hybrid recall, and (optionally) shares it across teammates. {{ className: 'lead' }}
 
-**Hands-on MCP walkthrough:** [Vault memory between chats](/learn/vault-memory-between-chats) · **Canonical repo docs:** [memory-obsidian.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/memory-obsidian.md) · [MCP tools § memory](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) · [Modularization § Layer 3](/vision/modularization)
+**Canonical repo docs:** [memory-obsidian.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/memory-obsidian.md) · [MCP tools § memory](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) · [Modularization § Layer 3](/vision/modularization)
 
 <Note>
   **Shipped vs vision:** This page describes what **`memory_ingest`** /
@@ -82,6 +82,89 @@ Today’s shipped stack is a **practical subset** of the full Memory 2.0 triple-
 | **`pageindex_get_content`** | Read a indexed node’s body                                           |
 
 Default **on**; hide all memory + PageIndex tools with **`CLAWQL_ENABLE_MEMORY=0`**. Hide PageIndex only with **`CLAWQL_ENABLE_PAGEINDEX=0`**. Requires a writable **`CLAWQL_OBSIDIAN_VAULT_PATH`** for real I/O.
+
+For **same-process** scratch state only, see [Cache handoff between chats](/learn/cache-handoff-between-chats).
+
+## Hands-on: memory between chats
+
+Use **`memory_ingest`** and **`memory_recall`** when context should **survive MCP server restarts**, pod reschedules, or starting a **new chat days later**. They read and write **Markdown under an Obsidian-style vault path** (plus an optional **`memory.db`** sidecar for hybrid recall)—not the in-process **`cache`** map.
+
+|                | **`cache`**                          | **`memory_ingest`** / **`memory_recall`**                                          |
+| -------------- | ------------------------------------ | ---------------------------------------------------------------------------------- |
+| **Storage**    | RAM in one Node process              | **Markdown files** under **`Memory/`** in the vault (and optional **`memory.db`**) |
+| **Restarts**   | **Lost**                             | **Kept** on disk (same vault path)                                                 |
+| **Kubernetes** | Each pod has its **own** empty cache | Needs a **shared writable volume** if you run **multiple replicas**                |
+| **Opt-out**    | Always on (Core)                     | Hide with **`CLAWQL_ENABLE_MEMORY=0`** (default is **on** when unset)              |
+
+### Storage you must provide (local dir or PVC)
+
+Vault memory is only real if the server has a **writable** place for files.
+
+1. **Set `CLAWQL_OBSIDIAN_VAULT_PATH`** to a directory that **already exists** and is **writable** by the ClawQL process at startup (see [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) § **`memory_ingest`**).
+2. **`memory_ingest`** creates pages under **`Memory/<slug>.md`** with YAML frontmatter; **`memory_recall`** scans that tree (subject to **`CLAWQL_MEMORY_RECALL_*`** defaults).
+
+**Local / VM / bare Docker**
+
+- Choose a folder on disk (for example **`~/ClawQL-vault`**), ensure permissions match the user running **`clawql-mcp`**, export **`CLAWQL_OBSIDIAN_VAULT_PATH`** to that path.
+- Back up the directory like any other data you care about.
+
+**Kubernetes**
+
+- The container filesystem alone is **ephemeral**: if you do not mount storage, notes disappear when the pod is recreated.
+- Use a **PersistentVolumeClaim** (or another supported volume type) mounted at the path you pass as **`CLAWQL_OBSIDIAN_VAULT_PATH`** (images often default to something like **`/vault`**—override to match your mount).
+- For **more than one replica**, use a volume that is **shared read-write** across pods (**RWX**) so every pod sees the same Markdown; otherwise each replica has its own isolated vault.
+- Local Docker Desktop flows in this repo often use **`hostPath`** for a vault under **`$HOME/.ClawQL`**—see [Kubernetes](/kubernetes) (**`CLAWQL_LOCAL_VAULT_HOST_PATH`**) and [Helm](/helm).
+
+**Managed platforms** (for example Cloud Run) treat unattached disk as ephemeral unless you add a **mounted volume**; see [deploy-cloud-run.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-cloud-run.md) for the same constraint in prose.
+
+### Before you start
+
+1. Confirm **`CLAWQL_ENABLE_MEMORY`** is **not** set to **`0`** (tools hidden).
+2. Confirm **`CLAWQL_OBSIDIAN_VAULT_PATH`** points at your **real** vault and that **`Memory/`** can be created or updated.
+3. **`ingest`** and **`recall`** must use the **same** vault root—path mismatches between environments produce empty recall or writes you cannot see (see [case study](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/truenas-scale-corgicave-homelab-networking-ssh-case-study-2026-04.md)).
+4. Treat vault Markdown as **sensitive** if you put secrets inside; prefer redaction and short-lived tokens in prose.
+
+### Pattern: checkpoint with memory_ingest
+
+At the end of a thread (or after a milestone), persist a distilled note: **goal**, **done**, **next**, **constraints**, **links**. Use a **`title`** you can **`memory_recall`** against later.
+
+```json
+{
+  "title": "Handoff — Acme API hardening",
+  "insights": "## Goal\nLock down the Acme public API review workflow.\n\n## Done\n- OpenAPI merge uses CLAWQL_SPEC_PATH + bundled slack\n\n## Next\n1. execute slack::conversations_list\n2. Post summary to #review-bot\n\n## Constraints\n- Branch feat/api-review; no production executes",
+  "append": true,
+  "wikilinks": ["Slack MCP", "Security review"]
+}
+```
+
+Optional fields include **`conversation`**, **`toolOutputs`**, **`toolOutputsFile`** (server-side file allowlist), **`enterpriseCitations`**, **`sessionId`**—full table in [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) § **`memory_ingest`**.
+
+Re-using the **`title`** with **`append: true`** (default) **appends** a new dated section instead of overwriting the whole note—good for running threads. Open the same folder in Obsidian (optional) to inspect what agents wrote.
+
+### Pattern: hydrate with memory_recall
+
+In a **new** chat (or after a restart), pull vault context **before** planning.
+
+```json
+{
+  "query": "Acme API hardening slack review",
+  "limit": 8,
+  "maxDepth": 2
+}
+```
+
+Responses include **`results[]`** with **`path`**, **`snippet`**, **`score`**, **`reason`** (**`keyword`**, **`link`**, or **`vector`** when embeddings are configured). Turn the snippets into your working set—or ask the agent to quote them and continue.
+
+Tune **`limit`**, **`maxDepth`**, and **`minScore`** to balance noise vs coverage (see [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) § **`memory_recall`**).
+
+### Limits and pitfalls
+
+- **No vault path** — tools may be registered but writes/recall require a valid **`CLAWQL_OBSIDIAN_VAULT_PATH`**.
+- **Read-only mount** — **`memory_ingest`** fails; fix volume permissions or mount options.
+- **Replicas without shared storage** — each pod’s vault diverges; use one replica or **RWX** PVC.
+- **Large logs** — use **`toolOutputsFile`** with **`CLAWQL_MEMORY_INGEST_FILE_ROOTS`** instead of megabyte **`toolOutputs`** in JSON.
+
+Use **`cache`** when everything happens on **one long-lived process** and you only need a **throwaway** handoff key. Move to **`memory_ingest`** / **`memory_recall`** when restarts, **shared teams**, or **audit-friendly** Markdown matter — see [Cache handoff between chats](/learn/cache-handoff-between-chats).
 
 ## Ingestion: from agent summary to vault page
 
@@ -219,8 +302,8 @@ Treat vault Markdown as **sensitive** if notes contain tokens or PII. Prefer red
 
 ## Related guides and references
 
-- [Vault memory between chats](/learn/vault-memory-between-chats) — MCP examples, PVC/K8s, append threading
 - [Cache handoff between chats](/learn/cache-handoff-between-chats) — when **`cache`** is enough
+- [OpenClaw → `memory_recall` case study](/case-studies/openclaw-clawql-memory-recall-2026-06) · [Cross-thread vault recall](/case-studies/cross-thread-vault-recall)
 - [Team vault sync](/getting-started/team-vault-sync) — R2/S3/GCS, Helm **`teamSync`**, **`memory_sync`**
 - [clawql-inference](/inference/clawql-inference) — export, fine-tune, semantic cache, flywheel
 - [Memory plugin](/plugins/memory) — env table and tool list

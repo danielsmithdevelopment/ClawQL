@@ -215,15 +215,15 @@ Local validation in this case study **precedes** cluster deploy; the Helm templa
 
 ## 11. References
 
-| Doc                                                                                           | Topic                                     |
-| --------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| [using-openclaw-with-clawql.md](../openclaw/using-openclaw-with-clawql.md)                    | Full OpenClaw + ClawQL guide              |
-| [clawql-bootstrap.md](../openclaw/clawql-bootstrap.md)                                        | Bootstrap smoke tests                     |
-| [cross-thread-vault-recall-cuckoo-filters.md](cross-thread-vault-recall-cuckoo-filters.md)    | Cursor recall + GitHub `search`/`execute` |
-| [vault-memory-github-session-2026-04.md](vault-memory-github-session-2026-04.md)              | Ingest-at-scale patterns                  |
-| [memory-obsidian.md](../memory/memory-obsidian.md)                                            | Vault design                              |
-| [helm.md](../deployment/helm.md)                                                              | OpenClaw / Goose / Hermes opt-ins         |
-| [Learn: OpenClaw with ClawQL](https://docs.clawql.com/learn/openclaw-and-clawql)              | Site walkthrough                          |
-| [Learn: Vault memory between chats](https://docs.clawql.com/learn/vault-memory-between-chats) | `memory_ingest` / `memory_recall` handoff |
+| Doc                                                                                        | Topic                                     |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| [using-openclaw-with-clawql.md](../openclaw/using-openclaw-with-clawql.md)                 | Full OpenClaw + ClawQL guide              |
+| [clawql-bootstrap.md](../openclaw/clawql-bootstrap.md)                                     | Bootstrap smoke tests                     |
+| [cross-thread-vault-recall-cuckoo-filters.md](cross-thread-vault-recall-cuckoo-filters.md) | Cursor recall + GitHub `search`/`execute` |
+| [vault-memory-github-session-2026-04.md](vault-memory-github-session-2026-04.md)           | Ingest-at-scale patterns                  |
+| [memory-obsidian.md](../memory/memory-obsidian.md)                                         | Vault design                              |
+| [helm.md](../deployment/helm.md)                                                           | OpenClaw / Goose / Hermes opt-ins         |
+| [Learn: OpenClaw with ClawQL](https://docs.clawql.com/learn/openclaw-and-clawql)           | Site walkthrough                          |
+| [Learn: clawql-memory (Memory 2.0)](https://docs.clawql.com/learn/memory)                  | `memory_ingest` / `memory_recall` handoff |
 
 **Ingest hook:** After publishing, run **`memory_ingest`** with title `OpenClaw agent chat memory_recall validation (June 2026)` and wikilinks to [[OpenClaw Mac mini ClawQL MCP setup]] and this case study so future **`memory_recall`** queries hit it.

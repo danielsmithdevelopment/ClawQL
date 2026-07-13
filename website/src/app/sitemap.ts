@@ -189,11 +189,6 @@ const ENTRIES: Array<Entry> = [
     priority: 0.88,
   },
   {
-    path: '/learn/vault-memory-between-chats',
-    changeFrequency: 'monthly',
-    priority: 0.88,
-  },
-  {
     path: '/learn/audit-tool-and-observability',
     changeFrequency: 'monthly',
     priority: 0.87,

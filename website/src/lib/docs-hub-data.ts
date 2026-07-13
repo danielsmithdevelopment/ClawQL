@@ -526,8 +526,8 @@ export const optionalToolsHubCards: Array<ReferenceCard> = [
     icon: BellIcon,
   }),
   card({
-    href: '/learn/vault-memory-between-chats',
-    name: 'Vault memory',
+    href: '/learn/memory',
+    name: 'clawql-memory',
     description: 'Durable memory_ingest / memory_recall across sessions.',
     icon: ChatBubbleIcon,
   }),

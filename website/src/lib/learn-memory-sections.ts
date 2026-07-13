@@ -19,6 +19,10 @@ export const learnMemorySections: Array<Section> = [
     id: 'mcp-tools-and-enablement',
   },
   {
+    title: 'Hands-on: memory between chats',
+    id: 'hands-on-memory-between-chats',
+  },
+  {
     title: 'Ingestion: from agent summary to vault page',
     id: 'ingestion-from-agent-summary-to-vault-page',
   },

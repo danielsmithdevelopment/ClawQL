@@ -21,7 +21,6 @@ import { learnPageSections } from '@/lib/learn-page-sections'
 import { learnSandboxExecSections } from '@/lib/learn-sandbox-exec-sections'
 import { learnScheduleNotifyWorkflowsSections } from '@/lib/learn-schedule-notify-workflows-sections'
 import { learnSearchExecuteSections } from '@/lib/learn-search-execute-sections'
-import { learnVaultMemoryHandoffSections } from '@/lib/learn-vault-memory-handoff-sections'
 
 /**
  * In-page section nav (TOC) keyed by path. Kept in a **client** module so the
@@ -39,7 +38,6 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
   '/learn/schedule-notify-workflows': learnScheduleNotifyWorkflowsSections,
   '/learn/cache-handoff-between-chats': learnCacheHandoffSections,
   '/learn/document-pipeline': learnDocumentPipelineSections,
-  '/learn/vault-memory-between-chats': learnVaultMemoryHandoffSections,
   '/learn/audit-tool-and-observability': learnAuditObservabilitySections,
   '/learn/effect-ts': learnEffectTsSections,
   '/learn/memory': learnMemorySections,
