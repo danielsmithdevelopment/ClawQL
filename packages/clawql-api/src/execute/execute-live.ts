@@ -1,7 +1,7 @@
 import { Effect, Layer } from "effect";
 import { ExecuteService } from "../execute-service.js";
 import { loadSpec } from "../spec/spec-loader.js";
-import type { LoadSpecFn } from "../search/search-live.js";
+import type { LoadSpecFn } from "../search/search-core.js";
 import { executeClawqlOperationEffect } from "./execute-core.js";
 
 /** Build an ExecuteService layer; optional `loadSpecFn` for tests and MCP overrides. */
