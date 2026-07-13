@@ -56,7 +56,7 @@ export function paymentsServicesLiveLayer(
     Layer.provide(Layer.mergeAll(config, runtimeConfig, gate))
   );
   const mppOpenApi = mppOpenApiLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(config, runtimeConfig, gate))
+    Layer.provide(Layer.mergeAll(runtimeConfig, gate))
   );
   const stripeWebhook = stripeWebhookLiveLayer().pipe(Layer.provide(Layer.mergeAll(config, audit)));
   const stripeMeter = stripeMeterLiveLayer(env).pipe(

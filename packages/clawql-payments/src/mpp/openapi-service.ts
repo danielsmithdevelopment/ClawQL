@@ -1,7 +1,6 @@
 import { Context, Effect, Layer } from "effect";
 import { ConfigError, X402Error } from "../errors/payment-errors.js";
 import { CLAWQL_PLANS } from "../plans/tiers.js";
-import { PaymentsConfigService } from "../config/payments-config-service.js";
 import { X402GateService } from "../x402/x402-gate-service.js";
 import { X402RuntimeConfigService } from "../x402/x402-runtime-config-service.js";
 import type { X402Gate } from "../x402/gate.js";
@@ -158,15 +157,10 @@ export class MppOpenApiService extends Context.Tag("clawql/MppOpenApiService")<
 
 export function mppOpenApiLiveLayer(
   env: NodeJS.ProcessEnv = process.env
-): Layer.Layer<
-  MppOpenApiService,
-  never,
-  PaymentsConfigService | X402RuntimeConfigService | X402GateService
-> {
+): Layer.Layer<MppOpenApiService, never, X402RuntimeConfigService | X402GateService> {
   return Layer.effect(
     MppOpenApiService,
     Effect.gen(function* () {
-      const configService = yield* PaymentsConfigService;
       const runtimeConfig = yield* X402RuntimeConfigService;
       const gates = yield* X402GateService;
 
