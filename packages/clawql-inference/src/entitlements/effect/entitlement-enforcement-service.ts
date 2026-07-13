@@ -7,10 +7,7 @@ import {
   UsageStoreService,
   type PaymentsServices,
 } from "clawql-payments/plugin";
-import {
-  buildEntitlementLimitReachedEntry,
-  entitlementsFromPlan,
-} from "clawql-payments";
+import { buildEntitlementLimitReachedEntry, entitlementsFromPlan } from "clawql-payments";
 import type { InferenceRequest, InferenceResponse } from "../../gateway.js";
 import { InferenceGatewayService } from "../../fallback/effect/inference-gateway-service.js";
 import { isInferenceEntitlementEnforcementActive } from "../flags.js";
@@ -31,11 +28,7 @@ export class EntitlementEnforcementService extends Context.Tag(
 
 export function entitlementEnforcementLiveLayer(
   env: NodeJS.ProcessEnv
-): Layer.Layer<
-  EntitlementEnforcementService,
-  never,
-  InferenceGatewayService | PaymentsServices
-> {
+): Layer.Layer<EntitlementEnforcementService, never, InferenceGatewayService | PaymentsServices> {
   return Layer.effect(
     EntitlementEnforcementService,
     Effect.gen(function* () {

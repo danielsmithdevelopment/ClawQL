@@ -13,11 +13,7 @@ export class EntitlementEnforcedGateway implements InferenceGateway {
   ) {}
 
   async complete(request: InferenceRequest): Promise<InferenceResponse> {
-    return runEntitlementEffect(
-      completeWithEnforcementProgram(request),
-      this.inner,
-      this.env
-    );
+    return runEntitlementEffect(completeWithEnforcementProgram(request), this.inner, this.env);
   }
 }
 

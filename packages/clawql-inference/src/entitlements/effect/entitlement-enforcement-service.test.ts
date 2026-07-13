@@ -67,9 +67,7 @@ describe("EntitlementEnforcementService", () => {
 
   function makeLayer(inner: InferenceGateway) {
     return entitlementEnforcementLiveLayer(env).pipe(
-      Layer.provide(
-        Layer.mergeAll(stubGatewayLayer(inner), paymentsServicesLiveLayer(env))
-      )
+      Layer.provide(Layer.mergeAll(stubGatewayLayer(inner), paymentsServicesLiveLayer(env)))
     );
   }
 

@@ -89,12 +89,7 @@ export function recordInferenceUsageEffect(
     const configService = yield* PaymentsConfigService;
     const config = yield* configService.load();
     const usageStore = yield* UsageStoreService;
-    yield* usageStore.increment(
-      input.tenantId,
-      "inference_calls",
-      input.amount ?? 1,
-      config.plan
-    );
+    yield* usageStore.increment(input.tenantId, "inference_calls", input.amount ?? 1, config.plan);
   });
 }
 

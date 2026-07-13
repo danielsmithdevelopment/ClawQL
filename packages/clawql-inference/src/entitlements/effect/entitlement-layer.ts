@@ -1,7 +1,5 @@
 import { Cause, Effect, Exit, Layer } from "effect";
-import {
-  paymentsServicesLiveLayer,
-} from "clawql-payments/plugin";
+import { paymentsServicesLiveLayer } from "clawql-payments/plugin";
 import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../../gateway.js";
 import { inferenceGatewayLiveLayer } from "../../fallback/effect/inference-gateway-service.js";
 import { EntitlementLimitError } from "../errors.js";
@@ -17,9 +15,7 @@ export function makeEntitlementLayer(
   env: NodeJS.ProcessEnv
 ): Layer.Layer<EntitlementEnforcementService> {
   return entitlementEnforcementLiveLayer(env).pipe(
-    Layer.provide(
-      Layer.mergeAll(inferenceGatewayLiveLayer(inner), paymentsServicesLiveLayer(env))
-    )
+    Layer.provide(Layer.mergeAll(inferenceGatewayLiveLayer(inner), paymentsServicesLiveLayer(env)))
   );
 }
 

@@ -11,7 +11,11 @@ import {
 
 export { isInferenceEntitlementEnforcementActive } from "./flags.js";
 
-export type { InferenceTenantContext, AssertInferenceEntitlementInput, RecordInferenceBillingInput };
+export type {
+  InferenceTenantContext,
+  AssertInferenceEntitlementInput,
+  RecordInferenceBillingInput,
+};
 
 export async function resolveInferenceTenantId(
   context: InferenceTenantContext = {},
