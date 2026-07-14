@@ -35,9 +35,9 @@
     "destroy": "pulumi destroy"
   },
   "dependencies": {
-    "@pulumi/aws": "^6.83.0",
+    "@pulumi/aws": "^7.36.0",
     "@pulumi/cloudflare": "^6.4.0",
-    "@pulumi/gcp": "^8.36.0",
+    "@pulumi/gcp": "^9.29.0",
     "@pulumi/pulumi": "^3.210.0",
     "zod": "4.3.6"
   },

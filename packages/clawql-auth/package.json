@@ -24,8 +24,8 @@
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",
-    "@smithy/protocol-http": "^5.1.2",
-    "@smithy/signature-v4": "^5.1.2"
+    "@smithy/protocol-http": "^5.5.8",
+    "@smithy/signature-v4": "^5.6.4"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
