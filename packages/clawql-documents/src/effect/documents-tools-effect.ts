@@ -9,30 +9,33 @@ import {
   type ExtractDocumentInput,
   type ExtractDocumentResult,
 } from "../langextract/extract-document.js";
-import {
-  runIdpPipeline,
-  type RunIdpPipelineInput,
-  type RunIdpPipelineResult,
-} from "../pipeline/runner.js";
+import type { RunIdpPipelineInput, RunIdpPipelineResult } from "../pipeline/runner.js";
 import { getDocumentsPluginDeps } from "../plugin/deps.js";
 import { DocumentsError } from "./documents-errors.js";
 import { documentsFromPromise } from "./documents-effect-utils.js";
+import { runIdpPipelineEffect } from "./idp-pipeline-effect.js";
 
-/** IDP pipeline body (deps resolved at call time). */
-export async function executeRunIdpPipelineCore(
-  input: RunIdpPipelineInput
-): Promise<RunIdpPipelineResult> {
-  const deps = getDocumentsPluginDeps();
-  return runIdpPipeline(input, {
-    execute: (p) => deps.execute(p),
-    onHop: deps.onPipelineHop,
-  });
-}
-
+/**
+ * Resolve plugin deps then run native Effect.gen IDP hop loop
+ * (no nested {@link runDocumentsEffect} / single-shot tryPromise wrapper).
+ */
 export function executeRunIdpPipelineEffect(
   input: RunIdpPipelineInput
 ): Effect.Effect<RunIdpPipelineResult, DocumentsError> {
-  return documentsFromPromise(() => executeRunIdpPipelineCore(input));
+  return Effect.gen(function* () {
+    const deps = getDocumentsPluginDeps();
+    return yield* runIdpPipelineEffect(input, {
+      execute: (p) => deps.execute(p),
+      onHop: deps.onPipelineHop,
+    });
+  });
+}
+
+/** @deprecated Prefer {@link executeRunIdpPipelineEffect}; kept for Promise callers. */
+export async function executeRunIdpPipelineCore(
+  input: RunIdpPipelineInput
+): Promise<RunIdpPipelineResult> {
+  return Effect.runPromise(executeRunIdpPipelineEffect(input));
 }
 
 export function executeClassifyDocumentEffect(
