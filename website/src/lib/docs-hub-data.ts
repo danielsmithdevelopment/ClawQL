@@ -178,7 +178,7 @@ export const architectureHubCards: Array<ReferenceCard> = [
     href: '/payments/clawql-payments',
     name: 'clawql-payments',
     description:
-      'Native Stripe + x402 + MPP rails, plan entitlements, and WORM payment audit. Roadmap: AP2, ACP, PayPal.',
+      'Native Stripe + x402 + MPP + AP2 + ACP + PayPal + Adyen rails, plan entitlements, and WORM payment audit.',
     icon: TagIcon,
   }),
 ]

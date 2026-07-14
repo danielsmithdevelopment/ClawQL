@@ -6,7 +6,7 @@
 
 `clawql-payments` is ClawQL's unified payments layer for **human fiat** and **agent micropayments**.
 
-**Positioning:** ClawQL is the only MCP gateway that speaks **five payment surfaces natively** — **Stripe** (subscriptions, invoices, meters, SPT), **[x402](https://www.x402.org/)** (per-request USDC), **[MPP](https://docs.stripe.com/mcp)** (session micropayments), **[AP2](https://ap2-protocol.org/)** (cryptographic Payment Mandates), and **[ACP](https://developers.openai.com/commerce/specs/checkout)** (merchant chat checkout) — plus a **PayPal Orders** adapter for human wallet checkout, all with a **WORM-audited** payment event trail. Docs-site `.well-known` discovery for ACP/UCP remains complementary; live adapters live in `clawql-payments`.
+**Positioning:** ClawQL is the only MCP gateway that speaks **five agentic payment surfaces natively** — **Stripe**, **[x402](https://www.x402.org/)**, **[MPP](https://docs.stripe.com/mcp)**, **[AP2](https://ap2-protocol.org/)**, and **[ACP](https://developers.openai.com/commerce/specs/checkout)** — plus **PayPal Orders** and **Adyen Checkout** for human/enterprise fiat, all with a **WORM-audited** payment event trail. Docs-site `.well-known` discovery for UCP remains complementary; live adapters live in `clawql-payments`.
 
 It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is available to self-hosted operators and ClawQL users who want to bill their own customers.
 
@@ -34,17 +34,17 @@ It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is ava
 | **AP2** Payment Mandates                            | ✅     | `Ap2MandateService` — parse/verify VCs, optional HS256, bridge into x402 gates   |
 | **ACP** checkout sessions                           | ✅     | `AcpCheckoutService` — create/complete + Stripe SPT (dry-run without key)        |
 | **PayPal** Orders v2                                | ✅     | `PaypalOrdersService` — OAuth, create order, capture                             |
+| **Adyen** Checkout                                  | ✅     | `AdyenCheckoutService` — sessions, payments, HMAC webhooks (enterprise)          |
 
 ### Roadmap
 
-| Tier  | Item                     | Role                | Notes                                                 |
-| ----- | ------------------------ | ------------------- | ----------------------------------------------------- |
-| **2** | **Adyen direct adapter** | Enterprise billing  | When Dedicated/Enterprise customers need native Adyen |
-| **3** | **Mollie / Razorpay**    | Regional processors | Add when regional traction requires them              |
+| Tier  | Item                  | Role                | Notes                                    |
+| ----- | --------------------- | ------------------- | ---------------------------------------- |
+| **3** | **Mollie / Razorpay** | Regional processors | Add when regional traction requires them |
 
 **Already covered (do not duplicate):** Shopify Payments (Stripe-powered), ACH Direct Debit via Stripe's APIs, card/subscription/invoice flows via Stripe. **Not planned:** Zelle (no merchant API), Square POS-first adapters.
 
-Docs-site **UCP** `.well-known` documents remain scanner-facing stubs. **AP2 / ACP / PayPal** are live in self-hosted `clawql-payments` when their env flags are set.
+Docs-site **UCP** `.well-known` documents remain scanner-facing stubs. **AP2 / ACP / PayPal / Adyen** are live in self-hosted `clawql-payments` when their env flags are set.
 
 ## Architecture
 
@@ -56,6 +56,7 @@ clawql-payments
 ├── ap2/        Payment Mandates (parse/verify) + x402 gate bridge
 ├── acp/        Agentic checkout sessions (create/complete + Stripe SPT)
 ├── paypal/     PayPal Orders v2 create/capture
+├── adyen/      Adyen Checkout sessions, payments, HMAC webhooks
 ├── plans/      Tier definitions, entitlements, usage.json counters
 ├── audit/      Hash-chained append-only JSONL + integrity verify
 └── cli/        clawql payments * implementations
@@ -290,7 +291,7 @@ They are independent toggles. A route can be x402-gated without plan enforcement
 
 Wallet and facilitator URL can also be stored in `payments.json` → `x402`.
 
-### AP2 / ACP / PayPal (Tier 1)
+### AP2 / ACP / PayPal / Adyen
 
 | Variable                          | Default  | Purpose                                                                |
 | --------------------------------- | -------- | ---------------------------------------------------------------------- |
@@ -305,6 +306,13 @@ Wallet and facilitator URL can also be stored in `payments.json` → `x402`.
 | `PAYPAL_CLIENT_ID`                | —        | PayPal REST client id                                                  |
 | `PAYPAL_CLIENT_SECRET`            | —        | PayPal REST client secret                                              |
 | `PAYPAL_API_BASE` / `PAYPAL_MODE` | sandbox  | Override API host (`live` → `api-m.paypal.com`)                        |
+| `CLAWQL_ADYEN_ENABLED`            | auto     | Explicit on/off; defaults on when Adyen API key + merchant are set     |
+| `ADYEN_API_KEY`                   | —        | Adyen Checkout API key                                                 |
+| `ADYEN_MERCHANT_ACCOUNT`          | —        | Adyen merchant account code                                            |
+| `ADYEN_HMAC_KEY`                  | —        | Hex HMAC key for standard webhook verification                         |
+| `ADYEN_CLIENT_KEY`                | —        | Optional client key returned with session create                       |
+| `ADYEN_ENVIRONMENT`               | `test`   | `test` or `live`                                                       |
+| `ADYEN_LIVE_ENDPOINT_PREFIX`      | —        | Required for live Checkout base URL prefix                             |
 
 ### Setup flow
 
@@ -465,6 +473,9 @@ A hot in-process mirror still feeds the MCP `audit` ring buffer (summary fields 
 | `AP2_MANDATE_VERIFIED` / `AP2_MANDATE_FAILED`                              | `Ap2MandateService` verify                                                    |
 | `ACP_CHECKOUT_CREATED` / `ACP_CHECKOUT_COMPLETED`                          | `AcpCheckoutService` create/complete                                          |
 | `PAYPAL_ORDER_CREATED` / `PAYPAL_ORDER_CAPTURED` / `PAYPAL_CAPTURE_FAILED` | PayPal Orders                                                                 |
+| `ADYEN_SESSION_CREATED`                                                    | Adyen Checkout Session create                                                 |
+| `ADYEN_PAYMENT_AUTHORIZED` / `ADYEN_PAYMENT_FAILED`                        | Adyen `/payments` or AUTHORISATION webhook                                    |
+| `ADYEN_WEBHOOK_PROCESSED`                                                  | Adyen standard notification verified / recorded                               |
 
 ### Environment
 

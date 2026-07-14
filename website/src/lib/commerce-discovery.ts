@@ -336,10 +336,10 @@ export function getPaymentsWellKnown(): Record<string, unknown> {
       },
     ],
     default: 'x402',
-    native_rails: ['stripe', 'x402', 'mpp', 'ap2', 'acp', 'paypal'],
+    native_rails: ['stripe', 'x402', 'mpp', 'ap2', 'acp', 'paypal', 'adyen'],
     planned_protocols: ['ucp'],
     ap2_extension: AP2_EXTENSION_URI,
-    note: 'Docs.clawql.com discovery only. Live AP2/ACP/PayPal adapters run on self-hosted clawql-payments when CLAWQL_AP2_ENABLED / CLAWQL_ACP_ENABLED / CLAWQL_PAYPAL_ENABLED are set.',
+    note: 'Docs.clawql.com discovery only. Live AP2/ACP/PayPal/Adyen adapters run on self-hosted clawql-payments when CLAWQL_AP2_ENABLED / CLAWQL_ACP_ENABLED / CLAWQL_PAYPAL_ENABLED / CLAWQL_ADYEN_ENABLED (or credentials) are set.',
     issue: 'https://github.com/danielsmithdevelopment/ClawQL/issues/88',
   }
 }

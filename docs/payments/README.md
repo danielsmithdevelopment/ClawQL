@@ -1,10 +1,10 @@
 # Payments documentation
 
-ClawQL's unified billing layer — **Stripe** (human fiat), **x402** (per-request USDC), **MPP** (session micropayments), **AP2** (Payment Mandates), **ACP** (agentic checkout), **PayPal** Orders, managed plan entitlements, and **WORM-auditable** payment events.
+ClawQL's unified billing layer — **Stripe** (human fiat), **x402** (per-request USDC), **MPP** (session micropayments), **AP2** (Payment Mandates), **ACP** (agentic checkout), **PayPal** Orders, **Adyen** Checkout (enterprise), managed plan entitlements, and **WORM-auditable** payment events.
 
-| Doc                                          | Audience                             | Contents                                                                                       |
-| -------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| [**clawql-payments.md**](clawql-payments.md) | Operators, integrators, contributors | Architecture, setup, env vars, HTTP flows, CLI, Tier 2+ roadmap (Adyen), inference integration |
+| Doc                                          | Audience                             | Contents                                                                                                 |
+| -------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| [**clawql-payments.md**](clawql-payments.md) | Operators, integrators, contributors | Architecture, setup, env vars, HTTP flows, CLI, Tier 3 roadmap (Mollie/Razorpay), inference integration |
 
 ## Package and CLI entry points
 

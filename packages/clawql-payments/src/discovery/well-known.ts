@@ -4,6 +4,7 @@ import {
   PaymentsDiscoveryService,
   type BuildPaymentsWellKnownOptions,
   type PaymentsWellKnownAcpMethod,
+  type PaymentsWellKnownAdyenMethod,
   type PaymentsWellKnownAp2Method,
   type PaymentsWellKnownDocument,
   type PaymentsWellKnownMethod,
@@ -16,6 +17,7 @@ import {
 export type {
   BuildPaymentsWellKnownOptions,
   PaymentsWellKnownAcpMethod,
+  PaymentsWellKnownAdyenMethod,
   PaymentsWellKnownAp2Method,
   PaymentsWellKnownDocument,
   PaymentsWellKnownMethod,

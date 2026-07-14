@@ -5,9 +5,9 @@ import PaymentsBody from '@/generated/clawql-payments-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'clawql-payments — Stripe, x402, MPP, and WORM audit',
+  title: 'clawql-payments — Stripe, x402, MPP, Adyen, and WORM audit',
   description:
-    'ClawQL unified payments: native Stripe + x402 + MPP agentic rails, plan entitlements, and WORM-audited payment events. Roadmap covers AP2, ACP, and PayPal.',
+    'ClawQL unified payments: native Stripe + x402 + MPP + AP2 + ACP agentic rails, PayPal Orders, Adyen Checkout, plan entitlements, and WORM-audited payment events.',
   path: '/payments/clawql-payments',
   ogType: 'article',
 })
@@ -31,7 +31,7 @@ export default function ClawqlPaymentsPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Three native agentic rails.</strong> Generated from{' '}
+          <strong>Native agentic + enterprise rails.</strong> Generated from{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/payments/clawql-payments.md"
             className="font-medium text-inherit underline underline-offset-2"

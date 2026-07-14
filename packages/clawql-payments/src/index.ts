@@ -7,6 +7,7 @@ export * from "./mpp/index.js";
 export * from "./ap2/index.js";
 export * from "./acp/index.js";
 export * from "./paypal/index.js";
+export * from "./adyen/index.js";
 export * from "./cli/index.js";
 export { loadPaymentsConfig, mergePaymentsConfig, savePaymentsConfig } from "./config/store.js";
 export type { PaymentsConfig } from "./config/store.js";

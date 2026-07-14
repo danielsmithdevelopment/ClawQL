@@ -10,6 +10,7 @@ export {
   type PaymentsWellKnownAp2Method,
   type PaymentsWellKnownAcpMethod,
   type PaymentsWellKnownPaypalMethod,
+  type PaymentsWellKnownAdyenMethod,
 } from "./well-known.js";
 export {
   PAYMENTS_WELL_KNOWN_PATH,

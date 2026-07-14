@@ -4,6 +4,7 @@ import { paymentsDiscoveryLiveLayer } from "../discovery/payments-discovery-serv
 import { ap2MandateLiveLayer } from "../ap2/ap2-mandate-service.js";
 import { acpCheckoutLiveLayer } from "../acp/acp-checkout-service.js";
 import { paypalOrdersLiveLayer } from "../paypal/paypal-orders-service.js";
+import { adyenCheckoutLiveLayer } from "../adyen/adyen-checkout-service.js";
 import { mppOpenApiLiveLayer } from "../mpp/openapi-service.js";
 import { mppVerificationLiveLayer } from "../mpp/verification-service.js";
 import { mppxAdapterLiveLayer } from "../mpp/mppx-adapter.js";
@@ -38,7 +39,8 @@ export type PaymentsServices =
   | import("../stripe/stripe-billing-service.js").StripeBillingService
   | import("../ap2/ap2-mandate-service.js").Ap2MandateService
   | import("../acp/acp-checkout-service.js").AcpCheckoutService
-  | import("../paypal/paypal-orders-service.js").PaypalOrdersService;
+  | import("../paypal/paypal-orders-service.js").PaypalOrdersService
+  | import("../adyen/adyen-checkout-service.js").AdyenCheckoutService;
 
 const layerCache = new Map<string, Layer.Layer<PaymentsServices>>();
 
@@ -60,6 +62,7 @@ export function paymentsServicesLiveLayer(
   const ap2 = ap2MandateLiveLayer(env).pipe(Layer.provide(audit));
   const acp = acpCheckoutLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(audit, stripeClient)));
   const paypal = paypalOrdersLiveLayer(env).pipe(Layer.provide(audit));
+  const adyen = adyenCheckoutLiveLayer(env).pipe(Layer.provide(audit));
 
   const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
   const mppOpenApi = mppOpenApiLiveLayer(env).pipe(
@@ -104,7 +107,8 @@ export function paymentsServicesLiveLayer(
     stripeBilling,
     ap2,
     acp,
-    paypal
+    paypal,
+    adyen
   );
   layerCache.set(key, layer);
   return layer;
