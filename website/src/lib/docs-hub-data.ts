@@ -131,7 +131,8 @@ export const architectureHubCards: Array<ReferenceCard> = [
   card({
     href: '/plugins',
     name: 'Plugins',
-    description: 'Per-plugin pages — core, memory, documents, automation, sandbox.',
+    description:
+      'Per-plugin pages — core, memory, documents, automation, sandbox.',
     icon: SquaresPlusIcon,
   }),
   card({
