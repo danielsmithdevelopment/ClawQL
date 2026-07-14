@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-07-11
-- Related: [`clawql-sandbox`](../../packages/clawql-sandbox/), [local agent sandbox guide](../getting-started/local-agent-sandbox.md), [Panguard ATR](../security/mcp-proxy-jwt-atr.md), [Module 11: Sandboxing](../security/security-best-practices-series/11-sandboxing-kata-gvisor-seatbelt.md)
+- Related: [`clawql-sandbox`](../../packages/clawql-sandbox/), [Agent setup — local sandbox](../getting-started/agent-setup.md#local-agent-sandbox-macos-seatbelt), [Panguard ATR](../security/mcp-proxy-jwt-atr.md), [Module 11: Sandboxing](../security/security-best-practices-series/11-sandboxing-kata-gvisor-seatbelt.md)
 
 ## Context
 

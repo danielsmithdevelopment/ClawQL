@@ -49,7 +49,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 ## Getting Started and README Splits
 
 - `readme/getting-started.md`
-- `getting-started/agent-setup-prompt.md` — copy-paste Cursor/Claude onboarding prompt
+- `getting-started/agent-setup.md` — desktop, Cursor iOS Cloud Agents, local Seatbelt sandbox
 - `getting-started/local-provider-vault.md` — ~/.ClawQL secrets vault + memory home
 - `getting-started/getting-started-for-teams.md` — **teams:** shared object storage + observability for shared Memory
 - `getting-started/team-vault-sync.md` — `clawql sync` push/pull (R2 / S3 / GCS), Helm `teamSync.*`

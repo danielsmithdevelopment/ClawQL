@@ -85,4 +85,4 @@ Exact `operationId`s match the bundled OpenAPI (see [apis README](../../provider
 
 - [Bundled providers plugin](../plugins/bundled-providers.md)
 - [Configuration § Feature tiers](../readme/configuration.md)
-- [Agent setup prompt](../getting-started/agent-setup-prompt.md)
+- [Agent setup](../getting-started/agent-setup.md)

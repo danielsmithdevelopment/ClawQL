@@ -21,7 +21,7 @@ const SECTIONS = [
   {
     heading: 'Getting started',
     links: [
-      ['Agent setup', '/agent-setup', 'Recommended MCP client wiring'],
+      ['Agent setup', '/agent-setup', 'Desktop onboarding, Cursor iOS Cloud Agents, local sandbox'],
       ['Quickstart', '/quickstart', 'Fastest path to a running gateway'],
       ['Getting started', '/getting-started', 'Phase 1 guide and team paths'],
       ['Install', '/install', 'npm, Docker, and Helm install options'],

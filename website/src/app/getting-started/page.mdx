@@ -10,7 +10,7 @@ Run ClawQL in minutes, deploy the full IDP stack with Helm, then dive into guide
     <>Quickstart</>
   </Button>
   <Button href="/agent-setup" variant="outline">
-    <>Agent setup prompt</>
+    <>Agent setup</>
   </Button>
   <Button href="/install" variant="outline">
     <>Install</>
@@ -27,12 +27,6 @@ Run ClawQL in minutes, deploy the full IDP stack with Helm, then dive into guide
   <Button href="/getting-started/golden-host-images" variant="outline">
     <>Golden host (Packer + Pulumi)</>
   </Button>
-  <Button href="/getting-started/local-agent-sandbox" variant="outline">
-    <>Local agent sandbox</>
-  </Button>
-  <Button href="/getting-started/cursor-ios-cloud-agent" variant="outline">
-    <>Cursor iOS</>
-  </Button>
   <Button href="/mcp-clients" variant="outline">
     <>MCP clients</>
   </Button>
@@ -41,7 +35,7 @@ Run ClawQL in minutes, deploy the full IDP stack with Helm, then dive into guide
 ## Recommended path
 
 1. [Quickstart](/quickstart) — `npx clawql-mcp` (default stack) and connect Cursor or Claude Desktop
-2. [Agent setup](/agent-setup) — copy-paste prompt for guided first run
+2. [Agent setup](/agent-setup) — desktop onboarding, Cursor iOS Cloud Agents, local sandbox
 3. [MCP clients](/mcp-clients) — stdio, HTTP, and auth token wiring
 4. [Concepts](/concepts) — how **`search`** and **`execute`** save context
 5. [Using search & execute](/learn/search-and-execute-mcp) — first hands-on lesson
@@ -49,16 +43,15 @@ Run ClawQL in minutes, deploy the full IDP stack with Helm, then dive into guide
 
 ## Deployment options
 
-| Path                | Best for                      | Start here                                                                                    |
-| ------------------- | ----------------------------- | --------------------------------------------------------------------------------------------- |
-| **Local MCP**       | Evaluation, solo dev          | [Quickstart](/quickstart)                                                                     |
-| **Tier 1 Compose**  | Full local IDP slice          | [Phase 1 guide](/getting-started/phase-1-platform-guide)                                      |
-| **Helm full stack** | Team K8s, IDP pipeline        | [Kubernetes](/deployment/kubernetes) · [Helm](/helm)                                          |
-| **Teams**           | Shared memory + observability | [For teams](/getting-started/for-teams) · [Team vault sync](/getting-started/team-vault-sync) |
-| **Cursor iOS**      | Phone → Cloud Agent + vault   | [Cursor iOS + Cloud Agent](/getting-started/cursor-ios-cloud-agent)                           |
-| **Managed hosts**   | AWS/GCP/Cloudflare VM tiers   | [Golden host images](/getting-started/golden-host-images) — Packer bake + Pulumi provision    |
-| **Agent laptops**   | Fail-closed local containment | [Local agent sandbox](/getting-started/local-agent-sandbox) — `clawql sandbox init`           |
-| **Operations**      | Upgrades, secrets, health     | [Operations guide](/deployment/operations-guide)                                              |
+| Path                | Best for                                    | Start here                                                                                    |
+| ------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| **Local MCP**       | Evaluation, solo dev                        | [Quickstart](/quickstart) · [Agent setup](/agent-setup)                                       |
+| **Tier 1 Compose**  | Full local IDP slice                        | [Phase 1 guide](/getting-started/phase-1-platform-guide)                                      |
+| **Helm full stack** | Team K8s, IDP pipeline                      | [Kubernetes](/deployment/kubernetes) · [Helm](/helm)                                          |
+| **Teams**           | Shared memory + observability               | [For teams](/getting-started/for-teams) · [Team vault sync](/getting-started/team-vault-sync) |
+| **Agents**          | Desktop, iOS Cloud Agents, Seatbelt sandbox | [Agent setup](/agent-setup)                                                                   |
+| **Managed hosts**   | AWS/GCP/Cloudflare VM tiers                 | [Golden host images](/getting-started/golden-host-images) — Packer bake + Pulumi provision    |
+| **Operations**      | Upgrades, secrets, health                   | [Operations guide](/deployment/operations-guide)                                              |
 
 <Note>
   An **opt-in ClawQL Operator scaffold** shipped in **7.0.0** (CRD, tier
