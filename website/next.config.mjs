@@ -119,6 +119,16 @@ const nextConfig = {
         destination: '/getting-started/for-teams#golden-host-images',
         permanent: true,
       },
+      {
+        source: '/getting-started/phase-1-platform-guide',
+        destination: '/getting-started',
+        permanent: true,
+      },
+      {
+        source: '/getting-started/clawql-7-setup-guide',
+        destination: '/resources/migration',
+        permanent: true,
+      },
     ]
   },
   /**

@@ -51,11 +51,6 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       id: 'layer-8-routing-tasks-to-the-right-model',
     },
     { title: 'Beyond These Eight Layers', id: 'beyond-these-eight-layers' },
-    {
-      title: 'Layers 9–12 (Inference gateway extensions)',
-      id: 'layers-9-12-inference-gateway-extensions',
-    },
-    { title: 'Implementation map', id: 'implementation-map' },
     { title: 'Putting It Together', id: 'putting-it-together' },
     { title: 'Known Trade-offs', id: 'known-trade-offs' },
     {
@@ -576,18 +571,9 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
   ],
   '/getting-started': [
     { title: 'Recommended path', id: 'recommended-path' },
+    { title: 'Shipped since 7.0', id: 'shipped-since-7-0' },
     { title: 'Deployment options', id: 'deployment-options' },
     { title: 'Next steps', id: 'next-steps' },
-  ],
-  '/getting-started/clawql-7-setup-guide': [
-    { title: 'What changed', id: 'what-changed' },
-    { title: 'npm / stdio', id: 'npm-stdio' },
-    { title: 'Helm', id: 'helm' },
-    {
-      title: 'Operator auth reconciliation',
-      id: 'operator-auth-reconciliation',
-    },
-    { title: 'Upgrade checklist', id: 'upgrade-checklist' },
   ],
   '/getting-started/clawql-desktop': [
     { title: 'What you get', id: 'what-you-get' },
@@ -613,10 +599,6 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Observability for team MCP', id: 'observability-for-team-mcp' },
     { title: 'Verify end-to-end', id: 'verify-end-to-end' },
     { title: 'Next steps', id: 'next-steps' },
-  ],
-  '/getting-started/phase-1-platform-guide': [
-    { title: 'Delivered in Phase 1', id: 'delivered-in-phase-1' },
-    { title: 'Quick starts', id: 'quick-starts' },
   ],
   '/graphql-proxy': [
     {
@@ -1072,6 +1054,8 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'stdio (npm)', id: 'stdio-npm' },
     { title: 'stdio (git checkout)', id: 'stdio-git-checkout' },
     { title: 'Streamable HTTP', id: 'streamable-http' },
+    { title: 'Gateway API key auth', id: 'gateway-api-key-auth' },
+    { title: 'Presidio redaction', id: 'presidio-redaction' },
     { title: 'OpenClaw', id: 'open-claw' },
   ],
   '/nats-jetstream': [
@@ -1151,6 +1135,23 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     },
     { title: 'Part VI: Summary', id: 'part-vi-summary' },
   ],
+  '/payments/clawql-payments': [
+    { title: 'What ships today', id: 'what-ships-today' },
+    { title: 'Architecture', id: 'architecture' },
+    { title: 'Local configuration', id: 'local-configuration' },
+    { title: 'Managed plan tiers', id: 'managed-plan-tiers' },
+    { title: 'Stripe billing', id: 'stripe-billing' },
+    { title: 'x402 micropayments', id: 'x402-micropayments' },
+    { title: 'Payment audit (WORM)', id: 'payment-audit-worm' },
+    { title: 'Full CLI reference', id: 'full-cli-reference' },
+    {
+      title: 'Inference integration checklist',
+      id: 'inference-integration-checklist',
+    },
+    { title: 'Troubleshooting', id: 'troubleshooting' },
+    { title: 'Follow-up work', id: 'follow-up-work' },
+    { title: 'Related', id: 'related' },
+  ],
   '/plugins/automation': [
     { title: 'MCP tools', id: 'mcp-tools' },
     { title: 'Prerequisites', id: 'prerequisites' },
@@ -1227,6 +1228,11 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Enable / disable', id: 'enable-disable' },
     { title: 'When to use', id: 'when-to-use' },
     { title: 'Learn more', id: 'learn-more' },
+  ],
+  '/plugins/payments': [
+    { title: 'Positioning', id: 'positioning' },
+    { title: 'Roadmap (not shipped)', id: 'roadmap-not-shipped' },
+    { title: 'Related', id: 'related' },
   ],
   '/plugins/sandbox': [
     {
@@ -1340,7 +1346,7 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       title: 'Upgrading clawql-mcp (general)',
       id: 'upgrading-clawql-mcp-general',
     },
-    { title: 'Docker Compose (planned)', id: 'docker-compose-planned' },
+    { title: 'Docker Compose', id: 'docker-compose' },
     { title: 'Kubernetes / Helm', id: 'kubernetes-helm' },
     { title: 'From other MCP servers', id: 'from-other-mcp-servers' },
   ],

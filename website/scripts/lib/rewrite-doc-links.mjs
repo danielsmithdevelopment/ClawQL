@@ -11,9 +11,9 @@ export const GH_MAIN =
 export const DOC_SITE_ROUTES = {
   'docs/clawql-ecosystem.md': '/vision/ecosystem',
   'docs/getting-started/phase-1-platform-guide.md':
-    '/getting-started/phase-1-platform-guide',
+    '/getting-started',
   'docs/getting-started/clawql-7-setup-guide.md':
-    '/getting-started/clawql-7-setup-guide',
+    '/resources/migration',
   'docs/getting-started/clawql-release-mvp.md':
     '/getting-started/clawql-release-mvp',
   'docs/getting-started/getting-started-for-teams.md':

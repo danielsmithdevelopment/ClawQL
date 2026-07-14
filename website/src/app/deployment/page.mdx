@@ -15,11 +15,12 @@ Deploy ClawQL with **Helm** (`charts/clawql-mcp`) for the full IDP stack, or run
 | Goal                                      | Start here                                                                                                                                                                                                    |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Full local IDP stack** (Docker Desktop) | `make local-k8s-up` → [Kubernetes](/deployment/kubernetes) · [Helm](/helm)                                                                                                                                    |
+| **Tier 1 Docker Compose**                 | `examples/clawql-local-docker-compose` — [Compose README](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/clawql-local-docker-compose/README.md)                                          |
 | **Minimal MCP**                           | [Quickstart](/quickstart) · [Install](/install)                                                                                                                                                               |
 | **Seven-vendor document pipeline**        | [IDP Platform](/vision/idp-platform) · [Document pipeline learn page](/learn/document-pipeline) · [IDP hub (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md) |
 | **Dashboard + Agent Chat**                | [Dashboard on Kubernetes](/dashboard-kubernetes)                                                                                                                                                              |
 | **Managed VM tiers (AWS/GCP/CF)**         | [Golden host images](/getting-started/for-teams#golden-host-images) — Packer bake + Pulumi provision                                                                                                          |
-| **Secrets & upgrades**                    | [Operations guide](/deployment/operations-guide) · [Helm](/helm)                                                                                                                                              |
+| **Secrets & upgrades**                    | [Operations guide](/deployment/operations-guide) · [Migration (7.0)](/resources/migration) · [Helm](/helm)                                                                                                    |
 
 ## Platform operations
 
@@ -31,7 +32,7 @@ Deploy ClawQL with **Helm** (`charts/clawql-mcp`) for the full IDP stack, or run
 
 ## Planned (design only)
 
-A three-tier **Operator + `ClawQLInstance` CRD** model and four-stack **Docker Compose** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) are specified but **not shipped**. See the [Operator target architecture](/design/operator-target-architecture) design reference.
+The **full** three-tier Operator vision beyond the 7.0 scaffold, and the broader **four-stack Docker Compose** layout ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)), remain design references. **Tier 1 Compose** and the opt-in **`ClawQLInstance`** scaffold already ship — see [Operator target architecture](/design/operator-target-architecture).
 
 import { DeploymentHubGrid } from '@/components/DocsHubSections'
 

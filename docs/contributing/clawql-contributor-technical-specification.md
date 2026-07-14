@@ -875,7 +875,7 @@ These are not guidelines. Contributions that violate these contracts will not be
 
 ### 6.1 Presidio Integration Points
 
-**Shipped (7.0, opt-in):** Gateway hooks redact on **`execute`**, **`memory_ingest`**, and **`ingest_external_knowledge`** when **`CLAWQL_ENABLE_PRESIDIO=1`** — see [Phase 1 platform guide](../getting-started/phase-1-platform-guide.md) §3. The contract below still applies to vertical plugins and future pipeline stages.
+**Shipped (7.0, opt-in):** Gateway hooks redact on **`execute`**, **`memory_ingest`**, and **`ingest_external_knowledge`** when **`CLAWQL_ENABLE_PRESIDIO=1`** — see [MCP clients — Presidio](https://docs.clawql.com/mcp-clients#presidio-redaction). The contract below still applies to vertical plugins and future pipeline stages.
 
 Presidio redaction must run before any data is written to persistent storage and before any data is returned across a trust boundary. In practice, this means:
 

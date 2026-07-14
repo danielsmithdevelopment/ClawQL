@@ -53,16 +53,6 @@ const ENTRIES: Array<Entry> = [
   },
   { path: '/getting-started', changeFrequency: 'weekly', priority: 0.96 },
   {
-    path: '/getting-started/phase-1-platform-guide',
-    changeFrequency: 'weekly',
-    priority: 0.97,
-  },
-  {
-    path: '/getting-started/clawql-7-setup-guide',
-    changeFrequency: 'weekly',
-    priority: 0.96,
-  },
-  {
     path: '/getting-started/for-teams',
     changeFrequency: 'weekly',
     priority: 0.95,

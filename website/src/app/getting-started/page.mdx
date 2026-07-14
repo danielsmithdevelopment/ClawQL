@@ -18,8 +18,8 @@ Run ClawQL in minutes, deploy the full IDP stack with Helm, then dive into guide
   <Button href="/getting-started/clawql-desktop" variant="outline">
     <>macOS Desktop</>
   </Button>
-  <Button href="/getting-started/phase-1-platform-guide" variant="outline">
-    <>Phase 1 guide (7.0)</>
+  <Button href="/resources/migration" variant="outline">
+    <>Migration (7.0)</>
   </Button>
   <Button href="/getting-started/for-teams" variant="outline">
     <>For teams</>
@@ -38,16 +38,31 @@ Run ClawQL in minutes, deploy the full IDP stack with Helm, then dive into guide
 5. [Using search & execute](/learn/search-and-execute-mcp) — first hands-on lesson
 6. [Deploy with Helm](/helm) — full stack via `make local-k8s-up` or `helm upgrade --install`
 
+## Shipped since 7.0
+
+Phase 1 exit is complete. Enable or evaluate these with the docs linked below:
+
+| Capability                       | Enable / path                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------------ |
+| **Gateway auth** (`clawql-auth`) | `CLAWQL_AUTH_MODE=apiKey` — [MCP clients](/mcp-clients#gateway-api-key-auth)   |
+| **PageIndex** (`pageindex_*`)    | Default on — [Memory plugin](/plugins/memory) · [clawql-memory](/learn/memory) |
+| **Presidio hooks**               | `CLAWQL_ENABLE_PRESIDIO=1` — [MCP clients](/mcp-clients#presidio-redaction)    |
+| **Tier 1 Compose**               | `examples/clawql-local-docker-compose`                                         |
+| **Release manifest**             | [Release manifest (Layer 0)](/getting-started/clawql-release-mvp)              |
+| **Default providers + Vault**    | [Migration guide](/resources/migration)                                        |
+
+OIDC/SAML/RBAC beyond gateway API keys, full Operator NL ops, and vertical packages remain **roadmap** — [Vision & Roadmap](/vision/roadmap). Package-level ground truth: [modularization-implementation-status.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md).
+
 ## Deployment options
 
-| Path                | Best for                                    | Start here                                               |
-| ------------------- | ------------------------------------------- | -------------------------------------------------------- |
-| **Local MCP**       | Evaluation, solo dev                        | [Quickstart](/quickstart) · [Agent setup](/agent-setup)  |
-| **Tier 1 Compose**  | Full local IDP slice                        | [Phase 1 guide](/getting-started/phase-1-platform-guide) |
-| **Helm full stack** | Team K8s, IDP pipeline                      | [Kubernetes](/deployment/kubernetes) · [Helm](/helm)     |
-| **Teams**           | Shared memory, golden hosts, observability  | [For teams](/getting-started/for-teams)                  |
-| **Agents**          | Desktop, iOS Cloud Agents, Seatbelt sandbox | [Agent setup](/agent-setup)                              |
-| **Operations**      | Upgrades, secrets, health                   | [Operations guide](/deployment/operations-guide)         |
+| Path                | Best for                                    | Start here                                                                                                                                              |
+| ------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Local MCP**       | Evaluation, solo dev                        | [Quickstart](/quickstart) · [Agent setup](/agent-setup)                                                                                                 |
+| **Tier 1 Compose**  | Full local IDP slice                        | [Compose README](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/clawql-local-docker-compose/README.md) · [Deployment](/deployment) |
+| **Helm full stack** | Team K8s, IDP pipeline                      | [Kubernetes](/deployment/kubernetes) · [Helm](/helm)                                                                                                    |
+| **Teams**           | Shared memory, golden hosts, observability  | [For teams](/getting-started/for-teams)                                                                                                                 |
+| **Agents**          | Desktop, iOS Cloud Agents, Seatbelt sandbox | [Agent setup](/agent-setup)                                                                                                                             |
+| **Operations**      | Upgrades, secrets, health                   | [Operations guide](/deployment/operations-guide) · [Migration (7.0)](/resources/migration)                                                              |
 
 <Note>
   An **opt-in ClawQL Operator scaffold** shipped in **7.0.0** (CRD, tier

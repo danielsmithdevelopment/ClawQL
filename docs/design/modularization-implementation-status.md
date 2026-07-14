@@ -28,7 +28,7 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 | `clawql-operator`   | Opt-in K8s operator — `ClawQLInstance` CRD, tier-spec ConfigMaps, horizontal layer composition from CRD, auth key reconciliation ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255))                                                      |
 | `clawql-release`    | Layer 0 MVP — manifest v0.1, Merkle root, SBOM/npm + GHCR digests, `clawql release *`, CI artifact ([#537](https://github.com/danielsmithdevelopment/ClawQL/pull/537))                                                                                      |
 
-**7.0 product surface (not separate packages):** custom sources (OpenAPI/Discovery/GraphQL/gRPC/MCP/CLI from URL), harness wrappers (`clawql claude|codex|cursor|opencode`), `curl | bash` install script, ClawQL Desktop (macOS/Windows/Linux). See [custom-sources.md](../getting-started/custom-sources.md) and [clawql-7-setup-guide.md](../getting-started/clawql-7-setup-guide.md).
+**7.0 product surface (not separate packages):** custom sources (OpenAPI/Discovery/GraphQL/gRPC/MCP/CLI from URL), harness wrappers (`clawql claude|codex|cursor|opencode`), `curl | bash` install script, ClawQL Desktop (macOS/Windows/Linux). See [custom-sources.md](../getting-started/custom-sources.md) and [Migration guide](https://docs.clawql.com/resources/migration).
 
 **What is still mostly in `src/`:** MCP tool registration for core tools (`search`/`execute`/`cache`/`audit`), GraphQL proxy entrypoints, server lifecycle, and transport glue (audit/cache MCP wrappers, OTEL, webhooks). **~35 deprecated shims removed** (July 2026); imports now target workspace packages directly.
 
@@ -145,7 +145,7 @@ MCP handlers: `src/memory-ingest.ts`, `src/memory-recall.ts` (thin wrappers + `l
 
 **Shipped via MCP + Helm (not a hidden runner):** seven bundled document vendors (**tika**, **gotenberg**, **stirling**, **paperless**, **onyx**, **nextcloud**, **coneshare**) in `clawql-api` — agents compose **`search`/`execute`**; see [`idp-pipeline.md`](../providers/idp-pipeline.md).
 
-**Not yet extracted to automated orchestration:** retries, Merkle per hop across the full IDP pipeline (vision in [`clawql-modularization-v2.md`](../vision/clawql-modularization-v2.md) §3.2). **Presidio gateway hooks** (execute + memory ingest + external ingest) ship in `clawql-api` when `CLAWQL_ENABLE_PRESIDIO=1` — see [Phase 1 platform guide](../getting-started/phase-1-platform-guide.md) §3.
+**Not yet extracted to automated orchestration:** retries, Merkle per hop across the full IDP pipeline (vision in [`clawql-modularization-v2.md`](../vision/clawql-modularization-v2.md) §3.2). **Presidio gateway hooks** (execute + memory ingest + external ingest) ship in `clawql-api` when `CLAWQL_ENABLE_PRESIDIO=1` — see [MCP clients — Presidio](https://docs.clawql.com/mcp-clients#presidio-redaction).
 
 MCP handler: `src/external-ingest.ts`.
 
@@ -284,7 +284,7 @@ These vision items are **not** done by package extraction alone:
 | [MCP tools](../mcp/mcp-tools.md)                                          | Operator-facing tool matrix               |
 | [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)       | Package delivery epic                     |
 | [clawql-release MVP](../getting-started/clawql-release-mvp.md)            | Layer 0 manifest commands, CI             |
-| [Phase 1 platform guide](../getting-started/phase-1-platform-guide.md)    | Auth, PageIndex, Presidio, Tier 1 Compose |
+| [Getting started](https://docs.clawql.com/getting-started)                | Auth, PageIndex, Presidio, Tier 1 Compose |
 | [clawql-operator-helm](../deployment/clawql-operator-helm.md)             | Operator scaffold install                 |
 
 ---

@@ -23,12 +23,8 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'Overview', href: '/getting-started' },
       { title: 'Quickstart', href: '/quickstart' },
       {
-        title: 'Phase 1 guide (7.0)',
-        href: '/getting-started/phase-1-platform-guide',
-      },
-      {
-        title: '7.0 setup & migration',
-        href: '/getting-started/clawql-7-setup-guide',
+        title: 'Migration (7.0)',
+        href: '/resources/migration',
       },
       {
         title: 'Release manifest (Layer 0)',

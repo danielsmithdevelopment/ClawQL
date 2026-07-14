@@ -23,7 +23,7 @@ const SECTIONS = [
     links: [
       ['Agent setup', '/agent-setup', 'Desktop onboarding, Cursor iOS Cloud Agents, local sandbox'],
       ['Quickstart', '/quickstart', 'Fastest path to a running gateway'],
-      ['Getting started', '/getting-started', 'Phase 1 guide and team paths'],
+      ['Getting started', '/getting-started', 'Quickstart paths, teams, and 7.0 migration'],
       ['Install', '/install', 'npm, Docker, and Helm install options'],
     ],
   },

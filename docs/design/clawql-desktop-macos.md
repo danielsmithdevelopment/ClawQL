@@ -62,5 +62,5 @@ Artifacts land in `desktop/dist/`. Site distribution requires **Apple code signi
 
 - [dashboard/README.md](../../dashboard/README.md)
 - [local-provider-vault.md](../getting-started/local-provider-vault.md)
-- [clawql-7-setup-guide.md](../getting-started/clawql-7-setup-guide.md)
+- [Migration guide](https://docs.clawql.com/resources/migration) · [ClawQL Desktop](https://docs.clawql.com/getting-started/clawql-desktop)
 - [desktop/README.md](../../desktop/README.md)
