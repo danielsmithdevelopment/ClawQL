@@ -1,6 +1,6 @@
 import { Button } from '@/components/Button'
-import { Note } from '@/components/mdx'
 import { DocProse } from '@/components/DocProse'
+import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
 import ClawQLPluginModelBody from '@/generated/clawql-plugin-model-body.mdx'
 import ClawQLPluginRegistryBody from '@/generated/clawql-plugin-registry-body.mdx'

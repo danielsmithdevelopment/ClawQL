@@ -1,5 +1,5 @@
-import { Note } from '@/components/mdx'
 import { DocProse } from '@/components/DocProse'
+import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
 import HybridDecentralizedBody from '@/generated/clawql-hybrid-decentralized-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'

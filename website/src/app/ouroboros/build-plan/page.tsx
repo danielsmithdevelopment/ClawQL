@@ -1,5 +1,5 @@
-import { Note } from '@/components/mdx'
 import { DocProse } from '@/components/DocProse'
+import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
 import DaosBuildPlanBody from '@/generated/daos-build-plan-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
