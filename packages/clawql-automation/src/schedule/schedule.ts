@@ -10,7 +10,7 @@ import { createRequire } from "node:module";
 import { dirname, isAbsolute, resolve as resolvePath } from "node:path";
 import initSqlJs, { type Database } from "sql.js";
 import { z } from "zod";
-import { runNotifySlack } from "../notify/notify.js";
+import { executeNotifySlackCore } from "../notify/notify.js";
 
 type Frequency =
   | { type: "cron"; expression: string }
@@ -722,7 +722,8 @@ async function maybeSendScheduleNotification(
       `job_id=${job.id}\n` +
       `http_status=${run.http_status ?? "none"} latency_ms=${run.latency_ms ?? "none"}\n` +
       `${run.error_text ?? "no error text"}`;
-    await runNotifySlack({ channel, text });
+    // Core façade (not runNotifySlack) avoids nested runAutomationEffect.
+    await executeNotifySlackCore({ channel, text });
   } catch {
     // Optional side channel; never fail the schedule loop because notify failed.
   }
