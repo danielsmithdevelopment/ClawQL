@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect, Layer, Ref } from "effect";
 import { describe, expect, it } from "vitest";
 import { MEMORY_PLUGIN_ID } from "clawql-memory/plugin";
 import { ClawQLApi, createClawQLApi } from "./index.js";
@@ -61,5 +61,24 @@ describe("createClawQLApi", () => {
     expect(api.registry.list().some((p) => p.id === "demo-dispose")).toBe(true);
     await api.dispose();
     expect(api.registry.list()).toHaveLength(0);
+  });
+
+  it("pluginLayers register synchronously and keep Scope until dispose", async () => {
+    const finalizerRan = Ref.unsafeMake(false);
+    const pluginLayer = Layer.scopedDiscard(
+      Effect.gen(function* () {
+        const claw = yield* ClawQLApi;
+        yield* claw.registerPlugin({ id: "from-plugin-layer", version: "0.0.1" });
+        yield* Effect.addFinalizer(() => Ref.set(finalizerRan, true));
+      })
+    );
+    const api = createClawQLApi({
+      plugins: [],
+      pluginLayers: [pluginLayer],
+    });
+    expect(api.registry.list().some((p) => p.id === "from-plugin-layer")).toBe(true);
+    expect(Effect.runSync(Ref.get(finalizerRan))).toBe(false);
+    await api.dispose();
+    expect(Effect.runSync(Ref.get(finalizerRan))).toBe(true);
   });
 });

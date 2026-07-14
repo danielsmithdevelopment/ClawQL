@@ -81,19 +81,28 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
     options.searchLayer ?? SearchNotConfiguredLive,
     options.executeLayer ?? ExecuteNotConfiguredLive
   );
+  // Keep horizontal plugin Layers inside ManagedRuntime Scope (plan §13) instead of
+  // throwaway Effect.scoped(Layer.build) that discards the Context immediately.
+  let composition: Layer.Layer<ClawQLApiRuntimeServices, ClawQLApiRuntimeError, never> = baseLayer;
   for (const pluginLayer of options.pluginLayers ?? []) {
-    Effect.runSync(Effect.scoped(Layer.build(Layer.provideMerge(pluginLayer, baseLayer))));
+    composition = Layer.provideMerge(pluginLayer, composition) as Layer.Layer<
+      ClawQLApiRuntimeServices,
+      ClawQLApiRuntimeError,
+      never
+    >;
   }
   const extras = options.runtimeLayers ?? [];
   const layer: Layer.Layer<ClawQLApiRuntimeServices, ClawQLApiRuntimeError, never> =
     extras.length === 0
-      ? baseLayer
-      : (Layer.mergeAll(baseLayer, ...extras) as Layer.Layer<
+      ? composition
+      : (Layer.mergeAll(composition, ...extras) as Layer.Layer<
           ClawQLApiRuntimeServices,
           ClawQLApiRuntimeError,
           never
         >);
   const runtime = ManagedRuntime.make(layer);
+  // Eager build so registry / MCP tools are populated synchronously after create.
+  runtime.runSync(Effect.void);
   const prepare = options.prepareEffect;
 
   return {
