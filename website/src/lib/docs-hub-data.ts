@@ -163,8 +163,9 @@ export const architectureHubCards: Array<ReferenceCard> = [
   }),
   card({
     href: '/architecture/token-efficiency',
-    name: 'Token efficiency (8 layers)',
-    description: 'Code Mode through classification-aware model routing.',
+    name: 'Token efficiency (12 layers)',
+    description:
+      'Code Mode through the fine-tuning flywheel — compounding cost control.',
     icon: BoltIcon,
   }),
   card({
@@ -264,7 +265,7 @@ export const guidesHubCards: Array<ReferenceCard> = [
     href: '/architecture/token-efficiency',
     name: 'Token efficiency',
     description:
-      'Eight compounding layers — primary cost control for agent workloads.',
+      'Twelve compounding layers — primary cost control for agent workloads.',
     icon: BoltIcon,
   }),
   card({

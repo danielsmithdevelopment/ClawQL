@@ -26,7 +26,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 ## Architecture
 
-- **Token efficiency — layered approach** (Code Mode, response trimming, caching, semantic cache, model routing): [`architecture/clawql-token-efficiency.md`](architecture/clawql-token-efficiency.md) — [`/architecture/token-efficiency`](https://docs.clawql.com/architecture/token-efficiency)
+- **Token efficiency — twelve compounding layers** (Code Mode through fine-tuning flywheel): [`architecture/clawql-token-efficiency.md`](architecture/clawql-token-efficiency.md) — [`/architecture/token-efficiency`](https://docs.clawql.com/architecture/token-efficiency)
 - **Modularization implementation status** (ground truth — packages, shims, MCP flow, Effect/plugin status, July 2026): [`design/modularization-implementation-status.md`](design/modularization-implementation-status.md)
 - **Shipped 7.0 capabilities** — auth, PageIndex, Presidio, Tier 1 Compose: [Getting started](https://docs.clawql.com/getting-started) · [MCP clients](https://docs.clawql.com/mcp-clients)
 - **ClawQL plugin model** (memory/documents/automation as plugins, MCP tools, third-party extensions): [`design/clawql-plugin-model.md`](design/clawql-plugin-model.md) — [`/reference/plugins`](https://docs.clawql.com/reference/plugins)
