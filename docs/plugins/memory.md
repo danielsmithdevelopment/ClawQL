@@ -20,14 +20,14 @@ Persists durable session knowledge to an **Obsidian-compatible vault** and recal
 
 Each piece has one job. The vault is the only canonical store; everything else is a **derived index**, a **code index**, an **external peer**, or the **recall facade**.
 
-| Component | Used for | Unique role |
-| --------- | -------- | ----------- |
-| **Obsidian / Vault** | Store knowledge as Markdown + YAML frontmatter under `Memory/` | **Canonical core** every derived index and query path references or cites back into |
-| **Wikilinks + `memory.db`** | Parse `[[links]]` into SQLite (`wikilink_edge`, `vault_chunk`) on ingest; traverse on recall | **Explicit structured graph** over the vault — link navigation without vectors |
-| **Embeddings** | Vector representations of vault chunks for similarity in `memory_recall` | **Fuzzy semantic retrieval** when no wikilinks or structural paths exist |
-| **PageIndex** | `pageindex_build_tree` → heading tree in `pageindex.db.json`; traverse / synthesize | **Deterministic, vectorless** section navigation and token-budget synthesis on vault structure |
-| **clawql-codegraph** | Parse **source** (TS compiler API for TS/JS; tree-sitter WASM for Python/Go) → nodes/edges with confidence tags | **Deterministic structural index over code**, independent of the vault |
-| **Onyx** | `knowledge_search_onyx` / `sources: ["onyx"]`; optional `enterpriseCitations` on ingest | **External search peer** — supplies org knowledge without ClawQL owning the corpus |
+| Component                   | Used for                                                                                                        | Unique role                                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Obsidian / Vault**        | Store knowledge as Markdown + YAML frontmatter under `Memory/`                                                  | **Canonical core** every derived index and query path references or cites back into            |
+| **Wikilinks + `memory.db`** | Parse `[[links]]` into SQLite (`wikilink_edge`, `vault_chunk`) on ingest; traverse on recall                    | **Explicit structured graph** over the vault — link navigation without vectors                 |
+| **Embeddings**              | Vector representations of vault chunks for similarity in `memory_recall`                                        | **Fuzzy semantic retrieval** when no wikilinks or structural paths exist                       |
+| **PageIndex**               | `pageindex_build_tree` → heading tree in `pageindex.db.json`; traverse / synthesize                             | **Deterministic, vectorless** section navigation and token-budget synthesis on vault structure |
+| **clawql-codegraph**        | Parse **source** (TS compiler API for TS/JS; tree-sitter WASM for Python/Go) → nodes/edges with confidence tags | **Deterministic structural index over code**, independent of the vault                         |
+| **Onyx**                    | `knowledge_search_onyx` / `sources: ["onyx"]`; optional `enterpriseCitations` on ingest                         | **External search peer** — supplies org knowledge without ClawQL owning the corpus             |
 
 **Write once, refresh indexes:** `memory_ingest` always writes vault Markdown. Optional `rebuild` refreshes derived layers (PageIndex, memory.db/embeddings). Codegraph indexes **code**; Onyx stays a **search** peer (citations into the vault, not “ingest into Onyx”).
 
