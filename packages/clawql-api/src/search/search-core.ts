@@ -26,7 +26,7 @@ export function searchClawqlOperationsEffect(
     const { operations } = yield* fromPromise(() => loadSpecFn());
     const results = searchOperations(operations, params.query, params.limit ?? 5);
     return { formattedText: formatSearchResults(results) };
-  });
+  }).pipe(Effect.withSpan("clawql.search", { attributes: { "clawql.query": params.query } }));
 }
 
 /** Promise boundary for legacy callers. */

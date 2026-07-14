@@ -289,9 +289,9 @@ Label cross-cutting PRs with both `effect-foundation` and `modularization-platfo
 1. **Docs:** keep [`modularization-implementation-status.md`](./modularization-implementation-status.md) updated as features merge.
 2. **Transport:** continue slim toward transport-only `clawql-mcp` packaging.
 3. **Third-party plugins:** document npm package template + `CLAWQL_PLUGINS` / Operator toggle.
-4. **Optional later:** `@effect/schema` at boundaries; `Effect.withSpan` on pipeline stages; deeper Scope ownership of long-lived plugin Layers (replace throwaway `Effect.scoped(Layer.build)`).
+4. **Optional later:** `@effect/schema` at boundaries; `@effect/opentelemetry` Tracer bridge so `Effect.withSpan` exports to existing OTEL; deeper Scope ownership of long-lived plugin Layers (replace throwaway `Effect.scoped(Layer.build)`).
 
-**Completed:** Turborepo scaffold; `clawql-core` + `AuditService`; execute/search Effect services; `PanguardProxyPlugin`; extraction **phases 1–9**; horizontal Plugin Layers; **Effect hot-path migration** for memory/documents/automation/sandbox/ouroboros + opt-in tools (pageindex, Onyx, HITL) + MCP audit bridge; **fiber workers** for schedule / ouroboros seeds poller / inference pipeline; **ManagedRuntime dispose** + pool/NATS `acquireRelease` helpers (IO remains `tryPromise`). Ouroboros Effect rewrite landed on the `effect-ouroboros` track.
+**Completed:** Turborepo scaffold; `clawql-core` + `AuditService`; execute/search Effect services; `PanguardProxyPlugin`; extraction **phases 1–9**; horizontal Plugin Layers; **Effect hot-path migration** for memory/documents/automation/sandbox/ouroboros + opt-in tools (pageindex, Onyx, HITL) + MCP audit bridge; **fiber workers** for schedule / ouroboros seeds poller / inference pipeline; **ManagedRuntime dispose** + pool/NATS `acquireRelease` helpers; workflow audit via `AuditService`; **`Effect.withSpan`** on search/execute cores (IO remains `tryPromise`). Ouroboros Effect rewrite landed on the `effect-ouroboros` track.
 ---
 
 ## 14. References

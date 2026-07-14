@@ -200,7 +200,11 @@ export function executeClawqlOperationEffect(
         })
       )
     );
-  });
+  }).pipe(
+    Effect.withSpan("clawql.execute", {
+      attributes: { "clawql.operationId": params.operationId },
+    })
+  );
 }
 
 /** Promise boundary for MCP handlers and legacy callers. */
