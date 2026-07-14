@@ -183,11 +183,11 @@ MCP: `handleScheduleToolInput` shim in `src/clawql-schedule.ts`; `handleNotifyTo
 
 **Next extraction (post–phase 9)** ([plan §6](./effect-ts-modularization-rearchitecture-plan.md#6-mapping-src--packages-first-extraction-order)):
 
-| Order | Target                      | Representative `src/`                     | Status  |
-| ----- | --------------------------- | ----------------------------------------- | ------- |
-| 7     | `clawql-sandbox`            | `sandbox-*.ts`                            | ✅ Done |
-| 8     | `clawql-ouroboros`          | Effect rewrite + thin MCP glue            | ✅ Done |
-| 9     | Transport-only `clawql-mcp` | `server.ts`, `tools.ts` registration only | 📋 Next |
+| Order | Target                      | Representative `src/`                     | Status                                                                                                             |
+| ----- | --------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 7     | `clawql-sandbox`            | `sandbox-*.ts`                            | ✅ Done — package + plugin live under `packages/clawql-sandbox/` (no root `src/sandbox-*`)                         |
+| 8     | `clawql-ouroboros`          | Effect rewrite + thin MCP glue            | ✅ Done — package under `packages/clawql-ouroboros/`; Effect services for tools, EventStore, loop, poller, engines |
+| 9     | Transport-only `clawql-mcp` | `server.ts`, `tools.ts` registration only | 📋 Next                                                                                                            |
 
 ---
 
