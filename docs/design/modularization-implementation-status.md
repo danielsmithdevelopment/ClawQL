@@ -258,6 +258,8 @@ From enablement §5.4 and the Effect plan §8:
 | `AutomationToolsService` argocd                                                  | ✅ Native `Effect.gen` enabled → soft Zod → K8s CRD list/get/sync                                                                               |
 | `hitl_enqueue_label_studio`                                                      | ✅ Native `Effect.gen` config/validate → HTTP import → NATS publish hook                                                                        |
 | `SandboxExecService` sandbox_exec                                                | ✅ Native `Effect.gen` (parse backend → resolve probes → dispatch Kata/Docker/Seatbelt/bridge → shape); Promise façade kept                     |
+| ManagedRuntime `dispose` + process shutdown                                      | ✅ `ClawQLApiHandle.dispose` → plugin `teardownAll` + `runtime.dispose`; MCP registers `disposeClawqlApi` on SIGINT/SIGTERM                     |
+| Postgres / NATS `acquireRelease`                                                 | ✅ Scoped Effect helpers for Ouroboros + pgvector pools and NATS HITL consumer (singleton façades retained)                                     |
 
 **Rule for new code in extracted packages:** prefer Effect in `clawql-core` / `clawql-api`; legacy `async` is acceptable **only** at IO edges (`Effect.tryPromise`). See plan §7.
 

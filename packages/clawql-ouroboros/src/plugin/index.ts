@@ -11,6 +11,9 @@ export { createOuroborosPlugin, OUROBOROS_PLUGIN_ID } from "./ouroboros-plugin.j
 
 export { getOuroborosContext, resetOuroborosContextForTests } from "./context.js";
 
+export { closeOuroborosPgPool, getOuroborosPgPool } from "../glue/postgres-pool.js";
+export { ouroborosPgPoolScopedEffect } from "../glue/postgres-pool-effect.js";
+
 export {
   OuroborosContextService,
   OuroborosError,
