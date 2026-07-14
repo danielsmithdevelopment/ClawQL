@@ -299,8 +299,28 @@ async function patchCronSuspend(
 export async function dispatchWorkflowToolCore(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
-  const parsed = workflowInputSchema.parse(params);
+  const parsedSoft = parseWorkflowToolParams(params);
+  if (!parsedSoft.ok) return jsonResponse({ ok: false, error: parsedSoft.error });
+  return runWorkflowParsedOperation(parsedSoft.value);
+}
 
+export type WorkflowParsedInput = z.infer<typeof workflowInputSchema>;
+
+/** Soft Zod parse — validation failures become MCP error payloads (not throws). */
+export function parseWorkflowToolParams(
+  params: unknown
+): { ok: true; value: WorkflowParsedInput } | { ok: false; error: string } {
+  const result = workflowInputSchema.safeParse(params);
+  if (!result.success) {
+    return { ok: false, error: result.error.issues.map((i) => i.message).join("; ") };
+  }
+  return { ok: true, value: result.data };
+}
+
+/** K8s / wait dispatch for a Zod-validated workflow payload. */
+export async function runWorkflowParsedOperation(
+  parsed: WorkflowParsedInput
+): Promise<{ content: { type: "text"; text: string }[] }> {
   try {
     switch (parsed.operation) {
       case "submit": {

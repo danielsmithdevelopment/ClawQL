@@ -204,8 +204,28 @@ async function getApplication(namespace: string, name: string): Promise<ArgoCdAp
 export async function dispatchArgocdToolCore(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
-  const parsed = argocdInputSchema.parse(params);
+  const parsedSoft = parseArgocdToolParams(params);
+  if (!parsedSoft.ok) return jsonResponse({ ok: false, error: parsedSoft.error });
+  return runArgocdParsedOperation(parsedSoft.value);
+}
 
+export type ArgocdParsedInput = z.infer<typeof argocdInputSchema>;
+
+/** Soft Zod parse — validation failures become MCP error payloads (not throws). */
+export function parseArgocdToolParams(
+  params: unknown
+): { ok: true; value: ArgocdParsedInput } | { ok: false; error: string } {
+  const result = argocdInputSchema.safeParse(params);
+  if (!result.success) {
+    return { ok: false, error: result.error.issues.map((i) => i.message).join("; ") };
+  }
+  return { ok: true, value: result.data };
+}
+
+/** K8s CRD list/get/sync for a Zod-validated payload. */
+export async function runArgocdParsedOperation(
+  parsed: ArgocdParsedInput
+): Promise<{ content: { type: "text"; text: string }[] }> {
   try {
     const customObjects = await getArgocdK8sClient();
     switch (parsed.operation) {
