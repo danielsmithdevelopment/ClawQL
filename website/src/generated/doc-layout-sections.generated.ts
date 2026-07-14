@@ -19,8 +19,8 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       id: 'the-wrong-conversation-about-llm-cost',
     },
     {
-      title: 'Why context bloat is worse than it looks',
-      id: 'why-context-bloat-is-worse-than-it-looks',
+      title: 'Why context bloat is a performance issue (not just cost)',
+      id: 'why-context-bloat-is-a-performance-issue-not-just-cost',
     },
     {
       title: 'The architecture of compounding efficiency',
