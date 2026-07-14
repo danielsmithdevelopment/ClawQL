@@ -1340,16 +1340,6 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Where to look', id: 'where-to-look' },
     { title: 'Versioning', id: 'versioning' },
   ],
-  '/resources/migration': [
-    { title: 'Upgrading to 7.0.0', id: 'upgrading-to-7-0-0' },
-    {
-      title: 'Upgrading clawql-mcp (general)',
-      id: 'upgrading-clawql-mcp-general',
-    },
-    { title: 'Docker Compose', id: 'docker-compose' },
-    { title: 'Kubernetes / Helm', id: 'kubernetes-helm' },
-    { title: 'From other MCP servers', id: 'from-other-mcp-servers' },
-  ],
   '/schedule': [
     { title: 'Setup and usage guide', id: 'setup-and-usage-guide' },
     { title: 'Pairing with notify', id: 'pairing-with-notify' },

@@ -18,9 +18,6 @@ Run ClawQL in minutes, deploy the full IDP stack with Helm, then dive into guide
   <Button href="/getting-started/clawql-desktop" variant="outline">
     <>macOS Desktop</>
   </Button>
-  <Button href="/resources/migration" variant="outline">
-    <>Migration (7.0)</>
-  </Button>
   <Button href="/getting-started/for-teams" variant="outline">
     <>For teams</>
   </Button>
@@ -49,7 +46,7 @@ Phase 1 exit is complete. Enable or evaluate these with the docs linked below:
 | **Presidio hooks**               | `CLAWQL_ENABLE_PRESIDIO=1` — [MCP clients](/mcp-clients#presidio-redaction)    |
 | **Tier 1 Compose**               | `examples/clawql-local-docker-compose`                                         |
 | **Release manifest**             | [Release manifest (Layer 0)](/getting-started/clawql-release-mvp)              |
-| **Default providers + Vault**    | [Migration guide](/resources/migration)                                        |
+| **Default providers + Vault**    | [Quickstart](/quickstart) · [Operations guide](/deployment/operations-guide)   |
 
 OIDC/SAML/RBAC beyond gateway API keys, full Operator NL ops, and vertical packages remain **roadmap** — [Vision & Roadmap](/vision/roadmap). Package-level ground truth: [modularization-implementation-status.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md).
 
@@ -62,7 +59,7 @@ OIDC/SAML/RBAC beyond gateway API keys, full Operator NL ops, and vertical packa
 | **Helm full stack** | Team K8s, IDP pipeline                      | [Kubernetes](/deployment/kubernetes) · [Helm](/helm)                                                                                                    |
 | **Teams**           | Shared memory, golden hosts, observability  | [For teams](/getting-started/for-teams)                                                                                                                 |
 | **Agents**          | Desktop, iOS Cloud Agents, Seatbelt sandbox | [Agent setup](/agent-setup)                                                                                                                             |
-| **Operations**      | Upgrades, secrets, health                   | [Operations guide](/deployment/operations-guide) · [Migration (7.0)](/resources/migration)                                                              |
+| **Operations**      | Upgrades, secrets, health                   | [Operations guide](/deployment/operations-guide) · [Helm](/helm)                                                                                        |
 
 <Note>
   An **opt-in ClawQL Operator scaffold** shipped in **7.0.0** (CRD, tier

@@ -13,7 +13,7 @@ export const DOC_SITE_ROUTES = {
   'docs/getting-started/phase-1-platform-guide.md':
     '/getting-started',
   'docs/getting-started/clawql-7-setup-guide.md':
-    '/resources/migration',
+    '/getting-started',
   'docs/getting-started/clawql-release-mvp.md':
     '/getting-started/clawql-release-mvp',
   'docs/getting-started/getting-started-for-teams.md':

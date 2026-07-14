@@ -128,7 +128,7 @@ For technical readers, the full rationale and patterns are in the [Contributor T
 
 **`mcp-grpc-transport`** — gRPC MCP transport for cluster deployments.
 
-**7.0 additions:** **`clawql-auth`** (gateway modes), **`clawql-pageindex`** + `pageindex_*` tools, Presidio gateway hooks (opt-in), **`clawql-release`** (Layer 0 manifest MVP), **`clawql-operator`** (opt-in K8s scaffold), custom sources + harness wrappers, install script, ClawQL Desktop, Tier 1 Compose. See [Getting started](https://docs.clawql.com/getting-started) and [Migration guide](https://docs.clawql.com/resources/migration).
+**7.0 additions:** **`clawql-auth`** (gateway modes), **`clawql-pageindex`** + `pageindex_*` tools, Presidio gateway hooks (opt-in), **`clawql-release`** (Layer 0 manifest MVP), **`clawql-operator`** (opt-in K8s scaffold), custom sources + harness wrappers, install script, ClawQL Desktop, Tier 1 Compose. See [Getting started](https://docs.clawql.com/getting-started) and [MCP clients](https://docs.clawql.com/mcp-clients).
 
 **Plugin Phase 2:** All horizontal tiers register MCP tools via **`Plugin.onRegister`** and compose through **`composeHorizontalPluginLayers()`** — see [ClawQL plugin model](../design/clawql-plugin-model.md).
 

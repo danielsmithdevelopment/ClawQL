@@ -27,7 +27,7 @@ CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
 helm upgrade --install clawql ./charts/clawql-mcp --set provider=all-providers
 ```
 
-→ [Migration guide](https://docs.clawql.com/resources/migration)
+→ [Getting started](https://docs.clawql.com/getting-started) · [Operations guide](https://docs.clawql.com/deployment/operations-guide)
 
 ---
 
@@ -213,7 +213,7 @@ Docling, LangExtract, IDP pipeline runner, NATS/KEDA worker, Langfuse→Ouroboro
 
 ## Upgrade checklist (6.4.x → 7.0.0)
 
-1. [Migration guide](https://docs.clawql.com/resources/migration)
+1. [Getting started](https://docs.clawql.com/getting-started) · [Operations guide](https://docs.clawql.com/deployment/operations-guide)
 2. Replace legacy env aliases and **`CLAWQL_DISABLE_HTTP_METRICS`** → **`CLAWQL_ENABLE_HTTP_METRICS=0`**
 3. Wire Vault → **`clawql-provider-env`**
 4. `clawql onboard --interactive` or import provider KV

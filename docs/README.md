@@ -4,13 +4,13 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 ## How to use this library
 
-| Doc type                   | Examples                                                                                                                                                                                                                 | Status language                      |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
-| **Ground truth**           | [modularization-implementation-status.md](design/modularization-implementation-status.md), CHANGELOG, RELEASE_NOTES                                                                                                      | ✅ / 🚧 / 📋 only                    |
-| **Getting started**        | [docs.clawql.com/getting-started](https://docs.clawql.com/getting-started), [getting-started-for-teams.md](getting-started/getting-started-for-teams.md), [Migration (7.0)](https://docs.clawql.com/resources/migration) | What to run today                    |
-| **Public roadmap**         | [clawql-vision-roadmap.md](vision/clawql-vision-roadmap.md)                                                                                                                                                              | Phases + honest table                |
-| **Reference architecture** | [clawql-modularization-v2.md](vision/clawql-modularization-v2.md), [operator-target-architecture.md](design/operator-target-architecture.md)                                                                             | 📋 target; inline 🚧 where partial   |
-| **Historical**             | [clawql-modularization.md](vision/clawql-modularization.md) (v1.9)                                                                                                                                                       | Fixed date — not for delivery claims |
+| Doc type                   | Examples                                                                                                                                                 | Status language                      |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| **Ground truth**           | [modularization-implementation-status.md](design/modularization-implementation-status.md), CHANGELOG, RELEASE_NOTES                                      | ✅ / 🚧 / 📋 only                    |
+| **Getting started**        | [docs.clawql.com/getting-started](https://docs.clawql.com/getting-started), [getting-started-for-teams.md](getting-started/getting-started-for-teams.md) | What to run today                    |
+| **Public roadmap**         | [clawql-vision-roadmap.md](vision/clawql-vision-roadmap.md)                                                                                              | Phases + honest table                |
+| **Reference architecture** | [clawql-modularization-v2.md](vision/clawql-modularization-v2.md), [operator-target-architecture.md](design/operator-target-architecture.md)             | 📋 target; inline 🚧 where partial   |
+| **Historical**             | [clawql-modularization.md](vision/clawql-modularization.md) (v1.9)                                                                                       | Fixed date — not for delivery claims |
 
 ## Core Product Docs
 
@@ -28,7 +28,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 - **Token efficiency — layered approach** (Code Mode, response trimming, caching, semantic cache, model routing): [`architecture/clawql-token-efficiency.md`](architecture/clawql-token-efficiency.md) — [`/architecture/token-efficiency`](https://docs.clawql.com/architecture/token-efficiency)
 - **Modularization implementation status** (ground truth — packages, shims, MCP flow, Effect/plugin status, July 2026): [`design/modularization-implementation-status.md`](design/modularization-implementation-status.md)
-- **Shipped 7.0 capabilities** — auth, PageIndex, Presidio, Tier 1 Compose: [Getting started](https://docs.clawql.com/getting-started) · [Migration](https://docs.clawql.com/resources/migration) · [MCP clients](https://docs.clawql.com/mcp-clients)
+- **Shipped 7.0 capabilities** — auth, PageIndex, Presidio, Tier 1 Compose: [Getting started](https://docs.clawql.com/getting-started) · [MCP clients](https://docs.clawql.com/mcp-clients)
 - **ClawQL plugin model** (memory/documents/automation as plugins, MCP tools, third-party extensions): [`design/clawql-plugin-model.md`](design/clawql-plugin-model.md) — [`/reference/plugins`](https://docs.clawql.com/reference/plugins)
 - **Operator target architecture** (full operator roadmap — NL ops, verticals): [`design/operator-target-architecture.md`](design/operator-target-architecture.md)
 - **Plugin registry** (shipped vs planned plugins, MCP tool ownership, enable flags): [`reference/clawql-plugin-registry.md`](reference/clawql-plugin-registry.md) — [`/reference/plugins`](https://docs.clawql.com/reference/plugins)
@@ -52,7 +52,6 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `getting-started/agent-setup.md` — desktop, Cursor iOS Cloud Agents, local Seatbelt sandbox
 - `getting-started/local-provider-vault.md` — ~/.ClawQL secrets vault + memory home
 - `getting-started/getting-started-for-teams.md` — **teams:** Helm, vault sync (R2/S3/GCS), Packer golden hosts, observability
-- [Migration guide (7.0)](https://docs.clawql.com/resources/migration) — default stack, Vault, operator auth, env aliases
 - `getting-started/custom-sources.md` — URL/CLI custom sources (7.0)
 - `design/clawql-desktop-macos.md` — ClawQL Desktop (macOS Electron app)
 - `getting-started/clawql-init-walkthrough-spec.md` — Executor comparison; Phases 1–2b shipped in 7.0.0

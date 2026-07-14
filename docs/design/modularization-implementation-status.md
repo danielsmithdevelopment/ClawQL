@@ -28,7 +28,7 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 | `clawql-operator`   | Opt-in K8s operator — `ClawQLInstance` CRD, tier-spec ConfigMaps, horizontal layer composition from CRD, auth key reconciliation ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255))                                                      |
 | `clawql-release`    | Layer 0 MVP — manifest v0.1, Merkle root, SBOM/npm + GHCR digests, `clawql release *`, CI artifact ([#537](https://github.com/danielsmithdevelopment/ClawQL/pull/537))                                                                                      |
 
-**7.0 product surface (not separate packages):** custom sources (OpenAPI/Discovery/GraphQL/gRPC/MCP/CLI from URL), harness wrappers (`clawql claude|codex|cursor|opencode`), `curl | bash` install script, ClawQL Desktop (macOS/Windows/Linux). See [custom-sources.md](../getting-started/custom-sources.md) and [Migration guide](https://docs.clawql.com/resources/migration).
+**7.0 product surface (not separate packages):** custom sources (OpenAPI/Discovery/GraphQL/gRPC/MCP/CLI from URL), harness wrappers (`clawql claude|codex|cursor|opencode`), `curl | bash` install script, ClawQL Desktop (macOS/Windows/Linux). See [custom-sources.md](../getting-started/custom-sources.md) and [Getting started](https://docs.clawql.com/getting-started).
 
 **What is still mostly in `src/`:** MCP tool registration for core tools (`search`/`execute`/`cache`/`audit`), GraphQL proxy entrypoints, server lifecycle, and transport glue (audit/cache MCP wrappers, OTEL, webhooks). **~35 deprecated shims removed** (July 2026); imports now target workspace packages directly.
 
