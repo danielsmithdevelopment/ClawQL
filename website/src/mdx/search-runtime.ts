@@ -91,7 +91,10 @@ async function loadSearchIndex(): Promise<Document> {
 
 function getSearchIndex(): Promise<Document> {
   if (!indexPromise) {
-    indexPromise = loadSearchIndex()
+    indexPromise = loadSearchIndex().catch((error) => {
+      indexPromise = null
+      throw error
+    })
   }
   return indexPromise
 }
@@ -100,25 +103,41 @@ export async function search(
   query: string,
   options: SearchOptions = {},
 ): Promise<Array<Result>> {
-  const sectionIndex = await getSearchIndex()
-  const result = sectionIndex.search(query, {
-    ...options,
-    enrich: true,
-  })
+  try {
+    const sectionIndex = await getSearchIndex()
+    const result = sectionIndex.search(query, {
+      ...options,
+      enrich: true,
+    })
 
-  if (!result.length) {
+    if (!result.length) {
+      return []
+    }
+
+    const first = result[0] as {
+      result: Array<{
+        id: string
+        doc: { title: string; pageTitle?: string } | null
+      }>
+    }
+
+    return (first.result ?? [])
+      .filter(
+        (
+          item,
+        ): item is {
+          id: string
+          doc: { title: string; pageTitle?: string }
+        } => Boolean(item?.doc),
+      )
+      .map((item) => ({
+        url: item.id,
+        title: item.doc.title,
+        pageTitle: item.doc.pageTitle,
+      }))
+  } catch {
     return []
   }
-
-  const first = result[0] as {
-    result: Array<{ id: string; doc: { title: string; pageTitle?: string } }>
-  }
-
-  return first.result.map((item) => ({
-    url: item.id,
-    title: item.doc.title,
-    pageTitle: item.doc.pageTitle,
-  }))
 }
 
 /** Preload index during idle time (optional — search dialog may call this). */
