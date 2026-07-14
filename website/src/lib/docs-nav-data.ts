@@ -23,10 +23,6 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'Overview', href: '/getting-started' },
       { title: 'Quickstart', href: '/quickstart' },
       {
-        title: 'Migration (7.0)',
-        href: '/resources/migration',
-      },
-      {
         title: 'Release manifest (Layer 0)',
         href: '/getting-started/clawql-release-mvp',
       },
@@ -99,7 +95,6 @@ export const docsNavigation: Array<NavGroup> = [
     links: [
       { title: 'Examples', href: '/examples' },
       { title: 'Changelog', href: '/resources/changelog' },
-      { title: 'Migration', href: '/resources/migration' },
       {
         title: 'GitHub',
         href: 'https://github.com/danielsmithdevelopment/ClawQL',

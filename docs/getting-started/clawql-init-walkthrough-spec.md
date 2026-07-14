@@ -74,7 +74,7 @@ Executor is a useful reference: one-line install, `doctor`, agent-bootstrap shor
 ### Phase 2b — End-to-end onboard (shipped — Tier 2)
 
 - **`clawql onboard --interactive`** — chains init → MCP config write → doctor smoke
-- Docs + migration guide updated for **7.0.0**
+- Docs updated for **7.0.0**
 - Agent-setup prompt uses onboard as the primary path
 
 ### Phase 3 — Guided UI (shipped in 7.0 Desktop)
@@ -144,5 +144,5 @@ flowchart TD
 
 - [Bundled providers plugin](../plugins/bundled-providers.md)
 - [AWS onboarding](../providers/aws-onboarding.md)
-- [Migration guide](https://docs.clawql.com/resources/migration)
+- [Getting started](https://docs.clawql.com/getting-started) · [Operations guide](https://docs.clawql.com/deployment/operations-guide)
 - Executor quickstart (external): [executor.sh quickstart](https://rhyssullivan-executor.mintlify.app/quickstart)

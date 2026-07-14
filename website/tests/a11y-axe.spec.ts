@@ -7,7 +7,6 @@ const routes = [
   '/quickstart',
   '/install',
   '/getting-started/for-teams',
-  '/resources/migration',
   '/reference/protocol',
   '/deployment/kubernetes',
   '/inference/clawql-inference',

@@ -198,13 +198,6 @@ export const deploymentHubCards: Array<ReferenceCard> = [
     icon: BoltIcon,
   }),
   card({
-    href: '/resources/migration',
-    name: 'Migration (7.0)',
-    description:
-      'Default provider stack, Vault-backed secrets, env aliases, and Helm/operator upgrade checklist.',
-    icon: BookIcon,
-  }),
-  card({
     href: '/getting-started/for-teams',
     name: 'Getting started for teams',
     description:
@@ -260,13 +253,6 @@ export const deploymentHubCards: Array<ReferenceCard> = [
 ]
 
 export const guidesHubCards: Array<ReferenceCard> = [
-  card({
-    href: '/resources/migration',
-    name: 'Migration (7.0)',
-    description:
-      'Default stack, Vault secrets, Helm defaults, and verification for ClawQL 7.0.',
-    icon: BookIcon,
-  }),
   card({
     href: '/learn',
     name: 'ClawQL Learn',
@@ -439,12 +425,6 @@ export const resourcesHubCards: Array<ReferenceCard> = [
     name: 'Troubleshooting & FAQ',
     description: 'Common MCP, spec, auth, and deploy failure modes.',
     icon: TagIcon,
-  }),
-  card({
-    href: '/resources/migration',
-    name: 'Migration guide',
-    description: 'Upgrading ClawQL versions and moving from other MCP servers.',
-    icon: DocumentIcon,
   }),
   card({
     href: '/vision/slide-deck',

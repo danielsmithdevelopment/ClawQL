@@ -44,7 +44,7 @@ Major release: **opinionated default stack everywhere** (npm + Helm), **vault-fi
 - **Plugins docs site**: `docs/plugins/*.md` → `/plugins` hub + per-slug pages.
 - **Init walkthrough (Phase 2)**: `clawql` CLI — **`init`**, **`doctor`**, **`mcp-config`**; local **`~/.ClawQL/vault/providers.json`** (HashiCorp KV shape); MCP loads vault at startup; [local-provider-vault.md](docs/getting-started/local-provider-vault.md).
 - **Onboarding Tier 1**: `clawql secrets list|set` (hidden token input), `clawql doctor --smoke`, `clawql mcp-config --write cursor|claude-desktop`, HashiCorp Vault auto-detect on init, MCP startup stderr summary.
-- **Onboarding Tier 2**: `clawql onboard` end-to-end walkthrough; docs/migration/agent-setup aligned to **7.0.0** and Tier 1 CLI commands.
+- **Onboarding Tier 2**: `clawql onboard` end-to-end walkthrough; docs/agent-setup aligned to **7.0.0** and Tier 1 CLI commands.
 - **ClawQL Operator scaffold (opt-in)**: `ClawQLInstance` tier presets, continuous reconcile Deployment, MCP rollout on tier-spec change, **`ProviderSecretsReady`** auth reconciliation (default-stack keys; full IDP vault catalog when **`documents.enabled`**), `clawql operator status`, `make local-k8s-up` operator install ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255), [#479](https://github.com/danielsmithdevelopment/ClawQL/pull/479)).
 - **Lending vertical Docker Compose** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)): **`docker/compose/lending.compose.yml`** — ClawQL MCP + Docling + reference classifier + LangExtract (demo) + Label Studio CE; env template **`lending.env.example`**; guide **[`docker/compose/README.md`](docker/compose/README.md)**; `make compose-lending-config-test`.
 - **Docling Helm reference deployment + classifier** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)): opt-in **`documentPipeline.docling`**, **`DOCLING_BASE_URL`** wiring, MCP **`classify_document`** when **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`**; reference classifier HTTP sample; **`DEFAULT_IDP_PIPELINE`** Docling layout-parse hop.
@@ -55,7 +55,7 @@ Major release: **opinionated default stack everywhere** (npm + Helm), **vault-fi
 - **IDP pipeline runner** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)): MCP **`run_idp_pipeline`** when **`CLAWQL_ENABLE_IDP_PIPELINE=1`**; docs **[`docs/mcp/idp-pipeline-runner.md`](docs/mcp/idp-pipeline-runner.md)**.
 - **NATS JetStream workflow events** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254), [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)): opt-in publish/consumer for HITL/workflow lifecycle.
 - **Langfuse eval → Ouroboros** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** + **`CLAWQL_ENABLE_OUROBOROS=1`** — webhook + **`ouroboros_propose_seed_revision_from_eval`**.
-- **7.0 migration:** [Migration guide](https://docs.clawql.com/resources/migration) (content formerly in `clawql-7-setup-guide.md`).
+- **7.0 defaults:** Getting started + Operations guide cover default stack, Vault-backed secrets, and Helm/operator paths (formerly `clawql-7-setup-guide.md` / migration page).
 - **Phase 1 exit (7.0.0 finalized):**
   - **`clawql-auth`** — gateway `noAuth`/`apiKey`, ATR claims, provider credential headers; HTTP MCP middleware when `CLAWQL_AUTH_MODE=apiKey`.
   - **`clawql-pageindex`** — MIT vectorless hierarchical indexing; `pageindex_build_tree`, `pageindex_traverse`, `pageindex_synthesize`, `pageindex_get_content` (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide).
@@ -65,7 +65,7 @@ Major release: **opinionated default stack everywhere** (npm + Helm), **vault-fi
 ### Changed
 
 - **Multi-spec HTTP**: `/graphql` is not mounted in merged multi-spec mode (MCP `search`/`execute` unchanged).
-- **First-run docs**: README, getting-started, quickstart, install, migration guide, and Helm defaults aligned to default stack vs `all-providers`.
+- **First-run docs**: README, getting-started, quickstart, install, and Helm defaults aligned to default stack vs `all-providers`.
 - **Plugin model/registry docs**: Phase 2 `onRegister` status updated (July 2026).
 - **HITL docs:** **`docs/mcp/hitl-label-studio.md`** is the operator guide; **`docs/plugins/hitl-label-studio.md`** is a short plugin index stub.
 - **Helm / vault docs:** default stack references updated from **6.4.x** to **7.0.x**.

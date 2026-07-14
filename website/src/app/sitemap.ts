@@ -104,7 +104,6 @@ const ENTRIES: Array<Entry> = [
   { path: '/reference/hitl', changeFrequency: 'monthly', priority: 0.82 },
   { path: '/reference/verticals', changeFrequency: 'monthly', priority: 0.82 },
   { path: '/resources/changelog', changeFrequency: 'monthly', priority: 0.8 },
-  { path: '/resources/migration', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/vision/roadmap', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/quickstart', changeFrequency: 'weekly', priority: 0.95 },
   { path: '/learn', changeFrequency: 'weekly', priority: 0.93 },

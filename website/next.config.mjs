@@ -126,7 +126,12 @@ const nextConfig = {
       },
       {
         source: '/getting-started/clawql-7-setup-guide',
-        destination: '/resources/migration',
+        destination: '/getting-started',
+        permanent: true,
+      },
+      {
+        source: '/resources/migration',
+        destination: '/getting-started',
         permanent: true,
       },
     ]
