@@ -52,8 +52,6 @@ export type WaitForWorkflowResult = {
   polls: number;
 };
 
-const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
 /**
  * Native Effect.gen wait loop — K8s get behind {@link automationFromPromise},
  * poll delay via {@link Effect.sleep} (or injectable Promise sleep for tests).

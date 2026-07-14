@@ -21,7 +21,6 @@ import {
   isNamespaceAllowed,
   isTemplateAllowed,
   workflowDeleteAllowed,
-  workflowToolEnabled,
   WORKFLOW_CORRELATION_LABEL,
 } from "./env.js";
 import {
