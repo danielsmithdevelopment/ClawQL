@@ -72,7 +72,7 @@ function rewriteDaosLinks(body) {
     .replaceAll('](./clawql-ouroboros.md)', '](/ouroboros)')
     .replaceAll(
       '](../vision/clawql-master-enablement-guide.md)',
-      '](/vision/technical-enablement)',
+      '](/architecture)',
     )
     .replaceAll('](../deployment/helm.md)', '](/helm')
     .replaceAll(

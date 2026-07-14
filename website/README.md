@@ -24,7 +24,7 @@ npm start
 
 ## Canonical doc sources (do not edit generated MDX by hand)
 
-**Product vision:** `docs/vision/clawql-vision-roadmap.md` → `/vision/roadmap` (**start here** — public edition). Master Architecture & Enablement Guide v2.1: `docs/vision/clawql-master-enablement-guide.md` → `/vision/technical-enablement` (unified index). Modularization v2.1 on `/vision/modularization` is the package-boundary companion.
+**Product vision:** `docs/vision/clawql-vision-roadmap.md` → `/vision/roadmap` (**start here** — public edition). Master Architecture & Enablement Guide v2.1: `docs/vision/clawql-master-enablement-guide.md` → `/architecture` (unified index). Modularization v2.1 on `/architecture` is the package-boundary companion.
 
 Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** / **dev**:
 
@@ -38,8 +38,8 @@ Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** /
 | `/ouroboros/build-plan` | `docs/ouroboros/daos-build-plan-v2.7.1.md` | `scripts/sync-daos-build-plan-doc.mjs` |
 | `/architecture/token-efficiency` | `docs/architecture/clawql-token-efficiency.md` | `scripts/sync-clawql-token-efficiency-doc.mjs` |
 | `/inference/clawql-inference` | `docs/inference/clawql-inference.md` | `scripts/sync-clawql-inference-doc.mjs` |
-| `/vision/technical-enablement` | `docs/vision/clawql-master-enablement-guide.md` (full technical reference)| `scripts/sync-clawql-master-enablement-doc.mjs` |
-| `/vision/modularization`       | `docs/vision/clawql-modularization-v2.md` (companion)                     | `scripts/sync-clawql-modularization-doc.mjs`    |
+| `/architecture` | `docs/vision/clawql-master-enablement-guide.md` (full technical reference)| `scripts/sync-clawql-master-enablement-doc.mjs` |
+| `/architecture`       | `docs/vision/clawql-modularization-v2.md` (companion)                     | `scripts/sync-clawql-modularization-doc.mjs`    |
 | `/vision/immutable-releases`   | `docs/vision/clawql-hybrid-decentralized-github-alternative.md` (Layer 0) | `scripts/sync-clawql-hybrid-decentralized-doc.mjs` |
 | `/vision/slide-deck`           | `docs/presentations/clawql-slides.md`                                     | `scripts/sync-clawql-slides-doc.mjs`            |
 | `/security/defense-in-depth`   | `docs/security/clawql-defense-in-depth-security-guide.md` (deployment reference) | `scripts/sync-clawql-defense-in-depth-doc.mjs`  |

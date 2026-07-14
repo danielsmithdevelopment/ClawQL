@@ -9,7 +9,7 @@ export const GH_MAIN =
 
 /** Repo-relative doc paths that have first-class site routes. */
 export const DOC_SITE_ROUTES = {
-  'docs/clawql-ecosystem.md': '/vision/ecosystem',
+  'docs/clawql-ecosystem.md': '/vision/roadmap',
   'docs/getting-started/phase-1-platform-guide.md':
     '/getting-started',
   'docs/getting-started/clawql-7-setup-guide.md':
@@ -39,9 +39,8 @@ export const DOC_SITE_ROUTES = {
   'docs/mcp/idp-pipeline-runner.md': '/learn/document-pipeline',
   'docs/mcp/hitl-label-studio.md': '/hitl-label-studio',
   'docs/vision/clawql-vision-roadmap.md': '/vision/roadmap',
-  'docs/vision/clawql-master-enablement-guide.md':
-    '/vision/technical-enablement',
-  'docs/vision/clawql-modularization-v2.md': '/vision/modularization',
+  'docs/vision/clawql-master-enablement-guide.md': '/architecture',
+  'docs/vision/clawql-modularization-v2.md': '/architecture',
   'docs/vision/clawql-idp-platform.md': '/vision/idp-platform',
   'docs/vision/clawql-hybrid-decentralized-github-alternative.md':
     '/vision/immutable-releases',

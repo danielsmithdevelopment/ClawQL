@@ -31,4 +31,4 @@ ClawQL is moving toward a **plugin registry** model where horizontal features sh
 
 - [Plugin model & registry](/reference/plugins)
 - [Contributor technical specification](/contributing/technical-specification)
-- [Modularization v2.1](/vision/modularization)
+- [Architecture](/architecture)

@@ -1,7 +1,7 @@
 /**
  * Copies the v2.1 modularization doc from docs/ into an MDX fragment
- * for /vision/modularization. Overall product vision canon is
- * docs/vision/clawql-master-enablement-guide.md (/vision/technical-enablement).
+ * for /architecture. Overall product vision canon is
+ * docs/vision/clawql-master-enablement-guide.md (/architecture).
  *
  * Source: docs/vision/clawql-modularization-v2.md → src/generated/clawql-modularization-body.mdx
  * (v1.9 package matrix: docs/vision/clawql-modularization.md — GitHub only.)

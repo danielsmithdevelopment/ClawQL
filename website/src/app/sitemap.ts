@@ -17,24 +17,9 @@ type Entry = {
 const ENTRIES: Array<Entry> = [
   { path: '/', changeFrequency: 'weekly', priority: 1 },
   {
-    path: '/vision/ecosystem',
-    changeFrequency: 'monthly',
-    priority: 0.7,
-  },
-  {
     path: '/vision/idp-platform',
     changeFrequency: 'monthly',
     priority: 0.75,
-  },
-  {
-    path: '/vision/technical-enablement',
-    changeFrequency: 'monthly',
-    priority: 0.7,
-  },
-  {
-    path: '/vision/modularization',
-    changeFrequency: 'monthly',
-    priority: 0.7,
   },
   {
     path: '/vision/immutable-releases',
@@ -78,7 +63,7 @@ const ENTRIES: Array<Entry> = [
     priority: 0.9,
   },
   { path: '/agent-setup', changeFrequency: 'weekly', priority: 0.97 },
-  { path: '/architecture', changeFrequency: 'monthly', priority: 0.92 },
+  { path: '/architecture', changeFrequency: 'monthly', priority: 0.93 },
   { path: '/reference', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/examples', changeFrequency: 'monthly', priority: 0.78 },
   { path: '/resources', changeFrequency: 'monthly', priority: 0.85 },
@@ -133,11 +118,6 @@ const ENTRIES: Array<Entry> = [
   },
   {
     path: '/learn/memory',
-    changeFrequency: 'monthly',
-    priority: 0.89,
-  },
-  {
-    path: '/learn/openclaw-and-clawql',
     changeFrequency: 'monthly',
     priority: 0.89,
   },

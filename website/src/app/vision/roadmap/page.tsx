@@ -29,48 +29,40 @@ export default function VisionRoadmapPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Start here.</strong> Generated from{' '}
+          <strong>Start here for status.</strong> Generated from{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-vision-roadmap.md"
             className="font-medium text-inherit underline underline-offset-2"
           >
             docs/vision/clawql-vision-roadmap.md
           </a>{' '}
-          on <code className="font-mono text-xs">main</code>. For full technical
-          depth, see{' '}
+          on <code className="font-mono text-xs">main</code>. Platform hub:{' '}
           <a
-            href="/vision/technical-enablement"
+            href="/architecture"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            Master enablement
-          </a>{' '}
-          and{' '}
-          <a
-            href="/vision/modularization"
-            className="font-medium text-inherit underline underline-offset-2"
-          >
-            Modularization v2.1
+            Architecture
           </a>
-          ,{' '}
+          . Layer 0:{' '}
           <a
             href="/vision/immutable-releases"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            Immutable releases (Layer 0)
+            Immutable releases
           </a>
-          . For implementation contracts, see{' '}
+          . Contracts:{' '}
           <a
             href="/contributing/technical-specification"
             className="font-medium text-inherit underline underline-offset-2"
           >
             Contributor Technical Specification
           </a>
-          . To run locally, see{' '}
+          . Day-2 ops:{' '}
           <a
             href="/deployment/operations-guide"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            Deployment & Operations Guide
+            Operations guide
           </a>
           .
         </Note>

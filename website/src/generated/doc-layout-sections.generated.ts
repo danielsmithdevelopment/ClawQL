@@ -871,39 +871,6 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       id: 'related-guides-and-references',
     },
   ],
-  '/learn/openclaw-and-clawql': [
-    {
-      title: 'What OpenClaw is vs ClawQL MCP',
-      id: 'what-open-claw-is-vs-claw-ql-mcp',
-    },
-    {
-      title: 'Why run OpenClaw with ClawQL',
-      id: 'why-run-open-claw-with-claw-ql',
-    },
-    { title: 'Prerequisites', id: 'prerequisites' },
-    { title: 'Install the OpenClaw CLI', id: 'install-the-open-claw-cli' },
-    {
-      title: 'Run ClawQL MCP pick HTTP or stdio',
-      id: 'run-claw-ql-mcp-pick-http-or-stdio',
-    },
-    {
-      title: 'Register ClawQL in OpenClaw',
-      id: 'register-claw-ql-in-open-claw',
-    },
-    { title: 'Validate with smoke tests', id: 'validate-with-smoke-tests' },
-    {
-      title: 'Environment variables and remote MCP',
-      id: 'environment-variables-and-remote-mcp',
-    },
-    {
-      title: 'Next steps document IDP workflows',
-      id: 'next-steps-document-idp-workflows',
-    },
-    {
-      title: 'Troubleshooting and related links',
-      id: 'troubleshooting-and-related-links',
-    },
-  ],
   '/learn/ouroboros-tools': [
     {
       title: 'What clawql-ouroboros and the three MCP tools are',
@@ -1056,9 +1023,37 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Tests', id: 'tests' },
   ],
   '/openclaw': [
-    { title: 'Quick start', id: 'quick-start' },
-    { title: 'npm name gotcha', id: 'npm-name-gotcha' },
-    { title: 'Also see', id: 'also-see' },
+    {
+      title: 'What OpenClaw is vs ClawQL MCP',
+      id: 'what-open-claw-is-vs-claw-ql-mcp',
+    },
+    {
+      title: 'Why run OpenClaw with ClawQL',
+      id: 'why-run-open-claw-with-claw-ql',
+    },
+    { title: 'Prerequisites', id: 'prerequisites' },
+    { title: 'Install the OpenClaw CLI', id: 'install-the-open-claw-cli' },
+    {
+      title: 'Run ClawQL MCP pick HTTP or stdio',
+      id: 'run-claw-ql-mcp-pick-http-or-stdio',
+    },
+    {
+      title: 'Register ClawQL in OpenClaw',
+      id: 'register-claw-ql-in-open-claw',
+    },
+    { title: 'Validate with smoke tests', id: 'validate-with-smoke-tests' },
+    {
+      title: 'Environment variables and remote MCP',
+      id: 'environment-variables-and-remote-mcp',
+    },
+    {
+      title: 'Next steps document IDP workflows',
+      id: 'next-steps-document-idp-workflows',
+    },
+    {
+      title: 'Troubleshooting and related links',
+      id: 'troubleshooting-and-related-links',
+    },
   ],
   '/ouroboros': [
     {
@@ -2370,54 +2365,6 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     },
     { title: 'Contributing upstream', id: 'contributing-upstream' },
   ],
-  '/vision/ecosystem': [
-    { title: 'What ClawQL Is', id: 'what-claw-ql-is' },
-    { title: 'The Core Loop', id: 'the-core-loop' },
-    { title: 'The Problem', id: 'the-problem' },
-    { title: 'Platform Highlights', id: 'platform-highlights' },
-    { title: 'Who ClawQL Is For', id: 'who-claw-ql-is-for' },
-    { title: 'Core Platform', id: 'core-platform' },
-    { title: 'MCP Tool Surface', id: 'mcp-tool-surface' },
-    {
-      title: 'search + execute: How API Discovery Works',
-      id: 'search-execute-how-api-discovery-works',
-    },
-    { title: 'Hybrid Memory Recall', id: 'hybrid-memory-recall' },
-    { title: 'Document Pipeline', id: 'document-pipeline' },
-    {
-      title: 'Enterprise Knowledge: Onyx + Flink',
-      id: 'enterprise-knowledge-onyx-flink',
-    },
-    { title: 'Intelligence Layer', id: 'intelligence-layer' },
-    {
-      title: 'Complete Pipeline: Step by Step',
-      id: 'complete-pipeline-step-by-step',
-    },
-    { title: 'Infrastructure', id: 'infrastructure' },
-    {
-      title: 'Privacy, Security & Local-First Architecture',
-      id: 'privacy-security-and-local-first-architecture',
-    },
-    { title: 'Security & Supply Chain', id: 'security-and-supply-chain' },
-    {
-      title: 'Optional: Hyperledger Fabric (roadmap)',
-      id: 'optional-hyperledger-fabric-roadmap',
-    },
-    { title: 'Observability Stack', id: 'observability-stack' },
-    {
-      title: 'ClawQL-Agent, OpenClaw & NATS',
-      id: 'claw-ql-agent-open-claw-and-nats',
-    },
-    { title: 'Why ClawQL Wins', id: 'why-claw-ql-wins' },
-    { title: 'Design Principles', id: 'design-principles' },
-    { title: 'Development Roadmap', id: 'development-roadmap' },
-    {
-      title: 'Appendix: Fiction and roadmap',
-      id: 'appendix-fiction-and-roadmap',
-    },
-    { title: 'Local Hardware Requirements', id: 'local-hardware-requirements' },
-    { title: 'Get Started', id: 'get-started' },
-  ],
   '/vision/idp-platform': [
     { title: 'For Investors', id: 'for-investors' },
     {
@@ -2469,27 +2416,6 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       id: 'what-happens-when-things-go-wrong',
     },
     { title: 'Adoption Path', id: 'adoption-path' },
-  ],
-  '/vision/modularization': [
-    {
-      title: '1. Vision & Core Objectives',
-      id: '1-vision-and-core-objectives',
-    },
-    {
-      title: '2. Unified 6-Layer Architecture',
-      id: '2-unified-6-layer-architecture',
-    },
-    { title: '3. Package Ecosystem', id: '3-package-ecosystem' },
-    { title: '4. Dependency Graph', id: '4-dependency-graph' },
-    {
-      title: '5. Intelligent MCP Gateway (clawql-api)',
-      id: '5-intelligent-mcp-gateway-clawql-api',
-    },
-    {
-      title: '6. Operator & Configuration',
-      id: '6-operator-and-configuration',
-    },
-    { title: '7. Cross-Cutting Concerns', id: '7-cross-cutting-concerns' },
   ],
   '/vision/roadmap': [
     { title: 'Read This First', id: 'read-this-first' },
@@ -2813,58 +2739,5 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       id: 'slide-79-security-ops-references-and-the-full-document',
     },
     { title: 'Slide 80 — Closing', id: 'slide-80-closing' },
-  ],
-  '/vision/technical-enablement': [
-    { title: 'Executive Summary', id: 'executive-summary' },
-    {
-      title: 'I. The Architectural Deficit We Are Solving',
-      id: 'i-the-architectural-deficit-we-are-solving',
-    },
-    {
-      title: 'II. The 6-Layer Architecture',
-      id: 'ii-the-6-layer-architecture',
-    },
-    {
-      title: 'III. Layer 0: The Trust Anchor (Immutability)',
-      id: 'iii-layer-0-the-trust-anchor-immutability',
-    },
-    {
-      title: 'IV. Layer 2: The Intelligent Gateway (clawql-api)',
-      id: 'iv-layer-2-the-intelligent-gateway-clawql-api',
-    },
-    {
-      title: 'V. Layer 3: Memory 2.0 (Persistence-First)',
-      id: 'v-layer-3-memory-2-0-persistence-first',
-    },
-    {
-      title: 'VI. Layer 4: Ouroboros (Strategic Coordination)',
-      id: 'vi-layer-4-ouroboros-strategic-coordination',
-    },
-    {
-      title: 'VII. Token Efficiency (12 Compounding Layers)',
-      id: 'vii-token-efficiency-12-compounding-layers',
-    },
-    {
-      title: 'VIII. Security & Compliance (Defense-in-Depth)',
-      id: 'viii-security-and-compliance-defense-in-depth',
-    },
-    {
-      title: 'IX. Observability (LGTMP Stack)',
-      id: 'ix-observability-lgtmp-stack',
-    },
-    {
-      title: 'X. Operator, Tiers & Modularity',
-      id: 'x-operator-tiers-and-modularity',
-    },
-    {
-      title: 'XI. How It All Works Together',
-      id: 'xi-how-it-all-works-together',
-    },
-    {
-      title: 'XII. Current Status & Roadmap (July 2026)',
-      id: 'xii-current-status-and-roadmap-july-2026',
-    },
-    { title: 'XIII. Why This Matters', id: 'xiii-why-this-matters' },
-    { title: 'Documentation suite', id: 'documentation-suite' },
   ],
 }

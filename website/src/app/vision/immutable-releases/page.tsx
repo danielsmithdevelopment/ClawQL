@@ -37,7 +37,7 @@ export default function ImmutableReleasesPage() {
           </a>{' '}
           on <code className="font-mono text-xs">main</code>. See also{' '}
           <a
-            href="/vision/modularization"
+            href="/architecture"
             className="font-medium text-inherit underline underline-offset-2"
           >
             Modularization v2.1

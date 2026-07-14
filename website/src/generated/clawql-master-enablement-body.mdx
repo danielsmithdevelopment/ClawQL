@@ -64,7 +64,7 @@ The single surface for all interactions.
 - Proxy support for external MCP, OpenAPI, GraphQL.
 - All operations respect classification levels and cross-vertical purpose requirements.
 
-_Full design: [Modularization v2.1](/vision/modularization) · [Token efficiency (12 layers)](/architecture/token-efficiency)._
+_Full design: [Modularization v2.1](/architecture) · [Token efficiency (12 layers)](/architecture/token-efficiency)._
 
 ## V. Layer 3: Memory 2.0 (Persistence-First)
 
@@ -134,7 +134,7 @@ The Kubernetes Operator manages `ClawQLInstance` CRD for tier, vertical enableme
 - Tier 2: Helm + Operator (team scale)
 - Tier 3: Full enterprise (Kata/gVisor, Istio mTLS, dedicated pools)
 
-_Full design: [Deployment & Operations Guide](/deployment/operations-guide) · [Operator target architecture (planned)](/design/operator-target-architecture) · [Modularization v2.1](/vision/modularization)._
+_Full design: [Deployment & Operations Guide](/deployment/operations-guide) · [Operator target architecture (planned)](/design/operator-target-architecture) · [Modularization v2.1](/architecture)._
 
 ## XI. How It All Works Together
 
@@ -189,7 +189,7 @@ Read the full documentation suite, deploy the Tier 1 stack, and begin building p
 | **[ClawQL plugin model](/reference/plugins)**                                                                                                               | Horizontal plugins — MCP tool registration, lifecycle, third-party path                      |
 | **[Plugin registry](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/reference/clawql-plugin-registry.md)**                                  | Shipped vs planned plugins, MCP tools, enable flags                                          |
 | [Vision & Roadmap](/vision/roadmap)                                                                                                                         | Public edition — honest shipped vs planned, phased delivery                                  |
-| [Modularization v2.1](/vision/modularization)                                                                                                               | Package boundaries, dependency graph, intelligent MCP gateway                                |
+| [Modularization v2.1](/architecture)                                                                                                                        | Package boundaries, dependency graph, intelligent MCP gateway                                |
 | **[IDP Platform (April 2026)](/vision/idp-platform)**                                                                                                       | End-to-end IDP: self-hosted + hosted, archive layer, Coneshare VDR, Merkle audit             |
 | [Immutable releases (Layer 0)](/vision/immutable-releases)                                                                                                  | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema                            |
 | [Contributor Technical Specification](/contributing/technical-specification)                                                                                | Implementation contracts, Effect-TS patterns, CI rules                                       |

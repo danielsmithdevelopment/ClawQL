@@ -36,7 +36,7 @@ test.describe('mobile table layout', () => {
     { path: '/security/defense-in-depth', name: 'defense in depth' },
     { path: '/reference/plugins', name: 'plugin registry' },
     { path: '/plugins/bundled-providers', name: 'bundled providers plugin' },
-    { path: '/vision/ecosystem', name: 'vision ecosystem' },
+    { path: '/vision/roadmap', name: 'vision roadmap' },
     { path: '/deployment/operations-guide', name: 'deployment operations' },
     { path: '/tools', name: 'tools reference' },
     { path: '/bundled-specs', name: 'bundled specs' },
