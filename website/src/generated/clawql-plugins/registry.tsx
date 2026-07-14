@@ -5,14 +5,14 @@ import Body5 from './bodies/bundled-providers.mdx'
 import Body3 from './bodies/codegraph.mdx'
 import Body0 from './bodies/core.mdx'
 import Body4 from './bodies/documents.mdx'
-import Body12 from './bodies/hitl-label-studio.mdx'
+import Body11 from './bodies/hitl-label-studio.mdx'
 import Body8 from './bodies/inference-providers.mdx'
 import Body2 from './bodies/memory.mdx'
 import Body9 from './bodies/ouroboros.mdx'
 import Body1 from './bodies/panguard-proxy.mdx'
 import Body10 from './bodies/payments.mdx'
 import Body7 from './bodies/sandbox.mdx'
-import Body11 from './bodies/third-party.mdx'
+import Body12 from './bodies/third-party.mdx'
 
 export type PluginPageMeta = {
   slug: string
@@ -136,16 +136,6 @@ export const pluginPages: PluginPageMeta[] = [
     next: 'hitl-label-studio',
   },
   {
-    slug: 'third-party',
-    title: 'Third-party plugins',
-    description:
-      'Roadmap for publishing clawql-* npm plugins that depend on clawql-core and clawql-api. Extension checklist for authors.',
-    status: 'roadmap',
-    package: 'npm (clawql-*-plugin)',
-    prev: 'hitl-label-studio',
-    next: null,
-  },
-  {
     slug: 'hitl-label-studio',
     title: 'HITL (Label Studio)',
     description:
@@ -154,6 +144,16 @@ export const pluginPages: PluginPageMeta[] = [
     package: 'src/',
     prev: 'payments',
     next: 'third-party',
+  },
+  {
+    slug: 'third-party',
+    title: 'Third-party plugins',
+    description:
+      'Roadmap for publishing clawql-* npm plugins that depend on clawql-core and clawql-api. Extension checklist for authors.',
+    status: 'roadmap',
+    package: 'npm (clawql-*-plugin)',
+    prev: 'hitl-label-studio',
+    next: null,
   },
 ]
 
@@ -169,8 +169,8 @@ export const pluginBodies: Record<string, ComponentType> = {
   'inference-providers': Body8,
   ouroboros: Body9,
   payments: Body10,
-  'third-party': Body11,
-  'hitl-label-studio': Body12,
+  'hitl-label-studio': Body11,
+  'third-party': Body12,
 }
 
 export function getPluginMeta(slug: string): PluginPageMeta | undefined {

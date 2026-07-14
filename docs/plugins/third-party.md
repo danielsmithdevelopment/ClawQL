@@ -4,7 +4,7 @@ description: Roadmap for publishing clawql-* npm plugins that depend on clawql-c
 slug: third-party
 status: roadmap
 package: npm (clawql-*-plugin)
-order: 10
+order: 12
 prev: hitl-label-studio
 next:
 ---
