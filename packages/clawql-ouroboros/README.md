@@ -45,7 +45,7 @@ Installing the **root** repo with `npm install github:danielsmithdevelopment/Cla
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`clawql-ouroboros`**           | `SeedSchema`, types, `EvolutionaryLoop`, `ConvergenceCriteria`, `RegressionDetector`, `InMemoryEventStore`, interfaces                                                                                           |
 | **`clawql-ouroboros/mcp-hooks`** | `ouroborosMcpTools` — Zod input schemas + async handlers for seed-from-document, run loop, lineage query (wire to [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk) yourself) |
-| **`clawql-ouroboros/poller`**    | `startSeedsPoller` — Effect daemon-fiber worker (interruptible); you supply `fetchPending(): Promise<Seed[]>` and `markFailed(seedId, err)`                                                                                                  |
+| **`clawql-ouroboros/poller`**    | `startSeedsPoller` — Effect daemon-fiber worker (interruptible); you supply `fetchPending(): Promise<Seed[]>` and `markFailed(seedId, err)`                                                                      |
 
 **Runtime dependencies:** `zod` ^4, `uuid` ^11 (declared in this package’s `package.json`).
 
