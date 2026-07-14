@@ -12,6 +12,7 @@ import {
   natsConfiguredForPublish,
   natsDocumentSubjectRoot,
   natsHitlResumeConsumerDurable,
+  natsJetStreamEnabled,
   natsStreamName,
   natsUrl,
   natsWorkflowSubjectRoot,

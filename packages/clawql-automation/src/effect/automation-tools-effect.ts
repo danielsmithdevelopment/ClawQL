@@ -2,14 +2,13 @@ import { Effect } from "effect";
 import type { NotifySlackInput } from "../notify/notify.js";
 import { AutomationError } from "./automation-errors.js";
 import { automationFromPromise, type McpTextResult } from "./automation-effect-utils.js";
+import { executeNotifySlackCoreEffect } from "./notify-slack-effect.js";
 
+/** Native Effect.gen notify staging (no full-core tryPromise wrapper). */
 export function executeNotifySlackEffect(
   params: NotifySlackInput
 ): Effect.Effect<McpTextResult, AutomationError> {
-  return automationFromPromise(async () => {
-    const { executeNotifySlackCore } = await import("../notify/notify.js");
-    return executeNotifySlackCore(params);
-  });
+  return executeNotifySlackCoreEffect(params);
 }
 
 export function executeScheduleToolEffect(

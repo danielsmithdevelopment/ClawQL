@@ -2,7 +2,6 @@
  * Optional Slack notification when a workflow `wait` reaches a terminal phase or times out.
  */
 
-import { runNotifySlack } from "../notify/notify.js";
 import type { WorkflowSummary } from "./argo-mapper.js";
 import { workflowTerminalNotifyEnabled } from "./env.js";
 
@@ -37,7 +36,9 @@ export async function maybeNotifyWorkflowTerminal(input: {
     uiLine;
 
   try {
-    await runNotifySlack({ channel, text });
+    // Core façade (not runNotifySlack) avoids nested runAutomationEffect.
+    const { executeNotifySlackCore } = await import("../notify/notify.js");
+    await executeNotifySlackCore({ channel, text });
   } catch {
     // Optional side channel; never fail `wait` because notify failed.
   }

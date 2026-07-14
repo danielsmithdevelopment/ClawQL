@@ -1,6 +1,7 @@
 export {
   SLACK_NOTIFY_OPERATION_ID,
   configureNotifyDeps,
+  executeNotifySlackCore,
   runNotifySlack,
   type NotifyExecuteFn,
   type NotifySlackInput,

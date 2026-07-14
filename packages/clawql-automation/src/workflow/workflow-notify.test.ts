@@ -1,19 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { workflowTerminalNotifyEnabled } from "./env.js";
 
-const runNotifySlack = vi.fn(async () => ({
-  content: [{ type: "text", text: JSON.stringify({ ok: true }) }],
+const executeNotifySlackCore = vi.fn(async (_params: { channel: string; text: string }) => ({
+  content: [{ type: "text" as const, text: JSON.stringify({ ok: true }) }],
 }));
 
 vi.mock("../notify/notify.js", () => ({
-  runNotifySlack: (...args: unknown[]) => runNotifySlack(...args),
+  executeNotifySlackCore: (params: { channel: string; text: string }) =>
+    executeNotifySlackCore(params),
 }));
 
 describe("maybeNotifyWorkflowTerminal", () => {
   afterEach(() => {
     delete process.env.CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL;
     delete process.env.CLAWQL_WORKFLOW_NOTIFY_CHANNEL;
-    runNotifySlack.mockClear();
+    executeNotifySlackCore.mockClear();
   });
 
   it("no-ops when notify env is off", async () => {
@@ -26,7 +27,7 @@ describe("maybeNotifyWorkflowTerminal", () => {
       waitedSeconds: 12,
       polls: 3,
     });
-    expect(runNotifySlack).not.toHaveBeenCalled();
+    expect(executeNotifySlackCore).not.toHaveBeenCalled();
   });
 
   it("posts Slack when enabled with channel", async () => {
@@ -46,8 +47,8 @@ describe("maybeNotifyWorkflowTerminal", () => {
       waitedSeconds: 12,
       polls: 3,
     });
-    expect(runNotifySlack).toHaveBeenCalledOnce();
-    expect(runNotifySlack.mock.calls[0]![0]).toMatchObject({
+    expect(executeNotifySlackCore).toHaveBeenCalledOnce();
+    expect(executeNotifySlackCore.mock.calls[0]?.[0]).toMatchObject({
       channel: "CWORKFLOW",
       text: expect.stringContaining("Workflow SUCCEEDED"),
     });
@@ -65,7 +66,7 @@ describe("maybeNotifyWorkflowTerminal", () => {
       waitedSeconds: 600,
       polls: 120,
     });
-    expect(runNotifySlack.mock.calls[0]![0].text).toContain("Workflow TIMEOUT");
+    expect(executeNotifySlackCore.mock.calls[0]?.[0]?.text).toContain("Workflow TIMEOUT");
   });
 });
 
