@@ -7,6 +7,9 @@ export {
   type PaymentsWellKnownResource,
   type PaymentsWellKnownStripeMethod,
   type PaymentsWellKnownX402Method,
+  type PaymentsWellKnownAp2Method,
+  type PaymentsWellKnownAcpMethod,
+  type PaymentsWellKnownPaypalMethod,
 } from "./well-known.js";
 export {
   PAYMENTS_WELL_KNOWN_PATH,

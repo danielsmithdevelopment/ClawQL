@@ -39,7 +39,7 @@ describe("PaymentAuditService", () => {
         },
         list: async () => [],
         listRecords: async () => [],
-        verify: async () => ({ ok: true, entries: 0 }),
+        verify: async () => ({ ok: true, records: 0, head_hash: "0".repeat(64), issues: [] }),
         reset: async () => undefined,
       },
       append: (entry) =>
@@ -47,6 +47,14 @@ describe("PaymentAuditService", () => {
           try: () => broken.store.append(entry),
           catch: (cause) => new PaymentError({ reason: "append failed", cause }),
         }),
+      appendEntry: (entry) =>
+        Effect.tryPromise({
+          try: () => broken.store.append(entry),
+          catch: (cause) => new PaymentError({ reason: "append failed", cause }),
+        }),
+      list: () => Effect.succeed([]),
+      verify: () =>
+        Effect.succeed({ ok: true, records: 0, head_hash: "0".repeat(64), issues: [] }),
       reset: () => Effect.void,
     });
 

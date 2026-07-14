@@ -2,6 +2,9 @@ import { Context, Effect, Layer } from "effect";
 import { ConfigError, X402Error } from "../errors/payment-errors.js";
 import { CLAWQL_PLANS } from "../plans/tiers.js";
 import { PaymentsConfigService } from "../config/payments-config-service.js";
+import { isAp2Enabled, isAp2Required } from "../ap2/config.js";
+import { isAcpEnabled } from "../acp/config.js";
+import { isPaypalEnabled, paypalApiBase } from "../paypal/config.js";
 import { X402GateService } from "../x402/x402-gate-service.js";
 import { X402RuntimeConfigService } from "../x402/x402-runtime-config-service.js";
 import { X402_VERSION } from "../x402/types.js";
@@ -14,7 +17,7 @@ export type PaymentsWellKnownResource = {
 };
 
 export type PaymentsWellKnownMethod = {
-  type: "x402" | "stripe";
+  type: "x402" | "stripe" | "ap2" | "acp" | "paypal";
   enabled: boolean;
 };
 
@@ -37,13 +40,41 @@ export type PaymentsWellKnownStripeMethod = PaymentsWellKnownMethod & {
   meter_event_name?: string;
 };
 
+export type PaymentsWellKnownAp2Method = PaymentsWellKnownMethod & {
+  type: "ap2";
+  protocol: "ap2";
+  mandate_types: string[];
+  require: boolean;
+  documentation: string;
+};
+
+export type PaymentsWellKnownAcpMethod = PaymentsWellKnownMethod & {
+  type: "acp";
+  protocol: "acp";
+  checkout: "sessions";
+  payment_provider: "stripe";
+  documentation: string;
+};
+
+export type PaymentsWellKnownPaypalMethod = PaymentsWellKnownMethod & {
+  type: "paypal";
+  api_base: string;
+  documentation: string;
+};
+
 export type PaymentsWellKnownDocument = {
   version: string;
   server_name: string;
   documentation: string;
   issue?: string;
-  payment_methods: Array<PaymentsWellKnownX402Method | PaymentsWellKnownStripeMethod>;
-  default: "x402" | "stripe" | null;
+  payment_methods: Array<
+    | PaymentsWellKnownX402Method
+    | PaymentsWellKnownStripeMethod
+    | PaymentsWellKnownAp2Method
+    | PaymentsWellKnownAcpMethod
+    | PaymentsWellKnownPaypalMethod
+  >;
+  default: "x402" | "stripe" | "ap2" | "acp" | "paypal" | null;
   updated_at: string;
 };
 
@@ -140,6 +171,37 @@ export function paymentsDiscoveryLiveLayer(
                 config.stripe?.meterEventName?.trim() ||
                 runEnv.STRIPE_METER_EVENT_NAME?.trim() ||
                 undefined,
+            });
+          }
+
+          if (isAp2Enabled(runEnv)) {
+            paymentMethods.push({
+              type: "ap2",
+              enabled: true,
+              protocol: "ap2",
+              mandate_types: ["mandate.payment.1", "mandate.payment.open.1"],
+              require: isAp2Required(runEnv),
+              documentation: "https://ap2-protocol.org/",
+            });
+          }
+
+          if (isAcpEnabled(runEnv)) {
+            paymentMethods.push({
+              type: "acp",
+              enabled: true,
+              protocol: "acp",
+              checkout: "sessions",
+              payment_provider: "stripe",
+              documentation: "https://developers.openai.com/commerce/specs/checkout",
+            });
+          }
+
+          if (isPaypalEnabled(runEnv)) {
+            paymentMethods.push({
+              type: "paypal",
+              enabled: true,
+              api_base: paypalApiBase(runEnv),
+              documentation: "https://developer.paypal.com/docs/api/orders/v2/",
             });
           }
 

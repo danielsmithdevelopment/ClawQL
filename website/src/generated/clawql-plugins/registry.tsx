@@ -129,7 +129,7 @@ export const pluginPages: PluginPageMeta[] = [
     slug: 'payments',
     title: 'Payments',
     description:
-      'Native Stripe + x402 + MPP agentic rails, plan entitlements, WORM payment audit. Roadmap AP2, ACP, PayPal.',
+      'Native Stripe + x402 + MPP + AP2 + ACP + PayPal rails, plan entitlements, WORM payment audit.',
     status: 'shipped',
     package: 'clawql-payments',
     prev: 'ouroboros',

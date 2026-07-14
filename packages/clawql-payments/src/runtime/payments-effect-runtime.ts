@@ -1,6 +1,9 @@
 import { Cause, Effect, Exit, Layer } from "effect";
 import { paymentsConfigLiveLayer } from "../config/payments-config-service.js";
 import { paymentsDiscoveryLiveLayer } from "../discovery/payments-discovery-service.js";
+import { ap2MandateLiveLayer } from "../ap2/ap2-mandate-service.js";
+import { acpCheckoutLiveLayer } from "../acp/acp-checkout-service.js";
+import { paypalOrdersLiveLayer } from "../paypal/paypal-orders-service.js";
 import { mppOpenApiLiveLayer } from "../mpp/openapi-service.js";
 import { mppVerificationLiveLayer } from "../mpp/verification-service.js";
 import { mppxAdapterLiveLayer } from "../mpp/mppx-adapter.js";
@@ -32,7 +35,10 @@ export type PaymentsServices =
   | import("../stripe/stripe-client-service.js").StripeClientService
   | import("../stripe/stripe-webhook-service.js").StripeWebhookService
   | import("../stripe/stripe-meter-service.js").StripeMeterService
-  | import("../stripe/stripe-billing-service.js").StripeBillingService;
+  | import("../stripe/stripe-billing-service.js").StripeBillingService
+  | import("../ap2/ap2-mandate-service.js").Ap2MandateService
+  | import("../acp/acp-checkout-service.js").AcpCheckoutService
+  | import("../paypal/paypal-orders-service.js").PaypalOrdersService;
 
 const layerCache = new Map<string, Layer.Layer<PaymentsServices>>();
 
@@ -51,6 +57,9 @@ export function paymentsServicesLiveLayer(
   const entitlement = entitlementLiveLayer();
   const facilitator = x402FacilitatorLiveLayer(env);
   const stripeClient = stripeClientLiveLayer(env);
+  const ap2 = ap2MandateLiveLayer(env).pipe(Layer.provide(audit));
+  const acp = acpCheckoutLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(audit, stripeClient)));
+  const paypal = paypalOrdersLiveLayer(env).pipe(Layer.provide(audit));
 
   const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
   const mppOpenApi = mppOpenApiLiveLayer(env).pipe(
@@ -61,7 +70,9 @@ export function paymentsServicesLiveLayer(
   );
   const mppxAdapter = mppxAdapterLiveLayer(env);
   const enforcement = x402EnforcementLiveLayer().pipe(
-    Layer.provide(Layer.mergeAll(config, audit, gate, runtimeConfig, facilitator, mppVerification))
+    Layer.provide(
+      Layer.mergeAll(config, audit, gate, runtimeConfig, facilitator, mppVerification, ap2)
+    )
   );
   const discovery = paymentsDiscoveryLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(config, runtimeConfig, gate))
@@ -90,7 +101,10 @@ export function paymentsServicesLiveLayer(
     stripeClient,
     stripeWebhook,
     stripeMeter,
-    stripeBilling
+    stripeBilling,
+    ap2,
+    acp,
+    paypal
   );
   layerCache.set(key, layer);
   return layer;

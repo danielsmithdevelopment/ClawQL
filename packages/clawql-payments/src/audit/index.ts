@@ -1,6 +1,13 @@
 export {
+  buildAcpCheckoutCompletedEntry,
+  buildAcpCheckoutCreatedEntry,
+  buildAp2MandateFailedEntry,
+  buildAp2MandateVerifiedEntry,
   buildEntitlementLimitReachedEntry,
   buildPaymentWormEntry,
+  buildPaypalCaptureFailedEntry,
+  buildPaypalOrderCapturedEntry,
+  buildPaypalOrderCreatedEntry,
   buildPlanChangedEntry,
   buildStripeInvoicePaidEntry,
   buildStripeMeterReportedEntry,

@@ -6,7 +6,7 @@
 
 `clawql-payments` is ClawQL's unified payments layer for **human fiat** and **agent micropayments**.
 
-**Positioning:** ClawQL is the only MCP gateway that speaks **three agentic payment rails natively** — **Stripe** (subscriptions, invoices, meters, SPT), **[x402](https://www.x402.org/)** (per-request USDC), and **[MPP](https://docs.stripe.com/mcp)** / Machine Payments Protocol (session-based streaming micropayments with Stripe's compliance stack, optional Tempo via `mppx`) — with a **WORM-audited** payment event trail. Additional agent protocols (AP2, ACP) and processors (PayPal, Adyen) are on the roadmap below; docs-site `.well-known` stubs are discovery-only until those adapters ship.
+**Positioning:** ClawQL is the only MCP gateway that speaks **five payment surfaces natively** — **Stripe** (subscriptions, invoices, meters, SPT), **[x402](https://www.x402.org/)** (per-request USDC), **[MPP](https://docs.stripe.com/mcp)** (session micropayments), **[AP2](https://ap2-protocol.org/)** (cryptographic Payment Mandates), and **[ACP](https://developers.openai.com/commerce/specs/checkout)** (merchant chat checkout) — plus a **PayPal Orders** adapter for human wallet checkout, all with a **WORM-audited** payment event trail. Docs-site `.well-known` discovery for ACP/UCP remains complementary; live adapters live in `clawql-payments`.
 
 It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is available to self-hosted operators and ClawQL users who want to bill their own customers.
 
@@ -30,23 +30,21 @@ It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is ava
 | MPP credential verification + receipts              | ✅     | `MppVerificationService` — x402 facilitator + Stripe SPT (`STRIPE_PROFILE_ID`)   |
 | MPP optional `mppx` adapter                         | ✅     | `MppxAdapterService` when `CLAWQL_MPPX_ENABLED=1` + optional `mppx` dep          |
 | MCP JSON-RPC payment errors                         | ✅     | `-32042`/`-32043` when `CLAWQL_MPP_MCP_JSONRPC=1` (default: tool-result `_meta`) |
-| Extended finance provider **adverts** in `offers[]` | ✅     | `CLAWQL_MPP_FINANCE_PROVIDERS` — **discovery labels only**, not live adapters    |
+| Extended finance provider **adverts** in `offers[]` | ✅     | `CLAWQL_MPP_FINANCE_PROVIDERS` — discovery labels; PayPal live via Orders below  |
+| **AP2** Payment Mandates                            | ✅     | `Ap2MandateService` — parse/verify VCs, optional HS256, bridge into x402 gates   |
+| **ACP** checkout sessions                           | ✅     | `AcpCheckoutService` — create/complete + Stripe SPT (dry-run without key)        |
+| **PayPal** Orders v2                                | ✅     | `PaypalOrdersService` — OAuth, create order, capture                             |
 
-### Roadmap (not shipped)
+### Roadmap
 
-Complementary 2026 agentic protocols and processors — build in this order:
-
-| Tier  | Item                      | Role                                                            | Notes                                                                                                |
-| ----- | ------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **1** | **AP2** (Google / FIDO)   | Cryptographic payment mandates (Intent / Cart / Payment as VCs) | Authorization + non-repudiation layer under MCP/A2A; bridges to existing x402 via A2A x402 extension |
-| **1** | **ACP** (OpenAI / Stripe) | Merchant-side conversational checkout                           | ChatGPT Instant Checkout–style flows; Stripe SharedPaymentToken                                      |
-| **1** | **PayPal direct adapter** | Human-facing wallet checkout                                    | Table-stakes conversion for consumer wallets; distinct from AP2's PayPal settlement partner path     |
-| **2** | **Adyen direct adapter**  | Enterprise billing                                              | When Dedicated/Enterprise customers need native Adyen (also an AP2 partner for agentic settlement)   |
-| **3** | **Mollie / Razorpay**     | Regional processors                                             | Add when regional traction requires them                                                             |
+| Tier  | Item                     | Role                | Notes                                                 |
+| ----- | ------------------------ | ------------------- | ----------------------------------------------------- |
+| **2** | **Adyen direct adapter** | Enterprise billing  | When Dedicated/Enterprise customers need native Adyen |
+| **3** | **Mollie / Razorpay**    | Regional processors | Add when regional traction requires them              |
 
 **Already covered (do not duplicate):** Shopify Payments (Stripe-powered), ACH Direct Debit via Stripe's APIs, card/subscription/invoice flows via Stripe. **Not planned:** Zelle (no merchant API), Square POS-first adapters.
 
-Docs-site **ACP / UCP / AP2** `.well-known` documents are **scanner-facing stubs**. Live settlement today is Stripe + x402 + MPP on self-hosted `clawql-payments`.
+Docs-site **UCP** `.well-known` documents remain scanner-facing stubs. **AP2 / ACP / PayPal** are live in self-hosted `clawql-payments` when their env flags are set.
 
 ## Architecture
 
@@ -55,6 +53,9 @@ clawql-payments
 ├── stripe/     Subscriptions, invoices, webhooks, Billing Meters, SPT
 ├── x402/       Wallet, gates, facilitator verify/settle, middleware
 ├── mpp/        OpenAPI discovery, Payment 402 challenges, verification, mppx
+├── ap2/        Payment Mandates (parse/verify) + x402 gate bridge
+├── acp/        Agentic checkout sessions (create/complete + Stripe SPT)
+├── paypal/     PayPal Orders v2 create/capture
 ├── plans/      Tier definitions, entitlements, usage.json counters
 ├── audit/      Hash-chained append-only JSONL + integrity verify
 └── cli/        clawql payments * implementations
@@ -289,6 +290,22 @@ They are independent toggles. A route can be x402-gated without plan enforcement
 
 Wallet and facilitator URL can also be stored in `payments.json` → `x402`.
 
+### AP2 / ACP / PayPal (Tier 1)
+
+| Variable                          | Default  | Purpose                                                                |
+| --------------------------------- | -------- | ---------------------------------------------------------------------- |
+| `CLAWQL_AP2_ENABLED`              | off      | Advertise AP2 in `payments.json` discovery; enable mandate verify path |
+| `CLAWQL_AP2_REQUIRE`              | off      | Deny x402-gated calls without a valid `X-AP2-Payment-Mandate` header   |
+| `CLAWQL_AP2_HMAC_SECRET`          | —        | Optional HS256 secret for signed Payment Mandate JWTs                  |
+| `CLAWQL_AP2_ALLOW_WITHOUT_X402`   | off      | When mandate verifies, allow gate without x402 proof (auth-only mode)  |
+| `CLAWQL_ACP_ENABLED`              | off      | Enable ACP checkout session create/complete                            |
+| `CLAWQL_ACP_DRY_RUN`              | off      | Complete ACP checkout without live Stripe SPT charge (tests/dev)       |
+| `CLAWQL_ACP_MERCHANT_ID`          | `clawql` | Merchant id stamped into WORM audit                                    |
+| `CLAWQL_PAYPAL_ENABLED`           | auto     | Explicit on/off; defaults on when PayPal client credentials are set    |
+| `PAYPAL_CLIENT_ID`                | —        | PayPal REST client id                                                  |
+| `PAYPAL_CLIENT_SECRET`            | —        | PayPal REST client secret                                              |
+| `PAYPAL_API_BASE` / `PAYPAL_MODE` | sandbox  | Override API host (`live` → `api-m.paypal.com`)                        |
+
 ### Setup flow
 
 ```bash
@@ -436,15 +453,18 @@ Payment events append to an **append-only, hash-chained audit log** at `$CLAWQL_
 
 A hot in-process mirror still feeds the MCP `audit` ring buffer (summary fields only). **Authoritative** payment history — including full structured `payload` — lives in `audit.jsonl`.
 
-| Event                               | Trigger                                                                       |
-| ----------------------------------- | ----------------------------------------------------------------------------- |
-| `STRIPE_INVOICE_PAID`               | Verified webhook                                                              |
-| `STRIPE_PAYMENT_FAILED`             | Verified webhook                                                              |
-| `STRIPE_METER_REPORTED`             | Successful meter event                                                        |
-| `X402_PAYMENT_RECEIVED`             | Facilitator verify + reconcile                                                |
-| `X402_PAYMENT_FAILED`               | Invalid proof, facilitator error, or misconfiguration (not `require_payment`) |
-| `ENTITLEMENT_LIMIT_REACHED`         | Plan cap hit                                                                  |
-| `PLAN_UPGRADED` / `PLAN_DOWNGRADED` | `clawql payments plan upgrade`                                                |
+| Event                                                                      | Trigger                                                                       |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `STRIPE_INVOICE_PAID`                                                      | Verified webhook                                                              |
+| `STRIPE_PAYMENT_FAILED`                                                    | Verified webhook                                                              |
+| `STRIPE_METER_REPORTED`                                                    | Successful meter event                                                        |
+| `X402_PAYMENT_RECEIVED`                                                    | Facilitator verify + reconcile                                                |
+| `X402_PAYMENT_FAILED`                                                      | Invalid proof, facilitator error, or misconfiguration (not `require_payment`) |
+| `ENTITLEMENT_LIMIT_REACHED`                                                | Plan cap hit                                                                  |
+| `PLAN_UPGRADED` / `PLAN_DOWNGRADED`                                        | `clawql payments plan upgrade`                                                |
+| `AP2_MANDATE_VERIFIED` / `AP2_MANDATE_FAILED`                              | `Ap2MandateService` verify                                                    |
+| `ACP_CHECKOUT_CREATED` / `ACP_CHECKOUT_COMPLETED`                          | `AcpCheckoutService` create/complete                                          |
+| `PAYPAL_ORDER_CREATED` / `PAYPAL_ORDER_CAPTURED` / `PAYPAL_CAPTURE_FAILED` | PayPal Orders                                                                 |
 
 ### Environment
 
