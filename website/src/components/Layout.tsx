@@ -22,9 +22,11 @@ const WebMcpRegister = dynamic(
 
 export function Layout({ children }: { children: React.ReactNode }) {
   let pathname = usePathname()
+  const sections =
+    pathname === '/' ? [] : (DOC_LAYOUT_SECTIONS_BY_PATH[pathname] ?? [])
 
   return (
-    <SectionProvider sections={DOC_LAYOUT_SECTIONS_BY_PATH[pathname] ?? []}>
+    <SectionProvider sections={sections}>
       <OnThisPageProvider>
         <WebMcpRegister />
         <div className="h-full lg:ml-72 xl:ml-80">
