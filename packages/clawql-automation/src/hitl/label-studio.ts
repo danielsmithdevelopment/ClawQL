@@ -5,7 +5,7 @@
 
 import { getClawqlOptionalToolFlags } from "clawql-api";
 import type { Request, Response } from "express";
-import { publishHitlCompletedEvent, publishHitlEnqueuedEvent } from "../nats/publish-hooks.js";
+import { publishHitlCompletedEvent } from "../nats/publish-hooks.js";
 import { maybeResumeWorkflowFromHitl, parseHitlWorkflowRef } from "../workflow/suspend-resume.js";
 import { getHitlWebhookDeps } from "./deps.js";
 
@@ -40,7 +40,7 @@ export function getHitlLabelStudioRestConfig(): {
   return { baseUrl: baseUrl.replace(/\/$/, ""), apiToken };
 }
 
-function mergeHitlMetadata(
+export function mergeHitlMetadata(
   params: HitlLabelStudioEnqueueParams
 ): Array<{ data: Record<string, unknown> }> {
   const enqueuedAt = new Date().toISOString();
@@ -120,103 +120,13 @@ export async function labelStudioImportTasks(
   return { ok: true, status: httpResponse.status, body: parsed };
 }
 
+/** Promise façade over {@link executeHitlEnqueueLabelStudioEffect}. */
 export async function handleHitlEnqueueLabelStudioToolInput(
   params: HitlLabelStudioEnqueueParams
 ): Promise<{ content: { type: "text"; text: string }[] }> {
-  const cfg = getHitlLabelStudioRestConfig();
-  if (!cfg) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({
-            error:
-              "Label Studio is not configured. Set CLAWQL_LABEL_STUDIO_URL and CLAWQL_LABEL_STUDIO_API_TOKEN.",
-          }),
-        },
-      ],
-    };
-  }
-
-  if (!Number.isFinite(params.project_id) || params.project_id < 1) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({ error: "`project_id` must be a positive integer." }),
-        },
-      ],
-    };
-  }
-
-  if (!params.tasks?.length) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({ error: "`tasks` must be a non-empty array." }),
-        },
-      ],
-    };
-  }
-
-  const payload = mergeHitlMetadata(params);
-  const result = await labelStudioImportTasks(
-    cfg.baseUrl,
-    cfg.apiToken,
-    params.project_id,
-    payload
-  );
-
-  if (!result.ok) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({
-            ok: false,
-            error: result.error,
-            detail: result.detail,
-          }),
-        },
-      ],
-    };
-  }
-
-  const workflowRef = params.workflow_ref
-    ? {
-        namespace: params.workflow_ref.namespace.trim(),
-        name: params.workflow_ref.name.trim(),
-        ...(params.workflow_ref.node_field_selector?.trim()
-          ? { node_field_selector: params.workflow_ref.node_field_selector.trim() }
-          : {}),
-      }
-    : undefined;
-
-  void publishHitlEnqueuedEvent({
-    correlation_id: params.correlation_id?.trim(),
-    workflow_ref: workflowRef,
-    project_id: params.project_id,
-    task_count: payload.length,
-  });
-
-  return {
-    content: [
-      {
-        type: "text",
-        text: JSON.stringify(
-          {
-            ok: true,
-            project_id: params.project_id,
-            task_count: payload.length,
-            label_studio_response: result.body,
-          },
-          null,
-          2
-        ),
-      },
-    ],
-  };
+  const { Effect } = await import("effect");
+  const { executeHitlEnqueueLabelStudioEffect } = await import("../effect/hitl-enqueue-effect.js");
+  return Effect.runPromise(executeHitlEnqueueLabelStudioEffect(params));
 }
 
 function getWebhookTokenExpected(): string | undefined {

@@ -1,3 +1,7 @@
+export {
+  executeKnowledgeSearchOnyxEffect,
+  type OnyxMcpResult,
+} from "./knowledge-search-onyx-effect.js";
 export { DocumentsError } from "./documents-errors.js";
 export { documentsFromPromise, documentsSync } from "./documents-effect-utils.js";
 export {
