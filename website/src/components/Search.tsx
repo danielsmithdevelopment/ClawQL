@@ -85,18 +85,23 @@ function useAutocomplete({ onNavigate }: { onNavigate: () => void }) {
         navigate,
       },
       getSources({ query }) {
-        return search(query, { limit: 5 }).then((results) => [
-          {
-            sourceId: 'documentation',
-            getItems() {
-              return results
+        if (!query) {
+          return []
+        }
+        return search(query, { limit: 5 })
+          .then((results) => [
+            {
+              sourceId: 'documentation',
+              getItems() {
+                return results
+              },
+              getItemUrl({ item }: { item: Result }) {
+                return item.url
+              },
+              onSelect: navigate,
             },
-            getItemUrl({ item }: { item: Result }) {
-              return item.url
-            },
-            onSelect: navigate,
-          },
-        ])
+          ])
+          .catch(() => [])
       },
     }),
   )
@@ -346,10 +351,18 @@ function SearchDialog({
   })
   let pathname = usePathname()
   let searchParams = useSearchParams()
+  // Close on client navigations only — not on mount. Dialog mounts when `open`
+  // becomes true; an unconditional effect would close it immediately (broken search).
+  let routeKey = `${pathname}?${searchParams.toString()}`
+  let previousRouteKey = useRef(routeKey)
 
   useEffect(() => {
+    if (previousRouteKey.current === routeKey) {
+      return
+    }
+    previousRouteKey.current = routeKey
     setOpen(false)
-  }, [pathname, searchParams, setOpen])
+  }, [routeKey, setOpen])
 
   return (
     <Dialog
@@ -389,13 +402,14 @@ function SearchDialog({
                 className="border-t border-zinc-200 bg-white empty:hidden dark:border-zinc-100/5 dark:bg-white/2.5"
                 {...autocomplete.getPanelProps({})}
               >
-                {autocompleteState.isOpen && (
-                  <SearchResults
-                    autocomplete={autocomplete}
-                    query={autocompleteState.query}
-                    collection={autocompleteState.collections[0]}
-                  />
-                )}
+                {autocompleteState.isOpen &&
+                  autocompleteState.collections[0] && (
+                    <SearchResults
+                      autocomplete={autocomplete}
+                      query={autocompleteState.query}
+                      collection={autocompleteState.collections[0]}
+                    />
+                  )}
               </div>
             </form>
           </div>
