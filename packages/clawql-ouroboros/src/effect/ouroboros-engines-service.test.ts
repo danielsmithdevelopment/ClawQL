@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 import type { Seed } from "../seed.js";
+import { configureOuroborosPluginDeps, resetOuroborosPluginDepsForTests } from "../plugin/deps.js";
 import {
   OuroborosEnginesService,
   ouroborosEnginesLiveLayer,
@@ -36,9 +37,15 @@ function minimalSeed(seedId: string): Seed {
 describe("OuroborosEnginesService", () => {
   afterEach(() => {
     resetOuroborosEnginesForTests();
+    resetOuroborosPluginDepsForTests();
   });
 
   it("provides default engines and execute/evaluate Effect methods", async () => {
+    configureOuroborosPluginDeps({
+      search: async () => ({ content: [{ type: "text", text: "[]" }] }),
+      execute: async () => ({ content: [{ type: "text", text: '{"ok":true}' }] }),
+    });
+
     const seed = minimalSeed("seed-engines");
     const result = await Effect.runPromise(
       Effect.gen(function* () {
