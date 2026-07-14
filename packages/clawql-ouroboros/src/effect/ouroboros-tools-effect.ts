@@ -2,6 +2,14 @@ import { Effect } from "effect";
 import type { z } from "zod";
 import { driftReportPayload, measureDrift } from "../drift.js";
 import { resolveBaselineSeed } from "../glue/resolve-baseline-seed.js";
+import { createSeedFromDocumentCore } from "../glue/seed-from-document.js";
+import {
+  langfuseEvalAutoApplyEnabled,
+  loadLatestSeedFromLineage,
+  normalizeLangfuseEvalPayload,
+  parseLangfuseMinScore,
+  processLangfuseEval,
+} from "../eval/index.js";
 import type {
   CreateSeedFromDocumentSchema,
   GetLineageStatusSchema,
@@ -9,30 +17,19 @@ import type {
   ProposeSeedRevisionFromEvalSchema,
   RunOuroborosSchema,
 } from "../mcp-hooks.js";
-import { OuroborosContextService } from "./ouroboros-context-service.js";
+import { SeedSchema } from "../seed.js";
 import { OuroborosEventStoreService } from "./ouroboros-event-store-service.js";
 import { OuroborosLoopService } from "./ouroboros-loop-service.js";
 import { OuroborosError } from "./ouroboros-errors.js";
 import { ouroborosFromPromise } from "./ouroboros-effect-utils.js";
 import { executeRunEvolutionaryLoopFromInputEffect } from "./ouroboros-loop-service.js";
 
+export type CreateSeedFromDocumentResult = ReturnType<typeof createSeedFromDocumentCore>;
+
 export function executeCreateSeedFromDocumentEffect(
   input: z.infer<typeof CreateSeedFromDocumentSchema>
-): Effect.Effect<
-  Awaited<
-    ReturnType<typeof import("../mcp-hooks.js").ouroborosMcpTools.createSeedFromDocument.handler>
-  >,
-  OuroborosError,
-  OuroborosContextService
-> {
-  return Effect.gen(function* () {
-    const ctxSvc = yield* OuroborosContextService;
-    const ctx = ctxSvc.getContext();
-    return yield* ouroborosFromPromise(async () => {
-      const { ouroborosMcpTools } = await import("../mcp-hooks.js");
-      return ouroborosMcpTools.createSeedFromDocument.handler(input, ctx);
-    });
-  });
+): Effect.Effect<CreateSeedFromDocumentResult> {
+  return Effect.sync(() => createSeedFromDocumentCore(input));
 }
 
 export function executeRunEvolutionaryLoopEffect(
@@ -64,18 +61,16 @@ export type MeasureDriftResult = Awaited<
   ReturnType<typeof import("../mcp-hooks.js").ouroborosMcpTools.measureDrift.handler>
 >;
 
-function measureDriftFailure(err: unknown): MeasureDriftResult {
+function taggedFailureMessage(err: unknown): string {
   if (err instanceof OuroborosError) {
     const cause = err.cause;
-    return {
-      ok: false,
-      error: cause instanceof Error ? cause.message : cause != null ? String(cause) : err.reason,
-    };
+    return cause instanceof Error ? cause.message : cause != null ? String(cause) : err.reason;
   }
-  return {
-    ok: false,
-    error: err instanceof Error ? err.message : String(err),
-  };
+  return err instanceof Error ? err.message : String(err);
+}
+
+function measureDriftFailure(err: unknown): MeasureDriftResult {
+  return { ok: false, error: taggedFailureMessage(err) };
 }
 
 export function executeMeasureDriftEffect(
@@ -120,23 +115,56 @@ export function executeMeasureDriftEffect(
   }).pipe(Effect.catchAll((err) => Effect.succeed(measureDriftFailure(err))));
 }
 
+export type ProposeSeedRevisionResult = Awaited<
+  ReturnType<typeof import("../mcp-hooks.js").ouroborosMcpTools.proposeSeedRevisionFromEval.handler>
+>;
+
 export function executeProposeSeedRevisionFromEvalEffect(
   input: z.infer<typeof ProposeSeedRevisionFromEvalSchema>
-): Effect.Effect<
-  Awaited<
-    ReturnType<
-      typeof import("../mcp-hooks.js").ouroborosMcpTools.proposeSeedRevisionFromEval.handler
-    >
-  >,
-  OuroborosError,
-  OuroborosContextService
-> {
+): Effect.Effect<ProposeSeedRevisionResult, never, OuroborosEventStoreService> {
   return Effect.gen(function* () {
-    const ctxSvc = yield* OuroborosContextService;
-    const ctx = ctxSvc.getContext();
-    return yield* ouroborosFromPromise(async () => {
-      const { ouroborosMcpTools } = await import("../mcp-hooks.js");
-      return ouroborosMcpTools.proposeSeedRevisionFromEval.handler(input, ctx);
-    });
-  });
+    const es = yield* OuroborosEventStoreService;
+
+    let evalEvent =
+      input.payload !== undefined ? normalizeLangfuseEvalPayload(input.payload) : null;
+    if (!evalEvent && input.scoreValue !== undefined) {
+      evalEvent = {
+        scoreName: input.scoreName?.trim() || "langfuse_score",
+        scoreValue: input.scoreValue,
+        traceId: input.traceId,
+        seedId: input.seedId,
+        correlationId: input.correlationId,
+        comment: input.comment,
+        metadata: {},
+      };
+    }
+    if (!evalEvent) {
+      return {
+        ok: false as const,
+        error: "Missing eval: provide `payload` or `scoreValue` (+ optional scoreName/seedId)",
+      };
+    }
+
+    const minScore = input.minScore ?? parseLangfuseMinScore(process.env);
+    const autoApply = input.autoApply ?? langfuseEvalAutoApplyEnabled(process.env);
+    const baseSeed = input.baseSeed !== undefined ? SeedSchema.parse(input.baseSeed) : undefined;
+    const store = es.getStore();
+
+    return yield* ouroborosFromPromise(() =>
+      processLangfuseEval(evalEvent!, {
+        minScore,
+        autoApply,
+        eventStore: store,
+        baseSeed,
+        loadSeedByLineageId: async (seedId) => loadLatestSeedFromLineage(store, seedId),
+      })
+    );
+  }).pipe(
+    Effect.catchAll((err) =>
+      Effect.succeed({
+        ok: false as const,
+        error: taggedFailureMessage(err),
+      })
+    )
+  );
 }
