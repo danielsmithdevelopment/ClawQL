@@ -54,7 +54,7 @@ describe("MppVerificationService", () => {
   });
 
   it("rejects unknown MPP challenge ids for stripe credentials", async () => {
-    const gate = await createX402Gate({ resource: "/v1/test", price: 0.5, asset: "USDC" }, env);
+    const { gate } = await createX402Gate({ resource: "/v1/test", price: 0.5, asset: "USDC" }, env);
     const credential = {
       challenge: {
         id: "missing-challenge",
@@ -109,7 +109,10 @@ describe("MppVerificationService", () => {
   });
 
   it("verifies legacy x402 PAYMENT-SIGNATURE credentials via facilitator", async () => {
-    const gate = await createX402Gate({ resource: "/v1/legacy", price: 0.001, asset: "USDC" }, env);
+    const { gate } = await createX402Gate(
+      { resource: "/v1/legacy", price: 0.001, asset: "USDC" },
+      env
+    );
     const payload = {
       x402Version: 2,
       accepted: {
@@ -162,7 +165,7 @@ describe("MppVerificationService", () => {
   });
 
   it("registers challenges for later single-use verification", async () => {
-    const gate = await createX402Gate(
+    const { gate } = await createX402Gate(
       { resource: "/v1/register", price: 0.01, asset: "USDC" },
       env
     );

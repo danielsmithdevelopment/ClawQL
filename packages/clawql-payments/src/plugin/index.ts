@@ -55,3 +55,6 @@ export {
   StripeSignatureError,
   StripeApiError,
 } from "../stripe/stripe-errors.js";
+export { Ap2MandateService, ap2MandateLiveLayer } from "../ap2/ap2-mandate-service.js";
+export { AcpCheckoutService, acpCheckoutLiveLayer } from "../acp/acp-checkout-service.js";
+export { PaypalOrdersService, paypalOrdersLiveLayer } from "../paypal/paypal-orders-service.js";

@@ -3,8 +3,11 @@ import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
 import {
   PaymentsDiscoveryService,
   type BuildPaymentsWellKnownOptions,
+  type PaymentsWellKnownAcpMethod,
+  type PaymentsWellKnownAp2Method,
   type PaymentsWellKnownDocument,
   type PaymentsWellKnownMethod,
+  type PaymentsWellKnownPaypalMethod,
   type PaymentsWellKnownResource,
   type PaymentsWellKnownStripeMethod,
   type PaymentsWellKnownX402Method,
@@ -12,8 +15,11 @@ import {
 
 export type {
   BuildPaymentsWellKnownOptions,
+  PaymentsWellKnownAcpMethod,
+  PaymentsWellKnownAp2Method,
   PaymentsWellKnownDocument,
   PaymentsWellKnownMethod,
+  PaymentsWellKnownPaypalMethod,
   PaymentsWellKnownResource,
   PaymentsWellKnownStripeMethod,
   PaymentsWellKnownX402Method,

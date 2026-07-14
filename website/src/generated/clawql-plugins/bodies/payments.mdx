@@ -1,29 +1,31 @@
 # Payments (`clawql-payments`)
 
-**Status:** Shipped (foundation)  
+**Status:** Shipped (foundation + Tier 1 protocols)  
 **Package:** [`packages/clawql-payments`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/../packages/clawql-payments)  
-**Toggle:** Always available as a library; gate enforcement via `CLAWQL_X402_ENFORCE`, `CLAWQL_MPP_ENABLED`, plan entitlements  
-**Plugin:** `PaymentsX402ProxyPlugin` (`payments-x402-mcp-proxy`) for MCP tool-level x402 enforcement
+**Toggle:** Always available as a library; gate rails via `CLAWQL_X402_ENFORCE`, `CLAWQL_MPP_ENABLED`, `CLAWQL_AP2_ENABLED`, `CLAWQL_ACP_ENABLED`, `CLAWQL_PAYPAL_ENABLED`, plan entitlements  
+**Plugin:** `PaymentsX402ProxyPlugin` (`payments-x402-mcp-proxy`) for MCP tool-level x402 enforcement (+ optional AP2 mandate checks)
 
 ## Positioning
 
-ClawQL is the only MCP gateway with native **Stripe + x402 + MPP** payment rails and a **WORM-audited** payment event trail:
+ClawQL is the only MCP gateway with native **Stripe + x402 + MPP + AP2 + ACP** payment surfaces, a **PayPal Orders** adapter, and a **WORM-audited** payment event trail:
 
 | Rail       | Role                                                                                   |
 | ---------- | -------------------------------------------------------------------------------------- |
 | **Stripe** | Human fiat — subscriptions, invoices, Billing Meters, Shared Payment Tokens            |
 | **x402**   | Per-request USDC micropayments (one chain settlement per paid call)                    |
 | **MPP**    | Session-based streaming micropayments (pre-authorize once; high-frequency agent spend) |
+| **AP2**    | Cryptographic Payment Mandates (authorization / non-repudiation under MCP)             |
+| **ACP**    | Merchant-side agentic checkout sessions (ChatGPT Instant Checkout–style)               |
+| **PayPal** | Human wallet Orders v2 create/capture                                                  |
 
 Operator guide: [clawql-payments](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/payments/clawql-payments.md) → `/payments/clawql-payments`.
 
-## Roadmap (not shipped)
+## Roadmap
 
-1. **AP2** (Google / FIDO) — cryptographic mandates; authorization layer bridged to x402
-2. **ACP** (OpenAI / Stripe) — merchant-side ChatGPT commerce checkout
-3. **PayPal direct** — human wallet checkout (Adyen direct = Tier 2 enterprise)
+1. **Adyen direct** — Tier 2 enterprise billing adapter
+2. **Mollie / Razorpay** — Tier 3 regional processors
 
-Docs-site ACP/UCP/AP2 discovery documents are stubs until those adapters land.
+Docs-site UCP discovery remains a stub. AP2/ACP live when env flags are set on self-hosted `clawql-payments`.
 
 ## Related
 

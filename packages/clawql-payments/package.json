@@ -1,7 +1,7 @@
 {
   "name": "clawql-payments",
   "version": "7.0.0",
-  "description": "ClawQL payments layer: Stripe billing, x402 micropayments, MPP discovery/runtime, managed plan entitlements, and WORM-auditable payment events",
+  "description": "ClawQL payments layer: Stripe billing, x402 micropayments, MPP, AP2 mandates, ACP checkout, PayPal Orders, managed plan entitlements, and WORM-auditable payment events",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -43,6 +43,21 @@
       "import": "./dist/mpp/index.js",
       "require": "./dist/mpp/index.cjs"
     },
+    "./ap2": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./acp": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./paypal": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
     "./plugin": {
       "types": "./dist/plugin/index.d.ts",
       "import": "./dist/plugin/index.js",
@@ -55,7 +70,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run clean && tsup",
+    "build": "npm run clean && NODE_OPTIONS='--max-old-space-size=4096' tsup",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
@@ -97,6 +112,9 @@
     "stripe",
     "x402",
     "mpp",
+    "ap2",
+    "acp",
+    "paypal",
     "micropayments",
     "billing",
     "worm"

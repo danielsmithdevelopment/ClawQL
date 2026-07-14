@@ -336,10 +336,10 @@ export function getPaymentsWellKnown(): Record<string, unknown> {
       },
     ],
     default: 'x402',
-    native_rails: ['stripe', 'x402', 'mpp'],
-    planned_protocols: ['ap2', 'acp'],
+    native_rails: ['stripe', 'x402', 'mpp', 'ap2', 'acp', 'paypal'],
+    planned_protocols: ['ucp'],
     ap2_extension: AP2_EXTENSION_URI,
-    note: 'AP2 URI is discovery metadata (planned mandates). Live settlement today: Stripe + x402 + MPP on self-hosted clawql-payments.',
+    note: 'Docs.clawql.com discovery only. Live AP2/ACP/PayPal adapters run on self-hosted clawql-payments when CLAWQL_AP2_ENABLED / CLAWQL_ACP_ENABLED / CLAWQL_PAYPAL_ENABLED are set.',
     issue: 'https://github.com/danielsmithdevelopment/ClawQL/issues/88',
   }
 }

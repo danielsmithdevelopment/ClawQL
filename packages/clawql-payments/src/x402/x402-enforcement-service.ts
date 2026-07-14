@@ -3,6 +3,8 @@ import { PaymentsConfigService } from "../config/payments-config-service.js";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
 import { ConfigError, X402Error } from "../errors/payment-errors.js";
 import { buildX402PaymentFailedEntry, buildX402PaymentReceivedEntry } from "../audit/events.js";
+import { Ap2MandateService } from "../ap2/ap2-mandate-service.js";
+import { isAp2Enabled, isAp2Required } from "../ap2/config.js";
 import { isMppEnabled } from "../mpp/config.js";
 import { extractPaymentCredential } from "../mpp/credential.js";
 import { buildChallengesFromOffers } from "../mpp/challenge.js";
@@ -86,6 +88,7 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
   | X402RuntimeConfigService
   | X402FacilitatorService
   | MppVerificationService
+  | Ap2MandateService
 > {
   return Layer.effect(
     X402EnforcementService,
@@ -96,6 +99,7 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
       const runtimeConfig = yield* X402RuntimeConfigService;
       const facilitator = yield* X402FacilitatorService;
       const mppVerification = yield* MppVerificationService;
+      const ap2 = yield* Ap2MandateService;
 
       const recordPaymentFailed = (input: {
         tenantId: string;
@@ -160,6 +164,54 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
           const mppOn = isMppEnabled(env);
           const credential = extractPaymentCredential(input.headers);
           const paymentHeader = readX402PaymentHeader(input.headers);
+
+          let ap2MandateId: string | undefined;
+          if (isAp2Enabled(env) || isAp2Required(env)) {
+            const ap2Check = yield* ap2.verifyFromHeaders({
+              headers: input.headers,
+              resource: gate.resource,
+              amountMajor: gate.price,
+              currency: gate.asset === "USDC" ? "USD" : "USD",
+              env,
+              correlationId: input.correlationId,
+              tenantId,
+            });
+            if (isAp2Required(env) && (!ap2Check.present || !ap2Check.ok)) {
+              const reason =
+                ap2Check.present && !ap2Check.ok
+                  ? ap2Check.reason
+                  : "AP2 Payment Mandate required (CLAWQL_AP2_REQUIRE=1)";
+              yield* recordPaymentFailed({
+                tenantId,
+                resource: gate.resource,
+                reason,
+                correlationId: input.correlationId,
+              });
+              return {
+                action: "deny" as const,
+                status: 402 as const,
+                reason,
+                resource: gate.resource,
+              };
+            }
+            if (ap2Check.present && ap2Check.ok) {
+              ap2MandateId =
+                ap2Check.mandate.payment_mandate_id ??
+                ap2Check.mandate.transaction_id ??
+                "verified";
+              const allowWithoutX402 =
+                env.CLAWQL_AP2_ALLOW_WITHOUT_X402?.trim().toLowerCase() === "1" ||
+                env.CLAWQL_AP2_ALLOW_WITHOUT_X402?.trim().toLowerCase() === "true";
+              if (allowWithoutX402 && !credential && !paymentHeader) {
+                return {
+                  action: "allow" as const,
+                  resource: gate.resource,
+                  payer: ap2MandateId,
+                };
+              }
+            }
+          }
+          void ap2MandateId;
 
           if (!credential && !paymentHeader) {
             const config = yield* runtimeConfig.load();

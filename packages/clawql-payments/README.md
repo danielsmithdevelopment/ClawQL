@@ -1,10 +1,10 @@
 # clawql-payments
 
-Unified payments layer for ClawQL — **Stripe** billing, **x402** micropayments, **MPP** (Machine Payments Protocol) discovery and session streaming, managed plan entitlements, and **WORM-auditable** payment events.
+Unified payments layer for ClawQL — **Stripe** billing, **x402** micropayments, **MPP** session streaming, **AP2** Payment Mandates, **ACP** checkout, **PayPal** Orders, managed plan entitlements, and **WORM-auditable** payment events.
 
-**Positioning:** ClawQL is the only MCP gateway with native **Stripe + x402 + MPP** rails and a correlated payment WORM trail. Roadmap: **AP2** (mandates), **ACP** (merchant checkout), **PayPal** direct — see [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md).
+**Positioning:** ClawQL is the only MCP gateway with native **Stripe + x402 + MPP + AP2 + ACP** surfaces plus a **PayPal** Orders adapter and a correlated payment WORM trail. See [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md).
 
-ClawQL's own managed tiers (Free / Pro / Team / Enterprise) run on this package internally. The same package is available to ClawQL users to bill their own customers via Stripe, gate MCP tools and HTTP endpoints via x402/MPP, and get a correlated payment audit trail across rails.
+ClawQL's own managed tiers (Free / Pro / Team / Enterprise) run on this package internally. The same package is available to ClawQL users to bill their own customers via Stripe/PayPal, gate MCP tools and HTTP endpoints via x402/MPP/AP2, expose ACP checkout for agent commerce, and get a correlated payment audit trail across rails.
 
 ## Architecture
 
@@ -13,6 +13,9 @@ clawql-payments
 ├── stripe/     # Subscriptions, invoices, webhooks, metered usage, customer portal, SPT
 ├── x402/       # Wallet setup, resource gating, proof verification, settlement reconcile
 ├── mpp/        # MPP OpenAPI discovery (`/openapi.json`), Payment 402 challenges, MCP -32042
+├── ap2/        # AP2 Payment Mandates (parse/verify) + x402 gate bridge
+├── acp/        # ACP checkout sessions (create/complete + Stripe SPT)
+├── paypal/     # PayPal Orders v2 create/capture
 ├── plans/      # ClawQL tier definitions, entitlements, usage tracking, limit enforcement
 ├── audit/      # Payment events → hash-chained WORM (jsonl, postgres, or memory) + optional Loki export
 └── cli/        # `clawql payments *` command implementations

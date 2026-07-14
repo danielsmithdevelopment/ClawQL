@@ -7,9 +7,16 @@ export type PaymentEventKind =
   | "X402_PAYMENT_FAILED"
   | "ENTITLEMENT_LIMIT_REACHED"
   | "PLAN_UPGRADED"
-  | "PLAN_DOWNGRADED";
+  | "PLAN_DOWNGRADED"
+  | "AP2_MANDATE_VERIFIED"
+  | "AP2_MANDATE_FAILED"
+  | "ACP_CHECKOUT_CREATED"
+  | "ACP_CHECKOUT_COMPLETED"
+  | "PAYPAL_ORDER_CREATED"
+  | "PAYPAL_ORDER_CAPTURED"
+  | "PAYPAL_CAPTURE_FAILED";
 
-export type PaymentProvider = "stripe" | "x402";
+export type PaymentProvider = "stripe" | "x402" | "ap2" | "acp" | "paypal";
 
 export type PaymentWormPayload = {
   provider: PaymentProvider;
@@ -158,6 +165,139 @@ export function buildStripeMeterReportedEntry(input: {
       provider: "stripe",
       tenant_id: input.tenantId,
       resource: input.eventName,
+    },
+  });
+}
+
+export function buildAp2MandateVerifiedEntry(input: {
+  tenantId: string;
+  resource: string;
+  mandateId?: string;
+  signed?: boolean;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "AP2_MANDATE_VERIFIED",
+    summary: `AP2 mandate verified for ${input.resource}${input.mandateId ? ` (${input.mandateId})` : ""}${input.signed ? " [signed]" : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "ap2",
+      tenant_id: input.tenantId,
+      resource: input.resource,
+      agent_id: input.mandateId,
+    },
+  });
+}
+
+export function buildAp2MandateFailedEntry(input: {
+  tenantId: string;
+  resource: string;
+  reason: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "AP2_MANDATE_FAILED",
+    summary: `AP2 mandate failed for ${input.resource}: ${input.reason}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "ap2",
+      tenant_id: input.tenantId,
+      resource: input.resource,
+    },
+  });
+}
+
+export function buildAcpCheckoutCreatedEntry(input: {
+  tenantId: string;
+  checkoutSessionId: string;
+  amountUsd: number;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "ACP_CHECKOUT_CREATED",
+    summary: `ACP checkout ${input.checkoutSessionId} created ($${input.amountUsd.toFixed(2)})`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "acp",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.checkoutSessionId,
+    },
+  });
+}
+
+export function buildAcpCheckoutCompletedEntry(input: {
+  tenantId: string;
+  checkoutSessionId: string;
+  amountUsd: number;
+  paymentIntentId?: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "ACP_CHECKOUT_COMPLETED",
+    summary: `ACP checkout ${input.checkoutSessionId} completed ($${input.amountUsd.toFixed(2)})`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "acp",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.paymentIntentId ?? input.checkoutSessionId,
+    },
+  });
+}
+
+export function buildPaypalOrderCreatedEntry(input: {
+  tenantId: string;
+  orderId: string;
+  amountUsd: number;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "PAYPAL_ORDER_CREATED",
+    summary: `PayPal order ${input.orderId} created ($${input.amountUsd.toFixed(2)})`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "paypal",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.orderId,
+    },
+  });
+}
+
+export function buildPaypalOrderCapturedEntry(input: {
+  tenantId: string;
+  orderId: string;
+  amountUsd?: number;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "PAYPAL_ORDER_CAPTURED",
+    summary: `PayPal order ${input.orderId} captured${input.amountUsd !== undefined ? ` ($${input.amountUsd.toFixed(2)})` : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "paypal",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.orderId,
+    },
+  });
+}
+
+export function buildPaypalCaptureFailedEntry(input: {
+  tenantId: string;
+  orderId: string;
+  reason: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "PAYPAL_CAPTURE_FAILED",
+    summary: `PayPal capture failed for ${input.orderId}: ${input.reason}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "paypal",
+      tenant_id: input.tenantId,
+      resource: input.orderId,
     },
   });
 }
