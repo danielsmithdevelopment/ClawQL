@@ -20,11 +20,13 @@ export const DOC_SITE_ROUTES = {
   'docs/getting-started/team-vault-sync.md':
     '/getting-started/team-vault-sync',
   'docs/getting-started/cursor-ios-cloud-agent.md':
-    '/getting-started/cursor-ios-cloud-agent',
+    '/agent-setup#cursor-i-os-cloud-agent',
   'docs/getting-started/golden-host-images.md':
     '/getting-started/golden-host-images',
   'docs/getting-started/local-agent-sandbox.md':
-    '/getting-started/local-agent-sandbox',
+    '/agent-setup#local-agent-sandbox-mac-os-seatbelt',
+  'docs/getting-started/agent-setup.md': '/agent-setup',
+  'docs/getting-started/agent-setup-prompt.md': '/agent-setup',
   'docs/deployment/clawql-deployment-operations-guide.md':
     '/deployment/operations-guide',
   'docs/deployment/helm.md': '/helm',

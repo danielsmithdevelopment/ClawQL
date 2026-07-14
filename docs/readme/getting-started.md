@@ -12,7 +12,7 @@ npx -p clawql-mcp clawql-mcp
 
 With no spec-related environment variables, ClawQL loads the **opinionated default stack**: **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**.
 
-2. Configure your MCP client (Cursor / Claude Desktop) for stdio — see [deployment.md](./deployment.md) and [agent setup prompt](../getting-started/agent-setup-prompt.md).
+2. Configure your MCP client (Cursor / Claude Desktop) for stdio — see [deployment.md](./deployment.md) and [Agent setup](../getting-started/agent-setup.md).
 
 3. Set credentials via the vault (recommended):
 
@@ -32,9 +32,9 @@ CLAWQL_MCP_URL=http://127.0.0.1:8080 npx -p clawql-mcp clawql doctor
 
 ## Set up with your agent
 
-Paste the copy-paste block from [agent-setup-prompt.md](../getting-started/agent-setup-prompt.md) into Cursor or Claude for a guided first run.
+Paste the copy-paste block from [agent-setup.md](../getting-started/agent-setup.md) into Cursor or Claude for a guided first run.
 
-**Cursor iOS:** use [Cloud Agent + team vault sync](../getting-started/cursor-ios-cloud-agent.md) — stdio MCP on the agent VM, R2/S3/GCS for durable **`Memory/`**, and **`memory_sync`** between sessions.
+**Cursor iOS:** use [Agent setup — Cursor iOS](../getting-started/agent-setup.md#cursor-ios--cloud-agent) — stdio MCP on the agent VM, R2/S3/GCS for durable **`Memory/`**, and **`memory_sync`** between sessions.
 
 **Vault-first CLI (recommended):**
 

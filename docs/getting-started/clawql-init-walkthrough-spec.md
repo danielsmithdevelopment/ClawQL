@@ -2,7 +2,7 @@
 
 **Status:** Shipped (7.0.0) — Phases 1–2b complete; Phase 3 UI optional  
 **Audience:** Product, docs, and contributors planning the next major release onboarding UX  
-**Companion:** [Agent setup prompt](./agent-setup-prompt.md) · [Getting started](../readme/getting-started.md)
+**Companion:** [Agent setup](./agent-setup.md) · [Getting started](../readme/getting-started.md)
 
 This document compares **Executor** (`executor.sh`) onboarding with ClawQL today and proposes a phased **init walkthrough** — copy-paste agent prompts, optional `clawql doctor`, and docs alignment — without committing to a full install script or dashboard yet.
 
@@ -58,7 +58,7 @@ Executor is a useful reference: one-line install, `doctor`, agent-bootstrap shor
 ### Phase 1 — Docs + prompt + doctor (shipped)
 
 1. **Docs refresh:** Default stack narrative everywhere “first run” is taught; `all-providers` labeled explicit opt-in.
-2. **[Agent setup prompt](./agent-setup-prompt.md)** + website [`/agent-setup`](https://docs.clawql.com/agent-setup): copy-paste block for Cursor/Claude to run install → MCP config → env for one vendor → first `search` / `execute`.
+2. **[Agent setup](./agent-setup.md)** + website [`/agent-setup`](https://docs.clawql.com/agent-setup): copy-paste block for Cursor/Claude to run install → MCP config → env for one vendor → first `search` / `execute`.
 3. **`clawql doctor`** (replaces `scripts/dev/clawql-doctor.sh` for most checks).
 4. **Migration note:** Pre-7.0 “no env = all-providers” → post-7.0 opinionated stack.
 
@@ -84,7 +84,7 @@ Executor is a useful reference: one-line install, `doctor`, agent-bootstrap shor
 
 ---
 
-## 5. Agent setup prompt flow (target)
+## 5. Agent setup flow (target)
 
 ```mermaid
 flowchart TD

@@ -212,10 +212,10 @@ export const deploymentHubCards: Array<ReferenceCard> = [
     icon: BookIcon,
   }),
   card({
-    href: '/getting-started/cursor-ios-cloud-agent',
-    name: 'Cursor iOS + Cloud Agent',
+    href: '/agent-setup',
+    name: 'Agent setup',
     description:
-      'ClawQL from the Cursor iOS app — stdio MCP on the agent VM, team bucket, memory_sync.',
+      'Desktop vault-first onboarding, Cursor iOS Cloud Agents, and local Seatbelt sandbox.',
     icon: BookIcon,
   }),
   card({
@@ -224,13 +224,6 @@ export const deploymentHubCards: Array<ReferenceCard> = [
     description:
       'Managed tiers: Packer bakes AMIs/GCP images; Pulumi provisions EC2/GCE/R2 with boot-time team vault.',
     icon: MapPinIcon,
-  }),
-  card({
-    href: '/getting-started/local-agent-sandbox',
-    name: 'Local agent sandbox',
-    description:
-      'clawql sandbox init — fail-closed Seatbelt for Codex, Claude, Cursor, OpenCode harnesses.',
-    icon: ShapesIcon,
   }),
   card({
     href: '/deployment/kubernetes',
@@ -509,14 +502,7 @@ export const optionalToolsHubCards: Array<ReferenceCard> = [
     href: '/learn/sandbox-exec',
     name: 'Sandbox exec',
     description:
-      'MCP sandbox_exec — Kata, Docker, Seatbelt, or Cloudflare bridge.',
-    icon: ShapesIcon,
-  }),
-  card({
-    href: '/getting-started/local-agent-sandbox',
-    name: 'Local agent sandbox (CLI)',
-    description:
-      'clawql sandbox init — per-harness Seatbelt profiles; fail-closed harness launch.',
+      'MCP sandbox_exec — Kata, Docker, Seatbelt, or Cloudflare bridge. Harness CLI: Agent setup.',
     icon: ShapesIcon,
   }),
   card({

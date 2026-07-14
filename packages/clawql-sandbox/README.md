@@ -12,7 +12,7 @@ clawql codex             # fail-closed harness launch when enabled
 
 Programmatic API: `import { runSandboxInit, ensureHarnessSandboxGate } from "clawql-sandbox/init"`.
 
-See [docs/getting-started/local-agent-sandbox.md](../../docs/getting-started/local-agent-sandbox.md).
+See [Agent setup — local sandbox](../../docs/getting-started/agent-setup.md#local-agent-sandbox-macos-seatbelt).
 
 ## Plugin entry
 

@@ -29,7 +29,7 @@ clawql sandbox verify    # macOS — must pass when failClosed
 clawql codex             # launches inside Seatbelt when configured
 ```
 
-See [Local agent sandbox](/getting-started/local-agent-sandbox) and [ADR 0008](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0008-fail-closed-local-agent-sandbox.md).
+See [Local agent sandbox](/agent-setup#local-agent-sandbox-mac-os-seatbelt) and [ADR 0008](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0008-fail-closed-local-agent-sandbox.md).
 
 **Never fail open:** if verification fails, harness launch exits with an error.
 
@@ -59,6 +59,6 @@ Helm: `enableSandbox: true` plus optional `sandboxKata` / `sandboxDocker` blocks
 
 ## Learn more
 
-- [Local agent sandbox](/getting-started/local-agent-sandbox)
+- [Local agent sandbox](/agent-setup#local-agent-sandbox-mac-os-seatbelt)
 - [Sandbox exec walkthrough](/learn/sandbox-exec)
 - [MCP tools § sandbox_exec](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#sandbox_exec)

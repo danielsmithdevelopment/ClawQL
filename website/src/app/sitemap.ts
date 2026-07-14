@@ -73,17 +73,7 @@ const ENTRIES: Array<Entry> = [
     priority: 0.94,
   },
   {
-    path: '/getting-started/cursor-ios-cloud-agent',
-    changeFrequency: 'weekly',
-    priority: 0.94,
-  },
-  {
     path: '/getting-started/golden-host-images',
-    changeFrequency: 'weekly',
-    priority: 0.93,
-  },
-  {
-    path: '/getting-started/local-agent-sandbox',
     changeFrequency: 'weekly',
     priority: 0.93,
   },

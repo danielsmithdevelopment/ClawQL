@@ -50,7 +50,7 @@ export default function GoldenHostImagesPage() {
           </a>
           . Local agent containment:{' '}
           <a
-            href="/getting-started/local-agent-sandbox"
+            href="/agent-setup#local-agent-sandbox-mac-os-seatbelt"
             className="font-medium text-inherit underline underline-offset-2"
           >
             Local agent sandbox

@@ -99,6 +99,16 @@ const nextConfig = {
         destination: '/learn/memory#hands-on-memory-between-chats',
         permanent: true,
       },
+      {
+        source: '/getting-started/cursor-ios-cloud-agent',
+        destination: '/agent-setup#cursor-i-os-cloud-agent',
+        permanent: true,
+      },
+      {
+        source: '/getting-started/local-agent-sandbox',
+        destination: '/agent-setup#local-agent-sandbox-mac-os-seatbelt',
+        permanent: true,
+      },
     ]
   },
   /**
