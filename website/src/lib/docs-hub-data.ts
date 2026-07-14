@@ -201,14 +201,7 @@ export const deploymentHubCards: Array<ReferenceCard> = [
     href: '/getting-started/for-teams',
     name: 'Getting started for teams',
     description:
-      'Shared object storage for Memory notes, Prometheus metrics, Loki audit, OTEL traces, Langfuse.',
-    icon: BookIcon,
-  }),
-  card({
-    href: '/getting-started/team-vault-sync',
-    name: 'Team vault sync (R2 / S3 / GCS)',
-    description:
-      'clawql sync push/pull, auto sync on memory_ingest/recall, Helm teamSync values.',
+      'Shared Memory sync (R2/S3/GCS), Packer golden hosts, Prometheus/Loki/OTEL/Langfuse.',
     icon: BookIcon,
   }),
   card({
@@ -217,13 +210,6 @@ export const deploymentHubCards: Array<ReferenceCard> = [
     description:
       'Desktop vault-first onboarding, Cursor iOS Cloud Agents, and local Seatbelt sandbox.',
     icon: BookIcon,
-  }),
-  card({
-    href: '/getting-started/golden-host-images',
-    name: 'Golden host images (Packer + Pulumi)',
-    description:
-      'Managed tiers: Packer bakes AMIs/GCP images; Pulumi provisions EC2/GCE/R2 with boot-time team vault.',
-    icon: MapPinIcon,
   }),
   card({
     href: '/deployment/kubernetes',

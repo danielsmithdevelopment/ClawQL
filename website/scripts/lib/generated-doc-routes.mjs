@@ -24,10 +24,8 @@ export const GENERATED_BODY_ROUTES = {
   'clawql-plugin-model-body.mdx': '/reference/plugins',
   'clawql-plugin-registry-body.mdx': '/reference/plugins',
   'cursor-ios-cloud-agent-body.mdx': '/agent-setup#cursor-i-os-cloud-agent',
-  'golden-host-images-body.mdx': '/getting-started/golden-host-images',
   'local-agent-sandbox-body.mdx':
     '/agent-setup#local-agent-sandbox-mac-os-seatbelt',
   'agent-setup-body.mdx': '/agent-setup',
-  'team-vault-sync-body.mdx': '/getting-started/team-vault-sync',
   'getting-started-for-teams-body.mdx': '/getting-started/for-teams',
 }

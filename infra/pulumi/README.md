@@ -98,6 +98,6 @@ Future: `clawql operator provision --tier dedicated --tenant acme`.
 ## Related
 
 - [Cloud Agent + R2 + Tailscale runbook](../../docs/deployment/cloud-agent-r2-tailscale-runbook.md)
-- [Golden host images (Packer)](../../docs/getting-started/golden-host-images.md)
+- [Golden host images (Packer)](../../docs/getting-started/getting-started-for-teams.md#golden-host-images)
 - [ADR 0006: Packer](../../docs/adr/0006-golden-host-images-packer.md)
 - [ADR 0007: Pulumi](../../docs/adr/0007-pulumi-provisioning-managed-tiers.md)

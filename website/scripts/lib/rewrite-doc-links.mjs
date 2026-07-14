@@ -18,11 +18,11 @@ export const DOC_SITE_ROUTES = {
   'docs/getting-started/getting-started-for-teams.md':
     '/getting-started/for-teams',
   'docs/getting-started/team-vault-sync.md':
-    '/getting-started/team-vault-sync',
+    '/getting-started/for-teams#team-vault-sync',
   'docs/getting-started/cursor-ios-cloud-agent.md':
     '/agent-setup#cursor-i-os-cloud-agent',
   'docs/getting-started/golden-host-images.md':
-    '/getting-started/golden-host-images',
+    '/getting-started/for-teams#golden-host-images',
   'docs/getting-started/local-agent-sandbox.md':
     '/agent-setup#local-agent-sandbox-mac-os-seatbelt',
   'docs/getting-started/agent-setup.md': '/agent-setup',

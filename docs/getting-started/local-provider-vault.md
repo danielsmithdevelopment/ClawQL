@@ -109,4 +109,4 @@ For the full team setup (Helm, observability, verification), start with [getting
 
 To share **`Memory/`** notes across teammates via a central bucket (R2 default):
 
-→ [team-vault-sync.md](./team-vault-sync.md) — `clawql sync init | push | pull | status`
+→ [Team vault sync](./getting-started-for-teams.md#team-vault-sync) — `clawql sync init | push | pull | status`

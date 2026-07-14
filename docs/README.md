@@ -51,9 +51,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `readme/getting-started.md`
 - `getting-started/agent-setup.md` — desktop, Cursor iOS Cloud Agents, local Seatbelt sandbox
 - `getting-started/local-provider-vault.md` — ~/.ClawQL secrets vault + memory home
-- `getting-started/getting-started-for-teams.md` — **teams:** shared object storage + observability for shared Memory
-- `getting-started/team-vault-sync.md` — `clawql sync` push/pull (R2 / S3 / GCS), Helm `teamSync.*`
-- `getting-started/golden-host-images.md` — Packer golden hosts for managed AWS/GCP/Cloudflare tiers
+- `getting-started/getting-started-for-teams.md` — **teams:** Helm, vault sync (R2/S3/GCS), Packer golden hosts, observability
 - `getting-started/clawql-7-setup-guide.md` — 7.0 upgrade: default stack, Vault, operator auth
 - `getting-started/phase-1-platform-guide.md` — **teach Phase 1:** clawql-auth, pageindex, code graph, Presidio, Tier 1 Compose
 - `getting-started/custom-sources.md` — URL/CLI custom sources (7.0)

@@ -82,7 +82,7 @@ Use ClawQL from the **Cursor iOS app** by running **Cloud Agents** with stdio MC
 
 **Desktop contrast:** Cursor on macOS/Windows can run **`npx clawql-mcp`** locally over stdio with **`~/.ClawQL`** on disk. The iOS app has no local shell, no stdio MCP subprocess, and no persistent **`~/.ClawQL`** on the phone — Cloud Agents provide the runtime.
 
-**Related:** [Team vault sync](./team-vault-sync.md) · [MCP clients](../readme/deployment.md)
+**Related:** [For teams — Team vault sync](./getting-started-for-teams.md#team-vault-sync) · [MCP clients](../readme/deployment.md)
 
 ### Architecture
 
@@ -105,7 +105,7 @@ Use ClawQL from the **Cursor iOS app** by running **Cloud Agents** with stdio MC
 
 ### Prerequisites
 
-1. **Object-storage bucket** with a team prefix (R2 quick start: [team-vault-sync.md](./team-vault-sync.md#quick-start-r2)).
+1. **Object-storage bucket** with a team prefix (R2 quick start: [For teams — R2](./getting-started-for-teams.md#quick-start-r2)).
 2. **Cursor Cloud Agents** enabled for your account (repo connected in the Cursor dashboard).
 3. **`clawql-mcp`** on the agent VM — `npx -p clawql-mcp` resolves it at MCP startup (Node.js is preinstalled on Cloud Agent VMs).
 
@@ -132,7 +132,7 @@ Add these under **Cursor → Settings → Cloud → Secrets** (or your team's se
 | `CLAWQL_SYNC_AUTO_PULL`          | `1` — throttled pull before **`memory_recall`**   |
 | `CLAWQL_SYNC_AUTO_PULL_ON_START` | `1` — pull once when MCP starts                   |
 
-For **S3** or **GCS**, use the credential variables from [team-vault-sync.md](./team-vault-sync.md#environment) instead of R2 keys.
+For **S3** or **GCS**, use the credential variables from [For teams — Environment](./getting-started-for-teams.md#environment) instead of R2 keys.
 
 **Provider API tokens** (GitHub, Slack, Cloudflare, etc.) also belong in Secrets — same keys as local **`clawql secrets set`**, loaded via **`CLAWQL_HOME`** / **`clawql.env`**. Do not put tokens in **`mcp.json`** or git.
 
@@ -196,7 +196,7 @@ Teams can add **`.cursor/environment.json`** with an install script that runs **
 | End of session        | **`memory_sync`** with **`{ "direction": "auto" }`** — pull remote changes, then push local |
 | Next session (new VM) | Auto-pull → **`memory_recall`** sees prior notes                                            |
 
-**`memory_sync`** replaces shell **`clawql sync push`** / **`pull`** on Cloud Agents. See [team-vault-sync.md — `memory_sync`](./team-vault-sync.md#memory_sync-mcp-tool).
+**`memory_sync`** replaces shell **`clawql sync push`** / **`pull`** on Cloud Agents. See [For teams — `memory_sync`](./getting-started-for-teams.md#memory-sync-mcp-tool).
 
 Auto sync (**`CLAWQL_SYNC_AUTO=1`**) debounces push after each **`memory_ingest`**; still call **`memory_sync`** at the end of important runs to flush immediately and reconcile conflicts.
 
@@ -219,7 +219,7 @@ Workflow:
 If sync is not configured, say so and list which CLAWQL_SYNC_* secrets are missing.
 Do not invent API responses. On auth failure, point to vault/providers.json or docs/providers/*-onboarding.md.
 
-Docs: https://docs.clawql.com/agent-setup#cursor-i-os-cloud-agent https://docs.clawql.com/getting-started/team-vault-sync
+Docs: https://docs.clawql.com/agent-setup#cursor-i-os-cloud-agent https://docs.clawql.com/getting-started/for-teams#team-vault-sync
 ```
 
 ### Troubleshooting (iOS)
@@ -323,7 +323,7 @@ MCP-side **`sandbox_exec`:** [Sandbox plugin](../plugins/sandbox.md) · [Learn: 
 ## Related
 
 - [Quickstart](https://docs.clawql.com/quickstart)
-- [Team vault sync](./team-vault-sync.md)
+- [For teams — Team vault sync](./getting-started-for-teams.md#team-vault-sync)
 - [Local provider vault](./local-provider-vault.md)
 - [MCP clients](https://docs.clawql.com/mcp-clients)
 - [clawql-memory](https://docs.clawql.com/learn/memory)

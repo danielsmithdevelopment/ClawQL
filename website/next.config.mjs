@@ -109,6 +109,16 @@ const nextConfig = {
         destination: '/agent-setup#local-agent-sandbox-mac-os-seatbelt',
         permanent: true,
       },
+      {
+        source: '/getting-started/team-vault-sync',
+        destination: '/getting-started/for-teams#team-vault-sync',
+        permanent: true,
+      },
+      {
+        source: '/getting-started/golden-host-images',
+        destination: '/getting-started/for-teams#golden-host-images',
+        permanent: true,
+      },
     ]
   },
   /**
