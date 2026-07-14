@@ -15,6 +15,7 @@ cd website && node scripts/sync-clawql-plugin-pages.mjs
 | `core.md`              | `/plugins/core`              | Always on             |
 | `panguard-proxy.md`    | `/plugins/panguard-proxy`    | Default on            |
 | `memory.md`            | `/plugins/memory`            | Default on            |
+| `codegraph.md`         | `/plugins/codegraph`         | Opt in                |
 | `documents.md`         | `/plugins/documents`         | Default on            |
 | `bundled-providers.md` | `/plugins/bundled-providers` | Default install stack |
 | `automation.md`        | `/plugins/automation`        | Opt in                |

@@ -5,14 +5,18 @@ import { createMemoryPlugin, MEMORY_PLUGIN_ID } from "./memory-plugin.js";
 
 describe("createMemoryPlugin", () => {
   const prevPageIndex = process.env.CLAWQL_ENABLE_PAGEINDEX;
+  const prevCodeGraph = process.env.CLAWQL_ENABLE_CODEGRAPH;
 
   afterEach(() => {
     if (prevPageIndex === undefined) delete process.env.CLAWQL_ENABLE_PAGEINDEX;
     else process.env.CLAWQL_ENABLE_PAGEINDEX = prevPageIndex;
+    if (prevCodeGraph === undefined) delete process.env.CLAWQL_ENABLE_CODEGRAPH;
+    else process.env.CLAWQL_ENABLE_CODEGRAPH = prevCodeGraph;
   });
 
   it("registers memory_ingest and memory_recall on onRegister", () => {
     process.env.CLAWQL_ENABLE_PAGEINDEX = "0";
+    process.env.CLAWQL_ENABLE_CODEGRAPH = "0";
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
     const plugin = createMemoryPlugin();
@@ -37,6 +41,33 @@ describe("createMemoryPlugin", () => {
 
   it("omits pageindex tools when CLAWQL_ENABLE_PAGEINDEX=0", () => {
     process.env.CLAWQL_ENABLE_PAGEINDEX = "0";
+    process.env.CLAWQL_ENABLE_CODEGRAPH = "0";
+    const registry = new McpToolRegistry();
+    const api = registry.registrationApi();
+    Effect.runSync(createMemoryPlugin().onRegister!(api));
+    const names = registry.list().map((t) => t.name);
+    expect(names).toEqual(["memory_ingest", "memory_recall"]);
+  });
+
+  it("registers codegraph tools when CLAWQL_ENABLE_CODEGRAPH=1", () => {
+    process.env.CLAWQL_ENABLE_PAGEINDEX = "0";
+    process.env.CLAWQL_ENABLE_CODEGRAPH = "1";
+    const registry = new McpToolRegistry();
+    const api = registry.registrationApi();
+    Effect.runSync(createMemoryPlugin().onRegister!(api));
+    const names = registry.list().map((t) => t.name);
+    expect(names).toContain("codegraph_index");
+    expect(names).toContain("codegraph_query");
+    expect(names).toContain("codegraph_neighbors");
+    expect(names).toContain("codegraph_path");
+    expect(names).toContain("codegraph_explain");
+    expect(names).toContain("codegraph_subgraph");
+    expect(names).toContain("codegraph_import_graphify");
+  });
+
+  it("omits codegraph tools when CLAWQL_ENABLE_CODEGRAPH is unset", () => {
+    process.env.CLAWQL_ENABLE_PAGEINDEX = "0";
+    delete process.env.CLAWQL_ENABLE_CODEGRAPH;
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
     Effect.runSync(createMemoryPlugin().onRegister!(api));

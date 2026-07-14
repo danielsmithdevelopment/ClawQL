@@ -72,3 +72,21 @@ Need enterprise-document evidence behind an action.
 2. Summarize key evidence.
 3. Execute action.
 4. `memory_ingest` with evidence summary (and citations when applicable).
+
+---
+
+## 6) Architecture Trace (Vault + Code Graph)
+
+### Use case
+
+You need both narrative decisions in the vault and precise import/call relationships in source.
+
+### Steps
+
+1. **`codegraph_index`** on the repo root (once per checkout), or **`codegraph_import_graphify`** from a Graphify export.
+2. **`memory_recall`** with hybrid enabled (`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1` or `includeCodeGraph: true`).
+3. Use vault **`results[]`** for decisions and **`codeGraphHits`** for symbol locations.
+4. **`codegraph_path`** between two symbols when you need a concrete trace.
+5. **`memory_ingest`** the architecture conclusion with wikilinks.
+
+See [Code graph plugin](../plugins/codegraph.md) and [Memory plugin](../plugins/memory.md).

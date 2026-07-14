@@ -3,6 +3,7 @@
   "/plugins/core",
   "/plugins/panguard-proxy",
   "/plugins/memory",
+  "/plugins/codegraph",
   "/plugins/documents",
   "/plugins/bundled-providers",
   "/plugins/automation",

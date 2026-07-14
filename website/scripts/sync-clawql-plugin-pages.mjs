@@ -71,6 +71,7 @@ function rewriteLinksForSite(body) {
         .replaceAll('](../mcp/mcp-tools.md)', '](/tools)')
         .replaceAll('](../getting-started/', '](/getting-started/')
         .replace(/]\(\/getting-started\/([^)#]+)\.md/g, '](/getting-started/$1')
+        .replace(/\]\(([a-z0-9-]+)\.md\)/g, '](/plugins/$1)')
         .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
         .replaceAll('](../', `](${GH_MAIN}/docs/plugins/`),
     ),

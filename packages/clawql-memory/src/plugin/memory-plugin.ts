@@ -1,6 +1,15 @@
 import { Effect } from "effect";
 import { z } from "zod";
 import {
+  codegraphExplain,
+  codegraphImportGraphify,
+  codegraphIndex,
+  codegraphNeighbors,
+  codegraphPath,
+  codegraphQuery,
+  codegraphSubgraph,
+} from "clawql-codegraph/mcp";
+import {
   pageindexBuildTree,
   pageindexGetContent,
   pageindexSynthesize,
@@ -9,7 +18,8 @@ import {
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { runMemoryIngest, type MemoryIngestInput } from "../ingest/ingest.js";
 import { runMemoryRecall, type MemoryRecallInput } from "../recall/recall.js";
-import { pageIndexEnabled } from "../recall/pageindex-recall.js";
+import { codeGraphEnabled, defaultCodeGraphRoot } from "../recall/codegraph-recall.js";
+import { pageIndexEnabled } from "../recall/pageindex-enabled.js";
 
 import type { Plugin } from "clawql-core";
 
@@ -64,6 +74,23 @@ export const memoryIngestToolSchema = {
     .describe(
       "When the page already exists, append a new section (default true). Set false to replace the file."
     ),
+  rebuild: z
+    .object({
+      pageindex: z
+        .boolean()
+        .optional()
+        .describe(
+          "Rebuild PageIndex tree for the written vault note (or set CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX=1)."
+        ),
+      embeddings: z
+        .boolean()
+        .optional()
+        .describe(
+          "Ensure memory.db chunk/embedding sync after write (default on when memory.db enabled). Set false to skip."
+        ),
+    })
+    .optional()
+    .describe("Derived-index rebuilds after the canonical vault Markdown write."),
 };
 
 export const memoryRecallToolSchema = {
@@ -96,6 +123,25 @@ export const memoryRecallToolSchema = {
     .describe(
       "Minimum keyword match score to seed a note (default: CLAWQL_MEMORY_RECALL_MIN_SCORE or 1)."
     ),
+  includeCodeGraph: z
+    .boolean()
+    .optional()
+    .describe(
+      "When true, include codegraph source even if CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH is unset (same as sources including codegraph)."
+    ),
+  codeGraphId: z
+    .string()
+    .optional()
+    .describe("Code graph id for hybrid supplement (default from CLAWQL_CODEGRAPH_ID)."),
+  sources: z
+    .array(z.enum(["vault", "vector", "codegraph", "pageindex", "onyx"]))
+    .min(1)
+    .optional()
+    .describe(
+      "Which recall backends to query. Omit for defaults: vault+vector, plus hybrids from env " +
+        "(CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH / _PAGEINDEX / _ONYX) or includeCodeGraph. " +
+        "Returns normalized hits[] + followUps for specialist tools."
+    ),
 };
 
 export const pageindexBuildTreeToolSchema = {
@@ -124,6 +170,63 @@ export const pageindexGetContentToolSchema = {
   storagePath: z.string().optional(),
 };
 
+export const codegraphIndexToolSchema = {
+  rootPath: z
+    .string()
+    .optional()
+    .describe("Repository root to index. Defaults to CLAWQL_CODEGRAPH_ROOT or process cwd."),
+  graphId: z.string().optional().describe("Stable graph id (defaults from directory name)."),
+  maxFiles: z.number().int().positive().optional().describe("Cap indexed source files."),
+  storagePath: z.string().optional().describe("Optional JSON storage path override."),
+};
+
+export const codegraphQueryToolSchema = {
+  graphId: z.string().min(1),
+  query: z.string().min(1).describe("Symbol name, path fragment, or concept."),
+  limit: z.number().int().positive().optional(),
+  storagePath: z.string().optional(),
+};
+
+export const codegraphNeighborsToolSchema = {
+  graphId: z.string().min(1),
+  nodeId: z.string().min(1).describe("Exact node id from codegraph_query."),
+  edgeKinds: z
+    .array(
+      z.enum(["imports", "exports", "contains", "calls", "extends", "implements", "references"])
+    )
+    .optional(),
+  limit: z.number().int().positive().optional(),
+  storagePath: z.string().optional(),
+};
+
+export const codegraphPathToolSchema = {
+  graphId: z.string().min(1),
+  from: z.string().min(1).describe("Start symbol or concept."),
+  to: z.string().min(1).describe("End symbol or concept."),
+  storagePath: z.string().optional(),
+};
+
+export const codegraphExplainToolSchema = {
+  graphId: z.string().min(1),
+  nodeQuery: z.string().min(1).describe("Symbol or concept to explain."),
+  storagePath: z.string().optional(),
+};
+
+export const codegraphSubgraphToolSchema = {
+  graphId: z.string().min(1),
+  seedQuery: z.string().min(1),
+  maxDepth: z.number().int().min(0).max(6).optional(),
+  maxNodes: z.number().int().positive().optional(),
+  storagePath: z.string().optional(),
+};
+
+export const codegraphImportGraphifyToolSchema = {
+  jsonPath: z.string().min(1).describe("Path to Graphify graph.json export."),
+  graphId: z.string().optional(),
+  rootPath: z.string().optional(),
+  storagePath: z.string().optional(),
+};
+
 export async function handleMemoryIngestToolInput(
   params: MemoryIngestInput
 ): Promise<{ content: { type: "text"; text: string }[] }> {
@@ -142,6 +245,8 @@ export async function handleMemoryIngestToolInput(
     ),
     wikilinkCount: params.wikilinks?.length ?? 0,
     hasSessionId: Boolean(params.sessionId?.trim()),
+    rebuildPageindex: params.rebuild?.pageindex,
+    rebuildEmbeddings: params.rebuild?.embeddings,
     ok: result.ok,
     skipped: result.skipped,
     merkleRootChanged: result.merkleRootChanged,
@@ -160,6 +265,8 @@ export async function handleMemoryRecallToolInput(
     limit: params.limit,
     maxDepth: params.maxDepth,
     minScore: params.minScore,
+    sources: params.sources,
+    includeCodeGraph: params.includeCodeGraph,
   });
   const result = await runMemoryRecall(params);
   return {
@@ -220,6 +327,96 @@ export function createMemoryPlugin(): Plugin {
             handler: async (args) => ({
               content: [
                 { type: "text", text: JSON.stringify(await pageindexGetContent(args), null, 2) },
+              ],
+            }),
+          });
+        }
+
+        if (codeGraphEnabled()) {
+          yield* api.registerMcpTool({
+            name: "codegraph_index",
+            schema: codegraphIndexToolSchema,
+            handler: async (args) => {
+              const params = args as {
+                rootPath?: string;
+                graphId?: string;
+                maxFiles?: number;
+                storagePath?: string;
+              };
+              logMcpToolShape("codegraph_index", {
+                rootPath: params.rootPath ?? defaultCodeGraphRoot(),
+                graphId: params.graphId,
+                maxFiles: params.maxFiles,
+              });
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: JSON.stringify(
+                      await codegraphIndex({
+                        ...params,
+                        rootPath: params.rootPath ?? defaultCodeGraphRoot(),
+                      }),
+                      null,
+                      2
+                    ),
+                  },
+                ],
+              };
+            },
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_query",
+            schema: codegraphQueryToolSchema,
+            handler: async (args) => ({
+              content: [
+                { type: "text", text: JSON.stringify(await codegraphQuery(args), null, 2) },
+              ],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_neighbors",
+            schema: codegraphNeighborsToolSchema,
+            handler: async (args) => ({
+              content: [
+                { type: "text", text: JSON.stringify(await codegraphNeighbors(args), null, 2) },
+              ],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_path",
+            schema: codegraphPathToolSchema,
+            handler: async (args) => ({
+              content: [{ type: "text", text: JSON.stringify(await codegraphPath(args), null, 2) }],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_explain",
+            schema: codegraphExplainToolSchema,
+            handler: async (args) => ({
+              content: [
+                { type: "text", text: JSON.stringify(await codegraphExplain(args), null, 2) },
+              ],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_subgraph",
+            schema: codegraphSubgraphToolSchema,
+            handler: async (args) => ({
+              content: [
+                { type: "text", text: JSON.stringify(await codegraphSubgraph(args), null, 2) },
+              ],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_import_graphify",
+            schema: codegraphImportGraphifyToolSchema,
+            handler: async (args) => ({
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(await codegraphImportGraphify(args), null, 2),
+                },
               ],
             }),
           });

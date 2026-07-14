@@ -5,7 +5,7 @@ slug: documents
 status: default-on
 package: clawql-documents
 order: 4
-prev: memory
+prev: codegraph
 next: bundled-providers
 ---
 

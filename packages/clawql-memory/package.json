@@ -53,6 +53,11 @@
       "import": "./dist/recall/recall.js",
       "require": "./dist/recall/recall.cjs"
     },
+    "./recall/onyx-recall": {
+      "types": "./dist/recall/onyx-recall.d.ts",
+      "import": "./dist/recall/onyx-recall.js",
+      "require": "./dist/recall/onyx-recall.cjs"
+    },
     "./embedding/embedding": {
       "types": "./dist/embedding/embedding.d.ts",
       "import": "./dist/embedding/embedding.js",
@@ -108,6 +113,7 @@
     "zod": "4.3.6",
     "clawql-api": "7.0.0",
     "clawql-pageindex": "7.0.0",
+    "clawql-codegraph": "7.0.0",
     "pg": "^8.21.0",
     "sql.js": "^1.14.1"
   },
