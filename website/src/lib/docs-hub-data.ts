@@ -198,10 +198,10 @@ export const deploymentHubCards: Array<ReferenceCard> = [
     icon: BoltIcon,
   }),
   card({
-    href: '/getting-started/phase-1-platform-guide',
-    name: 'Phase 1 platform guide (7.0)',
+    href: '/resources/migration',
+    name: 'Migration (7.0)',
     description:
-      'Auth, PageIndex, Presidio hooks, Tier 1 Compose, and release manifest.',
+      'Default provider stack, Vault-backed secrets, env aliases, and Helm/operator upgrade checklist.',
     icon: BookIcon,
   }),
   card({
@@ -261,10 +261,10 @@ export const deploymentHubCards: Array<ReferenceCard> = [
 
 export const guidesHubCards: Array<ReferenceCard> = [
   card({
-    href: '/getting-started/clawql-7-setup-guide',
-    name: '7.0 setup & migration',
+    href: '/resources/migration',
+    name: 'Migration (7.0)',
     description:
-      'Install paths, env vars, plugin enablement, and verification for ClawQL 7.0.',
+      'Default stack, Vault secrets, Helm defaults, and verification for ClawQL 7.0.',
     icon: BookIcon,
   }),
   card({

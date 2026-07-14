@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 export const metadata = docsPageMetadata({
   title: 'Getting started',
   description:
-    'ClawQL getting started: quickstart, Phase 1 guide, install paths, MCP clients, team shared memory, and deployment tiers.',
+    'ClawQL getting started: quickstart, migration, install paths, MCP clients, team shared memory, and deployment tiers.',
   path: '/getting-started',
 })
 

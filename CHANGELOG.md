@@ -55,7 +55,7 @@ Major release: **opinionated default stack everywhere** (npm + Helm), **vault-fi
 - **IDP pipeline runner** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)): MCP **`run_idp_pipeline`** when **`CLAWQL_ENABLE_IDP_PIPELINE=1`**; docs **[`docs/mcp/idp-pipeline-runner.md`](docs/mcp/idp-pipeline-runner.md)**.
 - **NATS JetStream workflow events** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254), [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)): opt-in publish/consumer for HITL/workflow lifecycle.
 - **Langfuse eval → Ouroboros** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** + **`CLAWQL_ENABLE_OUROBOROS=1`** — webhook + **`ouroboros_propose_seed_revision_from_eval`**.
-- **7.0 setup guide:** [`docs/getting-started/clawql-7-setup-guide.md`](docs/getting-started/clawql-7-setup-guide.md).
+- **7.0 migration:** [Migration guide](https://docs.clawql.com/resources/migration) (content formerly in `clawql-7-setup-guide.md`).
 - **Phase 1 exit (7.0.0 finalized):**
   - **`clawql-auth`** — gateway `noAuth`/`apiKey`, ATR claims, provider credential headers; HTTP MCP middleware when `CLAWQL_AUTH_MODE=apiKey`.
   - **`clawql-pageindex`** — MIT vectorless hierarchical indexing; `pageindex_build_tree`, `pageindex_traverse`, `pageindex_synthesize`, `pageindex_get_content` (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide).

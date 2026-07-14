@@ -151,7 +151,7 @@ _Full design: [Deployment & Operations Guide](../deployment/clawql-deployment-op
 
 ## XII. Current Status & Roadmap (July 2026)
 
-**Shipped (Phase 1 complete — 7.0.0):** MCP transport (stdio/HTTP/gRPC), horizontal packages (`clawql-core`, `clawql-auth`, `clawql-pageindex`, `clawql-api`, `clawql-memory`, `clawql-documents`, `clawql-automation`, `clawql-sandbox`, `clawql-ouroboros`), **Plugin Phase 2** (`onRegister` + `composeHorizontalPluginLayers`), Presidio gateway hooks (opt-in), Tier 1 Docker Compose, release manifest MVP, operator scaffold, custom sources — **[Modularization implementation status](../design/modularization-implementation-status.md)** and **[Phase 1 platform guide](../getting-started/phase-1-platform-guide.md)**.
+**Shipped (Phase 1 complete — 7.0.0):** MCP transport (stdio/HTTP/gRPC), horizontal packages (`clawql-core`, `clawql-auth`, `clawql-pageindex`, `clawql-api`, `clawql-memory`, `clawql-documents`, `clawql-automation`, `clawql-sandbox`, `clawql-ouroboros`), **Plugin Phase 2** (`onRegister` + `composeHorizontalPluginLayers`), Presidio gateway hooks (opt-in), Tier 1 Docker Compose, release manifest MVP, operator scaffold, custom sources — **[Modularization implementation status](../design/modularization-implementation-status.md)** and **[Getting started](https://docs.clawql.com/getting-started)**.
 
 **In progress (Phase 2):** Full Operator NL surface, third-party vertical plugin contract, transport-only `clawql-mcp` split.
 

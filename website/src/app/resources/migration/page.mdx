@@ -3,12 +3,12 @@ import { Note } from '@/components/mdx'
 
 # Migration guide
 
-Upgrade paths for ClawQL MCP server versions and teams moving from ad-hoc MCP integrations. {{ className: 'lead' }}
+Upgrade paths for ClawQL MCP server versions — including **7.0.0** requirements for npm, Docker, Helm, and the optional operator — and for teams moving from ad-hoc MCP integrations. {{ className: 'lead' }}
 
 <Note>
-  For **7.0.0** requirements (Vault, Helm defaults, operator auth), see the [7.0
-  setup guide](/getting-started/clawql-7-setup-guide). Helm Day-2 steps live in
-  the [Deployment & Operations Guide](/deployment/operations-guide).
+  Helm Day-2 steps live in the [Deployment & Operations
+  Guide](/deployment/operations-guide). Local first run:
+  [Quickstart](/quickstart) · [Agent setup](/agent-setup).
 </Note>
 
 ## Upgrading to 7.0.0
@@ -30,14 +30,56 @@ CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
 helm upgrade --install clawql ./charts/clawql-mcp -n clawql --set provider=all-providers
 ```
 
+Or use **`charts/clawql-idp/values-idp-full.yaml`** for the umbrella chart.
+
+Local Docker Desktop / **`make local-k8s-up`** uses **`provider: default`** like npm. For a full IDP lab on Desktop:
+
+```bash
+make local-k8s-up HELM_EXTRA_SET='--set provider=all-providers'
+```
+
 ### Vault-backed secrets (breaking default)
 
 **`secretSourcing.requireVaultBackedSecrets`** is **`true`** by default. Helm render fails without **`envFromSecret`** / **`envFromSecrets`** pointing at a Kubernetes Secret (normally synced from HashiCorp Vault KV **`secret/clawql/providers`**).
 
-- Production: wire External Secrets / Vault before upgrade — [Vault provider secrets](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/vault-provider-secrets.md)
-- Lab only: set **`requireVaultBackedSecrets: false`** in a values overlay (not recommended for production)
+```yaml
+envFromSecret: clawql-provider-env
+secretSourcing:
+  requireVaultBackedSecrets: true # default — set false only for lab overlays
+```
+
+Before first pod schedule:
+
+1. Install bundled Vault or point External Secrets at your cluster Vault.
+2. Populate KV path **`secret/clawql/providers`** — [Vault provider secrets](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/vault-provider-secrets.md).
+3. Run **`make bootstrap-vault-eso`** on local stacks, or apply your ESO **`ExternalSecret`**.
+4. Until sync succeeds, create a minimal placeholder **`Secret`** named **`clawql-provider-env`** so the Deployment can schedule.
+
+**Lab opt-out (not for production):**
+
+```yaml
+secretSourcing:
+  requireVaultBackedSecrets: false
+```
+
+You must then supply tokens via **`extraEnv`** or another supported pattern — plaintext cluster Secrets are discouraged.
 
 Local stdio: use **`clawql init`** → **`~/.ClawQL/vault/providers.json`** — [local provider vault](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/local-provider-vault.md)
+
+### Default-stack vault keys
+
+When documents are **off** (`enableDocuments: false` or operator **`documents.enabled: false`**), populate at minimum:
+
+| Vault property       | Env key                       |
+| -------------------- | ----------------------------- |
+| `githubToken`        | `CLAWQL_GITHUB_TOKEN`         |
+| `slackToken`         | `CLAWQL_SLACK_TOKEN`          |
+| `linearApiKey`       | `LINEAR_API_KEY`              |
+| `notionApiToken`     | `NOTION_API_TOKEN`            |
+| `onyxApiToken`       | `ONYX_API_TOKEN`              |
+| `cloudflareApiToken` | `CLAWQL_CLOUDFLARE_API_TOKEN` |
+
+When **documents / IDP** are on, also set Paperless, Stirling, Docling, and Nextcloud keys — full catalog in [vault-provider-secrets.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/vault-provider-secrets.md).
 
 ### Removed legacy env aliases
 
@@ -50,10 +92,20 @@ Local stdio: use **`clawql init`** → **`~/.ClawQL/vault/providers.json`** — 
 
 ### Operator auth reconciliation
 
-If you use **`ClawQLInstance`**, the operator now sets **`ProviderSecretsReady`** by checking **`clawql-provider-env`** (or **`spec.mcp.providerSecretName`**) against expected vault keys:
+If you use **`ClawQLInstance`**, install the operator scaffold and confirm **`ProviderSecretsReady`**:
+
+```bash
+helm upgrade --install clawql-operator ./charts/clawql-operator -n clawql-system --create-namespace
+kubectl apply -f examples/operator/clawqlinstance-minimal.yaml -n clawql
+clawql operator status
+```
+
+The operator checks **`clawql-provider-env`** (or **`spec.mcp.providerSecretName`**) against expected vault keys:
 
 - **`documents.enabled: false`** — default-stack keys only
 - **`documents.enabled: true`** — default stack plus all IDP provider keys
+
+See [Operator Helm](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-operator-helm.md).
 
 ### First run on a new machine
 
@@ -62,7 +114,16 @@ npx -p clawql-mcp clawql onboard --interactive
 clawql doctor --smoke
 ```
 
-→ Full checklist: [7.0 setup guide](/getting-started/clawql-7-setup-guide)
+### 7.0 upgrade checklist
+
+1. Replace legacy env aliases in `.env`, Helm values, and CI secrets
+2. Wire Vault → **`clawql-provider-env`** (or opt out explicitly for labs only)
+3. Run **`clawql onboard`** or populate Vault KV for default-stack keys
+4. **`helm upgrade`** with **`provider: default`** or **`all-providers`** as needed
+5. Verify **`clawql doctor --smoke`** (local) or **`/healthz`** + **`search`** (cluster)
+6. If using the operator: confirm **`ProviderSecretsReady=True`** on your **`ClawQLInstance`**
+
+macOS Desktop (Electron) secrets + Agent Chat: [ClawQL Desktop](/getting-started/clawql-desktop).
 
 ## Upgrading clawql-mcp (general)
 
@@ -71,13 +132,22 @@ clawql doctor --smoke
 3. For Kubernetes/Helm: bump image digest in values, run **`helm upgrade`**, verify **`/healthz`**
 4. Re-run smoke tests: **`search`** on a known operation, **`execute`** dry path, vault **`memory_recall`** if enabled
 
-## Docker Compose (planned)
+## Docker Compose
 
-Four-stack Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) is not shipped. Use **`make local-k8s-up`** (Helm) today → [Helm chart](/helm)
+**Tier 1 Compose** (MCP + Tika + Gotenberg + Paperless + Redis + Postgres, optional Presidio) is shipped:
+
+```bash
+cd examples/clawql-local-docker-compose
+./bootstrap.sh && docker compose up -d
+```
+
+→ [Tier 1 Compose README](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/clawql-local-docker-compose/README.md)
+
+The broader four-stack Compose layout ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) is still planned. For full Kubernetes IDP today, use **`make local-k8s-up`** → [Helm chart](/helm).
 
 ## Kubernetes / Helm
 
-→ [Operations guide](/deployment/operations-guide) · [Helm chart](/helm) · [7.0 setup guide](/getting-started/clawql-7-setup-guide)
+→ [Operations guide](/deployment/operations-guide) · [Helm chart](/helm) · [Kubernetes](/deployment/kubernetes)
 
 ## From other MCP servers
 
@@ -92,11 +162,11 @@ Four-stack Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issu
 → [Concepts](/concepts) · [Using search & execute](/learn/search-and-execute-mcp)
 
 <div className="not-prose my-8 flex flex-wrap gap-3">
-  <Button href="/getting-started/clawql-7-setup-guide" arrow="right">
-    <>7.0 setup guide</>
-  </Button>
-  <Button href="/deployment/operations-guide" variant="outline">
+  <Button href="/deployment/operations-guide" arrow="right">
     <>Deployment guide</>
+  </Button>
+  <Button href="/helm" variant="outline">
+    <>Helm chart</>
   </Button>
   <Button href="/troubleshooting" variant="outline">
     <>Troubleshooting</>

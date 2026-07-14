@@ -51,6 +51,45 @@ For `clawql-mcp-http`, Docker, Kubernetes, or Cloud Run, configure your client w
   serves **`/mcp`**, **`/healthz`**, and **`/graphql`** on the same server.
 </Note>
 
+## Gateway API key auth
+
+HTTP MCP can enforce an API key on **`/mcp`** routes via **`clawql-auth`**. Upstream provider credentials (AWS SigV4, env JSON) live in the same package.
+
+```bash
+export CLAWQL_AUTH_MODE=apiKey
+export CLAWQL_API_KEY="your-long-random-secret"
+```
+
+Clients must send **`Authorization: Bearer <CLAWQL_API_KEY>`** (or **`X-API-Key`**) on Streamable HTTP MCP requests.
+
+| `CLAWQL_AUTH_MODE` | Behavior                          |
+| ------------------ | --------------------------------- |
+| `noAuth` (default) | No gateway key check on MCP HTTP  |
+| `apiKey`           | Reject MCP HTTP without valid key |
+
+OIDC/SAML login flows and RBAC/ABAC are **roadmap** — see [`packages/clawql-auth/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-auth/README.md) and `.env.example` (`CLAWQL_AUTH_*`).
+
+## Presidio redaction
+
+When enabled, text is redacted **before** persistence on **`execute`** responses, **`memory_ingest`**, and **`ingest_external_knowledge`**:
+
+```bash
+export CLAWQL_ENABLE_PRESIDIO=1
+export CLAWQL_PRESIDIO_ANALYZER_URL=http://presidio-analyzer:3000
+export CLAWQL_PRESIDIO_ANONYMIZER_URL=http://presidio-anonymizer:3000
+# Optional: block when Presidio is unreachable
+export CLAWQL_PRESIDIO_FAILURE_POLICY=block
+```
+
+Tier 1 Compose with Presidio:
+
+```bash
+cd examples/clawql-local-docker-compose
+docker compose -f docker-compose.yml -f docker-compose.presidio.override.yml up -d
+```
+
+Full mandatory IDP-hop redaction remains roadmap — [Security](/security) · [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md).
+
 ## OpenClaw
 
 To use the **OpenClaw** CLI (`npm install -g openclaw`) as an MCP host for ClawQL — **`openclaw mcp set`**, HTTP vs stdio, env — see **[OpenClaw + ClawQL](/openclaw)** and the canonical repo guide [`docs/openclaw/using-openclaw-with-clawql.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/using-openclaw-with-clawql.md).

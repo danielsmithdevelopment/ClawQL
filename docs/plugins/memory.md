@@ -124,10 +124,18 @@ Optional hybrid vector index: see [memory-db-hybrid-implementation.md](https://g
 3. Do work with **`search`** / **`execute`**
 4. **`memory_ingest`** with decisions + wikilinks; set **`rebuild.pageindex: true`** for long notes
 
+### PageIndex workflow
+
+Standalone MIT library for **vectorless** hierarchical document indexing (Markdown headings → tree → traverse → synthesize), registered as MCP tools by `MemoryPlugin`:
+
+1. Ingest long docs with **`memory_ingest`** or **`ingest_external_knowledge`**
+2. **`pageindex_build_tree`** on vault Markdown (pass a `docId`)
+3. **`pageindex_traverse`** / **`pageindex_synthesize`** instead of pasting full files into the thread
+
+**Package API:** [`packages/clawql-pageindex/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-pageindex/README.md)
+
 ## Learn more
 
 - [Code graph plugin](/plugins/codegraph) — Graphify import, tree-sitter languages, env reference
-- [Phase 1 platform guide — PageIndex](../getting-started/phase-1-platform-guide.md#2-pageindex-clawql-pageindex)
-- [Phase 1 platform guide — Code graph](../getting-started/phase-1-platform-guide.md#3-code-graph-clawql-codegraph)
 - [clawql-memory (Memory 2.0)](/learn/memory)
 - [MCP tools § memory](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md)

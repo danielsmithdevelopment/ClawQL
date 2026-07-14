@@ -7,7 +7,7 @@ This file helps AI agents and crawlers find canonical documentation. For full-te
 ## Getting started
 - [Agent setup](https://docs.clawql.com/agent-setup): Desktop onboarding, Cursor iOS Cloud Agents, local sandbox
 - [Quickstart](https://docs.clawql.com/quickstart): Fastest path to a running gateway
-- [Getting started](https://docs.clawql.com/getting-started): Phase 1 guide and team paths
+- [Getting started](https://docs.clawql.com/getting-started): Quickstart paths, teams, and 7.0 migration
 - [Install](https://docs.clawql.com/install): npm, Docker, and Helm install options
 
 ## Core reference
