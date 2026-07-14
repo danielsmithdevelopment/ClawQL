@@ -22,11 +22,6 @@ const ENTRIES: Array<Entry> = [
     priority: 0.9,
   },
   {
-    path: '/getting-started/clawql-release-mvp',
-    changeFrequency: 'monthly',
-    priority: 0.9,
-  },
-  {
     path: '/vision/idp-platform',
     changeFrequency: 'monthly',
     priority: 0.92,

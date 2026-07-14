@@ -82,6 +82,40 @@ clawql-release pull [--rift]
 
 It's open source, written in TypeScript, and works whether or not Rift is available — `--backend git-worktree` is always a valid fallback.
 
+## Shipped MVP (`clawql-release` in 7.0)
+
+The commands above describe the **full Layer 0 vision**. What ships today in **7.0** is a GitHub + GHCR–anchored manifest MVP (Arweave, Rift golden images, and Radicle primary remain roadmap).
+
+```bash
+clawql release init
+
+clawql release publish --tag v7.0.0 \
+  --sbom sbom-cyclonedx-repo.cdx.json \
+  --npm-tgz clawql-mcp-7.0.0.tgz \
+  --image-digest clawql-mcp=sha256:YOUR_DIGEST \
+  --image-digest clawql-dashboard=sha256:...
+
+clawql release verify releases/v7.0.0/manifest.json
+```
+
+| Field               | Source                                     |
+| ------------------- | ------------------------------------------ |
+| `repository.commit` | `git rev-parse HEAD`                       |
+| `artifacts.sbom`    | SHA-256 of CycloneDX file                  |
+| `artifacts.npm`     | SHA-256 of `npm pack` tarball              |
+| `images.*`          | GHCR ref + `sha256:` digest                |
+| `merkleRoot`        | Merkle tree over all artifact/image leaves |
+
+**CI:** after `npm pack` in `.github/workflows/npm-publish.yml`, run `npm run release:manifest`. Set `CLAWQL_RELEASE_IMAGE_DIGESTS` to a JSON object of image name → digest from docker-publish.
+
+**Verify at runtime:**
+
+- **`clawql doctor --smoke`** auto-resolves `releases/v{version}/manifest.json` when the bundle exists (warning, not failure, for bare `npx` installs without a bundle).
+- Optional MCP startup check: **`CLAWQL_RELEASE_MANIFEST=releases/v7.0.0/manifest.json`**. Strict exit on failure: **`NODE_ENV=production`** or **`CLAWQL_RELEASE_MANIFEST_STRICT=1`**.
+- Container signatures separately: **`cosign verify`** — [golden-image-pipeline.md](../security/golden-image-pipeline.md).
+
+Package how-to: [`packages/clawql-release/README.md`](../../packages/clawql-release/README.md).
+
 ## The Release Manifest
 
 Every upload to Arweave includes a manifest file — a compact JSON document that turns a pile of binary artifacts into something a machine can reason about. Here's a representative example:

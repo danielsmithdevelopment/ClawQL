@@ -171,7 +171,7 @@ Custom sources persist in **`~/.ClawQL/sources.json`** and merge into **`search`
 - **`clawql doctor --smoke`** verifies `releases/v{version}/manifest.json` when the bundle exists
 - **`CLAWQL_RELEASE_MANIFEST`** — optional MCP startup verify (strict when `NODE_ENV=production` or `CLAWQL_RELEASE_MANIFEST_STRICT=1`)
 
-→ [clawql-release-mvp.md](docs/getting-started/clawql-release-mvp.md)
+→ [clawql-release README](packages/clawql-release/README.md) · [Immutable releases (MVP)](https://docs.clawql.com/vision/immutable-releases#shipped-mvp-clawql-release-in-7-0)
 
 ---
 
@@ -195,7 +195,7 @@ Docling, LangExtract, IDP pipeline runner, NATS/KEDA worker, Langfuse→Ouroboro
 ## Docs site
 
 - **`/vision/ecosystem`** — ecosystem overview synced from docs
-- **`/getting-started/clawql-release-mvp`** — Layer 0 release manifest guide
+- **`/vision/immutable-releases`** — Layer 0 vision + shipped MVP how-to
 - Shared doc link rewriter for generated MDX; consolidated nav via [`docs-nav-data.ts`](website/src/lib/docs-nav-data.ts)
 - HITL: [`docs/mcp/hitl-label-studio.md`](docs/mcp/hitl-label-studio.md) is canonical; plugin index is a stub
 

@@ -99,6 +99,12 @@ const nextConfig = {
         destination: '/learn/memory#hands-on-memory-between-chats',
         permanent: true,
       },
+      {
+        source: '/getting-started/clawql-release-mvp',
+        destination:
+          '/vision/immutable-releases#shipped-mvp-clawql-release-in-7-0',
+        permanent: true,
+      },
     ]
   },
   /**

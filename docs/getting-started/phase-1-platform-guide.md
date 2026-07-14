@@ -180,7 +180,7 @@ clawql doctor --smoke
 export CLAWQL_RELEASE_MANIFEST=/path/to/manifest.json
 ```
 
-**Commands:** `clawql release collect|manifest|verify|publish` — [clawql-release-mvp.md](./clawql-release-mvp.md).
+**Commands:** `clawql release collect|manifest|verify|publish` — [`packages/clawql-release/README.md`](../../packages/clawql-release/README.md) · [Immutable releases (MVP)](https://docs.clawql.com/vision/immutable-releases#shipped-mvp-clawql-release-in-7-0).
 
 ---
 
