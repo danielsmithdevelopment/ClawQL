@@ -235,7 +235,9 @@ From enablement §5.4 and the Effect plan §8:
 
 ## 7. Effect-TS migration status
 
-**Migration complete (July 2026):** registered MCP tool hot paths use native `Effect.gen` staging + Layers. External IO (fs, fetch, sql.js, K8s, embeddings, sandbox backends) remains behind `Effect.tryPromise` / `*FromPromise` by design. Zod stays at MCP registration; Promise façades bridge the SDK. `setInterval` workers (schedule / ouroboros poller / inference) remain imperative unless a future fibers track is opened.
+**Migration complete (July 2026):** registered MCP tool hot paths use native `Effect.gen` staging + Layers. External IO (fs, fetch, sql.js, K8s, embeddings, sandbox backends) remains behind `Effect.tryPromise` / `*FromPromise` by design. Zod stays at MCP registration; Promise façades bridge the SDK.
+
+**Workers / fibers:** schedule, Ouroboros seeds poller, and inference pipeline workers use daemon fibers + interruptible sleep (skip-if-busy `Ref`) instead of `setInterval`. Nested `Effect.runPromise` inside poller Effect.gen is removed (`OuroborosLoopService.run` is invoked as an Effect).
 
 | Area                                                                             | Status                                                                                                                                          |
 | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -258,6 +260,7 @@ From enablement §5.4 and the Effect plan §8:
 | `AutomationToolsService` argocd                                                  | ✅ Native `Effect.gen` enabled → soft Zod → K8s CRD list/get/sync                                                                               |
 | `hitl_enqueue_label_studio`                                                      | ✅ Native `Effect.gen` config/validate → HTTP import → NATS publish hook                                                                        |
 | `SandboxExecService` sandbox_exec                                                | ✅ Native `Effect.gen` (parse backend → resolve probes → dispatch Kata/Docker/Seatbelt/bridge → shape); Promise façade kept                     |
+| Background workers (schedule / ouroboros poller / inference pipeline)            | ✅ Daemon fibers + `Effect.sleep` loops (skip-if-busy `Ref`); interruptible `stop()`; TestClock-covered                                         |
 
 **Rule for new code in extracted packages:** prefer Effect in `clawql-core` / `clawql-api`; legacy `async` is acceptable **only** at IO edges (`Effect.tryPromise`). See plan §7.
 

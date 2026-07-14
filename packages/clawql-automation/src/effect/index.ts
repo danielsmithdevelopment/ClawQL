@@ -1,4 +1,5 @@
 export { executeHitlEnqueueLabelStudioEffect } from "./hitl-enqueue-effect.js";
+export { startScheduleWorkerFiberEffect } from "./schedule-worker-effect.js";
 export { AutomationError } from "./automation-errors.js";
 export { automationFromPromise, type McpTextResult } from "./automation-effect-utils.js";
 export {

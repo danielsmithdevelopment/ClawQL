@@ -289,9 +289,9 @@ Label cross-cutting PRs with both `effect-foundation` and `modularization-platfo
 1. **Docs:** keep [`modularization-implementation-status.md`](./modularization-implementation-status.md) updated as features merge.
 2. **Transport:** continue slim toward transport-only `clawql-mcp` packaging.
 3. **Third-party plugins:** document npm package template + `CLAWQL_PLUGINS` / Operator toggle.
-4. **Optional later:** `@effect/schema` at boundaries; Effect fibers for schedule / ouroboros / inference pollers (not required for migration-complete).
+4. **Optional later:** `@effect/schema` at boundaries; NATS consumer / Postgres pools as `Layer.scoped`; `Effect.withSpan` on pipeline stages; ManagedRuntime dispose on server shutdown.
 
-**Completed:** Turborepo scaffold; `clawql-core` + `AuditService`; execute/search Effect services; `PanguardProxyPlugin`; extraction **phases 1–9**; horizontal Plugin Layers; **Effect hot-path migration** for memory/documents/automation/sandbox/ouroboros + opt-in tools (pageindex, Onyx, HITL) + MCP audit bridge (IO remains `tryPromise`). Ouroboros Effect rewrite landed on the `effect-ouroboros` track.
+**Completed:** Turborepo scaffold; `clawql-core` + `AuditService`; execute/search Effect services; `PanguardProxyPlugin`; extraction **phases 1–9**; horizontal Plugin Layers; **Effect hot-path migration** for memory/documents/automation/sandbox/ouroboros + opt-in tools (pageindex, Onyx, HITL) + MCP audit bridge; **fiber workers** for schedule / ouroboros seeds poller / inference pipeline (IO remains `tryPromise`). Ouroboros Effect rewrite landed on the `effect-ouroboros` track.
 ---
 
 ## 14. References

@@ -1,5 +1,7 @@
+import { Deferred, Duration, Effect, Fiber, Ref, TestClock, TestContext } from "effect";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { startSeedsPoller } from "./poller.js";
+import { startSeedsPollerFiberEffect, type SeedRunEffect } from "./glue/seeds-poller-core.js";
 import type { Seed } from "./seed.js";
 
 function makeSeed(seedId: string): Seed {
@@ -28,64 +30,103 @@ function makeSeed(seedId: string): Seed {
   };
 }
 
-describe("startSeedsPoller", () => {
+describe("startSeedsPollerFiberEffect (TestClock)", () => {
+  it("runs pending seeds and soft-fails failures", async () => {
+    const okSeed = makeSeed("ok-seed");
+    const badSeed = makeSeed("bad-seed");
+    const runs: string[] = [];
+    const failed: Array<{ id: string; err: unknown }> = [];
+    const errors: Seed[] = [];
+
+    const run: SeedRunEffect = (seed) =>
+      Effect.gen(function* () {
+        runs.push(seed.metadata.seed_id);
+        if (seed.metadata.seed_id === "bad-seed") {
+          yield* Effect.fail(new Error("boom"));
+        }
+      });
+
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const handle = yield* startSeedsPollerFiberEffect(
+          run,
+          Effect.succeed([okSeed, badSeed]),
+          (seedId, error) =>
+            Effect.sync(() => {
+              failed.push({ id: seedId, err: error });
+            }),
+          {
+            pollIntervalMs: 10,
+            onError: async (seed) => {
+              errors.push(seed);
+            },
+          }
+        );
+        yield* TestClock.adjust(Duration.millis(12));
+        expect(runs).toEqual(["ok-seed", "bad-seed"]);
+        expect(failed).toHaveLength(1);
+        expect(failed[0]?.id).toBe("bad-seed");
+        expect(errors).toHaveLength(1);
+        yield* Fiber.interrupt(handle.fiber);
+      }).pipe(Effect.provide(TestContext.TestContext))
+    );
+  });
+
+  it("skips overlapping polls while prior run is in flight", async () => {
+    const seed = makeSeed("slow-seed");
+    const fetchCount = { n: 0 };
+
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const latch = yield* Deferred.make<void>();
+        const runCount = yield* Ref.make(0);
+
+        const handle = yield* startSeedsPollerFiberEffect(
+          () =>
+            Effect.gen(function* () {
+              yield* Ref.update(runCount, (n) => n + 1);
+              yield* Deferred.await(latch);
+            }),
+          Effect.sync(() => {
+            fetchCount.n += 1;
+            return [seed];
+          }),
+          () => Effect.void,
+          { pollIntervalMs: 10 }
+        );
+
+        yield* TestClock.adjust(Duration.millis(12));
+        expect(fetchCount.n).toBe(1);
+        expect(yield* Ref.get(runCount)).toBe(1);
+
+        yield* TestClock.adjust(Duration.millis(30));
+        expect(fetchCount.n).toBe(1);
+        expect(yield* Ref.get(runCount)).toBe(1);
+
+        yield* Deferred.succeed(latch, undefined);
+        yield* TestClock.adjust(Duration.millis(12));
+        expect(fetchCount.n).toBe(2);
+        expect(yield* Ref.get(runCount)).toBe(2);
+
+        yield* Fiber.interrupt(handle.fiber);
+      }).pipe(Effect.provide(TestContext.TestContext))
+    );
+  });
+});
+
+describe("startSeedsPoller Promise façade", () => {
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it("runs pending seeds and marks failures", async () => {
-    vi.useFakeTimers();
-    const okSeed = makeSeed("ok-seed");
-    const badSeed = makeSeed("bad-seed");
-    const run = vi.fn(async (seed: Seed) => {
-      if (seed.metadata.seed_id === "bad-seed") throw new Error("boom");
-    });
-    const fetchPending = vi.fn(async () => [okSeed, badSeed]);
-    const markFailed = vi.fn(async () => {});
-    const onError = vi.fn(async () => {});
-
-    const poller = startSeedsPoller({ run } as never, fetchPending, markFailed, {
-      pollIntervalMs: 10,
-      onError,
-    });
-
-    await vi.advanceTimersByTimeAsync(12);
-
-    expect(fetchPending).toHaveBeenCalledTimes(1);
-    expect(run).toHaveBeenCalledTimes(2);
-    expect(markFailed).toHaveBeenCalledWith("bad-seed", expect.any(Error));
-    expect(onError).toHaveBeenCalledWith(badSeed, expect.any(Error));
-
-    poller.stop();
-  });
-
-  it("skips overlapping polls while prior run is in flight", async () => {
-    vi.useFakeTimers();
-    const seed = makeSeed("slow-seed");
-    let resolveRun: (() => void) | null = null;
-    const run = vi.fn(
-      () =>
-        new Promise<void>((resolve) => {
-          resolveRun = resolve;
-        })
+  it("exposes stop() without throwing", () => {
+    const poller = startSeedsPoller(
+      { run: async () => undefined } as never,
+      async () => [],
+      async () => {},
+      { pollIntervalMs: 60_000 }
     );
-    const fetchPending = vi.fn(async () => [seed]);
-    const markFailed = vi.fn(async () => {});
-    const poller = startSeedsPoller({ run } as never, fetchPending, markFailed, {
-      pollIntervalMs: 10,
-    });
-
-    await vi.advanceTimersByTimeAsync(12);
-    await vi.advanceTimersByTimeAsync(25);
-    expect(fetchPending).toHaveBeenCalledTimes(1);
-    expect(run).toHaveBeenCalledTimes(1);
-
-    resolveRun?.();
-    await Promise.resolve();
-    await vi.advanceTimersByTimeAsync(12);
-
-    expect(fetchPending).toHaveBeenCalledTimes(2);
-    expect(run).toHaveBeenCalledTimes(2);
+    expect(typeof poller.stop).toBe("function");
     poller.stop();
   });
 });
