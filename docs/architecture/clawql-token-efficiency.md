@@ -1,6 +1,6 @@
 # The Twelve Layers of LLM Cost: Why One Optimization Is Never Enough
 
-_How a compounding stack of efficiency layers — from API surface reduction to a self-improving fine-tuning flywheel — drops token costs by ~99.8% and keeps dropping them._
+_How a compounding stack of efficiency layers — from API surface reduction to a self-improving fine-tuning flywheel — drops token costs by ~99.8%, and why lean context is a **reasoning** win, not only a bill reduction._
 
 ---
 
@@ -8,7 +8,7 @@ _How a compounding stack of efficiency layers — from API surface reduction to 
 
 Most teams trying to reduce LLM costs are having the wrong conversation. They swap models. They negotiate bulk pricing. They spend hours on prompt engineering. Then they re-run the benchmarks and find they've saved maybe 15%.
 
-Those interventions plateau quickly because they attack the wrong variable. The real cost driver in most agentic architectures isn't which model you're calling — it's how much of the context window you're wasting before the model sees a single token of actual work.
+Those interventions plateau quickly because they attack the wrong variable. In most agentic architectures the dominant waste isn't which model you're calling — it's how much of the context window you fill with noise before the model sees a single token of actual work. That waste is a **cost** problem, and it is also a **performance** problem: bloated context predictably degrades accuracy, retrieval of relevant facts, and multi-step reasoning.
 
 Consider what happens when you give an AI agent access to three common enterprise APIs using the standard approach of loading full tool schemas into context:
 
@@ -23,25 +23,54 @@ Over 2.5 million tokens just to describe the tools — before the agent has done
 
 Cloudflare's own engineering team measured the same problem independently and arrived at a similar conclusion: roughly 1.17 million tokens for their API surface using an internal estimate. The two numbers measure slightly different artifacts (a full downloaded OpenAPI spec vs. an internal API surface estimate) but point to the same conclusion: the standard approach to tool-calling doesn't scale to real enterprise API surfaces.
 
-This is the **context bloat** problem. And token pricing is only part of it.
+This is the **context bloat** problem. Token pricing is only part of it — the rest is whether the model can still reason correctly once the window is full of noise.
 
 ---
 
-## Why context bloat is worse than it looks
+## Why context bloat is a performance issue (not just cost)
 
-The naive mental model of LLM cost is linear: more tokens → proportionally more cost. The reality is worse.
+The naive mental model is financial and linear: more tokens → proportionally more cost. Engineers often stop there. Research on long-context models says you should not.
 
-**Attention scales quadratically in many underlying architectures.** Doubling the context doesn't double the compute — it can quadruple it. A 2× increase in input tokens can produce a 4× increase in the compute required to process them.
+**Context quantity is the enemy of context quality.** By the time an agent is sifting through millions of tokens of API schemas, it has less reliable access to the primary goal, weaker multi-step verification, and systemic position bias. Curated context is a force multiplier for model intelligence — not only a way to save money.
 
-**The "Lost in the Middle" effect degrades reasoning quality.** Research by Liu et al. documented a consistent failure mode in long-context models: information placed in the middle of a long prompt is retrieved and reasoned about significantly less reliably than information at the start or end. Stuffing context with tool schemas doesn't just cost more — it makes your agent worse. The very thing you're paying for (model reasoning) is degraded by the noise you're paying to inject.
+### 1. Lost in the Middle (positional bias)
 
-**Signal-to-noise dilution causes hallucinations and missed instructions.** When the context is full of irrelevant tool schemas the agent will never use, the model expends attention on those tokens instead of the task at hand. Recent research has shown reasoning performance can drop between 14% and 85% as total input length increases, even when the relevant information is present. Irrelevant information doesn't sit there passively — it actively interferes.
+[Liu et al., _Lost in the Middle: How Language Models Use Long Contexts_](https://arxiv.org/abs/2307.03172) (TACL 2024) is the landmark result. On multi-document QA and key-value retrieval, models show a **U-shaped** performance curve: they are more reliable when the relevant information sits at the **start** (primacy) or **end** (recency) of the prompt, and significantly less reliable when it sits in the **middle**.
 
-**Latency scales with input length.** Time-to-first-token increases as prompt length increases. A bloated context makes every request slower, which compounds at the system level across multi-step workflows.
+The stark proof for engineering audiences: when the answer-bearing document is placed in the middle of a long context, performance can fall **below closed-book** accuracy — meaning the model would have done better if you had given it _no_ documents at all. Stuffing tool schemas and dump-everything RAG around the task is not free or neutral; it can make the agent worse than sparse context.
 
-**The "stuffing trap" compounds over time.** When an agent produces poor results on a long prompt, the natural instinct is to add more context — more examples, more instructions, more schema detail. That worsens Lost in the Middle, increases latency and cost, and often makes quality worse. Teams get stuck in a loop.
+For agent workloads that load thousands of operation descriptions, the schemas themselves become long middle-of-prompt noise. The instruction that matters gets buried.
 
-The takeaway: the best way to improve an agent is often to provide _less_ context — curated, ranked, highly relevant — not to maximize the window because the capacity exists.
+### 2. Length alone hurts reasoning (even with perfect retrieval)
+
+A common rebuttal is: “If retrieval worked, length wouldn’t matter.” Findings from [_Context Length Alone Hurts LLM Performance Despite Perfect Retrieval_](https://arxiv.org/abs/2510.05381) (Findings of EMNLP 2025) contradict that. Across open- and closed-source models on math, QA, and coding tasks, accuracy still dropped substantially — on the order of **~13.9% to ~85%** — as input length grew, even when:
+
+- relevant information was retrieveable,
+- distractor content was replaced with minimally distracting whitespace, and
+- in some setups irrelevant tokens were masked so the model was forced to attend only to relevant tokens.
+
+So trimming is not just “cleaning the prompt.” Reducing sequence length lowers cognitive load on the attention stack itself. That is a capability argument, not a coupon-code argument.
+
+### 3. Signal-to-noise dilution (“context rot”)
+
+Large advertised windows invite stuffing: entire repos, full OpenAPI surfaces, every historical transcript. Two failure modes follow:
+
+- **Attention dilution.** Transformers allocate attention across the sequence. Every unused JSON schema field and irrelevant comment competes with the current task for attention weight.
+- **Reasoning shift under noise.** Irrelevant long context does not sit there passively — it interferes. Models miss instructions, hallucinate about unused APIs, and under-invest in the verification steps they would take on a short, clean problem.
+
+The practical translation: a 200K “supported” window used as a landfill is not a 200K effective reasoning window.
+
+### 4. What this means for engineering systems
+
+Three framings help convince a skeptical platform or SRE team:
+
+| Idea                                   | Why it matters                                                                                                                                                                                                                                                                         |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Marketed window ≠ effective window** | Vendors advertise max tokens; reliability for retrieval and reasoning often collapses long before that ceiling. Treat the **maximum effective context window** as the operating constraint — operating near the marketed limit is operating in a high-hallucination-risk zone.         |
+| **Attention and latency scale badly**  | Many attention mechanisms are quadratic (or otherwise superlinear) in sequence length. Bloated prompts raise time-to-first-token and amplify compute cost while degrading quality — you pay more and get worse answers.                                                                |
+| **The stuffing trap**                  | When results are bad, teams add more docs, examples, and schema detail. That deepens Lost-in-the-Middle effects, lengthens prompts further, and guarantees the feedback loop. The rational response to weak agent output is often **less, better-ranked context**, not a bigger paste. |
+
+**Bottom line for agents:** dumping ~2.5M tokens of tool definitions is not “making the model better informed.” Empirically it is the opposite pattern — poorer use of relevant information, weaker reasoning under length, and higher latency. Lean architecture (search → execute, projection, caches, routing) is how you keep the model on the high-reliability portion of its effective window.
 
 ---
 

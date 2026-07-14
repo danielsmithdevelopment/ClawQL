@@ -7,7 +7,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Token efficiency — twelve layers',
   description:
-    'Twelve compounding efficiency layers: Code Mode, response trimming, terse output, cache control, semantic cache, history distillation, prompt compression, PAL routing, structured outputs, token budgets, prefill, and the fine-tuning flywheel (~99.8% and compounding).',
+    'Why context bloat hurts accuracy (Lost in the Middle, length-alone degradation) and how twelve compounding layers cut cost ~99.8% while improving reasoning.',
   path: '/architecture/token-efficiency',
   ogType: 'article',
 })
@@ -28,23 +28,24 @@ export default function TokenEfficiencyPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Twelve optimization layers</strong> in three tiers (structural
-          → smart inference → continuous/flywheel). Generated from{' '}
+          <strong>Performance and cost.</strong> Context bloat is a reasoning
+          failure mode (Lost in the Middle, length-alone degradation), not only
+          a bill. Twelve optimization layers in three tiers (structural → smart
+          inference → continuous/flywheel). Source:{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/architecture/clawql-token-efficiency.md"
             className="font-medium text-inherit underline underline-offset-2"
           >
             docs/architecture/clawql-token-efficiency.md
-          </a>{' '}
-          on <code className="font-mono text-xs">main</code>. Hands-on MCP
-          usage:{' '}
+          </a>
+          . Hands-on MCP:{' '}
           <a
             href="/learn/search-and-execute-mcp"
             className="font-medium text-inherit underline underline-offset-2"
           >
             Using search &amp; execute
           </a>
-          . Inference stack:{' '}
+          . Inference:{' '}
           <a
             href="/inference/clawql-inference"
             className="font-medium text-inherit underline underline-offset-2"
