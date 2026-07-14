@@ -1,5 +1,8 @@
 import { Effect } from "effect";
-import type { ClassifyDocumentInput, ClassifyDocumentResult } from "../classify/classify-document.js";
+import type {
+  ClassifyDocumentInput,
+  ClassifyDocumentResult,
+} from "../classify/classify-document.js";
 import type {
   ExtractDocumentInput,
   ExtractDocumentResult,
