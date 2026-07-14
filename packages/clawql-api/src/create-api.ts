@@ -47,6 +47,8 @@ export type ClawQLApiHandle = {
   readonly run: <A, E extends ClawQLApiRuntimeError>(
     program: Effect.Effect<A, E, ClawQLApiRuntimeServices>
   ) => Promise<A>;
+  /** Tear down plugins then dispose the ManagedRuntime (call on process shutdown). */
+  readonly dispose: () => Promise<void>;
 };
 
 /**
@@ -81,5 +83,9 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
     runtime,
     listMcpTools,
     run: (program) => runtime.runPromise(program),
+    dispose: async () => {
+      await Effect.runPromise(registry.teardownAll());
+      await runtime.dispose();
+    },
   };
 }

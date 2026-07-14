@@ -17,6 +17,7 @@ import { createRegisteredMcpServer } from "./mcp-server-factory.js";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { validateOrDegradeObsidianVaultAtStartup } from "./vault-config.js";
 import { registerPostgresPoolShutdownHooks } from "clawql-memory/vector/pgvector";
+import { registerClawqlApiShutdownHooks } from "./clawql-api-adapters.js";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
 import { maybeVerifyReleaseManifestAtStartup } from "./release-manifest-startup.js";
 
@@ -25,6 +26,7 @@ async function main() {
   await maybeVerifyReleaseManifestAtStartup();
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
+  registerClawqlApiShutdownHooks();
   // Pre-warm the spec cache on startup so the first search call is fast
   await loadSpec();
   const { logStartupSummary } = await import("./startup-summary.js");
