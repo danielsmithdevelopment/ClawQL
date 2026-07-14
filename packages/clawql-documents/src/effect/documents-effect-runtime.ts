@@ -1,5 +1,10 @@
 import { Cause, Effect, Exit, Layer } from "effect";
-import { vaultConfigLiveLayer, VaultConfigService } from "clawql-memory/plugin";
+import {
+  memoryDbLiveLayer,
+  MemoryDbService,
+  vaultConfigLiveLayer,
+  VaultConfigService,
+} from "clawql-memory/plugin";
 import type { ExternalIngestInput, ExternalIngestResult } from "../ingest/external-ingest.js";
 import type {
   ClassifyDocumentInput,
@@ -13,12 +18,14 @@ import type { RunIdpPipelineInput, RunIdpPipelineResult } from "../pipeline/runn
 import { DocumentsIngestService, documentsIngestLiveLayer } from "./documents-ingest-service.js";
 import { DocumentsToolsService, documentsToolsLiveLayer } from "./documents-tools-service.js";
 
-export type DocumentsServices = VaultConfigService | DocumentsIngestService | DocumentsToolsService;
+export type DocumentsServices =
+  VaultConfigService | MemoryDbService | DocumentsIngestService | DocumentsToolsService;
 
-/** Merged Effect Layer for clawql-documents domain services + memory vault config. */
+/** Merged Effect Layer for clawql-documents domain services + memory vault/db. */
 export function documentsServicesLiveLayer(): Layer.Layer<DocumentsServices> {
   return Layer.mergeAll(
     vaultConfigLiveLayer(),
+    memoryDbLiveLayer(),
     documentsIngestLiveLayer(),
     documentsToolsLiveLayer()
   );

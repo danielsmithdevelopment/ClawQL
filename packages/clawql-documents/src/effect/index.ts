@@ -1,6 +1,10 @@
 export { DocumentsError } from "./documents-errors.js";
 export { documentsFromPromise, documentsSync } from "./documents-effect-utils.js";
-export { executeExternalIngestEffect } from "./external-ingest-effect.js";
+export {
+  executeExternalIngestCoreEffect,
+  executeExternalIngestEffect,
+  type ExternalIngestCoreServices,
+} from "./external-ingest-effect.js";
 export { DocumentsIngestService, documentsIngestLiveLayer } from "./documents-ingest-service.js";
 export {
   executeClassifyDocumentEffect,
