@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { Effect, Layer } from "effect";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { resetDefaultAuditRingBufferForTests } from "clawql-core";
+import { AuditLive, resetDefaultAuditRingBufferForTests } from "clawql-core";
 import { paymentsConfigLiveLayer } from "../config/payments-config-service.js";
 import { listPaymentAuditEntries, resetPaymentAuditStoreForTests } from "../audit/worm.js";
 import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
@@ -79,7 +79,11 @@ describe("stripe meter reporting", () => {
 
     const layer = stripeMeterLiveLayer(env).pipe(
       Layer.provide(
-        Layer.mergeAll(stubClientLayer, paymentsConfigLiveLayer(env), paymentAuditLiveLayer(env))
+        Layer.mergeAll(
+          stubClientLayer,
+          paymentsConfigLiveLayer(env),
+          paymentAuditLiveLayer(env).pipe(Layer.provide(AuditLive))
+        )
       )
     );
 

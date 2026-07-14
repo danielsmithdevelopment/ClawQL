@@ -1,3 +1,4 @@
+import { AuditLive } from "clawql-core";
 import { Cause, Effect, Exit, Layer } from "effect";
 import { paymentsConfigLiveLayer } from "../config/payments-config-service.js";
 import { paymentsDiscoveryLiveLayer } from "../discovery/payments-discovery-service.js";
@@ -53,7 +54,7 @@ export function paymentsServicesLiveLayer(
   if (cached) return cached;
 
   const config = paymentsConfigLiveLayer(env);
-  const audit = paymentAuditLiveLayer(env);
+  const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(AuditLive));
   const gate = x402GateLiveLayer(env);
   const usage = usageStoreLiveLayer(env);
   const entitlement = entitlementLiveLayer();
