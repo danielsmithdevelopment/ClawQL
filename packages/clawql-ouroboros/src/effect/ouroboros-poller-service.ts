@@ -1,7 +1,13 @@
+/**
+ * Effect service for the Ouroboros seeds background poller.
+ * Runs {@link OuroborosLoopService.run} directly (no nested Effect.runPromise).
+ */
+
 import { Context, Effect, Layer } from "effect";
 import type { Seed } from "../seed.js";
-import { startSeedsPollerCore, type SeedPollerOptions } from "../glue/seeds-poller-core.js";
+import { startSeedsPollerFiberEffect, type SeedPollerOptions } from "../glue/seeds-poller-core.js";
 import { OuroborosLoopService } from "./ouroboros-loop-service.js";
+import { ouroborosFromPromise } from "./ouroboros-effect-utils.js";
 
 /** Effect service for the Ouroboros seeds background poller. */
 export class OuroborosPollerService extends Context.Tag("clawql/OuroborosPollerService")<
@@ -22,14 +28,13 @@ export function ouroborosPollerLiveLayer(): Layer.Layer<OuroborosPollerService> 
       start: (fetchPending, markFailed, options) =>
         Effect.gen(function* () {
           const loopSvc = yield* OuroborosLoopService;
-          return startSeedsPollerCore(
-            async (seed) => {
-              await Effect.runPromise(loopSvc.run(seed));
-            },
-            fetchPending,
-            markFailed,
+          const handle = yield* startSeedsPollerFiberEffect(
+            (seed) => loopSvc.run(seed).pipe(Effect.asVoid),
+            ouroborosFromPromise(() => fetchPending()),
+            (seedId, error) => ouroborosFromPromise(() => markFailed(seedId, error)),
             options
           );
+          return { stop: handle.stop };
         }),
     })
   );

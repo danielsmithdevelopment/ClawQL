@@ -8,8 +8,10 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, isAbsolute, resolve as resolvePath } from "node:path";
+import { Effect } from "effect";
 import initSqlJs, { type Database } from "sql.js";
 import { z } from "zod";
+import { startScheduleWorkerFiberEffect } from "../effect/schedule-worker-effect.js";
 import { executeNotifySlackCore } from "../notify/notify.js";
 
 type Frequency =
@@ -73,8 +75,7 @@ type TriggerOutcome = {
 
 const SCHEMA_VERSION = 1;
 let sqlJsPromise: ReturnType<typeof initSqlJs> | null = null;
-let scheduleWorkerTimer: NodeJS.Timeout | null = null;
-let scheduleWorkerBusy = false;
+let scheduleWorkerStop: (() => void) | null = null;
 const cronMinuteRunCache = new Map<string, string>();
 
 async function loadSqlJs(): Promise<ReturnType<typeof initSqlJs>> {
@@ -867,26 +868,18 @@ export async function runScheduleWorkerTick(now = new Date()): Promise<number> {
 }
 
 export function startScheduleWorker(): void {
-  if (scheduleWorkerTimer) return;
+  if (scheduleWorkerStop) return;
   const pollMs = getSchedulePollMs();
-  scheduleWorkerTimer = setInterval(async () => {
-    if (scheduleWorkerBusy) return;
-    scheduleWorkerBusy = true;
-    try {
-      await runScheduleWorkerTick();
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : String(error);
-      console.error(`[clawql-schedule] worker tick failed: ${msg}`);
-    } finally {
-      scheduleWorkerBusy = false;
-    }
-  }, pollMs);
+  const handle = Effect.runSync(
+    startScheduleWorkerFiberEffect(() => runScheduleWorkerTick(), pollMs)
+  );
+  scheduleWorkerStop = handle.stop;
 }
 
 export function stopScheduleWorker(): void {
-  if (!scheduleWorkerTimer) return;
-  clearInterval(scheduleWorkerTimer);
-  scheduleWorkerTimer = null;
+  if (!scheduleWorkerStop) return;
+  scheduleWorkerStop();
+  scheduleWorkerStop = null;
 }
 
 export function registerScheduleWorkerShutdownHooks(): void {
@@ -1043,7 +1036,6 @@ export async function handleScheduleToolInput(
 export function resetScheduleSqlJsForTests(): void {
   sqlJsPromise = null;
   stopScheduleWorker();
-  scheduleWorkerBusy = false;
   cronMinuteRunCache.clear();
 }
 

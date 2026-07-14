@@ -1,10 +1,12 @@
+import { Effect } from "effect";
 import { buildPipelineRunLockKey, tryAcquirePipelineAdvisoryLock } from "./advisory-lock.js";
 import { loadPipelineConfig, savePipelineConfig } from "./config.js";
 import { cronMatchesUtc, toMinuteKey } from "./cron.js";
+import { startPipelineWorkerFiberEffect } from "./pipeline-worker-effect.js";
 import { runPipelineOnce } from "./run.js";
 import type { InferencePipelineConfig } from "./types.js";
 
-let workerTimer: ReturnType<typeof setInterval> | null = null;
+let pipelineWorkerStop: (() => void) | null = null;
 const minuteRunCache = new Set<string>();
 
 export type PipelineWorkerOptions = {
@@ -57,21 +59,22 @@ async function pipelineWorkerTick(env: NodeJS.ProcessEnv): Promise<void> {
   }
 }
 
+/** Start Effect daemon fiber for inference pipeline cron ticks. */
 export function startPipelineWorker(options: PipelineWorkerOptions = {}): void {
-  if (workerTimer) return;
+  if (pipelineWorkerStop) return;
   const env = options.env ?? process.env;
   const pollMs =
     options.pollMs ?? Number.parseInt(env.CLAWQL_INFERENCE_PIPELINE_POLL_MS?.trim() || "60000", 10);
-  workerTimer = setInterval(() => {
-    void pipelineWorkerTick(env).catch(() => {});
-  }, pollMs);
-  void pipelineWorkerTick(env).catch(() => {});
+  const handle = Effect.runSync(
+    startPipelineWorkerFiberEffect(() => pipelineWorkerTick(env), pollMs)
+  );
+  pipelineWorkerStop = handle.stop;
 }
 
 export function stopPipelineWorker(): void {
-  if (workerTimer) {
-    clearInterval(workerTimer);
-    workerTimer = null;
+  if (pipelineWorkerStop) {
+    pipelineWorkerStop();
+    pipelineWorkerStop = null;
   }
   minuteRunCache.clear();
 }
