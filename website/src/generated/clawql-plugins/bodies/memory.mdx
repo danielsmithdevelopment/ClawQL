@@ -5,19 +5,22 @@
 
 Persists durable session knowledge to an **Obsidian-compatible vault** and recalls it across chats. The same plugin tier also registers **PageIndex** and optional **code graph** specialists. Agents should start with **`memory_recall`** (optionally with `sources`) and open specialist tools only when they need path/tree/enterprise depth.
 
-## Roles in the memory system
+## Memory 2.0 components
 
-| Piece                                | Role                                                               | Canonical?                          | Redundancy / handoff                                                     |
-| ------------------------------------ | ------------------------------------------------------------------ | ----------------------------------- | ------------------------------------------------------------------------ |
-| **Vault Markdown** (`memory_ingest`) | Human-readable narrative: decisions, handoffs, wikilinks           | **Yes** — source of truth for notes | Team sync (R2/S3/GCS); back up the vault                                 |
-| **`memory.db` + embeddings**         | Derived chunk index + optional vector KNN                          | No — rebuilt from vault             | Sync after ingest (default); Merkle/Cuckoo optional                      |
-| **Wikilink graph**                   | Related-note hops inside `memory_recall`                           | Edge data derived from vault / db   | Overlaps keyword seeds — intentional                                     |
-| **PageIndex** (`pageindex_*`)        | Vectorless heading tree, token-budget synthesize                   | No — derived from Markdown          | Rebuild via `rebuild.pageindex` or `pageindex_build_tree`                |
-| **Code graph** (`codegraph_*`)       | Structural AST imports/calls/paths over **source**                 | No — derived from repo              | Index separately; not vault prose                                        |
-| **Onyx** (`knowledge_search_onyx`)   | Enterprise corpus search                                           | External system of record           | Pass citations into ingest; do not duplicate full corpora into the vault |
-| **`memory_recall` facade**           | Multi-source entry (`sources` → normalized `hits[]` + `followUps`) | Orchestration only                  | Specialist tools remain the deep path                                    |
+Each piece has one job. The vault is the only canonical store; everything else is a **derived index**, a **code index**, an **external peer**, or the **recall facade**.
 
-**Write once, refresh indexes:** `memory_ingest` always writes vault Markdown. Optional `rebuild` refreshes **derived** layers (PageIndex tree, memory.db/embeddings). Codegraph indexes **code**; Onyx stays a **search** target (citations in, not “ingest into Onyx”).
+| Component                   | Used for                                                                                                        | Unique role                                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Obsidian / Vault**        | Store knowledge as Markdown + YAML frontmatter under `Memory/`                                                  | **Canonical core** every derived index and query path references or cites back into            |
+| **Wikilinks + `memory.db`** | Parse `[[links]]` into SQLite (`wikilink_edge`, `vault_chunk`) on ingest; traverse on recall                    | **Explicit structured graph** over the vault — link navigation without vectors                 |
+| **Embeddings**              | Vector representations of vault chunks for similarity in `memory_recall`                                        | **Fuzzy semantic retrieval** when no wikilinks or structural paths exist                       |
+| **PageIndex**               | `pageindex_build_tree` → heading tree in `pageindex.db.json`; traverse / synthesize                             | **Deterministic, vectorless** section navigation and token-budget synthesis on vault structure |
+| **clawql-codegraph**        | Parse **source** (TS compiler API for TS/JS; tree-sitter WASM for Python/Go) → nodes/edges with confidence tags | **Deterministic structural index over code**, independent of the vault                         |
+| **Onyx**                    | `knowledge_search_onyx` / `sources: ["onyx"]`; optional `enterpriseCitations` on ingest                         | **External search peer** — supplies org knowledge without ClawQL owning the corpus             |
+
+**Write once, refresh indexes:** `memory_ingest` always writes vault Markdown. Optional `rebuild` refreshes derived layers (PageIndex, memory.db/embeddings). Codegraph indexes **code**; Onyx stays a **search** peer (citations into the vault, not “ingest into Onyx”).
+
+**Agent habit:** start with **`memory_recall`** (`sources` when needed) → follow **`followUps`** into specialists only when you need path / tree walk / filtered enterprise search.
 
 ## MCP tools
 
