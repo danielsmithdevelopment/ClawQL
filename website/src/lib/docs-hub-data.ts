@@ -24,7 +24,16 @@ const card = (
   ...partial,
 })
 
-/** Former case studies — reframed as workflow examples until production vertical stories ship. */
+/**
+ * Hub ownership (P1): each href appears in at most one hub grid.
+ * Architecture owns vision/status + platform products.
+ * Deployment owns ops/infra.
+ * Reference owns contracts/tools/config.
+ * Resources owns meta (changelog, github).
+ * Learn uses docs-site-card-data.ts for module cards.
+ */
+
+/** Former case studies — Examples hub only. */
 export const exampleSiteCards: Array<ReferenceCard> = [
   card({
     href: '/case-studies/cloudflare-docs-mcp',
@@ -77,82 +86,13 @@ export const exampleSiteCards: Array<ReferenceCard> = [
   }),
 ]
 
+/** Architecture hub — status + platform stories (not ops or MCP tool refs). */
 export const architectureHubCards: Array<ReferenceCard> = [
   card({
     href: '/vision/roadmap',
-    name: 'Vision & Roadmap',
+    name: 'Vision & status',
     description: 'Honest shipped vs planned status and phased delivery.',
     icon: BookIcon,
-  }),
-  card({
-    href: '/vision/ecosystem',
-    name: 'Ecosystem map',
-    description:
-      'Core loop, hybrid memory, IDP pipeline, infra map — shipped vs roadmap appendix.',
-    icon: BookIcon,
-  }),
-  card({
-    href: '/vision/idp-platform',
-    name: 'IDP Platform',
-    description:
-      'Self-hosted vs hosted IDP, ClawQL-native archive layer, VDR, Merkle audit.',
-    icon: DocumentIcon,
-  }),
-  card({
-    href: '/vision/technical-enablement',
-    name: 'Master enablement guide',
-    description:
-      'v2.1 unified 6-layer architecture and documentation suite index.',
-    icon: ShapesIcon,
-  }),
-  card({
-    href: '/vision/modularization',
-    name: 'Modularization v2.1',
-    description:
-      'Package boundaries, dependency graph, and intelligent MCP gateway.',
-    icon: PackageIcon,
-  }),
-  card({
-    href: '/reference/plugins',
-    name: 'Plugin model & registry',
-    description:
-      'Horizontal plugins, MCP tool ownership, shipped vs planned registry.',
-    icon: SquaresPlusIcon,
-  }),
-  card({
-    href: '/plugins',
-    name: 'Plugins hub',
-    description:
-      'Dedicated page per plugin — core, memory, documents, providers, automation, sandbox, Ouroboros.',
-    icon: SquaresPlusIcon,
-  }),
-  card({
-    href: '/vision/immutable-releases',
-    name: 'Immutable releases (Layer 0)',
-    description:
-      'Arweave bundles, Radicle, Rift, clawql-release, and release manifest.',
-    icon: LinkIcon,
-  }),
-  card({
-    href: '/ouroboros/daos',
-    name: 'DAOS Unified Architecture',
-    description:
-      '7-layer platform v2.7: Manifest, PEP, Memory 2.0, Ouroboros, Circuit Breaker.',
-    icon: SquaresPlusIcon,
-  }),
-  card({
-    href: '/ouroboros/specification',
-    name: 'DAOS coordination layer',
-    description:
-      'NATS handoff, NSV/SGDOP diversity metrics, Diversity Dividends, Coordinator.',
-    icon: SquaresPlusIcon,
-  }),
-  card({
-    href: '/ouroboros',
-    name: 'Ouroboros library',
-    description:
-      'NSV/SGDOP strategic coordination and optional ouroboros_* MCP tools.',
-    icon: SquaresPlusIcon,
   }),
   card({
     href: '/concepts',
@@ -163,74 +103,77 @@ export const architectureHubCards: Array<ReferenceCard> = [
   }),
   card({
     href: '/architecture/token-efficiency',
-    name: 'Token efficiency (12 layers)',
-    description:
-      'Research-backed: lean context improves accuracy; twelve layers compound ~99.8% cost cuts.',
+    name: 'Token efficiency',
+    description: 'Eight compounding layers for agent cost control.',
     icon: BoltIcon,
   }),
   card({
-    href: '/inference/clawql-inference',
-    name: 'clawql-inference',
+    href: '/vision/immutable-releases',
+    name: 'Immutable releases (Layer 0)',
     description:
-      'OpenAI-compatible gateway, tier escalation, cache, export/finetune flywheel, and Ouroboros wiring.',
+      'clawql-release, release manifest, and decentralized permanence roadmap.',
+    icon: LinkIcon,
+  }),
+  card({
+    href: '/vision/idp-platform',
+    name: 'IDP platform',
+    description:
+      'Document pipeline product story — self-hosted vs hosted IDP, archive, VDR.',
+    icon: DocumentIcon,
+  }),
+  card({
+    href: '/ouroboros',
+    name: 'Ouroboros',
+    description:
+      'Shipped evolutionary-loop library and optional ouroboros_* MCP tools.',
+    icon: SquaresPlusIcon,
+  }),
+  card({
+    href: '/plugins',
+    name: 'Plugins',
+    description: 'Per-plugin pages — core, memory, documents, automation, sandbox.',
+    icon: SquaresPlusIcon,
+  }),
+  card({
+    href: '/inference/clawql-inference',
+    name: 'Inference gateway',
+    description:
+      'OpenAI-compatible gateway, tier escalation, cache, export/finetune flywheel.',
     icon: BoltIcon,
   }),
   card({
     href: '/payments/clawql-payments',
-    name: 'clawql-payments',
+    name: 'Payments',
     description:
-      'Native Stripe + x402 + MPP + AP2 + ACP + PayPal + Adyen rails, plan entitlements, and WORM payment audit.',
+      'Stripe, x402, MPP, and related rails — plan entitlements and WORM audit.',
     icon: TagIcon,
   }),
 ]
 
+/** Deployment hub — ops/infra only (not getting-started entry points). */
 export const deploymentHubCards: Array<ReferenceCard> = [
   card({
     href: '/deployment/operations-guide',
-    name: 'Deployment & Operations Guide',
-    description:
-      'Full Tier 1–3 reference: CRDs, auth, day-2 ops, troubleshooting.',
-    icon: BookIcon,
-  }),
-  card({
-    href: '/quickstart',
-    name: 'Tier 1: Quickstart (npx / Compose)',
-    description: 'Fastest path — run clawql-mcp locally in minutes.',
-    icon: BoltIcon,
-  }),
-  card({
-    href: '/getting-started/for-teams',
-    name: 'Getting started for teams',
-    description:
-      'Shared Memory sync (R2/S3/GCS), Packer golden hosts, Prometheus/Loki/OTEL/Langfuse.',
-    icon: BookIcon,
-  }),
-  card({
-    href: '/agent-setup',
-    name: 'Agent setup',
-    description:
-      'Desktop vault-first onboarding, Cursor iOS Cloud Agents, and local Seatbelt sandbox.',
+    name: 'Operations guide',
+    description: 'Day-2 ops, health, secrets, and Helm paths.',
     icon: BookIcon,
   }),
   card({
     href: '/deployment/kubernetes',
-    name: 'Tier 2: Kubernetes & Helm',
-    description:
-      'Docker Desktop local cluster, Helm chart, Kustomize dev/prod.',
+    name: 'Kubernetes & Helm',
+    description: 'Docker Desktop local cluster, chart, Kustomize.',
     icon: MapPinIcon,
   }),
   card({
     href: '/helm',
     name: 'Helm chart reference',
-    description:
-      'charts/clawql-mcp values, Ingress, GHCR images, optional PVC.',
+    description: 'charts/clawql-mcp values, Ingress, GHCR images.',
     icon: PackageIcon,
   }),
   card({
     href: '/docker-desktop-observability',
-    name: 'Tier 3: Istio & observability lab',
-    description:
-      'Prometheus, Grafana, Tempo, Kiali, OTel — enterprise patterns on Desktop.',
+    name: 'Istio & observability lab',
+    description: 'Prometheus, Grafana, Tempo, Kiali, OTel on Desktop.',
     icon: BookIcon,
   }),
   card({
@@ -248,189 +191,118 @@ export const deploymentHubCards: Array<ReferenceCard> = [
   card({
     href: '/openclaw',
     name: 'OpenClaw + ClawQL',
-    description: 'Gateway product integration and bootstrap checklist.',
+    description: 'Register clawql-mcp in OpenClaw — HTTP/stdio and smoke path.',
     icon: LinkIcon,
   }),
 ]
 
+/**
+ * @deprecated Guides site route redirects to /learn. Kept for compile safety if imported.
+ * Prefer LearnCardSections / reference / architecture hubs.
+ */
 export const guidesHubCards: Array<ReferenceCard> = [
   card({
     href: '/learn',
     name: 'ClawQL Learn',
-    description:
-      'Step-by-step modules: search/execute, vault, sandbox, Ouroboros, OpenClaw.',
+    description: 'Hands-on modules — start here for guided walkthroughs.',
     icon: BookIcon,
-  }),
-  card({
-    href: '/architecture/token-efficiency',
-    name: 'Token efficiency',
-    description:
-      'Why bloat hurts reasoning — plus twelve layers as primary cost control.',
-    icon: BoltIcon,
-  }),
-  card({
-    href: '/inference/clawql-inference',
-    name: 'Inference gateway',
-    description:
-      'OpenAI-compatible gateway, flywheel export/finetune, and full wiring reference.',
-    icon: BoltIcon,
   }),
   card({
     href: '/security/defense-in-depth',
     name: 'Defense in depth',
-    description:
-      'Condensed deployment security reference — supply chain through audit.',
+    description: 'Deployment security reference — supply chain through audit.',
     icon: ShapesIcon,
   }),
   card({
     href: '/security/best-practices',
-    name: 'Security curriculum (32 modules)',
-    description:
-      'Vendor-neutral training — ATR, Presidio, egress, red team, compliance.',
+    name: 'Security curriculum',
+    description: 'Vendor-neutral training modules.',
     icon: ShapesIcon,
-  }),
-  card({
-    href: '/reference/hitl',
-    name: 'HITL & human interfaces',
-    description: 'Approval flows, Label Studio, HATEOAS + htmx patterns.',
-    icon: BellIcon,
-  }),
-  card({
-    href: '/reference/verticals',
-    name: 'Verticals guide',
-    description:
-      'Enabling lending, legal, and other vertical packages — from the contributor spec.',
-    icon: PackageIcon,
-  }),
-  card({
-    href: '/learn/schedule-notify-workflows',
-    name: 'Schedule & notify',
-    description: 'Synthetic checks, Slack notify, and automation workflows.',
-    icon: BellIcon,
-  }),
-  card({
-    href: '/learn/openclaw-and-clawql',
-    name: 'OpenClaw walkthrough',
-    description: 'openclaw mcp set, HTTP/stdio, and smoke validation.',
-    icon: LinkIcon,
   }),
 ]
 
+/** Reference hub — tools, config, contracts (not vision/status). */
 export const referenceHubCards: Array<ReferenceCard> = [
   card({
-    href: '/concepts',
-    name: 'Core concepts',
-    description:
-      'Architecture, feature tiers, cache vs vault, Ouroboros overview.',
-    icon: ShapesIcon,
-  }),
-  card({
     href: '/reference/protocol',
-    name: 'Protocol reference (v2.1)',
-    description: 'Uniform envelope, approval flows, HATEOAS, two-phase commit.',
+    name: 'Protocol reference',
+    description: 'Uniform envelope, approval flows, HATEOAS.',
     icon: DocumentIcon,
   }),
   card({
-    href: '/reference/plugins',
-    name: 'Plugin model & registry',
-    description:
-      'Extension contract, horizontal plugins, MCP tools per plugin, enable flags.',
-    icon: SquaresPlusIcon,
-  }),
-  card({
-    href: '/plugins',
-    name: 'Plugins hub',
-    description: 'One doc page per shipped or planned ClawQL plugin.',
-    icon: SquaresPlusIcon,
-  }),
-  card({
-    href: '/inference/clawql-inference',
-    name: 'clawql-inference',
-    description:
-      'Gateway stack, tier escalation, cache, virtual keys, export/finetune, Ouroboros audit.',
-    icon: BoltIcon,
-  }),
-  card({
     href: '/tools',
-    name: 'MCP tool reference',
-    description:
-      'search, execute, audit, cache, memory, optional tools and env gates.',
+    name: 'MCP tools',
+    description: 'search, execute, audit, cache, memory, optional tools.',
     icon: BoltIcon,
   }),
   card({
     href: '/spec-configuration',
-    name: 'Configuration reference',
-    description:
-      'CLAWQL_* env vars, spec loading, provider presets, precedence rules.',
+    name: 'Configuration',
+    description: 'CLAWQL_* env vars, spec loading, provider presets.',
     icon: CogIcon,
   }),
   card({
-    href: '/contributing/technical-specification',
-    name: 'Contributor technical specification',
-    description:
-      'Implementation contracts, Effect-TS patterns, CRD fields, CI rules.',
-    icon: BookIcon,
-  }),
-  card({
-    href: '/bundled-specs',
-    name: 'Bundled API specs',
-    description:
-      'Provider presets shipped in clawql-mcp and CLAWQL_PROVIDER values.',
-    icon: PackageIcon,
+    href: '/reference/plugins',
+    name: 'Plugin model & registry',
+    description: 'Extension contract, ownership matrix, enable flags.',
+    icon: SquaresPlusIcon,
   }),
   card({
     href: '/reference/optional-tools',
     name: 'Optional tools hub',
-    description:
-      'Cache, schedule, notify, Onyx, sandbox — consolidated learn walkthroughs.',
+    description: 'Cache, schedule, notify, Onyx, sandbox walkthroughs.',
     icon: ClipboardIcon,
+  }),
+  card({
+    href: '/bundled-specs',
+    name: 'Bundled API specs',
+    description: 'Provider presets and CLAWQL_PROVIDER values.',
+    icon: PackageIcon,
   }),
   card({
     href: '/graphql-proxy',
     name: 'GraphQL layer',
-    description:
-      'Internal OpenAPI→GraphQL projection vs native GraphQL sources.',
+    description: 'OpenAPI→GraphQL projection vs native GraphQL sources.',
     icon: CogIcon,
   }),
   card({
     href: '/nats-jetstream',
     name: 'NATS JetStream',
-    description:
-      'Optional event backbone for Ouroboros and agent coordination.',
+    description: 'Optional event backbone for coordination.',
     icon: MapPinIcon,
+  }),
+  card({
+    href: '/contributing/technical-specification',
+    name: 'Contributor spec',
+    description: 'Implementation contracts, Effect-TS, CRD fields, CI.',
+    icon: BookIcon,
   }),
   card({
     href: '/benchmarks',
     name: 'Benchmarks',
-    description:
-      'Planning-context comparisons and reproducible workflow artifacts.',
+    description: 'Planning-context comparisons and workflow artifacts.',
     icon: ListIcon,
   }),
 ]
 
+/** Resources hub — meta only. */
 export const resourcesHubCards: Array<ReferenceCard> = [
-  card({
-    href: '/vision/roadmap',
-    name: 'Roadmap',
-    description: 'Public edition — what ships today vs what is in development.',
-    icon: BookIcon,
-  }),
   card({
     href: '/resources/changelog',
     name: 'Changelog & releases',
-    description: 'Major versions and links to GitHub release notes.',
+    description: 'Major versions and GitHub release notes.',
     icon: TagIcon,
   }),
   card({
     href: '/troubleshooting',
-    name: 'Troubleshooting & FAQ',
+    name: 'Troubleshooting',
     description: 'Common MCP, spec, auth, and deploy failure modes.',
     icon: TagIcon,
   }),
   card({
     href: '/vision/slide-deck',
-    name: 'Consolidated slide deck',
-    description: '~80 slides — ecosystem overview for presentations.',
+    name: 'Slide deck',
+    description: 'Presentation overview — not a how-to guide.',
     icon: BookIcon,
   }),
   card({
@@ -476,7 +348,7 @@ export const optionalToolsHubCards: Array<ReferenceCard> = [
     href: '/learn/sandbox-exec',
     name: 'Sandbox exec',
     description:
-      'MCP sandbox_exec — Kata, Docker, Seatbelt, or Cloudflare bridge. Harness CLI: Agent setup.',
+      'MCP sandbox_exec — Kata, Docker, Seatbelt, or Cloudflare bridge.',
     icon: ShapesIcon,
   }),
   card({
@@ -531,7 +403,7 @@ export const pluginsHubCards: Array<ReferenceCard> = [
     href: '/plugins/bundled-providers',
     name: 'Bundled providers',
     description:
-      'Default stack: Cloudflare, GitHub, Slack, Linear, Notion, Onyx; all-providers for everything.',
+      'Default stack: Cloudflare, GitHub, Slack, Linear, Notion, Onyx.',
     icon: PackageIcon,
   }),
   card({

@@ -13,12 +13,9 @@ export const GENERATED_BODY_ROUTES = {
   'daos-unified-architecture-spec-body.mdx': '/ouroboros/daos',
   'daos-coordination-layer-spec-body.mdx': '/ouroboros/specification',
   'daos-build-plan-body.mdx': '/ouroboros/build-plan',
-  'clawql-master-enablement-body.mdx': '/vision/technical-enablement',
-  'clawql-modularization-body.mdx': '/vision/modularization',
   'clawql-hybrid-decentralized-body.mdx': '/vision/immutable-releases',
   'clawql-slides-body.mdx': '/vision/slide-deck',
   'clawql-defense-in-depth-body.mdx': '/security/defense-in-depth',
-  'clawql-ecosystem-body.mdx': '/vision/ecosystem',
   'clawql-idp-platform-body.mdx': '/vision/idp-platform',
   'clawql-operator-target-architecture-body.mdx':
     '/design/operator-target-architecture',

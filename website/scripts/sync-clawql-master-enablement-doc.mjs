@@ -1,6 +1,6 @@
 /**
  * Copies the Master Enablement guide into src/generated/ for
- * /vision/technical-enablement. Rewrites relative repo links to github.com;
+ * /architecture. Rewrites relative repo links to github.com;
  * escapes MDX-problematic `{`/`}` and `<digit` patterns outside fenced blocks.
  *
  * Source: docs/vision/clawql-master-enablement-guide.md
@@ -83,7 +83,7 @@ function rewriteLinksForSite(body) {
         .replaceAll('](./clawql-vision-roadmap.md)', '](/vision/roadmap)')
         .replaceAll(
           '](./clawql-modularization-v2.md)',
-          '](/vision/modularization)',
+          '](/architecture)',
         )
         .replaceAll(
           '](./clawql-hybrid-decentralized-github-alternative.md)',

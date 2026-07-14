@@ -118,7 +118,7 @@ export const learnModuleSiteCards: Array<ReferenceCard> = [
     },
   },
   {
-    href: '/learn/openclaw-and-clawql',
+    href: '/openclaw',
     name: 'OpenClaw with ClawQL',
     description:
       'Gateway wiring, `openclaw mcp set`, and a smoke path so agents use the same MCP surface as Cursor.',
@@ -270,20 +270,6 @@ export const learnRelatedGuideSiteCards: Array<ReferenceCard> = [
       squares: [
         [1, 1],
         [0, 2],
-      ],
-    },
-  },
-  {
-    href: '/openclaw',
-    name: 'OpenClaw + ClawQL',
-    description:
-      'Gateway product page plus cross-links to the full Learn walkthrough for `openclaw mcp set`.',
-    icon: LinkIcon,
-    pattern: {
-      y: 16,
-      squares: [
-        [0, 1],
-        [1, 3],
       ],
     },
   },

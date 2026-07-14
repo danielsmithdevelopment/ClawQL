@@ -70,7 +70,7 @@ function rewriteLinksForSite(body) {
       body
         .replaceAll(
           '](./clawql-modularization-v2.md)',
-          '](/vision/modularization)',
+          '](/architecture)',
         )
         .replaceAll('](./clawql-vision-roadmap.md)', '](/vision/roadmap)'),
     ),

@@ -66,7 +66,27 @@ const nextConfig = {
     return [
       {
         source: '/vision/master-enablement',
-        destination: '/vision/technical-enablement',
+        destination: '/architecture',
+        permanent: true,
+      },
+      {
+        source: '/vision/technical-enablement',
+        destination: '/architecture',
+        permanent: true,
+      },
+      {
+        source: '/vision/modularization',
+        destination: '/architecture',
+        permanent: true,
+      },
+      {
+        source: '/vision/ecosystem',
+        destination: '/vision/roadmap',
+        permanent: true,
+      },
+      {
+        source: '/learn/openclaw-and-clawql',
+        destination: '/openclaw',
         permanent: true,
       },
       {

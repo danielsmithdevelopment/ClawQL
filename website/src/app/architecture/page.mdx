@@ -4,28 +4,28 @@ import { ArchitectureHubGrid } from '@/components/DocsHubSections'
 
 # Architecture & Vision
 
-ClawQL is an **agent-first operating system** — not another prompt library. These documents define the 6-layer platform, strategic coordination, and how immutable releases anchor trust. Per-plugin docs live on the [Plugins hub](/plugins); DAOS and Ouroboros deep dives are in the cards below. {{ className: 'lead' }}
+ClawQL is an **agent-first operating system** — not another prompt library. Use this hub for platform shape; use [Vision & status](/vision/roadmap) for what actually ships. {{ className: 'lead' }}
 
 <Note>
-  **Start here for status:** [Vision & Roadmap](/vision/roadmap) (honest shipped
-  vs planned). **Unified index:** [Master enablement
-  guide](/vision/technical-enablement) v2.1.
+  **Status:** [Vision & roadmap](/vision/roadmap). **Run it:**
+  [Quickstart](/quickstart) · [Agent setup](/agent-setup) ·
+  [Operations](/deployment/operations-guide).
 </Note>
 
 <div className="not-prose my-8 flex flex-wrap gap-3">
   <Button href="/vision/roadmap" arrow="right">
-    <>Vision & Roadmap</>
+    <>Vision & status</>
   </Button>
-  <Button href="/vision/technical-enablement" variant="outline">
-    <>Master enablement</>
+  <Button href="/concepts" variant="outline">
+    <>Concepts</>
   </Button>
-  <Button href="/ouroboros/specification" variant="outline">
-    <>DAOS specification</>
+  <Button href="/plugins" variant="outline">
+    <>Plugins</>
   </Button>
 </div>
 
-## Platform architecture
+## Platform topics
 
-The stack spans **Layer 0 immutable releases** through **LGTMP observability**. Package boundaries and the intelligent MCP gateway are specified in Modularization v2.1; the DAOS specification covers protocol v2.1, HATEOAS approval flows, and decentralized handoff. **Why Effect-TS enforces this model:** [Effect-TS in ClawQL](/learn/effect-ts).
+Per-plugin docs live on the [Plugins hub](/plugins). Document pipeline detail is under [Learn — document pipeline](/learn/document-pipeline) with product context on [IDP platform](/vision/idp-platform).
 
 <ArchitectureHubGrid />

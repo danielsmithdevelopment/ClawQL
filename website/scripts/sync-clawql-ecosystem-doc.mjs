@@ -1,5 +1,5 @@
 /**
- * Copies the ecosystem vision doc into src/generated/ for /vision/ecosystem.
+ * Copies the ecosystem vision doc into src/generated/ for /vision/roadmap.
  *
  * Source: docs/clawql-ecosystem.md → src/generated/clawql-ecosystem-body.mdx
  *

@@ -46,7 +46,7 @@ export default function PluginsReferencePage() {
         <Button href="/tools" variant="outline">
           <>MCP tools</>
         </Button>
-        <Button href="/vision/modularization" variant="outline">
+        <Button href="/architecture" variant="outline">
           <>Modularization v2.1</>
         </Button>
         <Button href="/contributing/technical-specification" variant="outline">
