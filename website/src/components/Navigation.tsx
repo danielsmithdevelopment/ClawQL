@@ -15,6 +15,7 @@ import {
   type NavGroup,
 } from '@/lib/docs-nav-data'
 import { remToPx } from '@/lib/remToPx'
+import { TOC_SIDEBAR_MAX } from '@/lib/toc-constants'
 import { CloseButton } from '@headlessui/react'
 
 interface NavGroupProps extends NavGroup {}
@@ -191,7 +192,7 @@ function NavigationGroup({
               </NavLink>
               {link.href === pathname && sections.length > 0 ? (
                 <ul role="list">
-                  {sections.map((section) => (
+                  {sections.slice(0, TOC_SIDEBAR_MAX).map((section) => (
                     <li key={section.id}>
                       <NavLink
                         href={`${link.href}#${section.id}`}
@@ -202,6 +203,13 @@ function NavigationGroup({
                       </NavLink>
                     </li>
                   ))}
+                  {sections.length > TOC_SIDEBAR_MAX ? (
+                    <li>
+                      <span className="block py-1 pr-3 pl-7 text-xs text-zinc-500 dark:text-zinc-400">
+                        +{sections.length - TOC_SIDEBAR_MAX} more in page TOC
+                      </span>
+                    </li>
+                  ) : null}
                 </ul>
               ) : null}
             </li>

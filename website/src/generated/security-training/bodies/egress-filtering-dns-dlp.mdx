@@ -8,9 +8,7 @@ Ingress controls stop attackers from getting in. Egress controls determine what 
 
 This module builds the complete outbound defense stack so that even if every upstream control is bypassed, exfiltration remains structurally difficult and immediately detectable.
 
----
-
-Why Egress Is the Exfiltration Surface
+## Why Egress Is the Exfiltration Surface
 
 Ingress defenses are well-understood and heavily invested in. Egress is where defenders consistently fall short.
 
@@ -24,9 +22,7 @@ A successful injection without egress controls gives an attacker a direct pipe t
 
 Egress controls are the last line of defense when everything else has failed. They turn a potential breach into a contained, observable event.
 
----
-
-Istio ServiceEntry Allowlists and Default-Deny Egress
+## Istio ServiceEntry Allowlists and Default-Deny Egress
 
 We enforce egress at the service-mesh layer with a strict default-deny posture.
 
@@ -86,9 +82,7 @@ Key properties:
 
 - Panguard provides a second enforcement point at the tool-call level: it validates the external hostname against the skill manifest’s declared egressRequirements.
 
----
-
-SSRF Prevention for Agent URL Tools
+## SSRF Prevention for Agent URL Tools
 
 Any tool that accepts a URL parameter is an SSRF risk. We block it at parse time, before any DNS resolution occurs.
 
@@ -108,9 +102,7 @@ Validation rules applied in the gateway (before the request is dispatched):
 
 Even if the application-layer check is bypassed, enforce IMDSv2 at the cloud-provider level as a second control.
 
----
-
-DNS-Layer Filtering
+## DNS-Layer Filtering
 
 Istio allowlists stop HTTPS exfiltration but not DNS tunneling. We close that gap with allowlist-only DNS resolution.
 
@@ -128,9 +120,7 @@ DNS tunneling heuristics (applied at the resolver):
 
 Falco rule fires on any DNS query from an agent pod to a non-allowlisted domain.
 
----
-
-DLP Inspection of Outbound Tool Call Payloads
+## DLP Inspection of Outbound Tool Call Payloads
 
 We inspect at the tool-call parameter level — not just log-line scanning.
 
@@ -148,9 +138,7 @@ The skill manifest declares maxClassificationLevel for outbound payloads. The ga
 
 Detection = block (not alert-only). Alert-only gives the attacker the detection-to-response window.
 
----
-
-Session-Level Egress Volume Detection
+## Session-Level Egress Volume Detection
 
 Per-call checks are not enough. We also monitor cumulative behavior per session:
 
@@ -162,9 +150,7 @@ Per-call checks are not enough. We also monitor cumulative behavior per session:
 
 Panguard tracks cumulative egress across all tool calls in the session. We establish a behavioral baseline for each agent role before enabling blocking thresholds — alert fatigue from miscalibrated rules is itself a security risk.
 
----
-
-Egress from Sandboxed Skill Execution
+## Egress from Sandboxed Skill Execution
 
 Skills run in Kata Containers with a default policy of networkEgress: deny.
 
@@ -174,9 +160,7 @@ Skills run in Kata Containers with a default policy of networkEgress: deny.
 
 - Any undeclared egress attempt from a sandboxed skill triggers: block + automatic quarantine + critical alert (this is a strong signal of a compromised or malicious skill).
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - SSRF and DNS tunneling are distinct bypass paths that require distinct controls — Istio allowlists stop HTTPS exfiltration but not DNS tunneling.
 

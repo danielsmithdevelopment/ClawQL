@@ -4,6 +4,15 @@ One guide for **vault-first onboarding**, **Cursor iOS + Cloud Agents**, and the
 
 **Website:** [docs.clawql.com/agent-setup](https://docs.clawql.com/agent-setup)
 
+## Pick your path
+
+| You are…                             | Jump to                                                              |
+| ------------------------------------ | -------------------------------------------------------------------- |
+| Setting up Cursor or Claude Desktop  | [Desktop / stdio](#desktop-stdio-recommended)                        |
+| On Cursor iOS / Cloud Agent          | [Cursor iOS + Cloud Agent](#cursor-i-os-cloud-agent)                 |
+| Hardening local agent shell on macOS | [Local agent sandbox](#local-agent-sandbox-mac-os-seatbelt)          |
+| Sharing vault notes with a team      | [For teams — vault sync](/getting-started/for-teams#team-vault-sync) |
+
 ---
 
 ## Desktop / stdio (recommended)
@@ -320,10 +329,10 @@ MCP-side **`sandbox_exec`:** [Sandbox plugin](../plugins/sandbox.md) · [Learn: 
 
 ---
 
-## Related
+## Next steps
 
 - [Quickstart](https://docs.clawql.com/quickstart)
 - [For teams — Team vault sync](./getting-started-for-teams.md#team-vault-sync)
 - [Local provider vault](./local-provider-vault.md)
 - [MCP clients](https://docs.clawql.com/mcp-clients)
-- [clawql-memory](https://docs.clawql.com/learn/memory)
+- [Memory](https://docs.clawql.com/learn/memory)

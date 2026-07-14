@@ -1,5 +1,5 @@
+import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
 import InferenceBody from '@/generated/clawql-inference-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -56,9 +56,9 @@ export default function ClawqlInferencePage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <InferenceBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }

@@ -8,9 +8,7 @@ Modules 1–24 have given us a full technical security stack, living threat mode
 
 A quarterly review is the structured forcing function that catches this natural decay before it becomes a real gap. It is not a meeting where people say “everything looks good.” It is a verification exercise that produces a signed, auditable document with evidence for every item. In this module we walk through the exact checklist, the evidence required for each item, and how to turn findings into tracked issues with owners and deadlines. By the end you will have a repeatable process that keeps the entire platform’s security posture healthy, measurable, and continuously improving.
 
----
-
-Why Quarterly Cadence Matters
+## Why Quarterly Cadence Matters
 
 Security posture decays continuously and silently:
 
@@ -26,9 +24,7 @@ Without a forcing function, small issues compound into major gaps. The quarterly
 
 All findings are tracked as issues with named owners and deadlines. Any finding that remains unresolved at the next quarterly review escalates automatically to the security leadership team.
 
----
-
-Certificate and Credential Rotation Check
+## Certificate and Credential Rotation Check
 
 We start with the items that have hard expiration dates.
 
@@ -48,9 +44,7 @@ clawql security cert-audit --compare-last-quarter
 
 Any certificate or credential that is not on track becomes a critical finding with a 30-day remediation deadline.
 
----
-
-Allowlist Review
+## Allowlist Review
 
 Allowlists are a common source of creeping risk.
 
@@ -64,9 +58,7 @@ Allowlists are a common source of creeping risk.
 
 Each removed or updated entry is documented in the review report.
 
----
-
-Exception and Residual Risk Review
+## Exception and Residual Risk Review
 
 We explicitly review every accepted deviation from the baseline.
 
@@ -76,9 +68,7 @@ We explicitly review every accepted deviation from the baseline.
 
 - Review the residual risk register from the STRIDE model (Module 22). Any residual risk whose conditions have changed requires an immediate threat-model update.
 
----
-
-Backup and Restore Verification
+## Backup and Restore Verification
 
 We do not just trust that backups work — we test them.
 
@@ -92,9 +82,7 @@ We do not just trust that backups work — we test them.
 
 These tests are performed live during the review and the results are attached to the signed report.
 
----
-
-Metrics Review Against Baselines
+## Metrics Review Against Baselines
 
 We compare current metrics to the established baselines from previous quarters.
 
@@ -112,9 +100,7 @@ Key metrics to review:
 
 For any metric that is trending in the wrong direction, the review must document the root cause and the corrective action with an owner and deadline.
 
----
-
-STRIDE Model Update
+## STRIDE Model Update
 
 The living threat model (Module 22) is reviewed as a standing agenda item.
 
@@ -124,9 +110,7 @@ The living threat model (Module 22) is reviewed as a standing agenda item.
 
 - Document any new residual risks accepted this quarter with explicit sign-off from the security team lead.
 
----
-
-Signed Review Output
+## Signed Review Output
 
 The review ends with a single signed artifact:
 
@@ -138,9 +122,7 @@ The review ends with a single signed artifact:
 
 The report is signed by the security team lead and stored in WORM alongside the full evidence package (Module 29). It is also shared with the compliance team for SOC 2, HIPAA, GDPR, and EU AI Act evidence collection.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - The quarterly review is a verification exercise, not a confidence-building exercise — every item must produce evidence, not an assertion.
 

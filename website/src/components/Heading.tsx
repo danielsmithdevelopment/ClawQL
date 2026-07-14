@@ -114,10 +114,13 @@ export function Heading<Level extends 2 | 3>({
 
   useEffect(() => {
     if (level === 2) {
+      const title =
+        ref.current?.innerText?.replace(/\s+/g, ' ').trim() || props.id
       registerHeading({
         id: props.id,
         ref,
         offsetRem: tag || label ? 8 : 6,
+        title,
       })
     }
   })

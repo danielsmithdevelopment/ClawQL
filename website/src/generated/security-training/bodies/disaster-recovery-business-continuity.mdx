@@ -8,9 +8,7 @@ Modules 1–27 have built a resilient, zero-trust, multi-tenant platform that pr
 
 Incident response (Module 20) assumes the infrastructure is intact and the question is “how do we contain and eradicate the threat?” Disaster recovery assumes the infrastructure itself is gone and the question is “how do we restore service from a different location as fast as our business can tolerate?” In this module we define per-tier RTO/RPO targets, agent state serialization, a 3-2-1+ backup architecture, active/passive cross-region failover with a Merkle continuity gate, and a clear session recovery decision tree. By the end you will have a tested, measurable DR plan that keeps agents operational even when entire regions disappear.
 
----
-
-DR vs Incident Response
+## DR vs Incident Response
 
 These are two separate plans with different owners, different triggers, and different goals.
 
@@ -20,9 +18,7 @@ These are two separate plans with different owners, different triggers, and diff
 
 Both plans must exist independently. When ransomware hits (both an attack _and_ infrastructure loss), the two plans integrate. Each has a named owner, a tested runbook, and its own testing cadence.
 
----
-
-Data Tier Classification and RTO/RPO Targets
+## Data Tier Classification and RTO/RPO Targets
 
 Not all data is equally critical. We classify data into four tiers with explicit Recovery Time Objective (RTO) and Recovery Point Objective (RPO) targets.
 
@@ -48,9 +44,7 @@ Not all data is equally critical. We classify data into four tiers with explicit
 
 Untested RTO/RPO targets are aspirations. Only tested targets are commitments.
 
----
-
-Agent State Serialization
+## Agent State Serialization
 
 You cannot recover what you cannot describe as data. We serialize agent state into a checkpoint format:
 
@@ -62,9 +56,7 @@ You cannot recover what you cannot describe as data. We serialize agent state in
 
 Invalid checkpoint signature = clean restart (no recovery from corrupted state).
 
----
-
-Backup Architecture: 3-2-1+ per Tier
+## Backup Architecture: 3-2-1+ per Tier
 
 We follow the 3-2-1+ rule with tier-specific implementation:
 
@@ -76,9 +68,7 @@ We follow the 3-2-1+ rule with tier-specific implementation:
 
 All backups are encrypted at rest and in transit.
 
----
-
-Active/Passive Cross-Region Failover
+## Active/Passive Cross-Region Failover
 
 We use active/passive failover to avoid split-brain Merkle chain conflicts.
 
@@ -100,9 +90,7 @@ Failover sequence (fully scripted):
 
 Failback treats the original primary as a fresh deployment — never re-promote without full validation.
 
----
-
-Session Recovery Decision Tree
+## Session Recovery Decision Tree
 
 When a region fails mid-session, we follow this automated decision tree:
 
@@ -114,9 +102,7 @@ When a region fails mid-session, we follow this automated decision tree:
 
 The decision is logged to WORM with the reason and checkpoint status.
 
----
-
-DR Testing Programme
+## DR Testing Programme
 
 We test at increasing levels of realism:
 
@@ -128,9 +114,7 @@ We test at increasing levels of realism:
 
 Every test produces a signed report stored in WORM.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - DR and IR are different plans with different owners — conflating them produces a plan that does neither well.
 

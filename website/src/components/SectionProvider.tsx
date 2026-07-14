@@ -27,10 +27,12 @@ interface SectionState {
     id,
     ref,
     offsetRem,
+    title,
   }: {
     id: string
     ref: React.RefObject<HTMLHeadingElement | null>
     offsetRem: number
+    title?: string
   }) => void
 }
 
@@ -44,18 +46,31 @@ function createSectionStore(sections: Array<Section>) {
           ? {}
           : { visibleSections },
       ),
-    registerHeading: ({ id, ref, offsetRem }) =>
+    registerHeading: ({ id, ref, offsetRem, title }) =>
       set((state) => {
-        return {
-          sections: state.sections.map((section) => {
-            if (section.id === id) {
-              return {
-                ...section,
+        const index = state.sections.findIndex((section) => section.id === id)
+        if (index === -1) {
+          return {
+            sections: [
+              ...state.sections,
+              {
+                id,
+                title: title ?? id,
                 headingRef: ref,
                 offsetRem,
-              }
+              },
+            ],
+          }
+        }
+        return {
+          sections: state.sections.map((section, i) => {
+            if (i !== index) return section
+            return {
+              ...section,
+              title: title ?? section.title,
+              headingRef: ref,
+              offsetRem,
             }
-            return section
           }),
         }
       }),

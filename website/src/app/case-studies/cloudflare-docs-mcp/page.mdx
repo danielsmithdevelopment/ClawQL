@@ -166,7 +166,7 @@ Used **after meaningful outcomes**:
 ### 10.1 Workers runtime: no `fs.readdir` on the request path
 
 - **Root cause:** `src/app/layout.tsx` used **`fast-glob`** at **request time** to discover `**/*.mdx` and build the sidebar map. **`fast-glob`** uses **`fs.readdir`**, which **unenv** does not implement on Cloudflare Workers.
-- **Fix:** Remove runtime globbing. **Predefine** section metadata for routes that need it (e.g. shared `homePageSections` in [`website/src/lib/home-page-sections.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/website/src/lib/home-page-sections.ts)) and import from **`layout.tsx`** / **`page.mdx`**.
+- **Fix:** Remove runtime globbing. **Predefine** section metadata for routes that need it via build-time codegen ([`website/scripts/generate-doc-layout-sections.mjs`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/website/scripts/generate-doc-layout-sections.mjs) → `src/generated/doc-layout-sections.generated.ts`) and import from **`Layout.tsx`** through [`doc-layout-sections.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/website/src/lib/doc-layout-sections.ts).
 
 **Pattern:** anything that needs **`fs`** at runtime must move to **build time**, a **static map**, or **edge-safe** data.
 

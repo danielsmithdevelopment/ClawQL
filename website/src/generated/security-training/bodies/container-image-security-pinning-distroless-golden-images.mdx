@@ -10,9 +10,7 @@ In this module we’ll turn the most common supply-chain attack vector into some
 
 Let’s dive in.
 
----
-
-The Problem with Unpinned Images
+## The Problem with Unpinned Images
 
 Imagine you’re building the same agent every day. You write FROM node:22 (or python:3.12, etc.) in your Dockerfile and everything works perfectly… until one Tuesday morning when the upstream publisher silently updates the latest tag (or even a specific version tag) with a new layer that contains malware.
 
@@ -30,9 +28,7 @@ Here’s why unpinned images are catastrophic for agentic platforms:
 
 Real-world consequence: A single malicious update to a popular base image can give an attacker shell access inside every agent that pulls it. We’ve seen this pattern in the wild far too many times.
 
----
-
-Digest Pinning — The Cryptographic Fix
+## Digest Pinning — The Cryptographic Fix
 
 The solution is simple in concept but powerful in practice: never reference an image by tag; always pin to its cryptographic digest.
 
@@ -64,9 +60,7 @@ Practical workflow:
 
 This turns “image updates” from a risky manual process into a safe, auditable, automated one.
 
----
-
-Private Mirror Registry with Harbor — Your Single Source of Truth
+## Private Mirror Registry with Harbor — Your Single Source of Truth
 
 Never, ever pull directly from Docker Hub, Quay, or any public registry in production. That is the architectural decision with the highest supply-chain ROI in the entire curriculum.
 
@@ -90,9 +84,7 @@ How the flow works in practice:
 
 This gives you a single, auditable source of truth and removes the public internet as a dependency for production workloads.
 
----
-
-SBOM Generation — Know Exactly What’s Inside
+## SBOM Generation — Know Exactly What’s Inside
 
 You can’t defend what you can’t see. That’s why we generate a Software Bill of Materials (SBOM) at build time.
 
@@ -114,9 +106,7 @@ Why this is gold for agentic platforms:
 
 - It powers rapid blast-radius assessment during incident response.
 
----
-
-Distroless Base Images — Removing the Attacker’s Toolbox
+## Distroless Base Images — Removing the Attacker’s Toolbox
 
 Standard base images ship with a shell, package manager, curl, wget, and dozens of other utilities. None of these are needed at runtime for most agents.
 
@@ -154,9 +144,7 @@ COPY --from=builder /app/dist /app
 
 CMD ["index.js"]
 
----
-
-The Golden Image Pipeline — One Hardened Base to Rule Them All
+## The Golden Image Pipeline — One Hardened Base to Rule Them All
 
 Instead of every team making their own hardening decisions, we define golden base images for each runtime:
 
@@ -178,9 +166,7 @@ How the pipeline works:
 
 This gives you consistent, auditable hardening across the entire fleet instead of per-application guesswork.
 
----
-
-Trivy + OSV-Scanner Integration — Shift-Left Scanning
+## Trivy + OSV-Scanner Integration — Shift-Left Scanning
 
 We run two complementary scanners in CI on every PR that touches a Dockerfile or lockfile:
 
@@ -196,9 +182,7 @@ Policy:
 
 - Weekly scheduled scans against all images in Harbor catch newly disclosed CVEs.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - Digest pinning is non-negotiable — tag pinning is _not_ pinning.
 
@@ -210,9 +194,7 @@ Key Takeaways (Memorize These!)
 
 - The golden image pipeline means one hardened, reviewed base applied everywhere — far better than per-app decisions.
 
----
-
-Next Steps & Hands-On Challenge
+## Next Steps & Hands-On Challenge
 
 1. Take any existing Dockerfile in your project and convert it to digest pinning + distroless.
 

@@ -10,9 +10,7 @@ The default ServiceAccount in every namespace is far more powerful than most tea
 
 In this module we replace convenience with precision: one scoped ServiceAccount per workload, explicit RBAC, and cloud-native workload identity federation that eliminates long-lived credentials entirely. By the end you’ll have the structural foundation that makes least privilege the default — not an aspiration.
 
----
-
-The Over-Permissioned ServiceAccount Problem
+## The Over-Permissioned ServiceAccount Problem
 
 Kubernetes makes it easy to be lazy with identities:
 
@@ -26,9 +24,7 @@ Kubernetes makes it easy to be lazy with identities:
 
 The result: a single pod breach can become a cluster-wide incident. We fix this by treating every ServiceAccount as a long-lived security principal that must be justified.
 
----
-
-ServiceAccount Best Practices
+## ServiceAccount Best Practices
 
 Follow these rules for every workload:
 
@@ -69,9 +65,7 @@ spec:
 
     image: harbor.example.com/golden/node@sha256:...
 
----
-
-IRSA (IAM Roles for Service Accounts) on AWS
+## IRSA (IAM Roles for Service Accounts) on AWS
 
 Never store long-lived AWS credentials in pods or secrets. Use IRSA instead.
 
@@ -137,9 +131,7 @@ IAM role trust policy (minimum scope):
 
 Scope the attached IAM policy to the exact S3 prefixes, DynamoDB tables, or Secrets Manager paths the workload actually needs.
 
----
-
-Workload Identity on GCP
+## Workload Identity on GCP
 
 GCP uses the same principle with a workload identity pool.
 
@@ -156,9 +148,7 @@ metadata:
 
 - Scope the GCP service account to only the specific Cloud Storage buckets, Pub/Sub topics, or other resources required.
 
----
-
-Azure Workload Identity
+## Azure Workload Identity
 
 Azure federates via Azure AD:
 
@@ -168,9 +158,7 @@ Azure federates via Azure AD:
 
 - No client secrets or certificates are stored anywhere in the cluster.
 
----
-
-Auditing and Continuous Enforcement
+## Auditing and Continuous Enforcement
 
 Least privilege is only as good as its ongoing maintenance:
 
@@ -182,9 +170,7 @@ Least privilege is only as good as its ongoing maintenance:
 
 - Monthly automated diff: compare current RBAC bindings against the approved baseline stored in git.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - One ServiceAccount per workload is not pedantic — it is the structural requirement that makes RBAC meaningful.
 

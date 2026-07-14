@@ -6,6 +6,8 @@ Run ClawQL as a **shared MCP backend** for your team: centralize **Obsidian memo
 
 **Prerequisites:** Helm Kubernetes (or Tier 1 Compose for a lab slice), [Vault provider secrets](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/vault-provider-secrets.md) synced via External Secrets Operator, and at least one shared bucket (R2, S3, or GCS).
 
+**Suggested order:** deploy the shared MCP → enable team vault sync → (optional) golden hosts → wire observability → verify.
+
 ## What teams need
 
 | Capability        | Why                                                                   | Start here                                                                                                                           |
@@ -503,7 +505,7 @@ clawql doctor
 
 ---
 
-## Related
+## Next steps
 
 - [Agent setup](/agent-setup) — desktop, Cursor iOS Cloud Agents, local sandbox
 - [Local provider vault](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/local-provider-vault.md) — `~/.ClawQL` layout and secrets
@@ -511,9 +513,7 @@ clawql doctor
 - [Helm chart](/helm) — full `values.yaml` reference
 - [Memory / Obsidian](/learn/memory) — `memory_ingest` / `memory_recall`
 - [Golden image pipeline](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md) — container + Packer VM security gates
-- [ADR 0006: Golden host images (Packer)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0006-golden-host-images-packer.md)
-- [ADR 0007: Pulumi provisioning](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0007-pulumi-provisioning-managed-tiers.md)
-- [Cloudflare provider](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/cloudflare-onboarding.md) (API `execute`, not sync)
+- [ADR 0006](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0006-golden-host-images-packer.md) · [ADR 0007](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0007-pulumi-provisioning-managed-tiers.md)
 
 export function wrapper({ children }) {
   return children

@@ -8,9 +8,7 @@ Modules 1–29 have secured the entire technical stack — from supply chain to 
 
 A single compromised operator account gives an attacker the power to change the rules themselves, not just bypass them. The insider threat is usually the compromised employee (phishing, credential theft, or social engineering), not the malicious insider. In this final module we apply the same zero-trust principles we built for agents to the humans who operate the platform: least privilege, continuous verification, separation of duties, and audited emergency access. By the end you will have operator security that matches the rigor of every other layer in the curriculum.
 
----
-
-The Human Operator as the Highest-Value Target
+## The Human Operator as the Highest-Value Target
 
 An operator with the right permissions has broader access and greater blast radius than any individual agent.
 
@@ -26,9 +24,7 @@ They can:
 
 Compromise of one operator account lets an attacker modify controls rather than merely circumvent them. Zero trust must therefore apply to humans: the same least-privilege and continuous verification principles that govern agents must govern operators. Phishing and credential theft are the primary attack paths.
 
----
-
-Admin Access Controls: Who Can Modify What
+## Admin Access Controls: Who Can Modify What
 
 We define named, documented admin roles with explicit, mutually exclusive capability boundaries.
 
@@ -48,9 +44,7 @@ Enforcement is structural:
 
 - On operator termination, the mTLS certificate is immediately revoked and all derived tokens are invalidated within one TTL cycle.
 
----
-
-Separation of Duties
+## Separation of Duties
 
 We enforce SoD at both role and action levels:
 
@@ -62,9 +56,7 @@ Monthly automated SoD report flags any individual who performed two mutually exc
 
 In small teams where role overlap is unavoidable, mandatory 4-eyes review compensates. SoD violations are reviewed by the security team lead within 5 business days and escalated to the compliance officer if unresolved.
 
----
-
-4-Eyes Controls for High-Risk Configuration Changes
+## 4-Eyes Controls for High-Risk Configuration Changes
 
 High-risk changes require two distinct approvers:
 
@@ -92,9 +84,7 @@ Enforcement:
 
 - Both approver identities are permanently recorded in the WORM audit trail as part of the deployment record.
 
----
-
-Break-Glass Emergency Access
+## Break-Glass Emergency Access
 
 For true emergencies we maintain a sealed break-glass credential:
 
@@ -107,9 +97,7 @@ For true emergencies we maintain a sealed break-glass credential:
 
 Break-glass provides expedited access to the configuration plane only — it does not disable Panguard enforcement or ATR validation. A full post-incident review is required for every use; failure to complete the review is itself a finding.
 
----
-
-Operator Session Auditing and Insider Threat Detection
+## Operator Session Auditing and Insider Threat Detection
 
 Every operator action is logged to the WORM audit trail using the same canonical security event schema as agent actions (Module 19).
 
@@ -125,9 +113,7 @@ SIEM correlation rules specifically target insider threats:
 
 Weekly automated peer-review report of all operator actions is sent to the security team lead.
 
----
-
-Emergency Secret Rotation Runbooks
+## Emergency Secret Rotation Runbooks
 
 We maintain two offline runbooks tested annually:
 
@@ -153,9 +139,7 @@ Runbook B (Vault root token compromised)
 
 Both runbooks are stored offline (not only in the production cluster) so they remain available precisely when the cluster is compromised.
 
----
-
-External API Security
+## External API Security
 
 Many operator tasks involve configuring external integrations. We secure these at the operator layer:
 
@@ -169,9 +153,7 @@ Many operator tasks involve configuring external integrations. We secure these a
 
 External API security is treated as an operator security concern because these integrations are configured by humans, and agent-layer controls cannot validate them.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - Human operators have broader access and greater blast radius than any individual agent — the same zero-trust principles that govern agents must govern operators.
 

@@ -6,6 +6,7 @@ import { Pre as CodePre } from '@/components/Code'
 import { FeedbackClientIsland } from '@/components/FeedbackClientIsland'
 import { Heading } from '@/components/Heading'
 import { MermaidDiagramLazy } from '@/components/MermaidDiagramLazy'
+import { OnThisPage } from '@/components/OnThisPage'
 import { Prose } from '@/components/Prose'
 
 export const a = Link
@@ -79,7 +80,10 @@ export function pre(props: PreProps) {
 export function wrapper({ children }: { children: React.ReactNode }) {
   return (
     <article className="flex h-full flex-col pt-10 pb-10">
-      <Prose className="flex-auto">{children}</Prose>
+      <Prose className="flex-auto">
+        <OnThisPage />
+        {children}
+      </Prose>
       <footer className="mx-auto mt-16 w-full max-w-2xl lg:max-w-5xl">
         <FeedbackClientIsland />
       </footer>

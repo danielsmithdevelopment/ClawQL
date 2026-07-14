@@ -6,6 +6,8 @@ Run ClawQL as a **shared MCP backend** for your team: centralize **Obsidian memo
 
 **Prerequisites:** Helm Kubernetes (or Tier 1 Compose for a lab slice), [Vault provider secrets](../deployment/vault-provider-secrets.md) synced via External Secrets Operator, and at least one shared bucket (R2, S3, or GCS).
 
+**Suggested order:** deploy the shared MCP → enable team vault sync → (optional) golden hosts → wire observability → verify.
+
 ## What teams need
 
 | Capability        | Why                                                                   | Start here                                                                   |
@@ -503,7 +505,7 @@ clawql doctor
 
 ---
 
-## Related
+## Next steps
 
 - [Agent setup](./agent-setup.md) — desktop, Cursor iOS Cloud Agents, local sandbox
 - [Local provider vault](./local-provider-vault.md) — `~/.ClawQL` layout and secrets
@@ -511,6 +513,4 @@ clawql doctor
 - [Helm chart](../deployment/helm.md) — full `values.yaml` reference
 - [Memory / Obsidian](../memory/memory-obsidian.md) — `memory_ingest` / `memory_recall`
 - [Golden image pipeline](../security/golden-image-pipeline.md) — container + Packer VM security gates
-- [ADR 0006: Golden host images (Packer)](../adr/0006-golden-host-images-packer.md)
-- [ADR 0007: Pulumi provisioning](../adr/0007-pulumi-provisioning-managed-tiers.md)
-- [Cloudflare provider](../providers/cloudflare-onboarding.md) (API `execute`, not sync)
+- [ADR 0006](../adr/0006-golden-host-images-packer.md) · [ADR 0007](../adr/0007-pulumi-provisioning-managed-tiers.md)

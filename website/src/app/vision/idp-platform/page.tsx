@@ -1,5 +1,5 @@
+import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
 import IdpPlatformBody from '@/generated/clawql-idp-platform-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -62,9 +62,9 @@ export default function VisionIdpPlatformPage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <IdpPlatformBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }

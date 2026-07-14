@@ -1,5 +1,5 @@
+import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
 import DaosUnifiedBody from '@/generated/daos-unified-architecture-spec-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -72,9 +72,9 @@ export default function DaosUnifiedArchitecturePage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <DaosUnifiedBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }
