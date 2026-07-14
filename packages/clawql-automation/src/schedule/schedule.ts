@@ -255,6 +255,16 @@ async function openOrCreateDb(absDbPath: string): Promise<Database> {
   }
 }
 
+/** Open schedule DB (Effect IO edge). */
+export async function openScheduleDatabase(absDbPath: string): Promise<Database> {
+  return openOrCreateDb(absDbPath);
+}
+
+export function prepareScheduleDatabase(db: Database): void {
+  db.exec("PRAGMA foreign_keys = ON;");
+  migrate(db);
+}
+
 async function persistDb(db: Database, absDbPath: string): Promise<void> {
   await mkdir(dirname(absDbPath), { recursive: true });
   const tmp = `${absDbPath}.${process.pid}.tmp`;
@@ -366,6 +376,13 @@ const scheduleInputSchema = z.object(scheduleToolSchema).superRefine((data, ctx)
     }
   }
 });
+
+export type ScheduleParsedInput = z.infer<typeof scheduleInputSchema>;
+
+/** Zod parse for schedule tool (throws ZodError — keep inside Promise/Effect IO). */
+export function parseScheduleToolInput(params: unknown): ScheduleParsedInput {
+  return scheduleInputSchema.parse(params);
+}
 
 function clamp(val: number, min: number, max: number): number {
   return Math.min(Math.max(val, min), max);
@@ -879,136 +896,138 @@ export function registerScheduleWorkerShutdownHooks(): void {
   process.once("exit", shutdown);
 }
 
-export async function executeScheduleToolCore(
-  params: unknown
+export async function dispatchScheduleOperation(
+  db: Database,
+  absDbPath: string,
+  parsed: ScheduleParsedInput
 ): Promise<{ content: { type: "text"; text: string }[] }> {
-  const parsed = scheduleInputSchema.parse(params);
-
-  const absDbPath = getScheduleDatabasePath();
-  const db = await openOrCreateDb(absDbPath);
-  try {
-    db.exec("PRAGMA foreign_keys = ON;");
-    migrate(db);
-
-    switch (parsed.operation) {
-      case "create": {
-        const id = randomUUID();
-        const createdAt = nowIso();
-        const frequency = parsed.schedule!.frequency as Frequency;
-        const action = parsed.action as JobAction;
-        db.run(
-          `INSERT INTO clawql_schedule_jobs (id, frequency_json, action_json, enabled, created_at, updated_at)
+  switch (parsed.operation) {
+    case "create": {
+      const id = randomUUID();
+      const createdAt = nowIso();
+      const frequency = parsed.schedule!.frequency as Frequency;
+      const action = parsed.action as JobAction;
+      db.run(
+        `INSERT INTO clawql_schedule_jobs (id, frequency_json, action_json, enabled, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?)`,
-          [
-            id,
-            JSON.stringify(frequency),
-            JSON.stringify(action),
-            parsed.enabled === false ? 0 : 1,
-            createdAt,
-            createdAt,
-          ]
-        );
-        await persistDb(db, absDbPath);
-        return jsonResponse({
-          ok: true,
-          operation: "create",
-          job: {
-            id,
-            schedule: { frequency },
-            action,
-            enabled: parsed.enabled === false ? false : true,
-            created_at: createdAt,
-            updated_at: createdAt,
-          },
-        });
-      }
-      case "list": {
-        const limit = parsed.limit ?? 50;
-        const runsLimit = parsed.runs_limit ?? getScheduleHistoryLimit();
-        const includeRuns = parsed.include_runs === true;
-        const stmt = db.prepare(
-          `SELECT id, frequency_json, action_json, enabled, created_at, updated_at
+        [
+          id,
+          JSON.stringify(frequency),
+          JSON.stringify(action),
+          parsed.enabled === false ? 0 : 1,
+          createdAt,
+          createdAt,
+        ]
+      );
+      await persistDb(db, absDbPath);
+      return jsonResponse({
+        ok: true,
+        operation: "create",
+        job: {
+          id,
+          schedule: { frequency },
+          action,
+          enabled: parsed.enabled === false ? false : true,
+          created_at: createdAt,
+          updated_at: createdAt,
+        },
+      });
+    }
+    case "list": {
+      const limit = parsed.limit ?? 50;
+      const runsLimit = parsed.runs_limit ?? getScheduleHistoryLimit();
+      const includeRuns = parsed.include_runs === true;
+      const stmt = db.prepare(
+        `SELECT id, frequency_json, action_json, enabled, created_at, updated_at
            FROM clawql_schedule_jobs
            ORDER BY created_at DESC
            LIMIT ?`
-        );
-        stmt.bind([limit]);
-        const jobs: Array<Record<string, unknown>> = [];
-        while (stmt.step()) {
-          const row = stmt.getAsObject() as {
-            id: string;
-            frequency_json: string;
-            action_json: string;
-            enabled: number;
-            created_at: string;
-            updated_at: string;
-          };
-          const job: Record<string, unknown> = {
-            id: row.id,
-            schedule: { frequency: safeJsonParse<Frequency>(row.frequency_json) },
-            action: safeJsonParse<JobAction>(row.action_json),
-            enabled: Number(row.enabled) === 1,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
-          };
-          if (includeRuns) job.runs = getRunsForJob(db, row.id, runsLimit);
-          jobs.push(job);
-        }
-        stmt.free();
-        return jsonResponse({ ok: true, operation: "list", jobs });
+      );
+      stmt.bind([limit]);
+      const jobs: Array<Record<string, unknown>> = [];
+      while (stmt.step()) {
+        const row = stmt.getAsObject() as {
+          id: string;
+          frequency_json: string;
+          action_json: string;
+          enabled: number;
+          created_at: string;
+          updated_at: string;
+        };
+        const job: Record<string, unknown> = {
+          id: row.id,
+          schedule: { frequency: safeJsonParse<Frequency>(row.frequency_json) },
+          action: safeJsonParse<JobAction>(row.action_json),
+          enabled: Number(row.enabled) === 1,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+        };
+        if (includeRuns) job.runs = getRunsForJob(db, row.id, runsLimit);
+        jobs.push(job);
       }
-      case "get": {
-        const runsLimit = parsed.runs_limit ?? getScheduleHistoryLimit();
-        const includeRuns = parsed.include_runs ?? true;
-        const job = getJobById(db, parsed.job_id!);
-        if (!job) {
-          return jsonResponse({ ok: false, error: `job not found: ${parsed.job_id}` });
-        }
-        return jsonResponse({
-          ok: true,
-          operation: "get",
-          job: {
-            ...job,
-            schedule: { frequency: job.frequency },
-            ...(includeRuns ? { runs: getRunsForJob(db, job.id, runsLimit) } : {}),
-          },
-        });
-      }
-      case "delete": {
-        const job = getJobById(db, parsed.job_id!);
-        if (!job) {
-          return jsonResponse({ ok: false, error: `job not found: ${parsed.job_id}` });
-        }
-        db.run("DELETE FROM clawql_schedule_jobs WHERE id = ?", [job.id]);
-        await persistDb(db, absDbPath);
-        return jsonResponse({
-          ok: true,
-          operation: "delete",
-          deleted: true,
-          job_id: parsed.job_id,
-        });
-      }
-      case "trigger": {
-        const job = getJobById(db, parsed.job_id!);
-        if (!job) {
-          return jsonResponse({ ok: false, error: `job not found: ${parsed.job_id}` });
-        }
-        const run = await executeTriggerForJob(db, job, { dryRun: parsed.dry_run === true });
-        if (!run.dry_run) {
-          await persistDb(db, absDbPath);
-          await maybeSendScheduleNotification(job, run);
-        }
-        return jsonResponse({
-          ok: run.ok,
-          operation: "trigger",
-          job_id: job.id,
-          run,
-        });
-      }
+      stmt.free();
+      return jsonResponse({ ok: true, operation: "list", jobs });
     }
-  } finally {
-    db.close();
+    case "get": {
+      const runsLimit = parsed.runs_limit ?? getScheduleHistoryLimit();
+      const includeRuns = parsed.include_runs ?? true;
+      const job = getJobById(db, parsed.job_id!);
+      if (!job) {
+        return jsonResponse({ ok: false, error: `job not found: ${parsed.job_id}` });
+      }
+      return jsonResponse({
+        ok: true,
+        operation: "get",
+        job: {
+          ...job,
+          schedule: { frequency: job.frequency },
+          ...(includeRuns ? { runs: getRunsForJob(db, job.id, runsLimit) } : {}),
+        },
+      });
+    }
+    case "delete": {
+      const job = getJobById(db, parsed.job_id!);
+      if (!job) {
+        return jsonResponse({ ok: false, error: `job not found: ${parsed.job_id}` });
+      }
+      db.run("DELETE FROM clawql_schedule_jobs WHERE id = ?", [job.id]);
+      await persistDb(db, absDbPath);
+      return jsonResponse({
+        ok: true,
+        operation: "delete",
+        deleted: true,
+        job_id: parsed.job_id,
+      });
+    }
+    case "trigger": {
+      const job = getJobById(db, parsed.job_id!);
+      if (!job) {
+        return jsonResponse({ ok: false, error: `job not found: ${parsed.job_id}` });
+      }
+      const run = await executeTriggerForJob(db, job, { dryRun: parsed.dry_run === true });
+      if (!run.dry_run) {
+        await persistDb(db, absDbPath);
+        await maybeSendScheduleNotification(job, run);
+      }
+      return jsonResponse({
+        ok: run.ok,
+        operation: "trigger",
+        job_id: job.id,
+        run,
+      });
+    }
   }
+}
+
+/**
+ * Promise façade over {@link executeScheduleToolCoreEffect}.
+ */
+export async function executeScheduleToolCore(
+  params: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const { executeScheduleToolCoreEffect } = await import("../effect/schedule-effect.js");
+  const { Effect } = await import("effect");
+  return Effect.runPromise(executeScheduleToolCoreEffect(params));
 }
 
 /** Public async facade for schedule MCP tool. */

@@ -3,6 +3,8 @@ import type { NotifySlackInput } from "../notify/notify.js";
 import { AutomationError } from "./automation-errors.js";
 import { automationFromPromise, type McpTextResult } from "./automation-effect-utils.js";
 import { executeNotifySlackCoreEffect } from "./notify-slack-effect.js";
+import { executeScheduleToolCoreEffect } from "./schedule-effect.js";
+import { executeWorkflowToolCoreEffect } from "./workflow-effect.js";
 
 /** Native Effect.gen notify staging (no full-core tryPromise wrapper). */
 export function executeNotifySlackEffect(
@@ -11,22 +13,18 @@ export function executeNotifySlackEffect(
   return executeNotifySlackCoreEffect(params);
 }
 
+/** Native Effect.gen schedule staging. */
 export function executeScheduleToolEffect(
   params: unknown
 ): Effect.Effect<McpTextResult, AutomationError> {
-  return automationFromPromise(async () => {
-    const { executeScheduleToolCore } = await import("../schedule/schedule.js");
-    return executeScheduleToolCore(params);
-  });
+  return executeScheduleToolCoreEffect(params);
 }
 
+/** Native Effect.gen workflow staging. */
 export function executeWorkflowToolEffect(
   params: unknown
 ): Effect.Effect<McpTextResult, AutomationError> {
-  return automationFromPromise(async () => {
-    const { executeWorkflowToolCore } = await import("../workflow/workflow.js");
-    return executeWorkflowToolCore(params);
-  });
+  return executeWorkflowToolCoreEffect(params);
 }
 
 export function executeArgocdToolEffect(

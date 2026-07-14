@@ -1,9 +1,13 @@
 /**
  * Poll Argo Workflow status until terminal phase or timeout (`workflow` wait operation).
+ * Native Effect.gen available via {@link waitForWorkflowEffect}; Promise façade preserved.
  */
 
+import { Duration, Effect } from "effect";
 import { mapWorkflowToSummary, type WorkflowSummary } from "./argo-mapper.js";
 import type { ArgoWorkflowObject } from "./k8s-client.js";
+import { AutomationError } from "../effect/automation-errors.js";
+import { automationFromPromise } from "../effect/automation-effect-utils.js";
 
 export const TERMINAL_WORKFLOW_PHASES = ["Succeeded", "Failed", "Error"] as const;
 
@@ -50,42 +54,60 @@ export type WaitForWorkflowResult = {
 
 const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Native Effect.gen wait loop — K8s get behind {@link automationFromPromise},
+ * poll delay via {@link Effect.sleep} (or injectable Promise sleep for tests).
+ */
+export function waitForWorkflowEffect(
+  options: WaitForWorkflowOptions
+): Effect.Effect<WaitForWorkflowResult, AutomationError> {
+  return Effect.gen(function* () {
+    const now = options.now ?? (() => Date.now());
+    const deadline = now() + options.timeoutSeconds * 1000;
+    let polls = 0;
+    let waitedMs = 0;
+
+    while (true) {
+      polls++;
+      const started = now();
+      const wf = yield* automationFromPromise(() =>
+        options.getWorkflow(options.namespace, options.name)
+      );
+      const summary = mapWorkflowToSummary(wf, options.namespace);
+      if (options.includeNodes === false) {
+        delete summary.nodes;
+      }
+
+      if (isTerminalWorkflowPhase(summary.phase)) {
+        waitedMs += now() - started;
+        return { workflow: summary, waitedMs, timedOut: false, polls };
+      }
+
+      const remaining = deadline - now();
+      if (remaining <= 0) {
+        waitedMs += now() - started;
+        return {
+          workflow: summary,
+          waitedMs,
+          timedOut: true,
+          polls,
+        };
+      }
+
+      const delayMs = Math.min(options.pollIntervalSeconds * 1000, remaining);
+      if (options.sleep) {
+        yield* automationFromPromise(() => options.sleep!(delayMs));
+      } else {
+        yield* Effect.sleep(Duration.millis(delayMs));
+      }
+      waitedMs += now() - started;
+    }
+  });
+}
+
+/** Promise façade over {@link waitForWorkflowEffect}. */
 export async function waitForWorkflow(
   options: WaitForWorkflowOptions
 ): Promise<WaitForWorkflowResult> {
-  const sleep = options.sleep ?? defaultSleep;
-  const now = options.now ?? (() => Date.now());
-  const deadline = now() + options.timeoutSeconds * 1000;
-  let polls = 0;
-  let waitedMs = 0;
-
-  while (true) {
-    polls++;
-    const started = now();
-    const wf = await options.getWorkflow(options.namespace, options.name);
-    const summary = mapWorkflowToSummary(wf, options.namespace);
-    if (options.includeNodes === false) {
-      delete summary.nodes;
-    }
-
-    if (isTerminalWorkflowPhase(summary.phase)) {
-      waitedMs += now() - started;
-      return { workflow: summary, waitedMs, timedOut: false, polls };
-    }
-
-    const remaining = deadline - now();
-    if (remaining <= 0) {
-      waitedMs += now() - started;
-      return {
-        workflow: summary,
-        waitedMs,
-        timedOut: true,
-        polls,
-      };
-    }
-
-    const delayMs = Math.min(options.pollIntervalSeconds * 1000, remaining);
-    await sleep(delayMs);
-    waitedMs += now() - started;
-  }
+  return Effect.runPromise(waitForWorkflowEffect(options));
 }

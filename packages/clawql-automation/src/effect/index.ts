@@ -7,6 +7,8 @@ export {
   executeWorkflowToolEffect,
 } from "./automation-tools-effect.js";
 export { executeNotifySlackCoreEffect } from "./notify-slack-effect.js";
+export { executeScheduleToolCoreEffect } from "./schedule-effect.js";
+export { executeWorkflowToolCoreEffect } from "./workflow-effect.js";
 export { AutomationToolsService, automationToolsLiveLayer } from "./automation-tools-service.js";
 export {
   automationArgocdProgram,
