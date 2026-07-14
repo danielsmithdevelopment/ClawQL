@@ -283,7 +283,7 @@ These vision items are **not** done by package extraction alone:
 | [MCP tools](../mcp/mcp-tools.md)                                          | Operator-facing tool matrix               |
 | [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)       | Package delivery epic                     |
 | [clawql-release MVP](../getting-started/clawql-release-mvp.md)            | Layer 0 manifest commands, CI             |
-| [Getting started](https://docs.clawql.com/getting-started) | Auth, PageIndex, Presidio, Tier 1 Compose |
+| [Getting started](https://docs.clawql.com/getting-started)                | Auth, PageIndex, Presidio, Tier 1 Compose |
 | [clawql-operator-helm](../deployment/clawql-operator-helm.md)             | Operator scaffold install                 |
 
 ---
