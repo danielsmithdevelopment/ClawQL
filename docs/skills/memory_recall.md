@@ -49,7 +49,7 @@ Retrieve relevant prior context before making changes or claims. Prefer **`memor
 
 1. Ensure repo is indexed (`codegraph_index` or Graphify import).
 2. `memory_recall` with `sources: ["vault","codegraph"]` (or includeCodeGraph / hybrid env).
-3. Use vault snippets for *why* and codegraph hits for *where* in source.
+3. Use vault snippets for _why_ and codegraph hits for _where_ in source.
 
 ## Tips
 

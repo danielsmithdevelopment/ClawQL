@@ -2,13 +2,7 @@
  * memory_recall source selection and normalized multi-source hit/followUp helpers.
  */
 
-export const MEMORY_RECALL_SOURCES = [
-  "vault",
-  "vector",
-  "codegraph",
-  "pageindex",
-  "onyx",
-] as const;
+export const MEMORY_RECALL_SOURCES = ["vault", "vector", "codegraph", "pageindex", "onyx"] as const;
 
 export type MemoryRecallSource = (typeof MEMORY_RECALL_SOURCES)[number];
 

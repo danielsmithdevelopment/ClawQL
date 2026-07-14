@@ -39,14 +39,14 @@ Memory turns distilled outcomes — decisions, debugging notes, API quirks, runb
 
 ## Roles and redundancies
 
-| Piece | Role | Canonical? |
-| ----- | ---- | ---------- |
-| Vault Markdown (`memory_ingest`) | Narrative decisions, handoffs, wikilinks | **Yes** |
-| `memory.db` + embeddings | Derived chunks + optional vector KNN | No — rebuild from vault |
-| PageIndex (`pageindex_*`) | Heading tree + token-budget synthesize | No — rebuild from Markdown |
-| Code graph (`codegraph_*`) | Structural imports/calls over **source** | No — index the repo |
-| Onyx (`knowledge_search_onyx`) | Enterprise corpus search | External; cite into vault |
-| `memory_recall` + `sources` | Multi-source facade → `hits[]` + `followUps` | Orchestration |
+| Piece                            | Role                                         | Canonical?                 |
+| -------------------------------- | -------------------------------------------- | -------------------------- |
+| Vault Markdown (`memory_ingest`) | Narrative decisions, handoffs, wikilinks     | **Yes**                    |
+| `memory.db` + embeddings         | Derived chunks + optional vector KNN         | No — rebuild from vault    |
+| PageIndex (`pageindex_*`)        | Heading tree + token-budget synthesize       | No — rebuild from Markdown |
+| Code graph (`codegraph_*`)       | Structural imports/calls over **source**     | No — index the repo        |
+| Onyx (`knowledge_search_onyx`)   | Enterprise corpus search                     | External; cite into vault  |
+| `memory_recall` + `sources`      | Multi-source facade → `hits[]` + `followUps` | Orchestration              |
 
 **Agent habit:** call **`memory_recall`** first (set **`sources`** when you need code / PageIndex / Onyx in one shot). Use specialist tools only when **`followUps`** say so (path, synthesize, filtered search). **Write once** to the vault; use **`rebuild`** on ingest for derived indexes — do not paste the same prose into five systems.
 

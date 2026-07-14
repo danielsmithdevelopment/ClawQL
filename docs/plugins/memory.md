@@ -18,15 +18,15 @@ Persists durable session knowledge to an **Obsidian-compatible vault** and recal
 
 ## Roles in the memory system
 
-| Piece | Role | Canonical? | Redundancy / handoff |
-| ----- | ---- | ---------- | -------------------- |
-| **Vault Markdown** (`memory_ingest`) | Human-readable narrative: decisions, handoffs, wikilinks | **Yes** — source of truth for notes | Team sync (R2/S3/GCS); back up the vault |
-| **`memory.db` + embeddings** | Derived chunk index + optional vector KNN | No — rebuilt from vault | Sync after ingest (default); Merkle/Cuckoo optional |
-| **Wikilink graph** | Related-note hops inside `memory_recall` | Edge data derived from vault / db | Overlaps keyword seeds — intentional |
-| **PageIndex** (`pageindex_*`) | Vectorless heading tree, token-budget synthesize | No — derived from Markdown | Rebuild via `rebuild.pageindex` or `pageindex_build_tree` |
-| **Code graph** (`codegraph_*`) | Structural AST imports/calls/paths over **source** | No — derived from repo | Index separately; not vault prose |
-| **Onyx** (`knowledge_search_onyx`) | Enterprise corpus search | External system of record | Pass citations into ingest; do not duplicate full corpora into the vault |
-| **`memory_recall` facade** | Multi-source entry (`sources` → normalized `hits[]` + `followUps`) | Orchestration only | Specialist tools remain the deep path |
+| Piece                                | Role                                                               | Canonical?                          | Redundancy / handoff                                                     |
+| ------------------------------------ | ------------------------------------------------------------------ | ----------------------------------- | ------------------------------------------------------------------------ |
+| **Vault Markdown** (`memory_ingest`) | Human-readable narrative: decisions, handoffs, wikilinks           | **Yes** — source of truth for notes | Team sync (R2/S3/GCS); back up the vault                                 |
+| **`memory.db` + embeddings**         | Derived chunk index + optional vector KNN                          | No — rebuilt from vault             | Sync after ingest (default); Merkle/Cuckoo optional                      |
+| **Wikilink graph**                   | Related-note hops inside `memory_recall`                           | Edge data derived from vault / db   | Overlaps keyword seeds — intentional                                     |
+| **PageIndex** (`pageindex_*`)        | Vectorless heading tree, token-budget synthesize                   | No — derived from Markdown          | Rebuild via `rebuild.pageindex` or `pageindex_build_tree`                |
+| **Code graph** (`codegraph_*`)       | Structural AST imports/calls/paths over **source**                 | No — derived from repo              | Index separately; not vault prose                                        |
+| **Onyx** (`knowledge_search_onyx`)   | Enterprise corpus search                                           | External system of record           | Pass citations into ingest; do not duplicate full corpora into the vault |
+| **`memory_recall` facade**           | Multi-source entry (`sources` → normalized `hits[]` + `followUps`) | Orchestration only                  | Specialist tools remain the deep path                                    |
 
 **Write once, refresh indexes:** `memory_ingest` always writes vault Markdown. Optional `rebuild` refreshes **derived** layers (PageIndex tree, memory.db/embeddings). Codegraph indexes **code**; Onyx stays a **search** target (citations in, not “ingest into Onyx”).
 
@@ -59,13 +59,13 @@ Persists durable session knowledge to an **Obsidian-compatible vault** and recal
 }
 ```
 
-| Source | What it contributes |
-| ------ | ------------------- |
-| **`vault`** | Keyword + wikilink BFS over Obsidian Markdown |
-| **`vector`** | Embedding KNN seeds (when vector backend + API key configured) |
-| **`codegraph`** | Structural symbol hits (`codeGraphHits` + normalized hits) |
-| **`pageindex`** | Term-overlap heading nodes from stored PageIndex trees |
-| **`onyx`** | Enterprise citations via injected Onyx search |
+| Source          | What it contributes                                            |
+| --------------- | -------------------------------------------------------------- |
+| **`vault`**     | Keyword + wikilink BFS over Obsidian Markdown                  |
+| **`vector`**    | Embedding KNN seeds (when vector backend + API key configured) |
+| **`codegraph`** | Structural symbol hits (`codeGraphHits` + normalized hits)     |
+| **`pageindex`** | Term-overlap heading nodes from stored PageIndex trees         |
+| **`onyx`**      | Enterprise citations via injected Onyx search                  |
 
 **Defaults when `sources` is omitted:** `vault` + `vector`, plus hybrids from env (`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH`, `_PAGEINDEX`, `_ONYX`) or `includeCodeGraph: true`.
 
@@ -88,22 +88,22 @@ Persists durable session knowledge to an **Obsidian-compatible vault** and recal
 }
 ```
 
-| Flag | Effect |
-| ---- | ------ |
-| **`rebuild.pageindex`** | Rebuild PageIndex for the written note (or set **`CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX=1`**) |
-| **`rebuild.embeddings`** | Run memory.db / embedding sync (default on when memory.db enabled; `false` skips) |
+| Flag                     | Effect                                                                                         |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| **`rebuild.pageindex`**  | Rebuild PageIndex for the written note (or set **`CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX=1`**) |
+| **`rebuild.embeddings`** | Run memory.db / embedding sync (default on when memory.db enabled; `false` skips)              |
 
 ## Enable / disable
 
-| Env                                           | Default | Effect                                                              |
-| --------------------------------------------- | ------- | ------------------------------------------------------------------- |
-| **`CLAWQL_ENABLE_MEMORY=0`**                  | on      | Omit `MemoryPlugin` and hide memory + PageIndex + code graph tools  |
-| **`CLAWQL_ENABLE_PAGEINDEX=0`**               | on      | Hide `pageindex_*` only (memory ingest/recall remain)               |
-| **`CLAWQL_ENABLE_CODEGRAPH=1`**               | off     | Register `codegraph_*` tools (structural code graph)                |
-| **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`** | off     | Default `sources` includes codegraph                                |
-| **`CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX=1`** | off     | Default `sources` includes pageindex                                |
-| **`CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1`**      | off     | Default `sources` includes onyx (needs Onyx wired + enabled)        |
-| **`CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX=1`**| off     | Rebuild PageIndex after every successful ingest                     |
+| Env                                            | Default | Effect                                                             |
+| ---------------------------------------------- | ------- | ------------------------------------------------------------------ |
+| **`CLAWQL_ENABLE_MEMORY=0`**                   | on      | Omit `MemoryPlugin` and hide memory + PageIndex + code graph tools |
+| **`CLAWQL_ENABLE_PAGEINDEX=0`**                | on      | Hide `pageindex_*` only (memory ingest/recall remain)              |
+| **`CLAWQL_ENABLE_CODEGRAPH=1`**                | off     | Register `codegraph_*` tools (structural code graph)               |
+| **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`**  | off     | Default `sources` includes codegraph                               |
+| **`CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX=1`**  | off     | Default `sources` includes pageindex                               |
+| **`CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1`**       | off     | Default `sources` includes onyx (needs Onyx wired + enabled)       |
+| **`CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX=1`** | off     | Rebuild PageIndex after every successful ingest                    |
 
 ## Prerequisites
 

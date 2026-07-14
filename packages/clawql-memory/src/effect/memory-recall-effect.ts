@@ -263,7 +263,9 @@ export function executeMemoryRecallCoreEffect(
           if (sim >= minVectorSim) seedSet.add(p);
         }
       }
-      const seeds = [...seedSet].sort((a, b) => (scoreByRel.get(b) ?? 0) - (scoreByRel.get(a) ?? 0));
+      const seeds = [...seedSet].sort(
+        (a, b) => (scoreByRel.get(b) ?? 0) - (scoreByRel.get(a) ?? 0)
+      );
 
       type Q = { rel: string; depth: number; reason: "keyword" | "link" | "vector"; from?: string };
       const queue: Q[] = [];

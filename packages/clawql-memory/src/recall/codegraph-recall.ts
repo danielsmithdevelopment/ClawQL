@@ -106,7 +106,8 @@ export async function recallCodeGraphSupplementPack(input: {
       codeGraphHits: [],
       hits: [],
       followUps,
-      skipped: "Hybrid codegraph not enabled (set CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1 or pass sources: [\"codegraph\"])",
+      skipped:
+        'Hybrid codegraph not enabled (set CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1 or pass sources: ["codegraph"])',
     };
   }
 
