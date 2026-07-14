@@ -3,7 +3,8 @@ import { Prose } from '@/components/Prose'
 
 /**
  * Shared prose column for generated long-form docs (agent-setup, vision, …).
- * Includes the in-page table of contents when the route has ≥2 h2 sections.
+ * Includes the in-page TOC; a page-wide claim guard dedupes if the MDX
+ * `wrapper` also mounts `OnThisPage`.
  */
 export function DocProse({
   children,

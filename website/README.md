@@ -11,7 +11,9 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). Global search (⌘K) indexes MDX via FlexSearch — `prebuild` emits lazy-loaded chunks in `public/search-index/` (`scripts/generate-search-index.mjs`, runtime in `src/mdx/search-runtime.ts`).
 
-**In-page TOC:** pages with two or more `##` headings get an **On this page** nav (and left-sidebar section links). Section metadata is generated Workers-safely by `scripts/generate-doc-layout-sections.mjs` → `src/generated/doc-layout-sections.generated.ts` (wired into `prebuild` / `dev` after doc sync scripts).
+**In-page TOC:** pages with two or more `##` headings get an **On this page** nav (and left-sidebar section links). Section metadata is generated Workers-safely by `scripts/generate-doc-layout-sections.mjs` → `src/generated/doc-layout-sections.generated.ts` (wired into `prebuild` / `dev` after doc sync scripts). Only one TOC renders per page (claim guard in `OnThisPageProvider`).
+
+**Caching:** HTML uses short edge TTLs (`edge-cache-control.mjs` / `public/_headers`) so prerendered pages cannot keep pointing at deleted `/_next/static/*.css` hashes after a deploy. Static assets remain immutable.
 
 ## Build
 
