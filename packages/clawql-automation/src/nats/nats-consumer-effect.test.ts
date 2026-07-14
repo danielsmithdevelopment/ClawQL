@@ -9,9 +9,7 @@ describe("natsHitlConsumerScopedEffect", () => {
     delete process.env.CLAWQL_NATS_URL;
     delete process.env.CLAWQL_NATS_JETSTREAM;
     await Effect.runPromise(
-      Effect.scoped(
-        natsHitlConsumerScopedEffect(async () => ({ ok: true }))
-      )
+      Effect.scoped(natsHitlConsumerScopedEffect(async () => ({ ok: true })))
     );
     expect(true).toBe(true);
   });
