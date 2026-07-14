@@ -385,6 +385,8 @@ async function main() {
   await maybeVerifyReleaseManifestAtStartup();
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
+  const { registerClawqlApiShutdownHooks } = await import("./clawql-api-adapters.js");
+  registerClawqlApiShutdownHooks();
   const app = await createMcpHttpApp();
   const { logStartupSummary } = await import("./startup-summary.js");
   await logStartupSummary();
