@@ -260,7 +260,7 @@ From enablement §5.4 and the Effect plan §8:
 | `AutomationToolsService` argocd                                                  | ✅ Native `Effect.gen` enabled → soft Zod → K8s CRD list/get/sync                                                                               |
 | `hitl_enqueue_label_studio`                                                      | ✅ Native `Effect.gen` config/validate → HTTP import → NATS publish hook                                                                        |
 | `SandboxExecService` sandbox_exec                                                | ✅ Native `Effect.gen` (parse backend → resolve probes → dispatch Kata/Docker/Seatbelt/bridge → shape); Promise façade kept                     |
-| Background workers (schedule / ouroboros poller / inference pipeline)            | ✅ Daemon fibers + `Effect.sleep` loops (skip-if-busy `Ref`); interruptible `stop()`; TestClock-covered                                                                                           |
+| Background workers (schedule / ouroboros poller / inference pipeline)            | ✅ Daemon fibers + `Effect.sleep` loops (skip-if-busy `Ref`); interruptible `stop()`; TestClock-covered                                         |
 
 **Rule for new code in extracted packages:** prefer Effect in `clawql-core` / `clawql-api`; legacy `async` is acceptable **only** at IO edges (`Effect.tryPromise`). See plan §7.
 
