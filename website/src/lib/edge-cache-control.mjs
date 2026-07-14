@@ -1,15 +1,23 @@
 /**
  * Shared Cache-Control values for docs.clawql.com (Cloudflare Workers + CDN).
  * Imported from next.config.mjs and mirrored in public/_headers where applicable.
+ *
+ * HTML TTLs must stay short: prerendered HTML embeds hashed `/_next/static/*.css`
+ * URLs. Long edge HTML caches after a deploy serve stale markup that points at
+ * CSS files that no longer exist → unstyled pages (FOUC that never recovers).
+ * Hashed static assets remain immutable / long-lived.
  */
 
-/** Default HTML: browsers revalidate; edge may cache ~7d and serve stale up to ~30d. */
+/** Default HTML: browsers revalidate; edge may keep a brief soft cache. */
 export const EDGE_HTML_CACHE_CONTROL =
-  'public, max-age=0, s-maxage=604800, stale-while-revalidate=2592000'
+  'public, max-age=0, must-revalidate, s-maxage=60, stale-while-revalidate=300'
 
-/** Large MDX / generated bodies: maximize edge reuse (purge dashboard after urgent edits). */
+/**
+ * Large MDX / generated bodies: slightly longer edge reuse than default HTML,
+ * still short enough that post-deploy hashed CSS links cannot linger for days.
+ */
 export const EDGE_HEAVY_HTML_CACHE_CONTROL =
-  'public, max-age=0, s-maxage=2592000, stale-while-revalidate=7776000'
+  'public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900'
 
 /** Path patterns that get EDGE_HEAVY_HTML_CACHE_CONTROL in next.config headers(). */
 export const HEAVY_HTML_ROUTE_SOURCES = [

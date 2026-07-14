@@ -88,6 +88,17 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body className="flex min-h-full overflow-x-hidden bg-claw-warm-white antialiased dark:bg-claw-bg">
+        {/* Critical fallbacks if hashed CSS is briefly unavailable or delayed */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+.docs-logo-mark{width:2.25rem;height:2.25rem;object-fit:cover;object-position:top;border-radius:0.375rem}
+@media (max-width:1023px){
+  .docs-desktop-nav{display:none!important}
+}
+`.trim(),
+          }}
+        />
         <a
           href="#main-content"
           className="fixed top-0 left-4 z-[100] -translate-y-full rounded-b-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-md transition-transform focus:translate-y-0 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-white dark:bg-claw-cyan dark:text-claw-bg dark:focus:outline-claw-bg"

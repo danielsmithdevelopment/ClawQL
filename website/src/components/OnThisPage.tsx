@@ -2,19 +2,67 @@
 
 import clsx from 'clsx'
 import Link from 'next/link'
+import {
+  createContext,
+  useContext,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 
 import { useSectionStore } from '@/components/SectionProvider'
 import { TOC_COMPACT_THRESHOLD } from '@/lib/toc-constants'
+
+const OnThisPageClaimContext = createContext<{
+  claim: (id: string) => boolean
+} | null>(null)
+
+/**
+ * Ensures only the first `OnThisPage` in the tree renders. Generated docs wrap
+ * MDX with DocProse and may still receive the MDX `wrapper` — without this
+ * guard, readers see two identical TOCs.
+ */
+export function OnThisPageProvider({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const ownerRef = useRef<string | null>(null)
+  const claim = (id: string) => {
+    if (ownerRef.current === null) {
+      ownerRef.current = id
+      return true
+    }
+    return ownerRef.current === id
+  }
+  return (
+    <OnThisPageClaimContext.Provider value={{ claim }}>
+      {children}
+    </OnThisPageClaimContext.Provider>
+  )
+}
 
 /**
  * In-page table of contents for long docs (≥2 h2 sections).
  * Section list is seeded at build time (Layout) and kept in sync via Heading.
  */
 export function OnThisPage({ className }: { className?: string }) {
+  const instanceId = useId()
+  const claimApi = useContext(OnThisPageClaimContext)
+  const [allowed, setAllowed] = useState(
+    () => claimApi?.claim(instanceId) ?? true,
+  )
+
+  useLayoutEffect(() => {
+    if (!claimApi) return
+    setAllowed(claimApi.claim(instanceId))
+  }, [claimApi, instanceId])
+
   const sections = useSectionStore((s) => s.sections)
   const visibleSections = useSectionStore((s) => s.visibleSections)
 
-  if (sections.length < 2) {
+  if (!allowed || sections.length < 2) {
     return null
   }
 
