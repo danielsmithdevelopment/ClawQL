@@ -8,6 +8,11 @@ export {
   executeRunIdpPipelineCore,
   executeRunIdpPipelineEffect,
 } from "./documents-tools-effect.js";
+export {
+  runIdpPipelineEffect,
+  parseExecuteText,
+  loadMerkleSnapshotEffect,
+} from "./idp-pipeline-effect.js";
 export { DocumentsToolsService, documentsToolsLiveLayer } from "./documents-tools-service.js";
 export {
   documentsClassifyProgram,
