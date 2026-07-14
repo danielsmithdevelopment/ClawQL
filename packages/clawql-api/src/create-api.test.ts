@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
-import { makeMemoryLayer, MEMORY_PLUGIN_ID } from "clawql-memory/plugin";
+import { MEMORY_PLUGIN_ID } from "clawql-memory/plugin";
 import { ClawQLApi, createClawQLApi } from "./index.js";
 import { PANGUARD_PROXY_PLUGIN_ID } from "./plugins/panguard-proxy-plugin.js";
 
