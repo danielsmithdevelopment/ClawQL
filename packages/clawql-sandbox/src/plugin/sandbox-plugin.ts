@@ -2,7 +2,8 @@ import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import type { Plugin } from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
-import { handleClawqlCodeToolInput, type SandboxCodeToolInput } from "../bridge-client.js";
+import type { SandboxCodeToolInput } from "../bridge-client.js";
+import { runSandboxEffect, sandboxExecProgram } from "../effect/sandbox-effect-runtime.js";
 
 export const SANDBOX_PLUGIN_ID = "clawql-sandbox";
 
@@ -36,6 +37,7 @@ export const sandboxCodeSchema = {
     .describe("Optional wall-clock limit in ms (capped by CLAWQL_SANDBOX_TIMEOUT_MS_MAX)."),
 };
 
+/** Promise facade for `sandbox_exec` (Effect services underneath). */
 export async function handleSandboxExecToolInput(
   params: SandboxCodeToolInput
 ): Promise<{ content: { type: "text"; text: string }[] }> {
@@ -45,7 +47,7 @@ export async function handleSandboxExecToolInput(
     persistenceMode: params.persistenceMode,
     timeoutMs: params.timeoutMs,
   });
-  return handleClawqlCodeToolInput(params);
+  return runSandboxEffect(sandboxExecProgram(params));
 }
 
 export function createSandboxPlugin(): Plugin {

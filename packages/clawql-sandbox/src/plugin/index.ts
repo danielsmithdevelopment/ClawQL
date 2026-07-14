@@ -15,3 +15,15 @@ export {
   type SandboxPersistenceMode,
   type SandboxExecBackendKind,
 } from "../bridge-client.js";
+
+export {
+  SandboxError,
+  SandboxExecService,
+  executeSandboxExecEffect,
+  sandboxExecLiveLayer,
+  sandboxExecProgram,
+  sandboxServicesLiveLayer,
+  runSandboxEffect,
+  type SandboxExecResult,
+  type SandboxServices,
+} from "../effect/index.js";
