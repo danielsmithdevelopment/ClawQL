@@ -13,6 +13,7 @@ import {
   ouroborosEventStoreLiveLayer,
 } from "./ouroboros-event-store-service.js";
 import { OuroborosError } from "./ouroboros-errors.js";
+import { OuroborosEnginesService, ouroborosEnginesLiveLayer } from "./ouroboros-engines-service.js";
 import { OuroborosLoopService, ouroborosLoopLiveLayer } from "./ouroboros-loop-service.js";
 import { OuroborosPollerService, ouroborosPollerLiveLayer } from "./ouroboros-poller-service.js";
 import { OuroborosToolsService, ouroborosToolsLiveLayer } from "./ouroboros-tools-service.js";
@@ -21,6 +22,7 @@ export type OuroborosServices =
   | OuroborosContextService
   | OuroborosToolsService
   | OuroborosEventStoreService
+  | OuroborosEnginesService
   | OuroborosLoopService
   | OuroborosPollerService;
 
@@ -28,6 +30,7 @@ export type OuroborosServices =
 export function ouroborosServicesLiveLayer(): Layer.Layer<OuroborosServices> {
   return Layer.mergeAll(
     ouroborosEventStoreLiveLayer(),
+    ouroborosEnginesLiveLayer(),
     ouroborosLoopLiveLayer(),
     ouroborosPollerLiveLayer(),
     ouroborosContextLiveLayer(),
