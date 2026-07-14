@@ -326,7 +326,8 @@ function appendBuyerOfferContingencies(text: string, extractions: GroundedExtrac
   }
 }
 
-function heuristicExtract(input: ExtractDocumentInput): ExtractDocumentResult {
+/** Local regex grounding when `LANGEXTRACT_BASE_URL` is unset. */
+export function heuristicExtract(input: ExtractDocumentInput): ExtractDocumentResult {
   const text = input.text;
   const extractions: GroundedExtraction[] = [];
 
@@ -442,12 +443,16 @@ function resolvePromptAndExamples(input: ExtractDocumentInput): {
   };
 }
 
-export async function extractDocument(input: ExtractDocumentInput): Promise<ExtractDocumentResult> {
-  const baseUrl = langextractBaseUrl();
-  if (!baseUrl) {
-    return heuristicExtract(input);
-  }
+export type LangextractHttpResponse = {
+  status: number;
+  text: string;
+};
 
+/** POST to LangExtract sidecar; pure HTTP IO (no result shaping). */
+export async function postLangextractHttp(
+  input: ExtractDocumentInput,
+  baseUrl: string
+): Promise<LangextractHttpResponse> {
   const { prompt_description, examples } = resolvePromptAndExamples(input);
   const body = {
     text: input.text,
@@ -466,16 +471,22 @@ export async function extractDocument(input: ExtractDocumentInput): Promise<Extr
     body: JSON.stringify(body),
   });
 
-  const text = await res.text();
-  if (!res.ok) {
+  return { status: res.status, text: await res.text() };
+}
+
+/** Map HTTP body → extract result (sync). */
+export function parseLangextractHttpResponse(
+  response: LangextractHttpResponse
+): ExtractDocumentResult {
+  if (response.status < 200 || response.status >= 300) {
     return {
       ok: false,
-      error: `langextract HTTP ${res.status}: ${text.slice(0, 500)}`,
+      error: `langextract HTTP ${response.status}: ${response.text.slice(0, 500)}`,
     };
   }
 
   try {
-    const parsed = JSON.parse(text) as ExtractDocumentResult;
+    const parsed = JSON.parse(response.text) as ExtractDocumentResult;
     if (!parsed.ok) {
       return { ok: false, error: parsed.error ?? "langextract sidecar returned ok=false" };
     }
@@ -488,8 +499,18 @@ export async function extractDocument(input: ExtractDocumentInput): Promise<Extr
       artifact_paths: parsed.artifact_paths,
     };
   } catch {
-    return { ok: false, error: `langextract returned non-JSON: ${text.slice(0, 200)}` };
+    return { ok: false, error: `langextract returned non-JSON: ${response.text.slice(0, 200)}` };
   }
+}
+
+/** Promise façade — prefer {@link executeExtractDocumentEffect} for Effect callers. */
+export async function extractDocument(input: ExtractDocumentInput): Promise<ExtractDocumentResult> {
+  const baseUrl = langextractBaseUrl();
+  if (!baseUrl) {
+    return heuristicExtract(input);
+  }
+  const response = await postLangextractHttp(input, baseUrl);
+  return parseLangextractHttpResponse(response);
 }
 
 export async function handleExtractDocumentToolInput(

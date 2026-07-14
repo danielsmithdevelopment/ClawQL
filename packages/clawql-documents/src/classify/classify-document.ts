@@ -41,7 +41,8 @@ export type ClassifyDocumentResult = {
   error?: string;
 };
 
-function heuristicClassify(input: ClassifyDocumentInput): ClassifyDocumentResult {
+/** Local keyword heuristic when `CLASSIFIER_BASE_URL` is unset. */
+export function heuristicClassify(input: ClassifyDocumentInput): ClassifyDocumentResult {
   const corpus = [input.docling_md, input.text, JSON.stringify(input.docling_json ?? {})]
     .filter(Boolean)
     .join("\n")
@@ -90,14 +91,16 @@ function heuristicClassify(input: ClassifyDocumentInput): ClassifyDocumentResult
   };
 }
 
-export async function classifyDocument(
-  input: ClassifyDocumentInput
-): Promise<ClassifyDocumentResult> {
-  const baseUrl = classifierBaseUrl();
-  if (!baseUrl) {
-    return heuristicClassify(input);
-  }
+export type ClassifierHttpResponse = {
+  status: number;
+  text: string;
+};
 
+/** POST to remote classifier; pure HTTP IO (no result shaping). */
+export async function postClassifierHttp(
+  input: ClassifyDocumentInput,
+  baseUrl: string
+): Promise<ClassifierHttpResponse> {
   const url = `${baseUrl.replace(/\/$/, "")}/classify`;
   const body = {
     doc_id: input.doc_id,
@@ -113,16 +116,23 @@ export async function classifyDocument(
     body: JSON.stringify(body),
   });
 
-  const text = await res.text();
-  if (!res.ok) {
+  return { status: res.status, text: await res.text() };
+}
+
+/** Map HTTP body → classify result (sync). */
+export function parseClassifierHttpResponse(
+  input: ClassifyDocumentInput,
+  response: ClassifierHttpResponse
+): ClassifyDocumentResult {
+  if (response.status < 200 || response.status >= 300) {
     return {
       ok: false,
-      error: `classifier HTTP ${res.status}: ${text.slice(0, 500)}`,
+      error: `classifier HTTP ${response.status}: ${response.text.slice(0, 500)}`,
     };
   }
 
   try {
-    const parsed = JSON.parse(text) as Record<string, unknown>;
+    const parsed = JSON.parse(response.text) as Record<string, unknown>;
     const label = typeof parsed.label === "string" ? parsed.label : "unknown";
     const confidence =
       typeof parsed.confidence === "number"
@@ -142,8 +152,20 @@ export async function classifyDocument(
       needs_hitl: needsHitl,
     };
   } catch {
-    return { ok: false, error: `classifier returned non-JSON: ${text.slice(0, 200)}` };
+    return { ok: false, error: `classifier returned non-JSON: ${response.text.slice(0, 200)}` };
   }
+}
+
+/** Promise façade — prefer {@link executeClassifyDocumentEffect} for Effect callers. */
+export async function classifyDocument(
+  input: ClassifyDocumentInput
+): Promise<ClassifyDocumentResult> {
+  const baseUrl = classifierBaseUrl();
+  if (!baseUrl) {
+    return heuristicClassify(input);
+  }
+  const response = await postClassifierHttp(input, baseUrl);
+  return parseClassifierHttpResponse(input, response);
 }
 
 export async function handleClassifyDocumentToolInput(
