@@ -8,9 +8,7 @@ Modules 1–23 have given us a complete technical security stack, a living threa
 
 The gap between “deployed” and “effective” is where most security incidents originate. In this module we turn every control into something we can prove works under realistic attack conditions. We build a continuous, automated adversarial testing program that runs in CI, surfaces gaps immediately, and feeds new rules back into the system in real time. By the end you will have a living verification program that keeps the entire defense-in-depth stack honest.
 
----
-
-Why Controls Must Be Adversarially Tested
+## Why Controls Must Be Adversarially Tested
 
 Configuration reviews and static analysis only confirm that a control _exists_. Adversarial testing confirms that it _works_ when an intelligent attacker is trying to break it.
 
@@ -24,9 +22,7 @@ Key realities:
 
 Testing must be continuous, automated, and integrated into the deployment pipeline — not a periodic afterthought.
 
----
-
-YAML Test Case Library — Format and Storage
+## YAML Test Case Library — Format and Storage
 
 We maintain a living library of structured test cases in the infrastructure repository. Every test is a simple YAML file.
 
@@ -70,9 +66,7 @@ A failing test case blocks the deployment — exactly the same weight as a faili
 
 After each run, a signed test report is archived alongside the deployment artifact, proving that every known attack pattern was tested on this exact release.
 
----
-
-Prompt Injection and Goal Hijacking Drills
+## Prompt Injection and Goal Hijacking Drills
 
 We run three categories of injection tests:
 
@@ -88,9 +82,7 @@ clawql security inject --mode direct|indirect|multistep --target staging
 
 All tests run against an isolated staging environment with a dedicated test memory store — never against production.
 
----
-
-ATR Bypass and Privilege Escalation Tests
+## ATR Bypass and Privilege Escalation Tests
 
 We deliberately attempt to break the core enforcement layer:
 
@@ -102,9 +94,7 @@ We deliberately attempt to break the core enforcement layer:
 
 Every bypass attempt must generate both the correct rejection response and an audit log entry. A silent rejection without a log is treated as a detection gap.
 
----
-
-Tool Schema Fuzzing
+## Tool Schema Fuzzing
 
 We use property-based fuzzing to find edge cases that static tests miss.
 
@@ -128,9 +118,7 @@ Specific edge cases explicitly tested:
 
 Any crash or incorrect validation discovered by fuzzing becomes a named regression test case. Fuzzing runs weekly in CI as a scheduled job, not just on PRs.
 
----
-
-Memory Poisoning Simulations
+## Memory Poisoning Simulations
 
 We simulate every memory-poisoning vector:
 
@@ -144,9 +132,7 @@ We simulate every memory-poisoning vector:
 
 All simulations run against an isolated test memory store that is automatically restored to its original state after each run — never production.
 
----
-
-Purple Team Workflow
+## Purple Team Workflow
 
 Red team and blue team work together in real time:
 
@@ -165,9 +151,7 @@ This is not a post-exercise activity — gaps are closed in real time.
 
 Cadence: quarterly (aligned with the quarterly review in Module 25) plus ad-hoc after any major architecture change.
 
----
-
-External Penetration Test Scope
+## External Penetration Test Scope
 
 We also bring in external red teams quarterly.
 
@@ -201,9 +185,7 @@ Briefing package provided to the external team:
 
 Evidence requirements: methodology in the statement of work, findings report with full reproduction steps, retest within 30 days, and all artifacts signed and stored in WORM.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - The test case library in CI is what separates “we believe the controls work” from “we verify the controls work on every release.”
 

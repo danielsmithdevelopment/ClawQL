@@ -8,9 +8,7 @@ Modules 1–22 have given us a complete technical security stack and a living th
 
 The OWASP Agentic Top 10 provides a shared language for the ten risk categories that matter most when agents can act autonomously, maintain memory, and call real-world tools. In this module we walk through each risk, show exactly which controls in our platform address it, and explain the configuration and evidence required to prove it is working. By the end you will have a clear, auditable bridge between the published risk framework and our operational deployment decisions — turning “we know what could go wrong” into “we have verified that we’ve addressed it.”
 
----
-
-What the OWASP Agentic Top 10 Covers
+## What the OWASP Agentic Top 10 Covers
 
 The OWASP Agentic Top 10 (ASI = Agentic Security Issues) identifies the following risks:
 
@@ -36,9 +34,7 @@ The OWASP Agentic Top 10 (ASI = Agentic Security Issues) identifies the followin
 
 For each risk we provide the specific ClawQL controls, the exact modules that implement them, and the evidence that confirms they are operational.
 
----
-
-Control Mapping for Each Risk
+## Control Mapping for Each Risk
 
 ASI01: Prompt Injection
 
@@ -120,9 +116,7 @@ ASI10: Unbounded Consumption
 - Module 12 — circuit breakers on tool-call rate and session duration.  
   Evidence: Session-level token accounting and quota enforcement logs are part of the WORM trail.
 
----
-
-Evidence of Control Effectiveness
+## Evidence of Control Effectiveness
 
 Every control mapping is backed by executable test cases in the Module 24 adversarial testing suite.
 
@@ -130,9 +124,7 @@ Monthly metrics from Panguard track block rate per OWASP category and are trende
 
 Quarterly evidence packages (generated automatically from WORM + Merkle roots + Panguard logs) show each risk, the deployed control, and the test that verified it. This package is stored in WORM and used for SOC 2, EU AI Act, and other compliance audits (Module 29).
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - The OWASP Agentic Top 10 provides an external accountability framework — being able to map every risk to a deployed control is the deliverable.
 

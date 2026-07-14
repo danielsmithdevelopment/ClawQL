@@ -8,9 +8,7 @@ Modules 1–21 have given us a complete technical security stack: trusted images
 
 Standard application threat models assume simple request-response architectures with a human in the loop. Agentic AI systems are fundamentally different — they act autonomously across many steps, maintain persistent memory, delegate to sub-agents, and execute real-world actions. In this module we build a living threat model tailored to agentic platforms using an extended STRIDE framework, attack trees, and a defined update cadence so the model stays accurate as the platform evolves rather than becoming obsolete the week after it is written.
 
----
-
-Why Agentic AI Requires a Distinct Threat Model
+## Why Agentic AI Requires a Distinct Threat Model
 
 Traditional threat models assume:
 
@@ -42,9 +40,7 @@ This creates new threat categories that do not appear in standard STRIDE templat
 
 We must extend STRIDE and make the threat model a living document that evolves with the platform.
 
----
-
-STRIDE Applied to Each Component
+## STRIDE Applied to Each Component
 
 We systematically apply STRIDE (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege) to every major component, highlighting how the categories change in an agentic context.
 
@@ -90,9 +86,7 @@ Operator Plane
 
 Each threat is mapped to current controls and residual risk.
 
----
-
-Attack Trees
+## Attack Trees
 
 The attack tree is the most practical artifact we maintain.
 
@@ -112,9 +106,7 @@ Major branches:
 
 Each leaf node maps to one or more controls. Any leaf without a corresponding control is a documented gap with a remediation timeline.
 
----
-
-The Living Threat Model
+## The Living Threat Model
 
 A threat model written once at launch is a historical document within weeks. Ours is living.
 
@@ -144,9 +136,7 @@ Update process:
 
 Threat model review is a standing agenda item in every quarterly security review (Module 25). Red-team exercises (Module 24) must incorporate findings into the model within 14 days.
 
----
-
-Threat Model Documentation Format
+## Threat Model Documentation Format
 
 The model lives in git alongside infrastructure code as version-controlled YAML.
 
@@ -168,9 +158,7 @@ Each threat entry contains:
 
 Control gaps are explicitly documented with remediation plans and owners.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - Agentic AI introduces threat categories (goal hijacking, memory poisoning, inter-agent lateral movement) that don’t exist in standard STRIDE templates — the template must be extended.
 

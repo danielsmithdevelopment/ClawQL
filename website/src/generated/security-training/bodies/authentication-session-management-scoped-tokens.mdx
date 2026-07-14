@@ -10,9 +10,7 @@ Agent sessions are not like traditional web sessions. They can run for minutes o
 
 In this module we replace long-lived tokens with per-request scoped tokens, nonce-based replay protection, short TTLs, and proper second-factor patterns. By the end you will have an authentication system where stealing a token is irrelevant — because the token expires before the attacker can use it.
 
----
-
-Why Long-Lived Tokens Are an Agentic Risk
+## Why Long-Lived Tokens Are an Agentic Risk
 
 Traditional web apps assume human users who interact every few seconds. Agentic platforms are different:
 
@@ -24,9 +22,7 @@ Traditional web apps assume human users who interact every few seconds. Agentic 
 
 The correct mental model is this: every tool call is a separate authentication decision, not a continuation of a prior one. Long-lived session tokens create exactly the kind of static credential we eliminated with Vault in Module 8. We must treat authentication the same way.
 
----
-
-JWT + ATR Token Exchange at the Gateway
+## JWT + ATR Token Exchange at the Gateway
 
 We issue a Session JWT at the very start of every session. This JWT contains:
 
@@ -55,9 +51,7 @@ Session JWT → Gateway → Vault token exchange → Tool handler
 
 Every exchange creates a signed audit log entry with the tool name, claims used, and exact timestamp. This pattern turns credential theft from catastrophic to irrelevant — the stolen token expires before it can be operationalized.
 
----
-
-OAuth2/OIDC for External Tool Calls
+## OAuth2/OIDC for External Tool Calls
 
 Never embed static API keys in agent context or memory.
 
@@ -75,9 +69,7 @@ For user-delegated authorization we use the OIDC device flow. The HITL approval 
 
 This eliminates static service-account credentials from the agent’s context entirely.
 
----
-
-Nonce-Based Replay Prevention
+## Nonce-Based Replay Prevention
 
 Even short-lived tokens need protection against replay attacks.
 
@@ -91,9 +83,7 @@ Every MCP request includes a unique nonce in the JWT payload. The gateway:
 
 This reduces the replay window to zero even inside the 5-minute token TTL. In multi-tenant deployments the Redis store is partitioned per tenant.
 
----
-
-Automatic Rotation and Revocation
+## Automatic Rotation and Revocation
 
 Rotation and revocation are fully automated:
 
@@ -107,9 +97,7 @@ Rotation and revocation are fully automated:
 
 - Every revocation event is written to the WORM audit trail with cause, timestamp, and the revoking principal.
 
----
-
-Multi-Factor and Device Pairing for Local Access
+## Multi-Factor and Device Pairing for Local Access
 
 Local gateway access requires a true second factor:
 
@@ -127,9 +115,7 @@ For CI runners we use OIDC workload identity federation instead of device pairin
 
 These two patterns (device pairing for humans + OIDC for CI) cover every access scenario without any static credentials.
 
----
-
-Audit Logging of Every Authenticated Action
+## Audit Logging of Every Authenticated Action
 
 Every step of the token lifecycle is logged to the WORM audit trail:
 
@@ -195,9 +181,7 @@ ATR claim validation, Panguard enforcement, and token expiry checking all contin
 - Nonce store outages must be paged and tracked against the gateway's RTO — they are gateway outages from the user's perspective
 - Fail-closed scope should be limited to the nonce check itself — other authentication layers (ATR validation, token expiry, Panguard) continue operating independently and should not be taken down by the same dependency
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - Per-request token scoping is the control that turns credential theft from catastrophic to irrelevant — the token is expired before it can be operationalized.
 

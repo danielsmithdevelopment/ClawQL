@@ -1,5 +1,5 @@
+import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
 import DaosBuildPlanBody from '@/generated/daos-build-plan-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -58,9 +58,9 @@ export default function DaosBuildPlanPage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <DaosBuildPlanBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }

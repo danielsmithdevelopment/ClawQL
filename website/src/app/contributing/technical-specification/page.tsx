@@ -1,5 +1,5 @@
+import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
 import ContributorTechnicalSpecBody from '@/generated/clawql-contributor-technical-spec-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -54,9 +54,9 @@ export default function ContributorTechnicalSpecPage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <ContributorTechnicalSpecBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }

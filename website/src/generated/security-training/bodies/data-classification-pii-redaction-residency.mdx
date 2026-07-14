@@ -10,9 +10,7 @@ An agent that reads sensitive information and writes to memory, logs, or externa
 
 In this module we make classification an architectural property of the platform, not a manual review step. By the end you will have automatic tagging at ingestion, Presidio-based redaction at every write boundary, classification-gated tool access, residency enforcement, and safe anonymisation for analytics and testing.
 
----
-
-The Accidental Data Classification Problem
+## The Accidental Data Classification Problem
 
 Every agent becomes a data classifier the moment it processes information — whether the platform was designed that way or not.
 
@@ -26,9 +24,7 @@ Without explicit classification:
 
 The damage is already done by the time a human reviews a log. Classification must therefore be enforced by the system at ingestion time, before any tool call processes the data.
 
----
-
-Classification Taxonomy
+## Classification Taxonomy
 
 We use a simple four-level taxonomy applied at every data ingestion point:
 
@@ -42,9 +38,7 @@ We use a simple four-level taxonomy applied at every data ingestion point:
 
 Classification is assigned at the moment data enters the platform (user message, tool result, retrieved document, or API response) and travels with the data as metadata for the rest of its lifecycle.
 
----
-
-Presidio Entity Detection
+## Presidio Entity Detection
 
 Presidio runs as a Panguard-integrated service and is invoked at every memory write, log emission, and external API call.
 
@@ -62,9 +56,7 @@ Action on detection:
 
 Partial redaction of a secret is never sufficient — we reject the operation entirely.
 
----
-
-Classification-Gated Tool Access
+## Classification-Gated Tool Access
 
 An agent’s ATR claims include a maxClassificationLevel (e.g., internal).
 
@@ -76,9 +68,7 @@ The gateway enforces this at recall time:
 
 Classification level is stored as metadata alongside every memory entry and is enforced server-side, never client-side.
 
----
-
-Residency Controls
+## Residency Controls
 
 Certain data must remain in a specific geographic region (EU data under GDPR, PHI under HIPAA).
 
@@ -92,9 +82,7 @@ Enforcement:
 
 Residency is enforced at the infrastructure layer, not just documented in policy.
 
----
-
-Anonymisation for Analytics and Testing
+## Anonymisation for Analytics and Testing
 
 Production data must never be used directly in development, testing, or analytics.
 
@@ -108,9 +96,7 @@ Techniques:
 
 These processes run automatically in CI pipelines and test environments.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - Classification at ingestion is the only approach that works — classification applied after the fact misses data that has already propagated.
 

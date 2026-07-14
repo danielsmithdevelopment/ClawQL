@@ -8,9 +8,7 @@ Modules 1–28 have given us a complete technical security architecture that is 
 
 In this module we map every control in the platform to its specific obligations under GDPR, HIPAA, SOC 2 Type II, and the EU AI Act. We resolve genuine architectural conflicts (such as GDPR’s right to erasure versus WORM immutability) with cryptographic erasure. And we show how to generate continuous audit evidence packages directly from the infrastructure we have already built. By the end you will have audit readiness as a continuous state — not a last-minute scramble.
 
----
-
-Why Compliance Mapping Is a Distinct Discipline
+## Why Compliance Mapping Is a Distinct Discipline
 
 Technical controls prove “we are secure.”  
 Regulatory compliance proves “we can demonstrate we are secure over time.”
@@ -23,9 +21,7 @@ The difference is evidence:
 
 Compliance mapping also surfaces real architectural tensions that pure security engineering can miss (e.g., GDPR erasure vs. immutable WORM logs). We treat compliance as an engineering discipline, not an after-the-fact documentation exercise.
 
----
-
-GDPR: Data Subject Rights vs. WORM Integrity
+## GDPR: Data Subject Rights vs. WORM Integrity
 
 The central conflict is Article 17 (right to be forgotten / erasure) versus our immutable, append-only memory store and WORM-backed audit logs.
 
@@ -52,9 +48,7 @@ Additional GDPR mappings:
 
 - Article 32 (technical measures): Mapped explicitly — pseudonymisation (Modules 15 & 18), integrity (Modules 18 & 26), availability (Module 28), testing (Modules 24 & 25).
 
----
-
-HIPAA: PHI-Handling Deployments
+## HIPAA: PHI-Handling Deployments
 
 First determine applicability: Does the deployment process health condition, care provision, or payment data that identifies individuals?
 
@@ -76,9 +70,7 @@ Additional requirements:
 
 - Breach notification: The PICERL process (Module 20) produces the timeline. A Breach Risk Assessment (BRA) determines reportability under the four-factor test. Notification deadline is 60 days.
 
----
-
-SOC 2 Type II: Control Mapping
+## SOC 2 Type II: Control Mapping
 
 SOC 2 Type II requires evidence that controls operated effectively over the audit period. Our platform produces that evidence continuously.
 
@@ -102,9 +94,7 @@ Type II evidence:
 
 - Common SOC 2 findings in agentic platforms (e.g., missing evidence of least-privilege enforcement, inadequate audit logging) are directly addressed by the modules above.
 
----
-
-EU AI Act: High-Risk Classification and Obligations
+## EU AI Act: High-Risk Classification and Obligations
 
 Determine high-risk status using Annex III categories (employment, essential services, law enforcement, critical infrastructure).
 
@@ -120,9 +110,7 @@ Key obligations and how we meet them:
 
 - Article 15 (Accuracy and Cybersecurity): Adversarial testing programme (Module 24) + full security stack.
 
----
-
-Producing Audit Evidence from Existing Infrastructure
+## Producing Audit Evidence from Existing Infrastructure
 
 We do not build separate compliance systems — we extract evidence from the platform we already run.
 
@@ -136,9 +124,7 @@ We do not build separate compliance systems — we extract evidence from the pla
 
 Audit readiness is now a continuous state (quarterly evidence packages, WORM retention, Merkle chain) rather than a periodic scramble.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - Cryptographic erasure (key deletion) is the only architecturally coherent solution to the GDPR erasure/WORM conflict.
 

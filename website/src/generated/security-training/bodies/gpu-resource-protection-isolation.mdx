@@ -10,9 +10,7 @@ GPU memory is not cleared between workloads by default. In a shared environment,
 
 In this module we extend least privilege all the way down to the hardware with MIG partitioning, namespace isolation, strict quotas, and side-channel defenses. By the end you will know exactly how to prevent both data leakage and resource-exhaustion attacks at the GPU level.
 
----
-
-The GPU Memory Residue Problem
+## The GPU Memory Residue Problem
 
 NVIDIA GPUs (and most other accelerators) do not zero memory between context switches by default. When one workload finishes, its data remains in GPU memory until the next workload overwrites it.
 
@@ -26,9 +24,7 @@ In a shared cluster this means:
 
 We must treat the GPU as a shared resource that requires the same zero-trust isolation we apply everywhere else.
 
----
-
-MIG (Multi-Instance GPU) Partitioning
+## MIG (Multi-Instance GPU) Partitioning
 
 MIG is the strongest hardware-level isolation available on supported NVIDIA GPUs (A100, H100, and later).
 
@@ -48,9 +44,7 @@ Kubernetes integration:
 
 MIG gives us true hardware isolation at the GPU level — the gold standard for multi-tenant inference.
 
----
-
-GPU Namespace Isolation (Non-MIG GPUs)
+## GPU Namespace Isolation (Non-MIG GPUs)
 
 For GPU models that do not support MIG we use namespace-level separation:
 
@@ -62,9 +56,7 @@ For GPU models that do not support MIG we use namespace-level separation:
 
 This architectural separation ensures that even without MIG, tenants cannot share the same physical GPU hardware.
 
----
-
-Resource Quotas and Blast Radius Bounding
+## Resource Quotas and Blast Radius Bounding
 
 We prevent both data leakage and denial-of-service with strict quotas:
 
@@ -78,9 +70,7 @@ We prevent both data leakage and denial-of-service with strict quotas:
 
 We also alert on sustained GPU utilization >90 % for >5 minutes from a single tenant — a strong signal of possible inference DoS.
 
----
-
-Side-Channel Attacks on Shared GPU
+## Side-Channel Attacks on Shared GPU
 
 Even with isolation, sophisticated attackers can attempt side-channel attacks:
 
@@ -96,9 +86,7 @@ Mitigations:
 
 In practice, these side-channels require significant infrastructure access and are lower priority than MIG or namespace isolation for most deployments.
 
----
-
-GPU Monitoring and Anomaly Detection
+## GPU Monitoring and Anomaly Detection
 
 Visibility is critical. We monitor continuously:
 
@@ -111,9 +99,7 @@ Visibility is critical. We monitor continuously:
 
 These signals turn the GPU layer into an observable part of our security posture.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - GPU memory residue is a hardware property, not a software bug — it requires hardware-level mitigation (MIG) or architectural separation (dedicated GPU per tenant).
 

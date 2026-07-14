@@ -8,9 +8,7 @@ Modules 1–18 have given us trusted images, admission control, vetted skills, z
 
 Security observability is not just “monitoring.” Poorly designed telemetry creates three failure modes that are as dangerous as missing controls: alert fatigue, coverage gaps, and telemetry itself becoming an exfiltration channel. In this module we design a complete observability stack that turns every component into a reliable security sensor. By the end you will have a canonical event schema, smart correlation rules, cardinality-safe metrics, tail-based tracing, and a NOC dashboard that tells you exactly what matters.
 
----
-
-The Three Failure Modes of Security Observability
+## The Three Failure Modes of Security Observability
 
 Most teams deploy tools and hope for the best. That produces noise instead of signal. The three classic failures are:
 
@@ -22,9 +20,7 @@ Most teams deploy tools and hope for the best. That produces noise instead of si
 
 We solve all three by design, not by accident.
 
----
-
-Canonical Security Event Schema
+## Canonical Security Event Schema
 
 Every security-relevant event across the entire platform conforms to one structured schema. This is the prerequisite for reliable SIEM correlation.
 
@@ -66,9 +62,7 @@ Seven event types (used for routing and correlation):
 
 Schema version is pinned in SIEM correlation rules. Any schema drift is detected and blocked before deployment.
 
----
-
-Falco Rules for Agentic Platforms
+## Falco Rules for Agentic Platforms
 
 Falco provides runtime syscall monitoring inside every container and Kata VM.
 
@@ -86,9 +80,7 @@ Key rules we ship out of the box:
 
 Falco output is shipped via Fluent Bit to both the WORM audit trail and the SIEM in parallel.
 
----
-
-Wazuh SIEM Correlation
+## Wazuh SIEM Correlation
 
 Wazuh correlates events across the entire platform. Three critical rules every deployment must have:
 
@@ -100,9 +92,7 @@ Wazuh correlates events across the entire platform. Three critical rules every d
 
 All correlation rules are pinned to a specific schema version. Any schema upgrade requires the rules to be updated first.
 
----
-
-Metric Cardinality and Sensitive Data in Labels
+## Metric Cardinality and Sensitive Data in Labels
 
 Prometheus is excellent for operational metrics but dangerous for security data.
 
@@ -114,9 +104,7 @@ Rules we enforce:
 
 Per-session and per-agent security metrics are emitted as log events to the WORM pipeline (restricted access) instead of Prometheus metrics. Prometheus scrape endpoints are restricted to the monitoring namespace via NetworkPolicy.
 
----
-
-Distributed Tracing for Security Call Graphs
+## Distributed Tracing for Security Call Graphs
 
 We use W3C traceparent headers propagated across every inter-component call (gateway ↔ Panguard ↔ tool handler ↔ NATS ↔ subagent, etc.).
 
@@ -138,9 +126,7 @@ Tail-based sampling policy:
 
 - Security traces (with ATR claims and session IDs) are accessible only to the security team role.
 
----
-
-NOC Dashboard: Three Views
+## NOC Dashboard: Three Views
 
 We give operators exactly the information they need at a glance.
 
@@ -168,9 +154,7 @@ Investigation (on-demand):
 
 - Session timeline linking SIEM events → WORM audit entries → distributed traces for any sessionId
 
----
-
-Alert Tuning Methodology
+## Alert Tuning Methodology
 
 We treat alert quality as a measurable engineering metric:
 
@@ -184,9 +168,7 @@ We treat alert quality as a measurable engineering metric:
 
 Never route INFO or WARNING to the same channel as CRITICAL.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - A canonical event schema is the prerequisite for SIEM correlation — schema drift silently breaks detection rules.
 

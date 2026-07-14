@@ -1,5 +1,5 @@
+import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
 import TokenEfficiencyBody from '@/generated/clawql-token-efficiency-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -47,9 +47,9 @@ export default function TokenEfficiencyPage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <TokenEfficiencyBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }

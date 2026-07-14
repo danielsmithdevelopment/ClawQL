@@ -1,5 +1,5 @@
+import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
 import MasterEnablementBody from '@/generated/clawql-master-enablement-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -84,9 +84,9 @@ export default function VisionMasterEnablementPage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <MasterEnablementBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }

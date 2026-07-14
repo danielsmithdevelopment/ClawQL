@@ -10,9 +10,7 @@ Skills are not container images. They execute _inside_ a running agent, with acc
 
 In this module we build a rigorous, automated vetting pipeline that treats every ClawHub skill with the same zero-trust discipline we apply to container images. By the end you’ll know exactly how to verify, analyze, observe, and safely allowlist skills before they ever touch a production agent.
 
----
-
-Why Skills Are a Distinct Supply Chain Problem
+## Why Skills Are a Distinct Supply Chain Problem
 
 Container images are verified once at the cluster admission layer (Module 2). Skills are different — they run live inside an already-running agent session.
 
@@ -26,9 +24,7 @@ Key differences that make skills uniquely dangerous:
 
 Download count and publisher reputation are not security controls. We need cryptographic proof, static analysis, and behavioral observation before any skill is trusted.
 
----
-
-Cryptographic Manifest Signing and Verification
+## Cryptographic Manifest Signing and Verification
 
 Every ClawHub skill ships with two files:
 
@@ -62,9 +58,7 @@ Allowlist entry format (stored in a signed, version-controlled file):
 
 At agent startup, the gateway checks every loaded skill against this allowlist. Hash mismatch = gateway refuses to start. This single mechanism blocks post-publish updates until the security team explicitly re-reviews and re-pins the new manifest.
 
----
-
-Automated Static Analysis with `clawql skill lint --strict`
+## Automated Static Analysis with `clawql skill lint --strict`
 
 Before any sandbox testing, we run strict static analysis:
 
@@ -84,9 +78,7 @@ The linter flags dangerous patterns including:
 
 A failed lint requires a written exception from the security team before the skill can proceed to sandbox testing. The full lint report is stored as a signed artifact alongside the manifest hash for audit purposes.
 
----
-
-Dependency Confusion Attack Surface
+## Dependency Confusion Attack Surface
 
 Skills often pull dependencies from public registries. We eliminate the classic dependency confusion vector with these controls:
 
@@ -100,9 +92,7 @@ Skills often pull dependencies from public registries. We eliminate the classic 
 
 This ensures that even if an attacker publishes a higher-version package with the same name on the public registry, the skill cannot pull it.
 
----
-
-Sandboxed Execution Observation
+## Sandboxed Execution Observation
 
 Static analysis catches obvious issues, but runtime behavior is what matters. Every skill must pass observation in a real sandbox:
 
@@ -116,9 +106,7 @@ Static analysis catches obvious issues, but runtime behavior is what matters. Ev
 
 Any runtime behavior not explicitly declared in the manifest triggers automatic disqualification. A clean sandbox report is required before the skill can enter the production allowlist.
 
----
-
-Per-Agent Allowlists and Quarantine Mode
+## Per-Agent Allowlists and Quarantine Mode
 
 An organization-wide allowlist is necessary but not sufficient. We also enforce:
 
@@ -136,9 +124,7 @@ Newly approved skills enter quarantine mode for a 7-day trial:
 
 If the skill behaves cleanly for the full 7 days, it is promoted to full allowlist status. Otherwise it is automatically removed.
 
----
-
-Policy: Never Auto-Install
+## Policy: Never Auto-Install
 
 The gateway enforces this rule at the protocol level:
 
@@ -162,9 +148,7 @@ Every PR that adds or updates a skill reference triggers the full vetting pipeli
 
 Urgency is never an exception to this pipeline.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - Signing the manifest proves integrity, not intent — static analysis and sandbox observation supply the behavioral proof.
 

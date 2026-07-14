@@ -10,9 +10,7 @@ Unlike a short-lived web request, an agent persists across sessions. It accumula
 
 In this module we apply the same joiner-mover-leaver rigor we use for human employees — but to agents. By the end you will have a complete, auditable process for provisioning, governing scope changes, detecting orphans, and safely decommissioning agents — including the forensic-first rapid shutdown sequence under compromise.
 
----
-
-The Agent as a Long-Lived Security Principal
+## The Agent as a Long-Lived Security Principal
 
 An agent is not just a pod — it is a persistent identity with real blast radius:
 
@@ -28,9 +26,7 @@ An agent is not just a pod — it is a persistent identity with real blast radiu
 
 If we treat provisioning as “just create a Deployment,” we create dormant attack surface that accumulates silently. The full agent identity includes: certificate, ATR role, Vault policy, memory store path, NATS namespace, queue subscriptions, and registered pipelines. We manage all of it explicitly.
 
----
-
-Provisioning: Approval, Certificate Issuance, ATR Bootstrap
+## Provisioning: Approval, Certificate Issuance, ATR Bootstrap
 
 Provisioning is never ad-hoc. Every new agent begins with a formal request:
 
@@ -54,9 +50,7 @@ On approval the automated provisioning pipeline executes:
 
 All provisioning actions are logged to the WORM audit trail with the approver’s identity.
 
----
-
-ATR Scope Expansion Governance
+## ATR Scope Expansion Governance
 
 Scope expansion is a security event, never a simple config change.
 
@@ -72,9 +66,7 @@ Process for any expansion:
 
 Scope contraction is always safe and applied immediately — no approval required. This asymmetry ensures we only ever grow privileges under controlled conditions.
 
----
-
-Agent Credential Inventory and Sprawl Detection
+## Agent Credential Inventory and Sprawl Detection
 
 We maintain a live inventory of every credential tied to an agent:
 
@@ -94,9 +86,7 @@ Weekly automated scan checks for sprawl:
 
 Any sprawl finding is treated as critical: the agent is immediately stopped, the credential is revoked and rotated, and an investigation is opened.
 
----
-
-Orphaned Identity Detection
+## Orphaned Identity Detection
 
 Even with careful provisioning, incomplete decommissioning creates orphans.
 
@@ -122,9 +112,7 @@ Orphan handling:
 
 - 7-day review deadline; unreviewed orphans proceed to automatic decommissioning.
 
----
-
-Planned Decommissioning Checklist
+## Planned Decommissioning Checklist
 
 When an agent reaches end-of-life, follow this exact checklist (automated where possible):
 
@@ -144,9 +132,7 @@ When an agent reaches end-of-life, follow this exact checklist (automated where 
 
 8. Write a signed decommission record to WORM referencing the final Merkle root.
 
----
-
-Rapid Decommission Under Compromise
+## Rapid Decommission Under Compromise
 
 When an agent is suspected of compromise, speed matters — but evidence preservation matters more.
 
@@ -162,9 +148,7 @@ Step-by-step rapid shutdown:
 
 Never delete the memory store or audit trail during an active investigation. The forensic snapshot goes to a separate, IR-team-only bucket.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - Provisioning without a formal approval workflow is a supply-chain risk at the identity layer.
 

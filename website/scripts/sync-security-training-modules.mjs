@@ -73,14 +73,52 @@ function escapeMdxCurlyOutsideFences(body) {
 function rewriteLinksForSite(body) {
   return escapeMdxCurlyOutsideFences(
     escapeLessThanBeforeDigit(
-    body
-      .replaceAll('](../../charts/', `](${GH_MAIN}/charts/`)
-      .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
-      .replaceAll('](../../docker/', `](${GH_MAIN}/docker/`)
-      .replaceAll('](../../AGENTS.md)', `](${GH_MAIN}/AGENTS.md)`)
-      .replaceAll('](../', `](${GH_MAIN}/docs/security/`),
+      body
+        .replaceAll('](../../charts/', `](${GH_MAIN}/charts/`)
+        .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
+        .replaceAll('](../../docker/', `](${GH_MAIN}/docker/`)
+        .replaceAll('](../../AGENTS.md)', `](${GH_MAIN}/AGENTS.md)`)
+        .replaceAll('](../', `](${GH_MAIN}/docs/security/`),
     ),
   )
+}
+
+/**
+ * Training modules often use `---` + a plain-text title instead of `##`.
+ * Promote those titles so the site TOC and heading anchors work.
+ */
+function promoteHrSectionTitles(body) {
+  const parts = body.split(/\n---\n/)
+  if (parts.length < 2) return body
+
+  return parts
+    .map((part, index) => {
+      if (index === 0) return part
+      const lines = part.split('\n')
+      let j = 0
+      while (j < lines.length && lines[j].trim() === '') j++
+      if (j >= lines.length) return part
+
+      const titleLine = lines[j]
+      const trimmed = titleLine.trim()
+      if (
+        !trimmed ||
+        trimmed.startsWith('#') ||
+        trimmed.startsWith('```') ||
+        trimmed.startsWith('|') ||
+        trimmed.startsWith('>') ||
+        trimmed.startsWith('- ') ||
+        trimmed.startsWith('* ') ||
+        trimmed.startsWith('![') ||
+        trimmed.length > 120
+      ) {
+        return `\n---\n${part}`
+      }
+
+      lines[j] = `## ${trimmed}`
+      return `\n${lines.join('\n')}`
+    })
+    .join('')
 }
 
 /**
@@ -172,7 +210,9 @@ for (const file of names) {
     file,
     slug,
     fm: { title, description, part, total_parts: totalParts, prev, next },
-    body: appendPassthroughWrapper(rewriteLinksForSite(body.trimStart())),
+    body: appendPassthroughWrapper(
+      rewriteLinksForSite(promoteHrSectionTitles(body.trimStart())),
+    ),
   })
 }
 
