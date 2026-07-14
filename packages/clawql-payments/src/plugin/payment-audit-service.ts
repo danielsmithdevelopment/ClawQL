@@ -1,4 +1,4 @@
-import { getDefaultAuditRingBuffer } from "clawql-core";
+import { AuditService } from "clawql-core";
 import { Context, Effect, Layer } from "effect";
 import type { PaymentAuditVerifyResult } from "../audit/chain.js";
 import type { PaymentWormEntry } from "../audit/events.js";
@@ -25,9 +25,13 @@ export class PaymentAuditService extends Context.Tag("clawql/PaymentAuditService
   }
 >() {}
 
+/**
+ * Live payment audit Layer. Requires {@link AuditService} for MCP ring-buffer mirror
+ * (`appendEntry`). Callers should `Layer.provide(AuditLive)` (or `AuditTestLayer`).
+ */
 export function paymentAuditLiveLayer(
   env: NodeJS.ProcessEnv = process.env
-): Layer.Layer<PaymentAuditService> {
+): Layer.Layer<PaymentAuditService, never, AuditService> {
   const store = getPaymentAuditStore(env);
 
   const appendRaw = (entry: PaymentWormEntry) =>
@@ -40,53 +44,55 @@ export function paymentAuditLiveLayer(
         }),
     });
 
-  return Layer.succeed(
+  return Layer.effect(
     PaymentAuditService,
-    PaymentAuditService.of({
-      store,
-      append: appendRaw,
-      appendEntry: (entry) =>
-        Effect.gen(function* () {
-          const record = yield* appendRaw(entry);
-          getDefaultAuditRingBuffer().append({
-            ts: entry.ts,
-            category: entry.category,
-            action: entry.action,
-            summary: entry.summary,
-            correlationId: entry.correlationId,
-          });
-          if (isPaymentAuditLokiPushEnabled(env)) {
-            maybePushPaymentAuditEntryToLoki(entry, env);
-          }
-          return record;
-        }),
-      list: (limit = 100) =>
-        Effect.tryPromise({
-          try: () => store.list(limit),
-          catch: (cause) =>
-            new PaymentError({
-              reason: "payment audit list failed",
-              cause,
-            }),
-        }),
-      verify: () =>
-        Effect.tryPromise({
-          try: () => store.verify(),
-          catch: (cause) =>
-            new PaymentError({
-              reason: "payment audit verify failed",
-              cause,
-            }),
-        }),
-      reset: () =>
-        Effect.tryPromise({
-          try: () => store.reset(),
-          catch: (cause) =>
-            new PaymentError({
-              reason: "payment audit reset failed",
-              cause,
-            }),
-        }),
+    Effect.gen(function* () {
+      const clawqlAudit = yield* AuditService;
+      return PaymentAuditService.of({
+        store,
+        append: appendRaw,
+        appendEntry: (entry) =>
+          Effect.gen(function* () {
+            const record = yield* appendRaw(entry);
+            yield* clawqlAudit.append({
+              category: entry.category,
+              action: entry.action,
+              summary: entry.summary,
+              correlationId: entry.correlationId,
+            });
+            if (isPaymentAuditLokiPushEnabled(env)) {
+              maybePushPaymentAuditEntryToLoki(entry, env);
+            }
+            return record;
+          }),
+        list: (limit = 100) =>
+          Effect.tryPromise({
+            try: () => store.list(limit),
+            catch: (cause) =>
+              new PaymentError({
+                reason: "payment audit list failed",
+                cause,
+              }),
+          }),
+        verify: () =>
+          Effect.tryPromise({
+            try: () => store.verify(),
+            catch: (cause) =>
+              new PaymentError({
+                reason: "payment audit verify failed",
+                cause,
+              }),
+          }),
+        reset: () =>
+          Effect.tryPromise({
+            try: () => store.reset(),
+            catch: (cause) =>
+              new PaymentError({
+                reason: "payment audit reset failed",
+                cause,
+              }),
+          }),
+      });
     })
   );
 }

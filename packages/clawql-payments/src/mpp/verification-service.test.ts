@@ -2,6 +2,7 @@ import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AuditLive } from "clawql-core";
 import { Effect, Layer } from "effect";
 import { createX402Gate } from "../x402/gate.js";
 import { resetPaymentsEffectRuntimeForTests } from "../runtime/payments-effect-runtime.js";
@@ -69,7 +70,7 @@ describe("MppVerificationService", () => {
     const token = Buffer.from(JSON.stringify(credential), "utf8").toString("base64url");
 
     const config = paymentsConfigLiveLayer(env);
-    const audit = paymentAuditLiveLayer(env);
+    const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(AuditLive));
     const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
     const facilitator = Layer.succeed(
       X402FacilitatorService,
@@ -131,7 +132,7 @@ describe("MppVerificationService", () => {
     );
 
     const config = paymentsConfigLiveLayer(env);
-    const audit = paymentAuditLiveLayer(env);
+    const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(AuditLive));
     const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
     const facilitator = Layer.succeed(
       X402FacilitatorService,
@@ -210,7 +211,7 @@ describe("MppVerificationService", () => {
     }));
 
     const config = paymentsConfigLiveLayer({ ...env, STRIPE_SECRET_KEY: "sk_test_xxx" });
-    const audit = paymentAuditLiveLayer(env);
+    const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(AuditLive));
     const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
     const facilitator = Layer.succeed(
       X402FacilitatorService,

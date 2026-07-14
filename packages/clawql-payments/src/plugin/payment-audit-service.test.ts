@@ -1,10 +1,20 @@
+import {
+  AuditService,
+  AuditTestLayer,
+  getDefaultAuditRingBuffer,
+  resetDefaultAuditRingBufferForTests,
+} from "clawql-core";
 import { Effect, Either, Layer } from "effect";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { buildX402PaymentReceivedEntry } from "../audit/events.js";
 import { PaymentAuditService, paymentAuditLiveLayer } from "./payment-audit-service.js";
 import { PaymentError } from "../errors/payment-errors.js";
 
 describe("PaymentAuditService", () => {
+  afterEach(() => {
+    resetDefaultAuditRingBufferForTests();
+  });
+
   it("append persists via Effect layer", async () => {
     const env = {
       ...process.env,
@@ -22,7 +32,32 @@ describe("PaymentAuditService", () => {
       expect(record.seq).toBeGreaterThan(0);
     });
 
-    await Effect.runPromise(program.pipe(Effect.provide(paymentAuditLiveLayer(env))));
+    await Effect.runPromise(
+      program.pipe(Effect.provide(paymentAuditLiveLayer(env)), Effect.provide(AuditTestLayer))
+    );
+  });
+
+  it("appendEntry mirrors into AuditService (isolated test layer)", async () => {
+    const env = {
+      ...process.env,
+      CLAWQL_PAYMENTS_AUDIT_STORE: "memory",
+    };
+    const entry = buildX402PaymentReceivedEntry({
+      tenantId: "t1",
+      amountUsdc: 0.002,
+      resource: "tool:execute",
+      correlationId: "c-mirror",
+    });
+    const listed = await Effect.runPromise(
+      Effect.gen(function* () {
+        const paymentAudit = yield* PaymentAuditService;
+        yield* paymentAudit.appendEntry(entry);
+        const clawqlAudit = yield* AuditService;
+        return yield* clawqlAudit.list(5);
+      }).pipe(Effect.provide(paymentAuditLiveLayer(env)), Effect.provide(AuditTestLayer))
+    );
+    expect(listed.entries.some((e) => e.correlationId === "c-mirror")).toBe(true);
+    expect(getDefaultAuditRingBuffer().list(5).entries).toHaveLength(0);
   });
 
   it("maps store failures to PaymentError", async () => {
