@@ -4,10 +4,14 @@
  * - **`source: "markdown"`** + **`documents[]`**: write vault-relative `.md` files (same pipeline as `memory_ingest`).
  * - **`source: "url"`** + **`url`**: fetch HTTPS content when **`CLAWQL_EXTERNAL_INGEST_FETCH=1`** (opt-in network).
  * - No payload: legacy **stub** roadmap JSON (still no writes).
+ *
+ * Orchestration: native Effect.gen in {@link executeExternalIngestCoreEffect}.
  */
 
 import { getClawqlOptionalToolFlags } from "clawql-api";
 import { maybePresidioRedactText, presidioEnabled } from "clawql-api";
+import { Effect } from "effect";
+import { memoryDbLiveLayer } from "clawql-memory/plugin";
 import { buildUrlIngestNote, formatUrlResponseAsMarkdown } from "./url-format.js";
 import { slugifyTitle } from "clawql-memory/ingest/slug";
 import {
@@ -73,15 +77,15 @@ export function externalIngestFeatureEnabled(): boolean {
   return getClawqlOptionalToolFlags().externalIngestPreview;
 }
 
-function envFetchAllowed(): boolean {
+export function envFetchAllowed(): boolean {
   return process.env.CLAWQL_EXTERNAL_INGEST_FETCH?.trim() === "1";
 }
 
-function normalizeRelPath(p: string): string {
+export function normalizeRelPath(p: string): string {
   return p.replace(/\\/g, "/").replace(/^\/+/, "");
 }
 
-function validateMarkdownPath(rel: string): string | null {
+export function validateMarkdownPath(rel: string): string | null {
   const n = normalizeRelPath(rel);
   if (!n.toLowerCase().endsWith(".md")) {
     return "path must end with .md";
@@ -92,11 +96,11 @@ function validateMarkdownPath(rel: string): string | null {
   return null;
 }
 
-function isoNow(): string {
+export function isoNow(): string {
   return new Date().toISOString();
 }
 
-function defaultPathForUrl(urlStr: string): string {
+export function defaultPathForUrl(urlStr: string): string {
   let pathname = "/fetched";
   try {
     pathname = new URL(urlStr).pathname || "/";
@@ -110,19 +114,7 @@ function defaultPathForUrl(urlStr: string): string {
   return `Memory/external/${slug}.md`;
 }
 
-async function loadOptionalArtifactHints(
-  vault: string
-): Promise<Pick<ExternalIngestResult, "merkleSnapshot" | "cuckooMembershipReady">> {
-  const { runMemoryEffect, vaultArtifactHintsEffect } = await import("clawql-memory/plugin");
-  return runMemoryEffect(vaultArtifactHintsEffect(vault));
-}
-
-async function afterImportSync(vault: string): Promise<void> {
-  const { runMemoryEffect, vaultWritePostSyncEffect } = await import("clawql-memory/plugin");
-  await runMemoryEffect(vaultWritePostSyncEffect(vault));
-}
-
-async function fetchUrlResource(urlStr: string): Promise<{
+export async function fetchUrlResource(urlStr: string): Promise<{
   body: string;
   contentType: string | null;
   finalUrl: string;
@@ -165,25 +157,115 @@ async function fetchUrlResource(urlStr: string): Promise<{
   return { body, contentType, finalUrl: res.url };
 }
 
+export type PlannedMarkdownDoc = { rel: string; markdown: string };
+
+/** Validate + optional Presidio redact for Markdown documents. */
+export async function prepareMarkdownDocuments(
+  documents: ExternalIngestDocumentInput[],
+  vault: string
+): Promise<{
+  planned: PlannedMarkdownDoc[];
+  docErrors: { path: string; error: string }[];
+}> {
+  const docErrors: { path: string; error: string }[] = [];
+  const planned: PlannedMarkdownDoc[] = [];
+
+  for (const d of documents) {
+    const rel = normalizeRelPath(d.path);
+    const pe = validateMarkdownPath(rel);
+    if (pe) {
+      docErrors.push({ path: d.path, error: pe });
+      continue;
+    }
+    if (Buffer.byteLength(d.markdown ?? "", "utf8") > MAX_MARKDOWN_BYTES) {
+      docErrors.push({ path: d.path, error: "markdown exceeds size cap" });
+      continue;
+    }
+    try {
+      resolveVaultPath(vault, rel);
+    } catch (e: unknown) {
+      docErrors.push({ path: d.path, error: e instanceof Error ? e.message : String(e) });
+      continue;
+    }
+    let markdown = d.markdown ?? "";
+    if (presidioEnabled()) {
+      markdown = await maybePresidioRedactText(markdown);
+    }
+    planned.push({ rel, markdown });
+  }
+
+  return { planned, docErrors };
+}
+
+export async function writePlannedMarkdownDocuments(
+  vault: string,
+  planned: PlannedMarkdownDoc[]
+): Promise<void> {
+  await withVaultWriteLock(vault, async () => {
+    for (const p of planned) {
+      await writeVaultTextFileAtomic(vault, p.rel, p.markdown);
+    }
+  });
+}
+
+export async function writeUrlIngestNote(
+  vault: string,
+  targetRel: string,
+  finalUrl: string,
+  body: string,
+  contentType: string | null
+): Promise<void> {
+  const formatted = formatUrlResponseAsMarkdown(body, contentType, finalUrl);
+  const note = buildUrlIngestNote(finalUrl, formatted, isoNow());
+  await withVaultWriteLock(vault, async () => {
+    await writeVaultTextFileAtomic(vault, targetRel, note);
+  });
+}
+
 /**
- * Run external ingest: Markdown documents and/or (opt-in) URL fetch.
- * Vault path is resolved by the caller (Effect layer or tests).
+ * Sync gate / payload classification (no IO). Early {@link ExternalIngestResult}
+ * or a plan for Effect stages.
  */
-export async function executeExternalIngestCore(
+export type ExternalIngestPrelude =
+  | { kind: "result"; result: ExternalIngestResult }
+  | {
+      kind: "url";
+      vault: string;
+      url: string;
+      targetRel: string;
+      dryRun: boolean;
+    }
+  | {
+      kind: "markdown";
+      vault: string;
+      documents: ExternalIngestDocumentInput[];
+      dryRun: boolean;
+    }
+  | {
+      kind: "stub";
+      vault: string;
+      dryRun: boolean;
+      srcLabel: string;
+    };
+
+export function evaluateExternalIngestPrelude(
   vault: string | null,
   input: ExternalIngestInput
-): Promise<ExternalIngestResult> {
+): ExternalIngestPrelude {
   const vaultConfigured = vault !== null;
   if (!getClawqlOptionalToolFlags().enableDocuments) {
     return {
-      ok: false,
-      stub: true,
-      enabled: false,
-      vaultConfigured,
-      hint: "Set CLAWQL_ENABLE_DOCUMENTS=1 (or unset) for document tools. See docs/mcp/mcp-tools.md.",
-      message: "Document tools are disabled (CLAWQL_ENABLE_DOCUMENTS=0).",
-      roadmap: [],
-      relatedIssues: [40],
+      kind: "result",
+      result: {
+        ok: false,
+        stub: true,
+        enabled: false,
+        vaultConfigured,
+        hint: "Set CLAWQL_ENABLE_DOCUMENTS=1 (or unset) for document tools. See docs/mcp/mcp-tools.md.",
+        message: "Document tools are disabled (CLAWQL_ENABLE_DOCUMENTS=0).",
+        roadmap: [],
+        relatedIssues: [40],
+      },
     };
   }
   const enabled = externalIngestFeatureEnabled();
@@ -191,15 +273,18 @@ export async function executeExternalIngestCore(
 
   if (!enabled) {
     return {
-      ok: false,
-      stub: true,
-      enabled: false,
-      vaultConfigured,
-      hint: "External bulk ingest is not enabled. Set CLAWQL_EXTERNAL_INGEST=1. See docs/mcp/external-ingest.md.",
-      message:
-        "Feature disabled. Set CLAWQL_EXTERNAL_INGEST=1 to import Markdown or (with CLAWQL_EXTERNAL_INGEST_FETCH=1) fetch a URL.",
-      roadmap: [],
-      relatedIssues: [40, 24, 25, 27],
+      kind: "result",
+      result: {
+        ok: false,
+        stub: true,
+        enabled: false,
+        vaultConfigured,
+        hint: "External bulk ingest is not enabled. Set CLAWQL_EXTERNAL_INGEST=1. See docs/mcp/external-ingest.md.",
+        message:
+          "Feature disabled. Set CLAWQL_EXTERNAL_INGEST=1 to import Markdown or (with CLAWQL_EXTERNAL_INGEST_FETCH=1) fetch a URL.",
+        roadmap: [],
+        relatedIssues: [40, 24, 25, 27],
+      },
     };
   }
 
@@ -212,61 +297,76 @@ export async function executeExternalIngestCore(
 
   if (hasImportPayload && (!vaultConfigured || !vault)) {
     return {
-      ok: false,
-      enabled: true,
-      vaultConfigured: false,
-      message: "Obsidian vault is not configured. Set CLAWQL_OBSIDIAN_VAULT_PATH.",
-      error: "vault_missing",
+      kind: "result",
+      result: {
+        ok: false,
+        enabled: true,
+        vaultConfigured: false,
+        message: "Obsidian vault is not configured. Set CLAWQL_OBSIDIAN_VAULT_PATH.",
+        error: "vault_missing",
+      },
     };
   }
 
   if (!vault) {
     return {
-      ok: true,
-      stub: true,
-      enabled: true,
-      vaultConfigured: false,
-      message:
-        "No import payload. Configure CLAWQL_OBSIDIAN_VAULT_PATH to import Markdown or fetch URLs. " +
-        "Pass documents[] or url + source url (with CLAWQL_EXTERNAL_INGEST_FETCH=1).",
-      roadmap: [
-        "Markdown: pass documents[] with vault-relative .md paths (dryRun defaults true).",
-        'URL: set source to "url", pass url (https), scope as optional target path, and CLAWQL_EXTERNAL_INGEST_FETCH=1.',
-        "Secrets: per-provider env vars for future Notion/Confluence/GitHub plugins; never logged.",
-        "Orchestration: writes use the vault lock; syncMemoryDbForVaultScanRoot + _INDEX_ page after import.",
-      ],
-      relatedIssues: [40, 24, 25, 27],
+      kind: "result",
+      result: {
+        ok: true,
+        stub: true,
+        enabled: true,
+        vaultConfigured: false,
+        message:
+          "No import payload. Configure CLAWQL_OBSIDIAN_VAULT_PATH to import Markdown or fetch URLs. " +
+          "Pass documents[] or url + source url (with CLAWQL_EXTERNAL_INGEST_FETCH=1).",
+        roadmap: [
+          "Markdown: pass documents[] with vault-relative .md paths (dryRun defaults true).",
+          'URL: set source to "url", pass url (https), scope as optional target path, and CLAWQL_EXTERNAL_INGEST_FETCH=1.',
+          "Secrets: per-provider env vars for future Notion/Confluence/GitHub plugins; never logged.",
+          "Orchestration: writes use the vault lock; syncMemoryDbForVaultScanRoot + _INDEX_ page after import.",
+        ],
+        relatedIssues: [40, 24, 25, 27],
+      },
     };
   }
 
   if (documents?.length && urlRaw) {
     return {
-      ok: false,
-      enabled: true,
-      vaultConfigured: true,
-      message: "Pass only one of documents[] or url, not both.",
-      error: "conflicting_payload",
+      kind: "result",
+      result: {
+        ok: false,
+        enabled: true,
+        vaultConfigured: true,
+        message: "Pass only one of documents[] or url, not both.",
+        error: "conflicting_payload",
+      },
     };
   }
 
   if (urlRaw || src === "url") {
     if (!urlRaw) {
       return {
-        ok: false,
-        enabled: true,
-        vaultConfigured: true,
-        message: 'source "url" requires a non-empty url string.',
-        error: "url_required",
+        kind: "result",
+        result: {
+          ok: false,
+          enabled: true,
+          vaultConfigured: true,
+          message: 'source "url" requires a non-empty url string.',
+          error: "url_required",
+        },
       };
     }
     if (!envFetchAllowed()) {
       return {
-        ok: false,
-        enabled: true,
-        vaultConfigured: true,
-        message:
-          "URL fetch is disabled. Set CLAWQL_EXTERNAL_INGEST_FETCH=1 to allow HTTPS fetch from this tool.",
-        error: "fetch_disabled",
+        kind: "result",
+        result: {
+          ok: false,
+          enabled: true,
+          vaultConfigured: true,
+          message:
+            "URL fetch is disabled. Set CLAWQL_EXTERNAL_INGEST_FETCH=1 to allow HTTPS fetch from this tool.",
+          error: "fetch_disabled",
+        },
       };
     }
     const targetRel = input.scope?.trim()
@@ -275,11 +375,14 @@ export async function executeExternalIngestCore(
     const pathErr = validateMarkdownPath(targetRel);
     if (pathErr) {
       return {
-        ok: false,
-        enabled: true,
-        vaultConfigured: true,
-        message: `Invalid target path: ${pathErr}`,
-        error: "invalid_path",
+        kind: "result",
+        result: {
+          ok: false,
+          enabled: true,
+          vaultConfigured: true,
+          message: `Invalid target path: ${pathErr}`,
+          error: "invalid_path",
+        },
       };
     }
     try {
@@ -287,164 +390,55 @@ export async function executeExternalIngestCore(
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       return {
-        ok: false,
-        enabled: true,
-        vaultConfigured: true,
-        message: msg,
-        error: "invalid_path",
+        kind: "result",
+        result: {
+          ok: false,
+          enabled: true,
+          vaultConfigured: true,
+          message: msg,
+          error: "invalid_path",
+        },
       };
     }
-
-    if (dryRun) {
-      return {
-        ok: true,
-        enabled: true,
-        vaultConfigured: true,
-        dryRun: true,
-        message: `Would fetch ${JSON.stringify(urlRaw)} → ${JSON.stringify(targetRel)}`,
-        importedPaths: [targetRel],
-        ...(await loadOptionalArtifactHints(vault)),
-      };
-    }
-
-    let resource: { body: string; contentType: string | null; finalUrl: string };
-    try {
-      resource = await fetchUrlResource(urlRaw);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      return {
-        ok: false,
-        enabled: true,
-        vaultConfigured: true,
-        message: `Fetch failed: ${msg}`,
-        error: "fetch_failed",
-      };
-    }
-
-    const formatted = formatUrlResponseAsMarkdown(
-      resource.body,
-      resource.contentType,
-      resource.finalUrl
-    );
-    const note = buildUrlIngestNote(resource.finalUrl, formatted, isoNow());
-    await withVaultWriteLock(vault, async () => {
-      await writeVaultTextFileAtomic(vault, targetRel, note);
-    });
-    await afterImportSync(vault);
-
-    const hints = await loadOptionalArtifactHints(vault);
-    return {
-      ok: true,
-      enabled: true,
-      vaultConfigured: true,
-      dryRun: false,
-      message: `Fetched and wrote ${targetRel}`,
-      importedPaths: [targetRel],
-      ...hints,
-    };
+    return { kind: "url", vault, url: urlRaw, targetRel, dryRun };
   }
 
   if (documents !== undefined && documents.length > 0) {
     if (documents.length > MAX_DOCUMENTS) {
       return {
-        ok: false,
-        enabled: true,
-        vaultConfigured: true,
-        message: `At most ${MAX_DOCUMENTS} documents per call.`,
-        error: "too_many_documents",
+        kind: "result",
+        result: {
+          ok: false,
+          enabled: true,
+          vaultConfigured: true,
+          message: `At most ${MAX_DOCUMENTS} documents per call.`,
+          error: "too_many_documents",
+        },
       };
     }
-
-    const docErrors: { path: string; error: string }[] = [];
-    const planned: { rel: string; markdown: string }[] = [];
-
-    for (const d of documents) {
-      const rel = normalizeRelPath(d.path);
-      const pe = validateMarkdownPath(rel);
-      if (pe) {
-        docErrors.push({ path: d.path, error: pe });
-        continue;
-      }
-      if (Buffer.byteLength(d.markdown ?? "", "utf8") > MAX_MARKDOWN_BYTES) {
-        docErrors.push({ path: d.path, error: "markdown exceeds size cap" });
-        continue;
-      }
-      try {
-        resolveVaultPath(vault, rel);
-      } catch (e: unknown) {
-        docErrors.push({ path: d.path, error: e instanceof Error ? e.message : String(e) });
-        continue;
-      }
-      let markdown = d.markdown ?? "";
-      if (presidioEnabled()) {
-        markdown = await maybePresidioRedactText(markdown);
-      }
-      planned.push({ rel, markdown });
-    }
-
-    if (planned.length === 0) {
-      return {
-        ok: false,
-        enabled: true,
-        vaultConfigured: true,
-        message: "No valid documents to import.",
-        documentErrors: docErrors,
-        error: "no_valid_documents",
-      };
-    }
-
-    if (dryRun) {
-      return {
-        ok: true,
-        enabled: true,
-        vaultConfigured: true,
-        dryRun: true,
-        message: `Would import ${planned.length} Markdown file(s).`,
-        importedPaths: planned.map((p) => p.rel),
-        documentErrors: docErrors.length > 0 ? docErrors : undefined,
-        ...(await loadOptionalArtifactHints(vault)),
-      };
-    }
-
-    await withVaultWriteLock(vault, async () => {
-      for (const p of planned) {
-        await writeVaultTextFileAtomic(vault, p.rel, p.markdown);
-      }
-    });
-    await afterImportSync(vault);
-
-    const hints = await loadOptionalArtifactHints(vault);
-    return {
-      ok: true,
-      enabled: true,
-      vaultConfigured: true,
-      dryRun: false,
-      message: `Imported ${planned.length} Markdown file(s).`,
-      importedPaths: planned.map((p) => p.rel),
-      documentErrors: docErrors.length > 0 ? docErrors : undefined,
-      ...hints,
-    };
+    return { kind: "markdown", vault, documents, dryRun };
   }
 
-  const srcLabel = input.source?.trim() || "unspecified";
-  const hints = await loadOptionalArtifactHints(vault);
   return {
-    ok: true,
-    stub: true,
-    enabled: true,
-    vaultConfigured: true,
-    message:
-      `No import payload. Pass documents: [{ path, markdown }] for Markdown import, or url + source "url" with CLAWQL_EXTERNAL_INGEST_FETCH=1. ` +
-      `Preview: source=${JSON.stringify(srcLabel)}, dryRun=${dryRun}.`,
-    roadmap: [
-      "Markdown: pass documents[] with vault-relative .md paths (dryRun defaults true).",
-      'URL: set source to "url", pass url (https), scope as optional target path, and CLAWQL_EXTERNAL_INGEST_FETCH=1.',
-      "Secrets: per-provider env vars for future Notion/Confluence/GitHub plugins; never logged.",
-      "Orchestration: writes use the vault lock; syncMemoryDbForVaultScanRoot + _INDEX_ page after import.",
-    ],
-    relatedIssues: [40, 24, 25, 27],
-    ...hints,
+    kind: "stub",
+    vault,
+    dryRun,
+    srcLabel: input.source?.trim() || "unspecified",
   };
+}
+
+/**
+ * Run external ingest: Markdown documents and/or (opt-in) URL fetch.
+ * Promise façade over native Effect.gen staging (dynamic import avoids cycle).
+ */
+export async function executeExternalIngestCore(
+  vault: string | null,
+  input: ExternalIngestInput
+): Promise<ExternalIngestResult> {
+  const { executeExternalIngestCoreEffect } = await import("../effect/external-ingest-effect.js");
+  return Effect.runPromise(
+    executeExternalIngestCoreEffect(vault, input).pipe(Effect.provide(memoryDbLiveLayer()))
+  );
 }
 
 /** Public async facade for external ingest (MCP tools, scripts). */

@@ -1,5 +1,5 @@
 import { Context, Effect, Layer } from "effect";
-import { VaultConfigService } from "clawql-memory/plugin";
+import { MemoryDbService, VaultConfigService } from "clawql-memory/plugin";
 import type { ExternalIngestInput, ExternalIngestResult } from "../ingest/external-ingest.js";
 import { executeExternalIngestEffect } from "./external-ingest-effect.js";
 import { DocumentsError } from "./documents-errors.js";
@@ -10,7 +10,7 @@ export class DocumentsIngestService extends Context.Tag("clawql/DocumentsIngestS
   {
     readonly ingest: (
       input: ExternalIngestInput
-    ) => Effect.Effect<ExternalIngestResult, DocumentsError, VaultConfigService>;
+    ) => Effect.Effect<ExternalIngestResult, DocumentsError, VaultConfigService | MemoryDbService>;
   }
 >() {}
 
