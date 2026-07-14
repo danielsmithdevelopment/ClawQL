@@ -1,5 +1,5 @@
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
+import { DocProse } from '@/components/DocProse'
 import { Tag } from '@/components/Tag'
 import GettingStartedForTeamsBody from '@/generated/getting-started-for-teams-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -40,9 +40,9 @@ export default function GettingStartedForTeamsPage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <GettingStartedForTeamsBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }

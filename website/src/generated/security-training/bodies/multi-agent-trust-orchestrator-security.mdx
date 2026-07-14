@@ -10,9 +10,7 @@ A single agent with strong Panguard rules and sandboxing is a solved problem. A 
 
 In this module we build verifiable identities, signed instructions, signed results, downward-only delegation, and pipeline-level cumulative risk scoring so that multi-agent systems are as auditable and blast-radius-bounded as single-agent deployments.
 
----
-
-Why Single-Agent Security Controls Are Insufficient for Pipelines
+## Why Single-Agent Security Controls Are Insufficient for Pipelines
 
 Each node in a pipeline already has its own:
 
@@ -34,9 +32,7 @@ Three new attack paths unique to multi-agent systems emerge:
 
 Zero trust must apply between agents as strictly as it does between agents and external systems.
 
----
-
-Verifiable Agent Identity in Pipelines
+## Verifiable Agent Identity in Pipelines
 
 Every pipeline node receives a unique cryptographic identity from the cluster CA (Module 4).
 
@@ -53,9 +49,7 @@ How it works:
 
 If a node is compromised, its certificate is revoked immediately. All in-flight messages from that identity are rejected within one TTL cycle.
 
----
-
-ATR Delegation: Scope Only Downward
+## ATR Delegation: Scope Only Downward
 
 Orchestrators hold the full ATR scope for the overall task and delegate the minimum subset needed for each step.
 
@@ -67,9 +61,7 @@ The subagent’s session JWT contains a delegated_scope field. The gateway enfor
 
 Every delegation chain is recorded in the audit log entry for every tool call. The full authorization path is always reconstructable.
 
----
-
-Authenticating Orchestrator Instructions at the Subagent
+## Authenticating Orchestrator Instructions at the Subagent
 
 Instructions travel over NATS JetStream with two layers of protection:
 
@@ -87,9 +79,7 @@ The orchestrator signs the full instruction payload with its private key before 
 
 The instruction payload is also validated against a JSON Schema. Any out-of-schema content is rejected as potential injection. Panguard additionally flags any instruction containing known injection-pattern keywords.
 
----
-
-Result Integrity: Subagents Cannot Fabricate
+## Result Integrity: Subagents Cannot Fabricate
 
 Subagents sign their result payload before publishing it back to the orchestrator.
 
@@ -105,9 +95,7 @@ Consequences of a failed verification:
 
 The fabricating subagent is identified by its certificate fingerprint in the message.
 
----
-
-Blast Radius Isolation Between Pipeline Nodes
+## Blast Radius Isolation Between Pipeline Nodes
 
 Each pipeline node runs in its own Kata Container with a dedicated NetworkPolicy. There is no direct pod-to-pod communication.
 
@@ -121,9 +109,7 @@ Even with full code execution inside a node, the compromised node cannot reach a
 
 Panguard also tracks cumulative session risk across the full pipeline (not just per node). If the combined behavior of all nodes crosses a threshold (>3 blocked calls, >5 sensitive data accesses, >10 MB external egress), the entire pipeline is halted.
 
----
-
-Panguard Pipeline-Level Rules
+## Panguard Pipeline-Level Rules
 
 Panguard supports a special rule scope: pipeline_session.
 
@@ -145,9 +131,7 @@ When a threshold is crossed:
 
 This catches slow-moving attacks that stay under per-node limits by distributing suspicious actions across many nodes.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - Implicit trust between agents is the fundamental architectural mistake — every edge in the pipeline graph requires explicit authentication.
 

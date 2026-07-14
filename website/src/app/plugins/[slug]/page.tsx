@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Prose } from '@/components/Prose'
+import { DocProse } from '@/components/DocProse'
 import { Tag } from '@/components/Tag'
 import {
   getPluginMeta,
@@ -97,9 +97,9 @@ export default async function PluginPage({
         </Link>
       </p>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <Body />
-      </Prose>
+      </DocProse>
 
       <nav
         aria-label="Plugin navigation"

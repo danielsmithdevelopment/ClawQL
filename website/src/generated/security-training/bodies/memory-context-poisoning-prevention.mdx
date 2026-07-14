@@ -10,9 +10,7 @@ A poisoned memory entry does not cause immediate harm — it sits quietly until 
 
 In this module we make memory tamper-evident, GDPR-compliant, and poisoning-resistant using redaction at source, Merkle-tree integrity, append-only semantics, WORM storage, and per-subject encryption. By the end you will have a memory system that is as immutable and verifiable as the WORM audit trail itself.
 
----
-
-Why Long-Term Memory Is the Most Underprotected Surface
+## Why Long-Term Memory Is the Most Underprotected Surface
 
 Memory is a persistent, cross-session attack surface with four distinct poisoning vectors:
 
@@ -26,9 +24,7 @@ Memory is a persistent, cross-session attack surface with four distinct poisonin
 
 A successful poisoning attack is delayed-action: the entry looks innocent when written but becomes dangerous when retrieved in a future context. Traditional monitoring misses it because the harm happens long after the write. We must make memory tamper-evident from the moment it is created.
 
----
-
-Classification and Redaction at Write Time
+## Classification and Redaction at Write Time
 
 Presidio runs as a Panguard-integrated service and is invoked on every memory write before the data is committed.
 
@@ -42,9 +38,7 @@ What happens:
 
 The classification level is stored as metadata alongside every entry. The gateway enforces it at recall time so an agent with max_classification: internal can never retrieve confidential entries. Classification is enforced server-side, never client-side.
 
----
-
-Per-Subject Encryption for GDPR Compliance
+## Per-Subject Encryption for GDPR Compliance
 
 Each data subject’s memory entries are encrypted with a unique per-subject key stored in Vault’s transit engine.
 
@@ -58,9 +52,7 @@ This gives us the perfect solution to the GDPR right-to-erasure vs. WORM conflic
 
 Key deletion is irreversible — always confirm the GDPR request before executing. This satisfies Recital 26: data that cannot be attributed to an identified person is no longer personal data, while keeping the audit trail intact.
 
----
-
-Merkle-Tree Integrity
+## Merkle-Tree Integrity
 
 Every memory entry is part of a chained Merkle tree:
 
@@ -80,9 +72,7 @@ Scheduled integrity checks run every 15 minutes:
 
 - Blocking reads on integrity failure is intentional — a store whose integrity cannot be verified must not serve results.
 
----
-
-Append-Only Semantics and WORM Storage
+## Append-Only Semantics and WORM Storage
 
 Memory entries are never updated in place. “Updates” are implemented as new entries with a supersedes field referencing the prior entry’s hash. The original entry remains in the store forever.
 
@@ -94,9 +84,7 @@ All memory is stored in S3 (or equivalent) with:
 
 No API call, IAM policy, or even root account action can delete or modify a WORM-protected entry during the retention period. This is the final backstop.
 
----
-
-Poisoning Detection Rules
+## Poisoning Detection Rules
 
 Panguard blocks poisoning at write time:
 
@@ -112,9 +100,7 @@ Weekly memory audit:
 
 - Signed audit report stored in WORM and referenced in the quarterly review (Module 25)
 
----
-
-Inter-Agent Message Encryption and Mutual Auth
+## Inter-Agent Message Encryption and Mutual Auth
 
 Memory poisoning can also arrive via inter-agent messages over NATS JetStream.
 
@@ -128,9 +114,7 @@ Protections:
 
 - Message-level encryption key is fetched from Vault per conversation — even a compromised broker cannot read the content.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - Memory is a persistent attack surface that outlasts the session that created it — poisoning attacks are delayed-action.
 

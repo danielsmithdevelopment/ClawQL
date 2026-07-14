@@ -10,9 +10,7 @@ The MCP gateway receives untrusted input from many simultaneous sources — user
 
 In this module we make the input boundary rock-solid so that Panguard’s enforcement layer always sees clean, well-formed data. This is the upstream control that every other runtime defense depends on.
 
----
-
-The Input Boundary Problem
+## The Input Boundary Problem
 
 The gateway is the first place untrusted data enters the system. It arrives in many forms at once:
 
@@ -26,9 +24,7 @@ The gateway is the first place untrusted data enters the system. It arrives in m
 
 Each of these is a separate attack vector. Input validation failures here can create bypasses that Panguard never sees. We treat every inbound byte as hostile until it has been explicitly validated, normalized, and schema-checked.
 
----
-
-JSON Parsing Safety and Prototype Pollution
+## JSON Parsing Safety and Prototype Pollution
 
 JSON parsing is the first gate. We defend against prototype pollution and parser exploits before any object is even constructed.
 
@@ -44,9 +40,7 @@ Key protections:
 
 Never use deep object merge operations (Object.assign, lodash merge, etc.) on untrusted input — they are the most common prototype-pollution vectors. Structured schema validation (next section) replaces them entirely.
 
----
-
-SSRF Prevention for URL-Accepting Tools
+## SSRF Prevention for URL-Accepting Tools
 
 Any tool that accepts a URL is an SSRF risk. We block it at parse time, before any DNS resolution.
 
@@ -64,9 +58,7 @@ Validation rules (applied in the gateway):
 
 Even if the application-layer check is bypassed, enforce IMDSv2 at the cloud-provider level as the second control. This is the same SSRF defense used in egress filtering (Module 6), now applied at the tool-definition level.
 
----
-
-Context Window Token Budget Enforcement
+## Context Window Token Budget Enforcement
 
 Context-window displacement attacks are subtle but devastating: an attacker sends a very large retrieved document that pushes the system prompt out of the model’s effective attention window.
 
@@ -82,9 +74,7 @@ Panguard enforces hard token budgets:
 
 These budgets are enforced before any content enters the model’s context.
 
----
-
-Encoding-Based Injection Bypass Detection
+## Encoding-Based Injection Bypass Detection
 
 Attackers love to hide instructions using encoding tricks. We normalize and scan for them:
 
@@ -100,9 +90,7 @@ Attackers love to hide instructions using encoding tricks. We normalize and scan
 
 A single line of normalization closes an entire class of bypass attacks.
 
----
-
-Split-Payload Detection
+## Split-Payload Detection
 
 Injection can be split across multiple tool results so each individual result looks clean, but the model concatenates them into a full instruction.
 
@@ -111,9 +99,7 @@ Injection pattern matching is applied to the concatenated content of the window,
 
 This check runs as an async background task with alerting (it is computationally heavier, so we do not block synchronously on it).
 
----
-
-Tool Definition Integrity
+## Tool Definition Integrity
 
 Tool definition poisoning is an attack most operators never consider: an attacker modifies a tool’s description field so the model misuses the tool or calls it with malicious parameters.
 
@@ -127,9 +113,7 @@ Defenses:
 
 - Tool descriptions in production are human-reviewed and signed — never auto-generated from code comments.
 
----
-
-MCP Protocol-Level Controls
+## MCP Protocol-Level Controls
 
 We also harden the protocol itself:
 
@@ -141,9 +125,7 @@ We also harden the protocol itself:
 
 - JSON-RPC method allowlist: only declared methods are routed; unknown method names receive method not found — never a routing decision.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - Input validation must run before JSON parsing for the most dangerous attack classes (prototype pollution, oversized payloads) — Panguard’s ATR rules operate after parsing and cannot catch these.
 

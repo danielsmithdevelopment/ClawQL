@@ -1,5 +1,5 @@
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
+import { DocProse } from '@/components/DocProse'
 import { Tag } from '@/components/Tag'
 import EcosystemBody from '@/generated/clawql-ecosystem-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -53,9 +53,9 @@ export default function VisionEcosystemPage() {
         </Note>
       </div>
 
-      <Prose>
+      <DocProse>
         <EcosystemBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }

@@ -10,9 +10,7 @@ The gateway is not a static web server. It executes tools, dispatches real-world
 
 In this module we close both attack vectors that matter: direct network exposure and DNS rebinding. We make the gateway reachable only in the ways we explicitly allow — and impossible to reach in any other way.
 
----
-
-Why the Gateway Is the Highest-Value Target
+## Why the Gateway Is the Highest-Value Target
 
 The gateway has the keys to the kingdom:
 
@@ -30,9 +28,7 @@ Two completely separate threat vectors exist here:
 
 Each vector is invisible to controls that protect the other. Both must be addressed simultaneously.
 
----
-
-Default Binding: 127.0.0.1 and Unix Sockets
+## Default Binding: 127.0.0.1 and Unix Sockets
 
 Never bind the gateway to 0.0.0.0. Loopback binding is the first and simplest defense.
 
@@ -52,9 +48,7 @@ Why Unix sockets are ideal:
 
 Unix socket transport is the only transport that is immune to DNS rebinding by construction. Use it wherever your MCP client supports stdio.
 
----
-
-Host Firewall Rules
+## Host Firewall Rules
 
 Even with [localhost](http://localhost) binding, we add explicit firewall rules as a second layer.
 
@@ -84,9 +78,7 @@ Tailscale ACL example:
 
 Scope access to the specific Tailscale IP of the client machine — never \\\*:8080.
 
----
-
-VPN-Only Remote Access
+## VPN-Only Remote Access
 
 Production gateway access is VPN-only. No public ports are ever opened.
 
@@ -100,9 +92,7 @@ Recommended options:
 
 In every VPN model, no inbound port forwarding is required. The gateway host has zero public attack surface.
 
----
-
-Cloudflare Tunnel and Access (Outbound-Only Option)
+## Cloudflare Tunnel and Access (Outbound-Only Option)
 
 For environments that need occasional HTTP access without a persistent VPN (e.g., certain CI runners):
 
@@ -118,9 +108,7 @@ For environments that need occasional HTTP access without a persistent VPN (e.g.
 
 This is an outbound-only pattern that keeps the gateway host invisible from the public internet.
 
----
-
-DNS Rebinding: The Attack the Firewall Cannot Stop
+## DNS Rebinding: The Attack the Firewall Cannot Stop
 
 DNS rebinding is the attack that laughs at firewalls.
 
@@ -136,9 +124,7 @@ Attack mechanism:
 
 The MCP specification makes Host and Origin header validation a MUST requirement for HTTP and SSE transports.
 
----
-
-Host and Origin Header Validation Middleware
+## Host and Origin Header Validation Middleware
 
 ClawQL ships this validation enabled by default.
 
@@ -156,9 +142,7 @@ allowedHosts is configurable via Helm values for Tailscale or internal-domain de
 
 This middleware cannot be disabled on HTTP or SSE transports. Only Unix socket transport makes it redundant.
 
----
-
-Monitoring for Unexpected Listening Ports
+## Monitoring for Unexpected Listening Ports
 
 Configuration drift is the silent killer. We monitor continuously:
 
@@ -170,9 +154,7 @@ Configuration drift is the silent killer. We monitor continuously:
 
 Drift detection is as important as initial configuration. Upgrades and environment-variable changes can silently rebind the gateway.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - [Localhost](http://Localhost) binding + firewall stops direct external access; Host/Origin validation stops DNS rebinding — both are required.
 

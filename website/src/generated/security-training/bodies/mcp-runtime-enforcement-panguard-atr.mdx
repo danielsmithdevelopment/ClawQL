@@ -10,9 +10,7 @@ Prompt filtering alone is not enough — sophisticated attackers can always obfu
 
 In this module we build Panguard — the enforcement engine that sits between the MCP protocol handler and every tool call. By the end you will have a system that makes malicious execution structurally impossible, regardless of what the model was told to do.
 
----
-
-Why Prompt Filtering Alone Fails
+## Why Prompt Filtering Alone Fails
 
 Adversarial prompts are trivially defeated by:
 
@@ -26,9 +24,7 @@ State-of-the-art classifiers still produce too many false negatives for systems 
 
 The correct model is simple: treat all language input as untrusted data and enforce policy at the structured tool-call boundary. Once the model has translated a request into a tool name plus parameters, we have something concrete we can validate and block.
 
----
-
-Panguard Architecture
+## Panguard Architecture
 
 Panguard is a synchronous gatekeeper that sits directly between the MCP protocol handler and the tool-call dispatcher.
 
@@ -52,9 +48,7 @@ Decisions are made in milliseconds:
 
 Every Panguard decision (allow or block) is logged to the immutable WORM audit trail with full context: session ID, tool name, parameters, ATR claims presented, and decision reason.
 
----
-
-ATR (Agent Task Request) Rules
+## ATR (Agent Task Request) Rules
 
 ATR rules declare exactly what each agent role is permitted to do at a granular level.
 
@@ -82,9 +76,7 @@ Key properties:
 
 - Monthly audit report shows every ATR violation by rule ID and agent role.
 
----
-
-JSON Schema Validation
+## JSON Schema Validation
 
 Every tool registered with the gateway exposes a strict JSON Schema for its input parameters.
 
@@ -104,9 +96,7 @@ We also validate the output schema:
 
 - This prevents response smuggling attacks where unexpected structured fields could be interpreted as new instructions.
 
----
-
-HITL (Human-in-the-Loop) Flows
+## HITL (Human-in-the-Loop) Flows
 
 High-risk tool calls are gated behind mandatory human review:
 
@@ -134,9 +124,7 @@ Critical setting: fallback: deny
 
 HITL bypass is impossible without modifying the Panguard configuration — which itself requires 4-eyes approval.
 
----
-
-Prompt Guard Libraries (Secondary Layer Only)
+## Prompt Guard Libraries (Secondary Layer Only)
 
 We still use prompt guards as an additional behavioral layer:
 
@@ -150,9 +138,7 @@ We still use prompt guards as an additional behavioral layer:
 
 These libraries add depth against subtle goal drift and injection patterns, but they are never a replacement for structural enforcement at the tool-call layer. Panguard remains the primary control.
 
----
-
-Sandboxed Tool Execution
+## Sandboxed Tool Execution
 
 High-risk tools (especially exec-class) run inside the Kata Container sandbox (Module 11).
 
@@ -164,9 +150,7 @@ Additional controls:
 
 - networkEgress: deny inside exec sandboxes — executed code cannot reach the network.
 
----
-
-Confused Deputy Prevention
+## Confused Deputy Prevention
 
 We explicitly distinguish between user-originated instructions and tool-result-originated content.
 
@@ -174,9 +158,7 @@ Tool results are treated as data, never as instructions. Panguard blocks any too
 
 The HITL gate serves as the final backstop: irreversible actions always require explicit human principal confirmation, no matter how the agent arrived at the decision.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - The security boundary belongs at the structured tool-call layer, not inside the prompt — this is the central architectural principle of agentic security.
 

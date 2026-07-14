@@ -8,9 +8,7 @@ Modules 1–26 have built a comprehensive security stack for single-tenant and i
 
 Multi-tenancy introduces three distinct failure modes: silent cross-tenant data access (highest severity), resource exhaustion as denial-of-service (noisy but still dangerous), and audit-log contamination (compliance nightmare). Namespace isolation is necessary but not sufficient — every shared resource below the namespace boundary must be explicitly hardened. In this module we re-examine the entire stack through one question: “What does this component leak between tenants, and how do we make leakage architecturally impossible?”
 
----
-
-The Multi-Tenancy Threat Model
+## The Multi-Tenancy Threat Model
 
 We assume the worst: a compromised tenant could attempt to read another tenant’s data, exhaust shared resources, or poison shared logs.
 
@@ -24,9 +22,7 @@ The three failure modes we must eliminate:
 
 Namespace isolation is the starting point. Everything else must be hardened at the shared-infrastructure layer.
 
----
-
-Kubernetes Namespace Isolation
+## Kubernetes Namespace Isolation
 
 We enforce strict isolation at the Kubernetes layer:
 
@@ -61,9 +57,7 @@ spec:
 
 This ensures tenants cannot see or affect each other at the Kubernetes resource level.
 
----
-
-Per-Tenant Vault Paths and Policy Boundaries
+## Per-Tenant Vault Paths and Policy Boundaries
 
 Vault is the source of truth for all secrets, so it must be tenant-isolated.
 
@@ -77,9 +71,7 @@ Additional enforcement:
 
 - Per-tenant transit encryption keys: tenant A’s memory entries are encrypted with a key that tenant B can never access, even if the storage backend is shared.
 
----
-
-Memory Store Partitioning
+## Memory Store Partitioning
 
 Memory data is partitioned by tenant at the storage layer:
 
@@ -93,9 +85,7 @@ Memory data is partitioned by tenant at the storage layer:
 
 - Vector DB for semantic recall: separate collection per tenant; cross-collection queries are rejected at the gateway.
 
----
-
-Per-Tenant Resource Quotas and NATS Limits
+## Per-Tenant Resource Quotas and NATS Limits
 
 Shared resources must be quota-protected:
 
@@ -107,9 +97,7 @@ Shared resources must be quota-protected:
 
 This prevents resource-exhaustion attacks between tenants.
 
----
-
-Audit Log Segregation
+## Audit Log Segregation
 
 Audit logs must never mix tenant data.
 
@@ -123,9 +111,7 @@ Audit logs must never mix tenant data.
 
 - Evidence packages for tenant audits: signed, time-bounded export encrypted with the tenant’s public key — platform operators cannot read the contents.
 
----
-
-Cross-Tenant Leakage Through Shared Infrastructure
+## Cross-Tenant Leakage Through Shared Infrastructure
 
 We explicitly harden every remaining shared component:
 
@@ -137,9 +123,7 @@ We explicitly harden every remaining shared component:
 
 - Prometheus: No tenant-identifying labels on metrics visible across tenants. Per-tenant security metrics are emitted as log events to the WORM pipeline instead of Prometheus.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - Namespace isolation is the starting point, not the finish line — every shared resource requires explicit isolation analysis.
 

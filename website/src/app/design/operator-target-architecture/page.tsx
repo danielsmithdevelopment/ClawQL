@@ -1,5 +1,5 @@
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
+import { DocProse } from '@/components/DocProse'
 import { Tag } from '@/components/Tag'
 import OperatorTargetArchitectureBody from '@/generated/clawql-operator-target-architecture-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -67,9 +67,9 @@ export default function OperatorTargetArchitecturePage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <OperatorTargetArchitectureBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }

@@ -10,9 +10,7 @@ Standard Kubernetes containers are convenient, but they all share the same host 
 
 In this module we explore the three sandboxing technologies that give us real security boundaries — Kata Containers, gVisor, and macOS Seatbelt — plus seccomp as the universal baseline. You will learn exactly when to use each one and how Panguard integrates with them for defense in depth.
 
----
-
-Why Container Isolation Is Not Enough
+## Why Container Isolation Is Not Enough
 
 A standard container gives you process and filesystem isolation, but the kernel is shared.
 
@@ -28,9 +26,7 @@ Agentic workloads are especially risky because they:
 
 We need a genuine security boundary between the agent code and the host kernel. That is what sandboxing technologies provide.
 
----
-
-Kata Containers — VM-Level Isolation
+## Kata Containers — VM-Level Isolation
 
 Kata Containers is the highest-isolation option.
 
@@ -66,9 +62,7 @@ Best used for:
 
 Kata gives us the strongest guarantee that even a kernel exploit inside the sandbox cannot touch the host.
 
----
-
-gVisor (runsc) — Userspace Kernel with Lower Overhead
+## gVisor (runsc) — Userspace Kernel with Lower Overhead
 
 gVisor provides strong isolation without a full VM.
 
@@ -100,9 +94,7 @@ Best used for:
 
 gVisor is the sweet spot for many agentic use cases — excellent isolation with acceptable performance.
 
----
-
-macOS Seatbelt (for Local Development Only)
+## macOS Seatbelt (for Local Development Only)
 
 When developing locally on macOS we use Apple’s built-in sandbox.
 
@@ -124,9 +116,7 @@ Example restrictions:
 
 Important: Seatbelt is for local development only. It is not a production replacement for Kata or gVisor.
 
----
-
-seccomp Profiles — The Universal Baseline
+## seccomp Profiles — The Universal Baseline
 
 Regardless of which sandbox you choose, we always apply seccomp (secure computing mode).
 
@@ -152,9 +142,7 @@ securityContext:
 
 seccomp is the baseline applied to all containers. Kata and gVisor build on top of it.
 
----
-
-Panguard Integration with Sandbox Policy
+## Panguard Integration with Sandbox Policy
 
 Panguard and the sandbox work together as complementary layers:
 
@@ -172,9 +160,7 @@ Together they give:
 
 Full observability of what the agent attempted and whether it was permitted at every layer.
 
----
-
-Choosing Between Runtimes
+## Choosing Between Runtimes
 
 Use this decision matrix:
 
@@ -188,9 +174,7 @@ Use this decision matrix:
 
 Critical rule: Never mix runtime types within the same node pool for security-sensitive workloads. Isolation boundaries are enforced at the node level.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - Container isolation is a process boundary, not a security boundary — kernel exploitation from inside a container is a real attack class.
 

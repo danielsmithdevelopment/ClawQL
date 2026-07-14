@@ -1,5 +1,5 @@
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
+import { DocProse } from '@/components/DocProse'
 import { Tag } from '@/components/Tag'
 import AgentSetupBody from '@/generated/agent-setup-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -60,9 +60,9 @@ export default function AgentSetupPage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <AgentSetupBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }

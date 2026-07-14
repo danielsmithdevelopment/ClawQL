@@ -1,5 +1,5 @@
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
+import { DocProse } from '@/components/DocProse'
 import { Tag } from '@/components/Tag'
 import DaosCoordinationBody from '@/generated/daos-coordination-layer-spec-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -58,9 +58,9 @@ export default function DaosSpecificationPage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <DaosCoordinationBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }

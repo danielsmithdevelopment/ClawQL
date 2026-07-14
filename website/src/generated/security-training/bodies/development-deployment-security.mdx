@@ -8,9 +8,7 @@ Modules 1–20 have built a production-grade security stack that protects agents
 
 A long-lived credential in a shell profile or an unhardened local environment is one phishing email away from a production breach. Security that relies on manual steps at deploy time will eventually be skipped under pressure. In this module we harden both ends of the pipeline: the developer workstation (where everything begins) and the production deployment process (where everything lands). By the end you will have a secure-by-default development-to-production flow where the safe path is also the easiest path.
 
----
-
-The Development-to-Production Security Pipeline
+## The Development-to-Production Security Pipeline
 
 The developer workstation is part of the production security perimeter. Its posture directly affects what runs in production.
 
@@ -22,9 +20,7 @@ Key principles:
 
 - Weakness on either end of the pipeline undermines the entire system. We harden the workstation structurally and the deployment process automatically.
 
----
-
-Workstation Tooling Layer
+## Workstation Tooling Layer
 
 Every developer laptop runs a standardized, verified tooling stack as part of onboarding:
 
@@ -40,9 +36,7 @@ Every developer laptop runs a standardized, verified tooling stack as part of on
 
 All tooling is installed, verified, and kept up-to-date as part of developer onboarding — it is never optional.
 
----
-
-Workstation Structural Layer
+## Workstation Structural Layer
 
 Beyond tools, we enforce structural controls that limit blast radius even if tooling is bypassed:
 
@@ -58,9 +52,7 @@ Beyond tools, we enforce structural controls that limit blast radius even if too
 
 - External API keys for development: Stored only in the Vault dev server with a 4-hour TTL — never in shell profiles or dotfiles.
 
----
-
-Preventing Credential Leakage into Git and Logs
+## Preventing Credential Leakage into Git and Logs
 
 We actively block common leakage paths:
 
@@ -72,9 +64,7 @@ We actively block common leakage paths:
 
 - Developer offboarding checklist: Immediately revoke the developer’s mTLS certificate and rotate any shared credentials they had access to.
 
----
-
-Production Deployment: Secure-by-Default Architecture
+## Production Deployment: Secure-by-Default Architecture
 
 Production deployments are one-command and fully secure by default:
 
@@ -88,9 +78,7 @@ Production deployments are one-command and fully secure by default:
 
 - Rollback criteria are defined before every deploy: >20 % increase in Panguard block rate, any unhandled 500 error, or any Falco CRITICAL alert in the observation window.
 
----
-
-Environment Parity
+## Environment Parity
 
 Staging must be an exact mirror of production security configuration — same Panguard rules, same ATR roles, same NetworkPolicy, same Vault policies.
 
@@ -100,9 +88,7 @@ Staging must be an exact mirror of production security configuration — same Pa
 
 A staging environment that is more permissive than production is not a staging environment — it is a security gap.
 
----
-
-Key Takeaways (Memorize These!)
+## Key Takeaways (Memorize These!)
 
 - The workstation is part of the production security perimeter — treat its compromise with the same severity as a production server compromise.
 

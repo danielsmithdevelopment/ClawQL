@@ -1,6 +1,6 @@
 import { Button } from '@/components/Button'
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
+import { DocProse } from '@/components/DocProse'
 import { Tag } from '@/components/Tag'
 import ClawQLPluginModelBody from '@/generated/clawql-plugin-model-body.mdx'
 import ClawQLPluginRegistryBody from '@/generated/clawql-plugin-registry-body.mdx'
@@ -87,7 +87,7 @@ export default function PluginsReferencePage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <div id="plugin-registry">
           <ClawQLPluginRegistryBody />
         </div>
@@ -95,7 +95,7 @@ export default function PluginsReferencePage() {
         <div id="plugin-model">
           <ClawQLPluginModelBody />
         </div>
-      </Prose>
+      </DocProse>
     </article>
   )
 }

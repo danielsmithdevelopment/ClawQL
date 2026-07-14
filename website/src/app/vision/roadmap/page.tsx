@@ -1,5 +1,5 @@
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
+import { DocProse } from '@/components/DocProse'
 import { Tag } from '@/components/Tag'
 import VisionRoadmapBody from '@/generated/clawql-vision-roadmap-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -76,9 +76,9 @@ export default function VisionRoadmapPage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <VisionRoadmapBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }

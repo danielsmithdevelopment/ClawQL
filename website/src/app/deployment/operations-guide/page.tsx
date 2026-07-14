@@ -1,5 +1,5 @@
 import { Note } from '@/components/mdx'
-import { Prose } from '@/components/Prose'
+import { DocProse } from '@/components/DocProse'
 import { Tag } from '@/components/Tag'
 import DeploymentOperationsGuideBody from '@/generated/clawql-deployment-operations-guide-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
@@ -54,9 +54,9 @@ export default function DeploymentOperationsGuidePage() {
         </Note>
       </div>
 
-      <Prose className="flex-auto">
+      <DocProse className="flex-auto">
         <DeploymentOperationsGuideBody />
-      </Prose>
+      </DocProse>
     </article>
   )
 }
