@@ -21,7 +21,6 @@ import {
   isNamespaceAllowed,
   isTemplateAllowed,
   workflowDeleteAllowed,
-  workflowToolEnabled,
   WORKFLOW_CORRELATION_LABEL,
 } from "./env.js";
 import {
@@ -200,7 +199,7 @@ function jsonResponse(obj: unknown): { content: { type: "text"; text: string }[]
   return { content: [{ type: "text", text: JSON.stringify(obj, null, 2) }] };
 }
 
-function workflowDisabledResponse(): { content: { type: "text"; text: string }[] } {
+export function workflowDisabledResponse(): { content: { type: "text"; text: string }[] } {
   return jsonResponse({
     ok: false,
     error:
@@ -297,13 +296,9 @@ async function patchCronSuspend(
   return res as ArgoCronWorkflowObject;
 }
 
-export async function executeWorkflowToolCore(
+export async function dispatchWorkflowToolCore(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
-  if (!workflowToolEnabled()) {
-    return workflowDisabledResponse();
-  }
-
   const parsed = workflowInputSchema.parse(params);
 
   try {
@@ -725,6 +720,17 @@ export async function executeWorkflowToolCore(
     const message = error instanceof Error ? error.message : String(error);
     return jsonResponse({ ok: false, operation: parsed.operation, error: message });
   }
+}
+
+/**
+ * Promise façade over {@link executeWorkflowToolCoreEffect}.
+ */
+export async function executeWorkflowToolCore(
+  params: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const { executeWorkflowToolCoreEffect } = await import("../effect/workflow-effect.js");
+  const { Effect } = await import("effect");
+  return Effect.runPromise(executeWorkflowToolCoreEffect(params));
 }
 
 /** Public async facade for workflow MCP tool. */
