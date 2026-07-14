@@ -189,21 +189,23 @@ export function acpCheckoutLiveLayer(
             paymentIntentId = `pi_dry_${randomUUID().replace(/-/g, "").slice(0, 12)}`;
           } else {
             const stripe = yield* stripeClient.getClient();
-            const intent = yield* stripeTryPromise("stripe acp SPT paymentIntent create failed", () =>
-              stripe.paymentIntents.create({
-                amount: session.totals.total.amount,
-                currency: session.currency,
-                confirm: true,
-                automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-                // SPT field — Stripe agentic commerce; cast for SDK version variance.
-                payment_method_data: {
-                  shared_payment_granted_token: token,
-                } as never,
-                metadata: {
-                  clawql_acp_checkout_session_id: session.id,
-                  clawql_acp_merchant: acpMerchantId(env),
-                },
-              })
+            const intent = yield* stripeTryPromise(
+              "stripe acp SPT paymentIntent create failed",
+              () =>
+                stripe.paymentIntents.create({
+                  amount: session.totals.total.amount,
+                  currency: session.currency,
+                  confirm: true,
+                  automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+                  // SPT field — Stripe agentic commerce; cast for SDK version variance.
+                  payment_method_data: {
+                    shared_payment_granted_token: token,
+                  } as never,
+                  metadata: {
+                    clawql_acp_checkout_session_id: session.id,
+                    clawql_acp_merchant: acpMerchantId(env),
+                  },
+                })
             );
             paymentIntentId = intent.id;
           }

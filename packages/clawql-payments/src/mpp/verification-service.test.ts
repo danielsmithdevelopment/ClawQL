@@ -109,7 +109,10 @@ describe("MppVerificationService", () => {
   });
 
   it("verifies legacy x402 PAYMENT-SIGNATURE credentials via facilitator", async () => {
-    const { gate } = await createX402Gate({ resource: "/v1/legacy", price: 0.001, asset: "USDC" }, env);
+    const { gate } = await createX402Gate(
+      { resource: "/v1/legacy", price: 0.001, asset: "USDC" },
+      env
+    );
     const payload = {
       x402Version: 2,
       accepted: {

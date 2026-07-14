@@ -53,8 +53,7 @@ describe("PaymentAuditService", () => {
           catch: (cause) => new PaymentError({ reason: "append failed", cause }),
         }),
       list: () => Effect.succeed([]),
-      verify: () =>
-        Effect.succeed({ ok: true, records: 0, head_hash: "0".repeat(64), issues: [] }),
+      verify: () => Effect.succeed({ ok: true, records: 0, head_hash: "0".repeat(64), issues: [] }),
       reset: () => Effect.void,
     });
 
