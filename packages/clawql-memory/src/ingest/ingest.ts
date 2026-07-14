@@ -186,23 +186,22 @@ function buildFrontmatter(title: string): string {
   ].join("\n");
 }
 
-/** Public async facade for vault ingest (MCP tools, scripts, automation). */
-export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
-  const { runMemoryEffect, memoryIngestProgram } =
-    await import("../effect/memory-effect-runtime.js");
-  return runMemoryEffect(memoryIngestProgram(input));
-}
+export type PreparedMemoryIngest =
+  | {
+      ok: true;
+      title: string;
+      effective: MemoryIngestInput;
+      fileProvenance?: string;
+    }
+  | { ok: false; error: string };
 
-/** @deprecated Prefer {@link runMemoryIngest} — routes through Effect services. */
-export async function executeMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
-  return runMemoryIngest(input);
-}
-
-/** Vault write + index sync body (vault path already resolved). */
-export async function executeMemoryIngestCore(
-  vault: string,
+/**
+ * Resolve toolOutputs file, normalize citations, and optional Presidio redact.
+ * Pure orchestration helpers for the Effect ingest pipeline (IO at the edges).
+ */
+export async function prepareMemoryIngestEffectiveInput(
   input: MemoryIngestInput
-): Promise<MemoryIngestResult> {
+): Promise<PreparedMemoryIngest> {
   const title = input.title?.trim();
   if (!title) {
     return { ok: false, error: "title is required" };
@@ -229,14 +228,23 @@ export async function executeMemoryIngestCore(
   };
 
   effective = await presidioRedactMemoryIngestInput(effective);
+  return { ok: true, title, effective, fileProvenance };
+}
 
+/** Vault Markdown write only (under write lock). No index / embedding post-sync. */
+export async function writeMemoryIngestPage(
+  vault: string,
+  title: string,
+  effective: MemoryIngestInput,
+  fileProvenance?: string
+): Promise<MemoryIngestResult> {
   const slug = slugifyTitle(title);
   const rel = `${MEMORY_DIR}/${slug}.md`;
   const append = effective.append !== false;
   const hash = hashIngestSection(effective);
   const when = new Date().toISOString();
 
-  const result = await withVaultWriteLock(vault, async () => {
+  return withVaultWriteLock(vault, async () => {
     let existing = "";
     try {
       existing = await readVaultTextFile(vault, rel);
@@ -258,22 +266,7 @@ export async function executeMemoryIngestCore(
     });
     const related = buildRelatedLinks(effective.wikilinks);
 
-    if (!existing) {
-      const body = [
-        buildFrontmatter(title),
-        `# ${title}`,
-        "",
-        related,
-        "---",
-        "",
-        section,
-        "",
-      ].join("\n");
-      await writeVaultTextFileAtomic(vault, rel, body);
-      return { ok: true, path: rel };
-    }
-
-    if (!append) {
+    if (!existing || !append) {
       const body = [
         buildFrontmatter(title),
         `# ${title}`,
@@ -292,57 +285,29 @@ export async function executeMemoryIngestCore(
     await writeVaultTextFileAtomic(vault, rel, next);
     return { ok: true, path: rel };
   });
+}
 
-  if (result.ok && !result.skipped) {
-    const { runMemoryEffect } = await import("../effect/memory-effect-runtime.js");
-    const { memoryIngestPostSyncExtrasEffect, vaultProviderIndexEffect } =
-      await import("../effect/memory-vault-post-sync-effect.js");
+/** Public async facade for vault ingest (MCP tools, scripts, automation). */
+export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
+  const { runMemoryEffect, memoryIngestProgram } =
+    await import("../effect/memory-effect-runtime.js");
+  return runMemoryEffect(memoryIngestProgram(input));
+}
 
-    const wantEmbeddings =
-      effective.rebuild?.embeddings !== false &&
-      (effective.rebuild?.embeddings === true || process.env.CLAWQL_MEMORY_DB?.trim() !== "0");
-    const wantPageIndex =
-      effective.rebuild?.pageindex === true ||
-      process.env.CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX?.trim() === "1";
+/** @deprecated Prefer {@link runMemoryIngest} — routes through Effect services. */
+export async function executeMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
+  return runMemoryIngest(input);
+}
 
-    const rebuild: NonNullable<MemoryIngestResult["rebuild"]> = {};
-
-    if (wantEmbeddings) {
-      const indexExtras = await runMemoryEffect(memoryIngestPostSyncExtrasEffect(vault));
-      Object.assign(result, indexExtras);
-      rebuild.embeddings = { synced: true };
-    } else if (effective.rebuild?.embeddings === false) {
-      rebuild.embeddings = {
-        synced: false,
-        skipped: "rebuild.embeddings=false; memory.db / embedding sync skipped",
-      };
-    }
-
-    await runMemoryEffect(vaultProviderIndexEffect(vault));
-
-    if (wantPageIndex && result.path) {
-      try {
-        const { pageindexBuildFromVaultPath } = await import("../recall/pageindex-recall.js");
-        const docId = result.path.replace(/^Memory\//, "").replace(/\.md$/i, "");
-        const built = await pageindexBuildFromVaultPath({
-          docId,
-          vaultRelativePath: result.path,
-        });
-        rebuild.pageindex = built;
-      } catch (e) {
-        rebuild.pageindex = {
-          error: e instanceof Error ? e.message : String(e),
-        };
-      }
-    }
-
-    const { runAfterIngestVaultSync } = await import("../sync/vault-sync-hooks.js");
-    await runAfterIngestVaultSync();
-    return {
-      ...result,
-      rebuild: Object.keys(rebuild).length > 0 ? rebuild : undefined,
-    };
-  }
-
-  return result;
+/**
+ * Vault write + index sync body (vault path already resolved).
+ * Routes through native Effect.gen (`executeMemoryIngestCoreEffect`) with live Layers.
+ */
+export async function executeMemoryIngestCore(
+  vault: string,
+  input: MemoryIngestInput
+): Promise<MemoryIngestResult> {
+  const { runMemoryEffect } = await import("../effect/memory-effect-runtime.js");
+  const { executeMemoryIngestCoreEffect } = await import("../effect/memory-ingest-effect.js");
+  return runMemoryEffect(executeMemoryIngestCoreEffect(vault, input));
 }

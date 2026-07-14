@@ -9,7 +9,11 @@ export {
 } from "./vault-config-service.js";
 export { EmbeddingService, embeddingLiveLayer } from "./embedding-service.js";
 export { MemoryDbService, memoryDbLiveLayer, type MemoryDbDocument } from "./memory-db-service.js";
-export { executeMemoryIngestEffect } from "./memory-ingest-effect.js";
+export {
+  executeMemoryIngestEffect,
+  executeMemoryIngestCoreEffect,
+  type MemoryIngestServices,
+} from "./memory-ingest-effect.js";
 export {
   executeMemoryRecallEffect,
   executeMemoryRecallCoreEffect,
