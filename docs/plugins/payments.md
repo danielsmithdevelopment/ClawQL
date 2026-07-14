@@ -1,6 +1,6 @@
 ---
 title: Payments
-description: Native Stripe + x402 + MPP + AP2 + ACP + PayPal rails, plan entitlements, WORM payment audit.
+description: Native Stripe + x402 + MPP + AP2 + ACP + PayPal + Adyen rails, plan entitlements, WORM payment audit.
 slug: payments
 status: shipped
 package: clawql-payments
@@ -11,14 +11,14 @@ next: hitl-label-studio
 
 # Payments (`clawql-payments`)
 
-**Status:** Shipped (foundation + Tier 1 protocols)  
+**Status:** Shipped (foundation + Tier 1 protocols + Adyen enterprise)  
 **Package:** [`packages/clawql-payments`](../../packages/clawql-payments)  
-**Toggle:** Always available as a library; gate rails via `CLAWQL_X402_ENFORCE`, `CLAWQL_MPP_ENABLED`, `CLAWQL_AP2_ENABLED`, `CLAWQL_ACP_ENABLED`, `CLAWQL_PAYPAL_ENABLED`, plan entitlements  
+**Toggle:** Always available as a library; gate rails via `CLAWQL_X402_ENFORCE`, `CLAWQL_MPP_ENABLED`, `CLAWQL_AP2_ENABLED`, `CLAWQL_ACP_ENABLED`, `CLAWQL_PAYPAL_ENABLED`, `CLAWQL_ADYEN_ENABLED`, plan entitlements  
 **Plugin:** `PaymentsX402ProxyPlugin` (`payments-x402-mcp-proxy`) for MCP tool-level x402 enforcement (+ optional AP2 mandate checks)
 
 ## Positioning
 
-ClawQL is the only MCP gateway with native **Stripe + x402 + MPP + AP2 + ACP** payment surfaces, a **PayPal Orders** adapter, and a **WORM-audited** payment event trail:
+ClawQL is the only MCP gateway with native **Stripe + x402 + MPP + AP2 + ACP** payment surfaces, **PayPal Orders**, **Adyen Checkout** (enterprise), and a **WORM-audited** payment event trail:
 
 | Rail       | Role                                                                                   |
 | ---------- | -------------------------------------------------------------------------------------- |
@@ -28,15 +28,15 @@ ClawQL is the only MCP gateway with native **Stripe + x402 + MPP + AP2 + ACP** p
 | **AP2**    | Cryptographic Payment Mandates (authorization / non-repudiation under MCP)             |
 | **ACP**    | Merchant-side agentic checkout sessions (ChatGPT Instant Checkout–style)               |
 | **PayPal** | Human wallet Orders v2 create/capture                                                  |
+| **Adyen**  | Enterprise Checkout sessions, payments, HMAC-verified webhooks                         |
 
 Operator guide: [clawql-payments](../payments/clawql-payments.md) → `/payments/clawql-payments`.
 
 ## Roadmap
 
-1. **Adyen direct** — Tier 2 enterprise billing adapter
-2. **Mollie / Razorpay** — Tier 3 regional processors
+1. **Mollie / Razorpay** — Tier 3 regional processors when regional traction requires them
 
-Docs-site UCP discovery remains a stub. AP2/ACP live when env flags are set on self-hosted `clawql-payments`.
+Docs-site UCP discovery remains a stub. Adyen/AP2/ACP/PayPal live when env flags are set on self-hosted `clawql-payments`.
 
 ## Related
 

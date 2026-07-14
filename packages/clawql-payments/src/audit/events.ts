@@ -14,9 +14,13 @@ export type PaymentEventKind =
   | "ACP_CHECKOUT_COMPLETED"
   | "PAYPAL_ORDER_CREATED"
   | "PAYPAL_ORDER_CAPTURED"
-  | "PAYPAL_CAPTURE_FAILED";
+  | "PAYPAL_CAPTURE_FAILED"
+  | "ADYEN_SESSION_CREATED"
+  | "ADYEN_PAYMENT_AUTHORIZED"
+  | "ADYEN_PAYMENT_FAILED"
+  | "ADYEN_WEBHOOK_PROCESSED";
 
-export type PaymentProvider = "stripe" | "x402" | "ap2" | "acp" | "paypal";
+export type PaymentProvider = "stripe" | "x402" | "ap2" | "acp" | "paypal" | "adyen";
 
 export type PaymentWormPayload = {
   provider: PaymentProvider;
@@ -298,6 +302,84 @@ export function buildPaypalCaptureFailedEntry(input: {
       provider: "paypal",
       tenant_id: input.tenantId,
       resource: input.orderId,
+    },
+  });
+}
+
+export function buildAdyenSessionCreatedEntry(input: {
+  tenantId: string;
+  sessionId: string;
+  amountUsd: number;
+  reference?: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "ADYEN_SESSION_CREATED",
+    summary: `Adyen session ${input.sessionId} created ($${input.amountUsd.toFixed(2)})`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "adyen",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.reference ?? input.sessionId,
+    },
+  });
+}
+
+export function buildAdyenPaymentAuthorizedEntry(input: {
+  tenantId: string;
+  pspReference?: string;
+  amountUsd?: number;
+  reference?: string;
+  resultCode?: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "ADYEN_PAYMENT_AUTHORIZED",
+    summary: `Adyen payment authorised${input.pspReference ? ` ${input.pspReference}` : ""}${input.amountUsd !== undefined ? ` ($${input.amountUsd.toFixed(2)})` : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "adyen",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.pspReference ?? input.reference,
+    },
+  });
+}
+
+export function buildAdyenPaymentFailedEntry(input: {
+  tenantId: string;
+  reference?: string;
+  reason: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "ADYEN_PAYMENT_FAILED",
+    summary: `Adyen payment failed${input.reference ? ` for ${input.reference}` : ""}: ${input.reason}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "adyen",
+      tenant_id: input.tenantId,
+      resource: input.reference,
+    },
+  });
+}
+
+export function buildAdyenWebhookProcessedEntry(input: {
+  tenantId: string;
+  eventCode: string;
+  success: boolean;
+  pspReference?: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "ADYEN_WEBHOOK_PROCESSED",
+    summary: `Adyen webhook ${input.eventCode} success=${input.success}${input.pspReference ? ` (${input.pspReference})` : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "adyen",
+      tenant_id: input.tenantId,
+      resource: input.pspReference ?? input.eventCode,
     },
   });
 }

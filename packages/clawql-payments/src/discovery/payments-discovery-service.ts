@@ -5,6 +5,7 @@ import { PaymentsConfigService } from "../config/payments-config-service.js";
 import { isAp2Enabled, isAp2Required } from "../ap2/config.js";
 import { isAcpEnabled } from "../acp/config.js";
 import { isPaypalEnabled, paypalApiBase } from "../paypal/config.js";
+import { adyenEnvironment, adyenMerchantAccount, isAdyenEnabled } from "../adyen/config.js";
 import { X402GateService } from "../x402/x402-gate-service.js";
 import { X402RuntimeConfigService } from "../x402/x402-runtime-config-service.js";
 import { X402_VERSION } from "../x402/types.js";
@@ -17,7 +18,7 @@ export type PaymentsWellKnownResource = {
 };
 
 export type PaymentsWellKnownMethod = {
-  type: "x402" | "stripe" | "ap2" | "acp" | "paypal";
+  type: "x402" | "stripe" | "ap2" | "acp" | "paypal" | "adyen";
   enabled: boolean;
 };
 
@@ -62,6 +63,13 @@ export type PaymentsWellKnownPaypalMethod = PaymentsWellKnownMethod & {
   documentation: string;
 };
 
+export type PaymentsWellKnownAdyenMethod = PaymentsWellKnownMethod & {
+  type: "adyen";
+  environment: "test" | "live";
+  merchant_account?: string;
+  documentation: string;
+};
+
 export type PaymentsWellKnownDocument = {
   version: string;
   server_name: string;
@@ -73,8 +81,9 @@ export type PaymentsWellKnownDocument = {
     | PaymentsWellKnownAp2Method
     | PaymentsWellKnownAcpMethod
     | PaymentsWellKnownPaypalMethod
+    | PaymentsWellKnownAdyenMethod
   >;
-  default: "x402" | "stripe" | "ap2" | "acp" | "paypal" | null;
+  default: "x402" | "stripe" | "ap2" | "acp" | "paypal" | "adyen" | null;
   updated_at: string;
 };
 
@@ -202,6 +211,16 @@ export function paymentsDiscoveryLiveLayer(
               enabled: true,
               api_base: paypalApiBase(runEnv),
               documentation: "https://developer.paypal.com/docs/api/orders/v2/",
+            });
+          }
+
+          if (isAdyenEnabled(runEnv)) {
+            paymentMethods.push({
+              type: "adyen",
+              enabled: true,
+              environment: adyenEnvironment(runEnv),
+              merchant_account: adyenMerchantAccount(runEnv),
+              documentation: "https://docs.adyen.com/online-payments/",
             });
           }
 
