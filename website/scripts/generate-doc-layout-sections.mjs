@@ -58,11 +58,7 @@ for (const file of glob.sync('**/page.mdx', { cwd: appDir })) {
   mergePath(url === '/' ? '/' : url || '/', extractH2Sections(mdx))
 }
 
-// Home body (page.tsx imports home-body.mdx)
-const homeBody = path.join(appDir, 'home-body.mdx')
-if (fs.existsSync(homeBody)) {
-  mergePath('/', extractH2Sections(fs.readFileSync(homeBody, 'utf8')))
-}
+// Home body intentionally omitted from TOC seeding — landing has no OnThisPage.
 
 // Generated long-form docs
 for (const [fileName, url] of Object.entries(GENERATED_BODY_ROUTES)) {

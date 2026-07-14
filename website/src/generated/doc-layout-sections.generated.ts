@@ -1231,7 +1231,7 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
   ],
   '/plugins/payments': [
     { title: 'Positioning', id: 'positioning' },
-    { title: 'Roadmap (not shipped)', id: 'roadmap-not-shipped' },
+    { title: 'Roadmap', id: 'roadmap' },
     { title: 'Related', id: 'related' },
   ],
   '/plugins/sandbox': [

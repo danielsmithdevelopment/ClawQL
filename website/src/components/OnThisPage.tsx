@@ -2,6 +2,7 @@
 
 import clsx from 'clsx'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import {
   createContext,
   useContext,
@@ -48,6 +49,7 @@ export function OnThisPageProvider({
  * Section list is seeded at build time (Layout) and kept in sync via Heading.
  */
 export function OnThisPage({ className }: { className?: string }) {
+  const pathname = usePathname()
   const instanceId = useId()
   const claimApi = useContext(OnThisPageClaimContext)
   const [allowed, setAllowed] = useState(
@@ -62,7 +64,8 @@ export function OnThisPage({ className }: { className?: string }) {
   const sections = useSectionStore((s) => s.sections)
   const visibleSections = useSectionStore((s) => s.visibleSections)
 
-  if (!allowed || sections.length < 2) {
+  // Landing page: no in-page TOC — keep the first viewport uncluttered.
+  if (pathname === '/' || !allowed || sections.length < 2) {
     return null
   }
 
