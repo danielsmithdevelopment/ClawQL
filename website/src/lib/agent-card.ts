@@ -34,7 +34,7 @@ export function getAgentCard(): Record<string, unknown> {
   return {
     name: 'ClawQL',
     description:
-      'Secure MCP gateway for production agents — search and execute across OpenAPI sources with audit, cache, optional vault memory, x402 payments, and defense-in-depth controls.',
+      'Secure MCP gateway for production agents — search and execute across OpenAPI sources with audit, cache, optional vault memory, native Stripe + x402 + MPP payments, and defense-in-depth controls.',
     version,
     url: a2aUrl,
     provider: {
@@ -137,11 +137,12 @@ export function getAgentCard(): Record<string, unknown> {
         id: 'commerce_checkout',
         name: 'Agentic commerce checkout',
         description:
-          'Commerce discovery surface for x402, UCP, and ACP. Live checkout and settlement run on self-hosted ClawQL with clawql-payments configured.',
-        tags: ['commerce', 'x402', 'ucp', 'acp', 'payments'],
+          'Commerce discovery for native Stripe + x402 + MPP rails. ACP/UCP/AP2 documents on docs.clawql.com are stubs; live settlement runs on self-hosted ClawQL with clawql-payments.',
+        tags: ['commerce', 'stripe', 'x402', 'mpp', 'payments'],
         examples: [
           'Probe x402 payment on /api/v1',
-          'Read commerce OpenAPI at /openapi.json',
+          'Read MPP OpenAPI at /openapi.json',
+          'Read payments discovery at /.well-known/payments.json',
         ],
       },
       {

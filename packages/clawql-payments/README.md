@@ -1,14 +1,16 @@
 # clawql-payments
 
-Unified payments layer for ClawQL — Stripe billing, x402 micropayments, **MPP** (Machine Payments Protocol) discovery and runtime, managed plan entitlements, and WORM-auditable payment events.
+Unified payments layer for ClawQL — **Stripe** billing, **x402** micropayments, **MPP** (Machine Payments Protocol) discovery and session streaming, managed plan entitlements, and **WORM-auditable** payment events.
 
-ClawQL's own managed tiers (Free / Pro / Team / Enterprise) run on this package internally. The same package is available to ClawQL users to bill their own customers via Stripe, gate MCP tools and HTTP endpoints via x402, and get a correlated payment audit trail across both rails.
+**Positioning:** ClawQL is the only MCP gateway with native **Stripe + x402 + MPP** rails and a correlated payment WORM trail. Roadmap: **AP2** (mandates), **ACP** (merchant checkout), **PayPal** direct — see [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md).
+
+ClawQL's own managed tiers (Free / Pro / Team / Enterprise) run on this package internally. The same package is available to ClawQL users to bill their own customers via Stripe, gate MCP tools and HTTP endpoints via x402/MPP, and get a correlated payment audit trail across rails.
 
 ## Architecture
 
 ```
 clawql-payments
-├── stripe/     # Subscriptions, invoices, webhooks, metered usage, customer portal
+├── stripe/     # Subscriptions, invoices, webhooks, metered usage, customer portal, SPT
 ├── x402/       # Wallet setup, resource gating, proof verification, settlement reconcile
 ├── mpp/        # MPP OpenAPI discovery (`/openapi.json`), Payment 402 challenges, MCP -32042
 ├── plans/      # ClawQL tier definitions, entitlements, usage tracking, limit enforcement

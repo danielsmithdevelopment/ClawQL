@@ -174,6 +174,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
       'OpenAI-compatible gateway, tier escalation, cache, export/finetune flywheel, and Ouroboros wiring.',
     icon: BoltIcon,
   }),
+  card({
+    href: '/payments/clawql-payments',
+    name: 'clawql-payments',
+    description:
+      'Native Stripe + x402 + MPP rails, plan entitlements, and WORM payment audit. Roadmap: AP2, ACP, PayPal.',
+    icon: TagIcon,
+  }),
 ]
 
 export const deploymentHubCards: Array<ReferenceCard> = [

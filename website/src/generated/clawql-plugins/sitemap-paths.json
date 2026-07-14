@@ -10,6 +10,7 @@
   "/plugins/sandbox",
   "/plugins/inference-providers",
   "/plugins/ouroboros",
+  "/plugins/payments",
   "/plugins/hitl-label-studio",
   "/plugins/third-party"
 ]

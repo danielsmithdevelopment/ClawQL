@@ -4,8 +4,8 @@ description: hitl_enqueue_label_studio and webhook path for human-in-the-loop re
 slug: hitl-label-studio
 status: shipped
 package: src/
-order: 9
-prev: ouroboros
+order: 11
+prev: payments
 next: third-party
 ---
 

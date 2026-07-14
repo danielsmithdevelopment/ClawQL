@@ -5,13 +5,14 @@ import Body5 from './bodies/bundled-providers.mdx'
 import Body3 from './bodies/codegraph.mdx'
 import Body0 from './bodies/core.mdx'
 import Body4 from './bodies/documents.mdx'
-import Body10 from './bodies/hitl-label-studio.mdx'
+import Body11 from './bodies/hitl-label-studio.mdx'
 import Body8 from './bodies/inference-providers.mdx'
 import Body2 from './bodies/memory.mdx'
 import Body9 from './bodies/ouroboros.mdx'
 import Body1 from './bodies/panguard-proxy.mdx'
+import Body10 from './bodies/payments.mdx'
 import Body7 from './bodies/sandbox.mdx'
-import Body11 from './bodies/third-party.mdx'
+import Body12 from './bodies/third-party.mdx'
 
 export type PluginPageMeta = {
   slug: string
@@ -122,6 +123,16 @@ export const pluginPages: PluginPageMeta[] = [
     status: 'opt-in',
     package: 'clawql-ouroboros',
     prev: 'sandbox',
+    next: 'payments',
+  },
+  {
+    slug: 'payments',
+    title: 'Payments',
+    description:
+      'Native Stripe + x402 + MPP agentic rails, plan entitlements, WORM payment audit. Roadmap AP2, ACP, PayPal.',
+    status: 'shipped',
+    package: 'clawql-payments',
+    prev: 'ouroboros',
     next: 'hitl-label-studio',
   },
   {
@@ -131,7 +142,7 @@ export const pluginPages: PluginPageMeta[] = [
       'hitl_enqueue_label_studio and webhook path for human-in-the-loop review. CLAWQL_ENABLE_HITL_LABEL_STUDIO=1.',
     status: 'shipped',
     package: 'src/',
-    prev: 'ouroboros',
+    prev: 'payments',
     next: 'third-party',
   },
   {
@@ -157,8 +168,9 @@ export const pluginBodies: Record<string, ComponentType> = {
   sandbox: Body7,
   'inference-providers': Body8,
   ouroboros: Body9,
-  'hitl-label-studio': Body10,
-  'third-party': Body11,
+  payments: Body10,
+  'hitl-label-studio': Body11,
+  'third-party': Body12,
 }
 
 export function getPluginMeta(slug: string): PluginPageMeta | undefined {

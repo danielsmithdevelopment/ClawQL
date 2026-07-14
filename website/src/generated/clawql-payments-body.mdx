@@ -230,8 +230,8 @@ clawql inference serve --port 8080
 
 Each meter event includes an `identifier` for Stripe-side deduplication:
 
-- With correlation id: `inference:{tenantId}:{correlationId}`
-- Without: `inference:{tenantId}:{timestamp_ms}`
+- With correlation id: `inference:\{tenantId\}:\{correlationId\}`
+- Without: `inference:\{tenantId\}:\{timestamp_ms\}`
 
 Replaying the same correlation id within Stripe's dedup window will not double-bill.
 
@@ -327,12 +327,12 @@ sequenceDiagram
 
 **Headers:**
 
-| Header                            | Direction      | Purpose                                                |
-| --------------------------------- | -------------- | ------------------------------------------------------ |
-| `PAYMENT-REQUIRED`                | Response (402) | Base64-encoded `PaymentRequired` JSON                  |
-| `PAYMENT-SIGNATURE` / `X-PAYMENT` | Request        | Client payment proof (JSON or base64)                  |
-| `X-Clawql-Tool`                   | Request        | Gate MCP tools as `tool:{name}` (HTTP middleware path) |
-| `X-Correlation-Id`                | Request        | Audit correlation (optional)                           |
+| Header                            | Direction      | Purpose                                                  |
+| --------------------------------- | -------------- | -------------------------------------------------------- |
+| `PAYMENT-REQUIRED`                | Response (402) | Base64-encoded `PaymentRequired` JSON                    |
+| `PAYMENT-SIGNATURE` / `X-PAYMENT` | Request        | Client payment proof (JSON or base64)                    |
+| `X-Clawql-Tool`                   | Request        | Gate MCP tools as `tool:\{name\}` (HTTP middleware path) |
+| `X-Correlation-Id`                | Request        | Audit correlation (optional)                             |
 
 ### MCP in-process enforcement
 
@@ -423,7 +423,7 @@ import {
   createX402PaymentMiddleware,
   enforceX402Gate,
   verifyViaFacilitator,
-} from "clawql-payments/x402";
+} from 'clawql-payments/x402'
 ```
 
 Middleware mounts **before** auth in [`packages/clawql-inference/src/api/server.ts`](../../packages/clawql-inference/src/api/server.ts).
@@ -530,11 +530,11 @@ clawql payments spend report --group-by provider
 ### Programmatic verify
 
 ```typescript
-import { verifyPaymentAuditLog } from "clawql-payments";
+import { verifyPaymentAuditLog } from 'clawql-payments'
 
-const result = await verifyPaymentAuditLog();
+const result = await verifyPaymentAuditLog()
 if (!result.ok) {
-  console.error(result.issues);
+  console.error(result.issues)
 }
 ```
 
@@ -592,7 +592,7 @@ Middleware order in the HTTP app:
 3. Virtual key auth (`CLAWQL_INFERENCE_KEYS_ENABLED`)
 4. OpenAI-compat router (entitlement check inside gateway + HTTP layer for streaming)
 
-See also: [`packages/clawql-inference/README.md`](../../packages/clawql-inference/README.md).
+See also: [`packages/clawql-inference/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-inference/README.md).
 
 ---
 
@@ -641,6 +641,10 @@ See also: [`packages/clawql-inference/README.md`](../../packages/clawql-inferenc
 
 ## Related
 
-- Package README: [`packages/clawql-payments/README.md`](../../packages/clawql-payments/README.md)
-- Inference doc: [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md)
+- Package README: [`packages/clawql-payments/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-payments/README.md)
+- Inference doc: [`docs/inference/clawql-inference.md`](/inference/clawql-inference)
 - x402 protocol: [x402.org](https://www.x402.org/)
+
+export function wrapper({ children }) {
+  return children
+}

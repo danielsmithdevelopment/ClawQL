@@ -6,7 +6,7 @@ status: opt-in
 package: clawql-ouroboros
 order: 8
 prev: sandbox
-next: hitl-label-studio
+next: payments
 ---
 
 # Ouroboros
