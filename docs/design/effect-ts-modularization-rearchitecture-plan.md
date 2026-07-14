@@ -284,18 +284,14 @@ Label cross-cutting PRs with both `effect-foundation` and `modularization-platfo
 
 ---
 
-## 13. Recommended next steps (post-extraction, June 2026)
+## 13. Recommended next steps (post-extraction)
 
-1. **Docs:** keep [`modularization-implementation-status.md`](./modularization-implementation-status.md) updated as extractions merge.
-2. **Plugin Layers:** `MemoryPlugin`, `DocumentsPlugin`, `AutomationPlugin` — register MCP tools via `onRegister`; shrink `tools.ts`. See [ClawQL plugin model](./clawql-plugin-model.md).
-3. **Transport:** extract `clawql-sandbox`; move server lifecycle toward transport-only package.
-4. **Effect:** port memory/documents/automation hot paths behind `Effect.tryPromise` → native Effect incrementally.
-5. **Third-party plugins:** document npm package template + `CLAWQL_PLUGINS` / Operator toggle once Layer list is stable.
-6. **Ouroboros:** continue `effect-ouroboros` track (parity tests before cutover).
-7. **Operator/dashboard:** defer dynamic Layer CRD until `createApi(Layer[])` is stable in process.
+1. **Docs:** keep [`modularization-implementation-status.md`](./modularization-implementation-status.md) updated as features merge.
+2. **Transport:** continue slim toward transport-only `clawql-mcp` packaging.
+3. **Third-party plugins:** document npm package template + `CLAWQL_PLUGINS` / Operator toggle.
+4. **Optional later:** `@effect/schema` at boundaries; Effect fibers for schedule / ouroboros / inference pollers (not required for migration-complete).
 
-**Completed (no longer kickoff items):** Turborepo scaffold; `clawql-core` + `AuditService`; execute/search `Effect` services; `PanguardProxyPlugin`; extraction **phases 1–9** ([#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306), PRs [#401](https://github.com/danielsmithdevelopment/ClawQL/pull/401)–[#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430)).
-
+**Completed:** Turborepo scaffold; `clawql-core` + `AuditService`; execute/search Effect services; `PanguardProxyPlugin`; extraction **phases 1–9**; horizontal Plugin Layers; **Effect hot-path migration** for memory/documents/automation/sandbox/ouroboros + opt-in tools (pageindex, Onyx, HITL) + MCP audit bridge (IO remains `tryPromise`). Ouroboros Effect rewrite landed on the `effect-ouroboros` track.
 ---
 
 ## 14. References

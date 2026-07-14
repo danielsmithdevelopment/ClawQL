@@ -10,11 +10,11 @@ import {
   codegraphSubgraph,
 } from "clawql-codegraph/mcp";
 import {
-  pageindexBuildTree,
-  pageindexGetContent,
-  pageindexSynthesize,
-  pageindexTraverse,
-} from "clawql-pageindex/mcp";
+  executePageindexBuildTreeEffect,
+  executePageindexGetContentEffect,
+  executePageindexSynthesizeEffect,
+  executePageindexTraverseEffect,
+} from "../effect/pageindex-effect.js";
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { runMemoryIngest, type MemoryIngestInput } from "../ingest/ingest.js";
 import { runMemoryRecall, type MemoryRecallInput } from "../recall/recall.js";
@@ -297,38 +297,22 @@ export function createMemoryPlugin(): Plugin {
           yield* api.registerMcpTool({
             name: "pageindex_build_tree",
             schema: pageindexBuildTreeToolSchema,
-            handler: async (args) => ({
-              content: [
-                { type: "text", text: JSON.stringify(await pageindexBuildTree(args), null, 2) },
-              ],
-            }),
+            handler: (args) => Effect.runPromise(executePageindexBuildTreeEffect(args)),
           });
           yield* api.registerMcpTool({
             name: "pageindex_traverse",
             schema: pageindexTraverseToolSchema,
-            handler: async (args) => ({
-              content: [
-                { type: "text", text: JSON.stringify(await pageindexTraverse(args), null, 2) },
-              ],
-            }),
+            handler: (args) => Effect.runPromise(executePageindexTraverseEffect(args)),
           });
           yield* api.registerMcpTool({
             name: "pageindex_synthesize",
             schema: pageindexSynthesizeToolSchema,
-            handler: async (args) => ({
-              content: [
-                { type: "text", text: JSON.stringify(await pageindexSynthesize(args), null, 2) },
-              ],
-            }),
+            handler: (args) => Effect.runPromise(executePageindexSynthesizeEffect(args)),
           });
           yield* api.registerMcpTool({
             name: "pageindex_get_content",
             schema: pageindexGetContentToolSchema,
-            handler: async (args) => ({
-              content: [
-                { type: "text", text: JSON.stringify(await pageindexGetContent(args), null, 2) },
-              ],
-            }),
+            handler: (args) => Effect.runPromise(executePageindexGetContentEffect(args)),
           });
         }
 

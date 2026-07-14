@@ -1,3 +1,10 @@
+export {
+  executePageindexBuildTreeEffect,
+  executePageindexGetContentEffect,
+  executePageindexSynthesizeEffect,
+  executePageindexTraverseEffect,
+  type PageindexMcpResult,
+} from "./pageindex-effect.js";
 export { MemoryError } from "./memory-errors.js";
 export { memoryFromPromise, memorySync } from "./memory-effect-utils.js";
 export {

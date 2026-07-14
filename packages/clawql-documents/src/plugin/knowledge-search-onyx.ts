@@ -1,6 +1,3 @@
-import { loadSpec } from "clawql-api";
-import { getDocumentsPluginDeps } from "./deps.js";
-
 /** Current upstream OpenAPI `operationId` for `POST /search/send-search-message`. */
 export const ONYX_SEND_SEARCH_OPERATION_ID = "handle_send_search_message";
 
@@ -27,57 +24,12 @@ export type KnowledgeSearchOnyxInput = {
   fields?: string[];
 };
 
+/** Promise façade over {@link executeKnowledgeSearchOnyxEffect}. */
 export async function handleKnowledgeSearchOnyxToolInput(
   params: KnowledgeSearchOnyxInput
 ): Promise<{ content: { type: "text"; text: string }[] }> {
-  const loaded = await loadSpec();
-  const operationId = resolveOnyxSendSearchOperationId(loaded.operations);
-  if (!operationId) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({
-            error:
-              "Onyx search operation is not in the loaded API index. Include bundled provider `onyx` " +
-              "(e.g. `CLAWQL_BUNDLED_PROVIDERS=...,onyx` or default `all-providers`).",
-          }),
-        },
-      ],
-    };
-  }
-
-  if (params.stream === true) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({
-            error:
-              "stream=true is not supported for knowledge_search_onyx; omit stream or set stream=false.",
-          }),
-        },
-      ],
-    };
-  }
-
-  const args: Record<string, unknown> = {
-    search_query: params.query,
-    num_hits: params.num_hits ?? 15,
-    include_content: params.include_content ?? true,
-    stream: false,
-    run_query_expansion: params.run_query_expansion ?? false,
-  };
-  if (params.hybrid_alpha !== undefined) args.hybrid_alpha = params.hybrid_alpha;
-  if (params.filters !== undefined) args.filters = params.filters;
-  if (params.tenant_id !== undefined && params.tenant_id !== "") args.tenant_id = params.tenant_id;
-
-  const result = await getDocumentsPluginDeps().execute({
-    operationId,
-    args,
-    fields: params.fields,
-  });
-  return {
-    content: result.content.map((c) => ({ type: "text" as const, text: c.text })),
-  };
+  const { Effect } = await import("effect");
+  const { executeKnowledgeSearchOnyxEffect } =
+    await import("../effect/knowledge-search-onyx-effect.js");
+  return Effect.runPromise(executeKnowledgeSearchOnyxEffect(params));
 }

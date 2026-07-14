@@ -19,11 +19,13 @@ export type AuditAppendInput = {
   readonly correlationId?: string;
 };
 
+export type AuditAppendWithEntry = AuditAppendResult & { readonly entry: ClawqlAuditEntry };
+
 export class AuditService extends Context.Tag("clawql/AuditService")<
   AuditService,
   {
     readonly getMaxEntries: () => number;
-    readonly append: (input: AuditAppendInput) => Effect.Effect<AuditAppendResult>;
+    readonly append: (input: AuditAppendInput) => Effect.Effect<AuditAppendWithEntry>;
     readonly list: (limit: number) => Effect.Effect<AuditListResult>;
     readonly clear: () => Effect.Effect<AuditClearResult>;
     readonly resetForTests: () => Effect.Effect<void>;
@@ -46,7 +48,8 @@ function serviceFromBuffer(
           summary: input.summary,
           correlationId: input.correlationId,
         };
-        return buffer.append(entry);
+        const result = buffer.append(entry);
+        return { ...result, entry };
       }),
     list: (limit: number) => Effect.sync(() => buffer.list(limit)),
     clear: () => Effect.sync(() => buffer.clear()),
