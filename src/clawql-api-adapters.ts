@@ -16,6 +16,7 @@ import { closeOuroborosPgPool } from "clawql-ouroboros/plugin";
 import { closePostgresVectorPool } from "clawql-memory/vector/pgvector";
 import { Effect, Layer } from "effect";
 import { composeHorizontalPluginLayers } from "./compose-horizontal-plugin-layers.js";
+import { attachActiveOtelParent, makeEffectOtelTracerLayer } from "./effect-otel-bridge.js";
 import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
 
 let loadSpecOverride: LoadSpecFn | undefined;
@@ -49,6 +50,8 @@ export function getClawqlApi(): ClawQLApiHandle {
       executeLayer: buildExecuteLive(),
       plugins: [...defaultPlugins(), ...defaultPaymentsProxyPlugins()],
       pluginLayers: composeHorizontalPluginLayers(resolvePluginCompositionFlags()),
+      runtimeLayers: [makeEffectOtelTracerLayer()],
+      prepareEffect: attachActiveOtelParent,
     });
   }
   return apiHandle;

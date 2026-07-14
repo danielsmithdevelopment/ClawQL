@@ -36,6 +36,17 @@ export type CreateClawQLApiOptions = {
     ClawQLApiRuntimeError,
     ClawQLApiRuntimeServices
   >[];
+  /**
+   * Extra Layers merged into the ManagedRuntime (e.g. `@effect/opentelemetry` Tracer).
+   * Must be fully satisfied (`R = never`).
+   */
+  readonly runtimeLayers?: readonly Layer.Layer<never, never, never>[];
+  /**
+   * Optional transform applied to every `run()` program (e.g. attach active OTEL parent span).
+   */
+  readonly prepareEffect?: <A, E extends ClawQLApiRuntimeError>(
+    program: Effect.Effect<A, E, ClawQLApiRuntimeServices>
+  ) => Effect.Effect<A, E, ClawQLApiRuntimeServices>;
 };
 
 export type ClawQLApiHandle = {
@@ -73,8 +84,17 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
   for (const pluginLayer of options.pluginLayers ?? []) {
     Effect.runSync(Effect.scoped(Layer.build(Layer.provideMerge(pluginLayer, baseLayer))));
   }
-  const layer: Layer.Layer<ClawQLApiRuntimeServices, ClawQLApiRuntimeError, never> = baseLayer;
+  const extras = options.runtimeLayers ?? [];
+  const layer: Layer.Layer<ClawQLApiRuntimeServices, ClawQLApiRuntimeError, never> =
+    extras.length === 0
+      ? baseLayer
+      : (Layer.mergeAll(baseLayer, ...extras) as Layer.Layer<
+          ClawQLApiRuntimeServices,
+          ClawQLApiRuntimeError,
+          never
+        >);
   const runtime = ManagedRuntime.make(layer);
+  const prepare = options.prepareEffect;
 
   return {
     registry,
@@ -82,7 +102,7 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
     layer,
     runtime,
     listMcpTools,
-    run: (program) => runtime.runPromise(program),
+    run: (program) => runtime.runPromise(prepare ? prepare(program) : program),
     dispose: async () => {
       await Effect.runPromise(registry.teardownAll());
       await runtime.dispose();
