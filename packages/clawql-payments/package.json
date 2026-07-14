@@ -44,19 +44,19 @@
       "require": "./dist/mpp/index.cjs"
     },
     "./ap2": {
-      "types": "./dist/ap2/index.d.ts",
-      "import": "./dist/ap2/index.js",
-      "require": "./dist/ap2/index.cjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./acp": {
-      "types": "./dist/acp/index.d.ts",
-      "import": "./dist/acp/index.js",
-      "require": "./dist/acp/index.cjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./paypal": {
-      "types": "./dist/paypal/index.d.ts",
-      "import": "./dist/paypal/index.js",
-      "require": "./dist/paypal/index.cjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./plugin": {
       "types": "./dist/plugin/index.d.ts",
@@ -70,7 +70,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run clean && tsup",
+    "build": "npm run clean && NODE_OPTIONS='--max-old-space-size=4096' tsup",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
