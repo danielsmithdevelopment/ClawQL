@@ -113,7 +113,7 @@ Today’s shipped stack is a **practical subset** of the full Memory 2.0 design 
 
 **Code graph path:** `codegraph_index` (or Graphify import) indexes the repo → **`codegraph.db.json`**. Use **`codegraph_path`** / **`codegraph_neighbors`** for architecture traces; combine with vault narrative via hybrid recall.
 
-**Team sync (optional):** pushes and pulls the **`Memory/`** tree via object storage — see [Team vault sync](/getting-started/team-vault-sync). `memory.db` is rebuilt locally after pull. Code graph storage is local unless you sync **`codegraph.db.json`** yourself.
+**Team sync (optional):** pushes and pulls the **`Memory/`** tree via object storage — see [Team vault sync](/getting-started/for-teams#team-vault-sync). `memory.db` is rebuilt locally after pull. Code graph storage is local unless you sync **`codegraph.db.json`** yourself.
 
 | Flow                        | Reads from                                                | Writes to                                              |
 | --------------------------- | --------------------------------------------------------- | ------------------------------------------------------ |
@@ -318,7 +318,7 @@ Hits include **`reason`**: **`"keyword"`**, **`"link"`**, or **`"vector"`**. Tun
 | **`CLAWQL_SYNC_AUTO_PULL=1`**          | Throttled pull before **`memory_recall`**           |
 | **`CLAWQL_SYNC_AUTO_PULL_ON_START=1`** | Pull once at MCP startup                            |
 
-Full setup: [Team vault sync](/getting-started/team-vault-sync) · [For teams](/getting-started/for-teams).
+Full setup: [Team vault sync](/getting-started/for-teams#team-vault-sync) · [For teams](/getting-started/for-teams).
 
 **Roadmap (DAOS):** governed **`publish_to_team_memory`** ActionTypes, role-based visibility on shared nodes, Ouroboros **NSV/SGDOP** drift signals between agent swarms, and **Diversity Dividends** for high-value shared knowledge. Today’s sync is **file-level** consistency with conflict listing — appropriate for engineering teams sharing a vault prefix.
 
@@ -376,7 +376,7 @@ Treat vault Markdown as **sensitive** if notes contain tokens or PII. Prefer red
 
 - [Cache handoff between chats](/learn/cache-handoff-between-chats) — when **`cache`** is enough
 - [OpenClaw → `memory_recall` case study](/case-studies/openclaw-clawql-memory-recall-2026-06) · [Cross-thread vault recall](/case-studies/cross-thread-vault-recall)
-- [Team vault sync](/getting-started/team-vault-sync) — R2/S3/GCS, Helm **`teamSync`**, **`memory_sync`**
+- [Team vault sync](/getting-started/for-teams#team-vault-sync) — R2/S3/GCS, Helm **`teamSync`**, **`memory_sync`**
 - [clawql-inference](/inference/clawql-inference) — export, fine-tune, semantic cache, flywheel
 - [Memory plugin](/plugins/memory) — env table and tool list
 - [Code graph plugin](/plugins/codegraph) — structural indexing, Graphify import, hybrid recall

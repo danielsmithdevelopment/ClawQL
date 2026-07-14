@@ -4,7 +4,8 @@
  */
 import path from 'node:path'
 
-export const GH_MAIN = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
+export const GH_MAIN =
+  'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 
 /** Repo-relative doc paths that have first-class site routes. */
 export const DOC_SITE_ROUTES = {
@@ -18,11 +19,11 @@ export const DOC_SITE_ROUTES = {
   'docs/getting-started/getting-started-for-teams.md':
     '/getting-started/for-teams',
   'docs/getting-started/team-vault-sync.md':
-    '/getting-started/team-vault-sync',
+    '/getting-started/for-teams#team-vault-sync',
   'docs/getting-started/cursor-ios-cloud-agent.md':
     '/agent-setup#cursor-i-os-cloud-agent',
   'docs/getting-started/golden-host-images.md':
-    '/getting-started/golden-host-images',
+    '/getting-started/for-teams#golden-host-images',
   'docs/getting-started/local-agent-sandbox.md':
     '/agent-setup#local-agent-sandbox-mac-os-seatbelt',
   'docs/getting-started/agent-setup.md': '/agent-setup',
@@ -38,7 +39,8 @@ export const DOC_SITE_ROUTES = {
   'docs/mcp/idp-pipeline-runner.md': '/learn/document-pipeline',
   'docs/mcp/hitl-label-studio.md': '/hitl-label-studio',
   'docs/vision/clawql-vision-roadmap.md': '/vision/roadmap',
-  'docs/vision/clawql-master-enablement-guide.md': '/vision/technical-enablement',
+  'docs/vision/clawql-master-enablement-guide.md':
+    '/vision/technical-enablement',
   'docs/vision/clawql-modularization-v2.md': '/vision/modularization',
   'docs/vision/clawql-idp-platform.md': '/vision/idp-platform',
   'docs/vision/clawql-hybrid-decentralized-github-alternative.md':
@@ -59,7 +61,8 @@ export const DOC_SITE_ROUTES = {
   'docs/memory/memory-obsidian.md': '/learn/memory',
   'docs/ouroboros/clawql-ouroboros.md': '/ouroboros',
   'docs/inference/clawql-inference.md': '/inference/clawql-inference',
-  'docs/architecture/clawql-token-efficiency.md': '/architecture/token-efficiency',
+  'docs/architecture/clawql-token-efficiency.md':
+    '/architecture/token-efficiency',
   'docs/security/clawql-security-defense-in-depth.md':
     '/security/defense-in-depth',
   'docs/security/security-best-practices-series/README.md':
@@ -134,7 +137,9 @@ export function rewriteDocLinks(body, sourceDocPathFromRepoRoot) {
       const filePart = hashIdx >= 0 ? linkPath.slice(0, hashIdx) : linkPath
       const hash = hashIdx >= 0 ? linkPath.slice(hashIdx) : ''
 
-      const resolved = path.posix.normalize(path.posix.join(sourceDir, filePart))
+      const resolved = path.posix.normalize(
+        path.posix.join(sourceDir, filePart),
+      )
 
       if (DOC_SITE_ROUTES[resolved]) {
         return `](${DOC_SITE_ROUTES[resolved]}${hash})`

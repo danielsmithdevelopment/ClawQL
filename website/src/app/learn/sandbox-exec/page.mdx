@@ -10,7 +10,7 @@ Agents often need to **run short code** (evaluate an expression, transform JSON,
 | ------------------------ | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | **`sandbox_exec` MCP**   | Isolated **snippets** inside the MCP server (Python/JS/shell)                               | This page                                                               |
 | **`clawql sandbox` CLI** | **Full agent harness** containment (Codex, Claude, Cursor, OpenCode) — fail-closed Seatbelt | [Local agent sandbox](/agent-setup#local-agent-sandbox-mac-os-seatbelt) |
-| **Managed host (Kata)**  | Production VM/EC2 tiers — Packer bake + Pulumi provision                                    | [Golden host images](/getting-started/golden-host-images)               |
+| **Managed host (Kata)**  | Production VM/EC2 tiers — Packer bake + Pulumi provision                                    | [Golden host images](/getting-started/for-teams#golden-host-images)     |
 
 Use **`clawql sandbox init`** on developer Macs **before** launching harnesses. Use **`CLAWQL_ENABLE_SANDBOX=1`** when agents need in-session code evaluation via MCP.
 
@@ -116,7 +116,7 @@ Persist **decisions and outputs** you care about later with **`memory_ingest`** 
 ## Related guides and references
 
 - [Local agent sandbox](/agent-setup#local-agent-sandbox-mac-os-seatbelt) — `clawql sandbox init`, per-harness Seatbelt, fail-closed harness launch.
-- [Golden host images](/getting-started/golden-host-images) — Packer + Pulumi for managed AWS/GCP/Cloudflare tiers (Kata escalation in-cluster).
+- [Golden host images](/getting-started/for-teams#golden-host-images) — Packer + Pulumi for managed AWS/GCP/Cloudflare tiers (Kata escalation in-cluster).
 - [Sandbox plugin](/plugins/sandbox) — plugin overview and backends.
 - [Tools](/tools) — full MCP matrix (**`sandbox_exec`** is **default off — opt in** in the feature-tier diagram).
 - [Using search and execute](/learn/search-and-execute-mcp) — calling real APIs after sandbox checks.

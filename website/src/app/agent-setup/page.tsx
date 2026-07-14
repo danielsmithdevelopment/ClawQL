@@ -37,7 +37,7 @@ export default function AgentSetupPage() {
           </a>{' '}
           on <code className="font-mono text-xs">main</code>. Related:{' '}
           <a
-            href="/getting-started/team-vault-sync"
+            href="/getting-started/for-teams#team-vault-sync"
             className="font-medium text-inherit underline underline-offset-2"
           >
             Team vault sync

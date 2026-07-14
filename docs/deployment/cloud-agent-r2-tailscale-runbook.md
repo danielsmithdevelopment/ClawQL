@@ -2,7 +2,7 @@
 
 Run **ClawQL Cloud Agents** with a **durable memory vault on Cloudflare R2**, provision the bucket with **Pulumi**, and expose a **phone-reachable MCP endpoint** only on your **Tailscale tailnet** — not on the public internet.
 
-**Related:** [Team vault sync (R2)](../getting-started/team-vault-sync.md) · [Pulumi provision](../../infra/pulumi/README.md) · [Tailscale beginner guide](./tailscale-and-headscale-for-clawql.md) · [ADR 0007](../adr/0007-pulumi-provisioning-managed-tiers.md)
+**Related:** [Team vault sync (R2)](../getting-started/getting-started-for-teams.md#team-vault-sync) · [Pulumi provision](../../infra/pulumi/README.md) · [Tailscale beginner guide](./tailscale-and-headscale-for-clawql.md) · [ADR 0007](../adr/0007-pulumi-provisioning-managed-tiers.md)
 
 ---
 

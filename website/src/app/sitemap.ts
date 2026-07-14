@@ -68,16 +68,6 @@ const ENTRIES: Array<Entry> = [
     priority: 0.95,
   },
   {
-    path: '/getting-started/team-vault-sync',
-    changeFrequency: 'weekly',
-    priority: 0.94,
-  },
-  {
-    path: '/getting-started/golden-host-images',
-    changeFrequency: 'weekly',
-    priority: 0.93,
-  },
-  {
     path: '/getting-started/clawql-desktop',
     changeFrequency: 'monthly',
     priority: 0.9,

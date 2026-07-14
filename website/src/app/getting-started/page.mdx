@@ -24,9 +24,6 @@ Run ClawQL in minutes, deploy the full IDP stack with Helm, then dive into guide
   <Button href="/getting-started/for-teams" variant="outline">
     <>For teams</>
   </Button>
-  <Button href="/getting-started/golden-host-images" variant="outline">
-    <>Golden host (Packer + Pulumi)</>
-  </Button>
   <Button href="/mcp-clients" variant="outline">
     <>MCP clients</>
   </Button>
@@ -43,15 +40,14 @@ Run ClawQL in minutes, deploy the full IDP stack with Helm, then dive into guide
 
 ## Deployment options
 
-| Path                | Best for                                    | Start here                                                                                    |
-| ------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| **Local MCP**       | Evaluation, solo dev                        | [Quickstart](/quickstart) · [Agent setup](/agent-setup)                                       |
-| **Tier 1 Compose**  | Full local IDP slice                        | [Phase 1 guide](/getting-started/phase-1-platform-guide)                                      |
-| **Helm full stack** | Team K8s, IDP pipeline                      | [Kubernetes](/deployment/kubernetes) · [Helm](/helm)                                          |
-| **Teams**           | Shared memory + observability               | [For teams](/getting-started/for-teams) · [Team vault sync](/getting-started/team-vault-sync) |
-| **Agents**          | Desktop, iOS Cloud Agents, Seatbelt sandbox | [Agent setup](/agent-setup)                                                                   |
-| **Managed hosts**   | AWS/GCP/Cloudflare VM tiers                 | [Golden host images](/getting-started/golden-host-images) — Packer bake + Pulumi provision    |
-| **Operations**      | Upgrades, secrets, health                   | [Operations guide](/deployment/operations-guide)                                              |
+| Path                | Best for                                    | Start here                                               |
+| ------------------- | ------------------------------------------- | -------------------------------------------------------- |
+| **Local MCP**       | Evaluation, solo dev                        | [Quickstart](/quickstart) · [Agent setup](/agent-setup)  |
+| **Tier 1 Compose**  | Full local IDP slice                        | [Phase 1 guide](/getting-started/phase-1-platform-guide) |
+| **Helm full stack** | Team K8s, IDP pipeline                      | [Kubernetes](/deployment/kubernetes) · [Helm](/helm)     |
+| **Teams**           | Shared memory, golden hosts, observability  | [For teams](/getting-started/for-teams)                  |
+| **Agents**          | Desktop, iOS Cloud Agents, Seatbelt sandbox | [Agent setup](/agent-setup)                              |
+| **Operations**      | Upgrades, secrets, health                   | [Operations guide](/deployment/operations-guide)         |
 
 <Note>
   An **opt-in ClawQL Operator scaffold** shipped in **7.0.0** (CRD, tier

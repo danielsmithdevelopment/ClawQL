@@ -51,4 +51,4 @@ packer build -only=gcp-image.googlecompute.clawql \
 | Dedicated | `CLAWQL_SYNC_PREFIX=tenant/{id}/` from instance metadata |
 | Enterprise | Customer bucket + Vault; image unchanged |
 
-See [docs/getting-started/golden-host-images.md](../docs/getting-started/golden-host-images.md) and [ADR 0006](../docs/adr/0006-golden-host-images-packer.md).
+See [Getting started for teams — Golden host images](../docs/getting-started/getting-started-for-teams.md#golden-host-images) and [ADR 0006](../docs/adr/0006-golden-host-images-packer.md).

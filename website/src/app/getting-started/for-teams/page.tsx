@@ -7,7 +7,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Getting started for teams',
   description:
-    'Deploy shared ClawQL MCP for your team: object-storage sync for Memory notes, Prometheus metrics, Loki audit, OTEL traces, and Langfuse work traces.',
+    'Shared ClawQL for teams: R2/S3/GCS vault sync, Packer golden hosts, Prometheus metrics, Loki audit, OTEL traces, and Langfuse.',
   path: '/getting-started/for-teams',
   ogType: 'article',
 })
@@ -35,15 +35,8 @@ export default function GettingStartedForTeamsPage() {
           >
             docs/getting-started/getting-started-for-teams.md
           </a>{' '}
-          on <code className="font-mono text-xs">main</code>. Deep dive on sync
-          providers:{' '}
-          <a
-            href="/getting-started/team-vault-sync"
-            className="font-medium text-inherit underline underline-offset-2"
-          >
-            Team vault sync
-          </a>
-          .
+          on <code className="font-mono text-xs">main</code>. Covers helm
+          deploy, team vault sync, golden host seeding, and observability.
         </Note>
       </div>
 
