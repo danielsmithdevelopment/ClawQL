@@ -11,20 +11,20 @@
 
 ## What it does
 
-| Capability        | Summary                                                                        |
-| ----------------- | ------------------------------------------------------------------------------ |
-| **Gateway**       | OpenAI-compatible REST (`/v1/chat/completions`, `/v1/models`, SSE streaming)   |
-| **Providers**     | Built-in OpenAI, Anthropic, Ollama; extensible plugin registry                 |
-| **Routing**       | Frugal → standard → frontier tier escalation with kill switches                |
-| **Cache**         | Embedding similarity semantic cache (cosine threshold + TTL)                   |
+| Capability        | Summary                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| **Gateway**       | OpenAI-compatible REST (`/v1/chat/completions`, `/v1/models`, SSE streaming)                 |
+| **Providers**     | Built-in OpenAI, Anthropic, Ollama; extensible plugin registry                               |
+| **Routing**       | Frugal → standard → frontier tier escalation with kill switches                              |
+| **Cache**         | Embedding similarity semantic cache (cosine threshold + TTL)                                 |
 | **Efficiency**    | Layers 3–11 (terse, prompt cache, history/prompt compress, HTTP routing, structured/prefill) |
-| **Resilience**    | Per-tier / per-model fallback chains before hard failure                       |
-| **Auth**          | Virtual keys (per-team budgets, rate limits)                                   |
-| **Entitlements**  | Optional plan limits via `clawql-payments`                                     |
-| **Observability** | Durable call store, `logs` / `trace` / `spend` CLI                             |
-| **Flywheel**      | Verdict-filtered export → fine-tune → register custom model in tier map        |
-| **Automation**    | Scheduled pipeline worker (cron export when sample threshold met)              |
-| **Ouroboros**     | `model_escalation` + `agent_coordination` audit events in lineage store        |
+| **Resilience**    | Per-tier / per-model fallback chains before hard failure                                     |
+| **Auth**          | Virtual keys (per-team budgets, rate limits)                                                 |
+| **Entitlements**  | Optional plan limits via `clawql-payments`                                                   |
+| **Observability** | Durable call store, `logs` / `trace` / `spend` CLI                                           |
+| **Flywheel**      | Verdict-filtered export → fine-tune → register custom model in tier map                      |
+| **Automation**    | Scheduled pipeline worker (cron export when sample threshold met)                            |
+| **Ouroboros**     | `model_escalation` + `agent_coordination` audit events in lineage store                      |
 
 ---
 

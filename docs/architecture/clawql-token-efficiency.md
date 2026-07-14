@@ -1,6 +1,6 @@
 # The Twelve Layers of LLM Cost: Why One Optimization Is Never Enough
 
-*How a compounding stack of efficiency layers — from API surface reduction to a self-improving fine-tuning flywheel — drops token costs by ~99.8% and keeps dropping them.*
+_How a compounding stack of efficiency layers — from API surface reduction to a self-improving fine-tuning flywheel — drops token costs by ~99.8% and keeps dropping them._
 
 ---
 
@@ -12,11 +12,11 @@ Those interventions plateau quickly because they attack the wrong variable. The 
 
 Consider what happens when you give an AI agent access to three common enterprise APIs using the standard approach of loading full tool schemas into context:
 
-| Provider     | Operations | Full Spec Tokens |
-| ------------ | ---------- | ---------------- |
-| Google Cloud | 4,141 ops  | ~84,000 tokens   |
-| Cloudflare   | 2,697 ops  | ~2,206,000 tokens |
-| Jira         | 336 ops    | ~266,000 tokens  |
+| Provider     | Operations    | Full Spec Tokens      |
+| ------------ | ------------- | --------------------- |
+| Google Cloud | 4,141 ops     | ~84,000 tokens        |
+| Cloudflare   | 2,697 ops     | ~2,206,000 tokens     |
+| Jira         | 336 ops       | ~266,000 tokens       |
 | **Combined** | **7,174 ops** | **~2,556,000 tokens** |
 
 Over 2.5 million tokens just to describe the tools — before the agent has done a single thing. That exceeds the context window of every production model in common use. The agent literally cannot load the tools and start reasoning in the same request.
@@ -57,20 +57,20 @@ The layers organize into three tiers:
 
 **Tier 3: Continuous optimization (Layers 9–12)** — Improve over time. The system gets cheaper the longer it runs, not more expensive.
 
-| Layer | Mechanism | Primary impact | Default |
-| ----- | --------- | -------------- | ------- |
-| 1 | **Code Mode** | Two-tool pattern. Full API specs stay on the server. | Always on |
-| 2 | **Response trimming** | GraphQL projection. API responses pruned to consumed fields only. | Always on |
-| 3 | **Terse output processor** | Strips hedging/filler from LLM responses in `clawql-inference`. | On |
-| 4 | **Anthropic cache control** | Stabilizes system prefix for provider-side cache reuse (~10% of normal input cost). | On |
-| 5 | **Semantic cache** | Embeds requests; returns cached results for similar tasks (skips model call). | On when embeddings configured |
-| 6 | **History distillation** | Periodically distills long transcripts into compact structured summaries. | Opt-in |
-| 7 | **Prompt dedupe / truncation** | Removes low-value tokens from assembled prompt before send. | Opt-in |
-| 8 | **PAL adaptive routing** | Routes tasks to cheapest capable model (Frugal → Standard → Frontier). | Opt-in |
-| 9 | **Structured output hints** | Forces concise, machine-readable formats instead of verbose prose. | On |
-| 10 | **Token budget signaling** | Passes `max_tokens` as a soft signal encouraging brevity. | On |
-| 11 | **Assistant prefill opener** | Pre-populates response start to bypass hedging preamble. | Opt-in |
-| 12 | **Fine-tuning flywheel** | Production traffic → scrubbed export → custom model → new Frugal tier. | Documented |
+| Layer | Mechanism                      | Primary impact                                                                      | Default                       |
+| ----- | ------------------------------ | ----------------------------------------------------------------------------------- | ----------------------------- |
+| 1     | **Code Mode**                  | Two-tool pattern. Full API specs stay on the server.                                | Always on                     |
+| 2     | **Response trimming**          | GraphQL projection. API responses pruned to consumed fields only.                   | Always on                     |
+| 3     | **Terse output processor**     | Strips hedging/filler from LLM responses in `clawql-inference`.                     | On                            |
+| 4     | **Anthropic cache control**    | Stabilizes system prefix for provider-side cache reuse (~10% of normal input cost). | On                            |
+| 5     | **Semantic cache**             | Embeds requests; returns cached results for similar tasks (skips model call).       | On when embeddings configured |
+| 6     | **History distillation**       | Periodically distills long transcripts into compact structured summaries.           | Opt-in                        |
+| 7     | **Prompt dedupe / truncation** | Removes low-value tokens from assembled prompt before send.                         | Opt-in                        |
+| 8     | **PAL adaptive routing**       | Routes tasks to cheapest capable model (Frugal → Standard → Frontier).              | Opt-in                        |
+| 9     | **Structured output hints**    | Forces concise, machine-readable formats instead of verbose prose.                  | On                            |
+| 10    | **Token budget signaling**     | Passes `max_tokens` as a soft signal encouraging brevity.                           | On                            |
+| 11    | **Assistant prefill opener**   | Pre-populates response start to bypass hedging preamble.                            | Opt-in                        |
+| 12    | **Fine-tuning flywheel**       | Production traffic → scrubbed export → custom model → new Frugal tier.              | Documented                    |
 
 Hands-on MCP usage for Layers 1–2: [Using search & execute](/learn/search-and-execute-mcp). Inference gateway details for Layers 3–12: [clawql-inference](/inference/clawql-inference).
 
@@ -88,11 +88,11 @@ Large language models have seen enormous amounts of real TypeScript during train
 
 **Result:** base tool-definition footprint of ~1,800 tokens regardless of API surface size.
 
-| Provider     | Full Spec    | Code Mode   | Reduction |
-| ------------ | ------------ | ----------- | --------- |
-| Google Cloud | ~84,400 tokens | ~2,200 tokens | ~97%    |
-| Jira         | ~266,600 tokens | ~900 tokens | ~99.7%   |
-| Cloudflare   | ~2,206,000 tokens | ~2,400 tokens | ~99.9% |
+| Provider     | Full Spec           | Code Mode         | Reduction  |
+| ------------ | ------------------- | ----------------- | ---------- |
+| Google Cloud | ~84,400 tokens      | ~2,200 tokens     | ~97%       |
+| Jira         | ~266,600 tokens     | ~900 tokens       | ~99.7%     |
+| Cloudflare   | ~2,206,000 tokens   | ~2,400 tokens     | ~99.9%     |
 | **Average**  | **~852,000 tokens** | **~1,800 tokens** | **~99.8%** |
 
 A typical task uses around 60 of 7,000+ available operations — under 1% of the total surface. The other 99% never enters context.
@@ -117,11 +117,11 @@ Across representative workloads the average reduction is around **80%**. Jira's 
 
 Layers 1 and 2 address structured data. Layer 3 addresses natural-language filler that wraps everything.
 
-Language models default to verbose hedging: *"I'd be happy to help with that! Based on my analysis, it looks like the issue might possibly be related to…"* None of that adds information. The terse output processor in **`clawql-inference`** strips filler while leaving code blocks, file paths, identifiers, and configuration untouched.
+Language models default to verbose hedging: _"I'd be happy to help with that! Based on my analysis, it looks like the issue might possibly be related to…"_ None of that adds information. The terse output processor in **`clawql-inference`** strips filler while leaving code blocks, file paths, identifiers, and configuration untouched.
 
-**Before:** *"I would be absolutely happy to assist with that configuration issue! Based on my structural analysis of your active deployment codebase, it appears that the authentication middleware may be incorrectly handling the token object during handshakes. You should consider modifying the configuration block shown below…"*
+**Before:** _"I would be absolutely happy to assist with that configuration issue! Based on my structural analysis of your active deployment codebase, it appears that the authentication middleware may be incorrectly handling the token object during handshakes. You should consider modifying the configuration block shown below…"_
 
-**After:** *"Auth middleware mishandling token. Update config:"*
+**After:** _"Auth middleware mishandling token. Update config:"_
 
 Heavily hedged responses can shrink by 80%+; already-terse responses less so. On average across typical developer-facing responses, roughly half to two-thirds of prose volume disappears. **On by default.**
 
@@ -188,11 +188,11 @@ Not every step needs the most capable model. Status checks, schema validation, l
 
 **PAL (Performance Adaptive Ladder)** routes to the cheapest capable tier and escalates only when warranted:
 
-| Tier | Example fleet | Best for |
-| ---- | ------------- | -------- |
-| **Frugal** | Phi-4 14B / local Ollama | Metadata extraction, status checks, filtering, pre-processing (near-zero cloud cost locally) |
-| **Standard** | Qwen / Groq / Together | Primary document work, extraction, codegen, classification |
-| **Frontier** | Claude / GPT-4 class | Complex multi-step reasoning, cross-document synthesis, ambiguous edge cases |
+| Tier         | Example fleet            | Best for                                                                                     |
+| ------------ | ------------------------ | -------------------------------------------------------------------------------------------- |
+| **Frugal**   | Phi-4 14B / local Ollama | Metadata extraction, status checks, filtering, pre-processing (near-zero cloud cost locally) |
+| **Standard** | Qwen / Groq / Together   | Primary document work, extraction, codegen, classification                                   |
+| **Frontier** | Claude / GPT-4 class     | Complex multi-step reasoning, cross-document synthesis, ambiguous edge cases                 |
 
 Escalation: Frugal failure / low confidence → Standard → Frontier. Decomposed sub-tasks start Frugal; top-level orchestration starts Standard. Every routing decision is durable-logged (tier, failure signal, cost) — auditable optimization, not a black box.
 
@@ -206,11 +206,11 @@ Escalation: Frugal failure / low confidence → Standard → Frontier. Decompose
 
 These operate inside **`clawql-inference`** at response generation:
 
-| Layer | Mechanism | Default |
-| ----- | --------- | ------- |
-| **9 — Structured output hints** | Prefer concise machine-readable formats instead of cleaning up free prose afterward | On |
-| **10 — Token budget signaling** | Pass `max_tokens` as a soft brevity signal | On |
-| **11 — Assistant prefill opener** | Pre-populate the response start to skip hedging preamble | Opt-in |
+| Layer                             | Mechanism                                                                           | Default |
+| --------------------------------- | ----------------------------------------------------------------------------------- | ------- |
+| **9 — Structured output hints**   | Prefer concise machine-readable formats instead of cleaning up free prose afterward | On      |
+| **10 — Token budget signaling**   | Pass `max_tokens` as a soft brevity signal                                          | On      |
+| **11 — Assistant prefill opener** | Pre-populate the response start to skip hedging preamble                            | Opt-in  |
 
 ### Layer 12: The fine-tuning flywheel
 
@@ -292,13 +292,13 @@ Security tie-in: every fine-tuning export should carry a WORM manifest (hashes, 
 
 ## Known trade-offs
 
-| Topic | Reality |
-| ----- | ------- |
-| **Code Mode** | Needs a capable model; test before production; JSON tool-calling remains a fallback |
-| **Semantic cache** | Embedding latency on every request vs. sometimes skipping model calls — measure hit rate |
-| **Layers 6–7** | Limited inside third-party clients that own the context window |
-| **Layer 7 numbers** | ~20–40% on an already-optimized prompt ≠ 3–8× raw-prompt compression benchmarks |
-| **Flywheel** | Needs production verdict history; domain adapters can hurt out-of-domain tasks — keep base models for off-domain routing |
+| Topic               | Reality                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Code Mode**       | Needs a capable model; test before production; JSON tool-calling remains a fallback                                      |
+| **Semantic cache**  | Embedding latency on every request vs. sometimes skipping model calls — measure hit rate                                 |
+| **Layers 6–7**      | Limited inside third-party clients that own the context window                                                           |
+| **Layer 7 numbers** | ~20–40% on an already-optimized prompt ≠ 3–8× raw-prompt compression benchmarks                                          |
+| **Flywheel**        | Needs production verdict history; domain adapters can hurt out-of-domain tasks — keep base models for off-domain routing |
 
 ---
 
