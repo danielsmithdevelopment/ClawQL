@@ -15,48 +15,40 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
   ],
   '/architecture/token-efficiency': [
     {
-      title: "The Problem: API Surfaces Don't Fit in a Context Window",
-      id: 'the-problem-api-surfaces-dont-fit-in-a-context-window',
+      title: 'The wrong conversation about LLM cost',
+      id: 'the-wrong-conversation-about-llm-cost',
     },
     {
-      title: 'Layer 1: Code Mode — The Foundation',
-      id: 'layer-1-code-mode-the-foundation',
+      title: 'Why context bloat is worse than it looks',
+      id: 'why-context-bloat-is-worse-than-it-looks',
     },
     {
-      title: 'Layer 2: Trimming What Comes Back',
-      id: 'layer-2-trimming-what-comes-back',
+      title: 'The architecture of compounding efficiency',
+      id: 'the-architecture-of-compounding-efficiency',
     },
     {
-      title: 'Layer 3: Cutting Prose Filler',
-      id: 'layer-3-cutting-prose-filler',
+      title: 'Tier 1: Structural efficiency — what never enters context',
+      id: 'tier-1-structural-efficiency-what-never-enters-context',
     },
     {
-      title: 'Layer 4: Prompt Caching — Making Repetition Cheap',
-      id: 'layer-4-prompt-caching-making-repetition-cheap',
+      title: 'Tier 2: Smart inference — processing less, routing better',
+      id: 'tier-2-smart-inference-processing-less-routing-better',
     },
     {
-      title: 'Layer 5: Skipping Repeated Work Entirely',
-      id: 'layer-5-skipping-repeated-work-entirely',
+      title: 'Tier 3: Continuous optimization — cheaper over time',
+      id: 'tier-3-continuous-optimization-cheaper-over-time',
     },
+    { title: 'The compounding math', id: 'the-compounding-math' },
     {
-      title: 'Layer 6: Compressing History in Long Sessions',
-      id: 'layer-6-compressing-history-in-long-sessions',
+      title: 'Observability: proving the savings',
+      id: 'observability-proving-the-savings',
     },
+    { title: 'Known trade-offs', id: 'known-trade-offs' },
     {
-      title: 'Layer 7: Trimming the Final Prompt',
-      id: 'layer-7-trimming-the-final-prompt',
+      title: 'Efficiency is the path to sovereignty',
+      id: 'efficiency-is-the-path-to-sovereignty',
     },
-    {
-      title: 'Layer 8: Routing Tasks to the Right Model',
-      id: 'layer-8-routing-tasks-to-the-right-model',
-    },
-    { title: 'Beyond These Eight Layers', id: 'beyond-these-eight-layers' },
-    { title: 'Putting It Together', id: 'putting-it-together' },
-    { title: 'Known Trade-offs', id: 'known-trade-offs' },
-    {
-      title: 'How This Compares to Published Benchmarks',
-      id: 'how-this-compares-to-published-benchmarks',
-    },
+    { title: 'Getting started', id: 'getting-started' },
   ],
   '/benchmarks': [
     { title: 'What the highlights measure', id: 'what-the-highlights-measure' },
@@ -2876,8 +2868,8 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       id: 'vi-layer-4-ouroboros-strategic-coordination',
     },
     {
-      title: 'VII. Token Efficiency (8 Compounding Layers)',
-      id: 'vii-token-efficiency-8-compounding-layers',
+      title: 'VII. Token Efficiency (12 Compounding Layers)',
+      id: 'vii-token-efficiency-12-compounding-layers',
     },
     {
       title: 'VIII. Security & Compliance (Defense-in-Depth)',

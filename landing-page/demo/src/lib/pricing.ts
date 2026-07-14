@@ -103,7 +103,7 @@ export const pricing = {
     badge: 'Gateway + memory · 14-day trial',
     pluginBundle: 'gateway' as const,
     valueAnchor:
-      'Unlimited executions + vault memory + eight efficiency layers — executor.sh caps usage and charges overage.',
+      'Unlimited executions + vault memory + twelve efficiency layers — executor.sh caps usage and charges overage.',
     subheadline:
       'MCP gateway + agent memory vault for developers connecting Claude Code, Cursor, or Codex to your APIs. Start with a 14-day free trial — no credit card. No IDP, no GPU inference.',
     features: [

@@ -1,227 +1,334 @@
-# How ClawQL Reduces Token Usage: A Layered Approach to Efficient Agent Architectures
+# The Twelve Layers of LLM Cost: Why One Optimization Is Never Enough
 
-Most discussions about LLM cost focus on the wrong variable. Teams swap models, tweak prompts, or negotiate bulk pricing — while their agent architecture quietly burns most of every context window on tool schemas the model never needed to see in the first place.
-
-ClawQL addresses this at the systemic level, with multiple optimization layers operating at different points in the request/response lifecycle. Because each layer targets a different kind of token waste, their savings compound rather than overlap. The result is an agent framework that stays fast and cheap whether it's running a short script or a long multi-step reasoning session.
-
-One thing worth stating up front: not all of these layers are equally easy to get. Some work automatically with zero configuration. Others require setup, and a couple only fully apply in specific execution environments. The headline efficiency numbers later in this document assume the full stack is configured — if you're only using the defaults, you're getting real savings, but not all of them. We'll be specific about which is which as we go.
-
-## The Problem: API Surfaces Don't Fit in a Context Window
-
-The standard approach to giving an AI agent access to tools (via the Model Context Protocol, or MCP) is to load a description of every available operation directly into the model's context window. For a small, single-purpose server, this is fine. For a real enterprise setup connecting to multiple providers, it isn't.
-
-Consider three common providers bundled together:
-
-| Provider     | Operations in Spec | Estimated Tokens (Full Spec) |
-| ------------ | ------------------ | ---------------------------- |
-| Google Cloud | 4,141              | ~84,000+                     |
-| Cloudflare   | 2,697              | ~2,206,000+                  |
-| Jira         | 336                | ~266,000+                    |
-| **Combined** | **7,174**          | **~2,556,000+**              |
-
-The Cloudflare figure here is measured directly from Cloudflare's full published OpenAPI specification, downloaded in April 2026. Cloudflare's own cited internal estimate for the same API surface, discussed below, comes in at roughly 1.17 million tokens — about half this number. That difference reflects scope rather than a discrepancy in method: a complete downloaded OpenAPI spec typically carries more verbose descriptions, examples, and edge-case endpoints than an internal estimate of the "useful" API surface, and full specs for the same API commonly vary by a factor of two or more depending on what generated them and how complete they are. Both numbers are real measurements of the same underlying problem; they just measured different artifacts.
-
-At over 2.5 million tokens, this is far beyond what the large majority of production models in common use can hold in context. You couldn't load the basic tool definitions for most hosted frontier models today, let alone do any actual reasoning, on top of them — a handful of long-context outliers (open-weight models with very large advertised windows) could technically fit the raw token count, but reasoning over millions of tokens of unused tool schema is a different problem than fitting it, and one this architecture avoids needing to solve at all.
-
-This isn't a theoretical concern — Cloudflare's own engineering team measured a similar problem and found that a naive full-spec approach to exposing their roughly 2,500-endpoint API would require on the order of 1.17 million tokens just for the tool definitions.
-
-## Layer 1: Code Mode — The Foundation
-
-This layer is always on and can't be turned off, because it's the architectural basis for everything else.
-
-Instead of giving the model thousands of JSON tool schemas to choose from, ClawQL exposes exactly two tools: `search()` and `execute()`. The agent searches for the operations it needs, then writes code against a generated SDK to call them. The full API specifications stay on the server — the model never sees them directly.
-
-The reasoning behind this is straightforward: large language models have seen enormous amounts of real TypeScript and JavaScript during training, but comparatively little of the deeply nested, bespoke JSON schemas that tool-calling APIs typically use. Letting the model write code plays to a strength it actually has, instead of asking it to navigate a format it rarely encountered.
-
-This keeps the base tool-definition footprint at roughly 1,800 tokens, regardless of how large the underlying API surface is — whether that's 300 operations or 7,000.
-
-| Provider     | Full Spec    | Via Code Mode | Reduction  |
-| ------------ | ------------ | ------------- | ---------- |
-| Google Cloud | ~84,400      | ~2,200        | ~97%       |
-| Jira         | ~266,600     | ~900          | ~99.7%     |
-| Cloudflare   | ~2,206,000   | ~2,400        | ~99.9%     |
-| **Average**  | **~852,000** | **~1,800**    | **~99.8%** |
-
-A typical task ends up using maybe 60 operations out of 7,000+ available — under 1% of the total surface. The other 99% never enters context at all.
-
-A real caveat: this approach asks the model to write working code, not just fill in a JSON template. Frontier models (the largest, most capable models from major labs) handle this reliably. Smaller or less capable models may produce code with syntax errors or type mistakes that wouldn't happen with a simpler JSON-based tool call. If you're running this against a smaller model, test it on your actual workflows before relying on it — and know that falling back to traditional JSON tool-calling is always an option.
-
-## Layer 2: Trimming What Comes Back
-
-Code Mode reduces what goes into the model. This layer reduces what comes back — which matters because on every major model provider, output tokens cost more than input tokens, and a tool's response becomes part of the conversation history that gets reprocessed on every subsequent turn.
-
-When an agent calls an API, the raw response is often a large, deeply nested JSON object full of fields the agent will never use — metadata, pagination info, internal IDs, nested objects three levels deep. ClawQL analyzes the code the agent just wrote to figure out which fields it actually depends on, and trims the response down to just those fields (plus anything needed as an intermediate value, even if not directly returned).
-
-A concrete example — listing GKE clusters on Google Cloud:
-
-Raw response (~421 tokens) includes the full cluster object: name, self-link, location, endpoint, version info, status, subnet, complete node pool configuration, and more.
-
-Trimmed response (~76 tokens) includes just the name, status, endpoint, and self-link — an 82% reduction.
-
-Across representative examples from Google Cloud, Jira, and Cloudflare, trimming typically cuts response size by somewhere around 80% on average, with the exact number depending heavily on how bloated the underlying API's response format is to begin with (Jira's response format, in particular, tends to be extremely verbose).
-
-## Layer 3: Cutting Prose Filler
-
-Layers 1 and 2 deal with structured data — code and API responses. This layer deals with the natural-language text the model wraps around that data.
-
-Language models, especially when prompted conversationally, tend toward verbose, hedging language: "I'd be happy to help with that! Based on my analysis, it looks like the issue might possibly be related to…" None of that adds information. The actual content — what's wrong and what to do about it — is often a fraction of the response.
-
-A terse-output mode strips this filler while leaving code blocks, file paths, identifiers, and configuration untouched. Compare:
-
-"I would be absolutely happy to assist with that configuration issue! Based on my structural analysis of your active deployment codebase, it appears that the authentication middleware may be incorrectly handling the token object during handshakes. You should consider modifying the configuration block shown below…"
-
-versus:
-
-"Auth middleware mishandling token. Update config:"
-
-The reduction varies a lot depending on how verbose the response would otherwise be — heavily-hedged responses can shrink by 80% or more, while already-terse responses might only shrink slightly. On average across typical developer-facing responses, this tends to cut prose volume by roughly half to two-thirds.
-
-This is on by default and requires no configuration.
-
-## Layer 4: Prompt Caching — Making Repetition Cheap
-
-Most model providers offer prompt caching: if the beginning of your prompt (the "prefix") is identical to a previous request, the provider can reuse cached internal computation instead of reprocessing it from scratch. On Anthropic's API, for example, reading from a warm cache costs roughly 10% of the normal input token price.
-
-The catch is that this only works if the prefix stays exactly the same between requests. In a typical unmanaged conversation, this rarely holds — tool outputs of varying size, prose that varies slightly each time, and growing conversation history all shift where the "stable part" ends, which breaks the cache before it can build up any benefit.
-
-Layers 1 through 3 are what make this layer actually work in practice:
-
-- Layer 1 keeps tool definitions at a fixed ~1,800 tokens — they never change size based on which APIs are available.
-- Layer 2 means tool outputs entering history are small and consistently shaped, not multi-kilobyte blobs that vary wildly in size.
-- Layer 3 keeps response text terse and consistent, rather than having prose length wander based on the model's mood.
-
-Combined, these keep the early part of the conversation stable enough for caching to actually take hold. Once it does, an increasing fraction of the cost of each subsequent call comes from cheap cache reads rather than full-price input processing — and the longer a session runs, the bigger that fraction gets.
-
-Setup for this layer is a one-time initialization step that installs the configuration needed to maintain a stable prefix and apply cache controls correctly.
-
-## Layer 5: Skipping Repeated Work Entirely
-
-Layer 4 makes repeated calls cheaper. This layer skips some calls entirely — for tasks the agent has, in effect, already done.
-
-In any extended agent session, certain sub-tasks recur constantly: checking a deployment's status before making a change, looking up a ticket before updating it, listing records before modifying one. The surrounding conversation is different each time, so an exact-match cache won't catch this — but the intent of the request is often functionally identical.
-
-The approach here is semantic caching: incoming requests are converted into a numerical representation (an embedding) and compared against previously cached requests. If a new request is similar enough to a previous one — above a similarity threshold — the cached result is returned without calling the model again at all.
-
-```
-Incoming Request → Extract Task Signature → Compute Embedding
-                              ↓
-                  Check Cache (similarity ≥ threshold?)
-                  ↓                              ↓
-              Cache Hit                     Cache Miss
-            Return Result                Call Model, Cache Result
-```
-
-An honest note on this layer: how much this actually saves depends entirely on how repetitive your workload is. A pipeline that checks the same handful of statuses over and over will see a lot of cache hits. A workload where every request is genuinely novel will see very few, and the overhead of computing embeddings for every request might not be worth it in that case. There isn't a universal number to quote here — measure it on your own workload before assuming it's saving you anything significant, and turn it off if it isn't.
-
-There's also an important safety rule: only read operations are cached. Anything that writes, updates, or deletes data always executes live — never from cache. And any write operation automatically invalidates cached reads that touch the same resource (updating a record invalidates cached "list records" results for that resource), so the agent doesn't act on stale information after making a change. For custom integrations where this invalidation logic isn't configured, the safe default is to exclude that integration from caching entirely — an agent making decisions based on outdated state is a correctness problem, not just a performance one.
-
-## Layer 6: Compressing History in Long Sessions
-
-Even with Layers 1–5 working well, a session that runs for hours will accumulate a long transcript — and at some point, the transcript itself becomes the dominant cost, separate from any individual exchange.
-
-The fix is to periodically distill the message history into a compact structured summary — the key facts, decisions, and current state — and discard the raw transcript, keeping a full copy in cold storage in case it's needed later.
-
-This works differently depending on where the agent is running:
-
-In an environment ClawQL fully controls (a backend pipeline, for instance), this can happen automatically: when the conversation history crosses a size threshold, the older messages get distilled into a structured snapshot and replaced in the active context.
-
-Inside a third-party client (like an IDE's built-in AI assistant), ClawQL doesn't have control over that client's context window management. In this case, the approach is preventive rather than corrective: the agent is instructed to offload working state (IDs, intermediate values, etc.) to external storage rather than letting it accumulate in the visible conversation. This slows down history growth but can't compress history that's already there — the client's own context management ultimately decides what happens to it.
-
-This layer is off by default and needs to be explicitly enabled.
-
-## Layer 7: Trimming the Final Prompt
-
-This layer looks at the complete assembled prompt — system instructions, tool definitions, memory snapshot, and the current request — right before it's sent to the model, and removes lower-value tokens while trying to preserve meaning.
-
-There's an important framing issue here. General-purpose prompt compression tools report compression ratios (often 3–8x) measured against raw, unoptimized prompts. But a prompt that's already been through Layers 1–6 is already much leaner than the kind of prompt those benchmarks start from. Applying this layer on top of an already-compressed prompt gets you a real but more modest additional reduction — realistically somewhere in the 20–40% range, not another 3–8x. If you've seen big compression numbers quoted for tools like this, that's the context they apply to, and it's not directly comparable to what you'd see applied here.
-
-This layer requires direct control over the final prompt before it's sent, so it only works in environments ClawQL fully controls — not inside third-party clients. It's off by default.
-
-## Layer 8: Routing Tasks to the Right Model
-
-Not every step in a multi-step task needs the most capable (and most expensive) model. Checking a status, validating a schema, filtering a list, or writing a well-scoped piece of code don't need the same model as complex multi-step planning or synthesis.
-
-This layer routes sub-tasks to the cheapest model capable of handling them, escalating to a more capable model only when the task actually warrants it. In a multi-agent setup, this naturally produces a tiered structure: fast, cheap models do broad exploration; larger models do careful validation; specialized models handle specific domains.
-
-This is off by default and requires explicit configuration of routing rules.
-
-## Beyond These Eight Layers
-
-A few additional techniques are worth knowing about, separate from the layered architecture above, because they attack token waste from a different angle — at the point where the model generates its response, rather than before or after.
-
-**Structured output constraints.** Instead of asking the model to respond in natural language and then cleaning up the prose afterward (Layer 3), you can constrain the model to produce output in a fixed schema from the start — JSON mode, or a defined tool-call format. This eliminates hedging and filler at the source rather than trimming it after generation, and for tasks with a well-defined output shape (extracting structured data, returning a decision plus a reason, etc.) this is usually a better first move than relying on terse-mode cleanup.
-
-**Token budget signaling.** Telling the model explicitly how much space it has — "respond in under 100 words," "keep this under 500 tokens" — measurably reduces verbosity on most current models, particularly for open-ended explanatory tasks. This costs nothing to try and is worth using anywhere response length matters.
-
-**Prefill.** For chat-style APIs, you can pre-populate the start of the model's response (for example, starting it with `{` to signal a JSON object is coming, or with a fixed greeting-free opener). This skips the few tokens a model often spends on preamble before getting to the actual content — a small saving per call, but one that adds up across a high-volume system.
-
-None of these require the infrastructure the eight layers above do — they're prompt-level techniques you can apply today, and they compose well with everything else described here.
-
-## Layers 9–12 (Inference gateway extensions)
-
-The inference gateway (`clawql-inference`) adds four more layers on top of the MCP-focused stack above. Inspect effective status with `clawql inference policy show`.
-
-| Layer  | Name                    | Default | Package / scope                                                                |
-| ------ | ----------------------- | ------- | ------------------------------------------------------------------------------ |
-| **9**  | Structured output hints | on      | `clawql-inference` — injects concise structured-output guidance                |
-| **10** | Token budget signaling  | on      | `clawql-inference` — derives word budget from `max_tokens`                     |
-| **11** | Prefill opener          | off     | `clawql-inference` — optional assistant prefill (`CLAWQL_INFERENCE_PREFILL=1`) |
-| **12** | Flywheel                | on      | `clawql-inference` export → fine-tune → frugal tier registration               |
-
-Layer 8 HTTP routing accepts `clawql/auto`, `clawql/frugal`, `clawql/standard`, and `clawql/frontier` model aliases when `CLAWQL_INFERENCE_HTTP_AUTO_ROUTE=1` or tier escalation is enabled.
-
-## Implementation map
-
-| Layer              | Implementation                                                                                                        |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| 1 Code Mode        | MCP `search` + `execute` (`clawql-api`) — always on                                                                   |
-| 2 Response trim    | `field-projection.ts` on execute output — always on                                                                   |
-| 3 Terse output     | `TokenEfficiencyGateway` post-processor — on (`CLAWQL_INFERENCE_TERSE=0` to disable)                                  |
-| 4 Prompt cache     | Anthropic `cache_control` on stable system prefix — on (`CLAWQL_INFERENCE_PROMPT_CACHE=0` to disable)                 |
-| 5 Semantic cache   | `SemanticCachedGateway` with read/write safety — on when embeddings configured                                        |
-| 6 History compress | Rolling transcript distillation — off (`CLAWQL_INFERENCE_HISTORY_COMPRESS=1`)                                         |
-| 7 Prompt compress  | Pre-send dedupe + truncation — off (`CLAWQL_INFERENCE_PROMPT_COMPRESS=1`)                                             |
-| 8 Model routing    | Ouroboros escalation + HTTP `clawql/*` aliases — off (`CLAWQL_INFERENCE_ROUTING_ENABLED=1`)                           |
-| 9–11 Extensions    | Structured output, token budget, prefill — see env table in [`clawql-inference.md`](../inference/clawql-inference.md) |
-| 12 Flywheel        | Export pipeline + `finetune register`                                                                                 |
-
-## Putting It Together
-
-Each layer targets a different point in the request/response lifecycle:
-
-- Layer 1 — tool definitions entering context
-- Layer 2 — API response data entering context
-- Layer 3 — natural-language filler wrapping responses
-- Layer 4 — cost of repeated calls via provider-side caching
-- Layer 5 — whether a call happens at all
-- Layer 6 — growth of conversation history over time
-- Layer 7 — final prompt size right before sending
-- Layer 8 — which model handles which sub-task
-
-Layers 1–3 are on by default for MCP workloads (Layers 1–2) and inference gateway responses (Layer 3). Layer 4 and Layer 5 are on by default when the inference gateway runs with embedding credentials configured. Layer 5's benefit depends heavily on your workload's repetitiveness. Layers 6–8 are off by default and require explicit configuration. Layers 9–10 are on by default in the inference gateway; Layer 11 (prefill) is off by default.
-
-## Known Trade-offs
-
-**Code Mode needs a capable model.** The savings are real, but the model is now writing code rather than picking from a list. Test this on your actual model before depending on it in production — and remember that traditional tool-calling remains available as a fallback.
-
-**Semantic caching isn't free, and isn't universally beneficial.** It adds a small amount of latency on every request (computing the embedding) in exchange for sometimes skipping a model call entirely. Whether that trade is worth it depends entirely on how repetitive your workload is — measure before assuming.
-
-**High-throughput deployments may need to offload the embedding computation.** If semantic caching's embedding step runs in the same process handling requests, it can become a bottleneck under heavy parallel load. An external embedding service solves this but adds operational complexity.
-
-**Layers 6 and 7 can't do much inside third-party clients.** If you're building inside an IDE's AI integration rather than a backend you control, these layers shift from "compress what's there" to "slow down how fast it accumulates" — a real but smaller benefit.
-
-**Layer 7's numbers depend on what you compare them to.** 20–40% additional reduction on an already-compressed prompt sounds less impressive than "8x compression," but it's the honest number for what this layer adds on top of Layers 1–6 — not a replacement for them.
-
-**Model diversity matters more than model count in routing setups.** If Layer 8 just means "more small models doing the same kind of work," that's not the same as routing genuinely different kinds of sub-tasks to models suited for them.
-
-## How This Compares to Published Benchmarks
-
-Cloudflare's own measurements of a similar approach found roughly 99.9% input token reduction for their ~2,500-endpoint API, using the same basic methodology — comparing the full specification size against what actually enters context via a search-and-execute pattern. As noted earlier, that 1.17 million token figure reflects Cloudflare's own internal estimate of their API surface, while the figure used in this document's tables comes from a full downloaded OpenAPI specification, which tends to run larger; the two numbers measure related but not identical artifacts.
-
-The input-side reduction percentages here (97–99.9% per provider, ~99.8% average across a larger and more varied set of providers) are directionally consistent with Cloudflare's published result and were measured the same way: full specification size against what survives a search-and-execute pattern. The difference is scope — that kind of measurement covers the input side only. Layers 2 through 8 here address everything else in the cost equation — output size, prose, cache reuse, repeated calls, history growth, final prompt size, and per-task model selection.
-
-Token estimates throughout use a roughly 4-characters-per-token approximation, consistent with common tokenizer behavior for English text and code. Exact figures will vary by tokenizer and by the specific content involved.
+_How a compounding stack of efficiency layers — from API surface reduction to a self-improving fine-tuning flywheel — drops token costs by ~99.8% and keeps dropping them._
 
 ---
 
-_For the search/execute workflow, see [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md). For inference gateway layers and env vars, see [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md). For platform context, see the [Vision & Roadmap document](../vision/clawql-vision-roadmap.md)._
+## The wrong conversation about LLM cost
+
+Most teams trying to reduce LLM costs are having the wrong conversation. They swap models. They negotiate bulk pricing. They spend hours on prompt engineering. Then they re-run the benchmarks and find they've saved maybe 15%.
+
+Those interventions plateau quickly because they attack the wrong variable. The real cost driver in most agentic architectures isn't which model you're calling — it's how much of the context window you're wasting before the model sees a single token of actual work.
+
+Consider what happens when you give an AI agent access to three common enterprise APIs using the standard approach of loading full tool schemas into context:
+
+| Provider     | Operations    | Full Spec Tokens      |
+| ------------ | ------------- | --------------------- |
+| Google Cloud | 4,141 ops     | ~84,000 tokens        |
+| Cloudflare   | 2,697 ops     | ~2,206,000 tokens     |
+| Jira         | 336 ops       | ~266,000 tokens       |
+| **Combined** | **7,174 ops** | **~2,556,000 tokens** |
+
+Over 2.5 million tokens just to describe the tools — before the agent has done a single thing. That exceeds the context window of every production model in common use. The agent literally cannot load the tools and start reasoning in the same request.
+
+Cloudflare's own engineering team measured the same problem independently and arrived at a similar conclusion: roughly 1.17 million tokens for their API surface using an internal estimate. The two numbers measure slightly different artifacts (a full downloaded OpenAPI spec vs. an internal API surface estimate) but point to the same conclusion: the standard approach to tool-calling doesn't scale to real enterprise API surfaces.
+
+This is the **context bloat** problem. And token pricing is only part of it.
+
+---
+
+## Why context bloat is worse than it looks
+
+The naive mental model of LLM cost is linear: more tokens → proportionally more cost. The reality is worse.
+
+**Attention scales quadratically in many underlying architectures.** Doubling the context doesn't double the compute — it can quadruple it. A 2× increase in input tokens can produce a 4× increase in the compute required to process them.
+
+**The "Lost in the Middle" effect degrades reasoning quality.** Research by Liu et al. documented a consistent failure mode in long-context models: information placed in the middle of a long prompt is retrieved and reasoned about significantly less reliably than information at the start or end. Stuffing context with tool schemas doesn't just cost more — it makes your agent worse. The very thing you're paying for (model reasoning) is degraded by the noise you're paying to inject.
+
+**Signal-to-noise dilution causes hallucinations and missed instructions.** When the context is full of irrelevant tool schemas the agent will never use, the model expends attention on those tokens instead of the task at hand. Recent research has shown reasoning performance can drop between 14% and 85% as total input length increases, even when the relevant information is present. Irrelevant information doesn't sit there passively — it actively interferes.
+
+**Latency scales with input length.** Time-to-first-token increases as prompt length increases. A bloated context makes every request slower, which compounds at the system level across multi-step workflows.
+
+**The "stuffing trap" compounds over time.** When an agent produces poor results on a long prompt, the natural instinct is to add more context — more examples, more instructions, more schema detail. That worsens Lost in the Middle, increases latency and cost, and often makes quality worse. Teams get stuck in a loop.
+
+The takeaway: the best way to improve an agent is often to provide _less_ context — curated, ranked, highly relevant — not to maximize the window because the capacity exists.
+
+---
+
+## The architecture of compounding efficiency
+
+ClawQL addresses token cost at **twelve** distinct points in the request/response lifecycle. Because each layer targets a different kind of waste, their savings compound rather than overlap. The nearest MCP gateway competitors often implement one of these layers. Implementing all twelve produces a different order-of-magnitude result.
+
+The layers organize into three tiers:
+
+**Tier 1: Structural efficiency (Layers 1–4)** — Reduce what enters context in the first place. Highest leverage: a token that never enters context costs nothing.
+
+**Tier 2: Smart inference (Layers 5–8)** — Reduce what the model processes and which model processes it. Once context is lean, route intelligently.
+
+**Tier 3: Continuous optimization (Layers 9–12)** — Improve over time. The system gets cheaper the longer it runs, not more expensive.
+
+| Layer | Mechanism                      | Primary impact                                                                      | Default                       |
+| ----- | ------------------------------ | ----------------------------------------------------------------------------------- | ----------------------------- |
+| 1     | **Code Mode**                  | Two-tool pattern. Full API specs stay on the server.                                | Always on                     |
+| 2     | **Response trimming**          | GraphQL projection. API responses pruned to consumed fields only.                   | Always on                     |
+| 3     | **Terse output processor**     | Strips hedging/filler from LLM responses in `clawql-inference`.                     | On                            |
+| 4     | **Anthropic cache control**    | Stabilizes system prefix for provider-side cache reuse (~10% of normal input cost). | On                            |
+| 5     | **Semantic cache**             | Embeds requests; returns cached results for similar tasks (skips model call).       | On when embeddings configured |
+| 6     | **History distillation**       | Periodically distills long transcripts into compact structured summaries.           | Opt-in                        |
+| 7     | **Prompt dedupe / truncation** | Removes low-value tokens from assembled prompt before send.                         | Opt-in                        |
+| 8     | **PAL adaptive routing**       | Routes tasks to cheapest capable model (Frugal → Standard → Frontier).              | Opt-in                        |
+| 9     | **Structured output hints**    | Forces concise, machine-readable formats instead of verbose prose.                  | On                            |
+| 10    | **Token budget signaling**     | Passes `max_tokens` as a soft signal encouraging brevity.                           | On                            |
+| 11    | **Assistant prefill opener**   | Pre-populates response start to bypass hedging preamble.                            | Opt-in                        |
+| 12    | **Fine-tuning flywheel**       | Production traffic → scrubbed export → custom model → new Frugal tier.              | Documented                    |
+
+Hands-on MCP usage for Layers 1–2: [Using search & execute](/learn/search-and-execute-mcp). Inference gateway details for Layers 3–12: [clawql-inference](/inference/clawql-inference).
+
+---
+
+## Tier 1: Structural efficiency — what never enters context
+
+### Layer 1: Code Mode — the foundation
+
+Always on. Architectural basis for everything else.
+
+Instead of thousands of JSON tool schemas, the agent gets two tools: **`search()`** and **`execute()`**. It searches for operations it needs, then writes TypeScript against a generated SDK to call them. The full API specs stay on the server.
+
+Large language models have seen enormous amounts of real TypeScript during training, and comparatively little of the deeply nested bespoke JSON schemas that tool-calling typically uses. Code Mode plays to a strength the model actually has.
+
+**Result:** base tool-definition footprint of ~1,800 tokens regardless of API surface size.
+
+| Provider     | Full Spec           | Code Mode         | Reduction  |
+| ------------ | ------------------- | ----------------- | ---------- |
+| Google Cloud | ~84,400 tokens      | ~2,200 tokens     | ~97%       |
+| Jira         | ~266,600 tokens     | ~900 tokens       | ~99.7%     |
+| Cloudflare   | ~2,206,000 tokens   | ~2,400 tokens     | ~99.9%     |
+| **Average**  | **~852,000 tokens** | **~1,800 tokens** | **~99.8%** |
+
+A typical task uses around 60 of 7,000+ available operations — under 1% of the total surface. The other 99% never enters context.
+
+**Caveat:** this asks the model to write working code, not fill in a JSON template. Frontier models handle this reliably; smaller models may produce syntax or type mistakes. Test on your actual workload. Traditional tool-calling remains available as a fallback.
+
+### Layer 2: Response trimming
+
+Code Mode reduces what goes _into_ the model. Response trimming reduces what comes _back_ — which matters because output tokens cost more than input tokens on every major provider, and tool responses accumulate in conversation history and get reprocessed on every subsequent turn.
+
+When an agent calls an API, the raw response is typically a large nested JSON object full of fields the agent will never use. ClawQL analyzes the code the agent wrote to determine which fields it actually depends on, then trims the response to exactly those fields (GraphQL-style projection).
+
+**Example — listing GKE clusters on Google Cloud:**
+
+- **Raw response:** ~421 tokens (full cluster object: self-link, location, endpoint, version, status, subnet, complete node pool config, …)
+- **Trimmed response:** ~76 tokens (name, status, endpoint, self-link)
+- **Reduction: ~82%**
+
+Across representative workloads the average reduction is around **80%**. Jira's response format is particularly verbose — savings there are often higher.
+
+### Layer 3: Terse output processor
+
+Layers 1 and 2 address structured data. Layer 3 addresses natural-language filler that wraps everything.
+
+Language models default to verbose hedging: _"I'd be happy to help with that! Based on my analysis, it looks like the issue might possibly be related to…"_ None of that adds information. The terse output processor in **`clawql-inference`** strips filler while leaving code blocks, file paths, identifiers, and configuration untouched.
+
+**Before:** _"I would be absolutely happy to assist with that configuration issue! Based on my structural analysis of your active deployment codebase, it appears that the authentication middleware may be incorrectly handling the token object during handshakes. You should consider modifying the configuration block shown below…"_
+
+**After:** _"Auth middleware mishandling token. Update config:"_
+
+Heavily hedged responses can shrink by 80%+; already-terse responses less so. On average across typical developer-facing responses, roughly half to two-thirds of prose volume disappears. **On by default.**
+
+### Layer 4: Anthropic cache control
+
+Most model providers offer prompt caching: if the beginning of a prompt is identical to a previous request, the provider reuses cached computation. On Anthropic's API, reading from a warm cache costs roughly **10%** of normal input token price.
+
+The catch: this only works if the prefix stays exactly the same between requests. In an unmanaged conversation, variable-size tool outputs, wandering prose, and growing history all shift where the stable part ends — breaking the cache.
+
+Layers 1–3 are what make Layer 4 actually work:
+
+- Layer 1 keeps tool definitions at a fixed ~1,800 tokens.
+- Layer 2 keeps tool outputs small and consistently shaped.
+- Layer 3 keeps prose terse rather than varying by verbosity.
+
+Combined, these stabilize the early context enough for caching to take hold. The longer a session runs, the larger the fraction of each subsequent call that comes from cheap cache reads.
+
+---
+
+## Tier 2: Smart inference — processing less, routing better
+
+### Layer 5: Semantic cache
+
+Layer 4 makes repeated calls cheaper. Layer 5 skips some calls entirely.
+
+In extended sessions, certain sub-tasks recur: checking deployment status, looking up a ticket, listing records before modifying one. Surrounding conversation differs, so exact-match caching misses — but intent is often functionally identical.
+
+Incoming requests are embedded and compared against cached requests by cosine similarity. If similar enough, the cached result returns without calling the model.
+
+```text
+Incoming Request → Embed → Check Cache (similarity ≥ threshold?)
+                                ↓                         ↓
+                            Cache Hit               Cache Miss
+                          Return Result       Call Model → Cache Result
+```
+
+**Caveat:** savings depend on workload repetitiveness. Status-check loops hit often; fully novel workloads may not justify embedding overhead. Measure on your traffic.
+
+**Safety:** only **read** operations are cached. Writes, updates, and deletes always execute live. Any write invalidates cached reads for the affected resource.
+
+Enable with embeddings configured — see [clawql-inference](/inference/clawql-inference) (`CLAWQL_INFERENCE_SEMANTIC_CACHE`).
+
+### Layer 6: History distillation
+
+Even with Layers 1–5, a multi-hour session accumulates a long transcript that eventually dominates cost.
+
+Periodically distill message history into a compact structured summary — key facts, decisions, current state — discard the raw transcript from the hot path, and retain a full copy in cold storage where your pipeline allows.
+
+In backends ClawQL fully controls, this can run when history crosses a size threshold. Inside third-party clients (IDE integrations), ClawQL doesn't own context-window management — agents should offload working state (e.g. vault **`memory_ingest`**, Core **`cache`**) rather than letting the visible conversation grow forever.
+
+**Opt-in:** `CLAWQL_INFERENCE_HISTORY_COMPRESS=1`.
+
+### Layer 7: Prompt dedupe and truncation
+
+After history distillation, this layer inspects the fully assembled prompt — system instructions, tool definitions, memory snapshot, current request — right before send, and removes lower-value tokens while preserving meaning.
+
+**Honest framing:** general-purpose compression tools report 3–8× ratios against _raw, unoptimized_ prompts. A prompt that already passed Layers 1–6 is much leaner. Layer 7 on top yields roughly **20–40% additional** reduction — real, but not a headline compression-benchmark number.
+
+**Opt-in:** `CLAWQL_INFERENCE_PROMPT_COMPRESS=1`. Only fully effective in environments ClawQL controls.
+
+### Layer 8: PAL adaptive routing
+
+Not every step needs the most capable model. Status checks, schema validation, list filtering, and well-scoped codegen don't need the same model as multi-step planning.
+
+**PAL (Performance Adaptive Ladder)** routes to the cheapest capable tier and escalates only when warranted:
+
+| Tier         | Example fleet            | Best for                                                                                     |
+| ------------ | ------------------------ | -------------------------------------------------------------------------------------------- |
+| **Frugal**   | Phi-4 14B / local Ollama | Metadata extraction, status checks, filtering, pre-processing (near-zero cloud cost locally) |
+| **Standard** | Qwen / Groq / Together   | Primary document work, extraction, codegen, classification                                   |
+| **Frontier** | Claude / GPT-4 class     | Complex multi-step reasoning, cross-document synthesis, ambiguous edge cases                 |
+
+Escalation: Frugal failure / low confidence → Standard → Frontier. Decomposed sub-tasks start Frugal; top-level orchestration starts Standard. Every routing decision is durable-logged (tier, failure signal, cost) — auditable optimization, not a black box.
+
+**Opt-in:** `CLAWQL_INFERENCE_ROUTING_ENABLED=1`.
+
+---
+
+## Tier 3: Continuous optimization — cheaper over time
+
+### Layers 9–11: Gateway-level refinements
+
+These operate inside **`clawql-inference`** at response generation:
+
+| Layer                             | Mechanism                                                                           | Default |
+| --------------------------------- | ----------------------------------------------------------------------------------- | ------- |
+| **9 — Structured output hints**   | Prefer concise machine-readable formats instead of cleaning up free prose afterward | On      |
+| **10 — Token budget signaling**   | Pass `max_tokens` as a soft brevity signal                                          | On      |
+| **11 — Assistant prefill opener** | Pre-populate the response start to skip hedging preamble                            | Opt-in  |
+
+### Layer 12: The fine-tuning flywheel
+
+Static layers eventually hit a floor: the cheapest capable model is still a general-purpose model doing your specific task. The flywheel turns production traffic into a custom model that is better at your workload and cheaper to run.
+
+**Four-step loop:**
+
+**1. Verdict-filtered export** — Only calls where evaluation confirmed correctness become training examples (e.g. Langfuse verdicts), not every third-retry success.
+
+```bash
+clawql inference export \
+  --verdict passed \
+  --format openai-jsonl \
+  --output ./training-data/$(date +%Y-%m).jsonl
+```
+
+**2. PII sanitization** — Presidio scrubbing before any export leaves the system. WORM manifests record redaction rule versions so you can prove scrubbing happened.
+
+```bash
+clawql inference export --verdict passed --scrub-pii --format openai-jsonl
+```
+
+**3. Local training** — Historical agent logs become domain adapters (e.g. QLoRA on local hardware). Vertical adapters (legal, lending, healthcare admin) often produce the largest quality lift.
+
+**4. Register and route** — Register the fine-tuned weights as a custom Frugal tier; PAL routes matching work to it automatically.
+
+```bash
+clawql inference finetune register \
+  --model ./clawql-qwen-legal-v1.gguf \
+  --tier frugal-custom \
+  --domain legal
+```
+
+**Virtuous cycle:**
+
+```text
+Production traffic
+  → Verdict filtering (successes only)
+  → Presidio PII scrubbing
+  → Fine-tune domain adapter
+  → Register as custom Frugal tier
+  → Better outputs → better verdicts → better training data
+  → Repeat
+```
+
+Day one you run the base fleet. The efficiency gap vs. a naive gateway **widens as production traffic accumulates**.
+
+Upstream of flywheel data collection: IDP / document ingestion should scan for steganographic or prompt-injection content before documents enter LLM context. Poisoned training data affects every future model trained on that corpus — detection at ingest is a precondition for trusting Layer 12. See [Defense in depth](/security/defense-in-depth) and the IDP platform docs.
+
+---
+
+## The compounding math
+
+A GKE cluster listing that would normally consume hundreds of tokens in a naive agent:
+
+- **Layer 1:** tool definition ~2,400 tokens vs. ~84,400 for Google Cloud full schema — but the operation is found and invoked cleanly
+- **Layer 2:** response ~76 tokens vs. ~421 in history
+- **Layer 3:** natural-language wrapper stripped to essentials
+- **Layer 4:** tool definitions ~10% of input cost on subsequent session calls
+- **Layer 5:** if this status check ran before, skip the model entirely
+- **Layer 8:** utility task routes to Frugal, not Frontier
+- **Layer 12:** after training cycles, your fine-tuned Frugal model can beat a generic Standard model on this task type
+
+Implementing only Layer 1 (what many MCP gateways stop at) leaves most of the stack on the table: verbose outputs, repeated calls, over-tier models, and a model that never specializes to your workload.
+
+---
+
+## Observability: proving the savings
+
+Efficiency claims without measurement are marketing. ClawQL's LGTM+ path (Loki, Grafana, Tempo, Mimir, Pyroscope) supports:
+
+- **Inference cost views** — per-request spend and layer contribution (semantic-cache hit rate, PAL escalation rate)
+- **PAL routing traces** — which tasks escalated, why, and whether it was justified
+- **Flywheel quality** — Langfuse verdict rates before/after fine-tune cycles; canary promotion gates if a new adapter regresses
+
+Security tie-in: every fine-tuning export should carry a WORM manifest (hashes, Presidio rule versions, timestamps). See [clawql-inference](/inference/clawql-inference) and [observability profiles](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/observability/7.0-observability-profiles-plan.md).
+
+---
+
+## Known trade-offs
+
+| Topic               | Reality                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Code Mode**       | Needs a capable model; test before production; JSON tool-calling remains a fallback                                      |
+| **Semantic cache**  | Embedding latency on every request vs. sometimes skipping model calls — measure hit rate                                 |
+| **Layers 6–7**      | Limited inside third-party clients that own the context window                                                           |
+| **Layer 7 numbers** | ~20–40% on an already-optimized prompt ≠ 3–8× raw-prompt compression benchmarks                                          |
+| **Flywheel**        | Needs production verdict history; domain adapters can hurt out-of-domain tasks — keep base models for off-domain routing |
+
+---
+
+## Efficiency is the path to sovereignty
+
+Keeping data in your own infrastructure only works if that infrastructure is economically viable. If self-hosted inference costs 10× what sending data to a hosted API costs, economics eventually win.
+
+The twelve-layer stack reduces per-inference cost to a fraction of a naive approach, and Layer 12 makes that cost **decrease further over time**. After several flywheel cycles on your domain, a Frugal-tier custom model can outperform a generic Frontier API call on your specific workload — cheaper, and under your control.
+
+---
+
+## Getting started
+
+```bash
+# Inference gateway as an OpenAI-compatible drop-in (when clawql-inference is deployed)
+export OPENAI_BASE_URL=http://localhost:8080/v1
+
+# Inspect active inference policy (layers / routing / cache)
+clawql inference policy show
+
+# After traffic, inspect spend
+clawql inference spend --group-by layer
+```
+
+Layers **1–2** apply on every ClawQL MCP install (Code Mode + response trimming). Layers **3–12** live primarily in the [inference](/inference/clawql-inference) path and optional flags documented in `.env.example`.
+
+**Related:**
+
+- [Using search & execute (MCP)](/learn/search-and-execute-mcp)
+- [clawql-inference](/inference/clawql-inference)
+- [Memory 2.0](/learn/memory) — durable vault + multi-source recall (pairs with Layer 6 offload)
+- [Vision & roadmap](/vision/roadmap)
+- [Defense in depth](/security/defense-in-depth)

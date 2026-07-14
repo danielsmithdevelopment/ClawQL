@@ -64,7 +64,7 @@ The single surface for all interactions.
 - Proxy support for external MCP, OpenAPI, GraphQL.
 - All operations respect classification levels and cross-vertical purpose requirements.
 
-_Full design: [Modularization v2.1](./clawql-modularization-v2.md) · [Token efficiency (8 layers)](../architecture/clawql-token-efficiency.md)._
+_Full design: [Modularization v2.1](./clawql-modularization-v2.md) · [Token efficiency (12 layers)](../architecture/clawql-token-efficiency.md)._
 
 ## V. Layer 3: Memory 2.0 (Persistence-First)
 
@@ -85,20 +85,17 @@ _Full design: [Modularization v2.1](./clawql-modularization-v2.md) · [Token eff
 
 _Full target design (vision): [DAOS Unified Architecture v2.7](../ouroboros/daos-unified-architecture-specification-v2.7.md). Coordination deep dive: [Coordination layer spec](../ouroboros/daos-coordination-layer-specification.md)._
 
-## VII. Token Efficiency (8 Compounding Layers)
+## VII. Token Efficiency (12 Compounding Layers)
 
-1. Code Mode (~99.8% input reduction)
-2. Response Projection (~80% smaller outputs)
-3. Terse Output (50–80% less prose)
-4. Prompt Caching (stable prefixes)
-5. Semantic Caching (skip repeated reads)
-6. History Distillation (long sessions)
-7. Final Prompt Trimming (20–40% additional)
-8. Classification-aware Model Routing
+**Tier 1 — Structural (1–4):** Code Mode (~99.8% input reduction) · Response trimming (~80% smaller outputs) · Terse output · Anthropic cache control (stable prefixes)
 
-Layers 1–3 are on by default and deliver the majority of savings.
+**Tier 2 — Smart inference (5–8):** Semantic cache · History distillation · Prompt dedupe/truncation · PAL adaptive routing (Frugal → Standard → Frontier)
 
-_Full design: [Token efficiency (8 layers)](../architecture/clawql-token-efficiency.md)._
+**Tier 3 — Continuous (9–12):** Structured output hints · Token budget signaling · Assistant prefill · Fine-tuning flywheel (verdict-filtered export → PII scrub → domain adapter → custom Frugal tier)
+
+Layers 1–4 (and gateway defaults for 9–10) deliver the majority of day-one savings; Layer 12 compounds over production traffic.
+
+_Full design: [Token efficiency (12 layers)](../architecture/clawql-token-efficiency.md)._
 
 ## VIII. Security & Compliance (Defense-in-Depth)
 
@@ -202,7 +199,7 @@ Read the full documentation suite, deploy the Tier 1 stack, and begin building p
 | [Dashboard Agent Chat](../dashboard/agent-chat.md)                                                   | Browser UI, SSE, vault threads, IDP attachment JSON contract                                 |
 | [Defense-in-Depth Security Guide](../security/clawql-defense-in-depth-security-guide.md)             | What to deploy — condensed operator reference                                                |
 | [Security curriculum](../security/security-best-practices-series/README.md)                          | 32 modules — why and how to prove controls                                                   |
-| [Token efficiency (8 layers)](../architecture/clawql-token-efficiency.md)                            | Code Mode through model routing                                                              |
+| [Token efficiency (12 layers)](../architecture/clawql-token-efficiency.md)                           | Code Mode through fine-tuning flywheel                                                       |
 | [DAOS Unified Architecture v2.7](../ouroboros/daos-unified-architecture-specification-v2.7.md)       | **Vision / roadmap** — 7-layer platform, Manifest, PEP, Memory 2.0, Circuit Breaker          |
 | [Coordination layer spec](../ouroboros/daos-coordination-layer-specification.md)                     | **Vision / roadmap** — transport + NSV/SGDOP, Diversity Dividends, Coordinator (not shipped) |
 | [DAOS build plan v2.7.1](../ouroboros/daos-build-plan-v2.7.1.md)                                     | **Vision / roadmap** — P0–P3 engineering contract                                            |

@@ -5,7 +5,7 @@ import { businessAllInMonthly, pricing, unlimitedExecutionsTagline } from './pri
 export const competitiveHeadline = 'Plugin bundles — price each layer against the right incumbent.'
 
 export const competitiveSummary =
-  'ClawQL is an operating system for agents, not a single SKU. Developer and Teams tiers replace stateless MCP routers like executor.sh with a global edge gateway, persistent vault memory, Onyx semantic search, eight compounding token-efficiency layers, and unlimited executions. Starter through Professional compete with IDP and VDR incumbents — only when you opt into document processing. Gateway buyers should not subsidize GPU inference they never use.'
+  'ClawQL is an operating system for agents, not a single SKU. Developer and Teams tiers replace stateless MCP routers like executor.sh with a global edge gateway, persistent vault memory, Onyx semantic search, twelve compounding token-efficiency layers, and unlimited executions. Starter through Professional compete with IDP and VDR incumbents — only when you opt into document processing. Gateway buyers should not subsidize GPU inference they never use.'
 
 /** MCP gateway competitor — executor.sh (direct competitor to ClawQL gateway layer). */
 export const executorBenchmark = {
@@ -56,7 +56,7 @@ export const executorComparisonRows: ExecutorComparisonRow[] = [
     dimension: 'Token efficiency architecture',
     executor: 'One layer: search-and-execute pattern only.',
     clawql:
-      'Eight compounding layers — response trimming, prose compression, prompt caching, semantic cache, history compression, final prompt trimming, and model routing on top of search/execute.',
+      'Twelve compounding layers — Code Mode through response trimming, caching, PAL routing, gateway refinements, and the fine-tuning flywheel on top of search/execute.',
   },
   {
     dimension: 'Agent memory',

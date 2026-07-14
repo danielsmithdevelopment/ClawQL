@@ -1,13 +1,13 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
+import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
 import TokenEfficiencyBody from '@/generated/clawql-token-efficiency-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'Token efficiency — layered approach',
+  title: 'Token efficiency — twelve layers',
   description:
-    'How ClawQL reduces token usage: Code Mode (search/execute), response trimming, prose compression, prompt caching, semantic cache, history compression, and model routing.',
+    'Twelve compounding efficiency layers: Code Mode, response trimming, terse output, cache control, semantic cache, history distillation, prompt compression, PAL routing, structured outputs, token budgets, prefill, and the fine-tuning flywheel (~99.8% and compounding).',
   path: '/architecture/token-efficiency',
   ogType: 'article',
 })
@@ -28,7 +28,8 @@ export default function TokenEfficiencyPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Eight optimization layers.</strong> Generated from{' '}
+          <strong>Twelve optimization layers</strong> in three tiers (structural
+          → smart inference → continuous/flywheel). Generated from{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/architecture/clawql-token-efficiency.md"
             className="font-medium text-inherit underline underline-offset-2"
@@ -43,13 +44,20 @@ export default function TokenEfficiencyPage() {
           >
             Using search &amp; execute
           </a>
+          . Inference stack:{' '}
+          <a
+            href="/inference/clawql-inference"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            clawql-inference
+          </a>
           .
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
+      <Prose className="flex-auto">
         <TokenEfficiencyBody />
-      </DocProse>
+      </Prose>
     </article>
   )
 }

@@ -5,26 +5,26 @@
 
 `clawql-inference` is ClawQL's TypeScript-native **inference gateway and model-improvement platform** — a LiteLLM-class layer with ClawQL's trust model: WORM-auditable routing, semantic cache, model tier escalation, agent coordination hooks, verdict-filtered export, and fine-tuning flywheel. It is designed as a **drop-in OpenAI replacement** (`OPENAI_BASE_URL=http://127.0.0.1:8080/v1`) while closing the production loop that generic proxies leave open.
 
-**Related docs:** [Inference provider plugins](../plugins/inference-providers.md) · [Token efficiency (Layer 5 cache)](../architecture/clawql-token-efficiency.md) · [Ouroboros library](../ouroboros/clawql-ouroboros.md)
+**Related docs:** [Inference provider plugins](../plugins/inference-providers.md) · [Token efficiency (12 layers)](../architecture/clawql-token-efficiency.md) · [Ouroboros library](../ouroboros/clawql-ouroboros.md)
 
 ---
 
 ## What it does
 
-| Capability        | Summary                                                                        |
-| ----------------- | ------------------------------------------------------------------------------ |
-| **Gateway**       | OpenAI-compatible REST (`/v1/chat/completions`, `/v1/models`, SSE streaming)   |
-| **Providers**     | Built-in OpenAI, Anthropic, Ollama; extensible plugin registry                 |
-| **Routing**       | Frugal → standard → frontier tier escalation with kill switches                |
-| **Cache**         | Embedding similarity semantic cache (cosine threshold + TTL)                   |
-| **Efficiency**    | Layers 3–8 + 9–11 (terse, prompt cache, history/prompt compress, HTTP routing) |
-| **Resilience**    | Per-tier / per-model fallback chains before hard failure                       |
-| **Auth**          | Virtual keys (per-team budgets, rate limits)                                   |
-| **Entitlements**  | Optional plan limits via `clawql-payments`                                     |
-| **Observability** | Durable call store, `logs` / `trace` / `spend` CLI                             |
-| **Flywheel**      | Verdict-filtered export → fine-tune → register custom model in tier map        |
-| **Automation**    | Scheduled pipeline worker (cron export when sample threshold met)              |
-| **Ouroboros**     | `model_escalation` + `agent_coordination` audit events in lineage store        |
+| Capability        | Summary                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| **Gateway**       | OpenAI-compatible REST (`/v1/chat/completions`, `/v1/models`, SSE streaming)                 |
+| **Providers**     | Built-in OpenAI, Anthropic, Ollama; extensible plugin registry                               |
+| **Routing**       | Frugal → standard → frontier tier escalation with kill switches                              |
+| **Cache**         | Embedding similarity semantic cache (cosine threshold + TTL)                                 |
+| **Efficiency**    | Layers 3–11 (terse, prompt cache, history/prompt compress, HTTP routing, structured/prefill) |
+| **Resilience**    | Per-tier / per-model fallback chains before hard failure                                     |
+| **Auth**          | Virtual keys (per-team budgets, rate limits)                                                 |
+| **Entitlements**  | Optional plan limits via `clawql-payments`                                                   |
+| **Observability** | Durable call store, `logs` / `trace` / `spend` CLI                                           |
+| **Flywheel**      | Verdict-filtered export → fine-tune → register custom model in tier map                      |
+| **Automation**    | Scheduled pipeline worker (cron export when sample threshold met)                            |
+| **Ouroboros**     | `model_escalation` + `agent_coordination` audit events in lineage store                      |
 
 ---
 
@@ -73,7 +73,7 @@ Each `complete()` call passes **outward** through these layers before reaching a
 1. **`ConfiguredInferenceGateway`** — resolves `provider/model`, invokes the provider adapter
 2. **`FallbackChainGateway`** — tries alternate models on primary failure (when fallback enabled)
 3. **`SemanticCachedGateway`** — embedding-similarity cache lookup (when semantic cache enabled)
-4. **`TokenEfficiencyGateway`** — Layers 3–8 + 9–11 (terse, compress, route, prompt-cache markers)
+4. **`TokenEfficiencyGateway`** — Layers 3–11 (terse, compress, route, prompt-cache, structured/prefill markers)
 5. **`EntitlementEnforcedGateway`** — plan limit checks via `clawql-payments` (when enforcement enabled)
 6. **`ObservedInferenceGateway`** — appends an `InferenceRecord` to the call store
 7. **`TracedInferenceGateway`** — OTLP spans to infra + Langfuse when configured
