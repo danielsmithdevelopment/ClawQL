@@ -218,8 +218,8 @@ Registered with **`memory_ingest`** / **`memory_recall`** (hide all with **`CLAW
 | `CLAWQL_SYNC_SECRET_ACCESS_KEY` | R2 S3 API secret (or generic override)     |
 | `CLAWQL_R2_ACCOUNT_ID`          | Cloudflare account id (R2 endpoint)        |
 | `CLAWQL_AWS_ACCESS_KEY_ID`      | S3 IAM access key                          |
-| `CLAWQL_AWS_SECRET_ACCESS_KEY`   | S3 IAM secret                              |
-| `CLAWQL_AWS_REGION`              | S3 region (e.g. `us-east-1`)               |
+| `CLAWQL_AWS_SECRET_ACCESS_KEY`  | S3 IAM secret                              |
+| `CLAWQL_AWS_REGION`             | S3 region (e.g. `us-east-1`)               |
 | `CLAWQL_GCS_HMAC_ACCESS_ID`     | GCS interoperability HMAC access id        |
 | `CLAWQL_GCS_HMAC_SECRET`        | GCS interoperability HMAC secret           |
 | `CLAWQL_SYNC_ENDPOINT`          | Override endpoint URL                      |

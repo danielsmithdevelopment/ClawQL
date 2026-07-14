@@ -191,13 +191,13 @@ Helm **`openclaw.image.repository`** defaults to **`ghcr.io/danielsmithdevelopme
 
 Container images above (GHCR + Cosign + Kyverno) are separate from **Packer AMI / GCP images** used for managed AWS/GCP/Cloudflare host tiers. Operator how-to lives on [Getting started for teams — Golden host images](../getting-started/getting-started-for-teams.md#golden-host-images); this section is the **security contract** for those VMs.
 
-| Control                         | Requirement                                                                                          |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **No secrets in the image**     | Sync credentials (R2/S3/GCS keys) are **never** baked; inject at boot via Vault, instance role, or SM |
-| **Manifest verify on pull**     | Boot seeding verifies **every** pulled vault file with **SHA-256** against the remote sync manifest  |
-| **Bake gate**                   | Image build runs **`clawql doctor`** before the AMI/GCP image is published                           |
-| **Boot gate**                   | Startup runs **`clawql doctor --smoke`** after `bootstrap-team-vault.sh` before serving traffic      |
-| **Cloudflare Workers path**     | No AMI — `scripts/packer/cloudflare-bootstrap.sh` uses the same pull + hash verify + doctor gate     |
+| Control                     | Requirement                                                                                           |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **No secrets in the image** | Sync credentials (R2/S3/GCS keys) are **never** baked; inject at boot via Vault, instance role, or SM |
+| **Manifest verify on pull** | Boot seeding verifies **every** pulled vault file with **SHA-256** against the remote sync manifest   |
+| **Bake gate**               | Image build runs **`clawql doctor`** before the AMI/GCP image is published                            |
+| **Boot gate**               | Startup runs **`clawql doctor --smoke`** after `bootstrap-team-vault.sh` before serving traffic       |
+| **Cloudflare Workers path** | No AMI — `scripts/packer/cloudflare-bootstrap.sh` uses the same pull + hash verify + doctor gate      |
 
 Related: [ADR 0006](../adr/0006-golden-host-images-packer.md), [`packer/`](../../packer/), [team vault sync](../getting-started/getting-started-for-teams.md#team-vault-sync).
 
