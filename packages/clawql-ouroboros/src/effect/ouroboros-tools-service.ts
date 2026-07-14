@@ -56,8 +56,8 @@ export class OuroborosToolsService extends Context.Tag("clawql/OuroborosToolsSer
       input: z.infer<typeof MeasureDriftSchema>
     ) => Effect.Effect<
       Awaited<ReturnType<typeof import("../mcp-hooks.js").ouroborosMcpTools.measureDrift.handler>>,
-      OuroborosError,
-      OuroborosContextService
+      never,
+      OuroborosEventStoreService
     >;
     readonly proposeSeedRevisionFromEval: (
       input: z.infer<typeof ProposeSeedRevisionFromEvalSchema>

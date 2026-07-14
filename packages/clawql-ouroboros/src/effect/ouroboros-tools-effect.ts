@@ -1,5 +1,7 @@
 import { Effect } from "effect";
 import type { z } from "zod";
+import { driftReportPayload, measureDrift } from "../drift.js";
+import { resolveBaselineSeed } from "../glue/resolve-baseline-seed.js";
 import type {
   CreateSeedFromDocumentSchema,
   GetLineageStatusSchema,
@@ -58,21 +60,64 @@ export function executeGetLineageStatusEffect(
   });
 }
 
+export type MeasureDriftResult = Awaited<
+  ReturnType<typeof import("../mcp-hooks.js").ouroborosMcpTools.measureDrift.handler>
+>;
+
+function measureDriftFailure(err: unknown): MeasureDriftResult {
+  if (err instanceof OuroborosError) {
+    const cause = err.cause;
+    return {
+      ok: false,
+      error: cause instanceof Error ? cause.message : cause != null ? String(cause) : err.reason,
+    };
+  }
+  return {
+    ok: false,
+    error: err instanceof Error ? err.message : String(err),
+  };
+}
+
 export function executeMeasureDriftEffect(
   input: z.infer<typeof MeasureDriftSchema>
-): Effect.Effect<
-  Awaited<ReturnType<typeof import("../mcp-hooks.js").ouroborosMcpTools.measureDrift.handler>>,
-  OuroborosError,
-  OuroborosContextService
-> {
+): Effect.Effect<MeasureDriftResult, never, OuroborosEventStoreService> {
   return Effect.gen(function* () {
-    const ctxSvc = yield* OuroborosContextService;
-    const ctx = ctxSvc.getContext();
-    return yield* ouroborosFromPromise(async () => {
-      const { ouroborosMcpTools } = await import("../mcp-hooks.js");
-      return ouroborosMcpTools.measureDrift.handler(input, ctx);
+    const es = yield* OuroborosEventStoreService;
+    const baselineSeed = yield* ouroborosFromPromise(() =>
+      resolveBaselineSeed(input, es.getStore())
+    );
+    if (!baselineSeed) {
+      return {
+        ok: false as const,
+        error: "Provide `seed`, `seedId` with lineage events, or `seedContent`",
+      };
+    }
+
+    const report = measureDrift({
+      baselineSeed,
+      currentOutput: input.currentOutput,
+      constraintViolations: input.constraintViolations,
+      currentConcepts: input.currentConcepts,
     });
-  });
+
+    const rootSeedId = input.seedId ?? baselineSeed.metadata.seed_id;
+    const payload = driftReportPayload(report, {
+      generation_number: input.generationNumber ?? null,
+      constraint_violations: input.constraintViolations ?? [],
+      current_concepts: input.currentConcepts ?? [],
+    });
+
+    if (input.persistEvent !== false && input.seedId) {
+      yield* es.append({
+        type: "drift_measured",
+        seed_id: input.seedId,
+        data: payload,
+        timestamp: new Date(),
+      });
+    }
+
+    return { ok: true as const, report: payload, seedId: rootSeedId };
+  }).pipe(Effect.catchAll((err) => Effect.succeed(measureDriftFailure(err))));
 }
 
 export function executeProposeSeedRevisionFromEvalEffect(
