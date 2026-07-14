@@ -34,7 +34,7 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 | 5     | Security & Compliance              | ATRClaims, WORM audit, Vault                                     | Uniform zero-trust and compliance controls                                    |
 | 6     | Observability & Runtime Protection | LGTMP stack (Alloy, Langfuse, Beyla, Tetragon, Falco, Wazuh, k6) | Full visibility and enforcement                                               |
 
-**Layer 0 today:** **`clawql-release` MVP** (manifest v0.1, Merkle root, SBOM/npm + GHCR digests, `clawql release *`, CI artifact) ships in **7.0.0**. Full permanence (Arweave, Rift, Radicle primary, Kyverno policy from manifest) remains roadmap — see [clawql-release MVP](../getting-started/clawql-release-mvp.md) and [Hybrid Decentralized GitHub Alternative](./clawql-hybrid-decentralized-github-alternative.md).
+**Layer 0 today:** **`clawql-release` MVP** (manifest v0.1, Merkle root, SBOM/npm + GHCR digests, `clawql release *`, CI artifact) ships in **7.0.0**. Full permanence (Arweave, Rift, Radicle primary, Kyverno policy from manifest) remains roadmap — see [Immutable releases](./clawql-hybrid-decentralized-github-alternative.md).
 
 ---
 

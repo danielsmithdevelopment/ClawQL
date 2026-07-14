@@ -1,25 +1,25 @@
 import { LearnCardSections } from '@/components/LearnCardSections'
+import { Note } from '@/components/mdx'
 
 # ClawQL Learn
 
 **ClawQL Learn** is the home for practical guides — from your first **`npx clawql-mcp`** through production deployment and optional tools. {{ className: 'lead' }}
 
 <Note>
-  Structured **Guides** and **Reference** hubs organize the full site:
-  [Guides](/guides) · [Reference](/reference) · [Examples](/examples).
+  Structured modules and hub links:
+  [Reference](/reference) · [Examples](/examples) · [Security](/security).
 </Note>
 
 ## Start here
 
 If you are new to ClawQL, follow this sequence:
 
-1. [Quickstart](/quickstart) — run the MCP server and connect a client in minutes
-2. [Install](/install) — binaries, Docker, and Streamable HTTP
+1. [Quickstart](/quickstart) — run the MCP server, install options, Streamable HTTP
+2. [Agent setup](/agent-setup) — Desktop, Cursor iOS, local sandbox
 3. [MCP clients](/mcp-clients) — Cursor, Claude Desktop, and other MCP hosts
 4. [Concepts](/concepts) — how **`search`** and **`execute`** fit together
-5. [Using search and execute](/learn/search-and-execute-mcp) — **`search`** / **`execute`** inputs, args, fields, and pitfalls
+5. [Using search and execute](/learn/search-and-execute-mcp) — inputs, args, fields, and pitfalls
 6. [Tools](/tools) — full tool surface and behavior
-7. [OpenClaw with ClawQL](/learn/openclaw-and-clawql) — gateway + **`openclaw mcp set`** + smoke path
 
 <LearnCardSections />
 
@@ -28,16 +28,12 @@ If you are new to ClawQL, follow this sequence:
 Use these hubs when you care about one slice of the product:
 
 - **Core MCP** — [Tools](/tools), [Spec configuration](/spec-configuration), [Bundled specs](/bundled-specs)
-- **Architecture & platform** — [Effect-TS in ClawQL](/learn/effect-ts), [Architecture](/architecture), [Modularization](/vision/modularization), [Contributor Technical Specification](/contributing/technical-specification)
+- **Architecture & platform** — [Architecture](/architecture), [Vision & status](/vision/roadmap), [Contributor Technical Specification](/contributing/technical-specification)
 - **Session & automation** — [clawql-memory (Memory 2.0)](/learn/memory), [Optional tools hub](/reference/optional-tools), [Schedule & notify workflows](/learn/schedule-notify-workflows), [Audit tool & observability](/learn/audit-tool-and-observability)
-- **Knowledge & documents** — [Document pipeline (seven vendors)](/learn/document-pipeline), [External ingest & knowledge lake](/learn/external-ingest-knowledge), [Onyx enterprise search (`knowledge_search_onyx`)](/learn/knowledge-search-onyx), [Onyx knowledge search](/onyx-knowledge), [Flink Onyx sync](/flink-onyx-sync)
-- **Streams & APIs** — [NATS JetStream](/nats-jetstream), [GraphQL layer](/graphql-proxy)
-- **Spec-first workflows** — [Ouroboros tools (`ouroboros_*`)](/learn/ouroboros-tools), [Ouroboros library](/ouroboros)
-- **Human-in-the-loop** — [Schedule & notify workflows](/learn/schedule-notify-workflows) (Slack + Label Studio), [HITL — Label Studio](/hitl-label-studio)
-- **OpenClaw gateway** — [OpenClaw + ClawQL](/openclaw), [OpenClaw with ClawQL (learn walkthrough)](/learn/openclaw-and-clawql)
+- **Knowledge & documents** — [Document pipeline](/learn/document-pipeline), [External ingest](/learn/external-ingest-knowledge), [Onyx search](/learn/knowledge-search-onyx)
+- **Spec-first workflows** — [Ouroboros tools](/learn/ouroboros-tools), [Ouroboros library](/ouroboros)
+- **OpenClaw gateway** — [OpenClaw + ClawQL](/openclaw)
 
 ## Modules and certifications
 
-Structured courses, quizzes, and badges are **not published yet**. When they ship, they will live under **`/learn`** (for example, dedicated paths per module) so you can bookmark **`https://docs.clawql.com/learn`** as the single entry point for training.
-
-If you want a topic prioritized for the first module, open a discussion or issue on **[GitHub](https://github.com/danielsmithdevelopment/ClawQL)**.
+Hands-on modules above prepare you for production MCP usage. Security curriculum lives under [Security best practices](/security/best-practices).

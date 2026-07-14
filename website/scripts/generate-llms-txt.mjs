@@ -24,7 +24,7 @@ const SECTIONS = [
       ['Agent setup', '/agent-setup', 'Desktop onboarding, Cursor iOS Cloud Agents, local sandbox'],
       ['Quickstart', '/quickstart', 'Fastest path to a running gateway'],
       ['Getting started', '/getting-started', 'Quickstart paths, teams, and install options'],
-      ['Install', '/install', 'npm, Docker, and Helm install options'],
+      ['Quickstart', '/quickstart', 'npx, install options, and first MCP connect'],
     ],
   },
   {

@@ -15,21 +15,16 @@ export type NavGroup = {
   links: Array<NavLink>
 }
 
-/** Condensed sidebar — one link per concept; ~35 entries (was 74). */
+/** First-run sidebar — hubs only; long-tail lives on hub pages. */
 export const docsNavigation: Array<NavGroup> = [
   {
     title: 'Getting started',
     links: [
       { title: 'Overview', href: '/getting-started' },
       { title: 'Quickstart', href: '/quickstart' },
-      {
-        title: 'Release manifest (Layer 0)',
-        href: '/getting-started/clawql-release-mvp',
-      },
       { title: 'Agent setup', href: '/agent-setup' },
-      { title: 'For teams', href: '/getting-started/for-teams' },
-      { title: 'Install', href: '/install' },
       { title: 'MCP clients', href: '/mcp-clients' },
+      { title: 'For teams', href: '/getting-started/for-teams' },
     ],
   },
   {
@@ -41,19 +36,19 @@ export const docsNavigation: Array<NavGroup> = [
         href: '/deployment/operations-guide',
       },
       { title: 'Kubernetes & Helm', href: '/deployment/kubernetes' },
-      { title: 'Helm chart', href: '/helm' },
       { title: 'OpenClaw', href: '/openclaw' },
-      { title: 'Tailscale', href: '/tailscale' },
     ],
   },
   {
     title: 'Learn',
     links: [
-      { title: 'Learn hub', href: '/learn' },
-      { title: 'Effect-TS in ClawQL', href: '/learn/effect-ts' },
-      { title: 'clawql-memory', href: '/learn/memory' },
-      { title: 'Guides', href: '/guides' },
-      { title: 'Token efficiency', href: '/architecture/token-efficiency' },
+      { title: 'Learn', href: '/learn' },
+      { title: 'Concepts', href: '/concepts' },
+      { title: 'Memory', href: '/learn/memory' },
+      {
+        title: 'Token efficiency',
+        href: '/architecture/token-efficiency',
+      },
       { title: 'Security', href: '/security' },
       { title: 'Troubleshooting', href: '/troubleshooting' },
     ],
@@ -61,17 +56,9 @@ export const docsNavigation: Array<NavGroup> = [
   {
     title: 'Platform',
     links: [
-      { title: 'Vision & roadmap', href: '/vision/roadmap' },
+      { title: 'Vision & status', href: '/vision/roadmap' },
       { title: 'Architecture', href: '/architecture' },
-      { title: 'Modularization', href: '/vision/modularization' },
-      { title: 'IDP platform', href: '/vision/idp-platform' },
-      {
-        title: 'Immutable releases',
-        href: '/vision/immutable-releases',
-      },
-      { title: 'Ouroboros & DAOS', href: '/ouroboros' },
-      { title: 'Inference gateway', href: '/inference/clawql-inference' },
-      { title: 'Payments', href: '/payments/clawql-payments' },
+      { title: 'Ouroboros', href: '/ouroboros' },
     ],
   },
   {
@@ -80,14 +67,11 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'Reference', href: '/reference' },
       { title: 'MCP tools', href: '/tools' },
       { title: 'Configuration', href: '/spec-configuration' },
-      { title: 'Plugins & registry', href: '/reference/plugins' },
-      { title: 'Concepts', href: '/concepts' },
-      { title: 'Optional tools', href: '/reference/optional-tools' },
+      { title: 'Plugins', href: '/plugins' },
       {
         title: 'Contributor spec',
         href: '/contributing/technical-specification',
       },
-      { title: 'Benchmarks', href: '/benchmarks' },
     ],
   },
   {
@@ -95,10 +79,6 @@ export const docsNavigation: Array<NavGroup> = [
     links: [
       { title: 'Examples', href: '/examples' },
       { title: 'Changelog', href: '/resources/changelog' },
-      {
-        title: 'GitHub',
-        href: 'https://github.com/danielsmithdevelopment/ClawQL',
-      },
     ],
   },
 ]

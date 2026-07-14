@@ -134,6 +134,26 @@ const nextConfig = {
         destination: '/getting-started',
         permanent: true,
       },
+      {
+        source: '/install',
+        destination: '/quickstart#install-options',
+        permanent: true,
+      },
+      {
+        source: '/getting-started/clawql-desktop',
+        destination: '/agent-setup#desktop-stdio-recommended',
+        permanent: true,
+      },
+      {
+        source: '/getting-started/clawql-release-mvp',
+        destination: '/vision/immutable-releases',
+        permanent: true,
+      },
+      {
+        source: '/guides',
+        destination: '/learn',
+        permanent: true,
+      },
     ]
   },
   /**

@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test'
 const routes = [
   '/',
   '/quickstart',
-  '/install',
+  '/quickstart',
   '/getting-started/for-teams',
   '/reference/protocol',
   '/deployment/kubernetes',
