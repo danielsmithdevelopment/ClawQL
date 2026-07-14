@@ -4,12 +4,12 @@
  * Scope-aware programs should use this helper inside `Effect.scoped`.
  */
 
-import { Effect, type Scope } from "effect";
+import { Effect, Scope } from "effect";
 import type pg from "pg";
 import { closeOuroborosPgPool, getOuroborosPgPool } from "./postgres-pool.js";
 
 /** Acquire the shared Ouroboros pool (or null when unset); release → {@link closeOuroborosPgPool}. */
-export function ouroborosPgPoolScopedEffect(): Effect.Effect<pg.Pool | null, never, Scope> {
+export function ouroborosPgPoolScopedEffect(): Effect.Effect<pg.Pool | null, never, Scope.Scope> {
   return Effect.acquireRelease(
     Effect.sync(() => getOuroborosPgPool()),
     () => Effect.promise(() => closeOuroborosPgPool())

@@ -2,7 +2,7 @@
  * Effect acquire/release for the NATS HITL resume consumer (plan §7 lifecycle).
  */
 
-import { Effect, type Scope } from "effect";
+import { Effect, Scope } from "effect";
 import {
   startHitlCompletedConsumer,
   stopNatsClient,
@@ -16,7 +16,7 @@ import {
  */
 export function natsHitlConsumerScopedEffect(
   handler: HitlCompletedConsumerHandler
-): Effect.Effect<void, never, Scope> {
+): Effect.Effect<void, never, Scope.Scope> {
   return Effect.acquireRelease(
     Effect.promise(async () => {
       await startHitlCompletedConsumer(handler);
