@@ -37,12 +37,13 @@ Core registration entrypoint:
 
 - `src/tools.ts`
 
-Related modules (MCP transport + shims — **canonical logic in `packages/clawql-memory/`**):
+Related modules (MCP transport + shims — **canonical logic in packages**):
 
 - `src/memory-ingest.ts` → `clawql-memory/ingest/*`
 - `src/memory-recall.ts` → `clawql-memory/recall/*`
 - `src/vault-config.ts`, `src/vault-utils.ts` → `clawql-memory/vault/*`
-- `src/sandbox-bridge-client.ts` (sandbox — still in `src/` until `clawql-sandbox` extraction)
+- Sandbox: **`packages/clawql-sandbox/`** (`bridge-client.ts`, `container.ts`, `macos-seatbelt.ts`, plugin layer) — opt-in via `CLAWQL_ENABLE_SANDBOX=1`
+- Ouroboros: **`packages/clawql-ouroboros/`** — Effect services + thin MCP plugin glue
 
 ## GraphQL Notes
 
