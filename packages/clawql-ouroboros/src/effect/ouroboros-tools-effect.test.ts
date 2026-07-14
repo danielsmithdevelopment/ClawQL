@@ -9,8 +9,11 @@ import { ouroborosFromPromise } from "./ouroboros-effect-utils.js";
 import {
   executeCreateSeedFromDocumentEffect,
   executeMeasureDriftEffect,
+  executeProposeSeedRevisionFromEvalEffect,
 } from "./ouroboros-tools-effect.js";
 import { OuroborosToolsService, ouroborosToolsLiveLayer } from "./ouroboros-tools-service.js";
+
+const toolsOnlyLayer = ouroborosToolsLiveLayer();
 
 const stubContext = {} as OuroborosContext;
 
@@ -19,7 +22,7 @@ const testLayer = Layer.mergeAll(
     OuroborosContextService,
     OuroborosContextService.of({ getContext: () => stubContext })
   ),
-  ouroborosToolsLiveLayer()
+  toolsOnlyLayer
 );
 
 function minimalSeed(seedId: string): Seed {
@@ -88,16 +91,53 @@ describe("executeCreateSeedFromDocumentEffect", () => {
     }
   });
 
-  it("executeCreateSeedFromDocumentEffect uses context service", async () => {
+  it("executeCreateSeedFromDocumentEffect builds seed without context service", async () => {
     const result = await Effect.runPromise(
       executeCreateSeedFromDocumentEffect({
         documentId: "doc-ctx",
         extractedText: "Context service wiring validation text",
         metadata: {},
         taskType: "ingest",
-      }).pipe(Effect.provide(testLayer))
+      }).pipe(Effect.provide(toolsOnlyLayer))
     );
     expect(result).toMatchObject({ success: true });
+  });
+});
+
+describe("executeProposeSeedRevisionFromEvalEffect", () => {
+  it("proposes a dry-run revision via EventStoreService", async () => {
+    const store = new InMemoryEventStore();
+    const base = minimalSeed("seed-propose-effect");
+    base.evaluation_principles = [{ name: "accuracy", description: "score", weight: 1 }];
+
+    const res = await Effect.runPromise(
+      executeProposeSeedRevisionFromEvalEffect({
+        scoreName: "accuracy",
+        scoreValue: 0.95,
+        seedId: "seed-propose-effect",
+        autoApply: false,
+        minScore: 0.8,
+        baseSeed: base,
+      }).pipe(Effect.provide(eventStoreTestLayer(store)))
+    );
+
+    expect(res.ok).toBe(true);
+    expect(res.action).toBe("proposed");
+    expect(res.dryRun).toBe(true);
+    expect(
+      store.snapshot("seed-propose-effect").some((e) => e.type === "langfuse_eval_received")
+    ).toBe(true);
+  });
+
+  it("returns ok:false when eval payload is missing", async () => {
+    const store = new InMemoryEventStore();
+    const res = await Effect.runPromise(
+      executeProposeSeedRevisionFromEvalEffect({}).pipe(Effect.provide(eventStoreTestLayer(store)))
+    );
+    expect(res).toMatchObject({
+      ok: false,
+      error: "Missing eval: provide `payload` or `scoreValue` (+ optional scoreName/seedId)",
+    });
   });
 });
 

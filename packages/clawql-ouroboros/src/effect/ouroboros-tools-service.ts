@@ -7,7 +7,6 @@ import type {
   ProposeSeedRevisionFromEvalSchema,
   RunOuroborosSchema,
 } from "../mcp-hooks.js";
-import { OuroborosContextService } from "./ouroboros-context-service.js";
 import { OuroborosEventStoreService } from "./ouroboros-event-store-service.js";
 import { OuroborosLoopService } from "./ouroboros-loop-service.js";
 import { OuroborosError } from "./ouroboros-errors.js";
@@ -30,9 +29,7 @@ export class OuroborosToolsService extends Context.Tag("clawql/OuroborosToolsSer
         ReturnType<
           typeof import("../mcp-hooks.js").ouroborosMcpTools.createSeedFromDocument.handler
         >
-      >,
-      OuroborosError,
-      OuroborosContextService
+      >
     >;
     readonly runEvolutionaryLoop: (
       input: z.infer<typeof RunOuroborosSchema>
@@ -67,8 +64,8 @@ export class OuroborosToolsService extends Context.Tag("clawql/OuroborosToolsSer
           typeof import("../mcp-hooks.js").ouroborosMcpTools.proposeSeedRevisionFromEval.handler
         >
       >,
-      OuroborosError,
-      OuroborosContextService
+      never,
+      OuroborosEventStoreService
     >;
   }
 >() {}
