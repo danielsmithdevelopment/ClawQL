@@ -6,6 +6,7 @@ export {
   executeScheduleToolEffect,
   executeWorkflowToolEffect,
 } from "./automation-tools-effect.js";
+export { executeArgocdToolCoreEffect } from "./argocd-effect.js";
 export { executeNotifySlackCoreEffect } from "./notify-slack-effect.js";
 export { executeScheduleToolCoreEffect } from "./schedule-effect.js";
 export { executeWorkflowToolCoreEffect } from "./workflow-effect.js";

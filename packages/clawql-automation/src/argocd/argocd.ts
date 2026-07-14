@@ -7,7 +7,6 @@ import { KubeConfig, CustomObjectsApi } from "@kubernetes/client-node";
 import {
   ARGO_CD_CRD,
   argocdSyncAllowed,
-  argocdToolEnabled,
   isArgocdNamespaceAllowed,
   resolveArgocdNamespace,
   getArgocdKubeconfigPath,
@@ -138,6 +137,14 @@ function jsonResponse(obj: unknown): { content: { type: "text"; text: string }[]
   return { content: [{ type: "text", text: JSON.stringify(obj, null, 2) }] };
 }
 
+export function argocdDisabledResponse(): { content: { type: "text"; text: string }[] } {
+  return jsonResponse({
+    ok: false,
+    error:
+      "argocd tool is not enabled. Set CLAWQL_ENABLE_ARGO_CD=1 and configure CLAWQL_ARGO_CD_NAMESPACE_ALLOWLIST.",
+  });
+}
+
 function requireNamespace(
   namespace?: string
 ): { ok: true; namespace: string } | { ok: false; error: string } {
@@ -194,17 +201,9 @@ async function getApplication(namespace: string, name: string): Promise<ArgoCdAp
   return res as ArgoCdApplicationObject;
 }
 
-export async function executeArgocdToolCore(
+export async function dispatchArgocdToolCore(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
-  if (!argocdToolEnabled()) {
-    return jsonResponse({
-      ok: false,
-      error:
-        "argocd tool is not enabled. Set CLAWQL_ENABLE_ARGO_CD=1 and configure CLAWQL_ARGO_CD_NAMESPACE_ALLOWLIST.",
-    });
-  }
-
   const parsed = argocdInputSchema.parse(params);
 
   try {
@@ -283,6 +282,17 @@ export async function executeArgocdToolCore(
     const message = error instanceof Error ? error.message : String(error);
     return jsonResponse({ ok: false, operation: parsed.operation, error: message });
   }
+}
+
+/**
+ * Promise façade over {@link executeArgocdToolCoreEffect}.
+ */
+export async function executeArgocdToolCore(
+  params: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const { executeArgocdToolCoreEffect } = await import("../effect/argocd-effect.js");
+  const { Effect } = await import("effect");
+  return Effect.runPromise(executeArgocdToolCoreEffect(params));
 }
 
 /** Public async facade for argocd MCP tool. */
