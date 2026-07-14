@@ -361,24 +361,31 @@ describe("handleWorkflowToolInput", () => {
     expect(body.error).toMatch(/not in CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST/i);
   });
 
-  it("rejects submit without template_ref", async () => {
+  it("soft-fails submit without template_ref", async () => {
     enableWorkflowEnv();
     const { handleWorkflowToolInput } = await import("./workflow.js");
-    await expect(handleWorkflowToolInput({ operation: "submit" })).rejects.toThrow();
+    const res = await handleWorkflowToolInput({ operation: "submit" });
+    const body = JSON.parse(res.content[0]!.text) as { ok?: boolean; error?: string };
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/template_ref/i);
   });
 
-  it("rejects wait without name", async () => {
+  it("soft-fails wait without name", async () => {
     enableWorkflowEnv();
     const { handleWorkflowToolInput } = await import("./workflow.js");
-    await expect(handleWorkflowToolInput({ operation: "wait" })).rejects.toThrow();
+    const res = await handleWorkflowToolInput({ operation: "wait" });
+    const body = JSON.parse(res.content[0]!.text) as { ok?: boolean; error?: string };
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/name/i);
   });
 
-  it("rejects logs without node_name", async () => {
+  it("soft-fails logs without node_name", async () => {
     enableWorkflowEnv();
     const { handleWorkflowToolInput } = await import("./workflow.js");
-    await expect(
-      handleWorkflowToolInput({ operation: "logs", name: "clawql-xyz" })
-    ).rejects.toThrow();
+    const res = await handleWorkflowToolInput({ operation: "logs", name: "clawql-xyz" });
+    const body = JSON.parse(res.content[0]!.text) as { ok?: boolean; error?: string };
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/node_name/i);
   });
 
   it("suspends a running workflow", async () => {
@@ -436,10 +443,13 @@ describe("handleWorkflowToolInput", () => {
     expect(audit.some((e) => e.action === "resume")).toBe(true);
   });
 
-  it("rejects resume without name", async () => {
+  it("soft-fails resume without name", async () => {
     enableWorkflowEnv();
     const { handleWorkflowToolInput } = await import("./workflow.js");
-    await expect(handleWorkflowToolInput({ operation: "resume" })).rejects.toThrow();
+    const res = await handleWorkflowToolInput({ operation: "resume" });
+    const body = JSON.parse(res.content[0]!.text) as { ok?: boolean; error?: string };
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/name/i);
   });
 
   it("submit_cron creates CronWorkflow", async () => {

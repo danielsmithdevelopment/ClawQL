@@ -65,4 +65,14 @@ describe("executeArgocdToolCoreEffect", () => {
     expect(body.applications).toHaveLength(1);
     expect(body.applications?.[0]?.name).toBe("guestbook");
   });
+
+  it("soft-fails Zod validation without throwing", async () => {
+    enableArgocdEnv();
+    const result = await Effect.runPromise(
+      executeArgocdToolCoreEffect({ operation: "get" /* missing name */ })
+    );
+    const body = JSON.parse(result.content[0]!.text) as { ok?: boolean; error?: string };
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/name/i);
+  });
 });

@@ -22,6 +22,21 @@ describe("executeWorkflowToolCoreEffect", () => {
     expect(body.ok).toBe(false);
     expect(body.error).toMatch(/not enabled/i);
   });
+
+  it("soft-fails Zod validation without throwing", async () => {
+    process.env.CLAWQL_ENABLE_WORKFLOW = "1";
+    process.env.CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST = "clawql";
+    const result = await Effect.runPromise(
+      executeWorkflowToolCoreEffect({
+        operation: "get",
+        namespace: "clawql",
+        /* missing name */
+      })
+    );
+    const body = JSON.parse(result.content[0]!.text) as { ok?: boolean; error?: string };
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/name/i);
+  });
 });
 
 describe("waitForWorkflowEffect", () => {
