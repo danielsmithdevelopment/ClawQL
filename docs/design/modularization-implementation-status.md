@@ -284,7 +284,7 @@ These vision items are **not** done by package extraction alone:
 | [Vision & roadmap](../vision/clawql-vision-roadmap.md)                    | Public shipped vs planned table           |
 | [MCP tools](../mcp/mcp-tools.md)                                          | Operator-facing tool matrix               |
 | [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)       | Package delivery epic                     |
-| [Immutable releases](https://docs.clawql.com/vision/immutable-releases) | Layer 0 manifest commands, CI             |
+| [Immutable releases](https://docs.clawql.com/vision/immutable-releases)   | Layer 0 manifest commands, CI             |
 | [Getting started](https://docs.clawql.com/getting-started)                | Auth, PageIndex, Presidio, Tier 1 Compose |
 | [clawql-operator-helm](../deployment/clawql-operator-helm.md)             | Operator scaffold install                 |
 
