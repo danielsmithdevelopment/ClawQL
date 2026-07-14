@@ -6,6 +6,14 @@ export {
   ouroborosEventStoreLiveLayer,
 } from "./ouroboros-event-store-service.js";
 export {
+  OuroborosEnginesService,
+  ouroborosEnginesLiveLayer,
+  getOrCreateOuroborosEngines,
+  resetOuroborosEnginesForTests,
+  buildOuroborosToolBridgeFromPluginDeps,
+  type OuroborosEngines,
+} from "./ouroboros-engines-service.js";
+export {
   OuroborosLoopService,
   ouroborosLoopLiveLayer,
   executeRunEvolutionaryLoopFromInputEffect,

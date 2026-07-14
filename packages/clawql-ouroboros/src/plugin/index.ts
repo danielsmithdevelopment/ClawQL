@@ -14,11 +14,13 @@ export { getOuroborosContext, resetOuroborosContextForTests } from "./context.js
 export {
   OuroborosContextService,
   OuroborosError,
+  OuroborosEnginesService,
   OuroborosEventStoreService,
   OuroborosLoopService,
   OuroborosPollerService,
   OuroborosToolsService,
   ouroborosContextLiveLayer,
+  ouroborosEnginesLiveLayer,
   ouroborosEventStoreLiveLayer,
   ouroborosLoopLiveLayer,
   ouroborosPollerLiveLayer,

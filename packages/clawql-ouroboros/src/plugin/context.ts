@@ -2,6 +2,7 @@ import { resetOuroborosEventStoreForTests } from "../glue/create-event-store.js"
 import { buildEvolutionaryLoop } from "../glue/build-evolutionary-loop.js";
 import { closeOuroborosPgPool, registerOuroborosPoolShutdownHooks } from "../glue/postgres-pool.js";
 import type { OuroborosContext } from "../mcp-hooks.js";
+import { resetOuroborosEnginesForTests } from "../effect/ouroboros-engines-service.js";
 import { resetOuroborosLoopDepsForTests } from "../effect/ouroboros-loop-service.js";
 
 let ctxCache: OuroborosContext | null = null;
@@ -27,6 +28,7 @@ export function resetOuroborosContextForTests(): void {
   ctxCache = null;
   shutdownHooksRegistered = false;
   resetOuroborosEventStoreForTests();
+  resetOuroborosEnginesForTests();
   resetOuroborosLoopDepsForTests();
   void closeOuroborosPgPool();
 }
