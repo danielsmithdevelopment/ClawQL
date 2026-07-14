@@ -90,14 +90,17 @@ Send \`Authorization: Bearer <access_token>\` to the MCP Streamable HTTP endpoin
 
 ## Commerce
 
-ClawQL supports agentic commerce via **x402**, **UCP**, and **ACP**:
+ClawQL's **native** agentic payment rails on self-hosted deployments are **Stripe**, **x402**, and **MPP** (WORM-audited). Docs.clawql.com also publishes discovery stubs for **UCP**, **ACP**, and **AP2** (planned adapters):
 
+- Native rails guide: [ClawQL payments](${origin}/payments/clawql-payments)
 - x402 probe: \`GET ${origin}/api/v1\` returns HTTP 402 with \`PAYMENT-REQUIRED\` (v2)
-- UCP profile: \`${origin}/.well-known/ucp\`
-- ACP discovery: \`${origin}/.well-known/acp.json\`
-- AP2 extension on the agent card: \`https://github.com/google-agentic-commerce/ap2/tree/v0.1\`
+- MPP OpenAPI: \`${origin}/openapi.json\`
+- Payments discovery: \`${origin}/.well-known/payments.json\`
+- UCP profile (stub): \`${origin}/.well-known/ucp\`
+- ACP discovery (stub): \`${origin}/.well-known/acp.json\`
+- AP2 extension URI on the agent card (planned mandates)
 
-Live payment settlement requires a self-hosted ClawQL deployment with \`clawql-payments\` configured. See [ClawQL payments](${origin}/payments/clawql-payments).
+Live payment settlement requires a self-hosted ClawQL deployment with \`clawql-payments\` configured.
 
 ## Revocation
 

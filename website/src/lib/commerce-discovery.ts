@@ -1,6 +1,7 @@
 /**
- * Agentic commerce discovery for docs.clawql.com (x402, MPP, UCP, ACP).
- * Static metadata for scanners and agents; live settlement runs on self-hosted ClawQL.
+ * Agentic commerce discovery for docs.clawql.com.
+ * Native live rails on self-hosted ClawQL: Stripe + x402 + MPP.
+ * ACP / UCP / AP2 on this site are discovery stubs until adapters ship.
  */
 
 import { getSiteOrigin } from '@/lib/site-url'
@@ -152,10 +153,10 @@ export function getCommerceOpenApi(): Record<string, unknown> {
       title: 'ClawQL Commerce Discovery API',
       version: '1.0.0',
       description:
-        'MPP discovery surface for docs.clawql.com. Paid routes advertise x402 and Stripe offers; runtime 402 challenges are authoritative.',
+        'MPP discovery surface for docs.clawql.com. Native settlement rails on self-hosted ClawQL are Stripe, x402, and MPP; ACP/UCP checkout stubs are discovery-only.',
       'x-commerce': true,
       'x-guidance':
-        'Commerce discovery API for agent scanners. Runtime 402 challenges on /api/v1 are authoritative.',
+        'Commerce discovery API for agent scanners. Runtime 402 challenges on /api/v1 are authoritative. Docs.clawql.com does not settle payments.',
     },
     servers: [{ url: origin }],
     'x-service-info': {
@@ -185,11 +186,11 @@ export function getCommerceOpenApi(): Record<string, unknown> {
       '/api/commerce/checkout': {
         post: {
           operationId: 'createCheckout',
-          summary: 'Create agentic checkout session',
+          summary: 'Create agentic checkout session (stub)',
           description:
-            'UCP/ACP-aligned checkout stub for commerce discovery. Configure live checkout on self-hosted ClawQL.',
+            'ACP/UCP-aligned checkout discovery stub. Live ACP checkout is planned; configure Stripe/x402/MPP settlement on self-hosted ClawQL today.',
           'x-payment-info': mppPaymentInfo(
-            'Agentic checkout for ClawQL Pro/Team plans via x402 or Stripe.',
+            'Agentic checkout advertising for ClawQL plans via x402 or Stripe.',
           ),
           responses: {
             '402': { description: 'Payment Required' },
@@ -200,6 +201,8 @@ export function getCommerceOpenApi(): Record<string, unknown> {
     },
     'x-clawql-commerce': {
       documentation: `${origin}/payments/clawql-payments`,
+      nativeRails: ['stripe', 'x402', 'mpp'],
+      plannedProtocols: ['ap2', 'acp'],
       paymentsDiscovery: `${origin}/.well-known/payments.json`,
       ucp: `${origin}/.well-known/ucp`,
       acp: `${origin}/.well-known/acp.json`,
@@ -323,9 +326,20 @@ export function getPaymentsWellKnown(): Record<string, unknown> {
         plans: ['free', 'pro', 'team', 'enterprise'],
         documentation: `${origin}/payments/clawql-payments`,
       },
+      {
+        type: 'mpp',
+        enabled: true,
+        description:
+          'Machine Payments Protocol — session micropayments with dual x402 + MPP challenges on self-hosted ClawQL when CLAWQL_MPP_ENABLED=1.',
+        documentation: `${origin}/payments/clawql-payments`,
+        openapi: `${origin}/openapi.json`,
+      },
     ],
     default: 'x402',
+    native_rails: ['stripe', 'x402', 'mpp'],
+    planned_protocols: ['ap2', 'acp'],
     ap2_extension: AP2_EXTENSION_URI,
+    note: 'AP2 URI is discovery metadata (planned mandates). Live settlement today: Stripe + x402 + MPP on self-hosted clawql-payments.',
     issue: 'https://github.com/danielsmithdevelopment/ClawQL/issues/88',
   }
 }

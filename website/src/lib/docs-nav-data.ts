@@ -79,6 +79,7 @@ export const docsNavigation: Array<NavGroup> = [
       },
       { title: 'Ouroboros & DAOS', href: '/ouroboros' },
       { title: 'Inference gateway', href: '/inference/clawql-inference' },
+      { title: 'Payments', href: '/payments/clawql-payments' },
     ],
   },
   {

@@ -1,16 +1,17 @@
 # Payments documentation
 
-ClawQL's unified billing layer — Stripe subscriptions, x402 micropayments, managed plan entitlements, and WORM-auditable payment events.
+ClawQL's unified billing layer — **Stripe** (human fiat), **x402** (per-request USDC), **MPP** (session micropayments), managed plan entitlements, and **WORM-auditable** payment events. One MCP gateway, three native agentic rails today; AP2 / ACP / PayPal on the roadmap.
 
-| Doc                                          | Audience                             | Contents                                                                                         |
-| -------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| [**clawql-payments.md**](clawql-payments.md) | Operators, integrators, contributors | Architecture, setup, env vars, HTTP flows, CLI reference, inference integration, troubleshooting |
+| Doc                                          | Audience                             | Contents                                                                                        |
+| -------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| [**clawql-payments.md**](clawql-payments.md) | Operators, integrators, contributors | Architecture, setup, env vars, HTTP flows, CLI, roadmap (AP2/ACP/PayPal), inference integration |
 
 ## Package and CLI entry points
 
 - **Package:** [`packages/clawql-payments`](../../packages/clawql-payments)
 - **CLI:** `clawql payments *` → [`src/onboarding/payments-cli.ts`](../../src/onboarding/payments-cli.ts)
-- **Inference integration:** [`packages/clawql-inference`](../../packages/clawql-inference) — plan limits and x402 middleware
+- **Inference integration:** [`packages/clawql-inference`](../../packages/clawql-inference) — plan limits, x402 middleware, optional MPP challenges
+- **Plugin:** [`docs/plugins/payments.md`](../plugins/payments.md) → `/plugins/payments`
 
 ## Related docs
 

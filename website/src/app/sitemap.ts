@@ -92,6 +92,11 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'monthly',
     priority: 0.9,
   },
+  {
+    path: '/payments/clawql-payments',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
   { path: '/agent-setup', changeFrequency: 'weekly', priority: 0.95 },
   { path: '/architecture', changeFrequency: 'monthly', priority: 0.92 },
   { path: '/guides', changeFrequency: 'weekly', priority: 0.9 },

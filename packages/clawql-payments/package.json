@@ -96,8 +96,10 @@
     "payments",
     "stripe",
     "x402",
+    "mpp",
     "micropayments",
-    "billing"
+    "billing",
+    "worm"
   ],
   "publishConfig": {
     "access": "public"
