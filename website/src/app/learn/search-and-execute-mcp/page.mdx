@@ -17,7 +17,7 @@ That keeps **planning context** small: the model sees **top matches** (controlle
 1. **Confirm the tools exist** — they are Core; if your MCP client hides them, fix client config, not ClawQL flags.
 2. **Know what is loaded** — which **`CLAWQL_PROVIDER`**, **`CLAWQL_SPEC_PATHS`**, **`CLAWQL_BUNDLED_PROVIDERS`**, **`CLAWQL_GRAPHQL_SOURCES`**, or **`CLAWQL_GRPC_SOURCES`** your server process actually started with ([Spec configuration](/spec-configuration)). **`search`** only sees **loaded** operations.
 3. **Have auth ready** — tokens and base URLs live in **env** (and optional static headers). Wrong or missing auth shows up on **`execute`**, not **`search`**.
-4. **Prefer Streamable HTTP or gRPC MCP** for long sessions — stdio is fine, but a **stable server URL** is easier for editors that restart subprocesses often ([Install](/install), [MCP clients](/mcp-clients)).
+4. **Prefer Streamable HTTP or gRPC MCP** for long sessions — stdio is fine, but a **stable server URL** is easier for editors that restart subprocesses often ([Quickstart](/quickstart#install-options), [MCP clients](/mcp-clients)).
 
 ## The search tool
 

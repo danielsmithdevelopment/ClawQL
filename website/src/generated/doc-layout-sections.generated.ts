@@ -563,21 +563,8 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
   ],
   '/getting-started': [
     { title: 'Recommended path', id: 'recommended-path' },
-    { title: 'Shipped since 7.0', id: 'shipped-since-7-0' },
     { title: 'Deployment options', id: 'deployment-options' },
     { title: 'Next steps', id: 'next-steps' },
-  ],
-  '/getting-started/clawql-desktop': [
-    { title: 'What you get', id: 'what-you-get' },
-    { title: 'Build from source', id: 'build-from-source' },
-    { title: 'Development', id: 'development' },
-    { title: 'vs Executor desktop', id: 'vs-executor-desktop' },
-  ],
-  '/getting-started/clawql-release-mvp': [
-    { title: 'Quick start', id: 'quick-start' },
-    { title: 'What gets recorded', id: 'what-gets-recorded' },
-    { title: 'Verify at runtime', id: 'verify-at-runtime' },
-    { title: 'Related', id: 'related' },
   ],
   '/getting-started/for-teams': [
     { title: 'What teams need', id: 'what-teams-need' },
@@ -673,17 +660,6 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Differentiation vs LiteLLM', id: 'differentiation-vs-lite-llm' },
     { title: 'Implementation phasing', id: 'implementation-phasing' },
     { title: 'References', id: 'references' },
-  ],
-  '/install': [
-    { title: 'npm / yarn / bun', id: 'npm-yarn-bun' },
-    { title: 'Binaries', id: 'binaries' },
-    { title: 'First run (recommended)', id: 'first-run-recommended' },
-    {
-      title: 'Run without a global install',
-      id: 'run-without-a-global-install',
-    },
-    { title: 'Docker and HTTP', id: 'docker-and-http' },
-    { title: 'Install from GitHub', id: 'install-from-git-hub' },
   ],
   '/learn': [
     { title: 'Start here', id: 'start-here' },
@@ -1253,13 +1229,10 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: '2. Connect your client', id: '2-connect-your-client' },
     { title: '3. Use your own API spec', id: '3-use-your-own-api-spec' },
     { title: '4. HTTP transport (optional)', id: '4-http-transport-optional' },
+    { title: 'Install options', id: 'install-options' },
     {
       title: '5. Local bundled docs via Helm (Docker Desktop)',
       id: '5-local-bundled-docs-via-helm-docker-desktop',
-    },
-    {
-      title: '6. Inference gateway (optional)',
-      id: '6-inference-gateway-optional',
     },
     { title: 'Next steps', id: 'next-steps' },
   ],

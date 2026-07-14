@@ -19,27 +19,22 @@ const ENTRIES: Array<Entry> = [
   {
     path: '/vision/ecosystem',
     changeFrequency: 'monthly',
-    priority: 0.9,
-  },
-  {
-    path: '/getting-started/clawql-release-mvp',
-    changeFrequency: 'monthly',
-    priority: 0.9,
+    priority: 0.7,
   },
   {
     path: '/vision/idp-platform',
     changeFrequency: 'monthly',
-    priority: 0.92,
+    priority: 0.75,
   },
   {
     path: '/vision/technical-enablement',
     changeFrequency: 'monthly',
-    priority: 0.9,
+    priority: 0.7,
   },
   {
     path: '/vision/modularization',
     changeFrequency: 'monthly',
-    priority: 0.9,
+    priority: 0.7,
   },
   {
     path: '/vision/immutable-releases',
@@ -49,18 +44,13 @@ const ENTRIES: Array<Entry> = [
   {
     path: '/vision/slide-deck',
     changeFrequency: 'monthly',
-    priority: 0.88,
+    priority: 0.55,
   },
   { path: '/getting-started', changeFrequency: 'weekly', priority: 0.96 },
   {
     path: '/getting-started/for-teams',
     changeFrequency: 'weekly',
     priority: 0.95,
-  },
-  {
-    path: '/getting-started/clawql-desktop',
-    changeFrequency: 'monthly',
-    priority: 0.9,
   },
   {
     path: '/contributing/technical-specification',
@@ -70,7 +60,7 @@ const ENTRIES: Array<Entry> = [
   {
     path: '/design/operator-target-architecture',
     changeFrequency: 'monthly',
-    priority: 0.86,
+    priority: 0.55,
   },
   {
     path: '/architecture/token-efficiency',
@@ -87,9 +77,8 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'monthly',
     priority: 0.9,
   },
-  { path: '/agent-setup', changeFrequency: 'weekly', priority: 0.95 },
+  { path: '/agent-setup', changeFrequency: 'weekly', priority: 0.97 },
   { path: '/architecture', changeFrequency: 'monthly', priority: 0.92 },
-  { path: '/guides', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/reference', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/examples', changeFrequency: 'monthly', priority: 0.78 },
   { path: '/resources', changeFrequency: 'monthly', priority: 0.85 },
@@ -105,7 +94,7 @@ const ENTRIES: Array<Entry> = [
   { path: '/reference/verticals', changeFrequency: 'monthly', priority: 0.82 },
   { path: '/resources/changelog', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/vision/roadmap', changeFrequency: 'monthly', priority: 0.9 },
-  { path: '/quickstart', changeFrequency: 'weekly', priority: 0.95 },
+  { path: '/quickstart', changeFrequency: 'weekly', priority: 0.97 },
   { path: '/learn', changeFrequency: 'weekly', priority: 0.93 },
   {
     path: '/learn/search-and-execute-mcp',
@@ -167,7 +156,6 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'monthly',
     priority: 0.87,
   },
-  { path: '/install', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/mcp-clients', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/openclaw', changeFrequency: 'monthly', priority: 0.87 },
   { path: '/concepts', changeFrequency: 'monthly', priority: 0.88 },
@@ -195,17 +183,17 @@ const ENTRIES: Array<Entry> = [
     priority: 0.86,
   },
   { path: '/helm', changeFrequency: 'monthly', priority: 0.88 },
-  { path: '/tools', changeFrequency: 'weekly', priority: 0.9 },
+  { path: '/tools', changeFrequency: 'weekly', priority: 0.94 },
   { path: '/ouroboros', changeFrequency: 'monthly', priority: 0.88 },
-  { path: '/ouroboros/daos', changeFrequency: 'monthly', priority: 0.91 },
+  { path: '/ouroboros/daos', changeFrequency: 'monthly', priority: 0.6 },
   {
     path: '/ouroboros/specification',
     changeFrequency: 'monthly',
-    priority: 0.9,
+    priority: 0.55,
   },
-  { path: '/ouroboros/build-plan', changeFrequency: 'monthly', priority: 0.88 },
+  { path: '/ouroboros/build-plan', changeFrequency: 'monthly', priority: 0.55 },
   { path: '/spec-configuration', changeFrequency: 'monthly', priority: 0.85 },
-  { path: '/troubleshooting', changeFrequency: 'monthly', priority: 0.82 },
+  { path: '/troubleshooting', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/security', changeFrequency: 'monthly', priority: 0.9 },
   {
     path: '/security/defense-in-depth',

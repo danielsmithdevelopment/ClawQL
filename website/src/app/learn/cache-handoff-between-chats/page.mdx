@@ -14,7 +14,7 @@ It **does not** work like cloud-synced chat history:
 - **Another replica** in Kubernetes → **its own** empty cache ([cache vs multi-replica](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/cache-tool.md)).
 - **Stdio MCP** → cross-thread handoff only if your editor keeps **one long-lived** ClawQL process for every composer/agent session that should share state. If each thread starts a **fresh** subprocess, you get a **fresh** cache.
 
-**Practical takeaway:** for predictable handoff across threads, run ClawQL as **one shared Streamable HTTP** (or gRPC) server—see [Install](/install) and [Deployment](/deployment)—and point every MCP client at **that** endpoint. Then **`cache`** is a reliable bridge between conversations until the server restarts.
+**Practical takeaway:** for predictable handoff across threads, run ClawQL as **one shared Streamable HTTP** (or gRPC) server—see [Quickstart](/quickstart#install-options) and [Deployment](/deployment)—and point every MCP client at **that** endpoint. Then **`cache`** is a reliable bridge between conversations until the server restarts.
 
 ## Before you start
 

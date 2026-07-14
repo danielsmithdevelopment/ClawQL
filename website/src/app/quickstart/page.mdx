@@ -1,4 +1,5 @@
 import { Button } from '@/components/Button'
+import { Note } from '@/components/mdx'
 
 # Quickstart
 
@@ -68,7 +69,43 @@ CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/\$discovery/rest?version=v1
 
 ## 4. HTTP transport (optional)
 
-For **`clawql-mcp-http`**, MCP is at **`/mcp`** and GraphQL at **`/graphql`** on the same **`PORT`** (see [Install](/install)).
+For **`clawql-mcp-http`**, MCP is at **`/mcp`** and GraphQL at **`/graphql`** on the same **`PORT`**.
+
+```bash
+PORT=8080 npx -p clawql-mcp clawql-mcp-http
+```
+
+Default local endpoint: `http://localhost:8080/mcp` (health: `/healthz`).
+
+## Install options
+
+### npm / yarn / bun
+
+```bash
+npm install clawql-mcp
+# yarn add clawql-mcp
+# bun add clawql-mcp
+```
+
+### One-line install
+
+```bash
+curl -fsSL https://clawql.com/install | bash
+```
+
+Requires **Node.js 22+**. The script runs `npm install -g clawql-mcp` when npm is available.
+
+### Binaries
+
+| Command           | Purpose                                                                                                                    |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `clawql`          | Onboarding CLI — **`onboard`**, **`init`**, **`doctor`**, **`secrets`**, **`mcp-config`**, **`sources`**, harness wrappers |
+| `clawql-mcp`      | MCP server on **stdio** (Cursor, Claude Desktop, etc.)                                                                     |
+| `clawql-mcp-http` | MCP over **Streamable HTTP** (`PORT`, `/mcp`, `/healthz`, `/graphql`)                                                      |
+
+### Docker
+
+Multi-stage image and stdio/compose notes: [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md). For the full stack, see [Deployment](/deployment).
 
 ## 5. Local bundled docs via Helm (Docker Desktop)
 
@@ -78,27 +115,11 @@ If you deploy locally with Kubernetes + Helm:
 make local-k8s-up
 ```
 
-You can open the bundled dashboard at **`http://clawql.localhost`**, bundled docs UI at **`http://docs.localhost`**, and point MCP clients at **`http://clawql-mcp.localhost/mcp`** (**Ingress** — same hostname + **`/mcp`** pattern as production). The script installs **Kyverno** and only admits **Cosign-signed** ClawQL images from **GHCR** (including MCP, website, and dashboard images) — see [Security](/security) and the repo doc **[golden-image-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)**.
-
-## 6. Inference gateway (optional)
-
-Drop-in **OpenAI-compatible** LLM proxy with operator policy in YAML (`$CLAWQL_HOME/Inference/policy.yaml`):
-
-```bash
-export CLAWQL_HOME="${CLAWQL_HOME:-$HOME/.clawql}"
-mkdir -p "$CLAWQL_HOME/Inference"
-cp examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
-export OPENAI_API_KEY=sk-...   # and/or OLLAMA_BASE_URL=http://127.0.0.1:11434
-
-clawql inference policy show
-clawql inference serve --port 8080
-```
-
-Set `OPENAI_BASE_URL=http://127.0.0.1:8080/v1` on any OpenAI SDK. Walkthrough: [examples/inference/README.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/inference/README.md) · Reference: [clawql-inference](/inference/clawql-inference).
+You can open the bundled dashboard at **`http://clawql.localhost`**, bundled docs UI at **`http://docs.localhost`**, and point MCP clients at **`http://clawql-mcp.localhost/mcp`** (**Ingress** — same hostname + **`/mcp`** pattern as production). The script installs **Kyverno** and only admits **Cosign-signed** ClawQL images from **GHCR** — see [Security](/security).
 
 ## Next steps
 
-- [Install](/install) — binaries, Docker, HTTP transport
-- [Inference gateway](/inference/clawql-inference) — OpenAI-compatible proxy, policy YAML, flywheel
+- [Agent setup](/agent-setup) — Desktop, Cursor iOS, local sandbox
 - [Spec configuration](/spec-configuration) — merge rules and environment variables
 - [Tools](/tools) — **`search`** and **`execute`**
+- [Deployment](/deployment) — Helm and day-2 operations
