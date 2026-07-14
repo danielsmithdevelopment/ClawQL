@@ -37,6 +37,19 @@ Memory turns distilled outcomes — decisions, debugging notes, API quirks, runb
 - **Governance where it matters** — Optional Presidio redaction at the gateway, vault path allowlists, and team sync that **never** uploads API secrets. Full **ATRClaims** filtering on every recall and **WORM** on every memory mutation are **roadmap** (see [DAOS Layer 3](/ouroboros/daos)).
 - **Fail-closed sync** — Team sync failures are logged but do not block ingest/recall locally.
 
+## Roles and redundancies
+
+| Piece | Role | Canonical? |
+| ----- | ---- | ---------- |
+| Vault Markdown (`memory_ingest`) | Narrative decisions, handoffs, wikilinks | **Yes** |
+| `memory.db` + embeddings | Derived chunks + optional vector KNN | No — rebuild from vault |
+| PageIndex (`pageindex_*`) | Heading tree + token-budget synthesize | No — rebuild from Markdown |
+| Code graph (`codegraph_*`) | Structural imports/calls over **source** | No — index the repo |
+| Onyx (`knowledge_search_onyx`) | Enterprise corpus search | External; cite into vault |
+| `memory_recall` + `sources` | Multi-source facade → `hits[]` + `followUps` | Orchestration |
+
+**Agent habit:** call **`memory_recall`** first (set **`sources`** when you need code / PageIndex / Onyx in one shot). Use specialist tools only when **`followUps`** say so (path, synthesize, filtered search). **Write once** to the vault; use **`rebuild`** on ingest for derived indexes — do not paste the same prose into five systems.
+
 ## Architecture: vault, graph index, PageIndex, code graph, vectors
 
 Today’s shipped stack is a **practical subset** of the full Memory 2.0 triple-store in the DAOS spec:
@@ -78,7 +91,7 @@ Today’s shipped stack is a **practical subset** of the full Memory 2.0 triple-
 | Tool                            | Purpose                                                              |
 | ------------------------------- | -------------------------------------------------------------------- |
 | **`memory_ingest`**             | Write or append structured insights, wikilinks, optional tool output |
-| **`memory_recall`**             | Hybrid search over the vault (keyword + links + optional vectors)    |
+| **`memory_recall`**             | Multi-source recall (`sources` → `hits[]` + `followUps`)             |
 | **`memory_sync`**               | Team sync pull/push when object storage is configured                |
 | **`pageindex_build_tree`**      | Build a hierarchical index from Markdown                             |
 | **`pageindex_traverse`**        | Walk the tree under a token budget                                   |
@@ -93,6 +106,12 @@ Today’s shipped stack is a **practical subset** of the full Memory 2.0 triple-
 | **`codegraph_subgraph`**        | BFS subgraph around a seed query                                     |
 
 Default **on** for vault + PageIndex; hide all memory + PageIndex tools with **`CLAWQL_ENABLE_MEMORY=0`**. Hide PageIndex only with **`CLAWQL_ENABLE_PAGEINDEX=0`**. Register code graph tools with **`CLAWQL_ENABLE_CODEGRAPH=1`**. Requires a writable **`CLAWQL_OBSIDIAN_VAULT_PATH`** for vault I/O; code graph additionally needs **`CLAWQL_CODEGRAPH_ROOT`** and **`CLAWQL_CODEGRAPH_PATH`**.
+
+### `memory_recall` sources
+
+Pass **`sources`**: `vault` | `vector` | `codegraph` | `pageindex` | `onyx`. Defaults (when omitted): vault + vector, plus hybrid env flags. Response includes normalized **`hits[]`**, specialist **`followUps`**, and legacy **`results`** / **`codeGraphHits`**.
+
+See [Memory plugin](/plugins/memory) for the full roles table and **`rebuild`** flags on ingest.
 
 For **same-process** scratch state only, see [Cache handoff between chats](/learn/cache-handoff-between-chats).
 

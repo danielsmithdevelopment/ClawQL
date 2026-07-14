@@ -21,7 +21,12 @@ export type MemoryRecallInput = {
   maxDepth?: number;
   /** Minimum keyword score to seed recall (default from CLAWQL_MEMORY_RECALL_MIN_SCORE). */
   minScore?: number;
-  /** When true (and CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1), merge code graph symbol hits. */
+  /**
+   * Which backends to query: `vault` | `vector` | `codegraph` | `pageindex` | `onyx`.
+   * Omit for defaults (vault + vector; plus hybrid env flags / includeCodeGraph).
+   */
+  sources?: MemoryRecallSource[];
+  /** When true, include codegraph even if hybrid env flag is off (same as sources including codegraph). */
   includeCodeGraph?: boolean;
   /** Code graph id for hybrid supplement (default CLAWQL_CODEGRAPH_ID or repo name). */
   codeGraphId?: string;
@@ -45,12 +50,42 @@ export type CodeGraphRecallHit = {
   snippet?: string;
 };
 
+export type {
+  MemoryRecallSource,
+  NormalizedRecallHit,
+  RecallFollowUpHint,
+} from "./recall-sources.js";
+export {
+  MEMORY_RECALL_SOURCES,
+  resolveMemoryRecallSources,
+  mapVaultResultToNormalizedHit,
+  hybridPageIndexRecallEnabled,
+  hybridOnyxRecallEnabled,
+} from "./recall-sources.js";
+import type {
+  MemoryRecallSource,
+  NormalizedRecallHit,
+  RecallFollowUpHint,
+} from "./recall-sources.js";
+
 export type MemoryRecallResult = {
   ok: boolean;
   query?: string;
+  /** Vault-side hits (keyword / link / vector) — backward compatible. */
   results?: RecallHit[];
-  /** Structural code symbol hits when hybrid code graph recall is enabled. */
+  /** Structural code symbol hits when codegraph source is enabled. */
   codeGraphHits?: CodeGraphRecallHit[];
+  /**
+   * Normalized multi-source hits (vault, vector, link, codegraph, pageindex, onyx).
+   * Prefer this for new agent workflows; `results` / `codeGraphHits` remain for compatibility.
+   */
+  hits?: NormalizedRecallHit[];
+  /** Specialist tool hints when deeper ops are useful. */
+  followUps?: RecallFollowUpHint[];
+  /** Sources that were actually queried (after default resolution). */
+  sourcesUsed?: MemoryRecallSource[];
+  /** Per-source skip reasons (disabled, missing index, missing inject, …). */
+  sourceNotes?: Partial<Record<MemoryRecallSource, string>>;
   truncated?: boolean;
   scannedFiles?: number;
   error?: string;

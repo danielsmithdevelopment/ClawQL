@@ -40,6 +40,15 @@ export type MemoryIngestInput = {
   sessionId?: string;
   /** When true (default), append a new section to an existing page; duplicate payloads are skipped. */
   append?: boolean;
+  /**
+   * Post-write derived-index rebuilds (canonical write remains the vault Markdown).
+   * - `pageindex`: rebuild PageIndex tree for the written note
+   * - `embeddings`: ensure memory.db sync (chunk + embedding refresh) ran; default true when memory.db is on
+   */
+  rebuild?: {
+    pageindex?: boolean;
+    embeddings?: boolean;
+  };
 };
 
 /** Same shape as `memory_recall` / `loadVaultMerkleSnapshotFromDb`. */
@@ -64,6 +73,11 @@ export type MemoryIngestResult = {
   merkleRootChanged?: boolean;
   /** When **`CLAWQL_CUCKOO_ENABLED=1`** and **`memory.db`** sync ran: membership filter was rebuilt for chunk ids. */
   cuckooMembershipReady?: boolean;
+  /** Derived-index rebuild outcomes when requested. */
+  rebuild?: {
+    pageindex?: { docId: string; nodeCount: number } | { error: string };
+    embeddings?: { synced: boolean; skipped?: string };
+  };
 };
 
 function normalizeWikilink(name: string): string {
@@ -283,11 +297,51 @@ export async function executeMemoryIngestCore(
     const { runMemoryEffect } = await import("../effect/memory-effect-runtime.js");
     const { memoryIngestPostSyncExtrasEffect, vaultProviderIndexEffect } =
       await import("../effect/memory-vault-post-sync-effect.js");
-    const indexExtras = await runMemoryEffect(memoryIngestPostSyncExtrasEffect(vault));
+
+    const wantEmbeddings =
+      effective.rebuild?.embeddings !== false &&
+      (effective.rebuild?.embeddings === true || process.env.CLAWQL_MEMORY_DB?.trim() !== "0");
+    const wantPageIndex =
+      effective.rebuild?.pageindex === true ||
+      process.env.CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX?.trim() === "1";
+
+    const rebuild: NonNullable<MemoryIngestResult["rebuild"]> = {};
+
+    if (wantEmbeddings) {
+      const indexExtras = await runMemoryEffect(memoryIngestPostSyncExtrasEffect(vault));
+      Object.assign(result, indexExtras);
+      rebuild.embeddings = { synced: true };
+    } else if (effective.rebuild?.embeddings === false) {
+      rebuild.embeddings = {
+        synced: false,
+        skipped: "rebuild.embeddings=false; memory.db / embedding sync skipped",
+      };
+    }
+
     await runMemoryEffect(vaultProviderIndexEffect(vault));
+
+    if (wantPageIndex && result.path) {
+      try {
+        const { pageindexBuildFromVaultPath } = await import("../recall/pageindex-recall.js");
+        const docId = result.path.replace(/^Memory\//, "").replace(/\.md$/i, "");
+        const built = await pageindexBuildFromVaultPath({
+          docId,
+          vaultRelativePath: result.path,
+        });
+        rebuild.pageindex = built;
+      } catch (e) {
+        rebuild.pageindex = {
+          error: e instanceof Error ? e.message : String(e),
+        };
+      }
+    }
+
     const { runAfterIngestVaultSync } = await import("../sync/vault-sync-hooks.js");
     await runAfterIngestVaultSync();
-    return { ...result, ...indexExtras };
+    return {
+      ...result,
+      rebuild: Object.keys(rebuild).length > 0 ? rebuild : undefined,
+    };
   }
 
   return result;

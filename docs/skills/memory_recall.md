@@ -1,54 +1,65 @@
 # Skill: `memory_recall`
 
-Retrieve relevant prior context from vault notes before making changes or claims.
+Retrieve relevant prior context before making changes or claims. Prefer **`memory_recall`** as the entry facade; use specialist tools when `followUps` recommend them.
 
 ## When to Use
 
 - Start of a complex task.
 - User references previous work.
 - You need decisions/history not in current files.
-- Architecture tracing when hybrid code graph is enabled (`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1` or `includeCodeGraph: true`).
+- Multi-source context: vault + vectors + codegraph + PageIndex + Onyx via `sources`.
 
 ## Common Workflow
 
 1. Query with concrete terms (feature, incident code, component).
-2. Start with low `limit` (5-10).
-3. Increase `maxDepth` when wikilink context matters.
-4. Raise `minScore` if matches are noisy.
-5. Summarize hits before acting.
-6. When hybrid code graph is on, review **`codeGraphHits`** for matching symbols and file paths alongside vault snippets.
+2. Optionally set `sources`: `["vault","vector","codegraph","pageindex","onyx"]`.
+3. Start with low `limit` (5-10).
+4. Increase `maxDepth` when wikilink context matters.
+5. Prefer normalized **`hits[]`**; keep using **`results`** if needed for vault-only paths.
+6. Follow **`followUps`** only when you need path / synthesize / filtered Onyx.
+7. Summarize before acting.
 
 ## Patterns
 
 ### Pattern A: Resume prior implementation
 
 - Query: feature name + issue id + subsystem
+- Default sources (vault + vector)
 
-### Pattern B: Incident continuity
+### Pattern B: Architecture + narrative
 
-- Query: error code + service name + date range keywords
+```json
+{
+  "query": "AuthService billing path",
+  "sources": ["vault", "codegraph"],
+  "maxDepth": 2
+}
+```
 
-### Pattern C: Architecture recall
+### Pattern C: Long-doc + enterprise
 
-- Query: module name + "decision" + "tradeoff"
-- Optional: enable hybrid code graph after **`codegraph_index`** for symbol hits on the same query
+```json
+{
+  "query": "rate limit policy",
+  "sources": ["vault", "pageindex", "onyx"]
+}
+```
 
 ### Pattern D: Code structure + narrative
 
 1. Ensure repo is indexed (`codegraph_index` or Graphify import).
-2. `memory_recall` with `includeCodeGraph: true` (or env hybrid flag).
-3. Use vault snippets for _why_ and **`codeGraphHits`** for _where_ in source.
+2. `memory_recall` with `sources: ["vault","codegraph"]` (or includeCodeGraph / hybrid env).
+3. Use vault snippets for *why* and codegraph hits for *where* in source.
 
 ## Tips
 
 - Use multiple focused recalls rather than one broad query.
-- Distinguish direct keyword hits from linked-context hits.
-- Pair with `memory_ingest` after finishing new work.
-- For pure call-graph tracing without vault context, prefer **`codegraph_path`** / **`codegraph_neighbors`** directly.
+- Distinguish vault/link hits from codegraph/pageindex/onyx in `hits[].source`.
+- Pair with `memory_ingest` + optional `rebuild.pageindex` after finishing work.
 
 ## Composed Workflow
 
-- For backlog reconciliation sessions:
-  1. `memory_recall` for prior context
-  2. source-of-truth tool calls (`search`/`execute`/GitHub)
-  3. `memory_ingest` final decisions and links
+1. `memory_recall` (optional `sources`)
+2. Specialist tools from `followUps` if needed
+3. `search` / `execute`
+4. `memory_ingest` with decisions, wikilinks, and citations

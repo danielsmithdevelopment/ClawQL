@@ -72,6 +72,21 @@ describe("memory-recall vault", () => {
     const beta = r.results!.find((x) => x.path.endsWith("beta-page.md"));
     expect(beta?.reason).toBe("link");
     expect(beta?.linkFrom).toMatch(/alpha\.md$/);
+    expect(r.hits?.length).toBeGreaterThanOrEqual(2);
+    expect(r.sourcesUsed).toEqual(expect.arrayContaining(["vault", "vector"]));
+    expect(r.hits!.some((h) => h.source === "vault" || h.source === "link")).toBe(true);
+  });
+
+  it("honors sources=[vault] without requiring pageindex/onyx", async () => {
+    const r = await runMemoryRecall({
+      query: "github pat",
+      sources: ["vault"],
+      maxDepth: 1,
+    });
+    expect(r.ok).toBe(true);
+    expect(r.sourcesUsed).toEqual(["vault"]);
+    expect(r.hits?.every((h) => h.source === "vault" || h.source === "link")).toBe(true);
+    expect(r.codeGraphHits).toBeUndefined();
   });
 
   it("errors when vault unset", async () => {

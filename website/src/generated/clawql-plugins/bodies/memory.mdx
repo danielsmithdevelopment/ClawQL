@@ -3,24 +3,28 @@
 **Plugin ID:** `clawql-memory`  
 **Package:** `packages/clawql-memory` — `MemoryPlugin`
 
-Persists durable session knowledge to an **Obsidian-compatible vault** and recalls it across chats via graph-aware search. The same plugin tier also registers **PageIndex** (Markdown hierarchy) and, when enabled, **code graph** (structural AST indexing).
+Persists durable session knowledge to an **Obsidian-compatible vault** and recalls it across chats. The same plugin tier also registers **PageIndex** and optional **code graph** specialists. Agents should start with **`memory_recall`** (optionally with `sources`) and open specialist tools only when they need path/tree/enterprise depth.
 
-## Narrative vs structural memory
+## Roles in the memory system
 
-| Layer          | Tools                            | Best for                                                           |
-| -------------- | -------------------------------- | ------------------------------------------------------------------ |
-| **Vault**      | `memory_ingest`, `memory_recall` | Decisions, runbooks, debugging notes, wikilinked narrative         |
-| **PageIndex**  | `pageindex_*`                    | Long Markdown docs — traverse by heading tree without embeddings   |
-| **Code graph** | `codegraph_*` (opt-in)           | Imports, calls, symbol paths — architecture tracing in source code |
+| Piece                                | Role                                                               | Canonical?                          | Redundancy / handoff                                                     |
+| ------------------------------------ | ------------------------------------------------------------------ | ----------------------------------- | ------------------------------------------------------------------------ |
+| **Vault Markdown** (`memory_ingest`) | Human-readable narrative: decisions, handoffs, wikilinks           | **Yes** — source of truth for notes | Team sync (R2/S3/GCS); back up the vault                                 |
+| **`memory.db` + embeddings**         | Derived chunk index + optional vector KNN                          | No — rebuilt from vault             | Sync after ingest (default); Merkle/Cuckoo optional                      |
+| **Wikilink graph**                   | Related-note hops inside `memory_recall`                           | Edge data derived from vault / db   | Overlaps keyword seeds — intentional                                     |
+| **PageIndex** (`pageindex_*`)        | Vectorless heading tree, token-budget synthesize                   | No — derived from Markdown          | Rebuild via `rebuild.pageindex` or `pageindex_build_tree`                |
+| **Code graph** (`codegraph_*`)       | Structural AST imports/calls/paths over **source**                 | No — derived from repo              | Index separately; not vault prose                                        |
+| **Onyx** (`knowledge_search_onyx`)   | Enterprise corpus search                                           | External system of record           | Pass citations into ingest; do not duplicate full corpora into the vault |
+| **`memory_recall` facade**           | Multi-source entry (`sources` → normalized `hits[]` + `followUps`) | Orchestration only                  | Specialist tools remain the deep path                                    |
 
-Use **`memory_recall`** for cross-session context. Use **`codegraph_*`** when you need precise code structure instead of grepping dozens of files. See [Code graph plugin](/plugins/codegraph).
+**Write once, refresh indexes:** `memory_ingest` always writes vault Markdown. Optional `rebuild` refreshes **derived** layers (PageIndex tree, memory.db/embeddings). Codegraph indexes **code**; Onyx stays a **search** target (citations in, not “ingest into Onyx”).
 
 ## MCP tools
 
 | Tool                            | Purpose                                                                              |
 | ------------------------------- | ------------------------------------------------------------------------------------ |
 | **`memory_ingest`**             | Write structured insights, wikilinks, and optional verbatim tool output to the vault |
-| **`memory_recall`**             | Query the vault (text + optional graph depth) before deep work                       |
+| **`memory_recall`**             | Multi-source recall (`sources`) → `hits[]` + `followUps`; vault `results` kept       |
 | **`pageindex_build_tree`**      | Build a vectorless hierarchical index from Markdown (`clawql-pageindex`)             |
 | **`pageindex_traverse`**        | Walk the PageIndex tree under a token budget                                         |
 | **`pageindex_synthesize`**      | Merge selected nodes into agent context                                              |
@@ -33,33 +37,78 @@ Use **`memory_recall`** for cross-session context. Use **`codegraph_*`** when yo
 | **`codegraph_explain`**         | Summarize a symbol and its neighborhood                                              |
 | **`codegraph_subgraph`**        | BFS subgraph around a seed query                                                     |
 
+## `memory_recall` sources
+
+```json
+{
+  "query": "AuthService rate limit",
+  "sources": ["vault", "vector", "codegraph", "pageindex", "onyx"],
+  "limit": 10,
+  "maxDepth": 2
+}
+```
+
+| Source          | What it contributes                                            |
+| --------------- | -------------------------------------------------------------- |
+| **`vault`**     | Keyword + wikilink BFS over Obsidian Markdown                  |
+| **`vector`**    | Embedding KNN seeds (when vector backend + API key configured) |
+| **`codegraph`** | Structural symbol hits (`codeGraphHits` + normalized hits)     |
+| **`pageindex`** | Term-overlap heading nodes from stored PageIndex trees         |
+| **`onyx`**      | Enterprise citations via injected Onyx search                  |
+
+**Defaults when `sources` is omitted:** `vault` + `vector`, plus hybrids from env (`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH`, `_PAGEINDEX`, `_ONYX`) or `includeCodeGraph: true`.
+
+**Response:**
+
+- **`results`** — vault-side hits (backward compatible)
+- **`hits`** — normalized multi-source hits (`source`, `id`, `score`, `snippet`, …)
+- **`followUps`** — specialist tool hints (`pageindex_synthesize`, `codegraph_path`, `knowledge_search_onyx`, …)
+- **`sourcesUsed` / `sourceNotes`** — what ran and skip reasons
+
+## `memory_ingest` rebuild
+
+```json
+{
+  "title": "AuthService rate limits",
+  "insights": "## Finding\n…",
+  "wikilinks": ["API hardening"],
+  "enterpriseCitations": [],
+  "rebuild": { "pageindex": true, "embeddings": true }
+}
+```
+
+| Flag                     | Effect                                                                                         |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| **`rebuild.pageindex`**  | Rebuild PageIndex for the written note (or set **`CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX=1`**) |
+| **`rebuild.embeddings`** | Run memory.db / embedding sync (default on when memory.db enabled; `false` skips)              |
+
 ## Enable / disable
 
-| Env                                           | Default | Effect                                                              |
-| --------------------------------------------- | ------- | ------------------------------------------------------------------- |
-| **`CLAWQL_ENABLE_MEMORY=0`**                  | on      | Omit `MemoryPlugin` and hide memory + PageIndex + code graph tools  |
-| **`CLAWQL_ENABLE_PAGEINDEX=0`**               | on      | Hide `pageindex_*` only (memory ingest/recall remain)               |
-| **`CLAWQL_ENABLE_CODEGRAPH=1`**               | off     | Register `codegraph_*` tools (structural code graph)                |
-| **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`** | off     | Merge code graph symbol hits into `memory_recall` (`codeGraphHits`) |
+| Env                                            | Default | Effect                                                             |
+| ---------------------------------------------- | ------- | ------------------------------------------------------------------ |
+| **`CLAWQL_ENABLE_MEMORY=0`**                   | on      | Omit `MemoryPlugin` and hide memory + PageIndex + code graph tools |
+| **`CLAWQL_ENABLE_PAGEINDEX=0`**                | on      | Hide `pageindex_*` only (memory ingest/recall remain)              |
+| **`CLAWQL_ENABLE_CODEGRAPH=1`**                | off     | Register `codegraph_*` tools (structural code graph)               |
+| **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`**  | off     | Default `sources` includes codegraph                               |
+| **`CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX=1`**  | off     | Default `sources` includes pageindex                               |
+| **`CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1`**       | off     | Default `sources` includes onyx (needs Onyx wired + enabled)       |
+| **`CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX=1`** | off     | Rebuild PageIndex after every successful ingest                    |
 
 ## Prerequisites
 
 - Writable **`CLAWQL_OBSIDIAN_VAULT_PATH`** (Docker images often use `/vault`)
 - Tools register even without a vault path, but vault I/O fails until the path is configured
-- **Code graph:** writable **`CLAWQL_CODEGRAPH_ROOT`** (repo to index) and **`CLAWQL_CODEGRAPH_PATH`** (storage for `codegraph.db.json`); memory plugin must stay enabled
+- **Code graph:** **`CLAWQL_CODEGRAPH_ROOT`** + **`CLAWQL_CODEGRAPH_PATH`**
+- **Onyx in `sources`:** **`CLAWQL_ENABLE_ONYX=1`** + documents/`onyx` in merge; MCP wires search into memory
 
 Optional hybrid vector index: see [memory-db-hybrid-implementation.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/memory-db-hybrid-implementation.md) in the repo.
 
 ## Typical workflow
 
-1. **`memory_recall`** at task start with a focused query (optionally with hybrid code graph enabled)
-2. **`codegraph_index`** once per repo when structural tracing is needed; then **`codegraph_query`** / **`codegraph_path`**
+1. **`memory_recall`** with a focused query (add `sources` when you need code/enterprise/PageIndex in one shot)
+2. Follow **`followUps`** only when you need path, tree synthesize, or filtered Onyx
 3. Do work with **`search`** / **`execute`**
-4. **`memory_ingest`** with decisions, debugging conclusions, and wikilinks before ending the session
-
-## Hybrid recall (vault + code graph)
-
-When **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`** (or **`includeCodeGraph: true`** on a single call), **`memory_recall`** returns vault Markdown hits **and** a **`codeGraphHits`** array with matching symbols (`filePath`, `kind`, `score`). Tune **`CLAWQL_MEMORY_RECALL_CODEGRAPH_LIMIT`** (default 8). Requires a prior **`codegraph_index`** or **`codegraph_import_graphify`**.
+4. **`memory_ingest`** with decisions + wikilinks; set **`rebuild.pageindex: true`** for long notes
 
 ## Learn more
 

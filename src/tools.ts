@@ -41,7 +41,11 @@ import {
   handleNotifyToolInput,
   SLACK_NOTIFY_OPERATION_ID,
 } from "clawql-automation/plugin";
-import { configureDocumentsPluginDeps } from "clawql-documents/plugin";
+import {
+  configureDocumentsPluginDeps,
+  handleKnowledgeSearchOnyxToolInput,
+} from "clawql-documents/plugin";
+import { configureMemoryOnyxSearch } from "clawql-memory/recall/onyx-recall";
 import { wrapRegisteredMcpToolHandler } from "./mcp-tool-wrap.js";
 import { configureHomeSyncHooks } from "./configure-home-sync.js";
 import { handleMemorySyncToolInput, memorySyncToolSchema } from "./home-sync/memory-sync.js";
@@ -103,6 +107,7 @@ export { SLACK_NOTIFY_OPERATION_ID, handleNotifyToolInput };
 
 configureAutomationPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 configureDocumentsPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
+configureMemoryOnyxSearch((params) => handleKnowledgeSearchOnyxToolInput(params));
 configureHomeSyncHooks();
 
 /** Register MCP tools declared by composed plugins (Memory, Documents, Automation, Sandbox, Ouroboros, …). */

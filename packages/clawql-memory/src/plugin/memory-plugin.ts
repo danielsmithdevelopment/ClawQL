@@ -19,7 +19,7 @@ import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { runMemoryIngest, type MemoryIngestInput } from "../ingest/ingest.js";
 import { runMemoryRecall, type MemoryRecallInput } from "../recall/recall.js";
 import { codeGraphEnabled, defaultCodeGraphRoot } from "../recall/codegraph-recall.js";
-import { pageIndexEnabled } from "../recall/pageindex-recall.js";
+import { pageIndexEnabled } from "../recall/pageindex-enabled.js";
 
 import type { Plugin } from "clawql-core";
 
@@ -74,6 +74,23 @@ export const memoryIngestToolSchema = {
     .describe(
       "When the page already exists, append a new section (default true). Set false to replace the file."
     ),
+  rebuild: z
+    .object({
+      pageindex: z
+        .boolean()
+        .optional()
+        .describe(
+          "Rebuild PageIndex tree for the written vault note (or set CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX=1)."
+        ),
+      embeddings: z
+        .boolean()
+        .optional()
+        .describe(
+          "Ensure memory.db chunk/embedding sync after write (default on when memory.db enabled). Set false to skip."
+        ),
+    })
+    .optional()
+    .describe("Derived-index rebuilds after the canonical vault Markdown write."),
 };
 
 export const memoryRecallToolSchema = {
@@ -110,12 +127,21 @@ export const memoryRecallToolSchema = {
     .boolean()
     .optional()
     .describe(
-      "When true and CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1, merge structural code graph symbol hits into the response."
+      "When true, include codegraph source even if CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH is unset (same as sources including codegraph)."
     ),
   codeGraphId: z
     .string()
     .optional()
     .describe("Code graph id for hybrid supplement (default from CLAWQL_CODEGRAPH_ID)."),
+  sources: z
+    .array(z.enum(["vault", "vector", "codegraph", "pageindex", "onyx"]))
+    .min(1)
+    .optional()
+    .describe(
+      "Which recall backends to query. Omit for defaults: vault+vector, plus hybrids from env " +
+        "(CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH / _PAGEINDEX / _ONYX) or includeCodeGraph. " +
+        "Returns normalized hits[] + followUps for specialist tools."
+    ),
 };
 
 export const pageindexBuildTreeToolSchema = {
@@ -219,6 +245,8 @@ export async function handleMemoryIngestToolInput(
     ),
     wikilinkCount: params.wikilinks?.length ?? 0,
     hasSessionId: Boolean(params.sessionId?.trim()),
+    rebuildPageindex: params.rebuild?.pageindex,
+    rebuildEmbeddings: params.rebuild?.embeddings,
     ok: result.ok,
     skipped: result.skipped,
     merkleRootChanged: result.merkleRootChanged,
@@ -237,6 +265,8 @@ export async function handleMemoryRecallToolInput(
     limit: params.limit,
     maxDepth: params.maxDepth,
     minScore: params.minScore,
+    sources: params.sources,
+    includeCodeGraph: params.includeCodeGraph,
   });
   const result = await runMemoryRecall(params);
   return {
