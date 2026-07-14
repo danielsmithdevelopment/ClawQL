@@ -6,13 +6,6 @@
  * Or pin **`bridge`**, **`macos-seatbelt`**, **`docker`**, etc.
  */
 
-import {
-  parseExplicitSandboxBackendEnv,
-  resolveSandboxBackendChoice,
-} from "./backend-selection.js";
-import { callDockerSandbox } from "./container.js";
-import { callKataSandbox } from "./kata-kubernetes.js";
-import { callMacosSeatbeltSandbox } from "./macos-seatbelt.js";
 import { defaultPersistence, parseTimeoutMs } from "./shared.js";
 import type { SandboxBridgeResponse, SandboxCodeToolInput } from "./types.js";
 
@@ -117,35 +110,14 @@ export async function callSandboxBridge(
   }
 }
 
+/**
+ * Promise façade for callers that still import the bridge module entry.
+ * Prefer plugin {@link handleSandboxExecToolInput} / {@link executeSandboxExecEffect}.
+ */
 export async function handleClawqlCodeToolInput(
   params: SandboxCodeToolInput
 ): Promise<{ content: { type: "text"; text: string }[] }> {
-  const explicit = parseExplicitSandboxBackendEnv();
-  const choice = await resolveSandboxBackendChoice(explicit);
-  if (!choice.ok) {
-    const err: SandboxBridgeResponse = {
-      stdout: "",
-      stderr: "",
-      exitCode: -1,
-      success: false,
-      error: choice.error,
-    };
-    return {
-      content: [{ type: "text", text: JSON.stringify(err, null, 2) }],
-    };
-  }
-
-  let result: SandboxBridgeResponse;
-  if (choice.backend === "kata") {
-    result = await callKataSandbox(params);
-  } else if (choice.backend === "macos-seatbelt") {
-    result = await callMacosSeatbeltSandbox(params);
-  } else if (choice.backend === "docker") {
-    result = await callDockerSandbox(params);
-  } else {
-    result = { ...(await callSandboxBridge(params)), backend: "bridge" };
-  }
-  return {
-    content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-  };
+  const { Effect } = await import("effect");
+  const { executeSandboxExecEffect } = await import("./effect/sandbox-exec-effect.js");
+  return Effect.runPromise(executeSandboxExecEffect(params));
 }
