@@ -8,11 +8,11 @@ import { fileURLToPath } from 'node:url'
 
 import glob from 'fast-glob'
 
-import { GENERATED_BODY_ROUTES } from './lib/generated-doc-routes.mjs'
 import {
   extractH2Sections,
   TOC_MIN_SECTIONS,
 } from './lib/extract-h2-sections.mjs'
+import { GENERATED_BODY_ROUTES } from './lib/generated-doc-routes.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
@@ -53,11 +53,7 @@ function mergePath(url, sections) {
 
 // Hand-written App Router MDX pages
 for (const file of glob.sync('**/page.mdx', { cwd: appDir })) {
-  const url =
-    '/' +
-    file
-      .replace(/(^|\/)page\.mdx$/, '')
-      .replace(/\/$/, '')
+  const url = '/' + file.replace(/(^|\/)page\.mdx$/, '').replace(/\/$/, '')
   const mdx = fs.readFileSync(path.join(appDir, file), 'utf8')
   mergePath(url === '/' ? '/' : url || '/', extractH2Sections(mdx))
 }
