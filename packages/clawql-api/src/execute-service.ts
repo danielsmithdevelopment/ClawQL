@@ -1,11 +1,8 @@
 import { Context, Effect, Layer } from "effect";
+import type { ExecuteInputDecoded } from "./schema/search-execute-schema.js";
 
-/** MCP `execute` pipeline (Phase 1 stub — wired to spec execute in clawql-mcp next). */
-export type ExecuteInput = {
-  readonly operationId: string;
-  readonly args?: Record<string, unknown>;
-  readonly fields?: string[];
-};
+/** MCP `execute` pipeline input (from {@link ExecuteInputSchema}). */
+export type ExecuteInput = ExecuteInputDecoded;
 
 export type ExecuteOutput = {
   readonly content: { readonly type: "text"; readonly text: string }[];

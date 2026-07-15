@@ -10,7 +10,7 @@ const GRAPHQL_FIELD_NAME_RE = /^(_[A-Za-z][_0-9A-Za-z]*|[A-Za-z][_0-9A-Za-z]*)/;
  * `["nodes { id name }", "pageInfo { hasNextPage }"]` → `["nodes", "pageInfo"]`.
  * Plain keys (`["id", "name"]`) pass through unchanged.
  */
-export function topLevelProjectionKeys(fields: string[]): string[] {
+export function topLevelProjectionKeys(fields: readonly string[]): string[] {
   const keys: string[] = [];
   for (const raw of fields) {
     const fragment = raw.trim();
@@ -41,7 +41,7 @@ function defaultExecuteOutputFields(operationId: string): string[] | undefined {
  * the GraphQL selection set. Nested GraphQL fragments (`nodes { id name }`) are parsed to
  * their top-level name (`nodes`) before projection.
  */
-export function projectRestByFields(data: unknown, fields: string[] | undefined): unknown {
+export function projectRestByFields(data: unknown, fields: readonly string[] | undefined): unknown {
   if (!fields?.length) return data;
   const projectionKeys = topLevelProjectionKeys(fields);
   if (!projectionKeys.length) return data;
@@ -63,9 +63,9 @@ export function projectRestByFields(data: unknown, fields: string[] | undefined)
 /** Effective field list for GraphQL selection and post-response projection. */
 export function executeOutputFields(
   operationId: string,
-  fields: string[] | undefined
+  fields: readonly string[] | undefined
 ): string[] | undefined {
-  if (fields && fields.length > 0) return fields;
+  if (fields && fields.length > 0) return [...fields];
   return defaultExecuteOutputFields(operationId);
 }
 

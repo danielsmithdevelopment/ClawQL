@@ -67,7 +67,7 @@ flowchart TB
 | **Runtime**  | Effect for `search`/`execute` + plugins; **async** in memory/documents/automation packages; Zod at MCP boundary                                                | Effect programs + Layers in all extracted packages; Schema inward over time              |
 | **Entry**    | `server.ts` → `tools.ts` (core + HITL) → `getClawqlApi().run(Effect…)`; optional tools via **`buildMcpPlugins()`** + **`onRegister`**                          | Handlers delegate to **`Plugin.onRegister`** + **`createClawQLApi({ layers })`**         |
 | **Features** | `CLAWQL_ENABLE_*` gates optional tools                                                                                                                         | Same flags → **include or omit Layers** at startup                                       |
-| **Effect**   | Pinned in `clawql-api`; `AuditLive`, `SearchService`, `ExecuteService`, `PluginRegistry`                                                                       | Layer composition for memory/documents/automation; `@effect/schema` at stable boundaries |
+| **Effect**   | Pinned in `clawql-api`; `AuditLive`, `SearchService`, `ExecuteService`, `PluginRegistry`                                                                       | Layer composition for memory/documents/automation; `effect/Schema` at MCP arg boundaries |
 | **Plugins**  | **`PanguardProxyPlugin`** + horizontal **`onRegister`** plugins (Memory, Documents, Automation, Sandbox, Ouroboros); HITL inline                               | Effect **`Layer`** per horizontal package; third-party npm plugins                       |
 
 **Ground truth:** [`modularization-implementation-status.md`](./modularization-implementation-status.md).
@@ -207,7 +207,7 @@ Priority = **dependency order** + **test coverage** + **user impact**.
 6. **Testing:** prefer `TestLayer` over mocking modules; keep existing HTTP parity tests until transport moves.
 7. **Observability:** `Effect.withSpan` on pipeline steps; align with existing OTEL (`otel-tracing.ts`).
 
-**Zod → Schema:** keep Zod at MCP tool schema boundary initially; duplicate or generate from Schema for new tools; migrate when touch points stabilize.
+**Zod → Schema:** `effect/Schema` is authoritative in Effect pipelines (`decodeUnknown`). Thin Zod raw shapes remain only for MCP SDK `server.tool` registration until Standard Schema is supported; descriptions share one constant source (see `search-execute-schema.ts`).
 
 ---
 
@@ -289,9 +289,12 @@ Label cross-cutting PRs with both `effect-foundation` and `modularization-platfo
 1. **Docs:** keep [`modularization-implementation-status.md`](./modularization-implementation-status.md) updated as features merge.
 2. **Transport:** continue slim toward transport-only `clawql-mcp` packaging.
 3. **Third-party plugins:** document npm package template + `CLAWQL_PLUGINS` / Operator toggle.
-4. **Optional later:** `@effect/schema` at boundaries.
+4. **`effect/Schema` strangler (active):** replace Zod domain validation at MCP / plugin edges.
+   - **Done (pilot):** `search` / `execute` — `SearchInputSchema` / `ExecuteInputSchema` + `decode*Input` in handlers; Zod raw shapes only in `search-execute-zod-edge.ts` for `@modelcontextprotocol/sdk@1.29`.
+   - **Next order:** cache + audit → memory (+ memory_sync) → documents/Onyx → automation (schedule/workflow/argocd/HITL) → sandbox → ouroboros → pageindex/codegraph → registry `McpToolRegistration.schema` type → non-MCP config Zod.
+   - **Exit criterion:** no Zod `.parse` / `.safeParse` in domain packages; Zod imports confined to MCP transport adapter (or removed after Standard Schema SDK support). Prefer built-in `effect/Schema` (not `@effect/schema`).
 
-**Completed:** Turborepo scaffold; `clawql-core` + `AuditService`; execute/search Effect services; `PanguardProxyPlugin`; extraction **phases 1–9**; horizontal Plugin Layers; **Effect hot-path migration** for memory/documents/automation/sandbox/ouroboros + opt-in tools (pageindex, Onyx, HITL) + MCP audit bridge; **fiber workers** for schedule / ouroboros seeds poller / inference pipeline; **ManagedRuntime dispose** + pool/NATS `acquireRelease` helpers; workflow audit via `AuditService`; **`Effect.withSpan`** on search/execute cores; **`@effect/opentelemetry` Tracer bridge** (`src/effect-otel-bridge.ts`) so Effect spans export via the existing OTLP/`mcp.tool.*` path; **pluginLayers owned by ManagedRuntime Scope** (eager warm-up; Layer finalizers run on `dispose`) (IO remains `tryPromise`). Ouroboros Effect rewrite landed on the `effect-ouroboros` track.
+**Completed:** Turborepo scaffold; `clawql-core` + `AuditService`; execute/search Effect services; `PanguardProxyPlugin`; extraction **phases 1–9**; horizontal Plugin Layers; **Effect hot-path migration** for memory/documents/automation/sandbox/ouroboros + opt-in tools (pageindex, Onyx, HITL) + MCP audit bridge; **fiber workers** for schedule / ouroboros seeds poller / inference pipeline; **ManagedRuntime dispose** + pool/NATS `acquireRelease` helpers; workflow audit via `AuditService`; **`Effect.withSpan`** on search/execute cores; **`@effect/opentelemetry` Tracer bridge** (`src/effect-otel-bridge.ts`); **pluginLayers owned by ManagedRuntime Scope**; **`effect/Schema` pilot** for search/execute (IO remains `tryPromise`). Ouroboros Effect rewrite landed on the `effect-ouroboros` track.
 ---
 
 ## 14. References
