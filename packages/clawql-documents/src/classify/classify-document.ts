@@ -1,27 +1,10 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
-import { z } from "zod";
+import { Effect } from "effect";
 import { classifierBaseUrl, classifierMinConfidence, idpClassifierToolEnabled } from "./env.js";
+import { classifyDocumentToolZodShape, decodeClassifyDocumentInput } from "../schema/index.js";
 
-export const classifyDocumentToolSchema = {
-  doc_id: z.string().optional().describe("Optional stable document id for audit trails."),
-  docling_md: z
-    .string()
-    .optional()
-    .describe("Docling markdown output (primary feature signal for the classifier)."),
-  docling_json: z
-    .record(z.string(), z.unknown())
-    .optional()
-    .describe("Docling structured JSON (layout/tables)."),
-  text: z.string().optional().describe("Fallback plain text when Docling output is unavailable."),
-  min_confidence: z
-    .number()
-    .min(0)
-    .max(1)
-    .optional()
-    .describe(
-      "Confidence threshold for needs_hitl (default CLASSIFIER_MIN_CONFIDENCE env or 0.85)."
-    ),
-};
+/** @deprecated Prefer {@link classifyDocumentToolZodShape}. */
+export const classifyDocumentToolSchema = classifyDocumentToolZodShape;
 
 export type ClassifyDocumentInput = {
   doc_id?: string;
@@ -169,13 +152,14 @@ export async function classifyDocument(
 }
 
 export async function handleClassifyDocumentToolInput(
-  params: ClassifyDocumentInput
+  params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
+  const parsed = await Effect.runPromise(decodeClassifyDocumentInput(params));
   logMcpToolShape("classify_document", {
-    docIdLen: params.doc_id?.length,
-    doclingMdChars: params.docling_md?.length,
-    hasDoclingJson: Boolean(params.docling_json),
-    textChars: params.text?.length,
+    docIdLen: parsed.doc_id?.length,
+    doclingMdChars: parsed.docling_md?.length,
+    hasDoclingJson: Boolean(parsed.docling_json),
+    textChars: parsed.text?.length,
   });
 
   if (!idpClassifierToolEnabled()) {
@@ -195,7 +179,7 @@ export async function handleClassifyDocumentToolInput(
 
   const { runDocumentsEffect, documentsClassifyProgram } =
     await import("../effect/documents-effect-runtime.js");
-  const result = await runDocumentsEffect(documentsClassifyProgram(params));
+  const result = await runDocumentsEffect(documentsClassifyProgram(parsed));
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
   };

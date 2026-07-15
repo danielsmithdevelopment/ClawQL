@@ -1,68 +1,15 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
-import { z } from "zod";
+import { Effect } from "effect";
 import {
   langextractBaseUrl,
   langextractBackend,
   langextractDefaultModelId,
   langextractToolEnabled,
 } from "./env.js";
+import { decodeExtractDocumentInput, extractDocumentToolZodShape } from "../schema/index.js";
 
-const extractionExampleSchema = z.object({
-  extraction_class: z.string().min(1),
-  extraction_text: z.string().min(1),
-  attributes: z.record(z.string(), z.unknown()).optional(),
-});
-
-const exampleSchema = z.object({
-  text: z.string().min(1),
-  extractions: z.array(extractionExampleSchema).min(1),
-});
-
-export const extractDocumentToolSchema = {
-  text: z
-    .string()
-    .min(1)
-    .max(2_097_152)
-    .describe(
-      "Unstructured source text (typically Docling markdown or Tika output). LangExtract runs after layout/text parse."
-    ),
-  prompt_description: z
-    .string()
-    .min(1)
-    .max(8192)
-    .optional()
-    .describe("Natural-language extraction instructions for LangExtract."),
-  schema_preset: z
-    .enum(["w2", "title_commitment", "purchase_agreement", "buyer_offer"])
-    .optional()
-    .describe(
-      "Built-in few-shot preset when examples are omitted (w2, title_commitment, purchase_agreement, buyer_offer)."
-    ),
-  examples: z
-    .array(exampleSchema)
-    .max(20)
-    .optional()
-    .describe("Few-shot LangExtract examples (text + grounded extractions)."),
-  model_id: z
-    .string()
-    .optional()
-    .describe(
-      "LLM model id for live sidecar (default LANGEXTRACT_MODEL_ID). OpenRouter: e.g. deepseek/deepseek-chat; Ollama: e.g. gemma2:2b."
-    ),
-  backend: z
-    .enum(["openrouter", "ollama", "openai_compatible"])
-    .optional()
-    .describe(
-      "Live sidecar backend override (default LANGEXTRACT_BACKEND or openrouter). Use ollama for local models."
-    ),
-  write_html: z
-    .boolean()
-    .optional()
-    .describe(
-      "When true, sidecar writes interactive HTML viz to disk and returns path references only."
-    ),
-  doc_id: z.string().optional().describe("Stable id for artifact file names and audit."),
-};
+/** @deprecated Prefer {@link extractDocumentToolZodShape}. */
+export const extractDocumentToolSchema = extractDocumentToolZodShape;
 
 export type ExtractDocumentInput = {
   text: string;
@@ -514,14 +461,15 @@ export async function extractDocument(input: ExtractDocumentInput): Promise<Extr
 }
 
 export async function handleExtractDocumentToolInput(
-  params: ExtractDocumentInput
+  params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
+  const parsed = await Effect.runPromise(decodeExtractDocumentInput(params));
   logMcpToolShape("extract_document", {
-    textChars: params.text.length,
-    schemaPreset: params.schema_preset,
-    exampleCount: params.examples?.length,
-    writeHtml: params.write_html === true,
-    docIdLen: params.doc_id?.length,
+    textChars: parsed.text.length,
+    schemaPreset: parsed.schema_preset,
+    exampleCount: parsed.examples?.length,
+    writeHtml: parsed.write_html === true,
+    docIdLen: parsed.doc_id?.length,
   });
 
   if (!langextractToolEnabled()) {
@@ -541,7 +489,7 @@ export async function handleExtractDocumentToolInput(
 
   const { runDocumentsEffect, documentsExtractProgram } =
     await import("../effect/documents-effect-runtime.js");
-  const result = await runDocumentsEffect(documentsExtractProgram(params));
+  const result = await runDocumentsEffect(documentsExtractProgram(parsed));
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
   };

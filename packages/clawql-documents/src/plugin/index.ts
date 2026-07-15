@@ -23,3 +23,15 @@ export {
   resolveOnyxSendSearchOperationId,
   type KnowledgeSearchOnyxInput,
 } from "./knowledge-search-onyx.js";
+export {
+  classifyDocumentToolZodShape,
+  decodeClassifyDocumentInput,
+  decodeExtractDocumentInput,
+  decodeIngestExternalKnowledgeInput,
+  decodeKnowledgeSearchOnyxInput,
+  decodeRunIdpPipelineInput,
+  extractDocumentToolZodShape,
+  ingestExternalKnowledgeToolZodShape,
+  knowledgeSearchOnyxToolZodShape,
+  runIdpPipelineToolZodShape,
+} from "../schema/index.js";
