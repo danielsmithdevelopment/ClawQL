@@ -5,8 +5,10 @@
 
 import { Cause, Effect, Exit } from "effect";
 import { AuditLive, AuditService } from "./audit-service.js";
+import type { AuditInputDecoded } from "./audit-input-schema.js";
 import type { ClawqlAuditEntry } from "./types.js";
 
+/** @deprecated Prefer {@link AuditInputDecoded} from Effect Schema. */
 export type AuditToolParams = {
   operation: "append" | "list" | "clear";
   category?: string;
@@ -29,36 +31,35 @@ function jsonResponse(obj: unknown): AuditToolMcpResult {
 }
 
 /**
- * Soft-validated audit pipeline: parse fields → AuditService op → optional side effects.
+ * Effect Schema–validated audit pipeline: AuditService op → optional side effects.
  */
 export function executeAuditToolEffect(
-  parsed: AuditToolParams,
+  parsed: AuditInputDecoded,
   sideEffects: AuditToolSideEffects = {}
 ): Effect.Effect<AuditToolMcpResult, never, AuditService> {
   return Effect.gen(function* () {
     const audit = yield* AuditService;
     sideEffects.onShapeLog?.({
       operation: parsed.operation,
-      categoryLen: parsed.category?.length,
-      actionLen: parsed.action?.length,
-      summaryLen: parsed.summary?.length,
-      correlationIdLen: parsed.correlationId?.length,
+      categoryLen: parsed.operation === "append" ? parsed.category.length : undefined,
+      actionLen: parsed.operation === "append" ? parsed.action.length : undefined,
+      summaryLen: parsed.operation === "append" ? parsed.summary.length : undefined,
+      correlationIdLen: parsed.operation === "append" ? parsed.correlationId?.length : undefined,
     });
 
     switch (parsed.operation) {
       case "append": {
         const { total, dropped, entry } = yield* audit.append({
-          category: parsed.category!.trim(),
-          action: parsed.action!.trim(),
-          summary: parsed.summary!.trim(),
-          correlationId: parsed.correlationId?.trim() || undefined,
+          category: parsed.category,
+          action: parsed.action,
+          summary: parsed.summary,
+          correlationId: parsed.correlationId,
         });
         sideEffects.onAppend?.(entry, total, dropped);
         return jsonResponse({ ok: true, total, dropped });
       }
       case "list": {
-        const limit = parsed.limit ?? 20;
-        const { total, maxEntries, entries } = yield* audit.list(limit);
+        const { total, maxEntries, entries } = yield* audit.list(parsed.limit);
         return jsonResponse({ ok: true, total, maxEntries, entries });
       }
       case "clear": {
@@ -74,7 +75,7 @@ export function executeAuditToolEffect(
 
 /** Run audit MCP operation with {@link AuditLive}. */
 export async function runAuditOperation(
-  parsed: AuditToolParams,
+  parsed: AuditInputDecoded,
   sideEffects?: AuditToolSideEffects
 ): Promise<AuditToolMcpResult> {
   const exit = await Effect.runPromiseExit(
