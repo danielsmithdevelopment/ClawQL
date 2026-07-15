@@ -1,10 +1,13 @@
 import { ButtonLink } from '@/components/elements/button'
 import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
+import { pageMetadata } from '@/lib/seo'
 import { site } from '@/lib/site'
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: 'You’re on the list',
-}
+  description: 'Thanks for signing up for managed ClawQL. Self-host today while we open hosted slots.',
+  path: '/signup/thanks',
+})
 
 export default function Page() {
   return (

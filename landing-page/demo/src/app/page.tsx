@@ -16,8 +16,16 @@ import { WorkflowFeedSection } from '@/components/sections/workflow-feed'
 import { idpPipelineStages, mcpToolTiers, multiProviderBenchmark } from '@/lib/marketing'
 import { pricing } from '@/lib/pricing'
 import { securityEnforcementLayers, securityPillars } from '@/lib/security-marketing'
+import { pageMetadata } from '@/lib/seo'
 import { site } from '@/lib/site'
 import { workflowFeeds } from '@/lib/workflow-feeds'
+
+export const metadata = pageMetadata({
+  title: 'Home',
+  absoluteTitle: 'ClawQL — Operating system for agents',
+  description: site.description,
+  path: '/',
+})
 
 export default function Page() {
   return (
@@ -40,7 +48,7 @@ export default function Page() {
               <ButtonLink href={site.urls.signup} size="lg">
                 Start free trial
               </ButtonLink>
-              <PlainButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg">
+              <PlainButtonLink href={`${site.urls.docs}/getting-started`} size="lg">
                 Self-host free <ArrowNarrowRightIcon />
               </PlainButtonLink>
             </div>
@@ -239,7 +247,7 @@ export default function Page() {
               subheadline={<p>{pricing.selfHosted.subheadline}</p>}
               features={pricing.selfHosted.features.slice(0, 4)}
               cta={
-                <ButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg">
+                <ButtonLink href={`${site.urls.docs}/getting-started`} size="lg">
                   Quick start
                 </ButtonLink>
               }

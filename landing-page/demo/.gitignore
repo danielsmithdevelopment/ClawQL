@@ -46,6 +46,9 @@ next-env.d.ts
 /public/agent-markdown.json
 /public/llms.txt
 /public/_headers
+/public/_redirects
+/public/install
+/public/install.sh
 /public/.well-known/
 
 # Lighthouse CI artifacts

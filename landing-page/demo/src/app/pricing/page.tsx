@@ -21,6 +21,7 @@ import {
   type GatewayTierId,
   type IdpTierId,
 } from '@/lib/pricing'
+import { pageMetadata } from '@/lib/seo'
 import { site } from '@/lib/site'
 
 function gatewayPlans(billing: BillingPeriod) {
@@ -92,9 +93,12 @@ function idpPlans(billing: BillingPeriod) {
   )
 }
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: 'Pricing',
-}
+  description:
+    'ClawQL pricing for self-host, Developer trial, Teams gateway, and IDP tiers — unlimited MCP executions with vault memory on one endpoint.',
+  path: '/pricing',
+})
 
 export default function Page() {
   return (
@@ -109,7 +113,7 @@ export default function Page() {
               ))}
             </ul>
           </div>
-          <ButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg" className="shrink-0">
+          <ButtonLink href={`${site.urls.docs}/getting-started`} size="lg" className="shrink-0">
             Quick start
           </ButtonLink>
         </div>

@@ -6,11 +6,15 @@ import { CallToActionSimple } from '@/components/sections/call-to-action-simple'
 import { CaseStudyCard, CaseStudyGrid, ToolTierSection } from '@/components/sections/clawql-marketing'
 import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
 import { caseStudies, mcpToolTiers } from '@/lib/marketing'
+import { pageMetadata } from '@/lib/seo'
 import { site } from '@/lib/site'
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: 'About',
-}
+  description:
+    'ClawQL is the infrastructure layer agents call into — MCP search, execute, vault memory, and optional IDP. Not an agent framework.',
+  path: '/about',
+})
 
 export default function Page() {
   return (

@@ -46,6 +46,21 @@ jobs:
           NEXT_PUBLIC_SITE_URL: https://clawql.com
         run: npm run build
 
+      - name: Verify SEO/agent static assets
+        working-directory: landing-page/demo
+        run: |
+          set -euo pipefail
+          test -f out/.well-known/api-catalog
+          test -f out/.well-known/agent-card.json
+          test -f out/.well-known/mcp/server-card.json
+          test -f out/install
+          test -f out/og-image.png
+          test -f out/favicon.ico
+          test -f out/robots.txt
+          test -f out/sitemap.xml
+          grep -q 'operating system for agents' out/llms.txt
+          # Ensure install script is shell, not HTML
+          head -1 out/install | grep -q '^#!/usr/bin/env bash'
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:

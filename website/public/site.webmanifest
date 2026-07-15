@@ -1,7 +1,7 @@
 {
   "name": "ClawQL documentation",
   "short_name": "ClawQL",
-  "description": "ClawQL MCP server documentation — OpenAPI, Google APIs, search and execute, Kubernetes and Docker.",
+  "description": "ClawQL documentation — connect an MCP client, search and execute APIs, and deploy with Docker or Kubernetes.",
   "start_url": "/",
   "display": "browser",
   "background_color": "#faf8f5",

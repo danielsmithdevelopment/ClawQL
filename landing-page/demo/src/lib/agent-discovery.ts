@@ -5,11 +5,9 @@
 import { site } from '@/lib/site'
 import { getSiteOriginString } from '@/lib/site-url'
 
-const SERVER_CARD_SCHEMA =
-  'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json'
+const SERVER_CARD_SCHEMA = 'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json'
 
-const AGENT_SKILLS_SCHEMA =
-  'https://schemas.agentskills.io/discovery/0.2.0/schema.json'
+const AGENT_SKILLS_SCHEMA = 'https://schemas.agentskills.io/discovery/0.2.0/schema.json'
 
 const GOOGLE_OIDC_BASE: Record<string, unknown> = {
   issuer: 'https://accounts.google.com',
@@ -115,7 +113,7 @@ export function getApiCatalogLinkset(origin = getSiteOriginString()): {
         ],
         'service-doc': [
           { href: docs, type: 'text/html' },
-          { href: `${docs}/readme/getting-started`, type: 'text/html' },
+          { href: `${docs}/getting-started`, type: 'text/html' },
         ],
         status: [{ href: `${docs}/api/health`, type: 'application/json' }],
         describedby: [{ href: `${origin}/auth.md`, type: 'text/markdown' }],
@@ -131,8 +129,7 @@ export function getMcpServerCard(origin = getSiteOriginString()): Record<string,
     $schema: SERVER_CARD_SCHEMA,
     name: 'io.github.danielsmithdevelopment/clawql-mcp',
     version: '6.0.0',
-    description:
-      'MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer',
+    description: 'MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer',
     title: 'ClawQL',
     websiteUrl: origin,
     repository: {
@@ -297,7 +294,7 @@ ClawQL is an MCP platform. Production MCP Streamable HTTP is hosted at **${docs}
 
 ## Agent registration
 
-Hosted ClawQL accounts: start at [${origin}/signup/](${origin}/signup/) (14-day Developer trial). Self-hosted operators install via \`npm install -g clawql-mcp\` and configure MCP in Cursor, Claude, or other MCP clients — see [${docs}/readme/getting-started](${docs}/readme/getting-started).
+Hosted ClawQL accounts: start at [${origin}/signup/](${origin}/signup/) (14-day Developer trial). Self-hosted operators install via \`npm install -g clawql-mcp\` and configure MCP in Cursor, Claude, or other MCP clients — see [${docs}/getting-started](${docs}/getting-started).
 
 \`\`\`json
 {
@@ -324,7 +321,7 @@ Hosted ClawQL accounts: start at [${origin}/signup/](${origin}/signup/) (14-day 
 
 ## Documentation
 
-- MCP tools reference: [${docs}/mcp/mcp-tools](${docs}/mcp/mcp-tools)
+- MCP tools reference: [${docs}/tools](${docs}/tools)
 - MCP Server Card: [${origin}/.well-known/mcp/server-card.json](${origin}/.well-known/mcp/server-card.json)
 `
 }
@@ -349,7 +346,7 @@ ${site.installCommand}
 ## Key links
 
 - Documentation: ${docs}
-- Getting started: ${docs}/readme/getting-started
+- Getting started: ${docs}/getting-started
 - GitHub: ${site.urls.github}
 - Sign up: ${origin}/signup/
 - Pricing: ${origin}/pricing/

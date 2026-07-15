@@ -116,7 +116,7 @@ Pure GitHub Pages **cannot** pass **Link headers** or **Markdown for Agents** ch
 ## Learn more
 
 - [ClawQL README](../README.md)
-- [MCP tools reference](https://docs.clawql.com/mcp/mcp-tools)
-- [Getting started](https://docs.clawql.com/readme/getting-started)
+- [MCP tools reference](https://docs.clawql.com/tools)
+- [Getting started](https://docs.clawql.com/getting-started)
 - [Tailwind CSS](https://tailwindcss.com/docs)
 - [Elements](https://tailwindcss.com/plus/ui-blocks/documentation/elements)

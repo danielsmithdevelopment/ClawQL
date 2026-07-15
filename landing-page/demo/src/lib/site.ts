@@ -1,8 +1,8 @@
 export const site = {
   name: 'ClawQL',
-  tagline: 'MCP server for API discovery and execution',
+  tagline: 'Operating system for agents',
   description:
-    'Token-efficient search → execute workflows over OpenAPI, Google Discovery, GraphQL, and gRPC — with vault memory, documents, and enterprise tooling.',
+    'ClawQL is the MCP operating system for agents — search and execute APIs, vault memory, and optional IDP on one gateway. Self-host free or start a trial.',
   earlyAccess: {
     badge: '14-day free trial — no credit card required',
     summary:
