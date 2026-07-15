@@ -26,10 +26,12 @@ export type KnowledgeSearchOnyxInput = {
 
 /** Promise façade over {@link executeKnowledgeSearchOnyxEffect}. */
 export async function handleKnowledgeSearchOnyxToolInput(
-  params: KnowledgeSearchOnyxInput
+  params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
   const { Effect } = await import("effect");
+  const { decodeKnowledgeSearchOnyxInput } = await import("../schema/index.js");
   const { executeKnowledgeSearchOnyxEffect } =
     await import("../effect/knowledge-search-onyx-effect.js");
-  return Effect.runPromise(executeKnowledgeSearchOnyxEffect(params));
+  const parsed = await Effect.runPromise(decodeKnowledgeSearchOnyxInput(params));
+  return Effect.runPromise(executeKnowledgeSearchOnyxEffect(parsed));
 }

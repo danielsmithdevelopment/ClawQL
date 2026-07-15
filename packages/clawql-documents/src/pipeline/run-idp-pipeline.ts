@@ -1,85 +1,20 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
-import { z } from "zod";
+import { Effect } from "effect";
 import { idpPipelineRunnerEnabled } from "./env.js";
-import type { RunIdpPipelineInput } from "./runner.js";
+import { decodeRunIdpPipelineInput, runIdpPipelineToolZodShape } from "../schema/index.js";
 
-const stageEnum = z.enum([
-  "nextcloud",
-  "docling",
-  "tika",
-  "gotenberg",
-  "stirling",
-  "paperless",
-  "onyx",
-  "coneshare",
-]);
-
-export const runIdpPipelineToolSchema = {
-  dry_run: z
-    .boolean()
-    .optional()
-    .describe(
-      "Default true: plan hops and resolve args without calling execute. Set false to run the pipeline."
-    ),
-  correlation_id: z
-    .string()
-    .optional()
-    .describe("Correlation id for audit, dashboard, and optional NATS hooks."),
-  document_path: z
-    .string()
-    .optional()
-    .describe(
-      "Nextcloud relative path for inbox file (substitutes ${document_path} / ${source_path} in templates)."
-    ),
-  document_url: z
-    .string()
-    .optional()
-    .describe(
-      "HTTP(S) URL for Docling layout parse (${document_url} template). Defaults from IDP_DOCUMENT_URL or Nextcloud WebDAV."
-    ),
-  step_args: z
-    .record(z.string(), z.record(z.string(), z.unknown()))
-    .optional()
-    .describe("Per operationId execute args (merged over step argsTemplate)."),
-  skip_stages: z
-    .array(stageEnum)
-    .optional()
-    .describe(
-      "Omit hops for these pipeline stages (e.g. skip paperless when using archive layer)."
-    ),
-  stop_on_error: z
-    .boolean()
-    .optional()
-    .describe("Default true: halt remaining hops after first failure."),
-  max_retries: z
-    .number()
-    .int()
-    .min(0)
-    .max(10)
-    .optional()
-    .describe("Per-hop retries on execute failure (default from CLAWQL_IDP_PIPELINE_MAX_RETRIES)."),
-  from_step: z
-    .number()
-    .int()
-    .min(0)
-    .optional()
-    .describe("Inclusive start index into DEFAULT_IDP_PIPELINE (0-based)."),
-  to_step: z
-    .number()
-    .int()
-    .min(0)
-    .optional()
-    .describe("Inclusive end index into DEFAULT_IDP_PIPELINE (0-based)."),
-};
+/** @deprecated Prefer {@link runIdpPipelineToolZodShape}. */
+export const runIdpPipelineToolSchema = runIdpPipelineToolZodShape;
 
 export async function handleRunIdpPipelineToolInput(
-  params: RunIdpPipelineInput
+  params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
+  const parsed = await Effect.runPromise(decodeRunIdpPipelineInput(params));
   logMcpToolShape("run_idp_pipeline", {
-    dryRun: params.dry_run !== false,
-    correlationIdLen: params.correlation_id?.length,
-    documentPathLen: params.document_path?.length,
-    skipStages: params.skip_stages?.length,
+    dryRun: parsed.dry_run !== false,
+    correlationIdLen: parsed.correlation_id?.length,
+    documentPathLen: parsed.document_path?.length,
+    skipStages: parsed.skip_stages?.length,
   });
 
   if (!idpPipelineRunnerEnabled()) {
@@ -99,7 +34,7 @@ export async function handleRunIdpPipelineToolInput(
 
   const { runDocumentsEffect, documentsIdpPipelineProgram } =
     await import("../effect/documents-effect-runtime.js");
-  const result = await runDocumentsEffect(documentsIdpPipelineProgram(params));
+  const result = await runDocumentsEffect(documentsIdpPipelineProgram(parsed));
 
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
