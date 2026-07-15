@@ -28,6 +28,8 @@ import {
   resolveBundledProvider,
   SearchService,
   searchToolZodShape,
+  cacheToolZodShape,
+  auditToolZodShape,
   buildVarArgs,
   buildVarDeclarations,
   capturePathParams,
@@ -38,8 +40,8 @@ import {
 } from "clawql-api";
 import { getClawqlApi } from "./clawql-api-adapters.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
-import { cacheToolSchema, handleCacheToolInput } from "./clawql-cache.js";
-import { auditToolSchema, handleAuditToolInput } from "./clawql-audit.js";
+import { handleCacheToolInput } from "./clawql-cache.js";
+import { handleAuditToolInput } from "./clawql-audit.js";
 import {
   configureAutomationPluginDeps,
   handleNotifyToolInput,
@@ -146,12 +148,12 @@ export function registerTools(server: McpServer) {
   // below cannot throw and skip cache/audit (#89 #75).
   server.tool(
     "cache",
-    cacheToolSchema,
+    cacheToolZodShape,
     wrapRegisteredMcpToolHandler("cache", handleCacheToolInput)
   );
   server.tool(
     "audit",
-    auditToolSchema,
+    auditToolZodShape,
     wrapRegisteredMcpToolHandler("audit", handleAuditToolInput)
   );
 
