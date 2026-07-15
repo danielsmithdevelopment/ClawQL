@@ -17,13 +17,18 @@ import {
 } from '@/components/sections/navbar-with-links-actions-and-centered-logo'
 import { SiteStructuredData } from '@/components/SiteStructuredData'
 import { WebMcpRegister } from '@/components/WebMcpRegister'
+import {
+  DEFAULT_OG_IMAGE_ALT,
+  DEFAULT_OG_IMAGE_HEIGHT,
+  DEFAULT_OG_IMAGE_PATH,
+  DEFAULT_OG_IMAGE_WIDTH,
+} from '@/lib/seo'
 import { site } from '@/lib/site'
 import { getSiteOrigin } from '@/lib/site-url'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
-const defaultTitle = 'ClawQL — MCP for API discovery and execution'
-const ogImage = '/ClawQL-logo.jpeg'
+const defaultTitle = 'ClawQL — Operating system for agents'
 
 export const metadata: Metadata = {
   metadataBase: getSiteOrigin(),
@@ -35,9 +40,6 @@ export const metadata: Metadata = {
   applicationName: 'ClawQL',
   authors: [{ name: 'ClawQL', url: site.urls.github }],
   creator: 'ClawQL',
-  alternates: {
-    canonical: '/',
-  },
   robots: {
     index: true,
     follow: true,
@@ -57,10 +59,10 @@ export const metadata: Metadata = {
     description: site.description,
     images: [
       {
-        url: ogImage,
-        width: 871,
-        height: 890,
-        alt: 'ClawQL — MCP for API discovery and execution',
+        url: DEFAULT_OG_IMAGE_PATH,
+        width: DEFAULT_OG_IMAGE_WIDTH,
+        height: DEFAULT_OG_IMAGE_HEIGHT,
+        alt: DEFAULT_OG_IMAGE_ALT,
       },
     ],
   },
@@ -68,11 +70,14 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: defaultTitle,
     description: site.description,
-    images: [ogImage],
+    images: [DEFAULT_OG_IMAGE_PATH],
   },
   icons: {
-    icon: [{ url: ogImage, type: 'image/jpeg' }],
-    apple: [{ url: ogImage, type: 'image/jpeg' }],
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/ClawQL-logo.jpeg', type: 'image/jpeg' },
+    ],
+    apple: [{ url: '/ClawQL-logo.jpeg', type: 'image/jpeg' }],
   },
 }
 
@@ -185,9 +190,9 @@ export default function RootLayout({
                   <FooterLink href={site.urls.github}>GitHub</FooterLink>
                   <FooterLink href={site.urls.npm}>npm package</FooterLink>
                   <FooterLink href={site.urls.releases}>Changelog & releases</FooterLink>
-                  <FooterLink href={`${site.urls.docs}/readme/getting-started`}>Quick start</FooterLink>
+                  <FooterLink href={`${site.urls.docs}/getting-started`}>Quick start</FooterLink>
                   <FooterLink href={`${site.urls.docs}/security`}>Security</FooterLink>
-                  <FooterLink href={`${site.urls.docs}/mcp/mcp-tools`}>MCP tools</FooterLink>
+                  <FooterLink href={`${site.urls.docs}/tools`}>MCP tools</FooterLink>
                 </FooterCategory>
                 <FooterCategory title="Company">
                   <FooterLink href={site.urls.about}>About</FooterLink>

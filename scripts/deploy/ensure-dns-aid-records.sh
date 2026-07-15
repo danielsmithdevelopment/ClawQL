@@ -88,4 +88,38 @@ upsert_https "_mcp._agents.${APEX}" "${APEX}"
 upsert_https "_a2a._agents.${APEX}" "${APEX}"
 upsert_https "_index._agents.${APEX}" "${APEX}"
 
+echo "==> www → apex (CNAME + always-use-HTTPS friendly)"
+# Flattened CNAME to apex so browsers resolve www; pair with Cloudflare Redirect Rule
+# (www → https://apex) when orange-clouding. GitHub Pages also accepts www as additional domain.
+upsert_cname_www() {
+  local name="www.${APEX}"
+  local target="${APEX}"
+  local existing id
+  existing="$(cf "${API}/zones/${ZONE_ID}/dns_records?type=CNAME&name=${name}")"
+  id="$(echo "$existing" | jq -r --arg t "$target" '.result[] | select(.content == $t) | .id' | head -1)"
+  if [[ -n "$id" && "$id" != "null" ]]; then
+    echo "    CNAME ${name} already present"
+    return 0
+  fi
+  # Prefer upsert: delete mismatched www records then create
+  local stale
+  stale="$(echo "$existing" | jq -r '.result[].id // empty')"
+  if [[ -n "$stale" ]]; then
+    while IFS= read -r rid; do
+      [[ -z "$rid" ]] && continue
+      cf -X DELETE "${API}/zones/${ZONE_ID}/dns_records/${rid}" >/dev/null || true
+    done <<<"$stale"
+  fi
+  local body resp
+  body="$(jq -n --arg name "$name" --arg content "$target" '{type:"CNAME",name:$name,content:$content,ttl:1,proxied:true}')"
+  resp="$(cf -X POST "${API}/zones/${ZONE_ID}/dns_records" -d "$body")"
+  if [[ "$(echo "$resp" | jq -r '.success')" != "true" ]]; then
+    echo "$resp" | jq .
+    return 1
+  fi
+  echo "    Created CNAME ${name} -> ${target} (proxied)"
+}
+upsert_cname_www || echo "    WARN: www CNAME not created"
+
 echo "Done. DNS-AID records ensured for ${APEX}"
+echo "Note: add a Cloudflare Redirect Rule www.${APEX}/* → https://${APEX}/\$1 (301) if not already present."

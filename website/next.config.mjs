@@ -160,6 +160,16 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/readme/getting-started',
+        destination: '/getting-started',
+        permanent: true,
+      },
+      {
+        source: '/mcp/mcp-tools',
+        destination: '/tools',
+        permanent: true,
+      },
+      {
         source: '/getting-started/clawql-desktop',
         destination: '/agent-setup#desktop-stdio-recommended',
         permanent: true,

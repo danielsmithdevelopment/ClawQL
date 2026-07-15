@@ -1,14 +1,14 @@
 import type { Metadata } from 'next'
 
 /** Default social preview image (served from /public). */
-export const DEFAULT_OG_IMAGE_PATH = '/ClawQL-logo.jpeg'
+export const DEFAULT_OG_IMAGE_PATH = '/og-image.png'
 
-/** Pixel size of `ClawQL-logo.jpeg` (used in Open Graph metadata for crawlers). */
-export const DEFAULT_OG_IMAGE_WIDTH = 871
-export const DEFAULT_OG_IMAGE_HEIGHT = 890
+/** Pixel size of `og-image.png` (used in Open Graph metadata for crawlers). */
+export const DEFAULT_OG_IMAGE_WIDTH = 1200
+export const DEFAULT_OG_IMAGE_HEIGHT = 630
 
 export const DEFAULT_OG_IMAGE_ALT =
-  'ClawQL — MCP server for OpenAPI, Swagger, and Google Discovery APIs'
+  'ClawQL — Operating system for agents'
 
 export type DocsPageMetadataInput = {
   /** Page `<title>` segment; root layout template appends ` - ClawQL`. */
@@ -19,6 +19,8 @@ export type DocsPageMetadataInput = {
   path: '/' | `/${string}`
   /** `article` for long-form case studies; default `website` for guides. */
   ogType?: 'website' | 'article'
+  /** Absolute title that should not use the layout template. */
+  absoluteTitle?: string
 }
 
 /**
@@ -30,14 +32,16 @@ export function docsPageMetadata({
   description,
   path,
   ogType = 'website',
+  absoluteTitle,
 }: DocsPageMetadataInput): Metadata {
   const canonicalPath =
     path === '/'
       ? '/'
       : ((path.replace(/\/+$/, '') || '/') as '/' | `/${string}`)
+  const resolvedTitle = absoluteTitle ?? title
 
   return {
-    title,
+    title: absoluteTitle ? { absolute: absoluteTitle } : title,
     description,
     alternates: {
       canonical: canonicalPath,
@@ -55,7 +59,7 @@ export function docsPageMetadata({
     },
     openGraph: {
       type: ogType,
-      title,
+      title: resolvedTitle,
       description,
       url: canonicalPath,
       siteName: 'ClawQL',
@@ -71,7 +75,7 @@ export function docsPageMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: resolvedTitle,
       description,
       images: [DEFAULT_OG_IMAGE_PATH],
     },

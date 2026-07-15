@@ -82,7 +82,7 @@ Software agents connecting to ClawQL MCP tools.
 
 ## Agent registration
 
-Hosted accounts: [${origin}/signup/](${origin}/signup/). Self-hosted: \`npm install -g clawql-mcp\` — see [${docs}/readme/getting-started](${docs}/readme/getting-started).
+Hosted accounts: [${origin}/signup/](${origin}/signup/). Self-hosted: \`npm install -g clawql-mcp\` — see [${docs}/getting-started](${docs}/getting-started).
 
 \`\`\`json
 {
@@ -111,10 +111,10 @@ Hosted accounts: [${origin}/signup/](${origin}/signup/). Self-hosted: \`npm inst
 
 function getAgentMarkdownMap() {
   const description =
-    'Token-efficient search → execute workflows over OpenAPI, Google Discovery, GraphQL, and gRPC — with vault memory, documents, and enterprise tooling.'
+    'ClawQL is the MCP operating system for agents — search and execute APIs, vault memory, and optional IDP on one gateway. Self-host free or start a trial.'
 
   return {
-    '/': `# ClawQL — MCP for API discovery and execution
+    '/': `# ClawQL — Operating system for agents
 
 ${description}
 
@@ -283,12 +283,34 @@ writeText(
   path.join(publicDir, 'llms.txt'),
   `# ClawQL
 
-> MCP server for API discovery and execution.
+> Operating system for agents — MCP search, execute, vault memory, and optional IDP.
 
 - [Docs](${docs})
-- [Getting started](${docs}/readme/getting-started)
+- [Getting started](${docs}/getting-started)
 - [MCP Server Card](/.well-known/mcp/server-card.json)
 `,
+)
+
+// One-line installer: curl -fsSL https://clawql.com/install | bash
+const repoRoot = path.resolve(__dirname, '../../..')
+const installSrc = path.join(repoRoot, 'scripts/install.sh')
+if (fs.existsSync(installSrc)) {
+  const installBody = fs.readFileSync(installSrc, 'utf8')
+  writeText(path.join(publicDir, 'install'), installBody)
+  writeText(path.join(publicDir, 'install.sh'), installBody)
+} else {
+  console.warn(`[agent-assets] Missing ${installSrc}; skipped /install`)
+}
+
+// Cloudflare Pages redirects (also documents intended apex policy for www).
+writeText(
+  path.join(publicDir, '_redirects'),
+  [
+    '# Apex is canonical; www should 301 here (Cloudflare Pages / Redirect Rules).',
+    'https://www.clawql.com/* https://clawql.com/:splat 301',
+    '/install.sh /install 301',
+    '',
+  ].join('\n'),
 )
 
 console.log(`[agent-assets] Wrote agent-readiness files for ${origin}`)

@@ -1,11 +1,14 @@
 import Link from 'next/link'
 
 import { DocumentCentered } from '@/components/sections/document-centered'
+import { pageMetadata } from '@/lib/seo'
 import { site } from '@/lib/site'
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: 'Privacy Policy',
-}
+  description: 'How ClawQL collects, uses, and protects information on the marketing site, waitlist, and services.',
+  path: '/privacy-policy',
+})
 
 export default function Page() {
   return (

@@ -15,7 +15,7 @@ import '@/styles/tailwind.css'
 
 const siteDefaultTitle = 'ClawQL documentation'
 const siteDefaultDescription =
-  'ClawQL is an MCP server for OpenAPI and Google APIs: search and execute tools, optional sandbox and Obsidian memory tools, internal GraphQL projection, stdio or Streamable HTTP or optional gRPC (mcp-grpc-transport), Docker and Kubernetes.'
+  'ClawQL documentation — connect an MCP client, search and execute APIs, and deploy with Docker or Kubernetes.'
 
 export const metadata: Metadata = {
   metadataBase: getSiteOrigin(),
@@ -63,7 +63,10 @@ export const metadata: Metadata = {
     images: [DEFAULT_OG_IMAGE_PATH],
   },
   icons: {
-    icon: [{ url: '/ClawQL-logo.jpeg', type: 'image/jpeg' }],
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/ClawQL-logo.jpeg', type: 'image/jpeg' },
+    ],
     apple: [{ url: '/ClawQL-logo.jpeg', type: 'image/jpeg' }],
   },
 }

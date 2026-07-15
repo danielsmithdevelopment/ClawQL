@@ -9,11 +9,15 @@ import { Feature, FeaturesThreeColumn } from '@/components/sections/features-thr
 import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
 import { idpPipelineStages, mcpToolTiers } from '@/lib/marketing'
 import { hostedFreeTrial, pricing } from '@/lib/pricing'
+import { pageMetadata } from '@/lib/seo'
 import { site } from '@/lib/site'
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: 'Sign up for managed ClawQL',
-}
+  description:
+    'Start a 14-day ClawQL Developer trial or book a demo — edge-hosted MCP with vault memory, or self-host free on Apache 2.0.',
+  path: '/signup',
+})
 
 export default function Page() {
   return (
