@@ -16,8 +16,8 @@ import { WorkflowFeedSection } from '@/components/sections/workflow-feed'
 import { idpPipelineStages, mcpToolTiers, multiProviderBenchmark } from '@/lib/marketing'
 import { pricing } from '@/lib/pricing'
 import { securityEnforcementLayers, securityPillars } from '@/lib/security-marketing'
-import { site } from '@/lib/site'
 import { pageMetadata } from '@/lib/seo'
+import { site } from '@/lib/site'
 import { workflowFeeds } from '@/lib/workflow-feeds'
 
 export const metadata = pageMetadata({

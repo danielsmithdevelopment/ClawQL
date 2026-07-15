@@ -5,11 +5,9 @@
 import { site } from '@/lib/site'
 import { getSiteOriginString } from '@/lib/site-url'
 
-const SERVER_CARD_SCHEMA =
-  'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json'
+const SERVER_CARD_SCHEMA = 'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json'
 
-const AGENT_SKILLS_SCHEMA =
-  'https://schemas.agentskills.io/discovery/0.2.0/schema.json'
+const AGENT_SKILLS_SCHEMA = 'https://schemas.agentskills.io/discovery/0.2.0/schema.json'
 
 const GOOGLE_OIDC_BASE: Record<string, unknown> = {
   issuer: 'https://accounts.google.com',
@@ -131,8 +129,7 @@ export function getMcpServerCard(origin = getSiteOriginString()): Record<string,
     $schema: SERVER_CARD_SCHEMA,
     name: 'io.github.danielsmithdevelopment/clawql-mcp',
     version: '6.0.0',
-    description:
-      'MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer',
+    description: 'MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer',
     title: 'ClawQL',
     websiteUrl: origin,
     repository: {

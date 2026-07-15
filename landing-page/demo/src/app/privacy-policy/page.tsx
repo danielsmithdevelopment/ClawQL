@@ -17,8 +17,8 @@ export default function Page() {
         <p>
           ClawQL (&quot;<strong>we</strong>,&quot; &quot;<strong>us</strong>,&quot; or &quot;<strong>our</strong>&quot;)
           respects your privacy. This policy describes how we collect, use, and protect information when you use the
-          ClawQL marketing site, sign up for managed account waitlists, or interact with our services (collectively,
-          the &quot;<strong>Services</strong>&quot;).
+          ClawQL marketing site, sign up for managed account waitlists, or interact with our services (collectively, the
+          &quot;<strong>Services</strong>&quot;).
         </p>
         <h2>Information we collect</h2>
         <p>
@@ -48,8 +48,8 @@ export default function Page() {
         </p>
         <h2>Security</h2>
         <p>
-          We implement reasonable administrative and technical safeguards. No method of transmission over the internet is
-          completely secure; we cannot guarantee absolute security.
+          We implement reasonable administrative and technical safeguards. No method of transmission over the internet
+          is completely secure; we cannot guarantee absolute security.
         </p>
         <h2>Your choices</h2>
         <p>

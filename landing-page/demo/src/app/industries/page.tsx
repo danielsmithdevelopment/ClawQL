@@ -1,8 +1,8 @@
 import { ButtonLink } from '@/components/elements/button'
 import { Link } from '@/components/elements/link'
+import { Section } from '@/components/elements/section'
 import { ArrowNarrowRightIcon } from '@/components/icons/arrow-narrow-right-icon'
 import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
-import { Section } from '@/components/elements/section'
 import { industries } from '@/lib/industries'
 import { pageMetadata } from '@/lib/seo'
 import { site } from '@/lib/site'
@@ -63,8 +63,7 @@ export default function Page() {
                 <p className="line-clamp-3 text-sm/7 text-mist-600 dark:text-mist-600">{industry.overview}</p>
               </div>
               <Link href={`/industries/${industry.slug}`}>
-                {industry.status === 'planned' ? 'Notify me when it ships' : 'View use cases'}{' '}
-                <ArrowNarrowRightIcon />
+                {industry.status === 'planned' ? 'Notify me when it ships' : 'View use cases'} <ArrowNarrowRightIcon />
               </Link>
             </article>
           ))}

@@ -21,8 +21,8 @@ import {
   type GatewayTierId,
   type IdpTierId,
 } from '@/lib/pricing'
-import { site } from '@/lib/site'
 import { pageMetadata } from '@/lib/seo'
+import { site } from '@/lib/site'
 
 function gatewayPlans(billing: BillingPeriod) {
   const gatewayTiers: GatewayTierId[] = ['developer', 'teams']

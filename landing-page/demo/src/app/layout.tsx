@@ -1,8 +1,8 @@
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
 import { ClawQLLogo } from '@/components/elements/clawql-logo'
 import { Main } from '@/components/elements/main'
-import { GitHubIcon } from '@/components/icons/social/github-icon'
 import { NavbarIndustriesMenu } from '@/components/elements/navbar-industries-menu'
+import { GitHubIcon } from '@/components/icons/social/github-icon'
 import {
   FooterCategory,
   FooterLink,
@@ -17,12 +17,7 @@ import {
 } from '@/components/sections/navbar-with-links-actions-and-centered-logo'
 import { SiteStructuredData } from '@/components/SiteStructuredData'
 import { WebMcpRegister } from '@/components/WebMcpRegister'
-import {
-  DEFAULT_OG_IMAGE_ALT,
-  DEFAULT_OG_IMAGE_HEIGHT,
-  DEFAULT_OG_IMAGE_PATH,
-  DEFAULT_OG_IMAGE_WIDTH,
-} from '@/lib/seo'
+import { DEFAULT_OG_IMAGE_ALT, DEFAULT_OG_IMAGE_HEIGHT, DEFAULT_OG_IMAGE_PATH, DEFAULT_OG_IMAGE_WIDTH } from '@/lib/seo'
 import { site } from '@/lib/site'
 import { getSiteOrigin } from '@/lib/site-url'
 import type { Metadata, Viewport } from 'next'
@@ -113,7 +108,7 @@ export default function RootLayout({
         <>
           <a
             href="#main-content"
-            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-mist-950 focus:px-4 focus:py-2 focus:text-white"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-mist-950 focus:px-4 focus:py-2 focus:text-white"
           >
             Skip to main content
           </a>

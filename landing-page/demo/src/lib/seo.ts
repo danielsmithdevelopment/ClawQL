@@ -25,16 +25,8 @@ export type PageMetadataInput = {
  * Consistent SEO metadata for marketing pages: canonical URL, Open Graph, Twitter Card.
  * Paths use trailing slashes to match `trailingSlash: true` in next.config.
  */
-export function pageMetadata({
-  title,
-  description,
-  path,
-  absoluteTitle,
-}: PageMetadataInput): Metadata {
-  const canonicalPath =
-    path === '/'
-      ? '/'
-      : (`${path.replace(/\/+$/, '')}/` as `/${string}/`)
+export function pageMetadata({ title, description, path, absoluteTitle }: PageMetadataInput): Metadata {
+  const canonicalPath = path === '/' ? '/' : (`${path.replace(/\/+$/, '')}/` as `/${string}/`)
 
   return {
     title: absoluteTitle ? { absolute: absoluteTitle } : title,
