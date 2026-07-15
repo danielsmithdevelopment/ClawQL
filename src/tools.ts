@@ -17,13 +17,17 @@ import { readFile } from "node:fs/promises";
 import { isAbsolute, resolve as resolvePath } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Effect } from "effect";
-import { ExecuteService, SearchService } from "clawql-api";
-import { getClawqlOptionalToolFlags } from "clawql-api";
-import { z } from "zod";
-import { getClawqlApi } from "./clawql-api-adapters.js";
-import { getPackageRoot } from "clawql-api";
-import { resolveBundledProvider } from "clawql-api";
 import {
+  decodeExecuteInput,
+  decodeSearchInput,
+  executeToolZodShape,
+  ExecuteService,
+  getClawqlOptionalToolFlags,
+  getPackageRoot,
+  loadSpec,
+  resolveBundledProvider,
+  SearchService,
+  searchToolZodShape,
   buildVarArgs,
   buildVarDeclarations,
   capturePathParams,
@@ -32,7 +36,7 @@ import {
   operationIdToGraphQLName,
   operationIdToRunStyleName,
 } from "clawql-api";
-import { loadSpec } from "clawql-api";
+import { getClawqlApi } from "./clawql-api-adapters.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
 import { cacheToolSchema, handleCacheToolInput } from "./clawql-cache.js";
 import { auditToolSchema, handleAuditToolInput } from "./clawql-audit.js";
@@ -74,13 +78,13 @@ export async function preloadSchemaFieldCacheFromDisk(): Promise<boolean> {
 /** @deprecated No-op; retained for test compatibility. */
 export function resetSchemaFieldCache(): void {}
 
-/** MCP `search` implementation (exported for tests). */
-export async function handleClawqlSearchToolInput(params: {
-  query: string;
-  limit: number;
-}): Promise<{ content: { type: "text"; text: string }[] }> {
+/** MCP `search` implementation (exported for tests). Effect Schema is authoritative. */
+export async function handleClawqlSearchToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
   return getClawqlApi().run(
     Effect.gen(function* () {
+      const params = yield* decodeSearchInput(raw);
       const search = yield* SearchService;
       const { formattedText } = yield* search.search(params);
       return { content: [{ type: "text" as const, text: formattedText }] };
@@ -88,14 +92,13 @@ export async function handleClawqlSearchToolInput(params: {
   );
 }
 
-/** MCP `execute` implementation (exported for tests). */
-export async function handleClawqlExecuteToolInput(params: {
-  operationId: string;
-  args: Record<string, unknown>;
-  fields?: string[];
-}): Promise<{ content: { type: "text"; text: string }[] }> {
+/** MCP `execute` implementation (exported for tests). Effect Schema is authoritative. */
+export async function handleClawqlExecuteToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
   return getClawqlApi().run(
     Effect.gen(function* () {
+      const params = yield* decodeExecuteInput(raw);
       const execute = yield* ExecuteService;
       const { content } = yield* execute.execute(params);
       return { content: [...content] };
@@ -126,53 +129,16 @@ function registerPluginMcpTools(server: McpServer): void {
 }
 
 export function registerTools(server: McpServer) {
+  // Zod shapes are MCP SDK transport-only; Effect Schema decodes inside handlers.
   server.tool(
     "search",
-    {
-      query: z
-        .string()
-        .describe(
-          "Natural language description of what you want to do. " +
-            "E.g. 'list services in a region', 'delete a revision', " +
-            "'get IAM policy for a job', 'cancel a running execution'."
-        ),
-      limit: z
-        .number()
-        .int()
-        .min(1)
-        .max(50)
-        .default(5)
-        .describe("Max number of matching operations to return."),
-    },
+    searchToolZodShape,
     wrapRegisteredMcpToolHandler("search", handleClawqlSearchToolInput)
   );
 
   server.tool(
     "execute",
-    {
-      operationId: z
-        .string()
-        .describe(
-          "The operation ID from search() results. " +
-            "E.g. 'run.projects.locations.services.list'. " +
-            "For large binary bodies (e.g. PDF → Tika `application/octet-stream`), prefer the MCP gRPC surface " +
-            "(`model_context_protocol.Mcp/CallTool` on the chart gRPC port, default 50051) instead of Streamable HTTP JSON."
-        ),
-      args: z
-        .record(z.string(), z.unknown())
-        .describe(
-          "Key/value map of parameters for the operation (path + query + body). " +
-            'For `application/octet-stream`, pass `body` (+ optional `bodyEncoding: "base64"`, `bodyContentType`). ' +
-            "Very large `body` strings should use gRPC CallTool (see operationId note), not HTTP MCP."
-        ),
-      fields: z
-        .array(z.string())
-        .optional()
-        .describe(
-          "Optional response fields to return. Fewer fields = smaller context window usage. " +
-            "Omit to get a sensible default. E.g. ['name', 'uri', 'latestReadyRevision']"
-        ),
-    },
+    executeToolZodShape,
     wrapRegisteredMcpToolHandler("execute", handleClawqlExecuteToolInput)
   );
 

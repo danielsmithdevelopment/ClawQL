@@ -1,10 +1,8 @@
 import { Context, Effect, Layer } from "effect";
+import type { SearchInputDecoded } from "./schema/search-execute-schema.js";
 
-/** MCP `search` pipeline (Phase 1 stub — wired to spec-search in clawql-mcp next). */
-export type SearchInput = {
-  readonly query: string;
-  readonly limit?: number;
-};
+/** MCP `search` pipeline input (from {@link SearchInputSchema}). */
+export type SearchInput = SearchInputDecoded;
 
 export type SearchOutput = {
   /** MCP `search` tool body text (from `formatSearchResults`). */

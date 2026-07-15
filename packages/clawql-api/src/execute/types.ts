@@ -3,7 +3,7 @@ export type McpTextContent = { type: "text"; text: string };
 export type ExecuteClawqlOperationParams = {
   operationId: string;
   args: Record<string, unknown>;
-  fields?: string[];
+  fields?: readonly string[];
 };
 
 export type ExecuteOperationResult = { ok: true; data: unknown } | { ok: false; error: string };
