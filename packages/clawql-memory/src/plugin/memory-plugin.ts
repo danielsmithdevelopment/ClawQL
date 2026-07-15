@@ -16,133 +16,25 @@ import {
   executePageindexTraverseEffect,
 } from "../effect/pageindex-effect.js";
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
-import { runMemoryIngest, type MemoryIngestInput } from "../ingest/ingest.js";
-import { runMemoryRecall, type MemoryRecallInput } from "../recall/recall.js";
+import { runMemoryIngest } from "../ingest/ingest.js";
+import { runMemoryRecall } from "../recall/recall.js";
 import { codeGraphEnabled, defaultCodeGraphRoot } from "../recall/codegraph-recall.js";
 import { pageIndexEnabled } from "../recall/pageindex-enabled.js";
+import {
+  decodeMemoryIngestInput,
+  decodeMemoryRecallInput,
+  memoryIngestToolZodShape,
+  memoryRecallToolZodShape,
+} from "../schema/index.js";
 
 import type { Plugin } from "clawql-core";
 
 export const MEMORY_PLUGIN_ID = "clawql-memory";
 
-const memoryEnterpriseCitationSchema = z.object({
-  title: z.string().max(500).optional(),
-  url: z.string().max(2048).optional(),
-  document_id: z.string().max(200).optional(),
-  source: z.string().max(200).optional(),
-  snippet: z.string().max(400).optional(),
-});
-
-export const memoryIngestToolSchema = {
-  title: z
-    .string()
-    .min(1)
-    .describe("Suggested Obsidian page title (used for the file name and heading)."),
-  insights: z.string().optional().describe("Key insights to persist."),
-  conversation: z.string().optional().describe("Conversation transcript or summary text."),
-  toolOutputs: z
-    .union([z.string(), z.array(z.string())])
-    .optional()
-    .describe("Tool result body, or a list of results to record."),
-  toolOutputsFile: z
-    .string()
-    .optional()
-    .describe(
-      "If set, the ClawQL server reads UTF-8 from this file path and uses it as `toolOutputs` (small MCP payload; " +
-        "large content does not go through the tool round-trip). File must be under an allowed root " +
-        "(`CLAWQL_MEMORY_INGEST_FILE_ROOTS` or, by default, the process current working directory). " +
-        "Takes precedence over `toolOutputs` if both are set. Set `CLAWQL_MEMORY_INGEST_FILE=0` to reject."
-    ),
-  enterpriseCitations: z
-    .array(memoryEnterpriseCitationSchema)
-    .max(30)
-    .optional()
-    .describe(
-      "Optional short citation rows (e.g. trimmed from Onyx `knowledge_search_onyx` JSON). " +
-        "Stored as a small Markdown block in the vault — not full retrieval payloads (#130)."
-    ),
-  wikilinks: z
-    .array(z.string())
-    .optional()
-    .describe(
-      "Other vault page names to link with Obsidian [[wikilinks]] (plain names; brackets optional)."
-    ),
-  sessionId: z.string().optional().describe("Optional session label (shown in the note)."),
-  append: z
-    .boolean()
-    .optional()
-    .describe(
-      "When the page already exists, append a new section (default true). Set false to replace the file."
-    ),
-  rebuild: z
-    .object({
-      pageindex: z
-        .boolean()
-        .optional()
-        .describe(
-          "Rebuild PageIndex tree for the written vault note (or set CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX=1)."
-        ),
-      embeddings: z
-        .boolean()
-        .optional()
-        .describe(
-          "Ensure memory.db chunk/embedding sync after write (default on when memory.db enabled). Set false to skip."
-        ),
-    })
-    .optional()
-    .describe("Derived-index rebuilds after the canonical vault Markdown write."),
-};
-
-export const memoryRecallToolSchema = {
-  query: z
-    .string()
-    .min(1)
-    .describe(
-      "Natural language or keywords to find in vault Markdown (filename + body + headings)."
-    ),
-  limit: z
-    .number()
-    .int()
-    .min(1)
-    .max(50)
-    .optional()
-    .describe("Max notes to return (default: CLAWQL_MEMORY_RECALL_LIMIT or 10)."),
-  maxDepth: z
-    .number()
-    .int()
-    .min(0)
-    .max(10)
-    .optional()
-    .describe(
-      "How many wikilink hops to follow from keyword hits (default: CLAWQL_MEMORY_RECALL_MAX_DEPTH or 2)."
-    ),
-  minScore: z
-    .number()
-    .min(0)
-    .optional()
-    .describe(
-      "Minimum keyword match score to seed a note (default: CLAWQL_MEMORY_RECALL_MIN_SCORE or 1)."
-    ),
-  includeCodeGraph: z
-    .boolean()
-    .optional()
-    .describe(
-      "When true, include codegraph source even if CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH is unset (same as sources including codegraph)."
-    ),
-  codeGraphId: z
-    .string()
-    .optional()
-    .describe("Code graph id for hybrid supplement (default from CLAWQL_CODEGRAPH_ID)."),
-  sources: z
-    .array(z.enum(["vault", "vector", "codegraph", "pageindex", "onyx"]))
-    .min(1)
-    .optional()
-    .describe(
-      "Which recall backends to query. Omit for defaults: vault+vector, plus hybrids from env " +
-        "(CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH / _PAGEINDEX / _ONYX) or includeCodeGraph. " +
-        "Returns normalized hits[] + followUps for specialist tools."
-    ),
-};
+/** @deprecated Prefer {@link memoryIngestToolZodShape} — MCP SDK listing only. */
+export const memoryIngestToolSchema = memoryIngestToolZodShape;
+/** @deprecated Prefer {@link memoryRecallToolZodShape} — MCP SDK listing only. */
+export const memoryRecallToolSchema = memoryRecallToolZodShape;
 
 export const pageindexBuildTreeToolSchema = {
   docId: z.string().min(1).describe("Stable document id for the PageIndex tree."),
@@ -228,25 +120,26 @@ export const codegraphImportGraphifyToolSchema = {
 };
 
 export async function handleMemoryIngestToolInput(
-  params: MemoryIngestInput
+  params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
-  const result = await runMemoryIngest(params);
+  const parsed = await Effect.runPromise(decodeMemoryIngestInput(params));
+  const result = await runMemoryIngest(parsed);
   logMcpToolShape("memory_ingest", {
-    titleChars: params.title?.length ?? 0,
-    append: params.append,
-    hasInsights: Boolean(params.insights?.trim()),
-    enterpriseCitationCount: params.enterpriseCitations?.length ?? 0,
-    hasConversation: Boolean(params.conversation?.trim()),
-    hasToolOutputsFile: Boolean(params.toolOutputsFile?.trim()),
+    titleChars: parsed.title?.length ?? 0,
+    append: parsed.append,
+    hasInsights: Boolean(parsed.insights?.trim()),
+    enterpriseCitationCount: parsed.enterpriseCitations?.length ?? 0,
+    hasConversation: Boolean(parsed.conversation?.trim()),
+    hasToolOutputsFile: Boolean(parsed.toolOutputsFile?.trim()),
     hasToolOutputs: Boolean(
-      typeof params.toolOutputs === "string"
-        ? params.toolOutputs.trim()
-        : params.toolOutputs?.some((s) => s.trim())
+      typeof parsed.toolOutputs === "string"
+        ? parsed.toolOutputs.trim()
+        : parsed.toolOutputs?.some((s) => s.trim())
     ),
-    wikilinkCount: params.wikilinks?.length ?? 0,
-    hasSessionId: Boolean(params.sessionId?.trim()),
-    rebuildPageindex: params.rebuild?.pageindex,
-    rebuildEmbeddings: params.rebuild?.embeddings,
+    wikilinkCount: parsed.wikilinks?.length ?? 0,
+    hasSessionId: Boolean(parsed.sessionId?.trim()),
+    rebuildPageindex: parsed.rebuild?.pageindex,
+    rebuildEmbeddings: parsed.rebuild?.embeddings,
     ok: result.ok,
     skipped: result.skipped,
     merkleRootChanged: result.merkleRootChanged,
@@ -258,17 +151,18 @@ export async function handleMemoryIngestToolInput(
 }
 
 export async function handleMemoryRecallToolInput(
-  params: MemoryRecallInput
+  params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
+  const parsed = await Effect.runPromise(decodeMemoryRecallInput(params));
   logMcpToolShape("memory_recall", {
-    queryChars: params.query?.length ?? 0,
-    limit: params.limit,
-    maxDepth: params.maxDepth,
-    minScore: params.minScore,
-    sources: params.sources,
-    includeCodeGraph: params.includeCodeGraph,
+    queryChars: parsed.query?.length ?? 0,
+    limit: parsed.limit,
+    maxDepth: parsed.maxDepth,
+    minScore: parsed.minScore,
+    sources: parsed.sources,
+    includeCodeGraph: parsed.includeCodeGraph,
   });
-  const result = await runMemoryRecall(params);
+  const result = await runMemoryRecall(parsed);
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
   };
@@ -284,13 +178,13 @@ export function createMemoryPlugin(): Plugin {
       Effect.gen(function* () {
         yield* api.registerMcpTool({
           name: "memory_ingest",
-          schema: memoryIngestToolSchema,
-          handler: (args) => handleMemoryIngestToolInput(args as MemoryIngestInput),
+          schema: memoryIngestToolZodShape,
+          handler: (args) => handleMemoryIngestToolInput(args),
         });
         yield* api.registerMcpTool({
           name: "memory_recall",
-          schema: memoryRecallToolSchema,
-          handler: (args) => handleMemoryRecallToolInput(args as MemoryRecallInput),
+          schema: memoryRecallToolZodShape,
+          handler: (args) => handleMemoryRecallToolInput(args),
         });
 
         if (pageIndexEnabled()) {
