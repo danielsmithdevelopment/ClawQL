@@ -1,22 +1,23 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
+import { Effect } from "effect";
 import { z } from "zod";
 import { runSyncPull, runSyncPush, runSyncStatus } from "./engine.js";
 import type { SyncRunResult } from "./types.js";
+import {
+  decodeMemorySyncInput,
+  MEMORY_SYNC_DIRECTION_DESCRIPTION,
+  MEMORY_SYNC_DRY_RUN_DESCRIPTION,
+  MEMORY_SYNC_FORCE_DESCRIPTION,
+} from "./memory-sync-schema.js";
 
+/** Thin Zod shape for MCP SDK listing — domain decode via {@link decodeMemorySyncInput}. */
 export const memorySyncToolSchema = {
   direction: z
     .enum(["auto", "pull", "push"])
     .optional()
-    .describe(
-      "Sync strategy. `auto` (default): pull remote changes then push local changes. `pull` or `push` run one direction only."
-    ),
-  force: z
-    .boolean()
-    .optional()
-    .describe(
-      "When true, overwrite on hash conflicts. Default false — conflicts are reported only."
-    ),
-  dryRun: z.boolean().optional().describe("Plan only; do not read or write object storage."),
+    .describe(MEMORY_SYNC_DIRECTION_DESCRIPTION),
+  force: z.boolean().optional().describe(MEMORY_SYNC_FORCE_DESCRIPTION),
+  dryRun: z.boolean().optional().describe(MEMORY_SYNC_DRY_RUN_DESCRIPTION),
 };
 
 export type MemorySyncDirection = "auto" | "pull" | "push";
@@ -143,9 +144,10 @@ export async function runMemorySync(input: MemorySyncInput = {}): Promise<Memory
 }
 
 export async function handleMemorySyncToolInput(
-  params: MemorySyncInput
+  params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
-  const result = await runMemorySync(params);
+  const parsed = await Effect.runPromise(decodeMemorySyncInput(params));
+  const result = await runMemorySync(parsed);
   logMcpToolShape("memory_sync", {
     direction: result.direction,
     dryRun: result.dryRun,

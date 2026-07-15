@@ -6,6 +6,16 @@ export {
   memoryIngestToolSchema,
   memoryRecallToolSchema,
 } from "./memory-plugin.js";
+export {
+  MemoryIngestInputSchema,
+  MemoryRecallInputSchema,
+  decodeMemoryIngestInput,
+  decodeMemoryRecallInput,
+  memoryIngestToolZodShape,
+  memoryRecallToolZodShape,
+  type MemoryIngestInputDecoded,
+  type MemoryRecallInputDecoded,
+} from "../schema/index.js";
 export { makeMemoryLayer, type MemoryLayerError } from "./memory-layer.js";
 export {
   MemoryError,
