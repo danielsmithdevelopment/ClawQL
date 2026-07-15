@@ -11,8 +11,7 @@ export const AUDIT_OPERATION_DESCRIPTION =
 export const AUDIT_CATEGORY_DESCRIPTION =
   "For append: short category (e.g. tool_call, payment, policy).";
 export const AUDIT_ACTION_DESCRIPTION = "For append: action name or verb.";
-export const AUDIT_SUMMARY_DESCRIPTION =
-  "For append: human-readable summary — avoid secrets.";
+export const AUDIT_SUMMARY_DESCRIPTION = "For append: human-readable summary — avoid secrets.";
 export const AUDIT_CORRELATION_ID_DESCRIPTION =
   "Optional id to correlate with logs or memory_ingest.";
 export const AUDIT_LIMIT_DESCRIPTION = "For list: max entries (default 20).";

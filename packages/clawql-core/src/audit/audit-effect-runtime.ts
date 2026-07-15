@@ -44,8 +44,7 @@ export function executeAuditToolEffect(
       categoryLen: parsed.operation === "append" ? parsed.category.length : undefined,
       actionLen: parsed.operation === "append" ? parsed.action.length : undefined,
       summaryLen: parsed.operation === "append" ? parsed.summary.length : undefined,
-      correlationIdLen:
-        parsed.operation === "append" ? parsed.correlationId?.length : undefined,
+      correlationIdLen: parsed.operation === "append" ? parsed.correlationId?.length : undefined,
     });
 
     switch (parsed.operation) {

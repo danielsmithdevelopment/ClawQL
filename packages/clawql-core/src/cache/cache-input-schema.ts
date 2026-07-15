@@ -14,8 +14,7 @@ export const CACHE_VALUE_DESCRIPTION =
   "Value for set (size capped by CLAWQL_CACHE_MAX_VALUE_BYTES).";
 export const CACHE_PREFIX_DESCRIPTION =
   "For list: only keys starting with this prefix (default all).";
-export const CACHE_QUERY_DESCRIPTION =
-  "For search: case-insensitive substring match against keys.";
+export const CACHE_QUERY_DESCRIPTION = "For search: case-insensitive substring match against keys.";
 export const CACHE_LIMIT_DESCRIPTION =
   "For list/search: max results (defaults: list 100, search 50).";
 
@@ -62,8 +61,7 @@ export const CacheInputSchema = Schema.Union(
 export type CacheInputDecoded = Schema.Schema.Type<typeof CacheInputSchema>;
 
 /** Compile-time alignment with the Effect cache operation program. */
-const _cacheInputAssignability: CacheInputDecoded extends CacheOperationInput ? true : false =
-  true;
+const _cacheInputAssignability: CacheInputDecoded extends CacheOperationInput ? true : false = true;
 void _cacheInputAssignability;
 
 function formatParseError(err: ParseResult.ParseError): Error {
