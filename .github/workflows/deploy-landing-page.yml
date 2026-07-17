@@ -58,7 +58,9 @@ jobs:
           test -f out/favicon.ico
           test -f out/robots.txt
           test -f out/sitemap.xml
-          grep -q 'operating system for agents' out/llms.txt
+          test -f out/enterprise/gtm/index.html
+          grep -qi 'operating system for agents' out/llms.txt
+          grep -q 'enterprise/gtm' out/sitemap.xml
           # Ensure install script is shell, not HTML
           head -1 out/install | grep -q '^#!/usr/bin/env bash'
       - name: Upload Pages artifact
