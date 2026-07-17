@@ -9,7 +9,7 @@ import {
   resolvedDeniedPaths,
   seatbeltProfileParams,
 } from "./seatbelt-config.js";
-import { seatbeltSubpathLiteral } from "./seatbelt-paths.js";
+import { shellDoubleQuotedLiteral } from "./seatbelt-paths.js";
 import { sandboxExecArgv } from "./seatbelt-profile.js";
 
 export type ContainmentCheck = {
@@ -57,7 +57,7 @@ async function probeDeniedRead(
   params: Record<string, string>,
   deniedPath: string
 ): Promise<ContainmentCheck> {
-  const script = `test ! -r "${seatbeltSubpathLiteral(deniedPath)}"`;
+  const script = `test ! -r "${shellDoubleQuotedLiteral(deniedPath)}"`;
   try {
     const { exitCode } = await runSandboxProbe(profilePath, script, params);
     return {
@@ -76,7 +76,7 @@ async function probeAllowedRead(
   params: Record<string, string>,
   allowedPath: string
 ): Promise<ContainmentCheck> {
-  const escaped = seatbeltSubpathLiteral(allowedPath);
+  const escaped = shellDoubleQuotedLiteral(allowedPath);
   const script = `test -d "${escaped}" || test -r "${escaped}"`;
   try {
     const { exitCode } = await runSandboxProbe(profilePath, script, params);
@@ -97,7 +97,7 @@ async function probeWriteOutsideWorkDir(
   home: string
 ): Promise<ContainmentCheck> {
   const outside = join(home, ".clawql-sandbox-probe-outside");
-  const escapedOutside = seatbeltSubpathLiteral(outside);
+  const escapedOutside = shellDoubleQuotedLiteral(outside);
   const script = `rm -f "${escapedOutside}" 2>/dev/null; echo probe > "${escapedOutside}" 2>/dev/null; test ! -f "${escapedOutside}"`;
   try {
     const { exitCode } = await runSandboxProbe(profilePath, script, params);

@@ -4,7 +4,12 @@ import { Data } from "effect";
 export class Ap2Error extends Data.TaggedError("Ap2Error")<{
   readonly reason: string;
   readonly cause?: unknown;
-}> {}
+}> {
+  /** Vitest/`Error.message` consumers — Effect TaggedError does not set `message` by default. */
+  get message(): string {
+    return this.reason;
+  }
+}
 
 function b64urlToBuffer(input: string): Buffer {
   const pad = input.length % 4 === 0 ? "" : "=".repeat(4 - (input.length % 4));
@@ -16,6 +21,21 @@ export function decodeJwtPayload(token: string): Record<string, unknown> {
   const parts = token.trim().split(".");
   if (parts.length < 2) {
     throw new Ap2Error({ reason: "AP2 token must be a JWT with at least two segments" });
+  }
+  if (parts.length >= 3) {
+    try {
+      const header = JSON.parse(b64urlToBuffer(parts[0]!).toString("utf8")) as Record<
+        string,
+        unknown
+      >;
+      const alg = typeof header.alg === "string" ? header.alg.toLowerCase() : "";
+      if (alg === "none" || alg === "") {
+        throw new Ap2Error({ reason: `Unsupported JWT alg: ${String(header.alg)}` });
+      }
+    } catch (cause) {
+      if (cause instanceof Ap2Error) throw cause;
+      throw new Ap2Error({ reason: "Invalid JWT header", cause });
+    }
   }
   try {
     const json = b64urlToBuffer(parts[1]!).toString("utf8");

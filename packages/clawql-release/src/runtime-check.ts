@@ -75,12 +75,14 @@ export async function checkReleaseManifest(
     // default outputDir
   }
 
-  const manifestPath = resolveReleaseManifestPathSync({
+  const resolvedPath = resolveReleaseManifestPathSync({
     explicitPath: options.explicitPath,
     version: options.version,
     rootDir,
     outputDir,
   });
+  // Explicit CLAWQL_RELEASE_MANIFEST may resolve to a path that does not exist yet.
+  const manifestPath = resolvedPath && existsSync(resolvedPath) ? resolvedPath : null;
 
   if (!manifestPath) {
     const expected = expectedBundlePath(rootDir, options.version, outputDir);

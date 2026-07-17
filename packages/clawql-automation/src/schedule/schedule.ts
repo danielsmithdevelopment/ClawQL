@@ -389,7 +389,10 @@ function clamp(val: number, min: number, max: number): number {
   return Math.min(Math.max(val, min), max);
 }
 
-function validateSyntheticTarget(urlRaw: string): { ok: true } | { ok: false; error: string } {
+/** Exported for unit tests (SSRF gate for synthetic HTTP targets). */
+export function validateSyntheticTarget(
+  urlRaw: string
+): { ok: true } | { ok: false; error: string } {
   let u: URL;
   try {
     u = new URL(urlRaw);
@@ -414,7 +417,7 @@ function validateSyntheticTarget(urlRaw: string): { ok: true } | { ok: false; er
     };
   }
   if (
-    /^(127\.)|^(10\.)|^(192\.168\.)|^(169\.254\.)|^(0\.)|^(::1)$|^(fc00:)|^(fd00:)|^(fe80:)/i.test(
+    /^(127\.)|^(10\.)|^(192\.168\.)|^(169\.254\.)|^(0\.)|^(172\.(1[6-9]|2\d|3[0-1])\.)|^(::1)$|^(fc00:)|^(fd00:)|^(fe80:)/i.test(
       host
     )
   ) {

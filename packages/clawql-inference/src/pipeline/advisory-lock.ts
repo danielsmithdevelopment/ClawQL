@@ -28,9 +28,10 @@ export function buildPipelineRunLockKey(schedule: string, minuteKey: string): st
  */
 export async function tryAcquirePipelineAdvisoryLock(
   lockKey: string,
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
+  deps: { getPool?: typeof getInferencePgPool } = {}
 ): Promise<PipelineAdvisoryLockResult> {
-  const pool = getInferencePgPool(env);
+  const pool = (deps.getPool ?? getInferencePgPool)(env);
   if (!pool) {
     return { acquired: true, backend: "none", release: async () => {} };
   }
@@ -59,7 +60,12 @@ export async function tryAcquirePipelineAdvisoryLock(
       },
     };
   } catch {
-    client.release();
-    return { acquired: true, backend: "none", release: async () => {} };
+    // Fail closed: a Postgres error must not grant a phantom lock (duplicate ticks).
+    try {
+      client.release();
+    } catch {
+      /* ignore */
+    }
+    return { acquired: false, backend: "postgres", release: async () => {} };
   }
 }

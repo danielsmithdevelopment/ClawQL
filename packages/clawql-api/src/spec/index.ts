@@ -14,6 +14,7 @@ export * from "./graphql-native-loader.js";
 export * from "./grpc-native-loader.js";
 export * from "./custom-sources-types.js";
 export * from "./custom-sources-store.js";
+export * from "./custom-sources-security.js";
 export * from "./detect-source-from-url.js";
 export * from "./custom-sources-merge.js";
 export * from "./mcp-source-loader.js";

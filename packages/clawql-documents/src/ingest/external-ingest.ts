@@ -8,7 +8,7 @@
  * Orchestration: native Effect.gen in {@link executeExternalIngestCoreEffect}.
  */
 
-import { getClawqlOptionalToolFlags } from "clawql-api";
+import { getClawqlOptionalToolFlags, isPrivateOrLoopbackIp } from "clawql-api";
 import { maybePresidioRedactText, presidioEnabled } from "clawql-api";
 import { Effect } from "effect";
 import { memoryDbLiveLayer } from "clawql-memory/plugin";
@@ -23,6 +23,36 @@ import {
 const MAX_DOCUMENTS = 50;
 const MAX_MARKDOWN_BYTES = 2 * 1024 * 1024;
 const MAX_URL_RESPONSE_BYTES = 2 * 1024 * 1024;
+const MAX_URL_REDIRECTS = 5;
+const BLOCKED_INGEST_HOSTNAMES = new Set(["metadata.google.internal", "metadata.google"]);
+
+/**
+ * SSRF gate for URL ingest. Allows loopback only for explicit localhost / 127.0.0.1 / ::1
+ * (local dry-run servers); blocks other private/link-local and cloud metadata hostnames.
+ */
+export function assertSafeExternalIngestUrl(urlStr: string): URL {
+  let u: URL;
+  try {
+    u = new URL(urlStr);
+  } catch {
+    throw new Error("invalid url");
+  }
+  if (u.protocol !== "https:" && u.protocol !== "http:") {
+    throw new Error("only http and https URLs are allowed");
+  }
+  const host = u.hostname.trim().toLowerCase();
+  const isLoopbackHost = host === "localhost" || host === "127.0.0.1" || host === "::1";
+  if (u.protocol === "http:" && !isLoopbackHost) {
+    throw new Error("http is only allowed for localhost; use https");
+  }
+  if (BLOCKED_INGEST_HOSTNAMES.has(host) || host.endsWith(".localhost")) {
+    throw new Error("URL host is not allowed");
+  }
+  if (!isLoopbackHost && isPrivateOrLoopbackIp(host)) {
+    throw new Error("URL must not target private or link-local addresses");
+  }
+  return u;
+}
 
 export type ExternalIngestDocumentInput = {
   /** Vault-relative path (must end with `.md`; no `..`). */
@@ -119,42 +149,44 @@ export async function fetchUrlResource(urlStr: string): Promise<{
   contentType: string | null;
   finalUrl: string;
 }> {
-  let u: URL;
-  try {
-    u = new URL(urlStr);
-  } catch {
-    throw new Error("invalid url");
+  let current = assertSafeExternalIngestUrl(urlStr).href;
+  const headers = {
+    "User-Agent":
+      "Mozilla/5.0 (compatible; clawql-mcp-external-ingest/1.0; +https://github.com/danielsmithdevelopment/ClawQL)",
+    Accept: "*/*",
+  };
+
+  for (let hop = 0; hop <= MAX_URL_REDIRECTS; hop += 1) {
+    const res = await fetch(current, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(60_000),
+      headers,
+    });
+    if (res.status >= 300 && res.status < 400) {
+      const loc = res.headers.get("location");
+      if (!loc?.trim()) {
+        throw new Error(`HTTP ${res.status} redirect without Location`);
+      }
+      current = assertSafeExternalIngestUrl(new URL(loc, current).href).href;
+      continue;
+    }
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const len = res.headers.get("content-length");
+    if (len && Number.parseInt(len, 10) > MAX_URL_RESPONSE_BYTES) {
+      throw new Error("Content-Length exceeds cap");
+    }
+    const buf = await res.arrayBuffer();
+    if (buf.byteLength > MAX_URL_RESPONSE_BYTES) {
+      throw new Error("response body exceeds cap");
+    }
+    const rawCt = res.headers.get("content-type");
+    const contentType = rawCt?.split(";")[0]?.trim() ?? null;
+    const body = new TextDecoder("utf-8", { fatal: false }).decode(buf);
+    return { body, contentType, finalUrl: current };
   }
-  if (u.protocol !== "https:" && u.protocol !== "http:") {
-    throw new Error("only http and https URLs are allowed");
-  }
-  if (u.protocol === "http:" && u.hostname !== "localhost" && u.hostname !== "127.0.0.1") {
-    throw new Error("http is only allowed for localhost; use https");
-  }
-  const res = await fetch(urlStr, {
-    redirect: "follow",
-    signal: AbortSignal.timeout(60_000),
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; clawql-mcp-external-ingest/1.0; +https://github.com/danielsmithdevelopment/ClawQL)",
-      Accept: "*/*",
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
-  }
-  const len = res.headers.get("content-length");
-  if (len && Number.parseInt(len, 10) > MAX_URL_RESPONSE_BYTES) {
-    throw new Error("Content-Length exceeds cap");
-  }
-  const buf = await res.arrayBuffer();
-  if (buf.byteLength > MAX_URL_RESPONSE_BYTES) {
-    throw new Error("response body exceeds cap");
-  }
-  const rawCt = res.headers.get("content-type");
-  const contentType = rawCt?.split(";")[0]?.trim() ?? null;
-  const body = new TextDecoder("utf-8", { fatal: false }).decode(buf);
-  return { body, contentType, finalUrl: res.url };
+  throw new Error("too many redirects");
 }
 
 export type PlannedMarkdownDoc = { rel: string; markdown: string };

@@ -12,8 +12,15 @@ import {
 
 function gitInit(dir: string): void {
   spawnSync("git", ["init"], { cwd: dir, encoding: "utf8" });
-  spawnSync("git", ["add", "package.json"], { cwd: dir, encoding: "utf8" });
-  spawnSync("git", ["commit", "-m", "test"], { cwd: dir, encoding: "utf8" });
+  spawnSync("git", ["-c", "user.email=test@example.com", "-c", "user.name=Test", "add", "-A"], {
+    cwd: dir,
+    encoding: "utf8",
+  });
+  spawnSync(
+    "git",
+    ["-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "-m", "test"],
+    { cwd: dir, encoding: "utf8" }
+  );
 }
 
 describe("runtime-check", () => {
@@ -24,9 +31,9 @@ describe("runtime-check", () => {
       JSON.stringify({ name: "clawql-mcp", version: "7.0.0" }),
       "utf8"
     );
-    gitInit(root);
     const sbomPath = join(root, "sbom.cdx.json");
     await writeFile(sbomPath, '{"bomFormat":"CycloneDX"}', "utf8");
+    gitInit(root);
 
     const { manifestPath } = await buildReleaseManifest({
       rootDir: root,
@@ -49,9 +56,9 @@ describe("runtime-check", () => {
       JSON.stringify({ name: "clawql-mcp", version: "7.0.0" }),
       "utf8"
     );
-    gitInit(root);
     const sbomPath = join(root, "sbom.cdx.json");
     await writeFile(sbomPath, "{}", "utf8");
+    gitInit(root);
     await buildReleaseManifest({ rootDir: root, tag: "v7.0.0", sbomPath, copyArtifacts: true });
 
     const check = await checkReleaseManifest({

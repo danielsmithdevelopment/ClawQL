@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type pg from "pg";
 import {
   buildPipelineRunLockKey,
   pipelineAdvisoryLockId,
@@ -18,5 +19,46 @@ describe("pipeline advisory lock", () => {
     expect(lock.acquired).toBe(true);
     expect(lock.backend).toBe("none");
     await lock.release();
+  });
+
+  it("fail-closes when postgres query throws (no phantom acquire)", async () => {
+    const client = {
+      query: vi.fn(async () => {
+        throw new Error("connection reset");
+      }),
+      release: vi.fn(),
+    };
+    const lock = await tryAcquirePipelineAdvisoryLock(
+      "test-lock-db-error",
+      { CLAWQL_INFERENCE_DATABASE_URL: "postgres://example" },
+      {
+        getPool: () =>
+          ({
+            connect: async () => client,
+          }) as unknown as pg.Pool,
+      }
+    );
+    expect(lock.acquired).toBe(false);
+    expect(lock.backend).toBe("postgres");
+    expect(client.release).toHaveBeenCalled();
+  });
+
+  it("returns acquired:false when pg_try_advisory_lock is false", async () => {
+    const client = {
+      query: vi.fn(async () => ({ rows: [{ acquired: false }] })),
+      release: vi.fn(),
+    };
+    const lock = await tryAcquirePipelineAdvisoryLock(
+      "contended",
+      { CLAWQL_INFERENCE_DATABASE_URL: "postgres://example" },
+      {
+        getPool: () =>
+          ({
+            connect: async () => client,
+          }) as unknown as pg.Pool,
+      }
+    );
+    expect(lock.acquired).toBe(false);
+    expect(client.release).toHaveBeenCalled();
   });
 });
