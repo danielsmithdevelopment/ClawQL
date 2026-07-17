@@ -157,7 +157,12 @@ export default function Page() {
       <CallToActionSimple
         id="call-to-action"
         headline="Read the case studies. Run the tools."
-        subheadline={<p>Self-host today or start a 14-day Developer trial. {site.waitlistPromise}</p>}
+        subheadline={
+          <p>
+            Self-host today or start a 14-day Developer trial. For enterprise positioning against Palantir AIP, see the{' '}
+            <Link href={site.urls.enterpriseGtm}>GTM playbook</Link>. {site.waitlistPromise}
+          </p>
+        }
         cta={
           <div className="flex items-center gap-4">
             <ButtonLink href={site.urls.signup} size="lg">

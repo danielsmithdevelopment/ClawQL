@@ -191,6 +191,7 @@ export default function RootLayout({
                 </FooterCategory>
                 <FooterCategory title="Company">
                   <FooterLink href={site.urls.about}>About</FooterLink>
+                  <FooterLink href={site.urls.enterpriseGtm}>Enterprise GTM</FooterLink>
                   <FooterLink href={site.urls.contact}>Contact</FooterLink>
                 </FooterCategory>
                 <FooterCategory title="Legal">
