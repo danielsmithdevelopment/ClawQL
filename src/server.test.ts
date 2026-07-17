@@ -19,7 +19,10 @@ const root = join(here, "..");
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");
 const serverJs = join(root, "dist", "server.js");
 
-async function listToolNames(childEnv: NodeJS.ProcessEnv, clientName: string): Promise<Set<string>> {
+async function listToolNames(
+  childEnv: NodeJS.ProcessEnv,
+  clientName: string
+): Promise<Set<string>> {
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: [serverJs],

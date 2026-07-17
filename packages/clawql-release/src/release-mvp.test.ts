@@ -9,11 +9,10 @@ import { verifyReleaseBundle } from "./verify.js";
 
 function gitInit(dir: string): void {
   spawnSync("git", ["init"], { cwd: dir, encoding: "utf8" });
-  spawnSync(
-    "git",
-    ["-c", "user.email=test@example.com", "-c", "user.name=Test", "add", "-A"],
-    { cwd: dir, encoding: "utf8" }
-  );
+  spawnSync("git", ["-c", "user.email=test@example.com", "-c", "user.name=Test", "add", "-A"], {
+    cwd: dir,
+    encoding: "utf8",
+  });
   spawnSync(
     "git",
     ["-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "-m", "test"],

@@ -10,11 +10,19 @@ describe("external-ingest SSRF gate", () => {
     expect(() => assertSafeExternalIngestUrl("https://169.254.169.254/latest/meta-data/")).toThrow(
       /private|link-local/i
     );
-    expect(() => assertSafeExternalIngestUrl("https://10.0.0.1/secret")).toThrow(/private|link-local/i);
-    expect(() => assertSafeExternalIngestUrl("https://192.168.1.1/")).toThrow(/private|link-local/i);
+    expect(() => assertSafeExternalIngestUrl("https://10.0.0.1/secret")).toThrow(
+      /private|link-local/i
+    );
+    expect(() => assertSafeExternalIngestUrl("https://192.168.1.1/")).toThrow(
+      /private|link-local/i
+    );
     expect(() => assertSafeExternalIngestUrl("https://172.16.0.1/")).toThrow(/private|link-local/i);
-    expect(() => assertSafeExternalIngestUrl("https://172.31.255.255/")).toThrow(/private|link-local/i);
-    expect(() => assertSafeExternalIngestUrl("https://metadata.google.internal/")).toThrow(/not allowed/i);
+    expect(() => assertSafeExternalIngestUrl("https://172.31.255.255/")).toThrow(
+      /private|link-local/i
+    );
+    expect(() => assertSafeExternalIngestUrl("https://metadata.google.internal/")).toThrow(
+      /not allowed/i
+    );
     expect(() => assertSafeExternalIngestUrl("http://example.com/x")).toThrow(/localhost/i);
   });
 

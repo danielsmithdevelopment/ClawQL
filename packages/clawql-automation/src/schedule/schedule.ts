@@ -390,7 +390,9 @@ function clamp(val: number, min: number, max: number): number {
 }
 
 /** Exported for unit tests (SSRF gate for synthetic HTTP targets). */
-export function validateSyntheticTarget(urlRaw: string): { ok: true } | { ok: false; error: string } {
+export function validateSyntheticTarget(
+  urlRaw: string
+): { ok: true } | { ok: false; error: string } {
   let u: URL;
   try {
     u = new URL(urlRaw);

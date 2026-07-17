@@ -57,12 +57,18 @@ describe("maybeSignAwsRequest adversarial", () => {
     const signed = await maybeSignAwsRequest(
       url,
       "/",
-      { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "Action=GetCallerIdentity" },
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "Action=GetCallerIdentity",
+      },
       emptyDoc,
       "aws"
     );
     expect(signed).toBeDefined();
-    expect(signed!.headers.Authorization ?? signed!.headers.authorization).toMatch(/AWS4-HMAC-SHA256/);
+    expect(signed!.headers.Authorization ?? signed!.headers.authorization).toMatch(
+      /AWS4-HMAC-SHA256/
+    );
     expect(signed!.headers.host).toBe("sts.us-west-2.amazonaws.com:8443");
     expect(Object.keys(signed!.headers).some((k) => k.toLowerCase().startsWith("x-amz-"))).toBe(
       true

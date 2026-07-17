@@ -45,10 +45,7 @@ describe("clawql-auth gateway", () => {
   it("apiKey mode rejects wrong-length and wrong-value keys (timing-safe compare)", () => {
     process.env.CLAWQL_AUTH_MODE = "apiKey";
     process.env.CLAWQL_API_KEY = "correct-length-key!!";
-    const short = resolveAtrClaimsFromHeaders(
-      { "x-api-key": "short" },
-      loadGatewayAuthConfig()
-    );
+    const short = resolveAtrClaimsFromHeaders({ "x-api-key": "short" }, loadGatewayAuthConfig());
     expect(short.ok).toBe(false);
     const wrong = resolveAtrClaimsFromHeaders(
       { "x-api-key": "correct-length-key!?" },

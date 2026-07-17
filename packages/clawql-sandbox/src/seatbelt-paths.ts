@@ -30,5 +30,9 @@ export function seatbeltSubpathLiteral(absPath: string): string {
  * (Seatbelt probe scripts). Distinct from {@link seatbeltSubpathLiteral}.
  */
 export function shellDoubleQuotedLiteral(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\$/g, "\\$").replace(/`/g, "\\`");
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\$/g, "\\$")
+    .replace(/`/g, "\\`");
 }
