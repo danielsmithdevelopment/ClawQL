@@ -16,5 +16,19 @@ export function resolveSandboxPath(input: string, home = homedir()): string {
 
 /** Escape a path for embedding inside a Seatbelt profile string literal. */
 export function seatbeltSubpathLiteral(absPath: string): string {
-  return absPath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  // Reject / neutralize control chars that would break SBPL `"..."` string literals.
+  return absPath
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, "\\r")
+    .replace(/\n/g, "\\n")
+    .replace(/\0/g, "");
+}
+
+/**
+ * Escape a path for embedding inside a POSIX shell double-quoted string
+ * (Seatbelt probe scripts). Distinct from {@link seatbeltSubpathLiteral}.
+ */
+export function shellDoubleQuotedLiteral(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\$/g, "\\$").replace(/`/g, "\\`");
 }

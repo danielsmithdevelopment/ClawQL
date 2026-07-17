@@ -2,7 +2,20 @@
  * Gateway authentication modes and ATR claim resolution (Phase 1).
  */
 
+import { timingSafeEqual } from "node:crypto";
+
 export type AuthMode = "noAuth" | "apiKey";
+
+function apiKeysEqual(presented: string, expected: string): boolean {
+  const a = Buffer.from(presented, "utf8");
+  const b = Buffer.from(expected, "utf8");
+  if (a.length !== b.length) {
+    // Compare against self to keep runtime roughly constant on length mismatch.
+    timingSafeEqual(a, a);
+    return false;
+  }
+  return timingSafeEqual(a, b);
+}
 
 export type AtrClaims = {
   sub: string;
@@ -67,7 +80,7 @@ export function resolveAtrClaimsFromHeaders(
   if (!config.apiKey) {
     return { ok: false, error: "CLAWQL_AUTH_MODE=apiKey but CLAWQL_API_KEY is unset" };
   }
-  if (!presented || presented !== config.apiKey) {
+  if (!presented || !apiKeysEqual(presented, config.apiKey)) {
     return { ok: false, error: "Invalid or missing API key" };
   }
 

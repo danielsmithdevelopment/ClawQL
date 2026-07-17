@@ -7,7 +7,8 @@ import { resolve, sep } from "node:path";
 
 const BLOCKED_HOSTNAMES = new Set(["localhost", "metadata.google.internal", "metadata.google"]);
 
-function isPrivateOrLoopbackIp(host: string): boolean {
+/** True for loopback, RFC1918, link-local, and unique-local IPv6 addresses. */
+export function isPrivateOrLoopbackIp(host: string): boolean {
   const ipVersion = isIP(host);
   if (ipVersion === 4) {
     const parts = host.split(".").map((p) => Number.parseInt(p, 10));
@@ -17,7 +18,7 @@ function isPrivateOrLoopbackIp(host: string): boolean {
     if (a === 10) return true;
     if (a === 0) return true;
     if (a === 169 && b === 254) return true;
-    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 172 && b !== undefined && b >= 16 && b <= 31) return true;
     if (a === 192 && b === 168) return true;
     return false;
   }

@@ -9,15 +9,22 @@ describe("rate limit", () => {
     expect(parseRateLimit("100rpm")).toEqual({ maxRequests: 100, windowMs: 60_000 });
     expect(parseRateLimit("10rps")).toEqual({ maxRequests: 10, windowMs: 1_000 });
     expect(parseRateLimit("")).toBeUndefined();
+    expect(parseRateLimit("0rpm")).toBeUndefined();
+    expect(parseRateLimit("garbage")).toBeUndefined();
+    expect(parseRateLimit("999999999999999999999rpm")).toEqual({
+      maxRequests: Number.parseInt("999999999999999999999", 10),
+      windowMs: 60_000,
+    });
   });
 
-  it("enforces sliding window", () => {
+  it("enforces sliding window and isolates keyIds", () => {
     resetRateLimitState();
     const spec = { maxRequests: 2, windowMs: 1_000 };
     expect(checkRateLimit("k1", spec, 1_000)).toBe(true);
     expect(checkRateLimit("k1", spec, 1_100)).toBe(true);
     expect(checkRateLimit("k1", spec, 1_200)).toBe(false);
     expect(checkRateLimit("k1", spec, 2_100)).toBe(true);
+    expect(checkRateLimit("k2", spec, 1_200)).toBe(true);
   });
 });
 

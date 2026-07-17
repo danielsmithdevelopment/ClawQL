@@ -22,6 +22,8 @@ describe("custom-sources-security", () => {
   it("assertSafeSourceFetchUrl blocks private hosts", () => {
     expect(() => assertSafeSourceFetchUrl("http://127.0.0.1/spec.json")).toThrow();
     expect(() => assertSafeSourceFetchUrl("https://localhost/openapi.json")).toThrow();
+    expect(() => assertSafeSourceFetchUrl("https://172.16.5.1/openapi.json")).toThrow();
+    expect(() => assertSafeSourceFetchUrl("https://169.254.169.254/latest")).toThrow();
     const u = assertSafeSourceFetchUrl("https://example.com/openapi.json");
     expect(u.hostname).toBe("example.com");
   });

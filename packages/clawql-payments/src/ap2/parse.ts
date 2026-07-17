@@ -60,6 +60,12 @@ export function parsePaymentMandate(
   if (typeof input === "string") {
     const trimmed = input.trim();
     if (trimmed.startsWith("{")) {
+      if (options.hmacSecret) {
+        throw new Ap2Error({
+          reason:
+            "AP2 JSON string mandates are not accepted when CLAWQL_AP2_HMAC_SECRET is set; use a signed HS256 JWT",
+        });
+      }
       claims = JSON.parse(trimmed) as Record<string, unknown>;
     } else if (options.hmacSecret) {
       const verified = verifyHs256Jwt(trimmed, options.hmacSecret);
@@ -154,7 +160,8 @@ export function mandateCoversAmount(
   amountMajor: number,
   currency = "USD"
 ): boolean {
-  if (!mandate.payment_amount) return true;
+  // Missing amount must not authorize unbounded spend.
+  if (!mandate.payment_amount) return false;
   const cur = currency.trim().toUpperCase();
   if (
     mandate.payment_amount.currency !== cur &&

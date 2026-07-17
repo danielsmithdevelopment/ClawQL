@@ -42,6 +42,31 @@ describe("clawql-auth gateway", () => {
     expect(good.ok).toBe(true);
   });
 
+  it("apiKey mode rejects wrong-length and wrong-value keys (timing-safe compare)", () => {
+    process.env.CLAWQL_AUTH_MODE = "apiKey";
+    process.env.CLAWQL_API_KEY = "correct-length-key!!";
+    const short = resolveAtrClaimsFromHeaders(
+      { "x-api-key": "short" },
+      loadGatewayAuthConfig()
+    );
+    expect(short.ok).toBe(false);
+    const wrong = resolveAtrClaimsFromHeaders(
+      { "x-api-key": "correct-length-key!?" },
+      loadGatewayAuthConfig()
+    );
+    expect(wrong.ok).toBe(false);
+  });
+
+  it("does not trust x-clawql-role without a valid API key", () => {
+    process.env.CLAWQL_AUTH_MODE = "apiKey";
+    process.env.CLAWQL_API_KEY = "secret";
+    const spoof = resolveAtrClaimsFromHeaders(
+      { "x-clawql-role": "admin", "x-api-key": "nope" },
+      loadGatewayAuthConfig()
+    );
+    expect(spoof.ok).toBe(false);
+  });
+
   it("defaultAdminAtrClaims is stable shape", () => {
     expect(defaultAdminAtrClaims("u1")).toEqual({
       sub: "u1",
