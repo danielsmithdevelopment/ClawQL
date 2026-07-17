@@ -21,6 +21,7 @@ export const site = {
     signup: '/signup',
     pricing: '/pricing',
     about: '/about',
+    enterpriseGtm: '/enterprise/gtm',
     privacy: '/privacy-policy',
     contact: 'mailto:hello@clawql.com',
   },

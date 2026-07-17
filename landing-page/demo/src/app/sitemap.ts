@@ -13,6 +13,7 @@ const ROUTES: Array<{
   { path: '/pricing', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/signup', changeFrequency: 'monthly', priority: 0.85 },
   { path: '/about', changeFrequency: 'monthly', priority: 0.7 },
+  { path: '/enterprise/gtm', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/privacy-policy', changeFrequency: 'yearly', priority: 0.3 },
   { path: '/industries', changeFrequency: 'monthly', priority: 0.75 },
   { path: '/industries/lending', changeFrequency: 'monthly', priority: 0.65 },

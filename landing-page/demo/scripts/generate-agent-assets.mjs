@@ -132,6 +132,7 @@ npm install -g clawql-mcp
 `,
     '/pricing': `# Pricing\n\nSee ${origin}/pricing/ for ClawQL tiers.`,
     '/about': `# About\n\nSee ${origin}/about/.`,
+    '/enterprise/gtm': `# Enterprise GTM playbook\n\nSovereign alternative to Palantir AIP — Inference, IDP, and agentic infrastructure positioning.\n\nSee ${origin}/enterprise/gtm/.`,
     '/signup': `# Sign up\n\n${origin}/signup/`,
     '/privacy-policy': `# Privacy Policy\n\n${origin}/privacy-policy/`,
     '/industries': `# Industries\n\n${origin}/industries/`,
@@ -308,6 +309,7 @@ writeText(
 
 - [Docs](${docs})
 - [Getting started](${docs}/getting-started)
+- [Enterprise GTM playbook](${origin}/enterprise/gtm/)
 - [MCP Server Card](/.well-known/mcp/server-card.json)
 `,
 )
