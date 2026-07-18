@@ -60,7 +60,7 @@ jobs:
           test -f out/sitemap.xml
           test -f out/inference/gtm/index.html
           test -f out/enterprise/gtm/index.html
-          grep -qi 'operating system for agents' out/llms.txt
+          grep -qi 'Agentic Gateway for Auditable Production AI' out/llms.txt
           grep -q 'inference/gtm' out/llms.txt
           grep -q 'inference/gtm' out/sitemap.xml
           grep -q 'enterprise/gtm' out/sitemap.xml
