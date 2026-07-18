@@ -1,6 +1,7 @@
 import { Document } from '@/components/elements/document'
 import { Link } from '@/components/elements/link'
 import { Section } from '@/components/elements/section'
+import { site } from '@/lib/site'
 
 import type { ReactNode } from 'react'
 
@@ -44,9 +45,11 @@ export function EnterpriseGtmPlaybook() {
 
         <Document className="mx-auto w-full max-w-3xl">
           <p>
-            This playbook defines ClawQL’s go-to-market strategy against Palantir AIP and the broader enterprise AI
-            infrastructure market. It is written for three buyer types — CISOs and risk officers, CTOs and platform
-            engineering VPs, and FinOps leads — with a unified <strong>sovereign alternative</strong> narrative.
+            This playbook defines ClawQL’s <strong>secondary</strong> enterprise go-to-market strategy against Palantir
+            AIP and the broader enterprise AI infrastructure market. It is written for three buyer types — CISOs and
+            risk officers, CTOs and platform engineering VPs, and FinOps leads — with a unified{' '}
+            <strong>sovereign alternative</strong> narrative. The default product-led motion is the{' '}
+            <Link href={site.urls.inferenceGtm}>inference-first GTM playbook</Link>.
           </p>
 
           <div className="not-prose my-8 grid gap-4 sm:grid-cols-2">

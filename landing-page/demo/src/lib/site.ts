@@ -21,6 +21,9 @@ export const site = {
     signup: '/signup',
     pricing: '/pricing',
     about: '/about',
+    /** Default / primary GTM motion — Unified Gateway (inference + MCP). */
+    inferenceGtm: '/inference/gtm',
+    /** Secondary enterprise / Palantir-facing GTM motion. */
     enterpriseGtm: '/enterprise/gtm',
     privacy: '/privacy-policy',
     contact: 'mailto:hello@clawql.com',
