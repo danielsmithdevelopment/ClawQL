@@ -9,7 +9,7 @@ import { site } from '@/lib/site'
 export const metadata = pageMetadata({
   title: 'Inference-first GTM playbook',
   description:
-    'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — from npx clawql-inference to sovereign governance.',
+    'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Regional Hubs, Dedicated Virtual Gateways, and Edge swarm nodes.',
   path: '/inference/gtm',
 })
 
@@ -26,8 +26,8 @@ export default function Page() {
           <p>
             ClawQL provides the <strong>Agentic Gateway</strong> as the Foundational Platform for Auditable Production
             AI — land with an OpenAI-compatible inference control plane and native <code>/mcp</code> access, then expand
-            into memory, model provenance, Virtual Gateway audit-trail enforcement, and the full sovereign agent
-            operating system.
+            into memory, model provenance, Dedicated Virtual Gateway audit-trail enforcement, and a Zero-Trust Agentic
+            Fabric of Regional Hubs, private Virtual Gateways, and Edge Gateways on every laptop.
           </p>
         }
         cta={
@@ -50,7 +50,8 @@ export default function Page() {
         subheadline={
           <p>
             Drop in an OpenAI-compatible base URL or connect Cursor to <code>/mcp</code>. Expand product-led into
-            infrastructure optimization, model provenance, memory, and governance — without changing your endpoint.
+            infrastructure optimization, model provenance, memory, Dedicated Virtual Gateways, and Edge swarm
+            coordination — without changing your endpoint.
           </p>
         }
         cta={

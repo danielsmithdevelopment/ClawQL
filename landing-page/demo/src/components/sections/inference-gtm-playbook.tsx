@@ -9,6 +9,7 @@ const toc = [
   { href: '#executive-summary', label: 'Executive summary' },
   { href: '#two-entry-points', label: 'The two entry points' },
   { href: '#expansion-ladder', label: 'The expansion ladder' },
+  { href: '#agentic-fabric', label: 'Zero-Trust Agentic Fabric' },
   { href: '#why-nobody-else', label: 'Why nobody else can run this' },
   { href: '#pricing', label: 'Pricing reinforces the strategy' },
   { href: '#segments', label: 'Target segments' },
@@ -48,8 +49,9 @@ export function InferenceGtmPlaybook() {
             This playbook defines ClawQL’s <strong>default</strong> go-to-market motion:{' '}
             <strong>the Agentic Gateway as the Foundational Platform for Auditable Production AI</strong>. Developers
             land with OpenAI-compatible inference and a locally hosted MCP server, then expand product-led into memory,
-            model provenance, documents, payments, and Virtual Gateway audit-trail enforcement. For the secondary
-            enterprise / Palantir-facing motion, see the{' '}
+            model provenance, documents, payments, and the Zero-Trust Agentic Fabric — Regional Hubs, Dedicated Virtual
+            Gateways (Audit-Trail Enforcement Points with NATS JetStream + Valkey), and Edge Gateways on every laptop.
+            For the secondary enterprise / Palantir-facing motion, see the{' '}
             <Link href={site.urls.enterpriseGtm}>Enterprise GTM playbook</Link>.
           </p>
 
@@ -68,12 +70,12 @@ export function InferenceGtmPlaybook() {
               {
                 label: 'Core GTM motion',
                 value: 'Adoption-led expansion',
-                sub: 'Inference or MCP → optimization → provenance → memory → audit enforcement → IDP',
+                sub: 'Inference or MCP → optimization → provenance → Dedicated VG → Edge swarm → IDP',
               },
               {
                 label: 'Business outcome',
                 value: 'Auditable Production AI',
-                sub: 'Policy, WORM trails, and model provenance at the gateway layer',
+                sub: 'Three-layer fabric: usage, intent, and execution audits — plus model provenance',
               },
             ].map((item) => (
               <div key={item.label} className="border-t border-mist-200 pt-3 dark:border-white/15">
@@ -87,30 +89,34 @@ export function InferenceGtmPlaybook() {
           <h2 id="executive-summary">Executive summary: the strategic reframe</h2>
           <p>
             ClawQL’s GTM motion has evolved from a broad platform pitch to a focused, adoption-led strategy. The Agentic
-            Gateway is the Foundational Platform for Auditable Production AI.
+            Gateway is the Foundational Platform for Auditable Production AI — realized as a Zero-Trust Agentic Fabric:
+            Regional Hubs for multi-tenant routing and billing, Dedicated Virtual Gateways for isolated policy and
+            event-driven swarm coordination, and Edge Gateways on every engineer laptop for local execution in the mesh.
           </p>
           <Callout>
             ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.
           </Callout>
           <p>
             Developers land with an OpenAI-compatible inference control plane and native <code>/mcp</code> access, then
-            expand product-led into persistent memory, the fine-tuning Flywheel, Virtual Gateway governance, and the
-            full sovereign agent operating system. This three-minute install is the beginning of an expansion path that
-            evolves a developer’s workflow into a fully compliant, production-grade agentic environment.
+            expand product-led into persistent memory, the fine-tuning Flywheel, Dedicated Virtual Gateway governance
+            (NATS JetStream + Valkey), and a fleet of Edge Gateways that turn the company into a distributed agentic
+            swarm. This three-minute install is the beginning of an expansion path that evolves a developer’s workflow
+            into a fully compliant, production-grade agentic fabric.
           </p>
           <p>
             The Agentic Gateway is not merely a proxy; it is the infrastructure core that solves the “Agent Sprawl”
             problem. It integrates HTTP/REST inference routing and MCP tool-calling into one binary, creating a single
-            surface for policy enforcement, audit logging, and state management.
+            surface for policy enforcement, audit logging, and state management — then scales into Regional Hubs,
+            Dedicated Virtual Gateways, and Edge nodes without changing the developer’s entry point.
           </p>
 
           <h3>The architecture question that defines our market leadership</h3>
           <p>How many inference gateways provide the foundational platform requirements for Auditable Production AI?</p>
           <ul>
             <li>
-              <strong>Architectural governance:</strong> A Virtual Gateway for per-tenant policy enforcement and
-              isolated, WORM-auditable audit trails — the Audit-Trail Enforcement Point CISOs require to authorize
-              production AI.
+              <strong>Architectural governance:</strong> Dedicated Virtual Gateways as Audit-Trail Enforcement Points —
+              isolated policy, WORM-auditable trails, and NATS JetStream + Valkey for event-driven swarm workflows —
+              federated across regions when customers choose, never as a single global master.
             </li>
             <li>
               <strong>Stateful intelligence:</strong> Built-in persistent, cross-session memory that survives restarts.
@@ -279,22 +285,23 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
             “what happened since last time?”
           </p>
 
-          <h3>Month 4–6: Audit-trail enforcement — Virtual Gateway</h3>
+          <h3>Month 4–6: Audit-trail enforcement — Dedicated Virtual Gateway</h3>
           <p>
             The team grows. Different projects need different policies. The developer wants per-project audit trails,
-            per-team budget caps, and isolation between workloads. This is the Virtual Gateway conversation — the{' '}
-            <strong>Audit-Trail Enforcement Point</strong> that CISOs and compliance teams require to authorize
+            per-team budget caps, and isolation between workloads. This is the Dedicated Virtual Gateway conversation —
+            the <strong>Audit-Trail Enforcement Point</strong> that CISOs and compliance teams require to authorize
             production AI.
           </p>
           <p>
             Per-team virtual keys with USD budget caps are already available (
-            <code>clawql inference keys create --team engineering --budget 500</code>). The Virtual Gateway per-tenant
-            architecture is the natural upgrade for teams that need strict isolation — their own policy enforcement
-            point, their own WORM sink, their own audit trail.
+            <code>clawql inference keys create --team engineering --budget 500</code>). Customers start on ClawQL’s
+            multi-tenant Regional Hubs for routing and billing, then upgrade to a Dedicated Virtual Gateway — deployed
+            into the same region or their own cloud — that keeps policy, WORM sinks, and observability isolated while
+            still consuming Regional Hub routing and billing.
           </p>
           <p>
             This is when the first real sales conversation happens — not to sell ClawQL (the developer is already sold)
-            but to scope deployment model, SLA, and managed hosted vs self-hosted Virtual Gateway in their VPC.
+            but to scope deployment model, SLA, and Dedicated Virtual Gateway placement (ClawQL region vs customer VPC).
           </p>
 
           <h3>Month 6+: Integrated pipeline — IDP and documents</h3>
@@ -318,6 +325,177 @@ clawql sources add https://your-nextcloud-instance/api
             inference gateway, expanded to memory, and eventually discovered documents could flow through the same
             system they were already using. The IDP is an upsell from trust, not a standalone evaluation.
           </Callout>
+
+          <h2 id="agentic-fabric">Zero-Trust Agentic Fabric — the enterprise architecture</h2>
+          <p>
+            ClawQL’s Foundational Platform is not a single global proxy. It is a{' '}
+            <strong>Zero-Trust Agentic Fabric</strong> with three layers: multi-tenant Regional Hubs for routing and
+            billing, Dedicated Virtual Gateways for isolated governance, and Edge Agentic Gateways on developer machines
+            for local execution — optionally networked into a distributed swarm.
+          </p>
+          <Callout>
+            Global gateways as a single master are an anti-pattern for Auditable Production AI: they concentrate
+            failure, complicate per-tenant policy, and enlarge the blast radius. Prefer federated Virtual Gateways that
+            share policy truth but enforce and audit locally.
+          </Callout>
+
+          <h3>Layer 1 — Regional Hub (SaaS / shared)</h3>
+          <p>
+            ClawQL-operated, multi-tenant by default. Customers connect to one or multiple Regional Hubs. Hubs handle
+            inference routing, cost attribution, and billing — the transactional plumbing so teams can start today with
+            zero dedicated infrastructure.
+          </p>
+          <ul>
+            <li>
+              <strong>Function:</strong> routing, metering, billing, shared model access
+            </li>
+            <li>
+              <strong>Value:</strong> instant-on; land on Developer/Teams without a VPC deployment
+            </li>
+            <li>
+              <strong>Audit role:</strong> usage audit (what was called, at what cost)
+            </li>
+          </ul>
+
+          <h3>Layer 2 — Dedicated Virtual Gateway (governance / private)</h3>
+          <p>
+            The primary enterprise entry point. Deployed into a ClawQL region or the customer’s own cloud/VPC. It
+            communicates with Regional Hubs for usage and billing, but <strong>everything else</strong> — policy
+            enforcement, WORM sinks, observability, and event fabric — couples directly to the customer’s Dedicated
+            Virtual Gateway.
+          </p>
+          <ul>
+            <li>
+              <strong>Function:</strong> Audit-Trail Enforcement Point; EnterpriseGovernance manifests; PII/PHI
+              scrubbing; private WORM; NATS JetStream + Valkey for event-driven swarm workflows
+            </li>
+            <li>
+              <strong>Value:</strong> a private island of governance that still consumes Layer 1 routing/billing
+            </li>
+            <li>
+              <strong>Audit role:</strong> intent audit (policies, tool authorizations, why an action was allowed)
+            </li>
+            <li>
+              <strong>Federation:</strong> customers may run <em>multiple</em> Dedicated Virtual Gateways and network
+              them as peers — not as spokes under a global master — so EU data stays in an EU enforcement point while US
+              hubs remain sovereign, with optional cross-gateway tool routing under explicit policy
+            </li>
+          </ul>
+
+          <h3>Layer 3 — Edge Agentic Gateway (developer laptop / swarm node)</h3>
+          <p>
+            Each engineer’s laptop runs an Edge Agentic Gateway: local MCP, local memory, and low-latency tool
+            execution. Edge nodes sync through the company’s Dedicated Virtual Gateway(s) via mTLS identity pinning —
+            offline-first for local work, online-governed when connected.
+          </p>
+          <ul>
+            <li>
+              <strong>Function:</strong> IDE-native MCP, session memory, local tool runs, fine-grained execution audit
+            </li>
+            <li>
+              <strong>Sync:</strong> Virtual Gateway <em>pushes</em> policy updates; Edge Gateway <em>pushes</em>{' '}
+              WORM-signed audit bundles on reconnect — continuous trail without forcing always-online
+            </li>
+            <li>
+              <strong>Audit role:</strong> execution audit (what actually ran on the workstation)
+            </li>
+            <li>
+              <strong>Shadow IT inversion:</strong> developers prefer the Edge node because it unlocks corporate memory,
+              documents, and swarm topics — turning unmanaged local AI into a managed, auditable asset
+            </li>
+          </ul>
+
+          <h3>Three audits, one narrative</h3>
+          <ScrollTable>
+            <table>
+              <thead>
+                <tr>
+                  <th>Layer</th>
+                  <th>Audit surface</th>
+                  <th>What the CISO sees</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Regional Hub</td>
+                  <td>Usage audit</td>
+                  <td>Tokens, models, billing signals — not customer policy contents</td>
+                </tr>
+                <tr>
+                  <td>Dedicated Virtual Gateway</td>
+                  <td>Intent audit</td>
+                  <td>Policies, authorizations, tool invocations, WORM sink in the audit boundary</td>
+                </tr>
+                <tr>
+                  <td>Edge Agentic Gateway</td>
+                  <td>Execution audit</td>
+                  <td>Fine-grained local tool runs, synced as signed bundles when online</td>
+                </tr>
+              </tbody>
+            </table>
+          </ScrollTable>
+          <p>
+            An auditor querying the Dedicated Virtual Gateway gets a 360° view of an agent’s lifecycle across the
+            fabric, while sensitive source and personal context remain at the Edge or in the customer VPC.
+          </p>
+
+          <h3>Event-driven fabric — NATS JetStream + Valkey</h3>
+          <p>
+            Each Dedicated Virtual Gateway hosts its own <strong>NATS JetStream</strong> and <strong>Valkey</strong>{' '}
+            (plus supporting services) so agents publish and subscribe to topics and work in an event-driven manner.
+            This is baked into the Virtual Gateway definition — not a bolted-on Phase 4 — because swarm coordination is
+            how enterprise customers turn gateways into an Autonomous Operational Force.
+          </p>
+          <h4>Emergent parallelism</h4>
+          <p>
+            When one agent struggles, it publishes state to the company’s Virtual Gateway. Edge nodes subscribed to the
+            topic pull current state (Valkey as shared short-term memory) and work in parallel, publishing attempts and
+            status until one posts a breakthrough. Peers stop; the originator reports back to the employee. Redundant
+            work collapses because the swarm sees what was already tried.
+          </p>
+          <h4>CTO / CISO as swarm orchestrators</h4>
+          <p>
+            Leadership publishes tasks to the Virtual Gateway — weekly work summaries, security patches with mandate
+            details — and every Edge Gateway pulls the same task, executes locally with local tools and context, and
+            reports back. Mandates are system events, not email suggestions. Every publish/subscribe is WORM-logged on
+            the Dedicated Virtual Gateway: when it was mandated, who picked it up, what they tried, and when they
+            confirmed success.
+          </p>
+          <Callout>
+            The orchestration loop: Broadcast → Pull → Execute → Report. Accountability by design — with agentic payment
+            rails able to credit identities for completed automation work when the customer enables them.
+          </Callout>
+          <h4>Federated mesh properties</h4>
+          <ul>
+            <li>
+              <strong>Peer policy sync:</strong> gateways share EnterpriseGovernance truth (gossip or read-only policy
+              store); each remains an Independent Policy Enforcement Point
+            </li>
+            <li>
+              <strong>Cross-gateway tool routing:</strong> under explicit policy, a US-East Edge can reach EU-West tools
+              via secure inter-gateway routing without the developer knowing where data lives
+            </li>
+            <li>
+              <strong>Local WORM, mesh observability:</strong> each gateway keeps a regional WORM sink; a manager tier
+              aggregates metrics and compliance views without centralizing raw sensitive payloads
+            </li>
+            <li>
+              <strong>Explicit discovery:</strong> prefer configured registries and mTLS identity over open service
+              discovery — strict security and audit posture over convenience
+            </li>
+          </ul>
+
+          <h3>Sales framing for this architecture</h3>
+          <ul>
+            <li>
+              <strong>For the CTO:</strong> You manage agents at the Edge, govern them through your Dedicated Virtual
+              Gateway, and ClawQL handles global routing and billing through Regional Hubs.
+            </li>
+            <li>
+              <strong>For the CISO:</strong> Sensitive policy and WORM stay in your audit boundary. Regional Hubs see
+              billing and routing signals required for operations — not your private enforcement contents.
+            </li>
+          </ul>
 
           <h2 id="why-nobody-else">Why nobody else can run this playbook</h2>
           <p>
@@ -708,7 +886,7 @@ clawql sources add https://your-nextcloud-instance/api
           </p>
           <ul>
             <li>Flywheel case study — cost and quality impact of the first fine-tuning cycle</li>
-            <li>Virtual Gateway webinar for platform engineering leads</li>
+            <li>Dedicated Virtual Gateway + Agentic Fabric webinar for platform engineering leads</li>
             <li>
               IDP upsell sequence when a user runs <code>clawql sources add &lt;url&gt;</code> against a document store
             </li>
@@ -720,19 +898,45 @@ clawql sources add https://your-nextcloud-instance/api
 
           <h3>Phase 3: Enterprise and platform (months 12–24)</h3>
           <p>
-            <strong>Goal:</strong> 3 Enterprise pilots · 1 signed Enterprise contract · Virtual Gateway as the primary
-            enterprise entry point.
+            <strong>Goal:</strong> 3 Enterprise pilots · 1 signed Enterprise contract · Dedicated Virtual Gateway (Layer
+            2) as the primary enterprise entry point, with Regional Hubs remaining the billing/routing plane.
           </p>
           <ul>
             <li>
-              Enterprise inference brief for CTOs — Virtual Gateway, WORM, EnterpriseGovernance, Palantir comparison (
+              Enterprise inference brief for CTOs — Zero-Trust Agentic Fabric (Regional Hubs → Dedicated VG → Edge
+              swarm), WORM, EnterpriseGovernance, Palantir comparison (
               <Link href={site.urls.enterpriseGtm}>Enterprise GTM</Link>)
+            </li>
+            <li>
+              Dedicated VG pilots with NATS JetStream + Valkey swarm demos — parallel problem-solving and CTO/CISO
+              org-task broadcasts
             </li>
             <li>Compliance vertical push — HIPAA, GDPR, SOC 2 Type II; FedRAMP Moderate on roadmap</li>
             <li>System integrator partnership — white-label and reseller for healthcare, finance, and defense</li>
           </ul>
           <p>
-            <strong>Metrics:</strong> Pilot starts · contract conversion · ACV · NRR target &gt;110%
+            <strong>Metrics:</strong> Pilot starts · contract conversion · ACV · NRR target &gt;110% · Edge fleet
+            adoption in pilots
+          </p>
+
+          <h3>Phase 4: Edge swarm at scale (months 18–36)</h3>
+          <p>
+            <strong>Goal:</strong> Fleet Edge Gateways across customer engineering orgs; federated multi-VG meshes where
+            sovereignty requires them; swarm workflows as the default for org-wide agentic tasks.
+          </p>
+          <ul>
+            <li>
+              Edge Gateway packaging for developer laptops — mTLS identity pinning, policy push, audit-bundle sync
+            </li>
+            <li>
+              Federated mesh playbooks — peer Virtual Gateways, local WORM, mesh observability without raw
+              centralization
+            </li>
+            <li>Marketplace and payment-rail distribution on top of the fabric</li>
+          </ul>
+          <p>
+            <strong>Metrics:</strong> Edge nodes per Enterprise account · swarm task completion rate · multi-VG
+            federation deals
           </p>
 
           <h2 id="positioning">One-sentence positioning for each entry point</h2>
@@ -778,9 +982,9 @@ clawql sources add https://your-nextcloud-instance/api
                 <tr>
                   <td>Enterprise</td>
                   <td>
-                    The Foundational Platform for Auditable Production AI — providing per-tenant Virtual Gateways, WORM
-                    audit trails, and EnterpriseGovernance manifests to ensure CISO-level verification of all agentic
-                    activity.
+                    The Foundational Platform for Auditable Production AI — Regional Hubs for routing and billing,
+                    Dedicated Virtual Gateways as Audit-Trail Enforcement Points with NATS/Valkey swarm coordination,
+                    and Edge Gateways on every laptop so CISOs get WORM-verified control of the entire agentic fabric.
                   </td>
                 </tr>
               </tbody>
@@ -791,18 +995,18 @@ clawql sources add https://your-nextcloud-instance/api
           <p>
             ClawQL is not an inference gateway that happens to have an MCP server, or an MCP server that happens to have
             an inference gateway. It is an <strong>Agentic Gateway</strong> — the Foundational Platform for Auditable
-            Production AI. One binary speaks both HTTP/REST for inference and MCP for IDE-native tool access, with
-            memory, audit, payments, and governance integrated at the transport layer.
+            Production AI, delivered as a Zero-Trust Agentic Fabric. One binary speaks both HTTP/REST for inference and
+            MCP for IDE-native tool access, with memory, audit, payments, and governance integrated at the transport
+            layer — then scales across Regional Hubs, Dedicated Virtual Gateways, and Edge swarm nodes.
           </p>
           <p>
-            The self-hosted Virtual Gateway is the locally hosted MCP server and Audit-Trail Enforcement Point. The
-            managed hosted Virtual Gateway is the per-tenant enterprise policy enforcement layer. The same architecture,
-            the same binary, the same upgrade path — infrastructure that scales with the user’s needs from first install
-            to regulated production.
+            Developers start on multi-tenant Regional Hubs. Enterprises graduate to Dedicated Virtual Gateways —
+            isolated policy, WORM, and NATS JetStream + Valkey for event-driven swarm intelligence — while usage and
+            billing still flow through the Regional plane. Edge Gateways on every laptop make the fabric a distributed
+            agentic operating system: offline-first locally, online-governed through mTLS sync. The same architecture,
+            the same upgrade path — from three-minute install to regulated production swarm.
           </p>
-          <Callout>
-            Start with three minutes. End with Auditable Production AI on a sovereign agent operating system.
-          </Callout>
+          <Callout>Start with three minutes. End with Auditable Production AI on a Zero-Trust Agentic Fabric.</Callout>
 
           <p className="mt-10 text-xs text-mist-500">
             July 2026 · ClawQL ·{' '}

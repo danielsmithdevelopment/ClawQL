@@ -132,7 +132,7 @@ npm install -g clawql-mcp
 `,
     '/pricing': `# Pricing\n\nSee ${origin}/pricing/ for ClawQL tiers.`,
     '/about': `# About\n\nSee ${origin}/about/.`,
-    '/inference/gtm': `# Inference-first GTM playbook\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.\n\nSee ${origin}/inference/gtm/.`,
+    '/inference/gtm': `# Inference-first GTM playbook\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Zero-Trust Agentic Fabric (Regional Hubs, Dedicated Virtual Gateways with NATS/Valkey, Edge swarm).\n\nSee ${origin}/inference/gtm/.`,
     '/enterprise/gtm': `# Enterprise GTM playbook\n\nSecondary enterprise / Palantir-facing motion — sovereign alternative to Palantir AIP.\n\nSee ${origin}/enterprise/gtm/.`,
     '/signup': `# Sign up\n\n${origin}/signup/`,
     '/privacy-policy': `# Privacy Policy\n\n${origin}/privacy-policy/`,
