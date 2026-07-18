@@ -18,7 +18,7 @@ next: hitl-label-studio
 
 ## Positioning
 
-ClawQL is the only MCP gateway with native **Stripe + x402 + MPP + AP2 + ACP** payment surfaces, **PayPal Orders**, **Adyen Checkout** (enterprise), and a **WORM-audited** payment event trail:
+ClawQL is the only Agentic Gateway with native **Stripe + x402 + MPP + AP2 + ACP** payment surfaces, **PayPal Orders**, **Adyen Checkout** (enterprise), and a **WORM-audited** payment event trail:
 
 | Rail       | Role                                                                                   |
 | ---------- | -------------------------------------------------------------------------------------- |

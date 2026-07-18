@@ -371,7 +371,7 @@ export function IndustryPage({ industry }: { industry: Industry }) {
         headline={`Why ClawQL for ${industry.name.toLowerCase()}`}
         subheadline={
           <p>
-            Vertical packages extend the same MCP gateway — search, execute, memory, IDP, audit — with domain tools from{' '}
+            Vertical packages extend the same Agentic Gateway — search, execute, memory, IDP, audit — with domain tools from{' '}
             <code className="text-sm">{industry.packageName}</code>.
           </p>
         }

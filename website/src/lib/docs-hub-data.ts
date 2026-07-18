@@ -89,6 +89,13 @@ export const exampleSiteCards: Array<ReferenceCard> = [
 /** Architecture hub — status + platform stories (not ops or MCP tool refs). */
 export const architectureHubCards: Array<ReferenceCard> = [
   card({
+    href: '/architecture/agentic-fabric',
+    name: 'Zero-Trust Agentic Fabric',
+    description:
+      'Agentic Gateway as Foundational Platform — Regional Hubs, Dedicated Virtual Gateways (NATS/Valkey), Edge swarm.',
+    icon: SquaresPlusIcon,
+  }),
+  card({
     href: '/vision/roadmap',
     name: 'Vision & status',
     description: 'Honest shipped vs planned status and phased delivery.',
@@ -137,9 +144,9 @@ export const architectureHubCards: Array<ReferenceCard> = [
   }),
   card({
     href: '/inference/clawql-inference',
-    name: 'Inference gateway',
+    name: 'Agentic Gateway (clawql-inference)',
     description:
-      'OpenAI-compatible gateway, tier escalation, cache, export/finetune flywheel.',
+      'OpenAI-compatible /v1 + MCP entry to the Foundational Platform — routing, cache, flywheel, WORM path.',
     icon: BoltIcon,
   }),
   card({

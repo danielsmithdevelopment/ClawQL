@@ -5,7 +5,7 @@ export const educationIndustry: Industry = {
   name: 'Education',
   headline: 'Faculty productivity and LMS-connected agents.',
   subheadline:
-    'The planned clawql-education vertical connects Canvas, Moodle, and Blackboard with syllabus generation, rubric scaffolding, and progress analysis — course content and student data stay behind the same MCP gateway, audit, and vault policies as the rest of ClawQL.',
+    'The planned clawql-education vertical connects Canvas, Moodle, and Blackboard with syllabus generation, rubric scaffolding, and progress analysis — course content and student data stay behind the same Agentic Gateway, audit, and vault policies as the rest of ClawQL.',
   packageName: 'clawql-education',
   status: 'planned',
   overview:

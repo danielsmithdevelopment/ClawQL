@@ -12,7 +12,7 @@ export const lendingIndustry: Industry = {
   productionReference:
     'ClawQL powers vertical lending products like See The Greens LOS — a mortgage-first loan origination system built on the same IDP, vault, and HITL stack documented here.',
   overview:
-    'Mortgage, auto, BNPL, payday, and commercial lending share the same document-heavy intake problem: borrowers submit heterogeneous PDFs, underwriters re-ask for the same conditions, and API integrations sprawl across LOS, credit, and document vendors. Modularization v2.1 defines clawql-lending as five sub-verticals on one gateway — MortgagePlugin, AutoPlugin, BNPLPlugin, PaydayPlugin, and CommercialPlugin — plus shared UnderwritingPlugin and CompliancePlugin for Reg Z, ECOA, and fair-lending guardrails. Today you can run the lending Docker Compose stack and the shipped W-2 reference pack; full LOS tool registration ships with the vertical package.',
+    'Mortgage, auto, BNPL, payday, and commercial lending share the same document-heavy intake problem: borrowers submit heterogeneous PDFs, underwriters re-ask for the same conditions, and API integrations sprawl across LOS, credit, and document vendors. Modularization v2.1 defines clawql-lending as five sub-verticals on one Agentic Gateway — MortgagePlugin, AutoPlugin, BNPLPlugin, PaydayPlugin, and CommercialPlugin — plus shared UnderwritingPlugin and CompliancePlugin for Reg Z, ECOA, and fair-lending guardrails. Today you can run the lending Docker Compose stack and the shipped W-2 reference pack; full LOS tool registration ships with the vertical package.',
   painPoints: [
     {
       title: 'Spec dumps burn planning tokens',

@@ -228,7 +228,9 @@ export function EnterpriseGtmPlaybook() {
                 <tr>
                   <td>3 — Gateway</td>
                   <td>clawql-api + MCP + ATRClaims</td>
-                  <td>Zero-trust MCP gateway; role/purpose/scope validated before action; 2PC for high-impact work</td>
+                  <td>
+                    Zero-trust Agentic Gateway; role/purpose/scope validated before action; 2PC for high-impact work
+                  </td>
                 </tr>
                 <tr>
                   <td>4 — Memory</td>
@@ -261,31 +263,43 @@ export function EnterpriseGtmPlaybook() {
             </table>
           </ScrollTable>
 
-          <h3>Virtual Gateway — delegated sovereignty</h3>
+          <h3>Zero-Trust Agentic Fabric — delegated sovereignty</h3>
           <p>
-            The Virtual Gateway decouples the global routing substrate (efficiency and model routing) from per-tenant
-            policy enforcement (sovereignty and compliance), so one platform can serve radically different security
-            requirements.
+            Enterprise sovereignty maps onto the same three-layer fabric as the{' '}
+            <Link href={site.urls.inferenceGtm}>inference-first GTM playbook</Link>: multi-tenant Regional Hubs for
+            routing and billing, Dedicated Virtual Gateways as Audit-Trail Enforcement Points, and Edge Gateways on
+            engineer laptops. A single global master gateway is an anti-pattern — prefer federated peers.
           </p>
           <ScrollTable>
             <table>
               <thead>
                 <tr>
-                  <th>Tier</th>
+                  <th>Layer</th>
                   <th>Role</th>
                   <th>Where it runs</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>Global routing substrate</td>
-                  <td>Model-agnostic execution, optimization, HA throughput. Knows nothing about tenant policy.</td>
-                  <td>ClawQL-managed infrastructure</td>
+                  <td>Regional Hub (L1)</td>
+                  <td>
+                    Multi-tenant routing, metering, and billing. Model-agnostic optimization. Knows nothing about tenant
+                    policy contents.
+                  </td>
+                  <td>ClawQL-managed regions — customers connect to one or many</td>
                 </tr>
                 <tr>
-                  <td>Virtual Gateway</td>
-                  <td>Resolves tenant manifest, PII redaction, keys, kinetic guardrails, local routing</td>
-                  <td>Customer VPC, enclave, or on-prem — unless the customer chooses managed</td>
+                  <td>Dedicated Virtual Gateway (L2)</td>
+                  <td>
+                    Audit-Trail Enforcement Point — EnterpriseGovernance manifest, PII redaction, keys, kinetic
+                    guardrails, private WORM, NATS JetStream + Valkey swarm fabric
+                  </td>
+                  <td>Customer VPC, enclave, on-prem, or ClawQL region — federated peers when multi-region</td>
+                </tr>
+                <tr>
+                  <td>Edge Agentic Gateway (L3)</td>
+                  <td>Local MCP, memory, and tool execution; mTLS sync of policy push / audit-bundle pull</td>
+                  <td>Developer laptops — offline-first, online-governed</td>
                 </tr>
                 <tr>
                   <td>Inference providers</td>
@@ -306,7 +320,8 @@ export function EnterpriseGtmPlaybook() {
               event
             </li>
             <li>
-              <strong>Pull pattern:</strong> gateway initiates outbound; no inbound port into the tenant VPC
+              <strong>Pull pattern:</strong> Dedicated Virtual Gateway initiates outbound; no inbound port into the
+              tenant VPC
             </li>
             <li>
               <strong>Kill switch:</strong> lost heartbeats or invalid manifest stop routing to that endpoint
@@ -315,14 +330,14 @@ export function EnterpriseGtmPlaybook() {
 
           <h4>BYOG — bring your own gateway</h4>
           <p>
-            Absolute sovereignty buyers host their own Virtual Gateway container. ClawQL manages the global substrate.
-            The customer retains cryptographic keys and policy enforcement. Inference is processed under customer policy
-            before leaving their perimeter.
+            Absolute sovereignty buyers host their own Dedicated Virtual Gateway. ClawQL Regional Hubs still handle
+            routing and billing signals; the customer retains cryptographic keys, policy enforcement, and the WORM sink.
+            Inference is processed under customer policy before leaving their perimeter.
           </p>
           <Callout>
             Objection: “We can’t use your SaaS because of data sovereignty.” Response: with BYOG, payload stays in your
-            VPC unless your manifest allows otherwise. We manage routing intelligence; you manage keys and policy. The
-            WORM trail lets you verify what happened.
+            VPC unless your manifest allows otherwise. We manage Regional Hub routing intelligence; you manage keys and
+            policy. The WORM trail lets you verify what happened.
           </Callout>
 
           <h3>Policy-as-code — the ClawQL manifest</h3>

@@ -5,7 +5,7 @@ export const insuranceIndustry: Industry = {
   name: 'Insurance',
   headline: 'Claims and policy intelligence on one MCP surface.',
   subheadline:
-    'The planned clawql-insurance vertical targets carriers, brokers, and MGAs: claim extraction, policy analysis, loss-run reconciliation, and fraud signals — with HIPAA/SOC2-friendly redaction and Merkle audit trails on the same gateway as lending and healthcare.',
+    'The planned clawql-insurance vertical targets carriers, brokers, and MGAs: claim extraction, policy analysis, loss-run reconciliation, and fraud signals — with HIPAA/SOC2-friendly redaction and Merkle audit trails on the same Agentic Gateway as lending and healthcare.',
   packageName: 'clawql-insurance',
   status: 'planned',
   overview:

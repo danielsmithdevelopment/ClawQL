@@ -17,7 +17,7 @@ function statusLabel(status: (typeof industries)[number]['status'], custom?: str
 export const metadata = pageMetadata({
   title: 'Industries',
   description:
-    'ClawQL vertical packages for lending, real estate, healthcare, and more — agent-native document and API workflows on one MCP gateway.',
+    'ClawQL vertical packages for lending, real estate, healthcare, and more — agent-native document and API workflows on one Agentic Gateway.',
   path: '/industries',
 })
 
@@ -27,7 +27,7 @@ export default function Page() {
       <HeroSimpleCentered
         id="hero"
         eyebrow="Industry verticals"
-        headline="One gateway. Domain-specific workflows."
+        headline="One Agentic Gateway. Domain-specific workflows."
         subheadline={
           <p>
             ClawQL modularization v2.1 defines opt-in vertical packages that share security, memory, audit, and the IDP

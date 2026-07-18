@@ -31,8 +31,17 @@ const SECTIONS = [
     heading: 'Core reference',
     links: [
       ['MCP tools', '/tools', 'search, execute, audit, cache, and optional tools'],
-      ['Inference', '/inference/clawql-inference', 'Gateway, flywheel, and wiring'],
-      ['Plugins', '/plugins', 'Gateway core and optional plugin packages'],
+      [
+        'Zero-Trust Agentic Fabric',
+        '/architecture/agentic-fabric',
+        'Regional Hubs, Dedicated Virtual Gateways, Edge swarm',
+      ],
+      [
+        'Agentic Gateway (inference)',
+        '/inference/clawql-inference',
+        'OpenAI drop-in, flywheel, WORM path to Auditable Production AI',
+      ],
+      ['Plugins', '/plugins', 'Agentic Gateway core and optional plugin packages'],
       ['Protocol', '/reference/protocol', 'Uniform envelope and approval flows'],
       ['Spec configuration', '/spec-configuration', 'OpenAPI and provider sources'],
     ],
@@ -71,7 +80,7 @@ function formatSection({ heading, links }) {
 
 function main() {
   let content = `# ClawQL documentation\n\n`
-  content += `> ClawQL is an MCP server for OpenAPI, Swagger, and Google Discovery APIs — search and execute tools, optional vault memory, sandbox, schedule, notify, and defense-in-depth controls.\n\n`
+  content += `> ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — OpenAPI/MCP search and execute, optional vault memory, Zero-Trust Agentic Fabric (Regional Hubs, Dedicated Virtual Gateways, Edge swarm), and defense-in-depth controls.\n\n`
   content += `This file helps AI agents and crawlers find canonical documentation. For full-text Markdown of any page, send \`Accept: text/markdown\` on that URL.\n\n`
 
   for (const section of SECTIONS) {

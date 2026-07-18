@@ -221,7 +221,7 @@ You do **not** need a browser UI for the collector; **Grafana Explore (Tempo)** 
 
 ## See also
 
-- [`docker/README.md`](../../docker/README.md) — **Istio + observability** env vars, MCP gateway URLs, port-forward cheat sheet.
+- [`docker/README.md`](../../docker/README.md) — **Istio + observability** env vars, Agentic Gateway URLs, port-forward cheat sheet.
 - [`docs/readme/deployment.md`](../readme/deployment.md) — Kubernetes entry points and links.
 - [`docs/deployment/helm.md`](helm.md) — **`charts/clawql-mcp`** values, including **`extraEnv`** for OTLP.
 - Issue [**#155**](https://github.com/danielsmithdevelopment/ClawQL/issues/155) — Istio / mesh tracking.

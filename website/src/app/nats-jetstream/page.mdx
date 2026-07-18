@@ -1,6 +1,6 @@
 # NATS JetStream
 
-NATS JetStream is available as an optional in-cluster event backbone in the `charts/clawql-mcp` Helm chart. It is intended for Ouroboros workflow events, multi-agent coordination, and edge worker synchronization.
+NATS JetStream is available as an optional in-cluster event backbone in the `charts/clawql-mcp` Helm chart. In the [Zero-Trust Agentic Fabric](/architecture/agentic-fabric), each **Dedicated Virtual Gateway** hosts JetStream (with Valkey) so Edge Gateways and agents publish/subscribe for swarm workflows, Ouroboros events, and org-task broadcasts.
 
 ## Why this exists
 

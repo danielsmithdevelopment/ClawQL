@@ -7,7 +7,8 @@ export const DEFAULT_OG_IMAGE_PATH = '/og-image.png'
 export const DEFAULT_OG_IMAGE_WIDTH = 1200
 export const DEFAULT_OG_IMAGE_HEIGHT = 630
 
-export const DEFAULT_OG_IMAGE_ALT = 'ClawQL — Operating system for agents'
+export const DEFAULT_OG_IMAGE_ALT =
+  'ClawQL — Agentic Gateway for Auditable Production AI'
 
 export type DocsPageMetadataInput = {
   /** Page `<title>` segment; root layout template appends ` - ClawQL`. */

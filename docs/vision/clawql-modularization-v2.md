@@ -2,7 +2,7 @@
 
 **Version 2.2** · July 2026
 
-This document defines package boundaries, the dependency graph, Operator behavior, and the design of the intelligent MCP gateway. It serves as the authoritative reference for contributors and maintainers.
+This document defines package boundaries, the dependency graph, Operator behavior, and the design of the Agentic Gateway. It serves as the authoritative reference for contributors and maintainers.
 
 For the full platform vision, see the [Master Enablement Guide](./clawql-master-enablement-guide.md).
 
@@ -15,7 +15,7 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 **Core Principles**
 
 - Natural language is the primary interface for both humans and agents.
-- `clawql-api` is the single intelligent MCP gateway. All interactions use `search()` and `execute()`.
+- `clawql-api` is the single Agentic Gateway. All interactions use `search()` and `execute()`.
 - Optional packages and verticals have zero runtime footprint when disabled.
 - Defense-in-depth (ATR, Presidio, Merkle rooting, policy enforcement) is applied uniformly at the gateway.
 - All consumable artifacts originate from or verify against immutable ClawQL releases (Layer 0).
@@ -42,10 +42,10 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 
 ### 3.1 Always-Enabled (Foundation)
 
-| Package         | Responsibilities                                                                                                                                                                                                                      |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **clawql-core** | Shared types, ATRClaims, Merkle utilities, Cuckoo filter, Plugin interface, AgentRuntime, error factories                                                                                                                             |
-| **clawql-api**  | The intelligent MCP gateway. Handles search/execute, plugin registration (native + proxy), routing, ATR/Panguard enforcement, Presidio hooks (🚧 opt-in gateway redaction), circuit breakers (📋 roadmap), and observability emission |
+| Package         | Responsibilities                                                                                                                                                                                                              |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **clawql-core** | Shared types, ATRClaims, Merkle utilities, Cuckoo filter, Plugin interface, AgentRuntime, error factories                                                                                                                     |
+| **clawql-api**  | The Agentic Gateway. Handles search/execute, plugin registration (native + proxy), routing, ATR/Panguard enforcement, Presidio hooks (🚧 opt-in gateway redaction), circuit breakers (📋 roadmap), and observability emission |
 
 ### 3.2 Default-Enabled
 

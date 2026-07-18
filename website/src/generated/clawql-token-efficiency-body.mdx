@@ -76,7 +76,7 @@ Three framings help convince a skeptical platform or SRE team:
 
 ## The architecture of compounding efficiency
 
-ClawQL addresses token cost at **twelve** distinct points in the request/response lifecycle. Because each layer targets a different kind of waste, their savings compound rather than overlap. The nearest MCP gateway competitors often implement one of these layers. Implementing all twelve produces a different order-of-magnitude result.
+ClawQL addresses token cost at **twelve** distinct points in the request/response lifecycle. Because each layer targets a different kind of waste, their savings compound rather than overlap. The nearest Agentic Gateway competitors often implement one of these layers. Implementing all twelve produces a different order-of-magnitude result.
 
 The layers organize into three tiers:
 
@@ -101,7 +101,7 @@ The layers organize into three tiers:
 | 11    | **Assistant prefill opener**   | Pre-populates response start to bypass hedging preamble.                            | Opt-in                        |
 | 12    | **Fine-tuning flywheel**       | Production traffic → scrubbed export → custom model → new Frugal tier.              | Documented                    |
 
-Hands-on MCP usage for Layers 1–2: [Using search & execute](/learn/search-and-execute-mcp). Inference gateway details for Layers 3–12: [clawql-inference](/inference/clawql-inference).
+Hands-on MCP usage for Layers 1–2: [Using search & execute](/learn/search-and-execute-mcp). Agentic Gateway details for Layers 3–12: [clawql-inference](/inference/clawql-inference).
 
 ---
 
@@ -303,7 +303,7 @@ A GKE cluster listing that would normally consume hundreds of tokens in a naive 
 - **Layer 8:** utility task routes to Frugal, not Frontier
 - **Layer 12:** after training cycles, your fine-tuned Frugal model can beat a generic Standard model on this task type
 
-Implementing only Layer 1 (what many MCP gateways stop at) leaves most of the stack on the table: verbose outputs, repeated calls, over-tier models, and a model that never specializes to your workload.
+Implementing only Layer 1 (what many Agentic Gateways stop at) leaves most of the stack on the table: verbose outputs, repeated calls, over-tier models, and a model that never specializes to your workload.
 
 ---
 
@@ -342,7 +342,7 @@ The twelve-layer stack reduces per-inference cost to a fraction of a naive appro
 ## Getting started
 
 ```bash
-# Inference gateway as an OpenAI-compatible drop-in (when clawql-inference is deployed)
+# Agentic Gateway as an OpenAI-compatible drop-in (when clawql-inference is deployed)
 export OPENAI_BASE_URL=http://localhost:8080/v1
 
 # Inspect active inference policy (layers / routing / cache)

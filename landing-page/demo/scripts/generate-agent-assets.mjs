@@ -111,10 +111,10 @@ Hosted accounts: [${origin}/signup/](${origin}/signup/). Self-hosted: \`npm inst
 
 function getAgentMarkdownMap() {
   const description =
-    'ClawQL is the MCP operating system for agents — search and execute APIs, vault memory, and optional IDP on one gateway. Self-host free or start a trial.'
+    'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Regional Hubs, Dedicated Virtual Gateways, and Edge swarm. Self-host free or start a trial.'
 
   return {
-    '/': `# ClawQL — Operating system for agents
+    '/': `# ClawQL — Agentic Gateway for Auditable Production AI
 
 ${description}
 
@@ -132,8 +132,8 @@ npm install -g clawql-mcp
 `,
     '/pricing': `# Pricing\n\nSee ${origin}/pricing/ for ClawQL tiers.`,
     '/about': `# About\n\nSee ${origin}/about/.`,
-    '/inference/gtm': `# Inference-first GTM playbook\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.\n\nSee ${origin}/inference/gtm/.`,
-    '/enterprise/gtm': `# Enterprise GTM playbook\n\nSecondary enterprise / Palantir-facing motion — sovereign alternative to Palantir AIP.\n\nSee ${origin}/enterprise/gtm/.`,
+    '/inference/gtm': `# Inference-first GTM playbook\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Zero-Trust Agentic Fabric (Regional Hubs, Dedicated Virtual Gateways with NATS/Valkey, Edge swarm).\n\nSee ${origin}/inference/gtm/.`,
+    '/enterprise/gtm': `# Enterprise GTM playbook\n\nSecondary enterprise / Palantir-facing motion — Auditable Production AI on the Zero-Trust Agentic Fabric; sovereign alternative to Palantir AIP.\n\nSee ${origin}/enterprise/gtm/.`,
     '/signup': `# Sign up\n\n${origin}/signup/`,
     '/privacy-policy': `# Privacy Policy\n\n${origin}/privacy-policy/`,
     '/industries': `# Industries\n\n${origin}/industries/`,
@@ -211,7 +211,8 @@ writeJson(path.join(publicDir, '.well-known/mcp/server-card.json'), {
 
 writeJson(path.join(publicDir, '.well-known/agent-card.json'), {
   name: 'ClawQL',
-  description: 'Operating system for agents — MCP search, execute, vault memory, and optional IDP.',
+  description:
+    'Agentic Gateway for Auditable Production AI — MCP search, execute, vault memory, and optional IDP.',
   version: '6.0.0',
   url: `${docs}/mcp`,
   provider: { organization: 'ClawQL', url: origin },
@@ -306,7 +307,7 @@ writeText(
   path.join(publicDir, 'llms.txt'),
   `# ClawQL
 
-> Operating system for agents — MCP search, execute, vault memory, and optional IDP.
+> Agentic Gateway for Auditable Production AI — Regional Hubs, Dedicated Virtual Gateways, Edge swarm.
 
 - [Docs](${docs})
 - [Getting started](${docs}/getting-started)

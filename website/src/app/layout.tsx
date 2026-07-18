@@ -15,7 +15,7 @@ import '@/styles/tailwind.css'
 
 const siteDefaultTitle = 'ClawQL documentation'
 const siteDefaultDescription =
-  'ClawQL documentation — connect an MCP client, search and execute APIs, and deploy with Docker or Kubernetes.'
+  'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — MCP, inference, and Zero-Trust Agentic Fabric docs.'
 
 export const metadata: Metadata = {
   metadataBase: getSiteOrigin(),

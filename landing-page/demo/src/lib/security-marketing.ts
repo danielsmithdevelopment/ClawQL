@@ -17,7 +17,7 @@ export const securityPillars = [
   {
     slug: 'agentic-ai',
     title: 'Built for agentic AI',
-    body: '32-module security curriculum from supply chain through runtime. MCP gateway ATR scoping limits what agents can do regardless of prompt injection; audit trails, sandbox isolation, and distroless images are documented for self-hosted k3s.',
+    body: '32-module security curriculum from supply chain through runtime. Agentic Gateway ATR scoping limits what agents can do regardless of prompt injection; audit trails, sandbox isolation, and distroless images are documented for self-hosted k3s.',
     href: 'https://docs.clawql.com/security/best-practices',
     linkLabel: '32-module curriculum',
   },

@@ -196,7 +196,7 @@ export function getA2aAgentCard(origin = getSiteOriginString()): Record<string, 
   return {
     name: 'ClawQL',
     description:
-      'Operating system for agents — MCP search, execute, vault memory, and optional IDP document pipelines.',
+      'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Regional Hubs, Dedicated Virtual Gateways, and Edge swarm.',
     version: '6.0.0',
     url: `${docs}/mcp`,
     provider: {
@@ -371,7 +371,7 @@ export function getAgentMarkdownMap(origin = getSiteOriginString()): Record<stri
   return {
     '/': buildHomeMarkdown(origin),
     '/pricing': `# Pricing\n\nClawQL pricing — self-host free on Apache 2.0 or start a 14-day Developer trial.\n\nSee ${origin}/pricing/ for tier details.`,
-    '/about': `# About ClawQL\n\nClawQL is an operating system for agents.\n\nSee ${origin}/about/ for mission and ecosystem overview.`,
+    '/about': `# About ClawQL\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.\n\nSee ${origin}/about/ for mission and ecosystem overview.`,
     '/signup': `# Sign up\n\nStart a 14-day Developer trial or join the waitlist.\n\n${origin}/signup/`,
     '/privacy-policy': `# Privacy Policy\n\nSee ${origin}/privacy-policy/ for the full policy.`,
     '/industries': `# Industries\n\nVertical workflows for lending, real estate, healthcare, legal, insurance, and education.\n\n${origin}/industries/`,

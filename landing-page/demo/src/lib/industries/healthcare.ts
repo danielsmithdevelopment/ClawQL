@@ -5,11 +5,11 @@ export const healthcareIndustry: Industry = {
   name: 'Healthcare',
   headline: 'HIPAA-aware clinical document processing.',
   subheadline:
-    'The planned clawql-healthcare vertical extends ClawQL’s document pipeline for FHIR bundles, HL7 messages, DICOM imaging, and clinical notes — PHI de-identification, structured extraction, and audit trails on the same MCP gateway as the rest of your stack.',
+    'The planned clawql-healthcare vertical extends ClawQL’s document pipeline for FHIR bundles, HL7 messages, DICOM imaging, and clinical notes — PHI de-identification, structured extraction, and audit trails on the same Agentic Gateway as the rest of your stack.',
   packageName: 'clawql-healthcare',
   status: 'planned',
   overview:
-    'Health systems and digital health vendors juggle unstructured clinical PDFs, HL7 v2 feeds, FHIR R4 bundles, and imaging studies — often with separate OCR pipelines, manual de-identification, and brittle point-to-point integrations. clawql-healthcare (modularization v2.1) registers domain tools — fhir_parse, hl7_extract, dicom_analyze, ehr_structure, deidentify, medical_image_analyze, clinical_note_structure — on the same MCP gateway as search, execute, memory, and audit. PHI never enters vault notes or Onyx indexes without passing Stirling redaction in run_idp_pipeline; hitl_enqueue_label_studio routes ambiguous coding or medication extractions to clinical reviewers before downstream persistence.',
+    'Health systems and digital health vendors juggle unstructured clinical PDFs, HL7 v2 feeds, FHIR R4 bundles, and imaging studies — often with separate OCR pipelines, manual de-identification, and brittle point-to-point integrations. clawql-healthcare (modularization v2.1) registers domain tools — fhir_parse, hl7_extract, dicom_analyze, ehr_structure, deidentify, medical_image_analyze, clinical_note_structure — on the same Agentic Gateway as search, execute, memory, and audit. PHI never enters vault notes or Onyx indexes without passing Stirling redaction in run_idp_pipeline; hitl_enqueue_label_studio routes ambiguous coding or medication extractions to clinical reviewers before downstream persistence.',
   painPoints: [
     {
       title: 'PHI in agent prompts and vault notes',

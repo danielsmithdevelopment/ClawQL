@@ -1,4 +1,5 @@
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
+import { Link } from '@/components/elements/link'
 import { ArrowNarrowRightIcon } from '@/components/icons/arrow-narrow-right-icon'
 import { CallToActionSimpleCentered } from '@/components/sections/call-to-action-simple-centered'
 import { EnterpriseGtmPlaybook } from '@/components/sections/enterprise-gtm-playbook'
@@ -9,7 +10,7 @@ import { site } from '@/lib/site'
 export const metadata = pageMetadata({
   title: 'Enterprise GTM playbook',
   description:
-    'ClawQL enterprise go-to-market playbook — the sovereign alternative to Palantir AIP, with Inference, IDP, and agentic infrastructure positioning.',
+    'Secondary enterprise GTM — sovereign alternative to Palantir AIP on ClawQL’s Agentic Gateway and Zero-Trust Agentic Fabric for Auditable Production AI.',
   path: '/enterprise/gtm',
 })
 
@@ -18,12 +19,18 @@ export default function Page() {
     <>
       <HeroSimpleCentered
         id="hero"
-        eyebrow={<p className="text-sm/7 font-medium text-mist-600 dark:text-mist-300">Enterprise GTM · July 2026</p>}
-        headline="The sovereign alternative to Palantir AIP"
+        eyebrow={
+          <p className="text-sm/7 font-medium text-mist-600 dark:text-mist-300">
+            Enterprise GTM · Secondary motion · July 2026
+          </p>
+        }
+        headline="Auditable Production AI — the sovereign alternative to Palantir AIP"
         subheadline={
           <p>
-            ClawQL’s enterprise go-to-market playbook for regulated buyers — CISOs, CTOs, and FinOps — built around
-            agentic transparency, verifiable governance, and a three-phase adoption motion.
+            Secondary enterprise motion for regulated buyers — CISOs, CTOs, and FinOps — on the same Agentic Gateway
+            Foundational Platform: Regional Hubs, Dedicated Virtual Gateways, and Edge swarm, with a three-phase Observe
+            → Govern → Sovereignty adoption path. Default product-led motion:{' '}
+            <Link href={site.urls.inferenceGtm}>inference-first GTM</Link>.
           </p>
         }
         cta={

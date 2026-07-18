@@ -58,6 +58,11 @@ export const docsNavigation: Array<NavGroup> = [
     links: [
       { title: 'Vision & status', href: '/vision/roadmap' },
       { title: 'Architecture', href: '/architecture' },
+      {
+        title: 'Zero-Trust Agentic Fabric',
+        href: '/architecture/agentic-fabric',
+      },
+      { title: 'clawql-inference', href: '/inference/clawql-inference' },
       { title: 'Ouroboros', href: '/ouroboros' },
     ],
   },
