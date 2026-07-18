@@ -28,9 +28,10 @@ export default function AgenticFabricPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Canonical enterprise topology.</strong> Product layers (IDP stack, packages,
-          Operator tiers) describe what ships inside the platform. This page describes how
-          enterprises deploy and govern it. Source:{' '}
+          <strong>Canonical enterprise topology.</strong> Product layers (IDP
+          stack, packages, Operator tiers) describe what ships inside the
+          platform. This page describes how enterprises deploy and govern it.
+          Source:{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/architecture/zero-trust-agentic-fabric.md"
             className="font-medium text-inherit underline underline-offset-2"

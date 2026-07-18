@@ -31,7 +31,8 @@ export default function ClawqlInferencePage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Agentic Gateway + model-improvement flywheel.</strong> Fabric context:{' '}
+          <strong>Agentic Gateway + model-improvement flywheel.</strong> Fabric
+          context:{' '}
           <a
             href="/architecture/agentic-fabric"
             className="font-medium text-inherit underline underline-offset-2"
