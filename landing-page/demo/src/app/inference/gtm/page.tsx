@@ -21,11 +21,12 @@ export default function Page() {
         eyebrow={
           <p className="text-sm/7 font-medium text-mist-600 dark:text-mist-300">Inference-first GTM · July 2026</p>
         }
-        headline="The inference gateway is the razor"
+        headline="Lead with the Unified Gateway"
         subheadline={
           <p>
-            ClawQL’s default go-to-market playbook — from <code>npx clawql-inference</code> and a three-minute install
-            to memory, Flywheel, Virtual Gateway, and the full sovereign platform. Everything else is the blade.
+            ClawQL’s default go-to-market playbook — land with an OpenAI-compatible inference control plane and native{' '}
+            <code>/mcp</code> access, then expand into memory, Flywheel, Virtual Gateway governance, and the full
+            sovereign agent operating system.
           </p>
         }
         cta={
