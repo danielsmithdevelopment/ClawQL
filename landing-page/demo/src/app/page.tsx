@@ -22,7 +22,7 @@ import { workflowFeeds } from '@/lib/workflow-feeds'
 
 export const metadata = pageMetadata({
   title: 'Home',
-  absoluteTitle: 'ClawQL — Operating system for agents',
+  absoluteTitle: 'ClawQL — Agentic Gateway for Auditable Production AI',
   description: site.description,
   path: '/',
 })
@@ -34,12 +34,13 @@ export default function Page() {
       <HeroTwoColumnWithPhoto
         id="hero"
         eyebrow={<AnnouncementBadge href={site.urls.signup} text={site.earlyAccess.badge} cta="Start trial" />}
-        headline="AI agents that work your entire stack — without blowing your context budget."
+        headline="ClawQL — the Agentic Gateway for Auditable Production AI"
         subheadline={
           <p>
-            {site.earlyAccess.summary} Connect agents to your APIs, documents, and institutional memory in one closed
-            loop — <strong>recall</strong>, <strong>search</strong>, <strong>execute</strong>, and{' '}
-            <strong>ingest</strong> — with specs server-side, not in your prompt.
+            The Foundational Platform agents call into — not an agent framework. Land with OpenAI-compatible inference
+            and native <code>/mcp</code>, then expand into memory, Dedicated Virtual Gateway governance, and Edge
+            Gateways across your fleet. One closed loop: <strong>recall</strong>, <strong>search</strong>,{' '}
+            <strong>execute</strong>, and <strong>ingest</strong> — with specs server-side, not in your prompt.
           </p>
         }
         cta={
@@ -207,7 +208,7 @@ export default function Page() {
         <Faq
           id="faq-2"
           question="What's the difference between Developer, Teams, and Starter?"
-          answer={`Developer (${pricing.developer.monthlyPrice}/mo) is MCP gateway + memory — no IDP. Teams (${pricing.teams.monthlyPrice}/mo) adds full Onyx search. Starter (${pricing.starter.monthlyPrice}/mo) activates the IDP plugin bundle. Gateway-only buyers should not pay for document processing they do not use.`}
+          answer={`Developer (${pricing.developer.monthlyPrice}/mo) is Agentic Gateway + memory — no IDP. Teams (${pricing.teams.monthlyPrice}/mo) adds full Onyx search. Starter (${pricing.starter.monthlyPrice}/mo) activates the IDP plugin bundle. Gateway-only buyers should not pay for document processing they do not use.`}
         />
         <Faq
           id="faq-3"

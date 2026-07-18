@@ -9,7 +9,7 @@ export const legalIndustry: Industry = {
   packageName: 'clawql-legal',
   status: 'planned',
   overview:
-    'Law firms and in-house teams drown in PDF data rooms, discovery productions, and contract versions — while ethical walls and privilege rules forbid casual indexing of client material. clawql-legal registers clause_extract, risk_flag, precedent_search, redact_privilege, timeline_generate, brief_draft, motion_draft, and filing_validate on the shared MCP gateway. Documents pass Stirling and redact_privilege before archive or knowledge_search_onyx; memory_recall with graph depth surfaces prior matter notes without cross-contaminating walled teams. Human attorneys remain in the loop — agents handle retrieval, first-pass organization, and citation gathering.',
+    'Law firms and in-house teams drown in PDF data rooms, discovery productions, and contract versions — while ethical walls and privilege rules forbid casual indexing of client material. clawql-legal registers clause_extract, risk_flag, precedent_search, redact_privilege, timeline_generate, brief_draft, motion_draft, and filing_validate on the shared Agentic Gateway. Documents pass Stirling and redact_privilege before archive or knowledge_search_onyx; memory_recall with graph depth surfaces prior matter notes without cross-contaminating walled teams. Human attorneys remain in the loop — agents handle retrieval, first-pass organization, and citation gathering.',
   painPoints: [
     {
       title: 'Privilege leaks into enterprise search',

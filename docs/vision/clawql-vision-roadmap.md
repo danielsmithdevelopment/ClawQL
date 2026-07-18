@@ -40,7 +40,9 @@ If you are evaluating ClawQL for immediate production use, the answer today is: 
 
 ## 1. What ClawQL Is (and Isn’t)
 
-ClawQL is a modular orchestration platform and intelligent MCP gateway. It gives autonomous agents a single, secure, auditable surface to search and act across documents, persistent memory, structured data, and workflows — without requiring those agents to know anything about the underlying infrastructure.
+**ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.**
+
+It is a modular orchestration platform: an Agentic Gateway that gives autonomous agents a single, secure, auditable surface to search and act across documents, persistent memory, structured data, and workflows — without requiring those agents to know anything about the underlying infrastructure. Enterprise deployments follow the [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric): Regional Hubs (routing/billing), Dedicated Virtual Gateways (Audit-Trail Enforcement Points with NATS JetStream + Valkey), and Edge Gateways on developer machines.
 
 A practical way to think about it: when an agent needs to process a mortgage document, recall what it knows about a client, check a compliance rule, and write an audit record, it makes one call. ClawQL figures out where everything lives, enforces who is allowed to see what, redacts sensitive content before it touches anything persistent, and records a tamper-evident proof of the whole operation. The agent sees a clean result. The compliance team sees a complete trail.
 
@@ -80,11 +82,11 @@ Each problem makes the others worse. Fragmented tooling means you cannot enforce
 
 ## 3. The Approach
 
-### Single gateway surface
+### Agentic Gateway surface
 
-Everything flows through `clawql-api`. Agents call `search()` to discover what tools and data exist. They call `execute()` to act. No direct database access, no per-backend credentials, no bespoke integration code per tool. One surface means one place to enforce policy, one audit trail, and one contract for every consumer — human, agent, or system.
+Everything flows through the Agentic Gateway (`clawql-api` / `clawql-inference`). Agents call `search()` to discover what tools and data exist. They call `execute()` to act. No direct database access, no per-backend credentials, no bespoke integration code per tool. One surface means one place to enforce policy, one audit trail, and one contract for every consumer — human, agent, or system.
 
-This is a meaningful constraint. It means the gateway has to be intelligent: it needs to route requests to the right backend, project only the fields an agent is allowed to see, handle failures gracefully, and do all of this without the caller knowing the details. The payoff is that adding a new backend, enabling a new vertical, or enforcing a new compliance rule happens in one place.
+This is a meaningful constraint. It means the gateway has to be intelligent: it needs to route requests to the right backend, project only the fields an agent is allowed to see, handle failures gracefully, and do all of this without the caller knowing the details. The payoff is that adding a new backend, enabling a new vertical, or enforcing a new compliance rule happens in one place. At enterprise scale, that surface is deployed as a fabric — not a single global master gateway — so policy and WORM stay at Dedicated Virtual Gateways while Regional Hubs handle multi-tenant routing and billing.
 
 ### Persistent-first design
 

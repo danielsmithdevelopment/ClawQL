@@ -50,7 +50,7 @@ export default function ClawqlPaymentsPage() {
             href="/inference/clawql-inference"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            Inference gateway
+            Agentic Gateway
           </a>
           .
         </Note>

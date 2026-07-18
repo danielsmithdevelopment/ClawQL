@@ -23,7 +23,7 @@ import { getSiteOrigin } from '@/lib/site-url'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
-const defaultTitle = 'ClawQL — Operating system for agents'
+const defaultTitle = 'ClawQL — Agentic Gateway for Auditable Production AI'
 
 export const metadata: Metadata = {
   metadataBase: getSiteOrigin(),

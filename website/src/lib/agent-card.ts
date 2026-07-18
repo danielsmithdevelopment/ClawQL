@@ -34,7 +34,7 @@ export function getAgentCard(): Record<string, unknown> {
   return {
     name: 'ClawQL',
     description:
-      'Secure MCP gateway for production agents — search and execute across OpenAPI sources with audit, cache, optional vault memory, native Stripe + x402 + MPP + AP2 + ACP payments (plus PayPal Orders and Adyen Checkout), and defense-in-depth controls.',
+      'Agentic Gateway — Foundational Platform for Auditable Production AI. Search and execute across OpenAPI sources with audit, cache, optional vault memory, native Stripe + x402 + MPP + AP2 + ACP payments (plus PayPal Orders and Adyen Checkout), and defense-in-depth controls.',
     version,
     url: a2aUrl,
     provider: {

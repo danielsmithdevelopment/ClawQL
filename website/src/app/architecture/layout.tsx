@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 export const metadata = docsPageMetadata({
   title: 'Architecture & Vision',
   description:
-    'ClawQL platform architecture: 6-layer IDP stack, modularization, DAOS, immutable releases, token efficiency, and vision roadmap.',
+    'ClawQL platform architecture: Zero-Trust Agentic Fabric, Agentic Gateway, 6-layer IDP stack, modularization, DAOS, token efficiency, and vision roadmap.',
   path: '/architecture',
 })
 

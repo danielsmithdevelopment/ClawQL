@@ -73,6 +73,6 @@ Publish third-party packages as `clawql-*-inference-provider` (or in-repo under 
 
 ## Learn more
 
-- [clawql-inference gateway](/inference/clawql-inference)
+- [clawql-Agentic Gateway](/inference/clawql-inference)
 - [Third-party plugins](/plugins/third-party)
 - [Plugin registry](/reference/plugins)

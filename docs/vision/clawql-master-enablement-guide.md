@@ -8,11 +8,11 @@
 
 ## Executive Summary
 
-ClawQL is not another agent framework. It is the **secure, persistent, observable, and verifiable operating system** for production-grade autonomous agents.
+ClawQL is not another agent framework. It provides the **Agentic Gateway** as the **Foundational Platform for Auditable Production AI** — secure, persistent, observable, and verifiable infrastructure for production-grade autonomous agents.
 
 While the industry has spent the last 18 months building ever-more-elaborate prompt templates and decorator libraries, ClawQL has focused on the hard parts: long-term memory that survives restarts, immutable releases that cannot be silently altered, uniform defense-in-depth that applies even to external LLM calls, mathematical governance of multi-agent swarms, and token efficiency that makes high-volume agent workloads economically viable.
 
-Everything flows through a single intelligent MCP gateway (`clawql-api`). Disabled components cost nothing. All artifacts are verifiable against Layer 0 immutable releases. Observability, security, and strategic coordination are first-class, not afterthoughts.
+Everything flows through the Agentic Gateway (`clawql-api` / `clawql-inference`). Disabled components cost nothing. All artifacts are verifiable against Layer 0 immutable releases. Observability, security, and strategic coordination are first-class, not afterthoughts. Enterprise topology is the [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) — Regional Hubs, Dedicated Virtual Gateways, and Edge Gateways — not a single global master.
 
 This document is the single source of truth. It unifies the Vision & Roadmap, Modularization specification, Contributor Technical Specification, Deployment Guide, security modules, observability stack, token-efficiency layers, immutable release system, and Ouroboros strategic coordination.
 
@@ -189,7 +189,7 @@ Read the full documentation suite, deploy the Tier 1 stack, and begin building p
 | **[ClawQL plugin model](../design/clawql-plugin-model.md)**                                          | Horizontal plugins — MCP tool registration, lifecycle, third-party path                      |
 | **[Plugin registry](../reference/clawql-plugin-registry.md)**                                        | Shipped vs planned plugins, MCP tools, enable flags                                          |
 | [Vision & Roadmap](./clawql-vision-roadmap.md)                                                       | Public edition — honest shipped vs planned, phased delivery                                  |
-| [Modularization v2.1](./clawql-modularization-v2.md)                                                 | Package boundaries, dependency graph, intelligent MCP gateway                                |
+| [Modularization v2.1](./clawql-modularization-v2.md)                                                 | Package boundaries, dependency graph, Agentic Gateway                                |
 | **[IDP Platform (April 2026)](./clawql-idp-platform.md)**                                            | End-to-end IDP: self-hosted + hosted, archive layer, Coneshare VDR, Merkle audit             |
 | [Immutable releases (Layer 0)](./clawql-hybrid-decentralized-github-alternative.md)                  | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema                            |
 | [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md) | Implementation contracts, Effect-TS patterns, CI rules                                       |

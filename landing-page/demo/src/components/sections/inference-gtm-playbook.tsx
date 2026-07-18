@@ -185,8 +185,8 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
           </ul>
           <p>
             This is the original MCP-first deployment plan, now unified in the Agentic Gateway. The same binary handles
-            both. The self-hosted Virtual Gateway <em>is</em> the locally hosted MCP server. They are not two separate
-            products — they are two protocols exposed by one Foundational Platform.
+            both. The Edge Agentic Gateway on a laptop <em>is</em> the locally hosted MCP server. They are not two
+            separate products — they are two protocols exposed by one Foundational Platform.
           </p>
           <Callout>
             A developer who starts with the MCP entry point and never routes inference through ClawQL is still building
@@ -489,7 +489,7 @@ clawql sources add https://your-nextcloud-instance/api
           <ul>
             <li>
               <strong>For the CTO:</strong> You manage agents at the Edge, govern them through your Dedicated Virtual
-              Gateway, and ClawQL handles global routing and billing through Regional Hubs.
+              Gateway, and ClawQL handles multi-tenant routing and billing through Regional Hubs.
             </li>
             <li>
               <strong>For the CISO:</strong> Sensitive policy and WORM stay in your audit boundary. Regional Hubs see
@@ -712,7 +712,7 @@ clawql sources add https://your-nextcloud-instance/api
             sending those tools’ specs to a third party.
           </p>
           <p>
-            <strong>Pitch:</strong> ClawQL’s Virtual Gateway is a locally hosted MCP server with memory, audit, and
+            <strong>Pitch:</strong> ClawQL’s Edge Agentic Gateway is a locally hosted MCP server with memory, audit, and
             governance built in. <code>clawql inference serve --port 8080</code> and add{' '}
             <code>http://localhost:8080/mcp</code> to Cursor’s MCP settings.
           </p>

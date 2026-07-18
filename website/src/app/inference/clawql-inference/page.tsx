@@ -5,9 +5,9 @@ import InferenceBody from '@/generated/clawql-inference-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'clawql-inference — gateway, flywheel, and wiring',
+  title: 'clawql-inference — Agentic Gateway entry',
   description:
-    'Complete reference for ClawQL inference: OpenAI-compatible gateway, provider plugins, tier escalation, semantic cache, fallback chains, virtual keys, call store, export/finetune flywheel, Ouroboros audit, and CLI.',
+    'Agentic Gateway reference: OpenAI-compatible /v1, MCP path to Auditable Production AI, provider plugins, tier escalation, semantic cache, flywheel, and CLI.',
   path: '/inference/clawql-inference',
   ogType: 'article',
 })
@@ -31,7 +31,14 @@ export default function ClawqlInferencePage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Gateway + model-improvement flywheel.</strong> Generated from{' '}
+          <strong>Agentic Gateway + model-improvement flywheel.</strong> Fabric context:{' '}
+          <a
+            href="/architecture/agentic-fabric"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Zero-Trust Agentic Fabric
+          </a>
+          . Generated from{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/inference/clawql-inference.md"
             className="font-medium text-inherit underline underline-offset-2"

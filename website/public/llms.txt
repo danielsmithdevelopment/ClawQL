@@ -1,6 +1,6 @@
 # ClawQL documentation
 
-> ClawQL is an MCP server for OpenAPI, Swagger, and Google Discovery APIs — search and execute tools, optional vault memory, sandbox, schedule, notify, and defense-in-depth controls.
+> ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — OpenAPI/MCP search and execute, optional vault memory, Zero-Trust Agentic Fabric (Regional Hubs, Dedicated Virtual Gateways, Edge swarm), and defense-in-depth controls.
 
 This file helps AI agents and crawlers find canonical documentation. For full-text Markdown of any page, send `Accept: text/markdown` on that URL.
 
@@ -12,8 +12,9 @@ This file helps AI agents and crawlers find canonical documentation. For full-te
 
 ## Core reference
 - [MCP tools](https://docs.clawql.com/tools): search, execute, audit, cache, and optional tools
-- [Inference](https://docs.clawql.com/inference/clawql-inference): Gateway, flywheel, and wiring
-- [Plugins](https://docs.clawql.com/plugins): Gateway core and optional plugin packages
+- [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric): Regional Hubs, Dedicated Virtual Gateways, Edge swarm
+- [Agentic Gateway (inference)](https://docs.clawql.com/inference/clawql-inference): OpenAI drop-in, flywheel, WORM path to Auditable Production AI
+- [Plugins](https://docs.clawql.com/plugins): Agentic Gateway core and optional plugin packages
 - [Protocol](https://docs.clawql.com/reference/protocol): Uniform envelope and approval flows
 - [Spec configuration](https://docs.clawql.com/spec-configuration): OpenAPI and provider sources
 

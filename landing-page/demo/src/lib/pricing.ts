@@ -22,12 +22,12 @@ export const hostedFreeTrial = {
   durationDays: 14,
   headline: '14-day free trial',
   subheadline:
-    'Full Developer tier — persistent vault memory, unlimited executions, global edge endpoint. No credit card required.',
+    'Full Developer tier — persistent vault memory, unlimited executions, Regional Hub endpoint. No credit card required.',
   noCreditCard: true,
 } as const
 
 /** Gateway-tier hosting benefits (customer-facing; no provider names). */
-export const gatewayEdgeHostingFeature = 'Global edge-hosted MCP endpoint'
+export const gatewayEdgeHostingFeature = 'Regional Hub–hosted Agentic Gateway endpoint'
 export const vaultRecallStorageFeature = 'Vault storage — no egress penalties on memory recall'
 export const singleMcpEndpointFeature = 'One MCP endpoint on every tier — same URL when you upgrade'
 
@@ -44,9 +44,9 @@ export const annualBillingTotals = {
 
 export const pluginBundles = {
   gateway: {
-    name: 'MCP Gateway',
+    name: 'Agentic Gateway',
     description:
-      'search, execute, audit, cache — always-on Core. Global edge hosting on gateway tiers. Unlimited integrations and executions. Vault-backed memory with no per-recall egress penalties.',
+      'search, execute, audit, cache — always-on Core. Regional Hub hosting on gateway tiers. Unlimited integrations and executions. Vault-backed memory with no per-recall egress penalties.',
     tiers: ['Developer', 'Teams'] as const,
   },
   memory: {
@@ -105,7 +105,7 @@ export const pricing = {
     valueAnchor:
       'Unlimited executions + vault memory + twelve efficiency layers — executor.sh caps usage and charges overage.',
     subheadline:
-      'MCP gateway + agent memory vault for developers connecting Claude Code, Cursor, or Codex to your APIs. Start with a 14-day free trial — no credit card. No IDP, no GPU inference.',
+      'Agentic Gateway + agent memory vault for developers connecting Claude Code, Cursor, or Codex to your APIs. Start with a 14-day free trial — no credit card. No IDP, no GPU inference.',
     features: [
       'Unlimited MCP executions',
       gatewayEdgeHostingFeature,
@@ -126,7 +126,7 @@ export const pricing = {
     pluginBundle: 'memory' as const,
     valueAnchor: 'Agent infrastructure — semantic memory across connected tools without document processing.',
     subheadline:
-      'Full Onyx semantic search + memory vault + MCP gateway for teams building agent workflows. Still no IDP bundle — add Starter when you need document processing.',
+      'Full Onyx semantic search + memory vault + Agentic Gateway for teams building agent workflows. Still no IDP bundle — add Starter when you need document processing.',
     features: [
       'Unlimited MCP executions',
       gatewayEdgeHostingFeature,

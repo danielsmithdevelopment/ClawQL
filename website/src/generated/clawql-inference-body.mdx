@@ -3,9 +3,11 @@
 **Status:** Shipped (July 2026)  
 **Package:** [`packages/clawql-inference`](../../packages/clawql-inference)
 
-`clawql-inference` is ClawQL's TypeScript-native **inference gateway and model-improvement platform** — a LiteLLM-class layer with ClawQL's trust model: WORM-auditable routing, semantic cache, model tier escalation, agent coordination hooks, verdict-filtered export, and fine-tuning flywheel. It is designed as a **drop-in OpenAI replacement** (`OPENAI_BASE_URL=http://127.0.0.1:8080/v1`) while closing the production loop that generic proxies leave open.
+`clawql-inference` is ClawQL's TypeScript-native **Agentic Gateway** entry — the OpenAI-compatible inference control plane and model-improvement surface of the Foundational Platform for Auditable Production AI. It is a LiteLLM-class layer with ClawQL's trust model: WORM-auditable routing, semantic cache, model tier escalation, agent coordination hooks, verdict-filtered export, and fine-tuning flywheel. It is designed as a **drop-in OpenAI replacement** (`OPENAI_BASE_URL=http://127.0.0.1:8080/v1`) while closing the production loop that generic proxies leave open.
 
-**Related docs:** [Inference provider plugins](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/inference-providers.md) · [Token efficiency (12 layers)](/architecture/token-efficiency) · [Ouroboros library](/ouroboros)
+On a laptop it is often the **Edge Agentic Gateway**. In enterprise fabric deployments it connects through **Dedicated Virtual Gateways** to multi-tenant **Regional Hubs** — see [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric).
+
+**Related docs:** [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [Inference provider plugins](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/inference-providers.md) · [Token efficiency (12 layers)](/architecture/token-efficiency) · [Ouroboros library](/ouroboros)
 
 ---
 

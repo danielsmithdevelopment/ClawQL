@@ -12,7 +12,7 @@ import { site } from '@/lib/site'
 export const metadata = pageMetadata({
   title: 'About',
   description:
-    'ClawQL is the infrastructure layer agents call into — MCP search, execute, vault memory, and optional IDP. Not an agent framework.',
+    'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Regional Hubs, Dedicated Virtual Gateways, and Edge swarm.',
   path: '/about',
 })
 
@@ -21,13 +21,13 @@ export default function Page() {
     <>
       <HeroSimpleCentered
         id="hero"
-        headline="The infrastructure layer agents call into."
+        headline="ClawQL — the Agentic Gateway for Auditable Production AI"
         subheadline={
           <p>
-            ClawQL is not an agent framework — it does not reason or plan. It is the MCP operating system where agents{' '}
+            ClawQL is not an agent framework — it does not reason or plan. It is the Foundational Platform where agents{' '}
             <strong>search</strong> APIs, <strong>execute</strong> operations, <strong>recall</strong> vault knowledge,
-            <strong> ingest</strong> documents, and <strong>audit</strong> what happened. Memory and action form a
-            closed loop.
+            <strong> ingest</strong> documents, and <strong>audit</strong> what happened — from multi-tenant Regional
+            Hubs to Dedicated Virtual Gateways and Edge Gateways on every laptop.
           </p>
         }
       />
