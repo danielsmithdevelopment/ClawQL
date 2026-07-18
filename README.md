@@ -1,6 +1,10 @@
 # ClawQL
 
-ClawQL is an MCP server for API discovery and execution with a token-efficient `search -> execute` workflow over **OpenAPI**, **Google Discovery**, and optional **native GraphQL** and **gRPC** sources (see **`CLAWQL_GRAPHQL_URL`** / **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** in `.env.example` and [ADR 0002](docs/adr/0002-multi-protocol-supergraph.md)). GraphQL-only vendors (e.g. Linear) need no OpenAPI spec: use **`CLAWQL_PROVIDER=linear`** (bundled SDL under **`providers/linear/`** + **`LINEAR_API_KEY`**), or point **`CLAWQL_GRAPHQL_URL`** at their HTTP endpoint and auth headers, or load **`search`** from **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** (or per-source **`schemaPath`** / **`introspectionPath`**) when upstream introspection is disabled — without **`CLAWQL_SPEC_*`** / **`CLAWQL_PROVIDER`**, the default bundled REST specs are not loaded.
+**ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.**
+
+The Agentic Gateway is an MCP + OpenAI-compatible control plane for API discovery and execution with a token-efficient `search -> execute` workflow over **OpenAPI**, **Google Discovery**, and optional **native GraphQL** and **gRPC** sources (see **`CLAWQL_GRAPHQL_URL`** / **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** in `.env.example` and [ADR 0002](docs/adr/0002-multi-protocol-supergraph.md)). GraphQL-only vendors (e.g. Linear) need no OpenAPI spec: use **`CLAWQL_PROVIDER=linear`** (bundled SDL under **`providers/linear/`** + **`LINEAR_API_KEY`**), or point **`CLAWQL_GRAPHQL_URL`** at their HTTP endpoint and auth headers, or load **`search`** from **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** (or per-source **`schemaPath`** / **`introspectionPath`**) when upstream introspection is disabled — without **`CLAWQL_SPEC_*`** / **`CLAWQL_PROVIDER`**, the default bundled REST specs are not loaded.
+
+Enterprise topology: [Zero-Trust Agentic Fabric](docs/architecture/zero-trust-agentic-fabric.md) (Regional Hubs · Dedicated Virtual Gateways · Edge Gateways). GTM: [inference-first playbook](https://clawql.com/inference/gtm/).
 
 ## What You Get
 
@@ -12,7 +16,7 @@ Feature tiers (aligned with the [architecture diagram](docs/readme/images/clawql
 - Stdio and HTTP MCP server modes
 - Bundled provider specs for offline lookup and multi-provider workflows
 
-Primary package: `clawql-mcp` (**7.0.0** — default stack, vault-first onboarding, opt-in operator scaffold — [`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md))  
+Primary package: `clawql-mcp` (**7.0.0** — Agentic Gateway entry; default stack, vault-first onboarding, opt-in operator scaffold — [`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md) · announcement drafts: [`docs/announcements/announcement-drafts-v7.0.0.md`](docs/announcements/announcement-drafts-v7.0.0.md))  
 Repo: https://github.com/danielsmithdevelopment/ClawQL
 
 ### Container images on GHCR (Docker / Helm)
@@ -49,6 +53,7 @@ Top-level docs index: `docs/README.md`
 
 ### Start here
 
+- **Zero-Trust Agentic Fabric:** `docs/architecture/zero-trust-agentic-fabric.md` — [`/architecture/agentic-fabric`](https://docs.clawql.com/architecture/agentic-fabric)
 - Getting started: `docs/readme/getting-started.md`
 - **Set up with your agent:** `docs/getting-started/agent-setup-prompt.md` · init walkthrough spec: `docs/getting-started/clawql-init-walkthrough-spec.md`
 - Plugins hub: `docs/plugins/README.md` — [`/plugins`](https://docs.clawql.com/plugins)

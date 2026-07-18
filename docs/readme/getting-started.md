@@ -1,6 +1,6 @@
 # ClawQL Getting Started
 
-This guide is the quick path for running `clawql-mcp` locally and connecting it to an MCP client.
+**ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.** This guide is the quick path for running `clawql-mcp` locally (an Edge Agentic Gateway on your laptop) and connecting it to an MCP client. Enterprise fabric: [Zero-Trust Agentic Fabric](../architecture/zero-trust-agentic-fabric.md).
 
 ## First 5 minutes
 
