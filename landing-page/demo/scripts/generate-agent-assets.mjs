@@ -310,6 +310,7 @@ writeText(
 
 - [Docs](${docs})
 - [Getting started](${docs}/getting-started)
+- [Inference-first GTM playbook](${origin}/inference/gtm/)
 - [Enterprise GTM playbook](${origin}/enterprise/gtm/)
 - [MCP Server Card](/.well-known/mcp/server-card.json)
 `,

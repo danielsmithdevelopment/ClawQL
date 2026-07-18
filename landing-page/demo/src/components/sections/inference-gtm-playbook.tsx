@@ -55,8 +55,8 @@ export function InferenceGtmPlaybook() {
             {[
               {
                 label: 'Primary positioning',
-                value: 'Inference is the razor',
-                sub: 'Everything else is the blade — expand from three minutes of install',
+                value: 'Gateway-first adoption',
+                sub: 'Prove value in minutes, then expand into the sovereign operating system',
               },
               {
                 label: 'Entry binary',
@@ -88,7 +88,7 @@ export function InferenceGtmPlaybook() {
             and asked buyers to evaluate a comprehensive system before experiencing any of it. This playbook documents
             the corrected motion.
           </p>
-          <Callout>The inference gateway is the razor. Everything else is the blade.</Callout>
+          <Callout>The Unified Gateway is the adoption surface. The sovereign platform is the destination.</Callout>
           <p>
             <code>npx clawql-inference</code> and <code>export OPENAI_BASE_URL=http://localhost:8080</code> are the
             lowest-friction entry points in the stack. A developer can be running ClawQL in three minutes without
@@ -456,8 +456,8 @@ clawql sources add https://your-nextcloud-instance/api
               path for engineers and data-sovereignty buyers who will never use managed SaaS.
             </li>
             <li>
-              <strong>Developer ($29/mo):</strong> Inference gateway + vault memory. The “razor” tier — cheap enough
-              that cost is never the reason not to try it.
+              <strong>Developer ($29/mo):</strong> Inference gateway + vault memory. The land-and-expand entry tier —
+              priced so procurement friction never blocks a technical evaluation.
             </li>
             <li>
               <strong>Teams ($99/mo):</strong> Inference + vault memory + Onyx semantic search. Five users. Still below
