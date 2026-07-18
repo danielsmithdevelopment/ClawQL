@@ -103,9 +103,26 @@ Orchestration loop: **Broadcast → Pull → Execute → Report.**
 
 ---
 
+## Hardened primitives (proof of competence)
+
+The fabric is not marketing architecture alone — the security layers are published as engineering essays on [PragmaticVectors](https://pragmaticvectors.com/) ([Hardened Agentic Stack](https://pragmaticvectors.com/series/hardened-agentic-stack)):
+
+| Fabric concern                 | Verification essay                                                                                                                                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Infrastructure optimization    | [Twelve Layers of LLM Cost](https://pragmaticvectors.com/posts/twelve-layers-llm-cost/)                                                                                                           |
+| Memory / IDP residency         | [Local Data Residency](https://pragmaticvectors.com/posts/hardened-agentic-13-memory-residency/)                                                                                                  |
+| Intent ↔ execution correlation | [Observability Loop](https://pragmaticvectors.com/posts/hardened-agentic-08-observability-loop/)                                                                                                  |
+| Edge containment               | [The Kernel Said No (macOS Seatbelt)](https://pragmaticvectors.com/posts/macos-seatbelt-agent-sandbox/)                                                                                           |
+| Supply-chain / CISO posture    | [Mini Shai-Hulud layered defense](https://pragmaticvectors.com/posts/mini-shai-hulud-supply-chain/)                                                                                               |
+| Kata / sandbox + Tetragon      | [Building the Sandbox](https://pragmaticvectors.com/posts/hardened-agentic-07-tool-sandbox/) · [Process Containment](https://pragmaticvectors.com/posts/hardened-agentic-04-process-containment/) |
+
+GTM mapping of these essays to the expansion ladder: [Inference-first GTM — Hardened Security Dossier](https://clawql.com/inference/gtm/#security-dossier).
+
+---
+
 ## Related
 
-- Marketing GTM (primary): [Inference-first GTM playbook](https://clawql.com/inference/gtm/)
+- Marketing GTM (primary): [Inference-first GTM playbook](https://clawql.com/inference/gtm/) · [Hardened Security Dossier](https://clawql.com/inference/gtm/#security-dossier)
 - Enterprise / Palantir-facing (secondary): [Enterprise GTM playbook](https://clawql.com/enterprise/gtm/)
 - Product entry: [clawql-inference](../inference/clawql-inference.md) · [Getting started](https://docs.clawql.com/getting-started)
 - Vision: [Vision & roadmap](../vision/clawql-vision-roadmap.md)

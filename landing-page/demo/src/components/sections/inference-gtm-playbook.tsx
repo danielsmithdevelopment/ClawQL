@@ -9,6 +9,7 @@ const toc = [
   { href: '#executive-summary', label: 'Executive summary' },
   { href: '#two-entry-points', label: 'The two entry points' },
   { href: '#expansion-ladder', label: 'The expansion ladder' },
+  { href: '#security-dossier', label: 'Hardened Security Dossier' },
   { href: '#agentic-fabric', label: 'Zero-Trust Agentic Fabric' },
   { href: '#why-nobody-else', label: 'Why nobody else can run this' },
   { href: '#pricing', label: 'Pricing reinforces the strategy' },
@@ -18,6 +19,23 @@ const toc = [
   { href: '#execution', label: 'GTM execution plan' },
   { href: '#positioning', label: 'One-sentence positioning' },
 ] as const
+
+/** PragmaticVectors — technical verification library for the GTM expansion ladder. */
+const pv = {
+  origin: 'https://pragmaticvectors.com',
+  series: 'https://pragmaticvectors.com/series/hardened-agentic-stack',
+  twelveLayers: 'https://pragmaticvectors.com/posts/twelve-layers-llm-cost/',
+  memoryResidency: 'https://pragmaticvectors.com/posts/hardened-agentic-13-memory-residency/',
+  observabilityLoop: 'https://pragmaticvectors.com/posts/hardened-agentic-08-observability-loop/',
+  kernelSaidNo: 'https://pragmaticvectors.com/posts/macos-seatbelt-agent-sandbox/',
+  miniShaiHulud: 'https://pragmaticvectors.com/posts/mini-shai-hulud-supply-chain/',
+  supplyChainSigning: 'https://pragmaticvectors.com/posts/hardened-agentic-12-supply-chain-signing/',
+  zeroTrustIngest: 'https://pragmaticvectors.com/posts/hardened-agentic-01-zero-trust-ingest/',
+  anomalousToolUse: 'https://pragmaticvectors.com/posts/hardened-agentic-09-anomalous-tool-use/',
+  replaceLitellm: 'https://pragmaticvectors.com/posts/replace-litellm-clawql-inference/',
+  processContainment: 'https://pragmaticvectors.com/posts/hardened-agentic-04-process-containment/',
+  toolSandbox: 'https://pragmaticvectors.com/posts/hardened-agentic-07-tool-sandbox/',
+} as const
 
 function Callout({ children }: { children: ReactNode }) {
   return <blockquote>{children}</blockquote>
@@ -326,6 +344,92 @@ clawql sources add https://your-nextcloud-instance/api
             system they were already using. The IDP is an upsell from trust, not a standalone evaluation.
           </Callout>
 
+          <h2 id="security-dossier">Hardened Security Dossier — technical verification by expansion stage</h2>
+          <p>
+            Enterprise buyers and CISOs do not buy abstract security claims. They buy architectures they can verify. The{' '}
+            <Link href={pv.origin}>PragmaticVectors</Link> library — especially the{' '}
+            <Link href={pv.series}>Hardened Agentic Stack</Link> series — is the proof-of-competence dossier for every
+            stage of the expansion ladder. When a buyer asks “how do you secure this?”, the answer is a published
+            engineering standard, not a marketing slide.
+          </p>
+          <ScrollTable>
+            <table>
+              <thead>
+                <tr>
+                  <th>Expansion stage</th>
+                  <th>Business outcome</th>
+                  <th>Technical verification (whitepaper)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Inference Gateway</td>
+                  <td>Infrastructure optimization</td>
+                  <td>
+                    <Link href={pv.twelveLayers}>The Twelve Layers of LLM Cost</Link>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Memory / IDP</td>
+                  <td>Stateful intelligence</td>
+                  <td>
+                    <Link href={pv.memoryResidency}>Local Data Residency: Securing Obsidian and JSONL</Link>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Dedicated Virtual Gateway</td>
+                  <td>Audit-trail enforcement</td>
+                  <td>
+                    <Link href={pv.observabilityLoop}>The Observability Loop: Correlating Intent to Action</Link>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Edge Agentic Swarm</td>
+                  <td>Sovereign execution</td>
+                  <td>
+                    <Link href={pv.kernelSaidNo}>The Kernel Said No: Containment on macOS</Link>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Governance / CISO</td>
+                  <td>Auditable Production AI</td>
+                  <td>
+                    <Link href={pv.miniShaiHulud}>The Mini Shai-Hulud Worm: Layered Defense</Link>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </ScrollTable>
+
+          <h3>Sales quick reference</h3>
+          <p>Map the objection to the essay — educate first, then show that ClawQL implements the same architecture.</p>
+          <ul>
+            <li>
+              <strong>Supply chain:</strong>{' '}
+              <Link href={pv.supplyChainSigning}>Supply Chain Trust: Signing Images and Artifacts</Link> ·{' '}
+              <Link href={pv.miniShaiHulud}>Mini Shai-Hulud</Link>
+            </li>
+            <li>
+              <strong>LiteLLM migration:</strong>{' '}
+              <Link href={pv.replaceLitellm}>Replacing LiteLLM After the March 2026 Supply Chain Compromise</Link>
+            </li>
+            <li>
+              <strong>Runtime isolation (Kata / sandbox):</strong>{' '}
+              <Link href={pv.toolSandbox}>Building the Sandbox: Isolated Tool Execution</Link> ·{' '}
+              <Link href={pv.processContainment}>Process Containment (Tetragon / eBPF)</Link>
+            </li>
+            <li>
+              <strong>Regional Hub → Dedicated VG onboarding:</strong>{' '}
+              <Link href={pv.zeroTrustIngest}>Zero-Trust Ingest</Link> ·{' '}
+              <Link href={pv.anomalousToolUse}>Anomalous Tool Use Detection</Link>
+            </li>
+          </ul>
+          <Callout>
+            This is education-led sales. A buyer who adopts ClawQL because they read <em>The Kernel Said No</em> and{' '}
+            <em>Process Containment</em> is buying an architectural philosophy — not just a SKU. The moat is
+            intellectual as much as it is technical.
+          </Callout>
+
           <h2 id="agentic-fabric">Zero-Trust Agentic Fabric — the enterprise architecture</h2>
           <p>
             ClawQL’s Foundational Platform is not a single global proxy. It is a{' '}
@@ -496,6 +600,16 @@ clawql sources add https://your-nextcloud-instance/api
               billing and routing signals required for operations — not your private enforcement contents.
             </li>
           </ul>
+
+          <h3>Sovereign Execution Environment — safety switches</h3>
+          <p>
+            The fabric’s “kill switches” are runtime primitives, not policy PDFs. Identity (mTLS-pinned gateways) +
+            sandbox (<Link href={pv.toolSandbox}>Kata / isolated tool execution</Link>) + kernel enforcement (
+            <Link href={pv.processContainment}>Tetragon / eBPF process containment</Link>, Falco for behavioral audit) +
+            WORM on the Dedicated Virtual Gateway. Agents do not merely “follow rules” — they operate in a
+            hardware-isolated, kernel-monitored environment where unauthorized behavior is blocked at the host. Full
+            essay map: <Link href="#security-dossier">Hardened Security Dossier</Link>.
+          </p>
 
           <h2 id="why-nobody-else">Why nobody else can run this playbook</h2>
           <p>
@@ -859,16 +973,18 @@ clawql sources add https://your-nextcloud-instance/api
           </p>
           <ul>
             <li>
-              Content on PragmaticVectors.com — sandbox, LiteLLM supply chain, twelve-layer token efficiency, and
-              agentic payment rails posts as direct funnels to the inference gateway
+              Content on <Link href={pv.origin}>PragmaticVectors.com</Link> — use the{' '}
+              <Link href="#security-dossier">Hardened Security Dossier</Link> as the funnel map: LiteLLM migration +
+              twelve-layer cost posts for Inference Gateway buyers; Seatbelt / Tetragon / sandbox posts for Edge Gateway
+              adopters (<Link href={pv.series}>Hardened Agentic Stack</Link>)
             </li>
             <li>
               Anchor tweet: drop-in OpenAI replacement, semantic cache, PAL routing, Flywheel, virtual keys, plus{' '}
               <code>/mcp</code> for Cursor — everything else additive
             </li>
             <li>
-              LiteLLM migration guide: switch in five minutes, zero code changes, better supply chain posture,
-              fine-tuning loop the current setup can’t close
+              LiteLLM migration guide: <Link href={pv.replaceLitellm}>Replacing LiteLLM…</Link> — switch in five
+              minutes, zero code changes, better supply chain posture, fine-tuning loop the current setup can’t close
             </li>
             <li>
               executor.sh comparison: factual, not aggressive — tools + inference + memory + documents + policies, no
@@ -887,6 +1003,12 @@ clawql sources add https://your-nextcloud-instance/api
           <ul>
             <li>Flywheel case study — cost and quality impact of the first fine-tuning cycle</li>
             <li>Dedicated Virtual Gateway + Agentic Fabric webinar for platform engineering leads</li>
+            <li>
+              Welcome sequence for Regional Hub → Dedicated VG upgrades: assign{' '}
+              <Link href={pv.zeroTrustIngest}>Zero-Trust Ingest</Link> and{' '}
+              <Link href={pv.anomalousToolUse}>Anomalous Tool Use</Link> as foundational reading for the team’s new
+              security posture
+            </li>
             <li>
               IDP upsell sequence when a user runs <code>clawql sources add &lt;url&gt;</code> against a document store
             </li>
