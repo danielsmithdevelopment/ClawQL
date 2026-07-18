@@ -8,7 +8,7 @@ Install a **k3s-friendly** intelligent document processing stack without forking
 
 | Chart            | Footprint            | Use case                                                  |
 | ---------------- | -------------------- | --------------------------------------------------------- |
-| **`clawql-mcp`** | Minimal → custom     | Production Agentic Gateway, pick your own optional stacks     |
+| **`clawql-mcp`** | Minimal → custom     | Production Agentic Gateway, pick your own optional stacks |
 | **`clawql-idp`** | Opinionated full lab | Local IDP + OpenClaw + document pipeline + Argo MCP hooks |
 
 The umbrella chart is a **values wrapper** — all Kubernetes objects still render from `clawql-mcp` templates.

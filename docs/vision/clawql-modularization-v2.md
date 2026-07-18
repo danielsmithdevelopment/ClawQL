@@ -42,9 +42,9 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 
 ### 3.1 Always-Enabled (Foundation)
 
-| Package         | Responsibilities                                                                                                                                                                                                                      |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **clawql-core** | Shared types, ATRClaims, Merkle utilities, Cuckoo filter, Plugin interface, AgentRuntime, error factories                                                                                                                             |
+| Package         | Responsibilities                                                                                                                                                                                                              |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **clawql-core** | Shared types, ATRClaims, Merkle utilities, Cuckoo filter, Plugin interface, AgentRuntime, error factories                                                                                                                     |
 | **clawql-api**  | The Agentic Gateway. Handles search/execute, plugin registration (native + proxy), routing, ATR/Panguard enforcement, Presidio hooks (🚧 opt-in gateway redaction), circuit breakers (📋 roadmap), and observability emission |
 
 ### 3.2 Default-Enabled
