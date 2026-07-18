@@ -8,11 +8,7 @@ import {
   buildStripeInvoicePaidEntry,
 } from "../audit/events.js";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
-import {
-  TOPUP_META_KEY,
-  appendCreditEntry,
-  settleTopupByPaymentIntent,
-} from "../credits/index.js";
+import { TOPUP_META_KEY, appendCreditEntry, settleTopupByPaymentIntent } from "../credits/index.js";
 import type { ConfigError } from "../errors/payment-errors.js";
 import type { PaymentError } from "../errors/payment-errors.js";
 import { StripeSignatureError } from "./stripe-errors.js";
@@ -216,8 +212,7 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
                 return { handled: false, eventType: event.type, eventId: event.id };
               }
               const failTenant = tenantFromEvent(event, tenantId);
-              const failReason =
-                pi.last_payment_error?.message || "payment_intent.payment_failed";
+              const failReason = pi.last_payment_error?.message || "payment_intent.payment_failed";
               yield* Effect.promise(async () => {
                 try {
                   await appendCreditEntry(
