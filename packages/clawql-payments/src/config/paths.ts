@@ -49,3 +49,8 @@ export function resolveAgentAccountsPath(env: NodeJS.ProcessEnv = process.env): 
 export function resolvePendingActionsDir(env: NodeJS.ProcessEnv = process.env): string {
   return join(resolvePaymentsDir(env), "pending-actions");
 }
+
+/** Append-only deduction event outbox (post-counter NATS/analytics feed). */
+export function resolveDeductionOutboxPath(env: NodeJS.ProcessEnv = process.env): string {
+  return join(resolvePaymentsDir(env), "deduction-outbox.jsonl");
+}

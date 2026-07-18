@@ -35,6 +35,9 @@ export type PaymentEventKind =
   | "CREDIT_TOPUP_SETTLED"
   | "CREDIT_TOPUP_FAILED"
   | "CREDIT_DEBITED"
+  | "CREDIT_HELD"
+  | "CREDIT_CAPTURED"
+  | "CREDIT_RELEASED"
   | "COMPENSATION_DEPOSIT_STAGED"
   | "COMPENSATION_DEPOSIT_CONFIRMED"
   | "COMPENSATION_DEPOSIT_FAILED"
@@ -940,6 +943,71 @@ export function buildCompensationCancelledEntry(input: {
       agent_id: input.agentId,
       plan: input.kind,
       recruitment_id: input.recruitmentId,
+    },
+  });
+}
+
+export function buildCreditHeldEntry(input: {
+  tenantId: string;
+  amountUsd: number;
+  balanceUsd: number;
+  holdId: string;
+  resource?: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "CREDIT_HELD",
+    summary: `Credits held $${input.amountUsd.toFixed(2)} (${input.holdId}) → balance $${input.balanceUsd.toFixed(2)}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "credits",
+      amount_usd: input.amountUsd,
+      balance_usd: input.balanceUsd,
+      tenant_id: input.tenantId,
+      resource: input.resource ?? input.holdId,
+    },
+  });
+}
+
+export function buildCreditCapturedEntry(input: {
+  tenantId: string;
+  amountUsd: number;
+  refundedUsd: number;
+  balanceUsd: number;
+  holdId: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "CREDIT_CAPTURED",
+    summary: `Credits captured $${input.amountUsd.toFixed(2)} (refunded $${input.refundedUsd.toFixed(2)}) → balance $${input.balanceUsd.toFixed(2)}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "credits",
+      amount_usd: input.amountUsd,
+      balance_usd: input.balanceUsd,
+      tenant_id: input.tenantId,
+      resource: input.holdId,
+    },
+  });
+}
+
+export function buildCreditReleasedEntry(input: {
+  tenantId: string;
+  amountUsd: number;
+  balanceUsd: number;
+  holdId: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "CREDIT_RELEASED",
+    summary: `Credits released $${input.amountUsd.toFixed(2)} (${input.holdId}) → balance $${input.balanceUsd.toFixed(2)}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "credits",
+      amount_usd: input.amountUsd,
+      balance_usd: input.balanceUsd,
+      tenant_id: input.tenantId,
+      resource: input.holdId,
     },
   });
 }

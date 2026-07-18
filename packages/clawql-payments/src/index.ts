@@ -28,4 +28,5 @@ export {
   resolveCreditsLedgerPath,
   resolveAgentAccountsPath,
   resolvePendingActionsDir,
+  resolveDeductionOutboxPath,
 } from "./config/paths.js";
