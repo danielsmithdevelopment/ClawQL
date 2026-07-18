@@ -17,6 +17,7 @@ clawql-payments
 ├── acp/        # ACP checkout sessions (create/complete + Stripe SPT)
 ├── paypal/     # PayPal Orders v2 create/capture
 ├── adyen/      # Adyen Checkout sessions, payments, HMAC webhooks
+├── credits/    # Prepaid ledger + Stripe Financial Connections / ACH bank top-up
 ├── plans/      # ClawQL tier definitions, entitlements, usage tracking, limit enforcement
 ├── audit/      # Payment events → hash-chained WORM (jsonl, postgres, or memory) + optional Loki export
 └── cli/        # `clawql payments *` command implementations

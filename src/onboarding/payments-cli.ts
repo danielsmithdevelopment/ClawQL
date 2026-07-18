@@ -21,6 +21,9 @@ import {
   runPaymentsX402Reconcile,
   runPaymentsX402Verify,
   runPaymentsX402WalletSetup,
+  runPaymentsCreditsShow,
+  runPaymentsCreditsBankLink,
+  runPaymentsCreditsTopup,
   type SpendGroupBy,
 } from "clawql-payments";
 
@@ -55,6 +58,8 @@ export type PaymentsCliOptions = {
   eventName?: string;
   identifier?: string;
   value?: number;
+  paymentMethodId?: string;
+  returnUrl?: string;
 };
 
 export async function runPaymentsPlanShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
@@ -211,4 +216,29 @@ export async function runPaymentsX402GateListCmd(
   options: PaymentsCliOptions = {}
 ): Promise<number> {
   return runPaymentsX402GateList({ json: options.json });
+}
+
+export async function runPaymentsCreditsShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
+  return runPaymentsCreditsShow({ tenantId: options.tenantId });
+}
+
+export async function runPaymentsCreditsBankLinkCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsBankLink({
+    customerId: options.customer,
+    tenantId: options.tenantId,
+    returnUrl: options.returnUrl,
+  });
+}
+
+export async function runPaymentsCreditsTopupCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsTopup({
+    customerId: options.customer,
+    amountUsd: options.amount,
+    paymentMethodId: options.paymentMethodId,
+    tenantId: options.tenantId,
+  });
 }
