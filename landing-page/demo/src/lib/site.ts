@@ -21,7 +21,7 @@ export const site = {
     signup: '/signup',
     pricing: '/pricing',
     about: '/about',
-    /** Default / primary GTM motion — Unified Gateway (inference + MCP). */
+    /** Default / primary GTM motion — Agentic Gateway as Foundational Platform for Auditable Production AI. */
     inferenceGtm: '/inference/gtm',
     /** Secondary enterprise / Palantir-facing GTM motion. */
     enterpriseGtm: '/enterprise/gtm',

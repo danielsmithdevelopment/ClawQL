@@ -9,7 +9,7 @@ import { site } from '@/lib/site'
 export const metadata = pageMetadata({
   title: 'Inference-first GTM playbook',
   description:
-    'ClawQL inference-first go-to-market playbook — Unified Gateway from npx clawql-inference to the full sovereign platform, with MCP and OpenAI drop-in entry points.',
+    'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — from npx clawql-inference to sovereign governance.',
   path: '/inference/gtm',
 })
 
@@ -21,12 +21,13 @@ export default function Page() {
         eyebrow={
           <p className="text-sm/7 font-medium text-mist-600 dark:text-mist-300">Inference-first GTM · July 2026</p>
         }
-        headline="Lead with the Unified Gateway"
+        headline="The Foundational Platform for Auditable Production AI"
         subheadline={
           <p>
-            ClawQL’s default go-to-market playbook — land with an OpenAI-compatible inference control plane and native{' '}
-            <code>/mcp</code> access, then expand into memory, Flywheel, Virtual Gateway governance, and the full
-            sovereign agent operating system.
+            ClawQL provides the <strong>Agentic Gateway</strong> as the Foundational Platform for Auditable Production
+            AI — land with an OpenAI-compatible inference control plane and native <code>/mcp</code> access, then expand
+            into memory, model provenance, Virtual Gateway audit-trail enforcement, and the full sovereign agent
+            operating system.
           </p>
         }
         cta={
@@ -45,11 +46,11 @@ export default function Page() {
 
       <CallToActionSimpleCentered
         id="cta"
-        headline="Start with three minutes. Own the stack later."
+        headline="Start with three minutes. Reach auditable production."
         subheadline={
           <p>
-            Drop in an OpenAI-compatible base URL or connect Cursor to <code>/mcp</code>. Expand product-led into cache,
-            routing, Flywheel, memory, and documents — without changing your endpoint.
+            Drop in an OpenAI-compatible base URL or connect Cursor to <code>/mcp</code>. Expand product-led into
+            infrastructure optimization, model provenance, memory, and governance — without changing your endpoint.
           </p>
         }
         cta={
