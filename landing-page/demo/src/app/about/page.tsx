@@ -159,8 +159,10 @@ export default function Page() {
         headline="Read the case studies. Run the tools."
         subheadline={
           <p>
-            Self-host today or start a 14-day Developer trial. For enterprise positioning against Palantir AIP, see the{' '}
-            <Link href={site.urls.enterpriseGtm}>GTM playbook</Link>. {site.waitlistPromise}
+            Self-host today or start a 14-day Developer trial. For the default product-led motion, see the{' '}
+            <Link href={site.urls.inferenceGtm}>inference-first GTM playbook</Link>; for regulated / Palantir-facing
+            positioning, see the <Link href={site.urls.enterpriseGtm}>enterprise GTM playbook</Link>.{' '}
+            {site.waitlistPromise}
           </p>
         }
         cta={
