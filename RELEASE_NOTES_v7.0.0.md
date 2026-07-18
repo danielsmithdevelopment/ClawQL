@@ -8,7 +8,13 @@
 
 ## Headline
 
-**One default everywhere, vault-first defense in depth.** Fresh `npx clawql-mcp` and Helm **`provider: default`** load the same opinionated stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Vault-backed provider secrets are required by default; the operator reconciles expected keys against your synced Secret.
+**ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.**
+
+**7.0.0** ships that platform as a product: one default stack everywhere, vault-first defense in depth, and Phase 1 exit complete. Fresh `npx clawql-mcp` and Helm **`provider: default`** load the same opinionated stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Vault-backed provider secrets are required by default; the operator reconciles expected keys against your synced Secret.
+
+The Agentic Gateway speaks OpenAI-compatible **`/v1`** and MCP **`/mcp`**. Enterprise deployments follow the [Zero-Trust Agentic Fabric](docs/architecture/zero-trust-agentic-fabric.md): Regional Hubs (routing/billing), Dedicated Virtual Gateways (Audit-Trail Enforcement Points with NATS JetStream + Valkey), and Edge Gateways on developer machines.
+
+→ Announcement drafts: [`docs/announcements/announcement-drafts-v7.0.0.md`](docs/announcements/announcement-drafts-v7.0.0.md) · GTM: [inference-first playbook](https://clawql.com/inference/gtm/)
 
 ---
 

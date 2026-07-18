@@ -1,7 +1,7 @@
 {
     "name": "clawql-mcp",
     "version": "7.0.0",
-    "description": "MCP server: search + execute OpenAPI/Discovery APIs (internal GraphQL projection), optional native GraphQL HTTP and gRPC unary sources",
+    "description": "Agentic Gateway — Foundational Platform for Auditable Production AI. MCP search + execute over OpenAPI/Discovery (internal GraphQL projection), optional native GraphQL HTTP and gRPC unary sources",
     "license": "Apache-2.0",
     "type": "module",
     "main": "./dist/server.js",

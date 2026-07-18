@@ -126,7 +126,7 @@ export function getAgentCard(): Record<string, unknown> {
         id: 'search_execute',
         name: 'Search and execute APIs',
         description:
-          'Discover operationIds via search, then execute OpenAPI operations through the ClawQL MCP gateway with audit and policy enforcement.',
+          'Discover operationIds via search, then execute OpenAPI operations through the ClawQL Agentic Gateway with audit and policy enforcement.',
         tags: ['mcp', 'openapi', 'search', 'execute'],
         examples: [
           'Search GitHub API for list repository issues',

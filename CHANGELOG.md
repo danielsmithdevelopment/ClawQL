@@ -13,11 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **GTM / positioning (site-wide)** — **Agentic Gateway** as the **Foundational Platform for Auditable Production AI**; Zero-Trust Agentic Fabric docs; clawql.com + docs.clawql.com alignment; root README, `package.json` description, `RELEASE_NOTES_v7.0.0.md` headline, and **[`docs/announcements/announcement-drafts-v7.0.0.md`](docs/announcements/announcement-drafts-v7.0.0.md)** for the pending 7.0 announcement.
 - **Docs site (7.0 polish)** — Lighthouse perf: static header backdrop, **search on user intent** (placeholder + Cmd/Ctrl+K), deferred WebMCP register, dialog-only autocomplete; webpack search index with lazy query load. **SEO:** hub route metadata; sitemap + `SearchAction` JSON-LD; **Article** schema on case studies (dates, breadcrumbs). **A11y:** expanded axe routes; **CSS-only sidebar nav** (no framer-motion); home skeleton heading fix.
 
 ## [7.0.0] - 2026-07-10
 
-Major release: **opinionated default stack everywhere** (npm + Helm), **vault-first defense in depth**, **ClawQL Operator** with provider-secret reconciliation, **npm package separation at 7.0.0**, observability ADR 0005, and consolidated IDP wave. Release notes: **[`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md)**.
+Major release: **ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI** — opinionated default stack everywhere (npm + Helm), **vault-first defense in depth**, **ClawQL Operator** with provider-secret reconciliation, **npm package separation at 7.0.0**, observability ADR 0005, and consolidated IDP wave. Release notes: **[`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md)**. Announcement drafts: **[`docs/announcements/announcement-drafts-v7.0.0.md`](docs/announcements/announcement-drafts-v7.0.0.md)**. Fabric architecture: **[`docs/architecture/zero-trust-agentic-fabric.md`](docs/architecture/zero-trust-agentic-fabric.md)**.
 
 ### Breaking
 
