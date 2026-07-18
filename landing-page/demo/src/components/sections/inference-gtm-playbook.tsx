@@ -45,33 +45,35 @@ export function InferenceGtmPlaybook() {
 
         <Document className="mx-auto w-full max-w-3xl">
           <p>
-            This playbook defines ClawQL’s <strong>default</strong> go-to-market motion: lead with the Unified Gateway —
-            OpenAI-compatible inference plus a locally hosted MCP server — then expand product-led into memory,
-            documents, VDR, payments, and sovereign Virtual Gateway governance. For the secondary enterprise /
-            Palantir-facing motion, see the <Link href={site.urls.enterpriseGtm}>Enterprise GTM playbook</Link>.
+            This playbook defines ClawQL’s <strong>default</strong> go-to-market motion:{' '}
+            <strong>the Agentic Gateway as the Foundational Platform for Auditable Production AI</strong>. Developers
+            land with OpenAI-compatible inference and a locally hosted MCP server, then expand product-led into memory,
+            model provenance, documents, payments, and Virtual Gateway audit-trail enforcement. For the secondary
+            enterprise / Palantir-facing motion, see the{' '}
+            <Link href={site.urls.enterpriseGtm}>Enterprise GTM playbook</Link>.
           </p>
 
           <div className="not-prose my-8 grid gap-4 sm:grid-cols-2">
             {[
               {
                 label: 'Primary positioning',
-                value: 'Gateway-first adoption',
-                sub: 'Prove value in minutes, then expand into the sovereign operating system',
+                value: 'Agentic Gateway',
+                sub: 'Foundational Platform for Auditable Production AI',
               },
               {
                 label: 'Entry binary',
-                value: 'Unified Gateway',
+                value: 'One gateway, two protocols',
                 sub: '/v1 chat completions and /mcp from one process',
               },
               {
                 label: 'Core GTM motion',
-                value: 'Product-led expansion',
-                sub: 'Inference or MCP → cache → PAL → Flywheel → memory → VG → IDP',
+                value: 'Adoption-led expansion',
+                sub: 'Inference or MCP → optimization → provenance → memory → audit enforcement → IDP',
               },
               {
-                label: 'First paid tier',
-                value: 'Developer · $29/mo',
-                sub: 'Inference gateway + vault memory; self-host remains free forever',
+                label: 'Business outcome',
+                value: 'Auditable Production AI',
+                sub: 'Policy, WORM trails, and model provenance at the gateway layer',
               },
             ].map((item) => (
               <div key={item.label} className="border-t border-mist-200 pt-3 dark:border-white/15">
@@ -84,47 +86,51 @@ export function InferenceGtmPlaybook() {
 
           <h2 id="executive-summary">Executive summary: the strategic reframe</h2>
           <p>
-            ClawQL’s previous GTM motion led with the full platform — IDP, VDR, sovereign inference, DAOS coordination —
-            and asked buyers to evaluate a comprehensive system before experiencing any of it. This playbook documents
-            the corrected motion.
+            ClawQL’s GTM motion has evolved from a broad platform pitch to a focused, adoption-led strategy. The Agentic
+            Gateway is the Foundational Platform for Auditable Production AI.
           </p>
-          <Callout>The Unified Gateway is the adoption surface. The sovereign platform is the destination.</Callout>
+          <Callout>
+            ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.
+          </Callout>
           <p>
-            <code>npx clawql-inference</code> and <code>export OPENAI_BASE_URL=http://localhost:8080</code> are the
-            lowest-friction entry points in the stack. A developer can be running ClawQL in three minutes without
-            knowing anything about the IDP, the VDR, the Virtual Gateway, or the DAOS architecture. That three-minute
-            install is the beginning of a product-led expansion path that ends with a fully sovereign agent operating
-            system.
+            Developers land with an OpenAI-compatible inference control plane and native <code>/mcp</code> access, then
+            expand product-led into persistent memory, the fine-tuning Flywheel, Virtual Gateway governance, and the
+            full sovereign agent operating system. This three-minute install is the beginning of an expansion path that
+            evolves a developer’s workflow into a fully compliant, production-grade agentic environment.
           </p>
           <p>
-            The second strategic insight: the Virtual Gateway exposes not just an inference API but an <code>/mcp</code>{' '}
-            endpoint. This makes the gateway simultaneously an OpenAI-compatible inference proxy <strong>and</strong> a
-            locally hosted MCP server that Cursor, Claude Code, and Codex connect to natively. Users who don’t need
-            inference at all can connect their IDE directly to ClawQL’s tool catalog, memory vault, and document
-            pipeline through the MCP protocol. Two entry points from one binary.
+            The Agentic Gateway is not merely a proxy; it is the infrastructure core that solves the “Agent Sprawl”
+            problem. It integrates HTTP/REST inference routing and MCP tool-calling into one binary, creating a single
+            surface for policy enforcement, audit logging, and state management.
           </p>
 
-          <h3>The architecture question nobody else can answer</h3>
-          <p>How many inference gateways also have:</p>
+          <h3>The architecture question that defines our market leadership</h3>
+          <p>How many inference gateways provide the foundational platform requirements for Auditable Production AI?</p>
           <ul>
-            <li>A Virtual Gateway architecture for per-tenant policy enforcement and isolated audit trails?</li>
-            <li>Built-in persistent cross-session memory — not session memory — that survives restarts?</li>
             <li>
-              A document processing pipeline (IDP) that feeds the same semantic search layer the inference gateway
-              queries?
+              <strong>Architectural governance:</strong> A Virtual Gateway for per-tenant policy enforcement and
+              isolated, WORM-auditable audit trails — the Audit-Trail Enforcement Point CISOs require to authorize
+              production AI.
             </li>
             <li>
-              A fine-tuning flywheel that turns every production inference call into training data for a model that
-              becomes cheaper over time?
+              <strong>Stateful intelligence:</strong> Built-in persistent, cross-session memory that survives restarts.
             </li>
             <li>
-              Native agentic payment rails (Stripe + x402 + MPP + ACP + AP2) so the gateway itself can monetize the
-              tools it exposes?
+              <strong>Integrated pipeline:</strong> An IDP document processing pipeline that feeds the same semantic
+              search layer as the inference gateway.
             </li>
-            <li>A supply chain posture that survived March 2026?</li>
+            <li>
+              <strong>Model provenance:</strong> A fine-tuning Flywheel that turns production traffic into proprietary
+              models, backed by verifiable supply-chain integrity.
+            </li>
+            <li>
+              <strong>Agentic economics:</strong> Native payment rails (Stripe + x402 + MPP) to monetize tools and
+              agents directly at the gateway layer.
+            </li>
           </ul>
           <p>
-            The answer is zero. The inference gateway is the entry point. The platform is what makes it worth staying.
+            The answer is zero. The Agentic Gateway is the entry point. The Foundational Platform is what makes it the
+            standard for production-grade, auditable AI.
           </p>
 
           <h2 id="two-entry-points">The two entry points</h2>
@@ -157,7 +163,7 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
 # That's it.`}</code>
           </pre>
           <p>
-            The Virtual Gateway exposes <code>/mcp</code> alongside <code>/v1/chat/completions</code>. The IDE connects
+            The Agentic Gateway exposes <code>/mcp</code> alongside <code>/v1/chat/completions</code>. The IDE connects
             via MCP protocol. The developer immediately gets:
           </p>
           <ul>
@@ -172,9 +178,9 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
             </li>
           </ul>
           <p>
-            This is the original MCP-first deployment plan, now unified with the inference gateway. The same binary
-            handles both. The self-hosted virtual gateway <em>is</em> the locally hosted MCP server. They are not two
-            separate products — they are two protocols exposed by one gateway.
+            This is the original MCP-first deployment plan, now unified in the Agentic Gateway. The same binary handles
+            both. The self-hosted Virtual Gateway <em>is</em> the locally hosted MCP server. They are not two separate
+            products — they are two protocols exposed by one Foundational Platform.
           </p>
           <Callout>
             A developer who starts with the MCP entry point and never routes inference through ClawQL is still building
@@ -182,43 +188,43 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
             inference routing, token efficiency, or the fine-tuning flywheel, they’re already inside the ecosystem.
           </Callout>
 
-          <h2 id="expansion-ladder">The expansion ladder</h2>
+          <h2 id="expansion-ladder">The expansion ladder toward Auditable Production AI</h2>
           <p>
-            Every ClawQL user starts on one of the two entry points. The expansion path is product-led — each feature
-            creates the natural motivation for the next one. No sales motion required until the Virtual Gateway
-            conversation.
+            Every ClawQL user starts on one of the two entry points. The expansion path is product-led — each stage is
+            an evolution toward Auditable Production AI. No sales motion required until the Virtual Gateway conversation
+            (the Audit-Trail Enforcement Point).
           </p>
 
-          <h3>Week 1: The first value moment</h3>
+          <h3>Week 1: Production visibility</h3>
           <p>
             <strong>Inference entry:</strong> Developer runs <code>clawql inference spend --group-by team</code>. For
             the first time they can see which calls are expensive, which models are being used, and what the cost
-            attribution looks like per team. This report is often surprising — and hard to generate from OpenRouter or
-            LiteLLM without significant custom instrumentation.
+            attribution looks like per team — the first artifact of an auditable production trail. This report is often
+            surprising — and hard to generate from OpenRouter or LiteLLM without significant custom instrumentation.
           </p>
           <p>
             <strong>MCP entry:</strong> Developer runs <code>memory_recall</code> for the first time and retrieves
             context from a session three weeks ago. The agent remembers what decisions were made, what was tried, what
-            failed. They realize they’ve been paying the “what were we doing?” tax on every session and it just
-            disappeared.
+            failed. Stateful intelligence replaces the “what were we doing?” tax that breaks production continuity.
           </p>
           <p>
             In both cases, the value is immediate and concrete. No onboarding. No training. No integration work beyond
             the initial setup.
           </p>
 
-          <h3>Week 2: Semantic cache + cost visibility</h3>
+          <h3>Week 2: Infrastructure optimization — semantic cache</h3>
           <p>
             Enable semantic cache (<code>CLAWQL_INFERENCE_SEMANTIC_CACHE=1</code>). Cache hits start appearing in the
             call store. Cost drops measurably on repeated similar requests. The call store now shows{' '}
-            <code>cache_hit: true</code> on a growing fraction of calls.
+            <code>cache_hit: true</code> on a growing fraction of calls — infrastructure optimization for auditable
+            production, not a theoretical efficiency claim.
           </p>
           <p>
-            This is the first moment where ClawQL demonstrably costs less than the alternative — not as a theoretical
-            efficiency claim but as a visible line item in the spend report.
+            This is the first moment where ClawQL demonstrably costs less than the alternative as a visible line item in
+            the spend report, with every hit recorded in the same WORM-backed trail.
           </p>
 
-          <h3>Week 3: PAL model escalation</h3>
+          <h3>Week 3: Infrastructure optimization — PAL routing</h3>
           <p>
             Enable routing (<code>CLAWQL_INFERENCE_ROUTING_ENABLED=1</code>). Decomposed sub-tasks start routing to
             Frugal tier (local Ollama or Phi-4). Top-level orchestration stays on Standard. Frontier only fires on
@@ -226,10 +232,10 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
           </p>
           <p>
             The bill drops again. The call store shows tier distribution: what fraction of calls resolved at Frugal,
-            Standard, or Frontier. The developer can see exactly where their AI spend is going and why.
+            Standard, or Frontier. Routing decisions become part of the auditable production record — not opaque spend.
           </p>
 
-          <h3>Month 2: The flywheel begins</h3>
+          <h3>Month 2: Model provenance — the Flywheel</h3>
           <p>The call store has accumulated 500–2,000 verified training examples. The developer runs:</p>
           <pre>
             <code>{`clawql inference export \\
@@ -249,21 +255,23 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
           </pre>
           <p>
             The fine-tuned model registers back to <code>tier-map.json</code> as a custom Frugal tier. PAL routing uses
-            it automatically for matching task types. The bill drops again — and this time the model on the Frugal tier
-            is more accurate than the generic model it replaced, because it was trained on this developer’s actual
-            production traces.
+            it automatically for matching task types. This is <strong>model provenance for auditable production</strong>{' '}
+            — not only efficiency. The Frugal tier is more accurate than the generic model it replaced because it was
+            trained on this developer’s actual production traces, with WORM-recorded lineage of what entered the
+            training set.
           </p>
           <Callout>
             This is the moment that creates lock-in — not contractual lock-in, value lock-in. The custom Frugal model
-            lives in ClawQL’s tier-map. Moving to a different inference gateway means giving up that model and starting
-            training-data accumulation from scratch.
+            lives in ClawQL’s tier-map with verifiable provenance. Moving to a different inference gateway means giving
+            up that model asset and starting training-data accumulation from scratch.
           </Callout>
 
-          <h3>Month 3: Memory across sessions</h3>
+          <h3>Month 3: Stateful intelligence — memory across sessions</h3>
           <p>
             The developer enables persistent memory across their team. <code>memory_ingest</code> starts capturing
             architectural decisions, debugging context, and runbook notes. <code>memory_recall</code> retrieves them in
-            new sessions without anyone having to paste context.
+            new sessions without anyone having to paste context — stateful intelligence required for production agents
+            that must remain continuous and reviewable.
           </p>
           <p>
             This is available on the Developer tier ($29/mo) but it changes how the team works. Context that was
@@ -271,10 +279,12 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
             “what happened since last time?”
           </p>
 
-          <h3>Month 4–6: Team isolation and governance</h3>
+          <h3>Month 4–6: Audit-trail enforcement — Virtual Gateway</h3>
           <p>
             The team grows. Different projects need different policies. The developer wants per-project audit trails,
-            per-team budget caps, and isolation between workloads. This is the Virtual Gateway conversation.
+            per-team budget caps, and isolation between workloads. This is the Virtual Gateway conversation — the{' '}
+            <strong>Audit-Trail Enforcement Point</strong> that CISOs and compliance teams require to authorize
+            production AI.
           </p>
           <p>
             Per-team virtual keys with USD budget caps are already available (
@@ -287,7 +297,7 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
             but to scope deployment model, SLA, and managed hosted vs self-hosted Virtual Gateway in their VPC.
           </p>
 
-          <h3>Month 6+: IDP and document pipeline</h3>
+          <h3>Month 6+: Integrated pipeline — IDP and documents</h3>
           <p>
             The developer is processing documents — contracts, invoices, reports — and wants agents to read, classify,
             extract, and query them through the same MCP interface they’re already using.
@@ -731,65 +741,68 @@ clawql sources add https://your-nextcloud-instance/api
               <thead>
                 <tr>
                   <th>Buyer</th>
-                  <th>Line</th>
+                  <th>Positioning</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>Inference gateway</td>
                   <td>
-                    Stop paying for tokens you don’t need — ClawQL routes every call to the cheapest model that can
-                    handle it, caches semantically similar requests, and turns your production traffic into a fine-tuned
-                    model that gets cheaper every month.
+                    Stop paying for opaque tokens — the ClawQL Agentic Gateway routes traffic to the optimal model,
+                    caches semantically similar requests, and converts your production traffic into a verified,
+                    fine-tuned model that gains value every month.
                   </td>
                 </tr>
                 <tr>
                   <td>MCP server</td>
                   <td>
-                    One local gateway that gives Cursor and Claude Code governed access to every private API you own —
-                    with persistent memory across sessions, audit trails on every tool call, and a clear upgrade path to
-                    inference efficiency and document processing when you’re ready.
+                    The Foundational Platform for your IDE — one Agentic Gateway gives Cursor and Claude Code governed
+                    access to every private API you own, with persistent memory, full audit trails, and a clear path to
+                    production-grade governance.
                   </td>
                 </tr>
                 <tr>
                   <td>executor.sh replacement</td>
                   <td>
-                    Everything executor.sh does, plus persistent memory, semantic search, 12-layer token efficiency, and
-                    no execution meter — for less per month.
+                    Everything executor.sh provides, plus persistent memory, semantic search, 12-layer token efficiency,
+                    and a zero-meter execution model — providing a lower total cost of ownership for production agents.
                   </td>
                 </tr>
                 <tr>
                   <td>LiteLLM migration</td>
                   <td>
-                    Zero code changes. Better supply chain posture. And the fine-tuning loop that turns your inference
-                    logs into a model you own.
+                    Zero code changes, superior supply chain posture, and a fine-tuning Flywheel that turns your
+                    production logs into proprietary model assets.
                   </td>
                 </tr>
                 <tr>
                   <td>Enterprise</td>
                   <td>
-                    The governed inference layer with per-tenant Virtual Gateways, WORM audit trails, and
-                    EnterpriseGovernance manifests — so your CISO can verify what your agents did instead of trusting
-                    what your vendor claims.
+                    The Foundational Platform for Auditable Production AI — providing per-tenant Virtual Gateways, WORM
+                    audit trails, and EnterpriseGovernance manifests to ensure CISO-level verification of all agentic
+                    activity.
                   </td>
                 </tr>
               </tbody>
             </table>
           </ScrollTable>
 
-          <h2 id="summary">Summary: the Unified Gateway</h2>
+          <h2 id="summary">Summary: the Agentic Gateway as Foundational Platform</h2>
           <p>
             ClawQL is not an inference gateway that happens to have an MCP server, or an MCP server that happens to have
-            an inference gateway. It is a <strong>Unified Gateway</strong> — a single binary that speaks both HTTP/REST
-            for inference and MCP for IDE-native tool access, with memory, audit, payments, and governance integrated at
-            the transport layer.
+            an inference gateway. It is an <strong>Agentic Gateway</strong> — the Foundational Platform for Auditable
+            Production AI. One binary speaks both HTTP/REST for inference and MCP for IDE-native tool access, with
+            memory, audit, payments, and governance integrated at the transport layer.
           </p>
           <p>
-            The self-hosted Virtual Gateway is the locally hosted MCP server. The managed hosted Virtual Gateway is the
-            per-tenant enterprise policy enforcement layer. The same architecture, the same binary, the same upgrade
-            path. Infrastructure-as-a-product that scales with the user’s needs.
+            The self-hosted Virtual Gateway is the locally hosted MCP server and Audit-Trail Enforcement Point. The
+            managed hosted Virtual Gateway is the per-tenant enterprise policy enforcement layer. The same architecture,
+            the same binary, the same upgrade path — infrastructure that scales with the user’s needs from first install
+            to regulated production.
           </p>
-          <Callout>Start with three minutes. End with a sovereign agent operating system.</Callout>
+          <Callout>
+            Start with three minutes. End with Auditable Production AI on a sovereign agent operating system.
+          </Callout>
 
           <p className="mt-10 text-xs text-mist-500">
             July 2026 · ClawQL ·{' '}

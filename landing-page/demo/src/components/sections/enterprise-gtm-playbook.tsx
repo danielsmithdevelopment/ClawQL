@@ -49,7 +49,8 @@ export function EnterpriseGtmPlaybook() {
             AIP and the broader enterprise AI infrastructure market. It is written for three buyer types — CISOs and
             risk officers, CTOs and platform engineering VPs, and FinOps leads — with a unified{' '}
             <strong>sovereign alternative</strong> narrative. The default product-led motion is the{' '}
-            <Link href={site.urls.inferenceGtm}>inference-first GTM playbook</Link>.
+            <Link href={site.urls.inferenceGtm}>inference-first GTM playbook</Link> — Agentic Gateway as the
+            Foundational Platform for Auditable Production AI.
           </p>
 
           <div className="not-prose my-8 grid gap-4 sm:grid-cols-2">
