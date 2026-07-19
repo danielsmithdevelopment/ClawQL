@@ -74,7 +74,7 @@ clawql-payments
 └── cli/        clawql payments * implementations
 ```
 
-See also [payouts-ramp.md](./payouts-ramp.md), [credits-ach.md](./credits-ach.md), and [agent-compensation.md](./agent-compensation.md).
+See also [payouts-ramp.md](./payouts-ramp.md), [credits-ach.md](./credits-ach.md), [agent-compensation.md](./agent-compensation.md), and [sgdop-coordinator-compensation-bridge.md](./sgdop-coordinator-compensation-bridge.md) (future Coordinator stage-only port).
 
 ```mermaid
 flowchart TB

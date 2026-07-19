@@ -118,49 +118,27 @@ clawql payments compensation balance --agent a1
 | `CLAWQL_COMPENSATION_APPROVAL_BASE`   | HATEOAS base (or `CLAWQL_OUROBOROS_GATEWAY_URL`) |
 | `CLAWQL_COMPENSATION_CREDIT_USD_RATE` | Credits → USD at cash-out (default 1)            |
 
-## Future: SGDOP Coordinator call sketch
+## Future: SGDOP Coordinator
 
 When the strategic Coordinator ships (NSV / SGDOP / reputation / Diversity Dividends), it should **only stage** compensation. Confirm stays with the operator / PEP / Command Deck — money never moves inside the evolutionary loop.
 
-```text
-1. SGDOP detects blind spot B with azimuth gap → selects agents [A1..Ak] (diversity / w_i)
-2. For each recruited agent Ai (Coordinator / MCP stage tool only):
-     agent_compensation_deposit_stage  OR  AgentCompensationService.stageDeposit({
-       agentId: Ai,
-       amountUsd: bounty(B, Ai),          // or D_i dividend share
-       asset: "credits",
-       reason: "sgdop_recruit",
-       recruitmentId: B.id,               // blind-spot / recruitment correlation
-       correlationId: session.correlationId,
-     })
-     → returns { actionId, confirmationCode, approvalUrl }
-     → COMPENSATION_DEPOSIT_STAGED (recruitment_id = B.id)
-3. Operator / policy engine confirms (MCP agent_compensation_deposit_confirm or PEP POST)
-     → COMPENSATION_DEPOSIT_CONFIRMED — or COMPENSATION_DEPOSIT_FAILED on error
-4. Ai executes coverage work inside evolutionary loop / ActionTypes
-5. Ai (or payroll job) later:
-     agent_compensation_cashout_stage → …_confirm → PayoutService (bank | USDC)
-     → COMPENSATION_CASHOUT_COMPLETED (same correlation thread)
-     → on payout failure: ledger re-credited + COMPENSATION_CASHOUT_FAILED
-```
+**Full interface / API proposal:** [sgdop-coordinator-compensation-bridge.md](./sgdop-coordinator-compensation-bridge.md) — `CompensationStagingPort`, recruitment id linkage, bounty vs dividends, sequence diagram, error matrix, PEP swap notes.
 
-Pseudocode (Coordinator side — stage only):
+Short form:
 
 ```ts
-for (const agent of sgdop.recruit(blindSpot)) {
-  const staged =
-    yield *
-    compensation.stageDeposit({
-      agentId: agent.id,
-      amountUsd: agent.bountyUsd,
-      asset: "credits",
-      reason: "sgdop_recruit",
-      recruitmentId: blindSpot.id,
-    });
-  // Never call confirm from the Coordinator loop.
-  // Surface staged.approvalUrl in Command Deck / PEP Action View.
-  yield * notify.operator({ approvalUrl: staged.approvalUrl, code: staged.confirmationCode });
-}
+// Coordinator — stage only
+const staged =
+  yield *
+  compensation.stageDeposit({
+    agentId: agent.id,
+    amountUsd: agent.bountyUsd,
+    asset: "credits",
+    reason: "sgdop_recruit",
+    recruitmentId: blindSpot.id,
+  });
+// Never call confirm from the Coordinator loop.
+yield * notify.operator({ approvalUrl: staged.approvalUrl, code: staged.confirmationCode });
 ```
 
-See [Ouroboros coordination layer](../ouroboros/daos-coordination-layer-specification.md) §1.2 / §2 (SGDOP), [clawql-ouroboros.md](../ouroboros/clawql-ouroboros.md) (compensation bridge), and [payouts-ramp.md](./payouts-ramp.md).
+See also [Ouroboros coordination layer](../ouroboros/daos-coordination-layer-specification.md) §1.2 / §2, [clawql-ouroboros.md](../ouroboros/clawql-ouroboros.md), [payouts-ramp.md](./payouts-ramp.md).

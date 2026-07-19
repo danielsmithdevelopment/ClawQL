@@ -2,11 +2,12 @@
 
 ClawQL's unified billing layer — **Stripe** (human fiat), **x402** (per-request USDC), **MPP** (session micropayments), **AP2** (Payment Mandates), **ACP** (agentic checkout), **PayPal** Orders, **Adyen** Checkout (enterprise), managed plan entitlements, and **WORM-auditable** payment events.
 
-| Doc                                                      | Audience                             | Contents                                                                                                |
-| -------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| [**clawql-payments.md**](clawql-payments.md)             | Operators, integrators, contributors | Architecture, setup, env vars, HTTP flows, CLI, Tier 3 roadmap (Mollie/Razorpay), inference integration |
-| [**payouts-ramp.md**](payouts-ramp.md)                   | Platforms paying creators / agents   | Stripe Connect, Base USDC, Ramp agent cards, Moonpay/Transak off-ramp                                   |
-| [**agent-compensation.md**](agent-compensation.md)       | SGDOP / swarm operators              | Agent credits ledger, DAOS 2PC staging, cash-out via PayoutService                                      |
+| Doc                                                                                      | Audience                             | Contents                                                                                                |
+| ---------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| [**clawql-payments.md**](clawql-payments.md)                                             | Operators, integrators, contributors | Architecture, setup, env vars, HTTP flows, CLI, Tier 3 roadmap (Mollie/Razorpay), inference integration |
+| [**payouts-ramp.md**](payouts-ramp.md)                                                   | Platforms paying creators / agents   | Stripe Connect, Base USDC, Ramp agent cards, Moonpay/Transak off-ramp                                   |
+| [**agent-compensation.md**](agent-compensation.md)                                       | SGDOP / swarm operators              | Agent credits ledger, DAOS 2PC staging, cash-out via PayoutService                                      |
+| [**sgdop-coordinator-compensation-bridge.md**](sgdop-coordinator-compensation-bridge.md) | Coordinator / DAOS integrators       | Stage-only port: how future SGDOP Coordinator calls compensation MCP / Effect APIs                      |
 
 ## Package and CLI entry points
 
