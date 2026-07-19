@@ -41,28 +41,34 @@ When PEP + NATS KV land (build plan P0-B), swap the store behind the same stage/
 
 ## WORM event schema
 
-| Event                            | When                       | Key payload fields                                                 |
-| -------------------------------- | -------------------------- | ------------------------------------------------------------------ |
-| `COMPENSATION_DEPOSIT_STAGED`    | `stageDeposit`             | `amount_usd`, `agent_id`, `plan`=asset, `reason`, `recruitment_id` |
-| `COMPENSATION_DEPOSIT_CONFIRMED` | deposit `confirm` / direct | same + ledger applied                                              |
-| `COMPENSATION_CASHOUT_STAGED`    | `stageCashout`             | `amount_usd`, `plan`=destination, `reason`=source                  |
-| `COMPENSATION_CASHOUT_COMPLETED` | cash-out `confirm`         | `resource`=payoutId, destination/source                            |
-| `COMPENSATION_CANCELLED`         | `cancel`                   | `resource`=actionId, optional `recruitment_id`                     |
+| Event                            | When                       | Key payload fields                                                                 |
+| -------------------------------- | -------------------------- | ---------------------------------------------------------------------------------- |
+| `COMPENSATION_DEPOSIT_STAGED`    | `stageDeposit`             | `amount_usd`, `agent_id`, `plan`=asset, `reason`, `recruitment_id`                 |
+| `COMPENSATION_DEPOSIT_CONFIRMED` | deposit `confirm` / direct | same + ledger applied                                                              |
+| `COMPENSATION_DEPOSIT_FAILED`    | deposit `confirm` error    | `resource`=actionId, `reason`=failure (truncated), optional recruit                |
+| `COMPENSATION_CASHOUT_STAGED`    | `stageCashout`             | `amount_usd`, `plan`=destination, `reason`=source                                  |
+| `COMPENSATION_CASHOUT_COMPLETED` | cash-out `confirm`         | `resource`=payoutId, destination/source                                            |
+| `COMPENSATION_CASHOUT_FAILED`    | cash-out `confirm` error   | `resource`=actionId, `reason`=failure; ledger re-credited if debit already applied |
+| `COMPENSATION_CANCELLED`         | `cancel`                   | `resource`=actionId, optional `recruitment_id`                                     |
 
 `correlationId` prefers `recruitmentId` when present so SGDOP recruit → work → pay is one audit thread.
 
+Failure events are symmetric with staged/completed so SGDOP and ops can alert on confirm-time errors without scraping logs.
+
 ## MCP tools
 
-With `CLAWQL_PAYMENTS_MCP_TOOLS=1`. Underscores are MCP-safe; logical dotted form in comments:
+With `CLAWQL_PAYMENTS_MCP_TOOLS=1`. Underscores are MCP-safe; logical dotted form in comments.
 
-| Logical name                         | MCP tool name                        | Behavior         |
-| ------------------------------------ | ------------------------------------ | ---------------- |
-| `agent.compensation.deposit.stage`   | `agent_compensation_deposit_stage`   | Stage only       |
-| `agent.compensation.deposit.confirm` | `agent_compensation_deposit_confirm` | Execute deposit  |
-| `agent.compensation.cashout.stage`   | `agent_compensation_cashout_stage`   | Stage only       |
-| `agent.compensation.cashout.confirm` | `agent_compensation_cashout_confirm` | Execute cash-out |
+**Safety pattern:** always call `_stage` first (safe / inert). Only call `_confirm` when ready for the irreversible ledger or payout step.
 
-Confirm tools reject the wrong pending `kind` so deposit/cashout cannot be crossed.
+| Logical name                         | MCP tool name                        | Role                                           |
+| ------------------------------------ | ------------------------------------ | ---------------------------------------------- |
+| `agent.compensation.deposit.stage`   | `agent_compensation_deposit_stage`   | **Safe entry** — stage only; no ledger credit  |
+| `agent.compensation.deposit.confirm` | `agent_compensation_deposit_confirm` | **High-impact** — credits ledger               |
+| `agent.compensation.cashout.stage`   | `agent_compensation_cashout_stage`   | **Safe entry** — stage only; no debit / payout |
+| `agent.compensation.cashout.confirm` | `agent_compensation_cashout_confirm` | **High-impact** — debit + `PayoutService`      |
+
+Confirm tools reject the wrong pending `kind` so deposit/cashout cannot be crossed. MCP `tools/list` descriptions spell out the same stage-vs-confirm contract.
 
 Also classified financial (future PEP): `payments_payout_create`, `payments_ramp_agent_card_issue`, `transfer_funds`, etc. See `HIGH_IMPACT_PAYMENT_TOOLS`.
 
@@ -114,12 +120,12 @@ clawql payments compensation balance --agent a1
 
 ## Future: SGDOP Coordinator call sketch
 
-When the strategic Coordinator ships (NSV / SGDOP / reputation / Diversity Dividends):
+When the strategic Coordinator ships (NSV / SGDOP / reputation / Diversity Dividends), it should **only stage** compensation. Confirm stays with the operator / PEP / Command Deck — money never moves inside the evolutionary loop.
 
 ```text
 1. SGDOP detects blind spot B with azimuth gap → selects agents [A1..Ak] (diversity / w_i)
-2. For each recruited agent Ai:
-     AgentCompensationService.stageDeposit({
+2. For each recruited agent Ai (Coordinator / MCP stage tool only):
+     agent_compensation_deposit_stage  OR  AgentCompensationService.stageDeposit({
        agentId: Ai,
        amountUsd: bounty(B, Ai),          // or D_i dividend share
        asset: "credits",
@@ -128,15 +134,17 @@ When the strategic Coordinator ships (NSV / SGDOP / reputation / Diversity Divid
        correlationId: session.correlationId,
      })
      → returns { actionId, confirmationCode, approvalUrl }
+     → COMPENSATION_DEPOSIT_STAGED (recruitment_id = B.id)
 3. Operator / policy engine confirms (MCP agent_compensation_deposit_confirm or PEP POST)
-     → COMPENSATION_DEPOSIT_CONFIRMED with recruitment_id = B.id
+     → COMPENSATION_DEPOSIT_CONFIRMED — or COMPENSATION_DEPOSIT_FAILED on error
 4. Ai executes coverage work inside evolutionary loop / ActionTypes
 5. Ai (or payroll job) later:
-     stageCashout → confirm → PayoutService (bank | USDC)
+     agent_compensation_cashout_stage → …_confirm → PayoutService (bank | USDC)
      → COMPENSATION_CASHOUT_COMPLETED (same correlation thread)
+     → on payout failure: ledger re-credited + COMPENSATION_CASHOUT_FAILED
 ```
 
-Pseudocode (Coordinator side):
+Pseudocode (Coordinator side — stage only):
 
 ```ts
 for (const agent of sgdop.recruit(blindSpot)) {
@@ -149,9 +157,10 @@ for (const agent of sgdop.recruit(blindSpot)) {
       reason: "sgdop_recruit",
       recruitmentId: blindSpot.id,
     });
-  // Surface staged.approvalUrl in Command Deck / PEP Action View
+  // Never call confirm from the Coordinator loop.
+  // Surface staged.approvalUrl in Command Deck / PEP Action View.
   yield * notify.operator({ approvalUrl: staged.approvalUrl, code: staged.confirmationCode });
 }
 ```
 
-See [Ouroboros coordination layer](../ouroboros/daos-coordination-layer-specification.md) §1.2 / §2 (SGDOP) and [payouts-ramp.md](./payouts-ramp.md).
+See [Ouroboros coordination layer](../ouroboros/daos-coordination-layer-specification.md) §1.2 / §2 (SGDOP), [clawql-ouroboros.md](../ouroboros/clawql-ouroboros.md) (compensation bridge), and [payouts-ramp.md](./payouts-ramp.md).

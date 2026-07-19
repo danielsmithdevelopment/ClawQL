@@ -14,8 +14,10 @@ import type { PayoutMethod } from "../payouts/preferences.js";
 import {
   buildCompensationCancelledEntry,
   buildCompensationCashoutCompletedEntry,
+  buildCompensationCashoutFailedEntry,
   buildCompensationCashoutStagedEntry,
   buildCompensationDepositConfirmedEntry,
+  buildCompensationDepositFailedEntry,
   buildCompensationDepositStagedEntry,
 } from "../audit/events.js";
 import {
@@ -549,6 +551,25 @@ export function agentCompensationLiveLayer(
                         : "payout failed",
                     cause,
                   })
+              ),
+              Effect.catchAll((err) =>
+                Effect.gen(function* () {
+                  // Debit already applied — restore ledger so failed cash-out is not a silent loss.
+                  yield* Effect.tryPromise({
+                    try: () =>
+                      creditAgentAccount(
+                        {
+                          agentId: record.agentId,
+                          creditsUsd: source === "credits" ? amountUsd : 0,
+                          fundsUsd: source === "funds" ? amountUsd : 0,
+                          tenantId: record.tenantId,
+                        },
+                        env
+                      ),
+                    catch: () => err,
+                  }).pipe(Effect.catchAll(() => Effect.void));
+                  return yield* Effect.fail(err);
+                })
               )
             );
 
@@ -616,16 +637,71 @@ export function agentCompensationLiveLayer(
             );
           }
 
-          const result =
-            record.kind === "cashout"
-              ? yield* executeCashout(record)
-              : yield* executeDeposit(record);
+          const executed = yield* (
+            record.kind === "cashout" ? executeCashout(record) : executeDeposit(record)
+          ).pipe(
+            Effect.catchAll((err) =>
+              Effect.gen(function* () {
+                const failureReason =
+                  err instanceof CompensationError
+                    ? err.reason
+                    : err instanceof Error
+                      ? err.message
+                      : String(err);
+                const amountUsd = Number(record.args.amountUsd);
+                const recruitmentId =
+                  typeof record.args.recruitmentId === "string"
+                    ? record.args.recruitmentId
+                    : undefined;
+                if (record.kind === "cashout") {
+                  yield* audit
+                    .appendEntry(
+                      buildCompensationCashoutFailedEntry({
+                        tenantId: record.tenantId,
+                        actionId: record.actionId,
+                        agentId: record.agentId,
+                        amountUsd: Number.isFinite(amountUsd) ? amountUsd : undefined,
+                        failureReason,
+                        destination:
+                          typeof record.args.destination === "string"
+                            ? record.args.destination
+                            : undefined,
+                        recruitmentId,
+                        correlationId: record.correlationId,
+                      })
+                    )
+                    .pipe(Effect.catchAll(() => Effect.void));
+                } else {
+                  yield* audit
+                    .appendEntry(
+                      buildCompensationDepositFailedEntry({
+                        tenantId: record.tenantId,
+                        actionId: record.actionId,
+                        agentId: record.agentId,
+                        amountUsd: Number.isFinite(amountUsd) ? amountUsd : undefined,
+                        failureReason,
+                        reason:
+                          typeof record.args.reason === "string" ? record.args.reason : undefined,
+                        recruitmentId,
+                        correlationId: record.correlationId,
+                      })
+                    )
+                    .pipe(Effect.catchAll(() => Effect.void));
+                }
+                return yield* Effect.fail(
+                  err instanceof CompensationError
+                    ? err
+                    : new CompensationError({ reason: failureReason, cause: err })
+                );
+              })
+            )
+          );
 
           const updated: PendingActionRecord = {
             ...record,
             status: "executed",
             executedAt: new Date().toISOString(),
-            result: result as unknown as Record<string, unknown>,
+            result: executed as unknown as Record<string, unknown>,
           };
           yield* Effect.tryPromise({
             try: () => savePendingAction(updated, env),
@@ -635,7 +711,7 @@ export function agentCompensationLiveLayer(
                 cause,
               }),
           });
-          return result;
+          return executed;
         });
 
       const cancel = (input: { actionId: string; code: string }) =>

@@ -37,8 +37,10 @@ export type PaymentEventKind =
   | "CREDIT_DEBITED"
   | "COMPENSATION_DEPOSIT_STAGED"
   | "COMPENSATION_DEPOSIT_CONFIRMED"
+  | "COMPENSATION_DEPOSIT_FAILED"
   | "COMPENSATION_CASHOUT_STAGED"
   | "COMPENSATION_CASHOUT_COMPLETED"
+  | "COMPENSATION_CASHOUT_FAILED"
   | "COMPENSATION_CANCELLED";
 
 export type PaymentProvider =
@@ -861,6 +863,59 @@ export function buildCompensationCashoutCompletedEntry(input: {
       agent_id: input.agentId,
       plan: input.destination,
       reason: input.source,
+      recruitment_id: input.recruitmentId,
+    },
+  });
+}
+
+export function buildCompensationDepositFailedEntry(input: {
+  tenantId: string;
+  actionId: string;
+  agentId: string;
+  amountUsd?: number;
+  failureReason: string;
+  reason?: string;
+  recruitmentId?: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "COMPENSATION_DEPOSIT_FAILED",
+    summary: `Compensation deposit failed ${input.actionId}: ${input.failureReason}`,
+    correlationId: input.correlationId ?? input.recruitmentId ?? input.actionId,
+    payload: {
+      provider: "compensation",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.actionId,
+      agent_id: input.agentId,
+      reason: input.reason ?? input.failureReason.slice(0, 120),
+      recruitment_id: input.recruitmentId,
+    },
+  });
+}
+
+export function buildCompensationCashoutFailedEntry(input: {
+  tenantId: string;
+  actionId: string;
+  agentId: string;
+  amountUsd?: number;
+  failureReason: string;
+  destination?: string;
+  recruitmentId?: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "COMPENSATION_CASHOUT_FAILED",
+    summary: `Compensation cash-out failed ${input.actionId}: ${input.failureReason}`,
+    correlationId: input.correlationId ?? input.recruitmentId ?? input.actionId,
+    payload: {
+      provider: "compensation",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.actionId,
+      agent_id: input.agentId,
+      plan: input.destination,
+      reason: input.failureReason.slice(0, 120),
       recruitment_id: input.recruitmentId,
     },
   });

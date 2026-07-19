@@ -40,7 +40,7 @@ It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is ava
 | **Consumer off-ramp** (Moonpay / Transak)           | ✅     | Sessions + `OfframpWebhookService` completion settle                                                    |
 | **Payments MCP tools** (payout / ramp / offramp)    | ✅     | `CLAWQL_PAYMENTS_MCP_TOOLS=1`; optional AP2 gate                                                        |
 | **Prepaid credits + bank top-up**                   | ✅     | Ledger + Stripe Financial Connections / ACH (`us_bank_account`); see [credits-ach.md](./credits-ach.md) |
-| **Agent compensation** (credits + 2PC cash-out)     | ✅     | `AgentCompensationService` — SGDOP-ready deposits; reuses `PayoutService`        |
+| **Agent compensation** (credits + 2PC cash-out)     | ✅     | `AgentCompensationService` — stage/confirm MCP + FAILED WORM; reuses `PayoutService`                    |
 
 ### Roadmap
 

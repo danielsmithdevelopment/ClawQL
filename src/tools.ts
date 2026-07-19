@@ -118,15 +118,16 @@ configureHomeSyncHooks();
 /** Register MCP tools declared by composed plugins (Memory, Documents, Automation, Sandbox, Ouroboros, …). */
 function registerPluginMcpTools(server: McpServer): void {
   for (const tool of getClawqlApi().listMcpTools()) {
-    server.tool(
-      tool.name,
-      tool.schema,
-      wrapRegisteredMcpToolHandler(tool.name, (args) =>
-        tool.handler(args).then((result) => ({
-          content: result.content.map((c) => ({ type: "text" as const, text: c.text })),
-        }))
-      )
+    const handler = wrapRegisteredMcpToolHandler(tool.name, (args) =>
+      tool.handler(args).then((result) => ({
+        content: result.content.map((c) => ({ type: "text" as const, text: c.text })),
+      }))
     );
+    if (tool.description) {
+      server.tool(tool.name, tool.description, tool.schema, handler);
+    } else {
+      server.tool(tool.name, tool.schema, handler);
+    }
   }
 }
 

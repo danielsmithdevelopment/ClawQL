@@ -6,10 +6,12 @@ import { createPaymentsToolsPlugin, paymentsMcpToolsEnabled } from "./payments-t
 describe("payments tools MCP plugin", () => {
   it("registers payout, ramp, and offramp tools", () => {
     const names: string[] = [];
+    const descriptions = new Map<string, string | undefined>();
     const api: ClawQLPluginRegistrationApi = {
       registerMcpTool: (tool) =>
         Effect.sync(() => {
           names.push(tool.name);
+          descriptions.set(tool.name, tool.description);
         }),
     };
     const plugin = createPaymentsToolsPlugin({ CLAWQL_PAYMENTS_MCP_TOOLS: "1" });
@@ -24,6 +26,10 @@ describe("payments tools MCP plugin", () => {
       "agent_compensation_cashout_stage",
       "agent_compensation_cashout_confirm",
     ]);
+    expect(descriptions.get("agent_compensation_deposit_stage")).toMatch(/Safe entry point/i);
+    expect(descriptions.get("agent_compensation_deposit_confirm")).toMatch(/High-impact/i);
+    expect(descriptions.get("agent_compensation_cashout_stage")).toMatch(/Safe entry point/i);
+    expect(descriptions.get("agent_compensation_cashout_confirm")).toMatch(/High-impact/i);
   });
 
   it("gates registration via env flag", () => {

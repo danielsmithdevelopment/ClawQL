@@ -289,6 +289,8 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
         // agent.compensation.cashout.stage / .confirm
         yield* api.registerMcpTool({
           name: "agent_compensation_deposit_stage",
+          description:
+            "Safe entry point: stage an agent compensation deposit (credits/funds). Inert until agent_compensation_deposit_confirm — does not credit the ledger.",
           schema: compensationDepositStageSchema,
           handler: async (args) => {
             const a = args as {
@@ -317,13 +319,15 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             );
             return textResult({
               ...result,
-              next: "Call agent_compensation_deposit_confirm with actionId + code to execute.",
+              next: "High-impact next step: call agent_compensation_deposit_confirm with actionId + code to credit the ledger.",
             });
           },
         });
 
         yield* api.registerMcpTool({
           name: "agent_compensation_deposit_confirm",
+          description:
+            "High-impact: confirm a staged deposit and credit the agent ledger. Prefer agent_compensation_deposit_stage first; rejects non-deposit pending kinds.",
           schema: compensationConfirmSchema,
           handler: async (args) => {
             const a = args as { actionId: string; code: string; mandateJwt?: string };
@@ -353,6 +357,8 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
 
         yield* api.registerMcpTool({
           name: "agent_compensation_cashout_stage",
+          description:
+            "Safe entry point: stage an agent cash-out. Inert until agent_compensation_cashout_confirm — does not debit or call PayoutService.",
           schema: compensationCashoutStageSchema,
           handler: async (args) => {
             const a = args as {
@@ -383,13 +389,15 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             );
             return textResult({
               ...result,
-              next: "Call agent_compensation_cashout_confirm with actionId + code to execute.",
+              next: "High-impact next step: call agent_compensation_cashout_confirm with actionId + code to debit and pay out.",
             });
           },
         });
 
         yield* api.registerMcpTool({
           name: "agent_compensation_cashout_confirm",
+          description:
+            "High-impact: confirm a staged cash-out (ledger debit + PayoutService). Prefer agent_compensation_cashout_stage first; rejects non-cashout pending kinds.",
           schema: compensationConfirmSchema,
           handler: async (args) => {
             const a = args as { actionId: string; code: string; mandateJwt?: string };

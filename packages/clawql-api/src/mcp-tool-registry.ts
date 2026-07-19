@@ -10,6 +10,7 @@ import type { z } from "zod";
 
 export type McpToolRegistration = {
   readonly name: string;
+  readonly description?: string;
   readonly schema: Record<string, z.ZodTypeAny>;
   readonly handler: McpToolHandler;
 };
@@ -38,6 +39,7 @@ export class McpToolRegistry {
       registerMcpTool: (tool: McpToolDefinition) =>
         this.register({
           name: tool.name,
+          description: tool.description,
           schema: tool.schema as Record<string, z.ZodTypeAny>,
           handler: tool.handler,
         }),

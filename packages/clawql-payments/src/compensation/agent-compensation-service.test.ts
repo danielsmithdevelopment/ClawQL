@@ -140,6 +140,70 @@ describe("AgentCompensationService", () => {
     expect(entries.some((e) => e.action === "COMPENSATION_CASHOUT_COMPLETED")).toBe(true);
   });
 
+  it("emits COMPENSATION_CASHOUT_FAILED and re-credits when payout fails after debit", async () => {
+    await runPaymentsEffect(
+      Effect.gen(function* () {
+        const comp = yield* AgentCompensationService;
+        const staged = yield* comp.stageDeposit({
+          agentId: "agent-fail-payout",
+          amountUsd: 40,
+          asset: "credits",
+        });
+        yield* comp.confirm({
+          actionId: staged.actionId,
+          code: staged.confirmationCode,
+        });
+        yield* comp.setPreference({
+          agentId: "agent-fail-payout",
+          cashoutMethod: "bank",
+          connectAccountId: "acct_dry_fail",
+        });
+        return yield* Effect.void;
+      })
+    );
+
+    const stagedCashout = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const comp = yield* AgentCompensationService;
+        return yield* comp.stageCashout({
+          agentId: "agent-fail-payout",
+          amountUsd: 25,
+          source: "credits",
+          destination: "bank",
+        });
+      })
+    );
+
+    process.env.CLAWQL_PAYOUTS_ENABLED = "0";
+    resetPaymentsEffectRuntimeForTests();
+
+    await expect(
+      runPaymentsEffect(
+        Effect.gen(function* () {
+          const comp = yield* AgentCompensationService;
+          return yield* comp.confirm({
+            actionId: stagedCashout.actionId,
+            code: stagedCashout.confirmationCode,
+          });
+        })
+      )
+    ).rejects.toMatchObject({ reason: expect.stringMatching(/payout|disabled/i) });
+
+    process.env.CLAWQL_PAYOUTS_ENABLED = "1";
+    resetPaymentsEffectRuntimeForTests();
+
+    const balance = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const comp = yield* AgentCompensationService;
+        return yield* comp.getAccount("agent-fail-payout");
+      })
+    );
+    expect(balance.creditsUsd).toBe(40);
+
+    const entries = await listPaymentAuditEntries(50);
+    expect(entries.some((e) => e.action === "COMPENSATION_CASHOUT_FAILED")).toBe(true);
+  });
+
   it("cancel is GET-safe and blocks later confirm", async () => {
     const staged = await runPaymentsEffect(
       Effect.gen(function* () {
