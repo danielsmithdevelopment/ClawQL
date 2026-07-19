@@ -13,6 +13,8 @@ TypeScript workspace package at [`packages/clawql-ouroboros`](../packages/clawql
 **`CLAWQL_OUROBOROS_DATABASE_URL`** or split **`CLAWQL_OUROBOROS_DB_*`** env vars. Published npm name:
 **`clawql-ouroboros`** (see `packages/clawql-ouroboros/package.json`).
 
+**Compensation bridge (payments):** Financial high-impact tools (agent deposits / cash-outs for future SGDOP recruitment) use a DAOS-aligned two-phase commit in [`clawql-payments` AgentCompensationService](../payments/agent-compensation.md) today — file-backed `PENDING_ACTIONS` with `approval_url` / confirm / cancel. When PEP + NATS KV land (build plan P0-B), swap that store; do not put money movement inside the evolutionary loop package.
+
 ---
 
 ## Install

@@ -78,6 +78,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./compensation": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
     "./plugin": {
       "types": "./dist/plugin/index.d.ts",
       "import": "./dist/plugin/index.js",

@@ -34,7 +34,12 @@ export type PaymentEventKind =
   | "CREDIT_TOPUP_PENDING"
   | "CREDIT_TOPUP_SETTLED"
   | "CREDIT_TOPUP_FAILED"
-  | "CREDIT_DEBITED";
+  | "CREDIT_DEBITED"
+  | "COMPENSATION_STAGED"
+  | "COMPENSATION_DEPOSITED"
+  | "COMPENSATION_CASHOUT_REQUESTED"
+  | "COMPENSATION_CASHOUT_COMPLETED"
+  | "COMPENSATION_CANCELLED";
 
 export type PaymentProvider =
   | "stripe"
@@ -46,7 +51,8 @@ export type PaymentProvider =
   | "ramp"
   | "payouts"
   | "offramp"
-  | "credits";
+  | "credits"
+  | "compensation";
 
 export type PaymentWormPayload = {
   provider: PaymentProvider;
@@ -743,6 +749,118 @@ export function buildCreditDebitedEntry(input: {
       balance_usd: input.balanceUsd,
       tenant_id: input.tenantId,
       resource: input.resource,
+    },
+  });
+}
+
+export function buildCompensationStagedEntry(input: {
+  tenantId: string;
+  actionId: string;
+  agentId: string;
+  kind: string;
+  amountUsd: number;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "COMPENSATION_STAGED",
+    summary: `Compensation staged ${input.kind} $${input.amountUsd.toFixed(2)} for agent ${input.agentId} (${input.actionId})`,
+    correlationId: input.correlationId ?? input.actionId,
+    payload: {
+      provider: "compensation",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.actionId,
+      agent_id: input.agentId,
+    },
+  });
+}
+
+export function buildCompensationDepositedEntry(input: {
+  tenantId: string;
+  actionId: string;
+  agentId: string;
+  amountUsd: number;
+  asset: "credits" | "funds";
+  reason: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "COMPENSATION_DEPOSITED",
+    summary: `Compensation deposited ${input.asset} $${input.amountUsd.toFixed(2)} → ${input.agentId} (${input.reason})`,
+    correlationId: input.correlationId ?? input.actionId,
+    payload: {
+      provider: "compensation",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.actionId,
+      agent_id: input.agentId,
+      plan: input.asset,
+    },
+  });
+}
+
+export function buildCompensationCashoutRequestedEntry(input: {
+  tenantId: string;
+  actionId: string;
+  agentId: string;
+  amountUsd: number;
+  destination: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "COMPENSATION_CASHOUT_REQUESTED",
+    summary: `Compensation cash-out requested $${input.amountUsd.toFixed(2)} → ${input.destination} for ${input.agentId}`,
+    correlationId: input.correlationId ?? input.actionId,
+    payload: {
+      provider: "compensation",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.actionId,
+      agent_id: input.agentId,
+      plan: input.destination,
+    },
+  });
+}
+
+export function buildCompensationCashoutCompletedEntry(input: {
+  tenantId: string;
+  actionId: string;
+  agentId: string;
+  amountUsd: number;
+  payoutId: string;
+  destination: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "COMPENSATION_CASHOUT_COMPLETED",
+    summary: `Compensation cash-out completed $${input.amountUsd.toFixed(2)} payout ${input.payoutId}`,
+    correlationId: input.correlationId ?? input.actionId,
+    payload: {
+      provider: "compensation",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.payoutId,
+      agent_id: input.agentId,
+      plan: input.destination,
+    },
+  });
+}
+
+export function buildCompensationCancelledEntry(input: {
+  tenantId: string;
+  actionId: string;
+  agentId: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "COMPENSATION_CANCELLED",
+    summary: `Compensation action cancelled ${input.actionId} for ${input.agentId}`,
+    correlationId: input.correlationId ?? input.actionId,
+    payload: {
+      provider: "compensation",
+      tenant_id: input.tenantId,
+      resource: input.actionId,
+      agent_id: input.agentId,
     },
   });
 }

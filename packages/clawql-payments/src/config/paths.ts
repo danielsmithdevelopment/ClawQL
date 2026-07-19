@@ -36,3 +36,16 @@ export function resolvePayoutPreferencesPath(env: NodeJS.ProcessEnv = process.en
 export function resolveCreditsLedgerPath(env: NodeJS.ProcessEnv = process.env): string {
   return join(resolvePaymentsDir(env), "credits-ledger.json");
 }
+
+/** Agent compensation ledger (credits + funds balances). */
+export function resolveAgentAccountsPath(env: NodeJS.ProcessEnv = process.env): string {
+  return join(resolvePaymentsDir(env), "agent-accounts.json");
+}
+
+/**
+ * File-backed PENDING_ACTIONS store (DAOS 2PC staging until NATS KV PEP lands).
+ * One JSON file per action_id.
+ */
+export function resolvePendingActionsDir(env: NodeJS.ProcessEnv = process.env): string {
+  return join(resolvePaymentsDir(env), "pending-actions");
+}

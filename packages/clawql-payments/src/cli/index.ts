@@ -69,3 +69,15 @@ export {
   type PaymentsCreditsBankLinkOptions,
   type PaymentsCreditsTopupOptions,
 } from "./credits.js";
+export {
+  runPaymentsCompensationBalance,
+  runPaymentsCompensationDeposit,
+  runPaymentsCompensationCashout,
+  runPaymentsCompensationApprove,
+  runPaymentsCompensationConfirm,
+  runPaymentsCompensationCancel,
+  type PaymentsCompensationBalanceOptions,
+  type PaymentsCompensationDepositOptions,
+  type PaymentsCompensationCashoutOptions,
+  type PaymentsCompensationApproveOptions,
+} from "./compensation.js";

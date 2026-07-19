@@ -83,6 +83,12 @@ import {
   runPaymentsCreditsShowCmd,
   runPaymentsCreditsBankLinkCmd,
   runPaymentsCreditsTopupCmd,
+  runPaymentsCompensationBalanceCmd,
+  runPaymentsCompensationDepositCmd,
+  runPaymentsCompensationCashoutCmd,
+  runPaymentsCompensationApproveCmd,
+  runPaymentsCompensationConfirmCmd,
+  runPaymentsCompensationCancelCmd,
   type PaymentsCliOptions,
 } from "./payments-cli.js";
 
@@ -216,6 +222,12 @@ function parse(argv: string[]): {
     else if (a === "--show-secrets") flags.showSecrets = true;
     else if (a === "--vendor-ids") flags.vendorIds = argv[++i] ?? "";
     else if (a === "--interval") flags.interval = argv[++i] ?? "";
+    else if (a === "--action-id") flags.actionId = argv[++i] ?? "";
+    else if (a === "--code") flags.code = argv[++i] ?? "";
+    else if (a === "--reason") flags.reason = argv[++i] ?? "";
+    else if (a === "--recruitment-id") flags.recruitmentId = argv[++i] ?? "";
+    else if (a === "--source") flags.source = argv[++i] ?? "";
+    else if (a === "--confirm") flags.confirm = true;
     else if (a === "--skip-verify") flags.skipVerify = true;
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
@@ -290,6 +302,7 @@ Usage:
   clawql payments ramp fund create --limit 500 | card issue --user-id U --limit 100 | agent-card issue --user-id U --amount 25
   clawql payments offramp session --amount 25 --wallet 0x… [--provider moonpay|transak]
   clawql payments offramp webhook --provider moonpay --payload ./body.json --signature t=…,s=… --process
+  clawql payments compensation balance|deposit|cashout|approve|confirm|cancel --agent ID …
   clawql payments spend report [--group-by provider|tenant|plan] | audit [--correlation-id ID]
   clawql payments credits show | bank-link --customer cus_xxx | topup --customer cus_xxx --amount 25
   clawql claude | codex | cursor | opencode [-- harness args...]
@@ -877,6 +890,23 @@ async function main(): Promise<void> {
           : undefined,
       paymentMethodId:
         typeof flags.paymentMethodId === "string" ? flags.paymentMethodId : undefined,
+      actionId: typeof flags.actionId === "string" ? flags.actionId : undefined,
+      code: typeof flags.code === "string" ? flags.code : undefined,
+      reason:
+        typeof flags.reason === "string" &&
+        ["sgdop_recruit", "diversity_dividend", "task_bounty", "manual"].includes(flags.reason)
+          ? (flags.reason as PaymentsCliOptions["reason"])
+          : undefined,
+      recruitmentId: typeof flags.recruitmentId === "string" ? flags.recruitmentId : undefined,
+      source:
+        typeof flags.source === "string" && (flags.source === "credits" || flags.source === "funds")
+          ? flags.source
+          : undefined,
+      assetKind:
+        typeof flags.asset === "string" && (flags.asset === "credits" || flags.asset === "funds")
+          ? flags.asset
+          : undefined,
+      confirm: Boolean(flags.confirm),
     };
 
     if (subcmd === "plan") {
@@ -1043,8 +1073,40 @@ async function main(): Promise<void> {
       process.exitCode = 1;
       return;
     }
+    if (subcmd === "compensation") {
+      const action = rest[0];
+      if (action === "balance") {
+        process.exitCode = await runPaymentsCompensationBalanceCmd(paymentsOpts);
+        return;
+      }
+      if (action === "deposit") {
+        process.exitCode = await runPaymentsCompensationDepositCmd(paymentsOpts);
+        return;
+      }
+      if (action === "cashout") {
+        process.exitCode = await runPaymentsCompensationCashoutCmd(paymentsOpts);
+        return;
+      }
+      if (action === "approve") {
+        process.exitCode = await runPaymentsCompensationApproveCmd(paymentsOpts);
+        return;
+      }
+      if (action === "confirm") {
+        process.exitCode = await runPaymentsCompensationConfirmCmd(paymentsOpts);
+        return;
+      }
+      if (action === "cancel") {
+        process.exitCode = await runPaymentsCompensationCancelCmd(paymentsOpts);
+        return;
+      }
+      console.error(
+        "Usage: clawql payments compensation balance|deposit|cashout|approve|confirm|cancel"
+      );
+      process.exitCode = 1;
+      return;
+    }
     console.error(
-      "Usage: clawql payments plan | usage | spend | audit | stripe | x402 | payout | ramp | offramp | credits"
+      "Usage: clawql payments plan | usage | spend | audit | stripe | x402 | payout | ramp | offramp | credits | compensation"
     );
     process.exitCode = 1;
     return;

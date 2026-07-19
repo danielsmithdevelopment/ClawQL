@@ -33,9 +33,16 @@ import {
   runPaymentsCreditsShow,
   runPaymentsCreditsBankLink,
   runPaymentsCreditsTopup,
+  runPaymentsCompensationBalance,
+  runPaymentsCompensationDeposit,
+  runPaymentsCompensationCashout,
+  runPaymentsCompensationApprove,
+  runPaymentsCompensationConfirm,
+  runPaymentsCompensationCancel,
   type SpendGroupBy,
   type PayoutMethod,
   type OffRampProvider,
+  type CompensationReason,
 } from "clawql-payments";
 
 export type PaymentsCliOptions = {
@@ -83,6 +90,13 @@ export type PaymentsCliOptions = {
   interval?: "DAILY" | "WEEKLY" | "MONTHLY" | "TOTAL" | "ANNUAL";
   provider?: OffRampProvider;
   paymentMethodId?: string;
+  actionId?: string;
+  code?: string;
+  reason?: CompensationReason;
+  recruitmentId?: string;
+  source?: "credits" | "funds";
+  assetKind?: "credits" | "funds";
+  confirm?: boolean;
 };
 
 export async function runPaymentsPlanShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
@@ -383,5 +397,76 @@ export async function runPaymentsCreditsTopupCmd(
     amountUsd: options.amount,
     paymentMethodId: options.paymentMethodId,
     tenantId: options.tenantId,
+  });
+}
+
+export async function runPaymentsCompensationBalanceCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCompensationBalance({
+    agentId: options.agentId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCompensationDepositCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCompensationDeposit({
+    agentId: options.agentId,
+    amountUsd: options.amount,
+    asset: options.assetKind,
+    reason: options.reason,
+    recruitmentId: options.recruitmentId,
+    tenantId: options.tenantId,
+    correlationId: options.correlationId,
+    confirm: options.confirm,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCompensationCashoutCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCompensationCashout({
+    agentId: options.agentId,
+    amountUsd: options.amount,
+    source: options.source,
+    destination: options.destination,
+    account: options.accountId,
+    wallet: options.wallet,
+    tenantId: options.tenantId,
+    confirm: options.confirm,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCompensationApproveCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCompensationApprove({
+    actionId: options.actionId,
+    code: options.code,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCompensationConfirmCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCompensationConfirm({
+    actionId: options.actionId,
+    code: options.code,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCompensationCancelCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCompensationCancel({
+    actionId: options.actionId,
+    code: options.code,
+    json: options.json,
   });
 }
