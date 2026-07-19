@@ -404,6 +404,8 @@ Long-lived agents accumulate session history that can exhaust model context wind
 
 **Third-party client boundary**: In environments where ClawQL does not control the host client's context window, pruning shifts from corrective to preventive — agents offload working state to Memory 2.0 rather than accumulating it in the visible conversation.
 
+**P2 navigation (design):** Guided, warm-started graph traversal (Lifelong MAPF heuristics) is specified in [`lifelong-guided-traversal.md`](../memory/lifelong-guided-traversal.md) — distillation as guided exploration and fidelity biased by high-ROI traversed paths.
+
 #### 5.2 Pre-Pruning Snapshot and Retention
 
 **Snapshot**: Before any distillation, a bit-perfect snapshot of the agent's current context is written to encrypted cold storage. The encryption key is derived from the Manifest's HSM-backed Merkle root — not the agent's session keys — ensuring recoverability even if the agent's runtime state is fully compromised. The snapshot write must confirm as durable before active context replacement proceeds.
