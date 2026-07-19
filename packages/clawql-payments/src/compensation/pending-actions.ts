@@ -163,7 +163,13 @@ export async function assertPendingCode(
 
 export async function listPendingActions(
   env: NodeJS.ProcessEnv = process.env,
-  filter?: { agentId?: string; status?: PendingActionStatus }
+  filter?: {
+    agentId?: string;
+    status?: PendingActionStatus;
+    recruitmentId?: string;
+    reason?: string;
+    kindPrefix?: "deposit" | "cashout";
+  }
 ): Promise<PendingActionRecord[]> {
   const dir = resolvePendingActionsDir(env);
   let names: string[];
@@ -185,9 +191,48 @@ export async function listPendingActions(
     }
     if (filter?.agentId && record.agentId !== filter.agentId) continue;
     if (filter?.status && record.status !== filter.status) continue;
+    if (filter?.kindPrefix === "deposit" && !record.kind.startsWith("deposit_")) continue;
+    if (filter?.kindPrefix === "cashout" && record.kind !== "cashout") continue;
+    if (filter?.recruitmentId) {
+      const rid = record.args.recruitmentId;
+      if (typeof rid !== "string" || rid !== filter.recruitmentId) continue;
+    }
+    if (filter?.reason) {
+      const reason = record.args.reason;
+      if (typeof reason !== "string" || reason !== filter.reason) continue;
+    }
     out.push(record);
   }
   return out.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+/**
+ * Idempotency key for SGDOP / dividend deposits: recruitmentId + agentId + reason.
+ * Returns the newest matching deposit that is still pending or already executed.
+ */
+export async function findRecruitDepositByKey(
+  input: {
+    recruitmentId: string;
+    agentId: string;
+    reason: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<PendingActionRecord | undefined> {
+  const rid = input.recruitmentId.trim();
+  const agentId = input.agentId.trim();
+  const reason = input.reason.trim();
+  if (!rid || !agentId || !reason) return undefined;
+
+  const matches = await listPendingActions(env, {
+    agentId,
+    recruitmentId: rid,
+    reason,
+    kindPrefix: "deposit",
+  });
+  // Prefer live pending; else most recent executed (blocks double-bounty).
+  const pending = [...matches].reverse().find((r) => r.status === "pending");
+  if (pending) return pending;
+  return [...matches].reverse().find((r) => r.status === "executed");
 }
 
 export async function deletePendingAction(

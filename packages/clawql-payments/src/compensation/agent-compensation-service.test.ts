@@ -140,6 +140,82 @@ describe("AgentCompensationService", () => {
     expect(entries.some((e) => e.action === "COMPENSATION_CASHOUT_COMPLETED")).toBe(true);
   });
 
+  it("is idempotent on recruitmentId+agentId+reason and blocks double-execute bounty", async () => {
+    const first = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const comp = yield* AgentCompensationService;
+        return yield* comp.stageDeposit({
+          agentId: "agent-idem",
+          amountUsd: 25,
+          asset: "credits",
+          reason: "sgdop_recruit",
+          recruitmentId: "blindspot-idem-1",
+        });
+      })
+    );
+    expect(first.idempotentReplay).toBeUndefined();
+
+    const replay = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const comp = yield* AgentCompensationService;
+        return yield* comp.stageDeposit({
+          agentId: "agent-idem",
+          amountUsd: 25,
+          asset: "credits",
+          reason: "sgdop_recruit",
+          recruitmentId: "blindspot-idem-1",
+        });
+      })
+    );
+    expect(replay.actionId).toBe(first.actionId);
+    expect(replay.confirmationCode).toBe(first.confirmationCode);
+    expect(replay.idempotentReplay).toBe(true);
+
+    await expect(
+      runPaymentsEffect(
+        Effect.gen(function* () {
+          const comp = yield* AgentCompensationService;
+          return yield* comp.stageDeposit({
+            agentId: "agent-idem",
+            amountUsd: 99,
+            asset: "credits",
+            reason: "sgdop_recruit",
+            recruitmentId: "blindspot-idem-1",
+          });
+        })
+      )
+    ).rejects.toMatchObject({ reason: expect.stringMatching(/Idempotent conflict/i) });
+
+    await runPaymentsEffect(
+      Effect.gen(function* () {
+        const comp = yield* AgentCompensationService;
+        return yield* comp.confirm({
+          actionId: first.actionId,
+          code: first.confirmationCode,
+        });
+      })
+    );
+
+    await expect(
+      runPaymentsEffect(
+        Effect.gen(function* () {
+          const comp = yield* AgentCompensationService;
+          return yield* comp.stageDeposit({
+            agentId: "agent-idem",
+            amountUsd: 25,
+            asset: "credits",
+            reason: "sgdop_recruit",
+            recruitmentId: "blindspot-idem-1",
+          });
+        })
+      )
+    ).rejects.toMatchObject({ reason: expect.stringMatching(/already executed/i) });
+
+    const entries = await listPaymentAuditEntries(40);
+    const stagedCount = entries.filter((e) => e.action === "COMPENSATION_DEPOSIT_STAGED").length;
+    expect(stagedCount).toBe(1);
+  });
+
   it("emits COMPENSATION_CASHOUT_FAILED and re-credits when payout fails after debit", async () => {
     await runPaymentsEffect(
       Effect.gen(function* () {

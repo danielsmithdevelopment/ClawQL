@@ -1,8 +1,9 @@
 # SGDOP Coordinator ↔ agent compensation bridge
 
-**Status:** Interface / API proposal (July 2026) — not shipped  
-**Depends on:** shipped [`AgentCompensationService`](./agent-compensation.md) (PR #714); roadmap Coordinator / SGDOP ([coordination layer](../ouroboros/daos-coordination-layer-specification.md) §2)  
-**Package boundary:** money staging lives in `clawql-payments`; the Coordinator (future, strategic layer) **never confirms** and never imports payout adapters
+**Status:** Staging port + idempotency **shipped** in `clawql-payments` (PR #714); Coordinator / SGDOP engine still roadmap  
+**Depends on:** [`AgentCompensationService`](./agent-compensation.md); roadmap Coordinator ([coordination layer](../ouroboros/daos-coordination-layer-specification.md) §2)  
+**Package boundary:** money staging lives in `clawql-payments`; the Coordinator (future, strategic layer) **never confirms** and never imports payout adapters  
+**Import:** `import { makeCompensationStagingPort, type CompensationStagingPort } from "clawql-payments"`
 
 ## Problem
 
@@ -52,60 +53,50 @@ sequenceDiagram
   end
 ```
 
-## Proposed Coordinator-facing API
+## Coordinator-facing API (shipped port)
 
-The Coordinator should depend on a **narrow port**, not the full payments surface. Shape below is the contract to implement when P3 Coordinator lands; today the port is satisfied by `AgentCompensationService.stageDeposit` / MCP `agent_compensation_deposit_stage`.
+The Coordinator should depend on a **narrow port**, not the full payments surface. Types and adapter live in `packages/clawql-payments/src/compensation/staging-port.ts` (re-exported from `clawql-payments`).
 
 ```ts
-/** Stable id for one SGDOP recruitment episode (blind-spot batch). */
-export type RecruitmentId = string;
+import { makeCompensationStagingPort, type CompensationStagingPort } from "clawql-payments";
 
-export type CompensationReason = "sgdop_recruit" | "diversity_dividend" | "task_bounty" | "manual";
+const compensation: CompensationStagingPort = makeCompensationStagingPort(process.env);
 
-/** Input the Coordinator is allowed to emit (stage-only). */
-export type StageRecruitCompensationInput = {
-  agentId: string;
-  amountUsd: number;
-  /** Prefer credits for swarm budget; funds only when treasury already allocated. */
-  asset?: "credits" | "funds";
-  reason: "sgdop_recruit" | "diversity_dividend";
-  recruitmentId: RecruitmentId;
-  /** Session / escalation correlation when distinct from recruitmentId. */
-  correlationId?: string;
-  tenantId?: string;
-  /** Optional bounty metadata for Command Deck (not stored as secrets). */
-  meta?: {
-    embeddingModelVersion?: string;
-    nsv?: number;
-    sgdop?: number;
-    /** Unit vector from SGDOP — same axis as ReputationUpdate.directive.blind_spot_direction */
-    blindSpotDirection?: number[];
-    bountyKind?: "recruit_bounty" | "diversity_dividend_share";
-  };
-};
-
-export type StagedCompensationHandle = {
-  actionId: string;
-  confirmationCode: string;
-  approvalUrl: string;
-  cancelUrl: string;
-  expiresAt: string;
-  agentId: string;
-  amountUsd: number;
-  classification: "financial";
-};
-
-/**
- * Port implemented by clawql-payments. Coordinator must not see confirm/depositDirect.
- */
-export interface CompensationStagingPort {
-  stageRecruitDeposit(input: StageRecruitCompensationInput): Promise<StagedCompensationHandle>;
-  /** Optional: list open staged actions for a recruitmentId (ops / cancel-on-Blind). */
-  listStagedForRecruitment?(recruitmentId: RecruitmentId): Promise<StagedCompensationHandle[]>;
-}
+const staged = await compensation.stageRecruitDeposit({
+  agentId: "agent-diversity-1",
+  amountUsd: 50,
+  asset: "credits",
+  reason: "sgdop_recruit",
+  recruitmentId: "sgdop:emb-v3:1042",
+  meta: { nsv: 0.12, sgdop: 4.2, bountyKind: "recruit_bounty" },
+});
+// staged.idempotentReplay === true on safe retries with the same key
 ```
 
-### Mapping onto shipped APIs
+`CompensationStagingPort` exposes only:
+
+- `stageRecruitDeposit` — wraps `AgentCompensationService.stageDeposit`
+- `listStagedForRecruitment` — pending deposits for Blind-mode cancel / ops
+
+Confirm / `depositDirect` / `PayoutService` are **not** on the port.
+
+### Idempotency (shipped)
+
+When `recruitmentId` is set, `stageDeposit` / `stageRecruitDeposit` keys on:
+
+```text
+(recruitmentId, agentId, reason)
+```
+
+| Existing row        | Same amount + asset                                                                         | Different amount/asset      |
+| ------------------- | ------------------------------------------------------------------------------------------- | --------------------------- |
+| `pending`           | Return prior handle (`idempotentReplay: true`); **no** second `COMPENSATION_DEPOSIT_STAGED` | Fail `Idempotent conflict…` |
+| `executed`          | Fail `Deposit already executed…` (blocks double bounty)                                     | same                        |
+| cancelled / expired | New stage allowed                                                                           | —                           |
+
+Stages without `recruitmentId` (e.g. `reason: "manual"`) are not idempotent.
+
+### Mapping onto APIs
 
 | Port call             | Effect service                                                        | MCP tool                             |
 | --------------------- | --------------------------------------------------------------------- | ------------------------------------ |
@@ -218,15 +209,13 @@ async function onEscalation(
 
 ## Error / idempotency matrix
 
-| Failure                                             | Coordinator behavior                                                                                       | WORM / ledger                                                    |
-| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `stageDeposit` fails (validation, disabled)         | Retry with backoff or skip agent; do not invent confirm                                                    | No deposit events (or only provider errors outside compensation) |
-| Stage succeeds, operator never confirms             | Pending TTL → expired; agent unpaid                                                                        | `COMPENSATION_DEPOSIT_STAGED` only; no `_CONFIRMED`              |
-| Confirm fails                                       | Retriable by operator; Coordinator does not retry confirm                                                  | `COMPENSATION_DEPOSIT_FAILED`                                    |
-| Cash-out payout fails after debit                   | Payroll / agent retries; payments re-credits                                                               | `COMPENSATION_CASHOUT_FAILED`                                    |
-| Duplicate stage for same `(recruitmentId, agentId)` | **Proposed:** payments should reject or return prior pending handle (not shipped yet — track as follow-up) | Avoid double bounty                                              |
-
-**Follow-up implementation note:** add optional idempotency key `recruitmentId + agentId + reason` on `stageDeposit` when Coordinator work begins — out of scope for the current payments scaffold unless product asks for it in #714.
+| Failure                                                     | Coordinator behavior                                                        | WORM / ledger                                                    |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `stageDeposit` fails (validation, disabled)                 | Retry with backoff or skip agent; do not invent confirm                     | No deposit events (or only provider errors outside compensation) |
+| Stage succeeds, operator never confirms                     | Pending TTL → expired; agent unpaid                                         | `COMPENSATION_DEPOSIT_STAGED` only; no `_CONFIRMED`              |
+| Confirm fails                                               | Retriable by operator; Coordinator does not retry confirm                   | `COMPENSATION_DEPOSIT_FAILED`                                    |
+| Cash-out payout fails after debit                           | Payroll / agent retries; payments re-credits                                | `COMPENSATION_CASHOUT_FAILED`                                    |
+| Duplicate stage for same `(recruitmentId, agentId, reason)` | Return prior pending handle or reject executed / conflict (see Idempotency) | At most one `COMPENSATION_DEPOSIT_STAGED` per key                |
 
 ## PEP / Command Deck alignment
 
@@ -245,7 +234,7 @@ Until PEP + NATS KV (build plan **P0-B**):
 - `confirm` / `depositDirect` wrappers that the evolutionary loop could call
 - Auto-payout on Evaluator verdict
 
-Allowed: types for `RecruitmentId`, escalation `recruitment_id` field, and a thin client that calls the **staging port** (MCP or HTTP) if the Coordinator package is separate from payments.
+Allowed: consume `CompensationStagingPort` / `makeCompensationStagingPort` from `clawql-payments` (or MCP stage tools / HTTP HATEOAS). Do not re-implement ledger staging inside ouroboros.
 
 ## Env and naming cheat sheet
 

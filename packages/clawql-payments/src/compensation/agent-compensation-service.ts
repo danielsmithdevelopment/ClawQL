@@ -39,11 +39,13 @@ import {
   buildApprovalUrl,
   buildCancelUrl,
   buildConfirmUrl,
+  findRecruitDepositByKey,
   listPendingActions,
   savePendingAction,
   stagePendingAction,
   type PendingActionRecord,
 } from "./pending-actions.js";
+import type { StageRecruitCompensationMeta } from "./staging-types.js";
 
 export class CompensationError extends Data.TaggedError("CompensationError")<{
   readonly reason: string;
@@ -63,6 +65,8 @@ export type StagedCompensation = {
   cancelUrl: string;
   expiresAt: string;
   classification: "financial";
+  /** True when returned from an existing pending row for the same recruit key. */
+  idempotentReplay?: boolean;
 };
 
 export type ApproveView = {
@@ -110,7 +114,7 @@ export class AgentCompensationService extends Context.Tag("clawql/AgentCompensat
       email?: string;
       tenantId?: string;
     }) => Effect.Effect<AgentAccount, CompensationError>;
-    /** Stage a high-impact deposit (inert until confirm). */
+    /** Stage a high-impact deposit (inert until confirm). Idempotent on recruitmentId+agentId+reason. */
     readonly stageDeposit: (input: {
       agentId: string;
       amountUsd: number;
@@ -118,8 +122,10 @@ export class AgentCompensationService extends Context.Tag("clawql/AgentCompensat
       reason?: CompensationReason;
       tenantId?: string;
       correlationId?: string;
-      /** SGDOP blind-spot / recruitment id for traceability. */
+      /** SGDOP blind-spot / recruitment id for traceability + idempotency. */
       recruitmentId?: string;
+      /** Optional Command Deck / escalation metadata (not secrets). */
+      meta?: StageRecruitCompensationMeta;
     }) => Effect.Effect<StagedCompensation, CompensationError>;
     /** Stage cash-out (debits + PayoutService only on confirm). */
     readonly stageCashout: (input: {
@@ -148,6 +154,7 @@ export class AgentCompensationService extends Context.Tag("clawql/AgentCompensat
     }) => Effect.Effect<{ actionId: string; status: "cancelled" }, CompensationError>;
     readonly listPending: (input?: {
       agentId?: string;
+      recruitmentId?: string;
     }) => Effect.Effect<PendingActionRecord[], CompensationError>;
     /**
      * Trusted direct deposit (no 2PC). Requires CLAWQL_COMPENSATION_DIRECT=1.
@@ -218,6 +225,24 @@ export function agentCompensationLiveLayer(
                 }),
         });
 
+      const toStaged = (
+        record: PendingActionRecord,
+        amountUsd: number,
+        opts?: { idempotentReplay?: boolean }
+      ): StagedCompensation => ({
+        actionId: record.actionId,
+        confirmationCode: record.confirmationCode,
+        tool: record.tool,
+        kind: record.kind,
+        agentId: record.agentId,
+        amountUsd,
+        approvalUrl: buildApprovalUrl(record.tool, record.actionId, record.confirmationCode, env),
+        cancelUrl: buildCancelUrl(record.tool, record.actionId, record.confirmationCode, env),
+        expiresAt: record.expiresAt,
+        classification: "financial" as const,
+        idempotentReplay: opts?.idempotentReplay,
+      });
+
       const stageDeposit = (input: {
         agentId: string;
         amountUsd: number;
@@ -226,6 +251,7 @@ export function agentCompensationLiveLayer(
         tenantId?: string;
         correlationId?: string;
         recruitmentId?: string;
+        meta?: StageRecruitCompensationMeta;
       }) =>
         Effect.gen(function* () {
           ensureEnabled();
@@ -235,6 +261,48 @@ export function agentCompensationLiveLayer(
           if (!input.agentId.trim()) {
             return yield* Effect.fail(new CompensationError({ reason: "agentId required" }));
           }
+          const reason = input.reason ?? "manual";
+          const recruitmentId = input.recruitmentId?.trim() || undefined;
+
+          // Idempotency: (recruitmentId, agentId, reason) → return existing pending or block double-pay.
+          if (recruitmentId) {
+            const existing = yield* Effect.tryPromise({
+              try: () =>
+                findRecruitDepositByKey(
+                  {
+                    recruitmentId,
+                    agentId: input.agentId,
+                    reason,
+                  },
+                  env
+                ),
+              catch: (cause) =>
+                new CompensationError({
+                  reason: cause instanceof Error ? cause.message : "idempotency lookup failed",
+                  cause,
+                }),
+            });
+            if (existing?.status === "pending") {
+              const prevAmount = Number(existing.args.amountUsd);
+              const prevAsset = String(existing.args.asset ?? "credits");
+              if (Math.abs(prevAmount - input.amountUsd) > 1e-9 || prevAsset !== input.asset) {
+                return yield* Effect.fail(
+                  new CompensationError({
+                    reason: `Idempotent conflict for recruitment ${recruitmentId} / ${input.agentId}: existing pending amount=${prevAmount} asset=${prevAsset}`,
+                  })
+                );
+              }
+              return toStaged(existing, input.amountUsd, { idempotentReplay: true });
+            }
+            if (existing?.status === "executed") {
+              return yield* Effect.fail(
+                new CompensationError({
+                  reason: `Deposit already executed for recruitment ${recruitmentId} / agent ${input.agentId} (${reason})`,
+                })
+              );
+            }
+          }
+
           yield* Effect.tryPromise({
             try: () => ensureAgentAccount(input.agentId, env, input.tenantId),
             catch: (cause) =>
@@ -245,7 +313,6 @@ export function agentCompensationLiveLayer(
           });
           const kind = input.asset === "funds" ? "deposit_funds" : "deposit_credits";
           const tool = COMPENSATION_DEPOSIT_STAGE_TOOL;
-          const reason = input.reason ?? "manual";
           const record = yield* Effect.tryPromise({
             try: () =>
               stagePendingAction(
@@ -255,12 +322,13 @@ export function agentCompensationLiveLayer(
                   classification: "financial",
                   agentId: input.agentId,
                   tenantId: input.tenantId,
-                  correlationId: input.correlationId ?? input.recruitmentId,
+                  correlationId: input.correlationId ?? recruitmentId,
                   args: {
                     amountUsd: input.amountUsd,
                     asset: input.asset,
                     reason,
-                    recruitmentId: input.recruitmentId,
+                    recruitmentId,
+                    ...(input.meta ? { meta: input.meta } : {}),
                   },
                 },
                 env
@@ -280,23 +348,12 @@ export function agentCompensationLiveLayer(
                 amountUsd: input.amountUsd,
                 asset: input.asset,
                 reason,
-                recruitmentId: input.recruitmentId,
+                recruitmentId,
                 correlationId: record.correlationId,
               })
             )
             .pipe(Effect.catchAll(() => Effect.void));
-          return {
-            actionId: record.actionId,
-            confirmationCode: record.confirmationCode,
-            tool,
-            kind,
-            agentId: record.agentId,
-            amountUsd: input.amountUsd,
-            approvalUrl: buildApprovalUrl(tool, record.actionId, record.confirmationCode, env),
-            cancelUrl: buildCancelUrl(tool, record.actionId, record.confirmationCode, env),
-            expiresAt: record.expiresAt,
-            classification: "financial" as const,
-          } satisfies StagedCompensation;
+          return toStaged(record, input.amountUsd);
         });
 
       const stageCashout = (input: {
@@ -767,12 +824,13 @@ export function agentCompensationLiveLayer(
           return { actionId: record.actionId, status: "cancelled" as const };
         });
 
-      const listPending = (input?: { agentId?: string }) =>
+      const listPending = (input?: { agentId?: string; recruitmentId?: string }) =>
         Effect.tryPromise({
           try: async () => {
             ensureEnabled();
             return listPendingActions(env, {
               agentId: input?.agentId,
+              recruitmentId: input?.recruitmentId,
               status: "pending",
             });
           },

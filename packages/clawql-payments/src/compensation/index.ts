@@ -31,6 +31,7 @@ export {
   buildApprovalUrl,
   buildCancelUrl,
   buildConfirmUrl,
+  findRecruitDepositByKey,
   listPendingActions,
   loadPendingAction,
   stagePendingAction,
@@ -48,3 +49,12 @@ export {
   type DepositResult,
   type StagedCompensation,
 } from "./agent-compensation-service.js";
+export {
+  makeCompensationStagingPort,
+  type CompensationStagingPort,
+  type CoordinatorCompensationReason,
+  type RecruitmentId,
+  type StageRecruitCompensationInput,
+  type StageRecruitCompensationMeta,
+  type StagedCompensationHandle,
+} from "./staging-port.js";

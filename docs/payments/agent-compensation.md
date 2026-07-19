@@ -122,23 +122,24 @@ clawql payments compensation balance --agent a1
 
 When the strategic Coordinator ships (NSV / SGDOP / reputation / Diversity Dividends), it should **only stage** compensation. Confirm stays with the operator / PEP / Command Deck — money never moves inside the evolutionary loop.
 
-**Full interface / API proposal:** [sgdop-coordinator-compensation-bridge.md](./sgdop-coordinator-compensation-bridge.md) — `CompensationStagingPort`, recruitment id linkage, bounty vs dividends, sequence diagram, error matrix, PEP swap notes.
+**Bridge doc:** [sgdop-coordinator-compensation-bridge.md](./sgdop-coordinator-compensation-bridge.md) — shipped `makeCompensationStagingPort`, `(recruitmentId, agentId, reason)` idempotency, bounty vs dividends, sequence diagram.
 
 Short form:
 
 ```ts
-// Coordinator — stage only
-const staged =
-  yield *
-  compensation.stageDeposit({
-    agentId: agent.id,
-    amountUsd: agent.bountyUsd,
-    asset: "credits",
-    reason: "sgdop_recruit",
-    recruitmentId: blindSpot.id,
-  });
+import { makeCompensationStagingPort } from "clawql-payments";
+
+// Coordinator — stage only (Promise port; confirm is not on the type)
+const compensation = makeCompensationStagingPort();
+const staged = await compensation.stageRecruitDeposit({
+  agentId: agent.id,
+  amountUsd: agent.bountyUsd,
+  asset: "credits",
+  reason: "sgdop_recruit",
+  recruitmentId: blindSpot.id,
+});
 // Never call confirm from the Coordinator loop.
-yield * notify.operator({ approvalUrl: staged.approvalUrl, code: staged.confirmationCode });
+await notify.operator({ approvalUrl: staged.approvalUrl, code: staged.confirmationCode });
 ```
 
 See also [Ouroboros coordination layer](../ouroboros/daos-coordination-layer-specification.md) §1.2 / §2, [clawql-ouroboros.md](../ouroboros/clawql-ouroboros.md), [payouts-ramp.md](./payouts-ramp.md).
