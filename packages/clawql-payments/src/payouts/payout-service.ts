@@ -397,20 +397,23 @@ export function payoutLiveLayer(
                 })
               )
               .pipe(Effect.catchAll(() => Effect.void));
-            yield* audit
-              .appendEntry(
-                buildPayoutPaidEntry({
-                  tenantId,
-                  payoutId: id,
-                  amountUsd: amountCents / 100,
-                  destination: "usdc",
-                  correlationId: input.correlationId ?? id,
-                })
-              )
-              .pipe(Effect.catchAll(() => Effect.void));
+            // PAYOUT_PAID only after receipt confirmation (or dry-run). Skip-receipt → submitted.
+            if (sent.confirmed) {
+              yield* audit
+                .appendEntry(
+                  buildPayoutPaidEntry({
+                    tenantId,
+                    payoutId: id,
+                    amountUsd: amountCents / 100,
+                    destination: "usdc",
+                    correlationId: input.correlationId ?? id,
+                  })
+                )
+                .pipe(Effect.catchAll(() => Effect.void));
+            }
             return {
               id,
-              status: sent.dryRun ? "paid" : "submitted",
+              status: sent.confirmed ? "paid" : "submitted",
               amountCents,
               destination: "usdc",
               usdcWallet,

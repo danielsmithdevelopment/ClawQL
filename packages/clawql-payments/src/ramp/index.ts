@@ -1,7 +1,11 @@
 export {
+  isRampAgenticEnabled,
   isRampConfigured,
   isRampDryRun,
   isRampEnabled,
+  rampAgenticCredsPath,
+  rampAgenticIssuePath,
+  rampAgenticReadPath,
   rampApiBase,
   rampClientId,
   rampClientSecret,
@@ -13,6 +17,7 @@ export {
   RampError,
   RampService,
   rampLiveLayer,
+  type RampCardIssuancePath,
   type RampCardResult,
   type RampFundResult,
 } from "./ramp-service.js";

@@ -26,7 +26,10 @@ export type PaymentEventKind =
   | "RAMP_FUND_CREATED"
   | "RAMP_VIRTUAL_CARD_ISSUED"
   | "RAMP_AGENT_CARD_ISSUED"
-  | "OFFRAMP_SESSION_CREATED";
+  | "OFFRAMP_SESSION_CREATED"
+  | "OFFRAMP_UPDATED"
+  | "OFFRAMP_COMPLETED"
+  | "OFFRAMP_FAILED";
 
 export type PaymentProvider =
   "stripe" | "x402" | "ap2" | "acp" | "paypal" | "adyen" | "ramp" | "payouts" | "offramp";
@@ -561,6 +564,70 @@ export function buildOfframpSessionCreatedEntry(input: {
       tenant_id: input.tenantId,
       resource: input.sessionId,
       agent_id: input.creatorId ?? input.walletAddress,
+    },
+  });
+}
+
+export function buildOfframpUpdatedEntry(input: {
+  tenantId: string;
+  transactionId: string;
+  provider: "moonpay" | "transak";
+  status: string;
+  amountUsd?: number;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "OFFRAMP_UPDATED",
+    summary: `Off-ramp ${input.provider} ${input.transactionId} status=${input.status}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "offramp",
+      amount_usdc: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.transactionId,
+      agent_id: input.status,
+    },
+  });
+}
+
+export function buildOfframpCompletedEntry(input: {
+  tenantId: string;
+  transactionId: string;
+  provider: "moonpay" | "transak";
+  amountUsd?: number;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "OFFRAMP_COMPLETED",
+    summary: `Off-ramp ${input.provider} completed ${input.transactionId}${input.amountUsd != null ? ` $${input.amountUsd.toFixed(2)}` : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "offramp",
+      amount_usdc: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.transactionId,
+    },
+  });
+}
+
+export function buildOfframpFailedEntry(input: {
+  tenantId: string;
+  transactionId: string;
+  provider: "moonpay" | "transak";
+  reason: string;
+  amountUsd?: number;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "OFFRAMP_FAILED",
+    summary: `Off-ramp ${input.provider} failed ${input.transactionId}: ${input.reason}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "offramp",
+      amount_usdc: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.transactionId,
+      agent_id: input.reason.slice(0, 120),
     },
   });
 }

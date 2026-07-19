@@ -55,4 +55,9 @@ export {
   type PaymentsRampCardIssueOptions,
   type PaymentsRampAgentCardOptions,
 } from "./ramp.js";
-export { runPaymentsOfframpSession, type PaymentsOfframpSessionOptions } from "./offramp.js";
+export {
+  runPaymentsOfframpSession,
+  runPaymentsOfframpWebhook,
+  type PaymentsOfframpSessionOptions,
+  type PaymentsOfframpWebhookOptions,
+} from "./offramp.js";

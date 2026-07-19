@@ -70,3 +70,7 @@ export {
   ConsumerOffRampService,
   consumerOffRampLiveLayer,
 } from "../offramp/consumer-offramp-service.js";
+export {
+  OfframpWebhookService,
+  offrampWebhookLiveLayer,
+} from "../offramp/offramp-webhook-service.js";

@@ -31,6 +31,8 @@ describe("RampService", () => {
     delete process.env.CLAWQL_RAMP_DRY_RUN;
     delete process.env.RAMP_CLIENT_ID;
     delete process.env.RAMP_CLIENT_SECRET;
+    delete process.env.CLAWQL_RAMP_AGENTIC;
+    delete process.env.RAMP_ENVIRONMENT;
     vi.unstubAllGlobals();
     await rm(home, { recursive: true, force: true });
   });
@@ -57,6 +59,82 @@ describe("RampService", () => {
     expect(result.card.dryRun).toBe(true);
     expect(result.card.pan).toBeUndefined();
     expect(result.card.lastFour).toBe("4242");
+    expect(result.card.issuancePath).toBe("vault");
+  });
+
+  it("uses native agentic path when CLAWQL_RAMP_AGENTIC=1", async () => {
+    process.env.CLAWQL_RAMP_AGENTIC = "1";
+    resetPaymentsEffectRuntimeForTests();
+    const card = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const ramp = yield* RampService;
+        return yield* ramp.issueAgentCard({
+          userId: "user_agentic",
+          amountUsd: 30,
+          agentId: "research-2",
+        });
+      })
+    );
+    expect(card.issuancePath).toBe("agentic");
+    expect(card.agentScoped).toBe(true);
+    expect(card.id).toMatch(/^card_agentic_dry_/);
+    delete process.env.CLAWQL_RAMP_AGENTIC;
+  });
+
+  it("issues live agentic cards against mocked Developer API", async () => {
+    process.env.CLAWQL_RAMP_DRY_RUN = "0";
+    process.env.CLAWQL_RAMP_AGENTIC = "1";
+    process.env.RAMP_CLIENT_ID = "cid";
+    process.env.RAMP_CLIENT_SECRET = "csecret";
+    process.env.RAMP_ENVIRONMENT = "demo";
+    resetPaymentsEffectRuntimeForTests();
+
+    const fetchMock = vi.fn(async (url: string | URL, init?: RequestInit) => {
+      const href = String(url);
+      if (href.endsWith("/developer/v1/token")) {
+        expect(String(init?.body)).toContain("cards%3Aread_agentic");
+        return new Response(JSON.stringify({ access_token: "tok", expires_in: 3600 }), {
+          status: 200,
+        });
+      }
+      if (href.endsWith("/developer/v1/funds") && init?.method === "POST") {
+        return new Response(JSON.stringify({ id: "fund_ag_1", state: "ACTIVE" }), {
+          status: 200,
+        });
+      }
+      if (href.includes("/developer/v1/cards/agentic") && init?.method === "POST") {
+        return new Response(
+          JSON.stringify({
+            id: "card_ag_1",
+            pan: "4111111111119999",
+            cvv: "999",
+            expiration: "2031-06",
+            fund_id: "fund_ag_1",
+          }),
+          { status: 200 }
+        );
+      }
+      return new Response(`not found ${href}`, { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const card = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const ramp = yield* RampService;
+        return yield* ramp.issueAgentCard({
+          userId: "user_live_ag",
+          amountUsd: 40,
+          agentId: "bot-1",
+        });
+      })
+    );
+
+    expect(card.issuancePath).toBe("agentic");
+    expect(card.id).toBe("card_ag_1");
+    expect(card.lastFour).toBe("9999");
+    expect(card.pan).toBe("4111111111119999");
+    expect(card.fundId).toBe("fund_ag_1");
+    delete process.env.CLAWQL_RAMP_AGENTIC;
   });
 
   it("issues vault virtual cards against mocked Ramp APIs", async () => {
@@ -106,5 +184,6 @@ describe("RampService", () => {
     expect(card.pan).toBe("4111111111111111");
     expect(card.fundId).toBe("fund_1");
     expect(card.dryRun).toBe(false);
+    expect(card.issuancePath).toBe("vault");
   });
 });

@@ -18,6 +18,7 @@ describe("payments tools MCP plugin", () => {
       "payments_payout_create",
       "payments_ramp_agent_card_issue",
       "payments_offramp_session_create",
+      "payments_offramp_webhook_process",
     ]);
   });
 

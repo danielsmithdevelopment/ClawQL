@@ -79,6 +79,7 @@ import {
   runPaymentsRampCardIssueCmd,
   runPaymentsRampAgentCardIssueCmd,
   runPaymentsOfframpSessionCmd,
+  runPaymentsOfframpWebhookCmd,
   type PaymentsCliOptions,
 } from "./payments-cli.js";
 
@@ -285,6 +286,7 @@ Usage:
   clawql payments payout connect create --email creator@x.com | connect link --account acct_xxx | create --amount 25 | prefer --creator id --method bank
   clawql payments ramp fund create --limit 500 | card issue --user-id U --limit 100 | agent-card issue --user-id U --amount 25
   clawql payments offramp session --amount 25 --wallet 0x… [--provider moonpay|transak]
+  clawql payments offramp webhook --provider moonpay --payload ./body.json --signature t=…,s=… --process
   clawql payments spend report [--group-by provider|tenant|plan] | audit [--correlation-id ID]
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
@@ -1007,7 +1009,13 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsOfframpSessionCmd(paymentsOpts);
         return;
       }
-      console.error("Usage: clawql payments offramp session --amount N --wallet 0x…");
+      if (rest[0] === "webhook") {
+        process.exitCode = await runPaymentsOfframpWebhookCmd(paymentsOpts);
+        return;
+      }
+      console.error(
+        "Usage: clawql payments offramp session | webhook --provider moonpay|transak --payload FILE [--signature …] [--process]"
+      );
       process.exitCode = 1;
       return;
     }

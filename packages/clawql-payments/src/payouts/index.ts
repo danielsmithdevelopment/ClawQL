@@ -28,4 +28,8 @@ export {
   USDC_BASE_MAINNET,
   USDC_BASE_SEPOLIA,
   type UsdcSendResult,
+  waitForUsdcReceipt,
+  usdcReceiptConfirmations,
+  usdcReceiptTimeoutMs,
+  usdcSkipReceipt,
 } from "./usdc-send.js";

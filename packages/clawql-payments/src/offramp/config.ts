@@ -55,3 +55,25 @@ export function transakBaseUrl(env: NodeJS.ProcessEnv = process.env): string {
   }
   return "https://global-stg.transak.com";
 }
+
+/** MoonPay webhook signing secret (dashboard Developers → webhooks). */
+export function moonpayWebhookSecret(env: NodeJS.ProcessEnv = process.env): string | undefined {
+  return env.MOONPAY_WEBHOOK_SECRET?.trim() || env.MOONPAY_WEBHOOK_KEY?.trim() || undefined;
+}
+
+/** Transak partner access token used to verify webhook JWT `data` field. */
+export function transakWebhookSecret(env: NodeJS.ProcessEnv = process.env): string | undefined {
+  return (
+    env.TRANSAK_ACCESS_TOKEN?.trim() ||
+    env.TRANSAK_API_SECRET?.trim() ||
+    env.TRANSAK_WEBHOOK_SECRET?.trim() ||
+    undefined
+  );
+}
+
+/** Max age for MoonPay signature timestamp (seconds). Default 5 minutes. */
+export function moonpayWebhookMaxSkewSec(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = env.CLAWQL_OFFRAMP_WEBHOOK_MAX_SKEW_SEC?.trim();
+  if (raw && Number.isFinite(Number(raw)) && Number(raw) > 0) return Math.floor(Number(raw));
+  return 300;
+}

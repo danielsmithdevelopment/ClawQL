@@ -12,6 +12,7 @@ import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
 import { PayoutService } from "../payouts/payout-service.js";
 import { RampService } from "../ramp/ramp-service.js";
 import { ConsumerOffRampService } from "../offramp/consumer-offramp-service.js";
+import { OfframpWebhookService } from "../offramp/offramp-webhook-service.js";
 import { Ap2MandateService } from "../ap2/ap2-mandate-service.js";
 import { isAp2Enabled } from "../ap2/config.js";
 
@@ -81,6 +82,17 @@ const offrampSessionSchema = {
   redirectUrl: z.string().optional(),
   tenantId: z.string().optional(),
   creatorId: z.string().optional(),
+  mandateJwt: z.string().optional(),
+};
+
+const offrampWebhookSchema = {
+  provider: z.enum(["moonpay", "transak"]).describe("Off-ramp provider"),
+  rawBody: z.string().describe("Raw webhook JSON body"),
+  signatureHeader: z
+    .string()
+    .optional()
+    .describe("Moonpay-Signature-V2 header (required for moonpay)"),
+  tenantId: z.string().optional(),
   mandateJwt: z.string().optional(),
 };
 
@@ -161,6 +173,7 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               lastFour: result.lastFour,
               amountUsd: result.amountUsd,
               agentScoped: result.agentScoped,
+              issuancePath: result.issuancePath,
               dryRun: result.dryRun,
             });
           },
@@ -192,6 +205,34 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
                   redirectUrl: a.redirectUrl,
                   tenantId: a.tenantId,
                   creatorId: a.creatorId,
+                });
+              }),
+              env
+            );
+            return textResult(result);
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_offramp_webhook_process",
+          schema: offrampWebhookSchema,
+          handler: async (args) => {
+            const a = args as {
+              provider: "moonpay" | "transak";
+              rawBody: string;
+              signatureHeader?: string;
+              tenantId?: string;
+              mandateJwt?: string;
+            };
+            await assertAp2IfRequired(env, a.mandateJwt);
+            const result = await runPaymentsEffect(
+              Effect.gen(function* () {
+                const wh = yield* OfframpWebhookService;
+                return yield* wh.process({
+                  provider: a.provider,
+                  rawBody: a.rawBody,
+                  signatureHeader: a.signatureHeader,
+                  tenantId: a.tenantId,
                 });
               }),
               env

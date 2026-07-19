@@ -80,6 +80,6 @@ describe("PayoutService (Stripe Connect dry-run)", () => {
     expect(paid.amountCents).toBe(1000);
     expect(paid.dryRun).toBe(true);
     expect(paid.txHash).toMatch(/^0xdry/);
-    expect(paid.status).toBe("paid");
+    expect(paid.status).toBe("paid"); // dry-run confirms immediately
   });
 });

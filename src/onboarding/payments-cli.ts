@@ -29,6 +29,7 @@ import {
   runPaymentsRampCardIssue,
   runPaymentsRampAgentCardIssue,
   runPaymentsOfframpSession,
+  runPaymentsOfframpWebhook,
   type SpendGroupBy,
   type PayoutMethod,
   type OffRampProvider,
@@ -339,6 +340,19 @@ export async function runPaymentsOfframpSessionCmd(
     returnUrl: options.returnUrl,
     tenantId: options.tenantId,
     creatorId: options.creatorId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsOfframpWebhookCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsOfframpWebhook({
+    provider: options.provider,
+    payloadPath: options.payloadPath,
+    signature: options.signature,
+    tenantId: options.tenantId,
+    process: options.process,
     json: options.json,
   });
 }

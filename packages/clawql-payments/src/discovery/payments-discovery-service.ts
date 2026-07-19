@@ -7,7 +7,12 @@ import { isAcpEnabled } from "../acp/config.js";
 import { isPaypalEnabled, paypalApiBase } from "../paypal/config.js";
 import { adyenEnvironment, adyenMerchantAccount, isAdyenEnabled } from "../adyen/config.js";
 import { isPayoutsDryRun, isPayoutsEnabled } from "../payouts/config.js";
-import { isRampDryRun, isRampEnabled, rampEnvironment } from "../ramp/config.js";
+import {
+  isRampAgenticEnabled,
+  isRampDryRun,
+  isRampEnabled,
+  rampEnvironment,
+} from "../ramp/config.js";
 import { defaultOffRampProvider, isOffRampDryRun, isOffRampEnabled } from "../offramp/config.js";
 import { X402GateService } from "../x402/x402-gate-service.js";
 import { X402RuntimeConfigService } from "../x402/x402-runtime-config-service.js";
@@ -84,7 +89,7 @@ export type PaymentsWellKnownPayoutsMethod = PaymentsWellKnownMethod & {
 export type PaymentsWellKnownRampMethod = PaymentsWellKnownMethod & {
   type: "ramp";
   environment: "demo" | "production";
-  capabilities: Array<"funds" | "virtual_cards" | "agent_cards">;
+  capabilities: Array<"funds" | "virtual_cards" | "agent_cards" | "agentic_cards">;
   dry_run: boolean;
   documentation: string;
 };
@@ -268,13 +273,18 @@ export function paymentsDiscoveryLiveLayer(
           }
 
           if (isRampEnabled(runEnv)) {
+            const capabilities: Array<"funds" | "virtual_cards" | "agent_cards" | "agentic_cards"> =
+              ["funds", "virtual_cards", "agent_cards"];
+            if (isRampAgenticEnabled(runEnv)) capabilities.push("agentic_cards");
             paymentMethods.push({
               type: "ramp",
               enabled: true,
               environment: rampEnvironment(runEnv),
-              capabilities: ["funds", "virtual_cards", "agent_cards"],
+              capabilities,
               dry_run: isRampDryRun(runEnv),
-              documentation: "https://docs.ramp.com/developer-api/v1/virtual-cards",
+              documentation: isRampAgenticEnabled(runEnv)
+                ? "https://docs.ramp.com/developer-api/v1/agent-cards"
+                : "https://docs.ramp.com/developer-api/v1/virtual-cards",
             });
           }
 
