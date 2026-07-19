@@ -11,6 +11,7 @@ const toc = [
   { href: '#expansion-ladder', label: 'The expansion ladder' },
   { href: '#security-dossier', label: 'Hardened Security Dossier' },
   { href: '#agentic-fabric', label: 'Zero-Trust Agentic Fabric' },
+  { href: '#sales-objections', label: 'Sales quick reference' },
   { href: '#why-nobody-else', label: 'Why nobody else can run this' },
   { href: '#pricing', label: 'Pricing reinforces the strategy' },
   { href: '#segments', label: 'Target segments' },
@@ -433,183 +434,268 @@ clawql sources add https://your-nextcloud-instance/api
           <h2 id="agentic-fabric">Zero-Trust Agentic Fabric — the enterprise architecture</h2>
           <p>
             ClawQL’s Foundational Platform is not a single global proxy. It is a{' '}
-            <strong>Zero-Trust Agentic Fabric</strong> with three layers: multi-tenant Regional Hubs for routing and
-            billing, Dedicated Virtual Gateways for isolated governance, and Edge Agentic Gateways on developer machines
-            for local execution — optionally networked into a distributed swarm.
+            <strong>Zero-Trust Agentic Fabric</strong> — the distributed agentic operating system for Auditable
+            Production AI: multi-tenant <strong>Regional Hubs</strong> (billing/routing), customer-owned{' '}
+            <strong>Dedicated Virtual Gateways</strong> (governance + NATS nervous system), and{' '}
+            <strong>Edge Gateways</strong> on every laptop (execution). Full technical specification:{' '}
+            <Link href={`${site.urls.docs}/architecture/agentic-fabric`}>
+              docs.clawql.com/architecture/agentic-fabric
+            </Link>
+            .
           </p>
           <Callout>
-            Global gateways as a single master are an anti-pattern for Auditable Production AI: they concentrate
-            failure, complicate per-tenant policy, and enlarge the blast radius. Prefer federated Virtual Gateways that
-            share policy truth but enforce and audit locally.
+            Global master gateways are an anti-pattern: SPOF, compliance bottleneck, identical policy overhead for every
+            team, concentrated supply-chain target. Prefer federated Virtual Gateways that share EnterpriseGovernance
+            truth but enforce and audit locally. Regional Hub ≠ policy brain.
           </Callout>
 
           <h3>Layer 1 — Regional Hub (SaaS / shared)</h3>
           <p>
-            ClawQL-operated, multi-tenant by default. Customers connect to one or multiple Regional Hubs. Hubs handle
-            inference routing, cost attribution, and billing — the transactional plumbing so teams can start today with
-            zero dedicated infrastructure.
+            ClawQL-operated, multi-tenant by default. Customers connect to one or multiple hubs. This is the “cloud
+            pipe” — transactional plumbing so teams start today without a VPC.
           </p>
           <ul>
             <li>
-              <strong>Function:</strong> routing, metering, billing, shared model access
+              <strong>Does:</strong> model routing, billing metering, usage attribution, provider load balancing
             </li>
             <li>
-              <strong>Value:</strong> instant-on; land on Developer/Teams without a VPC deployment
+              <strong>Does not:</strong> hold tenant manifests, write tenant intent/execution WORM, see raw PII on
+              sovereign paths, or store customer sovereign secrets
             </li>
             <li>
-              <strong>Audit role:</strong> usage audit (what was called, at what cost)
+              <strong>Audit role:</strong> usage audit — what was called, at what cost
             </li>
           </ul>
 
           <h3>Layer 2 — Dedicated Virtual Gateway (governance / private)</h3>
           <p>
-            The primary enterprise entry point. Deployed into a ClawQL region or the customer’s own cloud/VPC. It
-            communicates with Regional Hubs for usage and billing, but <strong>everything else</strong> — policy
-            enforcement, WORM sinks, observability, and event fabric — couples directly to the customer’s Dedicated
-            Virtual Gateway.
+            The primary enterprise entry point — the company’s “brain.” Deployed into a ClawQL region or the customer’s
+            VPC/on-prem. Usage and billing still flow through Regional Hubs; <strong>everything else</strong> couples to
+            the Dedicated VG.
           </p>
           <ul>
             <li>
-              <strong>Function:</strong> Audit-Trail Enforcement Point; EnterpriseGovernance manifests; PII/PHI
-              scrubbing; private WORM; NATS JetStream + Valkey for event-driven swarm workflows
+              <strong>Function:</strong> Audit-Trail Enforcement Point; EnterpriseGovernance; PII/PHI scrubbing; private
+              WORM; <strong>NATS JetStream + Valkey</strong> swarm fabric
             </li>
             <li>
-              <strong>Value:</strong> a private island of governance that still consumes Layer 1 routing/billing
+              <strong>Federation:</strong> multiple VGs as peers (not spokes under a global master) — EU enforcement
+              stays in EU; optional cross-gateway tool routing under explicit policy
             </li>
             <li>
-              <strong>Audit role:</strong> intent audit (policies, tool authorizations, why an action was allowed)
-            </li>
-            <li>
-              <strong>Federation:</strong> customers may run <em>multiple</em> Dedicated Virtual Gateways and network
-              them as peers — not as spokes under a global master — so EU data stays in an EU enforcement point while US
-              hubs remain sovereign, with optional cross-gateway tool routing under explicit policy
+              <strong>Audit role:</strong> intent audit — why an action was authorized
             </li>
           </ul>
 
           <h3>Layer 3 — Edge Agentic Gateway (developer laptop / swarm node)</h3>
           <p>
-            Each engineer’s laptop runs an Edge Agentic Gateway: local MCP, local memory, and low-latency tool
-            execution. Edge nodes sync through the company’s Dedicated Virtual Gateway(s) via mTLS identity pinning —
-            offline-first for local work, online-governed when connected.
+            Same Agentic Gateway binary class, deployed locally: MCP for Cursor/Claude Code, local Frugal inference,
+            vault memory, NATS task subscriber, Seatbelt containment, WORM relay.
           </p>
           <ul>
             <li>
-              <strong>Function:</strong> IDE-native MCP, session memory, local tool runs, fine-grained execution audit
-            </li>
-            <li>
-              <strong>Sync:</strong> Virtual Gateway <em>pushes</em> policy updates; Edge Gateway <em>pushes</em>{' '}
-              WORM-signed audit bundles on reconnect — continuous trail without forcing always-online
-            </li>
-            <li>
-              <strong>Audit role:</strong> execution audit (what actually ran on the workstation)
+              <strong>Sync:</strong> VG <em>pushes</em> policy; Edge <em>pushes</em> WORM-signed audit bundles — offline
+              first, online governed
             </li>
             <li>
               <strong>Shadow IT inversion:</strong> developers prefer the Edge node because it unlocks corporate memory,
-              documents, and swarm topics — turning unmanaged local AI into a managed, auditable asset
+              documents, and swarm topics
+            </li>
+            <li>
+              <strong>Audit role:</strong> execution audit — what actually ran on the workstation
             </li>
           </ul>
 
-          <h3>Three audits, one narrative</h3>
+          <h3>Three audits, one forensic narrative</h3>
           <ScrollTable>
             <table>
               <thead>
                 <tr>
                   <th>Layer</th>
                   <th>Audit surface</th>
-                  <th>What the CISO sees</th>
+                  <th>What the CISO reconstructs</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>Regional Hub</td>
                   <td>Usage audit</td>
-                  <td>Tokens, models, billing signals — not customer policy contents</td>
+                  <td>Tokens, models, billing — not private policy contents</td>
                 </tr>
                 <tr>
                   <td>Dedicated Virtual Gateway</td>
                   <td>Intent audit</td>
-                  <td>Policies, authorizations, tool invocations, WORM sink in the audit boundary</td>
+                  <td>Policies, authorizations, tool permissions, WORM in the audit boundary</td>
                 </tr>
                 <tr>
                   <td>Edge Agentic Gateway</td>
                   <td>Execution audit</td>
-                  <td>Fine-grained local tool runs, synced as signed bundles when online</td>
+                  <td>Fine-grained local runs, synced as signed bundles when online</td>
                 </tr>
               </tbody>
             </table>
           </ScrollTable>
           <p>
-            An auditor querying the Dedicated Virtual Gateway gets a 360° view of an agent’s lifecycle across the
-            fabric, while sensitive source and personal context remain at the Edge or in the customer VPC.
+            Usage proves what was called. Intent proves why it was allowed. Execution proves what happened. An auditor
+            querying the Dedicated VG gets the composed record without centralizing raw source or personal context.
           </p>
 
-          <h3>Event-driven fabric — NATS JetStream + Valkey</h3>
-          <p>
-            Each Dedicated Virtual Gateway hosts its own <strong>NATS JetStream</strong> and <strong>Valkey</strong>{' '}
-            (plus supporting services) so agents publish and subscribe to topics and work in an event-driven manner.
-            This is baked into the Virtual Gateway definition — not a bolted-on Phase 4 — because swarm coordination is
-            how enterprise customers turn gateways into an Autonomous Operational Force.
-          </p>
-          <h4>Emergent parallelism</h4>
-          <p>
-            When one agent struggles, it publishes state to the company’s Virtual Gateway. Edge nodes subscribed to the
-            topic pull current state (Valkey as shared short-term memory) and work in parallel, publishing attempts and
-            status until one posts a breakthrough. Peers stop; the originator reports back to the employee. Redundant
-            work collapses because the swarm sees what was already tried.
-          </p>
-          <h4>CTO / CISO as swarm orchestrators</h4>
-          <p>
-            Leadership publishes tasks to the Virtual Gateway — weekly work summaries, security patches with mandate
-            details — and every Edge Gateway pulls the same task, executes locally with local tools and context, and
-            reports back. Mandates are system events, not email suggestions. Every publish/subscribe is WORM-logged on
-            the Dedicated Virtual Gateway: when it was mandated, who picked it up, what they tried, and when they
-            confirmed success.
-          </p>
-          <Callout>
-            The orchestration loop: Broadcast → Pull → Execute → Report. Accountability by design — with agentic payment
-            rails able to credit identities for completed automation work when the customer enables them.
-          </Callout>
-          <h4>Federated mesh properties</h4>
+          <h3>Sovereign handshakes</h3>
           <ul>
             <li>
-              <strong>Peer policy sync:</strong> gateways share EnterpriseGovernance truth (gossip or read-only policy
-              store); each remains an Independent Policy Enforcement Point
+              <strong>VG → Regional Hub:</strong> VG initiates (pull — no inbound into tenant VPC). mTLS identity →
+              GovernanceSync (manifest hash) → stream for routing/billing signals. Heartbeat timeout = kill switch
+              (fail-closed). Hash mismatch → DEGRADED_MODE + WORM event.
             </li>
             <li>
-              <strong>Cross-gateway tool routing:</strong> under explicit policy, a US-East Edge can reach EU-West tools
-              via secure inter-gateway routing without the developer knowing where data lives
-            </li>
-            <li>
-              <strong>Local WORM, mesh observability:</strong> each gateway keeps a regional WORM sink; a manager tier
-              aggregates metrics and compliance views without centralizing raw sensitive payloads
-            </li>
-            <li>
-              <strong>Explicit discovery:</strong> prefer configured registries and mTLS identity over open service
-              discovery — strict security and audit posture over convenience
+              <strong>Edge → VG:</strong> identity pinning → policy push (local enforce) → audit-bundle push on schedule
+              or reconnect. Offline Edges queue WORM; trail never discarded.
             </li>
           </ul>
 
-          <h3>Sales framing for this architecture</h3>
-          <ul>
+          <h3>Event-driven fabric — NATS JetStream + Valkey</h3>
+          <p>
+            Each Dedicated VG hosts its own JetStream and Valkey. This is baked into the VG definition — not a bolted-on
+            Phase 4. Subject hierarchy and Valkey schemas are specified in the{' '}
+            <Link href={`${site.urls.docs}/architecture/agentic-fabric`}>architecture doc</Link> (
+            <code>clawql.tasks.*.broadcast</code>,{' '}
+            <code>clawql.problems.&#123;id&#125;.open|attempt|solved|closed</code>, audit relay, policy updates).
+          </p>
+          <h4>Collaborative problem-solving</h4>
+          <ol>
             <li>
-              <strong>For the CTO:</strong> You manage agents at the Edge, govern them through your Dedicated Virtual
-              Gateway, and ClawQL handles multi-tenant routing and billing through Regional Hubs.
+              <strong>Publish</strong> — stuck Edge opens a problem topic; VG initializes Valkey problem state
             </li>
             <li>
-              <strong>For the CISO:</strong> Sensitive policy and WORM stay in your audit boundary. Regional Hubs see
-              billing and routing signals required for operations — not your private enforcement contents.
+              <strong>Parallel execute</strong> — Edges pull attempts, avoid redundant work, publish progress
+            </li>
+            <li>
+              <strong>Breakthrough</strong> — first solver publishes <code>.solved</code>; peers stop; VG validates
+            </li>
+            <li>
+              <strong>Close</strong> — originator notified; full WORM chain for the session
+            </li>
+          </ol>
+          <h4>CTO / CISO orchestration</h4>
+          <p>
+            Signed mandates on task broadcast subjects (security patches, weekly summaries). Every Edge validates the
+            issuer, executes locally, reports results. VG aggregates coverage %, failures, and a non-repudiable
+            completion WORM entry. Mandates are system events — not email.
+          </p>
+          <Callout>
+            Orchestration loop: Broadcast → Pull → Execute → Report. Optional agentic payment rails can credit
+            identities for completed automation work.
+          </Callout>
+          <h4>Federated mesh</h4>
+          <ul>
+            <li>Peer policy sync; Independent Policy Enforcement Points</li>
+            <li>Cross-gateway tool routing under explicit policy</li>
+            <li>Local WORM + mesh observability without centralizing raw sensitive payloads</li>
+            <li>Explicit registries and mTLS — not open discovery</li>
+          </ul>
+
+          <h3>VG buying triggers & 90-day onboarding</h3>
+          <p>The VG conversation opens when a Teams customer says any of:</p>
+          <ul>
+            <li>“Different projects need different policies” — isolation</li>
+            <li>“Our CISO needs to own the audit trail” — compliance</li>
+            <li>“We want models on our own hardware” — sovereignty</li>
+          </ul>
+          <ScrollTable>
+            <table>
+              <thead>
+                <tr>
+                  <th>Days</th>
+                  <th>Activity</th>
+                  <th>Outcome</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1–7</td>
+                  <td>Deploy VG; mTLS to Regional Hub; WORM sink to customer storage</td>
+                  <td>Traffic through VG; customer owns audit storage</td>
+                </tr>
+                <tr>
+                  <td>8–21</td>
+                  <td>Publish EnterpriseGovernance; Presidio; kinetic guardrails</td>
+                  <td>Policy enforcement active in the audit boundary</td>
+                </tr>
+                <tr>
+                  <td>22–45</td>
+                  <td>Enable NATS + Valkey; pilot Edge Gateways on 2–3 laptops</td>
+                  <td>First swarm / mandate demo</td>
+                </tr>
+                <tr>
+                  <td>46–90</td>
+                  <td>Fleet Edge Gateways; first org-wide CTO/CISO mandate</td>
+                  <td>Agentic Fabric operational for the account</td>
+                </tr>
+              </tbody>
+            </table>
+          </ScrollTable>
+
+          <h3>Sales framing</h3>
+          <ul>
+            <li>
+              <strong>CTO:</strong> Manage agents at the Edge, govern through your Dedicated VG, ClawQL Regional Hubs
+              handle multi-tenant routing and billing.
+            </li>
+            <li>
+              <strong>CISO:</strong> Policy and WORM stay in your audit boundary. Regional Hubs see billing/routing
+              signals — not private enforcement contents. “Verify us, don’t trust us.”
             </li>
           </ul>
 
           <h3>Sovereign Execution Environment — safety switches</h3>
           <p>
-            The fabric’s “kill switches” are runtime primitives, not policy PDFs. Identity (mTLS-pinned gateways) +
-            sandbox (<Link href={pv.toolSandbox}>Kata / isolated tool execution</Link>) + kernel enforcement (
-            <Link href={pv.processContainment}>Tetragon / eBPF process containment</Link>, Falco for behavioral audit) +
-            WORM on the Dedicated Virtual Gateway. Agents do not merely “follow rules” — they operate in a
-            hardware-isolated, kernel-monitored environment where unauthorized behavior is blocked at the host. Full
-            essay map: <Link href="#security-dossier">Hardened Security Dossier</Link>.
+            Kill switches are runtime primitives: mTLS identity + <Link href={pv.toolSandbox}>Kata / sandbox</Link> +{' '}
+            <Link href={pv.processContainment}>Tetragon / eBPF</Link> + Falco + VG WORM. Essay map:{' '}
+            <Link href="#security-dossier">Hardened Security Dossier</Link>.
           </p>
+
+          <h2 id="sales-objections">Sales quick reference — competitive objections</h2>
+          <ScrollTable>
+            <table>
+              <thead>
+                <tr>
+                  <th>Objection</th>
+                  <th>One-sentence answer</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>“LiteLLM does everything we need”</td>
+                  <td>
+                    LiteLLM had a supply-chain compromise and has no Flywheel, no persistent memory, and no Virtual
+                    Gateway fabric — see <Link href={pv.replaceLitellm}>Replacing LiteLLM…</Link> and{' '}
+                    <Link href={pv.miniShaiHulud}>Mini Shai-Hulud</Link>.
+                  </td>
+                </tr>
+                <tr>
+                  <td>“We use Palantir”</td>
+                  <td>
+                    Palantir asks you to trust a black box. ClawQL asks you to verify WORM, Cosign, and your own VG
+                    audit boundary — see <Link href={site.urls.enterpriseGtm}>Enterprise GTM</Link>.
+                  </td>
+                </tr>
+                <tr>
+                  <td>“OpenRouter is simpler”</td>
+                  <td>
+                    OpenRouter is a routing layer with zero governance path. ClawQL is the Foundational Platform —
+                    memory, WORM, Flywheel, fabric.
+                  </td>
+                </tr>
+                <tr>
+                  <td>“We’ll build this on LiteLLM”</td>
+                  <td>
+                    You can build a proxy. You cannot ship Flywheel + Dedicated VG + NATS swarm + Edge fleet as a
+                    package in any reasonable timeframe.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </ScrollTable>
 
           <h2 id="why-nobody-else">Why nobody else can run this playbook</h2>
           <p>
@@ -1109,9 +1195,28 @@ clawql sources add https://your-nextcloud-instance/api
                     and Edge Gateways on every laptop so CISOs get WORM-verified control of the entire agentic fabric.
                   </td>
                 </tr>
+                <tr>
+                  <td>CISO</td>
+                  <td>
+                    Verify us, don’t trust us — every agent decision in the WORM log, every policy in the
+                    EnterpriseGovernance manifest, Cosign-signed releases, and the audit trail lives in your VG
+                    boundary.
+                  </td>
+                </tr>
+                <tr>
+                  <td>CTO</td>
+                  <td>
+                    The Agentic Fabric turns your engineering org into a governed swarm — publish a mandate from the VG;
+                    every Edge Gateway pulls it, executes, and reports back with a non-repudiable trail.
+                  </td>
+                </tr>
               </tbody>
             </table>
           </ScrollTable>
+          <Callout>
+            Vision line for executive briefings: Most AI platforms are individual tools. ClawQL is the operating system
+            the tools run on — Auditable Production AI at organizational scale.
+          </Callout>
 
           <h2 id="summary">Summary: the Agentic Gateway as Foundational Platform</h2>
           <p>
