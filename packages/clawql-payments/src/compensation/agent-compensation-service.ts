@@ -14,9 +14,9 @@ import type { PayoutMethod } from "../payouts/preferences.js";
 import {
   buildCompensationCancelledEntry,
   buildCompensationCashoutCompletedEntry,
-  buildCompensationCashoutRequestedEntry,
-  buildCompensationDepositedEntry,
-  buildCompensationStagedEntry,
+  buildCompensationCashoutStagedEntry,
+  buildCompensationDepositConfirmedEntry,
+  buildCompensationDepositStagedEntry,
 } from "../audit/events.js";
 import {
   compensationCreditUsdRate,
@@ -31,7 +31,7 @@ import {
   setAgentAccountPreference,
   type AgentAccount,
 } from "./accounts.js";
-import { COMPENSATION_CASHOUT_TOOL, COMPENSATION_DEPOSIT_TOOL } from "./high-impact.js";
+import { COMPENSATION_CASHOUT_STAGE_TOOL, COMPENSATION_DEPOSIT_STAGE_TOOL } from "./high-impact.js";
 import {
   assertPendingCode,
   buildApprovalUrl,
@@ -242,7 +242,8 @@ export function agentCompensationLiveLayer(
               }),
           });
           const kind = input.asset === "funds" ? "deposit_funds" : "deposit_credits";
-          const tool = COMPENSATION_DEPOSIT_TOOL;
+          const tool = COMPENSATION_DEPOSIT_STAGE_TOOL;
+          const reason = input.reason ?? "manual";
           const record = yield* Effect.tryPromise({
             try: () =>
               stagePendingAction(
@@ -256,7 +257,7 @@ export function agentCompensationLiveLayer(
                   args: {
                     amountUsd: input.amountUsd,
                     asset: input.asset,
-                    reason: input.reason ?? "manual",
+                    reason,
                     recruitmentId: input.recruitmentId,
                   },
                 },
@@ -270,12 +271,14 @@ export function agentCompensationLiveLayer(
           });
           yield* audit
             .appendEntry(
-              buildCompensationStagedEntry({
+              buildCompensationDepositStagedEntry({
                 tenantId: record.tenantId,
                 actionId: record.actionId,
                 agentId: record.agentId,
-                kind,
                 amountUsd: input.amountUsd,
+                asset: input.asset,
+                reason,
+                recruitmentId: input.recruitmentId,
                 correlationId: record.correlationId,
               })
             )
@@ -333,7 +336,7 @@ export function agentCompensationLiveLayer(
             );
           }
           const destination = input.destination ?? account.cashoutMethod ?? "bank";
-          const tool = COMPENSATION_CASHOUT_TOOL;
+          const tool = COMPENSATION_CASHOUT_STAGE_TOOL;
           const record = yield* Effect.tryPromise({
             try: () =>
               stagePendingAction(
@@ -362,24 +365,13 @@ export function agentCompensationLiveLayer(
           });
           yield* audit
             .appendEntry(
-              buildCompensationStagedEntry({
-                tenantId: record.tenantId,
-                actionId: record.actionId,
-                agentId: record.agentId,
-                kind: "cashout",
-                amountUsd: input.amountUsd,
-                correlationId: record.correlationId,
-              })
-            )
-            .pipe(Effect.catchAll(() => Effect.void));
-          yield* audit
-            .appendEntry(
-              buildCompensationCashoutRequestedEntry({
+              buildCompensationCashoutStagedEntry({
                 tenantId: record.tenantId,
                 actionId: record.actionId,
                 agentId: record.agentId,
                 amountUsd: input.amountUsd,
                 destination,
+                source,
                 correlationId: record.correlationId,
               })
             )
@@ -478,15 +470,19 @@ export function agentCompensationLiveLayer(
                 cause,
               }),
           });
+          const reason = String(record.args.reason ?? "manual");
+          const recruitmentId =
+            typeof record.args.recruitmentId === "string" ? record.args.recruitmentId : undefined;
           yield* audit
             .appendEntry(
-              buildCompensationDepositedEntry({
+              buildCompensationDepositConfirmedEntry({
                 tenantId: record.tenantId,
                 actionId: record.actionId,
                 agentId: record.agentId,
                 amountUsd,
                 asset,
-                reason: String(record.args.reason ?? "manual"),
+                reason,
+                recruitmentId,
                 correlationId: record.correlationId,
               })
             )
@@ -574,6 +570,7 @@ export function agentCompensationLiveLayer(
                 amountUsd: payoutAmount,
                 payoutId: payout.id,
                 destination,
+                source,
                 correlationId: record.correlationId ?? record.actionId,
               })
             )
@@ -682,6 +679,11 @@ export function agentCompensationLiveLayer(
                 tenantId: record.tenantId,
                 actionId: record.actionId,
                 agentId: record.agentId,
+                kind: record.kind,
+                recruitmentId:
+                  typeof record.args.recruitmentId === "string"
+                    ? record.args.recruitmentId
+                    : undefined,
                 correlationId: record.correlationId,
               })
             )
@@ -746,13 +748,14 @@ export function agentCompensationLiveLayer(
           });
           yield* audit
             .appendEntry(
-              buildCompensationDepositedEntry({
+              buildCompensationDepositConfirmedEntry({
                 tenantId: input.tenantId?.trim() || "default",
                 actionId: `direct_${Date.now().toString(36)}`,
                 agentId: input.agentId.trim(),
                 amountUsd: input.amountUsd,
                 asset: input.asset,
                 reason: input.reason ?? "manual",
+                recruitmentId: input.recruitmentId,
                 correlationId: input.correlationId ?? input.recruitmentId,
               })
             )

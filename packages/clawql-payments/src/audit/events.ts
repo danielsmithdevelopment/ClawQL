@@ -35,9 +35,9 @@ export type PaymentEventKind =
   | "CREDIT_TOPUP_SETTLED"
   | "CREDIT_TOPUP_FAILED"
   | "CREDIT_DEBITED"
-  | "COMPENSATION_STAGED"
-  | "COMPENSATION_DEPOSITED"
-  | "COMPENSATION_CASHOUT_REQUESTED"
+  | "COMPENSATION_DEPOSIT_STAGED"
+  | "COMPENSATION_DEPOSIT_CONFIRMED"
+  | "COMPENSATION_CASHOUT_STAGED"
   | "COMPENSATION_CASHOUT_COMPLETED"
   | "COMPENSATION_CANCELLED";
 
@@ -63,6 +63,10 @@ export type PaymentWormPayload = {
   resource?: string;
   agent_id?: string;
   balance_usd?: number;
+  /** Compensation reason (e.g. sgdop_recruit). */
+  reason?: string;
+  /** SGDOP recruitment / blind-spot correlation. */
+  recruitment_id?: string;
 };
 
 /** Durable payment audit entry with hash-chained integrity fields on disk. */
@@ -753,41 +757,20 @@ export function buildCreditDebitedEntry(input: {
   });
 }
 
-export function buildCompensationStagedEntry(input: {
-  tenantId: string;
-  actionId: string;
-  agentId: string;
-  kind: string;
-  amountUsd: number;
-  correlationId?: string;
-}): PaymentWormEntry {
-  return buildPaymentWormEntry({
-    eventKind: "COMPENSATION_STAGED",
-    summary: `Compensation staged ${input.kind} $${input.amountUsd.toFixed(2)} for agent ${input.agentId} (${input.actionId})`,
-    correlationId: input.correlationId ?? input.actionId,
-    payload: {
-      provider: "compensation",
-      amount_usd: input.amountUsd,
-      tenant_id: input.tenantId,
-      resource: input.actionId,
-      agent_id: input.agentId,
-    },
-  });
-}
-
-export function buildCompensationDepositedEntry(input: {
+export function buildCompensationDepositStagedEntry(input: {
   tenantId: string;
   actionId: string;
   agentId: string;
   amountUsd: number;
   asset: "credits" | "funds";
-  reason: string;
+  reason?: string;
+  recruitmentId?: string;
   correlationId?: string;
 }): PaymentWormEntry {
   return buildPaymentWormEntry({
-    eventKind: "COMPENSATION_DEPOSITED",
-    summary: `Compensation deposited ${input.asset} $${input.amountUsd.toFixed(2)} → ${input.agentId} (${input.reason})`,
-    correlationId: input.correlationId ?? input.actionId,
+    eventKind: "COMPENSATION_DEPOSIT_STAGED",
+    summary: `Compensation deposit staged ${input.asset} $${input.amountUsd.toFixed(2)} for ${input.agentId}${input.reason ? ` (${input.reason})` : ""}`,
+    correlationId: input.correlationId ?? input.recruitmentId ?? input.actionId,
     payload: {
       provider: "compensation",
       amount_usd: input.amountUsd,
@@ -795,22 +778,53 @@ export function buildCompensationDepositedEntry(input: {
       resource: input.actionId,
       agent_id: input.agentId,
       plan: input.asset,
+      reason: input.reason,
+      recruitment_id: input.recruitmentId,
     },
   });
 }
 
-export function buildCompensationCashoutRequestedEntry(input: {
+export function buildCompensationDepositConfirmedEntry(input: {
+  tenantId: string;
+  actionId: string;
+  agentId: string;
+  amountUsd: number;
+  asset: "credits" | "funds";
+  reason?: string;
+  recruitmentId?: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "COMPENSATION_DEPOSIT_CONFIRMED",
+    summary: `Compensation deposit confirmed ${input.asset} $${input.amountUsd.toFixed(2)} → ${input.agentId}${input.reason ? ` (${input.reason})` : ""}`,
+    correlationId: input.correlationId ?? input.recruitmentId ?? input.actionId,
+    payload: {
+      provider: "compensation",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.actionId,
+      agent_id: input.agentId,
+      plan: input.asset,
+      reason: input.reason,
+      recruitment_id: input.recruitmentId,
+    },
+  });
+}
+
+export function buildCompensationCashoutStagedEntry(input: {
   tenantId: string;
   actionId: string;
   agentId: string;
   amountUsd: number;
   destination: string;
+  source?: "credits" | "funds";
+  recruitmentId?: string;
   correlationId?: string;
 }): PaymentWormEntry {
   return buildPaymentWormEntry({
-    eventKind: "COMPENSATION_CASHOUT_REQUESTED",
-    summary: `Compensation cash-out requested $${input.amountUsd.toFixed(2)} → ${input.destination} for ${input.agentId}`,
-    correlationId: input.correlationId ?? input.actionId,
+    eventKind: "COMPENSATION_CASHOUT_STAGED",
+    summary: `Compensation cash-out staged $${input.amountUsd.toFixed(2)} → ${input.destination} for ${input.agentId}`,
+    correlationId: input.correlationId ?? input.recruitmentId ?? input.actionId,
     payload: {
       provider: "compensation",
       amount_usd: input.amountUsd,
@@ -818,6 +832,8 @@ export function buildCompensationCashoutRequestedEntry(input: {
       resource: input.actionId,
       agent_id: input.agentId,
       plan: input.destination,
+      reason: input.source,
+      recruitment_id: input.recruitmentId,
     },
   });
 }
@@ -829,12 +845,14 @@ export function buildCompensationCashoutCompletedEntry(input: {
   amountUsd: number;
   payoutId: string;
   destination: string;
+  source?: "credits" | "funds";
+  recruitmentId?: string;
   correlationId?: string;
 }): PaymentWormEntry {
   return buildPaymentWormEntry({
     eventKind: "COMPENSATION_CASHOUT_COMPLETED",
     summary: `Compensation cash-out completed $${input.amountUsd.toFixed(2)} payout ${input.payoutId}`,
-    correlationId: input.correlationId ?? input.actionId,
+    correlationId: input.correlationId ?? input.recruitmentId ?? input.actionId,
     payload: {
       provider: "compensation",
       amount_usd: input.amountUsd,
@@ -842,6 +860,8 @@ export function buildCompensationCashoutCompletedEntry(input: {
       resource: input.payoutId,
       agent_id: input.agentId,
       plan: input.destination,
+      reason: input.source,
+      recruitment_id: input.recruitmentId,
     },
   });
 }
@@ -850,17 +870,21 @@ export function buildCompensationCancelledEntry(input: {
   tenantId: string;
   actionId: string;
   agentId: string;
+  kind?: string;
+  recruitmentId?: string;
   correlationId?: string;
 }): PaymentWormEntry {
   return buildPaymentWormEntry({
     eventKind: "COMPENSATION_CANCELLED",
     summary: `Compensation action cancelled ${input.actionId} for ${input.agentId}`,
-    correlationId: input.correlationId ?? input.actionId,
+    correlationId: input.correlationId ?? input.recruitmentId ?? input.actionId,
     payload: {
       provider: "compensation",
       tenant_id: input.tenantId,
       resource: input.actionId,
       agent_id: input.agentId,
+      plan: input.kind,
+      recruitment_id: input.recruitmentId,
     },
   });
 }

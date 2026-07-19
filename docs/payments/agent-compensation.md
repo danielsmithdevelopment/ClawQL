@@ -11,13 +11,13 @@ Ouroboros / DAOS will use **SGDOP** to detect directional blind spots and recrui
 
 This layer sits on top of the Jonah money-out rails (PR #713):
 
-| Need                        | Mechanism                                         |
-| --------------------------- | ------------------------------------------------- |
-| Deposit credits / funds     | Staged `deposit` → confirm (DAOS 2PC)             |
-| Hold balance                | Agent ledger (`creditsUsd` + `fundsUsd`)          |
-| Cash out                    | Staged `cashout` → `PayoutService` (bank / USDC)  |
-| Agent spend (separate)      | Ramp agent cards — not compensation               |
-| Future SGDOP recruitment id | `recruitmentId` / `correlationId` on stage + WORM |
+| Need                        | Mechanism                                       |
+| --------------------------- | ----------------------------------------------- |
+| Deposit credits / funds     | Staged deposit → confirm (DAOS 2PC)             |
+| Hold balance                | Agent ledger (`creditsUsd` + `fundsUsd`)        |
+| Cash out                    | Staged cash-out → `PayoutService` (bank / USDC) |
+| Agent spend (separate)      | Ramp agent cards — not compensation             |
+| Future SGDOP recruitment id | `recruitmentId` / `reason` on stage + WORM      |
 
 ## Credits vs funds
 
@@ -37,12 +37,34 @@ Ouroboros PEP / NATS `PENDING_ACTIONS` is not shipped yet. Payments implements a
 3. **Confirm** (sole execute) → ledger credit/debit + optional `PayoutService`
 4. **Cancel** (GET-safe) → marks cancelled
 
-High-impact tool names:
+When PEP + NATS KV land (build plan P0-B), swap the store behind the same stage/approve/confirm/cancel interface.
 
-- `payments_compensation_deposit`
-- `payments_compensation_cashout`
+## WORM event schema
 
-Also classified financial (for future PEP): `payments_payout_create`, `payments_ramp_agent_card_issue`, `transfer_funds`, etc. See `HIGH_IMPACT_PAYMENT_TOOLS`.
+| Event                            | When                       | Key payload fields                                                 |
+| -------------------------------- | -------------------------- | ------------------------------------------------------------------ |
+| `COMPENSATION_DEPOSIT_STAGED`    | `stageDeposit`             | `amount_usd`, `agent_id`, `plan`=asset, `reason`, `recruitment_id` |
+| `COMPENSATION_DEPOSIT_CONFIRMED` | deposit `confirm` / direct | same + ledger applied                                              |
+| `COMPENSATION_CASHOUT_STAGED`    | `stageCashout`             | `amount_usd`, `plan`=destination, `reason`=source                  |
+| `COMPENSATION_CASHOUT_COMPLETED` | cash-out `confirm`         | `resource`=payoutId, destination/source                            |
+| `COMPENSATION_CANCELLED`         | `cancel`                   | `resource`=actionId, optional `recruitment_id`                     |
+
+`correlationId` prefers `recruitmentId` when present so SGDOP recruit → work → pay is one audit thread.
+
+## MCP tools
+
+With `CLAWQL_PAYMENTS_MCP_TOOLS=1`. Underscores are MCP-safe; logical dotted form in comments:
+
+| Logical name                         | MCP tool name                        | Behavior         |
+| ------------------------------------ | ------------------------------------ | ---------------- |
+| `agent.compensation.deposit.stage`   | `agent_compensation_deposit_stage`   | Stage only       |
+| `agent.compensation.deposit.confirm` | `agent_compensation_deposit_confirm` | Execute deposit  |
+| `agent.compensation.cashout.stage`   | `agent_compensation_cashout_stage`   | Stage only       |
+| `agent.compensation.cashout.confirm` | `agent_compensation_cashout_confirm` | Execute cash-out |
+
+Confirm tools reject the wrong pending `kind` so deposit/cashout cannot be crossed.
+
+Also classified financial (future PEP): `payments_payout_create`, `payments_ramp_agent_card_issue`, `transfer_funds`, etc. See `HIGH_IMPACT_PAYMENT_TOOLS`.
 
 ## Effect API
 
@@ -80,22 +102,6 @@ clawql payments compensation cashout \
 clawql payments compensation balance --agent a1
 ```
 
-## MCP tools
-
-With `CLAWQL_PAYMENTS_MCP_TOOLS=1`:
-
-| Tool                            | Behavior                          |
-| ------------------------------- | --------------------------------- |
-| `payments_compensation_deposit` | **Stage only** — returns approval |
-| `payments_compensation_cashout` | **Stage only**                    |
-| `payments_compensation_confirm` | Execute staged action             |
-
-## WORM
-
-`COMPENSATION_STAGED`, `COMPENSATION_DEPOSITED`,  
-`COMPENSATION_CASHOUT_REQUESTED`, `COMPENSATION_CASHOUT_COMPLETED`,  
-`COMPENSATION_CANCELLED`
-
 ## Flags
 
 | Env                                   | Purpose                                          |
@@ -106,13 +112,46 @@ With `CLAWQL_PAYMENTS_MCP_TOOLS=1`:
 | `CLAWQL_COMPENSATION_APPROVAL_BASE`   | HATEOAS base (or `CLAWQL_OUROBOROS_GATEWAY_URL`) |
 | `CLAWQL_COMPENSATION_CREDIT_USD_RATE` | Credits → USD at cash-out (default 1)            |
 
-## Future: SGDOP / Coordinator
+## Future: SGDOP Coordinator call sketch
 
-When the strategic Coordinator ships:
+When the strategic Coordinator ships (NSV / SGDOP / reputation / Diversity Dividends):
 
-1. SGDOP detects blind spot → selects diverse agents (`w_i`, Diversity Dividends).
-2. Coordinator calls `payments_compensation_deposit` with `reason=sgdop_recruit` + `recruitmentId`.
-3. Operator/agent confirms via 2PC (or PEP when P0-B lands — swap file store for NATS KV).
-4. Agent works → later `cashout` through existing Connect / USDC / off-ramp rails.
+```text
+1. SGDOP detects blind spot B with azimuth gap → selects agents [A1..Ak] (diversity / w_i)
+2. For each recruited agent Ai:
+     AgentCompensationService.stageDeposit({
+       agentId: Ai,
+       amountUsd: bounty(B, Ai),          // or D_i dividend share
+       asset: "credits",
+       reason: "sgdop_recruit",
+       recruitmentId: B.id,               // blind-spot / recruitment correlation
+       correlationId: session.correlationId,
+     })
+     → returns { actionId, confirmationCode, approvalUrl }
+3. Operator / policy engine confirms (MCP agent_compensation_deposit_confirm or PEP POST)
+     → COMPENSATION_DEPOSIT_CONFIRMED with recruitment_id = B.id
+4. Ai executes coverage work inside evolutionary loop / ActionTypes
+5. Ai (or payroll job) later:
+     stageCashout → confirm → PayoutService (bank | USDC)
+     → COMPENSATION_CASHOUT_COMPLETED (same correlation thread)
+```
 
-See [Ouroboros coordination layer](../ouroboros/daos-coordination-layer-specification.md) §1.2 and [payouts-ramp.md](./payouts-ramp.md).
+Pseudocode (Coordinator side):
+
+```ts
+for (const agent of sgdop.recruit(blindSpot)) {
+  const staged =
+    yield *
+    compensation.stageDeposit({
+      agentId: agent.id,
+      amountUsd: agent.bountyUsd,
+      asset: "credits",
+      reason: "sgdop_recruit",
+      recruitmentId: blindSpot.id,
+    });
+  // Surface staged.approvalUrl in Command Deck / PEP Action View
+  yield * notify.operator({ approvalUrl: staged.approvalUrl, code: staged.confirmationCode });
+}
+```
+
+See [Ouroboros coordination layer](../ouroboros/daos-coordination-layer-specification.md) §1.2 / §2 (SGDOP) and [payouts-ramp.md](./payouts-ramp.md).

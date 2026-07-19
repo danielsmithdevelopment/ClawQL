@@ -19,9 +19,10 @@ describe("payments tools MCP plugin", () => {
       "payments_ramp_agent_card_issue",
       "payments_offramp_session_create",
       "payments_offramp_webhook_process",
-      "payments_compensation_deposit",
-      "payments_compensation_cashout",
-      "payments_compensation_confirm",
+      "agent_compensation_deposit_stage",
+      "agent_compensation_deposit_confirm",
+      "agent_compensation_cashout_stage",
+      "agent_compensation_cashout_confirm",
     ]);
   });
 

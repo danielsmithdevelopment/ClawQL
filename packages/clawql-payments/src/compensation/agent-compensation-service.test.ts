@@ -49,7 +49,7 @@ describe("AgentCompensationService", () => {
       })
     );
     expect(staged.classification).toBe("financial");
-    expect(staged.approvalUrl).toContain("payments_compensation_deposit/approve");
+    expect(staged.approvalUrl).toContain("agent_compensation_deposit_stage/approve");
     expect(staged.confirmationCode).toHaveLength(6);
 
     const view = await runPaymentsEffect(
@@ -84,8 +84,13 @@ describe("AgentCompensationService", () => {
     expect("balance" in deposited && deposited.balance.creditsUsd).toBe(50);
 
     const entries = await listPaymentAuditEntries(30);
-    expect(entries.some((e) => e.action === "COMPENSATION_STAGED")).toBe(true);
-    expect(entries.some((e) => e.action === "COMPENSATION_DEPOSITED")).toBe(true);
+    const stagedEvt = entries.find((e) => e.action === "COMPENSATION_DEPOSIT_STAGED");
+    expect(stagedEvt).toBeTruthy();
+    expect(stagedEvt?.payload.reason).toBe("sgdop_recruit");
+    expect(stagedEvt?.payload.recruitment_id).toBe("blindspot-azimuth-9");
+    const confirmed = entries.find((e) => e.action === "COMPENSATION_DEPOSIT_CONFIRMED");
+    expect(confirmed).toBeTruthy();
+    expect(confirmed?.payload.recruitment_id).toBe("blindspot-azimuth-9");
   });
 
   it("cash-out stages then pays via PayoutService dry-run", async () => {
@@ -131,6 +136,7 @@ describe("AgentCompensationService", () => {
       expect(cashout.balance.creditsUsd).toBe(10);
     }
     const entries = await listPaymentAuditEntries(40);
+    expect(entries.some((e) => e.action === "COMPENSATION_CASHOUT_STAGED")).toBe(true);
     expect(entries.some((e) => e.action === "COMPENSATION_CASHOUT_COMPLETED")).toBe(true);
   });
 
