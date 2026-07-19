@@ -212,7 +212,6 @@ function parse(argv: string[]): {
     else if (a === "--show-secrets") flags.showSecrets = true;
     else if (a === "--vendor-ids") flags.vendorIds = argv[++i] ?? "";
     else if (a === "--interval") flags.interval = argv[++i] ?? "";
-    else if (a === "--provider") flags.provider = argv[++i] ?? "";
     else if (a === "--skip-verify") flags.skipVerify = true;
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
