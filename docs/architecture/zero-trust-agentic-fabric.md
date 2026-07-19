@@ -4,7 +4,7 @@
 
 **ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.**
 
-This document is the canonical architecture for that positioning. The fabric is the destination; the Agentic Gateway binary is the entry. Product layers (IDP stack, modularization packages, Operator tiers) remain valid — they describe *what* ships inside the platform. The fabric describes *how* enterprises deploy and govern it.
+This document is the canonical architecture for that positioning. The fabric is the destination; the Agentic Gateway binary is the entry. Product layers (IDP stack, modularization packages, Operator tiers) remain valid — they describe _what_ ships inside the platform. The fabric describes _how_ enterprises deploy and govern it.
 
 > **Status language:** Core gateway, WORM patterns, MCP/inference entry, and Helm paths are shipped or shipping. NATS JetStream is available as an optional Helm event bus. Swarm subject hierarchy, VG-level NSV/SGDOP coordination, Command Deck mandate UI, and full Edge↔VG SPIFFE handshakes are the **target fabric architecture** — treat those subsections as the source of truth for implementation, not as claims that every surface is production-complete today.
 
@@ -12,17 +12,17 @@ This document is the canonical architecture for that positioning. The fabric is 
 
 ## Terminology
 
-| Term | Definition |
-| ---- | ---------- |
-| **Agentic Gateway** | The unified ClawQL binary. Speaks OpenAI-compatible HTTP/REST (`/v1/chat/completions`) and MCP (`/mcp`) from the same process. Entry point for all deployment tiers. |
-| **Regional Hub** | ClawQL-managed, multi-tenant infrastructure (also called Regional Gateway in some GTM materials). Handles billing, usage attribution, and intelligent model routing. Does **not** hold tenant policy or tenant WORM. The “cloud pipe.” |
-| **Dedicated Virtual Gateway (VG)** | Customer-owned, single-tenant Audit-Trail Enforcement Point. Hosts NATS JetStream, Valkey, WORM sink, and EnterpriseGovernance manifest resolution. Deployed in customer VPC, on-prem, or ClawQL region. The “company brain.” |
-| **Edge Gateway** | Developer laptop or workstation running a lightweight Agentic Gateway. Connects to company VG(s) via mTLS. IDE-native MCP server. The “worker node.” |
-| **Agentic Fabric** | The three-layer mesh: Regional Hubs + Dedicated Virtual Gateways + Edge Gateways — federated, no global master. |
-| **WORM** | Write-Once-Read-Many immutable audit. Hash-chained / Merkle-rooted where configured. Federated per-VG — each tenant owns their sink. |
-| **EnterpriseGovernance Manifest** | Versioned, signed governance contract: compliance level, residency, PII handling, kinetic guardrails, audit attribution. Travels with the deployment. |
-| **Intelligence Flywheel** | Production inference → verdict-filtered export → PII scrub → fine-tune → custom Frugal tier — **model provenance** for Auditable Production AI. |
-| **NSV / SGDOP** | Swarm diversity measurement (Ouroboros / DAOS). Target: run at VG level across Edge position vectors. See Ouroboros / DAOS specs. |
+| Term                               | Definition                                                                                                                                                                                                                             |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Agentic Gateway**                | The unified ClawQL binary. Speaks OpenAI-compatible HTTP/REST (`/v1/chat/completions`) and MCP (`/mcp`) from the same process. Entry point for all deployment tiers.                                                                   |
+| **Regional Hub**                   | ClawQL-managed, multi-tenant infrastructure (also called Regional Gateway in some GTM materials). Handles billing, usage attribution, and intelligent model routing. Does **not** hold tenant policy or tenant WORM. The “cloud pipe.” |
+| **Dedicated Virtual Gateway (VG)** | Customer-owned, single-tenant Audit-Trail Enforcement Point. Hosts NATS JetStream, Valkey, WORM sink, and EnterpriseGovernance manifest resolution. Deployed in customer VPC, on-prem, or ClawQL region. The “company brain.”          |
+| **Edge Gateway**                   | Developer laptop or workstation running a lightweight Agentic Gateway. Connects to company VG(s) via mTLS. IDE-native MCP server. The “worker node.”                                                                                   |
+| **Agentic Fabric**                 | The three-layer mesh: Regional Hubs + Dedicated Virtual Gateways + Edge Gateways — federated, no global master.                                                                                                                        |
+| **WORM**                           | Write-Once-Read-Many immutable audit. Hash-chained / Merkle-rooted where configured. Federated per-VG — each tenant owns their sink.                                                                                                   |
+| **EnterpriseGovernance Manifest**  | Versioned, signed governance contract: compliance level, residency, PII handling, kinetic guardrails, audit attribution. Travels with the deployment.                                                                                  |
+| **Intelligence Flywheel**          | Production inference → verdict-filtered export → PII scrub → fine-tune → custom Frugal tier — **model provenance** for Auditable Production AI.                                                                                        |
+| **NSV / SGDOP**                    | Swarm diversity measurement (Ouroboros / DAOS). Target: run at VG level across Edge position vectors. See Ouroboros / DAOS specs.                                                                                                      |
 
 ---
 
@@ -30,11 +30,11 @@ This document is the canonical architecture for that positioning. The fabric is 
 
 Each layer holds different data, enforces different policy, and writes a different audit surface. Do not collapse them into one “gateway.”
 
-| Layer | Name | Owned by | Runs | Audit role |
-| ----- | ---- | -------- | ---- | ---------- |
-| **L1** | Regional Hub | ClawQL-managed | Multi-tenant routing, billing metering, provider load balancing, usage attribution | **Usage audit** — what was called, at what cost |
-| **L2** | Dedicated Virtual Gateway | Customer (VPC / on-prem / region) | NATS JetStream, Valkey, WORM, manifest PEP, PII scrubbing, swarm coordination | **Intent audit** — why it was authorized |
-| **L3** | Edge Gateway | Developer laptop | Local MCP, local/Frugal inference, vault memory, WORM relay, task execution | **Execution audit** — what actually ran |
+| Layer  | Name                      | Owned by                          | Runs                                                                               | Audit role                                      |
+| ------ | ------------------------- | --------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------- |
+| **L1** | Regional Hub              | ClawQL-managed                    | Multi-tenant routing, billing metering, provider load balancing, usage attribution | **Usage audit** — what was called, at what cost |
+| **L2** | Dedicated Virtual Gateway | Customer (VPC / on-prem / region) | NATS JetStream, Valkey, WORM, manifest PEP, PII scrubbing, swarm coordination      | **Intent audit** — why it was authorized        |
+| **L3** | Edge Gateway              | Developer laptop                  | Local MCP, local/Frugal inference, vault memory, WORM relay, task execution        | **Execution audit** — what actually ran         |
 
 Usage + intent + execution compose a forensic record a CISO or regulator can reconstruct end-to-end.
 
@@ -66,32 +66,32 @@ A single global master gateway is a liability: SPOF, centralized compliance bott
 
 Primary enterprise entry point. Customer owns the infrastructure; ClawQL provides binary, Helm/Packer paths, and management tooling.
 
-| Service | Technology | Role |
-| ------- | ---------- | ---- |
-| Event bus | NATS JetStream | Pub/sub for swarm tasks, problems, mandates, audit relay |
-| Shared state | Valkey | Short-term swarm memory — problem state, attempts, workers |
-| Immutable audit | WORM | Tenant-local intent audit; federated sink |
-| Policy | EnterpriseGovernance + PEP | Manifest resolution, PII, kinetic guardrails |
-| Diversity (target) | NSV/SGDOP engine | Swarm coverage / blind-spot directives |
-| Secrets | Vault (sidecar / customer) | Short-lived credentials |
-| Transport | mTLS (+ SPIFFE/SPIRE target) | VG↔Regional, VG↔Edge, VG↔VG |
+| Service            | Technology                   | Role                                                       |
+| ------------------ | ---------------------------- | ---------------------------------------------------------- |
+| Event bus          | NATS JetStream               | Pub/sub for swarm tasks, problems, mandates, audit relay   |
+| Shared state       | Valkey                       | Short-term swarm memory — problem state, attempts, workers |
+| Immutable audit    | WORM                         | Tenant-local intent audit; federated sink                  |
+| Policy             | EnterpriseGovernance + PEP   | Manifest resolution, PII, kinetic guardrails               |
+| Diversity (target) | NSV/SGDOP engine             | Swarm coverage / blind-spot directives                     |
+| Secrets            | Vault (sidecar / customer)   | Short-lived credentials                                    |
+| Transport          | mTLS (+ SPIFFE/SPIRE target) | VG↔Regional, VG↔Edge, VG↔VG                                |
 
 ### Sovereign handshake — VG ↔ Regional Hub
 
 VG initiates all connections (pull pattern — no inbound exposure into the tenant VPC):
 
-1. mTLS (SPIFFE SVID target) — RG validates VG identity  
-2. GovernanceSync — VG sends manifest SHA-256; mismatch → DEGRADED_MODE + WORM event  
-3. Stream — upstream: observability / billing signals; downstream: routing instructions  
+1. mTLS (SPIFFE SVID target) — RG validates VG identity
+2. GovernanceSync — VG sends manifest SHA-256; mismatch → DEGRADED_MODE + WORM event
+3. Stream — upstream: observability / billing signals; downstream: routing instructions
 4. Kill switch — heartbeat timeout → RG stops routing to that endpoint (fail-closed)
 
 ### Sovereign handshake — Edge ↔ VG
 
-1. Edge presents developer-bound identity; VG checks authorization scope  
-2. **Policy push** — VG pushes constraints; Edge enforces locally (no round-trip per tool call)  
-3. **Audit pull / push** — Edge batches WORM-signed audit bundles to VG (e.g. every 60s or session end)  
-4. **Offline-first** — Edge continues locally; backlog syncs on reconnect  
-5. Manifest updates propagate to connected Edges within one heartbeat interval  
+1. Edge presents developer-bound identity; VG checks authorization scope
+2. **Policy push** — VG pushes constraints; Edge enforces locally (no round-trip per tool call)
+3. **Audit pull / push** — Edge batches WORM-signed audit bundles to VG (e.g. every 60s or session end)
+4. **Offline-first** — Edge continues locally; backlog syncs on reconnect
+5. Manifest updates propagate to connected Edges within one heartbeat interval
 
 ---
 
@@ -99,12 +99,12 @@ VG initiates all connections (pull pattern — no inbound exposure into the tena
 
 Same Agentic Gateway binary class as cloud — deployed locally.
 
-- MCP at `localhost` for Cursor / Claude Code / Codex  
-- Local / Frugal inference (e.g. Ollama) where configured  
-- Personal vault memory; optional team memory via VG fabric  
-- NATS subscriber for org tasks and problem topics  
-- Seatbelt / sandbox containment on launch (`clawql sandbox init` pattern)  
-- WORM relay to VG — trail never discarded on intermittent connectivity  
+- MCP at `localhost` for Cursor / Claude Code / Codex
+- Local / Frugal inference (e.g. Ollama) where configured
+- Personal vault memory; optional team memory via VG fabric
+- NATS subscriber for org tasks and problem topics
+- Seatbelt / sandbox containment on launch (`clawql sandbox init` pattern)
+- WORM relay to VG — trail never discarded on intermittent connectivity
 
 ---
 
@@ -112,32 +112,32 @@ Same Agentic Gateway binary class as cloud — deployed locally.
 
 Each Dedicated VG hosts its own JetStream. Target subject hierarchy:
 
-| Subject pattern | Publisher | Subscriber | Purpose |
-| --------------- | --------- | ---------- | ------- |
-| `clawql.tasks.{task_type}.broadcast` | CTO/CISO / VG | All Edges | Org mandates (summaries, security patches) |
-| `clawql.tasks.{task_type}.{agent_id}.result` | Edge | VG | Per-node task completion |
-| `clawql.tasks.{task_type}.aggregate` | VG | Dashboard / aggregator | Fleet results |
-| `clawql.problems.{problem_id}.open` | Edge | All Edges | Hard problem → swarm |
-| `clawql.problems.{problem_id}.attempt.{agent_id}` | Edge | VG + Edges | Attempt + state (Valkey updated) |
-| `clawql.problems.{problem_id}.solved` | Edge (breakthrough) | All Edges + VG | Convergence signal — peers stop |
-| `clawql.problems.{problem_id}.closed` | VG (after validation) | Requester + workers | Confirmed solution + WORM |
-| `clawql.agents.{agent_id}.status` | Edge | VG | Heartbeat / position |
-| `clawql.policy.manifest.updated` | VG | All Edges | Policy push notification |
-| `clawql.audit.relay.{agent_id}` | Edge | VG WORM | Signed audit bundles |
+| Subject pattern                                   | Publisher             | Subscriber             | Purpose                                    |
+| ------------------------------------------------- | --------------------- | ---------------------- | ------------------------------------------ |
+| `clawql.tasks.{task_type}.broadcast`              | CTO/CISO / VG         | All Edges              | Org mandates (summaries, security patches) |
+| `clawql.tasks.{task_type}.{agent_id}.result`      | Edge                  | VG                     | Per-node task completion                   |
+| `clawql.tasks.{task_type}.aggregate`              | VG                    | Dashboard / aggregator | Fleet results                              |
+| `clawql.problems.{problem_id}.open`               | Edge                  | All Edges              | Hard problem → swarm                       |
+| `clawql.problems.{problem_id}.attempt.{agent_id}` | Edge                  | VG + Edges             | Attempt + state (Valkey updated)           |
+| `clawql.problems.{problem_id}.solved`             | Edge (breakthrough)   | All Edges + VG         | Convergence signal — peers stop            |
+| `clawql.problems.{problem_id}.closed`             | VG (after validation) | Requester + workers    | Confirmed solution + WORM                  |
+| `clawql.agents.{agent_id}.status`                 | Edge                  | VG                     | Heartbeat / position                       |
+| `clawql.policy.manifest.updated`                  | VG                    | All Edges              | Policy push notification                   |
+| `clawql.audit.relay.{agent_id}`                   | Edge                  | VG WORM                | Signed audit bundles                       |
 
 ### Collaborative problem-solving protocol
 
-1. **Publish** — stuck Edge opens `problems.{id}.open`; VG initializes Valkey problem record  
-2. **Parallel execute** — Edges pull Valkey state, avoid duplicate attempts, publish `.attempt.*`  
-3. **Breakthrough** — first solver publishes `.solved`; peers stop; VG validates (Evaluator hook)  
-4. **Close** — `.closed` notifies originator; full WORM chain for the session  
+1. **Publish** — stuck Edge opens `problems.{id}.open`; VG initializes Valkey problem record
+2. **Parallel execute** — Edges pull Valkey state, avoid duplicate attempts, publish `.attempt.*`
+3. **Breakthrough** — first solver publishes `.solved`; peers stop; VG validates (Evaluator hook)
+4. **Close** — `.closed` notifies originator; full WORM chain for the session
 
 ### CTO / CISO orchestration protocol
 
-1. **Broadcast** — signed mandate on `tasks.{type}.broadcast` (only authorized issuers)  
-2. **Pull** — every Edge validates signature, executes locally, verifies  
-3. **Report** — `.result` subjects + WORM relay  
-4. **Aggregate** — VG dashboard: coverage %, failures, completion WORM entry, compliance report  
+1. **Broadcast** — signed mandate on `tasks.{type}.broadcast` (only authorized issuers)
+2. **Pull** — every Edge validates signature, executes locally, verifies
+3. **Report** — `.result` subjects + WORM relay
+4. **Aggregate** — VG dashboard: coverage %, failures, completion WORM entry, compliance report
 
 Loop: **Broadcast → Pull → Execute → Report.** Mandates are system events, not email.
 
@@ -177,14 +177,14 @@ At the VG, NSV/SGDOP measure whether Edge workers covering a problem are explori
 
 ## Sovereign execution environment
 
-| Concern | Primitive | Role |
-| ------- | --------- | ---- |
-| Identity | mTLS / SPIFFE | Authenticate nodes |
-| Sandbox | Kata / gVisor / Seatbelt | Isolate agent execution |
-| Kernel enforce | Tetragon (eBPF) | Synchronous block of forbidden exec |
-| Behavioral audit | Falco | Unexpected process / egress patterns |
-| Intent↔execution | TraceID correlation | Prompt → tool → syscall in one view |
-| Supply chain | Cosign / Kyverno / Layer 0 manifest | Only verified software runs |
+| Concern          | Primitive                           | Role                                 |
+| ---------------- | ----------------------------------- | ------------------------------------ |
+| Identity         | mTLS / SPIFFE                       | Authenticate nodes                   |
+| Sandbox          | Kata / gVisor / Seatbelt            | Isolate agent execution              |
+| Kernel enforce   | Tetragon (eBPF)                     | Synchronous block of forbidden exec  |
+| Behavioral audit | Falco                               | Unexpected process / egress patterns |
+| Intent↔execution | TraceID correlation                 | Prompt → tool → syscall in one view  |
+| Supply chain     | Cosign / Kyverno / Layer 0 manifest | Only verified software runs          |
 
 Essay map (proof of competence): [PragmaticVectors Hardened Agentic Stack](https://pragmaticvectors.com/series/hardened-agentic-stack) · GTM dossier: [Inference GTM — Hardened Security Dossier](https://clawql.com/inference/gtm/#security-dossier).
 
@@ -192,24 +192,24 @@ Essay map (proof of competence): [PragmaticVectors Hardened Agentic Stack](https
 
 ## Hardened primitives table
 
-| Fabric concern | Verification essay |
-| -------------- | ------------------ |
-| Infrastructure optimization | [Twelve Layers of LLM Cost](https://pragmaticvectors.com/posts/twelve-layers-llm-cost/) |
-| Memory / IDP residency | [Local Data Residency](https://pragmaticvectors.com/posts/hardened-agentic-13-memory-residency/) |
-| Intent ↔ execution | [Observability Loop](https://pragmaticvectors.com/posts/hardened-agentic-08-observability-loop/) |
-| Edge containment | [The Kernel Said No](https://pragmaticvectors.com/posts/macos-seatbelt-agent-sandbox/) |
-| Supply chain / CISO | [Mini Shai-Hulud](https://pragmaticvectors.com/posts/mini-shai-hulud-supply-chain/) |
-| Kata + Tetragon | [Building the Sandbox](https://pragmaticvectors.com/posts/hardened-agentic-07-tool-sandbox/) · [Process Containment](https://pragmaticvectors.com/posts/hardened-agentic-04-process-containment/) |
+| Fabric concern              | Verification essay                                                                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Infrastructure optimization | [Twelve Layers of LLM Cost](https://pragmaticvectors.com/posts/twelve-layers-llm-cost/)                                                                                                           |
+| Memory / IDP residency      | [Local Data Residency](https://pragmaticvectors.com/posts/hardened-agentic-13-memory-residency/)                                                                                                  |
+| Intent ↔ execution          | [Observability Loop](https://pragmaticvectors.com/posts/hardened-agentic-08-observability-loop/)                                                                                                  |
+| Edge containment            | [The Kernel Said No](https://pragmaticvectors.com/posts/macos-seatbelt-agent-sandbox/)                                                                                                            |
+| Supply chain / CISO         | [Mini Shai-Hulud](https://pragmaticvectors.com/posts/mini-shai-hulud-supply-chain/)                                                                                                               |
+| Kata + Tetragon             | [Building the Sandbox](https://pragmaticvectors.com/posts/hardened-agentic-07-tool-sandbox/) · [Process Containment](https://pragmaticvectors.com/posts/hardened-agentic-04-process-containment/) |
 
 ---
 
 ## Glossary vs other “layers”
 
-| Model | What it describes |
-| ----- | ----------------- |
-| **Fabric L1–L3** (this doc) | Deploy/governance topology |
-| **IDP / product layers 0–6** | Capability stack inside the platform |
-| **Operator Tier 1/2/3** | Kubernetes compose intensity — not fabric layers |
+| Model                        | What it describes                                |
+| ---------------------------- | ------------------------------------------------ |
+| **Fabric L1–L3** (this doc)  | Deploy/governance topology                       |
+| **IDP / product layers 0–6** | Capability stack inside the platform             |
+| **Operator Tier 1/2/3**      | Kubernetes compose intensity — not fabric layers |
 
 ---
 
