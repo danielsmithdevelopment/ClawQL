@@ -8,6 +8,7 @@ import { paypalOrdersLiveLayer } from "../paypal/paypal-orders-service.js";
 import { adyenCheckoutLiveLayer } from "../adyen/adyen-checkout-service.js";
 import { payoutLiveLayer } from "../payouts/payout-service.js";
 import { rampLiveLayer } from "../ramp/ramp-service.js";
+import { consumerOffRampLiveLayer } from "../offramp/consumer-offramp-service.js";
 import { mppOpenApiLiveLayer } from "../mpp/openapi-service.js";
 import { mppVerificationLiveLayer } from "../mpp/verification-service.js";
 import { mppxAdapterLiveLayer } from "../mpp/mppx-adapter.js";
@@ -45,7 +46,8 @@ export type PaymentsServices =
   | import("../paypal/paypal-orders-service.js").PaypalOrdersService
   | import("../adyen/adyen-checkout-service.js").AdyenCheckoutService
   | import("../payouts/payout-service.js").PayoutService
-  | import("../ramp/ramp-service.js").RampService;
+  | import("../ramp/ramp-service.js").RampService
+  | import("../offramp/consumer-offramp-service.js").ConsumerOffRampService;
 
 const layerCache = new Map<string, Layer.Layer<PaymentsServices>>();
 
@@ -70,6 +72,7 @@ export function paymentsServicesLiveLayer(
   const adyen = adyenCheckoutLiveLayer(env).pipe(Layer.provide(audit));
   const payouts = payoutLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(audit, stripeClient)));
   const ramp = rampLiveLayer(env).pipe(Layer.provide(audit));
+  const offramp = consumerOffRampLiveLayer(env).pipe(Layer.provide(audit));
 
   const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
   const mppOpenApi = mppOpenApiLiveLayer(env).pipe(
@@ -117,7 +120,8 @@ export function paymentsServicesLiveLayer(
     paypal,
     adyen,
     payouts,
-    ramp
+    ramp,
+    offramp
   );
   layerCache.set(key, layer);
   return layer;

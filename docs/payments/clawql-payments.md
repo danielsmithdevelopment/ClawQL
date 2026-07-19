@@ -35,18 +35,20 @@ It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is ava
 | **ACP** checkout sessions                           | ✅     | `AcpCheckoutService` — create/complete + Stripe SPT (dry-run without key)        |
 | **PayPal** Orders v2                                | ✅     | `PaypalOrdersService` — OAuth, create order, capture                             |
 | **Adyen** Checkout                                  | ✅     | `AdyenCheckoutService` — sessions, payments, HMAC webhooks (enterprise)          |
-| **Creator payouts** (Stripe Connect)                | ✅     | `PayoutService` — Express accounts, bank transfers, USDC intents                 |
+| **Creator payouts** (Stripe Connect + Base USDC)    | ✅     | `PayoutService` — Express bank transfers + live Base USDC ERC-20 sends           |
 | **Ramp** agent virtual cards                        | ✅     | `RampService` — funds, vault cards, agent-scoped spend caps                      |
+| **Consumer off-ramp** (Moonpay / Transak)           | ✅     | `ConsumerOffRampService` — USDC → fiat sell-session widgets                      |
+| **Payments MCP tools** (payout / ramp / offramp)    | ✅     | `CLAWQL_PAYMENTS_MCP_TOOLS=1`; optional AP2 gate                                 |
 
 ### Roadmap
 
-| Tier  | Item                         | Role                        | Notes                                              |
-| ----- | ---------------------------- | --------------------------- | -------------------------------------------------- |
-| **2** | Live USDC payout facilitator | Base USDC send for creators | Completes `destination=usdc` beyond audited intent |
-| **2** | Consumer off-ramp adapters   | Moonpay / Transak           | Separate from Ramp Business agent cards            |
-| **3** | **Mollie / Razorpay**        | Regional processors         | Add when regional traction requires them           |
+| Tier  | Item                         | Role                     | Notes                                                    |
+| ----- | ---------------------------- | ------------------------ | -------------------------------------------------------- |
+| **2** | USDC receipt confirmation    | Poll Base for finality   | Today: `submitted` after broadcast; dry-run marks `paid` |
+| **2** | Off-ramp completion webhooks | Moonpay / Transak settle | Session create + WORM already shipped                    |
+| **3** | **Mollie / Razorpay**        | Regional processors      | Add when regional traction requires them                 |
 
-**Already covered (do not duplicate):** Shopify Payments (Stripe-powered), ACH Direct Debit via Stripe's APIs, card/subscription/invoice flows via Stripe, **Stripe Connect payouts**, **Ramp agent cards**. **Not planned:** Zelle (no merchant API), Square POS-first adapters.
+**Already covered (do not duplicate):** Shopify Payments (Stripe-powered), ACH Direct Debit via Stripe's APIs, card/subscription/invoice flows via Stripe, **Stripe Connect payouts**, **live Base USDC payouts**, **consumer off-ramp (Moonpay/Transak)**, **Ramp agent cards**. **Not planned:** Zelle (no merchant API), Square POS-first adapters.
 
 Docs-site **UCP** `.well-known` documents remain scanner-facing stubs. **AP2 / ACP / PayPal / Adyen** are live in self-hosted `clawql-payments` when their env flags are set.
 
@@ -61,8 +63,9 @@ clawql-payments
 ├── acp/        Agentic checkout sessions (create/complete + Stripe SPT)
 ├── paypal/     PayPal Orders v2 create/capture
 ├── adyen/      Adyen Checkout sessions, payments, HMAC webhooks
-├── payouts/    Stripe Connect creator payouts (bank + USDC intents)
+├── payouts/    Stripe Connect bank payouts + Base USDC sends
 ├── ramp/       Ramp funds + virtual / agent cards
+├── offramp/    Consumer USDC → fiat (Moonpay / Transak)
 ├── plans/      Tier definitions, entitlements, usage.json counters
 ├── audit/      Hash-chained append-only JSONL + integrity verify
 └── cli/        clawql payments * implementations
@@ -322,18 +325,26 @@ Wallet and facilitator URL can also be stored in `payments.json` → `x402`.
 | `ADYEN_ENVIRONMENT`               | `test`   | `test` or `live`                                                       |
 | `ADYEN_LIVE_ENDPOINT_PREFIX`      | —        | Required for live Checkout base URL prefix                             |
 
-### Payouts (Stripe Connect) + Ramp agent cards
+### Payouts (Stripe Connect + USDC) + Ramp + consumer off-ramp
 
-| Variable                     | Default | Purpose                                                          |
-| ---------------------------- | ------- | ---------------------------------------------------------------- |
-| `CLAWQL_PAYOUTS_ENABLED`     | auto    | Defaults on when `STRIPE_SECRET_KEY` is set                      |
-| `CLAWQL_PAYOUTS_DRY_RUN`     | auto    | Dry-run when no Stripe key; force with `1`                       |
-| `CLAWQL_PAYOUTS_RETURN_URL`  | local   | Connect onboarding return URL                                    |
-| `CLAWQL_PAYOUTS_REFRESH_URL` | local   | Connect onboarding refresh URL                                   |
-| `CLAWQL_RAMP_ENABLED`        | auto    | Defaults on when `RAMP_CLIENT_ID` + `RAMP_CLIENT_SECRET` are set |
-| `CLAWQL_RAMP_DRY_RUN`        | auto    | Dry-run when Ramp credentials missing                            |
-| `RAMP_CLIENT_ID` / `SECRET`  | —       | Ramp OAuth client credentials                                    |
-| `RAMP_ENVIRONMENT`           | `demo`  | `demo` or `production`                                           |
+| Variable                          | Default | Purpose                                                          |
+| --------------------------------- | ------- | ---------------------------------------------------------------- |
+| `CLAWQL_PAYOUTS_ENABLED`          | auto    | Defaults on when `STRIPE_SECRET_KEY` is set                      |
+| `CLAWQL_PAYOUTS_DRY_RUN`          | auto    | Dry-run when no Stripe key; force with `1`                       |
+| `CLAWQL_PAYOUTS_RETURN_URL`       | local   | Connect onboarding return URL                                    |
+| `CLAWQL_PAYOUTS_REFRESH_URL`      | local   | Connect onboarding refresh URL                                   |
+| `CLAWQL_PAYOUTS_USDC_PRIVATE_KEY` | —       | Hot wallet for live Base USDC sends (`viem` optional dep)        |
+| `CLAWQL_PAYOUTS_USDC_DRY_RUN`     | auto    | Force dry USDC; default dry when no private key                  |
+| `CLAWQL_RAMP_ENABLED`             | auto    | Defaults on when `RAMP_CLIENT_ID` + `RAMP_CLIENT_SECRET` are set |
+| `CLAWQL_RAMP_DRY_RUN`             | auto    | Dry-run when Ramp credentials missing                            |
+| `RAMP_CLIENT_ID` / `SECRET`       | —       | Ramp OAuth client credentials                                    |
+| `RAMP_ENVIRONMENT`                | `demo`  | `demo` or `production`                                           |
+| `CLAWQL_OFFRAMP_ENABLED`          | off     | Consumer Moonpay/Transak sell sessions                           |
+| `CLAWQL_OFFRAMP_DRY_RUN`          | auto    | Dry widget URLs when no provider key                             |
+| `CLAWQL_OFFRAMP_PROVIDER`         | moonpay | `moonpay` or `transak`                                           |
+| `MOONPAY_API_KEY` / `TRANSAK_*`   | —       | Provider API keys                                                |
+| `CLAWQL_PAYMENTS_MCP_TOOLS`       | off     | Register payout / ramp / offramp MCP tools                       |
+| `CLAWQL_PAYMENTS_MCP_REQUIRE_AP2` | off     | Require AP2 mandate JWT on those tools                           |
 
 See [payouts-ramp.md](./payouts-ramp.md).
 

@@ -58,14 +58,15 @@ describe("PayoutService (Stripe Connect dry-run)", () => {
     expect(result.pref?.method).toBe("bank");
   });
 
-  it("records USDC payout intents", async () => {
+  it("sends USDC payouts (dry-run) with txHash", async () => {
+    const wallet = "0x1111111111111111111111111111111111111111";
     const paid = await runPaymentsEffect(
       Effect.gen(function* () {
         const payouts = yield* PayoutService;
         yield* payouts.setPreference({
           creatorId: "c2",
           method: "usdc",
-          usdcWallet: "0xabc",
+          usdcWallet: wallet,
         });
         return yield* payouts.createPayout({
           amountUsd: 10,
@@ -75,7 +76,10 @@ describe("PayoutService (Stripe Connect dry-run)", () => {
       })
     );
     expect(paid.destination).toBe("usdc");
-    expect(paid.usdcWallet).toBe("0xabc");
+    expect(paid.usdcWallet).toBe(wallet);
     expect(paid.amountCents).toBe(1000);
+    expect(paid.dryRun).toBe(true);
+    expect(paid.txHash).toMatch(/^0xdry/);
+    expect(paid.status).toBe("paid");
   });
 });

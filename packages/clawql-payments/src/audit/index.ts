@@ -9,6 +9,7 @@ export {
   buildAp2MandateVerifiedEntry,
   buildConnectAccountCreatedEntry,
   buildEntitlementLimitReachedEntry,
+  buildOfframpSessionCreatedEntry,
   buildPaymentWormEntry,
   buildPaypalCaptureFailedEntry,
   buildPaypalOrderCapturedEntry,

@@ -18,3 +18,14 @@ export {
   type ConnectOnboardingLinkResult,
   type PayoutResult,
 } from "./payout-service.js";
+export {
+  UsdcSendError,
+  sendUsdcPayout,
+  isUsdcPayoutConfigured,
+  usdcPayoutAsset,
+  usdcPayoutChainId,
+  usdcPayoutRpcUrl,
+  USDC_BASE_MAINNET,
+  USDC_BASE_SEPOLIA,
+  type UsdcSendResult,
+} from "./usdc-send.js";

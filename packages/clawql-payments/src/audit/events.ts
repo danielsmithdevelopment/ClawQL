@@ -25,10 +25,11 @@ export type PaymentEventKind =
   | "PAYOUT_FAILED"
   | "RAMP_FUND_CREATED"
   | "RAMP_VIRTUAL_CARD_ISSUED"
-  | "RAMP_AGENT_CARD_ISSUED";
+  | "RAMP_AGENT_CARD_ISSUED"
+  | "OFFRAMP_SESSION_CREATED";
 
 export type PaymentProvider =
-  "stripe" | "x402" | "ap2" | "acp" | "paypal" | "adyen" | "ramp" | "payouts";
+  "stripe" | "x402" | "ap2" | "acp" | "paypal" | "adyen" | "ramp" | "payouts" | "offramp";
 
 export type PaymentWormPayload = {
   provider: PaymentProvider;
@@ -536,6 +537,30 @@ export function buildRampAgentCardIssuedEntry(input: {
       tenant_id: input.tenantId,
       resource: input.cardId,
       agent_id: input.agentId,
+    },
+  });
+}
+
+export function buildOfframpSessionCreatedEntry(input: {
+  tenantId: string;
+  sessionId: string;
+  provider: "moonpay" | "transak";
+  amountUsd: number;
+  walletAddress: string;
+  dryRun?: boolean;
+  correlationId?: string;
+  creatorId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "OFFRAMP_SESSION_CREATED",
+    summary: `Off-ramp ${input.provider} session ${input.sessionId} $${input.amountUsd.toFixed(2)}${input.dryRun ? " [dry-run]" : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "offramp",
+      amount_usdc: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.sessionId,
+      agent_id: input.creatorId ?? input.walletAddress,
     },
   });
 }

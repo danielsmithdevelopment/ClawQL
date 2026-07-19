@@ -6,6 +6,7 @@ import type { Plugin } from "clawql-core";
 import { Effect } from "effect";
 import { isX402EnforcementActive } from "../x402/config.js";
 import { mcpX402BeforeCallToolEffect } from "../x402/mcp-enforce-effect.js";
+import { createPaymentsToolsPlugin, paymentsMcpToolsEnabled } from "./payments-tools-plugin.js";
 
 export const PAYMENTS_X402_PROXY_PLUGIN_ID = "payments-x402-mcp-proxy";
 
@@ -49,9 +50,16 @@ export function createPaymentsX402ProxyPlugin(
   return plugin;
 }
 
-/** Default payments MCP proxy plugins (x402 when enabled). */
+/** Default payments MCP plugins (x402 proxy + optional payout/ramp/offramp tools). */
 export function defaultPaymentsProxyPlugins(
   env: NodeJS.ProcessEnv = process.env
 ): readonly Plugin[] {
-  return paymentsX402ProxyPluginEnabled(env) ? [createPaymentsX402ProxyPlugin({ env })] : [];
+  const plugins: Plugin[] = [];
+  if (paymentsX402ProxyPluginEnabled(env)) {
+    plugins.push(createPaymentsX402ProxyPlugin({ env }));
+  }
+  if (paymentsMcpToolsEnabled(env)) {
+    plugins.push(createPaymentsToolsPlugin(env));
+  }
+  return plugins;
 }

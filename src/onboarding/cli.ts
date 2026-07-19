@@ -78,6 +78,7 @@ import {
   runPaymentsRampFundCreateCmd,
   runPaymentsRampCardIssueCmd,
   runPaymentsRampAgentCardIssueCmd,
+  runPaymentsOfframpSessionCmd,
   type PaymentsCliOptions,
 } from "./payments-cli.js";
 
@@ -210,6 +211,7 @@ function parse(argv: string[]): {
     else if (a === "--show-secrets") flags.showSecrets = true;
     else if (a === "--vendor-ids") flags.vendorIds = argv[++i] ?? "";
     else if (a === "--interval") flags.interval = argv[++i] ?? "";
+    else if (a === "--provider") flags.provider = argv[++i] ?? "";
     else if (a === "--skip-verify") flags.skipVerify = true;
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
@@ -282,6 +284,7 @@ Usage:
   clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
   clawql payments payout connect create --email creator@x.com | connect link --account acct_xxx | create --amount 25 | prefer --creator id --method bank
   clawql payments ramp fund create --limit 500 | card issue --user-id U --limit 100 | agent-card issue --user-id U --amount 25
+  clawql payments offramp session --amount 25 --wallet 0x… [--provider moonpay|transak]
   clawql payments spend report [--group-by provider|tenant|plan] | audit [--correlation-id ID]
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
@@ -861,6 +864,11 @@ async function main(): Promise<void> {
         ["DAILY", "WEEKLY", "MONTHLY", "TOTAL", "ANNUAL"].includes(flags.interval)
           ? (flags.interval as PaymentsCliOptions["interval"])
           : undefined,
+      provider:
+        typeof flags.provider === "string" &&
+        (flags.provider === "moonpay" || flags.provider === "transak")
+          ? flags.provider
+          : undefined,
     };
 
     if (subcmd === "plan") {
@@ -994,8 +1002,17 @@ async function main(): Promise<void> {
       process.exitCode = 1;
       return;
     }
+    if (subcmd === "offramp") {
+      if (rest[0] === "session") {
+        process.exitCode = await runPaymentsOfframpSessionCmd(paymentsOpts);
+        return;
+      }
+      console.error("Usage: clawql payments offramp session --amount N --wallet 0x…");
+      process.exitCode = 1;
+      return;
+    }
     console.error(
-      "Usage: clawql payments plan | usage | spend | audit | stripe | x402 | payout | ramp"
+      "Usage: clawql payments plan | usage | spend | audit | stripe | x402 | payout | ramp | offramp"
     );
     process.exitCode = 1;
     return;

@@ -28,8 +28,10 @@ import {
   runPaymentsRampFundCreate,
   runPaymentsRampCardIssue,
   runPaymentsRampAgentCardIssue,
+  runPaymentsOfframpSession,
   type SpendGroupBy,
   type PayoutMethod,
+  type OffRampProvider,
 } from "clawql-payments";
 
 export type PaymentsCliOptions = {
@@ -75,6 +77,7 @@ export type PaymentsCliOptions = {
   showSecrets?: boolean;
   vendorIds?: string[];
   interval?: "DAILY" | "WEEKLY" | "MONTHLY" | "TOTAL" | "ANNUAL";
+  provider?: OffRampProvider;
 };
 
 export async function runPaymentsPlanShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
@@ -321,6 +324,21 @@ export async function runPaymentsRampAgentCardIssueCmd(
     tenantId: options.tenantId,
     agentId: options.agentId,
     showSecrets: options.showSecrets,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsOfframpSessionCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsOfframpSession({
+    amountUsd: options.amount,
+    wallet: options.wallet,
+    provider: options.provider,
+    email: options.email,
+    returnUrl: options.returnUrl,
+    tenantId: options.tenantId,
+    creatorId: options.creatorId,
     json: options.json,
   });
 }

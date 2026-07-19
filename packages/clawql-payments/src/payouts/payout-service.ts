@@ -1,5 +1,5 @@
 /**
- * Platform creator payouts: Stripe Connect (bank) + USDC disbursement intents.
+ * Platform creator payouts: Stripe Connect (bank) + live Base USDC sends.
  *
  * Money-out complement to agentic ingress rails (x402/MPP/ACP/AP2).
  */
@@ -28,6 +28,7 @@ import {
   type CreatorPayoutPreference,
   type PayoutMethod,
 } from "./preferences.js";
+import { UsdcSendError, sendUsdcPayout } from "./usdc-send.js";
 
 export class PayoutError extends Data.TaggedError("PayoutError")<{
   readonly reason: string;
@@ -56,6 +57,8 @@ export type PayoutResult = {
   usdcWallet?: string;
   dryRun: boolean;
   transferId?: string;
+  /** Base USDC transfer hash when destination=usdc and send succeeded. */
+  txHash?: string;
 };
 
 /** Effect service for Stripe Connect onboarding + creator payouts. */
@@ -319,7 +322,11 @@ export function payoutLiveLayer(
             );
           }
 
-          if (isPayoutsDryRun(env) || connectAccountId?.startsWith("acct_dry_")) {
+          // Bank dry-run only — USDC has its own dry-run via CLAWQL_PAYOUTS_USDC_* / missing key.
+          if (
+            destination === "bank" &&
+            (isPayoutsDryRun(env) || connectAccountId?.startsWith("acct_dry_"))
+          ) {
             const id = `po_dry_${Date.now().toString(36)}`;
             yield* audit
               .appendEntry(
@@ -356,8 +363,28 @@ export function payoutLiveLayer(
           }
 
           if (destination === "usdc") {
-            // USDC send is recorded as an auditable intent; wire a chain facilitator later.
-            const id = `po_usdc_${Date.now().toString(36)}`;
+            const usdcEnv = isPayoutsDryRun(env)
+              ? ({ ...env, CLAWQL_PAYOUTS_USDC_DRY_RUN: "1" } as NodeJS.ProcessEnv)
+              : env;
+            const sent = yield* Effect.tryPromise({
+              try: () =>
+                sendUsdcPayout(
+                  {
+                    to: usdcWallet!,
+                    amountUsd: amountCents / 100,
+                    correlationId: input.correlationId,
+                  },
+                  usdcEnv
+                ),
+              catch: (cause) =>
+                cause instanceof UsdcSendError
+                  ? new PayoutError({ reason: cause.reason, cause })
+                  : new PayoutError({
+                      reason: cause instanceof Error ? cause.message : "USDC send failed",
+                      cause,
+                    }),
+            });
+            const id = sent.txHash;
             yield* audit
               .appendEntry(
                 buildPayoutInitiatedEntry({
@@ -365,7 +392,7 @@ export function payoutLiveLayer(
                   payoutId: id,
                   amountUsd: amountCents / 100,
                   destination: "usdc",
-                  dryRun: false,
+                  dryRun: sent.dryRun,
                   correlationId: input.correlationId,
                 })
               )
@@ -377,17 +404,18 @@ export function payoutLiveLayer(
                   payoutId: id,
                   amountUsd: amountCents / 100,
                   destination: "usdc",
-                  correlationId: input.correlationId,
+                  correlationId: input.correlationId ?? id,
                 })
               )
               .pipe(Effect.catchAll(() => Effect.void));
             return {
               id,
-              status: "recorded",
+              status: sent.dryRun ? "paid" : "submitted",
               amountCents,
               destination: "usdc",
               usdcWallet,
-              dryRun: false,
+              dryRun: sent.dryRun,
+              txHash: sent.txHash,
             } satisfies PayoutResult;
           }
 
@@ -408,6 +436,7 @@ export function payoutLiveLayer(
                   },
                 })
             );
+            // Live bank: INITIATED here; PAYOUT_PAID settles via Connect webhooks.
             yield* audit
               .appendEntry(
                 buildPayoutInitiatedEntry({
@@ -420,20 +449,9 @@ export function payoutLiveLayer(
                 })
               )
               .pipe(Effect.catchAll(() => Effect.void));
-            yield* audit
-              .appendEntry(
-                buildPayoutPaidEntry({
-                  tenantId,
-                  payoutId: transfer.id,
-                  amountUsd: amountCents / 100,
-                  destination: "bank",
-                  correlationId: input.correlationId ?? transfer.id,
-                })
-              )
-              .pipe(Effect.catchAll(() => Effect.void));
             return {
               id: transfer.id,
-              status: transfer.reversed ? "reversed" : "paid",
+              status: transfer.reversed ? "reversed" : "pending",
               amountCents,
               destination: "bank",
               connectAccountId,
