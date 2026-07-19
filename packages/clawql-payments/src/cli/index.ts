@@ -37,3 +37,21 @@ export {
   type PaymentsX402VerifyOptions,
   type PaymentsX402WalletSetupOptions,
 } from "./x402.js";
+export {
+  runPaymentsPayoutConnectCreate,
+  runPaymentsPayoutConnectLink,
+  runPaymentsPayoutCreate,
+  runPaymentsPayoutPrefer,
+  type PaymentsPayoutConnectCreateOptions,
+  type PaymentsPayoutConnectLinkOptions,
+  type PaymentsPayoutCreateOptions,
+  type PaymentsPayoutPreferOptions,
+} from "./payout.js";
+export {
+  runPaymentsRampFundCreate,
+  runPaymentsRampCardIssue,
+  runPaymentsRampAgentCardIssue,
+  type PaymentsRampFundCreateOptions,
+  type PaymentsRampCardIssueOptions,
+  type PaymentsRampAgentCardOptions,
+} from "./ramp.js";

@@ -71,6 +71,13 @@ import {
   runPaymentsX402ReconcileCmd,
   runPaymentsX402VerifyCmd,
   runPaymentsX402WalletSetupCmd,
+  runPaymentsPayoutConnectCreateCmd,
+  runPaymentsPayoutConnectLinkCmd,
+  runPaymentsPayoutCreateCmd,
+  runPaymentsPayoutPreferCmd,
+  runPaymentsRampFundCreateCmd,
+  runPaymentsRampCardIssueCmd,
+  runPaymentsRampAgentCardIssueCmd,
   type PaymentsCliOptions,
 } from "./payments-cli.js";
 
@@ -184,13 +191,25 @@ function parse(argv: string[]): {
     else if (a === "--payer") flags.payer = argv[++i] ?? "";
     else if (a === "--date") flags.date = argv[++i] ?? "";
     else if (a === "--month") flags.month = argv[++i] ?? "";
-    else if (a === "--account-id") flags.accountId = argv[++i] ?? "";
+    else if (a === "--account-id" || a === "--account") flags.accountId = argv[++i] ?? "";
     else if (a === "--publishable-key") flags.publishableKey = argv[++i] ?? "";
     else if (a === "--webhook-secret") flags.webhookSecret = argv[++i] ?? "";
     else if (a === "--payload") flags.payloadPath = argv[++i] ?? "";
     else if (a === "--process") flags.process = true;
     else if (a === "--facilitator-url") flags.facilitatorUrl = argv[++i] ?? "";
     else if (a === "--tenant-id") flags.tenantId = argv[++i] ?? "";
+    else if (a === "--destination") flags.destination = argv[++i] ?? "";
+    else if (a === "--creator" || a === "--creator-id") flags.creatorId = argv[++i] ?? "";
+    else if (a === "--wallet") flags.wallet = argv[++i] ?? "";
+    else if (a === "--method") flags.method = argv[++i] ?? "";
+    else if (a === "--country") flags.country = argv[++i] ?? "";
+    else if (a === "--return-url") flags.returnUrl = argv[++i] ?? "";
+    else if (a === "--refresh-url") flags.refreshUrl = argv[++i] ?? "";
+    else if (a === "--user-id") flags.userId = argv[++i] ?? "";
+    else if (a === "--agent-id" || a === "--agent") flags.agentId = argv[++i] ?? "";
+    else if (a === "--show-secrets") flags.showSecrets = true;
+    else if (a === "--vendor-ids") flags.vendorIds = argv[++i] ?? "";
+    else if (a === "--interval") flags.interval = argv[++i] ?? "";
     else if (a === "--skip-verify") flags.skipVerify = true;
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
@@ -261,6 +280,8 @@ Usage:
   clawql payments plan show | upgrade --tier team | usage report [--month YYYY-MM]
   clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | webhook verify
   clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
+  clawql payments payout connect create --email creator@x.com | connect link --account acct_xxx | create --amount 25 | prefer --creator id --method bank
+  clawql payments ramp fund create --limit 500 | card issue --user-id U --limit 100 | agent-card issue --user-id U --amount 25
   clawql payments spend report [--group-by provider|tenant|plan] | audit [--correlation-id ID]
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
@@ -811,6 +832,35 @@ async function main(): Promise<void> {
       eventName: typeof flags.eventName === "string" ? flags.eventName : undefined,
       identifier: typeof flags.identifier === "string" ? flags.identifier : undefined,
       value: Number.isFinite(value) ? value : undefined,
+      destination:
+        typeof flags.destination === "string" &&
+        (flags.destination === "bank" || flags.destination === "usdc")
+          ? flags.destination
+          : undefined,
+      creatorId: typeof flags.creatorId === "string" ? flags.creatorId : undefined,
+      wallet: typeof flags.wallet === "string" ? flags.wallet : undefined,
+      method:
+        typeof flags.method === "string" && (flags.method === "bank" || flags.method === "usdc")
+          ? flags.method
+          : undefined,
+      country: typeof flags.country === "string" ? flags.country : undefined,
+      returnUrl: typeof flags.returnUrl === "string" ? flags.returnUrl : undefined,
+      refreshUrl: typeof flags.refreshUrl === "string" ? flags.refreshUrl : undefined,
+      userId: typeof flags.userId === "string" ? flags.userId : undefined,
+      agentId: typeof flags.agentId === "string" ? flags.agentId : undefined,
+      showSecrets: Boolean(flags.showSecrets),
+      vendorIds:
+        typeof flags.vendorIds === "string" && flags.vendorIds
+          ? flags.vendorIds
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : undefined,
+      interval:
+        typeof flags.interval === "string" &&
+        ["DAILY", "WEEKLY", "MONTHLY", "TOTAL", "ANNUAL"].includes(flags.interval)
+          ? (flags.interval as PaymentsCliOptions["interval"])
+          : undefined,
     };
 
     if (subcmd === "plan") {
@@ -902,7 +952,51 @@ async function main(): Promise<void> {
       process.exitCode = 1;
       return;
     }
-    console.error("Usage: clawql payments plan | usage | spend | audit | stripe | x402");
+    if (subcmd === "payout") {
+      const action = rest[0];
+      if (action === "connect" && rest[1] === "create") {
+        process.exitCode = await runPaymentsPayoutConnectCreateCmd(paymentsOpts);
+        return;
+      }
+      if (action === "connect" && rest[1] === "link") {
+        process.exitCode = await runPaymentsPayoutConnectLinkCmd(paymentsOpts);
+        return;
+      }
+      if (action === "create") {
+        process.exitCode = await runPaymentsPayoutCreateCmd(paymentsOpts);
+        return;
+      }
+      if (action === "prefer") {
+        process.exitCode = await runPaymentsPayoutPreferCmd(paymentsOpts);
+        return;
+      }
+      console.error(
+        "Usage: clawql payments payout connect create | connect link | create | prefer"
+      );
+      process.exitCode = 1;
+      return;
+    }
+    if (subcmd === "ramp") {
+      const action = rest[0];
+      if (action === "fund" && rest[1] === "create") {
+        process.exitCode = await runPaymentsRampFundCreateCmd(paymentsOpts);
+        return;
+      }
+      if (action === "card" && rest[1] === "issue") {
+        process.exitCode = await runPaymentsRampCardIssueCmd(paymentsOpts);
+        return;
+      }
+      if (action === "agent-card" && rest[1] === "issue") {
+        process.exitCode = await runPaymentsRampAgentCardIssueCmd(paymentsOpts);
+        return;
+      }
+      console.error("Usage: clawql payments ramp fund create | card issue | agent-card issue");
+      process.exitCode = 1;
+      return;
+    }
+    console.error(
+      "Usage: clawql payments plan | usage | spend | audit | stripe | x402 | payout | ramp"
+    );
     process.exitCode = 1;
     return;
   }

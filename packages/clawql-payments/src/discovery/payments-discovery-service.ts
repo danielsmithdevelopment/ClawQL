@@ -6,6 +6,8 @@ import { isAp2Enabled, isAp2Required } from "../ap2/config.js";
 import { isAcpEnabled } from "../acp/config.js";
 import { isPaypalEnabled, paypalApiBase } from "../paypal/config.js";
 import { adyenEnvironment, adyenMerchantAccount, isAdyenEnabled } from "../adyen/config.js";
+import { isPayoutsDryRun, isPayoutsEnabled } from "../payouts/config.js";
+import { isRampDryRun, isRampEnabled, rampEnvironment } from "../ramp/config.js";
 import { X402GateService } from "../x402/x402-gate-service.js";
 import { X402RuntimeConfigService } from "../x402/x402-runtime-config-service.js";
 import { X402_VERSION } from "../x402/types.js";
@@ -18,7 +20,7 @@ export type PaymentsWellKnownResource = {
 };
 
 export type PaymentsWellKnownMethod = {
-  type: "x402" | "stripe" | "ap2" | "acp" | "paypal" | "adyen";
+  type: "x402" | "stripe" | "ap2" | "acp" | "paypal" | "adyen" | "payouts" | "ramp";
   enabled: boolean;
 };
 
@@ -70,6 +72,22 @@ export type PaymentsWellKnownAdyenMethod = PaymentsWellKnownMethod & {
   documentation: string;
 };
 
+export type PaymentsWellKnownPayoutsMethod = PaymentsWellKnownMethod & {
+  type: "payouts";
+  connect: "stripe_express";
+  destinations: Array<"bank" | "usdc">;
+  dry_run: boolean;
+  documentation: string;
+};
+
+export type PaymentsWellKnownRampMethod = PaymentsWellKnownMethod & {
+  type: "ramp";
+  environment: "demo" | "production";
+  capabilities: Array<"funds" | "virtual_cards" | "agent_cards">;
+  dry_run: boolean;
+  documentation: string;
+};
+
 export type PaymentsWellKnownDocument = {
   version: string;
   server_name: string;
@@ -82,8 +100,10 @@ export type PaymentsWellKnownDocument = {
     | PaymentsWellKnownAcpMethod
     | PaymentsWellKnownPaypalMethod
     | PaymentsWellKnownAdyenMethod
+    | PaymentsWellKnownPayoutsMethod
+    | PaymentsWellKnownRampMethod
   >;
-  default: "x402" | "stripe" | "ap2" | "acp" | "paypal" | "adyen" | null;
+  default: "x402" | "stripe" | "ap2" | "acp" | "paypal" | "adyen" | "payouts" | "ramp" | null;
   updated_at: string;
 };
 
@@ -221,6 +241,29 @@ export function paymentsDiscoveryLiveLayer(
               environment: adyenEnvironment(runEnv),
               merchant_account: adyenMerchantAccount(runEnv),
               documentation: "https://docs.adyen.com/online-payments/",
+            });
+          }
+
+          if (isPayoutsEnabled(runEnv)) {
+            paymentMethods.push({
+              type: "payouts",
+              enabled: true,
+              connect: "stripe_express",
+              destinations: ["bank", "usdc"],
+              dry_run: isPayoutsDryRun(runEnv),
+              documentation:
+                "https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/payments/payouts-ramp.md",
+            });
+          }
+
+          if (isRampEnabled(runEnv)) {
+            paymentMethods.push({
+              type: "ramp",
+              enabled: true,
+              environment: rampEnvironment(runEnv),
+              capabilities: ["funds", "virtual_cards", "agent_cards"],
+              dry_run: isRampDryRun(runEnv),
+              documentation: "https://docs.ramp.com/developer-api/v1/virtual-cards",
             });
           }
 

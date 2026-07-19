@@ -27,3 +27,8 @@ export function resolvePaymentAuditJsonlPath(env: NodeJS.ProcessEnv = process.en
 export function resolvePaymentAuditMetaPath(env: NodeJS.ProcessEnv = process.env): string {
   return join(resolvePaymentsDir(env), "audit.meta.json");
 }
+
+/** Creator payout destination preferences (bank vs USDC wallet). */
+export function resolvePayoutPreferencesPath(env: NodeJS.ProcessEnv = process.env): string {
+  return join(resolvePaymentsDir(env), "payout-preferences.json");
+}

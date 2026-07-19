@@ -5,11 +5,13 @@ import { MPP_METHOD_STRIPE, MPP_METHOD_X402 } from "./types.js";
 export const MPP_FINANCE_METHOD_PAYPAL = "paypal" as const;
 export const MPP_FINANCE_METHOD_ADYEN = "adyen" as const;
 export const MPP_FINANCE_METHOD_SQUARE = "square" as const;
+export const MPP_FINANCE_METHOD_RAMP = "ramp" as const;
 
 export type MppFinanceMethod =
   | typeof MPP_FINANCE_METHOD_PAYPAL
   | typeof MPP_FINANCE_METHOD_ADYEN
   | typeof MPP_FINANCE_METHOD_SQUARE
+  | typeof MPP_FINANCE_METHOD_RAMP
   | string;
 
 const DEFAULT_FINANCE_METHODS: MppFinanceMethod[] = [];
