@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import type { Dirent } from "node:fs";
 import path from "node:path";
 
 const DEFAULT_IGNORE = new Set([
@@ -32,7 +33,7 @@ export async function walkCodeFiles(
 
   async function walk(dir: string): Promise<void> {
     if (results.length >= maxFiles) return;
-    let entries: fs.Dirent[];
+    let entries: Dirent[];
     try {
       entries = await fs.readdir(dir, { withFileTypes: true });
     } catch {

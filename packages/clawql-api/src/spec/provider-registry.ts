@@ -166,6 +166,13 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     bundledIntrospectionPath: "providers/n8n/introspection.json",
     bundledSchemaSdlPath: "providers/n8n/schema.graphql",
   },
+  /** Xquik REST API. Auth: XQUIK_API_KEY -> x-api-key. */
+  xquik: {
+    id: "xquik",
+    bundledSpecPath: "providers/xquik/openapi.yaml",
+    format: "openapi",
+    fallbackUrl: "https://xquik.com/openapi.json",
+  },
   /**
    * Docling Serve — layout-aware document conversion (v1 REST API).
    * Base URL: DOCLING_BASE_URL. Auth: optional DOCLING_API_KEY → X-Api-Key.

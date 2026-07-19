@@ -30,6 +30,8 @@ afterEach(() => {
   delete process.env.CLAWQL_CONESHARE_API_TOKEN;
   delete process.env.SLACK_BOT_TOKEN;
   delete process.env.N8N_API_KEY;
+  delete process.env.XQUIK_API_KEY;
+  delete process.env.CLAWQL_XQUIK_API_KEY;
   delete process.env.SENTRY_AUTH_TOKEN;
   delete process.env.CLAWQL_ATLASSIAN_TOKEN;
 });
@@ -168,6 +170,20 @@ describe("mergedAuthHeaders", () => {
     process.env.N8N_API_KEY = "n8n_secret";
     expect(mergedAuthHeaders("n8n")).toEqual({
       "X-N8N-API-KEY": "n8n_secret",
+    });
+  });
+
+  it("uses XQUIK_API_KEY as x-api-key for xquik specLabel", () => {
+    process.env.XQUIK_API_KEY = "test-key";
+    expect(mergedAuthHeaders("xquik")).toEqual({
+      "x-api-key": "test-key",
+    });
+  });
+
+  it("uses CLAWQL_XQUIK_API_KEY when XQUIK_API_KEY is unset", () => {
+    process.env.CLAWQL_XQUIK_API_KEY = "clawql-test-key";
+    expect(mergedAuthHeaders("xquik")).toEqual({
+      "x-api-key": "clawql-test-key",
     });
   });
 

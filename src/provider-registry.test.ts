@@ -23,6 +23,7 @@ describe("provider-registry", () => {
     expect(ids).toContain("onyx");
     expect(ids).toContain("linear");
     expect(ids).toContain("notion");
+    expect(ids).toContain("xquik");
     expect(ids).not.toContain("atlassian"); // group, not concrete provider
   });
 
@@ -37,6 +38,16 @@ describe("provider-registry", () => {
     expect(p?.id).toBe("linear");
     expect(p?.format).toBe("graphql");
     expect(p && "graphqlEndpoint" in p ? p.graphqlEndpoint : "").toContain("api.linear.app");
+  });
+
+  it("resolves xquik as an OpenAPI bundled provider", () => {
+    const p = resolveBundledProvider("xquik");
+    expect(p?.id).toBe("xquik");
+    expect(p?.format).toBe("openapi");
+    expect(p && "bundledSpecPath" in p ? p.bundledSpecPath : "").toBe(
+      "providers/xquik/openapi.yaml"
+    );
+    expect(p?.fallbackUrl).toBe("https://xquik.com/openapi.json");
   });
 
   it("lists merged preset ids including google, aws, and default", () => {
@@ -101,6 +112,7 @@ describe("provider-registry", () => {
     const labels = new Set(items!.map((x) => x.label));
     expect(labels.has("slack")).toBe(true);
     expect(labels.has("n8n")).toBe(true);
+    expect(labels.has("xquik")).toBe(true);
     expect(labels.has("github")).toBe(true);
     expect(labels.has("notion")).toBe(true);
     expect(labels.has("paperless")).toBe(true);
@@ -255,5 +267,15 @@ describe("provider-registry", () => {
     const fromPreset = await resolveBundledProviderGroup("default");
     const direct = await resolveDefaultBundledProvidersItems();
     expect(fromPreset?.map((x) => x.label).sort()).toEqual(direct.map((x) => x.label).sort());
+  });
+
+  it("resolveItemsFromBundledProviderEnvList includes xquik as openapi item", async () => {
+    const items = await resolveItemsFromBundledProviderEnvList("xquik");
+    expect(items).toHaveLength(1);
+    expect(items[0]?.kind).toBe("openapi");
+    if (items[0]?.kind === "openapi") {
+      expect(items[0].label).toBe("xquik");
+      expect(items[0].abs).toContain("/providers/xquik/openapi.yaml");
+    }
   });
 });

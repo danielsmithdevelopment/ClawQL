@@ -9,7 +9,7 @@
  *   CLAWQL_CODEGRAPH_DOGFOOD_FULL=1 npm run test:dogfood -w clawql-codegraph
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { explainNode, queryGraph, shortestPath, subgraph } from "../graph/operations.js";

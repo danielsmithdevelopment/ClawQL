@@ -1,0 +1,267 @@
+openapi: 3.1.0
+info:
+  title: Xquik API
+  version: "1.0"
+  description: >-
+    Curated Xquik REST subset for X search, post lookup, and composition.
+    Xquik is an independent third-party service. Not affiliated with X Corp.
+    "Twitter" and "X" are trademarks of X Corp.
+servers:
+  - url: https://xquik.com/api/v1
+
+security:
+  - apiKey: []
+  - oauthBearer: []
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: >-
+        Xquik API key. Keys beginning with xq_ can also use Authorization:
+        Bearer.
+    oauthBearer:
+      type: http
+      scheme: bearer
+      description: OAuth 2.1 access token.
+  schemas:
+    TweetAuthor:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        name:
+          type: string
+        verified:
+          type: boolean
+    Tweet:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        likeCount:
+          type: integer
+        retweetCount:
+          type: integer
+        replyCount:
+          type: integer
+        quoteCount:
+          type: integer
+        viewCount:
+          type: integer
+        bookmarkCount:
+          type: integer
+        author:
+          $ref: "#/components/schemas/TweetAuthor"
+      additionalProperties: true
+    TweetSearchResponse:
+      type: object
+      required:
+        - tweets
+        - has_next_page
+      properties:
+        tweets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tweet"
+        has_next_page:
+          type: boolean
+        next_cursor:
+          type: string
+      additionalProperties: true
+    TweetLookupResponse:
+      type: object
+      required:
+        - tweet
+      properties:
+        tweet:
+          $ref: "#/components/schemas/Tweet"
+        author:
+          $ref: "#/components/schemas/TweetAuthor"
+      additionalProperties: true
+    ComposeRequest:
+      type: object
+      required:
+        - step
+      properties:
+        step:
+          type: string
+          enum:
+            - compose
+            - refine
+            - score
+        topic:
+          type: string
+        goal:
+          type: string
+          enum:
+            - engagement
+            - followers
+            - authority
+            - conversation
+        draft:
+          type: string
+        tone:
+          type: string
+        styleUsername:
+          type: string
+        additionalContext:
+          type: string
+        callToAction:
+          type: string
+        mediaType:
+          type: string
+          enum:
+            - photo
+            - video
+            - none
+        hasLink:
+          type: boolean
+        hasMedia:
+          type: boolean
+      additionalProperties: false
+    ComposeResponse:
+      type: object
+      properties:
+        text:
+          type: string
+        score:
+          type: number
+        feedback:
+          type: string
+        suggestions:
+          type: array
+          items:
+            type: string
+      additionalProperties: true
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      additionalProperties: true
+
+paths:
+  /x/tweets/search:
+    get:
+      operationId: searchTweets
+      summary: Search X posts
+      tags:
+        - X
+      security:
+        - apiKey: []
+        - oauthBearer: []
+        - {}
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: queryType
+          in: query
+          schema:
+            type: string
+            enum:
+              - Latest
+              - Top
+            default: Latest
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TweetSearchResponse"
+        "400":
+          description: Invalid search request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required
+        "402":
+          description: Payment required
+        "429":
+          description: Rate limit exceeded
+  /x/tweets/{id}:
+    get:
+      operationId: lookupTweet
+      summary: Get an X post
+      tags:
+        - X
+      security:
+        - apiKey: []
+        - oauthBearer: []
+        - {}
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Numeric post ID, 15 to 20 digits.
+      responses:
+        "200":
+          description: Post with author
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TweetLookupResponse"
+        "400":
+          description: Invalid post ID
+        "401":
+          description: Authentication required
+        "402":
+          description: Payment required
+        "404":
+          description: Post not found
+        "429":
+          description: Rate limit exceeded
+  /compose:
+    post:
+      operationId: compose
+      summary: Compose, refine, or score a post
+      tags:
+        - Composition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComposeRequest"
+      responses:
+        "200":
+          description: Composition result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComposeResponse"
+        "400":
+          description: Invalid composition request
+        "401":
+          description: Authentication required
+        "429":
+          description: Rate limit exceeded

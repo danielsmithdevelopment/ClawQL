@@ -27,6 +27,7 @@
  * **`stirling`** → `STIRLING_API_KEY` (or `CLAWQL_STIRLING_API_KEY`) as `X-API-KEY`.
  * **`tika`** / **`gotenberg`** → optional `CLAWQL_BEARER_TOKEN`.
  * **`onyx`** → `ONYX_API_TOKEN` / `CLAWQL_ONYX_API_TOKEN` as `Authorization: Bearer …`.
+ * **`xquik`** → `XQUIK_API_KEY` / `CLAWQL_XQUIK_API_KEY` as `x-api-key`.
  */
 
 function trimEnv(...keys: string[]): string | undefined {
@@ -246,6 +247,10 @@ function envResolvedAuthHeaders(specLabel?: string): Record<string, string> {
   if (effective === "n8n") {
     const key = trimEnv("N8N_API_KEY", "CLAWQL_N8N_API_KEY"); // gitleaks:allow — env var names, not secret values
     return key ? { "X-N8N-API-KEY": key } : {};
+  }
+  if (effective === "xquik") {
+    const key = trimEnv("XQUIK_API_KEY", "CLAWQL_XQUIK_API_KEY"); // gitleaks:allow - env var names, not secret values
+    return key ? { "x-api-key": key } : {};
   }
 
   /** Linear GraphQL — API key in `Authorization` without a `Bearer` prefix (see Linear API docs). */

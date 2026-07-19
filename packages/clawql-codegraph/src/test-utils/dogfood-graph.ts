@@ -25,7 +25,6 @@ export async function indexAndMergeRoots(options: {
 }): Promise<CodeGraphDocument> {
   const nodesMap = new Map<string, CodeGraphNode>();
   const edges: CodeGraphEdge[] = [];
-  let filesIndexed = 0;
 
   for (const root of options.roots) {
     const doc = await indexRepository({
@@ -35,7 +34,6 @@ export async function indexAndMergeRoots(options: {
     });
     mergeNodes(nodesMap, Object.values(doc.nodes));
     mergeEdges(edges, doc.edges);
-    filesIndexed += Object.values(doc.nodes).filter((n) => n.kind === "file").length;
   }
 
   const nodes = Object.fromEntries(nodesMap);

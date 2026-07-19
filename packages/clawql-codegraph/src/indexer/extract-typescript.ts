@@ -157,7 +157,6 @@ function extractCalls(
   const visit = (node: ts.Node): void => {
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
       const callee = node.expression.text;
-      const fromSymbols = [...symbolIds.entries()];
       // Attach call to the nearest enclosing symbol by line — simplified: file-level inference
       const callerId = fileNodeId(relFilePath);
       const targetId = symbolIds.get(callee);
