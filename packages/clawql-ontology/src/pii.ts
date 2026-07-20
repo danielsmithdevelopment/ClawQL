@@ -7,6 +7,9 @@ const REDACTED = "[REDACTED]";
 
 function getAtPath(root: unknown, path: string): unknown {
   const parts = path.split(".").filter(Boolean);
+  if (parts.some((p) => p === "__proto__" || p === "constructor" || p === "prototype")) {
+    return undefined;
+  }
   let cur: unknown = root;
   for (const p of parts) {
     if (cur == null || typeof cur !== "object") return undefined;
@@ -18,6 +21,10 @@ function getAtPath(root: unknown, path: string): unknown {
 function setAtPath(root: Record<string, unknown>, path: string, value: unknown): void {
   const parts = path.split(".").filter(Boolean);
   if (parts.length === 0) return;
+  // Reject prototype-polluting path segments (CodeQL).
+  if (parts.some((p) => p === "__proto__" || p === "constructor" || p === "prototype")) {
+    return;
+  }
   let cur: Record<string, unknown> = root;
   for (let i = 0; i < parts.length - 1; i++) {
     const p = parts[i]!;
@@ -33,9 +40,12 @@ function setAtPath(root: Record<string, unknown>, path: string, value: unknown):
       return;
     }
     if (next == null || typeof next !== "object") {
-      cur[p] = {};
+      const child: Record<string, unknown> = Object.create(null);
+      cur[p] = child;
+      cur = child;
+      continue;
     }
-    cur = cur[p] as Record<string, unknown>;
+    cur = next as Record<string, unknown>;
   }
   cur[parts[parts.length - 1]!] = value;
 }

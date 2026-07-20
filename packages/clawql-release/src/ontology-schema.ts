@@ -137,11 +137,29 @@ export async function lintCqmFiles(paths: string[]): Promise<CqmLintResult> {
       .exec(raw)?.[1]
       ?.trim()
       .replace(/^["']|["']$/g, "");
-    const nameMatch =
-      /^metadata:\s*\r?\n(?:[ \t]+.+\r?\n)*?[ \t]+name:\s*(.+)$/m.exec(raw) ??
-      /^[ \t]+name:\s*(.+)$/m.exec(raw);
-    const name = nameMatch?.[1]?.trim().replace(/^["']|["']$/g, "");
-
+    // Avoid nested quantifiers on metadata blocks (ReDoS); scan lines instead.
+    let name: string | undefined;
+    let inMetadata = false;
+    for (const line of raw.split(/\r?\n/)) {
+      if (/^metadata:\s*$/.test(line)) {
+        inMetadata = true;
+        continue;
+      }
+      if (inMetadata) {
+        if (/^[^\s#]/.test(line)) {
+          inMetadata = false;
+        } else {
+          const nm = /^[ \t]+name:\s*(.+)$/.exec(line);
+          if (nm) {
+            name = nm[1]?.trim().replace(/^["']|["']$/g, "");
+            break;
+          }
+        }
+      }
+    }
+    if (!name) {
+      name = /^[ \t]+name:\s*(.+)$/m.exec(raw)?.[1]?.trim().replace(/^["']|["']$/g, "");
+    }
     if (!apiVersion) {
       issues.push({ path: p, severity: "error", message: "missing apiVersion" });
     } else if (!apiVersion.startsWith("clawql.dev/manifest/")) {
