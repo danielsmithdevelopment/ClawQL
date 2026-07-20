@@ -2,6 +2,7 @@
  * Lint ontology Entity documents against JSON Schema + semantic rules.
  */
 
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,16 +32,26 @@ function packageRoot(): string | null {
   }
 }
 
-/** Resolve default entity.schema.json shipped with the monorepo (or package-relative fallback). */
+/**
+ * Resolve default entity.schema.json.
+ * Prefer the copy shipped inside `clawql-ontology` (npm install), then the
+ * monorepo path (`schemas/ontology/`), then cwd.
+ */
 export function defaultEntitySchemaPath(rootDir?: string): string {
   if (rootDir) {
     return join(resolve(rootDir), "schemas", "ontology", "entity.schema.json");
   }
   const pkg = packageRoot();
+  const candidates: string[] = [];
   if (pkg) {
-    return join(pkg, "..", "..", "schemas", "ontology", "entity.schema.json");
+    candidates.push(join(pkg, "schemas", "ontology", "entity.schema.json"));
+    candidates.push(join(pkg, "..", "..", "schemas", "ontology", "entity.schema.json"));
   }
-  return join(process.cwd(), "schemas", "ontology", "entity.schema.json");
+  candidates.push(join(process.cwd(), "schemas", "ontology", "entity.schema.json"));
+  for (const path of candidates) {
+    if (existsSync(path)) return path;
+  }
+  return candidates[0]!;
 }
 
 async function loadSchema(schemaPath: string): Promise<object> {

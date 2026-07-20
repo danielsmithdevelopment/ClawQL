@@ -1,11 +1,34 @@
+import { readFileSync } from "node:fs";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it, afterEach } from "vitest";
 import { generateOntologyReadTools } from "./generate.js";
-import { lintOntology } from "./lint.js";
+import { defaultEntitySchemaPath, lintOntology } from "./lint.js";
 
 const REPO_ROOT = join(import.meta.dirname, "..", "..", "..");
+const PKG_ROOT = join(import.meta.dirname, "..");
+
+describe("defaultEntitySchemaPath", () => {
+  it("resolves the schema shipped inside clawql-ontology", () => {
+    const path = defaultEntitySchemaPath();
+    expect(path).toContain(`${join("schemas", "ontology", "entity.schema.json")}`);
+    const body = readFileSync(path, "utf8");
+    expect(body).toContain("clawql.dev/ontology/v1alpha1");
+  });
+
+  it("packaged schema matches monorepo canonical", () => {
+    const packaged = readFileSync(
+      join(PKG_ROOT, "schemas", "ontology", "entity.schema.json"),
+      "utf8"
+    );
+    const canonical = readFileSync(
+      join(REPO_ROOT, "schemas", "ontology", "entity.schema.json"),
+      "utf8"
+    );
+    expect(packaged).toBe(canonical);
+  });
+});
 
 describe("lintOntology", () => {
   it("accepts examples/ontology/entities", async () => {

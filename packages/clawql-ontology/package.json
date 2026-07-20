@@ -37,6 +37,7 @@
   },
   "files": [
     "dist",
+    "schemas",
     "README.md"
   ],
   "engines": {

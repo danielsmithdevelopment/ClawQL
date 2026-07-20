@@ -39,12 +39,12 @@ plan entitlement check (optional)
 
 Flags:
 
-| Env                                   | Meaning                                                     |
-| ------------------------------------- | ----------------------------------------------------------- |
-| `CLAWQL_CREDITS_ENABLED=1`            | Enable ledger                                               |
-| `CLAWQL_CREDITS_ENFORCE_INFERENCE`    | Sync hold on inference (default on when credits enabled)    |
-| `CLAWQL_CREDITS_INFERENCE_COST_CENTS` | Hold amount per completion (default `1`)                    |
-| `CLAWQL_NATS_URL` + publish flags     | Best-effort NATS after outbox (`clawql.payments.credits.*`) |
+| Env                                   | Meaning                                                                                                                                                     |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLAWQL_CREDITS_ENABLED=1`            | Enable ledger                                                                                                                                               |
+| `CLAWQL_CREDITS_ENFORCE_INFERENCE`    | Sync hold on inference (default on when credits enabled)                                                                                                    |
+| `CLAWQL_CREDITS_INFERENCE_COST_CENTS` | Hold amount per completion (default `1`)                                                                                                                    |
+| `CLAWQL_NATS_URL` + publish flags     | Best-effort NATS after outbox (`CLAWQL_NATS_ENABLE_PUBLISH`, `CLAWQL_NATS_JETSTREAM`; subject `CLAWQL_NATS_SUBJECT_PAYMENTS` / `clawql.payments.credits.*`) |
 
 ## Grant waterfall
 

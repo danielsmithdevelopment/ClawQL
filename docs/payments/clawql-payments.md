@@ -12,35 +12,35 @@ It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is ava
 
 ## What ships today
 
-| Capability                                          | Status | Notes                                                                                                                                    |
-| --------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Managed plan tiers + entitlements                   | ✅     | Local `usage.json` counters; limit enforcement in inference                                                                              |
-| Stripe customers, subscriptions, invoices           | ✅     | Live SDK when `STRIPE_SECRET_KEY` is set                                                                                                 |
-| Stripe webhook signature verification               | ✅     | CLI verify/process; audit on `invoice.paid`                                                                                              |
-| Stripe Billing Meters (`meterEvents.create`)        | ✅     | API + inference hook when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`                                                                        |
-| x402 gate config + facilitator HTTP verify          | ✅     | `POST /verify` against x402.org or CDP                                                                                                   |
-| x402 Express middleware (402 + PAYMENT-REQUIRED)    | ✅     | Wired into `clawql-inference` HTTP                                                                                                       |
-| x402 MCP in-process enforcement                     | ✅     | `CLAWQL_X402_ENFORCE=1` on stdio / Streamable HTTP / gRPC MCP tool calls                                                                 |
-| Payment WORM audit (hash-chained JSONL)             | ✅     | `$CLAWQL_HOME/Payments/audit.jsonl` + `audit verify`                                                                                     |
-| Payment WORM audit (Postgres)                       | ✅     | `CLAWQL_PAYMENTS_AUDIT_STORE=postgres` for multi-node deployments                                                                        |
-| Payment audit → Loki/SIEM export                    | ✅     | Fire-and-forget push on append when `CLAWQL_LOKI_PUSH_URL` is set                                                                        |
-| `.well-known/payments.json` discovery               | ✅     | Dynamic on MCP + inference HTTP; static route on docs site                                                                               |
-| MPP `/openapi.json` discovery                       | ✅     | Dynamic on MCP + inference HTTP; canonical `x-payment-info.offers[]`                                                                     |
-| MPP HTTP 402 + MCP -32042 runtime                   | ✅     | Dual x402 + MPP challenges when `CLAWQL_MPP_ENABLED=1`                                                                                   |
-| MPP credential verification + receipts              | ✅     | `MppVerificationService` — x402 facilitator + Stripe SPT (`STRIPE_PROFILE_ID`)                                                           |
-| MPP optional `mppx` adapter                         | ✅     | `MppxAdapterService` when `CLAWQL_MPPX_ENABLED=1` + optional `mppx` dep                                                                  |
-| MCP JSON-RPC payment errors                         | ✅     | `-32042`/`-32043` when `CLAWQL_MPP_MCP_JSONRPC=1` (default: tool-result `_meta`)                                                         |
-| Extended finance provider **adverts** in `offers[]` | ✅     | `CLAWQL_MPP_FINANCE_PROVIDERS` — discovery labels; PayPal live via Orders below                                                          |
-| **AP2** Payment Mandates                            | ✅     | `Ap2MandateService` — parse/verify VCs, optional HS256, bridge into x402 gates                                                           |
-| **ACP** checkout sessions                           | ✅     | `AcpCheckoutService` — create/complete + Stripe SPT (dry-run without key)                                                                |
-| **PayPal** Orders v2                                | ✅     | `PaypalOrdersService` — OAuth, create order, capture                                                                                     |
-| **Adyen** Checkout                                  | ✅     | `AdyenCheckoutService` — sessions, payments, HMAC webhooks (enterprise)                                                                  |
-| **Creator payouts** (Stripe Connect + Base USDC)    | ✅     | `PayoutService` — bank transfers + live USDC with receipt confirmation                                                                   |
-| **Ramp** agent virtual / agentic cards              | ✅     | `RampService` — vault path + native `cards:read_agentic` when enabled                                                                    |
-| **Consumer off-ramp** (Moonpay / Transak)           | ✅     | Sessions + `OfframpWebhookService` completion settle                                                                                     |
-| **Payments MCP tools** (payout / ramp / offramp)    | ✅     | `CLAWQL_PAYMENTS_MCP_TOOLS=1`; optional AP2 gate                                                                                         |
-| **Prepaid credits + bank top-up**                   | ✅     | Grant ledger + Stripe FC/ACH top-up; sync [`DeductionService`](./deduction-service.md) on inference — [credits-ach.md](./credits-ach.md) |
-| **Agent compensation** (credits + 2PC cash-out)     | ✅     | `AgentCompensationService` — stage/confirm MCP + FAILED WORM; reuses `PayoutService`                                                     |
+| Capability                                                      | Status | Notes                                                                                                                                    |
+| --------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Managed plan tiers + entitlements                               | ✅     | Local `usage.json` counters; limit enforcement in inference                                                                              |
+| Stripe customers, subscriptions, invoices                       | ✅     | Live SDK when `STRIPE_SECRET_KEY` is set                                                                                                 |
+| Stripe webhook signature verification                           | ✅     | CLI verify/process; audit on `invoice.paid`                                                                                              |
+| Stripe Billing Meters (`meterEvents.create`)                    | ✅     | API + inference hook when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`                                                                        |
+| x402 gate config + facilitator HTTP verify                      | ✅     | `POST /verify` against x402.org or CDP                                                                                                   |
+| x402 Express middleware (402 + PAYMENT-REQUIRED)                | ✅     | Wired into `clawql-inference` HTTP                                                                                                       |
+| x402 MCP in-process enforcement                                 | ✅     | `CLAWQL_X402_ENFORCE=1` on stdio / Streamable HTTP / gRPC MCP tool calls                                                                 |
+| Payment WORM audit (hash-chained JSONL)                         | ✅     | `$CLAWQL_HOME/Payments/audit.jsonl` + `audit verify`                                                                                     |
+| Payment WORM audit (Postgres)                                   | ✅     | `CLAWQL_PAYMENTS_AUDIT_STORE=postgres` for multi-node deployments                                                                        |
+| Payment audit → Loki/SIEM export                                | ✅     | Fire-and-forget push on append when `CLAWQL_LOKI_PUSH_URL` is set                                                                        |
+| `.well-known/payments.json` discovery                           | ✅     | Dynamic on MCP + inference HTTP; static route on docs site                                                                               |
+| MPP `/openapi.json` discovery                                   | ✅     | Dynamic on MCP + inference HTTP; canonical `x-payment-info.offers[]`                                                                     |
+| MPP HTTP 402 + MCP -32042 runtime                               | ✅     | Dual x402 + MPP challenges when `CLAWQL_MPP_ENABLED=1`                                                                                   |
+| MPP credential verification + receipts                          | ✅     | `MppVerificationService` — x402 facilitator + Stripe SPT (`STRIPE_PROFILE_ID`)                                                           |
+| MPP optional `mppx` adapter                                     | ✅     | `MppxAdapterService` when `CLAWQL_MPPX_ENABLED=1` + optional `mppx` dep                                                                  |
+| MCP JSON-RPC payment errors                                     | ✅     | `-32042`/`-32043` when `CLAWQL_MPP_MCP_JSONRPC=1` (default: tool-result `_meta`)                                                         |
+| Extended finance provider **adverts** in `offers[]`             | ✅     | `CLAWQL_MPP_FINANCE_PROVIDERS` — discovery labels; PayPal live via Orders below                                                          |
+| **AP2** Payment Mandates                                        | ✅     | `Ap2MandateService` — parse/verify VCs, optional HS256, bridge into x402 gates                                                           |
+| **ACP** checkout sessions                                       | ✅     | `AcpCheckoutService` — create/complete + Stripe SPT (dry-run without key)                                                                |
+| **PayPal** Orders v2                                            | ✅     | `PaypalOrdersService` — OAuth, create order, capture                                                                                     |
+| **Adyen** Checkout                                              | ✅     | `AdyenCheckoutService` — sessions, payments, HMAC webhooks (enterprise)                                                                  |
+| **Creator payouts** (Stripe Connect + Base USDC)                | ✅     | `PayoutService` — bank transfers + live USDC with receipt confirmation                                                                   |
+| **Ramp** agent virtual / agentic cards                          | ✅     | `RampService` — vault path + native `cards:read_agentic` when enabled                                                                    |
+| **Consumer off-ramp** (Moonpay / Transak)                       | ✅     | Sessions + `OfframpWebhookService` completion settle                                                                                     |
+| **Payments MCP tools** (payout / ramp / offramp / compensation) | ✅     | `CLAWQL_PAYMENTS_MCP_TOOLS=1`; optional AP2 gate; includes `agent_compensation_*`                                                        |
+| **Prepaid credits + bank top-up**                               | ✅     | Grant ledger + Stripe FC/ACH top-up; sync [`DeductionService`](./deduction-service.md) on inference — [credits-ach.md](./credits-ach.md) |
+| **Agent compensation** (credits + 2PC cash-out)                 | ✅     | `AgentCompensationService` — stage/confirm MCP + FAILED WORM; reuses `PayoutService`                                                     |
 
 ### Roadmap
 
@@ -73,7 +73,7 @@ clawql-payments
 └── cli/        clawql payments * implementations
 ```
 
-See also [payouts-ramp.md](./payouts-ramp.md), [credits-ach.md](./credits-ach.md), [agent-compensation.md](./agent-compensation.md), and [sgdop-coordinator-compensation-bridge.md](./sgdop-coordinator-compensation-bridge.md) (future Coordinator stage-only port).
+See also [payouts-ramp.md](./payouts-ramp.md), [credits-ach.md](./credits-ach.md), [agent-compensation.md](./agent-compensation.md), and [sgdop-coordinator-compensation-bridge.md](./sgdop-coordinator-compensation-bridge.md) (`CompensationStagingPort` shipped; Coordinator integration still roadmap).
 
 ```mermaid
 flowchart TB
@@ -329,30 +329,42 @@ Wallet and facilitator URL can also be stored in `payments.json` → `x402`.
 
 ### Payouts (Stripe Connect + USDC) + Ramp + consumer off-ramp
 
-| Variable                            | Default | Purpose                                                          |
-| ----------------------------------- | ------- | ---------------------------------------------------------------- |
-| `CLAWQL_PAYOUTS_ENABLED`            | auto    | Defaults on when `STRIPE_SECRET_KEY` is set                      |
-| `CLAWQL_PAYOUTS_DRY_RUN`            | auto    | Dry-run when no Stripe key; force with `1`                       |
-| `CLAWQL_PAYOUTS_RETURN_URL`         | local   | Connect onboarding return URL                                    |
-| `CLAWQL_PAYOUTS_REFRESH_URL`        | local   | Connect onboarding refresh URL                                   |
-| `CLAWQL_PAYOUTS_USDC_PRIVATE_KEY`   | —       | Hot wallet for live Base USDC sends (`viem` optional dep)        |
-| `CLAWQL_PAYOUTS_USDC_DRY_RUN`       | auto    | Force dry USDC; default dry when no private key                  |
-| `CLAWQL_PAYOUTS_USDC_CONFIRMATIONS` | `1`     | Receipt confirmations before `PAYOUT_PAID`                       |
-| `CLAWQL_RAMP_ENABLED`               | auto    | Defaults on when `RAMP_CLIENT_ID` + `RAMP_CLIENT_SECRET` are set |
-| `CLAWQL_RAMP_DRY_RUN`               | auto    | Dry-run when Ramp credentials missing                            |
-| `CLAWQL_RAMP_AGENTIC`               | off     | Native Agent Cards API (`cards:read_agentic`)                    |
-| `RAMP_CLIENT_ID` / `SECRET`         | —       | Ramp OAuth client credentials                                    |
-| `RAMP_ENVIRONMENT`                  | `demo`  | `demo` or `production`                                           |
-| `CLAWQL_OFFRAMP_ENABLED`            | off     | Consumer Moonpay/Transak sell sessions                           |
-| `CLAWQL_OFFRAMP_DRY_RUN`            | auto    | Dry widget URLs when no provider key                             |
-| `CLAWQL_OFFRAMP_PROVIDER`           | moonpay | `moonpay` or `transak`                                           |
-| `MOONPAY_API_KEY` / `TRANSAK_*`     | —       | Provider API keys                                                |
-| `MOONPAY_WEBHOOK_SECRET`            | —       | MoonPay Signature-V2 verify                                      |
-| `TRANSAK_ACCESS_TOKEN`              | —       | Transak webhook JWT HS256 secret                                 |
-| `CLAWQL_PAYMENTS_MCP_TOOLS`         | off     | Register payout / ramp / offramp MCP tools                       |
-| `CLAWQL_PAYMENTS_MCP_REQUIRE_AP2`   | off     | Require AP2 mandate JWT on those tools                           |
+| Variable                            | Default | Purpose                                                             |
+| ----------------------------------- | ------- | ------------------------------------------------------------------- |
+| `CLAWQL_PAYOUTS_ENABLED`            | auto    | Defaults on when `STRIPE_SECRET_KEY` is set                         |
+| `CLAWQL_PAYOUTS_DRY_RUN`            | auto    | Dry-run when no Stripe key; force with `1`                          |
+| `CLAWQL_PAYOUTS_RETURN_URL`         | local   | Connect onboarding return URL                                       |
+| `CLAWQL_PAYOUTS_REFRESH_URL`        | local   | Connect onboarding refresh URL                                      |
+| `CLAWQL_PAYOUTS_USDC_PRIVATE_KEY`   | —       | Hot wallet for live Base USDC sends (`viem` optional dep)           |
+| `CLAWQL_PAYOUTS_USDC_DRY_RUN`       | auto    | Force dry USDC; default dry when no private key                     |
+| `CLAWQL_PAYOUTS_USDC_CONFIRMATIONS` | `1`     | Receipt confirmations before `PAYOUT_PAID`                          |
+| `CLAWQL_RAMP_ENABLED`               | auto    | Defaults on when `RAMP_CLIENT_ID` + `RAMP_CLIENT_SECRET` are set    |
+| `CLAWQL_RAMP_DRY_RUN`               | auto    | Dry-run when Ramp credentials missing                               |
+| `CLAWQL_RAMP_AGENTIC`               | off     | Native Agent Cards API (`cards:read_agentic`)                       |
+| `RAMP_CLIENT_ID` / `SECRET`         | —       | Ramp OAuth client credentials                                       |
+| `RAMP_ENVIRONMENT`                  | `demo`  | `demo` or `production`                                              |
+| `CLAWQL_OFFRAMP_ENABLED`            | off     | Consumer Moonpay/Transak sell sessions                              |
+| `CLAWQL_OFFRAMP_DRY_RUN`            | auto    | Dry widget URLs when no provider key                                |
+| `CLAWQL_OFFRAMP_PROVIDER`           | moonpay | `moonpay` or `transak`                                              |
+| `MOONPAY_API_KEY` / `TRANSAK_*`     | —       | Provider API keys                                                   |
+| `MOONPAY_WEBHOOK_SECRET`            | —       | MoonPay Signature-V2 verify                                         |
+| `TRANSAK_ACCESS_TOKEN`              | —       | Transak webhook JWT HS256 secret                                    |
+| `CLAWQL_PAYMENTS_MCP_TOOLS`         | off     | Register payout / ramp / offramp / `agent_compensation_*` MCP tools |
+| `CLAWQL_PAYMENTS_MCP_REQUIRE_AP2`   | off     | Require AP2 mandate JWT on those tools                              |
 
 See [payouts-ramp.md](./payouts-ramp.md).
+
+### Agent compensation (SGDOP / 2PC)
+
+| Variable                              | Default | Purpose                                                   |
+| ------------------------------------- | ------- | --------------------------------------------------------- |
+| `CLAWQL_COMPENSATION_ENABLED`         | on      | Agent deposit / cash-out staging + confirm                |
+| `CLAWQL_COMPENSATION_DIRECT`          | off     | Allow non-2PC deposit (tests / operators)                 |
+| `CLAWQL_COMPENSATION_ACTION_TTL_SEC`  | `7200`  | Pending action TTL                                        |
+| `CLAWQL_COMPENSATION_APPROVAL_BASE`   | —       | HATEOAS approval base (or `CLAWQL_OUROBOROS_GATEWAY_URL`) |
+| `CLAWQL_COMPENSATION_CREDIT_USD_RATE` | `1`     | Credits → USD at cash-out                                 |
+
+See [agent-compensation.md](./agent-compensation.md) and [sgdop-coordinator-compensation-bridge.md](./sgdop-coordinator-compensation-bridge.md).
 
 ### Prepaid credits + ACH bank top-up
 

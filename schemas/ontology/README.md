@@ -6,11 +6,15 @@ Provisional schemas for ClawQL’s enterprise Ontology. See:
 - [Architecture](../../docs/architecture/enterprise-ontology.md)
 - [Examples](../../examples/ontology/)
 
-| File | Kind |
-| ---- | ---- |
+| File                                         | Kind                 |
+| -------------------------------------------- | -------------------- |
 | [`entity.schema.json`](./entity.schema.json) | `Entity` definitions |
 
 Status: **provisional** — evolve with design partners before treating as a public standard.
+
+The same `entity.schema.json` is packaged with **`clawql-ontology`**
+(`packages/clawql-ontology/schemas/ontology/`) for standalone npm installs. Keep both
+copies identical (CI diffs them).
 
 ## CLI
 

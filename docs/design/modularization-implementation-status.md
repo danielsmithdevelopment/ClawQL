@@ -327,11 +327,15 @@ These vision items are **not** done by package extraction alone:
 | `packages/clawql-core`       | `clawql-core`       | 7.0.0       |
 | `packages/clawql-auth`       | `clawql-auth`       | 7.0.0       |
 | `packages/clawql-pageindex`  | `clawql-pageindex`  | 7.0.0 (MIT) |
+| `packages/clawql-codegraph`  | `clawql-codegraph`  | 7.0.0       |
 | `packages/clawql-api`        | `clawql-api`        | 7.0.0       |
 | `packages/clawql-memory`     | `clawql-memory`     | 7.0.0       |
+| `packages/clawql-ontology`   | `clawql-ontology`   | 7.0.0       |
 | `packages/clawql-documents`  | `clawql-documents`  | 7.0.0       |
 | `packages/clawql-automation` | `clawql-automation` | 7.0.0       |
 | `packages/clawql-sandbox`    | `clawql-sandbox`    | 7.0.0       |
+| `packages/clawql-inference`  | `clawql-inference`  | 7.0.0       |
+| `packages/clawql-payments`   | `clawql-payments`   | 7.0.0       |
 | `packages/clawql-ouroboros`  | `clawql-ouroboros`  | 7.0.0       |
 | `packages/clawql-operator`   | `clawql-operator`   | 7.0.0       |
 | `packages/clawql-release`    | `clawql-release`    | 7.0.0       |
