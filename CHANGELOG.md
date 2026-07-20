@@ -40,6 +40,7 @@ Minor release on the **7.0 Agentic Gateway** line: **enterprise Ontology + OKF**
 ### Fixed
 
 - Post-merge hygiene: observability Langfuse `ENABLE_*` conflict markers; payments docs/MDX sync; entitlement test timeouts under heavier payments Effect layer.
+- **Docker publish (dashboard)** — restore overnight `clawql-dashboard` GHCR builds: `.dockerignore` exceptions for `.env.example` + vault catalog script; Dockerfile `COPY` under `/app` for `prebuild` generators; CI **Dashboard Docker smoke** ([#740](https://github.com/danielsmithdevelopment/ClawQL/pull/740)).
 
 ## [7.0.0] - 2026-07-10
 
