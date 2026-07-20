@@ -11,24 +11,24 @@
 
 ## Essay claim → reality (snapshot)
 
-| Essay claim                                | Today                                                                             | Target for “as-is” publish                                                                            |
-| ------------------------------------------ | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Cold-open problem + OOP framing            | Docs only                                                                         | Keep (narrative)                                                                                      |
-| `.cqe` primary format                      | **Shipped** — examples/docs/scaffolds lead with `.cqe`; tooling dual-accepts YAML | Essay can say `Contract.cqe`; YAML still accepted ([ADR 0010 §2a](../adr/0010-cq-file-extensions.md)) |
-| `ontology lint` / `generate`               | Generate + register fixture MCP tools when enabled                                | Keep; expand adapters separately                                                                      |
-| Live typed tools (enums, not ints)         | **Shipped** — fixture handlers (`CLAWQL_ENABLE_ONTOLOGY=1`)                       | Essay: fixture/demo store; SQL = roadmap ([ADR 0009 §9](../adr/0009-enterprise-ontology.md))          |
-| PII from `pii_fields` → Presidio           | Presidio exists; not schema-driven                                                | Schema field list drives redaction on ontology tool results                                           |
-| Relationship → graph tools                 | Relationships in YAML only                                                        | Generate + register traversal tools (even if demo store)                                              |
-| GraphQL `@kinetic`                         | **Decision:** MCP-first for v1 kinetic writes; GraphQL = later transport | Essay: MCP kinetic methods; GraphQL samples = target / disclose ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)) |
-| Transaction Sandbox risk routing           | Missing                                                                           | Effect sandbox with LOW…CRITICAL paths (can start with LOW+MEDIUM)                                    |
-| Argo / Pulumi executors                    | Separate tools; not ontology-routed                                               | Kinetic router selects executor from action schema                                                    |
-| `.cqm` / `.cqw` / `.cqk` ecosystem         | Draft specs                                                                       | Specs on docs site + lint/doctor hooks for `.cqm`; `.cqk` write path                                  |
-| VS Code extension                          | Missing                                                                           | Real blocker → disclose or ship minimal diagnostics                                                   |
-| Vault `ontology/` + `memory/` OKF layout   | Memory OKF ships; schema in Git                                                   | Document + optional generate of `ontology/index.md` in Git; `.cqk` optional                           |
-| `init` / `create-entity` / `import --pack` | Missing                                                                           | Ship CLI scaffolds + ≥1 vertical pack                                                                 |
-| Command Deck builder → PR                  | Design notes only                                                                 | Real blocker → disclose or ship thin CLI-only authoring                                               |
-| Manifest pin + Arweave                     | Release MVP; Arweave deferred                                                     | Pin ontology hash in release manifest; Arweave = disclose                                             |
-| docs.clawql.com ontology page              | PR / deploy                                                                       | Must be live before essay link                                                                        |
+| Essay claim                                | Today                                                                             | Target for “as-is” publish                                                                                           |
+| ------------------------------------------ | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Cold-open problem + OOP framing            | Docs only                                                                         | Keep (narrative)                                                                                                     |
+| `.cqe` primary format                      | **Shipped** — examples/docs/scaffolds lead with `.cqe`; tooling dual-accepts YAML | Essay can say `Contract.cqe`; YAML still accepted ([ADR 0010 §2a](../adr/0010-cq-file-extensions.md))                |
+| `ontology lint` / `generate`               | Generate + register fixture MCP tools when enabled                                | Keep; expand adapters separately                                                                                     |
+| Live typed tools (enums, not ints)         | **Shipped** — fixture handlers (`CLAWQL_ENABLE_ONTOLOGY=1`)                       | Essay: fixture/demo store; SQL = roadmap ([ADR 0009 §9](../adr/0009-enterprise-ontology.md))                         |
+| PII from `pii_fields` → Presidio           | Presidio exists; not schema-driven                                                | Schema field list drives redaction on ontology tool results                                                          |
+| Relationship → graph tools                 | Relationships in YAML only                                                        | Generate + register traversal tools (even if demo store)                                                             |
+| GraphQL `@kinetic`                         | **Decision:** MCP-first for v1 kinetic writes; GraphQL = later transport          | Essay: MCP kinetic methods; GraphQL samples = target / disclose ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)) |
+| Transaction Sandbox risk routing           | Missing                                                                           | Effect sandbox with LOW…CRITICAL paths (can start with LOW+MEDIUM)                                                   |
+| Argo / Pulumi executors                    | Separate tools; not ontology-routed                                               | Kinetic router selects executor from action schema                                                                   |
+| `.cqm` / `.cqw` / `.cqk` ecosystem         | Draft specs                                                                       | Specs on docs site + lint/doctor hooks for `.cqm`; `.cqk` write path                                                 |
+| VS Code extension                          | Missing                                                                           | Real blocker → disclose or ship minimal diagnostics                                                                  |
+| Vault `ontology/` + `memory/` OKF layout   | Memory OKF ships; schema in Git                                                   | Document + optional generate of `ontology/index.md` in Git; `.cqk` optional                                          |
+| `init` / `create-entity` / `import --pack` | Missing                                                                           | Ship CLI scaffolds + ≥1 vertical pack                                                                                |
+| Command Deck builder → PR                  | Design notes only                                                                 | Real blocker → disclose or ship thin CLI-only authoring                                                              |
+| Manifest pin + Arweave                     | Release MVP; Arweave deferred                                                     | Pin ontology hash in release manifest; Arweave = disclose                                                            |
+| docs.clawql.com ontology page              | PR / deploy                                                                       | Must be live before essay link                                                                                       |
 
 ---
 
@@ -65,16 +65,16 @@
 
 ### WS3 — Kinetic writes (essay Layer 3)
 
-| ID      | Task                                                                                                   | Band  | Done-when                                             |
-| ------- | ------------------------------------------------------------------------------------------------------ | ----- | ----------------------------------------------------- |
+| ID      | Task                                                                                                   | Band     | Done-when                                                                                                                                                    |
+| ------- | ------------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **3.1** | Product decision: GraphQL `@kinetic` **and/or** MCP write tools with kinetic metadata                  | **B** ✅ | **Decided:** MCP write tools + kinetic metadata for v1; GraphQL `@kinetic` = transport target (**3.8**) ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)) |
-| **3.2** | Kinetic metadata validation on write actions at lint time (already partial) + generate write tool defs | A     | Write tools generated (may stay gated)                |
-| **3.3** | Minimal Transaction Sandbox: ATR check → snapshot → execute/deny → WORM/audit entry for **LOW**        | A/C   | LOW path works end-to-end in tests                    |
-| **3.4** | MEDIUM: mandate required when `requires_mandate` / over `change_limit`                                 | C     | Staged or rejected without mandate                    |
-| **3.5** | HIGH canary progression                                                                                | C     | Config respected (can stub analysis gate)             |
-| **3.6** | CRITICAL + HITL / Command Deck Action View                                                             | C     | Staged for approval                                   |
-| **3.7** | Executor router: `NATIVE` \| `ARGO_WORKFLOW` \| `PULUMI` from action schema                            | C     | One real Argo path + one native path                  |
-| **3.8** | GraphQL schema with `@kinetic` directive definitions + introspection                                   | C     | Essay GraphQL samples validate against shipped schema |
+| **3.2** | Kinetic metadata validation on write actions at lint time (already partial) + generate write tool defs | A        | Write tools generated (may stay gated)                                                                                                                       |
+| **3.3** | Minimal Transaction Sandbox: ATR check → snapshot → execute/deny → WORM/audit entry for **LOW**        | A/C      | LOW path works end-to-end in tests                                                                                                                           |
+| **3.4** | MEDIUM: mandate required when `requires_mandate` / over `change_limit`                                 | C        | Staged or rejected without mandate                                                                                                                           |
+| **3.5** | HIGH canary progression                                                                                | C        | Config respected (can stub analysis gate)                                                                                                                    |
+| **3.6** | CRITICAL + HITL / Command Deck Action View                                                             | C        | Staged for approval                                                                                                                                          |
+| **3.7** | Executor router: `NATIVE` \| `ARGO_WORKFLOW` \| `PULUMI` from action schema                            | C        | One real Argo path + one native path                                                                                                                         |
+| **3.8** | GraphQL schema with `@kinetic` directive definitions + introspection                                   | C        | Essay GraphQL samples validate against shipped schema                                                                                                        |
 
 ### WS4 — OKF / `.cqk` / vault layout
 

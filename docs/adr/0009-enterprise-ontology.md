@@ -38,12 +38,12 @@ The question is how to formalize an **enterprise IDP Ontology** that closes the 
 
 ClawQL’s Ontology is an **open, versioned, manifest-governed schema** that travels with the software delivery pipeline.
 
-| Dimension     | Palantir-style          | ClawQL decision                                                |
-| ------------- | ----------------------- | -------------------------------------------------------------- |
-| Format        | Proprietary             | Open YAML / OKF Markdown + JSON Schema; PR-reviewable          |
-| Versioning    | Console / runtime       | Git + EnterpriseGovernance / release manifest version events   |
-| Construction  | Professional services   | Derive from SQL / OpenAPI / documents; refine in UI or YAML    |
-| Portability   | Vendor-bound            | `git clone` + export YAML/OKF bundle                           |
+| Dimension     | Palantir-style          | ClawQL decision                                                            |
+| ------------- | ----------------------- | -------------------------------------------------------------------------- |
+| Format        | Proprietary             | Open YAML / OKF Markdown + JSON Schema; PR-reviewable                      |
+| Versioning    | Console / runtime       | Git + EnterpriseGovernance / release manifest version events               |
+| Construction  | Professional services   | Derive from SQL / OpenAPI / documents; refine in UI or YAML                |
+| Portability   | Vendor-bound            | `git clone` + export YAML/OKF bundle                                       |
 | Agent surface | Proprietary object APIs | Generated typed **MCP** tools first; GraphQL `@kinetic` as later transport |
 
 **Mental model:** OOP applied to the enterprise information space — typed objects, relationships, and methods — plus three enterprise-AI necessities: **provenance**, **permission-awareness** (ATRClaims), and **kinetic designation** (writes are structurally governed).
