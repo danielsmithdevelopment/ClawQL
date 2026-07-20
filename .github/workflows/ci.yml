@@ -298,6 +298,36 @@ jobs:
       - name: Docker build (Panguard bridge image)
         run: docker build -f docker/panguard-mcp-bridge/Dockerfile -t clawql-panguard-bridge:ci .
 
+  # Catches .dockerignore / COPY regressions that broke overnight clawql-dashboard publish.
+  dashboard-docker-smoke:
+    name: Dashboard Docker smoke
+    needs: [lint, workflow-scripts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Preflight — catalog COPY sources not dockerignored
+        run: |
+          set -euo pipefail
+          test -f .env.example
+          test -f scripts/kubernetes/provider-vault-key-catalog.ts
+          test -f src/provider-vault/catalog.ts
+          grep -qE '^!\.env\.example$' .dockerignore
+          grep -qE '^!scripts/kubernetes/provider-vault-key-catalog\.ts$' .dockerignore
+          if grep -qE '^scripts$' .dockerignore; then
+            echo ".dockerignore must not use bare 'scripts' (blocks negation); use scripts/** + !" >&2
+            exit 1
+          fi
+
+      - name: Docker build (dashboard image, linux/amd64)
+        run: |
+          docker build \
+            -f dashboard/Dockerfile \
+            --platform linux/amd64 \
+            -t clawql-dashboard:ci-smoke \
+            .
+
   distribution-npm-pack-smoke:
     name: npm pack install smoke
     needs: [lint, workflow-scripts]
@@ -362,6 +392,7 @@ jobs:
         workflow-scripts,
         website-docker-smoke,
         panguard-bridge-docker-smoke,
+        dashboard-docker-smoke,
         distribution-npm-pack-smoke,
         mcp-docker-workspace-smoke,
         website-playwright-smoke,
@@ -407,6 +438,7 @@ jobs:
         workflow-scripts,
         website-docker-smoke,
         panguard-bridge-docker-smoke,
+        dashboard-docker-smoke,
         distribution-npm-pack-smoke,
         mcp-docker-workspace-smoke,
         website-playwright-smoke,
@@ -456,6 +488,7 @@ jobs:
         workflow-scripts,
         website-docker-smoke,
         panguard-bridge-docker-smoke,
+        dashboard-docker-smoke,
         distribution-npm-pack-smoke,
         mcp-docker-workspace-smoke,
         website-playwright-smoke,

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Docker publish (dashboard)** — `.dockerignore` no longer excludes `.env.example` / `scripts/kubernetes/provider-vault-key-catalog.ts` needed by `dashboard/Dockerfile`; catalog `COPY` targets corrected to `/app/...` so `prebuild` generators resolve `repoRoot` after the repo-root build-context change. Overnight `clawql-dashboard` image builds were failing since that switch.
+- **Docker publish (dashboard)** — `.dockerignore` no longer excludes `.env.example` / `scripts/kubernetes/provider-vault-key-catalog.ts` needed by `dashboard/Dockerfile`; catalog `COPY` targets corrected to `/app/...` so `prebuild` generators resolve `repoRoot` after the repo-root build-context change. Overnight `clawql-dashboard` image builds were failing since that switch. CI adds **Dashboard Docker smoke**.
 
 ### Added
 
