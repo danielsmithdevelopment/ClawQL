@@ -10,18 +10,9 @@ const nextConfig = {
   output: 'standalone',
   /** Monorepo: trace file inclusion from repo root when multiple lockfiles exist. */
   outputFileTracingRoot: path.join(__dirname, '..'),
-  // Keep clawql-api (and its AWS/Effect stack) out of the webpack graph — Docker and
-  // Electron resolve them from node_modules / file: packages at runtime.
-  serverExternalPackages: [
-    'clawql-api',
-    'clawql-auth',
-    'clawql-core',
-    'effect',
-    '@aws-crypto/sha256-js',
-    '@smithy/protocol-http',
-    '@smithy/signature-v4',
-    '@smithy/core',
-  ],
+  // Externalize workspace packages so Next does not webpack their AWS/Effect graphs.
+  // Do not list `effect` here — Next may auto-transpile it and rejects the conflict.
+  serverExternalPackages: ['clawql-api', 'clawql-auth', 'clawql-core'],
 }
 
 export default nextConfig
