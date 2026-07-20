@@ -2,12 +2,15 @@ import Stripe from "stripe";
 import { Context, Effect, Layer } from "effect";
 import { PaymentsConfigService } from "../config/payments-config-service.js";
 import {
+  buildCreditTopupFailedEntry,
+  buildCreditTopupSettledEntry,
   buildPaymentWormEntry,
   buildPayoutFailedEntry,
   buildPayoutPaidEntry,
   buildStripeInvoicePaidEntry,
 } from "../audit/events.js";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
+import { TOPUP_META_KEY, appendCreditEntry, settleTopupByPaymentIntent } from "../credits/index.js";
 import type { ConfigError } from "../errors/payment-errors.js";
 import type { PaymentError } from "../errors/payment-errors.js";
 import { StripeSignatureError } from "./stripe-errors.js";
@@ -167,12 +170,12 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
               if (!isClawql && event.type === "transfer.created") {
                 return { handled: false, eventType: event.type, eventId: event.id };
               }
-              const topupTenant =
+              const payoutTenant =
                 transfer.metadata?.clawql_tenant?.trim() || tenantFromEvent(event, tenantId);
               if (transfer.reversed) {
                 yield* audit.appendEntry(
                   buildPayoutFailedEntry({
-                    tenantId: topupTenant,
+                    tenantId: payoutTenant,
                     payoutId: transfer.id,
                     reason: "transfer.reversed",
                     correlationId: options.correlationId ?? event.id,
@@ -182,7 +185,7 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
                 // INITIATED already written at create time; treat webhook as confirmation paid.
                 yield* audit.appendEntry(
                   buildPayoutPaidEntry({
-                    tenantId: topupTenant,
+                    tenantId: payoutTenant,
                     payoutId: transfer.id,
                     amountUsd: (transfer.amount ?? 0) / 100,
                     destination: "bank",
@@ -225,6 +228,95 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
                   tenantId: tenantFromEvent(event, tenantId),
                   payoutId: payout.id,
                   reason: payout.failure_message || payout.failure_code || "payout.failed",
+                  correlationId: options.correlationId ?? event.id,
+                })
+              );
+              break;
+            }
+            case "payment_intent.succeeded": {
+              const pi = event.data.object as Stripe.PaymentIntent;
+              if (pi.metadata?.[TOPUP_META_KEY] !== "1") {
+                return { handled: false, eventType: event.type, eventId: event.id };
+              }
+              const topupTenant = tenantFromEvent(event, tenantId);
+              const amountCents = pi.amount_received || pi.amount || 0;
+              const settled = yield* Effect.promise(async () => {
+                try {
+                  return {
+                    ok: true as const,
+                    ...(await settleTopupByPaymentIntent(
+                      {
+                        tenantId: topupTenant,
+                        paymentIntentId: pi.id,
+                        amountCents,
+                        correlationId: options.correlationId ?? event.id,
+                      },
+                      options.env
+                    )),
+                  };
+                } catch (cause) {
+                  return {
+                    ok: false as const,
+                    reason: cause instanceof Error ? cause.message : String(cause),
+                  };
+                }
+              });
+              if (!settled.ok) {
+                yield* audit.appendEntry(
+                  buildCreditTopupFailedEntry({
+                    tenantId: topupTenant,
+                    amountUsd: amountCents / 100,
+                    paymentIntentId: pi.id,
+                    reason: settled.reason,
+                    correlationId: options.correlationId ?? event.id,
+                  })
+                );
+                break;
+              }
+              if (!settled.alreadySettled) {
+                yield* audit.appendEntry(
+                  buildCreditTopupSettledEntry({
+                    tenantId: topupTenant,
+                    amountUsd: amountCents / 100,
+                    balanceUsd: settled.entry.balanceAfterCents / 100,
+                    paymentIntentId: pi.id,
+                    correlationId: options.correlationId ?? event.id,
+                  })
+                );
+              }
+              break;
+            }
+            case "payment_intent.payment_failed": {
+              const pi = event.data.object as Stripe.PaymentIntent;
+              if (pi.metadata?.[TOPUP_META_KEY] !== "1") {
+                return { handled: false, eventType: event.type, eventId: event.id };
+              }
+              const failTenant = tenantFromEvent(event, tenantId);
+              const failReason = pi.last_payment_error?.message || "payment_intent.payment_failed";
+              yield* Effect.promise(async () => {
+                try {
+                  await appendCreditEntry(
+                    {
+                      tenantId: failTenant,
+                      kind: "topup_failed",
+                      deltaCents: 0,
+                      paymentIntentId: pi.id,
+                      correlationId: options.correlationId ?? event.id,
+                      note: failReason,
+                      id: `fail_${pi.id}`,
+                    },
+                    options.env
+                  );
+                } catch {
+                  /* idempotent / best-effort ledger mark */
+                }
+              });
+              yield* audit.appendEntry(
+                buildCreditTopupFailedEntry({
+                  tenantId: failTenant,
+                  amountUsd: (pi.amount || 0) / 100,
+                  paymentIntentId: pi.id,
+                  reason: failReason,
                   correlationId: options.correlationId ?? event.id,
                 })
               );

@@ -14,6 +14,7 @@ import {
   rampEnvironment,
 } from "../ramp/config.js";
 import { defaultOffRampProvider, isOffRampDryRun, isOffRampEnabled } from "../offramp/config.js";
+import { isAchTopupEnabled, isCreditsEnabled } from "../credits/config.js";
 import { X402GateService } from "../x402/x402-gate-service.js";
 import { X402RuntimeConfigService } from "../x402/x402-runtime-config-service.js";
 import { X402_VERSION } from "../x402/types.js";
@@ -26,7 +27,7 @@ export type PaymentsWellKnownResource = {
 };
 
 export type PaymentsWellKnownMethod = {
-  type: "x402" | "stripe" | "ap2" | "acp" | "paypal" | "adyen" | "payouts" | "ramp" | "offramp";
+  type: "x402" | "stripe" | "ap2" | "acp" | "paypal" | "adyen" | "payouts" | "ramp" | "offramp" | "credits";
   enabled: boolean;
 };
 
@@ -102,6 +103,15 @@ export type PaymentsWellKnownOfframpMethod = PaymentsWellKnownMethod & {
   documentation: string;
 };
 
+export type PaymentsWellKnownCreditsMethod = PaymentsWellKnownMethod & {
+  type: "credits";
+  protocol: "stripe_financial_connections_ach";
+  bank_link: "financial_connections";
+  topup: "us_bank_account";
+  note: string;
+  documentation: string;
+};
+
 export type PaymentsWellKnownDocument = {
   version: string;
   server_name: string;
@@ -117,9 +127,20 @@ export type PaymentsWellKnownDocument = {
     | PaymentsWellKnownPayoutsMethod
     | PaymentsWellKnownRampMethod
     | PaymentsWellKnownOfframpMethod
+    | PaymentsWellKnownCreditsMethod
   >;
   default:
-    "x402" | "stripe" | "ap2" | "acp" | "paypal" | "adyen" | "payouts" | "ramp" | "offramp" | null;
+    | "x402"
+    | "stripe"
+    | "ap2"
+    | "acp"
+    | "paypal"
+    | "adyen"
+    | "payouts"
+    | "ramp"
+    | "offramp"
+    | "credits"
+    | null;
   updated_at: string;
 };
 
@@ -297,6 +318,18 @@ export function paymentsDiscoveryLiveLayer(
               dry_run: isOffRampDryRun(runEnv),
               documentation:
                 "https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/payments/payouts-ramp.md",
+            });
+          }
+
+          if (isCreditsEnabled(runEnv) && isAchTopupEnabled(runEnv)) {
+            paymentMethods.push({
+              type: "credits",
+              enabled: true,
+              protocol: "stripe_financial_connections_ach",
+              bank_link: "financial_connections",
+              topup: "us_bank_account",
+              note: "Bank link via Stripe Financial Connections (Plaid-backed Link UI); ACH debit tops up prepaid credits.",
+              documentation: "https://docs.stripe.com/financial-connections/payments",
             });
           }
 

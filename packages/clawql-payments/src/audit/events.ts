@@ -29,10 +29,24 @@ export type PaymentEventKind =
   | "OFFRAMP_SESSION_CREATED"
   | "OFFRAMP_UPDATED"
   | "OFFRAMP_COMPLETED"
-  | "OFFRAMP_FAILED";
+  | "OFFRAMP_FAILED"
+  | "BANK_LINKED"
+  | "CREDIT_TOPUP_PENDING"
+  | "CREDIT_TOPUP_SETTLED"
+  | "CREDIT_TOPUP_FAILED"
+  | "CREDIT_DEBITED";
 
 export type PaymentProvider =
-  "stripe" | "x402" | "ap2" | "acp" | "paypal" | "adyen" | "ramp" | "payouts" | "offramp";
+  | "stripe"
+  | "x402"
+  | "ap2"
+  | "acp"
+  | "paypal"
+  | "adyen"
+  | "ramp"
+  | "payouts"
+  | "offramp"
+  | "credits";
 
 export type PaymentWormPayload = {
   provider: PaymentProvider;
@@ -42,6 +56,7 @@ export type PaymentWormPayload = {
   plan?: string;
   resource?: string;
   agent_id?: string;
+  balance_usd?: number;
 };
 
 /** Durable payment audit entry with hash-chained integrity fields on disk. */
@@ -628,6 +643,106 @@ export function buildOfframpFailedEntry(input: {
       tenant_id: input.tenantId,
       resource: input.transactionId,
       agent_id: input.reason.slice(0, 120),
+    },
+  });
+}
+
+export function buildBankLinkedEntry(input: {
+  tenantId: string;
+  customerId: string;
+  sessionId: string;
+  dryRun?: boolean;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "BANK_LINKED",
+    summary: `Bank link session ${input.sessionId} for ${input.customerId}${input.dryRun ? " [dry-run]" : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "credits",
+      tenant_id: input.tenantId,
+      resource: input.sessionId,
+    },
+  });
+}
+
+export function buildCreditTopupPendingEntry(input: {
+  tenantId: string;
+  amountUsd: number;
+  paymentIntentId: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "CREDIT_TOPUP_PENDING",
+    summary: `Credit top-up pending $${input.amountUsd.toFixed(2)} (${input.paymentIntentId})`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "credits",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.paymentIntentId,
+    },
+  });
+}
+
+export function buildCreditTopupSettledEntry(input: {
+  tenantId: string;
+  amountUsd: number;
+  balanceUsd: number;
+  paymentIntentId: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "CREDIT_TOPUP_SETTLED",
+    summary: `Credit top-up settled $${input.amountUsd.toFixed(2)} → balance $${input.balanceUsd.toFixed(2)}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "credits",
+      amount_usd: input.amountUsd,
+      balance_usd: input.balanceUsd,
+      tenant_id: input.tenantId,
+      resource: input.paymentIntentId,
+    },
+  });
+}
+
+export function buildCreditTopupFailedEntry(input: {
+  tenantId: string;
+  amountUsd: number;
+  paymentIntentId: string;
+  reason: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "CREDIT_TOPUP_FAILED",
+    summary: `Credit top-up failed $${input.amountUsd.toFixed(2)} (${input.paymentIntentId}): ${input.reason}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "credits",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.paymentIntentId,
+    },
+  });
+}
+
+export function buildCreditDebitedEntry(input: {
+  tenantId: string;
+  amountUsd: number;
+  balanceUsd: number;
+  resource?: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "CREDIT_DEBITED",
+    summary: `Credits debited $${input.amountUsd.toFixed(2)} → balance $${input.balanceUsd.toFixed(2)}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "credits",
+      amount_usd: input.amountUsd,
+      balance_usd: input.balanceUsd,
+      tenant_id: input.tenantId,
+      resource: input.resource,
     },
   });
 }

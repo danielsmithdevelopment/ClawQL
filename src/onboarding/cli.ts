@@ -80,6 +80,9 @@ import {
   runPaymentsRampAgentCardIssueCmd,
   runPaymentsOfframpSessionCmd,
   runPaymentsOfframpWebhookCmd,
+  runPaymentsCreditsShowCmd,
+  runPaymentsCreditsBankLinkCmd,
+  runPaymentsCreditsTopupCmd,
   type PaymentsCliOptions,
 } from "./payments-cli.js";
 
@@ -183,6 +186,8 @@ function parse(argv: string[]): {
     else if (a === "--customer") flags.customer = argv[++i] ?? "";
     else if (a === "--plan") flags.plan = argv[++i] ?? "";
     else if (a === "--amount") flags.amount = argv[++i] ?? "";
+    else if (a === "--payment-method") flags.paymentMethodId = argv[++i] ?? "";
+    else if (a === "--return-url") flags.returnUrl = argv[++i] ?? "";
     else if (a === "--address") flags.address = argv[++i] ?? "";
     else if (a === "--asset") flags.asset = argv[++i] ?? "";
     else if (a === "--resource") flags.resource = argv[++i] ?? "";
@@ -205,7 +210,6 @@ function parse(argv: string[]): {
     else if (a === "--wallet") flags.wallet = argv[++i] ?? "";
     else if (a === "--method") flags.method = argv[++i] ?? "";
     else if (a === "--country") flags.country = argv[++i] ?? "";
-    else if (a === "--return-url") flags.returnUrl = argv[++i] ?? "";
     else if (a === "--refresh-url") flags.refreshUrl = argv[++i] ?? "";
     else if (a === "--user-id") flags.userId = argv[++i] ?? "";
     else if (a === "--agent-id" || a === "--agent") flags.agentId = argv[++i] ?? "";
@@ -287,6 +291,7 @@ Usage:
   clawql payments offramp session --amount 25 --wallet 0x… [--provider moonpay|transak]
   clawql payments offramp webhook --provider moonpay --payload ./body.json --signature t=…,s=… --process
   clawql payments spend report [--group-by provider|tenant|plan] | audit [--correlation-id ID]
+  clawql payments credits show | bank-link --customer cus_xxx | topup --customer cus_xxx --amount 25
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
 
@@ -870,6 +875,8 @@ async function main(): Promise<void> {
         (flags.provider === "moonpay" || flags.provider === "transak")
           ? flags.provider
           : undefined,
+      paymentMethodId:
+        typeof flags.paymentMethodId === "string" ? flags.paymentMethodId : undefined,
     };
 
     if (subcmd === "plan") {
@@ -1018,8 +1025,26 @@ async function main(): Promise<void> {
       process.exitCode = 1;
       return;
     }
+    if (subcmd === "credits") {
+      const creditsAction = rest[0] ?? "show";
+      if (creditsAction === "show") {
+        process.exitCode = await runPaymentsCreditsShowCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "bank-link") {
+        process.exitCode = await runPaymentsCreditsBankLinkCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "topup") {
+        process.exitCode = await runPaymentsCreditsTopupCmd(paymentsOpts);
+        return;
+      }
+      console.error("Usage: clawql payments credits show | bank-link | topup");
+      process.exitCode = 1;
+      return;
+    }
     console.error(
-      "Usage: clawql payments plan | usage | spend | audit | stripe | x402 | payout | ramp | offramp"
+      "Usage: clawql payments plan | usage | spend | audit | stripe | x402 | payout | ramp | offramp | credits"
     );
     process.exitCode = 1;
     return;

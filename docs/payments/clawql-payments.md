@@ -39,14 +39,16 @@ It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is ava
 | **Ramp** agent virtual / agentic cards              | ✅     | `RampService` — vault path + native `cards:read_agentic` when enabled            |
 | **Consumer off-ramp** (Moonpay / Transak)           | ✅     | Sessions + `OfframpWebhookService` completion settle                             |
 | **Payments MCP tools** (payout / ramp / offramp)    | ✅     | `CLAWQL_PAYMENTS_MCP_TOOLS=1`; optional AP2 gate                                 |
+| **Prepaid credits + bank top-up**                   | ✅     | Ledger + Stripe Financial Connections / ACH (`us_bank_account`); see [credits-ach.md](./credits-ach.md) |
 
 ### Roadmap
 
-| Tier  | Item                  | Role                | Notes                                    |
-| ----- | --------------------- | ------------------- | ---------------------------------------- |
-| **3** | **Mollie / Razorpay** | Regional processors | Add when regional traction requires them |
+| Tier  | Item                      | Role                                   | Notes                                             |
+| ----- | ------------------------- | -------------------------------------- | ------------------------------------------------- |
+| **2** | Credits ↔ inference debit | Spend prepaid balance before plan caps | Wire `CreditsService.debit` into entitlement path |
+| **3** | **Mollie / Razorpay**     | Regional processors                    | Add when regional traction requires them          |
 
-**Already covered (do not duplicate):** Shopify Payments (Stripe-powered), ACH Direct Debit via Stripe's APIs, card/subscription/invoice flows via Stripe, **Stripe Connect payouts**, **live Base USDC payouts with receipt confirmation**, **consumer off-ramp + webhooks (Moonpay/Transak)**, **Ramp vault + native agentic cards**. **Not planned:** Zelle (no merchant API), Square POS-first adapters.
+**Already covered (do not duplicate):** Shopify Payments (Stripe-powered), ACH Direct Debit via Stripe's APIs, card/subscription/invoice flows via Stripe, **bank ACH top-ups via Stripe Financial Connections** (Plaid-backed Link UI — no separate Plaid SDK), **Stripe Connect payouts**, **live Base USDC payouts with receipt confirmation**, **consumer off-ramp + webhooks (Moonpay/Transak)**, **Ramp vault + native agentic cards**. **Not planned:** Zelle (no merchant API), Square POS-first adapters, raw Plaid SDK unless non-payment bank data is required.
 
 Docs-site **UCP** `.well-known` documents remain scanner-facing stubs. **AP2 / ACP / PayPal / Adyen** are live in self-hosted `clawql-payments` when their env flags are set.
 
@@ -64,12 +66,13 @@ clawql-payments
 ├── payouts/    Stripe Connect bank payouts + Base USDC sends
 ├── ramp/       Ramp funds + virtual / agent cards
 ├── offramp/    Consumer USDC → fiat (Moonpay / Transak)
+├── credits/    Prepaid ledger + Stripe FC / ACH bank top-up
 ├── plans/      Tier definitions, entitlements, usage.json counters
 ├── audit/      Hash-chained append-only JSONL + integrity verify
 └── cli/        clawql payments * implementations
 ```
 
-See also [payouts-ramp.md](./payouts-ramp.md).
+See also [payouts-ramp.md](./payouts-ramp.md) and [credits-ach.md](./credits-ach.md).
 
 ```mermaid
 flowchart TB
@@ -349,6 +352,17 @@ Wallet and facilitator URL can also be stored in `payments.json` → `x402`.
 | `CLAWQL_PAYMENTS_MCP_REQUIRE_AP2`   | off     | Require AP2 mandate JWT on those tools                           |
 
 See [payouts-ramp.md](./payouts-ramp.md).
+
+### Prepaid credits + ACH bank top-up
+
+| Variable                    | Default | Purpose                                                                 |
+| --------------------------- | ------- | ----------------------------------------------------------------------- |
+| `CLAWQL_CREDITS_ENABLED`    | off     | Enable prepaid credit ledger                                            |
+| `CLAWQL_ACH_TOPUP_ENABLED`  | auto    | FC + ACH top-up; defaults on when credits + `STRIPE_SECRET_KEY` are set |
+| `CLAWQL_ACH_TOPUP_DRY_RUN`  | off     | Link/top-up without live Stripe ACH (tests/demos)                       |
+| `CLAWQL_CREDITS_RETURN_URL` | —       | Optional Financial Connections return URL                               |
+
+See [credits-ach.md](./credits-ach.md).
 
 ### Setup flow
 

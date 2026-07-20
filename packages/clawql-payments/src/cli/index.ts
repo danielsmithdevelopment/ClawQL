@@ -61,3 +61,11 @@ export {
   type PaymentsOfframpSessionOptions,
   type PaymentsOfframpWebhookOptions,
 } from "./offramp.js";
+export {
+  runPaymentsCreditsShow,
+  runPaymentsCreditsBankLink,
+  runPaymentsCreditsTopup,
+  type PaymentsCreditsShowOptions,
+  type PaymentsCreditsBankLinkOptions,
+  type PaymentsCreditsTopupOptions,
+} from "./credits.js";

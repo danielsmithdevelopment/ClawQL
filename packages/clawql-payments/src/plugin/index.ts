@@ -74,3 +74,5 @@ export {
   OfframpWebhookService,
   offrampWebhookLiveLayer,
 } from "../offramp/offramp-webhook-service.js";
+export { CreditsService, creditsLiveLayer } from "../credits/credits-service.js";
+export { AchTopupService, achTopupLiveLayer } from "../credits/ach-topup-service.js";

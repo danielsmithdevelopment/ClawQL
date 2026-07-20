@@ -30,6 +30,9 @@ import {
   runPaymentsRampAgentCardIssue,
   runPaymentsOfframpSession,
   runPaymentsOfframpWebhook,
+  runPaymentsCreditsShow,
+  runPaymentsCreditsBankLink,
+  runPaymentsCreditsTopup,
   type SpendGroupBy,
   type PayoutMethod,
   type OffRampProvider,
@@ -79,6 +82,7 @@ export type PaymentsCliOptions = {
   vendorIds?: string[];
   interval?: "DAILY" | "WEEKLY" | "MONTHLY" | "TOTAL" | "ANNUAL";
   provider?: OffRampProvider;
+  paymentMethodId?: string;
 };
 
 export async function runPaymentsPlanShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
@@ -354,5 +358,30 @@ export async function runPaymentsOfframpWebhookCmd(
     tenantId: options.tenantId,
     process: options.process,
     json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
+  return runPaymentsCreditsShow({ tenantId: options.tenantId });
+}
+
+export async function runPaymentsCreditsBankLinkCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsBankLink({
+    customerId: options.customer,
+    tenantId: options.tenantId,
+    returnUrl: options.returnUrl,
+  });
+}
+
+export async function runPaymentsCreditsTopupCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsTopup({
+    customerId: options.customer,
+    amountUsd: options.amount,
+    paymentMethodId: options.paymentMethodId,
+    tenantId: options.tenantId,
   });
 }

@@ -10,6 +10,8 @@ import { payoutLiveLayer } from "../payouts/payout-service.js";
 import { rampLiveLayer } from "../ramp/ramp-service.js";
 import { consumerOffRampLiveLayer } from "../offramp/consumer-offramp-service.js";
 import { offrampWebhookLiveLayer } from "../offramp/offramp-webhook-service.js";
+import { creditsLiveLayer } from "../credits/credits-service.js";
+import { achTopupLiveLayer } from "../credits/ach-topup-service.js";
 import { mppOpenApiLiveLayer } from "../mpp/openapi-service.js";
 import { mppVerificationLiveLayer } from "../mpp/verification-service.js";
 import { mppxAdapterLiveLayer } from "../mpp/mppx-adapter.js";
@@ -49,7 +51,9 @@ export type PaymentsServices =
   | import("../payouts/payout-service.js").PayoutService
   | import("../ramp/ramp-service.js").RampService
   | import("../offramp/consumer-offramp-service.js").ConsumerOffRampService
-  | import("../offramp/offramp-webhook-service.js").OfframpWebhookService;
+  | import("../offramp/offramp-webhook-service.js").OfframpWebhookService
+  | import("../credits/credits-service.js").CreditsService
+  | import("../credits/ach-topup-service.js").AchTopupService;
 
 const layerCache = new Map<string, Layer.Layer<PaymentsServices>>();
 
@@ -76,6 +80,10 @@ export function paymentsServicesLiveLayer(
   const ramp = rampLiveLayer(env).pipe(Layer.provide(audit));
   const offramp = consumerOffRampLiveLayer(env).pipe(Layer.provide(audit));
   const offrampWebhook = offrampWebhookLiveLayer(env).pipe(Layer.provide(audit));
+  const credits = creditsLiveLayer(env).pipe(Layer.provide(audit));
+  const achTopup = achTopupLiveLayer(env).pipe(
+    Layer.provide(Layer.mergeAll(audit, stripeClient, credits))
+  );
 
   const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
   const mppOpenApi = mppOpenApiLiveLayer(env).pipe(
@@ -125,7 +133,9 @@ export function paymentsServicesLiveLayer(
     payouts,
     ramp,
     offramp,
-    offrampWebhook
+    offrampWebhook,
+    credits,
+    achTopup
   );
   layerCache.set(key, layer);
   return layer;

@@ -11,6 +11,7 @@ export * from "./adyen/index.js";
 export * from "./payouts/index.js";
 export * from "./ramp/index.js";
 export * from "./offramp/index.js";
+export * from "./credits/index.js";
 export * from "./cli/index.js";
 export { loadPaymentsConfig, mergePaymentsConfig, savePaymentsConfig } from "./config/store.js";
 export type { PaymentsConfig } from "./config/store.js";
@@ -23,4 +24,5 @@ export {
   resolvePaymentAuditJsonlPath,
   resolvePaymentAuditMetaPath,
   resolvePayoutPreferencesPath,
+  resolveCreditsLedgerPath,
 } from "./config/paths.js";
