@@ -10,7 +10,9 @@ const nextConfig = {
   output: 'standalone',
   /** Monorepo: trace file inclusion from repo root when multiple lockfiles exist. */
   outputFileTracingRoot: path.join(__dirname, '..'),
-  serverExternalPackages: ['clawql-api', 'clawql-core'],
+  // Externalize workspace packages so Next does not webpack their AWS/Effect graphs.
+  // Do not list `effect` here — Next may auto-transpile it and rejects the conflict.
+  serverExternalPackages: ['clawql-api', 'clawql-auth', 'clawql-core'],
 }
 
 export default nextConfig
