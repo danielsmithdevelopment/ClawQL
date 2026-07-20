@@ -694,65 +694,56 @@ export function agentCompensationLiveLayer(
             );
           }
 
-          const executed = yield* (
-            record.kind === "cashout" ? executeCashout(record) : executeDeposit(record)
-          ).pipe(
-            Effect.catchAll((err) =>
-              Effect.gen(function* () {
-                const failureReason =
-                  err instanceof CompensationError
-                    ? err.reason
-                    : err instanceof Error
-                      ? err.message
-                      : String(err);
-                const amountUsd = Number(record.args.amountUsd);
-                const recruitmentId =
-                  typeof record.args.recruitmentId === "string"
-                    ? record.args.recruitmentId
-                    : undefined;
-                if (record.kind === "cashout") {
-                  yield* audit
-                    .appendEntry(
-                      buildCompensationCashoutFailedEntry({
-                        tenantId: record.tenantId,
-                        actionId: record.actionId,
-                        agentId: record.agentId,
-                        amountUsd: Number.isFinite(amountUsd) ? amountUsd : undefined,
-                        failureReason,
-                        destination:
-                          typeof record.args.destination === "string"
-                            ? record.args.destination
-                            : undefined,
-                        recruitmentId,
-                        correlationId: record.correlationId,
-                      })
-                    )
-                    .pipe(Effect.catchAll(() => Effect.void));
-                } else {
-                  yield* audit
-                    .appendEntry(
-                      buildCompensationDepositFailedEntry({
-                        tenantId: record.tenantId,
-                        actionId: record.actionId,
-                        agentId: record.agentId,
-                        amountUsd: Number.isFinite(amountUsd) ? amountUsd : undefined,
-                        failureReason,
-                        reason:
-                          typeof record.args.reason === "string" ? record.args.reason : undefined,
-                        recruitmentId,
-                        correlationId: record.correlationId,
-                      })
-                    )
-                    .pipe(Effect.catchAll(() => Effect.void));
-                }
-                return yield* Effect.fail(
-                  err instanceof CompensationError
-                    ? err
-                    : new CompensationError({ reason: failureReason, cause: err })
-                );
-              })
-            )
-          );
+          const runExecute =
+            record.kind === "cashout" ? executeCashout(record) : executeDeposit(record);
+          const emitFailure = (err: CompensationError) =>
+            Effect.gen(function* () {
+              const amountUsd = Number(record.args.amountUsd);
+              const recruitmentId =
+                typeof record.args.recruitmentId === "string"
+                  ? record.args.recruitmentId
+                  : undefined;
+              if (record.kind === "cashout") {
+                yield* audit
+                  .appendEntry(
+                    buildCompensationCashoutFailedEntry({
+                      tenantId: record.tenantId,
+                      actionId: record.actionId,
+                      agentId: record.agentId,
+                      amountUsd: Number.isFinite(amountUsd) ? amountUsd : undefined,
+                      failureReason: err.reason,
+                      destination:
+                        typeof record.args.destination === "string"
+                          ? record.args.destination
+                          : undefined,
+                      recruitmentId,
+                      correlationId: record.correlationId,
+                    })
+                  )
+                  .pipe(Effect.catchAll(() => Effect.void));
+              } else {
+                yield* audit
+                  .appendEntry(
+                    buildCompensationDepositFailedEntry({
+                      tenantId: record.tenantId,
+                      actionId: record.actionId,
+                      agentId: record.agentId,
+                      amountUsd: Number.isFinite(amountUsd) ? amountUsd : undefined,
+                      failureReason: err.reason,
+                      reason:
+                        typeof record.args.reason === "string" ? record.args.reason : undefined,
+                      recruitmentId,
+                      correlationId: record.correlationId,
+                    })
+                  )
+                  .pipe(Effect.catchAll(() => Effect.void));
+              }
+              return yield* Effect.fail(err);
+            });
+
+          const executed: DepositResult | CashoutResult = yield* (
+            runExecute as Effect.Effect<DepositResult | CashoutResult, CompensationError>
+          ).pipe(Effect.catchAll((err) => emitFailure(err)));
 
           const updated: PendingActionRecord = {
             ...record,
