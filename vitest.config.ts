@@ -25,6 +25,7 @@ export default defineConfig({
       "packages/clawql-api/src/**/*.test.ts",
       "packages/clawql-auth/src/**/*.test.ts",
       "packages/clawql-memory/src/**/*.test.ts",
+      "packages/clawql-ontology/src/**/*.test.ts",
       "packages/clawql-codegraph/src/**/*.test.ts",
       "packages/clawql-codegraph/src/**/*.integration.test.ts",
       "packages/clawql-documents/src/**/*.test.ts",

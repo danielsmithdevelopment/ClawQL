@@ -11,3 +11,12 @@ Provisional schemas for ClawQL’s enterprise Ontology. See:
 | [`entity.schema.json`](./entity.schema.json) | `Entity` definitions |
 
 Status: **provisional** — evolve with design partners before treating as a public standard.
+
+## CLI
+
+```bash
+clawql ontology lint --dir examples/ontology/entities
+clawql ontology generate --dir examples/ontology/entities --out generated/ontology
+```
+
+See [`docs/ontology/cli.md`](../../docs/ontology/cli.md).
