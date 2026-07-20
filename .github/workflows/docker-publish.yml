@@ -226,6 +226,20 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y skopeo
 
       # `dashboard/Dockerfile` build context is repo root (clawql-api file: dep + catalog generators).
+      - name: Preflight — dashboard COPY sources not dockerignored
+        run: |
+          set -euo pipefail
+          test -f .env.example
+          test -f scripts/kubernetes/provider-vault-key-catalog.ts
+          test -f src/provider-vault/catalog.ts
+          # Bare `scripts` / un-excepted `.env.*` previously broke overnight dashboard publish.
+          grep -qE '^!\.env\.example$' .dockerignore
+          grep -qE '^!scripts/kubernetes/provider-vault-key-catalog\.ts$' .dockerignore
+          if grep -qE '^scripts$' .dockerignore; then
+            echo ".dockerignore must not use bare 'scripts' (blocks negation); use scripts/** + !" >&2
+            exit 1
+          fi
+
       - name: Build OCI layout (single artifact — scanned and pushed)
         run: |
           set -euo pipefail
@@ -241,7 +255,6 @@ jobs:
             --provenance=mode=max \
             --sbom=true \
             .
-
       - name: Trivy scan OCI layout (HIGH / CRITICAL — before registry push)
         run: |
           set -euo pipefail
