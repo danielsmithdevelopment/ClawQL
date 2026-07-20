@@ -16,7 +16,7 @@
 | Cold-open problem + OOP framing            | Docs only                                                                         | Keep (narrative)                                                                                      |
 | `.cqe` primary format                      | **Shipped** — examples/docs/scaffolds lead with `.cqe`; tooling dual-accepts YAML | Essay can say `Contract.cqe`; YAML still accepted ([ADR 0010 §2a](../adr/0010-cq-file-extensions.md)) |
 | `ontology lint` / `generate`               | Generate + register fixture MCP tools when enabled                                | Keep; expand adapters separately                                                                      |
-| Live typed tools (enums, not ints)         | **Shipped** — fixture handlers (`CLAWQL_ENABLE_ONTOLOGY=1`)                   | Essay: fixture/demo store; SQL = roadmap ([ADR 0009 §9](../adr/0009-enterprise-ontology.md)) |
+| Live typed tools (enums, not ints)         | **Shipped** — fixture handlers (`CLAWQL_ENABLE_ONTOLOGY=1`)                       | Essay: fixture/demo store; SQL = roadmap ([ADR 0009 §9](../adr/0009-enterprise-ontology.md))          |
 | PII from `pii_fields` → Presidio           | Presidio exists; not schema-driven                                                | Schema field list drives redaction on ontology tool results                                           |
 | Relationship → graph tools                 | Relationships in YAML only                                                        | Generate + register traversal tools (even if demo store)                                              |
 | GraphQL `@kinetic`                         | Docs/ADR only                                                                     | Directive in schema + PEP intercept path (or MCP-equivalent kinetic writes)                           |
@@ -54,14 +54,14 @@
 
 ### WS2 — Generate → live MCP read tools
 
-| ID      | Task                                                                                                        | Band | Done-when                                                      |
-| ------- | ----------------------------------------------------------------------------------------------------------- | ---- | -------------------------------------------------------------- |
-| **2.1** | Implement `createOntologyPlugin()` (or layer) registering generated read tools                              | A    | Tools appear in MCP `ListTools` when ontology enabled          |
-| **2.2** | Demo / fixture backend: in-memory or JSON fixtures returning **typed** Contract (enum status, money object) | A    | Essay “status: active not 2” demo reproducible                 |
+| ID      | Task                                                                                                        | Band   | Done-when                                                                                                                          |
+| ------- | ----------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **2.1** | Implement `createOntologyPlugin()` (or layer) registering generated read tools                              | A      | Tools appear in MCP `ListTools` when ontology enabled                                                                              |
+| **2.2** | Demo / fixture backend: in-memory or JSON fixtures returning **typed** Contract (enum status, money object) | A      | Essay “status: active not 2” demo reproducible                                                                                     |
 | **2.3** | Optional SQL source adapter for `sources[type=sql]` (read-only)                                             | B/C ✅ | **Decided:** fixture mode is v1 read backend; SQL disclosed as partner/roadmap ([ADR 0009 §9](../adr/0009-enterprise-ontology.md)) |
-| **2.4** | Wire `CLAWQL_ONTOLOGY_DIR` (or default `.clawql/ontology`) into gateway startup                             | A    | No manual copy of stub into plugins                            |
-| **2.5** | Generate relationship traversal tools (`get_contract_parties`, reverse) from `relationships:`               | A    | Tools listed + demo-backed                                     |
-| **2.6** | Schema-driven Presidio: apply `pii_fields` on ontology tool **results** before LLM                          | A/B  | Redacted field absent without ATR; present with claim in tests |
+| **2.4** | Wire `CLAWQL_ONTOLOGY_DIR` (or default `.clawql/ontology`) into gateway startup                             | A      | No manual copy of stub into plugins                                                                                                |
+| **2.5** | Generate relationship traversal tools (`get_contract_parties`, reverse) from `relationships:`               | A      | Tools listed + demo-backed                                                                                                         |
+| **2.6** | Schema-driven Presidio: apply `pii_fields` on ontology tool **results** before LLM                          | A/B    | Redacted field absent without ATR; present with claim in tests                                                                     |
 
 ### WS3 — Kinetic writes (essay Layer 3)
 
@@ -164,17 +164,17 @@ Every imperative claim in the essay is true for a reader who clones ClawQL `main
 
 Closed without product decisions (see PR closing no-drama gaps):
 
-| IDs                         | Status                                                                                                        |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| **0.1–0.2**                 | Docs site pages for Enterprise Ontology + `.cq*` specs (merge + deploy still required for live URLs)          |
-| **0.3**                     | This backlog doc                                                                                              |
-| **1.1, 1.3, 1.4, 1.5**      | `.cqe` examples; `ontology init` / `create-entity`; **`.cqe` primary** (ADR 0010 §2a)                         |
+| IDs                              | Status                                                                                                                             |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **0.1–0.2**                      | Docs site pages for Enterprise Ontology + `.cq*` specs (merge + deploy still required for live URLs)                               |
+| **0.3**                          | This backlog doc                                                                                                                   |
+| **1.1, 1.3, 1.4, 1.5**           | `.cqe` examples; `ontology init` / `create-entity`; **`.cqe` primary** (ADR 0010 §2a)                                              |
 | **2.1, 2.2, 2.3, 2.4, 2.5, 2.6** | Fixture MCP plugin + **fixture-mode decision** (ADR 0009 §9); `CLAWQL_ENABLE_ONTOLOGY` / `CLAWQL_ONTOLOGY_DIR`; relationships; PII |
-| **4.1–4.3**                       | `.cqk` when `wormRef` / `CLAWQL_MEMORY_CQK`; generate `index.md`; recall boost                                                      |
-| **5.1–5.3**                       | Manifest `ontologySchema` pin + verify; `clawql-release lint` for `.cqm`; doctor ontology check                                     |
-| **6.1–6.2**                       | Legal pack + `import --pack legal`                                                                                                  |
-| **7.3**                           | CLI+PR authoring documented as shipped path                                                                                         |
-| **8.1**                           | Onyx source stubs on generate                                                                                                       |
+| **4.1–4.3**                      | `.cqk` when `wormRef` / `CLAWQL_MEMORY_CQK`; generate `index.md`; recall boost                                                     |
+| **5.1–5.3**                      | Manifest `ontologySchema` pin + verify; `clawql-release lint` for `.cqm`; doctor ontology check                                    |
+| **6.1–6.2**                      | Legal pack + `import --pack legal`                                                                                                 |
+| **7.3**                          | CLI+PR authoring documented as shipped path                                                                                        |
+| **8.1**                          | Onyx source stubs on generate                                                                                                      |
 
 **Stopped before decisions / blockers:** **3.1**, **4.4**, **5.4**, **6.3**, **7.1–7.2**, **8.2**, and B1–B6.
 

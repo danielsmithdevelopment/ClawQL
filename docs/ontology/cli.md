@@ -30,10 +30,10 @@ npx clawql-ontology import --pack legal
 
 ## Read backends (v1)
 
-| Backend | Status | How |
-| ------- | ------ | --- |
-| **Fixture / demo store** | **Shipped** | `CLAWQL_ENABLE_ONTOLOGY=1` (+ optional `CLAWQL_ONTOLOGY_FIXTURE`) |
-| **SQL / OpenAPI live bind** | Roadmap / design partners | `sources:` on entities drive generate stubs only today |
+| Backend                     | Status                    | How                                                               |
+| --------------------------- | ------------------------- | ----------------------------------------------------------------- |
+| **Fixture / demo store**    | **Shipped**               | `CLAWQL_ENABLE_ONTOLOGY=1` (+ optional `CLAWQL_ONTOLOGY_FIXTURE`) |
+| **SQL / OpenAPI live bind** | Roadmap / design partners | `sources:` on entities drive generate stubs only today            |
 
 Do not claim automatic SQL binding in essay or Getting Started until a dedicated adapter ships.
 
