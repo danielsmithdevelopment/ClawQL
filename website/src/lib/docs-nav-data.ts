@@ -62,6 +62,10 @@ export const docsNavigation: Array<NavGroup> = [
         title: 'Zero-Trust Agentic Fabric',
         href: '/architecture/agentic-fabric',
       },
+      {
+        title: 'Enterprise Ontology',
+        href: '/architecture/enterprise-ontology',
+      },
       { title: 'clawql-inference', href: '/inference/clawql-inference' },
       { title: 'Ouroboros', href: '/ouroboros' },
     ],

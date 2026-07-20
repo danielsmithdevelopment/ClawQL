@@ -33,6 +33,7 @@ test.describe('mobile table layout', () => {
   const tableHeavyRoutes = [
     { path: '/inference/clawql-inference', name: 'inference' },
     { path: '/architecture/token-efficiency', name: 'token efficiency' },
+    { path: '/architecture/enterprise-ontology', name: 'enterprise ontology' },
     { path: '/security/defense-in-depth', name: 'defense in depth' },
     { path: '/reference/plugins', name: 'plugin registry' },
     { path: '/plugins/bundled-providers', name: 'bundled providers plugin' },

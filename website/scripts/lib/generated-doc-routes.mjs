@@ -6,6 +6,8 @@ export const GENERATED_BODY_ROUTES = {
   'clawql-inference-body.mdx': '/inference/clawql-inference',
   'clawql-payments-body.mdx': '/payments/clawql-payments',
   'clawql-token-efficiency-body.mdx': '/architecture/token-efficiency',
+  'enterprise-ontology-body.mdx': '/architecture/enterprise-ontology',
+  'zero-trust-agentic-fabric-body.mdx': '/architecture/agentic-fabric',
   'clawql-vision-roadmap-body.mdx': '/vision/roadmap',
   'clawql-contributor-technical-spec-body.mdx':
     '/contributing/technical-specification',

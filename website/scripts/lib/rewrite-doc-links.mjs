@@ -62,6 +62,10 @@ export const DOC_SITE_ROUTES = {
   'docs/inference/clawql-inference.md': '/inference/clawql-inference',
   'docs/architecture/clawql-token-efficiency.md':
     '/architecture/token-efficiency',
+  'docs/architecture/enterprise-ontology.md':
+    '/architecture/enterprise-ontology',
+  'docs/architecture/zero-trust-agentic-fabric.md':
+    '/architecture/agentic-fabric',
   'docs/security/clawql-security-defense-in-depth.md':
     '/security/defense-in-depth',
   'docs/security/security-best-practices-series/README.md':

@@ -29,6 +29,8 @@ export const HEAVY_HTML_ROUTE_SOURCES = [
   '/security/defense-in-depth',
   '/security/best-practices/:path*',
   '/architecture/token-efficiency',
+  '/architecture/enterprise-ontology',
+  '/architecture/agentic-fabric',
   '/inference/:path*',
   '/examples/:path*',
 ]

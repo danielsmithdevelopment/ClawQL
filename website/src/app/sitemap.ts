@@ -53,6 +53,16 @@ const ENTRIES: Array<Entry> = [
     priority: 0.9,
   },
   {
+    path: '/architecture/enterprise-ontology',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  {
+    path: '/architecture/agentic-fabric',
+    changeFrequency: 'monthly',
+    priority: 0.92,
+  },
+  {
     path: '/inference/clawql-inference',
     changeFrequency: 'monthly',
     priority: 0.9,
