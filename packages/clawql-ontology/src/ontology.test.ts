@@ -47,7 +47,7 @@ describe("lintOntology", () => {
     try {
       await mkdir(join(dir, "entities"), { recursive: true });
       const body = await readFile(
-        join(REPO_ROOT, "examples", "ontology", "entities", "Organization.yaml"),
+        join(REPO_ROOT, "examples", "ontology", "entities", "Organization.cqe"),
         "utf8"
       );
       await writeFile(join(dir, "entities", "Organization.cqe"), body, "utf8");
@@ -117,13 +117,216 @@ describe("generateOntologyReadTools", () => {
     expect(lint?.ok).toBe(true);
     expect(result.tools.some((t) => t.name === "search_contracts")).toBe(true);
     expect(result.tools.some((t) => t.name === "get_contract")).toBe(true);
-    expect(result.deferredWriteActions.some((a) => a.name === "update_contract_status")).toBe(true);
-    expect(written.length).toBeGreaterThanOrEqual(2);
+    expect(result.tools.some((t) => t.name === "get_contract_parties")).toBe(true);
+    expect(result.writeTools.some((t) => t.name === "update_contract_status")).toBe(true);
+    expect(result.writeTools.some((t) => t.name === "adjust_contract_value")).toBe(true);
+    expect(
+      result.writeTools.every(
+        (t) => ["LOW", "MEDIUM"].includes(t.kinetic_level) && t.executor === "NATIVE"
+      )
+    ).toBe(true);
+    expect(result.deferredWriteActions.some((a) => a.name === "process_contract_document")).toBe(
+      true
+    );
+    expect(result.deferredWriteActions.some((a) => a.name === "update_contract_status")).toBe(
+      false
+    );
+    expect(written.length).toBeGreaterThanOrEqual(4);
     const catalog = JSON.parse(await readFile(join(outDir, "tools.json"), "utf8"));
-    expect(catalog.kind).toBe("GeneratedReadTools");
-    expect(catalog.tools.length).toBeGreaterThan(0);
+    expect(catalog.kind).toBe("GeneratedOntologyTools");
+    expect(catalog.writeTools.length).toBeGreaterThan(0);
     const stub = await readFile(join(outDir, "ontology-plugin.stub.ts"), "utf8");
     expect(stub).toContain("ONTOLOGY_READ_TOOLS");
+    expect(stub).toContain("ONTOLOGY_WRITE_TOOLS");
+    expect(stub).toContain("update_contract_status");
+    expect(stub).toContain("adjust_contract_value");
     expect(stub).toContain("search_contracts");
+    const index = await readFile(join(outDir, "index.md"), "utf8");
+    expect(index).toContain("Ontology entity catalog");
+    expect(index).toContain("Contract");
+    const onyx = JSON.parse(await readFile(join(outDir, "onyx-sources.stub.json"), "utf8"));
+    expect(onyx.kind).toBe("OnyxSourceStubs");
+  });
+});
+
+describe("examples .cqe dual-accept", () => {
+  it("lints Contract.cqe and Organization.cqe", async () => {
+    const result = await lintOntology({
+      rootDir: REPO_ROOT,
+      paths: [
+        join(REPO_ROOT, "examples", "ontology", "entities", "Contract.cqe"),
+        join(REPO_ROOT, "examples", "ontology", "entities", "Organization.cqe"),
+      ],
+      schemaPath: join(REPO_ROOT, "schemas", "ontology", "entity.schema.json"),
+    });
+    expect(result.ok).toBe(true);
+    expect(result.entities).toEqual(expect.arrayContaining(["Contract", "Organization"]));
+  });
+});
+
+describe("scaffold + fixtures + pii", () => {
+  it("init / create-entity / import legal pack", async () => {
+    const { initOntologyTree, createOntologyEntity, importOntologyPack, listOntologyPacks } =
+      await import("./scaffold.js");
+    expect(listOntologyPacks()).toContain("legal");
+    const dir = await mkdtemp(join(tmpdir(), "clawql-ont-scaffold-"));
+    try {
+      const written = await initOntologyTree(dir);
+      expect(written.some((w) => w.includes("entities"))).toBe(true);
+      const entity = await createOntologyEntity(dir, "Matter");
+      expect(entity.endsWith("Matter.cqe")).toBe(true);
+      const imported = await importOntologyPack(dir, "legal");
+      expect(imported.length).toBeGreaterThanOrEqual(3);
+      const lint = await lintOntology({
+        rootDir: dir,
+        paths: [join(dir, ".clawql", "ontology", "entities")],
+        schemaPath: join(REPO_ROOT, "schemas", "ontology", "entity.schema.json"),
+      });
+      expect(lint.ok).toBe(true);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("fixture get_contract returns typed enum status and redacts PII", async () => {
+    const { getContract, resetOntologyFixtureDbForTests } = await import("./fixture-store.js");
+    const { redactOntologyPiiFields } = await import("./pii.js");
+    resetOntologyFixtureDbForTests();
+    const row = getContract("acc-8821");
+    expect(row).toBeTruthy();
+    expect(row!.status).toBe("active");
+    expect(typeof row!.value?.amount).toBe("number");
+    const redacted = await redactOntologyPiiFields(row, [
+      "parties.contact_email",
+      "parties.contact_phone",
+    ]);
+    const parties = (redacted as { parties: Array<{ contact_email?: string }> }).parties;
+    expect(parties.some((p) => p.contact_email === "[REDACTED]")).toBe(true);
+  });
+});
+
+describe("LOW Transaction Sandbox (3.3)", () => {
+  it("commits update_contract_status when ATR allows", async () => {
+    const { resetOntologyFixtureDbForTests, getContract } = await import("./fixture-store.js");
+    const { resetKineticAuditForTests, runLowKineticTransaction, listKineticAudit } =
+      await import("./kinetic/index.js");
+    resetOntologyFixtureDbForTests();
+    resetKineticAuditForTests();
+    const result = await runLowKineticTransaction({
+      tool: "update_contract_status",
+      entity: "Contract",
+      recordId: "acc-8821",
+      field: "status",
+      nextValue: "expired",
+      claims: { sub: "tester", role: "agent", scope: ["ontology:write"] },
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.before).toBe("active");
+      expect(result.after).toBe("expired");
+      expect(result.audit.action).toBe("KINETIC_COMMITTED");
+    }
+    expect(getContract("acc-8821")?.status).toBe("expired");
+    expect(listKineticAudit().some((e) => e.action === "KINETIC_COMMITTED")).toBe(true);
+  });
+
+  it("denies update when ATR scope is insufficient", async () => {
+    const { resetOntologyFixtureDbForTests, getContract } = await import("./fixture-store.js");
+    const { resetKineticAuditForTests, runLowKineticTransaction } =
+      await import("./kinetic/index.js");
+    resetOntologyFixtureDbForTests();
+    resetKineticAuditForTests();
+    const result = await runLowKineticTransaction({
+      tool: "update_contract_status",
+      entity: "Contract",
+      recordId: "acc-8821",
+      field: "status",
+      nextValue: "terminated",
+      claims: { sub: "reader", role: "agent", scope: ["ontology:read"] },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe("denied");
+      expect(result.audit?.action).toBe("KINETIC_DENIED");
+    }
+    expect(getContract("acc-8821")?.status).toBe("active");
+  });
+
+  it("rejects adjust_contract_value without mandate (3.4)", async () => {
+    const { resetOntologyFixtureDbForTests, getContract } = await import("./fixture-store.js");
+    const { resetKineticAuditForTests, runKineticTransaction } = await import("./kinetic/index.js");
+    resetOntologyFixtureDbForTests();
+    resetKineticAuditForTests();
+    const before = getContract("acc-8821")!.value.amount;
+    const result = await runKineticTransaction({
+      tool: "adjust_contract_value",
+      entity: "Contract",
+      recordId: "acc-8821",
+      field: "value.amount",
+      nextValue: before + 25000,
+      kineticLevel: "MEDIUM",
+      claims: { sub: "agent", role: "agent", scope: ["ontology:write"] },
+      mandatePolicy: {
+        requiresMandate: true,
+        mandateType: "AP2_FINANCIAL",
+        changeLimit: 10000,
+      },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe("mandate_required");
+      expect(result.reason).toContain("mandate_required");
+    }
+    expect(getContract("acc-8821")?.value.amount).toBe(before);
+  });
+
+  it("commits adjust_contract_value when mandate is presented", async () => {
+    const { resetOntologyFixtureDbForTests, getContract } = await import("./fixture-store.js");
+    const { resetKineticAuditForTests, runKineticTransaction } = await import("./kinetic/index.js");
+    resetOntologyFixtureDbForTests();
+    resetKineticAuditForTests();
+    const result = await runKineticTransaction({
+      tool: "adjust_contract_value",
+      entity: "Contract",
+      recordId: "acc-8821",
+      field: "value.amount",
+      nextValue: 60000,
+      kineticLevel: "MEDIUM",
+      claims: { sub: "agent", role: "agent", scope: ["ontology:write"] },
+      mandate: { type: "AP2_FINANCIAL", id: "mand-demo-1" },
+      mandatePolicy: {
+        requiresMandate: true,
+        mandateType: "AP2_FINANCIAL",
+        changeLimit: 10000,
+      },
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.after).toBe(60000);
+      expect(result.audit.action).toBe("KINETIC_COMMITTED");
+    }
+    expect(getContract("acc-8821")?.value.amount).toBe(60000);
+  });
+
+  it("requires mandate when change exceeds change_limit even if requiresMandate is false", async () => {
+    const { resetKineticAuditForTests, runKineticTransaction } = await import("./kinetic/index.js");
+    const { resetOntologyFixtureDbForTests } = await import("./fixture-store.js");
+    resetOntologyFixtureDbForTests();
+    resetKineticAuditForTests();
+    const result = await runKineticTransaction({
+      tool: "adjust_contract_value",
+      entity: "Contract",
+      recordId: "acc-8821",
+      field: "value.amount",
+      nextValue: 90000,
+      claims: { sub: "agent", scope: ["ontology:write"] },
+      mandatePolicy: {
+        requiresMandate: false,
+        mandateType: "AP2_FINANCIAL",
+        changeLimit: 10000,
+      },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.status).toBe("mandate_required");
   });
 });

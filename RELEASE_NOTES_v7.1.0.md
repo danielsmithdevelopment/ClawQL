@@ -2,7 +2,7 @@
 
 **npm:** [`clawql-mcp@7.1.0`](https://www.npmjs.com/package/clawql-mcp/v/7.1.0) (publish on tag `v7.1.0`)  
 **Full changelog:** [CHANGELOG.md#710---2026-07-20](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#710---2026-07-20)  
-**Release date:** 2026-07-20 (tag after ontology PRs #718–#720 and Docker publish fix #740 land)
+**Release date:** 2026-07-20
 
 ---
 
@@ -20,10 +20,11 @@
 
 ### 1. Enterprise Ontology + OKF
 
-- Package **`clawql-ontology`**: `clawql ontology lint` / `generate` (read MCP stubs).
-- ADR **0009** / **0010** (`.cqe` / `.cqm` / … dual-accept).
+- Package **`clawql-ontology`**: `clawql ontology lint` / `generate`; fixture MCP plugin + industry packs; kinetic ATR / mandate / Transaction Sandbox (MEDIUM).
+- ADR **0009** / **0010** (`.cqe` primary; `.cqk` when `worm_ref` / `CLAWQL_MEMORY_CQK=1`).
 - Vault **`memory_ingest`** OKF frontmatter (`type`, `worm_ref`, …).
-- CI **Ontology lint (examples)**; schema shipped inside the npm package.
+- Docs site: **`/architecture/enterprise-ontology`** + CQ extension pages; backlog [`docs/ontology/essay-gap-closure.md`](docs/ontology/essay-gap-closure.md).
+- CI **Ontology lint (examples)**; schema in-package; `clawql release` ontology verify + doctor checks.
 
 → [`docs/architecture/enterprise-ontology.md`](docs/architecture/enterprise-ontology.md) · [`docs/memory/okf.md`](docs/memory/okf.md)
 

@@ -1,7 +1,7 @@
 {
   "name": "clawql-ontology",
   "version": "7.1.0",
-  "description": "ClawQL enterprise Ontology \u2014 lint YAML entity schemas and generate read MCP tool stubs (ADR 0009)",
+  "description": "ClawQL enterprise Ontology — lint/generate entity schemas, fixture MCP tools, packs (ADR 0009)",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -16,6 +16,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./plugin": {
+      "types": "./dist/plugin/index.d.ts",
+      "import": "./dist/plugin/index.js",
+      "require": "./dist/plugin/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -27,7 +32,11 @@
   },
   "dependencies": {
     "ajv": "^8.17.1",
-    "yaml": "^2.9.0"
+    "clawql-api": "7.1.0",
+    "clawql-core": "7.1.0",
+    "effect": "^3.21.4",
+    "yaml": "^2.9.0",
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
@@ -38,6 +47,8 @@
   "files": [
     "dist",
     "schemas",
+    "packs",
+    "fixtures",
     "README.md"
   ],
   "engines": {

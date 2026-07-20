@@ -1,0 +1,34 @@
+apiVersion: clawql.dev/ontology/v1alpha1
+kind: Entity
+metadata:
+  name: Matter
+  labels:
+    vertical: legal
+spec:
+  description: Legal matter or case file grouping related Contracts and documents
+  properties:
+    matter_id:
+      type: string
+      required: true
+      indexed: true
+    title:
+      type: string
+      required: true
+    status:
+      type: enum
+      values: [intake, active, closed]
+      required: true
+  sources:
+    - type: sql
+      connection: ${VAULT:contracts_db}
+      table: matters
+      id_column: matter_id
+  relationships:
+    - entity: Contract
+      type: one_to_many
+      via: matter_contracts
+  actions:
+    - name: search_matters
+      kind: read
+    - name: get_matter
+      kind: read

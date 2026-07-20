@@ -1,13 +1,15 @@
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { sha256FileHex, sha256Utf8Hex, normalizeDigest } from "./hash.js";
 import { merkleRootFromLeaves } from "./merkle.js";
 import { readManifestFile } from "./manifest.js";
+import { verifyOntologySchemaPin } from "./ontology-schema.js";
 import type { VerifyResult } from "./types.js";
 
 export async function verifyReleaseManifest(
   manifestPath: string,
-  bundleDir?: string
+  bundleDir?: string,
+  options?: { workspaceRoot?: string }
 ): Promise<VerifyResult> {
   const manifest = await readManifestFile(manifestPath);
   const baseDir = bundleDir ?? join(manifestPath, "..");
@@ -46,6 +48,20 @@ export async function verifyReleaseManifest(
     merkleLeaves.push({ id: `images/${name}`, sha256: sha256Utf8Hex(`sha256:${norm}`) });
   }
 
+  if (manifest.ontologySchema) {
+    merkleLeaves.push({
+      id: "ontologySchema",
+      sha256: manifest.ontologySchema.sha256,
+    });
+    const workspaceRoot =
+      options?.workspaceRoot ??
+      process.env.CLAWQL_RELEASE_WORKSPACE?.trim() ??
+      // Bundle lives under releases/vX — climb to repo root when verifying in-tree.
+      resolve(dirname(manifestPath), "..", "..");
+    const pinErr = await verifyOntologySchemaPin(workspaceRoot, manifest.ontologySchema);
+    if (pinErr) errors.push(pinErr);
+  }
+
   const { merkleRoot, leafCount } = merkleRootFromLeaves(merkleLeaves);
   if (merkleRoot !== manifest.merkleRoot) {
     errors.push(`merkleRoot mismatch (expected ${manifest.merkleRoot}, computed ${merkleRoot})`);
@@ -57,8 +73,11 @@ export async function verifyReleaseManifest(
   return { ok: errors.length === 0, errors, manifest };
 }
 
-export async function verifyReleaseBundle(bundleDir: string): Promise<VerifyResult> {
+export async function verifyReleaseBundle(
+  bundleDir: string,
+  workspaceRoot?: string
+): Promise<VerifyResult> {
   const manifestPath = join(bundleDir, "manifest.json");
   await readFile(manifestPath, "utf8");
-  return verifyReleaseManifest(manifestPath, bundleDir);
+  return verifyReleaseManifest(manifestPath, bundleDir, { workspaceRoot });
 }

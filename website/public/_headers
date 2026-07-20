@@ -32,6 +32,18 @@
 /architecture/token-efficiency
   Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900
 
+/architecture/enterprise-ontology
+  Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900
+
+/specs/cq-extensions
+  Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900
+
+/specs/cq-extensions/*
+  Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900
+
+/architecture/agentic-fabric
+  Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900
+
 /.well-known/*
   Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=60
 

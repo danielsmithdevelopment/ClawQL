@@ -4,6 +4,7 @@ import { readReleaseConfig } from "./config.js";
 import { readGitHead } from "./git.js";
 import { sha256FileHex, sha256Utf8Hex, normalizeDigest } from "./hash.js";
 import { merkleRootFromLeaves } from "./merkle.js";
+import { collectOntologySchemaPin } from "./ontology-schema.js";
 import {
   MANIFEST_SCHEMA_VERSION,
   type CollectOptions,
@@ -63,6 +64,14 @@ export async function collectReleaseManifest(options: CollectOptions): Promise<R
     merkleLeaves.push({ id: `images/${name}`, sha256: sha256Utf8Hex(`sha256:${norm}`) });
   }
 
+  const ontologySchema = await collectOntologySchemaPin(rootDir);
+  if (ontologySchema) {
+    merkleLeaves.push({
+      id: "ontologySchema",
+      sha256: ontologySchema.sha256,
+    });
+  }
+
   const { merkleRoot, leafCount } = merkleRootFromLeaves(merkleLeaves);
 
   const manifest: ReleaseManifestV01 = {
@@ -94,6 +103,7 @@ export async function collectReleaseManifest(options: CollectOptions): Promise<R
     },
     merkleRoot,
     leafCount,
+    ...(ontologySchema ? { ontologySchema } : {}),
     policy: {
       compatiblePolicyVersion: "0.1",
       requireSignatures: ["cosign"],

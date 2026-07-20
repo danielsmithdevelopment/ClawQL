@@ -39,7 +39,7 @@ export class McpToolRegistry {
       registerMcpTool: (tool: McpToolDefinition) =>
         this.register({
           name: tool.name,
-          description: tool.description,
+          description: tool.description ?? tool.name,
           schema: tool.schema as Record<string, z.ZodTypeAny>,
           handler: tool.handler,
         }),

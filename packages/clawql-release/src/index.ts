@@ -7,3 +7,4 @@ export * from "./publish.js";
 export * from "./runtime-check.js";
 export * from "./merkle.js";
 export * from "./git.js";
+export * from "./ontology-schema.js";

@@ -23,7 +23,10 @@ export async function listVaultMarkdownRelPaths(
       const nextRel = rel ? `${rel}/${e.name}` : e.name;
       if (e.isDirectory()) {
         await walk(nextRel);
-      } else if (e.isFile() && extname(e.name).toLowerCase() === ".md") {
+      } else if (
+        e.isFile() &&
+        (extname(e.name).toLowerCase() === ".md" || extname(e.name).toLowerCase() === ".cqk")
+      ) {
         out.push(nextRel.replace(/\\/g, "/"));
       }
     }
@@ -46,7 +49,7 @@ function extractFirstH1Title(markdown: string): string | undefined {
 export function buildSlugToVaultPath(files: { path: string; text: string }[]): Map<string, string> {
   const slugToPath = new Map<string, string>();
   for (const f of files) {
-    const s = slugifyTitle(basename(f.path, ".md"));
+    const s = slugifyTitle(basename(f.path).replace(/\.(md|cqk)$/i, ""));
     if (!slugToPath.has(s)) slugToPath.set(s, f.path);
     const title = extractFirstH1Title(f.text);
     if (title) {

@@ -5,7 +5,14 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { defaultOntologySearchRoots, loadOntologyEntities } from "./load.js";
-import type { GeneratedReadTool, OntologyGenerateResult, OntologyLintResult } from "./types.js";
+import type {
+  GeneratedReadTool,
+  GeneratedWriteTool,
+  OntologyAction,
+  OntologyGenerateResult,
+  OntologyLintResult,
+  OntologyRelationship,
+} from "./types.js";
 import { lintOntology } from "./lint.js";
 
 function snakeEntity(name: string): string {
@@ -13,6 +20,98 @@ function snakeEntity(name: string): string {
     .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
     .replace(/\s+/g, "_")
     .toLowerCase();
+}
+
+/** LOW/MEDIUM + NATIVE kinetic writes are generated as gated MCP write tool defs (essay 3.2–3.4). */
+export function isShipableNativeWrite(action: OntologyAction): boolean {
+  const level = String(action.kinetic_level ?? "").toUpperCase();
+  return (
+    action.kind === "write" &&
+    action.kinetic === true &&
+    (level === "LOW" || level === "MEDIUM") &&
+    String(action.executor ?? "").toUpperCase() === "NATIVE"
+  );
+}
+
+/** @deprecated use {@link isShipableNativeWrite} */
+export function isShipableLowNativeWrite(action: OntologyAction): boolean {
+  return (
+    isShipableNativeWrite(action) && String(action.kinetic_level ?? "").toUpperCase() === "LOW"
+  );
+}
+
+function writeInputSchemaForAction(
+  entityName: string,
+  action: OntologyAction,
+  properties:
+    Record<string, { type?: string; values?: string[]; change_limit?: string }> | undefined
+): GeneratedWriteTool["inputSchema"] {
+  // Convention: update_<snake>_status → id + status enum from entity properties.
+  if (
+    action.name === `update_${snakeEntity(entityName)}_status` ||
+    (action.name.endsWith("_status") && !action.name.includes("value"))
+  ) {
+    const statusProp = properties?.status;
+    return {
+      id: { type: "string", description: `${entityName} identifier` },
+      status: {
+        type: "string",
+        description: "New status value",
+        ...(statusProp?.values?.length ? { values: statusProp.values } : {}),
+      },
+    };
+  }
+  if (action.name.includes("value") || action.name.includes("payment")) {
+    return {
+      id: { type: "string", description: `${entityName} identifier` },
+      amount: { type: "number", description: "New money amount" },
+      mandate_type: {
+        type: "string",
+        description: "Mandate type when required (e.g. AP2_FINANCIAL)",
+        optional: true,
+      },
+      mandate_id: {
+        type: "string",
+        description: "Mandate / approval id when required",
+        optional: true,
+      },
+    };
+  }
+  return {
+    id: { type: "string", description: `${entityName} identifier` },
+    mandate_type: { type: "string", description: "Mandate type when required", optional: true },
+    mandate_id: { type: "string", description: "Mandate id when required", optional: true },
+  };
+}
+
+function toWriteTool(
+  entityName: string,
+  action: OntologyAction,
+  sourcePath: string,
+  properties: Record<string, { type?: string; values?: string[] }> | undefined
+): GeneratedWriteTool {
+  return {
+    name: action.name,
+    entity: entityName,
+    kind: "write",
+    description: action.description?.trim() || `Kinetic write ${action.name} on ${entityName}`,
+    kinetic: true,
+    kinetic_level: String(action.kinetic_level ?? "LOW"),
+    blast_radius: action.blast_radius,
+    rollback_protocol: action.rollback_protocol,
+    executor: String(action.executor ?? "NATIVE"),
+    requires_mandate: action.requires_mandate,
+    mandate_type: action.mandate_type,
+    audit_level: action.audit_level,
+    inputSchema: writeInputSchemaForAction(entityName, action, properties),
+    sourcePath,
+  };
+}
+
+function relationshipToolName(fromEntity: string, rel: OntologyRelationship): string {
+  const snake = snakeEntity(fromEntity);
+  if (rel.via?.startsWith(snake)) return `get_${rel.via}`;
+  return `get_${snake}_${snakeEntity(rel.entity)}s`;
 }
 
 function defaultReadToolsForEntity(
@@ -40,6 +139,29 @@ function defaultReadToolsForEntity(
   ];
 }
 
+function relationshipToolsForEntity(
+  entityName: string,
+  relationships: OntologyRelationship[] | undefined,
+  sourcePath: string
+): GeneratedReadTool[] {
+  const out: GeneratedReadTool[] = [];
+  for (const rel of relationships ?? []) {
+    out.push({
+      name: relationshipToolName(entityName, rel),
+      entity: entityName,
+      kind: "read",
+      description:
+        rel.description?.trim() ||
+        `Traverse ${entityName} → ${rel.entity} (${rel.type}${rel.via ? ` via ${rel.via}` : ""})`,
+      inputSchema: {
+        id: { type: "string", description: `${entityName} identifier` },
+      },
+      sourcePath,
+    });
+  }
+  return out;
+}
+
 export type GenerateOntologyOptions = {
   rootDir?: string;
   paths?: string[];
@@ -51,6 +173,54 @@ export type GenerateOntologyOptions = {
   /** When true, synthesize search_/get_ tools if entity has no read actions. */
   synthesizeDefaults?: boolean;
 };
+
+function renderOkfIndex(entities: LoadedMeta[]): string {
+  const lines = [
+    "---",
+    'type: "index"',
+    'title: "Ontology entity catalog"',
+    'description: "OKF catalog of enterprise Ontology entity types (Git schema)"',
+    'tags: ["ontology", "okf", "index"]',
+    `timestamp: "${new Date().toISOString()}"`,
+    "clawql_okf: true",
+    "---",
+    "",
+    "# Ontology entity catalog",
+    "",
+    "Generated by `clawql ontology generate`. Prefer this index before loading full `.cqe` bodies.",
+    "",
+  ];
+  for (const e of entities) {
+    lines.push(`- **${e.name}** — ${e.description} (\`${e.relPath}\`)`);
+  }
+  lines.push("");
+  return lines.join("\n");
+}
+
+type LoadedMeta = {
+  name: string;
+  description: string;
+  relPath: string;
+  pii: string[];
+  sources: unknown[];
+};
+
+function renderOnyxStubs(entities: LoadedMeta[]): string {
+  return `${JSON.stringify(
+    {
+      apiVersion: "clawql.dev/ontology/v1alpha1",
+      kind: "OnyxSourceStubs",
+      note: "Manual apply — automatic Onyx connector sync is not yet wired (essay gap B5/8.2).",
+      entities: entities.map((e) => ({
+        name: e.name,
+        sources: e.sources,
+        pii_fields: e.pii,
+      })),
+    },
+    null,
+    2
+  )}\n`;
+}
 
 export async function generateOntologyReadTools(opts: GenerateOntologyOptions): Promise<{
   result: OntologyGenerateResult;
@@ -72,7 +242,7 @@ export async function generateOntologyReadTools(opts: GenerateOntologyOptions): 
     });
     if (!lint.ok) {
       return {
-        result: { tools: [], deferredWriteActions: [], entities: lint.entities },
+        result: { tools: [], writeTools: [], deferredWriteActions: [], entities: lint.entities },
         lint,
         written: [],
       };
@@ -85,27 +255,62 @@ export async function generateOntologyReadTools(opts: GenerateOntologyOptions): 
   }
 
   const tools: GeneratedReadTool[] = [];
+  const writeTools: GeneratedWriteTool[] = [];
   const deferredWriteActions: OntologyGenerateResult["deferredWriteActions"] = [];
   const entities: string[] = [];
+  const metas: LoadedMeta[] = [];
   const synthesize = opts.synthesizeDefaults !== false;
+  const seenToolNames = new Set<string>();
+
+  const pushTool = (t: GeneratedReadTool) => {
+    if (seenToolNames.has(t.name)) return;
+    seenToolNames.add(t.name);
+    tools.push(t);
+  };
+
+  const pushWrite = (t: GeneratedWriteTool) => {
+    if (seenToolNames.has(t.name)) return;
+    seenToolNames.add(t.name);
+    writeTools.push(t);
+  };
 
   for (const { path, entity } of loaded) {
     const name = entity.metadata?.name;
     if (!name) continue;
     entities.push(name);
+    metas.push({
+      name,
+      description: entity.spec?.description ?? "",
+      relPath: path,
+      pii: entity.spec?.pii_fields ?? [],
+      sources: entity.spec?.sources ?? [],
+    });
     const actions = entity.spec?.actions ?? [];
     const readActions = actions.filter((a) => a.kind === "read");
     for (const a of actions.filter((x) => x.kind === "write")) {
-      deferredWriteActions.push({ entity: name, name: a.name, sourcePath: path });
+      if (isShipableNativeWrite(a)) {
+        pushWrite(toWriteTool(name, a, path, entity.spec?.properties));
+      } else {
+        deferredWriteActions.push({
+          entity: name,
+          name: a.name,
+          sourcePath: path,
+          reason: !a.kinetic
+            ? "missing kinetic"
+            : !["LOW", "MEDIUM"].includes(String(a.kinetic_level ?? "").toUpperCase())
+              ? `kinetic_level=${a.kinetic_level ?? "?"}`
+              : `executor=${a.executor ?? "?"}`,
+        });
+      }
     }
 
     if (readActions.length === 0 && synthesize) {
       for (const t of defaultReadToolsForEntity(name)) {
-        tools.push({ ...t, entity: name, sourcePath: path });
+        pushTool({ ...t, entity: name, sourcePath: path });
       }
     } else {
       for (const a of readActions) {
-        tools.push({
+        pushTool({
           name: a.name,
           entity: name,
           kind: "read",
@@ -126,38 +331,53 @@ export async function generateOntologyReadTools(opts: GenerateOntologyOptions): 
         });
       }
     }
+
+    for (const t of relationshipToolsForEntity(name, entity.spec?.relationships, path)) {
+      pushTool(t);
+    }
   }
 
-  const result: OntologyGenerateResult = { tools, deferredWriteActions, entities };
+  const result: OntologyGenerateResult = { tools, writeTools, deferredWriteActions, entities };
   const outDir = resolve(opts.outDir);
   await mkdir(outDir, { recursive: true });
 
   const toolsJsonPath = join(outDir, "tools.json");
   const catalog = {
     apiVersion: "clawql.dev/ontology/v1alpha1",
-    kind: "GeneratedReadTools",
+    kind: "GeneratedOntologyTools",
     generatedAt: new Date().toISOString(),
     entities,
     tools,
+    writeTools,
     deferredWriteActions,
+    note: "writeTools register when CLAWQL_ENABLE_ONTOLOGY_WRITES=1 (LOW/MEDIUM Transaction Sandbox).",
   };
   await writeFile(toolsJsonPath, `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
 
   const pluginPath = join(outDir, "ontology-plugin.stub.ts");
-  await writeFile(pluginPath, renderPluginStub(tools), "utf8");
+  await writeFile(pluginPath, renderPluginStub(tools, writeTools), "utf8");
+
+  const indexPath = join(outDir, "index.md");
+  await writeFile(indexPath, renderOkfIndex(metas), "utf8");
+
+  const onyxPath = join(outDir, "onyx-sources.stub.json");
+  await writeFile(onyxPath, renderOnyxStubs(metas), "utf8");
 
   const readmePath = join(outDir, "README.md");
   await writeFile(
     readmePath,
     [
-      "# Generated ontology read tools",
+      "# Generated ontology tools",
       "",
       "Produced by `clawql ontology generate` (ADR 0009).",
       "",
-      `- **tools.json** — MCP tool catalog (read-only)`,
-      `- **ontology-plugin.stub.ts** — TypeScript stub for a future \`createOntologyPlugin()\``,
+      `- **tools.json** — MCP read + relationship tools; **writeTools** for LOW/MEDIUM+NATIVE kinetic`,
+      `- **index.md** — OKF entity catalog (prefer before loading full \`.cqe\` bodies)`,
+      `- **onyx-sources.stub.json** — Onyx connector stubs from \`sources:\` (manual apply)`,
+      `- **ontology-plugin.stub.ts** — catalog constants`,
       "",
-      "Write / kinetic actions are listed under `deferredWriteActions` and are **not** registered in v1.",
+      "Live reads: `CLAWQL_ENABLE_ONTOLOGY=1`. Live LOW/MEDIUM kinetic writes: also `CLAWQL_ENABLE_ONTOLOGY_WRITES=1`.",
+      "HIGH+/non-NATIVE writes stay under `deferredWriteActions`.",
       "",
     ].join("\n"),
     "utf8"
@@ -166,31 +386,53 @@ export async function generateOntologyReadTools(opts: GenerateOntologyOptions): 
   return {
     result,
     lint,
-    written: [toolsJsonPath, pluginPath, readmePath],
+    written: [toolsJsonPath, pluginPath, indexPath, onyxPath, readmePath],
   };
 }
 
-function renderPluginStub(tools: GeneratedReadTool[]): string {
+function renderPluginStub(tools: GeneratedReadTool[], writeTools: GeneratedWriteTool[]): string {
   const toolList = tools
     .map(
       (t) =>
         `  { name: ${JSON.stringify(t.name)}, entity: ${JSON.stringify(t.entity)}, description: ${JSON.stringify(t.description)} }`
     )
     .join(",\n");
+  const writeList = writeTools
+    .map(
+      (t) =>
+        `  { name: ${JSON.stringify(t.name)}, entity: ${JSON.stringify(t.entity)}, kinetic_level: ${JSON.stringify(t.kinetic_level)}, executor: ${JSON.stringify(t.executor)} }`
+    )
+    .join(",\n");
 
   return `/**
  * AUTO-GENERATED by \`clawql ontology generate\` — do not hand-edit.
- * Read-only MCP tool stubs for the enterprise Ontology (ADR 0009).
+ * Ontology MCP catalog (ADR 0009 / essay 3.1–3.2).
  *
- * Wire into ClawQL by implementing handlers that query entity sources
- * (SQL / OpenAPI / Onyx) and registering via ClawQLPluginRegistrationApi.
+ * Reads: CLAWQL_ENABLE_ONTOLOGY=1
+ * LOW kinetic writes: CLAWQL_ENABLE_ONTOLOGY_WRITES=1
  */
 
 export const ONTOLOGY_READ_TOOLS = [
 ${toolList}
 ] as const;
 
-// Register each tool with api.registerMcpTool({ name, schema, handler })
-// Write/kinetic actions are intentionally omitted in v1.
+export const ONTOLOGY_WRITE_TOOLS = [
+${writeList}
+] as const;
 `;
+}
+
+/** @internal exported for tests */
+export function _relationshipToolNameForTests(from: string, rel: OntologyRelationship): string {
+  return relationshipToolName(from, rel);
+}
+
+/** @internal exported for tests */
+export function _isShipableLowNativeWriteForTests(action: OntologyAction): boolean {
+  return isShipableLowNativeWrite(action);
+}
+
+/** @internal exported for tests */
+export function _isShipableNativeWriteForTests(action: OntologyAction): boolean {
+  return isShipableNativeWrite(action);
 }

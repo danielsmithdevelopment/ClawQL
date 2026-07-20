@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- _(Pending ontology essay gap-closure / docs-site pages — merge #718–#720 before tagging.)_
+- _(None yet — next minor / patch after 7.1.0.)_
 
 ## [7.1.0] - 2026-07-20
 
@@ -18,6 +18,7 @@ Minor release on the **7.0 Agentic Gateway** line: **enterprise Ontology + OKF**
 ### Added
 
 - **Enterprise Ontology (`clawql-ontology`) + OKF** — ADR [0009](docs/adr/0009-enterprise-ontology.md) / [0010](docs/adr/0010-cq-file-extensions.md); package lint/generate CLI; OKF-compatible `memory_ingest` frontmatter ([`docs/memory/okf.md`](docs/memory/okf.md)); CI **Ontology lint (examples)**; schema shipped in-package for standalone npm installs; Command Deck UX / decision-rationale docs.
+- **Ontology essay gap-closure (band A + MEDIUM kinetic)** ([#720](https://github.com/danielsmithdevelopment/ClawQL/pull/720)) — fixture MCP plugin + packs; kinetic ATR/mandate/Transaction Sandbox; `.cqe` primary / dual-accept; `worm_ref` → `.cqk` vault notes; docs site **`/architecture/enterprise-ontology`** + CQ extension pages; essay backlog [`docs/ontology/essay-gap-closure.md`](docs/ontology/essay-gap-closure.md); `clawql release` ontology schema verify; doctor ontology checks.
 - **Payments: prepaid credits + ACH/FC top-up** — grant ledger, Stripe Financial Connections / `us_bank_account` ([`docs/payments/credits-ach.md`](docs/payments/credits-ach.md)).
 - **Payments: Connect payouts, live Base USDC, Ramp agentic cards, consumer off-ramp** — ([`docs/payments/payouts-ramp.md`](docs/payments/payouts-ramp.md)).
 - **Payments: agent compensation (DAOS 2PC)** — stage/confirm deposit + cash-out MCP tools; FAILED WORM events; Coordinator stage-only port ([`docs/payments/agent-compensation.md`](docs/payments/agent-compensation.md)).

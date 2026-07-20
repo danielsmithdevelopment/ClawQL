@@ -1,0 +1,29 @@
+{
+  "contracts": [
+    {
+      "contract_id": "acc-8821",
+      "title": "Enterprise Software License Agreement — Acme Corp",
+      "status": "active",
+      "effective_date": "2026-01-15",
+      "expiry_date": "2027-01-14",
+      "value": { "amount": 48500.0, "currency": "USD" },
+      "parties": [
+        {
+          "organization_id": "org-4421",
+          "name": "Acme Corporation",
+          "type": "customer",
+          "contact_email": "legal@acme.example",
+          "contact_phone": "+1-555-0100"
+        }
+      ]
+    }
+  ],
+  "organizations": [
+    {
+      "organization_id": "org-4421",
+      "name": "Acme Corporation",
+      "contact_email": "legal@acme.example",
+      "contact_phone": "+1-555-0100"
+    }
+  ]
+}
