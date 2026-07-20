@@ -9,10 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Enterprise Ontology (`clawql-ontology`) + OKF** — ADR [0009](docs/adr/0009-enterprise-ontology.md) / [0010](docs/adr/0010-cq-file-extensions.md); package lint/generate CLI; OKF-compatible `memory_ingest` frontmatter ([`docs/memory/okf.md`](docs/memory/okf.md)); CI **Ontology lint (examples)**; schema shipped in-package for standalone npm installs.
+- **Payments: prepaid credits, DeductionService, agent compensation** — Stripe FC/ACH top-up, sync hold/capture on inference, DAOS-aligned 2PC deposit/cash-out MCP tools; docs under [`docs/payments/`](docs/payments/).
 - **Team vault sync (`clawql sync`)** — push/pull `~/.ClawQL` shared paths (Memory/, sources/, chats/) to **Cloudflare R2** (default), **AWS S3**, or **GCS** (S3-compatible HMAC interop API); provider profiles for endpoint/path-style; vault keys **`gcsHmacAccessId`** / **`gcsHmacSecret`** for GCS; `sync.json` for bucket/prefix; secrets never uploaded. **Auto sync:** `CLAWQL_SYNC_AUTO=1` debounced push after `memory_ingest`; `CLAWQL_SYNC_AUTO_PULL=1` throttled pull before `memory_recall`. **Helm:** `teamSync.*` values on `charts/clawql-mcp` (GCS auto-sets endpoint). **Docs:** [`docs/getting-started/getting-started-for-teams.md`](docs/getting-started/getting-started-for-teams.md) (teams hub), [`docs/getting-started/getting-started-for-teams.md`](docs/getting-started/getting-started-for-teams.md#team-vault-sync); site: [`/getting-started/for-teams`](https://docs.clawql.com/getting-started/for-teams).
 
 ### Changed
 
+- **`clawql-payments` export `./credits`** — subpath alias alongside `./compensation` / `./payouts` for prepaid ledger + DeductionService consumers.
+- **npm publish order** — `clawql-payments` before `clawql-inference` (inference depends on payments entitlements/credits).
+- **`clawql-ontology` tsup** — shebang only on CLI entry; library `index` has no shebang.
 - **GTM / positioning (site-wide)** — **Agentic Gateway** as the **Foundational Platform for Auditable Production AI**; Zero-Trust Agentic Fabric docs; clawql.com + docs.clawql.com alignment; root README, `package.json` description, `RELEASE_NOTES_v7.0.0.md` headline, and **[`docs/announcements/announcement-drafts-v7.0.0.md`](docs/announcements/announcement-drafts-v7.0.0.md)** for the pending 7.0 announcement.
 - **Docs site (7.0 polish)** — Lighthouse perf: static header backdrop, **search on user intent** (placeholder + Cmd/Ctrl+K), deferred WebMCP register, dialog-only autocomplete; webpack search index with lazy query load. **SEO:** hub route metadata; sitemap + `SearchAction` JSON-LD; **Article** schema on case studies (dates, breadcrumbs). **A11y:** expanded axe routes; **CSS-only sidebar nav** (no framer-motion); home skeleton heading fix.
 

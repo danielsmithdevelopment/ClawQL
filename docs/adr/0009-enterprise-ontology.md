@@ -125,7 +125,7 @@ Ouroboros Seeds ([ADR 0001](./0001-ouroboros-workflow-engine.md)) carry a **task
 ### Follow-ups (implementation, not this ADR)
 
 1. Ship provisional JSON Schema + example entities under `schemas/ontology/` and `examples/ontology/`. ✅ (PR foundation)
-2. Implement `clawql ontology lint` / `generate` CLI (Vitest covers package behavior; dedicated CI `ontology:lint` job still optional). ✅ — `packages/clawql-ontology` + `clawql ontology lint` / `generate`
+2. Implement `clawql ontology lint` / `generate` CLI + CI `Ontology lint (examples)` job. ✅ — `packages/clawql-ontology`, `npm run ontology:lint`, `.github/workflows/ci.yml`
 3. Wire `memory_ingest` frontmatter to OKF-compatible fields (`type`, optional `worm_ref`). ✅ — see [`docs/memory/okf.md`](../memory/okf.md)
 4. Document hot/cold sync tiers when implementing tiered pull.
 5. Open tracking issues for graph layer, kinetic sandbox, visual builder, vertical packs.
