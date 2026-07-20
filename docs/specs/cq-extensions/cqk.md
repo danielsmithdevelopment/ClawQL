@@ -14,29 +14,29 @@ Markdown with YAML frontmatter (OKF). File path = concept identity.
 
 ## Required frontmatter
 
-| Field | Notes |
-| ----- | ----- |
-| `type` | OKF required — ClawQL taxonomy (`decision`, `context`, `task_result`, …) |
-| `clawql_okf` | `true` |
-| `worm_ref` | WORM entry hash or `null` when not yet sealed |
+| Field        | Notes                                                                    |
+| ------------ | ------------------------------------------------------------------------ |
+| `type`       | OKF required — ClawQL taxonomy (`decision`, `context`, `task_result`, …) |
+| `clawql_okf` | `true`                                                                   |
+| `worm_ref`   | WORM entry hash or `null` when not yet sealed                            |
 
 ## Recommended frontmatter
 
-| Field | Notes |
-| ----- | ----- |
-| `title`, `description`, `resource`, `tags`, `timestamp` | OKF recommended |
-| `correlation_id` | Session / request correlation |
-| `agent_id` | Producing agent |
-| `verdict` | Optional eval / quality |
-| `entity_refs` | List of Ontology entity names or instance ids |
+| Field                                                   | Notes                                         |
+| ------------------------------------------------------- | --------------------------------------------- |
+| `title`, `description`, `resource`, `tags`, `timestamp` | OKF recommended                               |
+| `correlation_id`                                        | Session / request correlation                 |
+| `agent_id`                                              | Producing agent                               |
+| `verdict`                                               | Optional eval / quality                       |
+| `entity_refs`                                           | List of Ontology entity names or instance ids |
 
 ## Distinguishing `.cqk` vs `.md` vs `.cqe`
 
-| File | Role |
-| ---- | ---- |
-| `.md` (OKF) | Portable knowledge; ClawQL can read/write |
-| `.cqk` | Same + **required** provenance fields; Onyx/doctor treat as ClawQL-owned |
-| `.cqe` | **Schema** definition (entity type), not an instance note |
+| File        | Role                                                                     |
+| ----------- | ------------------------------------------------------------------------ |
+| `.md` (OKF) | Portable knowledge; ClawQL can read/write                                |
+| `.cqk`      | Same + **required** provenance fields; Onyx/doctor treat as ClawQL-owned |
+| `.cqe`      | **Schema** definition (entity type), not an instance note                |
 
 ## Tooling hooks
 

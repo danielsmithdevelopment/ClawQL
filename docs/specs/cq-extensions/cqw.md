@@ -16,20 +16,20 @@ YAML compatible with Argo `Workflow` / `WorkflowTemplate`, plus ClawQL annotatio
 
 Under `metadata.annotations` (or a top-level `clawql:` extension object — choose one in v1 tooling; prefer annotations for Argo compatibility):
 
-| Key | Notes |
-| --- | ----- |
-| `clawql.dev/kinetic` | `true` when the workflow performs side effects |
-| `clawql.dev/risk-level` | `LOW` \| `MEDIUM` \| `HIGH` \| `CRITICAL` |
-| `clawql.dev/blast-radius` | e.g. `SINGLE_RECORD`, `BULK`, `INFRA` |
-| `clawql.dev/rollback-protocol` | e.g. `WORKFLOW_CANCEL`, `REVERSAL` |
-| `clawql.dev/executor` | `ARGO_WORKFLOW` (default for `.cqw`) |
+| Key                            | Notes                                          |
+| ------------------------------ | ---------------------------------------------- |
+| `clawql.dev/kinetic`           | `true` when the workflow performs side effects |
+| `clawql.dev/risk-level`        | `LOW` \| `MEDIUM` \| `HIGH` \| `CRITICAL`      |
+| `clawql.dev/blast-radius`      | e.g. `SINGLE_RECORD`, `BULK`, `INFRA`          |
+| `clawql.dev/rollback-protocol` | e.g. `WORKFLOW_CANCEL`, `REVERSAL`             |
+| `clawql.dev/executor`          | `ARGO_WORKFLOW` (default for `.cqw`)           |
 
 Recommended:
 
-| Key | Notes |
-| --- | ----- |
-| `clawql.dev/requires-mandate` | `true` / `false` |
-| `clawql.dev/mandate-type` | AP2 type when required |
+| Key                               | Notes                                         |
+| --------------------------------- | --------------------------------------------- |
+| `clawql.dev/requires-mandate`     | `true` / `false`                              |
+| `clawql.dev/mandate-type`         | AP2 type when required                        |
 | `clawql.dev/correlation-id-param` | Workflow param name carrying WORM correlation |
 
 ## Tooling hooks

@@ -5,12 +5,12 @@
 
 Open, one-page specifications for ClawQL-owned file types. Base content remains human-readable YAML or OKF Markdown. The extension is a **tooling signal**, not a binary container.
 
-| Spec | Extension | Role |
-| ---- | --------- | ---- |
-| [cqm.md](./cqm.md) | `.cqm` | Manifest (governance, release, policy) |
-| [cqe.md](./cqe.md) | `.cqe` | Ontology entity |
-| [cqw.md](./cqw.md) | `.cqw` | Kinetic-aware workflow |
-| [cqk.md](./cqk.md) | `.cqk` | Provenanced knowledge entry |
+| Spec               | Extension | Role                                   |
+| ------------------ | --------- | -------------------------------------- |
+| [cqm.md](./cqm.md) | `.cqm`    | Manifest (governance, release, policy) |
+| [cqe.md](./cqe.md) | `.cqe`    | Ontology entity                        |
+| [cqw.md](./cqw.md) | `.cqw`    | Kinetic-aware workflow                 |
+| [cqk.md](./cqk.md) | `.cqk`    | Provenanced knowledge entry            |
 
 ## Sequencing
 

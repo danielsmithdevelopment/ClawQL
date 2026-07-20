@@ -16,21 +16,21 @@ ClawQL’s vault and governance surfaces started as **plain Markdown / YAML**. O
 
 Candidate names considered and rejected:
 
-| Extension | Why not |
-| --------- | ------- |
+| Extension | Why not                                                                       |
+| --------- | ----------------------------------------------------------------------------- |
 | `.clawql` | Too long for daily filenames; keep for directory branding (`~/.ClawQL/`) only |
-| `.cql` | Collides with **Cassandra Query Language** (and niche XDCC lists) — avoid |
+| `.cql`    | Collides with **Cassandra Query Language** (and niche XDCC lists) — avoid     |
 
 ## Decision
 
 ### 1) Four extensions — earn each one
 
-| Ext | Name | Purpose | Base serialization |
-| --- | ---- | ------- | ------------------ |
-| **`.cqm`** | ClawQL Manifest | EnterpriseGovernance / release / policy manifests | YAML (ClawQL schema) |
-| **`.cqe`** | ClawQL Entity | Ontology entity definitions | YAML or OKF Markdown (entity schema) |
-| **`.cqw`** | ClawQL Workflow | Argo-compatible workflows with kinetic annotations | YAML |
-| **`.cqk`** | ClawQL Knowledge | OKF knowledge entries with ClawQL provenance | OKF Markdown |
+| Ext        | Name             | Purpose                                            | Base serialization                   |
+| ---------- | ---------------- | -------------------------------------------------- | ------------------------------------ |
+| **`.cqm`** | ClawQL Manifest  | EnterpriseGovernance / release / policy manifests  | YAML (ClawQL schema)                 |
+| **`.cqe`** | ClawQL Entity    | Ontology entity definitions                        | YAML or OKF Markdown (entity schema) |
+| **`.cqw`** | ClawQL Workflow  | Argo-compatible workflows with kinetic annotations | YAML                                 |
+| **`.cqk`** | ClawQL Knowledge | OKF knowledge entries with ClawQL provenance       | OKF Markdown                         |
 
 **Rule:** create an extension only when ClawQL tooling must treat the file differently from its generic equivalent. Not branding — a functional signal.
 

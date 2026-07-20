@@ -16,21 +16,21 @@ YAML. UTF-8. Optional leading document separator `---`.
 
 ## Required top-level fields
 
-| Field | Type | Notes |
-| ----- | ---- | ----- |
-| `apiVersion` | string | e.g. `clawql.dev/manifest/v1alpha1` |
-| `kind` | string | `ReleaseManifest` \| `EnterpriseGovernance` \| `Policy` |
-| `metadata.name` | string | Stable id |
+| Field           | Type   | Notes                                                   |
+| --------------- | ------ | ------------------------------------------------------- |
+| `apiVersion`    | string | e.g. `clawql.dev/manifest/v1alpha1`                     |
+| `kind`          | string | `ReleaseManifest` \| `EnterpriseGovernance` \| `Policy` |
+| `metadata.name` | string | Stable id                                               |
 
 ## Recommended fields
 
-| Field | Notes |
-| ----- | ----- |
-| `metadata.version` | Semver or release tag |
-| `spec` | Kind-specific body |
-| `spec.ontologySchemaVersion` | Pin to Ontology schema generation |
-| `spec.compliance` | Level, residency, PII handling |
-| `spec.kinetic` | Default blast-radius / mandate policy |
+| Field                        | Notes                                 |
+| ---------------------------- | ------------------------------------- |
+| `metadata.version`           | Semver or release tag                 |
+| `spec`                       | Kind-specific body                    |
+| `spec.ontologySchemaVersion` | Pin to Ontology schema generation     |
+| `spec.compliance`            | Level, residency, PII handling        |
+| `spec.kinetic`               | Default blast-radius / mandate policy |
 
 ## Tooling hooks
 
