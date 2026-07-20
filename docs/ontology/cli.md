@@ -84,7 +84,8 @@ See [essay gap closure](./essay-gap-closure.md) **7.3** and [Command Deck UX not
 
 - `clawql-release collect` pins `ontologySchema` when entity trees exist
 - `clawql-release lint examples/ontology/governance/demo.cqm` validates `.cqm`
-- `clawql doctor` reports ontology entity dir presence
+- `clawql doctor` reports ontology entity dir presence **and warns** if schema is missing from Git or marked object-storage-only (ADR 0009 §6 / essay **4.4**)
+- Vertical packs: **legal** shipped; healthcare / financial / real-estate are roadmap READMEs only
 
 ## Library
 

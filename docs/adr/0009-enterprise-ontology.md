@@ -94,6 +94,12 @@ One governance layer (`@kinetic` + PEP + WORM); agents do not choose the executo
 
 `clawql sync` remains the R2↔edge path. Hot/cold tiering (recent memory vs archive) is the scaling model — not “put the whole vault in GitHub.”
 
+**Doctor (essay gap 4.4):** `clawql doctor` **warns** (does not hard-fail) when:
+- no Entity files under `.clawql/ontology/entities` / `examples/ontology/entities` / `CLAWQL_ONTOLOGY_DIR`, or
+- env marks schema as object-storage-only (`CLAWQL_ONTOLOGY_SCHEMA_STORE=r2|s3|…`, `CLAWQL_ONTOLOGY_SCHEMA_IN_OBJECT_STORAGE=1`, or a remote `CLAWQL_ONTOLOGY_SCHEMA_URI`).
+
+Instances may live in R2; **schema must stay in Git** for PR review and release `ontologySchema` pins.
+
 ### 7) Ontology builder sequencing
 
 | Phase     | Deliverable                                                                                                                                                             |
@@ -177,6 +183,9 @@ Ouroboros Seeds ([ADR 0001](./0001-ouroboros-workflow-engine.md)) carry a **task
 7. **v1 read backend = fixture mode** (essay gap **2.3**). ✅ — see §9; SQL adapters are partner/roadmap.
 8. **v1 kinetic call surface = MCP** (essay gap **3.1**). ✅ — see §3 / §10; GraphQL `@kinetic` = transport target (**3.8**).
 9. **LOW MCP kinetic** (essay gaps **3.2–3.3**). ✅ — see §11; `CLAWQL_ENABLE_ONTOLOGY_WRITES`.
+10. **Schema in Git / doctor warn** (essay gap **4.4**). ✅ — §6 doctor bullets.
+11. **Legal-only vertical packs** (essay gap **6.3** / **B6a**). ✅ — `packs/legal` shipped; others roadmap READMEs.
+12. **Publish disclosures** (B1–B5, B4a): see [`essay-gap-closure.md`](../ontology/essay-gap-closure.md) § Decisions locked.
 
 ## Status language
 

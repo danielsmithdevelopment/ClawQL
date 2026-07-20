@@ -107,5 +107,14 @@ export function listOntologyPacks(): string[] {
   return readdirSync(packsDir, { withFileTypes: true })
     .filter((d) => d.isDirectory())
     .map((d) => d.name)
+    .filter((name) => {
+      const entities = join(packsDir, name, "entities");
+      if (!existsSync(entities)) return false;
+      try {
+        return readdirSync(entities).some((f) => /\.(cqe|ya?ml|json)$/i.test(f));
+      } catch {
+        return false;
+      }
+    })
     .sort();
 }
