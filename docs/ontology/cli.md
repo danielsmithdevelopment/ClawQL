@@ -57,7 +57,7 @@ Do not claim automatic SQL binding in essay or Getting Started until a dedicated
 | `ontology-plugin.stub.ts` | `ONTOLOGY_READ_TOOLS` constant                                       |
 | `README.md`               | Notes                                                                |
 
-Write / kinetic actions are listed as `deferredWriteActions` and **not** registered until Transaction Sandbox.
+Write / kinetic actions are listed as `deferredWriteActions` and **not** registered until Transaction Sandbox. **v1 kinetic surface = MCP** ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)); GraphQL `@kinetic` is a later transport target. Next impl: generate gated write tool defs (**3.2**) + LOW sandbox (**3.3**).
 
 Entity files: prefer **`.cqe`** ([ADR 0010 §2a](../adr/0010-cq-file-extensions.md)); `.yaml` / `.yml` / `.json` remain accepted ([`.cqe` spec](https://docs.clawql.com/specs/cq-extensions/cqe)).
 

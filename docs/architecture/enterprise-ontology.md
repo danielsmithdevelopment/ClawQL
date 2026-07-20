@@ -128,13 +128,15 @@ initiate_payment(...) → PaymentResult  # kinetic + AP2
 
 ---
 
-## Kinetic governance: GraphQL mutations are transport, not enough
+## Kinetic governance: MCP first; GraphQL is transport later
 
 **What GraphQL gets right:** query vs mutation is a schema-level semantic contract; introspection lets agents and PEPs discover side-effecting operations.
 
 **What it lacks:** graded risk, AP2 mandate binding, blast-radius caps, rollback protocols, progressive canary.
 
-**Decision:** mutations (and MCP write tools) carry a `@kinetic` directive / equivalent YAML fields:
+**v1 decision ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)):** ship kinetic **writes as MCP tools** from Entity actions (`kinetic: true` + graded fields). PEP + Transaction Sandbox intercept MCP. GraphQL `@kinetic` remains the fabric-aligned **transport target** (essay samples / multi-client) — not a v1 ship gate.
+
+Illustrative GraphQL shape (target — not shipped until **3.8**):
 
 ```graphql
 type Mutation {
@@ -153,6 +155,7 @@ type Mutation {
 }
 ```
 
+Equivalent v1 authoring is YAML on `.cqe` write actions; generate emits MCP tool defs (gated until LOW sandbox).
 High-risk path (conceptual):
 
 ```text

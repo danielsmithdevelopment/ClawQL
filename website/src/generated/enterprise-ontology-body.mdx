@@ -18,13 +18,13 @@ The Ontology is what happens when you apply a TypeScript-grade type system to th
 
 Typed entity / relationship / action schemas are not only a grounding story — they are how ClawQL keeps agent context **lean**. Without them, Code Mode and projection have nothing precise to generate or trim against, and vault recall falls back to paste-the-notebook.
 
-| Token-efficiency layer | Ontology / OKF role                                                                                                                                              |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1 Code Mode**        | `.cqe` / entity YAML → generated read tools; full catalogs stay server-side                                                                                      |
-| **2 Response trim**    | Project only declared properties (ATR-visible)                                                                                                                   |
+| Token-efficiency layer | Ontology / OKF role                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
+| **1 Code Mode**        | `.cqe` / entity YAML → generated read tools; full catalogs stay server-side                         |
+| **2 Response trim**    | Project only declared properties (ATR-visible)                                                      |
 | **6 History distill**  | Compact transcripts into [`type: decision` rationale](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf-decision-rationale.md) / `.cqk` |
-| **7–9**                | Graph-aware recall + structured OKF output instead of free prose                                                                                                 |
-| **8 Routing**          | `kinetic_level` / risk informs Frugal → Frontier                                                                                                                 |
+| **7–9**                | Graph-aware recall + structured OKF output instead of free prose                                    |
+| **8 Routing**          | `kinetic_level` / risk informs Frugal → Frontier                                                    |
 
 Full stack: [Twelve layers of LLM cost](/architecture/token-efficiency). Ontology without those layers becomes a typed landfill; layers without ontology become cheap answers about the wrong objects.
 
@@ -50,7 +50,7 @@ Competitive wedge: _“Your Ontology is a YAML/OKF tree in Git, signed with your
 
 | Layer               | Analogy                                                |
 | ------------------- | ------------------------------------------------------ |
-| OOP class           | `Contract \{ parties, status, sign() \}`               |
+| OOP class           | `Contract \{ parties, status, sign() \}`                 |
 | Database schema     | `CREATE TABLE contracts (...)`                         |
 | Enterprise Ontology | Typed object + sources + graph edges + kinetic methods |
 
@@ -128,21 +128,19 @@ initiate_payment(...) → PaymentResult  # kinetic + AP2
 
 ---
 
-## Kinetic governance: GraphQL mutations are transport, not enough
+## Kinetic governance: MCP first; GraphQL is transport later
 
 **What GraphQL gets right:** query vs mutation is a schema-level semantic contract; introspection lets agents and PEPs discover side-effecting operations.
 
 **What it lacks:** graded risk, AP2 mandate binding, blast-radius caps, rollback protocols, progressive canary.
 
-**Decision:** mutations (and MCP write tools) carry a `@kinetic` directive / equivalent YAML fields:
+**v1 decision ([ADR 0009 §10](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0009-enterprise-ontology.md)):** ship kinetic **writes as MCP tools** from Entity actions (`kinetic: true` + graded fields). PEP + Transaction Sandbox intercept MCP. GraphQL `@kinetic` remains the fabric-aligned **transport target** (essay samples / multi-client) — not a v1 ship gate.
+
+Illustrative GraphQL shape (target — not shipped until **3.8**):
 
 ```graphql
 type Mutation {
-  initiatePayment(
-    accountId: ID!
-    amount: Money!
-    recipient: ID!
-  ): PaymentResult
+  initiatePayment(accountId: ID!, amount: Money!, recipient: ID!): PaymentResult
     @kinetic(
       riskLevel: HIGH
       requiresMandate: true
@@ -157,6 +155,7 @@ type Mutation {
 }
 ```
 
+Equivalent v1 authoring is YAML on `.cqe` write actions; generate emits MCP tool defs (gated until LOW sandbox).
 High-risk path (conceptual):
 
 ```text
@@ -306,9 +305,9 @@ CLI reference: [`docs/ontology/cli.md`](https://github.com/danielsmithdevelopmen
 
 Enterprises and researchers are converging on the same problem — **typed meaning for agents**:
 
-| Effort                                | Overlap with ClawQL                                               | Difference                                                                                                                                                                                          |
-| ------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Microsoft Fabric IQ Ontology**      | Entity types, relationships, agent grounding, visual playground   | Platform-bound (OneLake); ClawQL stays Git + open YAML/OKF + kinetic PEP                                                                                                                            |
+| Effort                                | Overlap with ClawQL                                               | Difference                                                                                                                             |
+| ------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Microsoft Fabric IQ Ontology**      | Entity types, relationships, agent grounding, visual playground   | Platform-bound (OneLake); ClawQL stays Git + open YAML/OKF + kinetic PEP                                                               |
 | **AIF (Argument Interchange Format)** | Structured rationale so understanding transfers without ambiguity | Argumentation-specific; ClawQL reuses the idea in [OKF `type: decision`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf-decision-rationale.md) for enterprise decisions |
 | **Palantir Ontology**                 | Typed digital twin for agents                                     | Proprietary console; ClawQL is portable and pipeline-native ([ADR 0009](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0009-enterprise-ontology.md))                           |
 
@@ -324,13 +323,13 @@ Do **not** publish the property-type / relationship / source DSL as a frozen sta
 
 ## Phased delivery checklist
 
-| Phase      | Scope                                                                                | Depends on                                                                                                                                                                                         |
-| ---------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase      | Scope                                                                                | Depends on                                                                                                                            |
+| ---------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
 | Foundation | `v1alpha1` schema, lint, read-tool generate, source derivation, manifest version pin | This ADR — **schema + `clawql ontology lint` / `generate` shipped** ([cli](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ontology/cli.md)); derivation / manifest pin still open |
-| Graph      | Relationship traversal, ATRClaim-aware edges, graph-aware recall                     | Foundation                                                                                                                                                                                         |
-| Kinetic    | Write tools, `@kinetic`, Transaction Sandbox, AP2, canary                            | Foundation + PEP                                                                                                                                                                                   |
-| Builder UI | Command Deck schema editor                                                           | Stable format                                                                                                                                                                                      |
-| Verticals  | Industry OKF packs                                                                   | Builder + design partners                                                                                                                                                                          |
+| Graph      | Relationship traversal, ATRClaim-aware edges, graph-aware recall                     | Foundation                                                                                                                            |
+| Kinetic    | Write tools, `@kinetic`, Transaction Sandbox, AP2, canary                            | Foundation + PEP                                                                                                                      |
+| Builder UI | Command Deck schema editor                                                           | Stable format                                                                                                                         |
+| Verticals  | Industry OKF packs                                                                   | Builder + design partners                                                                                                             |
 
 ---
 

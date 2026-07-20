@@ -19,7 +19,7 @@
 | Live typed tools (enums, not ints)         | **Shipped** — fixture handlers (`CLAWQL_ENABLE_ONTOLOGY=1`)                       | Essay: fixture/demo store; SQL = roadmap ([ADR 0009 §9](../adr/0009-enterprise-ontology.md))          |
 | PII from `pii_fields` → Presidio           | Presidio exists; not schema-driven                                                | Schema field list drives redaction on ontology tool results                                           |
 | Relationship → graph tools                 | Relationships in YAML only                                                        | Generate + register traversal tools (even if demo store)                                              |
-| GraphQL `@kinetic`                         | Docs/ADR only                                                                     | Directive in schema + PEP intercept path (or MCP-equivalent kinetic writes)                           |
+| GraphQL `@kinetic`                         | **Decision:** MCP-first for v1 kinetic writes; GraphQL = later transport | Essay: MCP kinetic methods; GraphQL samples = target / disclose ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)) |
 | Transaction Sandbox risk routing           | Missing                                                                           | Effect sandbox with LOW…CRITICAL paths (can start with LOW+MEDIUM)                                    |
 | Argo / Pulumi executors                    | Separate tools; not ontology-routed                                               | Kinetic router selects executor from action schema                                                    |
 | `.cqm` / `.cqw` / `.cqk` ecosystem         | Draft specs                                                                       | Specs on docs site + lint/doctor hooks for `.cqm`; `.cqk` write path                                  |
@@ -67,7 +67,7 @@
 
 | ID      | Task                                                                                                   | Band  | Done-when                                             |
 | ------- | ------------------------------------------------------------------------------------------------------ | ----- | ----------------------------------------------------- |
-| **3.1** | Product decision: GraphQL `@kinetic` **and/or** MCP write tools with kinetic metadata                  | **B** | ADR amendment; one call surface for v1                |
+| **3.1** | Product decision: GraphQL `@kinetic` **and/or** MCP write tools with kinetic metadata                  | **B** ✅ | **Decided:** MCP write tools + kinetic metadata for v1; GraphQL `@kinetic` = transport target (**3.8**) ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)) |
 | **3.2** | Kinetic metadata validation on write actions at lint time (already partial) + generate write tool defs | A     | Write tools generated (may stay gated)                |
 | **3.3** | Minimal Transaction Sandbox: ATR check → snapshot → execute/deny → WORM/audit entry for **LOW**        | A/C   | LOW path works end-to-end in tests                    |
 | **3.4** | MEDIUM: mandate required when `requires_mandate` / over `change_limit`                                 | C     | Staged or rejected without mandate                    |
@@ -170,13 +170,14 @@ Closed without product decisions (see PR closing no-drama gaps):
 | **0.3**                          | This backlog doc                                                                                                                   |
 | **1.1, 1.3, 1.4, 1.5**           | `.cqe` examples; `ontology init` / `create-entity`; **`.cqe` primary** (ADR 0010 §2a)                                              |
 | **2.1, 2.2, 2.3, 2.4, 2.5, 2.6** | Fixture MCP plugin + **fixture-mode decision** (ADR 0009 §9); `CLAWQL_ENABLE_ONTOLOGY` / `CLAWQL_ONTOLOGY_DIR`; relationships; PII |
+| **3.1**                          | **MCP-first kinetic** (ADR 0009 §10); GraphQL `@kinetic` deferred to **3.8** / B4                                                  |
 | **4.1–4.3**                      | `.cqk` when `wormRef` / `CLAWQL_MEMORY_CQK`; generate `index.md`; recall boost                                                     |
 | **5.1–5.3**                      | Manifest `ontologySchema` pin + verify; `clawql-release lint` for `.cqm`; doctor ontology check                                    |
 | **6.1–6.2**                      | Legal pack + `import --pack legal`                                                                                                 |
 | **7.3**                          | CLI+PR authoring documented as shipped path                                                                                        |
 | **8.1**                          | Onyx source stubs on generate                                                                                                      |
 
-**Stopped before decisions / blockers:** **3.1**, **4.4**, **5.4**, **6.3**, **7.1–7.2**, **8.2**, and B1–B6.
+**Stopped before decisions / blockers:** **4.4**, **5.4**, **6.3**, **7.1–7.2**, **8.2**, and B1–B6 (next impl: **3.2–3.3** LOW MCP kinetic).
 
 ## Tracking
 
