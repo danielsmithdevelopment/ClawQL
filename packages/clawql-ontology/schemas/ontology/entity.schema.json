@@ -154,13 +154,7 @@
         "mandate_type": { "type": "string" },
         "blast_radius": {
           "type": "string",
-          "enum": [
-            "SINGLE_RECORD",
-            "SINGLE_REGION",
-            "FINANCIAL",
-            "BULK",
-            "INFRA"
-          ]
+          "enum": ["SINGLE_RECORD", "SINGLE_REGION", "FINANCIAL", "BULK", "INFRA"]
         },
         "rollback_protocol": {
           "type": "string",
@@ -194,7 +188,13 @@
             "properties": {
               "kinetic": { "const": true }
             },
-            "required": ["kinetic", "kinetic_level", "blast_radius", "rollback_protocol", "executor"]
+            "required": [
+              "kinetic",
+              "kinetic_level",
+              "blast_radius",
+              "rollback_protocol",
+              "executor"
+            ]
           }
         }
       ]
