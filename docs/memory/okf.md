@@ -67,6 +67,7 @@ OKF does not register types centrally — consumers must tolerate unknown values
 - Notes without `type` still recall normally (frontmatter stripped for search).
 - Digest and tooling prefer OKF `timestamp`, then `clawql_ingest_created`, then `date`.
 - `_INDEX_{Provider}.md` remains for [#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38); `index.md` is the OKF-native catalog.
+- Custom extensions (`.cqk`, etc.) are **optional promotions** after OKF — see [ADR 0010](../adr/0010-cq-file-extensions.md). Vault stays `.md` by default.
 
 ## Code
 
@@ -78,3 +79,5 @@ OKF does not register types centrally — consumers must tolerate unknown values
 
 - [memory-obsidian.md](./memory-obsidian.md)
 - [mcp-tools.md](../mcp/mcp-tools.md) § `memory_ingest`
+- [ADR 0010 — `.cq*` extensions](../adr/0010-cq-file-extensions.md)
+- [`.cqk` draft spec](../specs/cq-extensions/cqk.md)

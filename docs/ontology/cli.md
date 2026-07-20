@@ -35,10 +35,12 @@ npx clawql-ontology lint --dir examples/ontology/entities
 
 Write / kinetic actions are listed as `deferredWriteActions` and **not** registered in v1.
 
+Entity files may use `.yaml` / `.yml` / `.json` or draft **`.cqe`** ([ADR 0010](../adr/0010-cq-file-extensions.md), [`.cqe` spec](../specs/cq-extensions/cqe.md)).
+
 ## Library
 
 ```ts
 import { lintOntology, generateOntologyReadTools } from "clawql-ontology";
 ```
 
-See [ADR 0009](../adr/0009-enterprise-ontology.md) and [enterprise-ontology.md](../architecture/enterprise-ontology.md).
+See [ADR 0009](../adr/0009-enterprise-ontology.md), [ADR 0010](../adr/0010-cq-file-extensions.md), and [enterprise-ontology.md](../architecture/enterprise-ontology.md).

@@ -19,6 +19,27 @@ describe("lintOntology", () => {
     expect(result.issues.filter((i) => i.severity === "error")).toHaveLength(0);
   });
 
+  it("accepts .cqe extension (ADR 0010 dual-accept)", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "clawql-ont-cqe-"));
+    try {
+      await mkdir(join(dir, "entities"), { recursive: true });
+      const body = await readFile(
+        join(REPO_ROOT, "examples", "ontology", "entities", "Organization.yaml"),
+        "utf8"
+      );
+      await writeFile(join(dir, "entities", "Organization.cqe"), body, "utf8");
+      const result = await lintOntology({
+        rootDir: dir,
+        paths: [join(dir, "entities")],
+        schemaPath: join(REPO_ROOT, "schemas", "ontology", "entity.schema.json"),
+      });
+      expect(result.ok).toBe(true);
+      expect(result.entities).toContain("Organization");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("rejects write action without kinetic", async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-ont-"));
     try {

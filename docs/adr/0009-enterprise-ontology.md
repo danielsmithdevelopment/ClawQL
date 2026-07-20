@@ -3,6 +3,7 @@
 - Status: **Accepted** (architecture decision — implementation phased)
 - Date: 2026-07-20
 - Related:
+  - [ADR 0010](./0010-cq-file-extensions.md) (`.cqm` / `.cqe` / `.cqw` / `.cqk` — after OKF)
   - Architecture: [`docs/architecture/enterprise-ontology.md`](../architecture/enterprise-ontology.md)
   - Fabric: [`docs/architecture/zero-trust-agentic-fabric.md`](../architecture/zero-trust-agentic-fabric.md)
   - Memory vault: [`docs/memory/memory-obsidian.md`](../memory/memory-obsidian.md)

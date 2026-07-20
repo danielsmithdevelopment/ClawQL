@@ -1,5 +1,5 @@
 /**
- * Load ontology Entity YAML/JSON files from disk.
+ * Load ontology Entity YAML/JSON/.cqe files from disk.
  */
 
 import { readdir, readFile, stat } from "node:fs/promises";
@@ -7,7 +7,8 @@ import { join, resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
 import type { LoadedOntologyEntity, OntologyEntityDocument } from "./types.js";
 
-const ENTITY_EXT = /\.(ya?ml|json)$/i;
+/** YAML/JSON Entity docs, plus draft `.cqe` (ADR 0010). */
+const ENTITY_EXT = /\.(ya?ml|json|cqe)$/i;
 
 async function walkMarkdownOrYaml(dir: string, out: string[]): Promise<void> {
   let entries;
@@ -42,9 +43,11 @@ export async function loadOntologyEntityFile(path: string): Promise<LoadedOntolo
   const abs = resolve(path);
   const raw = await readFile(abs, "utf8");
   let doc: unknown;
-  if (abs.toLowerCase().endsWith(".json")) {
+  const lower = abs.toLowerCase();
+  if (lower.endsWith(".json")) {
     doc = JSON.parse(raw);
   } else {
+    // .yaml / .yml / .cqe — YAML Entity document (ADR 0010 dual-accept)
     doc = parseYaml(raw);
   }
   return { path: abs, entity: doc as OntologyEntityDocument };
