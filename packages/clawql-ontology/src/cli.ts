@@ -57,7 +57,9 @@ async function main(): Promise<void> {
     return;
   }
 
-  const rootDir = resolve(typeof flags.root === "string" && flags.root ? flags.root : process.cwd());
+  const rootDir = resolve(
+    typeof flags.root === "string" && flags.root ? flags.root : process.cwd()
+  );
   const schemaPath =
     typeof flags.schema === "string" && flags.schema.trim()
       ? resolve(flags.schema.trim())
@@ -89,8 +91,7 @@ async function main(): Promise<void> {
   }
 
   if (cmd === "generate") {
-    const out =
-      typeof flags.out === "string" && flags.out.trim() ? resolve(flags.out.trim()) : "";
+    const out = typeof flags.out === "string" && flags.out.trim() ? resolve(flags.out.trim()) : "";
     if (!out) {
       console.error("Usage: clawql-ontology generate --out DIR [...files]");
       process.exitCode = 1;
@@ -118,7 +119,9 @@ async function main(): Promise<void> {
     if (flags.json) {
       console.log(JSON.stringify({ ok: true, result, written }, null, 2));
     } else {
-      console.log(`Generated ${result.tools.length} read tool(s) for ${result.entities.length} entit(y/ies)`);
+      console.log(
+        `Generated ${result.tools.length} read tool(s) for ${result.entities.length} entit(y/ies)`
+      );
       if (result.deferredWriteActions.length) {
         console.log(
           `Deferred ${result.deferredWriteActions.length} write/kinetic action(s) until Transaction Sandbox`

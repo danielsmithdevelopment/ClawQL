@@ -4,15 +4,8 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import {
-  defaultOntologySearchRoots,
-  loadOntologyEntities,
-} from "./load.js";
-import type {
-  GeneratedReadTool,
-  OntologyGenerateResult,
-  OntologyLintResult,
-} from "./types.js";
+import { defaultOntologySearchRoots, loadOntologyEntities } from "./load.js";
+import type { GeneratedReadTool, OntologyGenerateResult, OntologyLintResult } from "./types.js";
 import { lintOntology } from "./lint.js";
 
 function snakeEntity(name: string): string {
@@ -22,7 +15,9 @@ function snakeEntity(name: string): string {
     .toLowerCase();
 }
 
-function defaultReadToolsForEntity(entityName: string): Omit<GeneratedReadTool, "sourcePath" | "entity">[] {
+function defaultReadToolsForEntity(
+  entityName: string
+): Omit<GeneratedReadTool, "sourcePath" | "entity">[] {
   const snake = snakeEntity(entityName);
   return [
     {
@@ -57,9 +52,7 @@ export type GenerateOntologyOptions = {
   synthesizeDefaults?: boolean;
 };
 
-export async function generateOntologyReadTools(
-  opts: GenerateOntologyOptions
-): Promise<{
+export async function generateOntologyReadTools(opts: GenerateOntologyOptions): Promise<{
   result: OntologyGenerateResult;
   lint?: OntologyLintResult;
   written: string[];

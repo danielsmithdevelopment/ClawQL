@@ -7,15 +7,8 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import Ajv2020Import from "ajv/dist/2020.js";
 import type { ErrorObject } from "ajv";
-import {
-  defaultOntologySearchRoots,
-  loadOntologyEntities,
-} from "./load.js";
-import type {
-  LoadedOntologyEntity,
-  OntologyIssue,
-  OntologyLintResult,
-} from "./types.js";
+import { defaultOntologySearchRoots, loadOntologyEntities } from "./load.js";
+import type { LoadedOntologyEntity, OntologyIssue, OntologyLintResult } from "./types.js";
 
 // ajv CJS/ESM interop — runtime default is constructable; types expose a namespace.
 const Ajv2020 = (Ajv2020Import as unknown as { default?: new (opts?: object) => AjvLike }).default

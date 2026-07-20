@@ -27,11 +27,11 @@ npx clawql-ontology lint --dir examples/ontology/entities
 
 ## What generate emits
 
-| File | Purpose |
-| ---- | ------- |
-| `tools.json` | Catalog of read MCP tools |
+| File                      | Purpose                                                 |
+| ------------------------- | ------------------------------------------------------- |
+| `tools.json`              | Catalog of read MCP tools                               |
 | `ontology-plugin.stub.ts` | `ONTOLOGY_READ_TOOLS` constant for future plugin wiring |
-| `README.md` | Notes |
+| `README.md`               | Notes                                                   |
 
 Write / kinetic actions are listed as `deferredWriteActions` and **not** registered in v1.
 

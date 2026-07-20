@@ -269,13 +269,13 @@ Do **not** publish the property-type / relationship / source DSL as a frozen sta
 
 ## Phased delivery checklist
 
-| Phase      | Scope                                                                                | Depends on                |
-| ---------- | ------------------------------------------------------------------------------------ | ------------------------- |
+| Phase      | Scope                                                                                | Depends on                                                                                                                            |
+| ---------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
 | Foundation | `v1alpha1` schema, lint, read-tool generate, source derivation, manifest version pin | This ADR — **schema + `clawql ontology lint` / `generate` shipped** ([cli](../ontology/cli.md)); derivation / manifest pin still open |
-| Graph      | Relationship traversal, ATRClaim-aware edges, graph-aware recall                     | Foundation                |
-| Kinetic    | Write tools, `@kinetic`, Transaction Sandbox, AP2, canary                            | Foundation + PEP          |
-| Builder UI | Command Deck schema editor                                                           | Stable format             |
-| Verticals  | Industry OKF packs                                                                   | Builder + design partners |
+| Graph      | Relationship traversal, ATRClaim-aware edges, graph-aware recall                     | Foundation                                                                                                                            |
+| Kinetic    | Write tools, `@kinetic`, Transaction Sandbox, AP2, canary                            | Foundation + PEP                                                                                                                      |
+| Builder UI | Command Deck schema editor                                                           | Stable format                                                                                                                         |
+| Verticals  | Industry OKF packs                                                                   | Builder + design partners                                                                                                             |
 
 ---
 

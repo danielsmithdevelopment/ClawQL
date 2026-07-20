@@ -17,7 +17,4 @@ export {
   loadOntologyEntityFile,
 } from "./load.js";
 export { defaultEntitySchemaPath, lintOntology, type LintOntologyOptions } from "./lint.js";
-export {
-  generateOntologyReadTools,
-  type GenerateOntologyOptions,
-} from "./generate.js";
+export { generateOntologyReadTools, type GenerateOntologyOptions } from "./generate.js";

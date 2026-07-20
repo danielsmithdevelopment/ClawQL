@@ -73,9 +73,7 @@ describe("generateOntologyReadTools", () => {
     expect(lint?.ok).toBe(true);
     expect(result.tools.some((t) => t.name === "search_contracts")).toBe(true);
     expect(result.tools.some((t) => t.name === "get_contract")).toBe(true);
-    expect(result.deferredWriteActions.some((a) => a.name === "update_contract_status")).toBe(
-      true
-    );
+    expect(result.deferredWriteActions.some((a) => a.name === "update_contract_status")).toBe(true);
     expect(written.length).toBeGreaterThanOrEqual(2);
     const catalog = JSON.parse(await readFile(join(outDir, "tools.json"), "utf8"));
     expect(catalog.kind).toBe("GeneratedReadTools");

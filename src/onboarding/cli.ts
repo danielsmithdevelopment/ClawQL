@@ -1112,9 +1112,7 @@ async function main(): Promise<void> {
   if (cmd === "ontology") {
     const ontologyOpts = {
       root:
-        (typeof flags.root === "string" && flags.root
-          ? flags.root
-          : undefined) ||
+        (typeof flags.root === "string" && flags.root ? flags.root : undefined) ||
         (typeof flags.home === "string" && flags.home ? flags.home : undefined),
       schema: typeof flags.schema === "string" && flags.schema ? flags.schema : undefined,
       dir: typeof flags.dir === "string" && flags.dir ? flags.dir : undefined,
