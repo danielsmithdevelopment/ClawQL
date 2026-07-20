@@ -71,7 +71,7 @@ Typed objects agents operate on. Each entity declares properties, PII fields (Pr
 Provisional shape (YAML or OKF frontmatter + body). Full example: [`examples/ontology/`](../../examples/ontology/).
 
 ```yaml
-# .clawql/ontology/entities/Contract.yaml  (Git — schema)
+# .clawql/ontology/entities/Contract.cqe  (Git — schema)
 apiVersion: clawql.dev/ontology/v1alpha1
 kind: Entity
 metadata:
@@ -128,13 +128,15 @@ initiate_payment(...) → PaymentResult  # kinetic + AP2
 
 ---
 
-## Kinetic governance: GraphQL mutations are transport, not enough
+## Kinetic governance: MCP first; GraphQL is transport later
 
 **What GraphQL gets right:** query vs mutation is a schema-level semantic contract; introspection lets agents and PEPs discover side-effecting operations.
 
 **What it lacks:** graded risk, AP2 mandate binding, blast-radius caps, rollback protocols, progressive canary.
 
-**Decision:** mutations (and MCP write tools) carry a `@kinetic` directive / equivalent YAML fields:
+**v1 decision ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)):** ship kinetic **writes as MCP tools** from Entity actions (`kinetic: true` + graded fields). PEP + Transaction Sandbox intercept MCP. GraphQL `@kinetic` remains the fabric-aligned **transport target** (essay samples / multi-client) — not a v1 ship gate.
+
+Illustrative GraphQL shape (target — not shipped until **3.8**):
 
 ```graphql
 type Mutation {
@@ -153,6 +155,7 @@ type Mutation {
 }
 ```
 
+Equivalent v1 authoring is YAML on `.cqe` write actions; generate emits MCP tool defs (gated until LOW sandbox).
 High-risk path (conceptual):
 
 ```text
@@ -211,7 +214,7 @@ Document IDP DAGs (Tika → … → Onyx) are already Workflow-shaped. Kinetic w
 
 **Shipped:** `memory_ingest` writes OKF frontmatter; `Memory/index.md` + `Memory/log.md`; legacy append upgrade. Details: [`docs/memory/okf.md`](../memory/okf.md).
 
-**Next (extensions):** Draft `.cq*` specs — [ADR 0010](../adr/0010-cq-file-extensions.md) · [`docs/specs/cq-extensions/`](../specs/cq-extensions/). Do not block OKF on promotion; ontology lint dual-accepts `.cqe`.
+**Next (extensions):** [ADR 0010](../adr/0010-cq-file-extensions.md) — **`.cqe` is primary** in docs/examples; lint/generate still dual-accept `.yaml` / `.yml` / `.json`. Specs: [`docs/specs/cq-extensions/`](../specs/cq-extensions/) · site: [`/specs/cq-extensions`](https://docs.clawql.com/specs/cq-extensions).
 
 ```text
 memory_ingest writes:
@@ -279,6 +282,39 @@ Builder surfaces executor choice (Argo Workflow template vs Pulumi resource) for
 
 ---
 
+## Try it today
+
+Foundation tooling is available now:
+
+```bash
+# Validate example entities (.cqe primary; .yaml still accepted)
+npm run ontology:lint
+
+# Generate read MCP tool catalog + OKF index + Onyx stubs
+npm run ontology:generate
+
+# Live typed reads (v1 = fixture store — ADR 0009 §9)
+CLAWQL_ENABLE_ONTOLOGY=1
+```
+
+CLI reference: [`docs/ontology/cli.md`](../ontology/cli.md). Examples: [`examples/ontology/`](../../examples/ontology/). **SQL `sources:`** are declarations / stubs in v1 — not a live query path.
+
+---
+
+## Industry context (not dependencies)
+
+Enterprises and researchers are converging on the same problem — **typed meaning for agents**:
+
+| Effort                                | Overlap with ClawQL                                               | Difference                                                                                                                             |
+| ------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Microsoft Fabric IQ Ontology**      | Entity types, relationships, agent grounding, visual playground   | Platform-bound (OneLake); ClawQL stays Git + open YAML/OKF + kinetic PEP                                                               |
+| **AIF (Argument Interchange Format)** | Structured rationale so understanding transfers without ambiguity | Argumentation-specific; ClawQL reuses the idea in [OKF `type: decision`](../memory/okf-decision-rationale.md) for enterprise decisions |
+| **Palantir Ontology**                 | Typed digital twin for agents                                     | Proprietary console; ClawQL is portable and pipeline-native ([ADR 0009](../adr/0009-enterprise-ontology.md))                           |
+
+These validate the direction. They are **not** runtime dependencies.
+
+---
+
 ## Design-partner gate
 
 Do **not** publish the property-type / relationship / source DSL as a frozen standard until **3–5 design partners** validate against real enterprise schemas. In-repo schema is **`v1alpha1`** — provisional.
@@ -300,10 +336,12 @@ Do **not** publish the property-type / relationship / source DSL as a frozen sta
 ## See also
 
 - [ADR 0009](../adr/0009-enterprise-ontology.md) — decision record
+- [Ontology CLI](../ontology/cli.md) — `clawql ontology lint` / `generate`
 - [Token efficiency (12 layers)](./clawql-token-efficiency.md)
 - [OKF decision rationale template](../memory/okf-decision-rationale.md)
 - [Command Deck ontology builder UX](./command-deck-ontology-builder-ux.md)
-- Example entity: [`examples/ontology/entities/Contract.yaml`](../../examples/ontology/entities/Contract.yaml)
+- [Essay gap closure backlog](../ontology/essay-gap-closure.md) — tasks to match the long-form Ontology essay without disclaimers
+- Example entity: [`examples/ontology/entities/Contract.cqe`](../../examples/ontology/entities/Contract.cqe)
 - Example decision note: [`examples/ontology/okf/decision-rationale-template.md`](../../examples/ontology/okf/decision-rationale-template.md)
 - JSON Schema: [`schemas/ontology/entity.schema.json`](../../schemas/ontology/entity.schema.json)
 - Ouroboros Seed ontology (task loop — different artifact): [ADR 0001](../adr/0001-ouroboros-workflow-engine.md)

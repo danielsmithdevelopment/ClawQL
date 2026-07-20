@@ -182,7 +182,9 @@ jobs:
         run: npm ci
 
       - name: Build clawql-ontology
-        run: npm run build -w clawql-ontology
+        run: |
+          # pii.ts imports clawql-api — build workspace deps so DTS resolve succeeds
+          npm run build -w clawql-core -w clawql-auth -w clawql-api -w clawql-ontology
 
       - name: Lint example ontology entities
         run: npm run ontology:lint

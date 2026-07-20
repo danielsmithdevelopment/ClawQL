@@ -53,6 +53,41 @@ const ENTRIES: Array<Entry> = [
     priority: 0.9,
   },
   {
+    path: '/architecture/enterprise-ontology',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  {
+    path: '/specs/cq-extensions',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  {
+    path: '/specs/cq-extensions/cqe',
+    changeFrequency: 'monthly',
+    priority: 0.85,
+  },
+  {
+    path: '/specs/cq-extensions/cqm',
+    changeFrequency: 'monthly',
+    priority: 0.85,
+  },
+  {
+    path: '/specs/cq-extensions/cqk',
+    changeFrequency: 'monthly',
+    priority: 0.85,
+  },
+  {
+    path: '/specs/cq-extensions/cqw',
+    changeFrequency: 'monthly',
+    priority: 0.85,
+  },
+  {
+    path: '/architecture/agentic-fabric',
+    changeFrequency: 'monthly',
+    priority: 0.92,
+  },
+  {
     path: '/inference/clawql-inference',
     changeFrequency: 'monthly',
     priority: 0.9,

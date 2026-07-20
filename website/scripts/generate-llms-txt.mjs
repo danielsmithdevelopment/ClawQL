@@ -37,6 +37,21 @@ const SECTIONS = [
         'Regional Hubs, Dedicated Virtual Gateways, Edge swarm',
       ],
       [
+        'Enterprise Ontology',
+        '/architecture/enterprise-ontology',
+        'Open YAML/OKF typed entities, kinetic actions, Git vs R2',
+      ],
+      [
+        '.cq* file extensions',
+        '/specs/cq-extensions',
+        'Draft specs for .cqe, .cqm, .cqk, .cqw (ADR 0010)',
+      ],
+      [
+        'Token efficiency',
+        '/architecture/token-efficiency',
+        'Twelve compounding layers for cost and reasoning quality',
+      ],
+      [
         'Agentic Gateway (inference)',
         '/inference/clawql-inference',
         'OpenAI drop-in, flywheel, WORM path to Auditable Production AI',

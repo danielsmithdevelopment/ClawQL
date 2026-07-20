@@ -41,6 +41,24 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_SANDBOX: z.string().optional(),
   /** Structural code graph MCP tools (`codegraph_*`). Default false — register with `CLAWQL_ENABLE_CODEGRAPH=1`. */
   CLAWQL_ENABLE_CODEGRAPH: z.string().optional(),
+  /** Enterprise Ontology fixture MCP tools (`get_contract`, …). Default false — `CLAWQL_ENABLE_ONTOLOGY=1`. */
+  CLAWQL_ENABLE_ONTOLOGY: z.string().optional(),
+  /**
+   * LOW/MEDIUM kinetic ontology write tools (`update_contract_status`, `adjust_contract_value`, …) via Transaction Sandbox.
+   * Default false — requires `CLAWQL_ENABLE_ONTOLOGY=1` (or implies it when set).
+   */
+  CLAWQL_ENABLE_ONTOLOGY_WRITES: z.string().optional(),
+  /**
+   * Override entity search root for `clawql ontology lint|generate` (relative to cwd or absolute).
+   * Default: `.clawql/ontology/entities` then `examples/ontology/entities`.
+   */
+  CLAWQL_ONTOLOGY_DIR: z.string().optional(),
+  /** Optional JSON fixture path for ontology demo tools (`CLAWQL_ENABLE_ONTOLOGY`). */
+  CLAWQL_ONTOLOGY_FIXTURE: z.string().optional(),
+  /** Optional ATR scope list for kinetic writes (comma/space separated). Default permissive local `*`. */
+  CLAWQL_ONTOLOGY_ATR_SCOPE: z.string().optional(),
+  CLAWQL_ONTOLOGY_ATR_SUB: z.string().optional(),
+  CLAWQL_ONTOLOGY_ATR_ROLE: z.string().optional(),
   /** ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)): HITL Label Studio enqueue + webhook path. Default false. */
   CLAWQL_ENABLE_HITL_LABEL_STUDIO: z.string().optional(),
   /** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)): ConeShare webhook + IDP sharing integration. Default false. */
@@ -126,6 +144,14 @@ export type ClawqlOptionalToolFlags = {
    */
   enableCodeGraph: boolean;
   /**
+   * Enterprise Ontology read tools (fixture-backed `get_contract`, relationship traversals, …). Default false.
+   */
+  enableOntology: boolean;
+  /**
+   * LOW/MEDIUM kinetic ontology writes (`update_contract_status`, `adjust_contract_value`) via Transaction Sandbox. Default false.
+   */
+  enableOntologyWrites: boolean;
+  /**
    * ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)): **`hitl_enqueue_label_studio`** + **`POST /hitl/label-studio/webhook`**. Default false.
    */
   enableHitlLabelStudio: boolean;
@@ -179,6 +205,9 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
     enableCodeGraph: envTruthy(raw.CLAWQL_ENABLE_CODEGRAPH),
+    enableOntology:
+      envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY) || envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY_WRITES),
+    enableOntologyWrites: envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY_WRITES),
     enableHitlLabelStudio: envTruthy(raw.CLAWQL_ENABLE_HITL_LABEL_STUDIO),
     enableConeshare: envTruthy(raw.CLAWQL_ENABLE_CONESHARE),
     enableIdpPipeline: envTruthy(raw.CLAWQL_ENABLE_IDP_PIPELINE),

@@ -38,13 +38,13 @@ The question is how to formalize an **enterprise IDP Ontology** that closes the 
 
 ClawQL’s Ontology is an **open, versioned, manifest-governed schema** that travels with the software delivery pipeline.
 
-| Dimension     | Palantir-style          | ClawQL decision                                                |
-| ------------- | ----------------------- | -------------------------------------------------------------- |
-| Format        | Proprietary             | Open YAML / OKF Markdown + JSON Schema; PR-reviewable          |
-| Versioning    | Console / runtime       | Git + EnterpriseGovernance / release manifest version events   |
-| Construction  | Professional services   | Derive from SQL / OpenAPI / documents; refine in UI or YAML    |
-| Portability   | Vendor-bound            | `git clone` + export YAML/OKF bundle                           |
-| Agent surface | Proprietary object APIs | Generated typed MCP tools (+ optional GraphQL with `@kinetic`) |
+| Dimension     | Palantir-style          | ClawQL decision                                                            |
+| ------------- | ----------------------- | -------------------------------------------------------------------------- |
+| Format        | Proprietary             | Open YAML / OKF Markdown + JSON Schema; PR-reviewable                      |
+| Versioning    | Console / runtime       | Git + EnterpriseGovernance / release manifest version events               |
+| Construction  | Professional services   | Derive from SQL / OpenAPI / documents; refine in UI or YAML                |
+| Portability   | Vendor-bound            | `git clone` + export YAML/OKF bundle                                       |
+| Agent surface | Proprietary object APIs | Generated typed **MCP** tools first; GraphQL `@kinetic` as later transport |
 
 **Mental model:** OOP applied to the enterprise information space — typed objects, relationships, and methods — plus three enterprise-AI necessities: **provenance**, **permission-awareness** (ATRClaims), and **kinetic designation** (writes are structurally governed).
 
@@ -52,13 +52,15 @@ ClawQL’s Ontology is an **open, versioned, manifest-governed schema** that tra
 
 1. **Entity schema** — typed objects, properties, PII fields, sources (SQL / OpenAPI / documents).
 2. **Relationship graph** — traversable, permission-aware edges (Onyx + graph store later).
-3. **Action schema** — generated MCP / GraphQL tools; writes marked `kinetic` with risk, blast radius, rollback, AP2 mandate binding.
+3. **Action schema** — generated **MCP** tools (v1); GraphQL optional later; writes marked `kinetic` with risk, blast radius, rollback, AP2 mandate binding.
 
-### 3) Kinetic transport: GraphQL mutations + `@kinetic` (not mutations alone)
+### 3) Kinetic transport: MCP write tools first; GraphQL `@kinetic` later
 
-GraphQL’s query/mutation split is the right **transport** instinct (better than undifferentiated REST). It is **not** sufficient for enterprise kinetic safety: mutations are binary (side effect or not), lack graded risk, mandate binding, blast-radius caps, and rollback protocols.
+GraphQL’s query/mutation split is the right **transport instinct** (better than undifferentiated REST). It is **not** sufficient for enterprise kinetic safety: mutations are binary (side effect or not), lack graded risk, mandate binding, blast-radius caps, and rollback protocols. The same graded fields apply whether the call arrives as MCP or GraphQL.
 
-**Decision:** use GraphQL mutations (and/or generated MCP write tools) as the call surface; encode graded governance with a `@kinetic` directive / schema fields (`riskLevel`, `requiresMandate`, `blastRadius`, `rollbackProtocol`, `executor`, optional canary). The PEP intercepts; the agent call site stays uniform.
+**Decision (essay gap 3.1 — see §10):** **v1 call surface = generated MCP write tools** with kinetic metadata on the Entity action schema (`kinetic: true`, `kinetic_level`, mandate / blast-radius / rollback / executor fields). The PEP + Transaction Sandbox intercept the MCP path. **GraphQL mutations + `@kinetic` directive** remain the fabric-aligned **transport target** (introspection, multi-client) — tracked as **3.8** / B4, not a v1 ship gate.
+
+**Governance payload (shared):** `riskLevel` / `kinetic_level`, `requiresMandate`, `blastRadius`, `rollbackProtocol`, `executor`, optional canary — whether expressed as YAML on `.cqe` actions or later as `@kinetic(...)` on GraphQL.
 
 ### 4) Kinetic executors: Pulumi + Argo Workflows + Argo Rollouts + native
 
@@ -92,13 +94,20 @@ One governance layer (`@kinetic` + PEP + WORM); agents do not choose the executo
 
 `clawql sync` remains the R2↔edge path. Hot/cold tiering (recent memory vs archive) is the scaling model — not “put the whole vault in GitHub.”
 
+**Doctor (essay gap 4.4):** `clawql doctor` **warns** (does not hard-fail) when:
+
+- no Entity files under `.clawql/ontology/entities` / `examples/ontology/entities` / `CLAWQL_ONTOLOGY_DIR`, or
+- env marks schema as object-storage-only (`CLAWQL_ONTOLOGY_SCHEMA_STORE=r2|s3|…`, `CLAWQL_ONTOLOGY_SCHEMA_IN_OBJECT_STORAGE=1`, or a remote `CLAWQL_ONTOLOGY_SCHEMA_URI`).
+
+Instances may live in R2; **schema must stay in Git** for PR review and release `ontologySchema` pins.
+
 ### 7) Ontology builder sequencing
 
 | Phase     | Deliverable                                                                                                                                                             |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Now**   | YAML/OKF schema format + JSON Schema; `clawql ontology lint` / `generate` (read tools); derive from sources; manifest version events                                    |
 | **Later** | Relationship graph + permission-aware traversal                                                                                                                         |
-| **Later** | Kinetic write tools + AP2 + Transaction Sandbox + canary                                                                                                                |
+| **Later** | Kinetic MCP write tools + Transaction Sandbox (LOW first); GraphQL `@kinetic` transport later (§3 / §10)                                                                |
 | **Later** | Command Deck visual builder (non-engineer authoring → Git PRs) — UX notes: [`command-deck-ontology-builder-ux.md`](../architecture/command-deck-ontology-builder-ux.md) |
 | **Later** | Vertical schema packs (Legal, Healthcare, Financial, Real Estate)                                                                                                       |
 
@@ -107,6 +116,57 @@ One governance layer (`@kinetic` + PEP + WORM); agents do not choose the executo
 ### 8) Relationship to Ouroboros Seed `ontology_schema`
 
 Ouroboros Seeds ([ADR 0001](./0001-ouroboros-workflow-engine.md)) carry a **task-loop** ontology for evolutionary convergence. This ADR’s **enterprise Ontology** is the org-wide typed entity layer for IDP agents. They may share concepts later; they are not the same artifact. Do not overload Seed ontology for enterprise digital-twin modeling.
+
+### 9) Amendment (2026-07-20) — v1 read backend = fixture mode (essay gap **2.3**)
+
+**Decision:** Ontology **read** MCP tools (`CLAWQL_ENABLE_ONTOLOGY=1`) are backed by a **typed fixture / demo store** in v1. Entity `spec.sources` entries with `type: sql` (and peers) remain **declarations** for generate stubs / partner wiring — they do **not** imply a live SQL query path today.
+
+**Rationale:** Typed enums / money objects for the essay demo are already true via fixtures. A general `sources[type=sql]` adapter is connection config, mapping, coercion, secrets, and multi-dialect work — design-partner depth, not a publish gate.
+
+**Non-goals of this amendment:**
+
+- Do **not** claim automatic Postgres/MySQL binding from `sources:` in v1 docs or essay without a separate ship.
+- Do **not** block Onyx stub emission (`ontology generate` → `onyx-sources.stub.json`) — stubs stay manual-apply.
+
+**Future (optional):** Narrow partner path (e.g. read-only `DATABASE_URL` + one Contract mapping) or a general SQL adapter — tracked separately; not required for “status: active not 2.”
+
+**Done-when:** Docs + essay gap mark fixture mode as the shipped read backend; SQL disclosed as roadmap / partner.
+
+### 10) Amendment (2026-07-20) — v1 kinetic call surface = MCP (essay gap **3.1**)
+
+**Decision:** Ship kinetic **writes** first as **MCP tools** generated from Entity `actions` with `kind: write` + kinetic fields. Do **not** block LOW Transaction Sandbox (**3.2–3.3**) on GraphQL `@kinetic`.
+
+**Rationale:** ClawQL’s agent surface is already MCP; write actions are already linted and listed as `deferredWriteActions`. Extending that path is the shortest honest route to “kinetic methods.” GraphQL `@kinetic` is valuable for introspection and non-MCP clients but is a second stack (schema, directive, proxy) before any write works.
+
+**Non-goals of this amendment:**
+
+- Do **not** claim GraphQL `@kinetic` ships in v1 essay copy without **3.8**.
+- Do **not** implement Argo/Pulumi executor routing or HIGH/CRITICAL paths here — B4 / **3.5–3.7**.
+- Do **not** remove GraphQL from the architecture narrative — keep it as the transport target.
+
+**Next implementation:** **3.2–3.4** ✅ (gated write defs + LOW/MEDIUM sandbox). Remaining: HIGH+ (**3.5–3.7**), GraphQL (**3.8**).
+
+**Done-when:** ADR + essay gap record MCP-first; GraphQL samples framed as target / disclose until 3.8.
+
+### 11) Amendment (2026-07-20) — LOW MCP kinetic shipped (essay gaps **3.2–3.3**)
+
+**Shipped:**
+
+- `ontology generate` emits `writeTools` for `kinetic_level: LOW` + `executor: NATIVE` (e.g. `update_contract_status`).
+- Runtime gate: `CLAWQL_ENABLE_ONTOLOGY_WRITES=1` registers write MCP tools.
+- Minimal Transaction Sandbox: ATR → field snapshot → native fixture execute/deny → in-memory kinetic audit hash-chain (`KINETIC_COMMITTED` / `KINETIC_DENIED`).
+
+**Extended by §12** for MEDIUM. Still deferred in this amendment’s scope: Argo/Pulumi routers, HIGH/CRITICAL, GraphQL `@kinetic`, permanent WORM store.
+
+### 12) Amendment (2026-07-20) — MEDIUM mandate gate (essay gap **3.4**)
+
+**Shipped:**
+
+- Generate also emits **MEDIUM** + NATIVE write tools (e.g. `adjust_contract_value`).
+- Sandbox: after ATR, if `requires_mandate` **or** `|Δ| > change_limit`, require a mandate (`mandate_type` + `mandate_id`) or ATR scope `mandate:TYPE` / `ontology:mandate`.
+- Without mandate → `status: mandate_required` (no mutate); with mandate → commit + audit.
+
+**Still deferred:** HIGH canary (**3.5**), CRITICAL HITL (**3.6**), executor routers (**3.7**), GraphQL `@kinetic` (**3.8**).
 
 ## Consequences
 
@@ -130,6 +190,14 @@ Ouroboros Seeds ([ADR 0001](./0001-ouroboros-workflow-engine.md)) carry a **task
 3. Wire `memory_ingest` frontmatter to OKF-compatible fields (`type`, optional `worm_ref`). ✅ — see [`docs/memory/okf.md`](../memory/okf.md)
 4. Document hot/cold sync tiers when implementing tiered pull.
 5. Open tracking issues for graph layer, kinetic sandbox, visual builder, vertical packs.
+6. **Essay gap closure** (PragmaticVectors publish path): [`docs/ontology/essay-gap-closure.md`](../ontology/essay-gap-closure.md) — close A/B workstreams or disclose C blockers.
+7. **v1 read backend = fixture mode** (essay gap **2.3**). ✅ — see §9; SQL adapters are partner/roadmap.
+8. **v1 kinetic call surface = MCP** (essay gap **3.1**). ✅ — see §3 / §10; GraphQL `@kinetic` = transport target (**3.8**).
+9. **LOW MCP kinetic** (essay gaps **3.2–3.3**). ✅ — see §11; `CLAWQL_ENABLE_ONTOLOGY_WRITES`.
+10. **MEDIUM mandate gate** (essay gap **3.4**). ✅ — see §12; `adjust_contract_value`.
+11. **Schema in Git / doctor warn** (essay gap **4.4**). ✅ — §6 doctor bullets.
+12. **Legal-only vertical packs** (essay gap **6.3** / **B6a**). ✅ — `packs/legal` shipped; others roadmap READMEs.
+13. **Publish disclosures** (B1–B5, B4a): see [`essay-gap-closure.md`](../ontology/essay-gap-closure.md) § Decisions locked.
 
 ## Status language
 

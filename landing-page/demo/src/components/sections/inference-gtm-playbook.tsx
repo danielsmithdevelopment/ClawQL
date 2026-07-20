@@ -441,6 +441,10 @@ clawql sources add https://your-nextcloud-instance/api
             <Link href={`${site.urls.docs}/architecture/agentic-fabric`}>
               docs.clawql.com/architecture/agentic-fabric
             </Link>
+            . Typed enterprise grounding (open Ontology, kinetic actions, Git vs R2):{' '}
+            <Link href={`${site.urls.docs}/architecture/enterprise-ontology`}>
+              docs.clawql.com/architecture/enterprise-ontology
+            </Link>
             .
           </p>
           <Callout>

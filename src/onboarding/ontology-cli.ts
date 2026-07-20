@@ -3,7 +3,14 @@
  */
 
 import { resolve } from "node:path";
-import { generateOntologyReadTools, lintOntology } from "clawql-ontology";
+import {
+  createOntologyEntity,
+  generateOntologyReadTools,
+  importOntologyPack,
+  initOntologyTree,
+  lintOntology,
+  listOntologyPacks,
+} from "clawql-ontology";
 
 export type OntologyCliOptions = {
   root?: string;
@@ -14,6 +21,8 @@ export type OntologyCliOptions = {
   skipLint?: boolean;
   json?: boolean;
   paths?: string[];
+  pack?: string;
+  name?: string;
 };
 
 function rootDir(opts: OntologyCliOptions): string {
@@ -76,14 +85,64 @@ export async function runOntologyGenerate(opts: OntologyCliOptions): Promise<num
     console.log(JSON.stringify({ ok: true, result, written }, null, 2));
   } else {
     console.log(
-      `Generated ${result.tools.length} read tool(s) for ${result.entities.length} entit(y/ies)`
+      `Generated ${result.tools.length} read tool(s), ${result.writeTools.length} gated write tool(s) for ${result.entities.length} entit(y/ies)`
     );
     if (result.deferredWriteActions.length) {
       console.log(
-        `Deferred ${result.deferredWriteActions.length} write/kinetic action(s) until Transaction Sandbox`
+        `Deferred ${result.deferredWriteActions.length} write action(s) (non-LOW or non-NATIVE)`
       );
     }
     for (const w of written) console.log(`  wrote ${w}`);
   }
   return 0;
+}
+
+export async function runOntologyInit(opts: OntologyCliOptions): Promise<number> {
+  const written = await initOntologyTree(rootDir(opts));
+  if (opts.json) {
+    console.log(JSON.stringify({ ok: true, written }, null, 2));
+  } else {
+    console.log("Initialized ontology tree:");
+    for (const w of written) console.log(`  ${w}`);
+  }
+  return 0;
+}
+
+export async function runOntologyCreateEntity(opts: OntologyCliOptions): Promise<number> {
+  const name = opts.name?.trim() || opts.paths?.[0]?.trim();
+  if (!name) {
+    console.error("Usage: clawql ontology create-entity <PascalCaseName>");
+    return 1;
+  }
+  try {
+    const dest = await createOntologyEntity(rootDir(opts), name);
+    if (opts.json) console.log(JSON.stringify({ ok: true, path: dest }, null, 2));
+    else console.log(`Created ${dest}`);
+    return 0;
+  } catch (e) {
+    console.error(e instanceof Error ? e.message : e);
+    return 1;
+  }
+}
+
+export async function runOntologyImport(opts: OntologyCliOptions): Promise<number> {
+  const pack = opts.pack?.trim();
+  if (!pack) {
+    console.error(
+      `Usage: clawql ontology import --pack <id>\nAvailable: ${listOntologyPacks().join(", ") || "(none)"}`
+    );
+    return 1;
+  }
+  try {
+    const written = await importOntologyPack(rootDir(opts), pack);
+    if (opts.json) console.log(JSON.stringify({ ok: true, written }, null, 2));
+    else {
+      console.log(`Imported pack ${pack}:`);
+      for (const w of written) console.log(`  ${w}`);
+    }
+    return 0;
+  } catch (e) {
+    console.error(e instanceof Error ? e.message : e);
+    return 1;
+  }
 }

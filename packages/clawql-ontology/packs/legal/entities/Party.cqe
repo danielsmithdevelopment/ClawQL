@@ -1,0 +1,31 @@
+apiVersion: clawql.dev/ontology/v1alpha1
+kind: Entity
+metadata:
+  name: Party
+  labels:
+    vertical: legal
+spec:
+  description: Individual or named party role on a Matter (distinct from Organization)
+  properties:
+    party_id:
+      type: string
+      required: true
+      indexed: true
+    display_name:
+      type: string
+      required: true
+    role:
+      type: enum
+      values: [counsel, witness, opposing, other]
+  pii_fields:
+    - display_name
+  sources:
+    - type: sql
+      connection: ${VAULT:contracts_db}
+      table: parties
+      id_column: party_id
+  actions:
+    - name: search_parties
+      kind: read
+    - name: get_party
+      kind: read

@@ -1,0 +1,92 @@
+apiVersion: clawql.dev/ontology/v1alpha1
+kind: Entity
+metadata:
+  name: Contract
+  labels:
+    vertical: legal
+spec:
+  description: Legal agreement between two or more parties
+  properties:
+    contract_id:
+      type: string
+      required: true
+      indexed: true
+      description: Stable primary identifier
+    status:
+      type: enum
+      values: [draft, active, expired, terminated]
+      required: true
+      mutable: true
+      kinetic_level: LOW
+    effective_date:
+      type: date
+      required: true
+    expiry_date:
+      type: date
+    value:
+      type: money
+      mutable: true
+      kinetic_level: MEDIUM
+      requires_mandate: AP2_FINANCIAL
+      change_limit: "10000.00"
+    parties:
+      type: array
+      items:
+        $ref: Organization
+      mutable: false
+  pii_fields:
+    - parties.contact_email
+    - parties.contact_phone
+  sources:
+    - type: sql
+      connection: ${VAULT:contracts_db}
+      table: contracts
+      id_column: contract_id
+    - type: nextcloud
+      path: /company/contracts/
+      classifier: classify_document
+  relationships:
+    - entity: Organization
+      type: many_to_many
+      via: contract_parties
+      description: Parties to the agreement
+  actions:
+    - name: search_contracts
+      kind: read
+      description: Search contracts by query and optional status
+    - name: get_contract
+      kind: read
+      description: Fetch a single contract by id
+    - name: list_contracts_expiring
+      kind: read
+      description: List contracts expiring within N days
+    - name: update_contract_status
+      kind: write
+      kinetic: true
+      kinetic_level: LOW
+      blast_radius: SINGLE_RECORD
+      rollback_protocol: FIELD_RESTORE
+      executor: NATIVE
+      audit_level: STANDARD
+      description: Update contract status enum
+    - name: adjust_contract_value
+      kind: write
+      kinetic: true
+      kinetic_level: MEDIUM
+      requires_mandate: true
+      mandate_type: AP2_FINANCIAL
+      blast_radius: FINANCIAL
+      rollback_protocol: FIELD_RESTORE
+      executor: NATIVE
+      audit_level: STANDARD
+      description: Adjust contract money value — mandate required (and when over change_limit)
+    - name: process_contract_document
+      kind: write
+      kinetic: true
+      kinetic_level: LOW
+      blast_radius: SINGLE_RECORD
+      rollback_protocol: WORKFLOW_CANCEL
+      executor: ARGO_WORKFLOW
+      workflow: clawql-idp-pipeline
+      audit_level: STANDARD
+      description: Run IDP pipeline for a contract document

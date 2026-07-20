@@ -76,5 +76,68 @@ describe("release manifest MVP", () => {
     const m = await collectReleaseManifest({ rootDir: root });
     expect(m.schemaVersion).toBe("0.1");
     expect(m.leafCount).toBe(0);
+    expect(m.ontologySchema).toBeUndefined();
+  });
+
+  it("pins ontologySchema when entity tree present", async () => {
+    const root = await mkdtemp(join(tmpdir(), "clawql-release-ont-"));
+    await writeFile(join(root, "package.json"), JSON.stringify({ version: "1.0.0" }), "utf8");
+    const entDir = join(root, ".clawql", "ontology", "entities");
+    const { mkdir } = await import("node:fs/promises");
+    await mkdir(entDir, { recursive: true });
+    await writeFile(
+      join(entDir, "Thing.cqe"),
+      [
+        "apiVersion: clawql.dev/ontology/v1alpha1",
+        "kind: Entity",
+        "metadata:",
+        "  name: Thing",
+        "spec:",
+        "  description: demo",
+        "  properties:",
+        "    id: { type: string, required: true }",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+    gitInit(root);
+    const m = await collectReleaseManifest({ rootDir: root });
+    expect(m.ontologySchema?.entityCount).toBe(1);
+    expect(m.ontologySchema?.sha256).toHaveLength(64);
+    expect(m.leafCount).toBe(1);
+
+    const { bundleDir } = await buildReleaseManifest({ rootDir: root, copyArtifacts: true });
+    const verify = await verifyReleaseBundle(bundleDir, root);
+    expect(verify.ok).toBe(true);
+
+    await writeFile(join(entDir, "Thing.cqe"), "tampered", "utf8");
+    const verifyDrift = await verifyReleaseBundle(bundleDir, root);
+    expect(verifyDrift.ok).toBe(false);
+    expect(verifyDrift.errors.some((e) => e.includes("ontologySchema"))).toBe(true);
+  });
+
+  it("lints .cqm manifests", async () => {
+    const { lintCqmFiles } = await import("./ontology-schema.js");
+    const root = await mkdtemp(join(tmpdir(), "clawql-cqm-"));
+    const good = join(root, "good.cqm");
+    await writeFile(
+      good,
+      [
+        "apiVersion: clawql.dev/manifest/v1alpha1",
+        "kind: EnterpriseGovernance",
+        "metadata:",
+        "  name: demo",
+        "spec: {}",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+    const ok = await lintCqmFiles([good]);
+    expect(ok.ok).toBe(true);
+
+    const bad = join(root, "bad.cqm");
+    await writeFile(bad, "kind: NotAThing\n", "utf8");
+    const fail = await lintCqmFiles([bad]);
+    expect(fail.ok).toBe(false);
   });
 });

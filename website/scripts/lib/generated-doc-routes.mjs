@@ -6,6 +6,8 @@ export const GENERATED_BODY_ROUTES = {
   'clawql-inference-body.mdx': '/inference/clawql-inference',
   'clawql-payments-body.mdx': '/payments/clawql-payments',
   'clawql-token-efficiency-body.mdx': '/architecture/token-efficiency',
+  'enterprise-ontology-body.mdx': '/architecture/enterprise-ontology',
+  'zero-trust-agentic-fabric-body.mdx': '/architecture/agentic-fabric',
   'clawql-vision-roadmap-body.mdx': '/vision/roadmap',
   'clawql-contributor-technical-spec-body.mdx':
     '/contributing/technical-specification',
@@ -25,5 +27,10 @@ export const GENERATED_BODY_ROUTES = {
   'local-agent-sandbox-body.mdx':
     '/agent-setup#local-agent-sandbox-mac-os-seatbelt',
   'agent-setup-body.mdx': '/agent-setup',
+  'cq-extensions-index-body.mdx': '/specs/cq-extensions',
+  'cq-extensions-cqe-body.mdx': '/specs/cq-extensions/cqe',
+  'cq-extensions-cqm-body.mdx': '/specs/cq-extensions/cqm',
+  'cq-extensions-cqk-body.mdx': '/specs/cq-extensions/cqk',
+  'cq-extensions-cqw-body.mdx': '/specs/cq-extensions/cqw',
   'getting-started-for-teams-body.mdx': '/getting-started/for-teams',
 }

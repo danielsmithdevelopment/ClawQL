@@ -18,6 +18,10 @@ export type ClawQLHorizontalTierSpec = {
     readonly hitlLabelStudio?: { readonly enabled?: boolean };
   };
   readonly sandbox?: { readonly enabled?: boolean };
+  readonly ontology?: {
+    readonly enabled?: boolean;
+    readonly writes?: { readonly enabled?: boolean };
+  };
   readonly ouroboros?: {
     readonly enabled?: boolean;
     readonly langfuseEval?: { readonly enabled?: boolean };
@@ -56,6 +60,8 @@ export function optionalFlagsFromHorizontalTierSpec(
       defaults.enableHitlLabelStudio
     ),
     enableSandbox: tierEnabled(spec.sandbox, defaults.enableSandbox),
+    enableOntology: tierEnabled(spec.ontology, defaults.enableOntology),
+    enableOntologyWrites: tierEnabled(spec.ontology?.writes, defaults.enableOntologyWrites),
     enableOuroboros: tierEnabled(spec.ouroboros, defaults.enableOuroboros),
     enableLangfuseEval: tierEnabled(spec.ouroboros?.langfuseEval, defaults.enableLangfuseEval),
   };

@@ -39,9 +39,22 @@ Candidate names considered and rejected:
 1. **OKF on `.md` vault** — done / shipping ([`docs/memory/okf.md`](../memory/okf.md)).
 2. **Draft open specs** for the four extensions (this ADR + [`docs/specs/cq-extensions/`](../specs/cq-extensions/)).
 3. **Dual-accept** in tooling (e.g. `clawql ontology lint` accepts `.yaml` / `.yml` / `.json` **and** `.cqe`).
-4. **Promote** files to `.cq*` after OKF + specs are stable (VS Code, doctor, release lint, Onyx differentiation).
+4. **Documented primary:** **`.cqe`** is the canonical extension in docs, examples, scaffolds, and essay copy. Tooling continues to accept `.yaml` / `.yml` / `.json` as **equivalent Entity content** (no mass-rename requirement; no lint failure on YAML).
+5. **Promote** remaining trees / editor associations after OKF + specs are stable (VS Code, doctor hints, Onyx differentiation).
 
 Do **not** block vault/OKF work on finishing VS Code or forcing a mass rename.
+
+### 2a) Amendment (2026-07-20) — `.cqe` primary
+
+**Decision:** For Ontology Entity definitions, **`.cqe` is primary in documentation and examples**. Serialization remains YAML (entity schema); the extension is the ClawQL tooling signal ([`.cqe` spec](../specs/cq-extensions/cqe.md)).
+
+**Non-goals of this amendment:**
+
+- Do **not** deprecate or reject `.yaml` / `.yml` / `.json` Entity files in `clawql ontology lint` / `generate`.
+- Do **not** require renaming existing customer trees.
+- Do **not** invent a second serialization — `.cqe` files are YAML Entity documents.
+
+**Done-when:** ADR + specs + examples lead with `.cqe`; essay / Getting Started can say “write `Contract.cqe`” without a disclaimer.
 
 ### 3) What stays in existing formats
 
@@ -71,10 +84,11 @@ Each extension has a one-page public spec (required/optional fields, content-typ
 ### Follow-ups
 
 1. Ship draft specs under `docs/specs/cq-extensions/`. ✅
-2. Ontology lint dual-accept `.cqe`. ✅ (this change set)
-3. VS Code grammar / schema association (later).
-4. `clawql-release` / doctor hooks for `.cqm` (later).
-5. Optional promote path: example `Contract.cqe` alongside YAML (later, non-breaking).
+2. Ontology lint dual-accept `.cqe`. ✅
+3. **`.cqe` primary in docs/examples** (essay gap **1.5**). ✅ — see §2a; examples ship as `Contract.cqe` / `Organization.cqe`.
+4. VS Code grammar / schema association (later — B2).
+5. `clawql-release` / doctor hooks for `.cqm` (MVP lint shipped; deepen later).
+6. Optional: doctor warn-only nudge when Entity files use `.yaml` instead of `.cqe` (not required for essay honesty).
 
 ## Status language
 

@@ -96,6 +96,20 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: SquaresPlusIcon,
   }),
   card({
+    href: '/architecture/enterprise-ontology',
+    name: 'Enterprise Ontology',
+    description:
+      'Open YAML/OKF typed entities, kinetic @kinetic actions, Git vs R2 — without Palantir lock-in.',
+    icon: DocumentIcon,
+  }),
+  card({
+    href: '/specs/cq-extensions',
+    name: '.cq* file extensions',
+    description:
+      'Draft Apache 2.0 specs for .cqe, .cqm, .cqk, and .cqw (ADR 0010).',
+    icon: DocumentIcon,
+  }),
+  card({
     href: '/vision/roadmap',
     name: 'Vision & status',
     description: 'Honest shipped vs planned status and phased delivery.',
@@ -111,7 +125,8 @@ export const architectureHubCards: Array<ReferenceCard> = [
   card({
     href: '/architecture/token-efficiency',
     name: 'Token efficiency',
-    description: 'Eight compounding layers for agent cost control.',
+    description:
+      'Twelve compounding layers for agent cost and reasoning quality.',
     icon: BoltIcon,
   }),
   card({

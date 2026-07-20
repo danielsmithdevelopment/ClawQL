@@ -1,24 +1,35 @@
 /**
- * clawql-ontology — lint + generate CLI
+ * clawql-ontology — lint / generate / scaffold CLI
  */
 import { resolve } from "node:path";
 import { generateOntologyReadTools } from "./generate.js";
 import { lintOntology } from "./lint.js";
+import {
+  createOntologyEntity,
+  importOntologyPack,
+  initOntologyTree,
+  listOntologyPacks,
+} from "./scaffold.js";
 
 function usage(): void {
-  console.log(`clawql-ontology — enterprise Ontology lint / generate (ADR 0009)
+  console.log(`clawql-ontology — enterprise Ontology (ADR 0009)
 
 Usage:
   clawql-ontology lint [--root DIR] [--schema PATH] [--dir PATH] [--strict] [--json] [files...]
   clawql-ontology generate [--root DIR] [--schema PATH] [--dir PATH] --out DIR [--skip-lint] [--json] [files...]
+  clawql-ontology init [--root DIR] [--json]
+  clawql-ontology create-entity <PascalCaseName> [--root DIR] [--json]
+  clawql-ontology import --pack <id> [--root DIR] [--json]
 
 Defaults:
-  Entity search: .clawql/ontology/entities then examples/ontology/entities
+  Entity search: CLAWQL_ONTOLOGY_DIR or .clawql/ontology/entities then examples/ontology/entities
   Schema: schemas/ontology/entity.schema.json
+  Packs: ${listOntologyPacks().join(", ") || "(none)"}
 
 Examples:
   clawql-ontology lint examples/ontology/entities
   clawql-ontology generate --dir examples/ontology/entities --out generated/ontology
+  clawql-ontology init && clawql-ontology import --pack legal
 `);
 }
 
@@ -35,6 +46,7 @@ function parseArgs(argv: string[]): {
     else if (a === "--schema") flags.schema = argv[++i] ?? "";
     else if (a === "--dir") flags.dir = argv[++i] ?? "";
     else if (a === "--out") flags.out = argv[++i] ?? "";
+    else if (a === "--pack") flags.pack = argv[++i] ?? "";
     else if (a === "--strict") flags.strict = true;
     else if (a === "--skip-lint") flags.skipLint = true;
     else if (a === "--json") flags.json = true;
@@ -120,16 +132,67 @@ async function main(): Promise<void> {
       console.log(JSON.stringify({ ok: true, result, written }, null, 2));
     } else {
       console.log(
-        `Generated ${result.tools.length} read tool(s) for ${result.entities.length} entit(y/ies)`
+        `Generated ${result.tools.length} read tool(s), ${result.writeTools.length} gated write tool(s) for ${result.entities.length} entit(y/ies)`
       );
       if (result.deferredWriteActions.length) {
         console.log(
-          `Deferred ${result.deferredWriteActions.length} write/kinetic action(s) until Transaction Sandbox`
+          `Deferred ${result.deferredWriteActions.length} write action(s) (non-LOW or non-NATIVE)`
         );
       }
       for (const w of written) console.log(`  wrote ${w}`);
     }
     process.exitCode = 0;
+    return;
+  }
+
+  if (cmd === "init") {
+    const written = await initOntologyTree(rootDir);
+    if (flags.json) console.log(JSON.stringify({ ok: true, written }, null, 2));
+    else {
+      console.log("Initialized ontology tree:");
+      for (const w of written) console.log(`  ${w}`);
+    }
+    return;
+  }
+
+  if (cmd === "create-entity") {
+    const name = positional[0]?.trim();
+    if (!name) {
+      console.error("Usage: clawql-ontology create-entity <PascalCaseName>");
+      process.exitCode = 1;
+      return;
+    }
+    try {
+      const dest = await createOntologyEntity(rootDir, name);
+      if (flags.json) console.log(JSON.stringify({ ok: true, path: dest }, null, 2));
+      else console.log(`Created ${dest}`);
+    } catch (e) {
+      console.error(e instanceof Error ? e.message : e);
+      process.exitCode = 1;
+    }
+    return;
+  }
+
+  if (cmd === "import") {
+    const pack = typeof flags.pack === "string" ? flags.pack.trim() : "";
+    if (!pack) {
+      console.error(
+        `Usage: clawql-ontology import --pack <id>\nAvailable: ${listOntologyPacks().join(", ") || "(none)"}`
+      );
+      process.exitCode = 1;
+      return;
+    }
+    try {
+      const written = await importOntologyPack(rootDir, pack);
+      if (flags.json) console.log(JSON.stringify({ ok: true, written }, null, 2));
+      else {
+        console.log(`Imported pack ${pack}:`);
+        for (const w of written) console.log(`  ${w}`);
+      }
+    } catch (e) {
+      console.error(e instanceof Error ? e.message : e);
+      process.exitCode = 1;
+    }
     return;
   }
 

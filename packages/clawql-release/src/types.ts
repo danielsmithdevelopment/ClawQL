@@ -47,6 +47,15 @@ export type ReleaseManifestV01 = {
   };
   merkleRoot: string;
   leafCount: number;
+  /**
+   * Optional pin of the enterprise Ontology schema tree (SHA-256 over sorted entity file digests).
+   * Present when `.clawql/ontology/entities` or `examples/ontology/entities` exists at collect time.
+   */
+  ontologySchema?: {
+    sha256: string;
+    path: string;
+    entityCount: number;
+  };
   policy: {
     compatiblePolicyVersion: string;
     requireSignatures?: string[];
