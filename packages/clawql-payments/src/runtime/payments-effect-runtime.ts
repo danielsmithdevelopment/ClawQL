@@ -13,6 +13,8 @@ import { offrampWebhookLiveLayer } from "../offramp/offramp-webhook-service.js";
 import { creditsLiveLayer } from "../credits/credits-service.js";
 import { achTopupLiveLayer } from "../credits/ach-topup-service.js";
 import { agentCompensationLiveLayer } from "../compensation/agent-compensation-service.js";
+import { deductionLiveLayer } from "../credits/deduction-service.js";
+import { deductionEventBusLiveLayer } from "../credits/deduction-event-bus.js";
 import { mppOpenApiLiveLayer } from "../mpp/openapi-service.js";
 import { mppVerificationLiveLayer } from "../mpp/verification-service.js";
 import { mppxAdapterLiveLayer } from "../mpp/mppx-adapter.js";
@@ -55,7 +57,9 @@ export type PaymentsServices =
   | import("../offramp/offramp-webhook-service.js").OfframpWebhookService
   | import("../credits/credits-service.js").CreditsService
   | import("../credits/ach-topup-service.js").AchTopupService
-  | import("../compensation/agent-compensation-service.js").AgentCompensationService;
+  | import("../compensation/agent-compensation-service.js").AgentCompensationService
+  | import("../credits/deduction-service.js").DeductionService
+  | import("../credits/deduction-event-bus.js").DeductionEventBus;
 
 const layerCache = new Map<string, Layer.Layer<PaymentsServices>>();
 
@@ -88,6 +92,10 @@ export function paymentsServicesLiveLayer(
   );
   const compensation = agentCompensationLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(audit, payouts))
+  );
+  const deductionBus = deductionEventBusLiveLayer(env);
+  const deduction = deductionLiveLayer(env).pipe(
+    Layer.provide(Layer.mergeAll(audit, deductionBus))
   );
 
   const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
@@ -141,7 +149,9 @@ export function paymentsServicesLiveLayer(
     offrampWebhook,
     credits,
     achTopup,
-    compensation
+    compensation,
+    deductionBus,
+    deduction
   );
   layerCache.set(key, layer);
   return layer;

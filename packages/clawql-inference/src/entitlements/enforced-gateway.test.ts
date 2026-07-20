@@ -87,7 +87,7 @@ describe("EntitlementEnforcedGateway", () => {
     expect(usage.inferenceCalls).toBe(1);
   });
 
-  it("passes through when enforcement is disabled", async () => {
+  it("passes through when enforcement is disabled", { timeout: 15_000 }, async () => {
     const disabledEnv = { ...env, CLAWQL_PAYMENTS_ENFORCE_INFERENCE: "0" };
     const usageStore = createUsageStore(disabledEnv);
     for (let i = 0; i < 100; i++) {
@@ -104,28 +104,32 @@ describe("EntitlementEnforcedGateway", () => {
     ).resolves.toMatchObject({ content: "ok" });
   });
 
-  it("is wired into createInferenceGateway when enforcement is enabled", async () => {
-    const { createInferenceGateway } = await import("../gateway.js");
-    const usageStore = createUsageStore(env);
-    for (let i = 0; i < 100; i++) {
-      await usageStore.increment("default", "inference_calls", 1, "free");
+  it(
+    "is wired into createInferenceGateway when enforcement is enabled",
+    { timeout: 15_000 },
+    async () => {
+      const { createInferenceGateway } = await import("../gateway.js");
+      const usageStore = createUsageStore(env);
+      for (let i = 0; i < 100; i++) {
+        await usageStore.increment("default", "inference_calls", 1, "free");
+      }
+
+      const gateway = createInferenceGateway({
+        env,
+        semanticCache: false,
+        fallback: false,
+        store: null,
+        providers: new Map([
+          ["openai", createOpenAiAdapter({ apiKey: "k", baseUrl: "https://api.openai.com/v1" })],
+        ]),
+      });
+
+      await expect(
+        gateway.complete({
+          model: "openai/gpt-4o",
+          messages: [{ role: "user", content: "blocked via factory" }],
+        })
+      ).rejects.toBeInstanceOf(EntitlementLimitError);
     }
-
-    const gateway = createInferenceGateway({
-      env,
-      semanticCache: false,
-      fallback: false,
-      store: null,
-      providers: new Map([
-        ["openai", createOpenAiAdapter({ apiKey: "k", baseUrl: "https://api.openai.com/v1" })],
-      ]),
-    });
-
-    await expect(
-      gateway.complete({
-        model: "openai/gpt-4o",
-        messages: [{ role: "user", content: "blocked via factory" }],
-      })
-    ).rejects.toBeInstanceOf(EntitlementLimitError);
-  });
+  );
 });

@@ -85,3 +85,9 @@ export {
   classifyPaymentTool,
   isHighImpactPaymentTool,
 } from "../compensation/high-impact.js";
+export { DeductionService, deductionLiveLayer } from "../credits/deduction-service.js";
+export {
+  DeductionEventBus,
+  deductionEventBusLiveLayer,
+  deductionEventBusNoopLayer,
+} from "../credits/deduction-event-bus.js";

@@ -20,7 +20,7 @@ clawql-payments
 ├── payouts/    # Stripe Connect creator payouts (bank + USDC intents)
 ├── ramp/       # Ramp funds + virtual / agent cards
 ├── offramp/    # Consumer USDC → fiat (Moonpay / Transak)
-├── credits/    # Prepaid ledger + Stripe Financial Connections / ACH bank top-up
+├── credits/    # Prepaid grants, DeductionService (sync hold/capture), FC/ACH top-up
 ├── plans/      # ClawQL tier definitions, entitlements, usage tracking, limit enforcement
 ├── audit/      # Payment events → hash-chained WORM (jsonl, postgres, or memory) + optional Loki export
 └── cli/        # `clawql payments *` command implementations

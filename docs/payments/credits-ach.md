@@ -77,6 +77,8 @@ Wired into `paymentsServicesLiveLayer()`. Discovery advertises `type: "credits"`
 
 ## Follow-ups
 
-- Debit credits automatically from inference entitlement path when balance > 0
 - Hosted checkout / Billing Portal bank payment method UX
 - Optional direct Plaid Link only if product needs non-Stripe bank data
+- Valkey Lua hot counter + Postgres durable grants (same DeductionService API)
+
+Inference debit/hold is implemented via [`DeductionService`](./deduction-service.md) (`CLAWQL_CREDITS_ENFORCE_INFERENCE`).

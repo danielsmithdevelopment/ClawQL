@@ -1,5 +1,5 @@
 import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../gateway.js";
-import { isStripeMeterReportingActive } from "clawql-payments";
+import { isCreditsInferenceEnforcementActive, isStripeMeterReportingActive } from "clawql-payments";
 import {
   completeWithEnforcementProgram,
   runEntitlementEffect,
@@ -21,7 +21,11 @@ export function withEntitlementEnforcement(
   gateway: InferenceGateway,
   env: NodeJS.ProcessEnv = process.env
 ): InferenceGateway {
-  if (!isInferenceEntitlementEnforcementActive(env) && !isStripeMeterReportingActive(env)) {
+  if (
+    !isInferenceEntitlementEnforcementActive(env) &&
+    !isStripeMeterReportingActive(env) &&
+    !isCreditsInferenceEnforcementActive(env)
+  ) {
     return gateway;
   }
   return new EntitlementEnforcedGateway(gateway, env);
