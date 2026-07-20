@@ -39,10 +39,12 @@ Same as [`entity.schema.json`](../../../schemas/ontology/entity.schema.json):
 - `clawql ontology generate` — emit read MCP tools from `.cqe`
 - Future VS Code — autocomplete against entity schema
 
-## Dual-accept period
+## Dual-accept (YAML still valid)
 
-Until promotion completes, repositories may keep `Contract.yaml`. Lint/generate treat `.cqe` and `.yaml` equivalently when content matches the Entity schema.
+**Primary:** use **`.cqe`** for new Entity files (docs, scaffolds, packs, essay).
+
+**Also accepted forever (or until a future major):** `.yaml` / `.yml` / `.json` with the same Entity body. Lint/generate treat them as equivalent content. No mass rename is required — see [ADR 0010 §2a](../../adr/0010-cq-file-extensions.md).
 
 ## Example
 
-See [`examples/ontology/entities/Contract.cqe`](../../../examples/ontology/entities/Contract.cqe) (YAML with a `.cqe` extension — ADR 0010 dual-accept).
+See [`examples/ontology/entities/Contract.cqe`](../../../examples/ontology/entities/Contract.cqe).

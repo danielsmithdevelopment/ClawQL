@@ -49,7 +49,7 @@ npx clawql-ontology import --pack legal
 
 Write / kinetic actions are listed as `deferredWriteActions` and **not** registered until Transaction Sandbox.
 
-Entity files may use `.yaml` / `.yml` / `.json` or draft **`.cqe`** ([ADR 0010](../adr/0010-cq-file-extensions.md), [`.cqe` spec](https://docs.clawql.com/specs/cq-extensions/cqe)).
+Entity files: prefer **`.cqe`** ([ADR 0010 §2a](../adr/0010-cq-file-extensions.md)); `.yaml` / `.yml` / `.json` remain accepted ([`.cqe` spec](https://docs.clawql.com/specs/cq-extensions/cqe)).
 
 ## Shipped authoring path (interim — no Command Deck builder yet)
 

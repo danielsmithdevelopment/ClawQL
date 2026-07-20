@@ -211,7 +211,7 @@ Document IDP DAGs (Tika → … → Onyx) are already Workflow-shaped. Kinetic w
 
 **Shipped:** `memory_ingest` writes OKF frontmatter; `Memory/index.md` + `Memory/log.md`; legacy append upgrade. Details: [`docs/memory/okf.md`](../memory/okf.md).
 
-**Next (extensions):** Draft `.cq*` specs — [ADR 0010](../adr/0010-cq-file-extensions.md) · [`docs/specs/cq-extensions/`](../specs/cq-extensions/). Do not block OKF on promotion; ontology lint dual-accepts `.cqe`.
+**Next (extensions):** [ADR 0010](../adr/0010-cq-file-extensions.md) — **`.cqe` is primary** in docs/examples; lint/generate still dual-accept `.yaml` / `.yml` / `.json`. Specs: [`docs/specs/cq-extensions/`](../specs/cq-extensions/) · site: [`/specs/cq-extensions`](https://docs.clawql.com/specs/cq-extensions).
 
 ```text
 memory_ingest writes:

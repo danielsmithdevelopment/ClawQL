@@ -14,9 +14,9 @@
 | Essay claim                                | Today                               | Target for “as-is” publish                                                  |
 | ------------------------------------------ | ----------------------------------- | --------------------------------------------------------------------------- |
 | Cold-open problem + OOP framing            | Docs only                           | Keep (narrative)                                                            |
-| `.cqe` primary format                      | Dual-accept; examples are `.yaml`   | Examples + docs lead with `.cqe`; YAML still accepted                       |
-| `ontology lint` / `generate`               | Read **stubs** to disk              | Generate **and register** read tools in gateway                             |
-| Live typed tools (enums, not ints)         | No handlers                         | Demo backend or SQL-mapped handlers returning typed shapes                  |
+| `.cqe` primary format                      | **Shipped** — examples/docs/scaffolds lead with `.cqe`; tooling dual-accepts YAML | Essay can say `Contract.cqe`; YAML still accepted ([ADR 0010 §2a](../adr/0010-cq-file-extensions.md)) |
+| `ontology lint` / `generate`               | Generate + register fixture MCP tools when enabled                              | Keep; expand adapters separately                                                                    |
+| Live typed tools (enums, not ints)         | Fixture handlers return typed Contract                                          | Optional SQL path (**2.3**) or disclose fixture mode                                                |
 | PII from `pii_fields` → Presidio           | Presidio exists; not schema-driven  | Schema field list drives redaction on ontology tool results                 |
 | Relationship → graph tools                 | Relationships in YAML only          | Generate + register traversal tools (even if demo store)                    |
 | GraphQL `@kinetic`                         | Docs/ADR only                       | Directive in schema + PEP intercept path (or MCP-equivalent kinetic writes) |
@@ -50,7 +50,7 @@
 | **1.2** | Align essay schema fields to `v1alpha1` **or** extend JSON Schema to cover essay fields used in publish version | A/B  | No invented fields in published essay without schema support |
 | **1.3** | `clawql ontology init` — create `.clawql/ontology/{entities,relationships,actions}` + README                    | A    | Essay Day-1 init works                                       |
 | **1.4** | `clawql ontology create-entity <Name>` — write templated `.cqe`                                                 | A    | Essay create-entity works                                    |
-| **1.5** | Decision: `.cqe` **primary in docs/essay**; dual-accept remains in tooling                                      | B    | Written in ADR 0010 amendment or this doc                    |
+| **1.5** | Decision: `.cqe` **primary in docs/essay**; dual-accept remains in tooling                                      | B ✅ | [ADR 0010 §2a](../adr/0010-cq-file-extensions.md); examples/scaffolds use `.cqe` |
 
 ### WS2 — Generate → live MCP read tools
 
@@ -168,7 +168,7 @@ Closed without product decisions (see PR closing no-drama gaps):
 | --------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | **0.1–0.2**                 | Docs site pages for Enterprise Ontology + `.cq*` specs (merge + deploy still required for live URLs)          |
 | **0.3**                     | This backlog doc                                                                                              |
-| **1.1, 1.3, 1.4**           | `.cqe` examples; `ontology init` / `create-entity`                                                            |
+| **1.1, 1.3, 1.4, 1.5**      | `.cqe` examples; `ontology init` / `create-entity`; **`.cqe` primary** (ADR 0010 §2a)              |
 | **2.1, 2.2, 2.4, 2.5, 2.6** | Fixture MCP plugin + `CLAWQL_ENABLE_ONTOLOGY` / `CLAWQL_ONTOLOGY_DIR`; relationship tools; PII path redaction |
 | **4.1–4.3**                 | `.cqk` when `wormRef` / `CLAWQL_MEMORY_CQK`; generate `index.md`; recall boost                                |
 | **5.1–5.3**                 | Manifest `ontologySchema` pin + verify; `clawql-release lint` for `.cqm`; doctor ontology check               |
@@ -176,7 +176,7 @@ Closed without product decisions (see PR closing no-drama gaps):
 | **7.3**                     | CLI+PR authoring documented as shipped path                                                                   |
 | **8.1**                     | Onyx source stubs on generate                                                                                 |
 
-**Stopped before decisions / blockers:** **1.5**, **2.3**, **3.1**, **4.4**, **5.4**, **6.3**, **7.1–7.2**, **8.2**, and B1–B6.
+**Stopped before decisions / blockers:** **2.3**, **3.1**, **4.4**, **5.4**, **6.3**, **7.1–7.2**, **8.2**, and B1–B6.
 
 ## Tracking
 
