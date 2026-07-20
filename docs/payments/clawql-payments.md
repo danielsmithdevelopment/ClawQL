@@ -40,13 +40,13 @@ It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is ava
 | **Consumer off-ramp** (Moonpay / Transak)           | ✅     | Sessions + `OfframpWebhookService` completion settle                                                                                     |
 | **Payments MCP tools** (payout / ramp / offramp)    | ✅     | `CLAWQL_PAYMENTS_MCP_TOOLS=1`; optional AP2 gate                                                                                         |
 | **Prepaid credits + bank top-up**                   | ✅     | Grant ledger + Stripe FC/ACH top-up; sync [`DeductionService`](./deduction-service.md) on inference — [credits-ach.md](./credits-ach.md) |
-| **Agent compensation** (credits + 2PC cash-out)     | ✅     | `AgentCompensationService` — stage/confirm MCP + FAILED WORM; reuses `PayoutService`                    |
+| **Agent compensation** (credits + 2PC cash-out)     | ✅     | `AgentCompensationService` — stage/confirm MCP + FAILED WORM; reuses `PayoutService`                                                     |
 
 ### Roadmap
 
-| Tier  | Item                  | Role                | Notes                                                    |
-| ----- | --------------------- | ------------------- | -------------------------------------------------------- |
-| **3** | **Mollie / Razorpay** | Regional processors | Add when regional traction requires them                 |
+| Tier  | Item                  | Role                | Notes                                    |
+| ----- | --------------------- | ------------------- | ---------------------------------------- |
+| **3** | **Mollie / Razorpay** | Regional processors | Add when regional traction requires them |
 
 **Already covered (do not duplicate):** Shopify Payments (Stripe-powered), ACH Direct Debit via Stripe's APIs, card/subscription/invoice flows via Stripe, **bank ACH top-ups via Stripe Financial Connections** (Plaid-backed Link UI — no separate Plaid SDK), **Stripe Connect payouts**, **live Base USDC payouts with receipt confirmation**, **consumer off-ramp + webhooks (Moonpay/Transak)**, **Ramp vault + native agentic cards**. **Not planned:** Zelle (no merchant API), Square POS-first adapters, raw Plaid SDK unless non-payment bank data is required.
 

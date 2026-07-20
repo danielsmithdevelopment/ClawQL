@@ -87,26 +87,22 @@ describe("EntitlementEnforcedGateway", () => {
     expect(usage.inferenceCalls).toBe(1);
   });
 
-  it(
-    "passes through when enforcement is disabled",
-    { timeout: 15_000 },
-    async () => {
-      const disabledEnv = { ...env, CLAWQL_PAYMENTS_ENFORCE_INFERENCE: "0" };
-      const usageStore = createUsageStore(disabledEnv);
-      for (let i = 0; i < 100; i++) {
-        await usageStore.increment("default", "inference_calls", 1, "free");
-      }
-
-      const inner = new StubGateway();
-      const gateway = new EntitlementEnforcedGateway(inner, disabledEnv);
-      await expect(
-        gateway.complete({
-          model: "openai/gpt-4o",
-          messages: [{ role: "user", content: "allowed without enforcement" }],
-        })
-      ).resolves.toMatchObject({ content: "ok" });
+  it("passes through when enforcement is disabled", { timeout: 15_000 }, async () => {
+    const disabledEnv = { ...env, CLAWQL_PAYMENTS_ENFORCE_INFERENCE: "0" };
+    const usageStore = createUsageStore(disabledEnv);
+    for (let i = 0; i < 100; i++) {
+      await usageStore.increment("default", "inference_calls", 1, "free");
     }
-  );
+
+    const inner = new StubGateway();
+    const gateway = new EntitlementEnforcedGateway(inner, disabledEnv);
+    await expect(
+      gateway.complete({
+        model: "openai/gpt-4o",
+        messages: [{ role: "user", content: "allowed without enforcement" }],
+      })
+    ).resolves.toMatchObject({ content: "ok" });
+  });
 
   it(
     "is wired into createInferenceGateway when enforcement is enabled",
