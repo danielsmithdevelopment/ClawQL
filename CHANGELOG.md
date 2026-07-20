@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- **Docker publish (dashboard)** — `.dockerignore` no longer excludes `.env.example` / `scripts/kubernetes/provider-vault-key-catalog.ts` needed by `dashboard/Dockerfile`; catalog `COPY` targets corrected to `/app/...` so `prebuild` generators resolve `repoRoot` after the repo-root build-context change; strip nested `packages/*/node_modules` before dashboard `npm ci` so Next does not follow incomplete AWS/Effect trees. Overnight `clawql-dashboard` image builds were failing since that switch. CI adds **Dashboard Docker smoke**.
-
 ### Added
 
 - _(Pending ontology essay gap-closure / docs-site pages — merge #718–#720 before tagging.)_
@@ -44,7 +40,7 @@ Minor release on the **7.0 Agentic Gateway** line: **enterprise Ontology + OKF**
 ### Fixed
 
 - Post-merge hygiene: observability Langfuse `ENABLE_*` conflict markers; payments docs/MDX sync; entitlement test timeouts under heavier payments Effect layer.
-- **Docker publish (dashboard)** — restore overnight `clawql-dashboard` GHCR builds: `.dockerignore` exceptions for `.env.example` + vault catalog script; Dockerfile `COPY` under `/app` for `prebuild` generators; CI **Dashboard Docker smoke** ([#740](https://github.com/danielsmithdevelopment/ClawQL/pull/740)).
+- **Docker publish (dashboard)** — restore overnight `clawql-dashboard` GHCR builds ([#740](https://github.com/danielsmithdevelopment/ClawQL/pull/740)): `.dockerignore` exceptions for `.env.example` + vault catalog; `COPY` under `/app` for `prebuild` generators; keep nested `packages/clawql-api` deps **and** hoisted `/app/node_modules` for Next webpack; CI **Dashboard Docker smoke**.
 
 ## [7.0.0] - 2026-07-10
 
