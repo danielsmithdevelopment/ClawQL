@@ -78,41 +78,41 @@
 
 ### WS4 — OKF / `.cqk` / vault layout
 
-| ID      | Task                                                                                  | Band | Done-when                                              |
-| ------- | ------------------------------------------------------------------------------------- | ---- | ------------------------------------------------------ |
-| **4.1** | Optional `memory_ingest` flag / type to write `.cqk` when `wormRef` set               | A    | Spec + tests; default can stay `.md`                   |
-| **4.2** | Generate Git `ontology/index.md` (OKF catalog) from entity set on `ontology generate` | A    | Essay “index first” has an artifact                    |
-| **4.3** | `memory_recall` optional boost: prefer ontology index / entity types when present     | A    | Documented behavior + test                             |
+| ID      | Task                                                                                  | Band | Done-when                                                                                                                           |
+| ------- | ------------------------------------------------------------------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **4.1** | Optional `memory_ingest` flag / type to write `.cqk` when `wormRef` set               | A    | Spec + tests; default can stay `.md`                                                                                                |
+| **4.2** | Generate Git `ontology/index.md` (OKF catalog) from entity set on `ontology generate` | A    | Essay “index first” has an artifact                                                                                                 |
+| **4.3** | `memory_recall` optional boost: prefer ontology index / entity types when present     | A    | Documented behavior + test                                                                                                          |
 | **4.4** | Decision: schema **always Git**; instances R2 — enforce in doctor                     | B ✅ | `clawql doctor` **warns** if local schema missing or marked object-storage-only ([ADR 0009 §6](../adr/0009-enterprise-ontology.md)) |
 
-| ID      | Task                                                                    | Band  | Done-when                                     |
-| ------- | ----------------------------------------------------------------------- | ----- | --------------------------------------------- |
-| **5.1** | Pin ontology schema hash/version on release manifest collect            | A     | Manifest field present; verify fails if drift |
-| **5.2** | `clawql-release lint` accepts/validates `.cqm` (or manifest path alias) | A     | Essay release lint claim true for MVP schema  |
-| **5.3** | `clawql doctor --smoke` checks ontology dir + optional manifest pin     | A     | Fail/warn documented                          |
+| ID      | Task                                                                    | Band              | Done-when                                                   |
+| ------- | ----------------------------------------------------------------------- | ----------------- | ----------------------------------------------------------- |
+| **5.1** | Pin ontology schema hash/version on release manifest collect            | A                 | Manifest field present; verify fails if drift               |
+| **5.2** | `clawql-release lint` accepts/validates `.cqm` (or manifest path alias) | A                 | Essay release lint claim true for MVP schema                |
+| **5.3** | `clawql doctor --smoke` checks ontology dir + optional manifest pin     | A                 | Fail/warn documented                                        |
 | **5.4** | Arweave upload of ontology pin                                          | **C** ✅ disclose | Same as **B3(a)** — Git + manifest pin now; Arweave roadmap |
 
 ### WS6 — Vertical packs & import
 
-| ID      | Task                                                                                         | Band | Done-when                                      |
-| ------- | -------------------------------------------------------------------------------------------- | ---- | ---------------------------------------------- |
-| **6.1** | Pack layout under `packages/clawql-ontology/packs/{legal,...}` or `examples/ontology/packs/` | A    | ≥1 pack (legal) with 3–5 entities              |
-| **6.2** | `clawql ontology import --pack legal` copies into `.clawql/ontology`                         | A    | Essay import works                             |
+| ID      | Task                                                                                         | Band   | Done-when                                                                      |
+| ------- | -------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------ |
+| **6.1** | Pack layout under `packages/clawql-ontology/packs/{legal,...}` or `examples/ontology/packs/` | A      | ≥1 pack (legal) with 3–5 entities                                              |
+| **6.2** | `clawql ontology import --pack legal` copies into `.clawql/ontology`                         | A      | Essay import works                                                             |
 | **6.3** | Healthcare / financial / real-estate packs                                                   | B/C ✅ | **Legal-only shipped**; other three roadmap placeholders (`packs/*/README.md`) |
 
 ### WS7 — Command Deck builder & VS Code
 
-| ID      | Task                                                            | Band  | Done-when                                                 |
-| ------- | --------------------------------------------------------------- | ----- | --------------------------------------------------------- |
-| **7.1** | VS Code extension: validate `.cqe` against JSON Schema          | **C** ✅ disclose | **B2(a)/(c):** disclose; CI `ontology lint` is the gate |
-| **7.2** | Command Deck 3-panel builder → branch + PR                      | **C** ✅ disclose | **B1(a)/(b):** CLI+PR is shipped authoring (**7.3**) |
-| **7.3** | Interim: document CLI+PR workflow as the shipped authoring path | A     | Essay “builder” section moved to roadmap **or** disclosed |
+| ID      | Task                                                            | Band              | Done-when                                                 |
+| ------- | --------------------------------------------------------------- | ----------------- | --------------------------------------------------------- |
+| **7.1** | VS Code extension: validate `.cqe` against JSON Schema          | **C** ✅ disclose | **B2(a)/(c):** disclose; CI `ontology lint` is the gate   |
+| **7.2** | Command Deck 3-panel builder → branch + PR                      | **C** ✅ disclose | **B1(a)/(b):** CLI+PR is shipped authoring (**7.3**)      |
+| **7.3** | Interim: document CLI+PR workflow as the shipped authoring path | A                 | Essay “builder” section moved to roadmap **or** disclosed |
 
 ### WS8 — Onyx / sources live binding
 
-| ID      | Task                                                         | Band  | Done-when                                           |
-| ------- | ------------------------------------------------------------ | ----- | --------------------------------------------------- |
-| **8.1** | Emit Onyx connector config stubs from `sources:` on generate | A     | Files emitted; manual apply OK                      |
+| ID      | Task                                                         | Band              | Done-when                            |
+| ------- | ------------------------------------------------------------ | ----------------- | ------------------------------------ |
+| **8.1** | Emit Onyx connector config stubs from `sources:` on generate | A                 | Files emitted; manual apply OK       |
 | **8.2** | Auto-apply / sync sources → Onyx                             | **C** ✅ disclose | **B5(a):** stubs only; no auto-apply |
 
 ---
@@ -135,15 +135,15 @@ then: 3.4–3.8, 7.*, 5.4, 8.2 as capacity allows
 
 ## Decisions locked (publish compromises)
 
-| Blocker / ID | Locked choice | Essay implication |
-| ------------ | ------------- | ----------------- |
-| **B1** builder | **(a)/(b)** Disclose + CLI+PR authoring | No “Command Deck ships” claim |
-| **B2** VS Code | **(a)/(c)** Disclose; CI lint is the gate | No “extension ships” claim |
-| **B3** / **5.4** Arweave | **(a)** Disclose; Git + release manifest pin | No Arweave permanence claim |
-| **B4** full kinetic | **(a)** LOW MCP kinetic shipped; GraphQL = transport target | Soft-copy HIGH/Argo/`@kinetic` as phased |
-| **B5** / **8.2** auto-Onyx | **(a)** Stubs only | No “generate configures Onyx” as automatic |
-| **B6** / **6.3** packs | **(a)** Legal only | Other verticals = roadmap |
-| **4.4** schema Git | Warn in `doctor` if missing / remote-only | Policy enforceable without hard fail |
+| Blocker / ID               | Locked choice                                               | Essay implication                          |
+| -------------------------- | ----------------------------------------------------------- | ------------------------------------------ |
+| **B1** builder             | **(a)/(b)** Disclose + CLI+PR authoring                     | No “Command Deck ships” claim              |
+| **B2** VS Code             | **(a)/(c)** Disclose; CI lint is the gate                   | No “extension ships” claim                 |
+| **B3** / **5.4** Arweave   | **(a)** Disclose; Git + release manifest pin                | No Arweave permanence claim                |
+| **B4** full kinetic        | **(a)** LOW MCP kinetic shipped; GraphQL = transport target | Soft-copy HIGH/Argo/`@kinetic` as phased   |
+| **B5** / **8.2** auto-Onyx | **(a)** Stubs only                                          | No “generate configures Onyx” as automatic |
+| **B6** / **6.3** packs     | **(a)** Legal only                                          | Other verticals = roadmap                  |
+| **4.4** schema Git         | Warn in `doctor` if missing / remote-only                   | Policy enforceable without hard fail       |
 
 **Remaining optional impl (not publish-blocking):** **3.4** MEDIUM mandate check; **3.5–3.8** still disclose/phased.
 
@@ -186,7 +186,7 @@ Closed without product decisions (see PR closing no-drama gaps):
 | **2.1, 2.2, 2.3, 2.4, 2.5, 2.6** | Fixture MCP plugin + **fixture-mode decision** (ADR 0009 §9); `CLAWQL_ENABLE_ONTOLOGY` / `CLAWQL_ONTOLOGY_DIR`; relationships; PII |
 | **3.1**                          | **MCP-first kinetic** (ADR 0009 §10); GraphQL `@kinetic` deferred to **3.8** / B4                                                  |
 | **3.2–3.3**                      | Gated `writeTools` + LOW Transaction Sandbox (`CLAWQL_ENABLE_ONTOLOGY_WRITES`)                                                     |
-| **4.1–4.4**                      | `.cqk` + recall boost + `index.md`; **schema-in-Git doctor warns** (4.4)                                                                |
+| **4.1–4.4**                      | `.cqk` + recall boost + `index.md`; **schema-in-Git doctor warns** (4.4)                                                           |
 | **5.1–5.3**                      | Manifest `ontologySchema` pin + verify; `clawql-release lint` for `.cqm`; doctor ontology check                                    |
 | **5.4**                          | **Disclosed** — Arweave deferred (B3a)                                                                                             |
 | **6.1–6.3**                      | Legal pack + import; **other verticals roadmap** (B6a)                                                                             |

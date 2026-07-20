@@ -33,16 +33,23 @@ async function countEntityFiles(dir: string): Promise<number> {
 }
 
 /** True when env claims schema lives only in object storage (anti-pattern). */
-export function ontologySchemaLooksRemoteOnly(
-  env: NodeJS.ProcessEnv = process.env
-): boolean {
+export function ontologySchemaLooksRemoteOnly(env: NodeJS.ProcessEnv = process.env): boolean {
   const store = env.CLAWQL_ONTOLOGY_SCHEMA_STORE?.trim().toLowerCase();
-  if (store === "r2" || store === "s3" || store === "gcs" || store === "object" || store === "remote") {
+  if (
+    store === "r2" ||
+    store === "s3" ||
+    store === "gcs" ||
+    store === "object" ||
+    store === "remote"
+  ) {
     return true;
   }
   if (env.CLAWQL_ONTOLOGY_SCHEMA_IN_OBJECT_STORAGE === "1") return true;
   const uri = env.CLAWQL_ONTOLOGY_SCHEMA_URI?.trim().toLowerCase() ?? "";
-  if (/^(s3|r2|gs|https?):\/\//.test(uri) && /r2|s3\.amazonaws|storage\.googleapis|blob\.core/.test(uri)) {
+  if (
+    /^(s3|r2|gs|https?):\/\//.test(uri) &&
+    /r2|s3\.amazonaws|storage\.googleapis|blob\.core/.test(uri)
+  ) {
     return true;
   }
   return false;

@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  ontologySchemaLooksRemoteOnly,
-  runOntologyDoctorChecks,
-} from "./ontology-doctor-check.js";
+import { ontologySchemaLooksRemoteOnly, runOntologyDoctorChecks } from "./ontology-doctor-check.js";
 
 describe("ontology doctor (4.4)", () => {
   it("flags object-storage-only schema env", () => {

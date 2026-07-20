@@ -95,6 +95,7 @@ One governance layer (`@kinetic` + PEP + WORM); agents do not choose the executo
 `clawql sync` remains the R2↔edge path. Hot/cold tiering (recent memory vs archive) is the scaling model — not “put the whole vault in GitHub.”
 
 **Doctor (essay gap 4.4):** `clawql doctor` **warns** (does not hard-fail) when:
+
 - no Entity files under `.clawql/ontology/entities` / `examples/ontology/entities` / `CLAWQL_ONTOLOGY_DIR`, or
 - env marks schema as object-storage-only (`CLAWQL_ONTOLOGY_SCHEMA_STORE=r2|s3|…`, `CLAWQL_ONTOLOGY_SCHEMA_IN_OBJECT_STORAGE=1`, or a remote `CLAWQL_ONTOLOGY_SCHEMA_URI`).
 
