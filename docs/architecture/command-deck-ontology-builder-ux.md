@@ -14,14 +14,14 @@ Microsoft’s open [Ontology Playground](https://microsoft.github.io/Ontology-Pl
 
 Mirror the playground’s “quests” as Command Deck onboarding steps. Each step has **one job**, one panel, and a clear exit criterion.
 
-| Step | Playground analogy | Command Deck job | Exit criterion |
-| ---- | ------------------ | ---------------- | -------------- |
-| **1. Meet the entities** | Entity Explorer | List / create entity types (`Contract`, `Organization`, …) with descriptions | ≥1 entity validates via `clawql ontology lint` |
-| **2. Trace a path** | Bean Trail / Path Finder | Walk one business path across relationships (e.g. Contract → Organization) | Path highlighted; edge types named |
-| **3. Supply-chain / domain graph** | Supply Chain Navigator | Expand the graph for one vertical slice (not the whole enterprise) | Graph view scoped; ATRClaims preview “what an agent can see” |
-| **4. Ask in language** | NL2Ontology / Query Explorer | Natural-language → entity/relationship suggestions (assisted authoring) | Suggestions become PR diffs, not silent runtime mutations |
-| **5. Bind sources** | Data Binding Discovery | Attach SQL / OpenAPI / document sources to properties | `sources:` block present; secrets via vault refs only |
-| **6. Kinetic actions** | _(ClawQL-only — no Fabric equivalent)_ | Mark write methods `kinetic`; set risk, mandate, executor, rollback | Lint fails if HIGH write lacks mandate / executor |
+| Step                               | Playground analogy                     | Command Deck job                                                             | Exit criterion                                               |
+| ---------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **1. Meet the entities**           | Entity Explorer                        | List / create entity types (`Contract`, `Organization`, …) with descriptions | ≥1 entity validates via `clawql ontology lint`               |
+| **2. Trace a path**                | Bean Trail / Path Finder               | Walk one business path across relationships (e.g. Contract → Organization)   | Path highlighted; edge types named                           |
+| **3. Supply-chain / domain graph** | Supply Chain Navigator                 | Expand the graph for one vertical slice (not the whole enterprise)           | Graph view scoped; ATRClaims preview “what an agent can see” |
+| **4. Ask in language**             | NL2Ontology / Query Explorer           | Natural-language → entity/relationship suggestions (assisted authoring)      | Suggestions become PR diffs, not silent runtime mutations    |
+| **5. Bind sources**                | Data Binding Discovery                 | Attach SQL / OpenAPI / document sources to properties                        | `sources:` block present; secrets via vault refs only        |
+| **6. Kinetic actions**             | _(ClawQL-only — no Fabric equivalent)_ | Mark write methods `kinetic`; set risk, mandate, executor, rollback          | Lint fails if HIGH write lacks mandate / executor            |
 
 Steps 1–5 are pedagogical parity with the playground. **Step 6 is ClawQL’s differentiator** and must be impossible to skip accidentally for write surfaces.
 
@@ -38,22 +38,22 @@ Align with Command Deck Action Views (schema-driven, one contract for enforce + 
 
 ## Inspector fields (entity selected)
 
-| Section | Content |
-| ------- | ------- |
-| Identity | `metadata.name`, description |
-| Properties | type, required, indexed, PII, mutability, `kinetic_level` |
-| Relationships | target entity, cardinality, via |
-| Sources | sql / openapi / documents + connection refs |
-| Generated tools | preview of read MCP tool names from `ontology generate` |
+| Section         | Content                                                   |
+| --------------- | --------------------------------------------------------- |
+| Identity        | `metadata.name`, description                              |
+| Properties      | type, required, indexed, PII, mutability, `kinetic_level` |
+| Relationships   | target entity, cardinality, via                           |
+| Sources         | sql / openapi / documents + connection refs               |
+| Generated tools | preview of read MCP tool names from `ontology generate`   |
 
 ## Competitive framing (for copy / docs, not UI chrome)
 
-| Fabric Ontology Playground / IQ | ClawQL Command Deck builder |
-| ------------------------------- | --------------------------- |
-| Learn Fabric IQ + OneLake bindings | Learn **open** Git ontology |
-| Export RDF/XML as a learning path | Export / commit **YAML + OKF** |
+| Fabric Ontology Playground / IQ      | ClawQL Command Deck builder                      |
+| ------------------------------------ | ------------------------------------------------ |
+| Learn Fabric IQ + OneLake bindings   | Learn **open** Git ontology                      |
+| Export RDF/XML as a learning path    | Export / commit **YAML + OKF**                   |
 | Agents grounded in Fabric vocabulary | Agents grounded in portable schema + kinetic PEP |
-| Platform graph item | Git + R2 instances + optional graph store later |
+| Platform graph item                  | Git + R2 instances + optional graph store later  |
 
 Positioning line: _open, Git-native ontology builder with kinetic safety — not a OneLake-only semantic layer._
 

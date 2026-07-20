@@ -18,13 +18,13 @@ The Ontology is what happens when you apply a TypeScript-grade type system to th
 
 Typed entity / relationship / action schemas are not only a grounding story — they are how ClawQL keeps agent context **lean**. Without them, Code Mode and projection have nothing precise to generate or trim against, and vault recall falls back to paste-the-notebook.
 
-| Token-efficiency layer | Ontology / OKF role |
-| ---------------------- | ------------------- |
-| **1 Code Mode** | `.cqe` / entity YAML → generated read tools; full catalogs stay server-side |
-| **2 Response trim** | Project only declared properties (ATR-visible) |
-| **6 History distill** | Compact transcripts into [`type: decision` rationale](../memory/okf-decision-rationale.md) / `.cqk` |
-| **7–9** | Graph-aware recall + structured OKF output instead of free prose |
-| **8 Routing** | `kinetic_level` / risk informs Frugal → Frontier |
+| Token-efficiency layer | Ontology / OKF role                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
+| **1 Code Mode**        | `.cqe` / entity YAML → generated read tools; full catalogs stay server-side                         |
+| **2 Response trim**    | Project only declared properties (ATR-visible)                                                      |
+| **6 History distill**  | Compact transcripts into [`type: decision` rationale](../memory/okf-decision-rationale.md) / `.cqk` |
+| **7–9**                | Graph-aware recall + structured OKF output instead of free prose                                    |
+| **8 Routing**          | `kinetic_level` / risk informs Frugal → Frontier                                                    |
 
 Full stack: [Twelve layers of LLM cost](./clawql-token-efficiency.md). Ontology without those layers becomes a typed landfill; layers without ontology become cheap answers about the wrong objects.
 

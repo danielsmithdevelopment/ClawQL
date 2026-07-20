@@ -94,13 +94,13 @@ One governance layer (`@kinetic` + PEP + WORM); agents do not choose the executo
 
 ### 7) Ontology builder sequencing
 
-| Phase     | Deliverable                                                                                                                          |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **Now**   | YAML/OKF schema format + JSON Schema; `clawql ontology lint` / `generate` (read tools); derive from sources; manifest version events |
-| **Later** | Relationship graph + permission-aware traversal                                                                                      |
-| **Later** | Kinetic write tools + AP2 + Transaction Sandbox + canary                                                                             |
+| Phase     | Deliverable                                                                                                                                                             |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Now**   | YAML/OKF schema format + JSON Schema; `clawql ontology lint` / `generate` (read tools); derive from sources; manifest version events                                    |
+| **Later** | Relationship graph + permission-aware traversal                                                                                                                         |
+| **Later** | Kinetic write tools + AP2 + Transaction Sandbox + canary                                                                                                                |
 | **Later** | Command Deck visual builder (non-engineer authoring → Git PRs) — UX notes: [`command-deck-ontology-builder-ux.md`](../architecture/command-deck-ontology-builder-ux.md) |
-| **Later** | Vertical schema packs (Legal, Healthcare, Financial, Real Estate)                                                                    |
+| **Later** | Vertical schema packs (Legal, Healthcare, Financial, Real Estate)                                                                                                       |
 
 **Do not lock property types / relationship syntax as a public standard** until 3–5 design partners validate against real enterprise schemas.
 

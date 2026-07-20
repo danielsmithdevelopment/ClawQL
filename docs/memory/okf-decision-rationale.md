@@ -12,12 +12,12 @@ ClawQL does **not** adopt AIF wire formats. We reuse the **shape of the idea** i
 
 ## When to use
 
-| Use `type: decision` + this template | Prefer another type |
-| ------------------------------------ | ------------------- |
-| Architecture / policy choice with grounds | `context` for session notes |
-| Kinetic / HITL outcome with audit trail | `task_result` for raw tool outcomes |
-| Distilled transcript → compact durable judgment (Layer 6) | `digest` for rolling vault digests |
-| Eval / design-partner verdict | keep `verdict` in frontmatter |
+| Use `type: decision` + this template                      | Prefer another type                 |
+| --------------------------------------------------------- | ----------------------------------- |
+| Architecture / policy choice with grounds                 | `context` for session notes         |
+| Kinetic / HITL outcome with audit trail                   | `task_result` for raw tool outcomes |
+| Distilled transcript → compact durable judgment (Layer 6) | `digest` for rolling vault digests  |
+| Eval / design-partner verdict                             | keep `verdict` in frontmatter       |
 
 ## Frontmatter (required / recommended)
 
@@ -92,13 +92,13 @@ See [`examples/ontology/okf/decision-rationale-template.md`](../../examples/onto
 
 ## Mapping to token-efficiency layers
 
-| Layer | How this template helps |
-| ----- | ----------------------- |
-| **6 History distillation** | Distill long transcripts into this shape instead of retaining full turns |
-| **7 Dedupe / truncate** | Recall can prefer `## Claim` + `## Decision` before expanding grounds |
-| **9 Structured output** | Prompt / prefill agents to emit these H2s |
-| **11 Prefill** | Prefill `type: decision` + section headers so models cannot ramble into the header |
-| **12 Fine-tune flywheel** | Scrubbed decision records are high-signal training rows |
+| Layer                      | How this template helps                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------- |
+| **6 History distillation** | Distill long transcripts into this shape instead of retaining full turns           |
+| **7 Dedupe / truncate**    | Recall can prefer `## Claim` + `## Decision` before expanding grounds              |
+| **9 Structured output**    | Prompt / prefill agents to emit these H2s                                          |
+| **11 Prefill**             | Prefill `type: decision` + section headers so models cannot ramble into the header |
+| **12 Fine-tune flywheel**  | Scrubbed decision records are high-signal training rows                            |
 
 ## Non-goals
 
