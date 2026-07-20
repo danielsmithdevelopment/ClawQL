@@ -27,7 +27,17 @@ export type PaymentsWellKnownResource = {
 };
 
 export type PaymentsWellKnownMethod = {
-  type: "x402" | "stripe" | "ap2" | "acp" | "paypal" | "adyen" | "payouts" | "ramp" | "offramp" | "credits";
+  type:
+    | "x402"
+    | "stripe"
+    | "ap2"
+    | "acp"
+    | "paypal"
+    | "adyen"
+    | "payouts"
+    | "ramp"
+    | "offramp"
+    | "credits";
   enabled: boolean;
 };
 
