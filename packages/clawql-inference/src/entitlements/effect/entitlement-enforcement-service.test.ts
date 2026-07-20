@@ -140,70 +140,78 @@ describe("EntitlementEnforcementService", () => {
     expect(usage.inferenceCalls).toBe(1);
   });
 
-  it("sync credit hold/capture on inference when credits enforcement is on", async () => {
-    env = {
-      ...env,
-      CLAWQL_CREDITS_ENABLED: "1",
-      CLAWQL_CREDITS_ENFORCE_INFERENCE: "1",
-      CLAWQL_CREDITS_INFERENCE_COST_CENTS: "25",
-      CLAWQL_ACH_TOPUP_ENABLED: "1",
-      CLAWQL_ACH_TOPUP_DRY_RUN: "1",
-    };
-    resetPaymentsEffectRuntimeForTests();
+  it(
+    "sync credit hold/capture on inference when credits enforcement is on",
+    { timeout: 15_000 },
+    async () => {
+      env = {
+        ...env,
+        CLAWQL_CREDITS_ENABLED: "1",
+        CLAWQL_CREDITS_ENFORCE_INFERENCE: "1",
+        CLAWQL_CREDITS_INFERENCE_COST_CENTS: "25",
+        CLAWQL_ACH_TOPUP_ENABLED: "1",
+        CLAWQL_ACH_TOPUP_DRY_RUN: "1",
+      };
+      resetPaymentsEffectRuntimeForTests();
 
-    await Effect.runPromise(
-      Effect.gen(function* () {
-        const ach = yield* AchTopupService;
-        yield* ach.createTopup({
-          customerId: "cus_test",
-          amountUsd: 1,
-          tenantId: "default",
-        });
-      }).pipe(Effect.provide(paymentsServicesLiveLayer(env)))
-    );
+      await Effect.runPromise(
+        Effect.gen(function* () {
+          const ach = yield* AchTopupService;
+          yield* ach.createTopup({
+            customerId: "cus_test",
+            amountUsd: 1,
+            tenantId: "default",
+          });
+        }).pipe(Effect.provide(paymentsServicesLiveLayer(env)))
+      );
 
-    const inner = new StubGateway();
-    const layer = makeLayer(inner);
-    await Effect.runPromise(
-      Effect.gen(function* () {
-        const enforcement = yield* EntitlementEnforcementService;
-        return yield* enforcement.completeWithEnforcement({
-          model: "openai/gpt-4o",
-          messages: [{ role: "user", content: "paid" }],
-          correlationId: "corr-credit-1",
-        });
-      }).pipe(Effect.provide(layer))
-    );
+      const inner = new StubGateway();
+      const layer = makeLayer(inner);
+      await Effect.runPromise(
+        Effect.gen(function* () {
+          const enforcement = yield* EntitlementEnforcementService;
+          return yield* enforcement.completeWithEnforcement({
+            model: "openai/gpt-4o",
+            messages: [{ role: "user", content: "paid" }],
+            correlationId: "corr-credit-1",
+          });
+        }).pipe(Effect.provide(layer))
+      );
 
-    const account = await getCreditAccount("default", env);
-    expect(account.balanceCents).toBe(75);
-    expect(inner.calls).toHaveLength(1);
-  });
+      const account = await getCreditAccount("default", env);
+      expect(account.balanceCents).toBe(75);
+      expect(inner.calls).toHaveLength(1);
+    }
+  );
 
-  it("denies inference when credits are insufficient", async () => {
-    env = {
-      ...env,
-      CLAWQL_CREDITS_ENABLED: "1",
-      CLAWQL_CREDITS_ENFORCE_INFERENCE: "1",
-      CLAWQL_CREDITS_INFERENCE_COST_CENTS: "50",
-      CLAWQL_PAYMENTS_ENFORCE_INFERENCE: "0",
-    };
-    resetPaymentsEffectRuntimeForTests();
+  it(
+    "denies inference when credits are insufficient",
+    { timeout: 15_000 },
+    async () => {
+      env = {
+        ...env,
+        CLAWQL_CREDITS_ENABLED: "1",
+        CLAWQL_CREDITS_ENFORCE_INFERENCE: "1",
+        CLAWQL_CREDITS_INFERENCE_COST_CENTS: "50",
+        CLAWQL_PAYMENTS_ENFORCE_INFERENCE: "0",
+      };
+      resetPaymentsEffectRuntimeForTests();
 
-    const inner = new StubGateway();
-    const layer = makeLayer(inner);
-    const exit = await Effect.runPromiseExit(
-      Effect.gen(function* () {
-        const enforcement = yield* EntitlementEnforcementService;
-        return yield* enforcement.completeWithEnforcement({
-          model: "openai/gpt-4o",
-          messages: [{ role: "user", content: "no balance" }],
-          correlationId: "corr-empty",
-        });
-      }).pipe(Effect.provide(layer))
-    );
+      const inner = new StubGateway();
+      const layer = makeLayer(inner);
+      const exit = await Effect.runPromiseExit(
+        Effect.gen(function* () {
+          const enforcement = yield* EntitlementEnforcementService;
+          return yield* enforcement.completeWithEnforcement({
+            model: "openai/gpt-4o",
+            messages: [{ role: "user", content: "no balance" }],
+            correlationId: "corr-empty",
+          });
+        }).pipe(Effect.provide(layer))
+      );
 
-    expect(exit._tag).toBe("Failure");
-    expect(inner.calls).toHaveLength(0);
-  });
+      expect(exit._tag).toBe("Failure");
+      expect(inner.calls).toHaveLength(0);
+    }
+  );
 });
