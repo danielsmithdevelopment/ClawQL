@@ -357,14 +357,14 @@ See [payouts-ramp.md](./payouts-ramp.md).
 
 ### Prepaid credits + ACH bank top-up
 
-| Variable                               | Default | Purpose                                                                 |
-| -------------------------------------- | ------- | ----------------------------------------------------------------------- |
-| `CLAWQL_CREDITS_ENABLED`               | off     | Enable prepaid credit ledger                                            |
-| `CLAWQL_CREDITS_ENFORCE_INFERENCE`     | on\*    | Sync `DeductionService.hold` on inference (\*when credits enabled)      |
-| `CLAWQL_CREDITS_INFERENCE_COST_CENTS`  | `1`     | Hold amount (USD cents) per inference completion                        |
-| `CLAWQL_ACH_TOPUP_ENABLED`             | auto    | FC + ACH top-up; defaults on when credits + `STRIPE_SECRET_KEY` are set |
-| `CLAWQL_ACH_TOPUP_DRY_RUN`             | off     | Link/top-up without live Stripe ACH (tests/demos)                       |
-| `CLAWQL_CREDITS_RETURN_URL`            | —       | Optional Financial Connections return URL                               |
+| Variable                              | Default | Purpose                                                                 |
+| ------------------------------------- | ------- | ----------------------------------------------------------------------- |
+| `CLAWQL_CREDITS_ENABLED`              | off     | Enable prepaid credit ledger                                            |
+| `CLAWQL_CREDITS_ENFORCE_INFERENCE`    | on\*    | Sync `DeductionService.hold` on inference (\*when credits enabled)      |
+| `CLAWQL_CREDITS_INFERENCE_COST_CENTS` | `1`     | Hold amount (USD cents) per inference completion                        |
+| `CLAWQL_ACH_TOPUP_ENABLED`            | auto    | FC + ACH top-up; defaults on when credits + `STRIPE_SECRET_KEY` are set |
+| `CLAWQL_ACH_TOPUP_DRY_RUN`            | off     | Link/top-up without live Stripe ACH (tests/demos)                       |
+| `CLAWQL_CREDITS_RETURN_URL`           | —       | Optional Financial Connections return URL                               |
 
 See [credits-ach.md](./credits-ach.md) and [deduction-service.md](./deduction-service.md).
 

@@ -1,8 +1,5 @@
 import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../gateway.js";
-import {
-  isCreditsInferenceEnforcementActive,
-  isStripeMeterReportingActive,
-} from "clawql-payments";
+import { isCreditsInferenceEnforcementActive, isStripeMeterReportingActive } from "clawql-payments";
 import {
   completeWithEnforcementProgram,
   runEntitlementEffect,
