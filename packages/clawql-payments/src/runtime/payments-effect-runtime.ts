@@ -12,6 +12,7 @@ import { consumerOffRampLiveLayer } from "../offramp/consumer-offramp-service.js
 import { offrampWebhookLiveLayer } from "../offramp/offramp-webhook-service.js";
 import { creditsLiveLayer } from "../credits/credits-service.js";
 import { achTopupLiveLayer } from "../credits/ach-topup-service.js";
+import { agentCompensationLiveLayer } from "../compensation/agent-compensation-service.js";
 import { mppOpenApiLiveLayer } from "../mpp/openapi-service.js";
 import { mppVerificationLiveLayer } from "../mpp/verification-service.js";
 import { mppxAdapterLiveLayer } from "../mpp/mppx-adapter.js";
@@ -53,7 +54,8 @@ export type PaymentsServices =
   | import("../offramp/consumer-offramp-service.js").ConsumerOffRampService
   | import("../offramp/offramp-webhook-service.js").OfframpWebhookService
   | import("../credits/credits-service.js").CreditsService
-  | import("../credits/ach-topup-service.js").AchTopupService;
+  | import("../credits/ach-topup-service.js").AchTopupService
+  | import("../compensation/agent-compensation-service.js").AgentCompensationService;
 
 const layerCache = new Map<string, Layer.Layer<PaymentsServices>>();
 
@@ -83,6 +85,9 @@ export function paymentsServicesLiveLayer(
   const credits = creditsLiveLayer(env).pipe(Layer.provide(audit));
   const achTopup = achTopupLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(audit, stripeClient, credits))
+  );
+  const compensation = agentCompensationLiveLayer(env).pipe(
+    Layer.provide(Layer.mergeAll(audit, payouts))
   );
 
   const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
@@ -135,7 +140,8 @@ export function paymentsServicesLiveLayer(
     offramp,
     offrampWebhook,
     credits,
-    achTopup
+    achTopup,
+    compensation
   );
   layerCache.set(key, layer);
   return layer;

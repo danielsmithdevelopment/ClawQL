@@ -76,3 +76,12 @@ export {
 } from "../offramp/offramp-webhook-service.js";
 export { CreditsService, creditsLiveLayer } from "../credits/credits-service.js";
 export { AchTopupService, achTopupLiveLayer } from "../credits/ach-topup-service.js";
+export {
+  AgentCompensationService,
+  agentCompensationLiveLayer,
+} from "../compensation/agent-compensation-service.js";
+export {
+  HIGH_IMPACT_PAYMENT_TOOLS,
+  classifyPaymentTool,
+  isHighImpactPaymentTool,
+} from "../compensation/high-impact.js";

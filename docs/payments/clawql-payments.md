@@ -40,6 +40,7 @@ It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is ava
 | **Consumer off-ramp** (Moonpay / Transak)           | ✅     | Sessions + `OfframpWebhookService` completion settle                                                    |
 | **Payments MCP tools** (payout / ramp / offramp)    | ✅     | `CLAWQL_PAYMENTS_MCP_TOOLS=1`; optional AP2 gate                                                        |
 | **Prepaid credits + bank top-up**                   | ✅     | Ledger + Stripe Financial Connections / ACH (`us_bank_account`); see [credits-ach.md](./credits-ach.md) |
+| **Agent compensation** (credits + 2PC cash-out)     | ✅     | `AgentCompensationService` — stage/confirm MCP + FAILED WORM; reuses `PayoutService`                    |
 
 ### Roadmap
 
@@ -67,12 +68,13 @@ clawql-payments
 ├── ramp/       Ramp funds + virtual / agent cards
 ├── offramp/    Consumer USDC → fiat (Moonpay / Transak)
 ├── credits/    Prepaid ledger + Stripe FC / ACH bank top-up
+├── compensation/  Agent credits ledger + DAOS-aligned 2PC staging
 ├── plans/      Tier definitions, entitlements, usage.json counters
 ├── audit/      Hash-chained append-only JSONL + integrity verify
 └── cli/        clawql payments * implementations
 ```
 
-See also [payouts-ramp.md](./payouts-ramp.md) and [credits-ach.md](./credits-ach.md).
+See also [payouts-ramp.md](./payouts-ramp.md), [credits-ach.md](./credits-ach.md), [agent-compensation.md](./agent-compensation.md), and [sgdop-coordinator-compensation-bridge.md](./sgdop-coordinator-compensation-bridge.md) (future Coordinator stage-only port).
 
 ```mermaid
 flowchart TB

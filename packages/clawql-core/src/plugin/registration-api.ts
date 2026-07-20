@@ -10,6 +10,8 @@ export type McpToolHandler = (args: unknown) => Promise<McpToolResult>;
  */
 export type McpToolDefinition = {
   readonly name: string;
+  /** Human-readable tool purpose shown in MCP `tools/list` when present. */
+  readonly description?: string;
   readonly schema: Record<string, unknown>;
   readonly handler: McpToolHandler;
 };
