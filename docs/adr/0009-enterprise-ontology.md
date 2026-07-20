@@ -108,6 +108,21 @@ One governance layer (`@kinetic` + PEP + WORM); agents do not choose the executo
 
 Ouroboros Seeds ([ADR 0001](./0001-ouroboros-workflow-engine.md)) carry a **task-loop** ontology for evolutionary convergence. This ADR’s **enterprise Ontology** is the org-wide typed entity layer for IDP agents. They may share concepts later; they are not the same artifact. Do not overload Seed ontology for enterprise digital-twin modeling.
 
+### 9) Amendment (2026-07-20) — v1 read backend = fixture mode (essay gap **2.3**)
+
+**Decision:** Ontology **read** MCP tools (`CLAWQL_ENABLE_ONTOLOGY=1`) are backed by a **typed fixture / demo store** in v1. Entity `spec.sources` entries with `type: sql` (and peers) remain **declarations** for generate stubs / partner wiring — they do **not** imply a live SQL query path today.
+
+**Rationale:** Typed enums / money objects for the essay demo are already true via fixtures. A general `sources[type=sql]` adapter is connection config, mapping, coercion, secrets, and multi-dialect work — design-partner depth, not a publish gate.
+
+**Non-goals of this amendment:**
+
+- Do **not** claim automatic Postgres/MySQL binding from `sources:` in v1 docs or essay without a separate ship.
+- Do **not** block Onyx stub emission (`ontology generate` → `onyx-sources.stub.json`) — stubs stay manual-apply.
+
+**Future (optional):** Narrow partner path (e.g. read-only `DATABASE_URL` + one Contract mapping) or a general SQL adapter — tracked separately; not required for “status: active not 2.”
+
+**Done-when:** Docs + essay gap mark fixture mode as the shipped read backend; SQL disclosed as roadmap / partner.
+
 ## Consequences
 
 ### Positive
@@ -131,6 +146,7 @@ Ouroboros Seeds ([ADR 0001](./0001-ouroboros-workflow-engine.md)) carry a **task
 4. Document hot/cold sync tiers when implementing tiered pull.
 5. Open tracking issues for graph layer, kinetic sandbox, visual builder, vertical packs.
 6. **Essay gap closure** (PragmaticVectors publish path): [`docs/ontology/essay-gap-closure.md`](../ontology/essay-gap-closure.md) — close A/B workstreams or disclose C blockers.
+7. **v1 read backend = fixture mode** (essay gap **2.3**). ✅ — see §9; SQL adapters are partner/roadmap.
 
 ## Status language
 

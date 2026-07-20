@@ -14,10 +14,11 @@ clawql ontology import --pack legal
 # Generate tools.json + OKF index + Onyx stubs + TypeScript catalog
 clawql ontology generate --dir examples/ontology/entities --out generated/ontology
 
-# Live fixture tools in the gateway (demo Contract/Organization store)
+# Live fixture tools in the gateway (v1 read backend — demo Contract/Organization store)
 CLAWQL_ENABLE_ONTOLOGY=1 npx clawql-mcp
 # Optional: CLAWQL_ONTOLOGY_DIR=.clawql/ontology/entities
 # Optional: CLAWQL_ONTOLOGY_FIXTURE=/path/to/fixtures.json
+# Note: sources[type=sql] is a declaration for stubs/partners — not a live DB adapter in v1 (ADR 0009 §9).
 
 # Package CLIs
 npm run ontology:lint
@@ -26,6 +27,15 @@ npx clawql-ontology lint --dir examples/ontology/entities
 npx clawql-ontology init
 npx clawql-ontology import --pack legal
 ```
+
+## Read backends (v1)
+
+| Backend | Status | How |
+| ------- | ------ | --- |
+| **Fixture / demo store** | **Shipped** | `CLAWQL_ENABLE_ONTOLOGY=1` (+ optional `CLAWQL_ONTOLOGY_FIXTURE`) |
+| **SQL / OpenAPI live bind** | Roadmap / design partners | `sources:` on entities drive generate stubs only today |
+
+Do not claim automatic SQL binding in essay or Getting Started until a dedicated adapter ships.
 
 ## What lint checks
 

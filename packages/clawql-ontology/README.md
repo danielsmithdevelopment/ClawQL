@@ -1,19 +1,26 @@
 # clawql-ontology
 
-Lint and generate tooling for ClawQL’s **enterprise Ontology** ([ADR 0009](../../docs/adr/0009-enterprise-ontology.md)).
+Lint, scaffold, and generate tooling for ClawQL’s **enterprise Ontology** ([ADR 0009](../../docs/adr/0009-enterprise-ontology.md)).
 
 ## Commands
 
 ```bash
-# Validate entity YAML against schemas/ontology/entity.schema.json
-# (packaged copy: packages/clawql-ontology/schemas/ontology/entity.schema.json)
-clawql ontology lint examples/ontology/entities/*.yaml
-# or
+# Prefer .cqe (ADR 0010 §2a); .yaml / .yml / .json still accepted
+clawql ontology lint --dir examples/ontology/entities
 npx clawql-ontology lint --dir examples/ontology/entities
 
-# Generate read-only MCP tool catalog + TypeScript plugin stub
+clawql ontology init
+clawql ontology create-entity Matter
+clawql ontology import --pack legal
+
 clawql ontology generate --dir examples/ontology/entities --out generated/ontology
 ```
+
+## Live read tools (v1 = fixture mode)
+
+Set `CLAWQL_ENABLE_ONTOLOGY=1` to register typed demo tools (`get_contract`, `search_contracts`, …). Optional `CLAWQL_ONTOLOGY_FIXTURE` points at a JSON store.
+
+Entity `sources: [{ type: sql, … }]` entries are **declarations** for generate stubs / partners — they do **not** open a live SQL connection in v1 ([ADR 0009 §9](../../docs/adr/0009-enterprise-ontology.md)).
 
 ## Schema packaging
 
@@ -25,7 +32,8 @@ the repo-canonical [`schemas/ontology/entity.schema.json`](../../schemas/ontolog
 ## Library
 
 ```ts
-import { lintOntology, generateOntologyReadTools } from "clawql-ontology";
+import { lintOntology, generateOntologyReadTools, initOntologyTree } from "clawql-ontology";
+import { makeOntologyLayer } from "clawql-ontology/plugin";
 ```
 
-v1 generate emits **read** tools only. Write / kinetic actions are listed in the catalog as deferred.
+v1 generate emits **read** + relationship tools. Write / kinetic actions stay deferred until Transaction Sandbox.

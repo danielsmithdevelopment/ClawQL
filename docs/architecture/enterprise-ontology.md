@@ -287,11 +287,14 @@ Foundation tooling is available now:
 # Validate example entities (.cqe primary; .yaml still accepted)
 npm run ontology:lint
 
-# Generate read MCP tool stubs from entity schemas
+# Generate read MCP tool catalog + OKF index + Onyx stubs
 npm run ontology:generate
+
+# Live typed reads (v1 = fixture store — ADR 0009 §9)
+CLAWQL_ENABLE_ONTOLOGY=1
 ```
 
-CLI reference: [`docs/ontology/cli.md`](../ontology/cli.md). Examples: [`examples/ontology/`](../../examples/ontology/).
+CLI reference: [`docs/ontology/cli.md`](../ontology/cli.md). Examples: [`examples/ontology/`](../../examples/ontology/). **SQL `sources:`** are declarations / stubs in v1 — not a live query path.
 
 ---
 
