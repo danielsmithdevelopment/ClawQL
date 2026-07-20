@@ -2,7 +2,7 @@
 
 Unified payments layer for ClawQL — **Stripe** billing + **Connect payouts**, **Ramp** agent cards, **x402** micropayments, **MPP** session streaming, **AP2** Payment Mandates, **ACP** checkout, **PayPal** Orders, **Adyen** Checkout, managed plan entitlements, and **WORM-auditable** payment events.
 
-**Positioning:** ClawQL’s Agentic Gateway is the only Foundational Platform surface with native **Stripe + x402 + MPP + AP2 + ACP** payments plus **PayPal**, **Adyen**, **Connect payouts**, and **Ramp** agent cards with a correlated payment WORM trail — part of Auditable Production AI. See [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md) and [`docs/payments/payouts-ramp.md`](../../docs/payments/payouts-ramp.md).
+**Positioning:** ClawQL’s Agentic Gateway is the only Foundational Platform surface with native **Stripe + x402 + MPP + AP2 + ACP** payments plus **PayPal**, **Adyen**, **Connect payouts**, **Ramp** agent cards, **prepaid credits**, and **agent compensation** with a correlated payment WORM trail — part of Auditable Production AI. See [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md), [`docs/payments/payouts-ramp.md`](../../docs/payments/payouts-ramp.md), [`docs/payments/credits-ach.md`](../../docs/payments/credits-ach.md), and [`docs/payments/agent-compensation.md`](../../docs/payments/agent-compensation.md).
 
 ClawQL's own managed tiers (Free / Pro / Team / Enterprise) run on this package internally. The same package is available to ClawQL users to bill their own customers via Stripe/PayPal/Adyen, pay creators via Connect, issue Ramp agent cards, gate MCP tools and HTTP endpoints via x402/MPP/AP2, expose ACP checkout for agent commerce, and get a correlated payment audit trail across rails.
 
@@ -21,6 +21,7 @@ clawql-payments
 ├── ramp/       # Ramp funds + virtual / agent cards
 ├── offramp/    # Consumer USDC → fiat (Moonpay / Transak)
 ├── credits/    # Prepaid grants, DeductionService (sync hold/capture), FC/ACH top-up
+├── compensation/ # Agent credits/funds ledger + DAOS-aligned 2PC staging
 ├── plans/      # ClawQL tier definitions, entitlements, usage tracking, limit enforcement
 ├── audit/      # Payment events → hash-chained WORM (jsonl, postgres, or memory) + optional Loki export
 └── cli/        # `clawql payments *` command implementations

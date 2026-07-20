@@ -11,24 +11,27 @@ next: hitl-label-studio
 
 # Payments (`clawql-payments`)
 
-**Status:** Shipped (foundation + Tier 1 protocols + Adyen enterprise)  
+**Status:** Shipped (foundation + Tier 1 protocols + Adyen + Connect payouts / Ramp / off-ramp + prepaid credits + agent compensation)  
 **Package:** [`packages/clawql-payments`](../../packages/clawql-payments)  
-**Toggle:** Always available as a library; gate rails via `CLAWQL_X402_ENFORCE`, `CLAWQL_MPP_ENABLED`, `CLAWQL_AP2_ENABLED`, `CLAWQL_ACP_ENABLED`, `CLAWQL_PAYPAL_ENABLED`, `CLAWQL_ADYEN_ENABLED`, plan entitlements  
-**Plugin:** `PaymentsX402ProxyPlugin` (`payments-x402-mcp-proxy`) for MCP tool-level x402 enforcement (+ optional AP2 mandate checks)
+**Toggle:** Always available as a library; gate rails via `CLAWQL_X402_ENFORCE`, `CLAWQL_MPP_ENABLED`, `CLAWQL_AP2_ENABLED`, `CLAWQL_ACP_ENABLED`, `CLAWQL_PAYPAL_ENABLED`, `CLAWQL_ADYEN_ENABLED`, `CLAWQL_CREDITS_ENABLED`, `CLAWQL_COMPENSATION_ENABLED`, `CLAWQL_PAYMENTS_MCP_TOOLS`, plan entitlements  
+**Plugin:** `PaymentsX402ProxyPlugin` (`payments-x402-mcp-proxy`) for MCP tool-level x402 enforcement (+ optional AP2 mandate checks); optional payout / compensation tools via `CLAWQL_PAYMENTS_MCP_TOOLS=1`
 
 ## Positioning
 
-ClawQL is the only Agentic Gateway with native **Stripe + x402 + MPP + AP2 + ACP** payment surfaces, **PayPal Orders**, **Adyen Checkout** (enterprise), and a **WORM-audited** payment event trail:
+ClawQL is the only Agentic Gateway with native **Stripe + x402 + MPP + AP2 + ACP** payment surfaces, **PayPal Orders**, **Adyen Checkout** (enterprise), **Connect payouts / Ramp / consumer off-ramp**, **prepaid credits**, **agent compensation**, and a **WORM-audited** payment event trail:
 
-| Rail       | Role                                                                                   |
-| ---------- | -------------------------------------------------------------------------------------- |
-| **Stripe** | Human fiat — subscriptions, invoices, Billing Meters, Shared Payment Tokens            |
-| **x402**   | Per-request USDC micropayments (one chain settlement per paid call)                    |
-| **MPP**    | Session-based streaming micropayments (pre-authorize once; high-frequency agent spend) |
-| **AP2**    | Cryptographic Payment Mandates (authorization / non-repudiation under MCP)             |
-| **ACP**    | Merchant-side agentic checkout sessions (ChatGPT Instant Checkout–style)               |
-| **PayPal** | Human wallet Orders v2 create/capture                                                  |
-| **Adyen**  | Enterprise Checkout sessions, payments, HMAC-verified webhooks                         |
+| Rail               | Role                                                                                   |
+| ------------------ | -------------------------------------------------------------------------------------- |
+| **Stripe**         | Human fiat — subscriptions, invoices, Billing Meters, Shared Payment Tokens            |
+| **x402**           | Per-request USDC micropayments (one chain settlement per paid call)                    |
+| **MPP**            | Session-based streaming micropayments (pre-authorize once; high-frequency agent spend) |
+| **AP2**            | Cryptographic Payment Mandates (authorization / non-repudiation under MCP)             |
+| **ACP**            | Merchant-side agentic checkout sessions (ChatGPT Instant Checkout–style)               |
+| **PayPal**         | Human wallet Orders v2 create/capture                                                  |
+| **Adyen**          | Enterprise Checkout sessions, payments, HMAC-verified webhooks                         |
+| **Payouts / Ramp** | Creator bank + Base USDC; Ramp agent cards; Moonpay/Transak off-ramp                   |
+| **Credits**        | Prepaid ledger + ACH/FC top-up; sync `DeductionService` on inference                   |
+| **Compensation**   | Agent deposit / cash-out with DAOS-aligned 2PC staging                                 |
 
 Operator guide: [clawql-payments](../payments/clawql-payments.md) → `/payments/clawql-payments`.
 

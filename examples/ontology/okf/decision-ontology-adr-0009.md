@@ -15,7 +15,7 @@ worm_ref: null
 
 Example **OKF-compatible** memory note. Production `memory_ingest` should write similar frontmatter (required `type`, ClawQL extensions such as `correlation_id` / `worm_ref`).
 
-See [[ADR 0009]] and the [Enterprise Ontology architecture](../../docs/architecture/enterprise-ontology.md).
+See [ADR 0009](../../../docs/adr/0009-enterprise-ontology.md) and the [Enterprise Ontology architecture](../../../docs/architecture/enterprise-ontology.md).
 
 ## Decisions
 

@@ -1,5 +1,5 @@
 /**
- * MCP tools for payouts, Ramp agent cards, and consumer off-ramps.
+ * MCP tools for payouts, Ramp agent cards, consumer off-ramps, and agent compensation.
  *
  * Enabled with CLAWQL_PAYMENTS_MCP_TOOLS=1. Optional AP2 gate via
  * CLAWQL_PAYMENTS_MCP_REQUIRE_AP2=1 (mandate JWT in tool args).
