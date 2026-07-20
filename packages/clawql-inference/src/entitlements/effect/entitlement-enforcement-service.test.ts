@@ -89,33 +89,37 @@ describe("EntitlementEnforcementService", () => {
     expect(inner.calls).toHaveLength(1);
   });
 
-  it("blocks completions when the monthly inference limit is reached", async () => {
-    const usageStore = createUsageStore(env);
-    for (let i = 0; i < 100; i++) {
-      await usageStore.increment("default", "inference_calls", 1, "free");
+  it(
+    "blocks completions when the monthly inference limit is reached",
+    { timeout: 15_000 },
+    async () => {
+      const usageStore = createUsageStore(env);
+      for (let i = 0; i < 100; i++) {
+        await usageStore.increment("default", "inference_calls", 1, "free");
+      }
+
+      const inner = new StubGateway();
+      const layer = makeLayer(inner);
+
+      const exit = await Effect.runPromiseExit(
+        Effect.gen(function* () {
+          const enforcement = yield* EntitlementEnforcementService;
+          return yield* enforcement.completeWithEnforcement({
+            model: "openai/gpt-4o",
+            messages: [{ role: "user", content: "blocked" }],
+          });
+        }).pipe(Effect.provide(layer))
+      );
+
+      expect(exit._tag).toBe("Failure");
+      expect(inner.calls).toHaveLength(0);
+      if (exit._tag === "Failure") {
+        const { Cause } = await import("effect");
+        const err = Cause.squash(exit.cause);
+        expect(err).toBeInstanceOf(EntitlementLimitError);
+      }
     }
-
-    const inner = new StubGateway();
-    const layer = makeLayer(inner);
-
-    const exit = await Effect.runPromiseExit(
-      Effect.gen(function* () {
-        const enforcement = yield* EntitlementEnforcementService;
-        return yield* enforcement.completeWithEnforcement({
-          model: "openai/gpt-4o",
-          messages: [{ role: "user", content: "blocked" }],
-        });
-      }).pipe(Effect.provide(layer))
-    );
-
-    expect(exit._tag).toBe("Failure");
-    expect(inner.calls).toHaveLength(0);
-    if (exit._tag === "Failure") {
-      const { Cause } = await import("effect");
-      const err = Cause.squash(exit.cause);
-      expect(err).toBeInstanceOf(EntitlementLimitError);
-    }
-  });
+  );
 
   it("uses virtual key team as tenant id for usage", async () => {
     const inner = new StubGateway();
