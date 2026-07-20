@@ -318,28 +318,28 @@ These vision items are **not** done by package extraction alone:
 
 ---
 
-## 11. npm distribution (7.0.0 — separate packages)
+## 11. npm distribution (7.1.0 — separate packages)
 
-**Model:** Each horizontal **`clawql-*`** package is a **separate publishable unit** at **`7.0.0`**, linked in the monorepo via matching semver (npm workspaces). **`clawql-mcp`** depends on them as normal registry dependencies — **not** `bundledDependencies`.
+**Model:** Each horizontal **`clawql-*`** package is a **separate publishable unit** at **`7.1.0`**, linked in the monorepo via matching semver (npm workspaces). **`clawql-mcp`** depends on them as normal registry dependencies — **not** `bundledDependencies`.
 
 | Package                      | npm name            | Version     |
 | ---------------------------- | ------------------- | ----------- |
-| `packages/clawql-core`       | `clawql-core`       | 7.0.0       |
-| `packages/clawql-auth`       | `clawql-auth`       | 7.0.0       |
-| `packages/clawql-pageindex`  | `clawql-pageindex`  | 7.0.0 (MIT) |
-| `packages/clawql-codegraph`  | `clawql-codegraph`  | 7.0.0       |
-| `packages/clawql-api`        | `clawql-api`        | 7.0.0       |
-| `packages/clawql-memory`     | `clawql-memory`     | 7.0.0       |
-| `packages/clawql-ontology`   | `clawql-ontology`   | 7.0.0       |
-| `packages/clawql-documents`  | `clawql-documents`  | 7.0.0       |
-| `packages/clawql-automation` | `clawql-automation` | 7.0.0       |
-| `packages/clawql-sandbox`    | `clawql-sandbox`    | 7.0.0       |
-| `packages/clawql-inference`  | `clawql-inference`  | 7.0.0       |
-| `packages/clawql-payments`   | `clawql-payments`   | 7.0.0       |
-| `packages/clawql-ouroboros`  | `clawql-ouroboros`  | 7.0.0       |
-| `packages/clawql-operator`   | `clawql-operator`   | 7.0.0       |
-| `packages/clawql-release`    | `clawql-release`    | 7.0.0       |
-| Root                         | `clawql-mcp`        | 7.0.0       |
+| `packages/clawql-core`       | `clawql-core`       | 7.1.0       |
+| `packages/clawql-auth`       | `clawql-auth`       | 7.1.0       |
+| `packages/clawql-pageindex`  | `clawql-pageindex`  | 7.1.0 (MIT) |
+| `packages/clawql-codegraph`  | `clawql-codegraph`  | 7.1.0       |
+| `packages/clawql-api`        | `clawql-api`        | 7.1.0       |
+| `packages/clawql-memory`     | `clawql-memory`     | 7.1.0       |
+| `packages/clawql-ontology`   | `clawql-ontology`   | 7.1.0       |
+| `packages/clawql-documents`  | `clawql-documents`  | 7.1.0       |
+| `packages/clawql-automation` | `clawql-automation` | 7.1.0       |
+| `packages/clawql-sandbox`    | `clawql-sandbox`    | 7.1.0       |
+| `packages/clawql-inference`  | `clawql-inference`  | 7.1.0       |
+| `packages/clawql-payments`   | `clawql-payments`   | 7.1.0       |
+| `packages/clawql-ouroboros`  | `clawql-ouroboros`  | 7.1.0       |
+| `packages/clawql-operator`   | `clawql-operator`   | 7.1.0       |
+| `packages/clawql-release`    | `clawql-release`    | 7.1.0       |
+| Root                         | `clawql-mcp`        | 7.1.0       |
 
 **Publish order:** [`scripts/release/npm-publish-order.json`](../../scripts/release/npm-publish-order.json) — dependencies before dependents; **`clawql-mcp` last**.
 
@@ -347,4 +347,4 @@ These vision items are **not** done by package extraction alone:
 
 **Not in this wave:** `clawql-telemetry` ([#313](https://github.com/danielsmithdevelopment/ClawQL/issues/313)); `mcp-grpc-transport` and `panguard-mcp-bridge` keep independent cadence.
 
-**npm publish:** workflow [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) + [`scripts/release/npm-publish-workspace.mjs`](../../scripts/release/npm-publish-workspace.mjs). **Not published yet** — run on `v7.0.0` tag when ready.
+**npm publish:** workflow [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) + [`scripts/release/npm-publish-workspace.mjs`](../../scripts/release/npm-publish-workspace.mjs). Tag **`v7.1.0`** when ready — see [`docs/release/v7.1.0-checklist.md`](../release/v7.1.0-checklist.md).
