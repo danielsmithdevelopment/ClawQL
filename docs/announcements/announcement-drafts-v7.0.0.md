@@ -1,6 +1,6 @@
 # ClawQL 7.0.0 — release announcement drafts (Medium, LinkedIn, HN/Reddit, X)
 
-**Status:** Draft — publish after the live [GitHub release](https://github.com/danielsmithdevelopment/ClawQL/releases) tag and npm confirmation.
+**Status:** Draft — publish after the live [GitHub release](https://github.com/danielsmithdevelopment/ClawQL/releases) tag and npm confirmation. **7.0.0 is already on GitHub + npm**; prefer [`announcement-drafts-v7.1.0.md`](announcement-drafts-v7.1.0.md) for the next public push, or use this file for a delayed 7.0 retrospective.
 
 **Positioning (use everywhere):** ClawQL provides the **Agentic Gateway** as the **Foundational Platform for Auditable Production AI**.
 

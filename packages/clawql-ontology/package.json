@@ -1,7 +1,7 @@
 {
   "name": "clawql-ontology",
-  "version": "7.0.0",
-  "description": "ClawQL enterprise Ontology — lint YAML entity schemas and generate read MCP tool stubs (ADR 0009)",
+  "version": "7.1.0",
+  "description": "ClawQL enterprise Ontology \u2014 lint YAML entity schemas and generate read MCP tool stubs (ADR 0009)",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",

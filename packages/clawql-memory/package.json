@@ -1,6 +1,6 @@
 {
   "name": "clawql-memory",
-  "version": "7.0.0",
+  "version": "7.1.0",
   "description": "ClawQL vault memory primitives: chunking, artifact cache, ingest helpers (#307 order 4)",
   "license": "Apache-2.0",
   "type": "module",
@@ -113,12 +113,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "clawql-core": "7.0.0",
+    "clawql-core": "7.1.0",
     "effect": "^3.21.4",
     "zod": "4.3.6",
-    "clawql-api": "7.0.0",
-    "clawql-pageindex": "7.0.0",
-    "clawql-codegraph": "7.0.0",
+    "clawql-api": "7.1.0",
+    "clawql-pageindex": "7.1.0",
+    "clawql-codegraph": "7.1.0",
     "pg": "^8.21.0",
     "sql.js": "^1.14.1"
   },
