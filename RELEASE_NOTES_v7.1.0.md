@@ -66,6 +66,7 @@ helm upgrade --install clawql ./charts/clawql-mcp \
 - **No intentional breaking env renames** vs 7.0.0.
 - New **opt-in** flags: credits / compensation / payments MCP tools / ontology CLI (see `.env.example` + payments docs).
 - Workspace packages remain **7.1.0** in lockstep; separate registry publish of `clawql-*` modules still follows OIDC package linking (same story as 7.0 — may ship inside `clawql-mcp` tarball via `bundledDependencies` until linked).
+- **Images:** overnight `clawql-dashboard` GHCR publish was broken by `.dockerignore` after the repo-root build-context switch — fixed in [#740](https://github.com/danielsmithdevelopment/ClawQL/pull/740). Confirm a green **Docker publish** before relying on `:latest` / `:7.1.0` dashboard tags.
 
 ---
 
