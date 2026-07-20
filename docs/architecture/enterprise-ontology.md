@@ -284,7 +284,7 @@ Builder surfaces executor choice (Argo Workflow template vs Pulumi resource) for
 Foundation tooling is available now:
 
 ```bash
-# Validate example entities (YAML or draft .cqe)
+# Validate example entities (.cqe primary; .yaml still accepted)
 npm run ontology:lint
 
 # Generate read MCP tool stubs from entity schemas

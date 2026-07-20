@@ -16,11 +16,11 @@ YAML. UTF-8. Optional leading document separator `---`.
 
 ## Required top-level fields
 
-| Field           | Type   | Notes                               |
-| --------------- | ------ | ----------------------------------- | ------------------------- | -------- |
-| `apiVersion`    | string | e.g. `clawql.dev/manifest/v1alpha1` |
-| `kind`          | string | `ReleaseManifest` \\                | `EnterpriseGovernance` \\ | `Policy` |
-| `metadata.name` | string | Stable id                           |
+| Field           | Type   | Notes                                                   |
+| --------------- | ------ | ------------------------------------------------------- |
+| `apiVersion`    | string | e.g. `clawql.dev/manifest/v1alpha1`                     |
+| `kind`          | string | `ReleaseManifest` \\| `EnterpriseGovernance` \\| `Policy` |
+| `metadata.name` | string | Stable id                                               |
 
 ## Recommended fields
 
@@ -50,7 +50,7 @@ apiVersion: clawql.dev/manifest/v1alpha1
 kind: EnterpriseGovernance
 metadata:
   name: acme-prod
-  version: '2026.7.20'
+  version: "2026.7.20"
 spec:
   compliance:
     level: high

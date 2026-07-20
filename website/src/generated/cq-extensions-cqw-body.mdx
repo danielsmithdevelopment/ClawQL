@@ -17,9 +17,9 @@ YAML compatible with Argo `Workflow` / `WorkflowTemplate`, plus ClawQL annotatio
 Under `metadata.annotations` (or a top-level `clawql:` extension object — choose one in v1 tooling; prefer annotations for Argo compatibility):
 
 | Key                            | Notes                                          |
-| ------------------------------ | ---------------------------------------------- | ----------- | --------- | ---------- |
+| ------------------------------ | ---------------------------------------------- |
 | `clawql.dev/kinetic`           | `true` when the workflow performs side effects |
-| `clawql.dev/risk-level`        | `LOW` \\                                       | `MEDIUM` \\ | `HIGH` \\ | `CRITICAL` |
+| `clawql.dev/risk-level`        | `LOW` \\| `MEDIUM` \\| `HIGH` \\| `CRITICAL`      |
 | `clawql.dev/blast-radius`      | e.g. `SINGLE_RECORD`, `BULK`, `INFRA`          |
 | `clawql.dev/rollback-protocol` | e.g. `WORKFLOW_CANCEL`, `REVERSAL`             |
 | `clawql.dev/executor`          | `ARGO_WORKFLOW` (default for `.cqw`)           |
@@ -51,11 +51,11 @@ kind: WorkflowTemplate
 metadata:
   name: clawql-idp-pipeline
   annotations:
-    clawql.dev/kinetic: 'true'
-    clawql.dev/risk-level: 'LOW'
-    clawql.dev/blast-radius: 'SINGLE_RECORD'
-    clawql.dev/rollback-protocol: 'WORKFLOW_CANCEL'
-    clawql.dev/executor: 'ARGO_WORKFLOW'
+    clawql.dev/kinetic: "true"
+    clawql.dev/risk-level: "LOW"
+    clawql.dev/blast-radius: "SINGLE_RECORD"
+    clawql.dev/rollback-protocol: "WORKFLOW_CANCEL"
+    clawql.dev/executor: "ARGO_WORKFLOW"
 spec:
   entrypoint: main
   templates:
