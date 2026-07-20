@@ -31,9 +31,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/dashboard/node_modules ./node_modules
 COPY --from=clawql-builder /app/packages /app/packages
 COPY dashboard/ .
-COPY .env.example /.env.example
-COPY scripts/kubernetes/provider-vault-key-catalog.ts /scripts/kubernetes/provider-vault-key-catalog.ts
-COPY src/provider-vault/catalog.ts /src/provider-vault/catalog.ts
+# prebuild generators resolve repoRoot as `/app` (`dashboard/scripts` → `../..`).
+# Keep these under `/app/...` (not `/`) so env + provider catalogs generate in-image.
+COPY .env.example /app/.env.example
+COPY scripts/kubernetes/provider-vault-key-catalog.ts /app/scripts/kubernetes/provider-vault-key-catalog.ts
+COPY src/provider-vault/catalog.ts /app/src/provider-vault/catalog.ts
 RUN npm run build
 
 FROM node:22-alpine AS runner

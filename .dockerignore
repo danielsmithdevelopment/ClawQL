@@ -1,4 +1,4 @@
-# Build context for `docker build -f docker/Dockerfile .`
+# Build context for `docker build -f docker/Dockerfile .` and `dashboard/Dockerfile` (repo root).
 node_modules
 # Workspace installs under packages/* conflict with `COPY packages ./packages` in the Dockerfile.
 packages/**/node_modules
@@ -8,10 +8,16 @@ dist
 .cursor
 .env
 .env.*
+# dashboard/Dockerfile COPYs `.env.example` for env-catalog generation at build time.
+!.env.example
 *.log
 .DS_Store
 docs
-scripts
+# Exclude scripts, but keep the single catalog re-export the dashboard image needs.
+# (Bare `scripts` blocks negation of children — use `scripts/**` + `!` exceptions.)
+scripts/**
+!scripts/kubernetes/
+!scripts/kubernetes/provider-vault-key-catalog.ts
 coverage
 **/*.test.ts
 **/__tests__

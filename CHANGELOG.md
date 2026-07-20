@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Docker publish (dashboard)** — `.dockerignore` no longer excludes `.env.example` / `scripts/kubernetes/provider-vault-key-catalog.ts` needed by `dashboard/Dockerfile`; catalog `COPY` targets corrected to `/app/...` so `prebuild` generators resolve `repoRoot` after the repo-root build-context change. Overnight `clawql-dashboard` image builds were failing since that switch.
+
 ### Added
 
 - **Enterprise Ontology (`clawql-ontology`) + OKF** — ADR [0009](docs/adr/0009-enterprise-ontology.md) / [0010](docs/adr/0010-cq-file-extensions.md); package lint/generate CLI; OKF-compatible `memory_ingest` frontmatter ([`docs/memory/okf.md`](docs/memory/okf.md)); CI **Ontology lint (examples)**; schema shipped in-package for standalone npm installs.
