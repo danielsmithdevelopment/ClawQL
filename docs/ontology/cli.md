@@ -37,6 +37,8 @@ Write / kinetic actions are listed as `deferredWriteActions` and **not** registe
 
 Entity files may use `.yaml` / `.yml` / `.json` or draft **`.cqe`** ([ADR 0010](../adr/0010-cq-file-extensions.md), [`.cqe` spec](../specs/cq-extensions/cqe.md)).
 
+**Closing the essay gap** (live tools, kinetic, packs, docs publish): [`essay-gap-closure.md`](./essay-gap-closure.md).
+
 ## Library
 
 ```ts

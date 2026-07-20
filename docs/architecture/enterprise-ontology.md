@@ -303,6 +303,7 @@ Do **not** publish the property-type / relationship / source DSL as a frozen sta
 - [Token efficiency (12 layers)](./clawql-token-efficiency.md)
 - [OKF decision rationale template](../memory/okf-decision-rationale.md)
 - [Command Deck ontology builder UX](./command-deck-ontology-builder-ux.md)
+- [Essay gap closure backlog](../ontology/essay-gap-closure.md) — tasks to match the long-form Ontology essay without disclaimers
 - Example entity: [`examples/ontology/entities/Contract.yaml`](../../examples/ontology/entities/Contract.yaml)
 - Example decision note: [`examples/ontology/okf/decision-rationale-template.md`](../../examples/ontology/okf/decision-rationale-template.md)
 - JSON Schema: [`schemas/ontology/entity.schema.json`](../../schemas/ontology/entity.schema.json)
