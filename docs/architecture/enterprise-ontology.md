@@ -2,7 +2,7 @@
 
 **Status:** Architecture decision ([ADR 0009](../adr/0009-enterprise-ontology.md)) · July 2026  
 **Audience:** architects, design partners, implementers of ontology lint/generate and kinetic governance  
-**Related:** [Zero-Trust Agentic Fabric](./zero-trust-agentic-fabric.md) · [Memory / Obsidian](../memory/memory-obsidian.md) · [Team vault sync](../getting-started/getting-started-for-teams.md) · [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md) · [ADR 0007](../adr/0007-pulumi-provisioning-managed-tiers.md)
+**Related:** [Zero-Trust Agentic Fabric](./zero-trust-agentic-fabric.md) · [Token efficiency (12 layers)](./clawql-token-efficiency.md) · [Memory / Obsidian](../memory/memory-obsidian.md) · [OKF decision rationale](../memory/okf-decision-rationale.md) · [Command Deck ontology builder UX](./command-deck-ontology-builder-ux.md) · [Team vault sync](../getting-started/getting-started-for-teams.md) · [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md) · [ADR 0007](../adr/0007-pulumi-provisioning-managed-tiers.md)
 
 > **Shipped vs target:** This document is the **source of truth for design intent**. Entity schema format and examples in-repo are provisional. Automatic MCP generation, graph traversal, kinetic Transaction Sandbox, and the Command Deck builder are phased — verify against [modularization implementation status](../design/modularization-implementation-status.md) before external claims.
 
@@ -11,6 +11,22 @@
 ## One-sentence pitch
 
 The Ontology is what happens when you apply a TypeScript-grade type system to the enterprise data model, give it to AI agents instead of only application code, version it in Git alongside deployments, and make every write auditable and kinetically governed — without Palantir lock-in.
+
+---
+
+## Ontology enables token efficiency (Tier 1)
+
+Typed entity / relationship / action schemas are not only a grounding story — they are how ClawQL keeps agent context **lean**. Without them, Code Mode and projection have nothing precise to generate or trim against, and vault recall falls back to paste-the-notebook.
+
+| Token-efficiency layer | Ontology / OKF role                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
+| **1 Code Mode**        | `.cqe` / entity YAML → generated read tools; full catalogs stay server-side                         |
+| **2 Response trim**    | Project only declared properties (ATR-visible)                                                      |
+| **6 History distill**  | Compact transcripts into [`type: decision` rationale](../memory/okf-decision-rationale.md) / `.cqk` |
+| **7–9**                | Graph-aware recall + structured OKF output instead of free prose                                    |
+| **8 Routing**          | `kinetic_level` / risk informs Frugal → Frontier                                                    |
+
+Full stack: [Twelve layers of LLM cost](./clawql-token-efficiency.md). Ontology without those layers becomes a typed landfill; layers without ontology become cheap answers about the wrong objects.
 
 ---
 
@@ -256,7 +272,7 @@ This matches existing team vault sync ([getting-started-for-teams](../getting-st
 ## Ontology builder (yes — sequenced)
 
 1. **Now — format + CLI:** `clawql ontology lint` / `generate` (read tools); CI with `clawql-release lint`; derivation from SQL/OpenAPI.
-2. **Next — visual builder in Command Deck:** entity / relationship / action panels; kinetic fields non-accidental; emits YAML → Git PR.
+2. **Next — visual builder in Command Deck:** entity / relationship / action panels; kinetic fields non-accidental; emits YAML → Git PR. UX quests and inspector layout: [`command-deck-ontology-builder-ux.md`](./command-deck-ontology-builder-ux.md) (Fabric Ontology Playground as reference only — open Git artifacts, not OneLake lock-in).
 3. **Later — vertical packs:** Legal, Healthcare, Financial Services, Real Estate as OKF bundles teams adopt and customize.
 
 Builder surfaces executor choice (Argo Workflow template vs Pulumi resource) for non-engineers without replacing engineer YAML authoring.
@@ -284,6 +300,10 @@ Do **not** publish the property-type / relationship / source DSL as a frozen sta
 ## See also
 
 - [ADR 0009](../adr/0009-enterprise-ontology.md) — decision record
+- [Token efficiency (12 layers)](./clawql-token-efficiency.md)
+- [OKF decision rationale template](../memory/okf-decision-rationale.md)
+- [Command Deck ontology builder UX](./command-deck-ontology-builder-ux.md)
 - Example entity: [`examples/ontology/entities/Contract.yaml`](../../examples/ontology/entities/Contract.yaml)
+- Example decision note: [`examples/ontology/okf/decision-rationale-template.md`](../../examples/ontology/okf/decision-rationale-template.md)
 - JSON Schema: [`schemas/ontology/entity.schema.json`](../../schemas/ontology/entity.schema.json)
 - Ouroboros Seed ontology (task loop — different artifact): [ADR 0001](../adr/0001-ouroboros-workflow-engine.md)

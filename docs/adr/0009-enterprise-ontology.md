@@ -79,6 +79,7 @@ One governance layer (`@kinetic` + PEP + WORM); agents do not choose the executo
 
 - Required OKF `type` plus ClawQL extensions (`correlation_id`, `worm_ref`, agent metadata).
 - ClawQL defines its own `type` taxonomy until ecosystem taxonomy stabilizes (`decision`, `context`, `ontology_entity`, …).
+- Optional body convention for `type: decision`: [OKF decision rationale](../memory/okf-decision-rationale.md) (AIF-inspired Claim / Grounds / Supports / Attacks).
 - Ontology definitions may live as OKF docs with `type: ontology_entity` under the **schema** tree (Git); instances stay in object storage.
 
 **Implementation status (July 2026):** `memory_ingest` writes OKF frontmatter; append upgrades legacy notes; `Memory/index.md` + `Memory/log.md` ship alongside `_INDEX_*`. See [`docs/memory/okf.md`](../memory/okf.md).
@@ -93,13 +94,13 @@ One governance layer (`@kinetic` + PEP + WORM); agents do not choose the executo
 
 ### 7) Ontology builder sequencing
 
-| Phase     | Deliverable                                                                                                                          |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **Now**   | YAML/OKF schema format + JSON Schema; `clawql ontology lint` / `generate` (read tools); derive from sources; manifest version events |
-| **Later** | Relationship graph + permission-aware traversal                                                                                      |
-| **Later** | Kinetic write tools + AP2 + Transaction Sandbox + canary                                                                             |
-| **Later** | Command Deck visual builder (non-engineer authoring → Git PRs)                                                                       |
-| **Later** | Vertical schema packs (Legal, Healthcare, Financial, Real Estate)                                                                    |
+| Phase     | Deliverable                                                                                                                                                             |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Now**   | YAML/OKF schema format + JSON Schema; `clawql ontology lint` / `generate` (read tools); derive from sources; manifest version events                                    |
+| **Later** | Relationship graph + permission-aware traversal                                                                                                                         |
+| **Later** | Kinetic write tools + AP2 + Transaction Sandbox + canary                                                                                                                |
+| **Later** | Command Deck visual builder (non-engineer authoring → Git PRs) — UX notes: [`command-deck-ontology-builder-ux.md`](../architecture/command-deck-ontology-builder-ux.md) |
+| **Later** | Vertical schema packs (Legal, Healthcare, Financial, Real Estate)                                                                                                       |
 
 **Do not lock property types / relationship syntax as a public standard** until 3–5 design partners validate against real enterprise schemas.
 

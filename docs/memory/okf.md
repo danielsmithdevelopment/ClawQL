@@ -41,6 +41,8 @@ clawql_okf: true # marks OKF-complete notes
 
 OKF does not register types centrally — consumers must tolerate unknown values.
 
+For **`type: decision`**, prefer the AIF-inspired body sections in [**OKF decision rationale**](./okf-decision-rationale.md) (Claim / Grounds / Supports / Attacks / Preference / Decision / Provenance) so Layer 6 distillation stays structured. Example: [`examples/ontology/okf/decision-rationale-template.md`](../../examples/ontology/okf/decision-rationale-template.md).
+
 ### MCP input fields
 
 | Field                         | Frontmatter                              |
@@ -78,6 +80,7 @@ OKF does not register types centrally — consumers must tolerate unknown values
 ## See also
 
 - [memory-obsidian.md](./memory-obsidian.md)
+- [okf-decision-rationale.md](./okf-decision-rationale.md) — `type: decision` body template
 - [mcp-tools.md](../mcp/mcp-tools.md) § `memory_ingest`
 - [ADR 0010 — `.cq*` extensions](../adr/0010-cq-file-extensions.md)
 - [`.cqk` draft spec](../specs/cq-extensions/cqk.md)
