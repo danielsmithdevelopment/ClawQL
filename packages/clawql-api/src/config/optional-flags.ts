@@ -44,7 +44,7 @@ const rawOptionalFlagsSchema = z.object({
   /** Enterprise Ontology fixture MCP tools (`get_contract`, …). Default false — `CLAWQL_ENABLE_ONTOLOGY=1`. */
   CLAWQL_ENABLE_ONTOLOGY: z.string().optional(),
   /**
-   * LOW kinetic ontology write tools (`update_contract_status`, …) via Transaction Sandbox.
+   * LOW/MEDIUM kinetic ontology write tools (`update_contract_status`, `adjust_contract_value`, …) via Transaction Sandbox.
    * Default false — requires `CLAWQL_ENABLE_ONTOLOGY=1` (or implies it when set).
    */
   CLAWQL_ENABLE_ONTOLOGY_WRITES: z.string().optional(),
@@ -148,7 +148,7 @@ export type ClawqlOptionalToolFlags = {
    */
   enableOntology: boolean;
   /**
-   * LOW kinetic ontology writes (`update_contract_status`) via minimal Transaction Sandbox. Default false.
+   * LOW/MEDIUM kinetic ontology writes (`update_contract_status`, `adjust_contract_value`) via Transaction Sandbox. Default false.
    */
   enableOntologyWrites: boolean;
   /**

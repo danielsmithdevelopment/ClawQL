@@ -141,10 +141,10 @@ Ouroboros Seeds ([ADR 0001](./0001-ouroboros-workflow-engine.md)) carry a **task
 **Non-goals of this amendment:**
 
 - Do **not** claim GraphQL `@kinetic` ships in v1 essay copy without **3.8**.
-- Do **not** implement Argo/Pulumi executor routing or HIGH/CRITICAL paths here — B4 / **3.4–3.7**.
+- Do **not** implement Argo/Pulumi executor routing or HIGH/CRITICAL paths here — B4 / **3.5–3.7**.
 - Do **not** remove GraphQL from the architecture narrative — keep it as the transport target.
 
-**Next implementation:** **3.2** ✅ / **3.3** ✅ (gated write defs + LOW sandbox). Remaining: MEDIUM+ (**3.4–3.7**), GraphQL (**3.8**).
+**Next implementation:** **3.2–3.4** ✅ (gated write defs + LOW/MEDIUM sandbox). Remaining: HIGH+ (**3.5–3.7**), GraphQL (**3.8**).
 
 **Done-when:** ADR + essay gap record MCP-first; GraphQL samples framed as target / disclose until 3.8.
 
@@ -156,7 +156,17 @@ Ouroboros Seeds ([ADR 0001](./0001-ouroboros-workflow-engine.md)) carry a **task
 - Runtime gate: `CLAWQL_ENABLE_ONTOLOGY_WRITES=1` registers write MCP tools.
 - Minimal Transaction Sandbox: ATR → field snapshot → native fixture execute/deny → in-memory kinetic audit hash-chain (`KINETIC_COMMITTED` / `KINETIC_DENIED`).
 
-**Still deferred:** Argo/Pulumi routers, MEDIUM+/HIGH/CRITICAL, GraphQL `@kinetic`, permanent WORM store.
+**Extended by §12** for MEDIUM. Still deferred in this amendment’s scope: Argo/Pulumi routers, HIGH/CRITICAL, GraphQL `@kinetic`, permanent WORM store.
+
+### 12) Amendment (2026-07-20) — MEDIUM mandate gate (essay gap **3.4**)
+
+**Shipped:**
+
+- Generate also emits **MEDIUM** + NATIVE write tools (e.g. `adjust_contract_value`).
+- Sandbox: after ATR, if `requires_mandate` **or** `|Δ| > change_limit`, require a mandate (`mandate_type` + `mandate_id`) or ATR scope `mandate:TYPE` / `ontology:mandate`.
+- Without mandate → `status: mandate_required` (no mutate); with mandate → commit + audit.
+
+**Still deferred:** HIGH canary (**3.5**), CRITICAL HITL (**3.6**), executor routers (**3.7**), GraphQL `@kinetic` (**3.8**).
 
 ## Consequences
 
@@ -184,9 +194,10 @@ Ouroboros Seeds ([ADR 0001](./0001-ouroboros-workflow-engine.md)) carry a **task
 7. **v1 read backend = fixture mode** (essay gap **2.3**). ✅ — see §9; SQL adapters are partner/roadmap.
 8. **v1 kinetic call surface = MCP** (essay gap **3.1**). ✅ — see §3 / §10; GraphQL `@kinetic` = transport target (**3.8**).
 9. **LOW MCP kinetic** (essay gaps **3.2–3.3**). ✅ — see §11; `CLAWQL_ENABLE_ONTOLOGY_WRITES`.
-10. **Schema in Git / doctor warn** (essay gap **4.4**). ✅ — §6 doctor bullets.
-11. **Legal-only vertical packs** (essay gap **6.3** / **B6a**). ✅ — `packs/legal` shipped; others roadmap READMEs.
-12. **Publish disclosures** (B1–B5, B4a): see [`essay-gap-closure.md`](../ontology/essay-gap-closure.md) § Decisions locked.
+10. **MEDIUM mandate gate** (essay gap **3.4**). ✅ — see §12; `adjust_contract_value`.
+11. **Schema in Git / doctor warn** (essay gap **4.4**). ✅ — §6 doctor bullets.
+12. **Legal-only vertical packs** (essay gap **6.3** / **B6a**). ✅ — `packs/legal` shipped; others roadmap READMEs.
+13. **Publish disclosures** (B1–B5, B4a): see [`essay-gap-closure.md`](../ontology/essay-gap-closure.md) § Decisions locked.
 
 ## Status language
 

@@ -26,7 +26,7 @@ spec:
     value:
       type: money
       mutable: true
-      kinetic_level: HIGH
+      kinetic_level: MEDIUM
       requires_mandate: AP2_FINANCIAL
       change_limit: "10000.00"
     parties:
@@ -69,6 +69,17 @@ spec:
       executor: NATIVE
       audit_level: STANDARD
       description: Update contract status enum
+    - name: adjust_contract_value
+      kind: write
+      kinetic: true
+      kinetic_level: MEDIUM
+      requires_mandate: true
+      mandate_type: AP2_FINANCIAL
+      blast_radius: FINANCIAL
+      rollback_protocol: FIELD_RESTORE
+      executor: NATIVE
+      audit_level: STANDARD
+      description: Adjust contract money value — mandate required (and when over change_limit)
     - name: process_contract_document
       kind: write
       kinetic: true

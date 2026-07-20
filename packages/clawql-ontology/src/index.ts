@@ -21,6 +21,7 @@ export { defaultEntitySchemaPath, lintOntology, type LintOntologyOptions } from 
 export {
   generateOntologyReadTools,
   isShipableLowNativeWrite,
+  isShipableNativeWrite,
   type GenerateOntologyOptions,
   _relationshipToolNameForTests,
 } from "./generate.js";
@@ -37,14 +38,18 @@ export {
   resetOntologyFixtureDbForTests,
   searchContracts,
   updateContractStatus,
+  updateContractValue,
 } from "./fixture-store.js";
 export { redactOntologyPiiFields } from "./pii.js";
 export {
+  checkKineticMandate,
   checkKineticWriteAllowed,
   listKineticAudit,
   resetKineticAuditForTests,
   resolveKineticAtrClaimsForRuntime,
+  runKineticTransaction,
   runLowKineticTransaction,
   type KineticAtrClaims,
+  type KineticMandate,
   type LowKineticWriteResult,
 } from "./kinetic/index.js";

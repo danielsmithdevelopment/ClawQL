@@ -110,6 +110,23 @@ export function updateContractStatus(
   return row;
 }
 
+/** Mutate fixture contract money amount (MEDIUM kinetic native execute). */
+export function updateContractValue(
+  id: string,
+  amount: number,
+  currency?: string
+): FixtureContract | undefined {
+  if (!Number.isFinite(amount)) return undefined;
+  const db = loadOntologyFixtureDb();
+  const row = db.contracts.find((c) => c.contract_id === id);
+  if (!row) return undefined;
+  row.value = {
+    amount,
+    currency: currency?.trim() || row.value.currency || "USD",
+  };
+  return row;
+}
+
 export function getContract(id: string): FixtureContract | undefined {
   return loadOntologyFixtureDb().contracts.find((c) => c.contract_id === id);
 }

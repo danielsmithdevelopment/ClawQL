@@ -119,8 +119,11 @@ describe("generateOntologyReadTools", () => {
     expect(result.tools.some((t) => t.name === "get_contract")).toBe(true);
     expect(result.tools.some((t) => t.name === "get_contract_parties")).toBe(true);
     expect(result.writeTools.some((t) => t.name === "update_contract_status")).toBe(true);
+    expect(result.writeTools.some((t) => t.name === "adjust_contract_value")).toBe(true);
     expect(
-      result.writeTools.every((t) => t.kinetic_level === "LOW" && t.executor === "NATIVE")
+      result.writeTools.every(
+        (t) => ["LOW", "MEDIUM"].includes(t.kinetic_level) && t.executor === "NATIVE"
+      )
     ).toBe(true);
     expect(result.deferredWriteActions.some((a) => a.name === "process_contract_document")).toBe(
       true
@@ -136,6 +139,7 @@ describe("generateOntologyReadTools", () => {
     expect(stub).toContain("ONTOLOGY_READ_TOOLS");
     expect(stub).toContain("ONTOLOGY_WRITE_TOOLS");
     expect(stub).toContain("update_contract_status");
+    expect(stub).toContain("adjust_contract_value");
     expect(stub).toContain("search_contracts");
     const index = await readFile(join(outDir, "index.md"), "utf8");
     expect(index).toContain("Ontology entity catalog");
@@ -246,5 +250,83 @@ describe("LOW Transaction Sandbox (3.3)", () => {
       expect(result.audit?.action).toBe("KINETIC_DENIED");
     }
     expect(getContract("acc-8821")?.status).toBe("active");
+  });
+
+  it("rejects adjust_contract_value without mandate (3.4)", async () => {
+    const { resetOntologyFixtureDbForTests, getContract } = await import("./fixture-store.js");
+    const { resetKineticAuditForTests, runKineticTransaction } = await import("./kinetic/index.js");
+    resetOntologyFixtureDbForTests();
+    resetKineticAuditForTests();
+    const before = getContract("acc-8821")!.value.amount;
+    const result = await runKineticTransaction({
+      tool: "adjust_contract_value",
+      entity: "Contract",
+      recordId: "acc-8821",
+      field: "value.amount",
+      nextValue: before + 25000,
+      kineticLevel: "MEDIUM",
+      claims: { sub: "agent", role: "agent", scope: ["ontology:write"] },
+      mandatePolicy: {
+        requiresMandate: true,
+        mandateType: "AP2_FINANCIAL",
+        changeLimit: 10000,
+      },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe("mandate_required");
+      expect(result.reason).toContain("mandate_required");
+    }
+    expect(getContract("acc-8821")?.value.amount).toBe(before);
+  });
+
+  it("commits adjust_contract_value when mandate is presented", async () => {
+    const { resetOntologyFixtureDbForTests, getContract } = await import("./fixture-store.js");
+    const { resetKineticAuditForTests, runKineticTransaction } = await import("./kinetic/index.js");
+    resetOntologyFixtureDbForTests();
+    resetKineticAuditForTests();
+    const result = await runKineticTransaction({
+      tool: "adjust_contract_value",
+      entity: "Contract",
+      recordId: "acc-8821",
+      field: "value.amount",
+      nextValue: 60000,
+      kineticLevel: "MEDIUM",
+      claims: { sub: "agent", role: "agent", scope: ["ontology:write"] },
+      mandate: { type: "AP2_FINANCIAL", id: "mand-demo-1" },
+      mandatePolicy: {
+        requiresMandate: true,
+        mandateType: "AP2_FINANCIAL",
+        changeLimit: 10000,
+      },
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.after).toBe(60000);
+      expect(result.audit.action).toBe("KINETIC_COMMITTED");
+    }
+    expect(getContract("acc-8821")?.value.amount).toBe(60000);
+  });
+
+  it("requires mandate when change exceeds change_limit even if requiresMandate is false", async () => {
+    const { resetKineticAuditForTests, runKineticTransaction } = await import("./kinetic/index.js");
+    const { resetOntologyFixtureDbForTests } = await import("./fixture-store.js");
+    resetOntologyFixtureDbForTests();
+    resetKineticAuditForTests();
+    const result = await runKineticTransaction({
+      tool: "adjust_contract_value",
+      entity: "Contract",
+      recordId: "acc-8821",
+      field: "value.amount",
+      nextValue: 90000,
+      claims: { sub: "agent", scope: ["ontology:write"] },
+      mandatePolicy: {
+        requiresMandate: false,
+        mandateType: "AP2_FINANCIAL",
+        changeLimit: 10000,
+      },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.status).toBe("mandate_required");
   });
 });

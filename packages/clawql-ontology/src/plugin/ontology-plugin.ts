@@ -184,7 +184,53 @@ export function createOntologyPlugin(opts: CreateOntologyPluginOptions = {}): Pl
                 field: "status",
                 nextValue: status,
                 executor: "NATIVE",
+                kineticLevel: "LOW",
                 claims: opts.atrClaims,
+              });
+              return textResult(result);
+            },
+          });
+
+          yield* api.registerMcpTool({
+            name: "adjust_contract_value",
+            schema: {
+              id: z.string().describe("Contract identifier"),
+              amount: z.number().describe("New contract value amount"),
+              mandate_type: z.string().optional().describe("Mandate type (e.g. AP2_FINANCIAL)"),
+              mandate_id: z.string().optional().describe("Mandate / approval id"),
+            },
+            handler: async (args) => {
+              const a = args as {
+                id?: string;
+                amount?: number;
+                mandate_type?: string;
+                mandate_id?: string;
+              };
+              const id = String(a.id ?? "");
+              const amount = Number(a.amount);
+              logOntologyTool("adjust_contract_value", { id, amount });
+              const mandate =
+                a.mandate_id?.trim()
+                  ? {
+                      type: a.mandate_type?.trim() || "AP2_FINANCIAL",
+                      id: a.mandate_id.trim(),
+                    }
+                  : null;
+              const result = await runLowKineticTransaction({
+                tool: "adjust_contract_value",
+                entity: "Contract",
+                recordId: id,
+                field: "value.amount",
+                nextValue: amount,
+                executor: "NATIVE",
+                kineticLevel: "MEDIUM",
+                claims: opts.atrClaims,
+                mandate,
+                mandatePolicy: {
+                  requiresMandate: true,
+                  mandateType: "AP2_FINANCIAL",
+                  changeLimit: 10000,
+                },
               });
               return textResult(result);
             },

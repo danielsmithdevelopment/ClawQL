@@ -70,7 +70,7 @@
 | **3.1** | Product decision: GraphQL `@kinetic` **and/or** MCP write tools with kinetic metadata                  | **B** ✅ | **Decided:** MCP write tools + kinetic metadata for v1; GraphQL `@kinetic` = transport target (**3.8**) ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)) |
 | **3.2** | Kinetic metadata validation on write actions at lint time (already partial) + generate write tool defs | A ✅     | `writeTools` for LOW+NATIVE; gated via `CLAWQL_ENABLE_ONTOLOGY_WRITES`                                                                                       |
 | **3.3** | Minimal Transaction Sandbox: ATR check → snapshot → execute/deny → WORM/audit entry for **LOW**        | A/C ✅   | `runLowKineticTransaction` + fixture `update_contract_status` + kinetic audit chain                                                                          |
-| **3.4** | MEDIUM: mandate required when `requires_mandate` / over `change_limit`                                 | C        | Staged or rejected without mandate                                                                                                                           |
+| **3.4** | MEDIUM: mandate required when `requires_mandate` / over `change_limit`                                 | C ✅     | `adjust_contract_value` + mandate gate; reject without mandate                                                                                               |
 | **3.5** | HIGH canary progression                                                                                | C        | Config respected (can stub analysis gate)                                                                                                                    |
 | **3.6** | CRITICAL + HITL / Command Deck Action View                                                             | C        | Staged for approval                                                                                                                                          |
 | **3.7** | Executor router: `NATIVE` \| `ARGO_WORKFLOW` \| `PULUMI` from action schema                            | C        | One real Argo path + one native path                                                                                                                         |
@@ -127,8 +127,8 @@
 4.1–4.3  .cqk option + ontology index + recall boost
 5.1–5.3  manifest pin + doctor
 6.1–6.2  legal pack + import
-3.1–3.3  kinetic decision + LOW sandbox
-then: 3.4–3.8, 7.*, 5.4, 8.2 as capacity allows
+3.1–3.4  kinetic decision + LOW/MEDIUM sandbox
+then: 3.5–3.8 (HIGH+/Argo/GraphQL) as capacity allows — B1–B5 disclosed
 ```
 
 ---
@@ -140,12 +140,12 @@ then: 3.4–3.8, 7.*, 5.4, 8.2 as capacity allows
 | **B1** builder             | **(a)/(b)** Disclose + CLI+PR authoring                     | No “Command Deck ships” claim              |
 | **B2** VS Code             | **(a)/(c)** Disclose; CI lint is the gate                   | No “extension ships” claim                 |
 | **B3** / **5.4** Arweave   | **(a)** Disclose; Git + release manifest pin                | No Arweave permanence claim                |
-| **B4** full kinetic        | **(a)** LOW MCP kinetic shipped; GraphQL = transport target | Soft-copy HIGH/Argo/`@kinetic` as phased   |
+| **B4** full kinetic        | **(a)** LOW+MEDIUM MCP kinetic shipped; GraphQL = transport target | Soft-copy HIGH/Argo/`@kinetic` as phased   |
 | **B5** / **8.2** auto-Onyx | **(a)** Stubs only                                          | No “generate configures Onyx” as automatic |
 | **B6** / **6.3** packs     | **(a)** Legal only                                          | Other verticals = roadmap                  |
 | **4.4** schema Git         | Warn in `doctor` if missing / remote-only                   | Policy enforceable without hard fail       |
 
-**Remaining optional impl (not publish-blocking):** **3.4** MEDIUM mandate check; **3.5–3.8** still disclose/phased.
+**Remaining optional impl (not publish-blocking):** **3.5–3.8** still disclose/phased (canary / HITL / Argo / GraphQL).
 
 ---
 
@@ -185,7 +185,7 @@ Closed without product decisions (see PR closing no-drama gaps):
 | **1.1, 1.3, 1.4, 1.5**           | `.cqe` examples; `ontology init` / `create-entity`; **`.cqe` primary** (ADR 0010 §2a)                                              |
 | **2.1, 2.2, 2.3, 2.4, 2.5, 2.6** | Fixture MCP plugin + **fixture-mode decision** (ADR 0009 §9); `CLAWQL_ENABLE_ONTOLOGY` / `CLAWQL_ONTOLOGY_DIR`; relationships; PII |
 | **3.1**                          | **MCP-first kinetic** (ADR 0009 §10); GraphQL `@kinetic` deferred to **3.8** / B4                                                  |
-| **3.2–3.3**                      | Gated `writeTools` + LOW Transaction Sandbox (`CLAWQL_ENABLE_ONTOLOGY_WRITES`)                                                     |
+| **3.2–3.4**                      | Gated `writeTools` + LOW/MEDIUM Transaction Sandbox (mandate gate on `adjust_contract_value`)          |
 | **4.1–4.4**                      | `.cqk` + recall boost + `index.md`; **schema-in-Git doctor warns** (4.4)                                                           |
 | **5.1–5.3**                      | Manifest `ontologySchema` pin + verify; `clawql-release lint` for `.cqm`; doctor ontology check                                    |
 | **5.4**                          | **Disclosed** — Arweave deferred (B3a)                                                                                             |
@@ -193,7 +193,7 @@ Closed without product decisions (see PR closing no-drama gaps):
 | **7.1–7.3**                      | CLI+PR authoring shipped; builder/VS Code **disclosed** (B1/B2)                                                                    |
 | **8.1–8.2**                      | Onyx stubs; auto-apply **disclosed** (B5a)                                                                                         |
 
-**Publish path:** core demo is literally true; remaining essay edits are disclosure sentences per § Decisions locked. Optional later: **3.4** MEDIUM mandate.
+**Publish path:** core demo is literally true; remaining essay edits are disclosure sentences per § Decisions locked. Optional later: **3.5–3.8**.
 
 ## Tracking
 

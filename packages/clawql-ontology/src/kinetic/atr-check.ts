@@ -7,6 +7,8 @@ export type KineticAtrClaims = {
   sub?: string;
   role?: string;
   scope?: string[];
+  /** Mandate types already granted to this principal (essay 3.4). */
+  mandates?: string[];
 };
 
 export type KineticAtrDecision = {

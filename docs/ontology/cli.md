@@ -16,7 +16,7 @@ clawql ontology generate --dir examples/ontology/entities --out generated/ontolo
 
 # Live fixture tools in the gateway (v1 read backend — demo Contract/Organization store)
 CLAWQL_ENABLE_ONTOLOGY=1 npx clawql-mcp
-# LOW kinetic writes (ATR → snapshot → execute → audit):
+# LOW/MEDIUM kinetic writes (ATR → snapshot → mandate gate → execute → audit):
 CLAWQL_ENABLE_ONTOLOGY=1 CLAWQL_ENABLE_ONTOLOGY_WRITES=1 npx clawql-mcp
 # Optional: CLAWQL_ONTOLOGY_DIR=.clawql/ontology/entities
 # Optional: CLAWQL_ONTOLOGY_FIXTURE=/path/to/fixtures.json
@@ -33,17 +33,18 @@ CLAWQL_ENABLE_ONTOLOGY=1 CLAWQL_ENABLE_ONTOLOGY_WRITES=1 npx clawql-mcp
 
 Do not claim automatic SQL binding in essay or Getting Started until a dedicated adapter ships.
 
-## Kinetic writes (v1 — LOW + NATIVE)
+## Kinetic writes (v1 — LOW + MEDIUM + NATIVE)
 
-| Concern  | Behavior                                                                                         |
-| -------- | ------------------------------------------------------------------------------------------------ |
-| Generate | `writeTools` for `kinetic_level: LOW` + `executor: NATIVE` (e.g. `update_contract_status`)       |
-| Deferred | Argo/Pulumi / non-LOW stay in `deferredWriteActions`                                             |
-| Runtime  | `CLAWQL_ENABLE_ONTOLOGY_WRITES=1` registers write MCP tools                                      |
-| Sandbox  | ATR check → field snapshot → mutate fixture → `KINETIC_COMMITTED` / `KINETIC_DENIED` audit chain |
-| ATR      | Scope `*` or `ontology:write`, or role `admin` (env: `CLAWQL_ONTOLOGY_ATR_SCOPE`)                |
+| Concern  | Behavior                                                                                                      |
+| -------- | ------------------------------------------------------------------------------------------------------------- |
+| Generate | `writeTools` for `kinetic_level: LOW\|MEDIUM` + `executor: NATIVE` (`update_contract_status`, `adjust_contract_value`) |
+| Deferred | Argo/Pulumi / HIGH+ stay in `deferredWriteActions`                                                            |
+| Runtime  | `CLAWQL_ENABLE_ONTOLOGY_WRITES=1` registers write MCP tools                                                   |
+| Sandbox  | ATR → snapshot → **(MEDIUM)** mandate gate → mutate → `KINETIC_COMMITTED` / `KINETIC_DENIED` / `mandate_required` |
+| ATR      | Scope `*` or `ontology:write`, or role `admin` (env: `CLAWQL_ONTOLOGY_ATR_SCOPE`)                             |
+| Mandate  | MEDIUM: `mandate_type` + `mandate_id`, or `|Δ| ≤ change_limit` without a mandate ([ADR 0009 §12](../adr/0009-enterprise-ontology.md)) |
 
-MEDIUM+/canary/HITL/GraphQL `@kinetic` remain roadmap ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)).
+HIGH+/canary/HITL/GraphQL `@kinetic` remain roadmap ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)).
 
 ## What lint checks
 
@@ -65,7 +66,7 @@ MEDIUM+/canary/HITL/GraphQL `@kinetic` remain roadmap ([ADR 0009 §10](../adr/00
 | `ontology-plugin.stub.ts` | `ONTOLOGY_READ_TOOLS` + `ONTOLOGY_WRITE_TOOLS`                       |
 | `README.md`               | Notes                                                                |
 
-**v1 kinetic surface = MCP** ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)). LOW+NATIVE writes emit as `writeTools` and register with `CLAWQL_ENABLE_ONTOLOGY_WRITES=1`. Non-NATIVE / non-LOW stay in `deferredWriteActions`. GraphQL `@kinetic` is a later transport target.
+**v1 kinetic surface = MCP** ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)). LOW/MEDIUM+NATIVE writes emit as `writeTools` and register with `CLAWQL_ENABLE_ONTOLOGY_WRITES=1`. Non-NATIVE / HIGH+ stay in `deferredWriteActions`. GraphQL `@kinetic` is a later transport target.
 
 Entity files: prefer **`.cqe`** ([ADR 0010 §2a](../adr/0010-cq-file-extensions.md)); `.yaml` / `.yml` / `.json` remain accepted ([`.cqe` spec](https://docs.clawql.com/specs/cq-extensions/cqe)).
 
