@@ -135,15 +135,15 @@ then: 3.5–3.8 (HIGH+/Argo/GraphQL) as capacity allows — B1–B5 disclosed
 
 ## Decisions locked (publish compromises)
 
-| Blocker / ID               | Locked choice                                               | Essay implication                          |
-| -------------------------- | ----------------------------------------------------------- | ------------------------------------------ |
-| **B1** builder             | **(a)/(b)** Disclose + CLI+PR authoring                     | No “Command Deck ships” claim              |
-| **B2** VS Code             | **(a)/(c)** Disclose; CI lint is the gate                   | No “extension ships” claim                 |
-| **B3** / **5.4** Arweave   | **(a)** Disclose; Git + release manifest pin                | No Arweave permanence claim                |
+| Blocker / ID               | Locked choice                                                      | Essay implication                          |
+| -------------------------- | ------------------------------------------------------------------ | ------------------------------------------ |
+| **B1** builder             | **(a)/(b)** Disclose + CLI+PR authoring                            | No “Command Deck ships” claim              |
+| **B2** VS Code             | **(a)/(c)** Disclose; CI lint is the gate                          | No “extension ships” claim                 |
+| **B3** / **5.4** Arweave   | **(a)** Disclose; Git + release manifest pin                       | No Arweave permanence claim                |
 | **B4** full kinetic        | **(a)** LOW+MEDIUM MCP kinetic shipped; GraphQL = transport target | Soft-copy HIGH/Argo/`@kinetic` as phased   |
-| **B5** / **8.2** auto-Onyx | **(a)** Stubs only                                          | No “generate configures Onyx” as automatic |
-| **B6** / **6.3** packs     | **(a)** Legal only                                          | Other verticals = roadmap                  |
-| **4.4** schema Git         | Warn in `doctor` if missing / remote-only                   | Policy enforceable without hard fail       |
+| **B5** / **8.2** auto-Onyx | **(a)** Stubs only                                                 | No “generate configures Onyx” as automatic |
+| **B6** / **6.3** packs     | **(a)** Legal only                                                 | Other verticals = roadmap                  |
+| **4.4** schema Git         | Warn in `doctor` if missing / remote-only                          | Policy enforceable without hard fail       |
 
 **Remaining optional impl (not publish-blocking):** **3.5–3.8** still disclose/phased (canary / HITL / Argo / GraphQL).
 
@@ -185,7 +185,7 @@ Closed without product decisions (see PR closing no-drama gaps):
 | **1.1, 1.3, 1.4, 1.5**           | `.cqe` examples; `ontology init` / `create-entity`; **`.cqe` primary** (ADR 0010 §2a)                                              |
 | **2.1, 2.2, 2.3, 2.4, 2.5, 2.6** | Fixture MCP plugin + **fixture-mode decision** (ADR 0009 §9); `CLAWQL_ENABLE_ONTOLOGY` / `CLAWQL_ONTOLOGY_DIR`; relationships; PII |
 | **3.1**                          | **MCP-first kinetic** (ADR 0009 §10); GraphQL `@kinetic` deferred to **3.8** / B4                                                  |
-| **3.2–3.4**                      | Gated `writeTools` + LOW/MEDIUM Transaction Sandbox (mandate gate on `adjust_contract_value`)          |
+| **3.2–3.4**                      | Gated `writeTools` + LOW/MEDIUM Transaction Sandbox (mandate gate on `adjust_contract_value`)                                      |
 | **4.1–4.4**                      | `.cqk` + recall boost + `index.md`; **schema-in-Git doctor warns** (4.4)                                                           |
 | **5.1–5.3**                      | Manifest `ontologySchema` pin + verify; `clawql-release lint` for `.cqm`; doctor ontology check                                    |
 | **5.4**                          | **Disclosed** — Arweave deferred (B3a)                                                                                             |

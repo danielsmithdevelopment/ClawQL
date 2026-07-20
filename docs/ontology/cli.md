@@ -35,14 +35,14 @@ Do not claim automatic SQL binding in essay or Getting Started until a dedicated
 
 ## Kinetic writes (v1 — LOW + MEDIUM + NATIVE)
 
-| Concern  | Behavior                                                                                                      |
-| -------- | ------------------------------------------------------------------------------------------------------------- |
+| Concern  | Behavior                                                                                                               |
+| -------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Generate | `writeTools` for `kinetic_level: LOW\|MEDIUM` + `executor: NATIVE` (`update_contract_status`, `adjust_contract_value`) |
-| Deferred | Argo/Pulumi / HIGH+ stay in `deferredWriteActions`                                                            |
-| Runtime  | `CLAWQL_ENABLE_ONTOLOGY_WRITES=1` registers write MCP tools                                                   |
-| Sandbox  | ATR → snapshot → **(MEDIUM)** mandate gate → mutate → `KINETIC_COMMITTED` / `KINETIC_DENIED` / `mandate_required` |
-| ATR      | Scope `*` or `ontology:write`, or role `admin` (env: `CLAWQL_ONTOLOGY_ATR_SCOPE`)                             |
-| Mandate  | MEDIUM: `mandate_type` + `mandate_id`, or `|Δ| ≤ change_limit` without a mandate ([ADR 0009 §12](../adr/0009-enterprise-ontology.md)) |
+| Deferred | Argo/Pulumi / HIGH+ stay in `deferredWriteActions`                                                                     |
+| Runtime  | `CLAWQL_ENABLE_ONTOLOGY_WRITES=1` registers write MCP tools                                                            |
+| Sandbox  | ATR → snapshot → **(MEDIUM)** mandate gate → mutate → `KINETIC_COMMITTED` / `KINETIC_DENIED` / `mandate_required`      |
+| ATR      | Scope `*` or `ontology:write`, or role `admin` (env: `CLAWQL_ONTOLOGY_ATR_SCOPE`)                                      |
+| Mandate  | MEDIUM: `mandate_type` + `mandate_id`, or `                                                                            | Δ   | ≤ change_limit` without a mandate ([ADR 0009 §12](../adr/0009-enterprise-ontology.md)) |
 
 HIGH+/canary/HITL/GraphQL `@kinetic` remain roadmap ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)).
 

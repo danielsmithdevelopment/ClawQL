@@ -209,13 +209,12 @@ export function createOntologyPlugin(opts: CreateOntologyPluginOptions = {}): Pl
               const id = String(a.id ?? "");
               const amount = Number(a.amount);
               logOntologyTool("adjust_contract_value", { id, amount });
-              const mandate =
-                a.mandate_id?.trim()
-                  ? {
-                      type: a.mandate_type?.trim() || "AP2_FINANCIAL",
-                      id: a.mandate_id.trim(),
-                    }
-                  : null;
+              const mandate = a.mandate_id?.trim()
+                ? {
+                    type: a.mandate_type?.trim() || "AP2_FINANCIAL",
+                    id: a.mandate_id.trim(),
+                  }
+                : null;
               const result = await runLowKineticTransaction({
                 tool: "adjust_contract_value",
                 entity: "Contract",

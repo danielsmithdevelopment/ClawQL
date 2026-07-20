@@ -36,15 +36,15 @@ export function isShipableNativeWrite(action: OntologyAction): boolean {
 /** @deprecated use {@link isShipableNativeWrite} */
 export function isShipableLowNativeWrite(action: OntologyAction): boolean {
   return (
-    isShipableNativeWrite(action) &&
-    String(action.kinetic_level ?? "").toUpperCase() === "LOW"
+    isShipableNativeWrite(action) && String(action.kinetic_level ?? "").toUpperCase() === "LOW"
   );
 }
 
 function writeInputSchemaForAction(
   entityName: string,
   action: OntologyAction,
-  properties: Record<string, { type?: string; values?: string[]; change_limit?: string }> | undefined
+  properties:
+    Record<string, { type?: string; values?: string[]; change_limit?: string }> | undefined
 ): GeneratedWriteTool["inputSchema"] {
   // Convention: update_<snake>_status → id + status enum from entity properties.
   if (

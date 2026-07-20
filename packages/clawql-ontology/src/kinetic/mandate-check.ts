@@ -35,9 +35,7 @@ function parseLimit(raw: string | number | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-export function resolveChangeLimit(
-  raw: string | number | undefined
-): number | undefined {
+export function resolveChangeLimit(raw: string | number | undefined): number | undefined {
   return parseLimit(raw);
 }
 

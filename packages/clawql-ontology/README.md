@@ -18,9 +18,9 @@ clawql ontology generate --dir examples/ontology/entities --out generated/ontolo
 
 ## Live tools
 
-| Flag                              | Tools                                                                    |
-| --------------------------------- | ------------------------------------------------------------------------ |
-| `CLAWQL_ENABLE_ONTOLOGY=1`        | Fixture reads (`get_contract`, relationships, …)                         |
+| Flag                              | Tools                                                                                                                   |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `CLAWQL_ENABLE_ONTOLOGY=1`        | Fixture reads (`get_contract`, relationships, …)                                                                        |
 | `CLAWQL_ENABLE_ONTOLOGY_WRITES=1` | LOW/MEDIUM kinetic writes (`update_contract_status`, `adjust_contract_value`) via ATR → snapshot → mandate gate → audit |
 
 Optional: `CLAWQL_ONTOLOGY_FIXTURE`, `CLAWQL_ONTOLOGY_ATR_SCOPE=ontology:write`. MEDIUM tools need `mandate_type` + `mandate_id` (or stay within `change_limit`).

@@ -105,9 +105,7 @@ function moneyDelta(before: unknown, next: unknown): number | undefined {
 /**
  * Run one native kinetic write with ATR + optional MEDIUM mandate gate.
  */
-export async function runKineticTransaction(
-  req: KineticWriteRequest
-): Promise<KineticWriteResult> {
+export async function runKineticTransaction(req: KineticWriteRequest): Promise<KineticWriteResult> {
   const claims = req.claims === undefined ? resolveKineticAtrClaimsForRuntime() : req.claims;
   const atr = checkKineticWriteAllowed(claims);
   const before =
@@ -144,8 +142,7 @@ export async function runKineticTransaction(
     requiresMandate: req.mandatePolicy?.requiresMandate,
     mandateType: req.mandatePolicy?.mandateType,
     changeLimit: req.mandatePolicy?.changeLimit,
-    changeAmount:
-      req.mandatePolicy?.changeAmount ?? moneyDelta(before, req.nextValue),
+    changeAmount: req.mandatePolicy?.changeAmount ?? moneyDelta(before, req.nextValue),
   };
   const mandate = checkKineticMandate({
     policy,
