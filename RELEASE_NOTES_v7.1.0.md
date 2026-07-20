@@ -2,7 +2,7 @@
 
 **npm:** [`clawql-mcp@7.1.0`](https://www.npmjs.com/package/clawql-mcp/v/7.1.0) (publish on tag `v7.1.0`)  
 **Full changelog:** [CHANGELOG.md#710---2026-07-20](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#710---2026-07-20)  
-**Release date:** 2026-07-20 (tag after ontology PRs #718–#720 land)
+**Release date:** 2026-07-20 (tag after ontology PRs #718–#720 and Docker publish fix #740 land)
 
 ---
 
