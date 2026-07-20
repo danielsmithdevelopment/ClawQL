@@ -3,6 +3,10 @@
 #
 # Build from repo root (needs clawql-api workspace package):
 #   docker build -f dashboard/Dockerfile -t clawql-dashboard .
+#
+# Webpack resolves clawql-api from packages/clawql-api/dist and walks Node resolution
+# upward. Some deps (@smithy/protocol-http) are nested under packages/clawql-api;
+# others (@smithy/core, effect) hoist to /app/node_modules. Both trees are required.
 
 FROM node:22-alpine AS clawql-builder
 WORKDIR /app
@@ -17,24 +21,26 @@ COPY packages/clawql-core packages/clawql-core
 COPY packages/clawql-auth packages/clawql-auth
 COPY packages/clawql-api packages/clawql-api
 RUN npm run build -w clawql-core -w clawql-auth -w clawql-api
-# Nested package node_modules are incomplete under workspaces; strip them.
-# Keep /app/node_modules — Next webpack resolves clawql-api imports from
-# packages/clawql-api/dist and walks up to /app/node_modules (not dashboard/).
-RUN find packages -type d -name node_modules -prune -exec rm -rf {} +
 
 FROM node:22-alpine AS deps
 WORKDIR /app/dashboard
 RUN apk upgrade --no-cache
 COPY dashboard/package.json dashboard/package-lock.json ./
-COPY --from=clawql-builder /app/packages /app/packages
+# package.json only — avoid overlaying workspace node_modules before dashboard npm ci
+COPY --from=clawql-builder /app/packages/clawql-core/package.json /app/packages/clawql-core/package.json
+COPY --from=clawql-builder /app/packages/clawql-core/dist /app/packages/clawql-core/dist
+COPY --from=clawql-builder /app/packages/clawql-auth/package.json /app/packages/clawql-auth/package.json
+COPY --from=clawql-builder /app/packages/clawql-auth/dist /app/packages/clawql-auth/dist
+COPY --from=clawql-builder /app/packages/clawql-api/package.json /app/packages/clawql-api/package.json
+COPY --from=clawql-builder /app/packages/clawql-api/dist /app/packages/clawql-api/dist
 RUN npm ci
 
 FROM node:22-alpine AS builder
 WORKDIR /app/dashboard
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/dashboard/node_modules ./node_modules
-COPY --from=deps /app/packages /app/packages
-# Workspace install tree for clawql-api transitive deps (effect, smithy, …).
+# Full workspace package trees (nested node_modules) + hoisted /app/node_modules.
+COPY --from=clawql-builder /app/packages /app/packages
 COPY --from=clawql-builder /app/node_modules /app/node_modules
 COPY dashboard/ .
 # prebuild generators resolve repoRoot as `/app` (`dashboard/scripts` → `../..`).
@@ -54,7 +60,6 @@ COPY --from=builder /app/dashboard/package*.json ./
 COPY --from=builder /app/dashboard/node_modules ./node_modules
 COPY --from=builder /app/dashboard/.next ./.next
 COPY --from=builder /app/dashboard/next.config.mjs ./next.config.mjs
-# file: clawql-api → ../packages; runtime also needs workspace node_modules for externals.
 COPY --from=builder /app/packages /packages
 COPY --from=builder /app/node_modules /node_modules
 EXPOSE 3040
