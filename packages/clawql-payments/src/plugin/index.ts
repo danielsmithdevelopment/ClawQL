@@ -5,6 +5,11 @@ export {
   paymentsX402ProxyPluginEnabled,
   type PaymentsX402ProxyPluginOptions,
 } from "./payments-x402-proxy-plugin.js";
+export {
+  createPaymentsToolsPlugin,
+  PAYMENTS_TOOLS_PLUGIN_ID,
+  paymentsMcpToolsEnabled,
+} from "./payments-tools-plugin.js";
 export { PaymentAuditService, paymentAuditLiveLayer } from "./payment-audit-service.js";
 export {
   makePaymentsLayer,
@@ -59,5 +64,15 @@ export { Ap2MandateService, ap2MandateLiveLayer } from "../ap2/ap2-mandate-servi
 export { AcpCheckoutService, acpCheckoutLiveLayer } from "../acp/acp-checkout-service.js";
 export { PaypalOrdersService, paypalOrdersLiveLayer } from "../paypal/paypal-orders-service.js";
 export { AdyenCheckoutService, adyenCheckoutLiveLayer } from "../adyen/adyen-checkout-service.js";
+export { PayoutService, payoutLiveLayer } from "../payouts/payout-service.js";
+export { RampService, rampLiveLayer } from "../ramp/ramp-service.js";
+export {
+  ConsumerOffRampService,
+  consumerOffRampLiveLayer,
+} from "../offramp/consumer-offramp-service.js";
+export {
+  OfframpWebhookService,
+  offrampWebhookLiveLayer,
+} from "../offramp/offramp-webhook-service.js";
 export { CreditsService, creditsLiveLayer } from "../credits/credits-service.js";
 export { AchTopupService, achTopupLiveLayer } from "../credits/ach-topup-service.js";

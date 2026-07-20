@@ -1,10 +1,10 @@
 # clawql-payments
 
-Unified payments layer for ClawQL — **Stripe** billing, **x402** micropayments, **MPP** session streaming, **AP2** Payment Mandates, **ACP** checkout, **PayPal** Orders, **Adyen** Checkout, managed plan entitlements, and **WORM-auditable** payment events.
+Unified payments layer for ClawQL — **Stripe** billing + **Connect payouts**, **Ramp** agent cards, **x402** micropayments, **MPP** session streaming, **AP2** Payment Mandates, **ACP** checkout, **PayPal** Orders, **Adyen** Checkout, managed plan entitlements, and **WORM-auditable** payment events.
 
-**Positioning:** ClawQL’s Agentic Gateway is the only Foundational Platform surface with native **Stripe + x402 + MPP + AP2 + ACP** payments plus **PayPal** and **Adyen** fiat adapters and a correlated payment WORM trail — part of Auditable Production AI. See [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md).
+**Positioning:** ClawQL’s Agentic Gateway is the only Foundational Platform surface with native **Stripe + x402 + MPP + AP2 + ACP** payments plus **PayPal**, **Adyen**, **Connect payouts**, and **Ramp** agent cards with a correlated payment WORM trail — part of Auditable Production AI. See [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md) and [`docs/payments/payouts-ramp.md`](../../docs/payments/payouts-ramp.md).
 
-ClawQL's own managed tiers (Free / Pro / Team / Enterprise) run on this package internally. The same package is available to ClawQL users to bill their own customers via Stripe/PayPal/Adyen, gate MCP tools and HTTP endpoints via x402/MPP/AP2, expose ACP checkout for agent commerce, and get a correlated payment audit trail across rails.
+ClawQL's own managed tiers (Free / Pro / Team / Enterprise) run on this package internally. The same package is available to ClawQL users to bill their own customers via Stripe/PayPal/Adyen, pay creators via Connect, issue Ramp agent cards, gate MCP tools and HTTP endpoints via x402/MPP/AP2, expose ACP checkout for agent commerce, and get a correlated payment audit trail across rails.
 
 ## Architecture
 
@@ -17,6 +17,9 @@ clawql-payments
 ├── acp/        # ACP checkout sessions (create/complete + Stripe SPT)
 ├── paypal/     # PayPal Orders v2 create/capture
 ├── adyen/      # Adyen Checkout sessions, payments, HMAC webhooks
+├── payouts/    # Stripe Connect creator payouts (bank + USDC intents)
+├── ramp/       # Ramp funds + virtual / agent cards
+├── offramp/    # Consumer USDC → fiat (Moonpay / Transak)
 ├── credits/    # Prepaid ledger + Stripe Financial Connections / ACH bank top-up
 ├── plans/      # ClawQL tier definitions, entitlements, usage tracking, limit enforcement
 ├── audit/      # Payment events → hash-chained WORM (jsonl, postgres, or memory) + optional Loki export

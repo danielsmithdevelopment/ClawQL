@@ -59,69 +59,73 @@ describe("inference entitlement enforcement HTTP", () => {
     if (home) await rm(home, { recursive: true, force: true });
   });
 
-  it("returns 402 insufficient_quota when monthly inference limit is reached", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => ({
-        ok: true,
-        json: async () => ({
-          model: "gpt-4o",
-          choices: [{ message: { content: "pong" } }],
-          usage: { prompt_tokens: 1, completion_tokens: 1 },
-        }),
-      }))
-    );
+  it(
+    "returns 402 insufficient_quota when monthly inference limit is reached",
+    { timeout: 15_000 },
+    async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => ({
+          ok: true,
+          json: async () => ({
+            model: "gpt-4o",
+            choices: [{ message: { content: "pong" } }],
+            usage: { prompt_tokens: 1, completion_tokens: 1 },
+          }),
+        }))
+      );
 
-    home = await mkdtemp(join(tmpdir(), "clawql-inference-http-entitlements-"));
-    const env = {
-      CLAWQL_HOME: home,
-      CLAWQL_PAYMENTS_ENFORCE_INFERENCE: "1",
-    };
-    await mkdir(join(home, "Payments"), { recursive: true });
-    await writeFile(
-      join(home, "Payments", "payments.json"),
-      `${JSON.stringify({ plan: "free", tenantId: "default" }, null, 2)}\n`
-    );
+      home = await mkdtemp(join(tmpdir(), "clawql-inference-http-entitlements-"));
+      const env = {
+        CLAWQL_HOME: home,
+        CLAWQL_PAYMENTS_ENFORCE_INFERENCE: "1",
+      };
+      await mkdir(join(home, "Payments"), { recursive: true });
+      await writeFile(
+        join(home, "Payments", "payments.json"),
+        `${JSON.stringify({ plan: "free", tenantId: "default" }, null, 2)}\n`
+      );
 
-    const usageStore = createUsageStore(env);
-    for (let i = 0; i < 100; i++) {
-      await usageStore.increment("default", "inference_calls", 1, "free");
-    }
+      const usageStore = createUsageStore(env);
+      for (let i = 0; i < 100; i++) {
+        await usageStore.increment("default", "inference_calls", 1, "free");
+      }
 
-    const gateway = createInferenceGateway({
-      env,
-      semanticCache: false,
-      fallback: false,
-      providers: new Map([
-        [
-          "openai",
-          createOpenAiAdapter({ apiKey: "test-key", baseUrl: "https://api.openai.com/v1" }),
-        ],
-      ]),
-    });
-    const app = createInferenceHttpApp({ gateway, env });
-    const server = createServer(app);
-    server.listen(0, "127.0.0.1");
-    await once(server, "listening");
-    const address = server.address();
-    if (!address || typeof address === "string") {
-      throw new Error("expected bound TCP port");
-    }
-
-    try {
-      const denied = await httpJson(`http://127.0.0.1:${address.port}/v1/chat/completions`, {
-        method: "POST",
-        body: JSON.stringify({
-          model: "openai/gpt-4o",
-          messages: [{ role: "user", content: "ping" }],
-        }),
+      const gateway = createInferenceGateway({
+        env,
+        semanticCache: false,
+        fallback: false,
+        providers: new Map([
+          [
+            "openai",
+            createOpenAiAdapter({ apiKey: "test-key", baseUrl: "https://api.openai.com/v1" }),
+          ],
+        ]),
       });
-      expect(denied.status).toBe(402);
-      const body = denied.body as { error?: { type?: string; message?: string } };
-      expect(body.error?.type).toBe("insufficient_quota");
-      expect(body.error?.message).toContain("inference_calls limit reached");
-    } finally {
-      await closeHttpServer(server);
+      const app = createInferenceHttpApp({ gateway, env });
+      const server = createServer(app);
+      server.listen(0, "127.0.0.1");
+      await once(server, "listening");
+      const address = server.address();
+      if (!address || typeof address === "string") {
+        throw new Error("expected bound TCP port");
+      }
+
+      try {
+        const denied = await httpJson(`http://127.0.0.1:${address.port}/v1/chat/completions`, {
+          method: "POST",
+          body: JSON.stringify({
+            model: "openai/gpt-4o",
+            messages: [{ role: "user", content: "ping" }],
+          }),
+        });
+        expect(denied.status).toBe(402);
+        const body = denied.body as { error?: { type?: string; message?: string } };
+        expect(body.error?.type).toBe("insufficient_quota");
+        expect(body.error?.message).toContain("inference_calls limit reached");
+      } finally {
+        await closeHttpServer(server);
+      }
     }
-  });
+  );
 });

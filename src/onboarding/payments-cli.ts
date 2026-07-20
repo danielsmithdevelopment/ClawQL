@@ -21,10 +21,21 @@ import {
   runPaymentsX402Reconcile,
   runPaymentsX402Verify,
   runPaymentsX402WalletSetup,
+  runPaymentsPayoutConnectCreate,
+  runPaymentsPayoutConnectLink,
+  runPaymentsPayoutCreate,
+  runPaymentsPayoutPrefer,
+  runPaymentsRampFundCreate,
+  runPaymentsRampCardIssue,
+  runPaymentsRampAgentCardIssue,
+  runPaymentsOfframpSession,
+  runPaymentsOfframpWebhook,
   runPaymentsCreditsShow,
   runPaymentsCreditsBankLink,
   runPaymentsCreditsTopup,
   type SpendGroupBy,
+  type PayoutMethod,
+  type OffRampProvider,
 } from "clawql-payments";
 
 export type PaymentsCliOptions = {
@@ -58,8 +69,20 @@ export type PaymentsCliOptions = {
   eventName?: string;
   identifier?: string;
   value?: number;
-  paymentMethodId?: string;
+  destination?: PayoutMethod;
+  creatorId?: string;
+  wallet?: string;
+  method?: PayoutMethod;
+  country?: string;
   returnUrl?: string;
+  refreshUrl?: string;
+  userId?: string;
+  agentId?: string;
+  showSecrets?: boolean;
+  vendorIds?: string[];
+  interval?: "DAILY" | "WEEKLY" | "MONTHLY" | "TOTAL" | "ANNUAL";
+  provider?: OffRampProvider;
+  paymentMethodId?: string;
 };
 
 export async function runPaymentsPlanShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
@@ -216,6 +239,126 @@ export async function runPaymentsX402GateListCmd(
   options: PaymentsCliOptions = {}
 ): Promise<number> {
   return runPaymentsX402GateList({ json: options.json });
+}
+
+export async function runPaymentsPayoutConnectCreateCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsPayoutConnectCreate({
+    email: options.email,
+    country: options.country,
+    creatorId: options.creatorId,
+    tenantId: options.tenantId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsPayoutConnectLinkCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsPayoutConnectLink({
+    accountId: options.accountId,
+    returnUrl: options.returnUrl,
+    refreshUrl: options.refreshUrl,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsPayoutCreateCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsPayoutCreate({
+    amountUsd: options.amount,
+    destination: options.destination,
+    accountId: options.accountId,
+    wallet: options.wallet,
+    creatorId: options.creatorId,
+    tenantId: options.tenantId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsPayoutPreferCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsPayoutPrefer({
+    creatorId: options.creatorId,
+    method: options.method,
+    accountId: options.accountId,
+    wallet: options.wallet,
+    email: options.email,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsRampFundCreateCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsRampFundCreate({
+    name: options.name,
+    limitUsd: options.limit ?? options.amount,
+    interval: options.interval,
+    tenantId: options.tenantId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsRampCardIssueCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsRampCardIssue({
+    userId: options.userId,
+    name: options.name,
+    limitUsd: options.limit ?? options.amount,
+    interval: options.interval,
+    tenantId: options.tenantId,
+    agentId: options.agentId,
+    showSecrets: options.showSecrets,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsRampAgentCardIssueCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsRampAgentCardIssue({
+    userId: options.userId,
+    amountUsd: options.amount ?? options.limit,
+    name: options.name,
+    vendorIds: options.vendorIds,
+    tenantId: options.tenantId,
+    agentId: options.agentId,
+    showSecrets: options.showSecrets,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsOfframpSessionCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsOfframpSession({
+    amountUsd: options.amount,
+    wallet: options.wallet,
+    provider: options.provider,
+    email: options.email,
+    returnUrl: options.returnUrl,
+    tenantId: options.tenantId,
+    creatorId: options.creatorId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsOfframpWebhookCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsOfframpWebhook({
+    provider: options.provider,
+    payloadPath: options.payloadPath,
+    signature: options.signature,
+    tenantId: options.tenantId,
+    process: options.process,
+    json: options.json,
+  });
 }
 
 export async function runPaymentsCreditsShowCmd(options: PaymentsCliOptions = {}): Promise<number> {

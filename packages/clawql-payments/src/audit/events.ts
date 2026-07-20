@@ -19,13 +19,34 @@ export type PaymentEventKind =
   | "ADYEN_PAYMENT_AUTHORIZED"
   | "ADYEN_PAYMENT_FAILED"
   | "ADYEN_WEBHOOK_PROCESSED"
+  | "CONNECT_ACCOUNT_CREATED"
+  | "PAYOUT_INITIATED"
+  | "PAYOUT_PAID"
+  | "PAYOUT_FAILED"
+  | "RAMP_FUND_CREATED"
+  | "RAMP_VIRTUAL_CARD_ISSUED"
+  | "RAMP_AGENT_CARD_ISSUED"
+  | "OFFRAMP_SESSION_CREATED"
+  | "OFFRAMP_UPDATED"
+  | "OFFRAMP_COMPLETED"
+  | "OFFRAMP_FAILED"
   | "BANK_LINKED"
   | "CREDIT_TOPUP_PENDING"
   | "CREDIT_TOPUP_SETTLED"
   | "CREDIT_TOPUP_FAILED"
   | "CREDIT_DEBITED";
 
-export type PaymentProvider = "stripe" | "x402" | "ap2" | "acp" | "paypal" | "adyen" | "credits";
+export type PaymentProvider =
+  | "stripe"
+  | "x402"
+  | "ap2"
+  | "acp"
+  | "paypal"
+  | "adyen"
+  | "ramp"
+  | "payouts"
+  | "offramp"
+  | "credits";
 
 export type PaymentWormPayload = {
   provider: PaymentProvider;
@@ -386,6 +407,242 @@ export function buildAdyenWebhookProcessedEntry(input: {
       provider: "adyen",
       tenant_id: input.tenantId,
       resource: input.pspReference ?? input.eventCode,
+    },
+  });
+}
+
+export function buildConnectAccountCreatedEntry(input: {
+  tenantId: string;
+  accountId: string;
+  email?: string;
+  dryRun?: boolean;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "CONNECT_ACCOUNT_CREATED",
+    summary: `Stripe Connect account ${input.accountId} created${input.dryRun ? " [dry-run]" : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "payouts",
+      tenant_id: input.tenantId,
+      resource: input.accountId,
+      agent_id: input.email,
+    },
+  });
+}
+
+export function buildPayoutInitiatedEntry(input: {
+  tenantId: string;
+  payoutId: string;
+  amountUsd: number;
+  destination: "bank" | "usdc";
+  dryRun?: boolean;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "PAYOUT_INITIATED",
+    summary: `Payout ${input.payoutId} initiated $${input.amountUsd.toFixed(2)} → ${input.destination}${input.dryRun ? " [dry-run]" : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "payouts",
+      amount_usd: input.destination === "bank" ? input.amountUsd : undefined,
+      amount_usdc: input.destination === "usdc" ? input.amountUsd : undefined,
+      tenant_id: input.tenantId,
+      resource: input.payoutId,
+    },
+  });
+}
+
+export function buildPayoutPaidEntry(input: {
+  tenantId: string;
+  payoutId: string;
+  amountUsd: number;
+  destination: "bank" | "usdc";
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "PAYOUT_PAID",
+    summary: `Payout ${input.payoutId} paid $${input.amountUsd.toFixed(2)} → ${input.destination}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "payouts",
+      amount_usd: input.destination === "bank" ? input.amountUsd : undefined,
+      amount_usdc: input.destination === "usdc" ? input.amountUsd : undefined,
+      tenant_id: input.tenantId,
+      resource: input.payoutId,
+    },
+  });
+}
+
+export function buildPayoutFailedEntry(input: {
+  tenantId: string;
+  payoutId?: string;
+  reason: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "PAYOUT_FAILED",
+    summary: `Payout failed${input.payoutId ? ` ${input.payoutId}` : ""}: ${input.reason}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "payouts",
+      tenant_id: input.tenantId,
+      resource: input.payoutId,
+    },
+  });
+}
+
+export function buildRampFundCreatedEntry(input: {
+  tenantId: string;
+  fundId: string;
+  displayName: string;
+  limitUsd: number;
+  dryRun?: boolean;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "RAMP_FUND_CREATED",
+    summary: `Ramp fund ${input.fundId} (${input.displayName}) limit $${input.limitUsd.toFixed(2)}${input.dryRun ? " [dry-run]" : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "ramp",
+      amount_usd: input.limitUsd,
+      tenant_id: input.tenantId,
+      resource: input.fundId,
+    },
+  });
+}
+
+export function buildRampVirtualCardIssuedEntry(input: {
+  tenantId: string;
+  cardId: string;
+  fundId?: string;
+  lastFour?: string;
+  dryRun?: boolean;
+  correlationId?: string;
+  agentId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "RAMP_VIRTUAL_CARD_ISSUED",
+    summary: `Ramp virtual card ${input.cardId}${input.lastFour ? ` ****${input.lastFour}` : ""} issued${input.dryRun ? " [dry-run]" : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "ramp",
+      tenant_id: input.tenantId,
+      resource: input.cardId,
+      agent_id: input.agentId,
+    },
+  });
+}
+
+export function buildRampAgentCardIssuedEntry(input: {
+  tenantId: string;
+  cardId: string;
+  fundId?: string;
+  amountUsd: number;
+  lastFour?: string;
+  dryRun?: boolean;
+  correlationId?: string;
+  agentId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "RAMP_AGENT_CARD_ISSUED",
+    summary: `Ramp agent card ${input.cardId} capped $${input.amountUsd.toFixed(2)}${input.lastFour ? ` ****${input.lastFour}` : ""}${input.dryRun ? " [dry-run]" : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "ramp",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.cardId,
+      agent_id: input.agentId,
+    },
+  });
+}
+
+export function buildOfframpSessionCreatedEntry(input: {
+  tenantId: string;
+  sessionId: string;
+  provider: "moonpay" | "transak";
+  amountUsd: number;
+  walletAddress: string;
+  dryRun?: boolean;
+  correlationId?: string;
+  creatorId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "OFFRAMP_SESSION_CREATED",
+    summary: `Off-ramp ${input.provider} session ${input.sessionId} $${input.amountUsd.toFixed(2)}${input.dryRun ? " [dry-run]" : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "offramp",
+      amount_usdc: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.sessionId,
+      agent_id: input.creatorId ?? input.walletAddress,
+    },
+  });
+}
+
+export function buildOfframpUpdatedEntry(input: {
+  tenantId: string;
+  transactionId: string;
+  provider: "moonpay" | "transak";
+  status: string;
+  amountUsd?: number;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "OFFRAMP_UPDATED",
+    summary: `Off-ramp ${input.provider} ${input.transactionId} status=${input.status}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "offramp",
+      amount_usdc: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.transactionId,
+      agent_id: input.status,
+    },
+  });
+}
+
+export function buildOfframpCompletedEntry(input: {
+  tenantId: string;
+  transactionId: string;
+  provider: "moonpay" | "transak";
+  amountUsd?: number;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "OFFRAMP_COMPLETED",
+    summary: `Off-ramp ${input.provider} completed ${input.transactionId}${input.amountUsd != null ? ` $${input.amountUsd.toFixed(2)}` : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "offramp",
+      amount_usdc: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.transactionId,
+    },
+  });
+}
+
+export function buildOfframpFailedEntry(input: {
+  tenantId: string;
+  transactionId: string;
+  provider: "moonpay" | "transak";
+  reason: string;
+  amountUsd?: number;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "OFFRAMP_FAILED",
+    summary: `Off-ramp ${input.provider} failed ${input.transactionId}: ${input.reason}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "offramp",
+      amount_usdc: input.amountUsd,
+      tenant_id: input.tenantId,
+      resource: input.transactionId,
+      agent_id: input.reason.slice(0, 120),
     },
   });
 }

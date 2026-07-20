@@ -6,6 +6,10 @@ import { ap2MandateLiveLayer } from "../ap2/ap2-mandate-service.js";
 import { acpCheckoutLiveLayer } from "../acp/acp-checkout-service.js";
 import { paypalOrdersLiveLayer } from "../paypal/paypal-orders-service.js";
 import { adyenCheckoutLiveLayer } from "../adyen/adyen-checkout-service.js";
+import { payoutLiveLayer } from "../payouts/payout-service.js";
+import { rampLiveLayer } from "../ramp/ramp-service.js";
+import { consumerOffRampLiveLayer } from "../offramp/consumer-offramp-service.js";
+import { offrampWebhookLiveLayer } from "../offramp/offramp-webhook-service.js";
 import { creditsLiveLayer } from "../credits/credits-service.js";
 import { achTopupLiveLayer } from "../credits/ach-topup-service.js";
 import { mppOpenApiLiveLayer } from "../mpp/openapi-service.js";
@@ -44,6 +48,10 @@ export type PaymentsServices =
   | import("../acp/acp-checkout-service.js").AcpCheckoutService
   | import("../paypal/paypal-orders-service.js").PaypalOrdersService
   | import("../adyen/adyen-checkout-service.js").AdyenCheckoutService
+  | import("../payouts/payout-service.js").PayoutService
+  | import("../ramp/ramp-service.js").RampService
+  | import("../offramp/consumer-offramp-service.js").ConsumerOffRampService
+  | import("../offramp/offramp-webhook-service.js").OfframpWebhookService
   | import("../credits/credits-service.js").CreditsService
   | import("../credits/ach-topup-service.js").AchTopupService;
 
@@ -68,6 +76,10 @@ export function paymentsServicesLiveLayer(
   const acp = acpCheckoutLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(audit, stripeClient)));
   const paypal = paypalOrdersLiveLayer(env).pipe(Layer.provide(audit));
   const adyen = adyenCheckoutLiveLayer(env).pipe(Layer.provide(audit));
+  const payouts = payoutLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(audit, stripeClient)));
+  const ramp = rampLiveLayer(env).pipe(Layer.provide(audit));
+  const offramp = consumerOffRampLiveLayer(env).pipe(Layer.provide(audit));
+  const offrampWebhook = offrampWebhookLiveLayer(env).pipe(Layer.provide(audit));
   const credits = creditsLiveLayer(env).pipe(Layer.provide(audit));
   const achTopup = achTopupLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(audit, stripeClient, credits))
@@ -118,6 +130,10 @@ export function paymentsServicesLiveLayer(
     acp,
     paypal,
     adyen,
+    payouts,
+    ramp,
+    offramp,
+    offrampWebhook,
     credits,
     achTopup
   );

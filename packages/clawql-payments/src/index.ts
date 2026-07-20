@@ -8,6 +8,9 @@ export * from "./ap2/index.js";
 export * from "./acp/index.js";
 export * from "./paypal/index.js";
 export * from "./adyen/index.js";
+export * from "./payouts/index.js";
+export * from "./ramp/index.js";
+export * from "./offramp/index.js";
 export * from "./credits/index.js";
 export * from "./cli/index.js";
 export { loadPaymentsConfig, mergePaymentsConfig, savePaymentsConfig } from "./config/store.js";
@@ -20,5 +23,6 @@ export {
   resolveX402GatesPath,
   resolvePaymentAuditJsonlPath,
   resolvePaymentAuditMetaPath,
+  resolvePayoutPreferencesPath,
   resolveCreditsLedgerPath,
 } from "./config/paths.js";

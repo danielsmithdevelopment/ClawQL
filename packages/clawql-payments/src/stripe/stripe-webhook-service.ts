@@ -5,6 +5,8 @@ import {
   buildCreditTopupFailedEntry,
   buildCreditTopupSettledEntry,
   buildPaymentWormEntry,
+  buildPayoutFailedEntry,
+  buildPayoutPaidEntry,
   buildStripeInvoicePaidEntry,
 } from "../audit/events.js";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
@@ -149,6 +151,84 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
                     tenant_id: tenantFromEvent(event, tenantId),
                     plan: config.plan,
                   },
+                })
+              );
+              break;
+            }
+            case "transfer.created":
+            case "transfer.updated": {
+              const transfer = event.data.object as Stripe.Transfer;
+              if (transfer.metadata?.clawql_payout !== "1" && event.type === "transfer.updated") {
+                // Still record clawql transfers; ignore unrelated updates when no metadata.
+              }
+              const isClawql =
+                transfer.metadata?.clawql_payout === "1" ||
+                Boolean(transfer.metadata?.clawql_tenant);
+              if (!isClawql && event.type === "transfer.updated") {
+                return { handled: false, eventType: event.type, eventId: event.id };
+              }
+              if (!isClawql && event.type === "transfer.created") {
+                return { handled: false, eventType: event.type, eventId: event.id };
+              }
+              const payoutTenant =
+                transfer.metadata?.clawql_tenant?.trim() || tenantFromEvent(event, tenantId);
+              if (transfer.reversed) {
+                yield* audit.appendEntry(
+                  buildPayoutFailedEntry({
+                    tenantId: payoutTenant,
+                    payoutId: transfer.id,
+                    reason: "transfer.reversed",
+                    correlationId: options.correlationId ?? event.id,
+                  })
+                );
+              } else if (event.type === "transfer.created") {
+                // INITIATED already written at create time; treat webhook as confirmation paid.
+                yield* audit.appendEntry(
+                  buildPayoutPaidEntry({
+                    tenantId: payoutTenant,
+                    payoutId: transfer.id,
+                    amountUsd: (transfer.amount ?? 0) / 100,
+                    destination: "bank",
+                    correlationId: options.correlationId ?? event.id,
+                  })
+                );
+              }
+              break;
+            }
+            case "transfer.reversed": {
+              const transfer = event.data.object as Stripe.Transfer;
+              yield* audit.appendEntry(
+                buildPayoutFailedEntry({
+                  tenantId:
+                    transfer.metadata?.clawql_tenant?.trim() || tenantFromEvent(event, tenantId),
+                  payoutId: transfer.id,
+                  reason: "transfer.reversed",
+                  correlationId: options.correlationId ?? event.id,
+                })
+              );
+              break;
+            }
+            case "payout.paid": {
+              const payout = event.data.object as Stripe.Payout;
+              yield* audit.appendEntry(
+                buildPayoutPaidEntry({
+                  tenantId: tenantFromEvent(event, tenantId),
+                  payoutId: payout.id,
+                  amountUsd: (payout.amount ?? 0) / 100,
+                  destination: "bank",
+                  correlationId: options.correlationId ?? event.id,
+                })
+              );
+              break;
+            }
+            case "payout.failed": {
+              const payout = event.data.object as Stripe.Payout;
+              yield* audit.appendEntry(
+                buildPayoutFailedEntry({
+                  tenantId: tenantFromEvent(event, tenantId),
+                  payoutId: payout.id,
+                  reason: payout.failure_message || payout.failure_code || "payout.failed",
+                  correlationId: options.correlationId ?? event.id,
                 })
               );
               break;

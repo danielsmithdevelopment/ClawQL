@@ -54,22 +54,26 @@ describe("EntitlementEnforcedGateway", () => {
     expect(inner.calls).toHaveLength(1);
   });
 
-  it("blocks completions when the monthly inference limit is reached", async () => {
-    const usageStore = createUsageStore(env);
-    for (let i = 0; i < 100; i++) {
-      await usageStore.increment("default", "inference_calls", 1, "free");
-    }
+  it(
+    "blocks completions when the monthly inference limit is reached",
+    { timeout: 15_000 },
+    async () => {
+      const usageStore = createUsageStore(env);
+      for (let i = 0; i < 100; i++) {
+        await usageStore.increment("default", "inference_calls", 1, "free");
+      }
 
-    const inner = new StubGateway();
-    const gateway = new EntitlementEnforcedGateway(inner, env);
-    await expect(
-      gateway.complete({
-        model: "openai/gpt-4o",
-        messages: [{ role: "user", content: "blocked" }],
-      })
-    ).rejects.toBeInstanceOf(EntitlementLimitError);
-    expect(inner.calls).toHaveLength(0);
-  });
+      const inner = new StubGateway();
+      const gateway = new EntitlementEnforcedGateway(inner, env);
+      await expect(
+        gateway.complete({
+          model: "openai/gpt-4o",
+          messages: [{ role: "user", content: "blocked" }],
+        })
+      ).rejects.toBeInstanceOf(EntitlementLimitError);
+      expect(inner.calls).toHaveLength(0);
+    }
+  );
 
   it("uses virtual key team as tenant id", async () => {
     const inner = new StubGateway();

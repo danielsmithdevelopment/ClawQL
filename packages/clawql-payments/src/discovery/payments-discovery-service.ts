@@ -6,6 +6,14 @@ import { isAp2Enabled, isAp2Required } from "../ap2/config.js";
 import { isAcpEnabled } from "../acp/config.js";
 import { isPaypalEnabled, paypalApiBase } from "../paypal/config.js";
 import { adyenEnvironment, adyenMerchantAccount, isAdyenEnabled } from "../adyen/config.js";
+import { isPayoutsDryRun, isPayoutsEnabled } from "../payouts/config.js";
+import {
+  isRampAgenticEnabled,
+  isRampDryRun,
+  isRampEnabled,
+  rampEnvironment,
+} from "../ramp/config.js";
+import { defaultOffRampProvider, isOffRampDryRun, isOffRampEnabled } from "../offramp/config.js";
 import { isAchTopupEnabled, isCreditsEnabled } from "../credits/config.js";
 import { X402GateService } from "../x402/x402-gate-service.js";
 import { X402RuntimeConfigService } from "../x402/x402-runtime-config-service.js";
@@ -19,7 +27,17 @@ export type PaymentsWellKnownResource = {
 };
 
 export type PaymentsWellKnownMethod = {
-  type: "x402" | "stripe" | "ap2" | "acp" | "paypal" | "adyen" | "credits";
+  type:
+    | "x402"
+    | "stripe"
+    | "ap2"
+    | "acp"
+    | "paypal"
+    | "adyen"
+    | "payouts"
+    | "ramp"
+    | "offramp"
+    | "credits";
   enabled: boolean;
 };
 
@@ -71,6 +89,30 @@ export type PaymentsWellKnownAdyenMethod = PaymentsWellKnownMethod & {
   documentation: string;
 };
 
+export type PaymentsWellKnownPayoutsMethod = PaymentsWellKnownMethod & {
+  type: "payouts";
+  connect: "stripe_express";
+  destinations: Array<"bank" | "usdc">;
+  dry_run: boolean;
+  documentation: string;
+};
+
+export type PaymentsWellKnownRampMethod = PaymentsWellKnownMethod & {
+  type: "ramp";
+  environment: "demo" | "production";
+  capabilities: Array<"funds" | "virtual_cards" | "agent_cards" | "agentic_cards">;
+  dry_run: boolean;
+  documentation: string;
+};
+
+export type PaymentsWellKnownOfframpMethod = PaymentsWellKnownMethod & {
+  type: "offramp";
+  providers: Array<"moonpay" | "transak">;
+  default_provider: "moonpay" | "transak";
+  dry_run: boolean;
+  documentation: string;
+};
+
 export type PaymentsWellKnownCreditsMethod = PaymentsWellKnownMethod & {
   type: "credits";
   protocol: "stripe_financial_connections_ach";
@@ -92,9 +134,23 @@ export type PaymentsWellKnownDocument = {
     | PaymentsWellKnownAcpMethod
     | PaymentsWellKnownPaypalMethod
     | PaymentsWellKnownAdyenMethod
+    | PaymentsWellKnownPayoutsMethod
+    | PaymentsWellKnownRampMethod
+    | PaymentsWellKnownOfframpMethod
     | PaymentsWellKnownCreditsMethod
   >;
-  default: "x402" | "stripe" | "ap2" | "acp" | "paypal" | "adyen" | "credits" | null;
+  default:
+    | "x402"
+    | "stripe"
+    | "ap2"
+    | "acp"
+    | "paypal"
+    | "adyen"
+    | "payouts"
+    | "ramp"
+    | "offramp"
+    | "credits"
+    | null;
   updated_at: string;
 };
 
@@ -232,6 +288,46 @@ export function paymentsDiscoveryLiveLayer(
               environment: adyenEnvironment(runEnv),
               merchant_account: adyenMerchantAccount(runEnv),
               documentation: "https://docs.adyen.com/online-payments/",
+            });
+          }
+
+          if (isPayoutsEnabled(runEnv)) {
+            paymentMethods.push({
+              type: "payouts",
+              enabled: true,
+              connect: "stripe_express",
+              destinations: ["bank", "usdc"],
+              dry_run: isPayoutsDryRun(runEnv),
+              documentation:
+                "https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/payments/payouts-ramp.md",
+            });
+          }
+
+          if (isRampEnabled(runEnv)) {
+            const capabilities: Array<"funds" | "virtual_cards" | "agent_cards" | "agentic_cards"> =
+              ["funds", "virtual_cards", "agent_cards"];
+            if (isRampAgenticEnabled(runEnv)) capabilities.push("agentic_cards");
+            paymentMethods.push({
+              type: "ramp",
+              enabled: true,
+              environment: rampEnvironment(runEnv),
+              capabilities,
+              dry_run: isRampDryRun(runEnv),
+              documentation: isRampAgenticEnabled(runEnv)
+                ? "https://docs.ramp.com/developer-api/v1/agent-cards"
+                : "https://docs.ramp.com/developer-api/v1/virtual-cards",
+            });
+          }
+
+          if (isOffRampEnabled(runEnv)) {
+            paymentMethods.push({
+              type: "offramp",
+              enabled: true,
+              providers: ["moonpay", "transak"],
+              default_provider: defaultOffRampProvider(runEnv),
+              dry_run: isOffRampDryRun(runEnv),
+              documentation:
+                "https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/payments/payouts-ramp.md",
             });
           }
 
