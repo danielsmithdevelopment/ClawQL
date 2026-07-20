@@ -49,7 +49,7 @@ export async function appendOkfMemoryLog(vaultRoot: string, entry: OkfLogEntry):
   if (process.env.CLAWQL_MEMORY_OKF_LOG?.trim() === "0") return;
 
   const rel = logFileRel(defaultScanRoot());
-  let existing = "";
+  let existing: string;
   try {
     existing = await readVaultTextFile(vaultRoot, rel);
   } catch {
