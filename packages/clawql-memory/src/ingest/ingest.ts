@@ -201,7 +201,10 @@ function inferDescription(input: MemoryIngestInput): string | undefined {
   if (input.description?.trim()) return input.description.trim();
   const insights = input.insights?.trim();
   if (!insights) return undefined;
-  const firstLine = insights.split("\n").find((l) => l.trim())?.trim();
+  const firstLine = insights
+    .split("\n")
+    .find((l) => l.trim())
+    ?.trim();
   if (!firstLine) return undefined;
   return firstLine.length > 240 ? `${firstLine.slice(0, 237)}...` : firstLine;
 }

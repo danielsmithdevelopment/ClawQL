@@ -6,32 +6,32 @@ ClawQL stores vault memory as [Open Knowledge Format (OKF) v0.1](https://github.
 
 ## What ships
 
-| Surface | Behavior |
-| ------- | -------- |
-| **`memory_ingest`** | Writes OKF frontmatter (`type` required; defaults to `context`) plus ClawQL extensions |
-| **`Memory/index.md`** | OKF catalog (alongside legacy `_INDEX_{Provider}.md`) |
-| **`Memory/log.md`** | Append-only OKF changelog of successful ingests |
-| **Append upgrade** | Legacy notes missing `type` are upgraded on append |
-| **Vault digest** | Reads `timestamp` → `clawql_ingest_created` → `date`; writes `type: digest` |
+| Surface               | Behavior                                                                               |
+| --------------------- | -------------------------------------------------------------------------------------- |
+| **`memory_ingest`**   | Writes OKF frontmatter (`type` required; defaults to `context`) plus ClawQL extensions |
+| **`Memory/index.md`** | OKF catalog (alongside legacy `_INDEX_{Provider}.md`)                                  |
+| **`Memory/log.md`**   | Append-only OKF changelog of successful ingests                                        |
+| **Append upgrade**    | Legacy notes missing `type` are upgraded on append                                     |
+| **Vault digest**      | Reads `timestamp` → `clawql_ingest_created` → `date`; writes `type: digest`            |
 
 ## Frontmatter contract
 
 ```yaml
 ---
-type: "decision"                 # OKF required (ClawQL taxonomy)
+type: "decision" # OKF required (ClawQL taxonomy)
 title: "Session notes"
-description: "One-line summary"  # OKF recommended
-resource: null                   # OKF recommended URI when applicable
+description: "One-line summary" # OKF recommended
+resource: null # OKF recommended URI when applicable
 tags: ["clawql-ingest", "okf"]
 timestamp: "2026-07-20T03:00:00.000Z"
-correlation_id: "corr-…"         # ClawQL extension
-worm_ref: "…"                    # ClawQL extension (optional)
-agent_id: "…"                    # ClawQL extension (optional)
-verdict: "accepted"              # ClawQL extension (optional)
-date: 2026-07-20T03:00:00.000Z   # legacy Obsidian alias (= timestamp)
-clawql_ingest: true              # legacy marker
-clawql_ingest_created: "…"       # legacy digest compatibility
-clawql_okf: true                 # marks OKF-complete notes
+correlation_id: "corr-…" # ClawQL extension
+worm_ref: "…" # ClawQL extension (optional)
+agent_id: "…" # ClawQL extension (optional)
+verdict: "accepted" # ClawQL extension (optional)
+date: 2026-07-20T03:00:00.000Z # legacy Obsidian alias (= timestamp)
+clawql_ingest: true # legacy marker
+clawql_ingest_created: "…" # legacy digest compatibility
+clawql_okf: true # marks OKF-complete notes
 ---
 ```
 
@@ -43,24 +43,24 @@ OKF does not register types centrally — consumers must tolerate unknown values
 
 ### MCP input fields
 
-| Field | Frontmatter |
-| ----- | ----------- |
-| `type` | `type` (default `context`) |
-| `description` | `description` (else first insights line) |
-| `resource` | `resource` |
-| `tags` | `tags` (+ always `clawql-ingest`) |
-| `correlationId` / `sessionId` | `correlation_id` |
-| `wormRef` | `worm_ref` |
-| `agentId` | `agent_id` |
-| `verdict` | `verdict` |
+| Field                         | Frontmatter                              |
+| ----------------------------- | ---------------------------------------- |
+| `type`                        | `type` (default `context`)               |
+| `description`                 | `description` (else first insights line) |
+| `resource`                    | `resource`                               |
+| `tags`                        | `tags` (+ always `clawql-ingest`)        |
+| `correlationId` / `sessionId` | `correlation_id`                         |
+| `wormRef`                     | `worm_ref`                               |
+| `agentId`                     | `agent_id`                               |
+| `verdict`                     | `verdict`                                |
 
 ## Env knobs
 
-| Env | Default | Effect |
-| --- | ------- | ------ |
-| `CLAWQL_MEMORY_INDEX_PAGE=0` | on | Disables `_INDEX_*` **and** OKF `index.md` |
-| `CLAWQL_MEMORY_OKF_INDEX=0` | on | Disables only OKF `index.md` (keeps `_INDEX_*`) |
-| `CLAWQL_MEMORY_OKF_LOG=0` | on | Disables `log.md` append |
+| Env                          | Default | Effect                                          |
+| ---------------------------- | ------- | ----------------------------------------------- |
+| `CLAWQL_MEMORY_INDEX_PAGE=0` | on      | Disables `_INDEX_*` **and** OKF `index.md`      |
+| `CLAWQL_MEMORY_OKF_INDEX=0`  | on      | Disables only OKF `index.md` (keeps `_INDEX_*`) |
+| `CLAWQL_MEMORY_OKF_LOG=0`    | on      | Disables `log.md` append                        |
 
 ## Backward compatibility
 

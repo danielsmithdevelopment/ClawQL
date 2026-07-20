@@ -45,10 +45,7 @@ export type OkfLogEntry = {
  * Append one ingest event to `Memory/log.md` (or scan-root equivalent).
  * Disabled when **`CLAWQL_MEMORY_OKF_LOG=0`**.
  */
-export async function appendOkfMemoryLog(
-  vaultRoot: string,
-  entry: OkfLogEntry
-): Promise<void> {
+export async function appendOkfMemoryLog(vaultRoot: string, entry: OkfLogEntry): Promise<void> {
   if (process.env.CLAWQL_MEMORY_OKF_LOG?.trim() === "0") return;
 
   const rel = logFileRel(defaultScanRoot());

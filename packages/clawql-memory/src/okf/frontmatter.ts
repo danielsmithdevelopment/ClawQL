@@ -70,10 +70,7 @@ export function parseFrontmatterBlock(block: string): ParsedFrontmatter {
       }
       out[key] = inner.split(",").map((t) => {
         let s = t.trim();
-        if (
-          (s.startsWith('"') && s.endsWith('"')) ||
-          (s.startsWith("'") && s.endsWith("'"))
-        ) {
+        if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
           try {
             s = JSON.parse(s.startsWith("'") ? `"${s.slice(1, -1)}"` : s) as string;
           } catch {
@@ -84,10 +81,7 @@ export function parseFrontmatterBlock(block: string): ParsedFrontmatter {
       });
       continue;
     }
-    if (
-      (raw.startsWith('"') && raw.endsWith('"')) ||
-      (raw.startsWith("'") && raw.endsWith("'"))
-    ) {
+    if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
       try {
         raw = JSON.parse(raw.startsWith("'") ? `"${raw.slice(1, -1)}"` : raw) as string;
       } catch {
@@ -139,7 +133,11 @@ export function buildOkfMemoryFrontmatter(input: BuildOkfFrontmatterInput): OkfM
   const createdAt = input.createdAt ?? timestamp;
   const description = input.description?.trim() || undefined;
   const resource =
-    input.resource === undefined ? undefined : input.resource === null ? null : input.resource.trim() || null;
+    input.resource === undefined
+      ? undefined
+      : input.resource === null
+        ? null
+        : input.resource.trim() || null;
   const correlation = input.correlationId?.trim() || undefined;
   const agentId = input.agentId?.trim() || undefined;
   const verdict = input.verdict?.trim() || undefined;
@@ -170,11 +168,7 @@ export function buildOkfMemoryFrontmatter(input: BuildOkfFrontmatterInput): OkfM
 
 /** Serialize OKF memory frontmatter to a YAML block including surrounding `---`. */
 export function serializeOkfMemoryFrontmatter(fm: OkfMemoryFrontmatter): string {
-  const lines: string[] = [
-    "---",
-    `type: ${yamlScalar(fm.type)}`,
-    `title: ${yamlScalar(fm.title)}`,
-  ];
+  const lines: string[] = ["---", `type: ${yamlScalar(fm.type)}`, `title: ${yamlScalar(fm.title)}`];
   if (fm.description) lines.push(`description: ${yamlScalar(fm.description)}`);
   if (fm.resource !== undefined) lines.push(`resource: ${yamlScalar(fm.resource)}`);
   lines.push(`tags: ${yamlTags(fm.tags)}`);
@@ -225,7 +219,7 @@ export function ensureOkfFrontmatter(
     title,
     type: hasType ? asString(parsed.type) : defaults.type,
     description,
-    resource: parsed.resource === null ? null : asString(parsed.resource) ?? undefined,
+    resource: parsed.resource === null ? null : (asString(parsed.resource) ?? undefined),
     tags,
     timestamp,
     createdAt,
