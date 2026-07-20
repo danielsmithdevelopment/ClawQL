@@ -158,7 +158,10 @@ export async function lintCqmFiles(paths: string[]): Promise<CqmLintResult> {
       }
     }
     if (!name) {
-      name = /^[ \t]+name:\s*(.+)$/m.exec(raw)?.[1]?.trim().replace(/^["']|["']$/g, "");
+      name = /^[ \t]+name:\s*(.+)$/m
+        .exec(raw)?.[1]
+        ?.trim()
+        .replace(/^["']|["']$/g, "");
     }
     if (!apiVersion) {
       issues.push({ path: p, severity: "error", message: "missing apiVersion" });
