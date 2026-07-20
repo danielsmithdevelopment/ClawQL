@@ -17,9 +17,9 @@ COPY packages/clawql-core packages/clawql-core
 COPY packages/clawql-auth packages/clawql-auth
 COPY packages/clawql-api packages/clawql-api
 RUN npm run build -w clawql-core -w clawql-auth -w clawql-api
-# Workspace npm ci may leave incomplete nested node_modules under packages/*.
-# Strip them so the dashboard lockfile install resolves clawql-api deps cleanly
-# (otherwise Next webpack follows ../packages/clawql-api/node_modules and fails).
+# Nested package node_modules are incomplete under workspaces; strip them.
+# Keep /app/node_modules — Next webpack resolves clawql-api imports from
+# packages/clawql-api/dist and walks up to /app/node_modules (not dashboard/).
 RUN find packages -type d -name node_modules -prune -exec rm -rf {} +
 
 FROM node:22-alpine AS deps
@@ -33,11 +33,11 @@ FROM node:22-alpine AS builder
 WORKDIR /app/dashboard
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/dashboard/node_modules ./node_modules
-# Use packages after dashboard `npm ci` (symlink + deps), not a second raw copy.
 COPY --from=deps /app/packages /app/packages
+# Workspace install tree for clawql-api transitive deps (effect, smithy, …).
+COPY --from=clawql-builder /app/node_modules /app/node_modules
 COPY dashboard/ .
 # prebuild generators resolve repoRoot as `/app` (`dashboard/scripts` → `../..`).
-# Keep these under `/app/...` (not `/`) so env + provider catalogs generate in-image.
 COPY .env.example /app/.env.example
 COPY scripts/kubernetes/provider-vault-key-catalog.ts /app/scripts/kubernetes/provider-vault-key-catalog.ts
 COPY src/provider-vault/catalog.ts /app/src/provider-vault/catalog.ts
@@ -54,7 +54,8 @@ COPY --from=builder /app/dashboard/package*.json ./
 COPY --from=builder /app/dashboard/node_modules ./node_modules
 COPY --from=builder /app/dashboard/.next ./.next
 COPY --from=builder /app/dashboard/next.config.mjs ./next.config.mjs
-# file: clawql-api resolves to ../packages — keep built workspace packages for runtime.
+# file: clawql-api → ../packages; runtime also needs workspace node_modules for externals.
 COPY --from=builder /app/packages /packages
+COPY --from=builder /app/node_modules /node_modules
 EXPOSE 3040
 CMD ["npm", "run", "start"]
