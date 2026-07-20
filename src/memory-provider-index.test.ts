@@ -39,13 +39,19 @@ describe("memory-provider-index", () => {
     await writeFile(join(dir, "Memory", "beta.md"), ["# Beta", "", "x", ""].join("\n"), "utf8");
     await updateProviderIndexPage(dir);
     const idx = await readFile(join(dir, "Memory", "_INDEX_ClawQL.md"), "utf8");
+    expect(idx).toContain('type: "index"');
     expect(idx).toContain("clawql_generated: provider_index");
+    expect(idx).toContain("clawql_okf: true");
     expect(idx).toContain("## Summary");
     expect(idx).toContain("## By folder");
     expect(idx).toContain("## All notes (A–Z)");
     expect(idx).toContain("[[Alpha Note]]");
     expect(idx).toContain("[[Beta]]");
     expect(idx).toContain("`Memory/`");
+    const okfIdx = await readFile(join(dir, "Memory", "index.md"), "utf8");
+    expect(okfIdx).toContain('type: "index"');
+    expect(okfIdx).toContain("[[Alpha Note]]");
+    expect(okfIdx).toContain("# Memory index");
   });
 
   it("skips second write when content unchanged", async () => {

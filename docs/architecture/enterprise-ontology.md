@@ -193,6 +193,8 @@ Document IDP DAGs (Tika → … → Onyx) are already Workflow-shaped. Kinetic w
 
 **Decision:** OKF-compatible serialization for memory **and** ontology definition docs; Obsidian remains the human UI.
 
+**Shipped:** `memory_ingest` writes OKF frontmatter; `Memory/index.md` + `Memory/log.md`; legacy append upgrade. Details: [`docs/memory/okf.md`](../memory/okf.md).
+
 ```text
 memory_ingest writes:
 ---
@@ -206,9 +208,9 @@ worm_ref: <hash>        # ClawQL extension
 <body>
 ```
 
-ClawQL `type` taxonomy (extension until ecosystem standardizes): `decision`, `context`, `error`, `runbook`, `entity`, `relationship`, `task_result`, `ontology_entity`, `ontology_relationship`, `ontology_action`.
+ClawQL `type` taxonomy (extension until ecosystem standardizes): `decision`, `context`, `error`, `runbook`, `entity`, `relationship`, `task_result`, `ontology_entity`, `ontology_relationship`, `ontology_action`, `index`, `log`, `digest`.
 
-`index.md` / `log.md` patterns (when adopted) give catalog + changelog without loading the full vault into context.
+`index.md` / `log.md` patterns give catalog + changelog without loading the full vault into context.
 
 ---
 

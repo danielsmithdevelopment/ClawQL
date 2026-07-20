@@ -80,6 +80,8 @@ One governance layer (`@kinetic` + PEP + WORM); agents do not choose the executo
 - ClawQL defines its own `type` taxonomy until ecosystem taxonomy stabilizes (`decision`, `context`, `ontology_entity`, …).
 - Ontology definitions may live as OKF docs with `type: ontology_entity` under the **schema** tree (Git); instances stay in object storage.
 
+**Implementation status (July 2026):** `memory_ingest` writes OKF frontmatter; append upgrades legacy notes; `Memory/index.md` + `Memory/log.md` ship alongside `_INDEX_*`. See [`docs/memory/okf.md`](../memory/okf.md).
+
 ### 6) Storage split: schema in Git, instances in R2/S3
 
 **Git holds definitions** (small, PR-reviewable): entity/relationship/action schemas, policy, static knowledge (runbooks, ADRs).
@@ -121,9 +123,9 @@ Ouroboros Seeds ([ADR 0001](./0001-ouroboros-workflow-engine.md)) carry a **task
 
 ### Follow-ups (implementation, not this ADR)
 
-1. Ship provisional JSON Schema + example entities under `schemas/ontology/` and `examples/ontology/`.
+1. Ship provisional JSON Schema + example entities under `schemas/ontology/` and `examples/ontology/`. ✅ (PR foundation)
 2. Implement `clawql ontology lint` in CI alongside `clawql-release lint`.
-3. Wire `memory_ingest` frontmatter to OKF-compatible fields (`type`, optional `worm_ref`).
+3. Wire `memory_ingest` frontmatter to OKF-compatible fields (`type`, optional `worm_ref`). ✅ — see [`docs/memory/okf.md`](../memory/okf.md)
 4. Document hot/cold sync tiers when implementing tiered pull.
 5. Open tracking issues for graph layer, kinetic sandbox, visual builder, vertical packs.
 

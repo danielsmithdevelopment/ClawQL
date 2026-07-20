@@ -271,6 +271,10 @@ The MCP tool is named **`sandbox_exec`** so it is not confused with editing or r
 ```json
 {
   "title": "Session 2026-04-15 API notes",
+  "type": "decision",
+  "description": "Use ETag when polling GitHub APIs.",
+  "tags": ["github", "http"],
+  "correlationId": "corr-abc-123",
   "insights": "Use ETag when polling GitHub APIs.",
   "conversation": "User: …\nAssistant: …",
   "toolOutputs": "{ \"status\": 200 }",
@@ -289,13 +293,15 @@ The MCP tool is named **`sandbox_exec`** so it is not confused with editing or r
 }
 ```
 
+**OKF frontmatter:** New notes are [OKF v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)–compatible. Required **`type`** defaults to **`context`**. Optional MCP fields map to frontmatter: **`description`**, **`resource`**, **`tags`**, **`correlationId`** → `correlation_id`, **`wormRef`**, **`agentId`**, **`verdict`**. Legacy markers (`clawql_ingest`, `clawql_ingest_created`, `date`) are retained for compatibility. Full contract: **[memory/okf.md](../memory/okf.md)**.
+
 **`enterpriseCitations`:** Optional array (max **30** rows) of short citation fields for vault-safe trails after enterprise search — e.g. chaining **`knowledge_search_onyx`** → **`memory_ingest`** ([#130](https://github.com/danielsmithdevelopment/ClawQL/issues/130)). See **[onyx-knowledge-tool.md](onyx-knowledge-tool.md)** §4 and **`enterpriseCitationsFromOnyxSearchToolText`** in **`src/enterprise-citations.ts`**.
 
 **`toolOutputs` vs `toolOutputsFile`:** Use **`toolOutputs`** (or an array) for text that fits comfortably in a single tool call. Use **`toolOutputsFile`** for **large** verbatim text: the ClawQL **server** reads UTF-8 from that path on its filesystem and treats it as **`toolOutputs`**. The MCP only carries a **short path string**—solving Cursor/agent payload limits for very large files. The path may be **absolute** or **relative to `process.cwd()`** (typically the ClawQL repo root in dev). If both **`toolOutputsFile`** and **`toolOutputs`** are set, the **file wins** (inline body is ignored). A short line in the new section’s **Insights** notes the server read.
 
 **Allowlist (security):** Reads are only allowed for files that resolve under **`CLAWQL_MEMORY_INGEST_FILE_ROOTS`** (comma- or newline-separated **absolute** directory prefixes, each resolved with **`realpath`**). If **unset**, the only allowed root is **realpath(`process.cwd()`)**. Set **`CLAWQL_MEMORY_INGEST_FILE=0`** (or `false` / `off` / `no`) to **disable** all `toolOutputsFile` reads. Max bytes: **`CLAWQL_MEMORY_INGEST_FILE_MAX_BYTES`** (default **10_000_000**). The target must be a **regular** file. See also **`.env.example`**.
 
-Writes **`Memory/<slug>.md`** with YAML frontmatter and optional `[[wikilinks]]`. Duplicate payloads (same content hash) are skipped when appending. When enabled (default), also maintains **`Memory/_INDEX_{Provider}.md`** (or under **`CLAWQL_MEMORY_RECALL_SCAN_ROOT`**) listing notes in that subtree — **`CLAWQL_MEMORY_INDEX_PAGE=0`** to disable; **`CLAWQL_MEMORY_INDEX_PROVIDER`** sets the label/filename (see **[memory-obsidian.md](../memory/memory-obsidian.md)**, [#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38)).
+Writes **`Memory/<slug>.md`** with OKF YAML frontmatter and optional `[[wikilinks]]`. Duplicate payloads (same content hash) are skipped when appending. When enabled (default), also maintains **`Memory/_INDEX_{Provider}.md`** and OKF **`Memory/index.md`**, and appends to **`Memory/log.md`** — **`CLAWQL_MEMORY_INDEX_PAGE=0`** disables both indexes; **`CLAWQL_MEMORY_OKF_INDEX=0`** / **`CLAWQL_MEMORY_OKF_LOG=0`** disable OKF pages only; **`CLAWQL_MEMORY_INDEX_PROVIDER`** sets the `_INDEX_*` label/filename (see **[memory-obsidian.md](../memory/memory-obsidian.md)**, **[okf.md](../memory/okf.md)**, [#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38)).
 
 After a successful, non-skipped write, **`memory.db`** is resynced. When **`CLAWQL_MERKLE_ENABLED=1`**, the tool result JSON can include **`merkleSnapshotBefore`** and **`merkleSnapshot`** (see **`memory_recall`** for field shapes) and **`merkleRootChanged`** when both are comparable. When **`CLAWQL_CUCKOO_ENABLED=1`** and the sidecar sync ran, **`cuckooMembershipReady`** is **`true`** (filter rebuilt over chunk ids).
 

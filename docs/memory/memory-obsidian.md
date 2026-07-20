@@ -48,12 +48,13 @@ Thread **`id`** values (e.g. **`thread-<epoch-ms>`**) are passed to OpenClaw as 
 
 `[[Page Name]]` links are **untyped**: they mean “related page,” not “contradicts” vs “supports.” For richer semantics, teams combine tags, folders, or prose in the note body—same as in human-maintained wikis.
 
-## OKF-compatible frontmatter (target)
+## OKF-compatible frontmatter (shipped)
 
-ClawQL is adopting [Open Knowledge Format (OKF) v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) as the **serialization convention** for vault notes: Markdown body + YAML frontmatter with required **`type`**, plus ClawQL extensions (`correlation_id`, `worm_ref`). Obsidian remains the human UI. Schema definitions (entity types) live in **Git**; dynamic memory instances live in **R2/S3** via `clawql sync` — see [Enterprise Ontology](../architecture/enterprise-ontology.md) and [ADR 0009](../adr/0009-enterprise-ontology.md).
+ClawQL writes [Open Knowledge Format (OKF) v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)–compatible vault notes: Markdown body + YAML frontmatter with required **`type`** (default `context`), recommended OKF fields, and ClawQL extensions (`correlation_id`, `worm_ref`, `agent_id`, `verdict`). Obsidian remains the human UI. Successful ingests also maintain OKF **`Memory/index.md`** and append to **`Memory/log.md`**. Schema definitions (entity types) live in **Git**; dynamic memory instances live in **R2/S3** via `clawql sync` — see [Enterprise Ontology](../architecture/enterprise-ontology.md), [ADR 0009](../adr/0009-enterprise-ontology.md), and the dedicated **[OKF memory guide](./okf.md)**.
 
 ## See also
 
+- **[okf.md](./okf.md)** — OKF frontmatter contract, taxonomy, env knobs, compatibility.
 - **[cache-tool.md](../mcp/cache-tool.md)** — optional MCP **`cache`** (ephemeral LRU) vs vault **`memory_*`**.
 - **[enterprise-mcp-tools.md](../mcp/enterprise-mcp-tools.md)** — optional **`audit`** (ephemeral buffer) vs vault; metrics/governance roadmap ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
 - **[integrations/cursor-vault-memory.md](../integrations/cursor-vault-memory.md)** — Cursor **rule** + **skill** in this repo for habitual `memory_ingest` / `memory_recall` in the agent.

@@ -7,6 +7,7 @@ export default defineConfig({
     "vault/utils": "src/vault/utils.ts",
     "vault/slug-index": "src/vault/slug-index.ts",
     "vault/provider-index": "src/vault/provider-index.ts",
+    "okf/index": "src/okf/index.ts",
     "ingest/slug": "src/ingest/slug.ts",
     "ingest/hashes": "src/ingest/hashes.ts",
     "ingest/enterprise-citations": "src/ingest/enterprise-citations.ts",

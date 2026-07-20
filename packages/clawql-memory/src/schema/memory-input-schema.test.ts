@@ -7,6 +7,10 @@ describe("MemoryIngestInputSchema", () => {
     const decoded = await Effect.runPromise(
       decodeMemoryIngestInput({
         title: "Notes",
+        type: "decision",
+        description: "Summary",
+        tags: ["okf"],
+        correlationId: "c1",
         insights: "ok",
         enterpriseCitations: [{ title: "A", url: "https://example.com" }],
         rebuild: { pageindex: true, embeddings: false },
@@ -15,6 +19,10 @@ describe("MemoryIngestInputSchema", () => {
     );
     expect(decoded).toEqual({
       title: "Notes",
+      type: "decision",
+      description: "Summary",
+      tags: ["okf"],
+      correlationId: "c1",
       insights: "ok",
       enterpriseCitations: [{ title: "A", url: "https://example.com" }],
       rebuild: { pageindex: true, embeddings: false },

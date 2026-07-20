@@ -45,8 +45,11 @@ export type RunVaultDailyDigestResult = {
 type Frontmatter = {
   title?: string;
   tags?: string[];
+  timestamp?: string;
   clawql_ingest_created?: string;
+  date?: string;
   clawql_ingest?: boolean;
+  type?: string;
 };
 
 function parseFrontmatter(text: string): Frontmatter {
@@ -68,6 +71,9 @@ function parseFrontmatter(text: string): Frontmatter {
       }
     }
     if (key === "title") out.title = raw;
+    if (key === "type") out.type = raw;
+    if (key === "timestamp") out.timestamp = raw;
+    if (key === "date") out.date = raw;
     if (key === "clawql_ingest_created") out.clawql_ingest_created = raw;
     if (key === "clawql_ingest") out.clawql_ingest = raw === "true";
     if (key === "tags") {
@@ -119,8 +125,9 @@ async function noteTimestampMs(
   text: string
 ): Promise<number | null> {
   const fm = parseFrontmatter(text);
-  if (fm.clawql_ingest_created) {
-    const t = Date.parse(fm.clawql_ingest_created);
+  for (const raw of [fm.timestamp, fm.clawql_ingest_created, fm.date]) {
+    if (!raw) continue;
+    const t = Date.parse(raw);
     if (Number.isFinite(t)) return t;
   }
   try {
@@ -235,6 +242,9 @@ export async function runVaultDailyDigest(
   const insights = buildDigestInsights(windowStart, windowEnd, sources);
   const ingest = await runMemoryIngest({
     title: digestTitle,
+    type: "digest",
+    tags: [DIGEST_TAG],
+    description: `Rolling digest of ${sources.length} note(s) from the last ${hoursBack} hours`,
     insights,
     wikilinks: sources.map((s) => s.title),
     sessionId: `vault-digest-${utcDateLabel(windowEnd)}`,
