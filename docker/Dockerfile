@@ -15,14 +15,20 @@ COPY package.json package-lock.json ./
 COPY packages/clawql-core/package.json ./packages/clawql-core/
 COPY packages/clawql-auth/package.json ./packages/clawql-auth/
 COPY packages/clawql-pageindex/package.json ./packages/clawql-pageindex/
+COPY packages/clawql-codegraph/package.json ./packages/clawql-codegraph/
 COPY packages/clawql-api/package.json ./packages/clawql-api/
 COPY packages/clawql-memory/package.json ./packages/clawql-memory/
+COPY packages/clawql-ontology/package.json ./packages/clawql-ontology/
 COPY packages/clawql-documents/package.json ./packages/clawql-documents/
 COPY packages/clawql-automation/package.json ./packages/clawql-automation/
 COPY packages/clawql-sandbox/package.json ./packages/clawql-sandbox/
+COPY packages/clawql-inference/package.json ./packages/clawql-inference/
+COPY packages/clawql-payments/package.json ./packages/clawql-payments/
+COPY packages/clawql-release/package.json ./packages/clawql-release/
 COPY packages/mcp-grpc-transport/package.json ./packages/mcp-grpc-transport/
 COPY packages/clawql-ouroboros/package.json ./packages/clawql-ouroboros/
 COPY packages/clawql-operator/package.json ./packages/clawql-operator/
+COPY packages/panguard-mcp-bridge/package.json ./packages/panguard-mcp-bridge/
 # `workspace:*` deps (e.g. clawql-ouroboros) need every workspace package.json present before `npm ci`.
 # `prepare` runs `tsc` before src/ exists — skip lifecycle scripts until deps are installed.
 RUN npm ci --ignore-scripts

@@ -7,6 +7,7 @@
     "clawql-codegraph",
     "clawql-api",
     "clawql-memory",
+    "clawql-ontology",
     "clawql-release",
     "clawql-sandbox",
     "clawql-documents",
@@ -20,6 +21,7 @@
   "notes": [
     "mcp-grpc-transport and panguard-mcp-bridge publish on their own cadence.",
     "clawql-telemetry is not yet a package (see #313).",
+    "clawql-ontology has no clawql-* deps (ajv/yaml only) — safe early in the order.",
     "npm publish replaces workspace:* with concrete versions in published package.json.",
     "Monorepo dev uses matching 7.0.0 semver; npm workspaces link packages locally."
   ]
