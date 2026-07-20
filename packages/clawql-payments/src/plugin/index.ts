@@ -59,3 +59,5 @@ export { Ap2MandateService, ap2MandateLiveLayer } from "../ap2/ap2-mandate-servi
 export { AcpCheckoutService, acpCheckoutLiveLayer } from "../acp/acp-checkout-service.js";
 export { PaypalOrdersService, paypalOrdersLiveLayer } from "../paypal/paypal-orders-service.js";
 export { AdyenCheckoutService, adyenCheckoutLiveLayer } from "../adyen/adyen-checkout-service.js";
+export { CreditsService, creditsLiveLayer } from "../credits/credits-service.js";
+export { AchTopupService, achTopupLiveLayer } from "../credits/ach-topup-service.js";

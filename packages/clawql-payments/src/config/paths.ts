@@ -27,3 +27,7 @@ export function resolvePaymentAuditJsonlPath(env: NodeJS.ProcessEnv = process.en
 export function resolvePaymentAuditMetaPath(env: NodeJS.ProcessEnv = process.env): string {
   return join(resolvePaymentsDir(env), "audit.meta.json");
 }
+
+export function resolveCreditsLedgerPath(env: NodeJS.ProcessEnv = process.env): string {
+  return join(resolvePaymentsDir(env), "credits-ledger.json");
+}

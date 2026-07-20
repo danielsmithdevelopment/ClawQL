@@ -71,6 +71,9 @@ import {
   runPaymentsX402ReconcileCmd,
   runPaymentsX402VerifyCmd,
   runPaymentsX402WalletSetupCmd,
+  runPaymentsCreditsShowCmd,
+  runPaymentsCreditsBankLinkCmd,
+  runPaymentsCreditsTopupCmd,
   type PaymentsCliOptions,
 } from "./payments-cli.js";
 
@@ -174,6 +177,8 @@ function parse(argv: string[]): {
     else if (a === "--customer") flags.customer = argv[++i] ?? "";
     else if (a === "--plan") flags.plan = argv[++i] ?? "";
     else if (a === "--amount") flags.amount = argv[++i] ?? "";
+    else if (a === "--payment-method") flags.paymentMethodId = argv[++i] ?? "";
+    else if (a === "--return-url") flags.returnUrl = argv[++i] ?? "";
     else if (a === "--address") flags.address = argv[++i] ?? "";
     else if (a === "--asset") flags.asset = argv[++i] ?? "";
     else if (a === "--resource") flags.resource = argv[++i] ?? "";
@@ -262,6 +267,7 @@ Usage:
   clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | webhook verify
   clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
   clawql payments spend report [--group-by provider|tenant|plan] | audit [--correlation-id ID]
+  clawql payments credits show | bank-link --customer cus_xxx | topup --customer cus_xxx --amount 25
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
 
@@ -811,6 +817,9 @@ async function main(): Promise<void> {
       eventName: typeof flags.eventName === "string" ? flags.eventName : undefined,
       identifier: typeof flags.identifier === "string" ? flags.identifier : undefined,
       value: Number.isFinite(value) ? value : undefined,
+      paymentMethodId:
+        typeof flags.paymentMethodId === "string" ? flags.paymentMethodId : undefined,
+      returnUrl: typeof flags.returnUrl === "string" ? flags.returnUrl : undefined,
     };
 
     if (subcmd === "plan") {
@@ -902,7 +911,25 @@ async function main(): Promise<void> {
       process.exitCode = 1;
       return;
     }
-    console.error("Usage: clawql payments plan | usage | spend | audit | stripe | x402");
+    if (subcmd === "credits") {
+      const creditsAction = rest[0] ?? "show";
+      if (creditsAction === "show") {
+        process.exitCode = await runPaymentsCreditsShowCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "bank-link") {
+        process.exitCode = await runPaymentsCreditsBankLinkCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "topup") {
+        process.exitCode = await runPaymentsCreditsTopupCmd(paymentsOpts);
+        return;
+      }
+      console.error("Usage: clawql payments credits show | bank-link | topup");
+      process.exitCode = 1;
+      return;
+    }
+    console.error("Usage: clawql payments plan | usage | spend | audit | stripe | x402 | credits");
     process.exitCode = 1;
     return;
   }

@@ -37,3 +37,11 @@ export {
   type PaymentsX402VerifyOptions,
   type PaymentsX402WalletSetupOptions,
 } from "./x402.js";
+export {
+  runPaymentsCreditsShow,
+  runPaymentsCreditsBankLink,
+  runPaymentsCreditsTopup,
+  type PaymentsCreditsShowOptions,
+  type PaymentsCreditsBankLinkOptions,
+  type PaymentsCreditsTopupOptions,
+} from "./credits.js";

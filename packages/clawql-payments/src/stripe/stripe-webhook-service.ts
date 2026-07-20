@@ -1,8 +1,14 @@
 import Stripe from "stripe";
 import { Context, Effect, Layer } from "effect";
 import { PaymentsConfigService } from "../config/payments-config-service.js";
-import { buildPaymentWormEntry, buildStripeInvoicePaidEntry } from "../audit/events.js";
+import {
+  buildCreditTopupFailedEntry,
+  buildCreditTopupSettledEntry,
+  buildPaymentWormEntry,
+  buildStripeInvoicePaidEntry,
+} from "../audit/events.js";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
+import { TOPUP_META_KEY, appendCreditEntry, settleTopupByPaymentIntent } from "../credits/index.js";
 import type { ConfigError } from "../errors/payment-errors.js";
 import type { PaymentError } from "../errors/payment-errors.js";
 import { StripeSignatureError } from "./stripe-errors.js";
@@ -143,6 +149,95 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
                     tenant_id: tenantFromEvent(event, tenantId),
                     plan: config.plan,
                   },
+                })
+              );
+              break;
+            }
+            case "payment_intent.succeeded": {
+              const pi = event.data.object as Stripe.PaymentIntent;
+              if (pi.metadata?.[TOPUP_META_KEY] !== "1") {
+                return { handled: false, eventType: event.type, eventId: event.id };
+              }
+              const topupTenant = tenantFromEvent(event, tenantId);
+              const amountCents = pi.amount_received || pi.amount || 0;
+              const settled = yield* Effect.promise(async () => {
+                try {
+                  return {
+                    ok: true as const,
+                    ...(await settleTopupByPaymentIntent(
+                      {
+                        tenantId: topupTenant,
+                        paymentIntentId: pi.id,
+                        amountCents,
+                        correlationId: options.correlationId ?? event.id,
+                      },
+                      options.env
+                    )),
+                  };
+                } catch (cause) {
+                  return {
+                    ok: false as const,
+                    reason: cause instanceof Error ? cause.message : String(cause),
+                  };
+                }
+              });
+              if (!settled.ok) {
+                yield* audit.appendEntry(
+                  buildCreditTopupFailedEntry({
+                    tenantId: topupTenant,
+                    amountUsd: amountCents / 100,
+                    paymentIntentId: pi.id,
+                    reason: settled.reason,
+                    correlationId: options.correlationId ?? event.id,
+                  })
+                );
+                break;
+              }
+              if (!settled.alreadySettled) {
+                yield* audit.appendEntry(
+                  buildCreditTopupSettledEntry({
+                    tenantId: topupTenant,
+                    amountUsd: amountCents / 100,
+                    balanceUsd: settled.entry.balanceAfterCents / 100,
+                    paymentIntentId: pi.id,
+                    correlationId: options.correlationId ?? event.id,
+                  })
+                );
+              }
+              break;
+            }
+            case "payment_intent.payment_failed": {
+              const pi = event.data.object as Stripe.PaymentIntent;
+              if (pi.metadata?.[TOPUP_META_KEY] !== "1") {
+                return { handled: false, eventType: event.type, eventId: event.id };
+              }
+              const failTenant = tenantFromEvent(event, tenantId);
+              const failReason = pi.last_payment_error?.message || "payment_intent.payment_failed";
+              yield* Effect.promise(async () => {
+                try {
+                  await appendCreditEntry(
+                    {
+                      tenantId: failTenant,
+                      kind: "topup_failed",
+                      deltaCents: 0,
+                      paymentIntentId: pi.id,
+                      correlationId: options.correlationId ?? event.id,
+                      note: failReason,
+                      id: `fail_${pi.id}`,
+                    },
+                    options.env
+                  );
+                } catch {
+                  /* idempotent / best-effort ledger mark */
+                }
+              });
+              yield* audit.appendEntry(
+                buildCreditTopupFailedEntry({
+                  tenantId: failTenant,
+                  amountUsd: (pi.amount || 0) / 100,
+                  paymentIntentId: pi.id,
+                  reason: failReason,
+                  correlationId: options.correlationId ?? event.id,
                 })
               );
               break;
