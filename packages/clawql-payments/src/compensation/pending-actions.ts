@@ -151,7 +151,7 @@ export async function assertPendingCode(
 ): Promise<PendingActionRecord> {
   const loaded = await loadPendingAction(actionId, env);
   if (!loaded) throw new Error(`Unknown pending action: ${actionId}`);
-  let record = materializeExpiry(loaded);
+  const record = materializeExpiry(loaded);
   if (record.status === "expired" && loaded.status === "pending") {
     await savePendingAction(record, env);
   }
