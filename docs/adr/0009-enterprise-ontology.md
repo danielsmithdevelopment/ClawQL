@@ -37,13 +37,13 @@ The question is how to formalize an **enterprise IDP Ontology** that closes the 
 
 ClawQL’s Ontology is an **open, versioned, manifest-governed schema** that travels with the software delivery pipeline.
 
-| Dimension      | Palantir-style                         | ClawQL decision                                                                 |
-| -------------- | -------------------------------------- | ------------------------------------------------------------------------------- |
-| Format         | Proprietary                            | Open YAML / OKF Markdown + JSON Schema; PR-reviewable                           |
-| Versioning     | Console / runtime                      | Git + EnterpriseGovernance / release manifest version events                    |
-| Construction   | Professional services                  | Derive from SQL / OpenAPI / documents; refine in UI or YAML                     |
-| Portability    | Vendor-bound                           | `git clone` + export YAML/OKF bundle                                            |
-| Agent surface  | Proprietary object APIs                | Generated typed MCP tools (+ optional GraphQL with `@kinetic`)                  |
+| Dimension     | Palantir-style          | ClawQL decision                                                |
+| ------------- | ----------------------- | -------------------------------------------------------------- |
+| Format        | Proprietary             | Open YAML / OKF Markdown + JSON Schema; PR-reviewable          |
+| Versioning    | Console / runtime       | Git + EnterpriseGovernance / release manifest version events   |
+| Construction  | Professional services   | Derive from SQL / OpenAPI / documents; refine in UI or YAML    |
+| Portability   | Vendor-bound            | `git clone` + export YAML/OKF bundle                           |
+| Agent surface | Proprietary object APIs | Generated typed MCP tools (+ optional GraphQL with `@kinetic`) |
 
 **Mental model:** OOP applied to the enterprise information space — typed objects, relationships, and methods — plus three enterprise-AI necessities: **provenance**, **permission-awareness** (ATRClaims), and **kinetic designation** (writes are structurally governed).
 
@@ -63,12 +63,12 @@ GraphQL’s query/mutation split is the right **transport** instinct (better tha
 
 The Transaction Sandbox routes by `executor`:
 
-| Executor           | Domain                         | Existing ADR / surface                          |
-| ------------------ | ------------------------------ | ----------------------------------------------- |
-| Pulumi             | Stateful infrastructure        | ADR 0007 Automation API                         |
-| Argo Workflows     | Multi-step DAGs / IDP pipeline | ADR 0004 `workflow` tool                        |
-| Argo Rollouts      | Progressive deployment         | Roadmap (bundles with Workflows/CD philosophy)  |
-| Native             | App writes (SAP, CRM, payment) | Effect-TS Transaction Sandbox (phased)          |
+| Executor       | Domain                         | Existing ADR / surface                         |
+| -------------- | ------------------------------ | ---------------------------------------------- |
+| Pulumi         | Stateful infrastructure        | ADR 0007 Automation API                        |
+| Argo Workflows | Multi-step DAGs / IDP pipeline | ADR 0004 `workflow` tool                       |
+| Argo Rollouts  | Progressive deployment         | Roadmap (bundles with Workflows/CD philosophy) |
+| Native         | App writes (SAP, CRM, payment) | Effect-TS Transaction Sandbox (phased)         |
 
 One governance layer (`@kinetic` + PEP + WORM); agents do not choose the executor.
 
@@ -90,13 +90,13 @@ One governance layer (`@kinetic` + PEP + WORM); agents do not choose the executo
 
 ### 7) Ontology builder sequencing
 
-| Phase        | Deliverable                                                                 |
-| ------------ | --------------------------------------------------------------------------- |
-| **Now**      | YAML/OKF schema format + JSON Schema; `clawql ontology lint` / `generate` (read tools); derive from sources; manifest version events |
-| **Later**    | Relationship graph + permission-aware traversal                             |
-| **Later**    | Kinetic write tools + AP2 + Transaction Sandbox + canary                    |
-| **Later**    | Command Deck visual builder (non-engineer authoring → Git PRs)              |
-| **Later**    | Vertical schema packs (Legal, Healthcare, Financial, Real Estate)           |
+| Phase     | Deliverable                                                                                                                          |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Now**   | YAML/OKF schema format + JSON Schema; `clawql ontology lint` / `generate` (read tools); derive from sources; manifest version events |
+| **Later** | Relationship graph + permission-aware traversal                                                                                      |
+| **Later** | Kinetic write tools + AP2 + Transaction Sandbox + canary                                                                             |
+| **Later** | Command Deck visual builder (non-engineer authoring → Git PRs)                                                                       |
+| **Later** | Vertical schema packs (Legal, Healthcare, Financial, Real Estate)                                                                    |
 
 **Do not lock property types / relationship syntax as a public standard** until 3–5 design partners validate against real enterprise schemas.
 

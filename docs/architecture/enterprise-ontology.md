@@ -20,23 +20,23 @@ Palantir’s Ontology is a genuine asset: agents operate on `Turbine` / `Contrac
 
 Three liabilities ClawQL consciously avoids:
 
-| Liability                         | ClawQL counter                                                           |
-| --------------------------------- | ------------------------------------------------------------------------ |
-| Proprietary, non-portable format  | Open YAML / OKF Markdown + JSON Schema; export is a file tree            |
-| Services-heavy Ontology build     | Derive from SQL, OpenAPI, document classifiers; refine, don’t invent     |
-| Outside the delivery pipeline     | Schema in Git; schema changes are manifest version events (signed / WORM)|
+| Liability                        | ClawQL counter                                                            |
+| -------------------------------- | ------------------------------------------------------------------------- |
+| Proprietary, non-portable format | Open YAML / OKF Markdown + JSON Schema; export is a file tree             |
+| Services-heavy Ontology build    | Derive from SQL, OpenAPI, document classifiers; refine, don’t invent      |
+| Outside the delivery pipeline    | Schema in Git; schema changes are manifest version events (signed / WORM) |
 
-Competitive wedge: *“Your Ontology is a YAML/OKF tree in Git, signed with your release. If you leave, you take it with you.”*
+Competitive wedge: _“Your Ontology is a YAML/OKF tree in Git, signed with your release. If you leave, you take it with you.”_
 
 ---
 
 ## OOP taken seriously for enterprise AI
 
-| Layer              | Analogy                                              |
-| ------------------ | ---------------------------------------------------- |
-| OOP class          | `Contract { parties, status, sign() }`               |
-| Database schema    | `CREATE TABLE contracts (...)`                       |
-| Enterprise Ontology| Typed object + sources + graph edges + kinetic methods|
+| Layer               | Analogy                                                |
+| ------------------- | ------------------------------------------------------ |
+| OOP class           | `Contract { parties, status, sign() }`                 |
+| Database schema     | `CREATE TABLE contracts (...)`                         |
+| Enterprise Ontology | Typed object + sources + graph edges + kinetic methods |
 
 Three properties beyond ordinary OOP:
 
@@ -160,12 +160,12 @@ Low-risk field updates skip mandate / HITL but still stage a field snapshot for 
 
 Stateful production changes need plans, observability, and rollback — the same lesson as deployments and IaC.
 
-| Executor            | Lesson from                         | ClawQL use                                      |
-| ------------------- | ----------------------------------- | ----------------------------------------------- |
-| **Pulumi**          | Plan / state / surgical rollback    | Infrastructure kinetic actions (ADR 0007)       |
-| **Argo Workflows**  | DAG, retries, artifacts, suspend    | IDP pipeline + multi-step agent tasks (ADR 0004)|
-| **Argo Rollouts**   | Canary, analysis, promote/rollback  | Deployment kinetic actions                      |
-| **Native sandbox**  | Same state machine in Effect-TS     | SAP / CRM / payments and other app writes       |
+| Executor           | Lesson from                        | ClawQL use                                       |
+| ------------------ | ---------------------------------- | ------------------------------------------------ |
+| **Pulumi**         | Plan / state / surgical rollback   | Infrastructure kinetic actions (ADR 0007)        |
+| **Argo Workflows** | DAG, retries, artifacts, suspend   | IDP pipeline + multi-step agent tasks (ADR 0004) |
+| **Argo Rollouts**  | Canary, analysis, promote/rollback | Deployment kinetic actions                       |
+| **Native sandbox** | Same state machine in Effect-TS    | SAP / CRM / payments and other app writes        |
 
 Routing is schema-driven (`executor` on `@kinetic`). Agents call typed mutations; PEP + Transaction Sandbox choose the executor. WORM records which executor ran.
 
@@ -236,12 +236,12 @@ s3://clawql-org-vault/
   indexes/              # FTS / vectors (derived)
 ```
 
-| Path                         | Store        | Sync                                      |
-| ---------------------------- | ------------ | ----------------------------------------- |
-| Schema + static knowledge    | Git → R2 on release | Propagates with release / `ontology generate` |
-| Memory + instances           | R2 only      | `clawql sync` / `memory_sync`             |
-| Hot tier (recent / active)   | Edge cache   | Sub-ms local recall                       |
-| Cold tier (archive)          | R2 on demand | Queried when needed                       |
+| Path                       | Store               | Sync                                          |
+| -------------------------- | ------------------- | --------------------------------------------- |
+| Schema + static knowledge  | Git → R2 on release | Propagates with release / `ontology generate` |
+| Memory + instances         | R2 only             | `clawql sync` / `memory_sync`                 |
+| Hot tier (recent / active) | Edge cache          | Sub-ms local recall                           |
+| Cold tier (archive)        | R2 on demand        | Queried when needed                           |
 
 **Onyx** indexes R2 content; it is never the source of truth.
 
@@ -267,13 +267,13 @@ Do **not** publish the property-type / relationship / source DSL as a frozen sta
 
 ## Phased delivery checklist
 
-| Phase | Scope | Depends on |
-| ----- | ----- | ---------- |
-| Foundation | `v1alpha1` schema, lint, read-tool generate, source derivation, manifest version pin | This ADR |
-| Graph | Relationship traversal, ATRClaim-aware edges, graph-aware recall | Foundation |
-| Kinetic | Write tools, `@kinetic`, Transaction Sandbox, AP2, canary | Foundation + PEP |
-| Builder UI | Command Deck schema editor | Stable format |
-| Verticals | Industry OKF packs | Builder + design partners |
+| Phase      | Scope                                                                                | Depends on                |
+| ---------- | ------------------------------------------------------------------------------------ | ------------------------- |
+| Foundation | `v1alpha1` schema, lint, read-tool generate, source derivation, manifest version pin | This ADR                  |
+| Graph      | Relationship traversal, ATRClaim-aware edges, graph-aware recall                     | Foundation                |
+| Kinetic    | Write tools, `@kinetic`, Transaction Sandbox, AP2, canary                            | Foundation + PEP          |
+| Builder UI | Command Deck schema editor                                                           | Stable format             |
+| Verticals  | Industry OKF packs                                                                   | Builder + design partners |
 
 ---
 

@@ -62,7 +62,7 @@ Engineers can run `npx clawql-mcp` locally and use **`clawql sync pull`** before
 
 Share **`~/.ClawQL`** memory notes across your team via a centralized object-storage bucket. **Cloudflare R2 is the default** provider because Cloudflare is in the bundled default stack.
 
-**Schema vs data:** Ontology entity *definitions* and static knowledge belong in **Git** (small, PR-reviewed). Dynamic **`Memory/`** instances and generated indexes belong in the **bucket** (unbounded growth). Do not put the full vault in GitHub — see [Enterprise Ontology — Git vs R2](../architecture/enterprise-ontology.md#git-vs-r2--what-lives-where) and [ADR 0009](../adr/0009-enterprise-ontology.md).
+**Schema vs data:** Ontology entity _definitions_ and static knowledge belong in **Git** (small, PR-reviewed). Dynamic **`Memory/`** instances and generated indexes belong in the **bucket** (unbounded growth). Do not put the full vault in GitHub — see [Enterprise Ontology — Git vs R2](../architecture/enterprise-ontology.md#git-vs-r2--what-lives-where) and [ADR 0009](../adr/0009-enterprise-ontology.md).
 
 ### What syncs
 
