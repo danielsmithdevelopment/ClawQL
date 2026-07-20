@@ -125,7 +125,8 @@ export const architectureHubCards: Array<ReferenceCard> = [
   card({
     href: '/architecture/token-efficiency',
     name: 'Token efficiency',
-    description: 'Twelve compounding layers for agent cost and reasoning quality.',
+    description:
+      'Twelve compounding layers for agent cost and reasoning quality.',
     icon: BoltIcon,
   }),
   card({

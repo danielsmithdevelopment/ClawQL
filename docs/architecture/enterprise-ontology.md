@@ -299,11 +299,11 @@ CLI reference: [`docs/ontology/cli.md`](../ontology/cli.md). Examples: [`example
 
 Enterprises and researchers are converging on the same problem — **typed meaning for agents**:
 
-| Effort | Overlap with ClawQL | Difference |
-| ------ | ------------------- | ---------- |
-| **Microsoft Fabric IQ Ontology** | Entity types, relationships, agent grounding, visual playground | Platform-bound (OneLake); ClawQL stays Git + open YAML/OKF + kinetic PEP |
+| Effort                                | Overlap with ClawQL                                               | Difference                                                                                                                             |
+| ------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Microsoft Fabric IQ Ontology**      | Entity types, relationships, agent grounding, visual playground   | Platform-bound (OneLake); ClawQL stays Git + open YAML/OKF + kinetic PEP                                                               |
 | **AIF (Argument Interchange Format)** | Structured rationale so understanding transfers without ambiguity | Argumentation-specific; ClawQL reuses the idea in [OKF `type: decision`](../memory/okf-decision-rationale.md) for enterprise decisions |
-| **Palantir Ontology** | Typed digital twin for agents | Proprietary console; ClawQL is portable and pipeline-native ([ADR 0009](../adr/0009-enterprise-ontology.md)) |
+| **Palantir Ontology**                 | Typed digital twin for agents                                     | Proprietary console; ClawQL is portable and pipeline-native ([ADR 0009](../adr/0009-enterprise-ontology.md))                           |
 
 These validate the direction. They are **not** runtime dependencies.
 

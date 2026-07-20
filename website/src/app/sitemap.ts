@@ -62,10 +62,26 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'monthly',
     priority: 0.9,
   },
-  { path: '/specs/cq-extensions/cqe', changeFrequency: 'monthly', priority: 0.85 },
-  { path: '/specs/cq-extensions/cqm', changeFrequency: 'monthly', priority: 0.85 },
-  { path: '/specs/cq-extensions/cqk', changeFrequency: 'monthly', priority: 0.85 },
-  { path: '/specs/cq-extensions/cqw', changeFrequency: 'monthly', priority: 0.85 },
+  {
+    path: '/specs/cq-extensions/cqe',
+    changeFrequency: 'monthly',
+    priority: 0.85,
+  },
+  {
+    path: '/specs/cq-extensions/cqm',
+    changeFrequency: 'monthly',
+    priority: 0.85,
+  },
+  {
+    path: '/specs/cq-extensions/cqk',
+    changeFrequency: 'monthly',
+    priority: 0.85,
+  },
+  {
+    path: '/specs/cq-extensions/cqw',
+    changeFrequency: 'monthly',
+    priority: 0.85,
+  },
   {
     path: '/architecture/agentic-fabric',
     changeFrequency: 'monthly',

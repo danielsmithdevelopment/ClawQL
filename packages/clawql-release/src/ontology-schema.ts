@@ -129,8 +129,14 @@ export async function lintCqmFiles(paths: string[]): Promise<CqmLintResult> {
     }
     filesChecked += 1;
     // Lightweight YAML field extract (avoid yaml dep in clawql-release).
-    const apiVersion = /^apiVersion:\s*(.+)$/m.exec(raw)?.[1]?.trim().replace(/^["']|["']$/g, "");
-    const kind = /^kind:\s*(.+)$/m.exec(raw)?.[1]?.trim().replace(/^["']|["']$/g, "");
+    const apiVersion = /^apiVersion:\s*(.+)$/m
+      .exec(raw)?.[1]
+      ?.trim()
+      .replace(/^["']|["']$/g, "");
+    const kind = /^kind:\s*(.+)$/m
+      .exec(raw)?.[1]
+      ?.trim()
+      .replace(/^["']|["']$/g, "");
     const nameMatch =
       /^metadata:\s*\r?\n(?:[ \t]+.+\r?\n)*?[ \t]+name:\s*(.+)$/m.exec(raw) ??
       /^[ \t]+name:\s*(.+)$/m.exec(raw);

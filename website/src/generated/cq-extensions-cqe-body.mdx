@@ -25,13 +25,13 @@ Same as [`entity.schema.json`](../../../schemas/ontology/entity.schema.json):
 
 ## ClawQL-specific conventions
 
-| Concern            | Where                                                                |
-| ------------------ | -------------------------------------------------------------------- |
-| PII                | `spec.pii_fields`                                                    |
-| Sources            | `spec.sources` (sql / openapi / nextcloud / …)                       |
-| Relationships      | `spec.relationships`                                                 |
-| Read/write actions | `spec.actions` (`kind: read\\|write`; writes require `kinetic: true`) |
-| Field mutability   | property `mutable`, `kinetic_level`, mandate fields                  |
+| Concern            | Where                                               |
+| ------------------ | --------------------------------------------------- | --------------------------------------- |
+| PII                | `spec.pii_fields`                                   |
+| Sources            | `spec.sources` (sql / openapi / nextcloud / …)      |
+| Relationships      | `spec.relationships`                                |
+| Read/write actions | `spec.actions` (`kind: read\\                       | write`; writes require `kinetic: true`) |
+| Field mutability   | property `mutable`, `kinetic_level`, mandate fields |
 
 ## Tooling hooks
 

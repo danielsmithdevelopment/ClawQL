@@ -39,13 +39,13 @@ npx clawql-ontology import --pack legal
 
 ## What generate emits
 
-| File                      | Purpose                                                                 |
-| ------------------------- | ----------------------------------------------------------------------- |
-| `tools.json`              | Catalog of read + relationship MCP tools                                |
-| `index.md`                | OKF entity catalog (prefer before loading full `.cqe` bodies)           |
-| `onyx-sources.stub.json`  | Onyx connector stubs from `sources:` (manual apply; auto-sync is B5)    |
-| `ontology-plugin.stub.ts` | `ONTOLOGY_READ_TOOLS` constant                                          |
-| `README.md`               | Notes                                                                   |
+| File                      | Purpose                                                              |
+| ------------------------- | -------------------------------------------------------------------- |
+| `tools.json`              | Catalog of read + relationship MCP tools                             |
+| `index.md`                | OKF entity catalog (prefer before loading full `.cqe` bodies)        |
+| `onyx-sources.stub.json`  | Onyx connector stubs from `sources:` (manual apply; auto-sync is B5) |
+| `ontology-plugin.stub.ts` | `ONTOLOGY_READ_TOOLS` constant                                       |
+| `README.md`               | Notes                                                                |
 
 Write / kinetic actions are listed as `deferredWriteActions` and **not** registered until Transaction Sandbox.
 

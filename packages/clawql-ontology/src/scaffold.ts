@@ -17,11 +17,7 @@ export function packRoot(packId: string): string {
 
 export async function initOntologyTree(rootDir: string): Promise<string[]> {
   const root = ontologyRoot(rootDir);
-  const dirs = [
-    join(root, "entities"),
-    join(root, "relationships"),
-    join(root, "actions"),
-  ];
+  const dirs = [join(root, "entities"), join(root, "relationships"), join(root, "actions")];
   for (const d of dirs) await mkdir(d, { recursive: true });
   const readme = join(root, "README.md");
   await writeFile(
@@ -73,10 +69,7 @@ spec:
 `;
 }
 
-export async function createOntologyEntity(
-  rootDir: string,
-  name: string
-): Promise<string> {
+export async function createOntologyEntity(rootDir: string, name: string): Promise<string> {
   if (!/^[A-Z][A-Za-z0-9]*$/.test(name)) {
     throw new Error(`Entity name must be PascalCase (got ${JSON.stringify(name)})`);
   }
@@ -89,10 +82,7 @@ export async function createOntologyEntity(
   return dest;
 }
 
-export async function importOntologyPack(
-  rootDir: string,
-  packId: string
-): Promise<string[]> {
+export async function importOntologyPack(rootDir: string, packId: string): Promise<string[]> {
   const src = packRoot(packId);
   if (!existsSync(src)) {
     throw new Error(

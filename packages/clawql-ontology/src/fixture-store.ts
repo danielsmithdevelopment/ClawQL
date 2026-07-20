@@ -126,10 +126,7 @@ export function searchOrganizations(query: string, limit = 20): FixtureOrganizat
   const all = loadOntologyFixtureDb().organizations;
   if (!q) return all.slice(0, limit);
   return all
-    .filter(
-      (o) =>
-        o.organization_id.toLowerCase().includes(q) || o.name.toLowerCase().includes(q)
-    )
+    .filter((o) => o.organization_id.toLowerCase().includes(q) || o.name.toLowerCase().includes(q))
     .slice(0, limit);
 }
 

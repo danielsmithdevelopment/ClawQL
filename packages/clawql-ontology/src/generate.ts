@@ -109,7 +109,13 @@ function renderOkfIndex(entities: LoadedMeta[]): string {
   return lines.join("\n");
 }
 
-type LoadedMeta = { name: string; description: string; relPath: string; pii: string[]; sources: unknown[] };
+type LoadedMeta = {
+  name: string;
+  description: string;
+  relPath: string;
+  pii: string[];
+  sources: unknown[];
+};
 
 function renderOnyxStubs(entities: LoadedMeta[]): string {
   return `${JSON.stringify(
@@ -295,9 +301,6 @@ ${toolList}
 }
 
 /** @internal exported for tests */
-export function _relationshipToolNameForTests(
-  from: string,
-  rel: OntologyRelationship
-): string {
+export function _relationshipToolNameForTests(from: string, rel: OntologyRelationship): string {
   return relationshipToolName(from, rel);
 }

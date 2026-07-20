@@ -23,7 +23,9 @@ function logOntologyTool(name: string, meta: Record<string, unknown>): void {
   }
 }
 
-async function textResult(payload: unknown): Promise<{ content: { type: "text"; text: string }[] }> {
+async function textResult(
+  payload: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
   return {
     content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
   };

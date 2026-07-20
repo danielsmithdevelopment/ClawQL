@@ -28,8 +28,8 @@ export default function CqExtensionsIndexPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Draft specs.</strong> Open format notes for ClawQL-owned extensions.
-          Source:{' '}
+          <strong>Draft specs.</strong> Open format notes for ClawQL-owned
+          extensions. Source:{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/cq-extensions/"
             className="font-medium text-inherit underline underline-offset-2"

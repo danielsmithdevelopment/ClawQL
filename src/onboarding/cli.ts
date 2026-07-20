@@ -99,7 +99,6 @@ import {
   runOntologyLint,
 } from "./ontology-cli.js";
 
-
 type Command =
   | "init"
   | "doctor"
