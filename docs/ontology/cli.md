@@ -35,13 +35,13 @@ Do not claim automatic SQL binding in essay or Getting Started until a dedicated
 
 ## Kinetic writes (v1 — LOW + NATIVE)
 
-| Concern | Behavior |
-| ------- | -------- |
-| Generate | `writeTools` for `kinetic_level: LOW` + `executor: NATIVE` (e.g. `update_contract_status`) |
-| Deferred | Argo/Pulumi / non-LOW stay in `deferredWriteActions` |
-| Runtime | `CLAWQL_ENABLE_ONTOLOGY_WRITES=1` registers write MCP tools |
-| Sandbox | ATR check → field snapshot → mutate fixture → `KINETIC_COMMITTED` / `KINETIC_DENIED` audit chain |
-| ATR | Scope `*` or `ontology:write`, or role `admin` (env: `CLAWQL_ONTOLOGY_ATR_SCOPE`) |
+| Concern  | Behavior                                                                                         |
+| -------- | ------------------------------------------------------------------------------------------------ |
+| Generate | `writeTools` for `kinetic_level: LOW` + `executor: NATIVE` (e.g. `update_contract_status`)       |
+| Deferred | Argo/Pulumi / non-LOW stay in `deferredWriteActions`                                             |
+| Runtime  | `CLAWQL_ENABLE_ONTOLOGY_WRITES=1` registers write MCP tools                                      |
+| Sandbox  | ATR check → field snapshot → mutate fixture → `KINETIC_COMMITTED` / `KINETIC_DENIED` audit chain |
+| ATR      | Scope `*` or `ontology:write`, or role `admin` (env: `CLAWQL_ONTOLOGY_ATR_SCOPE`)                |
 
 MEDIUM+/canary/HITL/GraphQL `@kinetic` remain roadmap ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)).
 

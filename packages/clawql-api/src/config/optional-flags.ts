@@ -205,7 +205,8 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
     enableCodeGraph: envTruthy(raw.CLAWQL_ENABLE_CODEGRAPH),
-    enableOntology: envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY) || envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY_WRITES),
+    enableOntology:
+      envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY) || envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY_WRITES),
     enableOntologyWrites: envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY_WRITES),
     enableHitlLabelStudio: envTruthy(raw.CLAWQL_ENABLE_HITL_LABEL_STUDIO),
     enableConeshare: envTruthy(raw.CLAWQL_ENABLE_CONESHARE),

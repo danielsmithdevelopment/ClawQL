@@ -119,13 +119,15 @@ describe("generateOntologyReadTools", () => {
     expect(result.tools.some((t) => t.name === "get_contract")).toBe(true);
     expect(result.tools.some((t) => t.name === "get_contract_parties")).toBe(true);
     expect(result.writeTools.some((t) => t.name === "update_contract_status")).toBe(true);
-    expect(result.writeTools.every((t) => t.kinetic_level === "LOW" && t.executor === "NATIVE")).toBe(
-      true
-    );
+    expect(
+      result.writeTools.every((t) => t.kinetic_level === "LOW" && t.executor === "NATIVE")
+    ).toBe(true);
     expect(result.deferredWriteActions.some((a) => a.name === "process_contract_document")).toBe(
       true
     );
-    expect(result.deferredWriteActions.some((a) => a.name === "update_contract_status")).toBe(false);
+    expect(result.deferredWriteActions.some((a) => a.name === "update_contract_status")).toBe(
+      false
+    );
     expect(written.length).toBeGreaterThanOrEqual(4);
     const catalog = JSON.parse(await readFile(join(outDir, "tools.json"), "utf8"));
     expect(catalog.kind).toBe("GeneratedOntologyTools");
@@ -202,9 +204,8 @@ describe("scaffold + fixtures + pii", () => {
 describe("LOW Transaction Sandbox (3.3)", () => {
   it("commits update_contract_status when ATR allows", async () => {
     const { resetOntologyFixtureDbForTests, getContract } = await import("./fixture-store.js");
-    const { resetKineticAuditForTests, runLowKineticTransaction, listKineticAudit } = await import(
-      "./kinetic/index.js"
-    );
+    const { resetKineticAuditForTests, runLowKineticTransaction, listKineticAudit } =
+      await import("./kinetic/index.js");
     resetOntologyFixtureDbForTests();
     resetKineticAuditForTests();
     const result = await runLowKineticTransaction({
@@ -227,9 +228,8 @@ describe("LOW Transaction Sandbox (3.3)", () => {
 
   it("denies update when ATR scope is insufficient", async () => {
     const { resetOntologyFixtureDbForTests, getContract } = await import("./fixture-store.js");
-    const { resetKineticAuditForTests, runLowKineticTransaction } = await import(
-      "./kinetic/index.js"
-    );
+    const { resetKineticAuditForTests, runLowKineticTransaction } =
+      await import("./kinetic/index.js");
     resetOntologyFixtureDbForTests();
     resetKineticAuditForTests();
     const result = await runLowKineticTransaction({

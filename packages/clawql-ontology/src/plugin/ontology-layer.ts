@@ -8,9 +8,7 @@ import { Effect, Layer } from "effect";
 import { createOntologyPlugin, type CreateOntologyPluginOptions } from "./ontology-plugin.js";
 
 export type OntologyLayerError =
-  | PluginAlreadyRegisteredError
-  | ClawQLError
-  | McpToolAlreadyRegisteredError;
+  PluginAlreadyRegisteredError | ClawQLError | McpToolAlreadyRegisteredError;
 
 export type MakeOntologyLayerOptions = CreateOntologyPluginOptions;
 

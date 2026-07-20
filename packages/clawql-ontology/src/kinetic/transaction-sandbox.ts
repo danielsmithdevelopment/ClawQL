@@ -8,11 +8,7 @@ import {
   type KineticAtrClaims,
 } from "./atr-check.js";
 import { appendKineticAudit, type KineticAuditEntry } from "./worm-audit.js";
-import {
-  getContract,
-  updateContractStatus,
-  type FixtureContract,
-} from "../fixture-store.js";
+import { getContract, updateContractStatus, type FixtureContract } from "../fixture-store.js";
 
 export type LowKineticWriteRequest = {
   tool: string;

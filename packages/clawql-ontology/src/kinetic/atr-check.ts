@@ -18,7 +18,9 @@ export type KineticAtrDecision = {
  * Allow when scope includes `*` or `ontology:write`, or role is `admin`.
  * Deny empty / read-only scopes.
  */
-export function checkKineticWriteAllowed(claims: KineticAtrClaims | null | undefined): KineticAtrDecision {
+export function checkKineticWriteAllowed(
+  claims: KineticAtrClaims | null | undefined
+): KineticAtrDecision {
   if (!claims) {
     return { allowed: false, reason: "missing_atr_claims" };
   }

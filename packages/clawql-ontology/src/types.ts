@@ -111,7 +111,10 @@ export type GeneratedWriteTool = {
   requires_mandate?: boolean;
   mandate_type?: string;
   audit_level?: string;
-  inputSchema: Record<string, { type: string; description?: string; optional?: boolean; values?: string[] }>;
+  inputSchema: Record<
+    string,
+    { type: string; description?: string; optional?: boolean; values?: string[] }
+  >;
   sourcePath: string;
 };
 

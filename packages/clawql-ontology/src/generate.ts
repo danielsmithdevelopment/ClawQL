@@ -38,7 +38,10 @@ function writeInputSchemaForAction(
   properties: Record<string, { type?: string; values?: string[] }> | undefined
 ): GeneratedWriteTool["inputSchema"] {
   // Convention: update_<snake>_status → id + status enum from entity properties.
-  if (action.name === `update_${snakeEntity(entityName)}_status` || action.name.endsWith("_status")) {
+  if (
+    action.name === `update_${snakeEntity(entityName)}_status` ||
+    action.name.endsWith("_status")
+  ) {
     const statusProp = properties?.status;
     return {
       id: { type: "string", description: `${entityName} identifier` },

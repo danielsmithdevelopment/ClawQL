@@ -18,9 +18,9 @@ clawql ontology generate --dir examples/ontology/entities --out generated/ontolo
 
 ## Live tools
 
-| Flag | Tools |
-| ---- | ----- |
-| `CLAWQL_ENABLE_ONTOLOGY=1` | Fixture reads (`get_contract`, relationships, …) |
+| Flag                              | Tools                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------ |
+| `CLAWQL_ENABLE_ONTOLOGY=1`        | Fixture reads (`get_contract`, relationships, …)                         |
 | `CLAWQL_ENABLE_ONTOLOGY_WRITES=1` | LOW kinetic writes (`update_contract_status`) via ATR → snapshot → audit |
 
 Optional: `CLAWQL_ONTOLOGY_FIXTURE`, `CLAWQL_ONTOLOGY_ATR_SCOPE=ontology:write`.
@@ -37,10 +37,6 @@ the repo-canonical [`schemas/ontology/entity.schema.json`](../../schemas/ontolog
 ## Library
 
 ```ts
-import {
-  lintOntology,
-  generateOntologyReadTools,
-  runLowKineticTransaction,
-} from "clawql-ontology";
+import { lintOntology, generateOntologyReadTools, runLowKineticTransaction } from "clawql-ontology";
 import { makeOntologyLayer } from "clawql-ontology/plugin";
 ```
