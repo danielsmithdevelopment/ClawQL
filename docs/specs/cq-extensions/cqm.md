@@ -1,0 +1,61 @@
+# `.cqm` — ClawQL Manifest (draft)
+
+**Extension:** `.cqm`  
+**Media type (proposed):** `application/vnd.clawql.manifest+yaml`  
+**Status:** Draft v0.1 · [ADR 0010](../../adr/0010-cq-file-extensions.md)
+
+## Purpose
+
+Structured manifests that `clawql-release`, EnterpriseGovernance PEP, and `clawql doctor` must validate with ClawQL-specific rules — not generic YAML lint.
+
+Examples: release manifest, governance pin, policy packs.
+
+## Serialization
+
+YAML. UTF-8. Optional leading document separator `---`.
+
+## Required top-level fields
+
+| Field           | Type   | Notes                                                   |
+| --------------- | ------ | ------------------------------------------------------- |
+| `apiVersion`    | string | e.g. `clawql.dev/manifest/v1alpha1`                     |
+| `kind`          | string | `ReleaseManifest` \| `EnterpriseGovernance` \| `Policy` |
+| `metadata.name` | string | Stable id                                               |
+
+## Recommended fields
+
+| Field                        | Notes                                 |
+| ---------------------------- | ------------------------------------- |
+| `metadata.version`           | Semver or release tag                 |
+| `spec`                       | Kind-specific body                    |
+| `spec.ontologySchemaVersion` | Pin to Ontology schema generation     |
+| `spec.compliance`            | Level, residency, PII handling        |
+| `spec.kinetic`               | Default blast-radius / mandate policy |
+
+## Tooling hooks
+
+- `clawql-release verify` / future `clawql-release lint` — validate `.cqm`
+- `clawql doctor --smoke` — hash / presence of active governance `.cqm`
+- Editors — associate with ClawQL manifest JSON Schema (when published)
+
+## Non-goals
+
+- Replacing `package.json`, Helm `values.yaml`, or Pulumi stack config
+- Binary packaging — keep YAML text for Git diff / PR review
+
+## Example (illustrative)
+
+```yaml
+apiVersion: clawql.dev/manifest/v1alpha1
+kind: EnterpriseGovernance
+metadata:
+  name: acme-prod
+  version: "2026.7.20"
+spec:
+  compliance:
+    level: high
+    residency: us
+  ontologySchemaVersion: clawql.dev/ontology/v1alpha1
+  kinetic:
+    defaultRequiresMandate: false
+```

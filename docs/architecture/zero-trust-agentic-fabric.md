@@ -217,6 +217,7 @@ Essay map (proof of competence): [PragmaticVectors Hardened Agentic Stack](https
 
 - Marketing GTM (primary): [Inference-first GTM](https://clawql.com/inference/gtm/) · [Hardened Security Dossier](https://clawql.com/inference/gtm/#security-dossier)
 - Enterprise / Palantir (secondary): [Enterprise GTM](https://clawql.com/enterprise/gtm/)
+- **Enterprise Ontology** (typed entities, kinetic writes, OKF + Git/R2 split — closes Palantir Ontology gap without lock-in): [enterprise-ontology.md](./enterprise-ontology.md) · [ADR 0009](../adr/0009-enterprise-ontology.md)
 - Product entry: [clawql-inference](../inference/clawql-inference.md) · [Getting started](https://docs.clawql.com/getting-started)
 - NATS Helm: [NATS JetStream](https://docs.clawql.com/nats-jetstream)
 - Vision: [Vision & roadmap](../vision/clawql-vision-roadmap.md)

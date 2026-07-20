@@ -1,5 +1,6 @@
 /**
- * Auto-generated vault index pages — `_INDEX_{Provider}.md` under the recall scan root (GitHub #38).
+ * Auto-generated vault index pages — `_INDEX_{Provider}.md` + OKF `index.md` under the recall scan root
+ * (GitHub #38, ADR 0009 OKF).
  */
 
 import { createHash } from "node:crypto";
@@ -24,6 +25,7 @@ function defaultScanRoot(): string {
 
 function isIndexPagePath(rel: string): boolean {
   const b = basename(rel);
+  if (b.toLowerCase() === "index.md" || b.toLowerCase() === "log.md") return true;
   return b.startsWith("_INDEX_") && b.toLowerCase().endsWith(".md");
 }
 
@@ -81,72 +83,51 @@ function indexFileRel(scanRoot: string, providerLabel: string): string {
   return root ? `${root}/${name}` : name;
 }
 
-/**
- * After a successful ingest + DB sync, rewrite the provider index page if needed.
- * Skips when **`CLAWQL_MEMORY_INDEX_PAGE=0`**. Idempotent: no write when content unchanged.
- */
-export async function updateProviderIndexPage(vaultRoot: string): Promise<void> {
-  if (process.env.CLAWQL_MEMORY_INDEX_PAGE?.trim() === "0") return;
+function okfIndexFileRel(scanRoot: string): string {
+  const root = scanRoot.replace(/\\/g, "/").replace(/^\/+/, "");
+  return root ? `${root}/index.md` : "index.md";
+}
 
-  const scanRoot = defaultScanRoot();
-  const maxFiles = envInt("CLAWQL_MEMORY_RECALL_MAX_FILES", 2000);
-  const rawLabel = process.env.CLAWQL_MEMORY_INDEX_PROVIDER?.trim();
-  const providerLabel = rawLabel && rawLabel.length > 0 ? rawLabel : "ClawQL";
+type Row = { rel: string; title: string };
 
-  let paths: string[];
-  try {
-    paths = await listVaultMarkdownRelPaths(vaultRoot, scanRoot, maxFiles);
-  } catch {
-    return;
-  }
-
-  const indexRel = indexFileRel(scanRoot, providerLabel);
-  const notePaths = paths.filter((p) => !isIndexPagePath(p)).filter((p) => p !== indexRel);
-
-  type Row = { rel: string; title: string };
-  const rows: Row[] = [];
-  for (const rel of notePaths) {
-    try {
-      const text = await readVaultTextFile(vaultRoot, rel);
-      rows.push({ rel, title: noteTitleFromMarkdown(rel, text) });
-    } catch {
-      /* skip */
-    }
-  }
-
-  rows.sort((a, b) => a.title.localeCompare(b.title, "en"));
-
-  const byFolder = new Map<string, Row[]>();
-  for (const r of rows) {
-    const k = folderKeyForRel(r.rel);
-    const list = byFolder.get(k);
-    if (list) list.push(r);
-    else byFolder.set(k, [r]);
-  }
-  const folderKeys = [...byFolder.keys()].sort((a, b) => a.localeCompare(b, "en"));
-  for (const k of folderKeys) {
-    byFolder.get(k)!.sort((a, b) => a.title.localeCompare(b.title, "en"));
-  }
-
-  const fp = indexFingerprint(rows);
-  try {
-    const existing = await readVaultTextFile(vaultRoot, indexRel);
-    if (fingerprintFromExisting(existing) === fp) return;
-  } catch {
-    /* missing */
-  }
-
+function buildIndexMarkdown(opts: {
+  providerLabel: string;
+  scanRoot: string;
+  rows: Row[];
+  folderKeys: string[];
+  byFolder: Map<string, Row[]>;
+  fp: string;
+  /** OKF reserved `index.md` vs legacy `_INDEX_*`. */
+  okf: boolean;
+}): string {
+  const { providerLabel, scanRoot, rows, folderKeys, byFolder, fp, okf } = opts;
   const scanDisplay = scanRoot === "" ? "(vault root)" : `\`${scanRoot}/\``;
+  const iso = new Date().toISOString();
   const lines: string[] = [];
   lines.push("---");
+  lines.push('type: "index"');
+  lines.push(`title: ${JSON.stringify(okf ? "Memory index" : `Index — ${providerLabel}`)}`);
+  lines.push(
+    `description: ${JSON.stringify(`Auto-generated catalog of notes under ${scanRoot || "vault root"}`)}`
+  );
+  lines.push("tags: [clawql-ingest, okf-index]");
+  lines.push(`timestamp: ${JSON.stringify(iso)}`);
+  lines.push(`date: ${iso}`);
   lines.push("clawql_generated: provider_index");
+  lines.push("clawql_okf: true");
   lines.push("---");
   lines.push("");
-  lines.push(`# Index — ${providerLabel}`);
+  lines.push(okf ? `# Memory index` : `# Index — ${providerLabel}`);
   lines.push("");
-  lines.push(
-    `Auto-generated list of Markdown notes under the recall subtree ${scanDisplay}. Updated after **successful \`memory_ingest\`** (when this feature is enabled). Disable with \`CLAWQL_MEMORY_INDEX_PAGE=0\`.`
-  );
+  if (okf) {
+    lines.push(
+      `OKF \`index.md\` catalog for the recall subtree ${scanDisplay}. Updated after **successful \`memory_ingest\`**. Legacy hub: \`_INDEX_{Provider}.md\`. Disable with \`CLAWQL_MEMORY_INDEX_PAGE=0\`.`
+    );
+  } else {
+    lines.push(
+      `Auto-generated list of Markdown notes under the recall subtree ${scanDisplay}. Updated after **successful \`memory_ingest\`** (when this feature is enabled). Disable with \`CLAWQL_MEMORY_INDEX_PAGE=0\`.`
+    );
+  }
   lines.push("");
   lines.push("## Summary");
   lines.push("");
@@ -182,13 +163,97 @@ export async function updateProviderIndexPage(vaultRoot: string): Promise<void> 
   }
   lines.push(`<!-- clawql-index:${fp} -->`);
   lines.push("");
+  return lines.join("\n");
+}
 
-  const body = lines.join("\n");
-
+async function writeIndexIfChanged(vaultRoot: string, rel: string, body: string): Promise<void> {
+  const fp = fingerprintFromExisting(body);
   try {
-    await writeVaultTextFileAtomic(vaultRoot, indexRel, body);
+    const existing = await readVaultTextFile(vaultRoot, rel);
+    if (fp && fingerprintFromExisting(existing) === fp) return;
+  } catch {
+    /* missing */
+  }
+  try {
+    await writeVaultTextFileAtomic(vaultRoot, rel, body);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.error(`[clawql-mcp] provider index page write failed: ${msg}`);
+    console.error(`[clawql-mcp] provider index page write failed (${rel}): ${msg}`);
+  }
+}
+
+/**
+ * After a successful ingest + DB sync, rewrite the provider index page if needed.
+ * Also writes OKF **`index.md`** alongside **`_INDEX_{Provider}.md`**.
+ * Skips when **`CLAWQL_MEMORY_INDEX_PAGE=0`**. Idempotent: no write when content unchanged.
+ */
+export async function updateProviderIndexPage(vaultRoot: string): Promise<void> {
+  if (process.env.CLAWQL_MEMORY_INDEX_PAGE?.trim() === "0") return;
+
+  const scanRoot = defaultScanRoot();
+  const maxFiles = envInt("CLAWQL_MEMORY_RECALL_MAX_FILES", 2000);
+  const rawLabel = process.env.CLAWQL_MEMORY_INDEX_PROVIDER?.trim();
+  const providerLabel = rawLabel && rawLabel.length > 0 ? rawLabel : "ClawQL";
+
+  let paths: string[];
+  try {
+    paths = await listVaultMarkdownRelPaths(vaultRoot, scanRoot, maxFiles);
+  } catch {
+    return;
+  }
+
+  const indexRel = indexFileRel(scanRoot, providerLabel);
+  const okfIndexRel = okfIndexFileRel(scanRoot);
+  const notePaths = paths
+    .filter((p) => !isIndexPagePath(p))
+    .filter((p) => p !== indexRel && p !== okfIndexRel);
+
+  const rows: Row[] = [];
+  for (const rel of notePaths) {
+    try {
+      const text = await readVaultTextFile(vaultRoot, rel);
+      rows.push({ rel, title: noteTitleFromMarkdown(rel, text) });
+    } catch {
+      /* skip */
+    }
+  }
+
+  rows.sort((a, b) => a.title.localeCompare(b.title, "en"));
+
+  const byFolder = new Map<string, Row[]>();
+  for (const r of rows) {
+    const k = folderKeyForRel(r.rel);
+    const list = byFolder.get(k);
+    if (list) list.push(r);
+    else byFolder.set(k, [r]);
+  }
+  const folderKeys = [...byFolder.keys()].sort((a, b) => a.localeCompare(b, "en"));
+  for (const k of folderKeys) {
+    byFolder.get(k)!.sort((a, b) => a.title.localeCompare(b.title, "en"));
+  }
+
+  const fp = indexFingerprint(rows);
+  const legacyBody = buildIndexMarkdown({
+    providerLabel,
+    scanRoot,
+    rows,
+    folderKeys,
+    byFolder,
+    fp,
+    okf: false,
+  });
+  const okfBody = buildIndexMarkdown({
+    providerLabel,
+    scanRoot,
+    rows,
+    folderKeys,
+    byFolder,
+    fp,
+    okf: true,
+  });
+
+  await writeIndexIfChanged(vaultRoot, indexRel, legacyBody);
+  if (process.env.CLAWQL_MEMORY_OKF_INDEX?.trim() !== "0") {
+    await writeIndexIfChanged(vaultRoot, okfIndexRel, okfBody);
   }
 }

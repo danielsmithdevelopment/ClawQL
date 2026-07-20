@@ -56,6 +56,24 @@ export function executeMemoryIngestCoreEffect(
       return result;
     }
 
+    yield* memoryFromPromise(async () => {
+      const { appendOkfMemoryLog } = await import("../okf/log.js");
+      const { resolveOkfType } = await import("../okf/frontmatter.js");
+      await appendOkfMemoryLog(vault, {
+        timestamp: new Date().toISOString(),
+        title,
+        path: result.path ?? `Memory/${title}`,
+        type: resolveOkfType(effective.type),
+        correlationId: effective.correlationId ?? effective.sessionId,
+      });
+    }).pipe(
+      Effect.catchAll((err) =>
+        Effect.sync(() => {
+          console.error(`[clawql-mcp] OKF log.md append failed: ${err.reason}`);
+        })
+      )
+    );
+
     const rebuild: NonNullable<MemoryIngestResult["rebuild"]> = {};
     let extras: Partial<MemoryIngestResult> = {};
 

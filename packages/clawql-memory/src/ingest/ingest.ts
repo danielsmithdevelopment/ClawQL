@@ -14,6 +14,12 @@ import { slugifyTitle } from "./slug.js";
 import { extractIngestHashes } from "./hashes.js";
 import { readVaultTextFile, withVaultWriteLock, writeVaultTextFileAtomic } from "../vault/utils.js";
 import { presidioRedactMemoryIngestInput } from "./presidio-ingest.js";
+import {
+  buildOkfFrontmatterString,
+  ensureOkfFrontmatter,
+  resolveOkfType,
+} from "../okf/frontmatter.js";
+import { DEFAULT_OKF_MEMORY_TYPE } from "../okf/types.js";
 
 export { slugifyTitle, extractIngestHashes };
 export type { EnterpriseCitation } from "./enterprise-citations.js";
@@ -22,6 +28,25 @@ const MEMORY_DIR = "Memory";
 
 export type MemoryIngestInput = {
   title: string;
+  /**
+   * OKF required `type` (ClawQL taxonomy: decision, context, error, runbook, …).
+   * Defaults to **`context`** when omitted.
+   */
+  type?: string;
+  /** OKF recommended one-line summary (frontmatter `description`). */
+  description?: string;
+  /** OKF recommended canonical URI for the underlying asset (`resource`). */
+  resource?: string | null;
+  /** Extra frontmatter tags (always includes `clawql-ingest`). */
+  tags?: string[];
+  /** ClawQL OKF extension — correlation id for WORM / session trails. */
+  correlationId?: string;
+  /** ClawQL OKF extension — WORM entry hash when available. */
+  wormRef?: string | null;
+  /** ClawQL OKF extension — agent identity label. */
+  agentId?: string;
+  /** ClawQL OKF extension — optional quality / eval verdict. */
+  verdict?: string;
   insights?: string;
   conversation?: string;
   /**
@@ -172,18 +197,32 @@ function buildRelatedLinks(wikilinks: string[] | undefined): string {
   return `## Related\n\n${items}\n\n`;
 }
 
-function buildFrontmatter(title: string): string {
-  const iso = new Date().toISOString();
-  return [
-    "---",
-    `title: ${JSON.stringify(title)}`,
-    `date: ${iso}`,
-    "tags: [clawql-ingest]",
-    "clawql_ingest: true",
-    `clawql_ingest_created: ${JSON.stringify(iso)}`,
-    "---",
-    "",
-  ].join("\n");
+function inferDescription(input: MemoryIngestInput): string | undefined {
+  if (input.description?.trim()) return input.description.trim();
+  const insights = input.insights?.trim();
+  if (!insights) return undefined;
+  const firstLine = insights
+    .split("\n")
+    .find((l) => l.trim())
+    ?.trim();
+  if (!firstLine) return undefined;
+  return firstLine.length > 240 ? `${firstLine.slice(0, 237)}...` : firstLine;
+}
+
+function buildFrontmatter(title: string, input: MemoryIngestInput, when: string): string {
+  return buildOkfFrontmatterString({
+    title,
+    type: input.type,
+    description: inferDescription(input),
+    resource: input.resource,
+    tags: input.tags,
+    timestamp: when,
+    createdAt: when,
+    correlationId: input.correlationId ?? input.sessionId,
+    wormRef: input.wormRef,
+    agentId: input.agentId,
+    verdict: input.verdict,
+  });
 }
 
 export type PreparedMemoryIngest =
@@ -268,7 +307,7 @@ export async function writeMemoryIngestPage(
 
     if (!existing || !append) {
       const body = [
-        buildFrontmatter(title),
+        buildFrontmatter(title, effective, when),
         `# ${title}`,
         "",
         related,
@@ -281,7 +320,13 @@ export async function writeMemoryIngestPage(
       return { ok: true, path: rel };
     }
 
-    const next = `${existing.trimEnd()}\n\n---\n\n${section}\n`;
+    // Upgrade legacy notes (missing OKF `type`) on append so the vault converges to OKF.
+    const upgraded = ensureOkfFrontmatter(existing, {
+      title,
+      type: resolveOkfType(effective.type) || DEFAULT_OKF_MEMORY_TYPE,
+      description: inferDescription(effective),
+    });
+    const next = `${upgraded.trimEnd()}\n\n---\n\n${section}\n`;
     await writeVaultTextFileAtomic(vault, rel, next);
     return { ok: true, path: rel };
   });

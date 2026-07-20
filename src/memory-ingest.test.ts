@@ -1,5 +1,5 @@
 import { constants } from "node:fs";
-import { access, mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -55,13 +55,86 @@ describe("memory-ingest", () => {
     expect(r.ok).toBe(true);
     expect(r.path).toBe("Memory/test-note.md");
     const text = await readFile(join(dir, "Memory", "test-note.md"), "utf8");
+    expect(text).toContain('type: "context"');
+    expect(text).toContain("clawql_okf: true");
     expect(text).toContain("clawql_ingest: true");
     expect(text).toContain("clawql_ingest_created:");
+    expect(text).toContain("timestamp:");
     expect(text).toContain("#### Provenance");
     expect(text).toContain("memory_ingest");
     expect(text).toContain("# Test Note");
     expect(text).toContain("[[Other]]");
     expect(text).toContain("Learned something.");
+  });
+
+  it("writes OKF type and extensions when provided", async () => {
+    const r = await runMemoryIngest({
+      title: "Arch Decision",
+      type: "decision",
+      description: "Adopt OKF for vault memory",
+      tags: ["okf"],
+      correlationId: "corr-okf-1",
+      wormRef: "worm-hash-1",
+      agentId: "cursor-agent",
+      verdict: "accepted",
+      insights: "OKF frontmatter is the contract.",
+    });
+    expect(r.ok).toBe(true);
+    const text = await readFile(join(dir, "Memory", "arch-decision.md"), "utf8");
+    expect(text).toContain('type: "decision"');
+    expect(text).toContain('description: "Adopt OKF for vault memory"');
+    expect(text).toContain("okf");
+    expect(text).toContain('correlation_id: "corr-okf-1"');
+    expect(text).toContain('worm_ref: "worm-hash-1"');
+    expect(text).toContain('agent_id: "cursor-agent"');
+    expect(text).toContain('verdict: "accepted"');
+  });
+
+  it("upgrades legacy frontmatter when appending", async () => {
+    await mkdir(join(dir, "Memory"), { recursive: true });
+    await writeFile(
+      join(dir, "Memory", "legacy.md"),
+      [
+        "---",
+        'title: "Legacy"',
+        "date: 2026-01-01T00:00:00.000Z",
+        "tags: [clawql-ingest]",
+        "clawql_ingest: true",
+        'clawql_ingest_created: "2026-01-01T00:00:00.000Z"',
+        "---",
+        "",
+        "# Legacy",
+        "",
+        "old body",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+    const r = await runMemoryIngest({ title: "Legacy", insights: "new section" });
+    expect(r.ok).toBe(true);
+    const text = await readFile(join(dir, "Memory", "legacy.md"), "utf8");
+    expect(text).toContain('type: "context"');
+    expect(text).toContain("clawql_okf: true");
+    expect(text).toContain("old body");
+    expect(text).toContain("new section");
+  });
+
+  it("appends OKF log.md and writes Memory/index.md", async () => {
+    const r = await runMemoryIngest({
+      title: "Logged Note",
+      type: "decision",
+      insights: "logged",
+      correlationId: "corr-log",
+    });
+    expect(r.ok).toBe(true);
+    const log = await readFile(join(dir, "Memory", "log.md"), "utf8");
+    expect(log).toContain('type: "log"');
+    expect(log).toContain("Logged Note");
+    expect(log).toContain("corr-log");
+    const idx = await readFile(join(dir, "Memory", "index.md"), "utf8");
+    expect(idx).toContain('type: "index"');
+    expect(idx).toContain("[[Logged Note]]");
+    expect(idx).toContain("clawql_okf: true");
   });
 
   it("persists enterpriseCitations block for Onyx chaining (#130)", async () => {

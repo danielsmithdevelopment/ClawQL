@@ -15,6 +15,22 @@ import { MEMORY_RECALL_SOURCES } from "../recall/recall-sources.js";
 
 export const MEMORY_INGEST_TITLE_DESCRIPTION =
   "Suggested Obsidian page title (used for the file name and heading).";
+export const MEMORY_INGEST_TYPE_DESCRIPTION =
+  "OKF required `type` (ClawQL taxonomy: decision, context, error, runbook, entity, relationship, task_result, ontology_*, digest). Defaults to context.";
+export const MEMORY_INGEST_DESCRIPTION_DESCRIPTION =
+  "OKF recommended one-line summary stored in frontmatter `description` (defaults to first insights line).";
+export const MEMORY_INGEST_RESOURCE_DESCRIPTION =
+  "OKF recommended canonical URI for the underlying asset (`resource`).";
+export const MEMORY_INGEST_TAGS_DESCRIPTION =
+  "Extra YAML frontmatter tags (always includes clawql-ingest).";
+export const MEMORY_INGEST_CORRELATION_ID_DESCRIPTION =
+  "ClawQL OKF extension — correlation id linking this note to WORM / session trails (falls back to sessionId).";
+export const MEMORY_INGEST_WORM_REF_DESCRIPTION =
+  "ClawQL OKF extension — WORM entry hash when available (`worm_ref`).";
+export const MEMORY_INGEST_AGENT_ID_DESCRIPTION =
+  "ClawQL OKF extension — agent identity label (`agent_id`).";
+export const MEMORY_INGEST_VERDICT_DESCRIPTION =
+  "ClawQL OKF extension — optional quality / eval verdict.";
 export const MEMORY_INGEST_INSIGHTS_DESCRIPTION = "Key insights to persist.";
 export const MEMORY_INGEST_CONVERSATION_DESCRIPTION = "Conversation transcript or summary text.";
 export const MEMORY_INGEST_TOOL_OUTPUTS_DESCRIPTION =
@@ -80,6 +96,34 @@ export const MemoryIngestInputSchema = Schema.Struct({
   title: Schema.String.pipe(Schema.minLength(1)).annotations({
     description: MEMORY_INGEST_TITLE_DESCRIPTION,
   }),
+  type: Schema.optional(
+    Schema.String.pipe(Schema.minLength(1)).annotations({
+      description: MEMORY_INGEST_TYPE_DESCRIPTION,
+    })
+  ),
+  description: Schema.optional(
+    Schema.String.annotations({ description: MEMORY_INGEST_DESCRIPTION_DESCRIPTION })
+  ),
+  resource: Schema.optional(
+    Schema.NullOr(Schema.String).annotations({ description: MEMORY_INGEST_RESOURCE_DESCRIPTION })
+  ),
+  tags: Schema.optional(
+    Schema.mutable(Schema.Array(Schema.String)).annotations({
+      description: MEMORY_INGEST_TAGS_DESCRIPTION,
+    })
+  ),
+  correlationId: Schema.optional(
+    Schema.String.annotations({ description: MEMORY_INGEST_CORRELATION_ID_DESCRIPTION })
+  ),
+  wormRef: Schema.optional(
+    Schema.NullOr(Schema.String).annotations({ description: MEMORY_INGEST_WORM_REF_DESCRIPTION })
+  ),
+  agentId: Schema.optional(
+    Schema.String.annotations({ description: MEMORY_INGEST_AGENT_ID_DESCRIPTION })
+  ),
+  verdict: Schema.optional(
+    Schema.String.annotations({ description: MEMORY_INGEST_VERDICT_DESCRIPTION })
+  ),
   insights: Schema.optional(
     Schema.String.annotations({ description: MEMORY_INGEST_INSIGHTS_DESCRIPTION })
   ),

@@ -57,3 +57,6 @@ docker/kustomize/overlays/local/patch-mcp-vault-hostpath.json
 charts/*/charts/*.tgz
 clawql-mcp-*.tgz
 .package.json.prepack-backup
+
+# Ontology generate output
+generated/

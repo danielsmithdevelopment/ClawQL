@@ -91,6 +91,7 @@ import {
   runPaymentsCompensationCancelCmd,
   type PaymentsCliOptions,
 } from "./payments-cli.js";
+import { runOntologyGenerate, runOntologyLint } from "./ontology-cli.js";
 
 type Command =
   | "init"
@@ -101,6 +102,7 @@ type Command =
   | "operator"
   | "sources"
   | "release"
+  | "ontology"
   | "sync"
   | "sandbox"
   | "inference"
@@ -131,6 +133,7 @@ function parse(argv: string[]): {
     else if (a === "--json") flags.json = true;
     else if (a === "--from-env") flags.fromEnv = argv[++i] ?? ".env";
     else if (a === "--home") flags.home = argv[++i] ?? "";
+    else if (a === "--root") flags.root = argv[++i] ?? "";
     else if (a === "--url") flags.url = argv[++i] ?? "";
     else if (a === "--write") flags.write = argv[++i] ?? "";
     else if (a.startsWith("--write=")) flags.write = a.slice("--write=".length);
@@ -147,6 +150,11 @@ function parse(argv: string[]): {
     else if (a === "--npm-tgz") flags.npmTgz = argv[++i] ?? "";
     else if (a === "--github") flags.github = true;
     else if (a === "--no-copy") flags.noCopy = true;
+    else if (a === "--dir") flags.dir = argv[++i] ?? "";
+    else if (a === "--out") flags.out = argv[++i] ?? "";
+    else if (a === "--schema") flags.schema = argv[++i] ?? "";
+    else if (a === "--strict") flags.strict = true;
+    else if (a === "--skip-lint") flags.skipLint = true;
     else if (a === "--dry-run") flags.dryRun = true;
     else if (a === "--force") flags.force = true;
     else if (a === "--provider") flags.provider = argv[++i] ?? "";
@@ -246,6 +254,7 @@ function parse(argv: string[]): {
     cmd === "operator" ||
     cmd === "sources" ||
     cmd === "release" ||
+    cmd === "ontology" ||
     cmd === "sync" ||
     cmd === "sandbox" ||
     cmd === "inference" ||
@@ -261,7 +270,7 @@ function parse(argv: string[]): {
     cmd === "inference" ||
     cmd === "payments"
       ? positional.slice(2)
-      : cmd === "release"
+      : cmd === "release" || cmd === "ontology"
         ? positional.slice(2)
         : positional.slice(1);
   return { cmd, subcmd, flags, rest };
@@ -286,6 +295,7 @@ Usage:
   clawql sources list | add <url> [--name NAME] [--kind openapi|discovery|graphql|grpc|mcp|cli] | remove <id>
   clawql sources add --kind cli --command <bin> [--args a,b] [--name NAME]
   clawql release init | collect | manifest | publish | verify <path>
+  clawql ontology lint [--dir PATH] [files...] | generate --out DIR [--dir PATH]
   clawql sync init | push | pull | status [--dry-run] [--force]
   clawql sandbox init | verify | status | edit --harness claude [--path DIR] [--skip-verify]
   clawql inference serve [--port 8080] | complete --model <provider/model> --message <text>
@@ -323,6 +333,10 @@ release (Layer 0 MVP — immutable manifest):
   manifest        Write releases/vX.Y.Z/manifest.json
   publish         manifest + optional --github (needs gh CLI)
   verify <path>   Verify bundle directory or manifest.json
+
+ontology (ADR 0009 — enterprise Ontology):
+  lint            Validate entity YAML against schemas/ontology/entity.schema.json
+  generate        Emit read MCP tools.json + TypeScript stub (--out DIR)
 
 operator:
   status          List ClawQLInstance CRs and tier-spec ConfigMaps (requires kubeconfig)
@@ -1153,6 +1167,32 @@ async function main(): Promise<void> {
       return;
     }
     console.error("Usage: clawql release init | collect | manifest | publish | verify <path>");
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "ontology") {
+    const ontologyOpts = {
+      root:
+        (typeof flags.root === "string" && flags.root ? flags.root : undefined) ||
+        (typeof flags.home === "string" && flags.home ? flags.home : undefined),
+      schema: typeof flags.schema === "string" && flags.schema ? flags.schema : undefined,
+      dir: typeof flags.dir === "string" && flags.dir ? flags.dir : undefined,
+      out: typeof flags.out === "string" && flags.out ? flags.out : undefined,
+      strict: Boolean(flags.strict),
+      skipLint: Boolean(flags.skipLint),
+      json: Boolean(flags.json),
+      paths: rest,
+    };
+    if (subcmd === "lint") {
+      process.exitCode = await runOntologyLint(ontologyOpts);
+      return;
+    }
+    if (subcmd === "generate") {
+      process.exitCode = await runOntologyGenerate(ontologyOpts);
+      return;
+    }
+    console.error("Usage: clawql ontology lint | generate --out DIR");
     process.exitCode = 1;
     return;
   }
