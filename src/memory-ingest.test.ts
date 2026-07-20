@@ -80,7 +80,9 @@ describe("memory-ingest", () => {
       insights: "OKF frontmatter is the contract.",
     });
     expect(r.ok).toBe(true);
-    const text = await readFile(join(dir, "Memory", "arch-decision.md"), "utf8");
+    // worm_ref selects dual-accept `.cqk` (ADR 0010) instead of `.md`
+    expect(r.path).toBe("Memory/arch-decision.cqk");
+    const text = await readFile(join(dir, r.path!), "utf8");
     expect(text).toContain('type: "decision"');
     expect(text).toContain('description: "Adopt OKF for vault memory"');
     expect(text).toContain("okf");
