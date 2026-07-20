@@ -137,9 +137,19 @@ Ouroboros Seeds ([ADR 0001](./0001-ouroboros-workflow-engine.md)) carry a **task
 - Do **not** implement Argo/Pulumi executor routing or HIGH/CRITICAL paths here — B4 / **3.4–3.7**.
 - Do **not** remove GraphQL from the architecture narrative — keep it as the transport target.
 
-**Next implementation:** **3.2** (generate gated write tool defs) → **3.3** (LOW sandbox: ATR → snapshot → execute/deny → WORM).
+**Next implementation:** **3.2** ✅ / **3.3** ✅ (gated write defs + LOW sandbox). Remaining: MEDIUM+ (**3.4–3.7**), GraphQL (**3.8**).
 
 **Done-when:** ADR + essay gap record MCP-first; GraphQL samples framed as target / disclose until 3.8.
+
+### 11) Amendment (2026-07-20) — LOW MCP kinetic shipped (essay gaps **3.2–3.3**)
+
+**Shipped:**
+
+- `ontology generate` emits `writeTools` for `kinetic_level: LOW` + `executor: NATIVE` (e.g. `update_contract_status`).
+- Runtime gate: `CLAWQL_ENABLE_ONTOLOGY_WRITES=1` registers write MCP tools.
+- Minimal Transaction Sandbox: ATR → field snapshot → native fixture execute/deny → in-memory kinetic audit hash-chain (`KINETIC_COMMITTED` / `KINETIC_DENIED`).
+
+**Still deferred:** Argo/Pulumi routers, MEDIUM+/HIGH/CRITICAL, GraphQL `@kinetic`, permanent WORM store.
 
 ## Consequences
 
@@ -166,6 +176,7 @@ Ouroboros Seeds ([ADR 0001](./0001-ouroboros-workflow-engine.md)) carry a **task
 6. **Essay gap closure** (PragmaticVectors publish path): [`docs/ontology/essay-gap-closure.md`](../ontology/essay-gap-closure.md) — close A/B workstreams or disclose C blockers.
 7. **v1 read backend = fixture mode** (essay gap **2.3**). ✅ — see §9; SQL adapters are partner/roadmap.
 8. **v1 kinetic call surface = MCP** (essay gap **3.1**). ✅ — see §3 / §10; GraphQL `@kinetic` = transport target (**3.8**).
+9. **LOW MCP kinetic** (essay gaps **3.2–3.3**). ✅ — see §11; `CLAWQL_ENABLE_ONTOLOGY_WRITES`.
 
 ## Status language
 

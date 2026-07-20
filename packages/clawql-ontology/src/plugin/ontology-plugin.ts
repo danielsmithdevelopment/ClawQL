@@ -10,12 +10,20 @@ import {
   searchContracts,
   searchOrganizations,
 } from "../fixture-store.js";
+import { runLowKineticTransaction, type KineticAtrClaims } from "../kinetic/index.js";
 import { redactOntologyPiiFields } from "../pii.js";
 
 export const ONTOLOGY_PLUGIN_ID = "clawql-ontology";
 
 const CONTRACT_PII = ["parties.contact_email", "parties.contact_phone"];
 const ORG_PII = ["contact_email", "contact_phone"];
+
+export type CreateOntologyPluginOptions = {
+  /** Register LOW kinetic write tools (requires fixture mutators). Default false. */
+  enableWrites?: boolean;
+  /** ATR claims for kinetic writes; default resolves from env / permissive local. */
+  atrClaims?: KineticAtrClaims | null;
+};
 
 function logOntologyTool(name: string, meta: Record<string, unknown>): void {
   if (process.env.CLAWQL_MCP_TOOL_SHAPE_LOG === "1") {
@@ -31,7 +39,8 @@ async function textResult(
   };
 }
 
-export function createOntologyPlugin(): Plugin {
+export function createOntologyPlugin(opts: CreateOntologyPluginOptions = {}): Plugin {
+  const enableWrites = opts.enableWrites === true;
   return {
     id: ONTOLOGY_PLUGIN_ID,
     version: "0.1.0",
@@ -153,6 +162,34 @@ export function createOntologyPlugin(): Plugin {
             return textResult(out);
           },
         });
+
+        if (enableWrites) {
+          yield* api.registerMcpTool({
+            name: "update_contract_status",
+            schema: {
+              id: z.string().describe("Contract identifier"),
+              status: z
+                .enum(["draft", "active", "expired", "terminated"])
+                .describe("New contract status"),
+            },
+            handler: async (args) => {
+              const a = args as { id?: string; status?: string };
+              const id = String(a.id ?? "");
+              const status = String(a.status ?? "");
+              logOntologyTool("update_contract_status", { id, status });
+              const result = await runLowKineticTransaction({
+                tool: "update_contract_status",
+                entity: "Contract",
+                recordId: id,
+                field: "status",
+                nextValue: status,
+                executor: "NATIVE",
+                claims: opts.atrClaims,
+              });
+              return textResult(result);
+            },
+          });
+        }
       }),
   };
 }

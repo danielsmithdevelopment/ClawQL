@@ -1,5 +1,6 @@
 export type {
   GeneratedReadTool,
+  GeneratedWriteTool,
   LoadedOntologyEntity,
   OntologyAction,
   OntologyEntityDocument,
@@ -19,6 +20,7 @@ export {
 export { defaultEntitySchemaPath, lintOntology, type LintOntologyOptions } from "./lint.js";
 export {
   generateOntologyReadTools,
+  isShipableLowNativeWrite,
   type GenerateOntologyOptions,
   _relationshipToolNameForTests,
 } from "./generate.js";
@@ -34,5 +36,15 @@ export {
   loadOntologyFixtureDb,
   resetOntologyFixtureDbForTests,
   searchContracts,
+  updateContractStatus,
 } from "./fixture-store.js";
 export { redactOntologyPiiFields } from "./pii.js";
+export {
+  checkKineticWriteAllowed,
+  listKineticAudit,
+  resetKineticAuditForTests,
+  resolveKineticAtrClaimsForRuntime,
+  runLowKineticTransaction,
+  type KineticAtrClaims,
+  type LowKineticWriteResult,
+} from "./kinetic/index.js";

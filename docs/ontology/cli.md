@@ -16,16 +16,12 @@ clawql ontology generate --dir examples/ontology/entities --out generated/ontolo
 
 # Live fixture tools in the gateway (v1 read backend — demo Contract/Organization store)
 CLAWQL_ENABLE_ONTOLOGY=1 npx clawql-mcp
+# LOW kinetic writes (ATR → snapshot → execute → audit):
+CLAWQL_ENABLE_ONTOLOGY=1 CLAWQL_ENABLE_ONTOLOGY_WRITES=1 npx clawql-mcp
 # Optional: CLAWQL_ONTOLOGY_DIR=.clawql/ontology/entities
 # Optional: CLAWQL_ONTOLOGY_FIXTURE=/path/to/fixtures.json
+# Optional: CLAWQL_ONTOLOGY_ATR_SCOPE=ontology:write
 # Note: sources[type=sql] is a declaration for stubs/partners — not a live DB adapter in v1 (ADR 0009 §9).
-
-# Package CLIs
-npm run ontology:lint
-npm run ontology:generate
-npx clawql-ontology lint --dir examples/ontology/entities
-npx clawql-ontology init
-npx clawql-ontology import --pack legal
 ```
 
 ## Read backends (v1)
@@ -36,6 +32,18 @@ npx clawql-ontology import --pack legal
 | **SQL / OpenAPI live bind** | Roadmap / design partners | `sources:` on entities drive generate stubs only today            |
 
 Do not claim automatic SQL binding in essay or Getting Started until a dedicated adapter ships.
+
+## Kinetic writes (v1 — LOW + NATIVE)
+
+| Concern | Behavior |
+| ------- | -------- |
+| Generate | `writeTools` for `kinetic_level: LOW` + `executor: NATIVE` (e.g. `update_contract_status`) |
+| Deferred | Argo/Pulumi / non-LOW stay in `deferredWriteActions` |
+| Runtime | `CLAWQL_ENABLE_ONTOLOGY_WRITES=1` registers write MCP tools |
+| Sandbox | ATR check → field snapshot → mutate fixture → `KINETIC_COMMITTED` / `KINETIC_DENIED` audit chain |
+| ATR | Scope `*` or `ontology:write`, or role `admin` (env: `CLAWQL_ONTOLOGY_ATR_SCOPE`) |
+
+MEDIUM+/canary/HITL/GraphQL `@kinetic` remain roadmap ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)).
 
 ## What lint checks
 
@@ -51,13 +59,13 @@ Do not claim automatic SQL binding in essay or Getting Started until a dedicated
 
 | File                      | Purpose                                                              |
 | ------------------------- | -------------------------------------------------------------------- |
-| `tools.json`              | Catalog of read + relationship MCP tools                             |
+| `tools.json`              | Catalog of read + relationship + gated **writeTools**                |
 | `index.md`                | OKF entity catalog (prefer before loading full `.cqe` bodies)        |
 | `onyx-sources.stub.json`  | Onyx connector stubs from `sources:` (manual apply; auto-sync is B5) |
-| `ontology-plugin.stub.ts` | `ONTOLOGY_READ_TOOLS` constant                                       |
+| `ontology-plugin.stub.ts` | `ONTOLOGY_READ_TOOLS` + `ONTOLOGY_WRITE_TOOLS`                       |
 | `README.md`               | Notes                                                                |
 
-Write / kinetic actions are listed as `deferredWriteActions` and **not** registered until Transaction Sandbox. **v1 kinetic surface = MCP** ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)); GraphQL `@kinetic` is a later transport target. Next impl: generate gated write tool defs (**3.2**) + LOW sandbox (**3.3**).
+**v1 kinetic surface = MCP** ([ADR 0009 §10](../adr/0009-enterprise-ontology.md)). LOW+NATIVE writes emit as `writeTools` and register with `CLAWQL_ENABLE_ONTOLOGY_WRITES=1`. Non-NATIVE / non-LOW stay in `deferredWriteActions`. GraphQL `@kinetic` is a later transport target.
 
 Entity files: prefer **`.cqe`** ([ADR 0010 §2a](../adr/0010-cq-file-extensions.md)); `.yaml` / `.yml` / `.json` remain accepted ([`.cqe` spec](https://docs.clawql.com/specs/cq-extensions/cqe)).
 

@@ -73,7 +73,7 @@ export function composeHorizontalPluginLayers(
     layers.push(makeSandboxLayer());
   }
   if (flags.enableOntology) {
-    layers.push(makeOntologyLayer());
+    layers.push(makeOntologyLayer({ enableWrites: flags.enableOntologyWrites }));
   }
   if (flags.enableOuroboros) {
     layers.push(makeOuroborosLayer({ enableLangfuseEval: flags.enableLangfuseEval }));

@@ -97,8 +97,34 @@ export type GeneratedReadTool = {
   sourcePath: string;
 };
 
+/** MCP write tool def emitted for LOW + NATIVE kinetic actions (gated at runtime). */
+export type GeneratedWriteTool = {
+  name: string;
+  entity: string;
+  kind: "write";
+  description: string;
+  kinetic: true;
+  kinetic_level: string;
+  blast_radius?: string;
+  rollback_protocol?: string;
+  executor: string;
+  requires_mandate?: boolean;
+  mandate_type?: string;
+  audit_level?: string;
+  inputSchema: Record<string, { type: string; description?: string; optional?: boolean; values?: string[] }>;
+  sourcePath: string;
+};
+
 export type OntologyGenerateResult = {
   tools: GeneratedReadTool[];
-  deferredWriteActions: { entity: string; name: string; sourcePath: string }[];
+  /** LOW + NATIVE kinetic writes — catalog only until `CLAWQL_ENABLE_ONTOLOGY_WRITES=1`. */
+  writeTools: GeneratedWriteTool[];
+  /** Writes not yet shippable as MCP (non-NATIVE executor, non-LOW, etc.). */
+  deferredWriteActions: {
+    entity: string;
+    name: string;
+    sourcePath: string;
+    reason?: string;
+  }[];
   entities: string[];
 };

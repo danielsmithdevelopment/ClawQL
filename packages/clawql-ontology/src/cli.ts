@@ -132,11 +132,11 @@ async function main(): Promise<void> {
       console.log(JSON.stringify({ ok: true, result, written }, null, 2));
     } else {
       console.log(
-        `Generated ${result.tools.length} read tool(s) for ${result.entities.length} entit(y/ies)`
+        `Generated ${result.tools.length} read tool(s), ${result.writeTools.length} gated write tool(s) for ${result.entities.length} entit(y/ies)`
       );
       if (result.deferredWriteActions.length) {
         console.log(
-          `Deferred ${result.deferredWriteActions.length} write/kinetic action(s) until Transaction Sandbox`
+          `Deferred ${result.deferredWriteActions.length} write action(s) (non-LOW or non-NATIVE)`
         );
       }
       for (const w of written) console.log(`  wrote ${w}`);

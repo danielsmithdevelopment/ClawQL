@@ -65,20 +65,24 @@ const DEFAULT_DB: OntologyFixtureDb = {
 
 let cached: OntologyFixtureDb | null = null;
 
+function cloneDb(db: OntologyFixtureDb): OntologyFixtureDb {
+  return structuredClone(db);
+}
+
 export function loadOntologyFixtureDb(): OntologyFixtureDb {
   if (cached) return cached;
   const override = process.env.CLAWQL_ONTOLOGY_FIXTURE?.trim();
   if (override) {
-    cached = JSON.parse(readFileSync(override, "utf8")) as OntologyFixtureDb;
+    cached = cloneDb(JSON.parse(readFileSync(override, "utf8")) as OntologyFixtureDb);
     return cached;
   }
   try {
     const here = dirname(fileURLToPath(import.meta.url));
     const packaged = join(here, "..", "fixtures", "legal-demo.json");
-    cached = JSON.parse(readFileSync(packaged, "utf8")) as OntologyFixtureDb;
+    cached = cloneDb(JSON.parse(readFileSync(packaged, "utf8")) as OntologyFixtureDb);
     return cached;
   } catch {
-    cached = DEFAULT_DB;
+    cached = cloneDb(DEFAULT_DB);
     return cached;
   }
 }
@@ -86,6 +90,24 @@ export function loadOntologyFixtureDb(): OntologyFixtureDb {
 /** Reset cache (tests). */
 export function resetOntologyFixtureDbForTests(): void {
   cached = null;
+}
+
+const STATUS_VALUES = new Set(["draft", "active", "expired", "terminated"]);
+
+/**
+ * Mutate fixture contract status (LOW kinetic native execute).
+ * Returns updated row or undefined if missing / invalid status.
+ */
+export function updateContractStatus(
+  id: string,
+  status: FixtureContract["status"]
+): FixtureContract | undefined {
+  if (!STATUS_VALUES.has(status)) return undefined;
+  const db = loadOntologyFixtureDb();
+  const row = db.contracts.find((c) => c.contract_id === id);
+  if (!row) return undefined;
+  row.status = status;
+  return row;
 }
 
 export function getContract(id: string): FixtureContract | undefined {

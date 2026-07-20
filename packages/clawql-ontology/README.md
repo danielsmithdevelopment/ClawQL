@@ -16,11 +16,16 @@ clawql ontology import --pack legal
 clawql ontology generate --dir examples/ontology/entities --out generated/ontology
 ```
 
-## Live read tools (v1 = fixture mode)
+## Live tools
 
-Set `CLAWQL_ENABLE_ONTOLOGY=1` to register typed demo tools (`get_contract`, `search_contracts`, …). Optional `CLAWQL_ONTOLOGY_FIXTURE` points at a JSON store.
+| Flag | Tools |
+| ---- | ----- |
+| `CLAWQL_ENABLE_ONTOLOGY=1` | Fixture reads (`get_contract`, relationships, …) |
+| `CLAWQL_ENABLE_ONTOLOGY_WRITES=1` | LOW kinetic writes (`update_contract_status`) via ATR → snapshot → audit |
 
-Entity `sources: [{ type: sql, … }]` entries are **declarations** for generate stubs / partners — they do **not** open a live SQL connection in v1 ([ADR 0009 §9](../../docs/adr/0009-enterprise-ontology.md)).
+Optional: `CLAWQL_ONTOLOGY_FIXTURE`, `CLAWQL_ONTOLOGY_ATR_SCOPE=ontology:write`.
+
+Entity `sources: [{ type: sql, … }]` entries are **declarations** for generate stubs / partners — not a live SQL connection in v1 ([ADR 0009 §9](../../docs/adr/0009-enterprise-ontology.md)).
 
 ## Schema packaging
 
@@ -32,8 +37,10 @@ the repo-canonical [`schemas/ontology/entity.schema.json`](../../schemas/ontolog
 ## Library
 
 ```ts
-import { lintOntology, generateOntologyReadTools, initOntologyTree } from "clawql-ontology";
+import {
+  lintOntology,
+  generateOntologyReadTools,
+  runLowKineticTransaction,
+} from "clawql-ontology";
 import { makeOntologyLayer } from "clawql-ontology/plugin";
 ```
-
-v1 generate emits **read** + relationship tools. Write / kinetic actions stay deferred until Transaction Sandbox.
