@@ -71,7 +71,7 @@ Typed objects agents operate on. Each entity declares properties, PII fields (Pr
 Provisional shape (YAML or OKF frontmatter + body). Full example: [`examples/ontology/`](../../examples/ontology/).
 
 ```yaml
-# .clawql/ontology/entities/Contract.yaml  (Git — schema)
+# .clawql/ontology/entities/Contract.cqe  (Git — schema)
 apiVersion: clawql.dev/ontology/v1alpha1
 kind: Entity
 metadata:
@@ -279,6 +279,36 @@ Builder surfaces executor choice (Argo Workflow template vs Pulumi resource) for
 
 ---
 
+## Try it today
+
+Foundation tooling is available now:
+
+```bash
+# Validate example entities (YAML or draft .cqe)
+npm run ontology:lint
+
+# Generate read MCP tool stubs from entity schemas
+npm run ontology:generate
+```
+
+CLI reference: [`docs/ontology/cli.md`](../ontology/cli.md). Examples: [`examples/ontology/`](../../examples/ontology/).
+
+---
+
+## Industry context (not dependencies)
+
+Enterprises and researchers are converging on the same problem — **typed meaning for agents**:
+
+| Effort | Overlap with ClawQL | Difference |
+| ------ | ------------------- | ---------- |
+| **Microsoft Fabric IQ Ontology** | Entity types, relationships, agent grounding, visual playground | Platform-bound (OneLake); ClawQL stays Git + open YAML/OKF + kinetic PEP |
+| **AIF (Argument Interchange Format)** | Structured rationale so understanding transfers without ambiguity | Argumentation-specific; ClawQL reuses the idea in [OKF `type: decision`](../memory/okf-decision-rationale.md) for enterprise decisions |
+| **Palantir Ontology** | Typed digital twin for agents | Proprietary console; ClawQL is portable and pipeline-native ([ADR 0009](../adr/0009-enterprise-ontology.md)) |
+
+These validate the direction. They are **not** runtime dependencies.
+
+---
+
 ## Design-partner gate
 
 Do **not** publish the property-type / relationship / source DSL as a frozen standard until **3–5 design partners** validate against real enterprise schemas. In-repo schema is **`v1alpha1`** — provisional.
@@ -300,10 +330,12 @@ Do **not** publish the property-type / relationship / source DSL as a frozen sta
 ## See also
 
 - [ADR 0009](../adr/0009-enterprise-ontology.md) — decision record
+- [Ontology CLI](../ontology/cli.md) — `clawql ontology lint` / `generate`
 - [Token efficiency (12 layers)](./clawql-token-efficiency.md)
 - [OKF decision rationale template](../memory/okf-decision-rationale.md)
 - [Command Deck ontology builder UX](./command-deck-ontology-builder-ux.md)
-- Example entity: [`examples/ontology/entities/Contract.yaml`](../../examples/ontology/entities/Contract.yaml)
+- [Essay gap closure backlog](../ontology/essay-gap-closure.md) — tasks to match the long-form Ontology essay without disclaimers
+- Example entity: [`examples/ontology/entities/Contract.cqe`](../../examples/ontology/entities/Contract.cqe)
 - Example decision note: [`examples/ontology/okf/decision-rationale-template.md`](../../examples/ontology/okf/decision-rationale-template.md)
 - JSON Schema: [`schemas/ontology/entity.schema.json`](../../schemas/ontology/entity.schema.json)
 - Ouroboros Seed ontology (task loop — different artifact): [ADR 0001](../adr/0001-ouroboros-workflow-engine.md)

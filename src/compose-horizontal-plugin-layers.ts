@@ -11,6 +11,7 @@ import { makeAutomationLayer } from "clawql-automation/plugin";
 import { natsConfiguredForConsumer } from "clawql-automation/nats/env";
 import { makeDocumentsLayer } from "clawql-documents/plugin";
 import { makeMemoryLayer } from "clawql-memory/plugin";
+import { makeOntologyLayer } from "clawql-ontology/plugin";
 import { makeOuroborosLayer } from "clawql-ouroboros/plugin";
 import { makeSandboxLayer } from "clawql-sandbox/plugin";
 import {
@@ -70,6 +71,9 @@ export function composeHorizontalPluginLayers(
   }
   if (flags.enableSandbox) {
     layers.push(makeSandboxLayer());
+  }
+  if (flags.enableOntology) {
+    layers.push(makeOntologyLayer());
   }
   if (flags.enableOuroboros) {
     layers.push(makeOuroborosLayer({ enableLangfuseEval: flags.enableLangfuseEval }));

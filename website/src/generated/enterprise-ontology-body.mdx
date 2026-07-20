@@ -1,0 +1,345 @@
+# Enterprise Ontology — open, versioned, kinetic
+
+**Status:** Architecture decision ([ADR 0009](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0009-enterprise-ontology.md)) · July 2026  
+**Audience:** architects, design partners, implementers of ontology lint/generate and kinetic governance  
+**Related:** [Zero-Trust Agentic Fabric](/architecture/agentic-fabric) · [Token efficiency (12 layers)](/architecture/token-efficiency) · [Memory / Obsidian](/learn/memory) · [OKF decision rationale](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf-decision-rationale.md) · [Command Deck ontology builder UX](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/architecture/command-deck-ontology-builder-ux.md) · [Team vault sync](/getting-started/for-teams) · [ADR 0004](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0004-argo-cd-workflows-clawql-pipelines.md) · [ADR 0007](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0007-pulumi-provisioning-managed-tiers.md)
+
+> **Shipped vs target:** This document is the **source of truth for design intent**. Entity schema format and examples in-repo are provisional. Automatic MCP generation, graph traversal, kinetic Transaction Sandbox, and the Command Deck builder are phased — verify against [modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md) before external claims.
+
+---
+
+## One-sentence pitch
+
+The Ontology is what happens when you apply a TypeScript-grade type system to the enterprise data model, give it to AI agents instead of only application code, version it in Git alongside deployments, and make every write auditable and kinetically governed — without Palantir lock-in.
+
+---
+
+## Ontology enables token efficiency (Tier 1)
+
+Typed entity / relationship / action schemas are not only a grounding story — they are how ClawQL keeps agent context **lean**. Without them, Code Mode and projection have nothing precise to generate or trim against, and vault recall falls back to paste-the-notebook.
+
+| Token-efficiency layer | Ontology / OKF role                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
+| **1 Code Mode**        | `.cqe` / entity YAML → generated read tools; full catalogs stay server-side                         |
+| **2 Response trim**    | Project only declared properties (ATR-visible)                                                      |
+| **6 History distill**  | Compact transcripts into [`type: decision` rationale](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf-decision-rationale.md) / `.cqk` |
+| **7–9**                | Graph-aware recall + structured OKF output instead of free prose                                    |
+| **8 Routing**          | `kinetic_level` / risk informs Frugal → Frontier                                                    |
+
+Full stack: [Twelve layers of LLM cost](/architecture/token-efficiency). Ontology without those layers becomes a typed landfill; layers without ontology become cheap answers about the wrong objects.
+
+---
+
+## Why formalize (and why not like Palantir)
+
+Palantir’s Ontology is a genuine asset: agents operate on `Turbine` / `Contract` / `Patient` objects with known types, relationships, and business meaning. That grounding is what makes production agents useful.
+
+Three liabilities ClawQL consciously avoids:
+
+| Liability                        | ClawQL counter                                                            |
+| -------------------------------- | ------------------------------------------------------------------------- |
+| Proprietary, non-portable format | Open YAML / OKF Markdown + JSON Schema; export is a file tree             |
+| Services-heavy Ontology build    | Derive from SQL, OpenAPI, document classifiers; refine, don’t invent      |
+| Outside the delivery pipeline    | Schema in Git; schema changes are manifest version events (signed / WORM) |
+
+Competitive wedge: _“Your Ontology is a YAML/OKF tree in Git, signed with your release. If you leave, you take it with you.”_
+
+---
+
+## OOP taken seriously for enterprise AI
+
+| Layer               | Analogy                                                |
+| ------------------- | ------------------------------------------------------ |
+| OOP class           | `Contract \{ parties, status, sign() \}`                 |
+| Database schema     | `CREATE TABLE contracts (...)`                         |
+| Enterprise Ontology | Typed object + sources + graph edges + kinetic methods |
+
+Three properties beyond ordinary OOP:
+
+1. **Provenance** — property values trace to source row/document; chain in WORM.
+2. **Permission-awareness** — ATRClaims are structural; unauthorized entities are invisible, not merely denied at method return.
+3. **Kinetic designation** — writes differ from reads in the type system (`kinetic: true` / `@kinetic`), not only by convention.
+
+---
+
+## Three-layer architecture
+
+### Layer 1 — Entity schema
+
+Typed objects agents operate on. Each entity declares properties, PII fields (Presidio), sources (Onyx indexing), and mutability / kinetic level for fields.
+
+Provisional shape (YAML or OKF frontmatter + body). Full example: [`examples/ontology/`](../../examples/ontology/).
+
+```yaml
+# .clawql/ontology/entities/Contract.cqe  (Git — schema)
+apiVersion: clawql.dev/ontology/v1alpha1
+kind: Entity
+metadata:
+  name: Contract
+spec:
+  description: Legal agreement between two or more parties
+  properties:
+    contract_id:
+      type: string
+      required: true
+      indexed: true
+    status:
+      type: enum
+      values: [draft, active, expired, terminated]
+      mutable: true
+      kinetic_level: LOW
+    value:
+      type: money
+      mutable: true
+      kinetic_level: HIGH
+      requires_mandate: AP2_FINANCIAL
+    parties:
+      type: array
+      items: { $ref: Organization }
+      mutable: false # schema encodes business rule — no mutation generated
+  pii_fields: [parties.contact_email, parties.contact_phone]
+  sources:
+    - type: sql
+      connection: ${VAULT:contracts_db}
+      table: contracts
+      id_column: contract_id
+  relationships:
+    - entity: Organization
+      type: many_to_many
+      via: contract_parties
+```
+
+JSON Schema for validation: [`schemas/ontology/entity.schema.json`](../../schemas/ontology/entity.schema.json).
+
+### Layer 2 — Relationship graph
+
+Edges from the schema become traversable, permission-aware graph tools. Target store: Onyx layer over Neo4j or a Postgres graph extension. Graph-aware `memory_recall` can expand related entities within ATRClaims. **Phased after** entity schema + read-tool generation.
+
+### Layer 3 — Action schema
+
+Read tools generate from the entity schema. Write tools require explicit kinetic metadata:
+
+```text
+search_contracts(query, status?) → Contract[]
+get_contract(contract_id) → Contract
+update_contract_status(...) → void   # kinetic
+initiate_payment(...) → PaymentResult  # kinetic + AP2
+```
+
+---
+
+## Kinetic governance: GraphQL mutations are transport, not enough
+
+**What GraphQL gets right:** query vs mutation is a schema-level semantic contract; introspection lets agents and PEPs discover side-effecting operations.
+
+**What it lacks:** graded risk, AP2 mandate binding, blast-radius caps, rollback protocols, progressive canary.
+
+**Decision:** mutations (and MCP write tools) carry a `@kinetic` directive / equivalent YAML fields:
+
+```graphql
+type Mutation {
+  initiatePayment(accountId: ID!, amount: Money!, recipient: ID!): PaymentResult
+    @kinetic(
+      riskLevel: HIGH
+      requiresMandate: true
+      mandateType: AP2_PAYMENT
+      blastRadius: FINANCIAL
+      transactionLimit: "50000.00"
+      rollbackProtocol: REVERSAL
+      auditLevel: FORENSIC
+      requiresHumanInLoop: true
+      executor: NATIVE
+    )
+}
+```
+
+High-risk path (conceptual):
+
+```text
+Agent mutation
+  → GraphQL / MCP boundary (mutation + @kinetic)
+  → PEP (ATRClaims)
+  → AP2 MandateService
+  → Transaction Sandbox (plan → stage → canary? → commit)
+  → Human-in-loop if required
+  → Execute + WORM (KINETIC_*)
+  → Register rollback hook
+```
+
+Low-risk field updates skip mandate / HITL but still stage a field snapshot for `FIELD_RESTORE`.
+
+`mutable: false` on a property means **no mutation is generated** — schema validation error, not an auth error.
+
+---
+
+## Kinetic executors (the triad + native)
+
+Stateful production changes need plans, observability, and rollback — the same lesson as deployments and IaC.
+
+| Executor           | Lesson from                        | ClawQL use                                       |
+| ------------------ | ---------------------------------- | ------------------------------------------------ |
+| **Pulumi**         | Plan / state / surgical rollback   | Infrastructure kinetic actions (ADR 0007)        |
+| **Argo Workflows** | DAG, retries, artifacts, suspend   | IDP pipeline + multi-step agent tasks (ADR 0004) |
+| **Argo Rollouts**  | Canary, analysis, promote/rollback | Deployment kinetic actions                       |
+| **Native sandbox** | Same state machine in Effect-TS    | SAP / CRM / payments and other app writes        |
+
+Routing is schema-driven (`executor` on `@kinetic`). Agents call typed mutations; PEP + Transaction Sandbox choose the executor. WORM records which executor ran.
+
+### Transaction Sandbox state (conceptual)
+
+Modeled on Pulumi state + Argo progressive execution:
+
+- **Plan** before execute (`pulumi preview` analogue)
+- **Completed steps** for surgical rollback
+- **Analysis gates** between canary batches
+- **Drift refresh** before commit (state changed underfoot → replan or halt)
+- **Suspension** for HITL — prefer Argo durable suspend when executor is Workflows
+
+Bulk high-blast-radius actions use canary progression (`initial_batch`, analysis metrics, `progression: [10, 100, ALL]`).
+
+### Argo Workflows today
+
+Document IDP DAGs (Tika → … → Onyx) are already Workflow-shaped. Kinetic wrapping adds mandate + WORM around existing `workflow` submission — do not reimplement DAG execution in the agent loop.
+
+---
+
+## OKF and the memory vault
+
+[Open Knowledge Format (OKF) v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) is a thin convention: directory of Markdown files, YAML frontmatter, path ≈ identity, `type` required ([announcement](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing)). Community critique (“rebrand of wiki/Obsidian”) is partly fair; the value is **interoperable frontmatter**, not a new runtime.
+
+**Decision:** OKF-compatible serialization for memory **and** ontology definition docs; Obsidian remains the human UI.
+
+**Shipped:** `memory_ingest` writes OKF frontmatter; `Memory/index.md` + `Memory/log.md`; legacy append upgrade. Details: [`docs/memory/okf.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf.md).
+
+**Next (extensions):** Draft `.cq*` specs — [ADR 0010](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0010-cq-file-extensions.md) · [`docs/specs/cq-extensions/`](../specs/cq-extensions/). Do not block OKF on promotion; ontology lint dual-accepts `.cqe`.
+
+```text
+memory_ingest writes:
+---
+type: decision          # OKF required
+title: …
+tags: …
+timestamp: …
+correlation_id: …
+worm_ref: <hash>        # ClawQL extension
+---
+<body>
+```
+
+ClawQL `type` taxonomy (extension until ecosystem standardizes): `decision`, `context`, `error`, `runbook`, `entity`, `relationship`, `task_result`, `ontology_entity`, `ontology_relationship`, `ontology_action`, `index`, `log`, `digest`.
+
+`index.md` / `log.md` patterns give catalog + changelog without loading the full vault into context.
+
+---
+
+## Git vs R2 — what lives where
+
+The vault **cannot** all live in GitHub. Separate **definition** from **instance**.
+
+### Git (small, versioned, PR-reviewed)
+
+```text
+repo/
+  .clawql/
+    ontology/           # Entity / relationship / action schemas
+    policy/             # HIPAA, residency, …
+    knowledge/          # Static OKF: runbooks, ADRs, metric defs
+    manifest.yaml       # Governance + ontology schema version pin
+```
+
+### Object storage — R2 default (large, synced)
+
+```text
+s3://clawql-org-vault/
+  memory/               # Dynamic OKF memory entries
+  ontology/instances/   # Populated entity instances (optional)
+  indexes/              # FTS / vectors (derived)
+```
+
+| Path                       | Store               | Sync                                          |
+| -------------------------- | ------------------- | --------------------------------------------- |
+| Schema + static knowledge  | Git → R2 on release | Propagates with release / `ontology generate` |
+| Memory + instances         | R2 only             | `clawql sync` / `memory_sync`                 |
+| Hot tier (recent / active) | Edge cache          | Sub-ms local recall                           |
+| Cold tier (archive)        | R2 on demand        | Queried when needed                           |
+
+**Onyx** indexes R2 content; it is never the source of truth.
+
+This matches existing team vault sync ([getting-started-for-teams](/getting-started/for-teams)): OKF standardizes file shape inside the bucket; it does not change the storage model.
+
+---
+
+## Ontology builder (yes — sequenced)
+
+1. **Now — format + CLI:** `clawql ontology lint` / `generate` (read tools); CI with `clawql-release lint`; derivation from SQL/OpenAPI.
+2. **Next — visual builder in Command Deck:** entity / relationship / action panels; kinetic fields non-accidental; emits YAML → Git PR. UX quests and inspector layout: [`command-deck-ontology-builder-ux.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/architecture/command-deck-ontology-builder-ux.md) (Fabric Ontology Playground as reference only — open Git artifacts, not OneLake lock-in).
+3. **Later — vertical packs:** Legal, Healthcare, Financial Services, Real Estate as OKF bundles teams adopt and customize.
+
+Builder surfaces executor choice (Argo Workflow template vs Pulumi resource) for non-engineers without replacing engineer YAML authoring.
+
+---
+
+## Try it today
+
+Foundation tooling is available now:
+
+```bash
+# Validate example entities (YAML or draft .cqe)
+npm run ontology:lint
+
+# Generate read MCP tool stubs from entity schemas
+npm run ontology:generate
+```
+
+CLI reference: [`docs/ontology/cli.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ontology/cli.md). Examples: [`examples/ontology/`](../../examples/ontology/).
+
+---
+
+## Industry context (not dependencies)
+
+Enterprises and researchers are converging on the same problem — **typed meaning for agents**:
+
+| Effort | Overlap with ClawQL | Difference |
+| ------ | ------------------- | ---------- |
+| **Microsoft Fabric IQ Ontology** | Entity types, relationships, agent grounding, visual playground | Platform-bound (OneLake); ClawQL stays Git + open YAML/OKF + kinetic PEP |
+| **AIF (Argument Interchange Format)** | Structured rationale so understanding transfers without ambiguity | Argumentation-specific; ClawQL reuses the idea in [OKF `type: decision`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf-decision-rationale.md) for enterprise decisions |
+| **Palantir Ontology** | Typed digital twin for agents | Proprietary console; ClawQL is portable and pipeline-native ([ADR 0009](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0009-enterprise-ontology.md)) |
+
+These validate the direction. They are **not** runtime dependencies.
+
+---
+
+## Design-partner gate
+
+Do **not** publish the property-type / relationship / source DSL as a frozen standard until **3–5 design partners** validate against real enterprise schemas. In-repo schema is **`v1alpha1`** — provisional.
+
+---
+
+## Phased delivery checklist
+
+| Phase      | Scope                                                                                | Depends on                                                                                                                            |
+| ---------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Foundation | `v1alpha1` schema, lint, read-tool generate, source derivation, manifest version pin | This ADR — **schema + `clawql ontology lint` / `generate` shipped** ([cli](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ontology/cli.md)); derivation / manifest pin still open |
+| Graph      | Relationship traversal, ATRClaim-aware edges, graph-aware recall                     | Foundation                                                                                                                            |
+| Kinetic    | Write tools, `@kinetic`, Transaction Sandbox, AP2, canary                            | Foundation + PEP                                                                                                                      |
+| Builder UI | Command Deck schema editor                                                           | Stable format                                                                                                                         |
+| Verticals  | Industry OKF packs                                                                   | Builder + design partners                                                                                                             |
+
+---
+
+## See also
+
+- [ADR 0009](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0009-enterprise-ontology.md) — decision record
+- [Ontology CLI](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ontology/cli.md) — `clawql ontology lint` / `generate`
+- [Token efficiency (12 layers)](/architecture/token-efficiency)
+- [OKF decision rationale template](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf-decision-rationale.md)
+- [Command Deck ontology builder UX](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/architecture/command-deck-ontology-builder-ux.md)
+- [Essay gap closure backlog](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ontology/essay-gap-closure.md) — tasks to match the long-form Ontology essay without disclaimers
+- Example entity: [`examples/ontology/entities/Contract.cqe`](../../examples/ontology/entities/Contract.cqe)
+- Example decision note: [`examples/ontology/okf/decision-rationale-template.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/ontology/okf/decision-rationale-template.md)
+- JSON Schema: [`schemas/ontology/entity.schema.json`](../../schemas/ontology/entity.schema.json)
+- Ouroboros Seed ontology (task loop — different artifact): [ADR 0001](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0001-ouroboros-workflow-engine.md)
+
+export function wrapper({ children }) {
+  return children
+}

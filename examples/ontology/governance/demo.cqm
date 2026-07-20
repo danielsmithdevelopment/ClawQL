@@ -1,0 +1,12 @@
+apiVersion: clawql.dev/manifest/v1alpha1
+kind: EnterpriseGovernance
+metadata:
+  name: clawql-demo-governance
+  version: "0.1.0"
+spec:
+  compliance:
+    level: medium
+    residency: us
+  ontologySchemaVersion: clawql.dev/ontology/v1alpha1
+  kinetic:
+    defaultRequiresMandate: false

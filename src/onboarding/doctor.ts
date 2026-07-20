@@ -12,6 +12,7 @@ import { getClawqlEnvFilePath, getClawqlHome, getLocalProvidersVaultPath } from 
 import { inferSpecMode } from "./spec-mode.js";
 import { probeHashicorpVault } from "./hashicorp-vault.js";
 import { runReleaseDoctorCheck } from "./release-doctor-check.js";
+import { runOntologyDoctorCheck } from "./ontology-doctor-check.js";
 import { runMcpSmoke } from "./smoke.js";
 import { sandboxDoctorCheck } from "clawql-sandbox/init";
 
@@ -178,6 +179,7 @@ export async function runDoctor(
   }
 
   checks.push({ level: "ok", message: `Spec mode: ${inferSpecModeFromEnv()}` });
+  checks.push(await runOntologyDoctorCheck());
 
   if (options.smoke) {
     checks.push(await runReleaseDoctorCheck());

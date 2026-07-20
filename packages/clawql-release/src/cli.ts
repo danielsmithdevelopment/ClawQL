@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { writeReleaseConfig } from "./config.js";
 import { collectReleaseManifest } from "./collect.js";
 import { buildReleaseManifest } from "./manifest.js";
+import { lintCqmFiles } from "./ontology-schema.js";
 import { publishRelease } from "./publish.js";
 import { verifyReleaseBundle, verifyReleaseManifest } from "./verify.js";
 
@@ -16,6 +17,7 @@ Usage:
   clawql-release collect [--root DIR] [--tag vX.Y.Z] [--sbom PATH] [--npm-tgz PATH]
   clawql-release manifest [--root DIR] [same flags as collect] [--no-copy]
   clawql-release verify <bundle-dir|manifest.json>
+  clawql-release lint <file.cqm> [more.cqm...]
   clawql-release publish [--root DIR] [--tag vX.Y.Z] [--sbom PATH] [--npm-tgz PATH] [--github]
 
   --image-digest NAME=sha256:...   Repeatable; container digest for manifest Merkle tree
@@ -23,6 +25,7 @@ Usage:
 
 Examples:
   clawql-release init
+  clawql-release lint examples/governance/acme.cqm
   clawql-release publish --tag v7.0.0 --sbom sbom.cdx.json --npm-tgz clawql-mcp-7.0.0.tgz \\
     --image-digest clawql-mcp=sha256:abc... --github
   clawql-release verify releases/v7.0.0/manifest.json
@@ -126,6 +129,11 @@ async function main(): Promise<void> {
       console.log(`merkleRoot: ${manifest.merkleRoot}`);
       console.log(`artifacts: ${Object.keys(manifest.artifacts).join(", ") || "(none)"}`);
       console.log(`images: ${Object.keys(manifest.images).join(", ") || "(none)"}`);
+      if (manifest.ontologySchema) {
+        console.log(
+          `ontologySchema: ${manifest.ontologySchema.path} (${manifest.ontologySchema.entityCount} entities) sha256=${manifest.ontologySchema.sha256}`
+        );
+      }
     }
     return;
   }
@@ -141,6 +149,27 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (cmd === "lint") {
+    const files = positional.map((p) => resolve(p));
+    if (!files.length) {
+      console.error("Usage: clawql-release lint <file.cqm> [more.cqm...]");
+      process.exitCode = 1;
+      return;
+    }
+    const result = await lintCqmFiles(files);
+    if (flags.json) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      console.log(`cqm lint: ${result.filesChecked} file(s)`);
+      for (const issue of result.issues) {
+        console.log(`${issue.severity.toUpperCase()} ${issue.path}: ${issue.message}`);
+      }
+      console.log(result.ok ? "OK" : "FAILED");
+    }
+    process.exitCode = result.ok ? 0 : 1;
+    return;
+  }
+
   if (cmd === "verify") {
     const target = positional[0];
     if (!target) {
@@ -150,8 +179,8 @@ async function main(): Promise<void> {
     }
     const abs = resolve(target);
     const result = abs.endsWith("manifest.json")
-      ? await verifyReleaseManifest(abs)
-      : await verifyReleaseBundle(abs);
+      ? await verifyReleaseManifest(abs, undefined, { workspaceRoot: rootDir })
+      : await verifyReleaseBundle(abs, rootDir);
     if (result.ok) {
       console.log(`OK — manifest ${result.manifest.tag} merkleRoot=${result.manifest.merkleRoot}`);
       return;

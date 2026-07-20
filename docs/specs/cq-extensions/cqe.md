@@ -45,4 +45,4 @@ Until promotion completes, repositories may keep `Contract.yaml`. Lint/generate 
 
 ## Example
 
-See [`examples/ontology/entities/Contract.yaml`](../../../examples/ontology/entities/Contract.yaml) (same content may be renamed `Contract.cqe` without schema change).
+See [`examples/ontology/entities/Contract.cqe`](../../../examples/ontology/entities/Contract.cqe) (YAML with a `.cqe` extension — ADR 0010 dual-accept).

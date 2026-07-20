@@ -1,9 +1,10 @@
 import { defineConfig } from "tsup";
 
-/** Library entry — no shebang (safe for import). */
+/** Library + plugin entries. */
 const library = defineConfig({
   entry: {
     index: "src/index.ts",
+    "plugin/index": "src/plugin/index.ts",
   },
   format: ["esm", "cjs"],
   dts: true,

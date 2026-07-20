@@ -41,6 +41,15 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_SANDBOX: z.string().optional(),
   /** Structural code graph MCP tools (`codegraph_*`). Default false — register with `CLAWQL_ENABLE_CODEGRAPH=1`. */
   CLAWQL_ENABLE_CODEGRAPH: z.string().optional(),
+  /** Enterprise Ontology fixture MCP tools (`get_contract`, …). Default false — `CLAWQL_ENABLE_ONTOLOGY=1`. */
+  CLAWQL_ENABLE_ONTOLOGY: z.string().optional(),
+  /**
+   * Override entity search root for `clawql ontology lint|generate` (relative to cwd or absolute).
+   * Default: `.clawql/ontology/entities` then `examples/ontology/entities`.
+   */
+  CLAWQL_ONTOLOGY_DIR: z.string().optional(),
+  /** Optional JSON fixture path for ontology demo tools (`CLAWQL_ENABLE_ONTOLOGY`). */
+  CLAWQL_ONTOLOGY_FIXTURE: z.string().optional(),
   /** ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)): HITL Label Studio enqueue + webhook path. Default false. */
   CLAWQL_ENABLE_HITL_LABEL_STUDIO: z.string().optional(),
   /** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)): ConeShare webhook + IDP sharing integration. Default false. */
@@ -126,6 +135,10 @@ export type ClawqlOptionalToolFlags = {
    */
   enableCodeGraph: boolean;
   /**
+   * Enterprise Ontology read tools (fixture-backed `get_contract`, relationship traversals, …). Default false.
+   */
+  enableOntology: boolean;
+  /**
    * ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)): **`hitl_enqueue_label_studio`** + **`POST /hitl/label-studio/webhook`**. Default false.
    */
   enableHitlLabelStudio: boolean;
@@ -179,6 +192,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
     enableCodeGraph: envTruthy(raw.CLAWQL_ENABLE_CODEGRAPH),
+    enableOntology: envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY),
     enableHitlLabelStudio: envTruthy(raw.CLAWQL_ENABLE_HITL_LABEL_STUDIO),
     enableConeshare: envTruthy(raw.CLAWQL_ENABLE_CONESHARE),
     enableIdpPipeline: envTruthy(raw.CLAWQL_ENABLE_IDP_PIPELINE),

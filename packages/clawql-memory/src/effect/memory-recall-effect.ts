@@ -166,10 +166,17 @@ export function executeMemoryRecallCoreEffect(
           Effect.catchAll(() => Effect.succeed(undefined))
         );
         if (text === undefined) continue;
+        let score = wantVault ? keywordScore(query, text) : 0;
+        if (wantVault) {
+          const relNorm = rel.replace(/\\/g, "/");
+          // Prefer OKF catalogs and ontology schema notes (essay Layer 6 / index-first recall).
+          if (/(^|\/)index\.md$/i.test(relNorm)) score += 8;
+          if (/ontology/i.test(relNorm) || /type:\s*["']?ontology_/i.test(text)) score += 5;
+        }
         files.push({
           rel,
           text,
-          score: wantVault ? keywordScore(query, text) : 0,
+          score,
         });
       }
       scannedFiles = files.length;

@@ -91,7 +91,14 @@ import {
   runPaymentsCompensationCancelCmd,
   type PaymentsCliOptions,
 } from "./payments-cli.js";
-import { runOntologyGenerate, runOntologyLint } from "./ontology-cli.js";
+import {
+  runOntologyCreateEntity,
+  runOntologyGenerate,
+  runOntologyImport,
+  runOntologyInit,
+  runOntologyLint,
+} from "./ontology-cli.js";
+
 
 type Command =
   | "init"
@@ -153,6 +160,7 @@ function parse(argv: string[]): {
     else if (a === "--dir") flags.dir = argv[++i] ?? "";
     else if (a === "--out") flags.out = argv[++i] ?? "";
     else if (a === "--schema") flags.schema = argv[++i] ?? "";
+    else if (a === "--pack") flags.pack = argv[++i] ?? "";
     else if (a === "--strict") flags.strict = true;
     else if (a === "--skip-lint") flags.skipLint = true;
     else if (a === "--dry-run") flags.dryRun = true;
@@ -296,6 +304,7 @@ Usage:
   clawql sources add --kind cli --command <bin> [--args a,b] [--name NAME]
   clawql release init | collect | manifest | publish | verify <path>
   clawql ontology lint [--dir PATH] [files...] | generate --out DIR [--dir PATH]
+  clawql ontology init | create-entity <Name> | import --pack legal
   clawql sync init | push | pull | status [--dry-run] [--force]
   clawql sandbox init | verify | status | edit --harness claude [--path DIR] [--skip-verify]
   clawql inference serve [--port 8080] | complete --model <provider/model> --message <text>
@@ -1179,6 +1188,8 @@ async function main(): Promise<void> {
       schema: typeof flags.schema === "string" && flags.schema ? flags.schema : undefined,
       dir: typeof flags.dir === "string" && flags.dir ? flags.dir : undefined,
       out: typeof flags.out === "string" && flags.out ? flags.out : undefined,
+      pack: typeof flags.pack === "string" && flags.pack ? flags.pack : undefined,
+      name: rest[0],
       strict: Boolean(flags.strict),
       skipLint: Boolean(flags.skipLint),
       json: Boolean(flags.json),
@@ -1192,7 +1203,21 @@ async function main(): Promise<void> {
       process.exitCode = await runOntologyGenerate(ontologyOpts);
       return;
     }
-    console.error("Usage: clawql ontology lint | generate --out DIR");
+    if (subcmd === "init") {
+      process.exitCode = await runOntologyInit(ontologyOpts);
+      return;
+    }
+    if (subcmd === "create-entity") {
+      process.exitCode = await runOntologyCreateEntity(ontologyOpts);
+      return;
+    }
+    if (subcmd === "import") {
+      process.exitCode = await runOntologyImport(ontologyOpts);
+      return;
+    }
+    console.error(
+      "Usage: clawql ontology lint | generate --out DIR | init | create-entity <Name> | import --pack legal"
+    );
     process.exitCode = 1;
     return;
   }

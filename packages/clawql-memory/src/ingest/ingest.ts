@@ -278,7 +278,12 @@ export async function writeMemoryIngestPage(
   fileProvenance?: string
 ): Promise<MemoryIngestResult> {
   const slug = slugifyTitle(title);
-  const rel = `${MEMORY_DIR}/${slug}.md`;
+  const useCqk =
+    Boolean(effective.wormRef?.trim()) ||
+    process.env.CLAWQL_MEMORY_CQK === "1" ||
+    process.env.CLAWQL_MEMORY_CQK?.toLowerCase() === "true";
+  const ext = useCqk ? ".cqk" : ".md";
+  const rel = `${MEMORY_DIR}/${slug}${ext}`;
   const append = effective.append !== false;
   const hash = hashIngestSection(effective);
   const when = new Date().toISOString();

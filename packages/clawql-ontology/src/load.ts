@@ -87,6 +87,10 @@ export async function loadOntologyEntities(
 
 /** Default search roots relative to a workspace root. */
 export function defaultOntologySearchRoots(rootDir: string): string[] {
+  const override = process.env.CLAWQL_ONTOLOGY_DIR?.trim();
+  if (override) {
+    return [resolve(rootDir, override)];
+  }
   return [
     join(rootDir, ".clawql", "ontology", "entities"),
     join(rootDir, "examples", "ontology", "entities"),
