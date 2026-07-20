@@ -51,6 +51,8 @@ Markdown with YAML frontmatter (OKF). File path = concept identity.
 
 ## Example
 
+Prefer the [decision rationale template](../../memory/okf-decision-rationale.md) body sections when `type: decision`. Worked example: [`examples/ontology/okf/decision-rationale-template.md`](../../../examples/ontology/okf/decision-rationale-template.md).
+
 ```markdown
 ---
 type: decision
@@ -61,9 +63,16 @@ timestamp: 2026-07-20T00:00:00Z
 correlation_id: adr-0010
 worm_ref: null
 clawql_okf: true
+verdict: accepted
 ---
 
 # Adopt OKF then .cq* extensions
 
-Body…
+## Claim
+
+…
+
+## Decision
+
+…
 ```

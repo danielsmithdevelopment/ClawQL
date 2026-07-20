@@ -103,6 +103,8 @@ The layers organize into three tiers:
 
 Hands-on MCP usage for Layers 1–2: [Using search & execute](/learn/search-and-execute-mcp). Agentic Gateway details for Layers 3–12: [clawql-inference](/inference/clawql-inference).
 
+**Enterprise Ontology is a Tier‑1 enabler:** typed entity / relationship / action schemas ([enterprise ontology](./enterprise-ontology.md), [ADR 0009](../adr/0009-enterprise-ontology.md)) are what Code Mode generates against, what projection trims to, and what Layer 6 distillation should write as structured OKF [`type: decision` rationale](../memory/okf-decision-rationale.md) — not another blob of chat. Without ontology, these layers still run, but they optimize the wrong vocabulary.
+
 ---
 
 ## Tier 1: Structural efficiency — what never enters context
@@ -359,5 +361,7 @@ Layers **1–2** apply on every ClawQL MCP install (Code Mode + response trimmin
 - [Using search & execute (MCP)](/learn/search-and-execute-mcp)
 - [clawql-inference](/inference/clawql-inference)
 - [Memory 2.0](/learn/memory) — durable vault + multi-source recall (pairs with Layer 6 offload)
+- [Enterprise Ontology](./enterprise-ontology.md) — typed schemas that Code Mode / projection / kinetic routing consume
+- [OKF decision rationale](../memory/okf-decision-rationale.md) — Layer 6 distillate shape
 - [Vision & roadmap](/vision/roadmap)
 - [Defense in depth](/security/defense-in-depth)

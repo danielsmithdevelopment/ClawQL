@@ -10,15 +10,13 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { appendPassthroughWrapper } from './lib/rewrite-doc-links.mjs'
+import { prepareMdxBody } from './lib/rewrite-doc-links.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
 const dstDir = path.join(websiteRoot, 'src/generated')
 const dst = path.join(dstDir, 'clawql-token-efficiency-body.mdx')
 const srcRelative = path.join('docs', 'architecture', 'clawql-token-efficiency.md')
-
-const GH_MAIN = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 
 function findRepoRootWithDocs() {
   let dir = websiteRoot
@@ -29,48 +27,6 @@ function findRepoRootWithDocs() {
     dir = parent
   }
   return null
-}
-
-function escapeLessThanBeforeDigit(body) {
-  return body.replace(/<(?=\d)/g, '&lt;')
-}
-
-function escapeMdxCurlyOutsideFences(body) {
-  const lines = body.split('\n')
-  let inFence = false
-  return lines
-    .map((line) => {
-      const fence = line.match(/^(`{3,}|~{3,})(.*)$/)
-      if (fence) {
-        if (!inFence) inFence = true
-        else if (!fence[2].trim()) inFence = false
-        return line
-      }
-      if (inFence) return line
-      return line
-        .replace(/\\/g, '\\\\')
-        .replace(/\{/g, '\\{')
-        .replace(/\}/g, '\\}')
-    })
-    .join('\n')
-}
-
-function rewriteLinksForSite(body) {
-  return escapeMdxCurlyOutsideFences(
-    escapeLessThanBeforeDigit(
-      body
-        .replaceAll(
-          '](../vision/clawql-vision-roadmap.md)',
-          '](/vision/roadmap)',
-        )
-        .replaceAll(
-          '](../mcp/mcp-tools.md)',
-          `](${GH_MAIN}/docs/mcp/mcp-tools.md)`,
-        )
-        .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
-        .replaceAll('](../docs/', `](${GH_MAIN}/docs/`),
-    ),
-  )
 }
 
 fs.mkdirSync(dstDir, { recursive: true })
@@ -94,10 +50,17 @@ if (!src || !fs.existsSync(src)) {
 
 fs.writeFileSync(
   dst,
-  appendPassthroughWrapper(rewriteLinksForSite(fs.readFileSync(src, 'utf8'))),
+  prepareMdxBody(fs.readFileSync(src, 'utf8'), srcRelative.replace(/\\/g, '/')),
   'utf8',
 )
-execSync('npx prettier --write src/generated/clawql-token-efficiency-body.mdx', {
-  cwd: websiteRoot,
-  stdio: 'inherit',
-})
+
+try {
+  execSync('npx prettier --write src/generated/clawql-token-efficiency-body.mdx', {
+    cwd: websiteRoot,
+    stdio: 'inherit',
+  })
+} catch {
+  console.warn(
+    'sync-clawql-token-efficiency-doc: prettier unavailable; wrote unformatted MDX',
+  )
+}
