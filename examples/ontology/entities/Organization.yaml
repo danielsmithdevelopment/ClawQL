@@ -1,0 +1,38 @@
+apiVersion: clawql.dev/ontology/v1alpha1
+kind: Entity
+metadata:
+  name: Organization
+  labels:
+    vertical: legal
+spec:
+  description: Legal entity that can be party to a Contract
+  properties:
+    organization_id:
+      type: string
+      required: true
+      indexed: true
+    name:
+      type: string
+      required: true
+      indexed: true
+    contact_email:
+      type: string
+    contact_phone:
+      type: string
+  pii_fields:
+    - contact_email
+    - contact_phone
+  sources:
+    - type: sql
+      connection: ${VAULT:contracts_db}
+      table: organizations
+      id_column: organization_id
+  relationships:
+    - entity: Contract
+      type: many_to_many
+      via: contract_parties
+  actions:
+    - name: search_organizations
+      kind: read
+    - name: get_organization
+      kind: read

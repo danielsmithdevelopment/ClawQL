@@ -4,7 +4,7 @@
 - Date: 2026-05-02 (updated 2026-06-30)
 - Intent: **post-6.0.0** capability — align after the semver-major release that ships current breaking Helm + MCP surface changes (see changelog **Unreleased** / **6.0.0** planning)
 - Tracking: [#239](https://github.com/danielsmithdevelopment/ClawQL/issues/239), implementation [#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243)
-- Related docs: [`docs/design/workflow-tool-argo.md`](../design/workflow-tool-argo.md), [`docs/clawql-ecosystem.md`](../clawql-ecosystem.md) (Appendix), [`docs/roadmap/argo-workflows-cd-provider.md`](../roadmap/argo-workflows-cd-provider.md) (issue body source)
+- Related docs: [`docs/design/workflow-tool-argo.md`](../design/workflow-tool-argo.md), [`docs/clawql-ecosystem.md`](../clawql-ecosystem.md) (Appendix), [`docs/roadmap/argo-workflows-cd-provider.md`](../roadmap/argo-workflows-cd-provider.md) (issue body source), [ADR 0009](./0009-enterprise-ontology.md) (kinetic executor routing — Argo Workflows as IDP / multi-step agent DAG plane)
 
 ## Context
 

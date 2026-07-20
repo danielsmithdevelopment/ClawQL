@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-07-11
-- Related: [ADR 0006: Golden host images (Packer)](./0006-golden-host-images-packer.md), [`infra/pulumi/`](../../infra/pulumi/), [`packer/`](../../packer/)
+- Related: [ADR 0006: Golden host images (Packer)](./0006-golden-host-images-packer.md), [`infra/pulumi/`](../../infra/pulumi/), [`packer/`](../../packer/), [ADR 0009](./0009-enterprise-ontology.md) (kinetic infra executor via Automation API)
 - Supersedes: N/A (complements Packer — artifact vs infrastructure)
 
 ## Context

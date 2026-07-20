@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://clawql.dev/schemas/ontology/entity.schema.json",
+  "title": "ClawQL Ontology Entity (v1alpha1)",
+  "description": "Provisional entity schema for ClawQL enterprise Ontology. See docs/adr/0009-enterprise-ontology.md. Not a frozen public standard until design-partner validation.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "clawql.dev/ontology/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Entity"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Z][A-Za-z0-9]*$"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": ["description", "properties"],
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string", "minLength": 1 },
+        "properties": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "$ref": "#/$defs/property" }
+        },
+        "pii_fields": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source" }
+        },
+        "relationships": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/relationship" }
+        },
+        "actions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/action" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "property": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "string",
+            "number",
+            "integer",
+            "boolean",
+            "date",
+            "datetime",
+            "money",
+            "enum",
+            "array",
+            "object",
+            "ref"
+          ]
+        },
+        "required": { "type": "boolean" },
+        "indexed": { "type": "boolean" },
+        "mutable": { "type": "boolean" },
+        "kinetic_level": {
+          "type": "string",
+          "enum": ["NONE", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
+        },
+        "requires_mandate": {
+          "type": "string",
+          "description": "AP2 mandate type when kinetic_level warrants it"
+        },
+        "change_limit": { "type": "string" },
+        "values": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Required when type is enum"
+        },
+        "items": {
+          "type": "object",
+          "description": "Array item type or $ref to another entity"
+        },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "source": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["sql", "openapi", "nextcloud", "document", "onyx"]
+        },
+        "connection": { "type": "string" },
+        "table": { "type": "string" },
+        "id_column": { "type": "string" },
+        "path": { "type": "string" },
+        "classifier": { "type": "string" },
+        "operationId": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "relationship": {
+      "type": "object",
+      "required": ["entity", "type"],
+      "properties": {
+        "entity": { "type": "string", "minLength": 1 },
+        "type": {
+          "type": "string",
+          "enum": ["one_to_one", "one_to_many", "many_to_one", "many_to_many"]
+        },
+        "via": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "action": {
+      "type": "object",
+      "required": ["name", "kind"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "enum": ["read", "write"] },
+        "description": { "type": "string" },
+        "kinetic": { "type": "boolean" },
+        "kinetic_level": {
+          "type": "string",
+          "enum": ["NONE", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
+        },
+        "requires_mandate": { "type": "boolean" },
+        "mandate_type": { "type": "string" },
+        "blast_radius": {
+          "type": "string",
+          "enum": [
+            "SINGLE_RECORD",
+            "SINGLE_REGION",
+            "FINANCIAL",
+            "BULK",
+            "INFRA"
+          ]
+        },
+        "rollback_protocol": {
+          "type": "string",
+          "enum": [
+            "FIELD_RESTORE",
+            "SNAPSHOT_RESTORE",
+            "REVERSAL",
+            "COMPENSATING_TRANSACTION",
+            "WORKFLOW_CANCEL",
+            "NONE"
+          ]
+        },
+        "executor": {
+          "type": "string",
+          "enum": ["NATIVE", "PULUMI", "ARGO_WORKFLOW", "ARGO_ROLLOUTS"]
+        },
+        "workflow": { "type": "string" },
+        "requires_human_in_loop": { "type": "boolean" },
+        "audit_level": {
+          "type": "string",
+          "enum": ["STANDARD", "FORENSIC"]
+        }
+      },
+      "additionalProperties": true,
+      "allOf": [
+        {
+          "if": {
+            "properties": { "kind": { "const": "write" } }
+          },
+          "then": {
+            "properties": {
+              "kinetic": { "const": true }
+            },
+            "required": ["kinetic", "kinetic_level", "blast_radius", "rollback_protocol", "executor"]
+          }
+        }
+      ]
+    }
+  }
+}
