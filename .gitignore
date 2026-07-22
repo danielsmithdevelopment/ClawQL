@@ -69,3 +69,6 @@ generated/
 
 # CI e2e-only release bundle (do not commit)
 releases/v0.0.0-e2e/
+
+# Python (OpenBench validators / adapters)
+__pycache__/

@@ -2,12 +2,13 @@
  * Harness wrappers: launch agent CLIs with ClawQL MCP pre-wired (Executor parity).
  *
  *   clawql claude | codex | cursor | opencode [-- forwarded args]
+ *   clawql claude --non-interactive --model <id> --task-file <path> [--workdir DIR]
  */
 
 import { spawn } from "node:child_process";
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir, platform } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { existsSync } from "node:fs";
 import { buildMcpServerConfig } from "./mcp-config.js";
 import { getClawqlHome } from "./paths.js";
@@ -21,6 +22,41 @@ const HARNESS_BIN: Record<HarnessId, string[]> = {
   codex: ["codex"],
   cursor: ["cursor"],
   opencode: ["opencode"],
+};
+
+export type NonInteractiveOpts = {
+  /** Model id in the target harness's native form (e.g. claude-sonnet-4, openai/gpt-5.5). */
+  model?: string;
+  /** Path to a markdown/text instruction file. */
+  taskFile?: string;
+  /** Inline instruction (used when taskFile is omitted). */
+  instruction?: string;
+  /** Working directory for the agent (defaults to cwd). */
+  workdir?: string;
+  /** Soft timeout in seconds (best-effort kill). */
+  timeoutS?: number;
+  /** Optional inference gateway base URL forwarded to the child env. */
+  inferenceUrl?: string;
+  /** When true, also write `.token_usage` into workdir for OpenBench checkers. */
+  writeTokenUsage?: boolean;
+};
+
+export type BenchUsage = {
+  tokens: number | null;
+  turns: number | null;
+  tokensInputUncached: number | null;
+  tokensOutput: number | null;
+  tokenBasis: string | null;
+};
+
+export type NonInteractiveResult = {
+  exitCode: number;
+  completed: boolean;
+  error: string | null;
+  outputTail: string;
+  fullOutput: string;
+  cmd: string[];
+  usage: BenchUsage;
 };
 
 export function resolveHarnessBinary(id: HarnessId): string {
@@ -161,7 +197,7 @@ export async function runHarness(id: HarnessId, forwarded: string[]): Promise<nu
   const spawnBin = gate.wrap ? "/usr/bin/sandbox-exec" : bin;
   const spawnArgs = gate.wrap ? gate.sandboxArgv(bin, forwarded) : forwarded;
 
-  return new Promise((resolve) => {
+  return new Promise((resolvePromise) => {
     const child = spawn(spawnBin, spawnArgs, {
       stdio: "inherit",
       env: {
@@ -170,12 +206,428 @@ export async function runHarness(id: HarnessId, forwarded: string[]): Promise<nu
       },
     });
     child.on("exit", (code, signal) => {
-      if (signal) resolve(1);
-      else resolve(code ?? 0);
+      if (signal) resolvePromise(1);
+      else resolvePromise(code ?? 0);
     });
     child.on("error", (err) => {
       console.error(`[clawql ${id}]`, err.message);
-      resolve(1);
+      resolvePromise(1);
     });
   });
+}
+
+function emptyUsage(): BenchUsage {
+  return {
+    tokens: null,
+    turns: null,
+    tokensInputUncached: null,
+    tokensOutput: null,
+    tokenBasis: null,
+  };
+}
+
+function asInt(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return Math.trunc(value);
+  if (typeof value === "string" && /^-?\d+$/.test(value.trim())) return Number(value.trim());
+  return null;
+}
+
+/** Best-effort parse of harness JSON / JSONL usage for OpenBench reporting. */
+export function parseHarnessUsage(id: HarnessId, stdout: string): BenchUsage {
+  const usage = emptyUsage();
+  const text = (stdout || "").trim();
+  if (!text) return usage;
+
+  const tryObj = (obj: Record<string, unknown>): BenchUsage | null => {
+    if (id === "claude") {
+      const turns = asInt(obj.num_turns);
+      const modelUsage = obj.modelUsage;
+      let input = 0;
+      let output = 0;
+      let found = false;
+      if (modelUsage && typeof modelUsage === "object") {
+        for (const m of Object.values(modelUsage as Record<string, unknown>)) {
+          if (!m || typeof m !== "object") continue;
+          const row = m as Record<string, unknown>;
+          const inp = asInt(row.inputTokens);
+          const out = asInt(row.outputTokens);
+          if (inp === null || out === null) continue;
+          input += inp;
+          output += out;
+          found = true;
+        }
+      }
+      if (!found && obj.usage && typeof obj.usage === "object") {
+        const u = obj.usage as Record<string, unknown>;
+        const inp = asInt(u.input_tokens);
+        const out = asInt(u.output_tokens);
+        if (inp !== null && out !== null) {
+          input = inp;
+          output = out;
+          found = true;
+        }
+      }
+      if (found) {
+        return {
+          tokens: input + output,
+          turns,
+          tokensInputUncached: input,
+          tokensOutput: output,
+          tokenBasis: "vendor_split",
+        };
+      }
+    }
+
+    if (id === "codex") {
+      // Codex JSONL: look for turn.completed usage aggregates on this object.
+      const u = obj.usage;
+      if (u && typeof u === "object") {
+        const row = u as Record<string, unknown>;
+        const inp = asInt(row.input_tokens);
+        const out = asInt(row.output_tokens);
+        if (inp !== null && out !== null) {
+          return {
+            tokens: inp + out,
+            turns: asInt(obj.turn_count) ?? asInt(obj.turns),
+            tokensInputUncached: inp,
+            tokensOutput: out,
+            tokenBasis: "harness_reported",
+          };
+        }
+      }
+    }
+
+    if (id === "opencode") {
+      const props = obj.properties as Record<string, unknown> | undefined;
+      const part = props?.part as Record<string, unknown> | undefined;
+      const tokens = part?.tokens as Record<string, unknown> | undefined;
+      if (tokens) {
+        const inp = asInt(tokens.input) ?? asInt(tokens.prompt);
+        const out = asInt(tokens.output) ?? asInt(tokens.completion);
+        if (inp !== null && out !== null) {
+          return {
+            tokens: inp + out,
+            turns: null,
+            tokensInputUncached: inp,
+            tokensOutput: out,
+            tokenBasis: "harness_reported",
+          };
+        }
+      }
+    }
+
+    // Generic CLAWQL_* lines are handled below; also accept explicit fields.
+    const tokens = asInt(obj.tokens);
+    const turns = asInt(obj.turns);
+    if (tokens !== null || turns !== null) {
+      return {
+        tokens,
+        turns,
+        tokensInputUncached: asInt(obj.tokens_input_uncached),
+        tokensOutput: asInt(obj.tokens_output),
+        tokenBasis: typeof obj.token_basis === "string" ? obj.token_basis : "estimated",
+      };
+    }
+    return null;
+  };
+
+  // Prefer a single JSON object (claude --output-format json).
+  try {
+    const obj = JSON.parse(text) as unknown;
+    if (obj && typeof obj === "object") {
+      const parsed = tryObj(obj as Record<string, unknown>);
+      if (parsed) return parsed;
+    }
+  } catch {
+    // fall through to JSONL / line scan
+  }
+
+  let best = usage;
+  let turnEvents = 0;
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try {
+      const obj = JSON.parse(trimmed) as unknown;
+      if (!obj || typeof obj !== "object") continue;
+      const row = obj as Record<string, unknown>;
+      if (row.type === "turn_end" || row.type === "step_finish" || row.type === "turn.completed") {
+        turnEvents += 1;
+      }
+      const parsed = tryObj(row);
+      if (parsed && (parsed.tokens !== null || parsed.turns !== null)) {
+        best = parsed;
+      }
+    } catch {
+      // ignore non-JSON noise
+    }
+  }
+  if (best.turns === null && turnEvents > 0) best.turns = turnEvents;
+  return best;
+}
+
+function buildHeadlessArgv(
+  id: HarnessId,
+  instruction: string,
+  workdir: string,
+  model: string | undefined,
+  extra: string[]
+): string[] {
+  switch (id) {
+    case "claude": {
+      const args = [
+        "-p",
+        "--bare",
+        "--output-format",
+        "json",
+        "--dangerously-skip-permissions",
+        "--disallowedTools",
+        "Agent",
+        "Task",
+        "--no-session-persistence",
+      ];
+      if (model) args.push("--model", model);
+      args.push(instruction, ...extra);
+      return args;
+    }
+    case "codex": {
+      const args = [
+        "exec",
+        "--json",
+        "--skip-git-repo-check",
+        "-C",
+        workdir,
+        "-s",
+        "workspace-write",
+        "--disable",
+        "apps",
+        "--disable",
+        "plugins",
+        "--disable",
+        "multi_agent",
+      ];
+      if (model) args.push("-m", model);
+      args.push(instruction, ...extra);
+      return args;
+    }
+    case "opencode": {
+      const args = ["run", "--dir", workdir, "--auto", "--format", "json", "--title", "clawql-openbench"];
+      if (model) args.push("-m", model);
+      args.push(instruction, ...extra);
+      return args;
+    }
+    case "cursor": {
+      // Cursor agent CLI surface varies; prefer `agent` subcommand when present.
+      // Extra forwarded args let operators pin exact flags for their Cursor build.
+      const args = ["agent", "--print", instruction];
+      if (model) args.push("--model", model);
+      args.push(...extra);
+      return args;
+    }
+  }
+}
+
+async function spawnCaptured(
+  spawnBin: string,
+  spawnArgs: string[],
+  opts: { cwd: string; env: NodeJS.ProcessEnv; timeoutS?: number }
+): Promise<{ code: number; stdout: string; stderr: string; timedOut: boolean }> {
+  return new Promise((resolvePromise) => {
+    const child = spawn(spawnBin, spawnArgs, {
+      cwd: opts.cwd,
+      env: opts.env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    let timedOut = false;
+    let settled = false;
+    const timer =
+      opts.timeoutS && opts.timeoutS > 0
+        ? setTimeout(() => {
+            timedOut = true;
+            child.kill("SIGTERM");
+            setTimeout(() => child.kill("SIGKILL"), 2000).unref();
+          }, opts.timeoutS * 1000)
+        : null;
+
+    child.stdout?.on("data", (chunk: Buffer | string) => {
+      stdout += typeof chunk === "string" ? chunk : chunk.toString("utf8");
+    });
+    child.stderr?.on("data", (chunk: Buffer | string) => {
+      stderr += typeof chunk === "string" ? chunk : chunk.toString("utf8");
+    });
+
+    const finish = (code: number) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      resolvePromise({ code, stdout, stderr, timedOut });
+    };
+
+    child.on("error", (err) => {
+      stderr += `\n${err.message}`;
+      finish(1);
+    });
+    child.on("exit", (code, signal) => {
+      if (timedOut) finish(124);
+      else if (signal) finish(1);
+      else finish(code ?? 0);
+    });
+  });
+}
+
+function emitBenchJson(payload: Record<string, unknown>): void {
+  console.log(`CLAWQL_BENCH_JSON: ${JSON.stringify(payload)}`);
+}
+
+/**
+ * Headless harness run for OpenBench / CI. Captures stdout, parses usage when
+ * possible, and prints machine-readable summary lines:
+ *
+ *   CLAWQL_TOKENS: <n>
+ *   CLAWQL_TURNS: <n>
+ *   CLAWQL_BENCH_JSON: {...}
+ */
+export async function runHarnessNonInteractive(
+  id: HarnessId,
+  opts: NonInteractiveOpts,
+  extraForwarded: string[] = []
+): Promise<NonInteractiveResult> {
+  await prepareHarness(id);
+  const bin = resolveHarnessBinary(id);
+  const workdir = resolve(opts.workdir?.trim() || process.cwd());
+
+  if (!existsSync(bin) && bin === HARNESS_BIN[id][0]) {
+    const msg = `Harness binary "${bin}" not found on PATH`;
+    console.error(`[clawql ${id}] ${msg}`);
+    emitBenchJson({ completed: false, error: msg, tokens: null, turns: null, exit_code: 1 });
+    return {
+      exitCode: 1,
+      completed: false,
+      error: msg,
+      outputTail: "",
+      fullOutput: "",
+      cmd: [],
+      usage: emptyUsage(),
+    };
+  }
+
+  let instruction = opts.instruction?.trim() ?? "";
+  if (opts.taskFile?.trim()) {
+    const taskPath = isAbsolute(opts.taskFile) ? opts.taskFile : resolve(process.cwd(), opts.taskFile);
+    instruction = (await readFile(taskPath, "utf8")).trim();
+  }
+  if (!instruction) {
+    const msg = "Provide --task-file <path> or --message <instruction> for --non-interactive";
+    console.error(`[clawql ${id}] ${msg}`);
+    emitBenchJson({ completed: false, error: msg, tokens: null, turns: null, exit_code: 2 });
+    return {
+      exitCode: 2,
+      completed: false,
+      error: msg,
+      outputTail: "",
+      fullOutput: "",
+      cmd: [],
+      usage: emptyUsage(),
+    };
+  }
+
+  // Soften Seatbelt fail-closed for disposable OpenBench workspaces: still
+  // wrap when sandbox-exec is available, but do not block Linux CI runners.
+  const gate = await ensureHarnessSandboxGate(id, getClawqlHome(), workdir);
+  const allowUnsandboxed =
+    process.env.CLAWQL_OPENBENCH === "1" || process.env.CLAWQL_HARNESS_ALLOW_UNSANDBOXED === "1";
+  if (!gate.ok && !allowUnsandboxed) {
+    console.error(`[clawql ${id}] ${gate.error}`);
+    console.error("Fix: clawql sandbox init && clawql sandbox verify");
+    console.error("Or set CLAWQL_OPENBENCH=1 / CLAWQL_HARNESS_ALLOW_UNSANDBOXED=1 for bench lanes.");
+    emitBenchJson({
+      completed: false,
+      error: gate.error ?? "sandbox gate failed",
+      tokens: null,
+      turns: null,
+      exit_code: 1,
+    });
+    return {
+      exitCode: 1,
+      completed: false,
+      error: gate.error ?? "sandbox gate failed",
+      outputTail: "",
+      fullOutput: "",
+      cmd: [],
+      usage: emptyUsage(),
+    };
+  }
+
+  const forwarded = buildHeadlessArgv(id, instruction, workdir, opts.model, extraForwarded);
+  const spawnBin = gate.ok && gate.wrap ? "/usr/bin/sandbox-exec" : bin;
+  const spawnArgs = gate.ok && gate.wrap ? gate.sandboxArgv(bin, forwarded) : forwarded;
+
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    CLAWQL_HOME: getClawqlHome(),
+    CLAWQL_OPENBENCH: "1",
+  };
+  if (opts.inferenceUrl?.trim()) {
+    env.CLAWQL_INFERENCE_URL = opts.inferenceUrl.trim();
+    env.OPENAI_BASE_URL = opts.inferenceUrl.trim();
+  }
+
+  const { code, stdout, stderr, timedOut } = await spawnCaptured(spawnBin, spawnArgs, {
+    cwd: workdir,
+    env,
+    timeoutS: opts.timeoutS,
+  });
+
+  const combined = `${stdout}${stderr}`;
+  const usage = parseHarnessUsage(id, stdout);
+  const completed = code === 0 && !timedOut;
+  const error = timedOut
+    ? `timeout after ${opts.timeoutS ?? "?"}s`
+    : completed
+      ? null
+      : `exit ${code}`;
+
+  if (opts.writeTokenUsage !== false) {
+    const payload = {
+      tokens: usage.tokens,
+      turns: usage.turns,
+      tokens_input_uncached: usage.tokensInputUncached,
+      tokens_output: usage.tokensOutput,
+      token_basis: usage.tokenBasis,
+      harness: id,
+      completed,
+    };
+    try {
+      await writeFile(join(workdir, ".token_usage"), `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+    } catch {
+      // non-fatal for the agent run itself
+    }
+  }
+
+  // Machine-readable lines for OpenBench adapters / logs.
+  if (usage.tokens !== null) console.log(`CLAWQL_TOKENS: ${usage.tokens}`);
+  if (usage.turns !== null) console.log(`CLAWQL_TURNS: ${usage.turns}`);
+  emitBenchJson({
+    completed,
+    error,
+    tokens: usage.tokens,
+    turns: usage.turns,
+    tokens_input_uncached: usage.tokensInputUncached,
+    tokens_output: usage.tokensOutput,
+    token_basis: usage.tokenBasis,
+    cmd: [spawnBin, ...spawnArgs].join(" "),
+    exit_code: code,
+  });
+
+  return {
+    exitCode: code,
+    completed,
+    error,
+    outputTail: combined.slice(-2000),
+    fullOutput: combined,
+    cmd: [spawnBin, ...spawnArgs],
+    usage,
+  };
 }

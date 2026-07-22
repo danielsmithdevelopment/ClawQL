@@ -1,0 +1,5 @@
+service: api
+replicas: 2
+tags:
+  - prod
+  - west

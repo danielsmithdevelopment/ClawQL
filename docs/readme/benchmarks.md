@@ -30,6 +30,12 @@ These are context-size comparisons, not direct per-call provider invoices.
 - Latest outputs: `docs/benchmarks/latest.json`, `docs/benchmarks/latest.md`
 - Reproduction guide: `docs/benchmarks/REPRODUCE.md`
 
+### OpenBench harness benchmark
+
+- Pack + adapter + tasks: `openbench/`
+- Narrative: `docs/benchmarks/openbench.md`
+- Offline checker validation: `npm run openbench:validate`
+
 ## Case Studies
 
 - Index: `docs/case_studies/README.md`

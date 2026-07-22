@@ -12,6 +12,7 @@ Token estimates in docs often use **~4 characters per token** as a heuristic.
 ## Reproduce
 
 - **Phase 1 / Phase 2 token repro:** `npm run benchmark:tokens` → [`docs/benchmarks/latest.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/latest.json) and [`latest.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/latest.md). Full steps: [`docs/benchmarks/REPRODUCE.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/REPRODUCE.md).
+- **OpenBench harness runs:** adapter + ClawQL-specific tasks under [`openbench/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/openbench). Overview: [`docs/benchmarks/openbench.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench.md). Offline checker validation: `npm run openbench:validate`.
 
 ## Normal usage vs pasted specs
 
