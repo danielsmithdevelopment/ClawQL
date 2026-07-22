@@ -9,7 +9,12 @@ describe("parseHarnessUsage", () => {
       result: "done",
       usage: { input_tokens: 100, output_tokens: 20 },
       modelUsage: {
-        "claude-opus-4-8": { inputTokens: 100, outputTokens: 20, cacheReadInputTokens: 0, cacheCreationInputTokens: 0 },
+        "claude-opus-4-8": {
+          inputTokens: 100,
+          outputTokens: 20,
+          cacheReadInputTokens: 0,
+          cacheCreationInputTokens: 0,
+        },
       },
     });
     const usage = parseHarnessUsage("claude", stdout);

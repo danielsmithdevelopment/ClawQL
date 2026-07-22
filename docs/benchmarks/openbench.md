@@ -33,11 +33,11 @@ Python adapter: [`openbench/adapters/clawql.py`](../../openbench/adapters/clawql
 
 ### Track B — ClawQL-specific tasks
 
-| Task | Differentiator |
-|------|----------------|
+| Task                            | Differentiator                                          |
+| ------------------------------- | ------------------------------------------------------- |
 | `memory-dependent-continuation` | Prior decisions only in vault memory after seed removal |
-| `token-budget-constrained` | Correctness + ≤5k-token budget scoring |
-| `multi-provider-api-workflow` | Offline multi-API Worker scaffold |
+| `token-budget-constrained`      | Correctness + ≤5k-token budget scoring                  |
+| `multi-provider-api-workflow`   | Offline multi-API Worker scaffold                       |
 
 Offline checker validation (no model):
 

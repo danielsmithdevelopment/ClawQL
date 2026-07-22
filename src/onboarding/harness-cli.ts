@@ -411,7 +411,16 @@ function buildHeadlessArgv(
       return args;
     }
     case "opencode": {
-      const args = ["run", "--dir", workdir, "--auto", "--format", "json", "--title", "clawql-openbench"];
+      const args = [
+        "run",
+        "--dir",
+        workdir,
+        "--auto",
+        "--format",
+        "json",
+        "--title",
+        "clawql-openbench",
+      ];
       if (model) args.push("-m", model);
       args.push(instruction, ...extra);
       return args;
@@ -515,7 +524,9 @@ export async function runHarnessNonInteractive(
 
   let instruction = opts.instruction?.trim() ?? "";
   if (opts.taskFile?.trim()) {
-    const taskPath = isAbsolute(opts.taskFile) ? opts.taskFile : resolve(process.cwd(), opts.taskFile);
+    const taskPath = isAbsolute(opts.taskFile)
+      ? opts.taskFile
+      : resolve(process.cwd(), opts.taskFile);
     instruction = (await readFile(taskPath, "utf8")).trim();
   }
   if (!instruction) {
@@ -541,7 +552,9 @@ export async function runHarnessNonInteractive(
   if (!gate.ok && !allowUnsandboxed) {
     console.error(`[clawql ${id}] ${gate.error}`);
     console.error("Fix: clawql sandbox init && clawql sandbox verify");
-    console.error("Or set CLAWQL_OPENBENCH=1 / CLAWQL_HARNESS_ALLOW_UNSANDBOXED=1 for bench lanes.");
+    console.error(
+      "Or set CLAWQL_OPENBENCH=1 / CLAWQL_HARNESS_ALLOW_UNSANDBOXED=1 for bench lanes."
+    );
     emitBenchJson({
       completed: false,
       error: gate.error ?? "sandbox gate failed",
@@ -600,7 +613,11 @@ export async function runHarnessNonInteractive(
       completed,
     };
     try {
-      await writeFile(join(workdir, ".token_usage"), `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+      await writeFile(
+        join(workdir, ".token_usage"),
+        `${JSON.stringify(payload, null, 2)}\n`,
+        "utf8"
+      );
     } catch {
       // non-fatal for the agent run itself
     }

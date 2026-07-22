@@ -446,7 +446,10 @@ async function main(): Promise<void> {
     try {
       const here = dirname(fileURLToPath(import.meta.url));
       const pkgPath = join(here, "..", "..", "package.json");
-      const pkg = JSON.parse(await readFile(pkgPath, "utf8")) as { version?: string; name?: string };
+      const pkg = JSON.parse(await readFile(pkgPath, "utf8")) as {
+        version?: string;
+        name?: string;
+      };
       console.log(`${pkg.name ?? "clawql-mcp"} ${pkg.version ?? "unknown"}`);
     } catch {
       console.log("clawql-mcp unknown");
