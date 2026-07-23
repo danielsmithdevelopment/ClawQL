@@ -26,18 +26,18 @@ required.
 
 `composeDefaultProviderPlugins()` registers these unless disabled:
 
-| Plugin id      | Adapter                         | Credentials / config                                                                        |
-| -------------- | ------------------------------- | ------------------------------------------------------------------------------------------- |
-| **openai**     | Chat completions                | `OPENAI_API_KEY`, `CLAWQL_OPENAI_BASE_URL`                                                  |
-| **anthropic**  | Messages API                    | `ANTHROPIC_API_KEY`, `CLAWQL_ANTHROPIC_BASE_URL`                                            |
-| **ollama**     | Local `/api/chat`               | `OLLAMA_BASE_URL` (default `http://127.0.0.1:11434`)                                        |
-| **deepseek**   | OpenAI-compatible (direct)      | `DEEPSEEK_API_KEY`, `CLAWQL_DEEPSEEK_BASE_URL`                                              |
-| **groq**       | OpenAI-compatible (direct)      | `GROQ_API_KEY`, `CLAWQL_GROQ_BASE_URL`                                                      |
-| **fireworks**  | OpenAI-compatible (direct)      | `FIREWORKS_API_KEY`, `CLAWQL_FIREWORKS_BASE_URL`                                            |
-| **together**   | OpenAI-compatible (direct)      | `TOGETHER_API_KEY`, `CLAWQL_TOGETHER_BASE_URL`                                              |
-| **mistral**    | OpenAI-compatible (direct)      | `MISTRAL_API_KEY`, `CLAWQL_MISTRAL_BASE_URL`                                                |
-| **xai**        | OpenAI-compatible (direct)      | `XAI_API_KEY`, `CLAWQL_XAI_BASE_URL`                                                        |
-| **google**     | Gemini OpenAI-compat endpoint   | `GOOGLE_API_KEY`, `CLAWQL_GOOGLE_OPENAI_BASE_URL`                                           |
+| Plugin id      | Adapter                          | Credentials / config                                                                        |
+| -------------- | -------------------------------- | ------------------------------------------------------------------------------------------- |
+| **openai**     | Chat completions                 | `OPENAI_API_KEY`, `CLAWQL_OPENAI_BASE_URL`                                                  |
+| **anthropic**  | Messages API                     | `ANTHROPIC_API_KEY`, `CLAWQL_ANTHROPIC_BASE_URL`                                            |
+| **ollama**     | Local `/api/chat`                | `OLLAMA_BASE_URL` (default `http://127.0.0.1:11434`)                                        |
+| **deepseek**   | OpenAI-compatible (direct)       | `DEEPSEEK_API_KEY`, `CLAWQL_DEEPSEEK_BASE_URL`                                              |
+| **groq**       | OpenAI-compatible (direct)       | `GROQ_API_KEY`, `CLAWQL_GROQ_BASE_URL`                                                      |
+| **fireworks**  | OpenAI-compatible (direct)       | `FIREWORKS_API_KEY`, `CLAWQL_FIREWORKS_BASE_URL`                                            |
+| **together**   | OpenAI-compatible (direct)       | `TOGETHER_API_KEY`, `CLAWQL_TOGETHER_BASE_URL`                                              |
+| **mistral**    | OpenAI-compatible (direct)       | `MISTRAL_API_KEY`, `CLAWQL_MISTRAL_BASE_URL`                                                |
+| **xai**        | OpenAI-compatible (direct)       | `XAI_API_KEY`, `CLAWQL_XAI_BASE_URL`                                                        |
+| **google**     | Gemini OpenAI-compat endpoint    | `GOOGLE_API_KEY`, `CLAWQL_GOOGLE_OPENAI_BASE_URL`                                           |
 | **openrouter** | Optional aggregator escape hatch | `OPENROUTER_API_KEY`, `CLAWQL_OPENROUTER_BASE_URL` (default `https://openrouter.ai/api/v1`) |
 
 Model ids use `provider/model` (e.g. `deepseek/deepseek-chat`,
@@ -80,10 +80,10 @@ Optional attribution headers: `CLAWQL_OPENROUTER_HTTP_REFERER`, `CLAWQL_OPENROUT
 
 ## Enable / disable plugins
 
-| Env                                           | Effect                                            |
-| --------------------------------------------- | ------------------------------------------------- |
-| `CLAWQL_INFERENCE_PROVIDERS=openai,deepseek`  | Allowlist — only listed provider plugins register |
-| `CLAWQL_INFERENCE_DISABLE_PROVIDERS=openrouter` | Denylist — skip listed builtins                 |
+| Env                                             | Effect                                            |
+| ----------------------------------------------- | ------------------------------------------------- |
+| `CLAWQL_INFERENCE_PROVIDERS=openai,deepseek`    | Allowlist — only listed provider plugins register |
+| `CLAWQL_INFERENCE_DISABLE_PROVIDERS=openrouter` | Denylist — skip listed builtins                   |
 
 ## Plugin contract
 

@@ -1,10 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { DEFAULT_INFERENCE_MODEL_CATALOG, type InferenceModelCatalog } from "./default-catalog.js";
 
-export type {
-  CatalogModel,
-  InferenceModelCatalog,
-} from "./default-catalog.js";
+export type { CatalogModel, InferenceModelCatalog } from "./default-catalog.js";
 export { DEFAULT_INFERENCE_MODEL_CATALOG } from "./default-catalog.js";
 
 /**
@@ -32,10 +29,7 @@ export async function loadInferenceModelCatalog(
   }
 }
 
-export function resolveCatalogAlias(
-  modelId: string,
-  catalog: InferenceModelCatalog
-): string {
+export function resolveCatalogAlias(modelId: string, catalog: InferenceModelCatalog): string {
   const trimmed = modelId.trim();
   return catalog.aliases[trimmed] ?? trimmed;
 }

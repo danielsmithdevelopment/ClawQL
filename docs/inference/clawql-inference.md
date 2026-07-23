@@ -15,20 +15,20 @@ On a laptop it is often the **Edge Agentic Gateway**. In enterprise fabric deplo
 
 ## What it does
 
-| Capability        | Summary                                                                                      |
-| ----------------- | -------------------------------------------------------------------------------------------- |
-| **Gateway**       | OpenAI-compatible REST (`/v1/chat/completions`, `/v1/models`, SSE streaming)                 |
+| Capability        | Summary                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------- |
+| **Gateway**       | OpenAI-compatible REST (`/v1/chat/completions`, `/v1/models`, SSE streaming)                        |
 | **Providers**     | Direct BYOK (OpenAI, Anthropic, DeepSeek, Groq, …) + local Ollama; OpenRouter optional escape hatch |
-| **Routing**       | Frugal → standard → frontier tier escalation with kill switches                              |
-| **Cache**         | Embedding similarity semantic cache (cosine threshold + TTL)                                 |
-| **Efficiency**    | Layers 3–11 (terse, prompt cache, history/prompt compress, HTTP routing, structured/prefill) |
-| **Resilience**    | Per-tier / per-model fallback chains before hard failure                                     |
-| **Auth**          | Virtual keys (per-team budgets, rate limits)                                                 |
-| **Entitlements**  | Optional plan limits via `clawql-payments`                                                   |
-| **Observability** | Durable call store, `logs` / `trace` / `spend` CLI                                           |
-| **Flywheel**      | Verdict-filtered export → fine-tune → register custom model in tier map                      |
-| **Automation**    | Scheduled pipeline worker (cron export when sample threshold met)                            |
-| **Ouroboros**     | `model_escalation` + `agent_coordination` audit events in lineage store                      |
+| **Routing**       | Frugal → standard → frontier tier escalation with kill switches                                     |
+| **Cache**         | Embedding similarity semantic cache (cosine threshold + TTL)                                        |
+| **Efficiency**    | Layers 3–11 (terse, prompt cache, history/prompt compress, HTTP routing, structured/prefill)        |
+| **Resilience**    | Per-tier / per-model fallback chains before hard failure                                            |
+| **Auth**          | Virtual keys (per-team budgets, rate limits)                                                        |
+| **Entitlements**  | Optional plan limits via `clawql-payments`                                                          |
+| **Observability** | Durable call store, `logs` / `trace` / `spend` CLI                                                  |
+| **Flywheel**      | Verdict-filtered export → fine-tune → register custom model in tier map                             |
+| **Automation**    | Scheduled pipeline worker (cron export when sample threshold met)                                   |
+| **Ouroboros**     | `model_escalation` + `agent_coordination` audit events in lineage store                             |
 
 ---
 
@@ -96,12 +96,14 @@ HTTP `clawql inference serve` uses `createInferenceGatewayAsync()` so semantic c
 ### Data flow summary
 
 ```
+
 HTTP clients → auth middleware → OpenAI router → [Observed → Entitlement → Cache → Fallback → Configured] → provider plugin
 CLI / library callers ──────────────────────────► [same decorator stack] ────────────────────────────────► provider plugin
 Ouroboros loop ─────────────────────────────────► ConfiguredInferenceGateway (innermost) ───────────────► provider plugin
 
 ObservedInferenceGateway ──writes──► Inference store (jsonl / postgres / memory)
-```
+
+````
 
 Every successful `complete()` call flows **outward through decorators** and ends in the call store. HTTP clients additionally pass through virtual-key auth before the OpenAI router invokes the same gateway.
 
@@ -130,7 +132,7 @@ const result = await gateway.complete({
   correlationId: "seed_abc_gen_2",
   team: "eng",
 });
-```
+````
 
 Disable layers via options: `{ semanticCache: false }`, `{ fallback: false }`, `{ store: null }`.
 
@@ -608,18 +610,18 @@ clawql-inference is positioned as a **complete upgrade** — not a thin wrapper.
 You can still terminate on OpenRouter when you want that aggregator; the default
 path disintermediates it and talks to vendors with **your keys**.
 
-| Capability | clawql-inference | OpenRouter | LiteLLM-class proxies |
-| ---------- | ---------------- | ---------- | --------------------- |
-| Direct BYOK to vendors | Yes (default) | N/A (is the middleman) | Often yes |
-| Optional OpenRouter passthrough | Yes (`openrouter/*`) | — | Possible via custom |
-| Curated catalog + `clawql/*` aliases | Yes | Catalog only | Config-dependent |
-| OpenAI-compatible drop-in | Yes | Yes | Yes |
-| Outcome-driven tier escalation | Yes | No | Static / rules |
-| Semantic cache + token-efficiency layers | Yes | No | Limited / plugins |
-| Virtual keys, budgets, entitlements | Yes | Keys/credits | Varies |
-| `correlation_id` → WORM / Ouroboros lineage | Yes | Generic logs | Generic logs |
-| Verdict-filtered export + fine-tune flywheel | Yes | No | Ad-hoc |
-| TypeScript-native control plane | Yes | Hosted SaaS | Usually Python |
+| Capability                                   | clawql-inference     | OpenRouter             | LiteLLM-class proxies |
+| -------------------------------------------- | -------------------- | ---------------------- | --------------------- |
+| Direct BYOK to vendors                       | Yes (default)        | N/A (is the middleman) | Often yes             |
+| Optional OpenRouter passthrough              | Yes (`openrouter/*`) | —                      | Possible via custom   |
+| Curated catalog + `clawql/*` aliases         | Yes                  | Catalog only           | Config-dependent      |
+| OpenAI-compatible drop-in                    | Yes                  | Yes                    | Yes                   |
+| Outcome-driven tier escalation               | Yes                  | No                     | Static / rules        |
+| Semantic cache + token-efficiency layers     | Yes                  | No                     | Limited / plugins     |
+| Virtual keys, budgets, entitlements          | Yes                  | Keys/credits           | Varies                |
+| `correlation_id` → WORM / Ouroboros lineage  | Yes                  | Generic logs           | Generic logs          |
+| Verdict-filtered export + fine-tune flywheel | Yes                  | No                     | Ad-hoc                |
+| TypeScript-native control plane              | Yes                  | Hosted SaaS            | Usually Python        |
 
 **Narrative for operators:** prefer `deepseek/…`, `groq/…`, `openai/…` with vendor
 keys. Use `openrouter/…` only when you explicitly want OpenRouter's long-tail

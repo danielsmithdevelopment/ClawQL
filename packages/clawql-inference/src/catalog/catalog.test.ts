@@ -12,9 +12,9 @@ describe("inference model catalog", () => {
     expect(DEFAULT_INFERENCE_MODEL_CATALOG.aliases["clawql/cheap-chat"]).toBe(
       "deepseek/deepseek-chat"
     );
-    expect(findCatalogModel("deepseek/deepseek-chat", DEFAULT_INFERENCE_MODEL_CATALOG)?.provider).toBe(
-      "deepseek"
-    );
+    expect(
+      findCatalogModel("deepseek/deepseek-chat", DEFAULT_INFERENCE_MODEL_CATALOG)?.provider
+    ).toBe("deepseek");
   });
 
   it("resolves aliases before lookup", () => {

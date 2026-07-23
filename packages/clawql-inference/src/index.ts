@@ -158,10 +158,7 @@ export {
   createOpenRouterAdapter,
   createOpenAiCompatibleAdapter,
 } from "./plugin/index.js";
-export type {
-  OpenAiCompatProviderSpec,
-  OpenAiCompatibleAdapterConfig,
-} from "./plugin/index.js";
+export type { OpenAiCompatProviderSpec, OpenAiCompatibleAdapterConfig } from "./plugin/index.js";
 
 export {
   DEFAULT_INFERENCE_MODEL_CATALOG,
