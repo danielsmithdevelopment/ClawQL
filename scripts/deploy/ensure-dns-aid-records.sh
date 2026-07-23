@@ -80,13 +80,20 @@ upsert_https() {
   echo "    Created HTTPS ${name} -> ${target}"
 }
 
-echo "==> DNS-AID index TXT"
-upsert_txt "_index._agents.${APEX}" "v=aid1; mcp=/.well-known/mcp/server-card.json; a2a=/.well-known/agent-card.json; api=/.well-known/api-catalog"
+echo "==> DNS-AID index TXT (format aligned with docs.clawql.com / isitagentready)"
+# Scanner parses entries like clawql-mcp:mcp from: agents=<name>:<proto>,...
+upsert_txt "_index._agents.${APEX}" "agents=clawql-site:https,clawql-mcp:mcp,clawql-a2a:a2a"
 
 echo "==> DNS-AID HTTPS service records"
 upsert_https "_mcp._agents.${APEX}" "${APEX}"
 upsert_https "_a2a._agents.${APEX}" "${APEX}"
 upsert_https "_index._agents.${APEX}" "${APEX}"
+# Named service records (same shape as docs.clawql.com)
+upsert_https "clawql-mcp._mcp._agents.${APEX}" "${APEX}"
+upsert_https "clawql-a2a._a2a._agents.${APEX}" "${APEX}"
+upsert_https "clawql-site._https._agents.${APEX}" "${APEX}"
+upsert_txt "clawql-mcp._mcp._agents.${APEX}" "cap=https://${APEX}/.well-known/mcp/server-card.json"
+upsert_txt "clawql-a2a._a2a._agents.${APEX}" "cap=https://${APEX}/.well-known/agent-card.json"
 
 echo "==> www → apex (CNAME + always-use-HTTPS friendly)"
 # Flattened CNAME to apex so browsers resolve www; pair with Cloudflare Redirect Rule

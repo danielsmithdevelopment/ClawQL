@@ -49,8 +49,12 @@ function buildRobotsTxt() {
 function getLinkHeaderValue() {
   return [
     `<${origin}/sitemap.xml>; rel="sitemap"`,
+    `</llms.txt>; rel="alternate"; type="text/plain"`,
+    `</auth.md>; rel="alternate"; type="text/markdown"`,
     `</.well-known/api-catalog>; rel="api-catalog"`,
     `</.well-known/mcp/server-card.json>; rel="service-desc"`,
+    `</.well-known/agent-card.json>; rel="agent-card"; type="application/json"`,
+    `</.well-known/payments.json>; rel="payment-method"`,
     `<${docs}>; rel="service-doc"`,
     `</auth.md>; rel="describedby"`,
     `<${docs}/api/health>; rel="status"`,
@@ -212,11 +216,22 @@ writeJson(path.join(publicDir, '.well-known/mcp/server-card.json'), {
 writeJson(path.join(publicDir, '.well-known/agent-card.json'), {
   name: 'ClawQL',
   description:
-    'Agentic Gateway for Auditable Production AI — MCP search, execute, vault memory, and optional IDP.',
+    'Agentic Gateway for Auditable Production AI — MCP search, execute, vault memory, optional IDP, and agentic commerce discovery (Stripe + x402 + MPP + AP2 + ACP).',
   version: '6.0.0',
   url: `${docs}/mcp`,
   provider: { organization: 'ClawQL', url: origin },
-  capabilities: { streaming: true, pushNotifications: false },
+  capabilities: {
+    streaming: true,
+    pushNotifications: false,
+    extensions: [
+      {
+        uri: 'https://github.com/google-agentic-commerce/ap2/tree/v0.1',
+        description:
+          'ClawQL marketing-site commerce discovery — merchant role; live adapters on self-hosted ClawQL / docs stubs.',
+        params: { roles: ['merchant'] },
+      },
+    ],
+  },
   defaultInputModes: ['text/plain'],
   defaultOutputModes: ['text/plain', 'application/json'],
   skills: [
@@ -228,6 +243,7 @@ writeJson(path.join(publicDir, '.well-known/agent-card.json'), {
       examples: ['List Cloudflare zones'],
     },
   ],
+  skillsUrl: `${origin}/.well-known/agent-skills/index.json`,
   documentationUrl: docs,
   securitySchemes: { bearer: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } },
   security: [{ bearer: [] }],
@@ -288,18 +304,98 @@ writeJson(path.join(publicDir, '.well-known/oauth-protected-resource'), {
   resource_documentation: `${docs}/spec-configuration`,
 })
 
+// Commerce discovery stubs (pricing lives on clawql.com; settlement is self-hosted / docs).
+writeJson(path.join(publicDir, '.well-known/payments.json'), {
+  name: 'ClawQL',
+  description:
+    'Marketing-site payment discovery. Live Stripe/x402/MPP rails run on self-hosted ClawQL; see docs.clawql.com/.well-known/payments.json for protocol stubs.',
+  pricing: `${origin}/pricing/`,
+  signup: `${origin}/signup/`,
+  documentation: `${docs}/payments/clawql-payments`,
+  related: {
+    docsPayments: `${docs}/.well-known/payments.json`,
+    ucp: `${origin}/.well-known/ucp`,
+    acp: `${origin}/.well-known/acp.json`,
+  },
+})
+
+writeJson(path.join(publicDir, '.well-known/ucp'), {
+  ucp: {
+    version: '2026-04-08',
+    spec: 'https://ucp.dev/2026-04-08/specification/overview',
+    services: {
+      'dev.ucp.shopping': [
+        {
+          version: '2026-04-08',
+          spec: 'https://ucp.dev/2026-04-08/specification/overview',
+          transport: 'rest',
+          endpoint: origin,
+          schema: 'https://ucp.dev/2026-04-08/services/shopping/rest.openapi.json',
+        },
+        {
+          version: '2026-04-08',
+          transport: 'mcp',
+          endpoint: `${docs}/mcp`,
+          schema: 'https://ucp.dev/2026-04-08/services/shopping/mcp.openrpc.json',
+        },
+      ],
+    },
+  },
+  note: 'Discovery stub for clawql.com; checkout adapters run on self-hosted ClawQL.',
+})
+
+writeJson(path.join(publicDir, '.well-known/acp.json'), {
+  protocol: {
+    name: 'acp',
+    version: '2026-01-30',
+    supported_versions: ['2026-01-30'],
+    documentation_url: 'https://agenticcommerce.dev',
+  },
+  api_base_url: origin,
+  transports: ['rest', 'mcp', 'a2a'],
+  capabilities: {
+    services: ['checkout', 'orders', 'delegate_payment'],
+  },
+  note: 'Discovery stub for clawql.com; live ACP adapters are self-hosted.',
+})
+
 const linkHeader = getLinkHeaderValue()
 writeText(
   path.join(publicDir, '_headers'),
   `/*
   Referrer-Policy: strict-origin-when-cross-origin
   X-Content-Type-Options: nosniff
-
-/
   Link: ${linkHeader}
 
-/*
-  Link: ${linkHeader}
+/.well-known/api-catalog
+  Content-Type: application/linkset+json
+
+/.well-known/oauth-protected-resource
+  Content-Type: application/json; charset=utf-8
+
+/.well-known/oauth-authorization-server
+  Content-Type: application/json; charset=utf-8
+
+/.well-known/openid-configuration
+  Content-Type: application/json; charset=utf-8
+
+/.well-known/ucp
+  Content-Type: application/json; charset=utf-8
+
+/.well-known/payments.json
+  Content-Type: application/json; charset=utf-8
+
+/.well-known/acp.json
+  Content-Type: application/json; charset=utf-8
+
+/.well-known/mcp/server-card.json
+  Content-Type: application/json; charset=utf-8
+
+/.well-known/agent-card.json
+  Content-Type: application/json; charset=utf-8
+
+/.well-known/agent-skills/index.json
+  Content-Type: application/json; charset=utf-8
 `,
 )
 

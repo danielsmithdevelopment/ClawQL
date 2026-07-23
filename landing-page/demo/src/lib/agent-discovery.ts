@@ -196,7 +196,7 @@ export function getA2aAgentCard(origin = getSiteOriginString()): Record<string, 
   return {
     name: 'ClawQL',
     description:
-      'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Regional Hubs, Dedicated Virtual Gateways, and Edge swarm.',
+      'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Regional Hubs, Dedicated Virtual Gateways, Edge swarm, and agentic commerce discovery.',
     version: '6.0.0',
     url: `${docs}/mcp`,
     provider: {
@@ -206,6 +206,14 @@ export function getA2aAgentCard(origin = getSiteOriginString()): Record<string, 
     capabilities: {
       streaming: true,
       pushNotifications: false,
+      extensions: [
+        {
+          uri: 'https://github.com/google-agentic-commerce/ap2/tree/v0.1',
+          description:
+            'ClawQL marketing-site commerce discovery — merchant role; live adapters on self-hosted ClawQL / docs stubs.',
+          params: { roles: ['merchant'] },
+        },
+      ],
     },
     defaultInputModes: ['text/plain'],
     defaultOutputModes: ['text/plain', 'application/json'],
@@ -226,6 +234,7 @@ export function getA2aAgentCard(origin = getSiteOriginString()): Record<string, 
         examples: ['Recall prior debugging notes', 'Ingest a decision after a deploy'],
       },
     ],
+    skillsUrl: `${origin}/.well-known/agent-skills/index.json`,
     documentationUrl: docs,
     securitySchemes: {
       bearer: {
@@ -375,6 +384,8 @@ export function getAgentMarkdownMap(origin = getSiteOriginString()): Record<stri
     '/signup': `# Sign up\n\nStart a 14-day Developer trial or join the waitlist.\n\n${origin}/signup/`,
     '/privacy-policy': `# Privacy Policy\n\nSee ${origin}/privacy-policy/ for the full policy.`,
     '/industries': `# Industries\n\nVertical workflows for lending, real estate, healthcare, legal, insurance, and education.\n\n${origin}/industries/`,
+    '/inference/gtm': `# Inference-first GTM playbook\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Zero-Trust Agentic Fabric.\n\nSee ${origin}/inference/gtm/.`,
+    '/enterprise/gtm': `# Enterprise GTM playbook\n\nSecondary enterprise motion — Auditable Production AI on the Zero-Trust Agentic Fabric.\n\nSee ${origin}/enterprise/gtm/.`,
   }
 }
 
@@ -383,10 +394,15 @@ export function getLinkHeaderValue(origin = getSiteOriginString()): string {
 
   return [
     `<${origin}/sitemap.xml>; rel="sitemap"`,
+    `</llms.txt>; rel="alternate"; type="text/plain"`,
+    `</auth.md>; rel="alternate"; type="text/markdown"`,
     `</.well-known/api-catalog>; rel="api-catalog"`,
     `</.well-known/mcp/server-card.json>; rel="service-desc"`,
+    `</.well-known/agent-card.json>; rel="agent-card"; type="application/json"`,
+    `</.well-known/payments.json>; rel="payment-method"`,
     `<${docs}>; rel="service-doc"`,
     `</auth.md>; rel="describedby"`,
     `<${docs}/api/health>; rel="status"`,
   ].join(', ')
 }
+

@@ -1,6 +1,7 @@
 # Static export of landing-page/demo → GitHub Pages (https://clawql.com) by default.
-# Set repo variable LANDING_PAGE_CLOUDFLARE_DEPLOY=true (and Cloudflare secrets) to also
-# deploy to Cloudflare Pages for Link headers, Markdown negotiation, and functions/.
+# When CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID are set, also deploy to Cloudflare
+# Pages (Link headers + Markdown negotiation via functions/) and configure agent edge.
+# Set LANDING_PAGE_CLOUDFLARE_DEPLOY=false to skip Cloudflare Pages even if secrets exist.
 name: Deploy landing page
 
 on:
@@ -8,6 +9,8 @@ on:
     branches: [main]
     paths:
       - "landing-page/**"
+      - "scripts/deploy/ensure-dns-aid-records.sh"
+      - "scripts/deploy/ensure-clawql-com-agent-edge.sh"
       - ".github/workflows/deploy-landing-page.yml"
   workflow_dispatch:
 
@@ -53,11 +56,21 @@ jobs:
           test -f out/.well-known/api-catalog
           test -f out/.well-known/agent-card.json
           test -f out/.well-known/mcp/server-card.json
+          test -f out/.well-known/oauth-protected-resource
+          test -f out/.well-known/oauth-authorization-server
+          test -f out/.well-known/openid-configuration
+          test -f out/.well-known/agent-skills/index.json
+          test -f out/.well-known/payments.json
+          test -f out/.well-known/ucp
+          test -f out/.well-known/acp.json
+          test -f out/.nojekyll
           test -f out/install
           test -f out/og-image.png
           test -f out/favicon.ico
           test -f out/robots.txt
           test -f out/sitemap.xml
+          test -f out/auth.md
+          test -f out/agent-markdown.json
           test -f out/inference/gtm/index.html
           test -f out/enterprise/gtm/index.html
           grep -qi 'Agentic Gateway for Auditable Production AI' out/llms.txt
@@ -66,10 +79,27 @@ jobs:
           grep -q 'enterprise/gtm' out/sitemap.xml
           # Ensure install script is shell, not HTML
           head -1 out/install | grep -q '^#!/usr/bin/env bash'
+          # Guard against reintroducing the hidden-file Pages artifact bug
+          python3 - <<'PY'
+          import tarfile, io, subprocess, os
+          # Mimic actions/upload-pages-artifact default exclude of .[^/]*
+          proc = subprocess.run(
+              ["tar", "--dereference", "--hard-dereference", "-cf", "-",
+               "--exclude=.git", "--exclude=.github", "--exclude=.[^/]*", "."],
+              cwd="out", capture_output=True, check=True,
+          )
+          with tarfile.open(fileobj=io.BytesIO(proc.stdout), mode="r:") as tf:
+              names = set(tf.getnames())
+          assert "./.well-known/mcp/server-card.json" not in names and ".well-known/mcp/server-card.json" not in names, names
+          print("confirmed: default tar exclude drops .well-known (workflow must set include-hidden-files: true)")
+          PY
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:
           path: landing-page/demo/out
+          # Required: default false drops .well-known and .nojekyll from the Pages deploy.
+          include-hidden-files: true
 
       - name: Upload build artifact (Cloudflare)
         uses: actions/upload-artifact@v7
@@ -77,6 +107,7 @@ jobs:
           name: landing-page-out
           path: landing-page/demo/out
           retention-days: 1
+          include-hidden-files: true
 
   deploy-github-pages:
     name: Deploy to GitHub Pages
@@ -107,9 +138,10 @@ jobs:
           exit 1
 
   deploy-cloudflare-pages:
-    name: Deploy to Cloudflare Pages (optional)
+    name: Deploy to Cloudflare Pages
     needs: build
-    if: ${{ vars.LANDING_PAGE_CLOUDFLARE_DEPLOY == 'true' }}
+    # Auto-run when Cloudflare secrets exist; opt out with LANDING_PAGE_CLOUDFLARE_DEPLOY=false.
+    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' && vars.LANDING_PAGE_CLOUDFLARE_DEPLOY != 'false' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -130,10 +162,19 @@ jobs:
           workingDirectory: landing-page/demo
           command: pages deploy out --project-name=clawql-website --branch=main
 
-      - name: Ensure DNS-AID records (optional)
+  configure-agent-edge:
+    name: Configure Cloudflare agent edge
+    needs: [deploy-github-pages]
+    if: ${{ always() && needs.deploy-github-pages.result == 'success' && secrets.CLOUDFLARE_API_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Ensure agent edge (proxy, markdown, Link, DNS-AID)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLAWQL_APEX_DOMAIN: clawql.com
-        run: bash scripts/deploy/ensure-dns-aid-records.sh
+        run: bash scripts/deploy/ensure-clawql-com-agent-edge.sh
         continue-on-error: true
