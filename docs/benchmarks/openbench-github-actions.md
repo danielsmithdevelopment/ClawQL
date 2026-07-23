@@ -20,13 +20,13 @@ No self-hosted runners, OpenBench clone, or long-lived infra — the job is
 2. **Run workflow**
 3. Pick inputs:
 
-| Input | Suggested first try |
-|-------|---------------------|
-| `task` | `memory-dependent-continuation` |
-| `model` | `gpt-5.5` |
-| `trials` | `1` |
-| `timeout_s` | `300` |
-| `arms` | `clawql-on,clawql-off` |
+| Input       | Suggested first try             |
+| ----------- | ------------------------------- |
+| `task`      | `memory-dependent-continuation` |
+| `model`     | `gpt-5.5`                       |
+| `trials`    | `1`                             |
+| `timeout_s` | `300`                           |
+| `arms`      | `clawql-on,clawql-off`          |
 
 4. Wait for the run to finish. Open **Summary** for the table.
 5. Download artifact `openbench-ab-<task>-<run_id>` for `results.json`.
@@ -64,10 +64,10 @@ gh run watch
 
 ## What each arm does
 
-| Arm | Agent | Memory seed |
-|-----|-------|-------------|
-| **clawql-on** | `clawql codex --non-interactive` (MCP pre-wired) | Seeded into a temp Obsidian vault, then **removed** from the workspace |
-| **clawql-off** | Raw `codex exec --json` | Seed removed; isolated `CODEX_HOME` — **no** ClawQL MCP |
+| Arm            | Agent                                            | Memory seed                                                            |
+| -------------- | ------------------------------------------------ | ---------------------------------------------------------------------- |
+| **clawql-on**  | `clawql codex --non-interactive` (MCP pre-wired) | Seeded into a temp Obsidian vault, then **removed** from the workspace |
+| **clawql-off** | Raw `codex exec --json`                          | Seed removed; isolated `CODEX_HOME` — **no** ClawQL MCP                |
 
 The checker (not the harness) grades success. Ephemeral workdirs are deleted
 unless `CLAWQL_AB_KEEP_WORKDIR=1`.
