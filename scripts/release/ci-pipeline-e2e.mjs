@@ -138,6 +138,10 @@ async function main() {
   await writeReleaseConfig(root, undefined, { skipSigningSetup: false });
   log("Wrote .clawql/release.json (signed commits configured when possible)");
 
+  // Fresh meta so reruns never reuse stale worktree paths
+  await mkdir(join(root, ".clawql", "workspaces"), { recursive: true });
+  await writeFile(join(root, ".clawql", "workspaces", "snapshots.json"), '{"snapshots":[]}\n', "utf8");
+
   const hasRift = await tryInstallRift();
   if (hasRift) {
     const init = run("rift", ["init"], { allowFailure: true });
@@ -193,6 +197,14 @@ async function main() {
 
   // Parallel collect from each git-worktree path (shared object store, isolated checkouts)
   log("Collecting manifests from parallel git-worktree workspaces…");
+  const { access } = await import("node:fs/promises");
+  for (const snap of wtSnaps) {
+    try {
+      await access(join(snap.path, "package.json"));
+    } catch {
+      throw new Error(`worktree missing package.json: ${snap.path}`);
+    }
+  }
   const collects = await Promise.all(
     wtSnaps.map(async (snap) => {
       const m = await collectReleaseManifest({ rootDir: snap.path });

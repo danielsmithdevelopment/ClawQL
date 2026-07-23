@@ -1,4 +1,5 @@
-import { mkdir, readFile, rm, writeFile, symlink, lstat } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile, symlink, lstat, access } from "node:fs/promises";
+import { constants as fsConstants } from "node:fs";
 import { join, resolve } from "node:path";
 import { runCommand, commandExists } from "../exec.js";
 import { readGitHead } from "../git.js";
@@ -55,6 +56,33 @@ function newSnapshotId(backend: WorkspaceBackend, name: string): string {
   return `${backend}_${slug}_${Date.now().toString(36)}`;
 }
 
+async function pathExists(p: string): Promise<boolean> {
+  try {
+    await access(p, fsConstants.F_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function findExistingSnapshot(
+  rootDir: string,
+  name: string,
+  backend: WorkspaceBackend
+): Promise<WorkspaceSnapshot | undefined> {
+  return withStoreLock(rootDir, async () => {
+    const store = await loadStore(rootDir);
+    const idx = store.snapshots.findIndex((s) => s.name === name && s.backend === backend);
+    if (idx < 0) return undefined;
+    const existing = store.snapshots[idx]!;
+    if (await pathExists(existing.path)) return existing;
+    // Stale meta (path removed outside clawql-release) — drop and recreate.
+    store.snapshots.splice(idx, 1);
+    await saveStore(rootDir, store);
+    return undefined;
+  });
+}
+
 async function registerSnapshot(
   rootDir: string,
   snap: WorkspaceSnapshot
@@ -64,7 +92,10 @@ async function registerSnapshot(
     const existing = store.snapshots.find(
       (s) => s.name === snap.name && s.backend === snap.backend
     );
-    if (existing) return existing;
+    if (existing && (await pathExists(existing.path))) return existing;
+    store.snapshots = store.snapshots.filter(
+      (s) => !(s.name === snap.name && s.backend === snap.backend)
+    );
     store.snapshots.push(snap);
     await saveStore(rootDir, store);
     return snap;
@@ -79,10 +110,7 @@ export async function createGitWorktreeSnapshot(
   await mkdir(worktreesRoot, { recursive: true });
   const path = join(worktreesRoot, options.name);
 
-  const early = await withStoreLock(rootDir, async () => {
-    const store = await loadStore(rootDir);
-    return store.snapshots.find((s) => s.name === options.name && s.backend === "git-worktree");
-  });
+  const early = await findExistingSnapshot(rootDir, options.name, "git-worktree");
   if (early) return early;
 
   const branch = options.branch ?? `clawql/${options.name}`;
@@ -126,10 +154,7 @@ export async function createGitWorktreeSnapshot(
 export async function createRiftSnapshot(options: SnapshotOptions): Promise<WorkspaceSnapshot> {
   const rootDir = resolve(options.rootDir);
 
-  const early = await withStoreLock(rootDir, async () => {
-    const store = await loadStore(rootDir);
-    return store.snapshots.find((s) => s.name === options.name && s.backend === "rift");
-  });
+  const early = await findExistingSnapshot(rootDir, options.name, "rift");
   if (early) return early;
 
   const riftsRoot = join(rootDir, ".rifts");
