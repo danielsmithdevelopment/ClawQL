@@ -4,12 +4,12 @@
 
 ## What the code deploys
 
-| Surface | Where | Notes |
-| -------- | ----- | ----- |
-| `robots.txt`, `sitemap.xml`, `auth.md`, `llms.txt` | Static export | Always in `out/` |
-| `/.well-known/*` | Static export | Requires `include-hidden-files: true` on `upload-pages-artifact` (dotdirs) |
-| Link headers + markdown negotiation | Cloudflare Pages `functions/` | Or zone Transform Rule + Markdown for Agents when proxied |
-| DNS-AID TXT/HTTPS | Cloudflare DNS API | `scripts/deploy/ensure-dns-aid-records.sh` |
+| Surface                                            | Where                         | Notes                                                                      |
+| -------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------- |
+| `robots.txt`, `sitemap.xml`, `auth.md`, `llms.txt` | Static export                 | Always in `out/`                                                           |
+| `/.well-known/*`                                   | Static export                 | Requires `include-hidden-files: true` on `upload-pages-artifact` (dotdirs) |
+| Link headers + markdown negotiation                | Cloudflare Pages `functions/` | Or zone Transform Rule + Markdown for Agents when proxied                  |
+| DNS-AID TXT/HTTPS                                  | Cloudflare DNS API            | `scripts/deploy/ensure-dns-aid-records.sh`                                 |
 
 ## CI automation
 

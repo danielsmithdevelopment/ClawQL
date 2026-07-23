@@ -18,13 +18,13 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Site structure
 
-| Route | Purpose |
-| ----- | ------- |
-| `/` | Homepage — MCP tool tiers, IDP pipeline, case studies, FAQs, pricing |
-| `/signup` | Managed accounts waitlist |
-| `/pricing` | Full pricing tiers and comparison table |
-| `/about` | Mission and ecosystem overview |
-| `/privacy-policy` | Privacy policy |
+| Route             | Purpose                                                              |
+| ----------------- | -------------------------------------------------------------------- |
+| `/`               | Homepage — MCP tool tiers, IDP pipeline, case studies, FAQs, pricing |
+| `/signup`         | Managed accounts waitlist                                            |
+| `/pricing`        | Full pricing tiers and comparison table                              |
+| `/about`          | Mission and ecosystem overview                                       |
+| `/privacy-policy` | Privacy policy                                                       |
 
 ## Key files
 

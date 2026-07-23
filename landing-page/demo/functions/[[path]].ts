@@ -25,11 +25,7 @@ function normalizePath(pathname: string): string {
   return trimmed === '' ? '/' : trimmed
 }
 
-export async function onRequestGet(context: {
-  request: Request
-  next: () => Promise<Response>
-  env: Env
-}) {
+export async function onRequestGet(context: { request: Request; next: () => Promise<Response>; env: Env }) {
   const accept = context.request.headers.get('accept') ?? ''
   if (!/\btext\/markdown\b/i.test(accept)) {
     return context.next()

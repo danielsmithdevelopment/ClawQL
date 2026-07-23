@@ -405,4 +405,3 @@ export function getLinkHeaderValue(origin = getSiteOriginString()): string {
     `<${docs}/api/health>; rel="status"`,
   ].join(', ')
 }
-

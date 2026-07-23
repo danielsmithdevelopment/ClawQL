@@ -37,11 +37,7 @@ export function linkHeader(origin: string): string {
   ].join(', ')
 }
 
-export async function onRequest(context: {
-  request: Request
-  next: () => Promise<Response>
-  env: Env
-}) {
+export async function onRequest(context: { request: Request; next: () => Promise<Response>; env: Env }) {
   const response = await context.next()
   const url = new URL(context.request.url)
   const origin = url.origin
