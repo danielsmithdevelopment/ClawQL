@@ -5,12 +5,17 @@
 
 [[IgnoredVulns]]
 id = "GHSA-qx2v-qp2m-jg93"
-reason = "Next.js currently vendors postcss@8.4.31 under next/node_modules; dashboard uses top-level patched postcss and npm audit reports clean while waiting for upstream next bundle refresh."
+reason = "Next.js currently vendors postcss@8.4.31 under next/node_modules; dashboard uses top-level patched postcss@8.5.22 and npm overrides cannot replace Next's nested copy until upstream refreshes the bundle."
 
-# Pinned website app (docs.clawql.com) — same rationale as GHSA-q4gf ignore above.
+[[IgnoredVulns]]
+id = "GHSA-6g55-p6wh-862q"
+reason = "Same Next.js-vendored postcss@8.4.31 under dashboard/node_modules/next; top-level postcss is patched to 8.5.22 across root/website/dashboard/landing. Remove when Next ships a nested postcss >= 8.5.12."
+
+# Historical note: website was briefly pinned on 16.1.x for MDX/webpack metadata; now on 16.2.11.
+# Keep this stanza only if an older lock still appears in a long-lived branch scan.
 [[PackageOverrides]]
 name = "next"
 ecosystem = "npm"
 version = "16.1.7"
 vulnerability.ignore = true
-reason = "Website stays on Next 16.1.x until App Router MDX + webpack metadata regression is resolved (vercel/next.js#91735); bump website/package.json when unblocked."
+reason = "Legacy website pin (vercel/next.js#91735); current main uses Next 16.2.11 — safe to delete once no branch locks reference 16.1.7."
