@@ -29,15 +29,16 @@ from pathlib import Path
 NAME = "clawql"
 
 # Which underlying agent CLI ClawQL should launch. Override with CLAWQL_OPENBENCH_HARNESS.
-_DEFAULT_HARNESS = os.environ.get("CLAWQL_OPENBENCH_HARNESS", "claude").strip() or "claude"
+# Default is OpenAI Codex (no Anthropic dependency for the primary A/B path).
+_DEFAULT_HARNESS = os.environ.get("CLAWQL_OPENBENCH_HARNESS", "codex").strip() or "codex"
 
-# Canonical OpenBench model pin -> CLI model id for the default (claude) harness.
-# When using CLAWQL_OPENBENCH_HARNESS=codex|opencode, override via MODELS env map
-# or extend this table.
+# Canonical OpenBench model pin -> CLI model id for the default (codex) harness.
 MODELS = {
-    "claude-opus-4-8": "claude-opus-4-8",
     "gpt-5.5-medium": "gpt-5.5",
+    "gpt-5.5": "gpt-5.5",
     "gpt-5.6-sol": "gpt-5.6-sol",
+    # Optional Claude pins when CLAWQL_OPENBENCH_HARNESS=claude is set explicitly.
+    "claude-opus-4-8": "claude-opus-4-8",
 }
 
 

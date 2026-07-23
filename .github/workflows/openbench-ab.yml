@@ -1,7 +1,8 @@
 # One-off OpenBench A/B: clawql-on vs clawql-off (same model).
 #
+# Provider: OpenAI Codex (OPENAI_API_KEY). Anthropic / Claude Code are not used.
 # Spin up → run N trials of each arm → post Step Summary + artifact → spin down.
-# Manual only (workflow_dispatch). Requires repo secret ANTHROPIC_API_KEY.
+# Manual only (workflow_dispatch).
 #
 # Actions → OpenBench A/B (clawql on vs off) → Run workflow.
 
@@ -20,10 +21,10 @@ on:
           - multi-provider-api-workflow
         default: memory-dependent-continuation
       model:
-        description: Claude Code model id (same for both arms)
+        description: OpenAI Codex model id (same for both arms)
         required: true
         type: string
-        default: claude-sonnet-4-5
+        default: gpt-5.5
       trials:
         description: Trials per arm (keep small — each cell spends tokens)
         required: true
@@ -57,22 +58,23 @@ permissions:
 
 jobs:
   ab-compare:
-    name: A/B compare
+    name: A/B compare (OpenAI Codex)
     runs-on: ubuntu-latest
     # Agent cells can be slow; allow headroom beyond per-cell timeout × trials × arms.
     timeout-minutes: 120
     env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       CLAWQL_OPENBENCH: "1"
       CLAWQL_HARNESS_ALLOW_UNSANDBOXED: "1"
-      DISABLE_AUTOUPDATER: "1"
-      # Claude Code refuses --dangerously-skip-permissions as root unless sandboxed.
-      IS_SANDBOX: "1"
+      CLAWQL_OPENBENCH_HARNESS: "codex"
+      # Codex nested sandbox needs this on GH-hosted Linux runners.
+      BENCH_IN_CONTAINER: "1"
+      CI: "true"
     steps:
-      - name: Require ANTHROPIC_API_KEY
+      - name: Require OPENAI_API_KEY
         run: |
-          if [ -z "$ANTHROPIC_API_KEY" ]; then
-            echo "::error::Add repository secret ANTHROPIC_API_KEY, then re-run this workflow."
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "::error::Add repository secret OPENAI_API_KEY, then re-run this workflow. (Anthropic is not used.)"
             exit 1
           fi
 
@@ -87,14 +89,13 @@ jobs:
         run: |
           npm ci
           npm run build
-          # Prefer repo CLI so the workflow matches the checked-out commit.
           echo "CLAWQL_BIN=$GITHUB_WORKSPACE/bin/clawql.mjs" >> "$GITHUB_ENV"
           node bin/clawql.mjs --version
 
-      - name: Install Claude Code CLI
+      - name: Install OpenAI Codex CLI
         run: |
-          npm install -g @anthropic-ai/claude-code@latest
-          claude --version
+          npm install -g @openai/codex@latest
+          codex --version
 
       - name: Validate task checkers (offline)
         run: python3 openbench/validate_tasks.py
@@ -116,9 +117,10 @@ jobs:
             --out "$OUT" \
             --summary-md "$SUM"
           {
-            echo "## OpenBench A/B job"
+            echo "## OpenBench A/B job (OpenAI Codex)"
             echo ""
             echo "- Run: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo "- Provider: \`openai\` / harness \`codex\`"
             echo "- Task: \`${{ inputs.task }}\`"
             echo "- Model: \`${{ inputs.model }}\`"
             echo "- Trials/arm: \`${{ inputs.trials }}\`"

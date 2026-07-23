@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """One-off A/B harness compare: clawql-on vs clawql-off on the same OpenBench task.
 
+Provider: **OpenAI Codex** (not Anthropic). Same model for both arms.
+
 Runs N trials of each arm against ``openbench/tasks/<task>/``, grades with
 ``checker.sh``, and writes:
 
@@ -9,15 +11,15 @@ Runs N trials of each arm against ``openbench/tasks/<task>/``, grades with
 
 Does not require a full OpenBench checkout. Requires:
 
-  - ``claude`` on PATH (Claude Code CLI)
+  - ``codex`` on PATH (``npm i -g @openai/codex``)
   - ``clawql`` on PATH for the on-arm (repo ``bin/clawql.mjs`` after build)
-  - ``ANTHROPIC_API_KEY`` in the environment
+  - ``OPENAI_API_KEY`` in the environment
 
 Example::
 
   python3 openbench/scripts/run-ab-compare.py \\
     --task memory-dependent-continuation \\
-    --model claude-sonnet-4-5 \\
+    --model gpt-5.5 \\
     --trials 1 \\
     --timeout 300 \\
     --out /tmp/ab-results.json \\
@@ -46,6 +48,9 @@ KNOWN_TASKS = (
     "token-budget-constrained",
     "multi-provider-api-workflow",
 )
+# Underlying coding-agent CLI for both arms (OpenAI Codex — no Anthropic).
+DEFAULT_HARNESS = "codex"
+DEFAULT_MODEL = os.environ.get("OPENBENCH_MODEL", "gpt-5.5")
 
 
 def parse_score(output: str):
@@ -123,62 +128,41 @@ def parse_bench_json(combined: str) -> dict:
     return payload
 
 
-def parse_claude_json_usage(stdout: str) -> dict:
-    """Best-effort Claude Code ``--output-format json`` usage."""
-    text = (stdout or "").strip()
-    obj = None
-    try:
-        cand = json.loads(text)
-        if isinstance(cand, dict):
-            obj = cand
-    except json.JSONDecodeError:
-        for line in reversed(text.splitlines()):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                cand = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if isinstance(cand, dict):
-                obj = cand
-                break
-    if not isinstance(obj, dict):
-        return {"tokens": None, "turns": None, "completed_cli": None}
+def _as_int(value):
+    return int(value) if isinstance(value, (int, float)) else None
 
-    turns = obj.get("num_turns")
-    turns = int(turns) if isinstance(turns, (int, float)) else None
-    is_error = obj.get("is_error")
-    completed_cli = (not is_error) if isinstance(is_error, bool) else None
 
-    input_tokens = 0
-    output_tokens = 0
-    found = False
-    model_usage = obj.get("modelUsage")
-    if isinstance(model_usage, dict):
-        for m in model_usage.values():
-            if not isinstance(m, dict):
-                continue
-            inp = m.get("inputTokens")
-            out = m.get("outputTokens")
-            if isinstance(inp, (int, float)) and isinstance(out, (int, float)):
-                input_tokens += int(inp)
-                output_tokens += int(out)
-                found = True
-    if not found and isinstance(obj.get("usage"), dict):
-        u = obj["usage"]
-        inp = u.get("input_tokens")
-        out = u.get("output_tokens")
-        if isinstance(inp, (int, float)) and isinstance(out, (int, float)):
-            input_tokens = int(inp)
-            output_tokens = int(out)
-            found = True
+def parse_codex_jsonl_usage(stdout: str) -> dict:
+    """Best-effort Codex ``exec --json`` JSONL usage (turn.completed events)."""
+    turns = 0
+    last_usage = None
+    for line in (stdout or "").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            ev = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(ev, dict):
+            continue
+        if ev.get("type") == "turn.completed":
+            turns += 1
+            usage = ev.get("usage")
+            if isinstance(usage, dict):
+                last_usage = usage
 
-    return {
-        "tokens": (input_tokens + output_tokens) if found else None,
-        "turns": turns,
-        "completed_cli": completed_cli,
-    }
+    if last_usage is None:
+        return {"tokens": None, "turns": turns or None}
+
+    inp = _as_int(last_usage.get("input_tokens"))
+    out = _as_int(last_usage.get("output_tokens"))
+    cached = _as_int(last_usage.get("cached_input_tokens")) or 0
+    if inp is None or out is None:
+        return {"tokens": None, "turns": turns or None}
+    # Fresh tokens ≈ uncached input + output (cache reads excluded).
+    fresh_in = max(inp - cached, 0)
+    return {"tokens": fresh_in + out, "turns": turns or None}
 
 
 def run_checker(task_dir: Path, workdir: Path) -> dict:
@@ -222,47 +206,59 @@ def resolve_clawql() -> str:
     return "clawql"
 
 
-def resolve_claude() -> str:
-    for name in ("claude", "claude-code"):
-        path = shutil.which(name)
-        if path:
-            return path
-    return "claude"
+def resolve_codex() -> str:
+    return shutil.which("codex") or "codex"
+
+
+def _dec_timeout_output(exc) -> str:
+    def _dec(x):
+        if x is None:
+            return ""
+        return x.decode("utf-8", "replace") if isinstance(x, bytes) else x
+
+    return _dec(exc.stdout) + _dec(exc.stderr)
 
 
 def run_arm_off(instruction: str, workdir: Path, model: str, timeout_s: int) -> dict:
-    """Raw Claude Code — no ClawQL MCP, no vault env."""
-    exe = resolve_claude()
+    """Raw OpenAI Codex — no ClawQL MCP, no vault env."""
+    exe = resolve_codex()
+    # Mirror OpenBench codex adapter headless flags (API-key route).
+    sandbox = (
+        ["--dangerously-bypass-approvals-and-sandbox"]
+        if os.environ.get("BENCH_IN_CONTAINER") or os.environ.get("CI")
+        else ["-s", "workspace-write"]
+    )
     cmd = [
         exe,
-        "-p",
-        "--bare",
-        "--output-format",
-        "json",
-        "--dangerously-skip-permissions",
-        "--disallowedTools",
-        "Agent",
-        "Task",
-        "--no-session-persistence",
-        "--model",
+        "exec",
+        "--json",
+        "--disable",
+        "apps",
+        "--disable",
+        "plugins",
+        "--disable",
+        "multi_agent",
+        "--skip-git-repo-check",
+        "-C",
+        str(workdir),
+        *sandbox,
+        "-m",
         model,
+        "-c",
+        'model_reasoning_effort="medium"',
         instruction,
     ]
+
     env = {
         k: v
         for k, v in os.environ.items()
-        if not k.startswith("CLAWQL_") and k not in ("CLAUDECODE",)
+        if not k.startswith("CLAWQL_") and not k.startswith("ANTHROPIC_")
     }
-    # Keep API key; drop vault/memory hints.
-    env.pop("CLAWQL_OBSIDIAN_VAULT_PATH", None)
-    env["ANTHROPIC_API_KEY"] = os.environ.get("ANTHROPIC_API_KEY", "")
-    env["DISABLE_AUTOUPDATER"] = "1"
-    if os.environ.get("IS_SANDBOX"):
-        env["IS_SANDBOX"] = os.environ["IS_SANDBOX"]
-    # Isolated HOME so user ~/.claude is never touched.
-    iso = tempfile.mkdtemp(prefix="claude_off_home_")
+    env["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY", "")
+    # Isolated CODEX_HOME so host config/MCP is not inherited for the off arm.
+    iso = tempfile.mkdtemp(prefix="codex_off_home_")
+    env["CODEX_HOME"] = iso
     env["HOME"] = iso
-    env["CLAUDE_CONFIG_DIR"] = str(Path(iso) / ".claude")
 
     t0 = time.monotonic()
     timed_out = False
@@ -284,23 +280,18 @@ def run_arm_off(instruction: str, workdir: Path, model: str, timeout_s: int) -> 
         code = proc.returncode
     except subprocess.TimeoutExpired as exc:
         timed_out = True
-
-        def _dec(x):
-            if x is None:
-                return ""
-            return x.decode("utf-8", "replace") if isinstance(x, bytes) else x
-
-        stdout = _dec(exc.stdout)
-        combined = stdout + _dec(exc.stderr)
+        combined = _dec_timeout_output(exc)
+        stdout = combined
         code = 124
     finally:
         shutil.rmtree(iso, ignore_errors=True)
 
     wall_s = round(time.monotonic() - t0, 3)
-    usage = parse_claude_json_usage(stdout)
-    completed = (not timed_out) and code == 0 and usage.get("completed_cli") is not False
+    usage = parse_codex_jsonl_usage(stdout)
+    completed = (not timed_out) and code == 0
     return {
         "arm": "clawql-off",
+        "harness": "codex",
         "cmd": cmd,
         "completed": completed,
         "exit_code": code,
@@ -314,45 +305,31 @@ def run_arm_off(instruction: str, workdir: Path, model: str, timeout_s: int) -> 
 
 
 def run_arm_on(instruction: str, workdir: Path, model: str, timeout_s: int, vault: str | None) -> dict:
-    """ClawQL-wired Claude via ``clawql claude --non-interactive``."""
+    """ClawQL-wired Codex via ``clawql codex --non-interactive``."""
     clawql = resolve_clawql()
     inst_file = workdir / ".openbench_instruction.md"
     inst_file.write_text(instruction, encoding="utf-8")
 
-    if clawql.endswith(".mjs"):
-        cmd = [
-            "node",
-            clawql,
-            "claude",
-            "--non-interactive",
-            "--model",
-            model,
-            "--task-file",
-            str(inst_file),
-            "--workdir",
-            str(workdir),
-            "--timeout",
-            str(int(timeout_s)),
-        ]
-    else:
-        cmd = [
-            clawql,
-            "claude",
-            "--non-interactive",
-            "--model",
-            model,
-            "--task-file",
-            str(inst_file),
-            "--workdir",
-            str(workdir),
-            "--timeout",
-            str(int(timeout_s)),
-        ]
+    prefix = ["node", clawql] if clawql.endswith(".mjs") else [clawql]
+    cmd = [
+        *prefix,
+        "codex",
+        "--non-interactive",
+        "--model",
+        model,
+        "--task-file",
+        str(inst_file),
+        "--workdir",
+        str(workdir),
+        "--timeout",
+        str(int(timeout_s)),
+    ]
 
     env = dict(os.environ)
+    env.pop("ANTHROPIC_API_KEY", None)
     env["CLAWQL_OPENBENCH"] = "1"
     env["CLAWQL_HARNESS_ALLOW_UNSANDBOXED"] = "1"
-    env["DISABLE_AUTOUPDATER"] = "1"
+    env["CLAWQL_OPENBENCH_HARNESS"] = "codex"
     if vault:
         env["CLAWQL_OBSIDIAN_VAULT_PATH"] = vault
         env["CLAWQL_ENABLE_MEMORY"] = "1"
@@ -375,13 +352,7 @@ def run_arm_on(instruction: str, workdir: Path, model: str, timeout_s: int, vaul
         code = proc.returncode
     except subprocess.TimeoutExpired as exc:
         timed_out = True
-
-        def _dec(x):
-            if x is None:
-                return ""
-            return x.decode("utf-8", "replace") if isinstance(x, bytes) else x
-
-        combined = _dec(exc.stdout) + _dec(exc.stderr)
+        combined = _dec_timeout_output(exc)
         code = 124
 
     wall_s = round(time.monotonic() - t0, 3)
@@ -389,7 +360,7 @@ def run_arm_on(instruction: str, workdir: Path, model: str, timeout_s: int, vaul
     tokens = bench.get("tokens") if isinstance(bench.get("tokens"), int) else None
     turns = bench.get("turns") if isinstance(bench.get("turns"), int) else None
     if tokens is None or turns is None:
-        usage = parse_claude_json_usage(combined)
+        usage = parse_codex_jsonl_usage(combined)
         tokens = tokens if tokens is not None else usage.get("tokens")
         turns = turns if turns is not None else usage.get("turns")
 
@@ -399,6 +370,7 @@ def run_arm_on(instruction: str, workdir: Path, model: str, timeout_s: int, vaul
 
     return {
         "arm": "clawql-on",
+        "harness": "codex",
         "cmd": cmd,
         "completed": completed,
         "exit_code": code,
@@ -439,11 +411,11 @@ def summarize(arm_rows: list[dict]) -> dict:
 def render_markdown(report: dict) -> str:
     task = report["task"]
     model = report["model"]
-    on_s = report["summary"]["clawql-on"]
-    off_s = report["summary"]["clawql-off"]
+    arms = report.get("arms") or list(report.get("summary", {}).keys())
     lines = [
         f"# OpenBench A/B — `{task}`",
         "",
+        f"- **Provider / harness:** OpenAI Codex (`codex`)",
         f"- **Model:** `{model}`",
         f"- **Trials / arm:** {report['trials']}",
         f"- **Timeout (s):** {report['timeout_s']}",
@@ -456,7 +428,10 @@ def render_markdown(report: dict) -> str:
         "| Arm | Success | Mean score | Mean tokens | Mean turns | Mean wall (s) |",
         "|-----|---------|------------|-------------|------------|---------------|",
     ]
-    for arm, s in (("clawql-on", on_s), ("clawql-off", off_s)):
+    for arm in arms:
+        s = report["summary"].get(arm)
+        if not s:
+            continue
         lines.append(
             f"| `{arm}` | {s['successes']}/{s['n']} ({s['success_rate']*100:.0f}%) | "
             f"{s['mean_score'] if s['mean_score'] is not None else '—'} | "
@@ -469,11 +444,12 @@ def render_markdown(report: dict) -> str:
             "",
             "## Interpretation",
             "",
-            "- **clawql-on** runs `clawql claude --non-interactive` with MCP pre-wired "
+            "- **clawql-on** runs `clawql codex --non-interactive` with MCP pre-wired "
             "(and vault memory seeded for memory tasks).",
-            "- **clawql-off** runs raw `claude -p --bare` with the same model/instruction; "
+            "- **clawql-off** runs raw `codex exec --json` with the same model/instruction; "
             "memory seed is removed from the workspace for both arms so file cheating is impossible.",
             "- Checker — not the harness self-report — decides success.",
+            "- No Anthropic / Claude Code involvement in this A/B path.",
             "",
         ]
     )
@@ -503,7 +479,6 @@ def run_trial(task_dir: Path, arm: str, model: str, timeout_s: int, trial: int) 
         materialize_workspace(task_dir, tmp)
         vault = seed_and_remove_memory(tmp)
         if arm == "clawql-off":
-            # Off arm must not see the vault either.
             agent = run_arm_off(instruction, tmp, model, timeout_s)
             if vault:
                 shutil.rmtree(vault, ignore_errors=True)
@@ -521,19 +496,14 @@ def run_trial(task_dir: Path, arm: str, model: str, timeout_s: int, trial: int) 
     finally:
         if vault:
             shutil.rmtree(vault, ignore_errors=True)
-        # Keep workdirs only when CLAWQL_AB_KEEP_WORKDIR=1 for debugging.
         if os.environ.get("CLAWQL_AB_KEEP_WORKDIR") != "1":
             shutil.rmtree(tmp, ignore_errors=True)
 
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--task",
-        required=True,
-        choices=KNOWN_TASKS,
-    )
-    parser.add_argument("--model", default=os.environ.get("OPENBENCH_MODEL", "claude-sonnet-4-5"))
+    parser.add_argument("--task", required=True, choices=KNOWN_TASKS)
+    parser.add_argument("--model", default=DEFAULT_MODEL, help=f"Codex model id (default: {DEFAULT_MODEL})")
     parser.add_argument("--trials", type=int, default=1)
     parser.add_argument("--timeout", type=int, default=300, dest="timeout_s")
     parser.add_argument("--out", type=Path, required=True, help="JSON results path")
@@ -545,8 +515,8 @@ def main(argv=None) -> int:
     )
     args = parser.parse_args(argv)
 
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        print("ERROR: ANTHROPIC_API_KEY is required", file=sys.stderr)
+    if not os.environ.get("OPENAI_API_KEY"):
+        print("ERROR: OPENAI_API_KEY is required (OpenAI Codex path — Anthropic is not used)", file=sys.stderr)
         return 2
 
     task_dir = TASKS_DIR / args.task
@@ -560,12 +530,11 @@ def main(argv=None) -> int:
             print(f"ERROR: unknown arm {arm!r}", file=sys.stderr)
             return 2
 
-    # Preflight binaries
-    if "clawql-off" in arms or "clawql-on" in arms:
-        claude = resolve_claude()
-        if not shutil.which(claude) and not Path(claude).exists():
-            print(f"ERROR: Claude Code CLI not found ({claude})", file=sys.stderr)
-            return 2
+    codex = resolve_codex()
+    if not shutil.which(codex) and not Path(codex).exists():
+        print(f"ERROR: Codex CLI not found ({codex}). Install: npm i -g @openai/codex", file=sys.stderr)
+        return 2
+
     if "clawql-on" in arms:
         clawql = resolve_clawql()
         probe = ["node", clawql, "--version"] if clawql.endswith(".mjs") else [clawql, "--version"]
@@ -579,7 +548,7 @@ def main(argv=None) -> int:
     rows: list[dict] = []
     for trial in range(1, args.trials + 1):
         for arm in arms:
-            print(f"==> trial {trial}/{args.trials} arm={arm}", flush=True)
+            print(f"==> trial {trial}/{args.trials} arm={arm} harness={DEFAULT_HARNESS}", flush=True)
             row = run_trial(task_dir, arm, args.model, args.timeout_s, trial)
             rows.append(row)
             chk = row["checker"]
@@ -594,6 +563,8 @@ def main(argv=None) -> int:
     by_arm = {arm: [r for r in rows if r["arm"] == arm] for arm in arms}
     report = {
         "schema": "clawql.openbench.ab.v1",
+        "provider": "openai",
+        "harness": DEFAULT_HARNESS,
         "task": args.task,
         "model": args.model,
         "trials": args.trials,

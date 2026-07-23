@@ -27,7 +27,7 @@ openbench/
 ## Prerequisites
 
 1. ClawQL CLI on `PATH` (`npm i -g clawql-mcp` or repo `bin/clawql.mjs`).
-2. An underlying agent CLI (`claude`, `codex`, or `opencode`) with credentials.
+2. An underlying agent CLI — **default A/B path uses OpenAI Codex** (`npm i -g @openai/codex`) with `OPENAI_API_KEY`.
 3. Optional: clone OpenBench for matrix runs against stock harnesses.
 
 ```bash
@@ -39,8 +39,8 @@ git clone https://github.com/minghinmatthewlam/openbench.git
 Headless launch (Seatbelt soft-fail allowed via `CLAWQL_OPENBENCH=1`):
 
 ```bash
-CLAWQL_OPENBENCH=1 clawql claude --non-interactive \
-  --model claude-opus-4-8 \
+CLAWQL_OPENBENCH=1 clawql codex --non-interactive \
+  --model gpt-5.5 \
   --task-file /path/to/instruction.md \
   --workdir /path/to/disposable/workspace \
   --timeout 300
@@ -63,13 +63,14 @@ cp openbench/adapters/clawql.py /path/to/openbench/obench/adapters/clawql.py
 Then run (from the OpenBench repo):
 
 ```bash
-python -m bench.run --harness clawql --model claude-opus-4-8 --task build-a-cli --trials 3
+CLAWQL_OPENBENCH_HARNESS=codex \
+python -m bench.run --harness clawql --model gpt-5.5 --task build-a-cli --trials 3
 ```
 
 Or use the BYO manifest without a Python adapter:
 
 ```bash
-python -m bench.run --candidate /path/to/ClawQL/openbench/candidates/clawql-claude.toml ...
+python -m bench.run --candidate /path/to/ClawQL/openbench/candidates/clawql-codex.toml ...
 ```
 
 Prefer the Python adapter: it writes the instruction file, parses
@@ -98,17 +99,18 @@ To contribute these upstream, copy `tasks/<name>/` into OpenBench's `tasks/`
 |----------|---------|
 | `CLAWQL_OPENBENCH=1` | Allow unsandboxed harness on Linux CI; mark bench mode |
 | `CLAWQL_HARNESS_ALLOW_UNSANDBOXED=1` | Same soft-fail for Seatbelt gate |
-| `CLAWQL_OPENBENCH_HARNESS` | Underlying CLI for the Python adapter (`claude` default) |
+| `CLAWQL_OPENBENCH_HARNESS` | Underlying CLI (`codex` default; also `claude` / `opencode`) |
 | `CLAWQL_INFERENCE_URL` / `OPENBENCH_INFERENCE_URL` | Optional inference gateway |
-| `ANTHROPIC_API_KEY` | Required for live A/B cells (Actions secret or local export) |
+| `OPENAI_API_KEY` | Required for the default Codex A/B / Actions path |
 
 ## One-off GitHub Actions A/B
 
-Manual workflow **OpenBench A/B (clawql on vs off)** — see
+Manual workflow **OpenBench A/B (clawql on vs off)** — OpenAI Codex, secret
+`OPENAI_API_KEY`. See
 [`docs/benchmarks/openbench-github-actions.md`](../docs/benchmarks/openbench-github-actions.md).
 
 ```bash
-gh workflow run openbench-ab.yml -f task=memory-dependent-continuation -f trials=1
+gh workflow run openbench-ab.yml -f task=memory-dependent-continuation -f model=gpt-5.5 -f trials=1
 ```
 
 Local dry path (same script):
