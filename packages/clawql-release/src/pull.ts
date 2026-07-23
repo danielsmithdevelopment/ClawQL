@@ -49,7 +49,7 @@ export async function pullRelease(options: PullOptions): Promise<PullResult> {
     options.outDir ?? join(options.rootDir, ".clawql", "pulled", Date.now().toString(36));
   await mkdir(outDir, { recursive: true });
 
-  let bundleDir = outDir;
+  let bundleDir: string;
   if (looksLikeTxId(options.target)) {
     const fetched = await fetchArweaveBundle(options.target, {
       rootDir: options.rootDir,
