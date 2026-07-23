@@ -140,20 +140,37 @@ jobs:
   deploy-cloudflare-pages:
     name: Deploy to Cloudflare Pages
     needs: build
-    # Auto-run when Cloudflare secrets exist; opt out with LANDING_PAGE_CLOUDFLARE_DEPLOY=false.
-    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' && vars.LANDING_PAGE_CLOUDFLARE_DEPLOY != 'false' }}
+    # Job-level `if` cannot use `secrets` when `needs` is set (actionlint). Opt out with
+    # LANDING_PAGE_CLOUDFLARE_DEPLOY=false; skip inside the job when secrets are absent.
+    if: ${{ vars.LANDING_PAGE_CLOUDFLARE_DEPLOY != 'false' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Check Cloudflare credentials
+        id: cf
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "${CLOUDFLARE_API_TOKEN}" ] && [ -n "${CLOUDFLARE_ACCOUNT_ID}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "SKIP: CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set — Cloudflare Pages deploy skipped."
+          fi
+
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        if: steps.cf.outputs.enabled == 'true'
 
       - name: Download build artifact
+        if: steps.cf.outputs.enabled == 'true'
         uses: actions/download-artifact@v8
         with:
           name: landing-page-out
           path: landing-page/demo/out
 
       - name: Deploy to Cloudflare Pages
+        if: steps.cf.outputs.enabled == 'true'
         uses: cloudflare/wrangler-action@6a6c3a8fbb837218b1a676c348aa5de81a9c3066
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -165,13 +182,27 @@ jobs:
   configure-agent-edge:
     name: Configure Cloudflare agent edge
     needs: [deploy-github-pages]
-    if: ${{ always() && needs.deploy-github-pages.result == 'success' && secrets.CLOUDFLARE_API_TOKEN != '' }}
+    if: ${{ always() && needs.deploy-github-pages.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Check Cloudflare credentials
+        id: cf
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "SKIP: CLOUDFLARE_API_TOKEN unset — agent edge not configured."
+          fi
+
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        if: steps.cf.outputs.enabled == 'true'
 
       - name: Ensure agent edge (proxy, markdown, Link, DNS-AID)
+        if: steps.cf.outputs.enabled == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
