@@ -1,6 +1,12 @@
 import { parseModelId } from "../providers/parse-model-id.js";
 import type { ProviderRegistry } from "../providers/types.js";
 import { isAutoRouteModel } from "../efficiency/layer-8-routing.js";
+import {
+  DEFAULT_INFERENCE_MODEL_CATALOG,
+  findCatalogModel,
+  resolveCatalogAlias,
+  type InferenceModelCatalog,
+} from "../catalog/index.js";
 
 export type ResolvedModel = {
   provider: string;
@@ -26,7 +32,8 @@ export function toPublicModelId(provider: string, model: string): string {
 
 export function resolveRequestModel(
   model: string,
-  registry: ProviderRegistry
+  registry: ProviderRegistry,
+  catalog: InferenceModelCatalog = DEFAULT_INFERENCE_MODEL_CATALOG
 ): ResolvedModel | null {
   const trimmed = model.trim();
   if (!trimmed) return null;
@@ -40,8 +47,23 @@ export function resolveRequestModel(
     };
   }
 
-  if (trimmed.includes("/")) {
-    const parsed = parseModelId(trimmed);
+  // Catalog aliases (clawql/cheap-chat → deepseek/deepseek-chat) and entries
+  // that remap display ids to upstream model strings.
+  const aliased = resolveCatalogAlias(trimmed, catalog);
+  const catalogEntry = findCatalogModel(aliased, catalog);
+  if (catalogEntry && registry.has(catalogEntry.provider)) {
+    return {
+      provider: catalogEntry.provider,
+      model: catalogEntry.upstream_model,
+      gatewayModelId: catalogEntry.id,
+      publicModelId: toPublicModelId(catalogEntry.provider, catalogEntry.upstream_model),
+    };
+  }
+
+  const resolvedId = aliased;
+
+  if (resolvedId.includes("/")) {
+    const parsed = parseModelId(resolvedId);
     if (!registry.has(parsed.provider)) return null;
     return {
       provider: parsed.provider,
@@ -51,39 +73,39 @@ export function resolveRequestModel(
     };
   }
 
-  if (registry.has("openai") && bareOpenAiModel(trimmed)) {
+  if (registry.has("openai") && bareOpenAiModel(resolvedId)) {
     return {
       provider: "openai",
-      model: trimmed,
-      gatewayModelId: `openai/${trimmed}`,
-      publicModelId: trimmed,
+      model: resolvedId,
+      gatewayModelId: `openai/${resolvedId}`,
+      publicModelId: resolvedId,
     };
   }
 
-  if (registry.has("anthropic") && bareAnthropicModel(trimmed)) {
+  if (registry.has("anthropic") && bareAnthropicModel(resolvedId)) {
     return {
       provider: "anthropic",
-      model: trimmed,
-      gatewayModelId: `anthropic/${trimmed}`,
-      publicModelId: trimmed,
+      model: resolvedId,
+      gatewayModelId: `anthropic/${resolvedId}`,
+      publicModelId: resolvedId,
     };
   }
 
   if (registry.has("ollama")) {
     return {
       provider: "ollama",
-      model: trimmed,
-      gatewayModelId: `ollama/${trimmed}`,
-      publicModelId: `ollama/${trimmed}`,
+      model: resolvedId,
+      gatewayModelId: `ollama/${resolvedId}`,
+      publicModelId: `ollama/${resolvedId}`,
     };
   }
 
   for (const provider of registry.keys()) {
     return {
       provider,
-      model: trimmed,
-      gatewayModelId: `${provider}/${trimmed}`,
-      publicModelId: toPublicModelId(provider, trimmed),
+      model: resolvedId,
+      gatewayModelId: `${provider}/${resolvedId}`,
+      publicModelId: toPublicModelId(provider, resolvedId),
     };
   }
 

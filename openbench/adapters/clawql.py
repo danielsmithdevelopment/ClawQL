@@ -29,11 +29,14 @@ from pathlib import Path
 NAME = "clawql"
 
 # Which underlying agent CLI ClawQL should launch. Override with CLAWQL_OPENBENCH_HARNESS.
-# Default is OpenCode (pairs with clawql-inference → OpenRouter for broad model choice).
+# Default is OpenCode (pairs with clawql-inference direct BYOK / optional OpenRouter).
 _DEFAULT_HARNESS = os.environ.get("CLAWQL_OPENBENCH_HARNESS", "opencode").strip() or "opencode"
 
 # Canonical OpenBench model pin -> CLI model id for the default (opencode) harness.
 MODELS = {
+    "deepseek/deepseek-chat": "clawql/deepseek/deepseek-chat",
+    "clawql/cheap-chat": "clawql/deepseek/deepseek-chat",
+    "groq/llama-3.3-70b-versatile": "clawql/groq/llama-3.3-70b-versatile",
     "openrouter/deepseek/deepseek-chat": "clawql/openrouter/deepseek/deepseek-chat",
     "openrouter/qwen/qwen3.6-plus": "clawql/openrouter/qwen/qwen3.6-plus",
     "gpt-5.5-medium": "gpt-5.5",

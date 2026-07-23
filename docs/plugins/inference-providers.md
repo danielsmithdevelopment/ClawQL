@@ -1,6 +1,6 @@
 ---
 title: Inference providers
-description: Optional provider plugins for clawql-inference — OpenAI, Anthropic, and Ollama built-ins plus third-party extensions.
+description: BYOK provider plugins for clawql-inference — direct vendor adapters by default, OpenRouter as an optional escape hatch.
 slug: inference-providers
 status: shipped
 package: clawql-inference/plugin
@@ -11,7 +11,16 @@ next: hitl-label-studio
 
 # Inference providers
 
-Inference backends are **optional provider plugins** on `clawql-inference`. The core package stays lean: gateway, routing, and a registry. Built-in defaults from the inference plan register automatically; integrators and third parties add more via the same plugin contract.
+Inference backends are **provider plugins** on `clawql-inference`. The core
+package stays lean: gateway, routing, catalog, and a registry. Built-in defaults
+register automatically; integrators and third parties add more via the same
+plugin contract.
+
+**Default posture:** bring **your own vendor keys** (BYOK). ClawQL routes
+`provider/model` **directly** to DeepSeek, Groq, Fireworks, Together, Mistral,
+xAI, Google, OpenAI, Anthropic, and local Ollama. **OpenRouter is optional** —
+keep using it through ClawQL if you prefer that aggregator, but it is never
+required.
 
 ## Built-in defaults (automatic)
 
@@ -22,17 +31,44 @@ Inference backends are **optional provider plugins** on `clawql-inference`. The 
 | **openai**     | Chat completions                | `OPENAI_API_KEY`, `CLAWQL_OPENAI_BASE_URL`                                                  |
 | **anthropic**  | Messages API                    | `ANTHROPIC_API_KEY`, `CLAWQL_ANTHROPIC_BASE_URL`                                            |
 | **ollama**     | Local `/api/chat`               | `OLLAMA_BASE_URL` (default `http://127.0.0.1:11434`)                                        |
-| **openrouter** | OpenAI-compatible (multi-model) | `OPENROUTER_API_KEY`, `CLAWQL_OPENROUTER_BASE_URL` (default `https://openrouter.ai/api/v1`) |
+| **deepseek**   | OpenAI-compatible (direct)      | `DEEPSEEK_API_KEY`, `CLAWQL_DEEPSEEK_BASE_URL`                                              |
+| **groq**       | OpenAI-compatible (direct)      | `GROQ_API_KEY`, `CLAWQL_GROQ_BASE_URL`                                                      |
+| **fireworks**  | OpenAI-compatible (direct)      | `FIREWORKS_API_KEY`, `CLAWQL_FIREWORKS_BASE_URL`                                            |
+| **together**   | OpenAI-compatible (direct)      | `TOGETHER_API_KEY`, `CLAWQL_TOGETHER_BASE_URL`                                              |
+| **mistral**    | OpenAI-compatible (direct)      | `MISTRAL_API_KEY`, `CLAWQL_MISTRAL_BASE_URL`                                                |
+| **xai**        | OpenAI-compatible (direct)      | `XAI_API_KEY`, `CLAWQL_XAI_BASE_URL`                                                        |
+| **google**     | Gemini OpenAI-compat endpoint   | `GOOGLE_API_KEY`, `CLAWQL_GOOGLE_OPENAI_BASE_URL`                                           |
+| **openrouter** | Optional aggregator escape hatch | `OPENROUTER_API_KEY`, `CLAWQL_OPENROUTER_BASE_URL` (default `https://openrouter.ai/api/v1`) |
 
-Model ids use `provider/model` (e.g. `anthropic/claude-sonnet-4`, `ollama/phi4`).
-OpenRouter catalog ids keep the vendor path: `openrouter/deepseek/deepseek-chat`,
-`openrouter/qwen/qwen3.6-plus`.
+Model ids use `provider/model` (e.g. `deepseek/deepseek-chat`,
+`anthropic/claude-sonnet-4`, `ollama/phi4`). Catalog aliases such as
+`clawql/cheap-chat` resolve to direct BYOK models.
 
-### OpenRouter quick start
+OpenRouter catalog ids keep the vendor path only when you opt in:
+`openrouter/deepseek/deepseek-chat`, `openrouter/qwen/qwen3.6-plus`.
+
+### Direct BYOK quick start (preferred)
+
+```bash
+export DEEPSEEK_API_KEY=sk-…
+clawql inference serve --port 8080
+
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"deepseek/deepseek-chat","messages":[{"role":"user","content":"hi"}]}'
+
+# Or use a ClawQL alias
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"clawql/cheap-chat","messages":[{"role":"user","content":"hi"}]}'
+```
+
+### OpenRouter escape hatch (optional)
 
 ```bash
 export OPENROUTER_API_KEY=sk-or-…
-export CLAWQL_INFERENCE_PROVIDERS=openrouter
+# Optional allowlist if you only want the aggregator registered:
+# export CLAWQL_INFERENCE_PROVIDERS=openrouter
 clawql inference serve --port 8080
 
 curl -s http://127.0.0.1:8080/v1/chat/completions \
@@ -46,20 +82,20 @@ Optional attribution headers: `CLAWQL_OPENROUTER_HTTP_REFERER`, `CLAWQL_OPENROUT
 
 | Env                                           | Effect                                            |
 | --------------------------------------------- | ------------------------------------------------- |
-| `CLAWQL_INFERENCE_PROVIDERS=openai,anthropic` | Allowlist — only listed provider plugins register |
-| `CLAWQL_INFERENCE_DISABLE_PROVIDERS=ollama`   | Denylist — skip listed builtins                   |
+| `CLAWQL_INFERENCE_PROVIDERS=openai,deepseek`  | Allowlist — only listed provider plugins register |
+| `CLAWQL_INFERENCE_DISABLE_PROVIDERS=openrouter` | Denylist — skip listed builtins                 |
 
 ## Plugin contract
 
 ```typescript
 import type { InferenceProviderPlugin } from "clawql-inference";
 
-export function createGroqProviderPlugin(): InferenceProviderPlugin {
+export function createAcmeProviderPlugin(): InferenceProviderPlugin {
   return {
-    id: "groq",
+    id: "acme",
     version: "1.0.0",
     onRegister({ env, registry }) {
-      registry.set("groq", createGroqAdapter({ apiKey: env.GROQ_API_KEY }));
+      registry.set("acme", createAcmeAdapter({ apiKey: env.ACME_API_KEY }));
     },
   };
 }
@@ -77,7 +113,7 @@ import {
 const gateway = createInferenceGateway({
   providers: createProviderRegistry({
     env: process.env,
-    plugins: composeProviderPlugins({ extensions: [createGroqProviderPlugin()] }),
+    plugins: composeProviderPlugins({ extensions: [createAcmeProviderPlugin()] }),
   }),
 });
 ```
@@ -91,5 +127,6 @@ Publish third-party packages as `clawql-*-inference-provider` (or in-repo under 
 ## Learn more
 
 - [clawql-Agentic Gateway](/inference/clawql-inference)
+- [Upgrade vs OpenRouter / LiteLLM](/inference/clawql-inference#upgrade-vs-openrouter--litellm)
 - [Third-party plugins](/plugins/third-party)
 - [Plugin registry](/reference/plugins)

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resolveRequestModel, toPublicModelId } from "./model-resolve.js";
 import { createProviderRegistry } from "../providers/registry.js";
 import { composeDefaultProviderPlugins } from "../plugin/compose.js";
+import { DEFAULT_INFERENCE_MODEL_CATALOG } from "../catalog/index.js";
 
 describe("resolveRequestModel", () => {
   const registry = createProviderRegistry({ plugins: composeDefaultProviderPlugins() });
@@ -16,6 +17,31 @@ describe("resolveRequestModel", () => {
     const resolved = resolveRequestModel("anthropic/claude-sonnet-4", registry);
     expect(resolved?.gatewayModelId).toBe("anthropic/claude-sonnet-4");
     expect(resolved?.publicModelId).toBe("claude-sonnet-4");
+  });
+
+  it("resolves direct BYOK catalog models", () => {
+    const resolved = resolveRequestModel("deepseek/deepseek-chat", registry);
+    expect(resolved?.provider).toBe("deepseek");
+    expect(resolved?.model).toBe("deepseek-chat");
+    expect(resolved?.gatewayModelId).toBe("deepseek/deepseek-chat");
+  });
+
+  it("resolves catalog aliases to direct BYOK providers", () => {
+    const resolved = resolveRequestModel("clawql/cheap-chat", registry);
+    expect(resolved?.provider).toBe("deepseek");
+    expect(resolved?.model).toBe("deepseek-chat");
+    expect(resolved?.gatewayModelId).toBe("deepseek/deepseek-chat");
+  });
+
+  it("keeps OpenRouter escape-hatch ids on the openrouter provider", () => {
+    const resolved = resolveRequestModel(
+      "openrouter/deepseek/deepseek-chat",
+      registry,
+      DEFAULT_INFERENCE_MODEL_CATALOG
+    );
+    expect(resolved?.provider).toBe("openrouter");
+    expect(resolved?.model).toBe("deepseek/deepseek-chat");
+    expect(resolved?.gatewayModelId).toBe("openrouter/deepseek/deepseek-chat");
   });
 
   it("keeps ollama ids namespaced", () => {

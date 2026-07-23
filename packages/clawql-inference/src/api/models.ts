@@ -3,6 +3,11 @@ import { loadModelEscalationConfigAsync } from "../routing/config.js";
 import { loadTokenEfficiencyConfig } from "../efficiency/config.js";
 import type { ProviderRegistry } from "../providers/types.js";
 import { parseModelId } from "../providers/parse-model-id.js";
+import {
+  findCatalogModel,
+  loadInferenceModelCatalog,
+  providerCredentialPresent,
+} from "../catalog/index.js";
 import { toPublicModelId } from "./model-resolve.js";
 import { sendOpenAiError } from "./openai-errors.js";
 
@@ -47,11 +52,37 @@ export async function collectListedModels(
     models.push(modelObject(gatewayModelId));
   };
 
+  // 1) Curated BYOK catalog — only surface models whose provider is registered
+  //    and credentialed (OpenRouter escape-hatch included when keyed).
+  const catalog = await loadInferenceModelCatalog(env);
+  const listUncredentialed = env.CLAWQL_INFERENCE_LIST_UNCREDENTIALED === "1";
+  for (const entry of catalog.models) {
+    if (!registry.has(entry.provider)) continue;
+    if (!listUncredentialed && !providerCredentialPresent(entry.provider, env)) continue;
+    add(entry.id);
+  }
+
+  // 2) Tier map + explicit extras
   const config = await loadModelEscalationConfigAsync(env);
   add(config.tierMap.frugal);
   add(config.tierMap.standard);
   add(config.tierMap.frontier);
   for (const id of parseExtraModels(env)) add(id);
+
+  // 3) Catalog aliases as first-class list entries (when target is credentialed)
+  for (const [alias, target] of Object.entries(catalog.aliases)) {
+    if (seen.has(alias)) continue;
+    const entry = findCatalogModel(target, catalog);
+    if (!entry || !registry.has(entry.provider)) continue;
+    if (!listUncredentialed && !providerCredentialPresent(entry.provider, env)) continue;
+    seen.add(alias);
+    models.push({
+      id: alias,
+      object: "model",
+      created: 1_700_000_000,
+      owned_by: "clawql",
+    });
+  }
 
   const efficiency = loadTokenEfficiencyConfig(env);
   if (efficiency.httpAutoRoute || efficiency.escalation.enabled) {

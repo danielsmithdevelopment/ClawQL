@@ -145,11 +145,34 @@ export {
   createAnthropicProviderPlugin,
   createOllamaProviderPlugin,
   createOpenRouterProviderPlugin,
+  createOpenAiCompatByokProviderPlugin,
+  createOpenAiCompatByokProviderPlugins,
+  OPENAI_COMPAT_BYOK_PROVIDERS,
+  OPENAI_PROVIDER_PLUGIN_ID,
+  ANTHROPIC_PROVIDER_PLUGIN_ID,
+  OLLAMA_PROVIDER_PLUGIN_ID,
+  OPENROUTER_PROVIDER_PLUGIN_ID,
   createOpenAiAdapter,
   createAnthropicAdapter,
   createOllamaAdapter,
   createOpenRouterAdapter,
+  createOpenAiCompatibleAdapter,
 } from "./plugin/index.js";
+export type {
+  OpenAiCompatProviderSpec,
+  OpenAiCompatibleAdapterConfig,
+} from "./plugin/index.js";
+
+export {
+  DEFAULT_INFERENCE_MODEL_CATALOG,
+  loadInferenceModelCatalog,
+  resolveCatalogAlias,
+  findCatalogModel,
+  providerCredentialPresent,
+  PROVIDER_API_KEY_ENV,
+  type CatalogModel,
+  type InferenceModelCatalog,
+} from "./catalog/index.js";
 
 export {
   createInferenceHttpApp,

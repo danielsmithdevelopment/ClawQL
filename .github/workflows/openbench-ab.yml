@@ -1,7 +1,8 @@
-# One-off OpenBench A/B via clawql-inference → OpenRouter (any model).
+# One-off OpenBench A/B via clawql-inference (direct BYOK; OpenRouter optional).
 #
 # Spin up inference + OpenCode → clawql-on vs clawql-off → Step Summary → tear down.
-# Secret: OPENROUTER_API_KEY.
+# Preferred secret: DEEPSEEK_API_KEY (or other vendor BYOK keys).
+# Optional: OPENROUTER_API_KEY when model is openrouter/*.
 #
 # Actions → OpenBench A/B (clawql on vs off) → Run workflow.
 
@@ -20,10 +21,10 @@ on:
           - multi-provider-api-workflow
         default: memory-dependent-continuation
       model:
-        description: "OpenRouter model id (openrouter/vendor/model or vendor/model)"
+        description: "clawql-inference model (deepseek/… preferred; openrouter/… optional)"
         required: true
         type: string
-        default: openrouter/deepseek/deepseek-chat
+        default: deepseek/deepseek-chat
       trials:
         description: Trials per arm (keep small — each cell spends tokens)
         required: true
@@ -62,12 +63,15 @@ permissions:
 
 jobs:
   ab-compare:
-    name: A/B via clawql-inference + OpenRouter
+    name: A/B via clawql-inference (BYOK)
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      CLAWQL_INFERENCE_PROVIDERS: openrouter
       CLAWQL_INFERENCE_PORT: ${{ inputs.inference_port }}
       CLAWQL_OPENBENCH: "1"
       CLAWQL_HARNESS_ALLOW_UNSANDBOXED: "1"
@@ -75,12 +79,27 @@ jobs:
       CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
       CLAWQL_OPENROUTER_APP_TITLE: ClawQL OpenBench
     steps:
-      - name: Require OPENROUTER_API_KEY
+      - name: Require BYOK or OpenRouter credentials
+        env:
+          MODEL: ${{ inputs.model }}
         run: |
-          if [ -z "$OPENROUTER_API_KEY" ]; then
-            echo "::error::Add repository secret OPENROUTER_API_KEY, then re-run. Models come from OpenRouter via clawql-inference."
-            exit 1
+          set -euo pipefail
+          if [[ "$MODEL" == openrouter/* ]]; then
+            if [ -z "${OPENROUTER_API_KEY:-}" ]; then
+              echo "::error::Model '$MODEL' needs repository secret OPENROUTER_API_KEY (optional escape hatch)."
+              exit 1
+            fi
+            echo "Using OpenRouter escape hatch for $MODEL"
+            exit 0
           fi
+          # Direct BYOK path — prefer DeepSeek for the default model.
+          if [ -n "${DEEPSEEK_API_KEY:-}" ] || [ -n "${GROQ_API_KEY:-}" ] \
+            || [ -n "${OPENAI_API_KEY:-}" ] || [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+            echo "Using direct BYOK credentials for clawql-inference ($MODEL)"
+            exit 0
+          fi
+          echo "::error::Add DEEPSEEK_API_KEY (preferred) or another vendor BYOK secret. OpenRouter remains optional via OPENROUTER_API_KEY + openrouter/* models."
+          exit 1
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
@@ -108,7 +127,7 @@ jobs:
       - name: Validate task checkers (offline)
         run: python3 openbench/validate_tasks.py
 
-      - name: Start clawql-inference (OpenRouter upstream)
+      - name: Start clawql-inference (BYOK upstreams)
         run: |
           mkdir -p artifacts/openbench-ab
           PORT="${{ inputs.inference_port }}"
@@ -145,10 +164,10 @@ jobs:
             --out "$OUT" \
             --summary-md "$SUM"
           {
-            echo "## OpenBench A/B (clawql-inference → OpenRouter)"
+            echo "## OpenBench A/B (clawql-inference BYOK)"
             echo ""
             echo "- Run: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            echo "- Inference: \`clawql-inference\` → OpenRouter"
+            echo "- Inference: \`clawql-inference\` (direct BYOK; OpenRouter optional)"
             echo "- Agent: OpenCode"
             echo "- Task: \`${{ inputs.task }}\`"
             echo "- Model: \`${{ inputs.model }}\`"

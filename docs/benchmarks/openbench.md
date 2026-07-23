@@ -47,9 +47,11 @@ python3 openbench/validate_tasks.py
 
 ## One-off GitHub Actions A/B
 
-Manual `workflow_dispatch` job: **clawql-inference → OpenRouter** (any catalog
-model), OpenCode **clawql-on vs clawql-off**, Step Summary + JSON artifact, then
-the runner exits. Requires repo secret `OPENROUTER_API_KEY`.
+Manual `workflow_dispatch` job: **clawql-inference** with **direct BYOK**
+(default `deepseek/deepseek-chat`), OpenCode **clawql-on vs clawql-off**, Step
+Summary + JSON artifact, then the runner exits. Preferred secret:
+`DEEPSEEK_API_KEY`. OpenRouter (`OPENROUTER_API_KEY` + `openrouter/*`) is
+optional.
 
 See [`openbench-github-actions.md`](openbench-github-actions.md).
 

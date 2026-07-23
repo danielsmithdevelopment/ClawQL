@@ -1,9 +1,10 @@
 kind = "manifest"
-name = "clawql-opencode-openrouter"
+name = "clawql-opencode-deepseek"
 isolate_home = false
 inherit_env = true
-# Optional OpenRouter escape hatch — prefer clawql-opencode-deepseek.toml for
-# direct BYOK. Assumes CLAWQL_INFERENCE_URL / OPENCODE_CONFIG_CONTENT are set.
+# Prefer the Python adapter + run-ab-compare.py for inference URL wiring.
+# This manifest assumes CLAWQL_INFERENCE_URL and OPENCODE_CONFIG_CONTENT are
+# already set in the environment (Actions / local shell).
 command = [
   "clawql", "opencode",
   "--non-interactive",
@@ -14,6 +15,8 @@ command = [
 version_command = ["clawql", "--version"]
 policy_headless_args = ["--non-interactive"]
 pass_env = [
+  "DEEPSEEK_API_KEY",
+  "GROQ_API_KEY",
   "OPENROUTER_API_KEY",
   "CLAWQL_HOME",
   "CLAWQL_OBSIDIAN_VAULT_PATH",
@@ -28,8 +31,9 @@ pass_env = [
   "HOME",
 ]
 [models]
-"openrouter/deepseek/deepseek-chat" = "clawql/openrouter/deepseek/deepseek-chat"
-"openrouter/qwen/qwen3.6-plus" = "clawql/openrouter/qwen/qwen3.6-plus"
+"deepseek/deepseek-chat" = "clawql/deepseek/deepseek-chat"
+"clawql/cheap-chat" = "clawql/deepseek/deepseek-chat"
+"groq/llama-3.3-70b-versatile" = "clawql/groq/llama-3.3-70b-versatile"
 
 [env]
 CLAWQL_OPENBENCH = "1"
