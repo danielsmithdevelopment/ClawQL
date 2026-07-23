@@ -6,12 +6,12 @@ This directory holds **repro instructions**, **latest pointers**, **per-scenario
 
 ## Start here
 
-| Document                       | Use                                                            |
-| ------------------------------ | -------------------------------------------------------------- |
-| [`REPRODUCE.md`](REPRODUCE.md) | Step-by-step commands to regenerate benchmark numbers locally. |
-| [`latest.md`](latest.md)       | Pointer to the newest consolidated benchmark artifacts.        |
-| [`latest.json`](latest.json)   | Machine-readable latest summary (when present).                |
-| [`openbench.md`](openbench.md) | OpenBench harness adoption (adapter + ClawQL-specific tasks).  |
+| Document                                                     | Use                                                                  |
+| ------------------------------------------------------------ | -------------------------------------------------------------------- |
+| [`REPRODUCE.md`](REPRODUCE.md)                               | Step-by-step commands to regenerate benchmark numbers locally.       |
+| [`latest.md`](latest.md)                                     | Pointer to the newest consolidated benchmark artifacts.              |
+| [`latest.json`](latest.json)                                 | Machine-readable latest summary (when present).                      |
+| [`openbench.md`](openbench.md)                               | OpenBench harness adoption (adapter + ClawQL-specific tasks).        |
 | [`openbench-github-actions.md`](openbench-github-actions.md) | One-off Actions A/B (clawql-on vs off) — spin up, report, spin down. |
 
 ---
