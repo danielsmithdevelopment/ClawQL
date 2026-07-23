@@ -60,3 +60,12 @@ clawql-mcp-*.tgz
 
 # Ontology generate output
 generated/
+
+# clawql-release rift workspaces
+.rifts/
+
+# clawql-release local tooling (keys, escrow, staging, e2e report)
+.clawql/
+
+# CI e2e-only release bundle (do not commit)
+releases/v0.0.0-e2e/

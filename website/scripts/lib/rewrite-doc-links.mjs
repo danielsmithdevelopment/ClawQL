@@ -15,7 +15,9 @@ export const DOC_SITE_ROUTES = {
   'docs/getting-started/clawql-7-setup-guide.md':
     '/getting-started',
   'docs/getting-started/clawql-release-mvp.md':
-    '/vision/immutable-releases',
+    '/getting-started/immutable-releases',
+  'docs/getting-started/immutable-releases.md':
+    '/getting-started/immutable-releases',
   'docs/getting-started/getting-started-for-teams.md':
     '/getting-started/for-teams',
   'docs/getting-started/team-vault-sync.md':

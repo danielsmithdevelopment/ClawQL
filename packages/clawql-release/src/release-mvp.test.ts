@@ -74,7 +74,7 @@ describe("release manifest MVP", () => {
     await writeFile(join(root, "package.json"), JSON.stringify({ version: "0.1.0" }), "utf8");
     gitInit(root);
     const m = await collectReleaseManifest({ rootDir: root });
-    expect(m.schemaVersion).toBe("0.1");
+    expect(m.schemaVersion).toBe("0.2");
     expect(m.leafCount).toBe(0);
     expect(m.ontologySchema).toBeUndefined();
   });

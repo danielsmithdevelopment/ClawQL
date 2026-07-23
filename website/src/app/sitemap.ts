@@ -38,6 +38,11 @@ const ENTRIES: Array<Entry> = [
     priority: 0.95,
   },
   {
+    path: '/getting-started/immutable-releases',
+    changeFrequency: 'weekly',
+    priority: 0.94,
+  },
+  {
     path: '/contributing/technical-specification',
     changeFrequency: 'monthly',
     priority: 0.88,

@@ -12,9 +12,18 @@ export function readGitHead(rootDir: string): GitHeadInfo {
   const remoteUrl = runGit(rootDir, ["config", "--get", "remote.origin.url"], {
     allowFailure: true,
   });
+  // Local Layer 0 tooling / untracked outputs must not fail the release dirty check.
+  // Only modified tracked files (and non-tooling paths) count as dirty.
+  const dirtyLines = status
+    .split("\n")
+    .map((l) => l.trimEnd())
+    .filter(Boolean)
+    .filter((l) => !/^\?\?/.test(l.trim()))
+    .filter((l) => !l.includes(".clawql/"))
+    .filter((l) => !l.includes(".rifts/"));
   return {
     commit: commit.trim(),
-    dirty: status.trim().length > 0,
+    dirty: dirtyLines.length > 0,
     remoteUrl: remoteUrl.trim() || undefined,
   };
 }

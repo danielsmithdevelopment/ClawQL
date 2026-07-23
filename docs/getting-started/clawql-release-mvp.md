@@ -1,68 +1,52 @@
-# clawql-release MVP (Layer 0)
+# clawql-release reference notes
 
-Immutable release manifests for **7.0.0** — GitHub + GHCR anchor (Arweave deferred).
+> **Hands-on guide:** [`immutable-releases.md`](./immutable-releases.md) · https://docs.clawql.com/getting-started/immutable-releases  
+> **Vision:** https://docs.clawql.com/vision/immutable-releases
+
+Short reference for Layer 0 CLI flags, env knobs, and CI. Prefer the getting-started guide for the full end-to-end path.
 
 ## Quick start
 
 ```bash
 clawql release init
 
-clawql release publish --tag v7.0.0 \
-  --sbom sbom-cyclonedx-repo.cdx.json \
-  --npm-tgz clawql-mcp-7.0.0.tgz \
+clawql-release immutable-volume snapshot --backend git-worktree --name build-local
+clawql-release golden-image build --image-digest clawql-mcp=sha256:YOUR_DIGEST
+
+clawql release publish --tag v7.1.0 \
+  --sbom sbom.cdx.json \
+  --npm-tgz clawql-mcp-7.1.0.tgz \
   --image-digest clawql-mcp=sha256:YOUR_DIGEST \
-  --image-digest clawql-dashboard=sha256:...
+  --stage-ipfs --permanent --github
 
-clawql release verify releases/v7.0.0/manifest.json
+clawql release verify releases/v7.1.0/manifest.json
+clawql-release pull <arweave-tx-id> --rift
 ```
 
-## What gets recorded
-
-| Field               | Source                                     |
-| ------------------- | ------------------------------------------ |
-| `repository.commit` | `git rev-parse HEAD`                       |
-| `artifacts.sbom`    | SHA-256 of CycloneDX file                  |
-| `artifacts.npm`     | SHA-256 of `npm pack` tarball              |
-| `images.*`          | GHCR ref + `sha256:` digest                |
-| `merkleRoot`        | Merkle tree over all artifact/image leaves |
-
-## CI
-
-After `npm pack` in [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml):
+## Dry-run / CI
 
 ```bash
-npm run release:manifest
+CLAWQL_RELEASE_DRY_RUN=1 node scripts/release/ci-pipeline-e2e.mjs
 ```
 
-Set `CLAWQL_RELEASE_IMAGE_DIGESTS` to a JSON object of image name → digest from the docker-publish workflow.
+Workflow: [`.github/workflows/clawql-release-pipeline.yml`](../../.github/workflows/clawql-release-pipeline.yml)
 
-## Verify at runtime (7.0)
+Do **not** put spendable Arweave wallets in GitHub Actions secrets for that workflow.
 
-**`clawql doctor --smoke`** auto-resolves `releases/v{version}/manifest.json` from the running package version and verifies Merkle + artifact digests when the bundle exists (typical in a git checkout after `clawql release publish`). When no bundle is present (e.g. bare `npx` install), doctor reports a **warning** — not a failure.
+## Env knobs
 
-**MCP startup (optional):** set **`CLAWQL_RELEASE_MANIFEST`** to a manifest path (file or bundle directory). The server verifies before serving:
+| Env                                                      | Purpose                              |
+| -------------------------------------------------------- | ------------------------------------ |
+| `CLAWQL_RELEASE_DRY_RUN=1` / `CLAWQL_RELEASE_MODE=local` | Force local backends                 |
+| `CLAWQL_ARWEAVE_WALLET_JWK`                              | Enable ar.io / Turbo upload path     |
+| `CLAWQL_ARIO_TURBO_URL`                                  | Turbo endpoint for uploads           |
+| `CLAWQL_IPFS_GATEWAY`                                    | IPFS HTTP gateway                    |
+| `CLAWQL_X402_ENFORCE=1`                                  | Live x402 facilitator verification   |
+| `CLAWQL_LIT_NETWORK`                                     | Lit Protocol network for key release |
 
-```bash
-export CLAWQL_RELEASE_MANIFEST=releases/v7.0.0/manifest.json
-npx clawql-mcp
-```
+## Runtime verify
 
-Strict mode (exit on failure): **`NODE_ENV=production`** or **`CLAWQL_RELEASE_MANIFEST_STRICT=1`**. In development, verification warnings are logged but startup continues.
+- `clawql doctor --smoke` — auto-resolves `releases/v{version}/manifest.json`
+- `CLAWQL_RELEASE_MANIFEST=…` — MCP startup verify; strict with `CLAWQL_RELEASE_MANIFEST_STRICT=1`
 
-## Verify cosign (containers)
-
-Manifest records digests; image signatures are verified separately:
-
-```bash
-cosign verify ghcr.io/danielsmithdevelopment/clawql-mcp@sha256:...
-```
-
-See [`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md).
-
-## Roadmap (not in MVP)
-
-- Arweave `publish --permanent`
-- `clawql-manifest-validator` policy blocks for Kyverno
-- Rift / Radicle integration
-
-Full vision: [`docs/vision/clawql-hybrid-decentralized-github-alternative.md`](../vision/clawql-hybrid-decentralized-github-alternative.md)
+Cosign for containers: [`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md)

@@ -1,5 +1,5 @@
 /**
- * clawql-release — Layer 0 MVP CLI
+ * clawql-release — Layer 0 CLI (immutable releases pipeline)
  */
 import { resolve } from "node:path";
 import { writeReleaseConfig } from "./config.js";
@@ -7,28 +7,49 @@ import { collectReleaseManifest } from "./collect.js";
 import { buildReleaseManifest } from "./manifest.js";
 import { lintCqmFiles } from "./ontology-schema.js";
 import { publishRelease } from "./publish.js";
-import { verifyReleaseBundle, verifyReleaseManifest } from "./verify.js";
+import { verifyReleaseTarget } from "./verify.js";
+import {
+  createWorkspaceSnapshot,
+  listWorkspaceSnapshots,
+  removeWorkspaceSnapshot,
+} from "./workspace/index.js";
+import { buildGoldenImages } from "./golden-image.js";
+import { pullRelease } from "./pull.js";
+import type { WorkspaceBackend } from "./types.js";
 
 function usage(): void {
-  console.log(`clawql-release — immutable release manifest (MVP v0.1)
+  console.log(`clawql-release — immutable release pipeline (Layer 0)
 
 Usage:
   clawql-release init [--root DIR]
-  clawql-release collect [--root DIR] [--tag vX.Y.Z] [--sbom PATH] [--npm-tgz PATH]
-  clawql-release manifest [--root DIR] [same flags as collect] [--no-copy]
-  clawql-release verify <bundle-dir|manifest.json>
+  clawql-release immutable-volume snapshot --name NAME [--backend rift|git-worktree]
+  clawql-release immutable-volume list
+  clawql-release immutable-volume remove --name NAME
+  clawql-release golden-image build [--version X] [--image-digest NAME=sha256:...]
+  clawql-release collect|manifest|publish [options]
+  clawql-release verify <bundle-dir|manifest.json|arweave-tx-id>
+  clawql-release pull <target> [--rift] [--out DIR]
   clawql-release lint <file.cqm> [more.cqm...]
-  clawql-release publish [--root DIR] [--tag vX.Y.Z] [--sbom PATH] [--npm-tgz PATH] [--github]
 
-  --image-digest NAME=sha256:...   Repeatable; container digest for manifest Merkle tree
-  --image-digests-file PATH        JSON object of image name → digest
+Publish options:
+  --tag vX.Y.Z
+  --sbom PATH --npm-tgz PATH
+  --image-digest NAME=sha256:...
+  --github                 Attach manifest to GitHub Release (mirror)
+  --stage-ipfs             Stage bundle on IPFS (or local content-addressed store)
+  --permanent              Upload permanent release via ar.io / local dry-run store
+  --encrypt                Encrypt bundle; Lit + x402 gate decryption
+  --price "0.50 USDC"      Paid release price (implies access metadata)
+  --dry-run                Force local/dry-run backends
+  --no-copy
 
 Examples:
   clawql-release init
-  clawql-release lint examples/governance/acme.cqm
-  clawql-release publish --tag v7.0.0 --sbom sbom.cdx.json --npm-tgz clawql-mcp-7.0.0.tgz \\
-    --image-digest clawql-mcp=sha256:abc... --github
-  clawql-release verify releases/v7.0.0/manifest.json
+  clawql-release immutable-volume snapshot --backend git-worktree --name agent-42
+  clawql-release golden-image build --image-digest clawql-mcp=sha256:abc...
+  clawql-release publish --tag v7.1.0 --sbom sbom.cdx.json --stage-ipfs --permanent --github
+  clawql-release verify releases/v7.1.0/manifest.json
+  clawql-release pull local_abc123 --rift
 `);
 }
 
@@ -46,6 +67,12 @@ function parseArgs(argv: string[]): {
     else if (a === "--sbom") flags.sbom = argv[++i] ?? "";
     else if (a === "--npm-tgz") flags.npmTgz = argv[++i] ?? "";
     else if (a === "--image-digests-file") flags.imageDigestsFile = argv[++i] ?? "";
+    else if (a === "--name") flags.name = argv[++i] ?? "";
+    else if (a === "--backend") flags.backend = argv[++i] ?? "";
+    else if (a === "--branch") flags.branch = argv[++i] ?? "";
+    else if (a === "--version") flags.version = argv[++i] ?? "";
+    else if (a === "--out") flags.out = argv[++i] ?? "";
+    else if (a === "--price") flags.price = argv[++i] ?? "";
     else if (a.startsWith("--image-digest=")) {
       const prev = (flags.imageDigest as string | undefined) ?? "";
       flags.imageDigest = prev
@@ -58,6 +85,11 @@ function parseArgs(argv: string[]): {
     } else if (a === "--github") flags.github = true;
     else if (a === "--no-copy") flags.noCopy = true;
     else if (a === "--json") flags.json = true;
+    else if (a === "--stage-ipfs") flags.stageIpfs = true;
+    else if (a === "--permanent") flags.permanent = true;
+    else if (a === "--encrypt") flags.encrypt = true;
+    else if (a === "--dry-run") flags.dryRun = true;
+    else if (a === "--rift") flags.rift = true;
     else if (!a.startsWith("-")) positional.push(a);
   }
   return { cmd: positional[0] ?? "help", flags, positional: positional.slice(1) };
@@ -104,6 +136,7 @@ async function main(): Promise<void> {
   const collectBase = {
     rootDir,
     tag: typeof flags.tag === "string" && flags.tag ? flags.tag : undefined,
+    version: typeof flags.version === "string" && flags.version ? flags.version : undefined,
     sbomPath: typeof flags.sbom === "string" && flags.sbom ? resolve(flags.sbom) : undefined,
     npmTarballPath:
       typeof flags.npmTgz === "string" && flags.npmTgz ? resolve(flags.npmTgz) : undefined,
@@ -115,6 +148,85 @@ async function main(): Promise<void> {
   if (cmd === "init") {
     const path = await writeReleaseConfig(rootDir);
     console.log(`Wrote ${path}`);
+    console.log("Signed commits enabled by default when a signing identity is available.");
+    return;
+  }
+
+  if (cmd === "immutable-volume") {
+    const sub = positional[0] ?? "help";
+    if (sub === "snapshot") {
+      const name = typeof flags.name === "string" ? flags.name : "";
+      if (!name) {
+        console.error(
+          "Usage: clawql-release immutable-volume snapshot --name NAME [--backend ...]"
+        );
+        process.exitCode = 1;
+        return;
+      }
+      const backend = (
+        typeof flags.backend === "string" && flags.backend ? flags.backend : "git-worktree"
+      ) as WorkspaceBackend;
+      const snap = await createWorkspaceSnapshot({
+        rootDir,
+        backend,
+        name,
+        branch: typeof flags.branch === "string" ? flags.branch : undefined,
+      });
+      if (flags.json) console.log(JSON.stringify(snap, null, 2));
+      else {
+        console.log(`snapshotId: ${snap.snapshotId}`);
+        console.log(`backend: ${snap.backend}`);
+        console.log(`path: ${snap.path}`);
+      }
+      return;
+    }
+    if (sub === "list") {
+      const snaps = await listWorkspaceSnapshots(rootDir);
+      if (flags.json) console.log(JSON.stringify(snaps, null, 2));
+      else {
+        for (const s of snaps) {
+          console.log(`${s.snapshotId}\t${s.backend}\t${s.name}\t${s.path}`);
+        }
+        if (!snaps.length) console.log("(no snapshots)");
+      }
+      return;
+    }
+    if (sub === "remove") {
+      const name = typeof flags.name === "string" ? flags.name : (positional[1] ?? "");
+      if (!name) {
+        console.error("Usage: clawql-release immutable-volume remove --name NAME");
+        process.exitCode = 1;
+        return;
+      }
+      const removed = await removeWorkspaceSnapshot(rootDir, name);
+      console.log(removed ? `Removed ${removed.snapshotId}` : `No snapshot named ${name}`);
+      return;
+    }
+    console.error(`Unknown immutable-volume subcommand: ${sub}`);
+    usage();
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "golden-image") {
+    const sub = positional[0] ?? "build";
+    if (sub !== "build") {
+      console.error("Usage: clawql-release golden-image build");
+      process.exitCode = 1;
+      return;
+    }
+    const result = await buildGoldenImages({
+      rootDir,
+      version: collectBase.version ?? collectBase.tag?.replace(/^v/, ""),
+      imageDigests: collectBase.imageDigests,
+      dryRun: Boolean(flags.dryRun),
+    });
+    if (flags.json) console.log(JSON.stringify(result, null, 2));
+    else {
+      console.log(`attestations: ${result.attestationsPath}`);
+      console.log(`images: ${Object.keys(result.images).join(", ") || "(none)"}`);
+      for (const d of result.detail) console.log(`  ${d}`);
+    }
     return;
   }
 
@@ -173,16 +285,47 @@ async function main(): Promise<void> {
   if (cmd === "verify") {
     const target = positional[0];
     if (!target) {
-      console.error("Usage: clawql-release verify <bundle-dir|manifest.json>");
+      console.error("Usage: clawql-release verify <bundle-dir|manifest.json|arweave-tx-id>");
       process.exitCode = 1;
       return;
     }
-    const abs = resolve(target);
-    const result = abs.endsWith("manifest.json")
-      ? await verifyReleaseManifest(abs, undefined, { workspaceRoot: rootDir })
-      : await verifyReleaseBundle(abs, rootDir);
+    const looksLocal =
+      target.endsWith(".json") ||
+      target.includes("/") ||
+      target.includes("\\") ||
+      target.startsWith(".");
+    const final = await verifyReleaseTarget(looksLocal ? resolve(target) : target, { rootDir });
+    if (final.ok) {
+      console.log(`OK — manifest ${final.manifest.tag} merkleRoot=${final.manifest.merkleRoot}`);
+      if (final.manifest.permanence?.arweave?.txId) {
+        console.log(`arweave: ${final.manifest.permanence.arweave.txId}`);
+      }
+      for (const w of final.warnings ?? []) console.log(`note: ${w}`);
+      return;
+    }
+    for (const e of final.errors) console.error(`FAIL: ${e}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "pull") {
+    const target = positional[0];
+    if (!target) {
+      console.error("Usage: clawql-release pull <target> [--rift] [--out DIR]");
+      process.exitCode = 1;
+      return;
+    }
+    const result = await pullRelease({
+      rootDir,
+      target: target.includes("/") || target.endsWith(".json") ? resolve(target) : target,
+      outDir: typeof flags.out === "string" ? resolve(flags.out) : undefined,
+      rift: Boolean(flags.rift),
+      dryRun: Boolean(flags.dryRun),
+    });
     if (result.ok) {
-      console.log(`OK — manifest ${result.manifest.tag} merkleRoot=${result.manifest.merkleRoot}`);
+      console.log(`OK — pulled ${result.manifest.tag} → ${result.outDir}`);
+      if (result.workspacePath) console.log(`workspace: ${result.workspacePath}`);
+      if (result.decrypted) console.log("decrypted: yes");
       return;
     }
     for (const e of result.errors) console.error(`FAIL: ${e}`);
@@ -195,9 +338,18 @@ async function main(): Promise<void> {
       ...collectBase,
       copyArtifacts: !flags.noCopy,
       githubRelease: Boolean(flags.github),
+      stageIpfs: Boolean(flags.stageIpfs),
+      permanent: Boolean(flags.permanent),
+      encrypt: Boolean(flags.encrypt),
+      dryRun: Boolean(flags.dryRun),
+      price: typeof flags.price === "string" && flags.price ? flags.price : undefined,
+      syncCollaboration: true,
     });
     console.log(`Published manifest: ${result.manifestPath}`);
     console.log(`Bundle: ${result.bundleDir}`);
+    if (result.ipfsCid) console.log(`IPFS staging CID: ${result.ipfsCid}`);
+    if (result.arweaveTxId) console.log(`Arweave tx: ${result.arweaveTxId}`);
+    if (result.encrypted) console.log("encrypted: yes (Lit/x402 gated)");
     if (result.githubReleaseUrl) {
       console.log(`GitHub release: ${result.githubReleaseUrl}`);
     }
