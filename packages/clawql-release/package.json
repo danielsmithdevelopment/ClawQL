@@ -1,7 +1,7 @@
 {
   "name": "clawql-release",
   "version": "7.1.0",
-  "description": "ClawQL Layer 0 MVP \u2014 verifiable release manifests (Merkle + SHA-256) for npm, SBOM, and container digests",
+  "description": "ClawQL Layer 0 \u2014 immutable releases: workspaces (git-worktree/rift), signed artifacts, Radicle+GitHub, IPFS staging, Lit/x402 access, Arweave/ar.io permanence",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -52,7 +52,12 @@
     "release",
     "sbom",
     "merkle",
-    "supply-chain"
+    "supply-chain",
+    "arweave",
+    "ipfs",
+    "x402",
+    "radicle",
+    "rift"
   ],
   "publishConfig": {
     "access": "public"

@@ -155,6 +155,9 @@ function parse(argv: string[]): {
     else if (a === "--sbom") flags.sbom = argv[++i] ?? "";
     else if (a === "--npm-tgz") flags.npmTgz = argv[++i] ?? "";
     else if (a === "--github") flags.github = true;
+    else if (a === "--stage-ipfs") flags.stageIpfs = true;
+    else if (a === "--permanent") flags.permanent = true;
+    else if (a === "--encrypt") flags.encrypt = true;
     else if (a === "--no-copy") flags.noCopy = true;
     else if (a === "--dir") flags.dir = argv[++i] ?? "";
     else if (a === "--out") flags.out = argv[++i] ?? "";
@@ -335,12 +338,12 @@ Harness (MCP pre-wired):
 Install (local script):
   curl -fsSL https://clawql.com/install | bash
 
-release (Layer 0 MVP — immutable manifest):
-  init            Write .clawql/release.json
+release (Layer 0 — immutable releases):
+  init            Write .clawql/release.json (+ signed commits by default)
   collect         Print manifest JSON (git commit, SBOM, npm tgz, image digests)
   manifest        Write releases/vX.Y.Z/manifest.json
-  publish         manifest + optional --github (needs gh CLI)
-  verify <path>   Verify bundle directory or manifest.json
+  publish         manifest + optional --github / --stage-ipfs / --permanent / --encrypt
+  verify <target> Verify bundle, manifest.json, or Arweave tx id
 
 ontology (ADR 0009 — enterprise Ontology):
   lint            Validate entity YAML against schemas/ontology/entity.schema.json
@@ -1147,6 +1150,11 @@ async function main(): Promise<void> {
       github: Boolean(flags.github),
       noCopy: Boolean(flags.noCopy),
       json: Boolean(flags.json),
+      stageIpfs: Boolean(flags.stageIpfs),
+      permanent: Boolean(flags.permanent),
+      encrypt: Boolean(flags.encrypt),
+      dryRun: Boolean(flags.dryRun),
+      price: typeof flags.price === "string" && flags.price ? flags.price : undefined,
     };
     if (subcmd === "init") {
       process.exitCode = await runReleaseInit(releaseOpts);
@@ -1167,14 +1175,16 @@ async function main(): Promise<void> {
     if (subcmd === "verify") {
       const target = rest[0];
       if (!target) {
-        console.error("Usage: clawql release verify <bundle-dir|manifest.json>");
+        console.error("Usage: clawql release verify <bundle-dir|manifest.json|arweave-tx-id>");
         process.exitCode = 1;
         return;
       }
-      process.exitCode = await runReleaseVerify(target);
+      process.exitCode = await runReleaseVerify(target, releaseOpts.root);
       return;
     }
-    console.error("Usage: clawql release init | collect | manifest | publish | verify <path>");
+    console.error(
+      "Usage: clawql release init | collect | manifest | publish | verify <target>"
+    );
     process.exitCode = 1;
     return;
   }

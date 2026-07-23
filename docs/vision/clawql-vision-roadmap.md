@@ -20,7 +20,7 @@ ClawQL is under active development. The **horizontal platform through Phase 1 (7
 | `clawql-sandbox`           | ✅ Shipped — **`SandboxPlugin`**, Kata default in-cluster **`auto`**                                                                                      |
 | `clawql-ouroboros`         | ✅ Shipped — evolutionary loops + **`OuroborosPlugin`**                                                                                                   |
 | `clawql-operator`          | 🚧 Scaffold shipped (7.0) — CRD, tier-spec, layer composition; full operator planned                                                                      |
-| `clawql-release`           | 🚧 MVP shipped (7.0) — manifest collect/verify/publish; Arweave/Rift roadmap                                                                              |
+| `clawql-release`           | ✅ Pipeline: workspaces, signatures, IPFS→Lit→Arweave, x402, verify/pull CLI                                                                              |
 | `mcp-grpc-transport`       | ✅ Shipped                                                                                                                                                |
 | `clawql-auth`              | ✅ Shipped — gateway `noAuth`/`apiKey`, ATR claims, provider headers                                                                                      |
 | `clawql-pageindex`         | ✅ Shipped — MIT package + `pageindex_*` MCP tools (opt-out: `CLAWQL_ENABLE_PAGEINDEX=0`)                                                                 |

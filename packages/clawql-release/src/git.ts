@@ -12,9 +12,16 @@ export function readGitHead(rootDir: string): GitHeadInfo {
   const remoteUrl = runGit(rootDir, ["config", "--get", "remote.origin.url"], {
     allowFailure: true,
   });
+  // Local Layer 0 tooling state under .clawql/ (keys, escrow, staging) must not
+  // mark the release tree dirty — those paths are gitignored by init.
+  const dirtyLines = status
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .filter((l) => !l.includes(".clawql/"));
   return {
     commit: commit.trim(),
-    dirty: status.trim().length > 0,
+    dirty: dirtyLines.length > 0,
     remoteUrl: remoteUrl.trim() || undefined,
   };
 }

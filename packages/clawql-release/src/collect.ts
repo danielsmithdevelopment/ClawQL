@@ -5,6 +5,8 @@ import { readGitHead } from "./git.js";
 import { sha256FileHex, sha256Utf8Hex, normalizeDigest } from "./hash.js";
 import { merkleRootFromLeaves } from "./merkle.js";
 import { collectOntologySchemaPin } from "./ontology-schema.js";
+import { ensureReleaseSigningKey, signFile, signBytes } from "./sign.js";
+import { resolveLatestSnapshot } from "./workspace/index.js";
 import {
   MANIFEST_SCHEMA_VERSION,
   type CollectOptions,
@@ -26,6 +28,8 @@ export async function collectReleaseManifest(options: CollectOptions): Promise<R
   const version = options.version ?? (await readPackageVersion(rootDir));
   const tag = options.tag ?? `v${version}`;
   const git = readGitHead(rootDir);
+  const signArtifacts = options.signArtifacts !== false;
+  const signingKey = signArtifacts ? await ensureReleaseSigningKey(rootDir) : undefined;
 
   const artifacts: Record<string, ArtifactRecord> = {};
   const merkleLeaves: Array<{ id: string; sha256: string }> = [];
@@ -33,24 +37,36 @@ export async function collectReleaseManifest(options: CollectOptions): Promise<R
   if (options.sbomPath) {
     const { hex, sizeBytes } = await sha256FileHex(options.sbomPath);
     const name = basename(options.sbomPath);
-    artifacts.sbom = {
+    const art: ArtifactRecord = {
       path: name,
       sha256: hex,
       format: name.includes("cyclonedx") ? "cyclonedx-json" : "spdx-json",
       sizeBytes,
     };
+    if (signingKey) {
+      const { signatureHex } = await signFile(signingKey.privateKeyPem, options.sbomPath);
+      art.signature = signatureHex;
+      art.signer = signingKey.publicKeyHex.slice(0, 16);
+    }
+    artifacts.sbom = art;
     merkleLeaves.push({ id: "artifacts/sbom", sha256: hex });
   }
 
   if (options.npmTarballPath) {
     const { hex, sizeBytes } = await sha256FileHex(options.npmTarballPath);
     const name = basename(options.npmTarballPath);
-    artifacts.npm = {
+    const art: ArtifactRecord = {
       path: name,
       sha256: hex,
       format: "npm-tarball",
       sizeBytes,
     };
+    if (signingKey) {
+      const { signatureHex } = await signFile(signingKey.privateKeyPem, options.npmTarballPath);
+      art.signature = signatureHex;
+      art.signer = signingKey.publicKeyHex.slice(0, 16);
+    }
+    artifacts.npm = art;
     merkleLeaves.push({ id: "artifacts/npm", sha256: hex });
   }
 
@@ -74,6 +90,15 @@ export async function collectReleaseManifest(options: CollectOptions): Promise<R
 
   const { merkleRoot, leafCount } = merkleRootFromLeaves(merkleLeaves);
 
+  const latestSnap = await resolveLatestSnapshot(
+    rootDir,
+    options.buildEnvironment?.type === "rift" ? "rift" : config.workspaceBackend
+  );
+
+  const buildType =
+    options.buildEnvironment?.type ??
+    (options.ci ? "ci" : latestSnap?.backend === "rift" ? "rift" : "git-worktree");
+
   const manifest: ReleaseManifestV01 = {
     schemaVersion: MANIFEST_SCHEMA_VERSION,
     version,
@@ -85,11 +110,20 @@ export async function collectReleaseManifest(options: CollectOptions): Promise<R
       dirty: git.dirty,
     },
     buildEnvironment: {
-      type: options.ci ? "ci" : "git-worktree",
+      type: buildType,
       node: process.version,
       platform: `${process.platform}-${process.arch}`,
       ...(options.ci ? { ci: options.ci } : {}),
       ...(options.workflow ? { workflow: options.workflow } : {}),
+      ...(latestSnap
+        ? {
+            snapshotId: latestSnap.snapshotId,
+            parentSnapshotId: latestSnap.parentSnapshotId,
+            createdAt: latestSnap.createdAt,
+            workspacePath: latestSnap.path,
+          }
+        : {}),
+      ...options.buildEnvironment,
     },
     artifacts,
     images,
@@ -100,17 +134,45 @@ export async function collectReleaseManifest(options: CollectOptions): Promise<R
         oidcIssuerRegexp: "^https://token\\.actions\\.githubusercontent\\.com.*",
       },
       npmProvenance: Boolean(artifacts.npm),
+      gitCommits: {
+        requireSigned: config.requireSignedCommits !== false,
+        signingFormat: "ssh",
+      },
     },
     merkleRoot,
     leafCount,
     ...(ontologySchema ? { ontologySchema } : {}),
     policy: {
-      compatiblePolicyVersion: "0.1",
-      requireSignatures: ["cosign"],
+      compatiblePolicyVersion: "1.0",
+      requireSignatures: ["cosign", "release-ed25519"],
       notes:
-        "MVP Layer 0 — manifest + Merkle over artifact hashes. Permanent Arweave anchor is optional in a future release.",
+        "Layer 0 — verifiable manifest with Merkle root; optional IPFS staging, Lit encryption, Arweave permanence, and x402 access.",
+    },
+    collaboration: {
+      primary: config.collaboration?.primary ?? "radicle",
+      radicle: config.collaboration?.radicleRid
+        ? { rid: config.collaboration.radicleRid }
+        : undefined,
+      githubMirror: config.collaboration?.githubMirrorUrl
+        ? { url: config.collaboration.githubMirrorUrl }
+        : undefined,
     },
   };
+
+  if (signingKey) {
+    const canonical = JSON.stringify({
+      version: manifest.version,
+      tag: manifest.tag,
+      merkleRoot: manifest.merkleRoot,
+      commit: manifest.repository.commit,
+    });
+    manifest.signatures.release = {
+      algorithm: "ed25519",
+      publicKeyHex: signingKey.publicKeyHex,
+      manifestSignatureHex: signBytes(signingKey.privateKeyPem, canonical),
+      signedAt: new Date().toISOString(),
+    };
+  }
 
   if (git.dirty) {
     manifest.policy.notes =

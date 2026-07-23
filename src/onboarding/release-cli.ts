@@ -1,5 +1,5 @@
 /**
- * `clawql release` — thin wrapper over clawql-release MVP.
+ * `clawql release` — thin wrapper over clawql-release.
  */
 
 import { resolve } from "node:path";
@@ -8,8 +8,7 @@ import {
   collectReleaseManifest,
   buildReleaseManifest,
   publishRelease,
-  verifyReleaseBundle,
-  verifyReleaseManifest,
+  verifyReleaseTarget,
 } from "clawql-release";
 
 export type ReleaseCliOptions = {
@@ -21,6 +20,11 @@ export type ReleaseCliOptions = {
   github?: boolean;
   noCopy?: boolean;
   json?: boolean;
+  stageIpfs?: boolean;
+  permanent?: boolean;
+  encrypt?: boolean;
+  dryRun?: boolean;
+  price?: string;
 };
 
 function rootDir(opts: ReleaseCliOptions): string {
@@ -76,17 +80,26 @@ export async function runReleasePublish(opts: ReleaseCliOptions): Promise<number
     imageDigests: opts.imageDigests,
     copyArtifacts: !opts.noCopy,
     githubRelease: opts.github,
+    stageIpfs: opts.stageIpfs,
+    permanent: opts.permanent,
+    encrypt: opts.encrypt,
+    dryRun: opts.dryRun,
+    price: opts.price,
+    syncCollaboration: true,
   });
   console.log(`Published: ${result.manifestPath}`);
+  if (result.ipfsCid) console.log(`IPFS: ${result.ipfsCid}`);
+  if (result.arweaveTxId) console.log(`Arweave: ${result.arweaveTxId}`);
   if (result.githubReleaseUrl) console.log(`GitHub: ${result.githubReleaseUrl}`);
   return 0;
 }
 
-export async function runReleaseVerify(target: string): Promise<number> {
-  const abs = resolve(target);
-  const result = abs.endsWith("manifest.json")
-    ? await verifyReleaseManifest(abs)
-    : await verifyReleaseBundle(abs);
+export async function runReleaseVerify(target: string, root?: string): Promise<number> {
+  const looksLocal =
+    target.endsWith(".json") || target.includes("/") || target.includes("\\") || target.startsWith(".");
+  const result = await verifyReleaseTarget(looksLocal ? resolve(target) : target, {
+    rootDir: root ? resolve(root) : process.cwd(),
+  });
   if (result.ok) {
     console.log(`OK — ${result.manifest.tag} merkleRoot=${result.manifest.merkleRoot}`);
     return 0;
