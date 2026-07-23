@@ -25,11 +25,7 @@ function normalizePath(pathname: string): string {
   return trimmed === '' ? '/' : trimmed
 }
 
-export async function onRequestGet(context: {
-  request: Request
-  next: () => Promise<Response>
-  env: Env
-}) {
+export async function onRequestGet(context: { request: Request; next: () => Promise<Response>; env: Env }) {
   const accept = context.request.headers.get('accept') ?? ''
   if (!/\btext\/markdown\b/i.test(accept)) {
     return context.next()
@@ -43,12 +39,30 @@ export async function onRequestGet(context: {
     return context.next()
   }
 
+  const origin = url.origin
+  const docs = 'https://docs.clawql.com'
+  const link = [
+    `<${origin}/sitemap.xml>; rel="sitemap"`,
+    `</llms.txt>; rel="alternate"; type="text/plain"`,
+    `</auth.md>; rel="alternate"; type="text/markdown"`,
+    `</.well-known/api-catalog>; rel="api-catalog"`,
+    `</.well-known/mcp/server-card.json>; rel="service-desc"`,
+    `</.well-known/agent-card.json>; rel="agent-card"; type="application/json"`,
+    `</.well-known/payments.json>; rel="payment-method"`,
+    `<${docs}>; rel="service-doc"`,
+    `</auth.md>; rel="describedby"`,
+    `<${docs}/api/health>; rel="status"`,
+  ].join(', ')
+
   return new Response(body, {
     status: 200,
     headers: {
       'Content-Type': 'text/markdown; charset=utf-8',
       'x-markdown-tokens': String(Math.ceil(body.length / 4)),
       Vary: 'Accept',
+      Link: link,
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'X-Content-Type-Options': 'nosniff',
     },
   })
 }

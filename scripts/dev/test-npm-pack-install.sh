@@ -22,18 +22,31 @@ if [[ -z "${MCP_TARBALL}" || ! -f "${MCP_TARBALL}" ]]; then
   exit 1
 fi
 
+mapfile -t PUBLISH_ORDER < <(node -e "
+const {packages}=require('./scripts/release/npm-publish-order.json');
+for (const name of packages) {
+  if (name === 'clawql-mcp') continue;
+  console.log(name);
+}
+")
+
 cd "${INSTALL_ROOT}"
 npm init -y >/dev/null 2>&1
 
-# Install workspace packages first (dependency order), then clawql-mcp.
-mapfile -t WS_TARBALLS < <(find "${PACK_DIR}" -maxdepth 1 -name 'clawql-*.tgz' ! -name 'clawql-mcp-*.tgz' | sort)
-if [[ ${#WS_TARBALLS[@]} -eq 0 ]]; then
-  echo "ERROR: no clawql-* workspace tarballs in ${PACK_DIR}" >&2
-  exit 1
-fi
-npm install "${WS_TARBALLS[@]}" >/dev/null
+# Install in topological order so each tarball's clawql-* deps resolve from
+# already-installed local packages (unpublished packages 404 on the registry).
+for name in "${PUBLISH_ORDER[@]}"; do
+  tarball="$(find "${PACK_DIR}" -maxdepth 1 -name "${name}-*.tgz" -print -quit)"
+  if [[ -z "${tarball}" || ! -f "${tarball}" ]]; then
+    echo "ERROR: missing tarball for ${name} in ${PACK_DIR}" >&2
+    exit 1
+  fi
+  echo "Installing ${name} from $(basename "${tarball}")..."
+  npm install "${tarball}" --no-fund --no-audit >/dev/null
+done
 
-npm install "${MCP_TARBALL}" >/dev/null
+echo "Installing clawql-mcp from $(basename "${MCP_TARBALL}")..."
+npm install "${MCP_TARBALL}" --no-fund --no-audit >/dev/null
 
 PKG_ROOT="${INSTALL_ROOT}/node_modules/clawql-mcp"
 resolve_pkg() {

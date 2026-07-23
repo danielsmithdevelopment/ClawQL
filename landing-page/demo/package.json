@@ -24,7 +24,7 @@
   "dependencies": {
     "@tailwindplus/elements": "0.0.0-insiders.98ea4bc",
     "clsx": "^2.1.1",
-    "next": "^16",
+    "next": "16.2.11",
     "react": "^19",
     "react-dom": "^19",
     "tailwindcss": "^4.3.1"
@@ -40,5 +40,16 @@
     "prettier-plugin-organize-imports": "^4.3.0",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@hono/node-server": "2.0.11",
+    "brace-expansion": "5.0.8",
+    "brace-expansion@1.1.15": "1.1.16",
+    "brace-expansion@2.0.3": "2.1.2",
+    "fast-uri": "3.1.4",
+    "hono": "4.12.31",
+    "js-yaml": "4.3.0",
+    "body-parser": "2.3.0",
+    "sharp": "0.35.3"
   }
 }
