@@ -1,0 +1,137 @@
+# One-off OpenBench A/B: clawql-on vs clawql-off (same model).
+#
+# Spin up → run N trials of each arm → post Step Summary + artifact → spin down.
+# Manual only (workflow_dispatch). Requires repo secret ANTHROPIC_API_KEY.
+#
+# Actions → OpenBench A/B (clawql on vs off) → Run workflow.
+
+name: OpenBench A/B (clawql on vs off)
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: OpenBench task under openbench/tasks/
+        required: true
+        type: choice
+        options:
+          - memory-dependent-continuation
+          - token-budget-constrained
+          - multi-provider-api-workflow
+        default: memory-dependent-continuation
+      model:
+        description: Claude Code model id (same for both arms)
+        required: true
+        type: string
+        default: claude-sonnet-4-5
+      trials:
+        description: Trials per arm (keep small — each cell spends tokens)
+        required: true
+        type: choice
+        options:
+          - "1"
+          - "2"
+          - "3"
+        default: "1"
+      timeout_s:
+        description: Per-cell agent timeout in seconds
+        required: true
+        type: string
+        default: "300"
+      arms:
+        description: Which arms to run
+        required: true
+        type: choice
+        options:
+          - clawql-on,clawql-off
+          - clawql-on
+          - clawql-off
+        default: clawql-on,clawql-off
+
+concurrency:
+  group: openbench-ab-${{ github.ref }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ab-compare:
+    name: A/B compare
+    runs-on: ubuntu-latest
+    # Agent cells can be slow; allow headroom beyond per-cell timeout × trials × arms.
+    timeout-minutes: 120
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CLAWQL_OPENBENCH: "1"
+      CLAWQL_HARNESS_ALLOW_UNSANDBOXED: "1"
+      DISABLE_AUTOUPDATER: "1"
+      # Claude Code refuses --dangerously-skip-permissions as root unless sandboxed.
+      IS_SANDBOX: "1"
+    steps:
+      - name: Require ANTHROPIC_API_KEY
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::Add repository secret ANTHROPIC_API_KEY, then re-run this workflow."
+            exit 1
+          fi
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install ClawQL (workspace)
+        run: |
+          npm ci
+          npm run build
+          # Prefer repo CLI so the workflow matches the checked-out commit.
+          echo "CLAWQL_BIN=$GITHUB_WORKSPACE/bin/clawql.mjs" >> "$GITHUB_ENV"
+          node bin/clawql.mjs --version
+
+      - name: Install Claude Code CLI
+        run: |
+          npm install -g @anthropic-ai/claude-code@latest
+          claude --version
+
+      - name: Validate task checkers (offline)
+        run: python3 openbench/validate_tasks.py
+
+      - name: Run A/B compare
+        id: ab
+        env:
+          CLAWQL_BIN: ${{ env.CLAWQL_BIN }}
+        run: |
+          mkdir -p artifacts/openbench-ab
+          OUT="artifacts/openbench-ab/results.json"
+          SUM="artifacts/openbench-ab/summary.md"
+          python3 openbench/scripts/run-ab-compare.py \
+            --task "${{ inputs.task }}" \
+            --model "${{ inputs.model }}" \
+            --trials "${{ inputs.trials }}" \
+            --timeout "${{ inputs.timeout_s }}" \
+            --arms "${{ inputs.arms }}" \
+            --out "$OUT" \
+            --summary-md "$SUM"
+          {
+            echo "## OpenBench A/B job"
+            echo ""
+            echo "- Run: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo "- Task: \`${{ inputs.task }}\`"
+            echo "- Model: \`${{ inputs.model }}\`"
+            echo "- Trials/arm: \`${{ inputs.trials }}\`"
+            echo "- Arms: \`${{ inputs.arms }}\`"
+            echo ""
+            cat "$SUM"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload results artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: openbench-ab-${{ inputs.task }}-${{ github.run_id }}
+          path: artifacts/openbench-ab/
+          if-no-files-found: warn
+          retention-days: 14

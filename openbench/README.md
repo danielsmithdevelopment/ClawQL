@@ -100,6 +100,22 @@ To contribute these upstream, copy `tasks/<name>/` into OpenBench's `tasks/`
 | `CLAWQL_HARNESS_ALLOW_UNSANDBOXED=1` | Same soft-fail for Seatbelt gate |
 | `CLAWQL_OPENBENCH_HARNESS` | Underlying CLI for the Python adapter (`claude` default) |
 | `CLAWQL_INFERENCE_URL` / `OPENBENCH_INFERENCE_URL` | Optional inference gateway |
+| `ANTHROPIC_API_KEY` | Required for live A/B cells (Actions secret or local export) |
+
+## One-off GitHub Actions A/B
+
+Manual workflow **OpenBench A/B (clawql on vs off)** — see
+[`docs/benchmarks/openbench-github-actions.md`](../docs/benchmarks/openbench-github-actions.md).
+
+```bash
+gh workflow run openbench-ab.yml -f task=memory-dependent-continuation -f trials=1
+```
+
+Local dry path (same script):
+
+```bash
+python3 openbench/scripts/run-ab-compare.py --help
+```
 
 ## Related
 

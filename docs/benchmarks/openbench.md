@@ -45,6 +45,13 @@ Offline checker validation (no model):
 python3 openbench/validate_tasks.py
 ```
 
+## One-off GitHub Actions A/B
+
+Manual `workflow_dispatch` job: same model, **clawql-on vs clawql-off**, Step
+Summary + JSON artifact, then the runner exits.
+
+See [`openbench-github-actions.md`](openbench-github-actions.md).
+
 ## Reproduce live cells
 
 See [`openbench/README.md`](../../openbench/README.md) and
