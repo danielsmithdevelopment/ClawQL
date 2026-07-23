@@ -154,4 +154,20 @@ describe("clawql-release pipeline", () => {
     const raw = await readFile(result.attestationsPath, "utf8");
     expect(raw).toContain("ed25519");
   });
+
+  it("registers parallel workspace snapshots without clobbering meta", async () => {
+    const root = await mkdtemp(join(tmpdir(), "clawql-parallel-"));
+    await writeFile(join(root, "package.json"), JSON.stringify({ version: "1.0.0" }), "utf8");
+    gitInit(root);
+    await writeReleaseConfig(root, undefined, { skipSigningSetup: true });
+
+    await Promise.all([
+      createWorkspaceSnapshot({ rootDir: root, backend: "git-worktree", name: "p1" }),
+      createWorkspaceSnapshot({ rootDir: root, backend: "git-worktree", name: "p2" }),
+      createWorkspaceSnapshot({ rootDir: root, backend: "rift", name: "r1" }),
+      createWorkspaceSnapshot({ rootDir: root, backend: "rift", name: "r2" }),
+    ]);
+    const listed = await listWorkspaceSnapshots(root);
+    expect(listed).toHaveLength(4);
+  });
 });

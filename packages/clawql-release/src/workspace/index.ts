@@ -12,6 +12,28 @@ function snapshotsMetaPath(rootDir: string): string {
 
 type SnapshotStore = { snapshots: WorkspaceSnapshot[] };
 
+/** Serialize store RMW so parallel workspace creates cannot clobber snapshots.json. */
+const storeLocks = new Map<string, Promise<unknown>>();
+
+async function withStoreLock<T>(rootDir: string, fn: () => Promise<T>): Promise<T> {
+  const key = resolve(rootDir);
+  const prev = storeLocks.get(key) ?? Promise.resolve();
+  let release!: () => void;
+  const gate = new Promise<void>((r) => {
+    release = r;
+  });
+  storeLocks.set(
+    key,
+    prev.then(() => gate)
+  );
+  await prev;
+  try {
+    return await fn();
+  } finally {
+    release();
+  }
+}
+
 async function loadStore(rootDir: string): Promise<SnapshotStore> {
   const path = snapshotsMetaPath(rootDir);
   try {
@@ -33,6 +55,22 @@ function newSnapshotId(backend: WorkspaceBackend, name: string): string {
   return `${backend}_${slug}_${Date.now().toString(36)}`;
 }
 
+async function registerSnapshot(
+  rootDir: string,
+  snap: WorkspaceSnapshot
+): Promise<WorkspaceSnapshot> {
+  return withStoreLock(rootDir, async () => {
+    const store = await loadStore(rootDir);
+    const existing = store.snapshots.find(
+      (s) => s.name === snap.name && s.backend === snap.backend
+    );
+    if (existing) return existing;
+    store.snapshots.push(snap);
+    await saveStore(rootDir, store);
+    return snap;
+  });
+}
+
 export async function createGitWorktreeSnapshot(
   options: SnapshotOptions
 ): Promise<WorkspaceSnapshot> {
@@ -40,25 +78,32 @@ export async function createGitWorktreeSnapshot(
   const worktreesRoot = join(rootDir, ".clawql", "workspaces", "git-worktree");
   await mkdir(worktreesRoot, { recursive: true });
   const path = join(worktreesRoot, options.name);
-  const store = await loadStore(rootDir);
-  const existing = store.snapshots.find(
-    (s) => s.name === options.name && s.backend === "git-worktree"
-  );
-  if (existing) {
-    return existing;
-  }
+
+  const early = await withStoreLock(rootDir, async () => {
+    const store = await loadStore(rootDir);
+    return store.snapshots.find((s) => s.name === options.name && s.backend === "git-worktree");
+  });
+  if (early) return early;
 
   const branch = options.branch ?? `clawql/${options.name}`;
   const head = readGitHead(rootDir);
 
-  // Create orphan branch tip at HEAD if needed, then worktree.
+  // git worktree add takes a repo lock — serialize via store lock only for meta;
+  // allowFailure + retry handles concurrent add races.
   runCommand("git", ["branch", branch, "HEAD"], { cwd: rootDir, allowFailure: true });
-  const add = runCommand("git", ["worktree", "add", path, branch], {
+  let add = runCommand("git", ["worktree", "add", path, branch], {
     cwd: rootDir,
     allowFailure: true,
   });
   if (add.status !== 0) {
-    // Retry with -B if branch exists elsewhere
+    add = runCommand("git", ["worktree", "add", "-B", branch, path, "HEAD"], {
+      cwd: rootDir,
+      allowFailure: true,
+    });
+  }
+  if (add.status !== 0) {
+    // Brief retry for lock contention under parallel creates
+    await new Promise((r) => setTimeout(r, 50 + Math.floor(Math.random() * 100)));
     runCommand("git", ["worktree", "add", "-B", branch, path, "HEAD"], { cwd: rootDir });
   }
 
@@ -71,33 +116,49 @@ export async function createGitWorktreeSnapshot(
     createdAt: new Date().toISOString(),
     commit: head.commit,
   };
-  store.snapshots.push(snap);
-  await saveStore(rootDir, store);
-  return snap;
+  return registerSnapshot(rootDir, snap);
 }
 
 /**
- * Rift CoW backend. Uses `rift` CLI when available; otherwise creates a local
- * hardlink/copy workspace under `.rifts/` that still records parent ancestry
- * for manifest provenance (CI / developer machines without Rift).
+ * Rift CoW backend. Uses `rift` CLI (rift-snapshot) when available; otherwise creates a local
+ * provenance workspace under `.rifts/` (CI / machines without btrfs·APFS·XFS CoW).
  */
 export async function createRiftSnapshot(options: SnapshotOptions): Promise<WorkspaceSnapshot> {
   const rootDir = resolve(options.rootDir);
-  const store = await loadStore(rootDir);
-  const existing = store.snapshots.find((s) => s.name === options.name && s.backend === "rift");
-  if (existing) return existing;
+
+  const early = await withStoreLock(rootDir, async () => {
+    const store = await loadStore(rootDir);
+    return store.snapshots.find((s) => s.name === options.name && s.backend === "rift");
+  });
+  if (early) return early;
 
   const riftsRoot = join(rootDir, ".rifts");
   await mkdir(riftsRoot, { recursive: true });
-  const path = join(riftsRoot, options.name);
+  let path = join(riftsRoot, options.name);
   const head = readGitHead(rootDir);
+  let mode: "rift-cli" | "local-fallback" = "local-fallback";
 
   if (commandExists("rift")) {
-    runCommand("rift", ["create", "--name", options.name], { cwd: rootDir, allowFailure: true });
-    // Prefer documented .rifts path; if CLI used another location, still record ours as canonical meta.
-  } else {
+    runCommand("rift", ["init"], { cwd: rootDir, allowFailure: true });
+    const created = runCommand("rift", ["create", "--name", options.name], {
+      cwd: rootDir,
+      allowFailure: true,
+    });
+    if (created.status === 0) {
+      const lines = created.stdout
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+      const printed = lines[lines.length - 1];
+      if (printed && (printed.startsWith("/") || printed.includes(options.name))) {
+        path = printed;
+        mode = "rift-cli";
+      }
+    }
+  }
+
+  if (mode === "local-fallback") {
     await mkdir(path, { recursive: true });
-    // Lightweight CoW-ish marker: symlink to repo root content via pointer file.
     await writeFile(
       join(path, ".clawql-rift-snapshot.json"),
       `${JSON.stringify(
@@ -107,14 +168,15 @@ export async function createRiftSnapshot(options: SnapshotOptions): Promise<Work
           parentSnapshotId: options.parentSnapshotId,
           commit: head.commit,
           createdAt: new Date().toISOString(),
-          note: "rift CLI not found — local fallback workspace for provenance only",
+          note: commandExists("rift")
+            ? "rift CLI present but create did not yield a path — local fallback for provenance"
+            : "rift CLI not found — local fallback workspace for provenance only",
         },
         null,
         2
       )}\n`,
       "utf8"
     );
-    // Point SOURCE at the repo for agents that expect a checkout-like path.
     try {
       await symlink(rootDir, join(path, "SOURCE"));
     } catch {
@@ -131,9 +193,7 @@ export async function createRiftSnapshot(options: SnapshotOptions): Promise<Work
     createdAt: new Date().toISOString(),
     commit: head.commit,
   };
-  store.snapshots.push(snap);
-  await saveStore(rootDir, store);
-  return snap;
+  return registerSnapshot(rootDir, snap);
 }
 
 export async function createWorkspaceSnapshot(
@@ -164,27 +224,29 @@ export async function removeWorkspaceSnapshot(
   name: string
 ): Promise<WorkspaceSnapshot | undefined> {
   const root = resolve(rootDir);
-  const store = await loadStore(root);
-  const idx = store.snapshots.findIndex((s) => s.name === name);
-  if (idx < 0) return undefined;
-  const [snap] = store.snapshots.splice(idx, 1);
-  if (!snap) return undefined;
+  return withStoreLock(root, async () => {
+    const store = await loadStore(root);
+    const idx = store.snapshots.findIndex((s) => s.name === name);
+    if (idx < 0) return undefined;
+    const [snap] = store.snapshots.splice(idx, 1);
+    if (!snap) return undefined;
 
-  if (snap.backend === "git-worktree") {
-    runCommand("git", ["worktree", "remove", "--force", snap.path], {
-      cwd: root,
-      allowFailure: true,
-    });
-  } else {
-    try {
-      const st = await lstat(snap.path);
-      if (st.isDirectory()) await rm(snap.path, { recursive: true, force: true });
-    } catch {
-      // ignore
+    if (snap.backend === "git-worktree") {
+      runCommand("git", ["worktree", "remove", "--force", snap.path], {
+        cwd: root,
+        allowFailure: true,
+      });
+    } else {
+      try {
+        const st = await lstat(snap.path);
+        if (st.isDirectory()) await rm(snap.path, { recursive: true, force: true });
+      } catch {
+        // ignore
+      }
     }
-  }
-  await saveStore(root, store);
-  return snap;
+    await saveStore(root, store);
+    return snap;
+  });
 }
 
 export async function resolveLatestSnapshot(

@@ -12,13 +12,15 @@ export function readGitHead(rootDir: string): GitHeadInfo {
   const remoteUrl = runGit(rootDir, ["config", "--get", "remote.origin.url"], {
     allowFailure: true,
   });
-  // Local Layer 0 tooling state under .clawql/ (keys, escrow, staging) must not
-  // mark the release tree dirty — those paths are gitignored by init.
+  // Local Layer 0 tooling / untracked outputs must not fail the release dirty check.
+  // Only modified tracked files (and non-tooling paths) count as dirty.
   const dirtyLines = status
     .split("\n")
-    .map((l) => l.trim())
+    .map((l) => l.trimEnd())
     .filter(Boolean)
-    .filter((l) => !l.includes(".clawql/"));
+    .filter((l) => !/^\?\?/.test(l.trim()))
+    .filter((l) => !l.includes(".clawql/"))
+    .filter((l) => !l.includes(".rifts/"));
   return {
     commit: commit.trim(),
     dirty: dirtyLines.length > 0,
