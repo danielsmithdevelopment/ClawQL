@@ -58,17 +58,17 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 
 ### 3.3 Opt-In Horizontal & Platform
 
-| Package              | Responsibilities                                              | Status today                                      |
-| -------------------- | ------------------------------------------------------------- | ------------------------------------------------- |
-| clawql-automation    | Schedule, notify, Argo workflow/argocd, NATS JetStream, HITL  | ✅ Shipped (workflow/argocd/NATS/HITL opt-in)     |
-| clawql-sandbox       | Isolated code execution (`sandbox_exec`)                      | ✅ Shipped                                        |
-| clawql-ouroboros     | Evolutionary schema/workflow loops                            | ✅ Shipped                                        |
-| clawql-operator      | Kubernetes `ClawQLInstance` CRD, tier-spec, layer composition | 🚧 Scaffold shipped (7.0) — full operator roadmap |
+| Package              | Responsibilities                                              | Status today                                                                   |
+| -------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| clawql-automation    | Schedule, notify, Argo workflow/argocd, NATS JetStream, HITL  | ✅ Shipped (workflow/argocd/NATS/HITL opt-in)                                  |
+| clawql-sandbox       | Isolated code execution (`sandbox_exec`)                      | ✅ Shipped                                                                     |
+| clawql-ouroboros     | Evolutionary schema/workflow loops                            | ✅ Shipped                                                                     |
+| clawql-operator      | Kubernetes `ClawQLInstance` CRD, tier-spec, layer composition | 🚧 Scaffold shipped (7.0) — full operator roadmap                              |
 | clawql-release       | Immutable release manifests (Layer 0)                         | ✅ Pipeline shipped (workspaces, IPFS, Lit/x402, Arweave dry-run + live hooks) |
-| clawql-telemetry     | OTEL/Langfuse emission package (never imported by others)     | 📋 Planned — OTEL at MCP transport today          |
-| clawql-data          | Structured data / DuckDB leg                                  | 📋 Planned                                        |
-| clawql-printingpress | Document generation                                           | 📋 Planned                                        |
-| clawql-goose         | Migrations                                                    | 📋 Planned                                        |
+| clawql-telemetry     | OTEL/Langfuse emission package (never imported by others)     | 📋 Planned — OTEL at MCP transport today                                       |
+| clawql-data          | Structured data / DuckDB leg                                  | 📋 Planned                                                                     |
+| clawql-printingpress | Document generation                                           | 📋 Planned                                                                     |
+| clawql-goose         | Migrations                                                    | 📋 Planned                                                                     |
 
 **Vertical packages** (`clawql-lending`, `clawql-legal`, …): 📋 Planned — none shipped.
 

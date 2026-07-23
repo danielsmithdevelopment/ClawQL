@@ -25,17 +25,17 @@ clawql-release pull <arweave-tx-id> --rift
 
 ## What gets recorded
 
-| Field | Source |
-| --- | --- |
-| `repository.commit` | `git rev-parse HEAD` |
-| `artifacts.*` | SHA-256 (+ Ed25519 signature) of SBOM / npm tarball |
-| `images.*` | GHCR ref + `sha256:` digest |
-| `merkleRoot` | Merkle tree over artifact/image leaves |
-| `buildEnvironment` | `git-worktree` / `rift` snapshot ancestry when present |
-| `collaboration` | Radicle primary + GitHub mirror banner metadata |
-| `staging.ipfs` | Temporary content-addressed staging CID |
-| `permanence.arweave` | Permanent tx id via ar.io (or local dry-run store) |
-| `access` | Public or x402 + Lit decrypt conditions |
+| Field                | Source                                                 |
+| -------------------- | ------------------------------------------------------ |
+| `repository.commit`  | `git rev-parse HEAD`                                   |
+| `artifacts.*`        | SHA-256 (+ Ed25519 signature) of SBOM / npm tarball    |
+| `images.*`           | GHCR ref + `sha256:` digest                            |
+| `merkleRoot`         | Merkle tree over artifact/image leaves                 |
+| `buildEnvironment`   | `git-worktree` / `rift` snapshot ancestry when present |
+| `collaboration`      | Radicle primary + GitHub mirror banner metadata        |
+| `staging.ipfs`       | Temporary content-addressed staging CID                |
+| `permanence.arweave` | Permanent tx id via ar.io (or local dry-run store)     |
+| `access`             | Public or x402 + Lit decrypt conditions                |
 
 ## Signed commits (default)
 
@@ -53,14 +53,14 @@ clawql-release publish --tag v7.1.0 --sbom sbom.cdx.json --encrypt --price "0.50
 
 Live network knobs:
 
-| Env | Purpose |
-| --- | --- |
-| `CLAWQL_RELEASE_DRY_RUN=1` / `CLAWQL_RELEASE_MODE=local` | Force local backends |
-| `CLAWQL_ARWEAVE_WALLET_JWK` | Enable ar.io / Turbo upload path |
-| `CLAWQL_ARIO_TURBO_URL` | Turbo endpoint for uploads |
-| `CLAWQL_IPFS_GATEWAY` | IPFS HTTP gateway |
-| `CLAWQL_X402_ENFORCE=1` | Live x402 facilitator verification |
-| `CLAWQL_LIT_NETWORK` | Lit Protocol network for key release |
+| Env                                                      | Purpose                              |
+| -------------------------------------------------------- | ------------------------------------ |
+| `CLAWQL_RELEASE_DRY_RUN=1` / `CLAWQL_RELEASE_MODE=local` | Force local backends                 |
+| `CLAWQL_ARWEAVE_WALLET_JWK`                              | Enable ar.io / Turbo upload path     |
+| `CLAWQL_ARIO_TURBO_URL`                                  | Turbo endpoint for uploads           |
+| `CLAWQL_IPFS_GATEWAY`                                    | IPFS HTTP gateway                    |
+| `CLAWQL_X402_ENFORCE=1`                                  | Live x402 facilitator verification   |
+| `CLAWQL_LIT_NETWORK`                                     | Lit Protocol network for key release |
 
 ## CI
 

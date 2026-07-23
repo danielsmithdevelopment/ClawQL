@@ -1182,9 +1182,7 @@ async function main(): Promise<void> {
       process.exitCode = await runReleaseVerify(target, releaseOpts.root);
       return;
     }
-    console.error(
-      "Usage: clawql release init | collect | manifest | publish | verify <target>"
-    );
+    console.error("Usage: clawql release init | collect | manifest | publish | verify <target>");
     process.exitCode = 1;
     return;
   }

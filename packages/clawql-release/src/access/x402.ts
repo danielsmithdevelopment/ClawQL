@@ -37,7 +37,8 @@ export function buildAccessRecord(opts: {
     public: false,
     paymentRequired: true,
     price,
-    wallet: opts.wallet ?? process.env.CLAWQL_X402_WALLET ?? "0x0000000000000000000000000000000000000000",
+    wallet:
+      opts.wallet ?? process.env.CLAWQL_X402_WALLET ?? "0x0000000000000000000000000000000000000000",
     asset: opts.asset ?? "USDC",
     network: opts.network ?? process.env.CLAWQL_X402_NETWORK ?? "base-sepolia",
     decryptCondition: buildPaymentLitCondition(`Decrypt after payment of ${price}`),

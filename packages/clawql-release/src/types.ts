@@ -7,8 +7,7 @@ export const MANIFEST_SCHEMA_VERSION = "0.2" as const;
 export const MANIFEST_SCHEMA_VERSION_LEGACY = "0.1" as const;
 
 export type ManifestSchemaVersion =
-  | typeof MANIFEST_SCHEMA_VERSION
-  | typeof MANIFEST_SCHEMA_VERSION_LEGACY;
+  typeof MANIFEST_SCHEMA_VERSION | typeof MANIFEST_SCHEMA_VERSION_LEGACY;
 
 export type ArtifactRecord = {
   /** Relative path inside the release bundle directory when materialized locally. */

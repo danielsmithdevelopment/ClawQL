@@ -96,7 +96,10 @@ export async function runReleasePublish(opts: ReleaseCliOptions): Promise<number
 
 export async function runReleaseVerify(target: string, root?: string): Promise<number> {
   const looksLocal =
-    target.endsWith(".json") || target.includes("/") || target.includes("\\") || target.startsWith(".");
+    target.endsWith(".json") ||
+    target.includes("/") ||
+    target.includes("\\") ||
+    target.startsWith(".");
   const result = await verifyReleaseTarget(looksLocal ? resolve(target) : target, {
     rootDir: root ? resolve(root) : process.cwd(),
   });

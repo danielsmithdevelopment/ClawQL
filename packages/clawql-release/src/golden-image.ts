@@ -47,11 +47,9 @@ export async function buildGoldenImages(
     };
 
     if (!dry && commandExists("cosign")) {
-      const verify = runCommand(
-        "cosign",
-        ["verify", `${base}@sha256:${norm}`],
-        { allowFailure: true }
-      );
+      const verify = runCommand("cosign", ["verify", `${base}@sha256:${norm}`], {
+        allowFailure: true,
+      });
       if (verify.status === 0) {
         images[name]!.signatureRef = `cosign:${base}@sha256:${norm}`;
         detail.push(`cosign verify ok for ${name}`);

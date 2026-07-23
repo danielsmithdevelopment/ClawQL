@@ -53,7 +53,11 @@ export function signBytes(privateKeyPem: string, data: Buffer | string): string 
   return sig.toString("hex");
 }
 
-export function verifyBytes(publicKeyPem: string, data: Buffer | string, signatureHex: string): boolean {
+export function verifyBytes(
+  publicKeyPem: string,
+  data: Buffer | string,
+  signatureHex: string
+): boolean {
   try {
     const key = createPublicKey(publicKeyPem);
     return verify(
@@ -120,9 +124,13 @@ export async function enableSignedCommitsByDefault(rootDir: string): Promise<{
   const sshKey = join(dir, "git-commit-ssh");
   if (!(await fileExists(sshKey))) {
     if (commandExists("ssh-keygen")) {
-      runCommand("ssh-keygen", ["-t", "ed25519", "-f", sshKey, "-N", "", "-C", "clawql-release-signing"], {
-        cwd: rootDir,
-      });
+      runCommand(
+        "ssh-keygen",
+        ["-t", "ed25519", "-f", sshKey, "-N", "", "-C", "clawql-release-signing"],
+        {
+          cwd: rootDir,
+        }
+      );
     } else {
       return {
         enabled: false,
@@ -188,7 +196,9 @@ export async function cosignSignBlob(
   if (opts.dryRun || !commandExists("cosign")) {
     return {
       ok: false,
-      detail: opts.dryRun ? "dry-run: skipped cosign" : "cosign not found — use Ed25519 release signatures",
+      detail: opts.dryRun
+        ? "dry-run: skipped cosign"
+        : "cosign not found — use Ed25519 release signatures",
     };
   }
   const sigPath = `${absPath}.sig`;

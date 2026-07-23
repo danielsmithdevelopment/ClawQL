@@ -41,7 +41,9 @@ export async function createGitWorktreeSnapshot(
   await mkdir(worktreesRoot, { recursive: true });
   const path = join(worktreesRoot, options.name);
   const store = await loadStore(rootDir);
-  const existing = store.snapshots.find((s) => s.name === options.name && s.backend === "git-worktree");
+  const existing = store.snapshots.find(
+    (s) => s.name === options.name && s.backend === "git-worktree"
+  );
   if (existing) {
     return existing;
   }

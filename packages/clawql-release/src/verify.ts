@@ -136,8 +136,7 @@ export async function verifyReleaseTarget(
     return verifyReleaseBundle(target, rootDir);
   }
   // Treat as Arweave tx id
-  const outDir =
-    options.outDir ?? join(rootDir, ".clawql", "verify-cache", target.slice(0, 16));
+  const outDir = options.outDir ?? join(rootDir, ".clawql", "verify-cache", target.slice(0, 16));
   await mkdir(outDir, { recursive: true });
   const fetched = await fetchArweaveBundle(target, { rootDir, outDir });
   return verifyReleaseBundle(fetched.path, rootDir);

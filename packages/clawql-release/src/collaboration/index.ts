@@ -45,10 +45,11 @@ export async function syncCollaborationRemotes(opts: {
         collaboration.radicle = {
           ...collaboration.radicle,
           rid: id.stdout.trim() || collaboration.radicle?.rid,
-          identity: runCommand("rad", ["self", "--did"], {
-            cwd: opts.rootDir,
-            allowFailure: true,
-          }).stdout.trim() || undefined,
+          identity:
+            runCommand("rad", ["self", "--did"], {
+              cwd: opts.rootDir,
+              allowFailure: true,
+            }).stdout.trim() || undefined,
         };
       }
       const push = runCommand("rad", ["push"], { cwd: opts.rootDir, allowFailure: true });

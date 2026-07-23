@@ -29,7 +29,8 @@ export async function requestLitDecryptionKey(
   input: LitKeyRequest,
   opts: { dryRun?: boolean } = {}
 ): Promise<LitKeyResult> {
-  const dry = opts.dryRun || process.env.CLAWQL_RELEASE_DRY_RUN === "1" || !process.env.CLAWQL_LIT_NETWORK;
+  const dry =
+    opts.dryRun || process.env.CLAWQL_RELEASE_DRY_RUN === "1" || !process.env.CLAWQL_LIT_NETWORK;
 
   if (input.condition.conditionType === "wallet-ownership" && input.escrowKeyHex) {
     return {

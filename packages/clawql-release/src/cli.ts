@@ -157,13 +157,15 @@ async function main(): Promise<void> {
     if (sub === "snapshot") {
       const name = typeof flags.name === "string" ? flags.name : "";
       if (!name) {
-        console.error("Usage: clawql-release immutable-volume snapshot --name NAME [--backend ...]");
+        console.error(
+          "Usage: clawql-release immutable-volume snapshot --name NAME [--backend ...]"
+        );
         process.exitCode = 1;
         return;
       }
-      const backend = (typeof flags.backend === "string" && flags.backend
-        ? flags.backend
-        : "git-worktree") as WorkspaceBackend;
+      const backend = (
+        typeof flags.backend === "string" && flags.backend ? flags.backend : "git-worktree"
+      ) as WorkspaceBackend;
       const snap = await createWorkspaceSnapshot({
         rootDir,
         backend,
@@ -190,7 +192,7 @@ async function main(): Promise<void> {
       return;
     }
     if (sub === "remove") {
-      const name = typeof flags.name === "string" ? flags.name : positional[1] ?? "";
+      const name = typeof flags.name === "string" ? flags.name : (positional[1] ?? "");
       if (!name) {
         console.error("Usage: clawql-release immutable-volume remove --name NAME");
         process.exitCode = 1;
