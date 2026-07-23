@@ -47,7 +47,11 @@ function run(cmd, args, opts = {}) {
       `${cmd} ${args.join(" ")} failed: ${(r.stderr || r.stdout || "").trim() || `exit ${r.status}`}`
     );
   }
-  return { status: r.status ?? 1, stdout: (r.stdout ?? "").trim(), stderr: (r.stderr ?? "").trim() };
+  return {
+    status: r.status ?? 1,
+    stdout: (r.stdout ?? "").trim(),
+    stderr: (r.stderr ?? "").trim(),
+  };
 }
 
 function commandExists(cmd) {
@@ -60,9 +64,7 @@ async function loadRelease() {
   try {
     return await import(pathToFileURL(require.resolve("clawql-release")).href);
   } catch {
-    return await import(
-      pathToFileURL(join(root, "packages/clawql-release/dist/index.js")).href
-    );
+    return await import(pathToFileURL(join(root, "packages/clawql-release/dist/index.js")).href);
   }
 }
 
@@ -140,7 +142,11 @@ async function main() {
 
   // Fresh meta so reruns never reuse stale worktree paths
   await mkdir(join(root, ".clawql", "workspaces"), { recursive: true });
-  await writeFile(join(root, ".clawql", "workspaces", "snapshots.json"), '{"snapshots":[]}\n', "utf8");
+  await writeFile(
+    join(root, ".clawql", "workspaces", "snapshots.json"),
+    '{"snapshots":[]}\n',
+    "utf8"
+  );
 
   const hasRift = await tryInstallRift();
   if (hasRift) {
@@ -159,9 +165,7 @@ async function main() {
 
   log(`Creating ${wtNames.length} git-worktree workspaces in parallel…`);
   const wtSnaps = await Promise.all(
-    wtNames.map((name) =>
-      createWorkspaceSnapshot({ rootDir: root, backend: "git-worktree", name })
-    )
+    wtNames.map((name) => createWorkspaceSnapshot({ rootDir: root, backend: "git-worktree", name }))
   );
   summary.workspaces["git-worktree"] = wtSnaps.map((s) => ({
     name: s.name,
@@ -192,7 +196,9 @@ async function main() {
 
   const listed = await listWorkspaceSnapshots(root);
   if (listed.length < wtNames.length + riftNames.length) {
-    throw new Error(`Expected >= ${wtNames.length + riftNames.length} snapshots, got ${listed.length}`);
+    throw new Error(
+      `Expected >= ${wtNames.length + riftNames.length} snapshots, got ${listed.length}`
+    );
   }
 
   // Parallel collect from each git-worktree path (shared object store, isolated checkouts)
@@ -264,7 +270,10 @@ async function main() {
   };
   log(`Published: ${JSON.stringify(summary.publish)}`);
 
-  if (!published.ipfsCid?.startsWith("clawql-cid:") && published.manifest.staging?.ipfs?.mode !== "ipfs") {
+  if (
+    !published.ipfsCid?.startsWith("clawql-cid:") &&
+    published.manifest.staging?.ipfs?.mode !== "ipfs"
+  ) {
     // dry-run expects local cid OR real ipfs
     if (!published.ipfsCid) throw new Error("missing ipfsCid");
   }

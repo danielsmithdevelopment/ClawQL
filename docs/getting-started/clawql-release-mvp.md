@@ -98,14 +98,14 @@ GitHub Actions runs [`.github/workflows/clawql-release-pipeline.yml`](../../.git
 
 **Do not** put `CLAWQL_ARWEAVE_WALLET_JWK` (or other spendable keys) in Actions secrets for this workflow. Local dry-run stores under `.clawql/` cover Merkle, signatures, staging CID, access policy, and pull/decrypt without spending AR or talking to Lit/x402 facilitators.
 
-| Layer | CI coverage | Needs wallet / daemon |
-| --- | --- | --- |
-| Workspaces (git-worktree) | Full | No |
-| Workspaces (rift CoW) | CLI install attempt + fallback; true CoW only on btrfs/APFS/XFS | No |
-| Signed commits / Ed25519 artifacts | Full (SSH signing key under `.clawql/keys`) | No |
-| IPFS staging | Local `clawql-cid:sha256:…` | Real CID needs `ipfs` daemon |
-| Lit + x402 | Dry-run receipt → escrow CEK release | Live needs `CLAWQL_X402_ENFORCE` + Lit network |
-| Arweave / ar.io | Local `.clawql/arweave/<tx>/` | Live needs `CLAWQL_ARWEAVE_WALLET_JWK` (+ Turbo) |
+| Layer                              | CI coverage                                                     | Needs wallet / daemon                            |
+| ---------------------------------- | --------------------------------------------------------------- | ------------------------------------------------ |
+| Workspaces (git-worktree)          | Full                                                            | No                                               |
+| Workspaces (rift CoW)              | CLI install attempt + fallback; true CoW only on btrfs/APFS/XFS | No                                               |
+| Signed commits / Ed25519 artifacts | Full (SSH signing key under `.clawql/keys`)                     | No                                               |
+| IPFS staging                       | Local `clawql-cid:sha256:…`                                     | Real CID needs `ipfs` daemon                     |
+| Lit + x402                         | Dry-run receipt → escrow CEK release                            | Live needs `CLAWQL_X402_ENFORCE` + Lit network   |
+| Arweave / ar.io                    | Local `.clawql/arweave/<tx>/`                                   | Live needs `CLAWQL_ARWEAVE_WALLET_JWK` (+ Turbo) |
 
 Run locally:
 
