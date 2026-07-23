@@ -25,6 +25,10 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'Agent setup', href: '/agent-setup' },
       { title: 'MCP clients', href: '/mcp-clients' },
       { title: 'For teams', href: '/getting-started/for-teams' },
+      {
+        title: 'Immutable releases',
+        href: '/getting-started/immutable-releases',
+      },
     ],
   },
   {

@@ -130,10 +130,10 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: BoltIcon,
   }),
   card({
-    href: '/vision/immutable-releases',
+    href: '/getting-started/immutable-releases',
     name: 'Immutable releases (Layer 0)',
     description:
-      'clawql-release, release manifest, and decentralized permanence roadmap.',
+      'Hands-on clawql-release pipeline: workspaces, IPFS, Lit/x402, Arweave — plus the vision doc.',
     icon: LinkIcon,
   }),
   card({

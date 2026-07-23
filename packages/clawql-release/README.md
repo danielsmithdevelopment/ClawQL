@@ -36,6 +36,6 @@ Also available as `clawql release …`.
 
 ## Docs
 
-- Getting started: [`docs/getting-started/clawql-release-mvp.md`](../../docs/getting-started/clawql-release-mvp.md)
-- Vision: [`docs/vision/clawql-hybrid-decentralized-github-alternative.md`](../../docs/vision/clawql-hybrid-decentralized-github-alternative.md)
-- Site: https://docs.clawql.com/vision/immutable-releases
+- Getting started (end-to-end): [`docs/getting-started/immutable-releases.md`](../../docs/getting-started/immutable-releases.md) · https://docs.clawql.com/getting-started/immutable-releases
+- Short reference: [`docs/getting-started/clawql-release-mvp.md`](../../docs/getting-started/clawql-release-mvp.md)
+- Vision: [`docs/vision/clawql-hybrid-decentralized-github-alternative.md`](../../docs/vision/clawql-hybrid-decentralized-github-alternative.md) · https://docs.clawql.com/vision/immutable-releases
