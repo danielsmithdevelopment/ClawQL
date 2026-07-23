@@ -5,9 +5,9 @@
     "": {
       "name": "clawql-mcp",
       "dependencies": {
-        "@aws-sdk/client-s3": "^3.1085.0",
-        "@effect/opentelemetry": "^0.63.0",
-        "@effect/platform": "^0.96.0",
+        "@aws-sdk/client-s3": "^3.1090.0",
+        "@effect/opentelemetry": "^0.64.0",
+        "@effect/platform": "^0.97.0",
         "@graphql-mesh/utils": "^0.104.36",
         "@grpc/grpc-js": "^1.14.4",
         "@grpc/proto-loader": "^0.8.1",
@@ -35,7 +35,7 @@
         "clawql-release": "7.1.0",
         "clawql-sandbox": "7.1.0",
         "dotenv": "^17.4.2",
-        "effect": "3.21.4",
+        "effect": "3.22.0",
         "express": "^5.2.1",
         "express-rate-limit": "^8.5.2",
         "graphql": "^16.14.2",
@@ -60,7 +60,7 @@
         "eslint": "^10.7.0",
         "prettier": "^3.9.3",
         "tsx": "^4.23.1",
-        "turbo": "^2.10.3",
+        "turbo": "^2.10.5",
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.62.1",
         "vitest": "^4.1.7",
@@ -78,7 +78,7 @@
       },
       "devDependencies": {
         "@types/node": "^26.1.1",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -107,7 +107,7 @@
       "devDependencies": {
         "@types/node": "^26.1.1",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -122,7 +122,7 @@
       "devDependencies": {
         "@types/node": "^26.1.1",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -144,7 +144,7 @@
         "@types/node": "^26.1.1",
         "@types/sql.js": "^1.4.11",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -173,7 +173,7 @@
       "devDependencies": {
         "@types/node": "^26.1.1",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -191,7 +191,7 @@
       "devDependencies": {
         "@types/node": "^26.1.1",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -221,7 +221,7 @@
         "@types/node": "^26.1.1",
         "@types/pg": "^8.20.0",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -243,7 +243,7 @@
         "@types/pg": "^8.20.0",
         "@types/sql.js": "^1.4.11",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -264,7 +264,7 @@
       "devDependencies": {
         "@types/node": "^26.1.1",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -283,7 +283,7 @@
       "devDependencies": {
         "@types/node": "^26.1.1",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -303,7 +303,7 @@
         "@types/node": "^26.1.1",
         "@types/pg": "^8.20.0",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -316,7 +316,7 @@
       "devDependencies": {
         "@types/node": "^26.1.1",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -338,12 +338,12 @@
       "devDependencies": {
         "@types/node": "^26.1.1",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
       "optionalDependencies": {
         "mppx": "^0.8.6",
-        "viem": "^2.55.1",
+        "viem": "^2.55.4",
       },
     },
     "packages/clawql-release": {
@@ -359,7 +359,7 @@
       "devDependencies": {
         "@types/node": "^26.1.1",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -375,7 +375,7 @@
       "devDependencies": {
         "@types/node": "^26.1.1",
         "tsup": "^8.3.0",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
       },
     },
@@ -392,7 +392,7 @@
       "devDependencies": {
         "@modelcontextprotocol/sdk": "^1.27.1",
         "@types/node": "^26.1.1",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.1",
         "zod": "^3.24.0",
       },
@@ -425,7 +425,7 @@
     "brace-expansion@1": "1.1.16",
     "brace-expansion@2": "2.1.2",
     "brace-expansion@5": "5.0.8",
-    "effect": "3.21.4",
+    "effect": "3.22.0",
     "esbuild": "0.28.1",
     "fast-uri": "3.1.4",
     "hono": "4.12.31",
@@ -496,9 +496,9 @@
 
     "@cfworker/json-schema": ["@cfworker/json-schema@4.1.1", "", {}, "sha512-gAmrUZSGtKc3AiBL71iNWxDsyUC5uMaKKGdvzYsBoTW/xi42JQHl7eKV2OYzCUqvc+D2RCcf7EXY2iCyFIk6og=="],
 
-    "@effect/opentelemetry": ["@effect/opentelemetry@0.63.0", "", { "peerDependencies": { "@effect/platform": "^0.96.0", "@opentelemetry/api": "^1.9", "@opentelemetry/resources": "^2.0.0", "@opentelemetry/sdk-logs": ">=0.203.0 <0.300.0", "@opentelemetry/sdk-metrics": "^2.0.0", "@opentelemetry/sdk-trace-base": "^2.0.0", "@opentelemetry/sdk-trace-node": "^2.0.0", "@opentelemetry/sdk-trace-web": "^2.0.0", "@opentelemetry/semantic-conventions": "^1.33.0", "effect": "^3.21.0" } }, "sha512-2yUG2QWNATi1uKP0kwhaP5eLp+c5NDzAL3EOpIcGLBAC0cbXZrx4n9Qw/QwUKxpuV+pbhrBUPCiByyWAFKfuCw=="],
+    "@effect/opentelemetry": ["@effect/opentelemetry@0.64.0", "", { "peerDependencies": { "@effect/platform": "^0.97.0", "@opentelemetry/api": "^1.9", "@opentelemetry/resources": "^2.0.0", "@opentelemetry/sdk-logs": ">=0.203.0 <0.300.0", "@opentelemetry/sdk-metrics": "^2.0.0", "@opentelemetry/sdk-trace-base": "^2.0.0", "@opentelemetry/sdk-trace-node": "^2.0.0", "@opentelemetry/sdk-trace-web": "^2.0.0", "@opentelemetry/semantic-conventions": "^1.33.0", "effect": "^3.22.0" } }, "sha512-fLdsyh/u5ImTyvWUfDQy53PVgHEWO0fOjwKzpmhQzW6CYs8wFBU6pP/VpuRYvCGgpZxk8KW4ySr+fvQ0o74rrA=="],
 
-    "@effect/platform": ["@effect/platform@0.96.3", "", { "dependencies": { "find-my-way-ts": "^0.1.6", "msgpackr": "^1.11.10", "multipasta": "^0.2.7" }, "peerDependencies": { "effect": "^3.21.5" } }, "sha512-LzvIj4HYE++TcTv/cVTCI/GRvQTV0ymwRmgjZMzNB5dU4OS05pTN36RKN0npiOm5orLJgw4yjIv1dNZoYGh/vg=="],
+    "@effect/platform": ["@effect/platform@0.97.0", "", { "dependencies": { "find-my-way-ts": "^0.1.6", "msgpackr": "^1.11.10", "multipasta": "^0.2.7" }, "peerDependencies": { "effect": "^3.22.0" } }, "sha512-PPSKkQ+QlIbKcf74FZKi3pi2h8hqYjsrUYaFuWXsuHpr8gjUoNNxJBptYzkzy4X9f7EeHhHqDMcj9YxaMygiHg=="],
 
     "@emnapi/core": ["@emnapi/core@1.10.0", "", { "dependencies": { "@emnapi/wasi-threads": "1.2.1", "tslib": "^2.4.0" } }, "sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw=="],
 
@@ -1218,7 +1218,7 @@
 
     "ee-first": ["ee-first@1.1.1", "", {}, "sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow=="],
 
-    "effect": ["effect@3.21.4", "", { "dependencies": { "@standard-schema/spec": "^1.0.0", "fast-check": "^3.23.1" } }, "sha512-B89v/xSgPbl1J2Ai2u18jxq3odpFauU1rC6/eSs4FeNHi72kwKdJp12VGigvRV2lK+kRnx+OOz41XV8guZd4gQ=="],
+    "effect": ["effect@3.22.0", "", { "dependencies": { "@standard-schema/spec": "^1.0.0", "fast-check": "^3.23.1" } }, "sha512-jhYFe0zTlIRqYFrKTS+6luhmS/Tm0f+JLo0K9KUxvtFab1SUGEszQi2ehOP6QzAZvy831lDmTwwzvVDZSPNz3g=="],
 
     "emoji-regex": ["emoji-regex@8.0.0", "", {}, "sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A=="],
 
