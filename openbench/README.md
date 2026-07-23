@@ -27,8 +27,9 @@ openbench/
 ## Prerequisites
 
 1. ClawQL CLI on `PATH` (`npm i -g clawql-mcp` or repo `bin/clawql.mjs`).
-2. An underlying agent CLI — **default A/B path uses OpenAI Codex** (`npm i -g @openai/codex`) with `OPENAI_API_KEY`.
-3. Optional: clone OpenBench for matrix runs against stock harnesses.
+2. **clawql-inference** with OpenRouter (`OPENROUTER_API_KEY`) for the default A/B path.
+3. OpenCode CLI for the coding-agent harness (`opencode`).
+4. Optional: clone OpenBench for matrix runs against stock harnesses.
 
 ```bash
 git clone https://github.com/minghinmatthewlam/openbench.git
@@ -36,11 +37,17 @@ git clone https://github.com/minghinmatthewlam/openbench.git
 
 ## Track A — ClawQL as a harness
 
-Headless launch (Seatbelt soft-fail allowed via `CLAWQL_OPENBENCH=1`):
+Headless launch through clawql-inference → OpenRouter:
 
 ```bash
-CLAWQL_OPENBENCH=1 clawql codex --non-interactive \
-  --model gpt-5.5 \
+# terminal 1
+OPENROUTER_API_KEY=sk-or-… CLAWQL_INFERENCE_PROVIDERS=openrouter \
+  clawql inference serve --port 8080
+
+# terminal 2
+CLAWQL_OPENBENCH=1 clawql opencode --non-interactive \
+  --model clawql/openrouter/deepseek/deepseek-chat \
+  --inference-url http://127.0.0.1:8080/v1 \
   --task-file /path/to/instruction.md \
   --workdir /path/to/disposable/workspace \
   --timeout 300
@@ -99,18 +106,22 @@ To contribute these upstream, copy `tasks/<name>/` into OpenBench's `tasks/`
 |----------|---------|
 | `CLAWQL_OPENBENCH=1` | Allow unsandboxed harness on Linux CI; mark bench mode |
 | `CLAWQL_HARNESS_ALLOW_UNSANDBOXED=1` | Same soft-fail for Seatbelt gate |
-| `CLAWQL_OPENBENCH_HARNESS` | Underlying CLI (`codex` default; also `claude` / `opencode`) |
-| `CLAWQL_INFERENCE_URL` / `OPENBENCH_INFERENCE_URL` | Optional inference gateway |
-| `OPENAI_API_KEY` | Required for the default Codex A/B / Actions path |
+| `CLAWQL_OPENBENCH_HARNESS` | Underlying CLI (`opencode` for OpenRouter A/B) |
+| `CLAWQL_INFERENCE_URL` / `OPENBENCH_INFERENCE_URL` | clawql-inference OpenAI-compat base |
+| `OPENROUTER_API_KEY` | Upstream key for clawql-inference `openrouter` provider |
 
 ## One-off GitHub Actions A/B
 
-Manual workflow **OpenBench A/B (clawql on vs off)** — OpenAI Codex, secret
-`OPENAI_API_KEY`. See
+Manual workflow **OpenBench A/B (clawql on vs off)** — starts
+**clawql-inference → OpenRouter**, runs OpenCode on/off, secret
+`OPENROUTER_API_KEY`. See
 [`docs/benchmarks/openbench-github-actions.md`](../docs/benchmarks/openbench-github-actions.md).
 
 ```bash
-gh workflow run openbench-ab.yml -f task=memory-dependent-continuation -f model=gpt-5.5 -f trials=1
+gh workflow run openbench-ab.yml \
+  -f task=memory-dependent-continuation \
+  -f model=openrouter/deepseek/deepseek-chat \
+  -f trials=1
 ```
 
 Local dry path (same script):

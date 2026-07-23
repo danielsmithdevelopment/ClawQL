@@ -47,9 +47,9 @@ python3 openbench/validate_tasks.py
 
 ## One-off GitHub Actions A/B
 
-Manual `workflow_dispatch` job: same **OpenAI Codex** model, **clawql-on vs
-clawql-off**, Step Summary + JSON artifact, then the runner exits. Requires
-repo secret `OPENAI_API_KEY` (Anthropic is not used).
+Manual `workflow_dispatch` job: **clawql-inference → OpenRouter** (any catalog
+model), OpenCode **clawql-on vs clawql-off**, Step Summary + JSON artifact, then
+the runner exits. Requires repo secret `OPENROUTER_API_KEY`.
 
 See [`openbench-github-actions.md`](openbench-github-actions.md).
 

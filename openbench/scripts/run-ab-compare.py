@@ -1,29 +1,40 @@
 #!/usr/bin/env python3
-"""One-off A/B harness compare: clawql-on vs clawql-off on the same OpenBench task.
+"""One-off A/B: clawql-on vs clawql-off through clawql-inference + OpenRouter.
 
-Provider: **OpenAI Codex** (not Anthropic). Same model for both arms.
+Architecture (same model for both arms)::
 
-Runs N trials of each arm against ``openbench/tasks/<task>/``, grades with
-``checker.sh``, and writes:
+  coding agent (OpenCode)
+        │  OPENAI-compatible
+        ▼
+  clawql inference serve   ←── OPENROUTER_API_KEY
+        │
+        ▼
+  OpenRouter (nearly all frontier / open models)
 
-  - JSON results (``--out``)
-  - Markdown summary (stdout + optional ``--summary-md`` for GitHub Step Summary)
+clawql-on  = OpenCode via ``clawql opencode --non-interactive`` + ClawQL MCP
+clawql-off = raw OpenCode pointed at the same inference URL (no ClawQL MCP)
 
-Does not require a full OpenBench checkout. Requires:
+Requires:
 
-  - ``codex`` on PATH (``npm i -g @openai/codex``)
-  - ``clawql`` on PATH for the on-arm (repo ``bin/clawql.mjs`` after build)
-  - ``OPENAI_API_KEY`` in the environment
+  - ``opencode`` on PATH
+  - ``clawql`` / ``bin/clawql.mjs`` for the on-arm
+  - A running ``clawql inference serve`` (or let Actions start it)
+  - ``OPENROUTER_API_KEY`` on the inference process
 
 Example::
 
+  # terminal 1
+  OPENROUTER_API_KEY=sk-or-… \\
+  CLAWQL_INFERENCE_PROVIDERS=openrouter \\
+    clawql inference serve --port 8080
+
+  # terminal 2
   python3 openbench/scripts/run-ab-compare.py \\
     --task memory-dependent-continuation \\
-    --model gpt-5.5 \\
+    --model openrouter/deepseek/deepseek-chat \\
+    --inference-url http://127.0.0.1:8080/v1 \\
     --trials 1 \\
-    --timeout 300 \\
-    --out /tmp/ab-results.json \\
-    --summary-md /tmp/ab-summary.md
+    --out /tmp/ab-results.json
 """
 
 from __future__ import annotations
@@ -48,9 +59,14 @@ KNOWN_TASKS = (
     "token-budget-constrained",
     "multi-provider-api-workflow",
 )
-# Underlying coding-agent CLI for both arms (OpenAI Codex — no Anthropic).
-DEFAULT_HARNESS = "codex"
-DEFAULT_MODEL = os.environ.get("OPENBENCH_MODEL", "gpt-5.5")
+DEFAULT_HARNESS = "opencode"
+DEFAULT_MODEL = os.environ.get(
+    "OPENBENCH_MODEL", "openrouter/deepseek/deepseek-chat"
+)
+DEFAULT_INFERENCE_URL = os.environ.get(
+    "CLAWQL_INFERENCE_URL",
+    os.environ.get("OPENBENCH_INFERENCE_URL", "http://127.0.0.1:8080/v1"),
+)
 
 
 def parse_score(output: str):
@@ -88,12 +104,6 @@ def materialize_workspace(task_dir: Path, dest: Path) -> None:
 
 
 def seed_and_remove_memory(workdir: Path) -> str | None:
-    """Move ``.openbench/memory-seed.md`` into a temp vault; remove from workdir.
-
-    Returns vault path or None. Both arms remove the seed so clawql-off cannot
-    cheat by reading the file; only clawql-on points CLAWQL_OBSIDIAN_VAULT_PATH
-    at the vault.
-    """
     seed = workdir / ".openbench" / "memory-seed.md"
     if not seed.is_file():
         return None
@@ -132,10 +142,12 @@ def _as_int(value):
     return int(value) if isinstance(value, (int, float)) else None
 
 
-def parse_codex_jsonl_usage(stdout: str) -> dict:
-    """Best-effort Codex ``exec --json`` JSONL usage (turn.completed events)."""
+def parse_opencode_jsonl_usage(stdout: str) -> dict:
+    """Best-effort OpenCode ``--format json`` usage from step_finish events."""
     turns = 0
-    last_usage = None
+    input_tokens = 0
+    output_tokens = 0
+    found = False
     for line in (stdout or "").splitlines():
         line = line.strip()
         if not line:
@@ -146,23 +158,27 @@ def parse_codex_jsonl_usage(stdout: str) -> dict:
             continue
         if not isinstance(ev, dict):
             continue
-        if ev.get("type") == "turn.completed":
+        etype = ev.get("type")
+        if etype in ("step_finish", "turn_end"):
             turns += 1
-            usage = ev.get("usage")
-            if isinstance(usage, dict):
-                last_usage = usage
-
-    if last_usage is None:
-        return {"tokens": None, "turns": turns or None}
-
-    inp = _as_int(last_usage.get("input_tokens"))
-    out = _as_int(last_usage.get("output_tokens"))
-    cached = _as_int(last_usage.get("cached_input_tokens")) or 0
-    if inp is None or out is None:
-        return {"tokens": None, "turns": turns or None}
-    # Fresh tokens ≈ uncached input + output (cache reads excluded).
-    fresh_in = max(inp - cached, 0)
-    return {"tokens": fresh_in + out, "turns": turns or None}
+        props = ev.get("properties") if isinstance(ev.get("properties"), dict) else {}
+        part = props.get("part") if isinstance(props.get("part"), dict) else {}
+        tokens = part.get("tokens") if isinstance(part.get("tokens"), dict) else None
+        if tokens is None and isinstance(ev.get("tokens"), dict):
+            tokens = ev["tokens"]
+        if not isinstance(tokens, dict):
+            continue
+        inp = _as_int(tokens.get("input") or tokens.get("prompt"))
+        out = _as_int(tokens.get("output") or tokens.get("completion"))
+        if inp is None or out is None:
+            continue
+        input_tokens += inp
+        output_tokens += out
+        found = True
+    return {
+        "tokens": (input_tokens + output_tokens) if found else None,
+        "turns": turns or None,
+    }
 
 
 def run_checker(task_dir: Path, workdir: Path) -> dict:
@@ -206,8 +222,49 @@ def resolve_clawql() -> str:
     return "clawql"
 
 
-def resolve_codex() -> str:
-    return shutil.which("codex") or "codex"
+def resolve_opencode() -> str:
+    return shutil.which("opencode") or "opencode"
+
+
+def normalize_inference_url(url: str) -> str:
+    u = url.strip().rstrip("/")
+    if not u.endswith("/v1"):
+        u = f"{u}/v1"
+    return u
+
+
+def normalize_model_id(model: str) -> str:
+    """Ensure OpenRouter models are prefixed for clawql-inference."""
+    m = model.strip()
+    if not m:
+        return m
+    if m.startswith("openrouter/"):
+        return m
+    # Bare OpenRouter catalog ids like deepseek/deepseek-chat
+    if "/" in m:
+        return f"openrouter/{m}"
+    return f"openrouter/{m}"
+
+
+def opencode_config_for_inference(inference_url: str, gateway_model: str) -> str:
+    """Point OpenCode at clawql-inference; gateway_model is the ClawQL model id."""
+    # OpenCode -m clawql/<gateway_model> → provider clawql, model = gateway_model
+    # which is forwarded to the OpenAI-compat endpoint as `model`.
+    return json.dumps(
+        {
+            "provider": {
+                "clawql": {
+                    "npm": "@ai-sdk/openai-compatible",
+                    "name": "ClawQL Inference",
+                    "options": {
+                        "baseURL": inference_url,
+                        "apiKey": os.environ.get("CLAWQL_INFERENCE_CLIENT_KEY", "clawql-openbench"),
+                    },
+                    "models": {gateway_model: {}},
+                }
+            }
+        }
+    )
 
 
 def _dec_timeout_output(exc) -> str:
@@ -219,46 +276,38 @@ def _dec_timeout_output(exc) -> str:
     return _dec(exc.stdout) + _dec(exc.stderr)
 
 
-def run_arm_off(instruction: str, workdir: Path, model: str, timeout_s: int) -> dict:
-    """Raw OpenAI Codex — no ClawQL MCP, no vault env."""
-    exe = resolve_codex()
-    # Mirror OpenBench codex adapter headless flags (API-key route).
-    sandbox = (
-        ["--dangerously-bypass-approvals-and-sandbox"]
-        if os.environ.get("BENCH_IN_CONTAINER") or os.environ.get("CI")
-        else ["-s", "workspace-write"]
-    )
+def run_arm_off(
+    instruction: str, workdir: Path, model: str, timeout_s: int, inference_url: str
+) -> dict:
+    """Raw OpenCode → clawql-inference → OpenRouter (no ClawQL MCP)."""
+    exe = resolve_opencode()
+    gateway_model = normalize_model_id(model)
+    opencode_model = f"clawql/{gateway_model}"
     cmd = [
         exe,
-        "exec",
-        "--json",
-        "--disable",
-        "apps",
-        "--disable",
-        "plugins",
-        "--disable",
-        "multi_agent",
-        "--skip-git-repo-check",
-        "-C",
+        "run",
+        "--dir",
         str(workdir),
-        *sandbox,
         "-m",
-        model,
-        "-c",
-        'model_reasoning_effort="medium"',
+        opencode_model,
+        "--auto",
+        "--format",
+        "json",
+        "--title",
+        "clawql-openbench-off",
         instruction,
     ]
-
     env = {
         k: v
         for k, v in os.environ.items()
-        if not k.startswith("CLAWQL_") and not k.startswith("ANTHROPIC_")
+        if not k.startswith("CLAWQL_") or k in ("CLAWQL_INFERENCE_CLIENT_KEY",)
     }
-    env["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY", "")
-    # Isolated CODEX_HOME so host config/MCP is not inherited for the off arm.
-    iso = tempfile.mkdtemp(prefix="codex_off_home_")
-    env["CODEX_HOME"] = iso
+    env["OPENCODE_CONFIG_CONTENT"] = opencode_config_for_inference(inference_url, gateway_model)
+    # Isolated home so host opencode MCP config is not loaded for the off arm.
+    iso = tempfile.mkdtemp(prefix="opencode_off_home_")
     env["HOME"] = iso
+    env["XDG_CONFIG_HOME"] = str(Path(iso) / ".config")
+    env["XDG_DATA_HOME"] = str(Path(iso) / ".local" / "share")
 
     t0 = time.monotonic()
     timed_out = False
@@ -287,11 +336,13 @@ def run_arm_off(instruction: str, workdir: Path, model: str, timeout_s: int) -> 
         shutil.rmtree(iso, ignore_errors=True)
 
     wall_s = round(time.monotonic() - t0, 3)
-    usage = parse_codex_jsonl_usage(stdout)
+    usage = parse_opencode_jsonl_usage(stdout)
     completed = (not timed_out) and code == 0
     return {
         "arm": "clawql-off",
-        "harness": "codex",
+        "harness": "opencode",
+        "inference_url": inference_url,
+        "gateway_model": gateway_model,
         "cmd": cmd,
         "completed": completed,
         "exit_code": code,
@@ -304,32 +355,44 @@ def run_arm_off(instruction: str, workdir: Path, model: str, timeout_s: int) -> 
     }
 
 
-def run_arm_on(instruction: str, workdir: Path, model: str, timeout_s: int, vault: str | None) -> dict:
-    """ClawQL-wired Codex via ``clawql codex --non-interactive``."""
+def run_arm_on(
+    instruction: str,
+    workdir: Path,
+    model: str,
+    timeout_s: int,
+    inference_url: str,
+    vault: str | None,
+) -> dict:
+    """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
     clawql = resolve_clawql()
+    gateway_model = normalize_model_id(model)
     inst_file = workdir / ".openbench_instruction.md"
     inst_file.write_text(instruction, encoding="utf-8")
 
     prefix = ["node", clawql] if clawql.endswith(".mjs") else [clawql]
     cmd = [
         *prefix,
-        "codex",
+        "opencode",
         "--non-interactive",
         "--model",
-        model,
+        f"clawql/{gateway_model}",
         "--task-file",
         str(inst_file),
         "--workdir",
         str(workdir),
         "--timeout",
         str(int(timeout_s)),
+        "--inference-url",
+        inference_url,
     ]
 
     env = dict(os.environ)
-    env.pop("ANTHROPIC_API_KEY", None)
     env["CLAWQL_OPENBENCH"] = "1"
     env["CLAWQL_HARNESS_ALLOW_UNSANDBOXED"] = "1"
-    env["CLAWQL_OPENBENCH_HARNESS"] = "codex"
+    env["CLAWQL_OPENBENCH_HARNESS"] = "opencode"
+    env["OPENCODE_CONFIG_CONTENT"] = opencode_config_for_inference(inference_url, gateway_model)
+    env["OPENAI_BASE_URL"] = inference_url
+    env["CLAWQL_INFERENCE_URL"] = inference_url
     if vault:
         env["CLAWQL_OBSIDIAN_VAULT_PATH"] = vault
         env["CLAWQL_ENABLE_MEMORY"] = "1"
@@ -360,7 +423,7 @@ def run_arm_on(instruction: str, workdir: Path, model: str, timeout_s: int, vaul
     tokens = bench.get("tokens") if isinstance(bench.get("tokens"), int) else None
     turns = bench.get("turns") if isinstance(bench.get("turns"), int) else None
     if tokens is None or turns is None:
-        usage = parse_codex_jsonl_usage(combined)
+        usage = parse_opencode_jsonl_usage(combined)
         tokens = tokens if tokens is not None else usage.get("tokens")
         turns = turns if turns is not None else usage.get("turns")
 
@@ -370,7 +433,9 @@ def run_arm_on(instruction: str, workdir: Path, model: str, timeout_s: int, vaul
 
     return {
         "arm": "clawql-on",
-        "harness": "codex",
+        "harness": "opencode",
+        "inference_url": inference_url,
+        "gateway_model": gateway_model,
         "cmd": cmd,
         "completed": completed,
         "exit_code": code,
@@ -415,8 +480,10 @@ def render_markdown(report: dict) -> str:
     lines = [
         f"# OpenBench A/B — `{task}`",
         "",
-        f"- **Provider / harness:** OpenAI Codex (`codex`)",
+        f"- **Inference:** clawql-inference → **OpenRouter**",
+        f"- **Agent harness:** OpenCode",
         f"- **Model:** `{model}`",
+        f"- **Inference URL:** `{report.get('inference_url')}`",
         f"- **Trials / arm:** {report['trials']}",
         f"- **Timeout (s):** {report['timeout_s']}",
         f"- **Started:** {report['started_at']}",
@@ -444,12 +511,12 @@ def render_markdown(report: dict) -> str:
             "",
             "## Interpretation",
             "",
-            "- **clawql-on** runs `clawql codex --non-interactive` with MCP pre-wired "
-            "(and vault memory seeded for memory tasks).",
-            "- **clawql-off** runs raw `codex exec --json` with the same model/instruction; "
-            "memory seed is removed from the workspace for both arms so file cheating is impossible.",
+            "- Both arms call the **same** clawql-inference → OpenRouter model.",
+            "- **clawql-on** adds ClawQL MCP (search/execute/memory/…) via "
+            "`clawql opencode --non-interactive`.",
+            "- **clawql-off** is raw OpenCode with isolated HOME (no ClawQL MCP).",
+            "- Memory seed is removed from the workspace for both arms.",
             "- Checker — not the harness self-report — decides success.",
-            "- No Anthropic / Claude Code involvement in this A/B path.",
             "",
         ]
     )
@@ -471,7 +538,20 @@ def git_sha() -> str | None:
         return None
 
 
-def run_trial(task_dir: Path, arm: str, model: str, timeout_s: int, trial: int) -> dict:
+def probe_inference(url: str) -> bool:
+    health = url.rstrip("/").removesuffix("/v1") + "/healthz"
+    try:
+        import urllib.request
+
+        with urllib.request.urlopen(health, timeout=5) as res:  # noqa: S310
+            return 200 <= getattr(res, "status", 200) < 300
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def run_trial(
+    task_dir: Path, arm: str, model: str, timeout_s: int, trial: int, inference_url: str
+) -> dict:
     instruction = (task_dir / "instruction.md").read_text(encoding="utf-8")
     tmp = Path(tempfile.mkdtemp(prefix=f"ab-{arm}-{trial}-"))
     vault = None
@@ -479,12 +559,12 @@ def run_trial(task_dir: Path, arm: str, model: str, timeout_s: int, trial: int) 
         materialize_workspace(task_dir, tmp)
         vault = seed_and_remove_memory(tmp)
         if arm == "clawql-off":
-            agent = run_arm_off(instruction, tmp, model, timeout_s)
+            agent = run_arm_off(instruction, tmp, model, timeout_s, inference_url)
             if vault:
                 shutil.rmtree(vault, ignore_errors=True)
                 vault = None
         else:
-            agent = run_arm_on(instruction, tmp, model, timeout_s, vault)
+            agent = run_arm_on(instruction, tmp, model, timeout_s, inference_url, vault)
         checker = run_checker(task_dir, tmp)
         return {
             "trial": trial,
@@ -503,20 +583,32 @@ def run_trial(task_dir: Path, arm: str, model: str, timeout_s: int, trial: int) 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--task", required=True, choices=KNOWN_TASKS)
-    parser.add_argument("--model", default=DEFAULT_MODEL, help=f"Codex model id (default: {DEFAULT_MODEL})")
+    parser.add_argument(
+        "--model",
+        default=DEFAULT_MODEL,
+        help="OpenRouter model via clawql-inference (e.g. openrouter/deepseek/deepseek-chat)",
+    )
+    parser.add_argument(
+        "--inference-url",
+        default=DEFAULT_INFERENCE_URL,
+        help="clawql-inference OpenAI-compat base (default http://127.0.0.1:8080/v1)",
+    )
     parser.add_argument("--trials", type=int, default=1)
     parser.add_argument("--timeout", type=int, default=300, dest="timeout_s")
     parser.add_argument("--out", type=Path, required=True, help="JSON results path")
-    parser.add_argument("--summary-md", type=Path, help="Markdown summary path (GitHub Step Summary)")
-    parser.add_argument(
-        "--arms",
-        default="clawql-on,clawql-off",
-        help="Comma-separated arms to run (default: both)",
-    )
+    parser.add_argument("--summary-md", type=Path, help="Markdown summary path")
+    parser.add_argument("--arms", default="clawql-on,clawql-off")
     args = parser.parse_args(argv)
 
-    if not os.environ.get("OPENAI_API_KEY"):
-        print("ERROR: OPENAI_API_KEY is required (OpenAI Codex path — Anthropic is not used)", file=sys.stderr)
+    inference_url = normalize_inference_url(args.inference_url)
+    if not probe_inference(inference_url):
+        print(
+            f"ERROR: clawql-inference not reachable at {inference_url} "
+            f"(expected /healthz). Start with:\n"
+            f"  OPENROUTER_API_KEY=… CLAWQL_INFERENCE_PROVIDERS=openrouter "
+            f"clawql inference serve --port 8080",
+            file=sys.stderr,
+        )
         return 2
 
     task_dir = TASKS_DIR / args.task
@@ -530,9 +622,8 @@ def main(argv=None) -> int:
             print(f"ERROR: unknown arm {arm!r}", file=sys.stderr)
             return 2
 
-    codex = resolve_codex()
-    if not shutil.which(codex) and not Path(codex).exists():
-        print(f"ERROR: Codex CLI not found ({codex}). Install: npm i -g @openai/codex", file=sys.stderr)
+    if not shutil.which(resolve_opencode()) and not Path(resolve_opencode()).exists():
+        print("ERROR: opencode CLI not found. Install OpenCode, then retry.", file=sys.stderr)
         return 2
 
     if "clawql-on" in arms:
@@ -544,12 +635,17 @@ def main(argv=None) -> int:
             print(f"ERROR: clawql probe failed: {exc}", file=sys.stderr)
             return 2
 
+    gateway_model = normalize_model_id(args.model)
     started = datetime.now(timezone.utc).isoformat()
     rows: list[dict] = []
     for trial in range(1, args.trials + 1):
         for arm in arms:
-            print(f"==> trial {trial}/{args.trials} arm={arm} harness={DEFAULT_HARNESS}", flush=True)
-            row = run_trial(task_dir, arm, args.model, args.timeout_s, trial)
+            print(
+                f"==> trial {trial}/{args.trials} arm={arm} "
+                f"harness={DEFAULT_HARNESS} model={gateway_model}",
+                flush=True,
+            )
+            row = run_trial(task_dir, arm, gateway_model, args.timeout_s, trial, inference_url)
             rows.append(row)
             chk = row["checker"]
             ag = row["agent"]
@@ -563,10 +659,12 @@ def main(argv=None) -> int:
     by_arm = {arm: [r for r in rows if r["arm"] == arm] for arm in arms}
     report = {
         "schema": "clawql.openbench.ab.v1",
-        "provider": "openai",
+        "provider": "openrouter",
+        "inference": "clawql-inference",
         "harness": DEFAULT_HARNESS,
+        "inference_url": inference_url,
         "task": args.task,
-        "model": args.model,
+        "model": gateway_model,
         "trials": args.trials,
         "timeout_s": args.timeout_s,
         "arms": arms,

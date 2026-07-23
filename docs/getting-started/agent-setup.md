@@ -279,16 +279,22 @@ clawql sandbox edit --harness claude   # customize profile in $EDITOR
 
 ### Headless harness (OpenBench)
 
+Preferred path: **clawql-inference → OpenRouter** (any catalog model) + OpenCode:
+
 ```bash
-CLAWQL_OPENBENCH=1 clawql codex --non-interactive \
-  --model gpt-5.5 \
+OPENROUTER_API_KEY=sk-or-… CLAWQL_INFERENCE_PROVIDERS=openrouter \
+  clawql inference serve --port 8080
+
+CLAWQL_OPENBENCH=1 clawql opencode --non-interactive \
+  --model clawql/openrouter/deepseek/deepseek-chat \
+  --inference-url http://127.0.0.1:8080/v1 \
   --task-file instruction.md \
   --workdir /tmp/task-workspace \
   --timeout 300
 ```
 
-Emits `CLAWQL_TOKENS` / `CLAWQL_TURNS` / `CLAWQL_BENCH_JSON` for harness benchmarks.
-One-off Actions A/B uses OpenAI Codex + `OPENAI_API_KEY` (not Anthropic) — see
+Emits `CLAWQL_TOKENS` / `CLAWQL_TURNS` / `CLAWQL_BENCH_JSON`. One-off Actions A/B
+uses secret `OPENROUTER_API_KEY` — see
 [`docs/benchmarks/openbench-github-actions.md`](../benchmarks/openbench-github-actions.md).
 
 #### Per-harness profiles

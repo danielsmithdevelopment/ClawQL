@@ -1,86 +1,87 @@
 # One-off GitHub Actions A/B (clawql-on vs clawql-off)
 
-Use a **manual** workflow to spin up an ephemeral runner, compare the same
-**OpenAI Codex** model with and without ClawQL, post a Step Summary, upload
-JSON, then tear down.
+Manual workflow: spin up **clawql-inference → OpenRouter**, run the same model
+with and without ClawQL MCP (via OpenCode), post a Step Summary, upload JSON,
+tear down.
 
-Anthropic / Claude Code are **not** used on this path.
+This is the preferred path: **any OpenRouter model**, routed through the
+inference gateway you already built — not a single-vendor CLI lock-in.
 
 ## Prerequisites
 
-1. Repository secret **`OPENAI_API_KEY`** (Settings → Secrets and variables → Actions).
-2. This branch (or `main` once merged) containing `openbench/` and the workflow file.
+1. Repository secret **`OPENROUTER_API_KEY`**
+2. Branch containing `openbench/` + `.github/workflows/openbench-ab.yml`
 
-No self-hosted runners, OpenBench clone, or long-lived infra — the job is
-`ubuntu-latest` and exits when finished.
+## Architecture
+
+```text
+OpenCode (clawql-on | clawql-off)
+        │  OpenAI-compatible
+        ▼
+clawql inference serve   (OPENROUTER_API_KEY)
+        │
+        ▼
+OpenRouter  →  deepseek / qwen / llama / gpt / claude / …
+```
+
+| Arm | Difference |
+|-----|------------|
+| **clawql-on** | `clawql opencode --non-interactive` + ClawQL MCP + same inference URL |
+| **clawql-off** | Raw OpenCode → same inference URL, isolated HOME, **no** ClawQL MCP |
 
 ## How to run
 
-1. GitHub → **Actions** → **OpenBench A/B (clawql on vs off)**
-2. **Run workflow**
-3. Pick inputs:
+1. Actions → **OpenBench A/B (clawql on vs off)** → **Run workflow**
+2. Suggested first try:
 
-| Input       | Suggested first try             |
-| ----------- | ------------------------------- |
-| `task`      | `memory-dependent-continuation` |
-| `model`     | `gpt-5.5`                       |
-| `trials`    | `1`                             |
-| `timeout_s` | `300`                           |
-| `arms`      | `clawql-on,clawql-off`          |
+| Input | Value |
+|-------|-------|
+| `task` | `memory-dependent-continuation` |
+| `model` | `openrouter/deepseek/deepseek-chat` |
+| `trials` | `1` |
+| `arms` | `clawql-on,clawql-off` |
 
-4. Wait for the run to finish. Open **Summary** for the table.
-5. Download artifact `openbench-ab-<task>-<run_id>` for `results.json`.
+Any OpenRouter catalog id works, e.g.:
 
-CLI equivalent (same script the workflow calls):
-
-```bash
-export OPENAI_API_KEY=…
-npm ci && npm run build
-npm install -g @openai/codex@latest
-export CLAWQL_BIN="$PWD/bin/clawql.mjs"
-export CLAWQL_OPENBENCH=1 CLAWQL_HARNESS_ALLOW_UNSANDBOXED=1
-
-python3 openbench/scripts/run-ab-compare.py \
-  --task memory-dependent-continuation \
-  --model gpt-5.5 \
-  --trials 1 \
-  --timeout 300 \
-  --out /tmp/ab-results.json \
-  --summary-md /tmp/ab-summary.md
-```
+- `openrouter/qwen/qwen3.6-plus`
+- `openrouter/openai/gpt-4o-mini`
+- `openrouter/meta-llama/llama-3.3-70b-instruct`
+- `deepseek/deepseek-chat` (auto-prefixed to `openrouter/…`)
 
 Via `gh`:
 
 ```bash
 gh workflow run openbench-ab.yml \
+  --ref cursor/openbench-clawql-benchmark-4ff0 \
   -f task=memory-dependent-continuation \
-  -f model=gpt-5.5 \
-  -f trials=1 \
-  -f timeout_s=300 \
-  -f arms=clawql-on,clawql-off
-
-gh run watch
+  -f model=openrouter/deepseek/deepseek-chat \
+  -f trials=1
 ```
 
-## What each arm does
+## Local equivalent
 
-| Arm            | Agent                                            | Memory seed                                                            |
-| -------------- | ------------------------------------------------ | ---------------------------------------------------------------------- |
-| **clawql-on**  | `clawql codex --non-interactive` (MCP pre-wired) | Seeded into a temp Obsidian vault, then **removed** from the workspace |
-| **clawql-off** | Raw `codex exec --json`                          | Seed removed; isolated `CODEX_HOME` — **no** ClawQL MCP                |
+```bash
+export OPENROUTER_API_KEY=sk-or-…
+npm ci && npm run build
+npm install -g opencode-ai@latest   # or your OpenCode install path
 
-The checker (not the harness) grades success. Ephemeral workdirs are deleted
-unless `CLAWQL_AB_KEEP_WORKDIR=1`.
+# terminal 1 — inference gateway
+CLAWQL_INFERENCE_PROVIDERS=openrouter \
+  node bin/clawql.mjs inference serve --port 8080
 
-## Cost / safety notes
-
-- Each trial × arm spends real OpenAI tokens. Start with **1 trial**.
-- The workflow is **manual only** (no `push` / `schedule` trigger).
-- Job timeout is 120 minutes; per-cell timeout defaults to 300s.
-- Artifact retention is 14 days, then GitHub deletes it.
+# terminal 2 — A/B
+export CLAWQL_BIN="$PWD/bin/clawql.mjs"
+python3 openbench/scripts/run-ab-compare.py \
+  --task memory-dependent-continuation \
+  --model openrouter/deepseek/deepseek-chat \
+  --inference-url http://127.0.0.1:8080/v1 \
+  --trials 1 \
+  --out /tmp/ab-results.json \
+  --summary-md /tmp/ab-summary.md
+```
 
 ## Files
 
 - Workflow: [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml)
 - Runner: [`openbench/scripts/run-ab-compare.py`](../../openbench/scripts/run-ab-compare.py)
-- Pack overview: [`openbench/README.md`](../../openbench/README.md)
+- OpenRouter provider: `packages/clawql-inference` (`openrouter` builtin)

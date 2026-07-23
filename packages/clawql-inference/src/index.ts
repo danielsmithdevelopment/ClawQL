@@ -144,9 +144,11 @@ export {
   createOpenAiProviderPlugin,
   createAnthropicProviderPlugin,
   createOllamaProviderPlugin,
+  createOpenRouterProviderPlugin,
   createOpenAiAdapter,
   createAnthropicAdapter,
   createOllamaAdapter,
+  createOpenRouterAdapter,
 } from "./plugin/index.js";
 
 export {

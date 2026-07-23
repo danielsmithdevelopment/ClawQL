@@ -14,11 +14,14 @@ export {
   createOpenAiProviderPlugin,
   createAnthropicProviderPlugin,
   createOllamaProviderPlugin,
+  createOpenRouterProviderPlugin,
   OPENAI_PROVIDER_PLUGIN_ID,
   ANTHROPIC_PROVIDER_PLUGIN_ID,
   OLLAMA_PROVIDER_PLUGIN_ID,
+  OPENROUTER_PROVIDER_PLUGIN_ID,
 } from "./builtins.js";
 
 export { createOpenAiAdapter } from "./adapters/openai.js";
 export { createAnthropicAdapter } from "./adapters/anthropic.js";
 export { createOllamaAdapter } from "./adapters/ollama.js";
+export { createOpenRouterAdapter } from "./adapters/openrouter.js";

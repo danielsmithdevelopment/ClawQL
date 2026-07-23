@@ -4,20 +4,33 @@ TypeScript-native **inference gateway** for ClawQL: model tier escalation, cloud
 
 **Status:** Gateway MVP + export/finetune — model tier escalation (#560), provider plugins, call store, dataset export, and fine-tune job API.
 
-Built-in provider plugins (OpenAI, Anthropic, Ollama) register automatically. Third parties add backends via `InferenceProviderPlugin` — see [`docs/plugins/inference-providers.md`](../../docs/plugins/inference-providers.md).
+Built-in provider plugins (OpenAI, Anthropic, Ollama, **OpenRouter**) register automatically. Third parties add backends via `InferenceProviderPlugin` — see [`docs/plugins/inference-providers.md`](../../docs/plugins/inference-providers.md).
 
 ## Drop-in OpenAI replacement
 
 Point any OpenAI SDK or tool at ClawQL inference — **no code changes**:
 
 ```bash
-export OPENAI_API_KEY=sk-...          # or ANTHROPIC_API_KEY / OLLAMA_BASE_URL
+export OPENAI_API_KEY=sk-...          # or OPENROUTER_API_KEY / ANTHROPIC_API_KEY / OLLAMA_BASE_URL
 export OPENAI_BASE_URL=http://127.0.0.1:8080/v1
 
 # Standalone gateway (npm package bin)
 npx clawql-inference
 # or via clawql CLI
 clawql inference serve --port 8080
+```
+
+### OpenRouter (many models, one key)
+
+```bash
+export OPENROUTER_API_KEY=sk-or-…
+export CLAWQL_INFERENCE_PROVIDERS=openrouter
+clawql inference serve --port 8080
+
+# Model ids: openrouter/<vendor>/<model>
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"openrouter/deepseek/deepseek-chat","messages":[{"role":"user","content":"hi"}]}'
 ```
 
 **Endpoints** (OpenAI-compatible):

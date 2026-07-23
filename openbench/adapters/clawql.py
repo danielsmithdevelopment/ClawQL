@@ -29,16 +29,15 @@ from pathlib import Path
 NAME = "clawql"
 
 # Which underlying agent CLI ClawQL should launch. Override with CLAWQL_OPENBENCH_HARNESS.
-# Default is OpenAI Codex (no Anthropic dependency for the primary A/B path).
-_DEFAULT_HARNESS = os.environ.get("CLAWQL_OPENBENCH_HARNESS", "codex").strip() or "codex"
+# Default is OpenCode (pairs with clawql-inference → OpenRouter for broad model choice).
+_DEFAULT_HARNESS = os.environ.get("CLAWQL_OPENBENCH_HARNESS", "opencode").strip() or "opencode"
 
-# Canonical OpenBench model pin -> CLI model id for the default (codex) harness.
+# Canonical OpenBench model pin -> CLI model id for the default (opencode) harness.
 MODELS = {
+    "openrouter/deepseek/deepseek-chat": "clawql/openrouter/deepseek/deepseek-chat",
+    "openrouter/qwen/qwen3.6-plus": "clawql/openrouter/qwen/qwen3.6-plus",
     "gpt-5.5-medium": "gpt-5.5",
     "gpt-5.5": "gpt-5.5",
-    "gpt-5.6-sol": "gpt-5.6-sol",
-    # Optional Claude pins when CLAWQL_OPENBENCH_HARNESS=claude is set explicitly.
-    "claude-opus-4-8": "claude-opus-4-8",
 }
 
 
@@ -59,12 +58,12 @@ def _doctor_auth(probes):
     if not probes.which("clawql"):
         return False, "clawql not on PATH (npm i -g clawql-mcp)"
     harness = _DEFAULT_HARNESS
-    if harness == "claude" and not (probes.which("claude") or probes.which("claude-code")):
-        return False, "claude / claude-code not on PATH"
-    if harness == "codex" and not probes.which("codex"):
-        return False, "codex not on PATH"
     if harness == "opencode" and not probes.which("opencode"):
         return False, "opencode not on PATH"
+    if harness == "codex" and not probes.which("codex"):
+        return False, "codex not on PATH"
+    if harness == "claude" and not (probes.which("claude") or probes.which("claude-code")):
+        return False, "claude / claude-code not on PATH"
     return True, f"clawql + {harness}"
 
 

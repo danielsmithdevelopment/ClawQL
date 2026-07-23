@@ -2,15 +2,17 @@ import {
   createAnthropicProviderPlugin,
   createOllamaProviderPlugin,
   createOpenAiProviderPlugin,
+  createOpenRouterProviderPlugin,
 } from "./builtins.js";
 import type { InferenceProviderPlugin } from "../providers/types.js";
 
-/** Built-in defaults from the inference plan: OpenAI, Anthropic, Ollama. */
+/** Built-in defaults: OpenAI, Anthropic, Ollama, OpenRouter. */
 export function composeDefaultProviderPlugins(): InferenceProviderPlugin[] {
   return [
     createOpenAiProviderPlugin(),
     createAnthropicProviderPlugin(),
     createOllamaProviderPlugin(),
+    createOpenRouterProviderPlugin(),
   ];
 }
 

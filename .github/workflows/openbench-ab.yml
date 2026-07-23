@@ -1,8 +1,7 @@
-# One-off OpenBench A/B: clawql-on vs clawql-off (same model).
+# One-off OpenBench A/B via clawql-inference → OpenRouter (any model).
 #
-# Provider: OpenAI Codex (OPENAI_API_KEY). Anthropic / Claude Code are not used.
-# Spin up → run N trials of each arm → post Step Summary + artifact → spin down.
-# Manual only (workflow_dispatch).
+# Spin up inference + OpenCode → clawql-on vs clawql-off → Step Summary → tear down.
+# Secret: OPENROUTER_API_KEY.
 #
 # Actions → OpenBench A/B (clawql on vs off) → Run workflow.
 
@@ -21,10 +20,10 @@ on:
           - multi-provider-api-workflow
         default: memory-dependent-continuation
       model:
-        description: OpenAI Codex model id (same for both arms)
+        description: "OpenRouter model id (openrouter/vendor/model or vendor/model)"
         required: true
         type: string
-        default: gpt-5.5
+        default: openrouter/deepseek/deepseek-chat
       trials:
         description: Trials per arm (keep small — each cell spends tokens)
         required: true
@@ -48,6 +47,11 @@ on:
           - clawql-on
           - clawql-off
         default: clawql-on,clawql-off
+      inference_port:
+        description: Local clawql-inference port
+        required: true
+        type: string
+        default: "8080"
 
 concurrency:
   group: openbench-ab-${{ github.ref }}-${{ github.run_id }}
@@ -58,23 +62,23 @@ permissions:
 
 jobs:
   ab-compare:
-    name: A/B compare (OpenAI Codex)
+    name: A/B via clawql-inference + OpenRouter
     runs-on: ubuntu-latest
-    # Agent cells can be slow; allow headroom beyond per-cell timeout × trials × arms.
     timeout-minutes: 120
     env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      CLAWQL_INFERENCE_PROVIDERS: openrouter
+      CLAWQL_INFERENCE_PORT: ${{ inputs.inference_port }}
       CLAWQL_OPENBENCH: "1"
       CLAWQL_HARNESS_ALLOW_UNSANDBOXED: "1"
-      CLAWQL_OPENBENCH_HARNESS: "codex"
-      # Codex nested sandbox needs this on GH-hosted Linux runners.
-      BENCH_IN_CONTAINER: "1"
-      CI: "true"
+      CLAWQL_OPENBENCH_HARNESS: "opencode"
+      CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+      CLAWQL_OPENROUTER_APP_TITLE: ClawQL OpenBench
     steps:
-      - name: Require OPENAI_API_KEY
+      - name: Require OPENROUTER_API_KEY
         run: |
-          if [ -z "$OPENAI_API_KEY" ]; then
-            echo "::error::Add repository secret OPENAI_API_KEY, then re-run this workflow. (Anthropic is not used.)"
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "::error::Add repository secret OPENROUTER_API_KEY, then re-run. Models come from OpenRouter via clawql-inference."
             exit 1
           fi
 
@@ -92,35 +96,60 @@ jobs:
           echo "CLAWQL_BIN=$GITHUB_WORKSPACE/bin/clawql.mjs" >> "$GITHUB_ENV"
           node bin/clawql.mjs --version
 
-      - name: Install OpenAI Codex CLI
+      - name: Install OpenCode CLI
         run: |
-          npm install -g @openai/codex@latest
-          codex --version
+          # Official npm package name varies by channel; try common ids.
+          npm install -g opencode-ai@latest 2>/dev/null \
+            || npm install -g @opencode-ai/cli@latest 2>/dev/null \
+            || npm install -g opencode@latest
+          command -v opencode
+          opencode --version || true
 
       - name: Validate task checkers (offline)
         run: python3 openbench/validate_tasks.py
+
+      - name: Start clawql-inference (OpenRouter upstream)
+        run: |
+          mkdir -p artifacts/openbench-ab
+          PORT="${{ inputs.inference_port }}"
+          node bin/clawql.mjs inference serve --port "$PORT" \
+            > artifacts/openbench-ab/inference.log 2>&1 &
+          echo $! > /tmp/clawql-inference.pid
+          echo "Started clawql-inference pid=$(cat /tmp/clawql-inference.pid) on :$PORT"
+          for i in $(seq 1 60); do
+            if curl -sf "http://127.0.0.1:${PORT}/healthz" >/dev/null; then
+              echo "clawql-inference healthy after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::clawql-inference failed to become healthy"
+          tail -n 120 artifacts/openbench-ab/inference.log || true
+          exit 1
 
       - name: Run A/B compare
         id: ab
         env:
           CLAWQL_BIN: ${{ env.CLAWQL_BIN }}
+          CLAWQL_INFERENCE_URL: http://127.0.0.1:${{ inputs.inference_port }}/v1
         run: |
-          mkdir -p artifacts/openbench-ab
           OUT="artifacts/openbench-ab/results.json"
           SUM="artifacts/openbench-ab/summary.md"
           python3 openbench/scripts/run-ab-compare.py \
             --task "${{ inputs.task }}" \
             --model "${{ inputs.model }}" \
+            --inference-url "http://127.0.0.1:${{ inputs.inference_port }}/v1" \
             --trials "${{ inputs.trials }}" \
             --timeout "${{ inputs.timeout_s }}" \
             --arms "${{ inputs.arms }}" \
             --out "$OUT" \
             --summary-md "$SUM"
           {
-            echo "## OpenBench A/B job (OpenAI Codex)"
+            echo "## OpenBench A/B (clawql-inference → OpenRouter)"
             echo ""
             echo "- Run: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            echo "- Provider: \`openai\` / harness \`codex\`"
+            echo "- Inference: \`clawql-inference\` → OpenRouter"
+            echo "- Agent: OpenCode"
             echo "- Task: \`${{ inputs.task }}\`"
             echo "- Model: \`${{ inputs.model }}\`"
             echo "- Trials/arm: \`${{ inputs.trials }}\`"
@@ -128,6 +157,14 @@ jobs:
             echo ""
             cat "$SUM"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stop clawql-inference
+        if: always()
+        run: |
+          if [ -f /tmp/clawql-inference.pid ]; then
+            kill "$(cat /tmp/clawql-inference.pid)" 2>/dev/null || true
+          fi
+          pkill -f "inference serve" 2>/dev/null || true
 
       - name: Upload results artifact
         if: always()

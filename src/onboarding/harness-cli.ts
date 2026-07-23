@@ -583,8 +583,27 @@ export async function runHarnessNonInteractive(
     CLAWQL_OPENBENCH: "1",
   };
   if (opts.inferenceUrl?.trim()) {
-    env.CLAWQL_INFERENCE_URL = opts.inferenceUrl.trim();
-    env.OPENAI_BASE_URL = opts.inferenceUrl.trim();
+    const inferenceUrl = opts.inferenceUrl.trim().replace(/\/$/, "");
+    const base = inferenceUrl.endsWith("/v1") ? inferenceUrl : `${inferenceUrl}/v1`;
+    env.CLAWQL_INFERENCE_URL = base;
+    env.OPENAI_BASE_URL = base;
+    // OpenCode prefers an explicit OpenAI-compatible provider block over bare env.
+    if (id === "opencode" && !env.OPENCODE_CONFIG_CONTENT && opts.model?.trim()) {
+      const gatewayModel = opts.model.trim().replace(/^clawql\//, "");
+      env.OPENCODE_CONFIG_CONTENT = JSON.stringify({
+        provider: {
+          clawql: {
+            npm: "@ai-sdk/openai-compatible",
+            name: "ClawQL Inference",
+            options: {
+              baseURL: base,
+              apiKey: process.env.CLAWQL_INFERENCE_CLIENT_KEY?.trim() || "clawql-openbench",
+            },
+            models: { [gatewayModel]: {} },
+          },
+        },
+      });
+    }
   }
 
   const { code, stdout, stderr, timedOut } = await spawnCaptured(spawnBin, spawnArgs, {
