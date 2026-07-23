@@ -280,14 +280,16 @@ clawql sandbox edit --harness claude   # customize profile in $EDITOR
 ### Headless harness (OpenBench)
 
 ```bash
-CLAWQL_OPENBENCH=1 clawql claude --non-interactive \
-  --model claude-opus-4-8 \
+CLAWQL_OPENBENCH=1 clawql codex --non-interactive \
+  --model gpt-5.5 \
   --task-file instruction.md \
   --workdir /tmp/task-workspace \
   --timeout 300
 ```
 
-Emits `CLAWQL_TOKENS` / `CLAWQL_TURNS` / `CLAWQL_BENCH_JSON` for harness benchmarks. See [`docs/benchmarks/openbench.md`](../benchmarks/openbench.md) and [`openbench/`](../../openbench/).
+Emits `CLAWQL_TOKENS` / `CLAWQL_TURNS` / `CLAWQL_BENCH_JSON` for harness benchmarks.
+One-off Actions A/B uses OpenAI Codex + `OPENAI_API_KEY` (not Anthropic) — see
+[`docs/benchmarks/openbench-github-actions.md`](../benchmarks/openbench-github-actions.md).
 
 #### Per-harness profiles
 
