@@ -24,22 +24,22 @@ clawql inference serve   (OPENROUTER_API_KEY)
 OpenRouter  →  deepseek / qwen / llama / gpt / claude / …
 ```
 
-| Arm | Difference |
-|-----|------------|
-| **clawql-on** | `clawql opencode --non-interactive` + ClawQL MCP + same inference URL |
-| **clawql-off** | Raw OpenCode → same inference URL, isolated HOME, **no** ClawQL MCP |
+| Arm            | Difference                                                            |
+| -------------- | --------------------------------------------------------------------- |
+| **clawql-on**  | `clawql opencode --non-interactive` + ClawQL MCP + same inference URL |
+| **clawql-off** | Raw OpenCode → same inference URL, isolated HOME, **no** ClawQL MCP   |
 
 ## How to run
 
 1. Actions → **OpenBench A/B (clawql on vs off)** → **Run workflow**
 2. Suggested first try:
 
-| Input | Value |
-|-------|-------|
-| `task` | `memory-dependent-continuation` |
-| `model` | `openrouter/deepseek/deepseek-chat` |
-| `trials` | `1` |
-| `arms` | `clawql-on,clawql-off` |
+| Input    | Value                               |
+| -------- | ----------------------------------- |
+| `task`   | `memory-dependent-continuation`     |
+| `model`  | `openrouter/deepseek/deepseek-chat` |
+| `trials` | `1`                                 |
+| `arms`   | `clawql-on,clawql-off`              |
 
 Any OpenRouter catalog id works, e.g.:
 

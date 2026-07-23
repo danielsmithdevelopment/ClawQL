@@ -17,12 +17,12 @@ Inference backends are **optional provider plugins** on `clawql-inference`. The 
 
 `composeDefaultProviderPlugins()` registers these unless disabled:
 
-| Plugin id       | Adapter                        | Credentials / config                                                                 |
-| --------------- | ------------------------------ | ------------------------------------------------------------------------------------ |
-| **openai**      | Chat completions               | `OPENAI_API_KEY`, `CLAWQL_OPENAI_BASE_URL`                                           |
-| **anthropic**   | Messages API                   | `ANTHROPIC_API_KEY`, `CLAWQL_ANTHROPIC_BASE_URL`                                     |
-| **ollama**      | Local `/api/chat`              | `OLLAMA_BASE_URL` (default `http://127.0.0.1:11434`)                                 |
-| **openrouter**  | OpenAI-compatible (multi-model)| `OPENROUTER_API_KEY`, `CLAWQL_OPENROUTER_BASE_URL` (default `https://openrouter.ai/api/v1`) |
+| Plugin id      | Adapter                         | Credentials / config                                                                        |
+| -------------- | ------------------------------- | ------------------------------------------------------------------------------------------- |
+| **openai**     | Chat completions                | `OPENAI_API_KEY`, `CLAWQL_OPENAI_BASE_URL`                                                  |
+| **anthropic**  | Messages API                    | `ANTHROPIC_API_KEY`, `CLAWQL_ANTHROPIC_BASE_URL`                                            |
+| **ollama**     | Local `/api/chat`               | `OLLAMA_BASE_URL` (default `http://127.0.0.1:11434`)                                        |
+| **openrouter** | OpenAI-compatible (multi-model) | `OPENROUTER_API_KEY`, `CLAWQL_OPENROUTER_BASE_URL` (default `https://openrouter.ai/api/v1`) |
 
 Model ids use `provider/model` (e.g. `anthropic/claude-sonnet-4`, `ollama/phi4`).
 OpenRouter catalog ids keep the vendor path: `openrouter/deepseek/deepseek-chat`,
