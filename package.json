@@ -118,7 +118,7 @@
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.1090.0",
-        "@effect/opentelemetry": "^0.63.0",
+        "@effect/opentelemetry": "^0.64.0",
         "@effect/platform": "^0.97.0",
         "@graphql-mesh/utils": "^0.104.36",
         "@grpc/grpc-js": "^1.14.4",
