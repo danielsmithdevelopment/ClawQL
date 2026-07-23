@@ -35,6 +35,9 @@ export default function Page() {
             <ButtonLink href={site.urls.signup} size="lg">
               Start free trial
             </ButtonLink>
+            <PlainButtonLink href={`${site.urls.docs}/getting-started/inference`} size="lg">
+              Get started <ArrowNarrowRightIcon />
+            </PlainButtonLink>
             <PlainButtonLink href={`${site.urls.docs}/inference/clawql-inference`} size="lg">
               Inference docs <ArrowNarrowRightIcon />
             </PlainButtonLink>
@@ -59,6 +62,9 @@ export default function Page() {
             <ButtonLink href={site.urls.signup} size="lg">
               Start 14-day trial
             </ButtonLink>
+            <PlainButtonLink href={`${site.urls.docs}/getting-started/inference`} size="lg">
+              Inference setup <ArrowNarrowRightIcon />
+            </PlainButtonLink>
             <PlainButtonLink href={`${site.urls.docs}/getting-started`} size="lg">
               Self-host free <ArrowNarrowRightIcon />
             </PlainButtonLink>

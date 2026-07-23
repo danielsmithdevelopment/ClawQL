@@ -11,6 +11,9 @@ You are connecting to ClawQL’s **Agentic Gateway** — the Foundational Platfo
   <Button href="/agent-setup" variant="outline">
     <>Agent setup</>
   </Button>
+  <Button href="/getting-started/inference" variant="outline">
+    <>Inference setup</>
+  </Button>
   <Button href="/getting-started/for-teams" variant="outline">
     <>For teams</>
   </Button>
@@ -26,16 +29,18 @@ You are connecting to ClawQL’s **Agentic Gateway** — the Foundational Platfo
 
 1. [Quickstart](/quickstart) — `npx clawql-mcp` (default stack) and optional install options
 2. [Agent setup](/agent-setup) — desktop onboarding, Cursor iOS Cloud Agents, local sandbox
-3. [MCP clients](/mcp-clients) — stdio, HTTP, and gateway auth
-4. [Concepts](/concepts) — how **`search`** and **`execute`** save context
-5. [Using search & execute](/learn/search-and-execute-mcp) — first hands-on lesson
-6. [Deploy](/deployment) — Helm / Kubernetes when you outgrow local MCP
+3. [Inference setup](/getting-started/inference) — OpenAI-compatible `/v1`, BYOK providers, MCP + memory
+4. [MCP clients](/mcp-clients) — stdio, HTTP, and gateway auth
+5. [Concepts](/concepts) — how **`search`** and **`execute`** save context
+6. [Using search & execute](/learn/search-and-execute-mcp) — first hands-on lesson
+7. [Deploy](/deployment) — Helm / Kubernetes when you outgrow local MCP
 
 ## Deployment options
 
 | Path                   | Best for                                   | Start here                                                                                       |
 | ---------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
 | **Local MCP**          | Evaluation, solo dev                       | [Quickstart](/quickstart) · [Agent setup](/agent-setup)                                          |
+| **Inference**          | OpenAI drop-in gateway, BYOK models        | [Inference setup](/getting-started/inference)                                                    |
 | **Tier 1 Compose**     | Full local IDP slice                       | [Deployment](/deployment)                                                                        |
 | **Helm full stack**    | Team K8s, IDP pipeline                     | [Kubernetes](/deployment/kubernetes) · [Helm](/helm)                                             |
 | **Teams**              | Shared memory, golden hosts, observability | [For teams](/getting-started/for-teams)                                                          |

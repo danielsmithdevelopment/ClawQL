@@ -126,6 +126,7 @@ Publish third-party packages as `clawql-*-inference-provider` (or in-repo under 
 
 ## Learn more
 
+- [Get started with clawql-inference](/getting-started/inference)
 - [clawql-Agentic Gateway](/inference/clawql-inference)
 - [Upgrade vs OpenRouter / LiteLLM](/inference/clawql-inference#upgrade-vs-openrouter--litellm)
 - [Third-party plugins](/plugins/third-party)

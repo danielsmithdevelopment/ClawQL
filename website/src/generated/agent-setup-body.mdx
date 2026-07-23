@@ -10,6 +10,7 @@ One guide for **vault-first onboarding**, **Cursor iOS + Cloud Agents**, and the
 | ------------------------------------ | -------------------------------------------------------------------- |
 | Setting up Cursor or Claude Desktop  | [Desktop / stdio](#desktop-stdio-recommended)                        |
 | On Cursor iOS / Cloud Agent          | [Cursor iOS + Cloud Agent](#cursor-i-os-cloud-agent)                 |
+| Running clawql-inference (`/v1`)     | [Inference setup](/getting-started/inference)                        |
 | Hardening local agent shell on macOS | [Local agent sandbox](#local-agent-sandbox-mac-os-seatbelt)          |
 | Sharing vault notes with a team      | [For teams — vault sync](/getting-started/for-teams#team-vault-sync) |
 
@@ -276,6 +277,26 @@ clawql sandbox status            # per-harness profile paths
 clawql sandbox verify            # kernel-level containment probes
 clawql sandbox edit --harness claude   # customize profile in $EDITOR
 ```
+
+### Headless harness (OpenBench)
+
+Preferred path: **clawql-inference direct BYOK** (DeepSeek / Groq / …) + OpenCode.
+OpenRouter remains available as `openrouter/*` if you prefer that aggregator:
+
+```bash
+DEEPSEEK_API_KEY=sk-… clawql inference serve --port 8080
+
+CLAWQL_OPENBENCH=1 clawql opencode --non-interactive \
+  --model clawql/deepseek/deepseek-chat \
+  --inference-url http://127.0.0.1:8080/v1 \
+  --task-file instruction.md \
+  --workdir /tmp/task-workspace \
+  --timeout 300
+```
+
+Emits `CLAWQL_TOKENS` / `CLAWQL_TURNS` / `CLAWQL_BENCH_JSON`. One-off Actions A/B
+prefers secret `DEEPSEEK_API_KEY` — see
+[`docs/benchmarks/openbench-github-actions.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-github-actions.md).
 
 #### Per-harness profiles
 

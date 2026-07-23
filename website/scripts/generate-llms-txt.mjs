@@ -22,6 +22,11 @@ const SECTIONS = [
     heading: 'Getting started',
     links: [
       ['Agent setup', '/agent-setup', 'Desktop onboarding, Cursor iOS Cloud Agents, local sandbox'],
+      [
+        'Inference setup',
+        '/getting-started/inference',
+        'clawql-inference five-minute start, BYOK, MCP + memory',
+      ],
       ['Quickstart', '/quickstart', 'Fastest path to a running gateway'],
       ['Getting started', '/getting-started', 'Quickstart paths, teams, and install options'],
       ['Quickstart', '/quickstart', 'npx, install options, and first MCP connect'],

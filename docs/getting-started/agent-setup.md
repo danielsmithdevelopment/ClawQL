@@ -10,6 +10,7 @@ One guide for **vault-first onboarding**, **Cursor iOS + Cloud Agents**, and the
 | ------------------------------------ | -------------------------------------------------------------------- |
 | Setting up Cursor or Claude Desktop  | [Desktop / stdio](#desktop-stdio-recommended)                        |
 | On Cursor iOS / Cloud Agent          | [Cursor iOS + Cloud Agent](#cursor-i-os-cloud-agent)                 |
+| Running clawql-inference (`/v1`)     | [Inference setup](./inference.md)                                    |
 | Hardening local agent shell on macOS | [Local agent sandbox](#local-agent-sandbox-mac-os-seatbelt)          |
 | Sharing vault notes with a team      | [For teams — vault sync](/getting-started/for-teams#team-vault-sync) |
 

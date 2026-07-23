@@ -7,9 +7,11 @@
 
 It is designed as a **drop-in OpenAI replacement** (`OPENAI_BASE_URL=http://127.0.0.1:8080/v1`) while closing the production loop that generic proxies leave open.
 
+**New here?** Start with the runbook: [Get started with clawql-inference](../getting-started/inference.md) — five-minute serve, client wiring, MCP + memory, security defaults.
+
 On a laptop it is often the **Edge Agentic Gateway**. In enterprise fabric deployments it connects through **Dedicated Virtual Gateways** to multi-tenant **Regional Hubs** — see [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric).
 
-**Related docs:** [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [Inference provider plugins](../plugins/inference-providers.md) · [Token efficiency (12 layers)](../architecture/clawql-token-efficiency.md) · [Ouroboros library](../ouroboros/clawql-ouroboros.md)
+**Related docs:** [Getting started — inference](../getting-started/inference.md) · [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [Inference provider plugins](../plugins/inference-providers.md) · [Token efficiency (12 layers)](../architecture/clawql-token-efficiency.md) · [Ouroboros library](../ouroboros/clawql-ouroboros.md)
 
 ---
 
@@ -56,9 +58,9 @@ One-shot CLI (no HTTP):
 ```bash
 clawql inference complete --model deepseek/deepseek-chat --message "hello"
 # or: clawql inference complete --model clawql/cheap-chat --message "hello"
+```
 
 See [Policy](#policy) for the full manifest schema and [Persistence layout](#persistence-layout) for other files under `$CLAWQL_HOME/Inference/`.
-
 ---
 
 ## Architecture overview
