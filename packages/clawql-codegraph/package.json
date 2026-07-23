@@ -31,7 +31,7 @@
   "dependencies": {
     "effect": "^3.21.4",
     "tree-sitter-wasms": "^0.1.13",
-    "typescript": "^7.0.2",
+    "typescript": "^6.0.3",
     "web-tree-sitter": "^0.25.6",
     "zod": "4.3.6"
   },

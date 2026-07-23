@@ -118,7 +118,7 @@
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.1090.0",
-        "@effect/opentelemetry": "^0.63.0",
+        "@effect/opentelemetry": "^0.64.0",
         "@effect/platform": "^0.97.0",
         "@graphql-mesh/utils": "^0.104.36",
         "@grpc/grpc-js": "^1.14.4",
@@ -147,7 +147,7 @@
         "clawql-release": "7.1.0",
         "clawql-sandbox": "7.1.0",
         "dotenv": "^17.4.2",
-        "effect": "3.21.4",
+        "effect": "3.22.0",
         "express": "^5.2.1",
         "express-rate-limit": "^8.5.2",
         "graphql": "^16.14.2",
@@ -173,8 +173,8 @@
         "prettier": "^3.9.3",
         "tsx": "^4.23.1",
         "turbo": "^2.10.5",
-        "typescript": "^7.0.2",
-        "typescript-eslint": "^8.62.1",
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.65.0",
         "vitest": "^4.1.7"
     },
     "overrides": {
@@ -211,6 +211,6 @@
         "brace-expansion@1": "1.1.16",
         "brace-expansion@2": "2.1.2",
         "brace-expansion@5": "5.0.8",
-        "effect": "3.21.4"
+        "effect": "3.22.0"
     }
 }
