@@ -1,4 +1,5 @@
-# Lab Lighthouse against a production `next build` + `next start` server (not Cloudflare Workers).
+# Lab Lighthouse against a production `next build` + standalone `node server.js` (not Cloudflare Workers).
+# Next 16+ rejects `next start` when `output: 'standalone'` is set (same layout as website/Dockerfile).
 # Catches client-side / HTML regressions, WCAG-ish accessibility, SEO metadata, and best-practices headers.
 # See docs/website/website-performance-workers-guardrails.md for what this does *not* cover (Worker CPU, waitUntil).
 
@@ -60,7 +61,11 @@ jobs:
         run: |
           set -euo pipefail
           cd website
-          ./node_modules/.bin/next start -p "${PORT}" &
+          # Mirror Dockerfile runner layout for `output: 'standalone'`.
+          cp -R public .next/standalone/public
+          mkdir -p .next/standalone/.next
+          cp -R .next/static .next/standalone/.next/static
+          HOSTNAME=127.0.0.1 PORT="${PORT}" node .next/standalone/server.js &
           PID=$!
           cleanup() { kill "$PID" 2>/dev/null || true; }
           trap cleanup EXIT
@@ -71,7 +76,7 @@ jobs:
               break
             fi
             if ! kill -0 "$PID" 2>/dev/null; then
-              echo "next start exited early."
+              echo "standalone server exited early."
               exit 1
             fi
             sleep 2
