@@ -35,8 +35,8 @@ export default function ImmutableReleasesPage() {
           >
             docs/vision/clawql-hybrid-decentralized-github-alternative.md
           </a>{' '}
-          on <code className="font-mono text-xs">main</code>. Hands-on
-          walkthrough:{' '}
+          on <code className="font-mono text-xs">main</code>. New here? Start
+          with the calm walkthrough:{' '}
           <a
             href="/getting-started/immutable-releases"
             className="font-medium text-inherit underline underline-offset-2"

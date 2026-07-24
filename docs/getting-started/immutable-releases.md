@@ -1,170 +1,87 @@
-# Getting started: immutable releases (`clawql-release`)
+# Immutable releases
 
-This guide walks through **Layer 0** end to end: parallel workspaces → signed artifacts → IPFS staging → optional Lit/x402 encryption → Arweave permanence → verify and pull.
+Make a release you can **trust forever** — same bytes tomorrow, next year, and after any tag rewrite.
 
-Vision (why): [Immutable releases](https://docs.clawql.com/vision/immutable-releases) · source [`docs/vision/clawql-hybrid-decentralized-github-alternative.md`](../vision/clawql-hybrid-decentralized-github-alternative.md)
+Start on your laptop. No wallets. Go permanent when you want to.
 
-CLI package: [`packages/clawql-release`](../../packages/clawql-release/README.md)
-
----
-
-## What you get
-
-| Step           | Command                            | Outcome                                            |
-| -------------- | ---------------------------------- | -------------------------------------------------- |
-| Init           | `clawql-release init`              | `.clawql/release.json`, signed commits by default  |
-| Workspaces     | `immutable-volume snapshot`        | Parallel `git-worktree` or `rift` CoW checkouts    |
-| Golden image   | `golden-image build`               | Signed attestations (+ cosign/syft when installed) |
-| Publish        | `publish --stage-ipfs --permanent` | Manifest + Merkle root; staged then permanent      |
-| Paid / private | `publish --encrypt --price "…"`    | Lit condition + x402 access metadata               |
-| Consume        | `verify` / `pull`                  | Tamper check; decrypt when paid                    |
-
-Day-to-day collaboration stays on **Radicle** (primary) with **GitHub as a mirror**. Official releases become permanent and verifiable on **Arweave** (via ar.io when configured).
+**Website:** [docs.clawql.com/getting-started/immutable-releases](https://docs.clawql.com/getting-started/immutable-releases) · **Why:** [vision](https://docs.clawql.com/vision/immutable-releases)
 
 ---
 
-## Prerequisites
+## Try it in one command
 
-- Node.js **≥ 22**
-- Git (for worktrees and commit signing)
-- From a ClawQL checkout (or any repo using the CLI):
+From a ClawQL checkout (Node 22+):
 
 ```bash
-npm ci
-npm run build -w clawql-core
-npm run build -w clawql-release
-# binary: npx clawql-release …  or  clawql release …
-```
-
-Optional tools (used when present):
-
-| Tool                                                                    | Role                                                      |
-| ----------------------------------------------------------------------- | --------------------------------------------------------- |
-| [`rift-snapshot`](https://www.npmjs.com/package/rift-snapshot) (`rift`) | Fast CoW workspaces (needs btrfs / APFS / XFS reflinks)   |
-| `ipfs` (Kubo)                                                           | Real IPFS CIDs instead of local content-addressed staging |
-| `rad`                                                                   | Radicle push as primary git surface                       |
-| `gh`                                                                    | Attach manifest to a GitHub Release (mirror)              |
-| `cosign` / `syft`                                                       | Container signatures / SBOM generation                    |
-
----
-
-## Path A — dry-run (start here)
-
-No wallets, no daemons. Proves the full control plane locally or in CI.
-
-```bash
-export CLAWQL_RELEASE_DRY_RUN=1
-
-clawql-release init
-
-# Parallel agent-style workspaces
-clawql-release immutable-volume snapshot --backend git-worktree --name agent-a
-clawql-release immutable-volume snapshot --backend git-worktree --name agent-b
-clawql-release immutable-volume snapshot --backend rift --name rift-a
-
-# Fixture artifacts (replace with real SBOM / digests in production)
-printf '%s\n' '{"bomFormat":"CycloneDX","specVersion":"1.5","version":1}' > /tmp/sbom.cdx.json
-
-clawql-release golden-image build \
-  --image-digest clawql-mcp=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-
-clawql-release publish --tag v0.0.0-local \
-  --sbom /tmp/sbom.cdx.json \
-  --image-digest clawql-mcp=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
-  --stage-ipfs --permanent --encrypt --price "0.01 USDC" \
-  --dry-run
-
-# Print tx id from the publish output, then:
-clawql-release verify local_<…>
-clawql-release pull local_<…> --rift
-```
-
-**One-shot CI/local script** (same flow GitHub Actions runs):
-
-```bash
+npm ci && npm run build -w clawql-core && npm run build -w clawql-release
 CLAWQL_RELEASE_DRY_RUN=1 node scripts/release/ci-pipeline-e2e.mjs
 ```
 
-Workflow: [`.github/workflows/clawql-release-pipeline.yml`](../../.github/workflows/clawql-release-pipeline.yml)
-
-Dry-run stores live under `.clawql/` (gitignored):
-
-| Path                    | Purpose                                               |
-| ----------------------- | ----------------------------------------------------- |
-| `.clawql/ipfs-staging/` | Content-addressed staging (`clawql-cid:sha256:…`)     |
-| `.clawql/arweave/<tx>/` | Permanent bundle stand-in                             |
-| `.clawql/escrow/`       | Content-encryption keys for Lit dry-run release       |
-| `.clawql/keys/`         | Ed25519 release signing + optional SSH commit signing |
-| `.clawql/workspaces/`   | Snapshot metadata + git-worktree roots                |
-| `.rifts/`               | Rift CLI or local fallback workspaces                 |
+That dry-run walks the whole pipeline locally: workspaces → signed manifest → stage → permanent store → verify → pull. Nothing spends crypto. Nothing needs IPFS or Arweave online.
 
 ---
 
-## Path B — real workspaces (laptop)
+## Walk through it yourself
 
-### Git worktree (always available)
+Four small steps. You can stop after publish and still have a signed, verifiable release.
+
+### 1. Init
 
 ```bash
-clawql-release immutable-volume snapshot --backend git-worktree --name feature-42
-cd .clawql/workspaces/git-worktree/feature-42
-# edit / test / commit as usual (shared object store with the main repo)
+clawql-release init
+# or: clawql release init
 ```
 
-List / remove:
+Creates `.clawql/release.json` and turns on signed commits when it can.
+
+### 2. Make a workspace (optional)
 
 ```bash
+clawql-release immutable-volume snapshot --backend git-worktree --name my-agent
+cd .clawql/workspaces/git-worktree/my-agent
+```
+
+Prefer `git-worktree` first — it always works. Try `--backend rift` later if you have Rift and a CoW filesystem (APFS / btrfs). If Rift can’t CoW, ClawQL still creates a local fallback.
+
+### 3. Publish (still dry-run)
+
+```bash
+export CLAWQL_RELEASE_DRY_RUN=1
+printf '%s\n' '{"bomFormat":"CycloneDX","specVersion":"1.5","version":1}' > /tmp/sbom.cdx.json
+
+clawql-release publish --tag v0.0.0-local \
+  --sbom /tmp/sbom.cdx.json \
+  --stage-ipfs --permanent --dry-run
+```
+
+Copy the `Arweave tx:` / `local_…` id from the output.
+
+### 4. Verify & pull
+
+```bash
+clawql-release verify local_YOUR_ID
+clawql-release pull local_YOUR_ID
+```
+
+You just finished the core path without leaving your machine.
+
+---
+
+## When you’re ready for more
+
+Skip this section until you need it.
+
+**Parallel agents** — snapshot a few worktrees and work side by side:
+
+```bash
+clawql-release immutable-volume snapshot --backend git-worktree --name agent-a
+clawql-release immutable-volume snapshot --backend git-worktree --name agent-b
 clawql-release immutable-volume list
-clawql-release immutable-volume remove --name feature-42
 ```
 
-### Rift CoW (when the filesystem supports it)
+**Real artifacts** — SBOM, `npm pack` tarball, image digests:
 
 ```bash
-npm install --prefix ~/.local/clawql-rift rift-snapshot
-export PATH="$HOME/.local/clawql-rift/node_modules/.bin:$PATH"
-
-rift init    # must succeed on btrfs / APFS / XFS with reflinks
-clawql-release immutable-volume snapshot --backend rift --name agent-42
-```
-
-If `rift init` fails with “copy-on-write cloning unavailable” (typical on ext4 / overlay / many CI runners), `clawql-release` still creates a **local fallback** under `.rifts/` for provenance. True CoW needs a capable volume — use a laptop APFS volume, a btrfs disk, or a self-hosted runner with that FS.
-
----
-
-## Path C — full publish (production-shaped)
-
-### 1. Collect artifacts
-
-Build your SBOM, npm pack, and record image digests (from GHCR / cosign):
-
-```bash
-# examples — adjust to your pipeline
-npm pack
-# syft . -o cyclonedx-json=sbom.cdx.json
-# skopeo inspect … → digests
-```
-
-### 2. Snapshot the build environment
-
-```bash
-clawql-release immutable-volume snapshot --backend rift --name build-$(date -u +%Y%m%d)
-# or: --backend git-worktree
-```
-
-### 3. Golden image attestations
-
-```bash
-clawql-release golden-image build \
-  --version 7.1.0 \
-  --image-digest clawql-mcp=sha256:YOUR_DIGEST
-```
-
-### 4. Publish
-
-**Public release (GitHub mirror + IPFS staging + Arweave):**
-
-```bash
-# Omit CLAWQL_RELEASE_DRY_RUN for live backends when tools/env are set
 clawql-release publish --tag v7.1.0 \
   --sbom sbom.cdx.json \
   --npm-tgz clawql-mcp-7.1.0.tgz \
@@ -172,136 +89,30 @@ clawql-release publish --tag v7.1.0 \
   --stage-ipfs --permanent --github
 ```
 
-**Paid / private release:**
+**Paid / private** — add `--encrypt --price "0.50 USDC"` (dry-run works without a wallet).
 
-```bash
-clawql-release publish --tag v7.1.0 \
-  --sbom sbom.cdx.json \
-  --stage-ipfs --permanent \
-  --encrypt --price "0.50 USDC"
-```
+**Live networks** — laptop or self-hosted runner only (keep spendable keys off hosted Actions):
 
-### 5. Verify and pull
-
-```bash
-clawql-release verify releases/v7.1.0/manifest.json
-clawql-release verify <arweave-tx-id>
-
-clawql-release pull <arweave-tx-id> --rift
-# Paid bundles: present PAYMENT-SIGNATURE / dry-run receipt; Lit releases the CEK
-```
-
-`clawql release …` is the same surface via the main ClawQL CLI.
+- IPFS: Kubo (`ipfs` on `PATH`)
+- Arweave: `CLAWQL_ARWEAVE_WALLET_JWK`
+- x402 / Lit: `CLAWQL_X402_ENFORCE=1`, `CLAWQL_LIT_NETWORK`
 
 ---
 
-## Configuration
+## Stuck?
 
-`clawql-release init` writes `.clawql/release.json`. Useful fields:
-
-```json
-{
-  "version": 1,
-  "outputDir": "releases",
-  "requireSignedCommits": true,
-  "workspaceBackend": "git-worktree",
-  "collaboration": {
-    "primary": "radicle",
-    "githubMirrorUrl": "https://github.com/org/repo"
-  },
-  "permanence": {
-    "arweaveGateway": "https://arweave.net",
-    "dryRun": true
-  },
-  "access": {
-    "defaultPrice": "0.50 USDC",
-    "asset": "USDC",
-    "network": "base-sepolia"
-  }
-}
-```
-
-Signed commits: init enables `commit.gpgsign` when a signing identity exists, or configures an SSH key under `.clawql/keys/`. Opt out with `requireSignedCommits: false`.
+| You see…                  | Try…                              |
+| ------------------------- | --------------------------------- |
+| Dirty git tree at publish | Commit or stash tracked changes   |
+| Rift “no reflinks”        | Stick with `git-worktree`         |
+| Verify signature failed   | Re-publish; check `.clawql/keys/` |
+| No real Arweave tx        | Expected in dry-run — that’s OK   |
 
 ---
 
-## Live network knobs (laptop / self-hosted — not hosted Actions wallets)
+## Keep going
 
-| Env                                                      | Enables                           |
-| -------------------------------------------------------- | --------------------------------- |
-| `CLAWQL_RELEASE_DRY_RUN=1` / `CLAWQL_RELEASE_MODE=local` | Force local backends (CI default) |
-| _(ipfs on PATH)_                                         | Real `ipfs add` CIDs              |
-| `CLAWQL_IPFS_GATEWAY`                                    | HTTP gateway base for IPFS        |
-| `CLAWQL_ARWEAVE_WALLET_JWK`                              | ar.io / Turbo upload path         |
-| `CLAWQL_ARIO_TURBO_URL`                                  | Turbo endpoint                    |
-| `CLAWQL_ARWEAVE_GATEWAY` / `CLAWQL_ARIO_GATEWAY`         | Fetch/verify gateways             |
-| `CLAWQL_X402_ENFORCE=1`                                  | Live facilitator verify           |
-| `CLAWQL_X402_FACILITATOR_URL`                            | Facilitator base URL              |
-| `CLAWQL_X402_WALLET` / `CLAWQL_X402_NETWORK`             | Payment metadata defaults         |
-| `CLAWQL_LIT_NETWORK`                                     | Lit network label for key release |
-
-**Do not** put spendable Arweave wallets in GitHub Actions secrets for the dry-run workflow. Prefer laptop or a self-hosted runner for one small live `--permanent` publish.
-
-### Maturity of live adapters
-
-| Backend                    | Dry-run / local              | Live                                                                 |
-| -------------------------- | ---------------------------- | -------------------------------------------------------------------- |
-| git-worktree               | Full                         | Full                                                                 |
-| rift                       | Fallback under `.rifts/`     | Full when `rift` + CoW FS work                                       |
-| IPFS staging               | `clawql-cid:sha256:…`        | Kubo when `ipfs` is available                                        |
-| Ed25519 manifest/artifacts | Full                         | Full                                                                 |
-| Arweave / ar.io            | `.clawql/arweave/<tx>/`      | Env-gated Turbo path (harden with a real wallet on laptop)           |
-| Lit + x402                 | Escrow CEK + dry-run receipt | Soft facilitator / Lit hooks — validate on testnet before production |
-
----
-
-## What the manifest records
-
-Every publish writes `releases/<tag>/manifest.json` (schema **v0.2**) including:
-
-- `repository.commit` + dirty flag
-- `artifacts.*` / `images.*` with SHA-256 (+ Ed25519 signatures)
-- `merkleRoot` over those leaves
-- `buildEnvironment` (worktree / rift snapshot ancestry when present)
-- `collaboration` (Radicle primary + GitHub mirror banner)
-- `staging.ipfs` · `permanence.arweave` · `access` (public or paid)
-
-Runtime checks:
-
-- `clawql doctor --smoke` resolves `releases/v{version}/manifest.json` when present
-- `CLAWQL_RELEASE_MANIFEST=/path/to/manifest.json` verifies at MCP startup (strict with `CLAWQL_RELEASE_MANIFEST_STRICT=1` or production)
-
-Container digests are also verified with cosign separately — see [`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md).
-
----
-
-## Suggested learning order
-
-1. **Dry-run** — `ci-pipeline-e2e.mjs` or Path A above
-2. **Parallel worktrees** on your laptop — Path B
-3. **Rift CoW** on APFS/btrfs if you run many agents
-4. **Local Kubo** — publish with `--stage-ipfs` without dry-run
-5. **One tiny Arweave publish** with a funded wallet outside CI
-6. **x402 + Lit testnet** for a paid decrypt round-trip
-
----
-
-## Troubleshooting
-
-| Symptom                           | Likely cause                           | Fix                                                                       |
-| --------------------------------- | -------------------------------------- | ------------------------------------------------------------------------- |
-| `Manifest records dirty git tree` | Uncommitted tracked changes at collect | Commit or stash; untracked `.clawql/` / `.rifts/` are ignored             |
-| `rift init` fails (no reflinks)   | ext4 / overlay / cloud VM              | Use git-worktree or a CoW-capable volume                                  |
-| `verify` fails signature          | Wrong key / tampered file              | Re-publish; check `.clawql/keys/`                                         |
-| No Arweave tx on `--permanent`    | Dry-run or missing wallet              | Expected under `CLAWQL_RELEASE_DRY_RUN`; set wallet only on trusted hosts |
-| Pull decrypt fails                | Missing escrow / payment               | Check `.clawql/escrow/<tag>.key` or live Lit+x402 config                  |
-
----
-
-## Related docs
-
-- Vision: [Immutable releases](https://docs.clawql.com/vision/immutable-releases)
-- Short reference (MVP-era notes): [`clawql-release-mvp.md`](./clawql-release-mvp.md)
-- Package README: [`packages/clawql-release/README.md`](../../packages/clawql-release/README.md)
-- Golden images: [`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md)
-- Modularization Layer 0: [`docs/vision/clawql-modularization-v2.md`](../vision/clawql-modularization-v2.md)
+- [Vision — Immutable releases](https://docs.clawql.com/vision/immutable-releases) — architecture & rationale
+- [CLI cheat sheet](./clawql-release-mvp.md) — flags & env vars
+- [Golden image pipeline](../security/golden-image-pipeline.md) — container signing
+- Package: [`clawql-release`](../../packages/clawql-release/README.md)
