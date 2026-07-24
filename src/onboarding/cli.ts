@@ -55,11 +55,7 @@ import {
   runInferenceTraceCmd,
   type InferenceCliOptions,
 } from "./inference-cli.js";
-import {
-  runGatewayCreate,
-  runGatewayDestroy,
-  runGatewayStatus,
-} from "./gateway-cli.js";
+import { runGatewayCreate, runGatewayDestroy, runGatewayStatus } from "./gateway-cli.js";
 import {
   runPaymentsAuditCmd,
   runPaymentsAuditVerifyCmd,
