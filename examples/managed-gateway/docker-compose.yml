@@ -1,6 +1,6 @@
 # Managed Edge Gateway — MCP (/mcp) + inference (/v1) + vault memory behind one port.
 #
-# Secure defaults: CLAWQL_AUTH_MODE=apiKey, CLAWQL_INFERENCE_KEYS_ENABLED=1.
+# Secure defaults: CLAWQL_AUTH_MODE=apiKey plus inference virtual-key enforcement.
 # Generate materials with: clawql gateway create --profile local-docker
 #
 # Run from this directory:
