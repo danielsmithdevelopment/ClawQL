@@ -375,6 +375,16 @@ envFrom:
 {{- printf "%s-proxy" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{/* Optional clawql-inference Deployment/Service (OpenAI-compatible /v1). */}}
+{{- define "clawql-mcp.inferenceName" -}}
+{{- printf "%s-inference" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/* Optional Managed Edge Gateway nginx (one hostname for /mcp + /v1). */}}
+{{- define "clawql-mcp.managedGatewayName" -}}
+{{- printf "%s-managed-gateway" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
 {{/* Optional annotations under each Onyx stack Pod template.metadata (e.g. Istio ambient: disable legacy sidecar injection). */}}
 {{- define "clawql-mcp.onyxPodTemplateAnnotations" -}}
 {{- with .Values.onyx.podAnnotations }}

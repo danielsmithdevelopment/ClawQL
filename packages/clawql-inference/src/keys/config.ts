@@ -10,6 +10,8 @@ function parseTruthy(value: string | undefined): boolean {
 }
 
 export function resolveVirtualKeysPath(env: NodeJS.ProcessEnv = process.env): string {
+  const explicit = env.CLAWQL_INFERENCE_VIRTUAL_KEYS_PATH?.trim();
+  if (explicit) return explicit;
   const home = env.CLAWQL_HOME?.trim() || join(process.cwd(), ".clawql");
   return join(home, "Inference", FILE_NAME);
 }

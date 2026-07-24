@@ -141,6 +141,80 @@ mcpProxy:
       labels: {}
       annotations: {}
 
+# Optional clawql-inference sidecar Deployment (OpenAI-compatible /v1). Defaults **off**.
+# Pair with managedGateway for one-hostname /mcp + /v1 (Managed Edge Gateway).
+# See docs/getting-started/inference.md and examples/managed-gateway/.
+inference:
+  enabled: false
+  replicaCount: 1
+  # Reuses the MCP image by default; override command runs clawql-inference.
+  image:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  command:
+    - packages/clawql-inference/bin/clawql-inference.mjs
+  args: []
+  extraEnv: []
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "2"
+      memory: 1Gi
+  securityContext: {}
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  service:
+    type: ClusterIP
+    annotations: {}
+    http:
+      port: 8080
+      targetPort: 8080
+  # Mount shared CLAWQL_HOME (virtual keys + policy) when set.
+  home:
+    enabled: false
+    existingClaim: ""
+    mountPath: /clawql-home
+  # Inject CLAWQL_AUTH_MODE / keys flags for managed deployments.
+  authMode: apiKey
+  keysEnabled: true
+  policyManifestPath: /clawql-home/Inference/policy.yaml
+
+# Optional nginx edge in front of MCP + inference (Managed Edge Gateway). Defaults **off**.
+# Requires inference.enabled=true for /v1 routes. Routes mirror examples/managed-gateway/nginx.conf.
+managedGateway:
+  enabled: false
+  replicaCount: 1
+  image:
+    repository: nginx
+    tag: "1.27-alpine"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: "1"
+      memory: 256Mi
+  securityContext: {}
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  service:
+    type: ClusterIP
+    annotations: {}
+    http:
+      port: 80
+      targetPort: 8080
+  # Upstream service names default to chart helpers when empty.
+  mcpUpstreamHost: ""
+  mcpUpstreamPort: ""
+  inferenceUpstreamHost: ""
+  inferenceUpstreamPort: ""
+
 # memory_ingest / memory_recall (default on). Set false to inject CLAWQL_ENABLE_MEMORY=0.
 enableMemory: true
 # Document stack: tika, gotenberg, paperless, stirling, onyx, nextcloud, coneshare in all-providers merge + ingest_external_knowledge + (with enableOnyx) knowledge_search_onyx. Set false to inject CLAWQL_ENABLE_DOCUMENTS=0.

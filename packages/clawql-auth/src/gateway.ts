@@ -23,11 +23,25 @@ export type AtrClaims = {
   scope: string[];
   tenantId?: string;
   verticals?: string[];
+  /** Present when auth succeeded via an inference virtual key. */
+  virtualKeyId?: string;
 };
+
+/**
+ * Optional sync resolver for presented API keys that are not the static
+ * `CLAWQL_API_KEY` (e.g. clawql-inference virtual keys). Injected by the MCP
+ * HTTP process so `clawql-auth` stays free of an inference dependency.
+ */
+export type ApiKeyClaimsResolver = (
+  presented: string,
+  headers: AuthHeaderSource
+) => { ok: true; claims: AtrClaims } | { ok: false; error: string } | null;
 
 export type GatewayAuthConfig = {
   mode: AuthMode;
   apiKey?: string;
+  /** Tried when presented key does not match static `apiKey` (or apiKey is unset). */
+  apiKeyClaimsResolver?: ApiKeyClaimsResolver;
 };
 
 export function resolveAuthMode(): AuthMode {
@@ -77,21 +91,35 @@ export function resolveAtrClaimsFromHeaders(
   const presented =
     apiKeyHeader ?? (bearer?.toLowerCase().startsWith("bearer ") ? bearer.slice(7).trim() : bearer);
 
-  if (!config.apiKey) {
-    return { ok: false, error: "CLAWQL_AUTH_MODE=apiKey but CLAWQL_API_KEY is unset" };
-  }
-  if (!presented || !apiKeysEqual(presented, config.apiKey)) {
+  if (!presented) {
     return { ok: false, error: "Invalid or missing API key" };
   }
 
-  return {
-    ok: true,
-    claims: {
-      sub: headerValue(headers, "x-clawql-subject") ?? "api-key",
-      role: headerValue(headers, "x-clawql-role") ?? "operator",
-      scope: ["execute", "search", "memory"],
-    },
-  };
+  // 1) Injected resolver first (inference virtual keys → tenantId from key.team).
+  // Prefer VK over static CLAWQL_API_KEY so managed gateways that set both to the
+  // same secret still get tenant claims (not spoofable client headers).
+  if (config.apiKeyClaimsResolver) {
+    const resolved = config.apiKeyClaimsResolver(presented, headers);
+    if (resolved) return resolved;
+  }
+
+  // 2) Static CLAWQL_API_KEY (legacy / bootstrap)
+  if (config.apiKey && apiKeysEqual(presented, config.apiKey)) {
+    return {
+      ok: true,
+      claims: {
+        sub: headerValue(headers, "x-clawql-subject") ?? "api-key",
+        role: headerValue(headers, "x-clawql-role") ?? "operator",
+        scope: ["execute", "search", "memory"],
+      },
+    };
+  }
+
+  if (!config.apiKey && !config.apiKeyClaimsResolver) {
+    return { ok: false, error: "CLAWQL_AUTH_MODE=apiKey but CLAWQL_API_KEY is unset" };
+  }
+
+  return { ok: false, error: "Invalid or missing API key" };
 }
 
 export function assertGatewayAuth(headers: AuthHeaderSource = {}): AtrClaims {

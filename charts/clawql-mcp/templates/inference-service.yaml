@@ -1,0 +1,23 @@
+{{- if .Values.inference.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.inferenceName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: inference
+  {{- with .Values.inference.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.inference.service.type }}
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: inference
+  ports:
+    - name: http
+      port: {{ .Values.inference.service.http.port }}
+      targetPort: http
+      protocol: TCP
+{{- end }}

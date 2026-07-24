@@ -72,3 +72,7 @@ releases/v0.0.0-e2e/
 
 # Python (OpenBench validators / adapters)
 __pycache__/
+
+# Managed Edge Gateway local runtime
+examples/managed-gateway/.env
+examples/managed-gateway/data/

@@ -55,6 +55,7 @@ import {
   runInferenceTraceCmd,
   type InferenceCliOptions,
 } from "./inference-cli.js";
+import { runGatewayCreate, runGatewayDestroy, runGatewayStatus } from "./gateway-cli.js";
 import {
   runPaymentsAuditCmd,
   runPaymentsAuditVerifyCmd,
@@ -115,6 +116,7 @@ type Command =
   | "sync"
   | "sandbox"
   | "inference"
+  | "gateway"
   | "payments"
   | "claude"
   | "codex"
@@ -181,6 +183,8 @@ function parse(argv: string[]): {
     else if (a === "--model") flags.model = argv[++i] ?? "";
     else if (a === "--message") flags.message = argv[++i] ?? "";
     else if (a === "--non-interactive") flags.nonInteractive = true;
+    else if (a === "--no-start") flags.noStart = true;
+    else if (a === "--profile") flags.profile = argv[++i] ?? "";
     else if (a === "--task-file") flags.taskFile = argv[++i] ?? "";
     else if (a === "--workdir") flags.workdir = argv[++i] ?? "";
     else if (a === "--timeout") flags.timeout = argv[++i] ?? "";
@@ -278,6 +282,7 @@ function parse(argv: string[]): {
     cmd === "sync" ||
     cmd === "sandbox" ||
     cmd === "inference" ||
+    cmd === "gateway" ||
     cmd === "payments"
       ? positional[1]
       : undefined;
@@ -288,6 +293,7 @@ function parse(argv: string[]): {
     cmd === "sync" ||
     cmd === "sandbox" ||
     cmd === "inference" ||
+    cmd === "gateway" ||
     cmd === "payments"
       ? positional.slice(2)
       : cmd === "release" || cmd === "ontology"
@@ -429,6 +435,13 @@ inference (gateway MVP):
   Fallback: CLAWQL_INFERENCE_FALLBACK_ENABLED=1, CLAWQL_INFERENCE_FALLBACK_FRUGAL=a,b
   Keys: per-team virtual API keys (see clawql-inference README)
   Env: OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_BASE_URL, CLAWQL_INFERENCE_PORT
+
+gateway (Managed Edge Gateway — /mcp + /v1 + memory):
+  create          Materialize secure gateway (virtual key + policy); start process|local-docker
+  status          Health + URLs for the active managed gateway
+  destroy --yes   Stop processes/compose and remove ManagedGateway materials
+  Flags: --profile process|local-docker --team NAME --port 8080 --no-start --json
+  Docs: https://docs.clawql.com/getting-started/inference
 
 Docs: https://docs.clawql.com/agent-setup
 `);
@@ -856,6 +869,58 @@ async function main(): Promise<void> {
     console.error(
       "Usage: clawql inference serve | complete | logs | trace | spend | export | finetune | escalation | pipeline | cache | fallback | keys | policy"
     );
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "gateway") {
+    const port =
+      typeof flags.port === "string" && flags.port ? Number.parseInt(flags.port, 10) : undefined;
+    const budgetUsd =
+      typeof flags.budgetUsd === "string" && flags.budgetUsd
+        ? Number.parseFloat(flags.budgetUsd)
+        : undefined;
+    const profileRaw = typeof flags.profile === "string" ? flags.profile.trim() : "";
+    const profile =
+      profileRaw === "local-docker" || profileRaw === "process"
+        ? (profileRaw as "process" | "local-docker")
+        : undefined;
+    const opts: {
+      profile?: "process" | "local-docker";
+      team?: string;
+      port?: number;
+      home?: string;
+      noStart: boolean;
+      yes: boolean;
+      json: boolean;
+      label?: string;
+      budgetUsd?: number;
+      rateLimit?: string;
+    } = {
+      profile,
+      team: typeof flags.team === "string" ? flags.team : undefined,
+      port,
+      home: typeof flags.home === "string" && flags.home ? flags.home : undefined,
+      noStart: Boolean(flags.noStart),
+      yes: Boolean(flags.yes),
+      json: Boolean(flags.json),
+      label: typeof flags.name === "string" ? flags.name : undefined,
+      budgetUsd,
+      rateLimit: typeof flags.rateLimit === "string" ? flags.rateLimit : undefined,
+    };
+    if (subcmd === "create") {
+      process.exitCode = await runGatewayCreate(opts);
+      return;
+    }
+    if (subcmd === "status") {
+      process.exitCode = await runGatewayStatus(opts);
+      return;
+    }
+    if (subcmd === "destroy") {
+      process.exitCode = await runGatewayDestroy(opts);
+      return;
+    }
+    console.error("Usage: clawql gateway create | status | destroy --yes");
     process.exitCode = 1;
     return;
   }

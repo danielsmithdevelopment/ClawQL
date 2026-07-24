@@ -276,6 +276,7 @@ Subpath: `clawql-inference/plugin` for builtin factories and compose helpers.
 | `CLAWQL_INFERENCE_FALLBACK_STANDARD`          | —                            | Fallback chain for standard tier                     |
 | `CLAWQL_INFERENCE_FALLBACK_FRONTIER`          | —                            | Fallback chain for frontier tier                     |
 | `CLAWQL_INFERENCE_KEYS_ENABLED`               | off                          | Require virtual keys on `/v1/*` (or when keys exist) |
+| `CLAWQL_INFERENCE_VIRTUAL_KEYS_PATH`          | `$CLAWQL_HOME/Inference/…`   | Override path to `virtual-keys.json` (shared mounts) |
 | `CLAWQL_INFERENCE_STORE`                      | jsonl when `CLAWQL_HOME` set | Inference call store: memory, jsonl, postgres        |
 | `CLAWQL_INFERENCE_DATABASE_URL`               | —                            | Postgres URL when store=postgres                     |
 | `CLAWQL_INFERENCE_PIPELINE_WORKER`            | off                          | Start cron worker with `inference serve`             |

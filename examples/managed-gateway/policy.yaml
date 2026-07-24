@@ -1,0 +1,57 @@
+# ClawQL Managed Edge Gateway — operator policy
+# keys.enabled: true — networked gateways never use noAuth on /v1
+#
+# Written by `clawql gateway create` into $CLAWQL_HOME/Inference/policy.yaml
+# when using the managed profile (or copy manually).
+
+policyVersion: "2026.07.01"
+
+inference:
+  escalation:
+    enabled: true
+    tierMap:
+      frugal: deepseek/deepseek-chat
+      standard: groq/llama-3.3-70b-versatile
+      frontier: anthropic/claude-sonnet-4
+
+  cache:
+    enabled: false
+
+  fallback:
+    enabled: false
+
+  keys:
+    enabled: true
+
+  store:
+    backend: jsonl
+
+  export:
+    defaultVerdict: passed
+    piiScrubDefault: true
+    writeManifestDefault: true
+
+  pipelineWorker:
+    enabled: false
+
+  agentCoordination:
+    enabled: false
+
+  observability:
+    profile: external
+    otelInfra: false
+    langfuse: false
+    semanticCacheBackend: memory
+
+  efficiency:
+    terse: true
+    promptCache: true
+    historyCompress: false
+    historyMaxChars: 48000
+    historyKeepRecent: 6
+    promptCompress: false
+    promptCompressMaxChars: 12000
+    httpAutoRoute: true
+    structuredOutput: true
+    tokenBudget: true
+    prefill: false

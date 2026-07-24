@@ -5,6 +5,7 @@ import {
   loadGatewayAuthConfig,
   resolveAtrClaimsFromHeaders,
   resolveAuthMode,
+  type GatewayAuthConfig,
 } from "./gateway.js";
 
 describe("clawql-auth gateway", () => {
@@ -62,6 +63,103 @@ describe("clawql-auth gateway", () => {
       loadGatewayAuthConfig()
     );
     expect(spoof.ok).toBe(false);
+  });
+
+  it("apiKeyClaimsResolver accepts virtual keys and ignores spoofed role headers", () => {
+    const config: GatewayAuthConfig = {
+      mode: "apiKey",
+      apiKeyClaimsResolver: (presented) => {
+        if (presented !== "clawql-vk-test") return null;
+        return {
+          ok: true,
+          claims: {
+            sub: "vk_abc",
+            role: "operator",
+            scope: ["execute", "search", "memory"],
+            tenantId: "acme",
+            virtualKeyId: "vk_abc",
+          },
+        };
+      },
+    };
+    const ok = resolveAtrClaimsFromHeaders(
+      {
+        authorization: "Bearer clawql-vk-test",
+        "x-clawql-role": "admin",
+        "x-clawql-subject": "spoofed",
+      },
+      config
+    );
+    expect(ok.ok).toBe(true);
+    if (ok.ok) {
+      expect(ok.claims.tenantId).toBe("acme");
+      expect(ok.claims.role).toBe("operator");
+      expect(ok.claims.sub).toBe("vk_abc");
+      expect(ok.claims.virtualKeyId).toBe("vk_abc");
+    }
+  });
+
+  it("prefers resolver over static CLAWQL_API_KEY when both match", () => {
+    const config: GatewayAuthConfig = {
+      mode: "apiKey",
+      apiKey: "shared-secret",
+      apiKeyClaimsResolver: (presented) => {
+        if (presented !== "shared-secret") return null;
+        return {
+          ok: true,
+          claims: {
+            sub: "vk_1",
+            role: "operator",
+            scope: ["execute", "search", "memory"],
+            tenantId: "team-from-vk",
+            virtualKeyId: "vk_1",
+          },
+        };
+      },
+    };
+    const ok = resolveAtrClaimsFromHeaders({ "x-api-key": "shared-secret" }, config);
+    expect(ok.ok).toBe(true);
+    if (ok.ok) {
+      expect(ok.claims.tenantId).toBe("team-from-vk");
+      expect(ok.claims.virtualKeyId).toBe("vk_1");
+    }
+  });
+
+  it("falls back to static key when resolver returns null", () => {
+    const config: GatewayAuthConfig = {
+      mode: "apiKey",
+      apiKey: "static-only",
+      apiKeyClaimsResolver: () => null,
+    };
+    const ok = resolveAtrClaimsFromHeaders({ authorization: "Bearer static-only" }, config);
+    expect(ok.ok).toBe(true);
+    if (ok.ok) {
+      expect(ok.claims.sub).toBe("api-key");
+      expect(ok.claims.tenantId).toBeUndefined();
+    }
+  });
+
+  it("allows apiKey mode with resolver and no static CLAWQL_API_KEY", () => {
+    const config: GatewayAuthConfig = {
+      mode: "apiKey",
+      apiKeyClaimsResolver: (presented) => {
+        if (presented !== "vk-only") return null;
+        return {
+          ok: true,
+          claims: {
+            sub: "vk_only",
+            role: "operator",
+            scope: ["execute", "search", "memory"],
+            tenantId: "solo",
+            virtualKeyId: "vk_only",
+          },
+        };
+      },
+    };
+    expect(resolveAtrClaimsFromHeaders({}, config).ok).toBe(false);
+    const ok = resolveAtrClaimsFromHeaders({ "x-api-key": "vk-only" }, config);
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.claims.tenantId).toBe("solo");
   });
 
   it("defaultAdminAtrClaims is stable shape", () => {

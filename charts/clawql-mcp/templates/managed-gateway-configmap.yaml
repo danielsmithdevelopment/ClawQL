@@ -1,0 +1,69 @@
+{{- if .Values.managedGateway.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "clawql-mcp.managedGatewayName" . }}-config
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: managed-gateway
+data:
+  nginx.conf: |
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /tmp/nginx.pid;
+    events {
+      worker_connections 1024;
+    }
+    http {
+      include /etc/nginx/mime.types;
+      default_type application/octet-stream;
+      access_log /var/log/nginx/access.log;
+      sendfile on;
+      client_max_body_size 32m;
+      proxy_read_timeout 600s;
+      proxy_send_timeout 600s;
+      upstream clawql_mcp {
+        server {{ .Values.managedGateway.mcpUpstreamHost | default (include "clawql-mcp.fullname" .) }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.managedGateway.mcpUpstreamPort | default .Values.service.http.port }};
+      }
+      {{- if .Values.inference.enabled }}
+      upstream clawql_inference {
+        server {{ .Values.managedGateway.inferenceUpstreamHost | default (include "clawql-mcp.inferenceName" .) }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.managedGateway.inferenceUpstreamPort | default .Values.inference.service.http.port }};
+      }
+      {{- end }}
+      server {
+        listen 8080;
+        server_name _;
+        location = /healthz {
+          default_type application/json;
+          return 200 '{"ok":true,"gateway":"managed-edge","mcp":"/mcp","inference":"/v1"}';
+        }
+        location {{ .Values.mcpPath }} {
+          proxy_http_version 1.1;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header Authorization $http_authorization;
+          proxy_set_header Connection "";
+          proxy_buffering off;
+          proxy_pass http://clawql_mcp;
+        }
+        {{- if .Values.inference.enabled }}
+        location /v1/ {
+          proxy_http_version 1.1;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header Authorization $http_authorization;
+          proxy_set_header Connection "";
+          proxy_buffering off;
+          proxy_pass http://clawql_inference;
+        }
+        location = /v1 {
+          return 301 /v1/;
+        }
+        {{- end }}
+      }
+    }
+{{- end }}

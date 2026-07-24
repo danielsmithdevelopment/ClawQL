@@ -1,0 +1,107 @@
+{{- if .Values.inference.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.inferenceName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: inference
+spec:
+  replicas: {{ .Values.inference.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: inference
+  template:
+    metadata:
+      {{- with .Values.inference.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: inference
+        service.istio.io/canonical-name: {{ include "clawql-mcp.inferenceName" . | quote }}
+        {{- with .Values.inference.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.inference.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: inference
+          {{- $repo := .Values.inference.image.repository | default .Values.image.repository }}
+          {{- $tag := .Values.inference.image.tag | default .Values.image.tag | default .Chart.AppVersion }}
+          image: "{{ $repo }}:{{ $tag }}"
+          imagePullPolicy: {{ .Values.inference.image.pullPolicy | default .Values.image.pullPolicy }}
+          {{- with .Values.inference.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.inference.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.inference.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.inference.service.http.targetPort }}
+          env:
+            - name: CLAWQL_INFERENCE_HOST
+              value: "0.0.0.0"
+            - name: CLAWQL_INFERENCE_PORT
+              value: {{ .Values.inference.service.http.targetPort | quote }}
+            {{- if .Values.inference.home.enabled }}
+            - name: CLAWQL_HOME
+              value: {{ .Values.inference.home.mountPath | quote }}
+            {{- end }}
+            {{- if .Values.inference.authMode }}
+            - name: CLAWQL_AUTH_MODE
+              value: {{ .Values.inference.authMode | quote }}
+            {{- end }}
+            {{- if .Values.inference.keysEnabled }}
+            - name: CLAWQL_INFERENCE_KEYS_ENABLED
+              value: "1"
+            {{- end }}
+            {{- if .Values.inference.policyManifestPath }}
+            - name: CLAWQL_INFERENCE_POLICY_MANIFEST
+              value: {{ .Values.inference.policyManifestPath | quote }}
+            {{- end }}
+            {{- with .Values.inference.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.inference.resources | nindent 12 }}
+          {{- if .Values.inference.home.enabled }}
+          volumeMounts:
+            - name: clawql-home
+              mountPath: {{ .Values.inference.home.mountPath }}
+          {{- end }}
+      {{- if .Values.inference.home.enabled }}
+      volumes:
+        - name: clawql-home
+          persistentVolumeClaim:
+            claimName: {{ required "inference.home.existingClaim is required when inference.home.enabled" .Values.inference.home.existingClaim }}
+      {{- end }}
+{{- end }}

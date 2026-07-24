@@ -44,4 +44,22 @@ describe("validateVirtualKey", () => {
     expect(blocked.ok).toBe(false);
     if (!blocked.ok) expect(blocked.status).toBe(429);
   });
+
+  it("honors CLAWQL_INFERENCE_VIRTUAL_KEYS_PATH override", async () => {
+    const { mkdtemp } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const { resolveVirtualKeysPath } = await import("./config.js");
+    const { createVirtualKey } = await import("./store.js");
+
+    const dir = await mkdtemp(join(tmpdir(), "clawql-vk-path-"));
+    const customPath = join(dir, "custom-keys.json");
+    const env = {
+      CLAWQL_INFERENCE_VIRTUAL_KEYS_PATH: customPath,
+      CLAWQL_INFERENCE_KEYS_ENABLED: "1",
+    };
+    expect(resolveVirtualKeysPath(env)).toBe(customPath);
+    const created = await createVirtualKey({ team: "path-team" }, env);
+    expect(validateVirtualKey(created.secret, env).ok).toBe(true);
+  });
 });
