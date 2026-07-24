@@ -1,6 +1,7 @@
 /**
  * Single source of truth for docs sidebar navigation.
  * Hub card grids (`docs-hub-data.ts`) surface long-tail pages not listed here.
+ * Off-sidebar routes are also indexed on `/archive` (generated catalog).
  */
 
 export type NavLink = {
@@ -94,6 +95,7 @@ export const docsNavigation: Array<NavGroup> = [
     links: [
       { title: 'Examples', href: '/examples' },
       { title: 'Changelog', href: '/resources/changelog' },
+      { title: 'Docs archive', href: '/archive' },
     ],
   },
 ]

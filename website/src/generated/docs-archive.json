@@ -1,0 +1,652 @@
+{
+  "generatedAt": "2026-07-24T03:34:10.126Z",
+  "sidebarHrefCount": 33,
+  "entryCount": 97,
+  "groups": [
+    {
+      "name": "Platform",
+      "entries": [
+        {
+          "href": "/bundled-specs",
+          "title": "Bundled specs",
+          "description": "Provider presets shipped in the package and how CLAWQL_PROVIDER selects them.",
+          "group": "Platform"
+        },
+        {
+          "href": "/dashboard-kubernetes",
+          "title": "Dashboard on Kubernetes",
+          "description": "Bundled dashboard UI, Vault sync, and Helm wiring.",
+          "group": "Platform"
+        },
+        {
+          "href": "/design/operator-target-architecture",
+          "title": "Operator target architecture",
+          "description": "",
+          "group": "Platform"
+        },
+        {
+          "href": "/docker-desktop-observability",
+          "title": "Istio & observability",
+          "description": "Docker Desktop: Prometheus, Grafana, Tempo, Kiali, OTel Collector—what each tool is and first steps if you are new to them.",
+          "group": "Platform"
+        },
+        {
+          "href": "/flink-onyx-sync",
+          "title": "Flink Onyx sync",
+          "description": "In-cluster Apache Flink runbook for real-time Onyx index freshness: architecture, values.yaml controls, connector secrets isolation, rollout, and troubleshooting.",
+          "group": "Platform"
+        },
+        {
+          "href": "/graphql-proxy",
+          "title": "GraphQL proxy",
+          "description": "How in-process GraphQL keeps execute responses lean (single-spec) vs REST (multi-spec).",
+          "group": "Platform"
+        },
+        {
+          "href": "/hitl-label-studio",
+          "title": "HITL — Label Studio",
+          "description": "Human review queues and webhook callbacks.",
+          "group": "Platform"
+        },
+        {
+          "href": "/nats-jetstream",
+          "title": "NATS JetStream",
+          "description": "Optional event-driven backbone for Ouroboros, agents, and edge sync: Helm values, JetStream retention controls, persistence, and health checks.",
+          "group": "Platform"
+        },
+        {
+          "href": "/onyx-knowledge",
+          "title": "Onyx knowledge (legacy path)",
+          "description": "",
+          "group": "Platform"
+        },
+        {
+          "href": "/payments/clawql-payments",
+          "title": "clawql-payments",
+          "description": "Stripe, x402, MPP, and related rails — plan entitlements and WORM audit.",
+          "group": "Platform"
+        }
+      ]
+    },
+    {
+      "name": "Plugins",
+      "entries": [
+        {
+          "href": "/plugins/automation",
+          "title": "Automation",
+          "description": "schedule, notify, workflow, argocd — each opt-in via env.",
+          "group": "Plugins"
+        },
+        {
+          "href": "/plugins/bundled-providers",
+          "title": "Bundled providers",
+          "description": "Default stack: Cloudflare, GitHub, Slack, Linear, Notion, Onyx.",
+          "group": "Plugins"
+        },
+        {
+          "href": "/plugins/codegraph",
+          "title": "Code graph",
+          "description": "codegraph_* — structural AST indexing, Graphify import, hybrid recall.",
+          "group": "Plugins"
+        },
+        {
+          "href": "/plugins/core",
+          "title": "Gateway core",
+          "description": "search, execute, audit, cache — always composed, no opt-out.",
+          "group": "Plugins"
+        },
+        {
+          "href": "/plugins/documents",
+          "title": "Documents & IDP",
+          "description": "ingest_external_knowledge, Onyx search, optional IDP tools.",
+          "group": "Plugins"
+        },
+        {
+          "href": "/plugins/hitl-label-studio",
+          "title": "HITL (Label Studio)",
+          "description": "Human-in-the-loop review — planned full plugin wiring.",
+          "group": "Plugins"
+        },
+        {
+          "href": "/plugins/inference-providers",
+          "title": "Inference providers",
+          "description": "OpenAI, Anthropic, Ollama builtins and third-party clawql-inference plugins.",
+          "group": "Plugins"
+        },
+        {
+          "href": "/plugins/memory",
+          "title": "Memory (vault)",
+          "description": "memory_ingest / memory_recall — default on, Obsidian vault.",
+          "group": "Plugins"
+        },
+        {
+          "href": "/plugins/ouroboros",
+          "title": "Ouroboros",
+          "description": "Evolutionary loop MCP tools and optional Postgres lineage.",
+          "group": "Plugins"
+        },
+        {
+          "href": "/plugins/panguard-proxy",
+          "title": "Panguard MCP proxy",
+          "description": "beforeCallTool policy chokepoint for enterprise MCP defense.",
+          "group": "Plugins"
+        },
+        {
+          "href": "/plugins/payments",
+          "title": "Payments plugin",
+          "description": "Stripe, x402, MPP, Adyen — see also the clawql-payments platform guide.",
+          "group": "Plugins"
+        },
+        {
+          "href": "/plugins/sandbox",
+          "title": "Sandbox",
+          "description": "sandbox_exec MCP + clawql sandbox CLI — Kata, Seatbelt, fail-closed harnesses.",
+          "group": "Plugins"
+        },
+        {
+          "href": "/plugins/third-party",
+          "title": "Third-party plugins",
+          "description": "Roadmap and checklist for external clawql-* npm plugins.",
+          "group": "Plugins"
+        }
+      ]
+    },
+    {
+      "name": "Learn",
+      "entries": [
+        {
+          "href": "/learn/audit-tool-and-observability",
+          "title": "Audit tool & observability",
+          "description": "Core `audit` ring buffer plus Prometheus, Grafana, and Loki — breadcrumbs without vault writes.",
+          "group": "Learn"
+        },
+        {
+          "href": "/learn/cache-handoff-between-chats",
+          "title": "Cache handoff between chats",
+          "description": "Core `cache` tool: scratch state, TTL, namespacing, and carrying context into a new chat session.",
+          "group": "Learn"
+        },
+        {
+          "href": "/learn/document-pipeline",
+          "title": "Document pipeline",
+          "description": "Seven-vendor IDP path: Nextcloud → Tika → Gotenberg → Stirling → archive → Onyx → Coneshare.",
+          "group": "Learn"
+        },
+        {
+          "href": "/learn/effect-ts",
+          "title": "Effect-TS in ClawQL",
+          "description": "Why Effect-TS enforces the 7-layer architecture: Layers, Gateway composition, fail-closed errors, and optional plugins.",
+          "group": "Learn"
+        },
+        {
+          "href": "/learn/external-ingest-knowledge",
+          "title": "External ingest & knowledge lake",
+          "description": "Import Markdown or a single URL into the vault with `ingest_external_knowledge`, dry runs, and vault pairing.",
+          "group": "Learn"
+        },
+        {
+          "href": "/learn/knowledge-search-onyx",
+          "title": "Onyx enterprise search",
+          "description": "Optional `knowledge_search_onyx`: ACL-aware semantic search over your enterprise Onyx index.",
+          "group": "Learn"
+        },
+        {
+          "href": "/learn/ouroboros-tools",
+          "title": "Ouroboros tools",
+          "description": "`ouroboros_*`: seed from documents, evolutionary loop, Postgres lineage, and route hints vs raw infra.",
+          "group": "Learn"
+        },
+        {
+          "href": "/learn/sandbox-exec",
+          "title": "Sandbox exec",
+          "description": "Optional sandbox_exec MCP tool; pair with Local agent sandbox for full harness containment.",
+          "group": "Learn"
+        },
+        {
+          "href": "/learn/schedule-notify-workflows",
+          "title": "Schedule & notify workflows",
+          "description": "`schedule` synthetics plus `notify` to Slack — threads, HITL hooks, and Label Studio handoff patterns.",
+          "group": "Learn"
+        },
+        {
+          "href": "/learn/search-and-execute-mcp",
+          "title": "Using search & execute",
+          "description": "`search` / `execute` inputs, args, response fields, and common pitfalls when calling loaded OpenAPI specs.",
+          "group": "Learn"
+        }
+      ]
+    },
+    {
+      "name": "Deploy",
+      "entries": [
+        {
+          "href": "/deployment/platforms",
+          "title": "Deployment platforms",
+          "description": "",
+          "group": "Deploy"
+        },
+        {
+          "href": "/helm",
+          "title": "Helm",
+          "description": "Chart at charts/clawql-mcp: values, GHCR image, optional Ingress, PVC, and upgrade notes.",
+          "group": "Deploy"
+        },
+        {
+          "href": "/tailscale",
+          "title": "Tailscale & Headscale",
+          "description": "Beginner guide: private tailnets for MCP and execute—MagicDNS, Serve, CLAWQL_MCP_URL, Headscale, ACLs, Kubernetes vs mesh DNS.",
+          "group": "Deploy"
+        }
+      ]
+    },
+    {
+      "name": "Security",
+      "entries": [
+        {
+          "href": "/security/best-practices",
+          "title": "Security curriculum",
+          "description": "Vendor-neutral training modules.",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/agent-gateway-hardening-dns-rebinding",
+          "title": "Agent Gateway Hardening Dns Rebinding",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/agent-identity-lifecycle-provisioning",
+          "title": "Agent Identity Lifecycle Provisioning",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/authentication-session-management-scoped-tokens",
+          "title": "Authentication Session Management Scoped Tokens",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/automated-response-incident-recovery-picerl",
+          "title": "Automated Response Incident Recovery Picerl",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/clawhub-skill-vetting-safe-installation",
+          "title": "Clawhub Skill Vetting Safe Installation",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/cluster-admission-control-signing-policy",
+          "title": "Cluster Admission Control Signing Policy",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/compliance-regulatory-mapping",
+          "title": "Compliance Regulatory Mapping",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/container-image-security-pinning-distroless-golden-images",
+          "title": "Container Image Security Pinning Distroless Golden Images",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/data-classification-pii-redaction-residency",
+          "title": "Data Classification Pii Redaction Residency",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/development-deployment-security",
+          "title": "Development Deployment Security",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/disaster-recovery-business-continuity",
+          "title": "Disaster Recovery Business Continuity",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/egress-filtering-dns-dlp",
+          "title": "Egress Filtering Dns Dlp",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/gpu-resource-protection-isolation",
+          "title": "Gpu Resource Protection Isolation",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/human-operator-security-admin-controls",
+          "title": "Human Operator Security Admin Controls",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/input-validation-protocol-hardening",
+          "title": "Input Validation Protocol Hardening",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/least-privilege-scoped-kubernetes-identities",
+          "title": "Least Privilege Scoped Kubernetes Identities",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/mcp-runtime-enforcement-panguard-atr",
+          "title": "Mcp Runtime Enforcement Panguard Atr",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/memory-context-poisoning-prevention",
+          "title": "Memory Context Poisoning Prevention",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/model-weight-integrity-verification",
+          "title": "Model Weight Integrity Verification",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/multi-agent-trust-orchestrator-security",
+          "title": "Multi Agent Trust Orchestrator Security",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/owasp-agentic-top-10-mitigations",
+          "title": "Owasp Agentic Top 10 Mitigations",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/quarterly-security-review-checklist",
+          "title": "Quarterly Security Review Checklist",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/red-teaming-adversarial-testing",
+          "title": "Red Teaming Adversarial Testing",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/sandboxing-kata-gvisor-seatbelt",
+          "title": "Sandboxing Kata Gvisor Seatbelt",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/secrets-at-rest-vault-hsm-audit",
+          "title": "Secrets At Rest Vault Hsm Audit",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/secure-multi-tenancy-isolation",
+          "title": "Secure Multi Tenancy Isolation",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/security-monitoring-observability-siem",
+          "title": "Security Monitoring Observability Siem",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/third-party-model-api-security",
+          "title": "Third Party Model Api Security",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/threat-modelling-stride-agentic-ai",
+          "title": "Threat Modelling Stride Agentic Ai",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/vulnerability-management-patch-cryptography",
+          "title": "Vulnerability Management Patch Cryptography",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/where-to-start-prioritization-new-deployment",
+          "title": "Where To Start Prioritization New Deployment",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/best-practices/zero-trust-network-mtls-istio-rbac",
+          "title": "Zero Trust Network Mtls Istio Rbac",
+          "description": "",
+          "group": "Security"
+        },
+        {
+          "href": "/security/defense-in-depth",
+          "title": "Defense in depth",
+          "description": "Deployment security reference — supply chain through audit.",
+          "group": "Security"
+        }
+      ]
+    },
+    {
+      "name": "Reference",
+      "entries": [
+        {
+          "href": "/reference/hitl",
+          "title": "HITL reference",
+          "description": "",
+          "group": "Reference"
+        },
+        {
+          "href": "/reference/optional-tools",
+          "title": "Optional tools hub",
+          "description": "Cache, schedule, notify, Onyx, sandbox walkthroughs.",
+          "group": "Reference"
+        },
+        {
+          "href": "/reference/plugins",
+          "title": "Plugin model & registry",
+          "description": "Extension contract, ownership matrix, enable flags.",
+          "group": "Reference"
+        },
+        {
+          "href": "/reference/protocol",
+          "title": "Protocol reference",
+          "description": "Uniform envelope, approval flows, HATEOAS.",
+          "group": "Reference"
+        },
+        {
+          "href": "/reference/verticals",
+          "title": "Verticals reference",
+          "description": "",
+          "group": "Reference"
+        }
+      ]
+    },
+    {
+      "name": "Vision",
+      "entries": [
+        {
+          "href": "/vision/idp-platform",
+          "title": "IDP platform",
+          "description": "Document pipeline product story — self-hosted vs hosted IDP, archive, VDR.",
+          "group": "Vision"
+        },
+        {
+          "href": "/vision/immutable-releases",
+          "title": "Immutable releases (vision)",
+          "description": "",
+          "group": "Vision"
+        },
+        {
+          "href": "/vision/slide-deck",
+          "title": "Slide deck",
+          "description": "Presentation overview — not a how-to guide.",
+          "group": "Vision"
+        }
+      ]
+    },
+    {
+      "name": "Examples",
+      "entries": [
+        {
+          "href": "/benchmarks",
+          "title": "Benchmarks",
+          "description": "What the benchmark numbers mean and where to find reproducible artifacts in the repo.",
+          "group": "Examples"
+        },
+        {
+          "href": "/case-studies/cloudflare-docs-mcp",
+          "title": "Example: Cloudflare docs deploy",
+          "description": "MCP workflow for docs.clawql.com: search, execute, vault memory, and Worker runtime triage.",
+          "group": "Examples"
+        },
+        {
+          "href": "/case-studies/cross-thread-vault-recall",
+          "title": "Example: Cross-thread vault recall",
+          "description": "Repo search vs memory_recall — Obsidian graph, wikilinks, and session resume patterns.",
+          "group": "Examples"
+        },
+        {
+          "href": "/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04",
+          "title": "Example: Worker 1102 incident",
+          "description": "docs.clawql.com Error 1102 postmortem; MCP on Cloudflare APIs; prevention runbook.",
+          "group": "Examples"
+        },
+        {
+          "href": "/case-studies/openclaw-clawql-memory-recall-2026-06",
+          "title": "Example: OpenClaw memory_recall",
+          "description": "Agent gateway chat calls clawql__memory_recall; verbatim transcript; cross-session vault knowledge for solo builders.",
+          "group": "Examples"
+        },
+        {
+          "href": "/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04",
+          "title": "Example: Deck parity session",
+          "description": "memory_recall before filing issues; cache scratch state; vault ingest to close the loop.",
+          "group": "Examples"
+        },
+        {
+          "href": "/case-studies/truenas-scale-corgicave-homelab",
+          "title": "Example: TrueNAS homelab",
+          "description": "TrueNAS SCALE island: Docker/K8s networking, vault tools, and full triage ladder.",
+          "group": "Examples"
+        },
+        {
+          "href": "/case-studies/vault-memory-github-session-2026-04",
+          "title": "Example: Vault + GitHub session",
+          "description": "memory_ingest at scale, issue triage, and shipping enterprise audit tooling with docs.",
+          "group": "Examples"
+        }
+      ]
+    },
+    {
+      "name": "Ouroboros",
+      "entries": [
+        {
+          "href": "/ouroboros/build-plan",
+          "title": "DAOS build plan",
+          "description": "",
+          "group": "Ouroboros"
+        },
+        {
+          "href": "/ouroboros/daos",
+          "title": "DAOS unified architecture",
+          "description": "",
+          "group": "Ouroboros"
+        },
+        {
+          "href": "/ouroboros/specification",
+          "title": "DAOS coordination specification",
+          "description": "",
+          "group": "Ouroboros"
+        }
+      ]
+    },
+    {
+      "name": "Specs",
+      "entries": [
+        {
+          "href": "/specs/cq-extensions/cqe",
+          "title": ".cqe — Effect contracts",
+          "description": "",
+          "group": "Specs"
+        },
+        {
+          "href": "/specs/cq-extensions/cqk",
+          "title": ".cqk — knowledge",
+          "description": "",
+          "group": "Specs"
+        },
+        {
+          "href": "/specs/cq-extensions/cqm",
+          "title": ".cqm — memory / OKF",
+          "description": "",
+          "group": "Specs"
+        },
+        {
+          "href": "/specs/cq-extensions/cqw",
+          "title": ".cqw — workflows",
+          "description": "",
+          "group": "Specs"
+        }
+      ]
+    },
+    {
+      "name": "Resources",
+      "entries": [
+        {
+          "href": "/resources",
+          "title": "Resources hub",
+          "description": "",
+          "group": "Resources"
+        }
+      ]
+    },
+    {
+      "name": "Legacy redirects",
+      "entries": [
+        {
+          "href": "/cache",
+          "title": "Session cache (`cache`)",
+          "description": "Redirects to /learn/cache-handoff-between-chats",
+          "group": "Legacy redirects",
+          "redirectTo": "/learn/cache-handoff-between-chats"
+        },
+        {
+          "href": "/notify",
+          "title": "Slack `notify`",
+          "description": "Redirects to /learn/schedule-notify-workflows",
+          "group": "Legacy redirects",
+          "redirectTo": "/learn/schedule-notify-workflows"
+        },
+        {
+          "href": "/schedule",
+          "title": "`schedule` (synthetic checks)",
+          "description": "Redirects to /learn/schedule-notify-workflows",
+          "group": "Legacy redirects",
+          "redirectTo": "/learn/schedule-notify-workflows"
+        }
+      ]
+    }
+  ]
+}

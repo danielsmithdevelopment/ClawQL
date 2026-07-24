@@ -34,4 +34,6 @@ export const GENERATED_BODY_ROUTES = {
   'cq-extensions-cqw-body.mdx': '/specs/cq-extensions/cqw',
   'getting-started-for-teams-body.mdx': '/getting-started/for-teams',
   'getting-started-inference-body.mdx': '/getting-started/inference',
+  'getting-started-immutable-releases-body.mdx':
+    '/getting-started/immutable-releases',
 }

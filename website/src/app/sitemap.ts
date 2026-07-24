@@ -112,6 +112,7 @@ const ENTRIES: Array<Entry> = [
   { path: '/reference', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/examples', changeFrequency: 'monthly', priority: 0.78 },
   { path: '/resources', changeFrequency: 'monthly', priority: 0.85 },
+  { path: '/archive', changeFrequency: 'weekly', priority: 0.86 },
   { path: '/reference/protocol', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/reference/plugins', changeFrequency: 'monthly', priority: 0.86 },
   { path: '/plugins', changeFrequency: 'weekly', priority: 0.9 },

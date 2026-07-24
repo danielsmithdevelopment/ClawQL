@@ -52,6 +52,13 @@ export default function ClawqlPaymentsPage() {
           >
             Agentic Gateway
           </a>
+          . Not in the first-run sidebar — find it via{' '}
+          <a
+            href="/archive"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Docs archive
+          </a>
           .
         </Note>
       </div>
