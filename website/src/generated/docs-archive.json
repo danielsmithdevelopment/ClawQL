@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-24T03:34:10.126Z",
-  "sidebarHrefCount": 33,
-  "entryCount": 97,
+  "generatedAt": "2026-07-24T03:42:47.681Z",
+  "sidebarHrefCount": 37,
+  "entryCount": 93,
   "groups": [
     {
       "name": "Platform",
@@ -58,12 +58,6 @@
           "href": "/onyx-knowledge",
           "title": "Onyx knowledge (legacy path)",
           "description": "",
-          "group": "Platform"
-        },
-        {
-          "href": "/payments/clawql-payments",
-          "title": "clawql-payments",
-          "description": "Stripe, x402, MPP, and related rails — plan entitlements and WORM audit.",
           "group": "Platform"
         }
       ]
@@ -223,12 +217,6 @@
           "href": "/deployment/platforms",
           "title": "Deployment platforms",
           "description": "",
-          "group": "Deploy"
-        },
-        {
-          "href": "/helm",
-          "title": "Helm",
-          "description": "Chart at charts/clawql-mcp: values, GHCR image, optional Ingress, PVC, and upgrade notes.",
           "group": "Deploy"
         },
         {
@@ -439,12 +427,6 @@
           "title": "Zero Trust Network Mtls Istio Rbac",
           "description": "",
           "group": "Security"
-        },
-        {
-          "href": "/security/defense-in-depth",
-          "title": "Defense in depth",
-          "description": "Deployment security reference — supply chain through audit.",
-          "group": "Security"
         }
       ]
     },
@@ -490,12 +472,6 @@
           "href": "/vision/idp-platform",
           "title": "IDP platform",
           "description": "Document pipeline product story — self-hosted vs hosted IDP, archive, VDR.",
-          "group": "Vision"
-        },
-        {
-          "href": "/vision/immutable-releases",
-          "title": "Immutable releases (vision)",
-          "description": "",
           "group": "Vision"
         },
         {
