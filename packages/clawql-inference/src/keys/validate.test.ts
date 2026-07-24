@@ -28,6 +28,23 @@ describe("validateVirtualKey", () => {
     }
   });
 
+  it("rejects when rate limit exceeded", async () => {
+    resetRateLimitState();
+    const { mkdtemp } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const { createVirtualKey } = await import("./store.js");
+
+    const dir = await mkdtemp(join(tmpdir(), "clawql-rl-"));
+    const env = { CLAWQL_HOME: dir, CLAWQL_INFERENCE_KEYS_ENABLED: "1" };
+    const created = await createVirtualKey({ team: "eng", rateLimit: "1rpm" }, env);
+
+    expect(validateVirtualKey(created.secret, env).ok).toBe(true);
+    const blocked = validateVirtualKey(created.secret, env);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) expect(blocked.status).toBe(429);
+  });
+
   it("honors CLAWQL_INFERENCE_VIRTUAL_KEYS_PATH override", async () => {
     const { mkdtemp } = await import("node:fs/promises");
     const { tmpdir } = await import("node:os");
