@@ -50,13 +50,14 @@ Today those are often two local processes; the **product** is one Agentic Gatewa
 
 ## Pick your path
 
-| You want…                                    | Jump to                                   |
-| -------------------------------------------- | ----------------------------------------- |
-| First completion in under 5 minutes          | [Five-minute start](#five-minute-start)   |
-| Point OpenCode / OpenAI SDK at the gateway   | [Point a client](#point-a-client)         |
-| MCP tools + vault memory alongside inference | [Add MCP and memory](#add-mcp-and-memory) |
-| Understand auth / keys / security defaults   | [Security defaults](#security-defaults)   |
-| Full knobs, flywheel, policy schema          | [Reference](/inference/clawql-inference)  |
+| You want…                                    | Jump to                                            |
+| -------------------------------------------- | -------------------------------------------------- |
+| First completion in under 5 minutes          | [Five-minute start](#five-minute-start)            |
+| Managed Edge Gateway (`/mcp` + `/v1`)        | [Managed Edge Gateway](#what-good-looks-like-next) |
+| Point OpenCode / OpenAI SDK at the gateway   | [Point a client](#point-a-client)                  |
+| MCP tools + vault memory alongside inference | [Add MCP and memory](#add-mcp-and-memory)          |
+| Understand auth / keys / security defaults   | [Security defaults](#security-defaults)            |
+| Full knobs, flywheel, policy schema          | [Reference](/inference/clawql-inference)           |
 
 ---
 
@@ -198,8 +199,18 @@ Defense-in-depth narrative: [MCP proxy JWT ATR](https://github.com/danielsmithde
 
 ## What “good” looks like next
 
-1. **Local Edge** — you are here (`inference serve` + optional MCP).
-2. **Managed Gateway** — one hostname for `/v1` + `/mcp` + memory (trial / hosted). Product path in progress; same client env vars.
+1. **Local Edge** — `clawql inference serve` alone (models only).
+2. **Managed Edge Gateway (go-live)** — one hostname for `/v1` + `/mcp` + memory:
+
+```bash
+export DEEPSEEK_API_KEY=sk-…   # or another BYOK key
+clawql gateway create --profile process --team demo
+# → MCP URL, Inference URL, virtual key (shown once)
+```
+
+Docker variant: `clawql gateway create --profile local-docker --team demo`  
+Example compose: [`examples/managed-gateway/`](../../examples/managed-gateway/).
+
 3. **Dedicated Virtual Gateway** — customer VPC, WORM, Vault, team sync ([For teams](/getting-started/for-teams), Packer / Pulumi).
 4. **Regional Hub** — ClawQL-managed metering / routing pipe only — never holds your sovereign vault.
 
