@@ -41,8 +41,10 @@ export const docsNavigation: Array<NavGroup> = [
         title: 'Operations guide',
         href: '/deployment/operations-guide',
       },
+      { title: 'Platforms', href: '/deployment/platforms' },
       { title: 'Kubernetes & Helm', href: '/deployment/kubernetes' },
       { title: 'Helm charts', href: '/helm' },
+      { title: 'NATS JetStream', href: '/nats-jetstream' },
       { title: 'OpenClaw', href: '/openclaw' },
     ],
   },
@@ -61,6 +63,10 @@ export const docsNavigation: Array<NavGroup> = [
         title: 'Defense in depth',
         href: '/security/defense-in-depth',
       },
+      {
+        title: 'Security best practices',
+        href: '/security/best-practices',
+      },
       { title: 'Troubleshooting', href: '/troubleshooting' },
     ],
   },
@@ -77,6 +83,11 @@ export const docsNavigation: Array<NavGroup> = [
         title: 'Enterprise Ontology',
         href: '/architecture/enterprise-ontology',
       },
+      { title: 'IDP platform', href: '/vision/idp-platform' },
+      {
+        title: 'Operator target architecture',
+        href: '/design/operator-target-architecture',
+      },
       { title: '.cq* extensions', href: '/specs/cq-extensions' },
       { title: 'clawql-inference', href: '/inference/clawql-inference' },
       { title: 'clawql-payments', href: '/payments/clawql-payments' },
@@ -85,6 +96,7 @@ export const docsNavigation: Array<NavGroup> = [
         href: '/vision/immutable-releases',
       },
       { title: 'Ouroboros', href: '/ouroboros' },
+      { title: 'DAOS architecture', href: '/ouroboros/daos' },
     ],
   },
   {
@@ -92,8 +104,13 @@ export const docsNavigation: Array<NavGroup> = [
     links: [
       { title: 'Reference', href: '/reference' },
       { title: 'MCP tools', href: '/tools' },
+      { title: 'Protocol', href: '/reference/protocol' },
       { title: 'Configuration', href: '/spec-configuration' },
       { title: 'Plugins', href: '/plugins' },
+      {
+        title: 'Panguard MCP proxy',
+        href: '/plugins/panguard-proxy',
+      },
       {
         title: 'Contributor spec',
         href: '/contributing/technical-specification',

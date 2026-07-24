@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-24T03:42:47.681Z",
-  "sidebarHrefCount": 37,
-  "entryCount": 93,
+  "generatedAt": "2026-07-24T03:46:15.660Z",
+  "sidebarHrefCount": 45,
+  "entryCount": 85,
   "groups": [
     {
       "name": "Platform",
@@ -16,12 +16,6 @@
           "href": "/dashboard-kubernetes",
           "title": "Dashboard on Kubernetes",
           "description": "Bundled dashboard UI, Vault sync, and Helm wiring.",
-          "group": "Platform"
-        },
-        {
-          "href": "/design/operator-target-architecture",
-          "title": "Operator target architecture",
-          "description": "",
           "group": "Platform"
         },
         {
@@ -46,12 +40,6 @@
           "href": "/hitl-label-studio",
           "title": "HITL — Label Studio",
           "description": "Human review queues and webhook callbacks.",
-          "group": "Platform"
-        },
-        {
-          "href": "/nats-jetstream",
-          "title": "NATS JetStream",
-          "description": "Optional event-driven backbone for Ouroboros, agents, and edge sync: Helm values, JetStream retention controls, persistence, and health checks.",
           "group": "Platform"
         },
         {
@@ -117,12 +105,6 @@
           "href": "/plugins/ouroboros",
           "title": "Ouroboros",
           "description": "Evolutionary loop MCP tools and optional Postgres lineage.",
-          "group": "Plugins"
-        },
-        {
-          "href": "/plugins/panguard-proxy",
-          "title": "Panguard MCP proxy",
-          "description": "beforeCallTool policy chokepoint for enterprise MCP defense.",
           "group": "Plugins"
         },
         {
@@ -214,12 +196,6 @@
       "name": "Deploy",
       "entries": [
         {
-          "href": "/deployment/platforms",
-          "title": "Deployment platforms",
-          "description": "",
-          "group": "Deploy"
-        },
-        {
           "href": "/tailscale",
           "title": "Tailscale & Headscale",
           "description": "Beginner guide: private tailnets for MCP and execute—MagicDNS, Serve, CLAWQL_MCP_URL, Headscale, ACLs, Kubernetes vs mesh DNS.",
@@ -230,12 +206,6 @@
     {
       "name": "Security",
       "entries": [
-        {
-          "href": "/security/best-practices",
-          "title": "Security curriculum",
-          "description": "Vendor-neutral training modules.",
-          "group": "Security"
-        },
         {
           "href": "/security/best-practices/agent-gateway-hardening-dns-rebinding",
           "title": "Agent Gateway Hardening Dns Rebinding",
@@ -452,12 +422,6 @@
           "group": "Reference"
         },
         {
-          "href": "/reference/protocol",
-          "title": "Protocol reference",
-          "description": "Uniform envelope, approval flows, HATEOAS.",
-          "group": "Reference"
-        },
-        {
           "href": "/reference/verticals",
           "title": "Verticals reference",
           "description": "",
@@ -468,12 +432,6 @@
     {
       "name": "Vision",
       "entries": [
-        {
-          "href": "/vision/idp-platform",
-          "title": "IDP platform",
-          "description": "Document pipeline product story — self-hosted vs hosted IDP, archive, VDR.",
-          "group": "Vision"
-        },
         {
           "href": "/vision/slide-deck",
           "title": "Slide deck",
@@ -541,12 +499,6 @@
         {
           "href": "/ouroboros/build-plan",
           "title": "DAOS build plan",
-          "description": "",
-          "group": "Ouroboros"
-        },
-        {
-          "href": "/ouroboros/daos",
-          "title": "DAOS unified architecture",
           "description": "",
           "group": "Ouroboros"
         },
