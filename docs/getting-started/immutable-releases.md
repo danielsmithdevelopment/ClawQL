@@ -101,12 +101,12 @@ clawql-release publish --tag v7.1.0 \
 
 ## Stuck?
 
-| You see…                  | Try…                            |
-| ------------------------- | ------------------------------- |
-| Dirty git tree at publish | Commit or stash tracked changes |
-| Rift “no reflinks”        | Stick with `git-worktree`       |
+| You see…                  | Try…                              |
+| ------------------------- | --------------------------------- |
+| Dirty git tree at publish | Commit or stash tracked changes   |
+| Rift “no reflinks”        | Stick with `git-worktree`         |
 | Verify signature failed   | Re-publish; check `.clawql/keys/` |
-| No real Arweave tx        | Expected in dry-run — that’s OK |
+| No real Arweave tx        | Expected in dry-run — that’s OK   |
 
 ---
 
