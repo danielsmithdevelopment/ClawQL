@@ -105,7 +105,7 @@ Ouroboros loop ─────────────────────�
 
 ObservedInferenceGateway ──writes──► Inference store (jsonl / postgres / memory)
 
-````
+```
 
 Every successful `complete()` call flows **outward through decorators** and ends in the call store. HTTP clients additionally pass through virtual-key auth before the OpenAI router invokes the same gateway.
 
@@ -134,7 +134,7 @@ const result = await gateway.complete({
   correlationId: "seed_abc_gen_2",
   team: "eng",
 });
-````
+```
 
 Disable layers via options: `{ semanticCache: false }`, `{ fallback: false }`, `{ store: null }`.
 
