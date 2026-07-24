@@ -2,7 +2,7 @@
 
 Run the **OpenAI-compatible** `clawql-inference` gateway with operator policy in YAML instead of dozens of env vars.
 
-**Reference:** [`docs/inference/clawql-inference.md`](../../docs/inference/clawql-inference.md) · **Package:** [`packages/clawql-inference`](../../packages/clawql-inference)
+**Getting started:** [`docs/getting-started/inference.md`](../../docs/getting-started/inference.md) · **Reference:** [`docs/inference/clawql-inference.md`](../../docs/inference/clawql-inference.md) · **Package:** [`packages/clawql-inference`](../../packages/clawql-inference)
 
 ## 1. Create `CLAWQL_HOME`
 

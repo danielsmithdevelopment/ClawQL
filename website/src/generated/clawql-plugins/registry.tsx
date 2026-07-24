@@ -109,7 +109,7 @@ export const pluginPages: PluginPageMeta[] = [
     slug: 'inference-providers',
     title: 'Inference providers',
     description:
-      'Optional provider plugins for clawql-inference — OpenAI, Anthropic, and Ollama built-ins plus third-party extensions.',
+      'BYOK provider plugins for clawql-inference — direct vendor adapters by default, OpenRouter as an optional escape hatch.',
     status: 'shipped',
     package: 'clawql-inference/plugin',
     prev: 'ouroboros',

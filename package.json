@@ -95,6 +95,8 @@
         "grpc:memory-recall": "node scripts/dev/grpc-memory-recall.mjs",
         "clawql:github-repo-description": "npm run build && node scripts/dev/clawql-github-patch-repo-description.mjs",
         "benchmark:tokens": "npm run build && node scripts/workflows/benchmark-provider-tokens.mjs",
+        "openbench:validate": "python3 openbench/validate_tasks.py",
+        "openbench:ab": "python3 openbench/scripts/run-ab-compare.py",
         "workflow:multi-provider": "npm run build && node scripts/workflows/workflow-gke-cloudflare-jira.mjs",
         "workflow:complex-release-stack": "npm run build && node scripts/workflows/workflow-complex-release-stack.mjs",
         "workflow:complex-release-stack:mcp": "npm run build && node scripts/workflows/mcp-workflow-complex-release-stack.mjs",

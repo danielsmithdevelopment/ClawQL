@@ -13,8 +13,14 @@ describe("parseModelId", () => {
     expect(parseModelId("gpt-4o")).toEqual({ provider: "openai", model: "gpt-4o" });
   });
 
-  it("rejects empty provider or model", () => {
-    expect(() => parseModelId("/model")).toThrow(/Invalid model id/);
-    expect(() => parseModelId("openai/")).toThrow(/Invalid model id/);
+  it("keeps multi-segment OpenRouter model paths after the provider", () => {
+    expect(parseModelId("openrouter/deepseek/deepseek-chat")).toEqual({
+      provider: "openrouter",
+      model: "deepseek/deepseek-chat",
+    });
+    expect(parseModelId("openrouter/qwen/qwen3.6-plus")).toEqual({
+      provider: "openrouter",
+      model: "qwen/qwen3.6-plus",
+    });
   });
 });

@@ -1,0 +1,41 @@
+kind = "manifest"
+name = "clawql-opencode-deepseek"
+isolate_home = false
+inherit_env = true
+# Prefer the Python adapter + run-ab-compare.py for inference URL wiring.
+# This manifest assumes CLAWQL_INFERENCE_URL and OPENCODE_CONFIG_CONTENT are
+# already set in the environment (Actions / local shell).
+command = [
+  "clawql", "opencode",
+  "--non-interactive",
+  "--model", "{model}",
+  "--workdir", "{workspace}",
+  "--message", "{prompt}",
+]
+version_command = ["clawql", "--version"]
+policy_headless_args = ["--non-interactive"]
+pass_env = [
+  "DEEPSEEK_API_KEY",
+  "GROQ_API_KEY",
+  "OPENROUTER_API_KEY",
+  "CLAWQL_HOME",
+  "CLAWQL_OBSIDIAN_VAULT_PATH",
+  "CLAWQL_INFERENCE_URL",
+  "CLAWQL_INFERENCE_CLIENT_KEY",
+  "CLAWQL_OPENBENCH",
+  "CLAWQL_HARNESS_ALLOW_UNSANDBOXED",
+  "CLAWQL_OPENBENCH_HARNESS",
+  "OPENCODE_CONFIG_CONTENT",
+  "OPENAI_BASE_URL",
+  "PATH",
+  "HOME",
+]
+[models]
+"deepseek/deepseek-chat" = "clawql/deepseek/deepseek-chat"
+"clawql/cheap-chat" = "clawql/deepseek/deepseek-chat"
+"groq/llama-3.3-70b-versatile" = "clawql/groq/llama-3.3-70b-versatile"
+
+[env]
+CLAWQL_OPENBENCH = "1"
+CLAWQL_HARNESS_ALLOW_UNSANDBOXED = "1"
+CLAWQL_OPENBENCH_HARNESS = "opencode"

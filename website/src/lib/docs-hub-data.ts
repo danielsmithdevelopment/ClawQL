@@ -158,6 +158,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: SquaresPlusIcon,
   }),
   card({
+    href: '/getting-started/inference',
+    name: 'Inference setup',
+    description:
+      'Five-minute clawql-inference runbook — BYOK /v1, MCP + memory, then deep reference.',
+    icon: BoltIcon,
+  }),
+  card({
     href: '/inference/clawql-inference',
     name: 'Agentic Gateway (clawql-inference)',
     description:

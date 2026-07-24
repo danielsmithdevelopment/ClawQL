@@ -3,6 +3,9 @@
  * ClawQL onboarding CLI: init, doctor, mcp-config, secrets.
  */
 import "../load-env.js";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { formatDoctorReport, runDoctor } from "./doctor.js";
 import { runInit } from "./init.js";
 import { formatMcpConfig } from "./mcp-config.js";
@@ -11,7 +14,7 @@ import { runSecretsList, runSecretsSet } from "./secrets-cli.js";
 import { onboardExitCode, runOnboard } from "./onboard.js";
 import { runOperatorStatus } from "./operator-cli.js";
 import { runSourcesAdd, runSourcesList, runSourcesRemove } from "./sources-cli.js";
-import { runHarness, type HarnessId } from "./harness-cli.js";
+import { runHarness, runHarnessNonInteractive, type HarnessId } from "./harness-cli.js";
 import {
   parseImageDigestFlags,
   runReleaseCollect,
@@ -118,6 +121,7 @@ type Command =
   | "cursor"
   | "opencode"
   | "install"
+  | "version"
   | "help";
 
 function parse(argv: string[]): {
@@ -131,6 +135,7 @@ function parse(argv: string[]): {
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;
     if (a === "--yes" || a === "-y") flags.yes = true;
+    else if (a === "--version" || a === "-V") flags.version = true;
     else if (a === "--interactive" || a === "-i") flags.interactive = true;
     else if (a === "--verbose" || a === "-v") flags.verbose = true;
     else if (a === "--smoke") flags.smoke = true;
@@ -175,6 +180,11 @@ function parse(argv: string[]): {
     else if (a === "--port") flags.port = argv[++i] ?? "";
     else if (a === "--model") flags.model = argv[++i] ?? "";
     else if (a === "--message") flags.message = argv[++i] ?? "";
+    else if (a === "--non-interactive") flags.nonInteractive = true;
+    else if (a === "--task-file") flags.taskFile = argv[++i] ?? "";
+    else if (a === "--workdir") flags.workdir = argv[++i] ?? "";
+    else if (a === "--timeout") flags.timeout = argv[++i] ?? "";
+    else if (a === "--inference-url") flags.inferenceUrl = argv[++i] ?? "";
     else if (a === "--correlation-id") flags.correlationId = argv[++i] ?? "";
     else if (a === "--since") flags.since = argv[++i] ?? "";
     else if (a === "--limit") flags.limit = argv[++i] ?? "";
@@ -327,6 +337,7 @@ Usage:
   clawql payments spend report [--group-by provider|tenant|plan] | audit [--correlation-id ID]
   clawql payments credits show | bank-link --customer cus_xxx | topup --customer cus_xxx --amount 25
   clawql claude | codex | cursor | opencode [-- harness args...]
+  clawql claude --non-interactive --model <id> --task-file <path> [--workdir DIR] [--timeout SECS]
   clawql operator status
 
 Harness (MCP pre-wired):
@@ -334,6 +345,7 @@ Harness (MCP pre-wired):
   clawql codex      ~/.codex/config.toml + launch codex
   clawql cursor     ~/.cursor/mcp.json + launch cursor
   clawql opencode   ~/.config/opencode/opencode.json + launch opencode
+  Headless (OpenBench): --non-interactive --task-file|--message [--model] [--workdir] [--timeout]
 
 Install (local script):
   curl -fsSL https://clawql.com/install | bash
@@ -429,6 +441,21 @@ async function main(): Promise<void> {
     return;
   }
   const { cmd, subcmd, flags, rest } = parse(argv);
+
+  if (flags.version || cmd === "version") {
+    try {
+      const here = dirname(fileURLToPath(import.meta.url));
+      const pkgPath = join(here, "..", "..", "package.json");
+      const pkg = JSON.parse(await readFile(pkgPath, "utf8")) as {
+        version?: string;
+        name?: string;
+      };
+      console.log(`${pkg.name ?? "clawql-mcp"} ${pkg.version ?? "unknown"}`);
+    } catch {
+      console.log("clawql-mcp unknown");
+    }
+    return;
+  }
 
   if (cmd === "help") {
     printHelp();
@@ -1233,6 +1260,24 @@ async function main(): Promise<void> {
   if (harnessIds.includes(cmd as HarnessId)) {
     const dash = argv.indexOf("--");
     const forwarded = dash >= 0 ? argv.slice(dash + 1) : rest;
+    if (flags.nonInteractive) {
+      const timeoutRaw = typeof flags.timeout === "string" ? flags.timeout : "";
+      const timeoutS = timeoutRaw ? Number(timeoutRaw) : undefined;
+      const result = await runHarnessNonInteractive(
+        cmd as HarnessId,
+        {
+          model: typeof flags.model === "string" ? flags.model : undefined,
+          taskFile: typeof flags.taskFile === "string" ? flags.taskFile : undefined,
+          instruction: typeof flags.message === "string" ? flags.message : undefined,
+          workdir: typeof flags.workdir === "string" ? flags.workdir : undefined,
+          timeoutS: Number.isFinite(timeoutS) ? timeoutS : undefined,
+          inferenceUrl: typeof flags.inferenceUrl === "string" ? flags.inferenceUrl : undefined,
+        },
+        forwarded
+      );
+      process.exitCode = result.exitCode;
+      return;
+    }
     process.exitCode = await runHarness(cmd as HarnessId, forwarded);
     return;
   }

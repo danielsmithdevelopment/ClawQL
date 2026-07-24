@@ -1,0 +1,195 @@
+# One-off OpenBench A/B via clawql-inference (direct BYOK; OpenRouter optional).
+#
+# Spin up inference + OpenCode → clawql-on vs clawql-off → Step Summary → tear down.
+# Preferred secret: DEEPSEEK_API_KEY (or other vendor BYOK keys).
+# Optional: OPENROUTER_API_KEY when model is openrouter/*.
+#
+# Actions → OpenBench A/B (clawql on vs off) → Run workflow.
+
+name: OpenBench A/B (clawql on vs off)
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: OpenBench task under openbench/tasks/
+        required: true
+        type: choice
+        options:
+          - memory-dependent-continuation
+          - token-budget-constrained
+          - multi-provider-api-workflow
+        default: memory-dependent-continuation
+      model:
+        description: "clawql-inference model (deepseek/… preferred; openrouter/… optional)"
+        required: true
+        type: string
+        default: deepseek/deepseek-chat
+      trials:
+        description: Trials per arm (keep small — each cell spends tokens)
+        required: true
+        type: choice
+        options:
+          - "1"
+          - "2"
+          - "3"
+        default: "1"
+      timeout_s:
+        description: Per-cell agent timeout in seconds
+        required: true
+        type: string
+        default: "300"
+      arms:
+        description: Which arms to run
+        required: true
+        type: choice
+        options:
+          - clawql-on,clawql-off
+          - clawql-on
+          - clawql-off
+        default: clawql-on,clawql-off
+      inference_port:
+        description: Local clawql-inference port
+        required: true
+        type: string
+        default: "8080"
+
+concurrency:
+  group: openbench-ab-${{ github.ref }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ab-compare:
+    name: A/B via clawql-inference (BYOK)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      CLAWQL_INFERENCE_PORT: ${{ inputs.inference_port }}
+      CLAWQL_OPENBENCH: "1"
+      CLAWQL_HARNESS_ALLOW_UNSANDBOXED: "1"
+      CLAWQL_OPENBENCH_HARNESS: "opencode"
+      CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+      CLAWQL_OPENROUTER_APP_TITLE: ClawQL OpenBench
+    steps:
+      - name: Require BYOK or OpenRouter credentials
+        env:
+          MODEL: ${{ inputs.model }}
+        run: |
+          set -euo pipefail
+          if [[ "$MODEL" == openrouter/* ]]; then
+            if [ -z "${OPENROUTER_API_KEY:-}" ]; then
+              echo "::error::Model '$MODEL' needs repository secret OPENROUTER_API_KEY (optional escape hatch)."
+              exit 1
+            fi
+            echo "Using OpenRouter escape hatch for $MODEL"
+            exit 0
+          fi
+          # Direct BYOK path — prefer DeepSeek for the default model.
+          if [ -n "${DEEPSEEK_API_KEY:-}" ] || [ -n "${GROQ_API_KEY:-}" ] \
+            || [ -n "${OPENAI_API_KEY:-}" ] || [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+            echo "Using direct BYOK credentials for clawql-inference ($MODEL)"
+            exit 0
+          fi
+          echo "::error::Add DEEPSEEK_API_KEY (preferred) or another vendor BYOK secret. OpenRouter remains optional via OPENROUTER_API_KEY + openrouter/* models."
+          exit 1
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install ClawQL (workspace)
+        run: |
+          npm ci
+          npm run build
+          echo "CLAWQL_BIN=$GITHUB_WORKSPACE/bin/clawql.mjs" >> "$GITHUB_ENV"
+          node bin/clawql.mjs --version
+
+      - name: Install OpenCode CLI
+        run: |
+          # Official npm package name varies by channel; try common ids.
+          npm install -g opencode-ai@latest 2>/dev/null \
+            || npm install -g @opencode-ai/cli@latest 2>/dev/null \
+            || npm install -g opencode@latest
+          command -v opencode
+          opencode --version || true
+
+      - name: Validate task checkers (offline)
+        run: python3 openbench/validate_tasks.py
+
+      - name: Start clawql-inference (BYOK upstreams)
+        run: |
+          mkdir -p artifacts/openbench-ab
+          PORT="${{ inputs.inference_port }}"
+          node bin/clawql.mjs inference serve --port "$PORT" \
+            > artifacts/openbench-ab/inference.log 2>&1 &
+          echo $! > /tmp/clawql-inference.pid
+          echo "Started clawql-inference pid=$(cat /tmp/clawql-inference.pid) on :$PORT"
+          for i in $(seq 1 60); do
+            if curl -sf "http://127.0.0.1:${PORT}/healthz" >/dev/null; then
+              echo "clawql-inference healthy after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::clawql-inference failed to become healthy"
+          tail -n 120 artifacts/openbench-ab/inference.log || true
+          exit 1
+
+      - name: Run A/B compare
+        id: ab
+        env:
+          CLAWQL_BIN: ${{ env.CLAWQL_BIN }}
+          CLAWQL_INFERENCE_URL: http://127.0.0.1:${{ inputs.inference_port }}/v1
+        run: |
+          OUT="artifacts/openbench-ab/results.json"
+          SUM="artifacts/openbench-ab/summary.md"
+          python3 openbench/scripts/run-ab-compare.py \
+            --task "${{ inputs.task }}" \
+            --model "${{ inputs.model }}" \
+            --inference-url "http://127.0.0.1:${{ inputs.inference_port }}/v1" \
+            --trials "${{ inputs.trials }}" \
+            --timeout "${{ inputs.timeout_s }}" \
+            --arms "${{ inputs.arms }}" \
+            --out "$OUT" \
+            --summary-md "$SUM"
+          {
+            echo "## OpenBench A/B (clawql-inference BYOK)"
+            echo ""
+            echo "- Run: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo "- Inference: \`clawql-inference\` (direct BYOK; OpenRouter optional)"
+            echo "- Agent: OpenCode"
+            echo "- Task: \`${{ inputs.task }}\`"
+            echo "- Model: \`${{ inputs.model }}\`"
+            echo "- Trials/arm: \`${{ inputs.trials }}\`"
+            echo "- Arms: \`${{ inputs.arms }}\`"
+            echo ""
+            cat "$SUM"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stop clawql-inference
+        if: always()
+        run: |
+          if [ -f /tmp/clawql-inference.pid ]; then
+            kill "$(cat /tmp/clawql-inference.pid)" 2>/dev/null || true
+          fi
+          pkill -f "inference serve" 2>/dev/null || true
+
+      - name: Upload results artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: openbench-ab-${{ inputs.task }}-${{ github.run_id }}
+          path: artifacts/openbench-ab/
+          if-no-files-found: warn
+          retention-days: 14

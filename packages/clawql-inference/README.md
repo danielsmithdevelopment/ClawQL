@@ -1,17 +1,26 @@
 # clawql-inference
 
-TypeScript-native **inference gateway** for ClawQL: model tier escalation, cloud provider adapters, local runtimes (Ollama / vLLM / Llama.cpp), semantic caching, token-efficiency layers (3–12), and WORM-auditable observability.
+TypeScript-native **inference gateway** for ClawQL: direct BYOK multi-provider
+routing, model tier escalation, semantic caching, token-efficiency layers (3–12),
+and WORM-auditable observability — a complete upgrade over OpenRouter-style
+aggregators and LiteLLM-class proxies.
 
-**Status:** Gateway MVP + export/finetune — model tier escalation (#560), provider plugins, call store, dataset export, and fine-tune job API.
+**Status:** Gateway MVP + export/finetune — model tier escalation (#560),
+provider plugins, call store, dataset export, and fine-tune job API.
 
-Built-in provider plugins (OpenAI, Anthropic, Ollama) register automatically. Third parties add backends via `InferenceProviderPlugin` — see [`docs/plugins/inference-providers.md`](../../docs/plugins/inference-providers.md).
+Built-in provider plugins register automatically: **OpenAI, Anthropic, Ollama,
+DeepSeek, Groq, Fireworks, Together, Mistral, xAI, Google**, plus **OpenRouter
+as an optional escape hatch**. Third parties add backends via
+`InferenceProviderPlugin` — see
+[`docs/plugins/inference-providers.md`](../../docs/plugins/inference-providers.md).
 
 ## Drop-in OpenAI replacement
 
 Point any OpenAI SDK or tool at ClawQL inference — **no code changes**:
 
 ```bash
-export OPENAI_API_KEY=sk-...          # or ANTHROPIC_API_KEY / OLLAMA_BASE_URL
+export DEEPSEEK_API_KEY=sk-...        # preferred BYOK (or OPENAI_API_KEY / GROQ_API_KEY / …)
+# export OPENROUTER_API_KEY=sk-or-... # optional escape hatch
 export OPENAI_BASE_URL=http://127.0.0.1:8080/v1
 
 # Standalone gateway (npm package bin)
@@ -20,12 +29,44 @@ npx clawql-inference
 clawql inference serve --port 8080
 ```
 
+### Direct BYOK (preferred)
+
+```bash
+export DEEPSEEK_API_KEY=sk-…
+clawql inference serve --port 8080
+
+# Direct vendor model ids — no OpenRouter in the path
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"deepseek/deepseek-chat","messages":[{"role":"user","content":"hi"}]}'
+
+# ClawQL catalog alias
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"clawql/cheap-chat","messages":[{"role":"user","content":"hi"}]}'
+```
+
+### OpenRouter escape hatch (optional)
+
+Keep OpenRouter if you prefer that aggregator — ClawQL still owns the control
+plane (cache, tiers, audit, virtual keys):
+
+```bash
+export OPENROUTER_API_KEY=sk-or-…
+clawql inference serve --port 8080
+
+# Model ids: openrouter/<vendor>/<model>
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"openrouter/deepseek/deepseek-chat","messages":[{"role":"user","content":"hi"}]}'
+```
+
 **Endpoints** (OpenAI-compatible):
 
 | Method | Path                   | Notes                                                 |
 | ------ | ---------------------- | ----------------------------------------------------- |
 | `GET`  | `/healthz`             | Liveness                                              |
-| `GET`  | `/v1/models`           | Tier map + `CLAWQL_INFERENCE_MODELS` + Ollama tags    |
+| `GET`  | `/v1/models`           | Credentialed catalog + tier map + Ollama tags         |
 | `GET`  | `/v1/models/:id`       | Single model                                          |
 | `POST` | `/v1/chat/completions` | Bare `gpt-4o` or `provider/model`; `stream: true` SSE |
 

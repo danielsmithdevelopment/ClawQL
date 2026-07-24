@@ -1,0 +1,1 @@
+NOTE_b2 = True

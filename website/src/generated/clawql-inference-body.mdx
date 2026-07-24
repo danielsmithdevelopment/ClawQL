@@ -3,30 +3,34 @@
 **Status:** Shipped (July 2026)  
 **Package:** [`packages/clawql-inference`](../../packages/clawql-inference)
 
-`clawql-inference` is ClawQL's TypeScript-native **Agentic Gateway** entry — the OpenAI-compatible inference control plane and model-improvement surface of the Foundational Platform for Auditable Production AI. It is a LiteLLM-class layer with ClawQL's trust model: WORM-auditable routing, semantic cache, model tier escalation, agent coordination hooks, verdict-filtered export, and fine-tuning flywheel. It is designed as a **drop-in OpenAI replacement** (`OPENAI_BASE_URL=http://127.0.0.1:8080/v1`) while closing the production loop that generic proxies leave open.
+`clawql-inference` is ClawQL's TypeScript-native **Agentic Gateway** entry — the OpenAI-compatible inference control plane and model-improvement surface of the Foundational Platform for Auditable Production AI. It is a **complete upgrade** over OpenRouter-style aggregators and LiteLLM-class proxies: direct BYOK multi-provider routing, curated catalog + aliases, WORM-auditable routing, semantic cache, model tier escalation, agent coordination hooks, verdict-filtered export, and a fine-tuning flywheel. OpenRouter remains an **optional escape hatch** if you prefer that aggregator — you still get ClawQL's control plane on top.
+
+It is designed as a **drop-in OpenAI replacement** (`OPENAI_BASE_URL=http://127.0.0.1:8080/v1`) while closing the production loop that generic proxies leave open.
+
+**New here?** Start with the runbook: [Get started with clawql-inference](/getting-started/inference) — five-minute serve, client wiring, MCP + memory, security defaults.
 
 On a laptop it is often the **Edge Agentic Gateway**. In enterprise fabric deployments it connects through **Dedicated Virtual Gateways** to multi-tenant **Regional Hubs** — see [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric).
 
-**Related docs:** [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [Inference provider plugins](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/inference-providers.md) · [Token efficiency (12 layers)](/architecture/token-efficiency) · [Ouroboros library](/ouroboros)
+**Related docs:** [Getting started — inference](/getting-started/inference) · [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [Inference provider plugins](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/inference-providers.md) · [Token efficiency (12 layers)](/architecture/token-efficiency) · [Ouroboros library](/ouroboros)
 
 ---
 
 ## What it does
 
-| Capability        | Summary                                                                                      |
-| ----------------- | -------------------------------------------------------------------------------------------- |
-| **Gateway**       | OpenAI-compatible REST (`/v1/chat/completions`, `/v1/models`, SSE streaming)                 |
-| **Providers**     | Built-in OpenAI, Anthropic, Ollama; extensible plugin registry                               |
-| **Routing**       | Frugal → standard → frontier tier escalation with kill switches                              |
-| **Cache**         | Embedding similarity semantic cache (cosine threshold + TTL)                                 |
-| **Efficiency**    | Layers 3–11 (terse, prompt cache, history/prompt compress, HTTP routing, structured/prefill) |
-| **Resilience**    | Per-tier / per-model fallback chains before hard failure                                     |
-| **Auth**          | Virtual keys (per-team budgets, rate limits)                                                 |
-| **Entitlements**  | Optional plan limits via `clawql-payments`                                                   |
-| **Observability** | Durable call store, `logs` / `trace` / `spend` CLI                                           |
-| **Flywheel**      | Verdict-filtered export → fine-tune → register custom model in tier map                      |
-| **Automation**    | Scheduled pipeline worker (cron export when sample threshold met)                            |
-| **Ouroboros**     | `model_escalation` + `agent_coordination` audit events in lineage store                      |
+| Capability        | Summary                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------- |
+| **Gateway**       | OpenAI-compatible REST (`/v1/chat/completions`, `/v1/models`, SSE streaming)                        |
+| **Providers**     | Direct BYOK (OpenAI, Anthropic, DeepSeek, Groq, …) + local Ollama; OpenRouter optional escape hatch |
+| **Routing**       | Frugal → standard → frontier tier escalation with kill switches                                     |
+| **Cache**         | Embedding similarity semantic cache (cosine threshold + TTL)                                        |
+| **Efficiency**    | Layers 3–11 (terse, prompt cache, history/prompt compress, HTTP routing, structured/prefill)        |
+| **Resilience**    | Per-tier / per-model fallback chains before hard failure                                            |
+| **Auth**          | Virtual keys (per-team budgets, rate limits)                                                        |
+| **Entitlements**  | Optional plan limits via `clawql-payments`                                                          |
+| **Observability** | Durable call store, `logs` / `trace` / `spend` CLI                                                  |
+| **Flywheel**      | Verdict-filtered export → fine-tune → register custom model in tier map                             |
+| **Automation**    | Scheduled pipeline worker (cron export when sample threshold met)                                   |
+| **Ouroboros**     | `model_escalation` + `agent_coordination` audit events in lineage store                             |
 
 ---
 
@@ -39,7 +43,8 @@ export CLAWQL_HOME="${CLAWQL_HOME:-$HOME/.clawql}"
 mkdir -p "$CLAWQL_HOME/Inference"
 cp examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
 
-export OPENAI_API_KEY=sk-...          # and/or OLLAMA_BASE_URL for local frugal tier
+export DEEPSEEK_API_KEY=sk-...        # preferred BYOK — and/or OPENAI_API_KEY / GROQ_API_KEY / …
+# export OPENROUTER_API_KEY=sk-or-... # optional escape hatch only
 export OLLAMA_BASE_URL=http://127.0.0.1:11434
 
 clawql inference policy show          # expect policy_source: manifest+env
@@ -51,12 +56,11 @@ Point clients at `OPENAI_BASE_URL=http://127.0.0.1:8080/v1`. Manifest YAML merge
 One-shot CLI (no HTTP):
 
 ```bash
-clawql inference complete --model ollama/phi4 --message "hello"
+clawql inference complete --model deepseek/deepseek-chat --message "hello"
+# or: clawql inference complete --model clawql/cheap-chat --message "hello"
 ```
 
-See [Policy](#policy) for the full manifest schema and [Persistence layout](#persistence-layout) for other files under `$CLAWQL_HOME/Inference/`.
-
----
+## See [Policy](#policy) for the full manifest schema and [Persistence layout](#persistence-layout) for other files under `$CLAWQL_HOME/Inference/`.
 
 ## Architecture overview
 
@@ -86,17 +90,20 @@ HTTP `clawql inference serve` uses `createInferenceGatewayAsync()` so semantic c
 
 ### Backends
 
-- **Provider plugins** — built-in OpenAI, Anthropic, Ollama; extensible via the plugin registry
+- **Provider plugins** — direct BYOK builtins (OpenAI, Anthropic, DeepSeek, Groq, Fireworks, Together, Mistral, xAI, Google) + Ollama; OpenRouter optional; extensible via the plugin registry
+- **Model catalog** — curated `provider/model` entries + `clawql/*` aliases; `/v1/models` lists credentialed catalog models
 - **Inference store** — `memory`, `jsonl`, or `postgres` backend for durable call records and export
 
 ### Data flow summary
 
 ```
+
 HTTP clients → auth middleware → OpenAI router → [Observed → Entitlement → Cache → Fallback → Configured] → provider plugin
 CLI / library callers ──────────────────────────► [same decorator stack] ────────────────────────────────► provider plugin
 Ouroboros loop ─────────────────────────────────► ConfiguredInferenceGateway (innermost) ───────────────► provider plugin
 
 ObservedInferenceGateway ──writes──► Inference store (jsonl / postgres / memory)
+
 ```
 
 Every successful `complete()` call flows **outward through decorators** and ends in the call store. HTTP clients additionally pass through virtual-key auth before the OpenAI router invokes the same gateway.
@@ -598,7 +605,31 @@ clawql inference <subcommand>
 
 ---
 
-## Differentiation vs LiteLLM
+## Upgrade vs OpenRouter / LiteLLM
+
+clawql-inference is positioned as a **complete upgrade** — not a thin wrapper.
+You can still terminate on OpenRouter when you want that aggregator; the default
+path disintermediates it and talks to vendors with **your keys**.
+
+| Capability                                   | clawql-inference     | OpenRouter             | LiteLLM-class proxies |
+| -------------------------------------------- | -------------------- | ---------------------- | --------------------- |
+| Direct BYOK to vendors                       | Yes (default)        | N/A (is the middleman) | Often yes             |
+| Optional OpenRouter passthrough              | Yes (`openrouter/*`) | —                      | Possible via custom   |
+| Curated catalog + `clawql/*` aliases         | Yes                  | Catalog only           | Config-dependent      |
+| OpenAI-compatible drop-in                    | Yes                  | Yes                    | Yes                   |
+| Outcome-driven tier escalation               | Yes                  | No                     | Static / rules        |
+| Semantic cache + token-efficiency layers     | Yes                  | No                     | Limited / plugins     |
+| Virtual keys, budgets, entitlements          | Yes                  | Keys/credits           | Varies                |
+| `correlation_id` → WORM / Ouroboros lineage  | Yes                  | Generic logs           | Generic logs          |
+| Verdict-filtered export + fine-tune flywheel | Yes                  | No                     | Ad-hoc                |
+| TypeScript-native control plane              | Yes                  | Hosted SaaS            | Usually Python        |
+
+**Narrative for operators:** prefer `deepseek/…`, `groq/…`, `openai/…` with vendor
+keys. Use `openrouter/…` only when you explicitly want OpenRouter's long-tail
+catalog or billing consolidation — ClawQL still owns routing, cache, audit, and
+policy.
+
+### Differentiation detail (vs LiteLLM)
 
 | ClawQL                                                    | LiteLLM-class proxies   |
 | --------------------------------------------------------- | ----------------------- |

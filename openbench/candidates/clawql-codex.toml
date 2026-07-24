@@ -1,0 +1,33 @@
+kind = "manifest"
+name = "clawql-codex"
+isolate_home = false
+inherit_env = true
+command = [
+  "clawql", "codex",
+  "--non-interactive",
+  "--model", "{model}",
+  "--workdir", "{workspace}",
+  "--message", "{prompt}",
+]
+version_command = ["clawql", "--version"]
+policy_headless_args = ["--non-interactive"]
+pass_env = [
+  "OPENAI_API_KEY",
+  "CLAWQL_HOME",
+  "CLAWQL_OBSIDIAN_VAULT_PATH",
+  "CLAWQL_INFERENCE_URL",
+  "CLAWQL_OPENBENCH",
+  "CLAWQL_HARNESS_ALLOW_UNSANDBOXED",
+  "CLAWQL_OPENBENCH_HARNESS",
+  "PATH",
+  "HOME",
+]
+[models]
+"gpt-5.5-medium" = "gpt-5.5"
+"gpt-5.5" = "gpt-5.5"
+"gpt-5.6-sol" = "gpt-5.6-sol"
+
+[env]
+CLAWQL_OPENBENCH = "1"
+CLAWQL_HARNESS_ALLOW_UNSANDBOXED = "1"
+CLAWQL_OPENBENCH_HARNESS = "codex"

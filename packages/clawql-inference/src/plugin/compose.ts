@@ -1,16 +1,24 @@
 import {
   createAnthropicProviderPlugin,
   createOllamaProviderPlugin,
+  createOpenAiCompatByokProviderPlugins,
   createOpenAiProviderPlugin,
+  createOpenRouterProviderPlugin,
 } from "./builtins.js";
 import type { InferenceProviderPlugin } from "../providers/types.js";
 
-/** Built-in defaults from the inference plan: OpenAI, Anthropic, Ollama. */
+/**
+ * Built-in defaults: direct BYOK providers + local Ollama + optional OpenRouter
+ * escape hatch. OpenRouter is never required — operators bring vendor keys.
+ */
 export function composeDefaultProviderPlugins(): InferenceProviderPlugin[] {
   return [
     createOpenAiProviderPlugin(),
     createAnthropicProviderPlugin(),
     createOllamaProviderPlugin(),
+    ...createOpenAiCompatByokProviderPlugins(),
+    // Optional aggregator — keep last so direct BYOK is the default narrative.
+    createOpenRouterProviderPlugin(),
   ];
 }
 

@@ -1,0 +1,31 @@
+kind = "manifest"
+name = "clawql-claude"
+isolate_home = false
+inherit_env = true
+command = [
+  "clawql", "claude",
+  "--non-interactive",
+  "--model", "{model}",
+  "--workdir", "{workspace}",
+  "--message", "{prompt}",
+]
+version_command = ["clawql", "help"]
+policy_headless_args = ["--non-interactive"]
+pass_env = [
+  "ANTHROPIC_API_KEY",
+  "OPENAI_API_KEY",
+  "CLAWQL_HOME",
+  "CLAWQL_OBSIDIAN_VAULT_PATH",
+  "CLAWQL_INFERENCE_URL",
+  "CLAWQL_OPENBENCH",
+  "CLAWQL_HARNESS_ALLOW_UNSANDBOXED",
+  "PATH",
+  "HOME",
+]
+[models]
+"claude-opus-4-8" = "claude-opus-4-8"
+"gpt-5.5-medium" = "gpt-5.5"
+
+[env]
+CLAWQL_OPENBENCH = "1"
+CLAWQL_HARNESS_ALLOW_UNSANDBOXED = "1"
