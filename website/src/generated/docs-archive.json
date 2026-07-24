@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-24T03:46:15.660Z",
-  "sidebarHrefCount": 45,
-  "entryCount": 85,
+  "generatedAt": "2026-07-24T03:55:03.590Z",
+  "sidebarHrefCount": 56,
+  "entryCount": 74,
   "groups": [
     {
       "name": "Platform",
@@ -124,71 +124,6 @@
           "title": "Third-party plugins",
           "description": "Roadmap and checklist for external clawql-* npm plugins.",
           "group": "Plugins"
-        }
-      ]
-    },
-    {
-      "name": "Learn",
-      "entries": [
-        {
-          "href": "/learn/audit-tool-and-observability",
-          "title": "Audit tool & observability",
-          "description": "Core `audit` ring buffer plus Prometheus, Grafana, and Loki — breadcrumbs without vault writes.",
-          "group": "Learn"
-        },
-        {
-          "href": "/learn/cache-handoff-between-chats",
-          "title": "Cache handoff between chats",
-          "description": "Core `cache` tool: scratch state, TTL, namespacing, and carrying context into a new chat session.",
-          "group": "Learn"
-        },
-        {
-          "href": "/learn/document-pipeline",
-          "title": "Document pipeline",
-          "description": "Seven-vendor IDP path: Nextcloud → Tika → Gotenberg → Stirling → archive → Onyx → Coneshare.",
-          "group": "Learn"
-        },
-        {
-          "href": "/learn/effect-ts",
-          "title": "Effect-TS in ClawQL",
-          "description": "Why Effect-TS enforces the 7-layer architecture: Layers, Gateway composition, fail-closed errors, and optional plugins.",
-          "group": "Learn"
-        },
-        {
-          "href": "/learn/external-ingest-knowledge",
-          "title": "External ingest & knowledge lake",
-          "description": "Import Markdown or a single URL into the vault with `ingest_external_knowledge`, dry runs, and vault pairing.",
-          "group": "Learn"
-        },
-        {
-          "href": "/learn/knowledge-search-onyx",
-          "title": "Onyx enterprise search",
-          "description": "Optional `knowledge_search_onyx`: ACL-aware semantic search over your enterprise Onyx index.",
-          "group": "Learn"
-        },
-        {
-          "href": "/learn/ouroboros-tools",
-          "title": "Ouroboros tools",
-          "description": "`ouroboros_*`: seed from documents, evolutionary loop, Postgres lineage, and route hints vs raw infra.",
-          "group": "Learn"
-        },
-        {
-          "href": "/learn/sandbox-exec",
-          "title": "Sandbox exec",
-          "description": "Optional sandbox_exec MCP tool; pair with Local agent sandbox for full harness containment.",
-          "group": "Learn"
-        },
-        {
-          "href": "/learn/schedule-notify-workflows",
-          "title": "Schedule & notify workflows",
-          "description": "`schedule` synthetics plus `notify` to Slack — threads, HITL hooks, and Label Studio handoff patterns.",
-          "group": "Learn"
-        },
-        {
-          "href": "/learn/search-and-execute-mcp",
-          "title": "Using search & execute",
-          "description": "`search` / `execute` inputs, args, response fields, and common pitfalls when calling loaded OpenAPI specs.",
-          "group": "Learn"
         }
       ]
     },
@@ -443,12 +378,6 @@
     {
       "name": "Examples",
       "entries": [
-        {
-          "href": "/benchmarks",
-          "title": "Benchmarks",
-          "description": "What the benchmark numbers mean and where to find reproducible artifacts in the repo.",
-          "group": "Examples"
-        },
         {
           "href": "/case-studies/cloudflare-docs-mcp",
           "title": "Example: Cloudflare docs deploy",

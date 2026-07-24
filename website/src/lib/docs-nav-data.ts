@@ -16,7 +16,7 @@ export type NavGroup = {
   links: Array<NavLink>
 }
 
-/** First-run sidebar — hubs only; long-tail lives on hub pages. */
+/** Sidebar navigation — getting-started path first; Learn lists every /learn module. */
 export const docsNavigation: Array<NavGroup> = [
   {
     title: 'Getting started',
@@ -53,7 +53,50 @@ export const docsNavigation: Array<NavGroup> = [
     links: [
       { title: 'Learn', href: '/learn' },
       { title: 'Concepts', href: '/concepts' },
-      { title: 'Memory', href: '/learn/memory' },
+      {
+        title: 'Using search & execute',
+        href: '/learn/search-and-execute-mcp',
+      },
+      {
+        title: 'clawql-memory (Memory 2.0)',
+        href: '/learn/memory',
+      },
+      {
+        title: 'External ingest & knowledge lake',
+        href: '/learn/external-ingest-knowledge',
+      },
+      {
+        title: 'Onyx enterprise search',
+        href: '/learn/knowledge-search-onyx',
+      },
+      {
+        title: 'Document pipeline',
+        href: '/learn/document-pipeline',
+      },
+      {
+        title: 'Sandbox exec',
+        href: '/learn/sandbox-exec',
+      },
+      {
+        title: 'Effect-TS in ClawQL',
+        href: '/learn/effect-ts',
+      },
+      {
+        title: 'Ouroboros tools',
+        href: '/learn/ouroboros-tools',
+      },
+      {
+        title: 'Schedule & notify workflows',
+        href: '/learn/schedule-notify-workflows',
+      },
+      {
+        title: 'Cache handoff between chats',
+        href: '/learn/cache-handoff-between-chats',
+      },
+      {
+        title: 'Audit tool & observability',
+        href: '/learn/audit-tool-and-observability',
+      },
       {
         title: 'Token efficiency',
         href: '/architecture/token-efficiency',
@@ -121,6 +164,7 @@ export const docsNavigation: Array<NavGroup> = [
     title: 'More',
     links: [
       { title: 'Examples', href: '/examples' },
+      { title: 'Benchmarks', href: '/benchmarks' },
       { title: 'Changelog', href: '/resources/changelog' },
       { title: 'Docs archive', href: '/archive' },
     ],
