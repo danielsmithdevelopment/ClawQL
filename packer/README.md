@@ -15,7 +15,8 @@ Cloudflare managed tier uses `scripts/packer/cloudflare-bootstrap.sh` at Worker/
 ## Bake vs boot
 
 - **Bake (Packer):** `scripts/packer/bake-clawql.sh` — Node 22, ClawQL install, `sync.json` template, no secrets.
-- **Boot (runtime):** `scripts/packer/bootstrap-team-vault.sh` — inject credentials, `clawql sync pull` (SHA-256 verified), `clawql doctor --smoke`.
+- **Boot (shared / vault-only):** `scripts/packer/bootstrap-team-vault.sh` — inject credentials, `clawql sync pull` (SHA-256 verified), `clawql doctor --smoke`.
+- **Boot (Dedicated VG alpha):** `scripts/packer/bootstrap-dedicated-gateway.sh` — vault bootstrap, then `clawql gateway create` (Managed Edge Gateway `/mcp` + `/v1` on `0.0.0.0:8080`).
 
 ## Local validate (CI uses the same)
 

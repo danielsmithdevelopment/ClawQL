@@ -124,6 +124,11 @@ build {
   }
 
   provisioner "file" {
+    source      = "${local.scripts_dir}/bootstrap-dedicated-gateway.sh"
+    destination = "/tmp/bootstrap-dedicated-gateway.sh"
+  }
+
+  provisioner "file" {
     source      = "${local.scripts_dir}/cloudflare-bootstrap.sh"
     destination = "/tmp/cloudflare-bootstrap.sh"
   }
@@ -131,8 +136,9 @@ build {
   provisioner "shell" {
     inline = [
       "install -m 0755 /tmp/bootstrap-team-vault.sh /usr/local/bin/bootstrap-team-vault.sh",
+      "install -m 0755 /tmp/bootstrap-dedicated-gateway.sh /usr/local/bin/bootstrap-dedicated-gateway.sh",
       "install -m 0755 /tmp/cloudflare-bootstrap.sh /usr/local/bin/cloudflare-bootstrap.sh",
-      "rm -f /tmp/bootstrap-team-vault.sh /tmp/cloudflare-bootstrap.sh",
+      "rm -f /tmp/bootstrap-team-vault.sh /tmp/bootstrap-dedicated-gateway.sh /tmp/cloudflare-bootstrap.sh",
     ]
   }
 
@@ -143,6 +149,8 @@ build {
       "test -f /root/.ClawQL/sync.json",
       "grep -q CONFIGURE_AT_BOOT /root/.ClawQL/sync.json",
       "command -v clawql",
+      "test -x /usr/local/bin/bootstrap-team-vault.sh",
+      "test -x /usr/local/bin/bootstrap-dedicated-gateway.sh",
     ]
   }
 }

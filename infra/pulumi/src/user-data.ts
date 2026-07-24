@@ -6,11 +6,21 @@ export type BootstrapUserDataOptions = {
   syncProvider: SyncProvider;
   /** When set, bootstrap loads credentials from AWS SSM Parameter Store at boot. */
   ssmParameterPrefix?: string;
+  /**
+   * When true (Dedicated VG alpha), boot runs vault sync then starts the Managed Edge
+   * Gateway (`/mcp` + `/v1`) via `/usr/local/bin/bootstrap-dedicated-gateway.sh`.
+   */
+  startManagedGateway?: boolean;
+  /** Tenant / team label passed to `clawql gateway create --team`. */
+  gatewayTeam?: string;
+  /** Edge listen port (default 8080). */
+  gatewayPort?: number;
 };
 
 /**
  * Cloud-init bash for golden Packer images: set non-secret sync config, then run
- * `/usr/local/bin/bootstrap-team-vault.sh` (credentials via env or SSM).
+ * vault bootstrap and optionally the Dedicated VG Managed Edge Gateway starter.
+ * Credentials via env or SSM — never baked into the image.
  */
 export function buildBootstrapUserData(opts: BootstrapUserDataOptions): string {
   const lines: string[] = [
@@ -33,13 +43,31 @@ export function buildBootstrapUserData(opts: BootstrapUserDataOptions): string {
     );
   }
 
-  lines.push(
-    "if [ -x /usr/local/bin/bootstrap-team-vault.sh ]; then",
-    "  exec /usr/local/bin/bootstrap-team-vault.sh",
-    "fi",
-    'echo "[user-data] bootstrap-team-vault.sh not found" >&2',
-    "exit 1"
-  );
+  if (opts.startManagedGateway) {
+    const team = escapeShellDoubleQuoted(opts.gatewayTeam?.trim() || "default");
+    const port = String(
+      opts.gatewayPort && Number.isFinite(opts.gatewayPort) ? opts.gatewayPort : 8080
+    );
+    lines.push(
+      `export CLAWQL_GATEWAY_TEAM="${team}"`,
+      `export CLAWQL_GATEWAY_PORT="${port}"`,
+      'export CLAWQL_GATEWAY_HOST="0.0.0.0"',
+      'export CLAWQL_DEDICATED_VG="1"',
+      "if [ -x /usr/local/bin/bootstrap-dedicated-gateway.sh ]; then",
+      "  exec /usr/local/bin/bootstrap-dedicated-gateway.sh",
+      "fi",
+      'echo "[user-data] bootstrap-dedicated-gateway.sh not found" >&2',
+      "exit 1"
+    );
+  } else {
+    lines.push(
+      "if [ -x /usr/local/bin/bootstrap-team-vault.sh ]; then",
+      "  exec /usr/local/bin/bootstrap-team-vault.sh",
+      "fi",
+      'echo "[user-data] bootstrap-team-vault.sh not found" >&2',
+      "exit 1"
+    );
+  }
 
   return lines.join("\n") + "\n";
 }

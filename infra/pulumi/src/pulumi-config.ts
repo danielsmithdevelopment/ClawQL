@@ -62,6 +62,9 @@ export function loadProvisionInputs(): ProvisionInputs {
     cfg.get("ssmParameterPrefix") ??
     (tenantId && useSsmSecrets ? ssmParameterPrefixForTenant(tenantId) : undefined);
 
+  const startManagedGateway =
+    cfg.getBoolean("startManagedGateway") ?? (tier === "dedicated" || tier === "enterprise");
+
   const cloudflareAccountId = new pulumi.Config("cloudflare").get("accountId");
   const gcpProject = new pulumi.Config("gcp").get("project");
 
@@ -78,6 +81,7 @@ export function loadProvisionInputs(): ProvisionInputs {
     region,
     useSsmSecrets,
     ssmParameterPrefix,
+    startManagedGateway,
     cloudflareAccountId,
     gcpProject,
     gcpZone: cfg.get("gcpZone") ?? `${region}-a`,

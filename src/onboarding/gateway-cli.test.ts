@@ -6,6 +6,7 @@ import { existsSync } from "node:fs";
 import {
   loadManagedGatewayState,
   materializeManagedGateway,
+  resolveProcessRuntimePaths,
   runGatewayDestroy,
 } from "./gateway-cli.js";
 
@@ -48,6 +49,16 @@ describe("managed gateway materials", () => {
     // State file must not contain the raw secret
     const stateRaw = await readFile(join(home, "ManagedGateway", "gateway.json"), "utf8");
     expect(stateRaw).not.toContain(secret);
+  });
+
+  it("resolves process runtimes from a built checkout without requiring Docker", () => {
+    const paths = resolveProcessRuntimePaths();
+    expect(paths.mcpEntry).toMatch(/server-http\.js$/);
+    expect(paths.inferenceBin).toMatch(/clawql-inference\.mjs$/);
+    expect(paths.proxyBin).toMatch(/gateway-proxy\.mjs$/);
+    expect(existsSync(paths.mcpEntry)).toBe(true);
+    expect(existsSync(paths.inferenceBin)).toBe(true);
+    expect(existsSync(paths.proxyBin)).toBe(true);
   });
 
   it("destroy --yes removes ManagedGateway directory", async () => {

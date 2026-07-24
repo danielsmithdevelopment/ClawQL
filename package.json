@@ -14,6 +14,7 @@
     "bin": {
         "clawql-mcp": "bin/clawql-mcp.mjs",
         "clawql-mcp-http": "bin/clawql-mcp-http.mjs",
+        "clawql-gateway-proxy": "bin/clawql-gateway-proxy.mjs",
         "clawql": "bin/clawql.mjs"
     },
     "engines": {

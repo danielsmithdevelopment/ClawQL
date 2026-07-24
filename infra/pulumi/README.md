@@ -81,6 +81,8 @@ pulumi preview && pulumi up
 
 Deterministic pipelines are **`.cqw` → WorkflowTemplate → Argo Workflows**; agents submit via MCP `workflow` (template-ref only).
 
+Dedicated / enterprise stacks default `startManagedGateway=true`: after vault sync, boot runs `bootstrap-dedicated-gateway.sh` so the VM serves **`/mcp` + `/v1`** (Managed Edge Gateway) on port **8080**. Set `clawql:startManagedGateway false` for vault-only hosts. Follow-ups (not in alpha): WORM/NATS/Valkey fabric, native JWT ATR.
+
 ## State backend (self-hosted only)
 
 See [ADR 0007](../../docs/adr/0007-pulumi-provisioning-managed-tiers.md). **No Pulumi Cloud.**

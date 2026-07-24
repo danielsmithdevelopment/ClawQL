@@ -326,6 +326,7 @@ Security constraints (credentials never baked; SHA-256 verify of pulled vault fi
 | Sync credentials            | Never baked            | Injected (Vault, instance role, secrets manager) |
 | Team `Memory/` notes        | —                      | `clawql sync pull`                               |
 | Health gate                 | `clawql doctor` (bake) | `clawql doctor --smoke` (boot)                   |
+| Managed Edge Gateway        | —                      | Dedicated/enterprise: `/mcp` + `/v1` after vault |
 
 ### Quick start (operators)
 
@@ -334,10 +335,10 @@ Security constraints (credentials never baked; SHA-256 verify of pulled vault fi
 ```bash
 cd packer
 packer init .
-packer build -only=aws-ami.amazon-ebs.clawql -var 'clawql_version=7.0.0' .
+packer build -only=aws-ami.amazon-ebs.clawql -var 'clawql_version=7.2.0' .
 ```
 
-See [`packer/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packer/README.md) for GCP and CI validate targets.
+See [`packer/README.md`](../../packer/README.md) for GCP and CI validate targets. Use a **clawql-mcp** version that includes `clawql gateway` (Managed Edge Gateway).
 
 #### 2. Provision infrastructure (Pulumi)
 
@@ -355,11 +356,13 @@ pulumi config set clawql:goldenImageId ami-xxxxxxxx   # Packer output
 pulumi preview   # or pulumi up — requires cloud credentials
 ```
 
-See [`infra/pulumi/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/infra/pulumi/README.md) and [ADR 0007](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0007-pulumi-provisioning-managed-tiers.md). State lives on self-hosted R2 or S3.
+Dedicated / enterprise tiers default **`startManagedGateway=true`**: user-data runs vault sync, then `/usr/local/bin/bootstrap-dedicated-gateway.sh` (Managed Edge Gateway on `:8080`). Override with `pulumi config set clawql:startManagedGateway false` for vault-only hosts.
+
+See [`infra/pulumi/README.md`](../../infra/pulumi/README.md) and [ADR 0007](../adr/0007-pulumi-provisioning-managed-tiers.md). State lives on **self-hosted R2 or S3** — not Pulumi Cloud.
 
 #### 3. Launch with boot-time seeding
 
-Set instance user-data / startup script to run:
+**Vault only** (shared tier / opt-out):
 
 ```bash
 export CLAWQL_SYNC_BUCKET=acme-clawql-team
@@ -367,17 +370,33 @@ export CLAWQL_SYNC_PREFIX=teams/production/
 export CLAWQL_R2_ACCOUNT_ID=...
 export CLAWQL_SYNC_ACCESS_KEY_ID=...
 export CLAWQL_SYNC_SECRET_ACCESS_KEY=...
-/usr/local/bin/bootstrap-team-vault.sh   # installed on golden images at bake time
+/usr/local/bin/bootstrap-team-vault.sh
 ```
 
-Or use the repo script path: `scripts/packer/bootstrap-team-vault.sh`.
+**Dedicated VG alpha** (vault → Managed Edge Gateway):
+
+```bash
+export CLAWQL_SYNC_BUCKET=acme-clawql-team
+export CLAWQL_SYNC_PREFIX=tenant/acme/
+export CLAWQL_GATEWAY_TEAM=acme
+# sync credentials as above (or SSM on AWS dedicated stacks)
+/usr/local/bin/bootstrap-dedicated-gateway.sh
+# → /healthz, /mcp, /v1 on 0.0.0.0:8080 (virtual key printed once in boot logs)
+```
+
+Or use the repo script paths under `scripts/packer/`.
 
 #### 4. Verify
 
 ```bash
 clawql doctor --smoke
 clawql sync status
+# Dedicated VG alpha:
+curl -sS http://127.0.0.1:8080/healthz
+clawql gateway status
 ```
+
+Alpha scope: vault sync + Managed Edge Gateway (`/mcp` + `/v1` + memory). **Not yet:** full WORM/NATS/Valkey Dedicated VG fabric, native JWT ATR on create, or Regional Hub metering.
 
 ### Tier seeding
 

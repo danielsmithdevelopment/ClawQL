@@ -19,6 +19,8 @@ export function createAwsGoldenHost(inputs: ProvisionInputs): AwsGoldenHostOutpu
     prefix: inputs.syncPrefix,
     syncProvider: inputs.syncProvider,
     ssmParameterPrefix: inputs.useSsmSecrets ? inputs.ssmParameterPrefix : undefined,
+    startManagedGateway: inputs.startManagedGateway,
+    gatewayTeam: inputs.tenantId,
   });
 
   const role = new aws.iam.Role("clawql-instance-role", {
