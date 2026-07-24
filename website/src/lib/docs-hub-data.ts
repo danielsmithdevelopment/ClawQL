@@ -131,9 +131,9 @@ export const architectureHubCards: Array<ReferenceCard> = [
   }),
   card({
     href: '/getting-started/immutable-releases',
-    name: 'Immutable releases (Layer 0)',
+    name: 'Immutable releases',
     description:
-      'Hands-on clawql-release pipeline: workspaces, IPFS, Lit/x402, Arweave — plus the vision doc.',
+      'Friendly dry-run first: publish, verify, and pull a release you can trust — permanence optional.',
     icon: LinkIcon,
   }),
   card({

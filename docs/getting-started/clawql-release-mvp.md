@@ -1,27 +1,22 @@
-# clawql-release reference notes
+# clawql-release — CLI reference
 
-> **Hands-on guide:** [`immutable-releases.md`](./immutable-releases.md) · https://docs.clawql.com/getting-started/immutable-releases  
-> **Vision:** https://docs.clawql.com/vision/immutable-releases
+Friendly walkthrough: **[Immutable releases](./immutable-releases.md)** · https://docs.clawql.com/getting-started/immutable-releases
 
-Short reference for Layer 0 CLI flags, env knobs, and CI. Prefer the getting-started guide for the full end-to-end path.
+This page is a compact cheat sheet for flags and env vars.
 
-## Quick start
+## Commands
 
 ```bash
-clawql release init
-
-clawql-release immutable-volume snapshot --backend git-worktree --name build-local
-clawql-release golden-image build --image-digest clawql-mcp=sha256:YOUR_DIGEST
-
-clawql release publish --tag v7.1.0 \
-  --sbom sbom.cdx.json \
-  --npm-tgz clawql-mcp-7.1.0.tgz \
-  --image-digest clawql-mcp=sha256:YOUR_DIGEST \
-  --stage-ipfs --permanent --github
-
-clawql release verify releases/v7.1.0/manifest.json
-clawql-release pull <arweave-tx-id> --rift
+clawql-release init
+clawql-release immutable-volume snapshot --backend git-worktree|rift --name NAME
+clawql-release immutable-volume list
+clawql-release golden-image build --image-digest NAME=sha256:…
+clawql-release publish --tag vX.Y.Z [--sbom …] [--npm-tgz …] [--stage-ipfs] [--permanent] [--encrypt] [--price "0.50 USDC"] [--github] [--dry-run]
+clawql-release verify <manifest.json|bundle-dir|tx-id>
+clawql-release pull <target> [--rift]
 ```
+
+Same via `clawql release …`.
 
 ## Dry-run / CI
 
@@ -29,24 +24,22 @@ clawql-release pull <arweave-tx-id> --rift
 CLAWQL_RELEASE_DRY_RUN=1 node scripts/release/ci-pipeline-e2e.mjs
 ```
 
-Workflow: [`.github/workflows/clawql-release-pipeline.yml`](../../.github/workflows/clawql-release-pipeline.yml)
-
 Do **not** put spendable Arweave wallets in GitHub Actions secrets for that workflow.
 
-## Env knobs
+## Env
 
-| Env                                                      | Purpose                              |
-| -------------------------------------------------------- | ------------------------------------ |
-| `CLAWQL_RELEASE_DRY_RUN=1` / `CLAWQL_RELEASE_MODE=local` | Force local backends                 |
-| `CLAWQL_ARWEAVE_WALLET_JWK`                              | Enable ar.io / Turbo upload path     |
-| `CLAWQL_ARIO_TURBO_URL`                                  | Turbo endpoint for uploads           |
-| `CLAWQL_IPFS_GATEWAY`                                    | IPFS HTTP gateway                    |
-| `CLAWQL_X402_ENFORCE=1`                                  | Live x402 facilitator verification   |
-| `CLAWQL_LIT_NETWORK`                                     | Lit Protocol network for key release |
+| Env                         | Purpose                   |
+| --------------------------- | ------------------------- |
+| `CLAWQL_RELEASE_DRY_RUN=1`  | Local backends            |
+| `CLAWQL_ARWEAVE_WALLET_JWK` | Live ar.io / Turbo upload |
+| `CLAWQL_ARIO_TURBO_URL`     | Turbo endpoint            |
+| `CLAWQL_IPFS_GATEWAY`       | IPFS gateway              |
+| `CLAWQL_X402_ENFORCE=1`     | Live x402 facilitator     |
+| `CLAWQL_LIT_NETWORK`        | Lit network label         |
 
-## Runtime verify
+## Runtime
 
-- `clawql doctor --smoke` — auto-resolves `releases/v{version}/manifest.json`
-- `CLAWQL_RELEASE_MANIFEST=…` — MCP startup verify; strict with `CLAWQL_RELEASE_MANIFEST_STRICT=1`
+- `clawql doctor --smoke` — checks `releases/v{version}/manifest.json` when present
+- `CLAWQL_RELEASE_MANIFEST=…` — verify at MCP startup
 
-Cosign for containers: [`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md)
+Cosign: [`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md)
