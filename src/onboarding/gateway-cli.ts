@@ -107,13 +107,7 @@ function findInstalledPackageRoot(): string | null {
 
 function resolveInferenceBin(repoRoot: string | null, packageRoot: string | null): string | null {
   if (repoRoot) {
-    const fromRepo = join(
-      repoRoot,
-      "packages",
-      "clawql-inference",
-      "bin",
-      "clawql-inference.mjs"
-    );
+    const fromRepo = join(repoRoot, "packages", "clawql-inference", "bin", "clawql-inference.mjs");
     if (existsSync(fromRepo)) return fromRepo;
   }
   try {
