@@ -497,7 +497,7 @@ export async function runGatewayStatus(options: GatewayCliOptions = {}): Promise
     return 1;
   }
 
-  let healthy = false;
+  let healthy: boolean;
   try {
     const res = await fetch(state.urls.healthz, { signal: AbortSignal.timeout(3000) });
     healthy = res.ok;

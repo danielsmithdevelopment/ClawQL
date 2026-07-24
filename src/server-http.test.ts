@@ -909,4 +909,64 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     },
     STREAMABLE_HTTP_TEST_TIMEOUT_MS
   );
+
+  it(
+    "POST /mcp accepts inference virtual key without CLAWQL_API_KEY and sets tenant claims",
+    async () => {
+      const { createVirtualKey } = await import("clawql-inference");
+      const { createInferenceVirtualKeyClaimsResolver } = await import("./server-http.js");
+      const savedMode = process.env.CLAWQL_AUTH_MODE;
+      const savedKey = process.env.CLAWQL_API_KEY;
+      const savedHome = process.env.CLAWQL_HOME;
+      const dir = await mkdtemp(join(tmpdir(), "clawql-mcp-vk-"));
+      process.env.CLAWQL_AUTH_MODE = "apiKey";
+      delete process.env.CLAWQL_API_KEY;
+      process.env.CLAWQL_HOME = dir;
+      resetSpecCache();
+      resetSchemaFieldCache();
+      try {
+        const created = await createVirtualKey({ team: "acme-corp" }, process.env);
+        const resolver = createInferenceVirtualKeyClaimsResolver(process.env);
+        const claims = resolver(created.secret, {});
+        expect(claims).not.toBeNull();
+        if (claims && claims.ok) {
+          expect(claims.claims.tenantId).toBe("acme-corp");
+          expect(claims.claims.virtualKeyId).toBe(created.key.id);
+        }
+
+        await withHttpServer(async (base) => {
+          const res = await fetch(`${base}/mcp`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${created.secret}`,
+              "x-clawql-role": "admin",
+            },
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              method: "initialize",
+              params: {
+                protocolVersion: "2024-11-05",
+                capabilities: {},
+                clientInfo: { name: "test", version: "0" },
+              },
+              id: 1,
+            }),
+          });
+          expect(res.status).not.toBe(401);
+        }, FAST_HTTP_APP_OPTS);
+      } finally {
+        if (savedMode === undefined) delete process.env.CLAWQL_AUTH_MODE;
+        else process.env.CLAWQL_AUTH_MODE = savedMode;
+        if (savedKey === undefined) delete process.env.CLAWQL_API_KEY;
+        else process.env.CLAWQL_API_KEY = savedKey;
+        if (savedHome === undefined) delete process.env.CLAWQL_HOME;
+        else process.env.CLAWQL_HOME = savedHome;
+        await rm(dir, { recursive: true, force: true });
+        resetSpecCache();
+        resetSchemaFieldCache();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
 });

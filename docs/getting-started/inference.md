@@ -211,6 +211,8 @@ clawql gateway create --profile process --team demo
 Docker variant: `clawql gateway create --profile local-docker --team demo`  
 Example compose: [`examples/managed-gateway/`](../../examples/managed-gateway/).
 
+Kubernetes (chart defaults **off**): set `inference.enabled=true` and `managedGateway.enabled=true` on `charts/clawql-mcp` for an in-cluster `/mcp` + `/v1` edge. MCP accepts the same inference virtual key (`tenantId` = `key.team`); optional shared home via `inference.home`.
+
 3. **Dedicated Virtual Gateway** — customer VPC, WORM, Vault, team sync ([For teams](/getting-started/for-teams), Packer / Pulumi).
 4. **Regional Hub** — ClawQL-managed metering / routing pipe only — never holds your sovereign vault.
 

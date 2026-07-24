@@ -35,7 +35,13 @@ import { configureHitlTransportDeps } from "./hitl-transport.js";
 import { handleConeshareWebhookRequest } from "./coneshare-webhook.js";
 import { handleLangfuseEvalWebhookRequest } from "./langfuse-eval-webhook.js";
 import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
-import { resolveAtrClaimsFromHeaders } from "clawql-auth";
+import {
+  loadGatewayAuthConfig,
+  resolveAtrClaimsFromHeaders,
+  type ApiKeyClaimsResolver,
+  type GatewayAuthConfig,
+} from "clawql-auth";
+import { validateVirtualKey } from "clawql-inference";
 import { attachPaymentsWellKnownRoutes } from "clawql-payments/discovery";
 import { attachMppOpenApiRoutes, isMppOpenApiEnabled } from "clawql-payments/mpp";
 import {
@@ -43,6 +49,44 @@ import {
   registerMcpX402TransportHooks,
   runWithMcpX402Context,
 } from "./mcp-x402-transport.js";
+
+/**
+ * Map clawql-inference virtual keys to ATR claims (tenantId = key.team).
+ * Returns null when the secret is not a known virtual key so static CLAWQL_API_KEY can apply.
+ */
+export function createInferenceVirtualKeyClaimsResolver(
+  env: NodeJS.ProcessEnv = process.env
+): ApiKeyClaimsResolver {
+  return (presented) => {
+    const result = validateVirtualKey(presented, env);
+    if (!result.ok) {
+      // Budget / rate-limit are hard failures for a recognized key path.
+      if (result.status === 402 || result.status === 429) {
+        return { ok: false, error: result.message };
+      }
+      return null;
+    }
+    return {
+      ok: true,
+      claims: {
+        sub: result.context.id,
+        role: "operator",
+        scope: ["execute", "search", "memory"],
+        tenantId: result.context.team,
+        virtualKeyId: result.context.id,
+      },
+    };
+  };
+}
+
+function buildGatewayAuthConfig(env: NodeJS.ProcessEnv = process.env): GatewayAuthConfig {
+  const config = loadGatewayAuthConfig();
+  if (config.mode !== "apiKey") return config;
+  return {
+    ...config,
+    apiKeyClaimsResolver: createInferenceVirtualKeyClaimsResolver(env),
+  };
+}
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
@@ -166,13 +210,14 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });
   }
 
-  /** Gateway auth (Phase 1 `clawql-auth`): enforced on MCP routes when `CLAWQL_AUTH_MODE=apiKey`. */
+  /** Gateway auth: static CLAWQL_API_KEY and/or inference virtual keys when `CLAWQL_AUTH_MODE=apiKey`. */
+  const gatewayAuthConfig = buildGatewayAuthConfig();
   function applyGatewayAuth(
     req: import("express").Request,
     res: import("express").Response,
     next: import("express").NextFunction
   ): void {
-    const result = resolveAtrClaimsFromHeaders(req.headers);
+    const result = resolveAtrClaimsFromHeaders(req.headers, gatewayAuthConfig);
     if (!result.ok) {
       res.status(401).json({ error: result.error });
       return;

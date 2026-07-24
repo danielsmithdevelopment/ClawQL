@@ -37,6 +37,7 @@ services:
       CLAWQL_ENABLE_MEMORY: "1"
       CLAWQL_AUTH_MODE: apiKey
       CLAWQL_API_KEY: ${CLAWQL_API_KEY:?CLAWQL_API_KEY is required — run clawql gateway create}
+      CLAWQL_INFERENCE_KEYS_ENABLED: "1"
       CLAWQL_HOME: /clawql-home
     volumes:
       - ${CLAWQL_VAULT_HOST_PATH:-./data/vault}:/vault

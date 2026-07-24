@@ -1,4 +1,4 @@
-.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up operator-install operator-status desktop-dev desktop-dist-mac desktop-dist-win desktop-dist-linux bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-team-sync-template-tests helm-docling-template-tests helm-idp-template-tests helm-operator-template-tests compose-lending-config-test compose-tier1-config-test distribution-npm-pack-test mcp-docker-workspace-test kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis verify-vault-policy verify-mcp-core-tools-local
+.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up operator-install operator-status desktop-dev desktop-dist-mac desktop-dist-win desktop-dist-linux bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-team-sync-template-tests helm-docling-template-tests helm-idp-template-tests helm-operator-template-tests helm-managed-gateway-template-tests compose-lending-config-test compose-tier1-config-test distribution-npm-pack-test mcp-docker-workspace-test kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis verify-vault-policy verify-mcp-core-tools-local
 
 # Validate charts/clawql-mcp (requires helm on PATH)
 helm-lint:
@@ -82,6 +82,9 @@ helm-idp-template-tests:
 helm-operator-template-tests:
 	@bash scripts/kubernetes/test-helm-operator-templates.sh
 
+helm-managed-gateway-template-tests:
+	@bash scripts/kubernetes/test-helm-managed-gateway-templates.sh
+
 compose-lending-config-test:
 	@bash scripts/dev/test-compose-lending-config.sh
 
@@ -94,7 +97,7 @@ distribution-npm-pack-test:
 mcp-docker-workspace-test:
 	@bash scripts/dev/test-docker-mcp-workspace-deps.sh
 
-lint-k8s-manifests: helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-team-sync-template-tests helm-docling-template-tests helm-idp-template-tests helm-operator-template-tests compose-lending-config-test compose-tier1-config-test kustomize-local-lint packer-golden-host-tests pulumi-provision-tests
+lint-k8s-manifests: helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-team-sync-template-tests helm-docling-template-tests helm-idp-template-tests helm-operator-template-tests helm-managed-gateway-template-tests compose-lending-config-test compose-tier1-config-test kustomize-local-lint packer-golden-host-tests pulumi-provision-tests
 
 packer-golden-host-tests:
 	@bash scripts/packer/test-golden-host-scripts.sh
