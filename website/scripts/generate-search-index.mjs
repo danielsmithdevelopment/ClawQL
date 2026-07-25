@@ -37,16 +37,25 @@ const chunks = groupPagesByChunk(pages)
 
 const manifestChunks = []
 
+// Drop stale chunk files (e.g. older builds that used `#` in filenames).
+for (const name of fs.readdirSync(outDir)) {
+  if (name.startsWith('chunk-') && name.endsWith('.json')) {
+    fs.unlinkSync(path.join(outDir, name))
+  }
+}
+
 for (const [id, chunkPages] of [...chunks.entries()].sort(([a], [b]) =>
   a.localeCompare(b),
 )) {
-  const fileName = `chunk-${id}.json`
+  // Defense in depth: chunk ids must be URL/path-safe for /search-index/*.
+  const safeId = id.replace(/[^a-zA-Z0-9._-]+/g, '-')
+  const fileName = `chunk-${safeId}.json`
   fs.writeFileSync(
     path.join(outDir, fileName),
     `${JSON.stringify(chunkPages)}\n`,
     'utf8',
   )
-  manifestChunks.push({ id, file: fileName, pages: chunkPages.length })
+  manifestChunks.push({ id: safeId, file: fileName, pages: chunkPages.length })
 }
 
 const manifest = {

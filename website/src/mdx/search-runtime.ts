@@ -73,7 +73,10 @@ async function loadSearchIndex(): Promise<Document> {
 
   await Promise.all(
     manifest.chunks.map(async (chunk) => {
-      const res = await fetch(`/search-index/${chunk.file}`)
+      // Encode so filenames never become URL fragments if a `#` slips through.
+      const res = await fetch(
+        `/search-index/${encodeURIComponent(chunk.file)}`,
+      )
       if (!res.ok) {
         throw new Error(
           `Failed to load search chunk ${chunk.file} (${res.status})`,
