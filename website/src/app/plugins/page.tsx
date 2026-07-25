@@ -7,7 +7,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Plugins',
   description:
-    'ClawQL plugin registry: horizontal packages, MCP proxies, and domain verticals — searchable with kind and status filters, enable flags, and dedicated docs.',
+    'ClawQL plugin registry: horizontal building blocks and domain verticals — verticals are presets that compose memory, documents, and other plugins with domain-tailored .cqw boilerplate.',
   path: '/plugins',
 })
 
@@ -21,7 +21,7 @@ export default function PluginsHubPage() {
           Plugins
         </Tag>
         <Tag color="amber" variant="medium">
-          Includes verticals
+          Verticals = presets
         </Tag>
         <Tag color="zinc" variant="medium">
           July 2026
@@ -32,35 +32,69 @@ export default function PluginsHubPage() {
         Plugins
       </h1>
       <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
-        Everything that extends the gateway is a plugin — horizontal packages
-        (memory, documents, automation), MCP proxies, and{' '}
+        Horizontal plugins are reusable capabilities. Domain verticals are{' '}
         <strong className="font-semibold text-zinc-800 dark:text-zinc-200">
-          domain verticals
+          presets
         </strong>{' '}
-        (lending, legal, healthcare, …). Verticals are domain-scoped plugins on
-        the same registration model, not a separate product line.
+        — packages that compose those capabilities (almost always Memory,
+        usually Documents) and ship domain-tailored boilerplate such as{' '}
+        <code className="font-mono text-[0.9em]">.cqw</code> workflows ready to
+        run or modify.
       </p>
 
       <div className="not-prose mt-6 mb-8 flex flex-wrap gap-3">
-        <Button href="/reference/plugins" arrow="right">
-          <>Plugin model (reference)</>
+        <Button href="#how-to-read" arrow="right">
+          <>How to read the catalog</>
         </Button>
         <Button href="/reference/verticals" variant="outline">
           <>Verticals guide</>
         </Button>
-        <Button href="/tools" variant="outline">
-          <>MCP tools</>
+        <Button href="/reference/plugins" variant="outline">
+          <>Plugin model</>
         </Button>
       </div>
 
-      <div className="not-prose mb-10">
+      <h2
+        id="how-to-read"
+        className="scroll-mt-28 text-xl font-semibold text-zinc-900 dark:text-white"
+      >
+        How to read this catalog
+      </h2>
+      <div className="mt-4 space-y-3 text-zinc-600 dark:text-zinc-400">
+        <p>
+          <strong className="font-semibold text-zinc-800 dark:text-zinc-200">
+            Horizontal
+          </strong>{' '}
+          (Memory, Documents, Automation, …) — shared building blocks. Toggle
+          them alone for a custom install, or let a vertical pull them in.
+        </p>
+        <p>
+          <strong className="font-semibold text-zinc-800 dark:text-zinc-200">
+            Domain vertical
+          </strong>{' '}
+          (Lending, Legal, Healthcare, …) — industry presets on the same{' '}
+          <code className="font-mono text-[0.9em]">Plugin.onRegister</code>{' '}
+          model. Each row lists what it <em>composes</em> (horizontal plugins)
+          and the domain <em>boilerplate</em> it ships (workflows, starters) —
+          not a fork of Memory or Documents.
+        </p>
+        <p>
+          <strong className="font-semibold text-zinc-800 dark:text-zinc-200">
+            MCP proxy / providers / core
+          </strong>{' '}
+          — policy chokepoints, spec merge stacks, and always-on gateway tools.
+          Core is listed for completeness; it is not an optional Layer.
+        </p>
+      </div>
+
+      <div className="not-prose mt-8 mb-10">
         <Note>
-          <strong>Gateway core</strong> (<code>search</code>,{' '}
-          <code>execute</code>, <code>audit</code>, <code>cache</code>) is
-          always on — listed in the registry for completeness, but not an
-          optional Layer. <strong>Domain verticals</strong> share{' '}
-          <code>Plugin.onRegister</code> with horizontal packages; filter the
-          registry by <em>Domain verticals</em> to browse them.
+          Example: <strong>Lending</strong> and a future real-estate vertical
+          both compose <strong>Memory</strong> + <strong>Documents</strong>,
+          then differentiate with domain <code>.cqw</code> workflows and tools.
+          Filter the registry by <em>Domain verticals</em> to compare presets;
+          filter by <em>Horizontal</em> to explore the building blocks those
+          presets depend on.
         </Note>
       </div>
 
@@ -71,8 +105,8 @@ export default function PluginsHubPage() {
         Plugin registry
       </h2>
       <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-        Search and filter the living catalog — kind (horizontal vs domain
-        vertical vs proxy), status, packages, tools, and enable flags.
+        Search and filter by kind, status, composed plugins, tools, or domain
+        keywords.
       </p>
 
       <div className="mt-6">

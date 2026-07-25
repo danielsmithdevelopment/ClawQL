@@ -3,16 +3,26 @@ import { Note } from '@/components/mdx'
 
 # Verticals guide
 
-Domain verticals (**lending**, **legal**, **healthcare**, etc.) are **plugins** — the same `Plugin.onRegister` model as memory, documents, and automation — scoped to an industry domain. They extend the gateway with domain-specific tools while sharing security, memory, and audit infrastructure. {{ className: 'lead' }}
+Domain verticals are **plugin presets** for an industry — not a separate product line. Enabling **lending**, **legal**, or **healthcare** composes the horizontal plugins that domain needs (almost always [Memory](/plugins/memory), usually [Documents](/plugins/documents)) and ships **domain-tailored boilerplate** such as ready-to-use or ready-to-modify [`.cqw` workflows](/specs/cq-extensions/cqw). {{ className: 'lead' }}
 
 <Note>
-  **No vertical packages are shipped yet.** Browse every planned vertical
-  alongside horizontal plugins in the [plugin registry](/plugins#registry)
-  (filter by **Domain verticals**). Contribution rules live in the [Contributor
-  Technical Specification](/contributing/technical-specification).
+  **No vertical packages are shipped yet.** Compare every planned vertical in
+  the [plugin registry](/plugins#registry) (filter **Domain verticals**) — each
+  row shows what it composes and what boilerplate it owns. Contribution rules:
+  [Contributor Technical Specification](/contributing/technical-specification).
 </Note>
 
-## Verticals are plugins
+## Mental model
+
+| Layer                  | What it is                                                     | Example                                                                        |
+| ---------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Horizontal plugins** | Reusable capabilities                                          | Memory, Documents, Automation, Sandbox                                         |
+| **Domain vertical**    | Preset / bundle that **composes** horizontals + domain surface | Lending pulls Memory + Documents, then adds LOS tools and lending `.cqw` files |
+| **Boilerplate**        | Differentiated per vertical                                    | Underwriting vs privilege-review vs claims `.cqw` starters                     |
+
+Verticals do **not** reimplement Memory or Documents. They declare those plugins as part of the install shape (Operator / Effect Layers / `requiredSpecs`) and focus differentiation on domain tools, compliance hooks, and workflow templates.
+
+## Verticals are still plugins
 
 | Concern             | Same as horizontal plugins? | Notes                                                                              |
 | ------------------- | --------------------------- | ---------------------------------------------------------------------------------- |
@@ -21,18 +31,19 @@ Domain verticals (**lending**, **legal**, **healthcare**, etc.) are **plugins** 
 | Cross-package calls | Via gateway                 | Verticals **never import other verticals** — use **`clawql-api.execute()`**        |
 | Enable path         | Operator / CRD              | Planned **`ClawQLInstance`** flags (not shipped) instead of only `CLAWQL_ENABLE_*` |
 
-See the full catalog on the [Plugins](/plugins) page — verticals are listed there as kind **Domain vertical**, not as a separate registry.
+Browse the full catalog on [Plugins](/plugins) — kind **Domain vertical**, with **Composes** and **Boilerplate** on each row.
 
 ## Design rules
 
 - Verticals **never import other verticals** — cross-domain operations route through **`clawql-api.execute()`**
 - Disabled verticals have **zero runtime footprint** (Operator / `ClawQLInstance` CRD)
 - Each vertical declares **`maxClassificationLevel`**, required ATR purposes, and Presidio policies
+- Domain **`.cqw`** (and related `.cq*`) starters should be tailored to that vertical’s workflows — not generic copies of another domain’s pack
 
 ## Enabling a vertical
 
 1. Set vertical flags in planned **`ClawQLInstance`** spec — see [Operator target architecture](/design/operator-target-architecture) §6 (not shipped)
-2. Register vertical plugins at gateway startup per contributor spec § vertical packages
+2. Register vertical plugins at gateway startup; composed horizontal Layers (Memory, Documents, …) come with the preset
 3. Run vertical-specific evaluation suites before production promotion
 
 ## Building a new vertical
@@ -41,7 +52,9 @@ See the full catalog on the [Plugins](/plugins) page — verticals are listed th
 
 → [Architecture](/architecture) — opt-in package ecosystem
 
-→ [Plugins](/plugins) — searchable registry (horizontal + vertical)
+→ [Plugins](/plugins) — searchable registry (building blocks + presets)
+
+→ [`.cqw` workflows](/specs/cq-extensions/cqw) — kinetic workflow file shape for domain boilerplate
 
 → [Plugin model & registry](/reference/plugins) — concepts and MCP tool ownership
 
@@ -52,7 +65,7 @@ See the full catalog on the [Plugins](/plugins) page — verticals are listed th
   <Button href="/contributing/technical-specification" variant="outline">
     <>Contributor spec</>
   </Button>
-  <Button href="/deployment/operations-guide" variant="outline">
-    <>Deployment guide</>
+  <Button href="/specs/cq-extensions/cqw" variant="outline">
+    <>.cqw workflows</>
   </Button>
 </div>

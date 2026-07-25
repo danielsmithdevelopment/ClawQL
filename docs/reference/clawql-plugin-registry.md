@@ -15,7 +15,7 @@ This page is the **registry** of ClawQL plugins: what exists today, what horizon
 | **`default`**   | Yes (when composed)  | `onRegister`, `onTeardown` | `clawql-memory` (✅ shipped); domain verticals such as `clawql-lending` (📋 planned) |
 | **`mcp-proxy`** | No                   | `beforeCallTool`           | `panguard-mcp-proxy` (shipped)                                                       |
 
-**Domain verticals** are `default`-kind plugins with industry scope (`verticals/clawql-*`). They are not a separate extension mechanism — see [Verticals guide](https://docs.clawql.com/reference/verticals) and the searchable [Plugins](https://docs.clawql.com/plugins#registry) registry.
+**Domain verticals** are `default`-kind plugins with industry scope (`verticals/clawql-*`): **presets** that compose horizontal plugins (typically Memory + Documents) and ship domain-tailored boilerplate (e.g. `.cqw` workflows). They are not a separate extension mechanism — see [Verticals guide](https://docs.clawql.com/reference/verticals) and the searchable [Plugins](https://docs.clawql.com/plugins#registry) registry.
 
 **Not plugins:** `search`, `execute`, `cache`, and `audit` are **gateway core** — always composed in `clawql-api`, not optional plugin Layers.
 

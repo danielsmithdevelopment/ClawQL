@@ -139,6 +139,25 @@ function RegistryRow({ entry }: { entry: PluginRegistryEntry }) {
         <p className="mt-1.5 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
           {entry.description}
         </p>
+        {entry.composes && entry.composes.length > 0 ? (
+          <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+              Composes
+            </span>{' '}
+            <span className="text-zinc-500 dark:text-zinc-500">
+              (horizontal plugins)
+            </span>{' '}
+            {entry.composes.join(' · ')}
+          </p>
+        ) : null}
+        {entry.boilerplate ? (
+          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+            <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+              Boilerplate
+            </span>{' '}
+            {entry.boilerplate}
+          </p>
+        ) : null}
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-500">
           {entry.package ? (
             <span>
@@ -264,12 +283,18 @@ export function PluginRegistryExplorer() {
             {filtered.length}
           </span>{' '}
           of {pluginRegistryEntries.length} entries
-          {category === 'all' && status === 'all' && !normalizedQuery ? (
+          {category === 'vertical' ? (
             <>
               {' '}
-              · {verticalCount} domain verticals (same plugin model as
-              horizontal packages)
+              · presets that compose horizontal plugins + domain{' '}
+              <code className="font-mono text-[0.85em]">.cqw</code> boilerplate
             </>
+          ) : null}
+          {category === 'horizontal' ? (
+            <> · building blocks composed into vertical presets</>
+          ) : null}
+          {category === 'all' && status === 'all' && !normalizedQuery ? (
+            <> · {verticalCount} domain vertical presets</>
           ) : null}
         </p>
       </div>

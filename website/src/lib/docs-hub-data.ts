@@ -154,7 +154,7 @@ export const architectureHubCards: Array<ReferenceCard> = [
     href: '/plugins',
     name: 'Plugins',
     description:
-      'Searchable registry — horizontal plugins and domain verticals.',
+      'Horizontal building blocks and domain vertical presets (.cqw boilerplate).',
     icon: SquaresPlusIcon,
   }),
   card({
@@ -275,7 +275,7 @@ export const referenceHubCards: Array<ReferenceCard> = [
     href: '/plugins',
     name: 'Plugins',
     description:
-      'Searchable registry with filters — horizontal plugins and domain verticals.',
+      'Searchable registry — horizontal building blocks and vertical presets.',
     icon: SquaresPlusIcon,
   }),
   card({

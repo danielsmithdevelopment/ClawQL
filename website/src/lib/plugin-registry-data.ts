@@ -1,7 +1,8 @@
 /**
  * Interactive plugin registry for /plugins.
- * Horizontal packages, MCP proxies, and domain verticals share one catalog —
- * verticals are domain-scoped plugins, not a separate product surface.
+ * Horizontal packages = reusable capabilities.
+ * Domain verticals = presets that compose horizontals + domain boilerplate
+ * (e.g. tailored .cqw workflows) — not a separate product surface.
  */
 
 export type PluginCategory =
@@ -21,6 +22,10 @@ export type PluginRegistryEntry = {
   enable?: string
   href: string
   keywords?: string[]
+  /** Horizontal plugins this vertical preset pulls in (vertical rows). */
+  composes?: string[]
+  /** Domain-tailored starters the vertical ships (e.g. .cqw packs). */
+  boilerplate?: string
 }
 
 export const PLUGIN_CATEGORY_LABELS: Record<PluginCategory, string> = {
@@ -78,14 +83,14 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
     id: 'clawql-memory',
     name: 'Memory (vault)',
     description:
-      'Durable Obsidian vault tools plus optional PageIndex and code graph registration.',
+      'Building block: durable Obsidian vault tools plus optional PageIndex and code graph — composed into most domain vertical presets.',
     category: 'horizontal',
     status: 'default-on',
     package: 'clawql-memory',
     tools: ['memory_ingest', 'memory_recall', 'pageindex_*', 'codegraph_*'],
     enable: 'CLAWQL_ENABLE_MEMORY=0 to omit',
     href: '/plugins/memory',
-    keywords: ['vault', 'obsidian', 'pageindex'],
+    keywords: ['vault', 'obsidian', 'pageindex', 'building block', 'preset'],
   },
   {
     id: 'clawql-codegraph',
@@ -104,7 +109,7 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
     id: 'clawql-documents',
     name: 'Documents & IDP',
     description:
-      'External ingest, optional Onyx search, and opt-in IDP / classifier / LangExtract tools.',
+      'Building block: external ingest, optional Onyx search, and IDP tools — composed into document-heavy vertical presets (lending, legal, healthcare, …).',
     category: 'horizontal',
     status: 'default-on',
     package: 'clawql-documents',
@@ -117,7 +122,7 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
     ],
     enable: 'CLAWQL_ENABLE_DOCUMENTS=0 to omit',
     href: '/plugins/documents',
-    keywords: ['idp', 'onyx', 'ingest'],
+    keywords: ['idp', 'onyx', 'ingest', 'building block', 'preset'],
   },
   {
     id: 'bundled-providers',
@@ -221,126 +226,153 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
     keywords: ['extension', 'npm', 'authors'],
   },
 
-  // Domain verticals — same Plugin.onRegister model; domain-scoped packages.
+  // Domain verticals — presets: compose horizontals + domain .cqw boilerplate.
   {
     id: 'clawql-lending',
     name: 'Lending',
     description:
-      'Mortgage, auto, BNPL, payday, and commercial LOS workflows — first planned production vertical.',
+      'Preset for mortgage, auto, BNPL, payday, and commercial LOS — composes shared plugins, then adds underwriting tools and lending-shaped workflows.',
     category: 'vertical',
     status: 'planned',
     package: 'verticals/clawql-lending',
     enable: 'ClawQLInstance CRD / Operator tier flags',
     href: '/reference/verticals',
-    keywords: ['mortgage', 'bnpl', 'underwriting', 'seethegreens'],
+    composes: ['Memory', 'Documents', 'Automation'],
+    boilerplate: 'LOS / underwriting .cqw starters (domain-tailored)',
+    keywords: [
+      'mortgage',
+      'bnpl',
+      'underwriting',
+      'seethegreens',
+      'preset',
+      'cqw',
+    ],
   },
   {
     id: 'clawql-blockchain',
     name: 'Blockchain',
     description:
-      'Hyperledger Fabric, Base, Solana, Chainlink, The Graph, and agentic wallet surfaces.',
+      'Preset for Fabric, Base, Solana, Chainlink, The Graph, and agentic wallets — composes Memory (Documents optional) plus chain-specific tooling.',
     category: 'vertical',
     status: 'planned',
     package: 'verticals/clawql-blockchain',
     enable: 'ClawQLInstance CRD / Operator tier flags',
     href: '/reference/verticals',
-    keywords: ['fabric', 'solana', 'chainlink', 'wallet'],
+    composes: ['Memory'],
+    boilerplate: 'Settlement / wallet / consortium .cqw starters',
+    keywords: ['fabric', 'solana', 'chainlink', 'wallet', 'preset', 'cqw'],
   },
   {
     id: 'clawql-legal',
     name: 'Legal',
     description:
-      'Contract intelligence, case law, e-discovery, privilege review, and drafting.',
+      'Preset for contract intelligence, e-discovery, and privilege review — Memory + Documents with legal-shaped workflow packs.',
     category: 'vertical',
     status: 'planned',
     package: 'verticals/clawql-legal',
     enable: 'ClawQLInstance CRD / Operator tier flags',
     href: '/reference/verticals',
-    keywords: ['contracts', 'ediscovery', 'privilege'],
+    composes: ['Memory', 'Documents'],
+    boilerplate: 'Privilege / e-discovery / drafting .cqw starters',
+    keywords: ['contracts', 'ediscovery', 'privilege', 'preset', 'cqw'],
   },
   {
     id: 'clawql-healthcare',
     name: 'Healthcare',
     description:
-      'FHIR/HL7, DICOM, EHR structuring, and HIPAA de-identification.',
+      'Preset for FHIR/HL7, DICOM, and EHR structuring — Memory + Documents with HIPAA-aware workflow boilerplate.',
     category: 'vertical',
     status: 'planned',
     package: 'verticals/clawql-healthcare',
     enable: 'ClawQLInstance CRD / Operator tier flags',
     href: '/reference/verticals',
-    keywords: ['fhir', 'hipaa', 'ehr', 'dicom'],
+    composes: ['Memory', 'Documents'],
+    boilerplate: 'EHR ingest / de-id / clinical review .cqw starters',
+    keywords: ['fhir', 'hipaa', 'ehr', 'dicom', 'preset', 'cqw'],
   },
   {
     id: 'clawql-insurance',
     name: 'Insurance',
     description:
-      'Claims, policy ingestion, underwriting automation, and fraud flagging.',
+      'Preset for claims, policy ingestion, and fraud flagging — composes Memory + Documents with claims-shaped .cqw packs.',
     category: 'vertical',
     status: 'planned',
     package: 'verticals/clawql-insurance',
     enable: 'ClawQLInstance CRD / Operator tier flags',
     href: '/reference/verticals',
-    keywords: ['claims', 'policy', 'fraud'],
+    composes: ['Memory', 'Documents', 'Automation'],
+    boilerplate: 'Claims / FNOL / underwriting .cqw starters',
+    keywords: ['claims', 'policy', 'fraud', 'preset', 'cqw'],
   },
   {
     id: 'clawql-supplychain',
     name: 'Supply chain',
     description:
-      'Procurement-to-payment, logistics docs, ERP connectors, and trade compliance.',
+      'Preset for procurement-to-payment and logistics docs — Memory + Documents with trade-compliance workflow starters.',
     category: 'vertical',
     status: 'planned',
     package: 'verticals/clawql-supplychain',
     enable: 'ClawQLInstance CRD / Operator tier flags',
     href: '/reference/verticals',
-    keywords: ['logistics', 'erp', 'procurement'],
+    composes: ['Memory', 'Documents', 'Automation'],
+    boilerplate: 'P2P / logistics / trade-compliance .cqw starters',
+    keywords: ['logistics', 'erp', 'procurement', 'preset', 'cqw'],
   },
   {
     id: 'clawql-government',
     name: 'Government',
     description:
-      'Permitting, FOIA, tax forms, procurement, and FedRAMP-ready defaults.',
+      'Preset for permitting, FOIA, and procurement — Memory + Documents with FedRAMP-oriented workflow defaults.',
     category: 'vertical',
     status: 'planned',
     package: 'verticals/clawql-government',
     enable: 'ClawQLInstance CRD / Operator tier flags',
     href: '/reference/verticals',
-    keywords: ['foia', 'fedramp', 'permitting'],
+    composes: ['Memory', 'Documents'],
+    boilerplate: 'FOIA / permitting / procurement .cqw starters',
+    keywords: ['foia', 'fedramp', 'permitting', 'preset', 'cqw'],
   },
   {
     id: 'clawql-manufacturing',
     name: 'Manufacturing',
     description:
-      'Production docs, QC, MES/ERP, BOM validation, and traceability.',
+      'Preset for production docs, QC, and BOM validation — Memory + Documents with traceability workflow packs.',
     category: 'vertical',
     status: 'planned',
     package: 'verticals/clawql-manufacturing',
     enable: 'ClawQLInstance CRD / Operator tier flags',
     href: '/reference/verticals',
-    keywords: ['mes', 'bom', 'qc'],
+    composes: ['Memory', 'Documents'],
+    boilerplate: 'QC / BOM / traceability .cqw starters',
+    keywords: ['mes', 'bom', 'qc', 'preset', 'cqw'],
   },
   {
     id: 'clawql-education',
     name: 'Education',
     description:
-      'LMS connectors (Canvas/Moodle/Blackboard), content generation, adaptive learning.',
+      'Preset for LMS connectors and adaptive learning — Memory + Documents with course-ops workflow starters.',
     category: 'vertical',
     status: 'planned',
     package: 'verticals/clawql-education',
     enable: 'ClawQLInstance CRD / Operator tier flags',
     href: '/reference/verticals',
-    keywords: ['lms', 'canvas', 'moodle'],
+    composes: ['Memory', 'Documents'],
+    boilerplate: 'LMS sync / content-gen .cqw starters',
+    keywords: ['lms', 'canvas', 'moodle', 'preset', 'cqw'],
   },
   {
     id: 'clawql-engineering',
     name: 'Engineering',
     description:
-      'MATLAB MCP Core + Simulink Agentic Toolkit (requires licensed MATLAB on host).',
+      'Preset for MATLAB / Simulink agentic kits — Memory + Sandbox with engineering workflow boilerplate (licensed MATLAB host).',
     category: 'vertical',
     status: 'planned',
     package: 'verticals/clawql-engineering',
     enable: 'ClawQLInstance CRD / Operator tier flags',
     href: '/reference/verticals',
-    keywords: ['matlab', 'simulink'],
+    composes: ['Memory', 'Sandbox'],
+    boilerplate: 'Model-run / Simulink review .cqw starters',
+    keywords: ['matlab', 'simulink', 'preset', 'cqw'],
   },
 ]
 
@@ -351,7 +383,9 @@ export function entrySearchText(entry: PluginRegistryEntry): string {
     entry.description,
     entry.package,
     entry.enable,
+    entry.boilerplate,
     ...(entry.tools ?? []),
+    ...(entry.composes ?? []),
     ...(entry.keywords ?? []),
     PLUGIN_CATEGORY_LABELS[entry.category],
     PLUGIN_STATUS_LABELS[entry.status],

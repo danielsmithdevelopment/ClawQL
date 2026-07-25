@@ -192,7 +192,7 @@ function addHomeBody(map) {
 
 function addHubPages(map) {
   map['/plugins'] =
-    '---\ntitle: Plugins\n---\n\n# Plugins\n\nClawQL plugin registry: horizontal packages, MCP proxies, and domain verticals (lending, legal, healthcare, …) on the same Plugin.onRegister model. Use the searchable registry on /plugins#registry (kind + status filters). Per-plugin docs under /plugins/{slug}; verticals guide at /reference/verticals.\n'
+    '---\ntitle: Plugins\n---\n\n# Plugins\n\nHorizontal plugins are reusable capabilities (Memory, Documents, …). Domain verticals are presets that compose those capabilities and ship domain-tailored .cqw boilerplate. Searchable registry at /plugins#registry (kind + status filters; vertical rows show Composes + Boilerplate). Per-plugin docs under /plugins/{slug}; verticals guide at /reference/verticals.\n'
 
   map['/security/best-practices'] =
     '---\ntitle: Agentic AI security best practices\n---\n\n# Agentic AI security best practices\n\nThirty-two vendor-neutral security modules synced from the repo security-best-practices-series. See /security/best-practices/{slug} for each module.\n'
