@@ -45,13 +45,11 @@ Offline checker validation (no model):
 python3 openbench/validate_tasks.py
 ```
 
-## One-off GitHub Actions A/B
+## GitHub Actions A/B (CI + manual)
 
-Manual `workflow_dispatch` job: **clawql-inference** with **direct BYOK**
-(default `deepseek/deepseek-chat`), OpenCode **clawql-on vs clawql-off**, Step
-Summary + JSON artifact, then the runner exits. Preferred secret:
-`DEEPSEEK_API_KEY`. OpenRouter (`OPENROUTER_API_KEY` + `openrouter/*`) is
-optional.
+- **Offline:** main CI always runs `python3 openbench/validate_tasks.py`.
+- **Live A/B:** [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml) runs on path-filtered PR/push to `main` and via `workflow_dispatch`. Preferred secret: `DEEPSEEK_API_KEY`. Missing secrets → live A/B **skipped** on PR/push (exit 0); manual dispatch still fails closed.
+- OpenRouter (`OPENROUTER_API_KEY` + `openrouter/*`) is optional.
 
 See [`openbench-github-actions.md`](openbench-github-actions.md).
 
@@ -60,8 +58,7 @@ See [`openbench-github-actions.md`](openbench-github-actions.md).
 See [`openbench/README.md`](../../openbench/README.md) and
 [`openbench/scripts/run-with-openbench.sh`](../../openbench/scripts/run-with-openbench.sh).
 
-Live runs need agent CLI credentials; CI in this repo only validates task
-checkers.
+Live runs need agent CLI credentials plus a BYOK inference secret in CI.
 
 ## Relation to planning-context benchmarks
 
