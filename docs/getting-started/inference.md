@@ -242,8 +242,8 @@ GTM narrative: [Inference-first GTM](https://clawql.com/inference/gtm) · Archit
 
 ## Troubleshooting
 
-| Symptom                          | Fix                                                                                |
-| -------------------------------- | ---------------------------------------------------------------------------------- |
+| Symptom                          | Fix                                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
 | Empty `/v1/models`               | Set `OPENROUTER_API_KEY` and/or a vendor BYOK key; catalog lists **credentialed** providers |
 | OpenRouter model 401 / missing   | Export `OPENROUTER_API_KEY` in the **same shell** as `inference serve`                      |
 | Want direct BYOK later           | Set `DEEPSEEK_API_KEY` (etc.) and use `deepseek/…` / `anthropic/…` model ids                |

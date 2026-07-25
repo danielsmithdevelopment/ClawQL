@@ -52,12 +52,12 @@ clawql inference serve
 1. Actions → **OpenBench A/B (clawql on vs off)** → **Run workflow**
 2. Suggested first try (OpenRouter key only):
 
-| Input    | Value                              |
-| -------- | ---------------------------------- |
-| `task`   | `memory-dependent-continuation`    |
+| Input    | Value                               |
+| -------- | ----------------------------------- |
+| `task`   | `memory-dependent-continuation`     |
 | `model`  | `openrouter/deepseek/deepseek-chat` |
-| `trials` | `1`                                |
-| `arms`   | `clawql-on,clawql-off`             |
+| `trials` | `1`                                 |
+| `arms`   | `clawql-on,clawql-off`              |
 
 OpenRouter examples:
 
