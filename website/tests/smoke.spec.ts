@@ -3,7 +3,9 @@ import { expect, test } from '@playwright/test'
 test('homepage renders and includes ClawQL text', async ({ page }) => {
   await page.goto('/')
   await expect(page).toHaveTitle(/ClawQL/i)
-  await expect(page.getByRole('heading', { name: /ClawQL/i }).first()).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /ClawQL/i }).first(),
+  ).toBeVisible()
 })
 
 test('health endpoint returns ok', async ({ request }) => {
@@ -22,5 +24,22 @@ test('plugins hub is reachable', async ({ page }) => {
   await page.goto('/plugins')
   const main = page.locator('#main-content')
   await expect(main.getByRole('heading', { name: /^Plugins$/ })).toBeVisible()
-  await expect(main.getByRole('link', { name: /Bundled providers/i })).toBeVisible()
+  await expect(
+    main.getByRole('heading', { name: /Plugin registry/i }),
+  ).toBeVisible()
+  await expect(main.getByLabel(/Search registry/i)).toBeVisible()
+  await expect(
+    main.getByRole('button', { name: /Domain verticals/i }),
+  ).toBeVisible()
+  await expect(main.getByRole('link', { name: /^Lending$/ })).toBeVisible()
+})
+
+test('plugins registry filters domain verticals', async ({ page }) => {
+  await page.goto('/plugins')
+  const main = page.locator('#main-content')
+  await main.getByRole('button', { name: /Domain verticals/i }).click()
+  await expect(main.getByRole('link', { name: /^Lending$/ })).toBeVisible()
+  await expect(
+    main.getByRole('link', { name: /^Memory \(vault\)$/ }),
+  ).toHaveCount(0)
 })

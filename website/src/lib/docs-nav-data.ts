@@ -62,7 +62,8 @@ export const docsNavigation: Array<NavGroup> = [
     title: 'Plugins',
     links: [
       { title: 'Plugins', href: '/plugins' },
-      { title: 'Plugin registry', href: '/reference/plugins' },
+      { title: 'Plugin model', href: '/reference/plugins' },
+      { title: 'Domain verticals', href: '/reference/verticals' },
       { title: 'Gateway core', href: '/plugins/core' },
       { title: 'Memory', href: '/plugins/memory' },
       { title: 'Documents', href: '/plugins/documents' },

@@ -192,7 +192,7 @@ function addHomeBody(map) {
 
 function addHubPages(map) {
   map['/plugins'] =
-    '---\ntitle: Plugins\n---\n\n# Plugins\n\nClawQL plugins: gateway core, Panguard proxy, memory, documents, bundled providers, automation, sandbox, Ouroboros, and extension roadmap. See individual plugin pages under /plugins/{slug}.\n'
+    '---\ntitle: Plugins\n---\n\n# Plugins\n\nClawQL plugin registry: horizontal packages, MCP proxies, and domain verticals (lending, legal, healthcare, …) on the same Plugin.onRegister model. Use the searchable registry on /plugins#registry (kind + status filters). Per-plugin docs under /plugins/{slug}; verticals guide at /reference/verticals.\n'
 
   map['/security/best-practices'] =
     '---\ntitle: Agentic AI security best practices\n---\n\n# Agentic AI security best practices\n\nThirty-two vendor-neutral security modules synced from the repo security-best-practices-series. See /security/best-practices/{slug} for each module.\n'

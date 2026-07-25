@@ -154,7 +154,7 @@ export const architectureHubCards: Array<ReferenceCard> = [
     href: '/plugins',
     name: 'Plugins',
     description:
-      'Per-plugin pages — core, memory, documents, automation, sandbox.',
+      'Searchable registry — horizontal plugins and domain verticals.',
     icon: SquaresPlusIcon,
   }),
   card({
@@ -275,7 +275,7 @@ export const referenceHubCards: Array<ReferenceCard> = [
     href: '/plugins',
     name: 'Plugins',
     description:
-      'Per-plugin docs, enable flags, and registry (model + ownership matrix).',
+      'Searchable registry with filters — horizontal plugins and domain verticals.',
     icon: SquaresPlusIcon,
   }),
   card({

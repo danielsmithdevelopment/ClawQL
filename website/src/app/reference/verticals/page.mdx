@@ -3,13 +3,25 @@ import { Note } from '@/components/mdx'
 
 # Verticals guide
 
-Vertical packages (**lending**, **legal**, **healthcare**, etc.) extend the gateway with domain-specific tools while sharing security, memory, and audit infrastructure. {{ className: 'lead' }}
+Domain verticals (**lending**, **legal**, **healthcare**, etc.) are **plugins** — the same `Plugin.onRegister` model as memory, documents, and automation — scoped to an industry domain. They extend the gateway with domain-specific tools while sharing security, memory, and audit infrastructure. {{ className: 'lead' }}
 
 <Note>
-  **No vertical packages are shipped yet.** This page indexes how to enable and
-  build them from the [Contributor Technical
-  Specification](/contributing/technical-specification).
+  **No vertical packages are shipped yet.** Browse every planned vertical
+  alongside horizontal plugins in the [plugin registry](/plugins#registry)
+  (filter by **Domain verticals**). Contribution rules live in the [Contributor
+  Technical Specification](/contributing/technical-specification).
 </Note>
+
+## Verticals are plugins
+
+| Concern             | Same as horizontal plugins? | Notes                                                                              |
+| ------------------- | --------------------------- | ---------------------------------------------------------------------------------- |
+| Registration        | Yes                         | `Plugin.onRegister` / Effect Layers when composed                                  |
+| Opt-in footprint    | Yes                         | Disabled verticals have **zero runtime footprint**                                 |
+| Cross-package calls | Via gateway                 | Verticals **never import other verticals** — use **`clawql-api.execute()`**        |
+| Enable path         | Operator / CRD              | Planned **`ClawQLInstance`** flags (not shipped) instead of only `CLAWQL_ENABLE_*` |
+
+See the full catalog on the [Plugins](/plugins) page — verticals are listed there as kind **Domain vertical**, not as a separate registry.
 
 ## Design rules
 
@@ -29,10 +41,15 @@ Vertical packages (**lending**, **legal**, **healthcare**, etc.) extend the gate
 
 → [Architecture](/architecture) — opt-in package ecosystem
 
-→ [Plugin model & registry](/reference/plugins) — horizontal plugins and MCP tool ownership
+→ [Plugins](/plugins) — searchable registry (horizontal + vertical)
+
+→ [Plugin model & registry](/reference/plugins) — concepts and MCP tool ownership
 
 <div className="not-prose my-8 flex flex-wrap gap-3">
-  <Button href="/contributing/technical-specification" arrow="right">
+  <Button href="/plugins#registry" arrow="right">
+    <>Browse plugin registry</>
+  </Button>
+  <Button href="/contributing/technical-specification" variant="outline">
     <>Contributor spec</>
   </Button>
   <Button href="/deployment/operations-guide" variant="outline">

@@ -1,6 +1,6 @@
 # ClawQL plugins (docs site source)
 
-Canonical markdown for the top-level **Plugins** section on [docs.clawql.com/plugins](https://docs.clawql.com/plugins) (site header + sidebar).
+Canonical markdown for per-plugin pages under the top-level **Plugins** section on [docs.clawql.com/plugins](https://docs.clawql.com/plugins) (site header + sidebar). The hub page hosts a searchable registry (horizontal plugins **and** domain verticals).
 
 Each `*.md` file (except this README) syncs to `website/src/generated/clawql-plugins/` via:
 

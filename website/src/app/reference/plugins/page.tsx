@@ -35,13 +35,14 @@ export default function PluginsReferencePage() {
         Plugin model &amp; registry
       </h1>
       <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
-        How ClawQL packages become plugins, which MCP tools each plugin owns,
-        and the living registry of shipped vs planned extensions.
+        How ClawQL packages become plugins — including domain verticals — which
+        MCP tools each plugin owns, and the living registry of shipped vs
+        planned extensions.
       </p>
 
       <div className="not-prose mt-6 mb-8 flex flex-wrap gap-3">
-        <Button href="/plugins" arrow="right">
-          <>Plugins hub</>
+        <Button href="/plugins#registry" arrow="right">
+          <>Searchable registry</>
         </Button>
         <Button href="/tools" variant="outline">
           <>MCP tools</>
