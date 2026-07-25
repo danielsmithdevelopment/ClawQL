@@ -1,6 +1,6 @@
 # ClawQL plugins (docs site source)
 
-Canonical markdown for the **Plugins** section on [docs.clawql.com/plugins](https://docs.clawql.com/plugins).
+Canonical markdown for the top-level **Plugins** section on [docs.clawql.com/plugins](https://docs.clawql.com/plugins) (site header + sidebar).
 
 Each `*.md` file (except this README) syncs to `website/src/generated/clawql-plugins/` via:
 

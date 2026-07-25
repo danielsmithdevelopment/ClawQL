@@ -272,9 +272,10 @@ export const referenceHubCards: Array<ReferenceCard> = [
     icon: CogIcon,
   }),
   card({
-    href: '/reference/plugins',
-    name: 'Plugin model & registry',
-    description: 'Extension contract, ownership matrix, enable flags.',
+    href: '/plugins',
+    name: 'Plugins',
+    description:
+      'Per-plugin docs, enable flags, and registry (model + ownership matrix).',
     icon: SquaresPlusIcon,
   }),
   card({
