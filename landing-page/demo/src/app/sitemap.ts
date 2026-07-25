@@ -14,6 +14,7 @@ const ROUTES: Array<{
   { path: '/signup', changeFrequency: 'monthly', priority: 0.85 },
   { path: '/about', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/inference/gtm', changeFrequency: 'monthly', priority: 0.9 },
+  { path: '/idp/gtm', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/enterprise/gtm', changeFrequency: 'monthly', priority: 0.75 },
   { path: '/privacy-policy', changeFrequency: 'yearly', priority: 0.3 },
   { path: '/industries', changeFrequency: 'monthly', priority: 0.75 },

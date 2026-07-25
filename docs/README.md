@@ -18,6 +18,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - **ClawQL Master enablement guide** (v2.1 — historical unified index; public hub is Architecture): [`vision/clawql-master-enablement-guide.md`](vision/clawql-master-enablement-guide.md) — redirects to [`/architecture`](https://docs.clawql.com/architecture)
 - **ClawQL Modularization v2.1** (package boundaries companion; public hub is Architecture): [`vision/clawql-modularization-v2.md`](vision/clawql-modularization-v2.md) — redirects to [`/architecture`](https://docs.clawql.com/architecture)
 - **ClawQL IDP Platform** (July 2026 — eight-vendor pipeline, umbrella Helm, observability, OpenClaw runbooks): [`vision/clawql-idp-platform.md`](vision/clawql-idp-platform.md) — [`/vision/idp-platform`](https://docs.clawql.com/vision/idp-platform)
+- **ClawQL IDP GTM** (standalone IDP motion — market, positioning, landing brief, sales tables): [`vision/clawql-idp-gtm.md`](vision/clawql-idp-gtm.md) — [`clawql.com/idp/gtm`](https://clawql.com/idp/gtm)
 - **Immutable releases — hybrid decentralized GitHub alternative** (Layer 0: `clawql-release`, Arweave, Radicle, Rift, release manifest): [`vision/clawql-hybrid-decentralized-github-alternative.md`](vision/clawql-hybrid-decentralized-github-alternative.md) — [`/vision/immutable-releases`](https://docs.clawql.com/vision/immutable-releases)
 
 ## Contributing

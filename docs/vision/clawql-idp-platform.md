@@ -5,7 +5,7 @@
 
 **Audience:** Investors · Developers & architects · Operators
 
-**Related:** [IDP pipeline hub](../providers/idp-pipeline.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Master enablement guide](./clawql-master-enablement-guide.md) · [Deployment guide](../deployment/clawql-deployment-operations-guide.md)
+**Related:** [IDP GTM strategy & landing brief](./clawql-idp-gtm.md) · [Public IDP GTM playbook](https://clawql.com/idp/gtm) · [IDP pipeline hub](../providers/idp-pipeline.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Master enablement guide](./clawql-master-enablement-guide.md) · [Deployment guide](../deployment/clawql-deployment-operations-guide.md)
 
 ---
 

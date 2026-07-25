@@ -739,12 +739,18 @@ export function EnterpriseGtmPlaybook() {
 
           <h2 id="idp-gtm">Part VIII — ClawQL IDP standalone GTM</h2>
           <p>
-            IDP is a platform strategy sale (VP Eng / platform lead), not only an engineering infrastructure swap. Pain
-            is agent sprawl and lead time for new agent services — not token bills alone.
+            IDP is a <strong>standalone revenue motion</strong> for ops, compliance, legal, lending, and M&amp;A buyers
+            — not only an engineering infrastructure swap. Pain is SaaS sprawl, per-page VDR fees, six-month
+            implementations, and IDPs that stop at extraction. Full competitive tables, landing-page brief, and honest
+            positioning live in the dedicated playbook:
+          </p>
+          <p>
+            <Link href={site.urls.idpGtm}>IDP-first GTM playbook →</Link>
           </p>
           <Callout>
-            ClawQL IDP is not a replacement for Backstage or Crossplane. It is the agentic governance layer around them:
-            Backstage catalogs services; ClawQL governs what agents built on those services are allowed to do.
+            ClawQL IDP competes with ABBYY, Hyperscience, and Intralinks on price, deployment speed, full-pipeline
+            integration, Merkle audit trails, and MCP-native agent access — then expands organically into inference and
+            memory on the same endpoint.
           </Callout>
 
           <h2 id="pitch-deck">Part IX — Enterprise pitch deck outline</h2>
