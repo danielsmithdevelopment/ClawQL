@@ -17,9 +17,10 @@ const colorStyles = {
       'ring-sky-300 bg-sky-50 text-sky-800 dark:ring-sky-400/30 dark:bg-sky-400/10 dark:text-sky-300',
   },
   amber: {
-    small: 'text-amber-500',
+    // Amber-800 on warm fill meets WCAG AA for small mono labels (amber-500 does not).
+    small: 'text-amber-800 dark:text-amber-300',
     medium:
-      'ring-amber-300 bg-amber-400/10 text-amber-500 dark:ring-amber-400/30 dark:bg-amber-400/10 dark:text-amber-400',
+      'ring-amber-400/50 bg-amber-50 text-amber-800 dark:ring-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300',
   },
   rose: {
     small: 'text-rose-800 dark:text-rose-400',

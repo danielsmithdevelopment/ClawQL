@@ -136,6 +136,9 @@ function SortHeader({
   return (
     <th
       scope="col"
+      aria-sort={
+        active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'
+      }
       className={clsx(
         'px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-zinc-600 uppercase dark:text-zinc-400',
         className,
@@ -145,9 +148,6 @@ function SortHeader({
         type="button"
         onClick={() => onSort(column)}
         className="inline-flex items-center gap-1 rounded-sm hover:text-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-claw-cyan dark:hover:text-white dark:focus-visible:outline-claw-cyan-bright"
-        aria-sort={
-          active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'
-        }
       >
         {label}
         <span className="font-mono text-[0.65rem] text-zinc-400" aria-hidden>
