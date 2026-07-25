@@ -45,7 +45,7 @@ test('plugins hub is reachable', async ({ page }) => {
     main.getByRole('heading', { name: /Domain verticals/i }),
   ).toBeVisible()
   await expect(
-    main.getByRole('heading', { name: /Plugin model/i }),
+    main.getByRole('heading', { name: 'Plugin model', exact: true }),
   ).toBeVisible()
 })
 
