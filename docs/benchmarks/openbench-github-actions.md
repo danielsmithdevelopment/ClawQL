@@ -11,11 +11,11 @@ OpenRouter remains an **optional escape hatch** (`openrouter/*` +
 
 ## When it runs
 
-| Trigger              | Behavior                                                                                         |
-| -------------------- | ------------------------------------------------------------------------------------------------ |
-| **`workflow_dispatch`** | Manual knobs (task / model / trials / arms). **Fails** if no matching BYOK / OpenRouter secret |
+| Trigger                                               | Behavior                                                                                                          |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **`workflow_dispatch`**                               | Manual knobs (task / model / trials / arms). **Fails** if no matching BYOK / OpenRouter secret                    |
 | **`pull_request` / `push` to `main`** (path-filtered) | CI smoke with defaults. **Skips live A/B (exit 0)** when secrets are missing; always runs offline task validation |
-| Main **CI** workflow | Always runs `python3 openbench/validate_tasks.py` (offline checkers only)                        |
+| Main **CI** workflow                                  | Always runs `python3 openbench/validate_tasks.py` (offline checkers only)                                         |
 
 Path filters include `openbench/**`, `packages/clawql-inference/**`, and the workflow/docs themselves.
 
