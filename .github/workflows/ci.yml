@@ -165,6 +165,16 @@ jobs:
       - name: Helm chart + Kustomize local overlay lint
         run: make lint-k8s-manifests
 
+  openbench-validate:
+    name: OpenBench task validate (offline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Validate OpenBench task checkers
+        run: python3 openbench/validate_tasks.py
+
   ontology-lint:
     name: Ontology lint (examples)
     needs: [lint, workflow-scripts]

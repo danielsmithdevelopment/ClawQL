@@ -1,10 +1,9 @@
-# One-off OpenBench A/B via clawql-inference (direct BYOK; OpenRouter optional).
+# OpenBench A/B via clawql-inference (direct BYOK; OpenRouter optional).
 #
-# Spin up inference + OpenCode → clawql-on vs clawql-off → Step Summary → tear down.
-# Preferred secret: DEEPSEEK_API_KEY (or other vendor BYOK keys).
-# Optional: OPENROUTER_API_KEY when model is openrouter/*.
+# - workflow_dispatch: full knobs (manual)
+# - pull_request / push (path-filtered): CI smoke — skip (exit 0) when no BYOK secret
 #
-# Actions → OpenBench A/B (clawql on vs off) → Run workflow.
+# Preferred secret: DEEPSEEK_API_KEY. Optional OPENROUTER_API_KEY for openrouter/* models.
 
 name: OpenBench A/B (clawql on vs off)
 
@@ -53,10 +52,29 @@ on:
         required: true
         type: string
         default: "8080"
+  pull_request:
+    paths:
+      - "openbench/**"
+      - "packages/clawql-inference/**"
+      - "src/onboarding/inference-cli.ts"
+      - "src/onboarding/cli.ts"
+      - "bin/clawql.mjs"
+      - ".github/workflows/openbench-ab.yml"
+      - "docs/benchmarks/openbench*.md"
+  push:
+    branches: [main]
+    paths:
+      - "openbench/**"
+      - "packages/clawql-inference/**"
+      - "src/onboarding/inference-cli.ts"
+      - "src/onboarding/cli.ts"
+      - "bin/clawql.mjs"
+      - ".github/workflows/openbench-ab.yml"
+      - "docs/benchmarks/openbench*.md"
 
 concurrency:
-  group: openbench-ab-${{ github.ref }}-${{ github.run_id }}
-  cancel-in-progress: false
+  group: openbench-ab-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -72,43 +90,78 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      CLAWQL_INFERENCE_PORT: ${{ inputs.inference_port }}
+      # Defaults for pull_request / push; workflow_dispatch inputs override when set.
+      OPENBENCH_TASK: ${{ inputs.task || 'memory-dependent-continuation' }}
+      OPENBENCH_MODEL: ${{ inputs.model || 'deepseek/deepseek-chat' }}
+      OPENBENCH_TRIALS: ${{ inputs.trials || '1' }}
+      OPENBENCH_TIMEOUT_S: ${{ inputs.timeout_s || '180' }}
+      OPENBENCH_ARMS: ${{ inputs.arms || 'clawql-on,clawql-off' }}
+      CLAWQL_INFERENCE_PORT: ${{ inputs.inference_port || '8080' }}
       CLAWQL_OPENBENCH: "1"
       CLAWQL_HARNESS_ALLOW_UNSANDBOXED: "1"
       CLAWQL_OPENBENCH_HARNESS: "opencode"
       CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
       CLAWQL_OPENROUTER_APP_TITLE: ClawQL OpenBench
     steps:
-      - name: Require BYOK or OpenRouter credentials
-        env:
-          MODEL: ${{ inputs.model }}
-        run: |
-          set -euo pipefail
-          if [[ "$MODEL" == openrouter/* ]]; then
-            if [ -z "${OPENROUTER_API_KEY:-}" ]; then
-              echo "::error::Model '$MODEL' needs repository secret OPENROUTER_API_KEY (optional escape hatch)."
-              exit 1
-            fi
-            echo "Using OpenRouter escape hatch for $MODEL"
-            exit 0
-          fi
-          # Direct BYOK path — prefer DeepSeek for the default model.
-          if [ -n "${DEEPSEEK_API_KEY:-}" ] || [ -n "${GROQ_API_KEY:-}" ] \
-            || [ -n "${OPENAI_API_KEY:-}" ] || [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-            echo "Using direct BYOK credentials for clawql-inference ($MODEL)"
-            exit 0
-          fi
-          echo "::error::Add DEEPSEEK_API_KEY (preferred) or another vendor BYOK secret. OpenRouter remains optional via OPENROUTER_API_KEY + openrouter/* models."
-          exit 1
-
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
+      - name: Credential preflight
+        id: preflight
+        run: |
+          set -euo pipefail
+          MODEL="${OPENBENCH_MODEL}"
+          run_benchmark=false
+          reason=""
+
+          if [[ "$MODEL" == openrouter/* ]]; then
+            if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+              run_benchmark=true
+              reason="OpenRouter escape hatch for $MODEL"
+            else
+              reason="Model '$MODEL' needs OPENROUTER_API_KEY (optional escape hatch)."
+            fi
+          elif [ -n "${DEEPSEEK_API_KEY:-}" ] || [ -n "${GROQ_API_KEY:-}" ] \
+            || [ -n "${OPENAI_API_KEY:-}" ] || [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+            run_benchmark=true
+            reason="Direct BYOK credentials for clawql-inference ($MODEL)"
+          else
+            reason="No DEEPSEEK_API_KEY (preferred) or other vendor BYOK secret. OpenRouter remains optional via OPENROUTER_API_KEY + openrouter/* models."
+          fi
+
+          echo "run_benchmark=${run_benchmark}" >> "$GITHUB_OUTPUT"
+          {
+            echo "## OpenBench credential preflight"
+            echo ""
+            echo "- Event: \`${{ github.event_name }}\`"
+            echo "- Task: \`${OPENBENCH_TASK}\`"
+            echo "- Model: \`${OPENBENCH_MODEL}\`"
+            echo "- Arms: \`${OPENBENCH_ARMS}\`"
+            echo "- Trials/arm: \`${OPENBENCH_TRIALS}\`"
+            echo "- Run live benchmark: \`${run_benchmark}\`"
+            echo "- Note: ${reason}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$run_benchmark" != "true" ]; then
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "::error::${reason}"
+              exit 1
+            fi
+            echo "::notice::Skipping live OpenBench A/B — ${reason}"
+          else
+            echo "${reason}"
+          fi
+
+      - name: Validate task checkers (offline)
+        run: python3 openbench/validate_tasks.py
+
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        if: steps.preflight.outputs.run_benchmark == 'true'
         with:
           node-version: "22"
           cache: npm
 
       - name: Install ClawQL (workspace)
+        if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
           npm ci
           npm run build
@@ -116,6 +169,7 @@ jobs:
           node bin/clawql.mjs --version
 
       - name: Install OpenCode CLI
+        if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
           # Official npm package name varies by channel; try common ids.
           npm install -g opencode-ai@latest 2>/dev/null \
@@ -124,13 +178,11 @@ jobs:
           command -v opencode
           opencode --version || true
 
-      - name: Validate task checkers (offline)
-        run: python3 openbench/validate_tasks.py
-
       - name: Start clawql-inference (BYOK upstreams)
+        if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
           mkdir -p artifacts/openbench-ab
-          PORT="${{ inputs.inference_port }}"
+          PORT="${CLAWQL_INFERENCE_PORT}"
           node bin/clawql.mjs inference serve --port "$PORT" \
             > artifacts/openbench-ab/inference.log 2>&1 &
           echo $! > /tmp/clawql-inference.pid
@@ -138,6 +190,15 @@ jobs:
           for i in $(seq 1 60); do
             if curl -sf "http://127.0.0.1:${PORT}/healthz" >/dev/null; then
               echo "clawql-inference healthy after ${i}s"
+              # Fail fast if catalog is empty (secret present but unused / wrong).
+              models="$(curl -sf "http://127.0.0.1:${PORT}/v1/models" || true)"
+              echo "$models" | head -c 400
+              echo ""
+              if ! echo "$models" | grep -q '"id"'; then
+                echo "::error::/v1/models has no credentialed models — check BYOK secrets"
+                tail -n 120 artifacts/openbench-ab/inference.log || true
+                exit 1
+              fi
               exit 0
             fi
             sleep 1
@@ -148,19 +209,20 @@ jobs:
 
       - name: Run A/B compare
         id: ab
+        if: steps.preflight.outputs.run_benchmark == 'true'
         env:
           CLAWQL_BIN: ${{ env.CLAWQL_BIN }}
-          CLAWQL_INFERENCE_URL: http://127.0.0.1:${{ inputs.inference_port }}/v1
+          CLAWQL_INFERENCE_URL: http://127.0.0.1:${{ env.CLAWQL_INFERENCE_PORT }}/v1
         run: |
           OUT="artifacts/openbench-ab/results.json"
           SUM="artifacts/openbench-ab/summary.md"
           python3 openbench/scripts/run-ab-compare.py \
-            --task "${{ inputs.task }}" \
-            --model "${{ inputs.model }}" \
-            --inference-url "http://127.0.0.1:${{ inputs.inference_port }}/v1" \
-            --trials "${{ inputs.trials }}" \
-            --timeout "${{ inputs.timeout_s }}" \
-            --arms "${{ inputs.arms }}" \
+            --task "${OPENBENCH_TASK}" \
+            --model "${OPENBENCH_MODEL}" \
+            --inference-url "http://127.0.0.1:${CLAWQL_INFERENCE_PORT}/v1" \
+            --trials "${OPENBENCH_TRIALS}" \
+            --timeout "${OPENBENCH_TIMEOUT_S}" \
+            --arms "${OPENBENCH_ARMS}" \
             --out "$OUT" \
             --summary-md "$SUM"
           {
@@ -169,16 +231,16 @@ jobs:
             echo "- Run: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
             echo "- Inference: \`clawql-inference\` (direct BYOK; OpenRouter optional)"
             echo "- Agent: OpenCode"
-            echo "- Task: \`${{ inputs.task }}\`"
-            echo "- Model: \`${{ inputs.model }}\`"
-            echo "- Trials/arm: \`${{ inputs.trials }}\`"
-            echo "- Arms: \`${{ inputs.arms }}\`"
+            echo "- Task: \`${OPENBENCH_TASK}\`"
+            echo "- Model: \`${OPENBENCH_MODEL}\`"
+            echo "- Trials/arm: \`${OPENBENCH_TRIALS}\`"
+            echo "- Arms: \`${OPENBENCH_ARMS}\`"
             echo ""
             cat "$SUM"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Stop clawql-inference
-        if: always()
+        if: always() && steps.preflight.outputs.run_benchmark == 'true'
         run: |
           if [ -f /tmp/clawql-inference.pid ]; then
             kill "$(cat /tmp/clawql-inference.pid)" 2>/dev/null || true
@@ -186,10 +248,10 @@ jobs:
           pkill -f "inference serve" 2>/dev/null || true
 
       - name: Upload results artifact
-        if: always()
+        if: always() && steps.preflight.outputs.run_benchmark == 'true'
         uses: actions/upload-artifact@v7
         with:
-          name: openbench-ab-${{ inputs.task }}-${{ github.run_id }}
+          name: openbench-ab-${{ env.OPENBENCH_TASK }}-${{ github.run_id }}
           path: artifacts/openbench-ab/
           if-no-files-found: warn
           retention-days: 14
