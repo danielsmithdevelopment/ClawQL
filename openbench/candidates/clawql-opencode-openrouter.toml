@@ -2,8 +2,9 @@ kind = "manifest"
 name = "clawql-opencode-openrouter"
 isolate_home = false
 inherit_env = true
-# Optional OpenRouter escape hatch — prefer clawql-opencode-deepseek.toml for
-# direct BYOK. Assumes CLAWQL_INFERENCE_URL / OPENCODE_CONFIG_CONTENT are set.
+# OpenRouter-first day-one path (existing aggregator key). Prefer
+# clawql-opencode-deepseek.toml later when you have direct BYOK.
+# Assumes CLAWQL_INFERENCE_URL / OPENCODE_CONFIG_CONTENT are set.
 command = [
   "clawql", "opencode",
   "--non-interactive",

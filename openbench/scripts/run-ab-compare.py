@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""One-off A/B: clawql-on vs clawql-off through clawql-inference (BYOK).
+"""One-off A/B: clawql-on vs clawql-off through clawql-inference.
 
 Architecture (same model for both arms)::
 
   coding agent (OpenCode)
         │  OPENAI-compatible
         ▼
-  clawql inference serve   ←── DEEPSEEK_API_KEY / GROQ_API_KEY / …
+  clawql inference serve   ←── OPENROUTER_API_KEY and/or BYOK keys
         │
-        ├── direct BYOK (default): deepseek, groq, fireworks, …
-        └── optional escape hatch: OpenRouter (OPENROUTER_API_KEY)
+        ├── openrouter/* (OpenRouter-first — existing aggregator key)
+        └── direct BYOK: deepseek, groq, openai, …
 
 clawql-on  = OpenCode via ``clawql opencode --non-interactive`` + ClawQL MCP
 clawql-off = raw OpenCode pointed at the same inference URL (no ClawQL MCP)
@@ -19,18 +19,18 @@ Requires:
   - ``opencode`` on PATH
   - ``clawql`` / ``bin/clawql.mjs`` for the on-arm
   - A running ``clawql inference serve`` (or let Actions start it)
-  - Vendor BYOK key(s) on the inference process (preferred), or OpenRouter
+  - ``OPENROUTER_API_KEY`` (day-one) and/or vendor BYOK key(s)
 
 Example::
 
-  # terminal 1 — direct DeepSeek (disintermediated)
-  DEEPSEEK_API_KEY=sk-… \\
+  # terminal 1 — OpenRouter-first (existing aggregator key)
+  OPENROUTER_API_KEY=sk-or-… \\
     clawql inference serve --port 8080
 
   # terminal 2
   python3 openbench/scripts/run-ab-compare.py \\
     --task memory-dependent-continuation \\
-    --model deepseek/deepseek-chat \\
+    --model openrouter/deepseek/deepseek-chat \\
     --inference-url http://127.0.0.1:8080/v1 \\
     --trials 1 \\
     --out /tmp/ab-results.json
@@ -59,7 +59,7 @@ KNOWN_TASKS = (
     "multi-provider-api-workflow",
 )
 DEFAULT_HARNESS = "opencode"
-DEFAULT_MODEL = os.environ.get("OPENBENCH_MODEL", "deepseek/deepseek-chat")
+DEFAULT_MODEL = os.environ.get("OPENBENCH_MODEL", "openrouter/deepseek/deepseek-chat")
 DEFAULT_INFERENCE_URL = os.environ.get(
     "CLAWQL_INFERENCE_URL",
     os.environ.get("OPENBENCH_INFERENCE_URL", "http://127.0.0.1:8080/v1"),
@@ -268,7 +268,7 @@ def _dec_timeout_output(exc) -> str:
 def run_arm_off(
     instruction: str, workdir: Path, model: str, timeout_s: int, inference_url: str
 ) -> dict:
-    """Raw OpenCode → clawql-inference (BYOK / optional OpenRouter; no ClawQL MCP)."""
+    """Raw OpenCode → clawql-inference (OpenRouter and/or BYOK; no ClawQL MCP)."""
     exe = resolve_opencode()
     gateway_model = normalize_model_id(model)
     opencode_model = f"clawql/{gateway_model}"
@@ -595,8 +595,8 @@ def main(argv=None) -> int:
         print(
             f"ERROR: clawql-inference not reachable at {inference_url} "
             f"(expected /healthz). Start with:\n"
-            f"  DEEPSEEK_API_KEY=… clawql inference serve --port 8080\n"
-            f"  # or OPENROUTER_API_KEY=… for the optional openrouter/* escape hatch",
+            f"  OPENROUTER_API_KEY=… clawql inference serve --port 8080\n"
+            f"  # or DEEPSEEK_API_KEY=… (direct BYOK) when you skip OpenRouter",
             file=sys.stderr,
         )
         return 2
