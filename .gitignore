@@ -24,7 +24,7 @@ Thumbs.db
 # IDE / editors
 .idea/
 .vscode/
-# Cursor MCP — copy .cursor/mcp.json.example → .cursor/mcp.json and set your URL
+# Cursor MCP — copy .cursor/mcp.json.example → .cursor/mcp.json (stdio; local to VM)
 .cursor/mcp.json
 *.swp
 *.swo
