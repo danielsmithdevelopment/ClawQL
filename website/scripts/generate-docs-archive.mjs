@@ -121,6 +121,17 @@ function parseSidebarHrefs(source) {
   for (const match of source.matchAll(/href:\s*'(\/[^']*)'/g)) {
     hrefs.add(match[1])
   }
+  // Security training modules are spread into nav from the generated registry
+  // (not string literals). Treat the whole /security tree as on-sidebar when
+  // the Security section is present.
+  if (hrefs.has('/security') || hrefs.has('/security/best-practices')) {
+    hrefs.add('/security/defense-in-depth')
+    for (const p of loadJsonArray(
+      'src/generated/security-training/sitemap-paths.json',
+    )) {
+      hrefs.add(p)
+    }
+  }
   return hrefs
 }
 
