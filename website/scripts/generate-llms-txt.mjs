@@ -61,7 +61,11 @@ const SECTIONS = [
         '/inference/clawql-inference',
         'OpenAI drop-in, flywheel, WORM path to Auditable Production AI',
       ],
-      ['Plugins', '/plugins', 'Agentic Gateway core and optional plugin packages'],
+      [
+        'Plugins',
+        '/plugins',
+        'Searchable registry — horizontal plugins and domain verticals',
+      ],
       ['Protocol', '/reference/protocol', 'Uniform envelope and approval flows'],
       ['Spec configuration', '/spec-configuration', 'OpenAPI and provider sources'],
     ],
