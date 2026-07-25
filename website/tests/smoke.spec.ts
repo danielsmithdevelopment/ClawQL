@@ -34,7 +34,9 @@ test('plugins hub is reachable', async ({ page }) => {
   await expect(
     main.getByRole('button', { name: /Domain verticals/i }),
   ).toBeVisible()
-  await expect(main.getByRole('table')).toBeVisible()
+  await expect(
+    main.getByRole('columnheader', { name: /^Name/i }),
+  ).toBeVisible()
   await expect(
     main.getByRole('link', { name: /Lending/i }).first(),
   ).toBeVisible()
