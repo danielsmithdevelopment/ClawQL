@@ -80,7 +80,7 @@ function rewriteLinksForSite(body) {
         )
         .replaceAll(
           '](../design/clawql-plugin-model.md)',
-          '](/reference/plugins)',
+          '](/plugins#plugin-model)',
         )
         .replaceAll(
           '](../design/modularization-implementation-status.md)',

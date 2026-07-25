@@ -40,4 +40,4 @@ The Panguard proxy plugin is the synchronous **`beforeCallTool`** chokepoint for
 
 - [Defense in depth (site)](/security/defense-in-depth)
 - [MCP proxy JWT ATR (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/mcp-proxy-jwt-atr.md)
-- [Plugin registry](/reference/plugins)
+- [Plugin registry](/plugins)

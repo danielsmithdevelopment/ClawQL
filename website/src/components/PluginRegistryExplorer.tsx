@@ -2,22 +2,36 @@
 
 import clsx from 'clsx'
 import Link from 'next/link'
-import { startTransition, useDeferredValue, useId, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import {
+  startTransition,
+  useDeferredValue,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react'
 
 import { Tag } from '@/components/Tag'
 import {
-  entrySearchText,
   PLUGIN_CATEGORY_LABELS,
   PLUGIN_STATUS_LABELS,
   pluginRegistryEntries,
-  SHIPPED_STATUSES,
   type PluginCategory,
   type PluginRegistryEntry,
   type PluginStatus,
 } from '@/lib/plugin-registry-data'
-
-type CategoryFilter = 'all' | PluginCategory
-type StatusFilter = 'all' | 'available' | 'planned' | 'roadmap'
+import {
+  DEFAULT_PAGE_SIZE,
+  filterEntries,
+  PAGE_SIZE_OPTIONS,
+  paginateEntries,
+  sortEntries,
+  type CategoryFilter,
+  type SortDir,
+  type SortKey,
+  type StatusFilter,
+} from '@/lib/plugin-registry-query'
 
 const CATEGORY_FILTERS: Array<{ id: CategoryFilter; label: string }> = [
   { id: 'all', label: 'All' },
@@ -76,12 +90,6 @@ function categoryTagColor(
   }
 }
 
-function matchesStatus(entry: PluginRegistryEntry, filter: StatusFilter) {
-  if (filter === 'all') return true
-  if (filter === 'available') return SHIPPED_STATUSES.has(entry.status)
-  return entry.status === filter
-}
-
 function FilterChip({
   active,
   onClick,
@@ -109,100 +117,204 @@ function FilterChip({
   )
 }
 
-function RegistryRow({ entry }: { entry: PluginRegistryEntry }) {
+function SortHeader({
+  label,
+  column,
+  sortKey,
+  sortDir,
+  onSort,
+  className,
+}: {
+  label: string
+  column: SortKey
+  sortKey: SortKey
+  sortDir: SortDir
+  onSort: (key: SortKey) => void
+  className?: string
+}) {
+  const active = sortKey === column
   return (
-    <li className="border-b border-zinc-900/5 last:border-b-0 dark:border-white/5">
-      <Link
-        href={entry.href}
-        aria-label={entry.name}
-        className="group block px-1 py-4 transition hover:bg-zinc-50/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-claw-cyan sm:px-3 dark:hover:bg-white/3 dark:focus-visible:outline-claw-cyan-bright"
+    <th
+      scope="col"
+      className={clsx(
+        'px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-zinc-600 uppercase dark:text-zinc-400',
+        className,
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(column)}
+        className="inline-flex items-center gap-1 rounded-sm hover:text-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-claw-cyan dark:hover:text-white dark:focus-visible:outline-claw-cyan-bright"
+        aria-sort={
+          active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'
+        }
       >
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
-          <h3
-            aria-hidden="true"
-            className="text-sm font-semibold text-zinc-900 group-hover:text-zinc-950 dark:text-white dark:group-hover:text-white"
-          >
-            {entry.name}
-          </h3>
-          <code className="font-mono text-[0.7rem] text-zinc-500 dark:text-zinc-400">
-            {entry.id}
-          </code>
-          <div className="flex flex-wrap gap-1.5">
-            <Tag color={categoryTagColor(entry.category)} variant="medium">
-              {PLUGIN_CATEGORY_LABELS[entry.category]}
-            </Tag>
-            <Tag color={statusTagColor(entry.status)} variant="medium">
-              {PLUGIN_STATUS_LABELS[entry.status]}
-            </Tag>
-          </div>
-        </div>
-        <p className="mt-1.5 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
-          {entry.description}
-        </p>
-        {entry.composes && entry.composes.length > 0 ? (
-          <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-              Composes
-            </span>{' '}
-            <span className="text-zinc-500 dark:text-zinc-500">
-              (horizontal plugins)
-            </span>{' '}
-            {entry.composes.join(' · ')}
-          </p>
-        ) : null}
-        {entry.boilerplate ? (
-          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-              Boilerplate
-            </span>{' '}
-            {entry.boilerplate}
-          </p>
-        ) : null}
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-500">
-          {entry.package ? (
-            <span>
-              <span className="text-zinc-400 dark:text-zinc-600">Package </span>
-              <code className="font-mono text-zinc-600 dark:text-zinc-400">
-                {entry.package}
-              </code>
-            </span>
-          ) : null}
-          {entry.enable ? (
-            <span>
-              <span className="text-zinc-400 dark:text-zinc-600">Enable </span>
-              <code className="font-mono text-zinc-600 dark:text-zinc-400">
-                {entry.enable}
-              </code>
-            </span>
-          ) : null}
-          {entry.tools && entry.tools.length > 0 ? (
-            <span>
-              <span className="text-zinc-400 dark:text-zinc-600">Tools </span>
-              <code className="font-mono text-zinc-600 dark:text-zinc-400">
-                {entry.tools.join(', ')}
-              </code>
-            </span>
-          ) : null}
-        </div>
-      </Link>
-    </li>
+        {label}
+        <span className="font-mono text-[0.65rem] text-zinc-400" aria-hidden>
+          {active ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
+        </span>
+      </button>
+    </th>
   )
+}
+
+function readUrlState(): {
+  query: string
+  category: CategoryFilter
+  status: StatusFilter
+  sortKey: SortKey
+  sortDir: SortDir
+  page: number
+  pageSize: number
+} {
+  if (typeof window === 'undefined') {
+    return {
+      query: '',
+      category: 'all',
+      status: 'all',
+      sortKey: 'category',
+      sortDir: 'asc',
+      page: 1,
+      pageSize: DEFAULT_PAGE_SIZE,
+    }
+  }
+  const params = new URLSearchParams(window.location.search)
+  const category = (params.get('kind') ?? 'all') as CategoryFilter
+  const status = (params.get('status') ?? 'all') as StatusFilter
+  const sortKey = (params.get('sort') ?? 'category') as SortKey
+  const sortDir = params.get('dir') === 'desc' ? 'desc' : 'asc'
+  const page = Number(params.get('page') ?? '1') || 1
+  const rawSize = Number(params.get('pageSize') ?? DEFAULT_PAGE_SIZE)
+  const pageSize = (PAGE_SIZE_OPTIONS as readonly number[]).includes(rawSize)
+    ? rawSize
+    : DEFAULT_PAGE_SIZE
+  const knownCategory = CATEGORY_FILTERS.some((c) => c.id === category)
+  const knownStatus = STATUS_FILTERS.some((s) => s.id === status)
+  const knownSort = ['name', 'category', 'status', 'package'].includes(sortKey)
+  return {
+    query: params.get('q') ?? '',
+    category: knownCategory ? category : 'all',
+    status: knownStatus ? status : 'all',
+    sortKey: knownSort ? sortKey : 'category',
+    sortDir,
+    page: Math.max(1, page),
+    pageSize,
+  }
+}
+
+function writeUrlState(state: {
+  query: string
+  category: CategoryFilter
+  status: StatusFilter
+  sortKey: SortKey
+  sortDir: SortDir
+  page: number
+  pageSize: number
+}) {
+  if (typeof window === 'undefined') return
+  const params = new URLSearchParams()
+  if (state.query.trim()) params.set('q', state.query.trim())
+  if (state.category !== 'all') params.set('kind', state.category)
+  if (state.status !== 'all') params.set('status', state.status)
+  if (state.sortKey !== 'category') params.set('sort', state.sortKey)
+  if (state.sortDir !== 'asc') params.set('dir', state.sortDir)
+  if (state.page > 1) params.set('page', String(state.page))
+  if (state.pageSize !== DEFAULT_PAGE_SIZE) {
+    params.set('pageSize', String(state.pageSize))
+  }
+  const qs = params.toString()
+  const next = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash || '#registry'}`
+  window.history.replaceState(null, '', next)
+}
+
+function truncateTools(tools: string[] | undefined, max = 3): string {
+  if (!tools?.length) return '—'
+  if (tools.length <= max) return tools.join(', ')
+  return `${tools.slice(0, max).join(', ')} +${tools.length - max}`
 }
 
 export function PluginRegistryExplorer() {
   const searchId = useId()
+  const tableId = useId()
+  const searchParams = useSearchParams()
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<CategoryFilter>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
+  const [sortKey, setSortKey] = useState<SortKey>('category')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
+  const [urlReady, setUrlReady] = useState(false)
+  const skipNextWrite = useRef(false)
   const deferredQuery = useDeferredValue(query)
-  const normalizedQuery = deferredQuery.trim().toLowerCase()
+  const searchKey = searchParams.toString()
 
-  const filtered = pluginRegistryEntries.filter((entry) => {
-    if (category !== 'all' && entry.category !== category) return false
-    if (!matchesStatus(entry, status)) return false
-    if (!normalizedQuery) return true
-    return entrySearchText(entry).includes(normalizedQuery)
+  useEffect(() => {
+    skipNextWrite.current = true
+    const initial = readUrlState()
+    setQuery(initial.query)
+    setCategory(initial.category)
+    setStatus(initial.status)
+    setSortKey(initial.sortKey)
+    setSortDir(initial.sortDir)
+    setPage(initial.page)
+    setPageSize(initial.pageSize)
+    setUrlReady(true)
+  }, [searchKey])
+
+  const filtered = filterEntries(pluginRegistryEntries, {
+    query: deferredQuery,
+    category,
+    status,
   })
+  const sorted = sortEntries(filtered, sortKey, sortDir)
+  const {
+    page: safePage,
+    pageCount,
+    slice,
+  } = paginateEntries(sorted, page, pageSize)
+
+  useEffect(() => {
+    if (page !== safePage) setPage(safePage)
+  }, [page, safePage])
+
+  useEffect(() => {
+    if (!urlReady) return
+    if (skipNextWrite.current) {
+      skipNextWrite.current = false
+      return
+    }
+    writeUrlState({
+      query: deferredQuery,
+      category,
+      status,
+      sortKey,
+      sortDir,
+      page: safePage,
+      pageSize,
+    })
+  }, [
+    urlReady,
+    deferredQuery,
+    category,
+    status,
+    sortKey,
+    sortDir,
+    safePage,
+    pageSize,
+  ])
+
+  function onSort(key: SortKey) {
+    startTransition(() => {
+      if (sortKey === key) {
+        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+      } else {
+        setSortKey(key)
+        setSortDir('asc')
+      }
+      setPage(1)
+    })
+  }
 
   const verticalCount = pluginRegistryEntries.filter(
     (e) => e.category === 'vertical',
@@ -223,93 +335,264 @@ export function PluginRegistryExplorer() {
               id={searchId}
               type="search"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Filter by name, package, tool, domain…"
+              onChange={(event) => {
+                setQuery(event.target.value)
+                setPage(1)
+              }}
+              placeholder="Name, package, tool, domain, composes…"
               autoComplete="off"
               className="mt-2 w-full rounded-lg border-0 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm ring-1 ring-zinc-900/10 placeholder:text-zinc-400 focus:ring-2 focus:ring-claw-cyan focus:outline-none dark:bg-claw-bg dark:text-zinc-100 dark:ring-white/10 dark:placeholder:text-zinc-500 dark:focus:ring-claw-cyan-bright"
             />
           </div>
 
-          <div>
-            <p className="text-xs font-semibold tracking-wide text-zinc-700 uppercase dark:text-zinc-300">
-              Kind
-            </p>
-            <div
-              className="mt-2 flex flex-wrap gap-2"
-              role="group"
-              aria-label="Filter by plugin kind"
-            >
-              {CATEGORY_FILTERS.map((item) => (
-                <FilterChip
-                  key={item.id}
-                  active={category === item.id}
-                  onClick={() => {
-                    startTransition(() => setCategory(item.id))
-                  }}
-                >
-                  {item.label}
-                </FilterChip>
-              ))}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold tracking-wide text-zinc-700 uppercase dark:text-zinc-300">
+                Kind
+              </p>
+              <div
+                className="mt-2 flex flex-wrap gap-2"
+                role="group"
+                aria-label="Filter by plugin kind"
+              >
+                {CATEGORY_FILTERS.map((item) => (
+                  <FilterChip
+                    key={item.id}
+                    active={category === item.id}
+                    onClick={() => {
+                      startTransition(() => {
+                        setCategory(item.id)
+                        setPage(1)
+                      })
+                    }}
+                  >
+                    {item.label}
+                  </FilterChip>
+                ))}
+              </div>
             </div>
-          </div>
-
-          <div>
-            <p className="text-xs font-semibold tracking-wide text-zinc-700 uppercase dark:text-zinc-300">
-              Status
-            </p>
-            <div
-              className="mt-2 flex flex-wrap gap-2"
-              role="group"
-              aria-label="Filter by status"
-            >
-              {STATUS_FILTERS.map((item) => (
-                <FilterChip
-                  key={item.id}
-                  active={status === item.id}
-                  onClick={() => {
-                    startTransition(() => setStatus(item.id))
-                  }}
-                >
-                  {item.label}
-                </FilterChip>
-              ))}
+            <div>
+              <p className="text-xs font-semibold tracking-wide text-zinc-700 uppercase dark:text-zinc-300">
+                Status
+              </p>
+              <div
+                className="mt-2 flex flex-wrap gap-2"
+                role="group"
+                aria-label="Filter by status"
+              >
+                {STATUS_FILTERS.map((item) => (
+                  <FilterChip
+                    key={item.id}
+                    active={status === item.id}
+                    onClick={() => {
+                      startTransition(() => {
+                        setStatus(item.id)
+                        setPage(1)
+                      })
+                    }}
+                  >
+                    {item.label}
+                  </FilterChip>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-          Showing{' '}
-          <span className="font-semibold text-zinc-900 dark:text-zinc-200">
-            {filtered.length}
-          </span>{' '}
-          of {pluginRegistryEntries.length} entries
-          {category === 'vertical' ? (
-            <>
-              {' '}
-              · presets that compose horizontal plugins + domain{' '}
-              <code className="font-mono text-[0.85em]">.cqw</code> boilerplate
-            </>
-          ) : null}
-          {category === 'horizontal' ? (
-            <> · building blocks composed into vertical presets</>
-          ) : null}
-          {category === 'all' && status === 'all' && !normalizedQuery ? (
-            <> · {verticalCount} domain vertical presets</>
-          ) : null}
-        </p>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-600 dark:text-zinc-400">
+          <p>
+            Showing{' '}
+            <span className="font-semibold text-zinc-900 dark:text-zinc-200">
+              {sorted.length === 0
+                ? 0
+                : `${(safePage - 1) * pageSize + 1}–${Math.min(safePage * pageSize, sorted.length)}`}
+            </span>{' '}
+            of{' '}
+            <span className="font-semibold text-zinc-900 dark:text-zinc-200">
+              {sorted.length}
+            </span>{' '}
+            match
+            {sorted.length === 1 ? '' : 'es'}
+            {sorted.length !== pluginRegistryEntries.length ? (
+              <> (catalog {pluginRegistryEntries.length})</>
+            ) : null}
+            {category === 'vertical' ? (
+              <>
+                {' '}
+                · vertical presets compose horizontals + domain{' '}
+                <code className="font-mono text-[0.85em]">.cqw</code>
+              </>
+            ) : null}
+            {category === 'horizontal' ? (
+              <> · building blocks for vertical presets</>
+            ) : null}
+            {category === 'all' && status === 'all' && !deferredQuery.trim() ? (
+              <> · {verticalCount} domain vertical presets</>
+            ) : null}
+          </p>
+          <label className="flex items-center gap-2 text-xs">
+            <span className="text-zinc-500">Rows</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value))
+                setPage(1)
+              }}
+              className="rounded-md border-0 bg-white py-1 pr-8 pl-2 text-xs text-zinc-800 ring-1 ring-zinc-900/10 dark:bg-claw-bg dark:text-zinc-200 dark:ring-white/10"
+            >
+              {PAGE_SIZE_OPTIONS.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {sorted.length === 0 ? (
         <p className="mt-8 text-sm text-zinc-600 dark:text-zinc-400">
           No plugins match. Clear filters or try a broader search.
         </p>
       ) : (
-        <ul className="mt-2 divide-y-0 border-t border-zinc-900/5 dark:border-white/5">
-          {filtered.map((entry) => (
-            <RegistryRow key={entry.id} entry={entry} />
-          ))}
-        </ul>
+        <>
+          <div className="mt-4 overflow-x-auto rounded-xl ring-1 ring-zinc-900/10 dark:ring-white/10">
+            <table
+              id={tableId}
+              className="w-full min-w-[56rem] border-collapse text-left text-sm"
+            >
+              <thead className="bg-zinc-50 dark:bg-white/[0.04]">
+                <tr className="border-b border-zinc-900/10 dark:border-white/10">
+                  <SortHeader
+                    label="Name"
+                    column="name"
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={onSort}
+                    className="sticky left-0 z-10 min-w-[14rem] bg-zinc-50 dark:bg-claw-bg"
+                  />
+                  <SortHeader
+                    label="Kind"
+                    column="category"
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={onSort}
+                  />
+                  <SortHeader
+                    label="Status"
+                    column="status"
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={onSort}
+                  />
+                  <SortHeader
+                    label="Package"
+                    column="package"
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={onSort}
+                  />
+                  <th
+                    scope="col"
+                    className="px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-zinc-600 uppercase dark:text-zinc-400"
+                  >
+                    Composes
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-zinc-600 uppercase dark:text-zinc-400"
+                  >
+                    Tools
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {slice.map((entry) => (
+                  <RegistryTableRow key={entry.id} entry={entry} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-zinc-500 dark:text-zinc-500">
+              Page {safePage} of {pageCount}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={safePage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="rounded-md px-3 py-1.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-900/10 enabled:hover:bg-zinc-100 disabled:opacity-40 dark:text-zinc-300 dark:ring-white/10 dark:enabled:hover:bg-white/5"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                disabled={safePage >= pageCount}
+                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                className="rounded-md px-3 py-1.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-900/10 enabled:hover:bg-zinc-100 disabled:opacity-40 dark:text-zinc-300 dark:ring-white/10 dark:enabled:hover:bg-white/5"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
+  )
+}
+
+function RegistryTableRow({ entry }: { entry: PluginRegistryEntry }) {
+  return (
+    <tr className="border-b border-zinc-900/5 last:border-b-0 hover:bg-zinc-50/80 dark:border-white/5 dark:hover:bg-white/[0.03]">
+      <td className="sticky left-0 z-[1] bg-white px-3 py-3 align-top dark:bg-claw-bg">
+        <Link
+          href={entry.href}
+          className="group block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-claw-cyan dark:focus-visible:outline-claw-cyan-bright"
+        >
+          <span className="font-semibold text-zinc-900 group-hover:underline dark:text-white">
+            {entry.name}
+          </span>
+          <span className="mt-0.5 block font-mono text-[0.7rem] text-zinc-500 dark:text-zinc-400">
+            {entry.id}
+          </span>
+          <span className="mt-1 block max-w-xs text-xs text-zinc-600 dark:text-zinc-400">
+            {entry.description}
+          </span>
+          {entry.boilerplate ? (
+            <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-500">
+              <span className="font-medium text-zinc-600 dark:text-zinc-400">
+                Boilerplate
+              </span>{' '}
+              {entry.boilerplate}
+            </span>
+          ) : null}
+        </Link>
+      </td>
+      <td className="px-3 py-3 align-top whitespace-nowrap">
+        <Tag color={categoryTagColor(entry.category)} variant="medium">
+          {PLUGIN_CATEGORY_LABELS[entry.category]}
+        </Tag>
+      </td>
+      <td className="px-3 py-3 align-top whitespace-nowrap">
+        <Tag color={statusTagColor(entry.status)} variant="medium">
+          {PLUGIN_STATUS_LABELS[entry.status]}
+        </Tag>
+      </td>
+      <td className="px-3 py-3 align-top">
+        <code className="font-mono text-xs text-zinc-600 dark:text-zinc-400">
+          {entry.package ?? '—'}
+        </code>
+      </td>
+      <td className="px-3 py-3 align-top text-xs text-zinc-600 dark:text-zinc-400">
+        {entry.composes?.length ? entry.composes.join(' · ') : '—'}
+      </td>
+      <td className="px-3 py-3 align-top">
+        <code className="font-mono text-xs text-zinc-600 dark:text-zinc-400">
+          {truncateTools(entry.tools)}
+        </code>
+      </td>
+    </tr>
   )
 }

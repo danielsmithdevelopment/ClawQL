@@ -21,8 +21,8 @@ export const GENERATED_BODY_ROUTES = {
   'clawql-idp-platform-body.mdx': '/vision/idp-platform',
   'clawql-operator-target-architecture-body.mdx':
     '/design/operator-target-architecture',
-  'clawql-plugin-model-body.mdx': '/reference/plugins',
-  'clawql-plugin-registry-body.mdx': '/reference/plugins',
+  'clawql-plugin-model-body.mdx': '/plugins#plugin-model',
+  'clawql-plugin-registry-body.mdx': '/plugins#registry',
   'cursor-ios-cloud-agent-body.mdx': '/agent-setup#cursor-i-os-cloud-agent',
   'local-agent-sandbox-body.mdx':
     '/agent-setup#local-agent-sandbox-mac-os-seatbelt',

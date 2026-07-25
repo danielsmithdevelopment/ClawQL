@@ -34,18 +34,39 @@ test('plugins hub is reachable', async ({ page }) => {
   await expect(
     main.getByRole('button', { name: /Domain verticals/i }),
   ).toBeVisible()
-  await expect(main.getByRole('link', { name: /^Lending$/ })).toBeVisible()
+  await expect(main.getByRole('table')).toBeVisible()
+  await expect(
+    main.getByRole('link', { name: /Lending/i }).first(),
+  ).toBeVisible()
   await expect(main.getByText(/Verticals = presets/i)).toBeVisible()
+  await expect(
+    main.getByRole('heading', { name: /Domain verticals/i }),
+  ).toBeVisible()
+  await expect(
+    main.getByRole('heading', { name: /Plugin model/i }),
+  ).toBeVisible()
 })
 
 test('plugins registry filters domain verticals', async ({ page }) => {
   await page.goto('/plugins')
   const main = page.locator('#main-content')
   await main.getByRole('button', { name: /Domain verticals/i }).click()
-  await expect(main.getByRole('link', { name: /^Lending$/ })).toBeVisible()
-  await expect(main.getByText(/Composes/i).first()).toBeVisible()
-  await expect(main.getByText(/Boilerplate/i).first()).toBeVisible()
   await expect(
-    main.getByRole('link', { name: /^Memory \(vault\)$/ }),
-  ).toHaveCount(0)
+    main.getByRole('link', { name: /Lending/i }).first(),
+  ).toBeVisible()
+  await expect(
+    main.getByRole('columnheader', { name: /Composes/i }),
+  ).toBeVisible()
+  await expect(main.locator('table').getByText('Memory (vault)')).toHaveCount(0)
+})
+
+test('legacy plugin reference routes redirect to /plugins', async ({
+  page,
+}) => {
+  const pluginsRes = await page.goto('/reference/plugins')
+  expect(pluginsRes?.ok()).toBeTruthy()
+  await expect(page).toHaveURL(/\/plugins/)
+  const verticalsRes = await page.goto('/reference/verticals')
+  expect(verticalsRes?.ok()).toBeTruthy()
+  await expect(page).toHaveURL(/\/plugins/)
 })

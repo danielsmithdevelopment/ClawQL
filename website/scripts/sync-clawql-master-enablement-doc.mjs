@@ -91,11 +91,11 @@ function rewriteLinksForSite(body) {
         )
         .replaceAll(
           '](../design/clawql-plugin-model.md)',
-          '](/reference/plugins)',
+          '](/plugins#plugin-model)',
         )
         .replaceAll(
           '](../reference/clawql-plugin-registry.md)',
-          '](/reference/plugins#plugin-registry)',
+          '](/plugins#registry)',
         )
         .replaceAll(
           '](../design/modularization-implementation-status.md)',

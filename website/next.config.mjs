@@ -15,9 +15,8 @@ import { remarkPlugins } from './src/mdx/remark.mjs'
 // Dev-only: dynamic import keeps `@opennextjs/cloudflare` out of the Docker/standalone runtime trace.
 async function initOpenNextCloudflareDevIfNeeded() {
   if (process.env.NODE_ENV !== 'development') return
-  const { initOpenNextCloudflareForDev } = await import(
-    '@opennextjs/cloudflare'
-  )
+  const { initOpenNextCloudflareForDev } =
+    await import('@opennextjs/cloudflare')
   initOpenNextCloudflareForDev()
 }
 
@@ -64,6 +63,16 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      {
+        source: '/reference/plugins',
+        destination: '/plugins',
+        permanent: true,
+      },
+      {
+        source: '/reference/verticals',
+        destination: '/plugins#verticals',
+        permanent: true,
+      },
       {
         source: '/vision/master-enablement',
         destination: '/architecture',

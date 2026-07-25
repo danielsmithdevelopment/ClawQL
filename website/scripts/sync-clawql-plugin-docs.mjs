@@ -1,6 +1,6 @@
 /**
  * Copies plugin model + plugin registry from docs/ into MDX fragments for
- * /reference/plugins.
+ * /plugins (#plugin-model; registry markdown kept as contributor ground truth).
  *
  * Sources:
  *   docs/design/clawql-plugin-model.md → src/generated/clawql-plugin-model-body.mdx
