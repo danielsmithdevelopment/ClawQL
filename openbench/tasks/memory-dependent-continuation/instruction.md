@@ -10,7 +10,8 @@ If you have a **memory_recall** (or similar vault/memory) tool, you **must call 
 before editing code**. Query for prior auth / password hashing / reset TTL
 decisions. Do not invent argon2 vs bcrypt or a TTL — use the recalled values.
 The seed note is **not** in the workspace filesystem. After recall,
-**immediately** implement `src/auth.py` — do not stop after recalling.
+**immediately** edit or write relative path `src/auth.py` (never `/src/auth.py`).
+Do not stop after recalling. Chat-only code fences do not count.
 
 ## Your job
 

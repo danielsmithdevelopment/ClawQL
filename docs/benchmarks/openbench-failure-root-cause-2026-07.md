@@ -96,6 +96,17 @@ Default OpenBench model is now **`openrouter/deepseek/deepseek-chat`** (still ch
 OpenRouter) for a stronger tool loop. Flash-lite remains available as
 `openrouter/google/gemini-2.5-flash-lite` for cost-sensitive runs.
 
+### DeepSeek matrix follow-ups ([run 30189004279](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30189004279))
+
+| Task           | on      | off   | Failure                                                           |
+| -------------- | ------- | ----- | ----------------------------------------------------------------- |
+| token-budget   | **1.0** | 0.0   | WIN (full recipe + write)                                         |
+| memory         | 0.333   | 0.333 | TIE — on wrote `/src/auth.py` (absolute) instead of `src/auth.py` |
+| multi-provider | 0.0     | 0.75  | LOSE — on recalled then pasted fences in chat (no `write` tool)   |
+
+Further harden: complete file templates in seeds; multi-provider checker constants
+are memory-only; instructions forbid chat-only scaffolds and absolute `/src/` paths.
+
 ## Layer 3 — token-budget doom loop ([run 30187258901](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30187258901))
 
 | Task                          | clawql-on                    | clawql-off |
