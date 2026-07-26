@@ -143,11 +143,12 @@ jobs:
       - name: Ouroboros task spend clamps
         if: matrix.task == 'ouroboros-oscillation-escape'
         run: |
-          # Prefer dedicated workflow; if dispatched here, force tight caps + arms.
-          echo "OPENBENCH_TIMEOUT_S=90" >> "$GITHUB_ENV"
+          # Prefer dedicated workflow; if dispatched here, force thrash-study caps + arms.
+          echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           echo "OPENBENCH_ARMS=ouroboros-on,ouroboros-off" >> "$GITHUB_ENV"
           echo "CLAWQL_OUROBOROS_MAX_GENERATIONS=4" >> "$GITHUB_ENV"
-          echo "::notice::ouroboros-oscillation-escape → arms=ouroboros-on,off timeout=90s maxGenerations=4"
+          echo "CLAWQL_OPENBENCH_DOOM_LOOP=allow" >> "$GITHUB_ENV"
+          echo "::notice::ouroboros-oscillation-escape → arms=ouroboros-on,off timeout=180s turns≤50 doom_loop=allow"
 
       - name: Credential preflight
         id: preflight

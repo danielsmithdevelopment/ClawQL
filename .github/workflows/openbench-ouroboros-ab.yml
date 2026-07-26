@@ -1,7 +1,7 @@
 # OpenBench A/B: ouroboros-on vs ouroboros-off (stagnation / oscillation escape).
 #
-# Spend-safe defaults:
-#   - trials=1, timeout=90s (hard wall), turns≤20, tokens≤4000, maxGenerations≤4
+# Spend-safe defaults (doom_loop OpenCode guard OFF so thrash can appear):
+#   - trials=1, timeout=180s, turns≤50 hard-fail, tokens≤8000, maxGenerations≤4
 #   - workflow_dispatch by default (not on every PR push)
 #   - PR/push only when Ouroboros or this task changes
 #
@@ -26,10 +26,10 @@ on:
           - "2"
         default: "1"
       timeout_s:
-        description: Per-arm agent timeout (hard-capped at 90 for this task)
+        description: Per-arm agent timeout (hard-capped at 180 for this task)
         required: true
         type: string
-        default: "90"
+        default: "180"
       arms:
         description: Which arms to run
         required: true
@@ -73,8 +73,8 @@ jobs:
   ab-compare:
     name: A/B ouroboros-oscillation-escape
     runs-on: ubuntu-latest
-    # Wall budget: ~2 arms × 90s + setup. Fail closed before runaway spend.
-    timeout-minutes: 25
+    # Wall budget: ~2 arms × 180s + setup. Fail closed before runaway spend.
+    timeout-minutes: 40
     env:
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -84,12 +84,14 @@ jobs:
       OPENBENCH_TASK: ouroboros-oscillation-escape
       OPENBENCH_MODEL: ${{ inputs.model || 'openrouter/deepseek/deepseek-chat' }}
       OPENBENCH_TRIALS: ${{ inputs.trials || '1' }}
-      OPENBENCH_TIMEOUT_S: ${{ inputs.timeout_s || '90' }}
+      OPENBENCH_TIMEOUT_S: ${{ inputs.timeout_s || '180' }}
       OPENBENCH_ARMS: ${{ inputs.arms || 'ouroboros-on,ouroboros-off' }}
       CLAWQL_INFERENCE_PORT: ${{ inputs.inference_port || '8080' }}
       CLAWQL_OPENBENCH: "1"
       CLAWQL_HARNESS_ALLOW_UNSANDBOXED: "1"
       CLAWQL_OPENBENCH_HARNESS: "opencode"
+      # Prove thrash without OpenCode's identical-tool guard; 50-turn hard cap binds spend.
+      CLAWQL_OPENBENCH_DOOM_LOOP: "allow"
       CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
       CLAWQL_OPENROUTER_APP_TITLE: ClawQL OpenBench Ouroboros
       # Server-side evolutionary loop ceiling (defense in depth vs agent args).
@@ -125,10 +127,10 @@ jobs:
             reason="Add OPENROUTER_API_KEY or a vendor BYOK secret."
           fi
 
-          # Hard spend clamp — never allow dispatch to raise above 90s for this task.
-          if [ "${OPENBENCH_TIMEOUT_S}" -gt 90 ]; then
-            echo "OPENBENCH_TIMEOUT_S=${OPENBENCH_TIMEOUT_S} clamped to 90" >> "$GITHUB_STEP_SUMMARY"
-            echo "OPENBENCH_TIMEOUT_S=90" >> "$GITHUB_ENV"
+          # Hard spend clamp — never allow dispatch to raise above 180s for this task.
+          if [ "${OPENBENCH_TIMEOUT_S}" -gt 180 ]; then
+            echo "OPENBENCH_TIMEOUT_S=${OPENBENCH_TIMEOUT_S} clamped to 180" >> "$GITHUB_STEP_SUMMARY"
+            echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           fi
 
           echo "run_benchmark=${run_benchmark}" >> "$GITHUB_OUTPUT"
@@ -139,8 +141,9 @@ jobs:
             echo "- Model: \`${OPENBENCH_MODEL}\`"
             echo "- Arms: \`${OPENBENCH_ARMS}\`"
             echo "- Trials/arm: \`${OPENBENCH_TRIALS}\`"
-            echo "- Timeout (s): \`${OPENBENCH_TIMEOUT_S}\` (hard max 90)"
-            echo "- Hard caps: turns≤20, tokens≤4000, maxGenerations≤4"
+            echo "- Timeout (s): \`${OPENBENCH_TIMEOUT_S}\` (hard max 180)"
+            echo "- Hard caps: turns≤50, tokens≤8000, maxGenerations≤4"
+            echo "- OpenCode doom_loop: **allow** (thrash visible; turn cap is spend backstop)"
             echo "- Run live benchmark: \`${run_benchmark}\`"
             echo "- Note: ${reason}"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -220,7 +223,7 @@ jobs:
             echo "## OpenBench Ouroboros A/B — \`${OPENBENCH_TASK}\`"
             echo ""
             echo "- Run: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            echo "- Caps: 90s wall / 20 turns / 4000 tokens / maxGenerations≤4"
+            echo "- Caps: 180s wall / 50 turns / 8000 tokens / maxGenerations≤4 (doom_loop allow)"
             echo ""
             cat "$SUM"
           } >> "$GITHUB_STEP_SUMMARY"

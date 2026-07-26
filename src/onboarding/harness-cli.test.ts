@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildOpencodeConfigContent, clawqlMcpChildEnv, parseHarnessUsage } from "./harness-cli.js";
+import {
+  buildOpencodeConfigContent,
+  clawqlMcpChildEnv,
+  openbenchOpencodePermissions,
+  parseHarnessUsage,
+} from "./harness-cli.js";
 
 describe("parseHarnessUsage", () => {
   it("parses Claude Code JSON usage", () => {
@@ -108,6 +113,19 @@ describe("buildOpencodeConfigContent", () => {
       else process.env.CLAWQL_ENABLE_OUROBOROS = prevEn;
       if (prevCap === undefined) delete process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS;
       else process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS = prevCap;
+    }
+  });
+
+  it("openbenchOpencodePermissions can allow doom_loop for thrash experiments", () => {
+    const prev = process.env.CLAWQL_OPENBENCH_DOOM_LOOP;
+    try {
+      delete process.env.CLAWQL_OPENBENCH_DOOM_LOOP;
+      expect(openbenchOpencodePermissions()).toEqual({ "*": "allow", doom_loop: "deny" });
+      process.env.CLAWQL_OPENBENCH_DOOM_LOOP = "allow";
+      expect(openbenchOpencodePermissions()).toEqual({ "*": "allow" });
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_OPENBENCH_DOOM_LOOP;
+      else process.env.CLAWQL_OPENBENCH_DOOM_LOOP = prev;
     }
   });
 });

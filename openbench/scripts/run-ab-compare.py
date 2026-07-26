@@ -72,14 +72,17 @@ KNOWN_ARMS = (
     "ouroboros-off",
 )
 # Per-task hard spend/loop caps. Exceeding → checker SCORE 0 (auto-fail).
-# Keep ouroboros caps tight — evolutionary loops must not runaway on API spend.
+# Ouroboros thrash study: OpenCode doom_loop is *allowed* so off-arm can loop;
+# agent turns hard-stop at 50 (not 250+) to bound spend.
 TASK_HARD_CAPS: dict[str, dict] = {
     "ouroboros-oscillation-escape": {
-        "max_turns": 20,
-        "max_tokens": 4000,
-        "max_wall_s": 90,
+        "max_turns": 50,
+        "max_tokens": 8000,
+        "max_wall_s": 180,
         "ouroboros_max_generations": 4,
-        "default_timeout_s": 90,
+        "default_timeout_s": 180,
+        # Observe strategy thrash without OpenCode's identical-tool guard.
+        "allow_doom_loop": True,
     },
 }
 DEFAULT_HARNESS = "opencode"
@@ -487,6 +490,11 @@ def run_arm_on(
             env["CLAWQL_OUROBOROS_MAX_GENERATIONS"] = str(int(cap))
         else:
             env.pop("CLAWQL_OUROBOROS_MAX_GENERATIONS", None)
+
+    # Thrash study: allow OpenCode doom_loop so ouroboros-off can actually loop;
+    # hard turn/token/wall caps (≤50 turns) remain the spend backstop.
+    if arm.startswith("ouroboros"):
+        env["CLAWQL_OPENBENCH_DOOM_LOOP"] = "allow"
 
     t0 = time.monotonic()
     timed_out = False

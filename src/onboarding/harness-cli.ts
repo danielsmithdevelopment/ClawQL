@@ -134,10 +134,18 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
 }
 
 /**
- * Headless OpenBench permissions: auto-approve normal tools, but deny doom_loop
- * so identical tool spam (e.g. re-reading the same file 200×) cannot burn the timeout.
+ * Headless OpenBench permissions: auto-approve normal tools.
+ *
+ * Default: deny `doom_loop` so identical tool spam cannot burn the timeout.
+ * Set `CLAWQL_OPENBENCH_DOOM_LOOP=allow` for Ouroboros thrash experiments that
+ * must observe strategy loops without OpenCode's built-in guard (spend still
+ * bounded by OpenBench hard turn/token/wall caps).
  */
 export function openbenchOpencodePermissions(): Record<string, string> {
+  const doom = process.env.CLAWQL_OPENBENCH_DOOM_LOOP?.trim().toLowerCase();
+  if (doom === "allow" || doom === "1" || doom === "true") {
+    return { "*": "allow" };
+  }
   return {
     "*": "allow",
     doom_loop: "deny",

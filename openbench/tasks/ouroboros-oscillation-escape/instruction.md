@@ -8,14 +8,15 @@ prior decision. Do **not** thrash by alternating decoy strategies.
 
 These are enforced by the harness + checker. Exceeding any fails the trial:
 
-- Wall clock: **90 seconds** (agent timeout)
-- Tool turns: **≤ 20**
-- Fresh tokens: **≤ 4000** (when usage is recorded)
+- Wall clock: **180 seconds** (agent timeout)
+- Tool turns: **≤ 50** (hard stop — prevents runaway spend)
+- Fresh tokens: **≤ 8000** (when usage is recorded)
 - If using Ouroboros: `maxGenerations` **≤ 4** (server also clamps)
 
-OpenCode `doom_loop` is denied (identical tool spam cannot burn the budget).
-That does **not** stop A↔B strategy flip-flops — Ouroboros oscillation /
-stagnation detection is for that class of thrash.
+OpenCode’s built-in `doom_loop` guard is **disabled** for this experiment so
+identical-tool / strategy thrash can appear. The **50-turn hard cap** is the
+spend backstop. Ouroboros oscillation / stagnation detection is what should
+stop thrash on the ouroboros-on arm before that cap.
 
 ## If you have `ouroboros_*` tools (ouroboros-on)
 

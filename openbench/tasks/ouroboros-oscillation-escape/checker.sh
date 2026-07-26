@@ -2,8 +2,8 @@
 # Grades ouroboros-oscillation-escape: functional fix + hard spend/loop caps.
 set -euo pipefail
 
-HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-20}"
-HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-4000}"
+HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-50}"
+HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-8000}"
 REQUIRE_OUROBOROS="${OPENBENCH_REQUIRE_OUROBOROS:-0}"
 
 pass_func=0

@@ -4,9 +4,10 @@ Apples-to-apples A/B of **Ouroboros on vs off** on the same model, same
 OpenCode harness, and same ClawQL MCP surface (memory included). The only
 intentional variable is whether `ouroboros_*` tools are registered.
 
-This is a different failure class from the earlier OpenCode **identical-tool**
-doom loop (276× re-read of `selftest.py`), which is already mitigated by
-`doom_loop: "deny"`. Ouroboros targets **strategy thrash**:
+For this study OpenCode’s built-in `doom_loop` guard is **`allow`** so thrash
+can appear (otherwise both arms are rescued by the harness). Spend is bounded by
+a **hard 50-turn / 180s / 8000-token** auto-fail — not by waiting for a $10 key
+cap. Ouroboros targets **strategy thrash** and stagnation:
 
 | Detector (`ConvergenceReasonCode`) | Meaning                                     |
 | ---------------------------------- | ------------------------------------------- |
@@ -28,14 +29,14 @@ doom loop (276× re-read of `selftest.py`), which is already mitigated by
 
 | Cap                   | Value      | Enforcement                                                 |
 | --------------------- | ---------- | ----------------------------------------------------------- |
-| Wall clock            | **90s**    | agent `--timeout` + workflow clamp + checker on `timed_out` |
-| Tool turns            | **≤ 20**   | `.openbench_usage.json` + checker + `apply_hard_caps`       |
-| Tokens                | **≤ 4000** | same (when usage is recorded)                               |
+| Wall clock            | **180s**   | agent `--timeout` + workflow clamp + checker on `timed_out` |
+| Tool turns            | **≤ 50**   | `.openbench_usage.json` + checker + `apply_hard_caps`       |
+| Tokens                | **≤ 8000** | same (when usage is recorded)                               |
 | Ouroboros generations | **≤ 4**    | instruction + `CLAWQL_OUROBOROS_MAX_GENERATIONS` MCP clamp  |
-| Job timeout           | **25 min** | GitHub Actions `timeout-minutes`                            |
+| OpenCode `doom_loop`  | **allow**  | `CLAWQL_OPENBENCH_DOOM_LOOP=allow` so thrash is observable  |
+| Job timeout           | **40 min** | GitHub Actions `timeout-minutes`                            |
 
-Exceeding any cap → **SCORE 0** (not a soft penalty). OpenCode `doom_loop` stays
-denied so identical-tool spam cannot burn the key.
+Exceeding any numeric cap → **SCORE 0** (not a soft penalty).
 
 ## How to run
 
@@ -44,11 +45,12 @@ denied so identical-tool spam cannot burn the key.
 OPENROUTER_API_KEY=… clawql inference serve --port 8080
 
 # terminal 2
+CLAWQL_OPENBENCH_DOOM_LOOP=allow \
 python3 openbench/scripts/run-ab-compare.py \
   --task ouroboros-oscillation-escape \
   --arms ouroboros-on,ouroboros-off \
   --model openrouter/deepseek/deepseek-chat \
-  --timeout 90 \
+  --timeout 180 \
   --trials 1 \
   --out /tmp/ouro-ab.json \
   --summary-md /tmp/ouro-ab.md
