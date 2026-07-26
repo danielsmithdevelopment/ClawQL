@@ -10,6 +10,7 @@ One guide for **vault-first onboarding**, **Cursor iOS + Cloud Agents**, and the
 | ------------------------------------ | -------------------------------------------------------------------- |
 | Setting up Cursor or Claude Desktop  | [Desktop / stdio](#desktop-stdio-recommended)                        |
 | On Cursor iOS / Cloud Agent          | [Cursor iOS + Cloud Agent](#cursor-i-os-cloud-agent)                 |
+| First Cloud Agent + R2 e2e checklist | [Cloud Agent e2e: ClawQL + R2](./cloud-agent-e2e-r2-memory.md)       |
 | Running clawql-inference (`/v1`)     | [Inference setup](./inference.md)                                    |
 | Hardening local agent shell on macOS | [Local agent sandbox](#local-agent-sandbox-mac-os-seatbelt)          |
 | Sharing vault notes with a team      | [For teams — vault sync](/getting-started/for-teams#team-vault-sync) |
@@ -118,6 +119,8 @@ Use ClawQL from the **Cursor iOS app** by running **Cloud Agents** with stdio MC
 1. **Object-storage bucket** with a team prefix (R2 quick start: [For teams — R2](./getting-started-for-teams.md#quick-start-r2)).
 2. **Cursor Cloud Agents** enabled for your account (repo connected in the Cursor dashboard).
 3. **`clawql-mcp`** on the agent VM — `npx -p clawql-mcp` resolves it at MCP startup (Node.js is preinstalled on Cloud Agent VMs).
+
+**Day-one e2e (doctor → ensure → ingest → recall → push):** follow the verified checklist in [Cloud Agent e2e: ClawQL + R2 team memory](./cloud-agent-e2e-r2-memory.md) — includes Cloudflare R2 enablement, secret paste hygiene, and TLS lag after first enabling R2.
 
 One-time bucket setup can be done from a desktop machine with the ClawQL CLI:
 
@@ -242,6 +245,9 @@ Docs: https://docs.clawql.com/agent-setup#cursor-i-os-cloud-agent https://docs.c
 | **`execute`** auth failures           | Provider keys in **`vault/providers.json`** or matching **`CLAWQL_*`** env secrets                 |
 | MCP tools missing                     | Enable **clawql** server for the Cloud Agent run; confirm **`CLAWQL_ENABLE_MEMORY`** is not `0`    |
 | Conflicts after parallel runs         | **`memory_sync`** response lists conflicts; use **`force: true`** only deliberately                |
+| `sync ensure` → Cloudflare **10042**  | Enable **R2** on the Cloudflare account (dashboard subscribe), then retry                          |
+| S3 TLS handshake failure after enable | Wait and retry `{accountId}.r2.cloudflarestorage.com`; trim whitespace on sync access key        |
+| Full e2e checklist                    | [cloud-agent-e2e-r2-memory.md](./cloud-agent-e2e-r2-memory.md)                                     |
 
 ---
 

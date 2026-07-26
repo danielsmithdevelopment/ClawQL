@@ -77,6 +77,9 @@ Share **`~/.ClawQL`** memory notes across your team via a centralized object-sto
 
 ### Quick start (R2)
 
+Cloud Agent day-one (enable R2, Cursor Secrets, doctor → ensure → ingest → push):
+[Cloud Agent e2e: ClawQL + R2 team memory](./cloud-agent-e2e-r2-memory.md).
+
 1. Create **R2 S3 API credentials** (Manage R2 API tokens → Create API token).
    Prefer **Admin Read & Write** so ClawQL can create the bucket for you.
    Object Read & Write alone can sync an existing bucket but cannot create one.

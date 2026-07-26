@@ -53,6 +53,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 - `readme/getting-started.md`
 - `getting-started/agent-setup.md` — desktop, Cursor iOS Cloud Agents, local Seatbelt sandbox
+- `getting-started/cloud-agent-e2e-r2-memory.md` — verified Cloud Agent + R2 memory sync e2e checklist
 - `getting-started/local-provider-vault.md` — ~/.ClawQL secrets vault + memory home
 - `getting-started/getting-started-for-teams.md` — **teams:** Helm, vault sync (R2/S3/GCS), Packer golden hosts, observability
 - `getting-started/custom-sources.md` — URL/CLI custom sources (7.0)
