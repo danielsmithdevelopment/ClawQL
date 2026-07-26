@@ -210,14 +210,31 @@ def _recalled_without_writes(combined: str) -> bool:
     return recalled and not wrote
 
 
-_WRITE_CONTINUATION = """Continue the same OpenBench task in this workspace.
+_WRITE_CONTINUATION_HEADER = """Continue the same OpenBench task in this workspace.
 
-You already ran memory_recall successfully. Now you MUST call the write (or edit)
-tool to create or update the required relative-path files on disk.
+You already ran memory_recall successfully. Do **not** call memory_recall again.
+Do **not** call todos/task/skill. Call the **write** tool (or edit) now.
 
-Do not only paste markdown code fences in chat — chat text is not graded.
-Start calling write/edit now.
+Create the required relative-path files on disk. Chat code fences are not graded.
 """
+
+
+def _build_write_continuation(vault: str | None) -> str:
+    parts = [_WRITE_CONTINUATION_HEADER]
+    if vault:
+        memory_dir = Path(vault) / "Memory"
+        if memory_dir.is_dir():
+            notes = []
+            for path in sorted(memory_dir.glob("*.md")):
+                try:
+                    notes.append(path.read_text(encoding="utf-8"))
+                except OSError:
+                    continue
+            if notes:
+                parts.append("## Vault notes to apply via write/edit\n")
+                parts.extend(notes)
+    parts.append("\nStart calling write now for each required file.\n")
+    return "\n".join(parts)
 
 
 def _run_harness_once(
@@ -317,7 +334,7 @@ def run(instruction: str, workdir: str, model: str, timeout_s: int) -> dict:
         if vault and _recalled_without_writes(combined):
             cont_file = os.path.join(workdir, ".openbench_continuation.md")
             with open(cont_file, "w", encoding="utf-8") as f:
-                f.write(_WRITE_CONTINUATION)
+                f.write(_build_write_continuation(vault))
             cont_timeout = max(60, min(timeout_s, 180))
             proc2, cmd2, timed_out2 = _run_harness_once(
                 exe=exe,

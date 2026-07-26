@@ -367,14 +367,32 @@ def recalled_without_writes(combined: str) -> bool:
     return recalled and not wrote
 
 
-WRITE_CONTINUATION = """Continue the same OpenBench task in this workspace.
+WRITE_CONTINUATION_HEADER = """Continue the same OpenBench task in this workspace.
 
-You already ran memory_recall successfully. Now you MUST call the write (or edit)
-tool to create or update the required relative-path files on disk.
+You already ran memory_recall successfully. Do **not** call memory_recall again.
+Do **not** call todos/task/skill. Call the **write** tool (or edit) now.
 
-Do not only paste markdown code fences in chat — chat text is not graded.
-Start calling write/edit now.
+Create the required relative-path files on disk. Chat code fences are not graded.
 """
+
+
+def build_write_continuation(vault: str | None) -> str:
+    """Continuation prompt with vault note body inlined so the model can write."""
+    parts = [WRITE_CONTINUATION_HEADER]
+    if vault:
+        memory_dir = Path(vault) / "Memory"
+        if memory_dir.is_dir():
+            notes = []
+            for path in sorted(memory_dir.glob("*.md")):
+                try:
+                    notes.append(path.read_text(encoding="utf-8"))
+                except OSError:
+                    continue
+            if notes:
+                parts.append("## Vault notes to apply via write/edit\n")
+                parts.extend(notes)
+    parts.append("\nStart calling write now for each required file.\n")
+    return "\n".join(parts)
 
 
 def run_arm_on(
@@ -447,10 +465,11 @@ def run_arm_on(
         combined = _dec_timeout_output(exc)
         code = 124
 
-    # Cheap models often stop after memory_recall; one write-focused nudge.
+    # Cheap models often stop after memory_recall; one write-focused nudge with
+    # vault notes inlined so a second recall is unnecessary.
     if vault and not timed_out and recalled_without_writes(combined):
         cont_file = workdir / ".openbench_continuation.md"
-        cont_file.write_text(WRITE_CONTINUATION, encoding="utf-8")
+        cont_file.write_text(build_write_continuation(vault), encoding="utf-8")
         cont_timeout = max(60, min(int(timeout_s), 180))
         cmd = build_cmd(cont_file, cont_timeout)
         try:
