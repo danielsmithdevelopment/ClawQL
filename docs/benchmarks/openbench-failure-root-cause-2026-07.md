@@ -107,6 +107,10 @@ OpenRouter) for a stronger tool loop. Flash-lite remains available as
 Further harden: complete file templates in seeds; multi-provider checker constants
 are memory-only; instructions forbid chat-only scaffolds and absolute `/src/` paths.
 
+When clawql-on **recalls but never write/edits**, `run-ab-compare.py` (and the
+OpenBench adapter) issue **one** write-focused continuation prompt so cheap models
+cannot lose solely by stopping after `memory_recall`.
+
 ## Layer 3 — token-budget doom loop ([run 30187258901](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30187258901))
 
 | Task                          | clawql-on                    | clawql-off |

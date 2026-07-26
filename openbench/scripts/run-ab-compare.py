@@ -359,6 +359,24 @@ def run_arm_off(
     }
 
 
+def recalled_without_writes(combined: str) -> bool:
+    """Detect stop-after-recall: memory hit but no write/edit tool calls."""
+    text = combined or ""
+    recalled = "clawql_memory_recall" in text or '"tool":"memory_recall"' in text
+    wrote = '"tool":"write"' in text or '"tool":"edit"' in text
+    return recalled and not wrote
+
+
+WRITE_CONTINUATION = """Continue the same OpenBench task in this workspace.
+
+You already ran memory_recall successfully. Now you MUST call the write (or edit)
+tool to create or update the required relative-path files on disk.
+
+Do not only paste markdown code fences in chat — chat text is not graded.
+Start calling write/edit now.
+"""
+
+
 def run_arm_on(
     instruction: str,
     workdir: Path,
@@ -374,21 +392,23 @@ def run_arm_on(
     inst_file.write_text(instruction, encoding="utf-8")
 
     prefix = ["node", clawql] if clawql.endswith(".mjs") else [clawql]
-    cmd = [
-        *prefix,
-        "opencode",
-        "--non-interactive",
-        "--model",
-        f"clawql/{gateway_model}",
-        "--task-file",
-        str(inst_file),
-        "--workdir",
-        str(workdir),
-        "--timeout",
-        str(int(timeout_s)),
-        "--inference-url",
-        inference_url,
-    ]
+
+    def build_cmd(task_file: Path, run_timeout: int) -> list[str]:
+        return [
+            *prefix,
+            "opencode",
+            "--non-interactive",
+            "--model",
+            f"clawql/{gateway_model}",
+            "--task-file",
+            str(task_file),
+            "--workdir",
+            str(workdir),
+            "--timeout",
+            str(int(run_timeout)),
+            "--inference-url",
+            inference_url,
+        ]
 
     env = dict(os.environ)
     env["CLAWQL_OPENBENCH"] = "1"
@@ -409,6 +429,7 @@ def run_arm_on(
     timed_out = False
     combined = ""
     code = 1
+    cmd = build_cmd(inst_file, timeout_s)
     try:
         proc = subprocess.run(
             cmd,
@@ -425,6 +446,29 @@ def run_arm_on(
         timed_out = True
         combined = _dec_timeout_output(exc)
         code = 124
+
+    # Cheap models often stop after memory_recall; one write-focused nudge.
+    if vault and not timed_out and recalled_without_writes(combined):
+        cont_file = workdir / ".openbench_continuation.md"
+        cont_file.write_text(WRITE_CONTINUATION, encoding="utf-8")
+        cont_timeout = max(60, min(int(timeout_s), 180))
+        cmd = build_cmd(cont_file, cont_timeout)
+        try:
+            proc2 = subprocess.run(
+                cmd,
+                cwd=str(workdir),
+                capture_output=True,
+                text=True,
+                timeout=cont_timeout + 45,
+                stdin=subprocess.DEVNULL,
+                env=env,
+            )
+            combined = combined + "\n" + (proc2.stdout or "") + (proc2.stderr or "")
+            code = proc2.returncode
+        except subprocess.TimeoutExpired as exc:
+            timed_out = True
+            combined = combined + "\n" + _dec_timeout_output(exc)
+            code = 124
 
     wall_s = round(time.monotonic() - t0, 3)
     bench = parse_bench_json(combined)
