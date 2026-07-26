@@ -44,10 +44,17 @@ CLAWQL_SYNC_AUTO_PULL_ON_START=1
 EOF
 fi
 
-# Ensure workspace MCP example is available for Cloud Agent stdio (gitignored copy)
+# Ensure workspace MCP config for IDE/stdio (committed mcp.json preferred; fall back to example)
 if [[ ! -f "$ROOT/.cursor/mcp.json" && -f "$ROOT/.cursor/mcp.json.example" ]]; then
   cp "$ROOT/.cursor/mcp.json.example" "$ROOT/.cursor/mcp.json"
   echo "[cloud-agent-install] Wrote .cursor/mcp.json from example (stdio clawql-mcp)"
+fi
+# Always refresh user-level Cursor MCP so Cloud Agent VMs have clawql even when
+# the dashboard MCP toggle is the primary attach path for tools/list.
+if [[ -f "$ROOT/.cursor/mcp.json" ]]; then
+  mkdir -p "$HOME/.cursor"
+  cp "$ROOT/.cursor/mcp.json" "$HOME/.cursor/mcp.json"
+  echo "[cloud-agent-install] Synced ~/.cursor/mcp.json from workspace (stdio clawql-mcp)"
 fi
 
 # Team vault sync — Cursor Secrets inject CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID
@@ -98,7 +105,7 @@ else
   echo "[cloud-agent-install]            CLAWQL_SYNC_AUTO_PULL_ON_START=1, OPENROUTER_API_KEY"
 fi
 
-# Stdio MCP config for this VM user (Cursor Cloud Agent)
+# Fallback if workspace mcp.json was missing above
 if [[ ! -f "$HOME/.cursor/mcp.json" ]]; then
   mkdir -p "$HOME/.cursor"
   node "$ROOT/bin/clawql.mjs" mcp-config --write cursor \
@@ -106,3 +113,4 @@ if [[ ! -f "$HOME/.cursor/mcp.json" ]]; then
 fi
 
 echo "[cloud-agent-install] done"
+echo "[cloud-agent-install] NOTE: memory_* tools require clawql enabled in cursor.com/agents MCP (repo mcp.json alone is not enough)."
