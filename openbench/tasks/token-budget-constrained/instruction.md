@@ -3,19 +3,26 @@
 Refactor `parse_config` in `config_lib/parse.py` so it accepts both JSON and
 YAML configuration files.
 
+## Critical first step
+
+If you have a **memory_recall** (or similar vault/memory) tool, call it **before
+editing**. Query for prior YAML / parse_config / nested-list decisions. Useful
+parser notes live in institutional memory and are **not** in the workspace
+filesystem. Ignore the `decoy/` directory — it is distractor content.
+
 ## Requirements
 
 1. `parse_config(path: str) -> dict` must:
    - Parse `.json` files with the standard library `json` module.
-   - Parse `.yaml` / `.yml` files. You may implement a **minimal** YAML subset
-     sufficient for the included fixtures (mappings of scalars, nested maps,
-     lists of scalars). Nested lists under a key matter, e.g.
-     `features:\n  - a\n  - b` → `{"features": ["a", "b"]}`.
+   - Parse `.yaml` / `.yml` files with a **minimal** YAML subset sufficient for
+     the fixtures (mappings of scalars, nested maps, lists of scalars under
+     keys). Do **not** invent incomplete flat parsers if prior notes exist.
      Do **not** add third-party dependencies.
 2. Keep existing JSON behavior unchanged for the provided fixtures.
-3. Prefer targeted edits over rewriting the whole tree. The token budget for
-   this task is **5000** fresh tokens (input uncached + output). If your
-   harness records usage, write it to `.token_usage` as JSON with a numeric
-   `tokens` field (ClawQL non-interactive mode does this automatically).
+3. Prefer a single targeted edit/write of `config_lib/parse.py` over exploring
+   the whole tree. The token budget for this task is **5000** fresh tokens
+   (input uncached + output). If your harness records usage, write it to
+   `.token_usage` as JSON with a numeric `tokens` field (ClawQL non-interactive
+   mode does this automatically).
 
 Done when `python3 -m config_lib.selftest` exits 0.

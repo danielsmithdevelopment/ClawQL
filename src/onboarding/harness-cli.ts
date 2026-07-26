@@ -113,8 +113,22 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
   };
   if (process.env.CLAWQL_OPENBENCH?.trim()) {
     env.CLAWQL_OPENBENCH = process.env.CLAWQL_OPENBENCH.trim();
+    // Slim tool surface for cheap OpenBench models — avoid pageindex/docs noise.
+    if (!process.env.CLAWQL_ENABLE_PAGEINDEX?.trim()) env.CLAWQL_ENABLE_PAGEINDEX = "0";
+    if (!process.env.CLAWQL_ENABLE_DOCUMENTS?.trim()) env.CLAWQL_ENABLE_DOCUMENTS = "0";
   }
   return env;
+}
+
+/**
+ * Headless OpenBench permissions: auto-approve normal tools, but deny doom_loop
+ * so identical tool spam (e.g. re-reading the same file 200×) cannot burn the timeout.
+ */
+export function openbenchOpencodePermissions(): Record<string, string> {
+  return {
+    "*": "allow",
+    doom_loop: "deny",
+  };
 }
 
 /**
@@ -131,10 +145,13 @@ export function buildOpencodeConfigContent(opts: {
   const base = opts.inferenceUrl.trim().replace(/\/$/, "");
   const inferenceUrl = base.endsWith("/v1") ? base : `${base}/v1`;
   const gatewayModel = opts.gatewayModel.trim().replace(/^clawql\//, "");
+  const mcpEnv = clawqlMcpChildEnv(home);
+  mcpEnv.CLAWQL_OPENBENCH = mcpEnv.CLAWQL_OPENBENCH || "1";
+  if (!mcpEnv.CLAWQL_ENABLE_PAGEINDEX) mcpEnv.CLAWQL_ENABLE_PAGEINDEX = "0";
+  if (!mcpEnv.CLAWQL_ENABLE_DOCUMENTS) mcpEnv.CLAWQL_ENABLE_DOCUMENTS = "0";
   return JSON.stringify({
     $schema: "https://opencode.ai/config.json",
-    // Headless CI: never pause on ask (doom_loop / external_directory defaults).
-    permission: { "*": "allow" },
+    permission: openbenchOpencodePermissions(),
     provider: {
       clawql: {
         npm: "@ai-sdk/openai-compatible",
@@ -151,7 +168,7 @@ export function buildOpencodeConfigContent(opts: {
         type: "local",
         command: resolveClawqlMcpCommand(),
         enabled: true,
-        environment: clawqlMcpChildEnv(home),
+        environment: mcpEnv,
       },
     },
   });

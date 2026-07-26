@@ -102,16 +102,26 @@ def materialize_workspace(task_dir: Path, dest: Path) -> None:
             shutil.copy2(item, target)
 
 
+def seed_note_filename(content: str) -> str:
+    """Prefer `# Title` from the seed; fall back to a stable OpenBench name."""
+    for line in content.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("# "):
+            title = stripped[2:].strip().replace("/", "-")
+            if title:
+                return f"{title}.md"
+    return "OpenBench Seed.md"
+
+
 def seed_and_remove_memory(workdir: Path) -> str | None:
     seed = workdir / ".openbench" / "memory-seed.md"
     if not seed.is_file():
         return None
+    content = seed.read_text(encoding="utf-8")
     vault = Path(tempfile.mkdtemp(prefix="clawql_ab_vault_"))
     memory_dir = vault / "Memory"
     memory_dir.mkdir(parents=True, exist_ok=True)
-    (memory_dir / "Prior Auth Decisions.md").write_text(
-        seed.read_text(encoding="utf-8"), encoding="utf-8"
-    )
+    (memory_dir / seed_note_filename(content)).write_text(content, encoding="utf-8")
     try:
         seed.unlink()
         openbench_dir = seed.parent
@@ -243,8 +253,8 @@ def opencode_config_for_inference(inference_url: str, gateway_model: str) -> str
     # which is forwarded to the OpenAI-compat endpoint as `model`.
     return json.dumps(
         {
-            # Headless CI: never pause on ask (doom_loop / external_directory defaults).
-            "permission": {"*": "allow"},
+            # Auto-approve edits/bash, but deny doom_loop so identical tool spam stops.
+            "permission": {"*": "allow", "doom_loop": "deny"},
             "provider": {
                 "clawql": {
                     "npm": "@ai-sdk/openai-compatible",

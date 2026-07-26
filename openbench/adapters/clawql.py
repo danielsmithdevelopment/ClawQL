@@ -121,6 +121,16 @@ def _unsupported(model):
     }
 
 
+def _seed_note_filename(content: str) -> str:
+    for line in content.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("# "):
+            title = stripped[2:].strip().replace("/", "-")
+            if title:
+                return f"{title}.md"
+    return "OpenBench Seed.md"
+
+
 def _seed_memory_vault(workdir: str) -> str | None:
     """Seed a disposable Obsidian vault for memory-dependent tasks.
 
@@ -132,11 +142,12 @@ def _seed_memory_vault(workdir: str) -> str | None:
     seed = Path(workdir) / ".openbench" / "memory-seed.md"
     if not seed.is_file():
         return None
+    content = seed.read_text(encoding="utf-8")
     vault = tempfile.mkdtemp(prefix="clawql_obench_vault_")
     memory_dir = Path(vault) / "Memory"
     memory_dir.mkdir(parents=True, exist_ok=True)
-    dest = memory_dir / "Prior Auth Decisions.md"
-    dest.write_text(seed.read_text(encoding="utf-8"), encoding="utf-8")
+    dest = memory_dir / _seed_note_filename(content)
+    dest.write_text(content, encoding="utf-8")
     # Deny file-based leakage of the prior decision.
     try:
         seed.unlink()

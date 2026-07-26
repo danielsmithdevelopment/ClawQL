@@ -79,3 +79,18 @@ the token-budget instruction.
   finishing edits — score variance with `trials=1` is expected on the cheapest model.
 - multi-provider: clawql-on **1.0** vs clawql-off **0.75**
 - token-budget: clawql-off **1.0** after nested-list hint; clawql-on still noisy on flash-lite
+
+## Layer 3 — token-budget doom loop ([run 30187258901](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30187258901))
+
+| Task                          | clawql-on                    | clawql-off |
+| ----------------------------- | ---------------------------- | ---------- |
+| memory-dependent-continuation | **1.0**                      | 0.333      |
+| multi-provider-api-workflow   | **1.0**                      | **1.0**    |
+| token-budget-constrained      | **0.0** (277 turns, timeout) | **1.0**    |
+
+clawql-on re-read `config_lib/selftest.py` **276×** and never wrote — `permission: "*": allow`
+had disabled OpenCode’s `doom_loop` guard.
+
+Fix: `doom_loop: deny`, slim OpenBench MCP tools (pageindex/documents off), seed
+token-budget + multi-provider vault notes so clawql-on recalls the nested-YAML /
+wrangler recipe instead of thrashing.

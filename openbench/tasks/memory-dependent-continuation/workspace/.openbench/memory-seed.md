@@ -1,3 +1,5 @@
+# Prior Auth Decisions
+
 ## Summary
 
 Prior JWT authentication refactor decisions for this codebase.

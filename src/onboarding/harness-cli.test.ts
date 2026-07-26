@@ -63,12 +63,14 @@ describe("buildOpencodeConfigContent", () => {
           clawql: { enabled: boolean; environment: Record<string, string>; command: string[] };
         };
       };
-      expect(cfg.permission).toEqual({ "*": "allow" });
+      expect(cfg.permission).toEqual({ "*": "allow", doom_loop: "deny" });
       expect(cfg.provider.clawql.options.baseURL).toBe("http://127.0.0.1:8080/v1");
       expect(cfg.provider.clawql.models["openrouter/google/gemini-2.5-flash-lite"]).toEqual({});
       expect(cfg.mcp.clawql.enabled).toBe(true);
       expect(cfg.mcp.clawql.environment.CLAWQL_OBSIDIAN_VAULT_PATH).toBe("/tmp/clawql-ab-vault");
       expect(cfg.mcp.clawql.environment.CLAWQL_ENABLE_MEMORY).toBe("1");
+      expect(cfg.mcp.clawql.environment.CLAWQL_ENABLE_PAGEINDEX).toBe("0");
+      expect(cfg.mcp.clawql.environment.CLAWQL_ENABLE_DOCUMENTS).toBe("0");
       expect(cfg.mcp.clawql.command.length).toBeGreaterThan(0);
     } finally {
       if (prevHome === undefined) delete process.env.CLAWQL_HOME;
