@@ -23,13 +23,19 @@ describe("inference model catalog", () => {
     );
   });
 
-  it("treats OpenRouter entries as optional escape hatch", () => {
-    const entry = findCatalogModel(
+  it("lists cheap OpenRouter models for OpenBench / day-one", () => {
+    const flash = findCatalogModel(
+      "openrouter/google/gemini-2.5-flash-lite",
+      DEFAULT_INFERENCE_MODEL_CATALOG
+    );
+    expect(flash?.provider).toBe("openrouter");
+    expect(flash?.tags).toContain("openbench-default");
+    const deepseek = findCatalogModel(
       "openrouter/deepseek/deepseek-chat",
       DEFAULT_INFERENCE_MODEL_CATALOG
     );
-    expect(entry?.provider).toBe("openrouter");
-    expect(entry?.tags).toContain("openrouter-escape-hatch");
+    expect(deepseek?.provider).toBe("openrouter");
+    expect(deepseek?.tags).toContain("openrouter");
   });
 
   it("detects provider credentials from env", () => {

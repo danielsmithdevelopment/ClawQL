@@ -30,7 +30,7 @@ Example::
   # terminal 2
   python3 openbench/scripts/run-ab-compare.py \\
     --task memory-dependent-continuation \\
-    --model openrouter/deepseek/deepseek-chat \\
+    --model openrouter/google/gemini-2.5-flash-lite \\
     --inference-url http://127.0.0.1:8080/v1 \\
     --trials 1 \\
     --out /tmp/ab-results.json
@@ -59,7 +59,9 @@ KNOWN_TASKS = (
     "multi-provider-api-workflow",
 )
 DEFAULT_HARNESS = "opencode"
-DEFAULT_MODEL = os.environ.get("OPENBENCH_MODEL", "openrouter/deepseek/deepseek-chat")
+DEFAULT_MODEL = os.environ.get(
+    "OPENBENCH_MODEL", "openrouter/google/gemini-2.5-flash-lite"
+)
 DEFAULT_INFERENCE_URL = os.environ.get(
     "CLAWQL_INFERENCE_URL",
     os.environ.get("OPENBENCH_INFERENCE_URL", "http://127.0.0.1:8080/v1"),
@@ -379,12 +381,16 @@ def run_arm_on(
     env["CLAWQL_OPENBENCH"] = "1"
     env["CLAWQL_HARNESS_ALLOW_UNSANDBOXED"] = "1"
     env["CLAWQL_OPENBENCH_HARNESS"] = "opencode"
-    env["OPENCODE_CONFIG_CONTENT"] = opencode_config_for_inference(inference_url, gateway_model)
     env["OPENAI_BASE_URL"] = inference_url
     env["CLAWQL_INFERENCE_URL"] = inference_url
+    # Do NOT set OPENCODE_CONFIG_CONTENT here — clawql opencode --non-interactive
+    # builds provider + MCP together. A provider-only JSON previously wiped MCP,
+    # so clawql-on could not memory_recall the seeded vault.
     if vault:
+        env["CLAWQL_HOME"] = vault
         env["CLAWQL_OBSIDIAN_VAULT_PATH"] = vault
         env["CLAWQL_ENABLE_MEMORY"] = "1"
+        env["CLAWQL_BUNDLED_OFFLINE"] = "1"
 
     t0 = time.monotonic()
     timed_out = False
@@ -469,7 +475,7 @@ def render_markdown(report: dict) -> str:
     lines = [
         f"# OpenBench A/B — `{task}`",
         "",
-        f"- **Inference:** clawql-inference (direct BYOK; OpenRouter optional)",
+        f"- **Inference:** clawql-inference (OpenRouter-first or BYOK)",
         f"- **Agent harness:** OpenCode",
         f"- **Model:** `{model}`",
         f"- **Inference URL:** `{report.get('inference_url')}`",
@@ -500,12 +506,13 @@ def render_markdown(report: dict) -> str:
             "",
             "## Interpretation",
             "",
-            "- Both arms call the **same** clawql-inference model (direct BYOK "
-            "by default; `openrouter/*` only when you opt in).",
+            "- Both arms call the **same** clawql-inference model.",
             "- **clawql-on** adds ClawQL MCP (search/execute/memory/…) via "
-            "`clawql opencode --non-interactive`.",
+            "`clawql opencode --non-interactive` (MCP embedded in "
+            "`OPENCODE_CONFIG_CONTENT` with the seeded vault path).",
             "- **clawql-off** is raw OpenCode with isolated HOME (no ClawQL MCP).",
-            "- Memory seed is removed from the workspace for both arms.",
+            "- Memory seed is removed from the workspace for both arms; "
+            "clawql-on must `memory_recall` to recover argon2id / 900s TTL.",
             "- Checker — not the harness self-report — decides success.",
             "",
         ]

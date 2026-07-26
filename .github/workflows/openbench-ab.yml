@@ -1,10 +1,10 @@
 # OpenBench A/B via clawql-inference.
 #
-# OpenRouter-first for teams already on that aggregator (OPENROUTER_API_KEY +
-# openrouter/* models). Direct BYOK (DeepSeek, Groq, …) remains fully supported.
+# OpenRouter-first with a cheap default model. On PR/push runs all three tasks
+# in a matrix when OPENROUTER_API_KEY (or BYOK) is present.
 #
-# - workflow_dispatch: full knobs (manual)
-# - pull_request / push (path-filtered): CI smoke — skip (exit 0) when no secret
+# - workflow_dispatch: pick one task or "all"
+# - pull_request / push (path-filtered): matrix of all tasks; skip (exit 0) when no secret
 
 name: OpenBench A/B (clawql on vs off)
 
@@ -12,19 +12,20 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: OpenBench task under openbench/tasks/
+        description: OpenBench task (or all)
         required: true
         type: choice
         options:
+          - all
           - memory-dependent-continuation
           - token-budget-constrained
           - multi-provider-api-workflow
-        default: memory-dependent-continuation
+        default: all
       model:
-        description: "clawql-inference model — openrouter/* with OPENROUTER_API_KEY, or direct BYOK ids"
+        description: "Cheap OpenRouter default — or any openrouter/* / BYOK id"
         required: true
         type: string
-        default: openrouter/deepseek/deepseek-chat
+        default: openrouter/google/gemini-2.5-flash-lite
       trials:
         description: Trials per arm (keep small — each cell spends tokens)
         required: true
@@ -58,6 +59,7 @@ on:
       - "openbench/**"
       - "packages/clawql-inference/**"
       - "src/onboarding/inference-cli.ts"
+      - "src/onboarding/harness-cli.ts"
       - "src/onboarding/cli.ts"
       - "bin/clawql.mjs"
       - ".github/workflows/openbench-ab.yml"
@@ -69,6 +71,7 @@ on:
       - "openbench/**"
       - "packages/clawql-inference/**"
       - "src/onboarding/inference-cli.ts"
+      - "src/onboarding/harness-cli.ts"
       - "src/onboarding/cli.ts"
       - "bin/clawql.mjs"
       - ".github/workflows/openbench-ab.yml"
@@ -83,22 +86,46 @@ permissions:
   contents: read
 
 jobs:
+  resolve-matrix:
+    name: Resolve task matrix
+    runs-on: ubuntu-latest
+    outputs:
+      tasks: ${{ steps.set.outputs.tasks }}
+    steps:
+      - id: set
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TASK="${{ inputs.task }}"
+            if [ "$TASK" = "all" ] || [ -z "$TASK" ]; then
+              echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow"]' >> "$GITHUB_OUTPUT"
+            else
+              echo "tasks=[\"${TASK}\"]" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow"]' >> "$GITHUB_OUTPUT"
+          fi
+
   ab-compare:
-    name: A/B via clawql-inference (OpenRouter or BYOK)
+    name: A/B ${{ matrix.task }}
+    needs: resolve-matrix
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        task: ${{ fromJson(needs.resolve-matrix.outputs.tasks) }}
     env:
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      # Defaults for pull_request / push; workflow_dispatch inputs override when set.
-      # OpenRouter-first default model for teams bringing an existing aggregator key.
-      OPENBENCH_TASK: ${{ inputs.task || 'memory-dependent-continuation' }}
-      OPENBENCH_MODEL: ${{ inputs.model || 'openrouter/deepseek/deepseek-chat' }}
+      OPENBENCH_TASK: ${{ matrix.task }}
+      # Cheap OpenRouter default for CI spend control
+      OPENBENCH_MODEL: ${{ inputs.model || 'openrouter/google/gemini-2.5-flash-lite' }}
       OPENBENCH_TRIALS: ${{ inputs.trials || '1' }}
-      OPENBENCH_TIMEOUT_S: ${{ inputs.timeout_s || '180' }}
+      OPENBENCH_TIMEOUT_S: ${{ inputs.timeout_s || '300' }}
       OPENBENCH_ARMS: ${{ inputs.arms || 'clawql-on,clawql-off' }}
       CLAWQL_INFERENCE_PORT: ${{ inputs.inference_port || '8080' }}
       CLAWQL_OPENBENCH: "1"
@@ -126,17 +153,17 @@ jobs:
           if [[ "$MODEL" == openrouter/* ]]; then
             if [ -n "${OPENROUTER_API_KEY:-}" ]; then
               run_benchmark=true
-              reason="OpenRouter key for $MODEL (bring-your-aggregator path)"
+              reason="OpenRouter key for $MODEL (cheap bring-your-aggregator path)"
             else
-              reason="Model '$MODEL' needs repository secret OPENROUTER_API_KEY. Add it under Settings → Secrets, or switch to a direct BYOK model + DEEPSEEK_API_KEY / etc."
+              reason="Model '$MODEL' needs repository secret OPENROUTER_API_KEY."
             fi
           elif [ "$has_byok" = true ]; then
             run_benchmark=true
             reason="Direct BYOK credentials for clawql-inference ($MODEL)"
           elif [ -n "${OPENROUTER_API_KEY:-}" ]; then
-            reason="OPENROUTER_API_KEY is set, but model '$MODEL' is a direct BYOK id. Use an openrouter/* model (default: openrouter/deepseek/deepseek-chat) or add the matching vendor secret."
+            reason="OPENROUTER_API_KEY is set, but model '$MODEL' is a direct BYOK id. Use openrouter/* (default: openrouter/google/gemini-2.5-flash-lite)."
           else
-            reason="Add OPENROUTER_API_KEY (OpenRouter-first) or a vendor BYOK secret (DEEPSEEK_API_KEY, …). Models: openrouter/<vendor>/<model> or deepseek/… with the matching key."
+            reason="Add OPENROUTER_API_KEY or a vendor BYOK secret."
           fi
 
           echo "run_benchmark=${run_benchmark}" >> "$GITHUB_OUTPUT"
@@ -182,7 +209,6 @@ jobs:
       - name: Install OpenCode CLI
         if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
-          # Official npm package name varies by channel; try common ids.
           npm install -g opencode-ai@latest 2>/dev/null \
             || npm install -g @opencode-ai/cli@latest 2>/dev/null \
             || npm install -g opencode@latest
@@ -192,10 +218,10 @@ jobs:
       - name: Start clawql-inference (OpenRouter and/or BYOK)
         if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
-          mkdir -p artifacts/openbench-ab
+          mkdir -p "artifacts/openbench-ab/${OPENBENCH_TASK}"
           PORT="${CLAWQL_INFERENCE_PORT}"
           node bin/clawql.mjs inference serve --port "$PORT" \
-            > artifacts/openbench-ab/inference.log 2>&1 &
+            > "artifacts/openbench-ab/${OPENBENCH_TASK}/inference.log" 2>&1 &
           echo $! > /tmp/clawql-inference.pid
           echo "Started clawql-inference pid=$(cat /tmp/clawql-inference.pid) on :$PORT"
           for i in $(seq 1 60); do
@@ -206,22 +232,15 @@ jobs:
               echo ""
               if ! echo "$models" | grep -q '"id"'; then
                 echo "::error::/v1/models has no credentialed models — check OPENROUTER_API_KEY or BYOK secrets"
-                tail -n 120 artifacts/openbench-ab/inference.log || true
+                tail -n 120 "artifacts/openbench-ab/${OPENBENCH_TASK}/inference.log" || true
                 exit 1
-              fi
-              # Ensure the requested model appears when OpenRouter-first.
-              if [[ "${OPENBENCH_MODEL}" == openrouter/* ]]; then
-                if ! echo "$models" | grep -Fq "\"id\":\"${OPENBENCH_MODEL}\"" \
-                  && ! echo "$models" | grep -Fq "\"id\": \"${OPENBENCH_MODEL}\""; then
-                  echo "::warning::Model ${OPENBENCH_MODEL} not listed in /v1/models (catalog may still route it)"
-                fi
               fi
               exit 0
             fi
             sleep 1
           done
           echo "::error::clawql-inference failed to become healthy"
-          tail -n 120 artifacts/openbench-ab/inference.log || true
+          tail -n 120 "artifacts/openbench-ab/${OPENBENCH_TASK}/inference.log" || true
           exit 1
 
       - name: Run A/B compare
@@ -231,8 +250,8 @@ jobs:
           CLAWQL_BIN: ${{ env.CLAWQL_BIN }}
           CLAWQL_INFERENCE_URL: http://127.0.0.1:${{ env.CLAWQL_INFERENCE_PORT }}/v1
         run: |
-          OUT="artifacts/openbench-ab/results.json"
-          SUM="artifacts/openbench-ab/summary.md"
+          OUT="artifacts/openbench-ab/${OPENBENCH_TASK}/results.json"
+          SUM="artifacts/openbench-ab/${OPENBENCH_TASK}/summary.md"
           python3 openbench/scripts/run-ab-compare.py \
             --task "${OPENBENCH_TASK}" \
             --model "${OPENBENCH_MODEL}" \
@@ -243,13 +262,10 @@ jobs:
             --out "$OUT" \
             --summary-md "$SUM"
           {
-            echo "## OpenBench A/B (clawql-inference)"
+            echo "## OpenBench A/B — \`${OPENBENCH_TASK}\`"
             echo ""
             echo "- Run: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            echo "- Inference: \`clawql-inference\` (OpenRouter-first or direct BYOK)"
-            echo "- Agent: OpenCode"
-            echo "- Task: \`${OPENBENCH_TASK}\`"
-            echo "- Model: \`${OPENBENCH_MODEL}\`"
+            echo "- Model: \`${OPENBENCH_MODEL}\` (cheap OpenRouter-first default)"
             echo "- Trials/arm: \`${OPENBENCH_TRIALS}\`"
             echo "- Arms: \`${OPENBENCH_ARMS}\`"
             echo ""
@@ -268,7 +284,7 @@ jobs:
         if: always() && steps.preflight.outputs.run_benchmark == 'true'
         uses: actions/upload-artifact@v7
         with:
-          name: openbench-ab-${{ env.OPENBENCH_TASK }}-${{ github.run_id }}
-          path: artifacts/openbench-ab/
+          name: openbench-ab-${{ matrix.task }}-${{ github.run_id }}
+          path: artifacts/openbench-ab/${{ matrix.task }}/
           if-no-files-found: warn
           retention-days: 14

@@ -37,6 +37,7 @@ MODELS = {
     "deepseek/deepseek-chat": "clawql/deepseek/deepseek-chat",
     "clawql/cheap-chat": "clawql/deepseek/deepseek-chat",
     "groq/llama-3.3-70b-versatile": "clawql/groq/llama-3.3-70b-versatile",
+    "openrouter/google/gemini-2.5-flash-lite": "clawql/openrouter/google/gemini-2.5-flash-lite",
     "openrouter/deepseek/deepseek-chat": "clawql/openrouter/deepseek/deepseek-chat",
     "openrouter/qwen/qwen3.6-plus": "clawql/openrouter/qwen/qwen3.6-plus",
     "gpt-5.5-medium": "gpt-5.5",

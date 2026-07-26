@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseHarnessUsage } from "./harness-cli.js";
+import {
+  buildOpencodeConfigContent,
+  clawqlMcpChildEnv,
+  parseHarnessUsage,
+} from "./harness-cli.js";
 
 describe("parseHarnessUsage", () => {
   it("parses Claude Code JSON usage", () => {
@@ -40,5 +44,50 @@ describe("parseHarnessUsage", () => {
     const usage = parseHarnessUsage("claude", "not json at all");
     expect(usage.tokens).toBeNull();
     expect(usage.turns).toBeNull();
+  });
+});
+
+describe("buildOpencodeConfigContent", () => {
+  it("embeds MCP + provider so OPENCODE_CONFIG_CONTENT does not drop memory tools", () => {
+    const prevHome = process.env.CLAWQL_HOME;
+    const prevVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+    process.env.CLAWQL_HOME = "/tmp/clawql-ab-vault";
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = "/tmp/clawql-ab-vault";
+    process.env.CLAWQL_ENABLE_MEMORY = "1";
+    try {
+      const raw = buildOpencodeConfigContent({
+        inferenceUrl: "http://127.0.0.1:8080/v1",
+        gatewayModel: "openrouter/google/gemini-2.5-flash-lite",
+        home: "/tmp/clawql-ab-vault",
+      });
+      const cfg = JSON.parse(raw) as {
+        provider: { clawql: { options: { baseURL: string }; models: Record<string, unknown> } };
+        mcp: { clawql: { enabled: boolean; environment: Record<string, string>; command: string[] } };
+      };
+      expect(cfg.provider.clawql.options.baseURL).toBe("http://127.0.0.1:8080/v1");
+      expect(cfg.provider.clawql.models["openrouter/google/gemini-2.5-flash-lite"]).toEqual({});
+      expect(cfg.mcp.clawql.enabled).toBe(true);
+      expect(cfg.mcp.clawql.environment.CLAWQL_OBSIDIAN_VAULT_PATH).toBe("/tmp/clawql-ab-vault");
+      expect(cfg.mcp.clawql.environment.CLAWQL_ENABLE_MEMORY).toBe("1");
+      expect(cfg.mcp.clawql.command.length).toBeGreaterThan(0);
+    } finally {
+      if (prevHome === undefined) delete process.env.CLAWQL_HOME;
+      else process.env.CLAWQL_HOME = prevHome;
+      if (prevVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = prevVault;
+    }
+  });
+
+  it("clawqlMcpChildEnv prefers CLAWQL_OBSIDIAN_VAULT_PATH", () => {
+    const prev = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = "/tmp/seeded-vault";
+    try {
+      const env = clawqlMcpChildEnv("/tmp/other-home");
+      expect(env.CLAWQL_OBSIDIAN_VAULT_PATH).toBe("/tmp/seeded-vault");
+      expect(env.CLAWQL_HOME).toBe("/tmp/other-home");
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = prev;
+    }
   });
 });

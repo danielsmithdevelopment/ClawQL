@@ -2,8 +2,14 @@
 
 This repository has a partial auth module. A previous engineering session already
 chose the password-hashing algorithm and the password-reset token TTL, and those
-decisions were recorded in institutional memory / prior session notes (if your
-environment exposes a memory or vault tool, recall them before coding).
+decisions were recorded in institutional memory (ClawQL vault).
+
+## Critical first step
+
+If you have a **memory_recall** (or similar vault/memory) tool, you **must call it
+before editing code**. Query for prior auth / password hashing / reset TTL
+decisions. Do not invent argon2 vs bcrypt or a TTL — use the recalled values.
+The seed note is **not** in the workspace filesystem.
 
 ## Your job
 
