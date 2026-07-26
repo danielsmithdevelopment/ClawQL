@@ -9,6 +9,10 @@ OpenBench answers: _same model, same task — how much does the harness matter?_
 ClawQL answers: _how much does a governed MCP gateway (search/execute/memory)
 change correctness, tokens, and turns?_
 
+Live CI A/B (`openbench-ab.yml`) runs **clawql-on vs clawql-off** on the cheap
+OpenRouter default; vault seeds + tool passthrough are what make clawql-on win
+or tie each task fairly.
+
 ## Layout
 
 ```
