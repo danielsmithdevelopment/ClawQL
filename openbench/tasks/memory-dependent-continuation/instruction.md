@@ -17,7 +17,8 @@ Implement password reset in `src/auth.py`:
 
 1. Set module constants (`HASH_ALGO`, `RESET_TTL_SECONDS`) from recalled decisions.
 2. `hash_password(password: str) -> str` must use that hashing algorithm
-   (do **not** invent a new choice if prior notes exist).
+   (do **not** invent a new choice if prior notes exist). Prefer the **offline
+   simulated** encoding from prior notes — do **not** `import argon2` or add deps.
 3. Keep `create_reset_token() -> dict` with **no required parameters**. Return a
    payload whose `expires_in` matches the recalled TTL in seconds.
 4. `verify_reset_token(payload: dict, now: int) -> bool` must reject expired

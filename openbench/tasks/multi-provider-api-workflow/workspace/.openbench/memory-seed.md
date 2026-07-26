@@ -7,6 +7,9 @@ GitHub release tag as JSON.
 
 ## Decisions
 
+- Write files in the **workspace / current project directory only**
+  (`./wrangler.toml`, `./src/index.js`, `./package.json`). Never write under
+  `/tmp` or absolute scratch paths.
 - `wrangler.toml`: `name = "release-tag-worker"`, `main = "src/index.js"`, and a
   `compatibility_date = "YYYY-MM-DD"`.
 - `src/index.js` must call exactly:

@@ -12,14 +12,17 @@ scaffold decisions. Those notes are **not** in the workspace filesystem.
 
 ## Required artifacts
 
+Create these files in the **current workspace directory** (relative paths only —
+not `/tmp` and not absolute scratch dirs):
+
 1. `wrangler.toml` with:
    - `name = "release-tag-worker"`
    - `main = "src/index.js"`
    - `compatibility_date` set to any ISO date `YYYY-MM-DD`
 2. `src/index.js` exporting a `fetch` handler that:
    - Reads `GITHUB_REPO` from the Worker `env` (format `owner/name`)
-   - Calls the GitHub **releases/latest** API for that repo (use the exact URL
-     shape recorded in prior session notes when available)
+   - Calls `https://api.github.com/repos/${owner}/${name}/releases/latest`
+     (same URL shape as prior session notes)
    - Returns JSON `{"tag":"<tag_name>"}` with status 200 on success
 3. `package.json` with a `"deploy": "wrangler deploy"` script
 
