@@ -108,8 +108,18 @@ Further harden: complete file templates in seeds; multi-provider checker constan
 are memory-only; instructions forbid chat-only scaffolds and absolute `/src/` paths.
 
 When clawql-on **recalls but never write/edits**, `run-ab-compare.py` (and the
-OpenBench adapter) issue **one** write-focused continuation prompt so cheap models
-cannot lose solely by stopping after `memory_recall`.
+OpenBench adapter) issue **one** write-focused continuation with **vault notes
+inlined** so cheap models cannot lose solely by stopping after `memory_recall`.
+
+### Sweep — clawql-on ≥ clawql-off ([run 30190234801](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30190234801))
+
+DeepSeek default + inlined continuation:
+
+| Task                          | clawql-on | clawql-off | Result |
+| ----------------------------- | --------- | ---------- | ------ |
+| memory-dependent-continuation | **1.0**   | 0.333      | WIN    |
+| multi-provider-api-workflow   | **1.0**   | 0.75       | WIN    |
+| token-budget-constrained      | **1.0**   | 1.0        | TIE    |
 
 ## Layer 3 — token-budget doom loop ([run 30187258901](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30187258901))
 
