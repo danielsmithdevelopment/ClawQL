@@ -57,3 +57,17 @@ PR/push OpenBench runs **all three** tasks with the cheap default
 - `multi-provider-api-workflow`
 
 Artifacts include `agent-logs/trial-*-{arm}.log` for post-mortem.
+
+## Layer 2 verification ([run 30186925604](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30186925604))
+
+Cheap model: `openrouter/google/gemini-2.5-flash-lite`.
+
+| Task | clawql-on | clawql-off | Notes |
+|------|-----------|------------|-------|
+| multi-provider-api-workflow | **1.0** (2 turns) | **1.0** (2 turns) | Tool loop healthy |
+| memory-dependent-continuation | **0.667** (14 turns) | 0.333 (8 turns) | on recovered argon2id via memory; TTL missed due to `create_reset_token(user_id=…)` signature drift |
+| token-budget-constrained | 0.0 (16 turns) | 0.0 (11 turns) | Model wrote YAML but nested `features: [a,b]` parser incomplete |
+
+Follow-ups in the same PR: forward OpenCode JSONL for clawql-on logs; harden memory
+checker/instruction for no-arg `create_reset_token`; clarify nested YAML lists in
+the token-budget instruction.
