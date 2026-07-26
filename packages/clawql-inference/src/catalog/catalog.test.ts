@@ -24,18 +24,18 @@ describe("inference model catalog", () => {
   });
 
   it("lists cheap OpenRouter models for OpenBench / day-one", () => {
-    const flash = findCatalogModel(
-      "openrouter/google/gemini-2.5-flash-lite",
-      DEFAULT_INFERENCE_MODEL_CATALOG
-    );
-    expect(flash?.provider).toBe("openrouter");
-    expect(flash?.tags).toContain("openbench-default");
     const deepseek = findCatalogModel(
       "openrouter/deepseek/deepseek-chat",
       DEFAULT_INFERENCE_MODEL_CATALOG
     );
     expect(deepseek?.provider).toBe("openrouter");
-    expect(deepseek?.tags).toContain("openrouter");
+    expect(deepseek?.tags).toContain("openbench-default");
+    const flash = findCatalogModel(
+      "openrouter/google/gemini-2.5-flash-lite",
+      DEFAULT_INFERENCE_MODEL_CATALOG
+    );
+    expect(flash?.provider).toBe("openrouter");
+    expect(flash?.tags).toContain("openrouter");
   });
 
   it("detects provider credentials from env", () => {

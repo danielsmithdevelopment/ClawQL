@@ -120,14 +120,14 @@ To contribute these upstream, copy `tasks/<name>/` into OpenBench's `tasks/`
 
 Manual workflow **OpenBench A/B (clawql on vs off)** — starts
 **clawql-inference**, runs OpenCode on/off. Preferred secret:
-`OPENROUTER_API_KEY` with default model `openrouter/google/gemini-2.5-flash-lite`.
+`OPENROUTER_API_KEY` with default model `openrouter/deepseek/deepseek-chat`.
 CI matrix runs all three tasks. See
 [`docs/benchmarks/openbench-github-actions.md`](../docs/benchmarks/openbench-github-actions.md).
 
 ```bash
 gh workflow run openbench-ab.yml \
   -f task=all \
-  -f model=openrouter/google/gemini-2.5-flash-lite \
+  -f model=openrouter/deepseek/deepseek-chat \
   -f trials=1
 ```
 

@@ -6,7 +6,7 @@ Spins up **clawql-inference**, runs the same model with and without ClawQL MCP
 (via OpenCode), posts a Step Summary, uploads JSON, tears down.
 
 **OpenRouter-first + cheap default:** set **`OPENROUTER_API_KEY`** and keep the
-default model `openrouter/google/gemini-2.5-flash-lite`. CI runs **all three**
+default model `openrouter/deepseek/deepseek-chat`. CI runs **all three**
 OpenBench tasks in a matrix on PR/push. Direct BYOK remains fully supported.
 
 **Tool calling:** clawql-inference passthroughs OpenAI `tools` / `tool_calls` to
@@ -27,7 +27,7 @@ Path filters include `openbench/**`, `packages/clawql-inference/**`, and the wor
 ## Prerequisites (live A/B)
 
 1. Repository secret **`OPENROUTER_API_KEY`** (recommended start — default model
-   is `openrouter/google/gemini-2.5-flash-lite`), **or** a direct vendor BYOK secret
+   is `openrouter/deepseek/deepseek-chat`), **or** a direct vendor BYOK secret
    when you choose a non-`openrouter/*` model
 2. Branch containing `openbench/` + `.github/workflows/openbench-ab.yml`
 
@@ -58,14 +58,14 @@ clawql inference serve
 | Input    | Value                                     |
 | -------- | ----------------------------------------- |
 | `task`   | `all`                                     |
-| `model`  | `openrouter/google/gemini-2.5-flash-lite` |
+| `model`  | `openrouter/deepseek/deepseek-chat` |
 | `trials` | `1`                                       |
 | `arms`   | `clawql-on,clawql-off`                    |
 
 OpenRouter examples (prefer cheaper for CI):
 
-- `openrouter/google/gemini-2.5-flash-lite` (default)
-- `openrouter/deepseek/deepseek-chat`
+- `openrouter/deepseek/deepseek-chat` (default)
+- `openrouter/google/gemini-2.5-flash-lite` (cheaper / noisier)
 - `openrouter/qwen/qwen3.6-plus`
 
 Direct BYOK (when you have vendor keys):
@@ -81,7 +81,7 @@ Via `gh`:
 gh workflow run openbench-ab.yml \
   --ref main \
   -f task=all \
-  -f model=openrouter/google/gemini-2.5-flash-lite \
+  -f model=openrouter/deepseek/deepseek-chat \
   -f trials=1
 ```
 
@@ -99,7 +99,7 @@ node bin/clawql.mjs inference serve --port 8080
 export CLAWQL_BIN="$PWD/bin/clawql.mjs"
 python3 openbench/scripts/run-ab-compare.py \
   --task memory-dependent-continuation \
-  --model openrouter/google/gemini-2.5-flash-lite \
+  --model openrouter/deepseek/deepseek-chat \
   --inference-url http://127.0.0.1:8080/v1 \
   --trials 1 \
   --out /tmp/ab-results.json \

@@ -30,7 +30,7 @@ Example::
   # terminal 2
   python3 openbench/scripts/run-ab-compare.py \\
     --task memory-dependent-continuation \\
-    --model openrouter/google/gemini-2.5-flash-lite \\
+    --model openrouter/deepseek/deepseek-chat \\
     --inference-url http://127.0.0.1:8080/v1 \\
     --trials 1 \\
     --out /tmp/ab-results.json
@@ -60,7 +60,7 @@ KNOWN_TASKS = (
 )
 DEFAULT_HARNESS = "opencode"
 DEFAULT_MODEL = os.environ.get(
-    "OPENBENCH_MODEL", "openrouter/google/gemini-2.5-flash-lite"
+    "OPENBENCH_MODEL", "openrouter/deepseek/deepseek-chat"
 )
 DEFAULT_INFERENCE_URL = os.environ.get(
     "CLAWQL_INFERENCE_URL",

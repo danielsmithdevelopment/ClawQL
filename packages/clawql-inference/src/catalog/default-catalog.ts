@@ -141,20 +141,22 @@ export const DEFAULT_INFERENCE_MODEL_CATALOG: InferenceModelCatalog = {
       tier_hint: "frontier",
       tags: ["chat", "byok"],
     },
-    // OpenRouter bring-your-aggregator examples (cheap first for CI / OpenBench)
-    {
-      id: "openrouter/google/gemini-2.5-flash-lite",
-      provider: "openrouter",
-      upstream_model: "google/gemini-2.5-flash-lite",
-      display_name: "Gemini 2.5 Flash Lite (via OpenRouter)",
-      tier_hint: "frugal",
-      tags: ["chat", "openrouter", "openbench-default"],
-    },
+    // OpenRouter bring-your-aggregator examples (cheap first for CI / OpenBench).
+    // DeepSeek Chat is the OpenBench default: still frugal, more reliable tool loops
+    // than flash-lite (which often stops after memory_recall or mangles edits).
     {
       id: "openrouter/deepseek/deepseek-chat",
       provider: "openrouter",
       upstream_model: "deepseek/deepseek-chat",
       display_name: "DeepSeek Chat (via OpenRouter)",
+      tier_hint: "frugal",
+      tags: ["chat", "openrouter", "openbench-default"],
+    },
+    {
+      id: "openrouter/google/gemini-2.5-flash-lite",
+      provider: "openrouter",
+      upstream_model: "google/gemini-2.5-flash-lite",
+      display_name: "Gemini 2.5 Flash Lite (via OpenRouter)",
       tier_hint: "frugal",
       tags: ["chat", "openrouter"],
     },

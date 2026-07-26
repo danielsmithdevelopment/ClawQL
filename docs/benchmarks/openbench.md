@@ -49,7 +49,7 @@ python3 openbench/validate_tasks.py
 
 - **Offline:** main CI always runs `python3 openbench/validate_tasks.py`.
 - **Live A/B:** [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml) runs on path-filtered PR/push to `main` and via `workflow_dispatch`.
-- **Default model:** `openrouter/google/gemini-2.5-flash-lite` (cheap) — preferred secret: **`OPENROUTER_API_KEY`**.
+- **Default model:** `openrouter/deepseek/deepseek-chat` (cheap OpenRouter default; flash-lite also supported) — preferred secret: **`OPENROUTER_API_KEY`**.
 - **Tool calling:** clawql-inference must passthrough OpenAI `tools` / `tool_calls` for OpenCode; see [`openbench-failure-root-cause-2026-07.md`](./openbench-failure-root-cause-2026-07.md).
 - **Matrix:** PR/push runs all three tasks (`memory-dependent-continuation`, `token-budget-constrained`, `multi-provider-api-workflow`) when secrets are present.
 - Missing secrets → live A/B **skipped** on PR/push (exit 0); manual dispatch still fails closed.
