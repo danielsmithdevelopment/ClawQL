@@ -122,7 +122,10 @@ export function collectSearchIndexPages({
 
 /** @param {string} url */
 export function chunkIdForUrl(url) {
-  const segment = url.split('/').filter(Boolean)[0]
+  // Strip hash/query so /plugins#registry groups with /plugins (and never
+  // emits filenames containing `#`, which break fetch as URL fragments).
+  const pathname = url.split(/[?#]/, 1)[0] ?? url
+  const segment = pathname.split('/').filter(Boolean)[0]
   return segment ?? 'root'
 }
 

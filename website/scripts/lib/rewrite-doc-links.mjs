@@ -47,7 +47,8 @@ export const DOC_SITE_ROUTES = {
   'docs/vision/clawql-idp-platform.md': '/vision/idp-platform',
   'docs/vision/clawql-hybrid-decentralized-github-alternative.md':
     '/vision/immutable-releases',
-  'docs/design/clawql-plugin-model.md': '/reference/plugins',
+  'docs/design/clawql-plugin-model.md': '/plugins#plugin-model',
+  'docs/reference/clawql-plugin-registry.md': '/plugins#registry',
   'docs/design/operator-target-architecture.md':
     '/design/operator-target-architecture',
   'docs/contributing/clawql-contributor-technical-specification.md':

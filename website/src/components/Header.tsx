@@ -165,6 +165,7 @@ export const Header = forwardRef<
             <TopLevelNavItem href="/">Home</TopLevelNavItem>
             <TopLevelNavItem href="/quickstart">Quickstart</TopLevelNavItem>
             <TopLevelNavItem href="/learn">Learn</TopLevelNavItem>
+            <TopLevelNavItem href="/plugins">Plugins</TopLevelNavItem>
             <TopLevelNavItem href="https://github.com/danielsmithdevelopment/ClawQL">
               GitHub
             </TopLevelNavItem>

@@ -59,6 +59,20 @@ export const docsNavigation: Array<NavGroup> = [
     ],
   },
   {
+    title: 'Plugins',
+    links: [
+      { title: 'Plugins', href: '/plugins' },
+      { title: 'Domain verticals', href: '/plugins#verticals' },
+      { title: 'Plugin model', href: '/plugins#plugin-model' },
+      { title: 'Gateway core', href: '/plugins/core' },
+      { title: 'Memory', href: '/plugins/memory' },
+      { title: 'Documents', href: '/plugins/documents' },
+      { title: 'Automation', href: '/plugins/automation' },
+      { title: 'Sandbox', href: '/plugins/sandbox' },
+      { title: 'Third-party', href: '/plugins/third-party' },
+    ],
+  },
+  {
     title: 'Platform',
     links: [
       { title: 'Vision & status', href: '/vision/roadmap' },
@@ -82,7 +96,6 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'Reference', href: '/reference' },
       { title: 'MCP tools', href: '/tools' },
       { title: 'Configuration', href: '/spec-configuration' },
-      { title: 'Plugins', href: '/plugins' },
       {
         title: 'Contributor spec',
         href: '/contributing/technical-specification',
@@ -104,6 +117,7 @@ export const docsMobileShortcuts: Array<{ title: string; href: string }> = [
   { title: 'Quickstart', href: '/quickstart' },
   { title: 'Deploy', href: '/deployment' },
   { title: 'Learn', href: '/learn' },
+  { title: 'Plugins', href: '/plugins' },
   { title: 'Reference', href: '/reference' },
   { title: 'GitHub', href: 'https://github.com/danielsmithdevelopment/ClawQL' },
 ]

@@ -86,14 +86,21 @@ export default async function PluginPage({
           href="/plugins"
           className="font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-white"
         >
-          Plugins hub
+          Plugins
         </Link>
         {' · '}
         <Link
-          href="/reference/plugins"
+          href="/plugins#registry"
           className="font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-white"
         >
-          Registry reference
+          Registry
+        </Link>
+        {' · '}
+        <Link
+          href="/plugins#plugin-model"
+          className="font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-white"
+        >
+          Plugin model
         </Link>
       </p>
 

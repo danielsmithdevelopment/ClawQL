@@ -192,7 +192,7 @@ function addHomeBody(map) {
 
 function addHubPages(map) {
   map['/plugins'] =
-    '---\ntitle: Plugins\n---\n\n# Plugins\n\nClawQL plugins: gateway core, Panguard proxy, memory, documents, bundled providers, automation, sandbox, Ouroboros, and extension roadmap. See individual plugin pages under /plugins/{slug}.\n'
+    '---\ntitle: Plugins\n---\n\n# Plugins\n\nHome for ClawQL extensions. Horizontal plugins are reusable capabilities (Memory, Documents, …). Domain verticals are presets that compose those capabilities and ship domain-tailored .cqw boilerplate. Searchable sortable paginated registry at /plugins#registry (kind/status filters, ?kind=vertical). Domain verticals: /plugins#verticals. Plugin model: /plugins#plugin-model. Per-plugin docs under /plugins/{slug}.\n'
 
   map['/security/best-practices'] =
     '---\ntitle: Agentic AI security best practices\n---\n\n# Agentic AI security best practices\n\nThirty-two vendor-neutral security modules synced from the repo security-best-practices-series. See /security/best-practices/{slug} for each module.\n'

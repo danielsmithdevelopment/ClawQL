@@ -28,7 +28,7 @@ export function WebMcpRegister() {
         name: 'clawql.docs.navigate',
         title: 'Navigate ClawQL docs',
         description:
-          'Navigate to a page on this documentation site. Use paths like /learn, /learn/search-and-execute-mcp, /learn/external-ingest-knowledge, /learn/knowledge-search-onyx, /learn/document-pipeline, /learn/sandbox-exec, /learn/effect-ts, /learn/memory, /learn/ouroboros-tools, /openclaw, /learn/schedule-notify-workflows, /learn/cache-handoff-between-chats, /learn/audit-tool-and-observability, /tools, /quickstart, /deployment, /kubernetes, /docker-desktop-observability, or /spec-configuration. Only same-origin relative paths are allowed.',
+          'Navigate to a page on this documentation site. Use paths like /learn, /plugins, /plugins/memory, /plugins/documents, /plugins#verticals, /plugins#plugin-model, /learn/search-and-execute-mcp, /learn/external-ingest-knowledge, /learn/knowledge-search-onyx, /learn/document-pipeline, /learn/sandbox-exec, /learn/effect-ts, /learn/memory, /learn/ouroboros-tools, /openclaw, /learn/schedule-notify-workflows, /learn/cache-handoff-between-chats, /learn/audit-tool-and-observability, /tools, /quickstart, /deployment, /kubernetes, /docker-desktop-observability, or /spec-configuration. Only same-origin relative paths are allowed.',
         inputSchema: {
           $schema: 'https://json-schema.org/draft/2020-12/schema',
           type: 'object',

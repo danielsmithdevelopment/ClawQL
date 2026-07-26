@@ -2,11 +2,12 @@ import { docsPageMetadata } from '@/lib/seo'
 
 import type { ReactNode } from 'react'
 
+/** Canonical docs live at `/plugins#verticals`; this layout only wraps the redirect. */
 export const metadata = docsPageMetadata({
-  title: 'Verticals guide',
+  title: 'Domain verticals',
   description:
-    'ClawQL vertical packages (lending, legal, healthcare) extend the gateway with domain-specific tools on shared security and audit infrastructure.',
-  path: '/reference/verticals',
+    'Domain verticals are ClawQL plugin presets — see /plugins for the registry and vertical composition guide.',
+  path: '/plugins',
 })
 
 export default function VerticalsGuideLayout({

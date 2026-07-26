@@ -154,7 +154,7 @@ export const architectureHubCards: Array<ReferenceCard> = [
     href: '/plugins',
     name: 'Plugins',
     description:
-      'Per-plugin pages — core, memory, documents, automation, sandbox.',
+      'Horizontal building blocks and domain vertical presets (.cqw boilerplate).',
     icon: SquaresPlusIcon,
   }),
   card({
@@ -272,9 +272,10 @@ export const referenceHubCards: Array<ReferenceCard> = [
     icon: CogIcon,
   }),
   card({
-    href: '/reference/plugins',
-    name: 'Plugin model & registry',
-    description: 'Extension contract, ownership matrix, enable flags.',
+    href: '/plugins',
+    name: 'Plugins',
+    description:
+      'Searchable registry — horizontal building blocks and vertical presets.',
     icon: SquaresPlusIcon,
   }),
   card({
