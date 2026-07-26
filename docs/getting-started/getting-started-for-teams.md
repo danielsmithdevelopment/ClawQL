@@ -193,7 +193,7 @@ clawql doctor
 
 | Command              | Purpose                                                                |
 | -------------------- | ---------------------------------------------------------------------- |
-| `clawql sync ensure` | Create R2/S3 bucket if missing, then write `sync.json`                |
+| `clawql sync ensure` | Create R2/S3 bucket if missing, then write `sync.json`                 |
 | `clawql sync init`   | Write `~/.ClawQL/sync.json` only (no secrets; no bucket create)        |
 | `clawql sync push`   | Upload changed local files + update remote manifest                    |
 | `clawql sync pull`   | Download changed remote files                                          |

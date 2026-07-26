@@ -130,18 +130,18 @@ clawql sync push   # seed Memory/ from an existing ~/.ClawQL
 
 Add these under **Cursor → Settings → Cloud → Secrets** (or your team's secret store). They are injected into every Cloud Agent run for the repo.
 
-| Secret                           | Purpose                                           |
-| -------------------------------- | ------------------------------------------------- |
-| `CLAWQL_HOME`                    | Vault root on the VM, e.g. `/home/ubuntu/.ClawQL` |
-| `CLAWQL_R2_ACCOUNT_ID`           | Cloudflare account id (R2 endpoint)               |
-| `CLAWQL_SYNC_ACCESS_KEY_ID`      | R2 S3 API access key (Admin Read & Write to auto-create bucket) |
-| `CLAWQL_SYNC_SECRET_ACCESS_KEY`  | R2 S3 API secret                                  |
+| Secret                           | Purpose                                                            |
+| -------------------------------- | ------------------------------------------------------------------ |
+| `CLAWQL_HOME`                    | Vault root on the VM, e.g. `/home/ubuntu/.ClawQL`                  |
+| `CLAWQL_R2_ACCOUNT_ID`           | Cloudflare account id (R2 endpoint)                                |
+| `CLAWQL_SYNC_ACCESS_KEY_ID`      | R2 S3 API access key (Admin Read & Write to auto-create bucket)    |
+| `CLAWQL_SYNC_SECRET_ACCESS_KEY`  | R2 S3 API secret                                                   |
 | `CLOUDFLARE_API_TOKEN`           | Optional — Workers R2 Storage Write if S3 keys cannot CreateBucket |
-| `CLAWQL_SYNC_BUCKET`             | Optional — default `clawql-team-vault` via `sync ensure` |
-| `CLAWQL_SYNC_PREFIX`             | Optional — default `teams/shared/`                |
-| `CLAWQL_SYNC_AUTO`               | `1` — debounced push after **`memory_ingest`**    |
-| `CLAWQL_SYNC_AUTO_PULL`          | `1` — throttled pull before **`memory_recall`**   |
-| `CLAWQL_SYNC_AUTO_PULL_ON_START` | `1` — pull once when MCP starts                   |
+| `CLAWQL_SYNC_BUCKET`             | Optional — default `clawql-team-vault` via `sync ensure`           |
+| `CLAWQL_SYNC_PREFIX`             | Optional — default `teams/shared/`                                 |
+| `CLAWQL_SYNC_AUTO`               | `1` — debounced push after **`memory_ingest`**                     |
+| `CLAWQL_SYNC_AUTO_PULL`          | `1` — throttled pull before **`memory_recall`**                    |
+| `CLAWQL_SYNC_AUTO_PULL_ON_START` | `1` — pull once when MCP starts                                    |
 
 For **S3** or **GCS**, use the credential variables from [For teams — Environment](./getting-started-for-teams.md#environment) instead of R2 keys.
 

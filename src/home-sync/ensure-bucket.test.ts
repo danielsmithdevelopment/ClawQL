@@ -126,7 +126,12 @@ describe("ensureSyncBucket", () => {
     expect(result.prefix).toBe(DEFAULT_SYNC_PREFIX);
 
     const raw = await readFile(join(home, "sync.json"), "utf8");
-    const cfg = JSON.parse(raw) as { bucket: string; provider: string; prefix: string; version: number };
+    const cfg = JSON.parse(raw) as {
+      bucket: string;
+      provider: string;
+      prefix: string;
+      version: number;
+    };
     expect(cfg).toMatchObject({
       version: 1,
       provider: "r2",

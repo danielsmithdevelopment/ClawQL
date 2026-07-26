@@ -150,8 +150,14 @@ export async function runSyncEnsure(opts: SyncEnsureOptions): Promise<number> {
   if (opts.interactive) {
     const p = await prompt("Provider (r2|s3)", provider);
     provider = parseSyncProvider(p || provider);
-    bucket = await prompt(`Bucket name (default ${DEFAULT_SYNC_BUCKET})`, bucket || DEFAULT_SYNC_BUCKET);
-    prefix = await prompt(`Team prefix (default ${DEFAULT_SYNC_PREFIX})`, prefix || DEFAULT_SYNC_PREFIX);
+    bucket = await prompt(
+      `Bucket name (default ${DEFAULT_SYNC_BUCKET})`,
+      bucket || DEFAULT_SYNC_BUCKET
+    );
+    prefix = await prompt(
+      `Team prefix (default ${DEFAULT_SYNC_PREFIX})`,
+      prefix || DEFAULT_SYNC_PREFIX
+    );
     if (provider === "r2") {
       location = await prompt("R2 location hint (e.g. weur)", location || "weur");
     }

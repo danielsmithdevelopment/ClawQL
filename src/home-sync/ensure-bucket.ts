@@ -202,8 +202,10 @@ async function headOrCreateViaS3(opts: {
   }
 
   try {
-    const input: { Bucket: string; CreateBucketConfiguration?: { LocationConstraint: BucketLocationConstraint } } =
-      { Bucket: bucket };
+    const input: {
+      Bucket: string;
+      CreateBucketConfiguration?: { LocationConstraint: BucketLocationConstraint };
+    } = { Bucket: bucket };
     if (provider === "s3" && region && region !== "us-east-1") {
       input.CreateBucketConfiguration = {
         LocationConstraint: region as BucketLocationConstraint,
@@ -290,11 +292,11 @@ function gcsEnsureError(): Error {
 /**
  * Ensure the team vault bucket exists and write `$CLAWQL_HOME/sync.json`.
  */
-export async function ensureSyncBucket(opts: EnsureBucketOptions = {}): Promise<EnsureBucketResult> {
+export async function ensureSyncBucket(
+  opts: EnsureBucketOptions = {}
+): Promise<EnsureBucketResult> {
   const home = opts.home;
-  const provider = parseSyncProvider(
-    opts.provider ?? envTrim("CLAWQL_SYNC_PROVIDER") ?? "r2"
-  );
+  const provider = parseSyncProvider(opts.provider ?? envTrim("CLAWQL_SYNC_PROVIDER") ?? "r2");
   if (provider === "gcs") {
     throw gcsEnsureError();
   }
@@ -309,10 +311,12 @@ export async function ensureSyncBucket(opts: EnsureBucketOptions = {}): Promise<
     throw new Error("Bucket name is empty after normalization");
   }
   const prefixRaw = opts.prefix ?? existing?.prefix ?? defaultEnsurePrefix();
-  const prefix = prefixRaw.endsWith("/") || !prefixRaw ? prefixRaw || DEFAULT_SYNC_PREFIX : `${prefixRaw}/`;
+  const prefix =
+    prefixRaw.endsWith("/") || !prefixRaw ? prefixRaw || DEFAULT_SYNC_PREFIX : `${prefixRaw}/`;
   const dryRun = Boolean(opts.dryRun);
   const configPath = getSyncConfigPath(home);
-  const location = opts.location?.trim() || envTrim("CLAWQL_SYNC_LOCATION") || DEFAULT_R2_LOCATION_HINT;
+  const location =
+    opts.location?.trim() || envTrim("CLAWQL_SYNC_LOCATION") || DEFAULT_R2_LOCATION_HINT;
 
   let created = false;
   let method: EnsureBucketMethod = "config-only";
