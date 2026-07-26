@@ -101,7 +101,8 @@ Use ClawQL from the **Cursor iOS app** by running **Cloud Agents** with stdio MC
         │
         ▼
   Cloud Agent VM (Cursor-managed)
-  ├── stdio MCP: npx -p clawql-mcp clawql-mcp
+  ├── stdio MCP: node …/bin/clawql-mcp.mjs  (ClawQL repo after install)
+  │              or npx -p clawql-mcp clawql-mcp (published package / other repos)
   ├── CLAWQL_HOME=/home/ubuntu/.ClawQL  (ephemeral VM disk)
   └── memory_sync ◄──► object storage (R2 / S3 / GCS)
         │
@@ -112,12 +113,13 @@ Use ClawQL from the **Cursor iOS app** by running **Cloud Agents** with stdio MC
 - **MCP** runs **inside** the Cloud Agent VM, not on the phone.
 - **`Memory/`** Markdown is the durable source of truth; **`memory.db`** is rebuilt per VM.
 - **`vault/providers.json`** (API tokens) stays on the VM or in Cursor Secrets — **never** in the sync bucket.
+- Cursor may **bake** the MCP command into the VM at start (`--mcp-config`). Changing `~/.cursor/mcp.json` mid-run does not always reattach tools — fix the launch command / install hooks so discovery succeeds on the first pass.
 
 ### Prerequisites
 
 1. **Object-storage bucket** with a team prefix (R2 quick start: [For teams — R2](./getting-started-for-teams.md#quick-start-r2)).
 2. **Cursor Cloud Agents** enabled for your account (repo connected in the Cursor dashboard).
-3. **`clawql-mcp`** on the agent VM — `npx -p clawql-mcp` resolves it at MCP startup (Node.js is preinstalled on Cloud Agent VMs).
+3. **`clawql-mcp`** on the agent VM — Node.js is preinstalled. In **this** repo, `.cursor/scripts/cloud-agent-install.sh` builds the workspace and prefers **`node /workspace/bin/clawql-mcp.mjs`**. Outside this monorepo, `npx -p clawql-mcp clawql-mcp` uses the published package.
 
 One-time bucket setup can be done from a desktop machine with the ClawQL CLI:
 
@@ -149,7 +151,25 @@ For **S3** or **GCS**, use the credential variables from [For teams — Environm
 
 ### 2. Connect ClawQL MCP (stdio)
 
-Cloud Agents use the repo's MCP configuration. Add **`.cursor/mcp.json`** (or enable the **clawql** server in the agent run UI):
+Cloud Agents use the repo's MCP configuration. Prefer the template at **`.cursor/mcp.json.example`** (install copies it to gitignored **`.cursor/mcp.json`** and writes **`~/.cursor/mcp.json`**).
+
+**ClawQL monorepo / Cloud Agent (recommended after install):**
+
+```json
+{
+  "mcpServers": {
+    "clawql": {
+      "command": "node",
+      "args": ["/workspace/bin/clawql-mcp.mjs"],
+      "env": {
+        "CLAWQL_HOME": "/home/ubuntu/.ClawQL"
+      }
+    }
+  }
+}
+```
+
+**Published package / other repos:**
 
 ```json
 {
@@ -165,12 +185,31 @@ Cloud Agents use the repo's MCP configuration. Add **`.cursor/mcp.json`** (or en
 }
 ```
 
-`CLAWQL_HOME` in **`env`** can match the dashboard secret; dashboard secrets are also visible to the MCP child process.
+`CLAWQL_HOME` in **`env`** can match the dashboard secret; dashboard secrets are also visible to the MCP child process for most keys. If **`memory_sync`** reports missing R2 credentials while shell **`clawql sync`** works, the MCP child did not inherit sync secrets — keep **`CLAWQL_SYNC_*`** / **`CLAWQL_R2_ACCOUNT_ID`** in Cursor Secrets and/or **`~/.ClawQL/clawql.env`**, or push via **`node bin/clawql.mjs sync push`**.
 
-On a desktop machine you can generate the same JSON:
+On a desktop machine you can generate npx-style JSON:
 
 ```bash
 npx -p clawql-mcp clawql mcp-config --write cursor
+```
+
+#### Monorepo `npx -p clawql-mcp` pitfall
+
+From the **ClawQL repo root**, `npx -p clawql-mcp` resolves the **workspace package** and puts **`node_modules/.bin`** on `PATH`. If that directory has no **`clawql-mcp`** shim (or `bin/*.mjs` is not executable), the MCP child exits **127** (`clawql-mcp: not found`) and Cursor reports failed tool discovery.
+
+This repo’s install hook fixes that after **`npm run build`**:
+
+```bash
+chmod +x bin/clawql.mjs bin/clawql-mcp.mjs bin/clawql-mcp-http.mjs
+ln -sfn ../../bin/clawql-mcp.mjs node_modules/.bin/clawql-mcp
+# same for clawql + clawql-mcp-http
+```
+
+Quick verify on the VM:
+
+```bash
+ls -la node_modules/.bin/clawql-mcp bin/clawql-mcp.mjs
+npx -p clawql-mcp clawql-mcp   # should print Ready (stdio), or use: node bin/clawql-mcp.mjs
 ```
 
 Enable the **clawql** MCP server when starting a Cloud Agent from iOS (same as desktop — the server must be toggled on per run if your client requires it).
@@ -197,6 +236,8 @@ Provider secrets should come from Cursor Secrets, not interactive prompts, when 
 
 Teams can add **`.cursor/environment.json`** with an install script that runs **`clawql init`**, writes **`sync.json`**, or pre-installs **`clawql-mcp`** before the agent starts. Keep secrets out of the script — use dashboard Secrets only.
 
+This repository’s hook (**.cursor/scripts/cloud-agent-install.sh**) runs **`npm ci` + `npm run build`**, links workspace MCP bins, ensures the R2 team bucket via **`clawql sync ensure`**, pulls **`Memory/`** when sync keys exist, and writes stdio MCP config pointing at **`node …/bin/clawql-mcp.mjs`**.
+
 ### 4. Session workflow (memory)
 
 | Step                  | Tool / behavior                                                                             |
@@ -217,7 +258,8 @@ Auto sync (**`CLAWQL_SYNC_AUTO=1`**) debounces push after each **`memory_ingest`
 You are helping me use ClawQL from Cursor on iOS via a Cloud Agent.
 
 Facts:
-- MCP is stdio: npx -p clawql-mcp clawql-mcp with CLAWQL_HOME on the agent VM.
+- In the ClawQL repo after install, MCP stdio is: node /workspace/bin/clawql-mcp.mjs with CLAWQL_HOME on the agent VM.
+- Elsewhere: npx -p clawql-mcp clawql-mcp. If tools/list fails with clawql-mcp: not found inside this monorepo, ensure node_modules/.bin/clawql-mcp exists and bin/*.mjs are executable (cloud-agent-install.sh does this).
 - There is no local ~/.ClawQL on my phone; durable memory lives in object storage (R2/S3/GCS).
 - Sync credentials are in Cursor Cloud Secrets (CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID).
 - Provider API tokens are in Secrets or CLAWQL_HOME/vault/providers.json — never in mcp.json or git.
@@ -226,6 +268,7 @@ Workflow:
 1. memory_recall with a concrete query at the start of non-trivial work.
 2. search → execute for API operations; memory_ingest for durable outcomes.
 3. Before ending the run: memory_sync { "direction": "auto" } to pull then push the team bucket.
+   If memory_sync cannot see R2 keys but the shell can, use: node bin/clawql.mjs sync push
 
 If sync is not configured, say so and list which CLAWQL_SYNC_* secrets are missing.
 Do not invent API responses. On auth failure, point to vault/providers.json or docs/providers/*-onboarding.md.
@@ -235,13 +278,15 @@ Docs: https://docs.clawql.com/agent-setup#cursor-i-os-cloud-agent https://docs.c
 
 ### Troubleshooting (iOS)
 
-| Symptom                               | Check                                                                                              |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **`memory_recall`** empty on a new VM | Secrets set? **`memory_sync` `{ "direction": "pull" }`** or **`CLAWQL_SYNC_AUTO_PULL_ON_START=1`** |
-| **`memory_sync`** errors              | **`CLAWQL_SYNC_BUCKET`**, prefix, and R2/S3/GCS credentials in dashboard Secrets                   |
-| **`execute`** auth failures           | Provider keys in **`vault/providers.json`** or matching **`CLAWQL_*`** env secrets                 |
-| MCP tools missing                     | Enable **clawql** server for the Cloud Agent run; confirm **`CLAWQL_ENABLE_MEMORY`** is not `0`    |
-| Conflicts after parallel runs         | **`memory_sync`** response lists conflicts; use **`force: true`** only deliberately                |
+| Symptom                                        | Check                                                                                                                                                        |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`memory_recall`** empty on a new VM          | Secrets set? **`memory_sync` `{ "direction": "pull" }`** or **`CLAWQL_SYNC_AUTO_PULL_ON_START=1`**                                                           |
+| **`memory_sync`** errors                       | **`CLAWQL_SYNC_BUCKET`**, prefix, and R2/S3/GCS credentials in dashboard Secrets                                                                             |
+| **`execute`** auth failures                    | Provider keys in **`vault/providers.json`** or matching **`CLAWQL_*`** env secrets                                                                           |
+| MCP tools missing / discovery failed           | Enable **clawql** for the run; confirm **`CLAWQL_ENABLE_MEMORY`** is not `0`; see monorepo pitfall above (`clawql-mcp: not found`)                           |
+| **`clawql-mcp: not found`** (exit 127)         | In this repo: wait for install/build; ensure **`node_modules/.bin/clawql-mcp`** → **`bin/clawql-mcp.mjs`** and **`chmod +x bin/*.mjs`**; prefer **`node …`** |
+| Sync pull: **manifest expects sha256 … got …** | Remote **`.clawql/sync/manifest.v1.json`** stale vs objects — seed **`Memory/`**, then **`clawql sync push --force`**, then pull again                       |
+| Conflicts after parallel runs                  | **`memory_sync`** response lists conflicts; use **`force: true`** only deliberately                                                                          |
 
 ---
 

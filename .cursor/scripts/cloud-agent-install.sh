@@ -16,6 +16,15 @@ else
 fi
 npm run build
 
+# Root package bins must be executable + linked for `npx -p clawql-mcp clawql-mcp`.
+# In this monorepo, npm resolves -p clawql-mcp to the workspace root; without
+# node_modules/.bin/clawql-mcp the MCP child exits 127 ("clawql-mcp: not found").
+chmod +x "$ROOT/bin/clawql.mjs" "$ROOT/bin/clawql-mcp.mjs" "$ROOT/bin/clawql-mcp-http.mjs"
+mkdir -p "$ROOT/node_modules/.bin"
+ln -sfn ../../bin/clawql.mjs "$ROOT/node_modules/.bin/clawql"
+ln -sfn ../../bin/clawql-mcp.mjs "$ROOT/node_modules/.bin/clawql-mcp"
+ln -sfn ../../bin/clawql-mcp-http.mjs "$ROOT/node_modules/.bin/clawql-mcp-http"
+
 # Pulumi provision package (R2 bucket tests)
 cd infra/pulumi
 if [[ -f package-lock.json ]]; then
@@ -98,11 +107,48 @@ else
   echo "[cloud-agent-install]            CLAWQL_SYNC_AUTO_PULL_ON_START=1, OPENROUTER_API_KEY"
 fi
 
-# Stdio MCP config for this VM user (Cursor Cloud Agent)
-if [[ ! -f "$HOME/.cursor/mcp.json" ]]; then
-  mkdir -p "$HOME/.cursor"
-  node "$ROOT/bin/clawql.mjs" mcp-config --write cursor \
-    || echo "[cloud-agent-install] mcp-config write skipped"
+# Stdio MCP config for this VM user (Cursor Cloud Agent).
+# Prefer the workspace binary after `npm run build` — Cloud Agent PATH uses
+# `/exec-daemon/npx`, and `npx -p clawql-mcp clawql-mcp` often fails with
+# `clawql-mcp: not found` (or a broken nested `@smithy/protocol-http` install
+# from the published tarball). Local `node bin/clawql-mcp.mjs` is reliable.
+mkdir -p "$HOME/.cursor"
+if [[ -f "$ROOT/dist/server.js" ]]; then
+  cat >"$HOME/.cursor/mcp.json" <<EOF
+{
+  "mcpServers": {
+    "clawql": {
+      "command": "node",
+      "args": ["$ROOT/bin/clawql-mcp.mjs"],
+      "env": {
+        "CLAWQL_HOME": "$CLAWQL_HOME"
+      }
+    }
+  }
+}
+EOF
+  # Repo-local copy (gitignored) — same transport the Cloud Agent UI may load.
+  if [[ ! -f "$ROOT/.cursor/mcp.json" || -f "$ROOT/.cursor/mcp.json.example" ]]; then
+    cat >"$ROOT/.cursor/mcp.json" <<EOF
+{
+  "mcpServers": {
+    "clawql": {
+      "command": "node",
+      "args": ["$ROOT/bin/clawql-mcp.mjs"],
+      "env": {
+        "CLAWQL_HOME": "$CLAWQL_HOME"
+      }
+    }
+  }
+}
+EOF
+  fi
+  echo "[cloud-agent-install] Wrote MCP stdio config → node $ROOT/bin/clawql-mcp.mjs"
+else
+  if [[ ! -f "$HOME/.cursor/mcp.json" ]]; then
+    node "$ROOT/bin/clawql.mjs" mcp-config --write cursor \
+      || echo "[cloud-agent-install] mcp-config write skipped"
+  fi
 fi
 
 echo "[cloud-agent-install] done"
