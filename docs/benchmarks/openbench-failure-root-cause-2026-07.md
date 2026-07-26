@@ -85,12 +85,12 @@ the token-budget instruction.
 Later flash-lite matrices still showed clawql-on **LOSE** cells from model behavior,
 not MCP wipe / tool strip / doom-loop (those layers stay fixed):
 
-| Failure mode | Symptom | Mitigation |
-| --- | --- | --- |
-| Stop-after-recall | multi-provider score 0 after successful vault hit | Instruction: after `memory_recall`, immediately write artifacts |
-| Truncated vault recipe | `CLAWQL_MEMORY_RECALL_SNIPPET_CHARS` default 520 cut off YAML parser / scaffold notes | OpenBench MCP env sets snippet chars to **8192** |
-| IndentationError | piecemeal `edit` of nested helpers after partial recall | Seed ships complete `parse.py`; instruction: use **write**, not edit |
-| `/tmp` writes | multi-provider artifacts outside workspace | Instruction: relative paths only |
+| Failure mode           | Symptom                                                                               | Mitigation                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Stop-after-recall      | multi-provider score 0 after successful vault hit                                     | Instruction: after `memory_recall`, immediately write artifacts      |
+| Truncated vault recipe | `CLAWQL_MEMORY_RECALL_SNIPPET_CHARS` default 520 cut off YAML parser / scaffold notes | OpenBench MCP env sets snippet chars to **8192**                     |
+| IndentationError       | piecemeal `edit` of nested helpers after partial recall                               | Seed ships complete `parse.py`; instruction: use **write**, not edit |
+| `/tmp` writes          | multi-provider artifacts outside workspace                                            | Instruction: relative paths only                                     |
 
 Default OpenBench model is now **`openrouter/deepseek/deepseek-chat`** (still cheap
 OpenRouter) for a stronger tool loop. Flash-lite remains available as
