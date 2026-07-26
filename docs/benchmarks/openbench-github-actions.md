@@ -9,6 +9,11 @@ Spins up **clawql-inference**, runs the same model with and without ClawQL MCP
 default model `openrouter/google/gemini-2.5-flash-lite`. CI runs **all three**
 OpenBench tasks in a matrix on PR/push. Direct BYOK remains fully supported.
 
+**Tool calling:** clawql-inference passthroughs OpenAI `tools` / `tool_calls` to
+upstream (required for OpenCode edit/bash/MCP). See
+[`openbench-failure-root-cause-2026-07.md`](./openbench-failure-root-cause-2026-07.md).
+Artifacts include `agent-logs/` for each trial/arm.
+
 ## When it runs
 
 | Trigger                                               | Behavior                                                                                                          |

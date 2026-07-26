@@ -133,6 +133,8 @@ export function buildOpencodeConfigContent(opts: {
   const gatewayModel = opts.gatewayModel.trim().replace(/^clawql\//, "");
   return JSON.stringify({
     $schema: "https://opencode.ai/config.json",
+    // Headless CI: never pause on ask (doom_loop / external_directory defaults).
+    permission: { "*": "allow" },
     provider: {
       clawql: {
         npm: "@ai-sdk/openai-compatible",

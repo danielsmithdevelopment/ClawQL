@@ -57,11 +57,13 @@ describe("buildOpencodeConfigContent", () => {
         home: "/tmp/clawql-ab-vault",
       });
       const cfg = JSON.parse(raw) as {
+        permission?: Record<string, string>;
         provider: { clawql: { options: { baseURL: string }; models: Record<string, unknown> } };
         mcp: {
           clawql: { enabled: boolean; environment: Record<string, string>; command: string[] };
         };
       };
+      expect(cfg.permission).toEqual({ "*": "allow" });
       expect(cfg.provider.clawql.options.baseURL).toBe("http://127.0.0.1:8080/v1");
       expect(cfg.provider.clawql.models["openrouter/google/gemini-2.5-flash-lite"]).toEqual({});
       expect(cfg.mcp.clawql.enabled).toBe(true);

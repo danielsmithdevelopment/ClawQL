@@ -243,6 +243,8 @@ def opencode_config_for_inference(inference_url: str, gateway_model: str) -> str
     # which is forwarded to the OpenAI-compat endpoint as `model`.
     return json.dumps(
         {
+            # Headless CI: never pause on ask (doom_loop / external_directory defaults).
+            "permission": {"*": "allow"},
             "provider": {
                 "clawql": {
                     "npm": "@ai-sdk/openai-compatible",
@@ -253,7 +255,7 @@ def opencode_config_for_inference(inference_url: str, gateway_model: str) -> str
                     },
                     "models": {gateway_model: {}},
                 }
-            }
+            },
         }
     )
 
@@ -342,6 +344,7 @@ def run_arm_off(
         "tokens": usage.get("tokens"),
         "turns": usage.get("turns"),
         "output_tail": combined[-2000:],
+        "_combined_log": combined,
         "error": None if completed else (f"timeout after {timeout_s}s" if timed_out else f"exit {code}"),
     }
 
@@ -439,6 +442,7 @@ def run_arm_on(
         "tokens": tokens,
         "turns": turns,
         "output_tail": combined[-2000:],
+        "_combined_log": combined,
         "error": None
         if completed
         else (bench.get("error") or (f"timeout after {timeout_s}s" if timed_out else f"exit {code}")),
@@ -501,22 +505,35 @@ def render_markdown(report: dict) -> str:
             f"{s['mean_turns'] if s['mean_turns'] is not None else '—'} | "
             f"{s['mean_wall_s'] if s['mean_wall_s'] is not None else '—'} |"
         )
-    lines.extend(
-        [
-            "",
-            "## Interpretation",
-            "",
-            "- Both arms call the **same** clawql-inference model.",
-            "- **clawql-on** adds ClawQL MCP (search/execute/memory/…) via "
-            "`clawql opencode --non-interactive` (MCP embedded in "
-            "`OPENCODE_CONFIG_CONTENT` with the seeded vault path).",
-            "- **clawql-off** is raw OpenCode with isolated HOME (no ClawQL MCP).",
-            "- Memory seed is removed from the workspace for both arms; "
-            "clawql-on must `memory_recall` to recover argon2id / 900s TTL.",
-            "- Checker — not the harness self-report — decides success.",
-            "",
-        ]
-    )
+    interp = [
+        "",
+        "## Interpretation",
+        "",
+        "- Both arms call the **same** clawql-inference model (cheap OpenRouter default OK).",
+        "- **clawql-on** adds ClawQL MCP (search/execute/memory/…) via "
+        "`clawql opencode --non-interactive` (provider + MCP + `permission: allow` "
+        "in `OPENCODE_CONFIG_CONTENT`).",
+        "- **clawql-off** is raw OpenCode with isolated HOME (no ClawQL MCP).",
+        "- clawql-inference must **passthrough** OpenAI `tools` / `tool_calls` "
+        "(otherwise OpenCode gets text-only replies and stops after one turn).",
+        "- Checker — not the harness self-report — decides success.",
+        "- Full agent JSONL lives under `agent-logs/` next to this summary.",
+    ]
+    if task == "memory-dependent-continuation":
+        interp.append(
+            "- Memory seed is removed from the workspace; clawql-on must "
+            "`memory_recall` to recover argon2id / 900s TTL."
+        )
+    elif task == "token-budget-constrained":
+        interp.append(
+            "- Prefer targeted edits under a tight token budget; both arms share the same model."
+        )
+    elif task == "multi-provider-api-workflow":
+        interp.append(
+            "- Prefer search/execute when available; offline scaffold only (no live APIs)."
+        )
+    interp.append("")
+    lines.extend(interp)
     return "\n".join(lines)
 
 
@@ -546,8 +563,25 @@ def probe_inference(url: str) -> bool:
         return False
 
 
+def write_agent_log(out_dir: Path | None, arm: str, trial: int, combined: str) -> str | None:
+    """Persist full OpenCode / harness stdout for post-mortem (fake tool_code, etc.)."""
+    if out_dir is None:
+        return None
+    logs = out_dir / "agent-logs"
+    logs.mkdir(parents=True, exist_ok=True)
+    path = logs / f"trial-{trial}-{arm}.log"
+    path.write_text(combined or "", encoding="utf-8")
+    return str(path)
+
+
 def run_trial(
-    task_dir: Path, arm: str, model: str, timeout_s: int, trial: int, inference_url: str
+    task_dir: Path,
+    arm: str,
+    model: str,
+    timeout_s: int,
+    trial: int,
+    inference_url: str,
+    log_dir: Path | None = None,
 ) -> dict:
     instruction = (task_dir / "instruction.md").read_text(encoding="utf-8")
     tmp = Path(tempfile.mkdtemp(prefix=f"ab-{arm}-{trial}-"))
@@ -562,6 +596,11 @@ def run_trial(
                 vault = None
         else:
             agent = run_arm_on(instruction, tmp, model, timeout_s, inference_url, vault)
+        # Prefer full captured stream from arm helpers when present.
+        combined = agent.pop("_combined_log", None) or agent.get("output_tail") or ""
+        log_path = write_agent_log(log_dir, arm, trial, combined)
+        if log_path:
+            agent["log_path"] = log_path
         checker = run_checker(task_dir, tmp)
         return {
             "trial": trial,
@@ -642,7 +681,18 @@ def main(argv=None) -> int:
                 f"harness={DEFAULT_HARNESS} model={gateway_model}",
                 flush=True,
             )
-            row = run_trial(task_dir, arm, gateway_model, args.timeout_s, trial, inference_url)
+            row = run_trial(
+                task_dir,
+                arm,
+                gateway_model,
+                args.timeout_s,
+                trial,
+                inference_url,
+                log_dir=args.out.parent,
+            )
+            # Keep JSON artifacts smaller — full text lives in agent-logs/.
+            if "_combined_log" in row.get("agent", {}):
+                del row["agent"]["_combined_log"]
             rows.append(row)
             chk = row["checker"]
             ag = row["agent"]

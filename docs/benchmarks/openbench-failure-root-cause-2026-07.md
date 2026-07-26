@@ -1,22 +1,13 @@
-# OpenBench A/B failure root cause (2026-07-26)
+# OpenBench A/B failure root cause (2026-07)
 
-Live run: [Actions #30182389422](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30182389422)
-(`memory-dependent-continuation`, `openrouter/deepseek/deepseek-chat`, 1 trial).
+## Timeline
 
-## What the checker said
+| Run                                                                                      | Model                                     | Symptom                                                |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------ |
+| [30182389422](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30182389422) | `openrouter/deepseek/deepseek-chat`       | memory task both arms **0.333**                        |
+| [30186357429](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30186357429) | `openrouter/google/gemini-2.5-flash-lite` | **all three** tasks: 1 turn, no edits (matrix widened) |
 
-Both arms scored **0.333** (import succeeded; argon2id + 900s TTL failed):
-
-```text
-FAIL: expected argon2id hashing
-FAIL: expected 900s reset TTL behavior
-SCORE: 0.3333333333333333
-```
-
-Workspace seed leaves misleading `bcrypt` / `3600` placeholders in `src/auth.py`.
-The correct answers live only in vault memory after the seed file is removed.
-
-## Root cause (clawql-on)
+## Layer 1 — MCP wiped by `OPENCODE_CONFIG_CONTENT` (fixed)
 
 `clawql opencode --non-interactive` set `OPENCODE_CONFIG_CONTENT` to a
 **provider-only** JSON block. OpenCode treats that env as the full config, so the
@@ -25,22 +16,44 @@ MCP server written to `~/.config/opencode/opencode.json` was never loaded.
 Without ClawQL MCP, **clawql-on could not call `memory_recall`** on the seeded
 temp vault — so it behaved like clawql-off and followed the bcrypt comment.
 
-Secondary gaps:
+Fix: embed **provider + MCP + `permission: { "*": "allow" }`** in
+`OPENCODE_CONFIG_CONTENT` (`buildOpencodeConfigContent`), pass vault env into the
+MCP child, prefer workspace `bin/clawql-mcp.mjs`.
 
-- Seeded vault path was set as `CLAWQL_OBSIDIAN_VAULT_PATH` for the harness
-  process, but MCP child env (when present) only passed `CLAWQL_HOME`.
-- Agents stopped after ~1 turn without editing toward argon2id/900s.
+## Layer 2 — clawql-inference stripped tool calling (this fix)
 
-## Fix
+After layer 1, CI still failed on **every** task with:
 
-1. Embed **provider + MCP** in `OPENCODE_CONFIG_CONTENT` (`buildOpencodeConfigContent`).
-2. Pass `CLAWQL_HOME` / `CLAWQL_OBSIDIAN_VAULT_PATH` / `CLAWQL_ENABLE_MEMORY` into
-   the MCP child; prefer workspace `bin/clawql-mcp.mjs` in CI.
-3. `run-ab-compare.py` sets `CLAWQL_HOME` to the seeded vault and no longer
-   overrides `OPENCODE_CONFIG_CONTENT` with a provider-only JSON.
-4. Instruction requires an explicit `memory_recall` before edits.
+- `turns: 1`, `exit_code: 0`, checker fail
+- clawql-on ~20–28s (MCP startup), clawql-off ~3–5s
+- OpenCode JSONL for clawql-off showed the model emitting **fake** tool syntax in
+  text, then `reason: "stop"` — e.g. a fenced JSON array with
+  `tool_code: memory_recall(...)` instead of a real `tool_calls` response.
 
-## Follow-up (this change set)
+Root cause: `POST /v1/chat/completions` in clawql-inference:
 
-- Default CI model → cheap `openrouter/google/gemini-2.5-flash-lite`.
-- PR/push matrix runs all three OpenBench tasks when secrets are present.
+1. Dropped `tools` / `tool_choice` / `tool_calls` / `role: tool` messages
+2. Always returned `finish_reason: "stop"` with text-only `content`
+3. Streaming path parsed only `delta.content`, discarding `delta.tool_calls`
+
+OpenCode (via `@ai-sdk/openai-compatible`) sends real edit/bash/MCP tools on every
+agent turn. Without passthrough, cheap models invent `tool_code` JSON and stop —
+so **both arms** fail equally on memory, token-budget, and multi-provider tasks.
+
+### Fix
+
+When a request uses tool calling, OpenAI-compatible providers **passthrough** the
+raw body to upstream (OpenRouter / BYOK) and return upstream JSON or SSE
+unchanged (with public `model` rewritten). Text-only requests keep the existing
+gateway path (cache / efficiency layers).
+
+## CI matrix (widened)
+
+PR/push OpenBench runs **all three** tasks with the cheap default
+`openrouter/google/gemini-2.5-flash-lite` when `OPENROUTER_API_KEY` is set:
+
+- `memory-dependent-continuation`
+- `token-budget-constrained`
+- `multi-provider-api-workflow`
+
+Artifacts include `agent-logs/trial-*-{arm}.log` for post-mortem.
