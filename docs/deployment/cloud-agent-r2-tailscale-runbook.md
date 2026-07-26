@@ -55,13 +55,14 @@ flowchart LR
 ### 1a. Prerequisites (your Cloudflare account)
 
 1. **R2** enabled on the account.
-2. **Two buckets** (recommended):
-   - `clawql-team-vault` — memory notes (`Memory/`, `sources/`, …)
-   - `clawql-pulumi-state` — Pulumi stack state (optional but preferred per ADR 0007)
-3. **R2 API token** with Object Read & Write on those buckets.
-4. **Cloudflare API token** for Pulumi with **R2 Edit** (and account read) — used only at provision time, not stored in git.
+2. **R2 S3 API token** — prefer **Admin Read & Write** so `clawql sync ensure` can create
+   `clawql-team-vault` for you. Object Read & Write alone is enough after the bucket exists.
+3. Optional: **Cloudflare API token** with **Workers R2 Storage Write** — alternate path for
+   `sync ensure` / Pulumi when S3 keys cannot CreateBucket.
+4. Optional second bucket `clawql-pulumi-state` for Pulumi stack state (ADR 0007).
 
 Create R2 S3 credentials in: Cloudflare Dashboard → R2 → Manage R2 API tokens.
+Day-one without Pulumi: set Cursor Secrets → run Cloud Agent install → `clawql sync ensure`.
 
 ### 1b. Pulumi state backend (one-time, your laptop or Cloud Agent)
 

@@ -23,7 +23,13 @@ import {
   runReleasePublish,
   runReleaseVerify,
 } from "./release-cli.js";
-import { runSyncInit, runSyncPullCmd, runSyncPushCmd, runSyncStatusCmd } from "./sync-cli.js";
+import {
+  runSyncEnsure,
+  runSyncInit,
+  runSyncPullCmd,
+  runSyncPushCmd,
+  runSyncStatusCmd,
+} from "./sync-cli.js";
 import {
   runSandboxEditCmd,
   runSandboxInitCmd,
@@ -177,6 +183,7 @@ function parse(argv: string[]): {
     else if (a === "--provider") flags.provider = argv[++i] ?? "";
     else if (a === "--bucket") flags.bucket = argv[++i] ?? "";
     else if (a === "--prefix") flags.prefix = argv[++i] ?? "";
+    else if (a === "--location") flags.location = argv[++i] ?? "";
     else if (a === "--path") flags.path = argv[++i] ?? "";
     else if (a === "--harness") flags.harness = argv[++i] ?? "";
     else if (a === "--port") flags.port = argv[++i] ?? "";
@@ -323,7 +330,7 @@ Usage:
   clawql release init | collect | manifest | publish | verify <path>
   clawql ontology lint [--dir PATH] [files...] | generate --out DIR [--dir PATH]
   clawql ontology init | create-entity <Name> | import --pack legal
-  clawql sync init | push | pull | status [--dry-run] [--force]
+  clawql sync init | ensure | push | pull | status [--dry-run] [--force]
   clawql sandbox init | verify | status | edit --harness claude [--path DIR] [--skip-verify]
   clawql inference serve [--port 8080] | complete --model <provider/model> --message <text>
   clawql inference logs [--model M] [--since 24h] [--limit 50] | trace --correlation-id <id> | spend [--group-by model]
@@ -398,6 +405,9 @@ secrets:
 
 sync (team shared memory — R2 default):
   init            Write ~/.ClawQL/sync.json (bucket + prefix; credentials via env/vault)
+  ensure          Create bucket if missing (R2/S3), then write sync.json
+                  R2: S3 Admin keys and/or CLOUDFLARE_API_TOKEN + CLAWQL_R2_ACCOUNT_ID
+                  Default bucket: clawql-team-vault  prefix: teams/shared/
   push            Upload Memory/, sources/, chats/ to the team bucket
   pull            Download team notes to this machine
   status          Compare local vs remote manifest
@@ -609,6 +619,22 @@ async function main(): Promise<void> {
       });
       return;
     }
+    if (subcmd === "ensure") {
+      process.exitCode = await runSyncEnsure({
+        home,
+        interactive: Boolean(flags.interactive),
+        yes: Boolean(flags.yes),
+        dryRun: Boolean(flags.dryRun),
+        provider:
+          typeof flags.provider === "string" && flags.provider
+            ? (flags.provider as "r2" | "s3" | "gcs")
+            : undefined,
+        bucket: typeof flags.bucket === "string" ? flags.bucket : undefined,
+        prefix: typeof flags.prefix === "string" ? flags.prefix : undefined,
+        location: typeof flags.location === "string" ? flags.location : undefined,
+      });
+      return;
+    }
     if (subcmd === "push") {
       process.exitCode = await runSyncPushCmd({
         dryRun: Boolean(flags.dryRun),
@@ -627,7 +653,7 @@ async function main(): Promise<void> {
       process.exitCode = await runSyncStatusCmd();
       return;
     }
-    console.error("Usage: clawql sync init | push | pull | status");
+    console.error("Usage: clawql sync init | ensure | push | pull | status");
     process.exitCode = 1;
     return;
   }

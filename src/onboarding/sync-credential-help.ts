@@ -6,6 +6,9 @@ export function printSyncCredentialHelp(provider: SyncProvider): void {
     console.log("  CLAWQL_R2_ACCOUNT_ID            Cloudflare account id");
     console.log("  CLAWQL_SYNC_ACCESS_KEY_ID       R2 S3 API access key");
     console.log("  CLAWQL_SYNC_SECRET_ACCESS_KEY   R2 S3 API secret");
+    console.log(
+      "  CLOUDFLARE_API_TOKEN            Optional — R2 create via REST if S3 keys lack Admin"
+    );
     console.log("  Or: r2AccessKeyId / r2SecretAccessKey / cloudflareAccountId in vault");
     return;
   }
