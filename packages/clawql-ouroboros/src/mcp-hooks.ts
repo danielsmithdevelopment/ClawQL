@@ -98,13 +98,21 @@ export const ouroborosMcpTools = {
 
     handler: async (input: z.infer<typeof RunOuroborosSchema>, context: OuroborosContext) => {
       const validatedSeed = SeedSchema.parse(input.seed);
+      // OpenBench / spend guard: optional hard ceiling on evolutionary generations.
+      const envCapRaw = process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS?.trim();
+      const envCap = envCapRaw ? Number.parseInt(envCapRaw, 10) : NaN;
+      let maxGenerations = input.maxGenerations;
+      if (Number.isFinite(envCap) && envCap >= 1) {
+        maxGenerations = Math.min(maxGenerations, Math.min(50, envCap));
+      }
       const result = await context.ouroborosLoop.run(validatedSeed, {
-        maxGenerations: input.maxGenerations,
+        maxGenerations,
         convergenceThreshold: input.convergenceThreshold,
       });
       return {
         converged: result.converged,
         generations: result.generations.length,
+        maxGenerations,
         finalSeed: result.finalSeed,
         lineageId: result.lineage.seed_id,
         status: result.lineage.status,

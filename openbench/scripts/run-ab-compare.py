@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-off A/B: clawql-on vs clawql-off through clawql-inference.
+"""One-off A/B through clawql-inference.
 
 Architecture (same model for both arms)::
 
@@ -11,13 +11,17 @@ Architecture (same model for both arms)::
         ├── openrouter/* (OpenRouter-first — existing aggregator key)
         └── direct BYOK: deepseek, groq, openai, …
 
-clawql-on  = OpenCode via ``clawql opencode --non-interactive`` + ClawQL MCP
-clawql-off = raw OpenCode pointed at the same inference URL (no ClawQL MCP)
+Arms:
+
+  clawql-on   = OpenCode via ``clawql opencode --non-interactive`` + ClawQL MCP
+  clawql-off  = raw OpenCode pointed at the same inference URL (no ClawQL MCP)
+  ouroboros-on  = clawql-on + ``CLAWQL_ENABLE_OUROBOROS=1`` (stagnation / oscillation)
+  ouroboros-off = clawql-on MCP/memory but Ouroboros tools disabled
 
 Requires:
 
   - ``opencode`` on PATH
-  - ``clawql`` / ``bin/clawql.mjs`` for the on-arm
+  - ``clawql`` / ``bin/clawql.mjs`` for MCP arms
   - A running ``clawql inference serve`` (or let Actions start it)
   - ``OPENROUTER_API_KEY`` (day-one) and/or vendor BYOK key(s)
 
@@ -29,9 +33,11 @@ Example::
 
   # terminal 2
   python3 openbench/scripts/run-ab-compare.py \\
-    --task memory-dependent-continuation \\
+    --task ouroboros-oscillation-escape \\
+    --arms ouroboros-on,ouroboros-off \\
     --model openrouter/deepseek/deepseek-chat \\
     --inference-url http://127.0.0.1:8080/v1 \\
+    --timeout 90 \\
     --trials 1 \\
     --out /tmp/ab-results.json
 """
@@ -57,7 +63,25 @@ KNOWN_TASKS = (
     "memory-dependent-continuation",
     "token-budget-constrained",
     "multi-provider-api-workflow",
+    "ouroboros-oscillation-escape",
 )
+KNOWN_ARMS = (
+    "clawql-on",
+    "clawql-off",
+    "ouroboros-on",
+    "ouroboros-off",
+)
+# Per-task hard spend/loop caps. Exceeding → checker SCORE 0 (auto-fail).
+# Keep ouroboros caps tight — evolutionary loops must not runaway on API spend.
+TASK_HARD_CAPS: dict[str, dict] = {
+    "ouroboros-oscillation-escape": {
+        "max_turns": 20,
+        "max_tokens": 4000,
+        "max_wall_s": 90,
+        "ouroboros_max_generations": 4,
+        "default_timeout_s": 90,
+    },
+}
 DEFAULT_HARNESS = "opencode"
 DEFAULT_MODEL = os.environ.get(
     "OPENBENCH_MODEL", "openrouter/deepseek/deepseek-chat"
@@ -190,10 +214,12 @@ def parse_opencode_jsonl_usage(stdout: str) -> dict:
     }
 
 
-def run_checker(task_dir: Path, workdir: Path) -> dict:
+def run_checker(task_dir: Path, workdir: Path, env_extra: dict | None = None) -> dict:
     checker = task_dir / "checker.sh"
     env = dict(os.environ)
     env["TASK_DIR"] = str(task_dir)
+    if env_extra:
+        env.update({k: str(v) for k, v in env_extra.items()})
     try:
         proc = subprocess.run(
             ["bash", str(checker)],
@@ -402,6 +428,10 @@ def run_arm_on(
     timeout_s: int,
     inference_url: str,
     vault: str | None,
+    *,
+    arm: str = "clawql-on",
+    ouroboros: bool | None = None,
+    ouroboros_max_generations: int | None = None,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
     clawql = resolve_clawql()
@@ -442,6 +472,21 @@ def run_arm_on(
         env["CLAWQL_OBSIDIAN_VAULT_PATH"] = vault
         env["CLAWQL_ENABLE_MEMORY"] = "1"
         env["CLAWQL_BUNDLED_OFFLINE"] = "1"
+
+    enable_ouro = ouroboros if ouroboros is not None else arm == "ouroboros-on"
+    if arm.startswith("ouroboros") or ouroboros is not None:
+        env["CLAWQL_ENABLE_OUROBOROS"] = "1" if enable_ouro else "0"
+        if enable_ouro:
+            cap = ouroboros_max_generations
+            if cap is None:
+                cap = int(
+                    (TASK_HARD_CAPS.get("ouroboros-oscillation-escape") or {}).get(
+                        "ouroboros_max_generations", 4
+                    )
+                )
+            env["CLAWQL_OUROBOROS_MAX_GENERATIONS"] = str(int(cap))
+        else:
+            env.pop("CLAWQL_OUROBOROS_MAX_GENERATIONS", None)
 
     t0 = time.monotonic()
     timed_out = False
@@ -503,7 +548,7 @@ def run_arm_on(
         completed = False
 
     return {
-        "arm": "clawql-on",
+        "arm": arm,
         "harness": "opencode",
         "inference_url": inference_url,
         "gateway_model": gateway_model,
@@ -514,12 +559,55 @@ def run_arm_on(
         "wall_s": wall_s,
         "tokens": tokens,
         "turns": turns,
+        "ouroboros_enabled": bool(enable_ouro),
         "output_tail": combined[-2000:],
         "_combined_log": combined,
         "error": None
         if completed
         else (bench.get("error") or (f"timeout after {timeout_s}s" if timed_out else f"exit {code}")),
     }
+
+
+def write_usage_sidecar(workdir: Path, agent: dict) -> None:
+    """Persist turns/tokens/timeout for checker hard-cap enforcement."""
+    payload = {
+        "turns": agent.get("turns"),
+        "tokens": agent.get("tokens"),
+        "wall_s": agent.get("wall_s"),
+        "timed_out": bool(agent.get("timed_out")),
+        "arm": agent.get("arm"),
+        "ouroboros_enabled": bool(agent.get("ouroboros_enabled")),
+    }
+    (workdir / ".openbench_usage.json").write_text(
+        json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+    )
+
+
+def apply_hard_caps(task: str, agent: dict, checker: dict) -> dict:
+    """Force SCORE 0 when spend/loop caps are breached (defense in depth)."""
+    caps = TASK_HARD_CAPS.get(task)
+    if not caps:
+        return checker
+    violations: list[str] = []
+    turns = agent.get("turns")
+    tokens = agent.get("tokens")
+    wall = agent.get("wall_s")
+    if agent.get("timed_out"):
+        violations.append("timeout")
+    if isinstance(turns, int) and turns > int(caps["max_turns"]):
+        violations.append(f"turns:{turns}>{caps['max_turns']}")
+    if isinstance(tokens, int) and tokens > int(caps["max_tokens"]):
+        violations.append(f"tokens:{tokens}>{caps['max_tokens']}")
+    if isinstance(wall, (int, float)) and wall > float(caps["max_wall_s"]):
+        violations.append(f"wall_s:{wall}>{caps['max_wall_s']}")
+    if not violations:
+        return checker
+    out = dict(checker)
+    out["success"] = False
+    out["score"] = 0.0
+    out["hard_cap_violations"] = violations
+    out["exit_code"] = out.get("exit_code") if out.get("exit_code") not in (None, 0) else 1
+    return out
 
 
 def mean_or_none(values):
@@ -583,15 +671,20 @@ def render_markdown(report: dict) -> str:
         "## Interpretation",
         "",
         "- Both arms call the **same** clawql-inference model (cheap OpenRouter default OK).",
-        "- **clawql-on** adds ClawQL MCP (search/execute/memory/…) via "
-        "`clawql opencode --non-interactive` (provider + MCP + `permission: allow` "
-        "in `OPENCODE_CONFIG_CONTENT`).",
-        "- **clawql-off** is raw OpenCode with isolated HOME (no ClawQL MCP).",
         "- clawql-inference must **passthrough** OpenAI `tools` / `tool_calls` "
         "(otherwise OpenCode gets text-only replies and stops after one turn).",
         "- Checker — not the harness self-report — decides success.",
         "- Full agent JSONL lives under `agent-logs/` next to this summary.",
     ]
+    if any(a.startswith("clawql-") for a in arms):
+        interp.extend(
+            [
+                "- **clawql-on** adds ClawQL MCP (search/execute/memory/…) via "
+                "`clawql opencode --non-interactive` (provider + MCP + `permission: allow` "
+                "in `OPENCODE_CONFIG_CONTENT`).",
+                "- **clawql-off** is raw OpenCode with isolated HOME (no ClawQL MCP).",
+            ]
+        )
     if task == "memory-dependent-continuation":
         interp.append(
             "- Memory seed is removed from the workspace; clawql-on must "
@@ -604,6 +697,19 @@ def render_markdown(report: dict) -> str:
     elif task == "multi-provider-api-workflow":
         interp.append(
             "- Prefer search/execute when available; offline scaffold only (no live APIs)."
+        )
+    elif task == "ouroboros-oscillation-escape":
+        caps = TASK_HARD_CAPS.get(task) or {}
+        interp.extend(
+            [
+                "- **ouroboros-on** enables ClawQL Ouroboros (stagnation / oscillation / "
+                f"maxGenerations≤{caps.get('ouroboros_max_generations', 4)}).",
+                "- **ouroboros-off** keeps MCP+memory but disables Ouroboros tools — "
+                "expected to thrash between decoy strategies or hit hard caps.",
+                f"- Hard auto-fail caps: turns≤{caps.get('max_turns')}, "
+                f"tokens≤{caps.get('max_tokens')}, wall≤{caps.get('max_wall_s')}s, "
+                "timeout fails the trial.",
+            ]
         )
     interp.append("")
     lines.extend(interp)
@@ -659,6 +765,8 @@ def run_trial(
     instruction = (task_dir / "instruction.md").read_text(encoding="utf-8")
     tmp = Path(tempfile.mkdtemp(prefix=f"ab-{arm}-{trial}-"))
     vault = None
+    task_name = task_dir.name
+    caps = TASK_HARD_CAPS.get(task_name) or {}
     try:
         materialize_workspace(task_dir, tmp)
         vault = seed_and_remove_memory(tmp)
@@ -668,7 +776,22 @@ def run_trial(
                 shutil.rmtree(vault, ignore_errors=True)
                 vault = None
         else:
-            agent = run_arm_on(instruction, tmp, model, timeout_s, inference_url, vault)
+            ouro = None
+            if arm == "ouroboros-on":
+                ouro = True
+            elif arm == "ouroboros-off":
+                ouro = False
+            agent = run_arm_on(
+                instruction,
+                tmp,
+                model,
+                timeout_s,
+                inference_url,
+                vault,
+                arm=arm,
+                ouroboros=ouro,
+                ouroboros_max_generations=caps.get("ouroboros_max_generations"),
+            )
         # Prefer full captured stream; fall back to workdir harness dump.
         combined = agent.pop("_combined_log", None) or ""
         dump = tmp / ".openbench_harness.jsonl"
@@ -684,7 +807,18 @@ def run_trial(
         log_path = write_agent_log(log_dir, arm, trial, combined)
         if log_path:
             agent["log_path"] = log_path
-        checker = run_checker(task_dir, tmp)
+        # Sidecars for checker hard caps + ouroboros evidence.
+        write_usage_sidecar(tmp, agent)
+        (tmp / ".openbench_agent.log").write_text(combined or "", encoding="utf-8")
+
+        checker_env_extra = {}
+        if caps:
+            checker_env_extra["OPENBENCH_HARD_MAX_TURNS"] = str(caps["max_turns"])
+            checker_env_extra["OPENBENCH_HARD_MAX_TOKENS"] = str(caps["max_tokens"])
+        if arm == "ouroboros-on":
+            checker_env_extra["OPENBENCH_REQUIRE_OUROBOROS"] = "1"
+        checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
+        checker = apply_hard_caps(task_name, agent, checker)
         return {
             "trial": trial,
             "arm": arm,
@@ -713,10 +847,14 @@ def main(argv=None) -> int:
         help="clawql-inference OpenAI-compat base (default http://127.0.0.1:8080/v1)",
     )
     parser.add_argument("--trials", type=int, default=1)
-    parser.add_argument("--timeout", type=int, default=300, dest="timeout_s")
+    parser.add_argument("--timeout", type=int, default=None, dest="timeout_s")
     parser.add_argument("--out", type=Path, required=True, help="JSON results path")
     parser.add_argument("--summary-md", type=Path, help="Markdown summary path")
-    parser.add_argument("--arms", default="clawql-on,clawql-off")
+    parser.add_argument(
+        "--arms",
+        default="clawql-on,clawql-off",
+        help="Comma list: clawql-on,clawql-off,ouroboros-on,ouroboros-off",
+    )
     args = parser.parse_args(argv)
 
     inference_url = normalize_inference_url(args.inference_url)
@@ -735,17 +873,26 @@ def main(argv=None) -> int:
         print(f"ERROR: task not found: {task_dir}", file=sys.stderr)
         return 2
 
+    caps = TASK_HARD_CAPS.get(args.task) or {}
+    timeout_s = args.timeout_s
+    if timeout_s is None:
+        timeout_s = int(caps.get("default_timeout_s") or 300)
+    # Never allow a timeout above the task hard wall cap (spend guard).
+    if caps.get("max_wall_s") is not None:
+        timeout_s = min(int(timeout_s), int(caps["max_wall_s"]))
+
     arms = [a.strip() for a in args.arms.split(",") if a.strip()]
     for arm in arms:
-        if arm not in ("clawql-on", "clawql-off"):
-            print(f"ERROR: unknown arm {arm!r}", file=sys.stderr)
+        if arm not in KNOWN_ARMS:
+            print(f"ERROR: unknown arm {arm!r} (known: {', '.join(KNOWN_ARMS)})", file=sys.stderr)
             return 2
 
     if not shutil.which(resolve_opencode()) and not Path(resolve_opencode()).exists():
         print("ERROR: opencode CLI not found. Install OpenCode, then retry.", file=sys.stderr)
         return 2
 
-    if "clawql-on" in arms:
+    mcp_arms = [a for a in arms if a != "clawql-off"]
+    if mcp_arms:
         clawql = resolve_clawql()
         probe = ["node", clawql, "--version"] if clawql.endswith(".mjs") else [clawql, "--version"]
         try:
@@ -768,7 +915,7 @@ def main(argv=None) -> int:
                 task_dir,
                 arm,
                 gateway_model,
-                args.timeout_s,
+                timeout_s,
                 trial,
                 inference_url,
                 log_dir=args.out.parent,
@@ -796,7 +943,8 @@ def main(argv=None) -> int:
         "task": args.task,
         "model": gateway_model,
         "trials": args.trials,
-        "timeout_s": args.timeout_s,
+        "timeout_s": timeout_s,
+        "hard_caps": caps or None,
         "arms": arms,
         "started_at": started,
         "finished_at": finished,

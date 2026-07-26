@@ -122,6 +122,14 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
       env.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS = "8192";
     }
   }
+  // Forward Ouroboros enablement + generation ceiling into the MCP child.
+  // Parent env alone is not inherited by OpenCode's local MCP `environment` map.
+  if (process.env.CLAWQL_ENABLE_OUROBOROS?.trim()) {
+    env.CLAWQL_ENABLE_OUROBOROS = process.env.CLAWQL_ENABLE_OUROBOROS.trim();
+  }
+  if (process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS?.trim()) {
+    env.CLAWQL_OUROBOROS_MAX_GENERATIONS = process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS.trim();
+  }
   return env;
 }
 

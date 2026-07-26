@@ -1,58 +1,44 @@
-# OpenBench A/B via clawql-inference.
+# OpenBench A/B: ouroboros-on vs ouroboros-off (stagnation / oscillation escape).
 #
-# OpenRouter-first with a cheap default model. On PR/push runs all three tasks
-# in a matrix when OPENROUTER_API_KEY (or BYOK) is present.
+# Spend-safe defaults:
+#   - trials=1, timeout=90s (hard wall), turns≤20, tokens≤4000, maxGenerations≤4
+#   - workflow_dispatch by default (not on every PR push)
+#   - PR/push only when Ouroboros or this task changes
 #
-# - workflow_dispatch: pick one task or "all"
-# - pull_request / push (path-filtered): matrix of all tasks; skip (exit 0) when no secret
+# Same cheap OpenRouter model as the main OpenBench matrix.
 
-name: OpenBench A/B (clawql on vs off)
+name: OpenBench A/B (ouroboros on vs off)
 
 on:
   workflow_dispatch:
     inputs:
-      task:
-        description: OpenBench task (or all)
-        required: true
-        type: choice
-        options:
-          - all
-          - memory-dependent-continuation
-          - token-budget-constrained
-          - multi-provider-api-workflow
-          - ouroboros-oscillation-escape
-        default: all
       model:
         description: "Cheap OpenRouter default — or any openrouter/* / BYOK id"
         required: true
         type: string
         default: openrouter/deepseek/deepseek-chat
       trials:
-        description: Trials per arm (keep small — each cell spends tokens)
+        description: Trials per arm (keep at 1 unless investigating noise)
         required: true
         type: choice
         options:
           - "1"
           - "2"
-          - "3"
         default: "1"
       timeout_s:
-        description: Per-cell agent timeout in seconds
+        description: Per-arm agent timeout (hard-capped at 90 for this task)
         required: true
         type: string
-        default: "300"
+        default: "90"
       arms:
         description: Which arms to run
         required: true
         type: choice
         options:
-          - clawql-on,clawql-off
-          - clawql-on
-          - clawql-off
           - ouroboros-on,ouroboros-off
           - ouroboros-on
           - ouroboros-off
-        default: clawql-on,clawql-off
+        default: ouroboros-on,ouroboros-off
       inference_port:
         description: Local clawql-inference port
         required: true
@@ -60,94 +46,56 @@ on:
         default: "8080"
   pull_request:
     paths:
-      - "openbench/**"
-      - "packages/clawql-inference/**"
-      - "src/onboarding/inference-cli.ts"
+      - "openbench/tasks/ouroboros-oscillation-escape/**"
+      - "openbench/scripts/run-ab-compare.py"
+      - "packages/clawql-ouroboros/**"
       - "src/onboarding/harness-cli.ts"
-      - "src/onboarding/cli.ts"
-      - "bin/clawql.mjs"
-      - ".github/workflows/openbench-ab.yml"
-      - "docs/benchmarks/openbench*.md"
-      - "docs/getting-started/inference.md"
+      - ".github/workflows/openbench-ouroboros-ab.yml"
+      - "docs/benchmarks/openbench-ouroboros*.md"
   push:
     branches: [main]
     paths:
-      - "openbench/**"
-      - "packages/clawql-inference/**"
-      - "src/onboarding/inference-cli.ts"
+      - "openbench/tasks/ouroboros-oscillation-escape/**"
+      - "openbench/scripts/run-ab-compare.py"
+      - "packages/clawql-ouroboros/**"
       - "src/onboarding/harness-cli.ts"
-      - "src/onboarding/cli.ts"
-      - "bin/clawql.mjs"
-      - ".github/workflows/openbench-ab.yml"
-      - "docs/benchmarks/openbench*.md"
-      - "docs/getting-started/inference.md"
-
-concurrency:
-  group: openbench-ab-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+      - ".github/workflows/openbench-ouroboros-ab.yml"
+      - "docs/benchmarks/openbench-ouroboros*.md"
 
 permissions:
   contents: read
 
-jobs:
-  resolve-matrix:
-    name: Resolve task matrix
-    runs-on: ubuntu-latest
-    outputs:
-      tasks: ${{ steps.set.outputs.tasks }}
-    steps:
-      - id: set
-        run: |
-          set -euo pipefail
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TASK="${{ inputs.task }}"
-            if [ "$TASK" = "all" ] || [ -z "$TASK" ]; then
-              echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow"]' >> "$GITHUB_OUTPUT"
-            else
-              echo "tasks=[\"${TASK}\"]" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow"]' >> "$GITHUB_OUTPUT"
-          fi
+concurrency:
+  group: openbench-ouroboros-ab-${{ github.ref }}
+  cancel-in-progress: true
 
+jobs:
   ab-compare:
-    name: A/B ${{ matrix.task }}
-    needs: resolve-matrix
+    name: A/B ouroboros-oscillation-escape
     runs-on: ubuntu-latest
-    timeout-minutes: 120
-    strategy:
-      fail-fast: false
-      matrix:
-        task: ${{ fromJson(needs.resolve-matrix.outputs.tasks) }}
+    # Wall budget: ~2 arms × 90s + setup. Fail closed before runaway spend.
+    timeout-minutes: 25
     env:
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      OPENBENCH_TASK: ${{ matrix.task }}
-      # Cheap OpenRouter default for CI spend control
+      OPENBENCH_TASK: ouroboros-oscillation-escape
       OPENBENCH_MODEL: ${{ inputs.model || 'openrouter/deepseek/deepseek-chat' }}
       OPENBENCH_TRIALS: ${{ inputs.trials || '1' }}
-      OPENBENCH_TIMEOUT_S: ${{ inputs.timeout_s || '300' }}
-      OPENBENCH_ARMS: ${{ inputs.arms || 'clawql-on,clawql-off' }}
+      OPENBENCH_TIMEOUT_S: ${{ inputs.timeout_s || '90' }}
+      OPENBENCH_ARMS: ${{ inputs.arms || 'ouroboros-on,ouroboros-off' }}
       CLAWQL_INFERENCE_PORT: ${{ inputs.inference_port || '8080' }}
       CLAWQL_OPENBENCH: "1"
       CLAWQL_HARNESS_ALLOW_UNSANDBOXED: "1"
       CLAWQL_OPENBENCH_HARNESS: "opencode"
       CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
-      CLAWQL_OPENROUTER_APP_TITLE: ClawQL OpenBench
+      CLAWQL_OPENROUTER_APP_TITLE: ClawQL OpenBench Ouroboros
+      # Server-side evolutionary loop ceiling (defense in depth vs agent args).
+      CLAWQL_OUROBOROS_MAX_GENERATIONS: "4"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
-
-      - name: Ouroboros task spend clamps
-        if: matrix.task == 'ouroboros-oscillation-escape'
-        run: |
-          # Prefer dedicated workflow; if dispatched here, force tight caps + arms.
-          echo "OPENBENCH_TIMEOUT_S=90" >> "$GITHUB_ENV"
-          echo "OPENBENCH_ARMS=ouroboros-on,ouroboros-off" >> "$GITHUB_ENV"
-          echo "CLAWQL_OUROBOROS_MAX_GENERATIONS=4" >> "$GITHUB_ENV"
-          echo "::notice::ouroboros-oscillation-escape → arms=ouroboros-on,off timeout=90s maxGenerations=4"
 
       - name: Credential preflight
         id: preflight
@@ -166,28 +114,33 @@ jobs:
           if [[ "$MODEL" == openrouter/* ]]; then
             if [ -n "${OPENROUTER_API_KEY:-}" ]; then
               run_benchmark=true
-              reason="OpenRouter key for $MODEL (cheap bring-your-aggregator path)"
+              reason="OpenRouter key for $MODEL (ouroboros oscillation A/B)"
             else
               reason="Model '$MODEL' needs repository secret OPENROUTER_API_KEY."
             fi
           elif [ "$has_byok" = true ]; then
             run_benchmark=true
             reason="Direct BYOK credentials for clawql-inference ($MODEL)"
-          elif [ -n "${OPENROUTER_API_KEY:-}" ]; then
-            reason="OPENROUTER_API_KEY is set, but model '$MODEL' is a direct BYOK id. Use openrouter/* (default: openrouter/deepseek/deepseek-chat)."
           else
             reason="Add OPENROUTER_API_KEY or a vendor BYOK secret."
           fi
 
+          # Hard spend clamp — never allow dispatch to raise above 90s for this task.
+          if [ "${OPENBENCH_TIMEOUT_S}" -gt 90 ]; then
+            echo "OPENBENCH_TIMEOUT_S=${OPENBENCH_TIMEOUT_S} clamped to 90" >> "$GITHUB_STEP_SUMMARY"
+            echo "OPENBENCH_TIMEOUT_S=90" >> "$GITHUB_ENV"
+          fi
+
           echo "run_benchmark=${run_benchmark}" >> "$GITHUB_OUTPUT"
           {
-            echo "## OpenBench credential preflight"
+            echo "## OpenBench Ouroboros A/B preflight"
             echo ""
-            echo "- Event: \`${{ github.event_name }}\`"
-            echo "- Task: \`${OPENBENCH_TASK}\`"
+            echo "- Task: \`ouroboros-oscillation-escape\`"
             echo "- Model: \`${OPENBENCH_MODEL}\`"
             echo "- Arms: \`${OPENBENCH_ARMS}\`"
             echo "- Trials/arm: \`${OPENBENCH_TRIALS}\`"
+            echo "- Timeout (s): \`${OPENBENCH_TIMEOUT_S}\` (hard max 90)"
+            echo "- Hard caps: turns≤20, tokens≤4000, maxGenerations≤4"
             echo "- Run live benchmark: \`${run_benchmark}\`"
             echo "- Note: ${reason}"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -197,9 +150,7 @@ jobs:
               echo "::error::${reason}"
               exit 1
             fi
-            echo "::notice::Skipping live OpenBench A/B — ${reason}"
-          else
-            echo "${reason}"
+            echo "::notice::Skipping live Ouroboros A/B — ${reason}"
           fi
 
       - name: Validate task checkers (offline)
@@ -228,43 +179,34 @@ jobs:
           command -v opencode
           opencode --version || true
 
-      - name: Start clawql-inference (OpenRouter and/or BYOK)
+      - name: Start clawql-inference
         if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
-          mkdir -p "artifacts/openbench-ab/${OPENBENCH_TASK}"
+          mkdir -p "artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}"
           PORT="${CLAWQL_INFERENCE_PORT}"
           node bin/clawql.mjs inference serve --port "$PORT" \
-            > "artifacts/openbench-ab/${OPENBENCH_TASK}/inference.log" 2>&1 &
+            > "artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}/inference.log" 2>&1 &
           echo $! > /tmp/clawql-inference.pid
-          echo "Started clawql-inference pid=$(cat /tmp/clawql-inference.pid) on :$PORT"
           for i in $(seq 1 60); do
             if curl -sf "http://127.0.0.1:${PORT}/healthz" >/dev/null; then
               echo "clawql-inference healthy after ${i}s"
-              models="$(curl -sf "http://127.0.0.1:${PORT}/v1/models" || true)"
-              echo "$models" | head -c 400
-              echo ""
-              if ! echo "$models" | grep -q '"id"'; then
-                echo "::error::/v1/models has no credentialed models — check OPENROUTER_API_KEY or BYOK secrets"
-                tail -n 120 "artifacts/openbench-ab/${OPENBENCH_TASK}/inference.log" || true
-                exit 1
-              fi
               exit 0
             fi
             sleep 1
           done
           echo "::error::clawql-inference failed to become healthy"
-          tail -n 120 "artifacts/openbench-ab/${OPENBENCH_TASK}/inference.log" || true
+          tail -n 120 "artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}/inference.log" || true
           exit 1
 
-      - name: Run A/B compare
+      - name: Run Ouroboros A/B compare
         id: ab
         if: steps.preflight.outputs.run_benchmark == 'true'
         env:
           CLAWQL_BIN: ${{ env.CLAWQL_BIN }}
           CLAWQL_INFERENCE_URL: http://127.0.0.1:${{ env.CLAWQL_INFERENCE_PORT }}/v1
         run: |
-          OUT="artifacts/openbench-ab/${OPENBENCH_TASK}/results.json"
-          SUM="artifacts/openbench-ab/${OPENBENCH_TASK}/summary.md"
+          OUT="artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}/results.json"
+          SUM="artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}/summary.md"
           python3 openbench/scripts/run-ab-compare.py \
             --task "${OPENBENCH_TASK}" \
             --model "${OPENBENCH_MODEL}" \
@@ -275,12 +217,10 @@ jobs:
             --out "$OUT" \
             --summary-md "$SUM"
           {
-            echo "## OpenBench A/B — \`${OPENBENCH_TASK}\`"
+            echo "## OpenBench Ouroboros A/B — \`${OPENBENCH_TASK}\`"
             echo ""
             echo "- Run: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            echo "- Model: \`${OPENBENCH_MODEL}\` (cheap OpenRouter-first default)"
-            echo "- Trials/arm: \`${OPENBENCH_TRIALS}\`"
-            echo "- Arms: \`${OPENBENCH_ARMS}\`"
+            echo "- Caps: 90s wall / 20 turns / 4000 tokens / maxGenerations≤4"
             echo ""
             cat "$SUM"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -291,13 +231,11 @@ jobs:
           if [ -f /tmp/clawql-inference.pid ]; then
             kill "$(cat /tmp/clawql-inference.pid)" 2>/dev/null || true
           fi
-          pkill -f "inference serve" 2>/dev/null || true
 
-      - name: Upload results artifact
+      - name: Upload artifacts
         if: always() && steps.preflight.outputs.run_benchmark == 'true'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
-          name: openbench-ab-${{ matrix.task }}-${{ github.run_id }}
-          path: artifacts/openbench-ab/${{ matrix.task }}/
-          if-no-files-found: warn
-          retention-days: 14
+          name: openbench-ouroboros-ab-${{ github.run_id }}
+          path: artifacts/openbench-ouroboros-ab/
+          if-no-files-found: ignore
