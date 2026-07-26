@@ -8,12 +8,12 @@ Verified path to get **ClawQL MCP**, **local vault memory**, and **Cloudflare R2
 
 ## What you get when this works
 
-| Layer | Location | Durable across VMs? |
-| ----- | -------- | ------------------- |
-| Local vault | `CLAWQL_HOME` (default `/home/ubuntu/.ClawQL`) | No (ephemeral VM disk) |
-| Memory notes | `CLAWQL_HOME/Memory/*.md` | Only after R2 sync |
-| Team bucket | `r2://clawql-team-vault/teams/shared/` (defaults) | Yes |
-| MCP tools | `memory_ingest` / `memory_recall` / `memory_sync` | Process-local; sync persists notes |
+| Layer        | Location                                          | Durable across VMs?                |
+| ------------ | ------------------------------------------------- | ---------------------------------- |
+| Local vault  | `CLAWQL_HOME` (default `/home/ubuntu/.ClawQL`)    | No (ephemeral VM disk)             |
+| Memory notes | `CLAWQL_HOME/Memory/*.md`                         | Only after R2 sync                 |
+| Team bucket  | `r2://clawql-team-vault/teams/shared/` (defaults) | Yes                                |
+| MCP tools    | `memory_ingest` / `memory_recall` / `memory_sync` | Process-local; sync persists notes |
 
 Secrets and provider tokens stay in **Cursor Secrets** or `vault/providers.json` — **never** in the R2 bucket or git.
 
@@ -24,10 +24,10 @@ Secrets and provider tokens stay in **Cursor Secrets** or `vault/providers.json`
 ### 1. Cloudflare account
 
 1. **Enable R2** in the Cloudflare dashboard (R2 → subscribe / purchase — free tier is enough).  
-   Until R2 is enabled, `clawql sync ensure` fails with Cloudflare error **10042**: *Please enable R2 through the Cloudflare Dashboard.*
+   Until R2 is enabled, `clawql sync ensure` fails with Cloudflare error **10042**: _Please enable R2 through the Cloudflare Dashboard._
 2. Note your **Account ID** (32-char hex) — used as `CLAWQL_R2_ACCOUNT_ID`.
-3. Create an **R2 S3 API token**: **R2 → Manage R2 API Tokens**.  
-   - Prefer **Admin Read & Write** so ensure can create buckets via the S3 API.  
+3. Create an **R2 S3 API token**: **R2 → Manage R2 API Tokens**.
+   - Prefer **Admin Read & Write** so ensure can create buckets via the S3 API.
    - **Object Read & Write** is enough once the bucket exists.
 4. Optional but useful: an **Account API token** (e.g. named `ClawQL-CI`) with at least:
    - **Workers R2 Storage: Write** — lets `sync ensure` create the bucket via Cloudflare REST when S3 keys lack CreateBucket
@@ -38,18 +38,18 @@ Secrets and provider tokens stay in **Cursor Secrets** or `vault/providers.json`
 
 **Cursor → Cloud Agents → Secrets** (injected into every run for the repo):
 
-| Secret | Required? | Notes |
-| ------ | --------- | ----- |
-| `CLAWQL_R2_ACCOUNT_ID` | Yes | Cloudflare account id (no spaces/newlines) |
-| `CLAWQL_SYNC_ACCESS_KEY_ID` | Yes | R2 S3 access key — **trim whitespace** when pasting |
-| `CLAWQL_SYNC_SECRET_ACCESS_KEY` | Yes | R2 S3 secret |
-| `CLOUDFLARE_API_TOKEN` | Recommended | Account token with Workers R2 Storage Write |
-| `CLAWQL_HOME` | Optional | Default `/home/ubuntu/.ClawQL` on Cloud Agent VMs |
-| `CLAWQL_SYNC_BUCKET` | Optional | Default `clawql-team-vault` |
-| `CLAWQL_SYNC_PREFIX` | Optional | Default `teams/shared/` |
-| `CLAWQL_SYNC_AUTO` | Optional | `1` — debounced push after `memory_ingest` |
-| `CLAWQL_SYNC_AUTO_PULL` | Optional | `1` — throttled pull before `memory_recall` |
-| `CLAWQL_SYNC_AUTO_PULL_ON_START` | Optional | `1` — pull when MCP starts |
+| Secret                           | Required?   | Notes                                               |
+| -------------------------------- | ----------- | --------------------------------------------------- |
+| `CLAWQL_R2_ACCOUNT_ID`           | Yes         | Cloudflare account id (no spaces/newlines)          |
+| `CLAWQL_SYNC_ACCESS_KEY_ID`      | Yes         | R2 S3 access key — **trim whitespace** when pasting |
+| `CLAWQL_SYNC_SECRET_ACCESS_KEY`  | Yes         | R2 S3 secret                                        |
+| `CLOUDFLARE_API_TOKEN`           | Recommended | Account token with Workers R2 Storage Write         |
+| `CLAWQL_HOME`                    | Optional    | Default `/home/ubuntu/.ClawQL` on Cloud Agent VMs   |
+| `CLAWQL_SYNC_BUCKET`             | Optional    | Default `clawql-team-vault`                         |
+| `CLAWQL_SYNC_PREFIX`             | Optional    | Default `teams/shared/`                             |
+| `CLAWQL_SYNC_AUTO`               | Optional    | `1` — debounced push after `memory_ingest`          |
+| `CLAWQL_SYNC_AUTO_PULL`          | Optional    | `1` — throttled pull before `memory_recall`         |
+| `CLAWQL_SYNC_AUTO_PULL_ON_START` | Optional    | `1` — pull when MCP starts                          |
 
 **Paste hygiene:** trailing spaces or newlines on `CLAWQL_SYNC_ACCESS_KEY_ID` break auth after TLS works. Re-save the secret if `len` is not 32 for a typical R2 access key.
 
@@ -57,11 +57,11 @@ Provider tokens (GitHub, Slack, …) are optional for memory sync; without them 
 
 ### 3. Repo wiring (this repository already has it)
 
-| File | Role |
-| ---- | ---- |
-| `.cursor/environment.json` | Runs `.cursor/scripts/cloud-agent-install.sh` on VM setup |
-| `.cursor/mcp.json.example` | Template for stdio `clawql-mcp` |
-| Install script | `npm ci` + `npm run build`, creates `~/.ClawQL`, runs `sync ensure` / `pull` when secrets exist, writes MCP config |
+| File                       | Role                                                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `.cursor/environment.json` | Runs `.cursor/scripts/cloud-agent-install.sh` on VM setup                                                          |
+| `.cursor/mcp.json.example` | Template for stdio `clawql-mcp`                                                                                    |
+| Install script             | `npm ci` + `npm run build`, creates `~/.ClawQL`, runs `sync ensure` / `pull` when secrets exist, writes MCP config |
 
 ---
 
@@ -180,16 +180,16 @@ If TLS to {accountId}.r2.cloudflarestorage.com fails right after enabling R2, wa
 
 ## Troubleshooting (from a real enablement)
 
-| Symptom | Cause | Fix |
-| ------- | ----- | --- |
-| `Cannot find module '.../dist/onboarding/cli.js'` | Install/build not finished | Wait for `.cursor/scripts/cloud-agent-install.sh` / `npm run build` |
-| `sync ensure` → Cloudflare **10042** | R2 product not enabled on the account | Dashboard → R2 → complete purchase/subscribe, then retry ensure |
+| Symptom                                                                                    | Cause                                                                                          | Fix                                                                                                                                        |
+| ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Cannot find module '.../dist/onboarding/cli.js'`                                          | Install/build not finished                                                                     | Wait for `.cursor/scripts/cloud-agent-install.sh` / `npm run build`                                                                        |
+| `sync ensure` → Cloudflare **10042**                                                       | R2 product not enabled on the account                                                          | Dashboard → R2 → complete purchase/subscribe, then retry ensure                                                                            |
 | `sync ensure` OK via `cloudflare-api`, but `push`/`pull` → `sslv3 alert handshake failure` | Account S3 hostname not ready yet, or bad network path to `{account}.r2.cloudflarestorage.com` | Wait a few minutes after enabling R2 and retry; confirm Account ID; do **not** require a key rotation if REST bucket create already worked |
-| Access key `len=34` for a 32-char key | Trailing whitespace in Cursor Secret | Re-paste `CLAWQL_SYNC_ACCESS_KEY_ID` with no spaces/newlines |
-| `Sync bucket not configured` | No `sync.json` / ensure never succeeded | Run `sync ensure --yes` (or `sync init --bucket …` if the bucket already exists) |
-| MCP catalog has no `memory_*` tools | **clawql** MCP not attached to this run | Enable clawql for the Cloud Agent; configs live in `~/.cursor/mcp.json` and `.cursor/mcp.json` |
-| `doctor` warns about GitHub/Slack/… | Provider vault empty | Optional for memory sync; add tokens via Secrets or `clawql secrets set` for `execute` |
-| REST upload to R2 works, S3 SDK fails | Same as TLS row — ClawQL sync uses the S3-compatible endpoint | Fix S3 endpoint TLS/credentials; REST success only proves the bucket exists |
+| Access key `len=34` for a 32-char key                                                      | Trailing whitespace in Cursor Secret                                                           | Re-paste `CLAWQL_SYNC_ACCESS_KEY_ID` with no spaces/newlines                                                                               |
+| `Sync bucket not configured`                                                               | No `sync.json` / ensure never succeeded                                                        | Run `sync ensure --yes` (or `sync init --bucket …` if the bucket already exists)                                                           |
+| MCP catalog has no `memory_*` tools                                                        | **clawql** MCP not attached to this run                                                        | Enable clawql for the Cloud Agent; configs live in `~/.cursor/mcp.json` and `.cursor/mcp.json`                                             |
+| `doctor` warns about GitHub/Slack/…                                                        | Provider vault empty                                                                           | Optional for memory sync; add tokens via Secrets or `clawql secrets set` for `execute`                                                     |
+| REST upload to R2 works, S3 SDK fails                                                      | Same as TLS row — ClawQL sync uses the S3-compatible endpoint                                  | Fix S3 endpoint TLS/credentials; REST success only proves the bucket exists                                                                |
 
 ### Quick TLS probe (no secrets printed)
 
@@ -204,14 +204,14 @@ curl -4 -sS -o /dev/null -w 'http=%{http_code} err=%{errormsg}\n' --connect-time
 
 ## Verification matrix (done once on ClawQL Cloud Agents)
 
-| Check | Expected |
-| ----- | -------- |
-| `clawql doctor` / `--smoke` | Exit 0; tools/list + search pass |
-| `sync ensure` | Bucket `clawql-team-vault` exists |
-| `memory_ingest` | Note under `Memory/*.md` |
-| `memory_recall` | Hits that note |
-| `sync push` then `sync status` | Local and remote file counts match, conflicts 0 |
-| `memory_sync` `{ "direction": "auto" }` | `ok: true`, conflicts empty |
+| Check                                   | Expected                                        |
+| --------------------------------------- | ----------------------------------------------- |
+| `clawql doctor` / `--smoke`             | Exit 0; tools/list + search pass                |
+| `sync ensure`                           | Bucket `clawql-team-vault` exists               |
+| `memory_ingest`                         | Note under `Memory/*.md`                        |
+| `memory_recall`                         | Hits that note                                  |
+| `sync push` then `sync status`          | Local and remote file counts match, conflicts 0 |
+| `memory_sync` `{ "direction": "auto" }` | `ok: true`, conflicts empty                     |
 
 ---
 

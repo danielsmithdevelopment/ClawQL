@@ -246,7 +246,7 @@ Docs: https://docs.clawql.com/agent-setup#cursor-i-os-cloud-agent https://docs.c
 | MCP tools missing                     | Enable **clawql** server for the Cloud Agent run; confirm **`CLAWQL_ENABLE_MEMORY`** is not `0`    |
 | Conflicts after parallel runs         | **`memory_sync`** response lists conflicts; use **`force: true`** only deliberately                |
 | `sync ensure` → Cloudflare **10042**  | Enable **R2** on the Cloudflare account (dashboard subscribe), then retry                          |
-| S3 TLS handshake failure after enable | Wait and retry `{accountId}.r2.cloudflarestorage.com`; trim whitespace on sync access key        |
+| S3 TLS handshake failure after enable | Wait and retry `{accountId}.r2.cloudflarestorage.com`; trim whitespace on sync access key          |
 | Full e2e checklist                    | [cloud-agent-e2e-r2-memory.md](./cloud-agent-e2e-r2-memory.md)                                     |
 
 ---
