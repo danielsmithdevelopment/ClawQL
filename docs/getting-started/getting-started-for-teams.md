@@ -77,20 +77,23 @@ Share **`~/.ClawQL`** memory notes across your team via a centralized object-sto
 
 ### Quick start (R2)
 
-1. Create an R2 bucket in Cloudflare (e.g. `acme-clawql-team`).
-2. Create **R2 S3 API credentials** (Manage R2 API tokens → Create API token with Object Read & Write).
-3. Configure sync:
+1. Create **R2 S3 API credentials** (Manage R2 API tokens → Create API token).
+   Prefer **Admin Read & Write** so ClawQL can create the bucket for you.
+   Object Read & Write alone can sync an existing bucket but cannot create one.
+2. Ensure the bucket (ClawQL declares a default name if you skip `--bucket`):
 
 ```bash
-clawql sync init --interactive
-# provider: r2 (default)
-# bucket: acme-clawql-team
-# prefix: teams/engineering/
-
 export CLAWQL_R2_ACCOUNT_ID="<cloudflare-account-id>"
 export CLAWQL_SYNC_ACCESS_KEY_ID="<r2-access-key>"
 export CLAWQL_SYNC_SECRET_ACCESS_KEY="<r2-secret>"
+
+# Creates clawql-team-vault (if missing) + writes ~/.ClawQL/sync.json
+clawql sync ensure
+# optional: --bucket acme-clawql-team --prefix teams/engineering/
 ```
+
+Alternative create path (when S3 keys are Object-only): set `CLOUDFLARE_API_TOKEN` with
+**Workers R2 Storage Write**, then `clawql sync ensure` uses the Cloudflare REST API.
 
 Or store credentials in the local vault (loaded at MCP/CLI startup):
 
@@ -98,33 +101,43 @@ Or store credentials in the local vault (loaded at MCP/CLI startup):
 clawql secrets set r2AccessKeyId
 clawql secrets set r2SecretAccessKey
 clawql secrets set cloudflareAccountId
+# optional for ensure via REST: clawql secrets set cloudflare
+clawql sync ensure
 ```
 
-4. Push your notes:
+3. Push your notes:
 
 ```bash
 clawql sync push
 ```
 
-5. Teammates pull:
+4. Teammates pull (same bucket/prefix; they do not need CreateBucket):
 
 ```bash
-clawql sync init --bucket acme-clawql-team --prefix teams/engineering/
+clawql sync init --bucket clawql-team-vault --prefix teams/shared/
 clawql sync pull
 clawql doctor
 ```
 
 ### Quick start (S3)
 
-1. Create an S3 bucket (e.g. `acme-clawql-team`) and an IAM user with `s3:GetObject`, `s3:PutObject`, `s3:ListBucket` on that bucket.
-2. Configure sync:
+1. Use an IAM user/role with `s3:CreateBucket` (first run) plus `s3:GetObject`,
+   `s3:PutObject`, `s3:ListBucket` on the team vault bucket.
+2. Let ClawQL create the bucket + write sync config:
 
 ```bash
-clawql sync init --provider s3 --bucket acme-clawql-team --prefix teams/engineering/
-
 export CLAWQL_AWS_ACCESS_KEY_ID="<iam-access-key>"
 export CLAWQL_AWS_SECRET_ACCESS_KEY="<iam-secret>"
 export CLAWQL_AWS_REGION="us-east-1"   # or CLAWQL_SYNC_REGION
+
+clawql sync ensure --provider s3
+# optional: --bucket acme-clawql-team --prefix teams/engineering/
+```
+
+Or point at a pre-created bucket:
+
+```bash
+clawql sync init --provider s3 --bucket acme-clawql-team --prefix teams/engineering/
 ```
 
 Or store credentials in the local vault:
@@ -180,7 +193,8 @@ clawql doctor
 
 | Command              | Purpose                                                                |
 | -------------------- | ---------------------------------------------------------------------- |
-| `clawql sync init`   | Write `~/.ClawQL/sync.json` (no secrets)                               |
+| `clawql sync ensure` | Create R2/S3 bucket if missing, then write `sync.json`                |
+| `clawql sync init`   | Write `~/.ClawQL/sync.json` only (no secrets; no bucket create)        |
 | `clawql sync push`   | Upload changed local files + update remote manifest                    |
 | `clawql sync pull`   | Download changed remote files                                          |
 | `clawql sync status` | Compare local vs remote (conflicts listed)                             |

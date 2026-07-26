@@ -6,6 +6,11 @@ import {
   writeSyncConfigFile,
   readSyncConfigFile,
 } from "../home-sync/config.js";
+import {
+  DEFAULT_SYNC_BUCKET,
+  DEFAULT_SYNC_PREFIX,
+  ensureSyncBucket,
+} from "../home-sync/ensure-bucket.js";
 import { getClawqlHome } from "./paths.js";
 import type { HomeSyncConfigFile, SyncProvider } from "../home-sync/types.js";
 import {
@@ -117,6 +122,65 @@ export async function runSyncStatusCmd(): Promise<number> {
   try {
     const status = await runSyncStatus();
     console.log(formatSyncStatus(status));
+    return 0;
+  } catch (e) {
+    console.error(e instanceof Error ? e.message : e);
+    return 1;
+  }
+}
+
+export type SyncEnsureOptions = {
+  home?: string;
+  interactive?: boolean;
+  provider?: SyncProvider;
+  bucket?: string;
+  prefix?: string;
+  location?: string;
+  dryRun?: boolean;
+  yes?: boolean;
+};
+
+export async function runSyncEnsure(opts: SyncEnsureOptions): Promise<number> {
+  const home = opts.home ?? getClawqlHome();
+  let provider: SyncProvider = opts.provider ?? "r2";
+  let bucket = opts.bucket ?? "";
+  let prefix = opts.prefix ?? "";
+  let location = opts.location ?? "";
+
+  if (opts.interactive) {
+    const p = await prompt("Provider (r2|s3)", provider);
+    provider = parseSyncProvider(p || provider);
+    bucket = await prompt(`Bucket name (default ${DEFAULT_SYNC_BUCKET})`, bucket || DEFAULT_SYNC_BUCKET);
+    prefix = await prompt(`Team prefix (default ${DEFAULT_SYNC_PREFIX})`, prefix || DEFAULT_SYNC_PREFIX);
+    if (provider === "r2") {
+      location = await prompt("R2 location hint (e.g. weur)", location || "weur");
+    }
+  }
+
+  try {
+    const result = await ensureSyncBucket({
+      home,
+      provider,
+      bucket: bucket || undefined,
+      prefix: prefix || undefined,
+      location: location || undefined,
+      dryRun: opts.dryRun,
+    });
+    console.log(opts.dryRun ? "Team sync ensure (dry-run)\n" : "Team sync ensured\n");
+    console.log(`  Config:   ${result.configPath}`);
+    console.log(`  Provider: ${result.provider} — ${syncProviderLabel(result.provider)}`);
+    console.log(`  Bucket:   ${result.bucket}`);
+    console.log(`  Prefix:   ${result.prefix}`);
+    console.log(
+      `  Status:   ${result.created ? "created" : "already exists"} via ${result.method}`
+    );
+    if (!opts.dryRun) {
+      printSyncCredentialHelp(result.provider);
+      console.log("\nNext:");
+      console.log("  clawql sync push    Upload Memory/ + sources to the team bucket");
+      console.log("  clawql sync pull    Download team notes to this machine");
+      console.log("  clawql sync status  Compare local vs remote\n");
+    }
     return 0;
   } catch (e) {
     console.error(e instanceof Error ? e.message : e);

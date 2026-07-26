@@ -51,11 +51,34 @@ if [[ ! -f "$ROOT/.cursor/mcp.json" && -f "$ROOT/.cursor/mcp.json.example" ]]; t
 fi
 
 # Team vault sync — Cursor Secrets inject CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID
-if [[ -n "${CLAWQL_SYNC_BUCKET:-}" && -n "${CLAWQL_SYNC_ACCESS_KEY_ID:-}" && -n "${CLAWQL_SYNC_SECRET_ACCESS_KEY:-}" ]]; then
-  if [[ -z "${CLAWQL_R2_ACCOUNT_ID:-}${CLAWQL_CLOUDFLARE_ACCOUNT_ID:-}${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
-    echo "[cloud-agent-install] WARN: CLAWQL_R2_ACCOUNT_ID missing — R2 endpoint cannot be resolved"
+# Prefer `sync ensure` so ClawQL can create clawql-team-vault when Admin R2 keys
+# or CLOUDFLARE_API_TOKEN (Workers R2 Storage Write) are present.
+has_r2_account="${CLAWQL_R2_ACCOUNT_ID:-${CLAWQL_CLOUDFLARE_ACCOUNT_ID:-${CLOUDFLARE_ACCOUNT_ID:-}}}"
+has_sync_keys=false
+if [[ -n "${CLAWQL_SYNC_ACCESS_KEY_ID:-}" && -n "${CLAWQL_SYNC_SECRET_ACCESS_KEY:-}" ]]; then
+  has_sync_keys=true
+fi
+has_cf_api="${CLAWQL_CLOUDFLARE_API_TOKEN:-${CLOUDFLARE_API_TOKEN:-}}"
+
+if [[ -n "$has_r2_account" && ( "$has_sync_keys" == true || -n "$has_cf_api" ) ]]; then
+  echo "[cloud-agent-install] Ensuring R2 team vault bucket + sync.json"
+  ensure_args=(sync ensure --yes --provider r2)
+  if [[ -n "${CLAWQL_SYNC_BUCKET:-}" ]]; then
+    ensure_args+=(--bucket "${CLAWQL_SYNC_BUCKET}")
   fi
-  echo "[cloud-agent-install] R2 sync configured — writing sync.json + pulling team vault"
+  if [[ -n "${CLAWQL_SYNC_PREFIX:-}" ]]; then
+    ensure_args+=(--prefix "${CLAWQL_SYNC_PREFIX}")
+  fi
+  node "$ROOT/bin/clawql.mjs" "${ensure_args[@]}" \
+    || echo "[cloud-agent-install] sync ensure skipped (need Admin R2 keys or CLOUDFLARE_API_TOKEN)"
+  if [[ "$has_sync_keys" == true ]]; then
+    node "$ROOT/bin/clawql.mjs" sync pull \
+      || echo "[cloud-agent-install] sync pull skipped (bucket empty or first run)"
+  else
+    echo "[cloud-agent-install] Sync object keys not set — bucket may exist, but pull needs CLAWQL_SYNC_ACCESS_KEY_ID / SECRET"
+  fi
+elif [[ -n "${CLAWQL_SYNC_BUCKET:-}" && "$has_sync_keys" == true ]]; then
+  echo "[cloud-agent-install] R2 sync bucket preset — writing sync.json + pulling"
   node "$ROOT/bin/clawql.mjs" sync init --yes \
     --bucket "${CLAWQL_SYNC_BUCKET}" \
     ${CLAWQL_SYNC_PREFIX:+--prefix "${CLAWQL_SYNC_PREFIX}"} \
@@ -63,12 +86,16 @@ if [[ -n "${CLAWQL_SYNC_BUCKET:-}" && -n "${CLAWQL_SYNC_ACCESS_KEY_ID:-}" && -n 
   node "$ROOT/bin/clawql.mjs" sync pull \
     || echo "[cloud-agent-install] sync pull skipped (bucket empty or first run)"
 else
-  echo "[cloud-agent-install] R2 sync secrets not set — skipping pull"
+  echo "[cloud-agent-install] R2 sync secrets not set — skipping ensure/pull"
   echo "[cloud-agent-install]   Add in Cursor → Cloud Agents → Secrets:"
-  echo "[cloud-agent-install]   CLAWQL_R2_ACCOUNT_ID, CLAWQL_SYNC_BUCKET, CLAWQL_SYNC_PREFIX,"
-  echo "[cloud-agent-install]   CLAWQL_SYNC_ACCESS_KEY_ID, CLAWQL_SYNC_SECRET_ACCESS_KEY,"
-  echo "[cloud-agent-install]   CLAWQL_SYNC_AUTO=1, CLAWQL_SYNC_AUTO_PULL=1, CLAWQL_SYNC_AUTO_PULL_ON_START=1"
-  echo "[cloud-agent-install]   Optional: OPENROUTER_API_KEY (inference), CLOUDFLARE_API_TOKEN (execute)"
+  echo "[cloud-agent-install]   CLAWQL_R2_ACCOUNT_ID"
+  echo "[cloud-agent-install]   CLAWQL_SYNC_ACCESS_KEY_ID + CLAWQL_SYNC_SECRET_ACCESS_KEY"
+  echo "[cloud-agent-install]     (R2 token with Admin Read & Write so sync ensure can create the bucket)"
+  echo "[cloud-agent-install]   OR CLOUDFLARE_API_TOKEN with Workers R2 Storage Write (bucket create)"
+  echo "[cloud-agent-install]   Optional: CLAWQL_SYNC_BUCKET (default clawql-team-vault),"
+  echo "[cloud-agent-install]            CLAWQL_SYNC_PREFIX (default teams/shared/),"
+  echo "[cloud-agent-install]            CLAWQL_SYNC_AUTO=1, CLAWQL_SYNC_AUTO_PULL=1,"
+  echo "[cloud-agent-install]            CLAWQL_SYNC_AUTO_PULL_ON_START=1, OPENROUTER_API_KEY"
 fi
 
 # Stdio MCP config for this VM user (Cursor Cloud Agent)
