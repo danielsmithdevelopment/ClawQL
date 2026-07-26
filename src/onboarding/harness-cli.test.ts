@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildOpencodeConfigContent,
-  clawqlMcpChildEnv,
-  parseHarnessUsage,
-} from "./harness-cli.js";
+import { buildOpencodeConfigContent, clawqlMcpChildEnv, parseHarnessUsage } from "./harness-cli.js";
 
 describe("parseHarnessUsage", () => {
   it("parses Claude Code JSON usage", () => {
@@ -62,7 +58,9 @@ describe("buildOpencodeConfigContent", () => {
       });
       const cfg = JSON.parse(raw) as {
         provider: { clawql: { options: { baseURL: string }; models: Record<string, unknown> } };
-        mcp: { clawql: { enabled: boolean; environment: Record<string, string>; command: string[] } };
+        mcp: {
+          clawql: { enabled: boolean; environment: Record<string, string>; command: string[] };
+        };
       };
       expect(cfg.provider.clawql.options.baseURL).toBe("http://127.0.0.1:8080/v1");
       expect(cfg.provider.clawql.models["openrouter/google/gemini-2.5-flash-lite"]).toEqual({});
