@@ -138,12 +138,12 @@ Add these **runtime** secrets (names must match — the install script and MCP c
 
 Add a **stdio** server (runs inside the Cloud Agent VM). After this repo’s install hook builds ClawQL, prefer the **workspace binary** (avoids monorepo `npx -p clawql-mcp` → `clawql-mcp: not found` when `node_modules/.bin/clawql-mcp` is missing):
 
-| Field   | Value                                                        |
-| ------- | ------------------------------------------------------------ |
-| Name    | `clawql`                                                     |
-| Command | `node`                                                       |
-| Args    | `["/workspace/bin/clawql-mcp.mjs"]`                          |
-| Env     | `CLAWQL_HOME=/home/ubuntu/.ClawQL` (match your VM user)      |
+| Field   | Value                                                   |
+| ------- | ------------------------------------------------------- |
+| Name    | `clawql`                                                |
+| Command | `node`                                                  |
+| Args    | `["/workspace/bin/clawql-mcp.mjs"]`                     |
+| Env     | `CLAWQL_HOME=/home/ubuntu/.ClawQL` (match your VM user) |
 
 Template: [`.cursor/mcp.json.example`](../../.cursor/mcp.json.example). Install also links **`node_modules/.bin/clawql-mcp`** so a baked `npx -p clawql-mcp clawql-mcp` config still works.
 

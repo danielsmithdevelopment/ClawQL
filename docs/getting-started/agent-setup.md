@@ -278,15 +278,15 @@ Docs: https://docs.clawql.com/agent-setup#cursor-i-os-cloud-agent https://docs.c
 
 ### Troubleshooting (iOS)
 
-| Symptom                                          | Check                                                                                                                                                         |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`memory_recall`** empty on a new VM            | Secrets set? **`memory_sync` `{ "direction": "pull" }`** or **`CLAWQL_SYNC_AUTO_PULL_ON_START=1`**                                                            |
-| **`memory_sync`** errors                         | **`CLAWQL_SYNC_BUCKET`**, prefix, and R2/S3/GCS credentials in dashboard Secrets                                                                              |
-| **`execute`** auth failures                      | Provider keys in **`vault/providers.json`** or matching **`CLAWQL_*`** env secrets                                                                            |
-| MCP tools missing / discovery failed             | Enable **clawql** for the run; confirm **`CLAWQL_ENABLE_MEMORY`** is not `0`; see monorepo pitfall above (`clawql-mcp: not found`)                            |
-| **`clawql-mcp: not found`** (exit 127)           | In this repo: wait for install/build; ensure **`node_modules/.bin/clawql-mcp`** → **`bin/clawql-mcp.mjs`** and **`chmod +x bin/*.mjs`**; prefer **`node …`** |
-| Sync pull: **manifest expects sha256 … got …**   | Remote **`.clawql/sync/manifest.v1.json`** stale vs objects — seed **`Memory/`**, then **`clawql sync push --force`**, then pull again                         |
-| Conflicts after parallel runs                    | **`memory_sync`** response lists conflicts; use **`force: true`** only deliberately                                                                           |
+| Symptom                                        | Check                                                                                                                                                        |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`memory_recall`** empty on a new VM          | Secrets set? **`memory_sync` `{ "direction": "pull" }`** or **`CLAWQL_SYNC_AUTO_PULL_ON_START=1`**                                                           |
+| **`memory_sync`** errors                       | **`CLAWQL_SYNC_BUCKET`**, prefix, and R2/S3/GCS credentials in dashboard Secrets                                                                             |
+| **`execute`** auth failures                    | Provider keys in **`vault/providers.json`** or matching **`CLAWQL_*`** env secrets                                                                           |
+| MCP tools missing / discovery failed           | Enable **clawql** for the run; confirm **`CLAWQL_ENABLE_MEMORY`** is not `0`; see monorepo pitfall above (`clawql-mcp: not found`)                           |
+| **`clawql-mcp: not found`** (exit 127)         | In this repo: wait for install/build; ensure **`node_modules/.bin/clawql-mcp`** → **`bin/clawql-mcp.mjs`** and **`chmod +x bin/*.mjs`**; prefer **`node …`** |
+| Sync pull: **manifest expects sha256 … got …** | Remote **`.clawql/sync/manifest.v1.json`** stale vs objects — seed **`Memory/`**, then **`clawql sync push --force`**, then pull again                       |
+| Conflicts after parallel runs                  | **`memory_sync`** response lists conflicts; use **`force: true`** only deliberately                                                                          |
 
 ---
 
