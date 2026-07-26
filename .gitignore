@@ -24,8 +24,8 @@ Thumbs.db
 # IDE / editors
 .idea/
 .vscode/
-# Cursor MCP — copy .cursor/mcp.json.example → .cursor/mcp.json (stdio; local to VM)
-.cursor/mcp.json
+# Cursor MCP — commit `.cursor/mcp.json` for IDE + Cloud Agents (no secrets; CLAWQL_HOME only).
+# Keep `.cursor/mcp.json.example` in sync when changing the template.
 *.swp
 *.swo
 *~

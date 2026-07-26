@@ -53,10 +53,17 @@ CLAWQL_SYNC_AUTO_PULL_ON_START=1
 EOF
 fi
 
-# Ensure workspace MCP example is available for Cloud Agent stdio (gitignored copy)
+# Ensure workspace MCP config for IDE/stdio (committed mcp.json preferred; fall back to example)
 if [[ ! -f "$ROOT/.cursor/mcp.json" && -f "$ROOT/.cursor/mcp.json.example" ]]; then
   cp "$ROOT/.cursor/mcp.json.example" "$ROOT/.cursor/mcp.json"
   echo "[cloud-agent-install] Wrote .cursor/mcp.json from example (stdio clawql-mcp)"
+fi
+# Always refresh user-level Cursor MCP so Cloud Agent VMs have clawql even when
+# the dashboard MCP toggle is the primary attach path for tools/list.
+if [[ -f "$ROOT/.cursor/mcp.json" ]]; then
+  mkdir -p "$HOME/.cursor"
+  cp "$ROOT/.cursor/mcp.json" "$HOME/.cursor/mcp.json"
+  echo "[cloud-agent-install] Synced ~/.cursor/mcp.json from workspace (stdio clawql-mcp)"
 fi
 
 # Team vault sync — Cursor Secrets inject CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID
@@ -112,6 +119,7 @@ fi
 # `/exec-daemon/npx`, and `npx -p clawql-mcp clawql-mcp` often fails with
 # `clawql-mcp: not found` (or a broken nested `@smithy/protocol-http` install
 # from the published tarball). Local `node bin/clawql-mcp.mjs` is reliable.
+# `npx -y clawql-mcp` also works for Automations / published-package hosts.
 mkdir -p "$HOME/.cursor"
 if [[ -f "$ROOT/dist/server.js" ]]; then
   cat >"$HOME/.cursor/mcp.json" <<EOF
@@ -127,9 +135,7 @@ if [[ -f "$ROOT/dist/server.js" ]]; then
   }
 }
 EOF
-  # Repo-local copy (gitignored) — same transport the Cloud Agent UI may load.
-  if [[ ! -f "$ROOT/.cursor/mcp.json" || -f "$ROOT/.cursor/mcp.json.example" ]]; then
-    cat >"$ROOT/.cursor/mcp.json" <<EOF
+  cat >"$ROOT/.cursor/mcp.json" <<EOF
 {
   "mcpServers": {
     "clawql": {
@@ -142,13 +148,11 @@ EOF
   }
 }
 EOF
-  fi
   echo "[cloud-agent-install] Wrote MCP stdio config → node $ROOT/bin/clawql-mcp.mjs"
-else
-  if [[ ! -f "$HOME/.cursor/mcp.json" ]]; then
-    node "$ROOT/bin/clawql.mjs" mcp-config --write cursor \
-      || echo "[cloud-agent-install] mcp-config write skipped"
-  fi
+elif [[ ! -f "$HOME/.cursor/mcp.json" ]]; then
+  node "$ROOT/bin/clawql.mjs" mcp-config --write cursor \
+    || echo "[cloud-agent-install] mcp-config write skipped"
 fi
 
 echo "[cloud-agent-install] done"
+echo "[cloud-agent-install] NOTE: memory_* tools require clawql enabled in cursor.com/agents MCP (repo mcp.json alone is not enough)."

@@ -34,7 +34,7 @@ CLAWQL_MCP_URL=http://127.0.0.1:8080 npx -p clawql-mcp clawql doctor
 
 Paste the copy-paste block from [agent-setup.md](../getting-started/agent-setup.md) into Cursor or Claude for a guided first run.
 
-**Cursor iOS:** use [Agent setup — Cursor iOS](../getting-started/agent-setup.md#cursor-ios--cloud-agent) — stdio MCP on the agent VM, R2/S3/GCS for durable **`Memory/`**, and **`memory_sync`** between sessions.
+**Cursor iOS:** use [Agent setup — Cursor iOS](../getting-started/agent-setup.md#cursor-ios--cloud-agent) — stdio MCP on the agent VM, R2/S3/GCS for durable **`Memory/`**, and **`memory_sync`** between sessions. Day-one R2 enablement checklist: [Cloud Agent e2e: ClawQL + R2](../getting-started/cloud-agent-e2e-r2-memory.md).
 
 **Vault-first CLI (recommended):**
 

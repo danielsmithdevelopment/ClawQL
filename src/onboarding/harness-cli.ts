@@ -108,9 +108,7 @@ async function writeOpencodeMcp(): Promise<void> {
     unknown
   >;
   const clawql = mcpBlock.clawql as Record<string, unknown> | undefined;
-  const command = Array.isArray(clawql?.args)
-    ? ["npx", "-p", "clawql-mcp", "clawql-mcp"]
-    : ["npx", "-p", "clawql-mcp", "clawql-mcp"];
+  const command = ["npx", "-y", "clawql-mcp"];
 
   const mcp = (existing.mcp as Record<string, unknown> | undefined) ?? {};
   mcp.clawql = {
@@ -139,7 +137,7 @@ async function writeCodexMcp(): Promise<void> {
   const block = `
 [mcp_servers.clawql]
 command = "npx"
-args = ["-p", "clawql-mcp", "clawql-mcp"]
+args = ["-y", "clawql-mcp"]
 enabled = true
 
 [mcp_servers.clawql.env]

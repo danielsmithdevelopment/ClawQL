@@ -35,7 +35,9 @@ export function buildMcpServerConfig(options: McpConfigOptions = {}): Record<str
     mcpServers: {
       clawql: {
         command: "npx",
-        args: ["-p", "clawql-mcp", "clawql-mcp"],
+        // `npx -p clawql-mcp clawql-mcp` fails on many hosts with "clawql-mcp: not found".
+        // `npx -y clawql-mcp` runs the package bin reliably (Cloud Agents / Automations).
+        args: ["-y", "clawql-mcp"],
         ...(Object.keys(env).length ? { env } : {}),
       },
     },

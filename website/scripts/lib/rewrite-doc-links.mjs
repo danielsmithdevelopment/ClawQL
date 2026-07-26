@@ -24,6 +24,8 @@ export const DOC_SITE_ROUTES = {
     '/getting-started/for-teams#team-vault-sync',
   'docs/getting-started/cursor-ios-cloud-agent.md':
     '/agent-setup#cursor-i-os-cloud-agent',
+  'docs/getting-started/cloud-agent-e2e-r2-memory.md':
+    '/agent-setup#cursor-i-os-cloud-agent',
   'docs/getting-started/golden-host-images.md':
     '/getting-started/for-teams#golden-host-images',
   'docs/getting-started/local-agent-sandbox.md':
