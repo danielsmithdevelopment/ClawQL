@@ -56,7 +56,7 @@ export async function runDoctor(
   }
 
   try {
-    execSync("npx -p clawql-mcp --yes clawql-mcp --help", { stdio: "ignore" });
+    execSync("npx -y clawql-mcp --help", { stdio: "ignore" });
     checks.push({ level: "ok", message: "clawql-mcp resolvable via npx" });
   } catch {
     checks.push({

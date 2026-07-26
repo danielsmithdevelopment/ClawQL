@@ -102,7 +102,7 @@ Use ClawQL from the **Cursor iOS app** by running **Cloud Agents** with stdio MC
         │
         ▼
   Cloud Agent VM (Cursor-managed)
-  ├── stdio MCP: npx -p clawql-mcp clawql-mcp
+  ├── stdio MCP: npx -y clawql-mcp
   ├── CLAWQL_HOME=/home/ubuntu/.ClawQL  (ephemeral VM disk)
   └── memory_sync ◄──► object storage (R2 / S3 / GCS)
         │
@@ -118,7 +118,7 @@ Use ClawQL from the **Cursor iOS app** by running **Cloud Agents** with stdio MC
 
 1. **Object-storage bucket** with a team prefix (R2 quick start: [For teams — R2](./getting-started-for-teams.md#quick-start-r2)).
 2. **Cursor Cloud Agents** enabled for your account (repo connected in the Cursor dashboard).
-3. **`clawql-mcp`** on the agent VM — `npx -p clawql-mcp` resolves it at MCP startup (Node.js is preinstalled on Cloud Agent VMs).
+3. **`clawql-mcp`** on the agent VM — use **`npx -y clawql-mcp`** (not `npx -p clawql-mcp clawql-mcp`, which fails tool discovery with `clawql-mcp: not found`).
 
 **Day-one e2e (doctor → ensure → ingest → recall → push):** follow the verified checklist in [Cloud Agent e2e: ClawQL + R2 team memory](./cloud-agent-e2e-r2-memory.md) — includes Cloudflare R2 enablement, secret paste hygiene, and TLS lag after first enabling R2.
 
@@ -162,7 +162,7 @@ For **S3** or **GCS**, use the credential variables from [For teams — Environm
 ```json
 {
   "command": "npx",
-  "args": ["-p", "clawql-mcp", "clawql-mcp"],
+  "args": ["-y", "clawql-mcp"],
   "env": {
     "CLAWQL_HOME": "/home/ubuntu/.ClawQL"
   }
@@ -224,7 +224,7 @@ Auto sync (**`CLAWQL_SYNC_AUTO=1`**) debounces push after each **`memory_ingest`
 You are helping me use ClawQL from Cursor on iOS via a Cloud Agent.
 
 Facts:
-- MCP is stdio: npx -p clawql-mcp clawql-mcp with CLAWQL_HOME on the agent VM.
+- MCP is stdio: npx -y clawql-mcp with CLAWQL_HOME on the agent VM.
 - There is no local ~/.ClawQL on my phone; durable memory lives in object storage (R2/S3/GCS).
 - Sync credentials are in Cursor Cloud Secrets (CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID).
 - Provider API tokens are in Secrets or CLAWQL_HOME/vault/providers.json — never in mcp.json or git.
