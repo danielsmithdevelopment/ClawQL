@@ -71,3 +71,11 @@ Cheap model: `openrouter/google/gemini-2.5-flash-lite`.
 Follow-ups in the same PR: forward OpenCode JSONL for clawql-on logs; harden memory
 checker/instruction for no-arg `create_reset_token`; clarify nested YAML lists in
 the token-budget instruction.
+
+## Layer-2 + MCP confirmation ([run 30187110845](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30187110845))
+
+- clawql-on **called `clawql_memory_recall`** and received seeded **argon2id / 900s**
+  from the vault (agent-logs). Flash-lite sometimes stops after recall without
+  finishing edits — score variance with `trials=1` is expected on the cheapest model.
+- multi-provider: clawql-on **1.0** vs clawql-off **0.75**
+- token-budget: clawql-off **1.0** after nested-list hint; clawql-on still noisy on flash-lite
