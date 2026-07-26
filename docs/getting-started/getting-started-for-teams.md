@@ -205,7 +205,7 @@ clawql doctor
 
 Registered with **`memory_ingest`** / **`memory_recall`** (hide all with **`CLAWQL_ENABLE_MEMORY=0`**). Requires sync bucket + credentials. Use from **Cursor Cloud Agents** (including iOS) instead of shell **`clawql sync`**.
 
-**Cursor iOS:** Cloud Agents have no local **`~/.ClawQL`** on the phone — configure dashboard Secrets, stdio MCP, and end-of-session **`memory_sync`**. Full walkthrough: [Agent setup — Cursor iOS](./agent-setup.md#cursor-i-os-cloud-agent).
+**Cursor iOS:** Cloud Agents have no local **`~/.ClawQL`** on the phone — configure dashboard Secrets, stdio MCP, and end-of-session **`memory_sync`**. Full walkthrough (including monorepo MCP `clawql-mcp: not found` and R2 manifest repair): [Agent setup — Cursor iOS](./agent-setup.md#cursor-i-os-cloud-agent).
 
 | Field       | Default | Meaning                                                                |
 | ----------- | ------- | ---------------------------------------------------------------------- |
