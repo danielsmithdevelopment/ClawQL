@@ -698,6 +698,16 @@ export async function runHarnessNonInteractive(
     }
   }
 
+  // Forward harness JSONL so OpenBench agent-logs capture tool calls (MCP, edit, …).
+  if (process.env.CLAWQL_OPENBENCH === "1" && combined.trim()) {
+    process.stdout.write(combined.endsWith("\n") ? combined : `${combined}\n`);
+  }
+  try {
+    await writeFile(join(workdir, ".openbench_harness.jsonl"), combined, "utf8");
+  } catch {
+    // non-fatal
+  }
+
   // Machine-readable lines for OpenBench adapters / logs.
   if (usage.tokens !== null) console.log(`CLAWQL_TOKENS: ${usage.tokens}`);
   if (usage.turns !== null) console.log(`CLAWQL_TURNS: ${usage.turns}`);

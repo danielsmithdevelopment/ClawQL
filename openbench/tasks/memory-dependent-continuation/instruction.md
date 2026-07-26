@@ -15,11 +15,12 @@ The seed note is **not** in the workspace filesystem.
 
 Implement password reset in `src/auth.py`:
 
-1. `hash_password(password: str) -> str` must use the hashing algorithm decided
-   in the prior session (do **not** invent a new choice if prior notes exist).
-2. `create_reset_token() -> dict` must return a token payload whose `expires_in`
-   matches the previously decided TTL in seconds.
-3. `verify_reset_token(payload: dict, now: int) -> bool` must reject expired
+1. Set module constants (`HASH_ALGO`, `RESET_TTL_SECONDS`) from recalled decisions.
+2. `hash_password(password: str) -> str` must use that hashing algorithm
+   (do **not** invent a new choice if prior notes exist).
+3. Keep `create_reset_token() -> dict` with **no required parameters**. Return a
+   payload whose `expires_in` matches the recalled TTL in seconds.
+4. `verify_reset_token(payload: dict, now: int) -> bool` must reject expired
    tokens using that same TTL.
 
 The workspace currently contains a misleading comment that suggests `bcrypt`.

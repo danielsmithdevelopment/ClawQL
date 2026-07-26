@@ -596,8 +596,18 @@ def run_trial(
                 vault = None
         else:
             agent = run_arm_on(instruction, tmp, model, timeout_s, inference_url, vault)
-        # Prefer full captured stream from arm helpers when present.
-        combined = agent.pop("_combined_log", None) or agent.get("output_tail") or ""
+        # Prefer full captured stream; fall back to workdir harness dump.
+        combined = agent.pop("_combined_log", None) or ""
+        dump = tmp / ".openbench_harness.jsonl"
+        if dump.is_file():
+            try:
+                dump_text = dump.read_text(encoding="utf-8", errors="replace")
+                if len(dump_text) > len(combined):
+                    combined = dump_text
+            except OSError:
+                pass
+        if not combined:
+            combined = agent.get("output_tail") or ""
         log_path = write_agent_log(log_dir, arm, trial, combined)
         if log_path:
             agent["log_path"] = log_path
