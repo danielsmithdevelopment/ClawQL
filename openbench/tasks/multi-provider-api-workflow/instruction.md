@@ -8,7 +8,9 @@ access or real credentials — produce a correct offline scaffold.
 
 If you have a **memory_recall** (or similar vault/memory) tool, call it **before
 creating files**. Query for prior release-tag Worker / wrangler / GitHub releases
-scaffold decisions. Those notes are **not** in the workspace filesystem.
+scaffold decisions. Those notes are **not** in the workspace filesystem. After
+recall, **immediately** write the three artifacts below in the workspace — do
+not stop after recalling.
 
 ## Required artifacts
 

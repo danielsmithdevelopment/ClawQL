@@ -8,7 +8,10 @@ YAML configuration files.
 If you have a **memory_recall** (or similar vault/memory) tool, call it **before
 editing**. Query for prior YAML / parse_config / nested-list decisions. Useful
 parser notes live in institutional memory and are **not** in the workspace
-filesystem. Ignore the `decoy/` directory — it is distractor content.
+filesystem. After recall, **immediately** replace `config_lib/parse.py` with the
+recalled complete file using the **write** tool (not piecemeal edit). Do not
+paste YAML examples into Python. Ignore the `decoy/` directory — it is
+distractor content.
 
 ## Requirements
 

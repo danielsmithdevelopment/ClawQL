@@ -71,6 +71,7 @@ describe("buildOpencodeConfigContent", () => {
       expect(cfg.mcp.clawql.environment.CLAWQL_ENABLE_MEMORY).toBe("1");
       expect(cfg.mcp.clawql.environment.CLAWQL_ENABLE_PAGEINDEX).toBe("0");
       expect(cfg.mcp.clawql.environment.CLAWQL_ENABLE_DOCUMENTS).toBe("0");
+      expect(cfg.mcp.clawql.environment.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS).toBe("8192");
       expect(cfg.mcp.clawql.command.length).toBeGreaterThan(0);
     } finally {
       if (prevHome === undefined) delete process.env.CLAWQL_HOME;

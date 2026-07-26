@@ -80,6 +80,22 @@ the token-budget instruction.
 - multi-provider: clawql-on **1.0** vs clawql-off **0.75**
 - token-budget: clawql-off **1.0** after nested-list hint; clawql-on still noisy on flash-lite
 
+## Flash-lite noise and DeepSeek default
+
+Later flash-lite matrices still showed clawql-on **LOSE** cells from model behavior,
+not MCP wipe / tool strip / doom-loop (those layers stay fixed):
+
+| Failure mode | Symptom | Mitigation |
+| --- | --- | --- |
+| Stop-after-recall | multi-provider score 0 after successful vault hit | Instruction: after `memory_recall`, immediately write artifacts |
+| Truncated vault recipe | `CLAWQL_MEMORY_RECALL_SNIPPET_CHARS` default 520 cut off YAML parser / scaffold notes | OpenBench MCP env sets snippet chars to **8192** |
+| IndentationError | piecemeal `edit` of nested helpers after partial recall | Seed ships complete `parse.py`; instruction: use **write**, not edit |
+| `/tmp` writes | multi-provider artifacts outside workspace | Instruction: relative paths only |
+
+Default OpenBench model is now **`openrouter/deepseek/deepseek-chat`** (still cheap
+OpenRouter) for a stronger tool loop. Flash-lite remains available as
+`openrouter/google/gemini-2.5-flash-lite` for cost-sensitive runs.
+
 ## Layer 3 — token-budget doom loop ([run 30187258901](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30187258901))
 
 | Task                          | clawql-on                    | clawql-off |

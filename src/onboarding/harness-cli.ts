@@ -116,6 +116,11 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
     // Slim tool surface for cheap OpenBench models — avoid pageindex/docs noise.
     if (!process.env.CLAWQL_ENABLE_PAGEINDEX?.trim()) env.CLAWQL_ENABLE_PAGEINDEX = "0";
     if (!process.env.CLAWQL_ENABLE_DOCUMENTS?.trim()) env.CLAWQL_ENABLE_DOCUMENTS = "0";
+    // Default recall snippets (520) truncate OpenBench vault recipes (full YAML
+    // parser / scaffold notes). Raise so clawql-on can apply recalled content.
+    if (!process.env.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS?.trim()) {
+      env.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS = "8192";
+    }
   }
   return env;
 }
@@ -149,6 +154,9 @@ export function buildOpencodeConfigContent(opts: {
   mcpEnv.CLAWQL_OPENBENCH = mcpEnv.CLAWQL_OPENBENCH || "1";
   if (!mcpEnv.CLAWQL_ENABLE_PAGEINDEX) mcpEnv.CLAWQL_ENABLE_PAGEINDEX = "0";
   if (!mcpEnv.CLAWQL_ENABLE_DOCUMENTS) mcpEnv.CLAWQL_ENABLE_DOCUMENTS = "0";
+  if (!mcpEnv.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS) {
+    mcpEnv.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS = "8192";
+  }
   return JSON.stringify({
     $schema: "https://opencode.ai/config.json",
     permission: openbenchOpencodePermissions(),

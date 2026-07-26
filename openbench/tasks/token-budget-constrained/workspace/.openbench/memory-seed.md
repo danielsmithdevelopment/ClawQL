@@ -7,22 +7,26 @@ tight token budget.
 
 ## Decisions
 
-- Edit **only** `config_lib/parse.py`. Ignore the `decoy/` tree — it is noise.
+- Replace **only** `config_lib/parse.py` via the **write** tool (full file). Do
+  **not** use piecemeal `edit` for nested helpers — that causes IndentationError.
+- Ignore the `decoy/` tree — it is noise.
 - Do **not** add PyYAML or any third-party dependency.
 - Keep JSON via stdlib `json.loads` for `.json` paths.
-- Use an indent-aware recursive parser (2-space style). Critical case:
+- Nested list case that must work: key `features` with indented `- a` / `- b`
+  items becomes `{"features": ["a", "b"]}`. Never paste YAML samples into `.py`.
+- After write, run `python3 -m config_lib.selftest` once. Stop when green.
 
-```yaml
-features:
-  - a
-  - b
-```
-
-must become `{"features": ["a", "b"]}`.
-
-## Reference approach (apply via write/edit)
+## COMPLETE FILE — write this entire content to `config_lib/parse.py`
 
 ```python
+"""Config parsing helpers (JSON + minimal YAML)."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+
 def _parse_scalar(raw: str):
     s = raw.strip()
     if (s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'")):
@@ -89,6 +93,7 @@ def _parse_minimal_yaml(text: str) -> dict:
 
 
 def parse_config(path: str) -> dict:
+    """Parse a JSON or YAML config file into a dict."""
     text = Path(path).read_text(encoding="utf-8")
     lower = path.lower()
     if lower.endswith((".yaml", ".yml")):
@@ -99,9 +104,6 @@ def parse_config(path: str) -> dict:
         raise ValueError("config root must be a mapping")
     return data
 ```
-
-- Verify once with `python3 -m config_lib.selftest`. Do not re-read the same file
-  in a loop — recall, write, test, stop when green.
 
 ## Tags
 

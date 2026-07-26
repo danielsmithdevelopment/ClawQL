@@ -7,6 +7,8 @@ GitHub release tag as JSON.
 
 ## Decisions
 
+- After reading this note, **immediately write all three artifacts** in the
+  workspace. Do not stop after recall.
 - Write files in the **workspace / current project directory only**
   (`./wrangler.toml`, `./src/index.js`, `./package.json`). Never write under
   `/tmp` or absolute scratch paths.
