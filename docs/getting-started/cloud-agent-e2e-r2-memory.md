@@ -30,21 +30,41 @@ A new chat that says **“ClawQL `memory_recall` is not available”** / only **
 | Personal / iOS | [cursor.com/agents](https://cursor.com/agents) → MCP → add **clawql** (stdio) → toggle **on** for the run                        |
 | Team admins    | [Dashboard → Integrations & MCP](https://cursor.com/dashboard/integrations) → add shared **clawql**, then enable it on the agent |
 
-Stdio config to paste:
+Stdio config to paste (**ClawQL monorepo / Cloud Agent VM** — preferred):
 
 ```json
 {
-  "command": "npx",
-  "args": ["-y", "clawql-mcp"],
-  "env": {
-    "CLAWQL_HOME": "/home/ubuntu/.ClawQL"
+  "mcpServers": {
+    "clawql": {
+      "command": "node",
+      "args": ["/workspace/bin/clawql-mcp.mjs"],
+      "env": {
+        "CLAWQL_HOME": "/home/ubuntu/.ClawQL"
+      }
+    }
   }
 }
 ```
 
-**Do not use** `npx -p clawql-mcp clawql-mcp` — on Cloud Agents it fails live tool discovery with `clawql-mcp: not found`.
+**Automations / published package** (when the workspace binary is unavailable):
 
-Repo **`.cursor/mcp.json`** helps the IDE and the install hook; **Cloud Agent tool calls still require the dashboard/MCP toggle** with the working args above. After enabling, start a **new** agent (or re-run) and wait for install so R2 auto-pull can fill `Memory/`.
+```json
+{
+  "mcpServers": {
+    "clawql": {
+      "command": "npx",
+      "args": ["-y", "clawql-mcp"],
+      "env": {
+        "CLAWQL_HOME": "/home/ubuntu/.ClawQL"
+      }
+    }
+  }
+}
+```
+
+**Do not use** `npx -p clawql-mcp clawql-mcp` — it fails live tool discovery with `clawql-mcp: not found` on Cloud Agents.
+
+Repo **`.cursor/mcp.json`** + the install hook write the **`node …/bin/clawql-mcp.mjs`** form; **Cloud Agent tool calls still require the dashboard/MCP toggle.** After enabling, start a **new** agent and wait for install so R2 auto-pull can fill `Memory/`.
 
 ### 1. Cloudflare account
 

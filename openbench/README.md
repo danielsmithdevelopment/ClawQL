@@ -27,8 +27,9 @@ openbench/
 ## Prerequisites
 
 1. ClawQL CLI on `PATH` (`npm i -g clawql-mcp` or repo `bin/clawql.mjs`).
-2. **clawql-inference** with a **direct BYOK** key (preferred: `DEEPSEEK_API_KEY`)
-   for the default A/B path. `OPENROUTER_API_KEY` is optional for `openrouter/*`.
+2. **clawql-inference** with an inference key. **OpenRouter-first:** set
+   `OPENROUTER_API_KEY` and use `openrouter/*` models (default CI path). Direct
+   BYOK (`DEEPSEEK_API_KEY`, …) is optional when you have vendor keys.
 3. OpenCode CLI for the coding-agent harness (`opencode`).
 4. Optional: clone OpenBench for matrix runs against stock harnesses.
 
@@ -38,15 +39,15 @@ git clone https://github.com/minghinmatthewlam/openbench.git
 
 ## Track A — ClawQL as a harness
 
-Headless launch through clawql-inference (direct BYOK):
+Headless launch through clawql-inference (OpenRouter-first):
 
 ```bash
 # terminal 1
-DEEPSEEK_API_KEY=sk-… clawql inference serve --port 8080
+OPENROUTER_API_KEY=sk-or-… clawql inference serve --port 8080
 
 # terminal 2
 CLAWQL_OPENBENCH=1 clawql opencode --non-interactive \
-  --model clawql/deepseek/deepseek-chat \
+  --model clawql/openrouter/deepseek/deepseek-chat \
   --inference-url http://127.0.0.1:8080/v1 \
   --task-file /path/to/instruction.md \
   --workdir /path/to/disposable/workspace \
@@ -106,22 +107,22 @@ To contribute these upstream, copy `tasks/<name>/` into OpenBench's `tasks/`
 |----------|---------|
 | `CLAWQL_OPENBENCH=1` | Allow unsandboxed harness on Linux CI; mark bench mode |
 | `CLAWQL_HARNESS_ALLOW_UNSANDBOXED=1` | Same soft-fail for Seatbelt gate |
-| `CLAWQL_OPENBENCH_HARNESS` | Underlying CLI (`opencode` for BYOK A/B) |
+| `CLAWQL_OPENBENCH_HARNESS` | Underlying CLI (`opencode` for A/B) |
 | `CLAWQL_INFERENCE_URL` / `OPENBENCH_INFERENCE_URL` | clawql-inference OpenAI-compat base |
-| `DEEPSEEK_API_KEY` (preferred) | Direct BYOK for default `deepseek/*` models |
-| `OPENROUTER_API_KEY` | Optional escape hatch for `openrouter/*` models |
+| `OPENROUTER_API_KEY` (preferred start) | Aggregator key for default `openrouter/*` models |
+| `DEEPSEEK_API_KEY` (etc.) | Direct BYOK when you skip OpenRouter |
 
 ## One-off GitHub Actions A/B
 
 Manual workflow **OpenBench A/B (clawql on vs off)** — starts
-**clawql-inference** with direct BYOK, runs OpenCode on/off, preferred secret
-`DEEPSEEK_API_KEY`. See
+**clawql-inference**, runs OpenCode on/off. Preferred secret:
+`OPENROUTER_API_KEY` with default model `openrouter/deepseek/deepseek-chat`. See
 [`docs/benchmarks/openbench-github-actions.md`](../docs/benchmarks/openbench-github-actions.md).
 
 ```bash
 gh workflow run openbench-ab.yml \
   -f task=memory-dependent-continuation \
-  -f model=deepseek/deepseek-chat \
+  -f model=openrouter/deepseek/deepseek-chat \
   -f trials=1
 ```
 

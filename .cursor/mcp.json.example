@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "clawql": {
-      "command": "npx",
-      "args": ["-y", "clawql-mcp"],
+      "command": "node",
+      "args": ["/workspace/bin/clawql-mcp.mjs"],
       "env": {
         "CLAWQL_HOME": "/home/ubuntu/.ClawQL"
       }
