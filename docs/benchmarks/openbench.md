@@ -48,8 +48,10 @@ python3 openbench/validate_tasks.py
 ## GitHub Actions A/B (CI + manual)
 
 - **Offline:** main CI always runs `python3 openbench/validate_tasks.py`.
-- **Live A/B:** [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml) runs on path-filtered PR/push to `main` and via `workflow_dispatch`. Preferred secret: `DEEPSEEK_API_KEY`. Missing secrets → live A/B **skipped** on PR/push (exit 0); manual dispatch still fails closed.
-- OpenRouter (`OPENROUTER_API_KEY` + `openrouter/*`) is optional.
+- **Live A/B:** [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml) runs on path-filtered PR/push to `main` and via `workflow_dispatch`.
+- **Default model:** `openrouter/deepseek/deepseek-chat` — preferred secret: **`OPENROUTER_API_KEY`** (bring your existing aggregator key; no per-provider BYOK required).
+- Missing secrets → live A/B **skipped** on PR/push (exit 0); manual dispatch still fails closed.
+- Optional later: switch `model` to direct BYOK ids (`deepseek/*`, `anthropic/*`, …) when you add vendor keys.
 
 See [`openbench-github-actions.md`](openbench-github-actions.md).
 
@@ -58,7 +60,7 @@ See [`openbench-github-actions.md`](openbench-github-actions.md).
 See [`openbench/README.md`](../../openbench/README.md) and
 [`openbench/scripts/run-with-openbench.sh`](../../openbench/scripts/run-with-openbench.sh).
 
-Live runs need agent CLI credentials plus a BYOK inference secret in CI.
+Live runs need agent CLI credentials plus an OpenRouter or BYOK inference secret in CI.
 
 ## Relation to planning-context benchmarks
 

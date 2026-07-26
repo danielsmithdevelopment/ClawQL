@@ -1,9 +1,10 @@
-# OpenBench A/B via clawql-inference (direct BYOK; OpenRouter optional).
+# OpenBench A/B via clawql-inference.
+#
+# OpenRouter-first for teams already on that aggregator (OPENROUTER_API_KEY +
+# openrouter/* models). Direct BYOK (DeepSeek, Groq, …) remains fully supported.
 #
 # - workflow_dispatch: full knobs (manual)
-# - pull_request / push (path-filtered): CI smoke — skip (exit 0) when no BYOK secret
-#
-# Preferred secret: DEEPSEEK_API_KEY. Optional OPENROUTER_API_KEY for openrouter/* models.
+# - pull_request / push (path-filtered): CI smoke — skip (exit 0) when no secret
 
 name: OpenBench A/B (clawql on vs off)
 
@@ -20,10 +21,10 @@ on:
           - multi-provider-api-workflow
         default: memory-dependent-continuation
       model:
-        description: "clawql-inference model (deepseek/… preferred; openrouter/… optional)"
+        description: "clawql-inference model — openrouter/* with OPENROUTER_API_KEY, or direct BYOK ids"
         required: true
         type: string
-        default: deepseek/deepseek-chat
+        default: openrouter/deepseek/deepseek-chat
       trials:
         description: Trials per arm (keep small — each cell spends tokens)
         required: true
@@ -61,6 +62,7 @@ on:
       - "bin/clawql.mjs"
       - ".github/workflows/openbench-ab.yml"
       - "docs/benchmarks/openbench*.md"
+      - "docs/getting-started/inference.md"
   push:
     branches: [main]
     paths:
@@ -71,6 +73,7 @@ on:
       - "bin/clawql.mjs"
       - ".github/workflows/openbench-ab.yml"
       - "docs/benchmarks/openbench*.md"
+      - "docs/getting-started/inference.md"
 
 concurrency:
   group: openbench-ab-${{ github.workflow }}-${{ github.ref }}
@@ -81,7 +84,7 @@ permissions:
 
 jobs:
   ab-compare:
-    name: A/B via clawql-inference (BYOK)
+    name: A/B via clawql-inference (OpenRouter or BYOK)
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
@@ -91,8 +94,9 @@ jobs:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       # Defaults for pull_request / push; workflow_dispatch inputs override when set.
+      # OpenRouter-first default model for teams bringing an existing aggregator key.
       OPENBENCH_TASK: ${{ inputs.task || 'memory-dependent-continuation' }}
-      OPENBENCH_MODEL: ${{ inputs.model || 'deepseek/deepseek-chat' }}
+      OPENBENCH_MODEL: ${{ inputs.model || 'openrouter/deepseek/deepseek-chat' }}
       OPENBENCH_TRIALS: ${{ inputs.trials || '1' }}
       OPENBENCH_TIMEOUT_S: ${{ inputs.timeout_s || '180' }}
       OPENBENCH_ARMS: ${{ inputs.arms || 'clawql-on,clawql-off' }}
@@ -113,19 +117,26 @@ jobs:
           run_benchmark=false
           reason=""
 
+          has_byok=false
+          if [ -n "${DEEPSEEK_API_KEY:-}" ] || [ -n "${GROQ_API_KEY:-}" ] \
+            || [ -n "${OPENAI_API_KEY:-}" ] || [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+            has_byok=true
+          fi
+
           if [[ "$MODEL" == openrouter/* ]]; then
             if [ -n "${OPENROUTER_API_KEY:-}" ]; then
               run_benchmark=true
-              reason="OpenRouter escape hatch for $MODEL"
+              reason="OpenRouter key for $MODEL (bring-your-aggregator path)"
             else
-              reason="Model '$MODEL' needs OPENROUTER_API_KEY (optional escape hatch)."
+              reason="Model '$MODEL' needs repository secret OPENROUTER_API_KEY. Add it under Settings → Secrets, or switch to a direct BYOK model + DEEPSEEK_API_KEY / etc."
             fi
-          elif [ -n "${DEEPSEEK_API_KEY:-}" ] || [ -n "${GROQ_API_KEY:-}" ] \
-            || [ -n "${OPENAI_API_KEY:-}" ] || [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+          elif [ "$has_byok" = true ]; then
             run_benchmark=true
             reason="Direct BYOK credentials for clawql-inference ($MODEL)"
+          elif [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            reason="OPENROUTER_API_KEY is set, but model '$MODEL' is a direct BYOK id. Use an openrouter/* model (default: openrouter/deepseek/deepseek-chat) or add the matching vendor secret."
           else
-            reason="No DEEPSEEK_API_KEY (preferred) or other vendor BYOK secret. OpenRouter remains optional via OPENROUTER_API_KEY + openrouter/* models."
+            reason="Add OPENROUTER_API_KEY (OpenRouter-first) or a vendor BYOK secret (DEEPSEEK_API_KEY, …). Models: openrouter/<vendor>/<model> or deepseek/… with the matching key."
           fi
 
           echo "run_benchmark=${run_benchmark}" >> "$GITHUB_OUTPUT"
@@ -178,7 +189,7 @@ jobs:
           command -v opencode
           opencode --version || true
 
-      - name: Start clawql-inference (BYOK upstreams)
+      - name: Start clawql-inference (OpenRouter and/or BYOK)
         if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
           mkdir -p artifacts/openbench-ab
@@ -190,14 +201,20 @@ jobs:
           for i in $(seq 1 60); do
             if curl -sf "http://127.0.0.1:${PORT}/healthz" >/dev/null; then
               echo "clawql-inference healthy after ${i}s"
-              # Fail fast if catalog is empty (secret present but unused / wrong).
               models="$(curl -sf "http://127.0.0.1:${PORT}/v1/models" || true)"
               echo "$models" | head -c 400
               echo ""
               if ! echo "$models" | grep -q '"id"'; then
-                echo "::error::/v1/models has no credentialed models — check BYOK secrets"
+                echo "::error::/v1/models has no credentialed models — check OPENROUTER_API_KEY or BYOK secrets"
                 tail -n 120 artifacts/openbench-ab/inference.log || true
                 exit 1
+              fi
+              # Ensure the requested model appears when OpenRouter-first.
+              if [[ "${OPENBENCH_MODEL}" == openrouter/* ]]; then
+                if ! echo "$models" | grep -Fq "\"id\":\"${OPENBENCH_MODEL}\"" \
+                  && ! echo "$models" | grep -Fq "\"id\": \"${OPENBENCH_MODEL}\""; then
+                  echo "::warning::Model ${OPENBENCH_MODEL} not listed in /v1/models (catalog may still route it)"
+                fi
               fi
               exit 0
             fi
@@ -226,10 +243,10 @@ jobs:
             --out "$OUT" \
             --summary-md "$SUM"
           {
-            echo "## OpenBench A/B (clawql-inference BYOK)"
+            echo "## OpenBench A/B (clawql-inference)"
             echo ""
             echo "- Run: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            echo "- Inference: \`clawql-inference\` (direct BYOK; OpenRouter optional)"
+            echo "- Inference: \`clawql-inference\` (OpenRouter-first or direct BYOK)"
             echo "- Agent: OpenCode"
             echo "- Task: \`${OPENBENCH_TASK}\`"
             echo "- Model: \`${OPENBENCH_MODEL}\`"

@@ -29,7 +29,7 @@ from pathlib import Path
 NAME = "clawql"
 
 # Which underlying agent CLI ClawQL should launch. Override with CLAWQL_OPENBENCH_HARNESS.
-# Default is OpenCode (pairs with clawql-inference direct BYOK / optional OpenRouter).
+# Default is OpenCode (pairs with clawql-inference OpenRouter-first or direct BYOK).
 _DEFAULT_HARNESS = os.environ.get("CLAWQL_OPENBENCH_HARNESS", "opencode").strip() or "opencode"
 
 # Canonical OpenBench model pin -> CLI model id for the default (opencode) harness.
