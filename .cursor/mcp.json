@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "clawql": {
+      "command": "npx",
+      "args": ["-p", "clawql-mcp", "clawql-mcp"],
+      "env": {
+        "CLAWQL_HOME": "/home/ubuntu/.ClawQL"
+      }
+    }
+  }
+}

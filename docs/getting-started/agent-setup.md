@@ -150,33 +150,37 @@ For **S3** or **GCS**, use the credential variables from [For teams — Environm
 
 **Provider API tokens** (GitHub, Slack, Cloudflare, etc.) also belong in Secrets — same keys as local **`clawql secrets set`**, loaded via **`CLAWQL_HOME`** / **`clawql.env`**. Do not put tokens in **`mcp.json`** or git.
 
-### 2. Connect ClawQL MCP (stdio)
+### 2. Connect ClawQL MCP (stdio) — required for `memory_*`
 
-Cloud Agents use the repo's MCP configuration. Add **`.cursor/mcp.json`** (or enable the **clawql** server in the agent run UI):
+**Cloud Agents do not get `memory_ingest` / `memory_recall` / `memory_sync` from repo files alone.** Cursor only exposes those tools when the **clawql** MCP server is **enabled for the run**.
+
+#### A. Register ClawQL for Cloud Agents (one-time, required)
+
+1. Open **[cursor.com/agents](https://cursor.com/agents)** → MCP dropdown → **add custom MCP** (stdio), **or** team admins: **[Dashboard → Integrations & MCP](https://cursor.com/dashboard/integrations)**.
+2. Add server name **`clawql`**:
 
 ```json
 {
-  "mcpServers": {
-    "clawql": {
-      "command": "npx",
-      "args": ["-p", "clawql-mcp", "clawql-mcp"],
-      "env": {
-        "CLAWQL_HOME": "/home/ubuntu/.ClawQL"
-      }
-    }
+  "command": "npx",
+  "args": ["-p", "clawql-mcp", "clawql-mcp"],
+  "env": {
+    "CLAWQL_HOME": "/home/ubuntu/.ClawQL"
   }
 }
 ```
 
-`CLAWQL_HOME` in **`env`** can match the dashboard secret; dashboard secrets are also visible to the MCP child process.
+3. Before each new chat / agent run, confirm **clawql** is **toggled on** in the MCP list (same place as built-in **cursor-cloud**).
+4. Wait for environment **install** to finish so `clawql-mcp` / the repo build and R2 **sync pull** can populate `~/.ClawQL/Memory/`.
 
-On a desktop machine you can generate the same JSON:
+If the tool catalog only shows **`cursor-cloud`**, `memory_recall` cannot run — that is an MCP attach problem, not a missing R2 note.
+
+#### B. Repo + desktop config (IDE / install hook)
+
+Committed **`.cursor/mcp.json`** (same shape as **`.cursor/mcp.json.example`**) wires stdio for the IDE and is copied/written by the Cloud Agent install script to **`~/.cursor/mcp.json`**. Dashboard Secrets supply sync credentials; do not put API tokens in MCP JSON.
 
 ```bash
 npx -p clawql-mcp clawql mcp-config --write cursor
 ```
-
-Enable the **clawql** MCP server when starting a Cloud Agent from iOS (same as desktop — the server must be toggled on per run if your client requires it).
 
 ### 3. Bootstrap the vault on the VM
 
@@ -243,7 +247,7 @@ Docs: https://docs.clawql.com/agent-setup#cursor-i-os-cloud-agent https://docs.c
 | **`memory_recall`** empty on a new VM | Secrets set? **`memory_sync` `{ "direction": "pull" }`** or **`CLAWQL_SYNC_AUTO_PULL_ON_START=1`** |
 | **`memory_sync`** errors              | **`CLAWQL_SYNC_BUCKET`**, prefix, and R2/S3/GCS credentials in dashboard Secrets                   |
 | **`execute`** auth failures           | Provider keys in **`vault/providers.json`** or matching **`CLAWQL_*`** env secrets                 |
-| MCP tools missing                     | Enable **clawql** server for the Cloud Agent run; confirm **`CLAWQL_ENABLE_MEMORY`** is not `0`    |
+| MCP tools missing / only `cursor-cloud` | Add + toggle **clawql** at [cursor.com/agents](https://cursor.com/agents) (or team Integrations); new run required |
 | Conflicts after parallel runs         | **`memory_sync`** response lists conflicts; use **`force: true`** only deliberately                |
 | `sync ensure` → Cloudflare **10042**  | Enable **R2** on the Cloudflare account (dashboard subscribe), then retry                          |
 | S3 TLS handshake failure after enable | Wait and retry `{accountId}.r2.cloudflarestorage.com`; trim whitespace on sync access key          |
