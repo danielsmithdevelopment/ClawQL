@@ -112,13 +112,12 @@ export const ouroborosMcpTools = {
       return {
         converged: result.converged,
         generations: result.generations.length,
-        maxGenerations,
         finalSeed: result.finalSeed,
         lineageId: result.lineage.seed_id,
         status: result.lineage.status,
         summary: result.converged
-          ? `Converged in ${result.generations.length} generation(s)`
-          : `Exhausted ${result.generations.length} generation(s) without convergence`,
+          ? `Converged in ${result.generations.length} generation(s) (cap=${maxGenerations})`
+          : `Exhausted ${result.generations.length} generation(s) without convergence (cap=${maxGenerations})`,
       };
     },
   },
