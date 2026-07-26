@@ -242,16 +242,16 @@ Docs: https://docs.clawql.com/agent-setup#cursor-i-os-cloud-agent https://docs.c
 
 ### Troubleshooting (iOS)
 
-| Symptom                               | Check                                                                                              |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **`memory_recall`** empty on a new VM | Secrets set? **`memory_sync` `{ "direction": "pull" }`** or **`CLAWQL_SYNC_AUTO_PULL_ON_START=1`** |
-| **`memory_sync`** errors              | **`CLAWQL_SYNC_BUCKET`**, prefix, and R2/S3/GCS credentials in dashboard Secrets                   |
-| **`execute`** auth failures           | Provider keys in **`vault/providers.json`** or matching **`CLAWQL_*`** env secrets                 |
+| Symptom                                 | Check                                                                                                              |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **`memory_recall`** empty on a new VM   | Secrets set? **`memory_sync` `{ "direction": "pull" }`** or **`CLAWQL_SYNC_AUTO_PULL_ON_START=1`**                 |
+| **`memory_sync`** errors                | **`CLAWQL_SYNC_BUCKET`**, prefix, and R2/S3/GCS credentials in dashboard Secrets                                   |
+| **`execute`** auth failures             | Provider keys in **`vault/providers.json`** or matching **`CLAWQL_*`** env secrets                                 |
 | MCP tools missing / only `cursor-cloud` | Add + toggle **clawql** at [cursor.com/agents](https://cursor.com/agents) (or team Integrations); new run required |
-| Conflicts after parallel runs         | **`memory_sync`** response lists conflicts; use **`force: true`** only deliberately                |
-| `sync ensure` → Cloudflare **10042**  | Enable **R2** on the Cloudflare account (dashboard subscribe), then retry                          |
-| S3 TLS handshake failure after enable | Wait and retry `{accountId}.r2.cloudflarestorage.com`; trim whitespace on sync access key          |
-| Full e2e checklist                    | [cloud-agent-e2e-r2-memory.md](./cloud-agent-e2e-r2-memory.md)                                     |
+| Conflicts after parallel runs           | **`memory_sync`** response lists conflicts; use **`force: true`** only deliberately                                |
+| `sync ensure` → Cloudflare **10042**    | Enable **R2** on the Cloudflare account (dashboard subscribe), then retry                                          |
+| S3 TLS handshake failure after enable   | Wait and retry `{accountId}.r2.cloudflarestorage.com`; trim whitespace on sync access key                          |
+| Full e2e checklist                      | [cloud-agent-e2e-r2-memory.md](./cloud-agent-e2e-r2-memory.md)                                                     |
 
 ---
 

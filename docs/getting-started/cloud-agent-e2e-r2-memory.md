@@ -25,10 +25,10 @@ Secrets and provider tokens stay in **Cursor Secrets** or `vault/providers.json`
 
 A new chat that says **“ClawQL `memory_recall` is not available”** / only **`cursor-cloud`** is attached means the **clawql** MCP server was not enabled for that run.
 
-| Surface | What to do |
-| ------- | ---------- |
-| Personal / iOS | [cursor.com/agents](https://cursor.com/agents) → MCP → add **clawql** (stdio) → toggle **on** for the run |
-| Team admins | [Dashboard → Integrations & MCP](https://cursor.com/dashboard/integrations) → add shared **clawql**, then enable it on the agent |
+| Surface        | What to do                                                                                                                       |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Personal / iOS | [cursor.com/agents](https://cursor.com/agents) → MCP → add **clawql** (stdio) → toggle **on** for the run                        |
+| Team admins    | [Dashboard → Integrations & MCP](https://cursor.com/dashboard/integrations) → add shared **clawql**, then enable it on the agent |
 
 Stdio config to paste:
 
@@ -80,10 +80,10 @@ Provider tokens (GitHub, Slack, …) are optional for memory sync; without them 
 
 ### 3. Repo wiring (this repository already has it)
 
-| File                              | Role                                                                                                                                    |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `.cursor/environment.json`        | Runs `.cursor/scripts/cloud-agent-install.sh` on VM setup                                                                               |
-| `.cursor/mcp.json` (+ `.example`) | Stdio `clawql-mcp` for IDE / install; **also register the same server in the Cloud Agents MCP UI**                                      |
+| File                              | Role                                                                                                                         |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `.cursor/environment.json`        | Runs `.cursor/scripts/cloud-agent-install.sh` on VM setup                                                                    |
+| `.cursor/mcp.json` (+ `.example`) | Stdio `clawql-mcp` for IDE / install; **also register the same server in the Cloud Agents MCP UI**                           |
 | Install script                    | `npm ci` + `npm run build`, creates `~/.ClawQL`, runs `sync ensure` / `pull` when secrets exist, writes `~/.cursor/mcp.json` |
 
 ---
@@ -203,17 +203,17 @@ If TLS to {accountId}.r2.cloudflarestorage.com fails right after enabling R2, wa
 
 ## Troubleshooting (from a real enablement)
 
-| Symptom                                                                                    | Cause                                                                                          | Fix                                                                                                                                        |
-| ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Cannot find module '.../dist/onboarding/cli.js'`                                          | Install/build not finished                                                                     | Wait for `.cursor/scripts/cloud-agent-install.sh` / `npm run build`                                                                        |
-| `sync ensure` → Cloudflare **10042**                                                       | R2 product not enabled on the account                                                          | Dashboard → R2 → complete purchase/subscribe, then retry ensure                                                                            |
-| `sync ensure` OK via `cloudflare-api`, but `push`/`pull` → `sslv3 alert handshake failure` | Account S3 hostname not ready yet, or bad network path to `{account}.r2.cloudflarestorage.com` | Wait a few minutes after enabling R2 and retry; confirm Account ID; do **not** require a key rotation if REST bucket create already worked |
-| Access key `len=34` for a 32-char key                                                      | Trailing whitespace in Cursor Secret                          | Re-paste `CLAWQL_SYNC_ACCESS_KEY_ID` with no spaces/newlines                                                                                                                    |
-| `Sync bucket not configured`                                                               | No `sync.json` / ensure never succeeded                       | Run `sync ensure --yes` (or `sync init --bucket …` if the bucket already exists)                                                                                                |
-| MCP catalog has no `memory_*` / “not available in this cloud-agent run”                    | **clawql** not enabled in Cloud Agents MCP UI                 | Add + toggle **clawql** at [cursor.com/agents](https://cursor.com/agents) (or team Integrations); start a **new** run; repo `mcp.json` alone is not enough                     |
-| New chat has empty vault / no `mcp.json` yet                                               | Install still running or first boot                           | Wait for install; secrets must allow `sync pull`; then `memory_sync` `{ "direction": "pull" }`                                                                                  |
-| `doctor` warns about GitHub/Slack/…                                                        | Provider vault empty                                          | Optional for memory sync; add tokens via Secrets or `clawql secrets set` for `execute`                                                                                          |
-| REST upload to R2 works, S3 SDK fails                                                      | Same as TLS row — ClawQL sync uses the S3-compatible endpoint | Fix S3 endpoint TLS/credentials; REST success only proves the bucket exists                                                                                                     |
+| Symptom                                                                                    | Cause                                                                                          | Fix                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Cannot find module '.../dist/onboarding/cli.js'`                                          | Install/build not finished                                                                     | Wait for `.cursor/scripts/cloud-agent-install.sh` / `npm run build`                                                                                        |
+| `sync ensure` → Cloudflare **10042**                                                       | R2 product not enabled on the account                                                          | Dashboard → R2 → complete purchase/subscribe, then retry ensure                                                                                            |
+| `sync ensure` OK via `cloudflare-api`, but `push`/`pull` → `sslv3 alert handshake failure` | Account S3 hostname not ready yet, or bad network path to `{account}.r2.cloudflarestorage.com` | Wait a few minutes after enabling R2 and retry; confirm Account ID; do **not** require a key rotation if REST bucket create already worked                 |
+| Access key `len=34` for a 32-char key                                                      | Trailing whitespace in Cursor Secret                                                           | Re-paste `CLAWQL_SYNC_ACCESS_KEY_ID` with no spaces/newlines                                                                                               |
+| `Sync bucket not configured`                                                               | No `sync.json` / ensure never succeeded                                                        | Run `sync ensure --yes` (or `sync init --bucket …` if the bucket already exists)                                                                           |
+| MCP catalog has no `memory_*` / “not available in this cloud-agent run”                    | **clawql** not enabled in Cloud Agents MCP UI                                                  | Add + toggle **clawql** at [cursor.com/agents](https://cursor.com/agents) (or team Integrations); start a **new** run; repo `mcp.json` alone is not enough |
+| New chat has empty vault / no `mcp.json` yet                                               | Install still running or first boot                                                            | Wait for install; secrets must allow `sync pull`; then `memory_sync` `{ "direction": "pull" }`                                                             |
+| `doctor` warns about GitHub/Slack/…                                                        | Provider vault empty                                                                           | Optional for memory sync; add tokens via Secrets or `clawql secrets set` for `execute`                                                                     |
+| REST upload to R2 works, S3 SDK fails                                                      | Same as TLS row — ClawQL sync uses the S3-compatible endpoint                                  | Fix S3 endpoint TLS/credentials; REST success only proves the bucket exists                                                                                |
 
 ### Quick TLS probe (no secrets printed)
 
