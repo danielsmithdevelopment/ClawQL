@@ -94,3 +94,16 @@ had disabled OpenCode’s `doom_loop` guard.
 Fix: `doom_loop: deny`, slim OpenBench MCP tools (pageindex/documents off), seed
 token-budget + multi-provider vault notes so clawql-on recalls the nested-YAML /
 wrangler recipe instead of thrashing.
+
+## Target state ([run 30188030157](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30188030157))
+
+Cheap model `openrouter/google/gemini-2.5-flash-lite`, 1 trial — **clawql-on wins every task**:
+
+| Task                          | clawql-on | clawql-off |
+| ----------------------------- | --------- | ---------- |
+| memory-dependent-continuation | **1.0**   | 0.333      |
+| multi-provider-api-workflow   | **1.0**   | 0.0        |
+| token-budget-constrained      | **1.0**   | 0.0        |
+
+Additional hardening: memory seed forbids `import argon2`; multi-provider seed/instruction
+require relative workspace paths (no `/tmp` writes).
