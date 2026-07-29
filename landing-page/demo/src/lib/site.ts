@@ -23,7 +23,9 @@ export const site = {
     about: '/about',
     /** Default / primary GTM motion — Agentic Gateway as Foundational Platform for Auditable Production AI. */
     inferenceGtm: '/inference/gtm',
-    /** IDP-first GTM motion — standalone document lifecycle for ops / compliance buyers. */
+    /** Public IDP-first marketing landing (ops / compliance buyers). */
+    idp: '/idp',
+    /** IDP-first GTM playbook — strategy source of truth for the IDP motion. */
     idpGtm: '/idp/gtm',
     /** Secondary enterprise / Palantir-facing GTM motion. */
     enterpriseGtm: '/enterprise/gtm',

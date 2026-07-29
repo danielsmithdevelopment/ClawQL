@@ -31,6 +31,9 @@ export default function Page() {
         }
         cta={
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center">
+            <ButtonLink href={site.urls.idp} size="lg">
+              View IDP landing
+            </ButtonLink>
             <ButtonLink href={site.urls.signup} size="lg">
               Start free trial
             </ButtonLink>

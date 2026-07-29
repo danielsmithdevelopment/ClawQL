@@ -3,7 +3,7 @@
 **July 2026 · Compiled from competitive research and product docs**
 
 **Audience:** Internal GTM, sales, product marketing  
-**Related:** [IDP platform](./clawql-idp-platform.md) · [IDP pipeline](../providers/idp-pipeline.md) · [Plugins](https://docs.clawql.com/plugins) · Public playbook: [clawql.com/idp/gtm](https://clawql.com/idp/gtm) · Inference GTM: [clawql.com/inference/gtm](https://clawql.com/inference/gtm)
+**Related:** [IDP platform](./clawql-idp-platform.md) · [IDP pipeline](../providers/idp-pipeline.md) · [Plugins](https://docs.clawql.com/plugins) · Marketing: [clawql.com/idp](https://clawql.com/idp) · Public playbook: [clawql.com/idp/gtm](https://clawql.com/idp/gtm) · Inference GTM: [clawql.com/inference/gtm](https://clawql.com/inference/gtm)
 
 > Internal strategy document. Do not distribute without review.
 
@@ -206,7 +206,7 @@ clawql.com/idp          → IDP-first motion (operations/compliance audience)
 clawql.com/enterprise   → enterprise/sovereign motion (CISO/CTO audience)
 ```
 
-This playbook lives at **[clawql.com/idp/gtm](https://clawql.com/idp/gtm)**. The public marketing landing (`clawql.com/idp`) should implement Part 4 when ready.
+This playbook lives at **[clawql.com/idp/gtm](https://clawql.com/idp/gtm)**. The public marketing landing that implements Part 4 is **[clawql.com/idp](https://clawql.com/idp)**.
 
 ---
 

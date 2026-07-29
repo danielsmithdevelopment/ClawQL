@@ -435,8 +435,11 @@ export function IdpGtmPlaybook() {
             <li>Footer CTAs by buyer type</li>
           </ol>
           <p>
-            Implement the public marketing page at <code>/idp</code> when ready; this playbook is the strategy source of
-            truth at <code>/idp/gtm</code>.
+            Public marketing landing:{' '}
+            <Link href={site.urls.idp}>
+              <code>clawql.com/idp</code>
+            </Link>
+            . This playbook remains the strategy source of truth at <code>/idp/gtm</code>.
           </p>
 
           <h2 id="site-architecture">Part 5 — Site architecture</h2>
