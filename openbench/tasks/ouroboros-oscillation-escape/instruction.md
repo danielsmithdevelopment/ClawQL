@@ -30,8 +30,14 @@ tells you otherwise.
 
 ## If you do **not** have `ouroboros_*` tools (ouroboros-off)
 
-Resolve the decoy conflict yourself under the same hard caps. Prefer one
-decisive write; alternating decoy strategies burns turns toward the hard fail.
+You MUST call tools — planning-only scores zero.
+
+1. Read both decoy notes.
+2. Implement token-bucket in `scheduler_lib/limiter.py`, run
+   `python3 -m scheduler_lib.selftest`.
+3. On failure, rewrite with sliding-window and re-test.
+4. Keep alternating decoys until selftest passes or you hit the turn/time cap.
+   Do not stop after the first failed attempt.
 
 ## Done when
 

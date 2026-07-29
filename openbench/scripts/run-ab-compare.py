@@ -134,6 +134,37 @@ stagnation / max_generations), write that implementation with the write tool
 and stop. Do not flip-flop between decoys.
 """
 
+# Forced for ouroboros-off when the model plans without tools or fails selftest.
+OUROBOROS_OFF_THRASH_NUDGE = """Continue the same task. Planning-only scored zero — call tools now.
+
+Hard rule: keep alternating until `python3 -m scheduler_lib.selftest` exits 0
+or you hit the turn budget:
+
+1. Read `decoy/token_bucket.md`, **write** that algorithm to `scheduler_lib/limiter.py`, run selftest.
+2. If it fails, read `decoy/sliding_window.md`, **rewrite** limiter.py, run selftest.
+3. If it fails again, flip back to token-bucket and repeat.
+4. Do not stop after one attempt. Do not invent leaky-bucket unless a decoy says so.
+"""
+
+
+def scheduler_selftest_ok(workdir: Path) -> bool:
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-m", "scheduler_lib.selftest"],
+            cwd=str(workdir),
+            capture_output=True,
+            text=True,
+            timeout=30,
+            stdin=subprocess.DEVNULL,
+        )
+        return proc.returncode == 0
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def count_write_tools(combined: str) -> int:
+    text = combined or ""
+    return text.count('"tool":"write"') + text.count('"tool":"edit"')
 DEFAULT_HARNESS = "opencode"
 DEFAULT_MODEL = os.environ.get(
     "OPENBENCH_MODEL", "openrouter/deepseek/deepseek-chat"
@@ -578,7 +609,7 @@ def run_arm_on(
 
     # Cheap models often stop after memory_recall; one write-focused nudge with
     # vault notes inlined so a second recall is unnecessary.
-    if vault and not timed_out and recalled_without_writes(combined):
+    if vault and not disable_memory and not timed_out and recalled_without_writes(combined):
         cont_file = workdir / ".openbench_continuation.md"
         cont_file.write_text(build_write_continuation(vault), encoding="utf-8")
         cont_timeout = max(60, min(int(timeout_s), 180))
@@ -599,6 +630,43 @@ def run_arm_on(
             timed_out = True
             combined = combined + "\n" + _dec_timeout_output(exc)
             code = 124
+
+    # ouroboros-off thrash study: re-nudge until selftest passes or spend caps bind.
+    # Caps: max 4 nudges, each ≤45s, total wall still bounded by timeout_s (≤180).
+    if arm == "ouroboros-off" and not timed_out:
+        nudge_n = 0
+        while nudge_n < 4 and not timed_out:
+            elapsed = time.monotonic() - t0
+            remaining = int(timeout_s) - int(elapsed)
+            if remaining < 25:
+                break
+            turns_so_far = parse_opencode_jsonl_usage(combined).get("turns") or 0
+            if isinstance(turns_so_far, int) and turns_so_far >= 50:
+                break
+            if scheduler_selftest_ok(workdir) and count_write_tools(combined) > 0:
+                break
+            nudge_n += 1
+            cont_file = workdir / f".openbench_thrash_nudge_{nudge_n}.md"
+            cont_file.write_text(OUROBOROS_OFF_THRASH_NUDGE, encoding="utf-8")
+            cont_timeout = max(25, min(45, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_n = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_n.stdout or "") + (proc_n.stderr or "")
+                code = proc_n.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+                break
 
     wall_s = round(time.monotonic() - t0, 3)
     bench = parse_bench_json(combined)
