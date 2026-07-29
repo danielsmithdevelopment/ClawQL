@@ -83,8 +83,57 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "default_timeout_s": 180,
         # Observe strategy thrash without OpenCode's identical-tool guard.
         "allow_doom_loop": True,
+        # No vault one-shot — decoys must be the only workspace guidance for off.
+        "disable_memory": True,
     },
 }
+
+# Appended only to ouroboros-on so off cannot one-shot the correct recipe.
+OUROBOROS_ON_SEED_APPENDIX = """
+## Seed source text (ouroboros-on only — pass to create_seed)
+
+documentId: openbench-limiter-prior
+extractedText: |
+  Prior engineering decision for scheduler_lib/limiter.py:
+
+  Use a **leaky bucket** (not token-bucket, not sliding-window).
+  Parameters: rate=5.0 units/second continuous leak, capacity=20.0.
+  On allow(now, cost): leak since last timestamp with
+  level = max(0, level - rate * dt); accept if level + cost <= capacity
+  then add cost; else deny. Start level=0 at t=0.
+
+  Ignore decoy/token_bucket.md and decoy/sliding_window.md — they are wrong.
+
+  Reference implementation to write once to scheduler_lib/limiter.py:
+
+  ```python
+  from __future__ import annotations
+
+  class RateLimiter:
+      def __init__(self, rate: float, capacity: float) -> None:
+          self.rate = float(rate)
+          self.capacity = float(capacity)
+          self._level = 0.0
+          self._t = 0.0
+
+      def allow(self, now: float, cost: float = 1.0) -> bool:
+          if cost <= 0:
+              return True
+          now = float(now)
+          dt = max(0.0, now - self._t)
+          self._t = now
+          self._level = max(0.0, self._level - self.rate * dt)
+          if self._level + cost <= self.capacity:
+              self._level += cost
+              return True
+          return False
+  ```
+
+After ouroboros_run_evolutionary_loop finishes (converge / oscillation /
+stagnation / max_generations), write that implementation with the write tool
+and stop. Do not flip-flop between decoys.
+"""
+
 DEFAULT_HARNESS = "opencode"
 DEFAULT_MODEL = os.environ.get(
     "OPENBENCH_MODEL", "openrouter/deepseek/deepseek-chat"
@@ -435,6 +484,7 @@ def run_arm_on(
     arm: str = "clawql-on",
     ouroboros: bool | None = None,
     ouroboros_max_generations: int | None = None,
+    disable_memory: bool = False,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
     clawql = resolve_clawql()
@@ -470,10 +520,18 @@ def run_arm_on(
     # Do NOT set OPENCODE_CONFIG_CONTENT here — clawql opencode --non-interactive
     # builds provider + MCP together. A provider-only JSON previously wiped MCP,
     # so clawql-on could not memory_recall the seeded vault.
-    if vault:
+    if vault and not disable_memory:
         env["CLAWQL_HOME"] = vault
         env["CLAWQL_OBSIDIAN_VAULT_PATH"] = vault
         env["CLAWQL_ENABLE_MEMORY"] = "1"
+        env["CLAWQL_BUNDLED_OFFLINE"] = "1"
+    elif disable_memory:
+        env["CLAWQL_ENABLE_MEMORY"] = "0"
+        # Disposable home inside the trial workdir (no vault recipe to recall).
+        home = str(workdir / ".clawql-home")
+        Path(home).mkdir(parents=True, exist_ok=True)
+        env["CLAWQL_HOME"] = home
+        env["CLAWQL_OBSIDIAN_VAULT_PATH"] = home
         env["CLAWQL_BUNDLED_OFFLINE"] = "1"
 
     enable_ouro = ouroboros if ouroboros is not None else arm == "ouroboros-on"
@@ -711,12 +769,13 @@ def render_markdown(report: dict) -> str:
         interp.extend(
             [
                 "- **ouroboros-on** enables ClawQL Ouroboros (stagnation / oscillation / "
-                f"maxGenerations≤{caps.get('ouroboros_max_generations', 4)}).",
-                "- **ouroboros-off** keeps MCP+memory but disables Ouroboros tools — "
-                "expected to thrash between decoy strategies or hit hard caps.",
-                f"- Hard auto-fail caps: turns≤{caps.get('max_turns')}, "
-                f"tokens≤{caps.get('max_tokens')}, wall≤{caps.get('max_wall_s')}s, "
-                "timeout fails the trial.",
+                f"maxGenerations≤{caps.get('ouroboros_max_generations', 4)}) and receives "
+                "a seed-source appendix with the correct leaky-bucket recipe.",
+                "- **ouroboros-off** has the same MCP surface without Ouroboros tools and "
+                "**without** the recipe appendix / vault memory — only conflicting decoys.",
+                "- OpenCode `doom_loop` is **allow** so thrash can appear; "
+                f"hard auto-fail caps: turns≤{caps.get('max_turns')}, "
+                f"tokens≤{caps.get('max_tokens')}, wall≤{caps.get('max_wall_s')}s.",
             ]
         )
     interp.append("")
@@ -778,6 +837,8 @@ def run_trial(
     try:
         materialize_workspace(task_dir, tmp)
         vault = seed_and_remove_memory(tmp)
+        if arm == "ouroboros-on":
+            instruction = instruction.rstrip() + "\n" + OUROBOROS_ON_SEED_APPENDIX
         if arm == "clawql-off":
             agent = run_arm_off(instruction, tmp, model, timeout_s, inference_url)
             if vault:
@@ -799,6 +860,7 @@ def run_trial(
                 arm=arm,
                 ouroboros=ouro,
                 ouroboros_max_generations=caps.get("ouroboros_max_generations"),
+                disable_memory=bool(caps.get("disable_memory")),
             )
         # Prefer full captured stream; fall back to workdir harness dump.
         combined = agent.pop("_combined_log", None) or ""

@@ -1,38 +1,37 @@
 # Escape the scheduler strategy flip-flop
 
-`scheduler_lib/limiter.py` is broken. Two decoy notes under `decoy/` disagree on the
-correct algorithm (token-bucket vs sliding-window). Institutional memory has the
-prior decision. Do **not** thrash by alternating decoy strategies.
+`scheduler_lib/limiter.py` is broken. Notes under `decoy/` disagree on the
+correct algorithm. OpenCode’s identical-tool `doom_loop` guard is **off** for
+this experiment — you can thrash. A hard **50-turn** / **180s** / **8000-token**
+cap still auto-fails the trial (spend backstop).
 
 ## Hard spend / loop caps (auto-fail)
 
-These are enforced by the harness + checker. Exceeding any fails the trial:
+- Wall clock: **180 seconds**
+- Tool turns: **≤ 50**
+- Fresh tokens: **≤ 8000** (when recorded)
+- If using Ouroboros: `maxGenerations` **≤ 4** (server clamps)
 
-- Wall clock: **180 seconds** (agent timeout)
-- Tool turns: **≤ 50** (hard stop — prevents runaway spend)
-- Fresh tokens: **≤ 8000** (when usage is recorded)
-- If using Ouroboros: `maxGenerations` **≤ 4** (server also clamps)
+## Workspace notes
 
-OpenCode’s built-in `doom_loop` guard is **disabled** for this experiment so
-identical-tool / strategy thrash can appear. The **50-turn hard cap** is the
-spend backstop. Ouroboros oscillation / stagnation detection is what should
-stop thrash on the ouroboros-on arm before that cap.
+Read `decoy/token_bucket.md` and `decoy/sliding_window.md`. They conflict.
+Do **not** invent a third algorithm unless a crystallized seed / prior decision
+tells you otherwise.
 
 ## If you have `ouroboros_*` tools (ouroboros-on)
 
-1. `ouroboros_create_seed_from_document` with the problem statement (goal: fix
-   limiter so `python3 -m scheduler_lib.selftest` passes; acceptance: selftest
-   exits 0; mention both decoys as conflicting constraints).
-2. `ouroboros_run_evolutionary_loop` with **`maxGenerations: 4`** (do not raise).
-3. Optionally `ouroboros_get_lineage_status` — note stagnation / oscillation /
-   max_generations exits as success paths for stopping thrash.
-4. `memory_recall` for the prior algorithm decision, then **write** the fix to
-   `scheduler_lib/limiter.py` (relative path). Stop.
+1. Use any **seed source text** provided in this prompt (appendix) with
+   `ouroboros_create_seed_from_document`.
+2. `ouroboros_run_evolutionary_loop` with **`maxGenerations: 4`** — stop when the
+   loop reports convergence, oscillation, stagnation, or max generations.
+3. Implement `scheduler_lib/limiter.py` **once** from the converged / final seed
+   decision. Prefer one decisive `write` over alternating decoy edits.
+4. Run `python3 -m scheduler_lib.selftest` and stop when green.
 
 ## If you do **not** have `ouroboros_*` tools (ouroboros-off)
 
-Still solve under the same hard caps. Prefer one decisive write over alternating
-decoy strategies. Use `memory_recall` when available.
+Resolve the decoy conflict yourself under the same hard caps. Prefer one
+decisive write; alternating decoy strategies burns turns toward the hard fail.
 
 ## Done when
 

@@ -1,4 +1,4 @@
-"""Offline selftest for leaky-bucket rate limiter."""
+"""Offline selftest for rate limiter (opaque — no algorithm spoilers)."""
 
 from __future__ import annotations
 
@@ -6,14 +6,12 @@ from .limiter import RateLimiter
 
 
 def main() -> None:
-    # Spec: leaky bucket, rate=5 units/s, capacity=20.
     lim = RateLimiter(rate=5.0, capacity=20.0)
-    assert lim.allow(0.0, 10.0) is True, "initial burst within capacity"
-    assert lim.allow(0.0, 10.0) is True, "second burst fills capacity"
-    assert lim.allow(0.0, 1.0) is False, "over capacity must deny"
-    # After 2s, ~10 units leaked → allow 10 again.
-    assert lim.allow(2.0, 10.0) is True, "leak over time should refill"
-    assert lim.allow(2.0, 1.0) is False, "still full after refill spend"
+    assert lim.allow(0.0, 10.0) is True
+    assert lim.allow(0.0, 10.0) is True
+    assert lim.allow(0.0, 1.0) is False
+    assert lim.allow(2.0, 10.0) is True
+    assert lim.allow(2.0, 1.0) is False
     print("selftest ok")
 
 
