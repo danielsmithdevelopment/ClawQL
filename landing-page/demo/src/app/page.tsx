@@ -23,7 +23,8 @@ import { workflowFeeds } from '@/lib/workflow-feeds'
 export const metadata = pageMetadata({
   title: 'Home',
   absoluteTitle: 'ClawQL — Agentic Gateway for Auditable Production AI',
-  description: site.description,
+  description:
+    'Token-efficient search → execute workflows over OpenAPI, Google Discovery, GraphQL, and gRPC — with vault memory, documents, and enterprise tooling.',
   path: '/',
 })
 
@@ -34,13 +35,15 @@ export default function Page() {
       <HeroTwoColumnWithPhoto
         id="hero"
         eyebrow={<AnnouncementBadge href={site.urls.signup} text={site.earlyAccess.badge} cta="Start trial" />}
-        headline="ClawQL — the Agentic Gateway for Auditable Production AI"
+        headline="AI agents that work your entire stack, without filling your context window."
         subheadline={
           <p>
-            The Foundational Platform agents call into — not an agent framework. Land with OpenAI-compatible inference
-            and native <code>/mcp</code>, then expand into memory, Dedicated Virtual Gateway governance, and Edge
-            Gateways across your fleet. One closed loop: <strong>recall</strong>, <strong>search</strong>,{' '}
-            <strong>execute</strong>, and <strong>ingest</strong> — with specs server-side, not in your prompt.
+            ClawQL is the open-source MCP core for production agent work: <code className="text-sm">search</code>,{' '}
+            <code className="text-sm">execute</code>, vault memory, and optional IDP. Self-host free on Apache 2.0, or
+            start a 14-day Developer trial with full persistent memory and unlimited executions. Connect agents to your
+            APIs, documents, and institutional memory in one closed loop — <strong>recall</strong>,{' '}
+            <strong>search</strong>, <strong>execute</strong>, and <strong>ingest</strong> — with specs server-side
+            rather than in your prompt.
           </p>
         }
         cta={
@@ -49,7 +52,7 @@ export default function Page() {
               <ButtonLink href={site.urls.signup} size="lg">
                 Start free trial
               </ButtonLink>
-              <PlainButtonLink href={`${site.urls.docs}/getting-started`} size="lg">
+              <PlainButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg">
                 Self-host free <ArrowNarrowRightIcon />
               </PlainButtonLink>
             </div>
@@ -106,11 +109,11 @@ export default function Page() {
         />
         <Stat
           stat={multiProviderBenchmark.workflowOperations}
-          text="Unique operations returned by search across 14 workflow steps — the candidates an agent actually needs."
+          text="Unique operations returned by search across 14 workflow steps."
         />
         <Stat
           stat={`${multiProviderBenchmark.planningTokensBefore} → ${multiProviderBenchmark.planningTokensAfter}`}
-          text="Planning-context tokens: naive full-spec paste vs compact workflow artifact (~99.9% reduction)."
+          text="Planning-context tokens: full-spec paste vs compact workflow artifact (~99.9% reduction)."
         />
       </StatsFourColumns>
 
@@ -134,7 +137,7 @@ export default function Page() {
       <Section
         id="tools"
         eyebrow="MCP tools"
-        headline="Every tool has a job — and a clear boundary."
+        headline="Every tool has a job and a clear boundary."
         subheadline={
           <p>
             Core discovery and execution are always on. Memory, documents, automation, and the IDP pipeline opt in when
@@ -181,7 +184,7 @@ export default function Page() {
       <SecuritySection
         id="security"
         eyebrow="Security"
-        headline="Built to prove, not just claim."
+        headline="Security: documented and reproducible"
         subheadline={
           <p>
             ClawQL documents how container images are scanned, signed, and enforced from CI through Kubernetes admission
@@ -208,7 +211,7 @@ export default function Page() {
         <Faq
           id="faq-2"
           question="What's the difference between Developer, Teams, and Starter?"
-          answer={`Developer (${pricing.developer.monthlyPrice}/mo) is Agentic Gateway + memory — no IDP. Teams (${pricing.teams.monthlyPrice}/mo) adds full Onyx search. Starter (${pricing.starter.monthlyPrice}/mo) activates the IDP plugin bundle. Gateway-only buyers should not pay for document processing they do not use.`}
+          answer={`Developer (${pricing.developer.monthlyPrice}/mo) is MCP gateway + memory — no IDP. Teams (${pricing.teams.monthlyPrice}/mo) adds full Onyx search. Starter (${pricing.starter.monthlyPrice}/mo) activates the IDP plugin bundle. Gateway-only buyers should not pay for document processing they do not use.`}
         />
         <Faq
           id="faq-3"
@@ -235,9 +238,11 @@ export default function Page() {
       {/* Pricing teaser — full grid on /pricing */}
       <PricingMultiTier
         id="pricing"
-        headline="Start your 14-day trial or self-host free"
+        headline="Pricing"
         subheadline={
-          <p className="text-center text-sm/7 text-mist-600 dark:text-mist-400">{site.earlyAccess.pricingNote}</p>
+          <p className="text-center text-sm/7 text-mist-600 dark:text-mist-400">
+            {site.earlyAccess.pricingNote}
+          </p>
         }
         plans={
           <>
@@ -248,7 +253,7 @@ export default function Page() {
               subheadline={<p>{pricing.selfHosted.subheadline}</p>}
               features={pricing.selfHosted.features.slice(0, 4)}
               cta={
-                <ButtonLink href={`${site.urls.docs}/getting-started`} size="lg">
+                <ButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg">
                   Quick start
                 </ButtonLink>
               }
@@ -298,12 +303,32 @@ export default function Page() {
 
       <CallToActionSimple
         id="enterprise-pricing"
-        headline="Need enterprise SLAs or on-call support?"
+        headline={`Enterprise from ${pricing.enterprise.priceFrom}${pricing.enterprise.period}`}
         subheadline={<p>{pricing.enterprise.subheadline}</p>}
         cta={
           <ButtonLink href={site.urls.contact} size="lg">
             Contact sales
           </ButtonLink>
+        }
+      />
+      <CallToActionSimple
+        id="call-to-action"
+        headline="Start your 14-day trial or self-host free"
+        subheadline={
+          <p>
+            Gateway from {pricing.developer.monthlyPrice}/mo, IDP bundle from {pricing.starter.monthlyPrice}/mo. Full
+            Apache 2.0 stack, no license fee.
+          </p>
+        }
+        cta={
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <ButtonLink href={site.urls.signup} size="lg">
+              Start free trial
+            </ButtonLink>
+            <PlainButtonLink href={site.urls.docs} size="lg">
+              Self-host guide <ArrowNarrowRightIcon />
+            </PlainButtonLink>
+          </div>
         }
       />
     </>

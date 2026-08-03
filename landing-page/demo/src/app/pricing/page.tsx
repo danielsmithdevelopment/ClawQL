@@ -9,7 +9,6 @@ import { Plan, PricingHeroMultiTier } from '@/components/sections/pricing-hero-m
 import {
   annualBillingNoteText,
   annualBillingSavingsLabel,
-  gatewayEdgeHostingFeature,
   hostedFreeTrial,
   managedPrice,
   pluginBundles,
@@ -103,7 +102,7 @@ export const metadata = pageMetadata({
 export default function Page() {
   return (
     <>
-      <Section id="self-hosted" eyebrow="Open source" headline="Want free forever? Run it yourself.">
+      <Section id="self-hosted" eyebrow="Open source" headline="Run it yourself, free forever">
         <div className="flex flex-col gap-6 rounded-xl bg-mist-950/2.5 p-6 sm:flex-row sm:items-center sm:justify-between dark:bg-white/5">
           <div className="max-w-2xl">
             <p className="text-sm/7 text-mist-700 dark:text-mist-400">{pricing.selfHosted.subheadline}</p>
@@ -113,7 +112,7 @@ export default function Page() {
               ))}
             </ul>
           </div>
-          <ButtonLink href={`${site.urls.docs}/getting-started`} size="lg" className="shrink-0">
+          <ButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg" className="shrink-0">
             Quick start
           </ButtonLink>
         </div>
@@ -127,7 +126,7 @@ export default function Page() {
           <p>
             ClawQL Core (<code className="text-sm">search</code>, <code className="text-sm">execute</code>,{' '}
             <code className="text-sm">audit</code>, <code className="text-sm">cache</code>) is always on. Gateway
-            bundles run at the Regional Hub; the IDP bundle provisions dedicated document-processing infrastructure when
+            bundles run at the global edge; the IDP bundle provisions dedicated document-processing infrastructure when
             you opt in — same MCP endpoint and vault across upgrades.
           </p>
         }
@@ -145,11 +144,11 @@ export default function Page() {
 
       <PricingHeroMultiTier
         id="pricing-gateway"
-        headline="Agentic Gateway & memory"
+        headline="Agent gateway & memory"
         subheadline={
           <p>
-            {gatewayEdgeHostingFeature} + vault memory for teams connecting agents to APIs — no IDP pipeline, no GPU
-            inference. {unlimitedExecutionsTagline}
+            Global edge-hosted MCP endpoint + vault memory for teams connecting agents to APIs.{' '}
+            {unlimitedExecutionsTagline}
           </p>
         }
         options={['Monthly', 'Yearly']}
@@ -188,9 +187,8 @@ export default function Page() {
         </ButtonLink>
       </Section>
 
-      <Section id="early-access" eyebrow="IDP tiers" headline="Document processing tiers are onboarding first tenants">
+      <Section id="document-processing-tiers" eyebrow="IDP tiers" headline="Document processing tiers">
         <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{site.earlyAccess.pricingNote}</p>
-        <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-600">{site.waitlistPromise}</p>
       </Section>
 
       <CompetitivePricingSection />
@@ -203,7 +201,7 @@ export default function Page() {
             title: 'Plugin bundle',
             features: [
               {
-                name: 'Agentic Gateway (Core)',
+                name: 'MCP Gateway (Core)',
                 value: {
                   'Self-hosted': true,
                   Developer: true,
@@ -255,8 +253,8 @@ export default function Page() {
                 name: 'Gateway hosting',
                 value: {
                   'Self-hosted': 'Your infra',
-                  Developer: 'Regional Hub',
-                  Teams: 'Regional Hub',
+                  Developer: 'Global edge',
+                  Teams: 'Global edge',
                   Starter: 'Dedicated tenant',
                   Business: 'Dedicated tenant',
                   Professional: 'Dedicated tenant',
@@ -440,22 +438,22 @@ export default function Page() {
         <Faq
           id="faq-1b"
           question="Do I need a credit card to start the free trial?"
-          answer={`No. The ${hostedFreeTrial.durationDays}-day trial gives you the full Developer tier — persistent vault memory, unlimited executions, Regional Hub endpoint. No credit card required. When the trial ends, continue at ${pricing.developer.monthlyPrice}/mo or upgrade to Teams.`}
+          answer={`No. The ${hostedFreeTrial.durationDays}-day trial gives you the full Developer tier — persistent vault memory, unlimited executions, global edge endpoint. No credit card required. When the trial ends, continue at ${pricing.developer.monthlyPrice}/mo or upgrade to Teams.`}
         />
         <Faq
           id="faq-2"
           question="What's the difference between Developer, Teams, and Starter?"
-          answer={`Developer (${pricing.developer.monthlyPrice}/mo) is Agentic Gateway + memory vault — no IDP. Teams (${pricing.teams.monthlyPrice}/mo) adds full Onyx semantic search. Starter (${pricing.starter.monthlyPrice}/mo) activates the IDP plugin bundle (classify, extract, VDR, sovereign inference). You only pay for document processing when you opt into IDP tiers.`}
+          answer={`Developer (${pricing.developer.monthlyPrice}/mo) is MCP gateway + memory vault — no IDP. Teams (${pricing.teams.monthlyPrice}/mo) adds full Onyx semantic search. Starter (${pricing.starter.monthlyPrice}/mo) activates the IDP plugin bundle (classify, extract, VDR, sovereign inference). You only pay for document processing when you opt into IDP tiers.`}
         />
         <Faq
           id="faq-3"
           question="How does ClawQL compare to executor.sh?"
-          answer={`executor.sh is a tool — it routes MCP calls well and has a head start on developer marketing. ClawQL is an Agentic Gateway for Auditable Production AI: the same Layer 1 search/execute pattern, plus seven additional efficiency layers, persistent vault memory, Onyx search, unlimited executions (no meter), and optional IDP from ${pricing.starter.monthlyPrice}/mo. At gateway tiers, ClawQL Developer (${pricing.developer.monthlyPrice}/mo) and Teams (${pricing.teams.monthlyPrice}/mo) deliver more for less than executor.sh Team ($150/mo + overage). We approached executor.sh about collaboration before publishing comparisons; buyers deserve an honest infrastructure evaluation, not a marketing feud.`}
+          answer={`executor.sh is a tool — it routes MCP calls well and has a head start on developer marketing. ClawQL covers the same Layer 1 search/execute pattern, plus seven additional efficiency layers, persistent vault memory, Onyx search, unlimited executions (no meter), and optional IDP from ${pricing.starter.monthlyPrice}/mo. At gateway tiers, ClawQL Developer (${pricing.developer.monthlyPrice}/mo) and Teams (${pricing.teams.monthlyPrice}/mo) deliver more for less than executor.sh Team ($150/mo + overage). We approached executor.sh about collaboration before publishing comparisons; buyers deserve an honest infrastructure evaluation.`}
         />
         <Faq
           id="faq-3b"
           question="Are MCP executions really unlimited?"
-          answer="Yes. Every hosted tier — Developer through Enterprise — includes unlimited MCP executions. We price on hosting model, storage, and plugin bundles because those drive real infrastructure cost — not per-call metering or egress on memory recall. Gateway tiers scale at the Regional Hub; taxing executions or recall only encourages customers to throttle their agents. executor.sh is the outlier with execution caps and overage billing."
+          answer="Yes. Every hosted tier — Developer through Enterprise — includes unlimited MCP executions. We price on hosting model, storage, and plugin bundles because those drive real infrastructure cost — not per-call metering or egress on memory recall. Gateway tiers scale at the global edge; taxing executions or recall only encourages customers to throttle their agents. executor.sh is the outlier with execution caps and overage billing."
         />
         <Faq
           id="faq-4"
@@ -465,7 +463,7 @@ export default function Page() {
         <Faq
           id="faq-4b"
           question="Why are gateway and IDP tiers priced differently?"
-          answer="Gateway tiers (Developer, Teams) need only MCP routing, vault memory, cache, and audit — lightweight workloads that run at the Regional Hub. IDP tiers (Starter+) activate document processing, Onyx at scale, Coneshare VDR, and sovereign inference on dedicated tenant infrastructure. You only pay for the heavy stack when you opt in. No perpetual free hosted plan — self-host free forever or start a 14-day Developer trial."
+          answer="Gateway tiers (Developer, Teams) need only MCP routing, vault memory, cache, and audit — lightweight workloads that run at the global edge. IDP tiers (Starter+) activate document processing, Onyx at scale, Coneshare VDR, and sovereign inference on dedicated tenant infrastructure. You only pay for the heavy stack when you opt in. No perpetual free hosted plan — self-host free forever or start a 14-day Developer trial."
         />
         <Faq
           id="faq-5"
@@ -475,7 +473,7 @@ export default function Page() {
         <Faq
           id="faq-6"
           question="What tier fits real estate teams on Command + Google Drive?"
-          answer={`Teams (${pricing.teams.monthlyPrice}/mo) for Agentic Gateway + Onyx search over Drive folders + vault memory across deals. Add Starter (${pricing.starter.monthlyPrice}/mo) when you need title commitment classify/extract or Coneshare VDR for trackable disclosure packages. See /industries/real-estate.`}
+          answer={`Teams (${pricing.teams.monthlyPrice}/mo) for MCP gateway + Onyx search over Drive folders + vault memory across deals. Add Starter (${pricing.starter.monthlyPrice}/mo) when you need title commitment classify/extract or Coneshare VDR for trackable disclosure packages. See /industries/real-estate.`}
         />
         <Faq
           id="faq-7"

@@ -2,13 +2,13 @@ export const site = {
   name: 'ClawQL',
   tagline: 'Agentic Gateway for Auditable Production AI',
   description:
-    'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Regional Hubs, Dedicated Virtual Gateways, and Edge swarm. Self-host free or start a trial.',
+    'Token-efficient search → execute workflows over OpenAPI, Google Discovery, GraphQL, and gRPC — with vault memory, documents, and enterprise tooling.',
   earlyAccess: {
     badge: '14-day free trial — no credit card required',
     summary:
-      'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — not an agent framework. Land with OpenAI-compatible inference and MCP; expand into memory, Dedicated Virtual Gateway governance, and Edge Gateways on every laptop. Self-host free on Apache 2.0, or start a 14-day Developer trial.',
+      'ClawQL is the open-source MCP core for production agent work: search, execute, vault memory, and optional IDP. Self-host free on Apache 2.0, or start a 14-day Developer trial with full persistent memory and unlimited executions.',
     pricingNote:
-      'No perpetual free hosted plan — self-host free forever on Apache 2.0, or start a 14-day Developer trial. Gateway tiers run on multi-tenant Regional Hubs with unlimited MCP executions, vault memory with no egress penalties on recall, and Onyx search on Teams. IDP tiers (Starter $299+) activate document processing, VDR, and sovereign inference on a dedicated tenant. One Agentic Gateway endpoint for every tier: upgrade from Teams to Starter without changing your URL, auth token, or vault history.',
+      'Self-host free forever on Apache 2.0, or start a 14-day Developer trial. Gateway tiers deploy at the global edge with unlimited MCP executions, vault memory with no egress penalties on recall, and Onyx search on Teams. IDP tiers (Starter $299+) activate document processing, VDR, and sovereign inference on a dedicated tenant. One MCP endpoint for every tier: upgrade from Teams to Starter and your URL, auth token, and vault history stay the same.',
   },
   waitlistPromise:
     'Start your 14-day trial or self-host free with npm or Helm — full Apache 2.0 stack, no license fee.',
