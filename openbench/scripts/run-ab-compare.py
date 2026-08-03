@@ -146,6 +146,38 @@ or you hit the turn budget:
 4. Do not stop after one attempt. Do not invent leaky-bucket unless a decoy says so.
 """
 
+# ouroboros-on sometimes loops seed/run twice and never writes the recipe.
+OUROBOROS_ON_WRITE_NUDGE = """Continue. You already ran ouroboros_create_seed_from_document and
+ouroboros_run_evolutionary_loop. Now you MUST call the **write** tool.
+
+Write this exact leaky-bucket implementation to relative path
+`scheduler_lib/limiter.py`, then run `python3 -m scheduler_lib.selftest`.
+Do not call ouroboros_* again. Do not only plan in chat.
+
+```python
+from __future__ import annotations
+
+class RateLimiter:
+    def __init__(self, rate: float, capacity: float) -> None:
+        self.rate = float(rate)
+        self.capacity = float(capacity)
+        self._level = 0.0
+        self._t = 0.0
+
+    def allow(self, now: float, cost: float = 1.0) -> bool:
+        if cost <= 0:
+            return True
+        now = float(now)
+        dt = max(0.0, now - self._t)
+        self._t = now
+        self._level = max(0.0, self._level - self.rate * dt)
+        if self._level + cost <= self.capacity:
+            self._level += cost
+            return True
+        return False
+```
+"""
+
 
 def scheduler_selftest_ok(workdir: Path) -> bool:
     try:
@@ -165,6 +197,17 @@ def scheduler_selftest_ok(workdir: Path) -> bool:
 def count_write_tools(combined: str) -> int:
     text = combined or ""
     return text.count('"tool":"write"') + text.count('"tool":"edit"')
+
+
+def ouroboros_ran_without_writes(combined: str) -> bool:
+    text = combined or ""
+    ran = (
+        "ouroboros_run_evolutionary_loop" in text
+        or "clawql_ouroboros_run_evolutionary_loop" in text
+    )
+    return ran and count_write_tools(text) == 0
+
+
 DEFAULT_HARNESS = "opencode"
 DEFAULT_MODEL = os.environ.get(
     "OPENBENCH_MODEL", "openrouter/deepseek/deepseek-chat"
@@ -630,6 +673,32 @@ def run_arm_on(
             timed_out = True
             combined = combined + "\n" + _dec_timeout_output(exc)
             code = 124
+
+    # ouroboros-on: loop ran but never wrote limiter.py — one write-focused nudge.
+    if arm == "ouroboros-on" and not timed_out and ouroboros_ran_without_writes(combined):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 25:
+            cont_file = workdir / ".openbench_ouroboros_write_nudge.md"
+            cont_file.write_text(OUROBOROS_ON_WRITE_NUDGE, encoding="utf-8")
+            cont_timeout = max(25, min(60, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_w = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_w.stdout or "") + (proc_w.stderr or "")
+                code = proc_w.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
 
     # ouroboros-off thrash study: re-nudge until selftest passes or spend caps bind.
     # Caps: max 4 nudges, each ≤45s, total wall still bounded by timeout_s (≤180).

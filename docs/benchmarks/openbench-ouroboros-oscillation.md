@@ -37,9 +37,23 @@ diminishing_returns / `max_generations` via `ouroboros_run_evolutionary_loop`.
 ## Expected shape
 
 - **ouroboros-on:** create seed from appendix → evolutionary loop → one write →
-  selftest pass; turns well under 50.
-- **ouroboros-off:** alternate decoy strategies and/or re-read until **turn/time
-  hard-fail** or wrong implementation (score 0).
+  selftest pass; turns well under 50. If the loop runs without a write, the
+  harness issues one write nudge (recipe inlined).
+- **ouroboros-off:** thrash (decoy flip-flops and/or identical-tool spam with
+  `doom_loop` allow) until **turn/time hard-fail** or wrong implementation.
+
+## Live evidence ([run 30424169516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30424169516))
+
+With doom_loop **allow**, no vault memory, 50-turn / 180s caps:
+
+| Arm           | Score | Turns | Wall (s) | Behavior                                                             |
+| ------------- | ----- | ----- | -------- | -------------------------------------------------------------------- |
+| ouroboros-on  | 0.0   | 3     | 163.7    | Ran `create_seed` + `run_evolutionary_loop` ×2; **never wrote**      |
+| ouroboros-off | 0.0   | 19    | 181.5    | `read` + **bash spam** (20 tools, 0 writes) → `wall_s>180` hard-fail |
+
+Off proves OpenCode-level doom loop when the guard is off (capped before $10).
+On needs the post-loop write nudge (follow-up commit) so functional success
+lands after stagnation/oscillation exit.
 
 ## How to run
 
