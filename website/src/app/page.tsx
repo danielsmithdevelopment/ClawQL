@@ -8,7 +8,7 @@ export const metadata = docsPageMetadata({
   title: 'ClawQL documentation',
   absoluteTitle: 'ClawQL documentation',
   description:
-    'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — docs for MCP, inference, and the Zero-Trust Agentic Fabric.',
+    'ClawQL documentation: MCP server for OpenAPI 3, Swagger 2, Google Discovery, optional native GraphQL and gRPC — search and execute, optional sandbox, vault memory, schedule synthetics, notify, Onyx, Ouroboros, stdio or HTTP or MCP gRPC, Docker and Kubernetes.',
   path: '/',
 })
 

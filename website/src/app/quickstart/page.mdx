@@ -1,51 +1,30 @@
-import { Button } from '@/components/Button'
-import { Note } from '@/components/mdx'
-
 # Quickstart
 
-You can be up and running in a few minutes with **`npx`**—no global install required. Run **`clawql-mcp`**; for **OpenAPI** single-spec loads, **`execute`** prefers in-process OpenAPI→GraphQL. Optional **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** add native protocols to the same **`search`** index ([spec configuration](/spec-configuration)). {{ className: 'lead' }}
+`npx` gets you running in a few minutes. Run `clawql-mcp`; for OpenAPI single-spec loads, `execute` prefers in-process OpenAPI→GraphQL. Optional `CLAWQL_GRAPHQL_SOURCES` / `CLAWQL_GRPC_SOURCES` add native protocols to the same `search` index ([spec configuration](https://docs.clawql.com/spec-configuration)).
 
-<div className="not-prose my-6">
-  <Button href="/agent-setup" arrow="right">
-    <>New here? Start with Agent setup</>
-  </Button>
-</div>
+The published package is large on disk (~90+ MB) because it ships bundled specs under `providers/`. That size is intentional — offline discovery works without network calls.
 
-<Note>
-  The published package is **large on disk** (~90+ MB) because it ships bundled
-  specs under **`providers/`**. That is intentional for offline discovery.
-</Note>
-
-## 0. First-time setup (recommended)
-
-```bash
-npx -p clawql-mcp clawql onboard --interactive
-```
-
-Creates **`~/.ClawQL`**, writes Cursor MCP config, and runs a smoke **`search`**. Provider secrets go in **`vault/providers.json`** — not in `mcp.json`.
+---
 
 ## 1. Start the MCP server
-
-**Default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx):
 
 ```bash
 npx -p clawql-mcp clawql-mcp
 ```
 
-For every bundled vendor plus Google top-50 and AWS top-50:
+For every bundled vendor at once:
 
 ```bash
 CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
 ```
 
-<Note>
-  New to MCP wiring? Run **`clawql onboard --interactive`** or use the [Agent
-  setup](/agent-setup) copy-paste prompt in Cursor or Claude.
-</Note>
+---
 
 ## 2. Connect your client
 
-Add an MCP server entry that runs **`clawql-mcp`** on stdio (see [MCP clients](/mcp-clients)). No separate GraphQL process or **`GRAPHQL_URL`** is required.
+Add an MCP server entry that runs `clawql-mcp` on stdio (see [MCP clients](https://docs.clawql.com/mcp-clients)). The server handles GraphQL internally — there's no separate GraphQL process or `GRAPHQL_URL` to configure.
+
+---
 
 ## 3. Use your own API spec
 
@@ -67,59 +46,32 @@ CLAWQL_SPEC_URL=https://example.com/openapi.json npx -p clawql-mcp clawql-mcp
 CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/\$discovery/rest?version=v1" npx -p clawql-mcp clawql-mcp
 ```
 
+---
+
 ## 4. HTTP transport (optional)
 
-For **`clawql-mcp-http`**, MCP is at **`/mcp`** and GraphQL at **`/graphql`** on the same **`PORT`**.
+For `clawql-mcp-http`, MCP is at `/mcp` and GraphQL at `/graphql` on the same `PORT` (see [Install](https://docs.clawql.com/install)).
 
-```bash
-PORT=8080 npx -p clawql-mcp clawql-mcp-http
-```
-
-Default local endpoint: `http://localhost:8080/mcp` (health: `/healthz`).
-
-## Install options
-
-### npm / yarn / bun
-
-```bash
-npm install clawql-mcp
-# yarn add clawql-mcp
-# bun add clawql-mcp
-```
-
-### One-line install
-
-```bash
-curl -fsSL https://clawql.com/install | bash
-```
-
-Requires **Node.js 22+**. The script runs `npm install -g clawql-mcp` when npm is available.
-
-### Binaries
-
-| Command           | Purpose                                                                                                                    |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `clawql`          | Onboarding CLI — **`onboard`**, **`init`**, **`doctor`**, **`secrets`**, **`mcp-config`**, **`sources`**, harness wrappers |
-| `clawql-mcp`      | MCP server on **stdio** (Cursor, Claude Desktop, etc.)                                                                     |
-| `clawql-mcp-http` | MCP over **Streamable HTTP** (`PORT`, `/mcp`, `/healthz`, `/graphql`)                                                      |
-
-### Docker
-
-Multi-stage image and stdio/compose notes: [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md). For the full stack, see [Deployment](/deployment).
+---
 
 ## 5. Local bundled docs via Helm (Docker Desktop)
-
-If you deploy locally with Kubernetes + Helm:
 
 ```bash
 make local-k8s-up
 ```
 
-You can open the bundled dashboard at **`http://clawql.localhost`**, bundled docs UI at **`http://docs.localhost`**, and point MCP clients at **`http://clawql-mcp.localhost/mcp`** (**Ingress** — same hostname + **`/mcp`** pattern as production). The script installs **Kyverno** and only admits **Cosign-signed** ClawQL images from **GHCR** — see [Security](/security).
+Opens the bundled dashboard at `http://clawql.localhost`, bundled docs UI at `http://docs.localhost`, and points MCP clients at `http://clawql-mcp.localhost/mcp` (Ingress — same hostname + `/mcp` pattern as production). The script installs Kyverno and admits only Cosign-signed ClawQL images from GHCR (MCP, website, and dashboard) — see [Security](https://docs.clawql.com/security) and [golden-image-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md).
+
+---
 
 ## Next steps
 
-- [Agent setup](/agent-setup) — Desktop, Cursor iOS, local sandbox
-- [Spec configuration](/spec-configuration) — merge rules and environment variables
-- [Tools](/tools) — **`search`** and **`execute`**
-- [Deployment](/deployment) — Helm and day-2 operations
+- [Install](https://docs.clawql.com/install) — binaries, Docker, HTTP transport
+- [Spec configuration](https://docs.clawql.com/spec-configuration) — merge rules and environment variables
+- [Tools](https://docs.clawql.com/tools) — `search` and `execute`
+
+---
+
+[← Overview](https://docs.clawql.com/getting-started) · [Install →](https://docs.clawql.com/install)
+
+© Copyright 2026. All rights reserved. · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL)
