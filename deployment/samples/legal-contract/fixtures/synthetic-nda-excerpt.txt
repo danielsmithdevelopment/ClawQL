@@ -1,0 +1,12 @@
+MUTUAL NON-DISCLOSURE AGREEMENT (SYNTHETIC — NOT LEGAL ADVICE)
+
+Parties: Demo Corp and Example LLC
+Effective date: 2026-01-01
+
+§3 Confidentiality. Receiving Party shall not disclose Confidential Information to third parties
+without prior written consent, except to employees with a need to know.
+
+§7 Governing Law. This Agreement is governed by the laws of the State of Demo, without regard
+to conflict-of-law principles.
+
+§9 Term. This Agreement remains in effect for two (2) years from the Effective Date.

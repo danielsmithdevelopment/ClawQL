@@ -1,0 +1,37 @@
+{
+  "project_id": 1,
+  "confidence": 0.61,
+  "correlation_id": "healthcare-referral-demo-001",
+  "provenance": {
+    "vertical": "healthcare",
+    "fixture": "fixtures/synthetic-referral.txt",
+    "disclaimer": "synthetic — not medical advice"
+  },
+  "tasks": [
+    {
+      "data": {
+        "text": "REFERRAL (SYNTHETIC)\nPatient ID: DEMO-0001\nReason: evaluation of chronic knee pain\nSpecialty: orthopedics\nUrgency: routine\nReferring: Dr. A. Example"
+      },
+      "predictions": [
+        {
+          "model_version": "healthcare-referral-reference-v1",
+          "score": 0.61,
+          "result": [
+            {
+              "from_name": "doc_type",
+              "to_name": "doc",
+              "type": "labels",
+              "value": { "labels": ["referral"] }
+            },
+            {
+              "from_name": "urgency",
+              "to_name": "doc",
+              "type": "choices",
+              "value": { "choices": ["routine"] }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

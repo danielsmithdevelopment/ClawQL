@@ -42,7 +42,13 @@ export function executeHitlEnqueueLabelStudioEffect(
       return mcpJson({ error: "`tasks` must be a non-empty array." });
     }
 
-    const payload = mergeHitlMetadata(params);
+    let payload: ReturnType<typeof mergeHitlMetadata>;
+    try {
+      payload = mergeHitlMetadata(params);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "invalid predictions payload";
+      return mcpJson({ ok: false, error: msg });
+    }
     const result = yield* automationFromPromise(() =>
       labelStudioImportTasks(cfg.baseUrl, cfg.apiToken, params.project_id, payload)
     );

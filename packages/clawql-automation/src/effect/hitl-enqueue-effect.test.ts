@@ -30,4 +30,20 @@ describe("executeHitlEnqueueLabelStudioEffect", () => {
     delete process.env.CLAWQL_LABEL_STUDIO_URL;
     delete process.env.CLAWQL_LABEL_STUDIO_API_TOKEN;
   });
+
+  it("soft-fails invalid predictions without throwing", async () => {
+    process.env.CLAWQL_LABEL_STUDIO_URL = "http://ls.test";
+    process.env.CLAWQL_LABEL_STUDIO_API_TOKEN = "tok";
+    const result = await Effect.runPromise(
+      executeHitlEnqueueLabelStudioEffect({
+        project_id: 1,
+        tasks: [{ data: { text: "x" }, predictions: [{ result: "nope" as never }] }],
+      })
+    );
+    const body = JSON.parse(result.content[0]!.text) as { ok?: boolean; error?: string };
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/result must be an array/);
+    delete process.env.CLAWQL_LABEL_STUDIO_URL;
+    delete process.env.CLAWQL_LABEL_STUDIO_API_TOKEN;
+  });
 });

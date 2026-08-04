@@ -9,11 +9,41 @@ import { publishHitlCompletedEvent } from "../nats/publish-hooks.js";
 import { maybeResumeWorkflowFromHitl, parseHitlWorkflowRef } from "../workflow/suspend-resume.js";
 import { getHitlWebhookDeps } from "./deps.js";
 
+/**
+ * Label Studio **prediction** object (pre-annotation) for import payloads ([#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)).
+ * Aligns with LS task/import shapes: `result` regions/choices + optional `model_version` / `score`.
+ */
+export type HitlLabelStudioPrediction = {
+  /** Label Studio prediction `result` array (regions, choices, labels, …). */
+  result: unknown[];
+  /** Optional model identifier shown in the LS UI. */
+  model_version?: string;
+  /** Optional aggregate score in [0, 1]. */
+  score?: number;
+};
+
+/** Soft limits for prediction payloads (keep import bodies bounded). */
+export const HITL_PREDICTION_MAX_PER_TASK = 20;
+export const HITL_PREDICTION_MAX_RESULT_ITEMS = 200;
+export const HITL_PREDICTION_MAX_JSON_BYTES = 512_000;
+
+export type HitlLabelStudioImportTask = {
+  data: Record<string, unknown>;
+  predictions?: HitlLabelStudioPrediction[];
+};
+
 export type HitlLabelStudioEnqueueParams = {
   /** Label Studio project primary key (integer). */
   project_id: number;
-  /** One or more tasks; each `data` object is stored under Label Studio `task.data`. */
-  tasks: Array<{ data: Record<string, unknown>; meta?: Record<string, unknown> }>;
+  /**
+   * One or more tasks; each `data` object is stored under Label Studio `task.data`.
+   * Optional **`predictions`** become Label Studio pre-annotations on import ([#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)).
+   */
+  tasks: Array<{
+    data: Record<string, unknown>;
+    meta?: Record<string, unknown>;
+    predictions?: HitlLabelStudioPrediction[];
+  }>;
   /** Model / router confidence in [0, 1]; stored under `data.clawql_hitl.confidence` for reviewer context. */
   confidence?: number;
   /** Correlate with OpenClaw, Ouroboros seed, or logs. */
@@ -30,6 +60,50 @@ export type HitlLabelStudioEnqueueParams = {
   provenance?: Record<string, unknown>;
 };
 
+/**
+ * Validate optional `predictions` for one task. Returns a clear Error without echoing secrets.
+ */
+export function validateHitlPredictions(
+  predictions: HitlLabelStudioPrediction[] | undefined,
+  taskIndex: number
+): Error | null {
+  if (predictions === undefined) return null;
+  if (!Array.isArray(predictions)) {
+    return new Error(`tasks[${taskIndex}].predictions must be an array`);
+  }
+  if (predictions.length > HITL_PREDICTION_MAX_PER_TASK) {
+    return new Error(
+      `tasks[${taskIndex}].predictions exceeds max ${HITL_PREDICTION_MAX_PER_TASK} entries`
+    );
+  }
+  for (let i = 0; i < predictions.length; i++) {
+    const p = predictions[i];
+    if (!p || typeof p !== "object" || !Array.isArray(p.result)) {
+      return new Error(`tasks[${taskIndex}].predictions[${i}].result must be an array`);
+    }
+    if (p.result.length > HITL_PREDICTION_MAX_RESULT_ITEMS) {
+      return new Error(
+        `tasks[${taskIndex}].predictions[${i}].result exceeds max ${HITL_PREDICTION_MAX_RESULT_ITEMS} items`
+      );
+    }
+    if (p.score !== undefined && (typeof p.score !== "number" || p.score < 0 || p.score > 1)) {
+      return new Error(`tasks[${taskIndex}].predictions[${i}].score must be a number in [0, 1]`);
+    }
+  }
+  let encoded: string;
+  try {
+    encoded = JSON.stringify(predictions);
+  } catch {
+    return new Error(`tasks[${taskIndex}].predictions is not JSON-serializable`);
+  }
+  if (Buffer.byteLength(encoded, "utf8") > HITL_PREDICTION_MAX_JSON_BYTES) {
+    return new Error(
+      `tasks[${taskIndex}].predictions exceeds ${HITL_PREDICTION_MAX_JSON_BYTES} byte JSON limit`
+    );
+  }
+  return null;
+}
+
 export function getHitlLabelStudioRestConfig(): {
   baseUrl: string;
   apiToken: string;
@@ -40,9 +114,14 @@ export function getHitlLabelStudioRestConfig(): {
   return { baseUrl: baseUrl.replace(/\/$/, ""), apiToken };
 }
 
+/**
+ * Build Label Studio import bodies: merge ClawQL HITL metadata into `data`,
+ * and pass through optional **`predictions`** ([#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)).
+ * Throws when prediction payloads fail validation.
+ */
 export function mergeHitlMetadata(
   params: HitlLabelStudioEnqueueParams
-): Array<{ data: Record<string, unknown> }> {
+): HitlLabelStudioImportTask[] {
   const enqueuedAt = new Date().toISOString();
   const hitl: Record<string, unknown> = {
     enqueued_at: enqueuedAt,
@@ -64,13 +143,25 @@ export function mergeHitlMetadata(
     hitl.provenance = params.provenance;
   }
 
-  return params.tasks.map((t) => ({
-    data: {
-      ...t.data,
-      ...(t.meta ? { meta: t.meta } : {}),
-      clawql_hitl: hitl,
-    },
-  }));
+  return params.tasks.map((t, taskIndex) => {
+    const predErr = validateHitlPredictions(t.predictions, taskIndex);
+    if (predErr) throw predErr;
+    const out: HitlLabelStudioImportTask = {
+      data: {
+        ...t.data,
+        ...(t.meta ? { meta: t.meta } : {}),
+        clawql_hitl: hitl,
+      },
+    };
+    if (t.predictions?.length) {
+      out.predictions = t.predictions.map((p) => ({
+        result: p.result,
+        ...(p.model_version?.trim() ? { model_version: p.model_version.trim() } : {}),
+        ...(p.score !== undefined ? { score: p.score } : {}),
+      }));
+    }
+    return out;
+  });
 }
 
 /**
@@ -80,7 +171,7 @@ export async function labelStudioImportTasks(
   baseUrl: string,
   apiToken: string,
   projectId: number,
-  tasks: Array<{ data: Record<string, unknown> }>
+  tasks: HitlLabelStudioImportTask[]
 ): Promise<
   { ok: true; status: number; body: unknown } | { ok: false; error: string; detail?: string }
 > {

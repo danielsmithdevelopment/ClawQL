@@ -1,0 +1,37 @@
+{
+  "project_id": 1,
+  "confidence": 0.58,
+  "correlation_id": "legal-nda-demo-001",
+  "provenance": {
+    "vertical": "legal",
+    "fixture": "fixtures/synthetic-nda-excerpt.txt",
+    "disclaimer": "synthetic — not legal advice"
+  },
+  "tasks": [
+    {
+      "data": {
+        "text": "MUTUAL NDA (SYNTHETIC)\n§3 Confidentiality. Receiving Party shall not disclose Confidential Information...\n§7 Governing Law. This Agreement is governed by the laws of the State of Demo."
+      },
+      "predictions": [
+        {
+          "model_version": "legal-contract-reference-v1",
+          "score": 0.58,
+          "result": [
+            {
+              "from_name": "doc_type",
+              "to_name": "doc",
+              "type": "labels",
+              "value": { "labels": ["nda"] }
+            },
+            {
+              "from_name": "privilege",
+              "to_name": "doc",
+              "type": "choices",
+              "value": { "choices": ["none"] }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

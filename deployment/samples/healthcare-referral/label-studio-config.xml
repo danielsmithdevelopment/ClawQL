@@ -1,0 +1,21 @@
+<View>
+  <Header value="Clinical referral review (synthetic healthcare demo)"/>
+  <Text name="instructions" value="Verify referral reason, specialty, and urgency. Correct any misread values. Synthetic data only — not medical advice."/>
+  <TextArea name="doc" value="$text" readonly="true"/>
+  <Labels name="doc_type" toName="doc">
+    <Label value="referral" background="#2ECC40"/>
+    <Label value="discharge_summary" background="#FF851B"/>
+    <Label value="lab_result" background="#0074D9"/>
+    <Label value="other" background="#AAAAAA"/>
+  </Labels>
+  <Choices name="urgency" toName="doc" choice="single">
+    <Choice value="routine"/>
+    <Choice value="urgent"/>
+    <Choice value="emergent"/>
+  </Choices>
+  <Choices name="approve" toName="doc" choice="single">
+    <Choice value="approve"/>
+    <Choice value="reject"/>
+    <Choice value="needs_rescan"/>
+  </Choices>
+</View>
