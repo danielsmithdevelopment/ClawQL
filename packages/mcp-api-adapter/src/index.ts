@@ -22,6 +22,7 @@ export {
   collapseCallToolMessages,
   collapseSdkToolResult,
   httpBodyFromCollapsed,
+  mcpCallToolResultFromCollapsed,
 } from "./call.js";
 export {
   isSafeToolPathName,

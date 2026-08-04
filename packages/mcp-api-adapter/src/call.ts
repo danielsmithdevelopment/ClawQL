@@ -39,6 +39,52 @@ export function httpBodyFromCollapsed(result: CollapsedToolResult): unknown {
 }
 
 /**
+ * Convert a collapsed gRPC CallTool result into an MCP SDK-shaped CallToolResult.
+ * gRPC wire content uses protobuf oneofs (`{ text: { text } }`); MCP expects `{ type, text }`.
+ */
+export function mcpCallToolResultFromCollapsed(collapsed: CollapsedToolResult): {
+  content: Array<{ type: "text"; text: string }>;
+  structuredContent?: Record<string, unknown>;
+  isError?: boolean;
+} {
+  const content = normalizeMcpTextContent(collapsed);
+  return {
+    content,
+    ...(hasUsefulValues(collapsed.structuredContent)
+      ? { structuredContent: collapsed.structuredContent }
+      : {}),
+    ...(collapsed.isError !== undefined ? { isError: collapsed.isError } : {}),
+  };
+}
+
+function normalizeMcpTextContent(
+  collapsed: CollapsedToolResult
+): Array<{ type: "text"; text: string }> {
+  if (typeof collapsed.text === "string" && collapsed.text.length > 0) {
+    return [{ type: "text", text: collapsed.text }];
+  }
+  const out: Array<{ type: "text"; text: string }> = [];
+  for (const item of collapsed.content ?? []) {
+    if (!item || typeof item !== "object") continue;
+    const o = item as Record<string, unknown>;
+    if (o.type === "text" && typeof o.text === "string") {
+      out.push({ type: "text", text: o.text });
+      continue;
+    }
+    // protobuf-js oneof: { text: { text: "…" }, image: null, … }
+    const nested = o.text;
+    if (nested && typeof nested === "object") {
+      const t = (nested as { text?: unknown }).text;
+      if (typeof t === "string") out.push({ type: "text", text: t });
+    }
+  }
+  if (out.length === 0 && hasUsefulValues(collapsed.structuredContent)) {
+    return [{ type: "text", text: JSON.stringify(collapsed.structuredContent) }];
+  }
+  return out;
+}
+
+/**
  * Normalize an MCP SDK `CallToolResult` (stdio / Streamable HTTP) into the same
  * collapsed shape used for gRPC CallTool responses.
  */

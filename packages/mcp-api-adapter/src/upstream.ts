@@ -24,7 +24,7 @@ import type {
   UpstreamOptions,
 } from "./types.js";
 
-const ADAPTER_VERSION = "0.5.0";
+const ADAPTER_VERSION = "0.5.1";
 
 const BRIDGE_CAPS = {
   capabilities: {
