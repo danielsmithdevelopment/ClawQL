@@ -188,7 +188,8 @@ Work **in this order** unless blocked:
 
 1. **[P0-a]** Write replication queue into ledger (3 cells). ✅  
 2. **[B4.1-a→f]** Ship `memory-conflict-pricing` to `pr_active`, watch CI, retire. ✅ [30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746)  
-3. **[Trace-0]** Persist OpenBench call-store JSONL from GHA (`CLAWQL_INFERENCE_STORE` + artifact). ✅ see [`openbench-trace-collection.md`](./openbench-trace-collection.md)  
+3. **[Trace-0]** Persist OpenBench call-store JSONL from GHA (`CLAWQL_INFERENCE_STORE` + artifact). ✅  
+3b. **[Trace-1]** Durable R2 corpus-of-record (not 90d artifacts) + OSS release plan. ✅ see [`openbench-trace-collection.md`](./openbench-trace-collection.md) — **set R2 secrets + optional `CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES=1`**  
 4. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire. ← **next**  
 5. **[B4.2-0] / [B4.3-0]** Spikes; only then optional cells.  
 6. **[P0-c]** First n=3 dispatch on one headline cell.  

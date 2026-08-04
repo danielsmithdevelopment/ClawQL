@@ -208,6 +208,20 @@ jobs:
           npm ls -g opencode-ai --depth=0 || true
           opencode --version || true
 
+      - name: Configure inference call store (fine-tune traces)
+        if: steps.preflight.outputs.run_benchmark == 'true'
+        run: |
+          set -euo pipefail
+          ARTIFACT_DIR="${GITHUB_WORKSPACE}/artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}-${{ matrix.doom_loop }}"
+          CALL_STORE="${ARTIFACT_DIR}/call-store/calls.jsonl"
+          mkdir -p "${ARTIFACT_DIR}/call-store"
+          {
+            echo "OPENBENCH_ARTIFACT_DIR=${ARTIFACT_DIR}"
+            echo "CLAWQL_INFERENCE_STORE=jsonl"
+            echo "CLAWQL_INFERENCE_STORE_PATH=${CALL_STORE}"
+          } >> "$GITHUB_ENV"
+          echo "::notice::Inference call store → ${CALL_STORE}"
+
       - name: Start clawql-inference
         if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
@@ -268,6 +282,41 @@ jobs:
           if [ -f /tmp/clawql-inference-${{ matrix.doom_loop }}.pid ]; then
             kill "$(cat /tmp/clawql-inference-${{ matrix.doom_loop }}.pid)" 2>/dev/null || true
           fi
+          sleep 1
+
+      - name: Package call-store traces + grader labels
+        if: always() && steps.preflight.outputs.run_benchmark == 'true'
+        run: |
+          set -euo pipefail
+          ARTIFACT_DIR="${OPENBENCH_ARTIFACT_DIR:-${GITHUB_WORKSPACE}/artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}-${{ matrix.doom_loop }}}"
+          python3 openbench/scripts/package-openbench-traces.py \
+            --artifact-dir "${ARTIFACT_DIR}" \
+            --run-id "${{ github.run_id }}" \
+            --task "${OPENBENCH_TASK}-${{ matrix.doom_loop }}" \
+            --model "${OPENBENCH_MODEL}"
+
+      - name: Sync durable traces to R2
+        if: always() && steps.preflight.outputs.run_benchmark == 'true'
+        env:
+          CLAWQL_OPENBENCH_R2_BUCKET: ${{ secrets.CLAWQL_OPENBENCH_R2_BUCKET }}
+          CLAWQL_SYNC_BUCKET: ${{ secrets.CLAWQL_SYNC_BUCKET }}
+          CLAWQL_OPENBENCH_R2_PREFIX: ${{ vars.CLAWQL_OPENBENCH_R2_PREFIX }}
+          CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES: ${{ vars.CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLAWQL_R2_ACCOUNT_ID: ${{ secrets.CLAWQL_R2_ACCOUNT_ID }}
+          CLAWQL_SYNC_ACCESS_KEY_ID: ${{ secrets.CLAWQL_SYNC_ACCESS_KEY_ID }}
+          CLAWQL_SYNC_SECRET_ACCESS_KEY: ${{ secrets.CLAWQL_SYNC_SECRET_ACCESS_KEY }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          set -euo pipefail
+          chmod +x openbench/scripts/sync-openbench-traces-durable.sh
+          ARTIFACT_DIR="${OPENBENCH_ARTIFACT_DIR:-${GITHUB_WORKSPACE}/artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}-${{ matrix.doom_loop }}}"
+          openbench/scripts/sync-openbench-traces-durable.sh \
+            --artifact-dir "${ARTIFACT_DIR}" \
+            --run-id "${{ github.run_id }}" \
+            --task "${OPENBENCH_TASK}-${{ matrix.doom_loop }}" \
+            --sha "${{ github.sha }}"
 
       - name: Upload artifacts
         if: always() && steps.preflight.outputs.run_benchmark == 'true'
@@ -276,3 +325,4 @@ jobs:
           name: openbench-ouroboros-ab-${{ matrix.doom_loop }}-${{ github.run_id }}
           path: artifacts/openbench-ouroboros-ab/
           if-no-files-found: ignore
+          retention-days: 90
