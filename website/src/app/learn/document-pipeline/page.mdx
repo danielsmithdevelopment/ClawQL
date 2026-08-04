@@ -1,8 +1,8 @@
-# Document pipeline: **Nextcloud → Docling → Tika → Gotenberg → Stirling → Paperless → Onyx → Coneshare**
+# Document pipeline: **Nextcloud → pdf-inspector → Docling → Tika → Gotenberg → Stirling → Paperless → Onyx → Coneshare**
 
 ClawQL does **not** run one hidden daemon that magically pipes bytes through all services. Instead, it loads **bundled OpenAPI** specs for **[Nextcloud](https://nextcloud.com/)**, **[Docling](https://github.com/docling-project/docling)** (layout parse), **[Apache Tika](https://tika.apache.org/)**, **[Gotenberg](https://gotenberg.dev/)**, **[Stirling-PDF](https://docs.stirlingpdf.com/)**, **[Paperless-ngx](https://docs.paperless-ngx.com/)**, **[Onyx](https://www.onyx.app/)**, and **[ConeShare](https://github.com/coneshare/coneshare)** into the same **`search` / `execute`** index as the rest of your providers. **You** (or an agent) choose **which** operations to call and **in what order**—that composition is the **document pipeline**. {{ className: 'lead' }}
 
-The **usual production story** is: **intake** from Nextcloud WebDAV → **layout parse** (**Docling**, optional) → **extract** heterogeneous files (**Tika**) → **normalize** to stable PDFs (**Gotenberg**) → **redact/remediate** (**Stirling**) → **archive** with metadata (**Paperless** self-hosted optional, or **ClawQL archive layer** — Nextcloud + Postgres + Onyx — default / hosted) → **index** for enterprise search (**Onyx**) → **sync** processed artifacts back to Nextcloud → **share** via secure links / VDR (**Coneshare**). Canonical recipe: **`DEFAULT_IDP_PIPELINE`** in **`clawql-documents`** — see [IDP pipeline hub](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md). **Product design:** [IDP Platform](/vision/idp-platform) · **Full-stack Helm:** [clawql-idp-helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-idp-helm.md) · **Slack runbook:** [slack-first-idp-runbook.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/slack-first-idp-runbook.md).
+The **usual production story** is: **intake** from Nextcloud WebDAV → **optional PDF route** (**[pdf-inspector](https://github.com/firecrawl/pdf-inspector)** via MCP **`inspect_pdf`**) → **layout OCR** (**Docling**, when scanned/forms) → **extract** heterogeneous files (**Tika**) → **normalize** to stable PDFs (**Gotenberg**) → **redact/remediate** (**Stirling**) → **archive** with metadata (**Paperless** self-hosted optional, or **ClawQL archive layer** — Nextcloud + Postgres + Onyx — default / hosted) → **index** for enterprise search (**Onyx**) → **sync** processed artifacts back to Nextcloud → **share** via secure links / VDR (**Coneshare**). Canonical recipe: **`DEFAULT_IDP_PIPELINE`** in **`clawql-documents`** — see [IDP pipeline hub](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md). **Product design:** [IDP Platform](/vision/idp-platform) · **Full-stack Helm:** [clawql-idp-helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-idp-helm.md) · **Slack runbook:** [slack-first-idp-runbook.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/slack-first-idp-runbook.md).
 
 **Intro essays (background):** [Tika](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-tika.md) · [Gotenberg](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-gotenberg.md) · [Stirling](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-stirling.md) · [Paperless](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-paperless.md) · [Onyx](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-onyx.md). **Matrix:** [Bundled specs](/bundled-specs), [providers/README.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/providers/README.md). **Helm / topology:** [Helm](/helm), [Docker Desktop observability](/docker-desktop-observability).
 
@@ -19,7 +19,7 @@ The **usual production story** is: **intake** from Nextcloud WebDAV → **layout
 | **Onyx**      | **Enterprise retrieval** — connectors, hybrid search, permissions; optional **ingestion** via **`onyx::upsert_ingestion_doc`** ([introducing-clawql-onyx.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-onyx.md), [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md)). |
 | **Coneshare** | **Secure sharing / VDR** — share links, data rooms, viewer webhook → vault ([coneshare-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/coneshare-onboarding.md))                                                                                                                                                                              |
 
-**MCP surface:** **`ingest_external_knowledge`** (vault Markdown / URL) and **`knowledge_search_onyx`** (when **`CLAWQL_ENABLE_ONYX=1`**) sit beside raw **`execute`**. Optional IDP tools: **`run_idp_pipeline`** (`CLAWQL_ENABLE_IDP_PIPELINE=1`), **`classify_document`** (`CLAWQL_ENABLE_IDP_CLASSIFIER=1`), **`extract_document`** (`CLAWQL_ENABLE_LANGEXTRACT=1`). See [External ingest & knowledge lake](/learn/external-ingest-knowledge), [Onyx enterprise search](/learn/knowledge-search-onyx), and [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md).
+**MCP surface:** **`ingest_external_knowledge`** (vault Markdown / URL) and **`knowledge_search_onyx`** (when **`CLAWQL_ENABLE_ONYX=1`**) sit beside raw **`execute`**. Optional IDP tools: **`run_idp_pipeline`** (`CLAWQL_ENABLE_IDP_PIPELINE=1`), **`inspect_pdf`** (`CLAWQL_ENABLE_PDF_INSPECTOR=1`), **`classify_document`** (`CLAWQL_ENABLE_IDP_CLASSIFIER=1`), **`extract_document`** (`CLAWQL_ENABLE_LANGEXTRACT=1`). See [External ingest & knowledge lake](/learn/external-ingest-knowledge), [Onyx enterprise search](/learn/knowledge-search-onyx), [Documents plugin](/plugins/documents), and [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md).
 
 ## Recommended IDP data flow
 
@@ -27,10 +27,14 @@ The **usual production story** is: **intake** from Nextcloud WebDAV → **layout
 [Nextcloud IDP/inbox …]
         │  WebDAV download
         ▼
-[binary / Office / email …]
-        │  optional: Docling layout parse (forms, W-2)
+[PDF / binary / Office / email …]
+        │  optional: inspect_pdf (pdf-inspector) — TextBased → local Markdown
+        │            Scanned / Mixed → Docling OCR
         ▼
-        │  Tika: detect + extract text/metadata
+[optional: Docling layout parse (forms, W-2, OCR pages)]
+        │
+        ▼
+        │  Tika: detect + extract text/metadata (non-PDF or fallback)
         ▼
 [optional: Office/HTML → PDF]
         │  Gotenberg: deterministic PDF artifact
@@ -55,6 +59,14 @@ Users / agents query with permissions enforced by Onyx
 
 **Why not “Onyx before Paperless”?** You _can_ call Onyx search at any time, but **durable filing**, **legal retention**, and **human classification** usually belong in **Paperless first**; Onyx then **indexes** what you want searchable across the org. The bundled **`onyx::upsert_ingestion_doc`** path is documented as **post-Paperless** for that reason ([onyx-knowledge-tool.md § 5](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md)).
 
+## pdf-inspector route (optional, in-process)
+
+- **Use when** inputs are **PDFs** and you want a **fast local classify + Markdown** path before spending Docling CPU on every file ([Firecrawl pdf-inspector](https://github.com/firecrawl/pdf-inspector)).
+- **In ClawQL:** MCP **`inspect_pdf`** when **`CLAWQL_ENABLE_PDF_INSPECTOR=1`** — no sidecar; `@firecrawl/pdf-inspector` runs inside `clawql-documents`. Returns `pdf_type`, optional `markdown`, and **`route`**: `local_markdown` | `docling_ocr` | `hybrid_docling`.
+- **Paths:** `path=` must fall under **`CLAWQL_PDF_INSPECTOR_FILE_ROOTS`** (default: process cwd); or pass **`base64`**.
+- **Helm:** **`enablePdfInspector: true`** (env only — no Deployment).
+- **Guide:** [pdf-inspector-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/pdf-inspector-onboarding.md).
+
 ## Nextcloud collaboration storage
 
 - **Use when** operators or upstream systems drop files in a **shared folder** (`IDP/inbox/…`) and agents should **download**, then **upload processed** output to `IDP/processed/…`.
@@ -63,15 +75,21 @@ Users / agents query with permissions enforced by Onyx
 
 ## Docling layout parse (optional)
 
-- **Use when** inputs are **forms, W-2s, or complex layouts** where vanilla Tika extraction is insufficient.
+- **Use when** inputs are **forms, W-2s, scanned pages, or complex layouts** — especially after **`inspect_pdf`** returns `docling_ocr` / `hybrid_docling`.
 - **In ClawQL:** **`DOCLING_BASE_URL`** (+ optional **`DOCLING_API_KEY`**); **`search`** / **`execute`** on bundled Docling Serve OpenAPI ([docling-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/docling-onboarding.md)).
 - **Helm:** **`documentPipeline.docling.enabled: true`** (large CPU image — opt-in).
+
+## Classify and extract (optional MCP tools)
+
+- **`classify_document`** (`CLAWQL_ENABLE_IDP_CLASSIFIER=1`) — document-type label + confidence via **`CLASSIFIER_BASE_URL`** or local heuristic. Helm: **`enableIdpClassifier`** + **`documentPipeline.classifier`**.
+- **`extract_document`** (`CLAWQL_ENABLE_LANGEXTRACT=1`) — schema-grounded LangExtract fields with **`char_interval`** (+ optional HTML path). Helm: **`enableLangextract`** + **`documentPipeline.langextract`**. Compose reference: [`docling-classifier.compose.yml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/compose/docling-classifier.compose.yml).
+- Guides: [fine-tuned-classifier.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/runbooks/fine-tuned-classifier.md) · [langextract-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/langextract-onboarding.md).
 
 ## Tika text and metadata extraction
 
 - **Use when** inputs are **mixed formats** (PDF, DOCX, EML, …) and you need **plain text + metadata** before routing to conversion or ML steps.
 - **In ClawQL:** bundled spec **`providers/tika/openapi.yaml`**; set **`TIKA_BASE_URL`** (and **`CLAWQL_BEARER_TOKEN`** if your Tika server requires it per [Bundled specs](/bundled-specs)). **`search`** for operations like “put document”, “detect”, “parse”, then **`execute`** with the right **`operationId`** and multipart or body fields your spec exposes.
-- **Caveats:** complex PDF layout and **scanned** pages still need **OCR strategy** outside vanilla Tika extraction ([introducing-clawql-tika.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-tika.md) § limitations).
+- **Caveats:** complex PDF layout and **scanned** pages still need **OCR strategy** outside vanilla Tika extraction ([introducing-clawql-tika.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-tika.md) § limitations) — prefer **`inspect_pdf` → Docling** for those.
 
 ## Gotenberg normalize to PDF
 
@@ -105,18 +123,21 @@ Users / agents query with permissions enforced by Onyx
 
 ## Orchestrating with search and execute
 
-1. **`search`** with a natural-language **`query`** (“split pdf with stirling”, “upload document paperless”) to list **`operationId`** candidates.
-2. **`execute`** with **`operationId`**, **`args`**, and optional **`fields`** to keep responses small ([Using search and execute](/learn/search-and-execute-mcp)).
-3. **`memory_ingest`** (or **`ingest_external_knowledge`**) for **operator notes** linking document ids across vendors — use **`enterpriseCitations`** when mixing in Onyx hits ([clawql-memory](/learn/memory)).
-4. **`notify`** for **human-visible** milestones when a long pipeline step finishes ([Schedule & notify workflows](/learn/schedule-notify-workflows)).
+1. **`inspect_pdf`** (when enabled) to decide local Markdown vs Docling for PDF inputs.
+2. **`search`** with a natural-language **`query`** (“split pdf with stirling”, “upload document paperless”) to list **`operationId`** candidates.
+3. **`execute`** with **`operationId`**, **`args`**, and optional **`fields`** to keep responses small ([Using search and execute](/learn/search-and-execute-mcp)).
+4. **`classify_document`** / **`extract_document`** for typed routing and grounded fields.
+5. **`memory_ingest`** (or **`ingest_external_knowledge`**) for **operator notes** linking document ids across vendors — use **`enterpriseCitations`** when mixing in Onyx hits ([clawql-memory](/learn/memory)).
+6. **`notify`** for **human-visible** milestones when a long pipeline step finishes ([Schedule & notify workflows](/learn/schedule-notify-workflows)).
 
 No single tool replaces **thinking through state**: pass **explicit** file buffers or URLs each vendor accepts, and handle **errors** between steps (e.g. Gotenberg 413 → Stirling never runs).
 
 ## Documents feature flag and environment
 
 - **`CLAWQL_ENABLE_DOCUMENTS`** (default **on**): when set to **`0`**, ClawQL **drops** document/IDP vendors from **`all-providers`** and **hides** document MCP tools — the **default stack** (no spec env) does not include Tika, Paperless, etc. anyway. See [Concepts](/concepts) and [configuration § Feature tiers](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md#feature-tiers-architecture-diagram). You can still set **`CLAWQL_BUNDLED_PROVIDERS`** to list only the document vendors you want.
+- **IDP specialist flags:** **`CLAWQL_ENABLE_PDF_INSPECTOR`**, **`CLAWQL_ENABLE_IDP_CLASSIFIER`**, **`CLAWQL_ENABLE_LANGEXTRACT`**, **`CLAWQL_ENABLE_IDP_PIPELINE`** — each default **off**.
 - **Per-service base URLs and tokens** live in **`.env.example`** and [IDP pipeline hub](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md) — refresh committed specs with **`npm run fetch-provider-specs`** when your upstream exposes **`/openapi.json`** or Paperless **`/api/schema/`** ([providers/README.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/providers/README.md) § refresh).
-- **Helm:** umbrella **`charts/clawql-idp`** + **`values-idp-full.yaml`**, or base **`enableDocuments`** / **`documentPipeline`** + **`idpCollaboration`** + **`onyx`** — [Helm](/helm).
+- **Helm:** umbrella **`charts/clawql-idp`** + **`values-idp-full.yaml`**, or base **`enableDocuments`** / **`enablePdfInspector`** / **`enableIdpClassifier`** / **`enableLangextract`** / **`documentPipeline`** + **`idpCollaboration`** + **`onyx`** — [Helm](/helm).
 
 ## Related posts guides and references
 
@@ -124,8 +145,12 @@ No single tool replaces **thinking through state**: pass **explicit** file buffe
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | **IDP Platform**     | [/vision/idp-platform](/vision/idp-platform) — self-hosted vs hosted, archive layer design                                               |
 | **IDP pipeline hub** | [idp-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md)                             |
+| **Documents plugin** | [/plugins/documents](/plugins/documents)                                                                                                 |
 | **Umbrella Helm**    | [clawql-idp-helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-idp-helm.md)                      |
+| pdf-inspector        | [pdf-inspector-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/pdf-inspector-onboarding.md)     |
 | Docling              | [docling-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/docling-onboarding.md)                 |
+| LangExtract          | [langextract-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/langextract-onboarding.md)         |
+| Classifier           | [fine-tuned-classifier.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/runbooks/fine-tuned-classifier.md)           |
 | Nextcloud            | [nextcloud-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/nextcloud-onboarding.md)             |
 | Coneshare            | [coneshare-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/coneshare-onboarding.md)             |
 | Tika deep dive       | [introducing-clawql-tika.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-tika.md)           |

@@ -77,16 +77,16 @@ Optional attribution headers: `CLAWQL_OPENROUTER_HTTP_REFERER`, `CLAWQL_OPENROUT
 ## Plugin contract
 
 ```typescript
-import type { InferenceProviderPlugin } from 'clawql-inference'
+import type { InferenceProviderPlugin } from "clawql-inference";
 
 export function createAcmeProviderPlugin(): InferenceProviderPlugin {
   return {
-    id: 'acme',
-    version: '1.0.0',
+    id: "acme",
+    version: "1.0.0",
     onRegister({ env, registry }) {
-      registry.set('acme', createAcmeAdapter({ apiKey: env.ACME_API_KEY }))
+      registry.set("acme", createAcmeAdapter({ apiKey: env.ACME_API_KEY }));
     },
-  }
+  };
 }
 ```
 
@@ -97,16 +97,14 @@ import {
   composeProviderPlugins,
   createInferenceGateway,
   createProviderRegistry,
-} from 'clawql-inference'
+} from "clawql-inference";
 
 const gateway = createInferenceGateway({
   providers: createProviderRegistry({
     env: process.env,
-    plugins: composeProviderPlugins({
-      extensions: [createAcmeProviderPlugin()],
-    }),
+    plugins: composeProviderPlugins({ extensions: [createAcmeProviderPlugin()] }),
   }),
-})
+});
 ```
 
 Publish third-party packages as `clawql-*-inference-provider` (or in-repo under `packages/`) and pass them to `composeProviderPlugins(\{ extensions: [...] \})` — same pattern as horizontal MCP plugins, without runtime npm discovery.
@@ -121,7 +119,7 @@ Publish third-party packages as `clawql-*-inference-provider` (or in-repo under 
 - [clawql-Agentic Gateway](/inference/clawql-inference)
 - [Upgrade vs OpenRouter / LiteLLM](/inference/clawql-inference#upgrade-vs-openrouter--litellm)
 - [Third-party plugins](/plugins/third-party)
-- [Plugin registry](/reference/plugins)
+- [Plugin registry](/plugins)
 
 export function wrapper({ children }) {
   return children

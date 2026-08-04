@@ -2,9 +2,9 @@ import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
   title:
-    'Document pipeline: Nextcloud, Tika, Gotenberg, Stirling, Paperless, Onyx, Coneshare',
+    'Document pipeline: pdf-inspector, Docling, Tika, Gotenberg, Stirling, Paperless, Onyx, Coneshare',
   description:
-    'How ClawQL’s seven bundled IDP vendors work together: WebDAV intake, extraction, PDF conversion, redaction, archival DMS, enterprise search, and secure sharing—plus search/execute orchestration and CLAWQL_ENABLE_DOCUMENTS.',
+    'How ClawQL’s IDP path works: optional pdf-inspector routing, Docling layout OCR, eight bundled vendors (Tika through Coneshare), classify/LangExtract MCP tools, search/execute orchestration, and CLAWQL_ENABLE_* flags.',
   path: '/learn/document-pipeline',
 })
 

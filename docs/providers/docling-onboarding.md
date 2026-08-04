@@ -55,7 +55,7 @@ For large files, prefer **`docling_convert_file_async`** and poll **`docling_sta
 
 ## IDP pipeline placement
 
-Docling typically runs **before** or **instead of** Tika when layout, tables, or form boxes matter (e.g. W-2, invoices). See [idp-pipeline.md](idp-pipeline.md) and the [lending W-2 sample pack](../../deployment/samples/lending-w2/README.md).
+Docling typically runs **after** optional **`inspect_pdf`** routing (TextBased → local Markdown; Scanned/Mixed → Docling) and **before** or **instead of** Tika when layout, tables, or form boxes matter (e.g. W-2, invoices). See [idp-pipeline.md](idp-pipeline.md), [pdf-inspector-onboarding.md](pdf-inspector-onboarding.md), and the [lending W-2 sample pack](../../deployment/samples/lending-w2/README.md).
 
 Pair with the [fine-tuned classifier runbook](../runbooks/fine-tuned-classifier.md) for tenant-specific document routing.
 

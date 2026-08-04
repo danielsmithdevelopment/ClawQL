@@ -16,7 +16,7 @@ OpenClaw (ClawQL-Agent runtime — external repo)
         │
         ▼
 clawql-mcp  ── search / execute ──► Docling (layout) → Tika → Stirling → Paperless → Onyx
-        │      classify_document / extract_document (optional MCP tools)
+        │      inspect_pdf / classify_document / extract_document (optional MCP tools)
         │      run_idp_pipeline (optional automated recipe)
         │      ingest_external_knowledge / memory_ingest
         │      workflow (optional Argo DAG)
@@ -30,7 +30,8 @@ clawql-mcp  ── search / execute ──► Docling (layout) → Tika → Stir
 | ---------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | ClawQL MCP             | `CLAWQL_ENABLE_DOCUMENTS=1` (default)                       | Document vendor merge                                                                               |
 | Docling layout parse   | `DOCLING_BASE_URL`, optional `DOCLING_API_KEY`              | Forms/tables/W-2 ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248))              |
-| Classifier (optional)  | `CLAWQL_ENABLE_IDP_CLASSIFIER=1`, `IDP_CLASSIFIER_BASE_URL` | Fine-tuned doc type routing ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248))   |
+| pdf-inspector (optional) | `CLAWQL_ENABLE_PDF_INSPECTOR=1`                           | Local PDF classify + Markdown before Docling — [pdf-inspector-onboarding.md](../providers/pdf-inspector-onboarding.md) |
+| Classifier (optional)  | `CLAWQL_ENABLE_IDP_CLASSIFIER=1`, `CLASSIFIER_BASE_URL`     | Fine-tuned doc type routing ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248))   |
 | LangExtract (optional) | `CLAWQL_ENABLE_LANGEXTRACT=1`, `LANGEXTRACT_BASE_URL`       | Schema extraction + grounding ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)) |
 | Slack notify           | `CLAWQL_ENABLE_NOTIFY=1`, `CLAWQL_SLACK_TOKEN`              | Completion message                                                                                  |
 | Vault (optional)       | `CLAWQL_OBSIDIAN_VAULT_PATH`                                | Durable `memory_ingest`                                                                             |
@@ -47,13 +48,14 @@ You are an IDP operator assistant wired to ClawQL MCP (profile: clawql-openclaw-
 When the user @mentions you with a document request (e.g. "process this W-2.pdf for underwriting"):
 
 1. **Discover** — `search` with a tight query for the right vendor `operationId` (Docling layout parse for forms/W-2, Tika for plain text, Stirling redact, Paperless archive, Onyx index).
-2. **Layout parse** — for structured forms (W-2, tax, lending), prefer `execute` on **`docling`** (`docling_convert_file` / `docling_convert_source`) before or instead of Tika — see [`docling-onboarding.md`](../providers/docling-onboarding.md) and [`deployment/samples/lending-w2/`](../../deployment/samples/lending-w2/README.md).
-3. **Classify / extract (optional)** — when enabled: `classify_document` for doc-type routing; `extract_document` for schema-grounded fields (W-2 boxes, etc.) — see [`langextract-onboarding.md`](../providers/langextract-onboarding.md).
-4. **Execute** — call `execute` with minimal `fields`; never paste full OpenAPI responses into Slack.
-5. **Vault** — `memory_ingest` a summary note with Paperless id, Merkle root, and correlation id when vault is configured.
-6. **Workflow** — if the operator enabled Argo, `workflow` `submit` + `wait` on template `clawql-vault-daily-digest` or an allowlisted IDP template; pass `correlation_id`.
-7. **HITL** — if policy requires human review, `hitl_enqueue_label_studio` then `workflow` `suspend`; resume via webhook when approved ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)).
-8. **Notify** — `notify` to the configured Slack channel with: doc title, Paperless link, Onyx citation ids, workflow phase, NO secrets.
+2. **Route PDFs (optional)** — when `CLAWQL_ENABLE_PDF_INSPECTOR=1`: `inspect_pdf` to choose local Markdown vs Docling OCR — see [`pdf-inspector-onboarding.md`](../providers/pdf-inspector-onboarding.md).
+3. **Layout parse** — for structured forms (W-2, tax, lending) or when `inspect_pdf` returns `docling_ocr` / `hybrid_docling`, prefer `execute` on **`docling`** (`docling_convert_file` / `docling_convert_source`) before or instead of Tika — see [`docling-onboarding.md`](../providers/docling-onboarding.md) and [`deployment/samples/lending-w2/`](../../deployment/samples/lending-w2/README.md).
+4. **Classify / extract (optional)** — when enabled: `classify_document` for doc-type routing; `extract_document` for schema-grounded fields (W-2 boxes, etc.) — see [`langextract-onboarding.md`](../providers/langextract-onboarding.md).
+5. **Execute** — call `execute` with minimal `fields`; never paste full OpenAPI responses into Slack.
+6. **Vault** — `memory_ingest` a summary note with Paperless id, Merkle root, and correlation id when vault is configured.
+7. **Workflow** — if the operator enabled Argo, `workflow` `submit` + `wait` on template `clawql-vault-daily-digest` or an allowlisted IDP template; pass `correlation_id`.
+8. **HITL** — if policy requires human review, `hitl_enqueue_label_studio` then `workflow` `suspend`; resume via webhook when approved ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)).
+9. **Notify** — `notify` to the configured Slack channel with: doc title, Paperless link, Onyx citation ids, workflow phase, NO secrets.
 
 Slack replies must be short prose + links. Use `audit.append` with the same `correlationId` for operator grep.
 ```

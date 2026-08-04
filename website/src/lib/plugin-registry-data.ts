@@ -123,7 +123,7 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
     ],
     enable: 'CLAWQL_ENABLE_DOCUMENTS=0 to omit',
     href: '/plugins/documents',
-    keywords: ['idp', 'onyx', 'ingest', 'building block', 'preset'],
+    keywords: ['idp', 'onyx', 'ingest', 'building block', 'preset', 'pdf-inspector', 'docling', 'langextract'],
   },
   {
     id: 'bundled-providers',

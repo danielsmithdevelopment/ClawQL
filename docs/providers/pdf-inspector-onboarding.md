@@ -46,6 +46,18 @@ Or pass **`base64`** instead of **`path`**. Response includes `pdf_type`, `confi
 | `detect` | Fast classify only (`classifyPdf`) |
 | `full` (default) | Classify + Markdown (`processPdf`) when native text is available |
 
+## Response shape
+
+| Field | Meaning |
+| ----- | ------- |
+| `pdf_type` | `TextBased` \| `Scanned` \| `ImageBased` \| `Mixed` |
+| `confidence` | Classifier confidence (0–1) |
+| `page_count` | Pages in the document |
+| `pages_needing_ocr` | Pages lacking reliable native text |
+| `markdown` | Present in `full` mode when routing allows |
+| `route` | `local_markdown` \| `docling_ocr` \| `hybrid_docling` |
+| `route_reason` | Human-readable why that route was chosen |
+
 ## Security
 
 - **`path`** must resolve under **`CLAWQL_PDF_INSPECTOR_FILE_ROOTS`** (default: cwd realpath).

@@ -17,8 +17,8 @@ docker compose -f docker/compose/lending.compose.yml down
 
 | File                                                               | Vertical                                                                                            | Services                                                                       |
 | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| [`lending.compose.yml`](lending.compose.yml)                       | **Lending / mortgage W-2**                                                                          | ClawQL MCP, Docling, reference classifier, LangExtract (demo), Label Studio CE |
-| [`docling-classifier.compose.yml`](docling-classifier.compose.yml) | **Docling + classifier only** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)) | Docling, classifier, LangExtract — no MCP                                      |
+| [`lending.compose.yml`](lending.compose.yml)                       | **Lending / mortgage W-2**                                                                          | ClawQL MCP (incl. **`inspect_pdf`**), Docling, reference classifier, LangExtract (demo), Label Studio CE |
+| [`docling-classifier.compose.yml`](docling-classifier.compose.yml) | **Docling + classifier + LangExtract** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248), [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)) | Docling, classifier, LangExtract — point MCP with `CLAWQL_ENABLE_PDF_INSPECTOR=1` for in-process routing |
 
 **Planned:** healthcare, legal, education Compose files (same issue [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)).
 

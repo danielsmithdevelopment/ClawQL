@@ -37,19 +37,21 @@ Legend: **Ready** = shipped in this repo with bundled or refreshed OpenAPI; **Pa
 | **Structured workflows**        | **`ouroboros_*`** MCP tools                                | **`CLAWQL_ENABLE_OUROBOROS=1`**                                              | Ready   | **[`docs/ouroboros/clawql-ouroboros.md`](../ouroboros/clawql-ouroboros.md)** — optional overlay on linear IDP chains.                                                                                                           |
 | **Dashboard Agent Chat**        | OpenClaw bridge → Next.js SSE + vault threads              | **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`**, dashboard Helm                     | Ready   | **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)** — rich JSON (`attachments`, `steps`, `pipelineStatus`).                                                                                                        |
 | **LangExtract**                 | **`extract_document`**                                     | **`CLAWQL_ENABLE_LANGEXTRACT=1`**, optional **`LANGEXTRACT_BASE_URL`**       | Ready   | [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246) — [`langextract-onboarding.md`](../providers/langextract-onboarding.md)                                                                                     |
-| **Classifier**                  | **`classify_document`**                                    | **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`**, optional **`IDP_CLASSIFIER_BASE_URL`** | Ready   | [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248) — [`fine-tuned-classifier.md`](../runbooks/fine-tuned-classifier.md)                                                                                        |
+| **Classifier**                  | **`classify_document`**                                    | **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`**, optional **`CLASSIFIER_BASE_URL`**     | Ready   | [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248) — [`fine-tuned-classifier.md`](../runbooks/fine-tuned-classifier.md)                                                                                        |
+| **pdf-inspector**               | **`inspect_pdf`**                                          | **`CLAWQL_ENABLE_PDF_INSPECTOR=1`** (in-process; no sidecar)                 | Ready   | [`pdf-inspector-onboarding.md`](../providers/pdf-inspector-onboarding.md) — route TextBased PDFs to local Markdown before Docling OCR                                                                                          |
 
 ## Reference workflow contract (chat-shaped)
 
 Use this as the **default narrative** for OpenClaw system prompts and eval harnesses. Steps are **logical**; skip or reorder when data or policy requires it.
 
 1. **Ingest** — **`ingest_external_knowledge`**, **`nextcloud::nextcloud_webdav_download`**, or Paperless/Tika **`execute`** as appropriate (see **`DEFAULT_IDP_PIPELINE`** in [`idp-pipeline.md`](../providers/idp-pipeline.md)).
-2. **Redact / policy** — apply **deployment-specific** redaction (sidecar, gateway, or human review); no single ClawQL env toggle documents “privacy filter” for all stacks.
-3. **Classify / route** — **`search`** for the right **`operationId`** across pipeline vendors; **`execute`** with lean **`fields`**.
-4. **Extract** — Tika/Stirling/Gotenberg **`execute`** paths for text/PDF/HTML transforms per spec.
-5. **Optional sign / seal** — Stirling/Paperless/Gotenberg routes where the OpenAPI exposes them; attest later via Merkle/Ouroboros ([#114](https://github.com/danielsmithdevelopment/ClawQL/issues/114)).
-6. **Archive / index** — Paperless **`execute`** for durable doc store; **`knowledge_search_onyx`** (or Onyx **`execute`**) for enterprise retrieval and citations.
-7. **Share** — **`coneshare::*`** share links / data rooms; webhook **`POST /idp/coneshare/webhook`** for viewer follow-up when **`CLAWQL_ENABLE_CONESHARE=1`**.
+2. **Route PDFs (optional)** — **`inspect_pdf`** when enabled; follow `route` (`local_markdown` | `docling_ocr` | `hybrid_docling`).
+3. **Redact / policy** — apply **deployment-specific** redaction (sidecar, gateway, or human review); no single ClawQL env toggle documents “privacy filter” for all stacks.
+4. **Classify / route** — **`classify_document`** (optional) and/or **`search`** for the right **`operationId`** across pipeline vendors; **`execute`** with lean **`fields`**.
+5. **Extract** — **`extract_document`** (optional LangExtract) and/or Tika/Stirling/Gotenberg / Docling **`execute`** paths for text/PDF/HTML transforms per spec.
+6. **Optional sign / seal** — Stirling/Paperless/Gotenberg routes where the OpenAPI exposes them; attest later via Merkle/Ouroboros ([#114](https://github.com/danielsmithdevelopment/ClawQL/issues/114)).
+7. **Archive / index** — Paperless **`execute`** for durable doc store; **`knowledge_search_onyx`** (or Onyx **`execute`**) for enterprise retrieval and citations.
+8. **Share** — **`coneshare::*`** share links / data rooms; webhook **`POST /idp/coneshare/webhook`** for viewer follow-up when **`CLAWQL_ENABLE_CONESHARE=1`**.
 
 Pair durable operator trails with **`memory_ingest`** / **`memory_recall`** when using an Obsidian vault (**[#130](https://github.com/danielsmithdevelopment/ClawQL/issues/130)** citation patterns).
 
@@ -139,7 +141,7 @@ when the HTTP bridge supplies it (see docs/dashboard/agent-chat.md).
 1. **[`using-openclaw-with-clawql.md`](using-openclaw-with-clawql.md)** — full OpenClaw + ClawQL guide (install, **`openclaw mcp set`**, validation).
 2. **[`clawql-bootstrap.md`](clawql-bootstrap.md)** — MCP registration + **`npm run smoke:openclaw-bootstrap`**.
 3. This page — **IDP** defaults and matrix.
-4. **[`docs/providers/idp-pipeline.md`](../providers/idp-pipeline.md)** — full seven-vendor stack, env, Helm, **`DEFAULT_IDP_PIPELINE`**.
+4. **[`docs/providers/idp-pipeline.md`](../providers/idp-pipeline.md)** — pdf-inspector route + eight-vendor stack, env, Helm, **`DEFAULT_IDP_PIPELINE`**.
 5. **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)** — dashboard Agent Chat API, SSE, vault schema, rich JSON contract.
 6. **[`slack-first-idp-runbook.md`](slack-first-idp-runbook.md)** — Slack @mention IDP flow ([#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256)).
 7. **[`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md)** — authoritative tool catalog.

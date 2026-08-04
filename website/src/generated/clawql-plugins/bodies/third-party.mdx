@@ -8,17 +8,17 @@ ClawQL is moving toward a **plugin registry** model where horizontal features sh
 2. Export a **`Plugin`** factory (eventually an Effect **`Layer`**).
 3. Implement **`onRegister`** to register MCP tools and declare **`requiredSpecs`**.
 4. Document the Operator toggle or **`CLAWQL_ENABLE_*`** flag.
-5. Open a PR to add a row to the [plugin registry](/reference/plugins).
+5. Open a PR to add a row to the [plugin registry](/plugins).
 
 ## Until the API stabilizes
 
 - Contribute in-repo under `packages/` or `providers/`
 - Use **`CLAWQL_BUNDLED_PROVIDERS`** for custom API merges
-- Vertical-specific behavior may land under `verticals/clawql-*` — see [Verticals guide](/reference/verticals)
+- Vertical-specific behavior may land under `verticals/clawql-*` — see [Verticals guide](/plugins#verticals)
 
 ## Learn more
 
-- [Plugin model & registry](/reference/plugins)
+- [Plugin model & registry](/plugins)
 - [Contributor technical specification](/contributing/technical-specification)
 - [Architecture](/architecture)
 

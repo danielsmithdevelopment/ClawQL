@@ -26,7 +26,7 @@ export const lendingIndustry: Industry = {
     },
   ],
   platformCapabilities: [
-    'Eight-vendor IDP pipeline (Docling, Tika, Gotenberg, Stirling, archive, Onyx, Coneshare)',
+    'IDP pipeline: pdf-inspector route + Docling, Tika, Gotenberg, Stirling, archive, Onyx, Coneshare',
     'Vault memory with wikilinks for borrower files and underwriting decisions',
     'Argo Workflows suspend/resume integrated with Label Studio HITL',
     'Cosign-signed MCP images with Kyverno admission on Helm deploys',
@@ -69,8 +69,9 @@ export const lendingIndustry: Industry = {
       title: 'W-2 intake with confidence routing',
       summary: 'Shipped reference path — synthetic W-2 through Docling, classify, HITL, vault.',
       body: 'The lending W-2 pack demonstrates the full pattern agents use for income verification: parse, score confidence, human review when needed, persist decisions durably.',
-      tools: ['execute', 'classify_document', 'hitl_enqueue_label_studio', 'memory_ingest'],
+      tools: ['inspect_pdf', 'execute', 'classify_document', 'hitl_enqueue_label_studio', 'memory_ingest'],
       steps: [
+        { label: 'Route PDF', detail: 'inspect_pdf on W-2 PDF — TextBased → local markdown; else Docling OCR.' },
         { label: 'Parse layout', detail: 'execute docling_convert_file on fixtures/synthetic-w2.txt — layout-aware OCR for boxed forms.' },
         { label: 'Classify', detail: 'classify_document routes W-2 vs pay stub vs bank statement before extraction schema selection.' },
         { label: 'Route low confidence', detail: 'Score below threshold → hitl_enqueue_label_studio with Label Studio project from label-studio-config.xml.' },

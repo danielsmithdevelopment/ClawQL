@@ -154,10 +154,16 @@ fs.mkdirSync(bodiesDir, { recursive: true })
 for (const p of plugins) {
   const out = path.join(bodiesDir, `${p.slug}.mdx`)
   fs.writeFileSync(out, p.body, 'utf8')
-  execSync(`npx prettier --write "${path.relative(websiteRoot, out)}"`, {
-    cwd: websiteRoot,
-    stdio: 'inherit',
-  })
+  try {
+    execSync(`npx prettier --write "${path.relative(websiteRoot, out)}"`, {
+      cwd: websiteRoot,
+      stdio: 'inherit',
+    })
+  } catch (err) {
+    console.warn(
+      `sync-clawql-plugin-pages: prettier skipped for ${p.slug}.mdx (${err instanceof Error ? err.message : err})`,
+    )
+  }
 }
 
 const esc = (s) =>
@@ -210,10 +216,16 @@ export function getPluginMeta(slug: string): PluginPageMeta | undefined {
 `
 
 fs.writeFileSync(registryPath, registrySource, 'utf8')
-execSync(`npx prettier --write "${path.relative(websiteRoot, registryPath)}"`, {
-  cwd: websiteRoot,
-  stdio: 'inherit',
-})
+try {
+  execSync(`npx prettier --write "${path.relative(websiteRoot, registryPath)}"`, {
+    cwd: websiteRoot,
+    stdio: 'inherit',
+  })
+} catch (err) {
+  console.warn(
+    `sync-clawql-plugin-pages: prettier skipped for registry.tsx (${err instanceof Error ? err.message : err})`,
+  )
+}
 
 const sitemapPaths = [
   '/plugins',

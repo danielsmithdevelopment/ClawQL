@@ -95,8 +95,14 @@ for (const job of JOBS) {
     prepareMdxBody(withAnchors, job.srcRelative),
     'utf8',
   )
-  execSync(`npx prettier --write ${job.prettierTarget}`, {
-    cwd: websiteRoot,
-    stdio: 'inherit',
-  })
+  try {
+    execSync(`npx prettier --write ${job.prettierTarget}`, {
+      cwd: websiteRoot,
+      stdio: 'inherit',
+    })
+  } catch (err) {
+    console.warn(
+      `sync-clawql-plugin-docs: prettier skipped for ${job.prettierTarget} (${err instanceof Error ? err.message : err})`,
+    )
+  }
 }

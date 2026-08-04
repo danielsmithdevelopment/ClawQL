@@ -118,8 +118,12 @@ export const mcpToolTiers = {
   },
   idp: {
     label: 'IDP document pipeline',
-    tagline: 'Eight bundled vendors, one compose path',
+    tagline: 'pdf-inspector route, eight vendors, grounded extract',
     tools: [
+      {
+        name: 'inspect_pdf',
+        help: 'Firecrawl pdf-inspector — classify TextBased vs scanned, extract Markdown, and decide whether Docling OCR is needed.',
+      },
       {
         name: 'run_idp_pipeline',
         help: 'Automated multi-hop pipeline: Nextcloud intake → Docling/Tika → Gotenberg → Stirling → archive → Onyx → Coneshare VDR.',
@@ -145,6 +149,11 @@ export const idpPipelineStages = [
     vendor: 'Nextcloud',
     role: 'Intake & sync',
     detail: 'WebDAV inbox receives uploads; processed files sync back to team folders.',
+  },
+  {
+    vendor: 'pdf-inspector',
+    role: 'PDF route',
+    detail: 'Local classify + Markdown for text PDFs; route scanned/mixed pages to Docling OCR.',
   },
   {
     vendor: 'Docling / Tika',
