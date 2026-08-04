@@ -129,6 +129,26 @@ spec:
             # Always set so chart intent wins over duplicate keys from envFrom Secret (e.g. clawql-provider-env).
             - name: CLAWQL_ENABLE_DOCUMENTS
               value: {{ ternary "1" "0" .Values.enableDocuments | quote }}
+            {{- if .Values.enableIdpClassifier }}
+            - name: CLAWQL_ENABLE_IDP_CLASSIFIER
+              value: "1"
+            {{- end }}
+            {{- if .Values.enableLangextract }}
+            - name: CLAWQL_ENABLE_LANGEXTRACT
+              value: "1"
+            {{- end }}
+            {{- if .Values.enablePdfInspector }}
+            - name: CLAWQL_ENABLE_PDF_INSPECTOR
+              value: "1"
+            {{- end }}
+            {{- if .Values.enableAnydoc }}
+            - name: CLAWQL_ENABLE_ANYDOC
+              value: "1"
+            {{- end }}
+            {{- if .Values.enableIdpPipeline }}
+            - name: CLAWQL_ENABLE_IDP_PIPELINE
+              value: "1"
+            {{- end }}
             - name: CLAWQL_ENABLE_GOOGLE
               value: {{ ternary "1" "0" (.Values.enableGoogle | default false) | quote }}
             - name: CLAWQL_ENABLE_CLOUDFLARE
@@ -289,6 +309,14 @@ spec:
             {{- if .Values.documentPipeline.docling.enabled }}
             - name: DOCLING_BASE_URL
               value: "http://{{ include "clawql-mcp.doclingName" . }}:{{ .Values.documentPipeline.docling.service.port }}"
+            {{- end }}
+            {{- if .Values.documentPipeline.classifier.enabled }}
+            - name: CLASSIFIER_BASE_URL
+              value: "http://{{ include "clawql-mcp.classifierName" . }}:{{ .Values.documentPipeline.classifier.service.port }}"
+            {{- end }}
+            {{- if .Values.documentPipeline.langextract.enabled }}
+            - name: LANGEXTRACT_BASE_URL
+              value: "http://{{ include "clawql-mcp.langextractName" . }}:{{ .Values.documentPipeline.langextract.service.port }}"
             {{- end }}
             - name: GOTENBERG_BASE_URL
               value: "http://{{ include "clawql-mcp.gotenbergName" . }}:{{ .Values.documentPipeline.gotenberg.service.port }}"

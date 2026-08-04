@@ -21,7 +21,7 @@ export const realEstateIndustry: Industry = {
       name: 'Brokerages & transaction teams',
       headline: 'Document intelligence alongside Command, BoldTrail, FUB, and Dotloop.',
       overview:
-        'Transaction coordinators re-read PDFs because CRMs track pipeline, not document content. ClawQL adds classify → extract → HITL → vault on top of your existing stack — the same pattern as the shipped title and PSA reference packs.',
+        'Transaction coordinators re-read PDFs because CRMs track pipeline, not document content. ClawQL adds inspect_pdf → Docling (when needed) → classify → extract → HITL → vault on top of your existing stack — the same pattern as the shipped title and PSA reference packs.',
       demoPitch:
         'Forward this to your TC lead: ClawQL sits on top of Drive and your CRM. When a title commitment lands, we extract Schedule B exceptions with citations and route ambiguous reads to Label Studio. Synthetic demo in 15 minutes.',
       stackPlacement: [
@@ -160,7 +160,7 @@ export const realEstateIndustry: Industry = {
   useCases: [
     {
       title: 'Title commitment intake',
-      body: 'Parse title commitments with Docling, classify Schedule B routing, extract policy amount and exceptions with citations, HITL when confidence is low — vault note links to the deal_id used in your folder naming convention.',
+      body: 'Route title PDFs with inspect_pdf, parse with Docling when scanned, classify Schedule B routing, extract policy amount and exceptions with citations, HITL when confidence is low — vault note links to the deal_id used in your folder naming convention.',
     },
     {
       title: 'PSA field extraction',

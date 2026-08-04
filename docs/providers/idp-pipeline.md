@@ -17,12 +17,14 @@ ClawQL supports **self-hosted** (full data sovereignty via Helm) and **managed h
 ## Stack overview
 
 ```text
-Nextcloud (inbox) → Docling (layout) / Tika → Gotenberg → Stirling → Paperless → Onyx → Nextcloud (processed) → Coneshare (VDR)
+Nextcloud (inbox) → convert_document (anydoc) / inspect_pdf → Docling (layout OCR) / Tika → Gotenberg → Stirling → Paperless → Onyx → Nextcloud (processed) → Coneshare (VDR)
 ```
 
 | Stage | Provider id | Role | Helm block |
 | ----- | ----------- | ---- | ---------- |
 | Intake / sync | **`nextcloud`** | WebDAV + OCS shares | `idpCollaboration.nextcloud` |
+| Fast convert (optional) | **`convert_document`** (in-process) | Firecrawl anydoc — Office/PDF/CSV → GFM; OCR → Docling | `enableAnydoc` |
+| PDF route (optional) | **`inspect_pdf`** (in-process) | Firecrawl pdf-inspector — TextBased → local markdown; scanned → Docling | `enablePdfInspector` |
 | Layout parse | **`docling`** | Layout-aware OCR + tables (forms, W-2) | `documentPipeline.docling` (opt-in; large CPU image) |
 | Extract | **`tika`** | Text + metadata from 1,000+ formats | `documentPipeline.tika` |
 | Normalize | **`gotenberg`** | Office/HTML → PDF | `documentPipeline.gotenberg` |
@@ -59,6 +61,8 @@ See **`.env.example`** for localhost / in-cluster defaults aligned with **`value
 | **`ingest_external_knowledge`** | Bulk Markdown / URL → vault (documents feature on) |
 | **`knowledge_search_onyx`** | Ergonomic Onyx search (`CLAWQL_ENABLE_ONYX=1`) |
 | **`run_idp_pipeline`** | Automated **`DEFAULT_IDP_PIPELINE`** executor (`CLAWQL_ENABLE_IDP_PIPELINE=1`) |
+| **`convert_document`** | Firecrawl anydoc Office/PDF/CSV → GFM + Docling/Tika route (`CLAWQL_ENABLE_ANYDOC=1`) |
+| **`inspect_pdf`** | Firecrawl pdf-inspector classify + markdown + Docling route (`CLAWQL_ENABLE_PDF_INSPECTOR=1`) |
 | **`classify_document`** | POST to **`CLASSIFIER_BASE_URL`** or local heuristic (`CLAWQL_ENABLE_IDP_CLASSIFIER=1`) |
 | **`extract_document`** | LangExtract grounded fields + HTML path refs (`CLAWQL_ENABLE_LANGEXTRACT=1`) |
 | **`memory_ingest` / `memory_recall`** | Durable operator notes + citations |
@@ -80,7 +84,16 @@ documentPipeline:
   enabled: true
   docling:
     enabled: true   # opt-in — large CPU image; layout parse for forms/W-2
+  classifier:
+    enabled: true   # reference HTTP classifier ([#248]); build/push sample image first
+  langextract:
+    enabled: true   # reference LangExtract sidecar ([#246])
 enableDocuments: true
+enableAnydoc: true
+enablePdfInspector: true
+enableIdpClassifier: true
+enableLangextract: true
+enableIdpPipeline: true
 ```
 
 **Onyx** (search wrapper + ingestion API):
@@ -116,6 +129,7 @@ The MCP Deployment receives **`TIKA_BASE_URL`**, **`GOTENBERG_BASE_URL`**, **`ST
 
 | Provider | Guide |
 | -------- | ----- |
+| pdf-inspector | [pdf-inspector-onboarding.md](pdf-inspector-onboarding.md) |
 | Docling | [docling-onboarding.md](docling-onboarding.md) |
 | Tika | [tika-onboarding.md](tika-onboarding.md) |
 | Gotenberg | [gotenberg-onboarding.md](gotenberg-onboarding.md) |

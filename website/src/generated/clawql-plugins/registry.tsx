@@ -59,7 +59,7 @@ export const pluginPages: PluginPageMeta[] = [
     slug: 'codegraph',
     title: 'Code graph (structural)',
     description:
-      'Graphify-style structural code indexing via codegraph_* MCP tools. Opt-in with CLAWQL_ENABLE_CODEGRAPH=1.',
+      'Structural code indexing via codegraph_* MCP tools. Opt-in with CLAWQL_ENABLE_CODEGRAPH=1.',
     status: 'opt-in',
     package: 'clawql-codegraph',
     prev: 'memory',
@@ -69,7 +69,7 @@ export const pluginPages: PluginPageMeta[] = [
     slug: 'documents',
     title: 'Documents & IDP',
     description:
-      'ingest_external_knowledge, optional Onyx search, and opt-in IDP pipeline tools. Default on; CLAWQL_ENABLE_DOCUMENTS=0 to omit.',
+      'ingest_external_knowledge, optional Onyx search, convert_document, inspect_pdf, and opt-in IDP pipeline tools. Default on; CLAWQL_ENABLE_DOCUMENTS=0 to omit.',
     status: 'default-on',
     package: 'clawql-documents',
     prev: 'codegraph',

@@ -9,6 +9,8 @@ export type ClawQLHorizontalTierSpec = {
     readonly idpPipeline?: { readonly enabled?: boolean };
     readonly idpClassifier?: { readonly enabled?: boolean };
     readonly langextract?: { readonly enabled?: boolean };
+    readonly pdfInspector?: { readonly enabled?: boolean };
+    readonly anydoc?: { readonly enabled?: boolean };
   };
   readonly automation?: {
     readonly schedule?: { readonly enabled?: boolean };
@@ -51,6 +53,8 @@ export function optionalFlagsFromHorizontalTierSpec(
     enableIdpPipeline: tierEnabled(spec.documents?.idpPipeline, defaults.enableIdpPipeline),
     enableIdpClassifier: tierEnabled(spec.documents?.idpClassifier, defaults.enableIdpClassifier),
     enableLangextract: tierEnabled(spec.documents?.langextract, defaults.enableLangextract),
+    enablePdfInspector: tierEnabled(spec.documents?.pdfInspector, defaults.enablePdfInspector),
+    enableAnydoc: tierEnabled(spec.documents?.anydoc, defaults.enableAnydoc),
     enableSchedule: tierEnabled(spec.automation?.schedule, defaults.enableSchedule),
     enableNotify: tierEnabled(spec.automation?.notify, defaults.enableNotify),
     enableWorkflow: tierEnabled(spec.automation?.workflow, defaults.enableWorkflow),

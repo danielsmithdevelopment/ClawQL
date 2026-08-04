@@ -10,6 +10,11 @@ import {
   extractDocumentToolSchema,
   handleExtractDocumentToolInput,
 } from "../langextract/extract-document.js";
+import { handleInspectPdfToolInput, inspectPdfToolSchema } from "../pdf-inspector/inspect-pdf.js";
+import {
+  handleConvertDocumentToolInput,
+  convertDocumentToolSchema,
+} from "../anydoc/convert-document.js";
 import { runIngestExternalKnowledge } from "../ingest/external-ingest.js";
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import type { Plugin } from "clawql-core";
@@ -54,6 +59,10 @@ export type CreateDocumentsPluginOptions = {
   readonly enableIdpClassifier?: boolean;
   /** Register `extract_document` when `CLAWQL_ENABLE_LANGEXTRACT=1` ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)). */
   readonly enableLangextract?: boolean;
+  /** Register `inspect_pdf` when `CLAWQL_ENABLE_PDF_INSPECTOR=1` (Firecrawl pdf-inspector). */
+  readonly enablePdfInspector?: boolean;
+  /** Register `convert_document` when `CLAWQL_ENABLE_ANYDOC=1` (Firecrawl anydoc). */
+  readonly enableAnydoc?: boolean;
 };
 
 export function createDocumentsPlugin(options: CreateDocumentsPluginOptions = {}): Plugin {
@@ -61,6 +70,8 @@ export function createDocumentsPlugin(options: CreateDocumentsPluginOptions = {}
   const enableIdpPipeline = options.enableIdpPipeline ?? false;
   const enableIdpClassifier = options.enableIdpClassifier ?? false;
   const enableLangextract = options.enableLangextract ?? false;
+  const enablePdfInspector = options.enablePdfInspector ?? false;
+  const enableAnydoc = options.enableAnydoc ?? false;
   return {
     id: DOCUMENTS_PLUGIN_ID,
     version: "0.1.0",
@@ -84,6 +95,20 @@ export function createDocumentsPlugin(options: CreateDocumentsPluginOptions = {}
             name: "run_idp_pipeline",
             schema: runIdpPipelineToolSchema,
             handler: (args) => handleRunIdpPipelineToolInput(args),
+          });
+        }
+        if (enablePdfInspector) {
+          yield* api.registerMcpTool({
+            name: "inspect_pdf",
+            schema: inspectPdfToolSchema,
+            handler: (args) => handleInspectPdfToolInput(args),
+          });
+        }
+        if (enableAnydoc) {
+          yield* api.registerMcpTool({
+            name: "convert_document",
+            schema: convertDocumentToolSchema,
+            handler: (args) => handleConvertDocumentToolInput(args),
           });
         }
         if (enableIdpClassifier) {

@@ -47,6 +47,8 @@ export function composeHorizontalPluginLayers(
         enableIdpPipeline: flags.enableIdpPipeline,
         enableIdpClassifier: flags.enableIdpClassifier,
         enableLangextract: flags.enableLangextract,
+        enablePdfInspector: flags.enablePdfInspector,
+        enableAnydoc: flags.enableAnydoc,
       })
     );
   }

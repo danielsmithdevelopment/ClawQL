@@ -37,6 +37,10 @@ Docling/Tika text → classify_document (optional) → extract_document → grou
 
 Response includes `extractions[]` with `char_interval` and optional `artifact_paths` (not inline HTML).
 
+## Pair with pdf-inspector
+
+Prefer **`inspect_pdf`** first when the source is a PDF: TextBased routes can feed `extract_document.text` from local Markdown and skip Docling OCR. See [pdf-inspector-onboarding.md](pdf-inspector-onboarding.md).
+
 ## Reference deployment
 
 ```bash

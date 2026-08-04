@@ -713,12 +713,20 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     },
     { title: 'Recommended IDP data flow', id: 'recommended-idp-data-flow' },
     {
+      title: 'pdf-inspector route (optional, in-process)',
+      id: 'pdf-inspector-route-optional-in-process',
+    },
+    {
       title: 'Nextcloud collaboration storage',
       id: 'nextcloud-collaboration-storage',
     },
     {
       title: 'Docling layout parse (optional)',
       id: 'docling-layout-parse-optional',
+    },
+    {
+      title: 'Classify and extract (optional MCP tools)',
+      id: 'classify-and-extract-optional-mcp-tools',
     },
     {
       title: 'Tika text and metadata extraction',

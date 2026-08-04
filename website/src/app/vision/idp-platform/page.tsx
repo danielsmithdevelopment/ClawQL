@@ -7,7 +7,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'IDP Platform — Intelligent Document Processing',
   description:
-    'ClawQL IDP Platform (April 2026): self-hosted vs managed hosted deployment, ClawQL-native archive layer, seven-vendor pipeline, Coneshare VDR, Merkle audit trails, and competitive positioning.',
+    'ClawQL IDP Platform: self-hosted vs managed hosted deployment, ClawQL-native archive layer, pdf-inspector route + eight-vendor pipeline (Docling through Coneshare), classify/LangExtract MCP tools, Coneshare VDR, Merkle audit trails, and competitive positioning.',
   path: '/vision/idp-platform',
   ogType: 'article',
 })

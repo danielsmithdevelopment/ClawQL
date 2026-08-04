@@ -4,11 +4,11 @@ The npm package ships **`providers/`**—optional on-disk API descriptions so co
 
 **Default install** (no spec env): **Cloudflare, GitHub, Slack, Linear, Notion, Onyx** — see [Bundled providers plugin](/plugins/bundled-providers). **`CLAWQL_PROVIDER=all-providers`** loads literally every bundled vendor plus Google top-50 and AWS top-50. Custom subsets: **`CLAWQL_BUNDLED_PROVIDERS`**, **`CLAWQL_SPEC_PATHS`**, or merged presets (`google`, `atlassian`, `default`, …). {{ className: 'lead' }}
 
-**Learn walkthrough** (Nextcloud → Tika → Gotenberg → Stirling → Paperless → Onyx → Coneshare): [Document pipeline](/learn/document-pipeline) · [IDP pipeline hub (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md).
+**Learn walkthrough** (Nextcloud → anydoc/pdf-inspector → Docling → Tika → Gotenberg → Stirling → Paperless → Onyx → Coneshare): [Document pipeline](/learn/document-pipeline) · [IDP pipeline hub (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md).
 
 ## Canonical REST-forward matrix (document stack + SaaS defaults)
 
-Use this as the default-bundle reference for **REST / OpenAPI–heavy** workflows. The table includes the **seven-vendor IDP stack** plus common SaaS presets; **`google`** is a merged Discovery preset, not a single file.
+Use this as the default-bundle reference for **REST / OpenAPI–heavy** workflows. The table includes the **eight-vendor IDP stack** (plus in-process **anydoc** via MCP `convert_document` and **pdf-inspector** via `inspect_pdf`) and common SaaS presets; **`google`** is a merged Discovery preset, not a single file.
 
 | Provider id (`CLAWQL_PROVIDER` / `CLAWQL_BUNDLED_PROVIDERS`) | Primary auth env(s)                                  | Typical use in workflows                                                                                      |
 | ------------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |

@@ -223,6 +223,14 @@ managedGateway:
 enableMemory: true
 # Document stack: tika, gotenberg, paperless, stirling, onyx, nextcloud, coneshare in all-providers merge + ingest_external_knowledge + (with enableOnyx) knowledge_search_onyx. Set false to inject CLAWQL_ENABLE_DOCUMENTS=0.
 enableDocuments: true
+# IDP specialist MCP tools (documents tier). Default off — set true to inject CLAWQL_ENABLE_*=1.
+enableIdpClassifier: false
+enableLangextract: false
+# In-process Firecrawl pdf-inspector (`inspect_pdf`). No sidecar; ships in clawql-documents.
+enablePdfInspector: false
+# In-process Firecrawl anydoc (`convert_document`). No sidecar; ships in clawql-documents.
+enableAnydoc: false
+enableIdpPipeline: false
 
 # Optional ClawQLInstance tier-spec overlay (#255). Default off — Helm `enable*` env flags remain authoritative unless this mount is enabled.
 instanceSpec:
@@ -551,6 +559,43 @@ documentPipeline:
     auth:
       apiKey: ""
       existingSecret: ""
+  # Reference classifier HTTP ([#248]) — Compose sample image; opt-in.
+  classifier:
+    enabled: false
+    image:
+      repository: ghcr.io/danielsmithdevelopment/clawql-classifier-http
+      tag: latest
+      pullPolicy: IfNotPresent
+    # When empty, chart builds from deployment/samples/classifier-http via values override / local image.
+    service:
+      port: 8080
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  # LangExtract sidecar ([#246]) — reference sample image; opt-in.
+  langextract:
+    enabled: false
+    image:
+      repository: ghcr.io/danielsmithdevelopment/clawql-langextract-http
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      port: 8090
+    env:
+      mode: demo
+      backend: openrouter
+      modelId: deepseek/deepseek-chat
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
   tika:
     image:
       repository: apache/tika

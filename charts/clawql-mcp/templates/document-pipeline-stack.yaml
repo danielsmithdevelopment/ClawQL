@@ -256,6 +256,145 @@ spec:
           resources:
             {{- toYaml .Values.documentPipeline.docling.resources | nindent 12 }}
 {{- end }}
+{{- if .Values.documentPipeline.classifier.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.classifierName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: classifier
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: classifier
+  ports:
+    - name: http
+      port: {{ .Values.documentPipeline.classifier.service.port | int }}
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.classifierName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: classifier
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: classifier
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: classifier
+    spec:
+      containers:
+        - name: classifier
+          image: "{{ .Values.documentPipeline.classifier.image.repository }}:{{ .Values.documentPipeline.classifier.image.tag }}"
+          imagePullPolicy: {{ .Values.documentPipeline.classifier.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.documentPipeline.classifier.service.port | int }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.documentPipeline.classifier.resources | nindent 12 }}
+{{- end }}
+{{- if .Values.documentPipeline.langextract.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.langextractName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: langextract
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: langextract
+  ports:
+    - name: http
+      port: {{ .Values.documentPipeline.langextract.service.port | int }}
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.langextractName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: langextract
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: langextract
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: langextract
+    spec:
+      containers:
+        - name: langextract
+          image: "{{ .Values.documentPipeline.langextract.image.repository }}:{{ .Values.documentPipeline.langextract.image.tag }}"
+          imagePullPolicy: {{ .Values.documentPipeline.langextract.image.pullPolicy }}
+          env:
+            - name: LANGEXTRACT_MODE
+              value: {{ .Values.documentPipeline.langextract.env.mode | quote }}
+            - name: LANGEXTRACT_BACKEND
+              value: {{ .Values.documentPipeline.langextract.env.backend | quote }}
+            - name: LANGEXTRACT_MODEL_ID
+              value: {{ .Values.documentPipeline.langextract.env.modelId | quote }}
+            - name: LANGEXTRACT_ARTIFACTS_DIR
+              value: /tmp/langextract-artifacts
+          ports:
+            - name: http
+              containerPort: {{ .Values.documentPipeline.langextract.service.port | int }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.documentPipeline.langextract.resources | nindent 12 }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service

@@ -2,7 +2,7 @@
 
 **Status:** Phase 2 shipped (July 2026) — horizontal plugins register via `onRegister`; HITL and third-party API remain roadmap  
 **Audience:** Contributors, integrators, and third-party plugin authors  
-**Related:** [Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md) · [Effect + plugin plan](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/effect-ts-modularization-rearchitecture-plan.md) · [Plugin registry](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/reference/clawql-plugin-registry.md#plugin-registry) · [Contributor Technical Specification §1.1](/contributing/technical-specification)
+**Related:** [Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md) · [Effect + plugin plan](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/effect-ts-modularization-rearchitecture-plan.md) · [Plugin registry](/plugins#registry#plugin-registry) · [Contributor Technical Specification §1.1](/contributing/technical-specification)
 
 This document explains what it means for **`clawql-memory`**, **`clawql-documents`**, and **`clawql-automation`** to become **plugins**, how that differs from today’s layout, and how third-party plugins will work.
 
@@ -183,7 +183,7 @@ Agent (stdio / HTTP / gRPC)
 
 | Doc                                                                                                                                                    | Use when                                 |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
-| [Plugin registry](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/reference/clawql-plugin-registry.md#plugin-registry)                 | Shipped vs planned plugins, enable flags |
+| [Plugin registry](/plugins#registry#plugin-registry)                                                                                                   | Shipped vs planned plugins, enable flags |
 | [Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md) | Package layout, shims, extraction PRs    |
 | [Effect + plugin plan](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/effect-ts-modularization-rearchitecture-plan.md)         | Effect Layers, plugin checklist, CI      |
 | [Contributor Technical Specification §1.1](/contributing/technical-specification)                                                                      | Full `Plugin` field semantics            |
