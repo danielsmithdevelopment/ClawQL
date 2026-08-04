@@ -42,18 +42,20 @@ diminishing_returns / `max_generations` via `ouroboros_run_evolutionary_loop`.
 - **ouroboros-off:** thrash (decoy flip-flops and/or identical-tool spam with
   `doom_loop` allow) until **turn/time hard-fail** or wrong implementation.
 
-## Live evidence ([run 30424169516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30424169516))
+## Live evidence ([run 30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642))
 
-With doom_loop **allow**, no vault memory, 50-turn / 180s caps:
+With doom_loop **allow**, no vault memory, 50-turn / 180s caps, write nudge + off thrash nudges:
 
-| Arm           | Score | Turns | Wall (s) | Behavior                                                             |
-| ------------- | ----- | ----- | -------- | -------------------------------------------------------------------- |
-| ouroboros-on  | 0.0   | 3     | 163.7    | Ran `create_seed` + `run_evolutionary_loop` ×2; **never wrote**      |
-| ouroboros-off | 0.0   | 19    | 181.5    | `read` + **bash spam** (20 tools, 0 writes) → `wall_s>180` hard-fail |
+| Arm           | Score | Turns | Wall (s) | Behavior                                                                      |
+| ------------- | ----- | ----- | -------- | ----------------------------------------------------------------------------- |
+| ouroboros-on  | **1.0** | 5   | 78       | `create_seed` → `run_evolutionary_loop` → `write` → selftest pass             |
+| ouroboros-off | **0.0** | 4+  | 167      | Decoy flip-flop `read`/`write`/`bash` → wrong limiter → selftest fail         |
 
-Off proves OpenCode-level doom loop when the guard is off (capped before $10).
-On needs the post-loop write nudge (follow-up commit) so functional success
-lands after stagnation/oscillation exit.
+**Verdict:** on converges under hard caps; off thrashs / fails the task without Ouroboros.
+
+### Earlier doom-loop capture ([run 30424169516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30424169516))
+
+Before the on-arm write nudge, both scored 0.0 under the same caps: on looped Ouroboros twice without writing; off `read` + **bash spam** hit `wall_s>180`. That run still shows OpenCode-level thrash when `doom_loop` is allowed (bounded before a $10 key burn).
 
 ## How to run
 
