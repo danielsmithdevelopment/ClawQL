@@ -24,6 +24,7 @@ describe("composeHorizontalPluginLayers", () => {
       enableIdpPipeline: false,
       enableIdpClassifier: false,
       enableLangextract: false,
+      enablePdfInspector: false,
       enableLangfuseEval: false,
       enableGrpc: false,
       enableGrpcReflection: false,

@@ -97,6 +97,14 @@ argocd
 {{- printf "%s-docling" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{- define "clawql-mcp.classifierName" -}}
+{{- printf "%s-classifier" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.langextractName" -}}
+{{- printf "%s-langextract" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
 {{- define "clawql-mcp.gotenbergName" -}}
 {{- printf "%s-gotenberg" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}

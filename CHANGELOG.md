@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`inspect_pdf`** — Firecrawl [pdf-inspector](https://github.com/firecrawl/pdf-inspector) in-process MCP tool (`CLAWQL_ENABLE_PDF_INSPECTOR=1`): classify TextBased/Scanned/Mixed, optional Markdown, Docling route recommendation. Docs: [`docs/providers/pdf-inspector-onboarding.md`](docs/providers/pdf-inspector-onboarding.md).
+- **Helm IDP sidecars** — opt-in **`documentPipeline.classifier`** + **`documentPipeline.langextract`** Deployments; chart flags **`enableIdpClassifier`**, **`enableLangextract`**, **`enablePdfInspector`**, **`enableIdpPipeline`** wire MCP env + `CLASSIFIER_BASE_URL` / `LANGEXTRACT_BASE_URL`.
 - **`codegraph_sync`** — native TypeScript pipeline (index → Louvain communities → `GRAPH_REPORT.md` / `graph.html` → vault ingest). **No Python / Graphify CLI.** Optional `codegraph_sync_graphify` only imports an existing `graph.json` (or falls back to native). ([`docs/plugins/codegraph.md`](docs/plugins/codegraph.md)).
 - **TS/JS codegraph depth** — enclosing-scope call graphs, `extends`/`implements`/`exports`, cross-file import/call linking, React/Next tags; **`codegraph_explore`** (one-shot agent context) and **`codegraph_impact`** (blast radius).
 - **Multi-language tree-sitter indexing** — 30+ languages via `tree-sitter-wasms` (Rust, Java, C/C++, C#, Ruby, Kotlin, Scala, PHP, Swift, …) alongside the TS compiler path.

@@ -35,6 +35,10 @@ import {
   INGEST_SCOPE_DESCRIPTION,
   INGEST_SOURCE_DESCRIPTION,
   INGEST_URL_DESCRIPTION,
+  INSPECT_PDF_BASE64_DESCRIPTION,
+  INSPECT_PDF_INCLUDE_MARKDOWN_DESCRIPTION,
+  INSPECT_PDF_MODE_DESCRIPTION,
+  INSPECT_PDF_PATH_DESCRIPTION,
   ONYX_FIELDS_DESCRIPTION,
   ONYX_FILTERS_DESCRIPTION,
   ONYX_HYBRID_ALPHA_DESCRIPTION,
@@ -139,4 +143,11 @@ export const extractDocumentToolZodShape = {
     .describe(EXTRACT_BACKEND_DESCRIPTION),
   write_html: z.boolean().optional().describe(EXTRACT_WRITE_HTML_DESCRIPTION),
   doc_id: z.string().optional().describe(EXTRACT_DOC_ID_DESCRIPTION),
+} as const;
+
+export const inspectPdfToolZodShape = {
+  path: z.string().min(1).max(4096).optional().describe(INSPECT_PDF_PATH_DESCRIPTION),
+  base64: z.string().min(1).max(140_000_000).optional().describe(INSPECT_PDF_BASE64_DESCRIPTION),
+  mode: z.enum(["detect", "full"]).optional().describe(INSPECT_PDF_MODE_DESCRIPTION),
+  include_markdown: z.boolean().optional().describe(INSPECT_PDF_INCLUDE_MARKDOWN_DESCRIPTION),
 } as const;

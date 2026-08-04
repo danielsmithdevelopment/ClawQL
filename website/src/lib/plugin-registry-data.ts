@@ -118,6 +118,7 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
       'knowledge_search_onyx',
       'run_idp_pipeline',
       'classify_document',
+      'inspect_pdf',
       'extract_document',
     ],
     enable: 'CLAWQL_ENABLE_DOCUMENTS=0 to omit',

@@ -38,6 +38,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@firecrawl/pdf-inspector": "1.12.0",
     "clawql-api": "7.1.0",
     "clawql-core": "7.1.0",
     "clawql-memory": "7.1.0",
