@@ -148,6 +148,25 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
   if (process.env.CLAWQL_PANGUARD_BLOCK_TOOLS?.trim()) {
     env.CLAWQL_PANGUARD_BLOCK_TOOLS = process.env.CLAWQL_PANGUARD_BLOCK_TOOLS.trim();
   }
+  if (process.env.CLAWQL_ENABLE_CODEGRAPH?.trim()) {
+    env.CLAWQL_ENABLE_CODEGRAPH = process.env.CLAWQL_ENABLE_CODEGRAPH.trim();
+  }
+  if (process.env.CLAWQL_CODEGRAPH_ROOT?.trim()) {
+    env.CLAWQL_CODEGRAPH_ROOT = process.env.CLAWQL_CODEGRAPH_ROOT.trim();
+  }
+  if (process.env.CLAWQL_CODEGRAPH_PATH?.trim()) {
+    env.CLAWQL_CODEGRAPH_PATH = process.env.CLAWQL_CODEGRAPH_PATH.trim();
+  }
+  if (process.env.CLAWQL_ENABLE_SCHEDULE?.trim()) {
+    env.CLAWQL_ENABLE_SCHEDULE = process.env.CLAWQL_ENABLE_SCHEDULE.trim();
+  }
+  if (process.env.CLAWQL_SCHEDULE_DB_PATH?.trim()) {
+    env.CLAWQL_SCHEDULE_DB_PATH = process.env.CLAWQL_SCHEDULE_DB_PATH.trim();
+  }
+  if (process.env.CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES?.trim()) {
+    env.CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES =
+      process.env.CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES.trim();
+  }
   return env;
 }
 

@@ -10,6 +10,9 @@ This is the **platform** backlog. Ouroboros-only detail lives in
 **Full per-run scores (update after every matrix):**
 [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
+**Thorough prove / why / how for every verified task:**
+[`openbench-task-explanations.md`](./openbench-task-explanations.md).
+
 ---
 
 ## Two measurement tracks (keep them separate)
@@ -41,7 +44,9 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 
 Still missing live cells: hybrid recall, codegraph, schedule/notify, sandbox, composed recipes, n≥3 trials. Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` runs on PR/push. All current graded tasks are **`retired`** after [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) (empty `pr_active` until new backlog tasks ship). Ouroboros workflow is dispatch-only.
+**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` runs on PR/push. Prior graded tasks are **`retired`**. Active next wave: `hybrid-recall-source-pin`, `codegraph-guided-edit`, `schedule-synthetic-dry-run`. Ouroboros workflow is dispatch-only.
+
+Explanations for every verified cell: [`openbench-task-explanations.md`](./openbench-task-explanations.md).
 
 ---
 
@@ -134,14 +139,14 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 
 ### P1 — memory & docs depth (where “tons of tooling” lives)
 
-8. **PageIndex long-doc Q&A**  
-9. **Hybrid recall source pin** (vector or pageindex only)  
-10. **Codegraph-guided edit**  
+8. ~~**PageIndex long-doc Q&A**~~ — verified on 1.0 / off 0.0 ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)).  
+9. **Hybrid recall source pin** — task shipped (`hybrid-recall-source-pin`); awaiting live A/B.  
+10. **Codegraph-guided edit** — task shipped (`codegraph-guided-edit`); awaiting live A/B.  
 11. **External ingest → continue**  
 
 ### P2 — automation / sandbox / composed
 
-12. **Schedule dry_run synthetic**  
+12. **Schedule dry_run synthetic** — task shipped (`schedule-synthetic-dry-run`); awaiting live A/B.  
 13. **Notify mock Slack**  
 14. **Sandbox-trusted compute**  
 15. **Composed safe-rollout** (search→execute×2→audit→ingest)  
@@ -175,9 +180,11 @@ Ouroboros remains **on vs off** (both have ClawQL) when the claim is the loop, n
 
 ## Links
 
-- OpenBench overview: [`openbench.md`](./openbench.md)
-- ClawQL-on failure/root-cause history: [`openbench-failure-root-cause-2026-07.md`](./openbench-failure-root-cause-2026-07.md)
-- Ouroboros evidence: [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md)
-- Skills / composed recipes: [`docs/skills/`](../skills/)
-- Plugin registry: [`docs/reference/clawql-plugin-registry.md`](../reference/clawql-plugin-registry.md)
-- Feature tiers: [`docs/readme/configuration.md`](../readme/configuration.md)
+- [OpenBench overview](./openbench.md)
+- [Results ledger](./openbench-results-ledger.md)
+- [Task explanations (prove / why / how)](./openbench-task-explanations.md)
+- [Stack coverage / backlog](./openbench-stack-coverage.md)
+- [Ouroboros evidence](./ouroboros-value-evidence.md)
+- [Skills / composed recipes](../skills/)
+- [Plugin registry](../reference/clawql-plugin-registry.md)
+- [Feature tiers](../readme/configuration.md)

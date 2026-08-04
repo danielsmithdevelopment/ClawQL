@@ -2,8 +2,12 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "Credits topped up 2026-08-04. After run 30881158522 all prior pr_active cells WON and were retired — pr_active empty until new backlog tasks ship.",
-  "pr_active": [],
+  "live_resume_note": "P1/P2 next wave active: hybrid-recall, codegraph, schedule. Prior tasks retired after 30881158522.",
+  "pr_active": [
+    "hybrid-recall-source-pin",
+    "codegraph-guided-edit",
+    "schedule-synthetic-dry-run"
+  ],
   "retired": {
     "memory-dependent-continuation": {
       "reason": "Verified WIN replicated (on 1.0 / off 0.333)",
@@ -51,5 +55,5 @@
     }
   },
   "ouroboros_pr_enabled": false,
-  "notes": "After a clean WIN lands for an active task, move it to retired and shrink pr_active. Docs-only PRs should not trigger live A/B (path filters exclude docs). Empty pr_active = no live spend until new tasks are added."
+  "notes": "After a clean WIN lands for an active task, move it to retired and shrink pr_active. Docs-only PRs should not trigger live A/B (path filters exclude docs)."
 }

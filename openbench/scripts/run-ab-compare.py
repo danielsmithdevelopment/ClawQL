@@ -161,6 +161,36 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "require_pageindex": True,
         "enable_pageindex": True,
     },
+    "hybrid-recall-source-pin": {
+        "max_turns": 30,
+        "max_tokens": 8000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        # Empty vault — decoy is filesystem-only; truth via PageIndex.
+        "disable_memory": False,
+        "empty_vault": True,
+        "require_pageindex": True,
+        "enable_pageindex": True,
+    },
+    "codegraph-guided-edit": {
+        "max_turns": 35,
+        "max_tokens": 8000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        "disable_memory": False,
+        "empty_vault": True,
+        "require_codegraph": True,
+        "enable_codegraph": True,
+    },
+    "schedule-synthetic-dry-run": {
+        "max_turns": 30,
+        "max_tokens": 8000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        "disable_memory": True,
+        "require_schedule": True,
+        "enable_schedule": True,
+    },
 }
 
 # Appended only to ouroboros-on so off cannot one-shot the correct recipe.
@@ -301,6 +331,38 @@ PAGE_INDEX_NUDGE = """Continue the PageIndex task.
    {"code":"orchid-77","source":"pageindex"}
 
 Ignore decoy/. Call pageindex tools now.
+"""
+
+HYBRID_PAGEINDEX_NUDGE = """Continue the hybrid PageIndex task.
+
+1. Call clawql_pageindex_build_tree with docId openbench-hybrid-handbook and
+   markdown from handbook.md.
+2. Call clawql_pageindex_synthesize querying CLAWQL_HYBRID_CODE / verification.
+3. write relative filePath answer.json:
+   {"code":"fern-42","source":"pageindex"}
+
+Ignore decoy/ (rose-99 is wrong). Call pageindex tools now.
+"""
+
+CODEGRAPH_NUDGE = """Continue the codegraph task.
+
+1. Call clawql_codegraph_index with root = repo (relative path).
+2. Call clawql_codegraph_query for SECRET_MARKER or format_line / ledger.
+3. write relative filePath answer.json:
+   {"marker":"cg-alpha-9","file":"payments/ledger.py","source":"codegraph"}
+
+Ignore decoy/. Call codegraph tools now.
+"""
+
+SCHEDULE_NUDGE = """Continue the schedule dry_run task.
+
+1. clawql_schedule operation=create with synthetic GET https://example.com/
+   assert status_in [200], interval 300s.
+2. clawql_schedule operation=trigger job_id=<id> dry_run=true.
+3. write relative filePath schedule.json:
+   {"dry_run":true,"status":"pass","job_id":"<id>","source":"schedule"}
+
+Call schedule tools now.
 """
 
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.
@@ -855,6 +917,39 @@ def pageindex_incomplete(combined: str, workdir: Path) -> bool:
     return True
 
 
+def codegraph_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "answer.json").is_file():
+        return True
+    text = combined or ""
+    indexed = '"tool":"clawql_codegraph_index"' in text or '"tool":"codegraph_index"' in text
+    if not indexed:
+        return True
+    queried = any(
+        s in text
+        for s in (
+            '"tool":"clawql_codegraph_query"',
+            '"tool":"codegraph_query"',
+            '"tool":"clawql_codegraph_explain"',
+            '"tool":"codegraph_explain"',
+            '"tool":"clawql_codegraph_neighbors"',
+            '"tool":"codegraph_neighbors"',
+        )
+    )
+    return not queried
+
+
+def schedule_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "schedule.json").is_file():
+        return True
+    text = combined or ""
+    hits = text.count('"tool":"clawql_schedule"') + text.count('"tool":"schedule"')
+    return hits < 2
+
+
 def policy_missing_artifact(workdir: Path) -> bool:
     return not (workdir / "policy.json").is_file()
 
@@ -909,6 +1004,10 @@ def run_arm_on(
     require_pageindex: bool = False,
     panguard_block_tools: str | None = None,
     enable_pageindex: bool = False,
+    require_codegraph: bool = False,
+    enable_codegraph: bool = False,
+    require_schedule: bool = False,
+    enable_schedule: bool = False,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
     clawql = resolve_clawql()
@@ -994,6 +1093,19 @@ def run_arm_on(
     if enable_pageindex:
         env["CLAWQL_ENABLE_PAGEINDEX"] = "1"
         env["CLAWQL_ENABLE_MEMORY"] = "1"  # PageIndex tools register via MemoryPlugin
+        env["CLAWQL_BUNDLED_OFFLINE"] = "1"
+
+    if enable_codegraph:
+        env["CLAWQL_ENABLE_CODEGRAPH"] = "1"
+        env["CLAWQL_ENABLE_MEMORY"] = "1"
+        env["CLAWQL_CODEGRAPH_ROOT"] = str(workdir / "repo")
+        env["CLAWQL_CODEGRAPH_PATH"] = str(workdir / ".codegraph")
+        env["CLAWQL_BUNDLED_OFFLINE"] = "1"
+
+    if enable_schedule:
+        env["CLAWQL_ENABLE_SCHEDULE"] = "1"
+        env["CLAWQL_SCHEDULE_DB_PATH"] = str(workdir / ".schedule" / "schedule.db")
+        env["CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES"] = "https://example.com"
         env["CLAWQL_BUNDLED_OFFLINE"] = "1"
 
     t0 = time.monotonic()
@@ -1216,7 +1328,12 @@ def run_arm_on(
         remaining = int(timeout_s) - int(elapsed)
         if remaining >= 25:
             cont_file = workdir / ".openbench_pageindex_nudge.md"
-            cont_file.write_text(PAGE_INDEX_NUDGE, encoding="utf-8")
+            nudge = (
+                HYBRID_PAGEINDEX_NUDGE
+                if (workdir / "handbook.md").is_file()
+                else PAGE_INDEX_NUDGE
+            )
+            cont_file.write_text(nudge, encoding="utf-8")
             cont_timeout = max(25, min(90, remaining))
             cmd = build_cmd(cont_file, cont_timeout)
             try:
@@ -1231,6 +1348,68 @@ def run_arm_on(
                 )
                 combined = combined + "\n" + (proc_pi.stdout or "") + (proc_pi.stderr or "")
                 code = proc_pi.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
+    # codegraph: missing index/query/answer.
+    if (
+        require_codegraph
+        and arm == "clawql-on"
+        and not timed_out
+        and codegraph_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 25:
+            cont_file = workdir / ".openbench_codegraph_nudge.md"
+            cont_file.write_text(CODEGRAPH_NUDGE, encoding="utf-8")
+            cont_timeout = max(25, min(90, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_cg = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_cg.stdout or "") + (proc_cg.stderr or "")
+                code = proc_cg.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
+    # schedule: missing create/trigger/schedule.json.
+    if (
+        require_schedule
+        and arm == "clawql-on"
+        and not timed_out
+        and schedule_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 25:
+            cont_file = workdir / ".openbench_schedule_nudge.md"
+            cont_file.write_text(SCHEDULE_NUDGE, encoding="utf-8")
+            cont_timeout = max(25, min(90, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_sch = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_sch.stdout or "") + (proc_sch.stderr or "")
+                code = proc_sch.returncode
             except subprocess.TimeoutExpired as exc:
                 timed_out = True
                 combined = combined + "\n" + _dec_timeout_output(exc)
@@ -1648,6 +1827,10 @@ def run_trial(
                 require_pageindex=bool(caps.get("require_pageindex")),
                 panguard_block_tools=caps.get("panguard_block_tools"),
                 enable_pageindex=bool(caps.get("enable_pageindex")),
+                require_codegraph=bool(caps.get("require_codegraph")),
+                enable_codegraph=bool(caps.get("enable_codegraph")),
+                require_schedule=bool(caps.get("require_schedule")),
+                enable_schedule=bool(caps.get("enable_schedule")),
             )
         # Prefer full captured stream; fall back to / merge harness dump.
         # Never *replace* combined with a longer dump — that can drop an earlier
@@ -1691,6 +1874,10 @@ def run_trial(
             checker_env_extra["OPENBENCH_REQUIRE_POLICY_BLOCK"] = "1"
         if caps.get("require_pageindex"):
             checker_env_extra["OPENBENCH_REQUIRE_PAGEINDEX"] = "1"
+        if caps.get("require_codegraph"):
+            checker_env_extra["OPENBENCH_REQUIRE_CODEGRAPH"] = "1"
+        if caps.get("require_schedule"):
+            checker_env_extra["OPENBENCH_REQUIRE_SCHEDULE"] = "1"
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
         return {
