@@ -81,6 +81,33 @@ export const hitlLabelStudioToolSchema = {
           .record(z.string(), z.unknown())
           .optional()
           .describe("Optional extra JSON merged into task.data.meta."),
+        predictions: z
+          .array(
+            z.object({
+              result: z
+                .array(z.unknown())
+                .max(200)
+                .describe(
+                  "Label Studio prediction result regions/choices (from_name/to_name/type/value)."
+                ),
+              model_version: z
+                .string()
+                .max(256)
+                .optional()
+                .describe("Optional model version label shown in Label Studio."),
+              score: z
+                .number()
+                .min(0)
+                .max(1)
+                .optional()
+                .describe("Optional prediction score in [0, 1]."),
+            })
+          )
+          .max(20)
+          .optional()
+          .describe(
+            "Optional Label Studio pre-annotations (predictions) for this task ([#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247))."
+          ),
       })
     )
     .min(1)

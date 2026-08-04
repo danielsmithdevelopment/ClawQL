@@ -121,17 +121,39 @@ Deep dive: [`docs/deployment/helm.md`](../deployment/helm.md#nats-jetstream-deep
 
 ### 5.1 Parameters
 
-| Field                | Required | Description                                                                                                                                                                                         |
-| -------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`project_id`**     | yes      | Integer primary key of the Label Studio project (`/api/projects/{id}/import`).                                                                                                                      |
-| **`tasks`**          | yes      | Non-empty array (max 100 in schema). Each element: **`data`** — object shown to annotators as **`task.data`**; optional **`meta`** — merged into **`data.meta`**.                                   |
-| **`confidence`**     | no       | Number in **[0, 1]** stored under **`data.clawql_hitl.confidence`** for reviewer context (your policy maps low scores here).                                                                        |
-| **`correlation_id`** | no       | String for cross-system correlation (OpenClaw run id, request id). Stored under **`data.clawql_hitl.correlation_id`**; echoed into webhook **`memory_ingest`** **`sessionId`** when present.        |
-| **`seed_id`**        | no       | Optional Ouroboros / workflow seed id — **`data.clawql_hitl.seed_id`**.                                                                                                                             |
-| **`workflow_ref`**   | no       | Argo Workflow to resume on webhook when **`CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1`** — stored as **`data.clawql_hitl.workflow`** (`namespace`, `name`, optional `node_field_selector`).              |
-| **`provenance`**     | no       | Arbitrary JSON object under **`data.clawql_hitl.provenance`** (doc URLs, pipeline ids — avoid secrets). May include `workflow_namespace` / `workflow_name` as an alternative to **`workflow_ref`**. |
+| Field                | Required | Description                                                                                                                                                                                                                                                                                        |
+| -------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`project_id`**     | yes      | Integer primary key of the Label Studio project (`/api/projects/{id}/import`).                                                                                                                                                                                                                     |
+| **`tasks`**          | yes      | Non-empty array (max 100 in schema). Each element: **`data`** — object shown to annotators as **`task.data`**; optional **`meta`** — merged into **`data.meta`**; optional **`predictions`** — Label Studio pre-annotations ([#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)). |
+| **`confidence`**     | no       | Number in **[0, 1]** stored under **`data.clawql_hitl.confidence`** for reviewer context (your policy maps low scores here).                                                                                                                                                                       |
+| **`correlation_id`** | no       | String for cross-system correlation (OpenClaw run id, request id). Stored under **`data.clawql_hitl.correlation_id`**; echoed into webhook **`memory_ingest`** **`sessionId`** when present.                                                                                                       |
+| **`seed_id`**        | no       | Optional Ouroboros / workflow seed id — **`data.clawql_hitl.seed_id`**.                                                                                                                                                                                                                            |
+| **`workflow_ref`**   | no       | Argo Workflow to resume on webhook when **`CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1`** — stored as **`data.clawql_hitl.workflow`** (`namespace`, `name`, optional `node_field_selector`).                                                                                                             |
+| **`provenance`**     | no       | Arbitrary JSON object under **`data.clawql_hitl.provenance`** (doc URLs, pipeline ids — avoid secrets). May include `workflow_namespace` / `workflow_name` as an alternative to **`workflow_ref`**.                                                                                                |
 
 Every task also receives **`data.clawql_hitl.enqueued_at`** (ISO timestamp) and **`data.clawql_hitl.source`** = **`clawql_mcp`**.
+
+### 5.1.1 Pre-annotations (`predictions`) — [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)
+
+Each task may include optional **`predictions`**: an array of Label Studio prediction objects. ClawQL forwards them on **`POST /api/projects/{id}/import`** so reviewers see model suggestions in the UI.
+
+| Field (per prediction) | Required | Limits / notes                                                                            |
+| ---------------------- | -------- | ----------------------------------------------------------------------------------------- |
+| **`result`**           | yes      | Array of LS result items (`from_name`, `to_name`, `type`, `value`, …). Max **200** items. |
+| **`model_version`**    | no       | String shown in LS (max 256).                                                             |
+| **`score`**            | no       | Number in **[0, 1]**.                                                                     |
+| Array length           | —        | Max **20** predictions per task; JSON ≤ **512 KiB** per task predictions payload.         |
+
+**Happy path:** classifier / LangExtract / heuristic output → build `result` regions aligned to your project XML → **`hitl_enqueue_label_studio`** → Label Studio shows pre-labels → webhook on completion.
+
+**Reference packs** (config + `sample-tasks.json`):
+
+- [`deployment/samples/lending-w2/`](../../deployment/samples/lending-w2/)
+- [`deployment/samples/healthcare-referral/`](../../deployment/samples/healthcare-referral/)
+- [`deployment/samples/legal-contract/`](../../deployment/samples/legal-contract/)
+- [`deployment/samples/education-transcript/`](../../deployment/samples/education-transcript/)
+
+Align **`from_name` / `to_name`** with the pack’s `label-studio-config.xml`.
 
 ### 5.2 Example (minimal)
 
@@ -154,9 +176,41 @@ Every task also receives **`data.clawql_hitl.enqueued_at`** (ISO timestamp) and 
 }
 ```
 
+### 5.2.1 Example (with pre-annotations)
+
+```json
+{
+  "project_id": 3,
+  "confidence": 0.61,
+  "correlation_id": "healthcare-referral-demo-001",
+  "tasks": [
+    {
+      "data": { "text": "REFERRAL (SYNTHETIC)…" },
+      "predictions": [
+        {
+          "model_version": "healthcare-referral-reference-v1",
+          "score": 0.61,
+          "result": [
+            {
+              "from_name": "doc_type",
+              "to_name": "doc",
+              "type": "labels",
+              "value": { "labels": ["referral"] }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Full checked-in examples: pack **`sample-tasks.json`** files under **`deployment/samples/`**.
+
 ### 5.3 Errors
 
 - Missing **`CLAWQL_LABEL_STUDIO_URL`** or **`CLAWQL_LABEL_STUDIO_API_TOKEN`**: tool returns JSON **`error`** explaining configuration.
+- Invalid **`predictions`** (limits / shape): tool returns JSON **`error`** (no secrets echoed).
 - Label Studio HTTP non-success: tool returns **`error`**, **`detail`** (truncated response body).
 
 ---
@@ -394,7 +448,7 @@ When native RBAC, SAML, and reviewer assignment are required:
 4. Enable **`enableHitlLabelStudio`** on **`charts/clawql-mcp`**; store tokens in Vault / ESO ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)).
 5. Optional: single-project **review workflow** with Enterprise assign-reviewers — ClawQL enqueue + webhook unchanged ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)).
 
-**Pre-annotations and vertical packs** (faster annotator UX) are tracked separately in [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247).
+Vertical Compose stacks and pre-annotation packs: [`docker/compose/README.md`](../../docker/compose/README.md) ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251), [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)).
 
 ---
 

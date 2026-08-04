@@ -1,0 +1,10 @@
+REFERRAL (SYNTHETIC — NOT REAL PHI)
+
+Patient ID: DEMO-0001
+DOB: 1980-01-15
+Reason: evaluation of chronic left knee pain after sports injury
+Specialty requested: orthopedics
+Urgency: routine
+Referring clinician: Dr. A. Example, Family Medicine
+Clinic: Demo Care Clinic (synthetic)
+Notes: No allergies listed. Prefer weekday afternoon slot.

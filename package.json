@@ -212,6 +212,7 @@
         "@opentelemetry/propagator-jaeger": "2.9.0",
         "sharp": "0.35.3",
         "brace-expansion": "5.0.9",
-        "effect": "3.22.0"
+        "effect": "3.22.0",
+        "@aws-sdk/credential-provider-login": "3.972.73"
     }
 }

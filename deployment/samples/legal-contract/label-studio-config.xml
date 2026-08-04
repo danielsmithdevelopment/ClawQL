@@ -1,0 +1,21 @@
+<View>
+  <Header value="Contract clause review (synthetic legal demo)"/>
+  <Text name="instructions" value="Review clause type and privilege flags. Synthetic contract text only — not legal advice."/>
+  <TextArea name="doc" value="$text" readonly="true"/>
+  <Labels name="doc_type" toName="doc">
+    <Label value="nda" background="#2ECC40"/>
+    <Label value="msa" background="#FF851B"/>
+    <Label value="sow" background="#0074D9"/>
+    <Label value="other" background="#AAAAAA"/>
+  </Labels>
+  <Choices name="privilege" toName="doc" choice="single">
+    <Choice value="none"/>
+    <Choice value="attorney_client"/>
+    <Choice value="work_product"/>
+  </Choices>
+  <Choices name="approve" toName="doc" choice="single">
+    <Choice value="approve"/>
+    <Choice value="reject"/>
+    <Choice value="escalate"/>
+  </Choices>
+</View>

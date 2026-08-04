@@ -1,0 +1,21 @@
+<View>
+  <Header value="Transcript review (synthetic education demo)"/>
+  <Text name="instructions" value="Verify document type and completeness. Synthetic student data only — not a FERPA compliance tool."/>
+  <TextArea name="doc" value="$text" readonly="true"/>
+  <Labels name="doc_type" toName="doc">
+    <Label value="transcript" background="#2ECC40"/>
+    <Label value="enrollment_letter" background="#FF851B"/>
+    <Label value="diploma" background="#0074D9"/>
+    <Label value="other" background="#AAAAAA"/>
+  </Labels>
+  <Choices name="completeness" toName="doc" choice="single">
+    <Choice value="complete"/>
+    <Choice value="partial"/>
+    <Choice value="illegible"/>
+  </Choices>
+  <Choices name="approve" toName="doc" choice="single">
+    <Choice value="approve"/>
+    <Choice value="reject"/>
+    <Choice value="needs_rescan"/>
+  </Choices>
+</View>

@@ -1,0 +1,15 @@
+OFFICIAL ACADEMIC TRANSCRIPT (SYNTHETIC — DEMO ONLY)
+
+Student: Alex Example
+Student ID: EDU-DEMO-1001
+Institution: Demo State University
+Program: B.S. Computer Science
+Enrollment status: Graduated (synthetic)
+Cumulative GPA: 3.40
+
+Coursework (excerpt):
+- CS101 Intro to Programming — A
+- CS201 Data Structures — B+
+- MATH210 Linear Algebra — A-
+
+This fixture is synthetic and must not be treated as a real education record.

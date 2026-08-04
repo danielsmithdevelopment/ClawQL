@@ -1,0 +1,39 @@
+{
+  "project_id": 1,
+  "confidence": 0.72,
+  "correlation_id": "lending-w2-preannotation-demo-001",
+  "provenance": {
+    "vertical": "lending",
+    "fixture": "fixtures/synthetic-w2.txt"
+  },
+  "tasks": [
+    {
+      "data": {
+        "text": "Form W-2 Wage and Tax Statement (SYNTHETIC)\nEmployer: ACME Demo Corp\nWages: 50000\nFederal income tax withheld: 7500",
+        "employer_name": "ACME Demo Corp",
+        "wages": 50000,
+        "federal_withheld": 7500
+      },
+      "predictions": [
+        {
+          "model_version": "lending-w2-reference-v1",
+          "score": 0.72,
+          "result": [
+            {
+              "from_name": "doc_type",
+              "to_name": "doc",
+              "type": "labels",
+              "value": { "labels": ["w2"] }
+            },
+            {
+              "from_name": "approve",
+              "to_name": "doc",
+              "type": "choices",
+              "value": { "choices": ["approve"] }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -12,6 +12,7 @@ End-to-end **intelligent document processing** sample for mortgage / lending und
 | [`label-studio-config.xml`](label-studio-config.xml)     | Label Studio labeling UI for W-2 field validation               |
 | [`openclaw-prompt.md`](openclaw-prompt.md)               | OpenClaw system prompt addendum + tool sequence                 |
 | [`fixtures/synthetic-w2.txt`](fixtures/synthetic-w2.txt) | Demo W-2 text (upload or base64 to Docling)                     |
+| [`sample-tasks.json`](sample-tasks.json)                 | Example **`hitl_enqueue_label_studio`** body with **predictions** ([#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)) |
 
 ## Prerequisites
 

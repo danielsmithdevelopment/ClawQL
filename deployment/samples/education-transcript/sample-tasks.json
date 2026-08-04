@@ -1,0 +1,37 @@
+{
+  "project_id": 1,
+  "confidence": 0.67,
+  "correlation_id": "education-transcript-demo-001",
+  "provenance": {
+    "vertical": "education",
+    "fixture": "fixtures/synthetic-transcript.txt",
+    "disclaimer": "synthetic — not FERPA advice"
+  },
+  "tasks": [
+    {
+      "data": {
+        "text": "OFFICIAL TRANSCRIPT (SYNTHETIC)\nStudent: Alex Example\nInstitution: Demo State University\nProgram: B.S. Computer Science\nCumulative GPA: 3.40"
+      },
+      "predictions": [
+        {
+          "model_version": "education-transcript-reference-v1",
+          "score": 0.67,
+          "result": [
+            {
+              "from_name": "doc_type",
+              "to_name": "doc",
+              "type": "labels",
+              "value": { "labels": ["transcript"] }
+            },
+            {
+              "from_name": "completeness",
+              "to_name": "doc",
+              "type": "choices",
+              "value": { "choices": ["complete"] }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

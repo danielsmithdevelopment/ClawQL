@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Vertical Docker Compose stacks** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) — **healthcare**, **legal**, and **education** stacks alongside lending (`docker/compose/*.compose.yml` + env templates + sample packs). Validate with **`make compose-vertical-config-test`**.
+- **HITL Label Studio pre-annotations** ([#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)) — optional **`tasks[].predictions`** on **`hitl_enqueue_label_studio`** (Zod + size limits); reference **`sample-tasks.json`** packs for lending / healthcare / legal / education.
 - **`convert_document`** — Firecrawl [anydoc](https://github.com/firecrawl/anydoc) in-process MCP tool (`CLAWQL_ENABLE_ANYDOC=1`): Office/PDF/CSV → GFM Markdown with Docling/Tika route recommendations. Helm **`enableAnydoc`**. Docs: [`docs/providers/anydoc-onboarding.md`](docs/providers/anydoc-onboarding.md).
 - **`inspect_pdf`** — Firecrawl [pdf-inspector](https://github.com/firecrawl/pdf-inspector) in-process MCP tool (`CLAWQL_ENABLE_PDF_INSPECTOR=1`): classify TextBased/Scanned/Mixed, optional Markdown, Docling route recommendation. Docs: [`docs/providers/pdf-inspector-onboarding.md`](docs/providers/pdf-inspector-onboarding.md).
 - **Helm IDP sidecars** — opt-in **`documentPipeline.classifier`** + **`documentPipeline.langextract`** Deployments; chart flags **`enableIdpClassifier`**, **`enableLangextract`**, **`enablePdfInspector`**, **`enableAnydoc`**, **`enableIdpPipeline`** wire MCP env + `CLASSIFIER_BASE_URL` / `LANGEXTRACT_BASE_URL`.
