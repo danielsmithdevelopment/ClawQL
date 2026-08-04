@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { graphql, printSchema } from "graphql";
 import { toolArgsFromInputSchema, buildGraphqlSchemaFromCatalog } from "./graphql-schema.js";
 import type { ToolCatalog } from "./types.js";
+import type { CollapsedToolResult } from "./call.js";
 
 describe("graphql-schema", () => {
   it("flattens simple object properties into args", () => {
@@ -21,6 +22,9 @@ describe("graphql-schema", () => {
     const catalog: ToolCatalog = {
       fetchedAt: new Date().toISOString(),
       grpcAddress: "127.0.0.1:50051",
+      upstream: "127.0.0.1:50051",
+      upstreamKind: "grpc",
+      surfaces: ["openapi", "graphql", "grpc"],
       tools: [
         {
           name: "echo",
@@ -35,6 +39,8 @@ describe("graphql-schema", () => {
     };
 
     const schema = buildGraphqlSchemaFromCatalog(catalog, {
+      callTool: async () =>
+        ({ structuredContent: { echo: "ok" } }) satisfies CollapsedToolResult,
       grpcAddress: catalog.grpcAddress,
       getCatalog: () => catalog,
     });

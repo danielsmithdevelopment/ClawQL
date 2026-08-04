@@ -347,6 +347,6 @@ These vision items are **not** done by package extraction alone:
 
 **Not in this wave:** `clawql-telemetry` ([#313](https://github.com/danielsmithdevelopment/ClawQL/issues/313)); `mcp-grpc-transport` and `panguard-mcp-bridge` keep independent cadence.
 
-**Adjacent package (MVP):** `mcp-openapi-gateway` (`0.1.0`) — MCP tools → named REST + OpenAPI on-ramp with gRPC `CallTool` as preferred backend (funnel onto `mcp-grpc-transport`). Design: [`docs/design/mcp-openapi-gateway.md`](../design/mcp-openapi-gateway.md). Example: [`examples/mcp-openapi-gateway/`](../../examples/mcp-openapi-gateway/). Independent npm cadence; does **not** depend on `clawql-api`.
+**Adjacent package:** `mcp-openapi-gateway` (`0.3.0`) — any MCP upstream (stdio / Streamable HTTP / gRPC) → OpenAPI + GraphQL + gRPC scaffold (funnel onto `mcp-grpc-transport`). User guide: [`docs/mcp/mcp-openapi-gateway.md`](../mcp/mcp-openapi-gateway.md). Design: [`docs/design/mcp-openapi-gateway.md`](../design/mcp-openapi-gateway.md). Example: [`examples/mcp-openapi-gateway/`](../../examples/mcp-openapi-gateway/). Independent npm cadence; does **not** depend on `clawql-api`.
 
 **npm publish:** workflow [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) + [`scripts/release/npm-publish-workspace.mjs`](../../scripts/release/npm-publish-workspace.mjs). Tag **`v7.1.0`** when ready — see [`docs/release/v7.1.0-checklist.md`](../release/v7.1.0-checklist.md).

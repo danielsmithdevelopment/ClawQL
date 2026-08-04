@@ -9,11 +9,13 @@ export type BuildOpenApiOptions = {
   tools: ListedMcpTool[];
   title?: string;
   serverName?: string;
-  grpcAddress: string;
+  /** Present when a gRPC MCP surface exists (upstream or scaffolded). */
+  grpcAddress?: string;
   publicBaseUrl?: string;
 };
 
 export function buildOpenApiDocument(options: BuildOpenApiOptions): Record<string, unknown> {
+  const grpcAddr = options.grpcAddress?.trim() || undefined;
   const componentsSchemas: Record<string, unknown> = {
     McpToolResult: {
       type: "object",
@@ -35,7 +37,7 @@ export function buildOpenApiDocument(options: BuildOpenApiOptions): Record<strin
     "/tools": {
       get: {
         operationId: "list_mcp_tools",
-        summary: "List MCP tools discovered via gRPC ListTools",
+        summary: "List MCP tools discovered from the upstream MCP server",
         responses: {
           "200": {
             description: "Tool catalog",
@@ -50,6 +52,12 @@ export function buildOpenApiDocument(options: BuildOpenApiOptions): Record<strin
                     },
                     fetchedAt: { type: "string", format: "date-time" },
                     grpcAddress: { type: "string" },
+                    upstream: { type: "string" },
+                    upstreamKind: { type: "string" },
+                    surfaces: {
+                      type: "array",
+                      items: { type: "string" },
+                    },
                   },
                 },
               },
@@ -86,23 +94,25 @@ export function buildOpenApiDocument(options: BuildOpenApiOptions): Record<strin
       ? jsonSchemaToOpenApiSchema(tool.outputSchema, componentsSchemas, `${prefix}_out`)
       : { $ref: "#/components/schemas/McpToolResult" };
 
+    const grpcHint = grpcAddr
+      ? `Also available via gRPC \`model_context_protocol.Mcp/CallTool\` at \`${grpcAddr}\`.`
+      : "Scaffold with `--grpc-listen` (or omit `--no-grpc`) to expose a local gRPC MCP surface.";
+
     paths[`/${tool.name}`] = {
       post: {
         operationId: `mcp_tool__${tool.name}`,
         summary: tool.title || tool.description || `Call MCP tool ${tool.name}`,
-        description: [
-          tool.description ?? "",
-          "",
-          `Prefer production calls via gRPC \`model_context_protocol.Mcp/CallTool\` at \`${options.grpcAddress}\`.`,
-        ]
-          .filter(Boolean)
-          .join("\n"),
-        "x-clawql-grpc": {
-          service: "model_context_protocol.Mcp",
-          method: "CallTool",
-          toolName: tool.name,
-          address: options.grpcAddress,
-        },
+        description: [tool.description ?? "", "", grpcHint].filter(Boolean).join("\n"),
+        ...(grpcAddr
+          ? {
+              "x-clawql-grpc": {
+                service: "model_context_protocol.Mcp",
+                method: "CallTool",
+                toolName: tool.name,
+                address: grpcAddr,
+              },
+            }
+          : {}),
         requestBody: {
           required: true,
           content: {
@@ -121,7 +131,7 @@ export function buildOpenApiDocument(options: BuildOpenApiOptions): Record<strin
             },
           },
           "400": { description: "Invalid arguments or unknown tool" },
-          "502": { description: "Upstream gRPC CallTool failed" },
+          "502": { description: "Upstream CallTool failed" },
         },
       },
     };
@@ -131,28 +141,35 @@ export function buildOpenApiDocument(options: BuildOpenApiOptions): Record<strin
     openapi: "3.1.0",
     info: {
       title: options.title ?? "MCP tools (OpenAPI on-ramp)",
-      version: "0.1.0",
+      version: "0.3.0",
       description:
-        "REST facade over MCP tools. GraphQL on-ramp at /graphql (GraphiQL at /graphiql). " +
-        "Prefer gRPC CallTool for production, mesh, and large payloads. " +
-        "Powered by mcp-grpc-transport — the production TypeScript gRPC transport for MCP.",
-      "x-clawql-grpc": {
-        service: "model_context_protocol.Mcp",
-        methods: ["ListTools", "CallTool"],
-        address: options.grpcAddress,
-        defaultPort: 50051,
-        protocolVersionMetadata: "mcp-protocol-version",
-        package: "mcp-grpc-transport",
-        docs: "https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-grpc-transport",
-        reflectionEnv: "ENABLE_GRPC_REFLECTION=1",
-        largePayloadNote:
-          "Prefer gRPC CallTool over Streamable HTTP / this OpenAPI on-ramp for large tool arguments (e.g. base64 documents).",
-      },
+        "REST + GraphQL facade over any MCP server (stdio, Streamable HTTP, or gRPC). " +
+        "GraphQL at /graphql (GraphiQL at /graphiql). " +
+        (grpcAddr
+          ? "Prefer gRPC CallTool for production, mesh, and large payloads. "
+          : "") +
+        "Powered by mcp-grpc-transport when a gRPC surface is available.",
+      ...(grpcAddr
+        ? {
+            "x-clawql-grpc": {
+              service: "model_context_protocol.Mcp",
+              methods: ["ListTools", "CallTool"],
+              address: grpcAddr,
+              defaultPort: 50051,
+              protocolVersionMetadata: "mcp-protocol-version",
+              package: "mcp-grpc-transport",
+              docs: "https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-grpc-transport",
+              reflectionEnv: "ENABLE_GRPC_REFLECTION=1",
+              largePayloadNote:
+                "Prefer gRPC CallTool over Streamable HTTP / this OpenAPI on-ramp for large tool arguments (e.g. base64 documents).",
+            },
+          }
+        : {}),
       "x-clawql-graphql": {
         endpoint: "/graphql",
         graphiql: "/graphiql",
         schema: "/graphql/schema.graphql",
-        note: "Per-tool mutations + callTool(name, args); same gRPC CallTool backend.",
+        note: "Per-tool mutations + callTool(name, args); same upstream as REST.",
       },
     },
     servers: options.publicBaseUrl

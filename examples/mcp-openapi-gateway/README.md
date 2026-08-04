@@ -1,14 +1,19 @@
-# Example: MCP server with OpenAPI, GraphQL, **and** gRPC
+# Example: scaffold OpenAPI + GraphQL + gRPC for MCP tools
 
-One demo MCP server exposes the **same tools** on three surfaces at once:
+This example shows two patterns:
 
-| Surface | How | Default |
-| ------- | --- | ------- |
+1. **gRPC-native demo server** — `server.mjs` starts tools on gRPC and puts `mcp-openapi-gateway` in front (OpenAPI + GraphQL).
+2. **Any-MCP wrap** — point the CLI at *any* Streamable HTTP or stdio MCP server; the gateway scaffolds REST + GraphQL + local gRPC for you.
+
+| Surface | How | Default (demo server) |
+| ------- | --- | --------------------- |
 | **gRPC MCP** | `mcp-grpc-transport` — `ListTools` / `CallTool` | `127.0.0.1:50051` |
 | **OpenAPI on-ramp** | `mcp-openapi-gateway` — `POST /{toolName}` + Swagger | `http://127.0.0.1:8090` |
 | **GraphQL on-ramp** | same gateway — `POST /graphql` + GraphiQL | `http://127.0.0.1:8090/graphql` |
 
 Demo tools: `echo`, `add`, `greet`.
+
+**User guide:** [`docs/mcp/mcp-openapi-gateway.md`](../../docs/mcp/mcp-openapi-gateway.md).
 
 ## Prerequisites
 
@@ -20,27 +25,32 @@ npm run build -w mcp-grpc-transport
 npm run build -w mcp-openapi-gateway
 ```
 
-## 1. Start the server
+## A. Demo server (gRPC upstream)
 
 ```bash
 node examples/mcp-openapi-gateway/server.mjs
 ```
 
-You should see gRPC, OpenAPI, and GraphQL addresses printed.
+Optional env: `GRPC_PORT` (default `50051`), `OPENAPI_PORT` (default `8090`), `ENABLE_GRPC_REFLECTION`, `MCP_OPENAPI_GATEWAY_API_KEY`.
 
-Optional env:
+## B. Wrap any MCP server (CLI)
 
-| Env | Default | Meaning |
-| --- | ------- | ------- |
-| `GRPC_PORT` | `50051` | gRPC listen port |
-| `OPENAPI_PORT` | `8090` | OpenAPI + GraphQL HTTP port |
-| `ENABLE_GRPC_REFLECTION` | `1` | `grpcurl list` / `describe` |
-| `MCP_OPENAPI_GATEWAY_API_KEY` | _(off)_ | Require `X-API-Key` on HTTP routes |
+```bash
+# Streamable HTTP MCP already running somewhere:
+npx mcp-openapi-gateway --mcp-url http://127.0.0.1:8080/mcp \
+  --listen 0.0.0.0:8090 --grpc-listen 127.0.0.1:50051
 
-## 2. Call via OpenAPI (REST)
+# Or spawn a stdio MCP package:
+npx mcp-openapi-gateway --stdio -- npx -y @modelcontextprotocol/server-everything
+```
+
+## Call surfaces
 
 ```bash
 node examples/mcp-openapi-gateway/demo-rest.mjs
+node examples/mcp-openapi-gateway/demo-graphql.mjs
+node examples/mcp-openapi-gateway/demo-grpc.mjs
+node examples/mcp-openapi-gateway/demo-all.mjs   # parity check
 ```
 
 ```bash
@@ -48,42 +58,11 @@ curl -s -X POST http://127.0.0.1:8090/echo \
   -H 'content-type: application/json' \
   -d '{"message":"hello"}' | jq .
 open http://127.0.0.1:8090/docs
-```
-
-## 3. Call via GraphQL
-
-```bash
-node examples/mcp-openapi-gateway/demo-graphql.mjs
-```
-
-```bash
-curl -s http://127.0.0.1:8090/graphql \
-  -H 'content-type: application/json' \
-  -d '{"query":"mutation { echo(message: \"hi\") }"}' | jq .
 open http://127.0.0.1:8090/graphiql
-```
-
-Per-tool mutations are generated from `ListTools` (`echo`, `add`, …). Generic escape hatch: `callTool(name:, args:)`.
-
-## 4. Call via gRPC
-
-```bash
-node examples/mcp-openapi-gateway/demo-grpc.mjs
-```
-
-```bash
-grpcurl -plaintext 127.0.0.1:50051 list
-```
-
-## 5. Side-by-side parity (all three)
-
-```bash
-node examples/mcp-openapi-gateway/demo-all.mjs
 ```
 
 ## Positioning
 
-OpenAPI + GraphQL are **on-ramps** for clients that don’t speak MCP.  
-gRPC (`mcp-grpc-transport`) is the **production** path — see `info.x-clawql-grpc` in `/openapi.json` and the GraphiQL banner.
+OpenAPI + GraphQL are **on-ramps**. gRPC (`mcp-grpc-transport`) is the **production** path — see `info.x-clawql-grpc` in `/openapi.json`.
 
 Design: [`docs/design/mcp-openapi-gateway.md`](../../docs/design/mcp-openapi-gateway.md).

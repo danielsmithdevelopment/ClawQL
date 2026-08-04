@@ -38,6 +38,31 @@ export function httpBodyFromCollapsed(result: CollapsedToolResult): unknown {
   return out;
 }
 
+/**
+ * Normalize an MCP SDK `CallToolResult` (stdio / Streamable HTTP) into the same
+ * collapsed shape used for gRPC CallTool responses.
+ */
+export function collapseSdkToolResult(result: unknown): CollapsedToolResult {
+  const r = (result ?? {}) as {
+    content?: Array<{ type?: string; text?: string }>;
+    structuredContent?: unknown;
+    isError?: boolean;
+  };
+  const out: CollapsedToolResult = {};
+  if (r.structuredContent && typeof r.structuredContent === "object") {
+    out.structuredContent = r.structuredContent as Record<string, unknown>;
+  }
+  if (Array.isArray(r.content) && r.content.length > 0) {
+    out.content = r.content;
+    const texts = r.content
+      .filter((c) => c?.type === "text" && typeof c.text === "string")
+      .map((c) => c.text as string);
+    if (texts.length > 0) out.text = texts[texts.length - 1];
+  }
+  if (typeof r.isError === "boolean") out.isError = r.isError;
+  return out;
+}
+
 /** Collapse server-streaming CallTool responses into a single JSON-friendly result. */
 export function collapseCallToolMessages(
   messages: Record<string, unknown>[]

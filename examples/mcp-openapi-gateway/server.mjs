@@ -12,7 +12,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
-import { startMcpOpenApiGateway } from "mcp-openapi-gateway";
+import { startMcpGateway } from "mcp-openapi-gateway";
 
 function createDemoMcpServer() {
   const server = new McpServer({
@@ -81,13 +81,14 @@ async function main() {
     throw new Error("gRPC did not start — set ENABLE_GRPC=1");
   }
 
-  const gateway = await startMcpOpenApiGateway({
-    grpcAddress: grpc.address,
+  const gateway = await startMcpGateway({
+    upstream: { kind: "grpc", address: grpc.address },
     host: openApiHost,
     port: openApiPort,
     title: "MCP OpenAPI Gateway demo",
     serverName: "mcp-openapi-gateway-demo",
     apiKey: process.env.MCP_OPENAPI_GATEWAY_API_KEY?.trim() || undefined,
+    grpcListen: false,
   });
 
   console.log("");

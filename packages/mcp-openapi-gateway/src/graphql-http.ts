@@ -2,21 +2,21 @@ import type { Express, Request, Response } from "express";
 import { graphql, printSchema } from "graphql";
 import { graphiqlHtml } from "./graphiql-html.js";
 import { buildGraphqlSchemaFromCatalog } from "./graphql-schema.js";
-import type { ToolCatalog } from "./types.js";
+import type { CallToolFn, ToolCatalog } from "./types.js";
 
 export type AttachGraphqlOptions = {
-  grpcAddress: string;
-  protocolVersion?: string;
+  callTool: CallToolFn;
   getCatalog: () => ToolCatalog;
   title?: string;
+  grpcAddress?: string;
 };
 
 export function attachGraphqlRoutes(app: Express, options: AttachGraphqlOptions): void {
   const buildSchema = () =>
     buildGraphqlSchemaFromCatalog(options.getCatalog(), {
-      grpcAddress: options.grpcAddress,
-      protocolVersion: options.protocolVersion,
+      callTool: options.callTool,
       getCatalog: options.getCatalog,
+      grpcAddress: options.grpcAddress,
     });
 
   app.get("/graphql/schema.graphql", (_req, res) => {
@@ -52,12 +52,14 @@ export function attachGraphqlRoutes(app: Express, options: AttachGraphqlOptions)
 }
 
 function parseVars(raw: unknown): Record<string, unknown> | undefined {
-  if (typeof raw !== "string" || !raw.trim()) return undefined;
-  try {
-    return JSON.parse(raw) as Record<string, unknown>;
-  } catch {
-    return undefined;
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      return JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      return undefined;
+    }
   }
+  return undefined;
 }
 
 async function runGraphql(

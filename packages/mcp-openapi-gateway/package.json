@@ -1,7 +1,7 @@
 {
   "name": "mcp-openapi-gateway",
-  "version": "0.2.0",
-  "description": "OpenAPI + GraphQL on-ramp for MCP tools — POST /{toolName}, /graphql, Swagger/GraphiQL — forwarding into gRPC CallTool via mcp-grpc-transport",
+  "version": "0.3.0",
+  "description": "Scaffold OpenAPI + GraphQL + gRPC for any MCP server (stdio, Streamable HTTP, or gRPC) — POST /{toolName}, /graphql, Swagger/GraphiQL, mcp-grpc-transport CallTool",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -44,12 +44,12 @@
   "homepage": "https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-openapi-gateway#readme",
   "dependencies": {
     "@grpc/grpc-js": "^1.14.4",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "express": "^5.2.1",
     "graphql": "^16.14.0",
     "mcp-grpc-transport": "1.0.0"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.1",
     "@types/express": "^5.0.3",
     "@types/node": "^26.1.1",
     "typescript": "^6.0.3",

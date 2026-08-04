@@ -11,15 +11,16 @@ import {
   type GraphQLFieldConfigArgumentMap,
 } from "graphql";
 import type { ListedMcpTool } from "mcp-grpc-transport";
-import { callToolViaGrpc, httpBodyFromCollapsed } from "./call.js";
+import { httpBodyFromCollapsed } from "./call.js";
 import { GraphQLJSON } from "./graphql-json-scalar.js";
 import { isSafeToolPathName } from "./schema-convert.js";
-import type { ToolCatalog } from "./types.js";
+import type { CallToolFn, ToolCatalog } from "./types.js";
 
 export type GraphqlSchemaContext = {
-  grpcAddress: string;
-  protocolVersion?: string;
+  callTool: CallToolFn;
   getCatalog: () => ToolCatalog;
+  /** Advertised gRPC address (upstream or scaffolded); may be unset. */
+  grpcAddress?: string;
 };
 
 function isGraphqlSafeFieldName(name: string): boolean {
@@ -120,11 +121,13 @@ function buildToolMutationField(
   }
   const { args, mode } = toolArgsFromInputSchema(tool.inputSchema);
 
+  const via =
+    ctx.grpcAddress != null && ctx.grpcAddress.length > 0
+      ? ` — also available via gRPC CallTool at ${ctx.grpcAddress}`
+      : " — via MCP upstream (OpenAPI/GraphQL on-ramp)";
   return {
     type: GraphQLJSON,
-    description:
-      (tool.description || `Call MCP tool ${tool.name}`) +
-      ` — resolved via gRPC CallTool at ${ctx.grpcAddress}`,
+    description: (tool.description || `Call MCP tool ${tool.name}`) + via,
     args,
     resolve: async (_src, fieldArgs: Record<string, unknown>) => {
       const catalog = ctx.getCatalog();
@@ -134,12 +137,7 @@ function buildToolMutationField(
         mode === "jsonBag"
           ? ((fieldArgs.args as Record<string, unknown> | undefined) ?? {})
           : { ...fieldArgs };
-      const result = await callToolViaGrpc({
-        grpcAddress: ctx.grpcAddress,
-        tool: live,
-        arguments: mcpArgs,
-        protocolVersion: ctx.protocolVersion,
-      });
+      const result = await ctx.callTool(live, mcpArgs);
       return httpBodyFromCollapsed(result);
     },
   };
@@ -157,8 +155,8 @@ export function buildGraphqlSchemaFromCatalog(
   ctx: Omit<GraphqlSchemaContext, "getCatalog"> & { getCatalog?: () => ToolCatalog }
 ): GraphQLSchema {
   const fullCtx: GraphqlSchemaContext = {
-    grpcAddress: ctx.grpcAddress,
-    protocolVersion: ctx.protocolVersion,
+    callTool: ctx.callTool,
+    grpcAddress: ctx.grpcAddress ?? catalog.grpcAddress,
     getCatalog: ctx.getCatalog ?? (() => catalog),
   };
 
@@ -177,12 +175,17 @@ export function buildGraphqlSchemaFromCatalog(
     name: "GatewayHealth",
     fields: {
       status: { type: new GraphQLNonNull(GraphQLString) },
-      grpcAddress: { type: new GraphQLNonNull(GraphQLString) },
+      upstream: { type: GraphQLString },
+      upstreamKind: { type: GraphQLString },
+      grpcAddress: { type: GraphQLString },
       toolCount: { type: new GraphQLNonNull(GraphQLFloat) },
       fetchedAt: { type: new GraphQLNonNull(GraphQLString) },
       surfaces: {
         type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(GraphQLString))),
-        resolve: () => ["openapi", "graphql", "grpc"],
+        resolve: (_src, _args, _ctx, info) => {
+          void info;
+          return fullCtx.getCatalog().surfaces;
+        },
       },
     },
   });
@@ -196,7 +199,9 @@ export function buildGraphqlSchemaFromCatalog(
           const c = fullCtx.getCatalog();
           return {
             status: "ok",
-            grpcAddress: c.grpcAddress,
+            upstream: c.upstream,
+            upstreamKind: c.upstreamKind,
+            grpcAddress: c.grpcAddress ?? fullCtx.grpcAddress ?? null,
             toolCount: c.tools.length,
             fetchedAt: c.fetchedAt,
           };
@@ -212,7 +217,7 @@ export function buildGraphqlSchemaFromCatalog(
   const mutationFields: Record<string, GraphQLFieldConfig<unknown, unknown>> = {
     callTool: {
       type: GraphQLJSON,
-      description: "Generic MCP CallTool by name (gRPC backend)",
+      description: "Generic MCP CallTool by name (any upstream)",
       args: {
         name: { type: new GraphQLNonNull(GraphQLString) },
         args: {
@@ -224,12 +229,7 @@ export function buildGraphqlSchemaFromCatalog(
         const catalogLive = fullCtx.getCatalog();
         const tool = catalogLive.tools.find((t) => t.name === fieldArgs.name);
         if (!tool) throw new Error(`unknown tool: ${fieldArgs.name}`);
-        const result = await callToolViaGrpc({
-          grpcAddress: fullCtx.grpcAddress,
-          tool,
-          arguments: fieldArgs.args ?? {},
-          protocolVersion: fullCtx.protocolVersion,
-        });
+        const result = await fullCtx.callTool(tool, fieldArgs.args ?? {});
         return httpBodyFromCollapsed(result);
       },
     },

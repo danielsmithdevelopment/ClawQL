@@ -1,16 +1,24 @@
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import type { Server } from "node:http";
-import { callToolViaGrpc, httpBodyFromCollapsed } from "./call.js";
-import { fetchToolCatalog } from "./catalog.js";
+import { httpBodyFromCollapsed } from "./call.js";
+import { refreshCatalog } from "./catalog.js";
 import { swaggerDocsHtml } from "./docs-html.js";
 import { attachGraphqlRoutes } from "./graphql-http.js";
 import { buildOpenApiDocument } from "./openapi.js";
 import { isSafeToolPathName } from "./schema-convert.js";
 import type {
+  CallToolFn,
+  McpGatewayOptions,
   McpOpenApiGatewayOptions,
+  StartedMcpGateway,
   StartedMcpOpenApiGateway,
   ToolCatalog,
 } from "./types.js";
+import {
+  buildCatalogFromUpstream,
+  connectUpstream,
+  type UpstreamConnection,
+} from "./upstream.js";
 
 function readApiKey(req: Request): string | undefined {
   const headerKey = req.header("x-api-key")?.trim();
@@ -22,9 +30,16 @@ function readApiKey(req: Request): string | undefined {
   return undefined;
 }
 
-export function createMcpOpenApiApp(
-  options: McpOpenApiGatewayOptions & { getCatalog: () => ToolCatalog }
-): Express {
+export type CreateMcpGatewayAppOptions = {
+  getCatalog: () => ToolCatalog;
+  callTool: CallToolFn;
+  apiKey?: string;
+  title?: string;
+  serverName?: string;
+  grpcAddress?: string;
+};
+
+export function createMcpGatewayApp(options: CreateMcpGatewayAppOptions): Express {
   const app = express();
   app.use(express.json({ limit: "2mb" }));
 
@@ -46,10 +61,12 @@ export function createMcpOpenApiApp(
     res.json({
       status: "ok",
       service: options.serverName ?? "mcp-openapi-gateway",
-      grpcAddress: options.grpcAddress,
+      upstream: catalog.upstream,
+      upstreamKind: catalog.upstreamKind,
+      grpcAddress: catalog.grpcAddress ?? options.grpcAddress,
       toolCount: catalog.tools.length,
       fetchedAt: catalog.fetchedAt,
-      surfaces: ["openapi", "graphql", "grpc"],
+      surfaces: catalog.surfaces,
     });
   });
 
@@ -67,7 +84,7 @@ export function createMcpOpenApiApp(
         tools: catalog.tools,
         title: options.title,
         serverName: options.serverName,
-        grpcAddress: options.grpcAddress,
+        grpcAddress: catalog.grpcAddress ?? options.grpcAddress,
         publicBaseUrl,
       })
     );
@@ -77,12 +94,11 @@ export function createMcpOpenApiApp(
     res.type("html").send(swaggerDocsHtml(options.title ?? "MCP OpenAPI Gateway"));
   });
 
-  // Register before `/:toolName` so GraphQL is not captured as a tool route.
   attachGraphqlRoutes(app, {
-    grpcAddress: options.grpcAddress,
-    protocolVersion: options.protocolVersion,
+    callTool: options.callTool,
     getCatalog: options.getCatalog,
     title: options.title,
+    grpcAddress: options.grpcAddress,
   });
 
   app.post("/:toolName", async (req, res) => {
@@ -102,12 +118,7 @@ export function createMcpOpenApiApp(
         ? (req.body as Record<string, unknown>)
         : {};
     try {
-      const result = await callToolViaGrpc({
-        grpcAddress: options.grpcAddress,
-        tool,
-        arguments: args,
-        protocolVersion: options.protocolVersion,
-      });
+      const result = await options.callTool(tool, args);
       res.json(httpBodyFromCollapsed(result));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -123,69 +134,125 @@ export function createMcpOpenApiApp(
   return app;
 }
 
-export async function startMcpOpenApiGateway(
-  options: McpOpenApiGatewayOptions
-): Promise<StartedMcpOpenApiGateway> {
-  let catalog = await fetchToolCatalog({
+/** @deprecated Prefer {@link createMcpGatewayApp}. */
+export function createMcpOpenApiApp(
+  options: McpOpenApiGatewayOptions & { getCatalog: () => ToolCatalog }
+): Express {
+  return createMcpGatewayApp({
+    getCatalog: options.getCatalog,
+    callTool: async (tool, args) => {
+      const { callToolViaGrpc } = await import("./call.js");
+      return callToolViaGrpc({
+        grpcAddress: options.grpcAddress,
+        tool,
+        arguments: args,
+        protocolVersion: options.protocolVersion,
+      });
+    },
+    apiKey: options.apiKey,
+    title: options.title,
+    serverName: options.serverName,
     grpcAddress: options.grpcAddress,
-    protocolVersion: options.protocolVersion,
   });
+}
 
-  const app = createMcpOpenApiApp({
-    ...options,
-    getCatalog: () => catalog,
-  });
-
-  const host = options.host?.trim() || "0.0.0.0";
-  const port = options.port ?? 8090;
-
+async function listenHttp(
+  app: Express,
+  host: string,
+  port: number
+): Promise<{ server: Server; boundPort: number }> {
   const server: Server = await new Promise((resolve, reject) => {
     const s = app.listen(port, host, () => resolve(s));
     s.on("error", reject);
   });
-
   const addr = server.address();
   const boundPort =
     typeof addr === "object" && addr && "port" in addr ? addr.port : port;
+  return { server, boundPort };
+}
 
-  let refreshTimer: ReturnType<typeof setInterval> | undefined;
-  const refreshMs = options.refreshMs ?? 0;
-  if (refreshMs > 0) {
-    refreshTimer = setInterval(() => {
-      void fetchToolCatalog({
-        grpcAddress: options.grpcAddress,
-        protocolVersion: options.protocolVersion,
-      })
-        .then((next) => {
-          catalog = next;
-        })
-        .catch((err) => {
-          console.error("[mcp-openapi-gateway] catalog refresh failed:", err);
-        });
-    }, refreshMs);
-    refreshTimer.unref?.();
-  }
+function attachRefreshTimer(
+  upstream: UpstreamConnection,
+  setCatalog: (c: ToolCatalog) => void,
+  refreshMs: number
+): ReturnType<typeof setInterval> | undefined {
+  if (refreshMs <= 0) return undefined;
+  const timer = setInterval(() => {
+    void refreshCatalog(upstream)
+      .then((next) => setCatalog(next))
+      .catch((err) => {
+        console.error("[mcp-openapi-gateway] catalog refresh failed:", err);
+      });
+  }, refreshMs);
+  timer.unref?.();
+  return timer;
+}
 
-  const refreshCatalog = async () => {
-    catalog = await fetchToolCatalog({
-      grpcAddress: options.grpcAddress,
-      protocolVersion: options.protocolVersion,
-    });
-    return catalog;
-  };
+/**
+ * Start the triple-surface gateway against any MCP upstream
+ * (stdio | Streamable HTTP | gRPC).
+ */
+export async function startMcpGateway(options: McpGatewayOptions): Promise<StartedMcpGateway> {
+  const upstream = await connectUpstream(options.upstream, {
+    grpcListen: options.grpcListen,
+  });
+
+  let catalog = buildCatalogFromUpstream(upstream);
+
+  const app = createMcpGatewayApp({
+    getCatalog: () => catalog,
+    callTool: upstream.callTool,
+    apiKey: options.apiKey,
+    title: options.title,
+    serverName: options.serverName,
+    grpcAddress: upstream.grpcAddress ?? options.grpcAddress,
+  });
+
+  const host = options.host?.trim() || "0.0.0.0";
+  const port = options.port ?? 8090;
+  const { server, boundPort } = await listenHttp(app, host, port);
+
+  const refreshTimer = attachRefreshTimer(
+    upstream,
+    (next) => {
+      catalog = next;
+    },
+    options.refreshMs ?? 0
+  );
 
   return {
     url: `http://${host === "0.0.0.0" ? "127.0.0.1" : host}:${boundPort}`,
     host,
     port: boundPort,
-    grpcAddress: options.grpcAddress,
+    grpcAddress: upstream.grpcAddress,
+    upstream: upstream.label,
+    upstreamKind: upstream.kind,
     getCatalog: () => catalog,
-    refreshCatalog,
+    refreshCatalog: async () => {
+      catalog = await refreshCatalog(upstream);
+      return catalog;
+    },
     close: async () => {
       if (refreshTimer) clearInterval(refreshTimer);
       await new Promise<void>((resolve, reject) => {
         server.close((err) => (err ? reject(err) : resolve()));
       });
+      await upstream.close();
     },
   };
+}
+
+/** @deprecated Prefer {@link startMcpGateway} with `upstream: { kind: "grpc", address }`. */
+export async function startMcpOpenApiGateway(
+  options: McpOpenApiGatewayOptions
+): Promise<StartedMcpOpenApiGateway> {
+  return startMcpGateway({
+    ...options,
+    upstream: {
+      kind: "grpc",
+      address: options.grpcAddress,
+      protocolVersion: options.protocolVersion,
+    },
+    grpcListen: false,
+  });
 }

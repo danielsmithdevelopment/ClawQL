@@ -1,7 +1,8 @@
 # GTM: MCP OpenAPI Gateway (gRPC on-ramp)
 
-**Status:** 🚧 MVP shipped in-repo (`mcp-openapi-gateway@0.2.0` — OpenAPI + GraphQL) — npm publish on independent cadence  
+**Status:** ✅ Shipped in-repo (`mcp-openapi-gateway@0.3.0` — any MCP → OpenAPI + GraphQL + gRPC) — npm publish on independent cadence  
 **Canonical design:** [`docs/design/mcp-openapi-gateway.md`](../design/mcp-openapi-gateway.md)  
+**User guide:** [`docs/mcp/mcp-openapi-gateway.md`](../mcp/mcp-openapi-gateway.md)  
 **Package:** [`packages/mcp-openapi-gateway`](../../packages/mcp-openapi-gateway/README.md)  
 **Example demos:** [`examples/mcp-openapi-gateway`](../../examples/mcp-openapi-gateway/README.md)  
 **Transport:** [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md)
@@ -25,10 +26,10 @@ Call MCP tools by name over HTTP **or GraphQL**. Production deployments use **`m
 
 ## Do not confuse with ClawQL Core
 
-| Direction                 | Product                     | Audience                                                           |
-| ------------------------- | --------------------------- | ------------------------------------------------------------------ |
-| **OpenAPI → MCP**         | ClawQL `search` / `execute` | Agents discovering upstream REST/GraphQL/gRPC APIs                 |
-| **MCP → OpenAPI/GraphQL** | `mcp-openapi-gateway` (MVP) | Workers / OpenWebUI / gateways that speak REST or GraphQL, not MCP |
+| Direction | Product | Audience |
+| --------- | ------- | -------- |
+| **OpenAPI → MCP** | ClawQL `search` / `execute` | Agents discovering upstream REST/GraphQL/gRPC APIs |
+| **MCP → OpenAPI/GraphQL/gRPC** | `mcp-openapi-gateway` (0.3) | Workers / OpenWebUI / GraphQL / mesh — wrap **any** MCP (stdio/HTTP/gRPC) |
 
 Use **“OpenAPI on-ramp”**, **“GraphQL on-ramp”**, or **“MCP tools as REST/GraphQL”** in marketing — not bare “OpenAPI gateway.”
 

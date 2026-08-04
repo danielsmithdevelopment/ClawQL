@@ -1,9 +1,10 @@
 # MCP OpenAPI Gateway — technical design
 
-**Status:** 🚧 MVP implemented (`mcp-openapi-gateway@0.2.0`) — OpenAPI + GraphQL on-ramps over gRPC  
+**Status:** ✅ Implemented (`mcp-openapi-gateway@0.3.0`) — any MCP upstream (stdio / Streamable HTTP / gRPC) → OpenAPI + GraphQL + gRPC simultaneously  
 **Date:** 2026-08-04  
 **Package:** `mcp-openapi-gateway` (npm; workspace `packages/mcp-openapi-gateway`)  
-**Depends on:** [`mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md) **1.0.0+**  
+**Depends on:** [`mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md) **1.0.0+**, `@modelcontextprotocol/sdk`  
+**User guide:** [`docs/mcp/mcp-openapi-gateway.md`](../mcp/mcp-openapi-gateway.md)  
 **Example:** [`examples/mcp-openapi-gateway/`](../../examples/mcp-openapi-gateway/)  
 **Related:** Vision & Roadmap · Managed Edge Gateway · Worker / OpenWebUI-style OpenAPI consumers
 
@@ -11,10 +12,11 @@
 
 ## 1. Summary
 
-Build a **thin TypeScript OpenAPI on-ramp** that turns any MCP server’s tools into **named REST endpoints**, with **gRPC `CallTool` as the preferred backend**.
+Build a **thin TypeScript gateway** that points at **any** MCP server and scaffolds **named REST (OpenAPI), GraphQL, and gRPC** from `ListTools` — so clients can call the same tools on all three surfaces.
 
 ```text
-OpenAPI / GraphQL clients / Workers / OpenWebUI
+Any MCP upstream
+  stdio | Streamable HTTP | gRPC
         │
         ▼
   mcp-openapi-gateway
@@ -22,15 +24,15 @@ OpenAPI / GraphQL clients / Workers / OpenWebUI
    POST /{toolName}
    POST /graphql · GET /graphiql · GET /graphql/schema.graphql
    GET  /tools
-        │
-        ▼  (preferred)
-  model_context_protocol.Mcp/CallTool   ← mcp-grpc-transport
+   (+ scaffolded or upstream gRPC CallTool)
         │
         ▼
-  Any McpServer tool registry (ClawQL or third-party)
+  Same tool registry (third-party or ClawQL)
 ```
 
-This is **not** a clone of [mcpo](https://github.com/open-webui/mcpo) (Python, stdio multi-server, FastAPI-first). It is **gRPC-first**, TypeScript-native, and positioned to drive traffic to **`mcp-grpc-transport`** — the only production TypeScript gRPC transport for MCP, shipping ahead of Google’s first-class gRPC MCP transport proposal.
+When upstream is already gRPC, REST/GraphQL forward into **`mcp-grpc-transport` `CallTool`**. When upstream is stdio or Streamable HTTP, REST/GraphQL use the MCP SDK client, and the gateway **scaffolds a local gRPC MCP server** that delegates to that client — so consumers still get the triple surface without requiring the upstream to speak gRPC first.
+
+This is **not** a clone of [mcpo](https://github.com/open-webui/mcpo) (Python, stdio multi-server, FastAPI-first). It is **transport-agnostic on the left**, **triple-surface on the right**, TypeScript-native, and positioned to drive traffic to **`mcp-grpc-transport`** for production/mesh.
 
 **Inverse of ClawQL Core:** `search` / `execute` is **OpenAPI → MCP** (upstream APIs behind tools). This package is **MCP tools → OpenAPI** (tools as REST for non-MCP clients). Keep the names and docs distinct.
 
@@ -72,9 +74,9 @@ Every Swagger UI visitor should see the gRPC path (`x-clawql-grpc` extensions, d
 
 | Non-goal                                                                       | Why                                                                   |
 | ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| Full mcpo clone (stdio spawn matrix, Claude Desktop multi-server config as v1) | Overlap with existing hosting; weakens gRPC story                     |
+| Full mcpo clone (Claude Desktop multi-server config matrix as a product)       | We support stdio/HTTP/gRPC as *upstreams*, not a Desktop config UI    |
 | Per-tool generated `.proto` RPCs                                               | Breaks when tools change at runtime; fights stable generic `CallTool` |
-| Replacing Streamable HTTP for Cursor / Claude Desktop                          | IDEs stay on `/mcp`                                                   |
+| Replacing Streamable HTTP for Cursor / Claude Desktop                          | IDEs stay on `/mcp`; we *wrap* those servers                          |
 | Product REST paths (`/payments/stripe/checkout`)                               | Tool-name REST only; domain gateways remain separate                  |
 | Replacing ClawQL `search` / `execute`                                          | Opposite direction                                                    |
 
@@ -90,7 +92,7 @@ Every Swagger UI visitor should see the gRPC path (`x-clawql-grpc` extensions, d
 | ClawQL dual listen HTTP + gRPC                                     | `src/server-http.ts` when `ENABLE_GRPC=1`                            |
 | Streamable HTTP MCP                                                | `POST /mcp` (not per-tool REST)                                      |
 
-**Gap:** no `POST /{toolName}`, no OpenAPI built from MCP `inputSchema`, no Swagger UI for tools.
+**Gap (closed in 0.3.0):** `POST /{toolName}`, OpenAPI + GraphQL from MCP `inputSchema`, and automatic gRPC scaffolding when upstream is stdio/HTTP.
 
 ---
 
@@ -286,6 +288,7 @@ npx mcp-openapi-gateway \
 6. [x] `x-clawql-grpc` extensions
 7. [x] Example server + REST/gRPC demos (`examples/mcp-openapi-gateway/`)
 8. [x] GraphQL on-ramp (`/graphql`, GraphiQL, per-tool mutations) + triple-surface demos
+9. [x] Any-MCP upstreams (stdio / Streamable HTTP / gRPC) + local gRPC scaffold + user guide
 
 ### Phase 2 — Hardening
 
