@@ -2,6 +2,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildDocumentEvent } from "./envelope.js";
 import { dispatchConeshareViewerEvent, dispatchDocumentInboxEvent } from "./dispatch-document.js";
 
+const { resumeMock } = vi.hoisted(() => ({
+  resumeMock: vi.fn(async (_hitl?: unknown) => ({
+    attempted: true,
+    ok: true,
+    resumed_nodes: ["hitl-review"],
+    workflow_level_resumed: false,
+  })),
+}));
+
 vi.mock("./env.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./env.js")>();
   return {
@@ -15,13 +24,6 @@ vi.mock("./env.js", async (importOriginal) => {
 
 vi.mock("../workflow/env.js", () => ({
   workflowToolEnabled: () => true,
-}));
-
-const resumeMock = vi.fn(async (_hitl?: unknown) => ({
-  attempted: true,
-  ok: true,
-  resumed_nodes: ["hitl-review"],
-  workflow_level_resumed: false,
 }));
 
 vi.mock("../workflow/suspend-resume.js", () => ({

@@ -309,13 +309,15 @@ export async function executeRestOperation(
     }
 
     const res = await getFetchImplForRest()(url.toString(), init);
-    const contentType = res.headers.get("content-type") ?? "";
+    // Optional chaining: unit-test fetch stubs often omit Headers.
+    const contentType = res.headers?.get?.("content-type") ?? "";
     const binary =
-      /application\/pdf/i.test(contentType) ||
-      /application\/octet-stream/i.test(contentType) ||
-      /image\//i.test(contentType);
+      Boolean(contentType) &&
+      (/application\/pdf/i.test(contentType) ||
+        /application\/octet-stream/i.test(contentType) ||
+        /image\//i.test(contentType));
 
-    if (binary) {
+    if (binary && typeof res.arrayBuffer === "function") {
       const buf = Buffer.from(await res.arrayBuffer());
       if (!res.ok) {
         return {
