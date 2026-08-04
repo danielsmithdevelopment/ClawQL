@@ -562,6 +562,7 @@ documentPipeline:
       apiKey: ""
       existingSecret: ""
   # Reference classifier HTTP ([#248]) — Compose sample image; opt-in.
+  # Pin contract: image.tag (+ env.modelVersion). Optional modelPath / PVC for BYO weights.
   classifier:
     enabled: false
     image:
@@ -571,6 +572,15 @@ documentPipeline:
     # When empty, chart builds from deployment/samples/classifier-http via values override / local image.
     service:
       port: 8080
+    env:
+      modelVersion: ""
+      minConfidence: "0.85"
+      # Optional filesystem pin for BYO weights (sidecar must load MODEL_PATH).
+      modelPath: ""
+    model:
+      # Optional PVC mount for exported weights (joblib/ONNX). Empty = bake into image.
+      existingClaim: ""
+      mountPath: /models/current
     resources:
       requests:
         cpu: 50m
@@ -888,6 +898,11 @@ nats:
   worker:
     enabled: false
     replicas: 1
+    # Document JetStream consumers (Nextcloud inbox → run_idp_pipeline; Coneshare analytics follow-up).
+    idpPipeline: false
+    coneshareFollowup: false
+    # When idpPipeline=true, worker calls MCP internal URL if documents deps are not in-process.
+    mcpInternalUrl: ""
     resources:
       requests:
         cpu: 50m

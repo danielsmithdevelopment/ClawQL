@@ -14,9 +14,17 @@ import {
 import {
   idpPipelineMaxRetries,
   idpPipelineRetryDelayMs,
+  idpRedactList,
+  idpRequireStirlingRedact,
   merklePerHopEnabled,
 } from "../pipeline/env.js";
 import { resolveArgsTemplate, type ArgsTemplateContext } from "../pipeline/args-template.js";
+import {
+  enrichStepArgsWithArtifacts,
+  extractBase64Artifact,
+  sanitizeArgsForHopResult,
+  type PipelineArtifactBag,
+} from "../pipeline/artifact-bag.js";
 import type {
   PipelineHopMerkleSnapshot,
   PipelineHopResult,
@@ -126,10 +134,16 @@ export function runIdpPipelineEffect(
     const stopOnError = input.stop_on_error !== false;
     const maxRetries = input.max_retries ?? idpPipelineMaxRetries();
     const retryDelayMs = idpPipelineRetryDelayMs();
+    const bag: PipelineArtifactBag = {
+      pdfBase64: input.pdf_base64?.trim() || undefined,
+      redactList: input.redact_list?.trim() || idpRedactList(),
+    };
     const ctx: ArgsTemplateContext = {
       document_path: input.document_path,
       processed_path: input.processed_path,
       document_url: input.document_url,
+      pdf_base64: bag.pdfBase64,
+      redact_list: bag.redactList,
     };
 
     const hops: PipelineHopResult[] = [];
@@ -140,9 +154,37 @@ export function runIdpPipelineEffect(
     for (let index = 0; index < pipeline.length; index++) {
       const step = pipeline[index]!;
       const skipped = skip.has(step.stage);
-      const args = resolveStepArgs(step, input, ctx);
+      // Refresh template ctx with latest PDF bytes from prior hops.
+      ctx.pdf_base64 = bag.pdfBase64;
+      ctx.redact_list = bag.redactList;
+      const resolved = resolveStepArgs(step, input, ctx);
+      const args = enrichStepArgsWithArtifacts(step.operationId, step.stage, resolved, bag);
+      const argsForResult = sanitizeArgsForHopResult(args);
 
       if (skipped) {
+        if (
+          idpRequireStirlingRedact() &&
+          (step.stage === "stirling" || step.operationId.includes("redactPdf"))
+        ) {
+          const hop: PipelineHopResult = {
+            index,
+            stage: step.stage,
+            operationId: step.operationId,
+            label: step.label,
+            ok: false,
+            skipped: true,
+            attempts: 0,
+            latency_ms: 0,
+            args: argsForResult,
+            error: "CLAWQL_IDP_REQUIRE_STIRLING_REDACT=1 forbids skipping Stirling redact",
+          };
+          hops.push(hop);
+          yield* invokeOnHop(options, input, hop, pipeline);
+          haltedAt = step.operationId;
+          fatalError = hop.error;
+          if (stopOnError) break;
+          continue;
+        }
         const hop: PipelineHopResult = {
           index,
           stage: step.stage,
@@ -152,7 +194,7 @@ export function runIdpPipelineEffect(
           skipped: true,
           attempts: 0,
           latency_ms: 0,
-          args,
+          args: argsForResult,
         };
         hops.push(hop);
         completedThrough = index;
@@ -170,7 +212,7 @@ export function runIdpPipelineEffect(
           skipped: false,
           attempts: 0,
           latency_ms: 0,
-          args,
+          args: argsForResult,
           response_excerpt: "(dry run — execute not called)",
         };
         hops.push(hop);
@@ -202,6 +244,9 @@ export function runIdpPipelineEffect(
           if (parsed.ok) {
             ok = true;
             excerpt = parsed.excerpt;
+            // Extract PDF bytes from the full response before excerpt truncation.
+            const nextPdf = extractBase64Artifact(text);
+            if (nextPdf) bag.pdfBase64 = nextPdf;
             break;
           }
           error = parsed.error ?? "execute returned error payload";
@@ -226,7 +271,7 @@ export function runIdpPipelineEffect(
         skipped: false,
         attempts,
         latency_ms: Date.now() - started,
-        args,
+        args: argsForResult,
         error,
         response_excerpt: excerpt,
         merkle_snapshot,

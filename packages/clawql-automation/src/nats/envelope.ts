@@ -17,13 +17,20 @@ export type WorkflowEventEnvelope = {
   payload?: Record<string, unknown>;
 };
 
-export type DocumentEventType = "coneshare.viewer";
+export type DocumentEventType =
+  | "coneshare.viewer"
+  | "inbox.arrived"
+  | "pipeline.requested"
+  | "pipeline.hop"
+  | "pipeline.completed"
+  | "pipeline.failed";
 
 export type DocumentEventEnvelope = {
   schema_version: typeof WORKFLOW_EVENT_SCHEMA_VERSION;
   event_type: DocumentEventType;
   subject: string;
   correlation_id?: string;
+  workflow_ref?: HitlWorkflowRef;
   source: string;
   ts: string;
   payload?: Record<string, unknown>;
@@ -61,6 +68,7 @@ export function buildDocumentEvent(
   source: string,
   fields: {
     correlation_id?: string;
+    workflow_ref?: HitlWorkflowRef;
     payload?: Record<string, unknown>;
   } = {}
 ): DocumentEventEnvelope {
@@ -78,6 +86,18 @@ export function parseWorkflowEvent(data: Uint8Array | string): WorkflowEventEnve
   try {
     const text = typeof data === "string" ? data : new TextDecoder().decode(data);
     const parsed = JSON.parse(text) as WorkflowEventEnvelope;
+    if (parsed?.schema_version !== WORKFLOW_EVENT_SCHEMA_VERSION) return undefined;
+    if (!parsed.event_type || !parsed.subject) return undefined;
+    return parsed;
+  } catch {
+    return undefined;
+  }
+}
+
+export function parseDocumentEvent(data: Uint8Array | string): DocumentEventEnvelope | undefined {
+  try {
+    const text = typeof data === "string" ? data : new TextDecoder().decode(data);
+    const parsed = JSON.parse(text) as DocumentEventEnvelope;
     if (parsed?.schema_version !== WORKFLOW_EVENT_SCHEMA_VERSION) return undefined;
     if (!parsed.event_type || !parsed.subject) return undefined;
     return parsed;

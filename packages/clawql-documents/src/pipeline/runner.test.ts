@@ -88,4 +88,80 @@ describe("runIdpPipeline", () => {
     expect(onHop).toHaveBeenCalledTimes(1);
     expect(onHop.mock.calls[0]?.[0]?.correlation_id).toBe("corr-1");
   });
+
+  it("chains Stirling redact args from prior PDF artifact", async () => {
+    const pdf = Buffer.from("%PDF-demo").toString("base64");
+    const execute = vi.fn().mockResolvedValue({
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            encoding: "base64",
+            data: pdf,
+            contentType: "application/pdf",
+          }),
+        },
+      ],
+    });
+    const pipeline = [
+      {
+        stage: "gotenberg" as const,
+        operationId: "gotenberg::post_forms_libreoffice_convert",
+        label: "Normalize PDF",
+      },
+      {
+        stage: "stirling" as const,
+        operationId: "stirling::redactPdfAuto",
+        label: "Redact",
+        argsTemplate: {
+          fileInput: "${pdf_base64}",
+          listOfText: "${redact_list}",
+        },
+      },
+    ];
+    const result = await runIdpPipeline(
+      {
+        dry_run: false,
+        pipeline,
+        redact_list: "SSN",
+        max_retries: 0,
+      },
+      { execute }
+    );
+    expect(result.ok).toBe(true);
+    expect(execute).toHaveBeenCalledTimes(2);
+    const stirlingCall = execute.mock.calls[1]?.[0] as {
+      operationId: string;
+      args: Record<string, unknown>;
+    };
+    expect(stirlingCall.operationId).toBe("stirling::redactPdfAuto");
+    expect(stirlingCall.args.fileInput).toBe(pdf);
+    expect(stirlingCall.args.listOfText).toBe("SSN");
+  });
+
+  it("fails when Stirling redact is skipped under require flag", async () => {
+    const prev = process.env.CLAWQL_IDP_REQUIRE_STIRLING_REDACT;
+    process.env.CLAWQL_IDP_REQUIRE_STIRLING_REDACT = "1";
+    try {
+      const result = await runIdpPipeline(
+        {
+          dry_run: true,
+          pipeline: [
+            {
+              stage: "stirling",
+              operationId: "stirling::redactPdfAuto",
+              label: "Redact",
+            },
+          ],
+          skip_stages: ["stirling"],
+        },
+        { execute: vi.fn() }
+      );
+      expect(result.ok).toBe(false);
+      expect(result.error).toMatch(/REQUIRE_STIRLING_REDACT/i);
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_IDP_REQUIRE_STIRLING_REDACT;
+      else process.env.CLAWQL_IDP_REQUIRE_STIRLING_REDACT = prev;
+    }
+  });
 });

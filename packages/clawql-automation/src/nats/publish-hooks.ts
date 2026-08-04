@@ -73,6 +73,7 @@ export async function publishWorkflowSuspendedEvent(fields: {
 
 export async function publishConeshareViewerEvent(fields: {
   correlation_id?: string;
+  workflow_ref?: HitlWorkflowRef;
   event_type: string;
   share_link_id?: string;
   room_url?: string;
@@ -81,6 +82,7 @@ export async function publishConeshareViewerEvent(fields: {
   return publishDocumentEvent(
     buildDocumentEvent("coneshare.viewer", "coneshare-webhook", {
       correlation_id: fields.correlation_id,
+      workflow_ref: fields.workflow_ref,
       payload: {
         event_type: fields.event_type,
         share_link_id: fields.share_link_id,
@@ -88,5 +90,86 @@ export async function publishConeshareViewerEvent(fields: {
         viewer_email: fields.viewer_email,
       },
     })
+  );
+}
+
+export async function publishDocumentInboxArrivedEvent(fields: {
+  correlation_id?: string;
+  document_path: string;
+  document_url?: string;
+  processed_path?: string;
+  redact_list?: string;
+  source?: string;
+}): Promise<boolean> {
+  return publishDocumentEvent(
+    buildDocumentEvent("inbox.arrived", fields.source ?? "nextcloud-webhook", {
+      correlation_id: fields.correlation_id,
+      payload: {
+        document_path: fields.document_path,
+        document_url: fields.document_url,
+        processed_path: fields.processed_path,
+        redact_list: fields.redact_list,
+      },
+    })
+  );
+}
+
+export async function publishDocumentPipelineRequestedEvent(fields: {
+  correlation_id?: string;
+  document_path: string;
+  document_url?: string;
+  processed_path?: string;
+  redact_list?: string;
+  dry_run?: boolean;
+  source?: string;
+}): Promise<boolean> {
+  return publishDocumentEvent(
+    buildDocumentEvent("pipeline.requested", fields.source ?? "mcp", {
+      correlation_id: fields.correlation_id,
+      payload: {
+        document_path: fields.document_path,
+        document_url: fields.document_url,
+        processed_path: fields.processed_path,
+        redact_list: fields.redact_list,
+        dry_run: fields.dry_run === true,
+      },
+    })
+  );
+}
+
+export async function publishDocumentPipelineHopEvent(fields: {
+  correlation_id?: string;
+  hop: Record<string, unknown>;
+  source?: string;
+}): Promise<boolean> {
+  return publishDocumentEvent(
+    buildDocumentEvent("pipeline.hop", fields.source ?? "run_idp_pipeline", {
+      correlation_id: fields.correlation_id,
+      payload: { hop: fields.hop },
+    })
+  );
+}
+
+export async function publishDocumentPipelineTerminalEvent(fields: {
+  ok: boolean;
+  correlation_id?: string;
+  document_path?: string;
+  error?: string;
+  completed_through?: number;
+  source?: string;
+}): Promise<boolean> {
+  return publishDocumentEvent(
+    buildDocumentEvent(
+      fields.ok ? "pipeline.completed" : "pipeline.failed",
+      fields.source ?? "nats-idp-pipeline-consumer",
+      {
+        correlation_id: fields.correlation_id,
+        payload: {
+          document_path: fields.document_path,
+          error: fields.error,
+          completed_through: fields.completed_through,
+        },
+      }
+    )
   );
 }
