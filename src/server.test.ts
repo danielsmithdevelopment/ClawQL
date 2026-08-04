@@ -114,6 +114,62 @@ describe("server (stdio)", () => {
     expect(stderr).toContain("Server running on stdio");
   }, 20_000);
 
+  it("announces Ready before default-stack loadSpec finishes (Cursor discovery)", async () => {
+    // Default six-vendor merge is multi-second; discovery must not wait on it.
+    const childEnv = isolatedStdioChildEnv(minimalSpec, {
+      CLAWQL_SPEC_PATH: undefined,
+      OPENAPI_SPEC_PATH: undefined,
+      OPENAPI_FILE: undefined,
+      CLAWQL_SPEC_PATHS: undefined,
+      CLAWQL_BUNDLED_PROVIDERS: undefined,
+      CLAWQL_SPEC_URL: undefined,
+      OPENAPI_SPEC_URL: undefined,
+      CLAWQL_DISCOVERY_URL: undefined,
+      GOOGLE_DISCOVERY_URL: undefined,
+      CLAWQL_PROVIDER: undefined,
+      CLAWQL_BUNDLED_OFFLINE: "1",
+    });
+
+    const serverLogs: string[] = [];
+    const transport = new StdioClientTransport({
+      command: process.execPath,
+      args: [serverJs],
+      cwd: root,
+      env: childEnv,
+      stderr: "pipe",
+    });
+    if (transport.stderr) {
+      transport.stderr.on("data", (chunk) => {
+        serverLogs.push(chunk.toString());
+      });
+    }
+
+    const t0 = Date.now();
+    let readyMs = -1;
+    const waitReady = new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("Ready not seen in time")), 5_000);
+      const poll = setInterval(() => {
+        if (serverLogs.join("").includes("Server running on stdio")) {
+          readyMs = Date.now() - t0;
+          clearInterval(poll);
+          clearTimeout(timer);
+          resolve();
+        }
+      }, 25);
+    });
+
+    const client = new Client({ name: "clawql-stdio-fast-ready", version: "1.0.0" }, {});
+    try {
+      await Promise.all([client.connect(transport), waitReady]);
+      const { tools } = await client.listTools();
+      expect(tools.some((t) => t.name === "memory_recall")).toBe(true);
+      expect(readyMs).toBeGreaterThanOrEqual(0);
+      expect(readyMs).toBeLessThan(4_000);
+    } finally {
+      await client.close();
+    }
+  }, 30_000);
+
   it("does not inherit CLAWQL_ENABLE_OUROBOROS from host when CLAWQL_HOME is isolated", async () => {
     // Regression: load-env.ts loads $CLAWQL_HOME/clawql.env with override:false.
     // Without CLAWQL_HOME isolation, a developer/CI ~/.ClawQL/clawql.env can enable optional tools.
