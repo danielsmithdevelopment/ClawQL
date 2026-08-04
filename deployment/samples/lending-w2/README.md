@@ -125,9 +125,28 @@ Persist outcomes with **`memory_ingest`** for underwriting audit trails.
 2. Configure webhook → `https://<clawql-host>/hitl/label-studio/webhook` with **`CLAWQL_HITL_WEBHOOK_TOKEN`**.
 3. Note **`project_id`** for enqueue calls.
 
+## Background intake (NATS)
+
+For production-style **async** ingest (Nextcloud drop → JetStream → `run_idp_pipeline`), enable Helm document consumers and follow:
+
+- Runbook: [`docs/runbooks/nats-idp-e2e.md`](../../docs/runbooks/nats-idp-e2e.md)
+- Values: [`charts/clawql-mcp/values-nats-idp.example.yaml`](../../charts/clawql-mcp/values-nats-idp.example.yaml)
+- Smoke: `SMOKE_HELM_ONLY=1 bash scripts/dev/smoke-nats-idp-webhooks.sh`
+
+Webhook sketch (dry-run plan):
+
+```bash
+curl -sS -X POST "$CLAWQL_HTTP_BASE/idp/nextcloud/webhook" \
+  -H "Authorization: Bearer $CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"document_path":"IDP/inbox/w2-sample.pdf","dry_run":true,"correlation_id":"lending-w2-nats-001"}'
+```
+
+Then continue with Argo HITL steps above when confidence routing suspends the workflow.
+
 ## OpenClaw
 
-Use [`openclaw-prompt.md`](openclaw-prompt.md) as a system prompt addendum. Full IDP defaults: [openclaw-idp-skill-profile.md](../../docs/openclaw/openclaw-idp-skill-profile.md).
+Use [`openclaw-prompt.md`](openclaw-prompt.md) as a system prompt addendum. Full IDP defaults: [openclaw-idp-skill-profile.md](../../docs/openclaw/openclaw-idp-skill-profile.md). Agent NATS contract: [clawql-agent-idp-nats.md](../../docs/openclaw/clawql-agent-idp-nats.md) ([#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)).
 
 ## Related
 
@@ -135,4 +154,5 @@ Use [`openclaw-prompt.md`](openclaw-prompt.md) as a system prompt addendum. Full
 - [HITL Label Studio](../../docs/mcp/hitl-label-studio.md)
 - [Multi-reviewer RBAC (CE two-person pattern)](../../docs/mcp/hitl-label-studio.md#14-multi-reviewer-rbac-ce-vs-enterprise) ([#249](https://github.com/danielsmithdevelopment/ClawQL/issues/249))
 - [Fine-tuned classifier runbook](../../docs/runbooks/fine-tuned-classifier.md)
+- [NATS IDP e2e](../../docs/runbooks/nats-idp-e2e.md)
 - [workflow MCP tool](../../docs/mcp/workflow-tool.md)

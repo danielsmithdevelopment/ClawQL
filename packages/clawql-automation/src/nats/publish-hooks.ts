@@ -99,6 +99,7 @@ export async function publishDocumentInboxArrivedEvent(fields: {
   document_url?: string;
   processed_path?: string;
   redact_list?: string;
+  dry_run?: boolean;
   source?: string;
 }): Promise<boolean> {
   return publishDocumentEvent(
@@ -109,6 +110,7 @@ export async function publishDocumentInboxArrivedEvent(fields: {
         document_url: fields.document_url,
         processed_path: fields.processed_path,
         redact_list: fields.redact_list,
+        dry_run: fields.dry_run === true,
       },
     })
   );

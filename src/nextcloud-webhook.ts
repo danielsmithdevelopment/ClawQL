@@ -41,6 +41,7 @@ function extractInboxEvent(body: unknown): {
   processedPath?: string;
   redactList?: string;
   correlationId?: string;
+  dryRun?: boolean;
 } {
   if (!body || typeof body !== "object") return {};
   const row = body as Record<string, unknown>;
@@ -63,7 +64,8 @@ function extractInboxEvent(body: unknown): {
       : typeof row.correlationId === "string"
         ? row.correlationId
         : undefined;
-  return { documentPath, documentUrl, processedPath, redactList, correlationId };
+  const dryRun = row.dry_run === true || row.dryRun === true;
+  return { documentPath, documentUrl, processedPath, redactList, correlationId, dryRun };
 }
 
 /** POST **`/idp/nextcloud/webhook`** — enqueue IDP pipeline via NATS. */
@@ -96,6 +98,7 @@ export async function handleNextcloudWebhookRequest(req: Request, res: Response)
     document_url: extracted.documentUrl,
     processed_path: extracted.processedPath,
     redact_list: extracted.redactList,
+    dry_run: extracted.dryRun,
     source: "nextcloud-webhook",
   });
 
