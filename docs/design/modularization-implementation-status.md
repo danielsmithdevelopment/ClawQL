@@ -347,4 +347,6 @@ These vision items are **not** done by package extraction alone:
 
 **Not in this wave:** `clawql-telemetry` ([#313](https://github.com/danielsmithdevelopment/ClawQL/issues/313)); `mcp-grpc-transport` and `panguard-mcp-bridge` keep independent cadence.
 
+**Adjacent package:** `mcp-api-adapter` (`0.4.0`) — any MCP upstream (stdio / Streamable HTTP / gRPC) → OpenAPI + GraphQL + gRPC scaffold (funnel onto `mcp-grpc-transport`). User guide: [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md). Design: [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md). Example: [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/). Independent npm cadence; does **not** depend on `clawql-api`.
+
 **npm publish:** workflow [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) + [`scripts/release/npm-publish-workspace.mjs`](../../scripts/release/npm-publish-workspace.mjs). Tag **`v7.1.0`** when ready — see [`docs/release/v7.1.0-checklist.md`](../release/v7.1.0-checklist.md).

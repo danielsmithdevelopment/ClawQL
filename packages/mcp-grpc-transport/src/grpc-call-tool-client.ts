@@ -12,11 +12,13 @@ import { fileURLToPath } from "node:url";
 import * as grpc from "@grpc/grpc-js";
 import protobuf from "protobufjs";
 import { LATEST_PROTOCOL_VERSION } from "./protocol-versions.js";
-import { jsonToStruct } from "./mcp-protobuf-struct.js";
+import { jsonToStruct, structToJson } from "./mcp-protobuf-struct.js";
+import { MCP_PROTOCOL_VERSION_METADATA_KEY } from "./grpc-mcp-metadata.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const protoRoot = join(__dirname, "../proto");
 const CALL_TOOL_METHOD = "/model_context_protocol.Mcp/CallTool";
+const require = createRequire(import.meta.url);
 
 export type CallToolGrpcClientOptions = {
   /** Host:port, e.g. `127.0.0.1:50051`. */
@@ -42,53 +44,13 @@ export function resolveGrpcMaxMessageLengthFromEnv(): number {
 }
 
 /**
- * Convert MCP-style JSON args → `google.protobuf.Struct.fields` shape expected by
- * `protobufjs` + `CallToolRequest.fromObject` (camelCase Value discriminators).
+ * Convert MCP-style JSON args → `google.protobuf.Struct.fields` for
+ * `protobufjs` + `CallToolRequest` (camelCase Value oneofs).
  */
 export function mcpArgumentsToCallToolStructFields(
   args: Record<string, unknown>
 ): Record<string, unknown> {
-  const { fields } = jsonToStruct(args);
-  const out: Record<string, unknown> = {};
-  for (const [k, val] of Object.entries(fields)) {
-    out[k] = mcpValueToProtobufJs(val as Record<string, unknown>);
-  }
-  return out;
-}
-
-function mcpValueToProtobufJs(v: Record<string, unknown>): Record<string, unknown> {
-  if ("null_value" in v || "nullValue" in v) {
-    return { nullValue: (v.null_value ?? v.nullValue ?? 0) as number };
-  }
-  if ("string_value" in v || "stringValue" in v) {
-    return { stringValue: String(v.string_value ?? v.stringValue ?? "") };
-  }
-  if ("number_value" in v || "numberValue" in v) {
-    return { numberValue: Number(v.number_value ?? v.numberValue ?? 0) };
-  }
-  if ("bool_value" in v || "boolValue" in v) {
-    return { boolValue: Boolean(v.bool_value ?? v.boolValue) };
-  }
-  const structInner = (v.struct_value ?? v.structValue) as
-    { fields?: Record<string, Record<string, unknown>> } | undefined;
-  if (structInner && typeof structInner === "object" && structInner.fields) {
-    const inner: Record<string, unknown> = {};
-    for (const [k2, v2] of Object.entries(structInner.fields)) {
-      inner[k2] = mcpValueToProtobufJs(v2);
-    }
-    return { structValue: { fields: inner } };
-  }
-  const listInner = (v.list_value ?? v.listValue) as { values?: unknown[] } | undefined;
-  if (listInner && Array.isArray(listInner.values)) {
-    return {
-      listValue: {
-        values: listInner.values.map((x) =>
-          mcpValueToProtobufJs((x as Record<string, unknown>) ?? {})
-        ),
-      },
-    };
-  }
-  return { stringValue: JSON.stringify(v) };
+  return jsonToStruct(args).fields;
 }
 
 async function loadCallToolTypes(): Promise<{
@@ -198,4 +160,144 @@ export function resolveGrpcAddressFromEnv(): string {
     return `${host}:${port}`;
   }
   return `127.0.0.1:${process.env.GRPC_PORT?.trim() || "50051"}`;
+}
+
+export type ListedMcpTool = {
+  name: string;
+  description?: string;
+  title?: string;
+  inputSchema: Record<string, unknown>;
+  outputSchema?: Record<string, unknown>;
+};
+
+export type ListToolsGrpcClientOptions = {
+  address: string;
+  protocolVersion?: string;
+  credentials?: grpc.ChannelCredentials;
+  readyDeadlineMs?: number;
+  maxMessageLength?: number;
+};
+
+const LIST_TOOLS_METHOD = "/model_context_protocol.Mcp/ListTools";
+
+async function loadListToolsTypes(): Promise<{
+  ListToolsRequest: protobuf.Type;
+  ListToolsResponse: protobuf.Type;
+}> {
+  const packageRoot = join(__dirname, "..");
+  const wellKnown = dirname(
+    require.resolve("google-proto-files/package.json", { paths: [packageRoot] })
+  );
+  const root = new protobuf.Root();
+  root.resolvePath = (origin: string | undefined, target: string) => {
+    if (target.startsWith("/") || /^[a-zA-Z]:[\\/]/.test(target)) {
+      return target;
+    }
+    if (target.startsWith("google/")) {
+      return join(wellKnown, target);
+    }
+    const base = origin && origin.length > 0 ? dirname(origin) : protoRoot;
+    return join(base, target);
+  };
+  await root.load(join(protoRoot, "model_context_protocol/mcp.proto"), { keepCase: true });
+  return {
+    ListToolsRequest: root.lookupType("model_context_protocol.ListToolsRequest"),
+    ListToolsResponse: root.lookupType("model_context_protocol.ListToolsResponse"),
+  };
+}
+
+/**
+ * Invoke unary `ListTools` over gRPC and decode `input_schema` / `output_schema` Structs to JSON Schema objects.
+ *
+ * Uses protobufjs decode (not `@grpc/proto-loader` message objects) so nested
+ * `google.protobuf.Value` fields inside Struct survive the wire.
+ */
+export async function listToolsUnaryGrpc(
+  options: ListToolsGrpcClientOptions
+): Promise<ListedMcpTool[]> {
+  const { ListToolsRequest, ListToolsResponse } = await loadListToolsTypes();
+  const payload = { common: {} };
+  const encodedRequest = Buffer.from(
+    ListToolsRequest.encode(ListToolsRequest.create(payload)).finish()
+  );
+
+  const creds = options.credentials ?? grpc.credentials.createInsecure();
+  const maxLen = options.maxMessageLength ?? resolveGrpcMaxMessageLengthFromEnv();
+  const client = new grpc.Client(options.address, creds, {
+    "grpc.max_receive_message_length": maxLen,
+    "grpc.max_send_message_length": maxLen,
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    client.waitForReady(Date.now() + (options.readyDeadlineMs ?? 15_000), (e) =>
+      e ? reject(e) : resolve()
+    );
+  });
+
+  const md = new grpc.Metadata();
+  md.set(
+    MCP_PROTOCOL_VERSION_METADATA_KEY,
+    options.protocolVersion?.trim() || LATEST_PROTOCOL_VERSION
+  );
+
+  try {
+    const buf = await new Promise<Buffer>((resolve, reject) => {
+      client.makeUnaryRequest(
+        LIST_TOOLS_METHOD,
+        () => encodedRequest,
+        (b: Buffer) => b,
+        {},
+        md,
+        (err, response) => {
+          if (err) reject(err);
+          else resolve(response as Buffer);
+        }
+      );
+    });
+
+    const decoded = ListToolsResponse.decode(buf);
+    const obj = ListToolsResponse.toObject(decoded, {
+      defaults: true,
+      enums: String,
+      longs: String,
+      // Keep oneof Value discriminators for structToJson
+      json: false,
+    }) as {
+      tools?: Array<{
+        name?: string;
+        description?: string;
+        title?: string;
+        input_schema?: { fields?: Record<string, unknown> | Map<string, unknown> };
+        inputSchema?: { fields?: Record<string, unknown> | Map<string, unknown> };
+        output_schema?: { fields?: Record<string, unknown> | Map<string, unknown> };
+        outputSchema?: { fields?: Record<string, unknown> | Map<string, unknown> };
+      }>;
+    };
+
+    return (obj.tools ?? [])
+      .filter((t) => typeof t.name === "string" && t.name.length > 0)
+      .map((t) => {
+        const inputSchema = structToJson(t.input_schema ?? t.inputSchema) ?? {
+          type: "object",
+          properties: {},
+        };
+        const outputSchema = structToJson(t.output_schema ?? t.outputSchema);
+        const tool: ListedMcpTool = {
+          name: t.name!,
+          inputSchema,
+        };
+        if (typeof t.description === "string" && t.description.length > 0) {
+          tool.description = t.description;
+        }
+        if (typeof t.title === "string" && t.title.length > 0) {
+          tool.title = t.title;
+        }
+        if (outputSchema && Object.keys(outputSchema).length > 0) {
+          tool.outputSchema = outputSchema;
+        }
+        return tool;
+      });
+  } finally {
+    client.close();
+  }
 }

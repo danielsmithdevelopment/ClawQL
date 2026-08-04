@@ -3,7 +3,7 @@
  * (wire-compatible with the community protobuf MCP schema).
  */
 
-/** Build `google.protobuf.Struct` as a plain object (grpc/proto-loader friendly). */
+/** Build `google.protobuf.Struct` as a plain object (grpc / protobufjs / proto-loader friendly). */
 export function jsonToStruct(data: unknown): {
   fields: Record<string, ReturnType<typeof jsonToValue>>;
 } {
@@ -17,31 +17,38 @@ export function jsonToStruct(data: unknown): {
   return { fields };
 }
 
-/** `google.protobuf.Value` as plain object (snake_case field names for proto3 JSON / proto-loader). */
+/**
+ * `google.protobuf.Value` as a plain object.
+ *
+ * Uses **camelCase** oneof arms (`stringValue`, …) plus a `kind` discriminator so values
+ * survive both **protobufjs** encode and **@grpc/proto-loader** (`oneofs: true`) serialize.
+ * Snake_case-only objects encode as empty Values on the wire (silent data loss).
+ */
 export function jsonToValue(v: unknown): Record<string, unknown> {
   if (v === null) {
-    return { null_value: 0 };
+    return { nullValue: 0, kind: "nullValue" };
   }
   if (typeof v === "number") {
-    return { number_value: v };
+    return { numberValue: v, kind: "numberValue" };
   }
   if (typeof v === "string") {
-    return { string_value: v };
+    return { stringValue: v, kind: "stringValue" };
   }
   if (typeof v === "boolean") {
-    return { bool_value: v };
+    return { boolValue: v, kind: "boolValue" };
   }
   if (Array.isArray(v)) {
     return {
-      list_value: {
+      listValue: {
         values: v.map((x) => jsonToValue(x)),
       },
+      kind: "listValue",
     };
   }
   if (typeof v === "object") {
-    return { struct_value: jsonToStruct(v) };
+    return { structValue: jsonToStruct(v), kind: "structValue" };
   }
-  return { string_value: String(v) };
+  return { stringValue: String(v), kind: "stringValue" };
 }
 
 /** Default list TTL (one hour, common default for list RPC caching). */
