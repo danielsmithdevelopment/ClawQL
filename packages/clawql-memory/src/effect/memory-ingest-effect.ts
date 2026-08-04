@@ -112,10 +112,24 @@ export function executeMemoryIngestCoreEffect(
       await runAfterIngestVaultSync();
     });
 
+    let git: MemoryIngestResult["git"];
+    if (result.ok && !result.skipped) {
+      git = yield* memoryFromPromise(async () => {
+        const { commitVaultAfterIngest } = await import("../vault/git-backend.js");
+        return commitVaultAfterIngest({
+          vault,
+          path: result.path,
+          title,
+          correlationId: effective.correlationId ?? effective.sessionId,
+        });
+      });
+    }
+
     return {
       ...result,
       ...extras,
       rebuild: Object.keys(rebuild).length > 0 ? rebuild : undefined,
+      git,
     };
   });
 }

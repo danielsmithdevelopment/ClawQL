@@ -122,6 +122,15 @@ export type MemoryIngestResult = {
     pageindex?: { docId: string; nodeCount: number } | { error: string };
     embeddings?: { synced: boolean; skipped?: string };
   };
+  /** Git-native vault: commit-on-ingest outcome when CLAWQL_MEMORY_BACKEND=git. */
+  git?: {
+    committed: boolean;
+    commitSha?: string;
+    skipped?: string;
+    pushed?: boolean;
+    pushError?: string;
+    error?: string;
+  };
 };
 
 function normalizeWikilink(name: string): string {
