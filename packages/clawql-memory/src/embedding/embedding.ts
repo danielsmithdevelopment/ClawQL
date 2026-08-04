@@ -1,9 +1,13 @@
 /**
- * Optional embedding pipeline for hybrid memory (#26 / #28).
- * - **sqlite:** float32 BLOBs on `vault_chunk` (sql.js; in-process KNN).
+ * Embedding pipeline for hybrid memory (#26 / #28).
+ * - **sqlite:** float32 BLOBs on `vault_chunk` (sql.js; in-process KNN) — **default / required** for memory.
  * - **postgres:** `CLAWQL_VECTOR_DATABASE_URL` + pgvector (`<=>` cosine in SQL).
  * - **Embedding providers:** `local` (in-process ONNX via @xenova/transformers — no API key /
  *   no Ollama) or `http` (OpenAI-compatible `/embeddings`).
+ *
+ * Keyword-only recall is a **measured failure mode** (worse than grep on shared-vocabulary
+ * corpora). Vectors are therefore **mandatory** whenever the vault + memory.db are enabled.
+ * Disabling them requires an explicit break-glass flag (tests / emergencies only).
  */
 
 import { getObsidianVaultPath } from "../vault/config.js";
@@ -31,15 +35,40 @@ const DEFAULT_HTTP_BASE = "https://api.openai.com/v1";
 const DEFAULT_HTTP_MODEL = "text-embedding-3-small";
 const EMBED_BATCH = 64;
 
+let warnedKeywordOnlyBreakGlass = false;
+
 /**
- * Vector store selection.
- * Default **`sqlite`** when unset so `memory_ingest` can write local embeddings with no
- * extra secrets. Set **`CLAWQL_VECTOR_BACKEND=off`** for keyword+wikilink-only.
+ * Break-glass only: allow keyword+wikilink memory without vectors.
+ * Required for `CLAWQL_VECTOR_BACKEND=off` / `CLAWQL_EMBEDDING_PROVIDER=off`.
+ * Not a supported product mode — measured worse than grep without vectors.
+ */
+export function allowKeywordOnlyMemory(): boolean {
+  const v = process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
+function warnKeywordOnlyIgnored(setting: string): void {
+  if (warnedKeywordOnlyBreakGlass) return;
+  warnedKeywordOnlyBreakGlass = true;
+  console.warn(
+    `[clawql-mcp] Ignoring ${setting}: vectors are mandatory for memory_recall ` +
+      `(keyword-only measured worse than grep). Set CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY=1 only for ` +
+      `tests/emergencies.`
+  );
+}
+
+/**
+ * Vector store selection. Default **`sqlite`**.
+ * `off` is ignored unless {@link allowKeywordOnlyMemory} is set.
  */
 export function vectorBackend(): VectorBackend {
   const v = process.env.CLAWQL_VECTOR_BACKEND?.trim().toLowerCase();
   if (!v) return "sqlite";
-  if (v === "off" || v === "0" || v === "false" || v === "none") return "off";
+  if (v === "off" || v === "0" || v === "false" || v === "none") {
+    if (allowKeywordOnlyMemory()) return "off";
+    warnKeywordOnlyIgnored("CLAWQL_VECTOR_BACKEND=off");
+    return "sqlite";
+  }
   if (v === "sqlite" || v === "sql") return "sqlite";
   if (v === "postgres" || v === "postgresql" || v === "pg" || v === "pgvector") return "postgres";
   return "sqlite";
@@ -78,7 +107,11 @@ export function embeddingProviderMode(): EmbeddingProviderMode {
   if (!v || v === "auto") return "auto";
   if (v === "local" || v === "onnx" || v === "transformers") return "local";
   if (v === "http" || v === "openai" || v === "remote") return "http";
-  if (v === "off" || v === "0" || v === "false" || v === "none") return "off";
+  if (v === "off" || v === "0" || v === "false" || v === "none") {
+    if (allowKeywordOnlyMemory()) return "off";
+    warnKeywordOnlyIgnored("CLAWQL_EMBEDDING_PROVIDER=off");
+    return "auto";
+  }
   return "auto";
 }
 
@@ -92,25 +125,23 @@ export function embeddingRebuildReport(): { synced: boolean; skipped?: string } 
   if (vectorBackend() === "off") {
     return {
       synced: false,
-      skipped: "CLAWQL_VECTOR_BACKEND=off; chunks may be indexed but embeddings were not written",
+      skipped:
+        "CLAWQL_VECTOR_BACKEND=off with CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY=1; embeddings not written (unsupported product mode)",
     };
   }
   if (embeddingProviderMode() === "off") {
     return {
       synced: false,
-      skipped: "CLAWQL_EMBEDDING_PROVIDER=off; embeddings disabled",
+      skipped:
+        "CLAWQL_EMBEDDING_PROVIDER=off with CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY=1; embeddings disabled (unsupported product mode)",
     };
   }
   if (!resolveEmbeddingConfig()) {
     return {
       synced: false,
       skipped:
-        "Embedding provider unavailable (set CLAWQL_EMBEDDING_PROVIDER=local or provide an HTTP API key)",
+        "Embedding provider unavailable (local MiniLM should resolve automatically when vault + memory.db are on)",
     };
-  }
-  const cfg = resolveEmbeddingConfig()!;
-  if (cfg.provider === "local") {
-    return { synced: true };
   }
   return { synced: true };
 }
@@ -148,8 +179,9 @@ export function resolveEmbeddingConfig(): EmbeddingConfig | null {
     return { provider: "http", baseUrl, model, apiKey };
   }
 
-  // local (explicit) or auto without API key
-  const model = process.env.CLAWQL_EMBEDDING_MODEL?.trim() || DEFAULT_LOCAL_EMBEDDING_MODEL;
+  // local (explicit) or auto without API key — mandatory default path
+  const model =
+    process.env.CLAWQL_EMBEDDING_MODEL?.trim() || DEFAULT_LOCAL_EMBEDDING_MODEL;
   return {
     provider: "local",
     baseUrl: "",

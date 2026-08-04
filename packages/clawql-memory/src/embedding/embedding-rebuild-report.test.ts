@@ -31,13 +31,38 @@ describe("embeddingRebuildReport + local provider", () => {
     expect(vectorBackend()).toBe("sqlite");
   });
 
-  it("reports not synced when vector backend is off", () => {
-    stash(["CLAWQL_MEMORY_DB", "CLAWQL_VECTOR_BACKEND", "CLAWQL_EMBEDDING_PROVIDER"]);
+  it("reports not synced when vector backend is off (break-glass only)", () => {
+    stash([
+      "CLAWQL_MEMORY_DB",
+      "CLAWQL_VECTOR_BACKEND",
+      "CLAWQL_EMBEDDING_PROVIDER",
+      "CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY",
+    ]);
     delete process.env.CLAWQL_MEMORY_DB;
     process.env.CLAWQL_VECTOR_BACKEND = "off";
+    process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = "1";
     const r = embeddingRebuildReport();
     expect(r.synced).toBe(false);
-    expect(r.skipped).toMatch(/VECTOR_BACKEND=off/i);
+    expect(r.skipped).toMatch(/ALLOW_KEYWORD_ONLY_MEMORY/i);
+  });
+
+  it("ignores VECTOR_BACKEND=off without break-glass flag", () => {
+    stash([
+      "CLAWQL_VECTOR_BACKEND",
+      "CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY",
+      "CLAWQL_OBSIDIAN_VAULT_PATH",
+      "CLAWQL_MEMORY_DB",
+      "CLAWQL_EMBEDDING_API_KEY",
+      "OPENAI_API_KEY",
+    ]);
+    delete process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
+    delete process.env.CLAWQL_MEMORY_DB;
+    delete process.env.CLAWQL_EMBEDDING_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    process.env.CLAWQL_VECTOR_BACKEND = "off";
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = "/tmp/clawql-vault-test";
+    expect(vectorBackend()).toBe("sqlite");
+    expect(resolveEmbeddingConfig()?.provider).toBe("local");
   });
 
   it("resolves local provider without API key when vault is set", () => {

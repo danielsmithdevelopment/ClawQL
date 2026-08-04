@@ -22,14 +22,16 @@ describe("memory-db", () => {
   const savedCuckoo = process.env.CLAWQL_CUCKOO_ENABLED;
   const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
   const savedCuckooMetrics = process.env.CLAWQL_CUCKOO_METRICS;
+  const savedAllowKw = process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
   let dir: string;
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "clawql-vault-db-"));
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
     delete process.env.CLAWQL_MEMORY_DB;
-    // Opt out of default local ONNX embeddings in unit tests.
+    // Break-glass: unit tests avoid downloading ONNX weights in CI.
     process.env.CLAWQL_VECTOR_BACKEND = "off";
+    process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = "1";
     delete process.env.CLAWQL_EMBEDDING_API_KEY;
     delete process.env.CLAWQL_CUCKOO_ENABLED;
     delete process.env.CLAWQL_MERKLE_ENABLED;
@@ -52,6 +54,8 @@ describe("memory-db", () => {
     else process.env.CLAWQL_MERKLE_ENABLED = savedMerkle;
     if (savedCuckooMetrics === undefined) delete process.env.CLAWQL_CUCKOO_METRICS;
     else process.env.CLAWQL_CUCKOO_METRICS = savedCuckooMetrics;
+    if (savedAllowKw === undefined) delete process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
+    else process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = savedAllowKw;
     vi.unstubAllGlobals();
     resetCuckooMetricsForTests();
     resetMemoryDbArtifactCachesForTests();
