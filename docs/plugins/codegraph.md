@@ -62,14 +62,14 @@ Requires **`CLAWQL_ENABLE_MEMORY`**.
 
 ClawQL’s TS pipeline is designed so agents should not need a separate Graphify/CodeGraph install for TypeScript repos:
 
-| Capability | Behavior |
-| --- | --- |
-| Symbols | Functions, methods, classes, interfaces, types, arrow/`const` functions, constructors |
-| Calls | Attached to **enclosing** function/method (not file-only); `foo()`, `obj.method()`, `new Foo()` |
-| Heritage | `extends` / `implements` edges |
-| Modules | Relative imports resolved to file nodes; unique exported callees linked cross-file (`INFERRED`) |
-| Framework tags | `react-component`, `next-app-router`, `next-app-dir`, `exported`, `default-export` |
-| Agent UX | Prefer **`codegraph_explore`** over multi-hop query→neighbors→path |
+| Capability     | Behavior                                                                                        |
+| -------------- | ----------------------------------------------------------------------------------------------- |
+| Symbols        | Functions, methods, classes, interfaces, types, arrow/`const` functions, constructors           |
+| Calls          | Attached to **enclosing** function/method (not file-only); `foo()`, `obj.method()`, `new Foo()` |
+| Heritage       | `extends` / `implements` edges                                                                  |
+| Modules        | Relative imports resolved to file nodes; unique exported callees linked cross-file (`INFERRED`) |
+| Framework tags | `react-component`, `next-app-router`, `next-app-dir`, `exported`, `default-export`              |
+| Agent UX       | Prefer **`codegraph_explore`** over multi-hop query→neighbors→path                              |
 
 ## Preferred workflow: `codegraph_sync`
 
