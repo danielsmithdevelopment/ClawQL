@@ -1,5 +1,5 @@
 {
-  "name": "example-mcp-openapi-gateway",
+  "name": "example-mcp-api-adapter",
   "private": true,
   "type": "module",
   "description": "Demo MCP server with gRPC + OpenAPI on-ramp enabled together",

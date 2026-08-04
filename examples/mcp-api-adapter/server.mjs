@@ -2,21 +2,21 @@
 /**
  * Example MCP server with **both** surfaces enabled at once:
  *   - gRPC  `model_context_protocol.Mcp` via mcp-grpc-transport (default :50051)
- *   - OpenAPI on-ramp via mcp-openapi-gateway (default :8090)
+ *   - OpenAPI on-ramp via mcp-api-adapter (default :8090)
  *
  * Run from repo root after building packages:
- *   npm run build -w mcp-grpc-transport && npm run build -w mcp-openapi-gateway
- *   node examples/mcp-openapi-gateway/server.mjs
+ *   npm run build -w mcp-grpc-transport && npm run build -w mcp-api-adapter
+ *   node examples/mcp-api-adapter/server.mjs
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
-import { startMcpGateway } from "mcp-openapi-gateway";
+import { startMcpApiAdapter } from "mcp-api-adapter";
 
 function createDemoMcpServer() {
   const server = new McpServer({
-    name: "mcp-openapi-gateway-demo",
+    name: "mcp-api-adapter-demo",
     version: "0.1.0",
   });
 
@@ -81,13 +81,13 @@ async function main() {
     throw new Error("gRPC did not start — set ENABLE_GRPC=1");
   }
 
-  const gateway = await startMcpGateway({
+  const gateway = await startMcpApiAdapter({
     upstream: { kind: "grpc", address: grpc.address },
     host: openApiHost,
     port: openApiPort,
-    title: "MCP OpenAPI Gateway demo",
-    serverName: "mcp-openapi-gateway-demo",
-    apiKey: process.env.MCP_OPENAPI_GATEWAY_API_KEY?.trim() || undefined,
+    title: "MCP API Adapter demo",
+    serverName: "mcp-api-adapter-demo",
+    apiKey: process.env.MCP_API_ADAPTER_API_KEY?.trim() || undefined,
     grpcListen: false,
   });
 
@@ -105,10 +105,10 @@ async function main() {
   console.log(`Tools:        ${gateway.getCatalog().tools.map((t) => t.name).join(", ")}`);
   console.log("");
   console.log("Demos (another terminal):");
-  console.log("  node examples/mcp-openapi-gateway/demo-rest.mjs");
-  console.log("  node examples/mcp-openapi-gateway/demo-graphql.mjs");
-  console.log("  node examples/mcp-openapi-gateway/demo-grpc.mjs");
-  console.log("  node examples/mcp-openapi-gateway/demo-all.mjs");
+  console.log("  node examples/mcp-api-adapter/demo-rest.mjs");
+  console.log("  node examples/mcp-api-adapter/demo-graphql.mjs");
+  console.log("  node examples/mcp-api-adapter/demo-grpc.mjs");
+  console.log("  node examples/mcp-api-adapter/demo-all.mjs");
   console.log("");
 
   const shutdown = async () => {

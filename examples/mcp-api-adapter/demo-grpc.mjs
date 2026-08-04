@@ -2,7 +2,7 @@
 /**
  * Call the same demo MCP tools over gRPC CallTool (mcp-grpc-transport).
  *
- * Requires: node examples/mcp-openapi-gateway/server.mjs
+ * Requires: node examples/mcp-api-adapter/server.mjs
  */
 
 import {

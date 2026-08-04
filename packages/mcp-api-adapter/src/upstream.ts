@@ -91,7 +91,7 @@ async function scaffoldLocalGrpc(
     return await maybeStartGrpcMcpServer({
       createMcpServer: () => {
         const mcp = new McpServer(
-          { name: "mcp-openapi-gateway-bridge", version: "0.3.0" },
+          { name: "mcp-api-adapter-bridge", version: "0.4.0" },
           {
             capabilities: {
               tools: {},
@@ -105,7 +105,7 @@ async function scaffoldLocalGrpc(
       },
       createSessionMcpServer: async () => {
         const mcp = new McpServer(
-          { name: "mcp-openapi-gateway-bridge-session", version: "0.3.0" },
+          { name: "mcp-api-adapter-bridge-session", version: "0.4.0" },
           {
             capabilities: {
               tools: {},
@@ -164,7 +164,7 @@ export async function connectUpstream(
     return connection;
   }
 
-  const client = new Client({ name: "mcp-openapi-gateway", version: "0.3.0" });
+  const client = new Client({ name: "mcp-api-adapter", version: "0.4.0" });
   let label: string;
   let kind: UpstreamKind;
   let closeTransport: () => Promise<void> = async () => undefined;

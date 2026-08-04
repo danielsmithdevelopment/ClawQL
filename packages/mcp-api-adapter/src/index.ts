@@ -1,8 +1,15 @@
 /**
- * MCP OpenAPI Gateway — scaffold OpenAPI + GraphQL (+ gRPC) for any MCP server.
+ * mcp-api-adapter — standalone adapter: any MCP server → OpenAPI + GraphQL + gRPC.
  */
 
-export { startMcpGateway, startMcpOpenApiGateway, createMcpGatewayApp, createMcpOpenApiApp } from "./server.js";
+export {
+  startMcpApiAdapter,
+  startMcpGateway,
+  startMcpOpenApiGateway,
+  createMcpApiAdapterApp,
+  createMcpGatewayApp,
+  createMcpOpenApiApp,
+} from "./server.js";
 export { buildOpenApiDocument } from "./openapi.js";
 export { buildGraphqlSchemaFromCatalog, toolArgsFromInputSchema } from "./graphql-schema.js";
 export { attachGraphqlRoutes } from "./graphql-http.js";
@@ -21,8 +28,11 @@ export {
 } from "./schema-convert.js";
 export { runCli } from "./cli.js";
 export type {
+  McpApiAdapterOptions,
+  McpApiAdapterHttpOptions,
   McpGatewayOptions,
   McpOpenApiGatewayOptions,
+  StartedMcpApiAdapter,
   StartedMcpGateway,
   StartedMcpOpenApiGateway,
   ToolCatalog,
@@ -36,3 +46,4 @@ export type {
 } from "./types.js";
 export type { CollapsedToolResult } from "./call.js";
 export type { UpstreamConnection } from "./upstream.js";
+export type { CreateMcpApiAdapterAppOptions } from "./server.js";

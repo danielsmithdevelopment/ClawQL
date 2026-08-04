@@ -141,7 +141,7 @@ export function buildOpenApiDocument(options: BuildOpenApiOptions): Record<strin
     openapi: "3.1.0",
     info: {
       title: options.title ?? "MCP tools (OpenAPI on-ramp)",
-      version: "0.3.0",
+      version: "0.4.0",
       description:
         "REST + GraphQL facade over any MCP server (stdio, Streamable HTTP, or gRPC). " +
         "GraphQL at /graphql (GraphiQL at /graphiql). " +

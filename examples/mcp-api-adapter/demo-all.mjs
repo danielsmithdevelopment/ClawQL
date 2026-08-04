@@ -2,7 +2,7 @@
 /**
  * Side-by-side demo: same tools via OpenAPI REST, GraphQL, and gRPC CallTool.
  *
- * Requires: node examples/mcp-openapi-gateway/server.mjs
+ * Requires: node examples/mcp-api-adapter/server.mjs
  */
 
 import {
@@ -16,7 +16,7 @@ const address =
   process.env.CLAWQL_MCP_GRPC_ADDR?.trim() ||
   resolveGrpcAddressFromEnv() ||
   "127.0.0.1:50051";
-const apiKey = process.env.MCP_OPENAPI_GATEWAY_API_KEY?.trim();
+const apiKey = process.env.MCP_API_ADAPTER_API_KEY?.trim();
 
 function headers() {
   const h = { "content-type": "application/json" };

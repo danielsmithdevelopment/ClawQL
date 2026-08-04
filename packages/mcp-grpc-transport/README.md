@@ -68,11 +68,11 @@ This package exports **`callToolServerStreamingGrpc`**, **`mcpArgumentsToCallToo
 
 ### OpenAPI on-ramp
 
-Non-MCP clients that want **tool-name REST** (`POST /echo`) plus Swagger/OpenAPI should use **`mcp-openapi-gateway`**: it introspects via **`ListTools`**, serves OpenAPI, and forwards into **`CallTool` over gRPC** (this transport). That keeps Streamable HTTP for IDE agents and makes gRPC the production path for Workers, OpenWebUI-style OpenAPI tools, and mesh deployments.
+Non-MCP clients that want **tool-name REST/GraphQL** (`POST /echo`, `/graphql`) plus Swagger should use standalone **`mcp-api-adapter`**: point it at any MCP server (stdio / Streamable HTTP / gRPC), serve OpenAPI + GraphQL, and expose or scaffold **`CallTool` over gRPC** (this transport). That keeps Streamable HTTP for IDE agents and makes gRPC the production path for Workers, OpenWebUI-style tools, and mesh deployments.
 
-- Package: [`packages/mcp-openapi-gateway`](../mcp-openapi-gateway/README.md)
-- Design: [`docs/design/mcp-openapi-gateway.md`](../../docs/design/mcp-openapi-gateway.md)
-- Demo (both surfaces at once): [`examples/mcp-openapi-gateway`](../../examples/mcp-openapi-gateway/README.md)
+- Package: [`packages/mcp-api-adapter`](../mcp-api-adapter/README.md)
+- Design: [`docs/design/mcp-api-adapter.md`](../../docs/design/mcp-api-adapter.md)
+- Demo (both surfaces at once): [`examples/mcp-api-adapter`](../../examples/mcp-api-adapter/README.md)
 
 ### Generality (what “any MCP server” means here)
 

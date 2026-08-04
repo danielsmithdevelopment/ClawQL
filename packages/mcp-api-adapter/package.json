@@ -1,7 +1,7 @@
 {
-  "name": "mcp-openapi-gateway",
-  "version": "0.3.0",
-  "description": "Scaffold OpenAPI + GraphQL + gRPC for any MCP server (stdio, Streamable HTTP, or gRPC) — POST /{toolName}, /graphql, Swagger/GraphiQL, mcp-grpc-transport CallTool",
+  "name": "mcp-api-adapter",
+  "version": "0.4.0",
+  "description": "Standalone adapter: point at any MCP server (stdio, Streamable HTTP, or gRPC) and instantly serve OpenAPI + GraphQL + gRPC for the same tools",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,7 +14,8 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "mcp-openapi-gateway": "bin/mcp-openapi-gateway.mjs"
+    "mcp-api-adapter": "bin/mcp-api-adapter.mjs",
+    "mcp-openapi-gateway": "bin/mcp-api-adapter.mjs"
   },
   "files": [
     "dist",
@@ -27,7 +28,8 @@
     "openapi",
     "graphql",
     "grpc",
-    "gateway",
+    "adapter",
+    "api",
     "clawql"
   ],
   "engines": {
@@ -36,12 +38,12 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
-    "directory": "packages/mcp-openapi-gateway"
+    "directory": "packages/mcp-api-adapter"
   },
   "bugs": {
     "url": "https://github.com/danielsmithdevelopment/ClawQL/issues"
   },
-  "homepage": "https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-openapi-gateway#readme",
+  "homepage": "https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-api-adapter#readme",
   "dependencies": {
     "@grpc/grpc-js": "^1.14.4",
     "@modelcontextprotocol/sdk": "^1.27.1",
@@ -61,6 +63,6 @@
     "build": "npm run clean && tsc",
     "prepublishOnly": "npm run build",
     "test": "vitest run",
-    "start": "node bin/mcp-openapi-gateway.mjs"
+    "start": "node bin/mcp-api-adapter.mjs"
   }
 }

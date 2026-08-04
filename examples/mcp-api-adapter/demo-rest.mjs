@@ -2,11 +2,11 @@
 /**
  * Call demo MCP tools over the OpenAPI on-ramp (plain HTTP).
  *
- * Requires: node examples/mcp-openapi-gateway/server.mjs
+ * Requires: node examples/mcp-api-adapter/server.mjs
  */
 
 const base = process.env.OPENAPI_BASE_URL?.trim() || "http://127.0.0.1:8090";
-const apiKey = process.env.MCP_OPENAPI_GATEWAY_API_KEY?.trim();
+const apiKey = process.env.MCP_API_ADAPTER_API_KEY?.trim();
 
 function headers(extra = {}) {
   const h = { "content-type": "application/json", ...extra };

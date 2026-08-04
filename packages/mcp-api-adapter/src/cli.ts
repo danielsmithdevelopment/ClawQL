@@ -1,15 +1,26 @@
 import { parseArgs } from "node:util";
 import { resolveGrpcAddressFromEnv } from "mcp-grpc-transport";
-import { startMcpGateway } from "./server.js";
+import { startMcpApiAdapter } from "./server.js";
 import type { UpstreamOptions } from "./types.js";
 
+function envFirst(...keys: string[]): string | undefined {
+  for (const key of keys) {
+    const v = process.env[key]?.trim();
+    if (v) return v;
+  }
+  return undefined;
+}
+
 function printHelp(): void {
-  console.log(`mcp-openapi-gateway — scaffold OpenAPI + GraphQL (+ gRPC) for ANY MCP server
+  console.log(`mcp-api-adapter — point at ANY MCP server, get OpenAPI + GraphQL + gRPC instantly
+
+Standalone npm package (no ClawQL install required). Wrap stdio, Streamable HTTP,
+or gRPC MCP and call the same tools over REST, GraphQL, and gRPC.
 
 Usage:
-  mcp-openapi-gateway --mcp-url <url> [options]
-  mcp-openapi-gateway --stdio -- <command> [args…]
-  mcp-openapi-gateway --grpc-address <host:port> [options]
+  npx mcp-api-adapter --mcp-url <url> [options]
+  npx mcp-api-adapter --stdio -- <command> [args…]
+  npx mcp-api-adapter --grpc-address <host:port> [options]
 
 Upstream (exactly one):
   --mcp-url <url>        Streamable HTTP MCP endpoint (e.g. http://127.0.0.1:8080/mcp)
@@ -17,32 +28,27 @@ Upstream (exactly one):
   --grpc-address <addr>  Existing MCP gRPC server (mcp-grpc-transport)
   --grpc-host / --grpc-port   Alternative to --grpc-address
 
-HTTP on-ramp:
+HTTP APIs:
   --listen <host:port>   OpenAPI + GraphQL bind (default 0.0.0.0:8090)
   --api-key <key>        Optional edge API key
   --refresh-ms <n>       Catalog poll interval (default 0 = off)
   --title <string>       Docs / GraphiQL title
 
 Scaffolded gRPC (stdio / HTTP upstreams only):
-  --grpc-listen <addr>   Bind for local MCP gRPC surface (default 127.0.0.1:0)
-  --no-grpc              Do not scaffold a local gRPC surface
+  --grpc-listen <addr>   Bind for local MCP gRPC API (default 127.0.0.1:0)
+  --no-grpc              Do not scaffold a local gRPC API
 
   -h, --help             Show help
 
-Env:
-  MCP_OPENAPI_GATEWAY_LISTEN, MCP_OPENAPI_GATEWAY_API_KEY,
-  MCP_OPENAPI_GATEWAY_REFRESH_MS, MCP_OPENAPI_GATEWAY_GRPC_LISTEN,
+Env (MCP_API_ADAPTER_*; legacy MCP_OPENAPI_GATEWAY_* still accepted):
+  MCP_API_ADAPTER_LISTEN, MCP_API_ADAPTER_API_KEY,
+  MCP_API_ADAPTER_REFRESH_MS, MCP_API_ADAPTER_GRPC_LISTEN,
   MCP_PROTOCOL_VERSION, GRPC_HOST, GRPC_PORT, CLAWQL_MCP_GRPC_ADDR
 
-Examples:
-  # Wrap any Streamable HTTP MCP server → REST + GraphQL + local gRPC
-  mcp-openapi-gateway --mcp-url http://127.0.0.1:8080/mcp --listen 0.0.0.0:8090
-
-  # Wrap a stdio MCP package
-  mcp-openapi-gateway --stdio -- npx -y @modelcontextprotocol/server-everything
-
-  # Point at an existing gRPC MCP server (ClawQL / ENABLE_GRPC)
-  mcp-openapi-gateway --grpc-address 127.0.0.1:50051 --listen 0.0.0.0:8090
+Instant examples:
+  npx mcp-api-adapter --mcp-url http://127.0.0.1:8080/mcp
+  npx mcp-api-adapter --stdio -- npx -y @modelcontextprotocol/server-everything
+  npx mcp-api-adapter --grpc-address 127.0.0.1:50051
 `);
 }
 
@@ -136,28 +142,30 @@ export async function runCli(argv: string[]): Promise<void> {
 
   const listenRaw =
     values.listen?.trim() ||
-    process.env.MCP_OPENAPI_GATEWAY_LISTEN?.trim() ||
+    envFirst("MCP_API_ADAPTER_LISTEN", "MCP_OPENAPI_GATEWAY_LISTEN") ||
     "0.0.0.0:8090";
   const { host, port } = parseListen(listenRaw);
 
   const apiKey =
-    values["api-key"]?.trim() || process.env.MCP_OPENAPI_GATEWAY_API_KEY?.trim() || undefined;
+    values["api-key"]?.trim() ||
+    envFirst("MCP_API_ADAPTER_API_KEY", "MCP_OPENAPI_GATEWAY_API_KEY") ||
+    undefined;
   const refreshMs = Number.parseInt(
     values["refresh-ms"]?.trim() ||
-      process.env.MCP_OPENAPI_GATEWAY_REFRESH_MS?.trim() ||
+      envFirst("MCP_API_ADAPTER_REFRESH_MS", "MCP_OPENAPI_GATEWAY_REFRESH_MS") ||
       "0",
     10
   );
 
   const grpcListenRaw =
     values["grpc-listen"]?.trim() ||
-    process.env.MCP_OPENAPI_GATEWAY_GRPC_LISTEN?.trim() ||
+    envFirst("MCP_API_ADAPTER_GRPC_LISTEN", "MCP_OPENAPI_GATEWAY_GRPC_LISTEN") ||
     undefined;
   const grpcListen: string | false = values["no-grpc"]
     ? false
     : grpcListenRaw || (upstream.kind === "grpc" ? false : "127.0.0.1:0");
 
-  const started = await startMcpGateway({
+  const started = await startMcpApiAdapter({
     upstream,
     host,
     port,
@@ -169,21 +177,21 @@ export async function runCli(argv: string[]): Promise<void> {
   });
 
   const catalog = started.getCatalog();
-  console.log(`[mcp-openapi-gateway] listening on ${started.url}`);
-  console.log(`[mcp-openapi-gateway] upstream (${started.upstreamKind}): ${started.upstream}`);
+  console.log(`[mcp-api-adapter] ready — ${started.url}`);
+  console.log(`[mcp-api-adapter] upstream (${started.upstreamKind}): ${started.upstream}`);
   console.log(
-    `[mcp-openapi-gateway] surfaces: ${catalog.surfaces.join(", ")}` +
+    `[mcp-api-adapter] APIs: ${catalog.surfaces.join(", ")}` +
       (started.grpcAddress ? ` (gRPC ${started.grpcAddress})` : "")
   );
   console.log(
-    `[mcp-openapi-gateway] tools: ${catalog.tools.map((t) => t.name).join(", ") || "(none)"}`
+    `[mcp-api-adapter] tools: ${catalog.tools.map((t) => t.name).join(", ") || "(none)"}`
   );
-  console.log(`[mcp-openapi-gateway] docs:     ${started.url}/docs`);
-  console.log(`[mcp-openapi-gateway] graphiql: ${started.url}/graphiql`);
-  console.log(`[mcp-openapi-gateway] graphql:  ${started.url}/graphql`);
+  console.log(`[mcp-api-adapter] docs:     ${started.url}/docs`);
+  console.log(`[mcp-api-adapter] graphiql: ${started.url}/graphiql`);
+  console.log(`[mcp-api-adapter] graphql:  ${started.url}/graphql`);
   if (started.grpcAddress) {
     console.log(
-      `[mcp-openapi-gateway] Prefer production CallTool via mcp-grpc-transport on ${started.grpcAddress}`
+      `[mcp-api-adapter] gRPC CallTool (mcp-grpc-transport): ${started.grpcAddress}`
     );
   }
 

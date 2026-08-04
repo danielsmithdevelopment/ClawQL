@@ -8,10 +8,9 @@ import { buildOpenApiDocument } from "./openapi.js";
 import { isSafeToolPathName } from "./schema-convert.js";
 import type {
   CallToolFn,
-  McpGatewayOptions,
+  McpApiAdapterOptions,
   McpOpenApiGatewayOptions,
-  StartedMcpGateway,
-  StartedMcpOpenApiGateway,
+  StartedMcpApiAdapter,
   ToolCatalog,
 } from "./types.js";
 import {
@@ -30,7 +29,7 @@ function readApiKey(req: Request): string | undefined {
   return undefined;
 }
 
-export type CreateMcpGatewayAppOptions = {
+export type CreateMcpApiAdapterAppOptions = {
   getCatalog: () => ToolCatalog;
   callTool: CallToolFn;
   apiKey?: string;
@@ -39,7 +38,7 @@ export type CreateMcpGatewayAppOptions = {
   grpcAddress?: string;
 };
 
-export function createMcpGatewayApp(options: CreateMcpGatewayAppOptions): Express {
+export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): Express {
   const app = express();
   app.use(express.json({ limit: "2mb" }));
 
@@ -60,7 +59,7 @@ export function createMcpGatewayApp(options: CreateMcpGatewayAppOptions): Expres
     const catalog = options.getCatalog();
     res.json({
       status: "ok",
-      service: options.serverName ?? "mcp-openapi-gateway",
+      service: options.serverName ?? "mcp-api-adapter",
       upstream: catalog.upstream,
       upstreamKind: catalog.upstreamKind,
       grpcAddress: catalog.grpcAddress ?? options.grpcAddress,
@@ -91,7 +90,7 @@ export function createMcpGatewayApp(options: CreateMcpGatewayAppOptions): Expres
   });
 
   app.get("/docs", (_req, res) => {
-    res.type("html").send(swaggerDocsHtml(options.title ?? "MCP OpenAPI Gateway"));
+    res.type("html").send(swaggerDocsHtml(options.title ?? "MCP API Adapter"));
   });
 
   attachGraphqlRoutes(app, {
@@ -134,11 +133,13 @@ export function createMcpGatewayApp(options: CreateMcpGatewayAppOptions): Expres
   return app;
 }
 
-/** @deprecated Prefer {@link createMcpGatewayApp}. */
+/** @deprecated Prefer {@link createMcpApiAdapterApp}. */
+export const createMcpGatewayApp = createMcpApiAdapterApp;
+/** @deprecated Prefer {@link createMcpApiAdapterApp}. */
 export function createMcpOpenApiApp(
   options: McpOpenApiGatewayOptions & { getCatalog: () => ToolCatalog }
 ): Express {
-  return createMcpGatewayApp({
+  return createMcpApiAdapterApp({
     getCatalog: options.getCatalog,
     callTool: async (tool, args) => {
       const { callToolViaGrpc } = await import("./call.js");
@@ -181,7 +182,7 @@ function attachRefreshTimer(
     void refreshCatalog(upstream)
       .then((next) => setCatalog(next))
       .catch((err) => {
-        console.error("[mcp-openapi-gateway] catalog refresh failed:", err);
+        console.error("[mcp-api-adapter] catalog refresh failed:", err);
       });
   }, refreshMs);
   timer.unref?.();
@@ -189,17 +190,19 @@ function attachRefreshTimer(
 }
 
 /**
- * Start the triple-surface gateway against any MCP upstream
- * (stdio | Streamable HTTP | gRPC).
+ * Point at any MCP server (stdio | Streamable HTTP | gRPC) and serve
+ * OpenAPI + GraphQL + (optional) gRPC for the same tools.
  */
-export async function startMcpGateway(options: McpGatewayOptions): Promise<StartedMcpGateway> {
+export async function startMcpApiAdapter(
+  options: McpApiAdapterOptions
+): Promise<StartedMcpApiAdapter> {
   const upstream = await connectUpstream(options.upstream, {
     grpcListen: options.grpcListen,
   });
 
   let catalog = buildCatalogFromUpstream(upstream);
 
-  const app = createMcpGatewayApp({
+  const app = createMcpApiAdapterApp({
     getCatalog: () => catalog,
     callTool: upstream.callTool,
     apiKey: options.apiKey,
@@ -242,11 +245,14 @@ export async function startMcpGateway(options: McpGatewayOptions): Promise<Start
   };
 }
 
-/** @deprecated Prefer {@link startMcpGateway} with `upstream: { kind: "grpc", address }`. */
+/** @deprecated Prefer {@link startMcpApiAdapter}. */
+export const startMcpGateway = startMcpApiAdapter;
+
+/** @deprecated Prefer {@link startMcpApiAdapter} with `upstream: { kind: "grpc", address }`. */
 export async function startMcpOpenApiGateway(
   options: McpOpenApiGatewayOptions
-): Promise<StartedMcpOpenApiGateway> {
-  return startMcpGateway({
+): Promise<StartedMcpApiAdapter> {
+  return startMcpApiAdapter({
     ...options,
     upstream: {
       kind: "grpc",

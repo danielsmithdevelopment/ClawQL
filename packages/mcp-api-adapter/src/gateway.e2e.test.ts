@@ -10,7 +10,7 @@ import {
   maybeStartGrpcMcpServer,
   type StartedGrpcServer,
 } from "mcp-grpc-transport";
-import { startMcpGateway, type StartedMcpGateway } from "./server.js";
+import { startMcpApiAdapter, type StartedMcpApiAdapter } from "./server.js";
 
 function createDemoMcpServer(): McpServer {
   const server = new McpServer({ name: "openapi-gateway-e2e", version: "0.0.0" });
@@ -95,9 +95,9 @@ async function startStreamableHttpUpstream(): Promise<{
   };
 }
 
-describe("mcp-openapi-gateway e2e (gRPC upstream)", () => {
+describe("mcp-api-adapter e2e (gRPC upstream)", () => {
   let grpc: StartedGrpcServer | undefined;
-  let gateway: StartedMcpGateway | undefined;
+  let gateway: StartedMcpApiAdapter | undefined;
   const saved = { ...process.env };
 
   afterEach(async () => {
@@ -118,7 +118,7 @@ describe("mcp-openapi-gateway e2e (gRPC upstream)", () => {
     });
     if (!grpc) throw new Error("expected gRPC server");
 
-    gateway = await startMcpGateway({
+    gateway = await startMcpApiAdapter({
       upstream: { kind: "grpc", address: grpc.address },
       host: "127.0.0.1",
       port: 0,
@@ -169,9 +169,9 @@ describe("mcp-openapi-gateway e2e (gRPC upstream)", () => {
   });
 });
 
-describe("mcp-openapi-gateway e2e (HTTP upstream → scaffold OpenAPI+GraphQL+gRPC)", () => {
+describe("mcp-api-adapter e2e (HTTP upstream → scaffold OpenAPI+GraphQL+gRPC)", () => {
   let upstream: { url: string; close: () => Promise<void> } | undefined;
-  let gateway: StartedMcpGateway | undefined;
+  let gateway: StartedMcpApiAdapter | undefined;
   const saved = { ...process.env };
 
   afterEach(async () => {
@@ -186,7 +186,7 @@ describe("mcp-openapi-gateway e2e (HTTP upstream → scaffold OpenAPI+GraphQL+gR
     process.env.ENABLE_GRPC_REFLECTION = "0";
     upstream = await startStreamableHttpUpstream();
 
-    gateway = await startMcpGateway({
+    gateway = await startMcpApiAdapter({
       upstream: { kind: "http", url: upstream.url },
       host: "127.0.0.1",
       port: 0,
