@@ -959,8 +959,9 @@ teamSync:
   prefix: "" # shared key prefix, e.g. teams/engineering/
   region: auto
   endpoint: "" # optional override (gcs defaults to https://storage.googleapis.com in template)
-  autoPush: false # CLAWQL_SYNC_AUTO=1 — debounced push after memory_ingest
-  autoPushDebounceMs: 30000
+  autoPush: false # CLAWQL_SYNC_AUTO=1 — quiet debounce + min-interval push after memory_ingest; shutdown flush if dirty
+  autoPushDebounceMs: 2000
+  autoPushMinMs: 30000 # CLAWQL_SYNC_AUTO_PUSH_MIN_MS — min gap between pushes; shutdown flush bypasses
   autoPull: false # CLAWQL_SYNC_AUTO_PULL=1 — throttled pull before memory_recall
   autoPullMinMs: 60000
   autoPullOnStart: false # CLAWQL_SYNC_AUTO_PULL_ON_START=1 — pull once at MCP startup
