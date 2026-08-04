@@ -25,7 +25,9 @@ export function defaultCodeGraphRoot(): string {
 export function hybridCodeGraphRecallEnabled(): boolean {
   if (!codeGraphEnabled()) return false;
   const v = process.env.CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH?.trim().toLowerCase();
-  return v === "1" || v === "true" || v === "yes";
+  if (v === "1" || v === "true" || v === "yes") return true;
+  const master = process.env.CLAWQL_MEMORY_RECALL_HYBRID?.trim().toLowerCase();
+  return master === "1" || master === "true" || master === "yes" || master === "on";
 }
 
 export type CodeGraphRecallHit = {

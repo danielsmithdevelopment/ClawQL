@@ -136,6 +136,8 @@ const issues = lintOkfMarkdown(next, { checkStale: true, requireWormRef: path.en
 | `CLAWQL_MEMORY_GIT_COMMIT_ON`                | ingest* | `off` disables commits; `*` default when backend=git                  |
 | `CLAWQL_MEMORY_GIT_PUSH_MODE`                | async†  | `async` \| `sync` \| `off` — †async when `GIT_REMOTE` set, else off   |
 | `CLAWQL_MEMORY_GIT_REMOTE`                   | —       | Remote URL (adds `origin` on first `git init`)                        |
+| `CLAWQL_MEMORY_RECALL_HYBRID=1`              | off     | Also query codegraph / pageindex / onyx when those layers are enabled |
+| `CLAWQL_MEMORY_RECALL_RRF=0`                 | on      | Disable reciprocal-rank fusion across multi-source `hits`             |
 
 ## Flywheel export filters (planned / next)
 

@@ -37,12 +37,18 @@ export function envFlagTruthy(key: string): boolean {
 
 /** Env-gated hybrid pageindex merge into memory_recall defaults. */
 export function hybridPageIndexRecallEnabled(): boolean {
-  return envFlagTruthy("CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX");
+  return (
+    envFlagTruthy("CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX") ||
+    envFlagTruthy("CLAWQL_MEMORY_RECALL_HYBRID")
+  );
 }
 
 /** Env-gated hybrid Onyx merge into memory_recall defaults. */
 export function hybridOnyxRecallEnabled(): boolean {
-  return envFlagTruthy("CLAWQL_MEMORY_RECALL_HYBRID_ONYX");
+  return (
+    envFlagTruthy("CLAWQL_MEMORY_RECALL_HYBRID_ONYX") ||
+    envFlagTruthy("CLAWQL_MEMORY_RECALL_HYBRID")
+  );
 }
 
 /**
