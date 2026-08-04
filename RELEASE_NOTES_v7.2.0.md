@@ -56,7 +56,7 @@
 | Vertical Compose + HITL predictions                                    | [#802](https://github.com/danielsmithdevelopment/ClawQL/pull/802) |
 | Local Privacy Filter after Presidio                                    | [#805](https://github.com/danielsmithdevelopment/ClawQL/pull/805) |
 | Stirling redact + Nextcloud/Coneshare NATS queues + classifier promote | [#810](https://github.com/danielsmithdevelopment/ClawQL/pull/810) |
-| NATS IDP e2e enablement (Helm profile, KEDA, smoke, Agent contract) | [#812](https://github.com/danielsmithdevelopment/ClawQL/pull/812) |
+| NATS IDP e2e enablement (Helm profile, KEDA, smoke, Agent contract)    | [#812](https://github.com/danielsmithdevelopment/ClawQL/pull/812) |
 | Tracking hygiene (#226–#259)                                           | [#809](https://github.com/danielsmithdevelopment/ClawQL/pull/809) |
 
 ### 6. Sync, Cloud Agent, inference, OpenBench, release tooling
