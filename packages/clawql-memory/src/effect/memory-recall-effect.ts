@@ -570,6 +570,21 @@ export function executeMemoryRecallCoreEffect(
       }
     }
 
+    // Best-effort MEMORY_RECALL WORM event (negative-proof / audit queries).
+    yield* memoryFromPromise(async () => {
+      const { emitMemoryWormEvent } = await import("../okf/worm-events.js");
+      await emitMemoryWormEvent({
+        kind: "MEMORY_RECALL",
+        at: new Date().toISOString(),
+        detail: {
+          query,
+          paths: (result.results ?? []).map((r) => r.path),
+          hitCount: (result.hits ?? result.results ?? []).length,
+          sourcesUsed,
+        },
+      });
+    }).pipe(Effect.catchAll(() => Effect.void));
+
     return result;
   });
 }

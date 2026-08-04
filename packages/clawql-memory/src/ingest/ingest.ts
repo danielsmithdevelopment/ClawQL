@@ -109,6 +109,8 @@ export type MemoryIngestResult = {
   skipped?: boolean;
   reason?: string;
   error?: string;
+  /** Content-addressed worm_ref sealed at ingest (sha256:…) when sealing is on. */
+  wormRef?: string | null;
   /** When **`CLAWQL_MERKLE_ENABLED=1`**: Merkle row before this ingest’s `memory.db` sync (`null` if no row yet). */
   merkleSnapshotBefore?: MerkleSnapshotPayload | null;
   /** When **`CLAWQL_MERKLE_ENABLED=1`**: Merkle row after sync (vault index fingerprint). */
@@ -347,7 +349,7 @@ export async function writeMemoryIngestPage(
     const related = buildRelatedLinks(effective.wikilinks);
 
     if (!existing || !append) {
-      const body = [
+      const provisional = [
         buildFrontmatter(title, effective, when),
         `# ${title}`,
         "",
@@ -357,6 +359,28 @@ export async function writeMemoryIngestPage(
         section,
         "",
       ].join("\n");
+      const { resolveWormRefForIngest } = await import("../okf/worm-seal.js");
+      const sealedWormRef = resolveWormRefForIngest({
+        wormRef: effective.wormRef,
+        sealedContent: provisional,
+      });
+      const sealedEffective =
+        sealedWormRef !== (effective.wormRef ?? null)
+          ? { ...effective, wormRef: sealedWormRef }
+          : effective;
+      const body =
+        sealedWormRef && sealedWormRef !== (effective.wormRef?.trim() || null)
+          ? [
+              buildFrontmatter(title, sealedEffective, when),
+              `# ${title}`,
+              "",
+              related,
+              "---",
+              "",
+              section,
+              "",
+            ].join("\n")
+          : provisional;
       await writeVaultTextFileAtomic(vault, rel, body);
       const { emitMemoryWormEvent } = await import("../okf/worm-events.js");
       await emitMemoryWormEvent({
@@ -364,9 +388,9 @@ export async function writeMemoryIngestPage(
         at: when,
         path: rel,
         correlationId: effective.correlationId,
-        wormRef: effective.wormRef ?? null,
+        wormRef: sealedWormRef,
       });
-      return { ok: true, path: rel };
+      return { ok: true, path: rel, wormRef: sealedWormRef ?? undefined };
     }
 
     // Upgrade legacy notes (missing OKF `type`) on append so the vault converges to OKF.
@@ -375,18 +399,23 @@ export async function writeMemoryIngestPage(
       type: resolveOkfType(effective.type) || DEFAULT_OKF_MEMORY_TYPE,
       description: inferDescription(effective),
     });
-    const next = `${upgraded.trimEnd()}\n\n---\n\n${section}\n`;
-    await writeVaultTextFileAtomic(vault, rel, next);
+    const nextProvisional = `${upgraded.trimEnd()}\n\n---\n\n${section}\n`;
+    const { resolveWormRefForIngest } = await import("../okf/worm-seal.js");
+    const sealedWormRef = resolveWormRefForIngest({
+      wormRef: effective.wormRef,
+      sealedContent: nextProvisional,
+    });
+    await writeVaultTextFileAtomic(vault, rel, nextProvisional);
     const { emitMemoryWormEvent } = await import("../okf/worm-events.js");
     await emitMemoryWormEvent({
       kind: "MEMORY_INGESTED",
       at: when,
       path: rel,
       correlationId: effective.correlationId,
-      wormRef: effective.wormRef ?? null,
+      wormRef: sealedWormRef,
       detail: { append: true },
     });
-    return { ok: true, path: rel };
+    return { ok: true, path: rel, wormRef: sealedWormRef ?? undefined };
   });
 }
 
