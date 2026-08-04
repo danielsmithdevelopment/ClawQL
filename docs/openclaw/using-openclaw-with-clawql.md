@@ -232,16 +232,16 @@ ClawQL exposes **`GET /metrics`** on **`clawql-mcp-http`**. Grafana import and P
 
 ## 11. Troubleshooting
 
-| Symptom                                         | What to check                                                                                                                                                 |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`openclaw: command not found`**               | **`npm install -g openclaw`**; ensure global npm **`bin`** is on **`PATH`**.                                                                                  |
-| **Connection refused** to HTTP MCP              | ClawQL process running; **`PORT`**; firewall.                                                                                                                 |
-| **404 / wrong path**                            | URL must end with **`/mcp`** (Streamable HTTP).                                                                                                               |
-| **Tools missing**                               | **`CLAWQL_ENABLE_*`** hides optional tools; rebuild/restart ClawQL.                                                                                           |
+| Symptom                                             | What to check                                                                                                                                                                                                                                |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`openclaw: command not found`**                   | **`npm install -g openclaw`**; ensure global npm **`bin`** is on **`PATH`**.                                                                                                                                                                 |
+| **Connection refused** to HTTP MCP                  | ClawQL process running; **`PORT`**; firewall.                                                                                                                                                                                                |
+| **404 / wrong path**                                | URL must end with **`/mcp`** (Streamable HTTP).                                                                                                                                                                                              |
+| **Tools missing**                                   | **`CLAWQL_ENABLE_*`** hides optional tools; rebuild/restart ClawQL.                                                                                                                                                                          |
 | **Cursor: MCP server failed during tool discovery** | Non-JSON on **stdout** breaks stdio JSON-RPC. With **`dotenv` ≥17**, ensure ClawQL loads env with **`quiet: true`** (fixed in `src/load-env.ts`). Confirm cold start prints only on **stderr**, then restart the MCP server / agent session. |
-| **GitHub 401 on execute**                       | **`CLAWQL_BEARER_TOKEN`** / **`gh auth token`**.                                                                                                              |
-| **`listTools` OK in smoke but not in OpenClaw** | OpenClaw config not loaded for that profile; try **`openclaw mcp list`**; check **`--profile`** / **`OPENCLAW_CONFIG_PATH`** per OpenClaw docs.               |
-| **No API key for provider `openai`**            | Default model is still **`openai/…`**. Set **`OPENROUTER_API_KEY`** and **`openclaw models set openrouter/…`**, or add OpenAI auth — see **§5.6 OpenRouter**. |
+| **GitHub 401 on execute**                           | **`CLAWQL_BEARER_TOKEN`** / **`gh auth token`**.                                                                                                                                                                                             |
+| **`listTools` OK in smoke but not in OpenClaw**     | OpenClaw config not loaded for that profile; try **`openclaw mcp list`**; check **`--profile`** / **`OPENCLAW_CONFIG_PATH`** per OpenClaw docs.                                                                                              |
+| **No API key for provider `openai`**                | Default model is still **`openai/…`**. Set **`OPENROUTER_API_KEY`** and **`openclaw models set openrouter/…`**, or add OpenAI auth — see **§5.6 OpenRouter**.                                                                                |
 
 ---
 
