@@ -71,11 +71,7 @@ export const memoryIngestToolZodShape = {
     .enum(["current", "stale", "superseded", "retracted"])
     .optional()
     .describe(MEMORY_INGEST_STATUS_DESCRIPTION),
-  supersededBy: z
-    .string()
-    .nullable()
-    .optional()
-    .describe(MEMORY_INGEST_SUPERSEDED_BY_DESCRIPTION),
+  supersededBy: z.string().nullable().optional().describe(MEMORY_INGEST_SUPERSEDED_BY_DESCRIPTION),
   model: z.string().optional().describe(MEMORY_INGEST_MODEL_DESCRIPTION),
   verified: z
     .object({

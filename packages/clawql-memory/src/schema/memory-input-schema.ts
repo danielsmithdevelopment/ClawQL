@@ -169,7 +169,9 @@ export const MemoryIngestInputSchema = Schema.Struct({
   ),
   sources: Schema.optional(
     Schema.mutable(
-      Schema.Array(Schema.Record({ key: Schema.String, value: Schema.Union(Schema.String, Schema.Number) }))
+      Schema.Array(
+        Schema.Record({ key: Schema.String, value: Schema.Union(Schema.String, Schema.Number) })
+      )
     ).annotations({ description: MEMORY_INGEST_SOURCES_DESCRIPTION })
   ),
   insights: Schema.optional(

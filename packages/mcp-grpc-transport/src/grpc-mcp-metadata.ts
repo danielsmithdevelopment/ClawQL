@@ -15,8 +15,7 @@ export const MCP_CLIENT_INFO_METADATA_KEY = "mcp-client-info";
 export const MCP_TOOL_NAME_METADATA_KEY = "mcp-tool-name";
 
 export type ProtocolVersionCheck =
-  | { ok: true; version: string }
-  | { ok: false; details: string; sendLatestInMetadata: boolean };
+  { ok: true; version: string } | { ok: false; details: string; sendLatestInMetadata: boolean };
 
 export function getMetadataValue(metadata: grpc.Metadata, key: string): string | undefined {
   const vals = metadata.get(key);

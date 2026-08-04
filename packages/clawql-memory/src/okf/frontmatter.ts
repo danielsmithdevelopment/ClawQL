@@ -164,9 +164,7 @@ export function parseFrontmatterBlock(block: string): ParsedFrontmatter {
 
     if (rest.startsWith("[") && rest.endsWith("]")) {
       const inner = rest.slice(1, -1).trim();
-      out[key] = inner
-        ? inner.split(",").map((t) => unquote(t.trim()))
-        : [];
+      out[key] = inner ? inner.split(",").map((t) => unquote(t.trim())) : [];
       i++;
       continue;
     }

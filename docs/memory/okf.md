@@ -6,14 +6,14 @@ ClawQL stores vault memory as [Open Knowledge Format (OKF) v0.2](https://okf.io)
 
 ## What ships
 
-| Surface               | Behavior                                                                                          |
-| --------------------- | ------------------------------------------------------------------------------------------------- |
+| Surface               | Behavior                                                                                                    |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- |
 | **`memory_ingest`**   | Writes OKF v0.2 frontmatter (`type` required; defaults to `context`) plus trust signals + ClawQL extensions |
-| **`Memory/index.md`** | OKF catalog (alongside legacy `_INDEX_{Provider}.md`)                                             |
-| **`Memory/log.md`**   | Append-only OKF changelog of successful ingests                                                   |
-| **Append upgrade**    | Legacy notes missing `type` / v0.2 fields are upgraded on append                                  |
-| **Recall**            | Excludes `status: retracted`; down-weights `stale` / past `stale_after`                           |
-| **Lint**              | `lintOkfMarkdown` / `lintOkfFrontmatter` validate status, stale_after, verified.\*                |
+| **`Memory/index.md`** | OKF catalog (alongside legacy `_INDEX_{Provider}.md`)                                                       |
+| **`Memory/log.md`**   | Append-only OKF changelog of successful ingests                                                             |
+| **Append upgrade**    | Legacy notes missing `type` / v0.2 fields are upgraded on append                                            |
+| **Recall**            | Excludes `status: retracted`; down-weights `stale` / past `stale_after`                                     |
+| **Lint**              | `lintOkfMarkdown` / `lintOkfFrontmatter` validate status, stale_after, verified.\*                          |
 
 ## Frontmatter contract (OKF v0.2)
 
@@ -62,14 +62,14 @@ okf_version: "0.2"
 
 ### Trust signals (v0.2)
 
-| Field            | Role                                                                  |
-| ---------------- | --------------------------------------------------------------------- |
-| `generated`      | Who/what wrote the entry (agent, tool, model, session, timestamp)     |
-| `verified`       | Human / evaluator / agent confirmation                                |
-| `sources`        | URLs or session turns that grounded the entry                         |
-| `stale_after`    | Soft expiry — lint warns when past and status still `current`         |
-| `status`         | Lifecycle: `current` · `stale` · `superseded` · `retracted`           |
-| `superseded_by`  | Path of the replacement entry                                         |
+| Field           | Role                                                              |
+| --------------- | ----------------------------------------------------------------- |
+| `generated`     | Who/what wrote the entry (agent, tool, model, session, timestamp) |
+| `verified`      | Human / evaluator / agent confirmation                            |
+| `sources`       | URLs or session turns that grounded the entry                     |
+| `stale_after`   | Soft expiry — lint warns when past and status still `current`     |
+| `status`        | Lifecycle: `current` · `stale` · `superseded` · `retracted`       |
+| `superseded_by` | Path of the replacement entry                                     |
 
 ### ClawQL `type` taxonomy
 

@@ -6,11 +6,7 @@ import type { EvaluatorVerdict } from "../store/types.js";
  * (see docs/inference/portal-flywheel.md) — not yet implemented in the writer.
  */
 export type ExportFormat =
-  | "openai-jsonl"
-  | "anthropic-jsonl"
-  | "raw-jsonl"
-  | "sharegpt"
-  | "portal-bundle";
+  "openai-jsonl" | "anthropic-jsonl" | "raw-jsonl" | "sharegpt" | "portal-bundle";
 
 export type ExportFilter = {
   modelId?: string;

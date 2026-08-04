@@ -336,13 +336,13 @@ clawql inference export \
   --min-score 0.8
 ```
 
-| Format            | Target                                         |
-| ----------------- | ---------------------------------------------- |
-| `openai-jsonl`    | OpenAI fine-tuning                             |
-| `anthropic-jsonl` | Anthropic fine-tuning                          |
-| `raw-jsonl`       | Full inference records                         |
-| `sharegpt`        | Community tooling interop                      |
-| `portal-bundle`   | PorTAL task-latent + alignment (**staged**)    |
+| Format            | Target                                      |
+| ----------------- | ------------------------------------------- |
+| `openai-jsonl`    | OpenAI fine-tuning                          |
+| `anthropic-jsonl` | Anthropic fine-tuning                       |
+| `raw-jsonl`       | Full inference records                      |
+| `sharegpt`        | Community tooling interop                   |
+| `portal-bundle`   | PorTAL task-latent + alignment (**staged**) |
 
 PII scrubbing (Presidio) is on by default. Every export writes a WORM dataset manifest (sample hashes, filter criteria, Merkle root, policy version).
 

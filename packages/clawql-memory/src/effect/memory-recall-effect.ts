@@ -3,11 +3,7 @@ import { readVaultTextFile } from "../vault/utils.js";
 import { slugifyTitle } from "../ingest/slug.js";
 import { listVaultMarkdownRelPaths, buildSlugToVaultPath } from "../vault/slug-index.js";
 import { extractWikilinkTargets, stripVaultFrontmatter } from "../vault/markdown.js";
-import {
-  isOkfRetracted,
-  isOkfStale,
-  parseVaultFrontmatter,
-} from "../okf/frontmatter.js";
+import { isOkfRetracted, isOkfStale, parseVaultFrontmatter } from "../okf/frontmatter.js";
 import {
   keywordScore,
   mapVaultResultToNormalizedHit,

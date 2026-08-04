@@ -130,17 +130,21 @@ describe("model_context_protocol.Mcp (protobuf RPC surface)", () => {
         stateless?: boolean;
         server_name?: string;
       }>((resolve, reject) => {
-        client.discover({ common: {}, protocol_version: LATEST_PROTOCOL_VERSION }, md, (err, res) => {
-          if (err) reject(err);
-          else
-            resolve(
-              res as {
-                protocol_version?: string;
-                stateless?: boolean;
-                server_name?: string;
-              }
-            );
-        });
+        client.discover(
+          { common: {}, protocol_version: LATEST_PROTOCOL_VERSION },
+          md,
+          (err, res) => {
+            if (err) reject(err);
+            else
+              resolve(
+                res as {
+                  protocol_version?: string;
+                  stateless?: boolean;
+                  server_name?: string;
+                }
+              );
+          }
+        );
       });
       expect(out.protocol_version).toBe(MCP_PROTOCOL_VERSION_2026_07_28);
       expect(out.stateless).toBe(true);

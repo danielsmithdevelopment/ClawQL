@@ -46,24 +46,24 @@ Production traffic
 
 ### What does **not** change
 
-| Layer                         | Unchanged? |
-| ----------------------------- | ---------- |
-| Gateway / PAL routing (TS)    | Yes        |
-| vLLM / PEFT serving           | Yes — standard LoRA load |
-| WORM audit for inference      | Yes — richer, not replaced |
-| OKF vault as training source  | Yes — gains v0.2 filters   |
+| Layer                        | Unchanged?                 |
+| ---------------------------- | -------------------------- |
+| Gateway / PAL routing (TS)   | Yes                        |
+| vLLM / PEFT serving          | Yes — standard LoRA load   |
+| WORM audit for inference     | Yes — richer, not replaced |
+| OKF vault as training source | Yes — gains v0.2 filters   |
 
 PorTAL is a **Python training/export** concern. ClawQL’s TypeScript gateway continues to route to models that already have LoRAs mounted. No new serving infrastructure.
 
 ### What changes
 
-| Surface                         | Intention                                                                 |
-| ------------------------------- | ------------------------------------------------------------------------- |
-| `clawql inference export`       | New `--format portal-bundle` artifact set                                 |
-| Export filters                  | `--okf-verified human` / `--okf-status current` (OKF v0.2)                |
-| `clawql inference finetune`     | New `refit` subcommand for alignment-only updates                         |
-| Tier map                        | Optional metadata: which task types have trained adapters                 |
-| WORM                            | Manifest covers task-latent + alignment digests                           |
+| Surface                     | Intention                                                  |
+| --------------------------- | ---------------------------------------------------------- |
+| `clawql inference export`   | New `--format portal-bundle` artifact set                  |
+| Export filters              | `--okf-verified human` / `--okf-status current` (OKF v0.2) |
+| `clawql inference finetune` | New `refit` subcommand for alignment-only updates          |
+| Tier map                    | Optional metadata: which task types have trained adapters  |
+| WORM                        | Manifest covers task-latent + alignment digests            |
 
 ---
 
@@ -83,11 +83,11 @@ clawql inference export \
 
 **Expected artifacts:**
 
-| File                   | Role                                              |
-| ---------------------- | ------------------------------------------------- |
-| `task_latent.pt`       | Portable task representation (train once)         |
-| `alignment_<base>.lora`| PEFT LoRA for the current base                    |
-| `adapter_manifest.cqm` | ClawQL manifest: WORM hashes, filters, Merkle root |
+| File                    | Role                                               |
+| ----------------------- | -------------------------------------------------- |
+| `task_latent.pt`        | Portable task representation (train once)          |
+| `alignment_<base>.lora` | PEFT LoRA for the current base                     |
+| `adapter_manifest.cqm`  | ClawQL manifest: WORM hashes, filters, Merkle root |
 
 ### Refit when a new base ships
 
@@ -112,24 +112,20 @@ Minutes, not a full retrain. No new export pipeline.
 
 ## Implementation stages
 
-| Stage | Deliverable                                                                 | Status      |
-| ----- | --------------------------------------------------------------------------- | ----------- |
-| **A** | OKF v0.2 trust signals on vault notes + recall filters                      | **Shipped** (this PR) |
-| **B** | Export filter flags `--okf-verified` / `--okf-status`                       | Next        |
-| **C** | `--format portal-bundle` + Python PorTAL invoke + `adapter_manifest.cqm`    | Next        |
-| **D** | `finetune refit` + tier-map adapter metadata for PAL                        | Next        |
-| **E** | Docs site sync + getting-started “start the Flywheel for PorTAL” runbook    | With C/D    |
+| Stage | Deliverable                                                              | Status                |
+| ----- | ------------------------------------------------------------------------ | --------------------- |
+| **A** | OKF v0.2 trust signals on vault notes + recall filters                   | **Shipped** (this PR) |
+| **B** | Export filter flags `--okf-verified` / `--okf-status`                    | Next                  |
+| **C** | `--format portal-bundle` + Python PorTAL invoke + `adapter_manifest.cqm` | Next                  |
+| **D** | `finetune refit` + tier-map adapter metadata for PAL                     | Next                  |
+| **E** | Docs site sync + getting-started “start the Flywheel for PorTAL” runbook | With C/D              |
 
 Reserve the export format name in TypeScript now so CLI/docs do not thrash:
 
 ```ts
 // packages/clawql-inference — ExportFormat (staged)
 export type ExportFormat =
-  | "openai-jsonl"
-  | "anthropic-jsonl"
-  | "raw-jsonl"
-  | "sharegpt"
-  | "portal-bundle"; // PorTAL task-latent + alignment bundle (staged)
+  "openai-jsonl" | "anthropic-jsonl" | "raw-jsonl" | "sharegpt" | "portal-bundle"; // PorTAL task-latent + alignment bundle (staged)
 ```
 
 ---

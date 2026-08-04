@@ -100,10 +100,16 @@ describe("okf frontmatter (v0.2)", () => {
     expect(isOkfRetracted({ status: "retracted" })).toBe(true);
     expect(isOkfRetracted({ status: "current" })).toBe(false);
     expect(
-      isOkfStale({ status: "current", stale_after: "2020-01-01T00:00:00.000Z" }, Date.parse("2026-08-01"))
+      isOkfStale(
+        { status: "current", stale_after: "2020-01-01T00:00:00.000Z" },
+        Date.parse("2026-08-01")
+      )
     ).toBe(true);
     expect(
-      isOkfStale({ status: "current", stale_after: "2099-01-01T00:00:00.000Z" }, Date.parse("2026-08-01"))
+      isOkfStale(
+        { status: "current", stale_after: "2099-01-01T00:00:00.000Z" },
+        Date.parse("2026-08-01")
+      )
     ).toBe(false);
   });
 
