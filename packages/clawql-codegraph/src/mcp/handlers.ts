@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { Effect } from "effect";
 import { CodeGraphService, runCodeGraphEffect } from "../effect/codegraph-service.js";
+import { syncCodeGraph } from "../sync/codegraph-sync.js";
+import { syncGraphify } from "../sync/graphify-sync.js";
 
 const indexInput = z.object({
   rootPath: z
@@ -45,11 +47,72 @@ const subgraphInput = graphIdInput.extend({
   maxNodes: z.number().int().positive().optional(),
 });
 
+const exploreInput = graphIdInput.extend({
+  query: z
+    .string()
+    .min(1)
+    .describe("Symbol or path fragment — returns explain + neighbors + blast radius in one call."),
+  impactDepth: z.number().int().min(1).max(6).optional(),
+  neighborLimit: z.number().int().positive().optional(),
+  subgraphDepth: z.number().int().min(0).max(6).optional(),
+});
+
+const impactInput = graphIdInput.extend({
+  seedQuery: z.string().min(1).describe("Symbol whose upstream blast radius to compute."),
+  depth: z.number().int().min(1).max(8).optional(),
+  limit: z.number().int().positive().optional(),
+});
+
 const importGraphifyInput = z.object({
   jsonPath: z.string().min(1).describe("Path to Graphify graph.json (NetworkX node-link export)."),
   graphId: z.string().optional(),
   rootPath: z.string().optional(),
   storagePath: z.string().optional(),
+});
+
+const syncInput = z.object({
+  rootPath: z
+    .string()
+    .optional()
+    .describe("Repository root (defaults to CLAWQL_CODEGRAPH_ROOT or cwd)."),
+  graphId: z.string().optional(),
+  storagePath: z.string().optional(),
+  mode: z
+    .enum(["fast", "thorough"])
+    .optional()
+    .describe("thorough raises the default maxFiles cap for larger repos."),
+  outDir: z
+    .string()
+    .optional()
+    .describe("Artifact directory for graph.json / GRAPH_REPORT.md / graph.html (default: {root}/codegraph-out)."),
+  vaultIngest: z
+    .boolean()
+    .optional()
+    .describe("Include vault ingest proposal (report + communities). Default true; MemoryPlugin applies it."),
+  maxFiles: z.number().int().positive().optional(),
+  writeHtml: z.boolean().optional().describe("Write interactive graph.html (default true)."),
+});
+
+const syncGraphifyInput = z.object({
+  rootPath: z
+    .string()
+    .optional()
+    .describe("Repository root (defaults to CLAWQL_CODEGRAPH_ROOT or cwd)."),
+  graphId: z.string().optional(),
+  storagePath: z.string().optional(),
+  mode: z.enum(["fast", "thorough"]).optional(),
+  skipGraphifyRun: z
+    .boolean()
+    .optional()
+    .describe("Ignored (Python CLI is never spawned). Kept for back-compat."),
+  outDir: z
+    .string()
+    .optional()
+    .describe(
+      "Directory with an existing graph.json to import. If missing, falls back to native codegraph_sync."
+    ),
+  vaultIngest: z.boolean().optional(),
+  maxFiles: z.number().int().positive().optional(),
 });
 
 export async function codegraphIndex(raw: unknown) {
@@ -132,6 +195,39 @@ export async function codegraphSubgraph(raw: unknown) {
   );
 }
 
+export async function codegraphExplore(raw: unknown) {
+  const input = exploreInput.parse(raw);
+  return runCodeGraphEffect(
+    Effect.gen(function* () {
+      const svc = yield* CodeGraphService;
+      return yield* svc.explore(input.graphId, input.query, {
+        impactDepth: input.impactDepth,
+        neighborLimit: input.neighborLimit,
+        subgraphDepth: input.subgraphDepth,
+        storagePath: input.storagePath,
+      });
+    }),
+    input.storagePath
+  );
+}
+
+export async function codegraphImpact(raw: unknown) {
+  const input = impactInput.parse(raw);
+  return runCodeGraphEffect(
+    Effect.gen(function* () {
+      const svc = yield* CodeGraphService;
+      return yield* svc.impact(
+        input.graphId,
+        input.seedQuery,
+        input.depth,
+        input.limit,
+        input.storagePath
+      );
+    }),
+    input.storagePath
+  );
+}
+
 export async function codegraphImportGraphify(raw: unknown) {
   const input = importGraphifyInput.parse(raw);
   return runCodeGraphEffect(
@@ -143,6 +239,21 @@ export async function codegraphImportGraphify(raw: unknown) {
   );
 }
 
+/** Native TypeScript index → Louvain → report/HTML → vault proposal. No Python. */
+export async function codegraphSync(raw: unknown) {
+  const input = syncInput.parse(raw);
+  return syncCodeGraph(input);
+}
+
+/**
+ * Optional import of an existing graph.json (Graphify or prior export).
+ * Never spawns Python; falls back to {@link codegraphSync} when no graph.json exists.
+ */
+export async function codegraphSyncGraphify(raw: unknown) {
+  const input = syncGraphifyInput.parse(raw);
+  return syncGraphify(input);
+}
+
 export type CodeGraphMcpHandlers = {
   index: typeof codegraphIndex;
   query: typeof codegraphQuery;
@@ -150,7 +261,11 @@ export type CodeGraphMcpHandlers = {
   path: typeof codegraphPath;
   explain: typeof codegraphExplain;
   subgraph: typeof codegraphSubgraph;
+  explore: typeof codegraphExplore;
+  impact: typeof codegraphImpact;
   importGraphify: typeof codegraphImportGraphify;
+  sync: typeof codegraphSync;
+  syncGraphify: typeof codegraphSyncGraphify;
 };
 
 export function createCodeGraphMcpHandlers(): CodeGraphMcpHandlers {
@@ -161,6 +276,10 @@ export function createCodeGraphMcpHandlers(): CodeGraphMcpHandlers {
     path: codegraphPath,
     explain: codegraphExplain,
     subgraph: codegraphSubgraph,
+    explore: codegraphExplore,
+    impact: codegraphImpact,
     importGraphify: codegraphImportGraphify,
+    sync: codegraphSync,
+    syncGraphify: codegraphSyncGraphify,
   };
 }

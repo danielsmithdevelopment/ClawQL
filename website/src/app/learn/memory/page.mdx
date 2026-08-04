@@ -55,7 +55,7 @@ Generates a hierarchical heading tree (`pageindex.db.json`) for section-level ad
 
 ### clawql-codegraph
 
-Parses source code (TypeScript compiler API for TS/JS; tree-sitter WASM for Python/Go) to produce nodes and edges (imports, calls, inheritance) with confidence tags (EXTRACTED / INFERRED / AMBIGUOUS). Exposed via `codegraph_*` tools and optional `memory_recall` `sources: ["codegraph"]`. The deterministic structural index over source code, providing precise architecture traversal independent of the vault.
+Parses source with the **TypeScript compiler** (TS/JS) and **tree-sitter WASM** (30+ languages: Python, Go, Rust, Java, C/C++, C#, Ruby, …). Preferred ingestion: `codegraph_sync` (index → Louvain → report → vault). TS/JS gets enclosing-scope calls, heritage/exports, cross-file linking, React/Next tags, plus **`codegraph_explore`** / **`codegraph_impact`**. Optional Graphify `graph.json` import — **no Python**.
 
 ### Onyx
 
@@ -75,14 +75,14 @@ Queried via `knowledge_search_onyx` (or `memory_recall` with `sources: ["onyx"]`
 
 Today's shipped stack is a practical subset of the full Memory 2.0 design in the DAOS spec:
 
-| Component   | Shipped role                                   | Technology                                           |
-| ----------- | ---------------------------------------------- | ---------------------------------------------------- |
-| Vault       | Canonical Markdown notes                       | `CLAWQL_OBSIDIAN_VAULT_PATH` → `Memory/<slug>.md`    |
-| Graph index | Wikilink edges + chunk rows                    | `memory.db` (`wikilink_edge`, `vault_chunk`, …)      |
-| Embeddings  | Optional vector leg in recall                  | OpenAI-compatible `/embeddings` + sqlite or postgres |
-| PageIndex   | Vectorless hierarchical tree                   | `clawql-pageindex` + `pageindex_*`                   |
-| Code graph  | Structural AST / import-call graph over source | `clawql-codegraph` + `codegraph_*` (opt-in)          |
-| Onyx        | External enterprise search peer                | `knowledge_search_onyx` + vault citations            |
+| Component   | Shipped role                                   | Technology                                                |
+| ----------- | ---------------------------------------------- | --------------------------------------------------------- |
+| Vault       | Canonical Markdown notes                       | `CLAWQL_OBSIDIAN_VAULT_PATH` → `Memory/<slug>.md`         |
+| Graph index | Wikilink edges + chunk rows                    | `memory.db` (`wikilink_edge`, `vault_chunk`, …)           |
+| Embeddings  | Optional vector leg in recall                  | OpenAI-compatible `/embeddings` + sqlite or postgres      |
+| PageIndex   | Vectorless hierarchical tree                   | `clawql-pageindex` + `pageindex_*`                        |
+| Code graph  | Structural AST / import-call graph over source | `clawql-codegraph` + `codegraph_sync` (opt-in; TS-native) |
+| Onyx        | External enterprise search peer                | `knowledge_search_onyx` + vault citations                 |
 
 **Ingest path:** `memory_ingest` writes or appends vault notes → rescans → rebuilds `memory.db` (chunks + wikilink edges; embeddings when configured). Optional `rebuild.pageindex` refreshes the heading tree for that note.
 
@@ -96,6 +96,7 @@ Today's shipped stack is a practical subset of the full Memory 2.0 design in the
 | `memory_recall`         | Vault, `memory.db`, optional codegraph / PageIndex / Onyx | (read-only)                                        |
 | `pageindex_build_tree`  | `Memory/*.md`                                             | `pageindex.db.json`                                |
 | `codegraph_index`       | Repo source tree                                          | `codegraph.db.json`                                |
+| `codegraph_sync`        | Native index + Louvain + report                           | `codegraph-out/*` + vault architecture report      |
 | `knowledge_search_onyx` | External Onyx                                             | (read); cite into vault via ingest                 |
 | `memory_sync`           | Object bucket ↔ local vault                               | `Memory/` (and configured paths)                   |
 
@@ -115,6 +116,10 @@ Today's shipped stack is a practical subset of the full Memory 2.0 design in the
 | `pageindex_synthesize`      | Merge selected nodes into agent context                              |
 | `pageindex_get_content`     | Read a indexed node's body                                           |
 | `codegraph_index`           | Build structural code graph from repo root (opt-in)                  |
+| `codegraph_sync`            | Native index → Louvain → vault architecture report                   |
+| `codegraph_explore`         | One-shot explain + neighbors + blast radius (agent-efficient)        |
+| `codegraph_impact`          | Upstream blast radius for a symbol                                   |
+| `codegraph_sync_graphify`   | Import existing graph.json (or fall back to native); no Python       |
 | `codegraph_import_graphify` | Import Graphify `graph.json`                                         |
 | `codegraph_query`           | Find symbols by name or concept                                      |
 | `codegraph_neighbors`       | List edges (imports, calls, contains)                                |
@@ -332,7 +337,7 @@ Treat vault Markdown as sensitive if notes contain tokens or PII. Prefer redacti
 - [Team vault sync](https://docs.clawql.com/getting-started/for-teams#team-vault-sync)
 - [clawql-inference](https://docs.clawql.com/inference/clawql-inference) — export, fine-tune, semantic cache, flywheel
 - [Memory plugin](https://docs.clawql.com/plugins/memory) — env table and tool list
-- [Code graph plugin](https://docs.clawql.com/plugins/codegraph) — structural indexing, Graphify import, hybrid recall
+- [Code graph plugin](https://docs.clawql.com/plugins/codegraph) — native sync, 30+ languages, explore/impact, optional Graphify import
 - [hybrid-memory-backends.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/hybrid-memory-backends.md)
 - [DAOS Unified Architecture § Layer 3](https://docs.clawql.com/ouroboros/daos) — full Memory 2.0 vision
 

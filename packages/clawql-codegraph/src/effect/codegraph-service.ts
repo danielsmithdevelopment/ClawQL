@@ -1,6 +1,12 @@
 import { Context, Effect, Layer } from "effect";
+import { exploreGraph, impactAnalysis } from "../graph/explore.js";
 import { explainNode, getNeighbors, queryGraph, shortestPath, subgraph } from "../graph/operations.js";
-import { documentSummary, importGraphifyFromPath, indexRepository, type IndexRepoOptions } from "../indexer/index-repo.js";
+import {
+  documentSummary,
+  importGraphifyFromPath,
+  indexRepository,
+  type IndexRepoOptions,
+} from "../indexer/index-repo.js";
 import { graphifyMcpDelegateEnabled, graphifyMcpQuery } from "../bridge/graphify-delegate.js";
 import { storageFromPath, type CodeGraphStorage } from "../storage/file-storage.js";
 import type { CodeGraphDocument } from "../types.js";
@@ -48,6 +54,23 @@ export class CodeGraphService extends Context.Tag("clawql/CodeGraphService")<
       maxNodes?: number,
       storagePath?: string
     ) => Effect.Effect<ReturnType<typeof subgraph>, CodeGraphError>;
+    readonly explore: (
+      graphId: string,
+      query: string,
+      options?: {
+        impactDepth?: number;
+        neighborLimit?: number;
+        subgraphDepth?: number;
+        storagePath?: string;
+      }
+    ) => Effect.Effect<ReturnType<typeof exploreGraph>, CodeGraphError>;
+    readonly impact: (
+      graphId: string,
+      seedQuery: string,
+      depth?: number,
+      limit?: number,
+      storagePath?: string
+    ) => Effect.Effect<ReturnType<typeof impactAnalysis>, CodeGraphError>;
     readonly importGraphify: (options: {
       jsonPath: string;
       graphId?: string;
@@ -120,6 +143,18 @@ export function makeCodeGraphServiceLive(storagePath?: string): Layer.Layer<Code
         const doc = yield* loadDoc(store, graphId);
         return subgraph(doc, seedQuery, maxDepth, maxNodes);
       }),
+    explore: (graphId, query, options = {}) =>
+      Effect.gen(function* () {
+        const store = storageFromPath(options.storagePath);
+        const doc = yield* loadDoc(store, graphId);
+        return exploreGraph(doc, query, options);
+      }),
+    impact: (graphId, seedQuery, depth, limit, pathOverride) =>
+      Effect.gen(function* () {
+        const store = storageFromPath(pathOverride);
+        const doc = yield* loadDoc(store, graphId);
+        return impactAnalysis(doc, seedQuery, depth, limit);
+      }),
     importGraphify: (options) =>
       Effect.tryPromise({
         try: async () => {
@@ -133,7 +168,10 @@ export function makeCodeGraphServiceLive(storagePath?: string): Layer.Layer<Code
   });
 }
 
-async function maybeDelegateQuery(query: string, limit?: number): Promise<ReturnType<typeof queryGraph> | null> {
+async function maybeDelegateQuery(
+  query: string,
+  limit?: number
+): Promise<ReturnType<typeof queryGraph> | null> {
   if (!graphifyMcpDelegateEnabled()) return null;
   const raw = await graphifyMcpQuery("query_graph", { query, limit: limit ?? 20 });
   if (Array.isArray(raw)) return raw as ReturnType<typeof queryGraph>;

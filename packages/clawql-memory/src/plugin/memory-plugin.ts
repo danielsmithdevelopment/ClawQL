@@ -2,12 +2,16 @@ import { Effect } from "effect";
 import { z } from "zod";
 import {
   codegraphExplain,
+  codegraphExplore,
+  codegraphImpact,
   codegraphImportGraphify,
   codegraphIndex,
   codegraphNeighbors,
   codegraphPath,
   codegraphQuery,
   codegraphSubgraph,
+  codegraphSync,
+  codegraphSyncGraphify,
 } from "clawql-codegraph/mcp";
 import {
   executePageindexBuildTreeEffect,
@@ -112,11 +116,74 @@ export const codegraphSubgraphToolSchema = {
   storagePath: z.string().optional(),
 };
 
+export const codegraphExploreToolSchema = {
+  graphId: z.string().min(1),
+  query: z
+    .string()
+    .min(1)
+    .describe("Symbol or path — one-shot explain + neighbors + blast radius for agent efficiency."),
+  impactDepth: z.number().int().min(1).max(6).optional(),
+  neighborLimit: z.number().int().positive().optional(),
+  subgraphDepth: z.number().int().min(0).max(6).optional(),
+  storagePath: z.string().optional(),
+};
+
+export const codegraphImpactToolSchema = {
+  graphId: z.string().min(1),
+  seedQuery: z.string().min(1).describe("Symbol whose upstream dependents to list."),
+  depth: z.number().int().min(1).max(8).optional(),
+  limit: z.number().int().positive().optional(),
+  storagePath: z.string().optional(),
+};
+
 export const codegraphImportGraphifyToolSchema = {
   jsonPath: z.string().min(1).describe("Path to Graphify graph.json export."),
   graphId: z.string().optional(),
   rootPath: z.string().optional(),
   storagePath: z.string().optional(),
+};
+
+export const codegraphSyncToolSchema = {
+  rootPath: z
+    .string()
+    .optional()
+    .describe("Repository root. Defaults to CLAWQL_CODEGRAPH_ROOT or process cwd."),
+  graphId: z.string().optional(),
+  storagePath: z.string().optional(),
+  mode: z
+    .enum(["fast", "thorough"])
+    .optional()
+    .describe("thorough raises the default maxFiles cap for larger repos."),
+  outDir: z.string().optional().describe("Artifact directory (default: {root}/codegraph-out)."),
+  vaultIngest: z
+    .boolean()
+    .optional()
+    .describe("Auto-ingest architecture report into the vault (default true)."),
+  maxFiles: z.number().int().positive().optional(),
+  writeHtml: z.boolean().optional(),
+};
+
+export const codegraphSyncGraphifyToolSchema = {
+  rootPath: z
+    .string()
+    .optional()
+    .describe("Repository root. Defaults to CLAWQL_CODEGRAPH_ROOT or process cwd."),
+  graphId: z.string().optional(),
+  storagePath: z.string().optional(),
+  mode: z.enum(["fast", "thorough"]).optional(),
+  skipGraphifyRun: z
+    .boolean()
+    .optional()
+    .describe("Ignored (Python Graphify CLI is never spawned). Kept for back-compat."),
+  outDir: z
+    .string()
+    .optional()
+    .describe("Existing graph.json directory to import; falls back to native codegraph_sync."),
+  vaultIngest: z
+    .boolean()
+    .optional()
+    .describe("Auto-ingest architecture report into the vault (default true)."),
+  maxFiles: z.number().int().positive().optional(),
 };
 
 export async function handleMemoryIngestToolInput(
@@ -165,6 +232,81 @@ export async function handleMemoryRecallToolInput(
   const result = await runMemoryRecall(parsed);
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+  };
+}
+
+async function applyVaultIngestProposal(syncResult: {
+  vaultIngest?: {
+    title: string;
+    type: string;
+    description: string;
+    insights: string;
+    wikilinks: readonly string[];
+    tags: readonly string[];
+    toolOutputs: string;
+  };
+}): Promise<unknown> {
+  if (!syncResult.vaultIngest) return undefined;
+  const proposal = syncResult.vaultIngest;
+  return runMemoryIngest({
+    title: proposal.title,
+    type: proposal.type,
+    description: proposal.description,
+    insights: proposal.insights,
+    wikilinks: [...proposal.wikilinks],
+    append: true,
+    tags: [...proposal.tags],
+    toolOutputs: proposal.toolOutputs,
+  });
+}
+
+async function handleCodegraphSync(args: unknown): Promise<{
+  content: { type: "text"; text: string }[];
+}> {
+  const syncResult = await codegraphSync(args);
+  const vaultIngestResult = await applyVaultIngestProposal(syncResult);
+  logMcpToolShape("codegraph_sync", {
+    mode: syncResult.mode,
+    engine: syncResult.engine,
+    nodeCount: syncResult.summary.nodeCount,
+    edgeCount: syncResult.summary.edgeCount,
+    communityCount: syncResult.communities.length,
+    modularity: syncResult.modularity,
+    vaultIngested: Boolean(syncResult.vaultIngest),
+  });
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify({ ...syncResult, vaultIngestResult }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleCodegraphSyncGraphify(args: unknown): Promise<{
+  content: { type: "text"; text: string }[];
+}> {
+  const syncResult = await codegraphSyncGraphify(args);
+  const vaultIngestResult = await applyVaultIngestProposal(syncResult);
+  logMcpToolShape("codegraph_sync_graphify", {
+    mode: syncResult.mode,
+    graphifyRan: syncResult.graphifyRan,
+    nativeIndexRan: syncResult.nativeIndexRan,
+    fellBackToNative: syncResult.fellBackToNative,
+    nodeCount: syncResult.importSummary.nodeCount,
+    edgeCount: syncResult.importSummary.edgeCount,
+    blindSpotCount: syncResult.blindSpots.blindSpots.length,
+    communityCount: syncResult.communities.length,
+    vaultIngested: Boolean(syncResult.vaultIngest),
+  });
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify({ ...syncResult, vaultIngestResult }, null, 2),
+      },
+    ],
   };
 }
 
@@ -287,6 +429,24 @@ export function createMemoryPlugin(): Plugin {
             }),
           });
           yield* api.registerMcpTool({
+            name: "codegraph_explore",
+            schema: codegraphExploreToolSchema,
+            handler: async (args) => ({
+              content: [
+                { type: "text", text: JSON.stringify(await codegraphExplore(args), null, 2) },
+              ],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_impact",
+            schema: codegraphImpactToolSchema,
+            handler: async (args) => ({
+              content: [
+                { type: "text", text: JSON.stringify(await codegraphImpact(args), null, 2) },
+              ],
+            }),
+          });
+          yield* api.registerMcpTool({
             name: "codegraph_import_graphify",
             schema: codegraphImportGraphifyToolSchema,
             handler: async (args) => ({
@@ -297,6 +457,16 @@ export function createMemoryPlugin(): Plugin {
                 },
               ],
             }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_sync",
+            schema: codegraphSyncToolSchema,
+            handler: (args) => handleCodegraphSync(args),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_sync_graphify",
+            schema: codegraphSyncGraphifyToolSchema,
+            handler: (args) => handleCodegraphSyncGraphify(args),
           });
         }
       }),

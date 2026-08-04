@@ -17,13 +17,20 @@ function tokenize(text: string): string[] {
 
 function scoreNode(node: CodeGraphNode, query: string): number {
   const terms = tokenize(query);
-  const hay = `${node.name} ${node.filePath ?? ""} ${node.docComment ?? ""}`.toLowerCase();
+  const hay = `${node.name} ${node.filePath ?? ""} ${node.docComment ?? ""} ${(node.tags ?? []).join(" ")}`.toLowerCase();
   let score = 0;
   for (const t of terms) {
     if (node.name.toLowerCase() === t) score += 10;
     else if (node.name.toLowerCase().includes(t)) score += 5;
     else if (hay.includes(t)) score += 1;
   }
+  if (score <= 0) return 0;
+  // Prefer concrete definitions over import aliases / stubs
+  if (node.tags?.includes("import-binding")) score -= 4;
+  if (node.tags?.includes("unresolved")) score -= 6;
+  if (node.tags?.includes("exported")) score += 3;
+  if (node.kind === "function" || node.kind === "class" || node.kind === "method") score += 2;
+  if (node.kind === "file" || node.kind === "module") score -= 1;
   return score;
 }
 

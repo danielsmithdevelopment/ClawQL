@@ -27,4 +27,15 @@ describe("importGraphifyJson", () => {
     expect(doc.edges[0]?.confidence).toBe("EXTRACTED");
     expect(doc.adjacency.auth).toContain("db");
   });
+
+  it("preserves Graphify community ids on nodes", () => {
+    const doc = importGraphifyJson(
+      {
+        nodes: [{ id: "n1", label: "x", file_type: "code", source_file: "x.py", community: 3 }],
+        links: [],
+      },
+      { graphId: "c", rootPath: "/tmp" }
+    );
+    expect(doc.nodes.n1?.community).toBe(3);
+  });
 });
