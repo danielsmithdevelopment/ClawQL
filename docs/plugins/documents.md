@@ -38,7 +38,7 @@ Office/PDF → convert_document (or inspect_pdf) → local_markdown | Docling OC
 
 | Hop        | Tool / execute             | Role                                                                    |
 | ---------- | -------------------------- | ----------------------------------------------------------------------- |
-| Convert    | **`convert_document`**     | Firecrawl anydoc — Office/PDF/CSV → GFM; OCR fails → Docling / Tika   |
+| Convert    | **`convert_document`**     | Firecrawl anydoc — Office/PDF/CSV → GFM; OCR fails → Docling / Tika     |
 | Route PDF  | **`inspect_pdf`**          | Firecrawl pdf-inspector — TextBased → Markdown; Scanned/Mixed → Docling |
 | Layout OCR | **`execute`** `docling::*` | Layout-aware parse for forms / W-2 / scanned pages                      |
 | Doc type   | **`classify_document`**    | Label + confidence (HTTP classifier or local heuristic)                 |
@@ -60,13 +60,13 @@ Office/PDF → convert_document (or inspect_pdf) → local_markdown | Docling OC
 
 ### Service URLs (when sidecars are up)
 
-| Env                                   | Purpose                                                                   |
-| ------------------------------------- | ------------------------------------------------------------------------- |
-| **`DOCLING_BASE_URL`**                | Docling Serve (layout OCR)                                                |
-| **`CLASSIFIER_BASE_URL`**             | Reference / fine-tuned classifier HTTP                                    |
-| **`LANGEXTRACT_BASE_URL`**            | LangExtract sidecar (heuristic when unset)                                |
+| Env                                   | Purpose                                                                       |
+| ------------------------------------- | ----------------------------------------------------------------------------- |
+| **`DOCLING_BASE_URL`**                | Docling Serve (layout OCR)                                                    |
+| **`CLASSIFIER_BASE_URL`**             | Reference / fine-tuned classifier HTTP                                        |
+| **`LANGEXTRACT_BASE_URL`**            | LangExtract sidecar (heuristic when unset)                                    |
 | **`CLAWQL_ANYDOC_FILE_ROOTS`**        | Allowlist for `convert_document` `path=` (default: pdf-inspector roots / cwd) |
-| **`CLAWQL_PDF_INSPECTOR_FILE_ROOTS`** | Allowlist for `inspect_pdf` `path=` (default: cwd)                        |
+| **`CLAWQL_PDF_INSPECTOR_FILE_ROOTS`** | Allowlist for `inspect_pdf` `path=` (default: cwd)                            |
 
 Explicit **`CLAWQL_BUNDLED_PROVIDERS=paperless,tika,...`** can still list IDP vendor ids when **`CLAWQL_ENABLE_DOCUMENTS=0`**.
 

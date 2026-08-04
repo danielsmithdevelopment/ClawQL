@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  recommendConvertRoute,
-  runConvertDocumentWithApi,
-} from "./convert-document.js";
+import { recommendConvertRoute, runConvertDocumentWithApi } from "./convert-document.js";
 
 describe("recommendConvertRoute", () => {
   it("prefers local_markdown on success", () => {

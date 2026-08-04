@@ -158,10 +158,12 @@ export const inspectPdfToolZodShape = {
 
 export const convertDocumentToolZodShape = {
   path: z.string().min(1).max(4096).optional().describe(CONVERT_DOCUMENT_PATH_DESCRIPTION),
-  base64: z.string().min(1).max(140_000_000).optional().describe(CONVERT_DOCUMENT_BASE64_DESCRIPTION),
-  format: z.string().min(1).max(32).optional().describe(CONVERT_DOCUMENT_FORMAT_DESCRIPTION),
-  include_markdown: z
-    .boolean()
+  base64: z
+    .string()
+    .min(1)
+    .max(140_000_000)
     .optional()
-    .describe(CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION),
+    .describe(CONVERT_DOCUMENT_BASE64_DESCRIPTION),
+  format: z.string().min(1).max(32).optional().describe(CONVERT_DOCUMENT_FORMAT_DESCRIPTION),
+  include_markdown: z.boolean().optional().describe(CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION),
 } as const;
