@@ -68,7 +68,12 @@ describe("buildOpencodeConfigContent", () => {
           clawql: { enabled: boolean; environment: Record<string, string>; command: string[] };
         };
       };
-      expect(cfg.permission).toEqual({ "*": "allow", doom_loop: "deny" });
+      expect(cfg.permission).toEqual({
+        "*": "allow",
+        question: "deny",
+        external_directory: "allow",
+        doom_loop: "deny",
+      });
       expect(cfg.provider.clawql.options.baseURL).toBe("http://127.0.0.1:8080/v1");
       expect(cfg.provider.clawql.models["openrouter/google/gemini-2.5-flash-lite"]).toEqual({});
       expect(cfg.mcp.clawql.enabled).toBe(true);
@@ -158,9 +163,18 @@ describe("buildOpencodeConfigContent", () => {
     const prev = process.env.CLAWQL_OPENBENCH_DOOM_LOOP;
     try {
       delete process.env.CLAWQL_OPENBENCH_DOOM_LOOP;
-      expect(openbenchOpencodePermissions()).toEqual({ "*": "allow", doom_loop: "deny" });
+      expect(openbenchOpencodePermissions()).toEqual({
+        "*": "allow",
+        question: "deny",
+        external_directory: "allow",
+        doom_loop: "deny",
+      });
       process.env.CLAWQL_OPENBENCH_DOOM_LOOP = "allow";
-      expect(openbenchOpencodePermissions()).toEqual({ "*": "allow" });
+      expect(openbenchOpencodePermissions()).toEqual({
+        "*": "allow",
+        question: "deny",
+        external_directory: "allow",
+      });
     } finally {
       if (prev === undefined) delete process.env.CLAWQL_OPENBENCH_DOOM_LOOP;
       else process.env.CLAWQL_OPENBENCH_DOOM_LOOP = prev;

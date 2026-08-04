@@ -594,10 +594,15 @@ def opencode_config_for_inference(inference_url: str, gateway_model: str) -> str
     """Point OpenCode at clawql-inference; gateway_model is the ClawQL model id."""
     # OpenCode -m clawql/<gateway_model> → provider clawql, model = gateway_model
     # which is forwarded to the OpenAI-compat endpoint as `model`.
+    # Explicit permission classes close headless "ask" hangs (no TTY).
     return json.dumps(
         {
-            # Auto-approve edits/bash, but deny doom_loop so identical tool spam stops.
-            "permission": {"*": "allow", "doom_loop": "deny"},
+            "permission": {
+                "*": "allow",
+                "question": "deny",
+                "external_directory": "allow",
+                "doom_loop": "deny",
+            },
             "provider": {
                 "clawql": {
                     "npm": "@ai-sdk/openai-compatible",
@@ -613,6 +618,39 @@ def opencode_config_for_inference(inference_url: str, gateway_model: str) -> str
     )
 
 
+def opencode_run_base_args(workdir: Path, opencode_model: str, title: str) -> list[str]:
+    """Shared `opencode run` flags for on/off arms."""
+    args = [
+        resolve_opencode(),
+        "run",
+        "--dir",
+        str(workdir),
+        "-m",
+        opencode_model,
+        "--auto",
+        "--format",
+        "json",
+        "--title",
+        title,
+    ]
+    if os.environ.get("CLAWQL_OPENBENCH") == "1" or os.environ.get("CLAWQL_OPENBENCH_PRINT_LOGS") == "1":
+        args.extend(["--print-logs", "--log-level", "WARN"])
+    return args
+
+
+def is_infra_hang(agent: dict) -> bool:
+    """True when OpenCode timed out with no turns/tools (API hang / ask deadlock)."""
+    if not agent.get("timed_out"):
+        return False
+    if agent.get("turns") is not None:
+        return False
+    tail = (agent.get("output_tail") or "") + (agent.get("error") or "")
+    if '"tool":' in tail:
+        return False
+    # Typical signature: only CLAWQL_BENCH_JSON timeout wrapper, no JSONL events.
+    return True
+
+
 def _dec_timeout_output(exc) -> str:
     def _dec(x):
         if x is None:
@@ -626,23 +664,9 @@ def run_arm_off(
     instruction: str, workdir: Path, model: str, timeout_s: int, inference_url: str
 ) -> dict:
     """Raw OpenCode → clawql-inference (OpenRouter and/or BYOK; no ClawQL MCP)."""
-    exe = resolve_opencode()
     gateway_model = normalize_model_id(model)
     opencode_model = f"clawql/{gateway_model}"
-    cmd = [
-        exe,
-        "run",
-        "--dir",
-        str(workdir),
-        "-m",
-        opencode_model,
-        "--auto",
-        "--format",
-        "json",
-        "--title",
-        "clawql-openbench-off",
-        instruction,
-    ]
+    cmd = opencode_run_base_args(workdir, opencode_model, "clawql-openbench-off") + [instruction]
     env = {
         k: v
         for k, v in os.environ.items()
@@ -1729,7 +1753,41 @@ def main(argv=None) -> int:
     started = datetime.now(timezone.utc).isoformat()
     rows: list[dict] = []
     for trial in range(1, args.trials + 1):
+        skip_remaining = False
+        skip_reason = ""
         for arm in arms:
+            if skip_remaining:
+                print(
+                    f"==> trial {trial}/{args.trials} arm={arm} SKIPPED "
+                    f"(infra hang on earlier arm: {skip_reason})",
+                    flush=True,
+                )
+                rows.append(
+                    {
+                        "trial": trial,
+                        "arm": arm,
+                        "agent": {
+                            "arm": arm,
+                            "harness": DEFAULT_HARNESS,
+                            "completed": False,
+                            "timed_out": False,
+                            "skipped": True,
+                            "skip_reason": skip_reason,
+                            "wall_s": 0,
+                            "tokens": None,
+                            "turns": None,
+                            "error": skip_reason,
+                        },
+                        "checker": {
+                            "success": False,
+                            "score": 0.0,
+                            "stdout": "",
+                            "stderr": skip_reason,
+                        },
+                        "workdir": None,
+                    }
+                )
+                continue
             print(
                 f"==> trial {trial}/{args.trials} arm={arm} "
                 f"harness={DEFAULT_HARNESS} model={gateway_model}",
@@ -1755,6 +1813,13 @@ def main(argv=None) -> int:
                 f"tokens={ag.get('tokens')} turns={ag.get('turns')} wall_s={ag.get('wall_s')}",
                 flush=True,
             )
+            if is_infra_hang(ag):
+                skip_remaining = True
+                skip_reason = (
+                    f"infra hang on {arm}: timed out with no turns/tools "
+                    f"(likely OpenCode API/permission stall; see agent-logs + --print-logs)"
+                )
+                print(f"    !! {skip_reason} — skipping remaining arms this trial", flush=True)
 
     finished = datetime.now(timezone.utc).isoformat()
     by_arm = {arm: [r for r in rows if r["arm"] == arm] for arm in arms}

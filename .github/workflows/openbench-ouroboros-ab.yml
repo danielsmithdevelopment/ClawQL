@@ -200,7 +200,7 @@ jobs:
       - name: Install OpenCode CLI
         if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
-          OPENCODE_PKG_VERSION="${OPENBENCH_OPENCODE_VERSION:-1.18.12}"
+          OPENCODE_PKG_VERSION="${OPENBENCH_OPENCODE_VERSION:-1.18.11}"
           npm install -g "opencode-ai@${OPENCODE_PKG_VERSION}" 2>/dev/null \
             || npm install -g "@opencode-ai/cli@${OPENCODE_PKG_VERSION}" 2>/dev/null \
             || npm install -g "opencode@${OPENCODE_PKG_VERSION}"

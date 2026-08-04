@@ -12,7 +12,7 @@ document is the **scoreboard + run diary**.
 | Default model | `openrouter/deepseek/deepseek-chat` |
 | Harness | OpenCode → clawql-inference |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T04:50Z |
+| Last ledger update | 2026-08-04T05:15Z |
 | CI matrix control | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push |
 
 ---
@@ -170,6 +170,12 @@ When a task is thoroughly verified (headline WIN, ideally replicated):
 3. Ouroboros is retired from PR auto-runs (`openbench-ouroboros-ab.yml` is **workflow_dispatch only**).
 
 **Still active (keep testing):** `cache-scratch-handoff`, `pageindex-section-qa`, `audit-checkpoints`, `multi-provider-api-workflow`.
+
+### 2026-08-04 — [30878740458](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30878740458) (lean `pr_active` only)
+
+Matrix correctly reduced to 4 tasks; ouroboros workflow did **not** fire. All four cells still infra-hung (on/off timeout, turns=null, no tool_use). Inference log showed startup only.
+
+Follow-ups: serialize `max-parallel: 1`, pin `opencode-ai@1.18.11`, `--print-logs`, skip remaining arms after first infra hang, tighten headless permissions (`question=deny`, `external_directory=allow`).
 
 ---
 

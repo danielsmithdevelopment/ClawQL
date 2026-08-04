@@ -160,12 +160,19 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
  * bounded by OpenBench hard turn/token/wall caps).
  */
 export function openbenchOpencodePermissions(): Record<string, string> {
+  // Explicit classes close known headless hang paths (permission → "ask" with no TTY).
+  // See anomalyco/opencode#36762 / #11899.
+  const base: Record<string, string> = {
+    "*": "allow",
+    question: "deny",
+    external_directory: "allow",
+  };
   const doom = process.env.CLAWQL_OPENBENCH_DOOM_LOOP?.trim().toLowerCase();
   if (doom === "allow" || doom === "1" || doom === "true") {
-    return { "*": "allow" };
+    return base;
   }
   return {
-    "*": "allow",
+    ...base,
     doom_loop: "deny",
   };
 }
@@ -537,6 +544,10 @@ function buildHeadlessArgv(
         "--title",
         "clawql-openbench",
       ];
+      // Surface API/permission hangs in CI artifacts (OpenCode often prints nothing otherwise).
+      if (process.env.CLAWQL_OPENBENCH === "1" || process.env.CLAWQL_OPENBENCH_PRINT_LOGS === "1") {
+        args.push("--print-logs", "--log-level", "WARN");
+      }
       if (model) args.push("-m", model);
       args.push(instruction, ...extra);
       return args;
