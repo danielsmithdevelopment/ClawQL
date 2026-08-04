@@ -5,15 +5,19 @@
 
 [[IgnoredVulns]]
 id = "GHSA-qx2v-qp2m-jg93"
-reason = "Next.js currently vendors postcss@8.4.31 under next/node_modules; dashboard uses top-level patched postcss@8.5.22 and npm overrides cannot replace Next's nested copy until upstream refreshes the bundle."
+reason = "Next.js currently vendors postcss@8.4.31 under next/node_modules; dashboard uses top-level patched postcss@8.5.23 and npm overrides cannot replace Next's nested copy until upstream refreshes the bundle."
 
 [[IgnoredVulns]]
 id = "GHSA-6g55-p6wh-862q"
-reason = "Same Next.js-vendored postcss@8.4.31 under dashboard/node_modules/next; top-level postcss is patched to 8.5.22 across root/website/dashboard/landing. Remove when Next ships a nested postcss >= 8.5.12."
+reason = "Same Next.js-vendored postcss@8.4.31 under dashboard/node_modules/next; top-level postcss is patched to 8.5.23 across root/website/dashboard/landing. Remove when Next ships a nested postcss >= 8.5.12."
 
 [[IgnoredVulns]]
 id = "GHSA-r28c-9q8g-f849"
-reason = "Same Next.js-vendored postcss@8.4.31 under dashboard (sourceMappingURL .map path traversal); top-level postcss is patched to >=8.5.18 / 8.5.22. Remove when Next ships nested postcss >= 8.5.18."
+reason = "Same Next.js-vendored postcss@8.4.31 under dashboard (sourceMappingURL .map path traversal); top-level postcss is patched to >=8.5.18 / 8.5.23. Remove when Next ships nested postcss >= 8.5.18."
+
+[[IgnoredVulns]]
+id = "GHSA-fxqj-rqcc-2cmp"
+reason = "Same Next.js-vendored postcss@8.4.31 under dashboard/next; top-level postcss is patched to 8.5.23 via overrides. Remove when Next ships nested postcss >= 8.5.23."
 
 # Historical note: website was briefly pinned on 16.1.x for MDX/webpack metadata; now on 16.2.11.
 # Keep this stanza only if an older lock still appears in a long-lived branch scan.

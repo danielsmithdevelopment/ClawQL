@@ -43,12 +43,12 @@
   },
   "overrides": {
     "@hono/node-server": "2.0.11",
-    "brace-expansion": "5.0.8",
-    "fast-uri": "3.1.4",
-    "hono": "4.12.31",
+    "brace-expansion": "5.0.9",
+    "fast-uri": "3.1.5",
+    "hono": "4.12.34",
     "js-yaml": "4.3.0",
     "body-parser": "2.3.0",
     "sharp": "0.35.3",
-    "postcss": "8.5.22"
+    "postcss": "8.5.23"
   }
 }
