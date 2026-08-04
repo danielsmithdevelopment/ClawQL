@@ -27,33 +27,33 @@ Use **`memory_recall`** for decisions and cross-session narrative context. Use *
 
 ## MCP tools
 
-| Tool                            | Purpose                                                                                                      |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **`codegraph_sync_graphify`**   | **Preferred:** run Graphify → import → auto-ingest architecture report → optional native blind-spot pass     |
-| **`codegraph_index`**           | Native-only index (TS/JS/Python/Go) — backup / blind-spot fill                                               |
-| **`codegraph_import_graphify`** | Import an existing Graphify `graph.json` (NetworkX node-link) without running Graphify                       |
-| **`codegraph_query`**           | Find symbols by name or concept                                                                              |
-| **`codegraph_neighbors`**       | List edges for a node (`imports`, `calls`, `contains`, …)                                                    |
-| **`codegraph_path`**            | Shortest path between two symbols                                                                            |
-| **`codegraph_explain`**         | Summarize a symbol and its connections                                                                       |
-| **`codegraph_subgraph`**        | BFS subgraph around a seed query                                                                             |
+| Tool                            | Purpose                                                                                                  |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **`codegraph_sync_graphify`**   | **Preferred:** run Graphify → import → auto-ingest architecture report → optional native blind-spot pass |
+| **`codegraph_index`**           | Native-only index (TS/JS/Python/Go) — backup / blind-spot fill                                           |
+| **`codegraph_import_graphify`** | Import an existing Graphify `graph.json` (NetworkX node-link) without running Graphify                   |
+| **`codegraph_query`**           | Find symbols by name or concept                                                                          |
+| **`codegraph_neighbors`**       | List edges for a node (`imports`, `calls`, `contains`, …)                                                |
+| **`codegraph_path`**            | Shortest path between two symbols                                                                        |
+| **`codegraph_explain`**         | Summarize a symbol and its connections                                                                   |
+| **`codegraph_subgraph`**        | BFS subgraph around a seed query                                                                         |
 
 Edges are labeled **`EXTRACTED`**, **`INFERRED`**, or **`AMBIGUOUS`** (aligned with Graphify confidence semantics). Imported nodes may carry a Leiden **`community`** id from Graphify.
 
 ## Enable
 
-| Env                                           | Default       | Effect                                                     |
-| --------------------------------------------- | ------------- | ---------------------------------------------------------- |
-| **`CLAWQL_ENABLE_CODEGRAPH=1`**               | off           | Register `codegraph_*` tools via memory tier               |
-| **`CLAWQL_CODEGRAPH_ROOT`**                   | cwd           | Default repo root for index / sync                         |
-| **`CLAWQL_CODEGRAPH_PATH`**                   | `./data`      | Base path for `codegraph.db.json`                          |
-| **`CLAWQL_CODEGRAPH_BACKEND`**                | `native`      | Set `graphify` to load Graphify `graph.json` on index      |
-| **`CLAWQL_CODEGRAPH_GRAPHIFY_JSON`**          | —             | Path to Graphify export                                    |
-| **`CLAWQL_CODEGRAPH_GRAPHIFY_OUT_DIR`**       | `graphify-out`| Default artifact directory for sync                        |
-| **`CLAWQL_CODEGRAPH_GRAPHIFY_SYNC_CMD`**      | `graphify .`  | Shell command for `codegraph_sync_graphify` (`{repoRoot}`, `{outDir}`) |
-| **`CLAWQL_CODEGRAPH_GRAPHIFY_REFRESH_CMD`**   | —             | Optional refresh when backend=`graphify`                   |
-| **`CLAWQL_CODEGRAPH_GRAPHIFY_MCP_URL`**       | —             | Optional HTTP MCP delegate for live queries                |
-| **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`** | off           | Merge code graph hits into `memory_recall`                 |
+| Env                                           | Default        | Effect                                                                 |
+| --------------------------------------------- | -------------- | ---------------------------------------------------------------------- |
+| **`CLAWQL_ENABLE_CODEGRAPH=1`**               | off            | Register `codegraph_*` tools via memory tier                           |
+| **`CLAWQL_CODEGRAPH_ROOT`**                   | cwd            | Default repo root for index / sync                                     |
+| **`CLAWQL_CODEGRAPH_PATH`**                   | `./data`       | Base path for `codegraph.db.json`                                      |
+| **`CLAWQL_CODEGRAPH_BACKEND`**                | `native`       | Set `graphify` to load Graphify `graph.json` on index                  |
+| **`CLAWQL_CODEGRAPH_GRAPHIFY_JSON`**          | —              | Path to Graphify export                                                |
+| **`CLAWQL_CODEGRAPH_GRAPHIFY_OUT_DIR`**       | `graphify-out` | Default artifact directory for sync                                    |
+| **`CLAWQL_CODEGRAPH_GRAPHIFY_SYNC_CMD`**      | `graphify .`   | Shell command for `codegraph_sync_graphify` (`{repoRoot}`, `{outDir}`) |
+| **`CLAWQL_CODEGRAPH_GRAPHIFY_REFRESH_CMD`**   | —              | Optional refresh when backend=`graphify`                               |
+| **`CLAWQL_CODEGRAPH_GRAPHIFY_MCP_URL`**       | —              | Optional HTTP MCP delegate for live queries                            |
+| **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`** | off            | Merge code graph hits into `memory_recall`                             |
 
 Requires **`CLAWQL_ENABLE_MEMORY`** (memory plugin registers codegraph tools). Install Graphify separately (`pip install graphifyy && graphify install` — CLI remains `graphify`).
 
@@ -68,10 +68,10 @@ Keeps the agent tool surface lean: Graphify does multimodal / multi-language ext
    Wikilinks: `[[Codebase Architecture]]`, `[[{repo}]]`, `[[Codegraph Sync History]]`, plus named Leiden clusters (numbered `Community N` / `cluster_N` labels go into insights only)
 4. **Conditional native pass** — `mode: "thorough"` (or `catchBlindSpots: true`) merges `codegraph_index` when Graphify missed native-indexable extensions (`.ts`/`.js`/`.py`/`.go`). Use `forceNative: true` to always merge. `graph.html` stays on disk for human review.
 
-| Mode       | Behavior                                                                  |
-| ---------- | ------------------------------------------------------------------------- |
-| `fast`     | Graphify + import + vault ingest                                          |
-| `thorough` | Same + native merge when native-fillable blind spots are detected         |
+| Mode       | Behavior                                                          |
+| ---------- | ----------------------------------------------------------------- |
+| `fast`     | Graphify + import + vault ingest                                  |
+| `thorough` | Same + native merge when native-fillable blind spots are detected |
 
 ## Graphify integration (manual)
 

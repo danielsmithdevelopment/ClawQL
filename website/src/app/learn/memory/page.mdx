@@ -75,14 +75,14 @@ Queried via `knowledge_search_onyx` (or `memory_recall` with `sources: ["onyx"]`
 
 Today's shipped stack is a practical subset of the full Memory 2.0 design in the DAOS spec:
 
-| Component   | Shipped role                                   | Technology                                           |
-| ----------- | ---------------------------------------------- | ---------------------------------------------------- |
-| Vault       | Canonical Markdown notes                       | `CLAWQL_OBSIDIAN_VAULT_PATH` → `Memory/<slug>.md`    |
-| Graph index | Wikilink edges + chunk rows                    | `memory.db` (`wikilink_edge`, `vault_chunk`, …)      |
-| Embeddings  | Optional vector leg in recall                  | OpenAI-compatible `/embeddings` + sqlite or postgres |
-| PageIndex   | Vectorless hierarchical tree                   | `clawql-pageindex` + `pageindex_*`                   |
+| Component   | Shipped role                                   | Technology                                                                                   |
+| ----------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Vault       | Canonical Markdown notes                       | `CLAWQL_OBSIDIAN_VAULT_PATH` → `Memory/<slug>.md`                                            |
+| Graph index | Wikilink edges + chunk rows                    | `memory.db` (`wikilink_edge`, `vault_chunk`, …)                                              |
+| Embeddings  | Optional vector leg in recall                  | OpenAI-compatible `/embeddings` + sqlite or postgres                                         |
+| PageIndex   | Vectorless hierarchical tree                   | `clawql-pageindex` + `pageindex_*`                                                           |
 | Code graph  | Structural AST / import-call graph over source | `clawql-codegraph` + `codegraph_*` (opt-in; Graphify upstream via `codegraph_sync_graphify`) |
-| Onyx        | External enterprise search peer                | `knowledge_search_onyx` + vault citations            |
+| Onyx        | External enterprise search peer                | `knowledge_search_onyx` + vault citations                                                    |
 
 **Ingest path:** `memory_ingest` writes or appends vault notes → rescans → rebuilds `memory.db` (chunks + wikilink edges; embeddings when configured). Optional `rebuild.pageindex` refreshes the heading tree for that note.
 
@@ -90,15 +90,15 @@ Today's shipped stack is a practical subset of the full Memory 2.0 design in the
 
 **Team sync (optional):** pushes and pulls the `Memory/` tree via object storage. `memory.db` is rebuilt locally after pull. Code graph storage is local unless you sync `codegraph.db.json` yourself.
 
-| Flow                    | Reads from                                                | Writes to                                          |
-| ----------------------- | --------------------------------------------------------- | -------------------------------------------------- |
-| `memory_ingest`         | Agent JSON (+ optional Onyx citations)                    | `Memory/*.md` → `memory.db` (+ optional PageIndex) |
-| `memory_recall`         | Vault, `memory.db`, optional codegraph / PageIndex / Onyx | (read-only)                                        |
-| `pageindex_build_tree`  | `Memory/*.md`                                             | `pageindex.db.json`                                |
-| `codegraph_index`       | Repo source tree                                          | `codegraph.db.json`                                |
-| `codegraph_sync_graphify` | Graphify artifacts + optional native merge              | `codegraph.db.json` + vault architecture report    |
-| `knowledge_search_onyx` | External Onyx                                             | (read); cite into vault via ingest                 |
-| `memory_sync`           | Object bucket ↔ local vault                               | `Memory/` (and configured paths)                   |
+| Flow                      | Reads from                                                | Writes to                                          |
+| ------------------------- | --------------------------------------------------------- | -------------------------------------------------- |
+| `memory_ingest`           | Agent JSON (+ optional Onyx citations)                    | `Memory/*.md` → `memory.db` (+ optional PageIndex) |
+| `memory_recall`           | Vault, `memory.db`, optional codegraph / PageIndex / Onyx | (read-only)                                        |
+| `pageindex_build_tree`    | `Memory/*.md`                                             | `pageindex.db.json`                                |
+| `codegraph_index`         | Repo source tree                                          | `codegraph.db.json`                                |
+| `codegraph_sync_graphify` | Graphify artifacts + optional native merge                | `codegraph.db.json` + vault architecture report    |
+| `knowledge_search_onyx`   | External Onyx                                             | (read); cite into vault via ingest                 |
+| `memory_sync`             | Object bucket ↔ local vault                               | `Memory/` (and configured paths)                   |
 
 **Roadmap (DAOS):** separate encrypted blob vault, typed link ActionTypes, Merkle root on every node at ingest, and recall filtered by signed ATRClaims purpose.
 
