@@ -19,11 +19,16 @@ describe("memory-recall helpers", () => {
 describe("memory-recall vault", () => {
   const saved = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
   const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
+  const savedVector = process.env.CLAWQL_VECTOR_BACKEND;
   let dir: string;
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "clawql-vault-"));
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
+    // Keep unit tests off the default local ONNX path (no model download in CI).
+    process.env.CLAWQL_VECTOR_BACKEND = "off";
+    // Keep unit tests off the default local ONNX path (no model download in CI).
+    process.env.CLAWQL_VECTOR_BACKEND = "off";
     await mkdir(join(dir, "Memory"), { recursive: true });
     await writeFile(
       join(dir, "Memory/alpha.md"),
@@ -53,6 +58,8 @@ describe("memory-recall vault", () => {
     else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = saved;
     if (savedMerkle === undefined) delete process.env.CLAWQL_MERKLE_ENABLED;
     else process.env.CLAWQL_MERKLE_ENABLED = savedMerkle;
+    if (savedVector === undefined) delete process.env.CLAWQL_VECTOR_BACKEND;
+    else process.env.CLAWQL_VECTOR_BACKEND = savedVector;
     resetMemoryDbArtifactCachesForTests();
     await rm(dir, { recursive: true, force: true });
   });

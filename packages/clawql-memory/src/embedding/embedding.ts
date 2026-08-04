@@ -2,37 +2,54 @@
  * Optional embedding pipeline for hybrid memory (#26 / #28).
  * - **sqlite:** float32 BLOBs on `vault_chunk` (sql.js; in-process KNN).
  * - **postgres:** `CLAWQL_VECTOR_DATABASE_URL` + pgvector (`<=>` cosine in SQL).
+ * - **Embedding providers:** `local` (in-process ONNX via @xenova/transformers — no API key /
+ *   no Ollama) or `http` (OpenAI-compatible `/embeddings`).
  */
 
 import { getObsidianVaultPath } from "../vault/config.js";
+import {
+  DEFAULT_LOCAL_EMBEDDING_DIMENSION,
+  DEFAULT_LOCAL_EMBEDDING_MODEL,
+  embedTextsLocal,
+} from "./embedding-local.js";
+
+export type EmbeddingProvider = "local" | "http";
 
 export type EmbeddingConfig = {
+  provider: EmbeddingProvider;
+  /** HTTP only — OpenAI-compatible base URL. */
   baseUrl: string;
   model: string;
+  /** HTTP only — Bearer token (unused for local). */
   apiKey: string;
 };
 
 /** Where chunk vectors are indexed for recall. */
 export type VectorBackend = "off" | "sqlite" | "postgres";
 
-const DEFAULT_BASE = "https://api.openai.com/v1";
-const DEFAULT_MODEL = "text-embedding-3-small";
+const DEFAULT_HTTP_BASE = "https://api.openai.com/v1";
+const DEFAULT_HTTP_MODEL = "text-embedding-3-small";
 const EMBED_BATCH = 64;
 
+/**
+ * Vector store selection.
+ * Default **`sqlite`** when unset so `memory_ingest` can write local embeddings with no
+ * extra secrets. Set **`CLAWQL_VECTOR_BACKEND=off`** for keyword+wikilink-only.
+ */
 export function vectorBackend(): VectorBackend {
   const v = process.env.CLAWQL_VECTOR_BACKEND?.trim().toLowerCase();
+  if (!v) return "sqlite";
+  if (v === "off" || v === "0" || v === "false" || v === "none") return "off";
   if (v === "sqlite" || v === "sql") return "sqlite";
   if (v === "postgres" || v === "postgresql" || v === "pg" || v === "pgvector") return "postgres";
-  return "off";
+  return "sqlite";
 }
 
 let warnedPostgresFallbackToSqlite = false;
 
 /**
  * **Runtime** vector store: same as {@link vectorBackend} except when env requests **postgres**
- * but **`CLAWQL_VECTOR_DATABASE_URL`** is unset — then we use **sqlite** vectors in **`memory.db`**
- * (dual-write BLOBs, in-process recall). Prefer setting the URL or **`CLAWQL_VECTOR_BACKEND=sqlite`**
- * explicitly to avoid ambiguity.
+ * but **`CLAWQL_VECTOR_DATABASE_URL`** is unset — then we use **sqlite** vectors in **`memory.db`**.
  */
 export function effectiveVectorBackend(): VectorBackend {
   const b = vectorBackend();
@@ -49,17 +66,24 @@ export function effectiveVectorBackend(): VectorBackend {
   return b;
 }
 
-/**
- * True when embeddings API + vector backend are configured (sqlite or postgres).
- */
+/** True when an embedding provider + vector backend are configured. */
 export function vectorRecallEnabled(): boolean {
   return resolveEmbeddingConfig() !== null;
 }
 
+export type EmbeddingProviderMode = "auto" | "local" | "http" | "off";
+
+export function embeddingProviderMode(): EmbeddingProviderMode {
+  const v = process.env.CLAWQL_EMBEDDING_PROVIDER?.trim().toLowerCase();
+  if (!v || v === "auto") return "auto";
+  if (v === "local" || v === "onnx" || v === "transformers") return "local";
+  if (v === "http" || v === "openai" || v === "remote") return "http";
+  if (v === "off" || v === "0" || v === "false" || v === "none") return "off";
+  return "auto";
+}
+
 /**
  * Honest status for memory_ingest `rebuild.embeddings`.
- * Chunk/index sync can succeed while every `vault_chunk.embedding` stays NULL when
- * VECTOR_BACKEND is off or no embedding API key is set — do not report synced:true then.
  */
 export function embeddingRebuildReport(): { synced: boolean; skipped?: string } {
   if (process.env.CLAWQL_MEMORY_DB === "0") {
@@ -69,14 +93,25 @@ export function embeddingRebuildReport(): { synced: boolean; skipped?: string } 
     return {
       synced: false,
       skipped:
-        "CLAWQL_VECTOR_BACKEND unset/off; chunks may be indexed but embeddings were not written",
+        "CLAWQL_VECTOR_BACKEND=off; chunks may be indexed but embeddings were not written",
+    };
+  }
+  if (embeddingProviderMode() === "off") {
+    return {
+      synced: false,
+      skipped: "CLAWQL_EMBEDDING_PROVIDER=off; embeddings disabled",
     };
   }
   if (!resolveEmbeddingConfig()) {
     return {
       synced: false,
-      skipped: "No CLAWQL_EMBEDDING_API_KEY (or OPENAI_API_KEY); chunks indexed without embeddings",
+      skipped:
+        "Embedding provider unavailable (set CLAWQL_EMBEDDING_PROVIDER=local or provide an HTTP API key)",
     };
+  }
+  const cfg = resolveEmbeddingConfig()!;
+  if (cfg.provider === "local") {
+    return { synced: true };
   }
   return { synced: true };
 }
@@ -86,35 +121,60 @@ export function vectorSqliteBackendEnabled(): boolean {
   return vectorBackend() === "sqlite" && resolveEmbeddingConfig() !== null;
 }
 
+/**
+ * Resolve embedding config.
+ * - **local** (default when no API key): in-process MiniLM — no third-party daemon.
+ * - **http**: OpenAI-compatible `/embeddings` when `CLAWQL_EMBEDDING_API_KEY` / `OPENAI_API_KEY` set.
+ */
 export function resolveEmbeddingConfig(): EmbeddingConfig | null {
   const b = vectorBackend();
   if (b === "off") return null;
   if (process.env.CLAWQL_MEMORY_DB === "0") return null;
   if (getObsidianVaultPath() === null) return null;
 
+  const mode = embeddingProviderMode();
+  if (mode === "off") return null;
+
   const apiKey =
     process.env.CLAWQL_EMBEDDING_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim() || "";
-  if (!apiKey) return null;
-  const baseUrl = (process.env.CLAWQL_EMBEDDING_BASE_URL?.trim() || DEFAULT_BASE).replace(
-    /\/$/,
-    ""
-  );
-  const model = process.env.CLAWQL_EMBEDDING_MODEL?.trim() || DEFAULT_MODEL;
-  return { baseUrl, model, apiKey };
+
+  const preferHttp = mode === "http" || (mode === "auto" && Boolean(apiKey));
+  if (preferHttp) {
+    if (!apiKey) return null;
+    const baseUrl = (process.env.CLAWQL_EMBEDDING_BASE_URL?.trim() || DEFAULT_HTTP_BASE).replace(
+      /\/$/,
+      ""
+    );
+    const model = process.env.CLAWQL_EMBEDDING_MODEL?.trim() || DEFAULT_HTTP_MODEL;
+    return { provider: "http", baseUrl, model, apiKey };
+  }
+
+  // local (explicit) or auto without API key
+  const model =
+    process.env.CLAWQL_EMBEDDING_MODEL?.trim() || DEFAULT_LOCAL_EMBEDDING_MODEL;
+  return {
+    provider: "local",
+    baseUrl: "",
+    model,
+    apiKey: "",
+  };
 }
 
-/** Vector width for pgvector `vector(dim)` and API validation (default OpenAI `text-embedding-3-small`). */
+/** Vector width — local MiniLM defaults to 384; HTTP OpenAI small defaults to 1536. */
 export function embeddingVectorDimension(): number {
   const v = process.env.CLAWQL_EMBEDDING_DIMENSION?.trim();
-  if (!v) return 1536;
-  const n = Number.parseInt(v, 10);
-  return Number.isFinite(n) && n > 0 ? n : 1536;
+  if (v) {
+    const n = Number.parseInt(v, 10);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  const cfg = resolveEmbeddingConfig();
+  if (cfg?.provider === "local") return DEFAULT_LOCAL_EMBEDDING_DIMENSION;
+  return 1536;
 }
 
 /**
  * When the **effective** backend is **postgres** (URL provided), set **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE=0`**
- * to skip float32 vectors in **`vault_chunk.embedding`** (vectors only in Postgres). Default **on** (dual-write).
- * When effective backend is **sqlite** (including postgres env without URL), vectors always go to **`memory.db`**.
+ * to skip float32 vectors in **`vault_chunk.embedding`**. Default **on** (dual-write).
  */
 export function vectorDualWriteToMemoryDb(): boolean {
   if (effectiveVectorBackend() !== "postgres") return true;
@@ -149,10 +209,7 @@ export function cosineSimilarity(a: Float32Array, b: Float32Array): number {
   return dot / denom;
 }
 
-/**
- * OpenAI-compatible `/embeddings` (batched `input` array).
- */
-export async function embedTexts(
+async function embedTextsHttp(
   texts: string[],
   config: EmbeddingConfig
 ): Promise<{ vectors: Float32Array[]; model: string; dimension: number }> {
@@ -195,6 +252,19 @@ export async function embedTexts(
   }
 
   return { vectors: all, model: config.model, dimension };
+}
+
+/**
+ * Embed texts via local ONNX (default) or OpenAI-compatible HTTP.
+ */
+export async function embedTexts(
+  texts: string[],
+  config: EmbeddingConfig
+): Promise<{ vectors: Float32Array[]; model: string; dimension: number }> {
+  if (config.provider === "local") {
+    return embedTextsLocal(texts, config.model);
+  }
+  return embedTextsHttp(texts, config);
 }
 
 export async function embedQuery(text: string, config: EmbeddingConfig): Promise<Float32Array> {
@@ -256,3 +326,9 @@ export function rankDocumentsByChunkSimilarity(
   const slice = scored.slice(0, topChunks);
   return aggregateScoresToDocumentBest(slice, maxDocs);
 }
+
+export {
+  DEFAULT_LOCAL_EMBEDDING_DIMENSION,
+  DEFAULT_LOCAL_EMBEDDING_MODEL,
+  setLocalEmbeddingOverrideForTests,
+} from "./embedding-local.js";

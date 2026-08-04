@@ -28,7 +28,8 @@ describe("memory-db", () => {
     dir = await mkdtemp(join(tmpdir(), "clawql-vault-db-"));
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
     delete process.env.CLAWQL_MEMORY_DB;
-    delete process.env.CLAWQL_VECTOR_BACKEND;
+    // Opt out of default local ONNX embeddings in unit tests.
+    process.env.CLAWQL_VECTOR_BACKEND = "off";
     delete process.env.CLAWQL_EMBEDDING_API_KEY;
     delete process.env.CLAWQL_CUCKOO_ENABLED;
     delete process.env.CLAWQL_MERKLE_ENABLED;
