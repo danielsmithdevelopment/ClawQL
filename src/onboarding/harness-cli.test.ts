@@ -138,6 +138,22 @@ describe("buildOpencodeConfigContent", () => {
     }
   });
 
+  it("clawqlMcpChildEnv forwards CLAWQL_ENABLE_PAGEINDEX=1 override", () => {
+    const prevOb = process.env.CLAWQL_OPENBENCH;
+    const prevPi = process.env.CLAWQL_ENABLE_PAGEINDEX;
+    process.env.CLAWQL_OPENBENCH = "1";
+    process.env.CLAWQL_ENABLE_PAGEINDEX = "1";
+    try {
+      const env = clawqlMcpChildEnv("/tmp/pi-home");
+      expect(env.CLAWQL_ENABLE_PAGEINDEX).toBe("1");
+    } finally {
+      if (prevOb === undefined) delete process.env.CLAWQL_OPENBENCH;
+      else process.env.CLAWQL_OPENBENCH = prevOb;
+      if (prevPi === undefined) delete process.env.CLAWQL_ENABLE_PAGEINDEX;
+      else process.env.CLAWQL_ENABLE_PAGEINDEX = prevPi;
+    }
+  });
+
   it("openbenchOpencodePermissions can allow doom_loop for thrash experiments", () => {
     const prev = process.env.CLAWQL_OPENBENCH_DOOM_LOOP;
     try {

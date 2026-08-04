@@ -7,6 +7,9 @@ customer copy.
 This is the **platform** backlog. Ouroboros-only detail lives in
 [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md).
 
+**Full per-run scores (update after every matrix):**
+[`openbench-results-ledger.md`](./openbench-results-ledger.md).
+
 ---
 
 ## Two measurement tracks (keep them separate)
@@ -33,11 +36,12 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 | `audit-checkpoints` | `audit` append×3 + list → trail | on **1.0** / off **0.0** ([30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811)); idle flake possible on n=1 |
 | `policy-deny-execute` | In-process Panguard blocks `execute` | on **1.0** / off **0.0** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)) |
 | `cache-scratch-handoff` | `cache` set/get secret assembly | **Partial** — clawql_cache set observed; get+write still flaky on cheap model |
+| `pageindex-section-qa` | PageIndex build+synthesize finds buried code | **Shipped** — awaiting live A/B |
 | `ouroboros-oscillation-escape` | Ouroboros stops strategy thrash | allow + **deny** both on 1.0 / off 0.0 ([30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277)) |
 
-Still missing live cells: PageIndex/hybrid, codegraph, schedule/notify, sandbox, composed recipes, n≥3 trials.
+Still missing live cells: hybrid recall, codegraph, schedule/notify, sandbox, composed recipes, n≥3 trials. Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-Note: run [30873723884](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30873723884) timed out across the matrix (OpenCode hung with no tool_use) — treat as infra noise, not claim regression.
+Note: runs [30873723884](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30873723884) and [30874355356](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30874355356) timed out across the matrix (OpenCode hung with no tool_use) — treat as infra noise, not claim regression. See the [results ledger](./openbench-results-ledger.md).
 
 ---
 

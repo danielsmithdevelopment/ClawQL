@@ -113,7 +113,8 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
   };
   if (process.env.CLAWQL_OPENBENCH?.trim()) {
     env.CLAWQL_OPENBENCH = process.env.CLAWQL_OPENBENCH.trim();
-    // Slim tool surface for cheap OpenBench models — avoid pageindex/docs noise.
+    // Slim tool surface for cheap OpenBench models — avoid pageindex/docs noise
+    // unless the task explicitly enables them (forwarded below).
     if (!process.env.CLAWQL_ENABLE_PAGEINDEX?.trim()) env.CLAWQL_ENABLE_PAGEINDEX = "0";
     if (!process.env.CLAWQL_ENABLE_DOCUMENTS?.trim()) env.CLAWQL_ENABLE_DOCUMENTS = "0";
     // Default recall snippets (520) truncate OpenBench vault recipes (full YAML
@@ -121,6 +122,13 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
     if (!process.env.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS?.trim()) {
       env.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS = "8192";
     }
+  }
+  // Explicit overrides must reach the MCP child (OpenCode does not inherit parent env).
+  if (process.env.CLAWQL_ENABLE_PAGEINDEX?.trim()) {
+    env.CLAWQL_ENABLE_PAGEINDEX = process.env.CLAWQL_ENABLE_PAGEINDEX.trim();
+  }
+  if (process.env.CLAWQL_ENABLE_DOCUMENTS?.trim()) {
+    env.CLAWQL_ENABLE_DOCUMENTS = process.env.CLAWQL_ENABLE_DOCUMENTS.trim();
   }
   // Forward Ouroboros enablement + generation ceiling into the MCP child.
   // Parent env alone is not inherited by OpenCode's local MCP `environment` map.

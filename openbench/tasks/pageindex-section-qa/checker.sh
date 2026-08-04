@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Grades cache-scratch-handoff: assembled token + optional cache evidence.
+# Grades pageindex-section-qa: correct code + PageIndex tool evidence.
 set -euo pipefail
 
-REQUIRE_CACHE="${OPENBENCH_REQUIRE_CACHE:-0}"
-HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-25}"
-HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-6000}"
-EXPECTED="alpha42-zeta99"
+REQUIRE_PI="${OPENBENCH_REQUIRE_PAGEINDEX:-0}"
+HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-30}"
+HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-8000}"
+EXPECTED="orchid-77"
 
 cap_fail=0
 pass=0
@@ -24,11 +24,11 @@ try:
 except Exception as exc:
     print(f"FAIL: answer.json parse error: {exc}", flush=True)
     raise SystemExit(1)
-token = str(d.get("token") or "").strip()
+code = str(d.get("code") or "").strip()
 src = str(d.get("source") or "").strip().lower()
-ok = token == "${EXPECTED}" and "cache" in src
+ok = code == "${EXPECTED}" and "pageindex" in src
 if not ok:
-    print(f"FAIL: expected token=${EXPECTED} source~cache; got {d!r}", flush=True)
+    print(f"FAIL: expected code=${EXPECTED} source~pageindex; got {d!r}", flush=True)
 raise SystemExit(0 if ok else 1)
 PY
 then
@@ -65,35 +65,18 @@ PY
   fi
 fi
 
-if [ "$REQUIRE_CACHE" = "1" ]; then
-  AGENT_LOG=""
-  if [ -f .openbench_agent.log ]; then
-    AGENT_LOG=".openbench_agent.log"
-  fi
-  if [ -z "$AGENT_LOG" ]; then
-    echo "FAIL: missing .openbench_agent.log for cache evidence" >&2
+if [ "$REQUIRE_PI" = "1" ]; then
+  if [ ! -f .openbench_agent.log ]; then
+    echo "FAIL: missing .openbench_agent.log for pageindex evidence" >&2
     cap_fail=1
   else
-    # OpenCode registers MCP cache as clawql_cache (bare "cache" is invalid).
-    cache_hits="$(grep -Fci '"tool":"clawql_cache"' "$AGENT_LOG" || true)"
-    if [ "${cache_hits:-0}" -lt 2 ]; then
-      echo "FAIL: required ≥2 clawql_cache tool_use calls (got ${cache_hits:-0})" >&2
+    if ! grep -Eq '"tool":"clawql_pageindex_build_tree"|"tool":"pageindex_build_tree"' .openbench_agent.log; then
+      echo "FAIL: required pageindex_build_tree tool_use" >&2
       cap_fail=1
     fi
-    if ! grep -Fq '"operation":"set"' "$AGENT_LOG"; then
-      echo "FAIL: required cache operation=set in tool_use input" >&2
+    if ! grep -Eq '"tool":"clawql_pageindex_synthesize"|"tool":"clawql_pageindex_traverse"|"tool":"pageindex_synthesize"|"tool":"pageindex_traverse"' .openbench_agent.log; then
+      echo "FAIL: required pageindex_synthesize or pageindex_traverse tool_use" >&2
       cap_fail=1
-    fi
-    # Prefer get evidence; allow set×2 + correct answer.json when get is missing
-    # (cheap models often set then stall before get).
-    if ! grep -Fq '"operation":"get"' "$AGENT_LOG"; then
-      set_hits="$(grep -Fci '"operation":"set"' "$AGENT_LOG" || true)"
-      if [ "${set_hits:-0}" -lt 2 ] || [ "$pass" -ne 1 ]; then
-        echo "FAIL: required cache operation=get (or ≥2 set + correct answer.json)" >&2
-        cap_fail=1
-      else
-        echo "NOTE: cache get missing; accepting ≥2 set + correct answer.json" >&2
-      fi
     fi
   fi
 fi
