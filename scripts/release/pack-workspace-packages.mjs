@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Pack all clawql-* workspace packages in topological publish order.
- * Used by CI smoke tests before registry publish.
+ * Also packs `localPackExtras` (e.g. mcp-grpc-transport) for CI smoke before registry publish.
  *
  * Usage: node scripts/release/pack-workspace-packages.mjs [output-dir]
  */
@@ -12,13 +12,15 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const orderPath = join(root, "scripts/release/npm-publish-order.json");
-const { packages } = JSON.parse(readFileSync(orderPath, "utf8"));
+const order = JSON.parse(readFileSync(orderPath, "utf8"));
+const packages = order.packages ?? [];
+const extras = order.localPackExtras ?? [];
 const outDir = process.argv[2] ?? join(root, ".pack-workspace");
 
 mkdirSync(outDir, { recursive: true });
 
 const tarballs = [];
-for (const name of packages) {
+for (const name of [...extras, ...packages]) {
   if (name === "clawql-mcp") continue;
   execSync(`npm pack -w ${name} --pack-destination "${outDir}"`, {
     cwd: root,
