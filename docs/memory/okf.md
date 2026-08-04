@@ -132,6 +132,10 @@ const issues = lintOkfMarkdown(next, { checkStale: true, requireWormRef: path.en
 | `CLAWQL_MEMORY_RECALL_INDEX_FIRST=0`         | on      | Disables index-first survey (`index.md` + `log.md` before bodies)     |
 | `CLAWQL_MEMORY_RECALL_INDEX_FIRST_THRESHOLD` | `48`    | Above this file count, load bodies only for catalog/vector candidates |
 | `CLAWQL_MEMORY_RECALL_MIN_SCORE`             | `0.05`  | Minimum keyword/IDF score to seed recall (fractional under IDF)       |
+| `CLAWQL_MEMORY_BACKEND=git`                  | fs      | Git-native vault: commit after each successful `memory_ingest`        |
+| `CLAWQL_MEMORY_GIT_COMMIT_ON`                | ingest* | `off` disables commits; `*` default when backend=git                  |
+| `CLAWQL_MEMORY_GIT_PUSH_MODE`                | async†  | `async` \| `sync` \| `off` — †async when `GIT_REMOTE` set, else off   |
+| `CLAWQL_MEMORY_GIT_REMOTE`                   | —       | Remote URL (adds `origin` on first `git init`)                        |
 
 ## Flywheel export filters (planned / next)
 
