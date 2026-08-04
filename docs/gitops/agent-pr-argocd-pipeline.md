@@ -80,11 +80,13 @@ File implementation epics in **ClawQL-Agent** for:
 - PR authoring loop (branch naming, commit message policy)
 - Correlation ID threading across MCP tools
 - Policy engine (when `argocd sync` is allowed)
+- Subscribe/publish adapters for IDP JetStream subjects ([clawql-agent-idp-nats.md](../openclaw/clawql-agent-idp-nats.md), [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128))
 
-Link PRs back to [#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258).
+Link PRs back to [#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258) / [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128).
 
 ## Related
 
 - [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md)
 - [Argo Workflows CD provider roadmap](../roadmap/argo-workflows-cd-provider.md)
+- [ClawQL-Agent IDP NATS contract](../openclaw/clawql-agent-idp-nats.md)
 - [Slack-first IDP runbook](../openclaw/slack-first-idp-runbook.md)

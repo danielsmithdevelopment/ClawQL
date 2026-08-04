@@ -923,6 +923,8 @@ nats:
     # Defaults match clawql-automation env (CLAWQL_WORKFLOW / clawql-hitl-resume).
     stream: ""
     consumer: ""
+    # Extra JetStream durables for KEDA lag (beyond HITL / idpPipeline / coneshareFollowup auto-triggers).
+    extraConsumers: []
     # Pre-create JetStream consumer so KEDA can read lag before first worker pod.
     bootstrapConsumer: true
 

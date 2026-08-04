@@ -3,7 +3,7 @@
 **npm:** [`clawql-mcp@7.2.0`](https://www.npmjs.com/package/clawql-mcp/v/7.2.0) (publish on tag `v7.2.0`)  
 **Full changelog:** [CHANGELOG.md#720---2026-08-04](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#720---2026-08-04)  
 **Release date:** 2026-08-04  
-**Since:** `v7.1.0` (2026-07-20) — **~223 commits**, **47 merged PRs** (excluding the 7.1.0 prep PR)
+**Since:** `v7.1.0` (2026-07-20) — **~223 commits**, **48 merged PRs** (excluding the 7.1.0 prep PR)
 
 ---
 
@@ -56,6 +56,7 @@
 | Vertical Compose + HITL predictions                                    | [#802](https://github.com/danielsmithdevelopment/ClawQL/pull/802) |
 | Local Privacy Filter after Presidio                                    | [#805](https://github.com/danielsmithdevelopment/ClawQL/pull/805) |
 | Stirling redact + Nextcloud/Coneshare NATS queues + classifier promote | [#810](https://github.com/danielsmithdevelopment/ClawQL/pull/810) |
+| NATS IDP e2e enablement (Helm profile, KEDA, smoke, Agent contract) | [#812](https://github.com/danielsmithdevelopment/ClawQL/pull/812) |
 | Tracking hygiene (#226–#259)                                           | [#809](https://github.com/danielsmithdevelopment/ClawQL/pull/809) |
 
 ### 6. Sync, Cloud Agent, inference, OpenBench, release tooling
