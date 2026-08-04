@@ -53,12 +53,12 @@ not MCP JSON-RPC / Streamable HTTP session semantics.
 
 ### 2.2 Strategic differentiator
 
-| Landscape fact | Implication |
-| -------------- | ----------- |
-| MCP remote default is Streamable HTTP; local is stdio | gRPC is the gap |
-| Google proposed gRPC as a first-class MCP transport (2026); community feedback Q1, implementation expected later if ratified | ClawQL already ships the TypeScript production transport |
-| Community Go wrappers exist; **no** production-grade TypeScript peer | `mcp-grpc-transport` is the npm story |
-| mcpo covers MCP → OpenAPI in Python, stdio-centric | Room for a **gRPC-first** TS package with an explicit migration path to raw gRPC |
+| Landscape fact                                                                                                               | Implication                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| MCP remote default is Streamable HTTP; local is stdio                                                                        | gRPC is the gap                                                                  |
+| Google proposed gRPC as a first-class MCP transport (2026); community feedback Q1, implementation expected later if ratified | ClawQL already ships the TypeScript production transport                         |
+| Community Go wrappers exist; **no** production-grade TypeScript peer                                                         | `mcp-grpc-transport` is the npm story                                            |
+| mcpo covers MCP → OpenAPI in Python, stdio-centric                                                                           | Room for a **gRPC-first** TS package with an explicit migration path to raw gRPC |
 
 ### 2.3 Positioning (one line)
 
@@ -70,25 +70,25 @@ Every Swagger UI visitor should see the gRPC path (`x-clawql-grpc` extensions, d
 
 ## 3. Non-goals
 
-| Non-goal | Why |
-| -------- | --- |
-| Full mcpo clone (stdio spawn matrix, Claude Desktop multi-server config as v1) | Overlap with existing hosting; weakens gRPC story |
-| Per-tool generated `.proto` RPCs | Breaks when tools change at runtime; fights stable generic `CallTool` |
-| Replacing Streamable HTTP for Cursor / Claude Desktop | IDEs stay on `/mcp` |
-| Product REST paths (`/payments/stripe/checkout`) | Tool-name REST only; domain gateways remain separate |
-| Replacing ClawQL `search` / `execute` | Opposite direction |
+| Non-goal                                                                       | Why                                                                   |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| Full mcpo clone (stdio spawn matrix, Claude Desktop multi-server config as v1) | Overlap with existing hosting; weakens gRPC story                     |
+| Per-tool generated `.proto` RPCs                                               | Breaks when tools change at runtime; fights stable generic `CallTool` |
+| Replacing Streamable HTTP for Cursor / Claude Desktop                          | IDEs stay on `/mcp`                                                   |
+| Product REST paths (`/payments/stripe/checkout`)                               | Tool-name REST only; domain gateways remain separate                  |
+| Replacing ClawQL `search` / `execute`                                          | Opposite direction                                                    |
 
 ---
 
 ## 4. What already exists
 
-| Capability | Location |
-| ---------- | -------- |
+| Capability                                                         | Location                                                             |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------- |
 | Generic `ListTools` / `CallTool` (name + `google.protobuf.Struct`) | `packages/mcp-grpc-transport/proto/model_context_protocol/mcp.proto` |
-| Server start + health + reflection | `maybeStartGrpcMcpServer`, `ENABLE_GRPC`, `ENABLE_GRPC_REFLECTION` |
-| Client helper for streaming CallTool | `callToolServerStreamingGrpc`, `mcpArgumentsToCallToolStructFields` |
-| ClawQL dual listen HTTP + gRPC | `src/server-http.ts` when `ENABLE_GRPC=1` |
-| Streamable HTTP MCP | `POST /mcp` (not per-tool REST) |
+| Server start + health + reflection                                 | `maybeStartGrpcMcpServer`, `ENABLE_GRPC`, `ENABLE_GRPC_REFLECTION`   |
+| Client helper for streaming CallTool                               | `callToolServerStreamingGrpc`, `mcpArgumentsToCallToolStructFields`  |
+| ClawQL dual listen HTTP + gRPC                                     | `src/server-http.ts` when `ENABLE_GRPC=1`                            |
+| Streamable HTTP MCP                                                | `POST /mcp` (not per-tool REST)                                      |
 
 **Gap:** no `POST /{toolName}`, no OpenAPI built from MCP `inputSchema`, no Swagger UI for tools.
 
@@ -119,11 +119,11 @@ packages/mcp-openapi-gateway/
 
 ### 5.2 Runtime modes
 
-| Mode | Description | v1 |
-| ---- | ----------- | -- |
-| **A. Sidecar / standalone** | Process points at `GRPC_HOST:GRPC_PORT` (e.g. ClawQL `:50051`), introspects, serves OpenAPI HTTP on its own port | **Required** |
-| **B. In-process mount** | Optional Express router mounted beside ClawQL HTTP (`attachMcpOpenApiGateway(app, { … })`) when both run in one process | Nice-to-have |
-| **C. HTTP MCP fallback** | If gRPC unavailable, forward via Streamable HTTP `tools/call` | Optional; document as degraded |
+| Mode                        | Description                                                                                                             | v1                             |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| **A. Sidecar / standalone** | Process points at `GRPC_HOST:GRPC_PORT` (e.g. ClawQL `:50051`), introspects, serves OpenAPI HTTP on its own port        | **Required**                   |
+| **B. In-process mount**     | Optional Express router mounted beside ClawQL HTTP (`attachMcpOpenApiGateway(app, { … })`) when both run in one process | Nice-to-have                   |
+| **C. HTTP MCP fallback**    | If gRPC unavailable, forward via Streamable HTTP `tools/call`                                                           | Optional; document as degraded |
 
 **Default recommendation:** Mode A with ClawQL `ENABLE_GRPC=1`. REST is a **translator into gRPC**, not a peer protocol of equal rank.
 
@@ -151,13 +151,13 @@ POST /memory_recall  { "query": "…", "limit": 8 }
 
 ## 6. HTTP surface (v1 contract)
 
-| Method | Path | Behavior |
-| ------ | ---- | -------- |
-| `GET` | `/healthz` | Liveness; include upstream gRPC reachability when cheap |
-| `GET` | `/tools` | Raw tool list: `name`, `description`, `inputSchema`, optional `outputSchema` |
-| `GET` | `/openapi.json` | OpenAPI **3.1** generated from catalog |
-| `GET` | `/docs` | Swagger UI (or Scalar) pointed at `/openapi.json` |
-| `POST` | `/{toolName}` | JSON body = tool arguments; response = tool result JSON |
+| Method | Path            | Behavior                                                                     |
+| ------ | --------------- | ---------------------------------------------------------------------------- |
+| `GET`  | `/healthz`      | Liveness; include upstream gRPC reachability when cheap                      |
+| `GET`  | `/tools`        | Raw tool list: `name`, `description`, `inputSchema`, optional `outputSchema` |
+| `GET`  | `/openapi.json` | OpenAPI **3.1** generated from catalog                                       |
+| `GET`  | `/docs`         | Swagger UI (or Scalar) pointed at `/openapi.json`                            |
+| `POST` | `/{toolName}`   | JSON body = tool arguments; response = tool result JSON                      |
 
 **Auth (v1):** optional shared API key (`Authorization: Bearer …` or `X-API-Key`), matching mcpo’s practical edge. Pass-through of upstream gRPC metadata (`Authorization`, `mcp-protocol-version`) must be configurable. Do **not** bypass ClawQL / Panguard policy: the facade must call the same tool surface the MCP client would (gRPC into the already-gated server).
 
@@ -176,7 +176,7 @@ paths:
   /{T.name}:
     post:
       operationId: mcp_tool__{sanitizedName}
-      summary: {T.description}
+      summary: { T.description }
       requestBody:
         required: true
         content:
@@ -195,13 +195,13 @@ paths:
 
 MCP tools already advertise **JSON Schema** for inputs. Conversion edge cases to handle explicitly in tests:
 
-| Case | Approach |
-| ---- | -------- |
-| `$ref` / `$defs` | Inline or preserve under `components.schemas` with unique prefixes per tool |
-| `anyOf` / `oneOf` / `allOf` | Pass through OpenAPI 3.1 combinators; document unsupported Draft features |
-| Recursive schemas | Depth cap + `$ref` into components |
-| `additionalProperties` | Preserve |
-| Non-object root schema | Wrap as `{ "type": "object", "properties": { "value": … } }` **or** allow raw JSON body with documented exception |
+| Case                        | Approach                                                                                                          |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `$ref` / `$defs`            | Inline or preserve under `components.schemas` with unique prefixes per tool                                       |
+| `anyOf` / `oneOf` / `allOf` | Pass through OpenAPI 3.1 combinators; document unsupported Draft features                                         |
+| Recursive schemas           | Depth cap + `$ref` into components                                                                                |
+| `additionalProperties`      | Preserve                                                                                                          |
+| Non-object root schema      | Wrap as `{ "type": "object", "properties": { "value": … } }` **or** allow raw JSON body with documented exception |
 
 Ship a small internal converter; evaluate existing libs only if they stay lightweight and license-clean (Apache-2.0 / MIT).
 
@@ -243,15 +243,15 @@ npx mcp-openapi-gateway \
   --api-key "$GATEWAY_API_KEY"
 ```
 
-| Env / flag | Purpose |
-| ---------- | ------- |
-| `MCP_OPENAPI_GATEWAY_GRPC_HOST` / `--grpc-host` | Upstream host |
-| `MCP_OPENAPI_GATEWAY_GRPC_PORT` / `--grpc-port` | Default `50051` |
-| `MCP_OPENAPI_GATEWAY_LISTEN` / `--listen` | HTTP bind (default `0.0.0.0:8090`) |
-| `MCP_OPENAPI_GATEWAY_API_KEY` / `--api-key` | Optional edge auth |
-| `MCP_PROTOCOL_VERSION` | Metadata for gRPC RPCs (default latest supported) |
-| `MCP_OPENAPI_GATEWAY_REFRESH_MS` | Optional catalog poll |
-| TLS client flags | Align with `mcp-grpc-transport` client TLS when upstream uses `GRPC_TLS_*` |
+| Env / flag                                      | Purpose                                                                    |
+| ----------------------------------------------- | -------------------------------------------------------------------------- |
+| `MCP_OPENAPI_GATEWAY_GRPC_HOST` / `--grpc-host` | Upstream host                                                              |
+| `MCP_OPENAPI_GATEWAY_GRPC_PORT` / `--grpc-port` | Default `50051`                                                            |
+| `MCP_OPENAPI_GATEWAY_LISTEN` / `--listen`       | HTTP bind (default `0.0.0.0:8090`)                                         |
+| `MCP_OPENAPI_GATEWAY_API_KEY` / `--api-key`     | Optional edge auth                                                         |
+| `MCP_PROTOCOL_VERSION`                          | Metadata for gRPC RPCs (default latest supported)                          |
+| `MCP_OPENAPI_GATEWAY_REFRESH_MS`                | Optional catalog poll                                                      |
+| TLS client flags                                | Align with `mcp-grpc-transport` client TLS when upstream uses `GRPC_TLS_*` |
 
 ---
 
@@ -275,28 +275,28 @@ npx mcp-openapi-gateway \
 
 ### Phase 1 — MVP package
 
-1. [x] Workspace package + CLI  
-2. [x] gRPC `ListTools` introspection + in-memory catalog (`listToolsUnaryGrpc`)  
-3. [x] JSON Schema → OpenAPI path generation (happy path + fixture tests)  
-4. [x] `POST /{toolName}` → `CallTool` (unary collapse)  
-5. [x] `/openapi.json`, `/docs`, `/tools`, `/healthz`  
-6. [x] `x-clawql-grpc` extensions  
+1. [x] Workspace package + CLI
+2. [x] gRPC `ListTools` introspection + in-memory catalog (`listToolsUnaryGrpc`)
+3. [x] JSON Schema → OpenAPI path generation (happy path + fixture tests)
+4. [x] `POST /{toolName}` → `CallTool` (unary collapse)
+5. [x] `/openapi.json`, `/docs`, `/tools`, `/healthz`
+6. [x] `x-clawql-grpc` extensions
 7. [x] Example server + REST/gRPC demos (`examples/mcp-openapi-gateway/`)
 
 ### Phase 2 — Hardening
 
-- Schema edge-case suite (`anyOf`, `$ref`, recursion)  
-- Catalog refresh + deny lists  
-- TLS client to upstream  
-- Helm example / Compose sidecar next to `clawql-mcp-http`  
-- Optional in-process mount on ClawQL HTTP  
+- Schema edge-case suite (`anyOf`, `$ref`, recursion)
+- Catalog refresh + deny lists
+- TLS client to upstream
+- Helm example / Compose sidecar next to `clawql-mcp-http`
+- Optional in-process mount on ClawQL HTTP
 
 ### Phase 3 — Ecosystem
 
-- Publish npm independently (same cadence model as `mcp-grpc-transport`)  
-- Server card / well-known discovery mention (OpenAPI on-ramp URL)  
-- Blog / PV essay: “MCP tools as OpenAPI — gRPC underneath”  
-- Stretch: SSE progress mapping; HTTP MCP fallback mode  
+- Publish npm independently (same cadence model as `mcp-grpc-transport`)
+- Server card / well-known discovery mention (OpenAPI on-ramp URL)
+- Blog / PV essay: “MCP tools as OpenAPI — gRPC underneath”
+- Stretch: SSE progress mapping; HTTP MCP fallback mode
 
 **Difficulty:** moderate. Transport RPC surface is done; the non-trivial slice is schema conversion + REST semantics + auth/policy parity.
 
@@ -304,11 +304,11 @@ npx mcp-openapi-gateway \
 
 ## 11. Naming
 
-| Option | Notes |
-| ------ | ----- |
-| **`mcp-openapi-gateway`** (preferred) | Clear MCP → OpenAPI direction; mirrors ecosystem language |
-| `@clawql/mcp-gateway` | Scoped; heavier ClawQL branding (still OK if published from monorepo) |
-| `mcp-tools-openapi` | Accurate but weaker “gateway” signal |
+| Option                                | Notes                                                                 |
+| ------------------------------------- | --------------------------------------------------------------------- |
+| **`mcp-openapi-gateway`** (preferred) | Clear MCP → OpenAPI direction; mirrors ecosystem language             |
+| `@clawql/mcp-gateway`                 | Scoped; heavier ClawQL branding (still OK if published from monorepo) |
+| `mcp-tools-openapi`                   | Accurate but weaker “gateway” signal                                  |
 
 Use **`mcp-openapi-gateway`** on npm unless packaging policy requires `@clawql/*`.
 
@@ -318,51 +318,51 @@ Use **`mcp-openapi-gateway`** on npm unless packaging policy requires `@clawql/*
 
 ## 12. GTM / docs funnel
 
-| Surface | Action |
-| ------- | ------ |
-| This design | Canonical technical contract |
-| Vision & Roadmap | Planned package row |
-| `mcp-grpc-transport` README | “OpenAPI on-ramp (planned)” → this doc |
-| Docs index | Link under Architecture / MCP |
-| Managed Edge Gateway | Later: optional companion port or sidecar for Workers |
-| Announcements | After MVP: “call tools by name over HTTP; production = gRPC” |
+| Surface                     | Action                                                       |
+| --------------------------- | ------------------------------------------------------------ |
+| This design                 | Canonical technical contract                                 |
+| Vision & Roadmap            | Planned package row                                          |
+| `mcp-grpc-transport` README | “OpenAPI on-ramp (planned)” → this doc                       |
+| Docs index                  | Link under Architecture / MCP                                |
+| Managed Edge Gateway        | Later: optional companion port or sidecar for Workers        |
+| Announcements               | After MVP: “call tools by name over HTTP; production = gRPC” |
 
 **Talk track:**
 
-1. Demo Swagger: `POST /memory_recall`  
-2. Show `/openapi.json` `x-clawql-grpc`  
-3. Same call via `grpcurl` / `CallTool` on `:50051`  
-4. Note: Google’s transport proposal vs shipping TypeScript transport today  
+1. Demo Swagger: `POST /memory_recall`
+2. Show `/openapi.json` `x-clawql-grpc`
+3. Same call via `grpcurl` / `CallTool` on `:50051`
+4. Note: Google’s transport proposal vs shipping TypeScript transport today
 
 ---
 
 ## 13. Success criteria
 
-| Metric | Signal |
-| ------ | ------ |
+| Metric     | Signal                                                                                |
+| ---------- | ------------------------------------------------------------------------------------- |
 | Functional | Any tool registered on a gRPC MCP server appears as `POST /{name}` with valid OpenAPI |
-| Funnel | OpenAPI `info.x-clawql-grpc` present; README leads with gRPC |
-| Generality | Works against a **non-ClawQL** `McpServer` + `maybeStartGrpcMcpServer` fixture |
-| Safety | Facade cannot invoke tools without going through upstream MCP CallTool |
-| Adoption | npm install + one Compose/Helm example; linked from vision roadmap |
+| Funnel     | OpenAPI `info.x-clawql-grpc` present; README leads with gRPC                          |
+| Generality | Works against a **non-ClawQL** `McpServer` + `maybeStartGrpcMcpServer` fixture        |
+| Safety     | Facade cannot invoke tools without going through upstream MCP CallTool                |
+| Adoption   | npm install + one Compose/Helm example; linked from vision roadmap                    |
 
 ---
 
 ## 14. Alternatives considered
 
-| Alternative | Rejected because |
-| ---------- | ---------------- |
-| Recommend mcpo only | Python/stdio-centric; no gRPC funnel; external dependency for core story |
-| REST → Streamable HTTP only | Misses differentiator; large-payload and mesh story weaker |
-| Per-tool protobuf codegen | Runtime tool churn; breaks generic proto stability |
-| Fold into Managed Edge Gateway first | Couples on-ramp to ClawQL hosting; delays standalone npm story |
+| Alternative                          | Rejected because                                                         |
+| ------------------------------------ | ------------------------------------------------------------------------ |
+| Recommend mcpo only                  | Python/stdio-centric; no gRPC funnel; external dependency for core story |
+| REST → Streamable HTTP only          | Misses differentiator; large-payload and mesh story weaker               |
+| Per-tool protobuf codegen            | Runtime tool churn; breaks generic proto stability                       |
+| Fold into Managed Edge Gateway first | Couples on-ramp to ClawQL hosting; delays standalone npm story           |
 
 ---
 
 ## 15. References
 
-- [`packages/mcp-grpc-transport/README.md`](../../packages/mcp-grpc-transport/README.md)  
-- [`proto/model_context_protocol/mcp.proto`](../../packages/mcp-grpc-transport/proto/model_context_protocol/mcp.proto)  
-- [`src/server-http.ts`](../../src/server-http.ts) — ClawQL HTTP + optional gRPC  
-- [open-webui/mcpo](https://github.com/open-webui/mcpo) — prior art (MCP → OpenAPI, different stack)  
-- Vision & Roadmap: [`docs/vision/clawql-vision-roadmap.md`](../vision/clawql-vision-roadmap.md)  
+- [`packages/mcp-grpc-transport/README.md`](../../packages/mcp-grpc-transport/README.md)
+- [`proto/model_context_protocol/mcp.proto`](../../packages/mcp-grpc-transport/proto/model_context_protocol/mcp.proto)
+- [`src/server-http.ts`](../../src/server-http.ts) — ClawQL HTTP + optional gRPC
+- [open-webui/mcpo](https://github.com/open-webui/mcpo) — prior art (MCP → OpenAPI, different stack)
+- Vision & Roadmap: [`docs/vision/clawql-vision-roadmap.md`](../vision/clawql-vision-roadmap.md)

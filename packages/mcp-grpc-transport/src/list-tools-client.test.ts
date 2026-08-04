@@ -23,14 +23,9 @@ describe("listToolsUnaryGrpc", () => {
     started = await maybeStartGrpcMcpServer({
       createMcpServer: () => {
         const s = new McpServer({ name: "list-tools-client-test", version: "0.0.0" });
-        s.tool(
-          "echo",
-          "Echo",
-          { message: z.string() },
-          async ({ message }) => ({
-            content: [{ type: "text", text: message }],
-          })
-        );
+        s.tool("echo", "Echo", { message: z.string() }, async ({ message }) => ({
+          content: [{ type: "text", text: message }],
+        }));
         return s;
       },
       bindAddress: "127.0.0.1:0",

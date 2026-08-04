@@ -25,9 +25,9 @@ Call MCP tools by name over HTTP. Production deployments use **`mcp-grpc-transpo
 
 ## Do not confuse with ClawQL Core
 
-| Direction | Product | Audience |
-| --------- | ------- | -------- |
-| **OpenAPI → MCP** | ClawQL `search` / `execute` | Agents discovering upstream REST/GraphQL/gRPC APIs |
+| Direction         | Product                         | Audience                                                |
+| ----------------- | ------------------------------- | ------------------------------------------------------- |
+| **OpenAPI → MCP** | ClawQL `search` / `execute`     | Agents discovering upstream REST/GraphQL/gRPC APIs      |
 | **MCP → OpenAPI** | `mcp-openapi-gateway` (planned) | Workers / OpenWebUI / gateways that speak REST, not MCP |
 
 Use **“OpenAPI on-ramp”** or **“MCP tools as REST”** in marketing — not bare “OpenAPI gateway.”
@@ -36,26 +36,26 @@ Use **“OpenAPI on-ramp”** or **“MCP tools as REST”** in marketing — no
 
 ## Demo narrative (3 steps)
 
-1. **Swagger:** `POST /memory_recall` with JSON args → vault results.  
-2. **OpenAPI extensions:** show `info.x-clawql-grpc` (port 50051, `CallTool`, reflection, large-payload note).  
+1. **Swagger:** `POST /memory_recall` with JSON args → vault results.
+2. **OpenAPI extensions:** show `info.x-clawql-grpc` (port 50051, `CallTool`, reflection, large-payload note).
 3. **Same call over gRPC:** `grpcurl` / `callToolServerStreamingGrpc` — “this is what production and mesh should use.”
 
 ---
 
 ## Channels
 
-| Channel | When |
-| ------- | ---- |
-| Vision & Roadmap planned row | Now (design merged) |
-| npm README + Compose/Helm sidecar example | At MVP ship |
-| pragmaticvectors / blog | After MVP: “MCP tools as OpenAPI — gRPC underneath” |
-| Managed Edge Gateway docs | Optional companion port once edge hardening lands |
-| Announcement drafts | Bundle with next minor that publishes the package |
+| Channel                                   | When                                                |
+| ----------------------------------------- | --------------------------------------------------- |
+| Vision & Roadmap planned row              | Now (design merged)                                 |
+| npm README + Compose/Helm sidecar example | At MVP ship                                         |
+| pragmaticvectors / blog                   | After MVP: “MCP tools as OpenAPI — gRPC underneath” |
+| Managed Edge Gateway docs                 | Optional companion port once edge hardening lands   |
+| Announcement drafts                       | Bundle with next minor that publishes the package   |
 
 ---
 
 ## Success signals
 
-- External blogs/issues cite `mcp-openapi-gateway` **and** `mcp-grpc-transport` together.  
-- OpenWebUI / Worker samples use our OpenAPI URL rather than only Streamable HTTP.  
+- External blogs/issues cite `mcp-openapi-gateway` **and** `mcp-grpc-transport` together.
+- OpenWebUI / Worker samples use our OpenAPI URL rather than only Streamable HTTP.
 - `mcp-grpc-transport` npm traffic / GitHub clones rise after on-ramp launch (directional, not a hard KPI).

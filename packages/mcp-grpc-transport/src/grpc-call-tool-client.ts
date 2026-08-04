@@ -243,10 +243,14 @@ export async function listToolsUnaryGrpc(
 ): Promise<ListedMcpTool[]> {
   const Mcp = loadListToolsClientConstructor();
   const maxLen = options.maxMessageLength ?? resolveGrpcMaxMessageLengthFromEnv();
-  const client = new Mcp(options.address, options.credentials ?? grpc.credentials.createInsecure(), {
-    "grpc.max_receive_message_length": maxLen,
-    "grpc.max_send_message_length": maxLen,
-  });
+  const client = new Mcp(
+    options.address,
+    options.credentials ?? grpc.credentials.createInsecure(),
+    {
+      "grpc.max_receive_message_length": maxLen,
+      "grpc.max_send_message_length": maxLen,
+    }
+  );
 
   await new Promise<void>((resolve, reject) => {
     client.waitForReady(Date.now() + (options.readyDeadlineMs ?? 15_000), (e) =>
