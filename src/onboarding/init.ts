@@ -138,7 +138,7 @@ export async function runInit(options: InitOptions = {}): Promise<InitResult> {
   const envFile = await writeClawqlEnv(home);
 
   if (options.fromEnv) {
-    const parsed = loadDotenv({ path: resolve(options.fromEnv) }).parsed ?? {};
+    const parsed = loadDotenv({ path: resolve(options.fromEnv), quiet: true }).parsed ?? {};
     await mergeEnvIntoLocalProvidersVault(parsed, getLocalProvidersVaultPath(home));
   }
 

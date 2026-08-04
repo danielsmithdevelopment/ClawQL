@@ -6,6 +6,9 @@
  * 4. Local provider vault `vault/providers.json` → env (vault-first; does not override set keys)
  *
  * When `~/.ClawQL` exists and CLAWQL_OBSIDIAN_VAULT_PATH is unset, default memory vault to home.
+ *
+ * **MCP stdio:** dotenv ≥17 logs `◇ injected env …` via `console.log` unless `quiet: true`.
+ * That banner corrupts JSON-RPC on stdout and breaks Cursor/Claude Desktop tool discovery.
  */
 import { config } from "dotenv";
 import { existsSync, readFileSync } from "node:fs";
@@ -20,7 +23,8 @@ import { applyLocalProvidersVaultToEnv } from "./provider-vault/local-store.js";
 
 function loadEnvFile(path: string, override: boolean): void {
   if (!existsSync(path)) return;
-  config({ path, override });
+  // quiet: never write to stdout (MCP stdio / Cursor discovery)
+  config({ path, override, quiet: true });
 }
 
 function loadLocalProvidersVaultSync(): void {

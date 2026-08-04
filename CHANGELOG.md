@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **MCP stdio / Cursor discovery** — `dotenv` ≥17 prints `◇ injected env …` to **stdout** by default; that corrupts JSON-RPC and makes Cursor report `clawql` as failed tool discovery. `src/load-env.ts` now always passes **`quiet: true`**.
+
 ### Added
 
 - **`codegraph_sync`** — native TypeScript pipeline (index → Louvain communities → `GRAPH_REPORT.md` / `graph.html` → vault ingest). **No Python / Graphify CLI.** Optional `codegraph_sync_graphify` only imports an existing `graph.json` (or falls back to native). ([`docs/plugins/codegraph.md`](docs/plugins/codegraph.md)).
