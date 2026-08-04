@@ -30,7 +30,7 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 | `search-first-discovery` | Must `search` (decoy wrong op) | **New** — awaiting live A/B |
 | `execute-verify-loop` | dry-run `execute` trail (≥2) | **New** — awaiting live A/B |
 | `memory-roundtrip-ingest-recall` | Empty vault ingest→recall | **New** — awaiting live A/B |
-| `ouroboros-oscillation-escape` | Ouroboros stops strategy thrash | allow cell verified ([#759](https://github.com/danielsmithdevelopment/ClawQL/pull/759)); **deny matrix** wired |
+| `ouroboros-oscillation-escape` | Ouroboros stops strategy thrash | allow + **deny** both on 1.0 / off 0.0 ([30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277)) |
 
 Still missing live cells: audit, ATR/Panguard, PageIndex/hybrid, automation, sandbox.
 
