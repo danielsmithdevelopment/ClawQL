@@ -34,10 +34,6 @@ except Exception as exc:
     raise SystemExit(1)
 op = norm(d.get("operationId"))
 prov = str(d.get("provider") or "").strip().lower()
-expected = {
-    "security_advisories_list_global_advisories",
-    "security_advisories_list_global_advisories",
-}
 # path form security-advisories/list-global-advisories → same after norm
 ok = op == "security_advisories_list_global_advisories" and prov in ("github", "gh", "")
 if not ok:
