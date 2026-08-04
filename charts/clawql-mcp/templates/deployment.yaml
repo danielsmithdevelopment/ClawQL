@@ -301,11 +301,23 @@ spec:
             - name: CLAWQL_NATS_ENABLE_PUBLISH
               value: "1"
             {{- end }}
-            {{- if and .Values.enableWorkflow (include "clawql-mcp.natsConfigured" .) .Values.nats.appIntegration.embeddedConsumer (not .Values.nats.worker.enabled) }}
+            {{- if and (include "clawql-mcp.natsConfigured" .) .Values.nats.appIntegration.embeddedConsumer (not .Values.nats.worker.enabled) }}
+            {{- if or .Values.enableWorkflow .Values.nats.worker.idpPipeline .Values.nats.worker.coneshareFollowup }}
             - name: CLAWQL_NATS_ENABLE_CONSUMER
               value: "1"
+            {{- end }}
+            {{- if .Values.enableWorkflow }}
             - name: CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW
               value: "1"
+            {{- end }}
+            {{- if .Values.nats.worker.idpPipeline }}
+            - name: CLAWQL_NATS_CONSUMER_IDP_PIPELINE
+              value: "1"
+            {{- end }}
+            {{- if .Values.nats.worker.coneshareFollowup }}
+            - name: CLAWQL_NATS_CONSUMER_CONESHARE_FOLLOWUP
+              value: "1"
+            {{- end }}
             {{- end }}
             {{- if .Values.documentPipeline.enabled }}
             - name: TIKA_BASE_URL
@@ -317,6 +329,8 @@ spec:
             {{- if .Values.documentPipeline.classifier.enabled }}
             - name: CLASSIFIER_BASE_URL
               value: "http://{{ include "clawql-mcp.classifierName" . }}:{{ .Values.documentPipeline.classifier.service.port }}"
+            - name: CLASSIFIER_MIN_CONFIDENCE
+              value: {{ .Values.documentPipeline.classifier.env.minConfidence | quote }}
             {{- end }}
             {{- if .Values.documentPipeline.langextract.enabled }}
             - name: LANGEXTRACT_BASE_URL

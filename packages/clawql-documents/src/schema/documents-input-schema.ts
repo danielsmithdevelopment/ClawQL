@@ -110,8 +110,14 @@ export const IDP_CORRELATION_ID_DESCRIPTION =
   "Correlation id for audit, dashboard, and optional NATS hooks.";
 export const IDP_DOCUMENT_PATH_DESCRIPTION =
   "Nextcloud relative path for inbox file (substitutes ${document_path} / ${source_path} in templates).";
+export const IDP_PROCESSED_PATH_DESCRIPTION =
+  "Nextcloud relative path for processed upload (${processed_path}); default swaps inbox→processed.";
 export const IDP_DOCUMENT_URL_DESCRIPTION =
   "HTTP(S) URL for Docling layout parse (${document_url} template). Defaults from IDP_DOCUMENT_URL or Nextcloud WebDAV.";
+export const IDP_REDACT_LIST_DESCRIPTION =
+  "Stirling listOfText patterns (comma-separated). Falls back to CLAWQL_IDP_REDACT_LIST.";
+export const IDP_PDF_BASE64_DESCRIPTION =
+  "Optional seed PDF (base64) when skipping download; updated from Gotenberg/Stirling hop outputs.";
 export const IDP_STEP_ARGS_DESCRIPTION =
   "Per operationId execute args (merged over step argsTemplate).";
 export const IDP_SKIP_STAGES_DESCRIPTION =
@@ -143,8 +149,17 @@ export const RunIdpPipelineInputSchema = Schema.Struct({
   document_path: Schema.optional(
     Schema.String.annotations({ description: IDP_DOCUMENT_PATH_DESCRIPTION })
   ),
+  processed_path: Schema.optional(
+    Schema.String.annotations({ description: IDP_PROCESSED_PATH_DESCRIPTION })
+  ),
   document_url: Schema.optional(
     Schema.String.annotations({ description: IDP_DOCUMENT_URL_DESCRIPTION })
+  ),
+  redact_list: Schema.optional(
+    Schema.String.annotations({ description: IDP_REDACT_LIST_DESCRIPTION })
+  ),
+  pdf_base64: Schema.optional(
+    Schema.String.annotations({ description: IDP_PDF_BASE64_DESCRIPTION })
   ),
   step_args: Schema.optional(
     Schema.Record({

@@ -18,7 +18,7 @@ CLAWQL_ENABLE_CONESHARE=1
 CLAWQL_CONESHARE_WEBHOOK_TOKEN=shared-secret-for-automation-callbacks
 ```
 
-## Webhook (viewer analytics → vault)
+## Webhook (viewer analytics → NATS follow-up)
 
 Configure ConeShare automations to POST to the ClawQL MCP HTTP server:
 
@@ -26,9 +26,24 @@ Configure ConeShare automations to POST to the ClawQL MCP HTTP server:
 POST /idp/coneshare/webhook
 Authorization: Bearer <CLAWQL_CONESHARE_WEBHOOK_TOKEN>
 Content-Type: application/json
+
+{
+  "event_type": "viewer.opened",
+  "share_link_id": "abc",
+  "viewer_email": "analyst@example.com",
+  "correlation_id": "share-batch-1",
+  "clawql_share": { "workflow": { "namespace": "clawql", "name": "wf-vdr-review" } }
+}
 ```
 
-Events are persisted via **`memory_ingest`** when vault memory is enabled, else **`audit`**.
+| Path | Behavior |
+|------|----------|
+| Vault / audit | Always — **`memory_ingest`** when enabled, else **`audit`** |
+| NATS publish | `clawql.document.coneshare.viewer` when `CLAWQL_NATS_ENABLE_PUBLISH=1` |
+| Sync resume | Optional `CLAWQL_CONESHARE_WEBHOOK_RESUME_WORKFLOW=1` + `clawql_share` |
+| Async follow-up | Worker with `CLAWQL_NATS_CONSUMER_CONESHARE_FOLLOWUP=1` resumes Argo + optional Slack (`CLAWQL_CONESHARE_NOTIFY_CHANNEL`) |
+
+Helm: `nats.worker.coneshareFollowup=true`. See [nats-keda-worker.md](../deployment/nats-keda-worker.md).
 
 ## Discover operations
 

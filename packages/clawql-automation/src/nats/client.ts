@@ -8,17 +8,22 @@ import {
   type NatsConnection,
 } from "nats";
 import {
-  natsConfiguredForConsumer,
-  natsConfiguredForPublish,
+  natsConeshareFollowupConsumerDurable,
   natsDocumentSubjectRoot,
   natsHitlResumeConsumerDurable,
+  natsIdpPipelineConsumerDurable,
   natsJetStreamEnabled,
   natsStreamName,
   natsUrl,
   natsWorkflowSubjectRoot,
+  natsConfiguredForPublish,
+  natsHitlConsumerConfigured,
+  natsConsumerIdpPipelineEnabled,
+  natsConsumerConeshareFollowupEnabled,
+  natsDocumentConsumerConfigured,
 } from "./env.js";
 import type { DocumentEventEnvelope, WorkflowEventEnvelope } from "./envelope.js";
-import { workflowEventSubject } from "./envelope.js";
+import { documentEventSubject, workflowEventSubject } from "./envelope.js";
 
 const sc = StringCodec();
 
@@ -89,10 +94,17 @@ export type HitlCompletedConsumerHandler = (
   envelope: WorkflowEventEnvelope
 ) => Promise<{ ok: boolean; error?: string }>;
 
-let consumerAbort: AbortController | undefined;
-let consumerLoopPromise: Promise<void> | undefined;
+export type DocumentConsumerHandler = (
+  envelope: DocumentEventEnvelope
+) => Promise<{ ok: boolean; error?: string }>;
 
-export async function ensureHitlResumeConsumer(): Promise<void> {
+const consumerAborts: AbortController[] = [];
+const consumerLoops: Promise<void>[] = [];
+
+async function ensureDurableConsumer(opts: {
+  durable: string;
+  filterSubject: string;
+}): Promise<void> {
   if (!natsUrl() || !natsJetStreamEnabled()) {
     throw new Error("CLAWQL_NATS_URL and CLAWQL_NATS_JETSTREAM=1 are required");
   }
@@ -100,45 +112,62 @@ export async function ensureHitlResumeConsumer(): Promise<void> {
   const nc = await getConnection();
   const jsm = await nc.jetstreamManager();
   const streamName = natsStreamName();
-  const durable = natsHitlResumeConsumerDurable();
-  const filterSubject = workflowEventSubject("hitl.completed");
-
   try {
-    await jsm.consumers.info(streamName, durable);
+    await jsm.consumers.info(streamName, opts.durable);
   } catch {
     await jsm.consumers.add(streamName, {
-      durable_name: durable,
-      filter_subject: filterSubject,
+      durable_name: opts.durable,
+      filter_subject: opts.filterSubject,
       ack_policy: AckPolicy.Explicit,
       deliver_policy: DeliverPolicy.All,
     });
   }
 }
 
-export async function startHitlCompletedConsumer(
-  handler: HitlCompletedConsumerHandler
-): Promise<void> {
-  if (!natsConfiguredForConsumer()) return;
-  if (consumerLoopPromise) return;
+export async function ensureHitlResumeConsumer(): Promise<void> {
+  await ensureDurableConsumer({
+    durable: natsHitlResumeConsumerDurable(),
+    filterSubject: workflowEventSubject("hitl.completed"),
+  });
+}
 
+export async function ensureIdpPipelineConsumer(): Promise<void> {
+  // JetStream allows one filter_subject per durable — split inbox vs explicit pipeline requests.
+  const base = natsIdpPipelineConsumerDurable();
+  await ensureDurableConsumer({
+    durable: base,
+    filterSubject: documentEventSubject("inbox.arrived"),
+  });
+  await ensureDurableConsumer({
+    durable: `${base}-requested`,
+    filterSubject: documentEventSubject("pipeline.requested"),
+  });
+}
+
+export async function ensureConeshareFollowupConsumer(): Promise<void> {
+  await ensureDurableConsumer({
+    durable: natsConeshareFollowupConsumerDurable(),
+    filterSubject: documentEventSubject("coneshare.viewer"),
+  });
+}
+
+async function startConsumerLoop(opts: {
+  durable: string;
+  onMessage: (data: Uint8Array) => Promise<{ ok: boolean; error?: string }>;
+}): Promise<void> {
   const abort = new AbortController();
-  consumerAbort = abort;
+  consumerAborts.push(abort);
 
-  consumerLoopPromise = (async () => {
-    await ensureHitlResumeConsumer();
-
+  const loop = (async () => {
     const streamName = natsStreamName();
-    const durable = natsHitlResumeConsumerDurable();
-
     const js = await getJetStream();
-    const consumer = await js.consumers.get(streamName, durable);
+    const consumer = await js.consumers.get(streamName, opts.durable);
     const messages = await consumer.consume({ max_messages: 1 });
 
     for await (const msg of messages) {
       if (abort.signal.aborted) break;
-      const envelope = JSON.parse(sc.decode(msg.data)) as WorkflowEventEnvelope;
       try {
-        const result = await handler(envelope);
+        const result = await opts.onMessage(msg.data);
         if (result.ok) {
           msg.ack();
         } else {
@@ -152,13 +181,59 @@ export async function startHitlCompletedConsumer(
     /* loop exits on connection loss; restart requires process recycle */
   });
 
-  return consumerLoopPromise;
+  consumerLoops.push(loop);
+  // Keep the worker/CLI alive until the consume loop ends (or abort).
+  await loop;
+}
+
+export async function startHitlCompletedConsumer(
+  handler: HitlCompletedConsumerHandler
+): Promise<void> {
+  if (!natsHitlConsumerConfigured()) return;
+  await ensureHitlResumeConsumer();
+  await startConsumerLoop({
+    durable: natsHitlResumeConsumerDurable(),
+    onMessage: async (data) => {
+      const envelope = JSON.parse(sc.decode(data)) as WorkflowEventEnvelope;
+      return handler(envelope);
+    },
+  });
+}
+
+export async function startIdpPipelineConsumer(handler: DocumentConsumerHandler): Promise<void> {
+  if (!natsConsumerIdpPipelineEnabled() || !natsDocumentConsumerConfigured()) return;
+  await ensureIdpPipelineConsumer();
+  const onMessage = async (data: Uint8Array) => {
+    const envelope = JSON.parse(sc.decode(data)) as DocumentEventEnvelope;
+    return handler(envelope);
+  };
+  const base = natsIdpPipelineConsumerDurable();
+  await Promise.all([
+    startConsumerLoop({ durable: base, onMessage }),
+    startConsumerLoop({ durable: `${base}-requested`, onMessage }),
+  ]);
+}
+
+export async function startConeshareFollowupConsumer(
+  handler: DocumentConsumerHandler
+): Promise<void> {
+  if (!natsConsumerConeshareFollowupEnabled() || !natsDocumentConsumerConfigured()) return;
+  await ensureConeshareFollowupConsumer();
+  await startConsumerLoop({
+    durable: natsConeshareFollowupConsumerDurable(),
+    onMessage: async (data) => {
+      const envelope = JSON.parse(sc.decode(data)) as DocumentEventEnvelope;
+      return handler(envelope);
+    },
+  });
 }
 
 export async function stopNatsClient(): Promise<void> {
-  consumerAbort?.abort();
-  consumerAbort = undefined;
-  consumerLoopPromise = undefined;
+  for (const abort of consumerAborts) abort.abort();
+  const loops = [...consumerLoops];
+  consumerAborts.length = 0;
+  consumerLoops.length = 0;
+  await Promise.allSettled(loops);
   streamsEnsured = false;
   if (connectionPromise) {
     const nc = await connectionPromise.catch(() => undefined);
@@ -173,8 +248,8 @@ export async function stopNatsClient(): Promise<void> {
 
 /** Test hook — reset module singletons. */
 export function resetNatsClientForTests(): void {
-  consumerAbort = undefined;
-  consumerLoopPromise = undefined;
+  consumerAborts.length = 0;
+  consumerLoops.length = 0;
   streamsEnsured = false;
   connectionPromise = undefined;
   jetStreamClient = undefined;

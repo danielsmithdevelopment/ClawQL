@@ -40,6 +40,8 @@ import { maybeVerifyReleaseManifestAtStartup } from "./release-manifest-startup.
 import { handleLabelStudioWebhookRequest } from "clawql-automation/hitl/label-studio";
 import { configureHitlTransportDeps } from "./hitl-transport.js";
 import { handleConeshareWebhookRequest } from "./coneshare-webhook.js";
+import { handleNextcloudWebhookRequest } from "./nextcloud-webhook.js";
+import { handleIdpPipelineRunRequest } from "./idp-pipeline-run-http.js";
 import { handleLangfuseEvalWebhookRequest } from "./langfuse-eval-webhook.js";
 import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
 import {
@@ -318,6 +320,38 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         await handleConeshareWebhookRequest(req, res);
       } catch (err: unknown) {
         console.error("[clawql-mcp-http] POST /idp/coneshare/webhook error:", err);
+        if (!res.headersSent) {
+          res.status(500).json({
+            ok: false,
+            error: "internal server error",
+          });
+        }
+      }
+    });
+  }
+
+  if (optionalFlags.enableDocuments) {
+    app.post("/idp/nextcloud/webhook", createWebhookRateLimiter(), async (req, res) => {
+      try {
+        await handleNextcloudWebhookRequest(req, res);
+      } catch (err: unknown) {
+        console.error("[clawql-mcp-http] POST /idp/nextcloud/webhook error:", err);
+        if (!res.headersSent) {
+          res.status(500).json({
+            ok: false,
+            error: "internal server error",
+          });
+        }
+      }
+    });
+  }
+
+  if (optionalFlags.enableIdpPipeline) {
+    app.post("/idp/pipeline/run", createWebhookRateLimiter(), async (req, res) => {
+      try {
+        await handleIdpPipelineRunRequest(req, res);
+      } catch (err: unknown) {
+        console.error("[clawql-mcp-http] POST /idp/pipeline/run error:", err);
         if (!res.headersSent) {
           res.status(500).json({
             ok: false,

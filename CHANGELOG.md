@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **IDP tracking hygiene** — matrix + gap-closure plan mark **#241–#258** / OpenClaw profile **#227** as shipped; epic [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) checklist closed. Remaining IDP **Partial** rows: Stirling document-stage orchestration, Nextcloud background queue, Coneshare analytics depth, classifier train/promote BYO.
+- **IDP tracking hygiene** — matrix + gap-closure plan mark **#241–#258** / OpenClaw profile **#227** as shipped; epic [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) checklist closed.
+- **IDP document events over NATS** — Stirling hop artifact chaining, Nextcloud inbox webhook → JetStream → `run_idp_pipeline`, Coneshare viewer → resume/notify consumers, classifier BYO promote pin. Matrix Partial rows for those tracks are **Shipped**.
 - **Team vault auto-push** — quiet debounce default **2s** (coalesce bursts) plus **30s min interval** between pushes during sustained ingest (no R2 spam). Pending dirty writes still **flush on shutdown** so short-lived MCP/Cloud Agent processes do not drop notes. Env: `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`, `CLAWQL_SYNC_AUTO_PUSH_MIN_MS`.
 
 ### Fixed
@@ -19,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Stirling document-stage redact orchestration** — `run_idp_pipeline` chains PDF bytes (`pdf_base64` bag) into Stirling `redactPdfAuto` and Nextcloud processed upload; REST binary responses wrap as base64. Env: `CLAWQL_IDP_REDACT_LIST`, `CLAWQL_IDP_REQUIRE_STIRLING_REDACT`.
+- **Nextcloud → NATS IDP queue** — `POST /idp/nextcloud/webhook` publishes `clawql.document.inbox.arrived`; durable consumer `clawql-idp-pipeline` runs the pipeline (in-process or `POST /idp/pipeline/run`). Helm: `nats.worker.idpPipeline`.
+- **Coneshare analytics → NATS follow-up** — webhook publishes `clawql.document.coneshare.viewer`; consumer resumes Argo + optional Slack (`CLAWQL_CONESHARE_NOTIFY_CHANNEL`). Helm: `nats.worker.coneshareFollowup`.
+- **Classifier train/promote BYO** — [`deployment/samples/classifier-http/promote.sh`](deployment/samples/classifier-http/promote.sh) gates on metrics; Helm pins `documentPipeline.classifier.image.tag` / `MODEL_VERSION` / optional model PVC.
 - **Local Privacy Filter gateway backup** ([#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)) — opt-in `CLAWQL_ENABLE_PRIVACY_FILTER=1` runs a **second local** redact pass after Presidio (`maybeGatewayRedactText`). Reference sidecar [`deployment/samples/privacy-filter-http/`](deployment/samples/privacy-filter-http/) (demo heuristics / live `openai/privacy-filter` weights — **no OpenAI API**). Helm `enablePrivacyFilter` + `documentPipeline.privacyFilter`. Docs: [`docs/security/privacy-filter-local.md`](docs/security/privacy-filter-local.md).
 - **Vertical Docker Compose stacks** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) — **healthcare**, **legal**, and **education** stacks alongside lending (`docker/compose/*.compose.yml` + env templates + sample packs). Validate with **`make compose-vertical-config-test`**.
 - **HITL Label Studio pre-annotations** ([#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)) — optional **`tasks[].predictions`** on **`hitl_enqueue_label_studio`** (Zod + size limits); reference **`sample-tasks.json`** packs for lending / healthcare / legal / education.

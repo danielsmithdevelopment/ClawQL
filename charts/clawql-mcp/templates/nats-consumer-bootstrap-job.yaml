@@ -43,4 +43,18 @@ spec:
               value: {{ include "clawql-mcp.natsJetStreamConsumer" . | quote }}
             - name: CLAWQL_NATS_SUBJECT_WORKFLOW
               value: {{ .Values.nats.subjectConvention.workflow | quote }}
+            - name: CLAWQL_NATS_SUBJECT_DOCUMENT
+              value: {{ .Values.nats.subjectConvention.document | quote }}
+            {{- if .Values.enableWorkflow }}
+            - name: CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW
+              value: "1"
+            {{- end }}
+            {{- if .Values.nats.worker.idpPipeline }}
+            - name: CLAWQL_NATS_CONSUMER_IDP_PIPELINE
+              value: "1"
+            {{- end }}
+            {{- if .Values.nats.worker.coneshareFollowup }}
+            - name: CLAWQL_NATS_CONSUMER_CONESHARE_FOLLOWUP
+              value: "1"
+            {{- end }}
 {{- end }}

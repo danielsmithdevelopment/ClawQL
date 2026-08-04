@@ -1,13 +1,32 @@
-import { natsConfiguredForConsumer } from "./env.js";
+import {
+  natsConfiguredForConsumer,
+  natsConsumerConeshareFollowupEnabled,
+  natsConsumerIdpPipelineEnabled,
+  natsHitlConsumerConfigured,
+} from "./env.js";
 import { dispatchHitlCompletedEvent } from "./dispatch.js";
-import { startHitlCompletedConsumer, stopNatsClient } from "./client.js";
+import { dispatchConeshareViewerEvent, dispatchDocumentInboxEvent } from "./dispatch-document.js";
+import {
+  startConeshareFollowupConsumer,
+  startHitlCompletedConsumer,
+  startIdpPipelineConsumer,
+  stopNatsClient,
+} from "./client.js";
 
 let workerStarted = false;
 
 export function startNatsWorkflowWorker(): void {
   if (!natsConfiguredForConsumer() || workerStarted) return;
   workerStarted = true;
-  void startHitlCompletedConsumer(dispatchHitlCompletedEvent);
+  if (natsHitlConsumerConfigured()) {
+    void startHitlCompletedConsumer(dispatchHitlCompletedEvent);
+  }
+  if (natsConsumerIdpPipelineEnabled()) {
+    void startIdpPipelineConsumer(dispatchDocumentInboxEvent);
+  }
+  if (natsConsumerConeshareFollowupEnabled()) {
+    void startConeshareFollowupConsumer(dispatchConeshareViewerEvent);
+  }
 }
 
 export async function stopNatsWorkflowWorker(): Promise<void> {

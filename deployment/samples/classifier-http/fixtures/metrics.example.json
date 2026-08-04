@@ -1,0 +1,12 @@
+{
+  "model_version": "v1.2.0",
+  "holdout_docs": 400,
+  "macro_f1": 0.94,
+  "per_class": {
+    "w2": { "precision": 0.97, "recall": 0.99, "f1": 0.98 },
+    "1099": { "precision": 0.93, "recall": 0.91, "f1": 0.92 },
+    "unknown": { "precision": 0.9, "recall": 0.88, "f1": 0.89 }
+  },
+  "false_positive_rate_unknown": 0.015,
+  "evaluated_at": "2026-08-04T00:00:00.000Z"
+}

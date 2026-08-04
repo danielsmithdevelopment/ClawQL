@@ -34,9 +34,36 @@ Common operationIds (merged mode):
 
 ## IDP pipeline
 
-See **`packages/clawql-documents`** `DEFAULT_IDP_PIPELINE` — intake from `IDP/inbox/…`, output to `IDP/processed/…`. Full stack guide: [idp-pipeline.md](idp-pipeline.md).
+See **`packages/clawql-documents`** `DEFAULT_IDP_PIPELINE` — intake from `IDP/inbox/…`, output to `IDP/processed/…` (upload body is the chained PDF after Stirling). Full stack guide: [idp-pipeline.md](idp-pipeline.md) · [run_idp_pipeline](../mcp/idp-pipeline-runner.md).
+
+## Background queue (NATS)
+
+Configure Nextcloud Flow / an external script to POST when a file lands in `IDP/inbox/`:
+
+```http
+POST /idp/nextcloud/webhook
+Authorization: Bearer <CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN>
+Content-Type: application/json
+
+{
+  "document_path": "IDP/inbox/w2-sample.pdf",
+  "processed_path": "IDP/processed/w2-sample.pdf",
+  "redact_list": "SSN,EIN",
+  "correlation_id": "nc-flow-001"
+}
+```
+
+| Env | Purpose |
+|-----|---------|
+| `CLAWQL_ENABLE_NEXTCLOUD_WEBHOOK` | Force on/off (`1`/`0`); defaults on when `NEXTCLOUD_BASE_URL` is set |
+| `CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN` | Required in production |
+| `CLAWQL_NATS_ENABLE_PUBLISH=1` | Publish `clawql.document.inbox.arrived` |
+| `CLAWQL_NATS_CONSUMER_IDP_PIPELINE=1` | Worker runs `run_idp_pipeline` |
+
+Helm: `nats.appIntegration.publish=true` + `nats.worker.enabled=true` + `nats.worker.idpPipeline=true`. See [nats-keda-worker.md](../deployment/nats-keda-worker.md).
 
 ## Related
 
 - [IDP pipeline hub](idp-pipeline.md)
+- [NATS JetStream worker](../deployment/nats-keda-worker.md)
 - [Bundled provider matrix](../../providers/README.md)

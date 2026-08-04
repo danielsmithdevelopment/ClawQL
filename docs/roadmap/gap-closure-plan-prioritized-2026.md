@@ -95,7 +95,7 @@ This plan closes known **product gaps** called out for HITL, classification, act
 
 ### IDP master reference — wave 2 (full stack narrative)
 
-Cross-cutting items from the **consolidated IDP super-edition** roadmap beyond P1–P4: [IDP master requirements matrix](idp-master-requirements-matrix.md). **Wave-2 tracking issues below are shipped** (close hygiene 2026-08-04); remaining matrix **Partial** rows are follow-ups (Stirling orchestration, Nextcloud background queue, Coneshare analytics depth, classifier train BYO).
+Cross-cutting items from the **consolidated IDP super-edition** roadmap beyond P1–P4: [IDP master requirements matrix](idp-master-requirements-matrix.md). **Wave-2 tracking issues below are shipped** (close hygiene 2026-08-04). Former matrix **Partial** rows (Stirling document-stage redact, Nextcloud→NATS pipeline queue, Coneshare NATS follow-up, classifier train/promote BYO) are **Shipped** via NATS JetStream document consumers.
 
 | Track                                                              | Issue                                                                                                                                                                                           |
 | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

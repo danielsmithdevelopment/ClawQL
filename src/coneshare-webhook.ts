@@ -10,6 +10,10 @@ import { getClawqlOptionalToolFlags } from "clawql-api";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { getObsidianVaultPath } from "./vault-config.js";
 import { publishConeshareViewerEvent } from "clawql-automation/nats/publish-hooks";
+import {
+  parseHitlWorkflowRef,
+  resumeWorkflowFromHitlRef,
+} from "clawql-automation/workflow/suspend-resume";
 
 function webhookTokenExpected(): string | undefined {
   const t = process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN?.trim();
@@ -27,11 +31,18 @@ function webhookAuthOk(req: Request): boolean {
   return header === expected;
 }
 
+function coneshareWebhookResumeEnabled(): boolean {
+  const v = process.env.CLAWQL_CONESHARE_WEBHOOK_RESUME_WORKFLOW?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
 function extractConeshareEvent(body: unknown): {
   eventType: string;
   shareLinkId?: string;
   roomUrl?: string;
   viewerEmail?: string;
+  correlationId?: string;
+  clawqlShare?: unknown;
 } {
   if (!body || typeof body !== "object") {
     return { eventType: "unknown" };
@@ -60,7 +71,14 @@ function extractConeshareEvent(body: unknown): {
       : typeof row.email === "string"
         ? row.email
         : undefined;
-  return { eventType, shareLinkId, roomUrl, viewerEmail };
+  const correlationId =
+    typeof row.correlation_id === "string"
+      ? row.correlation_id
+      : typeof row.correlationId === "string"
+        ? row.correlationId
+        : undefined;
+  const clawqlShare = row.clawql_share ?? row.clawqlShare ?? undefined;
+  return { eventType, shareLinkId, roomUrl, viewerEmail, correlationId, clawqlShare };
 }
 
 /** POST **`/idp/coneshare/webhook`** — ConeShare automation / analytics callback. */
@@ -78,13 +96,23 @@ export async function handleConeshareWebhookRequest(req: Request, res: Response)
   }
 
   const body = req.body;
-  const { eventType, shareLinkId, roomUrl, viewerEmail } = extractConeshareEvent(body);
+  const { eventType, shareLinkId, roomUrl, viewerEmail, correlationId, clawqlShare } =
+    extractConeshareEvent(body);
+  const workflow_ref = clawqlShare ? parseHitlWorkflowRef(clawqlShare) : undefined;
   void publishConeshareViewerEvent({
+    correlation_id: correlationId,
+    workflow_ref,
     event_type: eventType,
     share_link_id: shareLinkId,
     room_url: roomUrl,
     viewer_email: viewerEmail,
   });
+
+  let resume: { attempted?: boolean; ok?: boolean; error?: string } | undefined;
+  if (coneshareWebhookResumeEnabled() && clawqlShare) {
+    resume = await resumeWorkflowFromHitlRef(clawqlShare);
+  }
+
   const flags = getClawqlOptionalToolFlags();
   const vault = getObsidianVaultPath();
 
@@ -97,6 +125,7 @@ export async function handleConeshareWebhookRequest(req: Request, res: Response)
     `- **share_link_id:** ${shareLinkId ?? "(none)"}`,
     `- **room_url:** ${roomUrl ?? "(none)"}`,
     `- **viewer:** ${viewerEmail ?? "(anonymous)"}`,
+    `- **correlation_id:** ${correlationId ?? "(none)"}`,
     "",
   ].join("\n");
 
@@ -109,6 +138,7 @@ export async function handleConeshareWebhookRequest(req: Request, res: Response)
       title: "ConeShare IDP webhook",
       insights,
       append: true,
+      sessionId: correlationId,
       toolOutputs: [`## Webhook payload\n\n\`\`\`json\n${truncated}\n\`\`\``],
     });
     const text = mem.content[0]?.text ?? "{}";
@@ -118,7 +148,7 @@ export async function handleConeshareWebhookRequest(req: Request, res: Response)
     } catch {
       parsed = { raw: text };
     }
-    res.status(200).json({ ok: true, durable: "memory_ingest", result: parsed });
+    res.status(200).json({ ok: true, durable: "memory_ingest", resume, result: parsed });
     return;
   }
 
@@ -128,5 +158,5 @@ export async function handleConeshareWebhookRequest(req: Request, res: Response)
     action: "coneshare_webhook",
     summary: `event=${eventType} share=${shareLinkId ?? "none"} viewer=${viewerEmail ?? "none"}`,
   });
-  res.status(200).json({ ok: true, durable: "audit" });
+  res.status(200).json({ ok: true, durable: "audit", resume });
 }

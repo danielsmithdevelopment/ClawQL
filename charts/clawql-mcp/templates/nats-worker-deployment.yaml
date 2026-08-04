@@ -1,6 +1,7 @@
 {{- if and .Values.nats.worker.enabled (include "clawql-mcp.natsConfigured" .) }}
-{{- if not .Values.enableWorkflow }}
-{{- fail "nats.worker.enabled requires enableWorkflow=true (HITL resume consumer)" }}
+{{- /* HITL and/or document consumers (IDP pipeline / Coneshare follow-up). */ -}}
+{{- if and (not .Values.enableWorkflow) (not .Values.nats.worker.idpPipeline) (not .Values.nats.worker.coneshareFollowup) }}
+{{- fail "nats.worker.enabled requires enableWorkflow=true and/or nats.worker.idpPipeline / nats.worker.coneshareFollowup" }}
 {{- end }}
 {{- if and .Values.nats.keda.enabled (not .Values.nats.enabled) }}
 {{- fail "nats.keda.enabled with in-cluster monitoring requires nats.enabled=true (or disable keda)" }}
@@ -70,14 +71,35 @@ spec:
             {{- end }}
             - name: CLAWQL_NATS_ENABLE_CONSUMER
               value: "1"
+            {{- if .Values.enableWorkflow }}
             - name: CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW
               value: "1"
+            {{- end }}
+            {{- if .Values.nats.worker.idpPipeline }}
+            - name: CLAWQL_NATS_CONSUMER_IDP_PIPELINE
+              value: "1"
+            - name: CLAWQL_ENABLE_IDP_PIPELINE
+              value: "1"
+            {{- if .Values.nats.worker.mcpInternalUrl }}
+            - name: CLAWQL_MCP_INTERNAL_URL
+              value: {{ .Values.nats.worker.mcpInternalUrl | quote }}
+            {{- else }}
+            - name: CLAWQL_MCP_INTERNAL_URL
+              value: "http://{{ include "clawql-mcp.fullname" . }}:{{ .Values.service.http.targetPort }}"
+            {{- end }}
+            {{- end }}
+            {{- if .Values.nats.worker.coneshareFollowup }}
+            - name: CLAWQL_NATS_CONSUMER_CONESHARE_FOLLOWUP
+              value: "1"
+            {{- end }}
             - name: CLAWQL_NATS_STREAM_WORKFLOW
               value: {{ include "clawql-mcp.natsJetStreamStream" . | quote }}
             - name: CLAWQL_NATS_CONSUMER_DURABLE
               value: {{ include "clawql-mcp.natsJetStreamConsumer" . | quote }}
             - name: CLAWQL_NATS_SUBJECT_WORKFLOW
               value: {{ .Values.nats.subjectConvention.workflow | quote }}
+            - name: CLAWQL_NATS_SUBJECT_DOCUMENT
+              value: {{ .Values.nats.subjectConvention.document | quote }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

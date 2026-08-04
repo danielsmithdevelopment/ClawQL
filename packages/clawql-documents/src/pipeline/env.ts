@@ -25,3 +25,23 @@ export function idpPipelineRetryDelayMs(): number {
 export function merklePerHopEnabled(): boolean {
   return envTruthy(process.env.CLAWQL_MERKLE_ENABLED);
 }
+
+/** Comma-separated Stirling `listOfText` patterns (document-stage redact). */
+export function idpRedactList(): string {
+  return (
+    process.env.CLAWQL_IDP_REDACT_LIST?.trim() ||
+    process.env.CLAWQL_STIRLING_REDACT_LIST?.trim() ||
+    ""
+  );
+}
+
+export function idpRedactUseRegex(): boolean {
+  const raw = process.env.CLAWQL_IDP_REDACT_USE_REGEX?.trim().toLowerCase();
+  if (raw === undefined || raw === "") return true;
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
+/** When true, fail the pipeline if the Stirling redact hop is skipped. */
+export function idpRequireStirlingRedact(): boolean {
+  return envTruthy(process.env.CLAWQL_IDP_REQUIRE_STIRLING_REDACT);
+}

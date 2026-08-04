@@ -49,6 +49,17 @@ export const DEFAULT_IDP_PIPELINE: IdpPipelineStep[] = [
     stage: "stirling",
     operationId: "stirling::redactPdfAuto",
     label: "Redact PII (Stirling)",
+    argsTemplate: {
+      fileInput: "${pdf_base64}",
+      fileInputEncoding: "base64",
+      fileInputFileName: "document.pdf",
+      listOfText: "${redact_list}",
+      useRegex: true,
+      wholeWordSearch: false,
+      redactColor: "#000000",
+      customPadding: 0.1,
+      convertPDFToImage: false,
+    },
   },
   {
     stage: "paperless",
@@ -64,7 +75,12 @@ export const DEFAULT_IDP_PIPELINE: IdpPipelineStep[] = [
     stage: "nextcloud",
     operationId: "nextcloud::nextcloud_webdav_upload",
     label: "Sync processed file to Nextcloud",
-    argsTemplate: { username: "${NEXTCLOUD_USERNAME}", filePath: "IDP/processed/document.pdf" },
+    argsTemplate: {
+      username: "${NEXTCLOUD_USERNAME}",
+      filePath: "${processed_path}",
+      body: "${pdf_base64}",
+      bodyEncoding: "base64",
+    },
   },
   {
     stage: "coneshare",

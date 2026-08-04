@@ -126,11 +126,35 @@ High-confidence path: skip HITL, continue to Paperless/Onyx **`execute`** steps.
 
 ## 7. Promote / rollback
 
-| Action       | Steps                                                                                                                     |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| **Promote**  | Tag image `v1.2.0` → update Argo / Helm values → run smoke on [W-2 sample](../../deployment/samples/lending-w2/README.md) |
-| **Rollback** | Revert image tag or `CLASSIFIER_MODEL_URI`; re-run eval suite                                                             |
-| **Audit**    | `memory_ingest` model version + metrics snapshot per promote                                                              |
+Use the sample gate script after holdout eval:
+
+```bash
+./deployment/samples/classifier-http/promote.sh \
+  --metrics deployment/samples/classifier-http/fixtures/metrics.example.json \
+  --tag v1.2.0 \
+  --helm-print
+```
+
+Gates (override with env): macro F1 ≥ `CLASSIFIER_PROMOTE_MACRO_F1` (0.92), W-2 recall ≥ `CLASSIFIER_PROMOTE_W2_RECALL` (0.98), unknown FPR ≤ `CLASSIFIER_PROMOTE_UNKNOWN_FPR` (0.02).
+
+| Action       | Steps                                                                                                                      |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| **Promote**  | Pass `promote.sh` → pin Helm `documentPipeline.classifier.image.tag` + `env.modelVersion` (optional model PVC) → smoke W-2 |
+| **Rollback** | Revert image tag / `MODEL_VERSION` / PVC; re-run eval suite                                                                |
+| **Audit**    | `memory_ingest` title=`Classifier promote <tag>` with metrics.json snapshot                                                |
+
+Helm pin example:
+
+```bash
+helm upgrade --install clawql charts/clawql-mcp \
+  --set enableIdpClassifier=true \
+  --set documentPipeline.classifier.enabled=true \
+  --set documentPipeline.classifier.image.tag=v1.2.0 \
+  --set documentPipeline.classifier.env.modelVersion=v1.2.0 \
+  --set documentPipeline.classifier.env.minConfidence=0.85
+```
+
+Optional BYO weights: set `documentPipeline.classifier.model.existingClaim` + `env.modelPath` / `MODEL_PATH`.
 
 ---
 
