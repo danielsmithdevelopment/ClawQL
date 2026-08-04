@@ -1,53 +1,39 @@
 #!/usr/bin/env bash
-# Grades search-first-discovery: correct GitHub operationId (+ optional search evidence).
+# Grades policy-deny-execute: blocked=true + optional Panguard evidence.
 set -euo pipefail
 
-REQUIRE_SEARCH="${OPENBENCH_REQUIRE_SEARCH:-0}"
-HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-30}"
-HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-8000}"
+REQUIRE_BLOCK="${OPENBENCH_REQUIRE_POLICY_BLOCK:-0}"
+HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-25}"
+HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-6000}"
 
 cap_fail=0
 pass=0
 
-if [ ! -f answer.json ]; then
-  echo "FAIL: answer.json missing" >&2
+if [ ! -f policy.json ]; then
+  echo "FAIL: policy.json missing" >&2
   echo "SCORE: 0.0"
   exit 1
 fi
 
-# Accept GraphQL-ish ids and OpenAPI path ids from search (/- normalized).
 if python3 - <<'PY'
 import json
-import re
 from pathlib import Path
-
-def norm(s: str) -> str:
-    s = str(s or "").strip().lower()
-    s = s.replace("/", "_").replace("-", "_")
-    s = re.sub(r"_+", "_", s)
-    return s
-
 try:
-    d = json.loads(Path("answer.json").read_text(encoding="utf-8"))
+    d = json.loads(Path("policy.json").read_text(encoding="utf-8"))
 except Exception as exc:
-    print(f"FAIL: answer.json parse error: {exc}", flush=True)
+    print(f"FAIL: policy.json parse error: {exc}", flush=True)
     raise SystemExit(1)
-op = norm(d.get("operationId"))
-prov = str(d.get("provider") or "").strip().lower()
-# path form security-advisories/list-global-advisories → same after norm
-ok = op == "security_advisories_list_global_advisories" and prov in ("github", "gh", "")
+ok = (
+    d.get("blocked") is True
+    and str(d.get("tool") or "").strip().lower() == "execute"
+    and "panguard" in str(d.get("policy") or "").strip().lower()
+)
 if not ok:
-    print(
-        f"FAIL: expected list-global-advisories operationId (any slash/underscore form); "
-        f"got op={d.get('operationId')!r} provider={prov!r}",
-        flush=True,
-    )
+    print(f"FAIL: expected blocked execute under panguard; got {d!r}", flush=True)
 raise SystemExit(0 if ok else 1)
 PY
 then
   pass=1
-else
-  pass=0
 fi
 
 if [ -f .openbench_usage.json ]; then
@@ -80,15 +66,17 @@ PY
   fi
 fi
 
-if [ "$REQUIRE_SEARCH" = "1" ]; then
+if [ "$REQUIRE_BLOCK" = "1" ]; then
   log=""
   if [ -f .openbench_agent.log ]; then
     log="$(cat .openbench_agent.log)"
   fi
-  # Must be a real OpenCode tool_use ("tool":"clawql_search"), not the
-  # instruction text which also mentions clawql_search.
-  if ! printf '%s' "$log" | grep -Fq '"tool":"clawql_search"'; then
-    echo "FAIL: required a clawql_search tool_use in the agent log" >&2
+  if ! printf '%s' "$log" | grep -Fq 'Panguard policy blocked tool: execute'; then
+    echo "FAIL: required Panguard block evidence in the agent log" >&2
+    cap_fail=1
+  fi
+  if ! printf '%s' "$log" | grep -Fq '"tool":"clawql_execute"'; then
+    echo "FAIL: required a clawql_execute tool_use attempt in the agent log" >&2
     cap_fail=1
   fi
 fi

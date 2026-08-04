@@ -1,26 +1,24 @@
 # Discover the correct GitHub API operation
 
-You must identify the **exact** ClawQL / OpenAPI `operationId` that lists
-**global** GitHub security advisories (not repository-scoped advisories).
+Identify the ClawQL/OpenAPI operation that **lists global GitHub security
+advisories** (not repository-scoped advisories).
 
-## Critical rule
+## Rules
 
-If you have a **`search`** (or `clawql_search`) tool, you **must** call it before
-writing an answer. Query for global security advisories / list global advisories.
-Do **not** trust `decoy/` notes — they name a wrong operation on purpose.
+1. If you have a **`search`** / `clawql_search` tool, you **must** call it and use
+   its result. Guessing from model memory or `decoy/` is invalid.
+2. Passing requires a `search` tool call in this run (filesystem/decoy alone fails).
+3. Ignore `decoy/` — it names a wrong operation on purpose.
 
-If you do **not** have search, you may only use workspace files (including decoys).
+## Artifact
 
-## Required artifact
-
-Write a JSON file at relative path `answer.json` (not absolute paths) with:
+Write relative path `answer.json`:
 
 ```json
 {
-  "operationId": "<exact operation id from search>",
+  "operationId": "<id returned by search>",
   "provider": "github"
 }
 ```
 
-Do not call live APIs. The checker only validates the discovered operation id.
-Stop after writing `answer.json`.
+Do not call live APIs. Stop after writing `answer.json`.

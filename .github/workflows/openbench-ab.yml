@@ -23,6 +23,9 @@ on:
           - search-first-discovery
           - execute-verify-loop
           - memory-roundtrip-ingest-recall
+          - audit-checkpoints
+          - cache-scratch-handoff
+          - policy-deny-execute
           - ouroboros-oscillation-escape
         default: all
       model:
@@ -105,12 +108,12 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             TASK="${{ inputs.task }}"
             if [ "$TASK" = "all" ] || [ -z "$TASK" ]; then
-              echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow","search-first-discovery","execute-verify-loop","memory-roundtrip-ingest-recall"]' >> "$GITHUB_OUTPUT"
+              echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow","search-first-discovery","execute-verify-loop","memory-roundtrip-ingest-recall","audit-checkpoints","cache-scratch-handoff","policy-deny-execute"]' >> "$GITHUB_OUTPUT"
             else
               echo "tasks=[\"${TASK}\"]" >> "$GITHUB_OUTPUT"
             fi
           else
-            echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow","search-first-discovery","execute-verify-loop","memory-roundtrip-ingest-recall"]' >> "$GITHUB_OUTPUT"
+            echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow","search-first-discovery","execute-verify-loop","memory-roundtrip-ingest-recall","audit-checkpoints","cache-scratch-handoff","policy-deny-execute"]' >> "$GITHUB_OUTPUT"
           fi
 
   ab-compare:
@@ -178,6 +181,18 @@ jobs:
           echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
           echo "::notice::memory-roundtrip-ingest-recall → arms=clawql-on,off timeout=180s"
+
+      - name: Audit / cache / policy task clamps
+        if: matrix.task == 'audit-checkpoints' || matrix.task == 'cache-scratch-handoff' || matrix.task == 'policy-deny-execute'
+        run: |
+          echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
+          echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
+          if [ "${{ matrix.task }}" = "policy-deny-execute" ]; then
+            echo "CLAWQL_PROVIDER=github" >> "$GITHUB_ENV"
+            echo "CLAWQL_PANGUARD_IN_PROCESS=1" >> "$GITHUB_ENV"
+            echo "CLAWQL_PANGUARD_BLOCK_TOOLS=execute" >> "$GITHUB_ENV"
+          fi
+          echo "::notice::${{ matrix.task }} → arms=clawql-on,off timeout=180s"
 
       - name: Credential preflight
         id: preflight

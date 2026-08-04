@@ -24,15 +24,18 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 
 | Task | Primary claim | Verified shape |
 | ---- | ------------- | -------------- |
-| `memory-dependent-continuation` | Vault recall beats guessing after seed removal | clawql-on ≥ off ([#758](https://github.com/danielsmithdevelopment/ClawQL/pull/758) sweep) |
-| `token-budget-constrained` | Recall nested recipe + ignore decoy noise under token score | clawql-on ≥ off (same) |
-| `multi-provider-api-workflow` | Vault notes → correct Worker/wrangler scaffold | clawql-on ≥ off (same) |
-| `search-first-discovery` | Must `search` (decoy wrong op) | **New** — awaiting live A/B |
-| `execute-verify-loop` | dry-run `execute` trail (≥2) | **New** — awaiting live A/B |
-| `memory-roundtrip-ingest-recall` | Empty vault ingest→recall | **New** — awaiting live A/B |
+| `memory-dependent-continuation` | Vault recall beats guessing after seed removal | on **1.0** / off **0.333** ([30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)) |
+| `token-budget-constrained` | Recall nested recipe + ignore decoy noise under token score | on **1.0** / off **0.0** (same) |
+| `multi-provider-api-workflow` | Vault notes → correct Worker/wrangler scaffold | on **1.0** / off **0.75** (same) |
+| `memory-roundtrip-ingest-recall` | Empty vault ingest→recall | on **1.0** / off **0.0** (same) |
+| `search-first-discovery` | Must `search` (decoy wrong op) | prior tie 1.0/1.0 (guess); **tool_use evidence both arms** pending re-run |
+| `execute-verify-loop` | dry-run `execute` trail (≥2) | prior tie 1.0/1.0 (invented trail); **tool_use evidence both arms** pending re-run |
+| `audit-checkpoints` | `audit` append×3 + list → trail | **Shipped** — awaiting live A/B |
+| `cache-scratch-handoff` | `cache` set/get secret assembly | **Shipped** — awaiting live A/B |
+| `policy-deny-execute` | In-process Panguard blocks `execute` | **Shipped** — awaiting live A/B |
 | `ouroboros-oscillation-escape` | Ouroboros stops strategy thrash | allow + **deny** both on 1.0 / off 0.0 ([30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277)) |
 
-Still missing live cells: audit, ATR/Panguard, PageIndex/hybrid, automation, sandbox.
+Still missing live cells: PageIndex/hybrid, codegraph, schedule/notify, sandbox, composed recipes, n≥3 trials.
 
 ---
 
@@ -44,17 +47,17 @@ Legend: **Live** = OpenBench A/B · **Context** = planning-context stats · **Un
 
 | Capability | Claim | Evidence | Next OpenBench / note |
 | ---------- | ----- | -------- | --------------------- |
-| `search` | Discover ops without stuffing full OpenAPI | **Context** strong; agent path implicit in multi | Explicit **search-first** task: wrong hard-coded `operationId` in workspace; only `search` finds the right one |
-| `execute` | Typed call + dry-run / verify | Unit + skills; weak graded mutate→verify | **Safe mutation** task: read → mutate → re-read; score on before/after artifact (offline mock provider) |
-| `cache` | Ephemeral scratch across turns | Unit / skill | Task that **fails without** `cache.set/get` mid-workflow (multi-step secret handoff) |
-| `audit` | Append/list trail during a run | Unit | Checker requires `audit.list` to contain checkpoint markers; on vs off |
+| `search` | Discover ops without stuffing full OpenAPI | **Live task** `search-first-discovery` (tool_use evidence; re-run after guess fix) | Confirm on WIN / off FAIL under `"tool":"clawql_search"` |
+| `execute` | Typed call + dry-run / verify | **Live task** `execute-verify-loop` (tool_use ≥2 + dry_run; re-run after invent fix) | Confirm on WIN / off FAIL |
+| `cache` | Ephemeral scratch across turns | **Live task** `cache-scratch-handoff` (shipped) | Confirm live A/B |
+| `audit` | Append/list trail during a run | **Live task** `audit-checkpoints` (shipped) | Confirm live A/B |
 
 ### Memory (default on)
 
 | Capability | Claim | Evidence | Next OpenBench / note |
 | ---------- | ----- | -------- | --------------------- |
 | `memory_recall` (vault) | Prior decisions survive seed removal | **Live** (memory + token + multi) | Multi-trial n≥5; adversarial decoy vault notes |
-| `memory_ingest` | Durable write of outcomes | Skill + Cloud Agent probes; not graded | Task: ingest mid-run → second agent/session must recall (two-phase checker) |
+| `memory_ingest` | Durable write of outcomes | **Live** `memory-roundtrip-ingest-recall` on 1.0 / off 0.0 ([30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)) | Multi-trial n≥3; two-session recall |
 | `memory_sync` (R2/S3) | Team vault reconcile | Docs / Cloud Agent e2e guide | Ops smoke, not OpenBench (needs bucket secrets). Keep as **sync ensure** CI probe |
 | Hybrid `sources` (`vector` / `pageindex` / `onyx` / `codegraph`) | Multi-backend recall | Unit + flags | **Hybrid recall** task: answer only in PageIndex tree or vector chunk, not raw vault keyword |
 | `pageindex_*` | Hierarchical doc Q&A without stuffing full text | Unit | Seed a long doc → `pageindex_build_tree` → answer via traverse/synthesize |
@@ -93,7 +96,7 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 
 | Capability | Claim | Evidence | Next OpenBench / note |
 | ---------- | ----- | -------- | --------------------- |
-| Panguard / JWT ATR proxy | Block denied tools synchronously | Docs + proxy tests | **Policy deny** task: agent tempted to call blocked `execute`; on-arm must stop + report; score on no side effect |
+| Panguard / JWT ATR proxy | Block denied tools synchronously | **Live task** `policy-deny-execute` (in-process Panguard deny list; shipped) | Confirm live A/B; later full JWT ATR proxy cell |
 | Presidio redaction | PII stripped on execute/ingest | Unit / gateway | Ingest path with SSN/email fixtures; checker fails if vault retains raw PII |
 | x402 / payments gate | Paywalled tools | Package tests | Later; mock 402 challenge |
 
@@ -115,27 +118,27 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 
 ### P0 — core product story
 
-1. ~~**Search-first discovery**~~ — task shipped (`search-first-discovery`); confirm live WIN.  
-2. ~~**Execute verify loop**~~ — task shipped (`execute-verify-loop`, dry-run); confirm live WIN.  
-3. ~~**Memory ingest → recall**~~ — task shipped (`memory-roundtrip-ingest-recall`); confirm live WIN.  
+1. ~~**Search-first discovery**~~ — task shipped; prior live **tie** (off guessed id) → fixed with `"tool":"clawql_search"` evidence both arms.  
+2. ~~**Execute verify loop**~~ — task shipped; prior live **tie** (off invented trail) → fixed with clawql_execute tool_use ≥2 both arms.  
+3. ~~**Memory ingest → recall**~~ — verified on 1.0 / off 0.0 ([30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)).  
 4. ~~**Ouroboros `doom_loop` deny A/B**~~ — verified on 1.0 / off 0.0 (n=1).  
-5. **Audit checkpoints** — trail required for full score.  
-6. **Policy / ATR deny** — security claim customers actually buy.
+5. ~~**Audit checkpoints**~~ — task shipped (`audit-checkpoints`); confirm live WIN.  
+6. ~~**Policy / ATR deny**~~ — task shipped (`policy-deny-execute` + Panguard env forward); confirm live WIN.  
+7. ~~**Cache scratch handoff**~~ — task shipped (`cache-scratch-handoff`); confirm live WIN.
 
 ### P1 — memory & docs depth (where “tons of tooling” lives)
 
-6. **PageIndex long-doc Q&A**  
-7. **Hybrid recall source pin** (vector or pageindex only)  
-8. **Codegraph-guided edit**  
-9. **External ingest → continue**  
-10. **Cache scratch handoff** across turns  
+8. **PageIndex long-doc Q&A**  
+9. **Hybrid recall source pin** (vector or pageindex only)  
+10. **Codegraph-guided edit**  
+11. **External ingest → continue**  
 
 ### P2 — automation / sandbox / composed
 
-11. **Schedule dry_run synthetic**  
-12. **Notify mock Slack**  
-13. **Sandbox-trusted compute**  
-14. **Composed safe-rollout** (search→execute×2→audit→ingest)  
+12. **Schedule dry_run synthetic**  
+13. **Notify mock Slack**  
+14. **Sandbox-trusted compute**  
+15. **Composed safe-rollout** (search→execute×2→audit→ingest)  
 
 ### P3 — keep out of PR OpenBench (ops / cluster / paid SaaS)
 

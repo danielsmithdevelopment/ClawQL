@@ -130,6 +130,16 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
   if (process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS?.trim()) {
     env.CLAWQL_OUROBOROS_MAX_GENERATIONS = process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS.trim();
   }
+  // Provider pin + in-process Panguard deny list for OpenBench policy cells.
+  if (process.env.CLAWQL_PROVIDER?.trim()) {
+    env.CLAWQL_PROVIDER = process.env.CLAWQL_PROVIDER.trim();
+  }
+  if (process.env.CLAWQL_PANGUARD_IN_PROCESS?.trim()) {
+    env.CLAWQL_PANGUARD_IN_PROCESS = process.env.CLAWQL_PANGUARD_IN_PROCESS.trim();
+  }
+  if (process.env.CLAWQL_PANGUARD_BLOCK_TOOLS?.trim()) {
+    env.CLAWQL_PANGUARD_BLOCK_TOOLS = process.env.CLAWQL_PANGUARD_BLOCK_TOOLS.trim();
+  }
   return env;
 }
 

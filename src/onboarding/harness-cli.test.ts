@@ -116,6 +116,28 @@ describe("buildOpencodeConfigContent", () => {
     }
   });
 
+  it("clawqlMcpChildEnv forwards provider pin and Panguard deny list", () => {
+    const prevProv = process.env.CLAWQL_PROVIDER;
+    const prevIn = process.env.CLAWQL_PANGUARD_IN_PROCESS;
+    const prevBlock = process.env.CLAWQL_PANGUARD_BLOCK_TOOLS;
+    process.env.CLAWQL_PROVIDER = "github";
+    process.env.CLAWQL_PANGUARD_IN_PROCESS = "1";
+    process.env.CLAWQL_PANGUARD_BLOCK_TOOLS = "execute";
+    try {
+      const env = clawqlMcpChildEnv("/tmp/policy-home");
+      expect(env.CLAWQL_PROVIDER).toBe("github");
+      expect(env.CLAWQL_PANGUARD_IN_PROCESS).toBe("1");
+      expect(env.CLAWQL_PANGUARD_BLOCK_TOOLS).toBe("execute");
+    } finally {
+      if (prevProv === undefined) delete process.env.CLAWQL_PROVIDER;
+      else process.env.CLAWQL_PROVIDER = prevProv;
+      if (prevIn === undefined) delete process.env.CLAWQL_PANGUARD_IN_PROCESS;
+      else process.env.CLAWQL_PANGUARD_IN_PROCESS = prevIn;
+      if (prevBlock === undefined) delete process.env.CLAWQL_PANGUARD_BLOCK_TOOLS;
+      else process.env.CLAWQL_PANGUARD_BLOCK_TOOLS = prevBlock;
+    }
+  });
+
   it("openbenchOpencodePermissions can allow doom_loop for thrash experiments", () => {
     const prev = process.env.CLAWQL_OPENBENCH_DOOM_LOOP;
     try {

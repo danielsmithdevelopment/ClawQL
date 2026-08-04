@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Grades search-first-discovery: correct GitHub operationId (+ optional search evidence).
+# Grades cache-scratch-handoff: assembled token + optional cache evidence.
 set -euo pipefail
 
-REQUIRE_SEARCH="${OPENBENCH_REQUIRE_SEARCH:-0}"
-HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-30}"
-HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-8000}"
+REQUIRE_CACHE="${OPENBENCH_REQUIRE_CACHE:-0}"
+HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-25}"
+HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-6000}"
+EXPECTED="alpha42-zeta99"
 
 cap_fail=0
 pass=0
@@ -15,39 +16,23 @@ if [ ! -f answer.json ]; then
   exit 1
 fi
 
-# Accept GraphQL-ish ids and OpenAPI path ids from search (/- normalized).
-if python3 - <<'PY'
+if python3 - <<PY
 import json
-import re
 from pathlib import Path
-
-def norm(s: str) -> str:
-    s = str(s or "").strip().lower()
-    s = s.replace("/", "_").replace("-", "_")
-    s = re.sub(r"_+", "_", s)
-    return s
-
 try:
     d = json.loads(Path("answer.json").read_text(encoding="utf-8"))
 except Exception as exc:
     print(f"FAIL: answer.json parse error: {exc}", flush=True)
     raise SystemExit(1)
-op = norm(d.get("operationId"))
-prov = str(d.get("provider") or "").strip().lower()
-# path form security-advisories/list-global-advisories → same after norm
-ok = op == "security_advisories_list_global_advisories" and prov in ("github", "gh", "")
+token = str(d.get("token") or "").strip()
+src = str(d.get("source") or "").strip().lower()
+ok = token == "${EXPECTED}" and "cache" in src
 if not ok:
-    print(
-        f"FAIL: expected list-global-advisories operationId (any slash/underscore form); "
-        f"got op={d.get('operationId')!r} provider={prov!r}",
-        flush=True,
-    )
+    print(f"FAIL: expected token=${EXPECTED} source~cache; got {d!r}", flush=True)
 raise SystemExit(0 if ok else 1)
 PY
 then
   pass=1
-else
-  pass=0
 fi
 
 if [ -f .openbench_usage.json ]; then
@@ -80,15 +65,23 @@ PY
   fi
 fi
 
-if [ "$REQUIRE_SEARCH" = "1" ]; then
+if [ "$REQUIRE_CACHE" = "1" ]; then
   log=""
   if [ -f .openbench_agent.log ]; then
     log="$(cat .openbench_agent.log)"
   fi
-  # Must be a real OpenCode tool_use ("tool":"clawql_search"), not the
-  # instruction text which also mentions clawql_search.
-  if ! printf '%s' "$log" | grep -Fq '"tool":"clawql_search"'; then
-    echo "FAIL: required a clawql_search tool_use in the agent log" >&2
+  # Real tool_use only — instruction text also mentions cache/set/get.
+  cache_hits="$(printf '%s' "$log" | grep -Fci '"tool":"clawql_cache"' || true)"
+  if [ "${cache_hits:-0}" -lt 2 ]; then
+    echo "FAIL: required ≥2 clawql_cache tool_use calls (got ${cache_hits:-0})" >&2
+    cap_fail=1
+  fi
+  if ! printf '%s' "$log" | grep -Fq '"operation":"set"'; then
+    echo "FAIL: required cache operation=set in tool_use input" >&2
+    cap_fail=1
+  fi
+  if ! printf '%s' "$log" | grep -Fq '"operation":"get"'; then
+    echo "FAIL: required cache operation=get in tool_use input" >&2
     cap_fail=1
   fi
 fi

@@ -126,6 +126,32 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "empty_vault": True,
         "require_memory_roundtrip": True,
     },
+    "audit-checkpoints": {
+        "max_turns": 25,
+        "max_tokens": 6000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        "disable_memory": True,
+        "require_audit": True,
+    },
+    "cache-scratch-handoff": {
+        "max_turns": 25,
+        "max_tokens": 6000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        "disable_memory": True,
+        "require_cache": True,
+    },
+    "policy-deny-execute": {
+        "max_turns": 25,
+        "max_tokens": 6000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        "disable_memory": True,
+        "require_search": True,
+        "require_policy_block": True,
+        "panguard_block_tools": "execute",
+    },
 }
 
 # Appended only to ouroboros-on so off cannot one-shot the correct recipe.
@@ -646,6 +672,7 @@ def run_arm_on(
     require_search: bool = False,
     require_execute: bool = False,
     require_memory_roundtrip: bool = False,
+    panguard_block_tools: str | None = None,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
     clawql = resolve_clawql()
@@ -716,12 +743,17 @@ def run_arm_on(
     if arm.startswith("ouroboros"):
         env["CLAWQL_OPENBENCH_DOOM_LOOP"] = resolve_doom_loop_mode(task_hard_caps)
 
-    # Search / execute tasks need GitHub (or similar) in the merge for discovery.
-    if require_search or require_execute:
+    # Search / execute / policy tasks need GitHub (or similar) in the merge.
+    if require_search or require_execute or panguard_block_tools:
         env.setdefault("CLAWQL_PROVIDER", "github")
         env["CLAWQL_BUNDLED_OFFLINE"] = "1"
         if disable_memory:
             env["CLAWQL_ENABLE_MEMORY"] = "0"
+
+    # In-process Panguard deny list (policy-deny-execute A/B).
+    if panguard_block_tools:
+        env["CLAWQL_PANGUARD_IN_PROCESS"] = "1"
+        env["CLAWQL_PANGUARD_BLOCK_TOOLS"] = str(panguard_block_tools)
 
     t0 = time.monotonic()
     timed_out = False
@@ -1050,16 +1082,18 @@ def render_markdown(report: dict) -> str:
     elif task == "search-first-discovery":
         interp.extend(
             [
-                "- **clawql-on** must call `search` to find "
-                "`security_advisories_list_global_advisories` (decoy names a wrong op).",
-                "- **clawql-off** has no ClawQL search — typically copies the decoy and fails.",
+                "- Both arms require a real `\"tool\":\"clawql_search\"` tool_use "
+                "(instruction text alone does not count).",
+                "- Correct id is `security_advisories_list_global_advisories` (path form OK); "
+                "decoy names a wrong op. Off has no search tool → fails.",
             ]
         )
     elif task == "execute-verify-loop":
         interp.extend(
             [
-                "- **clawql-on** must `search` then `execute` (≥2) with dry_run and write `trail.json`.",
-                "- **clawql-off** lacks execute — decoy trail ids fail the checker.",
+                "- Both arms require `clawql_search` + ≥2 `clawql_execute` tool_use rows "
+                "with `dry_run:true` (guessed trail.json alone fails).",
+                "- Off lacks ClawQL tools → fails even if it invents the artifact.",
             ]
         )
     elif task == "memory-roundtrip-ingest-recall":
@@ -1067,6 +1101,21 @@ def render_markdown(report: dict) -> str:
             [
                 "- Empty vault: **clawql-on** must `memory_ingest` then `memory_recall` the marker fact.",
                 "- **clawql-off** has no memory tools — cannot complete the roundtrip.",
+            ]
+        )
+    elif task == "audit-checkpoints":
+        interp.append(
+            "- Both arms graded for `audit` append/list evidence; off lacks the tool and fails."
+        )
+    elif task == "cache-scratch-handoff":
+        interp.append(
+            "- Both arms graded for `cache` set/get evidence; off lacks the tool and fails."
+        )
+    elif task == "policy-deny-execute":
+        interp.extend(
+            [
+                "- **clawql-on** enables in-process Panguard with `execute` denied.",
+                "- Passing requires log evidence of the policy block (off cannot produce it).",
             ]
         )
     interp.append("")
@@ -1158,6 +1207,7 @@ def run_trial(
                 require_search=bool(caps.get("require_search")),
                 require_execute=bool(caps.get("require_execute")),
                 require_memory_roundtrip=bool(caps.get("require_memory_roundtrip")),
+                panguard_block_tools=caps.get("panguard_block_tools"),
             )
         # Prefer full captured stream; fall back to workdir harness dump.
         combined = agent.pop("_combined_log", None) or ""
@@ -1184,13 +1234,19 @@ def run_trial(
             checker_env_extra["OPENBENCH_HARD_MAX_TOKENS"] = str(caps["max_tokens"])
         if arm == "ouroboros-on":
             checker_env_extra["OPENBENCH_REQUIRE_OUROBOROS"] = "1"
-        if arm == "clawql-on" and caps.get("require_search"):
+        if caps.get("require_search"):
             checker_env_extra["OPENBENCH_REQUIRE_SEARCH"] = "1"
-        if arm == "clawql-on" and caps.get("require_execute"):
+        if caps.get("require_execute"):
             checker_env_extra["OPENBENCH_REQUIRE_EXECUTE"] = "1"
         if caps.get("require_memory_roundtrip"):
             # Both arms: off must fail without memory tools (no instruction leak win).
             checker_env_extra["OPENBENCH_REQUIRE_MEMORY_ROUNDTRIP"] = "1"
+        if caps.get("require_audit"):
+            checker_env_extra["OPENBENCH_REQUIRE_AUDIT"] = "1"
+        if caps.get("require_cache"):
+            checker_env_extra["OPENBENCH_REQUIRE_CACHE"] = "1"
+        if caps.get("require_policy_block"):
+            checker_env_extra["OPENBENCH_REQUIRE_POLICY_BLOCK"] = "1"
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
         return {

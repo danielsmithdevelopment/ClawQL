@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# Grades execute-verify-loop: correct trail.json + optional execute evidence.
+# Grades audit-checkpoints: trail.json + optional audit tool evidence.
 set -euo pipefail
 
-REQUIRE_EXECUTE="${OPENBENCH_REQUIRE_EXECUTE:-0}"
-REQUIRE_SEARCH="${OPENBENCH_REQUIRE_SEARCH:-0}"
-HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-40}"
-HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-10000}"
+REQUIRE_AUDIT="${OPENBENCH_REQUIRE_AUDIT:-0}"
+HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-25}"
+HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-6000}"
 
 cap_fail=0
 pass=0
@@ -18,34 +17,18 @@ fi
 
 if python3 - <<'PY'
 import json
-import re
 from pathlib import Path
-
-def norm(s: str) -> str:
-    s = str(s or "").strip().lower().replace("/", "_").replace("-", "_")
-    return re.sub(r"_+", "_", s)
-
 try:
     d = json.loads(Path("trail.json").read_text(encoding="utf-8"))
 except Exception as exc:
     print(f"FAIL: trail.json parse error: {exc}", flush=True)
     raise SystemExit(1)
-read_op = norm(d.get("readOperationId"))
-list_op = norm(d.get("listOperationId"))
-prov = str(d.get("provider") or "").strip().lower()
-dry = d.get("dryRunOnly")
-ok = (
-    read_op == "security_advisories_get_global_advisory"
-    and list_op == "security_advisories_list_global_advisories"
-    and prov in ("github", "gh", "")
-    and dry is True
-)
+cid = str(d.get("correlationId") or "").strip()
+summaries = d.get("summaries") or []
+need = ["openbench-audit-start", "openbench-audit-mid", "openbench-audit-done"]
+ok = cid == "openbench-audit-1" and all(s in summaries for s in need)
 if not ok:
-    print(
-        "FAIL: expected github get+list global advisory ops with dryRunOnly=true; "
-        f"got {d!r}",
-        flush=True,
-    )
+    print(f"FAIL: expected correlationId + three summaries; got {d!r}", flush=True)
 raise SystemExit(0 if ok else 1)
 PY
 then
@@ -82,27 +65,23 @@ PY
   fi
 fi
 
-if [ "$REQUIRE_SEARCH" = "1" ] || [ "$REQUIRE_EXECUTE" = "1" ]; then
+if [ "$REQUIRE_AUDIT" = "1" ]; then
   log=""
   if [ -f .openbench_agent.log ]; then
     log="$(cat .openbench_agent.log)"
   fi
-fi
-if [ "$REQUIRE_SEARCH" = "1" ]; then
-  if ! printf '%s' "$log" | grep -Fq '"tool":"clawql_search"'; then
-    echo "FAIL: required a clawql_search tool_use in the agent log" >&2
+  # Real tool_use only — instruction text also mentions audit/append/list.
+  audit_hits="$(printf '%s' "$log" | grep -Fci '"tool":"clawql_audit"' || true)"
+  if [ "${audit_hits:-0}" -lt 2 ]; then
+    echo "FAIL: required ≥2 clawql_audit tool_use calls (got ${audit_hits:-0})" >&2
     cap_fail=1
   fi
-fi
-if [ "$REQUIRE_EXECUTE" = "1" ]; then
-  # Real tool_use rows only — instruction text also mentions clawql_execute.
-  exec_hits="$(printf '%s' "$log" | grep -Fci '"tool":"clawql_execute"' || true)"
-  if [ "${exec_hits:-0}" -lt 2 ]; then
-    echo "FAIL: required ≥2 clawql_execute tool_use calls (got ${exec_hits:-0})" >&2
+  if ! printf '%s' "$log" | grep -Fq '"operation":"append"'; then
+    echo "FAIL: required audit operation=append in tool_use input" >&2
     cap_fail=1
   fi
-  if ! printf '%s' "$log" | grep -Fq '"dry_run":true'; then
-    echo "FAIL: required dry_run:true in execute tool input" >&2
+  if ! printf '%s' "$log" | grep -Fq '"operation":"list"'; then
+    echo "FAIL: required audit operation=list in tool_use input" >&2
     cap_fail=1
   fi
 fi

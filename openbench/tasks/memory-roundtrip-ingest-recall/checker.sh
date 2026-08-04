@@ -72,12 +72,12 @@ if [ "$REQUIRE_RT" = "1" ]; then
   if [ -f .openbench_agent.log ]; then
     log="$(cat .openbench_agent.log)"
   fi
-  if ! printf '%s' "$log" | grep -Eqi 'memory_ingest|clawql_memory_ingest'; then
-    echo "FAIL: clawql-on required memory_ingest in the agent log" >&2
+  if ! printf '%s' "$log" | grep -Fq '"tool":"clawql_memory_ingest"'; then
+    echo "FAIL: required clawql_memory_ingest tool_use in the agent log" >&2
     cap_fail=1
   fi
-  if ! printf '%s' "$log" | grep -Eqi 'memory_recall|clawql_memory_recall'; then
-    echo "FAIL: clawql-on required memory_recall in the agent log" >&2
+  if ! printf '%s' "$log" | grep -Fq '"tool":"clawql_memory_recall"'; then
+    echo "FAIL: required clawql_memory_recall tool_use in the agent log" >&2
     cap_fail=1
   fi
 fi
