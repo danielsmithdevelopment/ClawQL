@@ -1,15 +1,16 @@
-# Example: scaffold OpenAPI + GraphQL + gRPC for MCP tools
+# Example: scaffold OpenAPI + GraphQL + `/mcp` + gRPC for MCP tools
 
 This example shows two patterns:
 
-1. **gRPC-native demo server** — `server.mjs` starts tools on gRPC and puts `mcp-api-adapter` in front (OpenAPI + GraphQL).
-2. **Any-MCP wrap** — point the CLI at *any* Streamable HTTP or stdio MCP server; the gateway scaffolds REST + GraphQL + local gRPC for you.
+1. **gRPC-native demo server** — `server.mjs` starts tools on gRPC and puts `mcp-api-adapter` in front (OpenAPI + GraphQL + `/mcp`).
+2. **Any-MCP wrap** — point the CLI at *any* Streamable HTTP or stdio MCP server; the adapter scaffolds REST + GraphQL + `/mcp` + local gRPC for you.
 
 | Surface | How | Default (demo server) |
 | ------- | --- | --------------------- |
 | **gRPC MCP** | `mcp-grpc-transport` — `ListTools` / `CallTool` | `127.0.0.1:50051` |
 | **OpenAPI on-ramp** | `mcp-api-adapter` — `POST /{toolName}` + Swagger | `http://127.0.0.1:8090` |
-| **GraphQL on-ramp** | same gateway — `POST /graphql` + GraphiQL | `http://127.0.0.1:8090/graphql` |
+| **GraphQL on-ramp** | same adapter — `POST /graphql` + GraphiQL | `http://127.0.0.1:8090/graphql` |
+| **Streamable HTTP MCP** | same adapter — `/mcp` for IDE / agent clients | `http://127.0.0.1:8090/mcp` |
 
 Demo tools: `echo`, `add`, `greet`.
 
@@ -40,8 +41,19 @@ Optional env: `GRPC_PORT` (default `50051`), `OPENAPI_PORT` (default `8090`), `E
 npx mcp-api-adapter --mcp-url http://127.0.0.1:8080/mcp \
   --listen 0.0.0.0:8090 --grpc-listen 127.0.0.1:50051
 
-# Or spawn a stdio MCP package:
+# Or spawn a stdio MCP package (exposes /mcp for IDEs):
 npx mcp-api-adapter --stdio -- npx -y @modelcontextprotocol/server-everything
+```
+
+## C. Generate a thin CLI
+
+```bash
+npx mcp-api-adapter gen-cli --out ./my-cli \
+  --stdio -- npx -y @modelcontextprotocol/server-everything
+
+# With the adapter from A or B running:
+MCP_API_ADAPTER_URL=http://127.0.0.1:8090 node ./my-cli/bin/mcp-tools.mjs list
+MCP_API_ADAPTER_URL=http://127.0.0.1:8090 node ./my-cli/bin/mcp-tools.mjs echo --message hello
 ```
 
 ## Call surfaces
@@ -59,10 +71,11 @@ curl -s -X POST http://127.0.0.1:8090/echo \
   -d '{"message":"hello"}' | jq .
 open http://127.0.0.1:8090/docs
 open http://127.0.0.1:8090/graphiql
+# Point an MCP client at http://127.0.0.1:8090/mcp
 ```
 
 ## Positioning
 
-OpenAPI + GraphQL are **on-ramps**. gRPC (`mcp-grpc-transport`) is the **production** path — see `info.x-clawql-grpc` in `/openapi.json`.
+OpenAPI + GraphQL + `/mcp` are **on-ramps / compatibility surfaces**. gRPC (`mcp-grpc-transport`) is the **production** path — see `info.x-clawql-grpc` in `/openapi.json`.
 
 Design: [`docs/design/mcp-api-adapter.md`](../../docs/design/mcp-api-adapter.md).

@@ -1,6 +1,6 @@
 # MCP API Adapter — technical design
 
-**Status:** ✅ Implemented (`mcp-api-adapter@0.5.0`) — any MCP upstream → OpenAPI + GraphQL + `/mcp` + gRPC (+ gen-cli)  
+**Status:** ✅ Implemented (`mcp-api-adapter@0.5.1`) — any MCP upstream → OpenAPI + GraphQL + `/mcp` + gRPC (+ gen-cli)  
 **Date:** 2026-08-04  
 **Package:** `mcp-api-adapter` (npm; workspace `packages/mcp-api-adapter`)  
 **Depends on:** [`mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md) **1.0.0+**, `@modelcontextprotocol/sdk`  
@@ -12,7 +12,7 @@
 
 ## 1. Summary
 
-Build a **thin TypeScript API adapter** that points at **any** MCP server and scaffolds **named REST (OpenAPI), GraphQL, and gRPC** from `ListTools` — so clients can call the same tools on all three APIs.
+Build a **thin TypeScript API adapter** that points at **any** MCP server and scaffolds **named REST (OpenAPI), GraphQL, Streamable HTTP `/mcp`, and gRPC** from `ListTools` — plus optional **`gen-cli`** — so clients can call the same tools on every surface.
 
 ```text
 Any MCP upstream
@@ -23,16 +23,18 @@ Any MCP upstream
    GET  /openapi.json · /docs
    POST /{toolName}
    POST /graphql · GET /graphiql · GET /graphql/schema.graphql
+   POST/GET/DELETE /mcp   (Streamable HTTP MCP re-export)
    GET  /tools
    (+ scaffolded or upstream gRPC CallTool)
+   (+ gen-cli → thin Node CLI over REST)
         │
         ▼
   Same tool registry (third-party or ClawQL)
 ```
 
-When upstream is already gRPC, REST/GraphQL forward into **`mcp-grpc-transport` `CallTool`**. When upstream is stdio or Streamable HTTP, REST/GraphQL use the MCP SDK client, and the gateway **scaffolds a local gRPC MCP server** that delegates to that client — so consumers still get the triple surface without requiring the upstream to speak gRPC first.
+When upstream is already gRPC, REST / GraphQL / `/mcp` forward into **`mcp-grpc-transport` `CallTool`** (0.5.1 normalizes protobuf content oneofs into MCP text blocks for SDK clients). When upstream is stdio or Streamable HTTP, those surfaces use the MCP SDK client, and the adapter **scaffolds a local gRPC MCP server** that delegates to that client — so consumers still get the full surface set without requiring the upstream to speak gRPC first.
 
-This is **not** a clone of [mcpo](https://github.com/open-webui/mcpo) (Python, stdio multi-server, FastAPI-first). It is **transport-agnostic on the left**, **triple-surface on the right**, TypeScript-native, and positioned to drive traffic to **`mcp-grpc-transport`** for production/mesh.
+This is **not** a clone of [mcpo](https://github.com/open-webui/mcpo) (Python, stdio multi-server, FastAPI-first). It is **transport-agnostic on the left**, **multi-surface on the right**, TypeScript-native, and positioned to drive traffic to **`mcp-grpc-transport`** for production/mesh.
 
 **Inverse of ClawQL Core:** `search` / `execute` is **OpenAPI → MCP** (upstream APIs behind tools). This package is **MCP tools → OpenAPI** (tools as REST for non-MCP clients). Keep the names and docs distinct.
 
@@ -92,13 +94,20 @@ Every Swagger UI visitor should see the gRPC path (`x-clawql-grpc` extensions, d
 | ClawQL dual listen HTTP + gRPC                                     | `src/server-http.ts` when `ENABLE_GRPC=1`                            |
 | Streamable HTTP MCP                                                | `POST /mcp` (not per-tool REST)                                      |
 
-**Gap (closed in 0.3.0):** `POST /{toolName}`, OpenAPI + GraphQL from MCP `inputSchema`, and automatic gRPC scaffolding when upstream is stdio/HTTP.
+**Gaps closed:**
+
+| Version | Closed |
+| ------- | ------ |
+| `0.3.0` | `POST /{toolName}`, OpenAPI + GraphQL from MCP `inputSchema`; gRPC scaffolding for stdio/HTTP |
+| `0.4.0` | Rename `mcp-openapi-gateway` → `mcp-api-adapter` |
+| `0.5.0` | Streamable HTTP `/mcp` re-export; `gen-cli` thin CLI scaffold |
+| `0.5.1` | gRPC upstream → `/mcp` content normalization for MCP SDK validation |
 
 ---
 
 ## 5. Architecture
 
-### 5.1 Package layout (proposed)
+### 5.1 Package layout (shipped)
 
 ```text
 packages/mcp-api-adapter/
@@ -106,28 +115,29 @@ packages/mcp-api-adapter/
   README.md
   src/
     index.ts                   # public exports
-    cli.ts                     # `mcp-api-adapter` / `npx` entry
-    server.ts                  # Express (or Node http) app factory
-    introspect.ts              # ListTools via gRPC → ToolCatalog
-    openapi.ts                 # ToolCatalog → OpenAPI 3.1 document
-    routes.ts                  # GET /tools, POST /:toolName, /openapi.json, /docs
-    call.ts                    # REST body → CallTool (gRPC); optional HTTP fallback
-    schema-convert.ts          # JSON Schema → OpenAPI request body schema
-    grpc-extensions.ts         # x-clawql-grpc / info.description funnel copy
+    cli.ts                     # `mcp-api-adapter` / `gen-cli` entry
+    server.ts                  # Express app factory (REST + GraphQL + /mcp)
+    upstream.ts                # stdio / HTTP / gRPC connect + local gRPC scaffold
+    mcp-http.ts                # Streamable HTTP MCP surface
+    gen-cli.ts                 # catalog → thin Node CLI
+    openapi.ts                 # ToolCatalog → OpenAPI 3.1 (+ x-clawql-grpc)
+    graphql.ts                 # per-tool mutations + callTool
+    call.ts / delegate.ts      # CallTool collapse + content normalization
+    schema-convert.ts          # JSON Schema → OpenAPI / GraphQL args
   test/
 ```
 
-**Dependency rule:** depend on `mcp-grpc-transport` + `@modelcontextprotocol/sdk` types as needed. **Do not** depend on `clawql-mcp` / `clawql-api` so any MCP server behind gRPC can use the gateway.
+**Dependency rule:** depend on `mcp-grpc-transport` + `@modelcontextprotocol/sdk` as needed. **Do not** depend on `clawql-mcp` / `clawql-api` so any MCP server can use the adapter.
 
 ### 5.2 Runtime modes
 
-| Mode                        | Description                                                                                                         | v1                             |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| **A. Sidecar / standalone** | Process points at `GRPC_HOST:GRPC_PORT` (e.g. ClawQL `:50051`), introspects, serves OpenAPI HTTP on its own port    | **Required**                   |
-| **B. In-process mount**     | Optional Express router mounted beside ClawQL HTTP (`attachMcpApiAdapter(app, { … })`) when both run in one process | Nice-to-have                   |
-| **C. HTTP MCP fallback**    | If gRPC unavailable, forward via Streamable HTTP `tools/call`                                                       | Optional; document as degraded |
+| Mode                        | Description                                                                                                         | Status       |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| **A. Sidecar / standalone** | Point at any MCP (stdio / HTTP / gRPC); serve OpenAPI + GraphQL + `/mcp` (+ scaffold gRPC when needed)             | **Shipped**  |
+| **B. In-process mount**     | Optional Express router mounted beside ClawQL HTTP (`attachMcpApiAdapter(app, { … })`) when both run in one process | Nice-to-have |
+| **C. Re-export `/mcp`**     | Streamable HTTP MCP on the adapter port so IDEs/agents use the same tool catalog                                    | **Shipped** (`0.5.0`) |
 
-**Default recommendation:** Mode A with ClawQL `ENABLE_GRPC=1`. REST is a **translator into gRPC**, not a peer protocol of equal rank.
+**Default recommendation:** Mode A. Prefer raw gRPC (`mcp-grpc-transport`) for production/mesh/large payloads; REST / GraphQL / `/mcp` are on-ramps and compatibility surfaces.
 
 ### 5.3 Request path
 
@@ -163,6 +173,7 @@ POST /memory_recall  { "query": "…", "limit": 8 }
 | `POST` | `/graphql`                | GraphQL endpoint (per-tool mutations + `callTool`)                           |
 | `GET`  | `/graphiql`               | GraphiQL IDE                                                                 |
 | `GET`  | `/graphql/schema.graphql` | Printed SDL                                                                  |
+| `*`    | `/mcp` (configurable)     | Streamable HTTP MCP re-export of the same tools (`--mcp-path` / `--no-mcp`)  |
 
 **Auth (v1):** optional shared API key (`Authorization: Bearer …` or `X-API-Key`), matching mcpo’s practical edge. Pass-through of upstream gRPC metadata (`Authorization`, `mcp-protocol-version`) must be configurable. Do **not** bypass ClawQL / Panguard policy: the facade must call the same tool surface the MCP client would (gRPC into the already-gated server).
 
@@ -242,21 +253,29 @@ Swagger UI visitors see the migration path without leaving `/docs`.
 ```bash
 # Point at ClawQL (or any) gRPC MCP endpoint
 npx mcp-api-adapter \
-  --grpc-host 127.0.0.1 \
-  --grpc-port 50051 \
+  --grpc-address 127.0.0.1:50051 \
   --listen 0.0.0.0:8090 \
   --api-key "$GATEWAY_API_KEY"
+
+# Or wrap any stdio / Streamable HTTP MCP; scaffold gRPC + /mcp
+npx mcp-api-adapter --stdio -- npx -y @modelcontextprotocol/server-everything
+
+# Thin CLI over REST
+npx mcp-api-adapter gen-cli --out ./my-cli --mcp-url http://127.0.0.1:8080/mcp
 ```
 
-| Env / flag                                  | Purpose                                                                    |
-| ------------------------------------------- | -------------------------------------------------------------------------- |
-| `MCP_API_ADAPTER_GRPC_HOST` / `--grpc-host` | Upstream host                                                              |
-| `MCP_API_ADAPTER_GRPC_PORT` / `--grpc-port` | Default `50051`                                                            |
-| `MCP_API_ADAPTER_LISTEN` / `--listen`       | HTTP bind (default `0.0.0.0:8090`)                                         |
-| `MCP_API_ADAPTER_API_KEY` / `--api-key`     | Optional edge auth                                                         |
-| `MCP_PROTOCOL_VERSION`                      | Metadata for gRPC RPCs (default latest supported)                          |
-| `MCP_API_ADAPTER_REFRESH_MS`                | Optional catalog poll                                                      |
-| TLS client flags                            | Align with `mcp-grpc-transport` client TLS when upstream uses `GRPC_TLS_*` |
+| Env / flag                                          | Purpose                                                                    |
+| --------------------------------------------------- | -------------------------------------------------------------------------- |
+| `--mcp-url` / `--stdio` / `--grpc-address`          | Exactly one upstream                                                       |
+| `MCP_API_ADAPTER_LISTEN` / `--listen`               | HTTP bind (default `0.0.0.0:8090`)                                         |
+| `--mcp-path` / `--no-mcp`                           | Streamable HTTP MCP path (default `/mcp`) or disable                       |
+| `MCP_API_ADAPTER_GRPC_LISTEN` / `--grpc-listen`     | Scaffolded gRPC bind when upstream is stdio/HTTP                           |
+| `--no-grpc`                                         | Skip local gRPC scaffold                                                   |
+| `MCP_API_ADAPTER_API_KEY` / `--api-key`             | Optional edge auth                                                         |
+| `MCP_PROTOCOL_VERSION`                              | Metadata for gRPC RPCs (default latest supported)                          |
+| `MCP_API_ADAPTER_REFRESH_MS` / `--refresh-ms`       | Optional catalog poll                                                      |
+| `gen-cli --out` / `--name` / `--base-url`           | Generate thin REST CLI                                                     |
+| TLS client flags                                    | Align with `mcp-grpc-transport` client TLS when upstream uses `GRPC_TLS_*` |
 
 ---
 
@@ -287,8 +306,11 @@ npx mcp-api-adapter \
 5. [x] `/openapi.json`, `/docs`, `/tools`, `/healthz`
 6. [x] `x-clawql-grpc` extensions
 7. [x] Example server + REST/gRPC demos (`examples/mcp-api-adapter/`)
-8. [x] GraphQL on-ramp (`/graphql`, GraphiQL, per-tool mutations) + triple-surface demos
+8. [x] GraphQL on-ramp (`/graphql`, GraphiQL, per-tool mutations) + multi-surface demos
 9. [x] Any-MCP upstreams (stdio / Streamable HTTP / gRPC) + local gRPC scaffold + user guide
+10. [x] Streamable HTTP `/mcp` re-export (`--mcp-path` / `--no-mcp`)
+11. [x] `gen-cli` thin Node CLI scaffold (PrintingPress later)
+12. [x] gRPC upstream → `/mcp` CallTool content normalization (`0.5.1`)
 
 ### Phase 2 — Hardening
 
@@ -303,9 +325,10 @@ npx mcp-api-adapter \
 - Publish npm independently (same cadence model as `mcp-grpc-transport`)
 - Server card / well-known discovery mention (OpenAPI on-ramp URL)
 - Blog / PV essay: “MCP tools as OpenAPI — gRPC underneath”
-- Stretch: SSE progress mapping; HTTP MCP fallback mode
+- PrintingPress signed-binary path for gen-cli catalogs
+- Stretch: SSE progress mapping from gRPC server-streaming CallTool
 
-**Difficulty:** moderate. Transport RPC surface is done; the non-trivial slice is schema conversion + REST semantics + auth/policy parity.
+**Difficulty:** moderate. Transport RPC surface is done; remaining work is schema edge cases, packaging, and ops examples.
 
 ---
 

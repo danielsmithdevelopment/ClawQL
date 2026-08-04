@@ -24,7 +24,7 @@ ClawQL is under active development. The horizontal platform through **7.1.0** is
 | `clawql-release`           | ✅ Shipped — workspaces, signing, IPFS→Lit→Arweave, x402, verify/pull CLI                                                                                                                                                                                                                                                                                                          |
 | `clawql-operator`          | 🚧 Scaffold shipped (0.2.1) — CRD, tier-spec, layer composition; full operator planned                                                                                                                                                                                                                                                                                             |
 | `mcp-grpc-transport`       | ✅ Shipped                                                                                                                                                                                                                                                                                                                                                                         |
-| `mcp-api-adapter`          | ✅ `0.4.0` — any MCP (stdio/HTTP/gRPC) → OpenAPI + GraphQL + gRPC ([guide](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-api-adapter.md), [design](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md), [example](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-api-adapter/README.md)) |
+| `mcp-api-adapter`          | ✅ `0.5.1` — any MCP (stdio/HTTP/gRPC) → OpenAPI + GraphQL + `/mcp` + gRPC + gen-cli ([guide](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-api-adapter.md), [design](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md), [example](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-api-adapter/README.md)) |
 | `clawql-auth`              | ✅ Shipped — gateway `noAuth`/`apiKey`, ATR claims, provider headers                                                                                                                                                                                                                                                                                                               |
 | `clawql-pageindex`         | ✅ Shipped — MIT package + `pageindex_*` MCP tools                                                                                                                                                                                                                                                                                                                                 |
 | `clawql-inference`         | ✅ Shipped — policy manifest, Langfuse + OTel tracing, pgvector semantic cache, OpenBench A/B, BYOK, OpenRouter-first path                                                                                                                                                                                                                                                         |
@@ -134,7 +134,7 @@ The entire platform is built on Effect-TS. For non-technical readers: when a new
 
 **`mcp-grpc-transport`** — gRPC MCP transport for cluster deployments (MCP 2026-07-28 protobuf `ListTools` / `CallTool`).
 
-**`mcp-api-adapter`** (`0.4.0`) — Point at any MCP server (stdio / Streamable HTTP / gRPC) and scaffold OpenAPI + GraphQL + gRPC. Funnel for non-MCP clients onto the TypeScript gRPC transport. Guide: [`docs/mcp/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-api-adapter.md). Design: [`docs/design/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md). Example: [`examples/mcp-api-adapter/`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-api-adapter/README.md).
+**`mcp-api-adapter`** (`0.5.1`) — Point at any MCP server (stdio / Streamable HTTP / gRPC) and scaffold OpenAPI + GraphQL + `/mcp` + gRPC (+ gen-cli). Funnel for non-MCP clients onto the TypeScript gRPC transport; re-exports Streamable HTTP for IDE agents. Guide: [`docs/mcp/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-api-adapter.md). Design: [`docs/design/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md). Example: [`examples/mcp-api-adapter/`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-api-adapter/README.md).
 
 **`clawql-auth`** — Gateway modes, ATR claims, provider headers.
 
@@ -156,9 +156,9 @@ The entire platform is built on Effect-TS. For non-technical readers: when a new
 
 ### Planned
 
-Vertical packages, the full Kubernetes Operator, and remaining horizontal packages (`clawql-data`, `clawql-telemetry`, `clawql-printingpress`, `clawql-goose`). **`mcp-api-adapter`** (MCP tools → OpenAPI REST on-ramp over gRPC — [design](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md)). Layer 0 permanence production hardening (Arweave, Rift, Radicle primary). Specifications for not-yet-started packages are written and stable.
+Vertical packages, the full Kubernetes Operator, and remaining horizontal packages (`clawql-data`, `clawql-telemetry`, `clawql-printingpress`, `clawql-goose`). **`mcp-api-adapter`** shipped in-repo (`0.5.1` — [guide](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-api-adapter.md) / [design](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md)); remaining: independent npm publish + Compose/Helm sidecar. Layer 0 permanence production hardening (Arweave, Rift, Radicle primary). Specifications for not-yet-started packages are written and stable.
 
-**Unreleased (post-7.1, on `main`):** OpenBench/BYOK hardening, Managed Edge Gateway production path, Layer 0 pipeline additional durability, Plugins IA, IDP GTM docs, sync ensure, Cloud Agent MCP fixes; **`mcp-api-adapter`** `0.4.0` any-MCP → OpenAPI+GraphQL+gRPC (in-repo).
+**Unreleased (post-7.1, on `main`):** OpenBench/BYOK hardening, Managed Edge Gateway production path, Layer 0 pipeline additional durability, Plugins IA, IDP GTM docs, sync ensure, Cloud Agent MCP fixes; **`mcp-api-adapter`** `0.5.1` any-MCP → OpenAPI+GraphQL+`/mcp`+gRPC+gen-cli (in-repo).
 
 ---
 
@@ -182,11 +182,11 @@ There are no fixed delivery dates. Priorities are determined by dependency order
 
 ### Phase 1.2: MCP OpenAPI on-ramp (MVP in-repo)
 
-**What:** `mcp-api-adapter` — wrap any MCP (stdio / Streamable HTTP / gRPC), generate OpenAPI + GraphQL from `ListTools`, serve `POST /{toolName}` + `/graphql` + Swagger/GraphiQL, and expose (or scaffold) **`mcp-grpc-transport` `CallTool`**.
+**What:** `mcp-api-adapter` — wrap any MCP (stdio / Streamable HTTP / gRPC), generate OpenAPI + GraphQL from `ListTools`, serve `POST /{toolName}` + `/graphql` + `/mcp` + Swagger/GraphiQL, expose (or scaffold) **`mcp-grpc-transport` `CallTool`**, and optionally **`gen-cli`** a thin REST CLI.
 
-**Why:** Non-MCP clients (Workers, OpenWebUI OpenAPI tools, GraphQL clients) need tool-name HTTP. Building the facade ourselves — gRPC-first, TypeScript-native — drives adoption of the production gRPC transport rather than ceding the on-ramp to Python/stdio-only proxies. Design: [`docs/design/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md). Example: [`examples/mcp-api-adapter/`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-api-adapter/README.md).
+**Why:** Non-MCP clients (Workers, OpenWebUI OpenAPI tools, GraphQL clients) need tool-name HTTP; IDE agents often need Streamable HTTP even when upstream is stdio or gRPC-only. Building the facade ourselves — gRPC-first, TypeScript-native — drives adoption of the production gRPC transport rather than ceding the on-ramp to Python/stdio-only proxies. Design: [`docs/design/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md). Example: [`examples/mcp-api-adapter/`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-api-adapter/README.md).
 
-**Exit criteria:** ✅ In-repo MVP — package + e2e + triple-surface example demos (REST / GraphQL / gRPC). Remaining: independent npm publish; optional Compose/Helm sidecar.
+**Exit criteria:** ✅ In-repo MVP — package + e2e + multi-surface example demos (REST / GraphQL / `/mcp` / gRPC) + gen-cli. Remaining: independent npm publish; optional Compose/Helm sidecar.
 
 ### Phase 2: Operator and Natural Language Surface
 

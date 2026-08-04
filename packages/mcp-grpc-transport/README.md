@@ -66,13 +66,14 @@ For tools whose arguments are **large** (for example ClawQL **`execute`** with a
 
 This package exports **`callToolServerStreamingGrpc`**, **`mcpArgumentsToCallToolStructFields`**, and **`resolveGrpcAddressFromEnv`** so scripts and services can encode nested **`google.protobuf.Struct`** arguments with **protobufjs** (same pattern as **`scripts/dev/grpc-memory-recall.mjs`** in ClawQL).
 
-### OpenAPI on-ramp
+### OpenAPI on-ramp (`mcp-api-adapter`)
 
-Non-MCP clients that want **tool-name REST/GraphQL** (`POST /echo`, `/graphql`) plus Swagger should use standalone **`mcp-api-adapter`**: point it at any MCP server (stdio / Streamable HTTP / gRPC), serve OpenAPI + GraphQL, and expose or scaffold **`CallTool` over gRPC** (this transport). That keeps Streamable HTTP for IDE agents and makes gRPC the production path for Workers, OpenWebUI-style tools, and mesh deployments.
+Non-MCP clients that want **tool-name REST/GraphQL** (`POST /echo`, `/graphql`) plus Swagger — or a re-exported Streamable HTTP **`/mcp`** — should use standalone **`mcp-api-adapter`**: point it at any MCP server (stdio / Streamable HTTP / gRPC), serve OpenAPI + GraphQL + `/mcp`, and expose or scaffold **`CallTool` over gRPC** (this transport). Optional **`gen-cli`** scaffolds a thin CLI over REST. That keeps Streamable HTTP available for IDE agents and makes gRPC the production path for Workers, OpenWebUI-style tools, and mesh deployments.
 
-- Package: [`packages/mcp-api-adapter`](../mcp-api-adapter/README.md)
+- Package: [`packages/mcp-api-adapter`](../mcp-api-adapter/README.md) (`0.5.1+`)
+- User guide: [`docs/mcp/mcp-api-adapter.md`](../../docs/mcp/mcp-api-adapter.md)
 - Design: [`docs/design/mcp-api-adapter.md`](../../docs/design/mcp-api-adapter.md)
-- Demo (both surfaces at once): [`examples/mcp-api-adapter`](../../examples/mcp-api-adapter/README.md)
+- Demo (multi-surface): [`examples/mcp-api-adapter`](../../examples/mcp-api-adapter/README.md)
 
 ### Generality (what “any MCP server” means here)
 
