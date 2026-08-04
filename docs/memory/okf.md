@@ -124,11 +124,14 @@ const issues = lintOkfMarkdown(next, { checkStale: true, requireWormRef: path.en
 
 ## Env knobs
 
-| Env                          | Default | Effect                                          |
-| ---------------------------- | ------- | ----------------------------------------------- |
-| `CLAWQL_MEMORY_INDEX_PAGE=0` | on      | Disables `_INDEX_*` **and** OKF `index.md`      |
-| `CLAWQL_MEMORY_OKF_INDEX=0`  | on      | Disables only OKF `index.md` (keeps `_INDEX_*`) |
-| `CLAWQL_MEMORY_OKF_LOG=0`    | on      | Disables `log.md` append                        |
+| Env                                          | Default | Effect                                                                |
+| -------------------------------------------- | ------- | --------------------------------------------------------------------- |
+| `CLAWQL_MEMORY_INDEX_PAGE=0`                 | on      | Disables `_INDEX_*` **and** OKF `index.md`                            |
+| `CLAWQL_MEMORY_OKF_INDEX=0`                  | on      | Disables only OKF `index.md` (keeps `_INDEX_*`)                       |
+| `CLAWQL_MEMORY_OKF_LOG=0`                    | on      | Disables `log.md` append                                              |
+| `CLAWQL_MEMORY_RECALL_INDEX_FIRST=0`         | on      | Disables index-first survey (`index.md` + `log.md` before bodies)     |
+| `CLAWQL_MEMORY_RECALL_INDEX_FIRST_THRESHOLD` | `48`    | Above this file count, load bodies only for catalog/vector candidates |
+| `CLAWQL_MEMORY_RECALL_MIN_SCORE`             | `0.05`  | Minimum keyword/IDF score to seed recall (fractional under IDF)       |
 
 ## Flywheel export filters (planned / next)
 

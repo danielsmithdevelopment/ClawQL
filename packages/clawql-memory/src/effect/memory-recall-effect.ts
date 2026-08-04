@@ -35,6 +35,13 @@ import {
 } from "../recall/codegraph-recall.js";
 import { recallPageIndexSupplement } from "../recall/pageindex-recall.js";
 import { recallOnyxSupplement } from "../recall/onyx-recall.js";
+import {
+  catalogCandidatePaths,
+  indexFirstBodyLoadThreshold,
+  indexFirstRecallEnabled,
+  surveyOkfIndex,
+  type OkfIndexSurvey,
+} from "../recall/index-survey.js";
 
 const VAULT_NOT_CONFIGURED =
   "Obsidian vault is not configured. Set CLAWQL_OBSIDIAN_VAULT_PATH to a writable directory.";
@@ -150,23 +157,63 @@ export function executeMemoryRecallCoreEffect(
     let cuckooVectorChunksDropped: number | undefined;
     let recallArtifacts: RecallDbArtifacts | null = null;
     let codeGraphHits: CodeGraphRecallHit[] | undefined;
+    let indexSurvey: OkfIndexSurvey | undefined;
+    let indexFirstBodyLoad = false;
+    let bodiesLoaded = 0;
 
     if (wantVault || wantVector) {
+      const useIndexFirst = indexFirstRecallEnabled();
+      if (useIndexFirst) {
+        indexSurvey = yield* memoryFromPromise(() =>
+          surveyOkfIndex({
+            vault,
+            query,
+            scanRoot,
+            catalogLimit: envInt("CLAWQL_MEMORY_RECALL_CATALOG_LIMIT", Math.max(limit * 2, 12)),
+            logLimit: envInt("CLAWQL_MEMORY_RECALL_LOG_LIMIT", 8),
+          })
+        );
+      }
+
       const scanExit = yield* Effect.exit(
         memoryFromPromise(() => listVaultMarkdownRelPaths(vault, scanRoot, maxFiles))
       );
       if (Exit.isFailure(scanExit)) {
         const reason = Cause.squash(scanExit.cause);
         const msg = reason instanceof Error ? reason.message : String(reason);
-        return { ok: false, error: `Cannot scan vault: ${msg}`, sourcesUsed };
+        return { ok: false, error: `Cannot scan vault: ${msg}`, sourcesUsed, indexSurvey };
       }
       const mdFiles = scanExit.value;
       truncated = mdFiles.length >= maxFiles;
+
+      // Prefer catalog + recent-log paths for body load when vault is large.
+      const catalogPaths = indexSurvey
+        ? catalogCandidatePaths(
+            indexSurvey,
+            envInt("CLAWQL_MEMORY_RECALL_INDEX_BODY_CANDIDATES", Math.max(limit * 4, 24))
+          )
+        : [];
+      const restrictBodies =
+        useIndexFirst && mdFiles.length > indexFirstBodyLoadThreshold() && catalogPaths.length > 0;
+      indexFirstBodyLoad = restrictBodies;
+
+      // Always include index/log so catalog stays in the graph; plus catalog candidates.
+      const preferLoad = new Set<string>(catalogPaths);
+      for (const rel of mdFiles) {
+        const base = rel.replace(/\\/g, "/").split("/").pop() ?? "";
+        if (base === "index.md" || base === "log.md" || base.startsWith("_INDEX_")) {
+          preferLoad.add(rel);
+        }
+      }
 
       type FileInfo = { rel: string; text: string; score: number };
       const files: FileInfo[] = [];
       const corpusTexts: string[] = [];
       for (const rel of mdFiles) {
+        if (restrictBodies && !preferLoad.has(rel)) {
+          // Skip full body — vector pass still sees path via mdFiles / memory.db.
+          continue;
+        }
         const text = yield* memoryFromPromise(() => readVaultTextFile(vault, rel)).pipe(
           Effect.catchAll(() => Effect.succeed(undefined))
         );
@@ -177,10 +224,18 @@ export function executeMemoryRecallCoreEffect(
         corpusTexts.push(text);
         files.push({ rel, text, score: 0 });
       }
-      scannedFiles = files.length;
+      bodiesLoaded = files.length;
+      scannedFiles = restrictBodies ? mdFiles.length : files.length;
 
       // Corpus IDF so ubiquitous tokens (shared vocabulary) do not bury distinctive matches.
       const idf = wantVault ? buildCorpusIdf(corpusTexts) : undefined;
+      const catalogScoreByPath = new Map<string, number>();
+      if (indexSurvey) {
+        for (const h of indexSurvey.catalogHits) {
+          if (!h.path) continue;
+          catalogScoreByPath.set(h.path.replace(/\\/g, "/"), h.score);
+        }
+      }
       for (const f of files) {
         const fm = parseVaultFrontmatter(f.text);
         let score = wantVault && idf ? keywordScore(query, f.text, idf) : 0;
@@ -189,6 +244,9 @@ export function executeMemoryRecallCoreEffect(
           // Prefer OKF catalogs and ontology schema notes (essay Layer 6 / index-first recall).
           if (/(^|\/)index\.md$/i.test(relNorm)) score += 8;
           if (/ontology/i.test(relNorm) || /type:\s*["']?ontology_/i.test(f.text)) score += 5;
+          // Catalog title match is a cheap relevance prior (index-first).
+          const cat = catalogScoreByPath.get(relNorm);
+          if (cat && cat > 0) score += cat * 2;
           if (isOkfStale(fm)) score = Math.max(0, score - 3);
         }
         f.score = score;
@@ -256,6 +314,48 @@ export function executeMemoryRecallCoreEffect(
         }
       } else {
         sourceNotes.vector = "vector source not requested";
+      }
+
+      // Index-first: load any vector-hit bodies that were skipped in the restricted pass.
+      if (restrictBodies && wantVector) {
+        const minVectorSimLoad = envFloat("CLAWQL_MEMORY_VECTOR_MIN_SIM", 0.28);
+        for (const [p, sim] of vectorByRel) {
+          if (sim < minVectorSimLoad) continue;
+          if (textByRel.has(p)) continue;
+          const text = yield* memoryFromPromise(() => readVaultTextFile(vault, p)).pipe(
+            Effect.catchAll(() => Effect.succeed(undefined))
+          );
+          if (text === undefined) continue;
+          const fm = parseVaultFrontmatter(text);
+          if (isOkfRetracted(fm)) continue;
+          files.push({ rel: p, text, score: 0 });
+          corpusTexts.push(text);
+          textByRel.set(p, text);
+        }
+        // Recompute IDF + keyword scores over the expanded body set.
+        if (wantVault) {
+          const idf2 = buildCorpusIdf(corpusTexts);
+          for (const f of files) {
+            const fm = parseVaultFrontmatter(f.text);
+            let score = keywordScore(query, f.text, idf2);
+            const relNorm = f.rel.replace(/\\/g, "/");
+            if (/(^|\/)index\.md$/i.test(relNorm)) score += 8;
+            if (/ontology/i.test(relNorm) || /type:\s*["']?ontology_/i.test(f.text)) score += 5;
+            if (isOkfStale(fm)) score = Math.max(0, score - 3);
+            f.score = score;
+          }
+        }
+        bodiesLoaded = files.length;
+        // Rebuild slug map + edges for newly loaded bodies.
+        const slug2 = buildSlugToVaultPath(files.map((f) => ({ path: f.rel, text: f.text })));
+        for (const [k, v] of slug2) slugToPath.set(k, v);
+        for (const { rel, text } of files) {
+          for (const target of extractWikilinkTargets(text)) {
+            const slug = slugifyTitle(target);
+            const dest = slugToPath.get(slug);
+            if (dest) addEdge(rel, dest);
+          }
+        }
       }
 
       const vectorBoost = envFloat("CLAWQL_MEMORY_VECTOR_SCORE_BOOST", 50);
@@ -438,6 +538,9 @@ export function executeMemoryRecallCoreEffect(
       sourceNotes: Object.keys(sourceNotes).length > 0 ? sourceNotes : undefined,
       truncated: wantVault || wantVector ? truncated : undefined,
       scannedFiles: wantVault || wantVector ? scannedFiles : undefined,
+      indexSurvey,
+      indexFirstBodyLoad: indexFirstBodyLoad || undefined,
+      bodiesLoaded: wantVault || wantVector ? bodiesLoaded : undefined,
     };
 
     if (codeGraphHits) {
