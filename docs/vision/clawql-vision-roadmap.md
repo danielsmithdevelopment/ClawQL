@@ -24,6 +24,7 @@ ClawQL is under active development. The horizontal platform through **7.1.0** is
 | `clawql-release`           | ✅ Shipped — workspaces, signing, IPFS→Lit→Arweave, x402, verify/pull CLI                                                                   |
 | `clawql-operator`          | 🚧 Scaffold shipped (0.2.1) — CRD, tier-spec, layer composition; full operator planned                                                      |
 | `mcp-grpc-transport`       | ✅ Shipped                                                                                                                                  |
+| `mcp-openapi-gateway`      | 📋 Planned — MCP tools → named REST + OpenAPI on-ramp; gRPC `CallTool` preferred backend ([design](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-openapi-gateway.md)) |
 | `clawql-auth`              | ✅ Shipped — gateway `noAuth`/`apiKey`, ATR claims, provider headers                                                                        |
 | `clawql-pageindex`         | ✅ Shipped — MIT package + `pageindex_*` MCP tools                                                                                          |
 | `clawql-inference`         | ✅ Shipped — policy manifest, Langfuse + OTel tracing, pgvector semantic cache, OpenBench A/B, BYOK, OpenRouter-first path                  |
@@ -131,7 +132,9 @@ The entire platform is built on Effect-TS. For non-technical readers: when a new
 
 **`clawql-release`** — Layer 0 immutable release pipeline: workspaces, signatures, IPFS staging, Lit/x402 encryption, Arweave permanence (dry-run), verify/pull CLI.
 
-**`mcp-grpc-transport`** — gRPC MCP transport for cluster deployments.
+**`mcp-grpc-transport`** — gRPC MCP transport for cluster deployments (MCP 2026-07-28 protobuf `ListTools` / `CallTool`).
+
+**`mcp-openapi-gateway`** (planned) — Thin OpenAPI on-ramp: `POST /{toolName}` + `/openapi.json` + Swagger UI, forwarding into gRPC `CallTool`. Funnel for non-MCP clients (Workers, OpenWebUI) onto the TypeScript gRPC transport. Design: [`docs/design/mcp-openapi-gateway.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-openapi-gateway.md).
 
 **`clawql-auth`** — Gateway modes, ATR claims, provider headers.
 
@@ -153,9 +156,9 @@ The entire platform is built on Effect-TS. For non-technical readers: when a new
 
 ### Planned
 
-Vertical packages, the full Kubernetes Operator, and remaining horizontal packages (`clawql-data`, `clawql-telemetry`, `clawql-printingpress`, `clawql-goose`). Layer 0 permanence production hardening (Arweave, Rift, Radicle primary). Specifications for not-yet-started packages are written and stable.
+Vertical packages, the full Kubernetes Operator, and remaining horizontal packages (`clawql-data`, `clawql-telemetry`, `clawql-printingpress`, `clawql-goose`). **`mcp-openapi-gateway`** (MCP tools → OpenAPI REST on-ramp over gRPC — [design](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-openapi-gateway.md)). Layer 0 permanence production hardening (Arweave, Rift, Radicle primary). Specifications for not-yet-started packages are written and stable.
 
-**Unreleased (post-7.1, on `main`):** OpenBench/BYOK hardening, Managed Edge Gateway production path, Layer 0 pipeline additional durability, Plugins IA, IDP GTM docs, sync ensure, Cloud Agent MCP fixes.
+**Unreleased (post-7.1, on `main`):** OpenBench/BYOK hardening, Managed Edge Gateway production path, Layer 0 pipeline additional durability, Plugins IA, IDP GTM docs, sync ensure, Cloud Agent MCP fixes; **`mcp-openapi-gateway`** design accepted (implementation not started).
 
 ---
 
@@ -176,6 +179,14 @@ There are no fixed delivery dates. Priorities are determined by dependency order
 **Why:** The Effect migration closes the structural correctness guarantees described in §3. Enterprise Ontology and payments unlock the agentic economics story — agents that earn, compensate collaborators, and participate in economic flows, not just tools that execute operations. `clawql-codegraph` makes Memory 2.0 useful for engineering workflows specifically. The managed edge gateway CLI is the first step toward the Dedicated Virtual Gateway tier at production scale.
 
 **Exit criteria:** ✅ Shipped — 107 merged PRs, +71k/−21k lines, `v7.1.0` published 2026-07-20.
+
+### Phase 1.2: MCP OpenAPI on-ramp (planned, parallelizable)
+
+**What:** `mcp-openapi-gateway` — generate OpenAPI from MCP `ListTools`, serve `POST /{toolName}` + Swagger UI, forward into **`mcp-grpc-transport` `CallTool`**.
+
+**Why:** Non-MCP clients (Workers, OpenWebUI OpenAPI tools, custom gateways) need tool-name HTTP. Building the facade ourselves — gRPC-first, TypeScript-native — drives adoption of the production gRPC transport rather than ceding the on-ramp to Python/stdio-only proxies. Design: [`docs/design/mcp-openapi-gateway.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-openapi-gateway.md).
+
+**Exit criteria:** npm package publishes; ClawQL Compose/Helm example; OpenAPI `x-clawql-grpc` funnel extensions; works against a non-ClawQL `McpServer` fixture.
 
 ### Phase 2: Operator and Natural Language Surface
 

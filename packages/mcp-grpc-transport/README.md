@@ -66,6 +66,12 @@ For tools whose arguments are **large** (for example ClawQL **`execute`** with a
 
 This package exports **`callToolServerStreamingGrpc`**, **`mcpArgumentsToCallToolStructFields`**, and **`resolveGrpcAddressFromEnv`** so scripts and services can encode nested **`google.protobuf.Struct`** arguments with **protobufjs** (same pattern as **`scripts/dev/grpc-memory-recall.mjs`** in ClawQL).
 
+### OpenAPI on-ramp (planned)
+
+Non-MCP clients that want **tool-name REST** (`POST /memory_recall`) plus Swagger/OpenAPI should use the planned **`mcp-openapi-gateway`** package: it introspects via **`ListTools`**, serves OpenAPI, and forwards into **`CallTool` over gRPC** (this transport). That keeps Streamable HTTP for IDE agents and makes gRPC the production path for Workers, OpenWebUI-style OpenAPI tools, and mesh deployments.
+
+Design: [**`docs/design/mcp-openapi-gateway.md`**](../../docs/design/mcp-openapi-gateway.md).
+
 ### Generality (what “any MCP server” means here)
 
 - **Runtime:** Works with **any** [`McpServer`](https://github.com/modelcontextprotocol/typescript-sdk) you construct — pass your own `createMcpServer` (register tools, resources, prompts as usual). There is **no** dependency on ClawQL or OpenAPI.
