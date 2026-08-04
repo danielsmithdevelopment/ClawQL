@@ -2,13 +2,8 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "Credits topped up 2026-08-04; resumed with pr_active only + max_tokens output cap 2048.",
-  "pr_active": [
-    "cache-scratch-handoff",
-    "pageindex-section-qa",
-    "audit-checkpoints",
-    "multi-provider-api-workflow"
-  ],
+  "live_resume_note": "Credits topped up 2026-08-04. After run 30881158522 all prior pr_active cells WON and were retired — pr_active empty until new backlog tasks ship.",
+  "pr_active": [],
   "retired": {
     "memory-dependent-continuation": {
       "reason": "Verified WIN replicated (on 1.0 / off 0.333)",
@@ -37,8 +32,24 @@
     "ouroboros-oscillation-escape": {
       "reason": "Verified WIN allow+deny, replicated; dedicated workflow is dispatch-only",
       "evidence_run": "30866904277"
+    },
+    "cache-scratch-handoff": {
+      "reason": "Verified WIN — clawql_cache set/get + answer.json (on 1.0 / off 0.0)",
+      "evidence_run": "30881158522"
+    },
+    "pageindex-section-qa": {
+      "reason": "Verified WIN — pageindex_build_tree + synthesize (on 1.0 / off 0.0)",
+      "evidence_run": "30881158522"
+    },
+    "audit-checkpoints": {
+      "reason": "Verified WIN replicated after idle flake (on 1.0 / off 0.0)",
+      "evidence_run": "30881158522"
+    },
+    "multi-provider-api-workflow": {
+      "reason": "Verified WIN margin after credit restore (on 1.0 / off 0.75); earlier noisy cells noted",
+      "evidence_run": "30881158522"
     }
   },
   "ouroboros_pr_enabled": false,
-  "notes": "After a clean WIN lands for an active task, move it to retired and shrink pr_active. Docs-only PRs should not trigger live A/B (path filters exclude docs)."
+  "notes": "After a clean WIN lands for an active task, move it to retired and shrink pr_active. Docs-only PRs should not trigger live A/B (path filters exclude docs). Empty pr_active = no live spend until new tasks are added."
 }

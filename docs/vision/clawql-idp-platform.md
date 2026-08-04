@@ -464,8 +464,10 @@ Several properties previously stated only as architecture are now **live A/B-ver
 | **Vault memory under pressure** | ingest→recall; recall after seed removal; nested recipe under token budget | **1.0/0.0**, **1.0/0.333**, **1.0/0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516); token-pressure [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811) |
 | **Search-first discovery (efficiency Layer 1 behavior)** | Agent must call `clawql_search`; instruction-only guesses fail the grader | **1.0 / 0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) |
 | **Panguard fail-closed at runtime** | Denied execute surfaces policy block; on writes evidence trail | **1.0 / 0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) |
+| **Cache scratch handoff** | `clawql_cache` set/get assembles secret across turns | **1.0 / 0.0** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) |
+| **PageIndex long-doc Q&A** | build_tree + synthesize finds buried code without stuffing full text | **1.0 / 0.0** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) |
 
-**Still unproven / honest gaps** (do not overclaim): `cache-scratch-handoff` flaky on the cheap model; `pageindex-section-qa` awaiting a clean cell; multi-provider early WIN then noisy; most headline cells are **n=1** (expand to n=3–5 before statistical confidence language); recent matrices with OpenCode hang / no tool calls are **infra noise**, not claim regressions — see the ledger open-gaps section.
+**Still unproven / honest gaps** (do not overclaim): most headline cells are still **n=1–2** (expand to n=3–5 before statistical confidence language); hybrid recall / codegraph / schedule / notify / sandbox tasks not yet shipped; earlier OpenRouter **402 credit** hangs were infra, not claim regressions — see the [results ledger](../benchmarks/openbench-results-ledger.md).
 
 ### Shipped vs roadmap (honest scope)
 

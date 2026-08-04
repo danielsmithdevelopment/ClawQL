@@ -12,7 +12,7 @@ document is the **scoreboard + run diary**.
 | Default model | `openrouter/deepseek/deepseek-chat` |
 | Harness | OpenCode → clawql-inference |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T05:35Z |
+| Last ledger update | 2026-08-04T05:55Z |
 | CI matrix control | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push |
 
 ---
@@ -37,13 +37,14 @@ history). Move the best WIN into the headline table if it improves the claim.
 | `ouroboros-oscillation-escape` (`doom_loop=deny`) | Still wins with production doom_loop on | **1.0** (5 turns, 73s) | **0.0** (2 turns, 171s) | [30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277) deny cell | **WIN** |
 | `memory-dependent-continuation` | Vault recall after seed removal | **1.0** | **0.333** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) | **WIN** |
 | `token-budget-constrained` | Nested recipe under token pressure | **1.0** | **0.0** | [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811) | **WIN** |
-| `multi-provider-api-workflow` | Vault → Worker/wrangler scaffold | **1.0** | **0.75** | [30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877) | **WIN** (margin) |
+| `multi-provider-api-workflow` | Vault → Worker/wrangler scaffold | **1.0** (3 turns, 33s) | **0.75** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) | **WIN** (margin; also early [30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)) |
 | `memory-roundtrip-ingest-recall` | Empty vault ingest→recall | **1.0** | **0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) | **WIN** |
 | `search-first-discovery` | Must call `clawql_search` | **1.0** | **0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) | **WIN** (after anti-guess) |
 | `execute-verify-loop` | search + ≥2 dry_run execute | **1.0** | **0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) | **WIN** |
-| `audit-checkpoints` | audit append×3 + list → trail | **1.0** (6 turns, 68s) | **0.0** | [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811) | **WIN** (n=1; idle flake later) |
+| `audit-checkpoints` | audit append×3 + list → trail | **1.0** (2 turns, 29s) | **0.0** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) | **WIN** (replicated after idle flake) |
 | `policy-deny-execute` | Panguard blocks execute | **1.0** | **0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) | **WIN** |
-| `cache-scratch-handoff` | clawql_cache set/get handoff | — | — | — | **OPEN** (set observed; get+write flaky) |
+| `cache-scratch-handoff` | clawql_cache set/get handoff | **1.0** (4 turns, 33s) | **0.0** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) | **WIN** |
+| `pageindex-section-qa` | PageIndex build+synthesize buried code | **1.0** (4 turns, 38s) | **0.0** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) | **WIN** |
 
 Replicated Ouroboros WINs also on [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519) (allow + deny both on 1.0 / off 0.0).
 
@@ -190,6 +191,23 @@ stream error until our wall timeout (classic #8203-style hang).
 - Abort remaining arms/trials on credit exhaustion
 - Keep `pr_active` list ready; flip `live_enabled: true` after topping up `OPENROUTER_API_KEY` (or switch to BYOK)
 
+### 2026-08-04 — live A/B resumed
+
+Credits topped up. `live_enabled: true` again. Next matrix: `pr_active` only (cache, pageindex, audit, multi-provider), `max-parallel: 1`, output cap 2048.
+
+### 2026-08-04 — [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) (post-credit resume, lean matrix)
+
+All four `pr_active` cells **WIN** on frugal DeepSeek; no 402; real tool_use:
+
+| Task | on | off | on tools (abbrev) | Verdict |
+| ---- | -- | --- | ----------------- | ------- |
+| cache-scratch-handoff | **1.0** (4t, 33s) | **0.0** | read×2, clawql_cache×4, write | **WIN** |
+| pageindex-section-qa | **1.0** (4t, 38s) | **0.0** | read, pageindex_build_tree, synthesize, write | **WIN** |
+| audit-checkpoints | **1.0** (2t, 29s) | **0.0** | clawql_audit×4, write | **WIN** (replication) |
+| multi-provider-api-workflow | **1.0** (3t, 33s) | **0.75** | memory_recall, write×3 | **WIN** (margin) |
+
+**Retire:** all four moved `pr_active` → `retired` (stop PR token burn). Next live spend should be new backlog tasks or intentional `all-including-retired` / n≥3 dispatch.
+
 ---
 
 ## Confounds & harness notes (cumulative)
@@ -210,12 +228,10 @@ stream error until our wall timeout (classic #8203-style hang).
 
 ## Open gaps (not yet headline WIN)
 
-1. **`cache-scratch-handoff`** — set path works; finish get+write on cheap model still unreliable (checker now accepts ≥2 set + correct answer.json).
-2. **`pageindex-section-qa`** — task shipped; awaiting first live A/B.
-3. **hybrid recall / codegraph** — tasks not shipped.
-4. **schedule / notify / sandbox / composed recipes** — backlog.
-5. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals.
-6. **multi-provider-api-workflow** — early WIN but later cells noisy; needs hardening or n≥3.
+1. **hybrid recall / codegraph** — tasks not shipped.
+2. **schedule / notify / sandbox / composed recipes** — backlog.
+3. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
+4. **All current clawql-on/off + ouroboros tasks have at least one headline WIN** — retired from PR auto-runs; re-run via `workflow_dispatch` / `all-including-retired`.
 
 ---
 

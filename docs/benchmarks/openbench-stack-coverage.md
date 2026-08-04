@@ -29,21 +29,19 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 | ---- | ------------- | -------------- |
 | `memory-dependent-continuation` | Vault recall beats guessing after seed removal | on **1.0** / off **0.333** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)) |
 | `token-budget-constrained` | Recall nested recipe + ignore decoy noise under token score | on **1.0** / off **0.0** ([30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811)) |
-| `multi-provider-api-workflow` | Vault notes → correct Worker/wrangler scaffold | on **1.0** / off **0.75** ([30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)); later cells noisier |
+| `multi-provider-api-workflow` | Vault notes → correct Worker/wrangler scaffold | on **1.0** / off **0.75** ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522); also [30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)) |
 | `memory-roundtrip-ingest-recall` | Empty vault ingest→recall | on **1.0** / off **0.0** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)) |
 | `search-first-discovery` | Must `search` (decoy wrong op) | on **1.0** / off **0.0** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)) |
 | `execute-verify-loop` | dry-run `execute` trail (≥2) | on **1.0** / off **0.0** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)) |
-| `audit-checkpoints` | `audit` append×3 + list → trail | on **1.0** / off **0.0** ([30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811)); idle flake possible on n=1 |
+| `audit-checkpoints` | `audit` append×3 + list → trail | on **1.0** / off **0.0** ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522); also [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811)) |
 | `policy-deny-execute` | In-process Panguard blocks `execute` | on **1.0** / off **0.0** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)) |
-| `cache-scratch-handoff` | `cache` set/get secret assembly | **Partial** — clawql_cache set observed; get+write still flaky on cheap model |
-| `pageindex-section-qa` | PageIndex build+synthesize finds buried code | **Shipped** — awaiting live A/B |
+| `cache-scratch-handoff` | `cache` set/get secret assembly | on **1.0** / off **0.0** ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)) |
+| `pageindex-section-qa` | PageIndex build+synthesize finds buried code | on **1.0** / off **0.0** ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)) |
 | `ouroboros-oscillation-escape` | Ouroboros stops strategy thrash | allow + **deny** both on 1.0 / off 0.0 ([30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277)) |
 
 Still missing live cells: hybrid recall, codegraph, schedule/notify, sandbox, composed recipes, n≥3 trials. Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` runs on PR/push. Proven tasks are `retired` (dispatch still available). Active now: cache, pageindex, audit, multi-provider. Ouroboros workflow is dispatch-only.
-
-Note: runs [30873723884](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30873723884), [30874355356](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30874355356), [30876062118](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30876062118), [30877405306](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30877405306) timed out across the matrix (OpenCode hung with no tool_use) — treat as infra noise, not claim regression. See the [results ledger](./openbench-results-ledger.md).
+**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` runs on PR/push. All current graded tasks are **`retired`** after [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) (empty `pr_active` until new backlog tasks ship). Ouroboros workflow is dispatch-only.
 
 ---
 
@@ -55,10 +53,10 @@ Legend: **Live** = OpenBench A/B · **Context** = planning-context stats · **Un
 
 | Capability | Claim | Evidence | Next OpenBench / note |
 | ---------- | ----- | -------- | --------------------- |
-| `search` | Discover ops without stuffing full OpenAPI | **Live task** `search-first-discovery` (tool_use evidence; re-run after guess fix) | Confirm on WIN / off FAIL under `"tool":"clawql_search"` |
-| `execute` | Typed call + dry-run / verify | **Live task** `execute-verify-loop` (tool_use ≥2 + dry_run; re-run after invent fix) | Confirm on WIN / off FAIL |
-| `cache` | Ephemeral scratch across turns | **Live task** `cache-scratch-handoff` (shipped) | Confirm live A/B |
-| `audit` | Append/list trail during a run | **Live task** `audit-checkpoints` (shipped) | Confirm live A/B |
+| `search` | Discover ops without stuffing full OpenAPI | **Live WIN** `search-first-discovery` | Retired from PR; n≥3 optional via dispatch |
+| `execute` | Typed call + dry-run / verify | **Live WIN** `execute-verify-loop` | Retired from PR |
+| `cache` | Ephemeral scratch across turns | **Live WIN** `cache-scratch-handoff` ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)) | Retired from PR |
+| `audit` | Append/list trail during a run | **Live WIN** `audit-checkpoints` ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)) | Retired from PR |
 
 ### Memory (default on)
 
@@ -68,7 +66,7 @@ Legend: **Live** = OpenBench A/B · **Context** = planning-context stats · **Un
 | `memory_ingest` | Durable write of outcomes | **Live** `memory-roundtrip-ingest-recall` on 1.0 / off 0.0 ([30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)) | Multi-trial n≥3; two-session recall |
 | `memory_sync` (R2/S3) | Team vault reconcile | Docs / Cloud Agent e2e guide | Ops smoke, not OpenBench (needs bucket secrets). Keep as **sync ensure** CI probe |
 | Hybrid `sources` (`vector` / `pageindex` / `onyx` / `codegraph`) | Multi-backend recall | Unit + flags | **Hybrid recall** task: answer only in PageIndex tree or vector chunk, not raw vault keyword |
-| `pageindex_*` | Hierarchical doc Q&A without stuffing full text | Unit | Seed a long doc → `pageindex_build_tree` → answer via traverse/synthesize |
+| `pageindex_*` | Hierarchical doc Q&A without stuffing full text | **Live WIN** `pageindex-section-qa` ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)) | Retired from PR; hybrid recall still open |
 | `codegraph_*` | Structural code Q&A | Unit | Index fixture repo → neighbors/path required for correct edit |
 | Wikilinks / graph hops | Recall follows `[[links]]` | Unit-ish | Seed note A→B→fact; query only matches A |
 
