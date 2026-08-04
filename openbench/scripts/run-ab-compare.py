@@ -243,22 +243,17 @@ Then write **relative** path `trail.json` (filePath exactly `trail.json`, no lea
 Do not stop after search. Call execute now.
 """
 
-AUDIT_WRITE_NUDGE = """Continue. You already called audit append/list.
+AUDIT_WRITE_NUDGE = """Continue the audit-checkpoints task to completion.
 
-Call **write** with filePath exactly `trail.json` (relative — NOT `/trail.json`, NOT under /tmp):
+1. Call clawql_audit (or audit) operation=append three times with summaries
+   openbench-audit-start, openbench-audit-mid, openbench-audit-done and
+   correlationId openbench-audit-1.
+2. Call clawql_audit operation=list limit=3.
+3. Call write with filePath exactly trail.json (relative — NOT /trail.json, NOT /tmp):
 
-```json
-{
-  "correlationId": "openbench-audit-1",
-  "summaries": [
-    "openbench-audit-start",
-    "openbench-audit-mid",
-    "openbench-audit-done"
-  ]
-}
-```
+{"correlationId":"openbench-audit-1","summaries":["openbench-audit-start","openbench-audit-mid","openbench-audit-done"]}
 
-filePath must be `trail.json` only. Call write now.
+Do not stop until trail.json exists in the workspace root.
 """
 
 CACHE_WRITE_NUDGE = """Continue now. Call tools — do not stop with zero tool calls.
@@ -272,6 +267,16 @@ Call 4: clawql_cache operation=get key=ob.part.b
 Call 5: write relative filePath answer.json containing token alpha42-zeta99 and source cache
 
 Start with clawql_cache set for ob.part.a immediately.
+"""
+
+CACHE_FINISH_NUDGE = """Continue. Finish the cache handoff now.
+
+You already have clawql_cache set calls (or should). Next:
+1. clawql_cache operation=get key=ob.part.a
+2. clawql_cache operation=get key=ob.part.b
+3. write filePath answer.json (relative) with token alpha42-zeta99 and source cache
+
+Call get then write immediately.
 """
 
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.
@@ -719,10 +724,7 @@ def audit_ran_without_write(combined: str) -> bool:
 
 
 def audit_incomplete(combined: str, workdir: Path) -> bool:
-    """True when audit tools ran but graded trail.json is not in the workdir."""
-    text = combined or ""
-    if '"tool":"clawql_audit"' not in text:
-        return False
+    """True when graded trail.json is missing (including idle runs with no audit yet)."""
     return not (workdir / "trail.json").is_file()
 
 
@@ -750,6 +752,14 @@ def cache_incomplete(combined: str, workdir: Path) -> bool:
     except Exception:  # noqa: BLE001
         src = ""
     return not (used and has_set and has_get and "cache" in src.lower())
+
+
+def cache_needs_finish(combined: str, workdir: Path) -> bool:
+    """True when clawql_cache set ran but get/write still incomplete."""
+    text = combined or ""
+    if (workdir / "answer.json").is_file() and '"operation":"get"' in text:
+        return False
+    return '"tool":"clawql_cache"' in text and '"operation":"set"' in text
 
 
 def policy_missing_artifact(workdir: Path) -> bool:
@@ -1031,15 +1041,20 @@ def run_arm_on(
                 timed_out = True
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
-        # Cheap models sometimes idle twice — one more attempt if still incomplete.
+        # Prefer finish nudge when set already happened; otherwise full bootstrap.
         if (
             not timed_out
             and cache_incomplete(combined, workdir)
             and (int(timeout_s) - int(time.monotonic() - t0)) >= 25
         ):
             remaining = int(timeout_s) - int(time.monotonic() - t0)
+            nudge = (
+                CACHE_FINISH_NUDGE
+                if cache_needs_finish(combined, workdir)
+                else CACHE_WRITE_NUDGE
+            )
             cont_file = workdir / ".openbench_cache_nudge2.md"
-            cont_file.write_text(CACHE_WRITE_NUDGE, encoding="utf-8")
+            cont_file.write_text(nudge, encoding="utf-8")
             cont_timeout = max(25, min(90, remaining))
             cmd = build_cmd(cont_file, cont_timeout)
             try:
