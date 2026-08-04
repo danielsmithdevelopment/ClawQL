@@ -28,6 +28,10 @@ import {
   runPaymentsRampFundCreate,
   runPaymentsRampCardIssue,
   runPaymentsRampAgentCardIssue,
+  runPaymentsCfwHandleResolve,
+  runPaymentsCfwWalletCreate,
+  runPaymentsCfwWalletStatus,
+  runPaymentsCfwWalletRevoke,
   runPaymentsOfframpSession,
   runPaymentsOfframpWebhook,
   runPaymentsCreditsShow,
@@ -155,6 +159,11 @@ export type PaymentsCliOptions = {
   agentId?: string;
   showSecrets?: boolean;
   vendorIds?: string[];
+  allowanceUsd?: number;
+  maxTxUsd?: number;
+  merchants?: string[];
+  walletId?: string;
+  handle?: string;
   interval?: "DAILY" | "WEEKLY" | "MONTHLY" | "TOTAL" | "ANNUAL";
   provider?: OffRampProvider;
   paymentMethodId?: string;
@@ -437,6 +446,49 @@ export async function runPaymentsRampAgentCardIssueCmd(
     tenantId: options.tenantId,
     agentId: options.agentId,
     showSecrets: options.showSecrets,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCfwHandleResolveCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCfwHandleResolve({
+    handle: options.handle,
+    tenantId: options.tenantId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCfwWalletCreateCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCfwWalletCreate({
+    agentId: options.agentId,
+    allowanceUsd: options.allowanceUsd ?? options.amount ?? options.limit,
+    maxTxUsd: options.maxTxUsd,
+    merchants: options.merchants,
+    handle: options.handle,
+    tenantId: options.tenantId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCfwWalletStatusCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCfwWalletStatus({
+    walletId: options.walletId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCfwWalletRevokeCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCfwWalletRevoke({
+    walletId: options.walletId,
+    tenantId: options.tenantId,
     json: options.json,
   });
 }

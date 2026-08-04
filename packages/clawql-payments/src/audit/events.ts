@@ -31,6 +31,9 @@ export type PaymentEventKind =
   | "RAMP_FUND_CREATED"
   | "RAMP_VIRTUAL_CARD_ISSUED"
   | "RAMP_AGENT_CARD_ISSUED"
+  | "CLOUDFLARE_HANDLE_RESOLVED"
+  | "CLOUDFLARE_VIRTUAL_WALLET_ISSUED"
+  | "CLOUDFLARE_VIRTUAL_WALLET_REVOKED"
   | "OFFRAMP_SESSION_CREATED"
   | "OFFRAMP_UPDATED"
   | "OFFRAMP_COMPLETED"
@@ -61,6 +64,7 @@ export type PaymentProvider =
   | "paypal"
   | "adyen"
   | "ramp"
+  | "cloudflare_wallets"
   | "payouts"
   | "offramp"
   | "credits"
@@ -587,6 +591,68 @@ export function buildRampAgentCardIssuedEntry(input: {
       amount_usd: input.amountUsd,
       tenant_id: input.tenantId,
       resource: input.cardId,
+      agent_id: input.agentId,
+    },
+  });
+}
+
+export function buildCloudflareHandleResolvedEntry(input: {
+  tenantId: string;
+  handle: string;
+  reserved: boolean;
+  dryRun?: boolean;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "CLOUDFLARE_HANDLE_RESOLVED",
+    summary: `Cloudflare handle ${input.handle}${input.reserved ? " (reserved)" : " (unknown)"}${input.dryRun ? " [dry-run]" : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "cloudflare_wallets",
+      tenant_id: input.tenantId,
+      resource: input.handle,
+    },
+  });
+}
+
+export function buildCloudflareVirtualWalletIssuedEntry(input: {
+  tenantId: string;
+  walletId: string;
+  agentId: string;
+  allowanceUsd: number;
+  handle: string;
+  dryRun?: boolean;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "CLOUDFLARE_VIRTUAL_WALLET_ISSUED",
+    summary: `Cloudflare Virtual Wallet ${input.walletId} for ${input.agentId} capped $${input.allowanceUsd.toFixed(2)} (${input.handle})${input.dryRun ? " [dry-run]" : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "cloudflare_wallets",
+      amount_usd: input.allowanceUsd,
+      tenant_id: input.tenantId,
+      resource: input.walletId,
+      agent_id: input.agentId,
+    },
+  });
+}
+
+export function buildCloudflareVirtualWalletRevokedEntry(input: {
+  tenantId: string;
+  walletId: string;
+  agentId: string;
+  dryRun?: boolean;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "CLOUDFLARE_VIRTUAL_WALLET_REVOKED",
+    summary: `Cloudflare Virtual Wallet ${input.walletId} revoked for ${input.agentId}${input.dryRun ? " [dry-run]" : ""}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "cloudflare_wallets",
+      tenant_id: input.tenantId,
+      resource: input.walletId,
       agent_id: input.agentId,
     },
   });

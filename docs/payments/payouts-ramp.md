@@ -6,11 +6,12 @@
 
 ## Three complementary money-out surfaces
 
-| Surface      | Provider                      | Role                                                              |
-| ------------ | ----------------------------- | ----------------------------------------------------------------- |
-| **Payouts**  | Stripe Connect Express + Base | Platform → creator **bank** transfers; live **USDC** ERC-20 sends |
-| **Ramp**     | Ramp Developer API (Business) | **Agent virtual / agent cards** with spend controls               |
-| **Off-ramp** | Moonpay / Transak (widgets)   | Creator **USDC → fiat** cash-out sessions + completion webhooks   |
+| Surface                 | Provider                      | Role                                                              |
+| ----------------------- | ----------------------------- | ----------------------------------------------------------------- |
+| **Payouts**             | Stripe Connect Express + Base | Platform → creator **bank** transfers; live **USDC** ERC-20 sends |
+| **Ramp**                | Ramp Developer API (Business) | **Agent virtual / agent cards** with spend controls               |
+| **Cloudflare Wallets**  | Cloudflare (cloudflare.pay)   | **Identity + capped Virtual Wallets** (dry-run prep) — [cloudflare-wallets.md](./cloudflare-wallets.md) |
+| **Off-ramp**            | Moonpay / Transak (widgets)   | Creator **USDC → fiat** cash-out sessions + completion webhooks   |
 
 This is the money-out complement to the four agentic _ingress_ rails (x402 / MPP / ACP / AP2). It targets LiveFrame-style creator payouts and agent purchasing authority—not another micropayment protocol.
 

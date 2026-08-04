@@ -13,6 +13,7 @@
 
 ### Added
 
+- **Cloudflare Wallets prep** — `CloudflareWalletService` (dry-run) for reserved handle `clawql.cloudflare.pay`, local Virtual Wallet ledger, discovery advert, MCP tools, and CLI (`clawql payments cloudflare-wallet *`). Design: [`docs/payments/cloudflare-wallets.md`](docs/payments/cloudflare-wallets.md). Enable with `CLAWQL_CLOUDFLARE_WALLETS=1`.
 - **Credits HATEOAS gateway auth** — non-public `/credits/*` routes require ATR claims when `CLAWQL_AUTH_MODE` is `apiKey`/`oidc` (pay/QR/invite stay public; MFA for stage/confirm when `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL=1`). Overrides: `CLAWQL_CREDITS_HATEOAS_REQUIRE_AUTH`, `CLAWQL_CREDITS_HATEOAS_PUBLIC`.
 - **`clawql-web` package** — pluggable `WebSearchProvider` / `WebBrowserProvider` (Tavily, Brave, SearXNG, OpenSearch, Kitesurf, Chromium/Playwright/Puppeteer, Firecrawl), search→browser fallback with pre-flight audit, MCP tools `web_search` / `web_fetch` / `web_screenshot` / `web_interact`. Docs: [`docs/web/clawql-web.md`](docs/web/clawql-web.md), [`docs/plugins/web.md`](docs/plugins/web.md).
 - **Phase 1 edge gateway Worker** — [`cloudflare/gateway`](cloudflare/gateway): auth → D1 tier routing, REST + MCP JSON-RPC (`search` / `execute` / `memory_*` / `cache`), R2 vault ingest/recall, KV Layer 5, D1 audit, Stripe webhooks → tenant provisioning, 5‑minute interactive demo sandbox, `/status`. Unlimited MCP executions (no Worker-side meter). Pulumi `edge` deploys the bundled module; landing `/demo` + `/status` + X footer.

@@ -56,6 +56,16 @@ export {
   type PaymentsRampAgentCardOptions,
 } from "./ramp.js";
 export {
+  runPaymentsCfwHandleResolve,
+  runPaymentsCfwWalletCreate,
+  runPaymentsCfwWalletStatus,
+  runPaymentsCfwWalletRevoke,
+  type PaymentsCfwHandleOptions,
+  type PaymentsCfwWalletCreateOptions,
+  type PaymentsCfwWalletStatusOptions,
+  type PaymentsCfwWalletRevokeOptions,
+} from "./cloudflare-wallets.js";
+export {
   runPaymentsOfframpSession,
   runPaymentsOfframpWebhook,
   type PaymentsOfframpSessionOptions,
