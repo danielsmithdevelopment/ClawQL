@@ -173,7 +173,7 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 20. **`codegraph-impact-edit` (B-3.1 lite)** — cross-file edit via index/query/neighbors; miss dependents = fail.  
 21. Spikes only: B-4.2 stale cache · B-4.3 Panguard×`memory_ingest` — ship only if product behavior matches claim.
 
-Full breakdown (B-1 flywheel → B-6 domain HLE-analog): [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
+Full breakdown (B-1 flywheel → B-6 domain HLE-analog): [`openbench-advanced-suites.md`](./openbench-advanced-suites.md). Trace collection from GHA: [`openbench-trace-collection.md`](./openbench-trace-collection.md).
 
 ### P3 — keep out of PR OpenBench (ops / cluster / paid SaaS)
 
@@ -208,6 +208,7 @@ Ouroboros remains **on vs off** (both have ClawQL) when the claim is the loop, n
 - [Results ledger](./openbench-results-ledger.md)
 - [Task explanations (prove / why / how)](./openbench-task-explanations.md)
 - [Advanced suites plan (B-1…B-6 task breakdown)](./openbench-advanced-suites.md)
+- [Trace collection from GitHub Actions (call store → export)](./openbench-trace-collection.md)
 - [Stack coverage / backlog](./openbench-stack-coverage.md)
 - [Ouroboros evidence](./ouroboros-value-evidence.md)
 - [Skills / composed recipes](../skills/)

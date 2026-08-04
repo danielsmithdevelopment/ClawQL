@@ -129,6 +129,8 @@ Phase 7  B-1.3 cycle-over-cycle; B-3.2 langs; B-6.3 legal
 
 **Blocked on:** Qwen3.6-27B ClawQL-general LoRA v1 registered (e.g. `tier-map.json` / inference finetune path).
 
+**Unblocked (collection):** GHA now writes `CLAWQL_INFERENCE_STORE=jsonl` under each OpenBench artifact and packages grader session labels — see [`openbench-trace-collection.md`](./openbench-trace-collection.md). Keep collecting while FT v1 lands.
+
 | ID | Subtask | Size | Depends |
 | -- | ------- | ---- | ------- |
 | B1-0 | Confirm fine-tune artifact + how OpenBench selects `arm-base` vs `arm-ft` models | S | FT v1 |
@@ -186,10 +188,11 @@ Work **in this order** unless blocked:
 
 1. **[P0-a]** Write replication queue into ledger (3 cells). ✅  
 2. **[B4.1-a→f]** Ship `memory-conflict-pricing` to `pr_active`, watch CI, retire. ← **in progress**  
-3. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire.  
-4. **[B4.2-0] / [B4.3-0]** Spikes; only then optional cells.  
-5. **[P0-c]** First n=3 dispatch on one headline cell.  
-6. Park B-1/B-2-full/B-5/B-6 until their gates open; keep specs updated here.
+3. **[Trace-0]** Persist OpenBench call-store JSONL from GHA (`CLAWQL_INFERENCE_STORE` + artifact). ✅ see [`openbench-trace-collection.md`](./openbench-trace-collection.md)  
+4. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire.  
+5. **[B4.2-0] / [B4.3-0]** Spikes; only then optional cells.  
+6. **[P0-c]** First n=3 dispatch on one headline cell.  
+7. Park B-1/B-2-full/B-5/B-6 until their gates open; keep specs updated here. Collect traces on every live cell in the meantime.
 
 Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger, stack-coverage, and (for product claims) vision/GTM tables when headline-worthy.
 
