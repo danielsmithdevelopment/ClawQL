@@ -12,7 +12,7 @@ document is the **scoreboard + run diary**.
 | Default model | `openrouter/deepseek/deepseek-chat` |
 | Harness | OpenCode → clawql-inference |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T08:10Z |
+| Last ledger update | 2026-08-04T08:30Z |
 | CI matrix control | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push |
 | Task explanations | [`openbench-task-explanations.md`](./openbench-task-explanations.md) — prove / why / how for every cell |
 
@@ -50,9 +50,9 @@ history). Move the best WIN into the headline table if it improves the claim.
 | `schedule-synthetic-dry-run` | schedule create + dry_run trigger | **1.0** (3 turns, 32s) | **0.0** | [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377) | **WIN** |
 | `external-ingest-continue` | ingest_external_knowledge → memory_recall | **1.0** (5 turns, 37s) | **0.0** | [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038) | **WIN** |
 | `hybrid-recall-source-pin` | PageIndex retrieves buried handbook code | **1.0** (5 turns, 52s) | **0.0** | [30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063) | **WIN** |
-| `notify-mock-slack` | Stubbed Slack notify milestone | — | — | pending | **in flight** |
-| `sandbox-trusted-compute` | Docker sandbox_exec trusted token | — | — | pending | **in flight** |
-| `composed-safe-rollout` | search→dry_run×2→audit→ingest | — | — | pending | **in flight** |
+| `notify-mock-slack` | Stubbed Slack notify milestone | **1.0** (2 turns, 21s) | **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) | **WIN** |
+| `sandbox-trusted-compute` | Docker sandbox_exec trusted token | **1.0** (3 turns, 30s) | **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) | **WIN** |
+| `composed-safe-rollout` | search→dry_run×2→audit→ingest | **1.0** (5 turns, 79s) | **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) | **WIN** |
 
 Replicated Ouroboros WINs also on [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519) (allow + deny both on 1.0 / off 0.0).
 
@@ -282,8 +282,18 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 ## Open gaps (not yet headline WIN)
 
-1. **notify / sandbox / composed** — tasks shipped; awaiting first clean live WINs on `pr_active`, then retire.
-2. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
+1. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
+2. Optional later: agentic external benches (GAIA / τ-bench / SWE-style) with clawql-on vs off — not closed-book HLE.
+
+### 2026-08-04 — [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) (P2 wave — all WIN)
+
+| Task | on | off | Verdict |
+| ---- | -- | --- | ------- |
+| notify-mock-slack | **1.0** (2t, 21s) | **0.0** (2t, 14s) | **WIN** — clawql_notify + notify.json; stub Slack |
+| sandbox-trusted-compute | **1.0** (3t, 30s) | **0.0** (3t, 18s) | **WIN** — clawql_sandbox_exec docker → sand-77 |
+| composed-safe-rollout | **1.0** (5t, 79s) | **0.0** (2t, 26s) | **WIN** — search + dry_run×2 + audit + memory_ingest |
+
+**Verdict:** retire all three from `pr_active` (empty again). First offline gate failed on missing `marker` in `solution/notify.json` ([30890720126](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30890720126)); fixed before this run.
 
 ### 2026-08-04 — P2 wave shipped (awaiting CI)
 
