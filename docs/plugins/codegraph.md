@@ -27,17 +27,17 @@ Use **`memory_recall`** for decisions and cross-session narrative context. Use *
 
 ## MCP tools
 
-| Tool                            | Purpose                                                                                          |
-| ------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Tool                            | Purpose                                                                                             |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- |
 | **`codegraph_sync`**            | **Preferred:** native index → Louvain communities → `GRAPH_REPORT.md` / `graph.html` → vault ingest |
-| **`codegraph_index`**           | Native index only (TS/JS/Python/Go)                                                              |
-| **`codegraph_sync_graphify`**   | Import an **existing** `graph.json` (or fall back to native sync). Never spawns Python.          |
-| **`codegraph_import_graphify`** | Low-level import of Graphify / node-link `graph.json`                                            |
-| **`codegraph_query`**           | Find symbols by name or concept                                                                  |
-| **`codegraph_neighbors`**       | List edges for a node (`imports`, `calls`, `contains`, …)                                        |
-| **`codegraph_path`**            | Shortest path between two symbols                                                                |
-| **`codegraph_explain`**         | Summarize a symbol and its connections                                                           |
-| **`codegraph_subgraph`**        | BFS subgraph around a seed query                                                                 |
+| **`codegraph_index`**           | Native index only (TS/JS/Python/Go)                                                                 |
+| **`codegraph_sync_graphify`**   | Import an **existing** `graph.json` (or fall back to native sync). Never spawns Python.             |
+| **`codegraph_import_graphify`** | Low-level import of Graphify / node-link `graph.json`                                               |
+| **`codegraph_query`**           | Find symbols by name or concept                                                                     |
+| **`codegraph_neighbors`**       | List edges for a node (`imports`, `calls`, `contains`, …)                                           |
+| **`codegraph_path`**            | Shortest path between two symbols                                                                   |
+| **`codegraph_explain`**         | Summarize a symbol and its connections                                                              |
+| **`codegraph_subgraph`**        | BFS subgraph around a seed query                                                                    |
 
 Edges are labeled **`EXTRACTED`**, **`INFERRED`**, or **`AMBIGUOUS`**. Nodes may carry a Louvain **`community`** id after sync.
 

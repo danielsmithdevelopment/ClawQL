@@ -132,10 +132,7 @@ export const codegraphSyncToolSchema = {
     .enum(["fast", "thorough"])
     .optional()
     .describe("thorough raises the default maxFiles cap for larger repos."),
-  outDir: z
-    .string()
-    .optional()
-    .describe("Artifact directory (default: {root}/codegraph-out)."),
+  outDir: z.string().optional().describe("Artifact directory (default: {root}/codegraph-out)."),
   vaultIngest: z
     .boolean()
     .optional()
