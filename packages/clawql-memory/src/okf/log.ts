@@ -22,6 +22,8 @@ const LOG_HEADER = [
   'title: "Memory vault log"',
   'description: "Append-only OKF changelog of memory_ingest events"',
   "tags: [clawql-ingest, okf-log]",
+  'okf_version: "0.2"',
+  "status: current",
   "clawql_generated: okf_log",
   "clawql_okf: true",
   "---",

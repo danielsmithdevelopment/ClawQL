@@ -50,6 +50,7 @@ import {
   runInferenceExportCmd,
   runInferenceFinetuneCmd,
   runInferenceFinetuneRegisterCmd,
+  runInferenceFinetuneRefitCmd,
   runInferenceFinetuneStatusCmd,
   runInferenceLogsCmd,
   runInferencePipelineDisableCmd,
@@ -108,6 +109,7 @@ import {
   runOntologyInit,
   runOntologyLint,
 } from "./ontology-cli.js";
+import { runMemoryLint, runMemoryMigrate, runMemoryQuery } from "./memory-cli.js";
 
 type Command =
   | "init"
@@ -119,6 +121,7 @@ type Command =
   | "sources"
   | "release"
   | "ontology"
+  | "memory"
   | "sync"
   | "sandbox"
   | "inference"
@@ -212,6 +215,18 @@ function parse(argv: string[]): {
     else if (a === "--no-pii-scrub") flags.noPiiScrub = true;
     else if (a === "--write-manifest") flags.writeManifest = true;
     else if (a === "--no-write-manifest") flags.writeManifest = false;
+    else if (a === "--okf-verified") flags.okfVerified = argv[++i] ?? "";
+    else if (a === "--okf-status") flags.okfStatus = argv[++i] ?? "";
+    else if (a === "--vault-ref") flags.vaultRef = argv[++i] ?? "";
+    else if (a === "--vault") flags.vault = argv[++i] ?? "";
+    else if (a === "--okf-version") flags.okfVersion = argv[++i] ?? "";
+    else if (a === "--check-stale") flags.checkStale = true;
+    else if (a === "--no-check-stale") flags.checkStale = false;
+    else if (a === "--open-prs") flags.openPrs = true;
+    else if (a === "--require-worm-ref") flags.requireWormRef = true;
+    else if (a === "--filter") flags.filter = argv[++i] ?? "";
+    else if (a === "--bundle") flags.bundle = argv[++i] ?? "";
+    else if (a === "--target-model") flags.targetModel = argv[++i] ?? "";
     else if (a === "--dataset") flags.dataset = argv[++i] ?? "";
     else if (a === "--manifest") flags.manifest = argv[++i] ?? "";
     else if (a === "--base-model") flags.baseModel = argv[++i] ?? "";
@@ -286,6 +301,7 @@ function parse(argv: string[]): {
     cmd === "sources" ||
     cmd === "release" ||
     cmd === "ontology" ||
+    cmd === "memory" ||
     cmd === "sync" ||
     cmd === "sandbox" ||
     cmd === "inference" ||
@@ -303,7 +319,7 @@ function parse(argv: string[]): {
     cmd === "gateway" ||
     cmd === "payments"
       ? positional.slice(2)
-      : cmd === "release" || cmd === "ontology"
+      : cmd === "release" || cmd === "ontology" || cmd === "memory"
         ? positional.slice(2)
         : positional.slice(1);
   return { cmd, subcmd, flags, rest };
@@ -330,15 +346,20 @@ Usage:
   clawql release init | collect | manifest | publish | verify <path>
   clawql ontology lint [--dir PATH] [files...] | generate --out DIR [--dir PATH]
   clawql ontology init | create-entity <Name> | import --pack legal
+  clawql memory lint [--vault DIR] [--check-stale] [--open-prs] [--json]
+  clawql memory migrate --okf-version 0.2 [--vault DIR] [--dry-run]
+  clawql memory query --filter 'type == decision' [--vault DIR]
   clawql sync init | ensure | push | pull | status [--dry-run] [--force]
   clawql sandbox init | verify | status | edit --harness claude [--path DIR] [--skip-verify]
   clawql inference serve [--port 8080] | complete --model <provider/model> --message <text>
   clawql inference logs [--model M] [--since 24h] [--limit 50] | trace --correlation-id <id> | spend [--group-by model]
-  clawql inference export --output <path.jsonl> [--verdict passed] [--format openai-jsonl]
+  clawql inference export --output <path.jsonl|dir> [--verdict passed] [--format openai-jsonl|portal-bundle]
+  clawql inference export --okf-verified human --okf-status current --format portal-bundle --output ./adapters/x/
   clawql inference finetune --dataset <path> --base-model <model> [--provider openai|anthropic]
   clawql inference escalation show | set-tier --tier frugal --model ollama/phi4-custom
   clawql inference pipeline enable [--schedule "0 2 * * 0"] [--min-samples 500] | status | disable | run
   clawql inference finetune status --job-id <id> | register --job-id <id> --tier frugal --alias <model>
+  clawql inference finetune refit --bundle <task_latent.pt|dir> --target-model <model> --output <dir>
   clawql payments plan show | upgrade --tier team | usage report [--month YYYY-MM]
   clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | webhook verify
   clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
@@ -373,6 +394,11 @@ release (Layer 0 — immutable releases):
 ontology (ADR 0009 — enterprise Ontology):
   lint            Validate entity YAML against schemas/ontology/entity.schema.json
   generate        Emit read MCP tools.json + TypeScript stub (--out DIR)
+
+memory (OKF v0.2 vault):
+  lint            Validate OKF trust signals (--check-stale, --open-prs)
+  migrate         Non-destructive migrate to okf_version 0.2
+  query           Filter notes by verified.by / type / status
 
 operator:
   status          List ClawQLInstance CRs and tier-spec ConfigMaps (requires kubeconfig)
@@ -431,8 +457,8 @@ inference (gateway MVP):
   logs            Recent inference records from the call store
   trace           Records for a correlation_id (links to ouroboros / WORM lineage)
   spend           Token usage rollup by model, provider, or tier
-  export          Verdict-filtered dataset export with optional Presidio scrub + manifest
-  finetune        Submit fine-tuning job; subcommands: status, register
+  export          Verdict/OKF-filtered dataset export (JSONL or portal-bundle) + manifest
+  finetune        Submit fine-tuning job; subcommands: status, register, refit
   escalation      show tier map | set-tier --tier <tier> --model <id>
   pipeline        enable | status | disable | run | worker (scheduled auto-export)
   cache           Semantic cache config (CLAWQL_INFERENCE_SEMANTIC_CACHE=1)
@@ -744,7 +770,8 @@ async function main(): Promise<void> {
       (flags.format === "openai-jsonl" ||
         flags.format === "anthropic-jsonl" ||
         flags.format === "raw-jsonl" ||
-        flags.format === "sharegpt")
+        flags.format === "sharegpt" ||
+        flags.format === "portal-bundle")
         ? flags.format
         : undefined;
     const inferenceOpts: InferenceCliOptions = {
@@ -792,6 +819,12 @@ async function main(): Promise<void> {
       budgetUsd: Number.isFinite(budgetUsd) ? budgetUsd : undefined,
       rateLimit: typeof flags.rateLimit === "string" ? flags.rateLimit : undefined,
       keyId: typeof flags.id === "string" ? flags.id : undefined,
+      okfVerified: typeof flags.okfVerified === "string" ? flags.okfVerified : undefined,
+      okfStatus: typeof flags.okfStatus === "string" ? flags.okfStatus : undefined,
+      vaultRef: typeof flags.vaultRef === "string" ? flags.vaultRef : undefined,
+      vaultPath: typeof flags.vault === "string" ? flags.vault : undefined,
+      bundle: typeof flags.bundle === "string" ? flags.bundle : undefined,
+      targetModel: typeof flags.targetModel === "string" ? flags.targetModel : undefined,
     };
     if (subcmd === "serve") {
       process.exitCode = await runInferenceServeCmd(inferenceOpts);
@@ -825,6 +858,10 @@ async function main(): Promise<void> {
       }
       if (finetuneAction === "register") {
         process.exitCode = await runInferenceFinetuneRegisterCmd(inferenceOpts);
+        return;
+      }
+      if (finetuneAction === "refit") {
+        process.exitCode = await runInferenceFinetuneRefitCmd(inferenceOpts);
         return;
       }
       process.exitCode = await runInferenceFinetuneCmd(inferenceOpts);
@@ -1342,6 +1379,37 @@ async function main(): Promise<void> {
     }
     console.error(
       "Usage: clawql ontology lint | generate --out DIR | init | create-entity <Name> | import --pack legal"
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "memory") {
+    const memoryOpts = {
+      vault: typeof flags.vault === "string" ? flags.vault : undefined,
+      scanRoot: typeof flags.scanRoot === "string" ? flags.scanRoot : undefined,
+      dryRun: Boolean(flags.dryRun),
+      json: Boolean(flags.json),
+      checkStale: flags.checkStale === false ? false : true,
+      requireWormRef: Boolean(flags.requireWormRef),
+      openPrs: Boolean(flags.openPrs),
+      filter: typeof flags.filter === "string" ? flags.filter : undefined,
+      okfVersion: typeof flags.okfVersion === "string" ? flags.okfVersion : "0.2",
+    };
+    if (subcmd === "lint") {
+      process.exitCode = await runMemoryLint(memoryOpts);
+      return;
+    }
+    if (subcmd === "migrate") {
+      process.exitCode = await runMemoryMigrate(memoryOpts);
+      return;
+    }
+    if (subcmd === "query") {
+      process.exitCode = await runMemoryQuery(memoryOpts);
+      return;
+    }
+    console.error(
+      "Usage: clawql memory lint [--check-stale] [--open-prs] | migrate --okf-version 0.2 | query --filter EXPR"
     );
     process.exitCode = 1;
     return;

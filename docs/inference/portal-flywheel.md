@@ -112,22 +112,15 @@ Minutes, not a full retrain. No new export pipeline.
 
 ## Implementation stages
 
-| Stage | Deliverable                                                              | Status                |
-| ----- | ------------------------------------------------------------------------ | --------------------- |
-| **A** | OKF v0.2 trust signals on vault notes + recall filters                   | **Shipped** (this PR) |
-| **B** | Export filter flags `--okf-verified` / `--okf-status`                    | Next                  |
-| **C** | `--format portal-bundle` + Python PorTAL invoke + `adapter_manifest.cqm` | Next                  |
-| **D** | `finetune refit` + tier-map adapter metadata for PAL                     | Next                  |
-| **E** | Docs site sync + getting-started “start the Flywheel for PorTAL” runbook | With C/D              |
+| Stage | Deliverable                                                              | Status      |
+| ----- | ------------------------------------------------------------------------ | ----------- |
+| **A** | OKF v0.2 trust signals on vault notes + recall filters                   | **Shipped** |
+| **B** | Export filter flags `--okf-verified` / `--okf-status`                    | **Shipped** |
+| **C** | `--format portal-bundle` + `adapter_manifest.cqm` (placeholders; Python train via `CLAWQL_PORTAL_TRAIN_CMD`) | **Shipped** |
+| **D** | `finetune refit` (alignment-only stubs)                                  | **Shipped** |
+| **E** | Docs site sync + getting-started “start the Flywheel for PorTAL” runbook | Follow-up   |
 
-Reserve the export format name in TypeScript now so CLI/docs do not thrash:
-
-```ts
-// packages/clawql-inference — ExportFormat (staged)
-export type ExportFormat =
-  "openai-jsonl" | "anthropic-jsonl" | "raw-jsonl" | "sharegpt" | "portal-bundle"; // PorTAL task-latent + alignment bundle (staged)
-```
-
+`portal-bundle` writes a directory with `training.jsonl`, placeholder `task_latent.pt` / `alignment_*.lora`, and WORM-ready `adapter_manifest.cqm`. Replace placeholders with real PorTAL train output when the Python toolchain is configured.
 ---
 
 ## See also

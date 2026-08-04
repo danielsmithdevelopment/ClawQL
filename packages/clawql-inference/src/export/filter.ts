@@ -1,7 +1,21 @@
 import type { InferenceRecord } from "../store/types.js";
 import type { ExportFilter } from "./types.js";
 
-export function matchesExportFilter(record: InferenceRecord, filter: ExportFilter): boolean {
+export type OkfTrustLookup = Map<
+  string,
+  {
+    path: string;
+    status?: string;
+    verifiedBy?: string;
+    staleAfter?: string;
+  }
+>;
+
+export function matchesExportFilter(
+  record: InferenceRecord,
+  filter: ExportFilter,
+  okfByCorrelation?: OkfTrustLookup
+): boolean {
   if (filter.modelId && record.modelId !== filter.modelId) return false;
   if (filter.provider && record.provider !== filter.provider) return false;
   if (filter.tier && record.tier !== filter.tier) return false;
@@ -22,12 +36,23 @@ export function matchesExportFilter(record: InferenceRecord, filter: ExportFilte
     const efficiency = output / input;
     if (efficiency < filter.minTokenEfficiency) return false;
   }
+
+  if (filter.okfVerified || filter.okfStatus) {
+    const cid = record.correlationId?.trim();
+    if (!cid || !okfByCorrelation) return false;
+    const trust = okfByCorrelation.get(cid);
+    if (!trust) return false;
+    if (filter.okfVerified && (trust.verifiedBy ?? "") !== filter.okfVerified) return false;
+    if (filter.okfStatus && (trust.status ?? "current") !== filter.okfStatus) return false;
+  }
+
   return true;
 }
 
 export function filterRecordsForExport(
   records: InferenceRecord[],
-  filter: ExportFilter
+  filter: ExportFilter,
+  okfByCorrelation?: OkfTrustLookup
 ): InferenceRecord[] {
-  return records.filter((r) => matchesExportFilter(r, filter));
+  return records.filter((r) => matchesExportFilter(r, filter, okfByCorrelation));
 }

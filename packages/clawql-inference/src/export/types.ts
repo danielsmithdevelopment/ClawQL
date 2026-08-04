@@ -2,11 +2,14 @@ import type { EvaluatorVerdict } from "../store/types.js";
 
 /**
  * Dataset export formats.
- * `portal-bundle` is reserved for PorTAL task-latent + alignment artifacts
- * (see docs/inference/portal-flywheel.md) — not yet implemented in the writer.
+ * `portal-bundle` writes a PorTAL adapter directory (task_latent + alignment + adapter_manifest.cqm).
  */
 export type ExportFormat =
-  "openai-jsonl" | "anthropic-jsonl" | "raw-jsonl" | "sharegpt" | "portal-bundle";
+  | "openai-jsonl"
+  | "anthropic-jsonl"
+  | "raw-jsonl"
+  | "sharegpt"
+  | "portal-bundle";
 
 export type ExportFilter = {
   modelId?: string;
@@ -19,6 +22,10 @@ export type ExportFilter = {
   maxLatencyMs?: number;
   minTokenEfficiency?: number;
   excludeCacheHits?: boolean;
+  /** OKF v0.2 — only records whose vault note has verified.by matching this value (e.g. human). */
+  okfVerified?: string;
+  /** OKF v0.2 — only records whose vault note has this status (e.g. current). */
+  okfStatus?: string;
 };
 
 export type PiiScrubMode = "presidio" | "off";
@@ -39,6 +46,7 @@ export type DatasetManifest = {
   sampleHashes: string[];
   merkleRoot: string;
   policyVersion?: string;
+  vaultRef?: string;
   piiScrub: {
     enabled: boolean;
     provider: PiiScrubMode;

@@ -14,6 +14,7 @@ import {
   runInferenceExportCli,
   runInferenceFinetune,
   runInferenceFinetuneRegister,
+  runInferenceFinetuneRefit,
   runInferenceFinetuneStatus,
   runInferenceLogs,
   runInferencePipelineDisable,
@@ -69,6 +70,12 @@ export type InferenceCliOptions = {
   budgetUsd?: number;
   rateLimit?: string;
   keyId?: string;
+  okfVerified?: string;
+  okfStatus?: string;
+  vaultRef?: string;
+  vaultPath?: string;
+  bundle?: string;
+  targetModel?: string;
 };
 
 export async function runInferenceServeCmd(opts: InferenceCliOptions): Promise<number> {
@@ -142,6 +149,11 @@ export async function runInferenceExportCmd(opts: InferenceCliOptions): Promise<
     excludeCacheHits: opts.excludeCacheHits,
     noPiiScrub: opts.noPiiScrub,
     writeManifest: opts.writeManifest,
+    okfVerified: opts.okfVerified,
+    okfStatus: opts.okfStatus,
+    vaultRef: opts.vaultRef,
+    vaultPath: opts.vaultPath,
+    baseModel: opts.baseModel,
   });
 }
 
@@ -160,6 +172,15 @@ export async function runInferenceFinetuneStatusCmd(opts: InferenceCliOptions): 
   return runInferenceFinetuneStatus({
     jobId: opts.jobId,
     provider: opts.finetuneProvider,
+    json: opts.json,
+  });
+}
+
+export async function runInferenceFinetuneRefitCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferenceFinetuneRefit({
+    bundle: opts.bundle,
+    targetModel: opts.targetModel ?? opts.baseModel,
+    output: opts.output ?? opts.outputDir,
     json: opts.json,
   });
 }

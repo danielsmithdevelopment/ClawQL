@@ -83,7 +83,7 @@ export const memoryIngestToolZodShape = {
     .optional()
     .describe(MEMORY_INGEST_VERIFIED_DESCRIPTION),
   sources: z
-    .array(z.record(z.union([z.string(), z.number()])))
+    .array(z.record(z.string(), z.union([z.string(), z.number()])))
     .optional()
     .describe(MEMORY_INGEST_SOURCES_DESCRIPTION),
   insights: z.string().optional().describe(MEMORY_INGEST_INSIGHTS_DESCRIPTION),

@@ -107,6 +107,14 @@ Existing pre-v0.2 notes are upgraded non-destructively on append (`ensureOkfFron
 - Adds a default `generated` block from available agent/session fields
 - Does **not** rewrite Markdown body content
 
+Bulk CLI:
+
+```bash
+clawql memory migrate --okf-version 0.2 [--vault DIR] [--dry-run]
+clawql memory lint [--vault DIR] [--check-stale] [--open-prs]
+clawql memory query --filter 'verified.by != human AND type == decision'
+```
+
 ```ts
 import { migrateOkfFrontmatterToV02, lintOkfMarkdown } from "clawql-memory/okf";
 

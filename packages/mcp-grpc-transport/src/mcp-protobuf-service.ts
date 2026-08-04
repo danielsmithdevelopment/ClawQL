@@ -228,6 +228,10 @@ export function createMcpProtobufServiceImplementation(
             req.client_info != null
               ? structToJson(req.client_info as { fields?: Record<string, unknown> })
               : undefined;
+          const clientCaps =
+            req.client_capabilities != null
+              ? structToJson(req.client_capabilities as { fields?: Record<string, unknown> })
+              : undefined;
           const clientInfo = {
             ...(clientFromBody ?? {}),
             ...(clientFromMd ?? {}),
@@ -246,10 +250,12 @@ export function createMcpProtobufServiceImplementation(
             /** Multi-round-trip via resume_data / dependent_requests on RequestFields. */
             mrtr: true,
             protocolVersions: [check.version],
+            ...(clientCaps ? { negotiatedClientCapabilities: clientCaps } : {}),
           };
           const meta: Record<string, unknown> = {
             protocolVersion: check.version,
             ...(Object.keys(clientInfo).length > 0 ? { clientInfo } : {}),
+            ...(clientCaps ? { clientCapabilities: clientCaps } : {}),
             ...(parsed.metadata ? { requestMeta: parsed.metadata } : {}),
           };
           callback(null, {

@@ -349,6 +349,14 @@ export async function writeMemoryIngestPage(
         "",
       ].join("\n");
       await writeVaultTextFileAtomic(vault, rel, body);
+      const { emitMemoryWormEvent } = await import("../okf/worm-events.js");
+      await emitMemoryWormEvent({
+        kind: "MEMORY_INGESTED",
+        at: when,
+        path: rel,
+        correlationId: effective.correlationId,
+        wormRef: effective.wormRef ?? null,
+      });
       return { ok: true, path: rel };
     }
 
@@ -360,6 +368,15 @@ export async function writeMemoryIngestPage(
     });
     const next = `${upgraded.trimEnd()}\n\n---\n\n${section}\n`;
     await writeVaultTextFileAtomic(vault, rel, next);
+    const { emitMemoryWormEvent } = await import("../okf/worm-events.js");
+    await emitMemoryWormEvent({
+      kind: "MEMORY_INGESTED",
+      at: when,
+      path: rel,
+      correlationId: effective.correlationId,
+      wormRef: effective.wormRef ?? null,
+      detail: { append: true },
+    });
     return { ok: true, path: rel };
   });
 }

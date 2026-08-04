@@ -20,6 +20,13 @@ import { loadSpec, registerSpecCacheShutdownHooks } from "clawql-api";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
 import {
+  buildHttpDiscoverResponse,
+  isDiscoverJsonRpc,
+  MCP_PROTOCOL_VERSION_2026_07_28,
+  resolveHttpMcpProtocolVersion,
+  shouldUseStatelessHttpTransport,
+} from "./mcp-http-protocol.js";
+import {
   getObsidianVaultPath,
   getVaultStartupStatus,
   validateOrDegradeObsidianVaultAtStartup,
@@ -338,12 +345,49 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   }
 
   app.post(mcpPath, applyGatewayAuth, async (req, res) => {
+    const protocolVersion = resolveHttpMcpProtocolVersion(req.header("mcp-protocol-version"));
+    res.setHeader("mcp-protocol-version", protocolVersion);
+
+    // MCP 2026-07-28 capability discovery — no session required.
+    if (isDiscoverJsonRpc(req.body)) {
+      const body = req.body as {
+        id?: unknown;
+        params?: {
+          clientInfo?: { name?: string; version?: string };
+          clientCapabilities?: Record<string, unknown>;
+        };
+      };
+      const result = buildHttpDiscoverResponse({
+        protocolVersion,
+        clientInfo: body.params?.clientInfo,
+        clientCapabilities: body.params?.clientCapabilities,
+      });
+      res.status(200).json({
+        jsonrpc: "2.0",
+        id: body.id ?? null,
+        result,
+      });
+      return;
+    }
+
     const sessionId = req.header("mcp-session-id");
+    const useStateless = shouldUseStatelessHttpTransport(protocolVersion);
     try {
       let transport: StreamableHTTPServerTransport | undefined;
 
-      if (sessionId && transports.has(sessionId)) {
+      if (!useStateless && sessionId && transports.has(sessionId)) {
         transport = transports.get(sessionId);
+      } else if (useStateless) {
+        // Per-request transport — no session affinity (MCP 2026-07-28).
+        const streamableJson = ["1", "true", "yes"].includes(
+          (process.env.CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE ?? "").trim().toLowerCase()
+        );
+        transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: undefined,
+          enableJsonResponse: streamableJson,
+        });
+        const server = createRegisteredMcpServer();
+        await server.connect(transport);
       } else if (!sessionId && isInitializeRequest(req.body)) {
         const streamableJson = ["1", "true", "yes"].includes(
           (process.env.CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE ?? "").trim().toLowerCase()
@@ -366,7 +410,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       } else {
         jsonRpcError(
           res,
-          "Bad Request: missing/invalid mcp-session-id, or initialize request required."
+          "Bad Request: missing/invalid mcp-session-id, or initialize request required. For MCP 2026-07-28 send mcp-protocol-version: 2026-07-28."
         );
         return;
       }
@@ -388,6 +432,25 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         });
       }
     }
+  });
+
+  // Explicit discover endpoint (blog / edge clients).
+  app.post(`${mcpPath}/discover`, applyGatewayAuth, (req, res) => {
+    const protocolVersion = resolveHttpMcpProtocolVersion(
+      req.header("mcp-protocol-version") ?? MCP_PROTOCOL_VERSION_2026_07_28
+    );
+    res.setHeader("mcp-protocol-version", protocolVersion);
+    const body = (req.body ?? {}) as {
+      clientInfo?: { name?: string; version?: string };
+      clientCapabilities?: Record<string, unknown>;
+    };
+    res.status(200).json(
+      buildHttpDiscoverResponse({
+        protocolVersion,
+        clientInfo: body.clientInfo,
+        clientCapabilities: body.clientCapabilities,
+      })
+    );
   });
 
   app.get(mcpPath, applyGatewayAuth, async (req, res) => {

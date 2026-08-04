@@ -18,6 +18,11 @@ export type InferenceExportCliOptions = {
   noPiiScrub?: boolean;
   writeManifest?: boolean;
   policyVersion?: string;
+  okfVerified?: string;
+  okfStatus?: string;
+  vaultRef?: string;
+  vaultPath?: string;
+  baseModel?: string;
   env?: NodeJS.ProcessEnv;
 };
 
@@ -41,6 +46,11 @@ export async function runInferenceExportCli(
       noPiiScrub: options.noPiiScrub,
       writeManifest: options.writeManifest,
       policyVersion: options.policyVersion,
+      okfVerified: options.okfVerified,
+      okfStatus: options.okfStatus,
+      vaultRef: options.vaultRef,
+      vaultPath: options.vaultPath,
+      baseModel: options.baseModel,
       env: options.env,
     });
     console.log(
