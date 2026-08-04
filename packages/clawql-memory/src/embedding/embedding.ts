@@ -180,8 +180,7 @@ export function resolveEmbeddingConfig(): EmbeddingConfig | null {
   }
 
   // local (explicit) or auto without API key — mandatory default path
-  const model =
-    process.env.CLAWQL_EMBEDDING_MODEL?.trim() || DEFAULT_LOCAL_EMBEDDING_MODEL;
+  const model = process.env.CLAWQL_EMBEDDING_MODEL?.trim() || DEFAULT_LOCAL_EMBEDDING_MODEL;
   return {
     provider: "local",
     baseUrl: "",
