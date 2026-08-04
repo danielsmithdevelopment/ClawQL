@@ -23,8 +23,10 @@ if [[ -z "${MCP_TARBALL}" || ! -f "${MCP_TARBALL}" ]]; then
 fi
 
 mapfile -t PUBLISH_ORDER < <(node -e "
-const {packages}=require('./scripts/release/npm-publish-order.json');
-for (const name of packages) {
+const order=require('./scripts/release/npm-publish-order.json');
+const extras=order.localPackExtras||[];
+const packages=order.packages||[];
+for (const name of [...extras, ...packages]) {
   if (name === 'clawql-mcp') continue;
   console.log(name);
 }
@@ -35,6 +37,7 @@ npm init -y >/dev/null 2>&1
 
 # Install in topological order so each tarball's clawql-* deps resolve from
 # already-installed local packages (unpublished packages 404 on the registry).
+# localPackExtras (e.g. mcp-grpc-transport) install first for clawql-mcp peers.
 for name in "${PUBLISH_ORDER[@]}"; do
   tarball="$(find "${PACK_DIR}" -maxdepth 1 -name "${name}-*.tgz" -print -quit)"
   if [[ -z "${tarball}" || ! -f "${tarball}" ]]; then
@@ -61,7 +64,7 @@ resolve_pkg() {
   return 1
 }
 
-for name in clawql-api clawql-auth clawql-core clawql-codegraph clawql-memory clawql-ontology clawql-pageindex clawql-documents clawql-automation clawql-sandbox clawql-inference clawql-payments clawql-ouroboros clawql-operator clawql-release; do
+for name in clawql-api clawql-auth clawql-core clawql-codegraph clawql-memory clawql-ontology clawql-pageindex clawql-documents clawql-automation clawql-sandbox clawql-inference clawql-payments clawql-ouroboros clawql-operator clawql-release mcp-grpc-transport; do
   resolve_pkg "${name}"
 done
 

@@ -31,6 +31,20 @@ export const MEMORY_INGEST_AGENT_ID_DESCRIPTION =
   "ClawQL OKF extension — agent identity label (`agent_id`).";
 export const MEMORY_INGEST_VERDICT_DESCRIPTION =
   "ClawQL OKF extension — optional quality / eval verdict.";
+export const MEMORY_INGEST_CONFIDENCE_SCORE_DESCRIPTION =
+  "ClawQL OKF extension — optional confidence score 0–1 (`confidence_score`).";
+export const MEMORY_INGEST_STALE_AFTER_DESCRIPTION =
+  "OKF v0.2 — ISO timestamp after which the entry should be treated as stale (`stale_after`).";
+export const MEMORY_INGEST_STATUS_DESCRIPTION =
+  "OKF v0.2 lifecycle status: current | stale | superseded | retracted (default current).";
+export const MEMORY_INGEST_SUPERSEDED_BY_DESCRIPTION =
+  "OKF v0.2 — vault-relative path of the entry that replaced this one.";
+export const MEMORY_INGEST_MODEL_DESCRIPTION =
+  "OKF v0.2 — model id recorded under `generated.model`.";
+export const MEMORY_INGEST_VERIFIED_DESCRIPTION =
+  "OKF v0.2 — verification block (`by`, `at`, `method`, `reviewer`).";
+export const MEMORY_INGEST_SOURCES_DESCRIPTION =
+  "OKF v0.2 — provenance sources (URL or session/turn rows).";
 export const MEMORY_INGEST_INSIGHTS_DESCRIPTION = "Key insights to persist.";
 export const MEMORY_INGEST_CONVERSATION_DESCRIPTION = "Conversation transcript or summary text.";
 export const MEMORY_INGEST_TOOL_OUTPUTS_DESCRIPTION =
@@ -123,6 +137,42 @@ export const MemoryIngestInputSchema = Schema.Struct({
   ),
   verdict: Schema.optional(
     Schema.String.annotations({ description: MEMORY_INGEST_VERDICT_DESCRIPTION })
+  ),
+  confidenceScore: Schema.optional(
+    Schema.Number.pipe(Schema.between(0, 1)).annotations({
+      description: MEMORY_INGEST_CONFIDENCE_SCORE_DESCRIPTION,
+    })
+  ),
+  staleAfter: Schema.optional(
+    Schema.String.annotations({ description: MEMORY_INGEST_STALE_AFTER_DESCRIPTION })
+  ),
+  status: Schema.optional(
+    Schema.Literal("current", "stale", "superseded", "retracted").annotations({
+      description: MEMORY_INGEST_STATUS_DESCRIPTION,
+    })
+  ),
+  supersededBy: Schema.optional(
+    Schema.NullOr(Schema.String).annotations({
+      description: MEMORY_INGEST_SUPERSEDED_BY_DESCRIPTION,
+    })
+  ),
+  model: Schema.optional(
+    Schema.String.annotations({ description: MEMORY_INGEST_MODEL_DESCRIPTION })
+  ),
+  verified: Schema.optional(
+    Schema.Struct({
+      by: Schema.optional(Schema.String),
+      at: Schema.optional(Schema.String),
+      method: Schema.optional(Schema.String),
+      reviewer: Schema.optional(Schema.String),
+    }).annotations({ description: MEMORY_INGEST_VERIFIED_DESCRIPTION })
+  ),
+  sources: Schema.optional(
+    Schema.mutable(
+      Schema.Array(
+        Schema.Record({ key: Schema.String, value: Schema.Union(Schema.String, Schema.Number) })
+      )
+    ).annotations({ description: MEMORY_INGEST_SOURCES_DESCRIPTION })
   ),
   insights: Schema.optional(
     Schema.String.annotations({ description: MEMORY_INGEST_INSIGHTS_DESCRIPTION })

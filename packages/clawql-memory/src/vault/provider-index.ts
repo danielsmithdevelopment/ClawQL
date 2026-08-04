@@ -111,6 +111,8 @@ function buildIndexMarkdown(opts: {
     `description: ${JSON.stringify(`Auto-generated catalog of notes under ${scanRoot || "vault root"}`)}`
   );
   lines.push("tags: [clawql-ingest, okf-index]");
+  lines.push('okf_version: "0.2"');
+  lines.push("status: current");
   lines.push(`timestamp: ${JSON.stringify(iso)}`);
   lines.push(`date: ${iso}`);
   lines.push("clawql_generated: provider_index");

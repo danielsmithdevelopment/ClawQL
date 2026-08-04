@@ -111,7 +111,8 @@ spec:
               value: {{ .Values.bundledOffline | quote }}
             - name: NODE_OPTIONS
               value: {{ .Values.nodeOptions | quote }}
-            {{- if .Values.enableGrpc }}
+            {{- $enableGrpc := or .Values.enableGrpc (dig "clawql-mcp-grpc" "enabled" false .Values) }}
+            {{- if $enableGrpc }}
             - name: ENABLE_GRPC
               value: "1"
             - name: GRPC_MAX_MESSAGE_LENGTH

@@ -9,7 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- _(None yet — next minor / patch after 7.1.0.)_
+- **mcp-grpc-transport 1.0.0** — MCP **2026-07-28** stateless protocol support (`Discover` RPC, `mcp-protocol-version: 2026-07-28`, per-request `mcp-client-info` / `clientCapabilities`); production TypeScript gRPC MCP transport ([Convergence Week](https://pragmaticvectors.com/posts/convergence-week/)).
+- **Streamable HTTP MCP 2026-07-28** — `/mcp` accepts `mcp-protocol-version: 2026-07-28` with per-request stateless transports; JSON-RPC `discover` / `POST /mcp/discover`; Helm alias `clawql-mcp-grpc.enabled`.
+- **OKF v0.2 trust signals** on vault memory — `generated`, `verified`, `sources`, `stale_after`, `status`, `superseded_by`; `clawql memory lint|migrate|query`; MEMORY_* WORM events; recall excludes `retracted` and down-weights stale ([`docs/memory/okf.md`](docs/memory/okf.md)).
+- **PorTAL flywheel** — `--format portal-bundle` (task_latent + alignment stubs + `adapter_manifest.cqm`), `--okf-verified` / `--okf-status` export filters, `clawql inference finetune refit` ([`docs/inference/portal-flywheel.md`](docs/inference/portal-flywheel.md)).
 
 ## [7.1.0] - 2026-07-20
 

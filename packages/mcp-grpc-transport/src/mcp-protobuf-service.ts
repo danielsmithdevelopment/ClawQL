@@ -6,8 +6,10 @@ import {
   checkMcpProtocolVersion,
   getMetadataValue,
   grpcError,
+  isStatelessProtocolVersion,
   LATEST_PROTOCOL_VERSION,
   MCP_PROTOCOL_VERSION_METADATA_KEY,
+  parseClientInfoFromMetadata,
   sendMcpProtocolMetadata,
 } from "./grpc-mcp-metadata.js";
 import {
@@ -21,6 +23,19 @@ import { protobufRpcLogStorage } from "./mcp-protobuf-logging.js";
 import { defaultListTtlDuration, jsonToStruct, structToJson } from "./mcp-protobuf-struct.js";
 import type { McpProtobufBridge } from "./mcp-protobuf-bridge.js";
 import type { TaskCancellationRegistry } from "./mcp-protobuf-tasks.js";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+function transportPackageVersion(): string {
+  try {
+    const pkgPath = join(dirname(fileURLToPath(import.meta.url)), "../package.json");
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { version?: string };
+    return pkg.version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
 
 const MCP_TOOL_NAME_KEY = "mcp-tool-name";
 const MCP_RESOURCE_URI_KEY = "mcp-resource-uri";
@@ -192,6 +207,75 @@ export function createMcpProtobufServiceImplementation(
   taskRegistry: TaskCancellationRegistry
 ): grpc.UntypedServiceImplementation {
   return {
+    /**
+     * MCP 2026-07-28 capability discovery — no initialize handshake required.
+     * Returns server identity, capabilities, and whether the negotiated version is stateless.
+     */
+    Discover: ((call, callback) => {
+      void (async () => {
+        const check = checkMcpProtocolVersion(call.metadata);
+        if (!check.ok) {
+          sendMcpProtocolMetadata(call, LATEST_PROTOCOL_VERSION);
+          callback(grpcError(grpc.status.UNIMPLEMENTED, check.details));
+          return;
+        }
+        sendMcpProtocolMetadata(call, check.version);
+        try {
+          const req = call.request as Record<string, unknown>;
+          const parsed = parseRequestCommon(req);
+          const clientFromMd = parseClientInfoFromMetadata(call.metadata);
+          const clientFromBody =
+            req.client_info != null
+              ? structToJson(req.client_info as { fields?: Record<string, unknown> })
+              : undefined;
+          const clientCaps =
+            req.client_capabilities != null
+              ? structToJson(req.client_capabilities as { fields?: Record<string, unknown> })
+              : undefined;
+          const clientInfo = {
+            ...(clientFromBody ?? {}),
+            ...(clientFromMd ?? {}),
+          };
+          // Touch bridge so in-process SDK server is connected (for instructions).
+          await bridge.run(async () => {
+            /* ensure connected */
+          });
+          const caps = {
+            tools: {},
+            resources: {},
+            prompts: {},
+            logging: {},
+            /** Stateless unary RPCs — no session affinity required. */
+            stateless: isStatelessProtocolVersion(check.version),
+            /** Multi-round-trip via resume_data / dependent_requests on RequestFields. */
+            mrtr: true,
+            protocolVersions: [check.version],
+            ...(clientCaps ? { negotiatedClientCapabilities: clientCaps } : {}),
+          };
+          const meta: Record<string, unknown> = {
+            protocolVersion: check.version,
+            ...(Object.keys(clientInfo).length > 0 ? { clientInfo } : {}),
+            ...(clientCaps ? { clientCapabilities: clientCaps } : {}),
+            ...(parsed.metadata ? { requestMeta: parsed.metadata } : {}),
+          };
+          callback(null, {
+            common: {
+              instructions: bridge.getInstructions() ?? "",
+              metadata: jsonToStruct(meta),
+            },
+            protocol_version: check.version,
+            server_name: "mcp-grpc-transport",
+            server_version: transportPackageVersion(),
+            capabilities: jsonToStruct(caps),
+            instructions: bridge.getInstructions() ?? "",
+            stateless: isStatelessProtocolVersion(check.version),
+          });
+        } catch (e) {
+          callback(mapGrpcError(e));
+        }
+      })();
+    }) as UnaryHandler<Record<string, unknown>, Record<string, unknown>>,
+
     ListResources: ((call, callback) => {
       void (async () => {
         const check = checkMcpProtocolVersion(call.metadata);

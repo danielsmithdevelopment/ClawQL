@@ -315,13 +315,15 @@ clawql inference trace --correlation-id <id>
 ```
 Production traffic
   → WORM-logged inference (prompt, response, tier, verdict, correlation_id)
-  → Evaluator verdicts + quality filters
-  → PII-scrubbed dataset export (JSONL)
-  → Fine-tuning job (Anthropic / OpenAI)
-  → Custom model registered in ModelTierMap
+  → Evaluator verdicts + quality filters (+ OKF v0.2 verified/status filters)
+  → PII-scrubbed dataset export (JSONL or PorTAL bundle)
+  → Fine-tuning job (Anthropic / OpenAI) **or** PorTAL task-latent + alignment
+  → Custom model / LoRA registered in ModelTierMap
   → Deployed to Frugal tier
   → Better cheap-tier results → better verdicts → better training data
 ```
+
+**PorTAL (Ramp Labs):** ClawQL intends to make Flywheel adapters **portable across base models** via task-latent + per-base alignment. See **[PorTAL + Intelligence Flywheel](./portal-flywheel.md)** for staged CLI shapes (`--format portal-bundle`, `finetune refit`) and trade-offs.
 
 ### Export
 
@@ -334,12 +336,13 @@ clawql inference export \
   --min-score 0.8
 ```
 
-| Format            | Target                    |
-| ----------------- | ------------------------- |
-| `openai-jsonl`    | OpenAI fine-tuning        |
-| `anthropic-jsonl` | Anthropic fine-tuning     |
-| `raw-jsonl`       | Full inference records    |
-| `sharegpt`        | Community tooling interop |
+| Format            | Target                                      |
+| ----------------- | ------------------------------------------- |
+| `openai-jsonl`    | OpenAI fine-tuning                          |
+| `anthropic-jsonl` | Anthropic fine-tuning                       |
+| `raw-jsonl`       | Full inference records                      |
+| `sharegpt`        | Community tooling interop                   |
+| `portal-bundle`   | PorTAL task-latent + alignment (**staged**) |
 
 PII scrubbing (Presidio) is on by default. Every export writes a WORM dataset manifest (sample hashes, filter criteria, Merkle root, policy version).
 

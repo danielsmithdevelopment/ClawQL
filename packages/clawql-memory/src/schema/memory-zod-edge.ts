@@ -23,6 +23,13 @@ import {
   MEMORY_INGEST_TOOL_OUTPUTS_FILE_DESCRIPTION,
   MEMORY_INGEST_TYPE_DESCRIPTION,
   MEMORY_INGEST_VERDICT_DESCRIPTION,
+  MEMORY_INGEST_CONFIDENCE_SCORE_DESCRIPTION,
+  MEMORY_INGEST_STALE_AFTER_DESCRIPTION,
+  MEMORY_INGEST_STATUS_DESCRIPTION,
+  MEMORY_INGEST_SUPERSEDED_BY_DESCRIPTION,
+  MEMORY_INGEST_MODEL_DESCRIPTION,
+  MEMORY_INGEST_VERIFIED_DESCRIPTION,
+  MEMORY_INGEST_SOURCES_DESCRIPTION,
   MEMORY_INGEST_WIKILINKS_DESCRIPTION,
   MEMORY_INGEST_WORM_REF_DESCRIPTION,
   MEMORY_RECALL_CODE_GRAPH_ID_DESCRIPTION,
@@ -53,6 +60,32 @@ export const memoryIngestToolZodShape = {
   wormRef: z.string().nullable().optional().describe(MEMORY_INGEST_WORM_REF_DESCRIPTION),
   agentId: z.string().optional().describe(MEMORY_INGEST_AGENT_ID_DESCRIPTION),
   verdict: z.string().optional().describe(MEMORY_INGEST_VERDICT_DESCRIPTION),
+  confidenceScore: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .describe(MEMORY_INGEST_CONFIDENCE_SCORE_DESCRIPTION),
+  staleAfter: z.string().optional().describe(MEMORY_INGEST_STALE_AFTER_DESCRIPTION),
+  status: z
+    .enum(["current", "stale", "superseded", "retracted"])
+    .optional()
+    .describe(MEMORY_INGEST_STATUS_DESCRIPTION),
+  supersededBy: z.string().nullable().optional().describe(MEMORY_INGEST_SUPERSEDED_BY_DESCRIPTION),
+  model: z.string().optional().describe(MEMORY_INGEST_MODEL_DESCRIPTION),
+  verified: z
+    .object({
+      by: z.string().optional(),
+      at: z.string().optional(),
+      method: z.string().optional(),
+      reviewer: z.string().optional(),
+    })
+    .optional()
+    .describe(MEMORY_INGEST_VERIFIED_DESCRIPTION),
+  sources: z
+    .array(z.record(z.string(), z.union([z.string(), z.number()])))
+    .optional()
+    .describe(MEMORY_INGEST_SOURCES_DESCRIPTION),
   insights: z.string().optional().describe(MEMORY_INGEST_INSIGHTS_DESCRIPTION),
   conversation: z.string().optional().describe(MEMORY_INGEST_CONVERSATION_DESCRIPTION),
   toolOutputs: z

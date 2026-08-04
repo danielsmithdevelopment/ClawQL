@@ -2,7 +2,7 @@
 
 **Extension:** `.cqk`  
 **Media type (proposed):** `text/vnd.clawql.knowledge+markdown`  
-**Status:** Draft v0.1 · [ADR 0010](../../adr/0010-cq-file-extensions.md) · Base: [OKF v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) · [memory/okf.md](../../memory/okf.md)
+**Status:** Draft v0.2 · [ADR 0010](../../adr/0010-cq-file-extensions.md) · Base: [OKF v0.2](https://okf.io) · [memory/okf.md](../../memory/okf.md)
 
 ## Purpose
 
@@ -25,9 +25,12 @@ Markdown with YAML frontmatter (OKF). File path = concept identity.
 | Field                                                   | Notes                                         |
 | ------------------------------------------------------- | --------------------------------------------- |
 | `title`, `description`, `resource`, `tags`, `timestamp` | OKF recommended                               |
+| `generated`, `verified`, `sources`                      | OKF v0.2 trust signals                        |
+| `stale_after`, `status`, `superseded_by`                | OKF v0.2 lifecycle                            |
 | `correlation_id`                                        | Session / request correlation                 |
 | `agent_id`                                              | Producing agent                               |
 | `verdict`                                               | Optional eval / quality                       |
+| `confidence_score`                                      | Optional 0–1 confidence                       |
 | `entity_refs`                                           | List of Ontology entity names or instance ids |
 
 ## Distinguishing `.cqk` vs `.md` vs `.cqe`
@@ -59,10 +62,16 @@ type: decision
 title: Adopt OKF then .cq* extensions
 description: Sequence OKF before custom extensions
 tags: [architecture, okf]
-timestamp: 2026-07-20T00:00:00Z
+timestamp: 2026-07-28T00:00:00Z
+generated:
+  by: agent-architect
+  at: 2026-07-28T00:00:00Z
+  tool: memory_ingest
+status: current
 correlation_id: adr-0010
 worm_ref: null
 clawql_okf: true
+okf_version: "0.2"
 verdict: accepted
 ---
 

@@ -2,17 +2,28 @@
 
 **Pluggable [gRPC](https://grpc.io/) transport for the [Model Context Protocol](https://modelcontextprotocol.io)** (MCP), built on [`@modelcontextprotocol/sdk`](https://www.npmjs.com/package/@modelcontextprotocol/sdk).
 
-**Latest on npm: [`0.2.0`](https://www.npmjs.com/package/mcp-grpc-transport).** See [`CHANGELOG.md`](CHANGELOG.md) in the package for history. For why the code exists (ClawQL, Python PoC), see [Background](#background-clawql-and-the-python-reference).
+**Latest on npm: [`1.0.0`](https://www.npmjs.com/package/mcp-grpc-transport)** (MCP **2026-07-28** stateless core). See [`CHANGELOG.md`](CHANGELOG.md). Background: [ClawQL + Python PoC](#background-clawql-and-the-python-reference). Context: [Convergence Week](https://pragmaticvectors.com/posts/convergence-week/).
 
 It exposes:
 
 - **`grpc.health.v1.Health`** — standard [gRPC health checking](https://github.com/grpc/grpc/blob/master/doc/health-checking.md) (`Check` / `Watch`) for Kubernetes probes and meshes.
-- **`model_context_protocol.Mcp`** — protobuf unary/streaming RPCs matching [GoogleCloudPlatform/mcp-python-sdk-grpc-poc](https://github.com/GoogleCloudPlatform/mcp-python-sdk-grpc-poc) (`ListTools`, `CallTool`, `ListResources`, `ReadResource`, `Complete`, …). Clients **must** send **`mcp-protocol-version`** metadata (same strings as the TypeScript SDK’s supported protocol versions). See [`proto/model_context_protocol/mcp.proto`](proto/model_context_protocol/mcp.proto).
+- **`model_context_protocol.Mcp`** — protobuf unary/streaming RPCs (`Discover`, `ListTools`, `CallTool`, `ListResources`, `ReadResource`, `Complete`, …). Clients **must** send **`mcp-protocol-version`** metadata. Supported versions include **`2026-07-28`** (stateless) plus SDK versions (`2025-11-25` … `2024-10-07`). See [`proto/model_context_protocol/mcp.proto`](proto/model_context_protocol/mcp.proto).
 - **`mcp.transport.v1.Mcp.Session`** — optional bidirectional stream of JSON-RPC messages (stdio-style NDJSON over [`JsonRpcLine`](proto/mcp/transport/v1/mcp.proto)), for clients that do not use the protobuf unary/stream surface.
+
+### MCP 2026-07-28 (stateless)
+
+Anthropic’s **2026-07-28** protocol removes sessions and the initialize handshake from the critical path. For the **protobuf** surface:
+
+1. Client sends `mcp-protocol-version: 2026-07-28` on every RPC.
+2. Optional **`Discover`** returns server identity, capabilities, and `stateless: true`.
+3. Optional **`mcp-client-info`** metadata (JSON `{ "name", "version" }`) carries per-request client identity.
+4. Each `CallTool` / `ListTools` is a self-contained unary (or stream) — no sticky sessions.
+
+JSON-RPC **`Session`** remains available for older clients that still perform `initialize`.
 
 Optional **`ENABLE_GRPC_REFLECTION=1`** enables [gRPC server reflection](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md) for `grpcurl list` / `describe`.
 
-**Status:** **0.1.x** — pre-1.0; wire format may evolve if the ecosystem standardizes a single canonical MCP `mcp.proto`; feedback welcome.
+**Status:** **1.0.0** — production TypeScript gRPC MCP transport.
 
 ### Background (ClawQL and the Python reference)
 

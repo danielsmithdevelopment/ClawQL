@@ -19,9 +19,11 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const dryRun = process.argv.includes("--dry-run");
 const forceBundle = process.env.CLAWQL_NPM_BUNDLE_WORKSPACE === "1";
-const { packages } = JSON.parse(
+const order = JSON.parse(
   readFileSync(join(root, "scripts/release/npm-publish-order.json"), "utf8"),
 );
+const packages = order.packages ?? [];
+const extras = order.localPackExtras ?? [];
 
 function publishCmd(workspace) {
   return `npm publish -w ${workspace} --provenance --access public`;
@@ -79,6 +81,19 @@ function publishClawqlMcp(bundleWorkspace) {
 }
 
 let bundleWorkspace = forceBundle;
+
+// Own-cadence packages first (e.g. mcp-grpc-transport@1.0.0) so clawql-mcp peers resolve.
+if (!bundleWorkspace) {
+  for (const name of extras) {
+    console.log(`Publishing ${name} (localPackExtras)…`);
+    const result = tryPublish(name);
+    if (!result.ok) {
+      console.warn(
+        `WARN: ${name} publish failed (${result.reason}). Continuing with clawql-* packages.`
+      );
+    }
+  }
+}
 
 if (!bundleWorkspace) {
   for (const name of packages) {

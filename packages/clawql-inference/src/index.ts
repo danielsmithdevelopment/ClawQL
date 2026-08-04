@@ -96,6 +96,7 @@ export {
   runInferenceFinetune,
   runInferenceFinetuneStatus,
   runInferenceFinetuneRegister,
+  runInferenceFinetuneRefit,
   type InferenceFinetuneOptions,
 } from "./cli/finetune.js";
 export { runInferenceExport, type RunInferenceExportOptions } from "./export/run-export.js";

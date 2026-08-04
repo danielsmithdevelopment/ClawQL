@@ -40,8 +40,14 @@ export function formatExportLine(record: InferenceRecord, format: ExportFormat):
       return JSON.stringify({ messages: toAnthropicMessages(record) });
     case "sharegpt":
       return JSON.stringify(toShareGpt(record));
+    case "portal-bundle":
+      // Directory export is handled by writePortalBundle; line format falls back to openai-jsonl.
+      return JSON.stringify({ messages: toOpenAiMessages(record) });
     case "raw-jsonl":
-    default:
       return JSON.stringify(record);
+    default: {
+      const _exhaustive: never = format;
+      return JSON.stringify(_exhaustive);
+    }
   }
 }

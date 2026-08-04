@@ -24,6 +24,7 @@ export function buildDatasetManifest(input: {
   policyVersion?: string;
   piiScrub: PiiScrubMode;
   presidioActive: boolean;
+  vaultRef?: string;
 }): DatasetManifest {
   const byteSize = input.samples.reduce((sum, s) => sum + Buffer.byteLength(s.line, "utf8") + 1, 0);
   const sampleHashes = input.samples.map((s) => s.sha256);
@@ -44,6 +45,7 @@ export function buildDatasetManifest(input: {
     sampleHashes,
     merkleRoot,
     policyVersion: input.policyVersion,
+    vaultRef: input.vaultRef,
     piiScrub: {
       enabled: input.piiScrub !== "off",
       provider: input.piiScrub,

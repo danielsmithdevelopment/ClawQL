@@ -73,7 +73,12 @@ export function getMcpServerCard(): Record<string, unknown> {
       {
         type: 'streamable-http',
         url: streamableHttpUrl(origin),
-        supportedProtocolVersions: ['2025-03-12', '2025-06-18', '2025-11-25'],
+        supportedProtocolVersions: [
+          '2025-03-12',
+          '2025-06-18',
+          '2025-11-25',
+          '2026-07-28',
+        ],
       },
     ],
   }

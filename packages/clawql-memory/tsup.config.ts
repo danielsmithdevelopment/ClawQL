@@ -1,6 +1,6 @@
 import { defineConfig } from "tsup";
 
-export default defineConfig({
+const library = defineConfig({
   entry: {
     index: "src/index.ts",
     "vault/config": "src/vault/config.ts",
@@ -31,3 +31,14 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
 });
+
+const cli = defineConfig({
+  entry: { cli: "src/cli.ts" },
+  format: ["esm", "cjs"],
+  dts: false,
+  sourcemap: true,
+  clean: false,
+  banner: { js: "#!/usr/bin/env node" },
+});
+
+export default [library, cli];

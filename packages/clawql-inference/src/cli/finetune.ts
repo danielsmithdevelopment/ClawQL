@@ -112,3 +112,41 @@ export async function runInferenceFinetuneRegister(
     return 1;
   }
 }
+
+export type InferenceFinetuneRefitOptions = {
+  bundle?: string;
+  targetModel?: string;
+  output?: string;
+  json?: boolean;
+};
+
+/** PorTAL alignment-only refit (placeholder artifacts until Python train). */
+export async function runInferenceFinetuneRefit(
+  options: InferenceFinetuneRefitOptions
+): Promise<number> {
+  if (!options.bundle?.trim() || !options.targetModel?.trim() || !options.output?.trim()) {
+    console.error(
+      "Usage: clawql inference finetune refit --bundle <task_latent.pt|dir> --target-model <model> --output <dir>"
+    );
+    return 1;
+  }
+  try {
+    const { writePortalRefit } = await import("../export/portal-bundle.js");
+    const result = await writePortalRefit({
+      bundlePath: options.bundle.trim(),
+      targetModel: options.targetModel.trim(),
+      outputDir: options.output.trim(),
+    });
+    if (options.json) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      console.log(
+        `PorTAL refit: wrote ${result.alignmentLora} → ${result.outputDir} (manifest: ${result.manifestPath})`
+      );
+    }
+    return 0;
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    return 1;
+  }
+}

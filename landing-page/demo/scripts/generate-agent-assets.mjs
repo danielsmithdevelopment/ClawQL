@@ -208,7 +208,7 @@ writeJson(path.join(publicDir, '.well-known/mcp/server-card.json'), {
     {
       type: 'streamable-http',
       url: `${docs}/mcp`,
-      supportedProtocolVersions: ['2025-03-12', '2025-06-18', '2025-11-25'],
+      supportedProtocolVersions: ['2025-03-12', '2025-06-18', '2025-11-25', '2026-07-28'],
     },
   ],
 })

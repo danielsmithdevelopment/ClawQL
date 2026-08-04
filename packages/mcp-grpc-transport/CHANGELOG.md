@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-04
+
+### Added
+
+- **MCP 2026-07-28 (stateless core)** — accept protocol version `2026-07-28` on `mcp-protocol-version` metadata alongside SDK versions (`2025-11-25` … `2024-10-07`).
+- **`Discover` RPC** — capability discovery without initialize/session handshake; returns `stateless`, server identity, and capabilities.
+- **Per-request client info** — optional gRPC metadata `mcp-client-info` (JSON `{ name, version }`) for 2026-07-28 clients.
+- Public exports: `LATEST_PROTOCOL_VERSION`, `SUPPORTED_PROTOCOL_VERSIONS`, `MCP_PROTOCOL_VERSION_2026_07_28`, `isStatelessProtocolVersion`, `checkMcpProtocolVersion`.
+
+### Changed
+
+- Package version **1.0.0** — production TypeScript gRPC MCP transport aligned with Anthropic’s 2026-07-28 stateless protocol announcement.
+- Default client protocol version preference: **2026-07-28**.
+
+### Documentation
+
+- README: 1.0 / stateless MCP / Discover / Agentic Fabric edge↔VG notes.
+
 ## [0.2.0] - 2026-05-12
 
 ### Added

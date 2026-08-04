@@ -11,7 +11,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as grpc from "@grpc/grpc-js";
 import protobuf from "protobufjs";
-import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
+import { LATEST_PROTOCOL_VERSION } from "./protocol-versions.js";
 import { jsonToStruct } from "./mcp-protobuf-struct.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -24,7 +24,7 @@ export type CallToolGrpcClientOptions = {
   toolName: string;
   /** Plain JSON-shaped tool arguments (nested objects/arrays supported). */
   arguments: Record<string, unknown>;
-  /** Defaults to first {@link SUPPORTED_PROTOCOL_VERSIONS} entry. */
+  /** Defaults to {@link LATEST_PROTOCOL_VERSION}. */
   protocolVersion?: string;
   credentials?: grpc.ChannelCredentials;
   /** gRPC `waitForReady` budget (ms). */
@@ -154,10 +154,7 @@ export async function callToolServerStreamingGrpc(
   });
 
   const md = new grpc.Metadata();
-  md.set(
-    "mcp-protocol-version",
-    options.protocolVersion?.trim() || SUPPORTED_PROTOCOL_VERSIONS[0]!
-  );
+  md.set("mcp-protocol-version", options.protocolVersion?.trim() || LATEST_PROTOCOL_VERSION);
 
   const serialize = () => encodedRequest;
   const deserialize = (buf: Buffer) => CallToolResponse.decode(buf);
