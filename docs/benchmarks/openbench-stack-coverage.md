@@ -24,18 +24,20 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 
 | Task | Primary claim | Verified shape |
 | ---- | ------------- | -------------- |
-| `memory-dependent-continuation` | Vault recall beats guessing after seed removal | on **1.0** / off **0.333** ([30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)) |
-| `token-budget-constrained` | Recall nested recipe + ignore decoy noise under token score | on **1.0** / off **0.0** (same) |
-| `multi-provider-api-workflow` | Vault notes → correct Worker/wrangler scaffold | on **1.0** / off **0.75** (same) |
-| `memory-roundtrip-ingest-recall` | Empty vault ingest→recall | on **1.0** / off **0.0** (same) |
-| `search-first-discovery` | Must `search` (decoy wrong op) | on **1.0** / off **0.0** ([30871190463](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30871190463)) |
+| `memory-dependent-continuation` | Vault recall beats guessing after seed removal | on **1.0** / off **0.333** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)) |
+| `token-budget-constrained` | Recall nested recipe + ignore decoy noise under token score | on **1.0** / off **0.0** ([30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811)) |
+| `multi-provider-api-workflow` | Vault notes → correct Worker/wrangler scaffold | on **1.0** / off **0.75** ([30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)); later cells noisier |
+| `memory-roundtrip-ingest-recall` | Empty vault ingest→recall | on **1.0** / off **0.0** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)) |
+| `search-first-discovery` | Must `search` (decoy wrong op) | on **1.0** / off **0.0** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)) |
 | `execute-verify-loop` | dry-run `execute` trail (≥2) | on **1.0** / off **0.0** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)) |
-| `audit-checkpoints` | `audit` append×3 + list → trail | on **1.0** / off **0.0** ([30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811)) |
-| `cache-scratch-handoff` | `cache` set/get secret assembly | set works; finish get+write nudge pending |
-| `policy-deny-execute` | In-process Panguard blocks `execute` | on **1.0** / off **0.0** ([30871786843](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30871786843)) |
+| `audit-checkpoints` | `audit` append×3 + list → trail | on **1.0** / off **0.0** ([30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811)); idle flake possible on n=1 |
+| `policy-deny-execute` | In-process Panguard blocks `execute` | on **1.0** / off **0.0** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)) |
+| `cache-scratch-handoff` | `cache` set/get secret assembly | **Partial** — clawql_cache set observed; get+write still flaky on cheap model |
 | `ouroboros-oscillation-escape` | Ouroboros stops strategy thrash | allow + **deny** both on 1.0 / off 0.0 ([30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277)) |
 
 Still missing live cells: PageIndex/hybrid, codegraph, schedule/notify, sandbox, composed recipes, n≥3 trials.
+
+Note: run [30873723884](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30873723884) timed out across the matrix (OpenCode hung with no tool_use) — treat as infra noise, not claim regression.
 
 ---
 
