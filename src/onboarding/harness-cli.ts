@@ -247,6 +247,8 @@ export function buildOpencodeConfigContent(opts: {
   inferenceUrl: string;
   gatewayModel: string;
   home?: string;
+  /** Stamped onto inference call-store via x-correlation-id (OpenBench arm/trial). */
+  correlationId?: string;
 }): string {
   const home = opts.home ?? getClawqlHome();
   const base = opts.inferenceUrl.trim().replace(/\/$/, "");
@@ -259,6 +261,18 @@ export function buildOpencodeConfigContent(opts: {
   if (!mcpEnv.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS) {
     mcpEnv.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS = "8192";
   }
+  const correlationId =
+    opts.correlationId?.trim() || process.env.CLAWQL_OPENBENCH_CORRELATION_ID?.trim() || "";
+  const providerOptions: Record<string, unknown> = {
+    baseURL: inferenceUrl,
+    apiKey: process.env.CLAWQL_INFERENCE_CLIENT_KEY?.trim() || "clawql-openbench",
+  };
+  if (correlationId) {
+    providerOptions.headers = {
+      "x-correlation-id": correlationId,
+      "x-clawql-correlation-id": correlationId,
+    };
+  }
   return JSON.stringify({
     $schema: "https://opencode.ai/config.json",
     permission: openbenchOpencodePermissions(),
@@ -266,10 +280,7 @@ export function buildOpencodeConfigContent(opts: {
       clawql: {
         npm: "@ai-sdk/openai-compatible",
         name: "ClawQL Inference",
-        options: {
-          baseURL: inferenceUrl,
-          apiKey: process.env.CLAWQL_INFERENCE_CLIENT_KEY?.trim() || "clawql-openbench",
-        },
+        options: providerOptions,
         // Cap default completion budget — OpenRouter 402s when the key cannot
         // afford the client's requested max_tokens (often 16k).
         models: {

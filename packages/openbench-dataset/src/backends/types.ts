@@ -27,18 +27,5 @@ export type S3CompatibleConfig = {
   region?: string;
 };
 
-/**
- * Placeholder for S3/R2 — wire AWS SDK or CLI in the host environment.
- * Throws with setup instructions until implemented in a follow-up.
- */
-export class S3CompatibleBackend implements DatasetBackend {
-  readonly name = "s3";
-  constructor(private readonly config: S3CompatibleConfig) {}
-
-  async putObject(_key: string, _body: string | Buffer): Promise<void> {
-    void this.config;
-    throw new Error(
-      "S3CompatibleBackend not yet implemented in openbench-dataset — use LocalFsBackend or ClawQL sync-openbench-traces-durable.sh"
-    );
-  }
-}
+export { S3CompatibleBackend, resolveR2ConfigFromEnv } from "./s3.js";
+export type { ResolveR2ConfigResult } from "./s3.js";

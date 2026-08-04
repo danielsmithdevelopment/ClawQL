@@ -814,11 +814,29 @@ def resolve_doom_loop_mode(caps: dict | None = None) -> str:
     return "deny"
 
 
-def opencode_config_for_inference(inference_url: str, gateway_model: str) -> str:
+def openbench_correlation_id(arm: str, trial: int, run_id: str | None = None) -> str:
+    """Stable id stamped on inference calls for call-store ↔ trial join."""
+    rid = (run_id or os.environ.get("GITHUB_RUN_ID") or "local").strip()
+    return f"openbench/{arm}/{trial}/{rid}"
+
+
+def opencode_config_for_inference(
+    inference_url: str, gateway_model: str, correlation_id: str | None = None
+) -> str:
     """Point OpenCode at clawql-inference; gateway_model is the ClawQL model id."""
     # OpenCode -m clawql/<gateway_model> → provider clawql, model = gateway_model
     # which is forwarded to the OpenAI-compat endpoint as `model`.
     # Explicit permission classes close headless "ask" hangs (no TTY).
+    options: dict = {
+        "baseURL": inference_url,
+        "apiKey": os.environ.get("CLAWQL_INFERENCE_CLIENT_KEY", "clawql-openbench"),
+    }
+    corr = (correlation_id or os.environ.get("CLAWQL_OPENBENCH_CORRELATION_ID") or "").strip()
+    if corr:
+        options["headers"] = {
+            "x-correlation-id": corr,
+            "x-clawql-correlation-id": corr,
+        }
     return json.dumps(
         {
             "permission": {
@@ -831,10 +849,7 @@ def opencode_config_for_inference(inference_url: str, gateway_model: str) -> str
                 "clawql": {
                     "npm": "@ai-sdk/openai-compatible",
                     "name": "ClawQL Inference",
-                    "options": {
-                        "baseURL": inference_url,
-                        "apiKey": os.environ.get("CLAWQL_INFERENCE_CLIENT_KEY", "clawql-openbench"),
-                    },
+                    "options": options,
                     # Cap default completion budget — OpenRouter 402s when the key
                     # cannot afford the client's requested max_tokens (often 16k).
                     "models": {
@@ -911,7 +926,13 @@ def _dec_timeout_output(exc) -> str:
 
 
 def run_arm_off(
-    instruction: str, workdir: Path, model: str, timeout_s: int, inference_url: str
+    instruction: str,
+    workdir: Path,
+    model: str,
+    timeout_s: int,
+    inference_url: str,
+    *,
+    correlation_id: str | None = None,
 ) -> dict:
     """Raw OpenCode → clawql-inference (OpenRouter and/or BYOK; no ClawQL MCP)."""
     gateway_model = normalize_model_id(model)
@@ -922,7 +943,11 @@ def run_arm_off(
         for k, v in os.environ.items()
         if not k.startswith("CLAWQL_") or k in ("CLAWQL_INFERENCE_CLIENT_KEY",)
     }
-    env["OPENCODE_CONFIG_CONTENT"] = opencode_config_for_inference(inference_url, gateway_model)
+    if correlation_id:
+        env["CLAWQL_OPENBENCH_CORRELATION_ID"] = correlation_id
+    env["OPENCODE_CONFIG_CONTENT"] = opencode_config_for_inference(
+        inference_url, gateway_model, correlation_id
+    )
     # Isolated home so host opencode MCP config is not loaded for the off arm.
     iso = tempfile.mkdtemp(prefix="opencode_off_home_")
     env["HOME"] = iso
@@ -1303,6 +1328,7 @@ def run_arm_on(
     enable_onyx: bool = False,
     require_wikilink: bool = False,
     require_conflict: bool = False,
+    correlation_id: str | None = None,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
     clawql = resolve_clawql()
@@ -1335,6 +1361,8 @@ def run_arm_on(
     env["CLAWQL_OPENBENCH_HARNESS"] = "opencode"
     env["OPENAI_BASE_URL"] = inference_url
     env["CLAWQL_INFERENCE_URL"] = inference_url
+    if correlation_id:
+        env["CLAWQL_OPENBENCH_CORRELATION_ID"] = correlation_id
     # Do NOT set OPENCODE_CONFIG_CONTENT here — clawql opencode --non-interactive
     # builds provider + MCP together. A provider-only JSON previously wiped MCP,
     # so clawql-on could not memory_recall the seeded vault.
@@ -2395,6 +2423,7 @@ def run_trial(
     vault = None
     task_name = task_dir.name
     caps = TASK_HARD_CAPS.get(task_name) or {}
+    corr = openbench_correlation_id(arm, trial)
     try:
         materialize_workspace(task_dir, tmp)
         vault = seed_and_remove_memory(tmp)
@@ -2403,7 +2432,9 @@ def run_trial(
         if arm == "ouroboros-on":
             instruction = instruction.rstrip() + "\n" + OUROBOROS_ON_SEED_APPENDIX
         if arm == "clawql-off":
-            agent = run_arm_off(instruction, tmp, model, timeout_s, inference_url)
+            agent = run_arm_off(
+                instruction, tmp, model, timeout_s, inference_url, correlation_id=corr
+            )
             if vault:
                 shutil.rmtree(vault, ignore_errors=True)
                 vault = None
@@ -2450,7 +2481,9 @@ def run_trial(
                 enable_onyx=bool(caps.get("enable_onyx")),
                 require_wikilink=bool(caps.get("require_wikilink")),
                 require_conflict=bool(caps.get("require_conflict")),
+                correlation_id=corr,
             )
+        agent["correlation_id"] = corr
         # Prefer full captured stream; fall back to / merge harness dump.
         # Never *replace* combined with a longer dump — that can drop an earlier
         # session's tool_use rows (e.g. clawql_search) when a nudge rewrites the dump.

@@ -21,22 +21,27 @@ npm test -w openbench-dataset
 ## Library
 
 ```ts
-import { LocalFsBackend, TraceWriter, exportHuggingFaceDataset } from "openbench-dataset";
+import { LocalFsBackend, TraceWriter, collectFromResults, syncDatasetPack } from "openbench-dataset";
 
-const backend = new LocalFsBackend("/tmp/ob-corpus");
-const writer = new TraceWriter(backend, {
-  dayPrefix: "2026/08/04",
-  runId: "123",
-  taskId: "search-first-discovery",
-});
-await writer.writeTrace({ /* OpenBench trial fields */ });
-await writer.writeManifest();
+await collectFromResults({ artifactDir: "...", runId: "123", taskId: "search-first-discovery" });
+await syncDatasetPack({ datasetDir: ".../dataset", runId: "123", taskId: "search-first-discovery" });
 ```
 
 ## CLI
 
 ```bash
-openbench-dataset export --source ./traces --output ./hf-dataset --verdict pass
+npm run build -w openbench-dataset
+
+node packages/openbench-dataset/dist/cli.js collect \
+  --artifact-dir artifacts/openbench-ab/<task> \
+  --run-id "$GITHUB_RUN_ID" --task <task>
+
+node packages/openbench-dataset/dist/cli.js sync \
+  --artifact-dir artifacts/openbench-ab/<task> \
+  --run-id "$GITHUB_RUN_ID" --task <task>
+
+node packages/openbench-dataset/dist/cli.js export \
+  --source ./dataset/traces --output ./hf-dataset --verdict pass
 ```
 
 ## Status
@@ -45,8 +50,10 @@ openbench-dataset export --source ./traces --output ./hf-dataset --verdict pass
 | ----- | ------ |
 | OpenBenchTrace v1 types + JSON Schema | ✅ |
 | Local scrub + TraceWriter + local backend | ✅ |
-| HF export CLI | ✅ stub |
-| S3/R2 backend in-package | ⏳ use ClawQL durable sync script for now |
+| `collect` from OpenBench `results.json` | ✅ |
+| S3/R2 backend + `sync` | ✅ |
+| HF export CLI | ✅ |
+| Arm-scoped correlation (`openbench/{arm}/{trial}/{run}`) | ✅ |
 | Upstream OpenBench landing | ⏳ proposal drafted |
 
 ## License

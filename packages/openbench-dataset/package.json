@@ -47,6 +47,9 @@
     "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
     "directory": "packages/openbench-dataset"
   },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1090.0"
+  },
   "devDependencies": {
     "@types/node": "^22.13.10",
     "tsup": "^8.4.0",

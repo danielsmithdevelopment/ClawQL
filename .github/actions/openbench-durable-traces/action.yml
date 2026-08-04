@@ -1,9 +1,6 @@
 # Build + validate OpenBenchTrace v1 dataset and sync to durable R2.
-#
-# Inputs expect an artifact dir that already contains results.json and
-# optionally call-store/calls.jsonl (from CLAWQL_INFERENCE_STORE_PATH).
 name: openbench-durable-traces
-description: Validate, scrub, and upload OpenBench traces to R2 (corpus of record)
+description: Collect OpenBenchTrace packs and sync to R2 (corpus of record)
 inputs:
   artifact_dir:
     description: Path to openbench artifact directory for this cell
@@ -27,28 +24,22 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Install jsonschema
+    - name: Build openbench-dataset package
       shell: bash
-      run: pip install --user jsonschema -q
-
-    - name: Build + validate + scrub dataset
-      shell: bash
-      env:
-        CLAWQL_ENABLE_PRESIDIO: ${{ env.CLAWQL_ENABLE_PRESIDIO }}
       run: |
         set -euo pipefail
-        python3 openbench/scripts/package-openbench-traces.py \
-          --artifact-dir "${{ inputs.artifact_dir }}" \
-          --run-id "${{ inputs.run_id }}" \
-          --task "${{ inputs.task }}" \
-          --model "${{ inputs.model }}" || true
-        python3 openbench/scripts/build-openbench-dataset.py \
+        npm run build -w openbench-dataset
+
+    - name: Collect OpenBenchTrace pack
+      shell: bash
+      run: |
+        set -euo pipefail
+        node packages/openbench-dataset/dist/cli.js collect \
           --artifact-dir "${{ inputs.artifact_dir }}" \
           --run-id "${{ inputs.run_id }}" \
           --task "${{ inputs.task }}" \
           --model "${{ inputs.model }}" \
-          --clawql-version "${{ inputs.clawql_version }}" \
-          --require-nonempty
+          --clawql-version "${{ inputs.clawql_version }}"
 
     - name: Sync durable pack to R2
       shell: bash
@@ -65,9 +56,12 @@ runs:
         R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
       run: |
         set -euo pipefail
-        chmod +x openbench/scripts/sync-openbench-traces-durable.sh
-        openbench/scripts/sync-openbench-traces-durable.sh \
+        EXTRA=()
+        if [ "${{ inputs.require_durable }}" = "0" ] || [ "${{ inputs.require_durable }}" = "false" ]; then
+          EXTRA+=(--allow-missing-r2)
+        fi
+        node packages/openbench-dataset/dist/cli.js sync \
           --artifact-dir "${{ inputs.artifact_dir }}" \
           --run-id "${{ inputs.run_id }}" \
           --task "${{ inputs.task }}" \
-          --sha "${{ inputs.clawql_version }}"
+          "${EXTRA[@]}"

@@ -12,8 +12,10 @@ export {
   scrubJsonValue,
   scrubTextLocal,
 } from "./scrub/local.js";
-export { LocalFsBackend, S3CompatibleBackend } from "./backends/types.js";
-export type { DatasetBackend, S3CompatibleConfig } from "./backends/types.js";
+export { LocalFsBackend, S3CompatibleBackend, resolveR2ConfigFromEnv } from "./backends/types.js";
+export type { DatasetBackend, S3CompatibleConfig, ResolveR2ConfigResult } from "./backends/types.js";
 export { TraceWriter } from "./writer/trace-writer.js";
 export type { TraceWriterInput, WormBatchManifest } from "./writer/trace-writer.js";
 export { exportHuggingFaceDataset } from "./export/huggingface.js";
+export { collectFromResults } from "./collect/from-results.js";
+export { syncDatasetPack } from "./sync/sync-pack.js";

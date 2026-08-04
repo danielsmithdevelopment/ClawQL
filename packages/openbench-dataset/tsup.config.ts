@@ -7,6 +7,7 @@ export default defineConfig([
     dts: true,
     sourcemap: true,
     clean: true,
+    external: ["@aws-sdk/client-s3"],
   },
   {
     entry: { cli: "src/cli.ts" },
@@ -14,5 +15,6 @@ export default defineConfig([
     dts: false,
     sourcemap: true,
     clean: false,
+    external: ["@aws-sdk/client-s3"],
   },
 ]);
