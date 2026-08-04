@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Team vault auto-push debounce** — default `CLAWQL_SYNC_AUTO_DEBOUNCE_MS` **30s → 2s** (still coalesces a short ingest burst; short enough for Cloud Agent / MCP process lifetimes). Pending push also flushes on SIGINT/SIGTERM/`beforeExit`.
+
 ### Fixed
 
 - **MCP stdio / Cursor discovery** — `dotenv` ≥17 prints `◇ injected env …` to **stdout** by default; that corrupts JSON-RPC and makes Cursor report `clawql` as failed tool discovery. `src/load-env.ts` now always passes **`quiet: true`**.
