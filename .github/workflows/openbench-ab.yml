@@ -115,8 +115,16 @@ jobs:
               --mode pr \
               --github-output
           fi
-          echo "::notice::OpenBench PR-active matrix → $(python3 openbench/scripts/resolve-ci-matrix.py --mode pr)"
-          echo "Retired tasks (skipped on PR): $(python3 -c 'import json; print(",".join(sorted(json.load(open("openbench/ci-matrix.json"))["retired"])))')"
+          TASKS_JSON="$(python3 openbench/scripts/resolve-ci-matrix.py --mode pr)"
+          echo "::notice::OpenBench PR-active matrix → ${TASKS_JSON}"
+          python3 - <<'PY'
+          import json
+          cfg = json.load(open("openbench/ci-matrix.json"))
+          if cfg.get("live_enabled", True) is False:
+              print(f"::warning::Live OpenBench paused — {cfg.get('live_pause_reason', 'live_enabled=false')}")
+          retired = ",".join(sorted(cfg.get("retired") or {}))
+          print(f"Retired tasks (skipped on PR): {retired}")
+          PY
 
   ab-compare:
     name: A/B ${{ matrix.task }}

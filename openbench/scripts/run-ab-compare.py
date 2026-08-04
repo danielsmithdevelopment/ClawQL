@@ -611,7 +611,16 @@ def opencode_config_for_inference(inference_url: str, gateway_model: str) -> str
                         "baseURL": inference_url,
                         "apiKey": os.environ.get("CLAWQL_INFERENCE_CLIENT_KEY", "clawql-openbench"),
                     },
-                    "models": {gateway_model: {}},
+                    # Cap default completion budget — OpenRouter 402s when the key
+                    # cannot afford the client's requested max_tokens (often 16k).
+                    "models": {
+                        gateway_model: {
+                            "limit": {
+                                "context": int(os.environ.get("OPENBENCH_MODEL_CONTEXT", "32000")),
+                                "output": int(os.environ.get("OPENBENCH_MODEL_MAX_OUTPUT", "2048")),
+                            }
+                        }
+                    },
                 }
             },
         }
@@ -639,16 +648,33 @@ def opencode_run_base_args(workdir: Path, opencode_model: str, title: str) -> li
 
 
 def is_infra_hang(agent: dict) -> bool:
-    """True when OpenCode timed out with no turns/tools (API hang / ask deadlock)."""
-    if not agent.get("timed_out"):
-        return False
+    """True when OpenCode stalled with no turns/tools (API hang / ask deadlock)."""
     if agent.get("turns") is not None:
         return False
     tail = (agent.get("output_tail") or "") + (agent.get("error") or "")
     if '"tool":' in tail:
         return False
-    # Typical signature: only CLAWQL_BENCH_JSON timeout wrapper, no JSONL events.
-    return True
+    err = (agent.get("error") or "").lower()
+    if agent.get("timed_out") or agent.get("exit_code") == 124 or "timeout" in err:
+        return True
+    # OpenCode often retries forever on 402/429 without setting timed_out cleanly.
+    if any(s in tail for s in ("HTTP 402", "HTTP 429", "stream error", "openrouter_credits")):
+        return True
+    return False
+
+
+def credit_exhausted(agent: dict) -> bool:
+    """OpenRouter (or similar) rejected the call for insufficient credits."""
+    blob = (agent.get("output_tail") or "") + (agent.get("error") or "")
+    return any(
+        s in blob
+        for s in (
+            "HTTP 402",
+            "openrouter_credits",
+            "requires more credits",
+            "can only afford",
+        )
+    )
 
 
 def _dec_timeout_output(exc) -> str:
@@ -1751,42 +1777,45 @@ def main(argv=None) -> int:
 
     gateway_model = normalize_model_id(args.model)
     started = datetime.now(timezone.utc).isoformat()
+    def skipped_row(trial: int, arm: str, reason: str) -> dict:
+        return {
+            "trial": trial,
+            "arm": arm,
+            "agent": {
+                "arm": arm,
+                "harness": DEFAULT_HARNESS,
+                "completed": False,
+                "timed_out": False,
+                "skipped": True,
+                "skip_reason": reason,
+                "wall_s": 0,
+                "tokens": None,
+                "turns": None,
+                "error": reason,
+            },
+            "checker": {
+                "success": False,
+                "score": 0.0,
+                "stdout": "",
+                "stderr": reason,
+            },
+            "workdir": None,
+        }
+
     rows: list[dict] = []
+    abort_all = False
+    abort_reason = ""
     for trial in range(1, args.trials + 1):
-        skip_remaining = False
-        skip_reason = ""
+        skip_remaining = abort_all
+        skip_reason = abort_reason
         for arm in arms:
             if skip_remaining:
                 print(
                     f"==> trial {trial}/{args.trials} arm={arm} SKIPPED "
-                    f"(infra hang on earlier arm: {skip_reason})",
+                    f"({skip_reason})",
                     flush=True,
                 )
-                rows.append(
-                    {
-                        "trial": trial,
-                        "arm": arm,
-                        "agent": {
-                            "arm": arm,
-                            "harness": DEFAULT_HARNESS,
-                            "completed": False,
-                            "timed_out": False,
-                            "skipped": True,
-                            "skip_reason": skip_reason,
-                            "wall_s": 0,
-                            "tokens": None,
-                            "turns": None,
-                            "error": skip_reason,
-                        },
-                        "checker": {
-                            "success": False,
-                            "score": 0.0,
-                            "stdout": "",
-                            "stderr": skip_reason,
-                        },
-                        "workdir": None,
-                    }
-                )
+                rows.append(skipped_row(trial, arm, skip_reason))
                 continue
             print(
                 f"==> trial {trial}/{args.trials} arm={arm} "
@@ -1813,6 +1842,16 @@ def main(argv=None) -> int:
                 f"tokens={ag.get('tokens')} turns={ag.get('turns')} wall_s={ag.get('wall_s')}",
                 flush=True,
             )
+            if credit_exhausted(ag):
+                abort_all = True
+                skip_remaining = True
+                abort_reason = (
+                    f"provider credits exhausted on {arm} (HTTP 402 / openrouter_credits). "
+                    "Top up OPENROUTER_API_KEY (or use BYOK) before re-running."
+                )
+                skip_reason = abort_reason
+                print(f"    !! {abort_reason} — aborting remaining arms/trials", flush=True)
+                continue
             if is_infra_hang(ag):
                 skip_remaining = True
                 skip_reason = (

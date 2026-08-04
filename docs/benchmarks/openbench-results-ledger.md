@@ -12,7 +12,7 @@ document is the **scoreboard + run diary**.
 | Default model | `openrouter/deepseek/deepseek-chat` |
 | Harness | OpenCode → clawql-inference |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T05:15Z |
+| Last ledger update | 2026-08-04T05:30Z |
 | CI matrix control | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push |
 
 ---
@@ -177,6 +177,19 @@ Matrix correctly reduced to 4 tasks; ouroboros workflow did **not** fire. All fo
 
 Follow-ups: serialize `max-parallel: 1`, pin `opencode-ai@1.18.11`, `--print-logs`, skip remaining arms after first infra hang, tighten headless permissions (`question=deny`, `external_directory=allow`).
 
+### 2026-08-04 — [30880006784](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30880006784) — **root cause: OpenRouter 402**
+
+`--print-logs` showed the hang is **not** mystery infra: OpenRouter returned
+`HTTP 402` — *“This request requires more credits, or fewer max_tokens. You
+requested up to 16384 tokens, but can only afford 755.”* OpenCode retries the
+stream error until our wall timeout (classic #8203-style hang).
+
+**Actions taken:**
+- Pause PR live A/B: `openbench/ci-matrix.json` → `live_enabled: false`
+- Cap OpenCode model `limit.output` default to 2048
+- Abort remaining arms/trials on credit exhaustion
+- Keep `pr_active` list ready; flip `live_enabled: true` after topping up `OPENROUTER_API_KEY` (or switch to BYOK)
+
 ---
 
 ## Confounds & harness notes (cumulative)
@@ -191,6 +204,7 @@ Follow-ups: serialize `max-parallel: 1`, pin `opencode-ai@1.18.11`, `--print-log
 | Harness dump replace | Longer nudge dump dropped earlier `clawql_search` | Merge dump into combined; never replace |
 | Vault one-shot (early) | Both ouroboros arms scored 1.0 | Disable memory for thrash study |
 | Infra hang | Whole matrix timeout, no tools | Re-run; annotate as noise in this ledger |
+| OpenRouter 402 credits | OpenCode `stream error` + hang until wall | Top up key; cap `limit.output`; `live_enabled=false` until funded |
 
 ---
 

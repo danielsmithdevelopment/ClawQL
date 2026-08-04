@@ -1,5 +1,7 @@
 {
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
+  "live_enabled": false,
+  "live_pause_reason": "OpenRouter HTTP 402 on run 30880006784 — key out of credits (requested max_tokens=16384, afford ~755). Top up OPENROUTER_API_KEY credits (or switch to BYOK), then set live_enabled=true.",
   "pr_active": [
     "cache-scratch-handoff",
     "pageindex-section-qa",

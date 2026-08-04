@@ -52,14 +52,20 @@ def resolve(mode: str, task: str | None) -> list[str]:
     active = list(cfg.get("pr_active") or [])
     retired = dict(cfg.get("retired") or {})
     known = set(all_known(cfg))
+    live_enabled = cfg.get("live_enabled", True) is not False
 
     if mode == "pr":
+        if not live_enabled:
+            reason = cfg.get("live_pause_reason") or "live_enabled=false in openbench/ci-matrix.json"
+            print(f"::notice::OpenBench live A/B paused — {reason}", file=sys.stderr)
+            return []
         return [t for t in active if t in known or (TASKS_DIR / t).is_dir()]
 
     if mode != "dispatch":
         raise SystemExit(f"unknown mode: {mode}")
 
     t = (task or "all").strip()
+    # Manual dispatch always allowed (operator intent), even when PR live is paused.
     if t in ("", "all", "active"):
         return [x for x in active if (TASKS_DIR / x).is_dir()]
     if t == "all-including-retired":

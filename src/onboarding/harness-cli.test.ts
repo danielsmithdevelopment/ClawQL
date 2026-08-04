@@ -75,7 +75,9 @@ describe("buildOpencodeConfigContent", () => {
         doom_loop: "deny",
       });
       expect(cfg.provider.clawql.options.baseURL).toBe("http://127.0.0.1:8080/v1");
-      expect(cfg.provider.clawql.models["openrouter/google/gemini-2.5-flash-lite"]).toEqual({});
+      expect(cfg.provider.clawql.models["openrouter/google/gemini-2.5-flash-lite"]).toEqual({
+        limit: { context: 32000, output: 2048 },
+      });
       expect(cfg.mcp.clawql.enabled).toBe(true);
       expect(cfg.mcp.clawql.environment.CLAWQL_OBSIDIAN_VAULT_PATH).toBe("/tmp/clawql-ab-vault");
       expect(cfg.mcp.clawql.environment.CLAWQL_ENABLE_MEMORY).toBe("1");

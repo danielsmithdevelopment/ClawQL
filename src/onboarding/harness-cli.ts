@@ -209,7 +209,16 @@ export function buildOpencodeConfigContent(opts: {
           baseURL: inferenceUrl,
           apiKey: process.env.CLAWQL_INFERENCE_CLIENT_KEY?.trim() || "clawql-openbench",
         },
-        models: { [gatewayModel]: {} },
+        // Cap default completion budget — OpenRouter 402s when the key cannot
+        // afford the client's requested max_tokens (often 16k).
+        models: {
+          [gatewayModel]: {
+            limit: {
+              context: Number(process.env.OPENBENCH_MODEL_CONTEXT || 32000),
+              output: Number(process.env.OPENBENCH_MODEL_MAX_OUTPUT || 2048),
+            },
+          },
+        },
       },
     },
     mcp: {
