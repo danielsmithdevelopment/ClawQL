@@ -77,6 +77,33 @@ describe("memory-recall vault", () => {
     expect(r.hits!.some((h) => h.source === "vault" || h.source === "link")).toBe(true);
   });
 
+  it("still surfaces wikilink neighbors when many keyword seeds compete", async () => {
+    // Flood the corpus with notes that share a common token so seeds >> limit.
+    for (let i = 0; i < 30; i++) {
+      await writeFile(
+        join(dir, `Memory/noise-${i}.md`),
+        `# Noise ${i}\n\nchainlink chainlink network feed ${i}\n`,
+        "utf8"
+      );
+    }
+    await writeFile(
+      join(dir, "Memory/hub.md"),
+      "# Hub\n\nchainlink hub discusses [[Beta Page]] and github.\n",
+      "utf8"
+    );
+    const r = await runMemoryRecall({
+      query: "chainlink github",
+      limit: 5,
+      maxDepth: 2,
+      minScore: 0.1,
+      sources: ["vault"],
+    });
+    expect(r.ok).toBe(true);
+    const linkHit = r.results?.find((x) => x.reason === "link");
+    expect(linkHit).toBeDefined();
+    expect(linkHit?.path).toMatch(/beta-page\.md$/);
+  });
+
   it("honors sources=[vault] without requiring pageindex/onyx", async () => {
     const r = await runMemoryRecall({
       query: "github pat",

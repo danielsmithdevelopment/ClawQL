@@ -56,6 +56,32 @@ export function vectorRecallEnabled(): boolean {
   return resolveEmbeddingConfig() !== null;
 }
 
+/**
+ * Honest status for memory_ingest `rebuild.embeddings`.
+ * Chunk/index sync can succeed while every `vault_chunk.embedding` stays NULL when
+ * VECTOR_BACKEND is off or no embedding API key is set — do not report synced:true then.
+ */
+export function embeddingRebuildReport(): { synced: boolean; skipped?: string } {
+  if (process.env.CLAWQL_MEMORY_DB === "0") {
+    return { synced: false, skipped: "CLAWQL_MEMORY_DB=0; memory.db sync disabled" };
+  }
+  if (vectorBackend() === "off") {
+    return {
+      synced: false,
+      skipped:
+        "CLAWQL_VECTOR_BACKEND unset/off; chunks may be indexed but embeddings were not written",
+    };
+  }
+  if (!resolveEmbeddingConfig()) {
+    return {
+      synced: false,
+      skipped:
+        "No CLAWQL_EMBEDDING_API_KEY (or OPENAI_API_KEY); chunks indexed without embeddings",
+    };
+  }
+  return { synced: true };
+}
+
 /** @deprecated Prefer {@link vectorBackend} === `"sqlite"`. */
 export function vectorSqliteBackendEnabled(): boolean {
   return vectorBackend() === "sqlite" && resolveEmbeddingConfig() !== null;

@@ -13,6 +13,7 @@ import {
   vaultProviderIndexEffect,
 } from "./memory-vault-post-sync-effect.js";
 import { VaultConfigService } from "./vault-config-service.js";
+import { embeddingRebuildReport } from "../embedding/embedding.js";
 
 const VAULT_NOT_CONFIGURED =
   "Obsidian vault is not configured. Set CLAWQL_OBSIDIAN_VAULT_PATH to a writable directory.";
@@ -79,7 +80,7 @@ export function executeMemoryIngestCoreEffect(
 
     if (wantEmbeddingsRebuild(effective)) {
       extras = yield* memoryIngestPostSyncExtrasEffect(vault);
-      rebuild.embeddings = { synced: true };
+      rebuild.embeddings = embeddingRebuildReport();
     } else if (effective.rebuild?.embeddings === false) {
       rebuild.embeddings = {
         synced: false,
