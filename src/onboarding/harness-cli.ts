@@ -170,6 +170,30 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
   if (process.env.CLAWQL_EXTERNAL_INGEST?.trim()) {
     env.CLAWQL_EXTERNAL_INGEST = process.env.CLAWQL_EXTERNAL_INGEST.trim();
   }
+  if (process.env.CLAWQL_ENABLE_NOTIFY?.trim()) {
+    env.CLAWQL_ENABLE_NOTIFY = process.env.CLAWQL_ENABLE_NOTIFY.trim();
+  }
+  if (process.env.CLAWQL_SLACK_TOKEN?.trim()) {
+    env.CLAWQL_SLACK_TOKEN = process.env.CLAWQL_SLACK_TOKEN.trim();
+  }
+  if (process.env.CLAWQL_TEST_SLACK_FETCH_STUB?.trim()) {
+    env.CLAWQL_TEST_SLACK_FETCH_STUB = process.env.CLAWQL_TEST_SLACK_FETCH_STUB.trim();
+  }
+  if (process.env.CLAWQL_TEST_SLACK_FETCH_BODY?.trim()) {
+    env.CLAWQL_TEST_SLACK_FETCH_BODY = process.env.CLAWQL_TEST_SLACK_FETCH_BODY.trim();
+  }
+  if (process.env.CLAWQL_SPEC_PATH?.trim()) {
+    env.CLAWQL_SPEC_PATH = process.env.CLAWQL_SPEC_PATH.trim();
+  }
+  if (process.env.CLAWQL_ENABLE_SANDBOX?.trim()) {
+    env.CLAWQL_ENABLE_SANDBOX = process.env.CLAWQL_ENABLE_SANDBOX.trim();
+  }
+  if (process.env.CLAWQL_SANDBOX_BACKEND?.trim()) {
+    env.CLAWQL_SANDBOX_BACKEND = process.env.CLAWQL_SANDBOX_BACKEND.trim();
+  }
+  if (process.env.CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON?.trim()) {
+    env.CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON = process.env.CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON.trim();
+  }
   return env;
 }
 

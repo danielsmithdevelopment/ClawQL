@@ -12,7 +12,7 @@ document is the **scoreboard + run diary**.
 | Default model | `openrouter/deepseek/deepseek-chat` |
 | Harness | OpenCode → clawql-inference |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T07:50Z |
+| Last ledger update | 2026-08-04T08:10Z |
 | CI matrix control | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push |
 | Task explanations | [`openbench-task-explanations.md`](./openbench-task-explanations.md) — prove / why / how for every cell |
 
@@ -50,6 +50,9 @@ history). Move the best WIN into the headline table if it improves the claim.
 | `schedule-synthetic-dry-run` | schedule create + dry_run trigger | **1.0** (3 turns, 32s) | **0.0** | [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377) | **WIN** |
 | `external-ingest-continue` | ingest_external_knowledge → memory_recall | **1.0** (5 turns, 37s) | **0.0** | [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038) | **WIN** |
 | `hybrid-recall-source-pin` | PageIndex retrieves buried handbook code | **1.0** (5 turns, 52s) | **0.0** | [30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063) | **WIN** |
+| `notify-mock-slack` | Stubbed Slack notify milestone | — | — | pending | **in flight** |
+| `sandbox-trusted-compute` | Docker sandbox_exec trusted token | — | — | pending | **in flight** |
+| `composed-safe-rollout` | search→dry_run×2→audit→ingest | — | — | pending | **in flight** |
 
 Replicated Ouroboros WINs also on [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519) (allow + deny both on 1.0 / off 0.0).
 
@@ -279,8 +282,12 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 ## Open gaps (not yet headline WIN)
 
-1. **notify / sandbox / composed recipes** — backlog (next PR wave).
+1. **notify / sandbox / composed** — tasks shipped; awaiting first clean live WINs on `pr_active`, then retire.
 2. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
+
+### 2026-08-04 — P2 wave shipped (awaiting CI)
+
+`pr_active` set to `notify-mock-slack`, `sandbox-trusted-compute`, `composed-safe-rollout`. Wiring: Slack fetch stub + minimal OpenAPI fixture; Docker sandbox with `python:3.12-alpine` pre-pull; composed sequence graders + nudges. Harness forwards NOTIFY/SANDBOX/SPEC_PATH into MCP child.
 
 ---
 

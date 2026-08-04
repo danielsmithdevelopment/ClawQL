@@ -182,6 +182,67 @@ describe("buildOpencodeConfigContent", () => {
     }
   });
 
+  it("clawqlMcpChildEnv forwards notify + Slack stub + SPEC_PATH for OpenBench", () => {
+    const keys = [
+      "CLAWQL_OPENBENCH",
+      "CLAWQL_ENABLE_NOTIFY",
+      "CLAWQL_SLACK_TOKEN",
+      "CLAWQL_TEST_SLACK_FETCH_STUB",
+      "CLAWQL_TEST_SLACK_FETCH_BODY",
+      "CLAWQL_SPEC_PATH",
+      "CLAWQL_PROVIDER",
+    ] as const;
+    const prev: Record<string, string | undefined> = {};
+    for (const k of keys) prev[k] = process.env[k];
+    process.env.CLAWQL_OPENBENCH = "1";
+    process.env.CLAWQL_ENABLE_NOTIFY = "1";
+    process.env.CLAWQL_SLACK_TOKEN = "xoxb-test";
+    process.env.CLAWQL_TEST_SLACK_FETCH_STUB = "1";
+    process.env.CLAWQL_TEST_SLACK_FETCH_BODY = '{"ok":true}';
+    process.env.CLAWQL_SPEC_PATH = "/tmp/minimal-slack.json";
+    process.env.CLAWQL_PROVIDER = "slack";
+    try {
+      const env = clawqlMcpChildEnv("/tmp/notify-home");
+      expect(env.CLAWQL_ENABLE_NOTIFY).toBe("1");
+      expect(env.CLAWQL_SLACK_TOKEN).toBe("xoxb-test");
+      expect(env.CLAWQL_TEST_SLACK_FETCH_STUB).toBe("1");
+      expect(env.CLAWQL_TEST_SLACK_FETCH_BODY).toBe('{"ok":true}');
+      expect(env.CLAWQL_SPEC_PATH).toBe("/tmp/minimal-slack.json");
+      expect(env.CLAWQL_PROVIDER).toBe("slack");
+    } finally {
+      for (const k of keys) {
+        if (prev[k] === undefined) delete process.env[k];
+        else process.env[k] = prev[k];
+      }
+    }
+  });
+
+  it("clawqlMcpChildEnv forwards sandbox enablement + docker image for OpenBench", () => {
+    const keys = [
+      "CLAWQL_OPENBENCH",
+      "CLAWQL_ENABLE_SANDBOX",
+      "CLAWQL_SANDBOX_BACKEND",
+      "CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON",
+    ] as const;
+    const prev: Record<string, string | undefined> = {};
+    for (const k of keys) prev[k] = process.env[k];
+    process.env.CLAWQL_OPENBENCH = "1";
+    process.env.CLAWQL_ENABLE_SANDBOX = "1";
+    process.env.CLAWQL_SANDBOX_BACKEND = "docker";
+    process.env.CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON = "python:3.12-alpine";
+    try {
+      const env = clawqlMcpChildEnv("/tmp/sbx-home");
+      expect(env.CLAWQL_ENABLE_SANDBOX).toBe("1");
+      expect(env.CLAWQL_SANDBOX_BACKEND).toBe("docker");
+      expect(env.CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON).toBe("python:3.12-alpine");
+    } finally {
+      for (const k of keys) {
+        if (prev[k] === undefined) delete process.env[k];
+        else process.env[k] = prev[k];
+      }
+    }
+  });
+
   it("openbenchOpencodePermissions can allow doom_loop for thrash experiments", () => {
     const prev = process.env.CLAWQL_OPENBENCH_DOOM_LOOP;
     try {

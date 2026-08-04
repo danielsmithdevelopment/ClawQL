@@ -19,6 +19,9 @@ on:
         options:
           - all
           - all-including-retired
+          - notify-mock-slack
+          - sandbox-trusted-compute
+          - composed-safe-rollout
           - hybrid-recall-source-pin
           - external-ingest-continue
           - codegraph-guided-edit
@@ -200,7 +203,7 @@ jobs:
           echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
           echo "::notice::memory-roundtrip-ingest-recall → arms=clawql-on,off timeout=180s"
 
-      - name: Audit / cache / policy / pageindex / hybrid / codegraph / schedule / external-ingest clamps
+      - name: Audit / cache / policy / pageindex / hybrid / codegraph / schedule / external-ingest / notify / sandbox / composed clamps
         if: >
           matrix.task == 'audit-checkpoints' ||
           matrix.task == 'cache-scratch-handoff' ||
@@ -209,7 +212,10 @@ jobs:
           matrix.task == 'hybrid-recall-source-pin' ||
           matrix.task == 'codegraph-guided-edit' ||
           matrix.task == 'schedule-synthetic-dry-run' ||
-          matrix.task == 'external-ingest-continue'
+          matrix.task == 'external-ingest-continue' ||
+          matrix.task == 'notify-mock-slack' ||
+          matrix.task == 'sandbox-trusted-compute' ||
+          matrix.task == 'composed-safe-rollout'
         run: |
           echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
@@ -232,7 +238,24 @@ jobs:
             echo "CLAWQL_ENABLE_DOCUMENTS=1" >> "$GITHUB_ENV"
             echo "CLAWQL_EXTERNAL_INGEST=1" >> "$GITHUB_ENV"
           fi
-          echo "::notice::${{ matrix.task }} → arms=clawql-on,off timeout=180s"
+          if [ "${{ matrix.task }}" = "notify-mock-slack" ]; then
+            echo "CLAWQL_ENABLE_NOTIFY=1" >> "$GITHUB_ENV"
+            echo "CLAWQL_PROVIDER=slack" >> "$GITHUB_ENV"
+            echo "CLAWQL_TEST_SLACK_FETCH_STUB=1" >> "$GITHUB_ENV"
+            echo "CLAWQL_SLACK_TOKEN=xoxb-openbench-stub-not-real" >> "$GITHUB_ENV"
+            echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
+          fi
+          if [ "${{ matrix.task }}" = "sandbox-trusted-compute" ]; then
+            echo "CLAWQL_ENABLE_SANDBOX=1" >> "$GITHUB_ENV"
+            echo "CLAWQL_SANDBOX_BACKEND=docker" >> "$GITHUB_ENV"
+            echo "OPENBENCH_TIMEOUT_S=240" >> "$GITHUB_ENV"
+            docker pull python:3.12-alpine
+          fi
+          if [ "${{ matrix.task }}" = "composed-safe-rollout" ]; then
+            echo "CLAWQL_PROVIDER=github" >> "$GITHUB_ENV"
+            echo "OPENBENCH_TIMEOUT_S=240" >> "$GITHUB_ENV"
+          fi
+          echo "::notice::${{ matrix.task }} → arms=clawql-on,off timeout=${OPENBENCH_TIMEOUT_S:-180}s"
 
       - name: Credential preflight
         id: preflight

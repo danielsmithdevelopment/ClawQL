@@ -2,8 +2,12 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "All pr_active cells verified through 30888793063 (hybrid) and 30887394038 (external-ingest). Matrix idle until next backlog wave.",
-  "pr_active": [],
+  "live_resume_note": "P2 wave active: notify-mock-slack, sandbox-trusted-compute, composed-safe-rollout.",
+  "pr_active": [
+    "notify-mock-slack",
+    "sandbox-trusted-compute",
+    "composed-safe-rollout"
+  ],
   "retired": {
     "memory-dependent-continuation": {
       "reason": "Verified WIN replicated (on 1.0 / off 0.333)",

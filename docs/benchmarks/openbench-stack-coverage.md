@@ -45,10 +45,13 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 | `external-ingest-continue` | Bulk MD ingest → recall | on **1.0** / off **0.0** ([30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038)) |
 | `hybrid-recall-source-pin` | PageIndex retrieves buried handbook code | on **1.0** / off **0.0** ([30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063)) |
 | `ouroboros-oscillation-escape` | Ouroboros stops strategy thrash | allow + **deny** both on 1.0 / off 0.0 ([30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277)) |
+| `notify-mock-slack` | Stubbed Slack `notify` milestone | **in flight** (`pr_active`) |
+| `sandbox-trusted-compute` | Docker `sandbox_exec` trusted token | **in flight** (`pr_active`) |
+| `composed-safe-rollout` | search→dry_run×2→audit→ingest | **in flight** (`pr_active`) |
 
-Still missing live cells: notify, sandbox, composed recipes, n≥3 trials. Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
+Still missing after this wave: n≥3 trials; ops-only (Argo / live Onyx / live Slack / R2). Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` runs on PR/push. All graded cells above are **`retired`** (`pr_active` empty). Next wave: notify / sandbox / composed. Ouroboros workflow is dispatch-only.
+**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Verified cells above (except the three P2 in-flight) are **`retired`**. Ouroboros workflow is dispatch-only.
 
 Explanations for every verified cell: [`openbench-task-explanations.md`](./openbench-task-explanations.md).
 
@@ -93,7 +96,7 @@ Legend: **Live** = OpenBench A/B · **Context** = planning-context stats · **Un
 | Capability | Claim | Evidence | Next OpenBench / note |
 | ---------- | ----- | -------- | --------------------- |
 | `schedule` | Synthetic checks + dry_run | **Live WIN** `schedule-synthetic-dry-run` ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) | Retired from PR |
-| `notify` | Slack milestones | Unit (token) | Mock Slack HTTP; checker greps notify payload file / audit |
+| `notify` | Slack milestones | **OpenBench in flight** `notify-mock-slack` (stub HTTP) | Retire after clean WIN |
 | `workflow` (Argo) | Submit/wait Workflows | Optional CI | Cluster-dependent — **scheduled integration**, not PR OpenBench |
 | `argocd` | App observe/sync | Optional CI | Same — ops integration |
 
@@ -101,7 +104,7 @@ Legend: **Live** = OpenBench A/B · **Context** = planning-context stats · **Un
 
 | Capability | Claim | Evidence | Next OpenBench / note |
 | ---------- | ----- | -------- | --------------------- |
-| `sandbox_exec` | Isolated snippet eval | Unit | Task where host `bash` is poisoned/decoy; only sandbox result is trusted |
+| `sandbox_exec` | Isolated snippet eval | **OpenBench in flight** `sandbox-trusted-compute` | Retire after clean WIN; other backends later |
 
 ### Ouroboros
 
@@ -117,7 +120,7 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 
 ### Composed recipes (skills)
 
-[`composed-workflows.md`](../skills/composed-workflows.md) claims multi-tool rollouts (search→execute→notify→ingest, incident triage, Onyx-grounded act, synthetic monitor). **None are end-to-end OpenBench tasks yet.** Highest leverage: one **composed safe-rollout** task that grades the tool sequence, not only the final file.
+[`composed-workflows.md`](../skills/composed-workflows.md) claims multi-tool rollouts (search→execute→notify→ingest, incident triage, Onyx-grounded act, synthetic monitor). **`composed-safe-rollout`** is now on `pr_active` (search→dry_run×2→audit→ingest). Broader recipes (notify+Onyx+Argo) stay later cells.
 
 ### Inference / harness plumbing
 
@@ -151,9 +154,9 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 ### P2 — automation / sandbox / composed
 
 12. ~~**Schedule dry_run synthetic**~~ — verified on 1.0 / off 0.0 ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)).  
-13. **Notify mock Slack**  
-14. **Sandbox-trusted compute**  
-15. **Composed safe-rollout** (search→execute×2→audit→ingest)  
+13. **Notify mock Slack** — shipped on `pr_active` (`notify-mock-slack`).  
+14. **Sandbox-trusted compute** — shipped on `pr_active` (`sandbox-trusted-compute`).  
+15. **Composed safe-rollout** — shipped on `pr_active` (`composed-safe-rollout`).
 
 ### P3 — keep out of PR OpenBench (ops / cluster / paid SaaS)
 

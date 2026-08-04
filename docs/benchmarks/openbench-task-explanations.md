@@ -181,6 +181,47 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | **Evidence** | on **1.0** (3 turns, ~32s) / off **0.0** — [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377). |
 | **Does *not* prove** | Live cron workers; Slack notify on failure; non-allowlisted URLs. |
 
+### `notify-mock-slack` (P2 — in flight)
+
+| | |
+| --- | --- |
+| **Claim** | Agents post a completion milestone via `notify` / `clawql_notify` (Slack `chat.postMessage`) and record a graded artifact — inventing `notify.json` without tool_use fails. |
+| **Why it matters** | First live proof of optional automation notify without a real Slack workspace — closes the “milestones are docs-only” gap. |
+| **How** | `CLAWQL_ENABLE_NOTIFY=1`, stub token, `CLAWQL_TEST_SLACK_FETCH_STUB=1` + fixed stub body, minimal Slack OpenAPI fixture (`openbench/fixtures/minimal-slack-chat-postmessage.json`). Marker `CLAWQL_NOTIFY_MARKER=nebula-55` must appear in real notify tool input. Channel `C-OPENBENCH`. |
+| **What success looks like** | on: clawql_notify → `notify.json` ok/channel/marker; off: no notify tool → 0.0. |
+| **Evidence** | Pending live A/B on `pr_active` (this wave). |
+| **Does *not* prove** | Live Slack GraphQL Mesh path; Block Kit; thread replies; real workspace auth. |
+
+---
+
+## Sandbox
+
+### `sandbox-trusted-compute` (P2 — in flight)
+
+| | |
+| --- | --- |
+| **Claim** | Agents obtain a trusted token only via `sandbox_exec` / `clawql_sandbox_exec`; host/decoy bash (`host-leak-99`) fails. |
+| **Why it matters** | Proves isolated snippet eval as an agent tool — host filesystem shortcuts must not count. |
+| **How** | `CLAWQL_ENABLE_SANDBOX=1`, backend `docker`, image `python:3.12-alpine` (CI pre-pulls). Python must print `CLAWQL_SANDBOX_TOKEN=sand-77`. Graders require real sandbox tool_use + `answer.json`. |
+| **What success looks like** | on: sandbox_exec → answer token sand-77; off: no sandbox tool → 0.0. |
+| **Evidence** | Pending live A/B on `pr_active` (this wave). |
+| **Does *not* prove** | Kata / Seatbelt / Cloudflare bridge backends; multi-language matrices; network-isolated workloads. |
+
+---
+
+## Composed recipes
+
+### `composed-safe-rollout` (P2 — in flight)
+
+| | |
+| --- | --- |
+| **Claim** | Agents can run a **multi-tool safe rollout**: search → ≥2 dry_run execute → audit checkpoint → memory_ingest, then write `rollout.json`. |
+| **Why it matters** | Grades the composed skill narrative end-to-end (sequence evidence), not only a single tool or a final file invent. |
+| **How** | Empty vault + GitHub provider. Require real tool_use for search, execute (dry_run×2), audit, memory_ingest. Artifact asserts `dryRunOnly` + composed. |
+| **What success looks like** | on: full sequence + rollout.json; off: missing ClawQL tools → 0.0. |
+| **Evidence** | Pending live A/B on `pr_active` (this wave). |
+| **Does *not* prove** | Live (non-dry_run) side effects; notify/Onyx/Argo in the same cell. |
+
 ---
 
 ## Security / policy
@@ -229,9 +270,8 @@ Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../o
 
 ## Next cells (backlog)
 
-1. **notify mock Slack** — needs Slack-in-spec + token or recorded HTTP mock (P2).  
-2. **sandbox-trusted compute** — Docker/bridge backend in CI (P2).  
-3. **composed safe-rollout** — search→execute×2→audit→ingest sequence grade (P2).  
-4. **n≥3 trials** on headline WINs for Wilson intervals (P3).
+1. ~~**notify / sandbox / composed**~~ — shipped on `pr_active`; retire after clean WINs.  
+2. **n≥3 trials** on headline WINs for Wilson intervals (P3).  
+3. Optional later: agentic external benches (GAIA / τ-bench / SWE-style) with clawql-on vs off — not closed-book HLE.
 
 Append new run IDs to the [ledger](./openbench-results-ledger.md).

@@ -201,6 +201,36 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "require_external_ingest": True,
         "enable_external_ingest": True,
     },
+    "notify-mock-slack": {
+        "max_turns": 25,
+        "max_tokens": 6000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        "disable_memory": True,
+        "require_notify": True,
+        "enable_notify": True,
+    },
+    "sandbox-trusted-compute": {
+        "max_turns": 30,
+        "max_tokens": 8000,
+        "max_wall_s": 240,
+        "default_timeout_s": 240,
+        "disable_memory": True,
+        "require_sandbox": True,
+        "enable_sandbox": True,
+    },
+    "composed-safe-rollout": {
+        "max_turns": 40,
+        "max_tokens": 10000,
+        "max_wall_s": 240,
+        "default_timeout_s": 240,
+        "disable_memory": False,
+        "empty_vault": True,
+        "require_composed": True,
+        "require_search": True,
+        "require_execute": True,
+        "enable_composed": True,
+    },
 }
 
 # Appended only to ouroboros-on so off cannot one-shot the correct recipe.
@@ -390,6 +420,37 @@ EXTERNAL_INGEST_NUDGE = """Continue the external ingest task.
    {"token":"<token from CLAWQL_EXTERNAL_TOKEN=>","source":"memory_recall"}
 
 Ignore decoy/. Filesystem copy without ingest+recall fails.
+"""
+
+
+NOTIFY_NUDGE = """Continue the notify mock Slack task.
+
+1. clawql_notify channel=C-OPENBENCH text including CLAWQL_NOTIFY_MARKER=nebula-55
+2. write relative filePath notify.json:
+   {"ok":true,"channel":"C-OPENBENCH","marker":"nebula-55","source":"notify"}
+
+Call clawql_notify now.
+"""
+
+SANDBOX_NUDGE = """Continue the sandbox task.
+
+1. clawql_sandbox_exec language=python code that prints CLAWQL_SANDBOX_TOKEN=sand-77
+2. write relative filePath answer.json:
+   {"token":"sand-77","source":"sandbox_exec"}
+
+Ignore decoy/. Call sandbox_exec now.
+"""
+
+COMPOSED_NUDGE = """Continue the composed safe-rollout.
+
+1. clawql_search for GitHub global advisories list
+2. clawql_execute dry_run=true twice
+3. clawql_audit append
+4. clawql_memory_ingest title OpenBench Composed Rollout with CLAWQL_COMPOSED=ok
+5. write relative filePath rollout.json:
+   {"dryRunOnly":true,"composed":true,"source":"composed"}
+
+Call the missing tools now.
 """
 
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.
@@ -1038,6 +1099,39 @@ def external_ingest_incomplete(combined: str, workdir: Path) -> bool:
     return not (ingested and recalled)
 
 
+def notify_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "notify.json").is_file():
+        return True
+    tools = real_opencode_tools(combined)
+    return not bool(tools & {"clawql_notify", "notify"})
+
+
+def sandbox_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "answer.json").is_file():
+        return True
+    tools = real_opencode_tools(combined)
+    return not bool(tools & {"clawql_sandbox_exec", "sandbox_exec"})
+
+
+def composed_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "rollout.json").is_file():
+        return True
+    tools = real_opencode_tools(combined)
+    need = [
+        bool(tools & {"clawql_search", "search"}),
+        bool(tools & {"clawql_execute", "execute"}),
+        bool(tools & {"clawql_audit", "audit"}),
+        bool(tools & {"clawql_memory_ingest", "memory_ingest"}),
+    ]
+    return not all(need)
+
+
 def policy_missing_artifact(workdir: Path) -> bool:
     return not (workdir / "policy.json").is_file()
 
@@ -1098,6 +1192,12 @@ def run_arm_on(
     enable_schedule: bool = False,
     require_external_ingest: bool = False,
     enable_external_ingest: bool = False,
+    require_notify: bool = False,
+    enable_notify: bool = False,
+    require_sandbox: bool = False,
+    enable_sandbox: bool = False,
+    require_composed: bool = False,
+    enable_composed: bool = False,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
     clawql = resolve_clawql()
@@ -1203,6 +1303,32 @@ def run_arm_on(
         env["CLAWQL_EXTERNAL_INGEST"] = "1"
         env["CLAWQL_ENABLE_MEMORY"] = "1"
         env["CLAWQL_BUNDLED_OFFLINE"] = "1"
+
+    if enable_notify:
+        env["CLAWQL_ENABLE_NOTIFY"] = "1"
+        env["CLAWQL_PROVIDER"] = "slack"
+        env["CLAWQL_BUNDLED_OFFLINE"] = "1"
+        env["CLAWQL_SLACK_TOKEN"] = "xoxb-openbench-stub-not-real"
+        env["CLAWQL_TEST_SLACK_FETCH_STUB"] = "1"
+        env["CLAWQL_TEST_SLACK_FETCH_BODY"] = (
+            '{"ok":true,"channel":"C-OPENBENCH","ts":"1710000000.000100",'
+            '"message":{"text":"CLAWQL_NOTIFY_MARKER=nebula-55"}}'
+        )
+        # Prefer minimal Slack chat.postMessage fixture (avoids GraphQL Mesh issues).
+        fixture = str(ROOT / "openbench" / "fixtures" / "minimal-slack-chat-postmessage.json")
+        env["CLAWQL_SPEC_PATH"] = fixture
+
+    if enable_sandbox:
+        env["CLAWQL_ENABLE_SANDBOX"] = "1"
+        env["CLAWQL_SANDBOX_BACKEND"] = "docker"
+        env["CLAWQL_BUNDLED_OFFLINE"] = "1"
+        # Keep images small; workflow may pre-pull.
+        env.setdefault("CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON", "python:3.12-alpine")
+
+    if enable_composed:
+        env.setdefault("CLAWQL_PROVIDER", "github")
+        env["CLAWQL_BUNDLED_OFFLINE"] = "1"
+        env["CLAWQL_ENABLE_MEMORY"] = "1"
 
     t0 = time.monotonic()
     timed_out = False
@@ -1537,6 +1663,99 @@ def run_arm_on(
                 )
                 combined = combined + "\n" + (proc_ei.stdout or "") + (proc_ei.stderr or "")
                 code = proc_ei.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
+    # notify: missing clawql_notify / notify.json.
+    if (
+        require_notify
+        and arm == "clawql-on"
+        and not timed_out
+        and notify_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 20:
+            cont_file = workdir / ".openbench_notify_nudge.md"
+            cont_file.write_text(NOTIFY_NUDGE, encoding="utf-8")
+            cont_timeout = max(20, min(60, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_nt = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_nt.stdout or "") + (proc_nt.stderr or "")
+                code = proc_nt.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
+    # sandbox: missing sandbox_exec / answer.json.
+    if (
+        require_sandbox
+        and arm == "clawql-on"
+        and not timed_out
+        and sandbox_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 30:
+            cont_file = workdir / ".openbench_sandbox_nudge.md"
+            cont_file.write_text(SANDBOX_NUDGE, encoding="utf-8")
+            cont_timeout = max(30, min(120, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_sb = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 45,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_sb.stdout or "") + (proc_sb.stderr or "")
+                code = proc_sb.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
+    # composed: missing multi-tool sequence / rollout.json.
+    if (
+        require_composed
+        and arm == "clawql-on"
+        and not timed_out
+        and composed_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 30:
+            cont_file = workdir / ".openbench_composed_nudge.md"
+            cont_file.write_text(COMPOSED_NUDGE, encoding="utf-8")
+            cont_timeout = max(30, min(120, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_co = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 45,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_co.stdout or "") + (proc_co.stderr or "")
+                code = proc_co.returncode
             except subprocess.TimeoutExpired as exc:
                 timed_out = True
                 combined = combined + "\n" + _dec_timeout_output(exc)
@@ -1881,6 +2100,18 @@ def render_markdown(report: dict) -> str:
         interp.append(
             "- Both arms graded for ≥2 real schedule tool_use + dry_run pass artifact."
         )
+    elif task == "notify-mock-slack":
+        interp.append(
+            "- Both arms graded for real clawql_notify evidence; Slack upstream is stubbed."
+        )
+    elif task == "sandbox-trusted-compute":
+        interp.append(
+            "- Both arms graded for real sandbox_exec; off lacks the tool and fails."
+        )
+    elif task == "composed-safe-rollout":
+        interp.append(
+            "- Both arms graded for search + ≥2 dry_run execute + audit + memory_ingest."
+        )
     interp.append("")
     lines.extend(interp)
     return "\n".join(lines)
@@ -1982,6 +2213,12 @@ def run_trial(
                 enable_schedule=bool(caps.get("enable_schedule")),
                 require_external_ingest=bool(caps.get("require_external_ingest")),
                 enable_external_ingest=bool(caps.get("enable_external_ingest")),
+                require_notify=bool(caps.get("require_notify")),
+                enable_notify=bool(caps.get("enable_notify")),
+                require_sandbox=bool(caps.get("require_sandbox")),
+                enable_sandbox=bool(caps.get("enable_sandbox")),
+                require_composed=bool(caps.get("require_composed")),
+                enable_composed=bool(caps.get("enable_composed")),
             )
         # Prefer full captured stream; fall back to / merge harness dump.
         # Never *replace* combined with a longer dump — that can drop an earlier
@@ -2031,6 +2268,12 @@ def run_trial(
             checker_env_extra["OPENBENCH_REQUIRE_SCHEDULE"] = "1"
         if caps.get("require_external_ingest"):
             checker_env_extra["OPENBENCH_REQUIRE_EXTERNAL_INGEST"] = "1"
+        if caps.get("require_notify"):
+            checker_env_extra["OPENBENCH_REQUIRE_NOTIFY"] = "1"
+        if caps.get("require_sandbox"):
+            checker_env_extra["OPENBENCH_REQUIRE_SANDBOX"] = "1"
+        if caps.get("require_composed"):
+            checker_env_extra["OPENBENCH_REQUIRE_COMPOSED"] = "1"
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
         return {
