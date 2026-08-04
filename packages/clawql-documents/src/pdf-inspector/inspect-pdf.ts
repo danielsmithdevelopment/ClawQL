@@ -1,9 +1,6 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { Effect } from "effect";
-import {
-  pdfInspectorLocalMarkdownMinConfidence,
-  pdfInspectorToolEnabled,
-} from "./env.js";
+import { pdfInspectorLocalMarkdownMinConfidence, pdfInspectorToolEnabled } from "./env.js";
 import { readPdfPathAllowlisted } from "./read-path.js";
 import {
   decodeInspectPdfInput,

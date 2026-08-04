@@ -10,10 +10,7 @@ import {
   extractDocumentToolSchema,
   handleExtractDocumentToolInput,
 } from "../langextract/extract-document.js";
-import {
-  handleInspectPdfToolInput,
-  inspectPdfToolSchema,
-} from "../pdf-inspector/inspect-pdf.js";
+import { handleInspectPdfToolInput, inspectPdfToolSchema } from "../pdf-inspector/inspect-pdf.js";
 import { runIngestExternalKnowledge } from "../ingest/external-ingest.js";
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import type { Plugin } from "clawql-core";

@@ -355,8 +355,6 @@ export function decodeExtractDocumentInput(
   );
 }
 
-export function decodeInspectPdfInput(
-  raw: unknown
-): Effect.Effect<InspectPdfInputDecoded, Error> {
+export function decodeInspectPdfInput(raw: unknown): Effect.Effect<InspectPdfInputDecoded, Error> {
   return Schema.decodeUnknown(InspectPdfInputSchema)(raw).pipe(Effect.mapError(formatParseError));
 }
