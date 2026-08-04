@@ -78,6 +78,7 @@ A sovereign, modular IDP that closes the full document lifecycle in one system: 
 | "Will policy actually block bad execute?" | Panguard policy-deny-execute **1.0/0.0** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)). |
 | "Does orchestration reduce thrash/cost?" | Ouroboros on **1.0** in ~78s / 5 turns vs off **0.0** thrashing ~167s ([30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642)); still wins with production `doom_loop=deny`. |
 | "Can agents notify / sandbox / compose safely?" | Stubbed Slack notify, Docker sandbox_exec, and composed dry-run rollout each **1.0/0.0** ([30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305)). |
+| "Does Onyx / vault graph memory work on cheap models?" | Stubbed `knowledge_search_onyx` and wikilink-hop `memory_recall` each **1.0/0.0** ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)). |
 
 **Do not overclaim in sales:** most headline cells are still **n=1–2** — expand to n=3–5 before quoting statistical confidence. Live Onyx / live Slack / Argo / R2 sync are ops-integration, not PR OpenBench. Multi-provider remains a margin WIN (on 1.0 / off 0.75). Detail: [OpenBench results ledger — open gaps](../benchmarks/openbench-results-ledger.md#open-gaps-not-yet-headline-win).
 

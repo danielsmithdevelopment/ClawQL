@@ -12,7 +12,7 @@ document is the **scoreboard + run diary**.
 | Default model | `openrouter/deepseek/deepseek-chat` |
 | Harness | OpenCode → clawql-inference |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T08:45Z |
+| Last ledger update | 2026-08-04T08:55Z |
 | CI matrix control | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push |
 | Task explanations | [`openbench-task-explanations.md`](./openbench-task-explanations.md) — prove / why / how for every cell |
 
@@ -53,8 +53,8 @@ history). Move the best WIN into the headline table if it improves the claim.
 | `notify-mock-slack` | Stubbed Slack notify milestone | **1.0** (2 turns, 21s) | **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) | **WIN** |
 | `sandbox-trusted-compute` | Docker sandbox_exec trusted token | **1.0** (3 turns, 30s) | **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) | **WIN** |
 | `composed-safe-rollout` | search→dry_run×2→audit→ingest | **1.0** (5 turns, 79s) | **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) | **WIN** |
-| `onyx-mock-cite` | Stubbed Onyx knowledge cite | — | — | pending | **in flight** |
-| `memory-wikilink-hop` | Recall follows [[wikilink]] hop | — | — | pending | **in flight** |
+| `onyx-mock-cite` | Stubbed Onyx knowledge cite | **1.0** (3 turns, 17s) | **0.0** | [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189) | **WIN** |
+| `memory-wikilink-hop` | Recall follows [[wikilink]] hop | **1.0** (3 turns, 56s) | **0.0** | [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189) | **WIN** |
 
 Replicated Ouroboros WINs also on [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519) (allow + deny both on 1.0 / off 0.0).
 
@@ -284,9 +284,17 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 ## Open gaps (not yet headline WIN)
 
-1. **onyx-mock-cite / memory-wikilink-hop** — shipped on `pr_active`; awaiting live WINs.
-2. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
-3. Optional later: agentic external benches (GAIA / τ-bench / SWE-style) with clawql-on vs off — not closed-book HLE.
+1. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
+2. Optional later: agentic external benches (GAIA / τ-bench / SWE-style) with clawql-on vs off — not closed-book HLE.
+
+### 2026-08-04 — [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189) (P2.5 — both WIN)
+
+| Task | on | off | Verdict |
+| ---- | -- | --- | ------- |
+| onyx-mock-cite | **1.0** (3t, 17s) | **0.0** (2t, 13s) | **WIN** — clawql_knowledge_search_onyx + citations quartz-21 |
+| memory-wikilink-hop | **1.0** (3t, 56s) | **0.0** (1t, 11s) | **WIN** — clawql_memory_recall hop → opal-33 |
+
+**Verdict:** retire both from `pr_active` (empty again).
 
 ### 2026-08-04 — P2.5 wave shipped (awaiting CI)
 

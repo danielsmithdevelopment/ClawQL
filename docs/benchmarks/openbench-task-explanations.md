@@ -269,14 +269,7 @@ Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../o
 
 ---
 
-## Next cells (backlog)
-
-1. ~~**notify / sandbox / composed**~~ — verified WINs on [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305); retired.  
-2. **Onyx mock cite** + **memory wikilink hop** — shipped on `pr_active` (this wave).  
-3. **n≥3 trials** on headline WINs for Wilson intervals (P3).  
-4. Optional later: agentic external benches (GAIA / τ-bench / SWE-style) with clawql-on vs off — not closed-book HLE.
-
-### `onyx-mock-cite` (P2.5 — in flight)
+### `onyx-mock-cite`
 
 | | |
 | --- | --- |
@@ -284,10 +277,10 @@ Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../o
 | **Why it matters** | First live proof of optional Onyx knowledge tool without a live Onyx cluster — closes the “semantic search is docs-only” gap. |
 | **How** | `CLAWQL_ENABLE_ONYX=1` + `CLAWQL_ENABLE_DOCUMENTS=1`, stub token/URL, `CLAWQL_TEST_ONYX_FETCH_STUB=1` body embeds `CLAWQL_ONYX_CODE=quartz-21`. Graders require real onyx tool_use + `citations.json`. |
 | **What success looks like** | on: knowledge_search_onyx → citations code quartz-21; off: no tool → 0.0. |
-| **Evidence** | Pending live A/B on `pr_active`. |
+| **Evidence** | on **1.0** (3 turns, ~17s) / off **0.0** — [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189). Tools: clawql_knowledge_search_onyx, write. |
 | **Does *not* prove** | Live Onyx ACL / connectors; streaming; hybrid `memory_recall(sources=[onyx])`. |
 
-### `memory-wikilink-hop` (P2.5 — in flight)
+### `memory-wikilink-hop`
 
 | | |
 | --- | --- |
@@ -295,7 +288,14 @@ Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../o
 | **Why it matters** | Proves graph-hop memory (not keyword-only) — decoy unlinked notes must not win. |
 | **How** | Multi-file vault seed (`.openbench/memory-seed/`): Alpha Hub → [[Beta Fact]] holds `opal-33`; Decoy Noise has `zinc-00`. Query matches Alpha Hub. |
 | **What success looks like** | on: recall with depth → token opal-33; off: no memory tools → 0.0. |
-| **Evidence** | Pending live A/B on `pr_active`. |
+| **Evidence** | on **1.0** (3 turns, ~56s) / off **0.0** — [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189). Tools: clawql_memory_recall, write. |
 | **Does *not* prove** | Vector/hybrid backends; deep multi-hop graphs; R2 sync. |
+
+## Next cells (backlog)
+
+1. ~~**notify / sandbox / composed**~~ — verified WINs on [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305); retired.  
+2. ~~**Onyx mock cite** + **memory wikilink hop**~~ — verified on [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189); retired.  
+3. **n≥3 trials** on headline WINs for Wilson intervals (P3).  
+4. Optional later: agentic external benches (GAIA / τ-bench / SWE-style) with clawql-on vs off — not closed-book HLE.
 
 Append new run IDs to the [ledger](./openbench-results-ledger.md).

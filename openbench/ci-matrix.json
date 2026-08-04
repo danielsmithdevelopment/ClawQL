@@ -2,11 +2,8 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "P2.5 wave active: onyx-mock-cite, memory-wikilink-hop.",
-  "pr_active": [
-    "onyx-mock-cite",
-    "memory-wikilink-hop"
-  ],
+  "live_resume_note": "P2.5 wave verified and retired (onyx-mock-cite, memory-wikilink-hop). pr_active empty.",
+  "pr_active": [],
   "retired": {
     "memory-dependent-continuation": {
       "reason": "Verified WIN replicated (on 1.0 / off 0.333)",
@@ -79,6 +76,14 @@
     "composed-safe-rollout": {
       "reason": "Verified WIN \u2014 search + dry_run\u00d72 + audit + memory_ingest (on 1.0 / off 0.0)",
       "evidence_run": "30891002305"
+    },
+    "onyx-mock-cite": {
+      "reason": "Verified WIN \u2014 stubbed knowledge_search_onyx cite (on 1.0 / off 0.0)",
+      "evidence_run": "30893132189"
+    },
+    "memory-wikilink-hop": {
+      "reason": "Verified WIN \u2014 memory_recall wikilink hop to Beta Fact (on 1.0 / off 0.0)",
+      "evidence_run": "30893132189"
     }
   },
   "ouroboros_pr_enabled": false,

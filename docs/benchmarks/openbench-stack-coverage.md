@@ -48,12 +48,12 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 | `notify-mock-slack` | Stubbed Slack `notify` milestone | on **1.0** / off **0.0** ([30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305)) |
 | `sandbox-trusted-compute` | Docker `sandbox_exec` trusted token | on **1.0** / off **0.0** ([30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305)) |
 | `composed-safe-rollout` | search→dry_run×2→audit→ingest | on **1.0** / off **0.0** ([30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305)) |
-| `onyx-mock-cite` | Stubbed `knowledge_search_onyx` cite | **in flight** (`pr_active`) |
-| `memory-wikilink-hop` | Vault recall follows `[[wikilink]]` | **in flight** (`pr_active`) |
+| `onyx-mock-cite` | Stubbed `knowledge_search_onyx` cite | on **1.0** / off **0.0** ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)) |
+| `memory-wikilink-hop` | Vault recall follows `[[wikilink]]` | on **1.0** / off **0.0** ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)) |
 
 Still missing after this wave: n≥3 trials; ops-only (Argo / live Onyx / live Slack / R2). Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Verified cells above (except the two P2.5 in-flight) are **`retired`**. Ouroboros workflow is dispatch-only.
+**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. All graded cells above are **`retired`** (`pr_active` empty). Ouroboros workflow is dispatch-only.
 
 Explanations for every verified cell: [`openbench-task-explanations.md`](./openbench-task-explanations.md).
 
@@ -82,14 +82,14 @@ Legend: **Live** = OpenBench A/B · **Context** = planning-context stats · **Un
 | Hybrid `sources` (`vector` / `pageindex` / `onyx` / `codegraph`) | Multi-backend recall | Unit + flags; PageIndex path proven via `hybrid-recall-source-pin` | True `memory_recall(sources=[…])` pin still open |
 | `pageindex_*` | Hierarchical doc Q&A without stuffing full text | **Live WIN** `pageindex-section-qa` + `hybrid-recall-source-pin` ([30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063)) | Retired from PR |
 | `codegraph_*` | Structural code Q&A | **Live WIN** `codegraph-guided-edit` ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) | Retired from PR |
-| Wikilinks / graph hops | Recall follows `[[links]]` | **OpenBench in flight** `memory-wikilink-hop` | Retire after clean WIN |
+| Wikilinks / graph hops | Recall follows `[[links]]` | **Live WIN** `memory-wikilink-hop` ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)) | Retired from PR |
 
 ### Documents / knowledge
 
 | Capability | Claim | Evidence | Next OpenBench / note |
 | ---------- | ----- | -------- | --------------------- |
 | `ingest_external_knowledge` | Bulk MD/URL → vault | **Live WIN** `external-ingest-continue` ([30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038)) | Retired from PR |
-| `knowledge_search_onyx` | Enterprise evidence before act | **OpenBench in flight** `onyx-mock-cite` (stub HTTP) | Retire after clean WIN |
+| `knowledge_search_onyx` | Enterprise evidence before act | **Live WIN** `onyx-mock-cite` ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)) | Retired from PR |
 | `run_idp_pipeline` / classify / extract | IDP hops via execute | Unit / runbooks | Heavy; prefer **offline pipeline dry_run** graded artifact, not full vendor matrix |
 | Docling/Tika/Paperless/… | Provider execute paths | Provider tests / context benches | Keep as provider context benches; OpenBench only if agent must pick the right vendor op |
 
@@ -162,8 +162,8 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 
 ### P2.5 — remaining horizontal gaps (next PR wave)
 
-16. **Onyx mock cite** — shipped on `pr_active` (`onyx-mock-cite`).  
-17. **Memory wikilink hop** — shipped on `pr_active` (`memory-wikilink-hop`).  
+16. ~~**Onyx mock cite**~~ — verified on 1.0 / off 0.0 ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)).  
+17. ~~**Memory wikilink hop**~~ — verified on 1.0 / off 0.0 ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)).  
 18. **n≥3 trials** on a small headline subset for Wilson intervals (dispatch or dedicated matrix).
 
 ### P3 — keep out of PR OpenBench (ops / cluster / paid SaaS)
