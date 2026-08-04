@@ -75,10 +75,13 @@ function clearPushTimer(): void {
 
 function armPushTimer(delayMs: number): void {
   clearPushTimer();
-  pushTimer = setTimeout(() => {
-    pushTimer = null;
-    void tryAutoPush({ force: false });
-  }, Math.max(0, delayMs));
+  pushTimer = setTimeout(
+    () => {
+      pushTimer = null;
+      void tryAutoPush({ force: false });
+    },
+    Math.max(0, delayMs)
+  );
 }
 
 /** Debounced + rate-limited push after memory_ingest (and similar writes). */
