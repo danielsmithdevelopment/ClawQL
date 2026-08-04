@@ -83,26 +83,27 @@ PY
 fi
 
 if [ "$REQUIRE_SEARCH" = "1" ] || [ "$REQUIRE_EXECUTE" = "1" ]; then
-  log=""
+  AGENT_LOG=""
   if [ -f .openbench_agent.log ]; then
-    log="$(cat .openbench_agent.log)"
+    AGENT_LOG=".openbench_agent.log"
   fi
 fi
-if [ "$REQUIRE_SEARCH" = "1" ]; then
-  if ! printf '%s' "$log" | grep -Fq '"tool":"clawql_search"'; then
+if [ "$REQUIRE_SEARCH" = "1" ] && [ -n "${AGENT_LOG}" ]; then
+  # Grep the file directly — avoid loading multi-MB logs into a bash variable.
+  if ! grep -Fq '"tool":"clawql_search"' "$AGENT_LOG"; then
     echo "FAIL: required a clawql_search tool_use in the agent log" >&2
     cap_fail=1
   fi
 fi
-if [ "$REQUIRE_EXECUTE" = "1" ]; then
+if [ "$REQUIRE_EXECUTE" = "1" ] && [ -n "${AGENT_LOG}" ]; then
   # Real tool_use rows only — instruction text also mentions clawql_execute.
-  exec_hits="$(printf '%s' "$log" | grep -Fci '"tool":"clawql_execute"' || true)"
+  exec_hits="$(grep -Fci '"tool":"clawql_execute"' "$AGENT_LOG" || true)"
   if [ "${exec_hits:-0}" -lt 2 ]; then
     echo "FAIL: required ≥2 clawql_execute tool_use calls (got ${exec_hits:-0})" >&2
     cap_fail=1
   fi
   # Prefer explicit dry_run in tool args; also accept dryRun:true (camelCase).
-  if ! printf '%s' "$log" | grep -Eq '"dry_run"[[:space:]]*:[[:space:]]*true|"dryRun"[[:space:]]*:[[:space:]]*true'; then
+  if ! grep -Eq '"dry_run"[[:space:]]*:[[:space:]]*true|"dryRun"[[:space:]]*:[[:space:]]*true' "$AGENT_LOG"; then
     echo "FAIL: required dry_run:true (or dryRun:true) in execute tool input" >&2
     cap_fail=1
   fi

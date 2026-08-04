@@ -261,15 +261,17 @@ Call **write** with filePath exactly `trail.json` (relative — NOT `/trail.json
 filePath must be `trail.json` only. Call write now.
 """
 
-CACHE_WRITE_NUDGE = """Continue. The tool name is **clawql_cache** (not `cache`).
+CACHE_WRITE_NUDGE = """Continue now. Call tools — do not stop with zero tool calls.
 
-1. clawql_cache {"operation":"set","key":"ob.part.a","value":"alpha42"}
-2. clawql_cache {"operation":"set","key":"ob.part.b","value":"zeta99"}
-3. clawql_cache {"operation":"get","key":"ob.part.a"}
-4. clawql_cache {"operation":"get","key":"ob.part.b"}
-5. write filePath `answer.json` (relative) with {"token":"alpha42-zeta99","source":"cache"}
+Tool name: clawql_cache
 
-Do not call a tool named cache — use clawql_cache. Stop after writing answer.json.
+Call 1: clawql_cache operation=set key=ob.part.a value=alpha42
+Call 2: clawql_cache operation=set key=ob.part.b value=zeta99
+Call 3: clawql_cache operation=get key=ob.part.a
+Call 4: clawql_cache operation=get key=ob.part.b
+Call 5: write relative filePath answer.json containing token alpha42-zeta99 and source cache
+
+Start with clawql_cache set for ob.part.a immediately.
 """
 
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.
@@ -724,8 +726,16 @@ def audit_incomplete(combined: str, workdir: Path) -> bool:
     return not (workdir / "trail.json").is_file()
 
 
+# Also nudge when the agent produced zero tool calls (empty OpenCode session).
+def agent_idle(combined: str) -> bool:
+    text = combined or ""
+    return '"tool":"clawql_' not in text and '"tool":"write"' not in text and '"tool":"read"' not in text
+
+
 def cache_incomplete(combined: str, workdir: Path) -> bool:
     """True when answer.json missing or clawql_cache set/get evidence incomplete."""
+    if agent_idle(combined):
+        return True
     if not (workdir / "answer.json").is_file():
         return True
     text = combined or ""
@@ -1017,6 +1027,33 @@ def run_arm_on(
                 )
                 combined = combined + "\n" + (proc_ca.stdout or "") + (proc_ca.stderr or "")
                 code = proc_ca.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+        # Cheap models sometimes idle twice — one more attempt if still incomplete.
+        if (
+            not timed_out
+            and cache_incomplete(combined, workdir)
+            and (int(timeout_s) - int(time.monotonic() - t0)) >= 25
+        ):
+            remaining = int(timeout_s) - int(time.monotonic() - t0)
+            cont_file = workdir / ".openbench_cache_nudge2.md"
+            cont_file.write_text(CACHE_WRITE_NUDGE, encoding="utf-8")
+            cont_timeout = max(25, min(90, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_ca2 = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_ca2.stdout or "") + (proc_ca2.stderr or "")
+                code = proc_ca2.returncode
             except subprocess.TimeoutExpired as exc:
                 timed_out = True
                 combined = combined + "\n" + _dec_timeout_output(exc)
@@ -1457,14 +1494,16 @@ def run_trial(
                 require_policy_block=bool(caps.get("require_policy_block")),
                 panguard_block_tools=caps.get("panguard_block_tools"),
             )
-        # Prefer full captured stream; fall back to workdir harness dump.
+        # Prefer full captured stream; fall back to / merge harness dump.
+        # Never *replace* combined with a longer dump — that can drop an earlier
+        # session's tool_use rows (e.g. clawql_search) when a nudge rewrites the dump.
         combined = agent.pop("_combined_log", None) or ""
         dump = tmp / ".openbench_harness.jsonl"
         if dump.is_file():
             try:
                 dump_text = dump.read_text(encoding="utf-8", errors="replace")
-                if len(dump_text) > len(combined):
-                    combined = dump_text
+                if dump_text and dump_text not in combined:
+                    combined = (combined + "\n" + dump_text) if combined else dump_text
             except OSError:
                 pass
         if not combined:

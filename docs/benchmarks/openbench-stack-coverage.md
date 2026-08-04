@@ -29,9 +29,9 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 | `multi-provider-api-workflow` | Vault notes → correct Worker/wrangler scaffold | on **1.0** / off **0.75** (same) |
 | `memory-roundtrip-ingest-recall` | Empty vault ingest→recall | on **1.0** / off **0.0** (same) |
 | `search-first-discovery` | Must `search` (decoy wrong op) | on **1.0** / off **0.0** ([30871190463](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30871190463)) |
-| `execute-verify-loop` | dry-run `execute` trail (≥2) | off FAIL; on incomplete after search — stronger clawql_execute nudge |
-| `audit-checkpoints` | `audit` append×3 + list → trail | tools OK; wrote absolute path — relative-path nudge |
-| `cache-scratch-handoff` | `cache` set/get secret assembly | model called bare `cache` (invalid) — require `clawql_cache` |
+| `execute-verify-loop` | dry-run `execute` trail (≥2) | on-arm completed tools but checker log merge dropped search — fixed merge + file grep |
+| `audit-checkpoints` | `audit` append×3 + list → trail | on **1.0** / off **0.0** ([30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811)) |
+| `cache-scratch-handoff` | `cache` set/get secret assembly | idle sessions — simplified prompt + double nudge |
 | `policy-deny-execute` | In-process Panguard blocks `execute` | on **1.0** / off **0.0** ([30871786843](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30871786843)) |
 | `ouroboros-oscillation-escape` | Ouroboros stops strategy thrash | allow + **deny** both on 1.0 / off 0.0 ([30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277)) |
 
