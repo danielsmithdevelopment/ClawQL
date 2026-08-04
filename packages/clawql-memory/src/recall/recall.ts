@@ -98,6 +98,15 @@ export type MemoryRecallResult = {
   } | null;
   /** When **`CLAWQL_CUCKOO_ENABLED=1`** and a filter is loaded: vector-ranked chunk ids that failed membership (stale/inconsistent). */
   cuckooVectorChunksDropped?: number;
+  /**
+   * OKF index-first survey (`index.md` + recent `log.md`) — cheap catalog before full bodies.
+   * Present when index-first is enabled (default) and vault/vector sources are queried.
+   */
+  indexSurvey?: import("./index-survey.js").OkfIndexSurvey;
+  /** True when full bodies were loaded only for catalog/vector candidates (large vault). */
+  indexFirstBodyLoad?: boolean;
+  /** Paths whose bodies were loaded when index-first body restriction applied. */
+  bodiesLoaded?: number;
 };
 
 function tokenize(text: string): string[] {
