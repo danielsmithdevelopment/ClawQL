@@ -21,14 +21,14 @@
 
 ### 1. Memory Stack 2.0 (vision gap closure)
 
-| Piece | What shipped | PRs |
-| ----- | ------------ | --- |
-| **Layer 2 ranking** | IDF + log-TF; wikilink surface; honest embedding sync; **in-process MiniLM**; **vectors mandatory**; bakeoff regressions; default `minScore` **0.05** | [#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801) |
-| **Index-first recall** | Survey `index.md` / `log.md` before bodies; large-vault body restriction | [#803](https://github.com/danielsmithdevelopment/ClawQL/pull/803) |
-| **Git Mode A** | `CLAWQL_MEMORY_BACKEND=git` — commit-on-ingest, optional push; `result.git` | [#804](https://github.com/danielsmithdevelopment/ClawQL/pull/804) |
-| **Hybrid RRF** | Path-keyed reciprocal rank fusion; `CLAWQL_MEMORY_RECALL_HYBRID=1` | [#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806) |
-| **WORM seal** | Auto `worm_ref: sha256:…` on ingest; `MEMORY_RECALL` events | [#807](https://github.com/danielsmithdevelopment/ClawQL/pull/807) |
-| **CodeGraph flywheel** | `codegraph_impact` → vault `type: code_change` | [#808](https://github.com/danielsmithdevelopment/ClawQL/pull/808) |
+| Piece                  | What shipped                                                                                                                                          | PRs                                                               |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **Layer 2 ranking**    | IDF + log-TF; wikilink surface; honest embedding sync; **in-process MiniLM**; **vectors mandatory**; bakeoff regressions; default `minScore` **0.05** | [#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801) |
+| **Index-first recall** | Survey `index.md` / `log.md` before bodies; large-vault body restriction                                                                              | [#803](https://github.com/danielsmithdevelopment/ClawQL/pull/803) |
+| **Git Mode A**         | `CLAWQL_MEMORY_BACKEND=git` — commit-on-ingest, optional push; `result.git`                                                                           | [#804](https://github.com/danielsmithdevelopment/ClawQL/pull/804) |
+| **Hybrid RRF**         | Path-keyed reciprocal rank fusion; `CLAWQL_MEMORY_RECALL_HYBRID=1`                                                                                    | [#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806) |
+| **WORM seal**          | Auto `worm_ref: sha256:…` on ingest; `MEMORY_RECALL` events                                                                                           | [#807](https://github.com/danielsmithdevelopment/ClawQL/pull/807) |
+| **CodeGraph flywheel** | `codegraph_impact` → vault `type: code_change`                                                                                                        | [#808](https://github.com/danielsmithdevelopment/ClawQL/pull/808) |
 
 → [`docs/memory/okf.md`](docs/memory/okf.md) · [`docs/memory/hybrid-memory-backends.md`](docs/memory/hybrid-memory-backends.md)
 
@@ -50,13 +50,13 @@
 
 ### 5. IDP document pipeline (Partials → Shipped)
 
-| Track | PR |
-| ----- | --- |
-| pdf-inspector / anydoc + Helm classifier/LangExtract | [#797](https://github.com/danielsmithdevelopment/ClawQL/pull/797) |
-| Vertical Compose + HITL predictions | [#802](https://github.com/danielsmithdevelopment/ClawQL/pull/802) |
-| Local Privacy Filter after Presidio | [#805](https://github.com/danielsmithdevelopment/ClawQL/pull/805) |
+| Track                                                                  | PR                                                                |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| pdf-inspector / anydoc + Helm classifier/LangExtract                   | [#797](https://github.com/danielsmithdevelopment/ClawQL/pull/797) |
+| Vertical Compose + HITL predictions                                    | [#802](https://github.com/danielsmithdevelopment/ClawQL/pull/802) |
+| Local Privacy Filter after Presidio                                    | [#805](https://github.com/danielsmithdevelopment/ClawQL/pull/805) |
 | Stirling redact + Nextcloud/Coneshare NATS queues + classifier promote | [#810](https://github.com/danielsmithdevelopment/ClawQL/pull/810) |
-| Tracking hygiene (#226–#259) | [#809](https://github.com/danielsmithdevelopment/ClawQL/pull/809) |
+| Tracking hygiene (#226–#259)                                           | [#809](https://github.com/danielsmithdevelopment/ClawQL/pull/809) |
 
 ### 6. Sync, Cloud Agent, inference, OpenBench, release tooling
 
@@ -78,43 +78,43 @@
 
 Product / docs / CI (non-Dependabot):
 
-| Date | PR | Title |
-| ---- | -- | ----- |
-| 2026-07-23 | [#742](https://github.com/danielsmithdevelopment/ClawQL/pull/742) | clawql.com agent readiness |
-| 2026-07-23 | [#744](https://github.com/danielsmithdevelopment/ClawQL/pull/744) | Restore docs/landing deploys |
-| 2026-07-23 | [#743](https://github.com/danielsmithdevelopment/ClawQL/pull/743) | Layer 0 immutable release pipeline |
+| Date       | PR                                                                | Title                                 |
+| ---------- | ----------------------------------------------------------------- | ------------------------------------- |
+| 2026-07-23 | [#742](https://github.com/danielsmithdevelopment/ClawQL/pull/742) | clawql.com agent readiness            |
+| 2026-07-23 | [#744](https://github.com/danielsmithdevelopment/ClawQL/pull/744) | Restore docs/landing deploys          |
+| 2026-07-23 | [#743](https://github.com/danielsmithdevelopment/ClawQL/pull/743) | Layer 0 immutable release pipeline    |
 | 2026-07-23 | [#745](https://github.com/danielsmithdevelopment/ClawQL/pull/745) | Restore main after Dependabot fallout |
-| 2026-07-24 | [#741](https://github.com/danielsmithdevelopment/ClawQL/pull/741) | OpenBench + clawql-inference BYOK |
-| 2026-07-24 | [#746](https://github.com/danielsmithdevelopment/ClawQL/pull/746) | Managed Edge Gateway go-live wedge |
-| 2026-07-24 | [#747](https://github.com/danielsmithdevelopment/ClawQL/pull/747) | Immutable releases guide UX |
-| 2026-07-25 | [#750](https://github.com/danielsmithdevelopment/ClawQL/pull/750) | OpenBench CI A/B (skip-if-no-secret) |
-| 2026-07-26 | [#751](https://github.com/danielsmithdevelopment/ClawQL/pull/751) | Plugins top-level nav |
-| 2026-07-26 | [#753](https://github.com/danielsmithdevelopment/ClawQL/pull/753) | IDP GTM playbook |
-| 2026-07-26 | [#755](https://github.com/danielsmithdevelopment/ClawQL/pull/755) | `clawql sync ensure` |
-| 2026-07-26 | [#754](https://github.com/danielsmithdevelopment/ClawQL/pull/754) | Cloud Agent MCP + R2 bootstrap |
-| 2026-07-26 | [#752](https://github.com/danielsmithdevelopment/ClawQL/pull/752) | OpenRouter-first inference |
-| 2026-07-26 | [#757](https://github.com/danielsmithdevelopment/ClawQL/pull/757) | Cloud Agent workspace npx fix |
-| 2026-07-26 | [#756](https://github.com/danielsmithdevelopment/ClawQL/pull/756) | Cloud Agent e2e R2 memory guide |
-| 2026-07-29 | [#760](https://github.com/danielsmithdevelopment/ClawQL/pull/760) | clawql.com/idp landing |
-| 2026-08-04 | [#790](https://github.com/danielsmithdevelopment/ClawQL/pull/790) | Content rewrite pack |
-| 2026-08-04 | [#791](https://github.com/danielsmithdevelopment/ClawQL/pull/791) | Docs deploy brace-expansion fix |
-| 2026-08-04 | [#792](https://github.com/danielsmithdevelopment/ClawQL/pull/792) | Convergence Week parity |
-| 2026-08-04 | [#793](https://github.com/danielsmithdevelopment/ClawQL/pull/793) | Native CodeGraph |
-| 2026-08-04 | [#795](https://github.com/danielsmithdevelopment/ClawQL/pull/795) | mcp-api-adapter |
-| 2026-08-04 | [#796](https://github.com/danielsmithdevelopment/ClawQL/pull/796) | mcp-api-adapter gRPC /mcp fix |
-| 2026-08-04 | [#799](https://github.com/danielsmithdevelopment/ClawQL/pull/799) | Quiet dotenv + fast stdio Ready |
-| 2026-08-04 | [#800](https://github.com/danielsmithdevelopment/ClawQL/pull/800) | Sync auto-push rate limit |
-| 2026-08-04 | [#797](https://github.com/danielsmithdevelopment/ClawQL/pull/797) | pdf-inspector / anydoc / Helm IDP |
-| 2026-08-04 | [#802](https://github.com/danielsmithdevelopment/ClawQL/pull/802) | Vertical Compose + HITL predictions |
-| 2026-08-04 | [#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801) | Memory IDF + local embeddings |
-| 2026-08-04 | [#803](https://github.com/danielsmithdevelopment/ClawQL/pull/803) | Index-first recall |
-| 2026-08-04 | [#805](https://github.com/danielsmithdevelopment/ClawQL/pull/805) | Local Privacy Filter |
-| 2026-08-04 | [#804](https://github.com/danielsmithdevelopment/ClawQL/pull/804) | Git Mode A |
-| 2026-08-04 | [#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806) | Hybrid RRF |
-| 2026-08-04 | [#808](https://github.com/danielsmithdevelopment/ClawQL/pull/808) | CodeGraph flywheel |
-| 2026-08-04 | [#809](https://github.com/danielsmithdevelopment/ClawQL/pull/809) | IDP shipped-issue hygiene |
-| 2026-08-04 | [#807](https://github.com/danielsmithdevelopment/ClawQL/pull/807) | WORM seal + MEMORY_RECALL |
-| 2026-08-04 | [#810](https://github.com/danielsmithdevelopment/ClawQL/pull/810) | Stirling + NATS IDP Partials |
+| 2026-07-24 | [#741](https://github.com/danielsmithdevelopment/ClawQL/pull/741) | OpenBench + clawql-inference BYOK     |
+| 2026-07-24 | [#746](https://github.com/danielsmithdevelopment/ClawQL/pull/746) | Managed Edge Gateway go-live wedge    |
+| 2026-07-24 | [#747](https://github.com/danielsmithdevelopment/ClawQL/pull/747) | Immutable releases guide UX           |
+| 2026-07-25 | [#750](https://github.com/danielsmithdevelopment/ClawQL/pull/750) | OpenBench CI A/B (skip-if-no-secret)  |
+| 2026-07-26 | [#751](https://github.com/danielsmithdevelopment/ClawQL/pull/751) | Plugins top-level nav                 |
+| 2026-07-26 | [#753](https://github.com/danielsmithdevelopment/ClawQL/pull/753) | IDP GTM playbook                      |
+| 2026-07-26 | [#755](https://github.com/danielsmithdevelopment/ClawQL/pull/755) | `clawql sync ensure`                  |
+| 2026-07-26 | [#754](https://github.com/danielsmithdevelopment/ClawQL/pull/754) | Cloud Agent MCP + R2 bootstrap        |
+| 2026-07-26 | [#752](https://github.com/danielsmithdevelopment/ClawQL/pull/752) | OpenRouter-first inference            |
+| 2026-07-26 | [#757](https://github.com/danielsmithdevelopment/ClawQL/pull/757) | Cloud Agent workspace npx fix         |
+| 2026-07-26 | [#756](https://github.com/danielsmithdevelopment/ClawQL/pull/756) | Cloud Agent e2e R2 memory guide       |
+| 2026-07-29 | [#760](https://github.com/danielsmithdevelopment/ClawQL/pull/760) | clawql.com/idp landing                |
+| 2026-08-04 | [#790](https://github.com/danielsmithdevelopment/ClawQL/pull/790) | Content rewrite pack                  |
+| 2026-08-04 | [#791](https://github.com/danielsmithdevelopment/ClawQL/pull/791) | Docs deploy brace-expansion fix       |
+| 2026-08-04 | [#792](https://github.com/danielsmithdevelopment/ClawQL/pull/792) | Convergence Week parity               |
+| 2026-08-04 | [#793](https://github.com/danielsmithdevelopment/ClawQL/pull/793) | Native CodeGraph                      |
+| 2026-08-04 | [#795](https://github.com/danielsmithdevelopment/ClawQL/pull/795) | mcp-api-adapter                       |
+| 2026-08-04 | [#796](https://github.com/danielsmithdevelopment/ClawQL/pull/796) | mcp-api-adapter gRPC /mcp fix         |
+| 2026-08-04 | [#799](https://github.com/danielsmithdevelopment/ClawQL/pull/799) | Quiet dotenv + fast stdio Ready       |
+| 2026-08-04 | [#800](https://github.com/danielsmithdevelopment/ClawQL/pull/800) | Sync auto-push rate limit             |
+| 2026-08-04 | [#797](https://github.com/danielsmithdevelopment/ClawQL/pull/797) | pdf-inspector / anydoc / Helm IDP     |
+| 2026-08-04 | [#802](https://github.com/danielsmithdevelopment/ClawQL/pull/802) | Vertical Compose + HITL predictions   |
+| 2026-08-04 | [#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801) | Memory IDF + local embeddings         |
+| 2026-08-04 | [#803](https://github.com/danielsmithdevelopment/ClawQL/pull/803) | Index-first recall                    |
+| 2026-08-04 | [#805](https://github.com/danielsmithdevelopment/ClawQL/pull/805) | Local Privacy Filter                  |
+| 2026-08-04 | [#804](https://github.com/danielsmithdevelopment/ClawQL/pull/804) | Git Mode A                            |
+| 2026-08-04 | [#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806) | Hybrid RRF                            |
+| 2026-08-04 | [#808](https://github.com/danielsmithdevelopment/ClawQL/pull/808) | CodeGraph flywheel                    |
+| 2026-08-04 | [#809](https://github.com/danielsmithdevelopment/ClawQL/pull/809) | IDP shipped-issue hygiene             |
+| 2026-08-04 | [#807](https://github.com/danielsmithdevelopment/ClawQL/pull/807) | WORM seal + MEMORY_RECALL             |
+| 2026-08-04 | [#810](https://github.com/danielsmithdevelopment/ClawQL/pull/810) | Stirling + NATS IDP Partials          |
 
 Dependabot / toolchain (also in CHANGELOG): [#727](https://github.com/danielsmithdevelopment/ClawQL/pull/727), [#739](https://github.com/danielsmithdevelopment/ClawQL/pull/739), [#733](https://github.com/danielsmithdevelopment/ClawQL/pull/733), [#731](https://github.com/danielsmithdevelopment/ClawQL/pull/731), [#729](https://github.com/danielsmithdevelopment/ClawQL/pull/729), [#730](https://github.com/danielsmithdevelopment/ClawQL/pull/730), [#725](https://github.com/danielsmithdevelopment/ClawQL/pull/725), [#651](https://github.com/danielsmithdevelopment/ClawQL/pull/651), [#724](https://github.com/danielsmithdevelopment/ClawQL/pull/724), [#732](https://github.com/danielsmithdevelopment/ClawQL/pull/732), [#737](https://github.com/danielsmithdevelopment/ClawQL/pull/737), [#738](https://github.com/danielsmithdevelopment/ClawQL/pull/738) — see CHANGELOG **Changed**.
 
