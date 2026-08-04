@@ -3,7 +3,6 @@
 set -euo pipefail
 
 REQUIRE_SEARCH="${OPENBENCH_REQUIRE_SEARCH:-0}"
-EXPECTED_OP="security_advisories_list_global_advisories"
 HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-30}"
 HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-8000}"
 
@@ -16,19 +15,37 @@ if [ ! -f answer.json ]; then
   exit 1
 fi
 
-if python3 - <<PY
+# Accept GraphQL-ish ids and OpenAPI path ids from search (/- normalized).
+if python3 - <<'PY'
 import json
+import re
 from pathlib import Path
+
+def norm(s: str) -> str:
+    s = str(s or "").strip().lower()
+    s = s.replace("/", "_").replace("-", "_")
+    s = re.sub(r"_+", "_", s)
+    return s
+
 try:
     d = json.loads(Path("answer.json").read_text(encoding="utf-8"))
 except Exception as exc:
     print(f"FAIL: answer.json parse error: {exc}", flush=True)
     raise SystemExit(1)
-op = str(d.get("operationId") or "").strip()
+op = norm(d.get("operationId"))
 prov = str(d.get("provider") or "").strip().lower()
-ok = op == "${EXPECTED_OP}" and prov in ("github", "gh", "")
+expected = {
+    "security_advisories_list_global_advisories",
+    "security_advisories_list_global_advisories",
+}
+# path form security-advisories/list-global-advisories → same after norm
+ok = op == "security_advisories_list_global_advisories" and prov in ("github", "gh", "")
 if not ok:
-    print(f"FAIL: expected operationId=${EXPECTED_OP} provider=github; got op={op!r} provider={prov!r}", flush=True)
+    print(
+        f"FAIL: expected list-global-advisories operationId (any slash/underscore form); "
+        f"got op={d.get('operationId')!r} provider={prov!r}",
+        flush=True,
+    )
 raise SystemExit(0 if ok else 1)
 PY
 then

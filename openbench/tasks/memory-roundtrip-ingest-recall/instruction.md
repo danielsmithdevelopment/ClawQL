@@ -1,30 +1,26 @@
 # Memory ingest → recall roundtrip
 
-There is **no** pre-seeded vault note. You must create durable memory, then read it
-back, then write the answer file.
+There is **no** pre-seeded vault note. The marker token lives only in
+`sealed/marker.txt`.
 
-## Marker fact (must persist via memory tools)
+## Steps
 
-- **Title:** `OpenBench Roundtrip Marker`
-- **Body must include exact token:** `CLAWQL_ROUNDTRIP_TOKEN=nebula-77-orchid`
-
-## Steps (clawql-on)
-
-1. Call **`memory_ingest`** with that title and the token in insights/body.
-2. Call **`memory_recall`** querying for `nebula-77-orchid` or `OpenBench Roundtrip Marker`.
-3. Write relative path `answer.json` using the recalled token (not inventing a new one).
-
-## Required artifact
+1. Read `sealed/marker.txt`.
+2. If you have **`memory_ingest`**, ingest a note titled `OpenBench Roundtrip Marker`
+   whose body/insights include the exact `CLAWQL_ROUNDTRIP_TOKEN=…` line from that file.
+3. If you have **`memory_recall`**, recall that token / title.
+4. Write relative path `answer.json`:
 
 ```json
 {
-  "token": "nebula-77-orchid",
+  "token": "<token value only, without the CLAWQL_ROUNDTRIP_TOKEN= prefix>",
   "source": "memory_recall"
 }
 ```
 
 ## Rules
 
-- Ignore `decoy/` — it invents a different token.
-- If you lack memory tools, you cannot pass.
+- Ignore `decoy/`.
+- Passing requires **both** `memory_ingest` and `memory_recall` tool calls in this run
+  (filesystem copy alone is not enough).
 - Stop after writing `answer.json`.

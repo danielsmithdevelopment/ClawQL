@@ -17,14 +17,20 @@ fi
 
 if python3 - <<'PY'
 import json
+import re
 from pathlib import Path
+
+def norm(s: str) -> str:
+    s = str(s or "").strip().lower().replace("/", "_").replace("-", "_")
+    return re.sub(r"_+", "_", s)
+
 try:
     d = json.loads(Path("trail.json").read_text(encoding="utf-8"))
 except Exception as exc:
     print(f"FAIL: trail.json parse error: {exc}", flush=True)
     raise SystemExit(1)
-read_op = str(d.get("readOperationId") or "").strip()
-list_op = str(d.get("listOperationId") or "").strip()
+read_op = norm(d.get("readOperationId"))
+list_op = norm(d.get("listOperationId"))
 prov = str(d.get("provider") or "").strip().lower()
 dry = d.get("dryRunOnly")
 ok = (

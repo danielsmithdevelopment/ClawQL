@@ -186,6 +186,17 @@ or you hit the turn budget:
 4. Do not stop after one attempt. Do not invent leaky-bucket unless a decoy says so.
 """
 
+MEMORY_ROUNDTRIP_NUDGE = """Continue. You have not completed the memory roundtrip.
+
+1. Read `sealed/marker.txt`.
+2. Call **memory_ingest** with title `OpenBench Roundtrip Marker` and the exact
+   `CLAWQL_ROUNDTRIP_TOKEN=…` line in insights.
+3. Call **memory_recall** for that token.
+4. Write `answer.json` with `{"token":"<value>","source":"memory_recall"}`.
+
+Do not stop after planning. Call the memory tools now.
+"""
+
 # ouroboros-on sometimes loops seed/run twice and never writes the recipe.
 OUROBOROS_ON_WRITE_NUDGE = """Continue. You already ran ouroboros_create_seed_from_document and
 ouroboros_run_evolutionary_loop. Now you MUST call the **write** tool.
@@ -582,6 +593,15 @@ def recalled_without_writes(combined: str) -> bool:
     return recalled and not wrote
 
 
+def memory_roundtrip_incomplete(combined: str) -> bool:
+    """True when ingest and/or recall (and write) were skipped."""
+    text = combined or ""
+    ingest = "memory_ingest" in text or "clawql_memory_ingest" in text
+    recall = "memory_recall" in text or "clawql_memory_recall" in text
+    wrote = '"tool":"write"' in text or '"tool":"edit"' in text
+    return not (ingest and recall and wrote)
+
+
 WRITE_CONTINUATION_HEADER = """Continue the same OpenBench task in this workspace.
 
 You already ran memory_recall successfully. Do **not** call memory_recall again.
@@ -625,6 +645,7 @@ def run_arm_on(
     task_hard_caps: dict | None = None,
     require_search: bool = False,
     require_execute: bool = False,
+    require_memory_roundtrip: bool = False,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
     clawql = resolve_clawql()
@@ -1135,7 +1156,8 @@ def run_trial(
             checker_env_extra["OPENBENCH_REQUIRE_SEARCH"] = "1"
         if arm == "clawql-on" and caps.get("require_execute"):
             checker_env_extra["OPENBENCH_REQUIRE_EXECUTE"] = "1"
-        if arm == "clawql-on" and caps.get("require_memory_roundtrip"):
+        if caps.get("require_memory_roundtrip"):
+            # Both arms: off must fail without memory tools (no instruction leak win).
             checker_env_extra["OPENBENCH_REQUIRE_MEMORY_ROUNDTRIP"] = "1"
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
