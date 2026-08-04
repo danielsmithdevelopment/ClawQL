@@ -32,7 +32,7 @@ Use **`memory_recall`** for decisions and cross-session narrative context. Use *
 | **`codegraph_sync`**            | **Preferred:** native index → Louvain communities → `GRAPH_REPORT.md` / `graph.html` → vault ingest |
 | **`codegraph_explore`**         | **One-shot agent context:** explain + neighbors + blast radius + local subgraph                     |
 | **`codegraph_impact`**          | Upstream blast radius (who depends on this symbol)                                                  |
-| **`codegraph_index`**           | Native index (TS/JS compiler + 30+ tree-sitter languages)                                            |
+| **`codegraph_index`**           | Native index (TS/JS compiler + 30+ tree-sitter languages)                                           |
 | **`codegraph_sync_graphify`**   | Import an **existing** `graph.json` (or fall back to native sync). Never spawns Python.             |
 | **`codegraph_import_graphify`** | Low-level import of Graphify / node-link `graph.json`                                               |
 | **`codegraph_query`**           | Find symbols by name or concept                                                                     |
@@ -60,10 +60,10 @@ Requires **`CLAWQL_ENABLE_MEMORY`**.
 
 ## Languages
 
-| Path | Languages | Notes |
-| --- | --- | --- |
-| **TypeScript compiler API** | `.ts` `.tsx` `.js` `.jsx` `.mjs` `.cjs` | Deepest: enclosing calls, heritage, exports, React/Next tags, cross-file link |
-| **tree-sitter WASM** | Python, Go, Rust, Java, C/C++, C#, Ruby, Kotlin, Scala, PHP, Swift, Lua, Zig, Elixir, Objective-C, Bash, Dart, Solidity, OCaml, Elm, ReScript, QL, Emacs Lisp, Vue, JSON/YAML/TOML/HTML/CSS, … | Structural symbols + imports + calls; grammars from `tree-sitter-wasms` |
+| Path                        | Languages                                                                                                                                                                                      | Notes                                                                         |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **TypeScript compiler API** | `.ts` `.tsx` `.js` `.jsx` `.mjs` `.cjs`                                                                                                                                                        | Deepest: enclosing calls, heritage, exports, React/Next tags, cross-file link |
+| **tree-sitter WASM**        | Python, Go, Rust, Java, C/C++, C#, Ruby, Kotlin, Scala, PHP, Swift, Lua, Zig, Elixir, Objective-C, Bash, Dart, Solidity, OCaml, Elm, ReScript, QL, Emacs Lisp, Vue, JSON/YAML/TOML/HTML/CSS, … | Structural symbols + imports + calls; grammars from `tree-sitter-wasms`       |
 
 Not yet (no WASM in-tree / need dedicated extractors): Fortran, Verilog, PowerShell, Julia, Terraform/HCL, SQL schemas, Markdown semantic edges — use vault/PageIndex/Docling for docs, or import a Graphify `graph.json` if you already produce one.
 
