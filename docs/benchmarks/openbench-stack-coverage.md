@@ -164,7 +164,15 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 
 16. ~~**Onyx mock cite**~~ — verified on 1.0 / off 0.0 ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)).  
 17. ~~**Memory wikilink hop**~~ — verified on 1.0 / off 0.0 ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)).  
-18. **n≥3 trials** on a small headline subset for Wilson intervals (dispatch or dedicated matrix).
+18. **n≥3 trials** on a small headline subset for Wilson intervals (P3) — see Phase 0 in [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
+
+### Phase 1 advanced (frugal tool delta — no fine-tune)
+
+19. **`memory-conflict-pricing` (B-4.1)** — conflicting vault entries; agent must flag conflict, not synthesize.  
+20. **`codegraph-impact-edit` (B-3.1 lite)** — cross-file edit via index/query/neighbors; miss dependents = fail.  
+21. Spikes only: B-4.2 stale cache · B-4.3 Panguard×`memory_ingest` — ship only if product behavior matches claim.
+
+Full breakdown (B-1 flywheel → B-6 domain HLE-analog): [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
 
 ### P3 — keep out of PR OpenBench (ops / cluster / paid SaaS)
 
@@ -198,6 +206,7 @@ Ouroboros remains **on vs off** (both have ClawQL) when the claim is the loop, n
 - [OpenBench overview](./openbench.md)
 - [Results ledger](./openbench-results-ledger.md)
 - [Task explanations (prove / why / how)](./openbench-task-explanations.md)
+- [Advanced suites plan (B-1…B-6 task breakdown)](./openbench-advanced-suites.md)
 - [Stack coverage / backlog](./openbench-stack-coverage.md)
 - [Ouroboros evidence](./ouroboros-value-evidence.md)
 - [Skills / composed recipes](../skills/)

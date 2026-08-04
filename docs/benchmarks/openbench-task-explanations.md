@@ -295,7 +295,8 @@ Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../o
 
 1. ~~**notify / sandbox / composed**~~ — verified WINs on [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305); retired.  
 2. ~~**Onyx mock cite** + **memory wikilink hop**~~ — verified on [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189); retired.  
-3. **n≥3 trials** on headline WINs for Wilson intervals (P3).  
-4. Optional later: agentic external benches (GAIA / τ-bench / SWE-style) with clawql-on vs off — not closed-book HLE.
+3. **Phase 1 advanced** — `memory-conflict-pricing` (B-4.1), `codegraph-impact-edit` (B-3.1 lite); see [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).  
+4. **n≥3 trials** on headline WINs (Phase 0 / dispatch).  
+5. Later: B-1 flywheel (blocked on FT), B-2 stubbed IDP pipeline, B-6 domain compliance (not closed-book HLE).
 
 Append new run IDs to the [ledger](./openbench-results-ledger.md).

@@ -284,8 +284,18 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 ## Open gaps (not yet headline WIN)
 
-1. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
-2. Optional later: agentic external benches (GAIA / τ-bench / SWE-style) with clawql-on vs off — not closed-book HLE.
+1. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2) — Phase 0 in [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
+2. **Phase 1 advanced:** `memory-conflict-pricing` (B-4.1), `codegraph-impact-edit` (B-3.1 lite) — not shipped yet.
+3. Optional later: agentic external benches / domain HLE-analog (B-6) after fine-tune — not closed-book HLE.
+4. Blocked: B-1 flywheel (needs FT v1), B-5 NSV (needs metric export), full live IDP pipeline (ops).
+
+### Replication queue (Phase 0)
+
+| Task | Target n | Status |
+| ---- | -------- | ------ |
+| `search-first-discovery` | 3 | queued (dispatch) |
+| `memory-roundtrip-ingest-recall` | 3 | queued |
+| `policy-deny-execute` | 3 | queued |
 
 ### 2026-08-04 — [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189) (P2.5 — both WIN)
 
