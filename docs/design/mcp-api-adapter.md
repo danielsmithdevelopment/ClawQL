@@ -1,12 +1,12 @@
 # MCP API Adapter — technical design
 
-**Status:** ✅ Implemented (`mcp-api-adapter@0.4.0`) — any MCP upstream (stdio / Streamable HTTP / gRPC) → OpenAPI + GraphQL + gRPC simultaneously  
+**Status:** ✅ Implemented (`mcp-api-adapter@0.5.0`) — any MCP upstream → OpenAPI + GraphQL + `/mcp` + gRPC (+ gen-cli)  
 **Date:** 2026-08-04  
 **Package:** `mcp-api-adapter` (npm; workspace `packages/mcp-api-adapter`)  
 **Depends on:** [`mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md) **1.0.0+**, `@modelcontextprotocol/sdk`  
 **User guide:** [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md)  
 **Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)  
-**Related:** Vision & Roadmap · Managed Edge Gateway · Worker / OpenWebUI-style OpenAPI consumers
+**Related:** Vision & Roadmap · Managed Edge Gateway · Worker / OpenWebUI-style OpenAPI consumers · PrintingPress (planned CLI packaging)
 
 ---
 

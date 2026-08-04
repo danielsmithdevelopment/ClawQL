@@ -1,16 +1,19 @@
 # MCP API Adapter — user guide
 
-**Package:** [`mcp-api-adapter`](../../packages/mcp-api-adapter/) (`0.4.0+`)  
+**Package:** [`mcp-api-adapter`](../../packages/mcp-api-adapter/) (`0.5.0+`)  
 **Design:** [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)  
 **Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)
 
 ## What it does
 
-Point the adapter at **any** MCP server and it scaffolds three APIs from `ListTools`:
+Point the adapter at **any** MCP server and it scaffolds APIs from `ListTools`:
 
 1. **OpenAPI / REST** — `POST /{toolName}` + Swagger at `/docs`
 2. **GraphQL** — per-tool mutations + `callTool` at `/graphql` (GraphiQL at `/graphiql`)
-3. **gRPC** — `model_context_protocol.Mcp/CallTool` via [`mcp-grpc-transport`](../../packages/mcp-grpc-transport/) (upstream address, or a **scaffolded** local server when the upstream is stdio or Streamable HTTP)
+3. **Streamable HTTP MCP** — same tools at `/mcp` for IDE / agent clients
+4. **gRPC** — `model_context_protocol.Mcp/CallTool` via [`mcp-grpc-transport`](../../packages/mcp-grpc-transport/) (upstream or scaffolded)
+
+Plus **`gen-cli`** for a thin Node CLI over REST (PrintingPress is the future signed-binary path).
 
 ```text
 stdio | Streamable HTTP | gRPC MCP
@@ -18,12 +21,12 @@ stdio | Streamable HTTP | gRPC MCP
               ▼
       mcp-api-adapter
               │
-    ┌─────────┼─────────┐
-    ▼         ▼         ▼
- OpenAPI   GraphQL    gRPC
+    ┌─────┬───┼───┬─────┐
+    ▼     ▼   ▼   ▼     ▼
+ OpenAPI GQL /mcp gRPC  gen-cli
 ```
 
-This is the inverse of ClawQL Core **`search` / `execute`** (those turn OpenAPI ops into MCP tools). Here, MCP tools become HTTP/GraphQL (and gRPC when needed).
+This is the inverse of ClawQL Core **`search` / `execute`** (those turn OpenAPI ops into MCP tools). Here, MCP tools become APIs (and can re-export MCP itself).
 
 ## Quick start
 
