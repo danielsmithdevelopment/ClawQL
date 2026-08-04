@@ -134,7 +134,7 @@ The entire platform is built on Effect-TS. For non-technical readers: when a new
 
 **`mcp-grpc-transport`** — gRPC MCP transport for cluster deployments (MCP 2026-07-28 protobuf `ListTools` / `CallTool`).
 
-**`mcp-openapi-gateway`** (MVP) — Thin OpenAPI on-ramp: `POST /{toolName}` + `/openapi.json` + Swagger UI, forwarding into gRPC `CallTool`. Funnel for non-MCP clients (Workers, OpenWebUI) onto the TypeScript gRPC transport. Design: [`docs/design/mcp-openapi-gateway.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-openapi-gateway.md). Example: [`examples/mcp-openapi-gateway/`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-openapi-gateway/README.md).
+**`mcp-openapi-gateway`** (MVP) — Thin OpenAPI + GraphQL on-ramp: `POST /{toolName}`, `/graphql` + GraphiQL, forwarding into gRPC `CallTool`. Funnel for non-MCP clients (Workers, OpenWebUI) onto the TypeScript gRPC transport. Design: [`docs/design/mcp-openapi-gateway.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-openapi-gateway.md). Example: [`examples/mcp-openapi-gateway/`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-openapi-gateway/README.md).
 
 **`clawql-auth`** — Gateway modes, ATR claims, provider headers.
 
@@ -182,11 +182,11 @@ There are no fixed delivery dates. Priorities are determined by dependency order
 
 ### Phase 1.2: MCP OpenAPI on-ramp (MVP in-repo)
 
-**What:** `mcp-openapi-gateway` — generate OpenAPI from MCP `ListTools`, serve `POST /{toolName}` + Swagger UI, forward into **`mcp-grpc-transport` `CallTool`**.
+**What:** `mcp-openapi-gateway` — generate OpenAPI + GraphQL from MCP `ListTools`, serve `POST /{toolName}` + `/graphql` + Swagger/GraphiQL, forward into **`mcp-grpc-transport` `CallTool`**.
 
-**Why:** Non-MCP clients (Workers, OpenWebUI OpenAPI tools, custom gateways) need tool-name HTTP. Building the facade ourselves — gRPC-first, TypeScript-native — drives adoption of the production gRPC transport rather than ceding the on-ramp to Python/stdio-only proxies. Design: [`docs/design/mcp-openapi-gateway.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-openapi-gateway.md). Example: [`examples/mcp-openapi-gateway/`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-openapi-gateway/README.md).
+**Why:** Non-MCP clients (Workers, OpenWebUI OpenAPI tools, GraphQL clients) need tool-name HTTP. Building the facade ourselves — gRPC-first, TypeScript-native — drives adoption of the production gRPC transport rather than ceding the on-ramp to Python/stdio-only proxies. Design: [`docs/design/mcp-openapi-gateway.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-openapi-gateway.md). Example: [`examples/mcp-openapi-gateway/`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-openapi-gateway/README.md).
 
-**Exit criteria:** ✅ In-repo MVP — package + e2e + dual-surface example demos. Remaining: independent npm publish; optional Compose/Helm sidecar.
+**Exit criteria:** ✅ In-repo MVP — package + e2e + triple-surface example demos (REST / GraphQL / gRPC). Remaining: independent npm publish; optional Compose/Helm sidecar.
 
 ### Phase 2: Operator and Natural Language Surface
 
