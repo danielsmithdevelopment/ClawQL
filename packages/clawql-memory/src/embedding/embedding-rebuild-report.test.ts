@@ -19,7 +19,12 @@ describe("embeddingRebuildReport", () => {
   });
 
   it("reports not synced when vector backend is off", () => {
-    stash(["CLAWQL_MEMORY_DB", "CLAWQL_VECTOR_BACKEND", "CLAWQL_EMBEDDING_API_KEY", "OPENAI_API_KEY"]);
+    stash([
+      "CLAWQL_MEMORY_DB",
+      "CLAWQL_VECTOR_BACKEND",
+      "CLAWQL_EMBEDDING_API_KEY",
+      "OPENAI_API_KEY",
+    ]);
     delete process.env.CLAWQL_MEMORY_DB;
     delete process.env.CLAWQL_VECTOR_BACKEND;
     delete process.env.CLAWQL_EMBEDDING_API_KEY;
@@ -30,7 +35,12 @@ describe("embeddingRebuildReport", () => {
   });
 
   it("reports not synced when API key missing", () => {
-    stash(["CLAWQL_MEMORY_DB", "CLAWQL_VECTOR_BACKEND", "CLAWQL_EMBEDDING_API_KEY", "OPENAI_API_KEY"]);
+    stash([
+      "CLAWQL_MEMORY_DB",
+      "CLAWQL_VECTOR_BACKEND",
+      "CLAWQL_EMBEDDING_API_KEY",
+      "OPENAI_API_KEY",
+    ]);
     delete process.env.CLAWQL_MEMORY_DB;
     process.env.CLAWQL_VECTOR_BACKEND = "sqlite";
     delete process.env.CLAWQL_EMBEDDING_API_KEY;

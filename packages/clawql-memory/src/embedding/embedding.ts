@@ -75,8 +75,7 @@ export function embeddingRebuildReport(): { synced: boolean; skipped?: string } 
   if (!resolveEmbeddingConfig()) {
     return {
       synced: false,
-      skipped:
-        "No CLAWQL_EMBEDDING_API_KEY (or OPENAI_API_KEY); chunks indexed without embeddings",
+      skipped: "No CLAWQL_EMBEDDING_API_KEY (or OPENAI_API_KEY); chunks indexed without embeddings",
     };
   }
   return { synced: true };

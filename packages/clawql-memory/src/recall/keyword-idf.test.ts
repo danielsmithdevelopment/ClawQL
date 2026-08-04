@@ -8,10 +8,11 @@ describe("keywordScore + IDF", () => {
 
   it("down-weights ubiquitous terms so rare matches rank higher", () => {
     const noise = Array.from({ length: 40 }, (_, i) =>
-      `Note ${i}: chainlink chainlink chainlink chainlink chainlink network feed oracle docs.`.repeat(4)
+      `Note ${i}: chainlink chainlink chainlink chainlink chainlink network feed oracle docs.`.repeat(
+        4
+      )
     );
-    const target =
-      "GOMAXPROCS cpu limit host core count. Also mentions chainlink once in passing.";
+    const target = "GOMAXPROCS cpu limit host core count. Also mentions chainlink once in passing.";
     const corpus = [...noise, target];
     const idf = buildCorpusIdf(corpus);
     const query = "chainlink gomaxprocs cpu";

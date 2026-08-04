@@ -283,10 +283,7 @@ export function executeMemoryRecallCoreEffect(
       }
       // Cap seeds so ubiquitous keyword matches cannot fill `limit` before wikilink BFS runs.
       // Without this, every reason stays "keyword" even when the graph has usable edges.
-      const seedCap = envInt(
-        "CLAWQL_MEMORY_RECALL_SEED_CAP",
-        Math.max(limit * 2, 8)
-      );
+      const seedCap = envInt("CLAWQL_MEMORY_RECALL_SEED_CAP", Math.max(limit * 2, 8));
       const seeds = [...seedSet]
         .sort((a, b) => (scoreByRel.get(b) ?? 0) - (scoreByRel.get(a) ?? 0))
         .slice(0, seedCap);
@@ -362,7 +359,9 @@ export function executeMemoryRecallCoreEffect(
       const linkHits = scoredHits
         .filter((h) => h.reason === "link")
         .sort((a, b) => b.score - a.score || a.depth - b.depth);
-      const topPrimaryPaths = new Set(primary.slice(0, Math.max(limit, seedCap)).map((h) => h.path));
+      const topPrimaryPaths = new Set(
+        primary.slice(0, Math.max(limit, seedCap)).map((h) => h.path)
+      );
       const usefulLinks = linkHits.filter((h) => h.linkFrom && topPrimaryPaths.has(h.linkFrom));
       const linkBudget = Math.min(Math.max(1, Math.floor(limit / 2)), usefulLinks.length);
       const primaryBudget = Math.max(0, limit - linkBudget);
