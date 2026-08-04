@@ -35,33 +35,33 @@ Bundled IDP vendors (Tika, Gotenberg, Paperless, Stirling, Docling, Nextcloud, C
 PDF → inspect_pdf → local_markdown | Docling OCR → classify_document → extract_document → vault / HITL
 ```
 
-| Hop | Tool / execute | Role |
-| --- | --- | --- |
-| Route | **`inspect_pdf`** | Firecrawl pdf-inspector — TextBased → Markdown; Scanned/Mixed → Docling |
-| Layout OCR | **`execute`** `docling::*` | Layout-aware parse for forms / W-2 / scanned pages |
-| Doc type | **`classify_document`** | Label + confidence (HTTP classifier or local heuristic) |
-| Fields | **`extract_document`** | LangExtract schema-grounded extractions + `char_interval` |
-| Multi-hop | **`run_idp_pipeline`** | Automated `DEFAULT_IDP_PIPELINE` (Nextcloud → … → Coneshare) |
+| Hop        | Tool / execute             | Role                                                                    |
+| ---------- | -------------------------- | ----------------------------------------------------------------------- |
+| Route      | **`inspect_pdf`**          | Firecrawl pdf-inspector — TextBased → Markdown; Scanned/Mixed → Docling |
+| Layout OCR | **`execute`** `docling::*` | Layout-aware parse for forms / W-2 / scanned pages                      |
+| Doc type   | **`classify_document`**    | Label + confidence (HTTP classifier or local heuristic)                 |
+| Fields     | **`extract_document`**     | LangExtract schema-grounded extractions + `char_interval`               |
+| Multi-hop  | **`run_idp_pipeline`**     | Automated `DEFAULT_IDP_PIPELINE` (Nextcloud → … → Coneshare)            |
 
 ## Enable / disable
 
-| Env | Default | Effect |
-| --- | --- | --- |
-| **`CLAWQL_ENABLE_DOCUMENTS=0`** | on | Omit `DocumentsPlugin` and document MCP tools; trims IDP vendors from **`all-providers`** only |
-| **`CLAWQL_ENABLE_ONYX=1`** | off | Register **`knowledge_search_onyx`** |
-| **`CLAWQL_EXTERNAL_INGEST=1`** | off | Allow URL fetch mode on **`ingest_external_knowledge`** |
-| **`CLAWQL_ENABLE_PDF_INSPECTOR=1`** | off | Register **`inspect_pdf`** (in-process `@firecrawl/pdf-inspector`) |
-| **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`** | off | Register **`classify_document`** |
-| **`CLAWQL_ENABLE_LANGEXTRACT=1`** | off | Register **`extract_document`** |
-| **`CLAWQL_ENABLE_IDP_PIPELINE=1`** | off | Register **`run_idp_pipeline`** |
+| Env                                  | Default | Effect                                                                                         |
+| ------------------------------------ | ------- | ---------------------------------------------------------------------------------------------- |
+| **`CLAWQL_ENABLE_DOCUMENTS=0`**      | on      | Omit `DocumentsPlugin` and document MCP tools; trims IDP vendors from **`all-providers`** only |
+| **`CLAWQL_ENABLE_ONYX=1`**           | off     | Register **`knowledge_search_onyx`**                                                           |
+| **`CLAWQL_EXTERNAL_INGEST=1`**       | off     | Allow URL fetch mode on **`ingest_external_knowledge`**                                        |
+| **`CLAWQL_ENABLE_PDF_INSPECTOR=1`**  | off     | Register **`inspect_pdf`** (in-process `@firecrawl/pdf-inspector`)                             |
+| **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`** | off     | Register **`classify_document`**                                                               |
+| **`CLAWQL_ENABLE_LANGEXTRACT=1`**    | off     | Register **`extract_document`**                                                                |
+| **`CLAWQL_ENABLE_IDP_PIPELINE=1`**   | off     | Register **`run_idp_pipeline`**                                                                |
 
 ### Service URLs (when sidecars are up)
 
-| Env | Purpose |
-| --- | --- |
-| **`DOCLING_BASE_URL`** | Docling Serve (layout OCR) |
-| **`CLASSIFIER_BASE_URL`** | Reference / fine-tuned classifier HTTP |
-| **`LANGEXTRACT_BASE_URL`** | LangExtract sidecar (heuristic when unset) |
+| Env                                   | Purpose                                            |
+| ------------------------------------- | -------------------------------------------------- |
+| **`DOCLING_BASE_URL`**                | Docling Serve (layout OCR)                         |
+| **`CLASSIFIER_BASE_URL`**             | Reference / fine-tuned classifier HTTP             |
+| **`LANGEXTRACT_BASE_URL`**            | LangExtract sidecar (heuristic when unset)         |
 | **`CLAWQL_PDF_INSPECTOR_FILE_ROOTS`** | Allowlist for `inspect_pdf` `path=` (default: cwd) |
 
 Explicit **`CLAWQL_BUNDLED_PROVIDERS=paperless,tika,...`** can still list IDP vendor ids when **`CLAWQL_ENABLE_DOCUMENTS=0`**.

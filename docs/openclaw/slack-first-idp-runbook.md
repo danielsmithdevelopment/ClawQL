@@ -26,17 +26,17 @@ clawql-mcp  ── search / execute ──► Docling (layout) → Tika → Stir
 
 ## Required configuration
 
-| Component              | Env / Helm                                                  | Purpose                                                                                             |
-| ---------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| ClawQL MCP             | `CLAWQL_ENABLE_DOCUMENTS=1` (default)                       | Document vendor merge                                                                               |
-| Docling layout parse   | `DOCLING_BASE_URL`, optional `DOCLING_API_KEY`              | Forms/tables/W-2 ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248))              |
-| pdf-inspector (optional) | `CLAWQL_ENABLE_PDF_INSPECTOR=1`                           | Local PDF classify + Markdown before Docling — [pdf-inspector-onboarding.md](../providers/pdf-inspector-onboarding.md) |
-| Classifier (optional)  | `CLAWQL_ENABLE_IDP_CLASSIFIER=1`, `CLASSIFIER_BASE_URL`     | Fine-tuned doc type routing ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248))   |
-| LangExtract (optional) | `CLAWQL_ENABLE_LANGEXTRACT=1`, `LANGEXTRACT_BASE_URL`       | Schema extraction + grounding ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)) |
-| Slack notify           | `CLAWQL_ENABLE_NOTIFY=1`, `CLAWQL_SLACK_TOKEN`              | Completion message                                                                                  |
-| Vault (optional)       | `CLAWQL_OBSIDIAN_VAULT_PATH`                                | Durable `memory_ingest`                                                                             |
-| Workflow (optional)    | `CLAWQL_ENABLE_WORKFLOW=1`, namespace allowlist             | Durable Argo run                                                                                    |
-| HITL (optional)        | `CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`                         | Human review gate                                                                                   |
+| Component                | Env / Helm                                              | Purpose                                                                                                                |
+| ------------------------ | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| ClawQL MCP               | `CLAWQL_ENABLE_DOCUMENTS=1` (default)                   | Document vendor merge                                                                                                  |
+| Docling layout parse     | `DOCLING_BASE_URL`, optional `DOCLING_API_KEY`          | Forms/tables/W-2 ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248))                                 |
+| pdf-inspector (optional) | `CLAWQL_ENABLE_PDF_INSPECTOR=1`                         | Local PDF classify + Markdown before Docling — [pdf-inspector-onboarding.md](../providers/pdf-inspector-onboarding.md) |
+| Classifier (optional)    | `CLAWQL_ENABLE_IDP_CLASSIFIER=1`, `CLASSIFIER_BASE_URL` | Fine-tuned doc type routing ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248))                      |
+| LangExtract (optional)   | `CLAWQL_ENABLE_LANGEXTRACT=1`, `LANGEXTRACT_BASE_URL`   | Schema extraction + grounding ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246))                    |
+| Slack notify             | `CLAWQL_ENABLE_NOTIFY=1`, `CLAWQL_SLACK_TOKEN`          | Completion message                                                                                                     |
+| Vault (optional)         | `CLAWQL_OBSIDIAN_VAULT_PATH`                            | Durable `memory_ingest`                                                                                                |
+| Workflow (optional)      | `CLAWQL_ENABLE_WORKFLOW=1`, namespace allowlist         | Durable Argo run                                                                                                       |
+| HITL (optional)          | `CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`                     | Human review gate                                                                                                      |
 
 Helm full profile: [`charts/clawql-idp/values-idp-full.yaml`](../../charts/clawql-idp/values-idp-full.yaml) with `enableNotify: true`.
 
