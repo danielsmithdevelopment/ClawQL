@@ -54,7 +54,7 @@ Set **`1`** / **`true`** / **`yes`** where noted:
 
 **`knowledge_search_onyx`** — **`CLAWQL_ENABLE_ONYX=1`** plus **Documents** still enabled (documents off hides the tool regardless).
 
-**IDP MCP tools (documents on, each opt-in):** **`inspect_pdf`** (`CLAWQL_ENABLE_PDF_INSPECTOR=1`), **`run_idp_pipeline`** (`CLAWQL_ENABLE_IDP_PIPELINE=1`), **`classify_document`** (`CLAWQL_ENABLE_IDP_CLASSIFIER=1`), **`extract_document`** (`CLAWQL_ENABLE_LANGEXTRACT=1`). See [`docs/providers/pdf-inspector-onboarding.md`](../providers/pdf-inspector-onboarding.md), [`docs/mcp/idp-pipeline-runner.md`](../mcp/idp-pipeline-runner.md), [`docs/runbooks/fine-tuned-classifier.md`](../runbooks/fine-tuned-classifier.md), [`docs/providers/langextract-onboarding.md`](../providers/langextract-onboarding.md).
+**IDP MCP tools (documents on, each opt-in):** **`convert_document`** (`CLAWQL_ENABLE_ANYDOC=1`), **`inspect_pdf`** (`CLAWQL_ENABLE_PDF_INSPECTOR=1`), **`run_idp_pipeline`** (`CLAWQL_ENABLE_IDP_PIPELINE=1`), **`classify_document`** (`CLAWQL_ENABLE_IDP_CLASSIFIER=1`), **`extract_document`** (`CLAWQL_ENABLE_LANGEXTRACT=1`). See [`docs/providers/anydoc-onboarding.md`](../providers/anydoc-onboarding.md), [`docs/providers/pdf-inspector-onboarding.md`](../providers/pdf-inspector-onboarding.md), [`docs/mcp/idp-pipeline-runner.md`](../mcp/idp-pipeline-runner.md), [`docs/runbooks/fine-tuned-classifier.md`](../runbooks/fine-tuned-classifier.md), [`docs/providers/langextract-onboarding.md`](../providers/langextract-onboarding.md).
 
 ### Diagram vs. this build
 

@@ -93,7 +93,8 @@ async function loadPdfInspector(): Promise<PdfInspectorApi> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `Failed to load @firecrawl/pdf-inspector (native napi binding). Install platform binaries or set CLAWQL_ENABLE_PDF_INSPECTOR=0. ${msg}`
+      `Failed to load @firecrawl/pdf-inspector (native napi binding). Install platform binaries or set CLAWQL_ENABLE_PDF_INSPECTOR=0. ${msg}`,
+      { cause: err }
     );
   }
 }

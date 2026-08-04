@@ -31,6 +31,7 @@ clawql-mcp  ── search / execute ──► Docling (layout) → Tika → Stir
 | ClawQL MCP               | `CLAWQL_ENABLE_DOCUMENTS=1` (default)                   | Document vendor merge                                                                                                  |
 | Docling layout parse     | `DOCLING_BASE_URL`, optional `DOCLING_API_KEY`          | Forms/tables/W-2 ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248))                                 |
 | pdf-inspector (optional) | `CLAWQL_ENABLE_PDF_INSPECTOR=1`                         | Local PDF classify + Markdown before Docling — [pdf-inspector-onboarding.md](../providers/pdf-inspector-onboarding.md) |
+| anydoc (optional)        | `CLAWQL_ENABLE_ANYDOC=1`                                | Office/PDF/CSV → GFM Markdown — [anydoc-onboarding.md](../providers/anydoc-onboarding.md)                              |
 | Classifier (optional)    | `CLAWQL_ENABLE_IDP_CLASSIFIER=1`, `CLASSIFIER_BASE_URL` | Fine-tuned doc type routing ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248))                      |
 | LangExtract (optional)   | `CLAWQL_ENABLE_LANGEXTRACT=1`, `LANGEXTRACT_BASE_URL`   | Schema extraction + grounding ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246))                    |
 | Slack notify             | `CLAWQL_ENABLE_NOTIFY=1`, `CLAWQL_SLACK_TOKEN`          | Completion message                                                                                                     |
@@ -48,8 +49,8 @@ You are an IDP operator assistant wired to ClawQL MCP (profile: clawql-openclaw-
 When the user @mentions you with a document request (e.g. "process this W-2.pdf for underwriting"):
 
 1. **Discover** — `search` with a tight query for the right vendor `operationId` (Docling layout parse for forms/W-2, Tika for plain text, Stirling redact, Paperless archive, Onyx index).
-2. **Route PDFs (optional)** — when `CLAWQL_ENABLE_PDF_INSPECTOR=1`: `inspect_pdf` to choose local Markdown vs Docling OCR — see [`pdf-inspector-onboarding.md`](../providers/pdf-inspector-onboarding.md).
-3. **Layout parse** — for structured forms (W-2, tax, lending) or when `inspect_pdf` returns `docling_ocr` / `hybrid_docling`, prefer `execute` on **`docling`** (`docling_convert_file` / `docling_convert_source`) before or instead of Tika — see [`docling-onboarding.md`](../providers/docling-onboarding.md) and [`deployment/samples/lending-w2/`](../../deployment/samples/lending-w2/README.md).
+2. **Convert / route (optional)** — when `CLAWQL_ENABLE_ANYDOC=1`: `convert_document` for Office/PDF/CSV → GFM; when `CLAWQL_ENABLE_PDF_INSPECTOR=1`: `inspect_pdf` for PDF-type routing — see [`anydoc-onboarding.md`](../providers/anydoc-onboarding.md) and [`pdf-inspector-onboarding.md`](../providers/pdf-inspector-onboarding.md).
+3. **Layout parse** — for structured forms (W-2, tax, lending) or when convert/inspect returns `docling_ocr` / `hybrid_docling`, prefer `execute` on **`docling`** (`docling_convert_file` / `docling_convert_source`) before or instead of Tika — see [`docling-onboarding.md`](../providers/docling-onboarding.md) and [`deployment/samples/lending-w2/`](../../deployment/samples/lending-w2/README.md).
 4. **Classify / extract (optional)** — when enabled: `classify_document` for doc-type routing; `extract_document` for schema-grounded fields (W-2 boxes, etc.) — see [`langextract-onboarding.md`](../providers/langextract-onboarding.md).
 5. **Execute** — call `execute` with minimal `fields`; never paste full OpenAPI responses into Slack.
 6. **Vault** — `memory_ingest` a summary note with Paperless id, Merkle root, and correlation id when vault is configured.

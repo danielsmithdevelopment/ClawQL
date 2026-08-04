@@ -228,6 +228,8 @@ enableIdpClassifier: false
 enableLangextract: false
 # In-process Firecrawl pdf-inspector (`inspect_pdf`). No sidecar; ships in clawql-documents.
 enablePdfInspector: false
+# In-process Firecrawl anydoc (`convert_document`). No sidecar; ships in clawql-documents.
+enableAnydoc: false
 enableIdpPipeline: false
 
 # Optional ClawQLInstance tier-spec overlay (#255). Default off — Helm `enable*` env flags remain authoritative unless this mount is enabled.

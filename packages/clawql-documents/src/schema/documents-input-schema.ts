@@ -311,6 +311,48 @@ export const InspectPdfInputSchema = Schema.Union(
 
 export type InspectPdfInputDecoded = Schema.Schema.Type<typeof InspectPdfInputSchema>;
 
+// --- convert_document (anydoc) ---
+
+export const CONVERT_DOCUMENT_PATH_DESCRIPTION =
+  "Filesystem path under CLAWQL_ANYDOC_FILE_ROOTS (falls back to CLAWQL_PDF_INSPECTOR_FILE_ROOTS, then cwd). Mutually exclusive with base64.";
+export const CONVERT_DOCUMENT_BASE64_DESCRIPTION =
+  "Base64-encoded document bytes. Prefer path for large files. Mutually exclusive with path.";
+export const CONVERT_DOCUMENT_FORMAT_DESCRIPTION =
+  "Optional format hint (docx, pdf, xlsx, csv, …). Detected from bytes/extension when omitted; CSV usually needs an explicit hint.";
+export const CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION =
+  "Include markdown in the response (default true). Set false for routing-only payloads.";
+
+export const ConvertDocumentInputSchema = Schema.Union(
+  Schema.Struct({
+    path: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(4096)).annotations({
+      description: CONVERT_DOCUMENT_PATH_DESCRIPTION,
+    }),
+    format: Schema.optional(
+      Schema.String.pipe(Schema.minLength(1), Schema.maxLength(32)).annotations({
+        description: CONVERT_DOCUMENT_FORMAT_DESCRIPTION,
+      })
+    ),
+    include_markdown: Schema.optional(
+      Schema.Boolean.annotations({ description: CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION })
+    ),
+  }),
+  Schema.Struct({
+    base64: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(140_000_000)).annotations({
+      description: CONVERT_DOCUMENT_BASE64_DESCRIPTION,
+    }),
+    format: Schema.optional(
+      Schema.String.pipe(Schema.minLength(1), Schema.maxLength(32)).annotations({
+        description: CONVERT_DOCUMENT_FORMAT_DESCRIPTION,
+      })
+    ),
+    include_markdown: Schema.optional(
+      Schema.Boolean.annotations({ description: CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION })
+    ),
+  })
+);
+
+export type ConvertDocumentInputDecoded = Schema.Schema.Type<typeof ConvertDocumentInputSchema>;
+
 function formatParseError(err: ParseResult.ParseError): Error {
   return new Error(ParseResult.TreeFormatter.formatErrorSync(err));
 }
@@ -357,4 +399,12 @@ export function decodeExtractDocumentInput(
 
 export function decodeInspectPdfInput(raw: unknown): Effect.Effect<InspectPdfInputDecoded, Error> {
   return Schema.decodeUnknown(InspectPdfInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+}
+
+export function decodeConvertDocumentInput(
+  raw: unknown
+): Effect.Effect<ConvertDocumentInputDecoded, Error> {
+  return Schema.decodeUnknown(ConvertDocumentInputSchema)(raw).pipe(
+    Effect.mapError(formatParseError)
+  );
 }

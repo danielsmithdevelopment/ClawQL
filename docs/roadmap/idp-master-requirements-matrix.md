@@ -6,7 +6,7 @@
 
 **Epic (checklist only, no extra scope):** [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) — rolls up **#241–#258**.
 
-**Last updated:** 2026-07-02
+**Last updated:** 2026-08-04
 
 ---
 
@@ -30,6 +30,7 @@
 | **Privacy**           | **Stirling-PDF document redaction** (upstream of agents)                        | **Partial**               | Helm + Stirling provider; orchestration in **`clawql-documents`** gap; [`clawql-idp-platform.md`](../vision/clawql-idp-platform.md) § Security                                                                                                                                         |
 | **Privacy**           | **Presidio agent I/O redaction** (MCP/Panguard gateway)                         | **Partial (7.0)**         | Gateway hooks shipped — `CLAWQL_ENABLE_PRESIDIO=1`; full mandatory IDP-hop redaction + sparse-MoE [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245); [MCP clients — Presidio](https://docs.clawql.com/mcp-clients#presidio-redaction)                                |
 | **Privacy**           | Local sparse-MoE mask before extraction                                         | **Partial**               | [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)                                                                                                                                                                                                                    |
+| **Fast convert**      | Firecrawl anydoc (Office/PDF/CSV → GFM before Docling)                          | **Shipped**               | MCP **`convert_document`** (`CLAWQL_ENABLE_ANYDOC=1`); [`anydoc-onboarding.md`](../providers/anydoc-onboarding.md)                                                                                                                                                                      |
 | **PDF route**         | Firecrawl pdf-inspector (local classify + Markdown before Docling)              | **Shipped**               | MCP **`inspect_pdf`** (`CLAWQL_ENABLE_PDF_INSPECTOR=1`); [`pdf-inspector-onboarding.md`](../providers/pdf-inspector-onboarding.md)                                                                                                                                                     |
 | **Extraction**        | LangExtract (schema + char grounding + HTML viz)                                | **Shipped**               | [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246) — MCP **`extract_document`**, reference sidecar, Helm **`documentPipeline.langextract`**, threat model; live LLM mode BYO keys                                                                                     |
 | **Classification**    | Docling MCP + fine-tuned classifier                                             | **Shipped**               | [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248) — bundled **`docling`**, Helm **`documentPipeline.docling`** + **`classifier`**, **`classify_document`** + reference classifier sample; tenant model training BYO                                                  |

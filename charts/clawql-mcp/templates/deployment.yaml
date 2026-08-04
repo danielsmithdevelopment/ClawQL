@@ -141,6 +141,10 @@ spec:
             - name: CLAWQL_ENABLE_PDF_INSPECTOR
               value: "1"
             {{- end }}
+            {{- if .Values.enableAnydoc }}
+            - name: CLAWQL_ENABLE_ANYDOC
+              value: "1"
+            {{- end }}
             {{- if .Values.enableIdpPipeline }}
             - name: CLAWQL_ENABLE_IDP_PIPELINE
               value: "1"

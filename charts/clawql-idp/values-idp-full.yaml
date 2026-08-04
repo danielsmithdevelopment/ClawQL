@@ -25,6 +25,11 @@ clawql-mcp:
   enableOuroboros: true
   enableWorkflow: true
   enableArgoCd: true
+  enableAnydoc: true
+  enablePdfInspector: true
+  enableIdpClassifier: true
+  enableLangextract: true
+  enableIdpPipeline: true
 
   workflow:
     namespaceAllowlist:
@@ -50,6 +55,10 @@ clawql-mcp:
         limits:
           cpu: "2"
           memory: 6Gi
+    classifier:
+      enabled: true
+    langextract:
+      enabled: true
 
   idpCollaboration:
     enabled: true

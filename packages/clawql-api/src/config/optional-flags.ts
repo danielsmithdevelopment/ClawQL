@@ -71,6 +71,8 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_LANGEXTRACT: z.string().optional(),
   /** Firecrawl pdf-inspector: MCP `inspect_pdf` (local PDF classify + markdown). Default false. */
   CLAWQL_ENABLE_PDF_INSPECTOR: z.string().optional(),
+  /** Firecrawl anydoc: MCP `convert_document` (Office/PDF/CSV → GFM markdown). Default false. */
+  CLAWQL_ENABLE_ANYDOC: z.string().optional(),
   /** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): Langfuse eval webhook + `ouroboros_propose_seed_revision_from_eval`. Default false. */
   CLAWQL_ENABLE_LANGFUSE_EVAL: z.string().optional(),
   /**
@@ -178,6 +180,10 @@ export type ClawqlOptionalToolFlags = {
    */
   enablePdfInspector: boolean;
   /**
+   * Firecrawl **anydoc**: MCP **`convert_document`** — native Office/PDF/CSV → GFM markdown (pdf-inspector for text PDFs). Default false.
+   */
+  enableAnydoc: boolean;
+  /**
    * ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): **`POST /observability/langfuse/webhook`** + **`ouroboros_propose_seed_revision_from_eval`** (with Ouroboros). Default false.
    */
   enableLangfuseEval: boolean;
@@ -220,6 +226,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableIdpClassifier: envTruthy(raw.CLAWQL_ENABLE_IDP_CLASSIFIER),
     enableLangextract: envTruthy(raw.CLAWQL_ENABLE_LANGEXTRACT),
     enablePdfInspector: envTruthy(raw.CLAWQL_ENABLE_PDF_INSPECTOR),
+    enableAnydoc: envTruthy(raw.CLAWQL_ENABLE_ANYDOC),
     enableLangfuseEval: envTruthy(raw.CLAWQL_ENABLE_LANGFUSE_EVAL),
     enableGoogle: envTruthy(raw.CLAWQL_ENABLE_GOOGLE),
     enableCloudflare: envTruthyWithDefault(raw.CLAWQL_ENABLE_CLOUDFLARE, true),

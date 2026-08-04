@@ -1,17 +1,20 @@
 export {
   ClassifyDocumentInputSchema,
+  ConvertDocumentInputSchema,
   ExtractDocumentInputSchema,
   InspectPdfInputSchema,
   IngestExternalKnowledgeInputSchema,
   KnowledgeSearchOnyxInputSchema,
   RunIdpPipelineInputSchema,
   decodeClassifyDocumentInput,
+  decodeConvertDocumentInput,
   decodeExtractDocumentInput,
   decodeInspectPdfInput,
   decodeIngestExternalKnowledgeInput,
   decodeKnowledgeSearchOnyxInput,
   decodeRunIdpPipelineInput,
   type ClassifyDocumentInputDecoded,
+  type ConvertDocumentInputDecoded,
   type ExtractDocumentInputDecoded,
   type InspectPdfInputDecoded,
   type IngestExternalKnowledgeInputDecoded,
@@ -20,6 +23,7 @@ export {
 } from "./documents-input-schema.js";
 export {
   classifyDocumentToolZodShape,
+  convertDocumentToolZodShape,
   extractDocumentToolZodShape,
   inspectPdfToolZodShape,
   ingestExternalKnowledgeToolZodShape,

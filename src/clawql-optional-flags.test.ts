@@ -23,6 +23,7 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_IDP_CLASSIFIER: undefined,
       CLAWQL_ENABLE_LANGEXTRACT: undefined,
       CLAWQL_ENABLE_PDF_INSPECTOR: undefined,
+      CLAWQL_ENABLE_ANYDOC: undefined,
       CLAWQL_ENABLE_LANGFUSE_EVAL: undefined,
     });
     expect(f.enableGrpc).toBe(false);
@@ -43,6 +44,7 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enableIdpClassifier).toBe(false);
     expect(f.enableLangextract).toBe(false);
     expect(f.enablePdfInspector).toBe(false);
+    expect(f.enableAnydoc).toBe(false);
     expect(f.enableLangfuseEval).toBe(false);
   });
 
@@ -94,6 +96,7 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_IDP_CLASSIFIER: "1",
       CLAWQL_ENABLE_LANGEXTRACT: "1",
       CLAWQL_ENABLE_PDF_INSPECTOR: "1",
+      CLAWQL_ENABLE_ANYDOC: "1",
       CLAWQL_ENABLE_LANGFUSE_EVAL: "1",
     } as NodeJS.ProcessEnv);
     expect(f.enableMemory).toBe(true);
@@ -109,6 +112,7 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enableIdpClassifier).toBe(true);
     expect(f.enableLangextract).toBe(true);
     expect(f.enablePdfInspector).toBe(true);
+    expect(f.enableAnydoc).toBe(true);
     expect(f.enableLangfuseEval).toBe(true);
   });
 });

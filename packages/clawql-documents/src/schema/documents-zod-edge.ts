@@ -39,6 +39,10 @@ import {
   INSPECT_PDF_INCLUDE_MARKDOWN_DESCRIPTION,
   INSPECT_PDF_MODE_DESCRIPTION,
   INSPECT_PDF_PATH_DESCRIPTION,
+  CONVERT_DOCUMENT_BASE64_DESCRIPTION,
+  CONVERT_DOCUMENT_FORMAT_DESCRIPTION,
+  CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION,
+  CONVERT_DOCUMENT_PATH_DESCRIPTION,
   ONYX_FIELDS_DESCRIPTION,
   ONYX_FILTERS_DESCRIPTION,
   ONYX_HYBRID_ALPHA_DESCRIPTION,
@@ -150,4 +154,14 @@ export const inspectPdfToolZodShape = {
   base64: z.string().min(1).max(140_000_000).optional().describe(INSPECT_PDF_BASE64_DESCRIPTION),
   mode: z.enum(["detect", "full"]).optional().describe(INSPECT_PDF_MODE_DESCRIPTION),
   include_markdown: z.boolean().optional().describe(INSPECT_PDF_INCLUDE_MARKDOWN_DESCRIPTION),
+} as const;
+
+export const convertDocumentToolZodShape = {
+  path: z.string().min(1).max(4096).optional().describe(CONVERT_DOCUMENT_PATH_DESCRIPTION),
+  base64: z.string().min(1).max(140_000_000).optional().describe(CONVERT_DOCUMENT_BASE64_DESCRIPTION),
+  format: z.string().min(1).max(32).optional().describe(CONVERT_DOCUMENT_FORMAT_DESCRIPTION),
+  include_markdown: z
+    .boolean()
+    .optional()
+    .describe(CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION),
 } as const;
