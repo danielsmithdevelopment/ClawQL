@@ -5,7 +5,7 @@
 
 **Audience:** Investors · Developers & architects · Operators
 
-**Related:** [IDP GTM strategy & landing brief](./clawql-idp-gtm.md) · [Public IDP GTM playbook](https://clawql.com/idp/gtm) · [IDP pipeline hub](../providers/idp-pipeline.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Master enablement guide](./clawql-master-enablement-guide.md) · [Deployment guide](../deployment/clawql-deployment-operations-guide.md)
+**Related:** [IDP GTM strategy & landing brief](./clawql-idp-gtm.md) · [Public IDP GTM playbook](https://clawql.com/idp/gtm) · [IDP pipeline hub](../providers/idp-pipeline.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Master enablement guide](./clawql-master-enablement-guide.md) · [Deployment guide](../deployment/clawql-deployment-operations-guide.md) · [OpenBench results ledger](../benchmarks/openbench-results-ledger.md) (live A/B evidence)
 
 ---
 
@@ -442,17 +442,30 @@ executor.sh is the closest direct competitor to ClawQL's Agentic Gateway entry l
 | ------------------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
 | Category           | Tool — routes MCP calls, injects secrets, meters usage | Foundational Platform — Agentic Gateway, memory, search, security, IDP, sovereign inference              |
 | Developer adoption | Head start on marketing and community mindshare        | Later entrant; deeper stack, open-source core, published case studies                                    |
-| Token efficiency   | One layer: search-and-execute only                     | Twelve compounding layers on top of search/execute                                                       |
-| Agent memory       | None — every session starts from zero                  | Obsidian vault with memory_ingest / memory_recall                                                        |
+| Token efficiency   | One layer: search-and-execute only                     | Twelve compounding layers on top of search/execute — search-first and vault-under-pressure **OpenBench-verified** ([ledger](../benchmarks/openbench-results-ledger.md)) |
+| Agent memory       | None — every session starts from zero                  | Obsidian vault (`memory_ingest` / `memory_recall`) — **live A/B WIN on frugal DeepSeek** (ingest→recall 1.0/0.0; seed-removal 1.0/0.333; token-pressure 1.0/0.0) |
 | Semantic search    | None                                                   | Onyx — 40+ connectors, hybrid search, citations                                                          |
-| Security           | Host-side secrets, basic audit log                     | Kata isolation, WORM Merkle logs, Panguard fail-closed, documented defense-in-depth                      |
+| Security           | Host-side secrets, basic audit log                     | Kata isolation, WORM Merkle logs, Panguard fail-closed (**policy-deny-execute** OpenBench 1.0/0.0 with tool evidence), documented defense-in-depth |
 | Document pipeline  | None                                                   | Tika → Gotenberg → Stirling → archive → Onyx                                                             |
 | VDR                | None                                                   | Coneshare included from IDP Starter                                                                      |
 | Sovereign LLM      | None                                                   | Fine-tuned Qwen inside tenant boundary (IDP tiers) — vertical adapters early; maturity risk named openly |
 | Execution pricing  | 250K cap + $0.20/1K overage on Team                    | Unlimited on every tier — no caps, no overage bills                                                      |
 | Gateway pricing    | Team $150/org/mo — metered routing                     | Developer $29/mo · Teams $99/mo with memory + search · unlimited executions                              |
 
-On infrastructure dimensions that matter — memory, security, token efficiency depth, document pipeline, sovereign inference — ClawQL delivers more at lower gateway pricing. executor.sh's advantage is awareness and adoption velocity, not platform depth.
+On infrastructure dimensions that matter — memory, security, token efficiency depth, document pipeline, sovereign inference — ClawQL delivers more at lower gateway pricing. executor.sh's advantage is awareness and adoption velocity, not platform depth. The memory row is no longer an architectural claim alone: the same cheap-model class executor.sh customers would use still wins vault A/B cells under seed removal and token pressure ([OpenBench ledger](../benchmarks/openbench-results-ledger.md)).
+
+### Empirically verified platform claims (OpenBench A/B)
+
+Several properties previously stated only as architecture are now **live A/B-verified** on GitHub Actions with a frugal model (`openrouter/deepseek/deepseek-chat`), graders that require real `tool:clawql_*` evidence (not prompt guessing), and hard spend caps. Canonical scoreboard: [`docs/benchmarks/openbench-results-ledger.md`](../benchmarks/openbench-results-ledger.md).
+
+| Platform claim | What the cell proves | Best on / off | Evidence run |
+| -------------- | -------------------- | ------------- | ------------ |
+| **Ouroboros stops strategy thrash** | On converges; off thrashs (latency/cost, not just “nice loop”) | **1.0** (5 turns, ~78s) / **0.0** (~167s) — also with `doom_loop=deny` | [30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642); deny [30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277); replicated [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519) |
+| **Vault memory under pressure** | ingest→recall; recall after seed removal; nested recipe under token budget | **1.0/0.0**, **1.0/0.333**, **1.0/0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516); token-pressure [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811) |
+| **Search-first discovery (efficiency Layer 1 behavior)** | Agent must call `clawql_search`; instruction-only guesses fail the grader | **1.0 / 0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) |
+| **Panguard fail-closed at runtime** | Denied execute surfaces policy block; on writes evidence trail | **1.0 / 0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) |
+
+**Still unproven / honest gaps** (do not overclaim): `cache-scratch-handoff` flaky on the cheap model; `pageindex-section-qa` awaiting a clean cell; multi-provider early WIN then noisy; most headline cells are **n=1** (expand to n=3–5 before statistical confidence language); recent matrices with OpenCode hang / no tool calls are **infra noise**, not claim regressions — see the ledger open-gaps section.
 
 ### Shipped vs roadmap (honest scope)
 

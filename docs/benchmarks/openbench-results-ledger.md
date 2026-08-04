@@ -12,7 +12,7 @@ document is the **scoreboard + run diary**.
 | Default model | `openrouter/deepseek/deepseek-chat` |
 | Harness | OpenCode → clawql-inference |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T04:05Z |
+| Last ledger update | 2026-08-04T04:25Z |
 
 ---
 
@@ -185,6 +185,20 @@ Ouroboros [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions
 4. **schedule / notify / sandbox / composed recipes** — backlog.
 5. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals.
 6. **multi-provider-api-workflow** — early WIN but later cells noisy; needs hardening or n≥3.
+
+---
+
+## Product-doc claim upgrades (2026-08-04)
+
+Stakeholder framing: these headline WINs upgrade **architectural** statements to **empirically verified** claims (run IDs, frugal DeepSeek, anti-guess graders). Wired into:
+
+| Doc | What changed |
+| --- | ------------ |
+| [`docs/vision/clawql-idp-platform.md`](../vision/clawql-idp-platform.md) | New **Empirically verified platform claims** table; executor.sh memory/security/efficiency rows cite OpenBench |
+| [`docs/vision/clawql-idp-gtm.md`](../vision/clawql-idp-gtm.md) | Differentiator #7 + gateway objection handlers (memory / search-first / Panguard / Ouroboros) |
+| [`docs/architecture/clawql-token-efficiency.md`](../architecture/clawql-token-efficiency.md) | **Live behavioral evidence** for Layer 1 search-first + Layer 6 vault-under-pressure |
+
+Keep gaps honest in those docs: cache flake, PageIndex pending, multi-provider noise, n=1, infra timeouts.
 
 ---
 
