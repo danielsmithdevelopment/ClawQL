@@ -10,13 +10,17 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as grpc from "@grpc/grpc-js";
+import * as protoLoader from "@grpc/proto-loader";
 import protobuf from "protobufjs";
 import { LATEST_PROTOCOL_VERSION } from "./protocol-versions.js";
-import { jsonToStruct } from "./mcp-protobuf-struct.js";
+import { jsonToStruct, structToJson } from "./mcp-protobuf-struct.js";
+import { MCP_PROTOCOL_VERSION_METADATA_KEY } from "./grpc-mcp-metadata.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const protoRoot = join(__dirname, "../proto");
 const CALL_TOOL_METHOD = "/model_context_protocol.Mcp/CallTool";
+const require = createRequire(import.meta.url);
+const wellKnownProtoRoot = dirname(require.resolve("google-proto-files/package.json"));
 
 export type CallToolGrpcClientOptions = {
   /** Host:port, e.g. `127.0.0.1:50051`. */
@@ -198,4 +202,101 @@ export function resolveGrpcAddressFromEnv(): string {
     return `${host}:${port}`;
   }
   return `127.0.0.1:${process.env.GRPC_PORT?.trim() || "50051"}`;
+}
+
+export type ListedMcpTool = {
+  name: string;
+  description?: string;
+  title?: string;
+  inputSchema: Record<string, unknown>;
+  outputSchema?: Record<string, unknown>;
+};
+
+export type ListToolsGrpcClientOptions = {
+  address: string;
+  protocolVersion?: string;
+  credentials?: grpc.ChannelCredentials;
+  readyDeadlineMs?: number;
+  maxMessageLength?: number;
+};
+
+function loadListToolsClientConstructor(): grpc.ServiceClientConstructor {
+  const def = protoLoader.loadSync([join(protoRoot, "model_context_protocol/mcp.proto")], {
+    includeDirs: [protoRoot, wellKnownProtoRoot],
+    keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true,
+  });
+  const loaded = grpc.loadPackageDefinition(def) as {
+    model_context_protocol: { Mcp: grpc.ServiceClientConstructor };
+  };
+  return loaded.model_context_protocol.Mcp;
+}
+
+/**
+ * Invoke unary `ListTools` over gRPC and decode `input_schema` / `output_schema` Structs to JSON Schema objects.
+ */
+export async function listToolsUnaryGrpc(
+  options: ListToolsGrpcClientOptions
+): Promise<ListedMcpTool[]> {
+  const Mcp = loadListToolsClientConstructor();
+  const maxLen = options.maxMessageLength ?? resolveGrpcMaxMessageLengthFromEnv();
+  const client = new Mcp(options.address, options.credentials ?? grpc.credentials.createInsecure(), {
+    "grpc.max_receive_message_length": maxLen,
+    "grpc.max_send_message_length": maxLen,
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    client.waitForReady(Date.now() + (options.readyDeadlineMs ?? 15_000), (e) =>
+      e ? reject(e) : resolve()
+    );
+  });
+
+  const md = new grpc.Metadata();
+  md.set(
+    MCP_PROTOCOL_VERSION_METADATA_KEY,
+    options.protocolVersion?.trim() || LATEST_PROTOCOL_VERSION
+  );
+
+  try {
+    const res = await new Promise<{
+      tools?: Array<{
+        name?: string;
+        description?: string;
+        title?: string;
+        input_schema?: { fields?: Record<string, unknown> | Map<string, unknown> };
+        output_schema?: { fields?: Record<string, unknown> | Map<string, unknown> };
+      }>;
+    }>((resolve, reject) => {
+      client.listTools({ common: {} }, md, (err: grpc.ServiceError | null, out: unknown) => {
+        if (err) reject(err);
+        else resolve(out as typeof res);
+      });
+    });
+
+    return (res.tools ?? [])
+      .filter((t) => typeof t.name === "string" && t.name.length > 0)
+      .map((t) => {
+        const inputSchema = structToJson(t.input_schema) ?? { type: "object", properties: {} };
+        const outputSchema = structToJson(t.output_schema);
+        const tool: ListedMcpTool = {
+          name: t.name!,
+          inputSchema,
+        };
+        if (typeof t.description === "string" && t.description.length > 0) {
+          tool.description = t.description;
+        }
+        if (typeof t.title === "string" && t.title.length > 0) {
+          tool.title = t.title;
+        }
+        if (outputSchema && Object.keys(outputSchema).length > 0) {
+          tool.outputSchema = outputSchema;
+        }
+        return tool;
+      });
+  } finally {
+    client.close();
+  }
 }

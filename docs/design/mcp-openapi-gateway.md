@@ -1,9 +1,10 @@
 # MCP OpenAPI Gateway — technical design
 
-**Status:** 📋 Planned (design accepted for implementation)  
+**Status:** 🚧 MVP implemented (`mcp-openapi-gateway@0.1.0`) — design + package + example demos  
 **Date:** 2026-08-04  
-**Package (proposed):** `mcp-openapi-gateway` (npm; workspace `packages/mcp-openapi-gateway`)  
+**Package:** `mcp-openapi-gateway` (npm; workspace `packages/mcp-openapi-gateway`)  
 **Depends on:** [`mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md) **1.0.0+**  
+**Example:** [`examples/mcp-openapi-gateway/`](../../examples/mcp-openapi-gateway/)  
 **Related:** Vision & Roadmap · Managed Edge Gateway · Worker / OpenWebUI-style OpenAPI consumers
 
 ---
@@ -274,13 +275,13 @@ npx mcp-openapi-gateway \
 
 ### Phase 1 — MVP package
 
-1. Workspace package + CLI  
-2. gRPC `ListTools` introspection + in-memory catalog  
-3. JSON Schema → OpenAPI path generation (happy path + fixture tests)  
-4. `POST /{toolName}` → `CallTool` (unary collapse)  
-5. `/openapi.json`, `/docs`, `/tools`, `/healthz`  
-6. `x-clawql-grpc` extensions  
-7. README with ClawQL `ENABLE_GRPC=1` walkthrough  
+1. [x] Workspace package + CLI  
+2. [x] gRPC `ListTools` introspection + in-memory catalog (`listToolsUnaryGrpc`)  
+3. [x] JSON Schema → OpenAPI path generation (happy path + fixture tests)  
+4. [x] `POST /{toolName}` → `CallTool` (unary collapse)  
+5. [x] `/openapi.json`, `/docs`, `/tools`, `/healthz`  
+6. [x] `x-clawql-grpc` extensions  
+7. [x] Example server + REST/gRPC demos (`examples/mcp-openapi-gateway/`)
 
 ### Phase 2 — Hardening
 

@@ -18,11 +18,17 @@ export type { GrpcMcpServerOptions, McpMessageContextHook, StartedGrpcServer } f
 export {
   callToolServerStreamingGrpc,
   lastNonEmptyCallToolText,
+  listToolsUnaryGrpc,
   mcpArgumentsToCallToolStructFields,
   resolveGrpcAddressFromEnv,
   resolveGrpcMaxMessageLengthFromEnv,
 } from "./grpc-call-tool-client.js";
-export type { CallToolGrpcClientOptions } from "./grpc-call-tool-client.js";
+export type {
+  CallToolGrpcClientOptions,
+  ListedMcpTool,
+  ListToolsGrpcClientOptions,
+} from "./grpc-call-tool-client.js";
+export { structToJson, valueToJson, jsonToStruct, jsonToValue } from "./mcp-protobuf-struct.js";
 export {
   fulfillDependentRequests,
   runUnaryWithDependents,

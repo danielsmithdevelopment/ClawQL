@@ -1,0 +1,15 @@
+{
+  "name": "example-mcp-openapi-gateway",
+  "private": true,
+  "type": "module",
+  "description": "Demo MCP server with gRPC + OpenAPI on-ramp enabled together",
+  "scripts": {
+    "start": "node server.mjs",
+    "demo:rest": "node demo-rest.mjs",
+    "demo:grpc": "node demo-grpc.mjs",
+    "demo:all": "node demo-all.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

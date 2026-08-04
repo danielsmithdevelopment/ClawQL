@@ -1,0 +1,64 @@
+{
+  "name": "mcp-openapi-gateway",
+  "version": "0.1.0",
+  "description": "OpenAPI on-ramp for MCP tools — POST /{toolName} + Swagger, forwarding into gRPC CallTool via mcp-grpc-transport",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "mcp-openapi-gateway": "bin/mcp-openapi-gateway.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "openapi",
+    "grpc",
+    "gateway",
+    "clawql"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/mcp-openapi-gateway"
+  },
+  "bugs": {
+    "url": "https://github.com/danielsmithdevelopment/ClawQL/issues"
+  },
+  "homepage": "https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-openapi-gateway#readme",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.4",
+    "express": "^5.2.1",
+    "mcp-grpc-transport": "1.0.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@types/express": "^5.0.3",
+    "@types/node": "^26.1.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.1",
+    "zod": "^3.24.0"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "start": "node bin/mcp-openapi-gateway.mjs"
+  }
+}

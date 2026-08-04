@@ -1,7 +1,9 @@
 # GTM: MCP OpenAPI Gateway (gRPC on-ramp)
 
-**Status:** 📋 Planned — design accepted  
+**Status:** 🚧 MVP shipped in-repo (`mcp-openapi-gateway@0.1.0`) — npm publish on independent cadence  
 **Canonical design:** [`docs/design/mcp-openapi-gateway.md`](../design/mcp-openapi-gateway.md)  
+**Package:** [`packages/mcp-openapi-gateway`](../../packages/mcp-openapi-gateway/README.md)  
+**Example demos:** [`examples/mcp-openapi-gateway`](../../examples/mcp-openapi-gateway/README.md)  
 **Transport:** [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md)
 
 ---
