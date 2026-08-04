@@ -12,7 +12,7 @@ document is the **scoreboard + run diary**.
 | Default model | `openrouter/deepseek/deepseek-chat` |
 | Harness | OpenCode → clawql-inference |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T08:30Z |
+| Last ledger update | 2026-08-04T08:45Z |
 | CI matrix control | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push |
 | Task explanations | [`openbench-task-explanations.md`](./openbench-task-explanations.md) — prove / why / how for every cell |
 
@@ -53,6 +53,8 @@ history). Move the best WIN into the headline table if it improves the claim.
 | `notify-mock-slack` | Stubbed Slack notify milestone | **1.0** (2 turns, 21s) | **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) | **WIN** |
 | `sandbox-trusted-compute` | Docker sandbox_exec trusted token | **1.0** (3 turns, 30s) | **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) | **WIN** |
 | `composed-safe-rollout` | search→dry_run×2→audit→ingest | **1.0** (5 turns, 79s) | **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) | **WIN** |
+| `onyx-mock-cite` | Stubbed Onyx knowledge cite | — | — | pending | **in flight** |
+| `memory-wikilink-hop` | Recall follows [[wikilink]] hop | — | — | pending | **in flight** |
 
 Replicated Ouroboros WINs also on [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519) (allow + deny both on 1.0 / off 0.0).
 
@@ -282,8 +284,13 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 ## Open gaps (not yet headline WIN)
 
-1. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
-2. Optional later: agentic external benches (GAIA / τ-bench / SWE-style) with clawql-on vs off — not closed-book HLE.
+1. **onyx-mock-cite / memory-wikilink-hop** — shipped on `pr_active`; awaiting live WINs.
+2. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
+3. Optional later: agentic external benches (GAIA / τ-bench / SWE-style) with clawql-on vs off — not closed-book HLE.
+
+### 2026-08-04 — P2.5 wave shipped (awaiting CI)
+
+`pr_active` set to `onyx-mock-cite`, `memory-wikilink-hop`. Product docs (platform / GTM / token-efficiency) updated with P2 WINs. Multi-file vault seed via `.openbench/memory-seed/`. Harness forwards Onyx stub env into MCP child.
 
 ### 2026-08-04 — [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) (P2 wave — all WIN)
 
@@ -307,9 +314,9 @@ Stakeholder framing: these headline WINs upgrade **architectural** statements to
 
 | Doc | What changed |
 | --- | ------------ |
-| [`docs/vision/clawql-idp-platform.md`](../vision/clawql-idp-platform.md) | New **Empirically verified platform claims** table; executor.sh memory/security/efficiency rows cite OpenBench |
-| [`docs/vision/clawql-idp-gtm.md`](../vision/clawql-idp-gtm.md) | Differentiator #7 + gateway objection handlers (memory / search-first / Panguard / Ouroboros) |
-| [`docs/architecture/clawql-token-efficiency.md`](../architecture/clawql-token-efficiency.md) | **Live behavioral evidence** for Layer 1 search-first + Layer 6 vault-under-pressure |
+| [`docs/vision/clawql-idp-platform.md`](../vision/clawql-idp-platform.md) | **Empirically verified platform claims** table includes P2 notify/sandbox/composed |
+| [`docs/vision/clawql-idp-gtm.md`](../vision/clawql-idp-gtm.md) | Differentiator #7 + gateway objection handlers (memory / search-first / Panguard / Ouroboros / notify+sandbox+composed) |
+| [`docs/architecture/clawql-token-efficiency.md`](../architecture/clawql-token-efficiency.md) | **Live behavioral evidence** for Layer 1 search-first + Layer 6 vault-under-pressure + composed rollout |
 | [`docs/benchmarks/openbench-task-explanations.md`](./openbench-task-explanations.md) | Thorough prove / why / how for every verified cell |
 
 ---

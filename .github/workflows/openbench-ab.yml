@@ -19,6 +19,8 @@ on:
         options:
           - all
           - all-including-retired
+          - onyx-mock-cite
+          - memory-wikilink-hop
           - notify-mock-slack
           - sandbox-trusted-compute
           - composed-safe-rollout
@@ -203,7 +205,7 @@ jobs:
           echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
           echo "::notice::memory-roundtrip-ingest-recall → arms=clawql-on,off timeout=180s"
 
-      - name: Audit / cache / policy / pageindex / hybrid / codegraph / schedule / external-ingest / notify / sandbox / composed clamps
+      - name: Audit / cache / policy / pageindex / hybrid / codegraph / schedule / external-ingest / notify / sandbox / composed / onyx / wikilink clamps
         if: >
           matrix.task == 'audit-checkpoints' ||
           matrix.task == 'cache-scratch-handoff' ||
@@ -215,7 +217,9 @@ jobs:
           matrix.task == 'external-ingest-continue' ||
           matrix.task == 'notify-mock-slack' ||
           matrix.task == 'sandbox-trusted-compute' ||
-          matrix.task == 'composed-safe-rollout'
+          matrix.task == 'composed-safe-rollout' ||
+          matrix.task == 'onyx-mock-cite' ||
+          matrix.task == 'memory-wikilink-hop'
         run: |
           echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
@@ -254,6 +258,18 @@ jobs:
           if [ "${{ matrix.task }}" = "composed-safe-rollout" ]; then
             echo "CLAWQL_PROVIDER=github" >> "$GITHUB_ENV"
             echo "OPENBENCH_TIMEOUT_S=240" >> "$GITHUB_ENV"
+          fi
+          if [ "${{ matrix.task }}" = "onyx-mock-cite" ]; then
+            echo "CLAWQL_ENABLE_ONYX=1" >> "$GITHUB_ENV"
+            echo "CLAWQL_ENABLE_DOCUMENTS=1" >> "$GITHUB_ENV"
+            echo "CLAWQL_PROVIDER=onyx" >> "$GITHUB_ENV"
+            echo "CLAWQL_TEST_ONYX_FETCH_STUB=1" >> "$GITHUB_ENV"
+            echo "ONYX_BASE_URL=http://127.0.0.1:9" >> "$GITHUB_ENV"
+            echo "ONYX_API_TOKEN=openbench-onyx-stub-token" >> "$GITHUB_ENV"
+            echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
+          fi
+          if [ "${{ matrix.task }}" = "memory-wikilink-hop" ]; then
+            echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           fi
           echo "::notice::${{ matrix.task }} → arms=clawql-on,off timeout=${OPENBENCH_TIMEOUT_S:-180}s"
 

@@ -1,9 +1,12 @@
 {
-  "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
+  "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "P2 wave verified and retired (notify/sandbox/composed). pr_active empty — no PR token burn until next wave.",
-  "pr_active": [],
+  "live_resume_note": "P2.5 wave active: onyx-mock-cite, memory-wikilink-hop.",
+  "pr_active": [
+    "onyx-mock-cite",
+    "memory-wikilink-hop"
+  ],
   "retired": {
     "memory-dependent-continuation": {
       "reason": "Verified WIN replicated (on 1.0 / off 0.333)",
@@ -26,7 +29,7 @@
       "evidence_run": "30872913516"
     },
     "policy-deny-execute": {
-      "reason": "Verified WIN — Panguard fail-closed with tool evidence (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 Panguard fail-closed with tool evidence (on 1.0 / off 0.0)",
       "evidence_run": "30872913516"
     },
     "ouroboros-oscillation-escape": {
@@ -34,11 +37,11 @@
       "evidence_run": "30866904277"
     },
     "cache-scratch-handoff": {
-      "reason": "Verified WIN — clawql_cache set/get + answer.json (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 clawql_cache set/get + answer.json (on 1.0 / off 0.0)",
       "evidence_run": "30881158522"
     },
     "pageindex-section-qa": {
-      "reason": "Verified WIN — pageindex_build_tree + synthesize (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 pageindex_build_tree + synthesize (on 1.0 / off 0.0)",
       "evidence_run": "30881158522"
     },
     "audit-checkpoints": {
@@ -50,31 +53,31 @@
       "evidence_run": "30881158522"
     },
     "codegraph-guided-edit": {
-      "reason": "Verified WIN — codegraph_index + query found SECRET_MARKER (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 codegraph_index + query found SECRET_MARKER (on 1.0 / off 0.0)",
       "evidence_run": "30885341377"
     },
     "schedule-synthetic-dry-run": {
-      "reason": "Verified WIN — schedule create + dry_run trigger pass (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 schedule create + dry_run trigger pass (on 1.0 / off 0.0)",
       "evidence_run": "30885341377"
     },
     "external-ingest-continue": {
-      "reason": "Verified WIN — ingest_external_knowledge + memory_recall (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 ingest_external_knowledge + memory_recall (on 1.0 / off 0.0)",
       "evidence_run": "30887394038"
     },
     "hybrid-recall-source-pin": {
-      "reason": "Verified WIN — real pageindex build+synthesize with handbook marker (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 real pageindex build+synthesize with handbook marker (on 1.0 / off 0.0)",
       "evidence_run": "30888793063"
     },
     "notify-mock-slack": {
-      "reason": "Verified WIN — stubbed clawql_notify milestone (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 stubbed clawql_notify milestone (on 1.0 / off 0.0)",
       "evidence_run": "30891002305"
     },
     "sandbox-trusted-compute": {
-      "reason": "Verified WIN — docker sandbox_exec trusted token (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 docker sandbox_exec trusted token (on 1.0 / off 0.0)",
       "evidence_run": "30891002305"
     },
     "composed-safe-rollout": {
-      "reason": "Verified WIN — search + dry_run×2 + audit + memory_ingest (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 search + dry_run\u00d72 + audit + memory_ingest (on 1.0 / off 0.0)",
       "evidence_run": "30891002305"
     }
   },

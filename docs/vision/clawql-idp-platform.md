@@ -446,6 +446,8 @@ executor.sh is the closest direct competitor to ClawQL's Agentic Gateway entry l
 | Agent memory       | None — every session starts from zero                  | Obsidian vault (`memory_ingest` / `memory_recall`) — **live A/B WIN on frugal DeepSeek** (ingest→recall 1.0/0.0; seed-removal 1.0/0.333; token-pressure 1.0/0.0) |
 | Semantic search    | None                                                   | Onyx — 40+ connectors, hybrid search, citations                                                          |
 | Security           | Host-side secrets, basic audit log                     | Kata isolation, WORM Merkle logs, Panguard fail-closed (**policy-deny-execute** OpenBench 1.0/0.0 with tool evidence), documented defense-in-depth |
+| Automation / sandbox | None                                                   | `notify` + `schedule` + Docker `sandbox_exec` — **OpenBench-verified** on frugal DeepSeek ([30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305); schedule [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) |
+| Composed rollout   | Single-call routing                                    | Multi-tool safe rollout (search→dry_run execute→audit→ingest) **1.0/0.0** ([30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305)) |
 | Document pipeline  | None                                                   | Tika → Gotenberg → Stirling → archive → Onyx                                                             |
 | VDR                | None                                                   | Coneshare included from IDP Starter                                                                      |
 | Sovereign LLM      | None                                                   | Fine-tuned Qwen inside tenant boundary (IDP tiers) — vertical adapters early; maturity risk named openly |
@@ -466,8 +468,10 @@ Several properties previously stated only as architecture are now **live A/B-ver
 | **Panguard fail-closed at runtime** | Denied execute surfaces policy block; on writes evidence trail | **1.0 / 0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) |
 | **Cache scratch handoff** | `clawql_cache` set/get assembles secret across turns | **1.0 / 0.0** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) |
 | **PageIndex long-doc Q&A** | build_tree + synthesize finds buried code without stuffing full text | **1.0 / 0.0** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) |
+| **Codegraph + schedule + external ingest + hybrid PageIndex** | Structural index, synthetic dry_run monitors, bulk MD ingest→recall, handbook via PageIndex | **1.0 / 0.0** each | [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377); ingest [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038); hybrid [30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063) |
+| **Notify + sandbox + composed safe-rollout (P2)** | Stubbed Slack `notify`; Docker `sandbox_exec` trusted token; search→dry_run×2→audit→ingest sequence | **1.0 / 0.0** each | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) |
 
-**Still unproven / honest gaps** (do not overclaim): most headline cells are still **n=1–2** (expand to n=3–5 before statistical confidence language); hybrid recall / codegraph / schedule / notify / sandbox tasks not yet shipped; earlier OpenRouter **402 credit** hangs were infra, not claim regressions — see the [results ledger](../benchmarks/openbench-results-ledger.md).
+**Still unproven / honest gaps** (do not overclaim): most headline cells are still **n=1–2** (expand to n=3–5 before statistical confidence language); live Onyx / live Slack / Argo / R2 sync remain ops-integration (not PR OpenBench); earlier OpenRouter **402 credit** hangs were infra, not claim regressions — see the [results ledger](../benchmarks/openbench-results-ledger.md).
 
 ### Shipped vs roadmap (honest scope)
 

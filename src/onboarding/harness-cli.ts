@@ -194,6 +194,21 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
   if (process.env.CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON?.trim()) {
     env.CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON = process.env.CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON.trim();
   }
+  if (process.env.CLAWQL_ENABLE_ONYX?.trim()) {
+    env.CLAWQL_ENABLE_ONYX = process.env.CLAWQL_ENABLE_ONYX.trim();
+  }
+  if (process.env.ONYX_BASE_URL?.trim()) {
+    env.ONYX_BASE_URL = process.env.ONYX_BASE_URL.trim();
+  }
+  if (process.env.ONYX_API_TOKEN?.trim()) {
+    env.ONYX_API_TOKEN = process.env.ONYX_API_TOKEN.trim();
+  }
+  if (process.env.CLAWQL_TEST_ONYX_FETCH_STUB?.trim()) {
+    env.CLAWQL_TEST_ONYX_FETCH_STUB = process.env.CLAWQL_TEST_ONYX_FETCH_STUB.trim();
+  }
+  if (process.env.CLAWQL_TEST_ONYX_FETCH_BODY?.trim()) {
+    env.CLAWQL_TEST_ONYX_FETCH_BODY = process.env.CLAWQL_TEST_ONYX_FETCH_BODY.trim();
+  }
   return env;
 }
 

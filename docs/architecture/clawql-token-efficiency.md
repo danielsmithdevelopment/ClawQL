@@ -223,8 +223,9 @@ Architecture alone is not the claim. On a frugal model (`openrouter/deepseek/dee
 | **Search-first / Code Mode surface (Layer 1 behavior)** | clawql-on must call `clawql_search` → **1.0**; off prompt-guesses → **0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) |
 | **Vault offload under token pressure (Layer 6 pairing)** | Nested recipe with constrained budget → on **1.0** / off **0.0** | [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811) |
 | **Durable memory roundtrip** | Empty-vault ingest→recall → on **1.0** / off **0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) |
+| **Composed safe rollout (search→dry_run→audit→ingest)** | Multi-tool sequence evidence → on **1.0** / off **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) |
 
-Full scoreboard, replications, and honest gaps: [`docs/benchmarks/openbench-results-ledger.md`](../benchmarks/openbench-results-ledger.md). Do not treat these n=1 cells as Wilson CIs yet.
+Full scoreboard, replications, and honest gaps (n=1–2; ops-only Onyx/Slack/Argo/R2): [`docs/benchmarks/openbench-results-ledger.md`](../benchmarks/openbench-results-ledger.md). Do not treat these n=1 cells as Wilson CIs yet.
 
 ---
 

@@ -243,6 +243,41 @@ describe("buildOpencodeConfigContent", () => {
     }
   });
 
+  it("clawqlMcpChildEnv forwards Onyx enablement + fetch stub for OpenBench", () => {
+    const keys = [
+      "CLAWQL_OPENBENCH",
+      "CLAWQL_ENABLE_ONYX",
+      "CLAWQL_ENABLE_DOCUMENTS",
+      "ONYX_BASE_URL",
+      "ONYX_API_TOKEN",
+      "CLAWQL_TEST_ONYX_FETCH_STUB",
+      "CLAWQL_TEST_ONYX_FETCH_BODY",
+    ] as const;
+    const prev: Record<string, string | undefined> = {};
+    for (const k of keys) prev[k] = process.env[k];
+    process.env.CLAWQL_OPENBENCH = "1";
+    process.env.CLAWQL_ENABLE_ONYX = "1";
+    process.env.CLAWQL_ENABLE_DOCUMENTS = "1";
+    process.env.ONYX_BASE_URL = "http://127.0.0.1:9";
+    process.env.ONYX_API_TOKEN = "tok";
+    process.env.CLAWQL_TEST_ONYX_FETCH_STUB = "1";
+    process.env.CLAWQL_TEST_ONYX_FETCH_BODY = '{"documents":[]}';
+    try {
+      const env = clawqlMcpChildEnv("/tmp/onyx-home");
+      expect(env.CLAWQL_ENABLE_ONYX).toBe("1");
+      expect(env.CLAWQL_ENABLE_DOCUMENTS).toBe("1");
+      expect(env.ONYX_BASE_URL).toBe("http://127.0.0.1:9");
+      expect(env.ONYX_API_TOKEN).toBe("tok");
+      expect(env.CLAWQL_TEST_ONYX_FETCH_STUB).toBe("1");
+      expect(env.CLAWQL_TEST_ONYX_FETCH_BODY).toBe('{"documents":[]}');
+    } finally {
+      for (const k of keys) {
+        if (prev[k] === undefined) delete process.env[k];
+        else process.env[k] = prev[k];
+      }
+    }
+  });
+
   it("openbenchOpencodePermissions can allow doom_loop for thrash experiments", () => {
     const prev = process.env.CLAWQL_OPENBENCH_DOOM_LOOP;
     try {

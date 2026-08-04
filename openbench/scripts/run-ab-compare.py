@@ -231,6 +231,23 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "require_execute": True,
         "enable_composed": True,
     },
+    "onyx-mock-cite": {
+        "max_turns": 25,
+        "max_tokens": 6000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        "disable_memory": True,
+        "require_onyx": True,
+        "enable_onyx": True,
+    },
+    "memory-wikilink-hop": {
+        "max_turns": 25,
+        "max_tokens": 6000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        "disable_memory": False,
+        "require_wikilink": True,
+    },
 }
 
 # Appended only to ouroboros-on so off cannot one-shot the correct recipe.
@@ -453,6 +470,26 @@ COMPOSED_NUDGE = """Continue the composed safe-rollout.
 Call the missing tools now.
 """
 
+ONYX_NUDGE = """Continue the Onyx mock cite task.
+
+1. clawql_knowledge_search_onyx query about enterprise pricing policy
+2. From the result, find CLAWQL_ONYX_CODE=quartz-21
+3. write relative filePath citations.json:
+   {"code":"quartz-21","source":"knowledge_search_onyx"}
+
+Call knowledge_search_onyx now.
+"""
+
+WIKILINK_NUDGE = """Continue the memory wikilink hop.
+
+1. clawql_memory_recall query="Alpha Hub" maxDepth=1 (or higher)
+2. Follow [[Beta Fact]]; token is CLAWQL_WIKI_TOKEN=opal-33 (not zinc-00)
+3. write relative filePath answer.json:
+   {"token":"opal-33","source":"memory_recall"}
+
+Call memory_recall now.
+"""
+
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.
 
 Write relative path `policy.json` now (filePath exactly `policy.json`):
@@ -582,7 +619,26 @@ def seed_note_filename(content: str) -> str:
 
 
 def seed_and_remove_memory(workdir: Path) -> str | None:
+    """Seed vault from `.openbench/memory-seed.md` or multi-file `.openbench/memory-seed/`."""
+    seed_dir = workdir / ".openbench" / "memory-seed"
     seed = workdir / ".openbench" / "memory-seed.md"
+    if seed_dir.is_dir():
+        vault = Path(tempfile.mkdtemp(prefix="clawql_ab_vault_"))
+        memory_dir = vault / "Memory"
+        memory_dir.mkdir(parents=True, exist_ok=True)
+        for item in sorted(seed_dir.rglob("*.md")):
+            rel = item.relative_to(seed_dir)
+            dest = memory_dir / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(item.read_text(encoding="utf-8"), encoding="utf-8")
+        try:
+            shutil.rmtree(seed_dir)
+            openbench_dir = workdir / ".openbench"
+            if openbench_dir.is_dir() and not any(openbench_dir.iterdir()):
+                openbench_dir.rmdir()
+        except OSError:
+            pass
+        return str(vault)
     if not seed.is_file():
         return None
     content = seed.read_text(encoding="utf-8")
@@ -1132,6 +1188,24 @@ def composed_incomplete(combined: str, workdir: Path) -> bool:
     return not all(need)
 
 
+def onyx_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "citations.json").is_file():
+        return True
+    tools = real_opencode_tools(combined)
+    return not bool(tools & {"clawql_knowledge_search_onyx", "knowledge_search_onyx"})
+
+
+def wikilink_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "answer.json").is_file():
+        return True
+    tools = real_opencode_tools(combined)
+    return not bool(tools & {"clawql_memory_recall", "memory_recall"})
+
+
 def policy_missing_artifact(workdir: Path) -> bool:
     return not (workdir / "policy.json").is_file()
 
@@ -1198,6 +1272,9 @@ def run_arm_on(
     enable_sandbox: bool = False,
     require_composed: bool = False,
     enable_composed: bool = False,
+    require_onyx: bool = False,
+    enable_onyx: bool = False,
+    require_wikilink: bool = False,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
     clawql = resolve_clawql()
@@ -1329,6 +1406,23 @@ def run_arm_on(
         env.setdefault("CLAWQL_PROVIDER", "github")
         env["CLAWQL_BUNDLED_OFFLINE"] = "1"
         env["CLAWQL_ENABLE_MEMORY"] = "1"
+
+    if enable_onyx:
+        env["CLAWQL_ENABLE_ONYX"] = "1"
+        env["CLAWQL_ENABLE_DOCUMENTS"] = "1"
+        env["CLAWQL_PROVIDER"] = "onyx"
+        env["CLAWQL_BUNDLED_OFFLINE"] = "1"
+        env["ONYX_BASE_URL"] = "http://127.0.0.1:9"
+        env["ONYX_API_TOKEN"] = "openbench-onyx-stub-token"
+        env["CLAWQL_TEST_ONYX_FETCH_STUB"] = "1"
+        env["CLAWQL_TEST_ONYX_FETCH_BODY"] = (
+            '{"query":"enterprise pricing policy",'
+            '"documents":[{'
+            '"document_id":"doc-openbench-1",'
+            '"semantic_identifier":"Pricing Policy CLAWQL_ONYX_CODE=quartz-21",'
+            '"content":"Official pricing. CLAWQL_ONYX_CODE=quartz-21. Ignore zinc-00."'
+            '}]}'
+        )
 
     t0 = time.monotonic()
     timed_out = False
@@ -1761,6 +1855,68 @@ def run_arm_on(
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
 
+    # onyx: missing knowledge_search_onyx / citations.json.
+    if (
+        require_onyx
+        and arm == "clawql-on"
+        and not timed_out
+        and onyx_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 20:
+            cont_file = workdir / ".openbench_onyx_nudge.md"
+            cont_file.write_text(ONYX_NUDGE, encoding="utf-8")
+            cont_timeout = max(20, min(60, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_ox = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_ox.stdout or "") + (proc_ox.stderr or "")
+                code = proc_ox.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
+    # wikilink: missing memory_recall / answer.json.
+    if (
+        require_wikilink
+        and arm == "clawql-on"
+        and not timed_out
+        and wikilink_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 20:
+            cont_file = workdir / ".openbench_wikilink_nudge.md"
+            cont_file.write_text(WIKILINK_NUDGE, encoding="utf-8")
+            cont_timeout = max(20, min(60, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_wk = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_wk.stdout or "") + (proc_wk.stderr or "")
+                code = proc_wk.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
     # Cheap models often stop after memory_recall; one write-focused nudge with
     # vault notes inlined so a second recall is unnecessary.
     if vault and not disable_memory and not timed_out and recalled_without_writes(combined):
@@ -2112,6 +2268,14 @@ def render_markdown(report: dict) -> str:
         interp.append(
             "- Both arms graded for search + ≥2 dry_run execute + audit + memory_ingest."
         )
+    elif task == "onyx-mock-cite":
+        interp.append(
+            "- Both arms graded for real knowledge_search_onyx; Onyx upstream is stubbed."
+        )
+    elif task == "memory-wikilink-hop":
+        interp.append(
+            "- Both arms graded for memory_recall with wikilink hop to Beta Fact (opal-33)."
+        )
     interp.append("")
     lines.extend(interp)
     return "\n".join(lines)
@@ -2219,6 +2383,9 @@ def run_trial(
                 enable_sandbox=bool(caps.get("enable_sandbox")),
                 require_composed=bool(caps.get("require_composed")),
                 enable_composed=bool(caps.get("enable_composed")),
+                require_onyx=bool(caps.get("require_onyx")),
+                enable_onyx=bool(caps.get("enable_onyx")),
+                require_wikilink=bool(caps.get("require_wikilink")),
             )
         # Prefer full captured stream; fall back to / merge harness dump.
         # Never *replace* combined with a longer dump — that can drop an earlier
@@ -2274,6 +2441,10 @@ def run_trial(
             checker_env_extra["OPENBENCH_REQUIRE_SANDBOX"] = "1"
         if caps.get("require_composed"):
             checker_env_extra["OPENBENCH_REQUIRE_COMPOSED"] = "1"
+        if caps.get("require_onyx"):
+            checker_env_extra["OPENBENCH_REQUIRE_ONYX"] = "1"
+        if caps.get("require_wikilink"):
+            checker_env_extra["OPENBENCH_REQUIRE_WIKILINK"] = "1"
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
         return {

@@ -78,7 +78,11 @@ efficiency, OpenBench for end-to-end harness competition.
 
 ## Whole-stack coverage
 
-Live task pack now includes core **search / execute / memory roundtrip** cells
-plus the original three clawql-on/off tasks and Ouroboros (allow+deny matrix).
-Still open: audit, ATR/Panguard deny, PageIndex/hybrid, automation, sandbox.
+Live task pack covers gateway core (search / execute / cache / audit / policy),
+memory depth (roundtrip, seed-removal, token pressure, PageIndex, hybrid,
+codegraph, external ingest), automation (`schedule`, `notify`), sandbox, and a
+composed safe-rollout cell — all with clawql-on/off (or ouroboros on/off) and
+hard spend caps. Remaining gaps: n≥3 Wilson trials; mock Onyx / wikilink hops;
+ops-only live Slack/Onyx/Argo/R2.
 Full map: [`openbench-stack-coverage.md`](./openbench-stack-coverage.md).
+Scoreboard: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
