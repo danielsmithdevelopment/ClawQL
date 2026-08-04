@@ -105,6 +105,10 @@ argocd
 {{- printf "%s-langextract" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{- define "clawql-mcp.privacyFilterName" -}}
+{{- printf "%s-privacy-filter" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
 {{- define "clawql-mcp.gotenbergName" -}}
 {{- printf "%s-gotenberg" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}

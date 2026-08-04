@@ -137,6 +137,10 @@ spec:
             - name: CLAWQL_ENABLE_LANGEXTRACT
               value: "1"
             {{- end }}
+            {{- if .Values.enablePrivacyFilter }}
+            - name: CLAWQL_ENABLE_PRIVACY_FILTER
+              value: "1"
+            {{- end }}
             {{- if .Values.enablePdfInspector }}
             - name: CLAWQL_ENABLE_PDF_INSPECTOR
               value: "1"
@@ -317,6 +321,12 @@ spec:
             {{- if .Values.documentPipeline.langextract.enabled }}
             - name: LANGEXTRACT_BASE_URL
               value: "http://{{ include "clawql-mcp.langextractName" . }}:{{ .Values.documentPipeline.langextract.service.port }}"
+            {{- end }}
+            {{- if .Values.documentPipeline.privacyFilter.enabled }}
+            - name: CLAWQL_PRIVACY_FILTER_URL
+              value: "http://{{ include "clawql-mcp.privacyFilterName" . }}:{{ .Values.documentPipeline.privacyFilter.service.port }}"
+            - name: CLAWQL_PRIVACY_FILTER_FAILURE_POLICY
+              value: "warn"
             {{- end }}
             - name: GOTENBERG_BASE_URL
               value: "http://{{ include "clawql-mcp.gotenbergName" . }}:{{ .Values.documentPipeline.gotenberg.service.port }}"

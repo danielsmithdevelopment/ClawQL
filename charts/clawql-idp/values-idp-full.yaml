@@ -29,6 +29,7 @@ clawql-mcp:
   enablePdfInspector: true
   enableIdpClassifier: true
   enableLangextract: true
+  enablePrivacyFilter: true
   enableIdpPipeline: true
 
   workflow:
@@ -58,6 +59,8 @@ clawql-mcp:
     classifier:
       enabled: true
     langextract:
+      enabled: true
+    privacyFilter:
       enabled: true
 
   idpCollaboration:

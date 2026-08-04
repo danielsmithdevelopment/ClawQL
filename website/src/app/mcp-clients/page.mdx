@@ -88,7 +88,24 @@ cd examples/clawql-local-docker-compose
 docker compose -f docker-compose.yml -f docker-compose.presidio.override.yml up -d
 ```
 
-Full mandatory IDP-hop redaction remains roadmap — [Security](/security) · [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md).
+## Privacy Filter (local backup)
+
+Optional **second local pass** after Presidio ([#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)). Uses the open-weight Privacy Filter model (or demo heuristics) on operator hardware — **not** an OpenAI API.
+
+```bash
+export CLAWQL_ENABLE_PRIVACY_FILTER=1
+export CLAWQL_PRIVACY_FILTER_URL=http://privacy-filter:8091
+export CLAWQL_PRIVACY_FILTER_FAILURE_POLICY=warn
+```
+
+```bash
+cd examples/clawql-local-docker-compose
+docker compose -f docker-compose.yml \
+  -f docker-compose.presidio.override.yml \
+  -f docker-compose.privacy-filter.override.yml up -d
+```
+
+Docs: [privacy-filter-local.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/privacy-filter-local.md). Full mandatory IDP-hop redaction remains roadmap — [Security](/security) · [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md).
 
 ## OpenClaw
 

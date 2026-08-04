@@ -1,7 +1,7 @@
 /**
  * Apply ontology `pii_fields` (dotted paths) — redact string leaves for LLM exposure.
  */
-import { maybePresidioRedactText, presidioEnabled } from "clawql-api";
+import { gatewayRedactionEnabled, maybeGatewayRedactText } from "clawql-api";
 
 const REDACTED = "[REDACTED]";
 
@@ -52,7 +52,8 @@ function setAtPath(root: Record<string, unknown>, path: string, value: unknown):
 
 /**
  * Deep-clone JSON and redact listed dotted paths (supports one array segment).
- * When Presidio is enabled, string values are run through Presidio first then replaced.
+ * When gateway redaction is enabled, string values are run through Presidio + Privacy Filter
+ * first (for side-effect / logging consistency) then replaced with `[REDACTED]`.
  */
 export async function redactOntologyPiiFields<T>(
   value: T,
@@ -65,8 +66,8 @@ export async function redactOntologyPiiFields<T>(
   for (const path of piiFields) {
     const current = getAtPath(clone, path);
     if (typeof current === "string" && current.length > 0) {
-      if (presidioEnabled()) {
-        await maybePresidioRedactText(current);
+      if (gatewayRedactionEnabled()) {
+        await maybeGatewayRedactText(current);
       }
       setAtPath(clone, path, REDACTED);
       continue;
@@ -82,7 +83,7 @@ export async function redactOntologyPiiFields<T>(
           if (item && typeof item === "object") {
             const leaf = getAtPath(item, rest);
             if (typeof leaf === "string" && leaf.length > 0) {
-              if (presidioEnabled()) await maybePresidioRedactText(leaf);
+              if (gatewayRedactionEnabled()) await maybeGatewayRedactText(leaf);
               setAtPath(item as Record<string, unknown>, rest, REDACTED);
             }
           }

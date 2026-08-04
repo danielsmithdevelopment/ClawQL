@@ -226,6 +226,8 @@ enableDocuments: true
 # IDP specialist MCP tools (documents tier). Default off — set true to inject CLAWQL_ENABLE_*=1.
 enableIdpClassifier: false
 enableLangextract: false
+# Local Privacy Filter gateway backup ([#245]). Default off — set true to inject CLAWQL_ENABLE_PRIVACY_FILTER=1.
+enablePrivacyFilter: false
 # In-process Firecrawl pdf-inspector (`inspect_pdf`). No sidecar; ships in clawql-documents.
 enablePdfInspector: false
 # In-process Firecrawl anydoc (`convert_document`). No sidecar; ships in clawql-documents.
@@ -596,6 +598,26 @@ documentPipeline:
       limits:
         cpu: "1"
         memory: 1Gi
+  # Local Privacy Filter sidecar ([#245]) — backup after Presidio; demo by default.
+  privacyFilter:
+    enabled: false
+    image:
+      repository: ghcr.io/danielsmithdevelopment/clawql-privacy-filter-http
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      port: 8091
+    env:
+      mode: demo
+      device: cpu
+      modelId: openai/privacy-filter
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: "1"
+        memory: 4Gi
   tika:
     image:
       repository: apache/tika

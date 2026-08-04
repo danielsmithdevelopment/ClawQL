@@ -1,0 +1,26 @@
+# Optional local Privacy Filter — backup after Presidio ([#245]).
+#   docker compose -f docker-compose.yml \
+#     -f docker-compose.presidio.override.yml \
+#     -f docker-compose.privacy-filter.override.yml up -d
+# DEMO mode by default (no model weights). Set PRIVACY_FILTER_MODE=live for local HF weights.
+services:
+  privacy-filter:
+    build:
+      context: ../../deployment/samples/privacy-filter-http
+    image: clawql-privacy-filter-http:local
+    container_name: clawql-privacy-filter
+    restart: unless-stopped
+    ports:
+      - "8091:8091"
+    environment:
+      PORT: "8091"
+      PRIVACY_FILTER_MODE: demo
+      PRIVACY_FILTER_DEVICE: cpu
+
+  clawql-mcp-http:
+    environment:
+      CLAWQL_ENABLE_PRIVACY_FILTER: "1"
+      CLAWQL_PRIVACY_FILTER_URL: http://privacy-filter:8091
+      CLAWQL_PRIVACY_FILTER_FAILURE_POLICY: warn
+    depends_on:
+      - privacy-filter
