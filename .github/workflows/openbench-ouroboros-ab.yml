@@ -1,13 +1,17 @@
 # OpenBench A/B: ouroboros-on vs ouroboros-off (stagnation / oscillation escape).
 #
+# RETIRED from PR/push auto-runs (claim verified + replicated). Re-enable only via
+# workflow_dispatch when you intentionally want another cell. See
+# openbench/ci-matrix.json → retired.ouroboros-oscillation-escape /
+# ouroboros_pr_enabled=false.
+#
 # Matrix over OpenCode doom_loop:
 #   - allow — thrash study (identical-tool spam visible)
 #   - deny  — additive value with production guard on (strategy A↔B)
 #
 # Spend-safe defaults:
-#   - trials=1 on PR (dispatch may raise to 3), timeout=180s, turns≤50, tokens≤8000
+#   - trials=1 (dispatch may raise to 3), timeout=180s, turns≤50, tokens≤8000
 #   - maxGenerations≤4
-#   - PR/push only when Ouroboros or this task changes
 #
 # Same cheap OpenRouter model as the main OpenBench matrix.
 
@@ -58,25 +62,6 @@ on:
         required: true
         type: string
         default: "8080"
-  pull_request:
-    paths:
-      - "openbench/tasks/ouroboros-oscillation-escape/**"
-      - "openbench/scripts/run-ab-compare.py"
-      - "packages/clawql-ouroboros/**"
-      - "src/onboarding/harness-cli.ts"
-      - ".github/workflows/openbench-ouroboros-ab.yml"
-      - "docs/benchmarks/openbench-ouroboros*.md"
-      - "docs/benchmarks/ouroboros-value-evidence.md"
-  push:
-    branches: [main]
-    paths:
-      - "openbench/tasks/ouroboros-oscillation-escape/**"
-      - "openbench/scripts/run-ab-compare.py"
-      - "packages/clawql-ouroboros/**"
-      - "src/onboarding/harness-cli.ts"
-      - ".github/workflows/openbench-ouroboros-ab.yml"
-      - "docs/benchmarks/openbench-ouroboros*.md"
-      - "docs/benchmarks/ouroboros-value-evidence.md"
 
 permissions:
   contents: read
@@ -215,10 +200,12 @@ jobs:
       - name: Install OpenCode CLI
         if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
-          npm install -g opencode-ai@latest 2>/dev/null \
-            || npm install -g @opencode-ai/cli@latest 2>/dev/null \
-            || npm install -g opencode@latest
+          OPENCODE_PKG_VERSION="${OPENBENCH_OPENCODE_VERSION:-1.18.12}"
+          npm install -g "opencode-ai@${OPENCODE_PKG_VERSION}" 2>/dev/null \
+            || npm install -g "@opencode-ai/cli@${OPENCODE_PKG_VERSION}" 2>/dev/null \
+            || npm install -g "opencode@${OPENCODE_PKG_VERSION}"
           command -v opencode
+          npm ls -g opencode-ai --depth=0 || true
           opencode --version || true
 
       - name: Start clawql-inference

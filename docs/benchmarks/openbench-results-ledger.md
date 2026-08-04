@@ -12,7 +12,8 @@ document is the **scoreboard + run diary**.
 | Default model | `openrouter/deepseek/deepseek-chat` |
 | Harness | OpenCode → clawql-inference |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T04:25Z |
+| Last ledger update | 2026-08-04T04:50Z |
+| CI matrix control | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push |
 
 ---
 
@@ -154,11 +155,21 @@ Follow-up: never replace combined agent logs with longer harness dump; grep log 
 
 Ouroboros [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519): allow on 1.0 / off 0.0; deny on 1.0 / off 0.0 (replication).
 
-### 2026-08-04 — [30873723884](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30873723884) + [30874355356](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30874355356) + [30876062118](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30876062118)
+### 2026-08-04 — [30873723884](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30873723884) + [30874355356](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30874355356) + [30876062118](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30876062118) + [30877405306](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30877405306)
 
-**Infra timeout noise (repeated).** OpenCode hung with `timeout after 180s/240s/300s`, **no tool_use**, turns=null across the matrix (workflow still marked success). Same pattern on ouroboros [30874355348](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30874355348). Observed again on [30876062118](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30876062118) including new `pageindex-section-qa` and `cache-scratch-handoff` cells.
+**Infra timeout noise (repeated).** OpenCode hung with `timeout after 180s/240s/300s`, **no tool_use**, turns=null across the matrix (workflow still marked success). Same pattern on ouroboros [30874355348](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30874355348) / [30877405323](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30877405323). [30877405306](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30877405306) was a docs-only PR push that still burned a full 10-task matrix.
 
-**Do not treat as claim regression.** Likely OpenRouter / inference stall. Re-run when inference is healthy; prior WINs above remain the headline evidence.
+**Do not treat as claim regression.** Likely OpenRouter stampede / inference stall under high parallel fan-out. Mitigations landed: **retire proven tasks** from `pr_active`, `max-parallel: 2`, drop docs path filters, ouroboros dispatch-only.
+
+### CI retire policy (token spend)
+
+When a task is thoroughly verified (headline WIN, ideally replicated):
+
+1. Move it from `pr_active` → `retired` in [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json).
+2. PR/push stops running it; `workflow_dispatch` can still pick the task or `all-including-retired`.
+3. Ouroboros is retired from PR auto-runs (`openbench-ouroboros-ab.yml` is **workflow_dispatch only**).
+
+**Still active (keep testing):** `cache-scratch-handoff`, `pageindex-section-qa`, `audit-checkpoints`, `multi-provider-api-workflow`.
 
 ---
 
@@ -208,5 +219,6 @@ Keep gaps honest in those docs: cache flake, PageIndex pending, multi-provider n
 - [ ] Append a **Run diary** subsection with the table of on/off scores, turns, wall.
 - [ ] Update **Headline claims** if a new best WIN lands.
 - [ ] Note confounds / infra (timeouts, ties, flakes) explicitly.
+- [ ] If a task is thoroughly verified: move it `pr_active` → `retired` in [`ci-matrix.json`](../../openbench/ci-matrix.json).
 - [ ] Point [`openbench-stack-coverage.md`](./openbench-stack-coverage.md) “Live OpenBench today” at this ledger for detail.
 - [ ] Optional: `memory_ingest` a short pointer to the new run id under vault title `OpenBench ClawQL stack coverage`.

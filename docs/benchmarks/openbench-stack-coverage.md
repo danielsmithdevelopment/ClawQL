@@ -41,7 +41,9 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 
 Still missing live cells: hybrid recall, codegraph, schedule/notify, sandbox, composed recipes, n≥3 trials. Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-Note: runs [30873723884](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30873723884) and [30874355356](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30874355356) timed out across the matrix (OpenCode hung with no tool_use) — treat as infra noise, not claim regression. See the [results ledger](./openbench-results-ledger.md).
+**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` runs on PR/push. Proven tasks are `retired` (dispatch still available). Active now: cache, pageindex, audit, multi-provider. Ouroboros workflow is dispatch-only.
+
+Note: runs [30873723884](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30873723884), [30874355356](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30874355356), [30876062118](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30876062118), [30877405306](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30877405306) timed out across the matrix (OpenCode hung with no tool_use) — treat as infra noise, not claim regression. See the [results ledger](./openbench-results-ledger.md).
 
 ---
 

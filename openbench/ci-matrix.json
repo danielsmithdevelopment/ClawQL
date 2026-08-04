@@ -1,0 +1,41 @@
+{
+  "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
+  "pr_active": [
+    "cache-scratch-handoff",
+    "pageindex-section-qa",
+    "audit-checkpoints",
+    "multi-provider-api-workflow"
+  ],
+  "retired": {
+    "memory-dependent-continuation": {
+      "reason": "Verified WIN replicated (on 1.0 / off 0.333)",
+      "evidence_run": "30872913516"
+    },
+    "token-budget-constrained": {
+      "reason": "Verified WIN (on 1.0 / off 0.0)",
+      "evidence_run": "30872437811"
+    },
+    "memory-roundtrip-ingest-recall": {
+      "reason": "Verified WIN replicated (on 1.0 / off 0.0)",
+      "evidence_run": "30872913516"
+    },
+    "search-first-discovery": {
+      "reason": "Verified WIN after anti-guess graders (on 1.0 / off 0.0)",
+      "evidence_run": "30872913516"
+    },
+    "execute-verify-loop": {
+      "reason": "Verified WIN after log-merge fix (on 1.0 / off 0.0)",
+      "evidence_run": "30872913516"
+    },
+    "policy-deny-execute": {
+      "reason": "Verified WIN — Panguard fail-closed with tool evidence (on 1.0 / off 0.0)",
+      "evidence_run": "30872913516"
+    },
+    "ouroboros-oscillation-escape": {
+      "reason": "Verified WIN allow+deny, replicated; dedicated workflow is dispatch-only",
+      "evidence_run": "30866904277"
+    }
+  },
+  "ouroboros_pr_enabled": false,
+  "notes": "After a clean WIN lands for an active task, move it to retired and shrink pr_active. Docs-only PRs should not trigger live A/B (path filters exclude docs)."
+}

@@ -1,10 +1,11 @@
 # OpenBench A/B via clawql-inference.
 #
-# OpenRouter-first with a cheap default model. On PR/push runs all three tasks
-# in a matrix when OPENROUTER_API_KEY (or BYOK) is present.
+# OpenRouter-first with a cheap default model. PR/push runs only tasks listed in
+# openbench/ci-matrix.json → pr_active (retired tasks skip CI to save tokens).
 #
-# - workflow_dispatch: pick one task or "all"
-# - pull_request / push (path-filtered): matrix of all tasks; skip (exit 0) when no secret
+# - workflow_dispatch: pick one task, "all" (= pr_active), or all-including-retired
+# - pull_request / push (path-filtered): pr_active matrix; skip live A/B when no secret
+# - Docs-only changes do NOT trigger this workflow (update the ledger freely)
 
 name: OpenBench A/B (clawql on vs off)
 
@@ -12,22 +13,22 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: OpenBench task (or all)
+        description: "Task — all = pr_active only; all-including-retired re-runs proven cells"
         required: true
         type: choice
         options:
           - all
+          - all-including-retired
+          - cache-scratch-handoff
+          - pageindex-section-qa
+          - audit-checkpoints
+          - multi-provider-api-workflow
           - memory-dependent-continuation
           - token-budget-constrained
-          - multi-provider-api-workflow
           - search-first-discovery
           - execute-verify-loop
           - memory-roundtrip-ingest-recall
-          - audit-checkpoints
-          - cache-scratch-handoff
           - policy-deny-execute
-          - pageindex-section-qa
-          - ouroboros-oscillation-escape
         default: all
       model:
         description: "Cheap OpenRouter default — or any openrouter/* / BYOK id"
@@ -74,8 +75,6 @@ on:
       - "src/onboarding/cli.ts"
       - "bin/clawql.mjs"
       - ".github/workflows/openbench-ab.yml"
-      - "docs/benchmarks/openbench*.md"
-      - "docs/getting-started/inference.md"
   push:
     branches: [main]
     paths:
@@ -86,8 +85,6 @@ on:
       - "src/onboarding/cli.ts"
       - "bin/clawql.mjs"
       - ".github/workflows/openbench-ab.yml"
-      - "docs/benchmarks/openbench*.md"
-      - "docs/getting-started/inference.md"
 
 concurrency:
   group: openbench-ab-${{ github.workflow }}-${{ github.ref }}
@@ -102,28 +99,35 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tasks: ${{ steps.set.outputs.tasks }}
+      has_tasks: ${{ steps.set.outputs.has_tasks }}
     steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - id: set
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TASK="${{ inputs.task }}"
-            if [ "$TASK" = "all" ] || [ -z "$TASK" ]; then
-              echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow","search-first-discovery","execute-verify-loop","memory-roundtrip-ingest-recall","audit-checkpoints","cache-scratch-handoff","policy-deny-execute","pageindex-section-qa"]' >> "$GITHUB_OUTPUT"
-            else
-              echo "tasks=[\"${TASK}\"]" >> "$GITHUB_OUTPUT"
-            fi
+            python3 openbench/scripts/resolve-ci-matrix.py \
+              --mode dispatch \
+              --task "${{ inputs.task || 'all' }}" \
+              --github-output
           else
-            echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow","search-first-discovery","execute-verify-loop","memory-roundtrip-ingest-recall","audit-checkpoints","cache-scratch-handoff","policy-deny-execute","pageindex-section-qa"]' >> "$GITHUB_OUTPUT"
+            python3 openbench/scripts/resolve-ci-matrix.py \
+              --mode pr \
+              --github-output
           fi
+          echo "::notice::OpenBench PR-active matrix → $(python3 openbench/scripts/resolve-ci-matrix.py --mode pr)"
+          echo "Retired tasks (skipped on PR): $(python3 -c 'import json; print(",".join(sorted(json.load(open("openbench/ci-matrix.json"))["retired"])))')"
 
   ab-compare:
     name: A/B ${{ matrix.task }}
     needs: resolve-matrix
+    if: needs.resolve-matrix.outputs.has_tasks == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
       fail-fast: false
+      # Cap parallelism to reduce OpenRouter stampede / idle hangs.
+      max-parallel: 2
       matrix:
         task: ${{ fromJson(needs.resolve-matrix.outputs.tasks) }}
     env:
@@ -271,11 +275,15 @@ jobs:
       - name: Install OpenCode CLI
         if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
-          npm install -g opencode-ai@latest 2>/dev/null \
-            || npm install -g @opencode-ai/cli@latest 2>/dev/null \
-            || npm install -g opencode@latest
+          # Pin for reproducibility (avoid silent @latest drift across matrices).
+          OPENCODE_PKG_VERSION="${OPENBENCH_OPENCODE_VERSION:-1.18.12}"
+          npm install -g "opencode-ai@${OPENCODE_PKG_VERSION}" 2>/dev/null \
+            || npm install -g "@opencode-ai/cli@${OPENCODE_PKG_VERSION}" 2>/dev/null \
+            || npm install -g "opencode@${OPENCODE_PKG_VERSION}"
           command -v opencode
+          npm ls -g opencode-ai --depth=0 || true
           opencode --version || true
+          echo "::notice::OpenCode package pin opencode-ai@${OPENCODE_PKG_VERSION}"
 
       - name: Start clawql-inference (OpenRouter and/or BYOK)
         if: steps.preflight.outputs.run_benchmark == 'true'
