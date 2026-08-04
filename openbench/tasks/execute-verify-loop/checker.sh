@@ -101,8 +101,9 @@ if [ "$REQUIRE_EXECUTE" = "1" ]; then
     echo "FAIL: required ≥2 clawql_execute tool_use calls (got ${exec_hits:-0})" >&2
     cap_fail=1
   fi
-  if ! printf '%s' "$log" | grep -Fq '"dry_run":true'; then
-    echo "FAIL: required dry_run:true in execute tool input" >&2
+  # Prefer explicit dry_run in tool args; also accept dryRun:true (camelCase).
+  if ! printf '%s' "$log" | grep -Eq '"dry_run"[[:space:]]*:[[:space:]]*true|"dryRun"[[:space:]]*:[[:space:]]*true'; then
+    echo "FAIL: required dry_run:true (or dryRun:true) in execute tool input" >&2
     cap_fail=1
   fi
 fi

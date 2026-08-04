@@ -223,6 +223,53 @@ MEMORY_ROUNDTRIP_NUDGE = """Continue. You have not completed the memory roundtri
 Do not stop after planning. Call the memory tools now.
 """
 
+EXECUTE_DRY_RUN_NUDGE = """Continue. Your previous execute calls omitted dry_run.
+
+Call **execute** again (≥2 times) with `"dry_run": true` on the discovered get + list
+global advisory operations, then rewrite `trail.json` with dryRunOnly:true.
+Do not call live APIs without dry_run. Stop after writing trail.json.
+"""
+
+AUDIT_WRITE_NUDGE = """Continue. You already called audit append/list.
+
+Now call the **write** tool to create relative path `trail.json`:
+
+```json
+{
+  "correlationId": "openbench-audit-1",
+  "summaries": [
+    "openbench-audit-start",
+    "openbench-audit-mid",
+    "openbench-audit-done"
+  ]
+}
+```
+
+Do not only plan. Call write now.
+"""
+
+CACHE_WRITE_NUDGE = """Continue. Use the **cache** tool correctly, then write the answer.
+
+1. cache with operation=set, key=ob.part.a, value=<contents of sealed/part_a.txt>
+2. cache with operation=set, key=ob.part.b, value=<contents of sealed/part_b.txt>
+3. cache with operation=get for both keys
+4. write `answer.json` as {"token":"<a>-<b>","source":"cache"}
+
+Example set args: {"operation":"set","key":"ob.part.a","value":"alpha42"}
+Stop after writing answer.json.
+"""
+
+POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.
+
+Write relative path `policy.json` now:
+
+```json
+{"blocked": true, "tool": "execute", "policy": "panguard"}
+```
+
+Call the write tool. Do not claim execute succeeded.
+"""
+
 # ouroboros-on sometimes loops seed/run twice and never writes the recipe.
 OUROBOROS_ON_WRITE_NUDGE = """Continue. You already ran ouroboros_create_seed_from_document and
 ouroboros_run_evolutionary_loop. Now you MUST call the **write** tool.
@@ -628,6 +675,35 @@ def memory_roundtrip_incomplete(combined: str) -> bool:
     return not (ingest and recall and wrote)
 
 
+def execute_missing_dry_run(combined: str) -> bool:
+    """True when execute ran but dry_run:true never appeared in tool inputs."""
+    text = combined or ""
+    used = '"tool":"clawql_execute"' in text
+    dry = '"dry_run":true' in text or '"dry_run": true' in text or '"dryRun":true' in text
+    return used and not dry
+
+
+def audit_ran_without_write(combined: str) -> bool:
+    text = combined or ""
+    used = '"tool":"clawql_audit"' in text
+    return used and count_write_tools(text) == 0
+
+
+def cache_incomplete(combined: str, workdir: Path) -> bool:
+    """True when answer.json missing or cache set/get evidence incomplete."""
+    if not (workdir / "answer.json").is_file():
+        return True
+    text = combined or ""
+    used = '"tool":"clawql_cache"' in text or '"tool":"cache"' in text
+    has_set = '"operation":"set"' in text
+    has_get = '"operation":"get"' in text
+    return not (used and has_set and has_get)
+
+
+def policy_missing_artifact(workdir: Path) -> bool:
+    return not (workdir / "policy.json").is_file()
+
+
 WRITE_CONTINUATION_HEADER = """Continue the same OpenBench task in this workspace.
 
 You already ran memory_recall successfully. Do **not** call memory_recall again.
@@ -672,6 +748,9 @@ def run_arm_on(
     require_search: bool = False,
     require_execute: bool = False,
     require_memory_roundtrip: bool = False,
+    require_audit: bool = False,
+    require_cache: bool = False,
+    require_policy_block: bool = False,
     panguard_block_tools: str | None = None,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
@@ -803,6 +882,130 @@ def run_arm_on(
                 )
                 combined = combined + "\n" + (proc_rt.stdout or "") + (proc_rt.stderr or "")
                 code = proc_rt.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
+    # execute-verify: model often calls execute without dry_run then lies in trail.json.
+    if (
+        require_execute
+        and arm == "clawql-on"
+        and not timed_out
+        and execute_missing_dry_run(combined)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 25:
+            cont_file = workdir / ".openbench_execute_dry_run_nudge.md"
+            cont_file.write_text(EXECUTE_DRY_RUN_NUDGE, encoding="utf-8")
+            cont_timeout = max(25, min(90, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_ex = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_ex.stdout or "") + (proc_ex.stderr or "")
+                code = proc_ex.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
+    # audit: append/list succeeded but trail.json never written.
+    if (
+        require_audit
+        and arm == "clawql-on"
+        and not timed_out
+        and audit_ran_without_write(combined)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 20:
+            cont_file = workdir / ".openbench_audit_write_nudge.md"
+            cont_file.write_text(AUDIT_WRITE_NUDGE, encoding="utf-8")
+            cont_timeout = max(20, min(60, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_au = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_au.stdout or "") + (proc_au.stderr or "")
+                code = proc_au.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
+    # cache: missing answer.json and/or set/get evidence.
+    if (
+        require_cache
+        and arm == "clawql-on"
+        and not timed_out
+        and cache_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 25:
+            cont_file = workdir / ".openbench_cache_nudge.md"
+            cont_file.write_text(CACHE_WRITE_NUDGE, encoding="utf-8")
+            cont_timeout = max(25, min(90, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_ca = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_ca.stdout or "") + (proc_ca.stderr or "")
+                code = proc_ca.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
+    # policy: execute blocked but policy.json never written.
+    if (
+        require_policy_block
+        and arm == "clawql-on"
+        and not timed_out
+        and policy_missing_artifact(workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 15:
+            cont_file = workdir / ".openbench_policy_nudge.md"
+            cont_file.write_text(POLICY_WRITE_NUDGE, encoding="utf-8")
+            cont_timeout = max(15, min(45, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_po = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 20,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_po.stdout or "") + (proc_po.stderr or "")
+                code = proc_po.returncode
             except subprocess.TimeoutExpired as exc:
                 timed_out = True
                 combined = combined + "\n" + _dec_timeout_output(exc)
@@ -1207,6 +1410,9 @@ def run_trial(
                 require_search=bool(caps.get("require_search")),
                 require_execute=bool(caps.get("require_execute")),
                 require_memory_roundtrip=bool(caps.get("require_memory_roundtrip")),
+                require_audit=bool(caps.get("require_audit")),
+                require_cache=bool(caps.get("require_cache")),
+                require_policy_block=bool(caps.get("require_policy_block")),
                 panguard_block_tools=caps.get("panguard_block_tools"),
             )
         # Prefer full captured stream; fall back to workdir harness dump.

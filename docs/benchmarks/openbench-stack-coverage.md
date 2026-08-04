@@ -28,11 +28,11 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 | `token-budget-constrained` | Recall nested recipe + ignore decoy noise under token score | on **1.0** / off **0.0** (same) |
 | `multi-provider-api-workflow` | Vault notes → correct Worker/wrangler scaffold | on **1.0** / off **0.75** (same) |
 | `memory-roundtrip-ingest-recall` | Empty vault ingest→recall | on **1.0** / off **0.0** (same) |
-| `search-first-discovery` | Must `search` (decoy wrong op) | prior tie 1.0/1.0 (guess); **tool_use evidence both arms** pending re-run |
-| `execute-verify-loop` | dry-run `execute` trail (≥2) | prior tie 1.0/1.0 (invented trail); **tool_use evidence both arms** pending re-run |
-| `audit-checkpoints` | `audit` append×3 + list → trail | **Shipped** — awaiting live A/B |
-| `cache-scratch-handoff` | `cache` set/get secret assembly | **Shipped** — awaiting live A/B |
-| `policy-deny-execute` | In-process Panguard blocks `execute` | **Shipped** — awaiting live A/B |
+| `search-first-discovery` | Must `search` (decoy wrong op) | on **1.0** / off **0.0** ([30871190463](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30871190463)) |
+| `execute-verify-loop` | dry-run `execute` trail (≥2) | off FAIL; on failed missing dry_run arg — nudge + re-run |
+| `audit-checkpoints` | `audit` append×3 + list → trail | tools OK on-arm; missing write — nudge + re-run ([30871190463](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30871190463)) |
+| `cache-scratch-handoff` | `cache` set/get secret assembly | on failed schema/write — clearer args + nudge + re-run |
+| `policy-deny-execute` | In-process Panguard blocks `execute` | block observed; reason text lost — mcp-tool-wrap fix + re-run |
 | `ouroboros-oscillation-escape` | Ouroboros stops strategy thrash | allow + **deny** both on 1.0 / off 0.0 ([30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277)) |
 
 Still missing live cells: PageIndex/hybrid, codegraph, schedule/notify, sandbox, composed recipes, n≥3 trials.

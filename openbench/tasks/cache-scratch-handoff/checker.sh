@@ -70,10 +70,10 @@ if [ "$REQUIRE_CACHE" = "1" ]; then
   if [ -f .openbench_agent.log ]; then
     log="$(cat .openbench_agent.log)"
   fi
-  # Real tool_use only — instruction text also mentions cache/set/get.
-  cache_hits="$(printf '%s' "$log" | grep -Fci '"tool":"clawql_cache"' || true)"
+  # OpenCode may log MCP cache as clawql_cache or bare cache.
+  cache_hits="$(printf '%s' "$log" | grep -Eci '"tool":"clawql_cache"|"tool":"cache"' || true)"
   if [ "${cache_hits:-0}" -lt 2 ]; then
-    echo "FAIL: required ≥2 clawql_cache tool_use calls (got ${cache_hits:-0})" >&2
+    echo "FAIL: required ≥2 cache tool_use calls (got ${cache_hits:-0})" >&2
     cap_fail=1
   fi
   if ! printf '%s' "$log" | grep -Fq '"operation":"set"'; then

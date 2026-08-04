@@ -5,9 +5,11 @@ Assemble a secret token using the ephemeral **`cache`** tool (not durable memory
 ## Steps
 
 1. Read `sealed/part_a.txt` and `sealed/part_b.txt`.
-2. `cache` **set** key `ob.part.a` to the contents of part_a (trimmed).
-3. `cache` **set** key `ob.part.b` to the contents of part_b (trimmed).
-4. `cache` **get** both keys.
+2. Call **`cache`** with JSON args:
+   `{"operation":"set","key":"ob.part.a","value":"<part_a trimmed>"}`
+3. Call **`cache`** with:
+   `{"operation":"set","key":"ob.part.b","value":"<part_b trimmed>"}`
+4. Call **`cache`** with `{"operation":"get","key":"ob.part.a"}` and the same for `ob.part.b`.
 5. Write `answer.json` with the concatenation `a + "-" + b`.
 
 ## Artifact
