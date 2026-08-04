@@ -72,3 +72,10 @@ Existing [`latest.md`](latest.md) / workflow stats measure **planning-context**
 compression (full specs vs search outputs). OpenBench measures **agent
 execution** (harness + model + task). Use both: context math for gateway
 efficiency, OpenBench for end-to-end harness competition.
+
+## Whole-stack coverage
+
+Only four agent tasks exist today (three clawql-on/off + one Ouroboros). Memory
+depth, documents, automation, sandbox, audit/cache, and policy/ATR are mostly
+**skills + unit tests** without OpenBench cells. Full map and prioritized
+backlog: [`openbench-stack-coverage.md`](./openbench-stack-coverage.md).
