@@ -135,7 +135,9 @@ export function executeMemoryRecallCoreEffect(
     const maxDepth =
       input.maxDepth !== undefined ? input.maxDepth : envInt("CLAWQL_MEMORY_RECALL_MAX_DEPTH", 2);
     const minScore =
-      input.minScore !== undefined ? input.minScore : envInt("CLAWQL_MEMORY_RECALL_MIN_SCORE", 1);
+      input.minScore !== undefined
+        ? input.minScore
+        : envFloat("CLAWQL_MEMORY_RECALL_MIN_SCORE", 0.05);
     const maxFiles = envInt("CLAWQL_MEMORY_RECALL_MAX_FILES", 2000);
     const snippetChars = envInt("CLAWQL_MEMORY_RECALL_SNIPPET_CHARS", 520);
     const topChunks = envInt("CLAWQL_MEMORY_VECTOR_TOP_CHUNKS", 80);
