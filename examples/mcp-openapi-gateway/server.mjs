@@ -91,17 +91,21 @@ async function main() {
   });
 
   console.log("");
-  console.log("=== MCP OpenAPI + gRPC demo server ===");
+  console.log("=== MCP OpenAPI + GraphQL + gRPC demo server ===");
   console.log(`gRPC MCP:     ${grpc.address}`);
   console.log(`              service model_context_protocol.Mcp (ListTools / CallTool)`);
   console.log(`OpenAPI:      ${gateway.url}`);
   console.log(`  docs:       ${gateway.url}/docs`);
   console.log(`  openapi:    ${gateway.url}/openapi.json`);
   console.log(`  tools:      ${gateway.url}/tools`);
+  console.log(`GraphQL:      ${gateway.url}/graphql`);
+  console.log(`  graphiql:   ${gateway.url}/graphiql`);
+  console.log(`  schema:     ${gateway.url}/graphql/schema.graphql`);
   console.log(`Tools:        ${gateway.getCatalog().tools.map((t) => t.name).join(", ")}`);
   console.log("");
   console.log("Demos (another terminal):");
   console.log("  node examples/mcp-openapi-gateway/demo-rest.mjs");
+  console.log("  node examples/mcp-openapi-gateway/demo-graphql.mjs");
   console.log("  node examples/mcp-openapi-gateway/demo-grpc.mjs");
   console.log("  node examples/mcp-openapi-gateway/demo-all.mjs");
   console.log("");

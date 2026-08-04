@@ -105,7 +105,9 @@ export async function runCli(argv: string[]): Promise<void> {
   console.log(`[mcp-openapi-gateway] OpenAPI on-ramp listening on ${started.url}`);
   console.log(`[mcp-openapi-gateway] upstream gRPC: ${started.grpcAddress}`);
   console.log(`[mcp-openapi-gateway] tools: ${started.getCatalog().tools.map((t) => t.name).join(", ") || "(none)"}`);
-  console.log(`[mcp-openapi-gateway] docs: ${started.url}/docs`);
+  console.log(`[mcp-openapi-gateway] docs:     ${started.url}/docs`);
+  console.log(`[mcp-openapi-gateway] graphiql: ${started.url}/graphiql`);
+  console.log(`[mcp-openapi-gateway] graphql:  ${started.url}/graphql`);
   console.log(`[mcp-openapi-gateway] Prefer production CallTool via mcp-grpc-transport on ${started.grpcAddress}`);
 
   const shutdown = async () => {

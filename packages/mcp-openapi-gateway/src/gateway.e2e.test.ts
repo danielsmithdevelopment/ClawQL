@@ -35,7 +35,7 @@ function createDemoMcpServer(): McpServer {
   return server;
 }
 
-describe("mcp-openapi-gateway e2e (OpenAPI + gRPC)", () => {
+describe("mcp-openapi-gateway e2e (OpenAPI + GraphQL + gRPC)", () => {
   let grpc: StartedGrpcServer | undefined;
   let gateway: StartedMcpOpenApiGateway | undefined;
   const saved = { ...process.env };
@@ -48,7 +48,7 @@ describe("mcp-openapi-gateway e2e (OpenAPI + gRPC)", () => {
     grpc = undefined;
   });
 
-  it("serves the same tool results over REST and gRPC", async () => {
+  it("serves the same tool results over REST, GraphQL, and gRPC", async () => {
     process.env.ENABLE_GRPC = "1";
     process.env.ENABLE_GRPC_REFLECTION = "0";
 
@@ -112,6 +112,48 @@ describe("mcp-openapi-gateway e2e (OpenAPI + gRPC)", () => {
       arguments: { a: 2, b: 40 },
     });
     expect(JSON.parse(lastNonEmptyCallToolText(grpcAdd))).toEqual({ sum: 42 });
+
+    const gqlEcho = await fetch(`${gateway.url}/graphql`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        query: "mutation($m: String!) { echo(message: $m) }",
+        variables: { m: "hello-graphql" },
+      }),
+    });
+    expect(gqlEcho.status).toBe(200);
+    const gqlEchoBody = (await gqlEcho.json()) as {
+      data?: { echo?: { echo?: string } };
+      errors?: unknown[];
+    };
+    expect(gqlEchoBody.errors).toBeUndefined();
+    expect(gqlEchoBody.data?.echo?.echo).toBe("hello-graphql");
+
+    const gqlAdd = await fetch(`${gateway.url}/graphql`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query: "mutation { add(a: 2, b: 40) }" }),
+    });
+    const gqlAddBody = (await gqlAdd.json()) as {
+      data?: { add?: { sum?: number } };
+      errors?: unknown[];
+    };
+    expect(gqlAddBody.errors).toBeUndefined();
+    expect(gqlAddBody.data?.add?.sum).toBe(42);
+
+    const gqlGeneric = await fetch(`${gateway.url}/graphql`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        query: 'mutation { callTool(name: "echo", args: { message: "via-callTool" }) }',
+      }),
+    });
+    const gqlGenericBody = (await gqlGeneric.json()) as {
+      data?: { callTool?: { echo?: string } };
+      errors?: unknown[];
+    };
+    expect(gqlGenericBody.errors).toBeUndefined();
+    expect(gqlGenericBody.data?.callTool?.echo).toBe("via-callTool");
   });
 });
 

@@ -37,5 +37,7 @@ describe("listToolsUnaryGrpc", () => {
     const echo = tools.find((t) => t.name === "echo")!;
     expect(echo.inputSchema).toBeTruthy();
     expect(typeof echo.inputSchema).toBe("object");
+    const props = echo.inputSchema.properties as Record<string, unknown> | undefined;
+    expect(props?.message).toBeTruthy();
   });
 });

@@ -3,6 +3,7 @@ import type { Server } from "node:http";
 import { callToolViaGrpc, httpBodyFromCollapsed } from "./call.js";
 import { fetchToolCatalog } from "./catalog.js";
 import { swaggerDocsHtml } from "./docs-html.js";
+import { attachGraphqlRoutes } from "./graphql-http.js";
 import { buildOpenApiDocument } from "./openapi.js";
 import { isSafeToolPathName } from "./schema-convert.js";
 import type {
@@ -48,6 +49,7 @@ export function createMcpOpenApiApp(
       grpcAddress: options.grpcAddress,
       toolCount: catalog.tools.length,
       fetchedAt: catalog.fetchedAt,
+      surfaces: ["openapi", "graphql", "grpc"],
     });
   });
 
@@ -73,6 +75,14 @@ export function createMcpOpenApiApp(
 
   app.get("/docs", (_req, res) => {
     res.type("html").send(swaggerDocsHtml(options.title ?? "MCP OpenAPI Gateway"));
+  });
+
+  // Register before `/:toolName` so GraphQL is not captured as a tool route.
+  attachGraphqlRoutes(app, {
+    grpcAddress: options.grpcAddress,
+    protocolVersion: options.protocolVersion,
+    getCatalog: options.getCatalog,
+    title: options.title,
   });
 
   app.post("/:toolName", async (req, res) => {

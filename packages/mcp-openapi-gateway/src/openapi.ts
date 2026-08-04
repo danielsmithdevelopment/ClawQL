@@ -133,7 +133,8 @@ export function buildOpenApiDocument(options: BuildOpenApiOptions): Record<strin
       title: options.title ?? "MCP tools (OpenAPI on-ramp)",
       version: "0.1.0",
       description:
-        "REST facade over MCP tools. Prefer gRPC CallTool for production, mesh, and large payloads. " +
+        "REST facade over MCP tools. GraphQL on-ramp at /graphql (GraphiQL at /graphiql). " +
+        "Prefer gRPC CallTool for production, mesh, and large payloads. " +
         "Powered by mcp-grpc-transport — the production TypeScript gRPC transport for MCP.",
       "x-clawql-grpc": {
         service: "model_context_protocol.Mcp",
@@ -146,6 +147,12 @@ export function buildOpenApiDocument(options: BuildOpenApiOptions): Record<strin
         reflectionEnv: "ENABLE_GRPC_REFLECTION=1",
         largePayloadNote:
           "Prefer gRPC CallTool over Streamable HTTP / this OpenAPI on-ramp for large tool arguments (e.g. base64 documents).",
+      },
+      "x-clawql-graphql": {
+        endpoint: "/graphql",
+        graphiql: "/graphiql",
+        schema: "/graphql/schema.graphql",
+        note: "Per-tool mutations + callTool(name, args); same gRPC CallTool backend.",
       },
     },
     servers: options.publicBaseUrl

@@ -1,7 +1,7 @@
 {
   "name": "mcp-openapi-gateway",
-  "version": "0.1.0",
-  "description": "OpenAPI on-ramp for MCP tools — POST /{toolName} + Swagger, forwarding into gRPC CallTool via mcp-grpc-transport",
+  "version": "0.2.0",
+  "description": "OpenAPI + GraphQL on-ramp for MCP tools — POST /{toolName}, /graphql, Swagger/GraphiQL — forwarding into gRPC CallTool via mcp-grpc-transport",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -25,6 +25,7 @@
     "mcp",
     "model-context-protocol",
     "openapi",
+    "graphql",
     "grpc",
     "gateway",
     "clawql"
@@ -44,6 +45,7 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.14.4",
     "express": "^5.2.1",
+    "graphql": "^16.14.0",
     "mcp-grpc-transport": "1.0.0"
   },
   "devDependencies": {

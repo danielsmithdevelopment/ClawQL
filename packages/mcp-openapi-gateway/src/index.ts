@@ -4,6 +4,8 @@
 
 export { startMcpOpenApiGateway, createMcpOpenApiApp } from "./server.js";
 export { buildOpenApiDocument } from "./openapi.js";
+export { buildGraphqlSchemaFromCatalog, toolArgsFromInputSchema } from "./graphql-schema.js";
+export { attachGraphqlRoutes } from "./graphql-http.js";
 export { fetchToolCatalog } from "./catalog.js";
 export { callToolViaGrpc, collapseCallToolMessages, httpBodyFromCollapsed } from "./call.js";
 export {

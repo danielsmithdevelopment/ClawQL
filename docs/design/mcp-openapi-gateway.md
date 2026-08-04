@@ -1,6 +1,6 @@
 # MCP OpenAPI Gateway — technical design
 
-**Status:** 🚧 MVP implemented (`mcp-openapi-gateway@0.1.0`) — design + package + example demos  
+**Status:** 🚧 MVP implemented (`mcp-openapi-gateway@0.2.0`) — OpenAPI + GraphQL on-ramps over gRPC  
 **Date:** 2026-08-04  
 **Package:** `mcp-openapi-gateway` (npm; workspace `packages/mcp-openapi-gateway`)  
 **Depends on:** [`mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md) **1.0.0+**  
@@ -14,14 +14,14 @@
 Build a **thin TypeScript OpenAPI on-ramp** that turns any MCP server’s tools into **named REST endpoints**, with **gRPC `CallTool` as the preferred backend**.
 
 ```text
-OpenAPI clients / Workers / OpenWebUI
+OpenAPI / GraphQL clients / Workers / OpenWebUI
         │
         ▼
   mcp-openapi-gateway
-   GET  /openapi.json
-   GET  /docs
-   GET  /tools
+   GET  /openapi.json · /docs
    POST /{toolName}
+   POST /graphql · GET /graphiql · GET /graphql/schema.graphql
+   GET  /tools
         │
         ▼  (preferred)
   model_context_protocol.Mcp/CallTool   ← mcp-grpc-transport
@@ -151,13 +151,16 @@ POST /memory_recall  { "query": "…", "limit": 8 }
 
 ## 6. HTTP surface (v1 contract)
 
-| Method | Path            | Behavior                                                                     |
-| ------ | --------------- | ---------------------------------------------------------------------------- |
-| `GET`  | `/healthz`      | Liveness; include upstream gRPC reachability when cheap                      |
-| `GET`  | `/tools`        | Raw tool list: `name`, `description`, `inputSchema`, optional `outputSchema` |
-| `GET`  | `/openapi.json` | OpenAPI **3.1** generated from catalog                                       |
-| `GET`  | `/docs`         | Swagger UI (or Scalar) pointed at `/openapi.json`                            |
-| `POST` | `/{toolName}`   | JSON body = tool arguments; response = tool result JSON                      |
+| Method | Path | Behavior |
+| ------ | ---- | -------- |
+| `GET` | `/healthz` | Liveness; include upstream gRPC reachability when cheap |
+| `GET` | `/tools` | Raw tool list: `name`, `description`, `inputSchema`, optional `outputSchema` |
+| `GET` | `/openapi.json` | OpenAPI **3.1** generated from catalog |
+| `GET` | `/docs` | Swagger UI (or Scalar) pointed at `/openapi.json` |
+| `POST` | `/{toolName}` | JSON body = tool arguments; response = tool result JSON |
+| `POST` | `/graphql` | GraphQL endpoint (per-tool mutations + `callTool`) |
+| `GET` | `/graphiql` | GraphiQL IDE |
+| `GET` | `/graphql/schema.graphql` | Printed SDL |
 
 **Auth (v1):** optional shared API key (`Authorization: Bearer …` or `X-API-Key`), matching mcpo’s practical edge. Pass-through of upstream gRPC metadata (`Authorization`, `mcp-protocol-version`) must be configurable. Do **not** bypass ClawQL / Panguard policy: the facade must call the same tool surface the MCP client would (gRPC into the already-gated server).
 
@@ -275,13 +278,14 @@ npx mcp-openapi-gateway \
 
 ### Phase 1 — MVP package
 
-1. [x] Workspace package + CLI
-2. [x] gRPC `ListTools` introspection + in-memory catalog (`listToolsUnaryGrpc`)
-3. [x] JSON Schema → OpenAPI path generation (happy path + fixture tests)
-4. [x] `POST /{toolName}` → `CallTool` (unary collapse)
-5. [x] `/openapi.json`, `/docs`, `/tools`, `/healthz`
-6. [x] `x-clawql-grpc` extensions
-7. [x] Example server + REST/gRPC demos (`examples/mcp-openapi-gateway/`)
+1. [x] Workspace package + CLI  
+2. [x] gRPC `ListTools` introspection + in-memory catalog (`listToolsUnaryGrpc`)  
+3. [x] JSON Schema → OpenAPI path generation (happy path + fixture tests)  
+4. [x] `POST /{toolName}` → `CallTool` (unary collapse)  
+5. [x] `/openapi.json`, `/docs`, `/tools`, `/healthz`  
+6. [x] `x-clawql-grpc` extensions  
+7. [x] Example server + REST/gRPC demos (`examples/mcp-openapi-gateway/`)  
+8. [x] GraphQL on-ramp (`/graphql`, GraphiQL, per-tool mutations) + triple-surface demos
 
 ### Phase 2 — Hardening
 
