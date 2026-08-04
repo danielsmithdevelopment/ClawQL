@@ -105,11 +105,11 @@ export function InferenceGtmPlaybook() {
             ))}
           </div>
 
-          <h2 id="executive-summary">Executive summary: the strategic reframe</h2>
+          <h2 id="executive-summary">01 Executive summary</h2>
           <p>
             ClawQL’s GTM motion has evolved from a broad platform pitch to a focused, adoption-led strategy. The Agentic
             Gateway is the Foundational Platform for Auditable Production AI — realized as a Zero-Trust Agentic Fabric:
-            Regional Hubs for multi-tenant routing and billing, Dedicated Virtual Gateways for isolated policy and
+            multi-tenant Regional Hubs for routing and billing, Dedicated Virtual Gateways for isolated policy and
             event-driven swarm coordination, and Edge Gateways on every engineer laptop for local execution in the mesh.
           </p>
           <Callout>
@@ -119,47 +119,34 @@ export function InferenceGtmPlaybook() {
             Developers land with an OpenAI-compatible inference control plane and native <code>/mcp</code> access, then
             expand product-led into persistent memory, the fine-tuning Flywheel, Dedicated Virtual Gateway governance
             (NATS JetStream + Valkey), and a fleet of Edge Gateways that turn the company into a distributed agentic
-            swarm. This three-minute install is the beginning of an expansion path that evolves a developer’s workflow
-            into a fully compliant, production-grade agentic fabric.
+            swarm.
           </p>
           <p>
-            The Agentic Gateway is not merely a proxy; it is the infrastructure core that solves the “Agent Sprawl”
-            problem. It integrates HTTP/REST inference routing and MCP tool-calling into one binary, creating a single
-            surface for policy enforcement, audit logging, and state management — then scales into Regional Hubs,
+            The Agentic Gateway integrates HTTP/REST inference routing and MCP tool-calling into one binary, creating a
+            single surface for policy enforcement, audit logging, and state management — then scales into Regional Hubs,
             Dedicated Virtual Gateways, and Edge nodes without changing the developer’s entry point.
           </p>
 
-          <h3>The architecture question that defines our market leadership</h3>
-          <p>How many inference gateways provide the foundational platform requirements for Auditable Production AI?</p>
+          <h3>What no other inference gateway provides</h3>
           <ul>
             <li>
-              <strong>Architectural governance:</strong> Dedicated Virtual Gateways as Audit-Trail Enforcement Points —
-              isolated policy, WORM-auditable trails, and NATS JetStream + Valkey for event-driven swarm workflows —
-              federated across regions when customers choose, never as a single global master.
+              Dedicated Virtual Gateways as Audit-Trail Enforcement Points with isolated policy, WORM-auditable trails,
+              and NATS JetStream + Valkey for event-driven swarm workflows — federated across regions when customers
+              choose, never as a single global master.
+            </li>
+            <li>Built-in persistent cross-session memory.</li>
+            <li>
+              An IDP document processing pipeline that feeds the same semantic search layer as the inference gateway.
             </li>
             <li>
-              <strong>Stateful intelligence:</strong> Built-in persistent, cross-session memory that survives restarts.
+              A fine-tuning Flywheel that turns production traffic into proprietary models with verifiable supply-chain
+              integrity.
             </li>
-            <li>
-              <strong>Integrated pipeline:</strong> An IDP document processing pipeline that feeds the same semantic
-              search layer as the inference gateway.
-            </li>
-            <li>
-              <strong>Model provenance:</strong> A fine-tuning Flywheel that turns production traffic into proprietary
-              models, backed by verifiable supply-chain integrity.
-            </li>
-            <li>
-              <strong>Agentic economics:</strong> Native payment rails (Stripe + x402 + MPP) to monetize tools and
-              agents directly at the gateway layer.
-            </li>
+            <li>Native payment rails at the gateway layer.</li>
           </ul>
-          <p>
-            The answer is zero. The Agentic Gateway is the entry point. The Foundational Platform is what makes it the
-            standard for production-grade, auditable AI.
-          </p>
 
-          <h2 id="two-entry-points">The two entry points</h2>
-          <h3>Entry point 1: Inference gateway (OpenAI drop-in)</h3>
+          <h2 id="two-entry-points">02 The two entry points</h2>
+          <h3>Entry Point 1: Inference Gateway (OpenAI Drop-in)</h3>
           <p>For any developer currently using OpenAI, Anthropic, Groq, Together, or Ollama:</p>
           <pre>
             <code>{`npx clawql-inference
@@ -168,44 +155,31 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
           </pre>
           <p>
             This developer is immediately inside ClawQL’s ecosystem. Their inference calls hit the WORM call store. The
-            12-layer efficiency stack begins working. The PAL routing ladder starts building data on which tier each
-            task type needs. The Intelligence Flywheel begins accumulating training signal.
+            12-layer efficiency stack begins working. PAL routing starts building data on which tier each task type
+            needs. The Intelligence Flywheel accumulates training signal.
           </p>
           <p>
-            They haven’t changed a line of application code. They haven’t evaluated a pitch deck. They just made their
-            existing setup better.
+            They haven’t changed a line of application code. They haven’t evaluated a pitch deck.
           </p>
 
-          <h3>Entry point 2: MCP server (IDE-native)</h3>
+          <h3>Entry Point 2: MCP Server (IDE-Native)</h3>
           <p>
-            For any developer using Cursor, Claude Code, or Codex who wants to connect to local or private APIs without
-            routing inference through ClawQL at all:
+            For any developer using Cursor, Claude Code, or Codex who wants to connect to local or private APIs:
           </p>
           <pre>
             <code>{`clawql inference serve --port 8080
 # In Cursor MCP settings:
-# URL: http://localhost:8080/mcp
-# That's it.`}</code>
+# URL: http://localhost:8080/mcp`}</code>
           </pre>
           <p>
             The Agentic Gateway exposes <code>/mcp</code> alongside <code>/v1/chat/completions</code>. The IDE connects
-            via MCP protocol. The developer immediately gets:
+            via MCP protocol. The developer immediately gets ClawQL’s full tool catalog (search + execute across any
+            configured API), vault memory across sessions, document pipeline tools if IDP is enabled, WORM audit on every
+            tool invocation, and Seatbelt containment via <code>clawql sandbox init</code>.
           </p>
-          <ul>
-            <li>ClawQL’s full tool catalog (search + execute across any configured API)</li>
-            <li>
-              Vault memory (<code>memory_ingest</code> + <code>memory_recall</code> across sessions)
-            </li>
-            <li>Document pipeline tools if IDP is enabled</li>
-            <li>WORM audit trail on every tool invocation</li>
-            <li>
-              Seatbelt containment via <code>clawql sandbox init</code>
-            </li>
-          </ul>
           <p>
-            This is the original MCP-first deployment plan, now unified in the Agentic Gateway. The same binary handles
-            both. The Edge Agentic Gateway on a laptop <em>is</em> the locally hosted MCP server. They are not two
-            separate products — they are two protocols exposed by one Foundational Platform.
+            The same binary handles both protocols. The Edge Agentic Gateway on a laptop is the locally hosted MCP server.
+            They are not two separate products.
           </p>
           <Callout>
             A developer who starts with the MCP entry point and never routes inference through ClawQL is still building
@@ -213,11 +187,10 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
             inference routing, token efficiency, or the fine-tuning flywheel, they’re already inside the ecosystem.
           </Callout>
 
-          <h2 id="expansion-ladder">The expansion ladder toward Auditable Production AI</h2>
+          <h2 id="expansion-ladder">03 The expansion ladder</h2>
           <p>
-            Every ClawQL user starts on one of the two entry points. The expansion path is product-led — each stage is
-            an evolution toward Auditable Production AI. No sales motion required until the Virtual Gateway conversation
-            (the Audit-Trail Enforcement Point).
+            Every ClawQL user starts on one of the two entry points. The expansion path is product-led. No sales motion
+            is required until the Virtual Gateway conversation.
           </p>
 
           <h3>Week 1: Production visibility</h3>
@@ -291,17 +264,11 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
             up that model asset and starting training-data accumulation from scratch.
           </Callout>
 
-          <h3>Month 3: Stateful intelligence — memory across sessions</h3>
+          <h3>Month 3: Memory across sessions</h3>
           <p>
-            The developer enables persistent memory across their team. <code>memory_ingest</code> starts capturing
-            architectural decisions, debugging context, and runbook notes. <code>memory_recall</code> retrieves them in
-            new sessions without anyone having to paste context — stateful intelligence required for production agents
-            that must remain continuous and reviewable.
-          </p>
-          <p>
-            This is available on the Developer tier ($29/mo) but it changes how the team works. Context that was
-            previously lost between sessions now persists. Agents stop asking “what were we doing?” and start asking
-            “what happened since last time?”
+            The developer enables persistent memory across their team. <code>memory_ingest</code> captures architectural
+            decisions, debugging context, and runbook notes. <code>memory_recall</code> retrieves them in new sessions.
+            Context that was previously lost now persists. Agents stop asking “what were we doing?”
           </p>
 
           <h3>Month 4–6: Audit-trail enforcement — Dedicated Virtual Gateway</h3>
@@ -341,17 +308,16 @@ clawql sources add https://your-nextcloud-instance/api
           </p>
           <Callout>
             This is the IDP sale completing itself. The developer didn’t evaluate an IDP platform. They evaluated an
-            inference gateway, expanded to memory, and eventually discovered documents could flow through the same
-            system they were already using. The IDP is an upsell from trust, not a standalone evaluation.
+            inference gateway, expanded to memory, and eventually discovered documents could flow through the same system
+            they were already using.
           </Callout>
 
-          <h2 id="security-dossier">Hardened Security Dossier — technical verification by expansion stage</h2>
+          <h2 id="security-dossier">04 Hardened Security Dossier</h2>
           <p>
-            Enterprise buyers and CISOs do not buy abstract security claims. They buy architectures they can verify. The{' '}
+            Enterprise buyers and CISOs buy architectures they can verify. The{' '}
             <Link href={pv.origin}>PragmaticVectors</Link> library — especially the{' '}
             <Link href={pv.series}>Hardened Agentic Stack</Link> series — is the proof-of-competence dossier for every
-            stage of the expansion ladder. When a buyer asks “how do you secure this?”, the answer is a published
-            engineering standard, not a marketing slide.
+            stage of the expansion ladder.
           </p>
           <ScrollTable>
             <table>
@@ -359,7 +325,7 @@ clawql sources add https://your-nextcloud-instance/api
                 <tr>
                   <th>Expansion stage</th>
                   <th>Business outcome</th>
-                  <th>Technical verification (whitepaper)</th>
+                  <th>Technical verification</th>
                 </tr>
               </thead>
               <tbody>
@@ -431,7 +397,7 @@ clawql sources add https://your-nextcloud-instance/api
             intellectual as much as it is technical.
           </Callout>
 
-          <h2 id="agentic-fabric">Zero-Trust Agentic Fabric — the enterprise architecture</h2>
+          <h2 id="agentic-fabric">05 Zero-Trust Agentic Fabric</h2>
           <p>
             ClawQL’s Foundational Platform is not a single global proxy. It is a{' '}
             <strong>Zero-Trust Agentic Fabric</strong> — the distributed agentic operating system for Auditable
@@ -646,19 +612,12 @@ clawql sources add https://your-nextcloud-instance/api
               handle multi-tenant routing and billing.
             </li>
             <li>
-              <strong>CISO:</strong> Policy and WORM stay in your audit boundary. Regional Hubs see billing/routing
-              signals — not private enforcement contents. “Verify us, don’t trust us.”
+              <strong>CISO:</strong> Policy and WORM stay in your audit boundary. Regional Hubs see billing and routing
+              signals — not private enforcement contents. Verify us, don’t trust us.
             </li>
           </ul>
 
-          <h3>Sovereign Execution Environment — safety switches</h3>
-          <p>
-            Kill switches are runtime primitives: mTLS identity + <Link href={pv.toolSandbox}>Kata / sandbox</Link> +{' '}
-            <Link href={pv.processContainment}>Tetragon / eBPF</Link> + Falco + VG WORM. Essay map:{' '}
-            <Link href="#security-dossier">Hardened Security Dossier</Link>.
-          </p>
-
-          <h2 id="sales-objections">Sales quick reference — competitive objections</h2>
+          <h2 id="sales-objections">06 Sales quick reference</h2>
           <ScrollTable>
             <table>
               <thead>
@@ -701,7 +660,7 @@ clawql sources add https://your-nextcloud-instance/api
             </table>
           </ScrollTable>
 
-          <h2 id="why-nobody-else">Why nobody else can run this playbook</h2>
+          <h2 id="why-nobody-else">07 Why nobody else can run this playbook</h2>
           <p>
             The expansion ladder works because ClawQL’s stack is genuinely integrated. Each layer feeds the next. Trying
             to replicate this with point solutions fails at every transition.
@@ -725,18 +684,18 @@ clawql sources add https://your-nextcloud-instance/api
               pipeline.
             </li>
             <li>
-              <strong>Any layer → Payments:</strong> <code>clawql-payments</code> can gate tool calls, APIs, documents,
-              or VDR links behind Stripe, x402, MPP, ACP, or AP2. Payment is integrated at the MCP layer via the
-              McpProxyPipeline (X402EnforcementService, EntitlementService, AuditService).
+              <strong>Any layer → Payments:</strong> <code>clawql-payments</code> gates tool calls, APIs, documents, or
+              VDR links behind Stripe, x402, MPP, ACP, or AP2. Payment is integrated at the MCP layer via the{' '}
+              <code>McpProxyPipeline</code>.
             </li>
           </ul>
 
-          <h3>Competitive table — upsell from inference</h3>
+          <h3>Competitive table</h3>
           <ScrollTable>
             <table>
               <thead>
                 <tr>
-                  <th>Upsell from inference</th>
+                  <th>Capability</th>
                   <th>OpenRouter</th>
                   <th>LiteLLM</th>
                   <th>Portkey</th>
@@ -841,7 +800,7 @@ clawql sources add https://your-nextcloud-instance/api
             same integrated stack.
           </p>
 
-          <h2 id="pricing">The pricing model reinforces the strategy</h2>
+          <h2 id="pricing">08 Pricing reinforces the strategy</h2>
           <ul>
             <li>
               <strong>Self-hosted (Apache 2.0, free forever):</strong> Full feature set, no license fee — evaluation
@@ -867,7 +826,7 @@ clawql sources add https://your-nextcloud-instance/api
             frictionless because it’s an upgrade, not a replacement.
           </Callout>
 
-          <h2 id="segments">Target segments through the inference-first lens</h2>
+          <h2 id="segments">09 Target segments</h2>
 
           <h3>Segment 1: Developers currently on LiteLLM</h3>
           <p>
@@ -969,7 +928,7 @@ clawql sources add https://your-nextcloud-instance/api
             Virtual Gateway governance in Phase 2. IDP and full platform in Phase 3.
           </p>
 
-          <h2 id="moat">The competitive moat at each expansion stage</h2>
+          <h2 id="moat">10 Moat at each stage</h2>
           <p>
             Each stage deepens switching cost in a way competitors can’t replicate without rebuilding their entire
             stack.
@@ -1034,7 +993,7 @@ clawql sources add https://your-nextcloud-instance/api
             functionally impossible for any rational buyer.
           </p>
 
-          <h2 id="inference-optional">The “inference-optional” MCP path</h2>
+          <h2 id="inference-optional">11 The inference-optional MCP path</h2>
           <p>ClawQL is genuinely useful to developers who never want to route inference through it.</p>
           <p>
             A developer who uses Claude Code as their IDE agent but has a fleet of private internal APIs has a problem
@@ -1054,7 +1013,7 @@ clawql sources add https://your-nextcloud-instance/api
             platform.
           </Callout>
 
-          <h2 id="execution">GTM execution plan</h2>
+          <h2 id="execution">12 GTM execution plan</h2>
 
           <h3>Phase 1: Developer acquisition (months 1–6)</h3>
           <p>
@@ -1151,7 +1110,7 @@ clawql sources add https://your-nextcloud-instance/api
             federation deals
           </p>
 
-          <h2 id="positioning">One-sentence positioning for each entry point</h2>
+          <h2 id="positioning">13 One-sentence positioning</h2>
           <ScrollTable>
             <table>
               <thead>
@@ -1172,16 +1131,15 @@ clawql sources add https://your-nextcloud-instance/api
                 <tr>
                   <td>MCP server</td>
                   <td>
-                    The Foundational Platform for your IDE — one Agentic Gateway gives Cursor and Claude Code governed
-                    access to every private API you own, with persistent memory, full audit trails, and a clear path to
-                    production-grade governance.
+                    One Agentic Gateway gives Cursor and Claude Code governed access to every private API you own, with
+                    persistent memory, full audit trails, and a clear path to production-grade governance.
                   </td>
                 </tr>
                 <tr>
                   <td>executor.sh replacement</td>
                   <td>
                     Everything executor.sh provides, plus persistent memory, semantic search, 12-layer token efficiency,
-                    and a zero-meter execution model — providing a lower total cost of ownership for production agents.
+                    and a zero-meter execution model.
                   </td>
                 </tr>
                 <tr>
@@ -1221,23 +1179,6 @@ clawql sources add https://your-nextcloud-instance/api
             Vision line for executive briefings: Most AI platforms are individual tools. ClawQL is the operating system
             the tools run on — Auditable Production AI at organizational scale.
           </Callout>
-
-          <h2 id="summary">Summary: the Agentic Gateway as Foundational Platform</h2>
-          <p>
-            ClawQL is not an inference gateway that happens to have an MCP server, or an MCP server that happens to have
-            an inference gateway. It is an <strong>Agentic Gateway</strong> — the Foundational Platform for Auditable
-            Production AI, delivered as a Zero-Trust Agentic Fabric. One binary speaks both HTTP/REST for inference and
-            MCP for IDE-native tool access, with memory, audit, payments, and governance integrated at the transport
-            layer — then scales across Regional Hubs, Dedicated Virtual Gateways, and Edge swarm nodes.
-          </p>
-          <p>
-            Developers start on multi-tenant Regional Hubs. Enterprises graduate to Dedicated Virtual Gateways —
-            isolated policy, WORM, and NATS JetStream + Valkey for event-driven swarm intelligence — while usage and
-            billing still flow through the Regional plane. Edge Gateways on every laptop make the fabric a distributed
-            agentic operating system: offline-first locally, online-governed through mTLS sync. The same architecture,
-            the same upgrade path — from three-minute install to regulated production swarm.
-          </p>
-          <Callout>Start with three minutes. End with Auditable Production AI on a Zero-Trust Agentic Fabric.</Callout>
 
           <p className="mt-10 text-xs text-mist-500">
             July 2026 · ClawQL ·{' '}

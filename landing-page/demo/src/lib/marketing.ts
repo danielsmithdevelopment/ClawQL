@@ -56,7 +56,7 @@ export const mcpToolTiers = {
     tools: [
       {
         name: 'search',
-        help: 'Rank thousands of API operations by natural-language intent. Specs stay server-side — agents get operation IDs and parameter hints, not megabytes of YAML.',
+        help: 'Rank thousands of API operations by natural-language intent. Specs stay server-side; agents get operation IDs and parameter hints.',
       },
       {
         name: 'execute',
@@ -82,7 +82,7 @@ export const mcpToolTiers = {
       },
       {
         name: 'memory_recall',
-        help: 'Keyword search, wikilink graph hops, optional vector KNN. Agents pull institutional knowledge instead of re-asking the same questions.',
+        help: 'Keyword search, wikilink graph hops, optional vector KNN. Agents pull institutional knowledge rather than re-asking the same questions.',
       },
       {
         name: 'ingest_external_knowledge',
@@ -90,7 +90,7 @@ export const mcpToolTiers = {
       },
       {
         name: 'knowledge_search_onyx',
-        help: 'Hybrid enterprise search over your Onyx index. Ground agent answers in indexed documents, not model guesswork.',
+        help: 'Hybrid enterprise search over your Onyx index. Ground agent answers in indexed documents.',
       },
     ],
   },
@@ -130,7 +130,7 @@ export const mcpToolTiers = {
       },
       {
         name: 'extract_document',
-        help: 'Schema-grounded LangExtract fields with char_interval provenance — grounded extraction, not free-form hallucination.',
+        help: 'Schema-grounded LangExtract fields with char_interval provenance — grounded extraction with measurable confidence.',
       },
       {
         name: 'hitl_enqueue_label_studio',

@@ -51,7 +51,7 @@ export default function Page() {
 
       <CallToActionSimpleCentered
         id="cta"
-        headline="Close the document loop. Expand to the platform later."
+        headline="Land with pipeline, VDR, and auditability at a price incumbents cannot match."
         subheadline={
           <p>
             Land with pipeline + VDR + auditability at a price incumbents cannot match. When buyers are ready, the same

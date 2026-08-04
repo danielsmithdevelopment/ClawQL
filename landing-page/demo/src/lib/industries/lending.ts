@@ -3,20 +3,18 @@ import type { Industry } from './types'
 export const lendingIndustry: Industry = {
   slug: 'lending',
   name: 'Lending',
-  headline: 'Agent-native lending and mortgage operations.',
+  headline: 'Agent-native lending and mortgage operations',
   subheadline:
-    'ClawQL’s lending vertical (clawql-lending) composes the IDP pipeline, vault memory, HITL review, and workflow automation for loan origination — W-2s, bank statements, and underwriting packages without pasting specs or losing audit trails.',
+    'ClawQL’s lending vertical (clawql-lending) composes the IDP pipeline, vault memory, HITL review, and workflow automation for loan origination: W-2s, bank statements, and underwriting packages with structured audit trails throughout.',
   packageName: 'clawql-lending',
   status: 'partial',
-  statusLabel: 'W-2 + HITL available · full LOS shipping with vertical package',
-  productionReference:
-    'ClawQL powers vertical lending products like See The Greens LOS — a mortgage-first loan origination system built on the same IDP, vault, and HITL stack documented here.',
+  statusLabel: 'Partial — samples shipping',
   overview:
-    'Mortgage, auto, BNPL, payday, and commercial lending share the same document-heavy intake problem: borrowers submit heterogeneous PDFs, underwriters re-ask for the same conditions, and API integrations sprawl across LOS, credit, and document vendors. Modularization v2.1 defines clawql-lending as five sub-verticals on one Agentic Gateway — MortgagePlugin, AutoPlugin, BNPLPlugin, PaydayPlugin, and CommercialPlugin — plus shared UnderwritingPlugin and CompliancePlugin for Reg Z, ECOA, and fair-lending guardrails. Today you can run the lending Docker Compose stack and the shipped W-2 reference pack; full LOS tool registration ships with the vertical package.',
+    'Mortgage, auto, BNPL, payday, and commercial lending share the same document-heavy intake problem: borrowers submit heterogeneous PDFs, underwriters re-ask for the same conditions, and API integrations sprawl across LOS, credit, and document vendors. Modularization v2.1 defines clawql-lending as five sub-verticals on one gateway — MortgagePlugin, AutoPlugin, BNPLPlugin, PaydayPlugin, and CommercialPlugin — plus shared UnderwritingPlugin and CompliancePlugin for Reg Z, ECOA, and fair-lending guardrails. Today you can run the lending Docker Compose stack and the shipped W-2 reference pack; full LOS tool registration ships with the vertical package.',
   painPoints: [
     {
       title: 'Spec dumps burn planning tokens',
-      body: 'Credit bureau, GSE, and LOS OpenAPI surfaces are enormous. Pasting them into agent prompts is expensive and brittle. search returns ranked operationIds; execute validates args server-side.',
+      body: 'Credit bureau, GSE, and LOS OpenAPI surfaces are enormous. search returns ranked operationIds; execute validates args server-side — so the spec stays in the MCP server, not the prompt.',
     },
     {
       title: 'Context dies between underwriting sessions',
@@ -38,7 +36,7 @@ export const lendingIndustry: Industry = {
     { name: 'gse_validate', description: 'Validate loan data against agency guidelines indexed in Onyx.' },
     { name: 'condition_clear', description: 'Record and recall underwriting conditions with vault threading.' },
     { name: 'pii_redact', description: 'Strip borrower PII before documents enter search indexes.' },
-    { name: 'loan_archive', description: 'Tag and archive loan packages in the ClawQL Archive Layer or Paperless-ngx on self-hosted stacks.' },
+    { name: 'loan_archive', description: 'Tag and archive loan packages in Paperless or the native archive layer.' },
     { name: 'bnpl_decision / fraud_check', description: 'Sub-second decision loops for BNPL with Cuckoo dedup on doc batches.' },
   ],
   documentTypes: [
@@ -55,7 +53,7 @@ export const lendingIndustry: Industry = {
     },
     {
       title: 'Underwriting memory across sessions',
-      body: 'memory_recall surfaces prior borrower conditions, cleared stipulations, and vendor analysis — underwriters do not re-derive context every time a loan file reopens in a new agent thread.',
+      body: 'memory_recall surfaces prior borrower conditions, cleared stipulations, and vendor analysis so underwriters pick up where the prior session left off whenever a loan file reopens in a new agent thread.',
     },
     {
       title: 'Multi-product LOS coverage',
@@ -82,11 +80,11 @@ export const lendingIndustry: Industry = {
     {
       title: 'Argo suspend / resume for underwriting HITL',
       summary: 'Production-style workflow template with explicit suspend step.',
-      body: 'workflow submits clawql-lending-w2-ingest; operators resume after Label Studio without losing pipeline state.',
+      body: 'workflow submits clawql-lending-w2-ingest; operators resume after Label Studio while pipeline state is preserved in Argo.',
       tools: ['workflow', 'hitl_enqueue_label_studio', 'memory_recall'],
       steps: [
         { label: 'Submit workflow', detail: 'workflow operation submits WorkflowTemplate clawql-lending-w2-ingest with confidence_threshold parameter.' },
-        { label: 'Suspend', detail: 'Template hits suspend when classify confidence < threshold — file waits in Argo, not in chat context.' },
+        { label: 'Suspend', detail: 'Template hits suspend when classify confidence < threshold; the file waits in Argo rather than blocking chat context.' },
         { label: 'Human review', detail: 'Underwriter completes Label Studio task; webhook validates CLAWQL_HITL_WEBHOOK_TOKEN.' },
         { label: 'Resume', detail: 'workflow resume continues to finalize step; audit captures correlation_id for the loan.' },
       ],
@@ -131,5 +129,5 @@ export const lendingIndustry: Industry = {
   ],
   docsHref: 'https://docs.clawql.com/vision/modularization',
   disclaimer:
-    'Lending compose stacks and W-2 samples use synthetic data only — not tax, legal, or underwriting advice. Train tenant-specific classifiers before production.',
+    'Lending compose stacks and W-2 samples use synthetic data only. Consult qualified legal, compliance, and underwriting professionals before production use.',
 }

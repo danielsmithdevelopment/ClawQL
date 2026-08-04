@@ -41,30 +41,20 @@ export function IdpGtmPlaybook() {
         </nav>
 
         <Document className="mx-auto w-full max-w-3xl">
-          <p>
-            This playbook defines ClawQL&apos;s <strong>IDP-first</strong> go-to-market motion: a standalone Intelligent
-            Document Processing platform for operations, compliance, legal, lending, and M&amp;A buyers — not a feature
-            footnote under inference. Default developer motion:{' '}
-            <Link href={site.urls.inferenceGtm}>inference-first GTM</Link>. Enterprise / sovereign motion:{' '}
-            <Link href={site.urls.enterpriseGtm}>enterprise GTM</Link>. Product ground truth:{' '}
-            <Link href={`${site.urls.docs}/vision/idp-platform`}>IDP platform docs</Link>.
-          </p>
-
           <Callout>
             Internal strategy + landing-page brief (July 2026). Do not distribute externally without review. Canonical
             markdown: <code>docs/vision/clawql-idp-gtm.md</code>.
           </Callout>
 
-          <h2 id="market-reality">Part 1 — The market reality that creates the opportunity</h2>
+          <h2 id="market-reality">Part 1 — The Market Reality</h2>
           <p>
             Gartner&apos;s first Magic Quadrant for Intelligent Document Processing (September 2025) named five Leaders
-            among 18 vendors. Extraction accuracy has converged (top platforms advertise 90–99% on common formats). The
-            traditional moat — &quot;our model is more accurate&quot; — is disappearing. The battleground is{' '}
-            <strong>integration depth</strong>, <strong>deployment model</strong>, and <strong>TCO</strong>. ClawQL wins
-            all three on verifiable numbers.
+            among 18 vendors. Extraction accuracy has converged — top platforms advertise 90–99% on common formats. The
+            traditional moat of &quot;our model is more accurate&quot; is disappearing. The battleground is integration
+            depth, deployment model, and TCO. ClawQL wins all three on verifiable numbers.
           </p>
 
-          <h3>The pricing chasm</h3>
+          <h3>The Pricing Chasm</h3>
           <ScrollTable>
             <table>
               <thead>
@@ -120,100 +110,89 @@ export function IdpGtmPlaybook() {
             </table>
           </ScrollTable>
           <p>
-            A team that would pay $150,000/year for ABBYY pays $3,588/year for ClawQL Starter — for a platform that does
-            more, deploys faster, and does not require a dedicated implementation team.
+            A team paying $150,000/year for ABBYY pays $3,588/year for ClawQL Starter — for a platform that does more,
+            deploys faster, and requires no dedicated implementation team.
           </p>
 
-          <h3>The integration gap no incumbent fills</h3>
+          <h3>The Integration Gap No Incumbent Fills</h3>
           <p>
             Incumbent IDP stops at extraction and delivery. Cross-referencing institutional knowledge, triggering
-            downstream APIs, Merkle-chained archive, and secure counterparty distribution are left for the team to
+            downstream APIs, Merkle-chained archiving, and secure counterparty distribution are left for the team to
             build. ClawQL runs ingestion through secure external distribution on one MCP endpoint. That integration is
             structural, not additive.
           </p>
 
-          <h3>Three buyer problems nobody is solving</h3>
-          <ol>
-            <li>
-              <strong>SaaS sprawl tax</strong> — 5–10 disconnected tools (OCR, PDF, DMS, search, VDR) with separate
-              billing, compliance postures, and breach surfaces.
-            </li>
-            <li>
-              <strong>Implementation tax</strong> — 3–12 months, dedicated PS teams, $20K–$150K on top of license fees.
-            </li>
-            <li>
-              <strong>Pipeline–VDR gap</strong> — Intralinks/Datasite charge $0.40–$0.85/page with no pipeline;
-              documents arrive via manual OCR → redact → archive → upload.
-            </li>
-          </ol>
+          <h3>Three Buyer Problems</h3>
+          <p>
+            <strong>SaaS sprawl.</strong> Five to ten disconnected tools (OCR, PDF, DMS, search, VDR) with separate
+            billing, compliance postures, and breach surfaces.
+          </p>
+          <p>
+            <strong>Implementation overhead.</strong> Three to twelve months, dedicated PS teams, $20K–$150K on top of
+            license fees.
+          </p>
+          <p>
+            <strong>Pipeline-to-VDR gap.</strong> Intralinks/Datasite charge $0.40–$0.85/page with no pipeline;
+            documents arrive via manual OCR → redact → archive → upload.
+          </p>
           <p>ClawQL closes all three simultaneously.</p>
 
-          <h2 id="honest-positioning">Part 2 — The honest positioning</h2>
-          <h3>What ClawQL IDP is</h3>
+          <h2 id="honest-positioning">Part 2 — The Honest Positioning</h2>
+          <h3>What ClawQL IDP Is</h3>
           <p>
-            A sovereign, modular IDP that closes the full document lifecycle in one system:{' '}
-            <strong>
-              Ingest → Classify → Convert → OCR → Redact → Archive → Semantically index → Distribute securely
-            </strong>
-            . Self-hosted (Apache 2.0, free forever) or managed hosted (Starter $299/mo). AI agents orchestrate via MCP
-            / natural language in Cursor or Claude Code — no custom integration code.
+            A sovereign, modular IDP that closes the full document lifecycle in one system: Ingest → Classify → Convert
+            → OCR → Redact → Archive → Semantically index → Distribute securely. Self-hosted (Apache 2.0, free forever)
+            or managed hosted (Starter $299/mo). AI agents orchestrate via MCP / natural language in Cursor or Claude
+            Code — no custom integration code.
           </p>
 
-          <h3>What ClawQL IDP is not</h3>
-          <ul>
-            <li>
-              <strong>Not</strong> a replacement for ABBYY/Hyperscience at millions-of-documents-per-month scale — those
-              buyers may need deeper vertical extraction models.
-            </li>
-            <li>
-              <strong>Not yet FedRAMP authorized</strong> — Tungsten Automation achieved FedRAMP High ATO (March 2026);
-              US federal procurement is out of scope today.
-            </li>
-            <li>
-              <strong>Not</strong> a forms-automation RPA platform — ClawQL uses AI agents, not UiPath-style RPA bots.
-            </li>
-          </ul>
+          <h3>Scope and Limitations</h3>
+          <p>
+            <strong>Millions-of-documents-per-month scale.</strong> Buyers at that volume may need deeper vertical
+            extraction models that ABBYY and Hyperscience carry.
+          </p>
+          <p>
+            <strong>US federal procurement.</strong> Tungsten Automation achieved FedRAMP High ATO (March 2026). US
+            federal procurement is out of scope for ClawQL today.
+          </p>
+          <p>
+            <strong>Forms-automation RPA.</strong> ClawQL uses AI agents, not UiPath-style RPA bots.
+          </p>
 
-          <h3>Claimable differentiators (now)</h3>
+          <h3>Claimable Differentiators (Now)</h3>
           <ol>
             <li>
-              <strong>Most affordable full-pipeline IDP with VDR</strong> — $299/mo, unlimited documents, no per-page
-              meter; VDR included.
+              Most affordable full-pipeline IDP with VDR — $299/mo, unlimited documents, no per-page meter; VDR
+              included.
             </li>
             <li>
-              <strong>Only IDP that is also an inference gateway and MCP server</strong> — expand without changing
-              endpoint or vendor.
+              The only IDP that is also an inference gateway and MCP server — expand without changing endpoint or
+              vendor.
             </li>
+            <li>Native MCP from any AI assistant — full pipeline via natural language.</li>
+            <li>Merkle audit trail per step — independently verifiable for regulated industries.</li>
+            <li>Self-hosted / air-gapped / data-sovereign — no document data must leave the environment.</li>
             <li>
-              <strong>Native MCP from any AI assistant</strong> — full pipeline via natural language.
-            </li>
-            <li>
-              <strong>Merkle audit trail per step</strong> — independently verifiable for regulated industries.
-            </li>
-            <li>
-              <strong>Self-hosted / air-gapped / data-sovereign</strong> — no document data must leave the environment.
-            </li>
-            <li>
-              <strong>Deploy in hours, not months</strong> —{' '}
+              Deploy in hours, not months —{' '}
               <code>helm install clawql charts/clawql-full-stack --namespace clawql</code>.
             </li>
           </ol>
-          <Callout>
+          <p>
             Avoid &quot;best IDP on the planet&quot; until earned. Prefer:{' '}
             <em>
               best IDP for teams that need pipeline integration, data sovereignty, agentic access, and price efficiency
             </em>
             .
-          </Callout>
+          </p>
 
-          <h2 id="gtm-motion">Part 3 — The standalone IDP GTM motion</h2>
+          <h2 id="gtm-motion">Part 3 — The Standalone IDP GTM Motion</h2>
           <p>
             The IDP buyer is often a VP of Ops, Legal Ops Manager, transaction coordinator, controller, or compliance
             officer — not a developer optimizing PAL routing. Lead with documents, cost, auditability, and time-to-value
             in their language.
           </p>
 
-          <h3>Entry points</h3>
+          <h3>Entry Points</h3>
           <ol>
             <li>
               <strong>SaaS replacement</strong> — one system vs 5–10 tools ($500–$5,000/mo current spend).
@@ -229,7 +208,7 @@ export function IdpGtmPlaybook() {
             </li>
           </ol>
 
-          <h3>Expansion ladder (documents → platform)</h3>
+          <h3>Expansion Ladder</h3>
           <ScrollTable>
             <table>
               <thead>
@@ -267,7 +246,7 @@ export function IdpGtmPlaybook() {
             </table>
           </ScrollTable>
 
-          <h3>Competitive table (sales)</h3>
+          <h3>Competitive Table</h3>
           <ScrollTable>
             <table>
               <thead>
@@ -375,36 +354,34 @@ export function IdpGtmPlaybook() {
             </table>
           </ScrollTable>
 
-          <h3>Objection handlers (short)</h3>
-          <ul>
-            <li>
-              <strong>Gartner MQ vendor:</strong> MQ validated the category; evaluate on your docs, timeline, TCO, and
-              whether the IDP stops at extraction.
-            </li>
-            <li>
-              <strong>Millions of docs/month:</strong> be honest — Hyperscience/Tungsten may fit; ClawQL targets
-              hundreds→tens of thousands/month with pipeline + sovereignty + cost.
-            </li>
-            <li>
-              <strong>FedRAMP:</strong> we do not have it; say so before evaluation.
-            </li>
-            <li>
-              <strong>Setup complexity:</strong> one Helm chart vs months of PS.
-            </li>
-            <li>
-              <strong>Already run Stirling/Paperless/Nextcloud:</strong> ClawQL is the orchestration + MCP + VDR loop on
-              top.
-            </li>
-          </ul>
-
-          <h2 id="landing-brief">Part 4 — clawql.com/idp landing page brief</h2>
+          <h3>Objection Handlers</h3>
           <p>
-            Convert an IDP buyer who has never heard of ClawQL. Answer &quot;Is this the document platform I&apos;ve
-            been looking for?&quot; in ~10 seconds; trial/demo in ~60. Do <strong>not</strong> lead with PAL, Flywheel,
-            WORM, or developer framing.
+            <strong>Gartner MQ vendor:</strong> MQ validated the category; evaluate on your docs, timeline, TCO, and
+            whether the IDP stops at extraction.
+          </p>
+          <p>
+            <strong>Millions of docs/month:</strong> be honest — Hyperscience/Tungsten may fit; ClawQL targets hundreds
+            to tens of thousands per month with pipeline + sovereignty + cost.
+          </p>
+          <p>
+            <strong>FedRAMP:</strong> we do not have it; say so before evaluation.
+          </p>
+          <p>
+            <strong>Setup complexity:</strong> one Helm chart vs months of PS.
+          </p>
+          <p>
+            <strong>Already running Stirling/Paperless/Nextcloud:</strong> ClawQL is the orchestration + MCP + VDR loop
+            on top.
           </p>
 
-          <h3>Above the fold (test both headlines)</h3>
+          <h2 id="landing-brief">Part 4 — clawql.com/idp Landing Page Brief</h2>
+          <p>
+            Convert an IDP buyer who has never heard of ClawQL. Answer &quot;Is this the document platform I&apos;ve
+            been looking for?&quot; in ~10 seconds; trial/demo in ~60. Do not lead with PAL, Flywheel, WORM, or
+            developer framing.
+          </p>
+
+          <h3>Above the Fold (Test Both Headlines)</h3>
           <ul>
             <li>
               <strong>A:</strong> Document processing that doesn&apos;t stop at extraction.
@@ -419,7 +396,7 @@ export function IdpGtmPlaybook() {
             Merkle per step.
           </p>
 
-          <h3>Build sections</h3>
+          <h3>Build Sections</h3>
           <ol>
             <li>Pipeline visual (Intake → Convert → Process → Archive → Distribute)</li>
             <li>Price comparison table (hard numbers)</li>
@@ -439,13 +416,13 @@ export function IdpGtmPlaybook() {
             <Link href={site.urls.idp}>
               <code>clawql.com/idp</code>
             </Link>
-            . This playbook remains the strategy source of truth at <code>/idp/gtm</code>.
+            . This playbook is the strategy source of truth at <code>/idp/gtm</code>.
           </p>
 
-          <h2 id="site-architecture">Part 5 — Site architecture</h2>
+          <h2 id="site-architecture">Part 5 — Site Architecture</h2>
           <p>
-            <strong>Recommendation: section of clawql.com, not a separate microsite</strong> — shared SEO, pricing,
-            docs, and trial; natural expansion into the broader platform.
+            Section of clawql.com, not a separate microsite — shared SEO, pricing, docs, and trial; natural expansion
+            into the broader platform.
           </p>
           <pre>
             <code>{`clawql.com/inference  → inference-first (developers)
@@ -453,23 +430,23 @@ clawql.com/idp        → IDP-first (ops / compliance)
 clawql.com/enterprise → sovereign / CISO-CTO motion`}</code>
           </pre>
 
-          <h2 id="revenue-motion">Part 6 — IDP-first as its own revenue motion</h2>
+          <h2 id="revenue-motion">Part 6 — IDP-First as Its Own Revenue Motion</h2>
           <p>
             Inference-first is PLG. IDP-first often hits budget owners already spending on SaaS — a cleaner
             &quot;replace my stack&quot; sale. Starter converters are budget-approved, problem-aware, and warm leads for
             Business / Professional and eventually inference + memory.
           </p>
-          <Callout>
-            ClawQL IDP is not &quot;the document plugin for ClawQL.&quot; It is a standalone IDP that competes with
-            ABBYY, Hyperscience, and Intralinks — and wins on price, speed, pipeline integration, and agentic access.
-          </Callout>
+          <p>
+            ClawQL IDP is a standalone IDP that competes with ABBYY, Hyperscience, and Intralinks on price, speed,
+            pipeline integration, and agentic access.
+          </p>
           <p>
             Funnel: PragmaticVectors essays → <code>clawql.com/idp</code> → docs. Planned essays: &quot;The $150,000
             Invoice&quot; and &quot;The Per-Page Trap.&quot;
           </p>
 
-          <h2 id="positioning-statement">Part 7 — Positioning statement (one paragraph)</h2>
-          <Callout>
+          <h2 id="positioning-statement">Part 7 — Positioning Statement</h2>
+          <p>
             ClawQL is the Intelligent Document Processing platform that closes the full document lifecycle — ingest,
             convert, OCR, redact, archive, semantic search, and secure distribution — in a single system, orchestrated
             by AI agents, with a cryptographic audit trail at every step. It deploys in hours, starts at $299/month
@@ -479,7 +456,7 @@ clawql.com/enterprise → sovereign / CISO-CTO motion`}</code>
             without custom integration code. For teams in lending, legal, real estate, healthcare, or M&amp;A who need
             document intelligence without a six-figure contract, a six-month implementation, or a per-page surprise on
             every invoice.
-          </Callout>
+          </p>
 
           <p className="mt-10 text-xs text-mist-500">
             July 2026 · ClawQL IDP GTM ·{' '}

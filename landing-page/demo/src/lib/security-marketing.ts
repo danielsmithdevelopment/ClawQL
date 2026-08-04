@@ -10,20 +10,20 @@ export const securityPillars = [
   {
     slug: 'admission',
     title: 'Admission enforcement',
-    body: 'The Helm chart defaults Kyverno verifyImages for clawql-mcp and clawql-website. Unsigned or unverified digests do not schedule — deployed ClawQL images tie back to the signed artifacts from CI, not ad-hoc kubectl.',
+    body: 'The Helm chart defaults Kyverno verifyImages for clawql-mcp and clawql-website. Unsigned or unverified digests are rejected before scheduling — deployed ClawQL images tie back to the signed artifacts from CI.',
     href: 'https://docs.clawql.com/security/defense-in-depth',
     linkLabel: 'Defense in depth',
   },
   {
     slug: 'agentic-ai',
     title: 'Built for agentic AI',
-    body: '32-module security curriculum from supply chain through runtime. Agentic Gateway ATR scoping limits what agents can do regardless of prompt injection; audit trails, sandbox isolation, and distroless images are documented for self-hosted k3s.',
+    body: '32-module security curriculum from supply chain through runtime. MCP gateway ATR scoping limits what agents can do regardless of prompt injection; audit trails, sandbox isolation, and distroless images are documented for self-hosted k3s.',
     href: 'https://docs.clawql.com/security/best-practices',
     linkLabel: '32-module curriculum',
   },
   {
     slug: 'verify-yourself',
-    title: 'Prove it yourself',
+    title: 'Reproduce it yourself',
     body: 'Security documentation is public: golden-image walkthroughs, deliverables matrix, npm supply-chain hardening, and cosign verify instructions. Operators and reviewers can reproduce CI gates — we document limits as clearly as controls.',
     href: 'https://docs.clawql.com/security',
     linkLabel: 'Full security hub',

@@ -24,10 +24,10 @@ export default function Page() {
         headline="ClawQL — the Agentic Gateway for Auditable Production AI"
         subheadline={
           <p>
-            ClawQL is not an agent framework — it does not reason or plan. It is the Foundational Platform where agents{' '}
-            <strong>search</strong> APIs, <strong>execute</strong> operations, <strong>recall</strong> vault knowledge,
-            <strong> ingest</strong> documents, and <strong>audit</strong> what happened — from multi-tenant Regional
-            Hubs to Dedicated Virtual Gateways and Edge Gateways on every laptop.
+            ClawQL is the Foundational Platform where agents <strong>search</strong> APIs, <strong>execute</strong>{' '}
+            operations, <strong>recall</strong> vault knowledge, <strong>ingest</strong> documents, and{' '}
+            <strong>audit</strong> what happened — from multi-tenant Regional Hubs to Dedicated Virtual Gateways and
+            Edge Gateways on every laptop.
           </p>
         }
       />
@@ -35,7 +35,7 @@ export default function Page() {
       <Section
         id="story"
         eyebrow="Why ClawQL exists"
-        headline="Built from production agent work — not a demo."
+        headline="Built from production agent work"
         subheadline={
           <p>
             ClawQL started as the MCP layer behind real deployments: multi-provider DevOps workflows, document pipelines
@@ -50,8 +50,8 @@ export default function Page() {
             <p className="mt-2">
               See The Greens is a mortgage-first loan origination system powered by ClawQL — the same IDP pipeline,
               vault memory, and HITL patterns documented on this site. ClawQL is the horizontal platform; See The Greens
-              is one vertical product built on it. Neither implies exclusivity — lenders can self-host ClawQL or build
-              their own LOS on the same stack.
+              is one vertical product built on it. Lenders can self-host ClawQL or build their own LOS on the same
+              stack.
             </p>
           </div>
           <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
@@ -60,14 +60,14 @@ export default function Page() {
               The open-source MCP server is production-ready and self-hostable today — npm, Helm, published case
               studies, and a v7 operator for Kubernetes. Managed gateway hosting is in early access (14-day Developer
               trial, then paid tiers). IDP hosted tenants are onboarding with founder-led setup. We are pre-revenue on
-              managed hosting; the core product is not vaporware.
+              managed hosting; the core product is shipping and in use.
             </p>
           </div>
           <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
             <h3 className="font-semibold text-mist-950 dark:text-white">First buyers</h3>
             <p className="mt-2">
               Document-heavy teams of 20–200 people in legal, M&A diligence, healthcare operations, and lending — teams
-              that already spend $500–2k/mo on SaaS and need agent memory plus document intelligence, not another CRM.
+              that already spend $500–2k/mo on SaaS and need agent memory plus document intelligence.
               Gateway-only developers evaluating MCP infrastructure start on Developer or Teams; IDP activates when they
               need classify/extract and VDR.
             </p>
@@ -94,7 +94,7 @@ export default function Page() {
       <Section
         id="philosophy"
         eyebrow="What we build"
-        headline="Three problems — one platform, activated in layers."
+        headline="Three problems — one platform, activated in layers"
         subheadline={
           <p>
             Current agent systems lose context, burn tokens on API specs, and treat documents as afterthoughts. Plugin
@@ -124,7 +124,8 @@ export default function Page() {
             <h3 className="font-semibold text-mist-950 dark:text-white">Document intelligence</h3>
             <p className="mt-2">
               Eight bundled IDP vendors compose intake through secure sharing. Agents orchestrate real document
-              pipelines — classify, extract, archive, search — not one-off OCR prompts.
+              pipelines — classify, extract, archive, search — built around purpose-built extraction tools rather than
+              one-off OCR prompts.
             </p>
           </div>
         </div>
@@ -140,8 +141,7 @@ export default function Page() {
 
       <CaseStudyGrid
         id="case-studies"
-        eyebrow="Evidence"
-        headline="We publish what we ship."
+        headline="Evidence"
         subheadline={
           <p>
             Case studies include tool traces, failure modes, fixes, and token measurements — the same detail we expect
@@ -161,8 +161,8 @@ export default function Page() {
           <p>
             Self-host today or start a 14-day Developer trial. For the default product-led motion, see the{' '}
             <Link href={site.urls.inferenceGtm}>inference-first GTM playbook</Link>; for regulated / Palantir-facing
-            positioning, see the <Link href={site.urls.enterpriseGtm}>enterprise GTM playbook</Link>.{' '}
-            {site.waitlistPromise}
+            positioning, see the <Link href={site.urls.enterpriseGtm}>enterprise GTM playbook</Link>. Full Apache 2.0
+            stack, no license fee.
           </p>
         }
         cta={

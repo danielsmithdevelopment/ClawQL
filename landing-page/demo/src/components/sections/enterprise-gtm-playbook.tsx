@@ -86,11 +86,10 @@ export function EnterpriseGtmPlaybook() {
 
           <h2 id="executive-summary">Executive summary</h2>
           <p>
-            ClawQL does not try to out-Palantir Palantir. Palantir has decades of enterprise data integration,
-            government contracts, and a proprietary Ontology that took years to build. The path is not replication. It
-            is offering what they structurally cannot: mathematical verifiability, open auditability,
-            infrastructure-agnostic deployment, and a closed-loop Intelligence Flywheel that turns inference spend into
-            proprietary model capital.
+            Palantir has decades of enterprise data integration, government contracts, and a proprietary Ontology that
+            took years to build. The path forward isn’t replication. It’s offering what they structurally cannot:
+            mathematical verifiability, open auditability, infrastructure-agnostic deployment, and a closed-loop
+            Intelligence Flywheel that turns inference spend into proprietary model capital.
           </p>
 
           <h3>One-sentence positioning</h3>
@@ -100,7 +99,7 @@ export function EnterpriseGtmPlaybook() {
           </Callout>
 
           <h3>Three product vectors</h3>
-          <p>Each can be sold standalone. Each feeds the others:</p>
+          <p>Each standalone. Each feeds the others:</p>
           <ul>
             <li>
               <strong>ClawQL Inference</strong> — the inference firewall. Pre-inference budget enforcement, multi-layer
@@ -118,7 +117,7 @@ export function EnterpriseGtmPlaybook() {
             </li>
           </ul>
 
-          <h2 id="strategic-context">Part I — Strategic context</h2>
+          <h2 id="strategic-context">Strategic context</h2>
           <h3>The AI governance deadlock</h3>
           <p>
             Enterprise AI adoption is caught between two needs. Engineering wants agentic velocity — agents that execute
@@ -127,13 +126,13 @@ export function EnterpriseGtmPlaybook() {
             correctly, remain auditable, and survive a SOC 2 Type II review.
           </p>
           <p>
-            The market’s usual answer is: pick one. Palantir offers control with vendor lock-in, opacity, and long
-            implementations. OpenRouter and LiteLLM offer velocity without enterprise governance. ClawQL’s answer is
-            both: autonomous agents with mathematically verifiable safety, open auditability, and
-            infrastructure-agnostic deployment.
+            The market’s usual answer is pick one. Palantir offers control with vendor lock-in, opacity, and long
+            implementations. OpenRouter and LiteLLM offer velocity without enterprise governance. ClawQL offers both:
+            autonomous agents with mathematically verifiable safety, open auditability, and infrastructure-agnostic
+            deployment.
           </p>
 
-          <h3>Three pillars of enterprise AI failure</h3>
+          <h3>Three sources of enterprise AI failure</h3>
           <h4>1. Governance vacuum</h4>
           <ul>
             <li>Shadow AI — personal API keys wiring production data to public LLM endpoints</li>
@@ -146,7 +145,7 @@ export function EnterpriseGtmPlaybook() {
             <li>Token sprawl — Frontier models used for work cheaper local models could handle</li>
             <li>Budget controls that only appear as post-facto dashboards</li>
             <li>Point optimizations that never compound as a platform</li>
-            <li>No data ownership — every call is a sunk cost, not training capital</li>
+            <li>Every call is a sunk cost with no data ownership or training capital accumulation</li>
           </ul>
           <h4>3. Observability black boxes</h4>
           <ul>
@@ -156,7 +155,7 @@ export function EnterpriseGtmPlaybook() {
             <li>APM that sees HTTP, not reasoning chains, tool calls, or authorizing policy</li>
           </ul>
 
-          <h3>Palantir AIP — strengths and structural weaknesses</h3>
+          <h3>Palantir AIP — honest assessment</h3>
           <p>
             Palantir is the incumbent in regulated industries. Honest positioning starts with acknowledging what they do
             well.
@@ -180,25 +179,25 @@ export function EnterpriseGtmPlaybook() {
           </ul>
           <h4>Where Palantir is structurally weak</h4>
           <ul>
-            <li>Proprietary black box — Ontology is not portable or independently verifiable</li>
-            <li>High-touch implementation — multi-month onboarding and professional services</li>
-            <li>Vendor lock-in — Ontology, deployment, and tooling are all proprietary</li>
-            <li>“Trust us” governance — track record instead of open cryptographic proof</li>
-            <li>Opaque pricing — mid-market buyers often cannot get a clear cost structure</li>
+            <li>The Ontology is proprietary, not portable, and not independently verifiable</li>
+            <li>Implementations run to multiple months with professional services</li>
+            <li>Tooling, deployment, and Ontology are all proprietary with significant switching costs</li>
+            <li>Governance relies on track record rather than open cryptographic proof</li>
+            <li>Mid-market buyers often cannot get a clear cost structure</li>
           </ul>
 
-          <h3>The winning move: agentic transparency</h3>
-          <Callout>
-            Do not build a better Palantir. Build the most transparent and auditable agentic infrastructure. Palantir
-            says “trust us because we are the standard.” ClawQL says “verify us because we are the infrastructure.”
-          </Callout>
+          <h3>The strategic position: agentic transparency</h3>
           <p>
-            The category is not “cheaper Palantir” or “open-source Palantir.” It is an infrastructure layer that
-            provides autonomous agent capability with mathematical proof of what agents did, why, and which policy
-            authorized each action — verified by the WORM audit trail, not asserted by the vendor.
+            The category isn’t “cheaper Palantir” or “open-source Palantir.” It’s an infrastructure layer that provides
+            autonomous agent capability with mathematical proof of what agents did, why, and which policy authorized each
+            action — verified by the WORM audit trail, not asserted by the vendor.
+          </p>
+          <p>
+            Palantir says “trust us because we are the standard.” ClawQL says “verify us because we are the
+            infrastructure.”
           </p>
 
-          <h2 id="architecture">Part II — Architectural foundation</h2>
+          <h2 id="architecture">Architectural foundation</h2>
           <h3>The 8-layer acyclic graph</h3>
           <p>
             ClawQL’s platform is an eight-layer acyclic model with policy-as-code governance via a Merkle-anchored
@@ -372,8 +371,8 @@ export function EnterpriseGtmPlaybook() {
             <code>clawql doctor --smoke</code> for startup hash verification against the signed manifest.
           </p>
 
-          <h2 id="product-suite">Part III — Product suite</h2>
-          <h3>Product 1 — ClawQL Inference (inference firewall)</h3>
+          <h2 id="product-suite">Product suite</h2>
+          <h3>ClawQL Inference (inference firewall)</h3>
           <p>
             A standalone OpenAI-compatible gateway competitive with LiteLLM — built as a governance-first control plane,
             not only a routing proxy. Clients that work with OpenAI work with ClawQL Inference via an{' '}
@@ -423,8 +422,7 @@ export function EnterpriseGtmPlaybook() {
             <li>
               <strong>Frontier</strong> — highest capability; escalated only on genuine failure or drift
             </li>
-            <li>One notch per retry; never skip tiers. Drift can trigger agent coordination instead of escalation.</li>
-            <li>Every decision WORM-logged with failure signal, tier, cost delta, and correlation id</li>
+            <li>One notch per retry, never skip tiers. Every decision WORM-logged with failure signal, tier, cost delta, and correlation id</li>
           </ul>
 
           <h4>Intelligence Flywheel</h4>
@@ -434,7 +432,7 @@ export function EnterpriseGtmPlaybook() {
             proprietary model assets that grow with production traffic.
           </p>
 
-          <h3>Product 2 — ClawQL IDP (the foundation)</h3>
+          <h3>ClawQL IDP (the foundation)</h3>
           <p>
             Sold to platform engineering and CTOs drowning in infra tickets. The pitch is flow-state engineering, not
             “more AI tools.”
@@ -453,7 +451,7 @@ export function EnterpriseGtmPlaybook() {
             standard Kubernetes/Helm, independently verifiable WORM — without Apollo’s proprietary package format.
           </p>
 
-          <h3>Product 3 — Sovereign agentic infrastructure</h3>
+          <h3>Sovereign agentic infrastructure</h3>
           <h4>Enterprise Ontology primitive</h4>
           <ul>
             <li>Version-controlled entity/relationship schema in the manifest</li>
@@ -479,7 +477,7 @@ export function EnterpriseGtmPlaybook() {
             validation references in the broader research community.
           </p>
 
-          <h2 id="competitive-edge">Part IV — Competitive edge</h2>
+          <h2 id="competitive-edge">Competitive position</h2>
           <ScrollTable>
             <table>
               <thead>
@@ -582,7 +580,7 @@ export function EnterpriseGtmPlaybook() {
             </table>
           </ScrollTable>
 
-          <h2 id="gtm-strategy">Part V — GTM strategy by segment</h2>
+          <h2 id="gtm-strategy">GTM strategy by segment</h2>
           <ScrollTable>
             <table>
               <thead>
@@ -664,7 +662,7 @@ export function EnterpriseGtmPlaybook() {
             <li>Exit deliverable: sovereign OS on customer-controlled infrastructure</li>
           </ul>
 
-          <h2 id="audience-playbooks">Part VI — Audience-specific playbooks</h2>
+          <h2 id="audience-playbooks">Audience-specific playbooks</h2>
           <h3>CISO / risk officer</h3>
           <p>Anchor every conversation: “verify us, don’t trust us.”</p>
           <h4>Discovery questions</h4>
@@ -725,7 +723,7 @@ export function EnterpriseGtmPlaybook() {
             <li>Flywheel trend: more Frugal resolution, fewer Frontier escalations over time</li>
           </ul>
 
-          <h2 id="inference-gtm">Part VII — ClawQL Inference standalone GTM</h2>
+          <h2 id="inference-gtm">ClawQL Inference standalone GTM</h2>
           <p>
             Position as the inference firewall for CTOs, CISOs, and FinOps — not only a convenience proxy for individual
             developers.
@@ -737,7 +735,7 @@ export function EnterpriseGtmPlaybook() {
             pattern, stronger supply-chain story, and a fine-tuning loop the current setup usually cannot close.
           </p>
 
-          <h2 id="idp-gtm">Part VIII — ClawQL IDP standalone GTM</h2>
+          <h2 id="idp-gtm">ClawQL IDP standalone GTM</h2>
           <p>
             IDP is a <strong>standalone revenue motion</strong> for ops, compliance, legal, lending, and M&amp;A buyers
             — not only an engineering infrastructure swap. Pain is SaaS sprawl, per-page VDR fees, six-month
@@ -753,11 +751,11 @@ export function EnterpriseGtmPlaybook() {
             memory on the same endpoint.
           </Callout>
 
-          <h2 id="pitch-deck">Part IX — Enterprise pitch deck outline</h2>
+          <h2 id="pitch-deck">Enterprise pitch deck outline</h2>
           <p>Modular ~28-slide outline for a 25–30 minute enterprise pitch. Reorder by audience.</p>
           <ol>
             <li>
-              <strong>Context (1–5):</strong> title, thesis, governance deadlock, three failure pillars, honest Palantir
+              <strong>Context (1–5):</strong> title, thesis, governance deadlock, three failure sources, honest Palantir
               comparison
             </li>
             <li>
@@ -789,6 +787,11 @@ export function EnterpriseGtmPlaybook() {
               <strong>Option C:</strong> 90-day pilot with success metrics agreed up front
             </li>
           </ul>
+
+          <p>
+            Deploy inference observability in an afternoon, then layer governance and sovereignty as your audit trail and
+            FinOps case strengthen.
+          </p>
 
           <p className="mt-10 text-xs text-mist-500">
             July 2026 · ClawQL ·{' '}

@@ -32,7 +32,7 @@ const pipelineStages = [
   {
     name: 'Distribute',
     stack: 'ConeShare VDR',
-    detail: 'Trackable rooms, watermarks, and engagement analytics — not Drive folder chaos.',
+    detail: 'Trackable rooms, watermarks, and engagement analytics.',
   },
 ] as const
 
@@ -130,7 +130,7 @@ const securityPoints = [
   },
   {
     title: 'PII redaction in-pipeline',
-    body: 'Stirling redaction before archive and search — not an afterthought add-on.',
+    body: 'Stirling redaction before archive and search.',
   },
   {
     title: 'Istio mTLS mesh',
@@ -200,8 +200,7 @@ export function IdpLanding() {
         headline="Document processing that doesn't stop at extraction"
         subheadline={
           <p>
-            One pipeline from inbox to VDR — not five vendors glued together with scripts and hope. Agents orchestrate
-            every stage over MCP in natural language.
+            One pipeline from inbox to VDR. Agents orchestrate every stage over MCP in natural language.
           </p>
         }
       >
@@ -367,8 +366,8 @@ export function IdpLanding() {
         headline="Documents teams actually process"
         subheadline={
           <p>
-            Layout-aware OCR and parsers for the packs that slow down ops — not demo PDFs. Vertical presets compose the
-            same pipeline with domain boilerplate.
+            Layout-aware OCR and parsers for the formats that slow down ops. Vertical presets compose the same pipeline
+            with domain boilerplate.
           </p>
         }
       >
@@ -417,7 +416,7 @@ export function IdpLanding() {
       <Section
         id="security"
         eyebrow="Security & compliance"
-        headline="Built for examiners, not slideware"
+        headline="Built for Examiners"
         subheadline={
           <p>
             Sovereignty and auditability are product defaults for IDP tiers — not a separate “enterprise pack” you

@@ -5,7 +5,7 @@ export const realEstateIndustry: Industry = {
   name: 'Real estate',
   headline: 'The intelligent document layer for brokerages and FSBO sellers.',
   subheadline:
-    'Unify deal documents, extracted fields, and transaction memory in one place — without replacing your CRM, flat-fee listing platform, or transaction tool. ClawQL classifies title commitments and buyer offers, routes Schedule B exceptions to human review, and answers diligence questions with grounded citations.',
+    'Unify deal documents, extracted fields, and transaction memory in one place. ClawQL classifies title commitments and buyer offers, routes Schedule B exceptions to human review, and answers diligence questions with grounded citations — sitting alongside your existing CRM, flat-fee listing platform, and transaction tool.',
   packageName: 'real-estate transaction samples',
   status: 'partial',
   statusLabel: 'Title + PSA + FSBO offer workflows · CRM-agnostic',
@@ -14,7 +14,7 @@ export const realEstateIndustry: Industry = {
   marketContext:
     'Major brokerages standardize on different CRM operating systems — Keller Williams (Command), eXp (BoldTrail/kvCORE), Compass and Anywhere brands (Home Platform), and thousands of high-volume teams on Follow Up Boss — but none of them classify title commitments, extract Schedule B exceptions with citations, or answer cross-deal diligence questions from indexed transaction files. FSBO sellers on Houzeo, Beycome, or DIY MLS listings face the same gap at smaller scale: multiple buyer offers arrive as PDFs with no semantic index. AI investment in 2026 skews toward lead gen, listing copy, and routing; the document layer — where deals actually close — still runs on Drive folders and manual re-reads. Teams and sellers that add intelligent document processing first compress hours per file; those that wait inherit a compounding disadvantage.',
   demoPitch:
-    'Every major brokerage runs a CRM for contacts and pipeline, a transaction tool for e-sign and compliance, and Google Drive or Dropbox for transaction folders — but nothing connects them intelligently. When a title commitment or PSA lands in a deal folder, ClawQL classifies it, extracts purchase price and Schedule B exceptions with citations, routes low-confidence reads to a coordinator for review, and indexes everything for semantic search — so teams stop re-reading the same 200-page diligence folder. Your CRM keeps contacts and compliance; your storage keeps the files; ClawQL is the layer that understands what is in the documents and remembers it across deals. Works alongside Command, BoldTrail, Follow Up Boss, Compass, Dotloop, or SkySlope — no migration required. Live demo uses synthetic data only; early access includes founder-led setup.',
+    'Every major brokerage runs a CRM for contacts and pipeline, a transaction tool for e-sign and compliance, and Google Drive or Dropbox for transaction folders — but nothing connects them intelligently. When a title commitment or PSA lands in a deal folder, ClawQL classifies it, extracts purchase price and Schedule B exceptions with citations, routes low-confidence reads to a coordinator for review, and indexes everything for semantic search — so teams stop re-reading the same 200-page diligence folder. Your CRM keeps contacts and compliance; your storage keeps the files; ClawQL is the layer that understands what is in the documents and remembers it across deals. Works alongside Command, BoldTrail, Follow Up Boss, Compass, Dotloop, or SkySlope. Live demo uses synthetic data only; early access includes founder-led setup.',
   audiences: [
     {
       id: 'brokerage',
@@ -23,7 +23,7 @@ export const realEstateIndustry: Industry = {
       overview:
         'Transaction coordinators re-read PDFs because CRMs track pipeline, not document content. ClawQL adds classify → extract → HITL → vault on top of your existing stack — the same pattern as the shipped title and PSA reference packs.',
       demoPitch:
-        'Forward this to your TC lead: ClawQL sits on top of Drive and your CRM — when a title commitment lands, we extract Schedule B exceptions with citations and route ambiguous reads to Label Studio. No CRM migration. Synthetic demo in 15 minutes.',
+        'Forward this to your TC lead: ClawQL sits on top of Drive and your CRM. When a title commitment lands, we extract Schedule B exceptions with citations and route ambiguous reads to Label Studio. Synthetic demo in 15 minutes.',
       stackPlacement: [
         {
           system: 'Brokerage CRM',
@@ -62,7 +62,7 @@ export const realEstateIndustry: Industry = {
       name: 'FSBO sellers',
       headline: 'Understand offers and title docs without re-reading every PDF.',
       overview:
-        'For Sale By Owner sellers receive competing offers and title commitments with no transaction coordinator. ClawQL extracts price, earnest money, and contingencies with citations so you can compare offers side by side — complementary to Houzeo or Beycome for MLS and forms, not a replacement.',
+        'For Sale By Owner sellers receive competing offers and title commitments with no transaction coordinator. ClawQL extracts price, earnest money, and contingencies with citations so you can compare offers side by side — complementary to Houzeo or Beycome for MLS and forms.',
       demoPitch:
         'Selling your home without an agent? When buyer offers arrive, ClawQL reads each PDF and surfaces price, closing date, and contingencies in plain language — "Offer 2 is cash with no appraisal contingency." Same engine brokerages use for title commitments. Per-transaction pricing fits one sale; no $299/mo coordinator seat required.',
       stackPlacement: [
@@ -72,7 +72,7 @@ export const realEstateIndustry: Industry = {
         },
         {
           system: 'Title / escrow',
-          role: 'Commitment, closing — ClawQL helps you read Schedule B, not replace title insurance.',
+          role: 'Commitment, closing — ClawQL helps you read Schedule B',
         },
         {
           system: 'ClawQL',
@@ -126,7 +126,7 @@ export const realEstateIndustry: Industry = {
     },
     {
       title: 'Schedule B exceptions need human judgment',
-      body: 'Title commitments arrive with exceptions that require curative review — not fully automatable. classify_document and extract_document surface Schedule B items; hitl_enqueue_label_studio routes ambiguous exceptions to coordinators (or seller advisors) before they enter the vault.',
+      body: 'Title commitments arrive with exceptions that require curative review. classify_document and extract_document surface Schedule B items; hitl_enqueue_label_studio routes ambiguous exceptions to coordinators (or seller advisors) before they enter the vault.',
     },
     {
       title: 'Cross-deal memory lives in someone\'s head',
@@ -168,11 +168,11 @@ export const realEstateIndustry: Industry = {
     },
     {
       title: 'FSBO offer comparison',
-      body: 'Extract buyer_offer contingencies from multiple PDFs — compare financing, inspection, appraisal, and sale-of-home terms without re-reading each contract line by line.',
+      body: 'Extract buyer_offer contingencies from multiple PDFs — compare financing, inspection, appraisal, and sale-of-home terms from grounded fields rather than reading each contract line by line.',
     },
     {
-      title: 'CRM + storage without the re-read loop',
-      body: 'ClawQL does not replace your CRM or cloud folders. It makes transaction PDFs intelligible to agents: "What is the earnest money on 123 Main?" returns a grounded answer with char_interval, not a Ctrl+F hunt.',
+      title: 'CRM + storage with semantic search',
+      body: 'ClawQL makes transaction PDFs intelligible to agents: "What is the earnest money on 123 Main?" returns a grounded answer with char_interval. Your CRM and cloud folders keep their existing roles.',
     },
     {
       title: 'Secure external sharing',
@@ -243,10 +243,10 @@ export const realEstateIndustry: Industry = {
   ],
   compliance: [
     'PII redaction via Stirling before documents enter Onyx or archive indexes',
-    'Merkle audit trail on agent processing steps — not just activity logs',
+    'Merkle audit trail on agent processing steps',
     'Self-hosted option keeps transaction docs on your infrastructure',
     'Synthetic fixtures only in reference packs — no real client data in demos',
-    'VDR viewer webhooks for external access audit without replacing broker compliance workflows',
+    'VDR viewer webhooks for external access audit alongside broker compliance workflows',
   ],
   relatedResources: [
     { label: 'Real estate workflow overview', href: 'https://github.com/danielsmithdevelopment/ClawQL/tree/main/deployment/samples/real-estate' },
@@ -258,5 +258,5 @@ export const realEstateIndustry: Industry = {
   ],
   docsHref: 'https://github.com/danielsmithdevelopment/ClawQL/tree/main/deployment/samples/real-estate',
   disclaimer:
-    'Reference packs and demos use synthetic data only — not legal, title, or brokerage advice. Third-party CRM, storage, transaction, and FSBO listing products are not affiliated with ClawQL; integration is as an intelligent document layer, not a CRM or MLS replacement.',
+    'Reference packs and demos use synthetic data only. This is not legal, title, or brokerage advice. Third-party CRM, storage, transaction, and FSBO listing products are independent of ClawQL; ClawQL operates as an intelligent document layer alongside them.',
 }

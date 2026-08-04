@@ -1,83 +1,81 @@
-# Case study: Deploying `docs.clawql.com` with ClawQL MCP (`search`, `execute`, `memory_recall`, `memory_ingest`)
+**Source:** This page and the Markdown under [`docs/case_studies/cloudflare-docs-site-mcp-workflow.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/cloudflare-docs-site-mcp-workflow.md) are kept in sync; edit both when the narrative changes.
 
-This document is an **end-to-end narrative** of shipping the ClawQL documentation site to **Cloudflare Workers** (`https://docs.clawql.com`) while using the **same MCP server** that powers day-to-day API work: **`search`**, **`execute`**, **`memory_recall`**, and **`memory_ingest`**. It records **failures**, **fixes**, **mental models**, and **insights** for future agents and humans.
+# Case study: Deploying `docs.clawql.com` with ClawQL MCP
 
-**Related:** GitHub tracking issue ([#87](https://github.com/danielsmithdevelopment/ClawQL/issues/87)), repo [`website/`](../../website/) (Next.js + OpenNext + Wrangler), deploy script [`scripts/deploy/deploy-docs-to-cloudflare.sh`](../../scripts/deploy/deploy-docs-to-cloudflare.sh).
+An end-to-end narrative of shipping the ClawQL documentation site to Cloudflare Workers while using the same MCP server that powers day-to-day API work: `search`, `execute`, `memory_recall`, and `memory_ingest`. It records failures, fixes, mental models, and insights for future agents and humans.
+
+**Related:** GitHub tracking issue ([#87](https://github.com/danielsmithdevelopment/ClawQL/issues/87)), repo [`website/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/website) (Next.js + OpenNext + Wrangler), deploy script [`scripts/deploy/deploy-docs-to-cloudflare.sh`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/scripts/deploy/deploy-docs-to-cloudflare.sh).
 
 ---
 
 ## 1. Why this project is a stress test
 
-The docs site is not “static HTML in a bucket.” It is **Next.js 16** (App Router) compiled for **Cloudflare Workers** via **OpenNext** (`@opennextjs/cloudflare`). That means:
+The docs site is not static HTML in a bucket. It's Next.js 16 (App Router) compiled for Cloudflare Workers via OpenNext (`@opennextjs/cloudflare`). Request handling runs on Workers (V8 isolates), not a long-lived Node server. The runtime is not full Node: `unenv` polyfills gaps, and filesystem APIs used at request time can fail at runtime even when `next build` succeeded locally on macOS. Edge caching (`Cache-Control`, `public/_headers`) affects how fast users see fixes after deploy.
 
-- Request handling runs on **Workers** (V8 isolates), not a long-lived Node server.
-- The runtime is **not** full Node: **`unenv`** polyfills gaps, and **filesystem APIs used at request time** can fail at runtime even when **`next build`** succeeded locally on macOS.
-- **Edge caching** (`Cache-Control`, `public/_headers`) affects how fast users see fixes after deploy.
-
-So this case study is really two stories: **(A)** operating **Cloudflare’s control plane** with **`search` / `execute`**, and **(B)** making the **app** Worker-safe — both are required for a reliable **`docs.clawql.com`**.
+Two separate problems needed solving: operating Cloudflare's control plane with `search` / `execute`, and making the app Worker-safe. Both are required for a reliable `docs.clawql.com`.
 
 ---
 
 ## 2. Mental model: account, zone, Worker, hostname
 
-| Concept                | What it is                                         | Why it matters for this project                                                                                |
-| ---------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **Cloudflare account** | Billing + API namespace                            | **`account_id`** appears in REST paths; token must have **Account** read where needed.                         |
-| **Zone**               | DNS authority for a domain (e.g. **`clawql.com`**) | **`zone_id`** is required when attaching hostnames and debugging DNS.                                          |
-| **Worker**             | Your serverless JS bundle (**`clawql-docs`**)      | OpenNext emits **`.open-next/worker.js`**; Wrangler uploads it.                                                |
-| **Custom domain**      | **`docs.clawql.com`** → Worker                     | Bound via **`workers.domains`** API (or dashboard); must point at the **correct** Worker name and environment. |
-| **Assets**             | Hashed static files (`/_next/static/...`)          | Served via ASSETS binding; long **`immutable`** caching is safe.                                               |
+| Concept                | What it is                                     | Why it matters for this project                                                                       |
+| ---------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Cloudflare account** | Billing + API namespace                        | `account_id` appears in REST paths; token must have Account read where needed                         |
+| **Zone**               | DNS authority for a domain (e.g. `clawql.com`) | `zone_id` is required when attaching hostnames and debugging DNS                                      |
+| **Worker**             | Your serverless JS bundle (`clawql-docs`)      | OpenNext emits `.open-next/worker.js`; Wrangler uploads it                                            |
+| **Custom domain**      | `docs.clawql.com` → Worker                     | Bound via `workers.domains` API (or dashboard); must point at the correct Worker name and environment |
+| **Assets**             | Hashed static files (`/_next/static/...`)      | Served via ASSETS binding; long `immutable` caching is safe                                           |
 
-When **`execute`** fails, the fix is often **not** “change Next.js” — it is **token scope**, **wrong `account_id`**, or **hostname already bound** elsewhere. **`wrangler tail`** tells you if the **Worker** is throwing (app bug) vs **DNS** (platform).
+When `execute` fails, the fix is often not "change Next.js" — it's token scope, wrong `account_id`, or a hostname already bound elsewhere. `wrangler tail` tells you whether the Worker is throwing (app bug) vs DNS (platform).
 
 ---
 
 ## 3. Goals
 
-1. **Authenticate** to Cloudflare and wire tokens for local **Kubernetes** MCP, **Cursor** (HTTP MCP), and **CLI** (`wrangler`).
-2. **Deploy** the docs app (`website/`) to a **custom domain** on a **practical** Cloudflare setup (Workers + OpenNext).
-3. **Operate** Cloudflare (Workers, domains, routes) via **ClawQL** where it beats ad-hoc **`curl`** — especially for **discovering** operation ids and **consistent** request bodies.
-4. **Persist** setup, mistakes, and lessons in the **Obsidian vault** (and optional **`memory.db`**) so later sessions do not repeat the same failures.
+1. Authenticate to Cloudflare and wire tokens for local Kubernetes MCP, Cursor (HTTP MCP), and CLI (`wrangler`).
+2. Deploy the docs app (`website/`) to a custom domain on a practical Cloudflare setup (Workers + OpenNext).
+3. Operate Cloudflare (Workers, domains, routes) via ClawQL where it beats ad-hoc `curl` — especially for discovering operation ids and building consistent request bodies.
+4. Persist setup, mistakes, and lessons in the Obsidian vault (and optional `memory.db`) so later sessions don't repeat the same failures.
 
 ---
 
 ## 4. Environment and stack
 
-| Piece                                 | Role                                                                                                                                                                                       |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **ClawQL MCP**                        | Bundled **Cloudflare** provider (`CLAWQL_PROVIDER=cloudflare` or merged presets) for **`search`** / **`execute`** against Cloudflare’s REST surface.                                       |
-| **`CLAWQL_CLOUDFLARE_API_TOKEN`**     | Bearer for **`execute`**. Same variable name as in [`src/auth-headers.ts`](../../src/auth-headers.ts). Must be on the **MCP process** (stdio or HTTP), **not** only in an IDE-only `.env`. |
-| **`CLOUDFLARE_API_TOKEN`**            | Alias accepted by the deploy script and many tools — normalize on one token to avoid “works in Wrangler, missing in MCP.”                                                                  |
-| **`memory_recall` / `memory_ingest`** | Require **`CLAWQL_OBSIDIAN_VAULT_PATH`** (see [`docs/memory/memory-obsidian.md`](../memory/memory-obsidian.md)).                                                                           |
-| **Website**                           | Next.js App Router + **OpenNext** for Cloudflare (`@opennextjs/cloudflare`), **Wrangler** Worker **`clawql-docs`**, route **`docs.clawql.com`**.                                           |
-| **`NEXT_PUBLIC_SITE_URL`**            | Should be **`https://docs.clawql.com`** at build time so canonical URLs, OG metadata, and sitemap bases match production.                                                                  |
+| Piece                                 | Role                                                                                                                                                                                                                               |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL MCP**                        | Bundled Cloudflare provider (`CLAWQL_PROVIDER=cloudflare` or merged presets) for `search` / `execute` against Cloudflare's REST surface                                                                                            |
+| **`CLAWQL_CLOUDFLARE_API_TOKEN`**     | Bearer for `execute`. Same variable name as in [`src/auth-headers.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/auth-headers.ts). Must be on the MCP process (stdio or HTTP), not only in an IDE-only `.env` |
+| **`CLOUDFLARE_API_TOKEN`**            | Alias accepted by the deploy script and many tools — normalize on one token to avoid "works in Wrangler, missing in MCP"                                                                                                           |
+| **`memory_recall` / `memory_ingest`** | Require `CLAWQL_OBSIDIAN_VAULT_PATH` (see [`docs/memory/memory-obsidian.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/memory-obsidian.md))                                                           |
+| **Website**                           | Next.js App Router + OpenNext for Cloudflare (`@opennextjs/cloudflare`), Wrangler Worker `clawql-docs`, route `docs.clawql.com`                                                                                                    |
+| **`NEXT_PUBLIC_SITE_URL`**            | Should be `https://docs.clawql.com` at build time so canonical URLs, OG metadata, and sitemap bases match production                                                                                                               |
 
 ---
 
 ## 5. Wrangler deploy vs REST `execute`
 
-| Path                                                                        | When to use it                                                                                                            | Caveat                                                                                                    |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **`npm run deploy` in `website/`** (`opennextjs-cloudflare` build + deploy) | Iterating on the **app** — HTML, MDX, Worker bundle.                                                                      | Uses **Wrangler** auth; may succeed even when a **narrow** API token fails **`execute`** for domain APIs. |
-| **ClawQL `search` + `execute`**                                             | **Discovering** Cloudflare operations, **attaching** custom domains, **auditing** what hostname maps to which Worker.     | Token needs **explicit** scopes for **Workers** + **routes/domains** + **zone** read as required.         |
-| **Both**                                                                    | Healthy ops: deploy artifact with Wrangler; **verify** and **repair** routing with REST when automation or audit matters. | Treat **Wrangler success** and **REST success** as **independent** until proven.                          |
+| Path                                                                  | When to use it                                                                                                   | Caveat                                                                                       |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `npm run deploy` in `website/` (opennextjs-cloudflare build + deploy) | Iterating on the app — HTML, MDX, Worker bundle                                                                  | Uses Wrangler auth; may succeed even when a narrow API token fails `execute` for domain APIs |
+| ClawQL `search` + `execute`                                           | Discovering Cloudflare operations, attaching custom domains, auditing what hostname maps to which Worker         | Token needs explicit scopes for Workers + routes/domains + zone read as required             |
+| Both                                                                  | Healthy ops: deploy artifact with Wrangler; verify and repair routing with REST when automation or audit matters | Treat Wrangler success and REST success as independent until proven                          |
 
-The case study’s worst confusion was **“I can deploy, but `execute` says 403”** — almost always **scope** or **wrong account**.
+The worst confusion in this case study was "I can deploy, but `execute` says 403" — almost always a scope problem or the wrong account.
 
 ---
 
 ## 6. Deploy script and custom domain
 
-[`scripts/deploy/deploy-docs-to-cloudflare.sh`](../../scripts/deploy/deploy-docs-to-cloudflare.sh) encodes the happy path:
+[`scripts/deploy/deploy-docs-to-cloudflare.sh`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/scripts/deploy/deploy-docs-to-cloudflare.sh) encodes the happy path:
 
-1. Resolve **`account_id`** (or use **`CLAWQL_CLOUDFLARE_ACCOUNT_ID`**).
-2. Resolve **`zone_id`** for **`CLAWQL_DOCS_APEX_DOMAIN`** (default **`clawql.com`**).
-3. **`cd website && npm run deploy`** — OpenNext build + Wrangler upload.
-4. **PUT** **`/accounts/{account_id}/workers/domains`** to attach **`CLAWQL_DOCS_HOSTNAME`** (default **`docs.clawql.com`**) to **`clawql-docs`**.
+1. Resolve `account_id` (or use `CLAWQL_CLOUDFLARE_ACCOUNT_ID`).
+2. Resolve `zone_id` for `CLAWQL_DOCS_APEX_DOMAIN` (default `clawql.com`).
+3. `cd website && npm run deploy` — OpenNext build + Wrangler upload.
+4. PUT `/accounts/{account_id}/workers/domains` to attach `CLAWQL_DOCS_HOSTNAME` (default `docs.clawql.com`) to `clawql-docs`.
 
-Equivalent **`execute`** operations for interactive agents (names depend on spec indexing): e.g. **`zones`** list/get by name, **`workers.domains.update`**. The script comments map intent → API.
+Equivalent `execute` operations for interactive agents: `zones` list/get by name, `workers.domains.update`. The script comments map intent to API.
 
-**Prerequisites:** `jq`, a token with **Workers Scripts** write + ability to manage **Workers domains** + **zone** read for the apex domain.
+**Prerequisites:** `jq`, a token with Workers Scripts write + ability to manage Workers domains + zone read for the apex domain.
 
 ---
 
@@ -85,65 +83,44 @@ Equivalent **`execute`** operations for interactive agents (names depend on spec
 
 ### `search()`
 
-Used to **discover** operations and parameters **without** pasting **~multi‑MB** OpenAPI fragments into the chat:
-
-- Find operations for **Workers**, **routes**, **custom domains** (e.g. paths matching `workers`, `domains`, `routes`).
-- Narrow which **`execute`** call matches the intent (attach hostname, list bindings, confirm service name).
-- Prefer **concrete** queries: “Workers custom domain update PUT hostname service zone_id” beats “fix my site.”
+`search` was most useful for discovering operations and parameters without pasting multi-MB OpenAPI fragments into the chat. Concrete queries worked far better than vague ones: "Workers custom domain update PUT hostname service zone_id" found the right operation; "fix my site" returned noise. Once the right `operationId` and path shape were identified, `execute` took over.
 
 ### `execute()`
 
-Used for **Cloudflare REST** once **`operationId`** and **path/body** shape were known:
-
-- **Custom domains** and Worker routing: e.g. `workers.domains.update` — **path + body** fields must match what ClawQL expects (`account_id` in path; `hostname`, `service`, `environment`, `zone_id`, `zone_name` in body where applicable).
-- Listing domain attachments to confirm **`docs.clawql.com`** points at **`clawql-docs`**.
-
-**`execute` is only as good as the token’s permissions.** A token that works for **Wrangler OAuth** may still fail API calls until **Account** / **Workers** / **DNS** scopes align with the task. **IP allowlists** on the token can block CI or remote MCP egress.
+`execute` handled Cloudflare REST calls once operation ids were known — custom domain attachment, Worker routing, listing domain bindings to confirm `docs.clawql.com` points at `clawql-docs`. The key constraint: `execute` is only as good as the token's permissions. A token that works for Wrangler OAuth may still fail API calls until Account / Workers / DNS scopes align with the task. IP allowlists on the token can also block CI or remote MCP egress silently.
 
 ### `memory_recall()`
 
-Used **at the start of non-trivial work** and when the user referenced **past decisions** or **vault** context:
-
-- Concrete **`query`** (e.g. “Cloudflare docs deploy”, “Workers 1101”, “OpenNext fs”) with a reasonable **`limit`**.
-- **`maxDepth`** raised when **graph** relationships between notes mattered (e.g. vault note links **Kubernetes** + **Cloudflare** auth).
-
-If the vault path is unset, recall fails fast — **note it briefly** and continue without blocking the main task.
+`memory_recall` was called at the start of non-trivial work and whenever past decisions or vault context were relevant. Queries with a concrete subject and a reasonable `limit` worked best. Raising `maxDepth` helped when graph relationships between notes mattered — for example, vault note links between Kubernetes and Cloudflare auth. If the vault path was unset, recall failed fast; the right move was to note it briefly and continue without blocking the main task.
 
 ### `memory_ingest()`
 
-Used **after meaningful outcomes**:
-
-- **Decisions** (custom domain vs Pages, token strategy, “we use Worker X”).
-- **Debugging conclusions** (Worker **1101**, **500**, `fs.readdir` in Workers, **`Children.only`** in MDX).
-- **User preferences** (e.g. **`append: true`** to consolidate runbooks on **stable** note titles).
-- **`wikilinks`** between topics for Obsidian graph navigation.
-
-**Never store secrets** in ingests. Summarize redacted configuration only.
+`memory_ingest` was called after meaningful outcomes: decisions (custom domain vs Pages, token strategy, which Worker to use), debugging conclusions (Worker 1101, `fs.readdir` in Workers, `Children.only` in MDX), and user preferences. Using `append: true` with stable note titles built durable runbooks rather than fragmented one-off notes. Wikilinks between topics kept the Obsidian graph navigable. Secrets were never stored in ingests — only redacted configuration summaries.
 
 ---
 
 ## 8. End-to-end workflow (chronological)
 
-1. **`memory_recall`** — prior vault notes on Cloudflare + docs + MCP auth (avoid repeating dead ends).
-2. **Configure** `CLAWQL_CLOUDFLARE_API_TOKEN` on the **MCP server process** (k8s Secret or HTTP MCP env) — verify with a trivial **`execute`** if unsure.
-3. **`search`** Cloudflare operations; **`execute`** domain/Worker updates as needed.
-4. **Deploy** from `website/` (`opennextjs-cloudflare` build + deploy), set **`NEXT_PUBLIC_SITE_URL=https://docs.clawql.com`**.
-5. **Verify** `https://docs.clawql.com` and **`wrangler tail clawql-docs`** for runtime errors.
-6. **Fix** app code if the Worker throws (see failures below).
-7. **`memory_ingest`** session summary (`append: true`) into a stable note title (e.g. “Cloudflare docs site — deploy runbook”).
+1. `memory_recall` — pull prior vault notes on Cloudflare + docs + MCP auth to avoid repeating dead ends.
+2. Configure `CLAWQL_CLOUDFLARE_API_TOKEN` on the MCP server process (k8s Secret or HTTP MCP env) — verify with a trivial `execute` if unsure.
+3. `search` Cloudflare operations; `execute` domain/Worker updates as needed.
+4. Deploy from `website/` (`opennextjs-cloudflare` build + deploy), with `NEXT_PUBLIC_SITE_URL=https://docs.clawql.com`.
+5. Verify `https://docs.clawql.com` and `wrangler tail clawql-docs` for runtime errors.
+6. Fix app code if the Worker throws (see failures below).
+7. `memory_ingest` session summary (`append: true`) into a stable note title (e.g. "Cloudflare docs site — deploy runbook").
 
 ---
 
 ## 9. Failures and symptoms
 
-| Symptom                                                          | Likely cause                                                | What helped                                                                                                                               |
-| ---------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Missing / invalid auth** on Cloudflare calls                   | **No `Authorization`** on the MCP process                   | Set **`CLAWQL_CLOUDFLARE_API_TOKEN`** on the **server** running MCP, not only local `.env` for Cursor UI.                                 |
-| **HTTP 403 / blocked**                                           | Token **IP allowlist**                                      | Add egress IP (or widen policy) for the environment where MCP runs.                                                                       |
-| **API errors** despite Wrangler working                          | Token **scope** too narrow for **custom domains** / Workers | **Account** / **Workers** / **DNS**-style permissions; align token with **Wrangler** vs **REST** needs.                                   |
-| Browser **500** / Cloudflare **1101** (“Worker threw exception”) | Worker runtime exception                                    | **`wrangler tail <worker>`** — e.g. **`[unenv] fs.readdir is not implemented yet!`** when app code called **filesystem** APIs on Workers. |
-| **Prerender** crash on `/concepts`                               | **`React.Children.only`** in **`CodePanel`**                | MDX + Shiki can yield multiple nodes under **`code`**; **`Children.only`** throws.                                                        |
-| **Stale content** at edge after deploy                           | CDN **s-maxage** / browser cache                            | See [`docs/website/website-caching.md`](../website/website-caching.md); purge if needed.                                                  |
+| Symptom                                                  | Likely cause                                        | What helped                                                                                                                                          |
+| -------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Missing / invalid auth on Cloudflare calls               | No `Authorization` on the MCP process               | Set `CLAWQL_CLOUDFLARE_API_TOKEN` on the server running MCP, not only in local `.env` for the IDE                                                    |
+| HTTP 403 / blocked                                       | Token IP allowlist                                  | Add egress IP (or widen policy) for the environment where MCP runs                                                                                   |
+| API errors despite Wrangler working                      | Token scope too narrow for custom domains / Workers | Account / Workers / DNS-style permissions; align token with Wrangler vs REST needs                                                                   |
+| Browser 500 / Cloudflare 1101 ("Worker threw exception") | Worker runtime exception                            | `wrangler tail <worker>` — e.g. `[unenv] fs.readdir is not implemented yet!` when app code called filesystem APIs on Workers                         |
+| Prerender crash on `/concepts`                           | `React.Children.only` in `CodePanel`                | MDX + Shiki can yield multiple nodes under `code`; `Children.only` throws                                                                            |
+| Stale content at edge after deploy                       | CDN s-maxage / browser cache                        | See [`docs/website/website-caching.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/website/website-caching.md); purge if needed |
 
 ---
 
@@ -151,46 +128,47 @@ Used **after meaningful outcomes**:
 
 ### 10.1 Workers runtime: no `fs.readdir` on the request path
 
-- **Root cause:** `src/app/layout.tsx` used **`fast-glob`** at **request time** to discover `**/*.mdx` and build the sidebar map. **`fast-glob`** uses **`fs.readdir`**, which **unenv** does not implement on Cloudflare Workers.
-- **Fix:** Remove runtime globbing. **Predefine** section metadata for routes that need it (e.g. shared `homePageSections` in [`website/src/lib/home-page-sections.ts`](../../website/src/lib/home-page-sections.ts)) and import from **`layout.tsx`** / **`page.mdx`**.
+`src/app/layout.tsx` used `fast-glob` at request time to discover `**/*.mdx` and build the sidebar map. `fast-glob` uses `fs.readdir`, which `unenv` does not implement on Cloudflare Workers.
 
-**Pattern:** anything that needs **`fs`** at runtime must move to **build time**, a **static map**, or **edge-safe** data.
+The fix was to remove runtime globbing and predefine section metadata for routes that need it via build-time codegen ([`website/scripts/generate-doc-layout-sections.mjs`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/website/scripts/generate-doc-layout-sections.mjs) → `src/generated/doc-layout-sections.generated.ts`), then import from `Layout.tsx` through [`doc-layout-sections.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/website/src/lib/doc-layout-sections.ts).
+
+The general pattern: anything that needs `fs` at runtime must move to build time, a static map, or an edge-safe data source.
 
 ### 10.2 Prerender: `CodePanel` and `Children.only`
 
-- **Fix:** Normalize `children` with **`Children.toArray`**, pick the **`code` / `Code`** element, and avoid **`Children.only`** when MDX can emit multiple nodes.
+Normalize `children` with `Children.toArray`, pick the `code` / `Code` element, and avoid `Children.only` when MDX can emit multiple nodes.
 
 ### 10.3 Verification
 
-- **`curl -I`** / HTTP **200** on **`https://docs.clawql.com/`** after deploy.
-- **`wrangler tail`** clean on normal page loads (no `fs.readdir` / `Children.only` stack traces).
+`curl -I` / HTTP 200 on `https://docs.clawql.com/` after deploy. `wrangler tail` clean on normal page loads — no `fs.readdir` or `Children.only` stack traces.
 
 ---
 
 ## 11. Caching headers and purge
 
-Production behavior is documented in [`docs/website/website-caching.md`](../website/website-caching.md):
+Production behavior is documented in [`docs/website/website-caching.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/website/website-caching.md). `next.config.mjs` sets `Cache-Control` for HTML vs static chunks. `public/_headers` applies to assets served from the ASSETS binding.
 
-- **`next.config.mjs`** sets **`Cache-Control`** for HTML vs static chunks.
-- **`public/_headers`** applies to assets served from the **ASSETS** binding.
-
-After a deploy, if something still looks **stale** at the edge, use Cloudflare **Purge Cache** for **`docs.clawql.com`** (or lower **`s-maxage`** during heavy iteration).
+After a deploy, if content still looks stale at the edge, use Cloudflare Purge Cache for `docs.clawql.com`, or lower `s-maxage` during heavy iteration.
 
 ---
 
 ## 12. Insights for future work
 
-1. **Workers ≠ Node:** Any **server** code that runs on Workers must avoid **unsupported `fs`** on the hot path; prefer **build-time** generation or **static** maps.
-2. **Token parity:** Treat **Wrangler success** and **REST `execute` success** as **independent** — validate scopes explicitly for the operations you automate.
-3. **Vault cadence:** **`memory_ingest`** after **decisions and failures**; use **`append: true`** and **stable titles** to build durable runbooks instead of fragmented notes.
-4. **Case study hygiene:** Link new case studies from [`README.md`](../../README.md) and [`docs/case_studies/README.md`](README.md), then **`memory_ingest`** the canonical doc so **recall** finds “how we did X” later.
+**Workers is not Node.** Any server code that runs on Workers must avoid unsupported `fs` on the hot path — move it to build-time generation or static maps.
+
+**Token parity matters.** Wrangler success and REST `execute` success are independent. Validate scopes explicitly for the operations you automate rather than assuming the two auth paths are equivalent.
+
+**Vault cadence compounds.** `memory_ingest` after decisions and failures, with `append: true` and stable titles, builds durable runbooks. Fragmented one-off notes don't survive across sessions in a useful form.
+
+**Case study hygiene.** Link new case studies from [`README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/README.md) and [`docs/case_studies/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/README.md), then `memory_ingest` the canonical doc so recall finds "how we did X" in later sessions.
 
 ---
 
 ## 13. References
 
-- [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md) — MCP tool surface.
-- [`docs/integrations/cursor-vault-memory.md`](../integrations/cursor-vault-memory.md) — Cursor rules + vault skill.
-- [`docs/website/website-caching.md`](../website/website-caching.md) — CDN / browser caching for **`docs.clawql.com`** (`next.config` + `public/_headers`).
-- [`docs/case_studies/README.md`](README.md) — index of case studies.
-- Website (this study): **`https://docs.clawql.com/case-studies/cloudflare-docs-mcp`**
+- [`docs/mcp/mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) — MCP tool surface
+- [`docs/integrations/cursor-vault-memory.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/integrations/cursor-vault-memory.md) — Cursor rules + vault skill
+- [`docs/website/website-caching.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/website/website-caching.md) — CDN / browser caching for `docs.clawql.com`
+- [`docs/case_studies/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/README.md) — index of case studies
+
+© Copyright 2026. All rights reserved. · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL)

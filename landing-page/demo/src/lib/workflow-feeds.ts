@@ -39,7 +39,7 @@ export const workflowFeeds: readonly WorkflowFeed[] = [
         kind: 'tool',
         tool: 'search',
         title: 'Discover control-plane ops',
-        body: 'Rank Cloudflare REST operations for Workers custom domains and zone bindings — no multi‑MB OpenAPI in the prompt.',
+        body: 'Rank Cloudflare REST operations for Workers custom domains and zone bindings.',
       },
       {
         kind: 'tool',
@@ -56,7 +56,7 @@ export const workflowFeeds: readonly WorkflowFeed[] = [
         kind: 'tool',
         tool: 'memory_ingest',
         title: 'Persist runbook',
-        body: 'Append deploy decisions and fixes to the vault with append: true and wikilinks — durable recall for the next incident.',
+        body: 'Append deploy decisions and fixes to the vault with append: true and wikilinks.',
       },
     ],
   },
@@ -69,23 +69,23 @@ export const workflowFeeds: readonly WorkflowFeed[] = [
       {
         kind: 'agent',
         title: 'Months earlier — different agent, different product',
-        body: 'In Cursor, memory_ingest writes roadmap priorities, vendor analysis, and K8s debugging notes to the vault. OpenClaw is not installed yet.',
+        body: 'In Cursor, memory_ingest writes roadmap priorities, vendor analysis, and K8s debugging notes to the vault.',
       },
       {
         kind: 'agent',
         title: 'Fresh OpenClaw thread — zero pasted history',
-        body: 'A new gateway agent comes online: “fresh slate, no memories.” Different product, different session, no chat scrollback from April.',
+        body: 'A new gateway agent comes online: “fresh slate, no memories.”',
       },
       {
         kind: 'tool',
         tool: 'memory_recall',
         title: 'Recall over Streamable HTTP',
-        body: 'User directs clawql__memory_recall with query “comprehensive project summary”, limit 5 — return vault JSON paths and snippets only, no guessing.',
+        body: 'User directs clawql__memory_recall with query “comprehensive project summary”, limit 5 — return vault JSON paths and snippets from the tool response.',
       },
       {
         kind: 'result',
-        title: 'Ranked notes from long-ago sessions',
-        body: 'Vault returns Memory/_INDEX_ClawQL.md, openclaw-mac-mini-clawql-mcp-setup.md, and docker-desktop-kubernetes-mcp-kyverno-cosign-session.md — each with path, score, and snippet from the tool response.',
+        title: 'Ranked notes from prior sessions',
+        body: 'Vault returns Memory/_INDEX_ClawQL.md, openclaw-mac-mini-clawql-mcp-setup.md, and docker-desktop-kubernetes-mcp-kyverno-cosign-session.md — each with path, score, and snippet.',
       },
       {
         kind: 'result',

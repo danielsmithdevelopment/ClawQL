@@ -27,13 +27,16 @@ export default function Page() {
         headline="Start your 14-day trial or book a demo"
         subheadline={
           <p>
-            {site.earlyAccess.summary} Real estate teams: see the{' '}
+            ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI. Land with
+            OpenAI-compatible inference and MCP; expand into memory, Dedicated Virtual Gateway governance, and Edge
+            Gateways on every laptop. Self-host free on Apache 2.0, or start a 14-day Developer trial. Real estate teams:
+            see the{' '}
             <a href="/industries/real-estate#demo-pitch" className="underline">
               one-paragraph pitch
             </a>{' '}
             to forward before your demo. Developer trial is {hostedFreeTrial.durationDays} days, no credit card. Gateway
             from {pricing.developer.monthlyPrice}/mo, Teams {pricing.teams.monthlyPrice}/mo, IDP bundle from{' '}
-            {pricing.starter.monthlyPrice}/mo. {site.waitlistPromise}
+            {pricing.starter.monthlyPrice}/mo.
           </p>
         }
         cta={<WaitlistSignupForm className="mx-auto" />}
@@ -57,7 +60,7 @@ export default function Page() {
       <FeaturesThreeColumn
         id="signup-benefits"
         eyebrow="Why managed"
-        headline="IDP pipeline + vault memory, minus the Helm charts."
+        headline="IDP pipeline and vault memory, hosted"
         subheadline={
           <p>
             Self-hosters run <code className="text-sm">clawql-idp</code> with eight co-deployed vendors. Managed
@@ -91,8 +94,8 @@ export default function Page() {
               headline="knowledge_search_onyx"
               subheadline={
                 <p>
-                  Hybrid enterprise search over your indexed documents. Agents ground answers in Onyx hits, not model
-                  improvisation.
+                  Hybrid enterprise search over your indexed documents. Agents ground answers in Onyx hits rather than
+                  model improvisation.
                 </p>
               }
             />
@@ -100,7 +103,7 @@ export default function Page() {
         }
       />
 
-      <Section id="idp-stages" headline="Eight vendors, one pipeline.">
+      <Section id="idp-stages" headline="Eight vendors, one pipeline">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {idpPipelineStages.map((stage) => (
             <IdpStageCard key={stage.vendor} {...stage} />

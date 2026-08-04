@@ -1,44 +1,99 @@
-import { HeroPattern } from '@/components/HeroPattern'
-import { Button } from '@/components/Button'
-
-<HeroPattern />
-
 # ClawQL documentation
 
-**ClawQL** provides the **Agentic Gateway** as the **Foundational Platform for Auditable Production AI** — OpenAI-compatible inference and MCP **`search`** / **`execute`** across your APIs, with always-on **`audit`** and **`cache`**, optional vault memory, and defense-in-depth controls. Deploy as Regional Hubs, Dedicated Virtual Gateways, and Edge Gateways in a [Zero-Trust Agentic Fabric](/architecture/agentic-fabric). Ground agents in an open [Enterprise Ontology](/architecture/enterprise-ontology) — typed entities, kinetic actions, Git-versioned. {{ className: 'lead' }}
+**ClawQL** is the secure, persistent MCP gateway for production agents — **`search`** and **`execute`** across OpenAPI, Discovery, and optional GraphQL/gRPC sources, with always-on **`audit`** and **`cache`**, optional vault memory, and defense-in-depth controls.
 
-<div className="not-prose mt-8 flex flex-wrap gap-3">
-  <Button href="/agent-setup" arrow="right">
-    <>Agent setup</>
-  </Button>
-  <Button href="/getting-started/inference" variant="outline">
-    <>Inference setup</>
-  </Button>
-  <Button href="/quickstart" variant="outline">
-    <>Quickstart</>
-  </Button>
-  <Button href="/architecture/agentic-fabric" variant="outline">
-    <>Agentic Fabric</>
-  </Button>
-  <Button href="/architecture/enterprise-ontology" variant="outline">
-    <>Enterprise Ontology</>
-  </Button>
-</div>
+[Getting started](https://docs.clawql.com/getting-started) · [Quickstart](https://docs.clawql.com/quickstart) · [Architecture](https://docs.clawql.com/architecture) · [Deployment](https://docs.clawql.com/deployment)
 
-## Start here
+---
 
-- [Agent setup](/agent-setup) — connect Desktop, Cursor, or a local sandbox
-- [Inference setup](/getting-started/inference) — clawql-inference `/v1` in five minutes
-- [Quickstart](/quickstart) — run `npx clawql-mcp` in minutes
-- [Getting started](/getting-started) — paths for solo, teams, and full Helm stacks
-- [MCP clients](/mcp-clients) — stdio, HTTP, and Agentic Gateway auth
-- [Zero-Trust Agentic Fabric](/architecture/agentic-fabric) — Regional Hubs, Dedicated Virtual Gateways, Edge swarm
-- [Enterprise Ontology](/architecture/enterprise-ontology) — open typed entities, kinetic `@kinetic`, OKF memory
+## Agent-first operating system
 
-## Explore
+Everything flows through one intelligent gateway. Components you leave off add no overhead. Official artifacts verify against **Layer 0 immutable releases**. Start with the [Vision & Roadmap](https://docs.clawql.com/vision/roadmap), then the [Master enablement guide](https://docs.clawql.com/vision/technical-enablement) for the full 6-layer architecture.
 
-- [Architecture](/architecture) · [Vision & status](/vision/roadmap) · [Inference setup](/getting-started/inference) · [clawql-inference](/inference/clawql-inference)
-- [Deployment](/deployment) · [Operations guide](/deployment/operations-guide)
-- [Learn](/learn) · [Examples](/examples)
-- [Reference](/reference) · [MCP tools](/tools) · [Plugins](/plugins)
-- [Security](/security) · [Troubleshooting](/troubleshooting)
+[Vision & Roadmap](https://docs.clawql.com/vision/roadmap)
+
+---
+
+## Getting started
+
+- [Overview](https://docs.clawql.com/getting-started)
+- [Quickstart](https://docs.clawql.com/quickstart)
+- [Install](https://docs.clawql.com/install)
+- [MCP clients](https://docs.clawql.com/mcp-clients)
+- [Choose your tier](https://docs.clawql.com/deployment)
+
+## Architecture & vision
+
+- [Architecture hub](https://docs.clawql.com/architecture)
+- [Vision & Roadmap](https://docs.clawql.com/vision/roadmap)
+- [IDP Platform](https://docs.clawql.com/vision/idp-platform)
+- [Master enablement guide](https://docs.clawql.com/vision/technical-enablement)
+- [Modularization v2.1](https://docs.clawql.com/vision/modularization)
+- [Plugin model & registry](https://docs.clawql.com/reference/plugins)
+- [Immutable releases (Layer 0)](https://docs.clawql.com/vision/immutable-releases)
+- [DAOS Unified Architecture](https://docs.clawql.com/ouroboros/daos)
+- [Coordination layer](https://docs.clawql.com/ouroboros/specification)
+- [DAOS build plan](https://docs.clawql.com/ouroboros/build-plan)
+- [Ouroboros library](https://docs.clawql.com/ouroboros)
+- [Slide deck](https://docs.clawql.com/vision/slide-deck)
+
+## Deployment & operations
+
+- [Deployment hub](https://docs.clawql.com/deployment)
+- [Operations guide (Helm)](https://docs.clawql.com/deployment/operations-guide)
+- [Operator target architecture (planned)](https://docs.clawql.com/design/operator-target-architecture)
+- [Tier 2: Kubernetes](https://docs.clawql.com/deployment/kubernetes)
+- [Helm chart](https://docs.clawql.com/helm)
+- [Platform ops (HTTP, Docker)](https://docs.clawql.com/deployment/platforms)
+- [Tailscale & Headscale](https://docs.clawql.com/tailscale)
+- [Dashboard on Kubernetes](https://docs.clawql.com/dashboard-kubernetes)
+- [Istio & observability lab](https://docs.clawql.com/docker-desktop-observability)
+- [OpenClaw + ClawQL](https://docs.clawql.com/openclaw)
+
+## Guides
+
+- [Guides hub](https://docs.clawql.com/guides)
+- [ClawQL Learn](https://docs.clawql.com/learn)
+- [Token efficiency](https://docs.clawql.com/architecture/token-efficiency)
+- [Security overview](https://docs.clawql.com/security)
+- [Defense in depth](https://docs.clawql.com/security/defense-in-depth)
+- [Security curriculum (32 modules)](https://docs.clawql.com/security/best-practices)
+- [HITL & human interfaces](https://docs.clawql.com/reference/hitl)
+- [Verticals guide](https://docs.clawql.com/reference/verticals)
+- [Troubleshooting](https://docs.clawql.com/troubleshooting)
+
+## Reference
+
+- [Reference hub](https://docs.clawql.com/reference)
+- [Plugin model & registry](https://docs.clawql.com/reference/plugins)
+- [Protocol v2.1](https://docs.clawql.com/reference/protocol)
+- [Core concepts](https://docs.clawql.com/concepts)
+- [MCP tools](https://docs.clawql.com/tools)
+- [Configuration](https://docs.clawql.com/spec-configuration)
+- [Contributor specification](https://docs.clawql.com/contributing/technical-specification)
+- [Optional tools hub](https://docs.clawql.com/reference/optional-tools)
+- [Ouroboros library](https://docs.clawql.com/ouroboros)
+- [Bundled specs](https://docs.clawql.com/bundled-specs)
+- [GraphQL layer](https://docs.clawql.com/graphql-proxy)
+- [NATS JetStream](https://docs.clawql.com/nats-jetstream)
+- [Benchmarks](https://docs.clawql.com/benchmarks)
+
+## Examples
+
+- [Examples hub](https://docs.clawql.com/examples)
+- [Cloudflare docs deploy](https://docs.clawql.com/case-studies/cloudflare-docs-mcp)
+- [Vault + GitHub session](https://docs.clawql.com/case-studies/vault-memory-github-session-2026-04)
+- [Cross-thread vault recall](https://docs.clawql.com/case-studies/cross-thread-vault-recall)
+- [OpenClaw memory_recall](https://docs.clawql.com/case-studies/openclaw-clawql-memory-recall-2026-06)
+
+## Resources
+
+- [Resources hub](https://docs.clawql.com/resources)
+- [Roadmap](https://docs.clawql.com/vision/roadmap)
+- [Changelog & releases](https://docs.clawql.com/resources/changelog)
+- [Migration guide](https://docs.clawql.com/resources/migration)
+- [GitHub](https://github.com/danielsmithdevelopment/ClawQL)
+
+---
+
+© Copyright 2026. All rights reserved. · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL)

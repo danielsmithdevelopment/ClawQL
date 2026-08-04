@@ -63,15 +63,15 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
                   <span className="font-semibold text-mist-950 dark:text-white">{benchmark.clawql}</span>
                 </p>
               </div>
-              <p className="text-xs/6 text-mist-600 dark:text-mist-400">{benchmark.note}</p>
+              {benchmark.note ? (
+                <p className="text-xs/6 text-mist-600 dark:text-mist-400">{benchmark.note}</p>
+              ) : null}
             </div>
           ))}
         </div>
 
         <div className="mt-10 rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 sm:p-8 dark:border-white/10 dark:bg-white/5">
-          <h3 className="text-xl font-semibold text-mist-950 dark:text-white">
-            vs {executorBenchmark.name} — a tool, not a platform
-          </h3>
+          <h3 className="text-xl font-semibold text-mist-950 dark:text-white">ClawQL vs {executorBenchmark.name}</h3>
           <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">{executorBenchmark.positioning}</p>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
@@ -160,26 +160,23 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
                 {stackReplacementSummary.clawqlBusiness}
               </p>
               <p className="mt-1 text-sm/7 text-mist-600 dark:text-mist-400">
-                Up to {stackReplacementSummary.clawqlBusinessMax}
+                {stackReplacementSummary.clawqlBusinessMax}
               </p>
               <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">{stackReplacementSummary.savingsNote}</p>
             </div>
           </div>
         </div>
-        <p className="mt-6 text-xs/6 text-mist-600 dark:text-mist-400">
-          Illustrative benchmarks from published competitor pricing bands (July 2026). Your volume and contract terms
-          will differ — use these for order-of-magnitude comparison, not procurement quotes.
-        </p>
+        <p className="mt-6 text-xs/6 text-mist-600 dark:text-mist-400">{stackReplacementSummary.disclaimer}</p>
       </Section>
 
       <Section
         id="competitor-features"
         eyebrow="Feature comparison"
-        headline="ClawQL Business ($599/mo IDP bundle) vs IDP and VDR incumbents"
+        headline="ClawQL Business ($599/mo) vs IDP and VDR incumbents"
         subheadline={
           <p>
-            Competitors typically sell IDP <em>or</em> VDR. ClawQL IDP tiers bundle both plus semantic search, MCP
-            gateway, and agent memory. Gateway-only tiers are compared against executor.sh above.
+            Competitors typically sell IDP or VDR as separate products. ClawQL IDP tiers bundle both plus semantic
+            search, MCP gateway, and agent memory. Gateway-only tiers are compared against executor.sh above.
           </p>
         }
       >

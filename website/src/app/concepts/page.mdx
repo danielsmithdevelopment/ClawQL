@@ -1,6 +1,6 @@
 # Concepts
 
-ClawQL’s **Agentic Gateway** connects **agents** to **HTTP and gRPC APIs** (OpenAPI/Discovery by default, optional native GraphQL and gRPC) through a thin MCP surface, without asking models to ingest full OpenAPI documents up front. MCP is the protocol; the gateway is the Foundational Platform surface — see [Zero-Trust Agentic Fabric](/architecture/agentic-fabric) for Regional Hub / Virtual Gateway / Edge topology. {{ className: 'lead' }}
+ClawQL's Agentic Gateway connects agents to HTTP and gRPC APIs (OpenAPI/Discovery by default, optional native GraphQL and gRPC) through a thin MCP surface. Models see short ranked results from `search` rather than full OpenAPI documents. MCP is the protocol; the gateway is the Foundational Platform surface — see [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) for Regional Hub / Virtual Gateway / Edge topology.
 
 ## Architecture
 
@@ -11,40 +11,46 @@ Agent
         └─▶ execute tool  ──▶ OpenAPI→GraphQL (single-spec) / REST (multi) / native HTTP GraphQL / gRPC
 ```
 
-**Transports:** **stdio** and **Streamable HTTP** are the usual paths; **MCP over gRPC** (protobuf **`model_context_protocol.Mcp`**) is optional and uses the same tool registration via **[`mcp-grpc-transport`](https://www.npmjs.com/package/mcp-grpc-transport)**—see [Deployment](/deployment). (This is the **MCP wire protocol**, distinct from **native gRPC API** sources in **`CLAWQL_GRPC_SOURCES`**.)
+**Transports:** stdio and Streamable HTTP are the usual paths; MCP over gRPC (protobuf `model_context_protocol.Mcp`) is optional and uses the same tool registration via [`mcp-grpc-transport`](https://www.npmjs.com/package/mcp-grpc-transport) — see [Deployment](https://docs.clawql.com/deployment). This is the MCP wire protocol, distinct from native gRPC API sources in `CLAWQL_GRPC_SOURCES`.
 
-In **multi-spec** mode, **`search`** uses one merged index while **`execute`** routes **OpenAPI/Discovery** operations to the correct spec (**REST**). **Native** GraphQL/gRPC operations use their own clients when configured.
+In multi-spec mode, `search` uses one merged index while `execute` routes OpenAPI/Discovery operations to the correct spec (REST). Native GraphQL/gRPC operations use their own clients when configured.
 
-## Feature tiers (what is on by default)
+## Feature tiers
 
-Aligned with the **layer diagram** and **[configuration § Feature tiers](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md#feature-tiers-architecture-diagram)**:
+Aligned with the layer diagram and [configuration § Feature tiers](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md#feature-tiers-architecture-diagram):
 
-1. **ClawQL Core (always on — no opt-out)** — **`search`**, **`execute`**, **`audit`**, **`cache`** (same band as in the diagram; no env gate).
-2. **Default on — opt out** — **`memory_ingest`** / **`memory_recall`**, **Documents** (**`ingest_external_knowledge`**, **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX`** is set). Use **`CLAWQL_ENABLE_MEMORY`** or **`CLAWQL_ENABLE_DOCUMENTS`** set to **`0`** to hide.
-3. **Default off — opt in** — **`sandbox_exec`** (**`CLAWQL_ENABLE_SANDBOX=1`**), **`schedule`**, **`notify`**, **`hitl_enqueue_label_studio`** (**`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`** — [HITL — Label Studio](/hitl-label-studio)), **`ouroboros_*`**, and the **`knowledge_search_onyx`** wrapper (**`CLAWQL_ENABLE_ONYX`**, with Documents still enabled). **`sandbox_exec`** needs backend env ([sandbox bridge](https://github.com/danielsmithdevelopment/ClawQL/tree/main/cloudflare/sandbox-bridge), Seatbelt, or Docker) once registered.
-
-**Core** is **`search`**, **`execute`**, **`audit`**, **`cache`** — **no opt-out**.
+1. **ClawQL Core (always on)** — `search`, `execute`, `audit`, `cache` (same band as in the diagram; no env gate).
+2. **Default on — opt out** — `memory_ingest` / `memory_recall`, Documents (`ingest_external_knowledge`, `knowledge_search_onyx` when `CLAWQL_ENABLE_ONYX` is set). Use `CLAWQL_ENABLE_MEMORY` or `CLAWQL_ENABLE_DOCUMENTS` set to `0` to hide.
+3. **Default off — opt in** — `sandbox_exec` (`CLAWQL_ENABLE_SANDBOX=1`), `schedule`, `notify`, `hitl_enqueue_label_studio` (`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1` — [HITL — Label Studio](https://docs.clawql.com/hitl-label-studio)), `ouroboros_*`, and the `knowledge_search_onyx` wrapper (`CLAWQL_ENABLE_ONYX`, with Documents still enabled). `sandbox_exec` needs backend env ([sandbox bridge](https://github.com/danielsmithdevelopment/ClawQL/tree/main/cloudflare/sandbox-bridge), Seatbelt, or Docker) once registered.
 
 ## Design principles
 
-1. **`search` first, `execute` second** — discover `operationId` and parameters without loading the entire spec into context.
-2. **OpenAPI→GraphQL is internal** — for REST-backed operations, agents do not hand-author GraphQL; the server builds precise selections. **Native** GraphQL endpoints still use GraphQL over HTTP, but **`execute`** builds the document from introspection-shaped metadata.
-3. **Single index** — OpenAPI/Discovery plus optional native sources contribute to one **`search`** result set ([spec configuration](/spec-configuration)).
+**`search` first, `execute` second.** Discover `operationId` and parameters without loading the entire spec into context.
+
+**OpenAPI→GraphQL is internal.** For REST-backed operations, agents hand the parameters to `execute` and the server builds precise GraphQL selections internally. Native GraphQL endpoints still use GraphQL over HTTP, but `execute` builds the document from introspection-shaped metadata rather than requiring the agent to author it.
+
+**Single index.** OpenAPI/Discovery plus optional native sources contribute to one `search` result set ([spec configuration](https://docs.clawql.com/spec-configuration)).
 
 ## Ouroboros (library + optional MCP tools)
 
-For **multi-step** workflows that **iterate** on a structured spec (acceptance criteria, ontology fields) until convergence, ClawQL’s repo includes the TypeScript **`clawql-ouroboros`** package — see **[Ouroboros library](/ouroboros)** and **[clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md)**. It complements the **`search` → `execute`** pattern: executors inside the loop can still call the same APIs through your integration layer. With **`CLAWQL_ENABLE_OUROBOROS=1`**, **`clawql-mcp`** registers three **`ouroboros_*`** MCP tools; without the flag, use the library from your own process.
+For multi-step workflows that iterate on a structured spec (acceptance criteria, ontology fields) until convergence, ClawQL's repo includes the TypeScript `clawql-ouroboros` package — see [Ouroboros library](https://docs.clawql.com/ouroboros) and [clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md). It complements the `search` → `execute` pattern: executors inside the loop can still call the same APIs through your integration layer. With `CLAWQL_ENABLE_OUROBOROS=1`, `clawql-mcp` registers three `ouroboros_*` MCP tools; without the flag, use the library from your own process.
 
 ## How the two phases save tokens
 
 |                 | **Phase 1 — planning**                                   | **Phase 2 — execution**                                       |
 | --------------- | -------------------------------------------------------- | ------------------------------------------------------------- |
 | **Mechanism**   | `search` + in-memory index instead of pasting full specs | Internal GraphQL projection (when available) vs fat REST JSON |
-| **Typical win** | Input: huge spec text → short ranked hits                | Output: smaller structured payloads returned to the model     |
+| **Typical win** | Input: large spec text → short ranked hits               | Output: smaller structured payloads returned to the model     |
 | **Tradeoff**    | —                                                        | Small extra input for the internal query + variables          |
 
-Benchmarks in the repo compare **planning-context size** (merged specs on disk vs workflow/search artifacts) to illustrate scale—not a literal per-call “API bill” from a model provider. See [Benchmarks](/benchmarks).
+Benchmarks in the repo compare planning-context size (merged specs on disk vs workflow/search artifacts) to illustrate scale. These are not per-call API billing figures from a model provider. See [Benchmarks](https://docs.clawql.com/benchmarks).
 
 ## Ephemeral `cache` vs vault memory
 
-The **`cache`** tool (**ClawQL Core**, always registered) holds **short-lived** key/value state in the MCP process (LRU, no disk). The **`audit`** tool (always registered) holds **short-lived** structured events in-process (ring buffer, no disk) — not compliance-grade alone; see [enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/enterprise-mcp-tools.md). The optional **`notify`** tool (**`CLAWQL_ENABLE_NOTIFY`**) sends **Slack** messages via **`chat.postMessage`** (outbound HTTP to Slack, not vault storage) — [Slack notify](/notify), [notify-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/notify-tool.md). The optional **`hitl_enqueue_label_studio`** tool (**`CLAWQL_ENABLE_HITL_LABEL_STUDIO`**) enqueues tasks in **Label Studio** and accepts **`POST /hitl/label-studio/webhook`** callbacks — [HITL — Label Studio](/hitl-label-studio), [hitl-label-studio.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/hitl-label-studio.md) ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)). The optional **`knowledge_search_onyx`** tool (**`CLAWQL_ENABLE_ONYX`**) calls your **Onyx** HTTP API for **semantic document search** (enterprise index, not the vault) — [Onyx knowledge search](/onyx-knowledge), [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md). **`memory_ingest`** / **`memory_recall`** use your **Obsidian vault** (and optional **`memory.db`**) for **durable** notes and graph recall. Do not confuse them: use [Session cache](/cache) for scratch data; use the vault tools when the user expects persisted knowledge. See [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/cache-tool.md).
+The `cache` tool (ClawQL Core, always registered) holds short-lived key/value state in the MCP process (LRU, no disk). The `audit` tool (always registered) holds short-lived structured events in-process via ring buffer with no disk persistence — see [enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/enterprise-mcp-tools.md) for compliance considerations.
+
+The optional `notify` tool (`CLAWQL_ENABLE_NOTIFY`) sends Slack messages via `chat.postMessage` (outbound HTTP to Slack) — [Slack notify](https://docs.clawql.com/notify), [notify-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/notify-tool.md). The optional `hitl_enqueue_label_studio` tool (`CLAWQL_ENABLE_HITL_LABEL_STUDIO`) enqueues tasks in Label Studio and accepts `POST /hitl/label-studio/webhook` callbacks — [HITL — Label Studio](https://docs.clawql.com/hitl-label-studio), [hitl-label-studio.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/hitl-label-studio.md) ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)). The optional `knowledge_search_onyx` tool (`CLAWQL_ENABLE_ONYX`) calls your Onyx HTTP API for semantic document search against an enterprise index — [Onyx knowledge search](https://docs.clawql.com/onyx-knowledge), [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md).
+
+`memory_ingest` / `memory_recall` use your Obsidian vault (and optional `memory.db`) for durable notes and graph recall. Use [Session cache](https://docs.clawql.com/cache) for scratch data within a session; use the vault tools when the user expects knowledge to persist across sessions. See [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/cache-tool.md).
+
+© Copyright 2026. All rights reserved. · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL)
