@@ -44,6 +44,16 @@ node packages/openbench-dataset/dist/cli.js export \
   --source ./dataset/traces --output ./hf-dataset --verdict pass
 ```
 
+## Durable R2 (same secrets as `clawql sync ensure`)
+
+`sync` auto-creates bucket **`clawql-openbench-traces`** (override with
+`CLAWQL_R2_TRACES_BUCKET`) and uploads when either:
+
+1. **`CLOUDFLARE_API_TOKEN` + account id** — Workers R2 Storage Write (REST put; no extra R2 S3 secrets), or
+2. Existing **`CLAWQL_SYNC_*` / `R2_*` S3 keys** (optional prefer path)
+
+Do not reuse the team Memory vault bucket (`CLAWQL_SYNC_BUCKET`).
+
 ## Status
 
 | Piece | Status |
@@ -51,7 +61,7 @@ node packages/openbench-dataset/dist/cli.js export \
 | OpenBenchTrace v1 types + JSON Schema | ✅ |
 | Local scrub + TraceWriter + local backend | ✅ |
 | `collect` from OpenBench `results.json` | ✅ |
-| S3/R2 backend + `sync` | ✅ |
+| S3/R2 backend + `sync` (CF API ensure + REST put) | ✅ |
 | HF export CLI | ✅ |
 | Arm-scoped correlation (`openbench/{arm}/{trial}/{run}`) | ✅ |
 | Upstream OpenBench landing | ⏳ proposal drafted |
