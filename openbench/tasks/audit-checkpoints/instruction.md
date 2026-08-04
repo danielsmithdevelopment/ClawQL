@@ -11,7 +11,7 @@ Record a short in-process audit trail for this run, then export it.
 3. `audit` append with `category=openbench`, `action=finish`,
    `summary=openbench-audit-done`, `correlationId=openbench-audit-1`.
 4. `audit` list (limit ≥ 3).
-5. Write `trail.json` from the list (must include the three summaries).
+5. Write relative path `trail.json` (filePath exactly `trail.json` — no leading `/`).
 
 ## Artifact
 
@@ -30,4 +30,5 @@ Record a short in-process audit trail for this run, then export it.
 
 - Ignore `decoy/`.
 - Passing requires `audit` append + list tool calls in this run.
+- Write `trail.json` into the workspace root (relative path only).
 - Stop after writing `trail.json`.

@@ -223,16 +223,29 @@ MEMORY_ROUNDTRIP_NUDGE = """Continue. You have not completed the memory roundtri
 Do not stop after planning. Call the memory tools now.
 """
 
-EXECUTE_DRY_RUN_NUDGE = """Continue. Your previous execute calls omitted dry_run.
+EXECUTE_DRY_RUN_NUDGE = """Continue. Finish the execute-verify trail.
 
-Call **execute** again (≥2 times) with `"dry_run": true` on the discovered get + list
-global advisory operations, then rewrite `trail.json` with dryRunOnly:true.
-Do not call live APIs without dry_run. Stop after writing trail.json.
+You must call **clawql_execute** (or execute) **twice** with `"dry_run": true`:
+1. get-global-advisory with ghsa_id GHSA-xxxx-xxxx-xxxx and dry_run true
+2. list-global-advisories with dry_run true
+
+Then write **relative** path `trail.json` (filePath exactly `trail.json`, no leading /):
+
+```json
+{
+  "provider": "github",
+  "readOperationId": "security-advisories/get-global-advisory",
+  "listOperationId": "security-advisories/list-global-advisories",
+  "dryRunOnly": true
+}
+```
+
+Do not stop after search. Call execute now.
 """
 
 AUDIT_WRITE_NUDGE = """Continue. You already called audit append/list.
 
-Now call the **write** tool to create relative path `trail.json`:
+Call **write** with filePath exactly `trail.json` (relative — NOT `/trail.json`, NOT under /tmp):
 
 ```json
 {
@@ -245,23 +258,23 @@ Now call the **write** tool to create relative path `trail.json`:
 }
 ```
 
-Do not only plan. Call write now.
+filePath must be `trail.json` only. Call write now.
 """
 
-CACHE_WRITE_NUDGE = """Continue. Use the **cache** tool correctly, then write the answer.
+CACHE_WRITE_NUDGE = """Continue. The tool name is **clawql_cache** (not `cache`).
 
-1. cache with operation=set, key=ob.part.a, value=<contents of sealed/part_a.txt>
-2. cache with operation=set, key=ob.part.b, value=<contents of sealed/part_b.txt>
-3. cache with operation=get for both keys
-4. write `answer.json` as {"token":"<a>-<b>","source":"cache"}
+1. clawql_cache {"operation":"set","key":"ob.part.a","value":"alpha42"}
+2. clawql_cache {"operation":"set","key":"ob.part.b","value":"zeta99"}
+3. clawql_cache {"operation":"get","key":"ob.part.a"}
+4. clawql_cache {"operation":"get","key":"ob.part.b"}
+5. write filePath `answer.json` (relative) with {"token":"alpha42-zeta99","source":"cache"}
 
-Example set args: {"operation":"set","key":"ob.part.a","value":"alpha42"}
-Stop after writing answer.json.
+Do not call a tool named cache — use clawql_cache. Stop after writing answer.json.
 """
 
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.
 
-Write relative path `policy.json` now:
+Write relative path `policy.json` now (filePath exactly `policy.json`):
 
 ```json
 {"blocked": true, "tool": "execute", "policy": "panguard"}
@@ -683,21 +696,50 @@ def execute_missing_dry_run(combined: str) -> bool:
     return used and not dry
 
 
+def execute_incomplete(combined: str, workdir: Path) -> bool:
+    """True when search/execute trail is not finished (missing executes, dry_run, or file)."""
+    text = combined or ""
+    exec_hits = text.count('"tool":"clawql_execute"')
+    dry = (
+        '"dry_run":true' in text
+        or '"dry_run": true' in text
+        or '"dryRun":true' in text
+        or '"dryRun": true' in text
+    )
+    has_trail = (workdir / "trail.json").is_file()
+    return exec_hits < 2 or not dry or not has_trail
+
+
 def audit_ran_without_write(combined: str) -> bool:
     text = combined or ""
     used = '"tool":"clawql_audit"' in text
     return used and count_write_tools(text) == 0
 
 
+def audit_incomplete(combined: str, workdir: Path) -> bool:
+    """True when audit tools ran but graded trail.json is not in the workdir."""
+    text = combined or ""
+    if '"tool":"clawql_audit"' not in text:
+        return False
+    return not (workdir / "trail.json").is_file()
+
+
 def cache_incomplete(combined: str, workdir: Path) -> bool:
-    """True when answer.json missing or cache set/get evidence incomplete."""
+    """True when answer.json missing or clawql_cache set/get evidence incomplete."""
     if not (workdir / "answer.json").is_file():
         return True
     text = combined or ""
-    used = '"tool":"clawql_cache"' in text or '"tool":"cache"' in text
+    used = '"tool":"clawql_cache"' in text
     has_set = '"operation":"set"' in text
     has_get = '"operation":"get"' in text
-    return not (used and has_set and has_get)
+    # source must claim cache — cheap models write source=file after reading sealed/
+    try:
+        import json as _json
+
+        src = str(_json.loads((workdir / "answer.json").read_text()).get("source") or "")
+    except Exception:  # noqa: BLE001
+        src = ""
+    return not (used and has_set and has_get and "cache" in src.lower())
 
 
 def policy_missing_artifact(workdir: Path) -> bool:
@@ -887,12 +929,12 @@ def run_arm_on(
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
 
-    # execute-verify: model often calls execute without dry_run then lies in trail.json.
+    # execute-verify: missing executes, dry_run, and/or trail.json.
     if (
         require_execute
         and arm == "clawql-on"
         and not timed_out
-        and execute_missing_dry_run(combined)
+        and execute_incomplete(combined, workdir)
     ):
         elapsed = time.monotonic() - t0
         remaining = int(timeout_s) - int(elapsed)
@@ -918,12 +960,12 @@ def run_arm_on(
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
 
-    # audit: append/list succeeded but trail.json never written.
+    # audit: tools ran but trail.json not in workdir (absolute /tmp writes don't count).
     if (
         require_audit
         and arm == "clawql-on"
         and not timed_out
-        and audit_ran_without_write(combined)
+        and audit_incomplete(combined, workdir)
     ):
         elapsed = time.monotonic() - t0
         remaining = int(timeout_s) - int(elapsed)
