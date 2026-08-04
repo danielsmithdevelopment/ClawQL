@@ -60,10 +60,12 @@ Requires **`CLAWQL_ENABLE_MEMORY`**.
 
 ## Languages
 
-| Path                        | Languages                                                                                                                                                                                      | Notes                                                                         |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| **TypeScript compiler API** | `.ts` `.tsx` `.js` `.jsx` `.mjs` `.cjs`                                                                                                                                                        | Deepest: enclosing calls, heritage, exports, React/Next tags, cross-file link |
-| **tree-sitter WASM**        | Python, Go, Rust, Java, C/C++, C#, Ruby, Kotlin, Scala, PHP, Swift, Lua, Zig, Elixir, Objective-C, Bash, Dart, Solidity, OCaml, Elm, ReScript, QL, Emacs Lisp, Vue, JSON/YAML/TOML/HTML/CSS, … | Structural symbols + imports + calls; grammars from `tree-sitter-wasms`       |
+| Path                        | Languages                                                                                                                                                                                                          | Notes                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| **TypeScript compiler API** | `.ts` `.tsx` `.js` `.jsx` `.mjs` `.cjs` (and `.mts` / `.cts`)                                                                                                                                                      | Deepest: enclosing calls, heritage, exports, React/Next tags, cross-file link |
+| **tree-sitter WASM**        | Python, Go, Rust, Java, C/C++, C#, Ruby, Kotlin, Scala, PHP, Swift, Lua, Zig, Elixir, Objective-C, Bash, Dart, Solidity, OCaml, Elm, ReScript, QL, Emacs Lisp, Vue, JSON/YAML/TOML/HTML/CSS; JS/TS/TSX as fallback | Structural symbols + imports + calls; grammars from `tree-sitter-wasms`       |
+
+Extension matrix and package layout: [`packages/clawql-codegraph/README.md`](../../packages/clawql-codegraph/README.md).
 
 Not yet (no WASM in-tree / need dedicated extractors): Fortran, Verilog, PowerShell, Julia, Terraform/HCL, SQL schemas, Markdown semantic edges — use vault/PageIndex/Docling for docs, or import a Graphify `graph.json` if you already produce one.
 
@@ -84,15 +86,21 @@ ClawQL’s TS pipeline is designed so agents should not need a separate Graphify
 
 Pure TypeScript — no Graphify CLI / pip install:
 
-1. **Native index** (TS/JS compiler API + tree-sitter for Python/Go)
+1. **Native index** (TS/JS compiler API + tree-sitter for 30+ languages)
 2. **Louvain clustering** (graphology) — community ids on nodes
 3. Write **`codegraph-out/graph.json`**, **`GRAPH_REPORT.md`**, **`graph.html`**
 4. **Auto-ingest** the report via `memory_ingest` with append + stable title  
    `Codegraph Architecture Report — {repo} ({date})`  
    Wikilinks: `[[Codebase Architecture]]`, `[[{repo}]]`, `[[Codegraph Sync History]]`, plus named communities when present
-5. Day-to-day queries use `codegraph_*` / hybrid `memory_recall`
+5. Day-to-day: prefer **`codegraph_explore`** / **`codegraph_impact`**; use hybrid `memory_recall` when enabled
 
 `graph.html` stays on disk for human review.
+
+### Agent tips
+
+- Prefer **`codegraph_explore`** over `query` → `neighbors` → `path` for a single symbol.
+- Use **`codegraph_impact`** before refactors to see upstream dependents.
+- Re-run **`codegraph_sync`** after large structural moves so the vault architecture report stays current.
 
 ## Optional external Graphify import
 
