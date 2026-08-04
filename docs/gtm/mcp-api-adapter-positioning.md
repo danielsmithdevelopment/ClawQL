@@ -29,7 +29,7 @@ Call MCP tools by name over HTTP **or GraphQL**. Production deployments use **`m
 | Direction                      | Product                     | Audience                                                                  |
 | ------------------------------ | --------------------------- | ------------------------------------------------------------------------- |
 | **OpenAPI → MCP**              | ClawQL `search` / `execute` | Agents discovering upstream REST/GraphQL/gRPC APIs                        |
-| **MCP → OpenAPI/GraphQL/gRPC** | `mcp-api-adapter` (0.4) | Workers / OpenWebUI / GraphQL / mesh — wrap **any** MCP (stdio/HTTP/gRPC) |
+| **MCP → OpenAPI/GraphQL/gRPC** | `mcp-api-adapter` (0.4)     | Workers / OpenWebUI / GraphQL / mesh — wrap **any** MCP (stdio/HTTP/gRPC) |
 
 Use **“OpenAPI on-ramp”**, **“GraphQL on-ramp”**, or **“MCP tools as REST/GraphQL”** in marketing — not bare “OpenAPI gateway.”
 

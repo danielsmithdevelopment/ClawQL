@@ -121,11 +121,11 @@ packages/mcp-api-adapter/
 
 ### 5.2 Runtime modes
 
-| Mode                        | Description                                                                                                             | v1                             |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| **A. Sidecar / standalone** | Process points at `GRPC_HOST:GRPC_PORT` (e.g. ClawQL `:50051`), introspects, serves OpenAPI HTTP on its own port        | **Required**                   |
+| Mode                        | Description                                                                                                         | v1                             |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| **A. Sidecar / standalone** | Process points at `GRPC_HOST:GRPC_PORT` (e.g. ClawQL `:50051`), introspects, serves OpenAPI HTTP on its own port    | **Required**                   |
 | **B. In-process mount**     | Optional Express router mounted beside ClawQL HTTP (`attachMcpApiAdapter(app, { … })`) when both run in one process | Nice-to-have                   |
-| **C. HTTP MCP fallback**    | If gRPC unavailable, forward via Streamable HTTP `tools/call`                                                           | Optional; document as degraded |
+| **C. HTTP MCP fallback**    | If gRPC unavailable, forward via Streamable HTTP `tools/call`                                                       | Optional; document as degraded |
 
 **Default recommendation:** Mode A with ClawQL `ENABLE_GRPC=1`. REST is a **translator into gRPC**, not a peer protocol of equal rank.
 
@@ -248,15 +248,15 @@ npx mcp-api-adapter \
   --api-key "$GATEWAY_API_KEY"
 ```
 
-| Env / flag                                      | Purpose                                                                    |
-| ----------------------------------------------- | -------------------------------------------------------------------------- |
+| Env / flag                                  | Purpose                                                                    |
+| ------------------------------------------- | -------------------------------------------------------------------------- |
 | `MCP_API_ADAPTER_GRPC_HOST` / `--grpc-host` | Upstream host                                                              |
 | `MCP_API_ADAPTER_GRPC_PORT` / `--grpc-port` | Default `50051`                                                            |
 | `MCP_API_ADAPTER_LISTEN` / `--listen`       | HTTP bind (default `0.0.0.0:8090`)                                         |
 | `MCP_API_ADAPTER_API_KEY` / `--api-key`     | Optional edge auth                                                         |
-| `MCP_PROTOCOL_VERSION`                          | Metadata for gRPC RPCs (default latest supported)                          |
+| `MCP_PROTOCOL_VERSION`                      | Metadata for gRPC RPCs (default latest supported)                          |
 | `MCP_API_ADAPTER_REFRESH_MS`                | Optional catalog poll                                                      |
-| TLS client flags                                | Align with `mcp-grpc-transport` client TLS when upstream uses `GRPC_TLS_*` |
+| TLS client flags                            | Align with `mcp-grpc-transport` client TLS when upstream uses `GRPC_TLS_*` |
 
 ---
 
@@ -311,11 +311,11 @@ npx mcp-api-adapter \
 
 ## 11. Naming
 
-| Option                                | Notes                                                                 |
-| ------------------------------------- | --------------------------------------------------------------------- |
+| Option                            | Notes                                                                 |
+| --------------------------------- | --------------------------------------------------------------------- |
 | **`mcp-api-adapter`** (preferred) | Clear MCP → OpenAPI direction; mirrors ecosystem language             |
-| `@clawql/mcp-gateway`                 | Scoped; heavier ClawQL branding (still OK if published from monorepo) |
-| `mcp-tools-openapi`                   | Accurate but weaker “gateway” signal                                  |
+| `@clawql/mcp-gateway`             | Scoped; heavier ClawQL branding (still OK if published from monorepo) |
+| `mcp-tools-openapi`               | Accurate but weaker “gateway” signal                                  |
 
 Use **`mcp-api-adapter`** on npm unless packaging policy requires `@clawql/*`.
 

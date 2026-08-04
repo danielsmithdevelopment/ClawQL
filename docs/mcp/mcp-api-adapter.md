@@ -71,18 +71,18 @@ No second gRPC server is started; `/openapi.json` advertises the upstream addres
 
 ## CLI reference
 
-| Flag / env                                          | Meaning                                        |
-| --------------------------------------------------- | ---------------------------------------------- |
-| `--mcp-url`                                         | Streamable HTTP MCP URL                        |
-| `--stdio -- <cmd…>`                                 | Spawn MCP over stdio                           |
-| `--grpc-address` / `CLAWQL_MCP_GRPC_ADDR`           | Upstream gRPC `host:port`                      |
-| `--grpc-host` / `--grpc-port`                       | Alternate gRPC address pieces                  |
+| Flag / env                                      | Meaning                                        |
+| ----------------------------------------------- | ---------------------------------------------- |
+| `--mcp-url`                                     | Streamable HTTP MCP URL                        |
+| `--stdio -- <cmd…>`                             | Spawn MCP over stdio                           |
+| `--grpc-address` / `CLAWQL_MCP_GRPC_ADDR`       | Upstream gRPC `host:port`                      |
+| `--grpc-host` / `--grpc-port`                   | Alternate gRPC address pieces                  |
 | `--listen` / `MCP_API_ADAPTER_LISTEN`           | HTTP bind (default `0.0.0.0:8090`)             |
 | `--grpc-listen` / `MCP_API_ADAPTER_GRPC_LISTEN` | Scaffolded gRPC bind (default `127.0.0.1:0`)   |
-| `--no-grpc`                                         | Do not scaffold local gRPC (stdio/HTTP only)   |
+| `--no-grpc`                                     | Do not scaffold local gRPC (stdio/HTTP only)   |
 | `--api-key` / `MCP_API_ADAPTER_API_KEY`         | Require `X-API-Key` or `Authorization: Bearer` |
-| `--refresh-ms`                                      | Re-`ListTools` poll interval                   |
-| `--title`                                           | Swagger / GraphiQL title                       |
+| `--refresh-ms`                                  | Re-`ListTools` poll interval                   |
+| `--title`                                       | Swagger / GraphiQL title                       |
 
 Legacy env `MCP_OPENAPI_GATEWAY_*` is still accepted. Exactly one upstream mode is required (`--mcp-url`, `--stdio`, or `--grpc-address` / env default).
 
@@ -150,7 +150,7 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 
 | Piece                           | Direction                                 |
 | ------------------------------- | ----------------------------------------- |
-| **`mcp-api-adapter`**       | MCP → OpenAPI + GraphQL (+ gRPC scaffold) |
+| **`mcp-api-adapter`**           | MCP → OpenAPI + GraphQL (+ gRPC scaffold) |
 | **ClawQL `search` / `execute`** | OpenAPI → MCP tools                       |
 | **`mcp-grpc-transport`**        | Production TypeScript MCP gRPC transport  |
 | **Panguard bridge**             | Policy / JWT ATR in front of MCP          |
