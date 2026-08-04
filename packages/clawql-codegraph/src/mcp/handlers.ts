@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Effect } from "effect";
 import { CodeGraphService, runCodeGraphEffect } from "../effect/codegraph-service.js";
+import { syncGraphify } from "../sync/graphify-sync.js";
 
 const indexInput = z.object({
   rootPath: z
@@ -50,6 +51,56 @@ const importGraphifyInput = z.object({
   graphId: z.string().optional(),
   rootPath: z.string().optional(),
   storagePath: z.string().optional(),
+});
+
+const syncGraphifyInput = z.object({
+  rootPath: z
+    .string()
+    .optional()
+    .describe("Repository root (defaults to CLAWQL_CODEGRAPH_ROOT or cwd)."),
+  graphId: z.string().optional(),
+  storagePath: z.string().optional(),
+  mode: z
+    .enum(["fast", "thorough"])
+    .optional()
+    .describe(
+      "fast: Graphify + import (+ vault proposal). thorough: also run native codegraph when native-fillable blind spots exist."
+    ),
+  catchBlindSpots: z
+    .boolean()
+    .optional()
+    .describe(
+      "When true, run native index if Graphify missed native-indexable extensions. Defaults to true in thorough mode."
+    ),
+  forceNative: z
+    .boolean()
+    .optional()
+    .describe("Always merge a native codegraph_index pass after Graphify import."),
+  skipGraphifyRun: z
+    .boolean()
+    .optional()
+    .describe(
+      "Skip spawning Graphify; import existing graphify-out/graph.json (or CLAWQL_CODEGRAPH_GRAPHIFY_JSON)."
+    ),
+  outDir: z
+    .string()
+    .optional()
+    .describe(
+      "Directory with graph.json / GRAPH_REPORT.md / graph.html (default: {root}/graphify-out)."
+    ),
+  graphifyCmd: z
+    .string()
+    .optional()
+    .describe(
+      "Shell command to run Graphify. Supports {repoRoot} and {outDir}. Default: CLAWQL_CODEGRAPH_GRAPHIFY_SYNC_CMD or `graphify .`."
+    ),
+  vaultIngest: z
+    .boolean()
+    .optional()
+    .describe(
+      "Include vault ingest proposal (GRAPH_REPORT + communities). Default true; MemoryPlugin applies it."
+    ),
+  maxFiles: z.number().int().positive().optional(),
 });
 
 export async function codegraphIndex(raw: unknown) {
@@ -143,6 +194,12 @@ export async function codegraphImportGraphify(raw: unknown) {
   );
 }
 
+/** Consolidated Graphify run → import → optional native merge → vault ingest proposal. */
+export async function codegraphSyncGraphify(raw: unknown) {
+  const input = syncGraphifyInput.parse(raw);
+  return syncGraphify(input);
+}
+
 export type CodeGraphMcpHandlers = {
   index: typeof codegraphIndex;
   query: typeof codegraphQuery;
@@ -151,6 +208,7 @@ export type CodeGraphMcpHandlers = {
   explain: typeof codegraphExplain;
   subgraph: typeof codegraphSubgraph;
   importGraphify: typeof codegraphImportGraphify;
+  syncGraphify: typeof codegraphSyncGraphify;
 };
 
 export function createCodeGraphMcpHandlers(): CodeGraphMcpHandlers {
@@ -162,5 +220,6 @@ export function createCodeGraphMcpHandlers(): CodeGraphMcpHandlers {
     explain: codegraphExplain,
     subgraph: codegraphSubgraph,
     importGraphify: codegraphImportGraphify,
+    syncGraphify: codegraphSyncGraphify,
   };
 }

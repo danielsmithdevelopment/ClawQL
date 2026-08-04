@@ -63,6 +63,7 @@ describe("createMemoryPlugin", () => {
     expect(names).toContain("codegraph_explain");
     expect(names).toContain("codegraph_subgraph");
     expect(names).toContain("codegraph_import_graphify");
+    expect(names).toContain("codegraph_sync_graphify");
   });
 
   it("omits codegraph tools when CLAWQL_ENABLE_CODEGRAPH is unset", () => {

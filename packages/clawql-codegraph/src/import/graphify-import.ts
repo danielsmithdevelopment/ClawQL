@@ -82,6 +82,10 @@ export function importGraphifyJson(
   for (const n of nodesArr) {
     if (!n.id) continue;
     const label = n.label ?? n.id;
+    const community =
+      typeof n.community === "number" || typeof n.community === "string"
+        ? n.community
+        : undefined;
     nodes[n.id] = {
       id: n.id,
       kind: mapNodeKind(n.file_type, label),
@@ -89,6 +93,7 @@ export function importGraphifyJson(
       filePath: n.source_file,
       startLine: parseLine(n.source_location),
       docComment: typeof n.summary === "string" ? n.summary : undefined,
+      community,
     };
   }
 

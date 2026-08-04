@@ -9,3 +9,7 @@ export * from "./import/graphify-import.js";
 export * from "./bridge/graphify-delegate.js";
 export * from "./effect/codegraph-service.js";
 export * from "./mcp/handlers.js";
+export * from "./sync/graphify-sync.js";
+export * from "./sync/blind-spots.js";
+export * from "./sync/graphify-communities.js";
+export * from "./sync/merge-graphs.js";

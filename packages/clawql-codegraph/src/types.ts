@@ -29,6 +29,8 @@ export type CodeGraphNode = {
   readonly endLine?: number;
   readonly signature?: string;
   readonly docComment?: string;
+  /** Optional Leiden / Graphify community id when imported from graph.json. */
+  readonly community?: number | string;
 };
 
 export type CodeGraphEdge = {

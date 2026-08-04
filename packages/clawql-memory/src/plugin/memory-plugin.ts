@@ -8,6 +8,7 @@ import {
   codegraphPath,
   codegraphQuery,
   codegraphSubgraph,
+  codegraphSyncGraphify,
 } from "clawql-codegraph/mcp";
 import {
   executePageindexBuildTreeEffect,
@@ -119,6 +120,34 @@ export const codegraphImportGraphifyToolSchema = {
   storagePath: z.string().optional(),
 };
 
+export const codegraphSyncGraphifyToolSchema = {
+  rootPath: z
+    .string()
+    .optional()
+    .describe("Repository root. Defaults to CLAWQL_CODEGRAPH_ROOT or process cwd."),
+  graphId: z.string().optional(),
+  storagePath: z.string().optional(),
+  mode: z
+    .enum(["fast", "thorough"])
+    .optional()
+    .describe(
+      "fast: Graphify + import + vault ingest. thorough: also native-index when Graphify missed native-indexable languages."
+    ),
+  catchBlindSpots: z.boolean().optional(),
+  forceNative: z.boolean().optional(),
+  skipGraphifyRun: z
+    .boolean()
+    .optional()
+    .describe("Import existing graphify-out artifacts without spawning Graphify."),
+  outDir: z.string().optional(),
+  graphifyCmd: z.string().optional(),
+  vaultIngest: z
+    .boolean()
+    .optional()
+    .describe("Auto-ingest GRAPH_REPORT.md + communities into the vault (default true)."),
+  maxFiles: z.number().int().positive().optional(),
+};
+
 export async function handleMemoryIngestToolInput(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
@@ -165,6 +194,51 @@ export async function handleMemoryRecallToolInput(
   const result = await runMemoryRecall(parsed);
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+  };
+}
+
+async function handleCodegraphSyncGraphify(args: unknown): Promise<{
+  content: { type: "text"; text: string }[];
+}> {
+  const syncResult = await codegraphSyncGraphify(args);
+  let vaultIngestResult: unknown;
+  if (syncResult.vaultIngest) {
+    const proposal = syncResult.vaultIngest;
+    vaultIngestResult = await runMemoryIngest({
+      title: proposal.title,
+      type: proposal.type,
+      description: proposal.description,
+      insights: proposal.insights,
+      wikilinks: [...proposal.wikilinks],
+      append: true,
+      tags: [...proposal.tags],
+      toolOutputs: proposal.toolOutputs,
+    });
+  }
+  logMcpToolShape("codegraph_sync_graphify", {
+    mode: syncResult.mode,
+    graphifyRan: syncResult.graphifyRan,
+    nativeIndexRan: syncResult.nativeIndexRan,
+    nodeCount: syncResult.importSummary.nodeCount,
+    edgeCount: syncResult.importSummary.edgeCount,
+    blindSpotCount: syncResult.blindSpots.blindSpots.length,
+    communityCount: syncResult.communities.length,
+    vaultIngested: Boolean(syncResult.vaultIngest),
+  });
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(
+          {
+            ...syncResult,
+            vaultIngestResult,
+          },
+          null,
+          2
+        ),
+      },
+    ],
   };
 }
 
@@ -297,6 +371,11 @@ export function createMemoryPlugin(): Plugin {
                 },
               ],
             }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_sync_graphify",
+            schema: codegraphSyncGraphifyToolSchema,
+            handler: (args) => handleCodegraphSyncGraphify(args),
           });
         }
       }),
