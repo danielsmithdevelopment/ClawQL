@@ -55,7 +55,7 @@ Generates a hierarchical heading tree (`pageindex.db.json`) for section-level ad
 
 ### clawql-codegraph
 
-Parses source code (TypeScript compiler API for TS/JS; tree-sitter WASM for Python/Go) to produce nodes and edges (imports, calls, inheritance) with confidence tags (EXTRACTED / INFERRED / AMBIGUOUS). **Preferred ingestion** is the native TypeScript pipeline via `codegraph_sync` (index → Louvain → architecture report → vault ingest). TS/JS gets enclosing-scope call graphs, heritage/exports, cross-file linking, React/Next tags, plus **`codegraph_explore`** / **`codegraph_impact`**. Optional Graphify `graph.json` import remains — **no Python**. Exposed via `codegraph_*` and optional `memory_recall` `sources: ["codegraph"]`.
+Parses source with the **TypeScript compiler** (TS/JS) and **tree-sitter WASM** (30+ languages: Python, Go, Rust, Java, C/C++, C#, Ruby, …). Preferred ingestion: `codegraph_sync` (index → Louvain → report → vault). TS/JS gets enclosing-scope calls, heritage/exports, cross-file linking, React/Next tags, plus **`codegraph_explore`** / **`codegraph_impact`**. Optional Graphify `graph.json` import — **no Python**.
 
 ### Onyx
 

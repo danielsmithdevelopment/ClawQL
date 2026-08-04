@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { treeSitterExtensions } from "./extract-tree-sitter.js";
 
 const DEFAULT_IGNORE = new Set([
   "node_modules",
@@ -13,12 +14,30 @@ const DEFAULT_IGNORE = new Set([
   "__pycache__",
   ".venv",
   "venv",
+  "vendor",
+  "codegraph-out",
+  "graphify-out",
 ]);
 
-const CODE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".py", ".go"]);
+/** TS/JS (compiler) + all tree-sitter-backed extensions. */
+const CODE_EXTENSIONS = new Set([
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".cjs",
+  ".mts",
+  ".cts",
+  ...treeSitterExtensions(),
+]);
 
 export function isCodeFile(filePath: string): boolean {
   return CODE_EXTENSIONS.has(path.extname(filePath).toLowerCase());
+}
+
+export function codeFileExtensions(): readonly string[] {
+  return [...CODE_EXTENSIONS].sort();
 }
 
 export async function walkCodeFiles(

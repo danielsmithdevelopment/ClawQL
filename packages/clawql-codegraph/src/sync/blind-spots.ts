@@ -1,37 +1,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { CodeGraphDocument } from "../types.js";
+import { codeFileExtensions } from "../indexer/walk-repo.js";
 
-/** Extensions the native ClawQL indexer can extract today. */
-export const NATIVE_CODEGRAPH_EXTENSIONS = new Set([
-  ".ts",
-  ".tsx",
-  ".js",
-  ".jsx",
-  ".mjs",
-  ".cjs",
-  ".py",
-  ".go",
-]);
+/** Extensions the native ClawQL indexer can extract today (TS compiler + tree-sitter). */
+export const NATIVE_CODEGRAPH_EXTENSIONS = new Set(codeFileExtensions());
 
-/** Broader set used when measuring Graphify coverage vs the repo tree. */
+/** Broader set used when measuring coverage vs the repo tree (includes non-indexed docs/config). */
 const COVERAGE_EXTENSIONS = new Set([
   ...NATIVE_CODEGRAPH_EXTENSIONS,
-  ".rs",
-  ".java",
-  ".kt",
-  ".kts",
-  ".rb",
-  ".php",
-  ".c",
-  ".cc",
-  ".cpp",
-  ".cxx",
-  ".h",
-  ".hpp",
-  ".cs",
-  ".swift",
-  ".scala",
   ".sql",
   ".tf",
   ".hcl",

@@ -13,7 +13,7 @@ next: documents
 
 **Package:** `packages/clawql-codegraph` (MIT) — registered by **`MemoryPlugin`** when **`CLAWQL_ENABLE_CODEGRAPH=1`**
 
-Complements ClawQL vault memory (wikilinks + semantic recall) with **precise structural relationships** extracted from TypeScript/JavaScript/Python/Go sources. Fully TypeScript-native (tree-sitter WASM + TS compiler API + Louvain clustering via graphology). For **TS/JS**, ClawQL aims to be the strongest option: enclosing-scope call graphs, heritage (`extends`/`implements`), export edges, cross-file import/call linking, React/Next tags, plus one-shot **`codegraph_explore`** / blast-radius **`codegraph_impact`**. Optional import of an external Graphify `graph.json` remains available — **no Python runtime is required**.
+Complements ClawQL vault memory (wikilinks + semantic recall) with **precise structural relationships**. Fully TypeScript-native: **TS/JS via the compiler API** (deepest fidelity) plus **30+ languages via tree-sitter WASM** (Python, Go, Rust, Java, C/C++, C#, Ruby, Kotlin, Scala, PHP, Swift, Lua, Zig, Elixir, ObjC, Bash, Dart, Solidity, …). Louvain clustering via graphology. For TypeScript, ClawQL aims to be the strongest option (enclosing-scope calls, heritage, cross-file linking, React/Next tags, `codegraph_explore` / `codegraph_impact`). Optional Graphify `graph.json` import — **no Python runtime**.
 
 ## Why add this?
 
@@ -32,7 +32,7 @@ Use **`memory_recall`** for decisions and cross-session narrative context. Use *
 | **`codegraph_sync`**            | **Preferred:** native index → Louvain communities → `GRAPH_REPORT.md` / `graph.html` → vault ingest |
 | **`codegraph_explore`**         | **One-shot agent context:** explain + neighbors + blast radius + local subgraph                     |
 | **`codegraph_impact`**          | Upstream blast radius (who depends on this symbol)                                                  |
-| **`codegraph_index`**           | Native index only (TS/JS/Python/Go)                                                                 |
+| **`codegraph_index`**           | Native index (TS/JS compiler + 30+ tree-sitter languages)                                            |
 | **`codegraph_sync_graphify`**   | Import an **existing** `graph.json` (or fall back to native sync). Never spawns Python.             |
 | **`codegraph_import_graphify`** | Low-level import of Graphify / node-link `graph.json`                                               |
 | **`codegraph_query`**           | Find symbols by name or concept                                                                     |
@@ -57,6 +57,15 @@ Edges are labeled **`EXTRACTED`**, **`INFERRED`**, or **`AMBIGUOUS`**. Nodes may
 | **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`** | off             | Merge code graph hits into `memory_recall`                |
 
 Requires **`CLAWQL_ENABLE_MEMORY`**.
+
+## Languages
+
+| Path | Languages | Notes |
+| --- | --- | --- |
+| **TypeScript compiler API** | `.ts` `.tsx` `.js` `.jsx` `.mjs` `.cjs` | Deepest: enclosing calls, heritage, exports, React/Next tags, cross-file link |
+| **tree-sitter WASM** | Python, Go, Rust, Java, C/C++, C#, Ruby, Kotlin, Scala, PHP, Swift, Lua, Zig, Elixir, Objective-C, Bash, Dart, Solidity, OCaml, Elm, ReScript, QL, Emacs Lisp, Vue, JSON/YAML/TOML/HTML/CSS, … | Structural symbols + imports + calls; grammars from `tree-sitter-wasms` |
+
+Not yet (no WASM in-tree / need dedicated extractors): Fortran, Verilog, PowerShell, Julia, Terraform/HCL, SQL schemas, Markdown semantic edges — use vault/PageIndex/Docling for docs, or import a Graphify `graph.json` if you already produce one.
 
 ## TypeScript / JavaScript depth
 
