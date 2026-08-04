@@ -234,8 +234,9 @@ When the MCP server runs with sync configured, enable automatic background sync:
 
 | Variable                           | Behavior                                                                    |
 | ---------------------------------- | --------------------------------------------------------------------------- |
-| `CLAWQL_SYNC_AUTO=1`               | Debounced push after each successful `memory_ingest` (default debounce **2s**) |
-| `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`     | Push debounce interval (default `2000`) — coalesces a short ingest burst; keep low so short-lived MCP/Cloud Agent processes still upload before exit |
+| `CLAWQL_SYNC_AUTO=1`               | Auto-push after `memory_ingest` (see debounce + min interval below) |
+| `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`     | Quiet period after the last ingest before a push is considered (default `2000`) — coalesces note + index/log |
+| `CLAWQL_SYNC_AUTO_PUSH_MIN_MS`     | Minimum gap between successful auto-pushes during sustained ingest (default `30000`) — avoids R2 spam; **shutdown flush ignores this** so short-lived processes do not drop notes |
 | `CLAWQL_SYNC_AUTO_PULL=1`          | Throttled pull before `memory_recall` (default min interval 60s)            |
 | `CLAWQL_SYNC_AUTO_PULL_MIN_MS`     | Min ms between auto-pulls (default `60000`)                                 |
 | `CLAWQL_SYNC_AUTO_PULL_ON_START=1` | Pull once when MCP starts                                                   |

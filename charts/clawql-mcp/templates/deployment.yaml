@@ -337,6 +337,8 @@ spec:
               value: "1"
             - name: CLAWQL_SYNC_AUTO_DEBOUNCE_MS
               value: {{ (.Values.teamSync.autoPushDebounceMs | default 2000) | int | quote }}
+            - name: CLAWQL_SYNC_AUTO_PUSH_MIN_MS
+              value: {{ (.Values.teamSync.autoPushMinMs | default 30000) | int | quote }}
             {{- end }}
             {{- if .Values.teamSync.autoPull }}
             - name: CLAWQL_SYNC_AUTO_PULL

@@ -28,12 +28,23 @@ export function autoPullEnabled(): boolean {
   return envFlagOn("CLAWQL_SYNC_AUTO_PULL");
 }
 
-/** Default debounce: coalesce a short ingest burst (note + index/log) without
- * waiting so long that short-lived MCP/Cloud Agent processes exit first. */
+/**
+ * Quiet period after the last ingest before we consider pushing.
+ * Coalesces note + index/log writes into one PUT.
+ */
 export const DEFAULT_AUTO_PUSH_DEBOUNCE_MS = 2_000;
+
+/**
+ * Minimum time between successful auto-pushes during sustained ingest.
+ * Prevents R2 spam when agents ingest many notes over a long session.
+ * Shutdown flush ignores this so notes are not lost on process exit.
+ */
+export const DEFAULT_AUTO_PUSH_MIN_INTERVAL_MS = 30_000;
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
 let pushInFlight = false;
+let pushDirty = false;
+let lastPushMs = 0;
 let lastPullMs = 0;
 let pullInFlight = false;
 
@@ -41,37 +52,71 @@ export function resetHomeSyncAutoForTests(): void {
   if (pushTimer) clearTimeout(pushTimer);
   pushTimer = null;
   pushInFlight = false;
+  pushDirty = false;
+  lastPushMs = 0;
   lastPullMs = 0;
   pullInFlight = false;
 }
 
-/** Debounced push after memory_ingest (and similar writes). */
-export function scheduleAutoPushAfterIngest(): void {
-  if (!autoPushExplicitlyEnabled()) return;
-  const debounceMs = envInt("CLAWQL_SYNC_AUTO_DEBOUNCE_MS", DEFAULT_AUTO_PUSH_DEBOUNCE_MS);
-  if (pushTimer) clearTimeout(pushTimer);
-  pushTimer = setTimeout(() => {
-    pushTimer = null;
-    void flushAutoPush();
-  }, debounceMs);
+function debounceMs(): number {
+  return envInt("CLAWQL_SYNC_AUTO_DEBOUNCE_MS", DEFAULT_AUTO_PUSH_DEBOUNCE_MS);
 }
 
-/** Cancel debounce and push now (shutdown / explicit flush). */
-export async function flushPendingAutoPush(): Promise<void> {
-  if (!autoPushExplicitlyEnabled()) return;
+function minIntervalMs(): number {
+  return envInt("CLAWQL_SYNC_AUTO_PUSH_MIN_MS", DEFAULT_AUTO_PUSH_MIN_INTERVAL_MS);
+}
+
+function clearPushTimer(): void {
   if (pushTimer) {
     clearTimeout(pushTimer);
     pushTimer = null;
   }
-  await flushAutoPush();
 }
 
-async function flushAutoPush(): Promise<void> {
+function armPushTimer(delayMs: number): void {
+  clearPushTimer();
+  pushTimer = setTimeout(() => {
+    pushTimer = null;
+    void tryAutoPush({ force: false });
+  }, Math.max(0, delayMs));
+}
+
+/** Debounced + rate-limited push after memory_ingest (and similar writes). */
+export function scheduleAutoPushAfterIngest(): void {
+  if (!autoPushExplicitlyEnabled()) return;
+  pushDirty = true;
+  armPushTimer(debounceMs());
+}
+
+/**
+ * Cancel timers and push now if there are pending writes (shutdown / explicit flush).
+ * Ignores the min-interval throttle so short-lived processes do not drop notes.
+ */
+export async function flushPendingAutoPush(): Promise<void> {
+  if (!autoPushExplicitlyEnabled()) return;
+  clearPushTimer();
+  if (!pushDirty && !pushInFlight) return;
+  await tryAutoPush({ force: true });
+}
+
+async function tryAutoPush(opts: { force: boolean }): Promise<void> {
+  if (!pushDirty) return;
   if (pushInFlight) return;
+
+  if (!opts.force) {
+    const wait = Math.max(0, minIntervalMs() - (Date.now() - lastPushMs));
+    if (wait > 0) {
+      armPushTimer(wait);
+      return;
+    }
+  }
+
   pushInFlight = true;
   try {
     await loadResolvedHomeSyncConfig();
     const result = await runSyncPush({});
+    pushDirty = false;
+    lastPushMs = Date.now();
     if (result.uploaded > 0) {
       console.error(
         `[clawql-mcp] team sync auto-push: uploaded ${result.uploaded} file(s) to ${result.provider}://${result.bucket}/${result.prefix}`
@@ -80,6 +125,7 @@ async function flushAutoPush(): Promise<void> {
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error(`[clawql-mcp] team sync auto-push failed: ${msg}`);
+    // Keep dirty so a later ingest / shutdown flush can retry.
   } finally {
     pushInFlight = false;
   }
@@ -88,9 +134,9 @@ async function flushAutoPush(): Promise<void> {
 /** Throttled pull before memory_recall when CLAWQL_SYNC_AUTO_PULL=1. */
 export async function maybeAutoPullBeforeRecall(): Promise<void> {
   if (!autoPullEnabled()) return;
-  const minIntervalMs = envInt("CLAWQL_SYNC_AUTO_PULL_MIN_MS", 60_000);
+  const minPullMs = envInt("CLAWQL_SYNC_AUTO_PULL_MIN_MS", 60_000);
   const now = Date.now();
-  if (pullInFlight || now - lastPullMs < minIntervalMs) return;
+  if (pullInFlight || now - lastPullMs < minPullMs) return;
   pullInFlight = true;
   lastPullMs = now;
   try {
