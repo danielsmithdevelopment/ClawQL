@@ -47,6 +47,22 @@ const subgraphInput = graphIdInput.extend({
   maxNodes: z.number().int().positive().optional(),
 });
 
+const exploreInput = graphIdInput.extend({
+  query: z
+    .string()
+    .min(1)
+    .describe("Symbol or path fragment — returns explain + neighbors + blast radius in one call."),
+  impactDepth: z.number().int().min(1).max(6).optional(),
+  neighborLimit: z.number().int().positive().optional(),
+  subgraphDepth: z.number().int().min(0).max(6).optional(),
+});
+
+const impactInput = graphIdInput.extend({
+  seedQuery: z.string().min(1).describe("Symbol whose upstream blast radius to compute."),
+  depth: z.number().int().min(1).max(8).optional(),
+  limit: z.number().int().positive().optional(),
+});
+
 const importGraphifyInput = z.object({
   jsonPath: z.string().min(1).describe("Path to Graphify graph.json (NetworkX node-link export)."),
   graphId: z.string().optional(),
@@ -179,6 +195,39 @@ export async function codegraphSubgraph(raw: unknown) {
   );
 }
 
+export async function codegraphExplore(raw: unknown) {
+  const input = exploreInput.parse(raw);
+  return runCodeGraphEffect(
+    Effect.gen(function* () {
+      const svc = yield* CodeGraphService;
+      return yield* svc.explore(input.graphId, input.query, {
+        impactDepth: input.impactDepth,
+        neighborLimit: input.neighborLimit,
+        subgraphDepth: input.subgraphDepth,
+        storagePath: input.storagePath,
+      });
+    }),
+    input.storagePath
+  );
+}
+
+export async function codegraphImpact(raw: unknown) {
+  const input = impactInput.parse(raw);
+  return runCodeGraphEffect(
+    Effect.gen(function* () {
+      const svc = yield* CodeGraphService;
+      return yield* svc.impact(
+        input.graphId,
+        input.seedQuery,
+        input.depth,
+        input.limit,
+        input.storagePath
+      );
+    }),
+    input.storagePath
+  );
+}
+
 export async function codegraphImportGraphify(raw: unknown) {
   const input = importGraphifyInput.parse(raw);
   return runCodeGraphEffect(
@@ -212,6 +261,8 @@ export type CodeGraphMcpHandlers = {
   path: typeof codegraphPath;
   explain: typeof codegraphExplain;
   subgraph: typeof codegraphSubgraph;
+  explore: typeof codegraphExplore;
+  impact: typeof codegraphImpact;
   importGraphify: typeof codegraphImportGraphify;
   sync: typeof codegraphSync;
   syncGraphify: typeof codegraphSyncGraphify;
@@ -225,6 +276,8 @@ export function createCodeGraphMcpHandlers(): CodeGraphMcpHandlers {
     path: codegraphPath,
     explain: codegraphExplain,
     subgraph: codegraphSubgraph,
+    explore: codegraphExplore,
+    impact: codegraphImpact,
     importGraphify: codegraphImportGraphify,
     sync: codegraphSync,
     syncGraphify: codegraphSyncGraphify,

@@ -2,6 +2,8 @@ import { Effect } from "effect";
 import { z } from "zod";
 import {
   codegraphExplain,
+  codegraphExplore,
+  codegraphImpact,
   codegraphImportGraphify,
   codegraphIndex,
   codegraphNeighbors,
@@ -111,6 +113,26 @@ export const codegraphSubgraphToolSchema = {
   seedQuery: z.string().min(1),
   maxDepth: z.number().int().min(0).max(6).optional(),
   maxNodes: z.number().int().positive().optional(),
+  storagePath: z.string().optional(),
+};
+
+export const codegraphExploreToolSchema = {
+  graphId: z.string().min(1),
+  query: z
+    .string()
+    .min(1)
+    .describe("Symbol or path — one-shot explain + neighbors + blast radius for agent efficiency."),
+  impactDepth: z.number().int().min(1).max(6).optional(),
+  neighborLimit: z.number().int().positive().optional(),
+  subgraphDepth: z.number().int().min(0).max(6).optional(),
+  storagePath: z.string().optional(),
+};
+
+export const codegraphImpactToolSchema = {
+  graphId: z.string().min(1),
+  seedQuery: z.string().min(1).describe("Symbol whose upstream dependents to list."),
+  depth: z.number().int().min(1).max(8).optional(),
+  limit: z.number().int().positive().optional(),
   storagePath: z.string().optional(),
 };
 
@@ -403,6 +425,24 @@ export function createMemoryPlugin(): Plugin {
             handler: async (args) => ({
               content: [
                 { type: "text", text: JSON.stringify(await codegraphSubgraph(args), null, 2) },
+              ],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_explore",
+            schema: codegraphExploreToolSchema,
+            handler: async (args) => ({
+              content: [
+                { type: "text", text: JSON.stringify(await codegraphExplore(args), null, 2) },
+              ],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_impact",
+            schema: codegraphImpactToolSchema,
+            handler: async (args) => ({
+              content: [
+                { type: "text", text: JSON.stringify(await codegraphImpact(args), null, 2) },
               ],
             }),
           });

@@ -62,6 +62,8 @@ describe("createMemoryPlugin", () => {
     expect(names).toContain("codegraph_path");
     expect(names).toContain("codegraph_explain");
     expect(names).toContain("codegraph_subgraph");
+    expect(names).toContain("codegraph_explore");
+    expect(names).toContain("codegraph_impact");
     expect(names).toContain("codegraph_import_graphify");
     expect(names).toContain("codegraph_sync");
     expect(names).toContain("codegraph_sync_graphify");

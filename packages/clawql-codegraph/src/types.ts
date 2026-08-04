@@ -29,8 +29,10 @@ export type CodeGraphNode = {
   readonly endLine?: number;
   readonly signature?: string;
   readonly docComment?: string;
-  /** Optional Leiden / Graphify community id when imported from graph.json. */
+  /** Optional Louvain / Graphify community id. */
   readonly community?: number | string;
+  /** Framework / role tags (e.g. react-component, next-app-router, exported). */
+  readonly tags?: readonly string[];
 };
 
 export type CodeGraphEdge = {

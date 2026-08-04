@@ -13,7 +13,7 @@ next: documents
 
 **Package:** `packages/clawql-codegraph` (MIT) — registered by **`MemoryPlugin`** when **`CLAWQL_ENABLE_CODEGRAPH=1`**
 
-Complements ClawQL vault memory (wikilinks + semantic recall) with **precise structural relationships** extracted from TypeScript/JavaScript/Python/Go sources. Fully TypeScript-native (tree-sitter WASM + TS compiler API + Louvain clustering via graphology). Optional import of an external Graphify `graph.json` remains available — **no Python runtime is required**.
+Complements ClawQL vault memory (wikilinks + semantic recall) with **precise structural relationships** extracted from TypeScript/JavaScript/Python/Go sources. Fully TypeScript-native (tree-sitter WASM + TS compiler API + Louvain clustering via graphology). For **TS/JS**, ClawQL aims to be the strongest option: enclosing-scope call graphs, heritage (`extends`/`implements`), export edges, cross-file import/call linking, React/Next tags, plus one-shot **`codegraph_explore`** / blast-radius **`codegraph_impact`**. Optional import of an external Graphify `graph.json` remains available — **no Python runtime is required**.
 
 ## Why add this?
 
@@ -30,6 +30,8 @@ Use **`memory_recall`** for decisions and cross-session narrative context. Use *
 | Tool                            | Purpose                                                                                             |
 | ------------------------------- | --------------------------------------------------------------------------------------------------- |
 | **`codegraph_sync`**            | **Preferred:** native index → Louvain communities → `GRAPH_REPORT.md` / `graph.html` → vault ingest |
+| **`codegraph_explore`**         | **One-shot agent context:** explain + neighbors + blast radius + local subgraph                     |
+| **`codegraph_impact`**          | Upstream blast radius (who depends on this symbol)                                                  |
 | **`codegraph_index`**           | Native index only (TS/JS/Python/Go)                                                                 |
 | **`codegraph_sync_graphify`**   | Import an **existing** `graph.json` (or fall back to native sync). Never spawns Python.             |
 | **`codegraph_import_graphify`** | Low-level import of Graphify / node-link `graph.json`                                               |
@@ -55,6 +57,19 @@ Edges are labeled **`EXTRACTED`**, **`INFERRED`**, or **`AMBIGUOUS`**. Nodes may
 | **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`** | off             | Merge code graph hits into `memory_recall`                |
 
 Requires **`CLAWQL_ENABLE_MEMORY`**.
+
+## TypeScript / JavaScript depth
+
+ClawQL’s TS pipeline is designed so agents should not need a separate Graphify/CodeGraph install for TypeScript repos:
+
+| Capability | Behavior |
+| --- | --- |
+| Symbols | Functions, methods, classes, interfaces, types, arrow/`const` functions, constructors |
+| Calls | Attached to **enclosing** function/method (not file-only); `foo()`, `obj.method()`, `new Foo()` |
+| Heritage | `extends` / `implements` edges |
+| Modules | Relative imports resolved to file nodes; unique exported callees linked cross-file (`INFERRED`) |
+| Framework tags | `react-component`, `next-app-router`, `next-app-dir`, `exported`, `default-export` |
+| Agent UX | Prefer **`codegraph_explore`** over multi-hop query→neighbors→path |
 
 ## Preferred workflow: `codegraph_sync`
 

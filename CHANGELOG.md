@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`codegraph_sync`** — native TypeScript pipeline (index → Louvain communities → `GRAPH_REPORT.md` / `graph.html` → vault ingest). **No Python / Graphify CLI.** Optional `codegraph_sync_graphify` only imports an existing `graph.json` (or falls back to native). ([`docs/plugins/codegraph.md`](docs/plugins/codegraph.md)).
+- **TS/JS codegraph depth** — enclosing-scope call graphs, `extends`/`implements`/`exports`, cross-file import/call linking, React/Next tags; **`codegraph_explore`** (one-shot agent context) and **`codegraph_impact`** (blast radius).
 - **mcp-grpc-transport 1.0.0** — MCP **2026-07-28** stateless protocol support (`Discover` RPC, `mcp-protocol-version: 2026-07-28`, per-request `mcp-client-info` / `clientCapabilities`); production TypeScript gRPC MCP transport ([Convergence Week](https://pragmaticvectors.com/posts/convergence-week/)).
 - **Streamable HTTP MCP 2026-07-28** — `/mcp` accepts `mcp-protocol-version: 2026-07-28` with per-request stateless transports; JSON-RPC `discover` / `POST /mcp/discover`; Helm alias `clawql-mcp-grpc.enabled`.
 - **OKF v0.2 trust signals** on vault memory — `generated`, `verified`, `sources`, `stale_after`, `status`, `superseded_by`; `clawql memory lint|migrate|query`; MEMORY_* WORM events; recall excludes `retracted` and down-weights stale ([`docs/memory/okf.md`](docs/memory/okf.md)).

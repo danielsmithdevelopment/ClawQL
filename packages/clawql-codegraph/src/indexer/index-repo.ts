@@ -6,6 +6,7 @@ import { loadGraphifyDocument } from "../bridge/graphify-delegate.js";
 import { buildAdjacencyFromEdges } from "../import/graph-utils.js";
 import { extractTypeScriptGraph } from "./extract-typescript.js";
 import { extractWithTreeSitter } from "./extract-tree-sitter.js";
+import { linkTypeScriptCrossFile } from "./link-typescript.js";
 import { isCodeFile, relPath, walkCodeFiles } from "./walk-repo.js";
 
 export { buildAdjacencyFromEdges };
@@ -18,7 +19,11 @@ function extLang(filePath: string): "typescript" | "python" | "go" | null {
   return null;
 }
 
-async function extractFile(absFile: string, rel: string, content: string): Promise<{
+async function extractFile(
+  absFile: string,
+  rel: string,
+  content: string
+): Promise<{
   nodes: CodeGraphNode[];
   edges: CodeGraphEdge[];
 }> {
@@ -37,6 +42,8 @@ export type IndexRepoOptions = {
   readonly graphId?: string;
   readonly rootPath: string;
   readonly maxFiles?: number;
+  /** Skip TypeScript cross-file import/call linking (default false). */
+  readonly skipCrossFileLink?: boolean;
 };
 
 export type IndexRepoResult = {
@@ -79,7 +86,7 @@ export async function indexRepository(options: IndexRepoOptions): Promise<CodeGr
 
   const nodes = Object.fromEntries(nodesMap);
   const builtAt = new Date().toISOString();
-  return {
+  let doc: CodeGraphDocument = {
     graphId,
     rootPath,
     builtAt,
@@ -89,6 +96,11 @@ export async function indexRepository(options: IndexRepoOptions): Promise<CodeGr
     edges,
     adjacency: buildAdjacencyFromEdges(edges),
   };
+
+  if (!options.skipCrossFileLink) {
+    doc = linkTypeScriptCrossFile(doc);
+  }
+  return doc;
 }
 
 export async function importGraphifyFromPath(options: {

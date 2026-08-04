@@ -55,7 +55,7 @@ Generates a hierarchical heading tree (`pageindex.db.json`) for section-level ad
 
 ### clawql-codegraph
 
-Parses source code (TypeScript compiler API for TS/JS; tree-sitter WASM for Python/Go) to produce nodes and edges (imports, calls, inheritance) with confidence tags (EXTRACTED / INFERRED / AMBIGUOUS). **Preferred ingestion** is the native TypeScript pipeline via `codegraph_sync` (index → Louvain communities → architecture report → vault ingest). Optional `codegraph_import_graphify` / `codegraph_sync_graphify` can ingest an external `graph.json` — **no Python dependency**. Exposed via `codegraph_*` tools and optional `memory_recall` `sources: ["codegraph"]`.
+Parses source code (TypeScript compiler API for TS/JS; tree-sitter WASM for Python/Go) to produce nodes and edges (imports, calls, inheritance) with confidence tags (EXTRACTED / INFERRED / AMBIGUOUS). **Preferred ingestion** is the native TypeScript pipeline via `codegraph_sync` (index → Louvain → architecture report → vault ingest). TS/JS gets enclosing-scope call graphs, heritage/exports, cross-file linking, React/Next tags, plus **`codegraph_explore`** / **`codegraph_impact`**. Optional Graphify `graph.json` import remains — **no Python**. Exposed via `codegraph_*` and optional `memory_recall` `sources: ["codegraph"]`.
 
 ### Onyx
 
@@ -117,6 +117,8 @@ Today's shipped stack is a practical subset of the full Memory 2.0 design in the
 | `pageindex_get_content`     | Read a indexed node's body                                           |
 | `codegraph_index`           | Build structural code graph from repo root (opt-in)                  |
 | `codegraph_sync`            | Native index → Louvain → vault architecture report                   |
+| `codegraph_explore`         | One-shot explain + neighbors + blast radius (agent-efficient)        |
+| `codegraph_impact`          | Upstream blast radius for a symbol                                   |
 | `codegraph_sync_graphify`   | Import existing graph.json (or fall back to native); no Python       |
 | `codegraph_import_graphify` | Import Graphify `graph.json`                                         |
 | `codegraph_query`           | Find symbols by name or concept                                      |
