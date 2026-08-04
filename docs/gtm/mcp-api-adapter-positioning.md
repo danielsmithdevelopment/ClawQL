@@ -51,7 +51,7 @@ Use **“OpenAPI on-ramp”**, **“GraphQL on-ramp”**, or **“MCP tools as R
 | ----------------------------------------- | ----------------------------------------------------------- |
 | Vision & Roadmap planned row              | Now (design merged)                                         |
 | npm README + Compose/Helm sidecar example | At MVP ship                                                 |
-| pragmaticvectors / blog                   | After MVP: “MCP tools as OpenAPI/GraphQL — gRPC underneath” |
+| pragmaticvectors / blog                   | Draft: [`pragmaticvectors/mcp-tools-as-apis.md`](./pragmaticvectors/mcp-tools-as-apis.md) |
 | Managed Edge Gateway docs                 | Optional companion port once edge hardening lands           |
 | Announcement drafts                       | Bundle with next minor that publishes the package           |
 
