@@ -6,7 +6,8 @@ cd "${ROOT}"
 
 TMP_ENABLED="$(mktemp)"
 TMP_DISABLED="$(mktemp)"
-trap 'rm -f "${TMP_ENABLED}" "${TMP_DISABLED}"' EXIT
+TMP_IDP="$(mktemp)"
+trap 'rm -f "${TMP_ENABLED}" "${TMP_DISABLED}" "${TMP_IDP}"' EXIT
 
 _LINT_SECRET=(--set envFromSecret=clawql-lint-provider-env)
 
@@ -24,13 +25,20 @@ helm template test charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set kyverno.imageSignaturePolicy.enabled=false >"${TMP_DISABLED}"
 
-python3 - "${TMP_ENABLED}" "${TMP_DISABLED}" <<'PY'
+helm template test charts/clawql-mcp --namespace clawql \
+  "${_LINT_SECRET[@]}" \
+  --set kyverno.imageSignaturePolicy.enabled=false \
+  -f charts/clawql-mcp/values-nats-idp.example.yaml \
+  --set nats.keda.enabled=true >"${TMP_IDP}"
+
+python3 - "${TMP_ENABLED}" "${TMP_DISABLED}" "${TMP_IDP}" <<'PY'
 import re
 import sys
 
-enabled_path, disabled_path = sys.argv[1], sys.argv[2]
+enabled_path, disabled_path, idp_path = sys.argv[1], sys.argv[2], sys.argv[3]
 enabled = open(enabled_path, "r", encoding="utf-8").read()
 disabled = open(disabled_path, "r", encoding="utf-8").read()
+idp = open(idp_path, "r", encoding="utf-8").read()
 
 if enabled.count("CLAWQL_NATS_ENABLE_CONSUMER") != 1:
     print("ERROR: expected exactly one CLAWQL_NATS_ENABLE_CONSUMER (worker only)")
@@ -63,6 +71,17 @@ if "ScaledObject" in disabled:
 if "nats-worker" in disabled:
     print("ERROR: nats worker rendered when disabled")
     sys.exit(1)
+
+idp_checks = [
+    (r"CLAWQL_NATS_CONSUMER_IDP_PIPELINE", "idp pipeline consumer"),
+    (r"CLAWQL_NATS_CONSUMER_CONESHARE_FOLLOWUP", "coneshare followup consumer"),
+    (r'consumer: "clawql-idp-pipeline"', "KEDA idp-pipeline trigger"),
+    (r'consumer: "clawql-coneshare-followup"', "KEDA coneshare trigger"),
+]
+for pattern, message in idp_checks:
+    if re.search(pattern, idp) is None:
+        print(f"ERROR: IDP values missing {message}")
+        sys.exit(1)
 
 PY
 

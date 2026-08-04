@@ -14,6 +14,7 @@ spec:
   minReplicaCount: {{ .Values.nats.keda.minReplicaCount }}
   maxReplicaCount: {{ .Values.nats.keda.maxReplicaCount }}
   triggers:
+    {{- if .Values.enableWorkflow }}
     - type: nats-jetstream
       metadata:
         natsServerMonitoringEndpoint: {{ include "clawql-mcp.natsMonitoringEndpoint" . | quote }}
@@ -23,4 +24,38 @@ spec:
         lagThreshold: {{ .Values.nats.keda.lagThreshold | quote }}
         activationLagThreshold: {{ .Values.nats.keda.activationLagThreshold | quote }}
         useHttps: "false"
+    {{- end }}
+    {{- if .Values.nats.worker.idpPipeline }}
+    - type: nats-jetstream
+      metadata:
+        natsServerMonitoringEndpoint: {{ include "clawql-mcp.natsMonitoringEndpoint" . | quote }}
+        account: {{ .Values.nats.keda.account | quote }}
+        stream: {{ include "clawql-mcp.natsJetStreamStream" . | quote }}
+        consumer: "clawql-idp-pipeline"
+        lagThreshold: {{ .Values.nats.keda.lagThreshold | quote }}
+        activationLagThreshold: {{ .Values.nats.keda.activationLagThreshold | quote }}
+        useHttps: "false"
+    {{- end }}
+    {{- if .Values.nats.worker.coneshareFollowup }}
+    - type: nats-jetstream
+      metadata:
+        natsServerMonitoringEndpoint: {{ include "clawql-mcp.natsMonitoringEndpoint" . | quote }}
+        account: {{ .Values.nats.keda.account | quote }}
+        stream: {{ include "clawql-mcp.natsJetStreamStream" . | quote }}
+        consumer: "clawql-coneshare-followup"
+        lagThreshold: {{ .Values.nats.keda.lagThreshold | quote }}
+        activationLagThreshold: {{ .Values.nats.keda.activationLagThreshold | quote }}
+        useHttps: "false"
+    {{- end }}
+    {{- range .Values.nats.keda.extraConsumers }}
+    - type: nats-jetstream
+      metadata:
+        natsServerMonitoringEndpoint: {{ include "clawql-mcp.natsMonitoringEndpoint" $ | quote }}
+        account: {{ $.Values.nats.keda.account | quote }}
+        stream: {{ include "clawql-mcp.natsJetStreamStream" $ | quote }}
+        consumer: {{ . | quote }}
+        lagThreshold: {{ $.Values.nats.keda.lagThreshold | quote }}
+        activationLagThreshold: {{ $.Values.nats.keda.activationLagThreshold | quote }}
+        useHttps: "false"
+    {{- end }}
 {{- end }}

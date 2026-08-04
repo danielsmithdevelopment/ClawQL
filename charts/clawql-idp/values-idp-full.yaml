@@ -68,6 +68,17 @@ clawql-mcp:
 
   nats:
     enabled: true
+    appIntegration:
+      publish: true
+      embeddedConsumer: true
+    worker:
+      enabled: true
+      idpPipeline: true
+      coneshareFollowup: true
+    # Set nats.keda.enabled=true when KEDA is installed in the cluster.
+    keda:
+      enabled: false
+      bootstrapConsumer: true
 
   ouroborosPostgres:
     enabled: true

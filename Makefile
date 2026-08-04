@@ -1,4 +1,4 @@
-.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up operator-install operator-status desktop-dev desktop-dist-mac desktop-dist-win desktop-dist-linux bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-team-sync-template-tests helm-docling-template-tests helm-idp-template-tests helm-operator-template-tests helm-managed-gateway-template-tests compose-lending-config-test compose-vertical-config-test compose-tier1-config-test distribution-npm-pack-test mcp-docker-workspace-test kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis verify-vault-policy verify-mcp-core-tools-local
+.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up operator-install operator-status desktop-dev desktop-dist-mac desktop-dist-win desktop-dist-linux bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-team-sync-template-tests helm-docling-template-tests helm-idp-template-tests helm-operator-template-tests helm-managed-gateway-template-tests compose-lending-config-test compose-vertical-config-test compose-tier1-config-test distribution-npm-pack-test mcp-docker-workspace-test kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis smoke-nats-idp-webhooks verify-vault-policy verify-mcp-core-tools-local
 
 # Validate charts/clawql-mcp (requires helm on PATH)
 helm-lint:
@@ -66,6 +66,10 @@ helm-argocd-template-tests:
 
 helm-nats-keda-template-tests:
 	@bash scripts/kubernetes/test-helm-nats-keda-templates.sh
+
+# Helm-only by default; set CLAWQL_HTTP_BASE + webhook tokens for live HTTP checks.
+smoke-nats-idp-webhooks:
+	@SMOKE_HELM_ONLY=$${SMOKE_HELM_ONLY:-1} bash scripts/dev/smoke-nats-idp-webhooks.sh
 
 helm-vault-secrets-template-tests:
 	@bash scripts/kubernetes/test-helm-vault-secrets-templates.sh

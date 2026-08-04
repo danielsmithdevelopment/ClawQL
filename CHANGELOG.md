@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **NATS IDP e2e enablement** — Helm [`values-nats-idp.example.yaml`](charts/clawql-mcp/values-nats-idp.example.yaml), full IDP profile enables document workers, KEDA lag triggers for `clawql-idp-pipeline` / `clawql-coneshare-followup`, smoke `scripts/dev/smoke-nats-idp-webhooks.sh`, runbook [`nats-idp-e2e.md`](docs/runbooks/nats-idp-e2e.md), Agent contract [`clawql-agent-idp-nats.md`](docs/openclaw/clawql-agent-idp-nats.md) ([#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)).
 - **Stirling document-stage redact orchestration** — `run_idp_pipeline` chains PDF bytes (`pdf_base64` bag) into Stirling `redactPdfAuto` and Nextcloud processed upload; REST binary responses wrap as base64. Env: `CLAWQL_IDP_REDACT_LIST`, `CLAWQL_IDP_REQUIRE_STIRLING_REDACT`.
 - **Nextcloud → NATS IDP queue** — `POST /idp/nextcloud/webhook` publishes `clawql.document.inbox.arrived`; durable consumer `clawql-idp-pipeline` runs the pipeline (in-process or `POST /idp/pipeline/run`). Helm: `nats.worker.idpPipeline`.
 - **Coneshare analytics → NATS follow-up** — webhook publishes `clawql.document.coneshare.viewer`; consumer resumes Argo + optional Slack (`CLAWQL_CONESHARE_NOTIFY_CHANNEL`). Helm: `nats.worker.coneshareFollowup`.
