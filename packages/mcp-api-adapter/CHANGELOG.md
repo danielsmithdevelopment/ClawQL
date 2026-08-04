@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1
+
+- Fix Streamable HTTP `/mcp` when upstream is **gRPC**: normalize protobuf CallTool content oneofs into MCP `{ type: "text", text }` blocks (SDK validation was rejecting raw wire shapes).
+
 ## 0.5.0
 
 - **Streamable HTTP `/mcp`:** re-export the same tools as MCP for IDE/agent clients (`--mcp-path`, `--no-mcp`).

@@ -111,7 +111,7 @@ describe("mcp-api-adapter e2e (gRPC upstream)", () => {
     grpc = undefined;
   });
 
-  it("serves the same tool results over REST, GraphQL, and gRPC", async () => {
+  it("serves the same tool results over REST, GraphQL, gRPC, and /mcp", async () => {
     process.env.ENABLE_GRPC = "1";
     process.env.ENABLE_GRPC_REFLECTION = "0";
 
@@ -127,6 +127,7 @@ describe("mcp-api-adapter e2e (gRPC upstream)", () => {
       port: 0,
       title: "e2e demo",
       grpcListen: false,
+      mcpPath: "/mcp",
     });
 
     const toolsRes = await fetch(`${gateway.url}/tools`);
@@ -169,6 +170,24 @@ describe("mcp-api-adapter e2e (gRPC upstream)", () => {
     };
     expect(gqlEchoBody.errors).toBeUndefined();
     expect(gqlEchoBody.data?.echo?.echo).toBe("hello-graphql");
+
+    // gRPC upstream → Streamable HTTP /mcp (protobuf content must be normalized)
+    const mcpClient = new Client({ name: "e2e-grpc-mcp", version: "0.0.0" });
+    const mcpTransport = new StreamableHTTPClientTransport(
+      new URL(`${gateway.url}${gateway.mcpPath}`)
+    );
+    await mcpClient.connect(mcpTransport);
+    try {
+      const result = await mcpClient.callTool({
+        name: "echo",
+        arguments: { message: "hello-mcp-over-grpc" },
+      });
+      const collapsed = collapseSdkToolResult(result);
+      expect(collapsed.structuredContent?.echo).toBe("hello-mcp-over-grpc");
+    } finally {
+      await mcpClient.close().catch(() => {});
+      await mcpTransport.close().catch(() => {});
+    }
   });
 });
 

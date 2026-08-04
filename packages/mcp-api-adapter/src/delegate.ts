@@ -18,7 +18,7 @@ import {
   callToolServerStreamingGrpc,
   listToolsUnaryGrpc,
 } from "mcp-grpc-transport";
-import { collapseCallToolMessages } from "./call.js";
+import { collapseCallToolMessages, mcpCallToolResultFromCollapsed } from "./call.js";
 
 export function wireDelegationHandlers(server: Server, client: Client): void {
   server.setRequestHandler(ListToolsRequestSchema, async () => client.listTools());
@@ -82,20 +82,7 @@ export function wireGrpcDelegationHandlers(
       arguments: (request.params.arguments as Record<string, unknown> | undefined) ?? {},
       protocolVersion: options.protocolVersion,
     });
-    const collapsed = collapseCallToolMessages(messages);
-    const content =
-      Array.isArray(collapsed.content) && collapsed.content.length > 0
-        ? collapsed.content
-        : collapsed.text
-          ? [{ type: "text" as const, text: collapsed.text }]
-          : [];
-    return {
-      content,
-      ...(collapsed.structuredContent
-        ? { structuredContent: collapsed.structuredContent }
-        : {}),
-      ...(collapsed.isError !== undefined ? { isError: collapsed.isError } : {}),
-    };
+    return mcpCallToolResultFromCollapsed(collapseCallToolMessages(messages));
   });
 
   server.setRequestHandler(ListResourcesRequestSchema, async () => ({ resources: [] }));
