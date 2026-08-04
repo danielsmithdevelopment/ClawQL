@@ -37,11 +37,11 @@ For multi-step workflows that iterate on a structured spec (acceptance criteria,
 
 ## How the two phases save tokens
 
-| | **Phase 1 — planning** | **Phase 2 — execution** |
-|---|---|---|
-| **Mechanism** | `search` + in-memory index instead of pasting full specs | Internal GraphQL projection (when available) vs fat REST JSON |
-| **Typical win** | Input: large spec text → short ranked hits | Output: smaller structured payloads returned to the model |
-| **Tradeoff** | — | Small extra input for the internal query + variables |
+|                 | **Phase 1 — planning**                                   | **Phase 2 — execution**                                       |
+| --------------- | -------------------------------------------------------- | ------------------------------------------------------------- |
+| **Mechanism**   | `search` + in-memory index instead of pasting full specs | Internal GraphQL projection (when available) vs fat REST JSON |
+| **Typical win** | Input: large spec text → short ranked hits               | Output: smaller structured payloads returned to the model     |
+| **Tradeoff**    | —                                                        | Small extra input for the internal query + variables          |
 
 Benchmarks in the repo compare planning-context size (merged specs on disk vs workflow/search artifacts) to illustrate scale. These are not per-call API billing figures from a model provider. See [Benchmarks](https://docs.clawql.com/benchmarks).
 

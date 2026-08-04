@@ -2,21 +2,20 @@
 
 Run ClawQL as a shared MCP backend for your team: centralize Obsidian memory notes in object storage, seed managed hosts from the same bucket, and wire observability so operators can see health, audit volume, and agent work traces.
 
-
 **Prerequisites:** Helm Kubernetes (or Tier 1 Compose for a lab slice), [Vault provider secrets](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/vault-provider-secrets.md) synced via External Secrets Operator, and at least one shared bucket (R2, S3, or GCS).
 
 Deploy the shared MCP first, then enable team vault sync, then optionally golden hosts and observability.
 
 ## What teams need
 
-| Capability | Why | Start here |
-|---|---|---|
-| **Shared memory** | Same `Memory/` notes for every agent and engineer via `memory_recall` | [Team vault sync](#team-vault-sync) |
-| **Managed hosts** | Packer golden VMs + Pulumi that pull the team bucket at boot | [Golden host images](#golden-host-images) |
-| **Metrics** | Throughput, errors, audit counters on `/metrics` | [IDP trace & metrics guide](https://docs.clawql.com/learn/audit-tool-and-observability) |
-| **Audit logs** | Structured MCP tool events for grep and dashboards | [Audit tool & observability](https://docs.clawql.com/learn/audit-tool-and-observability) |
-| **Traces** | Request latency across tools and mesh hops | OTEL → Tempo (lab) or your collector |
-| **Work traces** | Token savings, eval scores, LLM spans | Langfuse ([ADR 0005](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0005-langfuse-default-work-trace-store.md)) |
+| Capability        | Why                                                                   | Start here                                                                                                                           |
+| ----------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Shared memory** | Same `Memory/` notes for every agent and engineer via `memory_recall` | [Team vault sync](#team-vault-sync)                                                                                                  |
+| **Managed hosts** | Packer golden VMs + Pulumi that pull the team bucket at boot          | [Golden host images](#golden-host-images)                                                                                            |
+| **Metrics**       | Throughput, errors, audit counters on `/metrics`                      | [IDP trace & metrics guide](https://docs.clawql.com/learn/audit-tool-and-observability)                                              |
+| **Audit logs**    | Structured MCP tool events for grep and dashboards                    | [Audit tool & observability](https://docs.clawql.com/learn/audit-tool-and-observability)                                             |
+| **Traces**        | Request latency across tools and mesh hops                            | OTEL → Tempo (lab) or your collector                                                                                                 |
+| **Work traces**   | Token savings, eval scores, LLM spans                                 | Langfuse ([ADR 0005](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0005-langfuse-default-work-trace-store.md)) |
 
 ## Architecture
 
@@ -64,14 +63,14 @@ Ontology entity definitions and static knowledge belong in Git (small, PR-review
 
 ### What syncs
 
-| Path | Shared |
-|---|---|
-| `Memory/` | Yes — team Markdown notes for `memory_recall` |
-| `sources/` + `sources.json` | Yes — custom integrations |
-| `Dashboard/chats/` | Yes — optional agent chat threads |
-| `pageindex.db.json` | Yes — PageIndex trees |
-| `vault/providers.json` | Never — API secrets stay local |
-| `memory.db` | No — rebuilt locally after pull |
+| Path                        | Shared                                        |
+| --------------------------- | --------------------------------------------- |
+| `Memory/`                   | Yes — team Markdown notes for `memory_recall` |
+| `sources/` + `sources.json` | Yes — custom integrations                     |
+| `Dashboard/chats/`          | Yes — optional agent chat threads             |
+| `pageindex.db.json`         | Yes — PageIndex trees                         |
+| `vault/providers.json`      | Never — API secrets stay local                |
+| `memory.db`                 | No — rebuilt locally after pull               |
 
 ### Quick start (R2)
 
@@ -176,14 +175,14 @@ clawql doctor
 
 ### Commands
 
-| Command | Purpose |
-|---|---|
-| `clawql sync init` | Write `~/.ClawQL/sync.json` (no secrets) |
-| `clawql sync push` | Upload changed local files + update remote manifest |
-| `clawql sync pull` | Download changed remote files |
-| `clawql sync status` | Compare local vs remote (conflicts listed) |
-| `--dry-run` | Show plan without I/O |
-| `--force` | Overwrite on conflict (push → remote wins locally; pull → remote wins) |
+| Command              | Purpose                                                                |
+| -------------------- | ---------------------------------------------------------------------- |
+| `clawql sync init`   | Write `~/.ClawQL/sync.json` (no secrets)                               |
+| `clawql sync push`   | Upload changed local files + update remote manifest                    |
+| `clawql sync pull`   | Download changed remote files                                          |
+| `clawql sync status` | Compare local vs remote (conflicts listed)                             |
+| `--dry-run`          | Show plan without I/O                                                  |
+| `--force`            | Overwrite on conflict (push → remote wins locally; pull → remote wins) |
 
 ### memory_sync (MCP tool)
 
@@ -191,11 +190,11 @@ Registered with `memory_ingest` / `memory_recall` (hide all with `CLAWQL_ENABLE_
 
 **Cursor iOS:** Cloud Agents have no local `~/.ClawQL` on the phone — configure dashboard Secrets, stdio MCP, and end-of-session `memory_sync`. Full walkthrough: [Agent setup — Cursor iOS](https://docs.clawql.com/agent-setup#cursor-ios-cloud-agent).
 
-| Field | Default | Meaning |
-|---|---|---|
-| `direction` | `auto` | `auto`: pull remote, then push local. `pull` or `push`: one direction. |
-| `force` | `false` | Overwrite on conflicts; otherwise listed in response only. |
-| `dryRun` | `false` | Plan without object storage I/O. |
+| Field       | Default | Meaning                                                                |
+| ----------- | ------- | ---------------------------------------------------------------------- |
+| `direction` | `auto`  | `auto`: pull remote, then push local. `pull` or `push`: one direction. |
+| `force`     | `false` | Overwrite on conflicts; otherwise listed in response only.             |
+| `dryRun`    | `false` | Plan without object storage I/O.                                       |
 
 ```json
 { "direction": "auto" }
@@ -203,29 +202,29 @@ Registered with `memory_ingest` / `memory_recall` (hide all with `CLAWQL_ENABLE_
 
 ### Providers
 
-| Provider | `sync.json` | Endpoint | Credentials |
-|---|---|---|---|
-| **r2** (default) | `"provider": "r2"` | `https://<account>.r2.cloudflarestorage.com` | R2 S3 API keys |
-| **s3** | `"provider": "s3"` | AWS default | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` |
-| **gcs** | `"provider": "gcs"` | `https://storage.googleapis.com` | GCS HMAC interop keys |
+| Provider         | `sync.json`         | Endpoint                                     | Credentials                                   |
+| ---------------- | ------------------- | -------------------------------------------- | --------------------------------------------- |
+| **r2** (default) | `"provider": "r2"`  | `https://<account>.r2.cloudflarestorage.com` | R2 S3 API keys                                |
+| **s3**           | `"provider": "s3"`  | AWS default                                  | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` |
+| **gcs**          | `"provider": "gcs"` | `https://storage.googleapis.com`             | GCS HMAC interop keys                         |
 
 ### Environment
 
-| Variable | Purpose |
-|---|---|
-| `CLAWQL_SYNC_PROVIDER` | `r2` (default), `s3`, or `gcs` |
-| `CLAWQL_SYNC_BUCKET` | Bucket name (overrides sync.json) |
-| `CLAWQL_SYNC_PREFIX` | Shared team prefix, e.g. `teams/acme/` |
-| `CLAWQL_SYNC_ACCESS_KEY_ID` | R2 S3 API access key (or generic override) |
-| `CLAWQL_SYNC_SECRET_ACCESS_KEY` | R2 S3 API secret (or generic override) |
-| `CLAWQL_R2_ACCOUNT_ID` | Cloudflare account id (R2 endpoint) |
-| `CLAWQL_AWS_ACCESS_KEY_ID` | S3 IAM access key |
-| `CLAWQL_AWS_SECRET_ACCESS_KEY` | S3 IAM secret |
-| `CLAWQL_AWS_REGION` | S3 region (e.g. `us-east-1`) |
-| `CLAWQL_GCS_HMAC_ACCESS_ID` | GCS interoperability HMAC access id |
-| `CLAWQL_GCS_HMAC_SECRET` | GCS interoperability HMAC secret |
-| `CLAWQL_SYNC_ENDPOINT` | Override endpoint URL |
-| `CLAWQL_SYNC_REGION` | Region (`auto` for R2/GCS) |
+| Variable                        | Purpose                                    |
+| ------------------------------- | ------------------------------------------ |
+| `CLAWQL_SYNC_PROVIDER`          | `r2` (default), `s3`, or `gcs`             |
+| `CLAWQL_SYNC_BUCKET`            | Bucket name (overrides sync.json)          |
+| `CLAWQL_SYNC_PREFIX`            | Shared team prefix, e.g. `teams/acme/`     |
+| `CLAWQL_SYNC_ACCESS_KEY_ID`     | R2 S3 API access key (or generic override) |
+| `CLAWQL_SYNC_SECRET_ACCESS_KEY` | R2 S3 API secret (or generic override)     |
+| `CLAWQL_R2_ACCOUNT_ID`          | Cloudflare account id (R2 endpoint)        |
+| `CLAWQL_AWS_ACCESS_KEY_ID`      | S3 IAM access key                          |
+| `CLAWQL_AWS_SECRET_ACCESS_KEY`  | S3 IAM secret                              |
+| `CLAWQL_AWS_REGION`             | S3 region (e.g. `us-east-1`)               |
+| `CLAWQL_GCS_HMAC_ACCESS_ID`     | GCS interoperability HMAC access id        |
+| `CLAWQL_GCS_HMAC_SECRET`        | GCS interoperability HMAC secret           |
+| `CLAWQL_SYNC_ENDPOINT`          | Override endpoint URL                      |
+| `CLAWQL_SYNC_REGION`            | Region (`auto` for R2/GCS)                 |
 
 Config file: `~/.ClawQL/sync.json` — safe to commit bucket/prefix in team docs; secrets should not go in this file.
 
@@ -233,13 +232,13 @@ Config file: `~/.ClawQL/sync.json` — safe to commit bucket/prefix in team docs
 
 When the MCP server runs with sync configured, enable automatic background sync:
 
-| Variable | Behavior |
-|---|---|
-| `CLAWQL_SYNC_AUTO=1` | Debounced push after each successful `memory_ingest` (default debounce 30s) |
-| `CLAWQL_SYNC_AUTO_DEBOUNCE_MS` | Push debounce interval (default `30000`) |
-| `CLAWQL_SYNC_AUTO_PULL=1` | Throttled pull before `memory_recall` (default min interval 60s) |
-| `CLAWQL_SYNC_AUTO_PULL_MIN_MS` | Min ms between auto-pulls (default `60000`) |
-| `CLAWQL_SYNC_AUTO_PULL_ON_START=1` | Pull once when MCP starts |
+| Variable                           | Behavior                                                                    |
+| ---------------------------------- | --------------------------------------------------------------------------- |
+| `CLAWQL_SYNC_AUTO=1`               | Debounced push after each successful `memory_ingest` (default debounce 30s) |
+| `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`     | Push debounce interval (default `30000`)                                    |
+| `CLAWQL_SYNC_AUTO_PULL=1`          | Throttled pull before `memory_recall` (default min interval 60s)            |
+| `CLAWQL_SYNC_AUTO_PULL_MIN_MS`     | Min ms between auto-pulls (default `60000`)                                 |
+| `CLAWQL_SYNC_AUTO_PULL_ON_START=1` | Pull once when MCP starts                                                   |
 
 Auto sync logs to stderr (`[clawql-mcp] team sync auto-push/...`). Failures are non-fatal — ingest/recall still succeed.
 
@@ -265,16 +264,16 @@ teamSync:
   autoPullMinMs: 60000
   autoPullOnStart: true
   r2:
-    accountId: '<cloudflare-account-id>'
+    accountId: "<cloudflare-account-id>"
 ```
 
 Credentials in Vault / `envFromSecret` (not in `values.yaml`):
 
-| Provider | Vault keys |
-|---|---|
-| **R2** (default) | `r2AccessKeyId`, `r2SecretAccessKey`, `cloudflareAccountId` |
-| **S3** | `awsAccessKeyId`, `awsSecretAccessKey` (+ `CLAWQL_AWS_REGION` via `extraEnv` if needed) |
-| **GCS** | `gcsHmacAccessId`, `gcsHmacSecret` |
+| Provider         | Vault keys                                                                              |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| **R2** (default) | `r2AccessKeyId`, `r2SecretAccessKey`, `cloudflareAccountId`                             |
+| **S3**           | `awsAccessKeyId`, `awsSecretAccessKey` (+ `CLAWQL_AWS_REGION` via `extraEnv` if needed) |
+| **GCS**          | `gcsHmacAccessId`, `gcsHmacSecret`                                                      |
 
 **GCS example:**
 
@@ -318,14 +317,14 @@ Security constraints (credentials never baked; SHA-256 verify of pulled vault fi
 
 ### What you get
 
-| Component | Bake time (image) | Boot time (runtime) |
-|---|---|---|
-| ClawQL + Node 22 | Yes | — |
-| `~/.ClawQL` skeleton | Yes | — |
-| `sync.json` (bucket/prefix) | Template only | Overridden from metadata/env |
-| Sync credentials | Never baked | Injected (Vault, instance role, secrets manager) |
-| Team `Memory/` notes | — | `clawql sync pull` |
-| Health gate | `clawql doctor` (bake) | `clawql doctor --smoke` (boot) |
+| Component                   | Bake time (image)      | Boot time (runtime)                              |
+| --------------------------- | ---------------------- | ------------------------------------------------ |
+| ClawQL + Node 22            | Yes                    | —                                                |
+| `~/.ClawQL` skeleton        | Yes                    | —                                                |
+| `sync.json` (bucket/prefix) | Template only          | Overridden from metadata/env                     |
+| Sync credentials            | Never baked            | Injected (Vault, instance role, secrets manager) |
+| Team `Memory/` notes        | —                      | `clawql sync pull`                               |
+| Health gate                 | `clawql doctor` (bake) | `clawql doctor --smoke` (boot)                   |
 
 ### Quick start (operators)
 
@@ -381,10 +380,10 @@ clawql sync status
 
 ### Tier seeding
 
-| Tier | Configuration |
-|---|---|
-| **Shared** | `CLAWQL_SYNC_PREFIX=shared/` |
-| **Dedicated** | `CLAWQL_SYNC_PREFIX=tenant/<tenant-id>/` |
+| Tier           | Configuration                                        |
+| -------------- | ---------------------------------------------------- |
+| **Shared**     | `CLAWQL_SYNC_PREFIX=shared/`                         |
+| **Dedicated**  | `CLAWQL_SYNC_PREFIX=tenant/<tenant-id>/`             |
 | **Enterprise** | Customer-owned bucket; same image, their credentials |
 
 ### Cloudflare managed tier
@@ -467,11 +466,11 @@ Set `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_HOST` via Vault / `e
 
 ### Observability profiles
 
-| Profile | Use case |
-|---|---|
-| `bundled` | Tier 1 Compose lab — Prometheus, Loki, Tempo, Grafana, Langfuse |
+| Profile    | Use case                                                                                                  |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| `bundled`  | Tier 1 Compose lab — Prometheus, Loki, Tempo, Grafana, Langfuse                                           |
 | `external` | Point at existing backends — [bring-your-own](https://docs.clawql.com/learn/audit-tool-and-observability) |
-| `minimal` | Metrics only; disable Langfuse and optional push |
+| `minimal`  | Metrics only; disable Langfuse and optional push                                                          |
 
 Index: [Observability bundle](https://docs.clawql.com/docker-desktop-observability).
 

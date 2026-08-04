@@ -68,7 +68,7 @@ The assistant can then synthesize an answer that matches your roadmap language â
 
 ## 5. Follow-up: `search` + `execute` to create GitHub issues
 
-Same session, new user request (paraphrased): *"Use ClawQL to create the issues that capture this work."*
+Same session, new user request (paraphrased): _"Use ClawQL to create the issues that capture this work."_
 
 Once `memory_recall` has returned vault roadmaps, the assistant holds a synthesized description of the hybrid-memory effort â€” Cuckoo membership layer, `sqlite-vec` / embeddings, `memory.db` schema, MCP env wiring (`CLAWQL_VECTOR_*`, `CLAWQL_CUCKOO_*`), and so on. The next step uses the core ClawQL surface against OpenAPI-backed providers:
 
@@ -85,13 +85,13 @@ Example outcome in this repository (Apr 2026): epic [#68](https://github.com/dan
 
 ## 6. Vault graph: ingest, wikilinks, and recall
 
-| Mechanism | Role |
-|---|---|
-| **`memory_ingest`** | Writes Markdown under the vault; supports structured `insights`, optional `conversation` capture, `toolOutputs`, and `wikilinks` so new notes link to related pages |
-| **Frontmatter + provenance** | Ingest sections can carry provenance metadata so you know what was captured and when |
-| **`[[wikilinks]]`** | Becomes Obsidian's graph; `memory_recall` can use link hops (`maxDepth`) so recall is not single-file grep |
-| **Tags in prose** | Consistent tagging in `insights` (see project skill for vault memory) so later `query` terms hit the right theme clusters |
-| **Optional sidecars** | With hybrid memory enabled, vector stores and Cuckoo-style membership checks can narrow candidate chunks before the model sees them |
+| Mechanism                    | Role                                                                                                                                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`memory_ingest`**          | Writes Markdown under the vault; supports structured `insights`, optional `conversation` capture, `toolOutputs`, and `wikilinks` so new notes link to related pages |
+| **Frontmatter + provenance** | Ingest sections can carry provenance metadata so you know what was captured and when                                                                                |
+| **`[[wikilinks]]`**          | Becomes Obsidian's graph; `memory_recall` can use link hops (`maxDepth`) so recall is not single-file grep                                                          |
+| **Tags in prose**            | Consistent tagging in `insights` (see project skill for vault memory) so later `query` terms hit the right theme clusters                                           |
+| **Optional sidecars**        | With hybrid memory enabled, vector stores and Cuckoo-style membership checks can narrow candidate chunks before the model sees them                                 |
 
 `cache()` is for ephemeral session scratch. `memory_ingest` is for durable narrative you want recall to find next month.
 

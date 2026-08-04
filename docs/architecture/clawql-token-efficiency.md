@@ -12,12 +12,12 @@ The standard approach to giving an AI agent access to tools (via MCP) is to load
 
 Consider three common providers bundled together:
 
-| Provider | Operations in Spec | Estimated Tokens (Full Spec) |
-|---|---|---|
-| Google Cloud | 4,141 | ~84,000+ |
-| Cloudflare | 2,697 | ~2,206,000+ |
-| Jira | 336 | ~266,000+ |
-| **Combined** | **7,174** | **~2,556,000+** |
+| Provider     | Operations in Spec | Estimated Tokens (Full Spec) |
+| ------------ | ------------------ | ---------------------------- |
+| Google Cloud | 4,141              | ~84,000+                     |
+| Cloudflare   | 2,697              | ~2,206,000+                  |
+| Jira         | 336                | ~266,000+                    |
+| **Combined** | **7,174**          | **~2,556,000+**              |
 
 The Cloudflare figure comes from measuring the full published OpenAPI specification directly. Cloudflare's own internal estimate for the same surface runs around 1.17 million tokens — roughly half — because an internal estimate of the "useful" API surface typically excludes verbose descriptions, examples, and edge-case endpoints that a complete downloaded spec carries. Both numbers measure the same underlying problem; they measured different artifacts.
 
@@ -35,12 +35,12 @@ The reasoning: large language models have seen enormous amounts of real TypeScri
 
 This keeps the base tool-definition footprint at roughly 1,800 tokens regardless of how large the underlying API surface is.
 
-| Provider | Full Spec | Via Code Mode | Reduction |
-|---|---|---|---|
-| Google Cloud | ~84,400 | ~2,200 | ~97% |
-| Jira | ~266,600 | ~900 | ~99.7% |
-| Cloudflare | ~2,206,000 | ~2,400 | ~99.9% |
-| **Average** | **~852,000** | **~1,800** | **~99.8%** |
+| Provider     | Full Spec    | Via Code Mode | Reduction  |
+| ------------ | ------------ | ------------- | ---------- |
+| Google Cloud | ~84,400      | ~2,200        | ~97%       |
+| Jira         | ~266,600     | ~900          | ~99.7%     |
+| Cloudflare   | ~2,206,000   | ~2,400        | ~99.9%     |
+| **Average**  | **~852,000** | **~1,800**    | **~99.8%** |
 
 A typical task ends up using maybe 60 operations out of 7,000+ available. The other 99%+ never enters context at all.
 
@@ -169,12 +169,12 @@ A few additional techniques attack token waste from a different angle — at the
 
 The inference gateway (`clawql-inference`) adds four more layers on top of the MCP-focused stack above. Inspect effective status with `clawql inference policy show`.
 
-| Layer | Name | Default | Package / scope |
-|---|---|---|---|
-| **9** | Structured output hints | on | `clawql-inference` — injects concise structured-output guidance |
-| **10** | Token budget signaling | on | `clawql-inference` — derives word budget from `max_tokens` |
-| **11** | Prefill opener | off | `clawql-inference` — optional assistant prefill (`CLAWQL_INFERENCE_PREFILL=1`) |
-| **12** | Flywheel | on | `clawql-inference` export → fine-tune → frugal tier registration |
+| Layer  | Name                    | Default | Package / scope                                                                |
+| ------ | ----------------------- | ------- | ------------------------------------------------------------------------------ |
+| **9**  | Structured output hints | on      | `clawql-inference` — injects concise structured-output guidance                |
+| **10** | Token budget signaling  | on      | `clawql-inference` — derives word budget from `max_tokens`                     |
+| **11** | Prefill opener          | off     | `clawql-inference` — optional assistant prefill (`CLAWQL_INFERENCE_PREFILL=1`) |
+| **12** | Flywheel                | on      | `clawql-inference` export → fine-tune → frugal tier registration               |
 
 Layer 8 HTTP routing accepts `clawql/auto`, `clawql/frugal`, `clawql/standard`, and `clawql/frontier` model aliases when `CLAWQL_INFERENCE_HTTP_AUTO_ROUTE=1` or tier escalation is enabled.
 
@@ -182,18 +182,18 @@ Layer 8 HTTP routing accepts `clawql/auto`, `clawql/frugal`, `clawql/standard`, 
 
 ## Implementation Map
 
-| Layer | Implementation |
-|---|---|
-| 1 Code Mode | MCP `search` + `execute` (`clawql-api`) — always on |
-| 2 Response trim | `field-projection.ts` on execute output — always on |
-| 3 Terse output | `TokenEfficiencyGateway` post-processor — on (`CLAWQL_INFERENCE_TERSE=0` to disable) |
-| 4 Prompt cache | Anthropic `cache_control` on stable system prefix — on (`CLAWQL_INFERENCE_PROMPT_CACHE=0` to disable) |
-| 5 Semantic cache | `SemanticCachedGateway` with read/write safety — on when embeddings configured |
-| 6 History compress | Rolling transcript distillation — off (`CLAWQL_INFERENCE_HISTORY_COMPRESS=1`) |
-| 7 Prompt compress | Pre-send dedupe + truncation — off (`CLAWQL_INFERENCE_PROMPT_COMPRESS=1`) |
-| 8 Model routing | Ouroboros escalation + HTTP `clawql/*` aliases — off (`CLAWQL_INFERENCE_ROUTING_ENABLED=1`) |
-| 9–11 Extensions | Structured output, token budget, prefill — see env table in [`clawql-inference.md`](https://docs.clawql.com/inference/clawql-inference) |
-| 12 Flywheel | Export pipeline + `finetune register` |
+| Layer              | Implementation                                                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 Code Mode        | MCP `search` + `execute` (`clawql-api`) — always on                                                                                     |
+| 2 Response trim    | `field-projection.ts` on execute output — always on                                                                                     |
+| 3 Terse output     | `TokenEfficiencyGateway` post-processor — on (`CLAWQL_INFERENCE_TERSE=0` to disable)                                                    |
+| 4 Prompt cache     | Anthropic `cache_control` on stable system prefix — on (`CLAWQL_INFERENCE_PROMPT_CACHE=0` to disable)                                   |
+| 5 Semantic cache   | `SemanticCachedGateway` with read/write safety — on when embeddings configured                                                          |
+| 6 History compress | Rolling transcript distillation — off (`CLAWQL_INFERENCE_HISTORY_COMPRESS=1`)                                                           |
+| 7 Prompt compress  | Pre-send dedupe + truncation — off (`CLAWQL_INFERENCE_PROMPT_COMPRESS=1`)                                                               |
+| 8 Model routing    | Ouroboros escalation + HTTP `clawql/*` aliases — off (`CLAWQL_INFERENCE_ROUTING_ENABLED=1`)                                             |
+| 9–11 Extensions    | Structured output, token budget, prefill — see env table in [`clawql-inference.md`](https://docs.clawql.com/inference/clawql-inference) |
+| 12 Flywheel        | Export pipeline + `finetune register`                                                                                                   |
 
 ---
 
@@ -240,6 +240,6 @@ Token estimates throughout use a roughly 4-characters-per-token approximation, c
 
 ---
 
-*For the search/execute workflow, see [`docs/mcp/mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md). For inference gateway layers and env vars, see [`docs/inference/clawql-inference.md`](https://docs.clawql.com/inference/clawql-inference). For platform context, see the [Vision & Roadmap document](https://docs.clawql.com/vision/roadmap).*
+_For the search/execute workflow, see [`docs/mcp/mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md). For inference gateway layers and env vars, see [`docs/inference/clawql-inference.md`](https://docs.clawql.com/inference/clawql-inference). For platform context, see the [Vision & Roadmap document](https://docs.clawql.com/vision/roadmap)._
 
 © Copyright 2026. All rights reserved. · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL)

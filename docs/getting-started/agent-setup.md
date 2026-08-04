@@ -2,15 +2,14 @@
 
 Vault-first onboarding, Cursor iOS Cloud Agents, and the local agent sandbox (macOS Seatbelt).
 
-
 ## Pick your path
 
-| You are… | Jump to |
-|---|---|
-| Setting up Cursor or Claude Desktop | [Desktop / stdio](#desktop-stdio-recommended) |
-| On Cursor iOS / Cloud Agent | [Cursor iOS + Cloud Agent](#cursor-ios-cloud-agent) |
-| Hardening local agent shell on macOS | [Local agent sandbox](#local-agent-sandbox-macos-seatbelt) |
-| Sharing vault notes with a team | [For teams — vault sync](https://docs.clawql.com/getting-started/for-teams#team-vault-sync) |
+| You are…                             | Jump to                                                                                     |
+| ------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Setting up Cursor or Claude Desktop  | [Desktop / stdio](#desktop-stdio-recommended)                                               |
+| On Cursor iOS / Cloud Agent          | [Cursor iOS + Cloud Agent](#cursor-ios-cloud-agent)                                         |
+| Hardening local agent shell on macOS | [Local agent sandbox](#local-agent-sandbox-macos-seatbelt)                                  |
+| Sharing vault notes with a team      | [For teams — vault sync](https://docs.clawql.com/getting-started/for-teams#team-vault-sync) |
 
 ---
 
@@ -67,11 +66,11 @@ When done, summarize: home path, secrets vault path, MCP transport, vendor teste
 
 ### Local vs cluster secrets
 
-| Mode | Secrets store |
-|---|---|
+| Mode            | Secrets store                                            |
+| --------------- | -------------------------------------------------------- |
 | **Local stdio** | `~/.ClawQL/vault/providers.json` (loaded at MCP startup) |
-| **Kubernetes** | HashiCorp Vault → ESO → `clawql-provider-env` |
-| **Dashboard** | Provider secrets UI → Vault KV |
+| **Kubernetes**  | HashiCorp Vault → ESO → `clawql-provider-env`            |
+| **Dashboard**   | Provider secrets UI → Vault KV                           |
 
 Guide: [local-provider-vault.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/local-provider-vault.md)
 
@@ -128,17 +127,17 @@ clawql sync push   # seed Memory/ from an existing ~/.ClawQL
 
 Add these under **Cursor → Settings → Cloud → Secrets** (or your team's secret store). They are injected into every Cloud Agent run for the repo.
 
-| Secret | Purpose |
-|---|---|
-| `CLAWQL_HOME` | Vault root on the VM, e.g. `/home/ubuntu/.ClawQL` |
-| `CLAWQL_R2_ACCOUNT_ID` | Cloudflare account id (R2 endpoint) |
-| `CLAWQL_SYNC_BUCKET` | Team bucket name |
-| `CLAWQL_SYNC_PREFIX` | Shared prefix, e.g. `teams/engineering/` |
-| `CLAWQL_SYNC_ACCESS_KEY_ID` | R2 S3 API access key |
-| `CLAWQL_SYNC_SECRET_ACCESS_KEY` | R2 S3 API secret |
-| `CLAWQL_SYNC_AUTO` | `1` — debounced push after `memory_ingest` |
-| `CLAWQL_SYNC_AUTO_PULL` | `1` — throttled pull before `memory_recall` |
-| `CLAWQL_SYNC_AUTO_PULL_ON_START` | `1` — pull once when MCP starts |
+| Secret                           | Purpose                                           |
+| -------------------------------- | ------------------------------------------------- |
+| `CLAWQL_HOME`                    | Vault root on the VM, e.g. `/home/ubuntu/.ClawQL` |
+| `CLAWQL_R2_ACCOUNT_ID`           | Cloudflare account id (R2 endpoint)               |
+| `CLAWQL_SYNC_BUCKET`             | Team bucket name                                  |
+| `CLAWQL_SYNC_PREFIX`             | Shared prefix, e.g. `teams/engineering/`          |
+| `CLAWQL_SYNC_ACCESS_KEY_ID`      | R2 S3 API access key                              |
+| `CLAWQL_SYNC_SECRET_ACCESS_KEY`  | R2 S3 API secret                                  |
+| `CLAWQL_SYNC_AUTO`               | `1` — debounced push after `memory_ingest`        |
+| `CLAWQL_SYNC_AUTO_PULL`          | `1` — throttled pull before `memory_recall`       |
+| `CLAWQL_SYNC_AUTO_PULL_ON_START` | `1` — pull once when MCP starts                   |
 
 For S3 or GCS, use the credential variables from [For teams — Environment](https://docs.clawql.com/getting-started/for-teams#environment) instead of R2 keys.
 
@@ -196,13 +195,13 @@ Teams can add `.cursor/environment.json` with an install script that runs `clawq
 
 ### 4. Session workflow (memory)
 
-| Step | Tool / behavior |
-|---|---|
-| Start session | Auto-pull on MCP start (if `CLAWQL_SYNC_AUTO_PULL_ON_START=1`) |
-| Recall context | `memory_recall` with a focused query |
-| Persist outcomes | `memory_ingest` after decisions, debugging, or API contracts |
-| End of session | `memory_sync` with `{ "direction": "auto" }` — pull remote changes, then push local |
-| Next session (new VM) | Auto-pull → `memory_recall` sees prior notes |
+| Step                  | Tool / behavior                                                                     |
+| --------------------- | ----------------------------------------------------------------------------------- |
+| Start session         | Auto-pull on MCP start (if `CLAWQL_SYNC_AUTO_PULL_ON_START=1`)                      |
+| Recall context        | `memory_recall` with a focused query                                                |
+| Persist outcomes      | `memory_ingest` after decisions, debugging, or API contracts                        |
+| End of session        | `memory_sync` with `{ "direction": "auto" }` — pull remote changes, then push local |
+| Next session (new VM) | Auto-pull → `memory_recall` sees prior notes                                        |
 
 `memory_sync` replaces shell `clawql sync push` / `pull` on Cloud Agents. See [For teams — `memory_sync`](https://docs.clawql.com/getting-started/for-teams#memory-sync-mcp-tool).
 
@@ -232,13 +231,13 @@ Docs: https://docs.clawql.com/agent-setup#cursor-ios-cloud-agent https://docs.cl
 
 ### Troubleshooting (iOS)
 
-| Symptom | Check |
-|---|---|
+| Symptom                           | Check                                                                                    |
+| --------------------------------- | ---------------------------------------------------------------------------------------- |
 | `memory_recall` empty on a new VM | Secrets set? `memory_sync { "direction": "pull" }` or `CLAWQL_SYNC_AUTO_PULL_ON_START=1` |
-| `memory_sync` errors | `CLAWQL_SYNC_BUCKET`, prefix, and R2/S3/GCS credentials in dashboard Secrets |
-| `execute` auth failures | Provider keys in `vault/providers.json` or matching `CLAWQL_*` env secrets |
-| MCP tools missing | Enable clawql server for the Cloud Agent run; confirm `CLAWQL_ENABLE_MEMORY` is not `0` |
-| Conflicts after parallel runs | `memory_sync` response lists conflicts; use `force: true` only deliberately |
+| `memory_sync` errors              | `CLAWQL_SYNC_BUCKET`, prefix, and R2/S3/GCS credentials in dashboard Secrets             |
+| `execute` auth failures           | Provider keys in `vault/providers.json` or matching `CLAWQL_*` env secrets               |
+| MCP tools missing                 | Enable clawql server for the Cloud Agent run; confirm `CLAWQL_ENABLE_MEMORY` is not `0`  |
+| Conflicts after parallel runs     | `memory_sync` response lists conflicts; use `force: true` only deliberately              |
 
 ---
 
@@ -260,10 +259,10 @@ clawql codex                   # per-harness sandbox-exec wrapper
 
 ### Architecture: two layers for Claude Code
 
-| Layer | Mechanism |
-|---|---|
+| Layer     | Mechanism                                                          |
+| --------- | ------------------------------------------------------------------ |
 | **Outer** | ClawQL `sandbox-exec -f ~/.ClawQL/sandbox/claude.sb -D WORK_DIR=…` |
-| **Inner** | Claude Code native `/sandbox` via `~/.claude/settings.json` |
+| **Inner** | Claude Code native `/sandbox` via `~/.claude/settings.json`        |
 
 Same defense-in-depth idea as Kata + Istio in enterprise — applied locally.
 
@@ -278,12 +277,12 @@ clawql sandbox edit --harness claude   # customize profile in $EDITOR
 
 #### Per-harness profiles
 
-| Harness | Profile | Notes |
-|---|---|---|
-| `claude` | `~/.ClawQL/sandbox/claude.sb` | Seatbelt wrapper + Claude `/sandbox` |
-| `codex` | `~/.ClawQL/sandbox/codex.sb` | `sandbox-exec` only |
-| `cursor` | `~/.ClawQL/sandbox/cursor.sb` | `sandbox-exec` only |
-| `opencode` | `~/.ClawQL/sandbox/opencode.sb` | `sandbox-exec` only |
+| Harness    | Profile                         | Notes                                |
+| ---------- | ------------------------------- | ------------------------------------ |
+| `claude`   | `~/.ClawQL/sandbox/claude.sb`   | Seatbelt wrapper + Claude `/sandbox` |
+| `codex`    | `~/.ClawQL/sandbox/codex.sb`    | `sandbox-exec` only                  |
+| `cursor`   | `~/.ClawQL/sandbox/cursor.sb`   | `sandbox-exec` only                  |
+| `opencode` | `~/.ClawQL/sandbox/opencode.sb` | `sandbox-exec` only                  |
 
 Launch: `clawql <harness>` → `sandbox-exec -f {harness}.sb -D WORK_DIR=$PWD … -- <binary>`
 
@@ -317,12 +316,12 @@ When `failClosed: true` (default), the harness aborts rather than proceeding uns
 
 ### Escalation path
 
-| Level | Use when | Tool |
-|---|---|---|
-| **1 — Seatbelt** | Daily macOS coding | `clawql sandbox init` |
-| **2 — sandbox_exec MCP** | In-agent snippets | `CLAWQL_ENABLE_SANDBOX=1` |
-| **3 — Kata** | Enterprise K8s | Helm `sandboxKata` |
-| **4 — UTM VM** | Computer Use | Share only company repos folder |
+| Level                    | Use when           | Tool                            |
+| ------------------------ | ------------------ | ------------------------------- |
+| **1 — Seatbelt**         | Daily macOS coding | `clawql sandbox init`           |
+| **2 — sandbox_exec MCP** | In-agent snippets  | `CLAWQL_ENABLE_SANDBOX=1`       |
+| **3 — Kata**             | Enterprise K8s     | Helm `sandboxKata`              |
+| **4 — UTM VM**           | Computer Use       | Share only company repos folder |
 
 MCP-side **`sandbox_exec`:** [Sandbox plugin](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/sandbox.md) · [Learn: sandbox_exec](https://docs.clawql.com/learn/sandbox-exec). Decision record: [ADR 0008](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0008-fail-closed-local-agent-sandbox.md).
 

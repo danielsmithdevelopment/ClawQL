@@ -16,15 +16,15 @@ Gartner's first Magic Quadrant for Intelligent Document Processing (September 20
 
 ### The Pricing Chasm
 
-| Vendor | Pricing model | Real cost |
-|---|---|---|
-| ABBYY Vantage | Per-page, custom quote | $0.02–$0.10/page; median enterprise ~$150K/year + $20–$150K implementation |
-| Hyperscience | Custom quote | Up to $1.50/page; $30K–$100K+ to start |
-| Kofax TotalAgility | Custom quote | Mid-five to seven figures annually |
-| Rossum | Tiered from $18K/year | $18K+ entry; SAP/Coupa-focused |
-| Intralinks VDR | $0.40–$0.85/page | $15K–$200K+ per M&A deal |
-| Datasite VDR | Custom quote | Up to $720K/year for large implementations |
-| **ClawQL IDP (Starter)** | **Flat $299/mo** | **$3,588/year. Unlimited documents. VDR included.** |
+| Vendor                   | Pricing model          | Real cost                                                                  |
+| ------------------------ | ---------------------- | -------------------------------------------------------------------------- |
+| ABBYY Vantage            | Per-page, custom quote | $0.02–$0.10/page; median enterprise ~$150K/year + $20–$150K implementation |
+| Hyperscience             | Custom quote           | Up to $1.50/page; $30K–$100K+ to start                                     |
+| Kofax TotalAgility       | Custom quote           | Mid-five to seven figures annually                                         |
+| Rossum                   | Tiered from $18K/year  | $18K+ entry; SAP/Coupa-focused                                             |
+| Intralinks VDR           | $0.40–$0.85/page       | $15K–$200K+ per M&A deal                                                   |
+| Datasite VDR             | Custom quote           | Up to $720K/year for large implementations                                 |
+| **ClawQL IDP (Starter)** | **Flat $299/mo**       | **$3,588/year. Unlimited documents. VDR included.**                        |
 
 A team paying $150,000/year for ABBYY pays $3,588/year for ClawQL Starter — for a platform that does more, deploys faster, and requires no dedicated implementation team.
 
@@ -67,7 +67,7 @@ A sovereign, modular IDP that closes the full document lifecycle in one system: 
 5. Self-hosted / air-gapped / data-sovereign — no document data must leave the environment.
 6. Deploy in hours, not months — `helm install clawql charts/clawql-full-stack --namespace clawql`.
 
-Avoid "best IDP on the planet" until earned. Prefer: *best IDP for teams that need pipeline integration, data sovereignty, agentic access, and price efficiency*.
+Avoid "best IDP on the planet" until earned. Prefer: _best IDP for teams that need pipeline integration, data sovereignty, agentic access, and price efficiency_.
 
 ---
 
@@ -84,27 +84,27 @@ The IDP buyer is often a VP of Ops, Legal Ops Manager, transaction coordinator, 
 
 ### Expansion Ladder
 
-| Horizon | Outcome |
-|---|---|
-| Day one | Full pipeline operational (Helm or hosted trial) |
-| Week 2 | Semantic cross-reference via `knowledge_search_onyx` |
-| Month 2 | HITL for low-confidence extractions (`hitl_enqueue_label_studio`) |
-| Month 3 | MCP from AI assistants for natural-language ops |
-| Month 4+ | Inference + memory discovered on the same platform |
+| Horizon  | Outcome                                                           |
+| -------- | ----------------------------------------------------------------- |
+| Day one  | Full pipeline operational (Helm or hosted trial)                  |
+| Week 2   | Semantic cross-reference via `knowledge_search_onyx`              |
+| Month 2  | HITL for low-confidence extractions (`hitl_enqueue_label_studio`) |
+| Month 3  | MCP from AI assistants for natural-language ops                   |
+| Month 4+ | Inference + memory discovered on the same platform                |
 
 ### Competitive Table
 
-| Dimension | ABBYY | Hyperscience | Rossum | Intralinks | ClawQL IDP |
-|---|---|---|---|---|---|
-| Entry price | $15K+/yr est | $30K+/yr est | $18K/yr | $10K+/yr | **$3,588/yr** |
-| Per-doc meter | Yes | Yes | Yes | Yes | **No** |
-| Implementation | Weeks–months | 3–12 months | Weeks–months | Days | **Hours** |
-| Self-hosted | Partial | Partial | No | No | **Yes (free)** |
-| VDR included | No | No | No | VDR only | **Yes** |
-| Pipeline | Extract + handoff | Extract + handoff | Extract + handoff | Distribute only | **Full lifecycle** |
-| MCP-native | No | No | No | No | **Yes** |
-| Merkle audit | No | No | No | No | **Yes** |
-| Inference gateway | No | No | No | No | **Same binary** |
+| Dimension         | ABBYY             | Hyperscience      | Rossum            | Intralinks      | ClawQL IDP         |
+| ----------------- | ----------------- | ----------------- | ----------------- | --------------- | ------------------ |
+| Entry price       | $15K+/yr est      | $30K+/yr est      | $18K/yr           | $10K+/yr        | **$3,588/yr**      |
+| Per-doc meter     | Yes               | Yes               | Yes               | Yes             | **No**             |
+| Implementation    | Weeks–months      | 3–12 months       | Weeks–months      | Days            | **Hours**          |
+| Self-hosted       | Partial           | Partial           | No                | No              | **Yes (free)**     |
+| VDR included      | No                | No                | No                | VDR only        | **Yes**            |
+| Pipeline          | Extract + handoff | Extract + handoff | Extract + handoff | Distribute only | **Full lifecycle** |
+| MCP-native        | No                | No                | No                | No              | **Yes**            |
+| Merkle audit      | No                | No                | No                | No              | **Yes**            |
+| Inference gateway | No                | No                | No                | No              | **Same binary**    |
 
 ### Objection Handlers
 

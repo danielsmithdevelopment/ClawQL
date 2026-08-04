@@ -12,11 +12,11 @@
 
 Agents lose context when the MCP server restarts or Kubernetes reschedules a pod, when you open a new chat days later on the same project, or when multiple teammates run isolated vault directories. Memory turns distilled outcomes — decisions, debugging notes, API quirks, runbooks — into files you can diff, back up, and recall. The pattern is sometimes called an LLM wiki or incremental wiki: the model is an editor of stable pages, not only a stateless answerer.
 
-| Store | Lifetime | Best for |
-|---|---|---|
-| `cache` (Core) | Single process, LRU | Scratch keys inside one long session |
-| `memory_ingest` / `memory_recall` | Disk vault | Cross-session and cross-restart handoffs |
-| Team sync | Shared object bucket | Same `Memory/` tree across teammates |
+| Store                             | Lifetime             | Best for                                 |
+| --------------------------------- | -------------------- | ---------------------------------------- |
+| `cache` (Core)                    | Single process, LRU  | Scratch keys inside one long session     |
+| `memory_ingest` / `memory_recall` | Disk vault           | Cross-session and cross-restart handoffs |
+| Team sync                         | Shared object bucket | Same `Memory/` tree across teammates     |
 
 ---
 
@@ -63,11 +63,11 @@ Queried via `knowledge_search_onyx` (or `memory_recall` with `sources: ["onyx"]`
 
 ### How Agents Should Use Them
 
-| Habit | Why |
-|---|---|
-| Start with `memory_recall` (+ `sources` when needed) | One facade → normalized `hits[]` + specialist `followUps` |
+| Habit                                                                         | Why                                                             |
+| ----------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Start with `memory_recall` (+ `sources` when needed)                          | One facade → normalized `hits[]` + specialist `followUps`       |
 | Open `pageindex_*` / `codegraph_*` / Onyx specialists when `followUps` say so | Deep path, tree walk, and filtered enterprise search stay typed |
-| Write once with `memory_ingest`; use `rebuild` for derived indexes | Never paste the same prose into five stores |
+| Write once with `memory_ingest`; use `rebuild` for derived indexes            | Never paste the same prose into five stores                     |
 
 ---
 
@@ -75,14 +75,14 @@ Queried via `knowledge_search_onyx` (or `memory_recall` with `sources: ["onyx"]`
 
 Today's shipped stack is a practical subset of the full Memory 2.0 design in the DAOS spec:
 
-| Component | Shipped role | Technology |
-|---|---|---|
-| Vault | Canonical Markdown notes | `CLAWQL_OBSIDIAN_VAULT_PATH` → `Memory/<slug>.md` |
-| Graph index | Wikilink edges + chunk rows | `memory.db` (`wikilink_edge`, `vault_chunk`, …) |
-| Embeddings | Optional vector leg in recall | OpenAI-compatible `/embeddings` + sqlite or postgres |
-| PageIndex | Vectorless hierarchical tree | `clawql-pageindex` + `pageindex_*` |
-| Code graph | Structural AST / import-call graph over source | `clawql-codegraph` + `codegraph_*` (opt-in) |
-| Onyx | External enterprise search peer | `knowledge_search_onyx` + vault citations |
+| Component   | Shipped role                                   | Technology                                           |
+| ----------- | ---------------------------------------------- | ---------------------------------------------------- |
+| Vault       | Canonical Markdown notes                       | `CLAWQL_OBSIDIAN_VAULT_PATH` → `Memory/<slug>.md`    |
+| Graph index | Wikilink edges + chunk rows                    | `memory.db` (`wikilink_edge`, `vault_chunk`, …)      |
+| Embeddings  | Optional vector leg in recall                  | OpenAI-compatible `/embeddings` + sqlite or postgres |
+| PageIndex   | Vectorless hierarchical tree                   | `clawql-pageindex` + `pageindex_*`                   |
+| Code graph  | Structural AST / import-call graph over source | `clawql-codegraph` + `codegraph_*` (opt-in)          |
+| Onyx        | External enterprise search peer                | `knowledge_search_onyx` + vault citations            |
 
 **Ingest path:** `memory_ingest` writes or appends vault notes → rescans → rebuilds `memory.db` (chunks + wikilink edges; embeddings when configured). Optional `rebuild.pageindex` refreshes the heading tree for that note.
 
@@ -90,14 +90,14 @@ Today's shipped stack is a practical subset of the full Memory 2.0 design in the
 
 **Team sync (optional):** pushes and pulls the `Memory/` tree via object storage. `memory.db` is rebuilt locally after pull. Code graph storage is local unless you sync `codegraph.db.json` yourself.
 
-| Flow | Reads from | Writes to |
-|---|---|---|
-| `memory_ingest` | Agent JSON (+ optional Onyx citations) | `Memory/*.md` → `memory.db` (+ optional PageIndex) |
-| `memory_recall` | Vault, `memory.db`, optional codegraph / PageIndex / Onyx | (read-only) |
-| `pageindex_build_tree` | `Memory/*.md` | `pageindex.db.json` |
-| `codegraph_index` | Repo source tree | `codegraph.db.json` |
-| `knowledge_search_onyx` | External Onyx | (read); cite into vault via ingest |
-| `memory_sync` | Object bucket ↔ local vault | `Memory/` (and configured paths) |
+| Flow                    | Reads from                                                | Writes to                                          |
+| ----------------------- | --------------------------------------------------------- | -------------------------------------------------- |
+| `memory_ingest`         | Agent JSON (+ optional Onyx citations)                    | `Memory/*.md` → `memory.db` (+ optional PageIndex) |
+| `memory_recall`         | Vault, `memory.db`, optional codegraph / PageIndex / Onyx | (read-only)                                        |
+| `pageindex_build_tree`  | `Memory/*.md`                                             | `pageindex.db.json`                                |
+| `codegraph_index`       | Repo source tree                                          | `codegraph.db.json`                                |
+| `knowledge_search_onyx` | External Onyx                                             | (read); cite into vault via ingest                 |
+| `memory_sync`           | Object bucket ↔ local vault                               | `Memory/` (and configured paths)                   |
 
 **Roadmap (DAOS):** separate encrypted blob vault, typed link ActionTypes, Merkle root on every node at ingest, and recall filtered by signed ATRClaims purpose.
 
@@ -105,22 +105,22 @@ Today's shipped stack is a practical subset of the full Memory 2.0 design in the
 
 ## MCP Tools and Enablement
 
-| Tool | Purpose |
-|---|---|
-| `memory_ingest` | Write or append structured insights, wikilinks, optional tool output |
-| `memory_recall` | Multi-source recall (`sources` → `hits[]` + `followUps`) |
-| `memory_sync` | Team sync pull/push when object storage is configured |
-| `pageindex_build_tree` | Build a hierarchical index from Markdown |
-| `pageindex_traverse` | Walk the tree under a token budget |
-| `pageindex_synthesize` | Merge selected nodes into agent context |
-| `pageindex_get_content` | Read a indexed node's body |
-| `codegraph_index` | Build structural code graph from repo root (opt-in) |
-| `codegraph_import_graphify` | Import Graphify `graph.json` |
-| `codegraph_query` | Find symbols by name or concept |
-| `codegraph_neighbors` | List edges (imports, calls, contains) |
-| `codegraph_path` | Shortest path between two symbols |
-| `codegraph_explain` | Summarize a symbol and its neighborhood |
-| `codegraph_subgraph` | BFS subgraph around a seed query |
+| Tool                        | Purpose                                                              |
+| --------------------------- | -------------------------------------------------------------------- |
+| `memory_ingest`             | Write or append structured insights, wikilinks, optional tool output |
+| `memory_recall`             | Multi-source recall (`sources` → `hits[]` + `followUps`)             |
+| `memory_sync`               | Team sync pull/push when object storage is configured                |
+| `pageindex_build_tree`      | Build a hierarchical index from Markdown                             |
+| `pageindex_traverse`        | Walk the tree under a token budget                                   |
+| `pageindex_synthesize`      | Merge selected nodes into agent context                              |
+| `pageindex_get_content`     | Read a indexed node's body                                           |
+| `codegraph_index`           | Build structural code graph from repo root (opt-in)                  |
+| `codegraph_import_graphify` | Import Graphify `graph.json`                                         |
+| `codegraph_query`           | Find symbols by name or concept                                      |
+| `codegraph_neighbors`       | List edges (imports, calls, contains)                                |
+| `codegraph_path`            | Shortest path between two symbols                                    |
+| `codegraph_explain`         | Summarize a symbol and its neighborhood                              |
+| `codegraph_subgraph`        | BFS subgraph around a seed query                                     |
 
 Default on for vault + PageIndex; hide all memory + PageIndex tools with `CLAWQL_ENABLE_MEMORY=0`. Hide PageIndex only with `CLAWQL_ENABLE_PAGEINDEX=0`. Register code graph tools with `CLAWQL_ENABLE_CODEGRAPH=1`. Requires a writable `CLAWQL_OBSIDIAN_VAULT_PATH` for vault I/O; code graph additionally needs `CLAWQL_CODEGRAPH_ROOT` and `CLAWQL_CODEGRAPH_PATH`.
 
@@ -134,12 +134,12 @@ Pass `sources`: `vault` | `vector` | `codegraph` | `pageindex` | `onyx`. Default
 
 Use `memory_ingest` and `memory_recall` when context should survive MCP server restarts, pod reschedules, or starting a new chat days later.
 
-| | `cache` | `memory_ingest` / `memory_recall` |
-|---|---|---|
-| Storage | RAM in one Node process | Markdown files under `Memory/` (and optional `memory.db`) |
-| Restarts | Lost | Kept on disk |
+|            | `cache`                          | `memory_ingest` / `memory_recall`                           |
+| ---------- | -------------------------------- | ----------------------------------------------------------- |
+| Storage    | RAM in one Node process          | Markdown files under `Memory/` (and optional `memory.db`)   |
+| Restarts   | Lost                             | Kept on disk                                                |
 | Kubernetes | Each pod has its own empty cache | Needs a shared writable volume if you run multiple replicas |
-| Opt-out | Always on (Core) | Hide with `CLAWQL_ENABLE_MEMORY=0` |
+| Opt-out    | Always on (Core)                 | Hide with `CLAWQL_ENABLE_MEMORY=0`                          |
 
 ### Storage You Must Provide
 
@@ -254,20 +254,20 @@ Hits include `reason`: `"keyword"`, `"link"`, or `"vector"`. Tune `limit`, `maxD
 
 Team sync shares Markdown — not secrets — via object storage:
 
-| Path | Synced? |
-|---|---|
-| `Memory/` | Yes — team notes for `memory_recall` |
-| `sources/`, `pageindex.db.json`, `Dashboard/chats/` | Yes (optional) |
-| `vault/providers.json`, API secrets | Never |
-| `memory.db` | No — rebuilt locally after pull |
+| Path                                                | Synced?                              |
+| --------------------------------------------------- | ------------------------------------ |
+| `Memory/`                                           | Yes — team notes for `memory_recall` |
+| `sources/`, `pageindex.db.json`, `Dashboard/chats/` | Yes (optional)                       |
+| `vault/providers.json`, API secrets                 | Never                                |
+| `memory.db`                                         | No — rebuilt locally after pull      |
 
 **CLI:** `clawql sync init`, `push`, `pull`, `status` — providers R2 (default), S3, GCS. **MCP:** `memory_sync` with `direction`: `auto` (pull then push), `pull`, or `push`.
 
-| Variable | Behavior |
-|---|---|
-| `CLAWQL_SYNC_AUTO=1` | Debounced push after successful `memory_ingest` |
-| `CLAWQL_SYNC_AUTO_PULL=1` | Throttled pull before `memory_recall` |
-| `CLAWQL_SYNC_AUTO_PULL_ON_START=1` | Pull once at MCP startup |
+| Variable                           | Behavior                                        |
+| ---------------------------------- | ----------------------------------------------- |
+| `CLAWQL_SYNC_AUTO=1`               | Debounced push after successful `memory_ingest` |
+| `CLAWQL_SYNC_AUTO_PULL=1`          | Throttled pull before `memory_recall`           |
+| `CLAWQL_SYNC_AUTO_PULL_ON_START=1` | Pull once at MCP startup                        |
 
 Full setup: [Team vault sync](https://docs.clawql.com/getting-started/for-teams#team-vault-sync).
 
@@ -313,14 +313,14 @@ Long sessions can exhaust context windows. The DAOS design adds a pruning engine
 
 ## Governance, Security, and Observability
 
-| Control | Shipped | Roadmap |
-|---|---|---|
-| Vault path + file roots allowlist | ✅ `CLAWQL_OBSIDIAN_VAULT_PATH`, `CLAWQL_MEMORY_INGEST_FILE_ROOTS` | |
-| Opt-in Presidio at gateway | ✅ | Mandatory on all memory writes |
-| `audit` ring buffer (Core) | ✅ Ephemeral MCP breadcrumbs | WORM per memory mutation |
-| ATRClaims on recall/ingest | Partial via gateway auth | Per-node classification + purpose |
-| Merkle on vault nodes | Optional `CLAWQL_MERKLE_*` artifacts in `memory.db` | Per-node Merkle at ingest |
-| Legal hold / prune gates | | Operator CRD + WORM hold bit |
+| Control                           | Shipped                                                            | Roadmap                           |
+| --------------------------------- | ------------------------------------------------------------------ | --------------------------------- |
+| Vault path + file roots allowlist | ✅ `CLAWQL_OBSIDIAN_VAULT_PATH`, `CLAWQL_MEMORY_INGEST_FILE_ROOTS` |                                   |
+| Opt-in Presidio at gateway        | ✅                                                                 | Mandatory on all memory writes    |
+| `audit` ring buffer (Core)        | ✅ Ephemeral MCP breadcrumbs                                       | WORM per memory mutation          |
+| ATRClaims on recall/ingest        | Partial via gateway auth                                           | Per-node classification + purpose |
+| Merkle on vault nodes             | Optional `CLAWQL_MERKLE_*` artifacts in `memory.db`                | Per-node Merkle at ingest         |
+| Legal hold / prune gates          |                                                                    | Operator CRD + WORM hold bit      |
 
 Treat vault Markdown as sensitive if notes contain tokens or PII. Prefer redaction in prose and short-lived credentials.
 

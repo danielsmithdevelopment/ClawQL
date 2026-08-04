@@ -32,12 +32,12 @@ In-progress branches, CI build artifacts, and build environments are stored on I
 
 For build environments specifically, ClawQL recommends Rift, a tool that uses the same copy-on-write filesystem features your operating system already has (btrfs on Linux, APFS on macOS) to create isolated, instantly-available workspaces:
 
-| | `git worktree` | Rift |
-|---|---|---|
-| Time to create a workspace | Seconds (full checkout) | Under 0.1 seconds |
-| Extra disk space used | High (full copy of files) | Near-zero until files change |
-| Running many agents in parallel | Painful (shared lock files, `node_modules` conflicts) | Straightforward |
-| Immutability | None | Built in — every snapshot has a parent and a timestamp |
+|                                 | `git worktree`                                        | Rift                                                   |
+| ------------------------------- | ----------------------------------------------------- | ------------------------------------------------------ |
+| Time to create a workspace      | Seconds (full checkout)                               | Under 0.1 seconds                                      |
+| Extra disk space used           | High (full copy of files)                             | Near-zero until files change                           |
+| Running many agents in parallel | Painful (shared lock files, `node_modules` conflicts) | Straightforward                                        |
+| Immutability                    | None                                                  | Built in — every snapshot has a parent and a timestamp |
 
 Rift is early-stage and maintained by a separate project. If it doesn't work for your setup, `git worktree` remains fully supported — everything downstream in this document works with either.
 
@@ -51,12 +51,12 @@ The resulting transaction ID becomes the permanent, canonical identifier for tha
 
 **What does this cost?** Arweave pricing is roughly $6–$12 per gigabyte, one time, with the price fluctuating along with the AR token.
 
-| Release contents | Approximate cost |
-|---|---|
-| Source + signatures only (~10 MB) | ~$0.07 |
-| Source + container image + SBOM (~100 MB) | ~$0.70 |
-| Full release with large images (~500 MB) | ~$3.50 |
-| Large monorepo bundle (~1 GB) | ~$7–10 |
+| Release contents                          | Approximate cost |
+| ----------------------------------------- | ---------------- |
+| Source + signatures only (~10 MB)         | ~$0.07           |
+| Source + container image + SBOM (~100 MB) | ~$0.70           |
+| Full release with large images (~500 MB)  | ~$3.50           |
+| Large monorepo bundle (~1 GB)             | ~$7–10           |
 
 For most projects, a release costs under a dollar.
 
@@ -120,21 +120,21 @@ For more complex access conditions — "decrypt after payment," for example — 
 **What this looks like for an AI agent consuming a paid release:**
 
 ```javascript
-const manifest = await clawql.verify(txId)
+const manifest = await clawql.verify(txId);
 
 if (manifest.access.paymentRequired) {
   const payment = await x402.pay({
     amount: manifest.access.price,
     recipient: manifest.access.wallet,
     resource: txId,
-  })
+  });
 
   const decryptionKey = await lit.requestKey({
     condition: manifest.access.decryptCondition,
     proof: payment.receipt,
-  })
+  });
 
-  const bundle = await clawql.decrypt(txId, decryptionKey)
+  const bundle = await clawql.decrypt(txId, decryptionKey);
 }
 ```
 
@@ -165,16 +165,16 @@ Teams not using Rift run the same commands with `--backend git-worktree`. Nothin
 
 ## Why This Model Holds Up
 
-| | Typical GitHub + CI setup | ClawQL |
-|---|---|---|
-| Can a release be silently changed after publishing? | Yes — tags can move | Arweave transactions are permanent |
-| Can you prove what build environment produced a release? | Usually not | Yes — snapshot ancestry in the manifest |
-| Can a Kubernetes cluster enforce policy automatically? | Only with custom tooling | Yes — manifest is machine-readable |
-| Can an AI agent verify and consume a release safely? | Not designed for this | Yes — first-class |
-| Running many isolated build environments in parallel | Painful | Trivial with Rift |
-| Private/paid releases | Requires custom infrastructure | Built in |
-| How long does the release last? | As long as the platform exists | ~200 years (Arweave endowment) |
-| Effort to adopt | None — it's GitHub | Near-zero — mirror + one CLI |
+|                                                          | Typical GitHub + CI setup      | ClawQL                                  |
+| -------------------------------------------------------- | ------------------------------ | --------------------------------------- |
+| Can a release be silently changed after publishing?      | Yes — tags can move            | Arweave transactions are permanent      |
+| Can you prove what build environment produced a release? | Usually not                    | Yes — snapshot ancestry in the manifest |
+| Can a Kubernetes cluster enforce policy automatically?   | Only with custom tooling       | Yes — manifest is machine-readable      |
+| Can an AI agent verify and consume a release safely?     | Not designed for this          | Yes — first-class                       |
+| Running many isolated build environments in parallel     | Painful                        | Trivial with Rift                       |
+| Private/paid releases                                    | Requires custom infrastructure | Built in                                |
+| How long does the release last?                          | As long as the platform exists | ~200 years (Arweave endowment)          |
+| Effort to adopt                                          | None — it's GitHub             | Near-zero — mirror + one CLI            |
 
 ## What Happens When Things Go Wrong
 
@@ -201,6 +201,6 @@ Nothing here requires an all-or-nothing migration.
 
 The only required step is publishing your first release. Everything else is optional hardening that you adopt when it solves a problem you have.
 
-*For package boundaries and Layer 0 in the platform architecture, see [Modularization v2.1](https://docs.clawql.com/vision/modularization). For platform vision and roadmap, see [Vision & Roadmap](https://docs.clawql.com/vision/roadmap).*
+_For package boundaries and Layer 0 in the platform architecture, see [Modularization v2.1](https://docs.clawql.com/vision/modularization). For platform vision and roadmap, see [Vision & Roadmap](https://docs.clawql.com/vision/roadmap)._
 
 © Copyright 2026. All rights reserved. · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL)

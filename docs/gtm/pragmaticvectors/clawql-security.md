@@ -104,9 +104,9 @@ Produces a current-state snapshot of the deployment against the 30-point framewo
 
 ```typescript
 const assessment = await security_assess({
-  scope: ['supply_chain', 'runtime_enforcement', 'detection'],
-  depth: 'full',
-  output: 'structured',
+  scope: ["supply_chain", "runtime_enforcement", "detection"],
+  depth: "full",
+  output: "structured",
 });
 
 // assessment.findings: ControlFinding[]
@@ -129,9 +129,9 @@ Applies remediations for identified gaps. Some hardening is automatic — tighte
 
 ```typescript
 const result = await security_harden({
-  findings: assessment.findings.filter(f => f.risk === 'high'),
-  auto_apply: ['gateway_config', 'atr_rules', 'schema_validation'],
-  require_confirmation: ['network_policy', 'admission_control'],
+  findings: assessment.findings.filter((f) => f.risk === "high"),
+  auto_apply: ["gateway_config", "atr_rules", "schema_validation"],
+  require_confirmation: ["network_policy", "admission_control"],
   dry_run: false,
 });
 ```
@@ -144,8 +144,8 @@ Generates and executes adversarial inputs against the deployment's controls. The
 
 ```typescript
 const redteam = await security_redteam({
-  targets: ['prompt_injection', 'tool_call_escalation', 'context_poisoning'],
-  model_tier: 'internal_evaluation',
+  targets: ["prompt_injection", "tool_call_escalation", "context_poisoning"],
+  model_tier: "internal_evaluation",
   iterations: 50,
   record_findings: true,
 });
@@ -159,8 +159,8 @@ Confirms that controls are functioning as specified rather than merely present. 
 
 ```typescript
 const validation = await security_validate({
-  controls: ['runtime_enforcement', 'identity'],
-  method: 'active_probe',
+  controls: ["runtime_enforcement", "identity"],
+  method: "active_probe",
   record_evidence: true,
 });
 ```
@@ -171,8 +171,8 @@ Produces an inventory of agents, MCP endpoints, and connected services in the cu
 
 ```typescript
 const inventory = await security_discover({
-  scan: ['docker_network', 'kubernetes_namespaces', 'process_table', 'mcp_manifests'],
-  depth: 'full',
+  scan: ["docker_network", "kubernetes_namespaces", "process_table", "mcp_manifests"],
+  depth: "full",
 });
 ```
 
@@ -196,7 +196,7 @@ Untrusted content — documents from RAG retrieval, tool results from external A
 const rawContent = await ragSystem.retrieve(query);
 
 const extracted = await sanitizedInput.extract(rawContent, {
-  schema: 'document_facts',
+  schema: "document_facts",
   strip_instructions: true,
   record_extraction: true,
 });
@@ -215,7 +215,7 @@ Panguard backstops this layer. Even if a prompt injection attempt reaches the mo
 Each agent role has a baseline profile covering tool call volume, tool type distribution, privilege class distribution, and session duration. The baseline builds from production traffic over a rolling window and updates continuously. Statistical deviations beyond configurable thresholds trigger graduated responses — from logging and flagging to signaling Panguard for quarantine.
 
 ```typescript
-const profile = behavioralBaseline.getProfile('underwriting_agent');
+const profile = behavioralBaseline.getProfile("underwriting_agent");
 // {
 //   tool_call_rate: { mean: 4.2, stddev: 1.1, unit: 'per_minute' },
 //   tool_distribution: { 'loan_origination.read': 0.45, ... },
@@ -233,11 +233,11 @@ Every security-relevant decision emits a structured event:
 
 ```typescript
 interface SecurityEvent {
-  schemaVersion: '1.0';
+  schemaVersion: "1.0";
   eventId: string;
   timestamp: string;
   source: {
-    package: 'clawql-security';
+    package: "clawql-security";
     version: string;
     component: string;
   };
@@ -250,8 +250,8 @@ interface SecurityEvent {
   event: {
     type: string;
     subtype: string;
-    outcome: 'allowed' | 'blocked' | 'flagged' | 'quarantined';
-    severity: 'info' | 'low' | 'medium' | 'high' | 'critical';
+    outcome: "allowed" | "blocked" | "flagged" | "quarantined";
+    severity: "info" | "low" | "medium" | "high" | "critical";
   };
   detail: Record<string, unknown>;
   traceContext: {
@@ -268,12 +268,12 @@ registerSecurityPlugin(gatewayAPI, {
   exporters: {
     otel: {
       endpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
-      headers: { 'x-honeycomb-team': process.env.HONEYCOMB_API_KEY },
+      headers: { "x-honeycomb-team": process.env.HONEYCOMB_API_KEY },
     },
   },
   worm: {
     enabled: true,
-    merkle_anchor: 'git',  // or 'arweave' | 's3_object_lock'
+    merkle_anchor: "git", // or 'arweave' | 's3_object_lock'
   },
 });
 ```
@@ -294,7 +294,7 @@ Session lifecycle hooks fire on session start and end. On start, ATR claims are 
 
 ```typescript
 registerSecurityPlugin(gateway, {
-  framework: { domains: 'all' },
+  framework: { domains: "all" },
   detection: {
     prompt_integrity: true,
     sanitized_input: true,
@@ -303,10 +303,10 @@ registerSecurityPlugin(gateway, {
   },
   redteam: {
     enabled: true,
-    path: 'evaluation',
+    path: "evaluation",
   },
   discovery: {
-    schedule: '0 */6 * * *',
+    schedule: "0 */6 * * *",
   },
 });
 ```
@@ -335,7 +335,7 @@ The package's automated Phase 1 response writes a WORM quarantine event first, s
 async function phase1Containment(event: SecurityEvent): Promise<void> {
   // Evidence first — always
   await worm.append({
-    event_kind: 'SECURITY_QUARANTINE_INITIATED',
+    event_kind: "SECURITY_QUARANTINE_INITIATED",
     correlation_id: event.principal.sessionId,
     payload: { trigger_event: event.eventId, severity: event.event.severity },
   });
@@ -347,7 +347,7 @@ async function phase1Containment(event: SecurityEvent): Promise<void> {
   ]);
 
   await panguard.quarantine(event.principal.agentId, {
-    mode: 'rate_limit',
+    mode: "rate_limit",
     review_required: true,
     auto_release: false,
   });
@@ -355,7 +355,7 @@ async function phase1Containment(event: SecurityEvent): Promise<void> {
   await reviewQueue.enqueue({
     event,
     evidence: { snapshot: true, spans: true },
-    priority: 'urgent',
+    priority: "urgent",
   });
 }
 ```
@@ -377,12 +377,12 @@ For the ClawQL use cases where this matters, 140 KB/s is adequate. A WORM audit 
 The `transport/optical-qr.ts` module wraps the encoding and session management:
 
 ```typescript
-import { createFountainEncoder, createFountainDecoder } from './fountain';
+import { createFountainEncoder, createFountainDecoder } from "./fountain";
 
 interface OpticalTransferOptions {
-  fps: number;           // 30 | 60 | 90 — depends on display and camera
-  qrVersion: number;     // 40 = max density (~2953 bytes/frame in binary mode)
-  errorCorrection: 'L' | 'M' | 'Q' | 'H';
+  fps: number; // 30 | 60 | 90 — depends on display and camera
+  qrVersion: number; // 40 = max density (~2953 bytes/frame in binary mode)
+  errorCorrection: "L" | "M" | "Q" | "H";
   sessionId: string;
   wormLog?: WORMLog;
 }
@@ -392,15 +392,15 @@ export async function encodeForOpticalTransfer(
   options: OpticalTransferOptions
 ): Promise<AsyncIterable<QRFrame>> {
   const encoder = createFountainEncoder(data, {
-    symbolSize: 2900,       // slightly under QR v40 binary capacity
-    redundancyFactor: 1.3,  // 30% overhead for fountain reliability
+    symbolSize: 2900, // slightly under QR v40 binary capacity
+    redundancyFactor: 1.3, // 30% overhead for fountain reliability
   });
 
   if (options.wormLog) {
     await options.wormLog.append({
-      event_kind: 'OPTICAL_TRANSFER_INITIATED',
-      layer: 'execution',
-      actor_id: 'transport/optical-qr',
+      event_kind: "OPTICAL_TRANSFER_INITIATED",
+      layer: "execution",
+      actor_id: "transport/optical-qr",
       payload: {
         session_id: options.sessionId,
         data_size_bytes: data.byteLength,
@@ -416,7 +416,7 @@ export async function encodeForOpticalTransfer(
 
 export async function decodeOpticalTransfer(
   frames: AsyncIterable<QRFrame>,
-  options: Pick<OpticalTransferOptions, 'sessionId' | 'wormLog'>
+  options: Pick<OpticalTransferOptions, "sessionId" | "wormLog">
 ): Promise<Uint8Array> {
   const decoder = createFountainDecoder();
 
@@ -429,9 +429,9 @@ export async function decodeOpticalTransfer(
 
   if (options.wormLog) {
     await options.wormLog.append({
-      event_kind: 'OPTICAL_TRANSFER_COMPLETE',
-      layer: 'execution',
-      actor_id: 'transport/optical-qr',
+      event_kind: "OPTICAL_TRANSFER_COMPLETE",
+      layer: "execution",
+      actor_id: "transport/optical-qr",
       payload: {
         session_id: options.sessionId,
         received_bytes: result.byteLength,
@@ -452,15 +452,15 @@ The practical integration with a forensic evidence pack export:
 ```typescript
 // On the air-gapped node — export and display
 const evidencePack = await security_export_evidence({
-  session_id: 'target-session-id',
+  session_id: "target-session-id",
   include_proofs: true,
-  format: 'bundle',
+  format: "bundle",
 });
 
 const frames = await encodeForOpticalTransfer(evidencePack, {
   fps: 60,
   qrVersion: 40,
-  errorCorrection: 'M',
+  errorCorrection: "M",
   sessionId: crypto.randomUUID(),
   wormLog: localWorm,
 });
@@ -472,7 +472,7 @@ await displayFrameSequence(frames, { fps: 60 });
 ```typescript
 // On the receiving device — camera captures and reconstructs
 const receivedData = await decodeOpticalTransfer(
-  captureQRFrames({ camera: 'rear', autoStart: true }),
+  captureQRFrames({ camera: "rear", autoStart: true }),
   { sessionId: expectedSessionId, wormLog: receivingWorm }
 );
 
@@ -523,7 +523,7 @@ The full stack, from model substrate through physical transfer, is what "auditab
 
 ---
 
-*Reference implementation: [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL). Related: [desperation vectors](https://pragmaticvectors.com/posts/desperation-vectors), [what model providers do to your prompts](https://pragmaticvectors.com/posts/what-providers-do-to-your-prompts), [the audit trail you can't reconstruct](https://pragmaticvectors.com/posts/audit-trail-reconstruction), [the kernel said no](https://pragmaticvectors.com/posts/macos-seatbelt-agent-sandbox), [the Mini Shai-Hulud supply chain](https://pragmaticvectors.com/posts/mini-shai-hulud-supply-chain). DECIMEN optical QR transfer: [github.com/mrdoob/decimen](https://github.com/mrdoob/decimen).*
+_Reference implementation: [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL). Related: [desperation vectors](https://pragmaticvectors.com/posts/desperation-vectors), [what model providers do to your prompts](https://pragmaticvectors.com/posts/what-providers-do-to-your-prompts), [the audit trail you can't reconstruct](https://pragmaticvectors.com/posts/audit-trail-reconstruction), [the kernel said no](https://pragmaticvectors.com/posts/macos-seatbelt-agent-sandbox), [the Mini Shai-Hulud supply chain](https://pragmaticvectors.com/posts/mini-shai-hulud-supply-chain). DECIMEN optical QR transfer: [github.com/mrdoob/decimen](https://github.com/mrdoob/decimen)._
 
 ## Building agents that need real trust boundaries?
 

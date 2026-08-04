@@ -10,14 +10,14 @@ CLI package: [`packages/clawql-release`](https://github.com/danielsmithdevelopme
 
 ## What you get
 
-| Step | Command | Outcome |
-|---|---|---|
-| Init | `clawql-release init` | `.clawql/release.json`, signed commits by default |
-| Workspaces | `immutable-volume snapshot` | Parallel `git-worktree` or `rift` CoW checkouts |
-| Golden image | `golden-image build` | Signed attestations (+ cosign/syft when installed) |
-| Publish | `publish --stage-ipfs --permanent` | Manifest + Merkle root; staged then permanent |
-| Paid / private | `publish --encrypt --price "…"` | Lit condition + x402 access metadata |
-| Consume | `verify` / `pull` | Tamper check; decrypt when paid |
+| Step           | Command                            | Outcome                                            |
+| -------------- | ---------------------------------- | -------------------------------------------------- |
+| Init           | `clawql-release init`              | `.clawql/release.json`, signed commits by default  |
+| Workspaces     | `immutable-volume snapshot`        | Parallel `git-worktree` or `rift` CoW checkouts    |
+| Golden image   | `golden-image build`               | Signed attestations (+ cosign/syft when installed) |
+| Publish        | `publish --stage-ipfs --permanent` | Manifest + Merkle root; staged then permanent      |
+| Paid / private | `publish --encrypt --price "…"`    | Lit condition + x402 access metadata               |
+| Consume        | `verify` / `pull`                  | Tamper check; decrypt when paid                    |
 
 Day-to-day collaboration stays on Radicle (primary) with GitHub as a mirror. Official releases become permanent and verifiable on Arweave (via ar.io when configured).
 
@@ -38,13 +38,13 @@ npm run build -w clawql-release
 
 Optional tools (used when present):
 
-| Tool | Role |
-|---|---|
-| [`rift-snapshot`](https://www.npmjs.com/package/rift-snapshot) (`rift`) | Fast CoW workspaces (needs btrfs / APFS / XFS reflinks) |
-| `ipfs` (Kubo) | Real IPFS CIDs instead of local content-addressed staging |
-| `rad` | Radicle push as primary git surface |
-| `gh` | Attach manifest to a GitHub Release (mirror) |
-| `cosign` / `syft` | Container signatures / SBOM generation |
+| Tool                                                                    | Role                                                      |
+| ----------------------------------------------------------------------- | --------------------------------------------------------- |
+| [`rift-snapshot`](https://www.npmjs.com/package/rift-snapshot) (`rift`) | Fast CoW workspaces (needs btrfs / APFS / XFS reflinks)   |
+| `ipfs` (Kubo)                                                           | Real IPFS CIDs instead of local content-addressed staging |
+| `rad`                                                                   | Radicle push as primary git surface                       |
+| `gh`                                                                    | Attach manifest to a GitHub Release (mirror)              |
+| `cosign` / `syft`                                                       | Container signatures / SBOM generation                    |
 
 ---
 
@@ -89,14 +89,14 @@ Workflow: [`.github/workflows/clawql-release-pipeline.yml`](https://docs.clawql.
 
 Dry-run stores live under `.clawql/` (gitignored):
 
-| Path | Purpose |
-|---|---|
-| `.clawql/ipfs-staging/` | Content-addressed staging (`clawql-cid:sha256:…`) |
-| `.clawql/arweave/<tx>/` | Permanent bundle stand-in |
-| `.clawql/escrow/` | Content-encryption keys for Lit dry-run release |
-| `.clawql/keys/` | Ed25519 release signing + optional SSH commit signing |
-| `.clawql/workspaces/` | Snapshot metadata + git-worktree roots |
-| `.rifts/` | Rift CLI or local fallback workspaces |
+| Path                    | Purpose                                               |
+| ----------------------- | ----------------------------------------------------- |
+| `.clawql/ipfs-staging/` | Content-addressed staging (`clawql-cid:sha256:…`)     |
+| `.clawql/arweave/<tx>/` | Permanent bundle stand-in                             |
+| `.clawql/escrow/`       | Content-encryption keys for Lit dry-run release       |
+| `.clawql/keys/`         | Ed25519 release signing + optional SSH commit signing |
+| `.clawql/workspaces/`   | Snapshot metadata + git-worktree roots                |
+| `.rifts/`               | Rift CLI or local fallback workspaces                 |
 
 ---
 
@@ -226,31 +226,31 @@ Signed commits: init enables `commit.gpgsign` when a signing identity exists, or
 
 ## Live network knobs (laptop / self-hosted)
 
-| Env | Enables |
-|---|---|
+| Env                                                      | Enables                           |
+| -------------------------------------------------------- | --------------------------------- |
 | `CLAWQL_RELEASE_DRY_RUN=1` / `CLAWQL_RELEASE_MODE=local` | Force local backends (CI default) |
-| *(ipfs on PATH)* | Real `ipfs add` CIDs |
-| `CLAWQL_IPFS_GATEWAY` | HTTP gateway base for IPFS |
-| `CLAWQL_ARWEAVE_WALLET_JWK` | ar.io / Turbo upload path |
-| `CLAWQL_ARIO_TURBO_URL` | Turbo endpoint |
-| `CLAWQL_ARWEAVE_GATEWAY` / `CLAWQL_ARIO_GATEWAY` | Fetch/verify gateways |
-| `CLAWQL_X402_ENFORCE=1` | Live facilitator verify |
-| `CLAWQL_X402_FACILITATOR_URL` | Facilitator base URL |
-| `CLAWQL_X402_WALLET` / `CLAWQL_X402_NETWORK` | Payment metadata defaults |
-| `CLAWQL_LIT_NETWORK` | Lit network label for key release |
+| _(ipfs on PATH)_                                         | Real `ipfs add` CIDs              |
+| `CLAWQL_IPFS_GATEWAY`                                    | HTTP gateway base for IPFS        |
+| `CLAWQL_ARWEAVE_WALLET_JWK`                              | ar.io / Turbo upload path         |
+| `CLAWQL_ARIO_TURBO_URL`                                  | Turbo endpoint                    |
+| `CLAWQL_ARWEAVE_GATEWAY` / `CLAWQL_ARIO_GATEWAY`         | Fetch/verify gateways             |
+| `CLAWQL_X402_ENFORCE=1`                                  | Live facilitator verify           |
+| `CLAWQL_X402_FACILITATOR_URL`                            | Facilitator base URL              |
+| `CLAWQL_X402_WALLET` / `CLAWQL_X402_NETWORK`             | Payment metadata defaults         |
+| `CLAWQL_LIT_NETWORK`                                     | Lit network label for key release |
 
 Spendable Arweave wallets should stay off GitHub Actions secrets for the dry-run workflow. Prefer a laptop or self-hosted runner for any live `--permanent` publish.
 
 ### Maturity of live adapters
 
-| Backend | Dry-run / local | Live |
-|---|---|---|
-| git-worktree | Full | Full |
-| rift | Fallback under `.rifts/` | Full when `rift` + CoW FS work |
-| IPFS staging | `clawql-cid:sha256:…` | Kubo when `ipfs` is available |
-| Ed25519 manifest/artifacts | Full | Full |
-| Arweave / ar.io | `.clawql/arweave/<tx>/` | Env-gated Turbo path (harden with a real wallet on laptop) |
-| Lit + x402 | Escrow CEK + dry-run receipt | Soft facilitator / Lit hooks — validate on testnet before production |
+| Backend                    | Dry-run / local              | Live                                                                 |
+| -------------------------- | ---------------------------- | -------------------------------------------------------------------- |
+| git-worktree               | Full                         | Full                                                                 |
+| rift                       | Fallback under `.rifts/`     | Full when `rift` + CoW FS work                                       |
+| IPFS staging               | `clawql-cid:sha256:…`        | Kubo when `ipfs` is available                                        |
+| Ed25519 manifest/artifacts | Full                         | Full                                                                 |
+| Arweave / ar.io            | `.clawql/arweave/<tx>/`      | Env-gated Turbo path (harden with a real wallet on laptop)           |
+| Lit + x402                 | Escrow CEK + dry-run receipt | Soft facilitator / Lit hooks — validate on testnet before production |
 
 ---
 
@@ -287,13 +287,13 @@ Container digests are also verified with cosign separately — see [`docs/securi
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| `Manifest records dirty git tree` | Uncommitted tracked changes at collect | Commit or stash; untracked `.clawql/` / `.rifts/` are ignored |
-| `rift init` fails (no reflinks) | ext4 / overlay / cloud VM | Use git-worktree or a CoW-capable volume |
-| `verify` fails signature | Wrong key / tampered file | Re-publish; check `.clawql/keys/` |
-| No Arweave tx on `--permanent` | Dry-run or missing wallet | Expected under `CLAWQL_RELEASE_DRY_RUN`; set wallet only on trusted hosts |
-| Pull decrypt fails | Missing escrow / payment | Check `.clawql/escrow/<tag>.key` or live Lit+x402 config |
+| Symptom                           | Likely cause                           | Fix                                                                       |
+| --------------------------------- | -------------------------------------- | ------------------------------------------------------------------------- |
+| `Manifest records dirty git tree` | Uncommitted tracked changes at collect | Commit or stash; untracked `.clawql/` / `.rifts/` are ignored             |
+| `rift init` fails (no reflinks)   | ext4 / overlay / cloud VM              | Use git-worktree or a CoW-capable volume                                  |
+| `verify` fails signature          | Wrong key / tampered file              | Re-publish; check `.clawql/keys/`                                         |
+| No Arweave tx on `--permanent`    | Dry-run or missing wallet              | Expected under `CLAWQL_RELEASE_DRY_RUN`; set wallet only on trusted hosts |
+| Pull decrypt fails                | Missing escrow / payment               | Check `.clawql/escrow/<tag>.key` or live Lit+x402 config                  |
 
 ---
 

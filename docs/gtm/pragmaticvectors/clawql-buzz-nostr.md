@@ -71,32 +71,32 @@ The adapter is thin:
 ```typescript
 // packages/clawql-buzz/src/client.ts
 
-import { generateSecretKey, getPublicKey, finalizeEvent } from 'nostr-tools'
+import { generateSecretKey, getPublicKey, finalizeEvent } from "nostr-tools";
 
 export class BuzzClient {
-  private relay: WebSocket
-  private secretKey: Uint8Array
-  private pubkey: string
+  private relay: WebSocket;
+  private secretKey: Uint8Array;
+  private pubkey: string;
 
   constructor(private config: BuzzConfig) {
-    this.secretKey = hexToBytes(config.nsec)
-    this.pubkey = getPublicKey(this.secretKey)
+    this.secretKey = hexToBytes(config.nsec);
+    this.pubkey = getPublicKey(this.secretKey);
   }
 
   async join(channels: string[]) {
-    this.relay = new WebSocket(this.config.relayUrl)
-    await this.authenticate()  // NIP-42
+    this.relay = new WebSocket(this.config.relayUrl);
+    await this.authenticate(); // NIP-42
 
     for (const channel of channels) {
-      this.subscribe(channel)
+      this.subscribe(channel);
     }
 
-    this.relay.on('message', (data) => {
-      const event = JSON.parse(data)
+    this.relay.on("message", (data) => {
+      const event = JSON.parse(data);
       if (isToolInvocation(event)) {
-        this.handleToolInvocation(event)
+        this.handleToolInvocation(event);
       }
-    })
+    });
   }
 
   private async handleToolInvocation(event: NostrEvent) {
@@ -107,33 +107,36 @@ export class BuzzClient {
         buzz_event_id: event.id,
         buzz_channel: event.channel,
         buzz_pubkey: event.pubkey,
-        protocolVersion: '2026-07-28',
-      }
-    })
+        protocolVersion: "2026-07-28",
+      },
+    });
 
-    const response = finalizeEvent({
-      kind: 1,
-      content: formatResult(result),
-      tags: [
-        ['e', event.id],
-        ['p', event.pubkey],
-        ['channel', event.channel],
-      ],
-      created_at: Math.floor(Date.now() / 1000),
-    }, this.secretKey)
+    const response = finalizeEvent(
+      {
+        kind: 1,
+        content: formatResult(result),
+        tags: [
+          ["e", event.id],
+          ["p", event.pubkey],
+          ["channel", event.channel],
+        ],
+        created_at: Math.floor(Date.now() / 1000),
+      },
+      this.secretKey
+    );
 
-    this.relay.send(JSON.stringify(['EVENT', response]))
+    this.relay.send(JSON.stringify(["EVENT", response]));
 
     await this.worm.write({
-      event_kind: 'BUZZ_TOOL_INVOCATION',
+      event_kind: "BUZZ_TOOL_INVOCATION",
       payload: {
         buzz_event_id: event.id,
         buzz_channel: event.channel,
         invoker_pubkey: event.pubkey,
         tool_name: extractToolName(event),
         result_summary: summarize(result),
-      }
-    })
+      },
+    });
   }
 }
 ```
@@ -428,12 +431,12 @@ The negative proof matters for regulated industries. "Prove that no PHI left the
 
 ClawQL supports four autonomous agent runtimes. All four gain the same capabilities through the VG gateway when ClawQL joins the Buzz relay.
 
-| Runtime | Buzz path | Via ClawQL VG |
-|---|---|---|
-| Goose (Block) | Native Buzz harness | IDP, payments, sandbox, memory, inference routing, governance |
-| Hermes (NousResearch) | Relay bridge | Same |
-| OpenClaw | MCP gateway | Same |
-| Pi | MCP gateway | Same |
+| Runtime               | Buzz path           | Via ClawQL VG                                                 |
+| --------------------- | ------------------- | ------------------------------------------------------------- |
+| Goose (Block)         | Native Buzz harness | IDP, payments, sandbox, memory, inference routing, governance |
+| Hermes (NousResearch) | Relay bridge        | Same                                                          |
+| OpenClaw              | MCP gateway         | Same                                                          |
+| Pi                    | MCP gateway         | Same                                                          |
 
 The VG does not know which runtime triggered a tool invocation. It receives an ACP/MCP tool call with the Buzz event metadata and routes it through the stack. One `clawql buzz join` on the VG covers every runtime in every channel.
 
@@ -519,7 +522,7 @@ The VG appears as a member in Buzz Desktop and buzz-cli immediately after `clawq
 
 ---
 
-*ClawQL Buzz integration: [docs.clawql.com/integrations/buzz](https://docs.clawql.com/integrations/buzz). Buzz: [github.com/block/buzz](https://github.com/block/buzz). Sandbox layer: [pragmaticvectors.com/posts/kernel-said-no](https://pragmaticvectors.com/posts/kernel-said-no). Payment rails: [pragmaticvectors.com/posts/four-agentic-payment-rails](https://pragmaticvectors.com/posts/four-agentic-payment-rails). Memory stack: [pragmaticvectors.com/posts/agent-memory-stack](https://pragmaticvectors.com/posts/agent-memory-stack).*
+_ClawQL Buzz integration: [docs.clawql.com/integrations/buzz](https://docs.clawql.com/integrations/buzz). Buzz: [github.com/block/buzz](https://github.com/block/buzz). Sandbox layer: [pragmaticvectors.com/posts/kernel-said-no](https://pragmaticvectors.com/posts/kernel-said-no). Payment rails: [pragmaticvectors.com/posts/four-agentic-payment-rails](https://pragmaticvectors.com/posts/four-agentic-payment-rails). Memory stack: [pragmaticvectors.com/posts/agent-memory-stack](https://pragmaticvectors.com/posts/agent-memory-stack)._
 
 ## Building agents that need real trust boundaries?
 
@@ -533,4 +536,4 @@ The VG appears as a member in Buzz Desktop and buzz-cli immediately after `clawq
 
 [@danielsmithdev](https://x.com/danielsmithdev) · [GitHub](https://github.com/danielsmithdevelopment) · [Site](https://danielsmithdevelopment.com)
 
-*References: [ClawQL](https://clawql.com) · [ClawQL docs](https://docs.clawql.com) · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL) · [Buzz](https://github.com/block/buzz) · [Hermes Agent](https://hermes-agent.nousresearch.com)*
+_References: [ClawQL](https://clawql.com) · [ClawQL docs](https://docs.clawql.com) · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL) · [Buzz](https://github.com/block/buzz) · [Hermes Agent](https://hermes-agent.nousresearch.com)_

@@ -6,11 +6,11 @@
 
 ## OpenClaw and ClawQL MCP — what each one is
 
-| | **OpenClaw** | **ClawQL (`clawql-mcp`)** |
-|---|---|---|
-| **Shipped as** | npm `openclaw` ([registry](https://www.npmjs.com/package/openclaw)) | npm `clawql-mcp` (this repository) |
-| **Role** | Gateway / orchestration UI / `openclaw mcp` config | MCP tool server for API discovery and execution |
-| **Relationship** | Consumes MCP servers you configure | One of those servers, configured inside OpenClaw |
+|                  | **OpenClaw**                                                        | **ClawQL (`clawql-mcp`)**                        |
+| ---------------- | ------------------------------------------------------------------- | ------------------------------------------------ |
+| **Shipped as**   | npm `openclaw` ([registry](https://www.npmjs.com/package/openclaw)) | npm `clawql-mcp` (this repository)               |
+| **Role**         | Gateway / orchestration UI / `openclaw mcp` config                  | MCP tool server for API discovery and execution  |
+| **Relationship** | Consumes MCP servers you configure                                  | One of those servers, configured inside OpenClaw |
 
 **Package name to use:** `openclaw-mcp` on npm is a different package (a bridge for hosts like Claude Desktop toward an OpenClaw gateway). To attach ClawQL to OpenClaw, use `clawql-mcp`, `node …/dist/server.js`, or an HTTP `url` — see [using-openclaw-with-clawql.md § 1](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/using-openclaw-with-clawql.md).
 
@@ -120,20 +120,20 @@ After `search` / `execute` is green, use [openclaw-idp-skill-profile.md](https:/
 
 ## Troubleshooting and related links
 
-| Symptom | Check |
-|---|---|
-| `openclaw: command not found` | Global npm `bin` on `PATH`; reinstall `openclaw`. |
-| Connection refused | ClawQL running; `PORT`; firewall. |
-| 404 | URL must end with `/mcp`. |
-| Tools missing | `CLAWQL_ENABLE_*` flags; restart ClawQL. |
-| GitHub 401 | `CLAWQL_BEARER_TOKEN` / `gh auth token`. |
-| Works in smoke, not OpenClaw | `openclaw mcp list`, profile / config path per OpenClaw docs. |
+| Symptom                       | Check                                                         |
+| ----------------------------- | ------------------------------------------------------------- |
+| `openclaw: command not found` | Global npm `bin` on `PATH`; reinstall `openclaw`.             |
+| Connection refused            | ClawQL running; `PORT`; firewall.                             |
+| 404                           | URL must end with `/mcp`.                                     |
+| Tools missing                 | `CLAWQL_ENABLE_*` flags; restart ClawQL.                      |
+| GitHub 401                    | `CLAWQL_BEARER_TOKEN` / `gh auth token`.                      |
+| Works in smoke, not OpenClaw  | `openclaw mcp list`, profile / config path per OpenClaw docs. |
 
-| Doc | Topic |
-|---|---|
-| [Spec configuration](https://docs.clawql.com/spec-configuration) | `CLAWQL_PROVIDER`, merges |
-| [Quickstart](https://docs.clawql.com/quickstart#install-options) | Binaries, Docker, HTTP |
-| [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) | Full tool catalog |
-| [configuration.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md) | `CLAWQL_*` matrix |
+| Doc                                                                                                         | Topic                     |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------- |
+| [Spec configuration](https://docs.clawql.com/spec-configuration)                                            | `CLAWQL_PROVIDER`, merges |
+| [Quickstart](https://docs.clawql.com/quickstart#install-options)                                            | Binaries, Docker, HTTP    |
+| [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md)            | Full tool catalog         |
+| [configuration.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md) | `CLAWQL_*` matrix         |
 
 © Copyright 2026. All rights reserved. · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL)

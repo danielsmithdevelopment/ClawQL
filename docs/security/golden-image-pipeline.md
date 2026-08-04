@@ -49,11 +49,11 @@ All `build-push-*` image jobs (`build-push-mcp`, `build-push-panguard-bridge`, `
 
 Workflow: [`.github/workflows/docker-publish.yml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.github/workflows/docker-publish.yml) job `repo-supply-chain`.
 
-| Step | What runs | Failure effect |
-|---|---|---|
-| OSV-Scanner | `ghcr.io/google/osv-scanner` with [`osv-scanner.toml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/osv-scanner.toml) | Job fails → no `docker-publish` image builds |
-| Trivy filesystem | `aquasecurity/trivy-action`, HIGH / CRITICAL, [`.trivyignore`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.trivyignore) | Job fails → no image builds |
-| Syft SBOM | `anchore/syft:v1.19.0` → CycloneDX JSON uploaded as artifact | Artifact missing → job fails |
+| Step             | What runs                                                                                                                               | Failure effect                               |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| OSV-Scanner      | `ghcr.io/google/osv-scanner` with [`osv-scanner.toml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/osv-scanner.toml)     | Job fails → no `docker-publish` image builds |
+| Trivy filesystem | `aquasecurity/trivy-action`, HIGH / CRITICAL, [`.trivyignore`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.trivyignore) | Job fails → no image builds                  |
+| Syft SBOM        | `anchore/syft:v1.19.0` → CycloneDX JSON uploaded as artifact                                                                            | Artifact missing → job fails                 |
 
 The main [`ci.yml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.github/workflows/ci.yml) workflow also runs a `supply-chain` job (OSV + Trivy fs + repository SBOM upload) on pushes/PRs so the merge queue can block bad dependency states before they reach `main`.
 
@@ -138,11 +138,11 @@ Install [Kyverno](https://kyverno.io/) in the cluster before applying the chart 
 
 ### Coverage
 
-| Covered | Outside automatic coverage |
-|---|---|
-| Pods whose container images match the `clawql-mcp` / `clawql-panguard-mcp-bridge` / `clawql-website` / `clawql-dashboard` GHCR globs must verify with the configured Sigstore identity | Other images in the same namespace (Postgres, Onyx, ingress, etc.) — different images, different risk |
-| Keyless signatures matching GitHub Actions issuer + this repo subject pattern | Forks must override regexes and image references in values |
-| Tag-based refs still resolve to a digest for verification | `verifyDigest: true` in values is optional and requires manifests to use digests — see [`image-signature-enforcement.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/image-signature-enforcement.md) |
+| Covered                                                                                                                                                                                | Outside automatic coverage                                                                                                                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pods whose container images match the `clawql-mcp` / `clawql-panguard-mcp-bridge` / `clawql-website` / `clawql-dashboard` GHCR globs must verify with the configured Sigstore identity | Other images in the same namespace (Postgres, Onyx, ingress, etc.) — different images, different risk                                                                                                                              |
+| Keyless signatures matching GitHub Actions issuer + this repo subject pattern                                                                                                          | Forks must override regexes and image references in values                                                                                                                                                                         |
+| Tag-based refs still resolve to a digest for verification                                                                                                                              | `verifyDigest: true` in values is optional and requires manifests to use digests — see [`image-signature-enforcement.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/image-signature-enforcement.md) |
 
 Operator verification without applying a workload: `cosign verify` as documented in [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md).
 
@@ -164,12 +164,12 @@ Recommended practices:
 
 Workflow: [`.github/workflows/container-mirror.yml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.github/workflows/container-mirror.yml) (scheduled daily + `workflow_dispatch`).
 
-| Step | Behavior |
-|---|---|
-| Pull | `skopeo copy` from `docker://ghcr.io/openclaw/openclaw:slim` to a local OCI layout (no GHCR write) |
-| Gate | Trivy `image` scan on that layout (HIGH / CRITICAL, `.trivyignore`) — failure → no push |
+| Step    | Behavior                                                                                                                                            |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pull    | `skopeo copy` from `docker://ghcr.io/openclaw/openclaw:slim` to a local OCI layout (no GHCR write)                                                  |
+| Gate    | Trivy `image` scan on that layout (HIGH / CRITICAL, `.trivyignore`) — failure → no push                                                             |
 | Publish | `skopeo copy` the same layout to `ghcr.io/danielsmithdevelopment/openclaw-vendor` (`:slim`, `:mirror-YYYYMMDD`, `:run-<run_id>` tags on one digest) |
-| Sign | Cosign v2 `sign --recursive` on the pushed digest (same OIDC identity as `docker-publish` — matches Helm `kyverno.imageSignaturePolicy` defaults) |
+| Sign    | Cosign v2 `sign --recursive` on the pushed digest (same OIDC identity as `docker-publish` — matches Helm `kyverno.imageSignaturePolicy` defaults)   |
 
 Helm `openclaw.image.repository` defaults to `ghcr.io/danielsmithdevelopment/openclaw-vendor`; Kyverno `imageReferences` includes `openclaw-vendor*` so admission matches this repo's signatures. Third-party base CVEs may require narrow `.trivyignore` updates or pinning an older upstream digest until upstream fixes land.
 
@@ -177,15 +177,15 @@ Helm `openclaw.image.repository` defaults to `ghcr.io/danielsmithdevelopment/ope
 
 ## Quick reference
 
-| Layer | Mechanism | Artifact / outcome |
-|---|---|---|
-| Merge / CI | `ci.yml` `supply-chain` + `secret-scan` (Gitleaks) | OSV + Trivy fs + SBOM + secret scan; gates `test` |
-| Publish | `docker-publish.yml` `repo-supply-chain` | Same repo gates + SBOM artifact for the publish run |
-| Image integrity | Single OCI layout + Trivy + `skopeo copy` | Scanned bytes = pushed bytes |
-| Identity | Cosign keyless on digest | Signature in Rekor / Sigstore ecosystem |
-| Mutability | `imagetools` promotion | `latest` / `nightly` only after success |
-| Cluster | Kyverno `verifyImages` (Helm default) + optional digest pins | Unsigned / wrong-identity ClawQL images blocked at admit |
-| Scheduled audit | `trufflehog-scheduled.yml` | TruffleHog git history; `providers/` excluded |
+| Layer           | Mechanism                                                    | Artifact / outcome                                       |
+| --------------- | ------------------------------------------------------------ | -------------------------------------------------------- |
+| Merge / CI      | `ci.yml` `supply-chain` + `secret-scan` (Gitleaks)           | OSV + Trivy fs + SBOM + secret scan; gates `test`        |
+| Publish         | `docker-publish.yml` `repo-supply-chain`                     | Same repo gates + SBOM artifact for the publish run      |
+| Image integrity | Single OCI layout + Trivy + `skopeo copy`                    | Scanned bytes = pushed bytes                             |
+| Identity        | Cosign keyless on digest                                     | Signature in Rekor / Sigstore ecosystem                  |
+| Mutability      | `imagetools` promotion                                       | `latest` / `nightly` only after success                  |
+| Cluster         | Kyverno `verifyImages` (Helm default) + optional digest pins | Unsigned / wrong-identity ClawQL images blocked at admit |
+| Scheduled audit | `trufflehog-scheduled.yml`                                   | TruffleHog git history; `providers/` excluded            |
 
 ---
 
@@ -193,13 +193,13 @@ Helm `openclaw.image.repository` defaults to `ghcr.io/danielsmithdevelopment/ope
 
 Container images (GHCR + Cosign + Kyverno) are separate from Packer AMI / GCP images used for managed AWS/GCP/Cloudflare host tiers. Operator how-to lives at [Getting started for teams — Golden host images](https://docs.clawql.com/getting-started/for-teams#golden-host-images); this section is the security contract for those VMs.
 
-| Control | Requirement |
-|---|---|
+| Control                     | Requirement                                                                                                    |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | **No secrets in the image** | Sync credentials (R2/S3/GCS keys) are never baked; inject at boot via Vault, instance role, or secrets manager |
-| **Manifest verify on pull** | Boot seeding verifies every pulled vault file with SHA-256 against the remote sync manifest |
-| **Bake gate** | Image build runs `clawql doctor` before the AMI/GCP image is published |
-| **Boot gate** | Startup runs `clawql doctor --smoke` after `bootstrap-team-vault.sh` before serving traffic |
-| **Cloudflare Workers path** | `scripts/packer/cloudflare-bootstrap.sh` uses the same pull + hash verify + doctor gate |
+| **Manifest verify on pull** | Boot seeding verifies every pulled vault file with SHA-256 against the remote sync manifest                    |
+| **Bake gate**               | Image build runs `clawql doctor` before the AMI/GCP image is published                                         |
+| **Boot gate**               | Startup runs `clawql doctor --smoke` after `bootstrap-team-vault.sh` before serving traffic                    |
+| **Cloudflare Workers path** | `scripts/packer/cloudflare-bootstrap.sh` uses the same pull + hash verify + doctor gate                        |
 
 Related: [ADR 0006](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0006-golden-host-images-packer.md), [`packer/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packer), [team vault sync](https://docs.clawql.com/getting-started/for-teams#team-vault-sync).
 

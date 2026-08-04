@@ -18,11 +18,11 @@ ClawQL's vault tools (`memory_ingest` / `memory_recall`) persist Markdown under 
 
 ## 2. Architecture: gateway consumes MCP; ClawQL owns the tools
 
-| Layer | Product | Role |
-|---|---|---|
-| **Agent gateway** | OpenClaw (`openclaw` npm) | Multi-channel UI, agents, `openclaw mcp` config — consumes MCP servers |
-| **Tool server** | ClawQL (`clawql-mcp`) | Registers `search`, `execute`, `memory_recall`, `memory_ingest`, etc. |
-| **Durable store** | Obsidian vault on disk | Markdown notes from earlier `memory_ingest` calls (Cursor, automation, or prior agent sessions) |
+| Layer             | Product                   | Role                                                                                            |
+| ----------------- | ------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Agent gateway** | OpenClaw (`openclaw` npm) | Multi-channel UI, agents, `openclaw mcp` config — consumes MCP servers                          |
+| **Tool server**   | ClawQL (`clawql-mcp`)     | Registers `search`, `execute`, `memory_recall`, `memory_ingest`, etc.                           |
+| **Durable store** | Obsidian vault on disk    | Markdown notes from earlier `memory_ingest` calls (Cursor, automation, or prior agent sessions) |
 
 OpenClaw routes agent tool calls to the configured `clawql` MCP endpoint (Streamable HTTP or stdio). ClawQL's tools are registered by `clawql-api`, not inside OpenClaw. The same pattern applies to optional Helm workloads for Goose and Hermes: they are deployment opt-ins that consume in-cluster ClawQL MCP.
 
@@ -30,13 +30,13 @@ OpenClaw routes agent tool calls to the configured `clawql` MCP endpoint (Stream
 
 ## 3. What was wired (local stack, June 2026)
 
-| Component | Purpose |
-|---|---|
-| **ClawQL HTTP MCP** | `PORT=8080 npm run start:http` → `http://127.0.0.1:8080/mcp` (Streamable HTTP) |
-| **OpenClaw MCP config** | `openclaw mcp set clawql '{"url":"http://127.0.0.1:8080/mcp","transport":"streamable-http"}'` |
-| **Chat bridge** | `dashboard/scripts/openclaw-chat-bridge.mjs` on :8787 — `POST /v1/chat` for dashboard Agent Chat |
-| **LLM** | OpenRouter (e.g. `openrouter/qwen/qwen3.6-plus`) via `openclaw models set` |
-| **Vault** | Prior session notes under `Memory/` (ingested during K8s/OpenClaw setup work) |
+| Component               | Purpose                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------ |
+| **ClawQL HTTP MCP**     | `PORT=8080 npm run start:http` → `http://127.0.0.1:8080/mcp` (Streamable HTTP)                   |
+| **OpenClaw MCP config** | `openclaw mcp set clawql '{"url":"http://127.0.0.1:8080/mcp","transport":"streamable-http"}'`    |
+| **Chat bridge**         | `dashboard/scripts/openclaw-chat-bridge.mjs` on :8787 — `POST /v1/chat` for dashboard Agent Chat |
+| **LLM**                 | OpenRouter (e.g. `openrouter/qwen/qwen3.6-plus`) via `openclaw models set`                       |
+| **Vault**               | Prior session notes under `Memory/` (ingested during K8s/OpenClaw setup work)                    |
 
 **Build prerequisite:** `npm run build` must produce `dist/server-http.js` (after `npm install` for workspace deps such as `effect`).
 
@@ -109,12 +109,12 @@ The agent then offered to continue bootstrap (name/vibe) — orthogonal to MCP v
 
 ## 5. What the agent did (tool trace)
 
-| Signal | Meaning |
-|---|---|
-| Tool name **`clawql__memory_recall`** | OpenClaw prefixed the configured server name (`clawql`) — real MCP `tools/call`, not a paraphrase |
-| **`Files scanned: 3`** | ClawQL walked the vault scan root and scored Markdown |
-| **`path` + `score` + `snippet`** | Structured JSON from `memory_recall` — matches [MCP tools](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) contract |
-| Content about **Kyverno**, **Cosign**, **Mac mini setup** | Matches prior `memory_ingest` sessions — not generic LLM knowledge |
+| Signal                                                    | Meaning                                                                                                                                               |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tool name **`clawql__memory_recall`**                     | OpenClaw prefixed the configured server name (`clawql`) — real MCP `tools/call`, not a paraphrase                                                     |
+| **`Files scanned: 3`**                                    | ClawQL walked the vault scan root and scored Markdown                                                                                                 |
+| **`path` + `score` + `snippet`**                          | Structured JSON from `memory_recall` — matches [MCP tools](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) contract |
+| Content about **Kyverno**, **Cosign**, **Mac mini setup** | Matches prior `memory_ingest` sessions — not generic LLM knowledge                                                                                    |
 
 A vague "what do you know about ClawQL?" prompt without naming the tool tends to produce a plausible but ungrounded answer. Naming `memory_recall` explicitly (or using a gateway skill that always recalls first) makes the tool path reliable.
 
@@ -154,13 +154,13 @@ Return paths and snippets from the tool JSON only.
 
 **Checklist:**
 
-| Check | Command / location |
-|---|---|
-| MCP up | `curl -sf http://127.0.0.1:8080/healthz` |
+| Check        | Command / location                                                   |
+| ------------ | -------------------------------------------------------------------- |
+| MCP up       | `curl -sf http://127.0.0.1:8080/healthz`                             |
 | OpenClaw MCP | `openclaw mcp show clawql` → `streamable-http`, url ends with `/mcp` |
-| Bridge | `curl -sf http://127.0.0.1:8787/healthz` |
-| Smoke | `./scripts/kubernetes/smoke-openclaw-chat-bridge.sh` |
-| Vault path | `CLAWQL_OBSIDIAN_VAULT_PATH` on the same process that serves MCP |
+| Bridge       | `curl -sf http://127.0.0.1:8787/healthz`                             |
+| Smoke        | `./scripts/kubernetes/smoke-openclaw-chat-bridge.sh`                 |
+| Vault path   | `CLAWQL_OBSIDIAN_VAULT_PATH` on the same process that serves MCP     |
 
 **Vault path note:** In this session, recalled filenames differed from another host path (`~/.ClawQL`) — recall still proved the tool chain. Align `CLAWQL_OBSIDIAN_VAULT_PATH` across local, K8s `hostPath`, and Compose mounts when you want one canonical vault (see [TrueNAS homelab case study](https://docs.clawql.com/case-studies/truenas-scale-corgicave-homelab) for the same class of mismatch).
 
@@ -192,13 +192,13 @@ Local validation in this case study precedes cluster deploy; the Helm templates 
 
 ## 11. References
 
-| Doc | Topic |
-|---|---|
-| [OpenClaw + ClawQL](https://docs.clawql.com/openclaw) | Site hub |
-| [Learn: clawql-memory (Memory 2.0)](https://docs.clawql.com/learn/memory) | `memory_ingest` / `memory_recall` handoff |
-| [Cross-thread vault recall](https://docs.clawql.com/case-studies/cross-thread-vault-recall) | Cursor recall + GitHub `search`/`execute` |
-| [using-openclaw-with-clawql.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/using-openclaw-with-clawql.md) | Full OpenClaw + ClawQL guide |
-| [helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/helm.md) | OpenClaw / Goose / Hermes opt-ins |
+| Doc                                                                                                                                     | Topic                                     |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| [OpenClaw + ClawQL](https://docs.clawql.com/openclaw)                                                                                   | Site hub                                  |
+| [Learn: clawql-memory (Memory 2.0)](https://docs.clawql.com/learn/memory)                                                               | `memory_ingest` / `memory_recall` handoff |
+| [Cross-thread vault recall](https://docs.clawql.com/case-studies/cross-thread-vault-recall)                                             | Cursor recall + GitHub `search`/`execute` |
+| [using-openclaw-with-clawql.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/using-openclaw-with-clawql.md) | Full OpenClaw + ClawQL guide              |
+| [helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/helm.md)                                           | OpenClaw / Goose / Hermes opt-ins         |
 
 **Ingest hook:** After publishing, run `memory_ingest` with title `OpenClaw agent chat memory_recall validation (June 2026)` and wikilinks to prior setup notes so future `memory_recall` queries hit this narrative.
 

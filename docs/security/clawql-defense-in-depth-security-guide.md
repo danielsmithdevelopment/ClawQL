@@ -326,8 +326,8 @@ metadata:
   namespace: agents
 spec:
   hard:
-    requests.nvidia.com/gpu: '4' # set to actual intended max concurrency
-    limits.nvidia.com/gpu: '4'
+    requests.nvidia.com/gpu: "4" # set to actual intended max concurrency
+    limits.nvidia.com/gpu: "4"
 ```
 
 Set the quota to your actual intended maximum agent concurrency. The purpose is a ceiling against runaway consumption, so setting it to `1` restricts legitimate parallelism. Pair this with a `LimitRange` to enforce per-pod GPU limits, so no single pod can claim the entire quota by itself.
@@ -387,30 +387,30 @@ helm upgrade --install clawql-full-stack ./clawql-full-stack \
 
 ## Summary: What Each Layer Stops
 
-| Attack Vector | Primary Control | Secondary Control |
-|---|---|---|
-| Compromised container image | Cosign + Kyverno verifyImages | Harbor allowlist |
-| Dependency confusion | Harbor allowlist-only resolution | Trivy scanning |
-| Secret in git | Gitleaks pre-commit | TruffleHog CI scan |
-| Post-training weight tampering | Init container SHA-256 + Cosign blob | Harbor manifest signing |
-| Training-time backdoor | Training pipeline supply chain controls (Section 1) | Behavioral evaluation (informative only) |
-| Agent privilege escalation | JWT ATR claims + Panguard | Deterministic governance layer |
-| Prompt injection / jailbreak | MCP tool scoping + ATR rules | Panguard ATR enforcement |
-| Lateral movement (container) | Kata VM isolation | NetworkPolicy default-deny |
-| Lateral movement (network) | Istio mTLS + AuthorizationPolicy | East-west baselining alerts |
-| Rogue egress | Istio EgressGateway + ServiceEntries | DNS hardening |
-| Supply chain (Helm chart) | YubiKey Git signing | Cosign + Kyverno |
-| Vault credential leak | Short TTL + auto-revocation | Lease monitoring |
-| PII in logs | Presidio pre-Loki redaction | Data classification policy |
-| GPU denial-of-service | ResourceQuota + LimitRange | Node isolation |
-| Silent log tampering | WORM + Merkle roots | Git-backed signed commits |
-| Panguard outage | Fail-closed + HA Panguard replicas | PICERL outage runbook |
-| Incident without forensics | WORM prompt/response logs | Wazuh SIEM correlation |
-| Compromised primary infra | Out-of-band comms (Matrix) | PICERL runbooks |
-| Untested recovery | Quarterly restore tests | Written test records |
+| Attack Vector                  | Primary Control                                     | Secondary Control                        |
+| ------------------------------ | --------------------------------------------------- | ---------------------------------------- |
+| Compromised container image    | Cosign + Kyverno verifyImages                       | Harbor allowlist                         |
+| Dependency confusion           | Harbor allowlist-only resolution                    | Trivy scanning                           |
+| Secret in git                  | Gitleaks pre-commit                                 | TruffleHog CI scan                       |
+| Post-training weight tampering | Init container SHA-256 + Cosign blob                | Harbor manifest signing                  |
+| Training-time backdoor         | Training pipeline supply chain controls (Section 1) | Behavioral evaluation (informative only) |
+| Agent privilege escalation     | JWT ATR claims + Panguard                           | Deterministic governance layer           |
+| Prompt injection / jailbreak   | MCP tool scoping + ATR rules                        | Panguard ATR enforcement                 |
+| Lateral movement (container)   | Kata VM isolation                                   | NetworkPolicy default-deny               |
+| Lateral movement (network)     | Istio mTLS + AuthorizationPolicy                    | East-west baselining alerts              |
+| Rogue egress                   | Istio EgressGateway + ServiceEntries                | DNS hardening                            |
+| Supply chain (Helm chart)      | YubiKey Git signing                                 | Cosign + Kyverno                         |
+| Vault credential leak          | Short TTL + auto-revocation                         | Lease monitoring                         |
+| PII in logs                    | Presidio pre-Loki redaction                         | Data classification policy               |
+| GPU denial-of-service          | ResourceQuota + LimitRange                          | Node isolation                           |
+| Silent log tampering           | WORM + Merkle roots                                 | Git-backed signed commits                |
+| Panguard outage                | Fail-closed + HA Panguard replicas                  | PICERL outage runbook                    |
+| Incident without forensics     | WORM prompt/response logs                           | Wazuh SIEM correlation                   |
+| Compromised primary infra      | Out-of-band comms (Matrix)                          | PICERL runbooks                          |
+| Untested recovery              | Quarterly restore tests                             | Written test records                     |
 
 ---
 
-*For the full security curriculum (reasoning, red-team test cases, configuration specifics), see the [Security best practices curriculum](https://docs.clawql.com/security/best-practices). For MCP proxy JWT/ATR details: [`mcp-proxy-jwt-atr.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/mcp-proxy-jwt-atr.md).*
+_For the full security curriculum (reasoning, red-team test cases, configuration specifics), see the [Security best practices curriculum](https://docs.clawql.com/security/best-practices). For MCP proxy JWT/ATR details: [`mcp-proxy-jwt-atr.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/mcp-proxy-jwt-atr.md)._
 
 © Copyright 2026. All rights reserved. · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL)
