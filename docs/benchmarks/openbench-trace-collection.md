@@ -113,5 +113,8 @@ CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES=0 \
 
 ## Related
 
+- Product / managed service: [`openbench-dataset-product.md`](./openbench-dataset-product.md)
+- Upstream proposal: [`openbench-dataset-upstream-proposal.md`](./openbench-dataset-upstream-proposal.md)
+- Package: [`packages/openbench-dataset`](../../packages/openbench-dataset/)
 - Inference export / FT flywheel: [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md)
 - Advanced suites (B-1): [`openbench-advanced-suites.md`](./openbench-advanced-suites.md)

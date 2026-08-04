@@ -2,7 +2,7 @@ IDP-first GTM · July 2026
 
 # Document Processing That Doesn't Stop at Extraction
 
-Standalone Intelligent Document Processing motion for ops, compliance, legal, lending, and M&A — full lifecycle from ingest to secure distribution, Merkle audit trails, MCP-native agents, Starter at $299/mo. Developer motion: [inference-first GTM](https://clawql.com/inference/gtm/). Enterprise motion: [enterprise GTM](https://clawql.com/enterprise/gtm/). Live gateway/memory A/B: [OpenBench results ledger](../benchmarks/openbench-results-ledger.md).
+Standalone Intelligent Document Processing motion for ops, compliance, legal, lending, and M&A — full lifecycle from ingest to secure distribution, Merkle audit trails, MCP-native agents, Starter at $299/mo. Developer motion: [inference-first GTM](https://clawql.com/inference/gtm/). Enterprise motion: [enterprise GTM](https://clawql.com/enterprise/gtm/). Live gateway/memory A/B: [OpenBench results ledger](../benchmarks/openbench-results-ledger.md). Dataset protocol: [OpenBench dataset product](../benchmarks/openbench-dataset-product.md).
 
 [View IDP landing](https://clawql.com/idp/) · [Start free trial](https://clawql.com/signup/) · [IDP platform docs](https://docs.clawql.com/vision/idp-platform) · [Deploy with Helm](https://docs.clawql.com/deployment/kubernetes)
 
