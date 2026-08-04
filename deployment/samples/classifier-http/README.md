@@ -40,6 +40,19 @@ docker run --rm -p 8080:8080 clawql-classifier-reference
 
 See [`docker/compose/docling-classifier.compose.yml`](../../docker/compose/docling-classifier.compose.yml) for Docling + classifier side-by-side.
 
+## Promote (BYO)
+
+After holdout eval, gate and print Helm pins:
+
+```bash
+./deployment/samples/classifier-http/promote.sh \
+  --metrics deployment/samples/classifier-http/fixtures/metrics.example.json \
+  --tag v1.2.0 \
+  --helm-print
+```
+
+See [`docs/runbooks/fine-tuned-classifier.md`](../../docs/runbooks/fine-tuned-classifier.md).
+
 ## License
 
 Apache-2.0 (same as ClawQL). **Model weights are not shipped** — only this reference server.

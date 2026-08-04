@@ -309,6 +309,34 @@ export async function executeRestOperation(
     }
 
     const res = await getFetchImplForRest()(url.toString(), init);
+    // Optional chaining: unit-test fetch stubs often omit Headers.
+    const contentType = res.headers?.get?.("content-type") ?? "";
+    const binary =
+      Boolean(contentType) &&
+      (/application\/pdf/i.test(contentType) ||
+        /application\/octet-stream/i.test(contentType) ||
+        /image\//i.test(contentType));
+
+    if (binary && typeof res.arrayBuffer === "function") {
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (!res.ok) {
+        return {
+          ok: false,
+          error: `REST HTTP ${res.status}: binary ${contentType || "body"} (${buf.byteLength} bytes)`,
+        };
+      }
+      // Base64 wrapper so IDP hops can chain PDF bytes (Stirling / Gotenberg / Nextcloud).
+      return {
+        ok: true,
+        data: {
+          contentType: contentType || "application/octet-stream",
+          encoding: "base64",
+          data: buf.toString("base64"),
+          byteLength: buf.byteLength,
+        },
+      };
+    }
+
     const text = await res.text();
     let payload: unknown = text;
     try {

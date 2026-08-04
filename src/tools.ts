@@ -111,7 +111,28 @@ export async function handleClawqlExecuteToolInput(
 export { SLACK_NOTIFY_OPERATION_ID, handleNotifyToolInput };
 
 configureAutomationPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
-configureDocumentsPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
+configureDocumentsPluginDeps({
+  execute: (params) => handleClawqlExecuteToolInput(params),
+  onPipelineHop: async (event) => {
+    try {
+      const { publishDocumentPipelineHopEvent } =
+        await import("clawql-automation/nats/publish-hooks");
+      await publishDocumentPipelineHopEvent({
+        correlation_id: event.correlation_id,
+        hop: {
+          index: event.hop.index,
+          stage: event.hop.stage,
+          operationId: event.hop.operationId,
+          ok: event.hop.ok,
+          skipped: event.hop.skipped,
+          error: event.hop.error,
+        },
+      });
+    } catch {
+      /* NATS publish optional */
+    }
+  },
+});
 configureMemoryOnyxSearch((params) => handleKnowledgeSearchOnyxToolInput(params));
 configureHomeSyncHooks();
 

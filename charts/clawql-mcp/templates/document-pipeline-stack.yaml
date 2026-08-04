@@ -302,10 +302,30 @@ spec:
         - name: classifier
           image: "{{ .Values.documentPipeline.classifier.image.repository }}:{{ .Values.documentPipeline.classifier.image.tag }}"
           imagePullPolicy: {{ .Values.documentPipeline.classifier.image.pullPolicy }}
+          env:
+            - name: MODEL_VERSION
+              value: {{ default .Values.documentPipeline.classifier.image.tag .Values.documentPipeline.classifier.env.modelVersion | quote }}
+            - name: CLASSIFIER_MIN_CONFIDENCE
+              value: {{ .Values.documentPipeline.classifier.env.minConfidence | quote }}
+            {{- if .Values.documentPipeline.classifier.env.modelPath }}
+            - name: MODEL_PATH
+              value: {{ .Values.documentPipeline.classifier.env.modelPath | quote }}
+            {{- else if .Values.documentPipeline.classifier.model.existingClaim }}
+            - name: MODEL_PATH
+              value: {{ .Values.documentPipeline.classifier.model.mountPath | quote }}
+            {{- end }}
+            - name: PORT
+              value: {{ .Values.documentPipeline.classifier.service.port | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.documentPipeline.classifier.service.port | int }}
               protocol: TCP
+          {{- if .Values.documentPipeline.classifier.model.existingClaim }}
+          volumeMounts:
+            - name: classifier-model
+              mountPath: {{ .Values.documentPipeline.classifier.model.mountPath | quote }}
+              readOnly: true
+          {{- end }}
           readinessProbe:
             httpGet:
               path: /health
@@ -320,6 +340,12 @@ spec:
             periodSeconds: 20
           resources:
             {{- toYaml .Values.documentPipeline.classifier.resources | nindent 12 }}
+      {{- if .Values.documentPipeline.classifier.model.existingClaim }}
+      volumes:
+        - name: classifier-model
+          persistentVolumeClaim:
+            claimName: {{ .Values.documentPipeline.classifier.model.existingClaim | quote }}
+      {{- end }}
 {{- end }}
 {{- if .Values.documentPipeline.langextract.enabled }}
 ---

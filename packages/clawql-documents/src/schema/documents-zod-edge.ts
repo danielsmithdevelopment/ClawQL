@@ -24,6 +24,9 @@ import {
   IDP_DRY_RUN_DESCRIPTION,
   IDP_FROM_STEP_DESCRIPTION,
   IDP_MAX_RETRIES_DESCRIPTION,
+  IDP_PDF_BASE64_DESCRIPTION,
+  IDP_PROCESSED_PATH_DESCRIPTION,
+  IDP_REDACT_LIST_DESCRIPTION,
   IDP_SKIP_STAGES_DESCRIPTION,
   IDP_STEP_ARGS_DESCRIPTION,
   IDP_STOP_ON_ERROR_DESCRIPTION,
@@ -98,7 +101,10 @@ export const runIdpPipelineToolZodShape = {
   dry_run: z.boolean().optional().describe(IDP_DRY_RUN_DESCRIPTION),
   correlation_id: z.string().optional().describe(IDP_CORRELATION_ID_DESCRIPTION),
   document_path: z.string().optional().describe(IDP_DOCUMENT_PATH_DESCRIPTION),
+  processed_path: z.string().optional().describe(IDP_PROCESSED_PATH_DESCRIPTION),
   document_url: z.string().optional().describe(IDP_DOCUMENT_URL_DESCRIPTION),
+  redact_list: z.string().optional().describe(IDP_REDACT_LIST_DESCRIPTION),
+  pdf_base64: z.string().optional().describe(IDP_PDF_BASE64_DESCRIPTION),
   step_args: z
     .record(z.string(), z.record(z.string(), z.unknown()))
     .optional()

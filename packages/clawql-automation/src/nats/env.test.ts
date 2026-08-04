@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   natsConfiguredForConsumer,
   natsConfiguredForPublish,
+  natsConsumerIdpPipelineEnabled,
   natsConsumerResumeWorkflowEnabled,
+  natsDocumentConsumerConfigured,
+  natsIdpPipelineConsumerDurable,
 } from "./env.js";
 
 describe("nats env", () => {
@@ -26,5 +29,16 @@ describe("nats env", () => {
     vi.stubEnv("CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW", "1");
     expect(natsConfiguredForConsumer()).toBe(true);
     expect(natsConsumerResumeWorkflowEnabled()).toBe(true);
+  });
+
+  it("enables document consumers without HITL resume", () => {
+    vi.stubEnv("CLAWQL_NATS_URL", "nats://localhost:4222");
+    vi.stubEnv("CLAWQL_NATS_JETSTREAM", "1");
+    vi.stubEnv("CLAWQL_NATS_ENABLE_CONSUMER", "1");
+    vi.stubEnv("CLAWQL_NATS_CONSUMER_IDP_PIPELINE", "1");
+    expect(natsConsumerIdpPipelineEnabled()).toBe(true);
+    expect(natsDocumentConsumerConfigured()).toBe(true);
+    expect(natsConfiguredForConsumer()).toBe(true);
+    expect(natsIdpPipelineConsumerDurable()).toBe("clawql-idp-pipeline");
   });
 });

@@ -14,7 +14,7 @@
 
 **Title:** _ClawQL 7.2.0: Memory Stack that beats grep_
 
-**Subhead:** A **semver-minor** that closes the PragmaticVectors memory gaps — IDF + local MiniLM, index-first recall, git Mode A, hybrid RRF, WORM seal, and a CodeGraph flywheel — on the same Agentic Gateway install.
+**Subhead:** A **semver-minor** that closes the PragmaticVectors memory gaps — IDF + local MiniLM, index-first recall, git Mode A, hybrid RRF, WORM seal, and a CodeGraph flywheel — and finishes the IDP NATS / Stirling event bus — on the same Agentic Gateway install.
 
 **Body:**
 
@@ -30,7 +30,7 @@ We measured recall against keyword-count grep on a shared-vocabulary corpus and 
 4. **Hybrid RRF** — fuse vault + codegraph / pageindex / onyx when you flip the hybrid switch.
 5. **WORM + flywheel** — auto `worm_ref` on ingest, `MEMORY_RECALL` events, CodeGraph impact → `type: code_change` notes.
 
-Also in the box: MCP **2026-07-28**, OKF v0.2, PorTAL flywheel, native multi-language CodeGraph, and a deeper IDP pipeline (pdf-inspector, anydoc, vertical Compose, local Privacy Filter).
+Also in the box: MCP **2026-07-28**, OKF v0.2, PorTAL flywheel, native multi-language CodeGraph, **mcp-api-adapter**, Managed Edge Gateway wedge, Cloud Agent / `sync ensure`, and a finished IDP pipeline (pdf-inspector, anydoc, vertical Compose, Privacy Filter, Stirling redact + NATS queues).
 
 ### Why it matters
 

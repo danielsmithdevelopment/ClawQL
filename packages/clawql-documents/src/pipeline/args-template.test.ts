@@ -10,6 +10,14 @@ describe("resolveArgsTemplate", () => {
     expect(resolved).toBe("https://files.example/idp/inbox/w2.pdf");
   });
 
+  it("substitutes pdf_base64 and redact_list", () => {
+    const resolved = resolveArgsTemplate(
+      { fileInput: "${pdf_base64}", listOfText: "${redact_list}" },
+      { pdf_base64: "JVBERi0x", redact_list: "SSN,EIN" }
+    );
+    expect(resolved).toEqual({ fileInput: "JVBERi0x", listOfText: "SSN,EIN" });
+  });
+
   it("builds Nextcloud WebDAV url when base and user are set", () => {
     const prevBase = process.env.NEXTCLOUD_BASE_URL;
     const prevUser = process.env.NEXTCLOUD_USERNAME;

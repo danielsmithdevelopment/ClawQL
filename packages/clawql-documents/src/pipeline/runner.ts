@@ -44,6 +44,10 @@ export type RunIdpPipelineInput = {
   document_path?: string;
   processed_path?: string;
   document_url?: string;
+  /** Stirling listOfText patterns (comma-separated); falls back to CLAWQL_IDP_REDACT_LIST. */
+  redact_list?: string;
+  /** Optional seed PDF (base64) when inbox download is skipped. */
+  pdf_base64?: string;
   from_step?: number;
   to_step?: number;
 };
