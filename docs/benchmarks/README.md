@@ -12,6 +12,7 @@ This directory holds **repro instructions**, **latest pointers**, **per-scenario
 | [`latest.md`](latest.md)                                     | Pointer to the newest consolidated benchmark artifacts.              |
 | [`latest.json`](latest.json)                                 | Machine-readable latest summary (when present).                      |
 | [`openbench.md`](openbench.md)                               | OpenBench harness adoption (adapter + ClawQL-specific tasks).        |
+| [`openbench-stack-coverage.md`](openbench-stack-coverage.md) | **Whole-stack** OpenBench coverage map + benchmark backlog.          |
 | [`ouroboros-value-evidence.md`](ouroboros-value-evidence.md) | **Evidence:** Ouroboros on converges vs off strategy thrash (verified A/B). |
 | [`openbench-ouroboros-oscillation.md`](openbench-ouroboros-oscillation.md) | Ouroboros oscillation-escape task design, caps, repro.        |
 | [`openbench-github-actions.md`](openbench-github-actions.md) | One-off Actions A/B (clawql-on vs off) — spin up, report, spin down. |
