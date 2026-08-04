@@ -205,7 +205,7 @@ Teams can add `.cursor/environment.json` with an install script that runs `clawq
 
 `memory_sync` replaces shell `clawql sync push` / `pull` on Cloud Agents. See [For teams — `memory_sync`](https://docs.clawql.com/getting-started/for-teams#memory-sync-mcp-tool).
 
-Auto sync (`CLAWQL_SYNC_AUTO=1`) debounces push after each `memory_ingest`; still call `memory_sync` at the end of important runs to flush immediately and reconcile conflicts.
+Auto sync (`CLAWQL_SYNC_AUTO=1`) debounces push after each `memory_ingest` (default **2s**); still call `memory_sync` at the end of important runs to flush immediately and reconcile conflicts. Pending auto-push also flushes on MCP process shutdown (SIGINT/SIGTERM).
 
 ### 5. Copy-paste prompt (iOS / Cloud Agent)
 

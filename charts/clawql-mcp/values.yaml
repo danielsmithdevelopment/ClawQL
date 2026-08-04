@@ -960,7 +960,7 @@ teamSync:
   region: auto
   endpoint: "" # optional override (gcs defaults to https://storage.googleapis.com in template)
   autoPush: false # CLAWQL_SYNC_AUTO=1 — debounced push after memory_ingest
-  autoPushDebounceMs: 30000
+  autoPushDebounceMs: 2000
   autoPull: false # CLAWQL_SYNC_AUTO_PULL=1 — throttled pull before memory_recall
   autoPullMinMs: 60000
   autoPullOnStart: false # CLAWQL_SYNC_AUTO_PULL_ON_START=1 — pull once at MCP startup

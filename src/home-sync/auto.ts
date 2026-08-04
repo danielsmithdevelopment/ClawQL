@@ -28,6 +28,10 @@ export function autoPullEnabled(): boolean {
   return envFlagOn("CLAWQL_SYNC_AUTO_PULL");
 }
 
+/** Default debounce: coalesce a short ingest burst (note + index/log) without
+ * waiting so long that short-lived MCP/Cloud Agent processes exit first. */
+export const DEFAULT_AUTO_PUSH_DEBOUNCE_MS = 2_000;
+
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
 let pushInFlight = false;
 let lastPullMs = 0;
@@ -44,12 +48,22 @@ export function resetHomeSyncAutoForTests(): void {
 /** Debounced push after memory_ingest (and similar writes). */
 export function scheduleAutoPushAfterIngest(): void {
   if (!autoPushExplicitlyEnabled()) return;
-  const debounceMs = envInt("CLAWQL_SYNC_AUTO_DEBOUNCE_MS", 30_000);
+  const debounceMs = envInt("CLAWQL_SYNC_AUTO_DEBOUNCE_MS", DEFAULT_AUTO_PUSH_DEBOUNCE_MS);
   if (pushTimer) clearTimeout(pushTimer);
   pushTimer = setTimeout(() => {
     pushTimer = null;
     void flushAutoPush();
   }, debounceMs);
+}
+
+/** Cancel debounce and push now (shutdown / explicit flush). */
+export async function flushPendingAutoPush(): Promise<void> {
+  if (!autoPushExplicitlyEnabled()) return;
+  if (pushTimer) {
+    clearTimeout(pushTimer);
+    pushTimer = null;
+  }
+  await flushAutoPush();
 }
 
 async function flushAutoPush(): Promise<void> {

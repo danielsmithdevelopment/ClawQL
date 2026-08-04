@@ -45,9 +45,11 @@ vi.mock("./config.js", () => ({
 describe("home-sync auto", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    vi.clearAllMocks();
     resetHomeSyncAutoForTests();
     delete process.env.CLAWQL_SYNC_AUTO;
     delete process.env.CLAWQL_SYNC_AUTO_PULL;
+    delete process.env.CLAWQL_SYNC_AUTO_DEBOUNCE_MS;
   });
 
   afterEach(() => {
@@ -75,7 +77,35 @@ describe("home-sync auto", () => {
     const { runSyncPush } = await import("./engine.js");
     scheduleAutoPushAfterIngest();
     expect(runSyncPush).not.toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(5000);
+    await vi.advanceTimersByTimeAsync(4999);
+    expect(runSyncPush).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(runSyncPush).toHaveBeenCalledTimes(1);
+  });
+
+  it("defaults to 2s debounce when CLAWQL_SYNC_AUTO_DEBOUNCE_MS unset", async () => {
+    process.env.CLAWQL_SYNC_AUTO = "1";
+    delete process.env.CLAWQL_SYNC_AUTO_DEBOUNCE_MS;
+    const { runSyncPush } = await import("./engine.js");
+    const { scheduleAutoPushAfterIngest: schedule, DEFAULT_AUTO_PUSH_DEBOUNCE_MS } =
+      await import("./auto.js");
+    expect(DEFAULT_AUTO_PUSH_DEBOUNCE_MS).toBe(2_000);
+    schedule();
+    await vi.advanceTimersByTimeAsync(1_999);
+    expect(runSyncPush).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(runSyncPush).toHaveBeenCalledTimes(1);
+  });
+
+  it("flushPendingAutoPush cancels debounce and pushes immediately", async () => {
+    process.env.CLAWQL_SYNC_AUTO = "1";
+    process.env.CLAWQL_SYNC_AUTO_DEBOUNCE_MS = "60000";
+    const { runSyncPush } = await import("./engine.js");
+    const { scheduleAutoPushAfterIngest: schedule, flushPendingAutoPush } =
+      await import("./auto.js");
+    schedule();
+    expect(runSyncPush).not.toHaveBeenCalled();
+    await flushPendingAutoPush();
     expect(runSyncPush).toHaveBeenCalledTimes(1);
   });
 });
