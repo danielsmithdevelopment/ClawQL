@@ -71,7 +71,7 @@ export type GraphifySyncOptions = {
   readonly skipGraphifyRun?: boolean;
   /** Directory containing graph.json / GRAPH_REPORT.md / graph.html (defaults to `{root}/graphify-out`). */
   readonly outDir?: string;
-  /** Shell command; `{repoRoot}` and `{outDir}` substituted. Defaults to env or `graphify .`. */
+  /** Shell command; `{repoRoot}` and `{outDir}` substituted. Defaults to env or Graphify code-only + cluster. */
   readonly graphifyCmd?: string;
   /** Build vault ingest proposal (default true). Caller (MemoryPlugin) runs `memory_ingest`. */
   readonly vaultIngest?: boolean;
@@ -82,7 +82,8 @@ function defaultGraphifySyncCommand(): string {
   return (
     process.env.CLAWQL_CODEGRAPH_GRAPHIFY_SYNC_CMD?.trim() ||
     process.env.CLAWQL_CODEGRAPH_GRAPHIFY_REFRESH_CMD?.trim() ||
-    'graphify .'
+    // `graphify .` alone fails without an LLM key when docs/images exist; cluster-only writes report + HTML.
+    "graphify . --code-only && graphify cluster-only . --no-label"
   );
 }
 

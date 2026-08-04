@@ -11,29 +11,43 @@ export type GraphifyCommunity = {
 
 const NUMBERED_CLUSTER_RE = /^(cluster|community)[_\s-]?\d+$/i;
 
+/** Strip wrapping quotes Graphify sometimes embeds in report headings. */
+export function stripWrappingQuotes(name: string): string {
+  const t = name.trim();
+  if (
+    (t.startsWith('"') && t.endsWith('"')) ||
+    (t.startsWith("'") && t.endsWith("'"))
+  ) {
+    return t.slice(1, -1).trim();
+  }
+  return t;
+}
+
 /** True when Leiden labels are auto-generated numbers, not human architecture names. */
 export function isNumberedClusterName(name: string): boolean {
-  return NUMBERED_CLUSTER_RE.test(name.trim());
+  return NUMBERED_CLUSTER_RE.test(stripWrappingQuotes(name));
 }
 
 /**
  * Extract community membership from Graphify `graph.json` node `community` fields.
- * Labels default to `Community {id}` until a report override is applied.
+ * Prefers node `community_name` when present; otherwise `Community {id}`.
  */
 export function extractCommunitiesFromGraphJson(raw: GraphifyGraphJson): GraphifyCommunity[] {
-  const buckets = new Map<string, { labels: string[] }>();
+  const buckets = new Map<string, { labels: string[]; name?: string }>();
   for (const n of raw.nodes ?? []) {
     const community = communityIdOf(n);
     if (community == null) continue;
     const bucket = buckets.get(community) ?? { labels: [] };
     const label = typeof n.label === "string" ? n.label : n.id;
     if (label && bucket.labels.length < 8) bucket.labels.push(label);
+    const cn = typeof n.community_name === "string" ? stripWrappingQuotes(n.community_name) : "";
+    if (cn && !bucket.name) bucket.name = cn;
     buckets.set(community, bucket);
   }
   return [...buckets.entries()]
-    .map(([id, { labels }]) => ({
+    .map(([id, { labels, name }]) => ({
       id,
-      name: `Community ${id}`,
+      name: name || `Community ${id}`,
       nodeCount: (raw.nodes ?? []).filter((n) => communityIdOf(n) === id).length,
       sampleLabels: labels,
     }))
@@ -49,7 +63,8 @@ function communityIdOf(n: GraphifyNode): string | null {
 
 /**
  * Prefer human-readable community titles from GRAPH_REPORT.md when present
- * (e.g. `## Community 0: Authentication Layer`). Falls back to numbered names.
+ * (e.g. `## Community 0: Authentication Layer` or `### Community 0 - "Auth"`).
+ * Numbered / quoted placeholders are ignored so wikilink logic stays clean.
  */
 export function applyReportCommunityNames(
   communities: GraphifyCommunity[],
@@ -61,7 +76,9 @@ export function applyReportCommunityNames(
     /^#{1,3}\s*(?:Community|Cluster)\s+(\d+|[A-Za-z0-9_-]+)\s*[:\-–—]\s*(.+?)\s*$/gim;
   let m: RegExpExecArray | null;
   while ((m = headingRe.exec(reportMd)) !== null) {
-    named.set(m[1]!, m[2]!.trim());
+    const cleaned = stripWrappingQuotes(m[2]!);
+    if (!cleaned || isNumberedClusterName(cleaned)) continue;
+    named.set(m[1]!, cleaned);
   }
   if (named.size === 0) return communities;
   return communities.map((c) => {
@@ -74,6 +91,6 @@ export function applyReportCommunityNames(
 export function communityWikilinks(communities: readonly GraphifyCommunity[]): string[] {
   return communities
     .filter((c) => !isNumberedClusterName(c.name))
-    .map((c) => c.name.trim())
+    .map((c) => stripWrappingQuotes(c.name))
     .filter(Boolean);
 }

@@ -92,7 +92,7 @@ const syncGraphifyInput = z.object({
     .string()
     .optional()
     .describe(
-      "Shell command to run Graphify. Supports {repoRoot} and {outDir}. Default: CLAWQL_CODEGRAPH_GRAPHIFY_SYNC_CMD or `graphify .`."
+      "Shell command to run Graphify. Supports {repoRoot} and {outDir}. Default: CLAWQL_CODEGRAPH_GRAPHIFY_SYNC_CMD or `graphify . --code-only && graphify cluster-only . --no-label`."
     ),
   vaultIngest: z
     .boolean()

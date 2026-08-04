@@ -73,6 +73,9 @@ releases/v0.0.0-e2e/
 # Python (OpenBench validators / adapters)
 __pycache__/
 
+# Graphify local artifacts (codegraph_sync_graphify / CLI)
+graphify-out/
+
 # Managed Edge Gateway local runtime
 examples/managed-gateway/.env
 examples/managed-gateway/data/

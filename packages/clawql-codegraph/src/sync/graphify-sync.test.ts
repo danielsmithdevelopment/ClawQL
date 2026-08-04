@@ -48,6 +48,22 @@ describe("graphify communities", () => {
     expect(named[0]?.name).toBe("Authentication Layer");
     expect(communityWikilinks(named)).toEqual(["Authentication Layer", "Data Access"]);
   });
+
+  it("ignores Graphify --no-label placeholder headings with quoted Community N", () => {
+    const base = extractCommunitiesFromGraphJson({
+      nodes: [
+        { id: "a", label: "auth", community: 0, community_name: "Community 0" },
+        { id: "b", label: "db", community: 1, community_name: "Community 1" },
+      ],
+    });
+    expect(base[0]?.name).toBe("Community 0");
+    const after = applyReportCommunityNames(
+      base,
+      '### Community 0 - "Community 0"\n\n### Community 1 - "Community 1"\n'
+    );
+    expect(after[0]?.name).toBe("Community 0");
+    expect(communityWikilinks(after)).toEqual([]);
+  });
 });
 
 describe("mergeCodeGraphs", () => {

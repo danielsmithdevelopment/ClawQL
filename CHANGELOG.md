@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`codegraph_sync_graphify`** — consolidated Graphify → import → vault architecture-report ingest → optional native blind-spot merge (`fast` / `thorough`); Graphify is the preferred upstream for codegraph ([`docs/plugins/codegraph.md`](docs/plugins/codegraph.md)).
+- **`codegraph_sync_graphify`** — consolidated Graphify → import → vault architecture-report ingest → optional native blind-spot merge (`fast` / `thorough`); Graphify is the preferred upstream for codegraph ([`docs/plugins/codegraph.md`](docs/plugins/codegraph.md)). Default CLI: `graphify . --code-only && graphify cluster-only . --no-label` (no LLM key required); strips Graphify `--no-label` quoted `Community N` placeholders from vault wikilinks.
 - **mcp-grpc-transport 1.0.0** — MCP **2026-07-28** stateless protocol support (`Discover` RPC, `mcp-protocol-version: 2026-07-28`, per-request `mcp-client-info` / `clientCapabilities`); production TypeScript gRPC MCP transport ([Convergence Week](https://pragmaticvectors.com/posts/convergence-week/)).
 - **Streamable HTTP MCP 2026-07-28** — `/mcp` accepts `mcp-protocol-version: 2026-07-28` with per-request stateless transports; JSON-RPC `discover` / `POST /mcp/discover`; Helm alias `clawql-mcp-grpc.enabled`.
 - **OKF v0.2 trust signals** on vault memory — `generated`, `verified`, `sources`, `stale_after`, `status`, `superseded_by`; `clawql memory lint|migrate|query`; MEMORY_* WORM events; recall excludes `retracted` and down-weights stale ([`docs/memory/okf.md`](docs/memory/okf.md)).
