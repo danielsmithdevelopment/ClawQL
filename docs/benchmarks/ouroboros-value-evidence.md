@@ -67,7 +67,7 @@ What we say Ouroboros does, and how far that claim is backed today.
 | # | Claim (customer-facing) | Unit / package tests | Live agent / OpenBench | Status |
 | - | ----------------------- | -------------------- | ---------------------- | ------ |
 | 1 | Stops **strategy thrash** when harness `doom_loop` is off | n/a (agent behavior) | on 1.0 / off 0.0 ([30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642)) | **Verified (n=1)** |
-| 2 | Still adds value when OpenCode `doom_loop` is **on** (strategy A↔B ≠ identical spam) | n/a | workflow matrix `deny` cell wired (PR #759) | **Awaiting live deny result** |
+| 2 | Still adds value when OpenCode `doom_loop` is **on** (strategy A↔B ≠ identical spam) | n/a | on 1.0 / off 0.0 ([30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277) deny cell) | **Verified (n=1)** |
 | 3 | `create_seed` + `run_evolutionary_loop` used end-to-end under hard caps | MCP hooks + loop tests | observed in winning arm | **Verified (path)** |
 | 4 | Convergence taxonomy exits: `oscillation` / `spinning` / `diminishing_returns` / `no_drift` | `convergence.test.ts` | live checker does **not** assert `reason_code` | Library yes · agent no |
 | 5 | Drift gate blocks premature converge (`drift_exceeded`, combined > 0.3) | `convergence` + `evolutionary-loop` + `drift` tests | no agent task forces measure/reflect on drift | Library yes · agent no |
@@ -113,21 +113,18 @@ Prioritized for **honest product claims**, not feature tourism.
 
 ---
 
-## Recommended next test (immediate)
+## Additive cell with `doom_loop` deny ([run 30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277))
 
-**Additive value with `doom_loop` on (default deny).**
+Production OpenCode guard **on** (`doom_loop=deny`); same task/caps:
 
-| Arm             | `doom_loop` | Ouroboros | Hypothesis                                      |
-| --------------- | ----------- | --------- | ------------------------------------------------- |
-| ouroboros-on    | deny        | yes       | Still converges on decoy-conflict task            |
-| ouroboros-off   | deny        | no        | Still thrashs via **strategy** flip-flop (A↔B)    |
+| Arm             | Score   | Turns | Wall (s) | Notes                          |
+| --------------- | ------- | ----- | -------- | ------------------------------ |
+| ouroboros-on    | **1.0** | 5     | 73       | Converges under production guard |
+| ouroboros-off   | **0.0** | 2     | 171      | Still fails (strategy thrash)  |
 
-OpenCode’s guard stops *identical* tool spam; it does **not** stop alternating
-between two plausible-but-wrong decoys. Same task, same caps,
-`CLAWQL_OPENBENCH_DOOM_LOOP` unset/deny; prefer **≥3 trials**.
-
-Then implement P0.2 (lineage/drift graded) and P0.3 (remediation multi-gen)
-before leaning hard on “self-healing / ontological tracking” in customer copy.
+**Verdict:** Ouroboros adds value **beyond** identical-tool spam blocking.
+Prefer **≥3 trials** next for CI width; then lineage/drift graded + multi-gen
+remediation before leaning on “self-healing” copy.
 
 ---
 

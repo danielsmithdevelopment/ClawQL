@@ -118,7 +118,7 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 1. ~~**Search-first discovery**~~ — task shipped (`search-first-discovery`); confirm live WIN.  
 2. ~~**Execute verify loop**~~ — task shipped (`execute-verify-loop`, dry-run); confirm live WIN.  
 3. ~~**Memory ingest → recall**~~ — task shipped (`memory-roundtrip-ingest-recall`); confirm live WIN.  
-4. **Ouroboros `doom_loop` deny A/B** — workflow matrix ships allow+deny; confirm deny cell.  
+4. ~~**Ouroboros `doom_loop` deny A/B**~~ — verified on 1.0 / off 0.0 (n=1).  
 5. **Audit checkpoints** — trail required for full score.  
 6. **Policy / ATR deny** — security claim customers actually buy.
 
