@@ -91,28 +91,28 @@ MCP_API_ADAPTER_URL=http://127.0.0.1:8090 node ./my-cli/bin/mcp-tools.mjs echo -
 
 ## CLI reference
 
-| Flag / env                                      | Meaning                                                              |
-| ----------------------------------------------- | -------------------------------------------------------------------- |
-| `--mcp-url`                                     | Streamable HTTP MCP URL                                              |
-| `--stdio -- <cmd…>`                             | Spawn MCP over stdio                                                 |
-| `--grpc-address` / `CLAWQL_MCP_GRPC_ADDR`       | Upstream gRPC `host:port`                                            |
-| `--grpc-host` / `--grpc-port`                   | Alternate gRPC address pieces                                        |
-| `--listen` / `MCP_API_ADAPTER_LISTEN`           | HTTP bind (default `0.0.0.0:8090`)                                   |
-| `--mcp-path`                                    | Streamable HTTP MCP path (default `/mcp`)                            |
-| `--no-mcp`                                      | Disable Streamable HTTP `/mcp` surface                               |
-| `--grpc-listen` / `MCP_API_ADAPTER_GRPC_LISTEN` | Scaffolded gRPC bind (default `127.0.0.1:0`)                         |
-| `--no-grpc`                                     | Do not scaffold local gRPC (stdio/HTTP only)                         |
-| `--api-key` / `MCP_API_ADAPTER_API_KEY`         | Require `X-API-Key` or `Authorization: Bearer`                       |
-| `--refresh-ms`                                  | Re-`ListTools` poll interval                                         |
-| `--title`                                       | Swagger / GraphiQL title                                             |
+| Flag / env                                      | Meaning                                        |
+| ----------------------------------------------- | ---------------------------------------------- |
+| `--mcp-url`                                     | Streamable HTTP MCP URL                        |
+| `--stdio -- <cmd…>`                             | Spawn MCP over stdio                           |
+| `--grpc-address` / `CLAWQL_MCP_GRPC_ADDR`       | Upstream gRPC `host:port`                      |
+| `--grpc-host` / `--grpc-port`                   | Alternate gRPC address pieces                  |
+| `--listen` / `MCP_API_ADAPTER_LISTEN`           | HTTP bind (default `0.0.0.0:8090`)             |
+| `--mcp-path`                                    | Streamable HTTP MCP path (default `/mcp`)      |
+| `--no-mcp`                                      | Disable Streamable HTTP `/mcp` surface         |
+| `--grpc-listen` / `MCP_API_ADAPTER_GRPC_LISTEN` | Scaffolded gRPC bind (default `127.0.0.1:0`)   |
+| `--no-grpc`                                     | Do not scaffold local gRPC (stdio/HTTP only)   |
+| `--api-key` / `MCP_API_ADAPTER_API_KEY`         | Require `X-API-Key` or `Authorization: Bearer` |
+| `--refresh-ms`                                  | Re-`ListTools` poll interval                   |
+| `--title`                                       | Swagger / GraphiQL title                       |
 
 **`gen-cli` subcommand** (after upstream opts above):
 
-| Flag             | Meaning                                              |
-| ---------------- | ---------------------------------------------------- |
-| `--out <dir>`    | Output directory (required)                          |
-| `--name <bin>`   | CLI / package name (default `mcp-tools`)             |
-| `--base-url`     | Default adapter URL baked into the generated CLI     |
+| Flag           | Meaning                                          |
+| -------------- | ------------------------------------------------ |
+| `--out <dir>`  | Output directory (required)                      |
+| `--name <bin>` | CLI / package name (default `mcp-tools`)         |
+| `--base-url`   | Default adapter URL baked into the generated CLI |
 
 Legacy env `MCP_OPENAPI_GATEWAY_*` is still accepted. Exactly one upstream mode is required (`--mcp-url`, `--stdio`, or `--grpc-address` / env default).
 
@@ -157,16 +157,16 @@ Compatibility: `startMcpOpenApiGateway({ grpcAddress })` ≡ `startMcpApiAdapter
 
 ## HTTP surface map
 
-| Method / path                 | Role                                                 |
-| ----------------------------- | ---------------------------------------------------- |
-| `GET /healthz`                | Liveness (`upstreamKind`, `surfaces`, `grpcAddress`) |
-| `GET /tools`                  | Full catalog JSON                                    |
-| `GET /openapi.json`           | OpenAPI 3.1 generated from tool `inputSchema`        |
-| `GET /docs`                   | Swagger UI                                           |
-| `POST /{toolName}`            | Invoke tool; JSON body = tool arguments              |
-| `POST /graphql`               | GraphQL endpoint                                     |
-| `GET /graphiql`               | GraphiQL IDE                                         |
-| `GET /graphql/schema.graphql` | SDL                                                  |
+| Method / path                 | Role                                                      |
+| ----------------------------- | --------------------------------------------------------- |
+| `GET /healthz`                | Liveness (`upstreamKind`, `surfaces`, `grpcAddress`)      |
+| `GET /tools`                  | Full catalog JSON                                         |
+| `GET /openapi.json`           | OpenAPI 3.1 generated from tool `inputSchema`             |
+| `GET /docs`                   | Swagger UI                                                |
+| `POST /{toolName}`            | Invoke tool; JSON body = tool arguments                   |
+| `POST /graphql`               | GraphQL endpoint                                          |
+| `GET /graphiql`               | GraphiQL IDE                                              |
+| `GET /graphql/schema.graphql` | SDL                                                       |
 | `POST/GET/DELETE /mcp`        | Streamable HTTP MCP (same tools; disable with `--no-mcp`) |
 
 Responses prefer MCP `structuredContent`, else parse single text content as JSON, else return a `{ content, text, isError }` envelope.
@@ -188,25 +188,25 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 
 ## Relationship to other ClawQL pieces
 
-| Piece                           | Direction                                              |
-| ------------------------------- | ------------------------------------------------------ |
-| **`mcp-api-adapter`**           | MCP → OpenAPI + GraphQL + `/mcp` + gRPC (+ gen-cli)    |
-| **ClawQL `search` / `execute`** | OpenAPI → MCP tools                                    |
-| **`mcp-grpc-transport`**        | Production TypeScript MCP gRPC transport               |
-| **Panguard bridge**             | Policy / JWT ATR in front of MCP                       |
-| **PrintingPress** (planned)     | Signed-binary packaging over the same tool catalog     |
+| Piece                           | Direction                                           |
+| ------------------------------- | --------------------------------------------------- |
+| **`mcp-api-adapter`**           | MCP → OpenAPI + GraphQL + `/mcp` + gRPC (+ gen-cli) |
+| **ClawQL `search` / `execute`** | OpenAPI → MCP tools                                 |
+| **`mcp-grpc-transport`**        | Production TypeScript MCP gRPC transport            |
+| **Panguard bridge**             | Policy / JWT ATR in front of MCP                    |
+| **PrintingPress** (planned)     | Signed-binary packaging over the same tool catalog  |
 
 ## Troubleshooting
 
-| Symptom                                   | Check                                                                                          |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `Provide exactly one upstream`            | Only one of `--mcp-url` / `--stdio` / `--grpc-address`                                         |
-| No gRPC surface for HTTP/stdio            | Ensure `--no-grpc` is unset; adapter sets `ENABLE_GRPC` while scaffolding                      |
-| Empty GraphQL args                        | Upstream `ListTools` `inputSchema` missing/empty — use `callTool(name, args: {…})`             |
-| `502 upstream CallTool failed`            | Upstream down, wrong URL, or tool threw `isError`                                              |
-| `/mcp` `callTool` fails (gRPC upstream)   | Needs `0.5.1+` — protobuf content oneofs are normalized to MCP text blocks before SDK validate |
-| IDE cannot reach MCP                      | Confirm `--no-mcp` is unset; path defaults to `/mcp` (`--mcp-path`); API key applies if set    |
-| Generated CLI 404 / connection refused    | Start the adapter first; set `MCP_API_ADAPTER_URL` or pass `--base-url` at gen time            |
+| Symptom                                 | Check                                                                                          |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `Provide exactly one upstream`          | Only one of `--mcp-url` / `--stdio` / `--grpc-address`                                         |
+| No gRPC surface for HTTP/stdio          | Ensure `--no-grpc` is unset; adapter sets `ENABLE_GRPC` while scaffolding                      |
+| Empty GraphQL args                      | Upstream `ListTools` `inputSchema` missing/empty — use `callTool(name, args: {…})`             |
+| `502 upstream CallTool failed`          | Upstream down, wrong URL, or tool threw `isError`                                              |
+| `/mcp` `callTool` fails (gRPC upstream) | Needs `0.5.1+` — protobuf content oneofs are normalized to MCP text blocks before SDK validate |
+| IDE cannot reach MCP                    | Confirm `--no-mcp` is unset; path defaults to `/mcp` (`--mcp-path`); API key applies if set    |
+| Generated CLI 404 / connection refused  | Start the adapter first; set `MCP_API_ADAPTER_URL` or pass `--base-url` at gen time            |
 
 ## Further reading
 

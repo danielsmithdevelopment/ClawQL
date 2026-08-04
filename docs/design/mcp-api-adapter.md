@@ -96,12 +96,12 @@ Every Swagger UI visitor should see the gRPC path (`x-clawql-grpc` extensions, d
 
 **Gaps closed:**
 
-| Version | Closed |
-| ------- | ------ |
+| Version | Closed                                                                                        |
+| ------- | --------------------------------------------------------------------------------------------- |
 | `0.3.0` | `POST /{toolName}`, OpenAPI + GraphQL from MCP `inputSchema`; gRPC scaffolding for stdio/HTTP |
-| `0.4.0` | Rename `mcp-openapi-gateway` → `mcp-api-adapter` |
-| `0.5.0` | Streamable HTTP `/mcp` re-export; `gen-cli` thin CLI scaffold |
-| `0.5.1` | gRPC upstream → `/mcp` content normalization for MCP SDK validation |
+| `0.4.0` | Rename `mcp-openapi-gateway` → `mcp-api-adapter`                                              |
+| `0.5.0` | Streamable HTTP `/mcp` re-export; `gen-cli` thin CLI scaffold                                 |
+| `0.5.1` | gRPC upstream → `/mcp` content normalization for MCP SDK validation                           |
 
 ---
 
@@ -131,10 +131,10 @@ packages/mcp-api-adapter/
 
 ### 5.2 Runtime modes
 
-| Mode                        | Description                                                                                                         | Status       |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| **A. Sidecar / standalone** | Point at any MCP (stdio / HTTP / gRPC); serve OpenAPI + GraphQL + `/mcp` (+ scaffold gRPC when needed)             | **Shipped**  |
-| **B. In-process mount**     | Optional Express router mounted beside ClawQL HTTP (`attachMcpApiAdapter(app, { … })`) when both run in one process | Nice-to-have |
+| Mode                        | Description                                                                                                         | Status                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| **A. Sidecar / standalone** | Point at any MCP (stdio / HTTP / gRPC); serve OpenAPI + GraphQL + `/mcp` (+ scaffold gRPC when needed)              | **Shipped**           |
+| **B. In-process mount**     | Optional Express router mounted beside ClawQL HTTP (`attachMcpApiAdapter(app, { … })`) when both run in one process | Nice-to-have          |
 | **C. Re-export `/mcp`**     | Streamable HTTP MCP on the adapter port so IDEs/agents use the same tool catalog                                    | **Shipped** (`0.5.0`) |
 
 **Default recommendation:** Mode A. Prefer raw gRPC (`mcp-grpc-transport`) for production/mesh/large payloads; REST / GraphQL / `/mcp` are on-ramps and compatibility surfaces.
@@ -264,18 +264,18 @@ npx mcp-api-adapter --stdio -- npx -y @modelcontextprotocol/server-everything
 npx mcp-api-adapter gen-cli --out ./my-cli --mcp-url http://127.0.0.1:8080/mcp
 ```
 
-| Env / flag                                          | Purpose                                                                    |
-| --------------------------------------------------- | -------------------------------------------------------------------------- |
-| `--mcp-url` / `--stdio` / `--grpc-address`          | Exactly one upstream                                                       |
-| `MCP_API_ADAPTER_LISTEN` / `--listen`               | HTTP bind (default `0.0.0.0:8090`)                                         |
-| `--mcp-path` / `--no-mcp`                           | Streamable HTTP MCP path (default `/mcp`) or disable                       |
-| `MCP_API_ADAPTER_GRPC_LISTEN` / `--grpc-listen`     | Scaffolded gRPC bind when upstream is stdio/HTTP                           |
-| `--no-grpc`                                         | Skip local gRPC scaffold                                                   |
-| `MCP_API_ADAPTER_API_KEY` / `--api-key`             | Optional edge auth                                                         |
-| `MCP_PROTOCOL_VERSION`                              | Metadata for gRPC RPCs (default latest supported)                          |
-| `MCP_API_ADAPTER_REFRESH_MS` / `--refresh-ms`       | Optional catalog poll                                                      |
-| `gen-cli --out` / `--name` / `--base-url`           | Generate thin REST CLI                                                     |
-| TLS client flags                                    | Align with `mcp-grpc-transport` client TLS when upstream uses `GRPC_TLS_*` |
+| Env / flag                                      | Purpose                                                                    |
+| ----------------------------------------------- | -------------------------------------------------------------------------- |
+| `--mcp-url` / `--stdio` / `--grpc-address`      | Exactly one upstream                                                       |
+| `MCP_API_ADAPTER_LISTEN` / `--listen`           | HTTP bind (default `0.0.0.0:8090`)                                         |
+| `--mcp-path` / `--no-mcp`                       | Streamable HTTP MCP path (default `/mcp`) or disable                       |
+| `MCP_API_ADAPTER_GRPC_LISTEN` / `--grpc-listen` | Scaffolded gRPC bind when upstream is stdio/HTTP                           |
+| `--no-grpc`                                     | Skip local gRPC scaffold                                                   |
+| `MCP_API_ADAPTER_API_KEY` / `--api-key`         | Optional edge auth                                                         |
+| `MCP_PROTOCOL_VERSION`                          | Metadata for gRPC RPCs (default latest supported)                          |
+| `MCP_API_ADAPTER_REFRESH_MS` / `--refresh-ms`   | Optional catalog poll                                                      |
+| `gen-cli --out` / `--name` / `--base-url`       | Generate thin REST CLI                                                     |
+| TLS client flags                                | Align with `mcp-grpc-transport` client TLS when upstream uses `GRPC_TLS_*` |
 
 ---
 

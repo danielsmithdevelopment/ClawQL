@@ -26,10 +26,10 @@ Call MCP tools by name over HTTP, GraphQL, **or Streamable HTTP `/mcp`**. Produc
 
 ## Do not confuse with ClawQL Core
 
-| Direction                                 | Product                     | Audience                                                                              |
-| ----------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------- |
-| **OpenAPI → MCP**                         | ClawQL `search` / `execute` | Agents discovering upstream REST/GraphQL/gRPC APIs                                    |
-| **MCP → OpenAPI/GraphQL/`/mcp`/gRPC/CLI** | `mcp-api-adapter` (0.5.1)   | Workers / OpenWebUI / GraphQL / IDEs / mesh — wrap **any** MCP (stdio/HTTP/gRPC)      |
+| Direction                                 | Product                     | Audience                                                                         |
+| ----------------------------------------- | --------------------------- | -------------------------------------------------------------------------------- |
+| **OpenAPI → MCP**                         | ClawQL `search` / `execute` | Agents discovering upstream REST/GraphQL/gRPC APIs                               |
+| **MCP → OpenAPI/GraphQL/`/mcp`/gRPC/CLI** | `mcp-api-adapter` (0.5.1)   | Workers / OpenWebUI / GraphQL / IDEs / mesh — wrap **any** MCP (stdio/HTTP/gRPC) |
 
 Use **“OpenAPI on-ramp”**, **“GraphQL on-ramp”**, or **“MCP tools as REST/GraphQL”** in marketing — not bare “OpenAPI gateway.” Distinct from ClawQL’s **Agentic Gateway** product name.
 
