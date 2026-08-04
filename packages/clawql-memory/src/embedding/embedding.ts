@@ -92,8 +92,7 @@ export function embeddingRebuildReport(): { synced: boolean; skipped?: string } 
   if (vectorBackend() === "off") {
     return {
       synced: false,
-      skipped:
-        "CLAWQL_VECTOR_BACKEND=off; chunks may be indexed but embeddings were not written",
+      skipped: "CLAWQL_VECTOR_BACKEND=off; chunks may be indexed but embeddings were not written",
     };
   }
   if (embeddingProviderMode() === "off") {
@@ -150,8 +149,7 @@ export function resolveEmbeddingConfig(): EmbeddingConfig | null {
   }
 
   // local (explicit) or auto without API key
-  const model =
-    process.env.CLAWQL_EMBEDDING_MODEL?.trim() || DEFAULT_LOCAL_EMBEDDING_MODEL;
+  const model = process.env.CLAWQL_EMBEDDING_MODEL?.trim() || DEFAULT_LOCAL_EMBEDDING_MODEL;
   return {
     provider: "local",
     baseUrl: "",
