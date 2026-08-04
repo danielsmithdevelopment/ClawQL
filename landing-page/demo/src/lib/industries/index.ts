@@ -4,17 +4,21 @@ import { insuranceIndustry } from './insurance'
 import { legalIndustry } from './legal'
 import { lendingIndustry } from './lending'
 import { realEstateIndustry } from './real-estate'
+import { surveillanceIndustry } from './surveillance'
 
 export type {
   Industry,
+  IndustryAuditEvent,
   IndustryExample,
   IndustryResource,
+  IndustryStackRow,
   IndustryWorkflowStep,
 } from './types'
 
 export const industries = [
   lendingIndustry,
   realEstateIndustry,
+  surveillanceIndustry,
   healthcareIndustry,
   legalIndustry,
   insuranceIndustry,

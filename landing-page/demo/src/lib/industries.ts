@@ -1,7 +1,9 @@
 export type {
   Industry,
+  IndustryAuditEvent,
   IndustryExample,
   IndustryResource,
+  IndustryStackRow,
   IndustryWorkflowStep,
 } from './industries/types'
 
