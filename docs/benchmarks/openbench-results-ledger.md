@@ -12,7 +12,7 @@ document is the **scoreboard + run diary**.
 | Default model | `openrouter/deepseek/deepseek-chat` |
 | Harness | OpenCode → clawql-inference |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T06:50Z |
+| Last ledger update | 2026-08-04T07:05Z |
 | CI matrix control | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push |
 | Task explanations | [`openbench-task-explanations.md`](./openbench-task-explanations.md) — prove / why / how for every cell |
 
@@ -46,6 +46,8 @@ history). Move the best WIN into the headline table if it improves the claim.
 | `policy-deny-execute` | Panguard blocks execute | **1.0** | **0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) | **WIN** |
 | `cache-scratch-handoff` | clawql_cache set/get handoff | **1.0** (4 turns, 33s) | **0.0** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) | **WIN** |
 | `pageindex-section-qa` | PageIndex build+synthesize buried code | **1.0** (4 turns, 38s) | **0.0** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) | **WIN** |
+| `codegraph-guided-edit` | Structural index locates SECRET_MARKER | **1.0** (3 turns, 53s) | **0.0** | [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377) | **WIN** |
+| `schedule-synthetic-dry-run` | schedule create + dry_run trigger | **1.0** (3 turns, 32s) | **0.0** | [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377) | **WIN** |
 
 Replicated Ouroboros WINs also on [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519) (allow + deny both on 1.0 / off 0.0).
 
@@ -192,13 +194,19 @@ stream error until our wall timeout (classic #8203-style hang).
 - Abort remaining arms/trials on credit exhaustion
 - Keep `pr_active` list ready; flip `live_enabled: true` after topping up `OPENROUTER_API_KEY` (or switch to BYOK)
 
-### 2026-08-04 — live A/B resumed
+### 2026-08-04 — [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377) (P1/P2 next wave)
 
-Credits topped up. `live_enabled: true` again. Next matrix: `pr_active` only (cache, pageindex, audit, multi-provider), `max-parallel: 1`, output cap 2048.
+| Task | on | off | Notes |
+| ---- | -- | --- | ----- |
+| codegraph-guided-edit | **1.0** (3t, 53s) | **0.0** | **WIN** — index + query + write; tools clawql_codegraph_* |
+| schedule-synthetic-dry-run | **1.0** (3t, 32s) | **0.0** | **WIN** — clawql_schedule×2 + write |
+| hybrid-recall-source-pin | 0.0 (4t, 36s) | 0.0 | **TIE fail** — on called pageindex tools but wrote literal placeholder `<value after CLAWQL_HYBRID_CODE=>` (did not read handbook.md; tree likely built from instruction text). Hardened instruction + nudge; keep `pr_active`. |
+
+Retired codegraph + schedule after WIN. Hybrid remains active.
 
 ### 2026-08-04 — [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) (post-credit resume, lean matrix)
 
-All four `pr_active` cells **WIN** on frugal DeepSeek; no 402; real tool_use:
+All four then-`pr_active` cells **WIN** on frugal DeepSeek; no 402; real tool_use:
 
 | Task | on | off | on tools (abbrev) | Verdict |
 | ---- | -- | --- | ----------------- | ------- |
@@ -207,7 +215,7 @@ All four `pr_active` cells **WIN** on frugal DeepSeek; no 402; real tool_use:
 | audit-checkpoints | **1.0** (2t, 29s) | **0.0** | clawql_audit×4, write | **WIN** (replication) |
 | multi-provider-api-workflow | **1.0** (3t, 33s) | **0.75** | memory_recall, write×3 | **WIN** (margin) |
 
-**Retire:** all four moved `pr_active` → `retired` (stop PR token burn). Next live spend should be new backlog tasks or intentional `all-including-retired` / n≥3 dispatch.
+Those four were retired after this run; later wave added hybrid/codegraph/schedule.
 
 ---
 
@@ -224,15 +232,15 @@ All four `pr_active` cells **WIN** on frugal DeepSeek; no 402; real tool_use:
 | Vault one-shot (early) | Both ouroboros arms scored 1.0 | Disable memory for thrash study |
 | Infra hang | Whole matrix timeout, no tools | Re-run; annotate as noise in this ledger |
 | OpenRouter 402 credits | OpenCode `stream error` + hang until wall | Top up key; cap `limit.output`; `live_enabled=false` until funded |
+| Hybrid placeholder write | answer.json copied instruction template | Require read handbook.md; ban angle-bracket placeholders |
 
 ---
 
 ## Open gaps (not yet headline WIN)
 
-1. **hybrid recall / codegraph** — tasks not shipped.
-2. **schedule / notify / sandbox / composed recipes** — backlog.
+1. **`hybrid-recall-source-pin`** — tools called but placeholder answer; instruction hardened; still `pr_active`.
+2. **notify / sandbox / composed recipes / external ingest** — backlog.
 3. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
-4. **All current clawql-on/off + ouroboros tasks have at least one headline WIN** — retired from PR auto-runs; re-run via `workflow_dispatch` / `all-including-retired`.
 
 ---
 
@@ -245,8 +253,7 @@ Stakeholder framing: these headline WINs upgrade **architectural** statements to
 | [`docs/vision/clawql-idp-platform.md`](../vision/clawql-idp-platform.md) | New **Empirically verified platform claims** table; executor.sh memory/security/efficiency rows cite OpenBench |
 | [`docs/vision/clawql-idp-gtm.md`](../vision/clawql-idp-gtm.md) | Differentiator #7 + gateway objection handlers (memory / search-first / Panguard / Ouroboros) |
 | [`docs/architecture/clawql-token-efficiency.md`](../architecture/clawql-token-efficiency.md) | **Live behavioral evidence** for Layer 1 search-first + Layer 6 vault-under-pressure |
-
-Keep gaps honest in those docs: cache flake, PageIndex pending, multi-provider noise, n=1, infra timeouts.
+| [`docs/benchmarks/openbench-task-explanations.md`](./openbench-task-explanations.md) | Thorough prove / why / how for every verified cell |
 
 ---
 

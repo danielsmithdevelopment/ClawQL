@@ -4,9 +4,7 @@
   "live_pause_reason": "",
   "live_resume_note": "P1/P2 next wave active: hybrid-recall, codegraph, schedule. Prior tasks retired after 30881158522.",
   "pr_active": [
-    "hybrid-recall-source-pin",
-    "codegraph-guided-edit",
-    "schedule-synthetic-dry-run"
+    "hybrid-recall-source-pin"
   ],
   "retired": {
     "memory-dependent-continuation": {
@@ -52,6 +50,14 @@
     "multi-provider-api-workflow": {
       "reason": "Verified WIN margin after credit restore (on 1.0 / off 0.75); earlier noisy cells noted",
       "evidence_run": "30881158522"
+    },
+    "codegraph-guided-edit": {
+      "reason": "Verified WIN — codegraph_index + query found SECRET_MARKER (on 1.0 / off 0.0)",
+      "evidence_run": "30885341377"
+    },
+    "schedule-synthetic-dry-run": {
+      "reason": "Verified WIN — schedule create + dry_run trigger pass (on 1.0 / off 0.0)",
+      "evidence_run": "30885341377"
     }
   },
   "ouroboros_pr_enabled": false,

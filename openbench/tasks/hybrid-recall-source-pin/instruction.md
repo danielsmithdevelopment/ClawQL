@@ -1,33 +1,38 @@
 # Hybrid recall — PageIndex source pin
 
-The correct verification code is buried in `handbook.md`. A vault-style decoy
-in `decoy/` names the wrong code on purpose.
+The correct verification code is buried in **`handbook.md` only**.
+`decoy/` names the wrong code on purpose.
 
-## Steps
+## Steps (in order)
 
-1. Build a PageIndex tree from `handbook.md` using **`pageindex_build_tree`**
-   with `docId` = `openbench-hybrid-handbook`.
-2. Call **`pageindex_synthesize`** (or `pageindex_traverse`) asking for the
-   hybrid verification code / `CLAWQL_HYBRID_CODE`.
-3. Optionally call **`memory_recall`** with `sources: ["pageindex"]` — but the
-   graded path still requires PageIndex tool_use (vault keyword alone fails).
-4. Write relative path `answer.json`.
+1. **`read`** the file `handbook.md` from the workspace (do not invent its contents).
+2. Call **`pageindex_build_tree`** with:
+   - `docId` = `openbench-hybrid-handbook`
+   - markdown = **the exact contents you just read from handbook.md**
+     (never pass this instruction text as the document).
+3. Call **`pageindex_synthesize`** (or `pageindex_traverse`) with a query like
+   `CLAWQL_HYBRID_CODE` / hybrid verification code / rare accession.
+4. From the synthesize result, extract the real token after `CLAWQL_HYBRID_CODE=`.
+5. Write relative path `answer.json` with that real token (not a placeholder).
 
 OpenCode tool names: `clawql_pageindex_build_tree`, `clawql_pageindex_synthesize`,
-`clawql_pageindex_traverse`, `clawql_memory_recall`.
+`clawql_pageindex_traverse`.
 
 ## Artifact
 
 ```json
 {
-  "code": "<value after CLAWQL_HYBRID_CODE=>",
+  "code": "REPLACE_WITH_REAL_TOKEN_FROM_HANDBOOK",
   "source": "pageindex"
 }
 ```
 
+The `code` field must be the literal token from handbook.md (looks like `word-number`).
+Do **not** write angle-bracket placeholders.
+
 ## Rules
 
 - Ignore `decoy/` (wrong code).
-- Guessing from decoy or training data fails — PageIndex tool_use is required.
-- filePath must be exactly `answer.json`.
+- If synthesize does not show the token, re-read `handbook.md` and rebuild the tree.
+- PageIndex tool_use is required; guessing fails.
 - Stop after writing `answer.json`.

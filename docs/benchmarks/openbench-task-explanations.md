@@ -167,12 +167,32 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 
 ---
 
-## Next cells (in flight)
+## Next cells
 
-| Task | Claim | How |
-| ---- | ----- | --- |
-| `hybrid-recall-source-pin` | Truth only via PageIndex; vault/decoy keyword is wrong | build_tree + synthesize on `handbook.md`; decoy `rose-99` |
-| `codegraph-guided-edit` | Structural index required to locate `SECRET_MARKER` | `codegraph_index` + query/explain on fixture `repo/` |
-| `schedule-synthetic-dry-run` | Create synthetic HTTP check + `trigger` dry_run pass | `clawql_schedule` create + trigger against `https://example.com/` |
+### `codegraph-guided-edit` — **WIN**
 
-Update each section above when these land WINs (or fails with lessons). Append run IDs to the [ledger](./openbench-results-ledger.md).
+| | |
+| --- | --- |
+| **Claim** | Structural codegraph index/query finds symbols better than decoy file hints. |
+| **Why it matters** | Proves `codegraph_*` agent value for architecture tracing without blind grep. |
+| **How** | Fixture `repo/` with `SECRET_MARKER` in `payments/ledger.py`; decoy claims `app.py`. Require index + query/explain/neighbors. |
+| **Evidence** | on **1.0** / off **0.0** — [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377). |
+
+### `schedule-synthetic-dry-run` — **WIN**
+
+| | |
+| --- | --- |
+| **Claim** | Agents can create a synthetic HTTP check and `trigger` it with `dry_run=true` to a pass verdict. |
+| **Why it matters** | First live proof of optional `schedule` automation without live cron. |
+| **How** | Allowlisted `https://example.com/`; ≥2 schedule tool_use + `schedule.json`. |
+| **Evidence** | on **1.0** / off **0.0** — [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377). |
+
+### `hybrid-recall-source-pin` — in flight
+
+| | |
+| --- | --- |
+| **Claim** | Truth only via PageIndex over a long handbook; vault/decoy keyword is wrong. |
+| **Lesson** | First cell ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) called pageindex tools but indexed instruction text and wrote a placeholder. Instruction now requires `read handbook.md` first. |
+| **Evidence** | Pending after harden; still `pr_active`. |
+
+Append new run IDs to the [ledger](./openbench-results-ledger.md).
