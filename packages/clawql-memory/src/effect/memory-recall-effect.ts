@@ -42,6 +42,7 @@ import {
   surveyOkfIndex,
   type OkfIndexSurvey,
 } from "../recall/index-survey.js";
+import { rerankNormalizedHitsRrf } from "../recall/hybrid-rerank.js";
 
 const VAULT_NOT_CONFIGURED =
   "Obsidian vault is not configured. Set CLAWQL_OBSIDIAN_VAULT_PATH to a writable directory.";
@@ -527,12 +528,24 @@ export function executeMemoryRecallCoreEffect(
     }
 
     normalizedHits.sort((a, b) => b.score - a.score);
+    // Cross-source RRF when ≥2 source kinds contributed (incompatible score scales).
+    const sourceKinds = new Set(normalizedHits.map((h) => h.source));
+    const useRrf =
+      sourceKinds.size >= 2 &&
+      process.env.CLAWQL_MEMORY_RECALL_RRF?.trim().toLowerCase() !== "0" &&
+      process.env.CLAWQL_MEMORY_RECALL_RRF?.trim().toLowerCase() !== "false";
+    const rankedHits = useRrf
+      ? rerankNormalizedHitsRrf(normalizedHits, {
+          k: envInt("CLAWQL_MEMORY_RECALL_RRF_K", 60),
+          limit: Math.max(limit * 2, normalizedHits.length),
+        }).slice(0, Math.max(limit, normalizedHits.length))
+      : normalizedHits;
 
     const result: MemoryRecallResult = {
       ok: true,
       query,
       results: vaultHits,
-      hits: normalizedHits,
+      hits: rankedHits,
       followUps: followUps.length > 0 ? dedupeFollowUps(followUps) : undefined,
       sourcesUsed,
       sourceNotes: Object.keys(sourceNotes).length > 0 ? sourceNotes : undefined,
