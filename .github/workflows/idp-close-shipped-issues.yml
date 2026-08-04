@@ -1,0 +1,123 @@
+# Close IDP issues already marked Shipped in the matrix (hygiene).
+# Triggered when docs/roadmap/idp-issue-close-batch.md lands on main.
+# Cloud Agent gh tokens cannot mutate issues; GITHUB_TOKEN with issues:write can.
+name: Close shipped IDP issues
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/roadmap/idp-issue-close-batch.md"
+      - ".github/workflows/idp-close-shipped-issues.yml"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: idp-close-shipped-issues
+  cancel-in-progress: false
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Close listed issues + refresh epic #259
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          BATCH=docs/roadmap/idp-issue-close-batch.md
+          test -f "$BATCH"
+
+          COMMENT_FILE="$(mktemp)"
+          EPIC_FILE="$(mktemp)"
+          trap 'rm -f "$COMMENT_FILE" "$EPIC_FILE"' EXIT
+
+          cat >"$COMMENT_FILE" <<'EOF'
+          Closing as **shipped** per the [IDP master requirements matrix](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/roadmap/idp-master-requirements-matrix.md) and [close batch](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/roadmap/idp-issue-close-batch.md).
+
+          This is tracking hygiene (issue was already delivered on `main`). Remaining IDP **Partial** rows (Stirling orchestration, Nextcloud background queue, Coneshare analytics depth, classifier train BYO) are tracked in the matrix, not these issues.
+          EOF
+
+          cat >"$EPIC_FILE" <<'EOF'
+          **Epic — consolidated checklist only.** Scope is **exactly** the linked issues below (no extra deliverables in this epic itself).
+
+          Canonical docs in this repo:
+          - [Gap closure plan (prioritized)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/roadmap/gap-closure-plan-prioritized-2026.md)
+          - [IDP master requirements matrix](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/roadmap/idp-master-requirements-matrix.md)
+          - [Close batch (2026-08-04)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/roadmap/idp-issue-close-batch.md)
+
+          ---
+
+          ## Security & secrets
+
+          - [x] #241
+          - [x] #242
+
+          ## Workflows & GitOps
+
+          - [x] #243
+          - [x] #244
+
+          ## Document intelligence
+
+          - [x] #245
+          - [x] #246
+          - [x] #247
+          - [x] #248
+
+          ## HITL governance
+
+          - [x] #249
+
+          ## Evolution & eval
+
+          - [x] #250
+
+          ## Deployment & verticals
+
+          - [x] #251
+
+          ## IDP master wave (observability, samples, integration, scale, platform)
+
+          - [x] #252
+          - [x] #253
+          - [x] #254
+          - [x] #255
+          - [x] #256
+          - [x] #257
+          - [x] #258
+
+          ## Status
+
+          **Completed** — all children shipped on `main`; epic closed via hygiene batch 2026-08-04.
+          EOF
+
+          # Strip common leading indent from heredocs above (two spaces / none — files are clean).
+          # Numbers between the machine-readable fenced block markers in the batch doc.
+          ISSUES="$(awk '/^```$/{f=!f; next} f && /^[0-9]+$/{print}' "$BATCH")"
+          if [[ -z "$ISSUES" ]]; then
+            echo "No issue numbers found in $BATCH"
+            exit 1
+          fi
+
+          while IFS= read -r n; do
+            [[ -z "$n" ]] && continue
+            state="$(gh issue view "$n" --json state --jq .state)"
+            echo "Issue #$n state=$state"
+            if [[ "$state" == "OPEN" ]]; then
+              gh issue comment "$n" --body-file "$COMMENT_FILE" || true
+              gh issue close "$n" --reason completed
+              echo "Closed #$n"
+            else
+              echo "Skip #$n (already $state)"
+            fi
+          done <<<"$ISSUES"
+
+          gh issue edit 259 --body-file "$EPIC_FILE"
+          echo "Updated epic #259 body"

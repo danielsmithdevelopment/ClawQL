@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **IDP tracking hygiene** — matrix + gap-closure plan mark **#241–#258** / OpenClaw profile **#227** as shipped; epic [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) checklist closed. Remaining IDP **Partial** rows: Stirling document-stage orchestration, Nextcloud background queue, Coneshare analytics depth, classifier train/promote BYO.
 - **Team vault auto-push** — quiet debounce default **2s** (coalesce bursts) plus **30s min interval** between pushes during sustained ingest (no R2 spam). Pending dirty writes still **flush on shutdown** so short-lived MCP/Cloud Agent processes do not drop notes. Env: `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`, `CLAWQL_SYNC_AUTO_PUSH_MIN_MS`.
 
 ### Fixed
