@@ -12,9 +12,7 @@ describe("mcp-http-protocol", () => {
     expect(resolveHttpMcpProtocolVersion("2026-07-28")).toBe(MCP_PROTOCOL_VERSION_2026_07_28);
     expect(shouldUseStatelessHttpTransport("2026-07-28")).toBe(true);
     expect(shouldUseStatelessHttpTransport("2025-11-25")).toBe(false);
-    expect(shouldUseStatelessHttpTransport("2025-11-25", { CLAWQL_MCP_STATELESS: "1" })).toBe(
-      true
-    );
+    expect(shouldUseStatelessHttpTransport("2025-11-25", { CLAWQL_MCP_STATELESS: "1" })).toBe(true);
   });
 
   it("detects discover methods and builds response", () => {

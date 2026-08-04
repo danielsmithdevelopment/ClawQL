@@ -5,11 +5,7 @@ import type { EvaluatorVerdict } from "../store/types.js";
  * `portal-bundle` writes a PorTAL adapter directory (task_latent + alignment + adapter_manifest.cqm).
  */
 export type ExportFormat =
-  | "openai-jsonl"
-  | "anthropic-jsonl"
-  | "raw-jsonl"
-  | "sharegpt"
-  | "portal-bundle";
+  "openai-jsonl" | "anthropic-jsonl" | "raw-jsonl" | "sharegpt" | "portal-bundle";
 
 export type ExportFilter = {
   modelId?: string;

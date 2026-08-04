@@ -75,9 +75,5 @@ export function buildHttpDiscoverResponse(input: {
 export function isDiscoverJsonRpc(body: unknown): boolean {
   if (!body || typeof body !== "object" || Array.isArray(body)) return false;
   const method = (body as { method?: unknown }).method;
-  return (
-    method === "discover" ||
-    method === "server/discover" ||
-    method === "mcp/discover"
-  );
+  return method === "discover" || method === "server/discover" || method === "mcp/discover";
 }

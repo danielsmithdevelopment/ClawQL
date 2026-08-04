@@ -7,10 +7,7 @@ import { basename, join } from "node:path";
 import { getObsidianVaultPath } from "../vault/config.js";
 import { listVaultMarkdownRelPaths } from "../vault/slug-index.js";
 import { writeVaultTextFileAtomic } from "../vault/utils.js";
-import {
-  migrateOkfFrontmatterToV02,
-  parseVaultFrontmatter,
-} from "./frontmatter.js";
+import { migrateOkfFrontmatterToV02, parseVaultFrontmatter } from "./frontmatter.js";
 import { lintOkfMarkdown, type OkfLintIssue } from "./lint.js";
 import { emitMemoryWormEvent } from "./worm-events.js";
 import { OKF_FORMAT_VERSION, type OkfStatus } from "./types.js";
@@ -35,9 +32,7 @@ function resolveVault(opts: VaultOpsOptions): string {
   if (fromOpts) return fromOpts;
   const env = getObsidianVaultPath();
   if (env) return env;
-  throw new Error(
-    "Vault path required: pass --vault DIR or set CLAWQL_OBSIDIAN_VAULT_PATH"
-  );
+  throw new Error("Vault path required: pass --vault DIR or set CLAWQL_OBSIDIAN_VAULT_PATH");
 }
 
 function scanRoot(opts: VaultOpsOptions): string {
@@ -142,8 +137,7 @@ export async function lintVaultOkf(opts: VaultOpsOptions = {}): Promise<LintResu
   const stalePaths: string[] = [];
 
   for (const note of notes) {
-    const requireWorm =
-      opts.requireWormRef === true || note.rel.toLowerCase().endsWith(".cqk");
+    const requireWorm = opts.requireWormRef === true || note.rel.toLowerCase().endsWith(".cqk");
     const fileIssues = lintOkfMarkdown(note.text, {
       path: note.rel,
       checkStale: opts.checkStale !== false,
@@ -253,8 +247,7 @@ export async function queryVaultOkf(opts: VaultOpsOptions = {}): Promise<QueryRe
       status: typeof fm.status === "string" ? (fm.status as OkfStatus) : undefined,
       verifiedBy: typeof verified?.by === "string" ? verified.by : undefined,
       title: typeof fm.title === "string" ? fm.title : undefined,
-      correlationId:
-        typeof fm.correlation_id === "string" ? fm.correlation_id : undefined,
+      correlationId: typeof fm.correlation_id === "string" ? fm.correlation_id : undefined,
     };
     if (matchSimpleFilter(row, opts.filter ?? "")) {
       rows.push(row);
@@ -265,9 +258,7 @@ export async function queryVaultOkf(opts: VaultOpsOptions = {}): Promise<QueryRe
 }
 
 /** Build a map of correlation_id → OKF trust fields for export filtering. */
-export async function loadOkfTrustByCorrelationId(
-  opts: VaultOpsOptions = {}
-): Promise<
+export async function loadOkfTrustByCorrelationId(opts: VaultOpsOptions = {}): Promise<
   Map<
     string,
     {

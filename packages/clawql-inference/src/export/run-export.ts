@@ -44,9 +44,8 @@ async function loadOkfLookup(
   options: RunInferenceExportOptions
 ): Promise<OkfTrustLookup | undefined> {
   if (!options.okfVerified && !options.okfStatus) return undefined;
-  const { loadOkfTrustByCorrelationIdFromVault, resolveVaultPathForExport } = await import(
-    "./okf-vault-join.js"
-  );
+  const { loadOkfTrustByCorrelationIdFromVault, resolveVaultPathForExport } =
+    await import("./okf-vault-join.js");
   const vault = resolveVaultPathForExport(options.vaultPath, options.env ?? process.env);
   if (!vault) {
     throw new Error(
@@ -149,11 +148,7 @@ export async function exportRecords(input: {
   baseModel?: string;
   vaultRef?: string;
 }): Promise<RunExportResult> {
-  const records = filterRecordsForExport(
-    input.records,
-    input.filter ?? {},
-    input.okfByCorrelation
-  );
+  const records = filterRecordsForExport(input.records, input.filter ?? {}, input.okfByCorrelation);
   const format = input.format ?? "openai-jsonl";
   const piiMode = resolvePiiScrubMode(input.noPiiScrub);
   const lineFormat: ExportFormat = format === "portal-bundle" ? "openai-jsonl" : format;

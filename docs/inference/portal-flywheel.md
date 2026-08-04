@@ -112,13 +112,13 @@ Minutes, not a full retrain. No new export pipeline.
 
 ## Implementation stages
 
-| Stage | Deliverable                                                              | Status      |
-| ----- | ------------------------------------------------------------------------ | ----------- |
-| **A** | OKF v0.2 trust signals on vault notes + recall filters                   | **Shipped** |
-| **B** | Export filter flags `--okf-verified` / `--okf-status`                    | **Shipped** |
+| Stage | Deliverable                                                                                                  | Status      |
+| ----- | ------------------------------------------------------------------------------------------------------------ | ----------- |
+| **A** | OKF v0.2 trust signals on vault notes + recall filters                                                       | **Shipped** |
+| **B** | Export filter flags `--okf-verified` / `--okf-status`                                                        | **Shipped** |
 | **C** | `--format portal-bundle` + `adapter_manifest.cqm` (placeholders; Python train via `CLAWQL_PORTAL_TRAIN_CMD`) | **Shipped** |
-| **D** | `finetune refit` (alignment-only stubs)                                  | **Shipped** |
-| **E** | Docs site sync + getting-started “start the Flywheel for PorTAL” runbook | Follow-up   |
+| **D** | `finetune refit` (alignment-only stubs)                                                                      | **Shipped** |
+| **E** | Docs site sync + getting-started “start the Flywheel for PorTAL” runbook                                     | Follow-up   |
 
 `portal-bundle` writes a directory with `training.jsonl`, placeholder `task_latent.pt` / `alignment_*.lora`, and WORM-ready `adapter_manifest.cqm`. Replace placeholders with real PorTAL train output when the Python toolchain is configured.
 ---

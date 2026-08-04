@@ -40,12 +40,7 @@ function parseSimpleFrontmatter(markdown: string): Record<string, unknown> {
   return out;
 }
 
-async function walkMd(
-  abs: string,
-  rel: string,
-  maxFiles: number,
-  out: string[]
-): Promise<void> {
+async function walkMd(abs: string, rel: string, maxFiles: number, out: string[]): Promise<void> {
   if (out.length >= maxFiles) return;
   const entries = await readdir(abs, { withFileTypes: true });
   for (const e of entries) {
