@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **MCP stdio / Cursor discovery** — `dotenv` ≥17 prints `◇ injected env …` to **stdout** by default; that corrupts JSON-RPC and makes Cursor report `clawql` as failed tool discovery. `src/load-env.ts` now always passes **`quiet: true`**.
+- **MCP stdio Ready latency** — default six-vendor `loadSpec()` (~5–10s) no longer blocks the stdio transport. Specs warm in the background after **Ready**; `search` / `execute` still await the cache on first use.
+
 ### Added
 
 - **`codegraph_sync`** — native TypeScript pipeline (index → Louvain communities → `GRAPH_REPORT.md` / `graph.html` → vault ingest). **No Python / Graphify CLI.** Optional `codegraph_sync_graphify` only imports an existing `graph.json` (or falls back to native). ([`docs/plugins/codegraph.md`](docs/plugins/codegraph.md)).
