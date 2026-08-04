@@ -248,6 +248,14 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "disable_memory": False,
         "require_wikilink": True,
     },
+    "memory-conflict-pricing": {
+        "max_turns": 25,
+        "max_tokens": 6000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        "disable_memory": False,
+        "require_conflict": True,
+    },
 }
 
 # Appended only to ouroboros-on so off cannot one-shot the correct recipe.
@@ -488,6 +496,16 @@ WIKILINK_NUDGE = """Continue the memory wikilink hop.
    {"token":"opal-33","source":"memory_recall"}
 
 Call memory_recall now.
+"""
+
+CONFLICT_NUDGE = """Continue the memory conflict pricing task.
+
+1. clawql_memory_recall query about Acme Widget Pro pricing
+2. Find BOTH CLAWQL_PRICE_USD=42 (2026-01-15) and CLAWQL_PRICE_USD=55 (2026-06-01)
+3. write relative filePath conflict.json:
+   {"conflict":true,"values":[{"price":42,"asOf":"2026-01-15"},{"price":55,"asOf":"2026-06-01"}],"chosen":null,"source":"memory_recall"}
+
+Do NOT invent 48 or pick only one price. Call memory_recall now.
 """
 
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.
@@ -1206,6 +1224,15 @@ def wikilink_incomplete(combined: str, workdir: Path) -> bool:
     return not bool(tools & {"clawql_memory_recall", "memory_recall"})
 
 
+def conflict_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "conflict.json").is_file():
+        return True
+    tools = real_opencode_tools(combined)
+    return not bool(tools & {"clawql_memory_recall", "memory_recall"})
+
+
 def policy_missing_artifact(workdir: Path) -> bool:
     return not (workdir / "policy.json").is_file()
 
@@ -1275,6 +1302,7 @@ def run_arm_on(
     require_onyx: bool = False,
     enable_onyx: bool = False,
     require_wikilink: bool = False,
+    require_conflict: bool = False,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
     clawql = resolve_clawql()
@@ -1917,6 +1945,37 @@ def run_arm_on(
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
 
+    # conflict: missing memory_recall / conflict.json.
+    if (
+        require_conflict
+        and arm == "clawql-on"
+        and not timed_out
+        and conflict_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 20:
+            cont_file = workdir / ".openbench_conflict_nudge.md"
+            cont_file.write_text(CONFLICT_NUDGE, encoding="utf-8")
+            cont_timeout = max(20, min(60, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_cf = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_cf.stdout or "") + (proc_cf.stderr or "")
+                code = proc_cf.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
     # Cheap models often stop after memory_recall; one write-focused nudge with
     # vault notes inlined so a second recall is unnecessary.
     if vault and not disable_memory and not timed_out and recalled_without_writes(combined):
@@ -2276,6 +2335,10 @@ def render_markdown(report: dict) -> str:
         interp.append(
             "- Both arms graded for memory_recall with wikilink hop to Beta Fact (opal-33)."
         )
+    elif task == "memory-conflict-pricing":
+        interp.append(
+            "- Both arms graded for memory_recall that surfaces BOTH prices and conflict=true."
+        )
     interp.append("")
     lines.extend(interp)
     return "\n".join(lines)
@@ -2386,6 +2449,7 @@ def run_trial(
                 require_onyx=bool(caps.get("require_onyx")),
                 enable_onyx=bool(caps.get("enable_onyx")),
                 require_wikilink=bool(caps.get("require_wikilink")),
+                require_conflict=bool(caps.get("require_conflict")),
             )
         # Prefer full captured stream; fall back to / merge harness dump.
         # Never *replace* combined with a longer dump — that can drop an earlier
@@ -2445,6 +2509,8 @@ def run_trial(
             checker_env_extra["OPENBENCH_REQUIRE_ONYX"] = "1"
         if caps.get("require_wikilink"):
             checker_env_extra["OPENBENCH_REQUIRE_WIKILINK"] = "1"
+        if caps.get("require_conflict"):
+            checker_env_extra["OPENBENCH_REQUIRE_CONFLICT"] = "1"
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
         return {

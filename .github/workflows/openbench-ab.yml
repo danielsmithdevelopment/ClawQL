@@ -19,6 +19,7 @@ on:
         options:
           - all
           - all-including-retired
+          - memory-conflict-pricing
           - onyx-mock-cite
           - memory-wikilink-hop
           - notify-mock-slack
@@ -219,7 +220,8 @@ jobs:
           matrix.task == 'sandbox-trusted-compute' ||
           matrix.task == 'composed-safe-rollout' ||
           matrix.task == 'onyx-mock-cite' ||
-          matrix.task == 'memory-wikilink-hop'
+          matrix.task == 'memory-wikilink-hop' ||
+          matrix.task == 'memory-conflict-pricing'
         run: |
           echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
@@ -269,6 +271,9 @@ jobs:
             echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           fi
           if [ "${{ matrix.task }}" = "memory-wikilink-hop" ]; then
+            echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
+          fi
+          if [ "${{ matrix.task }}" = "memory-conflict-pricing" ]; then
             echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           fi
           echo "::notice::${{ matrix.task }} → arms=clawql-on,off timeout=${OPENBENCH_TIMEOUT_S:-180}s"

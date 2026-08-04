@@ -12,7 +12,7 @@ document is the **scoreboard + run diary**.
 | Default model | `openrouter/deepseek/deepseek-chat` |
 | Harness | OpenCode → clawql-inference |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T08:55Z |
+| Last ledger update | 2026-08-04T16:40Z |
 | CI matrix control | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push |
 | Task explanations | [`openbench-task-explanations.md`](./openbench-task-explanations.md) — prove / why / how for every cell |
 
@@ -55,6 +55,7 @@ history). Move the best WIN into the headline table if it improves the claim.
 | `composed-safe-rollout` | search→dry_run×2→audit→ingest | **1.0** (5 turns, 79s) | **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) | **WIN** |
 | `onyx-mock-cite` | Stubbed Onyx knowledge cite | **1.0** (3 turns, 17s) | **0.0** | [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189) | **WIN** |
 | `memory-wikilink-hop` | Recall follows [[wikilink]] hop | **1.0** (3 turns, 56s) | **0.0** | [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189) | **WIN** |
+| `memory-conflict-pricing` | Surface conflicting vault prices (no synthesis) | — | — | pending | **in flight** |
 
 Replicated Ouroboros WINs also on [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519) (allow + deny both on 1.0 / off 0.0).
 
@@ -285,9 +286,13 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 ## Open gaps (not yet headline WIN)
 
 1. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2) — Phase 0 in [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
-2. **Phase 1 advanced:** `memory-conflict-pricing` (B-4.1), `codegraph-impact-edit` (B-3.1 lite) — not shipped yet.
+2. **Phase 1 advanced:** `memory-conflict-pricing` (B-4.1) **in flight** on `pr_active`; `codegraph-impact-edit` (B-3.1 lite) next.
 3. Optional later: agentic external benches / domain HLE-analog (B-6) after fine-tune — not closed-book HLE.
 4. Blocked: B-1 flywheel (needs FT v1), B-5 NSV (needs metric export), full live IDP pipeline (ops).
+
+### 2026-08-04 — Phase 1 B-4.1 shipped (awaiting CI)
+
+`pr_active` = `memory-conflict-pricing`. Multi-file vault seed with Acme Widget Pro prices 42 (2026-01-15) vs 55 (2026-06-01). Graders require both prices + `conflict:true` + real `memory_recall` (reject single-price or synthesized 48).
 
 ### Replication queue (Phase 0)
 

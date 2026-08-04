@@ -184,8 +184,8 @@ Docs still mark DAOS NSV/SGDOP as **roadmap / not production-hardened** — keep
 
 Work **in this order** unless blocked:
 
-1. **[P0-a]** Write replication queue into ledger (3 cells).  
-2. **[B4.1-a→f]** Ship `memory-conflict-pricing` to `pr_active`, watch CI, retire.  
+1. **[P0-a]** Write replication queue into ledger (3 cells). ✅  
+2. **[B4.1-a→f]** Ship `memory-conflict-pricing` to `pr_active`, watch CI, retire. ← **in progress**  
 3. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire.  
 4. **[B4.2-0] / [B4.3-0]** Spikes; only then optional cells.  
 5. **[P0-c]** First n=3 dispatch on one headline cell.  

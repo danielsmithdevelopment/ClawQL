@@ -83,6 +83,7 @@ Legend: **Live** = OpenBench A/B · **Context** = planning-context stats · **Un
 | `pageindex_*` | Hierarchical doc Q&A without stuffing full text | **Live WIN** `pageindex-section-qa` + `hybrid-recall-source-pin` ([30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063)) | Retired from PR |
 | `codegraph_*` | Structural code Q&A | **Live WIN** `codegraph-guided-edit` ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) | Retired from PR |
 | Wikilinks / graph hops | Recall follows `[[links]]` | **Live WIN** `memory-wikilink-hop` ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)) | Retired from PR |
+| Adversarial / conflict recall | Surface conflicting vault facts | **OpenBench in flight** `memory-conflict-pricing` | Retire after clean WIN |
 
 ### Documents / knowledge
 
@@ -168,7 +169,7 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 
 ### Phase 1 advanced (frugal tool delta — no fine-tune)
 
-19. **`memory-conflict-pricing` (B-4.1)** — conflicting vault entries; agent must flag conflict, not synthesize.  
+19. **`memory-conflict-pricing` (B-4.1)** — shipped on `pr_active` (conflicting vault prices; no synthesis).  
 20. **`codegraph-impact-edit` (B-3.1 lite)** — cross-file edit via index/query/neighbors; miss dependents = fail.  
 21. Spikes only: B-4.2 stale cache · B-4.3 Panguard×`memory_ingest` — ship only if product behavior matches claim.
 
