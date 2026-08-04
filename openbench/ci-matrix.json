@@ -2,10 +2,8 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "Phase 1 advanced: memory-conflict-pricing (B-4.1) on pr_active.",
-  "pr_active": [
-    "memory-conflict-pricing"
-  ],
+  "live_resume_note": "Phase 1 B-4.1 WIN retired; pr_active empty pending codegraph-impact-edit (B-3.1).",
+  "pr_active": [],
   "retired": {
     "memory-dependent-continuation": {
       "reason": "Verified WIN replicated (on 1.0 / off 0.333)",
@@ -86,6 +84,10 @@
     "memory-wikilink-hop": {
       "reason": "Verified WIN \u2014 memory_recall wikilink hop to Beta Fact (on 1.0 / off 0.0)",
       "evidence_run": "30893132189"
+    },
+    "memory-conflict-pricing": {
+      "reason": "Verified WIN \u2014 conflict.json surfaces both vault prices (on 1.0 / off 0.0)",
+      "evidence_run": "30930194746"
     }
   },
   "ouroboros_pr_enabled": false,

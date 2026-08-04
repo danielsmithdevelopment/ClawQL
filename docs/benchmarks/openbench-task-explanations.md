@@ -291,7 +291,7 @@ Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../o
 | **Evidence** | on **1.0** (3 turns, ~56s) / off **0.0** — [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189). Tools: clawql_memory_recall, write. |
 | **Does *not* prove** | Vector/hybrid backends; deep multi-hop graphs; R2 sync. |
 
-### `memory-conflict-pricing` (B-4.1 — in flight)
+### `memory-conflict-pricing` (B-4.1)
 
 | | |
 | --- | --- |
@@ -299,15 +299,16 @@ Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../o
 | **Why it matters** | Silent confabulation on stale data is a compliance failure mode. First adversarial-memory OpenBench cell. |
 | **How** | Multi-file seed: Jan note `CLAWQL_PRICE_USD=42`, Jun note `=55`, decoy `=99`. Require real `clawql_memory_recall` + `conflict.json` with both 42 and 55 and `conflict:true`. Reject single-price or `48`. |
 | **What success looks like** | on: recall both → conflict.json; off: no memory tools → 0.0. |
-| **Evidence** | Pending live A/B on `pr_active`. |
+| **Evidence** | on **1.0** (3 turns, ~29s) / off **0.0** — [30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746). |
 | **Does *not* prove** | Automatic resolution policy; Presidio; Panguard blocking hostile ingest (B-4.3). |
 
 ## Next cells (backlog)
 
 1. ~~**notify / sandbox / composed**~~ — verified WINs on [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305); retired.  
 2. ~~**Onyx mock cite** + **memory wikilink hop**~~ — verified on [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189); retired.  
-3. **`memory-conflict-pricing` (B-4.1)** — in flight; then **`codegraph-impact-edit` (B-3.1 lite)**. Full plan: [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).  
+3. ~~**`memory-conflict-pricing` (B-4.1)**~~ — verified on [30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746); retired. Next: **`codegraph-impact-edit` (B-3.1 lite)**. Full plan: [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).  
 4. **n≥3 trials** on headline WINs (Phase 0 / dispatch).  
-5. Later: B-1 flywheel (blocked on FT), B-2 stubbed IDP pipeline, B-6 domain compliance (not closed-book HLE).
+5. **Trace collection** from GHA is live — [`openbench-trace-collection.md`](./openbench-trace-collection.md).  
+6. Later: B-1 flywheel (blocked on FT), B-2 stubbed IDP pipeline, B-6 domain compliance (not closed-book HLE).
 
 Append new run IDs to the [ledger](./openbench-results-ledger.md).

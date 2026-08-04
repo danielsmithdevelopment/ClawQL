@@ -187,9 +187,9 @@ Docs still mark DAOS NSV/SGDOP as **roadmap / not production-hardened** — keep
 Work **in this order** unless blocked:
 
 1. **[P0-a]** Write replication queue into ledger (3 cells). ✅  
-2. **[B4.1-a→f]** Ship `memory-conflict-pricing` to `pr_active`, watch CI, retire. ← **in progress**  
+2. **[B4.1-a→f]** Ship `memory-conflict-pricing` to `pr_active`, watch CI, retire. ✅ [30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746)  
 3. **[Trace-0]** Persist OpenBench call-store JSONL from GHA (`CLAWQL_INFERENCE_STORE` + artifact). ✅ see [`openbench-trace-collection.md`](./openbench-trace-collection.md)  
-4. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire.  
+4. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire. ← **next**  
 5. **[B4.2-0] / [B4.3-0]** Spikes; only then optional cells.  
 6. **[P0-c]** First n=3 dispatch on one headline cell.  
 7. Park B-1/B-2-full/B-5/B-6 until their gates open; keep specs updated here. Collect traces on every live cell in the meantime.
@@ -202,7 +202,7 @@ Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger,
 
 | Suite | First concrete task ID | `pr_active` when? |
 | ----- | ---------------------- | ----------------- |
-| B-4.1 | `memory-conflict-pricing` | Phase 1 next |
+| B-4.1 | `memory-conflict-pricing` | ✅ retired WIN |
 | B-3.1 | `codegraph-impact-edit` | Phase 1 after or parallel (max-parallel 2) |
 | B-4.2 | `cache-stale-after-write` | After spike OK |
 | B-4.3 | `policy-deny-memory-ingest` | After spike OK |
