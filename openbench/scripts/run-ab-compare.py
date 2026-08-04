@@ -745,6 +745,37 @@ def run_arm_on(
         combined = _dec_timeout_output(exc)
         code = 124
 
+    # Empty-vault roundtrip: cheap models often stop after reading sealed/ only.
+    if (
+        require_memory_roundtrip
+        and arm == "clawql-on"
+        and not timed_out
+        and memory_roundtrip_incomplete(combined)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 25:
+            cont_file = workdir / ".openbench_memory_roundtrip_nudge.md"
+            cont_file.write_text(MEMORY_ROUNDTRIP_NUDGE, encoding="utf-8")
+            cont_timeout = max(25, min(90, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_rt = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_rt.stdout or "") + (proc_rt.stderr or "")
+                code = proc_rt.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
     # Cheap models often stop after memory_recall; one write-focused nudge with
     # vault notes inlined so a second recall is unnecessary.
     if vault and not disable_memory and not timed_out and recalled_without_writes(combined):
@@ -1126,6 +1157,7 @@ def run_trial(
                 task_hard_caps=caps,
                 require_search=bool(caps.get("require_search")),
                 require_execute=bool(caps.get("require_execute")),
+                require_memory_roundtrip=bool(caps.get("require_memory_roundtrip")),
             )
         # Prefer full captured stream; fall back to workdir harness dump.
         combined = agent.pop("_combined_log", None) or ""
