@@ -7,18 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+## [7.2.0] - 2026-08-04
 
-- **IDP tracking hygiene** — matrix + gap-closure plan mark **#241–#258** / OpenClaw profile **#227** as shipped; epic [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) checklist closed. Remaining IDP **Partial** rows: Stirling document-stage orchestration, Nextcloud background queue, Coneshare analytics depth, classifier train/promote BYO.
-- **Team vault auto-push** — quiet debounce default **2s** (coalesce bursts) plus **30s min interval** between pushes during sustained ingest (no R2 spam). Pending dirty writes still **flush on shutdown** so short-lived MCP/Cloud Agent processes do not drop notes. Env: `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`, `CLAWQL_SYNC_AUTO_PUSH_MIN_MS`.
-
-### Fixed
-
-- **MCP stdio / Cursor discovery** — `dotenv` ≥17 prints `◇ injected env …` to **stdout** by default; that corrupts JSON-RPC and makes Cursor report `clawql` as failed tool discovery. `src/load-env.ts` now always passes **`quiet: true`**.
-- **MCP stdio Ready latency** — default six-vendor `loadSpec()` (~5–10s) no longer blocks the stdio transport. Specs warm in the background after **Ready**; `search` / `execute` still await the cache on first use.
+Minor release on the **7.0 Agentic Gateway** line: **Memory Stack 2.0** (IDF + local MiniLM, index-first, git Mode A, hybrid RRF, WORM seal, CodeGraph flywheel), Convergence Week **MCP 2026-07-28 / OKF v0.2 / PorTAL**, native **CodeGraph**, and a deeper **IDP** document pipeline. No intentional semver-major breaks vs **7.1.0** — see behavioral notes in release notes. Release notes: **[`RELEASE_NOTES_v7.2.0.md`](RELEASE_NOTES_v7.2.0.md)**. Announcement drafts: **[`docs/announcements/announcement-drafts-v7.2.0.md`](docs/announcements/announcement-drafts-v7.2.0.md)**.
 
 ### Added
 
+- **Memory Stack — Layer 2 ranking** ([#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801)) — IDF + log-TF keyword scores; wikilink surface; honest embedding sync; **in-process local MiniLM** (`@xenova/transformers` / `Xenova/all-MiniLM-L6-v2`); **vectors mandatory** (keyword-only requires `CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY=1`); recall bakeoff regressions; default `CLAWQL_MEMORY_RECALL_MIN_SCORE` **0.05**.
+- **Memory Stack — index-first recall** ([#803](https://github.com/danielsmithdevelopment/ClawQL/pull/803)) — survey OKF `index.md` / `log.md` before note bodies; large-vault body restriction; catalog boost ([`docs/memory/okf.md`](docs/memory/okf.md)).
+- **Memory Stack — git-native Mode A** ([#804](https://github.com/danielsmithdevelopment/ClawQL/pull/804)) — `CLAWQL_MEMORY_BACKEND=git` commit-on-ingest; optional push; `result.git` on ingest.
+- **Memory Stack — hybrid RRF** ([#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806)) — path-keyed reciprocal rank fusion; `CLAWQL_MEMORY_RECALL_HYBRID=1` master switch.
+- **Memory Stack — WORM seal + recall events** ([#807](https://github.com/danielsmithdevelopment/ClawQL/pull/807)) — auto `worm_ref: sha256:…` on ingest; `MEMORY_RECALL` WORM events.
+- **Memory Stack — CodeGraph → vault flywheel** ([#808](https://github.com/danielsmithdevelopment/ClawQL/pull/808)) — `codegraph_impact` ingests `type: code_change` notes (disable with `CLAWQL_CODEGRAPH_CODE_CHANGE_INGEST=0`).
 - **Local Privacy Filter gateway backup** ([#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)) — opt-in `CLAWQL_ENABLE_PRIVACY_FILTER=1` runs a **second local** redact pass after Presidio (`maybeGatewayRedactText`). Reference sidecar [`deployment/samples/privacy-filter-http/`](deployment/samples/privacy-filter-http/) (demo heuristics / live `openai/privacy-filter` weights — **no OpenAI API**). Helm `enablePrivacyFilter` + `documentPipeline.privacyFilter`. Docs: [`docs/security/privacy-filter-local.md`](docs/security/privacy-filter-local.md).
 - **Vertical Docker Compose stacks** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) — **healthcare**, **legal**, and **education** stacks alongside lending (`docker/compose/*.compose.yml` + env templates + sample packs). Validate with **`make compose-vertical-config-test`**.
 - **HITL Label Studio pre-annotations** ([#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)) — optional **`tasks[].predictions`** on **`hitl_enqueue_label_studio`** (Zod + size limits); reference **`sample-tasks.json`** packs for lending / healthcare / legal / education.
@@ -33,6 +33,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Streamable HTTP MCP 2026-07-28** — `/mcp` accepts `mcp-protocol-version: 2026-07-28` with per-request stateless transports; JSON-RPC `discover` / `POST /mcp/discover`; Helm alias `clawql-mcp-grpc.enabled`.
 - **OKF v0.2 trust signals** on vault memory — `generated`, `verified`, `sources`, `stale_after`, `status`, `superseded_by`; `clawql memory lint|migrate|query`; MEMORY_* WORM events; recall excludes `retracted` and down-weights stale ([`docs/memory/okf.md`](docs/memory/okf.md)).
 - **PorTAL flywheel** — `--format portal-bundle` (task_latent + alignment stubs + `adapter_manifest.cqm`), `--okf-verified` / `--okf-status` export filters, `clawql inference finetune refit` ([`docs/inference/portal-flywheel.md`](docs/inference/portal-flywheel.md)).
+
+### Changed
+
+- **IDP tracking hygiene** — matrix + gap-closure plan mark **#241–#258** / OpenClaw profile **#227** as shipped; epic [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) checklist closed. Remaining IDP **Partial** rows: Stirling document-stage orchestration, Nextcloud background queue, Coneshare analytics depth, classifier train/promote BYO.
+- **Team vault auto-push** — quiet debounce default **2s** (coalesce bursts) plus **30s min interval** between pushes during sustained ingest (no R2 spam). Pending dirty writes still **flush on shutdown** so short-lived MCP/Cloud Agent processes do not drop notes. Env: `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`, `CLAWQL_SYNC_AUTO_PUSH_MIN_MS`.
+- **Workspace + Helm** — all `clawql-*` packages and chart `appVersion` → **7.2.0** (`charts/clawql-mcp` **0.7.2**, operator **0.2.2**, idp **0.1.2**).
+
+### Fixed
+
+- **MCP stdio / Cursor discovery** — `dotenv` ≥17 prints `◇ injected env …` to **stdout** by default; that corrupts JSON-RPC and makes Cursor report `clawql` as failed tool discovery. `src/load-env.ts` now always passes **`quiet: true`**.
+- **MCP stdio Ready latency** — default six-vendor `loadSpec()` (~5–10s) no longer blocks the stdio transport. Specs warm in the background after **Ready**; `search` / `execute` still await the cache on first use.
 
 ## [7.1.0] - 2026-07-20
 

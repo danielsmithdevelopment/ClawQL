@@ -1,6 +1,6 @@
 {
   "name": "clawql-codegraph",
-  "version": "7.1.0",
+  "version": "7.2.0",
   "description": "Structural code knowledge graph for ClawQL Memory — Graphify-style tree-sitter/AST indexing without embeddings",
   "license": "MIT",
   "type": "module",
