@@ -284,6 +284,31 @@ async function handleCodegraphSync(args: unknown): Promise<{
   };
 }
 
+async function handleCodegraphImpact(args: unknown): Promise<{
+  content: { type: "text"; text: string }[];
+}> {
+  const impact = await codegraphImpact(args);
+  let vaultIngestResult: unknown;
+  const { codeChangeVaultFlywheelEnabled, buildCodeChangeIngestProposal } =
+    await import("../recall/codegraph-code-change.js");
+  if (codeChangeVaultFlywheelEnabled()) {
+    const proposal = buildCodeChangeIngestProposal(
+      impact as Parameters<typeof buildCodeChangeIngestProposal>[0]
+    );
+    if (proposal) {
+      vaultIngestResult = await runMemoryIngest(proposal);
+    }
+  }
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify({ ...impact, vaultIngestResult }, null, 2),
+      },
+    ],
+  };
+}
+
 async function handleCodegraphSyncGraphify(args: unknown): Promise<{
   content: { type: "text"; text: string }[];
 }> {
@@ -440,11 +465,7 @@ export function createMemoryPlugin(): Plugin {
           yield* api.registerMcpTool({
             name: "codegraph_impact",
             schema: codegraphImpactToolSchema,
-            handler: async (args) => ({
-              content: [
-                { type: "text", text: JSON.stringify(await codegraphImpact(args), null, 2) },
-              ],
-            }),
+            handler: (args) => handleCodegraphImpact(args),
           });
           yield* api.registerMcpTool({
             name: "codegraph_import_graphify",
