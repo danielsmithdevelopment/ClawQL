@@ -20,7 +20,7 @@ Point `mcp-api-adapter` at any MCP server and instantly get REST, GraphQL, Strea
 
 ## The mismatch
 
-MCP won the *tool catalog* war. Agents discover capabilities with `ListTools` and invoke them with `CallTool`. Local servers speak **stdio**; remote ones speak **Streamable HTTP**. That is fine for Cursor, Claude Desktop, and other MCP-native clients.
+MCP won the _tool catalog_ war. Agents discover capabilities with `ListTools` and invoke them with `CallTool`. Local servers speak **stdio**; remote ones speak **Streamable HTTP**. That is fine for Cursor, Claude Desktop, and other MCP-native clients.
 
 It is awkward for everyone else.
 
@@ -28,7 +28,7 @@ A Cloudflare Worker wants `POST /memory_recall` with a JSON body. OpenWebUI want
 
 Python [mcpo](https://github.com/open-webui/mcpo) already covers part of this story — MCP → OpenAPI, stdio-centric, FastAPI-first. The gap we care about is different: **TypeScript-native**, **transport-agnostic on the left**, and **explicitly funneling production traffic to gRPC** on the right.
 
-Google has proposed gRPC as a first-class MCP transport. ClawQL already ships the production TypeScript implementation as [`mcp-grpc-transport`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-grpc-transport). What was missing was the adoption wedge: a thin adapter that makes *any* MCP server look like the APIs people already know how to call — while advertising the gRPC path in every Swagger page.
+Google has proposed gRPC as a first-class MCP transport. ClawQL already ships the production TypeScript implementation as [`mcp-grpc-transport`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-grpc-transport). What was missing was the adoption wedge: a thin adapter that makes _any_ MCP server look like the APIs people already know how to call — while advertising the gRPC path in every Swagger page.
 
 That package is **`mcp-api-adapter`**.
 
@@ -54,13 +54,13 @@ That package is **`mcp-api-adapter`**.
 
 You point the adapter at **one** upstream. It introspects `ListTools` and scaffolds the rest:
 
-| Surface | What you get |
-| ------- | ------------ |
-| **OpenAPI / REST** | `POST /{toolName}` — JSON body = tool arguments; Swagger at `/docs` |
-| **GraphQL** | Per-tool mutations + a generic `callTool` escape hatch; GraphiQL at `/graphiql` |
-| **Streamable HTTP MCP** | Same catalog re-exported at `/mcp` for IDE / agent clients |
-| **gRPC** | `model_context_protocol.Mcp/CallTool` via `mcp-grpc-transport` — reused if upstream is already gRPC, otherwise scaffolded locally |
-| **gen-cli** | A zero-dependency Node CLI that `POST`s to the REST surface (PrintingPress later for signed binaries) |
+| Surface                 | What you get                                                                                                                      |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **OpenAPI / REST**      | `POST /{toolName}` — JSON body = tool arguments; Swagger at `/docs`                                                               |
+| **GraphQL**             | Per-tool mutations + a generic `callTool` escape hatch; GraphiQL at `/graphiql`                                                   |
+| **Streamable HTTP MCP** | Same catalog re-exported at `/mcp` for IDE / agent clients                                                                        |
+| **gRPC**                | `model_context_protocol.Mcp/CallTool` via `mcp-grpc-transport` — reused if upstream is already gRPC, otherwise scaffolded locally |
+| **gen-cli**             | A zero-dependency Node CLI that `POST`s to the REST surface (PrintingPress later for signed binaries)                             |
 
 No ClawQL install required. It is a standalone npm package.
 
@@ -118,10 +118,10 @@ One catalog. Five ways to invoke it. One story for production.
 
 Direction matters:
 
-| Direction | Product | Audience |
-| --------- | ------- | -------- |
-| **OpenAPI → MCP** | ClawQL `search` / `execute` | Agents discovering *upstream* REST/GraphQL/gRPC APIs as tools |
-| **MCP → APIs** | `mcp-api-adapter` | Workers, OpenWebUI, GraphQL clients, IDEs, mesh — wrapping *any* MCP server |
+| Direction         | Product                     | Audience                                                                    |
+| ----------------- | --------------------------- | --------------------------------------------------------------------------- |
+| **OpenAPI → MCP** | ClawQL `search` / `execute` | Agents discovering _upstream_ REST/GraphQL/gRPC APIs as tools               |
+| **MCP → APIs**    | `mcp-api-adapter`           | Workers, OpenWebUI, GraphQL clients, IDEs, mesh — wrapping _any_ MCP server |
 
 ClawQL’s **Agentic Gateway** is a different product surface. `mcp-api-adapter` only adapts MCP tools onto call APIs (including re-exporting MCP itself when that is useful). In marketing we say **OpenAPI on-ramp**, **GraphQL on-ramp**, or **MCP tools as REST/GraphQL** — not bare “OpenAPI gateway,” which collides with Core’s inverse direction.
 
@@ -141,12 +141,12 @@ Because upstream shape rarely matches client shape.
 
 ## What ships today
 
-| Version | What landed |
-| ------- | ----------- |
-| `0.3.x` | Any MCP upstream + OpenAPI + GraphQL + gRPC scaffold |
+| Version | What landed                                             |
+| ------- | ------------------------------------------------------- |
+| `0.3.x` | Any MCP upstream + OpenAPI + GraphQL + gRPC scaffold    |
 | `0.4.0` | Rename to `mcp-api-adapter` (was `mcp-openapi-gateway`) |
-| `0.5.0` | Streamable HTTP `/mcp` + `gen-cli` |
-| `0.5.1` | gRPC → `/mcp` content normalization for SDK clients |
+| `0.5.0` | Streamable HTTP `/mcp` + `gen-cli`                      |
+| `0.5.1` | gRPC → `/mcp` content normalization for SDK clients     |
 
 In-repo now; independent npm publish follows the same cadence model as `mcp-grpc-transport`.
 
