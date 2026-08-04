@@ -1,7 +1,7 @@
 /**
  * Connect to any MCP upstream (gRPC, stdio, or Streamable HTTP) and expose:
  * - `callTool` for REST/GraphQL
- * - optional local gRPC MCP surface (scaffolded via mcp-grpc-transport) for stdio/HTTP
+ * - `createBridgedMcpServer` for Streamable HTTP `/mcp` + local gRPC scaffold
  */
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -15,13 +15,24 @@ import {
   type StartedGrpcServer,
 } from "mcp-grpc-transport";
 import { callToolViaGrpc, collapseSdkToolResult } from "./call.js";
-import { wireDelegationHandlers } from "./delegate.js";
+import { wireDelegationHandlers, wireGrpcDelegationHandlers } from "./delegate.js";
 import type {
+  ApiSurface,
   CallToolFn,
   ToolCatalog,
   UpstreamKind,
   UpstreamOptions,
 } from "./types.js";
+
+const ADAPTER_VERSION = "0.5.0";
+
+const BRIDGE_CAPS = {
+  capabilities: {
+    tools: {},
+    resources: {},
+    prompts: {},
+  },
+} as const;
 
 export type UpstreamConnection = {
   kind: UpstreamKind;
@@ -32,6 +43,8 @@ export type UpstreamConnection = {
   grpcAddress?: string;
   /** True when this process started a local gRPC MCP server. */
   localGrpc: boolean;
+  /** Create an McpServer that delegates to this upstream (for /mcp sessions + gRPC). */
+  createBridgedMcpServer: () => McpServer;
   refreshTools: () => Promise<ListedMcpTool[]>;
   close: () => Promise<void>;
 };
@@ -60,63 +73,50 @@ function asListedTools(
   }));
 }
 
-function catalogSurfaces(grpcAddress: string | undefined): ToolCatalog["surfaces"] {
-  const surfaces: ToolCatalog["surfaces"] = ["openapi", "graphql"];
-  if (grpcAddress) surfaces.push("grpc");
+export function catalogSurfaces(options: {
+  grpcAddress?: string;
+  mcpPath?: string;
+}): ApiSurface[] {
+  const surfaces: ApiSurface[] = ["openapi", "graphql"];
+  if (options.mcpPath) surfaces.push("mcp");
+  if (options.grpcAddress) surfaces.push("grpc");
   return surfaces;
 }
 
 export function buildCatalogFromUpstream(
   upstream: UpstreamConnection,
-  tools?: ListedMcpTool[]
+  extras?: { tools?: ListedMcpTool[]; mcpPath?: string }
 ): ToolCatalog {
-  const list = tools ?? upstream.tools;
+  const list = extras?.tools ?? upstream.tools;
+  const mcpPath = extras?.mcpPath;
   return {
     tools: list,
     fetchedAt: new Date().toISOString(),
     grpcAddress: upstream.grpcAddress,
+    mcpPath,
     upstream: upstream.label,
     upstreamKind: upstream.kind,
-    surfaces: catalogSurfaces(upstream.grpcAddress),
+    surfaces: catalogSurfaces({
+      grpcAddress: upstream.grpcAddress,
+      mcpPath,
+    }),
   };
 }
 
+function newBridgeServer(name: string): McpServer {
+  return new McpServer({ name, version: ADAPTER_VERSION }, { ...BRIDGE_CAPS });
+}
+
 async function scaffoldLocalGrpc(
-  client: Client,
+  createBridgedMcpServer: () => McpServer,
   listen: string
 ): Promise<StartedGrpcServer | undefined> {
   const prev = process.env.ENABLE_GRPC;
   process.env.ENABLE_GRPC = "1";
   try {
     return await maybeStartGrpcMcpServer({
-      createMcpServer: () => {
-        const mcp = new McpServer(
-          { name: "mcp-api-adapter-bridge", version: "0.4.0" },
-          {
-            capabilities: {
-              tools: {},
-              resources: {},
-              prompts: {},
-            },
-          }
-        );
-        wireDelegationHandlers(mcp.server, client);
-        return mcp;
-      },
-      createSessionMcpServer: async () => {
-        const mcp = new McpServer(
-          { name: "mcp-api-adapter-bridge-session", version: "0.4.0" },
-          {
-            capabilities: {
-              tools: {},
-              resources: {},
-              prompts: {},
-            },
-          }
-        );
-        wireDelegationHandlers(mcp.server, client);
-        return mcp;
-      },
+      createMcpServer: createBridgedMcpServer,
+      createSessionMcpServer: async () => createBridgedMcpServer(),
       bindAddress: listen,
     });
   } finally {
@@ -139,6 +139,14 @@ export async function connectUpstream(
       address,
       protocolVersion: upstream.protocolVersion,
     });
+    const createBridgedMcpServer = () => {
+      const mcp = newBridgeServer("mcp-api-adapter-bridge");
+      wireGrpcDelegationHandlers(mcp.server, {
+        address,
+        protocolVersion: upstream.protocolVersion,
+      });
+      return mcp;
+    };
     const connection: UpstreamConnection = {
       kind: "grpc",
       label: address,
@@ -152,6 +160,7 @@ export async function connectUpstream(
         }),
       grpcAddress: address,
       localGrpc: false,
+      createBridgedMcpServer,
       refreshTools: async () => {
         connection.tools = await listToolsUnaryGrpc({
           address,
@@ -164,7 +173,7 @@ export async function connectUpstream(
     return connection;
   }
 
-  const client = new Client({ name: "mcp-api-adapter", version: "0.4.0" });
+  const client = new Client({ name: "mcp-api-adapter", version: ADAPTER_VERSION });
   let label: string;
   let kind: UpstreamKind;
   let closeTransport: () => Promise<void> = async () => undefined;
@@ -223,6 +232,12 @@ export async function connectUpstream(
     return collapsed;
   };
 
+  const createBridgedMcpServer = () => {
+    const mcp = newBridgeServer("mcp-api-adapter-bridge");
+    wireDelegationHandlers(mcp.server, client);
+    return mcp;
+  };
+
   let grpcAddress: string | undefined;
   let localGrpc = false;
   let grpcServer: StartedGrpcServer | undefined;
@@ -230,7 +245,7 @@ export async function connectUpstream(
   const grpcListen = options?.grpcListen;
   if (grpcListen !== false) {
     const listen = (typeof grpcListen === "string" && grpcListen.trim()) || "127.0.0.1:0";
-    grpcServer = await scaffoldLocalGrpc(client, listen);
+    grpcServer = await scaffoldLocalGrpc(createBridgedMcpServer, listen);
     if (grpcServer) {
       grpcAddress = grpcServer.address;
       localGrpc = true;
@@ -244,6 +259,7 @@ export async function connectUpstream(
     callTool,
     grpcAddress,
     localGrpc,
+    createBridgedMcpServer,
     refreshTools: async () => {
       const next = await client.listTools();
       connection.tools = asListedTools(next.tools ?? []);

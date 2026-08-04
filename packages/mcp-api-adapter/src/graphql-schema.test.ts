@@ -24,7 +24,7 @@ describe("graphql-schema", () => {
       grpcAddress: "127.0.0.1:50051",
       upstream: "127.0.0.1:50051",
       upstreamKind: "grpc",
-      surfaces: ["openapi", "graphql", "grpc"],
+      surfaces: ["openapi", "graphql", "mcp", "grpc"],
       tools: [
         {
           name: "echo",

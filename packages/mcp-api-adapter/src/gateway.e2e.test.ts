@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { randomUUID } from "node:crypto";
 import { createServer, type Server as HttpServer } from "node:http";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
@@ -11,6 +13,7 @@ import {
   type StartedGrpcServer,
 } from "mcp-grpc-transport";
 import { startMcpApiAdapter, type StartedMcpApiAdapter } from "./server.js";
+import { collapseSdkToolResult } from "./call.js";
 
 function createDemoMcpServer(): McpServer {
   const server = new McpServer({ name: "openapi-gateway-e2e", version: "0.0.0" });
@@ -134,7 +137,7 @@ describe("mcp-api-adapter e2e (gRPC upstream)", () => {
       surfaces: string[];
     };
     expect(toolsBody.upstreamKind).toBe("grpc");
-    expect(toolsBody.surfaces).toEqual(["openapi", "graphql", "grpc"]);
+    expect(toolsBody.surfaces).toEqual(["openapi", "graphql", "mcp", "grpc"]);
     expect(toolsBody.tools.map((t) => t.name).sort()).toEqual(["add", "echo"]);
 
     const restEcho = await fetch(`${gateway.url}/echo`, {
@@ -182,7 +185,7 @@ describe("mcp-api-adapter e2e (HTTP upstream → scaffold OpenAPI+GraphQL+gRPC)"
     upstream = undefined;
   });
 
-  it("wraps Streamable HTTP MCP and exposes REST, GraphQL, and scaffolded gRPC", async () => {
+  it("wraps Streamable HTTP MCP and exposes REST, GraphQL, /mcp, and scaffolded gRPC", async () => {
     process.env.ENABLE_GRPC_REFLECTION = "0";
     upstream = await startStreamableHttpUpstream();
 
@@ -192,18 +195,22 @@ describe("mcp-api-adapter e2e (HTTP upstream → scaffold OpenAPI+GraphQL+gRPC)"
       port: 0,
       title: "http-upstream e2e",
       grpcListen: "127.0.0.1:0",
+      mcpPath: "/mcp",
     });
 
     expect(gateway.upstreamKind).toBe("http");
     expect(gateway.grpcAddress).toBeTruthy();
+    expect(gateway.mcpPath).toBe("/mcp");
 
     const health = await fetch(`${gateway.url}/healthz`);
     const healthBody = (await health.json()) as {
       surfaces: string[];
       upstreamKind: string;
+      mcpPath?: string;
     };
     expect(healthBody.upstreamKind).toBe("http");
-    expect(healthBody.surfaces).toEqual(["openapi", "graphql", "grpc"]);
+    expect(healthBody.mcpPath).toBe("/mcp");
+    expect(healthBody.surfaces).toEqual(["openapi", "graphql", "mcp", "grpc"]);
 
     const restAdd = await fetch(`${gateway.url}/add`, {
       method: "POST",
@@ -231,5 +238,24 @@ describe("mcp-api-adapter e2e (HTTP upstream → scaffold OpenAPI+GraphQL+gRPC)"
       arguments: { a: 2, b: 40 },
     });
     expect(JSON.parse(lastNonEmptyCallToolText(grpcAdd))).toEqual({ sum: 42 });
+
+    const mcpClient = new Client({ name: "e2e-mcp-client", version: "0.0.0" });
+    const mcpTransport = new StreamableHTTPClientTransport(
+      new URL(`${gateway.url}${gateway.mcpPath}`)
+    );
+    await mcpClient.connect(mcpTransport);
+    try {
+      const listed = await mcpClient.listTools();
+      expect(listed.tools.map((t) => t.name).sort()).toEqual(["add", "echo"]);
+      const result = await mcpClient.callTool({
+        name: "echo",
+        arguments: { message: "via-mcp-http" },
+      });
+      const collapsed = collapseSdkToolResult(result);
+      expect(collapsed.structuredContent?.echo).toBe("via-mcp-http");
+    } finally {
+      await mcpClient.close().catch(() => {});
+      await mcpTransport.close().catch(() => {});
+    }
   });
 });

@@ -4,6 +4,7 @@ import { httpBodyFromCollapsed } from "./call.js";
 import { refreshCatalog } from "./catalog.js";
 import { swaggerDocsHtml } from "./docs-html.js";
 import { attachGraphqlRoutes } from "./graphql-http.js";
+import { attachMcpHttpRoutes } from "./mcp-http.js";
 import { buildOpenApiDocument } from "./openapi.js";
 import { isSafeToolPathName } from "./schema-convert.js";
 import type {
@@ -29,6 +30,14 @@ function readApiKey(req: Request): string | undefined {
   return undefined;
 }
 
+function resolveMcpPath(mcpPath: string | false | undefined): string | undefined {
+  if (mcpPath === false) return undefined;
+  if (mcpPath === undefined) return "/mcp";
+  const trimmed = mcpPath.trim();
+  if (!trimmed || trimmed === "/") return "/mcp";
+  return trimmed.startsWith("/") ? trimmed.replace(/\/$/, "") || "/mcp" : `/${trimmed}`;
+}
+
 export type CreateMcpApiAdapterAppOptions = {
   getCatalog: () => ToolCatalog;
   callTool: CallToolFn;
@@ -36,6 +45,9 @@ export type CreateMcpApiAdapterAppOptions = {
   title?: string;
   serverName?: string;
   grpcAddress?: string;
+  /** When set, mount Streamable HTTP MCP at this path (before `/:toolName`). */
+  mcpPath?: string;
+  createBridgedMcpServer?: () => import("@modelcontextprotocol/sdk/server/mcp.js").McpServer;
 };
 
 export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): Express {
@@ -63,6 +75,7 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
       upstream: catalog.upstream,
       upstreamKind: catalog.upstreamKind,
       grpcAddress: catalog.grpcAddress ?? options.grpcAddress,
+      mcpPath: catalog.mcpPath ?? options.mcpPath,
       toolCount: catalog.tools.length,
       fetchedAt: catalog.fetchedAt,
       surfaces: catalog.surfaces,
@@ -85,6 +98,7 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
         serverName: options.serverName,
         grpcAddress: catalog.grpcAddress ?? options.grpcAddress,
         publicBaseUrl,
+        mcpPath: catalog.mcpPath ?? options.mcpPath,
       })
     );
   });
@@ -100,8 +114,25 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
     grpcAddress: options.grpcAddress,
   });
 
+  if (options.mcpPath && options.createBridgedMcpServer) {
+    attachMcpHttpRoutes(app, {
+      path: options.mcpPath,
+      createMcpServer: options.createBridgedMcpServer,
+    });
+  }
+
+  const reserved = new Set(
+    ["tools", "docs", "openapi.json", "healthz", "graphql", "graphiql", "mcp"].concat(
+      options.mcpPath ? [options.mcpPath.replace(/^\//, "")] : []
+    )
+  );
+
   app.post("/:toolName", async (req, res) => {
     const toolName = String(req.params.toolName ?? "");
+    if (reserved.has(toolName) || toolName.includes(".")) {
+      res.status(404).json({ error: `unknown tool: ${toolName}` });
+      return;
+    }
     if (!isSafeToolPathName(toolName)) {
       res.status(400).json({ error: "invalid tool name" });
       return;
@@ -174,12 +205,13 @@ async function listenHttp(
 
 function attachRefreshTimer(
   upstream: UpstreamConnection,
+  mcpPath: string | undefined,
   setCatalog: (c: ToolCatalog) => void,
   refreshMs: number
 ): ReturnType<typeof setInterval> | undefined {
   if (refreshMs <= 0) return undefined;
   const timer = setInterval(() => {
-    void refreshCatalog(upstream)
+    void refreshCatalog(upstream, mcpPath)
       .then((next) => setCatalog(next))
       .catch((err) => {
         console.error("[mcp-api-adapter] catalog refresh failed:", err);
@@ -191,16 +223,17 @@ function attachRefreshTimer(
 
 /**
  * Point at any MCP server (stdio | Streamable HTTP | gRPC) and serve
- * OpenAPI + GraphQL + (optional) gRPC for the same tools.
+ * OpenAPI + GraphQL + Streamable HTTP `/mcp` + (optional) gRPC for the same tools.
  */
 export async function startMcpApiAdapter(
   options: McpApiAdapterOptions
 ): Promise<StartedMcpApiAdapter> {
+  const mcpPath = resolveMcpPath(options.mcpPath);
   const upstream = await connectUpstream(options.upstream, {
     grpcListen: options.grpcListen,
   });
 
-  let catalog = buildCatalogFromUpstream(upstream);
+  let catalog = buildCatalogFromUpstream(upstream, { mcpPath });
 
   const app = createMcpApiAdapterApp({
     getCatalog: () => catalog,
@@ -209,6 +242,8 @@ export async function startMcpApiAdapter(
     title: options.title,
     serverName: options.serverName,
     grpcAddress: upstream.grpcAddress ?? options.grpcAddress,
+    mcpPath,
+    createBridgedMcpServer: mcpPath ? upstream.createBridgedMcpServer : undefined,
   });
 
   const host = options.host?.trim() || "0.0.0.0";
@@ -217,6 +252,7 @@ export async function startMcpApiAdapter(
 
   const refreshTimer = attachRefreshTimer(
     upstream,
+    mcpPath,
     (next) => {
       catalog = next;
     },
@@ -228,11 +264,13 @@ export async function startMcpApiAdapter(
     host,
     port: boundPort,
     grpcAddress: upstream.grpcAddress,
+    mcpPath,
     upstream: upstream.label,
     upstreamKind: upstream.kind,
     getCatalog: () => catalog,
     refreshCatalog: async () => {
-      catalog = await refreshCatalog(upstream);
+      const tools = await upstream.refreshTools();
+      catalog = buildCatalogFromUpstream(upstream, { tools, mcpPath });
       return catalog;
     },
     close: async () => {

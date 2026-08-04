@@ -1,6 +1,8 @@
 import { parseArgs } from "node:util";
 import { resolveGrpcAddressFromEnv } from "mcp-grpc-transport";
+import { generateToolCli } from "./gen-cli.js";
 import { startMcpApiAdapter } from "./server.js";
+import { connectUpstream } from "./upstream.js";
 import type { UpstreamOptions } from "./types.js";
 
 function envFirst(...keys: string[]): string | undefined {
@@ -12,24 +14,25 @@ function envFirst(...keys: string[]): string | undefined {
 }
 
 function printHelp(): void {
-  console.log(`mcp-api-adapter — point at ANY MCP server, get OpenAPI + GraphQL + gRPC instantly
+  console.log(`mcp-api-adapter — point at ANY MCP server; get OpenAPI + GraphQL + /mcp + gRPC
 
-Standalone npm package (no ClawQL install required). Wrap stdio, Streamable HTTP,
-or gRPC MCP and call the same tools over REST, GraphQL, and gRPC.
+Standalone npm package (no ClawQL install required).
 
 Usage:
   npx mcp-api-adapter --mcp-url <url> [options]
   npx mcp-api-adapter --stdio -- <command> [args…]
   npx mcp-api-adapter --grpc-address <host:port> [options]
+  npx mcp-api-adapter gen-cli --out <dir> [upstream opts…]
 
 Upstream (exactly one):
-  --mcp-url <url>        Streamable HTTP MCP endpoint (e.g. http://127.0.0.1:8080/mcp)
-  --stdio -- <cmd…>      Spawn an MCP server over stdio (everything after --)
-  --grpc-address <addr>  Existing MCP gRPC server (mcp-grpc-transport)
-  --grpc-host / --grpc-port   Alternative to --grpc-address
+  --mcp-url <url>        Streamable HTTP MCP endpoint
+  --stdio -- <cmd…>      Spawn an MCP server over stdio
+  --grpc-address <addr>  Existing MCP gRPC server
 
 HTTP APIs:
-  --listen <host:port>   OpenAPI + GraphQL bind (default 0.0.0.0:8090)
+  --listen <host:port>   Bind OpenAPI + GraphQL + /mcp (default 0.0.0.0:8090)
+  --mcp-path <path>      Streamable HTTP MCP path (default /mcp)
+  --no-mcp               Disable Streamable HTTP /mcp surface
   --api-key <key>        Optional edge API key
   --refresh-ms <n>       Catalog poll interval (default 0 = off)
   --title <string>       Docs / GraphiQL title
@@ -38,17 +41,16 @@ Scaffolded gRPC (stdio / HTTP upstreams only):
   --grpc-listen <addr>   Bind for local MCP gRPC API (default 127.0.0.1:0)
   --no-grpc              Do not scaffold a local gRPC API
 
+gen-cli:
+  --out <dir>            Output directory (required)
+  --name <bin>           CLI / package name (default mcp-tools)
+  --base-url <url>       Default adapter URL baked into CLI
+
   -h, --help             Show help
 
-Env (MCP_API_ADAPTER_*; legacy MCP_OPENAPI_GATEWAY_* still accepted):
-  MCP_API_ADAPTER_LISTEN, MCP_API_ADAPTER_API_KEY,
-  MCP_API_ADAPTER_REFRESH_MS, MCP_API_ADAPTER_GRPC_LISTEN,
-  MCP_PROTOCOL_VERSION, GRPC_HOST, GRPC_PORT, CLAWQL_MCP_GRPC_ADDR
-
 Instant examples:
-  npx mcp-api-adapter --mcp-url http://127.0.0.1:8080/mcp
   npx mcp-api-adapter --stdio -- npx -y @modelcontextprotocol/server-everything
-  npx mcp-api-adapter --grpc-address 127.0.0.1:50051
+  npx mcp-api-adapter gen-cli --out ./my-cli --mcp-url http://127.0.0.1:8080/mcp
 `);
 }
 
@@ -72,24 +74,109 @@ function splitStdioArgv(argv: string[]): { flags: string[]; stdioCmd: string[] |
   return { flags: argv.slice(0, idx), stdioCmd: argv.slice(idx + 1) };
 }
 
-export async function runCli(argv: string[]): Promise<void> {
+function parseUpstream(
+  values: Record<string, string | boolean | undefined>,
+  stdioCmd: string[] | null
+): UpstreamOptions {
+  if (typeof values["mcp-url"] === "string" && values["mcp-url"].trim()) {
+    return { kind: "http", url: values["mcp-url"].trim() };
+  }
+  if (values.stdio) {
+    if (!stdioCmd || stdioCmd.length === 0) {
+      throw new Error("With --stdio, pass a command after -- (e.g. --stdio -- npx -y @pkg)");
+    }
+    return {
+      kind: "stdio",
+      command: stdioCmd[0]!,
+      args: stdioCmd.slice(1),
+    };
+  }
+  let grpcAddress =
+    (typeof values["grpc-address"] === "string" && values["grpc-address"].trim()) ||
+    process.env.CLAWQL_MCP_GRPC_ADDR?.trim() ||
+    "";
+  if (!grpcAddress) {
+    if (values["grpc-host"] || values["grpc-port"]) {
+      const host =
+        (typeof values["grpc-host"] === "string" && values["grpc-host"].trim()) ||
+        process.env.GRPC_HOST?.trim() ||
+        "127.0.0.1";
+      const port =
+        (typeof values["grpc-port"] === "string" && values["grpc-port"].trim()) ||
+        process.env.GRPC_PORT?.trim() ||
+        "50051";
+      grpcAddress = `${host}:${port}`;
+    } else {
+      grpcAddress = resolveGrpcAddressFromEnv();
+    }
+  }
+  if (!grpcAddress) {
+    throw new Error("Provide --mcp-url, --stdio -- <cmd…>, or --grpc-address");
+  }
+  return {
+    kind: "grpc",
+    address: grpcAddress,
+    protocolVersion: process.env.MCP_PROTOCOL_VERSION?.trim(),
+  };
+}
+
+const sharedOpts = {
+  help: { type: "boolean", short: "h", default: false },
+  "mcp-url": { type: "string" },
+  stdio: { type: "boolean", default: false },
+  "grpc-host": { type: "string" },
+  "grpc-port": { type: "string" },
+  "grpc-address": { type: "string" },
+  "grpc-listen": { type: "string" },
+  "no-grpc": { type: "boolean", default: false },
+  "mcp-path": { type: "string" },
+  "no-mcp": { type: "boolean", default: false },
+  listen: { type: "string" },
+  "api-key": { type: "string" },
+  "refresh-ms": { type: "string" },
+  title: { type: "string" },
+  out: { type: "string" },
+  name: { type: "string" },
+  "base-url": { type: "string" },
+} as const;
+
+async function runGenCli(argv: string[]): Promise<void> {
   const { flags, stdioCmd } = splitStdioArgv(argv);
   const { values } = parseArgs({
     args: flags,
-    options: {
-      help: { type: "boolean", short: "h", default: false },
-      "mcp-url": { type: "string" },
-      stdio: { type: "boolean", default: false },
-      "grpc-host": { type: "string" },
-      "grpc-port": { type: "string" },
-      "grpc-address": { type: "string" },
-      "grpc-listen": { type: "string" },
-      "no-grpc": { type: "boolean", default: false },
-      listen: { type: "string" },
-      "api-key": { type: "string" },
-      "refresh-ms": { type: "string" },
-      title: { type: "string" },
-    },
+    options: sharedOpts,
+    allowPositionals: false,
+  });
+  if (values.help) {
+    printHelp();
+    return;
+  }
+  const outDir = values.out?.trim();
+  if (!outDir) throw new Error("gen-cli requires --out <dir>");
+
+  const upstream = parseUpstream(values, stdioCmd);
+  const conn = await connectUpstream(upstream, { grpcListen: false });
+  try {
+    const result = await generateToolCli({
+      outDir,
+      name: values.name?.trim(),
+      baseUrl: values["base-url"]?.trim(),
+      tools: conn.tools,
+      upstreamLabel: conn.label,
+    });
+    console.log(`[mcp-api-adapter] gen-cli wrote ${result.binName} → ${result.outDir}`);
+    for (const f of result.files) console.log(`  ${f}`);
+    console.log(`[mcp-api-adapter] try: node ${result.outDir}/bin/${result.binName}.mjs list`);
+  } finally {
+    await conn.close();
+  }
+}
+
+async function runServe(argv: string[]): Promise<void> {
+  const { flags, stdioCmd } = splitStdioArgv(argv);
+  const { values } = parseArgs({
+    args: flags,
+    options: sharedOpts,
     allowPositionals: false,
   });
 
@@ -98,47 +185,7 @@ export async function runCli(argv: string[]): Promise<void> {
     return;
   }
 
-  let upstream: UpstreamOptions | undefined;
-
-  if (values["mcp-url"]?.trim()) {
-    upstream = { kind: "http", url: values["mcp-url"].trim() };
-  } else if (values.stdio) {
-    if (!stdioCmd || stdioCmd.length === 0) {
-      throw new Error("With --stdio, pass a command after -- (e.g. --stdio -- npx -y @pkg)");
-    }
-    upstream = {
-      kind: "stdio",
-      command: stdioCmd[0]!,
-      args: stdioCmd.slice(1),
-    };
-  } else {
-    let grpcAddress =
-      values["grpc-address"]?.trim() ||
-      process.env.CLAWQL_MCP_GRPC_ADDR?.trim() ||
-      "";
-    if (!grpcAddress) {
-      if (values["grpc-host"] || values["grpc-port"]) {
-        const host = values["grpc-host"]?.trim() || process.env.GRPC_HOST?.trim() || "127.0.0.1";
-        const port = values["grpc-port"]?.trim() || process.env.GRPC_PORT?.trim() || "50051";
-        grpcAddress = `${host}:${port}`;
-      } else if (!values["mcp-url"] && !values.stdio) {
-        // Default: env-resolved gRPC (backward compatible)
-        grpcAddress = resolveGrpcAddressFromEnv();
-      }
-    }
-    if (grpcAddress) {
-      upstream = {
-        kind: "grpc",
-        address: grpcAddress,
-        protocolVersion: process.env.MCP_PROTOCOL_VERSION?.trim(),
-      };
-    }
-  }
-
-  if (!upstream) {
-    printHelp();
-    throw new Error("Provide --mcp-url, --stdio -- <cmd…>, or --grpc-address");
-  }
+  const upstream = parseUpstream(values, stdioCmd);
 
   const listenRaw =
     values.listen?.trim() ||
@@ -165,6 +212,12 @@ export async function runCli(argv: string[]): Promise<void> {
     ? false
     : grpcListenRaw || (upstream.kind === "grpc" ? false : "127.0.0.1:0");
 
+  const mcpPath: string | false = values["no-mcp"]
+    ? false
+    : values["mcp-path"]?.trim() ||
+      envFirst("MCP_API_ADAPTER_MCP_PATH") ||
+      "/mcp";
+
   const started = await startMcpApiAdapter({
     upstream,
     host,
@@ -173,6 +226,7 @@ export async function runCli(argv: string[]): Promise<void> {
     refreshMs: Number.isFinite(refreshMs) ? refreshMs : 0,
     title: values.title?.trim(),
     grpcListen,
+    mcpPath,
     protocolVersion: process.env.MCP_PROTOCOL_VERSION?.trim(),
   });
 
@@ -189,6 +243,9 @@ export async function runCli(argv: string[]): Promise<void> {
   console.log(`[mcp-api-adapter] docs:     ${started.url}/docs`);
   console.log(`[mcp-api-adapter] graphiql: ${started.url}/graphiql`);
   console.log(`[mcp-api-adapter] graphql:  ${started.url}/graphql`);
+  if (started.mcpPath) {
+    console.log(`[mcp-api-adapter] mcp:      ${started.url}${started.mcpPath}`);
+  }
   if (started.grpcAddress) {
     console.log(
       `[mcp-api-adapter] gRPC CallTool (mcp-grpc-transport): ${started.grpcAddress}`
@@ -201,4 +258,12 @@ export async function runCli(argv: string[]): Promise<void> {
   };
   process.on("SIGINT", () => void shutdown());
   process.on("SIGTERM", () => void shutdown());
+}
+
+export async function runCli(argv: string[]): Promise<void> {
+  if (argv[0] === "gen-cli") {
+    await runGenCli(argv.slice(1));
+    return;
+  }
+  await runServe(argv);
 }

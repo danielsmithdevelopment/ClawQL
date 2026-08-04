@@ -11,6 +11,8 @@ export type BuildOpenApiOptions = {
   serverName?: string;
   /** Present when a gRPC MCP surface exists (upstream or scaffolded). */
   grpcAddress?: string;
+  /** Streamable HTTP MCP path when enabled. */
+  mcpPath?: string;
   publicBaseUrl?: string;
 };
 
@@ -141,10 +143,11 @@ export function buildOpenApiDocument(options: BuildOpenApiOptions): Record<strin
     openapi: "3.1.0",
     info: {
       title: options.title ?? "MCP tools (OpenAPI on-ramp)",
-      version: "0.4.0",
+      version: "0.5.0",
       description:
-        "REST + GraphQL facade over any MCP server (stdio, Streamable HTTP, or gRPC). " +
+        "REST + GraphQL + Streamable HTTP MCP facade over any MCP server (stdio, Streamable HTTP, or gRPC). " +
         "GraphQL at /graphql (GraphiQL at /graphiql). " +
+        (options.mcpPath ? `MCP endpoint at ${options.mcpPath}. ` : "") +
         (grpcAddr
           ? "Prefer gRPC CallTool for production, mesh, and large payloads. "
           : "") +
@@ -171,6 +174,15 @@ export function buildOpenApiDocument(options: BuildOpenApiOptions): Record<strin
         schema: "/graphql/schema.graphql",
         note: "Per-tool mutations + callTool(name, args); same upstream as REST.",
       },
+      ...(options.mcpPath
+        ? {
+            "x-clawql-mcp": {
+              path: options.mcpPath,
+              transport: "streamable-http",
+              note: "Same tools as REST/GraphQL/gRPC via MCP Streamable HTTP (IDE / agent clients).",
+            },
+          }
+        : {}),
     },
     servers: options.publicBaseUrl
       ? [{ url: options.publicBaseUrl }]

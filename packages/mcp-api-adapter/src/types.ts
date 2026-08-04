@@ -5,15 +5,19 @@ export type { ListedMcpTool };
 
 export type UpstreamKind = "grpc" | "stdio" | "http";
 
+export type ApiSurface = "openapi" | "graphql" | "mcp" | "grpc";
+
 export type ToolCatalog = {
   tools: ListedMcpTool[];
   fetchedAt: string;
   /** Address of the gRPC MCP API (upstream or locally scaffolded). */
   grpcAddress?: string;
+  /** Streamable HTTP MCP path when enabled (e.g. `/mcp`). */
+  mcpPath?: string;
   /** Human-readable upstream label (command, URL, or host:port). */
   upstream: string;
   upstreamKind: UpstreamKind;
-  surfaces: Array<"openapi" | "graphql" | "grpc">;
+  surfaces: ApiSurface[];
 };
 
 /** Invoke one MCP tool and return a collapsed result. */
@@ -72,6 +76,11 @@ export type McpApiAdapterOptions = McpApiAdapterHttpOptions & {
    * Ignored when upstream is already gRPC (that address is reused).
    */
   grpcListen?: string | false;
+  /**
+   * Streamable HTTP MCP path to expose (default `/mcp`).
+   * Set `false` to disable the MCP HTTP surface.
+   */
+  mcpPath?: string | false;
 };
 
 export type StartedMcpApiAdapter = {
@@ -80,6 +89,8 @@ export type StartedMcpApiAdapter = {
   port: number;
   /** Present when a gRPC MCP API is available (upstream or scaffolded). */
   grpcAddress?: string;
+  /** Streamable HTTP MCP path when enabled. */
+  mcpPath?: string;
   upstream: string;
   upstreamKind: UpstreamKind;
   close: () => Promise<void>;
