@@ -5,6 +5,7 @@ import { listVaultMarkdownRelPaths, buildSlugToVaultPath } from "../vault/slug-i
 import { extractWikilinkTargets, stripVaultFrontmatter } from "../vault/markdown.js";
 import { isOkfRetracted, isOkfStale, parseVaultFrontmatter } from "../okf/frontmatter.js";
 import {
+  buildCorpusIdf,
   keywordScore,
   mapVaultResultToNormalizedHit,
   resolveMemoryRecallSources,
@@ -134,7 +135,9 @@ export function executeMemoryRecallCoreEffect(
     const maxDepth =
       input.maxDepth !== undefined ? input.maxDepth : envInt("CLAWQL_MEMORY_RECALL_MAX_DEPTH", 2);
     const minScore =
-      input.minScore !== undefined ? input.minScore : envInt("CLAWQL_MEMORY_RECALL_MIN_SCORE", 1);
+      input.minScore !== undefined
+        ? input.minScore
+        : envFloat("CLAWQL_MEMORY_RECALL_MIN_SCORE", 0.05);
     const maxFiles = envInt("CLAWQL_MEMORY_RECALL_MAX_FILES", 2000);
     const snippetChars = envInt("CLAWQL_MEMORY_RECALL_SNIPPET_CHARS", 520);
     const topChunks = envInt("CLAWQL_MEMORY_VECTOR_TOP_CHUNKS", 80);
@@ -162,6 +165,7 @@ export function executeMemoryRecallCoreEffect(
 
       type FileInfo = { rel: string; text: string; score: number };
       const files: FileInfo[] = [];
+      const corpusTexts: string[] = [];
       for (const rel of mdFiles) {
         const text = yield* memoryFromPromise(() => readVaultTextFile(vault, rel)).pipe(
           Effect.catchAll(() => Effect.succeed(undefined))
@@ -170,21 +174,25 @@ export function executeMemoryRecallCoreEffect(
         // OKF v0.2 — never surface retracted knowledge; down-weight stale/superseded.
         const fm = parseVaultFrontmatter(text);
         if (isOkfRetracted(fm)) continue;
-        let score = wantVault ? keywordScore(query, text) : 0;
-        if (wantVault) {
-          const relNorm = rel.replace(/\\/g, "/");
-          // Prefer OKF catalogs and ontology schema notes (essay Layer 6 / index-first recall).
-          if (/(^|\/)index\.md$/i.test(relNorm)) score += 8;
-          if (/ontology/i.test(relNorm) || /type:\s*["']?ontology_/i.test(text)) score += 5;
-          if (isOkfStale(fm)) score = Math.max(0, score - 3);
-        }
-        files.push({
-          rel,
-          text,
-          score,
-        });
+        corpusTexts.push(text);
+        files.push({ rel, text, score: 0 });
       }
       scannedFiles = files.length;
+
+      // Corpus IDF so ubiquitous tokens (shared vocabulary) do not bury distinctive matches.
+      const idf = wantVault ? buildCorpusIdf(corpusTexts) : undefined;
+      for (const f of files) {
+        const fm = parseVaultFrontmatter(f.text);
+        let score = wantVault && idf ? keywordScore(query, f.text, idf) : 0;
+        if (wantVault) {
+          const relNorm = f.rel.replace(/\\/g, "/");
+          // Prefer OKF catalogs and ontology schema notes (essay Layer 6 / index-first recall).
+          if (/(^|\/)index\.md$/i.test(relNorm)) score += 8;
+          if (/ontology/i.test(relNorm) || /type:\s*["']?ontology_/i.test(f.text)) score += 5;
+          if (isOkfStale(fm)) score = Math.max(0, score - 3);
+        }
+        f.score = score;
+      }
 
       const now = Date.now();
       yield* recallSyncDocumentsOnScanEffect(
@@ -275,9 +283,12 @@ export function executeMemoryRecallCoreEffect(
           if (sim >= minVectorSim) seedSet.add(p);
         }
       }
-      const seeds = [...seedSet].sort(
-        (a, b) => (scoreByRel.get(b) ?? 0) - (scoreByRel.get(a) ?? 0)
-      );
+      // Cap seeds so ubiquitous keyword matches cannot fill `limit` before wikilink BFS runs.
+      // Without this, every reason stays "keyword" even when the graph has usable edges.
+      const seedCap = envInt("CLAWQL_MEMORY_RECALL_SEED_CAP", Math.max(limit * 2, 8));
+      const seeds = [...seedSet]
+        .sort((a, b) => (scoreByRel.get(b) ?? 0) - (scoreByRel.get(a) ?? 0))
+        .slice(0, seedCap);
 
       type Q = { rel: string; depth: number; reason: "keyword" | "link" | "vector"; from?: string };
       const queue: Q[] = [];
@@ -296,21 +307,17 @@ export function executeMemoryRecallCoreEffect(
         }
       }
 
-      const hits: RecallHit[] = [];
+      // Expand the full neighborhood from capped seeds before truncating to `limit`.
+      // Stopping at `limit` during BFS left only keyword seeds in results (wikilink layer inert).
+      const maxCandidates = envInt(
+        "CLAWQL_MEMORY_RECALL_MAX_CANDIDATES",
+        Math.max(limit * 8, seedCap * 3)
+      );
       const bfsDepth = wantVault ? maxDepth : 0;
-      while (queue.length > 0 && hits.length < limit) {
+      const candidates: Q[] = [];
+      while (queue.length > 0 && candidates.length < maxCandidates) {
         const cur = queue.shift()!;
-        const t = textByRel.get(cur.rel);
-        if (!t) continue;
-
-        hits.push({
-          path: cur.rel,
-          score: scoreByRel.get(cur.rel) ?? 0,
-          depth: cur.depth,
-          reason: cur.reason,
-          linkFrom: cur.from,
-          snippet: buildSnippet(t, query, snippetChars),
-        });
+        candidates.push(cur);
 
         if (!wantVault || cur.depth >= bfsDepth) continue;
 
@@ -326,11 +333,53 @@ export function executeMemoryRecallCoreEffect(
         }
       }
 
-      hits.sort((a, b) => {
-        if (a.depth !== b.depth) return a.depth - b.depth;
-        return b.score - a.score;
-      });
-      vaultHits = hits.slice(0, limit);
+      const linkInherit = envFloat("CLAWQL_MEMORY_RECALL_LINK_SCORE_INHERIT", 0.35);
+      const scoredHits: RecallHit[] = [];
+      for (const cur of candidates) {
+        const t = textByRel.get(cur.rel);
+        if (!t) continue;
+        let score = scoreByRel.get(cur.rel) ?? 0;
+        if (cur.reason === "link" && cur.from) {
+          const inherited = (scoreByRel.get(cur.from) ?? 0) * linkInherit;
+          if (inherited > score) score = inherited;
+        }
+        scoredHits.push({
+          path: cur.rel,
+          score,
+          depth: cur.depth,
+          reason: cur.reason,
+          linkFrom: cur.from,
+          snippet: buildSnippet(t, query, snippetChars),
+        });
+      }
+
+      // Guarantee wikilink neighbors of top seeds can surface even when many
+      // weak keyword matches share ubiquitous vocabulary (measured 116-note failure).
+      const primary = scoredHits
+        .filter((h) => h.reason !== "link")
+        .sort((a, b) => b.score - a.score || a.depth - b.depth);
+      const linkHits = scoredHits
+        .filter((h) => h.reason === "link")
+        .sort((a, b) => b.score - a.score || a.depth - b.depth);
+      const topPrimaryPaths = new Set(
+        primary.slice(0, Math.max(limit, seedCap)).map((h) => h.path)
+      );
+      const usefulLinks = linkHits.filter((h) => h.linkFrom && topPrimaryPaths.has(h.linkFrom));
+      const linkBudget = Math.min(Math.max(1, Math.floor(limit / 2)), usefulLinks.length);
+      const primaryBudget = Math.max(0, limit - linkBudget);
+      const merged = [...primary.slice(0, primaryBudget), ...usefulLinks.slice(0, linkBudget)];
+      // Fill any remaining slots from leftover primary / links by score.
+      if (merged.length < limit) {
+        const used = new Set(merged.map((h) => h.path));
+        const rest = [...primary, ...usefulLinks]
+          .filter((h) => !used.has(h.path))
+          .sort((a, b) => b.score - a.score || a.depth - b.depth);
+        for (const h of rest) {
+          if (merged.length >= limit) break;
+          merged.push(h);
+        }
+      }
+      vaultHits = merged.slice(0, limit);
       for (const h of vaultHits) {
         normalizedHits.push(mapVaultResultToNormalizedHit(h));
       }

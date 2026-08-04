@@ -108,6 +108,11 @@ function tokenize(text: string): string[] {
     .filter((t) => t.length > 1);
 }
 
+/** Exported for tests and IDF helpers. */
+export function tokenizeQuery(text: string): string[] {
+  return tokenize(text);
+}
+
 function countOccurrences(hay: string, needle: string): number {
   if (needle.length < 2) return 0;
   let c = 0;
@@ -119,14 +124,51 @@ function countOccurrences(hay: string, needle: string): number {
   return c;
 }
 
-/** Exported for tests. */
-export function keywordScore(query: string, text: string): number {
+/** Smooth IDF: log(1 + N / (1 + df)). Higher weight for rarer corpus terms. */
+export type TermIdf = ReadonlyMap<string, number>;
+
+/**
+ * Build corpus-level IDF from document texts (document frequency, not raw TF).
+ * Fixes keyword recall burying distinctive matches under ubiquitous tokens
+ * (e.g. "chainlink" in ~1/3 of notes).
+ */
+export function buildCorpusIdf(documents: readonly string[]): Map<string, number> {
+  const n = documents.length;
+  const df = new Map<string, number>();
+  for (const doc of documents) {
+    const seen = new Set(tokenize(doc));
+    for (const t of seen) {
+      df.set(t, (df.get(t) ?? 0) + 1);
+    }
+  }
+  const idf = new Map<string, number>();
+  if (n === 0) return idf;
+  for (const [t, d] of df) {
+    idf.set(t, Math.log(1 + n / (1 + d)));
+  }
+  return idf;
+}
+
+/**
+ * Keyword score with optional corpus IDF.
+ * Without `idf`, each matched term contributes its capped TF (legacy behavior).
+ * With `idf`, score = Σ log(1 + tf(t)) × idf(t) so rare query terms dominate and
+ * repeated ubiquitous tokens cannot overwhelm distinctive matches.
+ */
+export function keywordScore(query: string, text: string, idf?: TermIdf): number {
   const terms = tokenize(query);
   if (terms.length === 0) return 0;
   const lower = text.toLowerCase();
   let s = 0;
   for (const t of terms) {
-    s += Math.min(countOccurrences(lower, t), 25);
+    const tf = Math.min(countOccurrences(lower, t), 25);
+    if (tf === 0) continue;
+    if (idf) {
+      const w = idf.get(t) ?? Math.log(2); // unseen query term: mild default
+      s += Math.log(1 + tf) * w;
+    } else {
+      s += tf;
+    }
   }
   return s;
 }

@@ -19,11 +19,16 @@ describe("memory-recall helpers", () => {
 describe("memory-recall vault", () => {
   const saved = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
   const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
+  const savedVector = process.env.CLAWQL_VECTOR_BACKEND;
+  const savedAllowKw = process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
   let dir: string;
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "clawql-vault-"));
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
+    // Break-glass: unit tests avoid downloading ONNX weights in CI.
+    process.env.CLAWQL_VECTOR_BACKEND = "off";
+    process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = "1";
     await mkdir(join(dir, "Memory"), { recursive: true });
     await writeFile(
       join(dir, "Memory/alpha.md"),
@@ -53,6 +58,10 @@ describe("memory-recall vault", () => {
     else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = saved;
     if (savedMerkle === undefined) delete process.env.CLAWQL_MERKLE_ENABLED;
     else process.env.CLAWQL_MERKLE_ENABLED = savedMerkle;
+    if (savedVector === undefined) delete process.env.CLAWQL_VECTOR_BACKEND;
+    else process.env.CLAWQL_VECTOR_BACKEND = savedVector;
+    if (savedAllowKw === undefined) delete process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
+    else process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = savedAllowKw;
     resetMemoryDbArtifactCachesForTests();
     await rm(dir, { recursive: true, force: true });
   });
@@ -75,6 +84,33 @@ describe("memory-recall vault", () => {
     expect(r.hits?.length).toBeGreaterThanOrEqual(2);
     expect(r.sourcesUsed).toEqual(expect.arrayContaining(["vault", "vector"]));
     expect(r.hits!.some((h) => h.source === "vault" || h.source === "link")).toBe(true);
+  });
+
+  it("still surfaces wikilink neighbors when many keyword seeds compete", async () => {
+    // Flood the corpus with notes that share a common token so seeds >> limit.
+    for (let i = 0; i < 30; i++) {
+      await writeFile(
+        join(dir, `Memory/noise-${i}.md`),
+        `# Noise ${i}\n\nchainlink chainlink network feed ${i}\n`,
+        "utf8"
+      );
+    }
+    await writeFile(
+      join(dir, "Memory/hub.md"),
+      "# Hub\n\nchainlink hub discusses [[Beta Page]] and github.\n",
+      "utf8"
+    );
+    const r = await runMemoryRecall({
+      query: "chainlink github",
+      limit: 5,
+      maxDepth: 2,
+      minScore: 0.1,
+      sources: ["vault"],
+    });
+    expect(r.ok).toBe(true);
+    const linkHit = r.results?.find((x) => x.reason === "link");
+    expect(linkHit).toBeDefined();
+    expect(linkHit?.path).toMatch(/beta-page\.md$/);
   });
 
   it("honors sources=[vault] without requiring pageindex/onyx", async () => {

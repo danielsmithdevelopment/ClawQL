@@ -64,15 +64,24 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
 
   beforeAll(async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-sqljs-warm-"));
+    const prevAllow = process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
+    const prevBackend = process.env.CLAWQL_VECTOR_BACKEND;
     try {
+      // Warm sql.js only — do not download local embedding weights in beforeAll.
+      process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = "1";
+      process.env.CLAWQL_VECTOR_BACKEND = "off";
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
       await syncMemoryDbFromDocuments(dir, [{ path: "warm.md", text: "# warm\n", mtimeMs: 0 }]);
     } finally {
+      if (prevAllow === undefined) delete process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
+      else process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = prevAllow;
+      if (prevBackend === undefined) delete process.env.CLAWQL_VECTOR_BACKEND;
+      else process.env.CLAWQL_VECTOR_BACKEND = prevBackend;
       delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
       await rm(dir, { recursive: true, force: true });
       resetMemoryDbArtifactCachesForTests();
     }
-  });
+  }, 30_000);
 
   beforeEach(() => {
     saved.CLAWQL_SPEC_PATH = process.env.CLAWQL_SPEC_PATH;

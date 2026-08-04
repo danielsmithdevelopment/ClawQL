@@ -21,6 +21,7 @@ import {
 import { extractWikilinkTargets } from "../vault/markdown.js";
 import { buildSlugToVaultPath, listVaultMarkdownRelPaths } from "../vault/slug-index.js";
 import {
+  allowKeywordOnlyMemory,
   blobToFloat32Array,
   embedTexts,
   float32ArrayToBlob,
@@ -529,6 +530,13 @@ export async function syncMemoryDbFromDocuments(
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         console.error(`[clawql-mcp] memory.db embedding sync failed: ${msg}`);
+        // Vectors are mandatory for memory — do not silently write NULL embeddings.
+        if (!allowKeywordOnlyMemory()) {
+          throw new Error(
+            `memory.db embedding sync failed (vectors required for memory_recall): ${msg}`,
+            { cause: e }
+          );
+        }
       }
     }
 
