@@ -71,18 +71,18 @@ No second gRPC server is started; `/openapi.json` advertises the upstream addres
 
 ## CLI reference
 
-| Flag / env | Meaning |
-| ---------- | ------- |
-| `--mcp-url` | Streamable HTTP MCP URL |
-| `--stdio -- <cmd…>` | Spawn MCP over stdio |
-| `--grpc-address` / `CLAWQL_MCP_GRPC_ADDR` | Upstream gRPC `host:port` |
-| `--grpc-host` / `--grpc-port` | Alternate gRPC address pieces |
-| `--listen` / `MCP_OPENAPI_GATEWAY_LISTEN` | HTTP bind (default `0.0.0.0:8090`) |
-| `--grpc-listen` / `MCP_OPENAPI_GATEWAY_GRPC_LISTEN` | Scaffolded gRPC bind (default `127.0.0.1:0`) |
-| `--no-grpc` | Do not scaffold local gRPC (stdio/HTTP only) |
-| `--api-key` / `MCP_OPENAPI_GATEWAY_API_KEY` | Require `X-API-Key` or `Authorization: Bearer` |
-| `--refresh-ms` | Re-`ListTools` poll interval |
-| `--title` | Swagger / GraphiQL title |
+| Flag / env                                          | Meaning                                        |
+| --------------------------------------------------- | ---------------------------------------------- |
+| `--mcp-url`                                         | Streamable HTTP MCP URL                        |
+| `--stdio -- <cmd…>`                                 | Spawn MCP over stdio                           |
+| `--grpc-address` / `CLAWQL_MCP_GRPC_ADDR`           | Upstream gRPC `host:port`                      |
+| `--grpc-host` / `--grpc-port`                       | Alternate gRPC address pieces                  |
+| `--listen` / `MCP_OPENAPI_GATEWAY_LISTEN`           | HTTP bind (default `0.0.0.0:8090`)             |
+| `--grpc-listen` / `MCP_OPENAPI_GATEWAY_GRPC_LISTEN` | Scaffolded gRPC bind (default `127.0.0.1:0`)   |
+| `--no-grpc`                                         | Do not scaffold local gRPC (stdio/HTTP only)   |
+| `--api-key` / `MCP_OPENAPI_GATEWAY_API_KEY`         | Require `X-API-Key` or `Authorization: Bearer` |
+| `--refresh-ms`                                      | Re-`ListTools` poll interval                   |
+| `--title`                                           | Swagger / GraphiQL title                       |
 
 Exactly one upstream mode is required (`--mcp-url`, `--stdio`, or `--grpc-address` / env default).
 
@@ -118,16 +118,16 @@ Compatibility: `startMcpOpenApiGateway({ grpcAddress })` ≡ `startMcpGateway({ 
 
 ## HTTP surface map
 
-| Method / path | Role |
-| ------------- | ---- |
-| `GET /healthz` | Liveness (`upstreamKind`, `surfaces`, `grpcAddress`) |
-| `GET /tools` | Full catalog JSON |
-| `GET /openapi.json` | OpenAPI 3.1 generated from tool `inputSchema` |
-| `GET /docs` | Swagger UI |
-| `POST /{toolName}` | Invoke tool; JSON body = tool arguments |
-| `POST /graphql` | GraphQL endpoint |
-| `GET /graphiql` | GraphiQL IDE |
-| `GET /graphql/schema.graphql` | SDL |
+| Method / path                 | Role                                                 |
+| ----------------------------- | ---------------------------------------------------- |
+| `GET /healthz`                | Liveness (`upstreamKind`, `surfaces`, `grpcAddress`) |
+| `GET /tools`                  | Full catalog JSON                                    |
+| `GET /openapi.json`           | OpenAPI 3.1 generated from tool `inputSchema`        |
+| `GET /docs`                   | Swagger UI                                           |
+| `POST /{toolName}`            | Invoke tool; JSON body = tool arguments              |
+| `POST /graphql`               | GraphQL endpoint                                     |
+| `GET /graphiql`               | GraphiQL IDE                                         |
+| `GET /graphql/schema.graphql` | SDL                                                  |
 
 Responses prefer MCP `structuredContent`, else parse single text content as JSON, else return a `{ content, text, isError }` envelope.
 
@@ -148,21 +148,21 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 
 ## Relationship to other ClawQL pieces
 
-| Piece | Direction |
-| ----- | --------- |
-| **`mcp-openapi-gateway`** | MCP → OpenAPI + GraphQL (+ gRPC scaffold) |
-| **ClawQL `search` / `execute`** | OpenAPI → MCP tools |
-| **`mcp-grpc-transport`** | Production TypeScript MCP gRPC transport |
-| **Panguard bridge** | Policy / JWT ATR in front of MCP |
+| Piece                           | Direction                                 |
+| ------------------------------- | ----------------------------------------- |
+| **`mcp-openapi-gateway`**       | MCP → OpenAPI + GraphQL (+ gRPC scaffold) |
+| **ClawQL `search` / `execute`** | OpenAPI → MCP tools                       |
+| **`mcp-grpc-transport`**        | Production TypeScript MCP gRPC transport  |
+| **Panguard bridge**             | Policy / JWT ATR in front of MCP          |
 
 ## Troubleshooting
 
-| Symptom | Check |
-| ------- | ----- |
-| `Provide exactly one upstream` | Only one of `--mcp-url` / `--stdio` / `--grpc-address` |
-| No gRPC surface for HTTP/stdio | Ensure `--no-grpc` is unset; gateway sets `ENABLE_GRPC` while scaffolding |
-| Empty GraphQL args | Upstream `ListTools` `inputSchema` missing/empty — use `callTool(name, args: {…})` |
-| `502 upstream CallTool failed` | Upstream down, wrong URL, or tool threw `isError` |
+| Symptom                        | Check                                                                              |
+| ------------------------------ | ---------------------------------------------------------------------------------- |
+| `Provide exactly one upstream` | Only one of `--mcp-url` / `--stdio` / `--grpc-address`                             |
+| No gRPC surface for HTTP/stdio | Ensure `--no-grpc` is unset; gateway sets `ENABLE_GRPC` while scaffolding          |
+| Empty GraphQL args             | Upstream `ListTools` `inputSchema` missing/empty — use `callTool(name, args: {…})` |
+| `502 upstream CallTool failed` | Upstream down, wrong URL, or tool threw `isError`                                  |
 
 ## Further reading
 

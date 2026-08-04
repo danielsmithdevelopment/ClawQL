@@ -72,13 +72,13 @@ Every Swagger UI visitor should see the gRPC path (`x-clawql-grpc` extensions, d
 
 ## 3. Non-goals
 
-| Non-goal                                                                       | Why                                                                   |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| Full mcpo clone (Claude Desktop multi-server config matrix as a product)       | We support stdio/HTTP/gRPC as *upstreams*, not a Desktop config UI    |
-| Per-tool generated `.proto` RPCs                                               | Breaks when tools change at runtime; fights stable generic `CallTool` |
-| Replacing Streamable HTTP for Cursor / Claude Desktop                          | IDEs stay on `/mcp`; we *wrap* those servers                          |
-| Product REST paths (`/payments/stripe/checkout`)                               | Tool-name REST only; domain gateways remain separate                  |
-| Replacing ClawQL `search` / `execute`                                          | Opposite direction                                                    |
+| Non-goal                                                                 | Why                                                                   |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| Full mcpo clone (Claude Desktop multi-server config matrix as a product) | We support stdio/HTTP/gRPC as _upstreams_, not a Desktop config UI    |
+| Per-tool generated `.proto` RPCs                                         | Breaks when tools change at runtime; fights stable generic `CallTool` |
+| Replacing Streamable HTTP for Cursor / Claude Desktop                    | IDEs stay on `/mcp`; we _wrap_ those servers                          |
+| Product REST paths (`/payments/stripe/checkout`)                         | Tool-name REST only; domain gateways remain separate                  |
+| Replacing ClawQL `search` / `execute`                                    | Opposite direction                                                    |
 
 ---
 
