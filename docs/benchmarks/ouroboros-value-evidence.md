@@ -67,7 +67,7 @@ What we say Ouroboros does, and how far that claim is backed today.
 | # | Claim (customer-facing) | Unit / package tests | Live agent / OpenBench | Status |
 | - | ----------------------- | -------------------- | ---------------------- | ------ |
 | 1 | Stops **strategy thrash** when harness `doom_loop` is off | n/a (agent behavior) | on 1.0 / off 0.0 ([30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642)) | **Verified (n=1)** |
-| 2 | Still adds value when OpenCode `doom_loop` is **on** (strategy A↔B ≠ identical spam) | n/a | not run | **Next A/B** |
+| 2 | Still adds value when OpenCode `doom_loop` is **on** (strategy A↔B ≠ identical spam) | n/a | workflow matrix `deny` cell wired (PR #759) | **Awaiting live deny result** |
 | 3 | `create_seed` + `run_evolutionary_loop` used end-to-end under hard caps | MCP hooks + loop tests | observed in winning arm | **Verified (path)** |
 | 4 | Convergence taxonomy exits: `oscillation` / `spinning` / `diminishing_returns` / `no_drift` | `convergence.test.ts` | live checker does **not** assert `reason_code` | Library yes · agent no |
 | 5 | Drift gate blocks premature converge (`drift_exceeded`, combined > 0.3) | `convergence` + `evolutionary-loop` + `drift` tests | no agent task forces measure/reflect on drift | Library yes · agent no |

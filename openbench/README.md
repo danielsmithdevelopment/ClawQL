@@ -14,9 +14,12 @@ OpenRouter default; vault seeds + tool passthrough are what make clawql-on win
 or tie each task fairly.
 
 **Ouroboros A/B** (`openbench-ouroboros-ab.yml`) runs **ouroboros-on vs
-ouroboros-off** on `ouroboros-oscillation-escape` with hard spend caps (90s /
-20 turns / 4000 tokens / maxGenerations≤4). See
+ouroboros-off** on `ouroboros-oscillation-escape` with hard spend caps (180s /
+50 turns / 8000 tokens / maxGenerations≤4) and a **doom_loop allow|deny**
+matrix. See
 [`docs/benchmarks/openbench-ouroboros-oscillation.md`](../docs/benchmarks/openbench-ouroboros-oscillation.md).
+
+Stack coverage map: [`docs/benchmarks/openbench-stack-coverage.md`](../docs/benchmarks/openbench-stack-coverage.md).
 
 ## Layout
 
@@ -28,6 +31,9 @@ openbench/
     memory-dependent-continuation/
     token-budget-constrained/
     multi-provider-api-workflow/
+    search-first-discovery/
+    execute-verify-loop/
+    memory-roundtrip-ingest-recall/
     ouroboros-oscillation-escape/
   validate_tasks.py           # fail-on-workspace / pass-on-solution
   scripts/run-with-openbench.sh

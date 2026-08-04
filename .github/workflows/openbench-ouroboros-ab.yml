@@ -1,8 +1,12 @@
 # OpenBench A/B: ouroboros-on vs ouroboros-off (stagnation / oscillation escape).
 #
-# Spend-safe defaults (doom_loop OpenCode guard OFF so thrash can appear):
-#   - trials=1, timeout=180s, turns≤50 hard-fail, tokens≤8000, maxGenerations≤4
-#   - workflow_dispatch by default (not on every PR push)
+# Matrix over OpenCode doom_loop:
+#   - allow — thrash study (identical-tool spam visible)
+#   - deny  — additive value with production guard on (strategy A↔B)
+#
+# Spend-safe defaults:
+#   - trials=1 on PR (dispatch may raise to 3), timeout=180s, turns≤50, tokens≤8000
+#   - maxGenerations≤4
 #   - PR/push only when Ouroboros or this task changes
 #
 # Same cheap OpenRouter model as the main OpenBench matrix.
@@ -18,12 +22,13 @@ on:
         type: string
         default: openrouter/deepseek/deepseek-chat
       trials:
-        description: Trials per arm (keep at 1 unless investigating noise)
+        description: Trials per arm (use 3 for doom_loop=deny confidence)
         required: true
         type: choice
         options:
           - "1"
           - "2"
+          - "3"
         default: "1"
       timeout_s:
         description: Per-arm agent timeout (hard-capped at 180 for this task)
@@ -39,6 +44,15 @@ on:
           - ouroboros-on
           - ouroboros-off
         default: ouroboros-on,ouroboros-off
+      doom_loop:
+        description: OpenCode doom_loop mode (or both)
+        required: true
+        type: choice
+        options:
+          - both
+          - allow
+          - deny
+        default: both
       inference_port:
         description: Local clawql-inference port
         required: true
@@ -52,6 +66,7 @@ on:
       - "src/onboarding/harness-cli.ts"
       - ".github/workflows/openbench-ouroboros-ab.yml"
       - "docs/benchmarks/openbench-ouroboros*.md"
+      - "docs/benchmarks/ouroboros-value-evidence.md"
   push:
     branches: [main]
     paths:
@@ -61,6 +76,7 @@ on:
       - "src/onboarding/harness-cli.ts"
       - ".github/workflows/openbench-ouroboros-ab.yml"
       - "docs/benchmarks/openbench-ouroboros*.md"
+      - "docs/benchmarks/ouroboros-value-evidence.md"
 
 permissions:
   contents: read
@@ -70,11 +86,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ab-compare:
-    name: A/B ouroboros-oscillation-escape
+  resolve-matrix:
+    name: Resolve doom_loop matrix
     runs-on: ubuntu-latest
-    # Wall budget: ~2 arms × 180s + setup. Fail closed before runaway spend.
-    timeout-minutes: 40
+    outputs:
+      modes: ${{ steps.set.outputs.modes }}
+    steps:
+      - id: set
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MODE="${{ inputs.doom_loop }}"
+            if [ "$MODE" = "both" ] || [ -z "$MODE" ]; then
+              echo 'modes=["allow","deny"]' >> "$GITHUB_OUTPUT"
+            else
+              echo "modes=[\"${MODE}\"]" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            # PR/push: both cells (1 trial each via OPENBENCH_TRIALS default).
+            echo 'modes=["allow","deny"]' >> "$GITHUB_OUTPUT"
+          fi
+
+  ab-compare:
+    name: A/B ouroboros (${{ matrix.doom_loop }})
+    needs: resolve-matrix
+    runs-on: ubuntu-latest
+    # Wall budget: ~2 arms × 180s × trials + setup. Fail closed before runaway spend.
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        doom_loop: ${{ fromJson(needs.resolve-matrix.outputs.modes) }}
     env:
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -90,11 +132,9 @@ jobs:
       CLAWQL_OPENBENCH: "1"
       CLAWQL_HARNESS_ALLOW_UNSANDBOXED: "1"
       CLAWQL_OPENBENCH_HARNESS: "opencode"
-      # Prove thrash without OpenCode's identical-tool guard; 50-turn hard cap binds spend.
-      CLAWQL_OPENBENCH_DOOM_LOOP: "allow"
+      CLAWQL_OPENBENCH_DOOM_LOOP: ${{ matrix.doom_loop }}
       CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
       CLAWQL_OPENROUTER_APP_TITLE: ClawQL OpenBench Ouroboros
-      # Server-side evolutionary loop ceiling (defense in depth vs agent args).
       CLAWQL_OUROBOROS_MAX_GENERATIONS: "4"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
@@ -127,7 +167,6 @@ jobs:
             reason="Add OPENROUTER_API_KEY or a vendor BYOK secret."
           fi
 
-          # Hard spend clamp — never allow dispatch to raise above 180s for this task.
           if [ "${OPENBENCH_TIMEOUT_S}" -gt 180 ]; then
             echo "OPENBENCH_TIMEOUT_S=${OPENBENCH_TIMEOUT_S} clamped to 180" >> "$GITHUB_STEP_SUMMARY"
             echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
@@ -138,12 +177,12 @@ jobs:
             echo "## OpenBench Ouroboros A/B preflight"
             echo ""
             echo "- Task: \`ouroboros-oscillation-escape\`"
+            echo "- doom_loop: \`${{ matrix.doom_loop }}\`"
             echo "- Model: \`${OPENBENCH_MODEL}\`"
             echo "- Arms: \`${OPENBENCH_ARMS}\`"
             echo "- Trials/arm: \`${OPENBENCH_TRIALS}\`"
             echo "- Timeout (s): \`${OPENBENCH_TIMEOUT_S}\` (hard max 180)"
             echo "- Hard caps: turns≤50, tokens≤8000, maxGenerations≤4"
-            echo "- OpenCode doom_loop: **allow** (thrash visible; turn cap is spend backstop)"
             echo "- Run live benchmark: \`${run_benchmark}\`"
             echo "- Note: ${reason}"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -185,20 +224,26 @@ jobs:
       - name: Start clawql-inference
         if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
-          mkdir -p "artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}"
+          ART="artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}-${{ matrix.doom_loop }}"
+          mkdir -p "$ART"
           PORT="${CLAWQL_INFERENCE_PORT}"
+          # Offset port per matrix cell to avoid collisions when jobs share a runner pool.
+          if [ "${{ matrix.doom_loop }}" = "deny" ]; then
+            PORT=$((PORT + 1))
+            echo "CLAWQL_INFERENCE_PORT=${PORT}" >> "$GITHUB_ENV"
+          fi
           node bin/clawql.mjs inference serve --port "$PORT" \
-            > "artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}/inference.log" 2>&1 &
-          echo $! > /tmp/clawql-inference.pid
+            > "$ART/inference.log" 2>&1 &
+          echo $! > /tmp/clawql-inference-${{ matrix.doom_loop }}.pid
           for i in $(seq 1 60); do
             if curl -sf "http://127.0.0.1:${PORT}/healthz" >/dev/null; then
-              echo "clawql-inference healthy after ${i}s"
+              echo "clawql-inference healthy after ${i}s on :${PORT}"
               exit 0
             fi
             sleep 1
           done
           echo "::error::clawql-inference failed to become healthy"
-          tail -n 120 "artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}/inference.log" || true
+          tail -n 120 "$ART/inference.log" || true
           exit 1
 
       - name: Run Ouroboros A/B compare
@@ -207,9 +252,11 @@ jobs:
         env:
           CLAWQL_BIN: ${{ env.CLAWQL_BIN }}
           CLAWQL_INFERENCE_URL: http://127.0.0.1:${{ env.CLAWQL_INFERENCE_PORT }}/v1
+          CLAWQL_OPENBENCH_DOOM_LOOP: ${{ matrix.doom_loop }}
         run: |
-          OUT="artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}/results.json"
-          SUM="artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}/summary.md"
+          ART="artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}-${{ matrix.doom_loop }}"
+          OUT="$ART/results.json"
+          SUM="$ART/summary.md"
           python3 openbench/scripts/run-ab-compare.py \
             --task "${OPENBENCH_TASK}" \
             --model "${OPENBENCH_MODEL}" \
@@ -220,10 +267,10 @@ jobs:
             --out "$OUT" \
             --summary-md "$SUM"
           {
-            echo "## OpenBench Ouroboros A/B — \`${OPENBENCH_TASK}\`"
+            echo "## OpenBench Ouroboros A/B — \`${OPENBENCH_TASK}\` (doom_loop=${{ matrix.doom_loop }})"
             echo ""
             echo "- Run: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            echo "- Caps: 180s wall / 50 turns / 8000 tokens / maxGenerations≤4 (doom_loop allow)"
+            echo "- Caps: 180s wall / 50 turns / 8000 tokens / maxGenerations≤4"
             echo ""
             cat "$SUM"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -231,14 +278,14 @@ jobs:
       - name: Stop clawql-inference
         if: always() && steps.preflight.outputs.run_benchmark == 'true'
         run: |
-          if [ -f /tmp/clawql-inference.pid ]; then
-            kill "$(cat /tmp/clawql-inference.pid)" 2>/dev/null || true
+          if [ -f /tmp/clawql-inference-${{ matrix.doom_loop }}.pid ]; then
+            kill "$(cat /tmp/clawql-inference-${{ matrix.doom_loop }}.pid)" 2>/dev/null || true
           fi
 
       - name: Upload artifacts
         if: always() && steps.preflight.outputs.run_benchmark == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: openbench-ouroboros-ab-${{ github.run_id }}
+          name: openbench-ouroboros-ab-${{ matrix.doom_loop }}-${{ github.run_id }}
           path: artifacts/openbench-ouroboros-ab/
           if-no-files-found: ignore

@@ -20,16 +20,19 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 
 ---
 
-## Live OpenBench today (4 tasks)
+## Live OpenBench today
 
 | Task | Primary claim | Verified shape |
 | ---- | ------------- | -------------- |
 | `memory-dependent-continuation` | Vault recall beats guessing after seed removal | clawql-on ≥ off ([#758](https://github.com/danielsmithdevelopment/ClawQL/pull/758) sweep) |
 | `token-budget-constrained` | Recall nested recipe + ignore decoy noise under token score | clawql-on ≥ off (same) |
 | `multi-provider-api-workflow` | Vault notes → correct Worker/wrangler scaffold | clawql-on ≥ off (same) |
-| `ouroboros-oscillation-escape` | Ouroboros stops strategy thrash (`doom_loop` allow) | on 1.0 / off 0.0 ([#759](https://github.com/danielsmithdevelopment/ClawQL/pull/759)) |
+| `search-first-discovery` | Must `search` (decoy wrong op) | **New** — awaiting live A/B |
+| `execute-verify-loop` | dry-run `execute` trail (≥2) | **New** — awaiting live A/B |
+| `memory-roundtrip-ingest-recall` | Empty vault ingest→recall | **New** — awaiting live A/B |
+| `ouroboros-oscillation-escape` | Ouroboros stops strategy thrash | allow cell verified ([#759](https://github.com/danielsmithdevelopment/ClawQL/pull/759)); **deny matrix** wired |
 
-**Hole:** almost everything else in the stack has skills/docs but **no clawql-on vs off cell**.
+Still missing live cells: audit, ATR/Panguard, PageIndex/hybrid, automation, sandbox.
 
 ---
 
@@ -110,13 +113,14 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 
 ## Prioritized backlog (whole stack)
 
-### P0 — core product story (do next after Ouroboros deny A/B)
+### P0 — core product story
 
-1. **Search-first discovery** — clawql-on must `search` to find the op; off guesses wrong.  
-2. **Execute verify loop** — offline mock provider; score before/after.  
-3. **Memory ingest → recall (two-phase)** — proves write path, not only seeded recall.  
-4. **Audit checkpoints** — trail required for full score.  
-5. **Policy / ATR deny** — security claim customers actually buy.
+1. ~~**Search-first discovery**~~ — task shipped (`search-first-discovery`); confirm live WIN.  
+2. ~~**Execute verify loop**~~ — task shipped (`execute-verify-loop`, dry-run); confirm live WIN.  
+3. ~~**Memory ingest → recall**~~ — task shipped (`memory-roundtrip-ingest-recall`); confirm live WIN.  
+4. **Ouroboros `doom_loop` deny A/B** — workflow matrix ships allow+deny; confirm deny cell.  
+5. **Audit checkpoints** — trail required for full score.  
+6. **Policy / ATR deny** — security claim customers actually buy.
 
 ### P1 — memory & docs depth (where “tons of tooling” lives)
 

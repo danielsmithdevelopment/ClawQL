@@ -20,6 +20,9 @@ on:
           - memory-dependent-continuation
           - token-budget-constrained
           - multi-provider-api-workflow
+          - search-first-discovery
+          - execute-verify-loop
+          - memory-roundtrip-ingest-recall
           - ouroboros-oscillation-escape
         default: all
       model:
@@ -102,12 +105,12 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             TASK="${{ inputs.task }}"
             if [ "$TASK" = "all" ] || [ -z "$TASK" ]; then
-              echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow"]' >> "$GITHUB_OUTPUT"
+              echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow","search-first-discovery","execute-verify-loop","memory-roundtrip-ingest-recall"]' >> "$GITHUB_OUTPUT"
             else
               echo "tasks=[\"${TASK}\"]" >> "$GITHUB_OUTPUT"
             fi
           else
-            echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow"]' >> "$GITHUB_OUTPUT"
+            echo 'tasks=["memory-dependent-continuation","token-budget-constrained","multi-provider-api-workflow","search-first-discovery","execute-verify-loop","memory-roundtrip-ingest-recall"]' >> "$GITHUB_OUTPUT"
           fi
 
   ab-compare:
@@ -147,8 +150,34 @@ jobs:
           echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           echo "OPENBENCH_ARMS=ouroboros-on,ouroboros-off" >> "$GITHUB_ENV"
           echo "CLAWQL_OUROBOROS_MAX_GENERATIONS=4" >> "$GITHUB_ENV"
-          echo "CLAWQL_OPENBENCH_DOOM_LOOP=allow" >> "$GITHUB_ENV"
-          echo "::notice::ouroboros-oscillation-escape → arms=ouroboros-on,off timeout=180s turns≤50 doom_loop=allow"
+          # Preserve caller doom_loop if set; default allow for thrash visibility.
+          if [ -z "${CLAWQL_OPENBENCH_DOOM_LOOP:-}" ]; then
+            echo "CLAWQL_OPENBENCH_DOOM_LOOP=allow" >> "$GITHUB_ENV"
+          fi
+          echo "::notice::ouroboros-oscillation-escape → arms=ouroboros-on,off timeout=180s turns≤50"
+
+      - name: Search-first task clamps
+        if: matrix.task == 'search-first-discovery'
+        run: |
+          echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
+          echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
+          echo "CLAWQL_PROVIDER=github" >> "$GITHUB_ENV"
+          echo "::notice::search-first-discovery → arms=clawql-on,off timeout=180s provider=github"
+
+      - name: Execute-verify task clamps
+        if: matrix.task == 'execute-verify-loop'
+        run: |
+          echo "OPENBENCH_TIMEOUT_S=240" >> "$GITHUB_ENV"
+          echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
+          echo "CLAWQL_PROVIDER=github" >> "$GITHUB_ENV"
+          echo "::notice::execute-verify-loop → arms=clawql-on,off timeout=240s provider=github"
+
+      - name: Memory-roundtrip task clamps
+        if: matrix.task == 'memory-roundtrip-ingest-recall'
+        run: |
+          echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
+          echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
+          echo "::notice::memory-roundtrip-ingest-recall → arms=clawql-on,off timeout=180s"
 
       - name: Credential preflight
         id: preflight

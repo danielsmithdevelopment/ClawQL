@@ -81,10 +81,38 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "max_wall_s": 180,
         "ouroboros_max_generations": 4,
         "default_timeout_s": 180,
-        # Observe strategy thrash without OpenCode's identical-tool guard.
+        # Default thrash study allows identical-tool spam; workflow may set
+        # CLAWQL_OPENBENCH_DOOM_LOOP=deny for the additive production-guard cell.
         "allow_doom_loop": True,
         # No vault one-shot — decoys must be the only workspace guidance for off.
         "disable_memory": True,
+    },
+    "search-first-discovery": {
+        "max_turns": 30,
+        "max_tokens": 8000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        "disable_memory": True,
+        "require_search": True,
+    },
+    "execute-verify-loop": {
+        "max_turns": 40,
+        "max_tokens": 10000,
+        "max_wall_s": 240,
+        "default_timeout_s": 240,
+        "disable_memory": True,
+        "require_search": True,
+        "require_execute": True,
+    },
+    "memory-roundtrip-ingest-recall": {
+        "max_turns": 30,
+        "max_tokens": 8000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        # Empty vault — agent must ingest then recall (no pre-seeded notes).
+        "disable_memory": False,
+        "empty_vault": True,
+        "require_memory_roundtrip": True,
     },
 }
 
@@ -282,6 +310,13 @@ def seed_and_remove_memory(workdir: Path) -> str | None:
     return str(vault)
 
 
+def empty_vault_home() -> str:
+    """Writable vault with empty Memory/ for ingest→recall roundtrips."""
+    vault = Path(tempfile.mkdtemp(prefix="clawql_ab_empty_vault_"))
+    (vault / "Memory").mkdir(parents=True, exist_ok=True)
+    return str(vault)
+
+
 def parse_bench_json(combined: str) -> dict:
     payload = {}
     for line in (combined or "").splitlines():
@@ -397,6 +432,22 @@ def normalize_inference_url(url: str) -> str:
 def normalize_model_id(model: str) -> str:
     """Pass through clawql-inference model ids (direct BYOK or openrouter/*)."""
     return model.strip()
+
+
+def resolve_doom_loop_mode(caps: dict | None = None) -> str:
+    """OpenCode doom_loop permission for thrash studies.
+
+    Precedence: ``CLAWQL_OPENBENCH_DOOM_LOOP`` env (workflow/matrix) → task cap
+    ``allow_doom_loop`` → default ``deny`` (production OpenCode guard).
+    """
+    raw = (os.environ.get("CLAWQL_OPENBENCH_DOOM_LOOP") or "").strip().lower()
+    if raw in ("allow", "1", "true", "yes", "on"):
+        return "allow"
+    if raw in ("deny", "0", "false", "no", "off"):
+        return "deny"
+    if caps and caps.get("allow_doom_loop"):
+        return "allow"
+    return "deny"
 
 
 def opencode_config_for_inference(inference_url: str, gateway_model: str) -> str:
@@ -559,6 +610,9 @@ def run_arm_on(
     ouroboros: bool | None = None,
     ouroboros_max_generations: int | None = None,
     disable_memory: bool = False,
+    task_hard_caps: dict | None = None,
+    require_search: bool = False,
+    require_execute: bool = False,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
     clawql = resolve_clawql()
@@ -623,10 +677,18 @@ def run_arm_on(
         else:
             env.pop("CLAWQL_OUROBOROS_MAX_GENERATIONS", None)
 
-    # Thrash study: allow OpenCode doom_loop so ouroboros-off can actually loop;
-    # hard turn/token/wall caps (≤50 turns) remain the spend backstop.
+    # Ouroboros A/B: doom_loop mode from env (workflow) or task caps.
+    # allow = thrash visible (identical-tool spam); deny = production default
+    # (strategy A↔B flip-flop still possible). Caps remain the spend backstop.
     if arm.startswith("ouroboros"):
-        env["CLAWQL_OPENBENCH_DOOM_LOOP"] = "allow"
+        env["CLAWQL_OPENBENCH_DOOM_LOOP"] = resolve_doom_loop_mode(task_hard_caps)
+
+    # Search / execute tasks need GitHub (or similar) in the merge for discovery.
+    if require_search or require_execute:
+        env.setdefault("CLAWQL_PROVIDER", "github")
+        env["CLAWQL_BUNDLED_OFFLINE"] = "1"
+        if disable_memory:
+            env["CLAWQL_ENABLE_MEMORY"] = "0"
 
     t0 = time.monotonic()
     timed_out = False
@@ -903,6 +965,7 @@ def render_markdown(report: dict) -> str:
         )
     elif task == "ouroboros-oscillation-escape":
         caps = TASK_HARD_CAPS.get(task) or {}
+        doom = resolve_doom_loop_mode(caps)
         interp.extend(
             [
                 "- **ouroboros-on** enables ClawQL Ouroboros (stagnation / oscillation / "
@@ -910,9 +973,36 @@ def render_markdown(report: dict) -> str:
                 "a seed-source appendix with the correct leaky-bucket recipe.",
                 "- **ouroboros-off** has the same MCP surface without Ouroboros tools and "
                 "**without** the recipe appendix / vault memory — only conflicting decoys.",
-                "- OpenCode `doom_loop` is **allow** so thrash can appear; "
-                f"hard auto-fail caps: turns≤{caps.get('max_turns')}, "
+                f"- OpenCode `doom_loop` is **{doom}** "
+                + (
+                    "so identical-tool thrash can appear; "
+                    if doom == "allow"
+                    else "(production guard on — strategy A↔B thrash still possible); "
+                )
+                + f"hard auto-fail caps: turns≤{caps.get('max_turns')}, "
                 f"tokens≤{caps.get('max_tokens')}, wall≤{caps.get('max_wall_s')}s.",
+            ]
+        )
+    elif task == "search-first-discovery":
+        interp.extend(
+            [
+                "- **clawql-on** must call `search` to find "
+                "`security_advisories_list_global_advisories` (decoy names a wrong op).",
+                "- **clawql-off** has no ClawQL search — typically copies the decoy and fails.",
+            ]
+        )
+    elif task == "execute-verify-loop":
+        interp.extend(
+            [
+                "- **clawql-on** must `search` then `execute` (≥2) with dry_run and write `trail.json`.",
+                "- **clawql-off** lacks execute — decoy trail ids fail the checker.",
+            ]
+        )
+    elif task == "memory-roundtrip-ingest-recall":
+        interp.extend(
+            [
+                "- Empty vault: **clawql-on** must `memory_ingest` then `memory_recall` the marker fact.",
+                "- **clawql-off** has no memory tools — cannot complete the roundtrip.",
             ]
         )
     interp.append("")
@@ -974,6 +1064,8 @@ def run_trial(
     try:
         materialize_workspace(task_dir, tmp)
         vault = seed_and_remove_memory(tmp)
+        if vault is None and caps.get("empty_vault") and arm != "clawql-off":
+            vault = empty_vault_home()
         if arm == "ouroboros-on":
             instruction = instruction.rstrip() + "\n" + OUROBOROS_ON_SEED_APPENDIX
         if arm == "clawql-off":
@@ -998,6 +1090,9 @@ def run_trial(
                 ouroboros=ouro,
                 ouroboros_max_generations=caps.get("ouroboros_max_generations"),
                 disable_memory=bool(caps.get("disable_memory")),
+                task_hard_caps=caps,
+                require_search=bool(caps.get("require_search")),
+                require_execute=bool(caps.get("require_execute")),
             )
         # Prefer full captured stream; fall back to workdir harness dump.
         combined = agent.pop("_combined_log", None) or ""
@@ -1024,6 +1119,12 @@ def run_trial(
             checker_env_extra["OPENBENCH_HARD_MAX_TOKENS"] = str(caps["max_tokens"])
         if arm == "ouroboros-on":
             checker_env_extra["OPENBENCH_REQUIRE_OUROBOROS"] = "1"
+        if arm == "clawql-on" and caps.get("require_search"):
+            checker_env_extra["OPENBENCH_REQUIRE_SEARCH"] = "1"
+        if arm == "clawql-on" and caps.get("require_execute"):
+            checker_env_extra["OPENBENCH_REQUIRE_EXECUTE"] = "1"
+        if arm == "clawql-on" and caps.get("require_memory_roundtrip"):
+            checker_env_extra["OPENBENCH_REQUIRE_MEMORY_ROUNDTRIP"] = "1"
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
         return {

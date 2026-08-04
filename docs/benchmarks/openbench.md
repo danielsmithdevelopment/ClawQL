@@ -33,12 +33,15 @@ Python adapter: [`openbench/adapters/clawql.py`](../../openbench/adapters/clawql
 
 ### Track B — ClawQL-specific tasks
 
-| Task                            | Differentiator                                                              |
-| ------------------------------- | --------------------------------------------------------------------------- |
-| `memory-dependent-continuation` | Prior auth decisions only in vault memory after seed removal                |
-| `token-budget-constrained`      | Nested YAML list recipe in vault memory; ignore `decoy/`; ≤5k-token scoring |
-| `multi-provider-api-workflow`   | Offline Worker scaffold; wrangler/GitHub URL notes in vault when clawql-on  |
-| `ouroboros-oscillation-escape`  | Ouroboros on vs off under decoy thrash; see [value evidence](./ouroboros-value-evidence.md) |
+| Task                              | Differentiator                                                              |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| `memory-dependent-continuation`   | Prior auth decisions only in vault memory after seed removal                |
+| `token-budget-constrained`        | Nested YAML list recipe in vault memory; ignore `decoy/`; ≤5k-token scoring |
+| `multi-provider-api-workflow`     | Offline Worker scaffold; wrangler/GitHub URL notes in vault when clawql-on  |
+| `search-first-discovery`          | Must `search` for global GHSA list op; decoy names wrong id                 |
+| `execute-verify-loop`             | `search` + ≥2 dry-run `execute` trail; decoy skips tools                    |
+| `memory-roundtrip-ingest-recall`  | Empty vault: ingest marker → recall → `answer.json`                         |
+| `ouroboros-oscillation-escape`    | Ouroboros on vs off under decoy thrash; see [value evidence](./ouroboros-value-evidence.md) |
 
 Offline checker validation (no model):
 
@@ -53,7 +56,7 @@ python3 openbench/validate_tasks.py
 - **Live A/B (Ouroboros on vs off):** [`.github/workflows/openbench-ouroboros-ab.yml`](../../.github/workflows/openbench-ouroboros-ab.yml) — thrash-escape evidence; see [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md).
 - **Default model:** `openrouter/deepseek/deepseek-chat` (cheap OpenRouter default; flash-lite also supported) — preferred secret: **`OPENROUTER_API_KEY`**.
 - **Tool calling:** clawql-inference must passthrough OpenAI `tools` / `tool_calls` for OpenCode; see [`openbench-failure-root-cause-2026-07.md`](./openbench-failure-root-cause-2026-07.md).
-- **Matrix (clawql on/off):** PR/push runs `memory-dependent-continuation`, `token-budget-constrained`, `multi-provider-api-workflow` when secrets are present.
+- **Matrix (clawql on/off):** PR/push runs memory / token / multi-provider / **search-first** / **execute-verify** / **memory-roundtrip** when secrets are present.
 - Missing secrets → live A/B **skipped** on PR/push (exit 0); manual dispatch still fails closed.
 - Optional later: switch `model` to direct BYOK ids when you add vendor keys.
 
@@ -75,7 +78,7 @@ efficiency, OpenBench for end-to-end harness competition.
 
 ## Whole-stack coverage
 
-Only four agent tasks exist today (three clawql-on/off + one Ouroboros). Memory
-depth, documents, automation, sandbox, audit/cache, and policy/ATR are mostly
-**skills + unit tests** without OpenBench cells. Full map and prioritized
-backlog: [`openbench-stack-coverage.md`](./openbench-stack-coverage.md).
+Live task pack now includes core **search / execute / memory roundtrip** cells
+plus the original three clawql-on/off tasks and Ouroboros (allow+deny matrix).
+Still open: audit, ATR/Panguard deny, PageIndex/hybrid, automation, sandbox.
+Full map: [`openbench-stack-coverage.md`](./openbench-stack-coverage.md).
