@@ -12,7 +12,7 @@ document is the **scoreboard + run diary**.
 | Default model | `openrouter/deepseek/deepseek-chat` |
 | Harness | OpenCode → clawql-inference |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T07:35Z |
+| Last ledger update | 2026-08-04T07:50Z |
 | CI matrix control | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push |
 | Task explanations | [`openbench-task-explanations.md`](./openbench-task-explanations.md) — prove / why / how for every cell |
 
@@ -49,12 +49,24 @@ history). Move the best WIN into the headline table if it improves the claim.
 | `codegraph-guided-edit` | Structural index locates SECRET_MARKER | **1.0** (3 turns, 53s) | **0.0** | [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377) | **WIN** |
 | `schedule-synthetic-dry-run` | schedule create + dry_run trigger | **1.0** (3 turns, 32s) | **0.0** | [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377) | **WIN** |
 | `external-ingest-continue` | ingest_external_knowledge → memory_recall | **1.0** (5 turns, 37s) | **0.0** | [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038) | **WIN** |
+| `hybrid-recall-source-pin` | PageIndex retrieves buried handbook code | **1.0** (5 turns, 52s) | **0.0** | [30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063) | **WIN** |
 
 Replicated Ouroboros WINs also on [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519) (allow + deny both on 1.0 / off 0.0).
 
 ---
 
 ## Run diary
+
+## Run diary
+
+### 2026-08-04 — [30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063) (hybrid catalog-scale handbook)
+
+| Arm | Score | Turns | Wall (s) | Notes |
+| --- | ----- | ----- | -------- | ----- |
+| clawql-on | **1.0** | 5 | 51.7 | read → build_tree (with fern-42 markdown) → synthesize → write |
+| clawql-off | **0.0** | 2 | 7.2 | Correct fail (no real pageindex tools) |
+
+**Verdict:** **WIN** — retire hybrid from `pr_active`.
 
 ### 2026-08-04 — [30888249849](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888249849) (hybrid empty-md harden)
 
@@ -267,9 +279,8 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 ## Open gaps (not yet headline WIN)
 
-1. **`hybrid-recall-source-pin`** — still `pr_active`; anti-guess OK, empty-markdown + answer-shape harden pending re-run.
-2. **notify / sandbox / composed recipes** — backlog.
-3. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
+1. **notify / sandbox / composed recipes** — backlog (next PR wave).
+2. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
 
 ---
 

@@ -42,11 +42,13 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 | `pageindex-section-qa` | PageIndex build+synthesize finds buried code | on **1.0** / off **0.0** ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)) |
 | `codegraph-guided-edit` | Structural index locates SECRET_MARKER | on **1.0** / off **0.0** ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) |
 | `schedule-synthetic-dry-run` | schedule create + dry_run trigger | on **1.0** / off **0.0** ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) |
+| `external-ingest-continue` | Bulk MD ingest → recall | on **1.0** / off **0.0** ([30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038)) |
+| `hybrid-recall-source-pin` | PageIndex retrieves buried handbook code | on **1.0** / off **0.0** ([30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063)) |
 | `ouroboros-oscillation-escape` | Ouroboros stops strategy thrash | allow + **deny** both on 1.0 / off 0.0 ([30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277)) |
 
-Still missing clean live WINs: hybrid recall (anti-guess re-run), external ingest, notify/sandbox/composed, n≥3 trials. Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
+Still missing live cells: notify, sandbox, composed recipes, n≥3 trials. Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` runs on PR/push. Prior graded tasks are **`retired`**. Active next wave: `hybrid-recall-source-pin` only (external-ingest retired after [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038)). Ouroboros workflow is dispatch-only.
+**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` runs on PR/push. All graded cells above are **`retired`** (`pr_active` empty). Next wave: notify / sandbox / composed. Ouroboros workflow is dispatch-only.
 
 Explanations for every verified cell: [`openbench-task-explanations.md`](./openbench-task-explanations.md).
 
@@ -72,8 +74,8 @@ Legend: **Live** = OpenBench A/B · **Context** = planning-context stats · **Un
 | `memory_recall` (vault) | Prior decisions survive seed removal | **Live** (memory + token + multi) | Multi-trial n≥5; adversarial decoy vault notes |
 | `memory_ingest` | Durable write of outcomes | **Live** `memory-roundtrip-ingest-recall` on 1.0 / off 0.0 ([30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)) | Multi-trial n≥3; two-session recall |
 | `memory_sync` (R2/S3) | Team vault reconcile | Docs / Cloud Agent e2e guide | Ops smoke, not OpenBench (needs bucket secrets). Keep as **sync ensure** CI probe |
-| Hybrid `sources` (`vector` / `pageindex` / `onyx` / `codegraph`) | Multi-backend recall | Unit + flags | **Hybrid recall** task shipped; awaiting clean WIN after invalid-tool grader fix |
-| `pageindex_*` | Hierarchical doc Q&A without stuffing full text | **Live WIN** `pageindex-section-qa` ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)) | Retired from PR; hybrid recall still open |
+| Hybrid `sources` (`vector` / `pageindex` / `onyx` / `codegraph`) | Multi-backend recall | Unit + flags; PageIndex path proven via `hybrid-recall-source-pin` | True `memory_recall(sources=[…])` pin still open |
+| `pageindex_*` | Hierarchical doc Q&A without stuffing full text | **Live WIN** `pageindex-section-qa` + `hybrid-recall-source-pin` ([30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063)) | Retired from PR |
 | `codegraph_*` | Structural code Q&A | **Live WIN** `codegraph-guided-edit` ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) | Retired from PR |
 | Wikilinks / graph hops | Recall follows `[[links]]` | Unit-ish | Seed note A→B→fact; query only matches A |
 
@@ -142,7 +144,7 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 ### P1 — memory & docs depth (where “tons of tooling” lives)
 
 8. ~~**PageIndex long-doc Q&A**~~ — verified on 1.0 / off 0.0 ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)).  
-9. **Hybrid recall source pin** — shipped; invalid-tool TIE on [30886497135](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30886497135); anti-guess re-run pending.  
+9. ~~**Hybrid recall source pin**~~ — verified on 1.0 / off 0.0 ([30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063)).  
 10. ~~**Codegraph-guided edit**~~ — verified on 1.0 / off 0.0 ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)).  
 11. ~~**External ingest → continue**~~ — verified on 1.0 / off 0.0 ([30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038)).  
 

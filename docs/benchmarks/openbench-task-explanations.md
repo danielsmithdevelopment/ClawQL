@@ -139,7 +139,7 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | **Evidence** | on **1.0** (5 turns, ~37s) / off **0.0** — [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038). |
 | **Does *not* prove** | URL fetch mode (`CLAWQL_EXTERNAL_INGEST_FETCH`); Presidio redaction on ingest; Merkle/cuckoo side effects. |
 
-### `hybrid-recall-source-pin` — **in flight (empty-markdown harden)**
+### `hybrid-recall-source-pin`
 
 | | |
 | --- | --- |
@@ -147,9 +147,9 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | **Why it matters** | Separates “PageIndex exists” (`pageindex-section-qa`) from “agents prefer the hierarchical path when decoys tempt shortcuts.” Supports hybrid recall / source-pin product narrative. |
 | **How** | Compact-but-filled `handbook.md` (~catalog size so cheap models can re-emit markdown) buries `CLAWQL_HYBRID_CODE=fern-42` among rose-/lilac- decoys. Empty vault. Graders require real `clawql_pageindex_*` **and** either build markdown containing the marker **or** synthesize output containing `fern-42`. |
 | **What success looks like** | on: read handbook → build_tree(full md) → synthesize → `answer.json` code fern-42; off: cannot produce real pageindex tool_use → 0.0. |
-| **Evidence** | Placeholder fail [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377). Invalid-tool TIE [30886497135](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30886497135). Empty-markdown fail [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038). Still `pr_active`. |
+| **Evidence** | on **1.0** (5 turns, ~52s) / off **0.0** — [30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063). Tools: read, clawql_pageindex_build_tree, clawql_pageindex_synthesize, write. |
 | **Does *not* prove** | Full `memory_recall` multi-backend `sources=[pageindex,…]` pin; vector/Onyx hybrids. |
-| **Failure modes learned** | (1) Indexing instruction text / placeholders. (2) `"tool":"invalid"` false positives. (3) `build_tree` with `markdown:""` then guessing from a prior `read`. |
+| **Failure modes learned** | (1) Indexing instruction text / placeholders. (2) `"tool":"invalid"` false positives. (3) `build_tree` with `markdown:""` then guessing from a prior `read`. (4) Oversized handbook (~14KB) timed out on re-emit — keep catalog-scale fixtures for frugal models. |
 
 ---
 
@@ -227,7 +227,7 @@ Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../o
 
 ---
 
-## Next cells (backlog after active)
+## Next cells (backlog)
 
 1. **notify mock Slack** — needs Slack-in-spec + token or recorded HTTP mock (P2).  
 2. **sandbox-trusted compute** — Docker/bridge backend in CI (P2).  
