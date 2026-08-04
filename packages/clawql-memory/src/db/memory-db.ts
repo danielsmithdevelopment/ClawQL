@@ -533,7 +533,8 @@ export async function syncMemoryDbFromDocuments(
         // Vectors are mandatory for memory — do not silently write NULL embeddings.
         if (!allowKeywordOnlyMemory()) {
           throw new Error(
-            `memory.db embedding sync failed (vectors required for memory_recall): ${msg}`
+            `memory.db embedding sync failed (vectors required for memory_recall): ${msg}`,
+            { cause: e }
           );
         }
       }
