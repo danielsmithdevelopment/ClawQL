@@ -4,6 +4,9 @@ Apples-to-apples A/B of **Ouroboros on vs off** on the same model and OpenCode
 harness. OpenCode’s built-in `doom_loop` guard is **`allow`** so thrash can
 appear. Spend is bounded by a **hard 50-turn / 180s / 8000-token** auto-fail.
 
+**Value write-up (claim + next test):**
+[`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md).
+
 ## Why the first live run tied 1.0 / 1.0
 
 [Run 30192620319](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30192620319)

@@ -7,6 +7,7 @@
 | Resource                                       | Link                                                                                                                                |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Long-form guide + copy-paste examples**      | [docs/ouroboros/clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md) |
+| **OpenBench value evidence (thrash A/B)**      | [docs/benchmarks/ouroboros-value-evidence.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/ouroboros-value-evidence.md) |
 | **Human-friendly overview (ClawQL docs site)** | [docs.clawql.com/ouroboros](https://docs.clawql.com/ouroboros)                                                                      |
 | **Source**                                     | [packages/clawql-ouroboros](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-ouroboros)                   |
 | **Issues / discussions**                       | [ClawQL issues](https://github.com/danielsmithdevelopment/ClawQL/issues)                                                            |

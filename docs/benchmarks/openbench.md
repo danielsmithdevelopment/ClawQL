@@ -38,6 +38,7 @@ Python adapter: [`openbench/adapters/clawql.py`](../../openbench/adapters/clawql
 | `memory-dependent-continuation` | Prior auth decisions only in vault memory after seed removal                |
 | `token-budget-constrained`      | Nested YAML list recipe in vault memory; ignore `decoy/`; ≤5k-token scoring |
 | `multi-provider-api-workflow`   | Offline Worker scaffold; wrangler/GitHub URL notes in vault when clawql-on  |
+| `ouroboros-oscillation-escape`  | Ouroboros on vs off under decoy thrash; see [value evidence](./ouroboros-value-evidence.md) |
 
 Offline checker validation (no model):
 
@@ -48,10 +49,11 @@ python3 openbench/validate_tasks.py
 ## GitHub Actions A/B (CI + manual)
 
 - **Offline:** main CI always runs `python3 openbench/validate_tasks.py`.
-- **Live A/B:** [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml) runs on path-filtered PR/push to `main` and via `workflow_dispatch`.
+- **Live A/B (ClawQL on vs off):** [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml) runs on path-filtered PR/push to `main` and via `workflow_dispatch`.
+- **Live A/B (Ouroboros on vs off):** [`.github/workflows/openbench-ouroboros-ab.yml`](../../.github/workflows/openbench-ouroboros-ab.yml) — thrash-escape evidence; see [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md).
 - **Default model:** `openrouter/deepseek/deepseek-chat` (cheap OpenRouter default; flash-lite also supported) — preferred secret: **`OPENROUTER_API_KEY`**.
 - **Tool calling:** clawql-inference must passthrough OpenAI `tools` / `tool_calls` for OpenCode; see [`openbench-failure-root-cause-2026-07.md`](./openbench-failure-root-cause-2026-07.md).
-- **Matrix:** PR/push runs all three tasks (`memory-dependent-continuation`, `token-budget-constrained`, `multi-provider-api-workflow`) when secrets are present.
+- **Matrix (clawql on/off):** PR/push runs `memory-dependent-continuation`, `token-budget-constrained`, `multi-provider-api-workflow` when secrets are present.
 - Missing secrets → live A/B **skipped** on PR/push (exit 0); manual dispatch still fails closed.
 - Optional later: switch `model` to direct BYOK ids when you add vendor keys.
 
