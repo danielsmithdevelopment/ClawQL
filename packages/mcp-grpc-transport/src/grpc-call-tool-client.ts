@@ -154,10 +154,7 @@ export async function callToolServerStreamingGrpc(
   });
 
   const md = new grpc.Metadata();
-  md.set(
-    "mcp-protocol-version",
-    options.protocolVersion?.trim() || LATEST_PROTOCOL_VERSION
-  );
+  md.set("mcp-protocol-version", options.protocolVersion?.trim() || LATEST_PROTOCOL_VERSION);
 
   const serialize = () => encodedRequest;
   const deserialize = (buf: Buffer) => CallToolResponse.decode(buf);
