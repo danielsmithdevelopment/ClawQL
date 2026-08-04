@@ -7,38 +7,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+## [7.2.0] - 2026-08-04
 
-- **IDP tracking hygiene** — matrix + gap-closure plan mark **#241–#258** / OpenClaw profile **#227** as shipped; epic [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) checklist closed.
-- **IDP document events over NATS** — Stirling hop artifact chaining, Nextcloud inbox webhook → JetStream → `run_idp_pipeline`, Coneshare viewer → resume/notify consumers, classifier BYO promote pin. Matrix Partial rows for those tracks are **Shipped**.
-- **Team vault auto-push** — quiet debounce default **2s** (coalesce bursts) plus **30s min interval** between pushes during sustained ingest (no R2 spam). Pending dirty writes still **flush on shutdown** so short-lived MCP/Cloud Agent processes do not drop notes. Env: `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`, `CLAWQL_SYNC_AUTO_PUSH_MIN_MS`.
-
-### Fixed
-
-- **MCP stdio / Cursor discovery** — `dotenv` ≥17 prints `◇ injected env …` to **stdout** by default; that corrupts JSON-RPC and makes Cursor report `clawql` as failed tool discovery. `src/load-env.ts` now always passes **`quiet: true`**.
-- **MCP stdio Ready latency** — default six-vendor `loadSpec()` (~5–10s) no longer blocks the stdio transport. Specs warm in the background after **Ready**; `search` / `execute` still await the cache on first use.
+Minor release on the **7.0 Agentic Gateway** line: **Memory Stack 2.0**, Convergence Week **MCP 2026-07-28 / OKF v0.2 / PorTAL**, native **CodeGraph**, **mcp-api-adapter**, Managed Edge Gateway wedge, Cloud Agent / team-sync hardening, and a completed **IDP** document-event wave (including Stirling + NATS). No intentional semver-major breaks vs **7.1.0** — see behavioral notes in release notes. Release notes: **[`RELEASE_NOTES_v7.2.0.md`](RELEASE_NOTES_v7.2.0.md)**. Announcement drafts: **[`docs/announcements/announcement-drafts-v7.2.0.md`](docs/announcements/announcement-drafts-v7.2.0.md)**. Inventory: **48** product/deps PRs merged after `v7.1.0` (excluding the 7.1.0 prep PR itself).
 
 ### Added
 
-- **NATS IDP e2e enablement** — Helm [`values-nats-idp.example.yaml`](charts/clawql-mcp/values-nats-idp.example.yaml), full IDP profile enables document workers, KEDA lag triggers for `clawql-idp-pipeline` / `clawql-coneshare-followup`, smoke `scripts/dev/smoke-nats-idp-webhooks.sh`, runbook [`nats-idp-e2e.md`](docs/runbooks/nats-idp-e2e.md), Agent contract [`clawql-agent-idp-nats.md`](docs/openclaw/clawql-agent-idp-nats.md) ([#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)).
-- **Stirling document-stage redact orchestration** — `run_idp_pipeline` chains PDF bytes (`pdf_base64` bag) into Stirling `redactPdfAuto` and Nextcloud processed upload; REST binary responses wrap as base64. Env: `CLAWQL_IDP_REDACT_LIST`, `CLAWQL_IDP_REQUIRE_STIRLING_REDACT`.
-- **Nextcloud → NATS IDP queue** — `POST /idp/nextcloud/webhook` publishes `clawql.document.inbox.arrived`; durable consumer `clawql-idp-pipeline` runs the pipeline (in-process or `POST /idp/pipeline/run`). Helm: `nats.worker.idpPipeline`.
-- **Coneshare analytics → NATS follow-up** — webhook publishes `clawql.document.coneshare.viewer`; consumer resumes Argo + optional Slack (`CLAWQL_CONESHARE_NOTIFY_CHANNEL`). Helm: `nats.worker.coneshareFollowup`.
-- **Classifier train/promote BYO** — [`deployment/samples/classifier-http/promote.sh`](deployment/samples/classifier-http/promote.sh) gates on metrics; Helm pins `documentPipeline.classifier.image.tag` / `MODEL_VERSION` / optional model PVC.
-- **Local Privacy Filter gateway backup** ([#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)) — opt-in `CLAWQL_ENABLE_PRIVACY_FILTER=1` runs a **second local** redact pass after Presidio (`maybeGatewayRedactText`). Reference sidecar [`deployment/samples/privacy-filter-http/`](deployment/samples/privacy-filter-http/) (demo heuristics / live `openai/privacy-filter` weights — **no OpenAI API**). Helm `enablePrivacyFilter` + `documentPipeline.privacyFilter`. Docs: [`docs/security/privacy-filter-local.md`](docs/security/privacy-filter-local.md).
-- **Vertical Docker Compose stacks** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) — **healthcare**, **legal**, and **education** stacks alongside lending (`docker/compose/*.compose.yml` + env templates + sample packs). Validate with **`make compose-vertical-config-test`**.
-- **HITL Label Studio pre-annotations** ([#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)) — optional **`tasks[].predictions`** on **`hitl_enqueue_label_studio`** (Zod + size limits); reference **`sample-tasks.json`** packs for lending / healthcare / legal / education.
-- **`convert_document`** — Firecrawl [anydoc](https://github.com/firecrawl/anydoc) in-process MCP tool (`CLAWQL_ENABLE_ANYDOC=1`): Office/PDF/CSV → GFM Markdown with Docling/Tika route recommendations. Helm **`enableAnydoc`**. Docs: [`docs/providers/anydoc-onboarding.md`](docs/providers/anydoc-onboarding.md).
-- **`inspect_pdf`** — Firecrawl [pdf-inspector](https://github.com/firecrawl/pdf-inspector) in-process MCP tool (`CLAWQL_ENABLE_PDF_INSPECTOR=1`): classify TextBased/Scanned/Mixed, optional Markdown, Docling route recommendation. Docs: [`docs/providers/pdf-inspector-onboarding.md`](docs/providers/pdf-inspector-onboarding.md).
-- **Helm IDP sidecars** — opt-in **`documentPipeline.classifier`** + **`documentPipeline.langextract`** Deployments; chart flags **`enableIdpClassifier`**, **`enableLangextract`**, **`enablePdfInspector`**, **`enableAnydoc`**, **`enableIdpPipeline`** wire MCP env + `CLASSIFIER_BASE_URL` / `LANGEXTRACT_BASE_URL`.
-- **IDP docs + website** — Documents plugin page, learn/document-pipeline, OpenClaw IDP skill/runbook, landing IDP marketing stages, plugin registry, and mcp-tools env table updated for anydoc / pdf-inspector → Docling → classify → LangExtract.
-- **`codegraph_sync`** — native TypeScript pipeline (index → Louvain communities → `GRAPH_REPORT.md` / `graph.html` → vault ingest). **No Python / Graphify CLI.** Optional `codegraph_sync_graphify` only imports an existing `graph.json` (or falls back to native). ([`docs/plugins/codegraph.md`](docs/plugins/codegraph.md)).
-- **TS/JS codegraph depth** — enclosing-scope call graphs, `extends`/`implements`/`exports`, cross-file import/call linking, React/Next tags; **`codegraph_explore`** (one-shot agent context) and **`codegraph_impact`** (blast radius).
-- **Multi-language tree-sitter indexing** — 30+ languages via `tree-sitter-wasms` (Rust, Java, C/C++, C#, Ruby, Kotlin, Scala, PHP, Swift, …) alongside the TS compiler path.
-- **mcp-grpc-transport 1.0.0** — MCP **2026-07-28** stateless protocol support (`Discover` RPC, `mcp-protocol-version: 2026-07-28`, per-request `mcp-client-info` / `clientCapabilities`); production TypeScript gRPC MCP transport ([Convergence Week](https://pragmaticvectors.com/posts/convergence-week/)).
-- **Streamable HTTP MCP 2026-07-28** — `/mcp` accepts `mcp-protocol-version: 2026-07-28` with per-request stateless transports; JSON-RPC `discover` / `POST /mcp/discover`; Helm alias `clawql-mcp-grpc.enabled`.
-- **OKF v0.2 trust signals** on vault memory — `generated`, `verified`, `sources`, `stale_after`, `status`, `superseded_by`; `clawql memory lint|migrate|query`; MEMORY_* WORM events; recall excludes `retracted` and down-weights stale ([`docs/memory/okf.md`](docs/memory/okf.md)).
-- **PorTAL flywheel** — `--format portal-bundle` (task_latent + alignment stubs + `adapter_manifest.cqm`), `--okf-verified` / `--okf-status` export filters, `clawql inference finetune refit` ([`docs/inference/portal-flywheel.md`](docs/inference/portal-flywheel.md)).
+#### Memory Stack 2.0
+
+- **Layer 2 ranking** ([#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801)) — IDF + log-TF keyword scores; wikilink surface; honest embedding sync; **in-process local MiniLM** (`@xenova/transformers` / `Xenova/all-MiniLM-L6-v2`); **vectors mandatory** (keyword-only requires `CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY=1`); recall bakeoff regressions; default `CLAWQL_MEMORY_RECALL_MIN_SCORE` **0.05**.
+- **Index-first recall** ([#803](https://github.com/danielsmithdevelopment/ClawQL/pull/803)) — survey OKF `index.md` / `log.md` before note bodies; large-vault body restriction; catalog boost ([`docs/memory/okf.md`](docs/memory/okf.md)).
+- **Git-native Mode A** ([#804](https://github.com/danielsmithdevelopment/ClawQL/pull/804)) — `CLAWQL_MEMORY_BACKEND=git` commit-on-ingest; optional push; `result.git` on ingest.
+- **Hybrid RRF** ([#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806)) — path-keyed reciprocal rank fusion; `CLAWQL_MEMORY_RECALL_HYBRID=1` master switch.
+- **WORM seal + recall events** ([#807](https://github.com/danielsmithdevelopment/ClawQL/pull/807)) — auto `worm_ref: sha256:…` on ingest; `MEMORY_RECALL` WORM events.
+- **CodeGraph → vault flywheel** ([#808](https://github.com/danielsmithdevelopment/ClawQL/pull/808)) — `codegraph_impact` ingests `type: code_change` notes (disable with `CLAWQL_CODEGRAPH_CODE_CHANGE_INGEST=0`).
+
+#### Convergence Week / protocol / OKF / PorTAL
+
+- **mcp-grpc-transport 1.0.0** + Streamable HTTP — MCP **2026-07-28** (`Discover`, per-request client info); Helm alias `clawql-mcp-grpc.enabled` ([#792](https://github.com/danielsmithdevelopment/ClawQL/pull/792)).
+- **OKF v0.2 trust signals** — `generated`, `verified`, `sources`, `stale_after`, `status`, `superseded_by`; `clawql memory lint|migrate|query`; MEMORY_* WORM events; recall excludes `retracted` and down-weights stale ([`docs/memory/okf.md`](docs/memory/okf.md)).
+- **PorTAL flywheel** — `--format portal-bundle`, `--okf-verified` / `--okf-status` export filters, `clawql inference finetune refit` ([`docs/inference/portal-flywheel.md`](docs/inference/portal-flywheel.md)).
+
+#### CodeGraph
+
+- **`codegraph_sync`** — native TypeScript pipeline (index → Louvain → `GRAPH_REPORT.md` / `graph.html` → vault). No Python Graphify CLI required; optional `codegraph_sync_graphify` import path ([#793](https://github.com/danielsmithdevelopment/ClawQL/pull/793)).
+- **TS/JS depth** — enclosing-scope call graphs, `extends`/`implements`/`exports`, cross-file linking, React/Next tags; **`codegraph_explore`** / **`codegraph_impact`**.
+- **Multi-language tree-sitter indexing** — 30+ languages via `tree-sitter-wasms`.
+
+#### MCP API adapter + Managed Gateway
+
+- **`mcp-api-adapter`** ([#795](https://github.com/danielsmithdevelopment/ClawQL/pull/795), [#796](https://github.com/danielsmithdevelopment/ClawQL/pull/796)) — any MCP → OpenAPI + GraphQL + Streamable HTTP `/mcp` + gRPC + `gen-cli`.
+- **Managed Edge Gateway go-live wedge** ([#746](https://github.com/danielsmithdevelopment/ClawQL/pull/746)) — `clawql gateway create|status|destroy`; compose/nginx examples; MCP acceptance of inference virtual keys (`tenantId` from `key.team`); gated Helm `inference` + `managedGateway`.
+
+#### IDP document pipeline
+
+- **Stirling document-stage redact** ([#810](https://github.com/danielsmithdevelopment/ClawQL/pull/810)) — `run_idp_pipeline` chains PDF bytes (`pdf_base64` bag) into Stirling `redactPdfAuto` + Nextcloud processed upload; REST binary as base64. Env: `CLAWQL_IDP_REDACT_LIST`, `CLAWQL_IDP_REQUIRE_STIRLING_REDACT`.
+- **Nextcloud → NATS IDP queue** ([#810](https://github.com/danielsmithdevelopment/ClawQL/pull/810)) — `POST /idp/nextcloud/webhook` → `clawql.document.inbox.arrived` → durable `clawql-idp-pipeline` consumer. Helm: `nats.worker.idpPipeline`.
+- **Coneshare analytics → NATS follow-up** ([#810](https://github.com/danielsmithdevelopment/ClawQL/pull/810)) — `clawql.document.coneshare.viewer` → Argo resume + optional Slack. Helm: `nats.worker.coneshareFollowup`.
+- **Classifier train/promote BYO** ([#810](https://github.com/danielsmithdevelopment/ClawQL/pull/810)) — [`promote.sh`](deployment/samples/classifier-http/promote.sh); Helm pins image tag / `MODEL_VERSION` / optional model PVC.
+- **NATS IDP e2e enablement** ([#812](https://github.com/danielsmithdevelopment/ClawQL/pull/812)) — Helm [`values-nats-idp.example.yaml`](charts/clawql-mcp/values-nats-idp.example.yaml); KEDA lag triggers; smoke `scripts/dev/smoke-nats-idp-webhooks.sh`; runbook [`nats-idp-e2e.md`](docs/runbooks/nats-idp-e2e.md); Agent contract [`clawql-agent-idp-nats.md`](docs/openclaw/clawql-agent-idp-nats.md) ([#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)).
+- **Local Privacy Filter gateway backup** ([#805](https://github.com/danielsmithdevelopment/ClawQL/pull/805) / [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)) — `CLAWQL_ENABLE_PRIVACY_FILTER=1` second local redact after Presidio. Docs: [`docs/security/privacy-filter-local.md`](docs/security/privacy-filter-local.md).
+- **Vertical Docker Compose stacks** ([#802](https://github.com/danielsmithdevelopment/ClawQL/pull/802) / [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) — healthcare / legal / education (+ lending).
+- **HITL Label Studio pre-annotations** ([#802](https://github.com/danielsmithdevelopment/ClawQL/pull/802) / [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)) — optional `tasks[].predictions`.
+- **`convert_document` / `inspect_pdf`** ([#797](https://github.com/danielsmithdevelopment/ClawQL/pull/797)) — Firecrawl anydoc + pdf-inspector; Helm classifier / LangExtract sidecars + IDP docs/website updates.
+
+#### Sync, Cloud Agent, inference, OpenBench, release tooling
+
+- **`clawql sync ensure`** ([#755](https://github.com/danielsmithdevelopment/ClawQL/pull/755)) — auto-creates R2/S3 team vault buckets.
+- **Cloud Agent e2e** ([#754](https://github.com/danielsmithdevelopment/ClawQL/pull/754), [#756](https://github.com/danielsmithdevelopment/ClawQL/pull/756), [#757](https://github.com/danielsmithdevelopment/ClawQL/pull/757)) — stdio MCP + R2 sync bootstrap; workspace `npx` fix; setup guide.
+- **OpenBench + inference** ([#741](https://github.com/danielsmithdevelopment/ClawQL/pull/741), [#750](https://github.com/danielsmithdevelopment/ClawQL/pull/750), [#752](https://github.com/danielsmithdevelopment/ClawQL/pull/752)) — OpenBench tasks + CI A/B (skip-if-no-secret); BYOK / OpenRouter-first `clawql-inference` path.
+- **Layer 0 immutable release pipeline** ([#743](https://github.com/danielsmithdevelopment/ClawQL/pull/743)) — `clawql-release` collect/manifest/publish/verify hardening; guide UX ([#747](https://github.com/danielsmithdevelopment/ClawQL/pull/747)).
+
+#### Site / GTM / content
+
+- **clawql.com agent readiness** ([#742](https://github.com/danielsmithdevelopment/ClawQL/pull/742), [#744](https://github.com/danielsmithdevelopment/ClawQL/pull/744)) — `.well-known` + Cloudflare edge; deploy restore.
+- **IDP marketing + GTM** ([#760](https://github.com/danielsmithdevelopment/ClawQL/pull/760), [#753](https://github.com/danielsmithdevelopment/ClawQL/pull/753)) — `/idp` landing; standalone IDP GTM playbook.
+- **Docs IA** ([#751](https://github.com/danielsmithdevelopment/ClawQL/pull/751), [#790](https://github.com/danielsmithdevelopment/ClawQL/pull/790), [#791](https://github.com/danielsmithdevelopment/ClawQL/pull/791)) — Plugins top-level nav; Aug 2026 rewrite pack; Cloudflare docs deploy fix.
+
+### Changed
+
+- **IDP tracking hygiene** ([#809](https://github.com/danielsmithdevelopment/ClawQL/pull/809), [#810](https://github.com/danielsmithdevelopment/ClawQL/pull/810)) — matrix + gap-closure mark **#241–#258** / OpenClaw **#227** shipped; epic [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) checklist closed; remaining Partials (Stirling / Nextcloud queue / Coneshare / classifier promote) now **Shipped** via #810.
+- **Team vault auto-push** ([#800](https://github.com/danielsmithdevelopment/ClawQL/pull/800)) — debounce **2s** + **30s** min interval; flush dirty writes on shutdown. Env: `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`, `CLAWQL_SYNC_AUTO_PUSH_MIN_MS`.
+- **Workspace + Helm** — all `clawql-*` packages and chart `appVersion` → **7.2.0** (`charts/clawql-mcp` **0.7.2**, operator **0.2.2**, idp **0.1.2**).
+- **Dependency bumps** (Dependabot + fallout fix) — notably `@effect/platform`, `express-rate-limit`, `viem`, AWS/Smithy clients, `stripe`, `mppx`, `turbo`, `typescript-eslint`, `actions/setup-node` ([#725](https://github.com/danielsmithdevelopment/ClawQL/pull/725)–[#739](https://github.com/danielsmithdevelopment/ClawQL/pull/739), [#745](https://github.com/danielsmithdevelopment/ClawQL/pull/745)). TypeScript **7** Dependabot land was followed by main restore (#745); root remains on the supported TS 6 toolchain for this tag.
+
+### Fixed
+
+- **MCP stdio / Cursor discovery** ([#799](https://github.com/danielsmithdevelopment/ClawQL/pull/799)) — quiet `dotenv` (`quiet: true`) so stdout banners do not corrupt JSON-RPC.
+- **MCP stdio Ready latency** ([#799](https://github.com/danielsmithdevelopment/ClawQL/pull/799)) — default six-vendor `loadSpec()` warms after **Ready**.
+- **mcp-api-adapter gRPC CallTool content** normalization for `/mcp` ([#796](https://github.com/danielsmithdevelopment/ClawQL/pull/796)).
+- **Cloud Agent MCP under workspace npx** ([#757](https://github.com/danielsmithdevelopment/ClawQL/pull/757)).
+- **Docs/landing deploys** after brace-expansion override ([#744](https://github.com/danielsmithdevelopment/ClawQL/pull/744), [#791](https://github.com/danielsmithdevelopment/ClawQL/pull/791)).
 
 ## [7.1.0] - 2026-07-20
 

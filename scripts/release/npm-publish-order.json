@@ -30,6 +30,6 @@
     "clawql-ontology has no clawql-* deps (ajv/yaml only) — safe early in the order.",
     "clawql-payments before clawql-inference (inference depends on payments for entitlements/credits).",
     "npm publish replaces workspace:* with concrete versions in published package.json.",
-    "Monorepo dev uses matching 7.1.0 semver; npm workspaces link packages locally."
+    "Monorepo dev uses matching 7.2.0 semver; npm workspaces link packages locally."
   ]
 }
