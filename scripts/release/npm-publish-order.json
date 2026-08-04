@@ -18,8 +18,12 @@
     "clawql-operator",
     "clawql-mcp"
   ],
+  "localPackExtras": [
+    "mcp-grpc-transport"
+  ],
   "notes": [
     "mcp-grpc-transport and panguard-mcp-bridge publish on their own cadence.",
+    "localPackExtras are packed/installed in CI npm-pack smoke so clawql-mcp can resolve unpublished peer versions (e.g. mcp-grpc-transport@1.0.0 before registry publish).",
     "clawql-telemetry is not yet a package (see #313).",
     "clawql-ontology has no clawql-* deps (ajv/yaml only) — safe early in the order.",
     "clawql-payments before clawql-inference (inference depends on payments for entitlements/credits).",
