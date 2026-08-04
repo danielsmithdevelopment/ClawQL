@@ -20,14 +20,14 @@
 
 ### 1. Memory Stack 2.0 (vision gap closure)
 
-| Piece | What shipped | PRs |
-| ----- | ------------ | --- |
-| **Layer 2 ranking** | IDF + log-TF keyword scores; wikilink surface; honest embedding sync; **in-process MiniLM** (`Xenova/all-MiniLM-L6-v2`); **vectors mandatory** (keyword-only is break-glass only); bakeoff regressions; default `minScore` **0.05** | [#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801) |
-| **Index-first recall** | Survey `index.md` / `log.md` before bodies; large-vault body restriction; catalog boost | [#803](https://github.com/danielsmithdevelopment/ClawQL/pull/803) |
-| **Git Mode A** | `CLAWQL_MEMORY_BACKEND=git` — commit-on-ingest, optional push; `result.git` | [#804](https://github.com/danielsmithdevelopment/ClawQL/pull/804) |
-| **Hybrid RRF** | Path-keyed reciprocal rank fusion; `CLAWQL_MEMORY_RECALL_HYBRID=1` | [#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806) |
-| **WORM seal** | Auto `worm_ref: sha256:…` on ingest; `MEMORY_RECALL` events | [#807](https://github.com/danielsmithdevelopment/ClawQL/pull/807) |
-| **CodeGraph flywheel** | `codegraph_impact` → vault `type: code_change` (disable with `CLAWQL_CODEGRAPH_CODE_CHANGE_INGEST=0`) | [#808](https://github.com/danielsmithdevelopment/ClawQL/pull/808) |
+| Piece                  | What shipped                                                                                                                                                                                                                        | PRs                                                               |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **Layer 2 ranking**    | IDF + log-TF keyword scores; wikilink surface; honest embedding sync; **in-process MiniLM** (`Xenova/all-MiniLM-L6-v2`); **vectors mandatory** (keyword-only is break-glass only); bakeoff regressions; default `minScore` **0.05** | [#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801) |
+| **Index-first recall** | Survey `index.md` / `log.md` before bodies; large-vault body restriction; catalog boost                                                                                                                                             | [#803](https://github.com/danielsmithdevelopment/ClawQL/pull/803) |
+| **Git Mode A**         | `CLAWQL_MEMORY_BACKEND=git` — commit-on-ingest, optional push; `result.git`                                                                                                                                                         | [#804](https://github.com/danielsmithdevelopment/ClawQL/pull/804) |
+| **Hybrid RRF**         | Path-keyed reciprocal rank fusion; `CLAWQL_MEMORY_RECALL_HYBRID=1`                                                                                                                                                                  | [#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806) |
+| **WORM seal**          | Auto `worm_ref: sha256:…` on ingest; `MEMORY_RECALL` events                                                                                                                                                                         | [#807](https://github.com/danielsmithdevelopment/ClawQL/pull/807) |
+| **CodeGraph flywheel** | `codegraph_impact` → vault `type: code_change` (disable with `CLAWQL_CODEGRAPH_CODE_CHANGE_INGEST=0`)                                                                                                                               | [#808](https://github.com/danielsmithdevelopment/ClawQL/pull/808) |
 
 → Operator knobs: [`docs/memory/okf.md`](docs/memory/okf.md) · Hybrid backends: [`docs/memory/hybrid-memory-backends.md`](docs/memory/hybrid-memory-backends.md)
 
