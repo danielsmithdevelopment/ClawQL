@@ -2,6 +2,8 @@
  * Pluggable gRPC transport for MCP (`@modelcontextprotocol/sdk`).
  * Originated in ClawQL for TypeScript gRPC MCP (see repo README Background).
  * Reference server: https://github.com/danielsmithdevelopment/ClawQL
+ *
+ * **1.0** — MCP 2026-07-28 stateless protocol + Discover RPC.
  */
 
 export {
@@ -29,3 +31,15 @@ export {
   protoSamplingMessageToMcp,
 } from "./mcp-protobuf-dependent.js";
 export type { DependentHandlers, UnaryWithCommon } from "./mcp-protobuf-dependent.js";
+export {
+  LATEST_PROTOCOL_VERSION,
+  SUPPORTED_PROTOCOL_VERSIONS,
+  MCP_PROTOCOL_VERSION_2026_07_28,
+  isStatelessProtocolVersion,
+  isSupportedProtocolVersion,
+} from "./protocol-versions.js";
+export {
+  MCP_PROTOCOL_VERSION_METADATA_KEY,
+  MCP_CLIENT_INFO_METADATA_KEY,
+  checkMcpProtocolVersion,
+} from "./grpc-mcp-metadata.js";

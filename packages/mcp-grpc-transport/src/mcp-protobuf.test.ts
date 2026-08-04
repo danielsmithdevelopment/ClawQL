@@ -6,9 +6,13 @@ import { dirname, join } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
 import { maybeStartGrpcMcpServer, PROTOBUF_MCP_SERVICE_FQN } from "./server.js";
 import { MCP_PROTOCOL_VERSION_METADATA_KEY } from "./grpc-mcp-metadata.js";
+import {
+  LATEST_PROTOCOL_VERSION,
+  MCP_PROTOCOL_VERSION_2026_07_28,
+  SUPPORTED_PROTOCOL_VERSIONS,
+} from "./protocol-versions.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -104,6 +108,46 @@ describe("model_context_protocol.Mcp (protobuf RPC surface)", () => {
         client.close();
         await started.shutdown();
       }
+    }
+  });
+
+  it("Discover returns stateless=true for MCP 2026-07-28", async () => {
+    const started = await maybeStartGrpcMcpServer({
+      createMcpServer: createServerWithTool,
+      bindAddress: "127.0.0.1:0",
+    });
+    if (!started) throw new Error("expected server");
+
+    const Mcp = loadModelContextProtocolMcpStub();
+    const client = new Mcp(started.address, grpc.credentials.createInsecure());
+    const md = new grpc.Metadata();
+    md.set(MCP_PROTOCOL_VERSION_METADATA_KEY, MCP_PROTOCOL_VERSION_2026_07_28);
+    md.set("mcp-client-info", JSON.stringify({ name: "clawql-edge", version: "7.1.0" }));
+
+    try {
+      const out = await new Promise<{
+        protocol_version?: string;
+        stateless?: boolean;
+        server_name?: string;
+      }>((resolve, reject) => {
+        client.discover({ common: {}, protocol_version: LATEST_PROTOCOL_VERSION }, md, (err, res) => {
+          if (err) reject(err);
+          else
+            resolve(
+              res as {
+                protocol_version?: string;
+                stateless?: boolean;
+                server_name?: string;
+              }
+            );
+        });
+      });
+      expect(out.protocol_version).toBe(MCP_PROTOCOL_VERSION_2026_07_28);
+      expect(out.stateless).toBe(true);
+      expect(out.server_name).toBe("mcp-grpc-transport");
+    } finally {
+      client.close();
+      await started.shutdown();
     }
   });
 

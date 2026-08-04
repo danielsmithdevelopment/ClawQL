@@ -1,6 +1,7 @@
 // MCP protocol schema based on the MCP specification:
 // https://modelcontextprotocol.io/specification/2025-06-18/
-// Last Updated on: August 18, 2025.
+// Extended for MCP 2026-07-28 (stateless core + Discover).
+// Last Updated on: 2026-08-04.
 
 syntax = "proto3";
 
@@ -10,6 +11,15 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 
 service Mcp {
+  //
+  // Discovery (MCP 2026-07-28 stateless)
+  //
+
+  // Capability discovery without an initialize/session handshake.
+  // Clients declaring protocol version 2026-07-28 may call Discover then
+  // CallTool / ListTools as self-contained unary RPCs.
+  rpc Discover(DiscoverRequest) returns (DiscoverResponse);
+
   //
   // Resources
   //
@@ -73,7 +83,28 @@ enum ProtocolVersion {
   VERSION_UNKNOWN = 0;
   VERSION_20250326 = 1;
   VERSION_20250618 = 2;
+  VERSION_20260728 = 3;  // Stateless core (MCP 2026-07-28)
   // More values can be added as needed.
+}
+
+message DiscoverRequest {
+  RequestFields common = 1;
+  // Optional; also sent as gRPC metadata `mcp-protocol-version`.
+  string protocol_version = 2;
+  // Optional client identity (MCP 2026-07-28 per-request clientInfo).
+  google.protobuf.Struct client_info = 3;
+  google.protobuf.Struct client_capabilities = 4;
+}
+
+message DiscoverResponse {
+  ResponseFields common = 1;
+  string protocol_version = 2;
+  string server_name = 3;
+  string server_version = 4;
+  google.protobuf.Struct capabilities = 5;
+  string instructions = 6;
+  // True when the negotiated protocol is session-less (2026-07-28+).
+  bool stateless = 7;
 }
 
 // If the request or response metadata field includes the key "progressToken"

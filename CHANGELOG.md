@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- _(None yet — next minor / patch after 7.1.0.)_
+- **mcp-grpc-transport 1.0.0** — MCP **2026-07-28** stateless protocol support (`Discover` RPC, `mcp-protocol-version: 2026-07-28`, per-request `mcp-client-info`); production TypeScript gRPC MCP transport ([Convergence Week](https://pragmaticvectors.com/posts/convergence-week/)).
+- **OKF v0.2 trust signals** on vault memory — `generated`, `verified`, `sources`, `stale_after`, `status`, `superseded_by`; lint helpers; recall excludes `retracted` and down-weights stale ([`docs/memory/okf.md`](docs/memory/okf.md)).
+- **PorTAL flywheel intentions** — staged design for portable LoRA adapters in the Intelligence Flywheel ([`docs/inference/portal-flywheel.md`](docs/inference/portal-flywheel.md)); reserved export format `portal-bundle`.
 
 ## [7.1.0] - 2026-07-20
 

@@ -40,8 +40,15 @@ export function formatExportLine(record: InferenceRecord, format: ExportFormat):
       return JSON.stringify({ messages: toAnthropicMessages(record) });
     case "sharegpt":
       return JSON.stringify(toShareGpt(record));
+    case "portal-bundle":
+      throw new Error(
+        "Export format portal-bundle is staged (PorTAL). See docs/inference/portal-flywheel.md — use openai-jsonl until the PorTAL writer ships."
+      );
     case "raw-jsonl":
-    default:
       return JSON.stringify(record);
+    default: {
+      const _exhaustive: never = format;
+      return JSON.stringify(_exhaustive);
+    }
   }
 }

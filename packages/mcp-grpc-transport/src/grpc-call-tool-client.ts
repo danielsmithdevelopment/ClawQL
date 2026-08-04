@@ -11,7 +11,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as grpc from "@grpc/grpc-js";
 import protobuf from "protobufjs";
-import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
+import { LATEST_PROTOCOL_VERSION, SUPPORTED_PROTOCOL_VERSIONS } from "./protocol-versions.js";
 import { jsonToStruct } from "./mcp-protobuf-struct.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

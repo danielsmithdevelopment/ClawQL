@@ -4,6 +4,11 @@ import { slugifyTitle } from "../ingest/slug.js";
 import { listVaultMarkdownRelPaths, buildSlugToVaultPath } from "../vault/slug-index.js";
 import { extractWikilinkTargets, stripVaultFrontmatter } from "../vault/markdown.js";
 import {
+  isOkfRetracted,
+  isOkfStale,
+  parseVaultFrontmatter,
+} from "../okf/frontmatter.js";
+import {
   keywordScore,
   mapVaultResultToNormalizedHit,
   resolveMemoryRecallSources,
@@ -166,12 +171,16 @@ export function executeMemoryRecallCoreEffect(
           Effect.catchAll(() => Effect.succeed(undefined))
         );
         if (text === undefined) continue;
+        // OKF v0.2 — never surface retracted knowledge; down-weight stale/superseded.
+        const fm = parseVaultFrontmatter(text);
+        if (isOkfRetracted(fm)) continue;
         let score = wantVault ? keywordScore(query, text) : 0;
         if (wantVault) {
           const relNorm = rel.replace(/\\/g, "/");
           // Prefer OKF catalogs and ontology schema notes (essay Layer 6 / index-first recall).
           if (/(^|\/)index\.md$/i.test(relNorm)) score += 8;
           if (/ontology/i.test(relNorm) || /type:\s*["']?ontology_/i.test(text)) score += 5;
+          if (isOkfStale(fm)) score = Math.max(0, score - 3);
         }
         files.push({
           rel,

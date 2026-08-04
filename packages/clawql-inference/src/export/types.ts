@@ -1,6 +1,16 @@
 import type { EvaluatorVerdict } from "../store/types.js";
 
-export type ExportFormat = "openai-jsonl" | "anthropic-jsonl" | "raw-jsonl" | "sharegpt";
+/**
+ * Dataset export formats.
+ * `portal-bundle` is reserved for PorTAL task-latent + alignment artifacts
+ * (see docs/inference/portal-flywheel.md) — not yet implemented in the writer.
+ */
+export type ExportFormat =
+  | "openai-jsonl"
+  | "anthropic-jsonl"
+  | "raw-jsonl"
+  | "sharegpt"
+  | "portal-bundle";
 
 export type ExportFilter = {
   modelId?: string;

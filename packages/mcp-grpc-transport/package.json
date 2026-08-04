@@ -1,7 +1,7 @@
 {
   "name": "mcp-grpc-transport",
-  "version": "0.2.0",
-  "description": "Pluggable gRPC transport for Model Context Protocol (MCP) servers using @modelcontextprotocol/sdk. Protobuf surface aligned with the community mcp-python-sdk-grpc-poc reference.",
+  "version": "1.0.0",
+  "description": "Production TypeScript gRPC transport for Model Context Protocol (MCP) — MCP 2026-07-28 stateless core, Discover RPC, health probes, TLS/mTLS. Built on @modelcontextprotocol/sdk.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",

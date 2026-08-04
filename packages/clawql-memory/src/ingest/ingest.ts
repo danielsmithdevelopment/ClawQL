@@ -47,6 +47,25 @@ export type MemoryIngestInput = {
   agentId?: string;
   /** ClawQL OKF extension — optional quality / eval verdict. */
   verdict?: string;
+  /** ClawQL OKF extension — optional confidence 0–1. */
+  confidenceScore?: number;
+  /** OKF v0.2 — ISO timestamp after which the entry should be treated as stale. */
+  staleAfter?: string;
+  /** OKF v0.2 lifecycle status (default `current`). */
+  status?: "current" | "stale" | "superseded" | "retracted";
+  /** OKF v0.2 — path of the entry that replaced this one. */
+  supersededBy?: string | null;
+  /** OKF v0.2 — model id recorded under `generated.model`. */
+  model?: string;
+  /** OKF v0.2 — optional verification block. */
+  verified?: {
+    by?: string;
+    at?: string;
+    method?: string;
+    reviewer?: string;
+  };
+  /** OKF v0.2 — provenance sources. */
+  sources?: Array<Record<string, string | number>>;
   insights?: string;
   conversation?: string;
   /**
@@ -222,6 +241,14 @@ function buildFrontmatter(title: string, input: MemoryIngestInput, when: string)
     wormRef: input.wormRef,
     agentId: input.agentId,
     verdict: input.verdict,
+    confidenceScore: input.confidenceScore,
+    staleAfter: input.staleAfter,
+    status: input.status,
+    supersededBy: input.supersededBy,
+    model: input.model,
+    sessionId: input.sessionId,
+    verified: input.verified,
+    sources: input.sources,
   });
 }
 
