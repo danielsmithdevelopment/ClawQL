@@ -14,6 +14,7 @@ This section tracks ClawQL security architecture, shipped controls, and roadmap 
 - **npm** publish hardening (pack → scan → publish, provenance / OIDC): [`npm-supply-chain.md`](npm-supply-chain.md)
 - **Deploy-time** Cosign enforcement (Kyverno policy fields, digest pins, forks): [`image-signature-enforcement.md`](image-signature-enforcement.md)
 - **Runtime containment** (Kata vs gVisor, **`security.kata`**, Kyverno **`runtimeClassPolicy`**, issue [#274](https://github.com/danielsmithdevelopment/ClawQL/issues/274)): [`runtime-class-containment.md`](runtime-class-containment.md)
+- **Local Privacy Filter** (gateway backup after Presidio, [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)): [`privacy-filter-local.md`](privacy-filter-local.md)
 
 ## Supply-chain pipeline (summary)
 

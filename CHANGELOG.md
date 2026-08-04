@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Local Privacy Filter gateway backup** ([#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)) — opt-in `CLAWQL_ENABLE_PRIVACY_FILTER=1` runs a **second local** redact pass after Presidio (`maybeGatewayRedactText`). Reference sidecar [`deployment/samples/privacy-filter-http/`](deployment/samples/privacy-filter-http/) (demo heuristics / live `openai/privacy-filter` weights — **no OpenAI API**). Helm `enablePrivacyFilter` + `documentPipeline.privacyFilter`. Docs: [`docs/security/privacy-filter-local.md`](docs/security/privacy-filter-local.md).
 - **Vertical Docker Compose stacks** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) — **healthcare**, **legal**, and **education** stacks alongside lending (`docker/compose/*.compose.yml` + env templates + sample packs). Validate with **`make compose-vertical-config-test`**.
 - **HITL Label Studio pre-annotations** ([#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)) — optional **`tasks[].predictions`** on **`hitl_enqueue_label_studio`** (Zod + size limits); reference **`sample-tasks.json`** packs for lending / healthcare / legal / education.
 - **`convert_document`** — Firecrawl [anydoc](https://github.com/firecrawl/anydoc) in-process MCP tool (`CLAWQL_ENABLE_ANYDOC=1`): Office/PDF/CSV → GFM Markdown with Docling/Tika route recommendations. Helm **`enableAnydoc`**. Docs: [`docs/providers/anydoc-onboarding.md`](docs/providers/anydoc-onboarding.md).

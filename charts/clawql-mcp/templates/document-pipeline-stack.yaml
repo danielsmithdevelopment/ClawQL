@@ -395,6 +395,79 @@ spec:
           resources:
             {{- toYaml .Values.documentPipeline.langextract.resources | nindent 12 }}
 {{- end }}
+{{- if .Values.documentPipeline.privacyFilter.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.privacyFilterName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: privacy-filter
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: privacy-filter
+  ports:
+    - name: http
+      port: {{ .Values.documentPipeline.privacyFilter.service.port | int }}
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.privacyFilterName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: privacy-filter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: privacy-filter
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: privacy-filter
+    spec:
+      containers:
+        - name: privacy-filter
+          image: "{{ .Values.documentPipeline.privacyFilter.image.repository }}:{{ .Values.documentPipeline.privacyFilter.image.tag }}"
+          imagePullPolicy: {{ .Values.documentPipeline.privacyFilter.image.pullPolicy }}
+          env:
+            - name: PRIVACY_FILTER_MODE
+              value: {{ .Values.documentPipeline.privacyFilter.env.mode | quote }}
+            - name: PRIVACY_FILTER_DEVICE
+              value: {{ .Values.documentPipeline.privacyFilter.env.device | quote }}
+            - name: PRIVACY_FILTER_MODEL
+              value: {{ .Values.documentPipeline.privacyFilter.env.modelId | quote }}
+            - name: PORT
+              value: {{ .Values.documentPipeline.privacyFilter.service.port | quote }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.documentPipeline.privacyFilter.service.port | int }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.documentPipeline.privacyFilter.resources | nindent 12 }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service

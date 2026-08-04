@@ -55,3 +55,21 @@ for needle in required:
         sys.exit(1)
 print("OK: Presidio override config valid")
 PY
+
+docker compose -f docker-compose.yml -f docker-compose.privacy-filter.override.yml --env-file "${ENV_FILE}" config >"${OUT}"
+
+python3 - "${OUT}" <<'PY'
+import sys
+
+text = open(sys.argv[1], encoding="utf-8").read()
+required = [
+    "privacy-filter",
+    "CLAWQL_ENABLE_PRIVACY_FILTER",
+    "CLAWQL_PRIVACY_FILTER_URL",
+]
+for needle in required:
+    if needle not in text:
+        print(f"ERROR: privacy-filter override config missing {needle!r}")
+        sys.exit(1)
+print("OK: Privacy Filter override config valid")
+PY

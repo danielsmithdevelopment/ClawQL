@@ -8,7 +8,10 @@ import { executeOperationGraphQL } from "../graphql/in-process-execute.js";
 import { loadSpec, resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
 import type { Operation } from "../spec/operation-types.js";
 import type { LoadSpecFn } from "../search/search-core.js";
-import { maybePresidioRedactText, presidioEnabled } from "../presidio/client.js";
+import {
+  gatewayRedactionEnabled,
+  maybeGatewayRedactText,
+} from "../redaction/gateway-redact.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./field-projection.js";
 import { executeNativeGraphQL } from "./native-graphql.js";
 import { executeNativeGrpc } from "./native-grpc.js";
@@ -26,7 +29,9 @@ function fromPromise<A>(fn: () => Promise<A>): Effect.Effect<A, Error> {
 
 function textContentEffect(text: string): Effect.Effect<McpTextContent[], Error> {
   return Effect.gen(function* () {
-    const body = presidioEnabled() ? yield* fromPromise(() => maybePresidioRedactText(text)) : text;
+    const body = gatewayRedactionEnabled()
+      ? yield* fromPromise(() => maybeGatewayRedactText(text))
+      : text;
     return [{ type: "text" as const, text: body }];
   });
 }

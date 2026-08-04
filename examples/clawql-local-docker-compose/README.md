@@ -23,6 +23,17 @@ docker compose -f docker-compose.yml -f docker-compose.presidio.override.yml up 
 
 Set `documents.presidio.enabled: true` in `clawql.local.yaml` when using Presidio.
 
+## Optional Privacy Filter (local backup after Presidio)
+
+```bash
+# [#245] — second local redact pass; demo sidecar (no model download) by default:
+docker compose -f docker-compose.yml \
+  -f docker-compose.presidio.override.yml \
+  -f docker-compose.privacy-filter.override.yml up -d
+```
+
+Docs: [`docs/security/privacy-filter-local.md`](../../docs/security/privacy-filter-local.md).
+
 ## Inference gateway (optional)
 
 OpenAI-compatible LLM gateway with operator policy in YAML:

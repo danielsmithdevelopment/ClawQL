@@ -6,7 +6,7 @@ import { filterRecordsForExport, type OkfTrustLookup } from "./filter.js";
 import { formatExportLine } from "./format.js";
 import { buildDatasetManifest, buildSampleLines } from "./manifest.js";
 import { writePortalBundle } from "./portal-bundle.js";
-import { presidioEnabled } from "clawql-api";
+import { gatewayRedactionEnabled } from "clawql-api";
 import { resolvePiiScrubMode, scrubExportLine } from "./pii.js";
 import type { ExportFilter, ExportFormat, RunExportResult } from "./types.js";
 
@@ -103,7 +103,7 @@ export async function runInferenceExport(
       lines,
       filters: filter,
       piiScrub: piiMode,
-      presidioActive: piiMode === "presidio" && presidioEnabled(),
+      presidioActive: piiMode === "presidio" && gatewayRedactionEnabled(),
       baseModel: options.baseModel,
       vaultRef: options.vaultRef,
     });
@@ -125,7 +125,7 @@ export async function runInferenceExport(
       samples,
       policyVersion: options.policyVersion ?? records.find((r) => r.policyVersion)?.policyVersion,
       piiScrub: piiMode,
-      presidioActive: piiMode === "presidio" && presidioEnabled(),
+      presidioActive: piiMode === "presidio" && gatewayRedactionEnabled(),
       vaultRef: options.vaultRef,
     });
     manifestPath = outputPath.replace(/\.jsonl$/i, ".manifest.json");

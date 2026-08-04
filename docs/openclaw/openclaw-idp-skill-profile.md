@@ -47,7 +47,7 @@ Use this as the **default narrative** for OpenClaw system prompts and eval harne
 
 1. **Ingest** — **`ingest_external_knowledge`**, **`nextcloud::nextcloud_webdav_download`**, or Paperless/Tika **`execute`** as appropriate (see **`DEFAULT_IDP_PIPELINE`** in [`idp-pipeline.md`](../providers/idp-pipeline.md)).
 2. **Convert / route (optional)** — **`convert_document`** (anydoc) for Office/PDF/CSV, or **`inspect_pdf`** for PDF-type diagnostics; follow `route` (`local_markdown` | `docling_ocr` | `tika_fallback` / `hybrid_docling`).
-3. **Redact / policy** — apply **deployment-specific** redaction (sidecar, gateway, or human review); no single ClawQL env toggle documents “privacy filter” for all stacks.
+3. **Redact / policy** — apply **deployment-specific** redaction: opt-in **Presidio** (`CLAWQL_ENABLE_PRESIDIO=1`) plus optional local **Privacy Filter** backup (`CLAWQL_ENABLE_PRIVACY_FILTER=1`, [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)); see [`privacy-filter-local.md`](../security/privacy-filter-local.md).
 4. **Classify / route** — **`classify_document`** (optional) and/or **`search`** for the right **`operationId`** across pipeline vendors; **`execute`** with lean **`fields`**.
 5. **Extract** — **`extract_document`** (optional LangExtract) and/or Tika/Stirling/Gotenberg / Docling **`execute`** paths for text/PDF/HTML transforms per spec.
 6. **Optional sign / seal** — Stirling/Paperless/Gotenberg routes where the OpenAPI exposes them; attest later via Merkle/Ouroboros ([#114](https://github.com/danielsmithdevelopment/ClawQL/issues/114)).

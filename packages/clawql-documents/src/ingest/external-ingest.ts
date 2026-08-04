@@ -9,7 +9,7 @@
  */
 
 import { getClawqlOptionalToolFlags, isPrivateOrLoopbackIp } from "clawql-api";
-import { maybePresidioRedactText, presidioEnabled } from "clawql-api";
+import { gatewayRedactionEnabled, maybeGatewayRedactText } from "clawql-api";
 import { Effect } from "effect";
 import { memoryDbLiveLayer } from "clawql-memory/plugin";
 import { buildUrlIngestNote, formatUrlResponseAsMarkdown } from "./url-format.js";
@@ -220,8 +220,8 @@ export async function prepareMarkdownDocuments(
       continue;
     }
     let markdown = d.markdown ?? "";
-    if (presidioEnabled()) {
-      markdown = await maybePresidioRedactText(markdown);
+    if (gatewayRedactionEnabled()) {
+      markdown = await maybeGatewayRedactText(markdown);
     }
     planned.push({ rel, markdown });
   }
