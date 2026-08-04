@@ -285,9 +285,14 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
     const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
     const savedHz = process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
+    const savedVector = process.env.CLAWQL_VECTOR_BACKEND;
+    const savedAllowKw = process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
     process.env.CLAWQL_MERKLE_ENABLED = "1";
     process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
+    // Break-glass: avoid downloading ONNX weights (HF 429 flakes in CI).
+    process.env.CLAWQL_VECTOR_BACKEND = "off";
+    process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = "1";
     await mkdir(join(dir, "Memory"), { recursive: true });
     await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
     const text = await readFile(join(dir, "Memory/a.md"), "utf8");
@@ -306,6 +311,10 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
       else process.env.CLAWQL_MERKLE_ENABLED = savedMerkle;
       if (savedHz === undefined) delete process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
       else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
+      if (savedVector === undefined) delete process.env.CLAWQL_VECTOR_BACKEND;
+      else process.env.CLAWQL_VECTOR_BACKEND = savedVector;
+      if (savedAllowKw === undefined) delete process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
+      else process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = savedAllowKw;
       await rm(dir, { recursive: true, force: true });
     }
   });
@@ -315,9 +324,14 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
     const savedCuckoo = process.env.CLAWQL_CUCKOO_ENABLED;
     const savedHz = process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
+    const savedVector = process.env.CLAWQL_VECTOR_BACKEND;
+    const savedAllowKw = process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
     process.env.CLAWQL_CUCKOO_ENABLED = "1";
     process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
+    // Break-glass: avoid downloading ONNX weights (HF 429 flakes in CI).
+    process.env.CLAWQL_VECTOR_BACKEND = "off";
+    process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = "1";
     await mkdir(join(dir, "Memory"), { recursive: true });
     await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
     const text = await readFile(join(dir, "Memory/a.md"), "utf8");
@@ -342,6 +356,10 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
       else process.env.CLAWQL_CUCKOO_ENABLED = savedCuckoo;
       if (savedHz === undefined) delete process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
       else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
+      if (savedVector === undefined) delete process.env.CLAWQL_VECTOR_BACKEND;
+      else process.env.CLAWQL_VECTOR_BACKEND = savedVector;
+      if (savedAllowKw === undefined) delete process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
+      else process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = savedAllowKw;
       await rm(dir, { recursive: true, force: true });
     }
   });

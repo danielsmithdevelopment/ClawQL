@@ -58,18 +58,30 @@ describe("external-ingest", () => {
 
   it("includes merkleSnapshot when vault has memory.db and Merkle is enabled (preview)", async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-ext-"));
+    const savedVector = process.env.CLAWQL_VECTOR_BACKEND;
+    const savedAllowKw = process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
     process.env.CLAWQL_EXTERNAL_INGEST = "1";
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
     process.env.CLAWQL_MERKLE_ENABLED = "1";
     process.env.CLAWQL_CUCKOO_ENABLED = "1";
-    await mkdir(join(dir, "Memory"), { recursive: true });
-    await writeFile(join(dir, "Memory/stub.md"), "# S\n", "utf8");
-    const text = await readFile(join(dir, "Memory/stub.md"), "utf8");
-    await syncMemoryDbFromDocuments(dir, [{ path: "Memory/stub.md", text, mtimeMs: 1 }]);
-    const r = await runIngestExternalKnowledge({ source: "notion" });
-    expect(r.merkleSnapshot?.rootHex).toMatch(/^[0-9a-f]{64}$/);
-    expect(r.cuckooMembershipReady).toBe(true);
-    await rm(dir, { recursive: true, force: true });
+    // Break-glass: avoid downloading ONNX weights (HF 429 flakes in CI).
+    process.env.CLAWQL_VECTOR_BACKEND = "off";
+    process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = "1";
+    try {
+      await mkdir(join(dir, "Memory"), { recursive: true });
+      await writeFile(join(dir, "Memory/stub.md"), "# S\n", "utf8");
+      const text = await readFile(join(dir, "Memory/stub.md"), "utf8");
+      await syncMemoryDbFromDocuments(dir, [{ path: "Memory/stub.md", text, mtimeMs: 1 }]);
+      const r = await runIngestExternalKnowledge({ source: "notion" });
+      expect(r.merkleSnapshot?.rootHex).toMatch(/^[0-9a-f]{64}$/);
+      expect(r.cuckooMembershipReady).toBe(true);
+    } finally {
+      if (savedVector === undefined) delete process.env.CLAWQL_VECTOR_BACKEND;
+      else process.env.CLAWQL_VECTOR_BACKEND = savedVector;
+      if (savedAllowKw === undefined) delete process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
+      else process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = savedAllowKw;
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it("dryRun markdown lists paths without writing", async () => {
