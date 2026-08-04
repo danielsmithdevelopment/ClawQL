@@ -86,7 +86,7 @@ export function splitFrontmatter(markdown: string): { frontmatter: string | null
 }
 
 function unquote(raw: string): string {
-  let s = raw.trim();
+  const s = raw.trim();
   if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
     try {
       return JSON.parse(s.startsWith("'") ? `"${s.slice(1, -1)}"` : s) as string;
