@@ -70,12 +70,15 @@ if [ "$REQUIRE_PI" = "1" ]; then
     echo "FAIL: missing .openbench_agent.log for pageindex evidence" >&2
     cap_fail=1
   else
-    if ! grep -Eq '"tool":"clawql_pageindex_build_tree"|"tool":"pageindex_build_tree"' .openbench_agent.log; then
-      echo "FAIL: required pageindex_build_tree tool_use" >&2
-      cap_fail=1
+    helper="${TASK_DIR}/../../scripts/require-real-clawql-tools.py"
+    if [ ! -f "$helper" ]; then
+      helper="$(cd "$(dirname "$0")/../.." && pwd)/scripts/require-real-clawql-tools.py"
     fi
-    if ! grep -Eq '"tool":"clawql_pageindex_synthesize"|"tool":"clawql_pageindex_traverse"|"tool":"pageindex_synthesize"|"tool":"pageindex_traverse"' .openbench_agent.log; then
-      echo "FAIL: required pageindex_synthesize or pageindex_traverse tool_use" >&2
+    if ! python3 "$helper" .openbench_agent.log \
+      'clawql_pageindex_build_tree|pageindex_build_tree' \
+      'clawql_pageindex_synthesize|pageindex_synthesize|clawql_pageindex_traverse|pageindex_traverse'
+    then
+      echo "FAIL: required real pageindex build_tree + synthesize/traverse tool_use" >&2
       cap_fail=1
     fi
   fi

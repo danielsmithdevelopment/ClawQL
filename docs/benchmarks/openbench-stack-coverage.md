@@ -40,11 +40,13 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 | `policy-deny-execute` | In-process Panguard blocks `execute` | on **1.0** / off **0.0** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)) |
 | `cache-scratch-handoff` | `cache` set/get secret assembly | on **1.0** / off **0.0** ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)) |
 | `pageindex-section-qa` | PageIndex build+synthesize finds buried code | on **1.0** / off **0.0** ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)) |
+| `codegraph-guided-edit` | Structural index locates SECRET_MARKER | on **1.0** / off **0.0** ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) |
+| `schedule-synthetic-dry-run` | schedule create + dry_run trigger | on **1.0** / off **0.0** ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) |
 | `ouroboros-oscillation-escape` | Ouroboros stops strategy thrash | allow + **deny** both on 1.0 / off 0.0 ([30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277)) |
 
-Still missing live cells: hybrid recall, codegraph, schedule/notify, sandbox, composed recipes, n≥3 trials. Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
+Still missing clean live WINs: hybrid recall (anti-guess re-run), external ingest, notify/sandbox/composed, n≥3 trials. Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` runs on PR/push. Prior graded tasks are **`retired`**. Active next wave: `hybrid-recall-source-pin`, `codegraph-guided-edit`, `schedule-synthetic-dry-run`. Ouroboros workflow is dispatch-only.
+**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` runs on PR/push. Prior graded tasks are **`retired`**. Active next wave: `hybrid-recall-source-pin`, `external-ingest-continue`. Ouroboros workflow is dispatch-only.
 
 Explanations for every verified cell: [`openbench-task-explanations.md`](./openbench-task-explanations.md).
 
@@ -70,16 +72,16 @@ Legend: **Live** = OpenBench A/B · **Context** = planning-context stats · **Un
 | `memory_recall` (vault) | Prior decisions survive seed removal | **Live** (memory + token + multi) | Multi-trial n≥5; adversarial decoy vault notes |
 | `memory_ingest` | Durable write of outcomes | **Live** `memory-roundtrip-ingest-recall` on 1.0 / off 0.0 ([30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)) | Multi-trial n≥3; two-session recall |
 | `memory_sync` (R2/S3) | Team vault reconcile | Docs / Cloud Agent e2e guide | Ops smoke, not OpenBench (needs bucket secrets). Keep as **sync ensure** CI probe |
-| Hybrid `sources` (`vector` / `pageindex` / `onyx` / `codegraph`) | Multi-backend recall | Unit + flags | **Hybrid recall** task: answer only in PageIndex tree or vector chunk, not raw vault keyword |
+| Hybrid `sources` (`vector` / `pageindex` / `onyx` / `codegraph`) | Multi-backend recall | Unit + flags | **Hybrid recall** task shipped; awaiting clean WIN after invalid-tool grader fix |
 | `pageindex_*` | Hierarchical doc Q&A without stuffing full text | **Live WIN** `pageindex-section-qa` ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)) | Retired from PR; hybrid recall still open |
-| `codegraph_*` | Structural code Q&A | Unit | Index fixture repo → neighbors/path required for correct edit |
+| `codegraph_*` | Structural code Q&A | **Live WIN** `codegraph-guided-edit` ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) | Retired from PR |
 | Wikilinks / graph hops | Recall follows `[[links]]` | Unit-ish | Seed note A→B→fact; query only matches A |
 
 ### Documents / knowledge
 
 | Capability | Claim | Evidence | Next OpenBench / note |
 | ---------- | ----- | -------- | --------------------- |
-| `ingest_external_knowledge` | Bulk MD/URL → vault | Unit / skill | Fixture MD bundle → recall-dependent coding task |
+| `ingest_external_knowledge` | Bulk MD/URL → vault | **OpenBench task** `external-ingest-continue` (pr_active) | First live A/B pending |
 | `knowledge_search_onyx` | Enterprise evidence before act | Skill only (needs Onyx) | Mock Onyx or recorded fixture HTTP; graded citation file |
 | `run_idp_pipeline` / classify / extract | IDP hops via execute | Unit / runbooks | Heavy; prefer **offline pipeline dry_run** graded artifact, not full vendor matrix |
 | Docling/Tika/Paperless/… | Provider execute paths | Provider tests / context benches | Keep as provider context benches; OpenBench only if agent must pick the right vendor op |
@@ -88,7 +90,7 @@ Legend: **Live** = OpenBench A/B · **Context** = planning-context stats · **Un
 
 | Capability | Claim | Evidence | Next OpenBench / note |
 | ---------- | ----- | -------- | --------------------- |
-| `schedule` | Synthetic checks + dry_run | Unit / skill | Create job → `dry_run` → assert pass; no live cron needed |
+| `schedule` | Synthetic checks + dry_run | **Live WIN** `schedule-synthetic-dry-run` ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) | Retired from PR |
 | `notify` | Slack milestones | Unit (token) | Mock Slack HTTP; checker greps notify payload file / audit |
 | `workflow` (Argo) | Submit/wait Workflows | Optional CI | Cluster-dependent — **scheduled integration**, not PR OpenBench |
 | `argocd` | App observe/sync | Optional CI | Same — ops integration |
@@ -140,13 +142,13 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 ### P1 — memory & docs depth (where “tons of tooling” lives)
 
 8. ~~**PageIndex long-doc Q&A**~~ — verified on 1.0 / off 0.0 ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)).  
-9. **Hybrid recall source pin** — task shipped (`hybrid-recall-source-pin`); awaiting live A/B.  
-10. **Codegraph-guided edit** — task shipped (`codegraph-guided-edit`); awaiting live A/B.  
-11. **External ingest → continue**  
+9. **Hybrid recall source pin** — shipped; invalid-tool TIE on [30886497135](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30886497135); anti-guess re-run pending.  
+10. ~~**Codegraph-guided edit**~~ — verified on 1.0 / off 0.0 ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)).  
+11. **External ingest → continue** — task shipped (`external-ingest-continue`); awaiting live A/B.  
 
 ### P2 — automation / sandbox / composed
 
-12. **Schedule dry_run synthetic** — task shipped (`schedule-synthetic-dry-run`); awaiting live A/B.  
+12. ~~**Schedule dry_run synthetic**~~ — verified on 1.0 / off 0.0 ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)).  
 13. **Notify mock Slack**  
 14. **Sandbox-trusted compute**  
 15. **Composed safe-rollout** (search→execute×2→audit→ingest)  

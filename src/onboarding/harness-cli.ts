@@ -167,6 +167,9 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
     env.CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES =
       process.env.CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES.trim();
   }
+  if (process.env.CLAWQL_EXTERNAL_INGEST?.trim()) {
+    env.CLAWQL_EXTERNAL_INGEST = process.env.CLAWQL_EXTERNAL_INGEST.trim();
+  }
   return env;
 }
 

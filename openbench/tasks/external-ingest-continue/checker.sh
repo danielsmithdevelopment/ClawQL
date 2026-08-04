@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# Grades schedule-synthetic-dry-run: dry_run pass + schedule tool evidence.
+# Grades external-ingest-continue: correct token + ingest + recall evidence.
 set -euo pipefail
 
-REQUIRE_SCH="${OPENBENCH_REQUIRE_SCHEDULE:-0}"
+REQUIRE_EXT="${OPENBENCH_REQUIRE_EXTERNAL_INGEST:-0}"
 HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-30}"
 HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-8000}"
+EXPECTED="cedar-88"
 
 cap_fail=0
 pass=0
 
-if [ ! -f schedule.json ]; then
-  echo "FAIL: schedule.json missing" >&2
+if [ ! -f answer.json ]; then
+  echo "FAIL: answer.json missing" >&2
   echo "SCORE: 0.0"
   exit 1
 fi
@@ -19,18 +20,18 @@ if python3 - <<PY
 import json
 from pathlib import Path
 try:
-    d = json.loads(Path("schedule.json").read_text(encoding="utf-8"))
+    d = json.loads(Path("answer.json").read_text(encoding="utf-8"))
 except Exception as exc:
-    print(f"FAIL: schedule.json parse error: {exc}", flush=True)
+    print(f"FAIL: answer.json parse error: {exc}", flush=True)
     raise SystemExit(1)
-dry = d.get("dry_run")
-status = str(d.get("status") or "").strip().lower()
+token = str(d.get("token") or "").strip()
 src = str(d.get("source") or "").strip().lower()
-job = str(d.get("job_id") or d.get("id") or "").strip()
-ok_dry = dry is True or str(dry).lower() in ("true", "1", "yes")
-ok = ok_dry and status == "pass" and "schedule" in src and bool(job)
+if token == "maple-17":
+    print("FAIL: used decoy token maple-17", flush=True)
+    raise SystemExit(1)
+ok = token == "${EXPECTED}" and ("memory" in src or "recall" in src)
 if not ok:
-    print(f"FAIL: expected dry_run=true status=pass source~schedule job_id; got {d!r}", flush=True)
+    print(f"FAIL: expected token=${EXPECTED} source~memory_recall; got {d!r}", flush=True)
 raise SystemExit(0 if ok else 1)
 PY
 then
@@ -67,41 +68,20 @@ PY
   fi
 fi
 
-if [ "$REQUIRE_SCH" = "1" ]; then
+if [ "$REQUIRE_EXT" = "1" ]; then
   if [ ! -f .openbench_agent.log ]; then
-    echo "FAIL: missing .openbench_agent.log for schedule evidence" >&2
+    echo "FAIL: missing .openbench_agent.log for external-ingest evidence" >&2
     cap_fail=1
   else
     helper="${TASK_DIR}/../../scripts/require-real-clawql-tools.py"
     if [ ! -f "$helper" ]; then
       helper="$(cd "$(dirname "$0")/../.." && pwd)/scripts/require-real-clawql-tools.py"
     fi
-    if ! python3 "$helper" .openbench_agent.log 'clawql_schedule|schedule'; then
-      echo "FAIL: required real schedule/clawql_schedule tool_use" >&2
-      cap_fail=1
-    fi
-    # Prefer seeing both create and trigger; accept ≥2 real schedule calls.
-    hits="$(python3 - <<'PY'
-import json
-from pathlib import Path
-n = 0
-for line in Path(".openbench_agent.log").read_text(encoding="utf-8", errors="replace").splitlines():
-    line = line.strip()
-    if not line.startswith("{"):
-        continue
-    try:
-        obj = json.loads(line)
-    except Exception:
-        continue
-    part = obj.get("part") if isinstance(obj, dict) else None
-    tool = part.get("tool") if isinstance(part, dict) else None
-    if tool in ("clawql_schedule", "schedule"):
-        n += 1
-print(n)
-PY
-)"
-    if [ "${hits:-0}" -lt 2 ]; then
-      echo "FAIL: required ≥2 real schedule tool_use calls (create + trigger)" >&2
+    if ! python3 "$helper" .openbench_agent.log \
+      'clawql_ingest_external_knowledge|ingest_external_knowledge' \
+      'clawql_memory_recall|memory_recall'
+    then
+      echo "FAIL: required real ingest_external_knowledge + memory_recall tool_use" >&2
       cap_fail=1
     fi
   fi

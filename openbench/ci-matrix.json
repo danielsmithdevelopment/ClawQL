@@ -2,9 +2,10 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "P1/P2 next wave active: hybrid-recall, codegraph, schedule. Prior tasks retired after 30881158522.",
+  "live_resume_note": "P1 next wave: hybrid (anti-guess fix after 30886497135 tie) + external-ingest-continue. Prior tasks retired after 30881158522 / 30885341377.",
   "pr_active": [
-    "hybrid-recall-source-pin"
+    "hybrid-recall-source-pin",
+    "external-ingest-continue"
   ],
   "retired": {
     "memory-dependent-continuation": {

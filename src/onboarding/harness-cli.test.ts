@@ -161,6 +161,27 @@ describe("buildOpencodeConfigContent", () => {
     }
   });
 
+  it("clawqlMcpChildEnv forwards CLAWQL_EXTERNAL_INGEST + DOCUMENTS for OpenBench", () => {
+    const prevOb = process.env.CLAWQL_OPENBENCH;
+    const prevDoc = process.env.CLAWQL_ENABLE_DOCUMENTS;
+    const prevExt = process.env.CLAWQL_EXTERNAL_INGEST;
+    process.env.CLAWQL_OPENBENCH = "1";
+    process.env.CLAWQL_ENABLE_DOCUMENTS = "1";
+    process.env.CLAWQL_EXTERNAL_INGEST = "1";
+    try {
+      const env = clawqlMcpChildEnv("/tmp/ext-home");
+      expect(env.CLAWQL_ENABLE_DOCUMENTS).toBe("1");
+      expect(env.CLAWQL_EXTERNAL_INGEST).toBe("1");
+    } finally {
+      if (prevOb === undefined) delete process.env.CLAWQL_OPENBENCH;
+      else process.env.CLAWQL_OPENBENCH = prevOb;
+      if (prevDoc === undefined) delete process.env.CLAWQL_ENABLE_DOCUMENTS;
+      else process.env.CLAWQL_ENABLE_DOCUMENTS = prevDoc;
+      if (prevExt === undefined) delete process.env.CLAWQL_EXTERNAL_INGEST;
+      else process.env.CLAWQL_EXTERNAL_INGEST = prevExt;
+    }
+  });
+
   it("openbenchOpencodePermissions can allow doom_loop for thrash experiments", () => {
     const prev = process.env.CLAWQL_OPENBENCH_DOOM_LOOP;
     try {

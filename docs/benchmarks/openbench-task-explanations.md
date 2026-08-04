@@ -10,7 +10,7 @@ Every live task below uses the same A/B pattern unless noted:
 | **clawql-on** | OpenCode + ClawQL MCP + feature flags for the surface under test |
 | **clawql-off** | Same model / harness / inference; **no** ClawQL MCP |
 | **Model** | Cheap frugal default: `openrouter/deepseek/deepseek-chat` |
-| **Graders** | Prefer real `"tool":"clawql_*"` tool_use evidence — instruction text alone must not pass |
+| **Graders** | Prefer **real** OpenCode `"part":{"tool":"clawql_*"}` tool_use — instruction text and `"tool":"invalid"` false positives must not pass |
 
 If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent behavior with ClawQL tools**, not “the model already knew the answer.”
 
@@ -23,11 +23,12 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | | |
 | --- | --- |
 | **Claim** | Agents discover the right OpenAPI operation via `search` instead of stuffing specs or guessing from training data. |
-| **Why it matters** | This is the behavioral proof of efficiency Layer 1 (Code Mode / search-first). Without it, “token efficiency” is only architectural. |
+| **Why it matters** | Behavioral proof of efficiency Layer 1 (Code Mode / search-first). Without it, “token efficiency” is only architectural. |
 | **How** | Task asks for the GitHub operation that lists *global* security advisories. Workspace decoy names a wrong operationId. Graders require `"tool":"clawql_search"` on both arms. |
 | **What success looks like** | on uses search → writes correct `operationId`; off guesses / reads decoy → fails. |
 | **Evidence** | on **1.0** / off **0.0** — [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) (after anti-guess fix; earlier cells tied when off guessed). |
 | **Does *not* prove** | Full GraphQL projection savings; multi-provider search quality; n≥3 stability. |
+| **Failure modes learned** | Instruction dumps mentioning `clawql_search` fooled naive greps — require JSON tool_use rows. |
 
 ### `execute-verify-loop`
 
@@ -35,10 +36,11 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | --- | --- |
 | **Claim** | Agents can `search` then `execute` with **dry_run**, leaving a verifiable trail — not invent a trail file. |
 | **Why it matters** | Safe rollout story: discover → rehearsed invoke. Closes the “execute is just marketing” objection. |
-| **How** | Require ≥2 `clawql_execute` tool_use calls with `"dry_run":true` in args, plus graded `trail.json`. Off arm inventing JSON without tools fails. |
+| **How** | Require ≥2 `clawql_execute` tool_use calls with `"dry_run":true` in args, plus graded `trail.json`. Off inventing JSON without tools fails. |
 | **What success looks like** | on: search + dry_run executes + trail; off: no tools / invented trail → 0.0. |
 | **Evidence** | on **1.0** / off **0.0** — [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) (after log-merge fix so early search tool_use was not dropped). |
 | **Does *not* prove** | Live (non-dry_run) side effects; full composed notify/ingest recipes. |
+| **Failure modes learned** | Replacing combined agent logs with longer nudge dumps dropped earlier `clawql_search` rows. |
 
 ### `cache-scratch-handoff`
 
@@ -50,6 +52,7 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | **What success looks like** | on: real cache tool_use + correct token; off: cannot call ClawQL cache → fail. |
 | **Evidence** | on **1.0** (4 turns, ~33s) / off **0.0** — [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522). Tools: read×2, clawql_cache×4, write. |
 | **Does *not* prove** | Cross-process / multi-replica cache; Redis-backed production cache. |
+| **Failure modes learned** | OpenCode names MCP tools `clawql_*`; calling bare `cache` becomes `"tool":"invalid"`. |
 
 ### `audit-checkpoints`
 
@@ -112,7 +115,7 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 
 ---
 
-## Documents / PageIndex
+## Documents / PageIndex / hybrid
 
 ### `pageindex-section-qa`
 
@@ -120,10 +123,63 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | --- | --- |
 | **Claim** | Hierarchical PageIndex (build_tree → synthesize/traverse) finds a buried fact without stuffing the whole long doc into chat. |
 | **Why it matters** | Document intelligence without context bloat; distinct from raw vault keyword recall. |
-| **How** | Long `catalog.md` with filler sections; buried `CLAWQL_PAGEINDEX_CODE=orchid-77`. Decoy says `rose-12`. Require `pageindex_build_tree` + synthesize/traverse tool_use; `CLAWQL_ENABLE_PAGEINDEX=1`. |
+| **How** | Long `catalog.md` with filler sections; buried `CLAWQL_PAGEINDEX_CODE=orchid-77`. Decoy says `rose-12`. Require real `pageindex_build_tree` + synthesize/traverse tool_use; `CLAWQL_ENABLE_PAGEINDEX=1`. |
 | **What success looks like** | on: build→synthesize→`answer.json` code orchid-77; off: glob/guess → 0.0. |
 | **Evidence** | on **1.0** (4 turns, ~38s) / off **0.0** — [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522). Tools: read, clawql_pageindex_build_tree, clawql_pageindex_synthesize, write. |
-| **Does *not* prove** | Hybrid `memory_recall` source pinning; Onyx enterprise search; multi-doc corpora. |
+| **Does *not* prove** | Hybrid source pinning vs vault decoys; Onyx enterprise search; multi-doc corpora. |
+
+### `hybrid-recall-source-pin` — **in flight (anti-guess harden)**
+
+| | |
+| --- | --- |
+| **Claim** | Agents must retrieve a buried handbook fact **through PageIndex tools**, not by reading alone or by inventing a placeholder. Vault/decoy keyword (`rose-99`) is wrong. |
+| **Why it matters** | Separates “PageIndex exists” (`pageindex-section-qa`) from “agents prefer the hierarchical path when decoys tempt shortcuts.” Supports hybrid recall / source-pin product narrative. |
+| **How** | Long `handbook.md` (~370 lines) buries `CLAWQL_HYBRID_CODE=fern-42` among rose-/lilac- decoys. Empty vault. on enables PageIndex. Graders require **real** `part.tool` = `clawql_pageindex_*` (not OpenCode `invalid` rows that embed the name in `input.tool`). |
+| **What success looks like** | on: read handbook → build_tree → synthesize → `answer.json` code fern-42 source pageindex; off: cannot produce real pageindex tool_use → 0.0 even if it greps the file. |
+| **Evidence** | Placeholder fail [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377). **Invalid-tool TIE** on/off both 1.0 — [30886497135](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30886497135) (off attempted unavailable pageindex tools; naive grep matched). Fixed via `require-real-clawql-tools.py` + longer handbook; still `pr_active`. |
+| **Does *not* prove** | Full `memory_recall` multi-backend `sources=[pageindex,…]` pin (this cell grades PageIndex tools directly); vector/Onyx hybrids. |
+| **Failure modes learned** | (1) Indexing instruction text and writing angle-bracket placeholders. (2) OpenCode `"tool":"invalid"` false positives in graders. |
+
+### `external-ingest-continue` — **new / pr_active**
+
+| | |
+| --- | --- |
+| **Claim** | Agents can bulk-import Markdown via `ingest_external_knowledge` (`dryRun:false`) then `memory_recall` the imported fact — not copy from disk. |
+| **Why it matters** | Closes the documents skill gap: external packets become vault knowledge agents continue from. Distinct from `memory_ingest` (single note API). |
+| **How** | Empty vault. `incoming/briefing.md` holds `CLAWQL_EXTERNAL_TOKEN=cedar-88`. Decoy `maple-17`. Require `CLAWQL_ENABLE_DOCUMENTS=1` + `CLAWQL_EXTERNAL_INGEST=1` (OpenBench defaults documents off). Graders require real ingest + recall tool_use. |
+| **What success looks like** | on: ingest write → recall → answer.json; off: no documents tools → 0.0. |
+| **Evidence** | Pending first live cell. |
+| **Does *not* prove** | URL fetch mode (`CLAWQL_EXTERNAL_INGEST_FETCH`); Presidio redaction on ingest; Merkle/cuckoo side effects. |
+
+---
+
+## Codegraph
+
+### `codegraph-guided-edit`
+
+| | |
+| --- | --- |
+| **Claim** | Structural `codegraph_index` + query/explain/neighbors finds a symbol (`SECRET_MARKER`) better than decoy file hints. |
+| **Why it matters** | Proves `codegraph_*` agent value for architecture tracing without trusting misleading README/decoy grep targets. |
+| **How** | Fixture `repo/` with marker `cg-alpha-9` in `payments/ledger.py`; decoy claims `app.py`. `CLAWQL_ENABLE_CODEGRAPH=1`, empty vault. Require real index + query/explain/neighbors tool_use. |
+| **What success looks like** | on: index → query → `answer.json` marker + file path; off: no codegraph tools → 0.0. |
+| **Evidence** | on **1.0** (3 turns, ~53s) / off **0.0** — [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377). |
+| **Does *not* prove** | Multi-language graphs; incremental re-index after edits; hybrid memory_recall `sources=[codegraph]`. |
+
+---
+
+## Automation
+
+### `schedule-synthetic-dry-run`
+
+| | |
+| --- | --- |
+| **Claim** | Agents can create a synthetic HTTP check and `trigger` it with `dry_run=true` to a pass verdict. |
+| **Why it matters** | First live proof of optional `schedule` automation without live cron — supports “synthetic monitors as agent tools.” |
+| **How** | Allowlisted `https://example.com/`; `CLAWQL_ENABLE_SCHEDULE=1`. ≥2 real schedule tool_use + graded `schedule.json` (`dry_run`, `status=pass`). |
+| **What success looks like** | on: create → dry_run trigger → schedule.json; off: no schedule tool → 0.0. |
+| **Evidence** | on **1.0** (3 turns, ~32s) / off **0.0** — [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377). |
+| **Does *not* prove** | Live cron workers; Slack notify on failure; non-allowlisted URLs. |
 
 ---
 
@@ -164,35 +220,18 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | Timeout, turns=null, no `"tool":` | Often OpenRouter **402/429** or OpenCode hang — not a claim regression. See ledger. |
 | Both arms 1.0 early ouroboros | Vault one-shot confound — memory disabled for thrash study. |
 | Search/execute ties | Fixed by requiring tool_use JSON evidence. |
+| PageIndex/hybrid off=1.0 with no ClawQL | Often `"tool":"invalid"` embedding `clawql_pageindex_*` in input — use `require-real-clawql-tools.py`. |
+| Hybrid placeholder `<value after…>` | Agent indexed instruction text; require read of handbook.md first. |
+
+Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../openbench/scripts/require-real-clawql-tools.py).
 
 ---
 
-## Next cells
+## Next cells (backlog after active)
 
-### `codegraph-guided-edit` — **WIN**
-
-| | |
-| --- | --- |
-| **Claim** | Structural codegraph index/query finds symbols better than decoy file hints. |
-| **Why it matters** | Proves `codegraph_*` agent value for architecture tracing without blind grep. |
-| **How** | Fixture `repo/` with `SECRET_MARKER` in `payments/ledger.py`; decoy claims `app.py`. Require index + query/explain/neighbors. |
-| **Evidence** | on **1.0** / off **0.0** — [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377). |
-
-### `schedule-synthetic-dry-run` — **WIN**
-
-| | |
-| --- | --- |
-| **Claim** | Agents can create a synthetic HTTP check and `trigger` it with `dry_run=true` to a pass verdict. |
-| **Why it matters** | First live proof of optional `schedule` automation without live cron. |
-| **How** | Allowlisted `https://example.com/`; ≥2 schedule tool_use + `schedule.json`. |
-| **Evidence** | on **1.0** / off **0.0** — [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377). |
-
-### `hybrid-recall-source-pin` — in flight
-
-| | |
-| --- | --- |
-| **Claim** | Truth only via PageIndex over a long handbook; vault/decoy keyword is wrong. |
-| **Lesson** | First cell ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) called pageindex tools but indexed instruction text and wrote a placeholder. Instruction now requires `read handbook.md` first. |
-| **Evidence** | Pending after harden; still `pr_active`. |
+1. **notify mock Slack** — needs Slack-in-spec + token or recorded HTTP mock (P2).  
+2. **sandbox-trusted compute** — Docker/bridge backend in CI (P2).  
+3. **composed safe-rollout** — search→execute×2→audit→ingest sequence grade (P2).  
+4. **n≥3 trials** on headline WINs for Wilson intervals (P3).
 
 Append new run IDs to the [ledger](./openbench-results-ledger.md).

@@ -191,6 +191,16 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "require_schedule": True,
         "enable_schedule": True,
     },
+    "external-ingest-continue": {
+        "max_turns": 30,
+        "max_tokens": 8000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        "disable_memory": False,
+        "empty_vault": True,
+        "require_external_ingest": True,
+        "enable_external_ingest": True,
+    },
 }
 
 # Appended only to ouroboros-on so off cannot one-shot the correct recipe.
@@ -365,6 +375,18 @@ SCHEDULE_NUDGE = """Continue the schedule dry_run task.
    {"dry_run":true,"status":"pass","job_id":"<id>","source":"schedule"}
 
 Call schedule tools now.
+"""
+
+EXTERNAL_INGEST_NUDGE = """Continue the external ingest task.
+
+1. read incoming/briefing.md
+2. clawql_ingest_external_knowledge with source=markdown, dryRun=false, and
+   documents=[{path:"Memory/openbench-external-briefing.md", markdown:<file contents>}]
+3. clawql_memory_recall query=CLAWQL_EXTERNAL_TOKEN
+4. write relative filePath answer.json:
+   {"token":"<token from CLAWQL_EXTERNAL_TOKEN=>","source":"memory_recall"}
+
+Ignore decoy/. Filesystem copy without ingest+recall fails.
 """
 
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.
@@ -903,19 +925,42 @@ def cache_needs_finish(combined: str, workdir: Path) -> bool:
     return '"tool":"clawql_cache"' in text and '"operation":"set"' in text
 
 
+def real_opencode_tools(combined: str) -> set[str]:
+    """Tool names from real OpenCode tool_use rows (excludes part.tool==invalid)."""
+    found: set[str] = set()
+    for line in (combined or "").splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(obj, dict):
+            continue
+        part = obj.get("part")
+        if not isinstance(part, dict):
+            continue
+        tool = part.get("tool")
+        if isinstance(tool, str) and tool and tool != "invalid":
+            found.add(tool)
+    return found
+
+
 def pageindex_incomplete(combined: str, workdir: Path) -> bool:
-    if (workdir / "answer.json").is_file() and (
-        '"tool":"clawql_pageindex_build_tree"' in (combined or "")
-        or '"tool":"pageindex_build_tree"' in (combined or "")
-    ):
-        text = combined or ""
-        syn = (
-            '"tool":"clawql_pageindex_synthesize"' in text
-            or '"tool":"clawql_pageindex_traverse"' in text
-            or '"tool":"pageindex_synthesize"' in text
-            or '"tool":"pageindex_traverse"' in text
-        )
-        return not syn
+    tools = real_opencode_tools(combined)
+    built = bool(tools & {"clawql_pageindex_build_tree", "pageindex_build_tree"})
+    syn = bool(
+        tools
+        & {
+            "clawql_pageindex_synthesize",
+            "pageindex_synthesize",
+            "clawql_pageindex_traverse",
+            "pageindex_traverse",
+        }
+    )
+    if (workdir / "answer.json").is_file() and built and syn:
+        return False
     return True
 
 
@@ -924,20 +969,20 @@ def codegraph_incomplete(combined: str, workdir: Path) -> bool:
         return True
     if not (workdir / "answer.json").is_file():
         return True
-    text = combined or ""
-    indexed = '"tool":"clawql_codegraph_index"' in text or '"tool":"codegraph_index"' in text
+    tools = real_opencode_tools(combined)
+    indexed = bool(tools & {"clawql_codegraph_index", "codegraph_index"})
     if not indexed:
         return True
-    queried = any(
-        s in text
-        for s in (
-            '"tool":"clawql_codegraph_query"',
-            '"tool":"codegraph_query"',
-            '"tool":"clawql_codegraph_explain"',
-            '"tool":"codegraph_explain"',
-            '"tool":"clawql_codegraph_neighbors"',
-            '"tool":"codegraph_neighbors"',
-        )
+    queried = bool(
+        tools
+        & {
+            "clawql_codegraph_query",
+            "codegraph_query",
+            "clawql_codegraph_explain",
+            "codegraph_explain",
+            "clawql_codegraph_neighbors",
+            "codegraph_neighbors",
+        }
     )
     return not queried
 
@@ -947,9 +992,33 @@ def schedule_incomplete(combined: str, workdir: Path) -> bool:
         return True
     if not (workdir / "schedule.json").is_file():
         return True
-    text = combined or ""
-    hits = text.count('"tool":"clawql_schedule"') + text.count('"tool":"schedule"')
+    hits = 0
+    for line in (combined or "").splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        part = obj.get("part") if isinstance(obj, dict) else None
+        tool = part.get("tool") if isinstance(part, dict) else None
+        if tool in ("clawql_schedule", "schedule"):
+            hits += 1
     return hits < 2
+
+
+def external_ingest_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "answer.json").is_file():
+        return True
+    tools = real_opencode_tools(combined)
+    ingested = bool(
+        tools & {"clawql_ingest_external_knowledge", "ingest_external_knowledge"}
+    )
+    recalled = bool(tools & {"clawql_memory_recall", "memory_recall"})
+    return not (ingested and recalled)
 
 
 def policy_missing_artifact(workdir: Path) -> bool:
@@ -1010,6 +1079,8 @@ def run_arm_on(
     enable_codegraph: bool = False,
     require_schedule: bool = False,
     enable_schedule: bool = False,
+    require_external_ingest: bool = False,
+    enable_external_ingest: bool = False,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
     clawql = resolve_clawql()
@@ -1108,6 +1179,12 @@ def run_arm_on(
         env["CLAWQL_ENABLE_SCHEDULE"] = "1"
         env["CLAWQL_SCHEDULE_DB_PATH"] = str(workdir / ".schedule" / "schedule.db")
         env["CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES"] = "https://example.com"
+        env["CLAWQL_BUNDLED_OFFLINE"] = "1"
+
+    if enable_external_ingest:
+        env["CLAWQL_ENABLE_DOCUMENTS"] = "1"
+        env["CLAWQL_EXTERNAL_INGEST"] = "1"
+        env["CLAWQL_ENABLE_MEMORY"] = "1"
         env["CLAWQL_BUNDLED_OFFLINE"] = "1"
 
     t0 = time.monotonic()
@@ -1412,6 +1489,37 @@ def run_arm_on(
                 )
                 combined = combined + "\n" + (proc_sch.stdout or "") + (proc_sch.stderr or "")
                 code = proc_sch.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
+    # external ingest: missing ingest/recall/answer.
+    if (
+        require_external_ingest
+        and arm == "clawql-on"
+        and not timed_out
+        and external_ingest_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 25:
+            cont_file = workdir / ".openbench_external_ingest_nudge.md"
+            cont_file.write_text(EXTERNAL_INGEST_NUDGE, encoding="utf-8")
+            cont_timeout = max(25, min(90, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_ei = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_ei.stdout or "") + (proc_ei.stderr or "")
+                code = proc_ei.returncode
             except subprocess.TimeoutExpired as exc:
                 timed_out = True
                 combined = combined + "\n" + _dec_timeout_output(exc)
@@ -1734,6 +1842,28 @@ def render_markdown(report: dict) -> str:
                 "- Correct code is buried under Rare cultivars; decoy is wrong.",
             ]
         )
+    elif task == "hybrid-recall-source-pin":
+        interp.extend(
+            [
+                "- Both arms require *real* PageIndex tool_use (invalid-tool attempts do not count).",
+                "- Correct code fern-42 is buried in handbook.md; decoy rose-99 fails.",
+            ]
+        )
+    elif task == "external-ingest-continue":
+        interp.extend(
+            [
+                "- Empty vault: **clawql-on** must ingest_external_knowledge then memory_recall.",
+                "- **clawql-off** lacks documents/ingest tools — filesystem copy alone fails.",
+            ]
+        )
+    elif task == "codegraph-guided-edit":
+        interp.append(
+            "- Both arms graded for real codegraph index + query evidence; off lacks tools."
+        )
+    elif task == "schedule-synthetic-dry-run":
+        interp.append(
+            "- Both arms graded for ≥2 real schedule tool_use + dry_run pass artifact."
+        )
     interp.append("")
     lines.extend(interp)
     return "\n".join(lines)
@@ -1833,6 +1963,8 @@ def run_trial(
                 enable_codegraph=bool(caps.get("enable_codegraph")),
                 require_schedule=bool(caps.get("require_schedule")),
                 enable_schedule=bool(caps.get("enable_schedule")),
+                require_external_ingest=bool(caps.get("require_external_ingest")),
+                enable_external_ingest=bool(caps.get("enable_external_ingest")),
             )
         # Prefer full captured stream; fall back to / merge harness dump.
         # Never *replace* combined with a longer dump — that can drop an earlier
@@ -1880,6 +2012,8 @@ def run_trial(
             checker_env_extra["OPENBENCH_REQUIRE_CODEGRAPH"] = "1"
         if caps.get("require_schedule"):
             checker_env_extra["OPENBENCH_REQUIRE_SCHEDULE"] = "1"
+        if caps.get("require_external_ingest"):
+            checker_env_extra["OPENBENCH_REQUIRE_EXTERNAL_INGEST"] = "1"
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
         return {

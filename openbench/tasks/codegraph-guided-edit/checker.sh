@@ -72,12 +72,15 @@ if [ "$REQUIRE_CG" = "1" ]; then
     echo "FAIL: missing .openbench_agent.log for codegraph evidence" >&2
     cap_fail=1
   else
-    if ! grep -Eq '"tool":"clawql_codegraph_index"|"tool":"codegraph_index"' .openbench_agent.log; then
-      echo "FAIL: required codegraph_index tool_use" >&2
-      cap_fail=1
+    helper="${TASK_DIR}/../../scripts/require-real-clawql-tools.py"
+    if [ ! -f "$helper" ]; then
+      helper="$(cd "$(dirname "$0")/../.." && pwd)/scripts/require-real-clawql-tools.py"
     fi
-    if ! grep -Eq '"tool":"clawql_codegraph_query"|"tool":"codegraph_query"|"tool":"clawql_codegraph_explain"|"tool":"codegraph_explain"|"tool":"clawql_codegraph_neighbors"|"tool":"codegraph_neighbors"' .openbench_agent.log; then
-      echo "FAIL: required codegraph_query/explain/neighbors tool_use" >&2
+    if ! python3 "$helper" .openbench_agent.log \
+      'clawql_codegraph_index|codegraph_index' \
+      'clawql_codegraph_query|codegraph_query|clawql_codegraph_explain|codegraph_explain|clawql_codegraph_neighbors|codegraph_neighbors'
+    then
+      echo "FAIL: required real codegraph index + query/explain/neighbors tool_use" >&2
       cap_fail=1
     fi
   fi

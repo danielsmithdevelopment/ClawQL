@@ -12,7 +12,7 @@ document is the **scoreboard + run diary**.
 | Default model | `openrouter/deepseek/deepseek-chat` |
 | Harness | OpenCode → clawql-inference |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T07:05Z |
+| Last ledger update | 2026-08-04T07:20Z |
 | CI matrix control | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push |
 | Task explanations | [`openbench-task-explanations.md`](./openbench-task-explanations.md) — prove / why / how for every cell |
 
@@ -54,6 +54,15 @@ Replicated Ouroboros WINs also on [30872913519](https://github.com/danielsmithde
 ---
 
 ## Run diary
+
+### 2026-08-04 — [30886497135](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30886497135) (hybrid harden attempt)
+
+| Arm | Score | Turns | Wall (s) | Notes |
+| --- | ----- | ----- | -------- | ----- |
+| clawql-on | 1.0 | 3 | 78.0 | After nudge: real build_tree + synthesize; wrote fern-42 |
+| clawql-off | 1.0 | 4 | 20.7 | **False pass** — read handbook + write; attempted unavailable pageindex tools recorded as `"tool":"invalid"` with name in `input.tool`; naive grep matched |
+
+**Verdict:** **TIE (invalid)** — not a headline WIN. Fix: `require-real-clawql-tools.py` + lengthen handbook; keep hybrid `pr_active`. Also ship `external-ingest-continue` as next P1.
 
 ### 2026-08-04 — [30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642) (ouroboros, allow)
 
@@ -233,14 +242,16 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 | Infra hang | Whole matrix timeout, no tools | Re-run; annotate as noise in this ledger |
 | OpenRouter 402 credits | OpenCode `stream error` + hang until wall | Top up key; cap `limit.output`; `live_enabled=false` until funded |
 | Hybrid placeholder write | answer.json copied instruction template | Require read handbook.md; ban angle-bracket placeholders |
+| Invalid-tool pageindex false positive | off scored 1.0 without ClawQL (30886497135) | Parse real `part.tool` ≠ `invalid` via require-real-clawql-tools.py |
 
 ---
 
 ## Open gaps (not yet headline WIN)
 
-1. **`hybrid-recall-source-pin`** — tools called but placeholder answer; instruction hardened; still `pr_active`.
-2. **notify / sandbox / composed recipes / external ingest** — backlog.
-3. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
+1. **`hybrid-recall-source-pin`** — still `pr_active` after invalid-tool TIE; anti-guess + longer handbook pending re-run.
+2. **`external-ingest-continue`** — shipped; awaiting first live A/B.
+3. **notify / sandbox / composed recipes** — backlog.
+4. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2).
 
 ---
 

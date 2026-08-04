@@ -20,6 +20,7 @@ on:
           - all
           - all-including-retired
           - hybrid-recall-source-pin
+          - external-ingest-continue
           - codegraph-guided-edit
           - schedule-synthetic-dry-run
           - cache-scratch-handoff
@@ -199,7 +200,7 @@ jobs:
           echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
           echo "::notice::memory-roundtrip-ingest-recall → arms=clawql-on,off timeout=180s"
 
-      - name: Audit / cache / policy / pageindex / hybrid / codegraph / schedule clamps
+      - name: Audit / cache / policy / pageindex / hybrid / codegraph / schedule / external-ingest clamps
         if: >
           matrix.task == 'audit-checkpoints' ||
           matrix.task == 'cache-scratch-handoff' ||
@@ -207,7 +208,8 @@ jobs:
           matrix.task == 'pageindex-section-qa' ||
           matrix.task == 'hybrid-recall-source-pin' ||
           matrix.task == 'codegraph-guided-edit' ||
-          matrix.task == 'schedule-synthetic-dry-run'
+          matrix.task == 'schedule-synthetic-dry-run' ||
+          matrix.task == 'external-ingest-continue'
         run: |
           echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
@@ -225,6 +227,10 @@ jobs:
           if [ "${{ matrix.task }}" = "schedule-synthetic-dry-run" ]; then
             echo "CLAWQL_ENABLE_SCHEDULE=1" >> "$GITHUB_ENV"
             echo "CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES=https://example.com" >> "$GITHUB_ENV"
+          fi
+          if [ "${{ matrix.task }}" = "external-ingest-continue" ]; then
+            echo "CLAWQL_ENABLE_DOCUMENTS=1" >> "$GITHUB_ENV"
+            echo "CLAWQL_EXTERNAL_INGEST=1" >> "$GITHUB_ENV"
           fi
           echo "::notice::${{ matrix.task }} → arms=clawql-on,off timeout=180s"
 
