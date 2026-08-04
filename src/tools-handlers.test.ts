@@ -331,7 +331,8 @@ describe("optional tool handlers (MCP content shape)", () => {
         query: "pat rotation",
         limit: 5,
         maxDepth: 2,
-        minScore: 1,
+        // IDF scores are fractional (~0.3–2 for typical hits); legacy integer TF used minScore:1.
+        minScore: 0.05,
       });
       expect(out.content[0].type).toBe("text");
       const parsed = JSON.parse(out.content[0].text) as {
