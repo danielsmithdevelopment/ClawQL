@@ -46,7 +46,7 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 
 Still missing clean live WINs: hybrid recall (anti-guess re-run), external ingest, notify/sandbox/composed, n≥3 trials. Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` runs on PR/push. Prior graded tasks are **`retired`**. Active next wave: `hybrid-recall-source-pin`, `external-ingest-continue`. Ouroboros workflow is dispatch-only.
+**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` runs on PR/push. Prior graded tasks are **`retired`**. Active next wave: `hybrid-recall-source-pin` only (external-ingest retired after [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038)). Ouroboros workflow is dispatch-only.
 
 Explanations for every verified cell: [`openbench-task-explanations.md`](./openbench-task-explanations.md).
 
@@ -81,7 +81,7 @@ Legend: **Live** = OpenBench A/B · **Context** = planning-context stats · **Un
 
 | Capability | Claim | Evidence | Next OpenBench / note |
 | ---------- | ----- | -------- | --------------------- |
-| `ingest_external_knowledge` | Bulk MD/URL → vault | **OpenBench task** `external-ingest-continue` (pr_active) | First live A/B pending |
+| `ingest_external_knowledge` | Bulk MD/URL → vault | **Live WIN** `external-ingest-continue` ([30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038)) | Retired from PR |
 | `knowledge_search_onyx` | Enterprise evidence before act | Skill only (needs Onyx) | Mock Onyx or recorded fixture HTTP; graded citation file |
 | `run_idp_pipeline` / classify / extract | IDP hops via execute | Unit / runbooks | Heavy; prefer **offline pipeline dry_run** graded artifact, not full vendor matrix |
 | Docling/Tika/Paperless/… | Provider execute paths | Provider tests / context benches | Keep as provider context benches; OpenBench only if agent must pick the right vendor op |
@@ -144,7 +144,7 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 8. ~~**PageIndex long-doc Q&A**~~ — verified on 1.0 / off 0.0 ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)).  
 9. **Hybrid recall source pin** — shipped; invalid-tool TIE on [30886497135](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30886497135); anti-guess re-run pending.  
 10. ~~**Codegraph-guided edit**~~ — verified on 1.0 / off 0.0 ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)).  
-11. **External ingest → continue** — task shipped (`external-ingest-continue`); awaiting live A/B.  
+11. ~~**External ingest → continue**~~ — verified on 1.0 / off 0.0 ([30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038)).  
 
 ### P2 — automation / sandbox / composed
 

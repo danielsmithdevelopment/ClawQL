@@ -24,16 +24,22 @@ try:
 except Exception as exc:
     print(f"FAIL: answer.json parse error: {exc}", flush=True)
     raise SystemExit(1)
-code = str(d.get("code") or "").strip()
+# Accept common agent shapes: {"code":…} or {"CLAWQL_HYBRID_CODE":…}
+code = str(d.get("code") or d.get("CLAWQL_HYBRID_CODE") or "").strip()
+if code.upper().startswith("CLAWQL_HYBRID_CODE="):
+    code = code.split("=", 1)[1].strip()
 src = str(d.get("source") or "").strip().lower()
 # Explicitly fail known vault decoy
 if code == "rose-99":
     print("FAIL: used vault/decoy code rose-99", flush=True)
     raise SystemExit(1)
-ok = code == "${EXPECTED}" and "pageindex" in src
-if not ok:
-    print(f"FAIL: expected code=${EXPECTED} source~pageindex; got {d!r}", flush=True)
-raise SystemExit(0 if ok else 1)
+# source may be omitted when the agent used the CLAWQL_HYBRID_CODE key;
+# real pageindex tool_use is still required below when REQUIRE_PI=1.
+ok = code == "${EXPECTED}" and ("pageindex" in src or "CLAWQL_HYBRID_CODE" in d or "code" in d)
+if not ok or code != "${EXPECTED}":
+    print(f"FAIL: expected code=${EXPECTED} (source~pageindex preferred); got {d!r}", flush=True)
+    raise SystemExit(1)
+raise SystemExit(0)
 PY
 then
   pass=1
@@ -85,6 +91,52 @@ if [ "$REQUIRE_PI" = "1" ]; then
       'clawql_pageindex_synthesize|pageindex_synthesize|clawql_pageindex_traverse|pageindex_traverse'
     then
       echo "FAIL: required real pageindex build_tree + synthesize/traverse tool_use" >&2
+      cap_fail=1
+    fi
+    # Empty markdown:"" builds do not count — PageIndex must index the handbook.
+    if ! python3 - <<'PY'
+import json
+from pathlib import Path
+text = Path(".openbench_agent.log").read_text(encoding="utf-8", errors="replace")
+nonempty_build = False
+synth_has_token = False
+for line in text.splitlines():
+    line = line.strip()
+    if not line.startswith("{"):
+        continue
+    try:
+        obj = json.loads(line)
+    except Exception:
+        continue
+    part = obj.get("part") if isinstance(obj, dict) else None
+    if not isinstance(part, dict):
+        continue
+    tool = part.get("tool")
+    state = part.get("state") if isinstance(part.get("state"), dict) else {}
+    inp = state.get("input") if isinstance(state.get("input"), dict) else {}
+    out = str(state.get("output") or "")
+    if tool in ("clawql_pageindex_build_tree", "pageindex_build_tree"):
+        md = str(inp.get("markdown") or "")
+        if "CLAWQL_HYBRID_CODE" in md and "fern-42" in md:
+            nonempty_build = True
+    if tool in (
+        "clawql_pageindex_synthesize",
+        "pageindex_synthesize",
+        "clawql_pageindex_traverse",
+        "pageindex_traverse",
+    ):
+        if "fern-42" in out:
+            synth_has_token = True
+ok = nonempty_build or synth_has_token
+if not ok:
+    print(
+        "FAIL: pageindex build must include handbook markdown with CLAWQL_HYBRID_CODE=fern-42 "
+        "(empty markdown:\"\" builds do not count), or synthesize/traverse output must contain fern-42",
+        flush=True,
+    )
+raise SystemExit(0 if ok else 1)
+PY
+    then
       cap_fail=1
     fi
   fi

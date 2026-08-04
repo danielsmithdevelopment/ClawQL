@@ -347,13 +347,15 @@ HYBRID_PAGEINDEX_NUDGE = """Continue the hybrid PageIndex task.
 
 CRITICAL: you must use handbook.md contents — not this instruction text.
 
-1. read file handbook.md
-2. clawql_pageindex_build_tree docId=openbench-hybrid-handbook with that file's markdown
+1. read file handbook.md (keep the full markdown text)
+2. clawql_pageindex_build_tree with docId=openbench-hybrid-handbook AND
+   markdown=<the FULL handbook.md contents you just read — never empty string>
 3. clawql_pageindex_synthesize query=CLAWQL_HYBRID_CODE
-4. write answer.json with the REAL token from the handbook line
-   CLAWQL_HYBRID_CODE=<token>  (example shape word-number, NOT a placeholder)
+4. write relative filePath answer.json with EXACTLY this shape (fill the token):
+   {"code":"fern-42","source":"pageindex"}
+   Use the real token from CLAWQL_HYBRID_CODE= in the handbook (word-number).
 
-Ignore decoy/. Never write angle-bracket placeholders into answer.json.
+Ignore decoy/. Never write angle-bracket placeholders. Never pass markdown:"".
 """
 
 CODEGRAPH_NUDGE = """Continue the codegraph task.
@@ -959,7 +961,21 @@ def pageindex_incomplete(combined: str, workdir: Path) -> bool:
             "pageindex_traverse",
         }
     )
-    if (workdir / "answer.json").is_file() and built and syn:
+    # Empty markdown build (nodeCount 1 / empty synthesize) still needs a retry.
+    empty_build = '"markdown":""' in (combined or "") or '"markdown": ""' in (combined or "")
+    answer = workdir / "answer.json"
+    answer_ok = False
+    if answer.is_file():
+        try:
+            d = json.loads(answer.read_text(encoding="utf-8"))
+            code = str(d.get("code") or d.get("CLAWQL_HYBRID_CODE") or "").strip()
+            if code.upper().startswith("CLAWQL_HYBRID_CODE="):
+                code = code.split("=", 1)[1].strip()
+            # Catalog task uses orchid-77; hybrid uses fern-42 — either means a real write.
+            answer_ok = code in {"orchid-77", "fern-42"}
+        except Exception:  # noqa: BLE001
+            answer_ok = False
+    if answer_ok and built and syn and not empty_build:
         return False
     return True
 

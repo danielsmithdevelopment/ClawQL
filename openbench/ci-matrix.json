@@ -2,10 +2,9 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "P1 next wave: hybrid (anti-guess fix after 30886497135 tie) + external-ingest-continue. Prior tasks retired after 30881158522 / 30885341377.",
+  "live_resume_note": "external-ingest WIN on 30887394038; hybrid still active after answer-shape/empty-markdown harden.",
   "pr_active": [
-    "hybrid-recall-source-pin",
-    "external-ingest-continue"
+    "hybrid-recall-source-pin"
   ],
   "retired": {
     "memory-dependent-continuation": {
@@ -59,6 +58,10 @@
     "schedule-synthetic-dry-run": {
       "reason": "Verified WIN — schedule create + dry_run trigger pass (on 1.0 / off 0.0)",
       "evidence_run": "30885341377"
+    },
+    "external-ingest-continue": {
+      "reason": "Verified WIN — ingest_external_knowledge + memory_recall (on 1.0 / off 0.0)",
+      "evidence_run": "30887394038"
     }
   },
   "ouroboros_pr_enabled": false,
