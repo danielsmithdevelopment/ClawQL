@@ -4,10 +4,7 @@
  */
 
 import { maybePresidioRedactText, presidioEnabled } from "../presidio/client.js";
-import {
-  maybePrivacyFilterRedactText,
-  privacyFilterEnabled,
-} from "../privacy-filter/client.js";
+import { maybePrivacyFilterRedactText, privacyFilterEnabled } from "../privacy-filter/client.js";
 
 /** True when any gateway redaction layer is enabled. */
 export function gatewayRedactionEnabled(): boolean {

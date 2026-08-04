@@ -25,8 +25,7 @@ export function privacyFilterEnabled(): boolean {
 
 export function loadPrivacyFilterConfig(): PrivacyFilterConfig | null {
   if (!privacyFilterEnabled()) return null;
-  const baseUrl =
-    process.env.CLAWQL_PRIVACY_FILTER_URL?.trim() ?? "http://127.0.0.1:8091";
+  const baseUrl = process.env.CLAWQL_PRIVACY_FILTER_URL?.trim() ?? "http://127.0.0.1:8091";
   const failureRaw = process.env.CLAWQL_PRIVACY_FILTER_FAILURE_POLICY?.trim().toLowerCase();
   // Default warn: ML sidecar should not brick the gateway when Presidio already ran (or alone).
   const failurePolicy = failureRaw === "block" ? "block" : "warn";

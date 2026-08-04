@@ -13,12 +13,12 @@ raw text
   → execute response / memory_ingest / ingest_external_knowledge / export scrub
 ```
 
-| Stage | What is preserved | What is dropped / masked |
-| ----- | ----------------- | ------------------------ |
-| Input | Full string until a layer runs | — |
-| Presidio | Non-entity tokens; structure of tool JSON | Matched NER entities (operator anonymizer rules) |
-| Privacy Filter | Non-span tokens; `spans[]` metadata in sidecar response (not persisted by gateway) | Matched taxonomy spans replaced with `[CATEGORY]` |
-| Downstream | Masked string only on success path | Original PII if both layers off or failure-policy `warn` |
+| Stage          | What is preserved                                                                  | What is dropped / masked                                 |
+| -------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Input          | Full string until a layer runs                                                     | —                                                        |
+| Presidio       | Non-entity tokens; structure of tool JSON                                          | Matched NER entities (operator anonymizer rules)         |
+| Privacy Filter | Non-span tokens; `spans[]` metadata in sidecar response (not persisted by gateway) | Matched taxonomy spans replaced with `[CATEGORY]`        |
+| Downstream     | Masked string only on success path                                                 | Original PII if both layers off or failure-policy `warn` |
 
 Chain helper: `maybeGatewayRedactText` in `clawql-api` (`packages/clawql-api/src/redaction/gateway-redact.ts`).
 
@@ -73,11 +73,11 @@ Helm (opt-in):
 
 ## Latency / memory envelope
 
-| Mode | Typical memory | Notes |
-| ---- | -------------- | ----- |
-| demo | &lt; 50 MiB | Regex only; CI smoke |
-| live CPU | ~2–4 GiB+ | ~1.5B params / ~50M active MoE; first request loads weights |
-| live GPU | VRAM-dependent | Set `PRIVACY_FILTER_DEVICE` |
+| Mode     | Typical memory | Notes                                                       |
+| -------- | -------------- | ----------------------------------------------------------- |
+| demo     | &lt; 50 MiB    | Regex only; CI smoke                                        |
+| live CPU | ~2–4 GiB+      | ~1.5B params / ~50M active MoE; first request loads weights |
+| live GPU | VRAM-dependent | Set `PRIVACY_FILTER_DEVICE`                                 |
 
 ## Smoke
 

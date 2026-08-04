@@ -68,10 +68,11 @@ describe("gateway redact chain", () => {
 
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
-        new Response(JSON.stringify({ ok: true, text: "[PRIVATE_PERSON] was here" }), {
-          status: 200,
-        })
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ ok: true, text: "[PRIVATE_PERSON] was here" }), {
+            status: 200,
+          })
       )
     );
 

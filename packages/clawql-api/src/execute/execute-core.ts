@@ -8,10 +8,7 @@ import { executeOperationGraphQL } from "../graphql/in-process-execute.js";
 import { loadSpec, resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
 import type { Operation } from "../spec/operation-types.js";
 import type { LoadSpecFn } from "../search/search-core.js";
-import {
-  gatewayRedactionEnabled,
-  maybeGatewayRedactText,
-} from "../redaction/gateway-redact.js";
+import { gatewayRedactionEnabled, maybeGatewayRedactText } from "../redaction/gateway-redact.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./field-projection.js";
 import { executeNativeGraphQL } from "./native-graphql.js";
 import { executeNativeGrpc } from "./native-grpc.js";
