@@ -277,8 +277,10 @@ export async function listToolsUnaryGrpc(
     return (obj.tools ?? [])
       .filter((t) => typeof t.name === "string" && t.name.length > 0)
       .map((t) => {
-        const inputSchema =
-          structToJson(t.input_schema ?? t.inputSchema) ?? { type: "object", properties: {} };
+        const inputSchema = structToJson(t.input_schema ?? t.inputSchema) ?? {
+          type: "object",
+          properties: {},
+        };
         const outputSchema = structToJson(t.output_schema ?? t.outputSchema);
         const tool: ListedMcpTool = {
           name: t.name!,

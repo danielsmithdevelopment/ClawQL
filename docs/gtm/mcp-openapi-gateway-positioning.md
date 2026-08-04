@@ -25,9 +25,9 @@ Call MCP tools by name over HTTP **or GraphQL**. Production deployments use **`m
 
 ## Do not confuse with ClawQL Core
 
-| Direction | Product | Audience |
-| --------- | ------- | -------- |
-| **OpenAPI → MCP** | ClawQL `search` / `execute` | Agents discovering upstream REST/GraphQL/gRPC APIs |
+| Direction                 | Product                     | Audience                                                           |
+| ------------------------- | --------------------------- | ------------------------------------------------------------------ |
+| **OpenAPI → MCP**         | ClawQL `search` / `execute` | Agents discovering upstream REST/GraphQL/gRPC APIs                 |
 | **MCP → OpenAPI/GraphQL** | `mcp-openapi-gateway` (MVP) | Workers / OpenWebUI / gateways that speak REST or GraphQL, not MCP |
 
 Use **“OpenAPI on-ramp”**, **“GraphQL on-ramp”**, or **“MCP tools as REST/GraphQL”** in marketing — not bare “OpenAPI gateway.”
@@ -36,22 +36,22 @@ Use **“OpenAPI on-ramp”**, **“GraphQL on-ramp”**, or **“MCP tools as R
 
 ## Demo narrative (4 steps)
 
-1. **Swagger:** `POST /echo` (or `memory_recall`) with JSON args.  
-2. **GraphiQL:** `mutation { echo(message: "…") }` — same tool, GraphQL surface.  
-3. **OpenAPI extensions:** show `info.x-clawql-grpc` / `x-clawql-graphql` (port 50051, `CallTool`, reflection).  
+1. **Swagger:** `POST /echo` (or `memory_recall`) with JSON args.
+2. **GraphiQL:** `mutation { echo(message: "…") }` — same tool, GraphQL surface.
+3. **OpenAPI extensions:** show `info.x-clawql-grpc` / `x-clawql-graphql` (port 50051, `CallTool`, reflection).
 4. **Same call over gRPC:** `grpcurl` / `callToolServerStreamingGrpc` — “this is what production and mesh should use.”
 
 ---
 
 ## Channels
 
-| Channel | When |
-| ------- | ---- |
-| Vision & Roadmap planned row | Now (design merged) |
-| npm README + Compose/Helm sidecar example | At MVP ship |
-| pragmaticvectors / blog | After MVP: “MCP tools as OpenAPI/GraphQL — gRPC underneath” |
-| Managed Edge Gateway docs | Optional companion port once edge hardening lands |
-| Announcement drafts | Bundle with next minor that publishes the package |
+| Channel                                   | When                                                        |
+| ----------------------------------------- | ----------------------------------------------------------- |
+| Vision & Roadmap planned row              | Now (design merged)                                         |
+| npm README + Compose/Helm sidecar example | At MVP ship                                                 |
+| pragmaticvectors / blog                   | After MVP: “MCP tools as OpenAPI/GraphQL — gRPC underneath” |
+| Managed Edge Gateway docs                 | Optional companion port once edge hardening lands           |
+| Announcement drafts                       | Bundle with next minor that publishes the package           |
 
 ---
 
