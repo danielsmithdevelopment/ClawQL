@@ -1,34 +1,24 @@
 #!/usr/bin/env bash
-# Sync an OpenBench artifact pack to durable object storage (R2 via S3 API).
+# Upload publish-ready OpenBench dataset pack to R2 (corpus of record).
 #
-# GitHub Actions artifacts expire (~90d). This is the corpus-of-record sink so
-# fine-tune traces accumulate indefinitely until you delete them.
-#
-# Layout (immutable per run/task):
-#   s3://$BUCKET/$PREFIX/<run_id>/<task>/
-#     calls.jsonl
-#     trace-session-labels.json
-#     results.json          (if present)
-#     summary.md           (if present)
+# Expected local pack (from build-openbench-dataset.py):
+#   $ARTIFACT_DIR/dataset/
+#     traces/*.jsonl
+#     call-store/calls.jsonl
 #     MANIFEST.json
+#     schema/openbench-trace.v1.json
 #
-# Auth (first match wins for keys):
-#   CLAWQL_SYNC_ACCESS_KEY_ID / CLAWQL_SYNC_SECRET_ACCESS_KEY
-#   R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY
-#   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
+# Remote layout:
+#   s3://$BUCKET/
+#     raw/YYYY/MM/DD/run-$RUN_ID/$TASK/          # traces + scrubbed call-store
+#     manifests/YYYY/MM/DD/run-$RUN_ID-$TASK.json
+#     schema/v1.0.json
 #
-# Required:
-#   CLAWQL_OPENBENCH_R2_BUCKET (or CLAWQL_SYNC_BUCKET)
-#   CLOUDFLARE_ACCOUNT_ID (or CLAWQL_R2_ACCOUNT_ID / CLAWQL_CLOUDFLARE_ACCOUNT_ID)
+# Fail-loud by default when CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES is unset or 1.
+# Set CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES=0 only for dry-runs without R2.
 #
-# Optional:
-#   CLAWQL_OPENBENCH_R2_PREFIX   default: openbench-traces
-#   CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES=1  → exit 1 if creds/bucket missing
-#
-# Usage:
-#   openbench/scripts/sync-openbench-traces-durable.sh \
-#     --artifact-dir artifacts/openbench-ab/search-first-discovery \
-#     --run-id 123 --task search-first-discovery
+# Bucket secret aliases (first wins):
+#   CLAWQL_R2_TRACES_BUCKET | CLAWQL_OPENBENCH_R2_BUCKET | CLAWQL_SYNC_BUCKET
 
 set -euo pipefail
 
@@ -43,14 +33,8 @@ while [[ $# -gt 0 ]]; do
     --run-id) RUN_ID="$2"; shift 2 ;;
     --task) TASK="$2"; shift 2 ;;
     --sha) SHA="$2"; shift 2 ;;
-    -h|--help)
-      sed -n '2,35p' "$0"
-      exit 0
-      ;;
-    *)
-      echo "Unknown arg: $1" >&2
-      exit 2
-      ;;
+    -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
+    *) echo "Unknown arg: $1" >&2; exit 2 ;;
   esac
 done
 
@@ -59,36 +43,39 @@ if [[ -z "$ARTIFACT_DIR" || -z "$RUN_ID" || -z "$TASK" ]]; then
   exit 2
 fi
 
-REQUIRE="${CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES:-0}"
-BUCKET="${CLAWQL_OPENBENCH_R2_BUCKET:-${CLAWQL_SYNC_BUCKET:-}}"
+REQUIRE="${CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES:-1}"
+BUCKET="${CLAWQL_R2_TRACES_BUCKET:-${CLAWQL_OPENBENCH_R2_BUCKET:-${CLAWQL_SYNC_BUCKET:-}}}"
 ACCOUNT="${CLAWQL_R2_ACCOUNT_ID:-${CLAWQL_CLOUDFLARE_ACCOUNT_ID:-${CLOUDFLARE_ACCOUNT_ID:-}}}"
-PREFIX="${CLAWQL_OPENBENCH_R2_PREFIX:-openbench-traces}"
-PREFIX="${PREFIX#/}"
-PREFIX="${PREFIX%/}"
-
 ACCESS_KEY="${CLAWQL_SYNC_ACCESS_KEY_ID:-${R2_ACCESS_KEY_ID:-${AWS_ACCESS_KEY_ID:-}}}"
 SECRET_KEY="${CLAWQL_SYNC_SECRET_ACCESS_KEY:-${R2_SECRET_ACCESS_KEY:-${AWS_SECRET_ACCESS_KEY:-}}}"
 
+fail_or_warn() {
+  local msg="$1"
+  if [[ "$REQUIRE" == "0" || "$REQUIRE" == "false" ]]; then
+    echo "::warning::${msg}"
+    exit 0
+  fi
+  echo "::error::${msg}"
+  exit 1
+}
+
 missing=()
-[[ -z "$BUCKET" ]] && missing+=("CLAWQL_OPENBENCH_R2_BUCKET|CLAWQL_SYNC_BUCKET")
+[[ -z "$BUCKET" ]] && missing+=("CLAWQL_R2_TRACES_BUCKET|CLAWQL_OPENBENCH_R2_BUCKET|CLAWQL_SYNC_BUCKET")
 [[ -z "$ACCOUNT" ]] && missing+=("CLOUDFLARE_ACCOUNT_ID|CLAWQL_R2_ACCOUNT_ID")
 [[ -z "$ACCESS_KEY" ]] && missing+=("CLAWQL_SYNC_ACCESS_KEY_ID|R2_ACCESS_KEY_ID")
 [[ -z "$SECRET_KEY" ]] && missing+=("CLAWQL_SYNC_SECRET_ACCESS_KEY|R2_SECRET_ACCESS_KEY")
 
 if ((${#missing[@]} > 0)); then
-  msg="Durable trace sink not configured (missing: ${missing[*]}). Actions artifacts alone expire in ~90 days."
-  if [[ "$REQUIRE" == "1" || "$REQUIRE" == "true" ]]; then
-    echo "::error::${msg}"
-    exit 1
-  fi
-  echo "::warning::${msg}"
-  exit 0
+  fail_or_warn "Durable R2 sink required but missing: ${missing[*]}. A live OpenBench run without persisted traces is wasted compute."
 fi
 
-CALLS="${ARTIFACT_DIR}/call-store/calls.jsonl"
-if [[ ! -f "$CALLS" ]]; then
-  echo "::warning::No call-store JSONL at ${CALLS} — nothing durable to upload"
-  exit 0
+DATASET="${ARTIFACT_DIR}/dataset"
+MANIFEST="${DATASET}/MANIFEST.json"
+if [[ ! -f "$MANIFEST" ]]; then
+  fail_or_warn "Missing ${MANIFEST} — run build-openbench-dataset.py before durable sync"
+fi
+if [[ ! -d "${DATASET}/traces" ]] || [[ -z "$(ls -A "${DATASET}/traces" 2>/dev/null || true)" ]]; then
+  fail_or_warn "No validated traces under ${DATASET}/traces"
 fi
 
 if ! command -v aws >/dev/null 2>&1; then
@@ -98,43 +85,29 @@ if ! command -v aws >/dev/null 2>&1; then
   sudo /tmp/aws/install >/dev/null
 fi
 
+DAY="$(date -u +%Y/%m/%d)"
 ENDPOINT="https://${ACCOUNT}.r2.cloudflarestorage.com"
-DEST="s3://${BUCKET}/${PREFIX}/${RUN_ID}/${TASK}"
-STAGING="$(mktemp -d)"
-trap 'rm -rf "$STAGING"' EXIT
-
-mkdir -p "${STAGING}/pack"
-cp "$CALLS" "${STAGING}/pack/calls.jsonl"
-[[ -f "${ARTIFACT_DIR}/trace-session-labels.json" ]] && cp "${ARTIFACT_DIR}/trace-session-labels.json" "${STAGING}/pack/"
-[[ -f "${ARTIFACT_DIR}/results.json" ]] && cp "${ARTIFACT_DIR}/results.json" "${STAGING}/pack/"
-[[ -f "${ARTIFACT_DIR}/summary.md" ]] && cp "${ARTIFACT_DIR}/summary.md" "${STAGING}/pack/"
-
-RECORD_COUNT="$(wc -l < "${STAGING}/pack/calls.jsonl" | tr -d ' ')"
-BYTES="$(wc -c < "${STAGING}/pack/calls.jsonl" | tr -d ' ')"
-cat > "${STAGING}/pack/MANIFEST.json" <<EOF
-{
-  "schema": "clawql.openbench.durable-trace-pack.v1",
-  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "github_run_id": "${RUN_ID}",
-  "github_sha": "${SHA}",
-  "task": "${TASK}",
-  "bucket": "${BUCKET}",
-  "prefix": "${PREFIX}/${RUN_ID}/${TASK}",
-  "calls_jsonl_records": ${RECORD_COUNT},
-  "calls_jsonl_bytes": ${BYTES},
-  "note": "Corpus of record for fine-tune. GitHub Actions artifacts are a 90d cache only."
-}
-EOF
+RAW_DEST="s3://${BUCKET}/raw/${DAY}/run-${RUN_ID}/${TASK}"
+MANIFEST_DEST="s3://${BUCKET}/manifests/${DAY}/run-${RUN_ID}-${TASK}.json"
+SCHEMA_DEST="s3://${BUCKET}/schema/v1.0.json"
 
 export AWS_ACCESS_KEY_ID="$ACCESS_KEY"
 export AWS_SECRET_ACCESS_KEY="$SECRET_KEY"
 export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-auto}"
-# R2 ignores region but aws cli wants one.
 
-echo "Uploading durable pack → ${DEST}/ (${RECORD_COUNT} records, ${BYTES} bytes)"
-aws s3 sync "${STAGING}/pack/" "${DEST}/" \
-  --endpoint-url "$ENDPOINT" \
-  --no-progress
+echo "Uploading raw pack → ${RAW_DEST}/"
+aws s3 sync "${DATASET}/traces/" "${RAW_DEST}/" --endpoint-url "$ENDPOINT" --no-progress
+if [[ -f "${DATASET}/call-store/calls.jsonl" ]]; then
+  aws s3 cp "${DATASET}/call-store/calls.jsonl" "${RAW_DEST}/call-store/calls.jsonl" \
+    --endpoint-url "$ENDPOINT" --no-progress
+fi
+aws s3 cp "$MANIFEST" "$MANIFEST_DEST" --endpoint-url "$ENDPOINT" --no-progress
+if [[ -f "${DATASET}/schema/openbench-trace.v1.json" ]]; then
+  aws s3 cp "${DATASET}/schema/openbench-trace.v1.json" "$SCHEMA_DEST" \
+    --endpoint-url "$ENDPOINT" --no-progress
+fi
 
-echo "::notice::Durable traces → ${DEST}/ (${RECORD_COUNT} records)"
-echo "DURABLE_TRACE_URI=${DEST}/"
+TRACE_N="$(find "${DATASET}/traces" -type f -name '*.jsonl' | wc -l | tr -d ' ')"
+echo "::notice::Durable OpenBench traces → ${RAW_DEST}/ (${TRACE_N} files); manifest → ${MANIFEST_DEST}"
+echo "DURABLE_RAW_URI=${RAW_DEST}/"
+echo "DURABLE_MANIFEST_URI=${MANIFEST_DEST}"

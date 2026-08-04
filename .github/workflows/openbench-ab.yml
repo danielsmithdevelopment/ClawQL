@@ -447,31 +447,14 @@ jobs:
           # Give the JSONL writer a moment to flush after SIGTERM.
           sleep 1
 
-      - name: Package call-store traces + grader labels
-        if: always() && steps.preflight.outputs.run_benchmark == 'true'
-        run: |
-          set -euo pipefail
-          ARTIFACT_DIR="${OPENBENCH_ARTIFACT_DIR:-${GITHUB_WORKSPACE}/artifacts/openbench-ab/${OPENBENCH_TASK}}"
-          python3 openbench/scripts/package-openbench-traces.py \
-            --artifact-dir "${ARTIFACT_DIR}" \
-            --run-id "${{ github.run_id }}" \
-            --task "${OPENBENCH_TASK}" \
-            --model "${OPENBENCH_MODEL}"
-          if [ -f "${ARTIFACT_DIR}/call-store/calls.jsonl" ]; then
-            echo "::notice::call-store lines=$(wc -l < "${ARTIFACT_DIR}/call-store/calls.jsonl")"
-          else
-            echo "::warning::call-store JSONL missing after package step"
-          fi
-
-      # Corpus of record (does not expire). Actions artifacts are a 90d cache only.
-      # Secrets: CLAWQL_OPENBENCH_R2_BUCKET (or CLAWQL_SYNC_BUCKET) + R2 S3 API keys + account id.
-      # Set CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES=1 (repo variable) to fail the job if unset.
-      - name: Sync durable traces to R2
-        if: always() && steps.preflight.outputs.run_benchmark == 'true'
+      - name: Build publish-ready traces + sync durable R2
+        id: durable
+        if: always() && steps.preflight.outputs.run_benchmark == 'true' && steps.ab.outcome != 'skipped'
         env:
+          CLAWQL_R2_TRACES_BUCKET: ${{ secrets.CLAWQL_R2_TRACES_BUCKET }}
           CLAWQL_OPENBENCH_R2_BUCKET: ${{ secrets.CLAWQL_OPENBENCH_R2_BUCKET }}
           CLAWQL_SYNC_BUCKET: ${{ secrets.CLAWQL_SYNC_BUCKET }}
-          CLAWQL_OPENBENCH_R2_PREFIX: ${{ vars.CLAWQL_OPENBENCH_R2_PREFIX }}
+          # Fail-loud by default: unset/empty → script requires R2 (wasted compute otherwise).
           CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES: ${{ vars.CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLAWQL_R2_ACCOUNT_ID: ${{ secrets.CLAWQL_R2_ACCOUNT_ID }}
@@ -479,15 +462,15 @@ jobs:
           CLAWQL_SYNC_SECRET_ACCESS_KEY: ${{ secrets.CLAWQL_SYNC_SECRET_ACCESS_KEY }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: |
-          set -euo pipefail
-          chmod +x openbench/scripts/sync-openbench-traces-durable.sh
-          ARTIFACT_DIR="${OPENBENCH_ARTIFACT_DIR:-${GITHUB_WORKSPACE}/artifacts/openbench-ab/${OPENBENCH_TASK}}"
-          openbench/scripts/sync-openbench-traces-durable.sh \
-            --artifact-dir "${ARTIFACT_DIR}" \
-            --run-id "${{ github.run_id }}" \
-            --task "${OPENBENCH_TASK}" \
-            --sha "${{ github.sha }}"
+          CLAWQL_ENABLE_PRESIDIO: ${{ vars.CLAWQL_ENABLE_PRESIDIO }}
+        uses: ./.github/actions/openbench-durable-traces
+        with:
+          artifact_dir: ${{ github.workspace }}/artifacts/openbench-ab/${{ matrix.task }}
+          run_id: ${{ github.run_id }}
+          task: ${{ matrix.task }}
+          model: ${{ env.OPENBENCH_MODEL }}
+          clawql_version: ${{ github.sha }}
+          require_durable: ${{ vars.CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES || '1' }}
 
       - name: Upload results artifact
         if: always() && steps.preflight.outputs.run_benchmark == 'true'
@@ -496,5 +479,5 @@ jobs:
           name: openbench-ab-${{ matrix.task }}-${{ github.run_id }}
           path: artifacts/openbench-ab/${{ matrix.task }}/
           if-no-files-found: warn
-          # Short cache only — durable corpus lives in R2 (see sync step + docs).
+          # Warm cache only — corpus of record is R2 (raw/ + manifests/).
           retention-days: 90

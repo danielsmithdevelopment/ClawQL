@@ -1,144 +1,117 @@
-# OpenBench trace collection (fine-tune flywheel)
+# OpenBench trace collection (publish-ready fine-tune corpus)
 
-Every live OpenBench cell already routes chat completions through
-`clawql inference serve`. Completions append `InferenceRecord` rows to the
-**inference call store**. On GitHub Actions the runner is ephemeral — without
-an explicit JSONL path those records never leave the job.
+R2 is the **corpus of record**. GitHub Actions artifacts are a **90-day warm
+cache** for active debugging — not the source of truth.
 
-Full fine-tune A/B (suite B-1) still waits on a registered LoRA; **collection
-does not**.
+Every live OpenBench cell must leave behind schema-validated, write-time-scrubbed
+traces + a WORM batch manifest. A run that finishes without durable persistence
+is treated as a failed job (wasted compute).
 
-## Two sinks (do not confuse them)
-
-| Sink | Lifetime | Role |
-| ---- | -------- | ---- |
-| **GitHub Actions artifact** | ~90 days | Convenient debug cache; not the corpus |
-| **R2 durable pack** | Until you delete it | **Corpus of record** — grows with every live run |
-
-Without R2 credentials configured, you only have the 90-day cache and **will**
-need to re-run cells after expiry. Set the secrets below once and the dataset
-accumulates for free.
-
-## Correct environment variables (per job)
-
-| Variable | Value in OpenBench CI |
-| -------- | --------------------- |
-| `CLAWQL_INFERENCE_STORE` | `jsonl` |
-| `CLAWQL_INFERENCE_STORE_PATH` | `…/artifacts/…/call-store/calls.jsonl` |
-
-There is **no** `CLAWQL_INFERENCE_CALL_STORE_PATH` or
-`CLAWQL_INFERENCE_CALL_STORE_VERDICT_FILTER`. Export filters with
-`clawql inference export --verdict …` after the fact.
-
-If neither `CLAWQL_HOME` nor `CLAWQL_INFERENCE_STORE_PATH` is set, the store
-backend defaults to **`memory`** — that is why CI historically produced zero
-durable traces.
-
-## What CI does now
-
-1. Point inference at a workspace JSONL path before `inference serve`.
-2. Run A/B; every completion appends to `calls.jsonl`.
-3. Package via `openbench/scripts/package-openbench-traces.py`:
-   - `call-store/calls.jsonl`
-   - `trace-session-labels.json` (grader scores per arm)
-4. **Sync durable pack to R2** via
-   `openbench/scripts/sync-openbench-traces-durable.sh` (S3-compatible API).
-5. Upload the Actions artifact as a 90-day cache (`if: always()`).
-
-### R2 object layout (immutable)
+## Architecture
 
 ```text
-s3://$BUCKET/openbench-traces/<run_id>/<task>/
-  calls.jsonl
-  trace-session-labels.json
-  results.json
-  summary.md
-  MANIFEST.json
+clawql inference serve  →  call-store JSONL (workspace)
+        ↓
+OpenBench grader / results.json
+        ↓
+build-openbench-dataset.py
+  · OpenBenchTrace v1.0 per trial
+  · local redaction policy (always)
+  · Presidio when CLAWQL_ENABLE_PRESIDIO=1
+  · JSON Schema validation (fail closed)
+  · WORM MANIFEST.json
+        ↓
+sync-openbench-traces-durable.sh  →  R2 (required)
+        ↓
+actions/upload-artifact             →  90d warm cache
 ```
 
-Prefix override: repo variable `CLAWQL_OPENBENCH_R2_PREFIX` (default
-`openbench-traces`).
+### R2 layout
 
-### Secrets / variables to set (once)
+```text
+$CLAWQL_R2_TRACES_BUCKET/
+  raw/YYYY/MM/DD/run-<run_id>/<task>/
+    <task>-on-001.jsonl
+    <task>-off-001.jsonl
+    call-store/calls.jsonl
+  manifests/YYYY/MM/DD/run-<run_id>-<task>.json
+  schema/v1.0.json
+  exports/training/          # future: clawql inference export output
+  exports/public/            # future: release scrub pass
+```
 
-Prefer the same S3 API keys you already use for `clawql sync`:
+## Schema (v1.0)
 
-| Secret / var | Purpose |
-| ------------ | ------- |
-| `CLAWQL_OPENBENCH_R2_BUCKET` or `CLAWQL_SYNC_BUCKET` | Target bucket |
-| `CLOUDFLARE_ACCOUNT_ID` or `CLAWQL_R2_ACCOUNT_ID` | R2 account |
-| `CLAWQL_SYNC_ACCESS_KEY_ID` / `CLAWQL_SYNC_SECRET_ACCESS_KEY` (or `R2_*`) | S3 API keys |
-| `CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES` (repo **variable**, `1`) | Fail the job if R2 is not configured — recommended once you care about growth |
+- JSON Schema: [`openbench/schema/openbench-trace.v1.json`](../../openbench/schema/openbench-trace.v1.json)
+- TypeScript: [`openbench/schema/openbench-trace.v1.ts`](../../openbench/schema/openbench-trace.v1.ts)
+- Changelog: [`openbench/schema/CHANGELOG.md`](../../openbench/schema/CHANGELOG.md)
 
-Until require=1, missing creds only emit a warning and you silently keep the
-90-day-only path.
+Stable enough that August 2026 traces remain usable for an October fine-tune and
+a later public release. Bump the schema version (and changelog) for breaking
+field changes — do not silently reshape v1.0.
 
-## Growing the corpus
+## Required secrets / variables
 
-Volume scales with **live cells you actually run**:
+| Name | Kind | Purpose |
+| ---- | ---- | ------- |
+| `CLAWQL_R2_TRACES_BUCKET` (preferred) or `CLAWQL_OPENBENCH_R2_BUCKET` / `CLAWQL_SYNC_BUCKET` | secret | Durable bucket |
+| `CLOUDFLARE_ACCOUNT_ID` or `CLAWQL_R2_ACCOUNT_ID` | secret | R2 account |
+| `CLAWQL_SYNC_ACCESS_KEY_ID` + `CLAWQL_SYNC_SECRET_ACCESS_KEY` (or `R2_*`) | secret | S3 API keys |
+| `CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES` | variable | Default **fail-loud** (`1`). Set `0` only for emergency dry-runs |
+| `CLAWQL_ENABLE_PRESIDIO` | variable | `1` to also run Presidio at write time (needs analyzer URLs) |
 
-- Put tasks on `pr_active`, or
-- `workflow_dispatch` (`all` / `all-including-retired` / n=3 Phase 0)
+Local redaction (`openbench-local-v1`) always runs — API keys, emails, Slack
+tokens, etc. Presidio is additive when enabled.
 
-Each full matrix × replications adds thousands of records. Failed cells are
-kept on purpose (negative examples).
+## CI wiring
 
-List what you have:
+Composite action: [`.github/actions/openbench-durable-traces`](../../.github/actions/openbench-durable-traces/action.yml)
+
+Used by `openbench-ab.yml` and `openbench-ouroboros-ab.yml` **after** the A/B
+step and **before** artifact upload. Durable sync failure fails the job.
+
+### Inference call store (companion)
+
+Still set before `inference serve`:
+
+| Env | Value |
+| --- | ----- |
+| `CLAWQL_INFERENCE_STORE` | `jsonl` |
+| `CLAWQL_INFERENCE_STORE_PATH` | `…/call-store/calls.jsonl` |
+
+Scrubbed copy lands under `raw/…/call-store/calls.jsonl`. Session/trial records
+in `OpenBenchTrace` are the primary fine-tune/public schema; call-store is the
+raw completion companion until arm-scoped correlation tagging lands.
+
+## Open-source release path
+
+Keep **`raw/` private** while iterating. When FT proves lift:
+
+1. Belt-and-suspenders Presidio pass over `raw/`
+2. Filter `suitable_for_training: true`
+3. Strip/replace internal ids for public (`run_id` → opaque dataset id)
+4. Write `exports/public/clawql-openbench-vN.jsonl`
+5. Publish to Hugging Face Datasets (`…/clawql-openbench`) with a datasheet
+6. License: Apache-2.0 (matches code) + cite via manifest provenance
+
+Datasheet should cover tasks, models, grader criteria, redaction policy hash,
+schema version, and what `suitable_for_training` removes.
+
+## Local build (no R2)
 
 ```bash
-aws s3 ls "s3://$BUCKET/openbench-traces/" --endpoint-url "https://$ACCOUNT.r2.cloudflarestorage.com"
+pip install jsonschema
+python3 openbench/scripts/build-openbench-dataset.py \
+  --artifact-dir artifacts/openbench-ab/<task> \
+  --run-id local --task <task> --require-nonempty
+
+CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES=0 \
+  openbench/scripts/sync-openbench-traces-durable.sh \
+  --artifact-dir artifacts/openbench-ab/<task> \
+  --run-id local --task <task>
 ```
-
-## Export for fine-tune
-
-```bash
-# Pull one pack
-aws s3 sync \
-  "s3://$BUCKET/openbench-traces/<run_id>/<task>/" \
-  /tmp/ob-traces/ \
-  --endpoint-url "https://$ACCOUNT.r2.cloudflarestorage.com"
-
-export CLAWQL_INFERENCE_STORE=jsonl
-export CLAWQL_INFERENCE_STORE_PATH=/tmp/ob-traces/calls.jsonl
-
-# Keep everything during collection; filter later
-clawql inference export --output /tmp/ft-dataset.jsonl
-# or: --verdict passed --min-score 0.9
-
-jq . /tmp/ob-traces/trace-session-labels.json
-```
-
-## Grader → call-store verdict (gap)
-
-OpenBench checkers label each arm in `trace-session-labels.json`
-(`arm_labels[].grader_verdict`). Per-record `evaluatorVerdict` on
-`InferenceRecord` still defaults to `"none"` until arm-scoped `team` /
-`correlationId` tagging lands in `run-ab-compare.py`.
-
-## Open-sourcing the dataset (later)
-
-Plan: keep the **raw R2 corpus private** while iterating; publish a **scrubbed,
-versioned release** once fine-tune value is proven.
-
-| Gate | Why |
-| ---- | --- |
-| Only OpenBench / synthetic tasks | No customer or tenant production traffic |
-| `clawql inference export` with Presidio PII scrub on | Default export path already scrubbing |
-| Join grader labels; prefer passed / high-score rows | Quality bar for public SFT |
-| Versioned HF dataset or GitHub Release assets | Reproducible `clawql-openbench-traces-vN` |
-| License (e.g. CC-BY-4.0 or Apache-2.0) + model card | Attribution + intended use |
-| Exclude secrets / API keys / real Slack tokens | OpenBench stubs only — still scan |
-
-Do **not** open-source the raw private bucket wholesale. Publish curated export
-snapshots after the first internal fine-tune proves lift (suite B-1).
-
-## Langfuse (optional)
-
-Complementary span timings / token counts. Not required for the first corpus.
 
 ## Related
 
-- Inference store / export: [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md)
-- Flywheel suite plan: [`openbench-advanced-suites.md`](./openbench-advanced-suites.md) (B-1)
-- Workflows: [`openbench-ab.yml`](../../.github/workflows/openbench-ab.yml),
-  [`openbench-ouroboros-ab.yml`](../../.github/workflows/openbench-ouroboros-ab.yml)
+- Inference export / FT flywheel: [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md)
+- Advanced suites (B-1): [`openbench-advanced-suites.md`](./openbench-advanced-suites.md)
