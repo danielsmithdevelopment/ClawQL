@@ -7,6 +7,14 @@ import { scrubTextLocal } from "./scrub/local.js";
 import { TraceWriter } from "./writer/trace-writer.js";
 import { collectFromResults } from "./collect/from-results.js";
 import { syncDatasetPack } from "./sync/sync-pack.js";
+import {
+  CloudflareR2RestBackend,
+  DEFAULT_OPENBENCH_TRACES_BUCKET,
+  encodeR2ObjectKey,
+  ensureR2BucketViaCloudflareApi,
+  resolveOpenBenchTracesBucket,
+} from "./backends/cloudflare-r2.js";
+import { resolveDurableBackendFromEnv } from "./backends/s3.js";
 
 describe("openbench-dataset", () => {
   it("scrubs api keys locally", () => {
@@ -113,5 +121,75 @@ describe("openbench-dataset", () => {
       "utf8"
     );
     expect(uploaded).toContain("demo-task");
+  });
+
+  it("defaults traces bucket away from team sync vault", () => {
+    expect(resolveOpenBenchTracesBucket({})).toBe(DEFAULT_OPENBENCH_TRACES_BUCKET);
+    expect(
+      resolveOpenBenchTracesBucket({ CLAWQL_SYNC_BUCKET: "clawql-team-vault" })
+    ).toBe(DEFAULT_OPENBENCH_TRACES_BUCKET);
+    expect(
+      resolveOpenBenchTracesBucket({ CLAWQL_R2_TRACES_BUCKET: "my-traces" })
+    ).toBe("my-traces");
+  });
+
+  it("encodes object keys with literal slashes", () => {
+    expect(encodeR2ObjectKey("raw/2026/08/04/run-1/a.jsonl")).toBe(
+      "raw/2026/08/04/run-1/a.jsonl"
+    );
+    expect(encodeR2ObjectKey("path/with space.jsonl")).toBe("path/with%20space.jsonl");
+  });
+
+  it("ensures bucket + puts via Cloudflare API token alone", async () => {
+    const calls: { method: string; url: string }[] = [];
+    const fetchFn: typeof fetch = async (input, init) => {
+      const url = String(input);
+      const method = (init?.method ?? "GET").toUpperCase();
+      calls.push({ method, url });
+      if (method === "GET" && url.includes("/r2/buckets/")) {
+        return new Response(JSON.stringify({ success: false }), { status: 404 });
+      }
+      if (method === "POST" && url.endsWith("/r2/buckets")) {
+        return new Response(JSON.stringify({ success: true }), { status: 200 });
+      }
+      if (method === "PUT" && url.includes("/objects/")) {
+        return new Response(JSON.stringify({ success: true }), { status: 200 });
+      }
+      return new Response("unexpected", { status: 500 });
+    };
+
+    const ensured = await ensureR2BucketViaCloudflareApi({
+      accountId: "acct123",
+      token: "cf-tok",
+      bucket: "clawql-openbench-traces",
+      fetchFn,
+    });
+    expect(ensured.created).toBe(true);
+    expect(ensured.method).toBe("cloudflare-api");
+
+    const backend = new CloudflareR2RestBackend({
+      accountId: "acct123",
+      apiToken: "cf-tok",
+      bucket: "clawql-openbench-traces",
+      fetchFn,
+    });
+    await backend.putObject("raw/a/b.jsonl", '{"ok":true}', "application/x-ndjson");
+    expect(calls.some((c) => c.method === "PUT" && c.url.includes("/objects/raw/a/b.jsonl"))).toBe(
+      true
+    );
+
+    const resolved = await resolveDurableBackendFromEnv({
+      env: {
+        CLOUDFLARE_API_TOKEN: "cf-tok",
+        CLOUDFLARE_ACCOUNT_ID: "acct123",
+      },
+      fetchFn,
+    });
+    expect(resolved.ok).toBe(true);
+    if (resolved.ok) {
+      expect(resolved.transport).toBe("cloudflare-api");
+      expect(resolved.bucket).toBe(DEFAULT_OPENBENCH_TRACES_BUCKET);
+      expect(resolved.ensure?.created).toBe(true);
+    }
   });
 });

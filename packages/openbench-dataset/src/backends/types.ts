@@ -27,5 +27,17 @@ export type S3CompatibleConfig = {
   region?: string;
 };
 
-export { S3CompatibleBackend, resolveR2ConfigFromEnv } from "./s3.js";
-export type { ResolveR2ConfigResult } from "./s3.js";
+export {
+  S3CompatibleBackend,
+  resolveR2ConfigFromEnv,
+  resolveDurableBackendFromEnv,
+} from "./s3.js";
+export type { ResolveR2ConfigResult, ResolveDurableBackendResult } from "./s3.js";
+export {
+  CloudflareR2RestBackend,
+  DEFAULT_OPENBENCH_TRACES_BUCKET,
+  ensureR2BucketViaCloudflareApi,
+  resolveCloudflareApiToken,
+  resolveOpenBenchTracesBucket,
+  resolveR2AccountId,
+} from "./cloudflare-r2.js";

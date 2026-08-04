@@ -12,8 +12,22 @@ export {
   scrubJsonValue,
   scrubTextLocal,
 } from "./scrub/local.js";
-export { LocalFsBackend, S3CompatibleBackend, resolveR2ConfigFromEnv } from "./backends/types.js";
-export type { DatasetBackend, S3CompatibleConfig, ResolveR2ConfigResult } from "./backends/types.js";
+export {
+  LocalFsBackend,
+  S3CompatibleBackend,
+  CloudflareR2RestBackend,
+  DEFAULT_OPENBENCH_TRACES_BUCKET,
+  resolveR2ConfigFromEnv,
+  resolveDurableBackendFromEnv,
+  ensureR2BucketViaCloudflareApi,
+  resolveOpenBenchTracesBucket,
+} from "./backends/types.js";
+export type {
+  DatasetBackend,
+  S3CompatibleConfig,
+  ResolveR2ConfigResult,
+  ResolveDurableBackendResult,
+} from "./backends/types.js";
 export { TraceWriter } from "./writer/trace-writer.js";
 export type { TraceWriterInput, WormBatchManifest } from "./writer/trace-writer.js";
 export { exportHuggingFaceDataset } from "./export/huggingface.js";

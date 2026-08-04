@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { S3CompatibleBackend, resolveR2ConfigFromEnv } from "../backends/s3.js";
+import { resolveDurableBackendFromEnv } from "../backends/s3.js";
 import type { DatasetBackend } from "../backends/types.js";
 
 export type SyncDatasetOptions = {
@@ -11,30 +11,52 @@ export type SyncDatasetOptions = {
   requireDurable?: boolean;
   backend?: DatasetBackend;
   dayPrefix?: string;
+  fetchFn?: typeof fetch;
+  skipEnsure?: boolean;
 };
 
 /**
  * Upload a local `dataset/` pack to R2 (or injected backend) using the corpus layout.
+ *
+ * Auth: CLOUDFLARE_API_TOKEN + account id is enough (auto-ensure bucket + REST put),
+ * matching `clawql sync ensure`. Optional CLAWQL_SYNC_* / R2_* S3 keys still work.
  */
 export async function syncDatasetPack(opts: SyncDatasetOptions): Promise<{
   rawPrefix: string;
   manifestKey: string;
   traceFiles: number;
+  bucket?: string;
+  transport?: string;
 }> {
   const requireDurable = opts.requireDurable !== false;
   let backend = opts.backend;
   let bucketLabel = "local";
+  let transport = "injected";
 
   if (!backend) {
-    const resolved = resolveR2ConfigFromEnv();
+    const resolved = await resolveDurableBackendFromEnv({
+      fetchFn: opts.fetchFn,
+      skipEnsure: opts.skipEnsure,
+    });
     if (!resolved.ok) {
-      const msg = `Durable R2 sink required but missing: ${resolved.missing.join(", ")}`;
+      const msg =
+        `Durable R2 sink required but missing: ${resolved.missing.join(", ")}. ` +
+        `Set CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID (or CLAWQL_R2_ACCOUNT_ID) ` +
+        `— same secrets as team sync ensure — or provide CLAWQL_SYNC_* S3 keys.`;
       if (requireDurable) throw new Error(msg);
       console.warn(msg);
       return { rawPrefix: "", manifestKey: "", traceFiles: 0 };
     }
-    backend = new S3CompatibleBackend(resolved.config);
+    backend = resolved.backend;
     bucketLabel = resolved.bucket;
+    transport = resolved.transport;
+    if (resolved.ensure) {
+      console.log(
+        `R2 bucket ${resolved.ensure.bucket}: ${
+          resolved.ensure.created ? "created" : "exists"
+        } via ${resolved.ensure.method}`
+      );
+    }
   }
 
   const day =
@@ -73,7 +95,15 @@ export async function syncDatasetPack(opts: SyncDatasetOptions): Promise<{
   }
 
   console.log(
-    `Synced ${jsonl.length} traces → ${backend.name === "s3" ? `s3://${bucketLabel}/` : ""}${rawPrefix}/`
+    `Synced ${jsonl.length} traces → ${
+      backend.name === "local" ? "" : `r2://${bucketLabel}/`
+    }${rawPrefix}/ (${transport})`
   );
-  return { rawPrefix, manifestKey, traceFiles: jsonl.length };
+  return {
+    rawPrefix,
+    manifestKey,
+    traceFiles: jsonl.length,
+    bucket: bucketLabel === "local" ? undefined : bucketLabel,
+    transport,
+  };
 }

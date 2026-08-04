@@ -52,13 +52,21 @@ field changes — do not silently reshape v1.0.
 
 ## Required secrets / variables
 
+Same Cloudflare secrets as **`clawql sync ensure`** for the team vault. Sync
+auto-creates the dedicated traces bucket (`clawql-openbench-traces` by default)
+and uploads via the Cloudflare R2 REST API — **no extra R2 S3 secrets required**.
+
 | Name | Kind | Purpose |
 | ---- | ---- | ------- |
-| `CLAWQL_R2_TRACES_BUCKET` (preferred) or `CLAWQL_OPENBENCH_R2_BUCKET` / `CLAWQL_SYNC_BUCKET` | secret | Durable bucket |
-| `CLOUDFLARE_ACCOUNT_ID` or `CLAWQL_R2_ACCOUNT_ID` | secret | R2 account |
-| `CLAWQL_SYNC_ACCESS_KEY_ID` + `CLAWQL_SYNC_SECRET_ACCESS_KEY` (or `R2_*`) | secret | S3 API keys |
+| `CLOUDFLARE_API_TOKEN` or `CLAWQL_CLOUDFLARE_API_TOKEN` | secret | Account token with **Workers R2 Storage Write** (bucket create + object put) |
+| `CLOUDFLARE_ACCOUNT_ID` or `CLAWQL_R2_ACCOUNT_ID` | secret | R2 account id |
+| `CLAWQL_R2_TRACES_BUCKET` or `CLAWQL_OPENBENCH_R2_BUCKET` | secret | Optional override (default **`clawql-openbench-traces`**) |
+| `CLAWQL_SYNC_ACCESS_KEY_ID` + `CLAWQL_SYNC_SECRET_ACCESS_KEY` (or `R2_*`) | secret | Optional — prefer S3 put when already present from team sync |
 | `CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES` | variable | Default **fail-loud** (`1`). Set `0` only for emergency dry-runs |
 | `CLAWQL_ENABLE_PRESIDIO` | variable | `1` to also run Presidio at write time (needs analyzer URLs) |
+
+Do **not** point traces at `CLAWQL_SYNC_BUCKET` (team Memory vault). Traces use a
+separate bucket so FT corpus and vault notes stay isolated.
 
 Local redaction (`openbench-local-v1`) always runs — API keys, emails, Slack
 tokens, etc. Presidio is additive when enabled.
