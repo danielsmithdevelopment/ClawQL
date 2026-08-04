@@ -59,12 +59,24 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 TASKS_DIR = ROOT / "openbench" / "tasks"
 CHECKER_TIMEOUT_S = 120
-KNOWN_TASKS = (
-    "memory-dependent-continuation",
-    "token-budget-constrained",
-    "multi-provider-api-workflow",
-    "ouroboros-oscillation-escape",
-)
+
+
+def discover_known_tasks() -> tuple[str, ...]:
+    """Task folder names that have checker.sh + workspace/ (same contract as validate_tasks)."""
+    if not TASKS_DIR.is_dir():
+        return ()
+    names = []
+    for child in sorted(TASKS_DIR.iterdir()):
+        if (
+            child.is_dir()
+            and (child / "checker.sh").is_file()
+            and (child / "workspace").is_dir()
+        ):
+            names.append(child.name)
+    return tuple(names)
+
+
+KNOWN_TASKS = discover_known_tasks()
 KNOWN_ARMS = (
     "clawql-on",
     "clawql-off",
