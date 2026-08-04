@@ -6,6 +6,7 @@ export {
   memoryIngestToolSchema,
   memoryRecallToolSchema,
   codegraphSyncGraphifyToolSchema,
+  codegraphSyncToolSchema,
 } from "./memory-plugin.js";
 export {
   MemoryIngestInputSchema,

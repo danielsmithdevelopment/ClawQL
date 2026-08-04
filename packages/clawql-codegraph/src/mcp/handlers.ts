@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Effect } from "effect";
 import { CodeGraphService, runCodeGraphEffect } from "../effect/codegraph-service.js";
+import { syncCodeGraph } from "../sync/codegraph-sync.js";
 import { syncGraphify } from "../sync/graphify-sync.js";
 
 const indexInput = z.object({
@@ -53,7 +54,7 @@ const importGraphifyInput = z.object({
   storagePath: z.string().optional(),
 });
 
-const syncGraphifyInput = z.object({
+const syncInput = z.object({
   rootPath: z
     .string()
     .optional()
@@ -63,43 +64,38 @@ const syncGraphifyInput = z.object({
   mode: z
     .enum(["fast", "thorough"])
     .optional()
-    .describe(
-      "fast: Graphify + import (+ vault proposal). thorough: also run native codegraph when native-fillable blind spots exist."
-    ),
-  catchBlindSpots: z
+    .describe("thorough raises the default maxFiles cap for larger repos."),
+  outDir: z
+    .string()
+    .optional()
+    .describe("Artifact directory for graph.json / GRAPH_REPORT.md / graph.html (default: {root}/codegraph-out)."),
+  vaultIngest: z
     .boolean()
     .optional()
-    .describe(
-      "When true, run native index if Graphify missed native-indexable extensions. Defaults to true in thorough mode."
-    ),
-  forceNative: z
-    .boolean()
+    .describe("Include vault ingest proposal (report + communities). Default true; MemoryPlugin applies it."),
+  maxFiles: z.number().int().positive().optional(),
+  writeHtml: z.boolean().optional().describe("Write interactive graph.html (default true)."),
+});
+
+const syncGraphifyInput = z.object({
+  rootPath: z
+    .string()
     .optional()
-    .describe("Always merge a native codegraph_index pass after Graphify import."),
+    .describe("Repository root (defaults to CLAWQL_CODEGRAPH_ROOT or cwd)."),
+  graphId: z.string().optional(),
+  storagePath: z.string().optional(),
+  mode: z.enum(["fast", "thorough"]).optional(),
   skipGraphifyRun: z
     .boolean()
     .optional()
-    .describe(
-      "Skip spawning Graphify; import existing graphify-out/graph.json (or CLAWQL_CODEGRAPH_GRAPHIFY_JSON)."
-    ),
+    .describe("Ignored (Python CLI is never spawned). Kept for back-compat."),
   outDir: z
     .string()
     .optional()
     .describe(
-      "Directory with graph.json / GRAPH_REPORT.md / graph.html (default: {root}/graphify-out)."
+      "Directory with an existing graph.json to import. If missing, falls back to native codegraph_sync."
     ),
-  graphifyCmd: z
-    .string()
-    .optional()
-    .describe(
-      "Shell command to run Graphify. Supports {repoRoot} and {outDir}. Default: CLAWQL_CODEGRAPH_GRAPHIFY_SYNC_CMD or `graphify . --code-only && graphify cluster-only . --no-label`."
-    ),
-  vaultIngest: z
-    .boolean()
-    .optional()
-    .describe(
-      "Include vault ingest proposal (GRAPH_REPORT + communities). Default true; MemoryPlugin applies it."
-    ),
+  vaultIngest: z.boolean().optional(),
   maxFiles: z.number().int().positive().optional(),
 });
 
@@ -194,7 +190,16 @@ export async function codegraphImportGraphify(raw: unknown) {
   );
 }
 
-/** Consolidated Graphify run → import → optional native merge → vault ingest proposal. */
+/** Native TypeScript index → Louvain → report/HTML → vault proposal. No Python. */
+export async function codegraphSync(raw: unknown) {
+  const input = syncInput.parse(raw);
+  return syncCodeGraph(input);
+}
+
+/**
+ * Optional import of an existing graph.json (Graphify or prior export).
+ * Never spawns Python; falls back to {@link codegraphSync} when no graph.json exists.
+ */
 export async function codegraphSyncGraphify(raw: unknown) {
   const input = syncGraphifyInput.parse(raw);
   return syncGraphify(input);
@@ -208,6 +213,7 @@ export type CodeGraphMcpHandlers = {
   explain: typeof codegraphExplain;
   subgraph: typeof codegraphSubgraph;
   importGraphify: typeof codegraphImportGraphify;
+  sync: typeof codegraphSync;
   syncGraphify: typeof codegraphSyncGraphify;
 };
 
@@ -220,6 +226,7 @@ export function createCodeGraphMcpHandlers(): CodeGraphMcpHandlers {
     explain: codegraphExplain,
     subgraph: codegraphSubgraph,
     importGraphify: codegraphImportGraphify,
+    sync: codegraphSync,
     syncGraphify: codegraphSyncGraphify,
   };
 }

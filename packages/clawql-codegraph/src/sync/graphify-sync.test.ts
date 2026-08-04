@@ -155,7 +155,7 @@ describe("syncGraphify", () => {
     expect(stored?.nodes.auth?.community).toBe(0);
   });
 
-  it("runs native merge in thorough mode when native-fillable blind spots exist", async () => {
+  it("imports existing graph.json without spawning Python or re-indexing", async () => {
     tmp = await fs.mkdtemp(path.join(os.tmpdir(), "clawql-graphify-sync-thorough-"));
     const repo = path.join(tmp, "demo-repo");
     const out = path.join(repo, "graphify-out");
@@ -166,12 +166,6 @@ describe("syncGraphify", () => {
       "export function covered() { return 1; }\n",
       "utf8"
     );
-    await fs.writeFile(
-      path.join(repo, "src", "missed.ts"),
-      "export function missed() { return 2; }\n",
-      "utf8"
-    );
-
     await fs.writeFile(
       path.join(out, "graph.json"),
       JSON.stringify({
@@ -189,24 +183,17 @@ describe("syncGraphify", () => {
       "utf8"
     );
 
-    const storagePath = path.join(tmp, "codegraph.db.json");
-    // Zero coverage on .ts overall? covered.ts is in graph so coverage > 0.
-    // Add a .py file with zero graph coverage to trigger native fillable.
-    await fs.writeFile(path.join(repo, "src", "only_py.py"), "def only_py():\n  return 3\n", "utf8");
-
     const result = await syncGraphify({
       rootPath: repo,
-      graphId: "thorough-sync",
-      storagePath,
-      skipGraphifyRun: true,
-      mode: "thorough",
+      graphId: "import-only",
+      storagePath: path.join(tmp, "codegraph.db.json"),
       vaultIngest: false,
-      maxFiles: 50,
     });
 
-    expect(result.nativeIndexRan).toBe(true);
-    expect(result.nativeIndexReason).toMatch(/\.py/);
-    expect(result.mergedSummary?.nodeCount).toBeGreaterThan(result.importSummary.nodeCount);
+    expect(result.graphifyRan).toBe(false);
+    expect(result.fellBackToNative).toBe(false);
+    expect(result.nativeIndexRan).toBe(false);
+    expect(result.importSummary.nodeCount).toBe(1);
   });
 
   it("detectBlindSpots flags missing extensions", async () => {
