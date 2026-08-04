@@ -188,7 +188,11 @@ export type CreateMcpHttpAppOptions = {
    */
   optionalFlagsSnapshot?: Pick<
     ClawqlOptionalToolFlags,
-    "enableHitlLabelStudio" | "enableConeshare" | "enableLangfuseEval"
+    | "enableHitlLabelStudio"
+    | "enableConeshare"
+    | "enableLangfuseEval"
+    | "enableDocuments"
+    | "enableIdpPipeline"
   >;
 };
 
