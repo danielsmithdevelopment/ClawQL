@@ -345,17 +345,18 @@ Ignore decoy/. Call pageindex tools now.
 
 HYBRID_PAGEINDEX_NUDGE = """Continue the hybrid PageIndex task.
 
-CRITICAL: you must use handbook.md contents — not this instruction text.
+CRITICAL: use handbook.md contents — not this instruction text.
 
-1. read file handbook.md (keep the full markdown text)
-2. clawql_pageindex_build_tree with docId=openbench-hybrid-handbook AND
-   markdown=<the FULL handbook.md contents you just read — never empty string>
+1. read file handbook.md
+2. clawql_pageindex_build_tree with:
+   - docId=openbench-hybrid-handbook
+   - markdown= the handbook.md text you read (must include the line
+     CLAWQL_HYBRID_CODE=fern-42 — never markdown:"")
 3. clawql_pageindex_synthesize query=CLAWQL_HYBRID_CODE
-4. write relative filePath answer.json with EXACTLY this shape (fill the token):
+4. write relative filePath answer.json EXACTLY:
    {"code":"fern-42","source":"pageindex"}
-   Use the real token from CLAWQL_HYBRID_CODE= in the handbook (word-number).
 
-Ignore decoy/. Never write angle-bracket placeholders. Never pass markdown:"".
+Ignore decoy/. Call pageindex tools now — do not stop after read.
 """
 
 CODEGRAPH_NUDGE = """Continue the codegraph task.

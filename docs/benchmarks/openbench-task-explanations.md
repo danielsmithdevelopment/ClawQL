@@ -145,7 +145,7 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | --- | --- |
 | **Claim** | Agents must retrieve a buried handbook fact **through PageIndex tools**, not by reading alone or by inventing a placeholder. Vault/decoy keyword (`rose-99`) is wrong. |
 | **Why it matters** | Separates “PageIndex exists” (`pageindex-section-qa`) from “agents prefer the hierarchical path when decoys tempt shortcuts.” Supports hybrid recall / source-pin product narrative. |
-| **How** | Long `handbook.md` (~370 lines) buries `CLAWQL_HYBRID_CODE=fern-42` among rose-/lilac- decoys. Empty vault. on enables PageIndex. Graders require **real** `part.tool` = `clawql_pageindex_*` **and** either non-empty build markdown containing the marker **or** synthesize output containing `fern-42`. |
+| **How** | Compact-but-filled `handbook.md` (~catalog size so cheap models can re-emit markdown) buries `CLAWQL_HYBRID_CODE=fern-42` among rose-/lilac- decoys. Empty vault. Graders require real `clawql_pageindex_*` **and** either build markdown containing the marker **or** synthesize output containing `fern-42`. |
 | **What success looks like** | on: read handbook → build_tree(full md) → synthesize → `answer.json` code fern-42; off: cannot produce real pageindex tool_use → 0.0. |
 | **Evidence** | Placeholder fail [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377). Invalid-tool TIE [30886497135](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30886497135). Empty-markdown fail [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038). Still `pr_active`. |
 | **Does *not* prove** | Full `memory_recall` multi-backend `sources=[pageindex,…]` pin; vector/Onyx hybrids. |

@@ -56,6 +56,15 @@ Replicated Ouroboros WINs also on [30872913519](https://github.com/danielsmithde
 
 ## Run diary
 
+### 2026-08-04 — [30888249849](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888249849) (hybrid empty-md harden)
+
+| Arm | Score | Turns | Wall (s) | Notes |
+| --- | ----- | ----- | -------- | ----- |
+| clawql-on | 0.0 | 1 | 154 | Read handbook then nudge timed out (90s) trying to re-emit ~14KB markdown into build_tree |
+| clawql-off | 0.0 | 2 | 9.8 | Correct fail |
+
+**Verdict:** shrink handbook to catalog-like size (same pattern as pageindex-section-qa WIN). Keep `pr_active`.
+
 ### 2026-08-04 — [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038) (anti-guess + external-ingest)
 
 | Task | on | off | Verdict |
@@ -252,6 +261,7 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 | Hybrid placeholder write | answer.json copied instruction template | Require read handbook.md; ban angle-bracket placeholders |
 | Invalid-tool pageindex false positive | off scored 1.0 without ClawQL (30886497135) | Parse real `part.tool` ≠ `invalid` via require-real-clawql-tools.py |
 | Empty pageindex markdown | on build_tree with `markdown:""` then guessed fern-42 (30887394038) | Require handbook markdown in build input or fern-42 in synthesize output |
+| Oversized handbook re-emit | on nudge timed out emitting ~14KB markdown (30888249849) | Shrink handbook to catalog-like size (~pageindex-section-qa) |
 
 ---
 
