@@ -73,9 +73,8 @@
   "overrides": {
     "@node-minify/core": {
       "minimatch": {
-        "brace-expansion": "5.0.9"
-      },
-      "brace-expansion": "5.0.9"
+        "brace-expansion": "2.1.4"
+      }
     },
     "@babel/core": "7.29.6",
     "@opentelemetry/core": "2.8.0",
