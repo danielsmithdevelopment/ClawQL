@@ -80,6 +80,8 @@ export {
   runPaymentsCreditsRequestAccept,
   runPaymentsCreditsRequestDecline,
   runPaymentsCreditsRequestCancel,
+  runPaymentsCreditsLink,
+  runPaymentsCreditsQr,
   runPaymentsCreditsStepUpEnroll,
   runPaymentsCreditsStepUpShow,
   type PaymentsCreditsShowOptions,
@@ -89,6 +91,7 @@ export {
   type PaymentsCreditsActivityOptions,
   type PaymentsCreditsDirectoryOptions,
   type PaymentsCreditsRequestOptions,
+  type PaymentsCreditsLinkOptions,
   type PaymentsCreditsStepUpOptions,
 } from "./credits.js";
 export {

@@ -71,6 +71,32 @@ export {
   type StageTransferFn,
 } from "./requests.js";
 export {
+  buildClawqlPayUri,
+  buildInviteDeepLink,
+  buildPayDeepLink,
+  buildPayQrPayload,
+  buildRequestDeepLink,
+  creditsHateoasBase,
+  isHttpCreditsHateoasBase,
+  parseCreditsDeepLink,
+  parsePayDeepLinkQuery,
+  payCliHint,
+  payHateoasEnvelope,
+  type HateoasEnvelope,
+  type HateoasLinkMap,
+  type InviteDeepLink,
+  type PayDeepLink,
+  type RequestDeepLink,
+} from "./deeplinks.js";
+export {
+  escapeHtml,
+  renderCreditsHateoasPage,
+  renderHateoasHtml,
+  renderQrSvg,
+  wantsHtml,
+} from "./hateoas-html.js";
+export { attachCreditsHateoasRoutes } from "./hateoas-http.js";
+export {
   appendCreditEntry,
   captureHold,
   getCreditAccount,

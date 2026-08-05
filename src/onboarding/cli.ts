@@ -97,6 +97,8 @@ import {
   runPaymentsCreditsTransferCmd,
   runPaymentsCreditsPayCmd,
   runPaymentsCreditsActivityCmd,
+  runPaymentsCreditsLinkCmd,
+  runPaymentsCreditsQrCmd,
   runPaymentsCreditsDirectoryClaimCmd,
   runPaymentsCreditsDirectoryShowCmd,
   runPaymentsCreditsDirectoryListCmd,
@@ -326,6 +328,7 @@ function parse(argv: string[]): {
     else if (a === "--from-tenant") flags.fromTenantId = argv[++i] ?? "";
     else if (a === "--idempotency-key") flags.idempotencyKey = argv[++i] ?? "";
     else if (a === "--note") flags.note = argv[++i] ?? "";
+    else if (a === "--parse") flags.parseDeepLink = argv[++i] ?? "";
     else if (a === "--totp") flags.totp = argv[++i] ?? "";
     else if (a === "--direct") flags.direct = true;
     else if (a.startsWith("--image-digest=")) {
@@ -422,6 +425,8 @@ Usage:
   clawql payments credits directory claim --email you@acme.com [--handle alice] [--name Alice]
   clawql payments credits directory show|list|release --email … | --handle @alice
   clawql payments credits pay --to you@acme.com|--to @alice --amount 10 [--note coffee]
+  clawql payments credits link --to @alice|--to you@acme.com [--amount 10] | --request-id UUID | --parse URI
+  clawql payments credits qr --to @alice [--amount 10] [--out pay.svg]
   clawql payments credits activity [--tenant-id ID] [--limit 25] [--filter money|transfers|requests|all]
   clawql payments credits request|invoice --to newbie@acme.com|--to @bob --amount 25 [--note …]
   clawql payments credits request list|show|accept|decline|cancel|claim-invite …
@@ -1189,6 +1194,8 @@ async function main(): Promise<void> {
       note: typeof flags.note === "string" ? flags.note : undefined,
       totp: typeof flags.totp === "string" ? flags.totp : undefined,
       direct: Boolean(flags.direct),
+      parseDeepLink: typeof flags.parseDeepLink === "string" ? flags.parseDeepLink : undefined,
+      out: typeof flags.out === "string" ? flags.out : undefined,
     };
 
     if (subcmd === "plan") {
@@ -1389,6 +1396,14 @@ async function main(): Promise<void> {
       }
       if (creditsAction === "activity") {
         process.exitCode = await runPaymentsCreditsActivityCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "link") {
+        process.exitCode = await runPaymentsCreditsLinkCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "qr") {
+        process.exitCode = await runPaymentsCreditsQrCmd(paymentsOpts);
         return;
       }
       if (creditsAction === "request" || creditsAction === "invoice") {

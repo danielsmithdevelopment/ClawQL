@@ -28,8 +28,20 @@ import {
   publicMoneyRequest,
 } from "../credits/requests.js";
 import { formatActivityLine, getActivityFeed } from "../credits/activity.js";
+import {
+  buildClawqlPayUri,
+  buildPayDeepLink,
+  buildPayQrPayload,
+  buildRequestDeepLink,
+  creditsHateoasBase,
+  parseCreditsDeepLink,
+  payCliHint,
+  payHateoasEnvelope,
+} from "../credits/deeplinks.js";
+import { renderQrSvg } from "../credits/hateoas-html.js";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
 import { loadPaymentsConfig } from "../config/store.js";
+import { writeFile } from "node:fs/promises";
 
 export type PaymentsCreditsShowOptions = {
   tenantId?: string;
@@ -905,6 +917,150 @@ export async function runPaymentsCreditsRequestCancel(
       return 0;
     }
     console.log(`Cancelled request ${req.requestId}`);
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
+}
+
+export type PaymentsCreditsLinkOptions = {
+  /** Payee for a pay link: email | @handle | tenant. */
+  payTo?: string;
+  toHandle?: string;
+  amountUsd?: number;
+  note?: string;
+  fromTenantId?: string;
+  /** Emit a request deep link instead of pay. */
+  requestId?: string;
+  /** Parse an existing deep link / clawql:// URI and print CLI hint. */
+  parse?: string;
+  /** Write QR SVG to this path (implies qr mode when used with `qr` command). */
+  out?: string;
+  json?: boolean;
+};
+
+function resolvePayeeForLink(options: PaymentsCreditsLinkOptions): string | undefined {
+  return options.payTo?.trim() || options.toHandle?.trim();
+}
+
+/** Print HATEOAS / clawql:// pay (or request) deep links. */
+export async function runPaymentsCreditsLink(
+  options: PaymentsCreditsLinkOptions = {}
+): Promise<number> {
+  if (options.parse?.trim()) {
+    const parsed = parseCreditsDeepLink(options.parse);
+    if (!parsed.ok) {
+      console.error(parsed.error);
+      return 1;
+    }
+    const { ok: _ok, ...pay } = parsed;
+    if (options.json) {
+      console.log(JSON.stringify(payHateoasEnvelope(pay), null, 2));
+      return 0;
+    }
+    console.log(payCliHint(pay));
+    console.log(buildPayDeepLink(pay));
+    console.log(buildClawqlPayUri(pay));
+    return 0;
+  }
+
+  const requestId = options.requestId?.trim();
+  if (requestId) {
+    const url = buildRequestDeepLink({ requestId });
+    if (options.json) {
+      console.log(
+        JSON.stringify(
+          {
+            ok: true,
+            kind: "credits.request",
+            links: { self: url, approval_url: url },
+            approval_url: url,
+            base: creditsHateoasBase(),
+          },
+          null,
+          2
+        )
+      );
+      return 0;
+    }
+    console.log(url);
+    return 0;
+  }
+
+  const to = resolvePayeeForLink(options);
+  if (!to) {
+    console.error(
+      "Usage: clawql payments credits link --to bob@acme.com|--to @bob [--amount 10] [--note …]\n" +
+        "       clawql payments credits link --request-id UUID\n" +
+        "       clawql payments credits link --parse 'clawql://pay?to=@bob&amount=10'"
+    );
+    return 1;
+  }
+  const pay = {
+    to,
+    amountUsd: options.amountUsd,
+    note: options.note,
+    fromTenantId: options.fromTenantId,
+  };
+  const envelope = payHateoasEnvelope(pay);
+  if (options.json) {
+    console.log(JSON.stringify(envelope, null, 2));
+    return 0;
+  }
+  console.log(envelope.links.self);
+  console.log(envelope.links.clawql);
+  console.log(`CLI: ${envelope.links.cli}`);
+  console.log(`HATEOAS base: ${creditsHateoasBase()}`);
+  return 0;
+}
+
+/** Generate a pay QR (SVG) to stdout or --out file. */
+export async function runPaymentsCreditsQr(
+  options: PaymentsCreditsLinkOptions = {}
+): Promise<number> {
+  const to = resolvePayeeForLink(options);
+  if (!to) {
+    console.error(
+      "Usage: clawql payments credits qr --to bob@acme.com|--to @bob [--amount 10] [--note …] [--out pay.svg]"
+    );
+    return 1;
+  }
+  const pay = {
+    to,
+    amountUsd: options.amountUsd,
+    note: options.note,
+    fromTenantId: options.fromTenantId,
+  };
+  const payload = buildPayQrPayload(pay);
+  try {
+    const svg = await renderQrSvg(payload);
+    const out = options.out?.trim();
+    if (out) {
+      await writeFile(out, svg, "utf8");
+      if (!options.json) {
+        console.log(`Wrote QR for ${payload} → ${out}`);
+      }
+    } else if (!options.json) {
+      process.stdout.write(svg);
+      if (!svg.endsWith("\n")) process.stdout.write("\n");
+    }
+    if (options.json) {
+      console.log(
+        JSON.stringify(
+          {
+            ok: true,
+            payload,
+            http: buildPayDeepLink(pay),
+            clawql: buildClawqlPayUri(pay),
+            out: out ?? null,
+            svg: out ? undefined : svg,
+          },
+          null,
+          2
+        )
+      );
+    }
     return 0;
   } catch (err) {
     console.error(formatErr(err));

@@ -30,6 +30,14 @@ import {
   publicMoneyRequest,
 } from "../credits/requests.js";
 import { getActivityFeed } from "../credits/activity.js";
+import {
+  buildClawqlPayUri,
+  buildPayDeepLink,
+  buildPayQrPayload,
+  buildRequestDeepLink,
+  payHateoasEnvelope,
+} from "../credits/deeplinks.js";
+import { renderQrSvg } from "../credits/hateoas-html.js";
 import { Ap2MandateService } from "../ap2/ap2-mandate-service.js";
 import { isAp2Enabled } from "../ap2/config.js";
 
@@ -451,6 +459,62 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               env
             );
             return textResult(feed);
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_link",
+          description:
+            "Build HATEOAS / clawql:// deep links for pay or a money request (QR-friendly; does not move money).",
+          schema: {
+            to: z.string().optional().describe("Payee email, @username, or tenant id"),
+            amountUsd: z.number().positive().optional(),
+            note: z.string().optional(),
+            fromTenantId: z.string().optional(),
+            requestId: z.string().optional().describe("When set, emit a request deep link instead of pay"),
+            includeQrSvg: z
+              .boolean()
+              .optional()
+              .describe("When true with a pay link, include an SVG QR payload"),
+          },
+          handler: async (args) => {
+            const a = args as {
+              to?: string;
+              amountUsd?: number;
+              note?: string;
+              fromTenantId?: string;
+              requestId?: string;
+              includeQrSvg?: boolean;
+            };
+            const requestId = a.requestId?.trim();
+            if (requestId) {
+              const url = buildRequestDeepLink({ requestId }, env);
+              return textResult({
+                ok: true,
+                kind: "credits.request",
+                links: { self: url, approval_url: url },
+                approval_url: url,
+              });
+            }
+            const to = a.to?.trim();
+            if (!to) throw new Error("Provide to= (payee) or requestId");
+            const pay = {
+              to,
+              amountUsd: a.amountUsd,
+              note: a.note,
+              fromTenantId: a.fromTenantId,
+            };
+            const envelope = payHateoasEnvelope(pay, env);
+            let qrSvg: string | undefined;
+            if (a.includeQrSvg) {
+              qrSvg = await renderQrSvg(buildPayQrPayload(pay));
+            }
+            return textResult({
+              ...envelope,
+              clawql: buildClawqlPayUri(pay),
+              http: buildPayDeepLink(pay, env),
+              qrSvg,
+            });
           },
         });
 

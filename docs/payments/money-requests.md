@@ -78,5 +78,8 @@ clawql payments credits request decline|cancel --request-id UUID
 | Variable | Default | Meaning |
 | -------- | ------- | ------- |
 | `CLAWQL_CREDITS_REQUEST_TTL_SEC` | 7 days | Request expiry |
+| `CLAWQL_CREDITS_HATEOAS_BASE` | compensation / `clawql://tool` | Public origin for invite / request deep links |
 
-See also: [consumer roadmap](./p2p-consumer-roadmap.md), [credits ACH / P2P](./credits-ach.md).
+Invite URLs use the [deep link](./credits-deeplinks.md) builders (`/credits/request/invite?request_id=…&token=…`). Print the URL for now — outbound email is deferred.
+
+See also: [consumer roadmap](./p2p-consumer-roadmap.md), [credits ACH / P2P](./credits-ach.md), [deep links](./credits-deeplinks.md).

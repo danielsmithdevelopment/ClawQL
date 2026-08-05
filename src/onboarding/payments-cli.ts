@@ -48,6 +48,8 @@ import {
   runPaymentsCreditsRequestAccept,
   runPaymentsCreditsRequestDecline,
   runPaymentsCreditsRequestCancel,
+  runPaymentsCreditsLink,
+  runPaymentsCreditsQr,
   runPaymentsCreditsStepUpEnroll,
   runPaymentsCreditsStepUpShow,
   runPaymentsCompensationBalance,
@@ -148,6 +150,10 @@ export type PaymentsCliOptions = {
   source?: "credits" | "funds";
   assetKind?: "credits" | "funds";
   confirm?: boolean;
+  /** Parse an existing credits deep link / clawql:// URI. */
+  parseDeepLink?: string;
+  /** Output path for QR SVG (`credits qr --out`). */
+  out?: string;
 };
 
 export async function runPaymentsPlanShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
@@ -500,6 +506,35 @@ export async function runPaymentsCreditsActivityCmd(
     tenantId: options.tenantId ?? options.fromTenantId,
     limit: options.limit,
     filter: options.activityFilter,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsLinkCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsLink({
+    payTo: options.payTo,
+    toHandle: options.toHandle ?? options.handle,
+    amountUsd: options.amount,
+    note: options.note,
+    fromTenantId: options.fromTenantId ?? options.tenantId,
+    requestId: options.requestId,
+    parse: options.parseDeepLink,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsQrCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsQr({
+    payTo: options.payTo,
+    toHandle: options.toHandle ?? options.handle,
+    amountUsd: options.amount,
+    note: options.note,
+    fromTenantId: options.fromTenantId ?? options.tenantId,
+    out: options.out ?? options.output,
     json: options.json,
   });
 }

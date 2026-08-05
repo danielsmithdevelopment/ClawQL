@@ -9,7 +9,6 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { compensationApprovalBaseUrl } from "../compensation/config.js";
 import { resolveMoneyRequestsPath } from "../config/paths.js";
 import {
   claimDirectory,
@@ -18,6 +17,7 @@ import {
   normalizeEmail,
   resolveRecipient,
 } from "./directory.js";
+import { buildInviteDeepLink } from "./deeplinks.js";
 
 export type MoneyRequestStatus =
   | "pending"
@@ -85,8 +85,7 @@ export function buildRequestInviteUrl(
   token: string,
   env: NodeJS.ProcessEnv = process.env
 ): string {
-  const base = compensationApprovalBaseUrl(env);
-  return `${base}/credits/request/invite?request_id=${encodeURIComponent(requestId)}&token=${encodeURIComponent(token)}`;
+  return buildInviteDeepLink({ requestId, token }, env);
 }
 
 async function loadFile(env: NodeJS.ProcessEnv): Promise<RequestsFile> {

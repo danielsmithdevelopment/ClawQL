@@ -51,6 +51,7 @@ ACH can take **1–3 business days**. Credits settle on `payment_intent.succeede
 | `CLAWQL_CREDITS_RETURN_URL`            | —                                     | Optional return URL for Financial Connections                   |
 | `CLAWQL_CREDITS_TRANSFER_DIRECT`       | off                                   | Skip stage/confirm (break-glass / tests only)                   |
 | `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP` | off                                   | Require enrolled TOTP on transfer confirm                       |
+| `CLAWQL_CREDITS_HATEOAS_BASE`          | compensation / `clawql://tool`        | Public origin for pay/request/invite deep links + HTMX          |
 
 ## CLI
 
