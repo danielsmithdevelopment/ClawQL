@@ -103,6 +103,10 @@ import {
   runPaymentsCreditsDirectoryShowCmd,
   runPaymentsCreditsDirectoryListCmd,
   runPaymentsCreditsDirectoryReleaseCmd,
+  runPaymentsCreditsContactsAddCmd,
+  runPaymentsCreditsContactsListCmd,
+  runPaymentsCreditsContactsRemoveCmd,
+  runPaymentsCreditsContactsShowCmd,
   runPaymentsCreditsRequestCreateCmd,
   runPaymentsCreditsInvoiceCmd,
   runPaymentsCreditsRequestListCmd,
@@ -329,6 +333,10 @@ function parse(argv: string[]): {
     else if (a === "--idempotency-key") flags.idempotencyKey = argv[++i] ?? "";
     else if (a === "--note") flags.note = argv[++i] ?? "";
     else if (a === "--parse") flags.parseDeepLink = argv[++i] ?? "";
+    else if (a === "--phone") flags.phone = argv[++i] ?? "";
+    else if (a === "--verified") flags.phoneVerified = true;
+    else if (a === "--contact-id") flags.contactId = argv[++i] ?? "";
+    else if (a === "--label") flags.label = argv[++i] ?? "";
     else if (a === "--totp") flags.totp = argv[++i] ?? "";
     else if (a === "--direct") flags.direct = true;
     else if (a.startsWith("--image-digest=")) {
@@ -422,8 +430,10 @@ Usage:
   clawql payments tax-profile set --party-id ID --tax-form 1099nec|none|unknown [--collected]
   clawql payments tax-profile show [--party-id ID]
   clawql payments credits show | bank-link --customer cus_xxx | topup --customer cus_xxx --amount 25
-  clawql payments credits directory claim --email you@acme.com [--handle alice] [--name Alice]
-  clawql payments credits directory show|list|release --email … | --handle @alice
+  clawql payments credits directory claim --email you@acme.com [--handle alice] [--phone +1555…] [--verified]
+  clawql payments credits directory show|list|release --email … | --handle @alice | --phone +1555…
+  clawql payments credits contacts add|list|show|remove --to … | --contact-id UUID [--label …]
+  clawql payments credits pay --to +15551234567|--to you@acme.com|--to @alice --amount 10
   clawql payments credits pay --to you@acme.com|--to @alice --amount 10 [--note coffee]
   clawql payments credits link --to @alice|--to you@acme.com [--amount 10] | --request-id UUID | --parse URI
   clawql payments credits qr --to @alice [--amount 10] [--out pay.svg]
@@ -1196,6 +1206,10 @@ async function main(): Promise<void> {
       direct: Boolean(flags.direct),
       parseDeepLink: typeof flags.parseDeepLink === "string" ? flags.parseDeepLink : undefined,
       out: typeof flags.out === "string" ? flags.out : undefined,
+      phone: typeof flags.phone === "string" ? flags.phone : undefined,
+      phoneVerified: Boolean(flags.phoneVerified),
+      contactId: typeof flags.contactId === "string" ? flags.contactId : undefined,
+      label: typeof flags.label === "string" ? flags.label : undefined,
     };
 
     if (subcmd === "plan") {
@@ -1465,6 +1479,23 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsCreditsDirectoryListCmd(paymentsOpts);
         return;
       }
+      if (creditsAction === "contacts" || creditsAction === "contact") {
+        const action = rest[1] ?? "list";
+        if (action === "add") {
+          process.exitCode = await runPaymentsCreditsContactsAddCmd(paymentsOpts);
+          return;
+        }
+        if (action === "show") {
+          process.exitCode = await runPaymentsCreditsContactsShowCmd(paymentsOpts);
+          return;
+        }
+        if (action === "remove" || action === "rm" || action === "delete") {
+          process.exitCode = await runPaymentsCreditsContactsRemoveCmd(paymentsOpts);
+          return;
+        }
+        process.exitCode = await runPaymentsCreditsContactsListCmd(paymentsOpts);
+        return;
+      }
       if (creditsAction === "step-up") {
         const step = rest[1] ?? "show";
         if (step === "enroll") {
@@ -1475,7 +1506,7 @@ async function main(): Promise<void> {
         return;
       }
       console.error(
-        "Usage: clawql payments credits show | bank-link | topup | pay | activity | transfer | request|invoice | directory | step-up"
+        "Usage: clawql payments credits show | bank-link | topup | pay | link | qr | activity | transfer | request|invoice | directory | contacts | step-up"
       );
       process.exitCode = 1;
       return;

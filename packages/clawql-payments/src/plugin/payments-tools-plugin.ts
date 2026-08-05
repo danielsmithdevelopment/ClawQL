@@ -16,9 +16,16 @@ import { OfframpWebhookService } from "../offramp/offramp-webhook-service.js";
 import { AgentCompensationService } from "../compensation/agent-compensation-service.js";
 import { CreditsService } from "../credits/credits-service.js";
 import {
+  addContact,
+  listContacts,
+  removeContact,
+  resolveContactPayee,
+} from "../credits/contacts.js";
+import {
   claimDirectory,
   getEmailEntry,
   getHandleEntry,
+  getPhoneEntry,
   listDirectory,
   resolveRecipient,
 } from "../credits/directory.js";
@@ -196,6 +203,14 @@ const creditsDirectoryClaimSchema = {
     .string()
     .optional()
     .describe("Optional privacy username (@alice) — hide email from payers who use @handle"),
+  phone: z
+    .string()
+    .optional()
+    .describe("Optional E.164 phone alias (+15551234567). Not a full IdP — verify via customer IdP."),
+  phoneVerified: z
+    .boolean()
+    .optional()
+    .describe("IdP/operator assertion phone was verified out-of-band"),
   tenantId: z.string().optional().describe("Tenant that owns the profile"),
   displayName: z.string().optional(),
 };
@@ -204,9 +219,10 @@ const creditsDirectoryResolveSchema = {
   payee: z
     .string()
     .optional()
-    .describe("Email, @username, or tenant id"),
+    .describe("Email, @username, phone (+E.164), or tenant id"),
   email: z.string().optional(),
   handle: z.string().optional().describe("Username e.g. @alice"),
+  phone: z.string().optional().describe("E.164 phone e.g. +15551234567"),
 };
 
 const creditsRequestCreateSchema = {
@@ -388,18 +404,22 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
         yield* api.registerMcpTool({
           name: "payments_credits_directory_claim",
           description:
-            "Register pay-by-email (default) and optional privacy @username in the payments directory.",
+            "Register pay-by-email (default), optional @username, and optional phone alias in the payments directory.",
           schema: creditsDirectoryClaimSchema,
           handler: async (args) => {
             const a = args as {
               email?: string;
               handle?: string;
+              phone?: string;
+              phoneVerified?: boolean;
               tenantId?: string;
               displayName?: string;
             };
             const result = await claimDirectory({
               email: a.email,
               handle: a.handle,
+              phone: a.phone,
+              phoneVerified: a.phoneVerified,
               tenantId: a.tenantId?.trim() || "default",
               displayName: a.displayName,
             });
@@ -410,12 +430,18 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
         yield* api.registerMcpTool({
           name: "payments_credits_directory_resolve",
           description:
-            "Resolve email, @username, or payee string to a tenant id via the payments directory.",
+            "Resolve email, @username, phone, or payee string to a tenant id via the payments directory.",
           schema: creditsDirectoryResolveSchema,
           handler: async (args) => {
-            const a = args as { payee?: string; email?: string; handle?: string };
-            const raw = a.payee?.trim() || a.email?.trim() || a.handle?.trim();
-            if (!raw) throw new Error("Provide payee, email, or handle");
+            const a = args as {
+              payee?: string;
+              email?: string;
+              handle?: string;
+              phone?: string;
+            };
+            const raw =
+              a.payee?.trim() || a.email?.trim() || a.handle?.trim() || a.phone?.trim();
+            if (!raw) throw new Error("Provide payee, email, handle, or phone");
             if (a.email?.trim() && !a.payee) {
               const entry = await getEmailEntry(a.email);
               if (entry) return textResult(entry);
@@ -424,15 +450,87 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               const entry = await getHandleEntry(a.handle);
               if (entry) return textResult(entry);
             }
+            if (a.phone?.trim() && !a.payee) {
+              const entry = await getPhoneEntry(a.phone);
+              if (entry) return textResult(entry);
+            }
             return textResult(await resolveRecipient(raw, env));
           },
         });
 
         yield* api.registerMcpTool({
           name: "payments_credits_directory_list",
-          description: "List payments directory profiles (email + optional @username).",
+          description: "List payments directory profiles (email + optional @username / phone).",
           schema: {},
           handler: async () => textResult({ profiles: await listDirectory() }),
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_contacts_add",
+          description: "Save a frequent payee (email / @username / phone) to the owner contacts book.",
+          schema: {
+            to: z.string().describe("Payee email, @username, phone, or tenant id"),
+            label: z.string().optional(),
+            ownerTenantId: z.string().optional(),
+          },
+          handler: async (args) => {
+            const a = args as { to: string; label?: string; ownerTenantId?: string };
+            return textResult(
+              await addContact({
+                ownerTenantId: a.ownerTenantId?.trim() || "default",
+                payee: a.to,
+                label: a.label,
+              })
+            );
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_contacts_list",
+          description: "List saved contacts for an owner tenant.",
+          schema: { ownerTenantId: z.string().optional() },
+          handler: async (args) => {
+            const a = args as { ownerTenantId?: string };
+            const ownerTenantId = a.ownerTenantId?.trim() || "default";
+            return textResult({
+              ownerTenantId,
+              contacts: await listContacts(ownerTenantId),
+            });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_contacts_remove",
+          description: "Remove a saved contact by id.",
+          schema: {
+            contactId: z.string(),
+            ownerTenantId: z.string().optional(),
+          },
+          handler: async (args) => {
+            const a = args as { contactId: string; ownerTenantId?: string };
+            const ok = await removeContact(a.ownerTenantId?.trim() || "default", a.contactId);
+            if (!ok) throw new Error("Unknown contact id");
+            return textResult({ removed: true, contactId: a.contactId });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_contacts_resolve",
+          description: "Resolve a contact id or payee string through the directory.",
+          schema: {
+            contactId: z.string().optional(),
+            to: z.string().optional(),
+            ownerTenantId: z.string().optional(),
+          },
+          handler: async (args) => {
+            const a = args as { contactId?: string; to?: string; ownerTenantId?: string };
+            return textResult(
+              await resolveContactPayee(a.ownerTenantId?.trim() || "default", {
+                contactId: a.contactId,
+                payee: a.to,
+              })
+            );
+          },
         });
 
         yield* api.registerMcpTool({

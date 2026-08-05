@@ -1,7 +1,8 @@
 /**
- * Payments directory: email (default) + optional @username → tenantId.
- * Venmo / Cash App–style: pay to email out of the box; claim a username for privacy.
- * Lives outside the credits ledger — never write emails into payment WORM.
+ * Payments directory: email (default) + optional @username + optional phone → tenantId.
+ * Venmo / Cash App–style: pay to email out of the box; claim a username for privacy;
+ * optional phone is a verified-claim alias (customer IdP — ClawQL is not a full IdP).
+ * Lives outside the credits ledger — never write emails/phones into payment WORM.
  */
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -14,6 +15,13 @@ export type DirectoryEntry = {
   readonly email?: string;
   /** Optional privacy username (no leading @). */
   readonly handle?: string;
+  /** Optional E.164 phone (+15551234567). */
+  readonly phone?: string;
+  /**
+   * When set, phone was asserted verified (operator/IdP claim).
+   * Soft signal only — ClawQL does not run SMS OTP itself.
+   */
+  readonly phoneVerifiedAt?: string;
   readonly displayName?: string;
   readonly claimedAt: string;
   readonly updatedAt: string;
@@ -23,17 +31,20 @@ export type ResolvedRecipient = {
   tenantId: string;
   email?: string;
   handle?: string;
+  phone?: string;
   displayName?: string;
   /** How the input was interpreted. */
-  via: "email" | "handle" | "tenantId";
+  via: "email" | "handle" | "phone" | "tenantId";
 };
 
 type DirectoryFile = {
-  version: 2;
+  version: 3;
   /** Normalized email → entry */
   emails: Record<string, DirectoryEntry>;
   /** Normalized handle (no @) → entry */
   handles: Record<string, DirectoryEntry>;
+  /** E.164 phone → entry */
+  phones: Record<string, DirectoryEntry>;
   /** tenantId → canonical entry */
   byTenant: Record<string, DirectoryEntry>;
 };
@@ -98,13 +109,45 @@ export function looksLikeEmail(raw: string): boolean {
 /** True when string is username-shaped (optional leading @). Does not check the directory. */
 export function looksLikeHandle(raw: string): boolean {
   const t = raw.trim();
-  if (!t || looksLikeEmail(t)) return false;
+  if (!t || looksLikeEmail(t) || looksLikePhone(t)) return false;
   try {
     normalizeHandle(t);
     return true;
   } catch {
     return false;
   }
+}
+
+/**
+ * Practical phone shape: optional +, then 8–15 digits (E.164 max 15).
+ * Accepts common separators (spaces, dashes, parens) before normalize.
+ */
+const PHONE_LOOSE_RE = /^\+?[\d\s().-]{8,22}$/;
+
+export function looksLikePhone(raw: string): boolean {
+  const t = raw.trim();
+  if (!t || t.startsWith("@") || looksLikeEmail(t)) return false;
+  if (!PHONE_LOOSE_RE.test(t)) return false;
+  const digits = t.replace(/\D/g, "");
+  return digits.length >= 8 && digits.length <= 15;
+}
+
+/** Normalize to E.164-ish `+` + digits. US 10-digit → +1… when no country code. */
+export function normalizePhone(raw: string, env: NodeJS.ProcessEnv = process.env): string {
+  const t = raw.trim();
+  if (!t) throw new Error("Phone required");
+  if (!looksLikePhone(t)) {
+    throw new Error(`Invalid phone "${raw}" — use E.164 like +15551234567`);
+  }
+  let digits = t.replace(/\D/g, "");
+  const defaultCc = (env.CLAWQL_CREDITS_PHONE_DEFAULT_CC ?? "1").replace(/\D/g, "") || "1";
+  if (!t.trim().startsWith("+") && digits.length === 10 && defaultCc === "1") {
+    digits = `1${digits}`;
+  }
+  if (digits.length < 8 || digits.length > 15) {
+    throw new Error(`Invalid phone "${raw}" — use E.164 like +15551234567`);
+  }
+  return `+${digits}`;
 }
 
 /** Redact for CLI list output — keep domain, mask local part. */
@@ -115,8 +158,30 @@ export function maskEmail(email: string): string {
   return `${local[0]}***${local[local.length - 1]}@${domain}`;
 }
 
+/** Mask middle digits: +1***567. */
+export function maskPhone(phone: string): string {
+  try {
+    const n = normalizePhone(phone);
+    if (n.length <= 5) return "+***";
+    return `${n.slice(0, 2)}***${n.slice(-4)}`;
+  } catch {
+    return "+***";
+  }
+}
+
+function parseTruthy(value: string | undefined): boolean {
+  if (value === undefined) return false;
+  const n = value.trim().toLowerCase();
+  return n === "1" || n === "true" || n === "yes" || n === "on";
+}
+
+/** When true, claiming a phone requires an IdP/operator verified assertion. */
+export function isPhoneVerifiedClaimRequired(env: NodeJS.ProcessEnv = process.env): boolean {
+  return parseTruthy(env.CLAWQL_CREDITS_PHONE_REQUIRE_VERIFIED);
+}
+
 function emptyFile(): DirectoryFile {
-  return { version: 2, emails: {}, handles: {}, byTenant: {} };
+  return { version: 3, emails: {}, handles: {}, phones: {}, byTenant: {} };
 }
 
 function migrateV1(parsed: {
@@ -132,12 +197,31 @@ function migrateV1(parsed: {
       handle,
       displayName: row.displayName,
       email: row.email,
+      phone: row.phone,
+      phoneVerifiedAt: row.phoneVerifiedAt,
       claimedAt: row.claimedAt ?? now,
       updatedAt: row.updatedAt ?? now,
     };
-    file.handles[handle] = entry;
-    file.byTenant[entry.tenantId] = entry;
-    if (entry.email) file.emails[entry.email] = entry;
+    indexEntry(file, entry);
+  }
+  return file;
+}
+
+function migrateV2(parsed: {
+  emails?: Record<string, DirectoryEntry>;
+  handles?: Record<string, DirectoryEntry>;
+  byTenant?: Record<string, DirectoryEntry>;
+}): DirectoryFile {
+  const file = emptyFile();
+  for (const entry of Object.values(parsed.byTenant ?? {})) {
+    indexEntry(file, entry);
+  }
+  // Prefer byTenant; fill gaps from email/handle indexes
+  for (const entry of Object.values(parsed.emails ?? {})) {
+    if (!file.byTenant[entry.tenantId]) indexEntry(file, entry);
+  }
+  for (const entry of Object.values(parsed.handles ?? {})) {
+    if (!file.byTenant[entry.tenantId]) indexEntry(file, entry);
   }
   return file;
 }
@@ -145,18 +229,26 @@ function migrateV1(parsed: {
 async function loadFile(env: NodeJS.ProcessEnv): Promise<DirectoryFile> {
   try {
     const raw = await readFile(resolveDirectoryPath(env), "utf8");
-    const parsed = JSON.parse(raw) as DirectoryFile & {
+    const parsed = JSON.parse(raw) as {
       version?: number;
+      emails?: Record<string, DirectoryEntry>;
+      handles?: Record<string, DirectoryEntry>;
+      phones?: Record<string, DirectoryEntry>;
+      byTenant?: Record<string, DirectoryEntry>;
       tenants?: Record<string, string>;
     };
     if (!parsed || typeof parsed !== "object") return emptyFile();
-    if (parsed.version === 2 && parsed.byTenant) {
+    if (parsed.version === 3 && parsed.byTenant) {
       return {
-        version: 2,
+        version: 3,
         emails: parsed.emails && typeof parsed.emails === "object" ? parsed.emails : {},
         handles: parsed.handles && typeof parsed.handles === "object" ? parsed.handles : {},
+        phones: parsed.phones && typeof parsed.phones === "object" ? parsed.phones : {},
         byTenant: parsed.byTenant && typeof parsed.byTenant === "object" ? parsed.byTenant : {},
       };
+    }
+    if (parsed.version === 2 && parsed.byTenant) {
+      return migrateV2(parsed);
     }
     // v1: { handles, tenants }
     return migrateV1(parsed);
@@ -176,12 +268,14 @@ function indexEntry(file: DirectoryFile, entry: DirectoryEntry): void {
   file.byTenant[entry.tenantId] = entry;
   if (entry.email) file.emails[entry.email] = entry;
   if (entry.handle) file.handles[entry.handle] = entry;
+  if (entry.phone) file.phones[entry.phone] = entry;
 }
 
 function unindexEntry(file: DirectoryFile, entry: DirectoryEntry): void {
   delete file.byTenant[entry.tenantId];
   if (entry.email) delete file.emails[entry.email];
   if (entry.handle) delete file.handles[entry.handle];
+  if (entry.phone) delete file.phones[entry.phone];
 }
 
 export async function getEmailEntry(
@@ -200,6 +294,15 @@ export async function getHandleEntry(
   const key = normalizeHandle(handle);
   const file = await loadFile(env);
   return file.handles[key];
+}
+
+export async function getPhoneEntry(
+  phone: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<DirectoryEntry | undefined> {
+  const key = normalizePhone(phone, env);
+  const file = await loadFile(env);
+  return file.phones[key];
 }
 
 export async function getTenantEntry(
@@ -225,8 +328,8 @@ export async function listDirectory(
 ): Promise<DirectoryEntry[]> {
   const file = await loadFile(env);
   return Object.values(file.byTenant).sort((a, b) => {
-    const ak = a.handle ?? a.email ?? a.tenantId;
-    const bk = b.handle ?? b.email ?? b.tenantId;
+    const ak = a.handle ?? a.email ?? a.phone ?? a.tenantId;
+    const bk = b.handle ?? b.email ?? b.phone ?? b.tenantId;
     return ak.localeCompare(bk);
   });
 }
@@ -237,12 +340,19 @@ export type ClaimDirectoryInput = {
   email?: string;
   /** Optional privacy username. */
   handle?: string;
+  /** Optional E.164 phone alias (maps to this tenant / email). */
+  phone?: string;
+  /**
+   * Operator/IdP assertion that the phone was verified out-of-band.
+   * Required when CLAWQL_CREDITS_PHONE_REQUIRE_VERIFIED=1.
+   */
+  phoneVerified?: boolean;
   displayName?: string;
 };
 
 /**
  * Claim or update directory identity for a tenant.
- * Email is the default payee; username (`handle`) is optional for privacy.
+ * Email is the default payee; username (`handle`) and phone are optional aliases.
  */
 export async function claimDirectory(
   input: ClaimDirectoryInput,
@@ -250,12 +360,22 @@ export async function claimDirectory(
 ): Promise<{ entry: DirectoryEntry; created: boolean }> {
   const tenantId = input.tenantId.trim();
   if (!tenantId) throw new Error("tenantId required");
-  if (!input.email?.trim() && !input.handle?.trim()) {
-    throw new Error("Provide --email (default) and/or --handle (optional privacy username)");
+  if (!input.email?.trim() && !input.handle?.trim() && !input.phone?.trim()) {
+    throw new Error(
+      "Provide --email (default) and/or --handle and/or --phone (optional aliases)"
+    );
   }
 
   const email = input.email?.trim() ? normalizeEmail(input.email) : undefined;
   const handle = input.handle?.trim() ? normalizeHandle(input.handle) : undefined;
+  const phone = input.phone?.trim() ? normalizePhone(input.phone, env) : undefined;
+
+  if (phone && isPhoneVerifiedClaimRequired(env) && !input.phoneVerified) {
+    throw new Error(
+      "Phone claim requires verified assertion (CLAWQL_CREDITS_PHONE_REQUIRE_VERIFIED=1). " +
+        "Pass --verified after customer IdP / SMS proof, or unset the gate."
+    );
+  }
 
   const file = await loadFile(env);
   const existing = file.byTenant[tenantId];
@@ -272,21 +392,35 @@ export async function claimDirectory(
       throw new Error(`Username @${handle} is already claimed by another tenant`);
     }
   }
+  if (phone) {
+    const taken = file.phones[phone];
+    if (taken && taken.tenantId !== tenantId) {
+      throw new Error(`Phone ${phone} is already claimed by another tenant`);
+    }
+  }
 
   if (existing) unindexEntry(file, existing);
 
   const now = new Date().toISOString();
+  let phoneVerifiedAt = existing?.phoneVerifiedAt;
+  if (phone) {
+    if (input.phoneVerified) phoneVerifiedAt = now;
+    else if (phone !== existing?.phone) phoneVerifiedAt = undefined;
+  }
+
   const entry: DirectoryEntry = {
     tenantId,
     email: email ?? existing?.email,
     handle: handle ?? existing?.handle,
+    phone: phone ?? existing?.phone,
+    phoneVerifiedAt: phone || existing?.phone ? phoneVerifiedAt : undefined,
     displayName: input.displayName?.trim() || existing?.displayName,
     claimedAt: existing?.claimedAt ?? now,
     updatedAt: now,
   };
 
-  if (!entry.email && !entry.handle) {
-    throw new Error("Directory entry must have an email and/or username");
+  if (!entry.email && !entry.handle && !entry.phone) {
+    throw new Error("Directory entry must have an email, username, and/or phone");
   }
 
   indexEntry(file, entry);
@@ -310,6 +444,26 @@ export async function claimHandle(
   return claimDirectory(input, env);
 }
 
+/** Convenience: claim phone alias (optionally mark verified). */
+export async function claimPhone(
+  input: {
+    phone: string;
+    tenantId: string;
+    email?: string;
+    handle?: string;
+    displayName?: string;
+    phoneVerified?: boolean;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<{ entry: DirectoryEntry; created: boolean }> {
+  return claimDirectory(input, env);
+}
+
+function keepEntryIfAddressable(entry: DirectoryEntry): DirectoryEntry | null {
+  if (entry.email || entry.handle || entry.phone) return entry;
+  return null;
+}
+
 export async function releaseHandle(
   handle: string,
   env: NodeJS.ProcessEnv = process.env
@@ -319,13 +473,12 @@ export async function releaseHandle(
   const entry = file.handles[key];
   if (!entry) return false;
   unindexEntry(file, entry);
-  if (entry.email) {
-    indexEntry(file, {
-      ...entry,
-      handle: undefined,
-      updatedAt: new Date().toISOString(),
-    });
-  }
+  const next = keepEntryIfAddressable({
+    ...entry,
+    handle: undefined,
+    updatedAt: new Date().toISOString(),
+  });
+  if (next) indexEntry(file, next);
   await saveFile(file, env);
   return true;
 }
@@ -339,13 +492,32 @@ export async function releaseEmail(
   const entry = file.emails[key];
   if (!entry) return false;
   unindexEntry(file, entry);
-  if (entry.handle) {
-    indexEntry(file, {
-      ...entry,
-      email: undefined,
-      updatedAt: new Date().toISOString(),
-    });
-  }
+  const next = keepEntryIfAddressable({
+    ...entry,
+    email: undefined,
+    updatedAt: new Date().toISOString(),
+  });
+  if (next) indexEntry(file, next);
+  await saveFile(file, env);
+  return true;
+}
+
+export async function releasePhone(
+  phone: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<boolean> {
+  const key = normalizePhone(phone, env);
+  const file = await loadFile(env);
+  const entry = file.phones[key];
+  if (!entry) return false;
+  unindexEntry(file, entry);
+  const next = keepEntryIfAddressable({
+    ...entry,
+    phone: undefined,
+    phoneVerifiedAt: undefined,
+    updatedAt: new Date().toISOString(),
+  });
+  if (next) indexEntry(file, next);
   await saveFile(file, env);
   return true;
 }
@@ -353,13 +525,14 @@ export async function releaseEmail(
 /**
  * Resolve a payee string for P2P.
  * - Email → directory (required when shaped like email)
+ * - Phone (E.164 / loose) → directory
  * - Leading `@` / username → directory
  * - Otherwise → raw tenant id
  */
 export async function resolveRecipient(
   raw: string,
   env: NodeJS.ProcessEnv = process.env,
-  options: { forceHandle?: boolean; forceEmail?: boolean } = {}
+  options: { forceHandle?: boolean; forceEmail?: boolean; forcePhone?: boolean } = {}
 ): Promise<ResolvedRecipient> {
   const input = raw.trim();
   if (!input) throw new Error("Recipient required");
@@ -375,8 +548,26 @@ export async function resolveRecipient(
       tenantId: entry.tenantId,
       email: entry.email,
       handle: entry.handle,
+      phone: entry.phone,
       displayName: entry.displayName,
       via: "email",
+    };
+  }
+
+  if (options.forcePhone || looksLikePhone(input)) {
+    const entry = await getPhoneEntry(input, env);
+    if (!entry) {
+      throw new Error(
+        `Unknown phone ${normalizePhone(input, env)} — claim with: clawql payments credits directory claim --phone …`
+      );
+    }
+    return {
+      tenantId: entry.tenantId,
+      email: entry.email,
+      handle: entry.handle,
+      phone: entry.phone,
+      displayName: entry.displayName,
+      via: "phone",
     };
   }
 
@@ -394,6 +585,7 @@ export async function resolveRecipient(
         tenantId: entry.tenantId,
         email: entry.email,
         handle: entry.handle,
+        phone: entry.phone,
         displayName: entry.displayName,
         via: "handle",
       };

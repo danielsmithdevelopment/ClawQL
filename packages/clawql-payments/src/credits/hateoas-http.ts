@@ -21,7 +21,13 @@ import {
   payHateoasEnvelope,
   type PayDeepLink,
 } from "./deeplinks.js";
-import { escapeHtml, renderCreditsHateoasPage, renderQrSvg, wantsHtml } from "./hateoas-html.js";
+import {
+  escapeHtml,
+  renderCreditsHateoasPage,
+  renderCreditsMiniHomeHtml,
+  renderQrSvg,
+  wantsHtml,
+} from "./hateoas-html.js";
 import {
   acceptMoneyRequest,
   claimMoneyRequestInvite,
@@ -42,47 +48,68 @@ function payPageHtml(pay: PayDeepLink): string {
     ...(pay.amountUsd != null ? { amount: String(pay.amountUsd) } : {}),
     ...(pay.note ? { note: pay.note } : {}),
   }).toString();
+  const amountLabel =
+    pay.amountUsd != null ? `$${Number(pay.amountUsd).toFixed(2)}` : "Credits";
 
   const body = `
-    <p class="muted">Confirm this payment in the CLI (stage → confirm). This page does not move money.</p>
-    <dl>
-      <dt>To</dt><dd>${esc(pay.to)}</dd>
-      <dt>Amount (USD)</dt><dd>${esc(pay.amountUsd != null ? String(pay.amountUsd) : "—")}</dd>
-      <dt>Note</dt><dd>${esc(pay.note ?? "—")}</dd>
-    </dl>
-    <p><strong>CLI</strong></p>
-    <pre>${esc(cli)}</pre>
-    <p class="muted">Scheme URI (QR payload): <code>${esc(clawql)}</code></p>
-    <p><img alt="Payment QR" width="200" height="200" src="/credits/qr.svg?${esc(qrQs)}" /></p>
+    <header>
+      <h1 class="brand">Claw<span>QL</span></h1>
+      <p class="lede">Send prepaid credits. This page does not move money — confirm in the CLI.</p>
+    </header>
+    <section class="hero" aria-label="Payment">
+      <p class="amount">${esc(amountLabel)}</p>
+      <p class="payee">to <strong>${esc(pay.to)}</strong>${pay.note ? ` · ${esc(pay.note)}` : ""}</p>
+      <div class="cta-row">
+        <a class="btn" href="${esc(clawql)}">Open clawql://</a>
+        <button type="button" class="btn ghost" onclick="navigator.clipboard.writeText(${JSON.stringify(cli)})">Copy CLI</button>
+      </div>
+    </section>
+    <div class="visual" aria-label="Payment QR">
+      <img alt="Payment QR code" width="280" height="280" src="/credits/qr.svg?${esc(qrQs)}" />
+    </div>
+    <div class="meta-block">
+      <details>
+        <summary>CLI &amp; details</summary>
+        <pre>${esc(cli)}</pre>
+        <p class="muted">Scheme: <code>${esc(clawql)}</code></p>
+      </details>
+    </div>
   `;
   return renderCreditsHateoasPage({
-    title: "Pay with ClawQL credits",
-    heading: "Send credits",
+    title: "Pay with ClawQL",
+    heading: "ClawQL",
     summary: envelope.summary,
     bodyHtml: body,
     envelope,
+    hideLinksPanel: true,
   });
 }
 
 function invitePageHtml(token: string, requestId: string): string {
   const body = `
-    <p class="muted">Claim this invite to link the request to your directory identity, then accept to stage payment.</p>
-    <p>Request: <code>${esc(requestId)}</code></p>
-    <form hx-post="/credits/request/invite/claim" hx-target="#result" hx-swap="innerHTML">
-      <input type="hidden" name="token" value="${esc(token)}" />
-      <input type="hidden" name="requestId" value="${esc(requestId)}" />
-      <label>Tenant id <input name="tenantId" required autocomplete="username" placeholder="your-tenant" /></label>
-      <label>Email <input name="email" type="email" autocomplete="email" placeholder="optional if invite email known" /></label>
-      <label>Optional @username <input name="handle" type="text" autocomplete="nickname" placeholder="optional" /></label>
-      <button type="submit">Claim invite</button>
-    </form>
-    <div id="result"></div>
+    <header>
+      <h1 class="brand">Claw<span>QL</span></h1>
+      <p class="lede">Join and link this money request to your directory identity.</p>
+    </header>
+    <section class="hero">
+      <p class="payee">Request <code>${esc(requestId)}</code></p>
+      <form hx-post="/credits/request/invite/claim" hx-target="#result" hx-swap="innerHTML" class="compose-grid">
+        <input type="hidden" name="token" value="${esc(token)}" />
+        <input type="hidden" name="requestId" value="${esc(requestId)}" />
+        <label>Tenant id <input name="tenantId" required autocomplete="username" placeholder="your-tenant" /></label>
+        <label>Email <input name="email" type="email" autocomplete="email" placeholder="optional if invite email known" /></label>
+        <label>Optional @username <input name="handle" type="text" autocomplete="nickname" placeholder="optional" /></label>
+        <div class="cta-row"><button type="submit">Claim invite</button></div>
+      </form>
+      <div id="result"></div>
+    </section>
   `;
   return renderCreditsHateoasPage({
     title: "Credits invite",
-    heading: "Money request invite",
+    heading: "ClawQL",
     summary: "Join ClawQL and link this request to your tenant.",
     bodyHtml: body,
+    hideLinksPanel: true,
   });
 }
 
@@ -90,37 +117,43 @@ function requestPageHtml(reqRow: MoneyRequest): string {
   const amountUsd = (reqRow.amountCents / 100).toFixed(2);
   const self = buildRequestDeepLink({ requestId: reqRow.requestId });
   const body = `
-    <dl>
-      <dt>Status</dt><dd>${esc(reqRow.status)}</dd>
-      <dt>Amount (USD)</dt><dd>${esc(amountUsd)}</dd>
-      <dt>From (requester)</dt><dd>${esc(reqRow.requesterTenantId)}</dd>
-      <dt>To (payer)</dt><dd>${esc(reqRow.payerTenantId ?? "— (invite pending)")}</dd>
-      <dt>Note</dt><dd>${esc(reqRow.note ?? "—")}</dd>
+    <header>
+      <h1 class="brand">Claw<span>QL</span></h1>
+      <p class="lede">Money request · ${esc(reqRow.status)}. Accept only stages payment.</p>
+    </header>
+    <section class="hero">
+      <p class="amount">$${esc(amountUsd)}</p>
+      <p class="payee">from <strong>${esc(reqRow.requesterTenantId)}</strong>
+        → ${esc(reqRow.payerTenantId ?? "invite pending")}${reqRow.note ? ` · ${esc(reqRow.note)}` : ""}</p>
       ${
-        reqRow.stagedTransferActionId
-          ? `<dt>Staged transfer</dt><dd><code>${esc(reqRow.stagedTransferActionId)}</code></dd>`
+        reqRow.status === "pending"
+          ? `
+      <form hx-post="/credits/request/${esc(reqRow.requestId)}/accept" hx-target="#result" hx-swap="innerHTML" class="compose-grid">
+        <label>Payer tenant id <input name="payerTenantId" value="${esc(reqRow.payerTenantId ?? "")}" required /></label>
+        <div class="cta-row">
+          <button type="submit">Accept (stage)</button>
+        </div>
+      </form>
+      <form hx-post="/credits/request/${esc(reqRow.requestId)}/decline" hx-target="#result" hx-swap="innerHTML" class="compose-grid">
+        <label>Payer tenant id <input name="payerTenantId" value="${esc(reqRow.payerTenantId ?? "")}" required /></label>
+        <div class="cta-row"><button type="submit" class="btn ghost">Decline</button></div>
+      </form>`
           : ""
       }
-    </dl>
-    ${
-      reqRow.status === "pending"
-        ? `
-    <form hx-post="/credits/request/${esc(reqRow.requestId)}/accept" hx-target="#result" hx-swap="innerHTML">
-      <label>Payer tenant id <input name="payerTenantId" value="${esc(reqRow.payerTenantId ?? "")}" required /></label>
-      <button type="submit">Accept (stage payment)</button>
-    </form>
-    <form hx-post="/credits/request/${esc(reqRow.requestId)}/decline" hx-target="#result" hx-swap="innerHTML" style="margin-top:0.75rem">
-      <label>Payer tenant id <input name="payerTenantId" value="${esc(reqRow.payerTenantId ?? "")}" required /></label>
-      <button type="submit" class="btn secondary">Decline</button>
-    </form>`
-        : ""
-    }
-    <div id="result"></div>
-    <p class="muted">After accept: <code>clawql payments credits transfer --confirm --action-id … --code …</code></p>
+      ${
+        reqRow.stagedTransferActionId
+          ? `<p class="note">Staged: <code>${esc(reqRow.stagedTransferActionId)}</code></p>`
+          : ""
+      }
+      <div id="result"></div>
+    </section>
+    <div class="meta-block">
+      <p class="muted">After accept: <code>clawql payments credits transfer --confirm --action-id … --code …</code></p>
+    </div>
   `;
   return renderCreditsHateoasPage({
     title: `Request ${reqRow.requestId}`,
-    heading: "Money request",
+    heading: "ClawQL",
     summary: `$${amountUsd} · ${reqRow.status}`,
     bodyHtml: body,
     envelope: {
@@ -131,6 +164,7 @@ function requestPageHtml(reqRow: MoneyRequest): string {
       links: { self, approval_url: self },
       approval_url: self,
     },
+    hideLinksPanel: true,
   });
 }
 
@@ -152,9 +186,21 @@ function sendJsonOrHtml(
  * Attach GET/POST routes under `/credits/*` for deep-link landing + HTMX actions.
  */
 export function attachCreditsHateoasRoutes(app: Express): void {
+  app.get("/credits", (_req: Request, res: Response) => {
+    res.type("html").send(renderCreditsMiniHomeHtml());
+  });
+  app.get("/credits/ui", (_req: Request, res: Response) => {
+    res.type("html").send(renderCreditsMiniHomeHtml());
+  });
+
   app.get("/credits/pay", (req: Request, res: Response) => {
     try {
-      const pay = parsePayDeepLinkQuery(req.query as Record<string, string | undefined>);
+      const q = req.query as Record<string, string | undefined>;
+      if (!String(q.to ?? "").trim()) {
+        res.type("html").send(renderCreditsMiniHomeHtml());
+        return;
+      }
+      const pay = parsePayDeepLinkQuery(q);
       const html = payPageHtml(pay);
       sendJsonOrHtml(req, res, html, payHateoasEnvelope(pay));
     } catch (e) {

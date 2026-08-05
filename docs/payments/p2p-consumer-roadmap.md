@@ -16,6 +16,8 @@ ClawQL is **not** a consumer bank. Balances are prepaid credits; bank/USDC off-r
 | Request / invoice + email invite | ✅ | [`money-requests.md`](./money-requests.md) |
 | Activity feed | ✅ | [`activity-feed.md`](./activity-feed.md) |
 | QR / deep links (HATEOAS + HTMX) | ✅ | [`credits-deeplinks.md`](./credits-deeplinks.md) |
+| Contacts + phone alias | ✅ | [`credits-contacts.md`](./credits-contacts.md) |
+| Hosted mini UI | ✅ | `/credits` brand-first compose + pay landing — [`credits-deeplinks.md`](./credits-deeplinks.md) |
 | OIDC / MFA policy (gateway) | ✅ (stacked) | [`clawql-auth-oidc-stepup.md`](../security/clawql-auth-oidc-stepup.md) |
 
 ## Addressing model
@@ -24,17 +26,19 @@ ClawQL is **not** a consumer bank. Balances are prepaid credits; bank/USDC off-r
 | -------- | ---- |
 | **Email** | Default payee (like Venmo / Cash App). Claim with `--email`. |
 | **`@username`** | Optional privacy alias — payers who know `@alice` never see the email. |
+| **Phone (E.164)** | Optional alias → tenant/email. Verified claim via customer IdP (`--verified`). |
 | **Tenant id** | Escape hatch for agents / ops (`--to-tenant`). |
+| **Contacts book** | Per-owner saved payees (`contacts.json`) — not a public graph. |
 
-Emails are stored only under `$CLAWQL_HOME/Payments/directory.json` (mode `0600`) — **never** in payment WORM. CLI `directory list` masks emails unless `--show-secrets`.
+Emails and phones are stored only under `$CLAWQL_HOME/Payments/` (mode `0600`) — **never** in payment WORM. CLI list/mask unless `--show-secrets`.
 
 ## Next bits (suggested order)
 
 1. ~~**Request money**~~ — ✅ email invoice + invite — [`money-requests.md`](./money-requests.md)
 2. ~~**Activity feed**~~ — ✅ [`activity-feed.md`](./activity-feed.md)
 3. ~~**QR / deep link**~~ — ✅ HATEOAS + HTMX + `clawql://pay` — [`credits-deeplinks.md`](./credits-deeplinks.md)
-4. **Contacts** — optional phone → email (customer IdP or verified claim; not a full IdP)
-5. **Hosted mini UI** — one-screen pay/request (brand-first; not a dashboard)
+4. ~~**Contacts**~~ — ✅ phone alias + contacts book — [`credits-contacts.md`](./credits-contacts.md)
+5. ~~**Hosted mini UI**~~ — ✅ brand-first `/credits` — [`credits-deeplinks.md`](./credits-deeplinks.md)
 6. **Outbound email delivery** — optional later (invite URL print is enough for now)
 
 ## Explicit non-goals (for now)
@@ -55,7 +59,10 @@ clawql payments credits directory claim --tenant-id alice --handle alice
 clawql payments credits directory claim --tenant-id bob --handle bob
 # fund alice ledger, then:
 clawql payments credits pay --from-tenant alice --to bob@acme.com --amount 5 --note coffee
-# or, if bob claimed @bob:
+# or, if bob claimed @bob / phone:
 clawql payments credits pay --from-tenant alice --to @bob --amount 5
+clawql payments credits directory claim --tenant-id bob --phone +15559876543 --verified
+clawql payments credits pay --from-tenant alice --to +15559876543 --amount 5
+clawql payments credits contacts add --to @bob --label Bob --tenant-id alice
 clawql payments credits transfer --confirm --action-id … --code …
 ```

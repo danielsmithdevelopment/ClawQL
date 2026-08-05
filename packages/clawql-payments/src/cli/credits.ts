@@ -8,13 +8,24 @@ import {
 } from "../credits/config.js";
 import { enrollStepUpTotp, getStepUpEnrollment } from "../credits/step-up.js";
 import {
+  addContact,
+  listContacts,
+  maskContactPayee,
+  removeContact,
+  resolveContactPayee,
+} from "../credits/contacts.js";
+import {
   claimDirectory,
   getEmailEntry,
   getHandleEntry,
+  getPhoneEntry,
   listDirectory,
+  looksLikePhone,
   maskEmail,
+  maskPhone,
   releaseEmail,
   releaseHandle,
+  releasePhone,
   resolveRecipient,
 } from "../credits/directory.js";
 import {
@@ -87,11 +98,24 @@ export type PaymentsCreditsTransferOptions = {
 export type PaymentsCreditsDirectoryOptions = {
   handle?: string;
   email?: string;
+  phone?: string;
+  /** IdP/operator assertion that phone was verified out-of-band. */
+  phoneVerified?: boolean;
   tenantId?: string;
   displayName?: string;
   json?: boolean;
-  /** Show full email in list (default masks local part). */
+  /** Show full email/phone in list (default masks). */
   showEmail?: boolean;
+};
+
+export type PaymentsCreditsContactsOptions = {
+  tenantId?: string;
+  payTo?: string;
+  toHandle?: string;
+  label?: string;
+  contactId?: string;
+  json?: boolean;
+  showSecrets?: boolean;
 };
 
 export type PaymentsCreditsStepUpOptions = {
@@ -258,6 +282,7 @@ export async function runPaymentsCreditsTransfer(
       const resolved = await resolveRecipient(payee, process.env, {
         forceHandle: Boolean(options.toHandle?.trim()) || payee.startsWith("@"),
         forceEmail: payee.includes("@") && !payee.startsWith("@"),
+        forcePhone: looksLikePhone(payee),
       });
       toTenantId = resolved.tenantId;
       resolvedHandle = resolved.handle;
@@ -280,7 +305,7 @@ export async function runPaymentsCreditsTransfer(
 
   const amountCents = Math.round(amountUsd * 100);
   const shouldStage = creditsTransferShouldStage() && !options.direct;
-  // Prefer privacy username when set; else email; else tenant id.
+  // Prefer privacy username when set; else email; else phone; else tenant id.
   const payeeLabel = resolvedHandle
     ? `@${resolvedHandle}`
     : resolvedEmail
@@ -369,11 +394,12 @@ export async function runPaymentsCreditsDirectoryClaim(
   const config = await loadPaymentsConfig();
   const handle = options.handle?.trim();
   const email = options.email?.trim();
+  const phone = options.phone?.trim();
   const tenantId = options.tenantId?.trim() || config.tenantId || "default";
-  if (!handle && !email) {
+  if (!handle && !email && !phone) {
     console.error(
-      "Usage: clawql payments credits directory claim --email you@acme.com [--handle alice] [--tenant-id …] [--name …]\n" +
-        "       (email is the default payee; --handle is an optional privacy username)"
+      "Usage: clawql payments credits directory claim --email you@acme.com [--handle alice] [--phone +15551234567] [--verified] [--tenant-id …] [--name …]\n" +
+        "       (email is the default payee; --handle / --phone are optional aliases)"
     );
     return 1;
   }
@@ -381,6 +407,8 @@ export async function runPaymentsCreditsDirectoryClaim(
     const { entry, created } = await claimDirectory({
       email,
       handle,
+      phone,
+      phoneVerified: options.phoneVerified,
       tenantId,
       displayName: options.displayName,
     });
@@ -393,6 +421,11 @@ export async function runPaymentsCreditsDirectoryClaim(
     if (entry.email) console.log(`Email (default): ${entry.email}`);
     if (entry.handle) console.log(`Username (privacy): @${entry.handle}`);
     else console.log("Username: (none — others pay you by email; set --handle for privacy)");
+    if (entry.phone) {
+      console.log(
+        `Phone: ${entry.phone}${entry.phoneVerifiedAt ? " (verified claim)" : " (unverified claim)"}`
+      );
+    }
     if (entry.displayName) console.log(`Display name: ${entry.displayName}`);
     return 0;
   } catch (err) {
@@ -406,17 +439,26 @@ export async function runPaymentsCreditsDirectoryShow(
 ): Promise<number> {
   const handle = options.handle?.trim();
   const email = options.email?.trim();
-  if (!handle && !email) {
+  const phone = options.phone?.trim();
+  if (!handle && !email && !phone) {
     console.error(
-      "Usage: clawql payments credits directory show --email you@acme.com | --handle @alice"
+      "Usage: clawql payments credits directory show --email you@acme.com | --handle @alice | --phone +15551234567"
     );
     return 1;
   }
   try {
-    const entry = email ? await getEmailEntry(email) : await getHandleEntry(handle!);
+    const entry = email
+      ? await getEmailEntry(email)
+      : phone
+        ? await getPhoneEntry(phone)
+        : await getHandleEntry(handle!);
     if (!entry) {
       console.error(
-        email ? `No directory entry for ${email}` : `No directory entry for @${handle!.replace(/^@+/, "")}`
+        email
+          ? `No directory entry for ${email}`
+          : phone
+            ? `No directory entry for ${phone}`
+            : `No directory entry for @${handle!.replace(/^@+/, "")}`
       );
       return 1;
     }
@@ -427,6 +469,11 @@ export async function runPaymentsCreditsDirectoryShow(
     console.log(`Tenant: ${entry.tenantId}`);
     if (entry.email) console.log(`Email: ${entry.email}`);
     if (entry.handle) console.log(`Username: @${entry.handle}`);
+    if (entry.phone) {
+      console.log(
+        `Phone: ${entry.phone}${entry.phoneVerifiedAt ? ` (verified ${entry.phoneVerifiedAt})` : ""}`
+      );
+    }
     if (entry.displayName) console.log(`Display name: ${entry.displayName}`);
     console.log(`Claimed: ${entry.claimedAt}`);
     return 0;
@@ -455,8 +502,13 @@ export async function runPaymentsCreditsDirectoryList(
         ? e.email
         : maskEmail(e.email)
       : "(no email)";
+    const phone = e.phone
+      ? options.showEmail
+        ? e.phone
+        : maskPhone(e.phone)
+      : "";
     console.log(
-      `${uname.padEnd(16)} ${mail.padEnd(28)} ${e.tenantId}${e.displayName ? `  (${e.displayName})` : ""}`
+      `${uname.padEnd(16)} ${mail.padEnd(28)} ${phone.padEnd(14)} ${e.tenantId}${e.displayName ? `  (${e.displayName})` : ""}`
     );
   }
   return 0;
@@ -467,9 +519,10 @@ export async function runPaymentsCreditsDirectoryRelease(
 ): Promise<number> {
   const handle = options.handle?.trim();
   const email = options.email?.trim();
-  if (!handle && !email) {
+  const phone = options.phone?.trim();
+  if (!handle && !email && !phone) {
     console.error(
-      "Usage: clawql payments credits directory release --handle @alice | --email you@acme.com"
+      "Usage: clawql payments credits directory release --handle @alice | --email you@acme.com | --phone +15551234567"
     );
     return 1;
   }
@@ -480,7 +533,16 @@ export async function runPaymentsCreditsDirectoryRelease(
         console.error(`No directory entry for ${email}`);
         return 1;
       }
-      console.log(`Released email ${email} (username kept if present)`);
+      console.log(`Released email ${email} (other aliases kept if present)`);
+      return 0;
+    }
+    if (phone) {
+      const ok = await releasePhone(phone);
+      if (!ok) {
+        console.error(`No directory entry for ${phone}`);
+        return 1;
+      }
+      console.log(`Released phone ${phone} (other aliases kept if present)`);
       return 0;
     }
     const ok = await releaseHandle(handle!);
@@ -917,6 +979,127 @@ export async function runPaymentsCreditsRequestCancel(
       return 0;
     }
     console.log(`Cancelled request ${req.requestId}`);
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
+}
+
+export async function runPaymentsCreditsContactsAdd(
+  options: PaymentsCreditsContactsOptions = {}
+): Promise<number> {
+  const config = await loadPaymentsConfig();
+  const ownerTenantId = options.tenantId?.trim() || config.tenantId || "default";
+  const payee = options.payTo?.trim() || options.toHandle?.trim();
+  if (!payee) {
+    console.error(
+      "Usage: clawql payments credits contacts add --to bob@acme.com|--to @bob|--to +15551234567 [--label …] [--tenant-id owner]"
+    );
+    return 1;
+  }
+  try {
+    const { contact, created } = await addContact({
+      ownerTenantId,
+      payee,
+      label: options.label,
+    });
+    if (options.json) {
+      console.log(JSON.stringify({ contact, created }, null, 2));
+      return 0;
+    }
+    console.log(created ? "Contact added" : "Contact updated");
+    console.log(`id: ${contact.contactId}`);
+    console.log(`payee: ${contact.payee}`);
+    if (contact.label) console.log(`label: ${contact.label}`);
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
+}
+
+export async function runPaymentsCreditsContactsList(
+  options: PaymentsCreditsContactsOptions = {}
+): Promise<number> {
+  const config = await loadPaymentsConfig();
+  const ownerTenantId = options.tenantId?.trim() || config.tenantId || "default";
+  try {
+    const contacts = await listContacts(ownerTenantId);
+    if (options.json) {
+      console.log(JSON.stringify({ ownerTenantId, contacts }, null, 2));
+      return 0;
+    }
+    if (contacts.length === 0) {
+      console.log("No contacts yet.");
+      return 0;
+    }
+    for (const c of contacts) {
+      const payee = options.showSecrets ? c.payee : maskContactPayee(c.payee);
+      console.log(
+        `${c.contactId.slice(0, 8)}…  ${(c.label ?? "").padEnd(16)} ${payee}`
+      );
+    }
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
+}
+
+export async function runPaymentsCreditsContactsRemove(
+  options: PaymentsCreditsContactsOptions = {}
+): Promise<number> {
+  const config = await loadPaymentsConfig();
+  const ownerTenantId = options.tenantId?.trim() || config.tenantId || "default";
+  const contactId = options.contactId?.trim();
+  if (!contactId) {
+    console.error(
+      "Usage: clawql payments credits contacts remove --contact-id UUID [--tenant-id owner]"
+    );
+    return 1;
+  }
+  try {
+    const ok = await removeContact(ownerTenantId, contactId);
+    if (!ok) {
+      console.error("Unknown contact id");
+      return 1;
+    }
+    if (options.json) {
+      console.log(JSON.stringify({ removed: true, contactId }, null, 2));
+      return 0;
+    }
+    console.log(`Removed contact ${contactId}`);
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
+}
+
+/** Resolve a saved contact (or payee) — useful before pay. */
+export async function runPaymentsCreditsContactsShow(
+  options: PaymentsCreditsContactsOptions = {}
+): Promise<number> {
+  const config = await loadPaymentsConfig();
+  const ownerTenantId = options.tenantId?.trim() || config.tenantId || "default";
+  try {
+    const { contact, recipient, payee } = await resolveContactPayee(ownerTenantId, {
+      contactId: options.contactId,
+      payee: options.payTo || options.toHandle,
+    });
+    if (options.json) {
+      console.log(JSON.stringify({ contact, recipient, payee }, null, 2));
+      return 0;
+    }
+    if (contact) {
+      console.log(`Contact: ${contact.contactId}${contact.label ? ` (${contact.label})` : ""}`);
+    }
+    console.log(`Payee: ${payee}`);
+    console.log(`Tenant: ${recipient.tenantId} (via ${recipient.via})`);
+    if (recipient.handle) console.log(`Username: @${recipient.handle}`);
+    if (recipient.email) console.log(`Email: ${recipient.email}`);
+    if (recipient.phone) console.log(`Phone: ${recipient.phone}`);
     return 0;
   } catch (err) {
     console.error(formatErr(err));

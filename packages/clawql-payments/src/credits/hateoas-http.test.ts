@@ -44,16 +44,25 @@ describe("credits hateoas http", () => {
     await rm(home, { recursive: true, force: true });
   });
 
-  it("GET /credits/pay returns HTML and JSON", async () => {
+  it("GET /credits mini home and pay landing", async () => {
     await withApp(async (base) => {
+      const home = await fetch(`${base}/credits`);
+      expect(home.status).toBe(200);
+      const homeBody = await home.text();
+      expect(homeBody).toContain("Claw");
+      expect(homeBody).toContain("Fraunces");
+      expect(homeBody).toContain('action="/credits/pay"');
+
       const html = await fetch(`${base}/credits/pay?to=%40bob&amount=10`, {
         headers: { Accept: "text/html" },
       });
       expect(html.status).toBe(200);
       const body = await html.text();
-      expect(body).toContain("Send credits");
+      expect(body).toContain("Claw");
       expect(body).toContain("@bob");
+      expect(body).toContain("$10.00");
       expect(body).toContain("htmx.org");
+      expect(body).toContain("Payment QR");
 
       const json = await fetch(`${base}/credits/pay?to=%40bob&amount=10`, {
         headers: { Accept: "application/json" },

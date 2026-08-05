@@ -40,6 +40,10 @@ import {
   runPaymentsCreditsDirectoryShow,
   runPaymentsCreditsDirectoryList,
   runPaymentsCreditsDirectoryRelease,
+  runPaymentsCreditsContactsAdd,
+  runPaymentsCreditsContactsList,
+  runPaymentsCreditsContactsRemove,
+  runPaymentsCreditsContactsShow,
   runPaymentsCreditsRequestCreate,
   runPaymentsCreditsInvoice,
   runPaymentsCreditsRequestList,
@@ -154,6 +158,12 @@ export type PaymentsCliOptions = {
   parseDeepLink?: string;
   /** Output path for QR SVG (`credits qr --out`). */
   out?: string;
+  /** Directory phone (E.164). */
+  phone?: string;
+  /** IdP/operator phone verified assertion. */
+  phoneVerified?: boolean;
+  contactId?: string;
+  label?: string;
 };
 
 export async function runPaymentsPlanShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
@@ -545,6 +555,8 @@ export async function runPaymentsCreditsDirectoryClaimCmd(
   return runPaymentsCreditsDirectoryClaim({
     handle: options.handle ?? options.toHandle,
     email: options.directoryEmail ?? options.email,
+    phone: options.phone,
+    phoneVerified: options.phoneVerified,
     tenantId: options.tenantId ?? options.fromTenantId,
     displayName: options.displayName ?? options.name,
     json: options.json,
@@ -557,6 +569,7 @@ export async function runPaymentsCreditsDirectoryShowCmd(
   return runPaymentsCreditsDirectoryShow({
     handle: options.handle ?? options.toHandle,
     email: options.directoryEmail ?? options.email,
+    phone: options.phone,
     json: options.json,
   });
 }
@@ -576,6 +589,51 @@ export async function runPaymentsCreditsDirectoryReleaseCmd(
   return runPaymentsCreditsDirectoryRelease({
     handle: options.handle ?? options.toHandle,
     email: options.directoryEmail ?? options.email,
+    phone: options.phone,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsContactsAddCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsContactsAdd({
+    tenantId: options.tenantId ?? options.fromTenantId,
+    payTo: options.payTo,
+    toHandle: options.toHandle ?? options.handle,
+    label: options.label,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsContactsListCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsContactsList({
+    tenantId: options.tenantId ?? options.fromTenantId,
+    json: options.json,
+    showSecrets: options.showSecrets,
+  });
+}
+
+export async function runPaymentsCreditsContactsRemoveCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsContactsRemove({
+    tenantId: options.tenantId ?? options.fromTenantId,
+    contactId: options.contactId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsContactsShowCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsContactsShow({
+    tenantId: options.tenantId ?? options.fromTenantId,
+    contactId: options.contactId,
+    payTo: options.payTo,
+    toHandle: options.toHandle ?? options.handle,
     json: options.json,
   });
 }

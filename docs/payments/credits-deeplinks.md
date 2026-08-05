@@ -1,11 +1,14 @@
-# Credits deep links (HATEOAS / HTMX / QR)
+# Credits deep links (HATEOAS / HTMX / QR) + mini UI
 
 Shareable pay and money-request links for prepaid P2P — same addressing as `credits pay` / `credits request`, without moving money until stage → confirm.
+
+Also hosts a **one-screen mini UI** (brand-first, not a dashboard) at `/credits`.
 
 ## URLs
 
 | Kind | Shape |
 | ---- | ----- |
+| Mini home | `{base}/credits` or `{base}/credits/ui` |
 | Pay (HTTP) | `{base}/credits/pay?to=@bob&amount=10&note=coffee` |
 | Pay (scheme) | `clawql://pay?to=@bob&amount=10` |
 | Request | `{base}/credits/request/{requestId}` |
@@ -16,9 +19,10 @@ Shareable pay and money-request links for prepaid P2P — same addressing as `cr
 
 ## Gateway routes
 
-When the MCP HTTP server is up, these are mounted under `/credits/*` with minimal HTMX pages:
+When the MCP HTTP server is up, these are mounted under `/credits/*`:
 
-- **GET** `/credits/pay` — landing + CLI hint + QR (Accept: HTML or JSON HATEOAS envelope)
+- **GET** `/credits` · `/credits/ui` — compose home (to / amount / note → pay link)
+- **GET** `/credits/pay` — brand-first pay landing + QR (Accept: HTML or JSON HATEOAS envelope); empty `to` → compose home
 - **GET** `/credits/qr.svg` — payment QR
 - **GET** `/credits/request/invite` — claim form (token-gated)
 - **POST** `/credits/request/invite/claim` — HTMX claim
@@ -27,6 +31,12 @@ When the MCP HTTP server is up, these are mounted under `/credits/*` with minima
 - **POST** `…/decline`
 
 Put these behind gateway auth in production; accept only **stages** — confirm (+ optional TOTP) remains the money-moving gate.
+
+### Mini UI notes
+
+- Brand (**ClawQL**) is the hero signal; one headline amount + payee; QR is the full-bleed visual plane
+- No money movement in the browser — CTAs copy CLI / open `clawql://`
+- Motion: brand rise, amount scale-in, QR fade (respects `prefers-reduced-motion`)
 
 ## CLI
 
@@ -49,4 +59,4 @@ clawql payments credits qr --to bob@acme.com --amount 5 --out pay.svg
 | -------- | ------- | ------- |
 | `CLAWQL_CREDITS_HATEOAS_BASE` | (compensation / `clawql://tool`) | Public origin for pay/request/invite URLs |
 
-See also: [money requests](./money-requests.md), [activity feed](./activity-feed.md), [consumer roadmap](./p2p-consumer-roadmap.md).
+See also: [contacts & phone](./credits-contacts.md), [money requests](./money-requests.md), [activity feed](./activity-feed.md), [consumer roadmap](./p2p-consumer-roadmap.md).
