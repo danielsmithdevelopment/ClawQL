@@ -6,7 +6,7 @@
 
 `clawql-payments` is ClawQL's unified payments layer for **human fiat** and **agent micropayments**.
 
-**Positioning:** ClawQL is the only Agentic Gateway that speaks **five agentic payment surfaces natively** — **Stripe**, **[x402](https://www.x402.org/)**, **[MPP](https://docs.stripe.com/mcp)**, **[AP2](https://ap2-protocol.org/)**, and **[ACP](https://developers.openai.com/commerce/specs/checkout)** — plus **PayPal Orders** and **Adyen Checkout** for human/enterprise fiat, all with a **WORM-audited** payment event trail. Docs-site `.well-known` discovery for UCP remains complementary; live adapters live in `clawql-payments`.
+**Positioning:** ClawQL is the only Agentic Gateway that speaks **five agentic payment surfaces natively** — **Stripe**, **[x402](https://www.x402.org/)**, **[MPP](https://docs.stripe.com/mcp)**, **[AP2](https://ap2-protocol.org/)**, and **[ACP](https://developers.openai.com/commerce/specs/checkout)** — plus **PayPal Orders** and **Adyen Checkout** for human/enterprise fiat, all with a **WORM-audited** payment event trail and an **accounting subledger export** for books / CPA handoff. Docs-site `.well-known` discovery for UCP remains complementary; live adapters live in `clawql-payments`.
 
 It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is available to self-hosted operators and ClawQL users who want to bill their own customers.
 
