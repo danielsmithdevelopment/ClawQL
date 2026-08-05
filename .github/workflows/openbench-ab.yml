@@ -174,41 +174,45 @@ jobs:
       - name: Ouroboros task spend clamps
         if: matrix.task == 'ouroboros-oscillation-escape'
         run: |
-          # shellcheck disable=SC2129
           # Prefer dedicated workflow; if dispatched here, force thrash-study caps + arms.
-          echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
-          echo "OPENBENCH_ARMS=ouroboros-on,ouroboros-off" >> "$GITHUB_ENV"
-          echo "CLAWQL_OUROBOROS_MAX_GENERATIONS=4" >> "$GITHUB_ENV"
-          # Preserve caller doom_loop if set; default allow for thrash visibility.
-          if [ -z "${CLAWQL_OPENBENCH_DOOM_LOOP:-}" ]; then
-            echo "CLAWQL_OPENBENCH_DOOM_LOOP=allow" >> "$GITHUB_ENV"
-          fi
+          {
+            echo "OPENBENCH_TIMEOUT_S=180"
+            echo "OPENBENCH_ARMS=ouroboros-on,ouroboros-off"
+            echo "CLAWQL_OUROBOROS_MAX_GENERATIONS=4"
+            # Preserve caller doom_loop if set; default allow for thrash visibility.
+            if [ -z "${CLAWQL_OPENBENCH_DOOM_LOOP:-}" ]; then
+              echo "CLAWQL_OPENBENCH_DOOM_LOOP=allow"
+            fi
+          } >> "$GITHUB_ENV"
           echo "::notice::ouroboros-oscillation-escape → arms=ouroboros-on,off timeout=180s turns≤50"
 
       - name: Search-first task clamps
         if: matrix.task == 'search-first-discovery'
         run: |
-          # shellcheck disable=SC2129
-          echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
-          echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
-          echo "CLAWQL_PROVIDER=github" >> "$GITHUB_ENV"
+          {
+            echo "OPENBENCH_TIMEOUT_S=180"
+            echo "OPENBENCH_ARMS=clawql-on,clawql-off"
+            echo "CLAWQL_PROVIDER=github"
+          } >> "$GITHUB_ENV"
           echo "::notice::search-first-discovery → arms=clawql-on,off timeout=180s provider=github"
 
       - name: Execute-verify task clamps
         if: matrix.task == 'execute-verify-loop'
         run: |
-          # shellcheck disable=SC2129
-          echo "OPENBENCH_TIMEOUT_S=240" >> "$GITHUB_ENV"
-          echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
-          echo "CLAWQL_PROVIDER=github" >> "$GITHUB_ENV"
+          {
+            echo "OPENBENCH_TIMEOUT_S=240"
+            echo "OPENBENCH_ARMS=clawql-on,clawql-off"
+            echo "CLAWQL_PROVIDER=github"
+          } >> "$GITHUB_ENV"
           echo "::notice::execute-verify-loop → arms=clawql-on,off timeout=240s provider=github"
 
       - name: Memory-roundtrip task clamps
         if: matrix.task == 'memory-roundtrip-ingest-recall'
         run: |
-          # shellcheck disable=SC2129
-          echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
-          echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
+          {
+            echo "OPENBENCH_TIMEOUT_S=180"
+            echo "OPENBENCH_ARMS=clawql-on,clawql-off"
+          } >> "$GITHUB_ENV"
           echo "::notice::memory-roundtrip-ingest-recall → arms=clawql-on,off timeout=180s"
 
       - name: Audit / cache / policy / pageindex / hybrid / codegraph / schedule / external-ingest / notify / sandbox / composed / onyx / wikilink clamps
@@ -229,62 +233,65 @@ jobs:
           matrix.task == 'memory-wikilink-hop' ||
           matrix.task == 'memory-conflict-pricing'
         run: |
-          # shellcheck disable=SC2129
-          echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
-          echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
-          if [ "${{ matrix.task }}" = "policy-deny-execute" ]; then
-            echo "CLAWQL_PROVIDER=github" >> "$GITHUB_ENV"
-            echo "CLAWQL_PANGUARD_IN_PROCESS=1" >> "$GITHUB_ENV"
-            echo "CLAWQL_PANGUARD_BLOCK_TOOLS=execute" >> "$GITHUB_ENV"
-          fi
-          if [ "${{ matrix.task }}" = "pageindex-section-qa" ] || [ "${{ matrix.task }}" = "hybrid-recall-source-pin" ]; then
-            echo "CLAWQL_ENABLE_PAGEINDEX=1" >> "$GITHUB_ENV"
-          fi
-          if [ "${{ matrix.task }}" = "codegraph-guided-edit" ] || [ "${{ matrix.task }}" = "codegraph-impact-edit" ]; then
-            echo "CLAWQL_ENABLE_CODEGRAPH=1" >> "$GITHUB_ENV"
-          fi
-          if [ "${{ matrix.task }}" = "codegraph-impact-edit" ]; then
-            echo "OPENBENCH_TIMEOUT_S=300" >> "$GITHUB_ENV"
-          fi
-          if [ "${{ matrix.task }}" = "schedule-synthetic-dry-run" ]; then
-            echo "CLAWQL_ENABLE_SCHEDULE=1" >> "$GITHUB_ENV"
-            echo "CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES=https://example.com" >> "$GITHUB_ENV"
-          fi
-          if [ "${{ matrix.task }}" = "external-ingest-continue" ]; then
-            echo "CLAWQL_ENABLE_DOCUMENTS=1" >> "$GITHUB_ENV"
-            echo "CLAWQL_EXTERNAL_INGEST=1" >> "$GITHUB_ENV"
-          fi
-          if [ "${{ matrix.task }}" = "notify-mock-slack" ]; then
-            echo "CLAWQL_ENABLE_NOTIFY=1" >> "$GITHUB_ENV"
-            echo "CLAWQL_PROVIDER=slack" >> "$GITHUB_ENV"
-            echo "CLAWQL_TEST_SLACK_FETCH_STUB=1" >> "$GITHUB_ENV"
-            echo "CLAWQL_SLACK_TOKEN=xoxb-openbench-stub-not-real" >> "$GITHUB_ENV"
-            echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
-          fi
+          {
+            echo "OPENBENCH_TIMEOUT_S=180"
+            echo "OPENBENCH_ARMS=clawql-on,clawql-off"
+            if [ "${{ matrix.task }}" = "policy-deny-execute" ]; then
+              echo "CLAWQL_PROVIDER=github"
+              echo "CLAWQL_PANGUARD_IN_PROCESS=1"
+              echo "CLAWQL_PANGUARD_BLOCK_TOOLS=execute"
+            fi
+            if [ "${{ matrix.task }}" = "pageindex-section-qa" ] || [ "${{ matrix.task }}" = "hybrid-recall-source-pin" ]; then
+              echo "CLAWQL_ENABLE_PAGEINDEX=1"
+            fi
+            if [ "${{ matrix.task }}" = "codegraph-guided-edit" ] || [ "${{ matrix.task }}" = "codegraph-impact-edit" ]; then
+              echo "CLAWQL_ENABLE_CODEGRAPH=1"
+            fi
+            if [ "${{ matrix.task }}" = "codegraph-impact-edit" ]; then
+              echo "OPENBENCH_TIMEOUT_S=300"
+            fi
+            if [ "${{ matrix.task }}" = "schedule-synthetic-dry-run" ]; then
+              echo "CLAWQL_ENABLE_SCHEDULE=1"
+              echo "CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES=https://example.com"
+            fi
+            if [ "${{ matrix.task }}" = "external-ingest-continue" ]; then
+              echo "CLAWQL_ENABLE_DOCUMENTS=1"
+              echo "CLAWQL_EXTERNAL_INGEST=1"
+            fi
+            if [ "${{ matrix.task }}" = "notify-mock-slack" ]; then
+              echo "CLAWQL_ENABLE_NOTIFY=1"
+              echo "CLAWQL_PROVIDER=slack"
+              echo "CLAWQL_TEST_SLACK_FETCH_STUB=1"
+              echo "CLAWQL_SLACK_TOKEN=xoxb-openbench-stub-not-real"
+              echo "OPENBENCH_TIMEOUT_S=180"
+            fi
+            if [ "${{ matrix.task }}" = "sandbox-trusted-compute" ]; then
+              echo "CLAWQL_ENABLE_SANDBOX=1"
+              echo "CLAWQL_SANDBOX_BACKEND=docker"
+              echo "OPENBENCH_TIMEOUT_S=240"
+            fi
+            if [ "${{ matrix.task }}" = "composed-safe-rollout" ]; then
+              echo "CLAWQL_PROVIDER=github"
+              echo "OPENBENCH_TIMEOUT_S=240"
+            fi
+            if [ "${{ matrix.task }}" = "onyx-mock-cite" ]; then
+              echo "CLAWQL_ENABLE_ONYX=1"
+              echo "CLAWQL_ENABLE_DOCUMENTS=1"
+              echo "CLAWQL_PROVIDER=onyx"
+              echo "CLAWQL_TEST_ONYX_FETCH_STUB=1"
+              echo "ONYX_BASE_URL=http://127.0.0.1:9"
+              echo "ONYX_API_TOKEN=openbench-onyx-stub-token"
+              echo "OPENBENCH_TIMEOUT_S=180"
+            fi
+            if [ "${{ matrix.task }}" = "memory-wikilink-hop" ]; then
+              echo "OPENBENCH_TIMEOUT_S=180"
+            fi
+            if [ "${{ matrix.task }}" = "memory-conflict-pricing" ]; then
+              echo "OPENBENCH_TIMEOUT_S=180"
+            fi
+          } >> "$GITHUB_ENV"
           if [ "${{ matrix.task }}" = "sandbox-trusted-compute" ]; then
-            echo "CLAWQL_ENABLE_SANDBOX=1" >> "$GITHUB_ENV"
-            echo "CLAWQL_SANDBOX_BACKEND=docker" >> "$GITHUB_ENV"
-            echo "OPENBENCH_TIMEOUT_S=240" >> "$GITHUB_ENV"
             docker pull python:3.12-alpine
-          fi
-          if [ "${{ matrix.task }}" = "composed-safe-rollout" ]; then
-            echo "CLAWQL_PROVIDER=github" >> "$GITHUB_ENV"
-            echo "OPENBENCH_TIMEOUT_S=240" >> "$GITHUB_ENV"
-          fi
-          if [ "${{ matrix.task }}" = "onyx-mock-cite" ]; then
-            echo "CLAWQL_ENABLE_ONYX=1" >> "$GITHUB_ENV"
-            echo "CLAWQL_ENABLE_DOCUMENTS=1" >> "$GITHUB_ENV"
-            echo "CLAWQL_PROVIDER=onyx" >> "$GITHUB_ENV"
-            echo "CLAWQL_TEST_ONYX_FETCH_STUB=1" >> "$GITHUB_ENV"
-            echo "ONYX_BASE_URL=http://127.0.0.1:9" >> "$GITHUB_ENV"
-            echo "ONYX_API_TOKEN=openbench-onyx-stub-token" >> "$GITHUB_ENV"
-            echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
-          fi
-          if [ "${{ matrix.task }}" = "memory-wikilink-hop" ]; then
-            echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
-          fi
-          if [ "${{ matrix.task }}" = "memory-conflict-pricing" ]; then
-            echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           fi
           echo "::notice::${{ matrix.task }} → arms=clawql-on,off timeout=${OPENBENCH_TIMEOUT_S:-180}s"
 
