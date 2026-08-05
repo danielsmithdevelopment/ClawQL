@@ -226,7 +226,9 @@ export async function runPaymentsOrgSpend(options: OrgCliOptions): Promise<numbe
     includeWormSpend: options.includeWorm,
   });
   if (options.prometheus) {
+    const { renderOrgWaterfallPrometheus } = await import("../credits/org-waterfall-metrics.js");
     process.stdout.write(renderOrgSpendPrometheus(summary));
+    process.stdout.write(renderOrgWaterfallPrometheus());
     return 0;
   }
   console.log(JSON.stringify(summary, null, 2));

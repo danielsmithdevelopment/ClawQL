@@ -4,6 +4,7 @@
 
 import { getOrgUnifiedSpendSummary, type OrgUnifiedSpendSummary } from "./org-spend.js";
 import { loadOrgCreditsFile } from "./org.js";
+import { renderOrgWaterfallPrometheus } from "./org-waterfall-metrics.js";
 
 function escapeLabel(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
@@ -48,7 +49,7 @@ export function renderOrgSpendPrometheus(summary: OrgUnifiedSpendSummary): strin
   return `${lines.join("\n")}\n`;
 }
 
-/** Load all orgs and emit combined Prometheus text. */
+/** Load all orgs and emit combined Prometheus text (balances + waterfall counters). */
 export async function renderAllOrgCreditsPrometheus(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<string> {
@@ -58,5 +59,6 @@ export async function renderAllOrgCreditsPrometheus(
     const summary = await getOrgUnifiedSpendSummary({ orgId }, env);
     chunks.push(renderOrgSpendPrometheus(summary));
   }
+  chunks.push(renderOrgWaterfallPrometheus());
   return chunks.join("\n");
 }

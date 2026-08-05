@@ -43,6 +43,8 @@ export type OrgMembership = {
   displayName?: string;
   /** Work email used for SSO / invites (must match allowedEmailDomains when set). */
   email?: string;
+  /** Manager this member reports to (tenant id of an org manager/billing_admin). */
+  reportsToTenantId?: string;
   invitedAt?: string;
   invitedByTenantId?: string;
   joinedAt: string;
@@ -69,6 +71,13 @@ export type OrgRecord = {
   members: OrgMembership[];
   /** Company-email SSO binding (domains + optional IdP). */
   sso?: OrgSsoPolicy;
+  /**
+   * Plan tier for seat entitlements (`free`/`pro`/`team`/`enterprise`).
+   * Defaults to `team` when unset.
+   */
+  planId?: "free" | "pro" | "team" | "enterprise";
+  /** Optional hard seat cap override (takes precedence over plan seats when set). */
+  seatLimit?: number;
   /** What happens to unused member credits at period redistribute. Default expire_to_pool. */
   periodEndPolicy: OrgCreditPeriodPolicy;
   createdAt: string;
@@ -137,6 +146,8 @@ export type CreateOrgInput = {
   ssoIssuer?: string;
   ssoJwksUrl?: string;
   billingAdminEmail?: string;
+  planId?: OrgRecord["planId"];
+  seatLimit?: number;
 };
 
 export async function createOrg(
@@ -185,6 +196,8 @@ export async function createOrg(
         }
       : {}),
     periodEndPolicy: input.periodEndPolicy ?? "expire_to_pool",
+    planId: input.planId ?? "team",
+    seatLimit: input.seatLimit,
     createdAt: now,
     updatedAt: now,
   };
@@ -230,7 +243,10 @@ export type AddOrgMemberInput = {
   orgRole?: OrgMemberRole;
   displayName?: string;
   email?: string;
+  reportsToTenantId?: string;
   actorTenantId: string;
+  /** Skip seat entitlement check (billing admin override). */
+  bypassSeatCheck?: boolean;
 };
 
 export async function addOrgMember(
@@ -250,12 +266,19 @@ export async function addOrgMember(
 
   const existing = org.members.find((m) => m.memberTenantId === memberId);
   const now = new Date().toISOString();
+  const becomingActive = !existing || existing.status !== "active";
+  if (becomingActive && !input.bypassSeatCheck) {
+    assertOrgSeatAvailable(org);
+  }
   if (existing) {
     existing.status = "active";
     existing.allocationRoleId = input.allocationRoleId;
     existing.orgRole = input.orgRole ?? existing.orgRole;
     if (input.displayName) existing.displayName = input.displayName;
     if (input.email) existing.email = input.email.trim().toLowerCase();
+    if (input.reportsToTenantId !== undefined) {
+      existing.reportsToTenantId = input.reportsToTenantId.trim() || undefined;
+    }
   } else {
     org.members.push({
       memberTenantId: memberId,
@@ -264,6 +287,7 @@ export async function addOrgMember(
       status: "active",
       displayName: input.displayName,
       email: input.email?.trim().toLowerCase(),
+      reportsToTenantId: input.reportsToTenantId?.trim() || undefined,
       joinedAt: now,
     });
   }
@@ -281,6 +305,54 @@ function assertBillingAdmin(org: OrgRecord, actorTenantId: string): void {
   if (!org.billingAdminTenantIds.includes(actor)) {
     throw new Error(`Actor ${actor} is not a billing admin for org ${org.orgId}`);
   }
+}
+
+export function countActiveSeats(org: OrgRecord): number {
+  return org.members.filter((m) => m.status === "active").length;
+}
+
+/** Effective seat limit: explicit seatLimit, else plan seats (default team). */
+export function resolveOrgSeatLimit(org: OrgRecord): number {
+  if (org.seatLimit !== undefined && Number.isFinite(org.seatLimit)) {
+    return Math.max(0, Math.round(org.seatLimit));
+  }
+  const planId = org.planId ?? "team";
+  // Inline plan seats to avoid circular imports at module load in tests.
+  const seatsByPlan: Record<string, number> = {
+    free: 1,
+    pro: 1,
+    team: 20,
+    enterprise: Number.POSITIVE_INFINITY,
+  };
+  return seatsByPlan[planId] ?? 20;
+}
+
+export function assertOrgSeatAvailable(org: OrgRecord, additionalSeats = 1): void {
+  const limit = resolveOrgSeatLimit(org);
+  if (!Number.isFinite(limit)) return;
+  const used = countActiveSeats(org);
+  if (used + additionalSeats > limit) {
+    throw new Error(
+      `Org ${org.orgId} seat limit reached (${used}/${limit}). Upgrade plan or raise seatLimit.`
+    );
+  }
+}
+
+export function assertManagerOrBillingAdmin(org: OrgRecord, actorTenantId: string): void {
+  const actor = actorTenantId.trim();
+  if (org.billingAdminTenantIds.includes(actor)) return;
+  const m = findMembership(org, actor);
+  if (m?.orgRole === "manager") return;
+  throw new Error(`Actor ${actor} is not a manager or billing admin for org ${org.orgId}`);
+}
+
+export function isReportOfManager(
+  org: OrgRecord,
+  managerTenantId: string,
+  reportTenantId: string
+): boolean {
+  const report = findMembership(org, reportTenantId);
+  return report?.reportsToTenantId === managerTenantId.trim();
 }
 
 function normalizeDomains(domains: string[] | undefined): string[] {
@@ -362,7 +434,9 @@ export type InviteOrgMemberInput = {
   allocationRoleId: OrgRoleId;
   orgRole?: OrgMemberRole;
   displayName?: string;
+  reportsToTenantId?: string;
   actorTenantId: string;
+  bypassSeatCheck?: boolean;
 };
 
 /**
@@ -390,12 +464,19 @@ export async function inviteOrgMember(
   const existing = org.members.find(
     (m) => m.memberTenantId === memberTenantId || m.email === email
   );
+  const becomingActive = !existing || existing.status !== "active";
+  if (becomingActive && !input.bypassSeatCheck) {
+    assertOrgSeatAvailable(org);
+  }
   if (existing) {
     existing.status = "active";
     existing.email = email;
     existing.allocationRoleId = input.allocationRoleId;
     existing.orgRole = input.orgRole ?? existing.orgRole;
     if (input.displayName) existing.displayName = input.displayName;
+    if (input.reportsToTenantId !== undefined) {
+      existing.reportsToTenantId = input.reportsToTenantId.trim() || undefined;
+    }
     existing.invitedAt = now;
     existing.invitedByTenantId = input.actorTenantId.trim();
   } else {
@@ -406,6 +487,7 @@ export async function inviteOrgMember(
       status: "active",
       displayName: input.displayName,
       email,
+      reportsToTenantId: input.reportsToTenantId?.trim() || undefined,
       invitedAt: now,
       invitedByTenantId: input.actorTenantId.trim(),
       joinedAt: now,
@@ -427,10 +509,114 @@ export async function listOrgMembers(
 ): Promise<OrgMembership[]> {
   const org = await getOrg(orgId, env);
   if (!org) throw new Error(`Unknown org: ${orgId}`);
-  if (options.actorTenantId) assertBillingAdmin(org, options.actorTenantId);
+  if (options.actorTenantId) assertManagerOrBillingAdmin(org, options.actorTenantId);
   const status = options.status ?? "active";
-  if (status === "any") return [...org.members];
-  return org.members.filter((m) => m.status === status);
+  let members = status === "any" ? [...org.members] : org.members.filter((m) => m.status === status);
+  // Managers see only themselves + direct reports unless billing admin
+  if (options.actorTenantId) {
+    const actor = options.actorTenantId.trim();
+    if (!org.billingAdminTenantIds.includes(actor)) {
+      members = members.filter(
+        (m) => m.memberTenantId === actor || m.reportsToTenantId === actor
+      );
+    }
+  }
+  return members;
+}
+
+/**
+ * Billing admin: set plan + optional seat cap for entitlement enforcement on invite/add.
+ */
+export async function setOrgSeatPolicy(
+  input: {
+    orgId: string;
+    actorTenantId: string;
+    planId?: OrgRecord["planId"];
+    seatLimit?: number;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  const file = await loadOrgCreditsFile(env);
+  const key = input.orgId.trim().toLowerCase();
+  const org = file.orgs[key];
+  if (!org) throw new Error(`Unknown org: ${input.orgId}`);
+  assertBillingAdmin(org, input.actorTenantId);
+  if (input.planId) org.planId = input.planId;
+  if (input.seatLimit !== undefined) {
+    org.seatLimit = Math.max(0, Math.round(input.seatLimit));
+  }
+  org.updatedAt = new Date().toISOString();
+  file.orgs[key] = org;
+  await saveOrgCreditsFile(file, env);
+  return org;
+}
+
+/** Assign a member's manager (reports-to). Billing admin only. */
+export async function setMemberReportsTo(
+  input: {
+    orgId: string;
+    memberTenantId: string;
+    reportsToTenantId: string | null;
+    actorTenantId: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  const file = await loadOrgCreditsFile(env);
+  const key = input.orgId.trim().toLowerCase();
+  const org = file.orgs[key];
+  if (!org) throw new Error(`Unknown org: ${input.orgId}`);
+  assertBillingAdmin(org, input.actorTenantId);
+  const member = org.members.find((m) => m.memberTenantId === input.memberTenantId.trim());
+  if (!member) throw new Error(`Unknown member: ${input.memberTenantId}`);
+  if (input.reportsToTenantId) {
+    const manager = findMembership(org, input.reportsToTenantId);
+    if (!manager || (manager.orgRole !== "manager" && manager.orgRole !== "billing_admin")) {
+      throw new Error("reportsToTenantId must be an active manager or billing_admin");
+    }
+    member.reportsToTenantId = input.reportsToTenantId.trim();
+  } else {
+    member.reportsToTenantId = undefined;
+  }
+  org.updatedAt = new Date().toISOString();
+  file.orgs[key] = org;
+  await saveOrgCreditsFile(file, env);
+  return org;
+}
+
+/**
+ * Manager (or billing admin): transfer from own balance to a direct report.
+ */
+export async function transferManagerToReport(
+  input: {
+    orgId: string;
+    managerTenantId: string;
+    reportTenantId: string;
+    amountCents: number;
+    note?: string;
+    idempotencyKey?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<CreditTransferResult> {
+  const org = await getOrg(input.orgId, env);
+  if (!org) throw new Error(`Unknown org: ${input.orgId}`);
+  assertManagerOrBillingAdmin(org, input.managerTenantId);
+  const isAdmin = org.billingAdminTenantIds.includes(input.managerTenantId.trim());
+  if (!isAdmin && !isReportOfManager(org, input.managerTenantId, input.reportTenantId)) {
+    throw new Error(
+      `${input.reportTenantId} is not a direct report of manager ${input.managerTenantId}`
+    );
+  }
+  return transferWithinOrg(
+    {
+      orgId: input.orgId,
+      fromMemberTenantId: input.managerTenantId,
+      toMemberTenantId: input.reportTenantId,
+      amountCents: input.amountCents,
+      note: input.note ?? `manager top-up to report`,
+      idempotencyKey: input.idempotencyKey,
+    },
+    env
+  );
 }
 
 export async function suspendOrgMember(
@@ -451,6 +637,12 @@ export async function reactivateOrgMember(
   input: { orgId: string; memberTenantId: string; actorTenantId: string },
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgRecord> {
+  const org = await getOrg(input.orgId, env);
+  if (!org) throw new Error(`Unknown org: ${input.orgId}`);
+  const member = org.members.find((m) => m.memberTenantId === input.memberTenantId.trim());
+  if (member && member.status !== "active") {
+    assertOrgSeatAvailable(org);
+  }
   return setMemberStatus({ ...input, status: "active" }, env);
 }
 

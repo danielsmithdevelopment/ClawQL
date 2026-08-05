@@ -1,73 +1,91 @@
 # Enterprise control plane
 
-**Status:** Tier-1 scaffold  
+**Status:** Tier-1 + next slices  
 **Audience:** Company billing admins (CFO), IT (SSO), platform operators
 
-ClawQL is building a **company-scoped control plane** on top of closed-loop org credits and OIDC JWT consumption. This is not a consumer payments network and ClawQL is **not an IdP**.
+ClawQL is building a **company-scoped control plane** on top of closed-loop org credits and OIDC JWT consumption. This is not a consumer payments network and ClawQL is **not an IdP** — it **verifies** customer IdP tokens (and can route per-org JWKS).
 
 ## Product shape
 
-| Capability | What shipped (scaffold) | Next |
-| --- | --- | --- |
-| **SSO under company email** | OIDC maps `email` / `hd`; `CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS` enforces domain; org `sso.allowedEmailDomains` + `findOrgByEmailDomain` | Per-org issuer/JWKS routing; Auth-code login UI; SCIM |
-| **User management** | `inviteOrgMember`, `listOrgMembers`, `suspend` / `remove` / `reactivate`; CLI `clawql payments org …` | Manager scopes; seat entitlements; IdP group sync |
-| **Unified spend + billing** | `getOrgUnifiedSpendSummary` (pool + member balances; optional WORM filter) | Member → pool → Stripe overage waterfall; Stripe invoice join |
-| **Observability** | Prometheus text: `clawql_org_*` gauges via `org spend --prometheus` | Grafana panel pack; deduction counters |
+| Capability | Status |
+| --- | --- |
+| **SSO under company email** | OIDC maps `email` / `hd`; domain allowlists; **per-org IdP routing** (`issuer` / `jwksUrl` by domain) |
+| **User management** | Invite / list / suspend / remove; **seat entitlements**; **manager scopes** + transfer to reports |
+| **Unified spend + billing** | Pool + member snapshot; **member → pool → Stripe overage** waterfall holds |
+| **Observability** | Prometheus `clawql_org_*` + waterfall counters; **Grafana** [`clawql-enterprise-org-spend.json`](../grafana/clawql-enterprise-org-spend.json) |
 
-## Roles (same as org credits)
+## Roles
 
 | Role | Typical persona | Capabilities |
 | --- | --- | --- |
-| `billing_admin` | CFO / owner | SSO domains, invites, suspend/remove, allocate, period distribute, spend view |
-| `manager` | Team lead | (Next) team usage; transfer to reports |
-| `member` | Employee / intern | Spend credits; within-org transfer |
+| `billing_admin` | CFO / owner | SSO domains, invites, seats, suspend/remove, allocate, period distribute, full spend view |
+| `manager` | Team lead | View self + direct reports; transfer from own balance to reports |
+| `member` | Employee / intern | Spend credits; within-org peer transfer |
 
-## SSO under `@company.com`
-
-ClawQL **consumes** IdP tokens (Okta / Entra / Google Workspace). Domain restriction:
-
-1. **IdP side (required for production):** restrict app assignment to the company directory.
-2. **ClawQL gateway:** set allowed domains so foreign emails cannot present a token even if mis-issued:
+## SSO under `@company.com` (+ per-org IdP)
 
 ```bash
 export CLAWQL_AUTH_MODE=oidc
+# Global fallback (single-tenant / default IdP):
 export CLAWQL_AUTH_OIDC_JWKS_URL=https://idp.example/.well-known/jwks.json
 export CLAWQL_AUTH_OIDC_ISSUER=https://idp.example
-export CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS=acme.com,acme.co.uk
-```
+export CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS=acme.com
 
-3. **Org registry:** bind the same domains on the company org so invites and directory resolution stay closed-loop:
-
-```bash
+# Multi-tenant: bind IdP per company org, then use createOrgCreditsIdpRouter +
+# verifyOidcBearerTokenWithOrgRouting from clawql-auth.
 clawql payments org create --org-id acme --actor-tenant cfo --domains acme.com --email cfo@acme.com
-clawql payments org sso --org-id acme --actor-tenant cfo --domains acme.com,acme.co.uk
+clawql payments org sso --org-id acme --actor-tenant cfo --domains acme.com
+```
+
+Library:
+
+```ts
+import { verifyOidcBearerTokenWithOrgRouting } from "clawql-auth";
+import { createOrgCreditsIdpRouter } from "clawql-payments";
+
+const result = await verifyOidcBearerTokenWithOrgRouting(token, {
+  router: createOrgCreditsIdpRouter(),
+});
+// result.claims.orgId set from route when domain matches
+```
+
+## Seats + manager scopes
+
+```bash
+# Plan seats (free=1, pro=1, team=20, enterprise=∞) or hard cap:
+# set via library setOrgSeatPolicy({ planId: "team", seatLimit: 50 })
+
 clawql payments org invite --org-id acme --actor-tenant cfo --email intern@acme.com --role intern
+# Managers: add with orgRole=manager, set reportsToTenantId on members
 ```
 
-ATR claims gain optional `email`, `emailVerified`, `emailDomain`, `orgId` (see `clawql-auth`).
+`transferManagerToReport` — manager tops up a direct report from their own balance (still closed-loop).
 
-## User management CLI
+## Deduction waterfall
 
-```bash
-clawql payments org members --org-id acme
-clawql payments org suspend --org-id acme --actor-tenant cfo --member-tenant acme:intern-acme-com
-clawql payments org remove  --org-id acme --actor-tenant cfo --member-tenant …
+```ts
+import { holdOrgWaterfall } from "clawql-payments";
+
+const held = await holdOrgWaterfall({
+  orgId: "acme",
+  memberTenantId: "intern1",
+  amountCents: 1000,
+  idempotencyKey: "inference-req-1",
+  allowOverage: true, // remainder → overageCents for Stripe meter
+});
+// slices: member → pool → overage
 ```
 
-## Unified spend + observability
+Wire capture/release on each slice’s `idempotencyKey` (`…:member` / `…:pool`). Overage is **not** a ledger hold — bill via Stripe meter / invoice to the billing admin.
+
+## Unified spend + Grafana
 
 ```bash
-# CFO JSON snapshot (credits pool + members)
 clawql payments org spend --org-id acme --actor-tenant cfo
-
-# Optional WORM payment rows for org tenant ids
-clawql payments org spend --org-id acme --include-worm
-
-# Prometheus text for scraping / Grafana
 clawql payments org spend --org-id acme --prometheus
 ```
 
-Metrics (gauges): `clawql_org_pool_balance_cents`, `clawql_org_member_balance_cents`, `clawql_org_total_credits_cents`, `clawql_org_member_count`, `clawql_org_member_balance_cents_by_tenant`.
+Import [`docs/grafana/clawql-enterprise-org-spend.json`](../grafana/clawql-enterprise-org-spend.json) (UID `clawql-enterprise-org-spend`). See [`docs/grafana/README.md`](../grafana/README.md).
 
 ## Compliance boundary
 
@@ -75,6 +93,7 @@ Managed hosting may enable **closed-loop company credits** and company-email SSO
 
 ## Related packages
 
-- [`clawql-auth`](../../packages/clawql-auth) — OIDC consumer + email-domain policy  
-- [`clawql-payments` org module](../../packages/clawql-payments/src/credits/org.ts) — membership + budgets  
-- [`org-spend.ts`](../../packages/clawql-payments/src/credits/org-spend.ts) / [`org-metrics.ts`](../../packages/clawql-payments/src/credits/org-metrics.ts)
+- [`clawql-auth`](../../packages/clawql-auth) — OIDC consumer, email-domain policy, **org IdP routing**  
+- [`org.ts`](../../packages/clawql-payments/src/credits/org.ts) — membership, seats, managers  
+- [`org-waterfall.ts`](../../packages/clawql-payments/src/credits/org-waterfall.ts) — spend hierarchy  
+- [`org-idp-router.ts`](../../packages/clawql-payments/src/credits/org-idp-router.ts) — payments → auth bridge

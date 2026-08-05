@@ -31,6 +31,10 @@ Gateway authentication and shared step-up primitives for the Agentic Gateway.
 | `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL` | Require MFA-class `acr`/`amr` for financial MCP tools    |
 | `CLAWQL_AUTH_FINANCIAL_TOOLS`           | Override financial tool name list (comma-separated)      |
 
+## Per-org IdP routing (multi-tenant)
+
+For SaaS with one IdP per company, inject an `OrgIdpRouter` (e.g. from `createOrgCreditsIdpRouter` in `clawql-payments`) and call `verifyOidcBearerTokenWithOrgRouting`. The router selects JWKS/issuer/domains from the JWT email domain (or `iss`). ClawQL still does **not** issue login tokens.
+
 ## Step-up (not SSO)
 
 ```ts

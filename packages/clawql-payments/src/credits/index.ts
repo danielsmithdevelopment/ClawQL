@@ -207,6 +207,9 @@ export {
   addOrgMember,
   allocateFromPoolToMember,
   assertEmailMatchesOrgDomains,
+  assertManagerOrBillingAdmin,
+  assertOrgSeatAvailable,
+  countActiveSeats,
   createOrg,
   distributeOrgPeriod,
   emailDomainOf,
@@ -214,6 +217,7 @@ export {
   findOrgByEmailDomain,
   getOrg,
   inviteOrgMember,
+  isReportOfManager,
   listOrgMembers,
   loadOrgCreditsFile,
   orgCreditsAllowedOnManagedHosting,
@@ -221,9 +225,13 @@ export {
   reactivateOrgMember,
   removeOrgMember,
   resetOrgCreditsForTests,
+  resolveOrgSeatLimit,
+  setMemberReportsTo,
   setOrgRolePolicies,
+  setOrgSeatPolicy,
   setOrgSsoPolicy,
   suspendOrgMember,
+  transferManagerToReport,
   transferWithinOrg,
   type DistributePeriodResult,
   type InviteOrgMemberInput,
@@ -245,3 +253,16 @@ export {
   renderAllOrgCreditsPrometheus,
   renderOrgSpendPrometheus,
 } from "./org-metrics.js";
+export { createOrgCreditsIdpRouter } from "./org-idp-router.js";
+export {
+  holdOrgWaterfall,
+  type HoldOrgWaterfallInput,
+  type OrgWaterfallHoldResult,
+  type WaterfallSlice,
+  type WaterfallSourceKind,
+} from "./org-waterfall.js";
+export {
+  renderOrgWaterfallPrometheus,
+  resetOrgWaterfallMetricsForTests,
+  snapshotOrgWaterfallMetrics,
+} from "./org-waterfall-metrics.js";
