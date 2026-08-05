@@ -354,11 +354,15 @@ Goal: grow OBT+RTP corpus with real `codegraph_*` tool traces after `codegraph-i
 
 ### Replication queue (Phase 0)
 
-| Task                             | Target n | Status            |
-| -------------------------------- | -------- | ----------------- |
-| `search-first-discovery`         | 3        | queued (dispatch) |
-| `memory-roundtrip-ingest-recall` | 3        | queued            |
-| `policy-deny-execute`            | 3        | queued            |
+| Task                             | Target n | Status                                                          |
+| -------------------------------- | -------- | --------------------------------------------------------------- |
+| `search-first-discovery`         | 3        | **in progress** via `pr_active` + `pr_trials: 3` (dispatch 403) |
+| `memory-roundtrip-ingest-recall` | 3        | queued                                                          |
+| `policy-deny-execute`            | 3        | queued                                                          |
+
+### 2026-08-05 — Phase 0 n≥3 kickoff (`pr_trials`)
+
+`workflow_dispatch` unavailable to cloud agent (HTTP 403). Enabled `ci-matrix.json` → `pr_trials` (clamp 1–3) so PR A/B can run n=3. Active cell: `search-first-discovery`.
 
 ### 2026-08-04 — [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189) (P2.5 — both WIN)
 

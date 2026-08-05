@@ -42,7 +42,7 @@ Phase 7  B-1.3 cycle-over-cycle; B-3.2 langs; B-6.3 legal
 | ID   | Task                                                                                                                                                        | Size | Done when                                        |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ------------------------------------------------ |
 | P0-a | Pick 3–5 cells for n=3: `search-first-discovery`, `memory-roundtrip-ingest-recall`, `policy-deny-execute`, optionally `notify-mock-slack`, `onyx-mock-cite` | S    | List committed in ledger “replication queue”     |
-| P0-b | Add workflow_dispatch preset or script: `OPENBENCH_TRIALS=3` + `task=…` / `all-including-retired` subset                                                    | S    | Docs in `openbench-github-actions.md`            |
+| P0-b | Add `OPENBENCH_TRIALS=3` via dispatch **or** `ci-matrix.json` → `pr_trials` (PR fallback when dispatch unavailable)                                         | S    | Docs in `openbench-github-actions.md`            |
 | P0-c | Run first n=3 matrix (one task) via dispatch                                                                                                                | M    | Run ID + Wilson note in ledger (even if CI-only) |
 | P0-d | Repeat for remaining queue; update “honest gaps”                                                                                                            | M    | Gaps say which cells have n≥3                    |
 

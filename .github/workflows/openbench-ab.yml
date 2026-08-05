@@ -112,6 +112,7 @@ jobs:
     outputs:
       tasks: ${{ steps.set.outputs.tasks }}
       has_tasks: ${{ steps.set.outputs.has_tasks }}
+      trials: ${{ steps.set.outputs.trials }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - id: set
@@ -136,6 +137,8 @@ jobs:
               print(f"::warning::Live OpenBench paused — {cfg.get('live_pause_reason', 'live_enabled=false')}")
           retired = ",".join(sorted(cfg.get("retired") or {}))
           print(f"Retired tasks (skipped on PR): {retired}")
+          trials = cfg.get("pr_trials", 1)
+          print(f"PR trials (ci-matrix pr_trials): {trials}")
           PY
 
   ab-compare:
@@ -160,7 +163,8 @@ jobs:
       OPENBENCH_TASK: ${{ matrix.task }}
       # Cheap OpenRouter default for CI spend control
       OPENBENCH_MODEL: ${{ inputs.model || 'openrouter/deepseek/deepseek-chat' }}
-      OPENBENCH_TRIALS: ${{ inputs.trials || '1' }}
+      # Dispatch `trials` wins; else ci-matrix `pr_trials` (Phase 0 n≥3 via PR).
+      OPENBENCH_TRIALS: ${{ inputs.trials || needs.resolve-matrix.outputs.trials || '1' }}
       OPENBENCH_TIMEOUT_S: ${{ inputs.timeout_s || '300' }}
       OPENBENCH_ARMS: ${{ inputs.arms || 'clawql-on,clawql-off' }}
       CLAWQL_INFERENCE_PORT: ${{ inputs.inference_port || '8080' }}
