@@ -16,14 +16,17 @@ You must update **all** of these files so the feature is wired end-to-end:
 
 Also update `src/index.js` only if needed to re-export the router.
 
-## Hints
+## How to work (hard rules)
 
-When ClawQL **codegraph** tools are available (`codegraph_index`,
-`codegraph_query`, `codegraph_neighbors`, `codegraph_path`,
-`codegraph_explain`), use them to discover dependents of
-`getWidgetById` / `handler.js` instead of guessing. Index with
-`root` = `.` (workspace root). Do not leave orphan handler code that
-nothing routes to.
+1. **Edit files yourself** with the write/edit tools. Do **not** delegate the
+   implementation to the OpenCode `task` / explore subagent — that skips grading.
+2. When ClawQL **codegraph** tools are available, call them **before** editing:
+   - `clawql_codegraph_index` with **`root` / `rootPath` = `.`** (workspace root
+     only — never `/` or a host absolute path outside this package)
+   - then `clawql_codegraph_query` / `neighbors` / `path` for `getWidgetById`
+     / `handler.js` / `router.js`
+3. Finish every file in the impact set, then run
+   `node --test tests/widgets.test.js`.
 
 ## Done when
 
