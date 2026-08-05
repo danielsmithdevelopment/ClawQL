@@ -39,10 +39,15 @@ import {
   runPaymentsCompensationApprove,
   runPaymentsCompensationConfirm,
   runPaymentsCompensationCancel,
+  runPaymentsAccountingExport,
+  runPaymentsTaxEvidence,
+  runPaymentsTaxProfileSet,
+  runPaymentsTaxProfileShow,
   type SpendGroupBy,
   type PayoutMethod,
   type OffRampProvider,
   type CompensationReason,
+  type AccountingExportFormat,
 } from "clawql-payments";
 
 export type PaymentsCliOptions = {
@@ -52,6 +57,16 @@ export type PaymentsCliOptions = {
   correlationId?: string;
   limit?: number;
   json?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+  format?: string;
+  output?: string;
+  skipVerify?: boolean;
+  taxYear?: number;
+  partyId?: string;
+  taxForm?: string;
+  collected?: boolean;
+  taxProfileRef?: string;
   email?: string;
   name?: string;
   customer?: string;
@@ -467,6 +482,61 @@ export async function runPaymentsCompensationCancelCmd(
   return runPaymentsCompensationCancel({
     actionId: options.actionId,
     code: options.code,
+    json: options.json,
+  });
+}
+
+function asAccountingFormat(format?: string): AccountingExportFormat | undefined {
+  if (format === "csv" || format === "json" || format === "qb-csv" || format === "xero-csv") {
+    return format;
+  }
+  return undefined;
+}
+
+export async function runPaymentsAccountingExportCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsAccountingExport({
+    from: options.dateFrom,
+    to: options.dateTo,
+    format: asAccountingFormat(options.format),
+    output: options.output,
+    skipVerify: options.skipVerify,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsTaxEvidenceCmd(options: PaymentsCliOptions = {}): Promise<number> {
+  const format =
+    options.format === "json" || options.format === "markdown" || options.format === "pack"
+      ? options.format
+      : undefined;
+  return runPaymentsTaxEvidence({
+    taxYear: options.taxYear,
+    output: options.output,
+    format,
+    skipVerify: options.skipVerify,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsTaxProfileSetCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsTaxProfileSet({
+    partyId: options.partyId ?? options.creatorId ?? options.agentId,
+    taxForm: options.taxForm,
+    collected: options.collected,
+    taxProfileRef: options.taxProfileRef,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsTaxProfileShowCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsTaxProfileShow({
+    partyId: options.partyId ?? options.creatorId ?? options.agentId,
     json: options.json,
   });
 }

@@ -101,7 +101,8 @@ export type DocumentConsumerHandler = (
 const consumerAborts: AbortController[] = [];
 const consumerLoops: Promise<void>[] = [];
 
-async function ensureDurableConsumer(opts: {
+/** @internal Exported for agent-bridge / tests — prefer typed start* helpers. */
+export async function ensureDurableConsumer(opts: {
   durable: string;
   filterSubject: string;
 }): Promise<void> {
@@ -151,7 +152,8 @@ export async function ensureConeshareFollowupConsumer(): Promise<void> {
   });
 }
 
-async function startConsumerLoop(opts: {
+/** @internal Exported for agent-bridge / tests — prefer typed start* helpers. */
+export async function startConsumerLoop(opts: {
   durable: string;
   onMessage: (data: Uint8Array) => Promise<{ ok: boolean; error?: string }>;
 }): Promise<void> {

@@ -40,7 +40,8 @@ Under `clawql-mcp:` in `values-idp-full.yaml`:
 - **Document pipeline** — Docling (layout), Tika, Gotenberg, Stirling, Paperless
 - **OpenClaw + dashboard** — Agent Chat bridge
 - **Workflow + Argo CD MCP** — `enableWorkflow`, `enableArgoCd` (RBAC only; controllers are BYO)
-- **NATS JetStream** + **Ouroboros Postgres**
+- **NATS JetStream** + **document workers** — publish + `nats.worker.idpPipeline` / `coneshareFollowup` (see [nats-idp-e2e.md](../runbooks/nats-idp-e2e.md))
+- **Ouroboros Postgres**
 - **Prometheus** — `metrics.serviceMonitor` for kube-prometheus-stack
 
 ## BYO (install separately)
@@ -63,6 +64,8 @@ After install:
 
 ## Related
 
+- [NATS IDP e2e enablement](../runbooks/nats-idp-e2e.md)
 - [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md)
+- [ClawQL-Agent IDP NATS contract](../openclaw/clawql-agent-idp-nats.md) ([#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128))
 - [Slack-first IDP runbook](../openclaw/slack-first-idp-runbook.md) ([#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256))
 - [Agent → PR → Argo CD](../gitops/agent-pr-argocd-pipeline.md) ([#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258))

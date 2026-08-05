@@ -107,6 +107,11 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'monthly',
     priority: 0.9,
   },
+  {
+    path: '/surveillance/clawql-surveillance',
+    changeFrequency: 'monthly',
+    priority: 0.88,
+  },
   { path: '/agent-setup', changeFrequency: 'weekly', priority: 0.97 },
   { path: '/architecture', changeFrequency: 'monthly', priority: 0.93 },
   { path: '/reference', changeFrequency: 'weekly', priority: 0.9 },

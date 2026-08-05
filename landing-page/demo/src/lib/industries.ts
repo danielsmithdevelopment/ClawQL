@@ -1,5 +1,6 @@
 export type {
   Industry,
+  IndustryAudience,
   IndustryAuditEvent,
   IndustryExample,
   IndustryResource,

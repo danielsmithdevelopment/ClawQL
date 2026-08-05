@@ -29,7 +29,7 @@ function publishCmd(workspace) {
   return `npm publish -w ${workspace} --provenance --access public`;
 }
 
-function tryPublish(workspace) {
+function tryPublish(workspace, { softFail = false } = {}) {
   const cmd = publishCmd(workspace);
   if (dryRun) {
     console.log(`[dry-run] ${cmd}`);
@@ -42,6 +42,19 @@ function tryPublish(workspace) {
     const output = `${error.stdout ?? ""}${error.stderr ?? ""}${error.message ?? ""}`;
     if (output.includes("E404") || output.includes("404 Not Found")) {
       return { ok: false, reason: "404", output };
+    }
+    // Own-cadence extras (and first-time clawql-* names) may lack OIDC / NPM_TOKEN.
+    // Soft-fail so clawql-mcp can still publish (bundled or registry-linked).
+    if (
+      softFail &&
+      (output.includes("ENEEDAUTH") ||
+        output.includes("need auth") ||
+        output.includes("EOTP") ||
+        output.includes("403 Forbidden") ||
+        output.includes("EPUBLISHCONFLICT") ||
+        output.includes("cannot publish over"))
+    ) {
+      return { ok: false, reason: "auth-or-conflict", output };
     }
     if (output) process.stderr.write(output);
     throw error;
@@ -82,15 +95,18 @@ function publishClawqlMcp(bundleWorkspace) {
 
 let bundleWorkspace = forceBundle;
 
-// Own-cadence packages first (e.g. mcp-grpc-transport@1.0.0) so clawql-mcp peers resolve.
+// Own-cadence packages first (e.g. mcp-grpc-transport@1.0.0) when OIDC/token allows.
+// localPackExtras are for pack-smoke + optional publish — never abort the clawql-mcp release.
 if (!bundleWorkspace) {
   for (const name of extras) {
     console.log(`Publishing ${name} (localPackExtras)…`);
-    const result = tryPublish(name);
+    const result = tryPublish(name, { softFail: true });
     if (!result.ok) {
       console.warn(
-        `WARN: ${name} publish failed (${result.reason}). Continuing with clawql-* packages.`
+        `WARN: ${name} publish failed (${result.reason}). ` +
+          "Skipping (own cadence / not linked for OIDC). Continuing with clawql-* packages.",
       );
+      if (result.output) process.stderr.write(`${result.output}\n`);
     }
   }
 }
@@ -99,12 +115,13 @@ if (!bundleWorkspace) {
   for (const name of packages) {
     if (name === "clawql-mcp") continue;
     console.log(`Publishing ${name}…`);
-    const result = tryPublish(name);
+    const result = tryPublish(name, { softFail: true });
     if (!result.ok) {
       console.warn(
         `WARN: ${name} publish failed (${result.reason}). ` +
           "Falling back to bundled clawql-mcp — add NPM_TOKEN or link trusted publishers on npmjs.com, then re-run to publish workspace packages separately.",
       );
+      if (result.output && result.reason !== "404") process.stderr.write(`${result.output}\n`);
       bundleWorkspace = true;
       break;
     }

@@ -149,6 +149,8 @@ curl -sS -X POST http://localhost:8080/idp/nextcloud/webhook \
 
 ## Limits (v1)
 
-- KEDA trigger targets the **HITL resume** durable by default. For document-only lag scaling, point `nats.keda.consumer` at `clawql-idp-pipeline` (or run a second ScaledObject).
+- KEDA **ScaledObject** includes lag triggers for HITL (`enableWorkflow`) and document durables when `nats.worker.idpPipeline` / `nats.worker.coneshareFollowup` are true. Add more via `nats.keda.extraConsumers`.
 - **External NATS** (`nats.url`) without in-cluster monitoring requires a future `nats.keda.monitoringEndpoint` override — use in-cluster NATS for KEDA today.
 - Worker shares the MCP **ServiceAccount**; IDP path prefers `CLAWQL_MCP_INTERNAL_URL` → `POST /idp/pipeline/run` when documents deps are not embedded in the worker image process.
+- Operator e2e: [nats-idp-e2e.md](../runbooks/nats-idp-e2e.md).
+- Agent bridge (Hermes/Pi, `#128`): [idp-nats-agent-bridge.md](../runbooks/idp-nats-agent-bridge.md) — Helm `nats.agentBridge.enabled`.

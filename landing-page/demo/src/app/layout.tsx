@@ -177,6 +177,7 @@ export default function RootLayout({
                   <FooterLink href="/industries/lending">Lending</FooterLink>
                   <FooterLink href="/industries/real-estate">Real estate</FooterLink>
                   <FooterLink href="/industries/surveillance">Surveillance</FooterLink>
+                  <FooterLink href="/industries/government">Government</FooterLink>
                   <FooterLink href="/industries/healthcare">Healthcare</FooterLink>
                   <FooterLink href="/industries/legal">Legal</FooterLink>
                   <FooterLink href="/industries/insurance">Insurance</FooterLink>

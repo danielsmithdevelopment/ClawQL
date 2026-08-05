@@ -910,6 +910,23 @@ nats:
       limits:
         cpu: "1"
         memory: 512Mi
+  # IDP agent bridge (#128): terminal/viewer document events → MCP memory_ingest / notify.
+  # Pair with Hermes or Pi as the interactive MCP client — see deployment/samples/idp-nats-agent/.
+  agentBridge:
+    enabled: false
+    replicas: 1
+    durable: clawql-idp-agent-bridge
+    # Streamable HTTP MCP (defaults to in-cluster clawql-mcp Service /mcp).
+    mcpHttpUrl: ""
+    # Optional Slack channel on pipeline.failed.
+    notifyChannel: ""
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: "500m"
+        memory: 256Mi
   keda:
     enabled: false
     # Requires KEDA (https://keda.sh) installed in the cluster.
@@ -923,6 +940,8 @@ nats:
     # Defaults match clawql-automation env (CLAWQL_WORKFLOW / clawql-hitl-resume).
     stream: ""
     consumer: ""
+    # Extra JetStream durables for KEDA lag (beyond HITL / idpPipeline / coneshareFollowup auto-triggers).
+    extraConsumers: []
     # Pre-create JetStream consumer so KEDA can read lag before first worker pod.
     bootstrapConsumer: true
 

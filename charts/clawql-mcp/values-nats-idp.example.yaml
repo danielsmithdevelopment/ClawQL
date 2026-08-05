@@ -1,0 +1,52 @@
+# Example: NATS document consumers for IDP (Nextcloud inbox + Coneshare follow-up).
+# Overlay on a normal clawql-mcp install:
+#
+#   helm upgrade --install clawql charts/clawql-mcp \
+#     -f charts/clawql-mcp/values-nats-idp.example.yaml \
+#     --set envFromSecret=clawql-provider-env \
+#     --namespace clawql
+#
+# Secret should include (production):
+#   CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN
+#   CLAWQL_CONESHARE_WEBHOOK_TOKEN
+#   CLAWQL_IDP_PIPELINE_RUN_TOKEN   (optional but recommended)
+#   CLAWQL_IDP_REDACT_LIST
+#   NEXTCLOUD_* / CONESHARE_* as needed
+
+enableDocuments: true
+enableIdpPipeline: true
+# Optional: also scale HITL resume on the same worker Deployment
+enableWorkflow: true
+
+nats:
+  enabled: true
+  appIntegration:
+    publish: true
+    embeddedConsumer: true
+  worker:
+    enabled: true
+    idpPipeline: true
+    coneshareFollowup: true
+    # Defaults to in-cluster MCP Service when empty.
+    mcpInternalUrl: ""
+  # #128 — terminal/viewer → MCP memory (Hermes/Pi use the same MCP HTTP endpoint).
+  agentBridge:
+    enabled: true
+    # notifyChannel: C01234567
+  keda:
+    enabled: false
+    # Set true when KEDA is installed — scales on HITL + document durables.
+    # enabled: true
+    # bootstrapConsumer: true
+
+documentPipeline:
+  enabled: true
+
+idpCollaboration:
+  enabled: true
+  nextcloud:
+    enabled: true
+  # Sets CLAWQL_ENABLE_CONESHARE=1 when enabled or externalUrl is set.
+  coneshare:
+    enabled: false
+    # externalUrl: https://coneshare.example.com

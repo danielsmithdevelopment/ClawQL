@@ -94,3 +94,37 @@ export function natsConeshareNotifyChannel(): string | undefined {
   const v = process.env.CLAWQL_CONESHARE_NOTIFY_CHANNEL?.trim();
   return v || undefined;
 }
+
+/** Agent bridge: subscribe to document events and call ClawQL MCP ([#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)). */
+export function natsAgentBridgeEnabled(): boolean {
+  return envTruthy(process.env.CLAWQL_NATS_AGENT_BRIDGE);
+}
+
+export function natsAgentBridgeDurable(): string {
+  return process.env.CLAWQL_NATS_AGENT_BRIDGE_DURABLE?.trim() || "clawql-idp-agent-bridge";
+}
+
+export function natsAgentBridgeConfigured(): boolean {
+  return (
+    Boolean(natsUrl()) &&
+    natsJetStreamEnabled() &&
+    natsConsumerEnabled() &&
+    natsAgentBridgeEnabled()
+  );
+}
+
+/** Optional Slack notify on pipeline.failed (agent bridge). */
+export function natsAgentBridgeNotifyChannel(): string | undefined {
+  const v =
+    process.env.CLAWQL_NATS_AGENT_BRIDGE_NOTIFY_CHANNEL?.trim() ||
+    process.env.CLAWQL_CONESHARE_NOTIFY_CHANNEL?.trim();
+  return v || undefined;
+}
+
+export function natsMcpHttpUrl(): string {
+  return (
+    process.env.CLAWQL_MCP_HTTP_URL?.trim() ||
+    process.env.CLAWQL_MCP_URL?.trim() ||
+    "http://127.0.0.1:8080/mcp"
+  );
+}

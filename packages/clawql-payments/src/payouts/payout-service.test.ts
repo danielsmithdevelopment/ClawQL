@@ -28,6 +28,7 @@ describe("PayoutService (Stripe Connect dry-run)", () => {
     delete process.env.CLAWQL_PAYMENTS_AUDIT_STORE;
     delete process.env.CLAWQL_PAYOUTS_ENABLED;
     delete process.env.CLAWQL_PAYOUTS_DRY_RUN;
+    delete process.env.CLAWQL_TAX_PROFILE_ENFORCE;
     await rm(home, { recursive: true, force: true });
   });
 
@@ -81,5 +82,24 @@ describe("PayoutService (Stripe Connect dry-run)", () => {
     expect(paid.dryRun).toBe(true);
     expect(paid.txHash).toMatch(/^0xdry/);
     expect(paid.status).toBe("paid"); // dry-run confirms immediately
+  });
+
+  it("blocks payout when tax profile enforce is on and profile missing", async () => {
+    process.env.CLAWQL_TAX_PROFILE_ENFORCE = "1";
+    resetPaymentsEffectRuntimeForTests();
+    await expect(
+      runPaymentsEffect(
+        Effect.gen(function* () {
+          const payouts = yield* PayoutService;
+          return yield* payouts.createPayout({
+            amountUsd: 10,
+            creatorId: "no-profile",
+            destination: "bank",
+            connectAccountId: "acct_dry_x",
+          });
+        })
+      )
+    ).rejects.toMatchObject({ reason: expect.stringMatching(/Tax profile missing/i) });
+    delete process.env.CLAWQL_TAX_PROFILE_ENFORCE;
   });
 });

@@ -81,3 +81,13 @@ export {
   type PaymentsCompensationCashoutOptions,
   type PaymentsCompensationApproveOptions,
 } from "./compensation.js";
+export {
+  runPaymentsAccountingExport,
+  runPaymentsTaxEvidence,
+  runPaymentsTaxProfileSet,
+  runPaymentsTaxProfileShow,
+  type PaymentsAccountingExportOptions,
+  type PaymentsTaxEvidenceOptions,
+  type PaymentsTaxProfileSetOptions,
+  type PaymentsTaxProfileShowOptions,
+} from "./accounting.js";

@@ -14,6 +14,8 @@ describe("external-ingest", () => {
   const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
   const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
   const savedCuckoo = process.env.CLAWQL_CUCKOO_ENABLED;
+  const savedAllowKw = process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
+  const savedVec = process.env.CLAWQL_VECTOR_BACKEND;
 
   beforeEach(() => {
     delete process.env.CLAWQL_EXTERNAL_INGEST;
@@ -21,6 +23,9 @@ describe("external-ingest", () => {
     delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
     delete process.env.CLAWQL_MERKLE_ENABLED;
     delete process.env.CLAWQL_CUCKOO_ENABLED;
+    // Avoid HuggingFace MiniLM downloads (429) in CI unit tests.
+    process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = "1";
+    process.env.CLAWQL_VECTOR_BACKEND = "off";
   });
 
   afterEach(async () => {
@@ -34,6 +39,10 @@ describe("external-ingest", () => {
     else process.env.CLAWQL_MERKLE_ENABLED = savedMerkle;
     if (savedCuckoo === undefined) delete process.env.CLAWQL_CUCKOO_ENABLED;
     else process.env.CLAWQL_CUCKOO_ENABLED = savedCuckoo;
+    if (savedAllowKw === undefined) delete process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
+    else process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = savedAllowKw;
+    if (savedVec === undefined) delete process.env.CLAWQL_VECTOR_BACKEND;
+    else process.env.CLAWQL_VECTOR_BACKEND = savedVec;
     resetMemoryDbArtifactCachesForTests();
   });
 

@@ -100,6 +100,10 @@ import {
   runPaymentsCompensationApproveCmd,
   runPaymentsCompensationConfirmCmd,
   runPaymentsCompensationCancelCmd,
+  runPaymentsAccountingExportCmd,
+  runPaymentsTaxEvidenceCmd,
+  runPaymentsTaxProfileSetCmd,
+  runPaymentsTaxProfileShowCmd,
   type PaymentsCliOptions,
 } from "./payments-cli.js";
 import {
@@ -283,6 +287,13 @@ function parse(argv: string[]): {
     else if (a === "--source") flags.source = argv[++i] ?? "";
     else if (a === "--confirm") flags.confirm = true;
     else if (a === "--skip-verify") flags.skipVerify = true;
+    else if (a === "--from") flags.dateFrom = argv[++i] ?? "";
+    else if (a === "--to") flags.dateTo = argv[++i] ?? "";
+    else if (a === "--tax-year") flags.taxYear = argv[++i] ?? "";
+    else if (a === "--party-id") flags.partyId = argv[++i] ?? "";
+    else if (a === "--tax-form") flags.taxForm = argv[++i] ?? "";
+    else if (a === "--collected") flags.collected = true;
+    else if (a === "--tax-profile-ref") flags.taxProfileRef = argv[++i] ?? "";
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
       flags.imageDigest = prev
@@ -369,6 +380,10 @@ Usage:
   clawql payments offramp webhook --provider moonpay --payload ./body.json --signature t=…,s=… --process
   clawql payments compensation balance|deposit|cashout|approve|confirm|cancel --agent ID …
   clawql payments spend report [--group-by provider|tenant|plan] | audit [--correlation-id ID]
+  clawql payments accounting export --date-from|--from YYYY-MM-DD --date-to|--to YYYY-MM-DD [--format csv|json|qb-csv|xero-csv]
+  clawql payments accounting tax-evidence --tax-year YYYY [--format pack|json|markdown]
+  clawql payments tax-profile set --party-id ID --tax-form 1099nec|none|unknown [--collected]
+  clawql payments tax-profile show [--party-id ID]
   clawql payments credits show | bank-link --customer cus_xxx | topup --customer cus_xxx --amount 25
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql claude --non-interactive --model <id> --task-file <path> [--workdir DIR] [--timeout SECS]
@@ -1087,6 +1102,19 @@ async function main(): Promise<void> {
           ? flags.asset
           : undefined,
       confirm: Boolean(flags.confirm),
+      dateFrom: typeof flags.dateFrom === "string" ? flags.dateFrom : undefined,
+      dateTo: typeof flags.dateTo === "string" ? flags.dateTo : undefined,
+      format: typeof flags.format === "string" ? flags.format : undefined,
+      output: typeof flags.output === "string" ? flags.output : undefined,
+      skipVerify: Boolean(flags.skipVerify),
+      taxYear:
+        typeof flags.taxYear === "string" && flags.taxYear
+          ? Number.parseInt(flags.taxYear, 10)
+          : undefined,
+      partyId: typeof flags.partyId === "string" ? flags.partyId : undefined,
+      taxForm: typeof flags.taxForm === "string" ? flags.taxForm : undefined,
+      collected: Boolean(flags.collected),
+      taxProfileRef: typeof flags.taxProfileRef === "string" ? flags.taxProfileRef : undefined,
     };
 
     if (subcmd === "plan") {
@@ -1104,6 +1132,34 @@ async function main(): Promise<void> {
     }
     if (subcmd === "spend") {
       process.exitCode = await runPaymentsSpendReportCmd(paymentsOpts);
+      return;
+    }
+    if (subcmd === "accounting") {
+      const action = rest[0];
+      if (action === "export") {
+        process.exitCode = await runPaymentsAccountingExportCmd(paymentsOpts);
+        return;
+      }
+      if (action === "tax-evidence") {
+        process.exitCode = await runPaymentsTaxEvidenceCmd(paymentsOpts);
+        return;
+      }
+      console.error("Usage: clawql payments accounting export | tax-evidence");
+      process.exitCode = 1;
+      return;
+    }
+    if (subcmd === "tax-profile") {
+      const action = rest[0];
+      if (action === "set") {
+        process.exitCode = await runPaymentsTaxProfileSetCmd(paymentsOpts);
+        return;
+      }
+      if (action === "show" || action === undefined) {
+        process.exitCode = await runPaymentsTaxProfileShowCmd(paymentsOpts);
+        return;
+      }
+      console.error("Usage: clawql payments tax-profile set | show");
+      process.exitCode = 1;
       return;
     }
     if (subcmd === "audit") {

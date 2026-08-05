@@ -270,6 +270,10 @@ app.kubernetes.io/component: goose
 {{- printf "%s-nats-worker" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{- define "clawql-mcp.natsAgentBridgeName" -}}
+{{- printf "%s-nats-agent-bridge" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
 {{- define "clawql-mcp.natsMonitoringEndpoint" -}}
 {{- printf "%s:%d" (include "clawql-mcp.natsName" .) (.Values.nats.service.monitorPort | int) }}
 {{- end }}
