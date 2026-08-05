@@ -16,7 +16,7 @@ ClawQL already runs on **Stripe**. Bank linking is implemented with **[Stripe Fi
 
 Stripe’s Link / Financial Connections UI commonly uses **Plaid (and other aggregators) under the hood**. That gives users a familiar bank-connect experience without a second identity, webhook, or compliance surface in ClawQL.
 
-Use a direct Plaid integration only if you need non-payment Plaid products (Identity, Assets, Transactions analytics) outside Stripe.
+Use a direct Plaid integration only if you need non-payment Plaid products (Identity, Assets, Transactions analytics) outside Stripe — typically via a **banking vertical** connector, not inside `clawql-payments`. Full KYC/onboarding workflows are out of scope here; see [`docs/design/clawql-banking-vertical.md`](../design/clawql-banking-vertical.md).
 
 ## Flow
 
