@@ -185,9 +185,9 @@ describe("org closed-loop credits", () => {
       process.env
     );
     expect(result.recalled.some((r) => r.memberTenantId === "intern1")).toBe(true);
-    expect(result.distributed.some((d) => d.memberTenantId === "intern1" && d.amountCents === 1000)).toBe(
-      true
-    );
+    expect(
+      result.distributed.some((d) => d.memberTenantId === "intern1" && d.amountCents === 1000)
+    ).toBe(true);
     expect((await getCreditAccount("intern1", process.env)).balanceCents).toBe(1000);
   });
 });

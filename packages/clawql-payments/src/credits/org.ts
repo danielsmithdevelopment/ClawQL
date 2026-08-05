@@ -126,7 +126,10 @@ export async function createOrg(
   if (!isCreditsEnabled(env)) {
     throw new Error("Credits disabled — set CLAWQL_CREDITS_ENABLED=1");
   }
-  const orgId = input.orgId.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-");
+  const orgId = input.orgId
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "-");
   if (!orgId) throw new Error("orgId is required");
   const admin = input.billingAdminTenantId.trim();
   if (!admin) throw new Error("billingAdminTenantId is required");
@@ -246,7 +249,9 @@ function assertBillingAdmin(org: OrgRecord, actorTenantId: string): void {
 }
 
 export function findMembership(org: OrgRecord, memberTenantId: string): OrgMembership | undefined {
-  return org.members.find((m) => m.memberTenantId === memberTenantId.trim() && m.status === "active");
+  return org.members.find(
+    (m) => m.memberTenantId === memberTenantId.trim() && m.status === "active"
+  );
 }
 
 export function assertSameOrgMembers(org: OrgRecord, a: string, b: string): void {
@@ -360,7 +365,8 @@ export async function distributeOrgPeriod(
   if (!org) throw new Error(`Unknown org: ${input.orgId}`);
   assertBillingAdmin(org, input.actorTenantId);
 
-  const prefix = input.idempotencyPrefix?.trim() || `period-${new Date().toISOString().slice(0, 10)}`;
+  const prefix =
+    input.idempotencyPrefix?.trim() || `period-${new Date().toISOString().slice(0, 10)}`;
   const distributed: DistributePeriodResult["distributed"] = [];
   const recalled: DistributePeriodResult["recalled"] = [];
   const skipped: DistributePeriodResult["skipped"] = [];

@@ -4,13 +4,13 @@
 
 ## Managed / hosted ClawQL (clawql.com SaaS)
 
-| Allowed | Not offered on managed |
-| --- | --- |
-| Stripe subscriptions, invoices, and platform fees for ClawQL plans | Cross-company / public **Venmo-like P2P** |
-| Closed-loop **company credit pools** funded via Stripe | Agent compensation deposit / cash-out between arbitrary agents |
-| Role budgets (e.g. intern $10 / employee $20 / senior $50) and CFO top-ups | Credits that convert to cash or leave the platform |
-| Employee ↔ employee credit transfer **inside the same company org** | General-purpose peer payments outside an org |
-| Credits redeemable **only for ClawQL services** (inference / gateway / IDP) | |
+| Allowed                                                                     | Not offered on managed                                         |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Stripe subscriptions, invoices, and platform fees for ClawQL plans          | Cross-company / public **Venmo-like P2P**                      |
+| Closed-loop **company credit pools** funded via Stripe                      | Agent compensation deposit / cash-out between arbitrary agents |
+| Role budgets (e.g. intern $10 / employee $20 / senior $50) and CFO top-ups  | Credits that convert to cash or leave the platform             |
+| Employee ↔ employee credit transfer **inside the same company org**         | General-purpose peer payments outside an org                   |
+| Credits redeemable **only for ClawQL services** (inference / gateway / IDP) |                                                                |
 
 Set `CLAWQL_MANAGED_HOSTING=1` on managed fleets. That **forces off** cross-tenant Venmo P2P (`CLAWQL_CREDITS_P2P_ENABLED`) and agent compensation. **Org credits** remain available when `CLAWQL_CREDITS_ENABLED=1` (see [org-credits.md](./org-credits.md)).
 
@@ -38,8 +38,8 @@ Prepaid / org credits are software ledger entries for ClawQL services. They are 
 
 ## Related
 
-- [`org-credits.md`](./org-credits.md) — company pool + role allocation engine  
-- [`clawql-payments.md`](./clawql-payments.md) — architecture and setup  
-- [`p2p-consumer-roadmap.md`](./p2p-consumer-roadmap.md) — cross-tenant P2P (self-hosted)  
-- [`agent-compensation.md`](./agent-compensation.md) — self-hosted agent rails  
-- [`credits-ach.md`](./credits-ach.md) — funding via Stripe FC/ACH  
+- [`org-credits.md`](./org-credits.md) — company pool + role allocation engine
+- [`clawql-payments.md`](./clawql-payments.md) — architecture and setup
+- [`p2p-consumer-roadmap.md`](./p2p-consumer-roadmap.md) — cross-tenant P2P (self-hosted)
+- [`agent-compensation.md`](./agent-compensation.md) — self-hosted agent rails
+- [`credits-ach.md`](./credits-ach.md) — funding via Stripe FC/ACH

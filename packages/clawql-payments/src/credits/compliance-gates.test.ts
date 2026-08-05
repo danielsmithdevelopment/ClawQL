@@ -5,10 +5,7 @@ import {
   isCreditsP2pEnabled,
   isManagedHosting,
 } from "./config.js";
-import {
-  assertCompensationEnabled,
-  isCompensationEnabled,
-} from "../compensation/config.js";
+import { assertCompensationEnabled, isCompensationEnabled } from "../compensation/config.js";
 
 describe("payments compliance gates", () => {
   afterEach(() => {
