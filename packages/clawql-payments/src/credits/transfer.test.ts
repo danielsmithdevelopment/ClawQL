@@ -14,6 +14,7 @@ import {
   resetCreditsLedgerForTests,
 } from "./ledger.js";
 import { creditsStepUpLiveLayer } from "./step-up.js";
+import { pendingActionsLiveLayer } from "../compensation/pending-actions.js";
 
 describe("credits P2P transfer", () => {
   let home: string;
@@ -46,8 +47,9 @@ describe("credits P2P transfer", () => {
     const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(AuditLive));
     const ledger = creditsLedgerLiveLayer(process.env);
     const stepUp = creditsStepUpLiveLayer(process.env);
+    const pending = pendingActionsLiveLayer(process.env);
     return creditsLiveLayer(process.env).pipe(
-      Layer.provide(Layer.mergeAll(audit, ledger, stepUp))
+      Layer.provide(Layer.mergeAll(audit, ledger, stepUp, pending))
     );
   };
 

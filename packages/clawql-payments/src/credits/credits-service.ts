@@ -9,9 +9,7 @@ import {
   buildCreditTopupSettledEntry,
 } from "../audit/events.js";
 import {
-  assertPendingCode,
-  savePendingAction,
-  stagePendingAction,
+  PendingActionsService,
   type PendingActionRecord,
 } from "../compensation/pending-actions.js";
 import {
@@ -30,7 +28,6 @@ import {
   type CreditAccount,
   type CreditLedgerEntry,
   type CreditTransferResult,
-  type LedgerError,
 } from "./ledger.js";
 import { CreditsStepUpService } from "./step-up.js";
 import { markMoneyRequestPaid } from "./requests.js";
@@ -121,7 +118,7 @@ export function creditsLiveLayer(
 ): Layer.Layer<
   CreditsService,
   never,
-  PaymentAuditService | CreditsLedgerService | CreditsStepUpService
+  PaymentAuditService | CreditsLedgerService | CreditsStepUpService | PendingActionsService
 > {
   return Layer.effect(
     CreditsService,
@@ -129,8 +126,9 @@ export function creditsLiveLayer(
       const audit = yield* PaymentAuditService;
       const ledger = yield* CreditsLedgerService;
       const stepUp = yield* CreditsStepUpService;
+      const pendingActions = yield* PendingActionsService;
 
-      const toCreditsError = (error: LedgerError) =>
+      const toCreditsError = (error: { readonly reason: string; readonly cause?: unknown }) =>
         new CreditsError({ reason: error.reason, cause: error.cause });
 
       const getBalance = (tenantId: string) =>
@@ -339,33 +337,24 @@ export function creditsLiveLayer(
           if (!Number.isFinite(input.amountCents) || input.amountCents <= 0) {
             return yield* Effect.fail(new CreditsError({ reason: "amountCents must be > 0" }));
           }
-          const record = yield* Effect.tryPromise({
-            try: () =>
-              stagePendingAction(
-                {
-                  tool: CREDITS_TRANSFER_STAGE_TOOL,
-                  kind: "credits_transfer",
-                  classification: "financial",
-                  agentId: fromTenantId,
-                  tenantId: fromTenantId,
-                  correlationId: input.correlationId,
-                  args: {
-                    fromTenantId,
-                    toTenantId,
-                    amountCents: Math.round(input.amountCents),
-                    idempotencyKey: input.idempotencyKey,
-                    note: input.note,
-                    requestId: input.requestId?.trim() || undefined,
-                  },
-                },
-                env
-              ),
-            catch: (cause) =>
-              new CreditsError({
-                reason: cause instanceof Error ? cause.message : "Failed to stage transfer",
-                cause,
-              }),
-          });
+          const record = yield* pendingActions
+            .stage({
+              tool: CREDITS_TRANSFER_STAGE_TOOL,
+              kind: "credits_transfer",
+              classification: "financial",
+              agentId: fromTenantId,
+              tenantId: fromTenantId,
+              correlationId: input.correlationId,
+              args: {
+                fromTenantId,
+                toTenantId,
+                amountCents: Math.round(input.amountCents),
+                idempotencyKey: input.idempotencyKey,
+                note: input.note,
+                requestId: input.requestId?.trim() || undefined,
+              },
+            })
+            .pipe(Effect.mapError(toCreditsError));
           return {
             actionId: record.actionId,
             confirmationCode: record.confirmationCode,
@@ -408,14 +397,9 @@ export function creditsLiveLayer(
               })
             );
           }
-          const record = yield* Effect.tryPromise({
-            try: () => assertPendingCode(input.actionId, input.code, env),
-            catch: (cause) =>
-              new CreditsError({
-                reason: cause instanceof Error ? cause.message : "Invalid pending action",
-                cause,
-              }),
-          });
+          const record = yield* pendingActions
+            .assertCode(input.actionId, input.code)
+            .pipe(Effect.mapError(toCreditsError));
           if (record.kind !== "credits_transfer") {
             return yield* Effect.fail(
               new CreditsError({
@@ -466,14 +450,7 @@ export function creditsLiveLayer(
             executedAt: new Date().toISOString(),
             result: { ...result },
           };
-          yield* Effect.tryPromise({
-            try: () => savePendingAction(updated, env),
-            catch: (cause) =>
-              new CreditsError({
-                reason: cause instanceof Error ? cause.message : "Failed to save pending action",
-                cause,
-              }),
-          });
+          yield* pendingActions.save(updated).pipe(Effect.mapError(toCreditsError));
 
           const requestId =
             typeof record.args.requestId === "string" ? record.args.requestId.trim() : "";

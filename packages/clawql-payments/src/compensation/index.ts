@@ -7,6 +7,9 @@ export {
   isCompensationEnabled,
 } from "./config.js";
 export {
+  CompensationAccountsError,
+  CompensationAccountsService,
+  compensationAccountsLiveLayer,
   creditAgentAccount,
   debitAgentAccount,
   ensureAgentAccount,
@@ -28,6 +31,8 @@ export {
   type HighImpactClassification,
 } from "./high-impact.js";
 export {
+  PendingActionsError,
+  PendingActionsService,
   assertPendingCode,
   buildApprovalUrl,
   buildCancelUrl,
@@ -35,6 +40,7 @@ export {
   findRecruitDepositByKey,
   listPendingActions,
   loadPendingAction,
+  pendingActionsLiveLayer,
   stagePendingAction,
   type CompensationPendingKind,
   type PendingActionRecord,

@@ -24,8 +24,7 @@ import {
   payoutsDefaultReturnUrl,
 } from "./config.js";
 import {
-  getCreatorPayoutPreference,
-  setCreatorPayoutPreference,
+  PayoutPreferencesService,
   type CreatorPayoutPreference,
   type PayoutMethod,
 } from "./preferences.js";
@@ -110,7 +109,7 @@ export function payoutLiveLayer(
 ): Layer.Layer<
   PayoutService,
   never,
-  PaymentAuditService | StripeClientService | TaxProfileService
+  PaymentAuditService | StripeClientService | TaxProfileService | PayoutPreferencesService
 > {
   return Layer.effect(
     PayoutService,
@@ -118,6 +117,10 @@ export function payoutLiveLayer(
       const audit = yield* PaymentAuditService;
       const stripeClient = yield* StripeClientService;
       const taxProfiles = yield* TaxProfileService;
+      const prefs = yield* PayoutPreferencesService;
+
+      const toPayoutError = (error: { readonly reason: string; readonly cause?: unknown }) =>
+        new PayoutError({ reason: error.reason, cause: error.cause });
 
       const createConnectAccount = (input: {
         email: string;
@@ -155,23 +158,14 @@ export function payoutLiveLayer(
               )
               .pipe(Effect.catchAll(() => Effect.void));
             if (input.creatorId?.trim()) {
-              yield* Effect.tryPromise({
-                try: () =>
-                  setCreatorPayoutPreference(
-                    {
-                      creatorId: input.creatorId!,
-                      method: "bank",
-                      connectAccountId: id,
-                      email,
-                    },
-                    env
-                  ),
-                catch: (cause) =>
-                  new PayoutError({
-                    reason: cause instanceof Error ? cause.message : "preference write failed",
-                    cause,
-                  }),
-              });
+              yield* prefs
+                .set({
+                  creatorId: input.creatorId!,
+                  method: "bank",
+                  connectAccountId: id,
+                  email,
+                })
+                .pipe(Effect.mapError(toPayoutError));
             }
             return { id, email, type: "express", dryRun: true } satisfies ConnectAccountResult;
           }
@@ -203,23 +197,14 @@ export function payoutLiveLayer(
             )
             .pipe(Effect.catchAll(() => Effect.void));
           if (input.creatorId?.trim()) {
-            yield* Effect.tryPromise({
-              try: () =>
-                setCreatorPayoutPreference(
-                  {
-                    creatorId: input.creatorId!,
-                    method: "bank",
-                    connectAccountId: account.id,
-                    email,
-                  },
-                  env
-                ),
-              catch: (cause) =>
-                new PayoutError({
-                  reason: cause instanceof Error ? cause.message : "preference write failed",
-                  cause,
-                }),
-            });
+            yield* prefs
+              .set({
+                creatorId: input.creatorId!,
+                method: "bank",
+                connectAccountId: account.id,
+                email,
+              })
+              .pipe(Effect.mapError(toPayoutError));
           }
           return {
             id: account.id,
@@ -308,14 +293,7 @@ export function payoutLiveLayer(
           let usdcWallet = input.usdcWallet?.trim();
 
           if (creatorId) {
-            const pref = yield* Effect.tryPromise({
-              try: () => getCreatorPayoutPreference(creatorId, env),
-              catch: (cause) =>
-                new PayoutError({
-                  reason: cause instanceof Error ? cause.message : "preference load failed",
-                  cause,
-                }),
-            });
+            const pref = yield* prefs.get(creatorId).pipe(Effect.mapError(toPayoutError));
             if (pref) {
               destination = destination ?? pref.method;
               connectAccountId = connectAccountId || pref.connectAccountId;
@@ -512,25 +490,10 @@ export function payoutLiveLayer(
         connectAccountId?: string;
         usdcWallet?: string;
         email?: string;
-      }) =>
-        Effect.tryPromise({
-          try: () => setCreatorPayoutPreference(input, env),
-          catch: (cause) =>
-            new PayoutError({
-              reason: cause instanceof Error ? cause.message : "preference write failed",
-              cause,
-            }),
-        });
+      }) => prefs.set(input).pipe(Effect.mapError(toPayoutError));
 
       const getPreference = (creatorId: string) =>
-        Effect.tryPromise({
-          try: () => getCreatorPayoutPreference(creatorId, env),
-          catch: (cause) =>
-            new PayoutError({
-              reason: cause instanceof Error ? cause.message : "preference load failed",
-              cause,
-            }),
-        });
+        prefs.get(creatorId).pipe(Effect.mapError(toPayoutError));
 
       return PayoutService.of({
         createConnectAccount,

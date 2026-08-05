@@ -14,6 +14,7 @@ import {
 } from "./ledger.js";
 import { claimDirectory, resetDirectoryForTests } from "./directory.js";
 import { creditsStepUpLiveLayer } from "./step-up.js";
+import { pendingActionsLiveLayer } from "../compensation/pending-actions.js";
 import { CreditsService, creditsLiveLayer } from "./credits-service.js";
 import {
   acceptMoneyRequest,
@@ -59,8 +60,9 @@ describe("money requests / invoices", () => {
     const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(AuditLive));
     const ledger = creditsLedgerLiveLayer(process.env);
     const stepUp = creditsStepUpLiveLayer(process.env);
+    const pending = pendingActionsLiveLayer(process.env);
     return creditsLiveLayer(process.env).pipe(
-      Layer.provide(Layer.mergeAll(audit, ledger, stepUp))
+      Layer.provide(Layer.mergeAll(audit, ledger, stepUp, pending))
     );
   };
 

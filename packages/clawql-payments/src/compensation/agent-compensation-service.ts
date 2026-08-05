@@ -25,24 +25,13 @@ import {
   isCompensationDirectAllowed,
   isCompensationEnabled,
 } from "./config.js";
-import {
-  creditAgentAccount,
-  debitAgentAccount,
-  ensureAgentAccount,
-  getAgentAccount,
-  setAgentAccountPreference,
-  type AgentAccount,
-} from "./accounts.js";
+import { CompensationAccountsService, type AgentAccount } from "./accounts.js";
 import { COMPENSATION_CASHOUT_STAGE_TOOL, COMPENSATION_DEPOSIT_STAGE_TOOL } from "./high-impact.js";
 import {
-  assertPendingCode,
+  PendingActionsService,
   buildApprovalUrl,
   buildCancelUrl,
   buildConfirmUrl,
-  findRecruitDepositByKey,
-  listPendingActions,
-  savePendingAction,
-  stagePendingAction,
   type PendingActionRecord,
 } from "./pending-actions.js";
 import type { StageRecruitCompensationMeta } from "./staging-types.js";
@@ -173,12 +162,21 @@ export class AgentCompensationService extends Context.Tag("clawql/AgentCompensat
 
 export function agentCompensationLiveLayer(
   env: NodeJS.ProcessEnv = process.env
-): Layer.Layer<AgentCompensationService, never, PaymentAuditService | PayoutService> {
+): Layer.Layer<
+  AgentCompensationService,
+  never,
+  PaymentAuditService | PayoutService | CompensationAccountsService | PendingActionsService
+> {
   return Layer.effect(
     AgentCompensationService,
     Effect.gen(function* () {
       const audit = yield* PaymentAuditService;
       const payouts = yield* PayoutService;
+      const accounts = yield* CompensationAccountsService;
+      const pending = yield* PendingActionsService;
+
+      const toCompensationError = (error: { readonly reason: string; readonly cause?: unknown }) =>
+        new CompensationError({ reason: error.reason, cause: error.cause });
 
       const ensureEnabled = () => {
         if (!isCompensationEnabled(env)) {
@@ -188,19 +186,20 @@ export function agentCompensationLiveLayer(
         }
       };
 
+      const ensureEnabledEff = Effect.suspend(() =>
+        isCompensationEnabled(env)
+          ? Effect.void
+          : Effect.fail(
+              new CompensationError({
+                reason: "Compensation disabled — set CLAWQL_COMPENSATION_ENABLED=1",
+              })
+            )
+      );
+
       const getAccount = (agentId: string) =>
-        Effect.tryPromise({
-          try: async () => {
-            ensureEnabled();
-            return ensureAgentAccount(agentId, env);
-          },
-          catch: (cause) =>
-            cause instanceof CompensationError
-              ? cause
-              : new CompensationError({
-                  reason: cause instanceof Error ? cause.message : "getAccount failed",
-                  cause,
-                }),
+        Effect.gen(function* () {
+          yield* ensureEnabledEff;
+          return yield* accounts.ensure(agentId).pipe(Effect.mapError(toCompensationError));
         });
 
       const setPreference = (input: {
@@ -211,18 +210,9 @@ export function agentCompensationLiveLayer(
         email?: string;
         tenantId?: string;
       }) =>
-        Effect.tryPromise({
-          try: async () => {
-            ensureEnabled();
-            return setAgentAccountPreference(input, env);
-          },
-          catch: (cause) =>
-            cause instanceof CompensationError
-              ? cause
-              : new CompensationError({
-                  reason: cause instanceof Error ? cause.message : "setPreference failed",
-                  cause,
-                }),
+        Effect.gen(function* () {
+          yield* ensureEnabledEff;
+          return yield* accounts.setPreference(input).pipe(Effect.mapError(toCompensationError));
         });
 
       const toStaged = (
@@ -266,22 +256,13 @@ export function agentCompensationLiveLayer(
 
           // Idempotency: (recruitmentId, agentId, reason) → return existing pending or block double-pay.
           if (recruitmentId) {
-            const existing = yield* Effect.tryPromise({
-              try: () =>
-                findRecruitDepositByKey(
-                  {
-                    recruitmentId,
-                    agentId: input.agentId,
-                    reason,
-                  },
-                  env
-                ),
-              catch: (cause) =>
-                new CompensationError({
-                  reason: cause instanceof Error ? cause.message : "idempotency lookup failed",
-                  cause,
-                }),
-            });
+            const existing = yield* pending
+              .findRecruitDeposit({
+                recruitmentId,
+                agentId: input.agentId,
+                reason,
+              })
+              .pipe(Effect.mapError(toCompensationError));
             if (existing?.status === "pending") {
               const prevAmount = Number(existing.args.amountUsd);
               const prevAsset = String(existing.args.asset ?? "credits");
@@ -303,42 +284,28 @@ export function agentCompensationLiveLayer(
             }
           }
 
-          yield* Effect.tryPromise({
-            try: () => ensureAgentAccount(input.agentId, env, input.tenantId),
-            catch: (cause) =>
-              new CompensationError({
-                reason: cause instanceof Error ? cause.message : "ensure account failed",
-                cause,
-              }),
-          });
+          yield* accounts
+            .ensure(input.agentId, input.tenantId)
+            .pipe(Effect.mapError(toCompensationError));
           const kind = input.asset === "funds" ? "deposit_funds" : "deposit_credits";
           const tool = COMPENSATION_DEPOSIT_STAGE_TOOL;
-          const record = yield* Effect.tryPromise({
-            try: () =>
-              stagePendingAction(
-                {
-                  tool,
-                  kind,
-                  classification: "financial",
-                  agentId: input.agentId,
-                  tenantId: input.tenantId,
-                  correlationId: input.correlationId ?? recruitmentId,
-                  args: {
-                    amountUsd: input.amountUsd,
-                    asset: input.asset,
-                    reason,
-                    recruitmentId,
-                    ...(input.meta ? { meta: input.meta } : {}),
-                  },
-                },
-                env
-              ),
-            catch: (cause) =>
-              new CompensationError({
-                reason: cause instanceof Error ? cause.message : "stage failed",
-                cause,
-              }),
-          });
+          const record = yield* pending
+            .stage({
+              tool,
+              kind,
+              classification: "financial",
+              agentId: input.agentId,
+              tenantId: input.tenantId,
+              correlationId: input.correlationId ?? recruitmentId,
+              args: {
+                amountUsd: input.amountUsd,
+                asset: input.asset,
+                reason,
+                recruitmentId,
+                ...(input.meta ? { meta: input.meta } : {}),
+              },
+            })
+            .pipe(Effect.mapError(toCompensationError));
           yield* audit
             .appendEntry(
               buildCompensationDepositStagedEntry({
@@ -371,14 +338,9 @@ export function agentCompensationLiveLayer(
           if (!Number.isFinite(input.amountUsd) || input.amountUsd <= 0) {
             return yield* Effect.fail(new CompensationError({ reason: "amountUsd must be > 0" }));
           }
-          const account = yield* Effect.tryPromise({
-            try: () => ensureAgentAccount(input.agentId, env, input.tenantId),
-            catch: (cause) =>
-              new CompensationError({
-                reason: cause instanceof Error ? cause.message : "ensure account failed",
-                cause,
-              }),
-          });
+          const account = yield* accounts
+            .ensure(input.agentId, input.tenantId)
+            .pipe(Effect.mapError(toCompensationError));
           const source =
             input.source ??
             (account.fundsUsd >= input.amountUsd
@@ -396,32 +358,23 @@ export function agentCompensationLiveLayer(
           }
           const destination = input.destination ?? account.cashoutMethod ?? "bank";
           const tool = COMPENSATION_CASHOUT_STAGE_TOOL;
-          const record = yield* Effect.tryPromise({
-            try: () =>
-              stagePendingAction(
-                {
-                  tool,
-                  kind: "cashout",
-                  classification: "financial",
-                  agentId: input.agentId,
-                  tenantId: input.tenantId,
-                  correlationId: input.correlationId,
-                  args: {
-                    amountUsd: input.amountUsd,
-                    source,
-                    destination,
-                    connectAccountId: input.connectAccountId ?? account.connectAccountId,
-                    usdcWallet: input.usdcWallet ?? account.usdcWallet,
-                  },
-                },
-                env
-              ),
-            catch: (cause) =>
-              new CompensationError({
-                reason: cause instanceof Error ? cause.message : "stage cashout failed",
-                cause,
-              }),
-          });
+          const record = yield* pending
+            .stage({
+              tool,
+              kind: "cashout",
+              classification: "financial",
+              agentId: input.agentId,
+              tenantId: input.tenantId,
+              correlationId: input.correlationId,
+              args: {
+                amountUsd: input.amountUsd,
+                source,
+                destination,
+                connectAccountId: input.connectAccountId ?? account.connectAccountId,
+                usdcWallet: input.usdcWallet ?? account.usdcWallet,
+              },
+            })
+            .pipe(Effect.mapError(toCompensationError));
           yield* audit
             .appendEntry(
               buildCompensationCashoutStagedEntry({
@@ -450,42 +403,15 @@ export function agentCompensationLiveLayer(
         });
 
       const approve = (input: { actionId: string; code: string }) =>
-        Effect.tryPromise({
-          try: async () => {
-            ensureEnabled();
-            const record = await assertPendingCode(input.actionId, input.code, env);
-            if (record.status === "expired") {
-              throw new CompensationError({ reason: "Action expired" });
-            }
-            if (record.status === "pending") {
-              return {
-                actionId: record.actionId,
-                status: record.status,
-                tool: record.tool,
-                kind: record.kind,
-                agentId: record.agentId,
-                args: record.args,
-                approvalUrl: buildApprovalUrl(
-                  record.tool,
-                  record.actionId,
-                  record.confirmationCode,
-                  env
-                ),
-                confirmUrl: buildConfirmUrl(
-                  record.tool,
-                  record.actionId,
-                  record.confirmationCode,
-                  env
-                ),
-                cancelUrl: buildCancelUrl(
-                  record.tool,
-                  record.actionId,
-                  record.confirmationCode,
-                  env
-                ),
-                expiresAt: record.expiresAt,
-              } satisfies ApproveView;
-            }
+        Effect.gen(function* () {
+          yield* ensureEnabledEff;
+          const record = yield* pending
+            .assertCode(input.actionId, input.code)
+            .pipe(Effect.mapError(toCompensationError));
+          if (record.status === "expired") {
+            return yield* Effect.fail(new CompensationError({ reason: "Action expired" }));
+          }
+          if (record.status === "pending") {
             return {
               actionId: record.actionId,
               status: record.status,
@@ -493,42 +419,53 @@ export function agentCompensationLiveLayer(
               kind: record.kind,
               agentId: record.agentId,
               args: record.args,
-              approvalUrl: null,
-              confirmUrl: null,
-              cancelUrl: null,
+              approvalUrl: buildApprovalUrl(
+                record.tool,
+                record.actionId,
+                record.confirmationCode,
+                env
+              ),
+              confirmUrl: buildConfirmUrl(
+                record.tool,
+                record.actionId,
+                record.confirmationCode,
+                env
+              ),
+              cancelUrl: buildCancelUrl(
+                record.tool,
+                record.actionId,
+                record.confirmationCode,
+                env
+              ),
               expiresAt: record.expiresAt,
             } satisfies ApproveView;
-          },
-          catch: (cause) =>
-            cause instanceof CompensationError
-              ? cause
-              : new CompensationError({
-                  reason: cause instanceof Error ? cause.message : "approve failed",
-                  cause,
-                }),
+          }
+          return {
+            actionId: record.actionId,
+            status: record.status,
+            tool: record.tool,
+            kind: record.kind,
+            agentId: record.agentId,
+            args: record.args,
+            approvalUrl: null,
+            confirmUrl: null,
+            cancelUrl: null,
+            expiresAt: record.expiresAt,
+          } satisfies ApproveView;
         });
 
       const executeDeposit = (record: PendingActionRecord) =>
         Effect.gen(function* () {
           const amountUsd = Number(record.args.amountUsd);
           const asset = record.args.asset === "funds" ? "funds" : "credits";
-          const balance = yield* Effect.tryPromise({
-            try: () =>
-              creditAgentAccount(
-                {
-                  agentId: record.agentId,
-                  creditsUsd: asset === "credits" ? amountUsd : 0,
-                  fundsUsd: asset === "funds" ? amountUsd : 0,
-                  tenantId: record.tenantId,
-                },
-                env
-              ),
-            catch: (cause) =>
-              new CompensationError({
-                reason: cause instanceof Error ? cause.message : "credit failed",
-                cause,
-              }),
-          });
+          const balance = yield* accounts
+            .credit({
+              agentId: record.agentId,
+              creditsUsd: asset === "credits" ? amountUsd : 0,
+              fundsUsd: asset === "funds" ? amountUsd : 0,
+              tenantId: record.tenantId,
+            })
+            .pipe(Effect.mapError(toCompensationError));
           const reason = String(record.args.reason ?? "manual");
           const recruitmentId =
             typeof record.args.recruitmentId === "string" ? record.args.recruitmentId : undefined;
@@ -566,22 +503,13 @@ export function agentCompensationLiveLayer(
           const payoutAmount =
             source === "credits" ? Math.round(amountUsd * rate * 100) / 100 : amountUsd;
 
-          yield* Effect.tryPromise({
-            try: () =>
-              debitAgentAccount(
-                {
-                  agentId: record.agentId,
-                  creditsUsd: source === "credits" ? amountUsd : 0,
-                  fundsUsd: source === "funds" ? amountUsd : 0,
-                },
-                env
-              ),
-            catch: (cause) =>
-              new CompensationError({
-                reason: cause instanceof Error ? cause.message : "debit failed",
-                cause,
-              }),
-          });
+          yield* accounts
+            .debit({
+              agentId: record.agentId,
+              creditsUsd: source === "credits" ? amountUsd : 0,
+              fundsUsd: source === "funds" ? amountUsd : 0,
+            })
+            .pipe(Effect.mapError(toCompensationError));
 
           const payout = yield* payouts
             .createPayout({
@@ -612,32 +540,25 @@ export function agentCompensationLiveLayer(
               Effect.catchAll((err) =>
                 Effect.gen(function* () {
                   // Debit already applied — restore ledger so failed cash-out is not a silent loss.
-                  yield* Effect.tryPromise({
-                    try: () =>
-                      creditAgentAccount(
-                        {
-                          agentId: record.agentId,
-                          creditsUsd: source === "credits" ? amountUsd : 0,
-                          fundsUsd: source === "funds" ? amountUsd : 0,
-                          tenantId: record.tenantId,
-                        },
-                        env
-                      ),
-                    catch: () => err,
-                  }).pipe(Effect.catchAll(() => Effect.void));
+                  yield* accounts
+                    .credit({
+                      agentId: record.agentId,
+                      creditsUsd: source === "credits" ? amountUsd : 0,
+                      fundsUsd: source === "funds" ? amountUsd : 0,
+                      tenantId: record.tenantId,
+                    })
+                    .pipe(Effect.catchAll(() => Effect.void));
                   return yield* Effect.fail(err);
                 })
               )
             );
 
-          const balance = yield* Effect.tryPromise({
-            try: () => getAgentAccount(record.agentId, env).then((a) => a!),
-            catch: (cause) =>
-              new CompensationError({
-                reason: cause instanceof Error ? cause.message : "reload balance failed",
-                cause,
-              }),
-          });
+          const balance = yield* accounts
+            .get(record.agentId)
+            .pipe(
+              Effect.mapError(toCompensationError),
+              Effect.map((a) => a!)
+            );
 
           yield* audit
             .appendEntry(
@@ -667,16 +588,9 @@ export function agentCompensationLiveLayer(
       const confirm = (input: { actionId: string; code: string }) =>
         Effect.gen(function* () {
           ensureEnabled();
-          const record = yield* Effect.tryPromise({
-            try: () => assertPendingCode(input.actionId, input.code, env),
-            catch: (cause) =>
-              cause instanceof CompensationError
-                ? cause
-                : new CompensationError({
-                    reason: cause instanceof Error ? cause.message : "confirm lookup failed",
-                    cause,
-                  }),
-          });
+          const record = yield* pending
+            .assertCode(input.actionId, input.code)
+            .pipe(Effect.mapError(toCompensationError));
           if (record.status === "executed" && record.result) {
             return record.result as unknown as DepositResult | CashoutResult;
           }
@@ -751,30 +665,16 @@ export function agentCompensationLiveLayer(
             executedAt: new Date().toISOString(),
             result: executed as unknown as Record<string, unknown>,
           };
-          yield* Effect.tryPromise({
-            try: () => savePendingAction(updated, env),
-            catch: (cause) =>
-              new CompensationError({
-                reason: cause instanceof Error ? cause.message : "save pending failed",
-                cause,
-              }),
-          });
+          yield* pending.save(updated).pipe(Effect.mapError(toCompensationError));
           return executed;
         });
 
       const cancel = (input: { actionId: string; code: string }) =>
         Effect.gen(function* () {
           ensureEnabled();
-          const record = yield* Effect.tryPromise({
-            try: () => assertPendingCode(input.actionId, input.code, env),
-            catch: (cause) =>
-              cause instanceof CompensationError
-                ? cause
-                : new CompensationError({
-                    reason: cause instanceof Error ? cause.message : "cancel lookup failed",
-                    cause,
-                  }),
-          });
+          const record = yield* pending
+            .assertCode(input.actionId, input.code)
+            .pipe(Effect.mapError(toCompensationError));
           if (record.status === "cancelled") {
             return { actionId: record.actionId, status: "cancelled" as const };
           }
@@ -789,14 +689,7 @@ export function agentCompensationLiveLayer(
             status: "cancelled",
             cancelledAt: new Date().toISOString(),
           };
-          yield* Effect.tryPromise({
-            try: () => savePendingAction(updated, env),
-            catch: (cause) =>
-              new CompensationError({
-                reason: cause instanceof Error ? cause.message : "save cancel failed",
-                cause,
-              }),
-          });
+          yield* pending.save(updated).pipe(Effect.mapError(toCompensationError));
           yield* audit
             .appendEntry(
               buildCompensationCancelledEntry({
@@ -816,20 +709,15 @@ export function agentCompensationLiveLayer(
         });
 
       const listPending = (input?: { agentId?: string; recruitmentId?: string }) =>
-        Effect.tryPromise({
-          try: async () => {
-            ensureEnabled();
-            return listPendingActions(env, {
+        Effect.gen(function* () {
+          yield* ensureEnabledEff;
+          return yield* pending
+            .list({
               agentId: input?.agentId,
               recruitmentId: input?.recruitmentId,
               status: "pending",
-            });
-          },
-          catch: (cause) =>
-            new CompensationError({
-              reason: cause instanceof Error ? cause.message : "list pending failed",
-              cause,
-            }),
+            })
+            .pipe(Effect.mapError(toCompensationError));
         });
 
       const depositDirect = (input: {
@@ -854,23 +742,14 @@ export function agentCompensationLiveLayer(
           if (!Number.isFinite(input.amountUsd) || input.amountUsd <= 0) {
             return yield* Effect.fail(new CompensationError({ reason: "amountUsd must be > 0" }));
           }
-          const balance = yield* Effect.tryPromise({
-            try: () =>
-              creditAgentAccount(
-                {
-                  agentId: input.agentId,
-                  creditsUsd: input.asset === "credits" ? input.amountUsd : 0,
-                  fundsUsd: input.asset === "funds" ? input.amountUsd : 0,
-                  tenantId: input.tenantId,
-                },
-                env
-              ),
-            catch: (cause) =>
-              new CompensationError({
-                reason: cause instanceof Error ? cause.message : "direct credit failed",
-                cause,
-              }),
-          });
+          const balance = yield* accounts
+            .credit({
+              agentId: input.agentId,
+              creditsUsd: input.asset === "credits" ? input.amountUsd : 0,
+              fundsUsd: input.asset === "funds" ? input.amountUsd : 0,
+              tenantId: input.tenantId,
+            })
+            .pipe(Effect.mapError(toCompensationError));
           yield* audit
             .appendEntry(
               buildCompensationDepositConfirmedEntry({

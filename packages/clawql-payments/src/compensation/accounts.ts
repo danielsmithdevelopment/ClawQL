@@ -4,6 +4,7 @@
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { Context, Data, Effect, Layer } from "effect";
 import { resolveAgentAccountsPath } from "../config/paths.js";
 import type { PayoutMethod } from "../payouts/preferences.js";
 
@@ -58,6 +59,7 @@ function emptyAccount(agentId: string, tenantId?: string): AgentAccount {
   };
 }
 
+/** @deprecated Prefer CompensationAccountsService.get — Promise façade retained for legacy callers. */
 export async function getAgentAccount(
   agentId: string,
   env: NodeJS.ProcessEnv = process.env
@@ -66,6 +68,7 @@ export async function getAgentAccount(
   return file.agents[agentId.trim()];
 }
 
+/** @deprecated Prefer CompensationAccountsService.ensure — Promise façade retained for legacy callers. */
 export async function ensureAgentAccount(
   agentId: string,
   env: NodeJS.ProcessEnv = process.env,
@@ -82,6 +85,7 @@ export async function ensureAgentAccount(
   return created;
 }
 
+/** @deprecated Prefer CompensationAccountsService.setPreference — Promise façade retained for legacy callers. */
 export async function setAgentAccountPreference(
   input: {
     agentId: string;
@@ -110,6 +114,7 @@ export async function setAgentAccountPreference(
   return next;
 }
 
+/** @deprecated Prefer CompensationAccountsService.credit — Promise façade retained for legacy callers. */
 export async function creditAgentAccount(
   input: {
     agentId: string;
@@ -137,6 +142,7 @@ export async function creditAgentAccount(
   return next;
 }
 
+/** @deprecated Prefer CompensationAccountsService.debit — Promise façade retained for legacy callers. */
 export async function debitAgentAccount(
   input: {
     agentId: string;
@@ -171,4 +177,65 @@ export async function debitAgentAccount(
 
 function roundMoney(n: number): number {
   return Math.round(n * 100) / 100;
+}
+
+export class CompensationAccountsError extends Data.TaggedError("CompensationAccountsError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+type SetAgentAccountPreferenceInput = Parameters<typeof setAgentAccountPreference>[0];
+type CreditAgentAccountInput = Parameters<typeof creditAgentAccount>[0];
+type DebitAgentAccountInput = Parameters<typeof debitAgentAccount>[0];
+
+/** Effect surface over the agent compensation accounts ledger (credits + funds held for cash-out). */
+export class CompensationAccountsService extends Context.Tag("clawql/CompensationAccountsService")<
+  CompensationAccountsService,
+  {
+    readonly get: (
+      agentId: string
+    ) => Effect.Effect<AgentAccount | undefined, CompensationAccountsError>;
+    readonly ensure: (
+      agentId: string,
+      tenantId?: string
+    ) => Effect.Effect<AgentAccount, CompensationAccountsError>;
+    readonly setPreference: (
+      input: SetAgentAccountPreferenceInput
+    ) => Effect.Effect<AgentAccount, CompensationAccountsError>;
+    readonly credit: (
+      input: CreditAgentAccountInput
+    ) => Effect.Effect<AgentAccount, CompensationAccountsError>;
+    readonly debit: (
+      input: DebitAgentAccountInput
+    ) => Effect.Effect<AgentAccount, CompensationAccountsError>;
+  }
+>() {}
+
+export function compensationAccountsLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<CompensationAccountsService> {
+  const run = <A>(reason: string, task: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: task,
+      catch: (cause) =>
+        cause instanceof CompensationAccountsError
+          ? cause
+          : new CompensationAccountsError({
+              reason: cause instanceof Error ? cause.message : reason,
+              cause,
+            }),
+    });
+
+  return Layer.succeed(
+    CompensationAccountsService,
+    CompensationAccountsService.of({
+      get: (agentId) => run("Failed to load agent account", () => getAgentAccount(agentId, env)),
+      ensure: (agentId, tenantId) =>
+        run("Failed to ensure agent account", () => ensureAgentAccount(agentId, env, tenantId)),
+      setPreference: (input) =>
+        run("Failed to set agent account preference", () => setAgentAccountPreference(input, env)),
+      credit: (input) => run("Failed to credit agent account", () => creditAgentAccount(input, env)),
+      debit: (input) => run("Failed to debit agent account", () => debitAgentAccount(input, env)),
+    })
+  );
 }

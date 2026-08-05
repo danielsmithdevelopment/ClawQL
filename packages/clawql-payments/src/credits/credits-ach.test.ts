@@ -15,6 +15,7 @@ import {
   resetCreditsLedgerForTests,
 } from "./ledger.js";
 import { creditsStepUpLiveLayer } from "./step-up.js";
+import { pendingActionsLiveLayer } from "../compensation/pending-actions.js";
 import { Layer } from "effect";
 
 describe("credits + ACH top-up (dry-run)", () => {
@@ -45,8 +46,9 @@ describe("credits + ACH top-up (dry-run)", () => {
     const stripe = stripeClientLiveLayer(process.env);
     const ledger = creditsLedgerLiveLayer(process.env);
     const stepUp = creditsStepUpLiveLayer(process.env);
+    const pending = pendingActionsLiveLayer(process.env);
     const credits = creditsLiveLayer(process.env).pipe(
-      Layer.provide(Layer.mergeAll(audit, ledger, stepUp))
+      Layer.provide(Layer.mergeAll(audit, ledger, stepUp, pending))
     );
     const ach = achTopupLiveLayer(process.env).pipe(
       Layer.provide(Layer.mergeAll(audit, stripe, credits))

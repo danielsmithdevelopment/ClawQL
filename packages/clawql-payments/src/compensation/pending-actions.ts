@@ -8,6 +8,7 @@
 import { mkdir, readFile, readdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { randomBytes, randomUUID } from "node:crypto";
+import { Context, Data, Effect, Layer } from "effect";
 import { resolvePendingActionsDir } from "../config/paths.js";
 import { compensationActionTtlSec, compensationApprovalBaseUrl } from "./config.js";
 import type { HighImpactClassification } from "./high-impact.js";
@@ -78,6 +79,7 @@ export function buildCancelUrl(
   return `${base}/${tool}/cancel?action_id=${encodeURIComponent(actionId)}&code=${encodeURIComponent(code)}`;
 }
 
+/** @deprecated Prefer PendingActionsService.stage — Promise façade retained for legacy callers. */
 export async function stagePendingAction(
   input: {
     tool: string;
@@ -116,6 +118,7 @@ export async function stagePendingAction(
   return record;
 }
 
+/** @deprecated Prefer PendingActionsService.load — Promise façade retained for legacy callers. */
 export async function loadPendingAction(
   actionId: string,
   env: NodeJS.ProcessEnv = process.env
@@ -129,6 +132,7 @@ export async function loadPendingAction(
   }
 }
 
+/** @deprecated Prefer PendingActionsService.save — Promise façade retained for legacy callers. */
 export async function savePendingAction(
   record: PendingActionRecord,
   env: NodeJS.ProcessEnv = process.env
@@ -150,6 +154,7 @@ export function materializeExpiry(
   return record;
 }
 
+/** @deprecated Prefer PendingActionsService.assertCode — Promise façade retained for legacy callers. */
 export async function assertPendingCode(
   actionId: string,
   code: string,
@@ -167,6 +172,7 @@ export async function assertPendingCode(
   return record;
 }
 
+/** @deprecated Prefer PendingActionsService.list — Promise façade retained for legacy callers. */
 export async function listPendingActions(
   env: NodeJS.ProcessEnv = process.env,
   filter?: {
@@ -215,6 +221,8 @@ export async function listPendingActions(
 /**
  * Idempotency key for SGDOP / dividend deposits: recruitmentId + agentId + reason.
  * Returns the newest matching deposit that is still pending or already executed.
+ *
+ * @deprecated Prefer PendingActionsService.findRecruitDeposit — Promise façade retained for legacy callers.
  */
 export async function findRecruitDepositByKey(
   input: {
@@ -241,6 +249,7 @@ export async function findRecruitDepositByKey(
   return [...matches].reverse().find((r) => r.status === "executed");
 }
 
+/** @deprecated Prefer PendingActionsService.delete — Promise façade retained for legacy callers. */
 export async function deletePendingAction(
   actionId: string,
   env: NodeJS.ProcessEnv = process.env
@@ -250,4 +259,70 @@ export async function deletePendingAction(
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
   }
+}
+
+export class PendingActionsError extends Data.TaggedError("PendingActionsError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+type StagePendingActionInput = Parameters<typeof stagePendingAction>[0];
+type ListPendingActionsFilter = NonNullable<Parameters<typeof listPendingActions>[1]>;
+type FindRecruitDepositInput = Parameters<typeof findRecruitDepositByKey>[0];
+
+/** Effect surface over the file-backed PENDING_ACTIONS two-phase-commit staging store. */
+export class PendingActionsService extends Context.Tag("clawql/PendingActionsService")<
+  PendingActionsService,
+  {
+    readonly stage: (
+      input: StagePendingActionInput
+    ) => Effect.Effect<PendingActionRecord, PendingActionsError>;
+    readonly load: (
+      actionId: string
+    ) => Effect.Effect<PendingActionRecord | undefined, PendingActionsError>;
+    readonly save: (record: PendingActionRecord) => Effect.Effect<void, PendingActionsError>;
+    readonly assertCode: (
+      actionId: string,
+      code: string
+    ) => Effect.Effect<PendingActionRecord, PendingActionsError>;
+    readonly list: (
+      filter?: ListPendingActionsFilter
+    ) => Effect.Effect<PendingActionRecord[], PendingActionsError>;
+    readonly findRecruitDeposit: (
+      input: FindRecruitDepositInput
+    ) => Effect.Effect<PendingActionRecord | undefined, PendingActionsError>;
+    readonly delete: (actionId: string) => Effect.Effect<void, PendingActionsError>;
+  }
+>() {}
+
+export function pendingActionsLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<PendingActionsService> {
+  const run = <A>(reason: string, task: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: task,
+      catch: (cause) =>
+        cause instanceof PendingActionsError
+          ? cause
+          : new PendingActionsError({
+              reason: cause instanceof Error ? cause.message : reason,
+              cause,
+            }),
+    });
+
+  return Layer.succeed(
+    PendingActionsService,
+    PendingActionsService.of({
+      stage: (input) => run("Failed to stage pending action", () => stagePendingAction(input, env)),
+      load: (actionId) => run("Failed to load pending action", () => loadPendingAction(actionId, env)),
+      save: (record) => run("Failed to save pending action", () => savePendingAction(record, env)),
+      assertCode: (actionId, code) =>
+        run("Failed to verify pending action code", () => assertPendingCode(actionId, code, env)),
+      list: (filter) => run("Failed to list pending actions", () => listPendingActions(env, filter)),
+      findRecruitDeposit: (input) =>
+        run("Failed to look up recruit deposit", () => findRecruitDepositByKey(input, env)),
+      delete: (actionId) =>
+        run("Failed to delete pending action", () => deletePendingAction(actionId, env)),
+    })
+  );
 }

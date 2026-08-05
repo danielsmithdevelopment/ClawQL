@@ -7,6 +7,7 @@ import { acpCheckoutLiveLayer } from "../acp/acp-checkout-service.js";
 import { paypalOrdersLiveLayer } from "../paypal/paypal-orders-service.js";
 import { adyenCheckoutLiveLayer } from "../adyen/adyen-checkout-service.js";
 import { taxProfileLiveLayer } from "../accounting/tax-profile.js";
+import { payoutPreferencesLiveLayer } from "../payouts/preferences.js";
 import { payoutLiveLayer } from "../payouts/payout-service.js";
 import { rampLiveLayer } from "../ramp/ramp-service.js";
 import { consumerOffRampLiveLayer } from "../offramp/consumer-offramp-service.js";
@@ -20,6 +21,8 @@ import { creditsActivityLiveLayer } from "../credits/activity.js";
 import { creditsInviteEmailLiveLayer } from "../credits/invite-email.js";
 import { creditsStepUpLiveLayer } from "../credits/step-up.js";
 import { achTopupLiveLayer } from "../credits/ach-topup-service.js";
+import { pendingActionsLiveLayer } from "../compensation/pending-actions.js";
+import { compensationAccountsLiveLayer } from "../compensation/accounts.js";
 import { agentCompensationLiveLayer } from "../compensation/agent-compensation-service.js";
 import { deductionLiveLayer } from "../credits/deduction-service.js";
 import { deductionEventBusLiveLayer } from "../credits/deduction-event-bus.js";
@@ -60,6 +63,7 @@ export type PaymentsServices =
   | import("../paypal/paypal-orders-service.js").PaypalOrdersService
   | import("../adyen/adyen-checkout-service.js").AdyenCheckoutService
   | import("../accounting/tax-profile.js").TaxProfileService
+  | import("../payouts/preferences.js").PayoutPreferencesService
   | import("../payouts/payout-service.js").PayoutService
   | import("../ramp/ramp-service.js").RampService
   | import("../offramp/consumer-offramp-service.js").ConsumerOffRampService
@@ -73,6 +77,8 @@ export type PaymentsServices =
   | import("../credits/invite-email.js").CreditsInviteEmailService
   | import("../credits/step-up.js").CreditsStepUpService
   | import("../credits/ach-topup-service.js").AchTopupService
+  | import("../compensation/pending-actions.js").PendingActionsService
+  | import("../compensation/accounts.js").CompensationAccountsService
   | import("../compensation/agent-compensation-service.js").AgentCompensationService
   | import("../credits/deduction-service.js").DeductionService
   | import("../credits/deduction-event-bus.js").DeductionEventBus;
@@ -99,8 +105,9 @@ export function paymentsServicesLiveLayer(
   const paypal = paypalOrdersLiveLayer(env).pipe(Layer.provide(audit));
   const adyen = adyenCheckoutLiveLayer(env).pipe(Layer.provide(audit));
   const taxProfiles = taxProfileLiveLayer(env);
+  const payoutPreferences = payoutPreferencesLiveLayer(env);
   const payouts = payoutLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(audit, stripeClient, taxProfiles))
+    Layer.provide(Layer.mergeAll(audit, stripeClient, taxProfiles, payoutPreferences))
   );
   const ramp = rampLiveLayer(env).pipe(Layer.provide(audit));
   const offramp = consumerOffRampLiveLayer(env).pipe(Layer.provide(audit));
@@ -114,14 +121,16 @@ export function paymentsServicesLiveLayer(
   );
   const inviteEmail = creditsInviteEmailLiveLayer(env);
   const stepUp = creditsStepUpLiveLayer(env);
+  const pendingActions = pendingActionsLiveLayer(env);
+  const compensationAccounts = compensationAccountsLiveLayer(env);
   const credits = creditsLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(audit, ledger, stepUp))
+    Layer.provide(Layer.mergeAll(audit, ledger, stepUp, pendingActions))
   );
   const achTopup = achTopupLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(audit, stripeClient, credits))
   );
   const compensation = agentCompensationLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(audit, payouts))
+    Layer.provide(Layer.mergeAll(audit, payouts, compensationAccounts, pendingActions))
   );
   const deductionBus = deductionEventBusLiveLayer(env);
   const deduction = deductionLiveLayer(env).pipe(
@@ -174,6 +183,7 @@ export function paymentsServicesLiveLayer(
     paypal,
     adyen,
     taxProfiles,
+    payoutPreferences,
     payouts,
     ramp,
     offramp,
@@ -187,6 +197,8 @@ export function paymentsServicesLiveLayer(
     stepUp,
     credits,
     achTopup,
+    pendingActions,
+    compensationAccounts,
     compensation,
     deductionBus,
     deduction

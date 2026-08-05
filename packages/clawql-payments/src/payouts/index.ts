@@ -5,7 +5,10 @@ export {
   payoutsDefaultReturnUrl,
 } from "./config.js";
 export {
+  PayoutPreferencesError,
+  PayoutPreferencesService,
   getCreatorPayoutPreference,
+  payoutPreferencesLiveLayer,
   setCreatorPayoutPreference,
   type CreatorPayoutPreference,
   type PayoutMethod,
