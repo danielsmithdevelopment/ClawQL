@@ -15,13 +15,13 @@ Full harness design, caps, and repro:
 
 ## What was held constant
 
-| Factor              | Both arms                                         |
-| ------------------- | ------------------------------------------------- |
-| Model / harness     | OpenCode + clawql-inference (cheap OpenRouter)    |
-| MCP core            | Same ClawQL server; vault **memory disabled**     |
-| Task                | `ouroboros-oscillation-escape` (leaky-bucket impl)|
-| OpenCode `doom_loop`| **`allow`** (so thrash is observable)             |
-| Hard auto-fail caps | **≤50 turns · 180s · ≤8000 tokens**               |
+| Factor               | Both arms                                          |
+| -------------------- | -------------------------------------------------- |
+| Model / harness      | OpenCode + clawql-inference (cheap OpenRouter)     |
+| MCP core             | Same ClawQL server; vault **memory disabled**      |
+| Task                 | `ouroboros-oscillation-escape` (leaky-bucket impl) |
+| OpenCode `doom_loop` | **`allow`** (so thrash is observable)              |
+| Hard auto-fail caps  | **≤50 turns · 180s · ≤8000 tokens**                |
 
 **Only difference:** `ouroboros_*` tools + on-only seed appendix (correct recipe).
 Off-arm sees conflicting `decoy/` notes that encourage strategy flip-flop.
@@ -30,8 +30,8 @@ Off-arm sees conflicting `decoy/` notes that encourage strategy flip-flop.
 
 ## Headline result
 
-| Arm             | Score   | Turns | Wall | Observed path                                              |
-| --------------- | ------- | ----- | ---- | ---------------------------------------------------------- |
+| Arm               | Score   | Turns | Wall | Observed path                                            |
+| ----------------- | ------- | ----- | ---- | -------------------------------------------------------- |
 | **ouroboros-on**  | **1.0** | 5     | 78s  | `create_seed` → `run_evolutionary_loop` → `write` → pass |
 | **ouroboros-off** | **0.0** | 4+    | 167s | Decoy `read`/`write`/`bash` flip-flop → selftest fail    |
 
@@ -50,7 +50,7 @@ Supporting thrash capture (pre write-nudge, both 0.0, off doom-loop into wall):
 
 ---
 
-## What this does *not* claim
+## What this does _not_ claim
 
 - Not a multi-trial Wilson CI yet (n=1 live cell on the final design).
 - Not “Ouroboros beats OpenCode `doom_loop`” — that guard was **off** so thrash
@@ -64,20 +64,20 @@ Supporting thrash capture (pre write-nudge, both 0.0, off doom-loop into wall):
 
 What we say Ouroboros does, and how far that claim is backed today.
 
-| # | Claim (customer-facing) | Unit / package tests | Live agent / OpenBench | Status |
-| - | ----------------------- | -------------------- | ---------------------- | ------ |
-| 1 | Stops **strategy thrash** when harness `doom_loop` is off | n/a (agent behavior) | on 1.0 / off 0.0 ([30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642)) | **Verified (n=1)** |
-| 2 | Still adds value when OpenCode `doom_loop` is **on** (strategy A↔B ≠ identical spam) | n/a | on 1.0 / off 0.0 ([30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277) deny cell) | **Verified (n=1)** |
-| 3 | `create_seed` + `run_evolutionary_loop` used end-to-end under hard caps | MCP hooks + loop tests | observed in winning arm | **Verified (path)** |
-| 4 | Convergence taxonomy exits: `oscillation` / `spinning` / `diminishing_returns` / `no_drift` | `convergence.test.ts` | live checker does **not** assert `reason_code` | Library yes · agent no |
-| 5 | Drift gate blocks premature converge (`drift_exceeded`, combined > 0.3) | `convergence` + `evolutionary-loop` + `drift` tests | no agent task forces measure/reflect on drift | Library yes · agent no |
-| 6 | `ouroboros_measure_drift` + lineage expose usable signals to agents | `mcp-hooks.test.ts`, lineage rebuild | skill mentions lineage; OpenBench never requires these tools | MCP yes · agent unused |
-| 7 | Multi-generation **Reflect** improves a failing seed (gen1 fail → gen2+ pass) | loop converges with stub engines | no task where first write must fail AC then recover via loop | **Gap** |
-| 8 | Hard `maxGenerations` spend bound | loop override test + CI env clamp | capped at ≤4 in thrash A/B | **Verified** |
-| 9 | Durable Postgres lineage / event store | optional integration tests (often skipped in CI) | not in OpenBench | Library partial · ops gap |
-| 10 | Wonder/Reflect with real LLMs (not stubs) | stubs in package tests | thrash task uses host default engines via MCP | **Thin** |
-| 11 | Model-tier / PAL-style escalation inside the loop | foundation in clawql-inference ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560)) | not an Ouroboros A/B | Roadmap / foundation |
-| 12 | Marketing “ontology graph continuously measures drift” style copy | 3-component drift shipped ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557)); not a full graph product | n/a | Keep claims aligned with [upstream roadmap](../ouroboros/upstream-q00-sync-roadmap.md) |
+| #   | Claim (customer-facing)                                                                     | Unit / package tests                                                                                                      | Live agent / OpenBench                                                                                                | Status                                                                                 |
+| --- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| 1   | Stops **strategy thrash** when harness `doom_loop` is off                                   | n/a (agent behavior)                                                                                                      | on 1.0 / off 0.0 ([30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642))           | **Verified (n=1)**                                                                     |
+| 2   | Still adds value when OpenCode `doom_loop` is **on** (strategy A↔B ≠ identical spam)        | n/a                                                                                                                       | on 1.0 / off 0.0 ([30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277) deny cell) | **Verified (n=1)**                                                                     |
+| 3   | `create_seed` + `run_evolutionary_loop` used end-to-end under hard caps                     | MCP hooks + loop tests                                                                                                    | observed in winning arm                                                                                               | **Verified (path)**                                                                    |
+| 4   | Convergence taxonomy exits: `oscillation` / `spinning` / `diminishing_returns` / `no_drift` | `convergence.test.ts`                                                                                                     | live checker does **not** assert `reason_code`                                                                        | Library yes · agent no                                                                 |
+| 5   | Drift gate blocks premature converge (`drift_exceeded`, combined > 0.3)                     | `convergence` + `evolutionary-loop` + `drift` tests                                                                       | no agent task forces measure/reflect on drift                                                                         | Library yes · agent no                                                                 |
+| 6   | `ouroboros_measure_drift` + lineage expose usable signals to agents                         | `mcp-hooks.test.ts`, lineage rebuild                                                                                      | skill mentions lineage; OpenBench never requires these tools                                                          | MCP yes · agent unused                                                                 |
+| 7   | Multi-generation **Reflect** improves a failing seed (gen1 fail → gen2+ pass)               | loop converges with stub engines                                                                                          | no task where first write must fail AC then recover via loop                                                          | **Gap**                                                                                |
+| 8   | Hard `maxGenerations` spend bound                                                           | loop override test + CI env clamp                                                                                         | capped at ≤4 in thrash A/B                                                                                            | **Verified**                                                                           |
+| 9   | Durable Postgres lineage / event store                                                      | optional integration tests (often skipped in CI)                                                                          | not in OpenBench                                                                                                      | Library partial · ops gap                                                              |
+| 10  | Wonder/Reflect with real LLMs (not stubs)                                                   | stubs in package tests                                                                                                    | thrash task uses host default engines via MCP                                                                         | **Thin**                                                                               |
+| 11  | Model-tier / PAL-style escalation inside the loop                                           | foundation in clawql-inference ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560))                      | not an Ouroboros A/B                                                                                                  | Roadmap / foundation                                                                   |
+| 12  | Marketing “ontology graph continuously measures drift” style copy                           | 3-component drift shipped ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557)); not a full graph product | n/a                                                                                                                   | Keep claims aligned with [upstream roadmap](../ouroboros/upstream-q00-sync-roadmap.md) |
 
 **Separate ClawQL (non-Ouroboros) OpenBench claims** — memory / multi-provider / token-budget A/Bs live under [#758](https://github.com/danielsmithdevelopment/ClawQL/pull/758). Do not mix those wins into the Ouroboros thrash claim.
 
@@ -98,17 +98,17 @@ Prioritized for **honest product claims**, not feature tourism.
 
 ### P1 — harden the thrash claim
 
-4. **n≥5** on `doom_loop=allow` (and on the deny cell) for Wilson-style intervals.  
+4. **n≥5** on `doom_loop=allow` (and on the deny cell) for Wilson-style intervals.
 5. **Stagnation-only** variant (rewrite same wrong file, no decoy A↔B) so `diminishing_returns` / `spinning` show up in live lineage, matching unit taxonomy.
 
 ### P2 — ops / durability claims
 
-6. Turn on **Postgres Ouroboros integration** in CI (or a scheduled job) and cite a green run when claiming durable lineage.  
+6. Turn on **Postgres Ouroboros integration** in CI (or a scheduled job) and cite a green run when claiming durable lineage.
 7. One **real-LLM Wonder/Reflect** smoke (cheap model, capped gens) so we are not only stub-engine confident.
 
 ### Explicit non-goals for this evidence track
 
-- Full Q00 PAL / agent-coordination / NSV-SGDOP parity — roadmap, not current claim support.  
+- Full Q00 PAL / agent-coordination / NSV-SGDOP parity — roadmap, not current claim support.
 - Inflating the marketing post beyond shipped drift + convergence APIs.
 
 ---
@@ -117,10 +117,10 @@ Prioritized for **honest product claims**, not feature tourism.
 
 Production OpenCode guard **on** (`doom_loop=deny`); same task/caps:
 
-| Arm             | Score   | Turns | Wall (s) | Notes                          |
-| --------------- | ------- | ----- | -------- | ------------------------------ |
-| ouroboros-on    | **1.0** | 5     | 73       | Converges under production guard |
-| ouroboros-off   | **0.0** | 2     | 171      | Still fails (strategy thrash)  |
+| Arm           | Score   | Turns | Wall (s) | Notes                            |
+| ------------- | ------- | ----- | -------- | -------------------------------- |
+| ouroboros-on  | **1.0** | 5     | 73       | Converges under production guard |
+| ouroboros-off | **0.0** | 2     | 171      | Still fails (strategy thrash)    |
 
 **Verdict:** Ouroboros adds value **beyond** identical-tool spam blocking.
 Prefer **≥3 trials** next for CI width; then lineage/drift graded + multi-gen

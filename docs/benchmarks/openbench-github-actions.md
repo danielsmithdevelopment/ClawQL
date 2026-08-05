@@ -18,11 +18,11 @@ Artifacts include `agent-logs/` for each trial/arm.
 
 ## When it runs
 
-| Trigger                                               | Behavior                                                                                                          |
-| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Trigger                                               | Behavior                                                                                                            |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | **`workflow_dispatch`**                               | Manual knobs. `task=all` = `pr_active` only; `all-including-retired` re-runs proven cells. **Fails** without secret |
-| **`pull_request` / `push` to `main`** (path-filtered) | Matrix = `pr_active` only (`max-parallel: 2`). **Skips live A/B** when secrets missing; offline validation always |
-| Main **CI** workflow                                  | Always runs `python3 openbench/validate_tasks.py` (offline checkers only)                                         |
+| **`pull_request` / `push` to `main`** (path-filtered) | Matrix = `pr_active` only (`max-parallel: 2`). **Skips live A/B** when secrets missing; offline validation always   |
+| Main **CI** workflow                                  | Always runs `python3 openbench/validate_tasks.py` (offline checkers only)                                           |
 
 Path filters include `openbench/**`, harness/inference code, and the workflow file.
 **Docs-only changes do not trigger live A/B** (update the ledger freely).

@@ -87,9 +87,7 @@ export function executeRunEvolutionaryLoopFromInputEffect(
     if (Number.isFinite(envCap) && envCap >= 1) {
       const capped = Math.min(50, envCap);
       maxGenerations =
-        typeof maxGenerations === "number"
-          ? Math.min(maxGenerations, capped)
-          : capped;
+        typeof maxGenerations === "number" ? Math.min(maxGenerations, capped) : capped;
     }
     const result = yield* loopSvc.run(validatedSeed, {
       maxGenerations,

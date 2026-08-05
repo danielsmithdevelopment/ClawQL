@@ -49,10 +49,10 @@ diminishing_returns / `max_generations` via `ouroboros_run_evolutionary_loop`.
 
 With doom_loop **allow**, no vault memory, 50-turn / 180s caps, write nudge + off thrash nudges:
 
-| Arm           | Score | Turns | Wall (s) | Behavior                                                                      |
-| ------------- | ----- | ----- | -------- | ----------------------------------------------------------------------------- |
-| ouroboros-on  | **1.0** | 5   | 78       | `create_seed` → `run_evolutionary_loop` → `write` → selftest pass             |
-| ouroboros-off | **0.0** | 4+  | 167      | Decoy flip-flop `read`/`write`/`bash` → wrong limiter → selftest fail         |
+| Arm           | Score   | Turns | Wall (s) | Behavior                                                              |
+| ------------- | ------- | ----- | -------- | --------------------------------------------------------------------- |
+| ouroboros-on  | **1.0** | 5     | 78       | `create_seed` → `run_evolutionary_loop` → `write` → selftest pass     |
+| ouroboros-off | **0.0** | 4+    | 167      | Decoy flip-flop `read`/`write`/`bash` → wrong limiter → selftest fail |
 
 **Verdict:** on converges under hard caps; off thrashs / fails the task without Ouroboros.
 

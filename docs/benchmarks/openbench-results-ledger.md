@@ -5,16 +5,16 @@ meaningful Actions run (pass, fail, flake, or infra timeout). Coverage / backlog
 lives in [`openbench-stack-coverage.md`](./openbench-stack-coverage.md); this
 document is the **scoreboard + run diary**.
 
-| Field | Value |
-| ----- | ----- |
-| PR | [#759](https://github.com/danielsmithdevelopment/ClawQL/pull/759) (stacked on [#758](https://github.com/danielsmithdevelopment/ClawQL/pull/758)) |
-| Branch | `cursor/openbench-ouroboros-doom-loop-4ff0` |
-| Default model | `openrouter/deepseek/deepseek-chat` |
-| Harness | OpenCode → clawql-inference |
-| How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0 |
-| Last ledger update | 2026-08-04T16:40Z |
-| CI matrix control | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push |
-| Task explanations | [`openbench-task-explanations.md`](./openbench-task-explanations.md) — prove / why / how for every cell |
+| Field              | Value                                                                                                                                            |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| PR                 | [#759](https://github.com/danielsmithdevelopment/ClawQL/pull/759) (stacked on [#758](https://github.com/danielsmithdevelopment/ClawQL/pull/758)) |
+| Branch             | `cursor/openbench-ouroboros-doom-loop-4ff0`                                                                                                      |
+| Default model      | `openrouter/deepseek/deepseek-chat`                                                                                                              |
+| Harness            | OpenCode → clawql-inference                                                                                                                      |
+| How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0                                                                    |
+| Last ledger update | 2026-08-04T16:40Z                                                                                                                                |
+| CI matrix control  | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push                                          |
+| Task explanations  | [`openbench-task-explanations.md`](./openbench-task-explanations.md) — prove / why / how for every cell                                          |
 
 ---
 
@@ -32,30 +32,30 @@ history). Move the best WIN into the headline table if it improves the claim.
 
 ## Headline claims (best verified)
 
-| Task | Claim | Best on | Best off | Run | Verdict |
-| ---- | ----- | ------- | -------- | --- | ------- |
-| `ouroboros-oscillation-escape` (`doom_loop=allow`) | Ouroboros stops strategy thrash | **1.0** (5 turns, 78s) | **0.0** (4 turns, 167s) | [30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642) | **WIN** |
-| `ouroboros-oscillation-escape` (`doom_loop=deny`) | Still wins with production doom_loop on | **1.0** (5 turns, 73s) | **0.0** (2 turns, 171s) | [30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277) deny cell | **WIN** |
-| `memory-dependent-continuation` | Vault recall after seed removal | **1.0** | **0.333** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) | **WIN** |
-| `token-budget-constrained` | Nested recipe under token pressure | **1.0** | **0.0** | [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811) | **WIN** |
-| `multi-provider-api-workflow` | Vault → Worker/wrangler scaffold | **1.0** (3 turns, 33s) | **0.75** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) | **WIN** (margin; also early [30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)) |
-| `memory-roundtrip-ingest-recall` | Empty vault ingest→recall | **1.0** | **0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) | **WIN** |
-| `search-first-discovery` | Must call `clawql_search` | **1.0** | **0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) | **WIN** (after anti-guess) |
-| `execute-verify-loop` | search + ≥2 dry_run execute | **1.0** | **0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) | **WIN** |
-| `audit-checkpoints` | audit append×3 + list → trail | **1.0** (2 turns, 29s) | **0.0** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) | **WIN** (replicated after idle flake) |
-| `policy-deny-execute` | Panguard blocks execute | **1.0** | **0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) | **WIN** |
-| `cache-scratch-handoff` | clawql_cache set/get handoff | **1.0** (4 turns, 33s) | **0.0** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) | **WIN** |
-| `pageindex-section-qa` | PageIndex build+synthesize buried code | **1.0** (4 turns, 38s) | **0.0** | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522) | **WIN** |
-| `codegraph-guided-edit` | Structural index locates SECRET_MARKER | **1.0** (3 turns, 53s) | **0.0** | [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377) | **WIN** |
-| `schedule-synthetic-dry-run` | schedule create + dry_run trigger | **1.0** (3 turns, 32s) | **0.0** | [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377) | **WIN** |
-| `external-ingest-continue` | ingest_external_knowledge → memory_recall | **1.0** (5 turns, 37s) | **0.0** | [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038) | **WIN** |
-| `hybrid-recall-source-pin` | PageIndex retrieves buried handbook code | **1.0** (5 turns, 52s) | **0.0** | [30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063) | **WIN** |
-| `notify-mock-slack` | Stubbed Slack notify milestone | **1.0** (2 turns, 21s) | **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) | **WIN** |
-| `sandbox-trusted-compute` | Docker sandbox_exec trusted token | **1.0** (3 turns, 30s) | **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) | **WIN** |
-| `composed-safe-rollout` | search→dry_run×2→audit→ingest | **1.0** (5 turns, 79s) | **0.0** | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) | **WIN** |
-| `onyx-mock-cite` | Stubbed Onyx knowledge cite | **1.0** (3 turns, 17s) | **0.0** | [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189) | **WIN** |
-| `memory-wikilink-hop` | Recall follows [[wikilink]] hop | **1.0** (3 turns, 56s) | **0.0** | [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189) | **WIN** |
-| `memory-conflict-pricing` | Surface conflicting vault prices (no synthesis) | **1.0** (3 turns, 29s) | **0.0** | [30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746) | **WIN** |
+| Task                                               | Claim                                           | Best on                | Best off                | Run                                                                                                | Verdict                                                                                                               |
+| -------------------------------------------------- | ----------------------------------------------- | ---------------------- | ----------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `ouroboros-oscillation-escape` (`doom_loop=allow`) | Ouroboros stops strategy thrash                 | **1.0** (5 turns, 78s) | **0.0** (4 turns, 167s) | [30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642)           | **WIN**                                                                                                               |
+| `ouroboros-oscillation-escape` (`doom_loop=deny`)  | Still wins with production doom_loop on         | **1.0** (5 turns, 73s) | **0.0** (2 turns, 171s) | [30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277) deny cell | **WIN**                                                                                                               |
+| `memory-dependent-continuation`                    | Vault recall after seed removal                 | **1.0**                | **0.333**               | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)           | **WIN**                                                                                                               |
+| `token-budget-constrained`                         | Nested recipe under token pressure              | **1.0**                | **0.0**                 | [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811)           | **WIN**                                                                                                               |
+| `multi-provider-api-workflow`                      | Vault → Worker/wrangler scaffold                | **1.0** (3 turns, 33s) | **0.75**                | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)           | **WIN** (margin; also early [30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)) |
+| `memory-roundtrip-ingest-recall`                   | Empty vault ingest→recall                       | **1.0**                | **0.0**                 | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)           | **WIN**                                                                                                               |
+| `search-first-discovery`                           | Must call `clawql_search`                       | **1.0**                | **0.0**                 | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)           | **WIN** (after anti-guess)                                                                                            |
+| `execute-verify-loop`                              | search + ≥2 dry_run execute                     | **1.0**                | **0.0**                 | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)           | **WIN**                                                                                                               |
+| `audit-checkpoints`                                | audit append×3 + list → trail                   | **1.0** (2 turns, 29s) | **0.0**                 | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)           | **WIN** (replicated after idle flake)                                                                                 |
+| `policy-deny-execute`                              | Panguard blocks execute                         | **1.0**                | **0.0**                 | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)           | **WIN**                                                                                                               |
+| `cache-scratch-handoff`                            | clawql_cache set/get handoff                    | **1.0** (4 turns, 33s) | **0.0**                 | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)           | **WIN**                                                                                                               |
+| `pageindex-section-qa`                             | PageIndex build+synthesize buried code          | **1.0** (4 turns, 38s) | **0.0**                 | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)           | **WIN**                                                                                                               |
+| `codegraph-guided-edit`                            | Structural index locates SECRET_MARKER          | **1.0** (3 turns, 53s) | **0.0**                 | [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)           | **WIN**                                                                                                               |
+| `schedule-synthetic-dry-run`                       | schedule create + dry_run trigger               | **1.0** (3 turns, 32s) | **0.0**                 | [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)           | **WIN**                                                                                                               |
+| `external-ingest-continue`                         | ingest_external_knowledge → memory_recall       | **1.0** (5 turns, 37s) | **0.0**                 | [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038)           | **WIN**                                                                                                               |
+| `hybrid-recall-source-pin`                         | PageIndex retrieves buried handbook code        | **1.0** (5 turns, 52s) | **0.0**                 | [30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063)           | **WIN**                                                                                                               |
+| `notify-mock-slack`                                | Stubbed Slack notify milestone                  | **1.0** (2 turns, 21s) | **0.0**                 | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305)           | **WIN**                                                                                                               |
+| `sandbox-trusted-compute`                          | Docker sandbox_exec trusted token               | **1.0** (3 turns, 30s) | **0.0**                 | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305)           | **WIN**                                                                                                               |
+| `composed-safe-rollout`                            | search→dry_run×2→audit→ingest                   | **1.0** (5 turns, 79s) | **0.0**                 | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305)           | **WIN**                                                                                                               |
+| `onyx-mock-cite`                                   | Stubbed Onyx knowledge cite                     | **1.0** (3 turns, 17s) | **0.0**                 | [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)           | **WIN**                                                                                                               |
+| `memory-wikilink-hop`                              | Recall follows [[wikilink]] hop                 | **1.0** (3 turns, 56s) | **0.0**                 | [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)           | **WIN**                                                                                                               |
+| `memory-conflict-pricing`                          | Surface conflicting vault prices (no synthesis) | **1.0** (3 turns, 29s) | **0.0**                 | [30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746)           | **WIN**                                                                                                               |
 
 Replicated Ouroboros WINs also on [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519) (allow + deny both on 1.0 / off 0.0).
 
@@ -67,44 +67,44 @@ Replicated Ouroboros WINs also on [30872913519](https://github.com/danielsmithde
 
 ### 2026-08-04 — [30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063) (hybrid catalog-scale handbook)
 
-| Arm | Score | Turns | Wall (s) | Notes |
-| --- | ----- | ----- | -------- | ----- |
-| clawql-on | **1.0** | 5 | 51.7 | read → build_tree (with fern-42 markdown) → synthesize → write |
-| clawql-off | **0.0** | 2 | 7.2 | Correct fail (no real pageindex tools) |
+| Arm        | Score   | Turns | Wall (s) | Notes                                                          |
+| ---------- | ------- | ----- | -------- | -------------------------------------------------------------- |
+| clawql-on  | **1.0** | 5     | 51.7     | read → build_tree (with fern-42 markdown) → synthesize → write |
+| clawql-off | **0.0** | 2     | 7.2      | Correct fail (no real pageindex tools)                         |
 
 **Verdict:** **WIN** — retire hybrid from `pr_active`.
 
 ### 2026-08-04 — [30888249849](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888249849) (hybrid empty-md harden)
 
-| Arm | Score | Turns | Wall (s) | Notes |
-| --- | ----- | ----- | -------- | ----- |
-| clawql-on | 0.0 | 1 | 154 | Read handbook then nudge timed out (90s) trying to re-emit ~14KB markdown into build_tree |
-| clawql-off | 0.0 | 2 | 9.8 | Correct fail |
+| Arm        | Score | Turns | Wall (s) | Notes                                                                                     |
+| ---------- | ----- | ----- | -------- | ----------------------------------------------------------------------------------------- |
+| clawql-on  | 0.0   | 1     | 154      | Read handbook then nudge timed out (90s) trying to re-emit ~14KB markdown into build_tree |
+| clawql-off | 0.0   | 2     | 9.8      | Correct fail                                                                              |
 
 **Verdict:** shrink handbook to catalog-like size (same pattern as pageindex-section-qa WIN). Keep `pr_active`.
 
 ### 2026-08-04 — [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038) (anti-guess + external-ingest)
 
-| Task | on | off | Verdict |
-| ---- | -- | --- | ------- |
-| hybrid-recall-source-pin | 0.0 (3t, 86s) | 0.0 (2t, 6s) | **TIE fail** — off correctly fails (anti-guess works). on called pageindex but `build_tree` with `markdown:""`, synthesize empty, wrote `{"CLAWQL_HYBRID_CODE":"fern-42"}` (wrong shape / not via PageIndex content). Harden: require non-empty handbook markdown in build **or** fern-42 in synthesize output; accept `code`/`CLAWQL_HYBRID_CODE` keys; clearer nudge. |
-| external-ingest-continue | **1.0** (5t, 37s) | **0.0** (3t, 11s) | **WIN** — retire after this run. |
+| Task                     | on                | off               | Verdict                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------ | ----------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| hybrid-recall-source-pin | 0.0 (3t, 86s)     | 0.0 (2t, 6s)      | **TIE fail** — off correctly fails (anti-guess works). on called pageindex but `build_tree` with `markdown:""`, synthesize empty, wrote `{"CLAWQL_HYBRID_CODE":"fern-42"}` (wrong shape / not via PageIndex content). Harden: require non-empty handbook markdown in build **or** fern-42 in synthesize output; accept `code`/`CLAWQL_HYBRID_CODE` keys; clearer nudge. |
+| external-ingest-continue | **1.0** (5t, 37s) | **0.0** (3t, 11s) | **WIN** — retire after this run.                                                                                                                                                                                                                                                                                                                                        |
 
 ### 2026-08-04 — [30886497135](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30886497135) (hybrid harden attempt)
 
-| Arm | Score | Turns | Wall (s) | Notes |
-| --- | ----- | ----- | -------- | ----- |
-| clawql-on | 1.0 | 3 | 78.0 | After nudge: real build_tree + synthesize; wrote fern-42 |
-| clawql-off | 1.0 | 4 | 20.7 | **False pass** — read handbook + write; attempted unavailable pageindex tools recorded as `"tool":"invalid"` with name in `input.tool`; naive grep matched |
+| Arm        | Score | Turns | Wall (s) | Notes                                                                                                                                                      |
+| ---------- | ----- | ----- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| clawql-on  | 1.0   | 3     | 78.0     | After nudge: real build_tree + synthesize; wrote fern-42                                                                                                   |
+| clawql-off | 1.0   | 4     | 20.7     | **False pass** — read handbook + write; attempted unavailable pageindex tools recorded as `"tool":"invalid"` with name in `input.tool`; naive grep matched |
 
 **Verdict:** **TIE (invalid)** — not a headline WIN. Fix: `require-real-clawql-tools.py` + lengthen handbook; keep hybrid `pr_active`. Also ship `external-ingest-continue` as next P1.
 
 ### 2026-08-04 — [30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642) (ouroboros, allow)
 
-| Arm | Score | Turns | Wall (s) |
-| --- | ----- | ----- | -------- |
-| ouroboros-on | 1.0 | 5 | 78.1 |
-| ouroboros-off | 0.0 | 4 | 167.5 |
+| Arm           | Score | Turns | Wall (s) |
+| ------------- | ----- | ----- | -------- |
+| ouroboros-on  | 1.0   | 5     | 78.1     |
+| ouroboros-off | 0.0   | 4     | 167.5    |
 
 Notes: First clean thrash WIN with memory disabled, hard caps ≤50 turns / 180s / 8000 tokens, on-only seed appendix.
 
@@ -112,17 +112,17 @@ Notes: First clean thrash WIN with memory disabled, hard caps ≤50 turns / 180s
 
 **allow**
 
-| Arm | Score | Turns | Wall (s) |
-| --- | ----- | ----- | -------- |
-| ouroboros-on | 1.0 | 5 | 55.0 |
-| ouroboros-off | 0.0 | 11 | 181.4 |
+| Arm           | Score | Turns | Wall (s) |
+| ------------- | ----- | ----- | -------- |
+| ouroboros-on  | 1.0   | 5     | 55.0     |
+| ouroboros-off | 0.0   | 11    | 181.4    |
 
 **deny**
 
-| Arm | Score | Turns | Wall (s) |
-| --- | ----- | ----- | -------- |
-| ouroboros-on | 1.0 | 5 | 72.8 |
-| ouroboros-off | 0.0 | 2 | 171.4 |
+| Arm           | Score | Turns | Wall (s) |
+| ------------- | ----- | ----- | -------- |
+| ouroboros-on  | 1.0   | 5     | 72.8     |
+| ouroboros-off | 0.0   | 2     | 171.4    |
 
 Notes: Additive production-guard cell — Ouroboros still wins when OpenCode `doom_loop=deny`.
 
@@ -130,76 +130,76 @@ Notes: Additive production-guard cell — Ouroboros still wins when OpenCode `do
 
 Model: `openrouter/deepseek/deepseek-chat` · SHA `01240fec…`
 
-| Task | on | off | Notes |
-| ---- | -- | --- | ----- |
-| memory-dependent-continuation | 1.0 | 0.333 | WIN |
-| token-budget-constrained | 1.0 | 0.0 | WIN |
-| multi-provider-api-workflow | 1.0 | 0.75 | WIN |
-| memory-roundtrip-ingest-recall | 1.0 | 0.0 | WIN |
-| search-first-discovery | 1.0 | **1.0** | **TIE** — off guessed operationId |
-| execute-verify-loop | 1.0 | **1.0** | **TIE** — off invented trail.json |
+| Task                           | on  | off     | Notes                             |
+| ------------------------------ | --- | ------- | --------------------------------- |
+| memory-dependent-continuation  | 1.0 | 0.333   | WIN                               |
+| token-budget-constrained       | 1.0 | 0.0     | WIN                               |
+| multi-provider-api-workflow    | 1.0 | 0.75    | WIN                               |
+| memory-roundtrip-ingest-recall | 1.0 | 0.0     | WIN                               |
+| search-first-discovery         | 1.0 | **1.0** | **TIE** — off guessed operationId |
+| execute-verify-loop            | 1.0 | **1.0** | **TIE** — off invented trail.json |
 
 Follow-up: require `"tool":"clawql_*"` evidence on **both** arms.
 
 ### 2026-08-04 — [30871190463](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30871190463) (anti-guess + new tasks)
 
-| Task | on | off | Notes |
-| ---- | -- | --- | ----- |
-| memory-dependent-continuation | 1.0 | 0.333 | WIN |
-| token-budget-constrained | 1.0 | 0.0 | WIN |
-| multi-provider-api-workflow | 1.0 | 1.0 | TIE (off scaffolded) |
-| memory-roundtrip-ingest-recall | 1.0 | 0.0 | WIN |
-| search-first-discovery | **1.0** | **0.0** | **WIN** (anti-guess worked) |
-| execute-verify-loop | 0.0 | 0.0 | on omitted dry_run in execute args |
-| audit-checkpoints | 0.0 | 0.0 | on used audit×4, no write |
-| cache-scratch-handoff | 0.0 | 0.0 | called bare `cache` → invalid |
-| policy-deny-execute | 0.0 | 0.0 | execute blocked; reason collapsed to generic error |
+| Task                           | on      | off     | Notes                                              |
+| ------------------------------ | ------- | ------- | -------------------------------------------------- |
+| memory-dependent-continuation  | 1.0     | 0.333   | WIN                                                |
+| token-budget-constrained       | 1.0     | 0.0     | WIN                                                |
+| multi-provider-api-workflow    | 1.0     | 1.0     | TIE (off scaffolded)                               |
+| memory-roundtrip-ingest-recall | 1.0     | 0.0     | WIN                                                |
+| search-first-discovery         | **1.0** | **0.0** | **WIN** (anti-guess worked)                        |
+| execute-verify-loop            | 0.0     | 0.0     | on omitted dry_run in execute args                 |
+| audit-checkpoints              | 0.0     | 0.0     | on used audit×4, no write                          |
+| cache-scratch-handoff          | 0.0     | 0.0     | called bare `cache` → invalid                      |
+| policy-deny-execute            | 0.0     | 0.0     | execute blocked; reason collapsed to generic error |
 
 Follow-ups: Panguard `isError` text; dry_run/write nudges; `clawql_cache` naming.
 
 ### 2026-08-04 — [30871786843](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30871786843)
 
-| Task | on | off | Notes |
-| ---- | -- | --- | ----- |
-| memory-dependent-continuation | 1.0 | 0.333 | WIN |
-| token-budget-constrained | 1.0 | 0.0 | WIN |
-| memory-roundtrip-ingest-recall | 1.0 | 0.0 | WIN |
-| search-first-discovery | 1.0 | 0.0 | WIN |
-| policy-deny-execute | **1.0** | **0.0** | **WIN** (Panguard surface fix) |
-| execute-verify-loop | 0.0 | 0.0 | on stopped after search only |
-| audit-checkpoints | 0.0 | 0.0 | wrote `/tmp/opencode/trail.json` (absolute) |
-| cache-scratch-handoff | 0.0 | 0.0 | invalid `cache` + source source=file |
-| multi-provider-api-workflow | 0.0 | 1.0 | on fail / off pass (noise) |
+| Task                           | on      | off     | Notes                                       |
+| ------------------------------ | ------- | ------- | ------------------------------------------- |
+| memory-dependent-continuation  | 1.0     | 0.333   | WIN                                         |
+| token-budget-constrained       | 1.0     | 0.0     | WIN                                         |
+| memory-roundtrip-ingest-recall | 1.0     | 0.0     | WIN                                         |
+| search-first-discovery         | 1.0     | 0.0     | WIN                                         |
+| policy-deny-execute            | **1.0** | **0.0** | **WIN** (Panguard surface fix)              |
+| execute-verify-loop            | 0.0     | 0.0     | on stopped after search only                |
+| audit-checkpoints              | 0.0     | 0.0     | wrote `/tmp/opencode/trail.json` (absolute) |
+| cache-scratch-handoff          | 0.0     | 0.0     | invalid `cache` + source source=file        |
+| multi-provider-api-workflow    | 0.0     | 1.0     | on fail / off pass (noise)                  |
 
 ### 2026-08-04 — [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811)
 
-| Task | on | off | Notes |
-| ---- | -- | --- | ----- |
-| memory-dependent-continuation | 1.0 | 0.333 | WIN |
-| token-budget-constrained | 1.0 | 0.0 | WIN |
-| memory-roundtrip-ingest-recall | 1.0 | 0.0 | WIN |
-| search-first-discovery | 1.0 | 0.0 | WIN |
-| policy-deny-execute | 1.0 | 0.0 | WIN |
-| audit-checkpoints | **1.0** | **0.0** | **WIN** (relative-path nudge) |
-| execute-verify-loop | 0.0 | 0.0 | on completed tools+trail; checker falsely failed search (log dump replace) |
-| cache-scratch-handoff | 0.0 | 0.0 | idle OpenCode session |
-| multi-provider-api-workflow | 0.75 | 0.75 | TIE |
+| Task                           | on      | off     | Notes                                                                      |
+| ------------------------------ | ------- | ------- | -------------------------------------------------------------------------- |
+| memory-dependent-continuation  | 1.0     | 0.333   | WIN                                                                        |
+| token-budget-constrained       | 1.0     | 0.0     | WIN                                                                        |
+| memory-roundtrip-ingest-recall | 1.0     | 0.0     | WIN                                                                        |
+| search-first-discovery         | 1.0     | 0.0     | WIN                                                                        |
+| policy-deny-execute            | 1.0     | 0.0     | WIN                                                                        |
+| audit-checkpoints              | **1.0** | **0.0** | **WIN** (relative-path nudge)                                              |
+| execute-verify-loop            | 0.0     | 0.0     | on completed tools+trail; checker falsely failed search (log dump replace) |
+| cache-scratch-handoff          | 0.0     | 0.0     | idle OpenCode session                                                      |
+| multi-provider-api-workflow    | 0.75    | 0.75    | TIE                                                                        |
 
 Follow-up: never replace combined agent logs with longer harness dump; grep log files on disk.
 
 ### 2026-08-04 — [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) + ouroboros [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519)
 
-| Task | on | off | Notes |
-| ---- | -- | --- | ----- |
-| memory-dependent-continuation | 1.0 | 0.333 | WIN |
-| memory-roundtrip-ingest-recall | 1.0 | 0.0 | WIN |
-| search-first-discovery | 1.0 | 0.0 | WIN |
-| execute-verify-loop | **1.0** | **0.0** | **WIN** (log-merge fix) |
-| policy-deny-execute | 1.0 | 0.0 | WIN |
-| token-budget-constrained | 1.0 | **1.0** | TIE this cell (off hit timeout wall with score 1.0) |
-| audit-checkpoints | 0.0 | 0.0 | idle (no tools) — flake vs prior WIN |
-| cache-scratch-handoff | 0.0 | 0.0 | clawql_cache **set×2** observed; no get/write |
-| multi-provider-api-workflow | 0.0 | 0.0 | both fail |
+| Task                           | on      | off     | Notes                                               |
+| ------------------------------ | ------- | ------- | --------------------------------------------------- |
+| memory-dependent-continuation  | 1.0     | 0.333   | WIN                                                 |
+| memory-roundtrip-ingest-recall | 1.0     | 0.0     | WIN                                                 |
+| search-first-discovery         | 1.0     | 0.0     | WIN                                                 |
+| execute-verify-loop            | **1.0** | **0.0** | **WIN** (log-merge fix)                             |
+| policy-deny-execute            | 1.0     | 0.0     | WIN                                                 |
+| token-budget-constrained       | 1.0     | **1.0** | TIE this cell (off hit timeout wall with score 1.0) |
+| audit-checkpoints              | 0.0     | 0.0     | idle (no tools) — flake vs prior WIN                |
+| cache-scratch-handoff          | 0.0     | 0.0     | clawql_cache **set×2** observed; no get/write       |
+| multi-provider-api-workflow    | 0.0     | 0.0     | both fail                                           |
 
 Ouroboros [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519): allow on 1.0 / off 0.0; deny on 1.0 / off 0.0 (replication).
 
@@ -228,11 +228,12 @@ Follow-ups: serialize `max-parallel: 1`, pin `opencode-ai@1.18.11`, `--print-log
 ### 2026-08-04 — [30880006784](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30880006784) — **root cause: OpenRouter 402**
 
 `--print-logs` showed the hang is **not** mystery infra: OpenRouter returned
-`HTTP 402` — *“This request requires more credits, or fewer max_tokens. You
-requested up to 16384 tokens, but can only afford 755.”* OpenCode retries the
+`HTTP 402` — _“This request requires more credits, or fewer max_tokens. You
+requested up to 16384 tokens, but can only afford 755.”_ OpenCode retries the
 stream error until our wall timeout (classic #8203-style hang).
 
 **Actions taken:**
+
 - Pause PR live A/B: `openbench/ci-matrix.json` → `live_enabled: false`
 - Cap OpenCode model `limit.output` default to 2048
 - Abort remaining arms/trials on credit exhaustion
@@ -240,11 +241,11 @@ stream error until our wall timeout (classic #8203-style hang).
 
 ### 2026-08-04 — [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377) (P1/P2 next wave)
 
-| Task | on | off | Notes |
-| ---- | -- | --- | ----- |
-| codegraph-guided-edit | **1.0** (3t, 53s) | **0.0** | **WIN** — index + query + write; tools clawql_codegraph_* |
-| schedule-synthetic-dry-run | **1.0** (3t, 32s) | **0.0** | **WIN** — clawql_schedule×2 + write |
-| hybrid-recall-source-pin | 0.0 (4t, 36s) | 0.0 | **TIE fail** — on called pageindex tools but wrote literal placeholder `<value after CLAWQL_HYBRID_CODE=>` (did not read handbook.md; tree likely built from instruction text). Hardened instruction + nudge; keep `pr_active`. |
+| Task                       | on                | off     | Notes                                                                                                                                                                                                                           |
+| -------------------------- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| codegraph-guided-edit      | **1.0** (3t, 53s) | **0.0** | **WIN** — index + query + write; tools clawql_codegraph_*                                                                                                                                                                       |
+| schedule-synthetic-dry-run | **1.0** (3t, 32s) | **0.0** | **WIN** — clawql_schedule×2 + write                                                                                                                                                                                             |
+| hybrid-recall-source-pin   | 0.0 (4t, 36s)     | 0.0     | **TIE fail** — on called pageindex tools but wrote literal placeholder `<value after CLAWQL_HYBRID_CODE=>` (did not read handbook.md; tree likely built from instruction text). Hardened instruction + nudge; keep `pr_active`. |
 
 Retired codegraph + schedule after WIN. Hybrid remains active.
 
@@ -252,12 +253,12 @@ Retired codegraph + schedule after WIN. Hybrid remains active.
 
 All four then-`pr_active` cells **WIN** on frugal DeepSeek; no 402; real tool_use:
 
-| Task | on | off | on tools (abbrev) | Verdict |
-| ---- | -- | --- | ----------------- | ------- |
-| cache-scratch-handoff | **1.0** (4t, 33s) | **0.0** | read×2, clawql_cache×4, write | **WIN** |
-| pageindex-section-qa | **1.0** (4t, 38s) | **0.0** | read, pageindex_build_tree, synthesize, write | **WIN** |
-| audit-checkpoints | **1.0** (2t, 29s) | **0.0** | clawql_audit×4, write | **WIN** (replication) |
-| multi-provider-api-workflow | **1.0** (3t, 33s) | **0.75** | memory_recall, write×3 | **WIN** (margin) |
+| Task                        | on                | off      | on tools (abbrev)                             | Verdict               |
+| --------------------------- | ----------------- | -------- | --------------------------------------------- | --------------------- |
+| cache-scratch-handoff       | **1.0** (4t, 33s) | **0.0**  | read×2, clawql_cache×4, write                 | **WIN**               |
+| pageindex-section-qa        | **1.0** (4t, 38s) | **0.0**  | read, pageindex_build_tree, synthesize, write | **WIN**               |
+| audit-checkpoints           | **1.0** (2t, 29s) | **0.0**  | clawql_audit×4, write                         | **WIN** (replication) |
+| multi-provider-api-workflow | **1.0** (3t, 33s) | **0.75** | memory_recall, write×3                        | **WIN** (margin)      |
 
 Those four were retired after this run; later wave added hybrid/codegraph/schedule.
 
@@ -265,21 +266,21 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 ## Confounds & harness notes (cumulative)
 
-| Issue | Symptom | Fix |
-| ----- | ------- | --- |
-| Instruction-text “tool evidence” | grep matched `clawql_search` inside the prompt dump | Require `"tool":"clawql_search"` tool_use JSON only |
-| OpenCode MCP names | Model called `cache` → `invalid` tool | Instructions/nudges use `clawql_cache` |
-| Absolute write paths | audit wrote `/trail.json` or `/tmp/opencode/…` | Nudge exact relative `trail.json` |
-| Panguard reason lost | OpenCode showed “An error has occurred” | `mcp-tool-wrap` returns `isError` + reason text |
-| dry_run omitted | execute called live GitHub; trail lied `dryRunOnly:true` | Require `"dry_run":true` in tool input + nudge |
-| Harness dump replace | Longer nudge dump dropped earlier `clawql_search` | Merge dump into combined; never replace |
-| Vault one-shot (early) | Both ouroboros arms scored 1.0 | Disable memory for thrash study |
-| Infra hang | Whole matrix timeout, no tools | Re-run; annotate as noise in this ledger |
-| OpenRouter 402 credits | OpenCode `stream error` + hang until wall | Top up key; cap `limit.output`; `live_enabled=false` until funded |
-| Hybrid placeholder write | answer.json copied instruction template | Require read handbook.md; ban angle-bracket placeholders |
-| Invalid-tool pageindex false positive | off scored 1.0 without ClawQL (30886497135) | Parse real `part.tool` ≠ `invalid` via require-real-clawql-tools.py |
-| Empty pageindex markdown | on build_tree with `markdown:""` then guessed fern-42 (30887394038) | Require handbook markdown in build input or fern-42 in synthesize output |
-| Oversized handbook re-emit | on nudge timed out emitting ~14KB markdown (30888249849) | Shrink handbook to catalog-like size (~pageindex-section-qa) |
+| Issue                                 | Symptom                                                             | Fix                                                                      |
+| ------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Instruction-text “tool evidence”      | grep matched `clawql_search` inside the prompt dump                 | Require `"tool":"clawql_search"` tool_use JSON only                      |
+| OpenCode MCP names                    | Model called `cache` → `invalid` tool                               | Instructions/nudges use `clawql_cache`                                   |
+| Absolute write paths                  | audit wrote `/trail.json` or `/tmp/opencode/…`                      | Nudge exact relative `trail.json`                                        |
+| Panguard reason lost                  | OpenCode showed “An error has occurred”                             | `mcp-tool-wrap` returns `isError` + reason text                          |
+| dry_run omitted                       | execute called live GitHub; trail lied `dryRunOnly:true`            | Require `"dry_run":true` in tool input + nudge                           |
+| Harness dump replace                  | Longer nudge dump dropped earlier `clawql_search`                   | Merge dump into combined; never replace                                  |
+| Vault one-shot (early)                | Both ouroboros arms scored 1.0                                      | Disable memory for thrash study                                          |
+| Infra hang                            | Whole matrix timeout, no tools                                      | Re-run; annotate as noise in this ledger                                 |
+| OpenRouter 402 credits                | OpenCode `stream error` + hang until wall                           | Top up key; cap `limit.output`; `live_enabled=false` until funded        |
+| Hybrid placeholder write              | answer.json copied instruction template                             | Require read handbook.md; ban angle-bracket placeholders                 |
+| Invalid-tool pageindex false positive | off scored 1.0 without ClawQL (30886497135)                         | Parse real `part.tool` ≠ `invalid` via require-real-clawql-tools.py      |
+| Empty pageindex markdown              | on build_tree with `markdown:""` then guessed fern-42 (30887394038) | Require handbook markdown in build input or fern-42 in synthesize output |
+| Oversized handbook re-emit            | on nudge timed out emitting ~14KB markdown (30888249849)            | Shrink handbook to catalog-like size (~pageindex-section-qa)             |
 
 ---
 
@@ -293,8 +294,8 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 ### 2026-08-04 — [30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746) (B-4.1 conflict memory — WIN)
 
-| Task | on | off | Verdict |
-| ---- | -- | --- | ------- |
+| Task                    | on                | off               | Verdict                                                 |
+| ----------------------- | ----------------- | ----------------- | ------------------------------------------------------- |
 | memory-conflict-pricing | **1.0** (3t, 29s) | **0.0** (2t, 13s) | **WIN** — both prices + conflict:true via memory_recall |
 
 **Verdict:** retire from `pr_active` (empty pending B-3.1).
@@ -305,18 +306,18 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 ### Replication queue (Phase 0)
 
-| Task | Target n | Status |
-| ---- | -------- | ------ |
-| `search-first-discovery` | 3 | queued (dispatch) |
-| `memory-roundtrip-ingest-recall` | 3 | queued |
-| `policy-deny-execute` | 3 | queued |
+| Task                             | Target n | Status            |
+| -------------------------------- | -------- | ----------------- |
+| `search-first-discovery`         | 3        | queued (dispatch) |
+| `memory-roundtrip-ingest-recall` | 3        | queued            |
+| `policy-deny-execute`            | 3        | queued            |
 
 ### 2026-08-04 — [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189) (P2.5 — both WIN)
 
-| Task | on | off | Verdict |
-| ---- | -- | --- | ------- |
-| onyx-mock-cite | **1.0** (3t, 17s) | **0.0** (2t, 13s) | **WIN** — clawql_knowledge_search_onyx + citations quartz-21 |
-| memory-wikilink-hop | **1.0** (3t, 56s) | **0.0** (1t, 11s) | **WIN** — clawql_memory_recall hop → opal-33 |
+| Task                | on                | off               | Verdict                                                      |
+| ------------------- | ----------------- | ----------------- | ------------------------------------------------------------ |
+| onyx-mock-cite      | **1.0** (3t, 17s) | **0.0** (2t, 13s) | **WIN** — clawql_knowledge_search_onyx + citations quartz-21 |
+| memory-wikilink-hop | **1.0** (3t, 56s) | **0.0** (1t, 11s) | **WIN** — clawql_memory_recall hop → opal-33                 |
 
 **Verdict:** retire both from `pr_active` (empty again).
 
@@ -326,11 +327,11 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 ### 2026-08-04 — [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) (P2 wave — all WIN)
 
-| Task | on | off | Verdict |
-| ---- | -- | --- | ------- |
-| notify-mock-slack | **1.0** (2t, 21s) | **0.0** (2t, 14s) | **WIN** — clawql_notify + notify.json; stub Slack |
-| sandbox-trusted-compute | **1.0** (3t, 30s) | **0.0** (3t, 18s) | **WIN** — clawql_sandbox_exec docker → sand-77 |
-| composed-safe-rollout | **1.0** (5t, 79s) | **0.0** (2t, 26s) | **WIN** — search + dry_run×2 + audit + memory_ingest |
+| Task                    | on                | off               | Verdict                                              |
+| ----------------------- | ----------------- | ----------------- | ---------------------------------------------------- |
+| notify-mock-slack       | **1.0** (2t, 21s) | **0.0** (2t, 14s) | **WIN** — clawql_notify + notify.json; stub Slack    |
+| sandbox-trusted-compute | **1.0** (3t, 30s) | **0.0** (3t, 18s) | **WIN** — clawql_sandbox_exec docker → sand-77       |
+| composed-safe-rollout   | **1.0** (5t, 79s) | **0.0** (2t, 26s) | **WIN** — search + dry_run×2 + audit + memory_ingest |
 
 **Verdict:** retire all three from `pr_active` (empty again). First offline gate failed on missing `marker` in `solution/notify.json` ([30890720126](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30890720126)); fixed before this run.
 
@@ -344,12 +345,12 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 Stakeholder framing: these headline WINs upgrade **architectural** statements to **empirically verified** claims (run IDs, frugal DeepSeek, anti-guess graders). Wired into:
 
-| Doc | What changed |
-| --- | ------------ |
-| [`docs/vision/clawql-idp-platform.md`](../vision/clawql-idp-platform.md) | **Empirically verified platform claims** table includes P2 notify/sandbox/composed |
-| [`docs/vision/clawql-idp-gtm.md`](../vision/clawql-idp-gtm.md) | Differentiator #7 + gateway objection handlers (memory / search-first / Panguard / Ouroboros / notify+sandbox+composed) |
-| [`docs/architecture/clawql-token-efficiency.md`](../architecture/clawql-token-efficiency.md) | **Live behavioral evidence** for Layer 1 search-first + Layer 6 vault-under-pressure + composed rollout |
-| [`docs/benchmarks/openbench-task-explanations.md`](./openbench-task-explanations.md) | Thorough prove / why / how for every verified cell |
+| Doc                                                                                          | What changed                                                                                                            |
+| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| [`docs/vision/clawql-idp-platform.md`](../vision/clawql-idp-platform.md)                     | **Empirically verified platform claims** table includes P2 notify/sandbox/composed                                      |
+| [`docs/vision/clawql-idp-gtm.md`](../vision/clawql-idp-gtm.md)                               | Differentiator #7 + gateway objection handlers (memory / search-first / Panguard / Ouroboros / notify+sandbox+composed) |
+| [`docs/architecture/clawql-token-efficiency.md`](../architecture/clawql-token-efficiency.md) | **Live behavioral evidence** for Layer 1 search-first + Layer 6 vault-under-pressure + composed rollout                 |
+| [`docs/benchmarks/openbench-task-explanations.md`](./openbench-task-explanations.md)         | Thorough prove / why / how for every verified cell                                                                      |
 
 ---
 

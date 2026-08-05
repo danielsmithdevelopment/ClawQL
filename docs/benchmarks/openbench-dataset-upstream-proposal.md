@@ -36,10 +36,10 @@ Changelog lives next to the schema. Breaking changes bump the major schema versi
 
 ### 2. Package: `openbench-dataset`
 
-- **TraceWriter** — accepts a completed run (results + logs), emits validated OpenBenchTrace records  
-- **Backends** — `local`, `s3` (R2-compatible), pluggable  
-- **Scrub** — write-time redaction; Presidio when configured; always record policy in the manifest  
-- **CLI** — `openbench-dataset export --source … --verdict pass --format huggingface`  
+- **TraceWriter** — accepts a completed run (results + logs), emits validated OpenBenchTrace records
+- **Backends** — `local`, `s3` (R2-compatible), pluggable
+- **Scrub** — write-time redaction; Presidio when configured; always record policy in the manifest
+- **CLI** — `openbench-dataset export --source … --verdict pass --format huggingface`
 - **Manifest** — WORM batch manifest (hashes, scrub version, schema version, trace index)
 
 ### 3. Composite action: `openbench-dataset/collect`
@@ -50,9 +50,9 @@ Three-line drop-in for CI. Fail-loud if durable sink required but missing. Artif
 
 ## Non-goals (v1)
 
-- Replacing OpenBench graders or task definitions  
-- Mandating a single cloud vendor  
-- Publishing any vendor’s private production traffic as “OpenBench” data  
+- Replacing OpenBench graders or task definitions
+- Mandating a single cloud vendor
+- Publishing any vendor’s private production traffic as “OpenBench” data
 - Claiming this is the first eval→FT pipeline in ML history (it is a **standardization** play)
 
 ---
@@ -65,8 +65,8 @@ ClawQL’s current GHA path already emits OpenBenchTrace v1.0-compatible packs. 
 
 ## Ask
 
-1. Interest in hosting `OpenBenchTrace` + `openbench-dataset` under the OpenBench org  
-2. Feedback on schema v1.0 required fields  
+1. Interest in hosting `OpenBenchTrace` + `openbench-dataset` under the OpenBench org
+2. Feedback on schema v1.0 required fields
 3. Preferred package location (`packages/openbench-dataset` vs `contrib/dataset-export`)
 
 Reference implementation (ClawQL): `packages/openbench-dataset`, `docs/benchmarks/openbench-dataset-product.md`.

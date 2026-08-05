@@ -33,15 +33,15 @@ Python adapter: [`openbench/adapters/clawql.py`](../../openbench/adapters/clawql
 
 ### Track B — ClawQL-specific tasks
 
-| Task                              | Differentiator                                                              |
-| --------------------------------- | --------------------------------------------------------------------------- |
-| `memory-dependent-continuation`   | Prior auth decisions only in vault memory after seed removal                |
-| `token-budget-constrained`        | Nested YAML list recipe in vault memory; ignore `decoy/`; ≤5k-token scoring |
-| `multi-provider-api-workflow`     | Offline Worker scaffold; wrangler/GitHub URL notes in vault when clawql-on  |
-| `search-first-discovery`          | Must `search` for global GHSA list op; decoy names wrong id                 |
-| `execute-verify-loop`             | `search` + ≥2 dry-run `execute` trail; decoy skips tools                    |
-| `memory-roundtrip-ingest-recall`  | Empty vault: ingest marker → recall → `answer.json`                         |
-| `ouroboros-oscillation-escape`    | Ouroboros on vs off under decoy thrash; see [value evidence](./ouroboros-value-evidence.md) |
+| Task                             | Differentiator                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| `memory-dependent-continuation`  | Prior auth decisions only in vault memory after seed removal                                |
+| `token-budget-constrained`       | Nested YAML list recipe in vault memory; ignore `decoy/`; ≤5k-token scoring                 |
+| `multi-provider-api-workflow`    | Offline Worker scaffold; wrangler/GitHub URL notes in vault when clawql-on                  |
+| `search-first-discovery`         | Must `search` for global GHSA list op; decoy names wrong id                                 |
+| `execute-verify-loop`            | `search` + ≥2 dry-run `execute` trail; decoy skips tools                                    |
+| `memory-roundtrip-ingest-recall` | Empty vault: ingest marker → recall → `answer.json`                                         |
+| `ouroboros-oscillation-escape`   | Ouroboros on vs off under decoy thrash; see [value evidence](./ouroboros-value-evidence.md) |
 
 Offline checker validation (no model):
 
