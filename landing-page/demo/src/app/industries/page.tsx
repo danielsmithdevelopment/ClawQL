@@ -17,7 +17,7 @@ function statusLabel(status: (typeof industries)[number]['status'], custom?: str
 export const metadata = pageMetadata({
   title: 'Industries',
   description:
-    'ClawQL vertical packages for lending, real estate, government, healthcare, and more — agent-native document and API workflows on one Agentic Gateway.',
+    'ClawQL vertical packages for lending, real estate, surveillance, government, healthcare, and more — agent-native document, audit, and API workflows on one Agentic Gateway.',
   path: '/industries',
 })
 
@@ -32,8 +32,8 @@ export default function Page() {
           <p>
             ClawQL modularization v2.1 defines opt-in vertical packages that share security, memory, audit, and the IDP
             pipeline. <strong>Lending</strong> and <strong>real estate</strong> have shipped reference workflows today;{' '}
-            <strong>government</strong> outcome-accountability tooling is on the roadmap with audit infrastructure
-            available now; healthcare, legal, and insurance follow.
+            <strong>surveillance</strong> and <strong>government</strong> audit/outcome surfaces are available with
+            domain packages progressing; healthcare, legal, and insurance follow.
           </p>
         }
         cta={

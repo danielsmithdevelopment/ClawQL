@@ -42,6 +42,13 @@ Python adapter: [`openbench/adapters/clawql.py`](../../openbench/adapters/clawql
 | `execute-verify-loop`            | `search` + ≥2 dry-run `execute` trail; decoy skips tools                                    |
 | `memory-roundtrip-ingest-recall` | Empty vault: ingest marker → recall → `answer.json`                                         |
 | `ouroboros-oscillation-escape`   | Ouroboros on vs off under decoy thrash; see [value evidence](./ouroboros-value-evidence.md) |
+| `codegraph-impact-edit`          | Cross-file rename via codegraph impact set (B-3.1 lite; **live WIN**)                       |
+| `codegraph-feature-api-surface`  | Cross-file API wiring (B-3.1 Phase 1 offline pack)                                          |
+| `memory-conflict-pricing`        | Flag vault price conflict; no confabulation (B-4.1; **live WIN**)                           |
+| `memory-stale-after-update`      | Cache invalidation after write (B-4.2 offline pack)                                         |
+| `memory-injection-attempt`       | Deny adversarial `memory_ingest` (B-4.3 offline pack)                                       |
+
+Full live scoreboard: [`openbench-results-ledger.md`](openbench-results-ledger.md). Advanced suite ledger (B-1…B-6 specs): [`openbench-advanced-specs.md`](openbench-advanced-specs.md) · execution checklist: [`openbench-advanced-suites.md`](openbench-advanced-suites.md).
 
 Offline checker validation (no model):
 

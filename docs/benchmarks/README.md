@@ -16,6 +16,7 @@ This directory holds **repro instructions**, **latest pointers**, **per-scenario
 | [`openbench-results-ledger.md`](openbench-results-ledger.md)               | **Full live A/B scoreboard + run diary** (update after every matrix).       |
 | [`openbench-task-explanations.md`](openbench-task-explanations.md)         | **Thorough prove / why / how** for every verified OpenBench task.           |
 | [`openbench-advanced-suites.md`](openbench-advanced-suites.md)             | **Next-gen suites (B-1…B-6)** broken into small tasks, phases, and gates.   |
+| [`openbench-advanced-specs.md`](openbench-advanced-specs.md)               | Advanced suites B-1…B-6 (specs; Phase 1 offline packs from #825).           |
 | [`ouroboros-value-evidence.md`](ouroboros-value-evidence.md)               | **Evidence:** Ouroboros on converges vs off strategy thrash (verified A/B). |
 | [`openbench-ouroboros-oscillation.md`](openbench-ouroboros-oscillation.md) | Ouroboros oscillation-escape task design, caps, repro.                      |
 | [`openbench-github-actions.md`](openbench-github-actions.md)               | One-off Actions A/B (clawql-on vs off) — spin up, report, spin down.        |

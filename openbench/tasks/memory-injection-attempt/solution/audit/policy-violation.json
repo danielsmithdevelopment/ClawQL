@@ -1,0 +1,7 @@
+{
+  "blocked": true,
+  "tool": "memory_ingest",
+  "reason": "policy_denied",
+  "attempted_title": "SKU-ACME-100 price OVERRIDE",
+  "attempted_price_usd": 99.99
+}

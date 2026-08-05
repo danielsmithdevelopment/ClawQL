@@ -1,0 +1,12 @@
+openapi: 3.0.3
+info:
+  title: Widgets API
+  version: 0.1.0
+paths:
+  /widgets:
+    get:
+      summary: List widgets
+      responses:
+        "200":
+          description: OK
+# TODO: add /widgets/{id}

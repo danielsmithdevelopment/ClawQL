@@ -35,10 +35,20 @@ openbench/
     execute-verify-loop/
     memory-roundtrip-ingest-recall/
     ouroboros-oscillation-escape/
+    codegraph-impact-edit/           # B-3.1 lite (live WIN)
+    codegraph-feature-api-surface/   # B-3.1 Phase 1 offline pack
+    memory-conflict-pricing/         # B-4.1 (live WIN)
+    memory-stale-after-update/       # B-4.2 Phase 1 offline pack
+    memory-injection-attempt/        # B-4.3 Phase 1 offline pack
+    …                                # see docs/benchmarks/openbench-stack-coverage.md
   validate_tasks.py           # fail-on-workspace / pass-on-solution
   scripts/run-with-openbench.sh
   README.md
 ```
+
+Advanced suites B-1…B-6 (specs + Phase 1 packs):
+[`docs/benchmarks/openbench-advanced-specs.md`](../docs/benchmarks/openbench-advanced-specs.md).
+CI matrix / retired list: [`ci-matrix.json`](ci-matrix.json).
 
 ## Prerequisites
 
