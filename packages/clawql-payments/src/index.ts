@@ -30,4 +30,5 @@ export {
   resolveAgentAccountsPath,
   resolvePendingActionsDir,
   resolveDeductionOutboxPath,
+  resolveMoneyRequestsPath,
 } from "./config/paths.js";

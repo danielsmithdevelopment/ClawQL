@@ -87,6 +87,11 @@ export const docsNavigation: Array<NavGroup> = [
       },
       { title: '.cq* extensions', href: '/specs/cq-extensions' },
       { title: 'clawql-inference', href: '/inference/clawql-inference' },
+      {
+        title: 'clawql-surveillance',
+        href: '/surveillance/clawql-surveillance',
+        tag: 'Spec',
+      },
       { title: 'Ouroboros', href: '/ouroboros' },
     ],
   },

@@ -1,0 +1,22 @@
+# Example stack — AWS EKS + Karpenter scaffolding (Phase 3 shared tenancy)
+#
+#   cd infra/pulumi
+#   cp Pulumi.eks.example.yaml Pulumi.eks-prod.yaml
+#   pulumi stack init eks-prod
+#   pulumi config set aws:region us-east-1
+#   pulumi config set clawql:subnetIds 'subnet-aaa,subnet-bbb'
+#   pulumi preview && pulumi up
+#
+config:
+  clawql:cloud: aws
+  clawql:profile: eks
+  clawql:tier: shared
+  clawql:syncBucket: clawql-vault-prod
+  clawql:region: us-east-1
+  clawql:eksClusterName: clawql-prod
+  clawql:eksVersion: "1.32"
+  clawql:instanceType: r7i.xlarge
+  clawql:eksReservedDesiredSize: "2"
+  # Prefer explicit subnets tagged karpenter.sh/discovery=clawql-prod
+  # clawql:vpcId: vpc-xxxxxxxx
+  # clawql:subnetIds: subnet-aaa,subnet-bbb

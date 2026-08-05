@@ -1,0 +1,59 @@
+{
+  "name": "openbench-dataset",
+  "version": "0.1.0",
+  "description": "OpenBenchTrace protocol: write-time scrubbed, provenance-tracked dataset export from agent benchmark runs (ClawQL reference implementation; intended for OpenBench upstream).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./schema/openbench-trace.v1.json": "./schema/openbench-trace.v1.json",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "openbench-dataset": "bin/openbench-dataset.mjs"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config ../../vitest.config.ts packages/openbench-dataset"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist",
+    "schema",
+    "bin",
+    "README.md"
+  ],
+  "keywords": [
+    "openbench",
+    "dataset",
+    "fine-tune",
+    "mcp",
+    "traces",
+    "provenance"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/openbench-dataset"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1090.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8"
+  }
+}

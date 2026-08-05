@@ -15,6 +15,41 @@ import { ConsumerOffRampService } from "../offramp/consumer-offramp-service.js";
 import { OfframpWebhookService } from "../offramp/offramp-webhook-service.js";
 import { AgentCompensationService } from "../compensation/agent-compensation-service.js";
 import { CreditsService } from "../credits/credits-service.js";
+import {
+  addContact,
+  listContacts,
+  removeContact,
+  resolveContactPayee,
+} from "../credits/contacts.js";
+import {
+  claimDirectory,
+  getEmailEntry,
+  getHandleEntry,
+  getPhoneEntry,
+  getTenantEntry,
+  listDirectory,
+  resolveRecipient,
+} from "../credits/directory.js";
+import {
+  acceptMoneyRequest,
+  claimMoneyRequestInvite,
+  createMoneyRequest,
+  listMoneyRequests,
+  publicMoneyRequest,
+} from "../credits/requests.js";
+import {
+  sendMoneyRequestInviteEmail,
+  shouldSendInviteEmailOnCreate,
+} from "../credits/invite-email.js";
+import { getActivityFeed } from "../credits/activity.js";
+import {
+  buildClawqlPayUri,
+  buildPayDeepLink,
+  buildPayQrPayload,
+  buildRequestDeepLink,
+  payHateoasEnvelope,
+} from "../credits/deeplinks.js";
+import { renderQrSvg } from "../credits/hateoas-html.js";
 import { Ap2MandateService } from "../ap2/ap2-mandate-service.js";
 import { isAp2Enabled } from "../ap2/config.js";
 
@@ -142,7 +177,12 @@ const compensationConfirmSchema = {
 
 /** Safe entry: stage prepaid credit P2P (inert until confirm). */
 const creditsTransferStageSchema = {
-  toTenantId: z.string().describe("Recipient ClawQL tenant id"),
+  toTenantId: z
+    .string()
+    .optional()
+    .describe("Recipient ClawQL tenant id (use toHandle for @payee)"),
+  toHandle: z.string().optional().describe("Recipient @username from payments directory"),
+  toEmail: z.string().optional().describe("Recipient email (default directory identity)"),
   amountUsd: z.number().positive().describe("Amount in USD to transfer from prepaid credits"),
   fromTenantId: z
     .string()
@@ -151,6 +191,64 @@ const creditsTransferStageSchema = {
   idempotencyKey: z.string().optional().describe("Replay-safe transfer key"),
   note: z.string().optional(),
   mandateJwt: z.string().optional(),
+};
+
+const creditsDirectoryClaimSchema = {
+  email: z
+    .string()
+    .optional()
+    .describe("Primary payee identity (recommended default, like Venmo/Cash App email)"),
+  handle: z
+    .string()
+    .optional()
+    .describe("Optional privacy username (@alice) — hide email from payers who use @handle"),
+  phone: z
+    .string()
+    .optional()
+    .describe(
+      "Optional E.164 phone alias (+15551234567). Not a full IdP — verify via customer IdP."
+    ),
+  phoneVerified: z
+    .boolean()
+    .optional()
+    .describe("IdP/operator assertion phone was verified out-of-band"),
+  tenantId: z.string().optional().describe("Tenant that owns the profile"),
+  displayName: z.string().optional(),
+};
+
+const creditsDirectoryResolveSchema = {
+  payee: z.string().optional().describe("Email, @username, phone (+E.164), or tenant id"),
+  email: z.string().optional(),
+  handle: z.string().optional().describe("Username e.g. @alice"),
+  phone: z.string().optional().describe("E.164 phone e.g. +15551234567"),
+};
+
+const creditsRequestCreateSchema = {
+  to: z.string().describe("Payer email (invites if unknown), @username, or tenant id"),
+  amountUsd: z.number().positive(),
+  fromTenantId: z.string().optional().describe("Requester tenant"),
+  note: z.string().optional().describe("Invoice memo"),
+  sendEmail: z
+    .boolean()
+    .optional()
+    .describe("Send invite email (dry-run by default; set CLAWQL_CREDITS_INVITE_EMAIL=1)"),
+  emailDryRun: z.boolean().optional().describe("Force email dry-run preview"),
+  mandateJwt: z.string().optional(),
+};
+
+const creditsRequestAcceptSchema = {
+  requestId: z.string(),
+  payerTenantId: z.string().optional(),
+  mandateJwt: z.string().optional(),
+};
+
+const creditsRequestClaimInviteSchema = {
+  requestId: z.string(),
+  token: z.string().describe("Invite token from create response (shown once)"),
+  tenantId: z.string().describe("New or existing tenant id for the invitee"),
+  email: z.string().optional(),
+  handle: z.string().optional(),
+  displayName: z.string().optional(),
 };
 
 /** High-impact: confirm staged P2P transfer (+ optional TOTP). */
@@ -307,13 +405,437 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
         });
 
         yield* api.registerMcpTool({
+          name: "payments_credits_directory_claim",
+          description:
+            "Register pay-by-email (default), optional @username, and optional phone alias in the payments directory.",
+          schema: creditsDirectoryClaimSchema,
+          handler: async (args) => {
+            const a = args as {
+              email?: string;
+              handle?: string;
+              phone?: string;
+              phoneVerified?: boolean;
+              tenantId?: string;
+              displayName?: string;
+            };
+            const result = await claimDirectory({
+              email: a.email,
+              handle: a.handle,
+              phone: a.phone,
+              phoneVerified: a.phoneVerified,
+              tenantId: a.tenantId?.trim() || "default",
+              displayName: a.displayName,
+            });
+            return textResult(result);
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_directory_resolve",
+          description:
+            "Resolve email, @username, phone, or payee string to a tenant id via the payments directory.",
+          schema: creditsDirectoryResolveSchema,
+          handler: async (args) => {
+            const a = args as {
+              payee?: string;
+              email?: string;
+              handle?: string;
+              phone?: string;
+            };
+            const raw = a.payee?.trim() || a.email?.trim() || a.handle?.trim() || a.phone?.trim();
+            if (!raw) throw new Error("Provide payee, email, handle, or phone");
+            if (a.email?.trim() && !a.payee) {
+              const entry = await getEmailEntry(a.email);
+              if (entry) return textResult(entry);
+            }
+            if (a.handle?.trim() && !a.payee) {
+              const entry = await getHandleEntry(a.handle);
+              if (entry) return textResult(entry);
+            }
+            if (a.phone?.trim() && !a.payee) {
+              const entry = await getPhoneEntry(a.phone);
+              if (entry) return textResult(entry);
+            }
+            return textResult(await resolveRecipient(raw, env));
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_directory_list",
+          description: "List payments directory profiles (email + optional @username / phone).",
+          schema: {},
+          handler: async () => textResult({ profiles: await listDirectory() }),
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_contacts_add",
+          description:
+            "Save a frequent payee (email / @username / phone) to the owner contacts book.",
+          schema: {
+            to: z.string().describe("Payee email, @username, phone, or tenant id"),
+            label: z.string().optional(),
+            ownerTenantId: z.string().optional(),
+          },
+          handler: async (args) => {
+            const a = args as { to: string; label?: string; ownerTenantId?: string };
+            return textResult(
+              await addContact({
+                ownerTenantId: a.ownerTenantId?.trim() || "default",
+                payee: a.to,
+                label: a.label,
+              })
+            );
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_contacts_list",
+          description: "List saved contacts for an owner tenant.",
+          schema: { ownerTenantId: z.string().optional() },
+          handler: async (args) => {
+            const a = args as { ownerTenantId?: string };
+            const ownerTenantId = a.ownerTenantId?.trim() || "default";
+            return textResult({
+              ownerTenantId,
+              contacts: await listContacts(ownerTenantId),
+            });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_contacts_remove",
+          description: "Remove a saved contact by id.",
+          schema: {
+            contactId: z.string(),
+            ownerTenantId: z.string().optional(),
+          },
+          handler: async (args) => {
+            const a = args as { contactId: string; ownerTenantId?: string };
+            const ok = await removeContact(a.ownerTenantId?.trim() || "default", a.contactId);
+            if (!ok) throw new Error("Unknown contact id");
+            return textResult({ removed: true, contactId: a.contactId });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_contacts_resolve",
+          description: "Resolve a contact id or payee string through the directory.",
+          schema: {
+            contactId: z.string().optional(),
+            to: z.string().optional(),
+            ownerTenantId: z.string().optional(),
+          },
+          handler: async (args) => {
+            const a = args as { contactId?: string; to?: string; ownerTenantId?: string };
+            return textResult(
+              await resolveContactPayee(a.ownerTenantId?.trim() || "default", {
+                contactId: a.contactId,
+                payee: a.to,
+              })
+            );
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_activity",
+          description:
+            "Recent prepaid activity for a tenant: transfers, money requests/invoices, top-ups (Venmo-style feed).",
+          schema: {
+            tenantId: z.string().optional(),
+            limit: z.number().int().positive().max(100).optional(),
+            filter: z.enum(["all", "transfers", "requests", "money", "ledger"]).optional(),
+          },
+          handler: async (args) => {
+            const a = args as {
+              tenantId?: string;
+              limit?: number;
+              filter?: "all" | "transfers" | "requests" | "money" | "ledger";
+            };
+            const feed = await getActivityFeed(
+              {
+                tenantId: a.tenantId?.trim() || "default",
+                limit: a.limit,
+                filter: a.filter ?? "money",
+              },
+              env
+            );
+            return textResult(feed);
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_link",
+          description:
+            "Build HATEOAS / clawql:// deep links for pay or a money request (QR-friendly; does not move money).",
+          schema: {
+            to: z.string().optional().describe("Payee email, @username, or tenant id"),
+            amountUsd: z.number().positive().optional(),
+            note: z.string().optional(),
+            fromTenantId: z.string().optional(),
+            requestId: z
+              .string()
+              .optional()
+              .describe("When set, emit a request deep link instead of pay"),
+            includeQrSvg: z
+              .boolean()
+              .optional()
+              .describe("When true with a pay link, include an SVG QR payload"),
+          },
+          handler: async (args) => {
+            const a = args as {
+              to?: string;
+              amountUsd?: number;
+              note?: string;
+              fromTenantId?: string;
+              requestId?: string;
+              includeQrSvg?: boolean;
+            };
+            const requestId = a.requestId?.trim();
+            if (requestId) {
+              const url = buildRequestDeepLink({ requestId }, env);
+              return textResult({
+                ok: true,
+                kind: "credits.request",
+                links: { self: url, approval_url: url },
+                approval_url: url,
+              });
+            }
+            const to = a.to?.trim();
+            if (!to) throw new Error("Provide to= (payee) or requestId");
+            const pay = {
+              to,
+              amountUsd: a.amountUsd,
+              note: a.note,
+              fromTenantId: a.fromTenantId,
+            };
+            const envelope = payHateoasEnvelope(pay, env);
+            let qrSvg: string | undefined;
+            if (a.includeQrSvg) {
+              qrSvg = await renderQrSvg(buildPayQrPayload(pay));
+            }
+            return textResult({
+              ...envelope,
+              clawql: buildClawqlPayUri(pay),
+              http: buildPayDeepLink(pay, env),
+              qrSvg,
+            });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_request_create",
+          description:
+            "Create a money request / invoice. Prefer email — unknown emails get an invite URL to join ClawQL and pay. Optional invite email (dry-run by default).",
+          schema: creditsRequestCreateSchema,
+          handler: async (args) => {
+            const a = args as {
+              to: string;
+              amountUsd: number;
+              fromTenantId?: string;
+              note?: string;
+              sendEmail?: boolean;
+              emailDryRun?: boolean;
+              mandateJwt?: string;
+            };
+            await assertAp2IfRequired(env, a.mandateJwt);
+            const fromTenantId = a.fromTenantId?.trim() || "default";
+            const result = await createMoneyRequest(
+              {
+                requesterTenantId: fromTenantId,
+                to: a.to,
+                amountCents: Math.round(a.amountUsd * 100),
+                note: a.note,
+              },
+              env
+            );
+            let email: Awaited<ReturnType<typeof sendMoneyRequestInviteEmail>> | undefined;
+            if (
+              result.invite &&
+              result.inviteToken &&
+              result.request.inviteUrl &&
+              result.request.payerEmail &&
+              shouldSendInviteEmailOnCreate({ sendEmail: a.sendEmail }, env)
+            ) {
+              const requester = await getTenantEntry(fromTenantId, env);
+              email = await sendMoneyRequestInviteEmail(
+                {
+                  toEmail: result.request.payerEmail,
+                  inviteUrl: result.request.inviteUrl,
+                  requestId: result.request.requestId,
+                  amountCents: result.request.amountCents,
+                  note: result.request.note,
+                  fromLabel:
+                    requester?.displayName ||
+                    (requester?.handle ? `@${requester.handle}` : undefined) ||
+                    requester?.email ||
+                    fromTenantId,
+                  inviteToken: result.inviteToken,
+                  expiresAt: result.request.expiresAt,
+                },
+                env,
+                { dryRun: a.emailDryRun === true ? true : a.emailDryRun }
+              );
+            }
+            return textResult({
+              ...publicMoneyRequest(result.request),
+              invite: result.invite,
+              inviteToken: result.inviteToken,
+              email,
+              next: result.invite
+                ? "Share inviteUrl / inviteToken (or use email preview); payer runs claim-invite then accept."
+                : "Payer: payments_credits_request_accept with requestId.",
+            });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_request_send_invite",
+          description:
+            "Preview or send the money-request invite email (needs cleartext token from create). Dry-run by default.",
+          schema: {
+            requestId: z.string(),
+            token: z.string().describe("Cleartext invite token from create"),
+            email: z.string().optional().describe("Override recipient email"),
+            emailDryRun: z.boolean().optional(),
+          },
+          handler: async (args) => {
+            const a = args as {
+              requestId: string;
+              token: string;
+              email?: string;
+              emailDryRun?: boolean;
+            };
+            const { getMoneyRequest, buildRequestInviteUrl } =
+              await import("../credits/requests.js");
+            const req = await getMoneyRequest(a.requestId, env);
+            if (!req) throw new Error("Unknown request id");
+            const toEmail = a.email?.trim() || req.payerEmail;
+            if (!toEmail) throw new Error("No payer email — pass email");
+            const inviteUrl = req.inviteUrl || buildRequestInviteUrl(a.requestId, a.token, env);
+            const requester = await getTenantEntry(req.requesterTenantId, env);
+            return textResult(
+              await sendMoneyRequestInviteEmail(
+                {
+                  toEmail,
+                  inviteUrl,
+                  requestId: a.requestId,
+                  amountCents: req.amountCents,
+                  note: req.note,
+                  fromLabel:
+                    requester?.displayName ||
+                    (requester?.handle ? `@${requester.handle}` : undefined) ||
+                    requester?.email ||
+                    req.requesterTenantId,
+                  inviteToken: a.token,
+                  expiresAt: req.expiresAt,
+                },
+                env,
+                { dryRun: a.emailDryRun === true ? true : a.emailDryRun }
+              )
+            );
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_request_list",
+          description: "List money requests / invoices for a tenant.",
+          schema: {
+            tenantId: z.string().optional(),
+            role: z.enum(["requester", "payer", "any"]).optional(),
+          },
+          handler: async (args) => {
+            const a = args as { tenantId?: string; role?: "requester" | "payer" | "any" };
+            const rows = await listMoneyRequests(
+              { tenantId: a.tenantId, role: a.role ?? "any" },
+              env
+            );
+            return textResult({ requests: rows.map(publicMoneyRequest) });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_request_claim_invite",
+          description:
+            "Claim an email invite from a money request: registers directory identity and links payer tenant.",
+          schema: creditsRequestClaimInviteSchema,
+          handler: async (args) => {
+            const a = args as {
+              requestId: string;
+              token: string;
+              tenantId: string;
+              email?: string;
+              handle?: string;
+              displayName?: string;
+            };
+            const result = await claimMoneyRequestInvite(
+              {
+                requestId: a.requestId,
+                token: a.token,
+                tenantId: a.tenantId,
+                email: a.email,
+                handle: a.handle,
+                displayName: a.displayName,
+              },
+              env
+            );
+            return textResult({
+              request: publicMoneyRequest(result.request),
+              directoryCreated: result.directoryCreated,
+              next: "Call payments_credits_request_accept to stage payment.",
+            });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_request_accept",
+          description:
+            "Payer accepts a money request: stages a credits transfer (confirm with payments_credits_transfer_confirm).",
+          schema: creditsRequestAcceptSchema,
+          handler: async (args) => {
+            const a = args as {
+              requestId: string;
+              payerTenantId?: string;
+              mandateJwt?: string;
+            };
+            await assertAp2IfRequired(env, a.mandateJwt);
+            const payerTenantId = a.payerTenantId?.trim() || "default";
+            const { request, staged } = await acceptMoneyRequest(
+              { requestId: a.requestId, payerTenantId },
+              async (input) =>
+                runPaymentsEffect(
+                  Effect.gen(function* () {
+                    const credits = yield* CreditsService;
+                    return yield* credits.stageTransfer({
+                      fromTenantId: input.fromTenantId,
+                      toTenantId: input.toTenantId,
+                      amountCents: input.amountCents,
+                      note: input.note,
+                      correlationId: input.correlationId,
+                      requestId: input.requestId,
+                    });
+                  }),
+                  env
+                ),
+              env
+            );
+            return textResult({
+              request: publicMoneyRequest(request),
+              staged,
+              next: "High-impact: payments_credits_transfer_confirm with actionId + code (+ totp if required).",
+            });
+          },
+        });
+
+        yield* api.registerMcpTool({
           name: "payments_credits_transfer_stage",
           description:
-            "Safe entry point: stage a prepaid credit P2P transfer. Inert until payments_credits_transfer_confirm — does not move balances.",
+            "Safe entry point: stage a prepaid credit P2P transfer. Prefer toEmail or toHandle (@bob). Inert until payments_credits_transfer_confirm.",
           schema: creditsTransferStageSchema,
           handler: async (args) => {
             const a = args as {
-              toTenantId: string;
+              toTenantId?: string;
+              toHandle?: string;
+              toEmail?: string;
               amountUsd: number;
               fromTenantId?: string;
               idempotencyKey?: string;
@@ -321,12 +843,28 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               mandateJwt?: string;
             };
             await assertAp2IfRequired(env, a.mandateJwt);
+            let toTenantId = a.toTenantId?.trim();
+            let toHandle: string | undefined;
+            let toEmail: string | undefined;
+            if (a.toEmail?.trim()) {
+              const resolved = await resolveRecipient(a.toEmail, env, { forceEmail: true });
+              toTenantId = resolved.tenantId;
+              toHandle = resolved.handle;
+              toEmail = resolved.email;
+            } else if (a.toHandle?.trim()) {
+              const resolved = await resolveRecipient(a.toHandle, env, { forceHandle: true });
+              toTenantId = resolved.tenantId;
+              toHandle = resolved.handle;
+              toEmail = resolved.email;
+            } else if (!toTenantId) {
+              throw new Error("Provide toEmail, toHandle (@bob), or toTenantId");
+            }
             const result = await runPaymentsEffect(
               Effect.gen(function* () {
                 const credits = yield* CreditsService;
                 return yield* credits.stageTransfer({
                   fromTenantId: a.fromTenantId?.trim() || "default",
-                  toTenantId: a.toTenantId,
+                  toTenantId: toTenantId!,
                   amountCents: Math.round(a.amountUsd * 100),
                   idempotencyKey: a.idempotencyKey,
                   note: a.note,
@@ -336,6 +874,8 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             );
             return textResult({
               ...result,
+              toHandle,
+              toEmail,
               next: "High-impact next step: call payments_credits_transfer_confirm with actionId + code (+ totp if required).",
             });
           },

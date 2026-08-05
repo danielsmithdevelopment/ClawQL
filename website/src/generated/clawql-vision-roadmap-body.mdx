@@ -9,33 +9,34 @@ Apache 2.0 / MIT · [github.com/danielsmithdevelopment/ClawQL](https://github.co
 
 ClawQL is under active development. The horizontal platform through **7.1.0** is shipped and documented in [Getting started](https://docs.clawql.com/getting-started). The table below is the honest current state; everything after it describes where ClawQL is going and why.
 
-| Package                    | Status                                                                                                                                      |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `clawql-mcp`               | ✅ Shipped (transport + MCP registration in `src/`)                                                                                         |
-| `clawql-core`              | ✅ Shipped (audit, Merkle, Cuckoo, Plugin types)                                                                                            |
-| `clawql-api`               | ✅ Shipped (spec, execute, gateway, Panguard plugin, custom URL sources)                                                                    |
-| `clawql-memory`            | ✅ Shipped (vault, memory.db, ingest/recall, Memory 2.0)                                                                                    |
-| `clawql-documents`         | ✅ Shipped — ingest + `DEFAULT_IDP_PIPELINE` + `run_idp_pipeline`; 8 bundled IDP vendors; `classify_document` / `extract_document` opt-in   |
-| `clawql-automation`        | ✅ Shipped — schedule, notify, `workflow`, `argocd`; NATS JetStream opt-in                                                                  |
-| `clawql-sandbox`           | ✅ Shipped — `SandboxPlugin`, Kata default in-cluster `auto`                                                                                |
-| `clawql-ouroboros`         | ✅ Shipped — evolutionary loops + `OuroborosPlugin`; full Effect-native (7.1)                                                               |
-| `clawql-codegraph`         | ✅ Shipped (7.1) — structural code graph; hybrid `memory_recall.sources`                                                                    |
-| `clawql-ontology`          | ✅ Shipped (7.1) — versioned Enterprise Ontology + OKF; ADR 0009/0010                                                                       |
-| `clawql-release`           | ✅ Shipped — workspaces, signing, IPFS→Lit→Arweave, x402, verify/pull CLI                                                                   |
-| `clawql-operator`          | 🚧 Scaffold shipped (0.2.1) — CRD, tier-spec, layer composition; full operator planned                                                      |
-| `mcp-grpc-transport`       | ✅ Shipped                                                                                                                                  |
-| `clawql-auth`              | ✅ Shipped — gateway `noAuth`/`apiKey`, ATR claims, provider headers                                                                        |
-| `clawql-pageindex`         | ✅ Shipped — MIT package + `pageindex_*` MCP tools                                                                                          |
-| `clawql-inference`         | ✅ Shipped — policy manifest, Langfuse + OTel tracing, pgvector semantic cache, OpenBench A/B, BYOK, OpenRouter-first path                  |
-| `clawql-payments`          | ✅ Shipped — Stripe + x402 + MPP + AP2/ACP + PayPal + Adyen; credits/ACH, Connect payouts, USDC, AgentCompensationService, DeductionService |
-| Managed Edge Gateway       | 🚧 Shipped CLI (`clawql gateway create` / `status` / `destroy`); Helm `managedGateway` (off by default) — production hardening in progress  |
-| `clawql-data`              | 📋 Planned                                                                                                                                  |
-| `clawql-telemetry`         | 📋 Planned                                                                                                                                  |
-| `clawql-printingpress`     | 📋 Planned                                                                                                                                  |
-| `clawql-goose`             | 📋 Planned                                                                                                                                  |
-| Kubernetes Operator (full) | 📋 Planned — NL dashboard, dynamic Deployments, full auth reconciliation                                                                    |
-| Natural Language Dashboard | 📋 Planned                                                                                                                                  |
-| All vertical packages      | 📋 Planned                                                                                                                                  |
+| Package                    | Status                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clawql-mcp`               | ✅ Shipped (transport + MCP registration in `src/`)                                                                                                                                                                                                                                                                                                                                |
+| `clawql-core`              | ✅ Shipped (audit, Merkle, Cuckoo, Plugin types)                                                                                                                                                                                                                                                                                                                                   |
+| `clawql-api`               | ✅ Shipped (spec, execute, gateway, Panguard plugin, custom URL sources)                                                                                                                                                                                                                                                                                                           |
+| `clawql-memory`            | ✅ Shipped (vault, memory.db, ingest/recall, Memory 2.0)                                                                                                                                                                                                                                                                                                                           |
+| `clawql-documents`         | ✅ Shipped — ingest + `DEFAULT_IDP_PIPELINE` + `run_idp_pipeline`; 8 bundled IDP vendors; `classify_document` / `extract_document` opt-in                                                                                                                                                                                                                                          |
+| `clawql-automation`        | ✅ Shipped — schedule, notify, `workflow`, `argocd`; NATS JetStream opt-in                                                                                                                                                                                                                                                                                                         |
+| `clawql-sandbox`           | ✅ Shipped — `SandboxPlugin`, Kata default in-cluster `auto`                                                                                                                                                                                                                                                                                                                       |
+| `clawql-ouroboros`         | ✅ Shipped — evolutionary loops + `OuroborosPlugin`; full Effect-native (7.1)                                                                                                                                                                                                                                                                                                      |
+| `clawql-codegraph`         | ✅ Shipped (7.1) — structural code graph; hybrid `memory_recall.sources`                                                                                                                                                                                                                                                                                                           |
+| `clawql-ontology`          | ✅ Shipped (7.1) — versioned Enterprise Ontology + OKF; ADR 0009/0010                                                                                                                                                                                                                                                                                                              |
+| `clawql-release`           | ✅ Shipped — workspaces, signing, IPFS→Lit→Arweave, x402, verify/pull CLI                                                                                                                                                                                                                                                                                                          |
+| `clawql-operator`          | 🚧 Scaffold shipped (0.2.1) — CRD, tier-spec, layer composition; full operator planned                                                                                                                                                                                                                                                                                             |
+| `mcp-grpc-transport`       | ✅ Shipped                                                                                                                                                                                                                                                                                                                                                                         |
+| `mcp-api-adapter`          | ✅ `0.4.0` — any MCP (stdio/HTTP/gRPC) → OpenAPI + GraphQL + gRPC ([guide](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-api-adapter.md), [design](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md), [example](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-api-adapter/README.md)) |
+| `clawql-auth`              | ✅ Shipped — gateway `noAuth`/`apiKey`, ATR claims, provider headers                                                                                                                                                                                                                                                                                                               |
+| `clawql-pageindex`         | ✅ Shipped — MIT package + `pageindex_*` MCP tools                                                                                                                                                                                                                                                                                                                                 |
+| `clawql-inference`         | ✅ Shipped — policy manifest, Langfuse + OTel tracing, pgvector semantic cache, OpenBench A/B, BYOK, OpenRouter-first path                                                                                                                                                                                                                                                         |
+| `clawql-payments`          | ✅ Shipped — Stripe + x402 + MPP + AP2/ACP + PayPal + Adyen; credits/ACH, Connect payouts, USDC, AgentCompensationService, DeductionService                                                                                                                                                                                                                                        |
+| Managed Edge Gateway       | 🚧 Shipped CLI (`clawql gateway create` / `status` / `destroy`); Helm `managedGateway` (off by default) — production hardening in progress                                                                                                                                                                                                                                         |
+| `clawql-data`              | 📋 Planned                                                                                                                                                                                                                                                                                                                                                                         |
+| `clawql-telemetry`         | 📋 Planned                                                                                                                                                                                                                                                                                                                                                                         |
+| `clawql-printingpress`     | 📋 Planned                                                                                                                                                                                                                                                                                                                                                                         |
+| `clawql-goose`             | 📋 Planned                                                                                                                                                                                                                                                                                                                                                                         |
+| Kubernetes Operator (full) | 📋 Planned — NL dashboard, dynamic Deployments, full auth reconciliation                                                                                                                                                                                                                                                                                                           |
+| Natural Language Dashboard | 📋 Planned                                                                                                                                                                                                                                                                                                                                                                         |
+| All vertical packages      | 📋 Planned                                                                                                                                                                                                                                                                                                                                                                         |
 
 **Detail:** [Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md). **Horizontal plugins:** [ClawQL plugin model](https://docs.clawql.com/reference/plugins).
 
@@ -131,7 +132,9 @@ The entire platform is built on Effect-TS. For non-technical readers: when a new
 
 **`clawql-release`** — Layer 0 immutable release pipeline: workspaces, signatures, IPFS staging, Lit/x402 encryption, Arweave permanence (dry-run), verify/pull CLI.
 
-**`mcp-grpc-transport`** — gRPC MCP transport for cluster deployments.
+**`mcp-grpc-transport`** — gRPC MCP transport for cluster deployments (MCP 2026-07-28 protobuf `ListTools` / `CallTool`).
+
+**`mcp-api-adapter`** (`0.4.0`) — Point at any MCP server (stdio / Streamable HTTP / gRPC) and scaffold OpenAPI + GraphQL + gRPC. Funnel for non-MCP clients onto the TypeScript gRPC transport. Guide: [`docs/mcp/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-api-adapter.md). Design: [`docs/design/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md). Example: [`examples/mcp-api-adapter/`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-api-adapter/README.md).
 
 **`clawql-auth`** — Gateway modes, ATR claims, provider headers.
 
@@ -153,9 +156,9 @@ The entire platform is built on Effect-TS. For non-technical readers: when a new
 
 ### Planned
 
-Vertical packages, the full Kubernetes Operator, and remaining horizontal packages (`clawql-data`, `clawql-telemetry`, `clawql-printingpress`, `clawql-goose`). Layer 0 permanence production hardening (Arweave, Rift, Radicle primary). Specifications for not-yet-started packages are written and stable.
+Vertical packages, the full Kubernetes Operator, and remaining horizontal packages (`clawql-data`, `clawql-telemetry`, `clawql-printingpress`, `clawql-goose`). **`mcp-api-adapter`** (MCP tools → OpenAPI REST on-ramp over gRPC — [design](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md)). Layer 0 permanence production hardening (Arweave, Rift, Radicle primary). Specifications for not-yet-started packages are written and stable.
 
-**Unreleased (post-7.1, on `main`):** OpenBench/BYOK hardening, Managed Edge Gateway production path, Layer 0 pipeline additional durability, Plugins IA, IDP GTM docs, sync ensure, Cloud Agent MCP fixes.
+**Unreleased (post-7.1, on `main`):** OpenBench/BYOK hardening, Managed Edge Gateway production path, Layer 0 pipeline additional durability, Plugins IA, IDP GTM docs, sync ensure, Cloud Agent MCP fixes; **`mcp-api-adapter`** `0.4.0` any-MCP → OpenAPI+GraphQL+gRPC (in-repo).
 
 ---
 
@@ -177,6 +180,14 @@ There are no fixed delivery dates. Priorities are determined by dependency order
 
 **Exit criteria:** ✅ Shipped — 107 merged PRs, +71k/−21k lines, `v7.1.0` published 2026-07-20.
 
+### Phase 1.2: MCP OpenAPI on-ramp (MVP in-repo)
+
+**What:** `mcp-api-adapter` — wrap any MCP (stdio / Streamable HTTP / gRPC), generate OpenAPI + GraphQL from `ListTools`, serve `POST /\{toolName\}` + `/graphql` + Swagger/GraphiQL, and expose (or scaffold) **`mcp-grpc-transport` `CallTool`**.
+
+**Why:** Non-MCP clients (Workers, OpenWebUI OpenAPI tools, GraphQL clients) need tool-name HTTP. Building the facade ourselves — gRPC-first, TypeScript-native — drives adoption of the production gRPC transport rather than ceding the on-ramp to Python/stdio-only proxies. Design: [`docs/design/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md). Example: [`examples/mcp-api-adapter/`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-api-adapter/README.md).
+
+**Exit criteria:** ✅ In-repo MVP — package + e2e + triple-surface example demos (REST / GraphQL / gRPC). Remaining: independent npm publish; optional Compose/Helm sidecar.
+
 ### Phase 2: Operator and Natural Language Surface
 
 **What:** Kubernetes Operator (`ClawQLInstance` CRD), Hermes supervisor, OpenClaw messaging gateway, natural language dashboard.
@@ -195,7 +206,7 @@ There are no fixed delivery dates. Priorities are determined by dependency order
 
 ### Phase 4: Community Vertical Ecosystem
 
-**What:** Remaining planned verticals (`clawql-legal`, `clawql-healthcare`, `clawql-insurance`, `clawql-supplychain`, `clawql-government`, `clawql-manufacturing`, `clawql-education`, `clawql-engineering`) plus community-contributed verticals.
+**What:** Remaining planned verticals (`clawql-surveillance`, `clawql-legal`, `clawql-healthcare`, `clawql-insurance`, `clawql-supplychain`, `clawql-government`, `clawql-manufacturing`, `clawql-education`, `clawql-engineering`) plus community-contributed verticals. Spec: [clawql-surveillance](/surveillance/clawql-surveillance).
 
 **Why fourth:** Verticals can be built in parallel once the platform is stable and the lending vertical has validated the contribution model. The 12-step checklist and vertical template exist specifically to make this parallelisable.
 

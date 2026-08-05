@@ -34,6 +34,7 @@ export default defineConfig({
       "packages/clawql-ouroboros/src/**/*.test.ts",
       "packages/clawql-operator/src/**/*.test.ts",
       "packages/clawql-inference/src/**/*.test.ts",
+      "packages/openbench-dataset/src/**/*.test.ts",
       "packages/clawql-payments/src/**/*.test.ts",
       "packages/clawql-release/src/**/*.test.ts",
       "packages/clawql-pageindex/src/**/*.test.ts",

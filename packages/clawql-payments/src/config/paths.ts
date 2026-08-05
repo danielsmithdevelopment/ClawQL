@@ -54,3 +54,8 @@ export function resolvePendingActionsDir(env: NodeJS.ProcessEnv = process.env): 
 export function resolveDeductionOutboxPath(env: NodeJS.ProcessEnv = process.env): string {
   return join(resolvePaymentsDir(env), "deduction-outbox.jsonl");
 }
+
+/** Money requests / invoices (file-backed; invite tokens for off-platform email). */
+export function resolveMoneyRequestsPath(env: NodeJS.ProcessEnv = process.env): string {
+  return join(resolvePaymentsDir(env), "money-requests.json");
+}

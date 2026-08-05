@@ -1,0 +1,6 @@
+{
+  "dryRunOnly": true,
+  "composed": true,
+  "steps": ["search", "execute", "execute", "audit", "memory_ingest"],
+  "source": "composed"
+}

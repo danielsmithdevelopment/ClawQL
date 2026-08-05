@@ -1,0 +1,28 @@
+# Argo CD Application — ClawQL WorkflowTemplates from .cqw / YAML packs
+# Agents submit these via MCP `workflow` (template-ref only). Promotion: PR → sync (#258).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: clawql-workflows
+  namespace: argocd
+  labels:
+    clawql.dev/surface: workflows
+spec:
+  project: clawql
+  source:
+    repoURL: https://github.com/danielsmithdevelopment/ClawQL.git
+    targetRevision: main
+    path: deployment/workflows
+    directory:
+      recurse: true
+      include: "{*.yaml,*.cqw}"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argo
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

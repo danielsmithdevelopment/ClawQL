@@ -178,6 +178,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
       'Stripe, x402, MPP, and related rails — plan entitlements and WORM audit.',
     icon: TagIcon,
   }),
+  card({
+    href: '/surveillance/clawql-surveillance',
+    name: 'Surveillance (spec)',
+    description:
+      'Planned vertical: HSE attestation, Merkle/WORM audit, Arweave anchors, case-number enforcement.',
+    icon: SquaresPlusIcon,
+  }),
 ]
 
 /** Deployment hub — ops/infra only (not getting-started entry points). */

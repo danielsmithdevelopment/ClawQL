@@ -30,4 +30,19 @@ describe("wrapRegisteredMcpToolHandler", () => {
     expect(result.isError).toBe(true);
     expect(result.content[0]?.text).toContain("payment_required");
   });
+
+  it("returns Panguard policy block text instead of a generic throw", async () => {
+    vi.mocked(runMcpProxyBeforeCallTool).mockRejectedValueOnce({
+      _tag: "ClawQLError",
+      reason: "Panguard policy blocked tool: execute",
+    });
+
+    const wrapped = wrapRegisteredMcpToolHandler("execute", async () => ({
+      content: [{ type: "text" as const, text: "ok" }],
+    }));
+
+    const result = await wrapped({ operationId: "x", dry_run: true });
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain("Panguard policy blocked tool: execute");
+  });
 });

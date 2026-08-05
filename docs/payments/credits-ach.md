@@ -43,14 +43,17 @@ ACH can take **1–3 business days**. Credits settle on `payment_intent.succeede
 
 ## Feature flags
 
-| Env                                    | Default                               | Meaning                                                         |
-| -------------------------------------- | ------------------------------------- | --------------------------------------------------------------- |
-| `CLAWQL_CREDITS_ENABLED`               | off                                   | Enable prepaid credit ledger                                    |
-| `CLAWQL_ACH_TOPUP_ENABLED`             | on when credits + `STRIPE_SECRET_KEY` | Enable FC + ACH top-up path                                     |
-| `CLAWQL_ACH_TOPUP_DRY_RUN`             | off                                   | Create sessions / settle without live Stripe/ACH (tests, demos) |
-| `CLAWQL_CREDITS_RETURN_URL`            | —                                     | Optional return URL for Financial Connections                   |
-| `CLAWQL_CREDITS_TRANSFER_DIRECT`       | off                                   | Skip stage/confirm (break-glass / tests only)                   |
-| `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP` | off                                   | Require enrolled TOTP on transfer confirm                       |
+| Env                                     | Default                               | Meaning                                                         |
+| --------------------------------------- | ------------------------------------- | --------------------------------------------------------------- |
+| `CLAWQL_CREDITS_ENABLED`                | off                                   | Enable prepaid credit ledger                                    |
+| `CLAWQL_ACH_TOPUP_ENABLED`              | on when credits + `STRIPE_SECRET_KEY` | Enable FC + ACH top-up path                                     |
+| `CLAWQL_ACH_TOPUP_DRY_RUN`              | off                                   | Create sessions / settle without live Stripe/ACH (tests, demos) |
+| `CLAWQL_CREDITS_RETURN_URL`             | —                                     | Optional return URL for Financial Connections                   |
+| `CLAWQL_CREDITS_TRANSFER_DIRECT`        | off                                   | Skip stage/confirm (break-glass / tests only)                   |
+| `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP`  | off                                   | Require enrolled TOTP on transfer confirm                       |
+| `CLAWQL_CREDITS_HATEOAS_BASE`           | compensation / `clawql://tool`        | Public origin for pay/request/invite deep links + HTMX          |
+| `CLAWQL_CREDITS_PHONE_REQUIRE_VERIFIED` | off                                   | Require `--verified` when claiming a phone alias                |
+| `CLAWQL_CREDITS_PHONE_DEFAULT_CC`       | `1`                                   | Default country code for 10-digit national numbers              |
 
 ## CLI
 
@@ -64,10 +67,16 @@ clawql payments credits topup --customer cus_xxx --amount 25
 # live:
 # clawql payments credits topup --customer cus_xxx --amount 25 --payment-method pm_xxx
 
-# P2P: stage then confirm (confirmation code = step-up; optional TOTP)
-clawql payments credits transfer --to-tenant bob --amount 10
+# Claim email (default) + optional privacy username
+clawql payments credits directory claim --email bob@acme.com --tenant-id bob
+clawql payments credits directory claim --tenant-id bob --handle bob
+clawql payments credits pay --to bob@acme.com --amount 10 --note coffee
+# or: clawql payments credits pay --to @bob --amount 10
 # → prints action_id + confirmation_code (balances unchanged)
 clawql payments credits transfer --confirm --action-id <uuid> --code <hex>
+
+# Or explicit tenant id
+clawql payments credits transfer --to-tenant bob --amount 10
 
 # Optional authenticator TOTP on confirm
 clawql payments credits step-up enroll --tenant-id alice --show-secrets
@@ -79,8 +88,11 @@ clawql payments credits transfer --confirm --action-id <uuid> --code <hex> --tot
 
 Transfers are **high-impact**. Default path is DAOS-style **2PC** (stage → confirm). Money does not move until confirm.
 
+Payees can be **email** (default), **`@username`** (optional privacy), or raw tenant ids — see [consumer P2P roadmap](./p2p-consumer-roadmap.md).
+
 | Property    | Behavior                                                                                  |
 | ----------- | ----------------------------------------------------------------------------------------- |
+| Addressing  | Email (default), optional `@username`, or `--to-tenant`                                   |
 | Scope       | Tenant ↔ tenant prepaid credits (not Stripe Connect / USDC chain send)                    |
 | Staging     | Default — `stageTransfer` returns `action_id` + `confirmation_code`                       |
 | Confirm     | `confirmTransfer` with code; optional TOTP when `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1`  |
@@ -88,17 +100,19 @@ Transfers are **high-impact**. Default path is DAOS-style **2PC** (stage → con
 | Overdraft   | Rejected — sender must have spendable grant balance                                       |
 | Idempotency | Optional `--idempotency-key` on the execute leg                                           |
 | WORM        | `CREDIT_TRANSFER_SENT` + `CREDIT_TRANSFER_RECEIVED` (accounting category `peer_transfer`) |
-| MCP         | `payments_credits_transfer_stage` + `payments_credits_transfer_confirm`                   |
+| MCP         | `payments_credits_directory_*` + `payments_credits_transfer_stage` / `_confirm`           |
 
 ```mermaid
 sequenceDiagram
   participant A as Tenant A
-  participant CLI as credits transfer
+  participant CLI as credits pay
+  participant Dir as directory.json
   participant Pend as pending-actions
   participant Ledger as credits-ledger.json
   participant WORM as payment audit
 
-  A->>CLI: transfer --to-tenant B --amount 10
+  A->>CLI: pay --to bob@acme.com|--to @bob --amount 10
+  CLI->>Dir: resolve email or @username → tenant
   CLI->>Pend: stage (inert) + confirmation_code
   CLI-->>A: action_id + code
   A->>CLI: transfer --confirm --action-id --code [--totp]
@@ -121,6 +135,7 @@ Platform liability is unchanged (credits move between tenants). Withdraw to bank
 ## Storage
 
 - Ledger: `$CLAWQL_HOME/Payments/credits-ledger.json` (append-only entries, USD cents)
+- Directory: `$CLAWQL_HOME/Payments/directory.json` (email + optional `@username` → tenantId; mode `0600`; emails never in WORM)
 - WORM kinds: `BANK_LINKED`, `CREDIT_TOPUP_PENDING`, `CREDIT_TOPUP_SETTLED`, `CREDIT_TOPUP_FAILED`, `CREDIT_DEBITED`, `CREDIT_TRANSFER_SENT`, `CREDIT_TRANSFER_RECEIVED`
 
 ## Effect services
@@ -132,9 +147,9 @@ Wired into `paymentsServicesLiveLayer()`. Discovery advertises `type: "credits"`
 
 ## Follow-ups
 
+- QR / deep links ([consumer roadmap](./p2p-consumer-roadmap.md))
 - Hosted checkout / Billing Portal bank payment method UX
 - Optional direct Plaid Link only if product needs non-Stripe bank data
 - Valkey Lua hot counter + Postgres durable grants (same DeductionService API)
-- Directory / handle resolution (`@user` → tenant id) outside the ledger
 
 Inference debit/hold is implemented via [`DeductionService`](./deduction-service.md) (`CLAWQL_CREDITS_ENFORCE_INFERENCE`).

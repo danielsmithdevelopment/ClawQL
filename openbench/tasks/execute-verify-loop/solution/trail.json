@@ -1,0 +1,6 @@
+{
+  "provider": "github",
+  "readOperationId": "security_advisories_get_global_advisory",
+  "listOperationId": "security_advisories_list_global_advisories",
+  "dryRunOnly": true
+}

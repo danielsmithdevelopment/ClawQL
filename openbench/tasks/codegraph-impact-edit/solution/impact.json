@@ -1,0 +1,14 @@
+{
+  "old_name": "compute_total",
+  "new_name": "compute_grand_total",
+  "files": [
+    "core/pricing.py",
+    "api/checkout.py",
+    "api/invoice.py",
+    "workers/batch.py",
+    "reports/summary.py",
+    "cli/main.py",
+    "tests/test_pricing.py"
+  ],
+  "source": "codegraph"
+}

@@ -1,0 +1,24 @@
+# Karpenter NodePools / EC2NodeClasses — synced after EKS Pulumi profile + Karpenter Helm install
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: clawql-karpenter-config
+  namespace: argocd
+  labels:
+    clawql.dev/surface: karpenter
+spec:
+  project: clawql
+  source:
+    repoURL: https://github.com/danielsmithdevelopment/ClawQL.git
+    targetRevision: main
+    path: deployment/gitops/karpenter
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: karpenter
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: false
+    syncOptions:
+      - CreateNamespace=true
+  # Requires: Pulumi profile=eks, Karpenter controller Helm installed, IAM roles from stack outputs

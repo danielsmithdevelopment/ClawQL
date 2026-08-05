@@ -51,6 +51,7 @@ import {
   type GatewayAuthConfig,
 } from "clawql-auth";
 import { validateVirtualKey } from "clawql-inference";
+import { attachCreditsHateoasRoutes } from "clawql-payments";
 import { attachPaymentsWellKnownRoutes } from "clawql-payments/discovery";
 import { attachMppOpenApiRoutes, isMppOpenApiEnabled } from "clawql-payments/mpp";
 import {
@@ -219,6 +220,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   app.use(applyCorsIfConfigured);
 
   attachPaymentsWellKnownRoutes(app, { serverName: "ClawQL MCP" });
+  // HTMX forms on /credits/* (invite claim / accept / decline)
+  app.use("/credits", express.urlencoded({ extended: false }));
+  attachCreditsHateoasRoutes(app);
   if (isMppOpenApiEnabled(process.env)) {
     attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });
   }

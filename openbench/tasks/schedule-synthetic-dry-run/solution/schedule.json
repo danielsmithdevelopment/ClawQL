@@ -1,0 +1,6 @@
+{
+  "dry_run": true,
+  "status": "pass",
+  "job_id": "job_openbench_example",
+  "source": "schedule"
+}

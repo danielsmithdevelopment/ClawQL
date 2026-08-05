@@ -1,0 +1,117 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: clawql-idp-document-pipeline
+  labels:
+    clawql.dev/managed: "true"
+    clawql.dev/template: idp-pipeline
+  annotations:
+    clawql.dev/kinetic: "true"
+    clawql.dev/risk-level: "MEDIUM"
+    clawql.dev/blast-radius: "BULK"
+    clawql.dev/rollback-protocol: "WORKFLOW_CANCEL"
+    clawql.dev/executor: "ARGO_WORKFLOW"
+    clawql.dev/requires-mandate: "false"
+    clawql.dev/correlation-id-param: "correlation_id"
+spec:
+  entrypoint: main
+  activeDeadlineSeconds: 3600
+  arguments:
+    parameters:
+      - name: document_uri
+        value: ""
+      - name: tenant_id
+        value: "internal-dev"
+      - name: correlation_id
+        value: ""
+      - name: clawql_mcp_url
+        value: "http://clawql-mcp-http.clawql.svc.cluster.local:8080"
+      - name: max_concurrency
+        value: "2"
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: inspect
+            template: mcp-tool
+            arguments:
+              parameters:
+                - name: tool
+                  value: inspect_pdf
+                - name: args_json
+                  value: '{"uri":"{{workflow.parameters.document_uri}}"}'
+          - name: classify
+            dependencies: [inspect]
+            template: mcp-tool
+            arguments:
+              parameters:
+                - name: tool
+                  value: classify_document
+                - name: args_json
+                  value: '{"uri":"{{workflow.parameters.document_uri}}"}'
+          - name: extract
+            dependencies: [classify]
+            template: mcp-tool
+            arguments:
+              parameters:
+                - name: tool
+                  value: extract_document
+                - name: args_json
+                  value: '{"uri":"{{workflow.parameters.document_uri}}"}'
+          - name: run-pipeline
+            dependencies: [extract]
+            template: mcp-tool
+            arguments:
+              parameters:
+                - name: tool
+                  value: run_idp_pipeline
+                - name: args_json
+                  value: '{"uri":"{{workflow.parameters.document_uri}}","correlationId":"{{workflow.parameters.correlation_id}}"}'
+
+    - name: mcp-tool
+      inputs:
+        parameters:
+          - name: tool
+          - name: args_json
+      # Spot-friendly processing; retry on interruption
+      retryStrategy:
+        limit: "3"
+        retryPolicy: Always
+        backoff:
+          duration: "30s"
+          factor: "2"
+      timeout: "180s"
+      container:
+        image: curlimages/curl:8.11.1
+        command: ["sh", "-c"]
+        args:
+          - |
+            set -eu
+            # Placeholder: wire to Streamable HTTP MCP or internal gateway once auth is set.
+            # Production: use clawql workflow submit from agents; this template is the DAG shape.
+            echo "tool={{inputs.parameters.tool}}"
+            echo "args={{inputs.parameters.args_json}}"
+            echo "tenant={{workflow.parameters.tenant_id}}"
+            echo "correlation={{workflow.parameters.correlation_id}}"
+            echo "mcp={{workflow.parameters.clawql_mcp_url}}"
+            # Fail closed if document_uri empty (deterministic guard)
+            test -n "{{workflow.parameters.document_uri}}"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+      nodeSelector:
+        clawql.dev/pool: spot
+      tolerations:
+        - key: clawql.dev/spot
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      synchronization:
+        semaphore:
+          configMapKeyRef:
+            name: clawql-tenant-semaphores
+            key: "{{workflow.parameters.tenant_id}}"

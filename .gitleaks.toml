@@ -9,7 +9,7 @@ useDefault = true
 
 # `paths` are regexes matched against the file path in each finding (see gitleaks README).
 [allowlist]
-description = "Upstream provider specs are vendor artifacts; build outputs and dependencies are not committed."
+description = "Upstream provider specs are vendor artifacts; OpenBench task fixtures use deliberate fake markers; build outputs and dependencies are not committed."
 paths = [
   '''(^|/)providers/''',
   '''(^|/)node_modules/''',
@@ -19,5 +19,6 @@ paths = [
   '''(^|/)packages/[^/]+/dist/''',
   '''(^|/)coverage/''',
   '''(^|/)packages/mcp-grpc-transport/test-fixtures/''',
+  '''(^|/)openbench/tasks/''',
   '''\.test\.ts$''',
 ]
