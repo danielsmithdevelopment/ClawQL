@@ -55,7 +55,7 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 
 Still missing after this wave: n≥3 trials; ops-only (Argo / live Onyx / live Slack / R2). Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Graded cells above are **`retired`**; **`pr_active` empty** after Phase 0 `search-first-discovery` n=3 WIN ([31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064)); next remaining P0 cells or B-4.2/B-4.3 spikes. Ouroboros workflow is dispatch-only.
+**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Graded cells above are **`retired`**; **`pr_active` empty** after Phase 0 memory-roundtrip n=3 WIN ([31014040293](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31014040293)); next `policy-deny-execute` n=3 or B-4.2/B-4.3 spikes. Ouroboros workflow is dispatch-only.
 
 Explanations for every verified cell: [`openbench-task-explanations.md`](./openbench-task-explanations.md).
 
