@@ -60,7 +60,7 @@ function createTestOnyxFetch(): typeof baseFetch {
 /**
  * Test stubs are resolved per request so Vitest `beforeEach` env wins over module-init order.
  * When **both** Slack and Onyx stubs are enabled (OpenBench `idp-safe-pipeline-lite`),
- * dispatch by URL so neither stub shadows the other.
+ * dispatch by hostname so neither stub shadows the other.
  */
 function getFetchImplForRest(): typeof baseFetch {
   const slack = process.env.CLAWQL_TEST_SLACK_FETCH_STUB === "1";
@@ -69,8 +69,16 @@ function getFetchImplForRest(): typeof baseFetch {
     const slackFetch = createTestSlackFetch();
     const onyxFetch = createTestOnyxFetch();
     return ((url: string | URL, init?: FetchRequestInit) => {
-      const u = String(url).toLowerCase();
-      if (u.includes("slack.com")) return slackFetch(url, init);
+      let host = "";
+      try {
+        host = new URL(String(url)).hostname.toLowerCase();
+      } catch {
+        host = "";
+      }
+      // Hostname match only (avoid substring false positives flagged by CodeQL).
+      if (host === "slack.com" || host.endsWith(".slack.com")) {
+        return slackFetch(url, init);
+      }
       return onyxFetch(url, init);
     }) as typeof baseFetch;
   }
