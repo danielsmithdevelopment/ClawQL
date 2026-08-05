@@ -1,0 +1,18 @@
+{
+  "sku": "SKU-ACME-100",
+  "conflict": true,
+  "entries": [
+    {
+      "price_usd": 15.0,
+      "as_of": "2026-07-01",
+      "source": "SKU-ACME-100 price (2026-07)"
+    },
+    {
+      "price_usd": 12.5,
+      "as_of": "2025-11-15",
+      "source": "SKU-ACME-100 price (2025-11)"
+    }
+  ],
+  "resolution": "needs_clarification",
+  "chosen_price_usd": null
+}

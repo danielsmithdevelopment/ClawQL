@@ -38,6 +38,12 @@ Python adapter: [`openbench/adapters/clawql.py`](../../openbench/adapters/clawql
 | `memory-dependent-continuation` | Prior decisions only in vault memory after seed removal |
 | `token-budget-constrained`      | Correctness + ≤5k-token budget scoring                  |
 | `multi-provider-api-workflow`   | Offline multi-API Worker scaffold                       |
+| `codegraph-feature-api-surface` | Cross-file API wiring (B-3.1 Phase 1)                   |
+| `memory-conflict-pricing`       | Flag vault price conflict; no confabulation (B-4.1)     |
+| `memory-stale-after-update`     | Cache invalidation after write (B-4.2)                  |
+| `memory-injection-attempt`      | Deny adversarial `memory_ingest` (B-4.3)                |
+
+Advanced suite ledger (B-1…B-6 specs): [`openbench-advanced-specs.md`](openbench-advanced-specs.md).
 
 Offline checker validation (no model):
 
