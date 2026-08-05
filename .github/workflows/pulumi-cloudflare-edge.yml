@@ -78,7 +78,7 @@ jobs:
           npm run typecheck
 
   deploy:
-    name: Edge ${{ inputs.action || 'preview' }}
+    name: Edge deploy
     needs: test
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest

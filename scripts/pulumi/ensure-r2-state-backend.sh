@@ -88,7 +88,8 @@ else
     exit 1
   fi
   export AWS_ACCESS_KEY_ID="${TOKEN_ID}"
-  export AWS_SECRET_ACCESS_KEY="$(printf '%s' "${API_TOKEN}" | sha256sum | awk '{print $1}')"
+  derived_secret="$(printf '%s' "${API_TOKEN}" | sha256sum | awk '{print $1}')"
+  export AWS_SECRET_ACCESS_KEY="${derived_secret}"
   echo "Derived R2 S3 credentials from CLOUDFLARE_API_TOKEN (Access Key ID = token id)"
 fi
 export AWS_REGION="${AWS_REGION:-auto}"
