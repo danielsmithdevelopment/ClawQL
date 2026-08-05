@@ -194,10 +194,10 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "codegraph_impact": True,
     },
     "codegraph-feature-api-surface": {
-        "max_turns": 40,
-        "max_tokens": 10000,
-        "max_wall_s": 240,
-        "default_timeout_s": 240,
+        "max_turns": 50,
+        "max_tokens": 12000,
+        "max_wall_s": 300,
+        "default_timeout_s": 300,
         "disable_memory": False,
         "empty_vault": True,
         "require_codegraph": True,
@@ -459,20 +459,23 @@ CODEGRAPH_IMPACT_NUDGE = """Continue the codegraph impact rename.
 Ignore decoy/. Missing any of the 7 files fails. Call codegraph tools and finish now.
 """
 
-CODEGRAPH_FEATURE_NUDGE = """Continue the widgets API surface task.
+CODEGRAPH_FEATURE_NUDGE = """Continue the widgets API surface task — finish it yourself.
 
-1. Call clawql_codegraph_index with root = . (workspace root).
-2. Call clawql_codegraph_query / neighbors / path for getWidgetById / handler.js /
-   router.js to find every file that must change.
-3. Finish ALL of:
-   - src/handler.js — implement getWidgetById(id)
-   - src/router.js — register GET /widgets/:id
-   - src/schema.js — WidgetParams
-   - openapi/openapi.yaml — path + 200/404
-   - tests/widgets.test.js — found + not-found
+HARD RULES:
+- Do NOT use the OpenCode `task` tool / subagents to implement files.
+- Index with clawql_codegraph_index root=. (workspace only — never root=/).
+
+1. clawql_codegraph_index with root = .
+2. clawql_codegraph_query / neighbors / path for getWidgetById / handler.js / router.js
+3. Edit ALL of these yourself:
+   - src/handler.js — getWidgetById(id) returns WIDGETS[id] or null
+   - src/router.js — import getWidgetById; register GET /widgets/:id
+   - src/schema.js — export WidgetParams (non-empty string id)
+   - openapi/openapi.yaml — /widgets/{id} with 200 and 404
+   - tests/widgets.test.js — found + not-found/null cases
 4. Run: node --test tests/widgets.test.js
 
-Ignore decoy/. Call codegraph tools and finish the impact set now.
+Ignore decoy/. Call codegraph tools with root=. and finish now.
 """
 
 SCHEDULE_NUDGE = """Continue the schedule dry_run task.
