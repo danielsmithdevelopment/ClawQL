@@ -453,6 +453,38 @@ jobs:
             echo ""
             cat "$SUM"
           } >> "$GITHUB_STEP_SUMMARY"
+          python3 - <<'PY'
+import json, os, sys
+from pathlib import Path
+task = os.environ["OPENBENCH_TASK"]
+out = Path(f"artifacts/openbench-ab/{task}/results.json")
+report = json.loads(out.read_text(encoding="utf-8"))
+summary = report.get("summary") or {}
+arms = report.get("arms") or []
+on = summary.get("clawql-on") or summary.get("ouroboros-on") or {}
+off = summary.get("clawql-off") or summary.get("ouroboros-off") or {}
+on_score = float(on.get("mean_score") or 0.0)
+off_score = float(off.get("mean_score") or 0.0)
+on_ok = int(on.get("successes") or 0)
+if "clawql-on" in arms or "ouroboros-on" in arms:
+    if on_ok < 1:
+        print(
+            f"::error::OpenBench gate — on-arm successes={on_ok} (need ≥1); "
+            f"on_score={on_score} off_score={off_score}",
+            flush=True,
+        )
+        raise SystemExit(1)
+    if on_score + 1e-9 < off_score:
+        print(
+            f"::error::OpenBench gate — on_score={on_score} < off_score={off_score}",
+            flush=True,
+        )
+        raise SystemExit(1)
+    print(
+        f"OpenBench gate OK — on_score={on_score} >= off_score={off_score} successes={on_ok}",
+        flush=True,
+    )
+PY
 
       - name: Stop clawql-inference
         if: always() && steps.preflight.outputs.run_benchmark == 'true'
@@ -467,6 +499,9 @@ jobs:
       - name: Build publish-ready traces + sync durable R2
         id: durable
         if: always() && steps.preflight.outputs.run_benchmark == 'true' && steps.ab.outcome != 'skipped'
+        # Soft-fail when CLOUDFLARE_ACCOUNT_ID (or S3 keys) are absent — GH artifact
+        # remains the warm cache; do not mask A/B score outcomes.
+        continue-on-error: true
         env:
           # Optional override; default bucket clawql-openbench-traces (auto-created).
           CLAWQL_R2_TRACES_BUCKET: ${{ secrets.CLAWQL_R2_TRACES_BUCKET }}
