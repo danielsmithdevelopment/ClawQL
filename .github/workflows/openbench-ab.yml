@@ -174,6 +174,7 @@ jobs:
       - name: Ouroboros task spend clamps
         if: matrix.task == 'ouroboros-oscillation-escape'
         run: |
+          # shellcheck disable=SC2129
           # Prefer dedicated workflow; if dispatched here, force thrash-study caps + arms.
           echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           echo "OPENBENCH_ARMS=ouroboros-on,ouroboros-off" >> "$GITHUB_ENV"
@@ -187,6 +188,7 @@ jobs:
       - name: Search-first task clamps
         if: matrix.task == 'search-first-discovery'
         run: |
+          # shellcheck disable=SC2129
           echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
           echo "CLAWQL_PROVIDER=github" >> "$GITHUB_ENV"
@@ -195,6 +197,7 @@ jobs:
       - name: Execute-verify task clamps
         if: matrix.task == 'execute-verify-loop'
         run: |
+          # shellcheck disable=SC2129
           echo "OPENBENCH_TIMEOUT_S=240" >> "$GITHUB_ENV"
           echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
           echo "CLAWQL_PROVIDER=github" >> "$GITHUB_ENV"
@@ -203,6 +206,7 @@ jobs:
       - name: Memory-roundtrip task clamps
         if: matrix.task == 'memory-roundtrip-ingest-recall'
         run: |
+          # shellcheck disable=SC2129
           echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
           echo "::notice::memory-roundtrip-ingest-recall → arms=clawql-on,off timeout=180s"
@@ -225,6 +229,7 @@ jobs:
           matrix.task == 'memory-wikilink-hop' ||
           matrix.task == 'memory-conflict-pricing'
         run: |
+          # shellcheck disable=SC2129
           echo "OPENBENCH_TIMEOUT_S=180" >> "$GITHUB_ENV"
           echo "OPENBENCH_ARMS=clawql-on,clawql-off" >> "$GITHUB_ENV"
           if [ "${{ matrix.task }}" = "policy-deny-execute" ]; then
