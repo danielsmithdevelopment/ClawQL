@@ -2,7 +2,7 @@
   "name": "clawql-provision",
   "version": "7.0.0",
   "private": true,
-  "description": "Pulumi programs to provision ClawQL golden hosts (AWS/GCP/Cloudflare) — pairs with Packer artifacts",
+  "description": "Pulumi programs for ClawQL hosted infra (edge / idp-k3s / eks / golden-host) — pairs with Argo CD GitOps and Packer AMIs",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",

@@ -1,0 +1,107 @@
+# Karpenter EC2NodeClass + NodePools for ClawQL shared tenancy (GTM Phase 3)
+#
+# BEFORE APPLY:
+# 1. Pulumi profile=eks → note karpenterNodeRoleArn + clusterName outputs
+# 2. Install Karpenter Helm chart into namespace karpenter (controller SA: karpenter)
+# 3. Replace PLACEHOLDER_* values below (or use Application helm parameters / Kustomize)
+#
+# Pools:
+# - reserved: on-demand r7i (Onyx, Nextcloud, ES, Postgres, ClawQL core)
+# - spot: mixed family (Tika, Gotenberg, Stirling, Argo Workflow pods)
+---
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: clawql-default
+  namespace: karpenter
+spec:
+  role: PLACEHOLDER_KARPENTER_NODE_ROLE_NAME
+  amiSelectorTerms:
+    - alias: al2023@latest
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: PLACEHOLDER_CLUSTER_NAME
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: PLACEHOLDER_CLUSTER_NAME
+  tags:
+    clawql.dev/managed: "true"
+    Name: clawql-karpenter
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: clawql-reserved
+  namespace: karpenter
+  labels:
+    clawql.dev/pool: reserved
+spec:
+  template:
+    metadata:
+      labels:
+        clawql.dev/pool: reserved
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: clawql-default
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: ["r7i.xlarge", "r7i.2xlarge", "r7i.4xlarge"]
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+  limits:
+    cpu: "64"
+    memory: 256Gi
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 30m
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: clawql-spot
+  namespace: karpenter
+  labels:
+    clawql.dev/pool: spot
+spec:
+  template:
+    metadata:
+      labels:
+        clawql.dev/pool: spot
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: clawql-default
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values:
+            - "c7i.xlarge"
+            - "c7i.2xlarge"
+            - "m7i.xlarge"
+            - "m7i.2xlarge"
+            - "r7i.xlarge"
+            - "c6i.xlarge"
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+      taints:
+        - key: clawql.dev/spot
+          value: "true"
+          effect: NoSchedule
+  limits:
+    cpu: "128"
+    memory: 256Gi
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 5m

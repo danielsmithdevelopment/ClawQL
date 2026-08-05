@@ -2,6 +2,8 @@
 
 Optional **bring-your-own Argo Workflows** (≥ **3.4.0**) manifests. ClawQL does not install Argo as a required chart dependency.
 
+> **Preferred for live / GitOps:** kinetic [`.cqw` packs](../workflows/) synced by Argo CD Application **clawql-workflows**. See [`docs/deployment/hosted-live-bootstrap.md`](../../docs/deployment/hosted-live-bootstrap.md). Templates under `templates/` remain valid for lab smoke.
+
 ## Prerequisites
 
 - Argo Workflows controller running in the cluster

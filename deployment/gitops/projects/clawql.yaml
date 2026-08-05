@@ -1,0 +1,38 @@
+# ClawQL AppProject — destination + source allowlists for GitOps
+# Apply: kubectl apply -f deployment/gitops/projects/clawql.yaml -n argocd
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: clawql
+  namespace: argocd
+spec:
+  description: ClawQL IDP + MCP + Argo Workflows (.cqw)
+  sourceRepos:
+    - https://github.com/danielsmithdevelopment/ClawQL.git
+    - https://github.com/danielsmithdevelopment/ClawQL
+    - '*' # allow forks — tighten in production
+  destinations:
+    - namespace: clawql
+      server: https://kubernetes.default.svc
+    - namespace: clawql-*
+      server: https://kubernetes.default.svc
+    - namespace: argo
+      server: https://kubernetes.default.svc
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+    - namespace: karpenter
+      server: https://kubernetes.default.svc
+    - namespace: infrastructure
+      server: https://kubernetes.default.svc
+    - namespace: pipeline
+      server: https://kubernetes.default.svc
+    - namespace: archive
+      server: https://kubernetes.default.svc
+    - namespace: tenant-*
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'

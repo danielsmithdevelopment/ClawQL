@@ -78,6 +78,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - **IDP observability bundle** (Grafana + trace/metrics guide, #252): [`observability/README.md`](observability/README.md)
 - **Slack-first IDP runbook** (OpenClaw, #256): [`openclaw/slack-first-idp-runbook.md`](openclaw/slack-first-idp-runbook.md)
 - **Agent PR → Argo CD pipeline** (GitOps contract, #258): [`gitops/agent-pr-argocd-pipeline.md`](gitops/agent-pr-argocd-pipeline.md)
+- **Hosted live bootstrap** (Pulumi profiles + Argo CD + `.cqw`): [`deployment/hosted-live-bootstrap.md`](deployment/hosted-live-bootstrap.md) · [`infra/pulumi`](../infra/pulumi/) · [`deployment/gitops`](../deployment/gitops/) · [`deployment/workflows`](../deployment/workflows/)
 - **Docling onboarding** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)): [`providers/docling-onboarding.md`](providers/docling-onboarding.md)
 - **pdf-inspector onboarding** (Firecrawl local PDF route): [`providers/pdf-inspector-onboarding.md`](providers/pdf-inspector-onboarding.md)
 - **LangExtract onboarding** ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)): [`providers/langextract-onboarding.md`](providers/langextract-onboarding.md)
