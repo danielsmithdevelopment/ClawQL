@@ -6,12 +6,12 @@ Closes the **agent-side** of the IDP event bus without requiring the external Cl
 
 ## Roles
 
-| Process | Role |
-|---------|------|
-| `clawql-mcp-http` | MCP tools + webhooks (publish) |
-| `nats:worker` (`idpPipeline`) | Inbox → `run_idp_pipeline` |
-| **`nats:agent-bridge`** | Terminal / viewer events → `memory_ingest` (+ optional `notify`) |
-| **Hermes or Pi** | Interactive MCP client + skill/extension |
+| Process                       | Role                                                             |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `clawql-mcp-http`             | MCP tools + webhooks (publish)                                   |
+| `nats:worker` (`idpPipeline`) | Inbox → `run_idp_pipeline`                                       |
+| **`nats:agent-bridge`**       | Terminal / viewer events → `memory_ingest` (+ optional `notify`) |
+| **Hermes or Pi**              | Interactive MCP client + skill/extension                         |
 
 ```text
 inbox.arrived ──► nats-worker ──► pipeline.* events ──► agent-bridge ──► MCP memory/notify
@@ -38,12 +38,12 @@ npm run nats:agent-bridge
 
 `nats.agentBridge.enabled=true` (included in [`values-nats-idp.example.yaml`](../../charts/clawql-mcp/values-nats-idp.example.yaml)) runs Deployment `*-nats-agent-bridge` against in-cluster `/mcp`.
 
-| Env | Default | Purpose |
-|-----|---------|---------|
-| `CLAWQL_NATS_AGENT_BRIDGE` | off | Enable bridge consumer |
-| `CLAWQL_NATS_AGENT_BRIDGE_DURABLE` | `clawql-idp-agent-bridge` | JetStream durable |
-| `CLAWQL_MCP_HTTP_URL` / `CLAWQL_MCP_URL` | `http://127.0.0.1:8080/mcp` | Streamable HTTP MCP |
-| `CLAWQL_NATS_AGENT_BRIDGE_NOTIFY_CHANNEL` | — | Slack on `pipeline.failed` |
+| Env                                       | Default                     | Purpose                    |
+| ----------------------------------------- | --------------------------- | -------------------------- |
+| `CLAWQL_NATS_AGENT_BRIDGE`                | off                         | Enable bridge consumer     |
+| `CLAWQL_NATS_AGENT_BRIDGE_DURABLE`        | `clawql-idp-agent-bridge`   | JetStream durable          |
+| `CLAWQL_MCP_HTTP_URL` / `CLAWQL_MCP_URL`  | `http://127.0.0.1:8080/mcp` | Streamable HTTP MCP        |
+| `CLAWQL_NATS_AGENT_BRIDGE_NOTIFY_CHANNEL` | —                           | Slack on `pipeline.failed` |
 
 ## Runtime setup
 

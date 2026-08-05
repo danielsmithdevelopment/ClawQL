@@ -44,7 +44,10 @@ async function main(): Promise<void> {
     JSON.stringify({
       ok: true,
       message: "idp nats agent bridge starting",
-      mcp: process.env.CLAWQL_MCP_HTTP_URL || process.env.CLAWQL_MCP_URL || "http://127.0.0.1:8080/mcp",
+      mcp:
+        process.env.CLAWQL_MCP_HTTP_URL ||
+        process.env.CLAWQL_MCP_URL ||
+        "http://127.0.0.1:8080/mcp",
     })
   );
 

@@ -16,11 +16,11 @@ Use ClawQL MCP tools only:
 
 Async intake is **NATS JetStream** (not a Hermes-local queue):
 
-| Subject | Who handles it |
-|---------|----------------|
-| `clawql.document.inbox.arrived` | ClawQL `nats-worker` → `run_idp_pipeline` |
+| Subject                                          | Who handles it                                            |
+| ------------------------------------------------ | --------------------------------------------------------- |
+| `clawql.document.inbox.arrived`                  | ClawQL `nats-worker` → `run_idp_pipeline`                 |
 | `clawql.document.pipeline.completed` / `.failed` | `nats:agent-bridge` → memory_ingest (+ notify on failure) |
-| `clawql.document.coneshare.viewer` | ClawQL follow-up consumer + agent-bridge memory |
+| `clawql.document.coneshare.viewer`               | ClawQL follow-up consumer + agent-bridge memory           |
 
 If a user drops a file in Nextcloud inbox, prefer confirming the webhook/NATS path over calling every hop manually.
 

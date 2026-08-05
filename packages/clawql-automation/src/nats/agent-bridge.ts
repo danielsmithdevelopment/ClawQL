@@ -11,7 +11,11 @@ import {
   natsAgentBridgeNotifyChannel,
   natsDocumentSubjectRoot,
 } from "./env.js";
-import { ensureDurableConsumer, startConsumerLoop, type DocumentConsumerHandler } from "./client.js";
+import {
+  ensureDurableConsumer,
+  startConsumerLoop,
+  type DocumentConsumerHandler,
+} from "./client.js";
 
 export type AgentBridgeMcpCaller = {
   callTool: (
@@ -40,8 +44,7 @@ export async function handleDocumentEventForAgentBridge(
 
   if (envelope.event_type === "pipeline.completed" || envelope.event_type === "pipeline.failed") {
     const ok = envelope.event_type === "pipeline.completed";
-    const err =
-      typeof envelope.payload?.error === "string" ? envelope.payload.error : undefined;
+    const err = typeof envelope.payload?.error === "string" ? envelope.payload.error : undefined;
     const insights = [
       "## Summary",
       "",
@@ -90,9 +93,7 @@ export async function handleDocumentEventForAgentBridge(
 
   if (envelope.event_type === "coneshare.viewer") {
     const eventType =
-      typeof envelope.payload?.event_type === "string"
-        ? envelope.payload.event_type
-        : "viewer";
+      typeof envelope.payload?.event_type === "string" ? envelope.payload.event_type : "viewer";
     const share =
       typeof envelope.payload?.share_link_id === "string"
         ? envelope.payload.share_link_id

@@ -10,9 +10,8 @@ export async function createStreamableHttpMcpCaller(
   url = natsMcpHttpUrl()
 ): Promise<{ caller: AgentBridgeMcpCaller; close: () => Promise<void> }> {
   const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
-  const { StreamableHTTPClientTransport } = await import(
-    "@modelcontextprotocol/sdk/client/streamableHttp.js"
-  );
+  const { StreamableHTTPClientTransport } =
+    await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
 
   const transport = new StreamableHTTPClientTransport(new URL(url));
   const client = new Client({ name: "clawql-idp-agent-bridge", version: "7.2.0" }, {});

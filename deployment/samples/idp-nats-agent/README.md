@@ -12,12 +12,12 @@ Contract: [`docs/openclaw/clawql-agent-idp-nats.md`](../../../docs/openclaw/claw
 
 ## Why Hermes / Pi (not OpenClaw)
 
-| Runtime | Fit for this bridge |
-|---------|---------------------|
-| **Hermes** | Native MCP + skills; load [`hermes/SKILL.md`](hermes/SKILL.md) |
-| **Pi** | Minimal TS harness; drop in [`pi/clawql-idp.ts`](pi/clawql-idp.ts) extension |
-| **Goose** | Helm already wires `CLAWQL_MCP_URL` — same MCP tools |
-| **OpenClaw** | Full chat gateway; heavier — use when you already run Agent Chat |
+| Runtime      | Fit for this bridge                                                          |
+| ------------ | ---------------------------------------------------------------------------- |
+| **Hermes**   | Native MCP + skills; load [`hermes/SKILL.md`](hermes/SKILL.md)               |
+| **Pi**       | Minimal TS harness; drop in [`pi/clawql-idp.ts`](pi/clawql-idp.ts) extension |
+| **Goose**    | Helm already wires `CLAWQL_MCP_URL` — same MCP tools                         |
+| **OpenClaw** | Full chat gateway; heavier — use when you already run Agent Chat             |
 
 ## Run the bridge
 
