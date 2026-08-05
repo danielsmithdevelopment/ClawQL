@@ -30,14 +30,11 @@ export class OidcAuthService extends Context.Tag("clawql/OidcAuthService")<
 
 export function oidcAuthServiceFromConfig(config: OidcAuthConfig) {
   return OidcAuthService.of({
-    verifyBearerToken: (token) =>
-      verifyBearerTokenEffect(token, config),
+    verifyBearerToken: (token) => verifyBearerTokenEffect(token, config),
     resolveClaimsFromHeaders: (headers) =>
       resolveOidcAtrClaimsFromHeadersEffect(headers, config).pipe(
         Effect.catchTag("OidcAuthError", (err) =>
-          err.reason.startsWith("Missing Bearer")
-            ? Effect.succeed(undefined)
-            : Effect.fail(err)
+          err.reason.startsWith("Missing Bearer") ? Effect.succeed(undefined) : Effect.fail(err)
         )
       ),
   });

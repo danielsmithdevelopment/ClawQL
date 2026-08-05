@@ -23,9 +23,7 @@ export class GatewayAuthService extends Context.Tag("clawql/GatewayAuthService")
       headers?: AuthHeaderSource
     ) => Effect.Effect<AtrClaims, GatewayAuthError>;
     /** Assert gateway auth and return ATR claims; fails with GatewayAuthError. */
-    readonly assertAuth: (
-      headers?: AuthHeaderSource
-    ) => Effect.Effect<AtrClaims, GatewayAuthError>;
+    readonly assertAuth: (headers?: AuthHeaderSource) => Effect.Effect<AtrClaims, GatewayAuthError>;
   }
 >() {}
 

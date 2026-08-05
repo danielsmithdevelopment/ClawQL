@@ -8,11 +8,7 @@ import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
 import { lokiPushLiveLayer } from "../audit/loki.js";
 import { resetPaymentAuditStoreForTests } from "../audit/worm.js";
 import { resetPaymentsEffectRuntimeForTests } from "../runtime/payments-effect-runtime.js";
-import {
-  appendCreditEntry,
-  creditsLedgerLiveLayer,
-  resetCreditsLedgerForTests,
-} from "./ledger.js";
+import { appendCreditEntry, creditsLedgerLiveLayer, resetCreditsLedgerForTests } from "./ledger.js";
 import { claimDirectory, resetDirectoryForTests } from "./directory.js";
 import { creditsStepUpLiveLayer } from "./step-up.js";
 import { pendingActionsLiveLayer } from "../compensation/pending-actions.js";
@@ -58,7 +54,9 @@ describe("money requests / invoices", () => {
   });
 
   const layer = () => {
-    const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(process.env))));
+    const audit = paymentAuditLiveLayer(process.env).pipe(
+      Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(process.env)))
+    );
     const ledger = creditsLedgerLiveLayer(process.env);
     const stepUp = creditsStepUpLiveLayer(process.env);
     const pending = pendingActionsLiveLayer(process.env);

@@ -10,11 +10,7 @@ import { stripeClientLiveLayer } from "../stripe/stripe-client-service.js";
 import { resetPaymentAuditStoreForTests } from "../audit/index.js";
 import { AchTopupService, achTopupLiveLayer } from "./ach-topup-service.js";
 import { CreditsService, creditsLiveLayer } from "./credits-service.js";
-import {
-  creditsLedgerLiveLayer,
-  getCreditAccount,
-  resetCreditsLedgerForTests,
-} from "./ledger.js";
+import { creditsLedgerLiveLayer, getCreditAccount, resetCreditsLedgerForTests } from "./ledger.js";
 import { creditsStepUpLiveLayer } from "./step-up.js";
 import { pendingActionsLiveLayer } from "../compensation/pending-actions.js";
 import { Layer } from "effect";
@@ -43,7 +39,9 @@ describe("credits + ACH top-up (dry-run)", () => {
   });
 
   const testLayer = () => {
-    const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(process.env))));
+    const audit = paymentAuditLiveLayer(process.env).pipe(
+      Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(process.env)))
+    );
     const stripe = stripeClientLiveLayer(process.env);
     const ledger = creditsLedgerLiveLayer(process.env);
     const stepUp = creditsStepUpLiveLayer(process.env);

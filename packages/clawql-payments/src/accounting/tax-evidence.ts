@@ -188,9 +188,7 @@ export function taxEvidenceLiveLayer(
           buildTaxEvidencePack({ ...options, env: options.env ?? env })
         ),
       write: (pack, outputDir) =>
-        run("Failed to write tax evidence pack", () =>
-          writeTaxEvidencePack(pack, env, outputDir)
-        ),
+        run("Failed to write tax evidence pack", () => writeTaxEvidencePack(pack, env, outputDir)),
       formatMarkdown: (pack) =>
         Effect.try({
           try: () => formatTaxEvidenceMarkdown(pack),

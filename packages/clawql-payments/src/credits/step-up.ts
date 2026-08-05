@@ -80,11 +80,7 @@ export async function requireStepUpTotp(
   token: string | undefined,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<void> {
-  await store(env).require(
-    tenantId,
-    token,
-    stepUpEnrollHint(tenantId)
-  );
+  await store(env).require(tenantId, token, stepUpEnrollHint(tenantId));
 }
 
 function stepUpEnrollHint(tenantId: string): string {

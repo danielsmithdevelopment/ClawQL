@@ -118,10 +118,7 @@ export class StepUpStoreService extends Context.Tag("clawql/StepUpStoreService")
     readonly enroll: (
       input: StepUpEnrollInput
     ) => Effect.Effect<StepUpEnrollResult, StepUpStoreError>;
-    readonly verify: (
-      subjectId: string,
-      token: string
-    ) => Effect.Effect<boolean, StepUpStoreError>;
+    readonly verify: (subjectId: string, token: string) => Effect.Effect<boolean, StepUpStoreError>;
     readonly require: (
       subjectId: string,
       token: string | undefined,
@@ -217,7 +214,10 @@ async function runStepUp<A>(eff: Effect.Effect<A, StepUpStoreError>): Promise<A>
   if (Exit.isSuccess(exit)) return exit.value;
   const failure = Option.getOrUndefined(Cause.failureOption(exit.cause));
   if (failure) {
-    throw new Error(failure.reason, failure.cause !== undefined ? { cause: failure.cause } : undefined);
+    throw new Error(
+      failure.reason,
+      failure.cause !== undefined ? { cause: failure.cause } : undefined
+    );
   }
   throw new Error("Step-up store operation failed");
 }

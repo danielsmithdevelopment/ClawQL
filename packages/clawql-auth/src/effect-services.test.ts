@@ -7,15 +7,9 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { AwsSigV4Service, AwsSigV4ServiceLive } from "./aws-sigv4.js";
 import type { OpenAPIDoc } from "./openapi-types.js";
-import {
-  createGatewayAuthServiceLayer,
-  GatewayAuthService,
-} from "./gateway-service.js";
+import { createGatewayAuthServiceLayer, GatewayAuthService } from "./gateway-service.js";
 import { loadGatewayAuthConfig, resolveAtrClaimsFromHeadersEffect } from "./gateway.js";
-import {
-  createOidcAuthServiceLayer,
-  OidcAuthService,
-} from "./oidc-service.js";
+import { createOidcAuthServiceLayer, OidcAuthService } from "./oidc-service.js";
 import { loadOidcAuthConfig, resetOidcVerifyCaches } from "./oidc.js";
 import { createStepUpStoreLayer, generateTotp, StepUpStoreService } from "./step-up/index.js";
 
@@ -68,7 +62,9 @@ describe("clawql-auth Effect services", () => {
     });
     const result = await Effect.runPromise(
       program.pipe(
-        Effect.provide(createOidcAuthServiceLayer({ hs256Secret: "test-secret-32-characters-long!!" }))
+        Effect.provide(
+          createOidcAuthServiceLayer({ hs256Secret: "test-secret-32-characters-long!!" })
+        )
       )
     );
     expect(result).toBeUndefined();

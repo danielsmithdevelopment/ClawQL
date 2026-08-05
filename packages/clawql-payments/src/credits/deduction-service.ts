@@ -98,7 +98,11 @@ function mapLedgerError(error: LedgerError): DeductionError {
 
 export function deductionLiveLayer(
   env: NodeJS.ProcessEnv = process.env
-): Layer.Layer<DeductionService, never, PaymentAuditService | DeductionEventBus | CreditsLedgerService> {
+): Layer.Layer<
+  DeductionService,
+  never,
+  PaymentAuditService | DeductionEventBus | CreditsLedgerService
+> {
   return Layer.effect(
     DeductionService,
     Effect.gen(function* () {

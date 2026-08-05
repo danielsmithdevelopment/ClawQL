@@ -352,9 +352,7 @@ export async function verifyOidcBearerToken(
 ): Promise<{ ok: true; claims: AtrClaims; payload: JWTPayload } | { ok: false; error: string }> {
   return Effect.runPromise(
     verifyOidcBearerTokenEffect(token, config).pipe(
-      Effect.map(
-        (r) => ({ ok: true, claims: r.claims, payload: r.payload }) as const
-      ),
+      Effect.map((r) => ({ ok: true, claims: r.claims, payload: r.payload }) as const),
       Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason } as const))
     )
   );

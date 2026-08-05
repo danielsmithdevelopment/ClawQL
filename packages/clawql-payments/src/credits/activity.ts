@@ -266,7 +266,9 @@ export class ActivityError extends Data.TaggedError("ActivityError")<{
 export class CreditsActivityService extends Context.Tag("clawql/CreditsActivityService")<
   CreditsActivityService,
   {
-    readonly getFeed: (options: GetActivityFeedOptions) => Effect.Effect<ActivityFeed, ActivityError>;
+    readonly getFeed: (
+      options: GetActivityFeedOptions
+    ) => Effect.Effect<ActivityFeed, ActivityError>;
   }
 >() {}
 
@@ -330,12 +332,8 @@ export function creditsActivityLiveLayer(): Layer.Layer<
           );
 
           const includeLedger =
-            filter === "all" ||
-            filter === "ledger" ||
-            filter === "money" ||
-            filter === "transfers";
-          const includeRequests =
-            filter === "all" || filter === "requests" || filter === "money";
+            filter === "all" || filter === "ledger" || filter === "money" || filter === "transfers";
+          const includeRequests = filter === "all" || filter === "requests" || filter === "money";
 
           const items: ActivityItem[] = [];
 

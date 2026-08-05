@@ -9,11 +9,7 @@ import { lokiPushLiveLayer } from "../audit/loki.js";
 import { listPaymentAuditEntries, resetPaymentAuditStoreForTests } from "../audit/worm.js";
 import { resetPaymentsEffectRuntimeForTests } from "../runtime/payments-effect-runtime.js";
 import { CreditsService, creditsLiveLayer } from "./credits-service.js";
-import {
-  appendCreditEntry,
-  creditsLedgerLiveLayer,
-  resetCreditsLedgerForTests,
-} from "./ledger.js";
+import { appendCreditEntry, creditsLedgerLiveLayer, resetCreditsLedgerForTests } from "./ledger.js";
 import { creditsStepUpLiveLayer } from "./step-up.js";
 import { pendingActionsLiveLayer } from "../compensation/pending-actions.js";
 
@@ -45,7 +41,9 @@ describe("credits P2P transfer", () => {
   });
 
   const layer = () => {
-    const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(process.env))));
+    const audit = paymentAuditLiveLayer(process.env).pipe(
+      Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(process.env)))
+    );
     const ledger = creditsLedgerLiveLayer(process.env);
     const stepUp = creditsStepUpLiveLayer(process.env);
     const pending = pendingActionsLiveLayer(process.env);

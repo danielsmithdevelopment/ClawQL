@@ -105,9 +105,7 @@ export function paymentsServicesLiveLayer(
 
   const config = paymentsConfigLiveLayer(env);
   const lokiPush = lokiPushLiveLayer(env);
-  const audit = paymentAuditLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(AuditLive, lokiPush))
-  );
+  const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(AuditLive, lokiPush)));
   const gate = x402GateLiveLayer(env);
   const usage = usageStoreLiveLayer(env);
   const entitlement = entitlementLiveLayer();

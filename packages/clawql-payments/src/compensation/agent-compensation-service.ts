@@ -431,12 +431,7 @@ export function agentCompensationLiveLayer(
                 record.confirmationCode,
                 env
               ),
-              cancelUrl: buildCancelUrl(
-                record.tool,
-                record.actionId,
-                record.confirmationCode,
-                env
-              ),
+              cancelUrl: buildCancelUrl(record.tool, record.actionId, record.confirmationCode, env),
               expiresAt: record.expiresAt,
             } satisfies ApproveView;
           }
@@ -553,12 +548,10 @@ export function agentCompensationLiveLayer(
               )
             );
 
-          const balance = yield* accounts
-            .get(record.agentId)
-            .pipe(
-              Effect.mapError(toCompensationError),
-              Effect.map((a) => a!)
-            );
+          const balance = yield* accounts.get(record.agentId).pipe(
+            Effect.mapError(toCompensationError),
+            Effect.map((a) => a!)
+          );
 
           yield* audit
             .appendEntry(

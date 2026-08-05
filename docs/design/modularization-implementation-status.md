@@ -276,19 +276,19 @@ From enablement §5.4 and the Effect plan §8:
 
 These vision items are **not** done by package extraction alone:
 
-| Vision item                                   | Status                                                                                     |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Vision item                                   | Status                                                                                                                                                                                                 |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `clawql-auth` package                         | ✅ Gateway `noAuth`/`apiKey`/`oidc`, ATR claims, provider headers; Effect services (`OidcAuthService`, `GatewayAuthService`, `StepUpStoreService`, `AwsSigV4Service`, `AuthLive`); HTTP MCP middleware |
-| `clawql-pageindex`                            | ✅ MIT package + `pageindex_*` MCP tools (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide) |
-| Document pipeline (Tika → … → Paperless)      | 🚧 Vendors + `run_idp_pipeline` shipped; retries/Merkle per hop roadmap                    |
-| NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                                      |
-| Layer 0 immutable releases                    | 🚧 MVP (`clawql-release`); Arweave/Rift/Radicle roadmap                                    |
-| Release manifest verification at gateway      | ✅ `clawql doctor --smoke` + optional `CLAWQL_RELEASE_MANIFEST` at MCP startup             |
-| Kubernetes Operator Layer composition         | 🚧 Phase 1 scaffold (CRD + ConfigMap + tier layers; no NL dashboard)                       |
-| Tier 1 Docker Compose                         | ✅ `examples/clawql-local-docker-compose` + `make compose-tier1-config-test`               |
-| Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains                                   |
-| Presidio gateway hooks                        | ✅ Execute + memory ingest + external ingest redaction when `CLAWQL_ENABLE_PRESIDIO=1`     |
-| All vertical packages                         | 📋 Not started                                                                             |
+| `clawql-pageindex`                            | ✅ MIT package + `pageindex_*` MCP tools (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide)                                                                                                             |
+| Document pipeline (Tika → … → Paperless)      | 🚧 Vendors + `run_idp_pipeline` shipped; retries/Merkle per hop roadmap                                                                                                                                |
+| NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                                                                                                                                                  |
+| Layer 0 immutable releases                    | 🚧 MVP (`clawql-release`); Arweave/Rift/Radicle roadmap                                                                                                                                                |
+| Release manifest verification at gateway      | ✅ `clawql doctor --smoke` + optional `CLAWQL_RELEASE_MANIFEST` at MCP startup                                                                                                                         |
+| Kubernetes Operator Layer composition         | 🚧 Phase 1 scaffold (CRD + ConfigMap + tier layers; no NL dashboard)                                                                                                                                   |
+| Tier 1 Docker Compose                         | ✅ `examples/clawql-local-docker-compose` + `make compose-tier1-config-test`                                                                                                                           |
+| Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains                                                                                                                                               |
+| Presidio gateway hooks                        | ✅ Execute + memory ingest + external ingest redaction when `CLAWQL_ENABLE_PRESIDIO=1`                                                                                                                 |
+| All vertical packages                         | 📋 Not started                                                                                                                                                                                         |
 
 ---
 

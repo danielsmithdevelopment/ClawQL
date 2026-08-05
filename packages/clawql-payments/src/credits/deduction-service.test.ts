@@ -12,11 +12,7 @@ import { AchTopupService, achTopupLiveLayer } from "./ach-topup-service.js";
 import { CreditsService, creditsLiveLayer } from "./credits-service.js";
 import { DeductionService, deductionLiveLayer } from "./deduction-service.js";
 import { deductionEventBusLiveLayer } from "./deduction-event-bus.js";
-import {
-  creditsLedgerLiveLayer,
-  getCreditAccount,
-  resetCreditsLedgerForTests,
-} from "./ledger.js";
+import { creditsLedgerLiveLayer, getCreditAccount, resetCreditsLedgerForTests } from "./ledger.js";
 import { creditsStepUpLiveLayer } from "./step-up.js";
 import { pendingActionsLiveLayer } from "../compensation/pending-actions.js";
 import { stripeClientLiveLayer } from "../stripe/stripe-client-service.js";
@@ -46,7 +42,9 @@ describe("DeductionService (sync hold → capture/release → outbox)", () => {
   });
 
   const testLayer = () => {
-    const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(process.env))));
+    const audit = paymentAuditLiveLayer(process.env).pipe(
+      Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(process.env)))
+    );
     const stripe = stripeClientLiveLayer(process.env);
     const ledger = creditsLedgerLiveLayer(process.env);
     const stepUp = creditsStepUpLiveLayer(process.env);

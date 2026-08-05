@@ -234,7 +234,8 @@ export function compensationAccountsLiveLayer(
         run("Failed to ensure agent account", () => ensureAgentAccount(agentId, env, tenantId)),
       setPreference: (input) =>
         run("Failed to set agent account preference", () => setAgentAccountPreference(input, env)),
-      credit: (input) => run("Failed to credit agent account", () => creditAgentAccount(input, env)),
+      credit: (input) =>
+        run("Failed to credit agent account", () => creditAgentAccount(input, env)),
       debit: (input) => run("Failed to debit agent account", () => debitAgentAccount(input, env)),
     })
   );

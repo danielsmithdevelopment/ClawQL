@@ -259,9 +259,7 @@ export function accountingExportLiveLayer(
           buildAccountingExport({ ...options, env: options.env ?? env })
         ),
       write: (result, outputPath) =>
-        run("Failed to write accounting export", () =>
-          writeAccountingExport(result, outputPath)
-        ),
+        run("Failed to write accounting export", () => writeAccountingExport(result, outputPath)),
       serialize: (result, format) =>
         Effect.try({
           try: () => serializeAccountingExport(result, format),

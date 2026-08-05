@@ -83,7 +83,9 @@ describe("stripe meter reporting", () => {
         Layer.mergeAll(
           stubClientLayer,
           paymentsConfigLiveLayer(env),
-          paymentAuditLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(env))))
+          paymentAuditLiveLayer(env).pipe(
+            Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(env)))
+          )
         )
       )
     );

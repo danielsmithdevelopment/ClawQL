@@ -68,10 +68,7 @@ export function paymentAuditLiveLayer(
                 loki.push(entry).pipe(
                   Effect.catchAll((err) =>
                     Effect.sync(() => {
-                      console.error(
-                        "[clawql-payments-audit-loki] push failed:",
-                        err.reason
-                      );
+                      console.error("[clawql-payments-audit-loki] push failed:", err.reason);
                     })
                   )
                 )

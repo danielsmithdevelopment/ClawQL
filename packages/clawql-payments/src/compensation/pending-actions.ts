@@ -314,11 +314,13 @@ export function pendingActionsLiveLayer(
     PendingActionsService,
     PendingActionsService.of({
       stage: (input) => run("Failed to stage pending action", () => stagePendingAction(input, env)),
-      load: (actionId) => run("Failed to load pending action", () => loadPendingAction(actionId, env)),
+      load: (actionId) =>
+        run("Failed to load pending action", () => loadPendingAction(actionId, env)),
       save: (record) => run("Failed to save pending action", () => savePendingAction(record, env)),
       assertCode: (actionId, code) =>
         run("Failed to verify pending action code", () => assertPendingCode(actionId, code, env)),
-      list: (filter) => run("Failed to list pending actions", () => listPendingActions(env, filter)),
+      list: (filter) =>
+        run("Failed to list pending actions", () => listPendingActions(env, filter)),
       findRecruitDeposit: (input) =>
         run("Failed to look up recruit deposit", () => findRecruitDepositByKey(input, env)),
       delete: (actionId) =>

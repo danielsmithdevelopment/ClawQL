@@ -44,11 +44,7 @@ import {
   createCreditsHateoasAuthMiddleware,
   type CreditsHateoasAuthOptions,
 } from "./hateoas-auth.js";
-import {
-  CreditsRequestsService,
-  publicMoneyRequest,
-  type MoneyRequest,
-} from "./requests.js";
+import { CreditsRequestsService, publicMoneyRequest, type MoneyRequest } from "./requests.js";
 
 const esc = escapeHtml;
 
@@ -279,9 +275,6 @@ function sendJsonOrHtml(
   res.status(status).json(json);
 }
 
-/**
- * Attach GET/POST routes under `/credits/*` for deep-link landing + HTMX actions.
- */
 /**
  * Attach GET/POST routes under `/credits/*` for deep-link landing + HTMX actions.
  * When gateway auth is apiKey/oidc (or CLAWQL_CREDITS_HATEOAS_REQUIRE_AUTH=1),

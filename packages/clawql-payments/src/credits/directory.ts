@@ -609,7 +609,11 @@ export class DirectoryError extends Data.TaggedError("DirectoryError")<{
   readonly cause?: unknown;
 }> {}
 
-type ResolveRecipientOptions = { forceHandle?: boolean; forceEmail?: boolean; forcePhone?: boolean };
+type ResolveRecipientOptions = {
+  forceHandle?: boolean;
+  forceEmail?: boolean;
+  forcePhone?: boolean;
+};
 
 /** Effect surface over the payments directory (email / handle / phone → tenant). */
 export class CreditsDirectoryService extends Context.Tag("clawql/CreditsDirectoryService")<

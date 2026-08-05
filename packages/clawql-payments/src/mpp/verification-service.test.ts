@@ -71,7 +71,9 @@ describe("MppVerificationService", () => {
     const token = Buffer.from(JSON.stringify(credential), "utf8").toString("base64url");
 
     const config = paymentsConfigLiveLayer(env);
-    const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(env))));
+    const audit = paymentAuditLiveLayer(env).pipe(
+      Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(env)))
+    );
     const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
     const facilitator = Layer.succeed(
       X402FacilitatorService,
@@ -133,7 +135,9 @@ describe("MppVerificationService", () => {
     );
 
     const config = paymentsConfigLiveLayer(env);
-    const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(env))));
+    const audit = paymentAuditLiveLayer(env).pipe(
+      Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(env)))
+    );
     const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
     const facilitator = Layer.succeed(
       X402FacilitatorService,
@@ -212,7 +216,9 @@ describe("MppVerificationService", () => {
     }));
 
     const config = paymentsConfigLiveLayer({ ...env, STRIPE_SECRET_KEY: "sk_test_xxx" });
-    const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(env))));
+    const audit = paymentAuditLiveLayer(env).pipe(
+      Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(env)))
+    );
     const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
     const facilitator = Layer.succeed(
       X402FacilitatorService,
