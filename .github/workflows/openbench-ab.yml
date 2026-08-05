@@ -19,6 +19,7 @@ on:
         options:
           - all
           - all-including-retired
+          - codegraph-feature-api-surface
           - codegraph-impact-edit
           - memory-conflict-pricing
           - onyx-mock-cite
@@ -40,7 +41,7 @@ on:
           - execute-verify-loop
           - memory-roundtrip-ingest-recall
           - policy-deny-execute
-        default: codegraph-impact-edit
+        default: codegraph-feature-api-surface
       model:
         description: "Cheap OpenRouter default — or any openrouter/* / BYOK id"
         required: true
@@ -224,6 +225,7 @@ jobs:
           matrix.task == 'hybrid-recall-source-pin' ||
           matrix.task == 'codegraph-guided-edit' ||
           matrix.task == 'codegraph-impact-edit' ||
+          matrix.task == 'codegraph-feature-api-surface' ||
           matrix.task == 'schedule-synthetic-dry-run' ||
           matrix.task == 'external-ingest-continue' ||
           matrix.task == 'notify-mock-slack' ||
@@ -244,11 +246,14 @@ jobs:
             if [ "${{ matrix.task }}" = "pageindex-section-qa" ] || [ "${{ matrix.task }}" = "hybrid-recall-source-pin" ]; then
               echo "CLAWQL_ENABLE_PAGEINDEX=1"
             fi
-            if [ "${{ matrix.task }}" = "codegraph-guided-edit" ] || [ "${{ matrix.task }}" = "codegraph-impact-edit" ]; then
+            if [ "${{ matrix.task }}" = "codegraph-guided-edit" ] || [ "${{ matrix.task }}" = "codegraph-impact-edit" ] || [ "${{ matrix.task }}" = "codegraph-feature-api-surface" ]; then
               echo "CLAWQL_ENABLE_CODEGRAPH=1"
             fi
             if [ "${{ matrix.task }}" = "codegraph-impact-edit" ]; then
               echo "OPENBENCH_TIMEOUT_S=300"
+            fi
+            if [ "${{ matrix.task }}" = "codegraph-feature-api-surface" ]; then
+              echo "OPENBENCH_TIMEOUT_S=240"
             fi
             if [ "${{ matrix.task }}" = "schedule-synthetic-dry-run" ]; then
               echo "CLAWQL_ENABLE_SCHEDULE=1"

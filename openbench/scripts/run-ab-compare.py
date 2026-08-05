@@ -193,6 +193,17 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "enable_codegraph": True,
         "codegraph_impact": True,
     },
+    "codegraph-feature-api-surface": {
+        "max_turns": 40,
+        "max_tokens": 10000,
+        "max_wall_s": 240,
+        "default_timeout_s": 240,
+        "disable_memory": False,
+        "empty_vault": True,
+        "require_codegraph": True,
+        "enable_codegraph": True,
+        "codegraph_feature": True,
+    },
     "schedule-synthetic-dry-run": {
         "max_turns": 30,
         "max_tokens": 8000,
@@ -446,6 +457,22 @@ CODEGRAPH_IMPACT_NUDGE = """Continue the codegraph impact rename.
    {"old_name":"compute_total","new_name":"compute_grand_total","files":["core/pricing.py","api/checkout.py","api/invoice.py","workers/batch.py","reports/summary.py","cli/main.py","tests/test_pricing.py"],"source":"codegraph"}
 
 Ignore decoy/. Missing any of the 7 files fails. Call codegraph tools and finish now.
+"""
+
+CODEGRAPH_FEATURE_NUDGE = """Continue the widgets API surface task.
+
+1. Call clawql_codegraph_index with root = . (workspace root).
+2. Call clawql_codegraph_query / neighbors / path for getWidgetById / handler.js /
+   router.js to find every file that must change.
+3. Finish ALL of:
+   - src/handler.js — implement getWidgetById(id)
+   - src/router.js — register GET /widgets/:id
+   - src/schema.js — WidgetParams
+   - openapi/openapi.yaml — path + 200/404
+   - tests/widgets.test.js — found + not-found
+4. Run: node --test tests/widgets.test.js
+
+Ignore decoy/. Call codegraph tools and finish the impact set now.
 """
 
 SCHEDULE_NUDGE = """Continue the schedule dry_run task.
@@ -1240,6 +1267,50 @@ def codegraph_impact_incomplete(combined: str, workdir: Path) -> bool:
     return not queried
 
 
+def codegraph_feature_incomplete(combined: str, workdir: Path) -> bool:
+    """True when widgets API impact set or codegraph evidence is still missing."""
+    if agent_idle(combined):
+        return True
+    tools = real_opencode_tools(combined)
+    indexed = bool(tools & {"clawql_codegraph_index", "codegraph_index"})
+    if not indexed:
+        return True
+    queried = bool(
+        tools
+        & {
+            "clawql_codegraph_query",
+            "codegraph_query",
+            "clawql_codegraph_explain",
+            "codegraph_explain",
+            "clawql_codegraph_neighbors",
+            "codegraph_neighbors",
+            "clawql_codegraph_path",
+            "codegraph_path",
+        }
+    )
+    if not queried:
+        return True
+    try:
+        handler = (workdir / "src" / "handler.js").read_text(encoding="utf-8")
+        router = (workdir / "src" / "router.js").read_text(encoding="utf-8")
+        schema = (workdir / "src" / "schema.js").read_text(encoding="utf-8")
+        openapi = (workdir / "openapi" / "openapi.yaml").read_text(encoding="utf-8")
+        tests = (workdir / "tests" / "widgets.test.js").read_text(encoding="utf-8")
+    except OSError:
+        return True
+    if "function getWidgetById" not in handler or "WIDGETS" not in handler:
+        return True
+    if "/widgets/:id" not in router or "getWidgetById" not in router:
+        return True
+    if "WidgetParams" not in schema:
+        return True
+    if "/widgets/{id}" not in openapi or "404" not in openapi:
+        return True
+    if "not found" not in tests.lower() and "null" not in tests and "404" not in tests:
+        return True
+    return False
+
+
 def schedule_incomplete(combined: str, workdir: Path) -> bool:
     if agent_idle(combined):
         return True
@@ -1391,6 +1462,7 @@ def run_arm_on(
     require_codegraph: bool = False,
     enable_codegraph: bool = False,
     codegraph_impact: bool = False,
+    codegraph_feature: bool = False,
     require_schedule: bool = False,
     enable_schedule: bool = False,
     require_external_ingest: bool = False,
@@ -1802,7 +1874,7 @@ def run_arm_on(
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
 
-    # codegraph: missing index/query/answer (guided) or impact rename.
+    # codegraph: missing index/query/answer (guided), impact rename, or feature API.
     if (
         require_codegraph
         and arm == "clawql-on"
@@ -1810,18 +1882,28 @@ def run_arm_on(
         and (
             codegraph_impact_incomplete(combined, workdir)
             if codegraph_impact
-            else codegraph_incomplete(combined, workdir)
+            else (
+                codegraph_feature_incomplete(combined, workdir)
+                if codegraph_feature
+                else codegraph_incomplete(combined, workdir)
+            )
         )
     ):
         elapsed = time.monotonic() - t0
         remaining = int(timeout_s) - int(elapsed)
         if remaining >= 25:
             cont_file = workdir / ".openbench_codegraph_nudge.md"
-            cont_file.write_text(
-                CODEGRAPH_IMPACT_NUDGE if codegraph_impact else CODEGRAPH_NUDGE,
-                encoding="utf-8",
+            if codegraph_impact:
+                nudge = CODEGRAPH_IMPACT_NUDGE
+            elif codegraph_feature:
+                nudge = CODEGRAPH_FEATURE_NUDGE
+            else:
+                nudge = CODEGRAPH_NUDGE
+            cont_file.write_text(nudge, encoding="utf-8")
+            cont_timeout = max(
+                25,
+                min(120 if codegraph_impact or codegraph_feature else 90, remaining),
             )
-            cont_timeout = max(25, min(120 if codegraph_impact else 90, remaining))
             cmd = build_cmd(cont_file, cont_timeout)
             try:
                 proc_cg = subprocess.run(
@@ -2427,6 +2509,10 @@ def render_markdown(report: dict) -> str:
         interp.append(
             "- Both arms graded for real codegraph + full rename impact set (7 files); off lacks tools."
         )
+    elif task == "codegraph-feature-api-surface":
+        interp.append(
+            "- Both arms graded for real codegraph + full GET /widgets/:id wiring; off lacks tools."
+        )
     elif task == "schedule-synthetic-dry-run":
         interp.append(
             "- Both arms graded for ≥2 real schedule tool_use + dry_run pass artifact."
@@ -2556,6 +2642,7 @@ def run_trial(
                 require_codegraph=bool(caps.get("require_codegraph")),
                 enable_codegraph=bool(caps.get("enable_codegraph")),
                 codegraph_impact=bool(caps.get("codegraph_impact")),
+                codegraph_feature=bool(caps.get("codegraph_feature")),
                 require_schedule=bool(caps.get("require_schedule")),
                 enable_schedule=bool(caps.get("enable_schedule")),
                 require_external_ingest=bool(caps.get("require_external_ingest")),

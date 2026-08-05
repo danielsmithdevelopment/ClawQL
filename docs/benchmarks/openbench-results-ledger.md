@@ -292,6 +292,12 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 4. Optional later: agentic external benches / domain HLE-analog (B-6) after fine-tune — not closed-book HLE.
 5. Blocked: B-1 flywheel (needs FT v1), B-5 NSV (needs metric export), full live IDP pipeline (ops).
 
+
+### 2026-08-05 — next cell: `codegraph-feature-api-surface`
+
+Activate B-3 API-surface impact set for live A/B under OpenBenchTrace **v1.1 / RTP**.
+Goal: grow OBT+RTP corpus with real `codegraph_*` tool traces after `codegraph-impact-edit` retire.
+
 ### 2026-08-05 — [30977578882](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30977578882) (B-3.1 + durable R2 corpus — WIN)
 
 | Task                  | on                | off               | Verdict                                                                               |
