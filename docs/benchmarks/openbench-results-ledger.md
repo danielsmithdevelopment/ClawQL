@@ -1,9 +1,9 @@
 ### 2026-08-05 — `composed-safe-rollout` RTP v1.1 recollect WIN
 
-| Arm | Score             | Notes                                                         |
-| --- | ----------------- | ------------------------------------------------------------- |
-| on  | **1.0** (5t, 91s) | search + dry_run×2 + audit + memory_ingest; multi-tool RTP    |
-| off | **0.0** (2t, 12s) | no ClawQL tools                                               |
+| Arm | Score             | Notes                                                      |
+| --- | ----------------- | ---------------------------------------------------------- |
+| on  | **1.0** (5t, 91s) | search + dry_run×2 + audit + memory_ingest; multi-tool RTP |
+| off | **0.0** (2t, 12s) | no ClawQL tools                                            |
 
 Run: [30985126247](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30985126247). Gate OK. **Durable R2:** 2 traces → `r2://clawql-openbench-traces/raw/2026/08/05/run-30985126247/composed-safe-rollout/` (schema **1.1**, on-arm `suitable_for_training: true` + RTP). Prior WIN [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305). **Verdict:** clear `pr_active` (keep retired; evidence_run bumped).
 
