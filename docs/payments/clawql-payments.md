@@ -137,8 +137,11 @@ All local state lives under `$CLAWQL_HOME/Payments/` (default `~/.clawql/Payment
 | `payments.json`   | Tenant id, plan tier, Stripe metadata, x402 wallet/facilitator            |
 | `x402-gates.json` | Payment-gated HTTP paths and MCP tool names                               |
 | `usage.json`      | Monthly counters per tenant (`inference_calls`, `documents`, `memory_mb`) |
-| `audit.jsonl`     | Append-only hash-chained payment audit log                                |
-| `audit.meta.json` | Chain head (`seq`, `last_hash`) for fast append                           |
+| `audit.jsonl`           | Append-only hash-chained payment audit log                                |
+| `audit.meta.json`       | Chain head (`seq`, `last_hash`) for fast append                           |
+| `accounting-map.json`   | Optional customer chart-of-accounts overrides (GL codes)                  |
+| `tax-profiles.json`     | Opaque tax readiness tags (`1099nec` / collected) — never SSNs            |
+| `tax-evidence/<year>/`  | Year-end evidence packs (`evidence.json` + `evidence.md`)                 |
 
 Example `payments.json`:
 
@@ -644,6 +647,107 @@ if (!result.ok) {
 
 ---
 
+## Accounting & tax
+
+The payment WORM is the **subledger of record** for ClawQL-mediated money flows. ClawQL exports that trail for books and CPA handoff — it does **not** replace QuickBooks/Xero/NetSuite or file IRS forms in-process.
+
+Deep dive: [accounting-and-tax.md](./accounting-and-tax.md).
+
+| Capability | What it does |
+| ---------- | ------------ |
+| **Period export** | One row per monetary WORM event → CSV / JSON / QuickBooks-style / Xero-style |
+| **Classification** | New WORM writes carry `accounting` (direction, category, tax treatment); credits top-ups = **prepaid liability**, not revenue |
+| **CoA mapping** | Default GL codes; override with `$CLAWQL_HOME/Payments/accounting-map.json` |
+| **Integrity gate** | Export refuses to run if `audit verify` fails (unless `--skip-verify`) |
+| **Tax profiles** | Opaque readiness tags only (no SSN/ITIN in payments storage) |
+| **Payout gate** | Opt-in: `CLAWQL_TAX_PROFILE_ENFORCE=1` blocks creator/agent payouts without a collected profile |
+| **Year-end pack** | Markdown + JSON evidence for payouts / compensation cash-outs (not an e-file) |
+
+### Period close (operator recipe)
+
+```bash
+# 1. Integrity
+clawql payments audit verify
+
+# 2. Subledger for the books
+clawql payments accounting export \
+  --date-from 2026-01-01 --date-to 2026-03-31 \
+  --format csv \
+  --output ./books/2026-q1-subledger.csv
+
+# QuickBooks / Xero bank-style templates
+clawql payments accounting export --from 2026-01-01 --to 2026-03-31 --format qb-csv
+clawql payments accounting export --from 2026-01-01 --to 2026-03-31 --format xero-csv
+
+# 3. Year-end evidence (payouts + compensation cash-outs)
+clawql payments accounting tax-evidence --tax-year 2026
+# → $CLAWQL_HOME/Payments/tax-evidence/2026/evidence.json + evidence.md
+```
+
+Import the CSV into your GL or CPA spreadsheet. Reconcile Stripe balance / USDC wallet / ACH pending separately.
+
+### Tax profiles (payout readiness)
+
+```bash
+# Store readiness only — PII stays in vault / Stripe / KYC vendor
+clawql payments tax-profile set \
+  --party-id creator-1 \
+  --tax-form 1099nec \
+  --collected \
+  --tax-profile-ref vault:w9_abc
+
+clawql payments tax-profile show --party-id creator-1
+
+# Opt-in gate before PayoutService money-out
+export CLAWQL_TAX_PROFILE_ENFORCE=1
+```
+
+| Form / obligation | Owner |
+| ----------------- | ----- |
+| Stripe invoices / receipts | Stripe (existing billing) |
+| US 1099-NEC / 1099-K on Connect | Prefer **Stripe Connect Tax**; ClawQL exports evidence |
+| W-9 / W-8 collection UX | Banking / onboarding vertical; payments stores readiness |
+| VAT / GST invoices | Stripe Tax / regional processor; invoice refs in WORM |
+| Agent compensation classification | CPA outside ClawQL; cash-out rows in tax-evidence pack |
+
+### Environment
+
+| Variable | Default | Purpose |
+| -------- | ------- | ------- |
+| `CLAWQL_TAX_PROFILE_ENFORCE` | off | When `1`, `PayoutService.createPayout` requires a collected tax profile (or `taxForm=none`) for the party |
+
+### Example `accounting-map.json`
+
+```json
+{
+  "categories": {
+    "saas_revenue": "4000",
+    "usage_revenue": "4100",
+    "micropayment_revenue": "4100",
+    "prepaid_liability": "2500",
+    "prepaid_redemption": "4100",
+    "creator_payout": "6000",
+    "agent_compensation": "6100",
+    "agent_spend": "6200"
+  }
+}
+```
+
+### Programmatic export
+
+```typescript
+import { buildAccountingExport, buildTaxEvidencePack } from "clawql-payments";
+
+const books = await buildAccountingExport({
+  from: "2026-01-01",
+  to: "2026-12-31",
+  format: "csv",
+});
+const evidence = await buildTaxEvidencePack({ taxYear: 2026 });
+```
+
+---
+
 ## Full CLI reference
 
 ```bash
@@ -666,6 +770,13 @@ clawql payments x402 wallet setup | gate | gate list | verify | reconcile
 clawql payments spend report --group-by provider
 clawql payments audit --correlation-id xxx
 clawql payments audit verify
+
+# Accounting & tax (subledger + evidence — not a full GL / IRS e-file)
+clawql payments accounting export --from 2026-01-01 --to 2026-12-31 --format csv
+clawql payments accounting export --date-from 2026-01-01 --date-to 2026-12-31 --format qb-csv --output ./books.csv
+clawql payments accounting tax-evidence --tax-year 2026
+clawql payments tax-profile set --party-id creator-1 --tax-form 1099nec --collected
+clawql payments tax-profile show [--party-id creator-1]
 ```
 
 ---
@@ -745,6 +856,7 @@ See also: [`packages/clawql-inference/README.md`](../../packages/clawql-inferenc
 
 ## Related
 
+- Accounting & tax: [`docs/payments/accounting-and-tax.md`](./accounting-and-tax.md)
 - Package README: [`packages/clawql-payments/README.md`](../../packages/clawql-payments/README.md)
 - Inference doc: [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md)
 - x402 protocol: [x402.org](https://www.x402.org/)
