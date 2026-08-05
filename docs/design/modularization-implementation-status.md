@@ -268,7 +268,7 @@ From enablement §5.4 and the Effect plan §8:
 | ManagedRuntime `dispose` + process shutdown                                      | ✅ `ClawQLApiHandle.dispose` → plugin `teardownAll` + `runtime.dispose`; MCP registers `disposeClawqlApi` on SIGINT/SIGTERM                                                              |
 | Postgres / NATS `acquireRelease`                                                 | ✅ Scoped Effect helpers for Ouroboros + pgvector pools and NATS HITL consumer (singleton façades retained)                                                                              |
 
-**Rule for new code in extracted packages:** prefer Effect in `clawql-core` / `clawql-api`; legacy `async` is acceptable **only** at IO edges (`Effect.tryPromise`). See plan §7.
+**Hard rule — Effect everywhere:** production code that can be Effect-based **must** be. Bare `async`/`Promise` domain APIs are not an acceptable default. Allowed non-Effect surfaces are only (1) forced Promise edges (Express / MCP SDK) as thin façades over `run*Effect`, (2) pure sync helpers, and (3) `Effect.tryPromise` / `*FromPromise` at the absolute external IO edge **inside** Effect programs. See [`.cursor/rules/effect-ts-everywhere.mdc`](../../.cursor/rules/effect-ts-everywhere.mdc) and plan §7.
 
 ---
 

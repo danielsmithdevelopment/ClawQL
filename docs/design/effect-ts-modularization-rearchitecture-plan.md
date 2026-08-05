@@ -199,13 +199,16 @@ Priority = **dependency order** + **test coverage** + **user impact**.
 
 ## 7. Effect conventions (repo-wide)
 
-1. **All new code in extracted packages is Effect-first** — no new `async` business logic in `clawql-api` / `clawql-core`.
-2. **Legacy interop:** `Effect.tryPromise` / `Effect.promise` at IO edges only; shrink over time.
-3. **Errors:** never throw across Layer boundaries; map to `ClawQLError` with `Effect.catchTag`.
-4. **Resources:** pools (Postgres, pgvector) via `Effect.acquireRelease` scoped services.
-5. **Concurrency:** fibers for schedule worker, ingest parallelism; document supervision strategy.
-6. **Testing:** prefer `TestLayer` over mocking modules; keep existing HTTP parity tests until transport moves.
-7. **Observability:** `Effect.withSpan` on pipeline steps; align with existing OTEL (`otel-tracing.ts`).
+**Hard rule:** production code that can be Effect-based **must** be. Do not merge domain IO / orchestration / policy as bare `async`/`Promise` APIs. See [`.cursor/rules/effect-ts-everywhere.mdc`](../../.cursor/rules/effect-ts-everywhere.mdc).
+
+1. **All prod code in extracted packages is Effect-first** — `Context.Tag` + `Layer` + methods returning `Effect`. No new `async` business logic in `clawql-api` / `clawql-core` / domain packages.
+2. **Forced edges only:** Express / MCP SDK Promise handlers are thin façades over `run*Effect` / `ManagedRuntime`. Pure sync (types, HTML/URL builders, sync crypto, env flags) may stay sync.
+3. **External IO:** `Effect.tryPromise` / `Effect.promise` / `*FromPromise` only at the absolute fs/net/SDK edge **inside** Effect programs — not as the public shape of domain modules.
+4. **Errors:** never throw across Layer boundaries; map to tagged errors / `ClawQLError` with `Effect.catchTag`.
+5. **Resources:** pools (Postgres, pgvector) via `Effect.acquireRelease` scoped services.
+6. **Concurrency:** fibers for schedule worker, ingest parallelism; document supervision strategy.
+7. **Testing:** prefer `TestLayer` over mocking modules; keep existing HTTP parity tests until transport moves.
+8. **Observability:** `Effect.withSpan` on pipeline steps; align with existing OTEL (`otel-tracing.ts`).
 
 **Zod → Schema:** `effect/Schema` is authoritative in Effect pipelines (`decodeUnknown`). Thin Zod raw shapes remain only for MCP SDK `server.tool` registration until Standard Schema is supported; descriptions share one constant source (see `search-execute-schema.ts`).
 

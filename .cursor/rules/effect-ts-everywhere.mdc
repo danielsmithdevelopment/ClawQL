@@ -1,0 +1,25 @@
+# Effect-TS everywhere (hard rule)
+
+ClawQL production code that **can** be Effect-based **must** be Effect-based.
+
+## Never ship
+
+- New or changed **prod** modules that perform IO, orchestration, policy gates, or multi-step workflows as bare `async`/`Promise` APIs when they could be `Effect` / `Context.Tag` / `Layer`.
+- “Temporary” Promise domain APIs that are not forced by an external SDK boundary.
+- Docs or comments that treat bare `async`/`await` as an acceptable default for domain packages.
+
+## Allowed non-Effect surfaces
+
+1. **Forced Promise edges** — Express handlers, MCP `server.tool` callbacks, and similar hosts that require `Promise`. These must be thin façades over `run*Effect` / `Effect.runPromise` / `ManagedRuntime`.
+2. **Pure sync** — types, URL/HTML builders, sync crypto helpers, env flag readers, and other code with no IO, no fibers, and no typed failure channel that needs a Layer.
+3. **`Effect.tryPromise` / `*FromPromise`** — only at the absolute external IO edge (fs, fetch, SDK clients), inside Effect programs — not as the public shape of domain modules.
+
+## Required shape for domain IO
+
+- Prefer `Context.Tag` + `Layer` services with methods returning `Effect.Effect<A, E, R>`.
+- Compose via live Layers (e.g. `paymentsServicesLiveLayer`, auth live Layers).
+- Tests provide test Layers or `Effect.provide` — do not grow new Promise-only domain APIs for test convenience.
+
+## Reviewer checklist
+
+Before merge: if a changed file does fs/net/DB/crypto-async or multi-step business logic and exports `async function` / `Promise<…>` as its primary API, **reject** unless it is explicitly a forced edge façade documented as such.
