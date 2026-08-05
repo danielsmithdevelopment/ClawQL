@@ -2,11 +2,13 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "Phase 1 B-3.1 codegraph-impact-edit on pr_active — collecting durable traces.",
-  "pr_active": [
-    "codegraph-impact-edit"
-  ],
+  "live_resume_note": "Phase 1 B-3.1 codegraph-impact-edit retired WIN — pr_active empty pending next cell (B-4.2/B-4.3 spike or P0 n≥3).",
+  "pr_active": [],
   "retired": {
+    "codegraph-impact-edit": {
+      "reason": "Verified WIN — full 7-file rename via codegraph; on 1.0 / off 0.0 (off lacked tools + bad impact schema)",
+      "evidence_run": "30969554941"
+    },
     "memory-dependent-continuation": {
       "reason": "Verified WIN replicated (on 1.0 / off 0.333)",
       "evidence_run": "30872913516"

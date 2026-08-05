@@ -195,8 +195,8 @@ Work **in this order** unless blocked:
    3b. **[Trace-1]** Publish-ready corpus: OpenBenchTrace v1, write-time scrub, WORM manifests, fail-loud R2. ✅  
    3c. **[Trace-2]** Productize as protocol + managed service docs + `packages/openbench-dataset` scaffold. ✅  
    3d. **[Trace-3]** Full collect/sync package path (S3/R2, arm correlation, GHA composite). ✅
-4. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire. ← **in flight on #759**
-5. **[B4.2-0] / [B4.3-0]** Spikes; only then optional cells.
+4. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire. ✅ [30969554941](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30969554941)
+5. **[B4.2-0] / [B4.3-0]** Spikes; only then optional cells. ← **next**
 6. **[P0-c]** First n=3 dispatch on one headline cell.
 7. Park B-1/B-2-full/B-5/B-6 until their gates open; keep specs updated here. Collect traces on every live cell in the meantime.
 
@@ -206,16 +206,16 @@ Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger,
 
 ## Mapping: suite → first OpenBench task IDs
 
-| Suite | First concrete task ID                    | `pr_active` when?                          |
-| ----- | ----------------------------------------- | ------------------------------------------ |
-| B-4.1 | `memory-conflict-pricing`                 | ✅ retired WIN                             |
-| B-3.1 | `codegraph-impact-edit`                   | Phase 1 after or parallel (max-parallel 2) |
-| B-4.2 | `cache-stale-after-write`                 | After spike OK                             |
-| B-4.3 | `policy-deny-memory-ingest`               | After spike OK                             |
-| B-2   | `idp-safe-pipeline-lite`                  | After Phase 1 WINs                         |
-| B-1   | reuse retired IDs under FT matrix         | After FT v1                                |
-| B-6   | `compliance-mortgage-qa` (custom harness) | After B-1 + corpus                         |
-| B-5   | `daos-multiperspective-*`                 | After metric export                        |
+| Suite | First concrete task ID                    | `pr_active` when?   |
+| ----- | ----------------------------------------- | ------------------- |
+| B-4.1 | `memory-conflict-pricing`                 | ✅ retired WIN      |
+| B-3.1 | `codegraph-impact-edit`                   | ✅ retired WIN      |
+| B-4.2 | `cache-stale-after-write`                 | After spike OK      |
+| B-4.3 | `policy-deny-memory-ingest`               | After spike OK      |
+| B-2   | `idp-safe-pipeline-lite`                  | After Phase 1 WINs  |
+| B-1   | reuse retired IDs under FT matrix         | After FT v1         |
+| B-6   | `compliance-mortgage-qa` (custom harness) | After B-1 + corpus  |
+| B-5   | `daos-multiperspective-*`                 | After metric export |
 
 ---
 

@@ -166,6 +166,17 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | **Evidence**                | on **1.0** (3 turns, ~53s) / off **0.0** — [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377).                                                      |
 | **Does _not_ prove**        | Multi-language graphs; incremental re-index after edits; hybrid memory_recall `sources=[codegraph]`.                                                                                      |
 
+### `codegraph-impact-edit` (B-3.1 lite)
+
+|                             |                                                                                                                                                                                                              |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Claim**                   | Agents using codegraph index/query/neighbors can rename a symbol across the full call graph (definition + callers + test) better than decoy impact lists.                                                    |
+| **Why it matters**          | Extends guided-edit from “find marker” to “edit impact set” — closer to SWE-lite without full SWE-bench.                                                                                                     |
+| **How**                     | Fixture `repo/` with `compute_total` → `compute_grand_total` across 7 files; `decoy/` lists the wrong set. Require real codegraph tool_use + root `impact.json` + clean rename (`compileall`).               |
+| **What success looks like** | on: codegraph → rename all 7 → impact.json; off: no codegraph tools and/or bad schema → 0.0.                                                                                                                 |
+| **Evidence**                | on **1.0** (4 turns, ~109s) / off **0.0** — [30969554941](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30969554941). Job later failed on durable R2 secrets; scores are the claim evidence. |
+| **Does _not_ prove**        | Polyglot graphs; incremental re-index mid-edit; full SWE-bench difficulty.                                                                                                                                   |
+
 ---
 
 ## Automation
@@ -306,9 +317,10 @@ Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../o
 
 1. ~~**notify / sandbox / composed**~~ — verified WINs on [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305); retired.
 2. ~~**Onyx mock cite** + **memory wikilink hop**~~ — verified on [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189); retired.
-3. ~~**`memory-conflict-pricing` (B-4.1)**~~ — verified on [30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746); retired. Next: **`codegraph-impact-edit` (B-3.1 lite)**. Full plan: [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
-4. **n≥3 trials** on headline WINs (Phase 0 / dispatch).
-5. **Trace collection** from GHA is live — [`openbench-trace-collection.md`](./openbench-trace-collection.md).
-6. Later: B-1 flywheel (blocked on FT), B-2 stubbed IDP pipeline, B-6 domain compliance (not closed-book HLE).
+3. ~~**`memory-conflict-pricing` (B-4.1)**~~ — verified on [30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746); retired.
+4. ~~**`codegraph-impact-edit` (B-3.1 lite)**~~ — verified on [30969554941](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30969554941); retired. Next: B-4.2/B-4.3 spikes or P0 n≥3. Full plan: [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
+5. **n≥3 trials** on headline WINs (Phase 0 / dispatch).
+6. **Trace collection** from GHA is live — [`openbench-trace-collection.md`](./openbench-trace-collection.md).
+7. Later: B-1 flywheel (blocked on FT), B-2 stubbed IDP pipeline, B-6 domain compliance (not closed-book HLE).
 
 Append new run IDs to the [ledger](./openbench-results-ledger.md).

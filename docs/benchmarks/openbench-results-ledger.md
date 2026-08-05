@@ -287,10 +287,18 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 ## Open gaps (not yet headline WIN)
 
 1. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2) — Phase 0 in [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
-2. **Phase 1 advanced:** `memory-conflict-pricing` (B-4.1) **retired WIN**; next `codegraph-impact-edit` (B-3.1 lite).
+2. **Phase 1 advanced:** `memory-conflict-pricing` (B-4.1) + `codegraph-impact-edit` (B-3.1) **retired WIN**; next B-4.2/B-4.3 spikes or P0 n≥3.
 3. **Trace collection:** GHA call-store JSONL now persists — [`openbench-trace-collection.md`](./openbench-trace-collection.md).
 4. Optional later: agentic external benches / domain HLE-analog (B-6) after fine-tune — not closed-book HLE.
 5. Blocked: B-1 flywheel (needs FT v1), B-5 NSV (needs metric export), full live IDP pipeline (ops).
+
+### 2026-08-05 — [30969554941](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30969554941) (B-3.1 codegraph impact rename — WIN)
+
+| Task                  | on                 | off               | Verdict                                                                                   |
+| --------------------- | ------------------ | ----------------- | ----------------------------------------------------------------------------------------- |
+| codegraph-impact-edit | **1.0** (4t, 109s) | **0.0** (3t, 50s) | **WIN** — 7-file rename + impact.json via codegraph; off lacked tools / bad impact schema |
+
+**Notes:** Job conclusion was failure on durable R2 (`CLOUDFLARE_ACCOUNT_ID` missing); A/B scores are the claim evidence. Follow-up: soft-fail durable R2 + score gate script on tip. **Verdict:** retire from `pr_active` (empty pending next cell).
 
 ### 2026-08-04 — [30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746) (B-4.1 conflict memory — WIN)
 
