@@ -1,15 +1,24 @@
-# B-2.3 IDP pipeline smoke (scheduled / dispatch)
+# B-2.3 IDP pipeline smoke (scheduled / dispatch / PR path-filtered)
 #
-# Proves IDP **wiring** and optional local/remote vendor hops outside OpenBench
-# `pr_active`. Stubbed orchestration remains `idp-safe-pipeline-lite` (retired WIN).
+# Proves real IDP document hops with local Docker (compose) or remote HTTP (live).
+# Stubbed OpenBench orchestration remains `idp-safe-pipeline-lite` (retired WIN) —
+# that does NOT replace this smoke.
 #
-# - schedule: weekly (Mondays 14:00 UTC)
-# - workflow_dispatch: pick tier offline | compose | live
-# - Never burns PR OpenBench tokens
+# - pull_request (path-filtered): always runs **compose** (Tika + Gotenberg)
+# - schedule: weekly compose
+# - workflow_dispatch: offline | compose | live
+# - Never burns OpenBench `pr_active` tokens
 
 name: IDP pipeline smoke (B-2.3)
 
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/idp-pipeline-smoke.yml"
+      - "scripts/dev/smoke-idp-pipeline-b23.sh"
+      - "examples/clawql-local-docker-compose/docker-compose.yml"
+      - "packages/clawql-documents/**"
+      - "docs/runbooks/idp-pipeline-b23-smoke.md"
   schedule:
     - cron: "0 14 * * 1"
   workflow_dispatch:
@@ -22,20 +31,20 @@ on:
           - offline
           - compose
           - live
-        default: offline
+        default: compose
 
 permissions:
   contents: read
 
 concurrency:
-  group: idp-pipeline-b23-smoke
+  group: idp-pipeline-b23-smoke-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   smoke:
-    name: IDP B-2.3 smoke (${{ github.event.inputs.tier || 'offline' }})
+    name: IDP B-2.3 smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
@@ -61,13 +70,19 @@ jobs:
       - name: Resolve smoke tier
         id: tier
         env:
-          REQ_TIER: ${{ github.event.inputs.tier || 'offline' }}
+          EVENT_NAME: ${{ github.event_name }}
+          REQ_TIER: ${{ github.event.inputs.tier || '' }}
           CLAWQL_HTTP_BASE: ${{ secrets.CLAWQL_HTTP_BASE }}
           CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN: ${{ secrets.CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN }}
           CLAWQL_CONESHARE_WEBHOOK_TOKEN: ${{ secrets.CLAWQL_CONESHARE_WEBHOOK_TOKEN }}
         run: |
           set -euo pipefail
-          TIER="${REQ_TIER}"
+          # PR + schedule default to compose (real local vendors). Dispatch uses input.
+          if [ "${EVENT_NAME}" = "pull_request" ] || [ "${EVENT_NAME}" = "schedule" ]; then
+            TIER=compose
+          else
+            TIER="${REQ_TIER:-compose}"
+          fi
           if [ "${TIER}" = "live" ]; then
             if [ -z "${CLAWQL_HTTP_BASE:-}" ] || {
               [ -z "${CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN:-}" ] &&
@@ -79,6 +94,7 @@ jobs:
           fi
           echo "tier=${TIER}" >> "$GITHUB_OUTPUT"
           echo "IDP_SMOKE_TIER=${TIER}" >> "$GITHUB_ENV"
+          echo "::notice::IDP B-2.3 smoke tier=${TIER}"
 
       - name: Run B-2.3 smoke script
         env:

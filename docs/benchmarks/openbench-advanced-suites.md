@@ -176,7 +176,7 @@ Phase 7  B-1.3 cycle-over-cycle; B-3.2 langs; B-6.3 legal
 
 **Live cell (B-2.0 / B2.1):** `idp-safe-pipeline-lite` **retired WIN** ([31039035892](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31039035892) on 1.0 / off 0.0). Seven stubbed stages — discover → plan_extract → plan_redact → audit_trail → onyx_cite → notify_handoff → persist. Dual Slack/Onyx fetch stubs are URL-dispatched so both can coexist. **Does not** prove live Stirling/Argo/ConeShare (that is B2.3).
 
-**B2.3 status:** Workflow + script landed (`offline` / `compose` / `live` tiers). Weekly schedule runs offline wiring. Live webhook dry_run needs repo secrets (`CLAWQL_HTTP_BASE`, webhook tokens). Full non-dry_run Stirling→ConeShare still operator/staging.
+**B2.3 status:** Workflow defaults to **compose** (real Tika + Gotenberg on GHA/Docker). PR path-filter runs compose when smoke files change. Live webhook dry_run needs repo secrets. Full Stirling→ConeShare non-dry_run still staging.
 
 ---
 
