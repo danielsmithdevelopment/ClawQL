@@ -50,13 +50,13 @@ gateway Worker (MCP + vault + Stripe→D1) ──proxy──► AWS K3s/EKS ingr
 
 ## Profiles (`clawql:profile`)
 
-| Profile       | Cloud      | Provisions                                                            |
-| ------------- | ---------- | --------------------------------------------------------------------- |
+| Profile       | Cloud      | Provisions                                                                             |
+| ------------- | ---------- | -------------------------------------------------------------------------------------- |
 | `edge`        | cloudflare | R2 vault, KV semantic cache, D1 tenants, Queues, gateway Worker (`cloudflare/gateway`) |
-| `team-vault`  | cloudflare | R2 only (legacy ADR 0007 path)                                        |
-| `golden-host` | aws / gcp  | Packer AMI → EC2/GCE                                                  |
-| `idp-k3s`     | aws        | `r7i.2xlarge` + 200GB gp3 + K3s user-data (first IDP customer)        |
-| `eks`         | aws        | EKS + reserved node group + Karpenter IAM (Phase 3)                   |
+| `team-vault`  | cloudflare | R2 only (legacy ADR 0007 path)                                                         |
+| `golden-host` | aws / gcp  | Packer AMI → EC2/GCE                                                                   |
+| `idp-k3s`     | aws        | `r7i.2xlarge` + 200GB gp3 + K3s user-data (first IDP customer)                         |
+| `eks`         | aws        | EKS + reserved node group + Karpenter IAM (Phase 3)                                    |
 
 ## Phase 1 — Cloudflare edge (Developer/Teams)
 
@@ -79,17 +79,17 @@ Stack outputs: vault bucket, KV id, D1 id, queue id, optional Worker name.
 
 Source: [`cloudflare/gateway`](../../cloudflare/gateway). Pulumi deploys `dist/index.js` when `clawql:deployWorkerStub=true` (name kept for config compatibility — content is the full gateway, not a stub).
 
-| Surface | Notes |
-| --- | --- |
-| Auth | Bearer API token → D1 `api_token_hash`; `CLAWQL_BOOTSTRAP_TOKEN` for operator |
-| Tools | REST `POST /search\|/execute\|/memory_*\|/cache` + JSON-RPC `POST /mcp` |
-| Vault | R2 `tenant-{id}/vault/Memory/…` |
-| Audit | D1 `audit_log` with `tenant_id` + `correlation_id` |
-| Layer 5 | KV `CLAWQL_SEMANTIC_CACHE` |
-| Stripe | `POST /webhooks/stripe` → upsert D1 tenant (trial/developer/teams/…) |
-| Demo | `POST /demo/session` (5‑min TTL) + `/demo/pipeline` |
-| IDP | Proxy via `CLAWQL_IDP_PROXY_ORIGIN` or `503 upgrade_required` |
-| Policy | **Unlimited MCP executions** — no Worker-side meter |
+| Surface | Notes                                                                         |
+| ------- | ----------------------------------------------------------------------------- |
+| Auth    | Bearer API token → D1 `api_token_hash`; `CLAWQL_BOOTSTRAP_TOKEN` for operator |
+| Tools   | REST `POST /search\|/execute\|/memory_*\|/cache` + JSON-RPC `POST /mcp`       |
+| Vault   | R2 `tenant-{id}/vault/Memory/…`                                               |
+| Audit   | D1 `audit_log` with `tenant_id` + `correlation_id`                            |
+| Layer 5 | KV `CLAWQL_SEMANTIC_CACHE`                                                    |
+| Stripe  | `POST /webhooks/stripe` → upsert D1 tenant (trial/developer/teams/…)          |
+| Demo    | `POST /demo/session` (5‑min TTL) + `/demo/pipeline`                           |
+| IDP     | Proxy via `CLAWQL_IDP_PROXY_ORIGIN` or `503 upgrade_required`                 |
+| Policy  | **Unlimited MCP executions** — no Worker-side meter                           |
 
 Secrets after deploy: `wrangler secret put CLAWQL_BOOTSTRAP_TOKEN`, `STRIPE_WEBHOOK_SECRET`, optional `CLAWQL_IDP_PROXY_ORIGIN`. Attach custom domain `gateway.clawql.app` in Cloudflare dashboard / Wrangler routes.
 
