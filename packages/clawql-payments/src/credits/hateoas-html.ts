@@ -181,16 +181,16 @@ const MINI_UI_STYLES = `
   .err { color: var(--err); }
   .muted { color: var(--muted); }
   @keyframes rise {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: none; }
+    from { transform: translateY(8px); }
+    to { transform: none; }
   }
   @keyframes amountIn {
-    from { opacity: 0; transform: scale(0.92); }
-    to { opacity: 1; transform: none; }
+    from { transform: scale(0.96); }
+    to { transform: none; }
   }
   @keyframes fadeVisual {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from { transform: translateY(6px); }
+    to { transform: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; }

@@ -61,7 +61,7 @@ function payPageHtml(pay: PayDeepLink): string {
       <p class="payee">to <strong>${esc(pay.to)}</strong>${pay.note ? ` · ${esc(pay.note)}` : ""}</p>
       <div class="cta-row">
         <a class="btn" href="${esc(clawql)}">Open clawql://</a>
-        <button type="button" class="btn ghost" onclick="navigator.clipboard.writeText(${JSON.stringify(cli)})">Copy CLI</button>
+        <button type="button" class="btn ghost" data-cli="${esc(cli)}" onclick="navigator.clipboard.writeText(this.dataset.cli)">Copy CLI</button>
       </div>
     </section>
     <div class="visual" aria-label="Payment QR">
