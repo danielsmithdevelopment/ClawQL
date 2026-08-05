@@ -29,7 +29,7 @@ export function loadOpenBenchTraceSchema(): Record<string, unknown> {
 
 /** Lightweight required-field check (full ajv optional at call sites). */
 export function assertOpenBenchTraceShape(trace: OpenBenchTraceV1): void {
-  if (trace.schema_version !== "1.0") {
+  if (trace.schema_version !== "1.0" && trace.schema_version !== "1.1") {
     throw new Error(`unsupported schema_version: ${trace.schema_version}`);
   }
   if (trace.verdict_source !== "grader") {
@@ -43,6 +43,25 @@ export function assertOpenBenchTraceShape(trace: OpenBenchTraceV1): void {
   }
   if (typeof trace.score !== "number" || trace.score < 0 || trace.score > 1) {
     throw new Error(`score out of range: ${trace.score}`);
+  }
+  if (trace.schema_version === "1.1") {
+    if (!trace.rtp || trace.rtp.protocol !== "rtp") {
+      throw new Error("schema_version 1.1 requires rtp.protocol === \"rtp\"");
+    }
+    if (!Array.isArray(trace.rtp.turnSequence) || trace.rtp.turnSequence.length < 2) {
+      throw new Error("rtp.turnSequence must include at least Intent + Verdict");
+    }
+    const kinds = trace.rtp.turnSequence.map((t) => t.kind);
+    if (kinds[0] !== "intent" || kinds[kinds.length - 1] !== "verdict") {
+      throw new Error("rtp.turnSequence must start with intent and end with verdict");
+    }
+    if (!trace.rtp.consentToken?.token || !trace.rtp.consentToken.scopes?.length) {
+      throw new Error("rtp.consentToken with scopes is required");
+    }
+    const tier = trace.rtp.verdict?.evaluatorTier;
+    if (tier !== 1 && tier !== 2 && tier !== 3) {
+      throw new Error(`invalid rtp.verdict.evaluatorTier: ${tier}`);
+    }
   }
 }
 

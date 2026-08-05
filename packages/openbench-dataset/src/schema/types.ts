@@ -1,7 +1,10 @@
 /**
- * OpenBenchTrace v1.0 — publish-ready session/trial record.
+ * OpenBenchTrace v1.1 — publish-ready session/trial record.
+ * Outer envelope wraps an RTP-compatible inner session (`rtp`).
  * JSON Schema: ../schema/openbench-trace.v1.json
  */
+import type { RtpSession } from "../rtp/types.js";
+
 export type OpenBenchArm = "on" | "off";
 export type OpenBenchVerdict = "pass" | "fail" | "partial";
 
@@ -19,7 +22,8 @@ export type OpenBenchToolCall = {
 };
 
 export type OpenBenchTraceV1 = {
-  schema_version: "1.0";
+  /** Minor bumps stay in the v1 family (`1.0`, `1.1`, …). */
+  schema_version: "1.0" | "1.1";
   trace_id: string;
   run_id: string;
   task_id: string;
@@ -50,6 +54,11 @@ export type OpenBenchTraceV1 = {
   collected_at: string;
   suitable_for_training: boolean;
   inference_call_ids?: string[];
+  /**
+   * RTP inner structure — Intent→Retrieval→Reasoning→Execution→Delta→Verdict
+   * with consent token and turn hash chaining. Required on schema_version >= 1.1.
+   */
+  rtp?: RtpSession;
 };
 
-export const OPENBENCH_TRACE_SCHEMA_VERSION = "1.0" as const;
+export const OPENBENCH_TRACE_SCHEMA_VERSION = "1.1" as const;

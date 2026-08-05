@@ -1,8 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { OpenBenchTraceV1 } from "../schema/types.js";
+import { OPENBENCH_TRACE_SCHEMA_VERSION } from "../schema/types.js";
 import { assertOpenBenchTraceShape, sha256Json } from "../schema/validate.js";
 import { LOCAL_REDACTION_POLICY_ID, redactionPolicyHash, scrubJsonValue } from "../scrub/local.js";
 import type { DatasetBackend } from "../backends/types.js";
+import { projectToRtpSession } from "../rtp/project.js";
 
 export type TraceWriterInput = {
   runId: string;
@@ -27,12 +29,14 @@ export type TraceWriterInput = {
   inferenceCallIds?: string[];
   collectedAt?: string;
   manifestId: string;
+  /** Optional pre-issued RTP consent JWT (else minted at write time). */
+  consentToken?: string;
 };
 
 export type WormBatchManifest = {
   schema: "clawql.openbench.worm-manifest.v1";
   manifest_id: string;
-  schema_version: "1.0";
+  schema_version: "1.1";
   created_at: string;
   run_id: string;
   task_id: string;
@@ -50,6 +54,8 @@ export type WormBatchManifest = {
     score: number;
     content_hash: string;
     redacted_hash: string;
+    rtp_protocol_version?: string;
+    rtp_evaluator_tier?: number;
   }>;
   batch_content_hash: string;
 };
@@ -71,8 +77,22 @@ export class TraceWriter {
   async writeTrace(input: TraceWriterInput): Promise<OpenBenchTraceV1> {
     const collectedAt = input.collectedAt ?? new Date().toISOString();
     const policyHash = redactionPolicyHash();
+    const verdict = scoreToVerdict(input.score);
+    const graderId = `openbench/${input.taskId}/checker.sh`;
+    const rtp = projectToRtpSession({
+      runId: input.runId,
+      taskId: input.taskId,
+      messages: input.messages,
+      toolCalls: input.toolCalls,
+      verdict,
+      score: input.score,
+      graderId,
+      collectedAt,
+      consentToken: input.consentToken,
+    });
+
     const pre: OpenBenchTraceV1 = {
-      schema_version: "1.0",
+      schema_version: OPENBENCH_TRACE_SCHEMA_VERSION,
       trace_id: randomUUID(),
       run_id: input.runId,
       task_id: input.taskId,
@@ -84,10 +104,10 @@ export class TraceWriter {
       clawql_version: input.clawqlVersion,
       messages: input.messages,
       tool_calls: input.toolCalls,
-      verdict: scoreToVerdict(input.score),
+      verdict,
       verdict_source: "grader",
       score: input.score,
-      grader_id: `openbench/${input.taskId}/checker.sh`,
+      grader_id: graderId,
       turns: input.turns ?? null,
       elapsed_ms: input.elapsedMs ?? null,
       total_tokens: input.totalTokens ?? null,
@@ -103,6 +123,7 @@ export class TraceWriter {
       collected_at: collectedAt,
       suitable_for_training: input.suitableForTraining,
       inference_call_ids: input.inferenceCallIds,
+      rtp,
     };
 
     const forHash = { ...pre };
@@ -133,6 +154,8 @@ export class TraceWriter {
       score: scrubbed.score,
       content_hash: scrubbed.content_hash,
       redacted_hash: scrubbed.redacted_hash,
+      rtp_protocol_version: scrubbed.rtp?.protocolVersion,
+      rtp_evaluator_tier: scrubbed.rtp?.verdict.evaluatorTier,
     });
     return scrubbed;
   }
@@ -142,7 +165,7 @@ export class TraceWriter {
     const manifest: WormBatchManifest = {
       schema: "clawql.openbench.worm-manifest.v1",
       manifest_id: `ob-manifest-${this.opts.runId}-${this.opts.taskId}`,
-      schema_version: "1.0",
+      schema_version: OPENBENCH_TRACE_SCHEMA_VERSION,
       created_at: createdAt,
       run_id: this.opts.runId,
       task_id: this.opts.taskId,

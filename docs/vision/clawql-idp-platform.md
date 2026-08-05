@@ -557,9 +557,9 @@ Every passing OpenBench trial should also be a valid RTP session: OpenBenchTrace
 
 Practical design rule: serialize `messages` / `tool_calls` into an RTP-compatible `turnSequence`; map grader → RTP verdict; Merkle / content hashes ↔ RTP turn chaining. Publish as OpenBenchTrace (narrow, OpenBench-specific) and as RTP-compatible traces (broad, any fine-tune pipeline).
 
-**Consent gap (to close):** RTP requires a consent token before the session. In GHA, consent is implicit (own infra). Issue a gateway JWT at job start with `community_model` + `dataset_licensing` scopes (RTP §6.2) so HF releases stay commercially licensable without retroactive cleanup.
+**Consent:** RTP requires a consent token before the session. Writers mint (or accept) a gateway JWT with `community_model` + `dataset_licensing` scopes at collect time — set `CLAWQL_OPENBENCH_CONSENT_TOKEN` or `CLAWQL_RTP_CONSENT_SECRET`. See [openbench-trace-collection.md](../benchmarks/openbench-trace-collection.md#rtp-alignment).
 
-NSV/SGDOP: same mathematics at two scales — RTP schema governance (coverage of reasoning concepts) and ClawQL ensemble coordination (coverage of embedding / J-space). Blind-spot vector → add a schema node or recruit a model. See [openbench-trace-collection.md](../benchmarks/openbench-trace-collection.md#rtp-alignment).
+NSV/SGDOP: same mathematics at two scales — RTP schema governance (coverage of reasoning concepts) and ClawQL ensemble coordination (coverage of embedding / J-space). Blind-spot vector → add a schema node or recruit a model.
 
 ---
 

@@ -53,8 +53,8 @@ field changes — do not silently reshape v1.0.
 ## RTP alignment
 
 OpenBenchTrace is the **outer** benchmark envelope. The Reasoning Trace Protocol
-(RTP) is the **inner** reasoning structure. They compose: a publishable
-OpenBenchTrace record should wrap an RTP-compatible session.
+(RTP) is the **inner** reasoning structure. Schema **1.1** requires a populated
+`rtp` object on every new write.
 
 | OpenBenchTrace field(s)                                  | RTP counterpart                                                  |
 | -------------------------------------------------------- | ---------------------------------------------------------------- |
@@ -62,17 +62,15 @@ OpenBenchTrace record should wrap an RTP-compatible session.
 | `memory_recall` / `search` (and similar) in `tool_calls` | Retrieval                                                        |
 | Assistant reasoning before tool selection                | Reasoning (`seedChain`, `selectedTool`)                          |
 | `tool_calls[]`                                           | Execution (`toolName`, payload)                                  |
-| Pre/post state hashes (when present)                     | Delta                                                            |
+| Derived state hashes around each tool                    | Delta                                                            |
 | `verdict` + `verdict_source: grader`                     | Verdict (`evaluatorTier` 1 = deterministic grader, 2 = semantic) |
-| `content_hash` / Merkle batch chain                      | RTP turn hash chaining                                           |
-| (planned) job-start consent JWT                          | `consentToken` (`community_model`, `dataset_licensing`)          |
+| `content_hash` / Merkle batch chain                      | RTP turn hash chaining (`turnHash` / `prevTurnHash`)             |
+| `rtp.consentToken` (job-start or write-time JWT)         | Consent (`community_model`, `dataset_licensing`)                 |
 
-v1.0 today stores OpenAI-shaped `messages` + `tool_calls` without an explicit
-`turnSequence` object. Prefer writers that can project those fields into RTP’s
-six-node sequence so every suitable training row is both an OpenBench cell and
-an RTP training example. Domain-agnostic RTP (IDP, combat, debugging, …) is what
-makes a multi-domain fine-tune learn transferable reasoning, not only
-ClawQL tool sequences.
+Writers project `messages` + `tool_calls` into `rtp.turnSequence` via
+`projectToRtpSession` (`packages/openbench-dataset`). Set
+`CLAWQL_OPENBENCH_CONSENT_TOKEN` (pre-issued) or `CLAWQL_RTP_CONSENT_SECRET` for
+HMAC minting; otherwise a deterministic CI-dev secret is used.
 
 Schema governance (RTP) and agent coordination (ClawQL) both use NSV/SGDOP —
 dataset coverage of reasoning space vs ensemble coverage of representation
@@ -92,6 +90,8 @@ and uploads via the Cloudflare R2 REST API — **no extra R2 S3 secrets required
 | `CLAWQL_R2_TRACES_BUCKET` or `CLAWQL_OPENBENCH_R2_BUCKET`                 | secret   | Optional override (default **`clawql-openbench-traces`**)                                                                                                              |
 | `CLAWQL_SYNC_ACCESS_KEY_ID` + `CLAWQL_SYNC_SECRET_ACCESS_KEY` (or `R2_*`) | secret   | Optional — prefer S3 put when already present from team sync                                                                                                           |
 | `CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES`                                 | variable | Default **fail-loud** (`1`). Set `0` only for emergency dry-runs                                                                                                       |
+| `CLAWQL_OPENBENCH_CONSENT_TOKEN`                                          | secret   | Optional pre-issued RTP consent JWT (job start). When unset, writer mints HS256 with `CLAWQL_RTP_CONSENT_SECRET` or a CI-dev fallback. |
+| `CLAWQL_RTP_CONSENT_SECRET` / `CLAWQL_OPENBENCH_CONSENT_SECRET`           | secret   | Optional HMAC secret for minting consent JWTs (`community_model` + `dataset_licensing`)                                              |
 | `CLAWQL_ENABLE_PRESIDIO`                                                  | variable | `1` to also run Presidio at write time (needs analyzer URLs)                                                                                                           |
 
 Do **not** point traces at `CLAWQL_SYNC_BUCKET` (team Memory vault). Traces use a

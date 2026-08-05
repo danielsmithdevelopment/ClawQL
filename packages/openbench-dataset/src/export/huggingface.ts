@@ -46,18 +46,19 @@ tags:
 
 # ${name}
 
-OpenBenchTrace v1.0 export. Filter: suitable_for_training=${opts.trainingOnly !== false}${
+OpenBenchTrace v1.1 export (RTP-compatible). Filter: suitable_for_training=${opts.trainingOnly !== false}${
     opts.verdict ? `, verdict=${opts.verdict}` : ""
   }.
 
 ## Provenance
 
-Each record includes \`manifest_id\`, \`content_hash\`, \`redacted_hash\`, and scrub metadata.
+Each record includes \`manifest_id\`, \`content_hash\`, \`redacted_hash\`, scrub metadata,
+and an RTP inner session (\`rtp.turnSequence\` + \`rtp.consentToken\`).
 See the OpenBenchTrace schema and WORM batch manifests for auditability.
 
 ## Citation
 
-Please cite the OpenBenchTrace schema version (\`1.0\`) and the dataset release tag.
+Please cite the OpenBenchTrace schema version (\`1.1\`) and the dataset release tag.
 `;
   await writeFile(cardPath, card, "utf8");
   return { jsonlPath, cardPath, count: rows.length };

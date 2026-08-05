@@ -33,3 +33,23 @@ export type { TraceWriterInput, WormBatchManifest } from "./writer/trace-writer.
 export { exportHuggingFaceDataset } from "./export/huggingface.js";
 export { collectFromResults } from "./collect/from-results.js";
 export { syncDatasetPack } from "./sync/sync-pack.js";
+export {
+  RTP_PROTOCOL,
+  RTP_PROTOCOL_VERSION,
+  issueOpenBenchConsentToken,
+  verifyOpenBenchConsentToken,
+  projectToRtpSession,
+  extractRtpSession,
+  resolveEvaluatorTier,
+  sealTurn,
+  computeTurnHash,
+  sha256Canonical,
+} from "./rtp/index.js";
+export type {
+  RtpSession,
+  RtpTurnNode,
+  RtpConsentToken,
+  RtpVerdictPayload,
+  RtpEvaluatorTier,
+  ProjectToRtpInput,
+} from "./rtp/index.js";

@@ -33,8 +33,33 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_PATH = ROOT / "openbench" / "schema" / "openbench-trace.v1.json"
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "1.1"
 REDACTION_POLICY_ID = "openbench-local-v1+presidio-when-enabled"
+RTP_PROTOCOL_VERSION = "0.1"
+RETRIEVAL_TOOLS = {
+    "memory_recall",
+    "clawql_memory_recall",
+    "search",
+    "clawql_search",
+    "knowledge_search_onyx",
+    "clawql_knowledge_search_onyx",
+    "pageindex_traverse",
+    "pageindex_get_content",
+    "pageindex_synthesize",
+    "clawql_pageindex_traverse",
+    "clawql_pageindex_get_content",
+    "clawql_pageindex_synthesize",
+    "ingest_external_knowledge",
+    "clawql_ingest_external_knowledge",
+}
+TIER1_HINTS = (
+    "policy-deny",
+    "audit-checkpoints",
+    "cache-scratch",
+    "schedule-synthetic",
+    "notify-mock",
+    "sandbox-trusted",
+)
 
 # Deterministic local redaction (always on). Presidio is preferred when enabled
 # via CLAWQL_ENABLE_PRESIDIO=1 and a reachable analyzer — see clawql-api.
@@ -226,6 +251,269 @@ def score_to_verdict(score: float | None) -> str:
     return "partial"
 
 
+def canonical_json(value: Any) -> str:
+    return json.dumps(value, sort_keys=True, ensure_ascii=False, default=str, separators=(",", ":"))
+
+
+def sha256_canonical(value: Any) -> str:
+    return sha256_text(canonical_json(value))
+
+
+def b64url(data: bytes) -> str:
+    import base64
+
+    return base64.urlsafe_b64encode(data).decode("ascii").rstrip("=")
+
+
+def issue_consent_token(*, run_id: str, task_id: str, issued_at: str) -> dict[str, Any]:
+    """HS256 JWT with community_model + dataset_licensing scopes (RTP-compatible)."""
+    import hmac
+
+    scopes = ["community_model", "dataset_licensing"]
+    issuer = "clawql-openbench-gateway"
+    subject = f"openbench:run:{run_id}:task:{task_id}"
+    pre = os.environ.get("CLAWQL_OPENBENCH_CONSENT_TOKEN", "").strip()
+    if pre:
+        return {
+            "token": pre,
+            "scopes": scopes,
+            "issuedAt": issued_at,
+            "issuer": issuer,
+            "subject": subject,
+        }
+    secret = (
+        os.environ.get("CLAWQL_RTP_CONSENT_SECRET", "").strip()
+        or os.environ.get("CLAWQL_OPENBENCH_CONSENT_SECRET", "").strip()
+        or f"clawql-openbench-consent-dev:{os.environ.get('GITHUB_RUN_ID', run_id)}:{os.environ.get('GITHUB_SHA', 'dev')}"
+    )
+    iat = int(datetime.fromisoformat(issued_at.replace("Z", "+00:00")).timestamp())
+    header = {"alg": "HS256", "typ": "JWT"}
+    payload = {
+        "iss": issuer,
+        "sub": subject,
+        "scope": " ".join(scopes),
+        "iat": iat,
+        "exp": iat + 60 * 60 * 24 * 90,
+        "run_id": run_id,
+        "task_id": task_id,
+        "purpose": "openbench_trace_dataset",
+    }
+    signing_input = f"{b64url(json.dumps(header, separators=(',', ':')).encode())}.{b64url(json.dumps(payload, separators=(',', ':')).encode())}"
+    sig = hmac.new(secret.encode("utf-8"), signing_input.encode("utf-8"), hashlib.sha256).digest()
+    return {
+        "token": f"{signing_input}.{b64url(sig)}",
+        "scopes": scopes,
+        "issuedAt": issued_at,
+        "issuer": issuer,
+        "subject": subject,
+    }
+
+
+def seal_turn(partial: dict[str, Any], prev: str | None) -> dict[str, Any]:
+    body = {
+        "kind": partial["kind"],
+        "turnIndex": partial["turnIndex"],
+        "intent": partial.get("intent"),
+        "retrieval": partial.get("retrieval"),
+        "reasoning": partial.get("reasoning"),
+        "execution": partial.get("execution"),
+        "delta": partial.get("delta"),
+        "verdict": partial.get("verdict"),
+    }
+    turn_hash = sha256_canonical({"prev": prev or "genesis", "node": body})
+    out = dict(partial)
+    out["prevTurnHash"] = prev
+    out["turnHash"] = turn_hash
+    return out
+
+
+def resolve_evaluator_tier(task_id: str, grader_id: str) -> int:
+    hay = f"{task_id} {grader_id}".lower()
+    if "semantic" in hay or "llm-judge" in hay or "tier-2" in hay:
+        return 2
+    if "human" in hay or "tier-3" in hay:
+        return 3
+    if any(h in hay for h in TIER1_HINTS):
+        return 1
+    if "checker.sh" in grader_id or grader_id.startswith("openbench/"):
+        return 1
+    return 2
+
+
+def is_retrieval_tool(name: str) -> bool:
+    n = name.lower().removeprefix("tool:")
+    if n in RETRIEVAL_TOOLS:
+        return True
+    return any(x in n for x in ("memory_recall", "search", "pageindex", "onyx", "knowledge"))
+
+
+def project_rtp(
+    *,
+    run_id: str,
+    task_id: str,
+    messages: list[dict[str, Any]],
+    tool_calls: list[dict[str, Any]],
+    verdict: str,
+    score: float,
+    grader_id: str,
+    collected_at: str,
+) -> dict[str, Any]:
+    consent = issue_consent_token(run_id=run_id, task_id=task_id, issued_at=collected_at)
+    turns: list[dict[str, Any]] = []
+    prev: str | None = None
+    turn_index = 0
+    state_hash = sha256_canonical({"messages": [], "tools": []})
+
+    raw_prompt = ""
+    for m in messages:
+        if m.get("role") == "user" and m.get("content") is not None:
+            content = m["content"]
+            raw_prompt = content if isinstance(content, str) else json.dumps(content)
+            break
+    goal_line = next(
+        (ln.strip() for ln in raw_prompt.splitlines() if ln.strip() and not ln.strip().startswith("#")),
+        "",
+    )
+    parsed_goal = (
+        goal_line
+        if goal_line and len(goal_line) <= 240
+        else (f"{goal_line[:237]}..." if goal_line else f"complete openbench task {task_id}")
+    )
+    intent = seal_turn(
+        {
+            "kind": "intent",
+            "turnIndex": turn_index,
+            "intent": {
+                "rawPrompt": raw_prompt or f"(task:{task_id})",
+                "parsedGoal": parsed_goal,
+            },
+        },
+        prev,
+    )
+    turn_index += 1
+    turns.append(intent)
+    prev = intent["turnHash"]
+    state_hash = sha256_canonical({"after": "intent", "prompt": intent["intent"]["rawPrompt"]})
+
+    assistant_bits = [
+        (m["content"] if isinstance(m.get("content"), str) else json.dumps(m.get("content") or ""))
+        for m in messages
+        if m.get("role") == "assistant" and m.get("content")
+    ]
+
+    for call in tool_calls:
+        tool_name = str(call.get("tool") or "unknown")
+        if is_retrieval_tool(tool_name):
+            inp = call.get("input")
+            if isinstance(inp, str):
+                queries = [inp]
+            elif isinstance(inp, dict):
+                queries = []
+                for key in ("query", "q", "prompt", "text", "title"):
+                    if isinstance(inp.get(key), str) and inp[key]:
+                        queries = [inp[key]]
+                        break
+                if not queries:
+                    queries = [json.dumps(inp)[:500]]
+            elif inp is None:
+                queries = []
+            else:
+                queries = [str(inp)]
+            node = seal_turn(
+                {
+                    "kind": "retrieval",
+                    "turnIndex": turn_index,
+                    "retrieval": {"queries": queries, "sources": [tool_name], "tool": tool_name},
+                },
+                prev,
+            )
+            turn_index += 1
+            turns.append(node)
+            prev = node["turnHash"]
+        else:
+            seed = [s[:800] for s in assistant_bits[-2:]] if assistant_bits else [f"select tool {tool_name}"]
+            node = seal_turn(
+                {
+                    "kind": "reasoning",
+                    "turnIndex": turn_index,
+                    "reasoning": {"seedChain": seed, "selectedTool": tool_name},
+                },
+                prev,
+            )
+            turn_index += 1
+            turns.append(node)
+            prev = node["turnHash"]
+
+        before = state_hash
+        execution = seal_turn(
+            {
+                "kind": "execution",
+                "turnIndex": turn_index,
+                "execution": {
+                    "toolName": tool_name,
+                    "payload": call.get("input"),
+                    "output": call.get("output"),
+                },
+            },
+            prev,
+        )
+        turn_index += 1
+        turns.append(execution)
+        prev = execution["turnHash"]
+        state_hash = sha256_canonical(
+            {
+                "before": before,
+                "tool": tool_name,
+                "input": call.get("input"),
+                "output": call.get("output"),
+            }
+        )
+        delta = seal_turn(
+            {
+                "kind": "delta",
+                "turnIndex": turn_index,
+                "delta": {"stateBeforeHash": before, "stateAfterHash": state_hash},
+            },
+            prev,
+        )
+        turn_index += 1
+        turns.append(delta)
+        prev = delta["turnHash"]
+
+    if not tool_calls and assistant_bits:
+        reasoning = seal_turn(
+            {
+                "kind": "reasoning",
+                "turnIndex": turn_index,
+                "reasoning": {"seedChain": [s[:800] for s in assistant_bits[:3]]},
+            },
+            prev,
+        )
+        turn_index += 1
+        turns.append(reasoning)
+        prev = reasoning["turnHash"]
+
+    verdict_payload = {
+        "outcome": verdict,
+        "evaluatorTier": resolve_evaluator_tier(task_id, grader_id),
+        "source": "grader",
+        "graderId": grader_id,
+        "score": score,
+    }
+    verdict_node = seal_turn(
+        {"kind": "verdict", "turnIndex": turn_index, "verdict": verdict_payload},
+        prev,
+    )
+    turns.append(verdict_node)
+    return {
+        "protocol": "rtp",
+        "protocolVersion": RTP_PROTOCOL_VERSION,
+        "consentToken": consent,
+        "turnSequence": turns,
+        "verdict": verdict_payload,
+    }
+
+
 def build_messages(instruction: str, log_text: str, call_records: list[dict]) -> list[dict]:
     messages: list[dict[str, Any]] = []
     if instruction.strip():
@@ -366,6 +654,20 @@ def build_dataset(
 
         # Call-store is shared across arms today; attach ids as batch context only.
         call_ids = [str(r.get("id")) for r in call_records if r.get("id")]
+        messages = build_messages(instruction, log_text, [])
+        tool_calls = extract_tool_calls(log_text)
+        verdict = score_to_verdict(score)
+        grader_id = f"openbench/{task_id}/checker.sh"
+        rtp = project_rtp(
+            run_id=str(run_id),
+            task_id=task_id,
+            messages=messages,
+            tool_calls=tool_calls,
+            verdict=verdict,
+            score=score,
+            grader_id=grader_id,
+            collected_at=collected_at,
+        )
 
         pre = {
             "schema_version": SCHEMA_VERSION,
@@ -378,12 +680,12 @@ def build_dataset(
             "model": model_id,
             "harness": harness,
             "clawql_version": clawql_version,
-            "messages": build_messages(instruction, log_text, []),
-            "tool_calls": extract_tool_calls(log_text),
-            "verdict": score_to_verdict(score),
+            "messages": messages,
+            "tool_calls": tool_calls,
+            "verdict": verdict,
             "verdict_source": "grader",
             "score": score,
-            "grader_id": f"openbench/{task_id}/checker.sh",
+            "grader_id": grader_id,
             "turns": agent.get("turns"),
             "elapsed_ms": int(round(float(agent.get("wall_s") or 0) * 1000))
             if agent.get("wall_s") is not None
@@ -404,6 +706,7 @@ def build_dataset(
                 agent.get("completed") and success and not agent.get("timed_out")
             ),
             "inference_call_ids": call_ids[:200],
+            "rtp": rtp,
         }
 
         # content_hash over pre-redaction canonical JSON (without hashes filled)

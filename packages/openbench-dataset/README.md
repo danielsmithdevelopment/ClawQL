@@ -58,7 +58,8 @@ Do not reuse the team Memory vault bucket (`CLAWQL_SYNC_BUCKET`).
 
 | Piece | Status |
 | ----- | ------ |
-| OpenBenchTrace v1 types + JSON Schema | ✅ |
+| OpenBenchTrace v1.1 types + JSON Schema (RTP inner) | ✅ |
+| RTP project + consent JWT + turn hashing | ✅ |
 | Local scrub + TraceWriter + local backend | ✅ |
 | `collect` from OpenBench `results.json` | ✅ |
 | S3/R2 backend + `sync` (CF API ensure + REST put) | ✅ |
