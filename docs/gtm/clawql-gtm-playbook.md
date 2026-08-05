@@ -770,7 +770,7 @@ NAS (TrueNAS Scale) = **dev only** for AWS-side IDP. Cloudflare work uses Wrangl
 
 | Risk | Likelihood | Impact | Mitigation |
 | --- | --- | --- | --- |
-| OSOM from ES + per-tenant Onyx growth | Medium | High | Quotas, heap caps, Onyx limits, 75% alert, Karpenter reserved growth |
+| OOM from ES + per-tenant Onyx growth | Medium | High | Quotas, heap caps, Onyx limits, 75% alert, Karpenter reserved growth |
 | Spot capacity shortage | Low–Med | Medium | On-demand burst NodePool; diversify families |
 | Gotenberg CPU saturation | Medium | Medium | Per-tenant concurrency=2; spot scale with cap |
 | Nextcloud AGPL scrutiny | Low–Med | Medium | Network/API access pattern; legal memo ready |
