@@ -1,0 +1,136 @@
+# Pulumi Cloudflare edge deploy — R2 state backend + edge profile (Developer/Teams).
+#
+# PR / path push: unit tests only (no cloud).
+# workflow_dispatch: ensure R2 state bucket, pulumi preview|up.
+#
+# Secrets (same as docs/landing deploy where possible):
+#   CLOUDFLARE_API_TOKEN   — required for deploy
+#   CLOUDFLARE_ACCOUNT_ID  — required for deploy
+# Optional:
+#   CLAWQL_R2_ACCESS_KEY_ID / CLAWQL_R2_SECRET_ACCESS_KEY — explicit R2 S3 keys
+#     (otherwise derived from API token id + SHA-256 of token value)
+#   PULUMI_CONFIG_PASSPHRASE — preferred stable passphrase for stack secrets
+#
+name: Pulumi Cloudflare edge
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infra/pulumi/**"
+      - "scripts/pulumi/**"
+      - ".github/workflows/pulumi-cloudflare-edge.yml"
+  pull_request:
+    paths:
+      - "infra/pulumi/**"
+      - "scripts/pulumi/**"
+      - ".github/workflows/pulumi-cloudflare-edge.yml"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Pulumi action"
+        type: choice
+        options:
+          - preview
+          - up
+        default: preview
+      stack:
+        description: "Pulumi stack name"
+        required: false
+        default: edge-prod
+      deploy_worker_stub:
+        description: "Deploy gateway Worker health/IDP stub"
+        type: boolean
+        default: true
+      sync_bucket:
+        description: "R2 vault bucket name"
+        required: false
+        default: clawql-vault-prod
+
+concurrency:
+  group: pulumi-cloudflare-edge-${{ github.workflow }}-${{ github.ref }}-${{ inputs.stack || 'edge-prod' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Pulumi unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install workspace deps
+        run: npm ci
+
+      - name: Test + typecheck clawql-provision
+        working-directory: infra/pulumi
+        run: |
+          set -euo pipefail
+          npm test
+          npm run typecheck
+
+  deploy:
+    name: Edge ${{ inputs.action || 'preview' }}
+    needs: test
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Optional: add GitHub Environment protection later (pulumi-preview / pulumi-prod).
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+
+      - name: Install Pulumi CLI
+        run: |
+          set -euo pipefail
+          curl -fsSL https://get.pulumi.com | sh
+          echo "$HOME/.pulumi/bin" >> "$GITHUB_PATH"
+
+      - name: Install workspace deps + build
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build --prefix infra/pulumi
+
+      - name: Ensure R2 state backend + deploy edge
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLAWQL_R2_ACCESS_KEY_ID: ${{ secrets.CLAWQL_R2_ACCESS_KEY_ID }}
+          CLAWQL_R2_SECRET_ACCESS_KEY: ${{ secrets.CLAWQL_R2_SECRET_ACCESS_KEY }}
+          CLAWQL_SYNC_ACCESS_KEY_ID: ${{ secrets.CLAWQL_SYNC_ACCESS_KEY_ID }}
+          CLAWQL_SYNC_SECRET_ACCESS_KEY: ${{ secrets.CLAWQL_SYNC_SECRET_ACCESS_KEY }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          PULUMI_STACK: ${{ inputs.stack }}
+          PULUMI_ACTION: ${{ inputs.action }}
+          CLAWQL_DEPLOY_WORKER_STUB: ${{ inputs.deploy_worker_stub }}
+          CLAWQL_SYNC_BUCKET: ${{ inputs.sync_bucket }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${CLOUDFLARE_API_TOKEN}" ]]; then
+            echo "::error::Secret CLOUDFLARE_API_TOKEN is not set"
+            exit 1
+          fi
+          if [[ -z "${CLOUDFLARE_ACCOUNT_ID}" ]]; then
+            echo "::error::Secret CLOUDFLARE_ACCOUNT_ID is not set"
+            exit 1
+          fi
+          chmod +x scripts/pulumi/ensure-r2-state-backend.sh scripts/pulumi/deploy-edge.sh
+          # shellcheck disable=SC1091
+          source scripts/pulumi/ensure-r2-state-backend.sh
+          bash scripts/pulumi/deploy-edge.sh
