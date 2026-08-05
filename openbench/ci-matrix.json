@@ -2,10 +2,14 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-2.0 idp-safe-pipeline-lite stubbed 7-stage IDP on pr_active. Not live Stirling/Argo (B2.3 later).",
-  "pr_active": ["idp-safe-pipeline-lite"],
+  "live_resume_note": "B-2.0 idp-safe-pipeline-lite WIN (31039035892). Next: optional B2.2 resilience, or scheduled B2.3 live-vendor smoke (not pr_active).",
+  "pr_active": [],
   "pr_trials": 1,
   "retired": {
+    "idp-safe-pipeline-lite": {
+      "reason": "Verified WIN \u2014 stubbed 7-stage IDP orchestration (on 1.0 / off 0.0; RTP v1.1)",
+      "evidence_run": "31039035892"
+    },
     "codegraph-impact-edit": {
       "reason": "Verified WIN + durable R2 traces (on 1.0 / off 0.0; call_store=17; r2://clawql-openbench-traces)",
       "evidence_run": "30977578882"
