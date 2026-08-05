@@ -383,7 +383,7 @@ export function getAgentMarkdownMap(origin = getSiteOriginString()): Record<stri
     '/about': `# About ClawQL\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.\n\nSee ${origin}/about/ for mission and ecosystem overview.`,
     '/signup': `# Sign up\n\nStart a 14-day Developer trial or join the waitlist.\n\n${origin}/signup/`,
     '/privacy-policy': `# Privacy Policy\n\nSee ${origin}/privacy-policy/ for the full policy.`,
-    '/industries': `# Industries\n\nVertical workflows for lending, real estate, healthcare, legal, insurance, and education.\n\n${origin}/industries/`,
+    '/industries': `# Industries\n\nVertical workflows for lending, real estate, government, healthcare, legal, insurance, and education.\n\n${origin}/industries/`,
     '/inference/gtm': `# Inference-first GTM playbook\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Zero-Trust Agentic Fabric.\n\nSee ${origin}/inference/gtm/.`,
     '/idp': `# Intelligent Document Processing\n\nClawQL IDP — full document lifecycle (ingest → VDR), flat Starter pricing vs ABBYY / Hyperscience / Intralinks, Helm deploy or 14-day trial.\n\nSee ${origin}/idp/.`,
     '/idp/gtm': `# IDP-first GTM playbook\n\nStandalone ClawQL Intelligent Document Processing go-to-market — market reality, honest positioning, sales motion, and landing-page brief vs ABBYY, Hyperscience, and Intralinks.\n\nSee ${origin}/idp/gtm/.`,

@@ -5,7 +5,7 @@ import { ArrowNarrowRightIcon } from '@/components/icons/arrow-narrow-right-icon
 import { CallToActionSimple } from '@/components/sections/call-to-action-simple'
 import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
 import { NewsletterForm } from '@/components/sections/footer-with-newsletter-form-categories-and-social-icons'
-import type { Industry } from '@/lib/industries'
+import type { Industry, IndustryStackRow } from '@/lib/industries'
 import { site } from '@/lib/site'
 
 function StatusBadge({ industry }: { industry: Industry }) {
@@ -23,6 +23,17 @@ function StatusBadge({ industry }: { industry: Industry }) {
   )
 }
 
+function HeroEyebrow({ industry }: { industry: Industry }) {
+  if (industry.heroEyebrow) {
+    return (
+      <p className="max-w-3xl text-center text-sm font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
+        {industry.heroEyebrow}
+      </p>
+    )
+  }
+  return <StatusBadge industry={industry} />
+}
+
 function DisclaimerNotice({ text }: { text: string }) {
   return (
     <div className="mx-auto max-w-3xl rounded-xl border border-amber-500/25 bg-amber-500/5 px-5 py-4 text-sm/7 text-mist-700 dark:text-mist-300">
@@ -31,7 +42,48 @@ function DisclaimerNotice({ text }: { text: string }) {
   )
 }
 
+function StackTable({
+  rows,
+  systemLabel = 'System',
+  roleLabel = 'Role',
+}: {
+  rows: readonly IndustryStackRow[]
+  systemLabel?: string
+  roleLabel?: string
+}) {
+  const hasProvider = rows.some((row) => row.provider)
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[320px] border-collapse text-left text-sm/7">
+        <thead>
+          <tr className="border-b border-mist-950/10 dark:border-white/10">
+            <th className="py-2 pr-3 font-semibold text-mist-950 dark:text-white">{systemLabel}</th>
+            <th className="py-2 pr-3 font-semibold text-mist-950 dark:text-white">{roleLabel}</th>
+            {hasProvider ? (
+              <th className="py-2 font-semibold text-mist-950 dark:text-white">Who provides it</th>
+            ) : null}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.system} className="border-b border-mist-950/5 dark:border-white/5">
+              <td className="py-2 pr-3 font-medium text-mist-950 dark:text-white">{row.system}</td>
+              <td className="py-2 pr-3 text-mist-700 dark:text-mist-400">{row.role}</td>
+              {hasProvider ? (
+                <td className="py-2 text-mist-700 dark:text-mist-400">{row.provider ?? '—'}</td>
+              ) : null}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 function ctaSubheadline(industry: Industry) {
+  if (industry.ctaSubheadline) {
+    return <p>{industry.ctaSubheadline}</p>
+  }
   if (industry.status === 'partial' || industry.status === 'shipped') {
     return (
       <p>
@@ -53,7 +105,7 @@ function PlannedIndustryStub({ industry }: { industry: Industry }) {
     <>
       <HeroSimpleCentered
         id="hero"
-        eyebrow={<StatusBadge industry={industry} />}
+        eyebrow={<HeroEyebrow industry={industry} />}
         headline={industry.headline}
         subheadline={<p>{industry.subheadline}</p>}
       />
@@ -115,11 +167,14 @@ export function IndustryPage({ industry }: { industry: Industry }) {
     return <PlannedIndustryStub industry={industry} />
   }
 
+  const secondaryHref = industry.ctaSecondaryHref ?? `${site.urls.docs}/vision/modularization`
+  const secondaryLabel = industry.ctaSecondaryLabel ?? 'Modularization roadmap'
+
   return (
     <>
       <HeroSimpleCentered
         id="hero"
-        eyebrow={<StatusBadge industry={industry} />}
+        eyebrow={<HeroEyebrow industry={industry} />}
         headline={industry.headline}
         subheadline={<p>{industry.subheadline}</p>}
         cta={
@@ -142,7 +197,11 @@ export function IndustryPage({ industry }: { industry: Industry }) {
         </section>
       ) : null}
 
-      <Section id="overview" eyebrow="Overview" headline={`ClawQL for ${industry.name.toLowerCase()}`}>
+      <Section
+        id="overview"
+        eyebrow="Overview"
+        headline={industry.overviewHeadline ?? `ClawQL for ${industry.name.toLowerCase()}`}
+      >
         <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{industry.overview}</p>
         {industry.productionReference ? (
           <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-600">{industry.productionReference}</p>
@@ -154,16 +213,21 @@ export function IndustryPage({ industry }: { industry: Industry }) {
           id="market"
           eyebrow="Industry context"
           headline={
-            industry.audiences && industry.audiences.length > 0
+            industry.marketHeadline ??
+            (industry.audiences && industry.audiences.length > 0
               ? 'The gap brokerages and FSBO sellers share'
-              : 'The gap every brokerage stack shares'
+              : 'The gap every brokerage stack shares')
           }
           subheadline={
-            <p>
-              {industry.audiences && industry.audiences.length > 0
-                ? 'CRM and flat-fee listing tools compete on pipeline and MLS access — nobody classifies title commitments or compares buyer offers with grounded citations.'
-                : 'Franchise CRMs compete on lead gen and agent productivity — transaction document intelligence is still unowned.'}
-            </p>
+            industry.marketSubheadline ? (
+              <p>{industry.marketSubheadline}</p>
+            ) : (
+              <p>
+                {industry.audiences && industry.audiences.length > 0
+                  ? 'CRM and flat-fee listing tools compete on pipeline and MLS access — nobody classifies title commitments or compares buyer offers with grounded citations.'
+                  : 'Franchise CRMs compete on lead gen and agent productivity — transaction document intelligence is still unowned.'}
+              </p>
+            )
           }
         >
           <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{industry.marketContext}</p>
@@ -174,11 +238,11 @@ export function IndustryPage({ industry }: { industry: Industry }) {
         <Section
           id="audiences"
           eyebrow="Who it's for"
-          headline="Two audiences, one document engine"
+          headline={industry.audiencesHeadline ?? 'Two audiences, one document engine'}
           subheadline={
             <p>
-              Same classify → extract → recall pipeline — positioned for transaction coordinators at
-              brokerages and for FSBO sellers comparing offers without a coordinator seat.
+              {industry.audiencesSubheadline ??
+                'Same classify → extract → recall pipeline — positioned for transaction coordinators at brokerages and for FSBO sellers comparing offers without a coordinator seat.'}
             </p>
           }
         >
@@ -197,24 +261,11 @@ export function IndustryPage({ industry }: { industry: Industry }) {
                   <p className="text-sm/7 text-mist-700 dark:text-mist-400">{audience.overview}</p>
                 </div>
                 {audience.stackPlacement && audience.stackPlacement.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[320px] border-collapse text-left text-sm/7">
-                      <thead>
-                        <tr className="border-b border-mist-950/10 dark:border-white/10">
-                          <th className="py-2 pr-3 font-semibold text-mist-950 dark:text-white">System</th>
-                          <th className="py-2 font-semibold text-mist-950 dark:text-white">Role</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {audience.stackPlacement.map((row) => (
-                          <tr key={row.system} className="border-b border-mist-950/5 dark:border-white/5">
-                            <td className="py-2 pr-3 font-medium text-mist-950 dark:text-white">{row.system}</td>
-                            <td className="py-2 text-mist-700 dark:text-mist-400">{row.role}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <StackTable
+                    rows={audience.stackPlacement}
+                    systemLabel={audience.stackPlacement.some((r) => r.provider) ? 'Layer' : 'System'}
+                    roleLabel={audience.stackPlacement.some((r) => r.provider) ? 'What it does' : 'Role'}
+                  />
                 ) : null}
                 {audience.useCases && audience.useCases.length > 0 ? (
                   <ul className="flex flex-col gap-3">
@@ -249,24 +300,7 @@ export function IndustryPage({ industry }: { industry: Industry }) {
             </p>
           }
         >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[480px] border-collapse text-left text-sm/7">
-              <thead>
-                <tr className="border-b border-mist-950/10 dark:border-white/10">
-                  <th className="py-3 pr-4 font-semibold text-mist-950 dark:text-white">System</th>
-                  <th className="py-3 font-semibold text-mist-950 dark:text-white">Role</th>
-                </tr>
-              </thead>
-              <tbody>
-                {industry.stackPlacement.map((row) => (
-                  <tr key={row.system} className="border-b border-mist-950/5 dark:border-white/5">
-                    <td className="py-3 pr-4 font-medium text-mist-950 dark:text-white">{row.system}</td>
-                    <td className="py-3 text-mist-700 dark:text-mist-400">{row.role}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <StackTable rows={industry.stackPlacement} />
         </Section>
       ) : null}
 
@@ -288,11 +322,11 @@ export function IndustryPage({ industry }: { industry: Industry }) {
       <Section
         id="pain-points"
         eyebrow="Challenges"
-        headline="Problems agents solve in this vertical"
+        headline={industry.painPointsHeadline ?? 'Problems agents solve in this vertical'}
         subheadline={
           <p>
-            These are the operational friction points {industry.packageName} targets — on top of ClawQL Core search,
-            execute, memory, audit, and the IDP pipeline.
+            {industry.painPointsSubheadline ??
+              `These are the operational friction points ${industry.packageName} targets — on top of ClawQL Core search, execute, memory, audit, and the IDP pipeline.`}
           </p>
         }
       >
@@ -310,7 +344,12 @@ export function IndustryPage({ industry }: { industry: Industry }) {
         id="platform"
         eyebrow="Platform"
         headline="Shared ClawQL capabilities"
-        subheadline={<p>Every vertical package composes these horizontal layers — security, memory, and document intelligence.</p>}
+        subheadline={
+          <p>
+            {industry.platformSubheadline ??
+              'Every vertical package composes these horizontal layers — security, memory, and document intelligence.'}
+          </p>
+        }
       >
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {industry.platformCapabilities.map((item) => (
@@ -331,9 +370,13 @@ export function IndustryPage({ industry }: { industry: Industry }) {
         headline={`Tools from ${industry.packageName}`}
         subheadline={
           <p>
-            Planned or shipping MCP tools from{' '}
-            <Link href="https://docs.clawql.com/vision/modularization">modularization v2.1</Link> — registered when the
-            vertical package is enabled via <code className="text-sm">CLAWQL_ENABLE_*</code> or Operator flags.
+            {industry.domainToolsSubheadline ?? (
+              <>
+                Planned or shipping MCP tools from{' '}
+                <Link href="https://docs.clawql.com/vision/modularization">modularization v2.1</Link> — registered when
+                the vertical package is enabled via <code className="text-sm">CLAWQL_ENABLE_*</code> or Operator flags.
+              </>
+            )}
           </p>
         }
       >
@@ -347,23 +390,60 @@ export function IndustryPage({ industry }: { industry: Industry }) {
         </div>
       </Section>
 
-      <Section
-        id="documents"
-        eyebrow="Document types"
-        headline="What the IDP pipeline processes"
-        subheadline={<p>Representative inputs agents classify, extract, redact, and archive in this vertical.</p>}
-      >
-        <ul className="flex flex-wrap gap-2">
-          {industry.documentTypes.map((docType) => (
-            <li
-              key={docType}
-              className="rounded-full bg-mist-950/5 px-4 py-2 text-sm font-medium text-mist-700 dark:bg-white/10 dark:text-mist-300"
-            >
-              {docType}
-            </li>
-          ))}
-        </ul>
-      </Section>
+      {industry.auditEvents && industry.auditEvents.length > 0 ? (
+        <Section
+          id="audit-events"
+          eyebrow="Audit events"
+          headline="What goes into the permanent record"
+          subheadline={
+            <p>
+              {industry.auditEventsSubheadline ??
+                'Every event appends a hash-chained entry to the WORM audit log. Entries cannot be modified or deleted after writing.'}
+            </p>
+          }
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] border-collapse text-left text-sm/7">
+              <thead>
+                <tr className="border-b border-mist-950/10 dark:border-white/10">
+                  <th className="py-3 pr-4 font-semibold text-mist-950 dark:text-white">Event</th>
+                  <th className="py-3 font-semibold text-mist-950 dark:text-white">Trigger</th>
+                </tr>
+              </thead>
+              <tbody>
+                {industry.auditEvents.map((row) => (
+                  <tr key={row.event} className="border-b border-mist-950/5 dark:border-white/5">
+                    <td className="py-3 pr-4 font-mono text-sm font-medium text-mist-950 dark:text-white">
+                      {row.event}
+                    </td>
+                    <td className="py-3 text-mist-700 dark:text-mist-400">{row.trigger}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      ) : null}
+
+      {industry.documentTypes.length > 0 ? (
+        <Section
+          id="documents"
+          eyebrow="Document types"
+          headline="What the IDP pipeline processes"
+          subheadline={<p>Representative inputs agents classify, extract, redact, and archive in this vertical.</p>}
+        >
+          <ul className="flex flex-wrap gap-2">
+            {industry.documentTypes.map((docType) => (
+              <li
+                key={docType}
+                className="rounded-full bg-mist-950/5 px-4 py-2 text-sm font-medium text-mist-700 dark:bg-white/10 dark:text-mist-300"
+              >
+                {docType}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ) : null}
 
       <Section
         id="use-cases"
@@ -371,8 +451,12 @@ export function IndustryPage({ industry }: { industry: Industry }) {
         headline={`Why ClawQL for ${industry.name.toLowerCase()}`}
         subheadline={
           <p>
-            Vertical packages extend the same Agentic Gateway — search, execute, memory, IDP, audit — with domain tools from{' '}
-            <code className="text-sm">{industry.packageName}</code>.
+            {industry.useCasesSubheadline ?? (
+              <>
+                Vertical packages extend the same Agentic Gateway — search, execute, memory, IDP, audit — with domain
+                tools from <code className="text-sm">{industry.packageName}</code>.
+              </>
+            )}
           </p>
         }
       >
@@ -386,64 +470,70 @@ export function IndustryPage({ industry }: { industry: Industry }) {
         </div>
       </Section>
 
-      <Section
-        id="examples"
-        eyebrow="Examples"
-        headline="Example agent workflows"
-        subheadline={
-          <p>
-            Representative MCP tool sequences with step-by-step detail — production deployments add tenant classifiers,
-            RBAC, and your compliance policies on top.
-          </p>
-        }
-      >
-        <div className="flex flex-col gap-6">
-          {industry.examples.map((example) => (
-            <article
-              key={example.title}
-              className="flex flex-col gap-5 rounded-xl bg-mist-950/2.5 p-6 sm:p-8 dark:bg-white/5"
-            >
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
-                  {example.summary}
-                </p>
-                <h3 className="text-base font-semibold text-mist-950 dark:text-white">{example.title}</h3>
-                <p className="text-sm/7 text-mist-700 dark:text-mist-400">{example.body}</p>
-              </div>
-              <ol className="flex flex-col gap-3 border-l border-mist-950/10 pl-5 dark:border-white/10">
-                {example.steps.map((step, index) => (
-                  <li key={step.label} className="relative flex flex-col gap-1">
-                    <span className="absolute -left-[1.375rem] flex size-5 items-center justify-center rounded-full bg-mist-950/10 text-xs font-semibold text-mist-600 dark:bg-white/10 dark:text-mist-300">
-                      {index + 1}
-                    </span>
-                    <span className="text-sm font-semibold text-mist-950 dark:text-white">{step.label}</span>
-                    <span className="text-sm/7 text-mist-700 dark:text-mist-400">{step.detail}</span>
-                  </li>
-                ))}
-              </ol>
-              <div className="flex flex-wrap gap-2">
-                {example.tools.map((tool) => (
-                  <code
-                    key={tool}
-                    className="rounded-md bg-mist-950/5 px-2 py-1 text-xs font-semibold text-mist-800 dark:bg-white/10 dark:text-mist-200"
-                  >
-                    {tool}()
-                  </code>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      </Section>
+      {industry.examples.length > 0 ? (
+        <Section
+          id="examples"
+          eyebrow="Examples"
+          headline="Example agent workflows"
+          subheadline={
+            <p>
+              Representative MCP tool sequences with step-by-step detail — production deployments add tenant classifiers,
+              RBAC, and your compliance policies on top.
+            </p>
+          }
+        >
+          <div className="flex flex-col gap-6">
+            {industry.examples.map((example) => (
+              <article
+                key={example.title}
+                className="flex flex-col gap-5 rounded-xl bg-mist-950/2.5 p-6 sm:p-8 dark:bg-white/5"
+              >
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
+                    {example.summary}
+                  </p>
+                  <h3 className="text-base font-semibold text-mist-950 dark:text-white">{example.title}</h3>
+                  <p className="text-sm/7 text-mist-700 dark:text-mist-400">{example.body}</p>
+                </div>
+                <ol className="flex flex-col gap-3 border-l border-mist-950/10 pl-5 dark:border-white/10">
+                  {example.steps.map((step, index) => (
+                    <li key={step.label} className="relative flex flex-col gap-1">
+                      <span className="absolute -left-[1.375rem] flex size-5 items-center justify-center rounded-full bg-mist-950/10 text-xs font-semibold text-mist-600 dark:bg-white/10 dark:text-mist-300">
+                        {index + 1}
+                      </span>
+                      <span className="text-sm font-semibold text-mist-950 dark:text-white">{step.label}</span>
+                      <span className="text-sm/7 text-mist-700 dark:text-mist-400">{step.detail}</span>
+                    </li>
+                  ))}
+                </ol>
+                <div className="flex flex-wrap gap-2">
+                  {example.tools.map((tool) => (
+                    <code
+                      key={tool}
+                      className="rounded-md bg-mist-950/5 px-2 py-1 text-xs font-semibold text-mist-800 dark:bg-white/10 dark:text-mist-200"
+                    >
+                      {tool}()
+                    </code>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </Section>
+      ) : null}
 
       <Section
         id="compliance"
         eyebrow="Security & compliance"
-        headline="Built for regulated workflows"
+        headline={industry.complianceHeadline ?? 'Built for regulated workflows'}
         subheadline={
           <p>
-            Industry pages summarize platform capabilities — your legal, compliance, and security teams should review{' '}
-            <Link href={`${site.urls.docs}/security`}>docs.clawql.com/security</Link> before production data.
+            {industry.complianceSubheadline ?? (
+              <>
+                Industry pages summarize platform capabilities — your legal, compliance, and security teams should review{' '}
+                <Link href={`${site.urls.docs}/security`}>docs.clawql.com/security</Link> before production data.
+              </>
+            )}
           </p>
         }
       >
@@ -476,19 +566,29 @@ export function IndustryPage({ industry }: { industry: Industry }) {
 
       <CallToActionSimple
         id="cta"
-        headline={`Ready to demo ClawQL for ${industry.name.toLowerCase()}?`}
+        headline={industry.ctaHeadline ?? `Ready to demo ClawQL for ${industry.name.toLowerCase()}?`}
         subheadline={ctaSubheadline(industry)}
         cta={
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <ButtonLink href={site.urls.signup} size="lg">
               Book a demo
             </ButtonLink>
-            <PlainButtonLink href={`${site.urls.docs}/vision/modularization`} size="lg">
-              Modularization roadmap <ArrowNarrowRightIcon />
+            <PlainButtonLink href={secondaryHref} size="lg">
+              {secondaryLabel} <ArrowNarrowRightIcon />
             </PlainButtonLink>
           </div>
         }
       />
+
+      {industry.closingNote ? (
+        <section className="pb-16">
+          <div className="px-6">
+            <p className="mx-auto max-w-3xl text-center text-xs/6 text-mist-600 dark:text-mist-500">
+              {industry.closingNote}
+            </p>
+          </div>
+        </section>
+      ) : null}
     </>
   )
 }
