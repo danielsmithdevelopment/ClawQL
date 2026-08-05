@@ -34,6 +34,11 @@ import {
   runPaymentsCreditsBankLink,
   runPaymentsCreditsTopup,
   runPaymentsCreditsTransfer,
+  runPaymentsCreditsPay,
+  runPaymentsCreditsDirectoryClaim,
+  runPaymentsCreditsDirectoryShow,
+  runPaymentsCreditsDirectoryList,
+  runPaymentsCreditsDirectoryRelease,
   runPaymentsCreditsStepUpEnroll,
   runPaymentsCreditsStepUpShow,
   runPaymentsCompensationBalance,
@@ -72,6 +77,12 @@ export type PaymentsCliOptions = {
   taxProfileRef?: string;
   toTenantId?: string;
   fromTenantId?: string;
+  /** Payments directory handle (@alice). */
+  handle?: string;
+  toHandle?: string;
+  /** Venmo-style payee from context-aware --to */
+  payTo?: string;
+  displayName?: string;
   idempotencyKey?: string;
   note?: string;
   totp?: string;
@@ -430,6 +441,8 @@ export async function runPaymentsCreditsTransferCmd(
   return runPaymentsCreditsTransfer({
     fromTenantId: options.fromTenantId ?? options.tenantId,
     toTenantId: options.toTenantId,
+    toHandle: options.toHandle ?? options.handle,
+    payTo: options.payTo,
     amountUsd: options.amount,
     idempotencyKey: options.idempotencyKey,
     correlationId: options.correlationId,
@@ -439,6 +452,62 @@ export async function runPaymentsCreditsTransferCmd(
     code: options.code,
     totp: options.totp,
     direct: options.direct,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsPayCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsPay({
+    fromTenantId: options.fromTenantId ?? options.tenantId,
+    toTenantId: options.toTenantId,
+    toHandle: options.toHandle ?? options.handle,
+    payTo: options.payTo,
+    amountUsd: options.amount,
+    idempotencyKey: options.idempotencyKey,
+    correlationId: options.correlationId,
+    note: options.note,
+    confirm: options.confirm,
+    actionId: options.actionId,
+    code: options.code,
+    totp: options.totp,
+    direct: options.direct,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsDirectoryClaimCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsDirectoryClaim({
+    handle: options.handle ?? options.toHandle,
+    tenantId: options.tenantId ?? options.fromTenantId,
+    displayName: options.displayName ?? options.name,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsDirectoryShowCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsDirectoryShow({
+    handle: options.handle ?? options.toHandle,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsDirectoryListCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsDirectoryList({ json: options.json });
+}
+
+export async function runPaymentsCreditsDirectoryReleaseCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsDirectoryRelease({
+    handle: options.handle ?? options.toHandle,
     json: options.json,
   });
 }

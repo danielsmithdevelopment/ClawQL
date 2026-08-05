@@ -19,6 +19,21 @@ export {
   verifyStepUpTotp,
 } from "./step-up.js";
 export {
+  claimHandle,
+  getHandleEntry,
+  getTenantHandle,
+  listDirectory,
+  looksLikeHandle,
+  normalizeHandle,
+  releaseHandle,
+  resetDirectoryForTests,
+  resolveDirectoryPath,
+  resolveRecipient,
+  RESERVED_HANDLES,
+  type DirectoryEntry,
+  type ResolvedRecipient,
+} from "./directory.js";
+export {
   appendCreditEntry,
   captureHold,
   getCreditAccount,

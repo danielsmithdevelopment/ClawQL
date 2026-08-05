@@ -95,6 +95,11 @@ import {
   runPaymentsCreditsBankLinkCmd,
   runPaymentsCreditsTopupCmd,
   runPaymentsCreditsTransferCmd,
+  runPaymentsCreditsPayCmd,
+  runPaymentsCreditsDirectoryClaimCmd,
+  runPaymentsCreditsDirectoryShowCmd,
+  runPaymentsCreditsDirectoryListCmd,
+  runPaymentsCreditsDirectoryReleaseCmd,
   runPaymentsCreditsStepUpEnrollCmd,
   runPaymentsCreditsStepUpShowCmd,
   runPaymentsCompensationBalanceCmd,
@@ -291,7 +296,14 @@ function parse(argv: string[]): {
     else if (a === "--confirm") flags.confirm = true;
     else if (a === "--skip-verify") flags.skipVerify = true;
     else if (a === "--from") flags.dateFrom = argv[++i] ?? "";
-    else if (a === "--to") flags.dateTo = argv[++i] ?? "";
+    else if (a === "--to") {
+      const v = argv[++i] ?? "";
+      // Accounting uses ISO dates; P2P pay uses @handle / payee strings.
+      if (/^\d{4}-\d{2}-\d{2}/.test(v)) flags.dateTo = v;
+      else flags.payTo = v;
+    }
+    else if (a === "--to-handle" || a === "--handle") flags.toHandle = argv[++i] ?? "";
+    else if (a === "--display-name") flags.displayName = argv[++i] ?? "";
     else if (a === "--tax-year") flags.taxYear = argv[++i] ?? "";
     else if (a === "--party-id") flags.partyId = argv[++i] ?? "";
     else if (a === "--tax-form") flags.taxForm = argv[++i] ?? "";
@@ -394,7 +406,9 @@ Usage:
   clawql payments tax-profile set --party-id ID --tax-form 1099nec|none|unknown [--collected]
   clawql payments tax-profile show [--party-id ID]
   clawql payments credits show | bank-link --customer cus_xxx | topup --customer cus_xxx --amount 25
-  clawql payments credits transfer --to-tenant other-tenant --amount 10   # stages (confirm next)
+  clawql payments credits directory claim --handle alice [--name Alice] | show|list|release --handle @alice
+  clawql payments credits pay --to @bob --amount 10 [--note coffee]   # stages (confirm next)
+  clawql payments credits transfer --to-tenant other-tenant --amount 10
   clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
   clawql payments credits step-up enroll|show [--tenant-id ID] [--show-secrets]
   clawql claude | codex | cursor | opencode [-- harness args...]
@@ -1129,6 +1143,15 @@ async function main(): Promise<void> {
       taxProfileRef: typeof flags.taxProfileRef === "string" ? flags.taxProfileRef : undefined,
       toTenantId: typeof flags.toTenantId === "string" ? flags.toTenantId : undefined,
       fromTenantId: typeof flags.fromTenantId === "string" ? flags.fromTenantId : undefined,
+      handle: typeof flags.toHandle === "string" ? flags.toHandle : undefined,
+      toHandle: typeof flags.toHandle === "string" ? flags.toHandle : undefined,
+      payTo: typeof flags.payTo === "string" ? flags.payTo : undefined,
+      displayName:
+        typeof flags.displayName === "string"
+          ? flags.displayName
+          : typeof flags.name === "string"
+            ? flags.name
+            : undefined,
       idempotencyKey: typeof flags.idempotencyKey === "string" ? flags.idempotencyKey : undefined,
       note: typeof flags.note === "string" ? flags.note : undefined,
       totp: typeof flags.totp === "string" ? flags.totp : undefined,
@@ -1327,6 +1350,27 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsCreditsTransferCmd(paymentsOpts);
         return;
       }
+      if (creditsAction === "pay") {
+        process.exitCode = await runPaymentsCreditsPayCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "directory") {
+        const dirAction = rest[1] ?? "list";
+        if (dirAction === "claim") {
+          process.exitCode = await runPaymentsCreditsDirectoryClaimCmd(paymentsOpts);
+          return;
+        }
+        if (dirAction === "show") {
+          process.exitCode = await runPaymentsCreditsDirectoryShowCmd(paymentsOpts);
+          return;
+        }
+        if (dirAction === "release") {
+          process.exitCode = await runPaymentsCreditsDirectoryReleaseCmd(paymentsOpts);
+          return;
+        }
+        process.exitCode = await runPaymentsCreditsDirectoryListCmd(paymentsOpts);
+        return;
+      }
       if (creditsAction === "step-up") {
         const step = rest[1] ?? "show";
         if (step === "enroll") {
@@ -1337,7 +1381,7 @@ async function main(): Promise<void> {
         return;
       }
       console.error(
-        "Usage: clawql payments credits show | bank-link | topup | transfer | step-up enroll|show"
+        "Usage: clawql payments credits show | bank-link | topup | pay | transfer | directory | step-up"
       );
       process.exitCode = 1;
       return;

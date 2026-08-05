@@ -15,6 +15,7 @@ import { ConsumerOffRampService } from "../offramp/consumer-offramp-service.js";
 import { OfframpWebhookService } from "../offramp/offramp-webhook-service.js";
 import { AgentCompensationService } from "../compensation/agent-compensation-service.js";
 import { CreditsService } from "../credits/credits-service.js";
+import { claimHandle, getHandleEntry, listDirectory, resolveRecipient } from "../credits/directory.js";
 import { Ap2MandateService } from "../ap2/ap2-mandate-service.js";
 import { isAp2Enabled } from "../ap2/config.js";
 
@@ -142,7 +143,14 @@ const compensationConfirmSchema = {
 
 /** Safe entry: stage prepaid credit P2P (inert until confirm). */
 const creditsTransferStageSchema = {
-  toTenantId: z.string().describe("Recipient ClawQL tenant id"),
+  toTenantId: z
+    .string()
+    .optional()
+    .describe("Recipient ClawQL tenant id (use toHandle for @payee)"),
+  toHandle: z
+    .string()
+    .optional()
+    .describe("Recipient @handle from payments directory (e.g. @bob)"),
   amountUsd: z.number().positive().describe("Amount in USD to transfer from prepaid credits"),
   fromTenantId: z
     .string()
@@ -151,6 +159,16 @@ const creditsTransferStageSchema = {
   idempotencyKey: z.string().optional().describe("Replay-safe transfer key"),
   note: z.string().optional(),
   mandateJwt: z.string().optional(),
+};
+
+const creditsDirectoryClaimSchema = {
+  handle: z.string().describe("Handle to claim (with or without @)"),
+  tenantId: z.string().optional().describe("Tenant that owns the handle"),
+  displayName: z.string().optional(),
+};
+
+const creditsDirectoryResolveSchema = {
+  handle: z.string().describe("Handle to resolve (e.g. @alice)"),
 };
 
 /** High-impact: confirm staged P2P transfer (+ optional TOTP). */
@@ -307,13 +325,50 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
         });
 
         yield* api.registerMcpTool({
+          name: "payments_credits_directory_claim",
+          description:
+            "Claim a Venmo-style @handle for a tenant in the payments directory (alias → tenantId).",
+          schema: creditsDirectoryClaimSchema,
+          handler: async (args) => {
+            const a = args as { handle: string; tenantId?: string; displayName?: string };
+            const result = await claimHandle({
+              handle: a.handle,
+              tenantId: a.tenantId?.trim() || "default",
+              displayName: a.displayName,
+            });
+            return textResult(result);
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_directory_resolve",
+          description: "Resolve an @handle (or payee string) to a tenant id via the payments directory.",
+          schema: creditsDirectoryResolveSchema,
+          handler: async (args) => {
+            const a = args as { handle: string };
+            const entry = await getHandleEntry(a.handle);
+            if (entry) return textResult(entry);
+            const resolved = await resolveRecipient(a.handle);
+            return textResult(resolved);
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_directory_list",
+          description: "List claimed @handles in the payments directory.",
+          schema: {},
+          handler: async () => textResult({ handles: await listDirectory() }),
+        });
+
+        yield* api.registerMcpTool({
           name: "payments_credits_transfer_stage",
           description:
-            "Safe entry point: stage a prepaid credit P2P transfer. Inert until payments_credits_transfer_confirm — does not move balances.",
+            "Safe entry point: stage a prepaid credit P2P transfer. Prefer toHandle (@bob) for Venmo-style pay. Inert until payments_credits_transfer_confirm.",
           schema: creditsTransferStageSchema,
           handler: async (args) => {
             const a = args as {
-              toTenantId: string;
+              toTenantId?: string;
+              toHandle?: string;
               amountUsd: number;
               fromTenantId?: string;
               idempotencyKey?: string;
@@ -321,12 +376,21 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               mandateJwt?: string;
             };
             await assertAp2IfRequired(env, a.mandateJwt);
+            let toTenantId = a.toTenantId?.trim();
+            let toHandle: string | undefined;
+            if (a.toHandle?.trim()) {
+              const resolved = await resolveRecipient(a.toHandle, env, { forceHandle: true });
+              toTenantId = resolved.tenantId;
+              toHandle = resolved.handle;
+            } else if (!toTenantId) {
+              throw new Error("Provide toHandle (@bob) or toTenantId");
+            }
             const result = await runPaymentsEffect(
               Effect.gen(function* () {
                 const credits = yield* CreditsService;
                 return yield* credits.stageTransfer({
                   fromTenantId: a.fromTenantId?.trim() || "default",
-                  toTenantId: a.toTenantId,
+                  toTenantId: toTenantId!,
                   amountCents: Math.round(a.amountUsd * 100),
                   idempotencyKey: a.idempotencyKey,
                   note: a.note,
@@ -336,6 +400,7 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             );
             return textResult({
               ...result,
+              toHandle,
               next: "High-impact next step: call payments_credits_transfer_confirm with actionId + code (+ totp if required).",
             });
           },

@@ -64,10 +64,14 @@ clawql payments credits topup --customer cus_xxx --amount 25
 # live:
 # clawql payments credits topup --customer cus_xxx --amount 25 --payment-method pm_xxx
 
-# P2P: stage then confirm (confirmation code = step-up; optional TOTP)
-clawql payments credits transfer --to-tenant bob --amount 10
+# Claim @handles, then pay (stages by default)
+clawql payments credits directory claim --handle bob --tenant-id bob
+clawql payments credits pay --to @bob --amount 10 --note coffee
 # → prints action_id + confirmation_code (balances unchanged)
 clawql payments credits transfer --confirm --action-id <uuid> --code <hex>
+
+# Or explicit tenant id
+clawql payments credits transfer --to-tenant bob --amount 10
 
 # Optional authenticator TOTP on confirm
 clawql payments credits step-up enroll --tenant-id alice --show-secrets
@@ -79,8 +83,11 @@ clawql payments credits transfer --confirm --action-id <uuid> --code <hex> --tot
 
 Transfers are **high-impact**. Default path is DAOS-style **2PC** (stage → confirm). Money does not move until confirm.
 
+Payees can be **`@handles`** ([consumer roadmap](./p2p-consumer-roadmap.md)) or raw tenant ids.
+
 | Property    | Behavior                                                                                  |
 | ----------- | ----------------------------------------------------------------------------------------- |
+| Addressing  | `@handle` via `directory.json`, or `--to-tenant`                                          |
 | Scope       | Tenant ↔ tenant prepaid credits (not Stripe Connect / USDC chain send)                    |
 | Staging     | Default — `stageTransfer` returns `action_id` + `confirmation_code`                       |
 | Confirm     | `confirmTransfer` with code; optional TOTP when `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1`  |
@@ -88,17 +95,19 @@ Transfers are **high-impact**. Default path is DAOS-style **2PC** (stage → con
 | Overdraft   | Rejected — sender must have spendable grant balance                                       |
 | Idempotency | Optional `--idempotency-key` on the execute leg                                           |
 | WORM        | `CREDIT_TRANSFER_SENT` + `CREDIT_TRANSFER_RECEIVED` (accounting category `peer_transfer`) |
-| MCP         | `payments_credits_transfer_stage` + `payments_credits_transfer_confirm`                   |
+| MCP         | `payments_credits_directory_*` + `payments_credits_transfer_stage` / `_confirm`           |
 
 ```mermaid
 sequenceDiagram
   participant A as Tenant A
-  participant CLI as credits transfer
+  participant CLI as credits pay
+  participant Dir as directory.json
   participant Pend as pending-actions
   participant Ledger as credits-ledger.json
   participant WORM as payment audit
 
-  A->>CLI: transfer --to-tenant B --amount 10
+  A->>CLI: pay --to @bob --amount 10
+  CLI->>Dir: resolve @bob → tenant
   CLI->>Pend: stage (inert) + confirmation_code
   CLI-->>A: action_id + code
   A->>CLI: transfer --confirm --action-id --code [--totp]
@@ -120,6 +129,7 @@ Platform liability is unchanged (credits move between tenants). Withdraw to bank
 ## Storage
 
 - Ledger: `$CLAWQL_HOME/Payments/credits-ledger.json` (append-only entries, USD cents)
+- Directory: `$CLAWQL_HOME/Payments/directory.json` (`@handle` → tenantId; mode `0600`)
 - WORM kinds: `BANK_LINKED`, `CREDIT_TOPUP_PENDING`, `CREDIT_TOPUP_SETTLED`, `CREDIT_TOPUP_FAILED`, `CREDIT_DEBITED`, `CREDIT_TRANSFER_SENT`, `CREDIT_TRANSFER_RECEIVED`
 
 ## Effect services
@@ -131,9 +141,9 @@ Wired into `paymentsServicesLiveLayer()`. Discovery advertises `type: "credits"`
 
 ## Follow-ups
 
+- Request money + activity feed + QR deep links ([consumer roadmap](./p2p-consumer-roadmap.md))
 - Hosted checkout / Billing Portal bank payment method UX
 - Optional direct Plaid Link only if product needs non-Stripe bank data
 - Valkey Lua hot counter + Postgres durable grants (same DeductionService API)
-- Directory / handle resolution (`@user` → tenant id) outside the ledger
 
 Inference debit/hold is implemented via [`DeductionService`](./deduction-service.md) (`CLAWQL_CREDITS_ENFORCE_INFERENCE`).

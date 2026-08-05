@@ -39,7 +39,7 @@ It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is ava
 | **Ramp** agent virtual / agentic cards                          | ✅     | `RampService` — vault path + native `cards:read_agentic` when enabled                                                                           |
 | **Consumer off-ramp** (Moonpay / Transak)                       | ✅     | Sessions + `OfframpWebhookService` completion settle                                                                                            |
 | **Payments MCP tools** (payout / ramp / offramp / compensation) | ✅     | `CLAWQL_PAYMENTS_MCP_TOOLS=1`; optional AP2 gate; includes `agent_compensation_*`                                                               |
-| **Prepaid credits + bank top-up + P2P transfer**                | ✅     | Grant ledger + FC/ACH top-up + tenant↔tenant `transfer`; sync [`DeductionService`](./deduction-service.md) — [credits-ach.md](./credits-ach.md) |
+| **Prepaid credits + bank top-up + P2P transfer**                | ✅     | Grant ledger + FC/ACH top-up + `@handle` / tenant transfer; sync [`DeductionService`](./deduction-service.md) — [credits-ach.md](./credits-ach.md) / [p2p-consumer-roadmap.md](./p2p-consumer-roadmap.md) |
 | **Agent compensation** (credits + 2PC cash-out)                 | ✅     | `AgentCompensationService` — stage/confirm MCP + FAILED WORM; reuses `PayoutService`                                                            |
 | **Accounting export + tax evidence**                            | ✅     | Subledger CSV/JSON/QB/Xero; `TaxProfileService` gate; year-end pack — [accounting-and-tax.md](./accounting-and-tax.md)                          |
 
@@ -389,8 +389,9 @@ See [credits-ach.md](./credits-ach.md) and [deduction-service.md](./deduction-se
 ```bash
 export CLAWQL_CREDITS_ENABLED=1
 clawql payments credits show
-# P2P stages by default — confirm with code (+ optional TOTP)
-clawql payments credits transfer --to-tenant other-tenant --amount 10
+# P2P: pay @handle (stages) — confirm with code (+ optional TOTP)
+clawql payments credits directory claim --handle bob --tenant-id other-tenant
+clawql payments credits pay --to @bob --amount 10
 clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
 clawql payments credits step-up enroll   # optional authenticator
 export CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1

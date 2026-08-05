@@ -66,12 +66,18 @@ export {
   runPaymentsCreditsBankLink,
   runPaymentsCreditsTopup,
   runPaymentsCreditsTransfer,
+  runPaymentsCreditsPay,
+  runPaymentsCreditsDirectoryClaim,
+  runPaymentsCreditsDirectoryShow,
+  runPaymentsCreditsDirectoryList,
+  runPaymentsCreditsDirectoryRelease,
   runPaymentsCreditsStepUpEnroll,
   runPaymentsCreditsStepUpShow,
   type PaymentsCreditsShowOptions,
   type PaymentsCreditsBankLinkOptions,
   type PaymentsCreditsTopupOptions,
   type PaymentsCreditsTransferOptions,
+  type PaymentsCreditsDirectoryOptions,
   type PaymentsCreditsStepUpOptions,
 } from "./credits.js";
 export {

@@ -7,6 +7,13 @@ import {
   isCreditsTransferTotpRequired,
 } from "../credits/config.js";
 import { enrollStepUpTotp, getStepUpEnrollment } from "../credits/step-up.js";
+import {
+  claimHandle,
+  getHandleEntry,
+  listDirectory,
+  releaseHandle,
+  resolveRecipient,
+} from "../credits/directory.js";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
 import { loadPaymentsConfig } from "../config/store.js";
 
@@ -30,6 +37,13 @@ export type PaymentsCreditsTopupOptions = {
 export type PaymentsCreditsTransferOptions = {
   fromTenantId?: string;
   toTenantId?: string;
+  /** @handle or bare handle — resolved via payments directory. */
+  toHandle?: string;
+  /**
+   * Venmo-style payee: `@bob`, handle, or tenant id.
+   * Prefer this for `pay`; `--to-tenant` remains explicit.
+   */
+  payTo?: string;
   amountUsd?: number;
   idempotencyKey?: string;
   correlationId?: string;
@@ -41,6 +55,13 @@ export type PaymentsCreditsTransferOptions = {
   totp?: string;
   /** Force immediate execute (also requires CLAWQL_CREDITS_TRANSFER_DIRECT=1). */
   direct?: boolean;
+  json?: boolean;
+};
+
+export type PaymentsCreditsDirectoryOptions = {
+  handle?: string;
+  tenantId?: string;
+  displayName?: string;
   json?: boolean;
 };
 
@@ -197,11 +218,28 @@ export async function runPaymentsCreditsTransfer(
 
   const config = await loadPaymentsConfig();
   const fromTenantId = options.fromTenantId?.trim() || config.tenantId || "default";
-  const toTenantId = options.toTenantId?.trim();
   const amountUsd = options.amountUsd;
+
+  let toTenantId = options.toTenantId?.trim();
+  let resolvedHandle: string | undefined;
+  const payee = options.toHandle?.trim() || options.payTo?.trim();
+  if (payee) {
+    try {
+      const resolved = await resolveRecipient(payee, process.env, {
+        forceHandle: Boolean(options.toHandle?.trim()) || payee.startsWith("@"),
+      });
+      toTenantId = resolved.tenantId;
+      resolvedHandle = resolved.handle;
+    } catch (err) {
+      console.error(formatErr(err));
+      return 1;
+    }
+  }
+
   if (!toTenantId || amountUsd === undefined || !Number.isFinite(amountUsd) || amountUsd <= 0) {
     console.error(
-      "Usage: clawql payments credits transfer --to-tenant <tenantId> --amount 10 [--from-tenant <tenantId>]\n" +
+      "Usage: clawql payments credits pay --to @bob --amount 10\n" +
+        "       clawql payments credits transfer --to-tenant <tenantId> --amount 10\n" +
         "       clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]"
     );
     return 1;
@@ -209,6 +247,7 @@ export async function runPaymentsCreditsTransfer(
 
   const amountCents = Math.round(amountUsd * 100);
   const shouldStage = creditsTransferShouldStage() && !options.direct;
+  const payeeLabel = resolvedHandle ? `@${resolvedHandle}` : toTenantId;
 
   try {
     if (!shouldStage) {
@@ -232,11 +271,11 @@ export async function runPaymentsCreditsTransfer(
         })
       );
       if (options.json) {
-        console.log(JSON.stringify(result, null, 2));
+        console.log(JSON.stringify({ ...result, toHandle: resolvedHandle }, null, 2));
         return 0;
       }
       console.log(
-        `Transferred $${(result.amountCents / 100).toFixed(2)} ${result.fromTenantId} → ${result.toTenantId}`
+        `Transferred $${(result.amountCents / 100).toFixed(2)} ${result.fromTenantId} → ${payeeLabel}`
       );
       console.log(`Transfer id: ${result.transferId}`);
       return 0;
@@ -256,11 +295,11 @@ export async function runPaymentsCreditsTransfer(
       })
     );
     if (options.json) {
-      console.log(JSON.stringify(staged, null, 2));
+      console.log(JSON.stringify({ ...staged, toHandle: resolvedHandle }, null, 2));
       return 0;
     }
     console.log(
-      `Staged transfer $${staged.amountUsd.toFixed(2)} ${staged.fromTenantId} → ${staged.toTenantId}`
+      `Staged transfer $${staged.amountUsd.toFixed(2)} ${staged.fromTenantId} → ${payeeLabel}`
     );
     console.log(`action_id: ${staged.actionId}`);
     console.log(`confirmation_code: ${staged.confirmationCode}`);
@@ -276,6 +315,118 @@ export async function runPaymentsCreditsTransfer(
     console.error(formatErr(err));
     return 1;
   }
+}
+
+export async function runPaymentsCreditsDirectoryClaim(
+  options: PaymentsCreditsDirectoryOptions = {}
+): Promise<number> {
+  const config = await loadPaymentsConfig();
+  const handle = options.handle?.trim();
+  const tenantId = options.tenantId?.trim() || config.tenantId || "default";
+  if (!handle) {
+    console.error(
+      "Usage: clawql payments credits directory claim --handle alice [--tenant-id …] [--name …]"
+    );
+    return 1;
+  }
+  try {
+    const { entry, created } = await claimHandle({
+      handle,
+      tenantId,
+      displayName: options.displayName,
+    });
+    if (options.json) {
+      console.log(JSON.stringify({ entry, created }, null, 2));
+      return 0;
+    }
+    console.log(
+      created
+        ? `Claimed @${entry.handle} → tenant ${entry.tenantId}`
+        : `Updated @${entry.handle} → tenant ${entry.tenantId}`
+    );
+    if (entry.displayName) console.log(`Display name: ${entry.displayName}`);
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
+}
+
+export async function runPaymentsCreditsDirectoryShow(
+  options: PaymentsCreditsDirectoryOptions = {}
+): Promise<number> {
+  const handle = options.handle?.trim();
+  if (!handle) {
+    console.error("Usage: clawql payments credits directory show --handle @alice");
+    return 1;
+  }
+  try {
+    const entry = await getHandleEntry(handle);
+    if (!entry) {
+      console.error(`No directory entry for @${handle.replace(/^@+/, "")}`);
+      return 1;
+    }
+    if (options.json) {
+      console.log(JSON.stringify(entry, null, 2));
+      return 0;
+    }
+    console.log(`@${entry.handle} → ${entry.tenantId}`);
+    if (entry.displayName) console.log(`Display name: ${entry.displayName}`);
+    console.log(`Claimed: ${entry.claimedAt}`);
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
+}
+
+export async function runPaymentsCreditsDirectoryList(
+  options: PaymentsCreditsDirectoryOptions = {}
+): Promise<number> {
+  const entries = await listDirectory();
+  if (options.json) {
+    console.log(JSON.stringify(entries, null, 2));
+    return 0;
+  }
+  if (entries.length === 0) {
+    console.log("No handles claimed yet.");
+    return 0;
+  }
+  for (const e of entries) {
+    console.log(
+      `@${e.handle.padEnd(16)} ${e.tenantId}${e.displayName ? `  (${e.displayName})` : ""}`
+    );
+  }
+  return 0;
+}
+
+export async function runPaymentsCreditsDirectoryRelease(
+  options: PaymentsCreditsDirectoryOptions = {}
+): Promise<number> {
+  const handle = options.handle?.trim();
+  if (!handle) {
+    console.error("Usage: clawql payments credits directory release --handle @alice");
+    return 1;
+  }
+  try {
+    const ok = await releaseHandle(handle);
+    if (!ok) {
+      console.error(`No directory entry for ${handle}`);
+      return 1;
+    }
+    console.log(`Released ${handle.startsWith("@") ? handle : `@${handle}`}`);
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
+}
+
+/** Alias: Venmo-style pay → same staging path as transfer. */
+export async function runPaymentsCreditsPay(
+  options: PaymentsCreditsTransferOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsTransfer(options);
 }
 
 export async function runPaymentsCreditsStepUpEnroll(
