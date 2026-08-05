@@ -109,11 +109,12 @@ sequenceDiagram
 
 ### Step-up / 2FA model
 
-ClawQL is not an IdP — phishing-resistant MFA for human SSO stays a **customer** concern. For prepaid P2P:
+ClawQL is not an IdP — phishing-resistant MFA for human SSO stays a **customer** concern ([`clawql-auth` OIDC consumer](../security/clawql-auth-oidc-stepup.md)). For prepaid P2P:
 
 1. **Confirmation code** (always, unless `CLAWQL_CREDITS_TRANSFER_DIRECT=1`) — second factor for CLI/MCP/agent flows
-2. **Optional TOTP** — enroll via `credits step-up enroll`; gate with `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1`
+2. **Optional TOTP** — shared `clawql-auth` primitives; enroll via `credits step-up enroll`; gate with `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1`
 3. Secrets live in `$CLAWQL_HOME/Payments/step-up-totp.json` (mode `0600`) — **never** in the payment WORM
+4. Optional gateway gate: `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL=1` requires IdP `acr`/`amr` MFA-class claims for financial tools
 
 Platform liability is unchanged (credits move between tenants). Withdraw to bank/USDC remains via [payouts / off-ramp](./payouts-ramp.md).
 

@@ -51,23 +51,25 @@ For `clawql-mcp-http`, Docker, Kubernetes, or Cloud Run, configure your client w
   serves **`/mcp`**, **`/healthz`**, and **`/graphql`** on the same server.
 </Note>
 
-## Gateway API key auth
+## Gateway auth
 
-HTTP MCP can enforce an API key on **`/mcp`** routes via **`clawql-auth`**. Upstream provider credentials (AWS SigV4, env JSON) live in the same package.
+HTTP MCP enforces credentials on **`/mcp`** routes via **`clawql-auth`**. Upstream provider credentials (AWS SigV4, env JSON) live in the same package. **ClawQL is not an IdP** — `oidc` mode verifies customer-issued JWTs.
 
 ```bash
 export CLAWQL_AUTH_MODE=apiKey
 export CLAWQL_API_KEY="your-long-random-secret"
+# Or: CLAWQL_AUTH_MODE=oidc + CLAWQL_AUTH_OIDC_JWKS_URL=…
 ```
 
-Clients must send **`Authorization: Bearer <CLAWQL_API_KEY>`** (or **`X-API-Key`**) on Streamable HTTP MCP requests.
+Clients must send **`Authorization: Bearer <token>`** (API key or IdP JWT) or **`X-API-Key`** on Streamable HTTP MCP requests.
 
-| `CLAWQL_AUTH_MODE` | Behavior                          |
-| ------------------ | --------------------------------- |
-| `noAuth` (default) | No gateway key check on MCP HTTP  |
-| `apiKey`           | Reject MCP HTTP without valid key |
+| `CLAWQL_AUTH_MODE` | Behavior |
+| ------------------ | -------- |
+| `noAuth` (default) | No gateway key check on MCP HTTP |
+| `apiKey` | Reject MCP HTTP without valid key / virtual key |
+| `oidc` | Verify Bearer JWT (JWKS / PEM) → ATR claims |
 
-OIDC/SAML login flows and RBAC/ABAC are **roadmap** — see [`packages/clawql-auth/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-auth/README.md) and `.env.example` (`CLAWQL_AUTH_*`).
+Shared TOTP step-up and MFA policy for financial tools: [`docs/security/clawql-auth-oidc-stepup.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-auth-oidc-stepup.md). SAML/LDAP client modes and full RBAC/ABAC remain **roadmap**.
 
 ## Presidio redaction
 

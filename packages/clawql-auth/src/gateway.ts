@@ -1,10 +1,17 @@
 /**
- * Gateway authentication modes and ATR claim resolution (Phase 1).
+ * Gateway authentication modes and ATR claim resolution.
+ * Modes: noAuth | apiKey | oidc (JWT consumer — ClawQL is not an IdP).
  */
 
 import { timingSafeEqual } from "node:crypto";
 
-export type AuthMode = "noAuth" | "apiKey";
+import {
+  loadOidcAuthConfig,
+  resolveOidcAtrClaimsFromHeaders,
+  type OidcAuthConfig,
+} from "./oidc.js";
+
+export type AuthMode = "noAuth" | "apiKey" | "oidc";
 
 function apiKeysEqual(presented: string, expected: string): boolean {
   const a = Buffer.from(presented, "utf8");
@@ -25,6 +32,13 @@ export type AtrClaims = {
   verticals?: string[];
   /** Present when auth succeeded via an inference virtual key. */
   virtualKeyId?: string;
+  /**
+   * Authentication Context Class Reference from the IdP (OIDC `acr`).
+   * Used by policy hooks (e.g. require MFA for financial tools).
+   */
+  acr?: string;
+  /** Authentication Methods References from the IdP (OIDC `amr`). */
+  amr?: string[];
 };
 
 /**
@@ -42,18 +56,25 @@ export type GatewayAuthConfig = {
   apiKey?: string;
   /** Tried when presented key does not match static `apiKey` (or apiKey is unset). */
   apiKeyClaimsResolver?: ApiKeyClaimsResolver;
+  /** OIDC / JWT verify settings when mode is `oidc`. */
+  oidc?: OidcAuthConfig;
 };
 
-export function resolveAuthMode(): AuthMode {
-  const raw = process.env.CLAWQL_AUTH_MODE?.trim().toLowerCase();
+export function resolveAuthMode(env: NodeJS.ProcessEnv = process.env): AuthMode {
+  const raw = env.CLAWQL_AUTH_MODE?.trim().toLowerCase();
   if (raw === "apikey" || raw === "api_key" || raw === "api-key") return "apiKey";
+  if (raw === "oidc" || raw === "oauth2") return "oidc";
   return "noAuth";
 }
 
-export function loadGatewayAuthConfig(): GatewayAuthConfig {
-  const mode = resolveAuthMode();
-  const apiKey = process.env.CLAWQL_API_KEY?.trim();
-  return { mode, apiKey: apiKey || undefined };
+export function loadGatewayAuthConfig(env: NodeJS.ProcessEnv = process.env): GatewayAuthConfig {
+  const mode = resolveAuthMode(env);
+  const apiKey = env.CLAWQL_API_KEY?.trim();
+  return {
+    mode,
+    apiKey: apiKey || undefined,
+    oidc: mode === "oidc" ? loadOidcAuthConfig(env) : undefined,
+  };
 }
 
 /** Permissive default when gateway auth is noAuth (modularization §4.3). */
@@ -74,12 +95,21 @@ function headerValue(headers: AuthHeaderSource, name: string): string | undefine
 }
 
 /**
- * Validate incoming MCP/HTTP credentials and produce ATR-shaped claims for the gateway.
+ * Sync claim resolution for `noAuth` / `apiKey`.
+ * For `oidc`, returns an error directing callers to {@link resolveAtrClaimsFromHeadersAsync}.
  */
 export function resolveAtrClaimsFromHeaders(
   headers: AuthHeaderSource = {},
   config: GatewayAuthConfig = loadGatewayAuthConfig()
 ): { ok: true; claims: AtrClaims } | { ok: false; error: string } {
+  if (config.mode === "oidc") {
+    return {
+      ok: false,
+      error:
+        "CLAWQL_AUTH_MODE=oidc requires async JWT verification — use resolveAtrClaimsFromHeadersAsync",
+    };
+  }
+
   if (config.mode === "noAuth") {
     const sub = headerValue(headers, "x-clawql-subject") ?? "local";
     return { ok: true, claims: defaultAdminAtrClaims(sub) };
@@ -122,8 +152,32 @@ export function resolveAtrClaimsFromHeaders(
   return { ok: false, error: "Invalid or missing API key" };
 }
 
+/**
+ * Async claim resolution — supports `oidc` JWT verify plus sync modes.
+ */
+export async function resolveAtrClaimsFromHeadersAsync(
+  headers: AuthHeaderSource = {},
+  config: GatewayAuthConfig = loadGatewayAuthConfig()
+): Promise<{ ok: true; claims: AtrClaims } | { ok: false; error: string }> {
+  if (config.mode === "oidc") {
+    return resolveOidcAtrClaimsFromHeaders(headers, config.oidc ?? loadOidcAuthConfig());
+  }
+  return resolveAtrClaimsFromHeaders(headers, config);
+}
+
 export function assertGatewayAuth(headers: AuthHeaderSource = {}): AtrClaims {
   const result = resolveAtrClaimsFromHeaders(headers);
+  if (!result.ok) {
+    throw new Error(result.error);
+  }
+  return result.claims;
+}
+
+export async function assertGatewayAuthAsync(
+  headers: AuthHeaderSource = {},
+  config?: GatewayAuthConfig
+): Promise<AtrClaims> {
+  const result = await resolveAtrClaimsFromHeadersAsync(headers, config);
   if (!result.ok) {
     throw new Error(result.error);
   }

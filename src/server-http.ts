@@ -46,7 +46,7 @@ import { handleLangfuseEvalWebhookRequest } from "./langfuse-eval-webhook.js";
 import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
 import {
   loadGatewayAuthConfig,
-  resolveAtrClaimsFromHeaders,
+  resolveAtrClaimsFromHeadersAsync,
   type ApiKeyClaimsResolver,
   type GatewayAuthConfig,
 } from "clawql-auth";
@@ -89,7 +89,7 @@ export function createInferenceVirtualKeyClaimsResolver(
 }
 
 function buildGatewayAuthConfig(env: NodeJS.ProcessEnv = process.env): GatewayAuthConfig {
-  const config = loadGatewayAuthConfig();
+  const config = loadGatewayAuthConfig(env);
   if (config.mode !== "apiKey") return config;
   return {
     ...config,
@@ -223,21 +223,26 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });
   }
 
-  /** Gateway auth: static CLAWQL_API_KEY and/or inference virtual keys when `CLAWQL_AUTH_MODE=apiKey`. */
+  /**
+   * Gateway auth: `noAuth` | `apiKey` (static + inference VKs) | `oidc` (JWT consumer).
+   * OIDC verifies IdP-issued bearer tokens asynchronously — ClawQL is not an IdP.
+   */
   const gatewayAuthConfig = buildGatewayAuthConfig();
   function applyGatewayAuth(
     req: import("express").Request,
     res: import("express").Response,
     next: import("express").NextFunction
   ): void {
-    const result = resolveAtrClaimsFromHeaders(req.headers, gatewayAuthConfig);
-    if (!result.ok) {
-      res.status(401).json({ error: result.error });
-      return;
-    }
-    (req as import("express").Request & { clawqlClaims?: typeof result.claims }).clawqlClaims =
-      result.claims;
-    next();
+    void (async () => {
+      const result = await resolveAtrClaimsFromHeadersAsync(req.headers, gatewayAuthConfig);
+      if (!result.ok) {
+        res.status(401).json({ error: result.error });
+        return;
+      }
+      (req as import("express").Request & { clawqlClaims?: typeof result.claims }).clawqlClaims =
+        result.claims;
+      next();
+    })();
   }
 
   if (!options.skipGraphqlAttach) {
