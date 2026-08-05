@@ -56,16 +56,16 @@ OpenBenchTrace is the **outer** benchmark envelope. The Reasoning Trace Protocol
 (RTP) is the **inner** reasoning structure. They compose: a publishable
 OpenBenchTrace record should wrap an RTP-compatible session.
 
-| OpenBenchTrace field(s) | RTP counterpart |
-| ----------------------- | --------------- |
-| Task prompt / first user message | Intent (`rawPrompt`, `parsedGoal`) |
-| `memory_recall` / `search` (and similar) in `tool_calls` | Retrieval |
-| Assistant reasoning before tool selection | Reasoning (`seedChain`, `selectedTool`) |
-| `tool_calls[]` | Execution (`toolName`, payload) |
-| Pre/post state hashes (when present) | Delta |
-| `verdict` + `verdict_source: grader` | Verdict (`evaluatorTier` 1 = deterministic grader, 2 = semantic) |
-| `content_hash` / Merkle batch chain | RTP turn hash chaining |
-| (planned) job-start consent JWT | `consentToken` (`community_model`, `dataset_licensing`) |
+| OpenBenchTrace field(s)                                  | RTP counterpart                                                  |
+| -------------------------------------------------------- | ---------------------------------------------------------------- |
+| Task prompt / first user message                         | Intent (`rawPrompt`, `parsedGoal`)                               |
+| `memory_recall` / `search` (and similar) in `tool_calls` | Retrieval                                                        |
+| Assistant reasoning before tool selection                | Reasoning (`seedChain`, `selectedTool`)                          |
+| `tool_calls[]`                                           | Execution (`toolName`, payload)                                  |
+| Pre/post state hashes (when present)                     | Delta                                                            |
+| `verdict` + `verdict_source: grader`                     | Verdict (`evaluatorTier` 1 = deterministic grader, 2 = semantic) |
+| `content_hash` / Merkle batch chain                      | RTP turn hash chaining                                           |
+| (planned) job-start consent JWT                          | `consentToken` (`community_model`, `dataset_licensing`)          |
 
 v1.0 today stores OpenAI-shaped `messages` + `tool_calls` without an explicit
 `turnSequence` object. Prefer writers that can project those fields into RTP’s

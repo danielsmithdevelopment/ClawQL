@@ -13,14 +13,14 @@
 
 ### Open-source protocol (ship / contribute now)
 
-| Piece        | Name                                                                   | Role                                             |
-| ------------ | ---------------------------------------------------------------------- | ------------------------------------------------ |
-| Schema       | **OpenBenchTrace** v1.0                                                | Stable, citable session/trial record (outer envelope) |
-| Inner structure | **RTP** (Reasoning Trace Protocol)                                  | Domain-agnostic six-node reasoning; OpenBenchTrace wraps it |
-| Package      | **`openbench-dataset`**                                                | Writer, backends, scrub, export CLI              |
-| CLI          | `openbench-dataset export` (ClawQL today; `openbench export` upstream) | HF-ready JSONL + dataset card                    |
-| Manifest     | WORM batch manifest                                                    | Provenance: scrub policy, hashes, schema version |
-| Distribution | GHA composite `openbench-dataset/collect`                              | Three-line drop-in for any CI                    |
+| Piece           | Name                                                                   | Role                                                        |
+| --------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Schema          | **OpenBenchTrace** v1.0                                                | Stable, citable session/trial record (outer envelope)       |
+| Inner structure | **RTP** (Reasoning Trace Protocol)                                     | Domain-agnostic six-node reasoning; OpenBenchTrace wraps it |
+| Package         | **`openbench-dataset`**                                                | Writer, backends, scrub, export CLI                         |
+| CLI             | `openbench-dataset export` (ClawQL today; `openbench export` upstream) | HF-ready JSONL + dataset card                               |
+| Manifest        | WORM batch manifest                                                    | Provenance: scrub policy, hashes, schema version            |
+| Distribution    | GHA composite `openbench-dataset/collect`                              | Three-line drop-in for any CI                               |
 
 Anyone running OpenBench-compatible agent benchmarks can emit interoperable training data. Other frameworks can implement the schema without ClawQL.
 

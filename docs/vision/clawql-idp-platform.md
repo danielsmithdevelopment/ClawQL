@@ -539,21 +539,21 @@ Infrastructure timeouts (OpenCode hang, no tools) are noise, not claim failures.
 
 OpenBenchTrace and RTP solve adjacent problems and compose rather than compete.
 
-| Layer | Role |
-| ----- | ---- |
-| **OpenBenchTrace** | Collection / publish envelope — run_id, arm, task_id, grader verdict, spend caps, clawql_version, scrub provenance, Hugging Face–citable batch |
-| **RTP** | Domain-agnostic reasoning schema — Intent → Retrieval → Reasoning → Execution → Delta → Verdict, with consent provenance and turn hash chaining |
+| Layer              | Role                                                                                                                                            |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **OpenBenchTrace** | Collection / publish envelope — run_id, arm, task_id, grader verdict, spend caps, clawql_version, scrub provenance, Hugging Face–citable batch  |
+| **RTP**            | Domain-agnostic reasoning schema — Intent → Retrieval → Reasoning → Execution → Delta → Verdict, with consent provenance and turn hash chaining |
 
 Every passing OpenBench trial should also be a valid RTP session: OpenBenchTrace wraps RTP. Outer fields carry benchmark metadata RTP need not know about; inner agent behavior maps to RTP’s six-node sequence:
 
-| Agent step | RTP node | Notes |
-| ---------- | -------- | ----- |
-| Task prompt | Intent | rawPrompt + parsedGoal |
-| memory_recall / search | Retrieval | queries + sources |
-| Pre-tool chain | Reasoning | seedChain + selectedTool |
-| Tool call | Execution | toolName + payload |
-| State change | Delta | stateBeforeHash / stateAfterHash |
-| OpenBench grader | Verdict | Tier 1 deterministic (e.g. policy-deny) or Tier 2 semantic |
+| Agent step             | RTP node  | Notes                                                      |
+| ---------------------- | --------- | ---------------------------------------------------------- |
+| Task prompt            | Intent    | rawPrompt + parsedGoal                                     |
+| memory_recall / search | Retrieval | queries + sources                                          |
+| Pre-tool chain         | Reasoning | seedChain + selectedTool                                   |
+| Tool call              | Execution | toolName + payload                                         |
+| State change           | Delta     | stateBeforeHash / stateAfterHash                           |
+| OpenBench grader       | Verdict   | Tier 1 deterministic (e.g. policy-deny) or Tier 2 semantic |
 
 Practical design rule: serialize `messages` / `tool_calls` into an RTP-compatible `turnSequence`; map grader → RTP verdict; Merkle / content hashes ↔ RTP turn chaining. Publish as OpenBenchTrace (narrow, OpenBench-specific) and as RTP-compatible traces (broad, any fine-tune pipeline).
 
