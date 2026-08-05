@@ -54,7 +54,7 @@ function directoryLabel(entry: DirectoryEntry | undefined, tenantId: string): st
   return tenantId;
 }
 
-function selfLabel(entry: DirectoryEntry | undefined, tenantId: string): string | undefined {
+function selfLabel(entry: DirectoryEntry | undefined, _tenantId: string): string | undefined {
   if (entry?.handle) return `@${entry.handle}`;
   if (entry?.email) return entry.email;
   return undefined;
