@@ -11,7 +11,8 @@ impact set.
    **`codegraph_explain`** to find the definition of `compute_total` and every
    caller / test that references it.
 3. Rename the function and update **all** dependents (imports, calls, tests).
-4. Write relative path `impact.json` listing every file you changed under `repo/`.
+4. Write relative path `impact.json` **at the workspace root** (same directory as
+   `repo/`, **not** `repo/impact.json`) listing every file you changed under `repo/`.
 
 OpenCode tool names: `clawql_codegraph_index`, `clawql_codegraph_query`,
 `clawql_codegraph_neighbors`, `clawql_codegraph_path`, `clawql_codegraph_explain`.

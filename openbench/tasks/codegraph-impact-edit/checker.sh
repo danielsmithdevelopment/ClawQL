@@ -19,8 +19,13 @@ REQUIRED_REL=(
 cap_fail=0
 pass=0
 
+if [ ! -f impact.json ] && [ -f repo/impact.json ]; then
+  # Cheap models often write the artifact under repo/; normalize to workspace root.
+  cp repo/impact.json impact.json
+fi
+
 if [ ! -f impact.json ]; then
-  echo "FAIL: impact.json missing" >&2
+  echo "FAIL: impact.json missing (expected at workspace root or repo/impact.json)" >&2
   echo "SCORE: 0.0"
   exit 1
 fi

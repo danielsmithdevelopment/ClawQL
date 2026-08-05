@@ -439,11 +439,13 @@ CODEGRAPH_IMPACT_NUDGE = """Continue the codegraph impact rename.
 
 1. Call clawql_codegraph_index with root = repo (relative path).
 2. Call clawql_codegraph_query / neighbors / path for compute_total and every caller.
-3. Rename compute_total → compute_grand_total in definition + ALL callers + test.
-4. write relative filePath impact.json:
+3. Rename compute_total → compute_grand_total in definition + ALL callers + test
+   (api/checkout.py, api/invoice.py, workers/batch.py, reports/summary.py, cli/main.py,
+   tests/test_pricing.py, and core/pricing.py). Use edit replaceAll on each file.
+4. write relative filePath impact.json at WORKSPACE ROOT (NOT repo/impact.json):
    {"old_name":"compute_total","new_name":"compute_grand_total","files":["core/pricing.py","api/checkout.py","api/invoice.py","workers/batch.py","reports/summary.py","cli/main.py","tests/test_pricing.py"],"source":"codegraph"}
 
-Ignore decoy/. Missing any of the 7 files fails. Call codegraph tools now.
+Ignore decoy/. Missing any of the 7 files fails. Call codegraph tools and finish now.
 """
 
 SCHEDULE_NUDGE = """Continue the schedule dry_run task.
@@ -1189,8 +1191,16 @@ def codegraph_incomplete(combined: str, workdir: Path) -> bool:
 def codegraph_impact_incomplete(combined: str, workdir: Path) -> bool:
     if agent_idle(combined):
         return True
-    if not (workdir / "impact.json").is_file():
-        return True
+    impact = workdir / "impact.json"
+    if not impact.is_file():
+        nested = workdir / "repo" / "impact.json"
+        if nested.is_file():
+            try:
+                impact.write_text(nested.read_text(encoding="utf-8"), encoding="utf-8")
+            except OSError:
+                return True
+        else:
+            return True
     pricing = workdir / "repo" / "core" / "pricing.py"
     if not pricing.is_file():
         return True
@@ -1199,6 +1209,14 @@ def codegraph_impact_incomplete(combined: str, workdir: Path) -> bool:
     except OSError:
         return True
     if "def compute_grand_total" not in text or "def compute_total" in text:
+        return True
+    # Any leftover compute_total under repo means the rename is incomplete.
+    try:
+        for path in (workdir / "repo").rglob("*.py"):
+            body = path.read_text(encoding="utf-8")
+            if "compute_total" in body:
+                return True
+    except OSError:
         return True
     tools = real_opencode_tools(combined)
     indexed = bool(tools & {"clawql_codegraph_index", "codegraph_index"})
@@ -1215,6 +1233,8 @@ def codegraph_impact_incomplete(combined: str, workdir: Path) -> bool:
             "codegraph_neighbors",
             "clawql_codegraph_path",
             "codegraph_path",
+            "clawql_codegraph_impact",
+            "codegraph_impact",
         }
     )
     return not queried
