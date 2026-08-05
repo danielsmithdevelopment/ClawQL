@@ -118,11 +118,11 @@ Phase 7  B-1.3 cycle-over-cycle; B-3.2 langs; B-6.3 legal
 
 #### B4.2-0 spike decision (2026-08-05)
 
-| Claim surface                         | Finding                                                                                                                                  | Live OpenBench? |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| MCP `cache` set→overwrite→get         | Overwrite is by-construction fresh (no separate invalidate API). Overlaps `cache-scratch-handoff` (already retired WIN).                 | **No** — park    |
-| Inference semantic `invalidateByTags` | Real product surface, but agent-visible OpenBench A/B is the wrong venue (gateway/inference benches).                                    | **No** — park    |
-| Offline `memory-stale-after-update`   | Local Python read-through cache bugfix (SWE-lite fixture). Valid offline pack; both arms have bash/edit so ClawQL A/B delta is weak. | Offline only     |
+| Claim surface                         | Finding                                                                                                                              | Live OpenBench? |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------- |
+| MCP `cache` set→overwrite→get         | Overwrite is by-construction fresh (no separate invalidate API). Overlaps `cache-scratch-handoff` (already retired WIN).             | **No** — park   |
+| Inference semantic `invalidateByTags` | Real product surface, but agent-visible OpenBench A/B is the wrong venue (gateway/inference benches).                                | **No** — park   |
+| Offline `memory-stale-after-update`   | Local Python read-through cache bugfix (SWE-lite fixture). Valid offline pack; both arms have bash/edit so ClawQL A/B delta is weak. | Offline only    |
 
 **Verdict:** keep offline pack; do **not** activate on `pr_active` as a ClawQL product claim.
 
@@ -222,16 +222,16 @@ Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger,
 
 ## Mapping: suite → first OpenBench task IDs
 
-| Suite | First concrete task ID                    | `pr_active` when?   |
-| ----- | ----------------------------------------- | ------------------- |
-| B-4.1 | `memory-conflict-pricing`                 | ✅ retired WIN      |
-| B-3.1 | `codegraph-impact-edit`                   | ✅ retired WIN      |
+| Suite | First concrete task ID                    | `pr_active` when?     |
+| ----- | ----------------------------------------- | --------------------- |
+| B-4.1 | `memory-conflict-pricing`                 | ✅ retired WIN        |
+| B-3.1 | `codegraph-impact-edit`                   | ✅ retired WIN        |
 | B-4.2 | `memory-stale-after-update`               | Parked (offline only) |
 | B-4.3 | `memory-injection-attempt`                | Live after B4.3-0 ✅  |
-| B-2   | `idp-safe-pipeline-lite`                  | After Phase 1 WINs  |
-| B-1   | reuse retired IDs under FT matrix         | After FT v1         |
-| B-6   | `compliance-mortgage-qa` (custom harness) | After B-1 + corpus  |
-| B-5   | `daos-multiperspective-*`                 | After metric export |
+| B-2   | `idp-safe-pipeline-lite`                  | After Phase 1 WINs    |
+| B-1   | reuse retired IDs under FT matrix         | After FT v1           |
+| B-6   | `compliance-mortgage-qa` (custom harness) | After B-1 + corpus    |
+| B-5   | `daos-multiperspective-*`                 | After metric export   |
 
 ---
 

@@ -3,9 +3,7 @@
   "live_enabled": true,
   "live_pause_reason": "",
   "live_resume_note": "B-4.3 memory-injection-attempt live A/B (Panguard blocks memory_ingest). B-4.2 parked (offline pack only).",
-  "pr_active": [
-    "memory-injection-attempt"
-  ],
+  "pr_active": ["memory-injection-attempt"],
   "pr_trials": 1,
   "retired": {
     "codegraph-impact-edit": {
