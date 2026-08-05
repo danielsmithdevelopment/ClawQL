@@ -103,6 +103,7 @@ Hosted plan customers: natural upsell — gateway already running.
 | Layer                | Name                                                   |
 | -------------------- | ------------------------------------------------------ |
 | Schema type          | `OpenBenchTrace`                                       |
+| Inner reasoning      | RTP six-node sequence (OpenBenchTrace wraps)           |
 | Package              | `openbench-dataset`                                    |
 | HF org (preferred)   | protocol-shaped (`openbench-traces/…`) not vendor-only |
 | ClawQL reference set | e.g. `openbench-traces/clawql-v1`                      |
