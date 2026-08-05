@@ -206,7 +206,7 @@ There are no fixed delivery dates. Priorities are determined by dependency order
 
 ### Phase 4: Community Vertical Ecosystem
 
-**What:** Remaining planned verticals (`clawql-legal`, `clawql-healthcare`, `clawql-insurance`, `clawql-supplychain`, `clawql-government`, `clawql-manufacturing`, `clawql-education`, `clawql-engineering`) plus community-contributed verticals.
+**What:** Remaining planned verticals (`clawql-surveillance`, `clawql-legal`, `clawql-healthcare`, `clawql-insurance`, `clawql-supplychain`, `clawql-government`, `clawql-manufacturing`, `clawql-education`, `clawql-engineering`) plus community-contributed verticals. Spec: [clawql-surveillance](../surveillance/clawql-surveillance.md).
 
 **Why fourth:** Verticals can be built in parallel once the platform is stable and the lending vertical has validated the contribution model. The 12-step checklist and vertical template exist specifically to make this parallelisable.
 
