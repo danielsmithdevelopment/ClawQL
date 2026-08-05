@@ -34,6 +34,8 @@ import {
   runPaymentsCreditsBankLink,
   runPaymentsCreditsTopup,
   runPaymentsCreditsTransfer,
+  runPaymentsCreditsStepUpEnroll,
+  runPaymentsCreditsStepUpShow,
   runPaymentsCompensationBalance,
   runPaymentsCompensationDeposit,
   runPaymentsCompensationCashout,
@@ -72,6 +74,8 @@ export type PaymentsCliOptions = {
   fromTenantId?: string;
   idempotencyKey?: string;
   note?: string;
+  totp?: string;
+  direct?: boolean;
   email?: string;
   name?: string;
   customer?: string;
@@ -430,6 +434,30 @@ export async function runPaymentsCreditsTransferCmd(
     idempotencyKey: options.idempotencyKey,
     correlationId: options.correlationId,
     note: options.note,
+    confirm: options.confirm,
+    actionId: options.actionId,
+    code: options.code,
+    totp: options.totp,
+    direct: options.direct,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsStepUpEnrollCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsStepUpEnroll({
+    tenantId: options.tenantId ?? options.fromTenantId,
+    json: options.json,
+    showSecret: options.showSecrets,
+  });
+}
+
+export async function runPaymentsCreditsStepUpShowCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsStepUpShow({
+    tenantId: options.tenantId ?? options.fromTenantId,
     json: options.json,
   });
 }

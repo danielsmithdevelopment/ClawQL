@@ -95,6 +95,8 @@ import {
   runPaymentsCreditsBankLinkCmd,
   runPaymentsCreditsTopupCmd,
   runPaymentsCreditsTransferCmd,
+  runPaymentsCreditsStepUpEnrollCmd,
+  runPaymentsCreditsStepUpShowCmd,
   runPaymentsCompensationBalanceCmd,
   runPaymentsCompensationDepositCmd,
   runPaymentsCompensationCashoutCmd,
@@ -299,6 +301,8 @@ function parse(argv: string[]): {
     else if (a === "--from-tenant") flags.fromTenantId = argv[++i] ?? "";
     else if (a === "--idempotency-key") flags.idempotencyKey = argv[++i] ?? "";
     else if (a === "--note") flags.note = argv[++i] ?? "";
+    else if (a === "--totp") flags.totp = argv[++i] ?? "";
+    else if (a === "--direct") flags.direct = true;
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
       flags.imageDigest = prev
@@ -390,7 +394,9 @@ Usage:
   clawql payments tax-profile set --party-id ID --tax-form 1099nec|none|unknown [--collected]
   clawql payments tax-profile show [--party-id ID]
   clawql payments credits show | bank-link --customer cus_xxx | topup --customer cus_xxx --amount 25
-  clawql payments credits transfer --to-tenant other-tenant --amount 10 [--from-tenant me] [--idempotency-key KEY]
+  clawql payments credits transfer --to-tenant other-tenant --amount 10   # stages (confirm next)
+  clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
+  clawql payments credits step-up enroll|show [--tenant-id ID] [--show-secrets]
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql claude --non-interactive --model <id> --task-file <path> [--workdir DIR] [--timeout SECS]
   clawql operator status
@@ -1125,6 +1131,8 @@ async function main(): Promise<void> {
       fromTenantId: typeof flags.fromTenantId === "string" ? flags.fromTenantId : undefined,
       idempotencyKey: typeof flags.idempotencyKey === "string" ? flags.idempotencyKey : undefined,
       note: typeof flags.note === "string" ? flags.note : undefined,
+      totp: typeof flags.totp === "string" ? flags.totp : undefined,
+      direct: Boolean(flags.direct),
     };
 
     if (subcmd === "plan") {
@@ -1319,7 +1327,18 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsCreditsTransferCmd(paymentsOpts);
         return;
       }
-      console.error("Usage: clawql payments credits show | bank-link | topup | transfer");
+      if (creditsAction === "step-up") {
+        const step = rest[1] ?? "show";
+        if (step === "enroll") {
+          process.exitCode = await runPaymentsCreditsStepUpEnrollCmd(paymentsOpts);
+          return;
+        }
+        process.exitCode = await runPaymentsCreditsStepUpShowCmd(paymentsOpts);
+        return;
+      }
+      console.error(
+        "Usage: clawql payments credits show | bank-link | topup | transfer | step-up enroll|show"
+      );
       process.exitCode = 1;
       return;
     }

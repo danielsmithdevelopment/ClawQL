@@ -49,6 +49,8 @@ ACH can take **1–3 business days**. Credits settle on `payment_intent.succeede
 | `CLAWQL_ACH_TOPUP_ENABLED`  | on when credits + `STRIPE_SECRET_KEY` | Enable FC + ACH top-up path                                     |
 | `CLAWQL_ACH_TOPUP_DRY_RUN`  | off                                   | Create sessions / settle without live Stripe/ACH (tests, demos) |
 | `CLAWQL_CREDITS_RETURN_URL` | —                                     | Optional return URL for Financial Connections                   |
+| `CLAWQL_CREDITS_TRANSFER_DIRECT` | off                              | Skip stage/confirm (break-glass / tests only)                   |
+| `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP` | off                        | Require enrolled TOTP on transfer confirm                       |
 
 ## CLI
 
@@ -62,37 +64,56 @@ clawql payments credits topup --customer cus_xxx --amount 25
 # live:
 # clawql payments credits topup --customer cus_xxx --amount 25 --payment-method pm_xxx
 
-# P2P: move prepaid credits to another ClawQL tenant
+# P2P: stage then confirm (confirmation code = step-up; optional TOTP)
 clawql payments credits transfer --to-tenant bob --amount 10
-clawql payments credits transfer --from-tenant alice --to-tenant bob --amount 5 \
-  --idempotency-key lunch-2026-08-05 --note "shared inference budget"
+# → prints action_id + confirmation_code (balances unchanged)
+clawql payments credits transfer --confirm --action-id <uuid> --code <hex>
+
+# Optional authenticator TOTP on confirm
+clawql payments credits step-up enroll --tenant-id alice --show-secrets
+export CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1
+clawql payments credits transfer --confirm --action-id <uuid> --code <hex> --totp 123456
 ```
 
 ## Peer-to-peer transfers
 
-`CreditsService.transfer` debits the sender and credits the recipient **atomically** (ordered tenant locks; shared `transferId` on both ledger legs).
+Transfers are **high-impact**. Default path is DAOS-style **2PC** (stage → confirm). Money does not move until confirm.
 
 | Property    | Behavior                                                                                  |
 | ----------- | ----------------------------------------------------------------------------------------- |
 | Scope       | Tenant ↔ tenant prepaid credits (not Stripe Connect / USDC chain send)                    |
+| Staging     | Default — `stageTransfer` returns `action_id` + `confirmation_code`                       |
+| Confirm     | `confirmTransfer` with code; optional TOTP when `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1`  |
+| Direct      | Break-glass only: `CLAWQL_CREDITS_TRANSFER_DIRECT=1` (tests / trusted ops)                |
 | Overdraft   | Rejected — sender must have spendable grant balance                                       |
-| Idempotency | Optional `--idempotency-key` / `idempotencyKey` replays the same transfer                 |
+| Idempotency | Optional `--idempotency-key` on the execute leg                                           |
 | WORM        | `CREDIT_TRANSFER_SENT` + `CREDIT_TRANSFER_RECEIVED` (accounting category `peer_transfer`) |
-| MCP         | `payments_credits_transfer` when `CLAWQL_PAYMENTS_MCP_TOOLS=1` (high-impact / financial)  |
+| MCP         | `payments_credits_transfer_stage` + `payments_credits_transfer_confirm`                   |
 
 ```mermaid
 sequenceDiagram
   participant A as Tenant A
   participant CLI as credits transfer
+  participant Pend as pending-actions
   participant Ledger as credits-ledger.json
   participant WORM as payment audit
 
   A->>CLI: transfer --to-tenant B --amount 10
-  CLI->>Ledger: lock A+B (sorted)
-  CLI->>Ledger: transfer_out A / transfer_in B
+  CLI->>Pend: stage (inert) + confirmation_code
+  CLI-->>A: action_id + code
+  A->>CLI: transfer --confirm --action-id --code [--totp]
+  CLI->>Pend: assert code (+ TOTP if required)
+  CLI->>Ledger: lock A+B; transfer_out / transfer_in
   CLI->>WORM: CREDIT_TRANSFER_SENT + RECEIVED
-  CLI-->>A: transferId + balances
 ```
+
+### Step-up / 2FA model
+
+ClawQL is not an IdP — phishing-resistant MFA for human SSO stays a **customer** concern. For prepaid P2P:
+
+1. **Confirmation code** (always, unless `CLAWQL_CREDITS_TRANSFER_DIRECT=1`) — second factor for CLI/MCP/agent flows  
+2. **Optional TOTP** — enroll via `credits step-up enroll`; gate with `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1`  
+3. Secrets live in `$CLAWQL_HOME/Payments/step-up-totp.json` (mode `0600`) — **never** in the payment WORM  
 
 Platform liability is unchanged (credits move between tenants). Withdraw to bank/USDC remains via [payouts / off-ramp](./payouts-ramp.md).
 

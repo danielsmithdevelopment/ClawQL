@@ -70,3 +70,19 @@ export function isDeductionNatsPublishEnabled(env: NodeJS.ProcessEnv = process.e
 export function natsPaymentsSubjectRoot(env: NodeJS.ProcessEnv = process.env): string {
   return env.CLAWQL_NATS_SUBJECT_PAYMENTS?.trim() || "clawql.payments";
 }
+
+/**
+ * When true, `credits transfer` executes immediately (tests / break-glass only).
+ * Default off — transfers must stage then confirm (confirmation code).
+ */
+export function isCreditsTransferDirectAllowed(env: NodeJS.ProcessEnv = process.env): boolean {
+  return parseTruthy(env.CLAWQL_CREDITS_TRANSFER_DIRECT);
+}
+
+/**
+ * When true, confirm also requires a valid TOTP from the sender tenant's enrolled
+ * step-up secret (`Payments/step-up-totp.json`).
+ */
+export function isCreditsTransferTotpRequired(env: NodeJS.ProcessEnv = process.env): boolean {
+  return parseTruthy(env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP);
+}

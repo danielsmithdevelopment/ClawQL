@@ -18,6 +18,8 @@ describe("credits P2P transfer", () => {
     process.env.CLAWQL_HOME = home;
     process.env.CLAWQL_PAYMENTS_AUDIT_STORE = "memory";
     process.env.CLAWQL_CREDITS_ENABLED = "1";
+    process.env.CLAWQL_CREDITS_TRANSFER_DIRECT = "1";
+    delete process.env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP;
     resetPaymentsEffectRuntimeForTests();
     await resetPaymentAuditStoreForTests(process.env);
     await resetCreditsLedgerForTests(process.env);
@@ -28,6 +30,8 @@ describe("credits P2P transfer", () => {
     delete process.env.CLAWQL_HOME;
     delete process.env.CLAWQL_PAYMENTS_AUDIT_STORE;
     delete process.env.CLAWQL_CREDITS_ENABLED;
+    delete process.env.CLAWQL_CREDITS_TRANSFER_DIRECT;
+    delete process.env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP;
     await rm(home, { recursive: true, force: true });
   });
 
@@ -154,5 +158,96 @@ describe("credits P2P transfer", () => {
     if (over._tag === "Left") {
       expect(over.left.reason).toMatch(/Insufficient credits/i);
     }
+  });
+
+  it("stages then confirms (2PC) without moving funds on stage", async () => {
+    delete process.env.CLAWQL_CREDITS_TRANSFER_DIRECT;
+    await appendCreditEntry(
+      { tenantId: "alice", kind: "topup_settled", deltaCents: 2000, grantSource: "topup" },
+      process.env
+    );
+
+    const staged = await Effect.runPromise(
+      Effect.gen(function* () {
+        const credits = yield* CreditsService;
+        return yield* credits.stageTransfer({
+          fromTenantId: "alice",
+          toTenantId: "bob",
+          amountCents: 700,
+        });
+      }).pipe(Effect.provide(layer()))
+    );
+    expect(staged.confirmationCode).toHaveLength(6);
+
+    const mid = await Effect.runPromise(
+      Effect.gen(function* () {
+        const credits = yield* CreditsService;
+        return yield* credits.getBalance("alice");
+      }).pipe(Effect.provide(layer()))
+    );
+    expect(mid.balanceCents).toBe(2000);
+
+    const done = await Effect.runPromise(
+      Effect.gen(function* () {
+        const credits = yield* CreditsService;
+        return yield* credits.confirmTransfer({
+          actionId: staged.actionId,
+          code: staged.confirmationCode,
+        });
+      }).pipe(Effect.provide(layer()))
+    );
+    expect(done.amountCents).toBe(700);
+    expect(done.toTenantId).toBe("bob");
+  });
+
+  it("requires TOTP on confirm when gate is enabled", async () => {
+    delete process.env.CLAWQL_CREDITS_TRANSFER_DIRECT;
+    process.env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP = "1";
+    const { enrollStepUpTotp } = await import("./step-up.js");
+    const { generateTotp } = await import("./totp.js");
+    const enrolled = await enrollStepUpTotp({ tenantId: "alice" }, process.env);
+
+    await appendCreditEntry(
+      { tenantId: "alice", kind: "topup_settled", deltaCents: 1000, grantSource: "topup" },
+      process.env
+    );
+
+    const staged = await Effect.runPromise(
+      Effect.gen(function* () {
+        const credits = yield* CreditsService;
+        return yield* credits.stageTransfer({
+          fromTenantId: "alice",
+          toTenantId: "bob",
+          amountCents: 100,
+        });
+      }).pipe(Effect.provide(layer()))
+    );
+    expect(staged.totpRequired).toBe(true);
+
+    const denied = await Effect.runPromise(
+      Effect.gen(function* () {
+        const credits = yield* CreditsService;
+        return yield* credits
+          .confirmTransfer({
+            actionId: staged.actionId,
+            code: staged.confirmationCode,
+          })
+          .pipe(Effect.either);
+      }).pipe(Effect.provide(layer()))
+    );
+    expect(denied._tag).toBe("Left");
+
+    const totp = generateTotp(enrolled.enrollment.secretBase32);
+    const ok = await Effect.runPromise(
+      Effect.gen(function* () {
+        const credits = yield* CreditsService;
+        return yield* credits.confirmTransfer({
+          actionId: staged.actionId,
+          code: staged.confirmationCode,
+          totp,
+        });
+      }).pipe(Effect.provide(layer()))
+    );
+    expect(ok.amountCents).toBe(100);
   });
 });

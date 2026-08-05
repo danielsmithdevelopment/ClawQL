@@ -140,8 +140,8 @@ const compensationConfirmSchema = {
   mandateJwt: z.string().optional(),
 };
 
-/** High-impact: prepaid credit P2P between ClawQL tenants. */
-const creditsTransferSchema = {
+/** Safe entry: stage prepaid credit P2P (inert until confirm). */
+const creditsTransferStageSchema = {
   toTenantId: z.string().describe("Recipient ClawQL tenant id"),
   amountUsd: z.number().positive().describe("Amount in USD to transfer from prepaid credits"),
   fromTenantId: z
@@ -150,6 +150,17 @@ const creditsTransferSchema = {
     .describe("Sender tenant (defaults to payments.json tenant / default)"),
   idempotencyKey: z.string().optional().describe("Replay-safe transfer key"),
   note: z.string().optional(),
+  mandateJwt: z.string().optional(),
+};
+
+/** High-impact: confirm staged P2P transfer (+ optional TOTP). */
+const creditsTransferConfirmSchema = {
+  actionId: z.string().describe("Pending action_id from payments_credits_transfer_stage"),
+  code: z.string().describe("confirmation_code from the stage response"),
+  totp: z
+    .string()
+    .optional()
+    .describe("6-digit TOTP when CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1"),
   mandateJwt: z.string().optional(),
 };
 
@@ -299,10 +310,10 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
         });
 
         yield* api.registerMcpTool({
-          name: "payments_credits_transfer",
+          name: "payments_credits_transfer_stage",
           description:
-            "High-impact: transfer prepaid credits between ClawQL tenants (P2P). Debits sender and credits recipient atomically; idempotent when idempotencyKey is set.",
-          schema: creditsTransferSchema,
+            "Safe entry point: stage a prepaid credit P2P transfer. Inert until payments_credits_transfer_confirm — does not move balances.",
+          schema: creditsTransferStageSchema,
           handler: async (args) => {
             const a = args as {
               toTenantId: string;
@@ -316,12 +327,43 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             const result = await runPaymentsEffect(
               Effect.gen(function* () {
                 const credits = yield* CreditsService;
-                return yield* credits.transfer({
+                return yield* credits.stageTransfer({
                   fromTenantId: a.fromTenantId?.trim() || "default",
                   toTenantId: a.toTenantId,
                   amountCents: Math.round(a.amountUsd * 100),
                   idempotencyKey: a.idempotencyKey,
                   note: a.note,
+                });
+              }),
+              env
+            );
+            return textResult({
+              ...result,
+              next: "High-impact next step: call payments_credits_transfer_confirm with actionId + code (+ totp if required).",
+            });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_transfer_confirm",
+          description:
+            "High-impact: confirm a staged prepaid credit P2P transfer (ledger move). Prefer payments_credits_transfer_stage first. Requires TOTP when CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1.",
+          schema: creditsTransferConfirmSchema,
+          handler: async (args) => {
+            const a = args as {
+              actionId: string;
+              code: string;
+              totp?: string;
+              mandateJwt?: string;
+            };
+            await assertAp2IfRequired(env, a.mandateJwt);
+            const result = await runPaymentsEffect(
+              Effect.gen(function* () {
+                const credits = yield* CreditsService;
+                return yield* credits.confirmTransfer({
+                  actionId: a.actionId,
+                  code: a.code,
+                  totp: a.totp,
                 });
               }),
               env

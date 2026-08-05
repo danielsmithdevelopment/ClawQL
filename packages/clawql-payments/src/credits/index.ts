@@ -3,11 +3,26 @@ export {
   isAchTopupEnabled,
   isCreditsEnabled,
   isCreditsInferenceEnforcementActive,
+  isCreditsTransferDirectAllowed,
+  isCreditsTransferTotpRequired,
   isDeductionNatsPublishEnabled,
   inferenceCreditCostCents,
   creditsReturnUrl,
   natsPaymentsSubjectRoot,
 } from "./config.js";
+export {
+  generateTotp,
+  generateTotpSecret,
+  totpOtpauthUrl,
+  verifyTotp,
+} from "./totp.js";
+export {
+  enrollStepUpTotp,
+  getStepUpEnrollment,
+  requireStepUpTotp,
+  resolveStepUpTotpPath,
+  verifyStepUpTotp,
+} from "./step-up.js";
 export {
   appendCreditEntry,
   captureHold,
@@ -26,7 +41,15 @@ export {
   type CreditLedgerKind,
   type CreditTransferResult,
 } from "./ledger.js";
-export { CreditsError, CreditsService, creditsLiveLayer } from "./credits-service.js";
+export {
+  CREDITS_TRANSFER_CONFIRM_TOOL,
+  CREDITS_TRANSFER_STAGE_TOOL,
+  CreditsError,
+  CreditsService,
+  creditsLiveLayer,
+  creditsTransferShouldStage,
+  type StagedCreditTransfer,
+} from "./credits-service.js";
 export {
   AchTopupError,
   AchTopupService,

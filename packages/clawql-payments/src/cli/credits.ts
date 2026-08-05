@@ -1,7 +1,15 @@
 import { Effect } from "effect";
 import { AchTopupService } from "../credits/ach-topup-service.js";
-import { CreditsService } from "../credits/credits-service.js";
-import { isAchTopupDryRun, isCreditsEnabled } from "../credits/config.js";
+import {
+  CreditsService,
+  creditsTransferShouldStage,
+} from "../credits/credits-service.js";
+import {
+  isAchTopupDryRun,
+  isCreditsEnabled,
+  isCreditsTransferTotpRequired,
+} from "../credits/config.js";
+import { enrollStepUpTotp, getStepUpEnrollment } from "../credits/step-up.js";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
 import { loadPaymentsConfig } from "../config/store.js";
 
@@ -23,15 +31,26 @@ export type PaymentsCreditsTopupOptions = {
 };
 
 export type PaymentsCreditsTransferOptions = {
-  /** Sender tenant (defaults to payments.json tenant). */
   fromTenantId?: string;
-  /** Recipient ClawQL tenant id. */
   toTenantId?: string;
   amountUsd?: number;
   idempotencyKey?: string;
   correlationId?: string;
   note?: string;
+  /** When set with actionId+code, confirm a staged transfer. */
+  confirm?: boolean;
+  actionId?: string;
+  code?: string;
+  totp?: string;
+  /** Force immediate execute (also requires CLAWQL_CREDITS_TRANSFER_DIRECT=1). */
+  direct?: boolean;
   json?: boolean;
+};
+
+export type PaymentsCreditsStepUpOptions = {
+  tenantId?: string;
+  json?: boolean;
+  showSecret?: boolean;
 };
 
 export async function runPaymentsCreditsShow(
@@ -142,24 +161,97 @@ export async function runPaymentsCreditsTransfer(
     console.error("Credits disabled — set CLAWQL_CREDITS_ENABLED=1");
     return 1;
   }
+
+  // Confirm path
+  if (options.confirm || options.actionId?.trim()) {
+    const actionId = options.actionId?.trim();
+    const code = options.code?.trim();
+    if (!actionId || !code) {
+      console.error(
+        "Usage: clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]"
+      );
+      return 1;
+    }
+    try {
+      const result = await runPaymentsEffect(
+        Effect.gen(function* () {
+          const credits = yield* CreditsService;
+          return yield* credits.confirmTransfer({
+            actionId,
+            code,
+            totp: options.totp,
+          });
+        })
+      );
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+        return 0;
+      }
+      console.log(
+        `Confirmed transfer $${(result.amountCents / 100).toFixed(2)} ${result.fromTenantId} → ${result.toTenantId}`
+      );
+      console.log(`Transfer id: ${result.transferId}`);
+      return 0;
+    } catch (err) {
+      console.error(formatErr(err));
+      return 1;
+    }
+  }
+
   const config = await loadPaymentsConfig();
   const fromTenantId = options.fromTenantId?.trim() || config.tenantId || "default";
   const toTenantId = options.toTenantId?.trim();
   const amountUsd = options.amountUsd;
   if (!toTenantId || amountUsd === undefined || !Number.isFinite(amountUsd) || amountUsd <= 0) {
     console.error(
-      "Usage: clawql payments credits transfer --to-tenant <tenantId> --amount 10 [--from-tenant <tenantId>] [--idempotency-key KEY]"
+      "Usage: clawql payments credits transfer --to-tenant <tenantId> --amount 10 [--from-tenant <tenantId>]\n" +
+        "       clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]"
     );
     return 1;
   }
+
+  const amountCents = Math.round(amountUsd * 100);
+  const shouldStage = creditsTransferShouldStage() && !options.direct;
+
   try {
-    const result = await runPaymentsEffect(
+    if (!shouldStage) {
+      if (creditsTransferShouldStage() && options.direct) {
+        console.error(
+          "Direct transfer refused — set CLAWQL_CREDITS_TRANSFER_DIRECT=1 for break-glass execute (not recommended)"
+        );
+        return 1;
+      }
+      const result = await runPaymentsEffect(
+        Effect.gen(function* () {
+          const credits = yield* CreditsService;
+          return yield* credits.transfer({
+            fromTenantId,
+            toTenantId,
+            amountCents,
+            idempotencyKey: options.idempotencyKey,
+            correlationId: options.correlationId,
+            note: options.note,
+          });
+        })
+      );
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+        return 0;
+      }
+      console.log(
+        `Transferred $${(result.amountCents / 100).toFixed(2)} ${result.fromTenantId} → ${result.toTenantId}`
+      );
+      console.log(`Transfer id: ${result.transferId}`);
+      return 0;
+    }
+
+    const staged = await runPaymentsEffect(
       Effect.gen(function* () {
         const credits = yield* CreditsService;
-        return yield* credits.transfer({
+        return yield* credits.stageTransfer({
           fromTenantId,
           toTenantId,
-          amountCents: Math.round(amountUsd * 100),
+          amountCents,
           idempotencyKey: options.idempotencyKey,
           correlationId: options.correlationId,
           note: options.note,
@@ -167,27 +259,105 @@ export async function runPaymentsCreditsTransfer(
       })
     );
     if (options.json) {
-      console.log(JSON.stringify(result, null, 2));
+      console.log(JSON.stringify(staged, null, 2));
       return 0;
     }
     console.log(
-      `Transferred $${(result.amountCents / 100).toFixed(2)} ${result.fromTenantId} → ${result.toTenantId}`
+      `Staged transfer $${staged.amountUsd.toFixed(2)} ${staged.fromTenantId} → ${staged.toTenantId}`
     );
+    console.log(`action_id: ${staged.actionId}`);
+    console.log(`confirmation_code: ${staged.confirmationCode}`);
+    console.log(`expires: ${staged.expiresAt}`);
+    if (staged.totpRequired || isCreditsTransferTotpRequired()) {
+      console.log("TOTP required on confirm (CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1)");
+    }
     console.log(
-      `Transfer id: ${result.transferId}${result.alreadyExisted ? " (idempotent replay)" : ""}`
-    );
-    console.log(
-      `Sender balance: $${(result.fromEntry.balanceAfterCents / 100).toFixed(2)} | Recipient: $${(result.toEntry.balanceAfterCents / 100).toFixed(2)}`
+      `Confirm: clawql payments credits transfer --confirm --action-id ${staged.actionId} --code ${staged.confirmationCode}${staged.totpRequired ? " --totp NNNNNN" : ""}`
     );
     return 0;
   } catch (err) {
-    const reason =
-      err && typeof err === "object" && "reason" in err
-        ? String((err as { reason: unknown }).reason)
-        : err instanceof Error
-          ? err.message
-          : String(err);
-    console.error(reason);
+    console.error(formatErr(err));
     return 1;
   }
+}
+
+export async function runPaymentsCreditsStepUpEnroll(
+  options: PaymentsCreditsStepUpOptions = {}
+): Promise<number> {
+  const config = await loadPaymentsConfig();
+  const tenantId = options.tenantId?.trim() || config.tenantId || "default";
+  try {
+    const result = await enrollStepUpTotp({ tenantId });
+    if (options.json) {
+      console.log(
+        JSON.stringify(
+          {
+            tenantId,
+            created: result.created,
+            enrolledAt: result.enrollment.enrolledAt,
+            otpauthUrl: result.otpauthUrl,
+            secretBase32: options.showSecret ? result.enrollment.secretBase32 : undefined,
+          },
+          null,
+          2
+        )
+      );
+      return 0;
+    }
+    console.log(
+      result.created
+        ? `Enrolled TOTP step-up for tenant ${tenantId}`
+        : `TOTP step-up already enrolled for tenant ${tenantId}`
+    );
+    console.log(`otpauth: ${result.otpauthUrl}`);
+    if (options.showSecret) {
+      console.log(`secret: ${result.enrollment.secretBase32}`);
+    } else {
+      console.log("Pass --show-secrets once to print the base32 secret for authenticator apps.");
+    }
+    console.log("Enable gate: export CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1");
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
+}
+
+export async function runPaymentsCreditsStepUpShow(
+  options: PaymentsCreditsStepUpOptions = {}
+): Promise<number> {
+  const config = await loadPaymentsConfig();
+  const tenantId = options.tenantId?.trim() || config.tenantId || "default";
+  const enrollment = await getStepUpEnrollment(tenantId);
+  if (options.json) {
+    console.log(
+      JSON.stringify(
+        {
+          tenantId,
+          enrolled: Boolean(enrollment),
+          enrolledAt: enrollment?.enrolledAt,
+          totpRequired: isCreditsTransferTotpRequired(),
+        },
+        null,
+        2
+      )
+    );
+    return enrollment ? 0 : 1;
+  }
+  if (!enrollment) {
+    console.log(`No TOTP step-up enrollment for ${tenantId}`);
+    return 1;
+  }
+  console.log(`Tenant ${tenantId}: enrolled at ${enrollment.enrolledAt}`);
+  console.log(
+    `Transfer TOTP gate: ${isCreditsTransferTotpRequired() ? "ON" : "off (set CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1)"}`
+  );
+  return 0;
+}
+
+function formatErr(err: unknown): string {
+  if (err && typeof err === "object" && "reason" in err) {
+    return String((err as { reason: unknown }).reason);
+  }
+  return err instanceof Error ? err.message : String(err);
 }

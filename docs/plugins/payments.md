@@ -30,7 +30,7 @@ ClawQL is the only Agentic Gateway with native **Stripe + x402 + MPP + AP2 + ACP
 | **PayPal**         | Human wallet Orders v2 create/capture                                                  |
 | **Adyen**          | Enterprise Checkout sessions, payments, HMAC-verified webhooks                         |
 | **Payouts / Ramp** | Creator bank + Base USDC; Ramp agent cards; Moonpay/Transak off-ramp                   |
-| **Credits**        | Prepaid ledger + ACH/FC top-up + P2P tenant transfer; sync `DeductionService`          |
+| **Credits**        | Prepaid ledger + ACH/FC top-up + P2P transfer (stage/confirm + optional TOTP)          |
 | **Compensation**   | Agent deposit / cash-out with DAOS-aligned 2PC staging                                 |
 | **Accounting**     | Period subledger CSV/JSON/QB/Xero; tax profile gate; year-end evidence pack            |
 

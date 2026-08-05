@@ -14,6 +14,8 @@ export type HighImpactClassification = "financial" | "external_write" | "destruc
 export const HIGH_IMPACT_PAYMENT_TOOLS: Record<string, HighImpactClassification> = {
   transfer_funds: "financial",
   payments_credits_transfer: "financial",
+  payments_credits_transfer_stage: "financial",
+  payments_credits_transfer_confirm: "financial",
   payments_payout_create: "financial",
   payments_ramp_agent_card_issue: "financial",
   payments_offramp_session_create: "financial",

@@ -389,7 +389,11 @@ See [credits-ach.md](./credits-ach.md) and [deduction-service.md](./deduction-se
 ```bash
 export CLAWQL_CREDITS_ENABLED=1
 clawql payments credits show
-clawql payments credits transfer --to-tenant other-tenant --amount 10 [--idempotency-key KEY]
+# P2P stages by default — confirm with code (+ optional TOTP)
+clawql payments credits transfer --to-tenant other-tenant --amount 10
+clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
+clawql payments credits step-up enroll   # optional authenticator
+export CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1
 ```
 
 ### Setup flow
@@ -784,9 +788,11 @@ clawql payments accounting tax-evidence --tax-year 2026
 clawql payments tax-profile set --party-id creator-1 --tax-form 1099nec --collected
 clawql payments tax-profile show [--party-id creator-1]
 
-# Prepaid credits (top-up + P2P)
+# Prepaid credits (top-up + P2P with stage/confirm step-up)
 clawql payments credits show | bank-link | topup --customer cus_xxx --amount 25
-clawql payments credits transfer --to-tenant other-tenant --amount 10 [--from-tenant me] [--idempotency-key KEY]
+clawql payments credits transfer --to-tenant other-tenant --amount 10
+clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
+clawql payments credits step-up enroll|show
 ```
 
 ---
