@@ -202,6 +202,8 @@ There are no fixed delivery dates. Priorities are determined by dependency order
 
 **Why lending first:** It is the most complete specification, it has a known production use case (SeeTheGreens LOS), and it exercises the widest range of platform capabilities: document processing, memory recall, compliance controls, HITL gates, and Merkle auditing. A successful lending vertical validates the full platform.
 
+**Peer design (not Phase 3 MVP):** `clawql-banking` — neobank / BaaS vertical preset (KYC workflows via Documents, agent spend via Payments). Design: [`docs/design/clawql-banking-vertical.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/clawql-banking-vertical.md). KYC is **not** folded into `clawql-payments`.
+
 **Exit criteria:** A complete W-2 processing workflow runs end-to-end with Presidio redaction, Merkle auditing, Memory 2.0 ingest, and deal room creation via natural language command.
 
 ### Phase 4: Community Vertical Ecosystem
