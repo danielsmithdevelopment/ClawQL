@@ -52,6 +52,8 @@ import {
 import { renderQrSvg } from "../credits/hateoas-html.js";
 import { Ap2MandateService } from "../ap2/ap2-mandate-service.js";
 import { isAp2Enabled } from "../ap2/config.js";
+import { isCreditsP2pEnabled } from "../credits/config.js";
+import { isCompensationEnabled } from "../compensation/config.js";
 
 export const PAYMENTS_TOOLS_PLUGIN_ID = "clawql-payments-tools";
 
@@ -781,141 +783,144 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             return textResult({
               request: publicMoneyRequest(result.request),
               directoryCreated: result.directoryCreated,
-              next: "Call payments_credits_request_accept to stage payment.",
+              next: isCreditsP2pEnabled(env)
+                ? "Call payments_credits_request_accept to stage payment."
+                : "P2P accept/transfer is disabled on this deployment (CLAWQL_CREDITS_P2P_ENABLED).",
             });
           },
         });
 
-        yield* api.registerMcpTool({
-          name: "payments_credits_request_accept",
-          description:
-            "Payer accepts a money request: stages a credits transfer (confirm with payments_credits_transfer_confirm).",
-          schema: creditsRequestAcceptSchema,
-          handler: async (args) => {
-            const a = args as {
-              requestId: string;
-              payerTenantId?: string;
-              mandateJwt?: string;
-            };
-            await assertAp2IfRequired(env, a.mandateJwt);
-            const payerTenantId = a.payerTenantId?.trim() || "default";
-            const { request, staged } = await acceptMoneyRequest(
-              { requestId: a.requestId, payerTenantId },
-              async (input) =>
-                runPaymentsEffect(
-                  Effect.gen(function* () {
-                    const credits = yield* CreditsService;
-                    return yield* credits.stageTransfer({
-                      fromTenantId: input.fromTenantId,
-                      toTenantId: input.toTenantId,
-                      amountCents: input.amountCents,
-                      note: input.note,
-                      correlationId: input.correlationId,
-                      requestId: input.requestId,
-                    });
-                  }),
-                  env
-                ),
-              env
-            );
-            return textResult({
-              request: publicMoneyRequest(request),
-              staged,
-              next: "High-impact: payments_credits_transfer_confirm with actionId + code (+ totp if required).",
-            });
-          },
-        });
+        if (isCreditsP2pEnabled(env)) {
+          yield* api.registerMcpTool({
+            name: "payments_credits_request_accept",
+            description:
+              "Payer accepts a money request: stages a credits transfer (confirm with payments_credits_transfer_confirm). Self-hosted only — requires CLAWQL_CREDITS_P2P_ENABLED=1.",
+            schema: creditsRequestAcceptSchema,
+            handler: async (args) => {
+              const a = args as {
+                requestId: string;
+                payerTenantId?: string;
+                mandateJwt?: string;
+              };
+              await assertAp2IfRequired(env, a.mandateJwt);
+              const payerTenantId = a.payerTenantId?.trim() || "default";
+              const { request, staged } = await acceptMoneyRequest(
+                { requestId: a.requestId, payerTenantId },
+                async (input) =>
+                  runPaymentsEffect(
+                    Effect.gen(function* () {
+                      const credits = yield* CreditsService;
+                      return yield* credits.stageTransfer({
+                        fromTenantId: input.fromTenantId,
+                        toTenantId: input.toTenantId,
+                        amountCents: input.amountCents,
+                        note: input.note,
+                        correlationId: input.correlationId,
+                        requestId: input.requestId,
+                      });
+                    }),
+                    env
+                  ),
+                env
+              );
+              return textResult({
+                request: publicMoneyRequest(request),
+                staged,
+                next: "High-impact: payments_credits_transfer_confirm with actionId + code (+ totp if required).",
+              });
+            },
+          });
 
-        yield* api.registerMcpTool({
-          name: "payments_credits_transfer_stage",
-          description:
-            "Safe entry point: stage a prepaid credit P2P transfer. Prefer toEmail or toHandle (@bob). Inert until payments_credits_transfer_confirm.",
-          schema: creditsTransferStageSchema,
-          handler: async (args) => {
-            const a = args as {
-              toTenantId?: string;
-              toHandle?: string;
-              toEmail?: string;
-              amountUsd: number;
-              fromTenantId?: string;
-              idempotencyKey?: string;
-              note?: string;
-              mandateJwt?: string;
-            };
-            await assertAp2IfRequired(env, a.mandateJwt);
-            let toTenantId = a.toTenantId?.trim();
-            let toHandle: string | undefined;
-            let toEmail: string | undefined;
-            if (a.toEmail?.trim()) {
-              const resolved = await resolveRecipient(a.toEmail, env, { forceEmail: true });
-              toTenantId = resolved.tenantId;
-              toHandle = resolved.handle;
-              toEmail = resolved.email;
-            } else if (a.toHandle?.trim()) {
-              const resolved = await resolveRecipient(a.toHandle, env, { forceHandle: true });
-              toTenantId = resolved.tenantId;
-              toHandle = resolved.handle;
-              toEmail = resolved.email;
-            } else if (!toTenantId) {
-              throw new Error("Provide toEmail, toHandle (@bob), or toTenantId");
-            }
-            const result = await runPaymentsEffect(
-              Effect.gen(function* () {
-                const credits = yield* CreditsService;
-                return yield* credits.stageTransfer({
-                  fromTenantId: a.fromTenantId?.trim() || "default",
-                  toTenantId: toTenantId!,
-                  amountCents: Math.round(a.amountUsd * 100),
-                  idempotencyKey: a.idempotencyKey,
-                  note: a.note,
-                });
-              }),
-              env
-            );
-            return textResult({
-              ...result,
-              toHandle,
-              toEmail,
-              next: "High-impact next step: call payments_credits_transfer_confirm with actionId + code (+ totp if required).",
-            });
-          },
-        });
+          yield* api.registerMcpTool({
+            name: "payments_credits_transfer_stage",
+            description:
+              "Safe entry point: stage a prepaid credit P2P transfer (self-hosted; CLAWQL_CREDITS_P2P_ENABLED=1). Prefer toEmail or toHandle (@bob). Inert until payments_credits_transfer_confirm.",
+            schema: creditsTransferStageSchema,
+            handler: async (args) => {
+              const a = args as {
+                toTenantId?: string;
+                toHandle?: string;
+                toEmail?: string;
+                amountUsd: number;
+                fromTenantId?: string;
+                idempotencyKey?: string;
+                note?: string;
+                mandateJwt?: string;
+              };
+              await assertAp2IfRequired(env, a.mandateJwt);
+              let toTenantId = a.toTenantId?.trim();
+              let toHandle: string | undefined;
+              let toEmail: string | undefined;
+              if (a.toEmail?.trim()) {
+                const resolved = await resolveRecipient(a.toEmail, env, { forceEmail: true });
+                toTenantId = resolved.tenantId;
+                toHandle = resolved.handle;
+                toEmail = resolved.email;
+              } else if (a.toHandle?.trim()) {
+                const resolved = await resolveRecipient(a.toHandle, env, { forceHandle: true });
+                toTenantId = resolved.tenantId;
+                toHandle = resolved.handle;
+                toEmail = resolved.email;
+              } else if (!toTenantId) {
+                throw new Error("Provide toEmail, toHandle (@bob), or toTenantId");
+              }
+              const result = await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const credits = yield* CreditsService;
+                  return yield* credits.stageTransfer({
+                    fromTenantId: a.fromTenantId?.trim() || "default",
+                    toTenantId: toTenantId!,
+                    amountCents: Math.round(a.amountUsd * 100),
+                    idempotencyKey: a.idempotencyKey,
+                    note: a.note,
+                  });
+                }),
+                env
+              );
+              return textResult({
+                ...result,
+                toHandle,
+                toEmail,
+                next: "High-impact next step: call payments_credits_transfer_confirm with actionId + code (+ totp if required).",
+              });
+            },
+          });
 
-        yield* api.registerMcpTool({
-          name: "payments_credits_transfer_confirm",
-          description:
-            "High-impact: confirm a staged prepaid credit P2P transfer (ledger move). Prefer payments_credits_transfer_stage first. Requires TOTP when CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1.",
-          schema: creditsTransferConfirmSchema,
-          handler: async (args) => {
-            const a = args as {
-              actionId: string;
-              code: string;
-              totp?: string;
-              mandateJwt?: string;
-            };
-            await assertAp2IfRequired(env, a.mandateJwt);
-            const result = await runPaymentsEffect(
-              Effect.gen(function* () {
-                const credits = yield* CreditsService;
-                return yield* credits.confirmTransfer({
-                  actionId: a.actionId,
-                  code: a.code,
-                  totp: a.totp,
-                });
-              }),
-              env
-            );
-            return textResult(result);
-          },
-        });
+          yield* api.registerMcpTool({
+            name: "payments_credits_transfer_confirm",
+            description:
+              "High-impact: confirm a staged prepaid credit P2P transfer (self-hosted; CLAWQL_CREDITS_P2P_ENABLED=1). Prefer payments_credits_transfer_stage first. Requires TOTP when CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1.",
+            schema: creditsTransferConfirmSchema,
+            handler: async (args) => {
+              const a = args as {
+                actionId: string;
+                code: string;
+                totp?: string;
+                mandateJwt?: string;
+              };
+              await assertAp2IfRequired(env, a.mandateJwt);
+              const result = await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const credits = yield* CreditsService;
+                  return yield* credits.confirmTransfer({
+                    actionId: a.actionId,
+                    code: a.code,
+                    totp: a.totp,
+                  });
+                }),
+                env
+              );
+              return textResult(result);
+            },
+          });
+        }
 
-        // High-impact compensation (logical dotted names → underscores for MCP):
-        // agent.compensation.deposit.stage / .confirm
-        // agent.compensation.cashout.stage / .confirm
+        // High-impact compensation — self-hosted opt-in only (CLAWQL_COMPENSATION_ENABLED=1).
+        if (isCompensationEnabled(env)) {
         yield* api.registerMcpTool({
           name: "agent_compensation_deposit_stage",
           description:
-            "Safe entry point: stage an agent compensation deposit (credits/funds). Inert until agent_compensation_deposit_confirm — does not credit the ledger.",
+            "Safe entry point: stage an agent compensation deposit (credits/funds). Inert until agent_compensation_deposit_confirm — does not credit the ledger. Self-hosted; CLAWQL_COMPENSATION_ENABLED=1.",
           schema: compensationDepositStageSchema,
           handler: async (args) => {
             const a = args as {
@@ -1049,6 +1054,7 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             return textResult(result);
           },
         });
+        } // isCompensationEnabled
       }),
   };
 }

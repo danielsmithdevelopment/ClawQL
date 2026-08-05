@@ -456,6 +456,11 @@ export default function Page() {
           answer="Yes. Every hosted tier — Developer through Enterprise — includes unlimited MCP executions. We price on hosting model, storage, and plugin bundles because those drive real infrastructure cost — not per-call metering or egress on memory recall. Gateway tiers scale at the global edge; taxing executions or recall only encourages customers to throttle their agents. executor.sh is the outlier with execution caps and overage billing."
         />
         <Faq
+          id="faq-payments-p2p"
+          question="Does managed ClawQL offer peer-to-peer payments or Venmo-like transfers?"
+          answer="No. Managed hosting bills through Stripe for ClawQL plans and optional gated access. We are not a bank and do not run a consumer P2P network on managed SaaS. Peer credit transfer and agent compensation software exist for self-hosted operators who enable them under their own compliance programs."
+        />
+        <Faq
           id="faq-4"
           question="Can I switch tiers later?"
           answer="Yes. Upgrade from Teams to Starter (or any IDP tier) without changing your MCP endpoint URL, auth token, or vault memory — agents pick up where they left off. Vault exports, provider auth, and plugin flags migrate between tiers. Start on Teams for agent memory; add the IDP bundle when you need document processing."

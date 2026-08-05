@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+<<<<<<< HEAD
 ### Added
 
 - **`clawql-web` package** — pluggable `WebSearchProvider` / `WebBrowserProvider` (Tavily, Brave, SearXNG, OpenSearch, Kitesurf, Chromium/Playwright/Puppeteer, Firecrawl), search→browser fallback with pre-flight audit, MCP tools `web_search` / `web_fetch` / `web_screenshot` / `web_interact`. Docs: [`docs/web/clawql-web.md`](docs/web/clawql-web.md), [`docs/plugins/web.md`](docs/plugins/web.md).
+=======
+### Changed
+
+- **Payments compliance posture** — prepaid P2P and agent compensation default **off**; forced off when `CLAWQL_MANAGED_HOSTING=1`. Docs + website framed as Stripe-mediated platform billing on managed hosting; P2P/compensation self-hosted opt-in. See [`docs/payments/hosted-vs-self-hosted-compliance.md`](docs/payments/hosted-vs-self-hosted-compliance.md).
+>>>>>>> 7a53fa11 (fix(payments): align hosted posture — P2P off by default)
 
 ### Fixed
 

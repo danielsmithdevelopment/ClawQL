@@ -1,8 +1,11 @@
 # Consumer P2P path (Venmo / Cash App simplicity)
 
+**Audience:** self-hosted operators only.  
+**Managed hosting:** peer transfer is **disabled** (`CLAWQL_CREDITS_P2P_ENABLED` defaults off; forced off when `CLAWQL_MANAGED_HOSTING=1`). See [hosted vs self-hosted compliance](./hosted-vs-self-hosted-compliance.md).
+
 **Goal:** Make prepaid credit transfers feel as simple as `pay @bob $10`, while keeping ClawQL’s stage/confirm + optional TOTP security model.
 
-ClawQL is **not** a consumer bank. Balances are prepaid credits; bank/USDC off-ramp stays on existing payout rails. The product bet is **agent-native + human-simple** addressing and flows.
+ClawQL is **not** a consumer bank or licensed money transmitter. Balances are prepaid credits; bank/USDC off-ramp stays on existing payout rails. On self-hosted deployments that explicitly enable P2P, the product bet is **agent-native + human-simple** addressing — compliance remains with the operator.
 
 ## Shipped (bit by bit)
 

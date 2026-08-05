@@ -6,7 +6,9 @@
 
 ## Goal
 
-Let users **connect a bank account**, **top up prepaid credit balances**, and **transfer credits peer-to-peer** between ClawQL tenants. Balances can be debited for inference/docs usage (alongside plan entitlements). Withdrawals use existing payout / off-ramp rails; this doc covers the prepaid ledger + ACH top-up + P2P transfer.
+Let operators **connect a bank account** (via Stripe) and **top up prepaid credit balances** redeemable for ClawQL services (closed-loop usage). Balances can be debited for inference/docs usage (alongside plan entitlements).
+
+**Peer-to-peer transfer** between tenants is a separate, **self-hosted opt-in** (`CLAWQL_CREDITS_P2P_ENABLED=1`) and is **not** part of managed hosting — see [hosted vs self-hosted compliance](./hosted-vs-self-hosted-compliance.md) and [p2p-consumer-roadmap.md](./p2p-consumer-roadmap.md). Withdrawals use existing payout / off-ramp rails when those features are enabled by the operator.
 
 ## Why not a raw Plaid SDK?
 

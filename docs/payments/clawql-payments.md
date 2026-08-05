@@ -6,9 +6,9 @@
 
 `clawql-payments` is ClawQL's unified payments layer for **human fiat** and **agent micropayments**.
 
-**Positioning:** ClawQL is the only Agentic Gateway that speaks **five agentic payment surfaces natively** — **Stripe**, **[x402](https://www.x402.org/)**, **[MPP](https://docs.stripe.com/mcp)**, **[AP2](https://ap2-protocol.org/)**, and **[ACP](https://developers.openai.com/commerce/specs/checkout)** — plus **PayPal Orders** and **Adyen Checkout** for human/enterprise fiat, all with a **WORM-audited** payment event trail and an **accounting subledger export** for books / CPA handoff. Docs-site `.well-known` discovery for UCP remains complementary; live adapters live in `clawql-payments`.
+**Positioning:** ClawQL speaks **Stripe**, **[x402](https://www.x402.org/)**, **[MPP](https://docs.stripe.com/mcp)**, **[AP2](https://ap2-protocol.org/)**, and **[ACP](https://developers.openai.com/commerce/specs/checkout)** — plus **PayPal Orders** and **Adyen Checkout** — with a **WORM-audited** payment event trail. On **managed hosting**, those rails collect **platform fees** and gate tool/API access; they are **not** a consumer P2P network. Peer credit transfer and agent compensation ship for **self-hosted** operators who enable them under their own compliance framework — see [hosted vs self-hosted compliance](./hosted-vs-self-hosted-compliance.md).
 
-It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is available to self-hosted operators and ClawQL users who want to bill their own customers.
+It powers ClawQL's own managed tiers (Developer / Teams / Shared / Dedicated / Enterprise) via **Stripe** and is available to self-hosted operators who want to bill their own customers.
 
 ## What ships today
 
@@ -39,8 +39,8 @@ It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is ava
 | **Ramp** agent virtual / agentic cards                          | ✅     | `RampService` — vault path + native `cards:read_agentic` when enabled                                                                                                                                     |
 | **Consumer off-ramp** (Moonpay / Transak)                       | ✅     | Sessions + `OfframpWebhookService` completion settle                                                                                                                                                      |
 | **Payments MCP tools** (payout / ramp / offramp / compensation) | ✅     | `CLAWQL_PAYMENTS_MCP_TOOLS=1`; optional AP2 gate; includes `agent_compensation_*`                                                                                                                         |
-| **Prepaid credits + bank top-up + P2P transfer**                | ✅     | Grant ledger + FC/ACH top-up + `@handle` / tenant transfer; sync [`DeductionService`](./deduction-service.md) — [credits-ach.md](./credits-ach.md) / [p2p-consumer-roadmap.md](./p2p-consumer-roadmap.md) |
-| **Agent compensation** (credits + 2PC cash-out)                 | ✅     | `AgentCompensationService` — stage/confirm MCP + FAILED WORM; reuses `PayoutService`                                                                                                                      |
+| **Prepaid credits + bank top-up + P2P transfer**                | ✅*    | Grant ledger + FC/ACH top-up; **P2P transfer self-hosted opt-in** (`CLAWQL_CREDITS_P2P_ENABLED=1`) — [credits-ach.md](./credits-ach.md) / [compliance](./hosted-vs-self-hosted-compliance.md) |
+| **Agent compensation** (credits + 2PC cash-out)                 | ✅*    | `AgentCompensationService` — **self-hosted opt-in** (`CLAWQL_COMPENSATION_ENABLED=1`); off on managed |
 | **Accounting export + tax evidence**                            | ✅     | Subledger CSV/JSON/QB/Xero; `TaxProfileService` gate; year-end pack — [accounting-and-tax.md](./accounting-and-tax.md)                                                                                    |
 
 ### Roadmap

@@ -2,9 +2,11 @@
 
 Unified payments layer for ClawQL — **Stripe** billing + **Connect payouts**, **Ramp** agent cards, **x402** micropayments, **MPP** session streaming, **AP2** Payment Mandates, **ACP** checkout, **PayPal** Orders, **Adyen** Checkout, managed plan entitlements, and **WORM-auditable** payment events.
 
-**Positioning:** ClawQL’s Agentic Gateway is the only Foundational Platform surface with native **Stripe + x402 + MPP + AP2 + ACP** payments plus **PayPal**, **Adyen**, **Connect payouts**, **Ramp** agent cards, **prepaid credits**, and **agent compensation** with a correlated payment WORM trail — part of Auditable Production AI. See [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md), [`docs/payments/payouts-ramp.md`](../../docs/payments/payouts-ramp.md), [`docs/payments/credits-ach.md`](../../docs/payments/credits-ach.md), and [`docs/payments/agent-compensation.md`](../../docs/payments/agent-compensation.md).
+**Managed vs self-hosted:** On ClawQL managed hosting, use Stripe (and optional agentic rails) for **platform fees and gated access**. Prepaid **P2P** and **agent compensation** default **off** and stay off when `CLAWQL_MANAGED_HOSTING=1`. Self-hosted operators may set `CLAWQL_CREDITS_P2P_ENABLED=1` / `CLAWQL_COMPENSATION_ENABLED=1` and own compliance. Details: [`docs/payments/hosted-vs-self-hosted-compliance.md`](../../docs/payments/hosted-vs-self-hosted-compliance.md).
 
-ClawQL's own managed tiers (Free / Pro / Team / Enterprise) run on this package internally. The same package is available to ClawQL users to bill their own customers via Stripe/PayPal/Adyen, pay creators via Connect, issue Ramp agent cards, gate MCP tools and HTTP endpoints via x402/MPP/AP2, expose ACP checkout for agent commerce, and get a correlated payment audit trail across rails.
+**Docs:** [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md), [`docs/payments/payouts-ramp.md`](../../docs/payments/payouts-ramp.md), [`docs/payments/credits-ach.md`](../../docs/payments/credits-ach.md), [`docs/payments/agent-compensation.md`](../../docs/payments/agent-compensation.md).
+
+ClawQL's own managed tiers run on this package for **Stripe-mediated subscriptions**. The same package is available to self-hosted operators to bill their customers, pay creators via Connect, issue Ramp agent cards, gate MCP tools via x402/MPP/AP2, and (when explicitly enabled) run peer credit transfer or agent compensation under the operator's compliance framework.
 
 ## Architecture
 

@@ -35,6 +35,7 @@ describe("credits hateoas http", () => {
     home = await mkdtemp(join(tmpdir(), "clawql-credits-hateoas-"));
     process.env.CLAWQL_HOME = home;
     process.env.CLAWQL_CREDITS_ENABLED = "1";
+    process.env.CLAWQL_CREDITS_P2P_ENABLED = "1";
     process.env.CLAWQL_CREDITS_HATEOAS_BASE = "http://127.0.0.1:9";
     delete process.env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP;
     delete process.env.CLAWQL_CREDITS_TRANSFER_DIRECT;
@@ -44,6 +45,7 @@ describe("credits hateoas http", () => {
 
   afterEach(async () => {
     delete process.env.CLAWQL_CREDITS_HATEOAS_BASE;
+    delete process.env.CLAWQL_CREDITS_P2P_ENABLED;
     await rm(home, { recursive: true, force: true });
   });
 

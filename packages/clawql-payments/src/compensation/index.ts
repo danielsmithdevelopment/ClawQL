@@ -1,4 +1,5 @@
 export {
+  assertCompensationEnabled,
   compensationActionTtlSec,
   compensationApprovalBaseUrl,
   compensationCreditUsdRate,
