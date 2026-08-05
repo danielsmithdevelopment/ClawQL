@@ -2,14 +2,21 @@
 # Ensure Pulumi R2 state bucket exists and export AWS_* + PULUMI_BACKEND_URL for pulumi login.
 #
 # Uses CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID (same secrets as docs/landing deploy).
-# Derives R2 S3 Access Key ID / Secret from the API token per Cloudflare docs:
-#   Access Key ID = token id (from /user/tokens/verify)
-#   Secret Access Key = SHA-256 hex of the token value
-# https://developers.cloudflare.com/r2/api/tokens/
 #
-# Optional overrides (long-lived R2 keys):
-#   CLAWQL_R2_ACCESS_KEY_ID / CLAWQL_R2_SECRET_ACCESS_KEY
-#   or CLAWQL_SYNC_ACCESS_KEY_ID / CLAWQL_SYNC_SECRET_ACCESS_KEY
+# R2 S3 credentials for `pulumi login` (S3-compatible API), in order:
+#   1) CLAWQL_R2_ACCESS_KEY_ID + CLAWQL_R2_SECRET_ACCESS_KEY
+#      (or CLAWQL_SYNC_ACCESS_KEY_ID / CLAWQL_SYNC_SECRET_ACCESS_KEY)
+#   2) Derive from Cloudflare API token per
+#      https://developers.cloudflare.com/r2/api/tokens/
+#        Access Key ID = token id
+#        Secret Access Key = SHA-256 hex of the token value
+#      Token id sources:
+#        a) CLOUDFLARE_API_TOKEN_ID secret (required for account-scoped Workers tokens)
+#        b) GET /user/tokens/verify (works for user-scoped tokens only)
+#
+# Account-scoped "Edit Cloudflare Workers" tokens often 401 on /user/tokens/verify —
+# that is expected. Add CLOUDFLARE_API_TOKEN_ID (Dashboard → API Tokens → token id)
+# or create R2 S3 keys under R2 → Manage API Tokens.
 #
 # Usage (CI):
 #   source scripts/pulumi/ensure-r2-state-backend.sh
@@ -46,6 +53,21 @@ cf_api() {
   fi
 }
 
+# Like cf_api but do not fail the script on HTTP errors (caller inspects status/body).
+cf_api_soft() {
+  local method="$1"
+  local path="$2"
+  local out_file="$3"
+  local http_code
+  http_code="$(
+    curl -sS -o "${out_file}" -w "%{http_code}" -X "${method}" \
+      "https://api.cloudflare.com/client/v4${path}" \
+      -H "Authorization: Bearer ${API_TOKEN}" \
+      -H "Content-Type: application/json" || true
+  )"
+  echo "${http_code}"
+}
+
 echo "::group::Ensure R2 state bucket ${STATE_BUCKET}"
 # List / create via Cloudflare R2 REST (Workers R2 Storage Write)
 list_json="$(cf_api GET "/accounts/${ACCOUNT_ID}/r2/buckets" || echo '{}')"
@@ -74,24 +96,55 @@ fi
 echo "::endgroup::"
 
 echo "::group::Resolve R2 S3 credentials for Pulumi backend"
+TOKEN_ID=""
 if [[ -n "${CLAWQL_R2_ACCESS_KEY_ID:-${CLAWQL_SYNC_ACCESS_KEY_ID:-}}" && -n "${CLAWQL_R2_SECRET_ACCESS_KEY:-${CLAWQL_SYNC_SECRET_ACCESS_KEY:-}}" ]]; then
   export AWS_ACCESS_KEY_ID="${CLAWQL_R2_ACCESS_KEY_ID:-${CLAWQL_SYNC_ACCESS_KEY_ID}}"
   export AWS_SECRET_ACCESS_KEY="${CLAWQL_R2_SECRET_ACCESS_KEY:-${CLAWQL_SYNC_SECRET_ACCESS_KEY}}"
   echo "Using explicit R2/S3 access keys from environment"
 else
-  # Derive from Cloudflare API token (documented R2 mapping)
-  verify_json="$(cf_api GET "/user/tokens/verify")"
-  TOKEN_ID="$(echo "${verify_json}" | jq -r '.result.id // empty')"
+  # Prefer explicit token id (account-scoped Workers tokens cannot call /user/tokens/verify)
+  if [[ -n "${CLOUDFLARE_API_TOKEN_ID:-}" ]]; then
+    TOKEN_ID="${CLOUDFLARE_API_TOKEN_ID}"
+    echo "Using CLOUDFLARE_API_TOKEN_ID for R2 Access Key ID"
+  else
+    verify_code=""
+    verify_code="$(cf_api_soft GET "/user/tokens/verify" /tmp/clawql-token-verify.json)"
+    if [[ "${verify_code}" == "200" ]]; then
+      TOKEN_ID="$(jq -r '.result.id // empty' /tmp/clawql-token-verify.json)"
+      echo "Resolved token id via /user/tokens/verify"
+    else
+      echo "::warning::/user/tokens/verify returned HTTP ${verify_code} (common for account-scoped API tokens)."
+      jq . /tmp/clawql-token-verify.json 2>/dev/null || cat /tmp/clawql-token-verify.json || true
+    fi
+  fi
+
   if [[ -z "${TOKEN_ID}" || "${TOKEN_ID}" == "null" ]]; then
-    echo "::error::Could not resolve API token id from /user/tokens/verify. Token may be account-scoped without user verify — set CLAWQL_R2_ACCESS_KEY_ID / CLAWQL_R2_SECRET_ACCESS_KEY secrets instead." >&2
-    echo "${verify_json}" | jq . >&2 || true
+    cat >&2 <<'EOF'
+::error::Cannot derive R2 S3 credentials for Pulumi state backend.
+
+Your CLOUDFLARE_API_TOKEN can manage R2 via the Cloudflare REST API (bucket create
+succeeded) but cannot be mapped to S3 Access Keys without the token id.
+
+Pick one fix (then re-run the workflow):
+
+  A) Add repo secret CLOUDFLARE_API_TOKEN_ID
+     Dashboard → My Profile → API Tokens → open the token → copy Token ID
+     (Access Key ID = token id; Secret = SHA-256 of the token value — we compute that)
+
+  B) Add dedicated R2 S3 keys (recommended for CI)
+     R2 → Overview → API Tokens → Create API token (Object Read & Write on clawql-pulumi-state)
+     Secrets: CLAWQL_R2_ACCESS_KEY_ID + CLAWQL_R2_SECRET_ACCESS_KEY
+
+Docs: https://developers.cloudflare.com/r2/api/tokens/
+EOF
     exit 1
   fi
+
   export AWS_ACCESS_KEY_ID="${TOKEN_ID}"
   derived_secret=""
   derived_secret="$(printf '%s' "${API_TOKEN}" | sha256sum | awk '{print $1}')"
   export AWS_SECRET_ACCESS_KEY="${derived_secret}"
-  echo "Derived R2 S3 credentials from CLOUDFLARE_API_TOKEN (Access Key ID = token id)"
+  echo "Derived R2 S3 Secret Access Key = SHA-256(CLOUDFLARE_API_TOKEN)"
 fi
 export AWS_REGION="${AWS_REGION:-auto}"
 export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-auto}"
@@ -105,8 +158,9 @@ echo "PULUMI_BACKEND_URL=${PULUMI_BACKEND_URL}"
 
 # Stable passphrase: prefer dedicated secret; else deterministic from account id (document rotation risk)
 if [[ -z "${PULUMI_CONFIG_PASSPHRASE:-}" && -z "${PULUMI_CONFIG_PASSPHRASE_FILE:-}" ]]; then
-  export PULUMI_CONFIG_PASSPHRASE
-  PULUMI_CONFIG_PASSPHRASE="$(printf 'clawql-pulumi-v1:%s' "${ACCOUNT_ID}" | sha256sum | awk '{print $1}')"
+  derived_pass=""
+  derived_pass="$(printf 'clawql-pulumi-v1:%s' "${ACCOUNT_ID}" | sha256sum | awk '{print $1}')"
+  export PULUMI_CONFIG_PASSPHRASE="${derived_pass}"
   echo "::warning::PULUMI_CONFIG_PASSPHRASE unset — using account-derived passphrase. Prefer a dedicated repo secret PULUMI_CONFIG_PASSPHRASE for production."
 fi
 

@@ -7,8 +7,10 @@
 #   CLOUDFLARE_API_TOKEN   — required for deploy
 #   CLOUDFLARE_ACCOUNT_ID  — required for deploy
 # Optional:
+#   CLOUDFLARE_API_TOKEN_ID — token UUID (needed when token is account-scoped and
+#     /user/tokens/verify returns 401; Access Key ID for R2 S3 mapping)
 #   CLAWQL_R2_ACCESS_KEY_ID / CLAWQL_R2_SECRET_ACCESS_KEY — explicit R2 S3 keys
-#     (otherwise derived from API token id + SHA-256 of token value)
+#     (preferred over token derivation)
 #   PULUMI_CONFIG_PASSPHRASE — preferred stable passphrase for stack secrets
 #
 name: Pulumi Cloudflare edge
@@ -111,6 +113,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN_ID: ${{ secrets.CLOUDFLARE_API_TOKEN_ID }}
           CLAWQL_R2_ACCESS_KEY_ID: ${{ secrets.CLAWQL_R2_ACCESS_KEY_ID }}
           CLAWQL_R2_SECRET_ACCESS_KEY: ${{ secrets.CLAWQL_R2_SECRET_ACCESS_KEY }}
           CLAWQL_SYNC_ACCESS_KEY_ID: ${{ secrets.CLAWQL_SYNC_ACCESS_KEY_ID }}
