@@ -61,11 +61,11 @@ Hosts should call `assertToolPolicy` when dispatching MCP tools once request ATR
 
 ## Shared step-up
 
-| Primitive | Module | Notes |
-| --------- | ------ | ----- |
-| TOTP (RFC 6238) | `clawql-auth` `step-up/totp` | Used by `clawql-payments` credits |
-| File enrollment store | `createFileStepUpStore(path)` | Caller-owned path; mode `0600` |
-| WebAuthn | `WebAuthnStepUpVerifier` | Pluggable; default fails closed |
+| Primitive             | Module                        | Notes                             |
+| --------------------- | ----------------------------- | --------------------------------- |
+| TOTP (RFC 6238)       | `clawql-auth` `step-up/totp`  | Used by `clawql-payments` credits |
+| File enrollment store | `createFileStepUpStore(path)` | Caller-owned path; mode `0600`    |
+| WebAuthn              | `WebAuthnStepUpVerifier`      | Pluggable; default fails closed   |
 
 Payments path: `$CLAWQL_HOME/Payments/step-up-totp.json` via `clawql payments credits step-up enroll`. Secrets never go in payment WORM.
 

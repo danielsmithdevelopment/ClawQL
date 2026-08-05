@@ -20,7 +20,10 @@ export function generateTotpSecret(bytes = 20): string {
 }
 
 export function decodeBase32(secret: string): Buffer {
-  const cleaned = secret.replace(/=+$/g, "").toUpperCase().replace(/[^A-Z2-7]/g, "");
+  const cleaned = secret
+    .replace(/=+$/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z2-7]/g, "");
   let bits = "";
   for (const c of cleaned) {
     const idx = BASE32_ALPHABET.indexOf(c);

@@ -20,7 +20,12 @@ import {
   resolveAtrClaimsFromHeadersAsync,
   resolveAuthMode,
 } from "./gateway.js";
-import { createFileStepUpStore, generateTotp, generateTotpSecret, verifyTotp } from "./step-up/index.js";
+import {
+  createFileStepUpStore,
+  generateTotp,
+  generateTotpSecret,
+  verifyTotp,
+} from "./step-up/index.js";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

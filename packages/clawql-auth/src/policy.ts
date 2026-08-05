@@ -37,7 +37,12 @@ export function resolveFinancialToolNames(env: NodeJS.ProcessEnv = process.env):
   return parseToolList(env) ?? DEFAULT_FINANCIAL_TOOL_NAMES;
 }
 
-const MFA_ACR_HINTS = ["mfa", "phr", "pop", "urn:oasis:names:tc:SAML:2.0:ac:classes:MobileTwoFactorContract"];
+const MFA_ACR_HINTS = [
+  "mfa",
+  "phr",
+  "pop",
+  "urn:oasis:names:tc:SAML:2.0:ac:classes:MobileTwoFactorContract",
+];
 const MFA_AMR_HINTS = ["mfa", "otp", "totp", "hotp", "sms", "hwk", "swk", "face", "fpt", "rba"];
 
 /**
@@ -62,10 +67,7 @@ export function claimsHaveMfa(claims: AtrClaims): boolean {
   return MFA_AMR_HINTS.some((h) => amr.includes(h) && h !== "pwd");
 }
 
-export function isFinancialTool(
-  toolName: string,
-  env: NodeJS.ProcessEnv = process.env
-): boolean {
+export function isFinancialTool(toolName: string, env: NodeJS.ProcessEnv = process.env): boolean {
   const name = toolName.trim();
   if (!name) return false;
   return resolveFinancialToolNames(env).includes(name);
