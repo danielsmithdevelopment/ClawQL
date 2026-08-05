@@ -310,7 +310,16 @@ export function verifyOidcBearerTokenEffect(
           cause,
         }),
     });
-    return { claims: atrClaimsFromJwtPayload(payload, config), payload };
+    const claims = atrClaimsFromJwtPayload(payload, config);
+    yield* Effect.try({
+      try: () =>
+        assertEmailDomainAllowed(claims, {
+          allowedDomains: config.allowedEmailDomains,
+          require: config.requireEmailDomain,
+        }),
+      catch: (cause) => new OidcAuthError({ reason: errorMessage(cause), cause }),
+    });
+    return { claims, payload };
   });
 }
 
@@ -341,26 +350,6 @@ export async function verifyOidcBearerToken(
   token: string,
   config: OidcAuthConfig = loadOidcAuthConfig()
 ): Promise<{ ok: true; claims: AtrClaims; payload: JWTPayload } | { ok: false; error: string }> {
-<<<<<<< HEAD
-  try {
-    const key = resolveVerifyKey(config);
-    const { payload } = await jwtVerify(token, key, {
-      ...(config.issuer ? { issuer: config.issuer } : {}),
-      ...(config.audience ? { audience: config.audience } : {}),
-    });
-    const claims = atrClaimsFromJwtPayload(payload, config);
-    assertEmailDomainAllowed(claims, {
-      allowedDomains: config.allowedEmailDomains,
-      require: config.requireEmailDomain,
-    });
-    return { ok: true, claims, payload };
-  } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : "OIDC JWT verification failed",
-    };
-  }
-=======
   return Effect.runPromise(
     verifyOidcBearerTokenEffect(token, config).pipe(
       Effect.map(
@@ -369,7 +358,6 @@ export async function verifyOidcBearerToken(
       Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason } as const))
     )
   );
->>>>>>> cd52e237 (feat(auth): Effect services for OIDC, gateway, step-up, SigV4)
 }
 
 /**

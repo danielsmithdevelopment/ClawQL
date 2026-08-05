@@ -17,6 +17,9 @@ export {
 } from "./config.js";
 export { generateTotp, generateTotpSecret, totpOtpauthUrl, verifyTotp } from "./totp.js";
 export {
+  creditsStepUpLiveLayer,
+  CreditsStepUpError,
+  CreditsStepUpService,
   enrollStepUpTotp,
   getStepUpEnrollment,
   requireStepUpTotp,
@@ -59,6 +62,9 @@ export {
 } from "./directory.js";
 export {
   addContact,
+  ContactsError,
+  creditsContactsLiveLayer,
+  CreditsContactsService,
   getContact,
   listContacts,
   maskContactPayee,
@@ -71,6 +77,9 @@ export {
   type ContactEntry,
 } from "./contacts.js";
 export {
+  ActivityError,
+  creditsActivityLiveLayer,
+  CreditsActivityService,
   formatActivityLine,
   getActivityFeed,
   type ActivityFeed,
@@ -84,6 +93,8 @@ export {
   cancelMoneyRequest,
   claimMoneyRequestInvite,
   createMoneyRequest,
+  creditsRequestsLiveLayer,
+  CreditsRequestsService,
   declineMoneyRequest,
   getMoneyRequest,
   listMoneyRequests,
@@ -91,6 +102,7 @@ export {
   markMoneyRequestPaid,
   moneyRequestTtlSec,
   publicMoneyRequest,
+  RequestsError,
   resetMoneyRequestsForTests,
   type CreateMoneyRequestInput,
   type CreateMoneyRequestResult,
@@ -149,7 +161,10 @@ export { attachCreditsHateoasRoutes } from "./hateoas-http.js";
 export {
   buildMoneyRequestInviteEmail,
   creditsInviteEmailFrom,
+  creditsInviteEmailLiveLayer,
   creditsInviteEmailProvider,
+  CreditsInviteEmailService,
+  InviteEmailError,
   isCreditsInviteEmailDryRun,
   isCreditsInviteEmailEnabled,
   sendMoneyRequestInviteEmail,

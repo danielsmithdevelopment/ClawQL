@@ -13,6 +13,7 @@ import {
   creditsLedgerLiveLayer,
   resetCreditsLedgerForTests,
 } from "./ledger.js";
+import { creditsStepUpLiveLayer } from "./step-up.js";
 
 describe("credits P2P transfer", () => {
   let home: string;
@@ -44,7 +45,10 @@ describe("credits P2P transfer", () => {
   const layer = () => {
     const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(AuditLive));
     const ledger = creditsLedgerLiveLayer(process.env);
-    return creditsLiveLayer(process.env).pipe(Layer.provide(Layer.mergeAll(audit, ledger)));
+    const stepUp = creditsStepUpLiveLayer(process.env);
+    return creditsLiveLayer(process.env).pipe(
+      Layer.provide(Layer.mergeAll(audit, ledger, stepUp))
+    );
   };
 
   it("moves balance from sender to recipient and writes WORM legs", async () => {

@@ -32,7 +32,7 @@ import {
   type CreditTransferResult,
   type LedgerError,
 } from "./ledger.js";
-import { requireStepUpTotp } from "./step-up.js";
+import { CreditsStepUpService } from "./step-up.js";
 import { markMoneyRequestPaid } from "./requests.js";
 
 export const CREDITS_TRANSFER_STAGE_TOOL = "payments_credits_transfer_stage";
@@ -118,12 +118,17 @@ export class CreditsService extends Context.Tag("clawql/CreditsService")<
 
 export function creditsLiveLayer(
   env: NodeJS.ProcessEnv = process.env
-): Layer.Layer<CreditsService, never, PaymentAuditService | CreditsLedgerService> {
+): Layer.Layer<
+  CreditsService,
+  never,
+  PaymentAuditService | CreditsLedgerService | CreditsStepUpService
+> {
   return Layer.effect(
     CreditsService,
     Effect.gen(function* () {
       const audit = yield* PaymentAuditService;
       const ledger = yield* CreditsLedgerService;
+      const stepUp = yield* CreditsStepUpService;
 
       const toCreditsError = (error: LedgerError) =>
         new CreditsError({ reason: error.reason, cause: error.cause });
@@ -433,14 +438,13 @@ export function creditsLiveLayer(
 
           const fromTenantId = String(record.args.fromTenantId ?? record.agentId);
           if (isCreditsTransferTotpRequired(env)) {
-            yield* Effect.tryPromise({
-              try: () => requireStepUpTotp(fromTenantId, input.totp, env),
-              catch: (cause) =>
-                new CreditsError({
-                  reason: cause instanceof Error ? cause.message : "TOTP step-up failed",
-                  cause,
-                }),
-            });
+            yield* stepUp
+              .require(fromTenantId, input.totp)
+              .pipe(
+                Effect.mapError(
+                  (error) => new CreditsError({ reason: error.reason, cause: error.cause })
+                )
+              );
           }
 
           const amountCents = Number(record.args.amountCents);

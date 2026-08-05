@@ -9,7 +9,7 @@ import { Effect } from "effect";
 import type { Express, Request, Response } from "express";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
 import { assertPendingCode, savePendingAction } from "../compensation/pending-actions.js";
-import { getActivityFeed, type ActivityItem } from "./activity.js";
+import { CreditsActivityService, type ActivityItem } from "./activity.js";
 import { isCreditsTransferTotpRequired } from "./config.js";
 import { CreditsService } from "./credits-service.js";
 import {
@@ -23,7 +23,7 @@ import {
   payHateoasEnvelope,
   type PayDeepLink,
 } from "./deeplinks.js";
-import { resolveRecipient } from "./directory.js";
+import { CreditsDirectoryService } from "./directory.js";
 import {
   escapeHtml,
   renderCreditsActivityHtml,
@@ -45,10 +45,7 @@ import {
   type CreditsHateoasAuthOptions,
 } from "./hateoas-auth.js";
 import {
-  acceptMoneyRequest,
-  claimMoneyRequestInvite,
-  declineMoneyRequest,
-  getMoneyRequest,
+  CreditsRequestsService,
   publicMoneyRequest,
   type MoneyRequest,
 } from "./requests.js";
@@ -99,7 +96,12 @@ function recentFromFeed(items: ActivityItem[]): MiniHomeRecentItem[] {
 
 async function homeHtml(tenantId: string): Promise<string> {
   try {
-    const feed = await getActivityFeed({ tenantId, limit: 5, filter: "money" });
+    const feed = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const activity = yield* CreditsActivityService;
+        return yield* activity.getFeed({ tenantId, limit: 5, filter: "money" });
+      })
+    );
     return renderCreditsMiniHomeHtml({
       tenantId: feed.tenantId,
       label: feed.label,
@@ -279,6 +281,9 @@ function sendJsonOrHtml(
 
 /**
  * Attach GET/POST routes under `/credits/*` for deep-link landing + HTMX actions.
+ */
+/**
+ * Attach GET/POST routes under `/credits/*` for deep-link landing + HTMX actions.
  * When gateway auth is apiKey/oidc (or CLAWQL_CREDITS_HATEOAS_REQUIRE_AUTH=1),
  * non-public paths require ATR claims; stage/confirm also honor MFA financial policy.
  */
@@ -302,7 +307,12 @@ export function attachCreditsHateoasRoutes(
   app.get("/credits/activity", async (req: Request, res: Response) => {
     const tenantId = tenantFromQuery(req);
     try {
-      const feed = await getActivityFeed({ tenantId, limit: 40, filter: "money" });
+      const feed = await runPaymentsEffect(
+        Effect.gen(function* () {
+          const activity = yield* CreditsActivityService;
+          return yield* activity.getFeed({ tenantId, limit: 40, filter: "money" });
+        })
+      );
       res.type("html").send(
         renderCreditsActivityHtml({
           tenantId: feed.tenantId,
@@ -357,10 +367,11 @@ export function attachCreditsHateoasRoutes(
       const amountUsd = Number(amountRaw);
       if (!to || !fromTenantId) throw new Error("from and to are required");
       if (!Number.isFinite(amountUsd) || amountUsd <= 0) throw new Error("amount must be > 0");
-      const recipient = await resolveRecipient(to);
       const staged = await runPaymentsEffect(
         Effect.gen(function* () {
+          const directory = yield* CreditsDirectoryService;
           const credits = yield* CreditsService;
+          const recipient = yield* directory.resolveRecipient(to);
           return yield* credits.stageTransfer({
             fromTenantId,
             toTenantId: recipient.tenantId,
@@ -535,7 +546,12 @@ export function attachCreditsHateoasRoutes(
 
   app.get("/credits/request/:requestId", async (req: Request, res: Response) => {
     const requestId = String(req.params.requestId ?? "").trim();
-    const row = await getMoneyRequest(requestId);
+    const row = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const requests = yield* CreditsRequestsService;
+        return yield* requests.get(requestId);
+      })
+    );
     if (!row) {
       res
         .status(404)
@@ -566,13 +582,18 @@ export function attachCreditsHateoasRoutes(
       const tenantId = String(req.body?.tenantId ?? "").trim();
       const email = String(req.body?.email ?? "").trim();
       const handleRaw = String(req.body?.handle ?? "").trim();
-      const result = await claimMoneyRequestInvite({
-        requestId,
-        token,
-        tenantId,
-        ...(email ? { email } : {}),
-        ...(handleRaw ? { handle: handleRaw } : {}),
-      });
+      const result = await runPaymentsEffect(
+        Effect.gen(function* () {
+          const requests = yield* CreditsRequestsService;
+          return yield* requests.claimInvite({
+            requestId,
+            token,
+            tenantId,
+            ...(email ? { email } : {}),
+            ...(handleRaw ? { handle: handleRaw } : {}),
+          });
+        })
+      );
       const next = buildRequestDeepLink({ requestId: result.request.requestId });
       res.type("html").send(`
         <p>Claimed${result.directoryCreated ? " (directory created)" : ""}.</p>
@@ -592,22 +613,41 @@ export function attachCreditsHateoasRoutes(
     try {
       const requestId = String(req.params.requestId ?? "").trim();
       const payerTenantId = String(req.body?.payerTenantId ?? "").trim();
-      const { request, staged } = await acceptMoneyRequest(
-        { requestId, payerTenantId },
-        async (input) =>
-          runPaymentsEffect(
-            Effect.gen(function* () {
-              const credits = yield* CreditsService;
-              return yield* credits.stageTransfer({
-                fromTenantId: input.fromTenantId,
-                toTenantId: input.toTenantId,
-                amountCents: input.amountCents,
-                note: input.note,
-                correlationId: input.correlationId,
-                requestId: input.requestId,
-              });
-            })
-          )
+      const { request, staged } = await runPaymentsEffect(
+        Effect.gen(function* () {
+          const requests = yield* CreditsRequestsService;
+          const credits = yield* CreditsService;
+          const reqRow = yield* requests.get(requestId);
+          if (!reqRow) return yield* Effect.fail(new Error("Unknown request id"));
+          if (reqRow.status === "expired") return yield* Effect.fail(new Error("Request expired"));
+          if (reqRow.status !== "pending") {
+            return yield* Effect.fail(new Error(`Request is ${reqRow.status}`));
+          }
+          if (!reqRow.payerTenantId) {
+            return yield* Effect.fail(
+              new Error(
+                "Payer has not joined yet — claim the invite first: clawql payments credits request claim-invite …"
+              )
+            );
+          }
+          if (reqRow.payerTenantId !== payerTenantId) {
+            return yield* Effect.fail(new Error("Only the payer can accept this request"));
+          }
+          const stagedResult = yield* credits.stageTransfer({
+            fromTenantId: reqRow.payerTenantId,
+            toTenantId: reqRow.requesterTenantId,
+            amountCents: reqRow.amountCents,
+            note: reqRow.note ?? `Payment for request ${reqRow.requestId}`,
+            correlationId: reqRow.correlationId,
+            requestId: reqRow.requestId,
+          });
+          const updated = yield* requests.markAccepted({
+            requestId: reqRow.requestId,
+            payerTenantId,
+            stagedTransferActionId: stagedResult.actionId,
+          });
+          return { request: updated, staged: stagedResult };
+        })
       );
       res.type("html").send(
         renderCreditsStagedTransferHtml({
@@ -630,7 +670,12 @@ export function attachCreditsHateoasRoutes(
     try {
       const requestId = String(req.params.requestId ?? "").trim();
       const payerTenantId = String(req.body?.payerTenantId ?? "").trim();
-      const result = await declineMoneyRequest({ requestId, payerTenantId });
+      const result = await runPaymentsEffect(
+        Effect.gen(function* () {
+          const requests = yield* CreditsRequestsService;
+          return yield* requests.decline({ requestId, payerTenantId });
+        })
+      );
       res.type("html").send(`<p>Declined. Status: <strong>${esc(result.status)}</strong></p>`);
     } catch (e) {
       res

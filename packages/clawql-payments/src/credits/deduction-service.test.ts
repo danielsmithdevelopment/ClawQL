@@ -16,6 +16,7 @@ import {
   getCreditAccount,
   resetCreditsLedgerForTests,
 } from "./ledger.js";
+import { creditsStepUpLiveLayer } from "./step-up.js";
 import { stripeClientLiveLayer } from "../stripe/stripe-client-service.js";
 
 describe("DeductionService (sync hold → capture/release → outbox)", () => {
@@ -46,7 +47,10 @@ describe("DeductionService (sync hold → capture/release → outbox)", () => {
     const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(AuditLive));
     const stripe = stripeClientLiveLayer(process.env);
     const ledger = creditsLedgerLiveLayer(process.env);
-    const credits = creditsLiveLayer(process.env).pipe(Layer.provide(Layer.mergeAll(audit, ledger)));
+    const stepUp = creditsStepUpLiveLayer(process.env);
+    const credits = creditsLiveLayer(process.env).pipe(
+      Layer.provide(Layer.mergeAll(audit, ledger, stepUp))
+    );
     const ach = achTopupLiveLayer(process.env).pipe(
       Layer.provide(Layer.mergeAll(audit, stripe, credits))
     );

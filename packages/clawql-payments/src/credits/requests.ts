@@ -9,6 +9,7 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { Context, Data, Effect, Layer } from "effect";
 import { resolveMoneyRequestsPath } from "../config/paths.js";
 import {
   claimDirectory,
@@ -107,6 +108,7 @@ function touchExpired(req: MoneyRequest): MoneyRequest {
   return { ...req, status: "expired", updatedAt: new Date().toISOString() };
 }
 
+/** @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only. */
 export async function getMoneyRequest(
   requestId: string,
   env: NodeJS.ProcessEnv = process.env
@@ -122,6 +124,7 @@ export async function getMoneyRequest(
   return req;
 }
 
+/** @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only. */
 export async function listMoneyRequests(
   options: {
     tenantId?: string;
@@ -176,6 +179,7 @@ export type CreateMoneyRequestResult = {
 /**
  * Create a money request / invoice.
  * If `to` is an unknown email, attaches an invite URL so they can join and pay.
+ * @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only.
  */
 export async function createMoneyRequest(
   input: CreateMoneyRequestInput,
@@ -273,6 +277,7 @@ export function publicMoneyRequest(req: MoneyRequest): Omit<MoneyRequest, "invit
   };
 }
 
+/** @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only. */
 export async function claimMoneyRequestInvite(
   input: {
     requestId: string;
@@ -335,6 +340,7 @@ export async function claimMoneyRequestInvite(
   return { request: updated, directoryCreated: created };
 }
 
+/** @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only. */
 export async function declineMoneyRequest(
   input: { requestId: string; payerTenantId: string },
   env: NodeJS.ProcessEnv = process.env
@@ -342,6 +348,7 @@ export async function declineMoneyRequest(
   return updateAsPayer(input.requestId, input.payerTenantId, "declined", env);
 }
 
+/** @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only. */
 export async function cancelMoneyRequest(
   input: { requestId: string; requesterTenantId: string },
   env: NodeJS.ProcessEnv = process.env
@@ -400,7 +407,10 @@ async function updateAsPayer(
   return updated;
 }
 
-/** Mark request accepted and attach staged transfer action id. */
+/**
+ * Mark request accepted and attach staged transfer action id.
+ * @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only.
+ */
 export async function markMoneyRequestAccepted(
   input: {
     requestId: string;
@@ -458,6 +468,7 @@ export type StageTransferFn = (input: {
 /**
  * Payer accepts: stages a credits transfer (payer → requester).
  * Then authorize via magic link (`/credits/transfer/approve`) or CLI confirm (+ optional TOTP).
+ * @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only.
  */
 export async function acceptMoneyRequest(
   input: { requestId: string; payerTenantId: string },
@@ -501,7 +512,10 @@ export async function acceptMoneyRequest(
   return { request: updated, staged };
 }
 
-/** Called after credits transfer confirm when args.requestId is set. */
+/**
+ * Called after credits transfer confirm when args.requestId is set.
+ * @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only.
+ */
 export async function markMoneyRequestPaid(
   input: { requestId: string; transferId: string },
   env: NodeJS.ProcessEnv = process.env
@@ -525,4 +539,72 @@ export async function resetMoneyRequestsForTests(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<void> {
   await saveFile(emptyFile(), env);
+}
+
+export class RequestsError extends Data.TaggedError("RequestsError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+type ListMoneyRequestsOptions = Parameters<typeof listMoneyRequests>[0];
+type ClaimInviteInput = Parameters<typeof claimMoneyRequestInvite>[0];
+type DeclineInput = Parameters<typeof declineMoneyRequest>[0];
+type CancelInput = Parameters<typeof cancelMoneyRequest>[0];
+type MarkAcceptedInput = Parameters<typeof markMoneyRequestAccepted>[0];
+type MarkPaidInput = Parameters<typeof markMoneyRequestPaid>[0];
+
+/** Effect surface over money requests / invoices. */
+export class CreditsRequestsService extends Context.Tag("clawql/CreditsRequestsService")<
+  CreditsRequestsService,
+  {
+    readonly get: (requestId: string) => Effect.Effect<MoneyRequest | undefined, RequestsError>;
+    readonly list: (
+      options?: ListMoneyRequestsOptions
+    ) => Effect.Effect<MoneyRequest[], RequestsError>;
+    readonly create: (
+      input: CreateMoneyRequestInput
+    ) => Effect.Effect<CreateMoneyRequestResult, RequestsError>;
+    readonly claimInvite: (
+      input: ClaimInviteInput
+    ) => Effect.Effect<{ request: MoneyRequest; directoryCreated: boolean }, RequestsError>;
+    readonly decline: (input: DeclineInput) => Effect.Effect<MoneyRequest, RequestsError>;
+    readonly cancel: (input: CancelInput) => Effect.Effect<MoneyRequest, RequestsError>;
+    readonly markAccepted: (input: MarkAcceptedInput) => Effect.Effect<MoneyRequest, RequestsError>;
+    readonly markPaid: (
+      input: MarkPaidInput
+    ) => Effect.Effect<MoneyRequest | undefined, RequestsError>;
+    readonly reset: () => Effect.Effect<void, RequestsError>;
+  }
+>() {}
+
+export function creditsRequestsLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<CreditsRequestsService> {
+  const run = <A>(reason: string, task: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: task,
+      catch: (cause) =>
+        cause instanceof RequestsError
+          ? cause
+          : new RequestsError({ reason: cause instanceof Error ? cause.message : reason, cause }),
+    });
+
+  return Layer.succeed(
+    CreditsRequestsService,
+    CreditsRequestsService.of({
+      get: (requestId) => run("Failed to load money request", () => getMoneyRequest(requestId, env)),
+      list: (options) =>
+        run("Failed to list money requests", () => listMoneyRequests(options ?? {}, env)),
+      create: (input) => run("Failed to create money request", () => createMoneyRequest(input, env)),
+      claimInvite: (input) =>
+        run("Failed to claim money request invite", () => claimMoneyRequestInvite(input, env)),
+      decline: (input) => run("Failed to decline money request", () => declineMoneyRequest(input, env)),
+      cancel: (input) => run("Failed to cancel money request", () => cancelMoneyRequest(input, env)),
+      markAccepted: (input) =>
+        run("Failed to mark money request accepted", () => markMoneyRequestAccepted(input, env)),
+      markPaid: (input) =>
+        run("Failed to mark money request paid", () => markMoneyRequestPaid(input, env)),
+      reset: () => run("Failed to reset money requests", () => resetMoneyRequestsForTests(env)),
+    })
+  );
 }

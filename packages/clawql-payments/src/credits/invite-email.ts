@@ -6,6 +6,8 @@
  * Invite tokens / emails are never written to payment WORM.
  */
 
+import { Context, Data, Effect, Layer } from "effect";
+
 function parseTruthy(value: string | undefined): boolean {
   if (value === undefined) return false;
   const n = value.trim().toLowerCase();
@@ -165,6 +167,7 @@ export type SendInviteEmailOptions = {
 /**
  * Deliver (or dry-run) a money-request invite email.
  * Does not throw on provider HTTP errors — returns `{ ok: false, error }`.
+ * @deprecated Promise façade — prefer CreditsInviteEmailService / Effect APIs. Forced edge only.
  */
 export async function sendMoneyRequestInviteEmail(
   input: MoneyRequestInviteEmailInput,
@@ -301,4 +304,51 @@ export function shouldSendInviteEmailOnCreate(
   if (options.sendEmail === false) return false;
   if (options.sendEmail === true) return true;
   return isCreditsInviteEmailEnabled(env);
+}
+
+export class InviteEmailError extends Data.TaggedError("InviteEmailError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+/** Effect surface over money-request invite email delivery (dry-run by default). */
+export class CreditsInviteEmailService extends Context.Tag("clawql/CreditsInviteEmailService")<
+  CreditsInviteEmailService,
+  {
+    readonly build: (
+      input: MoneyRequestInviteEmailInput
+    ) => Effect.Effect<InviteEmailPayload, InviteEmailError>;
+    readonly send: (
+      input: MoneyRequestInviteEmailInput,
+      options?: SendInviteEmailOptions
+    ) => Effect.Effect<InviteEmailResult, InviteEmailError>;
+  }
+>() {}
+
+export function creditsInviteEmailLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<CreditsInviteEmailService> {
+  const run = <A>(reason: string, task: () => Promise<A> | A) =>
+    Effect.tryPromise({
+      try: async () => task(),
+      catch: (cause) =>
+        cause instanceof InviteEmailError
+          ? cause
+          : new InviteEmailError({
+              reason: cause instanceof Error ? cause.message : reason,
+              cause,
+            }),
+    });
+
+  return Layer.succeed(
+    CreditsInviteEmailService,
+    CreditsInviteEmailService.of({
+      build: (input) =>
+        run("Failed to build invite email", () => buildMoneyRequestInviteEmail(input, env)),
+      send: (input, options) =>
+        run("Failed to send invite email", () =>
+          sendMoneyRequestInviteEmail(input, env, options ?? {})
+        ),
+    })
+  );
 }

@@ -13,6 +13,7 @@ import {
   resetCreditsLedgerForTests,
 } from "./ledger.js";
 import { claimDirectory, resetDirectoryForTests } from "./directory.js";
+import { creditsStepUpLiveLayer } from "./step-up.js";
 import { CreditsService, creditsLiveLayer } from "./credits-service.js";
 import {
   acceptMoneyRequest,
@@ -57,7 +58,10 @@ describe("money requests / invoices", () => {
   const layer = () => {
     const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(AuditLive));
     const ledger = creditsLedgerLiveLayer(process.env);
-    return creditsLiveLayer(process.env).pipe(Layer.provide(Layer.mergeAll(audit, ledger)));
+    const stepUp = creditsStepUpLiveLayer(process.env);
+    return creditsLiveLayer(process.env).pipe(
+      Layer.provide(Layer.mergeAll(audit, ledger, stepUp))
+    );
   };
 
   it("creates request to on-platform email", async () => {

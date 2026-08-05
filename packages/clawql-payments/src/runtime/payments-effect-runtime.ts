@@ -14,6 +14,11 @@ import { offrampWebhookLiveLayer } from "../offramp/offramp-webhook-service.js";
 import { creditsLiveLayer } from "../credits/credits-service.js";
 import { creditsLedgerLiveLayer } from "../credits/ledger.js";
 import { creditsDirectoryLiveLayer } from "../credits/directory.js";
+import { creditsContactsLiveLayer } from "../credits/contacts.js";
+import { creditsRequestsLiveLayer } from "../credits/requests.js";
+import { creditsActivityLiveLayer } from "../credits/activity.js";
+import { creditsInviteEmailLiveLayer } from "../credits/invite-email.js";
+import { creditsStepUpLiveLayer } from "../credits/step-up.js";
 import { achTopupLiveLayer } from "../credits/ach-topup-service.js";
 import { agentCompensationLiveLayer } from "../compensation/agent-compensation-service.js";
 import { deductionLiveLayer } from "../credits/deduction-service.js";
@@ -62,6 +67,11 @@ export type PaymentsServices =
   | import("../credits/credits-service.js").CreditsService
   | import("../credits/ledger.js").CreditsLedgerService
   | import("../credits/directory.js").CreditsDirectoryService
+  | import("../credits/contacts.js").CreditsContactsService
+  | import("../credits/requests.js").CreditsRequestsService
+  | import("../credits/activity.js").CreditsActivityService
+  | import("../credits/invite-email.js").CreditsInviteEmailService
+  | import("../credits/step-up.js").CreditsStepUpService
   | import("../credits/ach-topup-service.js").AchTopupService
   | import("../compensation/agent-compensation-service.js").AgentCompensationService
   | import("../credits/deduction-service.js").DeductionService
@@ -97,7 +107,16 @@ export function paymentsServicesLiveLayer(
   const offrampWebhook = offrampWebhookLiveLayer(env).pipe(Layer.provide(audit));
   const ledger = creditsLedgerLiveLayer(env);
   const directory = creditsDirectoryLiveLayer(env);
-  const credits = creditsLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(audit, ledger)));
+  const contacts = creditsContactsLiveLayer(env);
+  const requests = creditsRequestsLiveLayer(env);
+  const activity = creditsActivityLiveLayer().pipe(
+    Layer.provide(Layer.mergeAll(ledger, directory, requests))
+  );
+  const inviteEmail = creditsInviteEmailLiveLayer(env);
+  const stepUp = creditsStepUpLiveLayer(env);
+  const credits = creditsLiveLayer(env).pipe(
+    Layer.provide(Layer.mergeAll(audit, ledger, stepUp))
+  );
   const achTopup = achTopupLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(audit, stripeClient, credits))
   );
@@ -161,6 +180,11 @@ export function paymentsServicesLiveLayer(
     offrampWebhook,
     ledger,
     directory,
+    contacts,
+    requests,
+    activity,
+    inviteEmail,
+    stepUp,
     credits,
     achTopup,
     compensation,
