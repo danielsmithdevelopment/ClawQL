@@ -23,4 +23,5 @@ ClawQL's unified billing layer — **Stripe** (human fiat), **x402** (per-reques
 
 - [clawql-inference](../inference/clawql-inference.md) — gateway, call store, export/finetune flywheel
 - [clawql-idp-platform](../vision/clawql-idp-platform.md) — product pricing philosophy
+- [**accounting-and-tax.md**](accounting-and-tax.md) — WORM → books handoff; tax form ownership
 - GitHub [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) — `.well-known/payments.json` discovery (dynamic on self-hosted HTTP; static on docs site)
