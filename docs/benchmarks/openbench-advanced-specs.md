@@ -87,16 +87,16 @@ Current OpenBench tasks are mostly single-stage. Real IDP is a multi-stage chain
 
 ### B-2.1 — Full seven-stage pipeline completion
 
-| Field         | Value                                                                                                                                                                           |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Product claim | ClawQL-orchestrated agents complete full IDP pipelines that fail mid-chain without ClawQL                                                                                       |
-| Arms          | `arm-clawql` (tools + Ouroboros + Argo DAG simulation) vs `arm-bare`                                                                                                            |
-| Task IDs      | `idp-full-pipeline-invoice`, `idp-full-pipeline-contract`, `idp-full-pipeline-medical-form`                                                                                     |
-| Stages        | (1) classify/pdf-inspector (2) LangExtract grounding (3) Stirling redact + Merkle (4) archive/Postgres (5) Onyx index (6) ConeShare VDR + `deal_id` (7) WORM audit verification |
-| Score         | `stages_passed / 7`                                                                                                                                                             |
-| Spend cap     | 100 turns / 360s / 16,000 tokens                                                                                                                                                |
-| Expected      | clawql ≈ 7/7; bare ≈ 3/7 (fails redact/archive/Onyx/VDR/audit)                                                                                                                  |
-| Status        | **Stub cell WIN:** `idp-safe-pipeline-lite` ([31039035892](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31039035892)). Full vendor IDs remain Phase 3 / B2.3.  |
+| Field         | Value                                                                                                                                                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Product claim | ClawQL-orchestrated agents complete full IDP pipelines that fail mid-chain without ClawQL                                                                                                                                             |
+| Arms          | `arm-clawql` (tools + Ouroboros + Argo DAG simulation) vs `arm-bare`                                                                                                                                                                  |
+| Task IDs      | `idp-full-pipeline-invoice`, `idp-full-pipeline-contract`, `idp-full-pipeline-medical-form`                                                                                                                                           |
+| Stages        | (1) classify/pdf-inspector (2) LangExtract grounding (3) Stirling redact + Merkle (4) archive/Postgres (5) Onyx index (6) ConeShare VDR + `deal_id` (7) WORM audit verification                                                       |
+| Score         | `stages_passed / 7`                                                                                                                                                                                                                   |
+| Spend cap     | 100 turns / 360s / 16,000 tokens                                                                                                                                                                                                      |
+| Expected      | clawql ≈ 7/7; bare ≈ 3/7 (fails redact/archive/Onyx/VDR/audit)                                                                                                                                                                        |
+| Status        | **Stub cell WIN:** `idp-safe-pipeline-lite` ([31039035892](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31039035892)). **B2.3 smoke scaffold** landed (scheduled/dispatch). Full vendor non-dry_run remains staging. |
 
 ### B-2.2 — Pipeline resilience under stage failure
 

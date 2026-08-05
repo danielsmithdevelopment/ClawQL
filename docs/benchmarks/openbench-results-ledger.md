@@ -331,7 +331,11 @@ Run: [31022595633](https://github.com/danielsmithdevelopment/ClawQL/actions/runs
 2. **Phase 1 advanced:** B-4.1 / B-3.1 / `codegraph-feature-api-surface` / composed RTP recollect **retired WIN**; next B-4.2/B-4.3 spikes (`memory-stale-after-update`, `memory-injection-attempt` task folders exist) or remaining P0 n≥3.
 3. **Trace collection:** GHA call-store JSONL now persists — [`openbench-trace-collection.md`](./openbench-trace-collection.md).
 4. Optional later: agentic external benches / domain HLE-analog (B-6) after fine-tune — not closed-book HLE.
-5. Blocked: B-1 flywheel (needs FT v1), B-5 NSV (needs metric export), **live** IDP vendor matrix (B2.3 ops). Stubbed B-2 `idp-safe-pipeline-lite` **retired WIN**.
+5. Blocked: B-1 flywheel (needs FT v1), B-5 NSV (needs metric export). **Live IDP vendor matrix:** B2.3 scaffold shipped (scheduled smoke); full non-dry_run staging still needs secrets. Stubbed B-2 `idp-safe-pipeline-lite` **retired WIN**.
+
+### 2026-08-05 — B-2.3 scheduled IDP smoke scaffold
+
+Workflow [`.github/workflows/idp-pipeline-smoke.yml`](../../.github/workflows/idp-pipeline-smoke.yml) + [`scripts/dev/smoke-idp-pipeline-b23.sh`](../../scripts/dev/smoke-idp-pipeline-b23.sh) + [runbook](../runbooks/idp-pipeline-b23-smoke.md). Tiers: `offline` (Helm+vitest), `compose` (Tika/Gotenberg), `live` (webhook dry_run with secrets). Not `pr_active`.
 
 ### 2026-08-05 — B-2.0 `idp-safe-pipeline-lite` WIN
 
