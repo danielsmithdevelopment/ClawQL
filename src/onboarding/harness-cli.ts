@@ -10,7 +10,6 @@ import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir, platform } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { existsSync } from "node:fs";
-import { buildMcpServerConfig } from "./mcp-config.js";
 import { getClawqlHome } from "./paths.js";
 import { runInit } from "./init.js";
 import { ensureHarnessSandboxGate } from "clawql-sandbox/init";
@@ -88,6 +87,101 @@ async function writeClaudeDesktopMcp(): Promise<void> {
   await writeMcpConfigFile("claude-desktop");
 }
 
+/** Prefer workspace `bin/clawql-mcp.mjs` (OpenBench CI) over published npx. */
+export function resolveClawqlMcpCommand(): string[] {
+  const fromBin = process.env.CLAWQL_BIN?.trim();
+  if (fromBin?.endsWith("clawql.mjs")) {
+    const mcp = fromBin.replace(/clawql\.mjs$/, "clawql-mcp.mjs");
+    if (existsSync(mcp)) return ["node", mcp];
+  }
+  const argv1 = process.argv[1];
+  if (typeof argv1 === "string" && argv1.endsWith("clawql.mjs")) {
+    const mcp = argv1.replace(/clawql\.mjs$/, "clawql-mcp.mjs");
+    if (existsSync(mcp)) return ["node", mcp];
+  }
+  return ["npx", "-p", "clawql-mcp", "clawql-mcp"];
+}
+
+/** Env passed into the OpenCode-local ClawQL MCP child (vault + memory for OpenBench). */
+export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string> {
+  const vault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH?.trim() || home;
+  const env: Record<string, string> = {
+    CLAWQL_HOME: home,
+    CLAWQL_OBSIDIAN_VAULT_PATH: vault,
+    CLAWQL_ENABLE_MEMORY: process.env.CLAWQL_ENABLE_MEMORY?.trim() || "1",
+    CLAWQL_BUNDLED_OFFLINE: process.env.CLAWQL_BUNDLED_OFFLINE?.trim() || "1",
+  };
+  if (process.env.CLAWQL_OPENBENCH?.trim()) {
+    env.CLAWQL_OPENBENCH = process.env.CLAWQL_OPENBENCH.trim();
+    // Slim tool surface for cheap OpenBench models — avoid pageindex/docs noise.
+    if (!process.env.CLAWQL_ENABLE_PAGEINDEX?.trim()) env.CLAWQL_ENABLE_PAGEINDEX = "0";
+    if (!process.env.CLAWQL_ENABLE_DOCUMENTS?.trim()) env.CLAWQL_ENABLE_DOCUMENTS = "0";
+    // Default recall snippets (520) truncate OpenBench vault recipes (full YAML
+    // parser / scaffold notes). Raise so clawql-on can apply recalled content.
+    if (!process.env.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS?.trim()) {
+      env.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS = "8192";
+    }
+  }
+  return env;
+}
+
+/**
+ * Headless OpenBench permissions: auto-approve normal tools, but deny doom_loop
+ * so identical tool spam (e.g. re-reading the same file 200×) cannot burn the timeout.
+ */
+export function openbenchOpencodePermissions(): Record<string, string> {
+  return {
+    "*": "allow",
+    doom_loop: "deny",
+  };
+}
+
+/**
+ * OpenCode config for OpenBench / non-interactive: provider + MCP in one JSON.
+ * OPENCODE_CONFIG_CONTENT replaces file config — MCP must be embedded here or
+ * clawql-on runs without memory_recall (both arms look identical).
+ */
+export function buildOpencodeConfigContent(opts: {
+  inferenceUrl: string;
+  gatewayModel: string;
+  home?: string;
+}): string {
+  const home = opts.home ?? getClawqlHome();
+  const base = opts.inferenceUrl.trim().replace(/\/$/, "");
+  const inferenceUrl = base.endsWith("/v1") ? base : `${base}/v1`;
+  const gatewayModel = opts.gatewayModel.trim().replace(/^clawql\//, "");
+  const mcpEnv = clawqlMcpChildEnv(home);
+  mcpEnv.CLAWQL_OPENBENCH = mcpEnv.CLAWQL_OPENBENCH || "1";
+  if (!mcpEnv.CLAWQL_ENABLE_PAGEINDEX) mcpEnv.CLAWQL_ENABLE_PAGEINDEX = "0";
+  if (!mcpEnv.CLAWQL_ENABLE_DOCUMENTS) mcpEnv.CLAWQL_ENABLE_DOCUMENTS = "0";
+  if (!mcpEnv.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS) {
+    mcpEnv.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS = "8192";
+  }
+  return JSON.stringify({
+    $schema: "https://opencode.ai/config.json",
+    permission: openbenchOpencodePermissions(),
+    provider: {
+      clawql: {
+        npm: "@ai-sdk/openai-compatible",
+        name: "ClawQL Inference",
+        options: {
+          baseURL: inferenceUrl,
+          apiKey: process.env.CLAWQL_INFERENCE_CLIENT_KEY?.trim() || "clawql-openbench",
+        },
+        models: { [gatewayModel]: {} },
+      },
+    },
+    mcp: {
+      clawql: {
+        type: "local",
+        command: resolveClawqlMcpCommand(),
+        enabled: true,
+        environment: mcpEnv,
+      },
+    },
+  });
+}
+
 async function writeOpencodeMcp(): Promise<void> {
   const home = getClawqlHome();
   const cfgDir =
@@ -103,22 +197,12 @@ async function writeOpencodeMcp(): Promise<void> {
     await copyFile(cfgPath, `${cfgPath}.bak-${Date.now()}`);
   }
 
-  const mcpBlock = buildMcpServerConfig({ includeHomeEnv: true }).mcpServers as Record<
-    string,
-    unknown
-  >;
-  const clawql = mcpBlock.clawql as Record<string, unknown> | undefined;
-  const command = ["npx", "-y", "clawql-mcp"];
-
   const mcp = (existing.mcp as Record<string, unknown> | undefined) ?? {};
   mcp.clawql = {
     type: "local",
-    command,
+    command: resolveClawqlMcpCommand(),
     enabled: true,
-    environment: {
-      CLAWQL_HOME: home,
-      ...(typeof clawql?.env === "object" ? (clawql.env as Record<string, string>) : {}),
-    },
+    environment: clawqlMcpChildEnv(home),
   };
 
   const out = {
@@ -575,31 +659,30 @@ export async function runHarnessNonInteractive(
   const spawnBin = gate.ok && gate.wrap ? "/usr/bin/sandbox-exec" : bin;
   const spawnArgs = gate.ok && gate.wrap ? gate.sandboxArgv(bin, forwarded) : forwarded;
 
+  const home = getClawqlHome();
   const env: NodeJS.ProcessEnv = {
     ...process.env,
-    CLAWQL_HOME: getClawqlHome(),
+    CLAWQL_HOME: home,
     CLAWQL_OPENBENCH: "1",
   };
+  if (!env.CLAWQL_OBSIDIAN_VAULT_PATH?.trim()) {
+    env.CLAWQL_OBSIDIAN_VAULT_PATH = home;
+  }
+  if (!env.CLAWQL_ENABLE_MEMORY?.trim()) {
+    env.CLAWQL_ENABLE_MEMORY = "1";
+  }
   if (opts.inferenceUrl?.trim()) {
     const inferenceUrl = opts.inferenceUrl.trim().replace(/\/$/, "");
     const base = inferenceUrl.endsWith("/v1") ? inferenceUrl : `${inferenceUrl}/v1`;
     env.CLAWQL_INFERENCE_URL = base;
     env.OPENAI_BASE_URL = base;
-    // OpenCode prefers an explicit OpenAI-compatible provider block over bare env.
-    if (id === "opencode" && !env.OPENCODE_CONFIG_CONTENT && opts.model?.trim()) {
+    // OPENCODE_CONFIG_CONTENT replaces file config — always embed MCP + provider.
+    if (id === "opencode" && opts.model?.trim()) {
       const gatewayModel = opts.model.trim().replace(/^clawql\//, "");
-      env.OPENCODE_CONFIG_CONTENT = JSON.stringify({
-        provider: {
-          clawql: {
-            npm: "@ai-sdk/openai-compatible",
-            name: "ClawQL Inference",
-            options: {
-              baseURL: base,
-              apiKey: process.env.CLAWQL_INFERENCE_CLIENT_KEY?.trim() || "clawql-openbench",
-            },
-            models: { [gatewayModel]: {} },
-          },
-        },
+      env.OPENCODE_CONFIG_CONTENT = buildOpencodeConfigContent({
+        inferenceUrl: base,
+        gatewayModel,
+        home,
       });
     }
   }
@@ -638,6 +721,16 @@ export async function runHarnessNonInteractive(
     } catch {
       // non-fatal for the agent run itself
     }
+  }
+
+  // Forward harness JSONL so OpenBench agent-logs capture tool calls (MCP, edit, …).
+  if (process.env.CLAWQL_OPENBENCH === "1" && combined.trim()) {
+    process.stdout.write(combined.endsWith("\n") ? combined : `${combined}\n`);
+  }
+  try {
+    await writeFile(join(workdir, ".openbench_harness.jsonl"), combined, "utf8");
+  } catch {
+    // non-fatal
   }
 
   // Machine-readable lines for OpenBench adapters / logs.
