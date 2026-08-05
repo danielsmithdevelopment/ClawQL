@@ -537,7 +537,29 @@ Infrastructure timeouts (OpenCode hang, no tools) are noise, not claim failures.
 
 ### Reasoning Trace Protocol (RTP)
 
-OpenBenchTrace (outer envelope) + RTP (inner reasoning structure) are complementary. NSV/SGDOP used for schema governance in RTP and runtime ensemble coordination in ClawQL — same math, two scales.
+OpenBenchTrace and RTP solve adjacent problems and compose rather than compete.
+
+| Layer | Role |
+| ----- | ---- |
+| **OpenBenchTrace** | Collection / publish envelope — run_id, arm, task_id, grader verdict, spend caps, clawql_version, scrub provenance, Hugging Face–citable batch |
+| **RTP** | Domain-agnostic reasoning schema — Intent → Retrieval → Reasoning → Execution → Delta → Verdict, with consent provenance and turn hash chaining |
+
+Every passing OpenBench trial should also be a valid RTP session: OpenBenchTrace wraps RTP. Outer fields carry benchmark metadata RTP need not know about; inner agent behavior maps to RTP’s six-node sequence:
+
+| Agent step | RTP node | Notes |
+| ---------- | -------- | ----- |
+| Task prompt | Intent | rawPrompt + parsedGoal |
+| memory_recall / search | Retrieval | queries + sources |
+| Pre-tool chain | Reasoning | seedChain + selectedTool |
+| Tool call | Execution | toolName + payload |
+| State change | Delta | stateBeforeHash / stateAfterHash |
+| OpenBench grader | Verdict | Tier 1 deterministic (e.g. policy-deny) or Tier 2 semantic |
+
+Practical design rule: serialize `messages` / `tool_calls` into an RTP-compatible `turnSequence`; map grader → RTP verdict; Merkle / content hashes ↔ RTP turn chaining. Publish as OpenBenchTrace (narrow, OpenBench-specific) and as RTP-compatible traces (broad, any fine-tune pipeline).
+
+**Consent gap (to close):** RTP requires a consent token before the session. In GHA, consent is implicit (own infra). Issue a gateway JWT at job start with `community_model` + `dataset_licensing` scopes (RTP §6.2) so HF releases stay commercially licensable without retroactive cleanup.
+
+NSV/SGDOP: same mathematics at two scales — RTP schema governance (coverage of reasoning concepts) and ClawQL ensemble coordination (coverage of embedding / J-space). Blind-spot vector → add a schema node or recruit a model. See [openbench-trace-collection.md](../benchmarks/openbench-trace-collection.md#rtp-alignment).
 
 ---
 

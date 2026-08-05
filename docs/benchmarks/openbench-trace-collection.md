@@ -50,6 +50,35 @@ Stable enough that August 2026 traces remain usable for an October fine-tune and
 a later public release. Bump the schema version (and changelog) for breaking
 field changes — do not silently reshape v1.0.
 
+## RTP alignment
+
+OpenBenchTrace is the **outer** benchmark envelope. The Reasoning Trace Protocol
+(RTP) is the **inner** reasoning structure. They compose: a publishable
+OpenBenchTrace record should wrap an RTP-compatible session.
+
+| OpenBenchTrace field(s) | RTP counterpart |
+| ----------------------- | --------------- |
+| Task prompt / first user message | Intent (`rawPrompt`, `parsedGoal`) |
+| `memory_recall` / `search` (and similar) in `tool_calls` | Retrieval |
+| Assistant reasoning before tool selection | Reasoning (`seedChain`, `selectedTool`) |
+| `tool_calls[]` | Execution (`toolName`, payload) |
+| Pre/post state hashes (when present) | Delta |
+| `verdict` + `verdict_source: grader` | Verdict (`evaluatorTier` 1 = deterministic grader, 2 = semantic) |
+| `content_hash` / Merkle batch chain | RTP turn hash chaining |
+| (planned) job-start consent JWT | `consentToken` (`community_model`, `dataset_licensing`) |
+
+v1.0 today stores OpenAI-shaped `messages` + `tool_calls` without an explicit
+`turnSequence` object. Prefer writers that can project those fields into RTP’s
+six-node sequence so every suitable training row is both an OpenBench cell and
+an RTP training example. Domain-agnostic RTP (IDP, combat, debugging, …) is what
+makes a multi-domain fine-tune learn transferable reasoning, not only
+ClawQL tool sequences.
+
+Schema governance (RTP) and agent coordination (ClawQL) both use NSV/SGDOP —
+dataset coverage of reasoning space vs ensemble coverage of representation
+space. Same blind-spot geometry; different recruitment action (schema node vs
+model).
+
 ## Required secrets / variables
 
 Same Cloudflare secrets as **`clawql sync ensure`** for the team vault. Sync

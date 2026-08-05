@@ -15,7 +15,8 @@
 
 | Piece        | Name                                                                   | Role                                             |
 | ------------ | ---------------------------------------------------------------------- | ------------------------------------------------ |
-| Schema       | **OpenBenchTrace** v1.0                                                | Stable, citable session/trial record             |
+| Schema       | **OpenBenchTrace** v1.0                                                | Stable, citable session/trial record (outer envelope) |
+| Inner structure | **RTP** (Reasoning Trace Protocol)                                  | Domain-agnostic six-node reasoning; OpenBenchTrace wraps it |
 | Package      | **`openbench-dataset`**                                                | Writer, backends, scrub, export CLI              |
 | CLI          | `openbench-dataset export` (ClawQL today; `openbench export` upstream) | HF-ready JSONL + dataset card                    |
 | Manifest     | WORM batch manifest                                                    | Provenance: scrub policy, hashes, schema version |
