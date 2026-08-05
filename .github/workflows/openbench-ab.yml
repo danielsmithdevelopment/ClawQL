@@ -27,6 +27,7 @@ on:
           - notify-mock-slack
           - sandbox-trusted-compute
           - composed-safe-rollout
+          - idp-safe-pipeline-lite
           - hybrid-recall-source-pin
           - external-ingest-continue
           - codegraph-guided-edit
@@ -237,6 +238,7 @@ jobs:
           matrix.task == 'notify-mock-slack' ||
           matrix.task == 'sandbox-trusted-compute' ||
           matrix.task == 'composed-safe-rollout' ||
+          matrix.task == 'idp-safe-pipeline-lite' ||
           matrix.task == 'onyx-mock-cite' ||
           matrix.task == 'memory-wikilink-hop' ||
           matrix.task == 'memory-conflict-pricing'
@@ -288,6 +290,18 @@ jobs:
             if [ "${{ matrix.task }}" = "composed-safe-rollout" ]; then
               echo "CLAWQL_PROVIDER=github"
               echo "OPENBENCH_TIMEOUT_S=240"
+            fi
+            if [ "${{ matrix.task }}" = "idp-safe-pipeline-lite" ]; then
+              echo "CLAWQL_BUNDLED_PROVIDERS=github,slack,onyx"
+              echo "CLAWQL_ENABLE_NOTIFY=1"
+              echo "CLAWQL_ENABLE_ONYX=1"
+              echo "CLAWQL_ENABLE_DOCUMENTS=1"
+              echo "CLAWQL_TEST_SLACK_FETCH_STUB=1"
+              echo "CLAWQL_SLACK_TOKEN=xoxb-openbench-stub-not-real"
+              echo "CLAWQL_TEST_ONYX_FETCH_STUB=1"
+              echo "ONYX_BASE_URL=http://127.0.0.1:9"
+              echo "ONYX_API_TOKEN=openbench-onyx-stub-token"
+              echo "OPENBENCH_TIMEOUT_S=300"
             fi
             if [ "${{ matrix.task }}" = "onyx-mock-cite" ]; then
               echo "CLAWQL_ENABLE_ONYX=1"

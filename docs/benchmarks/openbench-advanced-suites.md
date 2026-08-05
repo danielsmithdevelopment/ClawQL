@@ -166,13 +166,15 @@ Phase 7  B-1.3 cycle-over-cycle; B-3.2 langs; B-6.3 legal
 
 **Do not** put live Stirling / Coneshare / Argo / live Onyx in PR OpenBench (ops confounds).
 
-| ID     | Subtask                                                                                                                                              | Size | Notes                        |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ---------------------------- |
-| B2-0   | Define **stubbed** 5–7 stage chain using tools already graded: search/execute dry_run, audit Merkle-ish trail, memory_ingest, notify stub, onyx stub | M    | Map stages → existing MCP    |
-| B2.1-a | Task `idp-safe-pipeline-lite`: agent must complete ordered stages; score stages_passed/N                                                             | L    | Extend composed-safe-rollout |
-| B2.1-b | Artifacts: `pipeline.json` + trail with correlation_id                                                                                               | M    |                              |
-| B2.2   | Inject failure + Ouroboros recovery (optional cell)                                                                                                  | L    | After B2.1 WIN               |
-| B2.3   | Scheduled **integration** job with real services (not `pr_active`)                                                                                   | XL   | Secrets / cluster            |
+| ID     | Subtask                                                                                                                                              | Size | Notes                                                                                           |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ----------------------------------------------------------------------------------------------- |
+| B2-0   | Define **stubbed** 5–7 stage chain using tools already graded: search/execute dry_run, audit Merkle-ish trail, memory_ingest, notify stub, onyx stub | M    | Map stages → existing MCP                                                                       |
+| B2.1-a | Task `idp-safe-pipeline-lite`: agent must complete ordered stages; score stages_passed/N                                                             | L    | ✅ WIN [31039035892](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31039035892) |
+| B2.1-b | Artifacts: `pipeline.json` + trail with correlation_id                                                                                               | M    | ✅ `pipeline.json` graded                                                                       |
+| B2.2   | Inject failure + Ouroboros recovery (optional cell)                                                                                                  | L    | After B2.1 WIN                                                                                  |
+| B2.3   | Scheduled **integration** job with real services (not `pr_active`)                                                                                   | XL   | Secrets / cluster                                                                               |
+
+**Live cell (B-2.0 / B2.1):** `idp-safe-pipeline-lite` **retired WIN** ([31039035892](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31039035892) on 1.0 / off 0.0). Seven stubbed stages — discover → plan_extract → plan_redact → audit_trail → onyx_cite → notify_handoff → persist. Dual Slack/Onyx fetch stubs are URL-dispatched so both can coexist. **Does not** prove live Stirling/Argo/ConeShare (that is B2.3).
 
 ---
 
@@ -222,16 +224,16 @@ Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger,
 
 ## Mapping: suite → first OpenBench task IDs
 
-| Suite | First concrete task ID                    | `pr_active` when?     |
-| ----- | ----------------------------------------- | --------------------- |
-| B-4.1 | `memory-conflict-pricing`                 | ✅ retired WIN        |
-| B-3.1 | `codegraph-impact-edit`                   | ✅ retired WIN        |
-| B-4.2 | `memory-stale-after-update`               | Parked (offline only) |
-| B-4.3 | `memory-injection-attempt`                | ✅ retired WIN        |
-| B-2   | `idp-safe-pipeline-lite`                  | After Phase 1 WINs    |
-| B-1   | reuse retired IDs under FT matrix         | After FT v1           |
-| B-6   | `compliance-mortgage-qa` (custom harness) | After B-1 + corpus    |
-| B-5   | `daos-multiperspective-*`                 | After metric export   |
+| Suite | First concrete task ID                    | `pr_active` when?                                                                                       |
+| ----- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| B-4.1 | `memory-conflict-pricing`                 | ✅ retired WIN                                                                                          |
+| B-3.1 | `codegraph-impact-edit`                   | ✅ retired WIN                                                                                          |
+| B-4.2 | `memory-stale-after-update`               | Parked (offline only)                                                                                   |
+| B-4.3 | `memory-injection-attempt`                | ✅ retired WIN                                                                                          |
+| B-2   | `idp-safe-pipeline-lite`                  | ✅ Retired WIN [31039035892](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31039035892) |
+| B-1   | reuse retired IDs under FT matrix         | After FT v1                                                                                             |
+| B-6   | `compliance-mortgage-qa` (custom harness) | After B-1 + corpus                                                                                      |
+| B-5   | `daos-multiperspective-*`                 | After metric export                                                                                     |
 
 ---
 

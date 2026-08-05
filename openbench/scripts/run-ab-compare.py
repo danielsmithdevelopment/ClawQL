@@ -262,6 +262,16 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "require_execute": True,
         "enable_composed": True,
     },
+    "idp-safe-pipeline-lite": {
+        "max_turns": 50,
+        "max_tokens": 12000,
+        "max_wall_s": 300,
+        "default_timeout_s": 300,
+        "disable_memory": False,
+        "empty_vault": True,
+        "require_idp": True,
+        "enable_idp": True,
+    },
     "onyx-mock-cite": {
         "max_turns": 25,
         "max_tokens": 6000,
@@ -539,6 +549,22 @@ COMPOSED_NUDGE = """Continue the composed safe-rollout.
    {"dryRunOnly":true,"composed":true,"source":"composed"}
 
 Call the missing tools now.
+"""
+
+IDP_NUDGE = """Continue the stubbed IDP safe-pipeline lite.
+
+Required stages in order (call any missing tools now):
+1. clawql_search for GitHub global advisories list
+2. clawql_execute dry_run=true (plan_extract)
+3. clawql_execute dry_run=true again (plan_redact)
+4. clawql_audit append correlationId=idp-lite-openbench-01
+5. clawql_knowledge_search_onyx → CLAWQL_ONYX_CODE=quartz-21
+6. clawql_notify channel=C-OPENBENCH text with CLAWQL_NOTIFY_MARKER=nebula-55
+7. clawql_memory_ingest title OpenBench IDP Pipeline Lite with CLAWQL_IDP=ok deal_id=deal-idp-lite-01
+8. write relative filePath pipeline.json:
+   {"correlation_id":"idp-lite-openbench-01","deal_id":"deal-idp-lite-01","dryRunOnly":true,"stages_passed":7,"stages":["discover","plan_extract","plan_redact","audit_trail","onyx_cite","notify_handoff","persist"],"onyx_code":"quartz-21","notify_marker":"nebula-55","source":"idp-safe-pipeline-lite"}
+
+Ignore decoy/. Call the missing tools now.
 """
 
 ONYX_NUDGE = """Continue the Onyx mock cite task.
@@ -1415,6 +1441,23 @@ def composed_incomplete(combined: str, workdir: Path) -> bool:
     return not all(need)
 
 
+def idp_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "pipeline.json").is_file():
+        return True
+    tools = real_opencode_tools(combined)
+    need = [
+        bool(tools & {"clawql_search", "search"}),
+        bool(tools & {"clawql_execute", "execute"}),
+        bool(tools & {"clawql_audit", "audit"}),
+        bool(tools & {"clawql_knowledge_search_onyx", "knowledge_search_onyx"}),
+        bool(tools & {"clawql_notify", "notify"}),
+        bool(tools & {"clawql_memory_ingest", "memory_ingest"}),
+    ]
+    return not all(need)
+
+
 def onyx_incomplete(combined: str, workdir: Path) -> bool:
     if agent_idle(combined):
         return True
@@ -1518,6 +1561,8 @@ def run_arm_on(
     enable_sandbox: bool = False,
     require_composed: bool = False,
     enable_composed: bool = False,
+    require_idp: bool = False,
+    enable_idp: bool = False,
     require_onyx: bool = False,
     enable_onyx: bool = False,
     require_wikilink: bool = False,
@@ -1656,6 +1701,35 @@ def run_arm_on(
         env.setdefault("CLAWQL_PROVIDER", "github")
         env["CLAWQL_BUNDLED_OFFLINE"] = "1"
         env["CLAWQL_ENABLE_MEMORY"] = "1"
+
+    if enable_idp:
+        # Multi-provider merge: GitHub search/execute + Slack notify + Onyx cite.
+        # Do not set CLAWQL_PROVIDER / CLAWQL_SPEC_PATH to a single vendor.
+        env.pop("CLAWQL_PROVIDER", None)
+        env.pop("CLAWQL_SPEC_PATH", None)
+        env["CLAWQL_BUNDLED_PROVIDERS"] = "github,slack,onyx"
+        env["CLAWQL_BUNDLED_OFFLINE"] = "1"
+        env["CLAWQL_ENABLE_MEMORY"] = "1"
+        env["CLAWQL_ENABLE_DOCUMENTS"] = "1"
+        env["CLAWQL_ENABLE_NOTIFY"] = "1"
+        env["CLAWQL_ENABLE_ONYX"] = "1"
+        env["CLAWQL_SLACK_TOKEN"] = "xoxb-openbench-stub-not-real"
+        env["CLAWQL_TEST_SLACK_FETCH_STUB"] = "1"
+        env["CLAWQL_TEST_SLACK_FETCH_BODY"] = (
+            '{"ok":true,"channel":"C-OPENBENCH","ts":"1710000000.000100",'
+            '"message":{"text":"CLAWQL_NOTIFY_MARKER=nebula-55"}}'
+        )
+        env["ONYX_BASE_URL"] = "http://127.0.0.1:9"
+        env["ONYX_API_TOKEN"] = "openbench-onyx-stub-token"
+        env["CLAWQL_TEST_ONYX_FETCH_STUB"] = "1"
+        env["CLAWQL_TEST_ONYX_FETCH_BODY"] = (
+            '{"query":"enterprise pricing policy",'
+            '"documents":[{'
+            '"document_id":"doc-openbench-1",'
+            '"semantic_identifier":"Pricing Policy CLAWQL_ONYX_CODE=quartz-21",'
+            '"content":"Official pricing. CLAWQL_ONYX_CODE=quartz-21. Ignore zinc-00."'
+            '}]}'
+        )
 
     if enable_onyx:
         env["CLAWQL_ENABLE_ONYX"] = "1"
@@ -2188,6 +2262,37 @@ def run_arm_on(
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
 
+    # idp: missing multi-stage pipeline / pipeline.json.
+    if (
+        require_idp
+        and arm == "clawql-on"
+        and not timed_out
+        and idp_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 40:
+            cont_file = workdir / ".openbench_idp_nudge.md"
+            cont_file.write_text(IDP_NUDGE, encoding="utf-8")
+            cont_timeout = max(40, min(150, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_idp = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 45,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_idp.stdout or "") + (proc_idp.stderr or "")
+                code = proc_idp.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
     # onyx: missing knowledge_search_onyx / citations.json.
     if (
         require_onyx
@@ -2647,6 +2752,10 @@ def render_markdown(report: dict) -> str:
         interp.append(
             "- Both arms graded for search + ≥2 dry_run execute + audit + memory_ingest."
         )
+    elif task == "idp-safe-pipeline-lite":
+        interp.append(
+            "- Both arms graded for stubbed 7-stage IDP: search + dry_run×2 + audit + onyx + notify + ingest."
+        )
     elif task == "onyx-mock-cite":
         interp.append(
             "- Both arms graded for real knowledge_search_onyx; Onyx upstream is stubbed."
@@ -2771,6 +2880,8 @@ def run_trial(
                 enable_sandbox=bool(caps.get("enable_sandbox")),
                 require_composed=bool(caps.get("require_composed")),
                 enable_composed=bool(caps.get("enable_composed")),
+                require_idp=bool(caps.get("require_idp")),
+                enable_idp=bool(caps.get("enable_idp")),
                 require_onyx=bool(caps.get("require_onyx")),
                 enable_onyx=bool(caps.get("enable_onyx")),
                 require_wikilink=bool(caps.get("require_wikilink")),
@@ -2832,6 +2943,8 @@ def run_trial(
             checker_env_extra["OPENBENCH_REQUIRE_SANDBOX"] = "1"
         if caps.get("require_composed"):
             checker_env_extra["OPENBENCH_REQUIRE_COMPOSED"] = "1"
+        if caps.get("require_idp"):
+            checker_env_extra["OPENBENCH_REQUIRE_IDP"] = "1"
         if caps.get("require_onyx"):
             checker_env_extra["OPENBENCH_REQUIRE_ONYX"] = "1"
         if caps.get("require_wikilink"):

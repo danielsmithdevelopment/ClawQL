@@ -96,7 +96,7 @@ Current OpenBench tasks are mostly single-stage. Real IDP is a multi-stage chain
 | Score         | `stages_passed / 7`                                                                                                                                                             |
 | Spend cap     | 100 turns / 360s / 16,000 tokens                                                                                                                                                |
 | Expected      | clawql ≈ 7/7; bare ≈ 3/7 (fails redact/archive/Onyx/VDR/audit)                                                                                                                  |
-| Status        | Spec only — Phase 3                                                                                                                                                             |
+| Status        | **Stub cell WIN:** `idp-safe-pipeline-lite` ([31039035892](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31039035892)). Full vendor IDs remain Phase 3 / B2.3.  |
 
 ### B-2.2 — Pipeline resilience under stage failure
 

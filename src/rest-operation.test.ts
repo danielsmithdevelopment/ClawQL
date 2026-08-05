@@ -445,4 +445,50 @@ describe("executeRestOperation", () => {
       expect(out.error).toMatch(/SigV4 credentials/i);
     }
   });
+
+  it("dispatches Slack vs Onyx fetch stubs by URL when both are enabled", async () => {
+    process.env.CLAWQL_TEST_SLACK_FETCH_STUB = "1";
+    process.env.CLAWQL_TEST_ONYX_FETCH_STUB = "1";
+    process.env.CLAWQL_TEST_SLACK_FETCH_BODY = '{"ok":true,"channel":"C-DUAL","from":"slack"}';
+    process.env.CLAWQL_TEST_ONYX_FETCH_BODY =
+      '{"query":"q","documents":[{"content":"from=onyx CLAWQL_ONYX_CODE=quartz-21"}]}';
+
+    const slackOut = await executeRestOperation(
+      makeOp({
+        id: "chat_postMessage",
+        method: "POST",
+        path: "api/chat.postMessage",
+        flatPath: "api/chat.postMessage",
+        parameters: {},
+      }),
+      { channel: "C-DUAL", text: "hi" },
+      makeOpenApi("https://api.slack.com/")
+    );
+    expect(slackOut.ok).toBe(true);
+    if (slackOut.ok) {
+      expect(slackOut.data).toMatchObject({ from: "slack", channel: "C-DUAL" });
+    }
+
+    const onyxOut = await executeRestOperation(
+      makeOp({
+        id: "handle_send_search_message",
+        method: "POST",
+        path: "search/send-search-message",
+        flatPath: "search/send-search-message",
+        parameters: {},
+      }),
+      { search_query: "q" },
+      makeOpenApi("http://127.0.0.1:9/")
+    );
+    expect(onyxOut.ok).toBe(true);
+    if (onyxOut.ok) {
+      const data = onyxOut.data as { documents?: { content?: string }[] };
+      expect(data.documents?.[0]?.content).toMatch(/from=onyx/);
+    }
+
+    delete process.env.CLAWQL_TEST_SLACK_FETCH_STUB;
+    delete process.env.CLAWQL_TEST_ONYX_FETCH_STUB;
+    delete process.env.CLAWQL_TEST_SLACK_FETCH_BODY;
+    delete process.env.CLAWQL_TEST_ONYX_FETCH_BODY;
+  });
 });
