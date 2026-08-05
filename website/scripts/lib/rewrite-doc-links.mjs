@@ -66,6 +66,9 @@ export const DOC_SITE_ROUTES = {
   'docs/memory/memory-obsidian.md': '/learn/memory',
   'docs/ouroboros/clawql-ouroboros.md': '/ouroboros',
   'docs/inference/clawql-inference.md': '/inference/clawql-inference',
+  'docs/payments/clawql-payments.md': '/payments/clawql-payments',
+  'docs/surveillance/clawql-surveillance.md':
+    '/surveillance/clawql-surveillance',
   'docs/architecture/clawql-token-efficiency.md':
     '/architecture/token-efficiency',
   'docs/architecture/enterprise-ontology.md':

@@ -70,7 +70,7 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 | clawql-printingpress | Document generation                                           | 📋 Planned                                                                     |
 | clawql-goose         | Migrations                                                    | 📋 Planned                                                                     |
 
-**Vertical packages** (`clawql-lending`, `clawql-legal`, …): 📋 Planned — none shipped.
+**Vertical packages** (`clawql-lending`, `clawql-surveillance`, `clawql-legal`, …): 📋 Planned — none shipped. Spec for evidence integrity: [clawql-surveillance](../surveillance/clawql-surveillance.md).
 
 ### 3.4 Shipped (workspace packages)
 
