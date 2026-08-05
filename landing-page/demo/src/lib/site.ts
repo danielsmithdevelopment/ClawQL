@@ -21,6 +21,12 @@ export const site = {
     signup: '/signup',
     pricing: '/pricing',
     about: '/about',
+    /** Interactive edge demo (no signup) — sandboxed 5-minute session. */
+    demo: '/demo',
+    /** Public status surface (gateway health + components). */
+    status: '/status',
+    /** X / Twitter — GTM Phase 1 footer checklist. */
+    twitter: 'https://x.com/clawql',
     /** Default / primary GTM motion — Agentic Gateway as Foundational Platform for Auditable Production AI. */
     inferenceGtm: '/inference/gtm',
     /** Public IDP-first marketing landing (ops / compliance buyers). */
@@ -37,3 +43,14 @@ export const site = {
   installCommand: 'npm install -g clawql-mcp',
   providers: ['Cloudflare', 'GitHub', 'Slack', 'Linear', 'Notion', 'Onyx'],
 } as const
+
+/** Edge gateway origin — override with NEXT_PUBLIC_CLAWQL_GATEWAY_URL at build time. */
+export const gatewayUrl = (() => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const env = (globalThis as any)?.process?.env as Record<string, string | undefined> | undefined
+    return env?.NEXT_PUBLIC_CLAWQL_GATEWAY_URL?.trim() || 'https://gateway.clawql.app'
+  } catch {
+    return 'https://gateway.clawql.app'
+  }
+})()

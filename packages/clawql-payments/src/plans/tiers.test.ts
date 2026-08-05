@@ -14,6 +14,12 @@ describe("CLAWQL_PLANS", () => {
     expect(getPlanDefinition("pro").x402_enabled).toBe(true);
   });
 
+  it("marks MCP executions unlimited on every plan", () => {
+    for (const plan of Object.values(CLAWQL_PLANS)) {
+      expect(plan.mcp_executions_unlimited).toBe(true);
+    }
+  });
+
   it("validates plan ids", () => {
     expect(isClawqlPlanId("pro")).toBe(true);
     expect(isClawqlPlanId("invalid")).toBe(false);

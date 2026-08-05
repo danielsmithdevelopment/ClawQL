@@ -6,13 +6,24 @@
 #   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID (required)
 #   PULUMI_STACK (default: edge-prod)
 #   PULUMI_ACTION (preview | up) default: preview
-#   CLAWQL_DEPLOY_WORKER_STUB (true|false) default: true
+#   CLAWQL_DEPLOY_WORKER_STUB (true|false) default: true — deploys full gateway module
 #   CLAWQL_SYNC_BUCKET (default: clawql-vault-prod)
 #   CLAWQL_EDGE_NAME_PREFIX (default: clawql)
 #
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+echo "::group::Build clawql-gateway Worker bundle"
+(
+  cd "${ROOT}/cloudflare/gateway"
+  if [[ ! -d node_modules ]]; then
+    npm install --legacy-peer-deps
+  fi
+  npm run build
+)
+echo "::endgroup::"
+
 cd "${ROOT}/infra/pulumi"
 
 STACK="${PULUMI_STACK:-edge-prod}"

@@ -723,13 +723,13 @@ NAS (TrueNAS Scale) = **dev only** for AWS-side IDP. Cloudflare work uses Wrangl
 
 ### Phase 1 exit — Cloudflare (launch first)
 
-- [ ] Routing Worker on `gateway.clawql.app` (auth, lookup, native, IDP stub)
-- [ ] R2 per-tenant prefix; ingest/recall E2E
-- [ ] D1 audit with `tenant_id` + `correlation_id`
-- [ ] KV semantic cache write/hit path
-- [ ] Stripe webhooks → D1 tenant creation
-- [ ] Unlimited executions (no Worker-side execution meter)
-- [ ] Status page live; X/Twitter handle in footer fixed
+- [x] Routing Worker on `gateway.clawql.app` (auth, lookup, native, IDP stub) — [`cloudflare/gateway`](../../cloudflare/gateway)
+- [x] R2 per-tenant prefix; ingest/recall E2E — Worker `memory_ingest` / `memory_recall`
+- [x] D1 audit with `tenant_id` + `correlation_id`
+- [x] KV semantic cache write/hit path
+- [x] Stripe webhooks → D1 tenant creation — `POST /webhooks/stripe`
+- [x] Unlimited executions (no Worker-side execution meter)
+- [x] Status page live; X/Twitter handle in footer fixed — clawql.com `/status`, footer X → `x.com/clawql`
 
 ### Phase 1 exit — AWS (on first IDP customer)
 
@@ -743,9 +743,9 @@ NAS (TrueNAS Scale) = **dev only** for AWS-side IDP. Cloudflare work uses Wrangl
 
 ### Phase 2 exit — before first paid customer
 
-- [ ] Developer tier + 14-day trial (no CC) via Stripe trial API
-- [ ] Pricing page: unlimited executions; no free hosted tier; self-hosted as zero-cost path; Dev/Teams visible
-- [ ] Interactive demo (sandboxed Worker; no signup)
+- [x] Developer tier + 14-day trial (no CC) via Stripe trial API — webhook provisions `trial` tier in D1 (Stripe product/price still operator-owned)
+- [x] Pricing page: unlimited executions; no free hosted tier; self-hosted as zero-cost path; Dev/Teams visible
+- [x] Interactive demo (sandboxed Worker; no signup) — clawql.com `/demo` + `POST /demo/session`
 - [ ] Provisioning runbooks (CF + AWS)
 - [ ] Support SLA (email)
 - [ ] Contract + DPA reviewed
