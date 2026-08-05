@@ -198,7 +198,7 @@ Work **in this order** unless blocked:
 4. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire. ✅ [30969554941](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30969554941)
 5. **[B4.2-0] / [B4.3-0]** Spikes; only then optional cells. ← **next**
 6. **[P0-c]** First n=3 on `search-first-discovery`. ✅ [31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064)
-7. **[P0-d]** Remaining queue: `memory-roundtrip-ingest-recall`, `policy-deny-execute`.
+7. **[P0-d]** Remaining queue complete: memory-roundtrip ✅ [31014040293](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31014040293); policy-deny ✅ [31016004063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31016004063).
 8. Park B-1/B-2-full/B-5/B-6 until their gates open; keep specs updated here. Collect traces on every live cell in the meantime.
 
 Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger, stack-coverage, and (for product claims) vision/GTM tables when headline-worthy.

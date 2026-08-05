@@ -2,7 +2,7 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "Phase 0 memory-roundtrip n=3 WIN (31014040293). Next: policy-deny-execute n=3 or B-4.2/B-4.3 spikes.",
+  "live_resume_note": "Phase 0 queue complete (search/memory/policy n=3). Next: B-4.2/B-4.3 spikes or n\u22655.",
   "pr_active": [],
   "pr_trials": 1,
   "retired": {
@@ -31,8 +31,8 @@
       "evidence_run": "30872913516"
     },
     "policy-deny-execute": {
-      "reason": "Verified WIN \u2014 Panguard fail-closed with tool evidence (on 1.0 / off 0.0)",
-      "evidence_run": "30872913516"
+      "reason": "Verified WIN + Phase 0 n=3 margin (on 2/3 / off 0/3; RTP v1.1 R2; prior clean 1.0 @ 30872913516)",
+      "evidence_run": "31016004063"
     },
     "ouroboros-oscillation-escape": {
       "reason": "Verified WIN allow+deny, replicated; dedicated workflow is dispatch-only",

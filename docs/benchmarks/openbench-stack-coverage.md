@@ -55,7 +55,7 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 
 Still missing after this wave: n≥3 trials; ops-only (Argo / live Onyx / live Slack / R2). Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Graded cells above are **`retired`**; **`pr_active` empty** after Phase 0 memory-roundtrip n=3 WIN ([31014040293](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31014040293)); next `policy-deny-execute` n=3 or B-4.2/B-4.3 spikes. Ouroboros workflow is dispatch-only.
+**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Graded cells above are **`retired`**; **`pr_active` empty** after Phase 0 queue complete (policy-deny n=3 [31016004063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31016004063)); next B-4.2/B-4.3 spikes or optional n≥5. Ouroboros workflow is dispatch-only.
 
 Explanations for every verified cell: [`openbench-task-explanations.md`](./openbench-task-explanations.md).
 
@@ -167,7 +167,7 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 
 16. ~~**Onyx mock cite**~~ — verified on 1.0 / off 0.0 ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)).
 17. ~~**Memory wikilink hop**~~ — verified on 1.0 / off 0.0 ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)).
-18. **n≥3 trials** on a small headline subset for Wilson intervals (P3) — see Phase 0 in [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
+18. ~~**n≥3 trials** on headline subset~~ — Phase 0 trio done (search / memory-roundtrip / policy-deny); optional n≥5 — [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
 
 ### Phase 1 advanced (frugal tool delta — no fine-tune)
 
