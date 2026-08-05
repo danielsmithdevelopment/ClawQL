@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **IDP platform vision refresh (July 2026)** — [`docs/vision/clawql-idp-platform.md`](docs/vision/clawql-idp-platform.md) rewritten for investor + architect audiences: twelve-layer token efficiency, `mcp-api-adapter`, sovereign fleet / PorTAL / OKF, OpenBench evidence, hybrid Cloudflare→K3s→EKS deployment, and honest competitive gaps.
 - **OpenBench advanced specs + Phase 1 task packs** — B-1…B-6 ledger in [`docs/benchmarks/openbench-advanced-specs.md`](docs/benchmarks/openbench-advanced-specs.md). Offline packs: `codegraph-feature-api-surface` (B-3.1), `memory-conflict-pricing` (B-4.1), `memory-stale-after-update` (B-4.2), `memory-injection-attempt` (B-4.3). Specs only — no live run IDs yet.
 - **IDP NATS agent bridge (#128)** — second JetStream durable `clawql-idp-agent-bridge` on `clawql.document.>` maps `pipeline.completed` / `pipeline.failed` / `coneshare.viewer` into ClawQL MCP `memory_ingest` (+ optional `notify` / `audit`). Runtime-agnostic for Hermes / Pi / OpenClaw. CLI: `npm run nats:agent-bridge`. Helm: `nats.agentBridge.enabled`. Samples: [`deployment/samples/idp-nats-agent/`](deployment/samples/idp-nats-agent/). Runbook: [`docs/runbooks/idp-nats-agent-bridge.md`](docs/runbooks/idp-nats-agent-bridge.md).
 
