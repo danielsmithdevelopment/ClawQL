@@ -1,3 +1,8 @@
+import { classifyAccounting } from "../accounting/classify.js";
+import type { PaymentAccounting } from "../accounting/types.js";
+
+export type { PaymentAccounting };
+
 export type PaymentEventKind =
   | "STRIPE_SUBSCRIPTION_CREATED"
   | "STRIPE_INVOICE_PAID"
@@ -82,6 +87,8 @@ export type PaymentWormEntry = {
   summary: string;
   correlationId?: string;
   payload: PaymentWormPayload;
+  /** Optional accounting enrichment (auto-filled on new writes). */
+  accounting?: PaymentAccounting;
 };
 
 export function buildPaymentWormEntry(input: {
@@ -89,7 +96,10 @@ export function buildPaymentWormEntry(input: {
   summary: string;
   payload: PaymentWormPayload;
   correlationId?: string;
+  accounting?: PaymentAccounting;
 }): PaymentWormEntry {
+  const accounting =
+    input.accounting ?? classifyAccounting(input.eventKind, input.payload);
   return {
     ts: new Date().toISOString(),
     category: "payment",
@@ -97,6 +107,7 @@ export function buildPaymentWormEntry(input: {
     summary: input.summary,
     correlationId: input.correlationId,
     payload: input.payload,
+    accounting,
   };
 }
 
@@ -453,6 +464,7 @@ export function buildPayoutInitiatedEntry(input: {
   destination: "bank" | "usdc";
   dryRun?: boolean;
   correlationId?: string;
+  creatorId?: string;
 }): PaymentWormEntry {
   return buildPaymentWormEntry({
     eventKind: "PAYOUT_INITIATED",
@@ -464,6 +476,7 @@ export function buildPayoutInitiatedEntry(input: {
       amount_usdc: input.destination === "usdc" ? input.amountUsd : undefined,
       tenant_id: input.tenantId,
       resource: input.payoutId,
+      agent_id: input.creatorId,
     },
   });
 }
@@ -474,6 +487,7 @@ export function buildPayoutPaidEntry(input: {
   amountUsd: number;
   destination: "bank" | "usdc";
   correlationId?: string;
+  creatorId?: string;
 }): PaymentWormEntry {
   return buildPaymentWormEntry({
     eventKind: "PAYOUT_PAID",
@@ -485,6 +499,7 @@ export function buildPayoutPaidEntry(input: {
       amount_usdc: input.destination === "usdc" ? input.amountUsd : undefined,
       tenant_id: input.tenantId,
       resource: input.payoutId,
+      agent_id: input.creatorId,
     },
   });
 }

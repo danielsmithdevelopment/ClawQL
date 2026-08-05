@@ -9,6 +9,10 @@ import { Data } from "effect";
 import type Stripe from "stripe";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
 import {
+  TaxProfileError,
+  TaxProfileService,
+} from "../accounting/tax-profile.js";
+import {
   buildConnectAccountCreatedEntry,
   buildPayoutFailedEntry,
   buildPayoutInitiatedEntry,
@@ -106,12 +110,17 @@ export class PayoutService extends Context.Tag("clawql/PayoutService")<
 
 export function payoutLiveLayer(
   env: NodeJS.ProcessEnv = process.env
-): Layer.Layer<PayoutService, never, PaymentAuditService | StripeClientService> {
+): Layer.Layer<
+  PayoutService,
+  never,
+  PaymentAuditService | StripeClientService | TaxProfileService
+> {
   return Layer.effect(
     PayoutService,
     Effect.gen(function* () {
       const audit = yield* PaymentAuditService;
       const stripeClient = yield* StripeClientService;
+      const taxProfiles = yield* TaxProfileService;
 
       const createConnectAccount = (input: {
         email: string;
@@ -285,14 +294,24 @@ export function payoutLiveLayer(
           }
           const tenantId = input.tenantId?.trim() || "default";
           const amountCents = Math.round(input.amountUsd * 100);
+          const creatorId = input.creatorId?.trim() || undefined;
+
+          yield* taxProfiles.requireForPayout(creatorId ?? "").pipe(
+            Effect.mapError(
+              (cause) =>
+                cause instanceof TaxProfileError
+                  ? new PayoutError({ reason: cause.reason })
+                  : new PayoutError({ reason: "tax profile check failed", cause })
+            )
+          );
 
           let destination = input.destination;
           let connectAccountId = input.connectAccountId?.trim();
           let usdcWallet = input.usdcWallet?.trim();
 
-          if (input.creatorId?.trim()) {
+          if (creatorId) {
             const pref = yield* Effect.tryPromise({
-              try: () => getCreatorPayoutPreference(input.creatorId!, env),
+              try: () => getCreatorPayoutPreference(creatorId, env),
               catch: (cause) =>
                 new PayoutError({
                   reason: cause instanceof Error ? cause.message : "preference load failed",
@@ -337,6 +356,7 @@ export function payoutLiveLayer(
                   destination,
                   dryRun: true,
                   correlationId: input.correlationId,
+                  creatorId,
                 })
               )
               .pipe(Effect.catchAll(() => Effect.void));
@@ -348,6 +368,7 @@ export function payoutLiveLayer(
                   amountUsd: amountCents / 100,
                   destination,
                   correlationId: input.correlationId,
+                  creatorId,
                 })
               )
               .pipe(Effect.catchAll(() => Effect.void));
@@ -394,6 +415,7 @@ export function payoutLiveLayer(
                   destination: "usdc",
                   dryRun: sent.dryRun,
                   correlationId: input.correlationId,
+                  creatorId,
                 })
               )
               .pipe(Effect.catchAll(() => Effect.void));
@@ -407,6 +429,7 @@ export function payoutLiveLayer(
                     amountUsd: amountCents / 100,
                     destination: "usdc",
                     correlationId: input.correlationId ?? id,
+                    creatorId,
                   })
                 )
                 .pipe(Effect.catchAll(() => Effect.void));
@@ -435,7 +458,7 @@ export function payoutLiveLayer(
                   metadata: {
                     clawql_tenant: tenantId,
                     clawql_payout: "1",
-                    ...(input.creatorId?.trim() ? { clawql_creator: input.creatorId.trim() } : {}),
+                    ...(creatorId ? { clawql_creator: creatorId } : {}),
                   },
                 })
             );
@@ -449,6 +472,7 @@ export function payoutLiveLayer(
                   destination: "bank",
                   dryRun: false,
                   correlationId: input.correlationId ?? transfer.id,
+                  creatorId,
                 })
               )
               .pipe(Effect.catchAll(() => Effect.void));

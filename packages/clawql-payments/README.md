@@ -79,6 +79,11 @@ clawql payments x402 reconcile --date 2026-07-11
 clawql payments spend report --group-by provider
 clawql payments audit --correlation-id xxx
 clawql payments audit verify
+
+# Accounting subledger + tax evidence (see docs/payments/accounting-and-tax.md)
+clawql payments accounting export --from 2026-01-01 --to 2026-12-31 --format csv
+clawql payments accounting tax-evidence --tax-year 2026
+clawql payments tax-profile set --party-id creator-1 --tax-form 1099nec --collected
 ```
 
 ## Programmatic usage
@@ -103,6 +108,9 @@ Local state is stored under `$CLAWQL_HOME/Payments/` (default `~/.clawql/Payment
 - `usage.json` — metered usage counters per tenant/month
 - `audit.jsonl` — hash-chained payment audit log (append-only WORM; default store)
 - `audit.meta.json` — chain head metadata (jsonl store)
+- `accounting-map.json` — optional customer chart-of-accounts overrides
+- `tax-profiles.json` — opaque tax readiness tags (never SSNs)
+- `tax-evidence/<year>/` — year-end evidence packs
 
 Postgres store (`CLAWQL_PAYMENTS_AUDIT_STORE=postgres`) uses `clawql_payments_audit` tables instead of local files. Optional Loki export pushes full payloads when `CLAWQL_LOKI_PUSH_URL` is set.
 

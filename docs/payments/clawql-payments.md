@@ -41,13 +41,14 @@ It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is ava
 | **Payments MCP tools** (payout / ramp / offramp / compensation) | ✅     | `CLAWQL_PAYMENTS_MCP_TOOLS=1`; optional AP2 gate; includes `agent_compensation_*`                                                        |
 | **Prepaid credits + bank top-up**                               | ✅     | Grant ledger + Stripe FC/ACH top-up; sync [`DeductionService`](./deduction-service.md) on inference — [credits-ach.md](./credits-ach.md) |
 | **Agent compensation** (credits + 2PC cash-out)                 | ✅     | `AgentCompensationService` — stage/confirm MCP + FAILED WORM; reuses `PayoutService`                                                     |
+| **Accounting export + tax evidence**                            | ✅     | Subledger CSV/JSON/QB/Xero; `TaxProfileService` gate; year-end pack — [accounting-and-tax.md](./accounting-and-tax.md)                   |
 
 ### Roadmap
 
 | Tier  | Item                            | Role                                         | Notes                                                    |
 | ----- | ------------------------------- | -------------------------------------------- | -------------------------------------------------------- |
-| **1** | **Accounting export**           | Period CSV/JSON subledger from payment WORM  | Design: [accounting-and-tax.md](./accounting-and-tax.md) |
-| **2** | **Tax profile gate + year-end** | Tags + export; Stripe Connect Tax for 1099s  | No in-process IRS e-file                                 |
+| ~~1~~ | ~~**Accounting export**~~       | Period CSV/JSON subledger from payment WORM  | ✅ Shipped — [accounting-and-tax.md](./accounting-and-tax.md) |
+| ~~2~~ | ~~**Tax profile gate + year-end**~~ | Tags + export; Stripe Connect Tax for 1099s | ✅ Gate + evidence pack; no in-process IRS e-file        |
 | **3** | **Mollie / Razorpay**           | Regional processors                          | Add when regional traction requires them                 |
 
 **Already covered (do not duplicate):** Shopify Payments (Stripe-powered), ACH Direct Debit via Stripe's APIs, card/subscription/invoice flows via Stripe, **bank ACH top-ups via Stripe Financial Connections** (Plaid-backed Link UI — no separate Plaid SDK), **Stripe Connect payouts**, **live Base USDC payouts with receipt confirmation**, **consumer off-ramp + webhooks (Moonpay/Transak)**, **Ramp vault + native agentic cards**. **Not planned:** Zelle (no merchant API), Square POS-first adapters, raw Plaid SDK unless non-payment bank data is required, **full GL / tax e-file product** (subledger export + Stripe Connect Tax / CPA handoff — [accounting-and-tax.md](./accounting-and-tax.md)).
@@ -70,6 +71,7 @@ clawql-payments
 ├── offramp/    Consumer USDC → fiat (Moonpay / Transak)
 ├── credits/    Prepaid ledger + Stripe FC / ACH bank top-up
 ├── compensation/  Agent credits ledger + DAOS-aligned 2PC staging
+├── accounting/ Subledger export, CoA map, tax profile gate, evidence pack
 ├── plans/      Tier definitions, entitlements, usage.json counters
 ├── audit/      Hash-chained append-only JSONL + integrity verify
 └── cli/        clawql payments * implementations

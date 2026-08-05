@@ -1,6 +1,6 @@
 # Accounting & tax for `clawql-payments`
 
-**Status:** 📋 Design / gap analysis — not a full GL or tax-filing product  
+**Status:** ✅ Phases 1–3 surfaces shipped (subledger export + enrichment + tax profile gate + evidence pack) — still not a full GL or tax-filing product  
 **Package:** `clawql-payments` (event source) · optional exports / verticals for books & forms  
 **Related:** [clawql-payments.md](./clawql-payments.md) · [credits-ach.md](./credits-ach.md) · [agent-compensation.md](./agent-compensation.md) · [payouts-ramp.md](./payouts-ramp.md) · [banking vertical](../design/clawql-banking-vertical.md)
 
@@ -8,7 +8,7 @@
 
 ## 1. Where we are today
 
-`clawql-payments` is strong at **money-movement audit**, not at **general ledger / tax compliance**.
+`clawql-payments` is strong at **money-movement audit**, and now also at **accounting-grade export**. It is still not a **general ledger / tax e-file** product.
 
 | Capability | Status | Role |
 | ---------- | ------ | ---- |
@@ -19,35 +19,25 @@
 | Compensation ledger + 2PC cash-out | ✅ | Agent payable staging |
 | x402 reconcile CLI | ✅ | Facilitator settlement check |
 | Loki / SIEM export of payment events | ✅ | Security/ops, not books |
-| Double-entry journal / chart of accounts | ❌ | Not shipped |
-| Period close / trial balance | ❌ | Not shipped |
-| Tax forms (W-9, 1099-NEC, VAT invoices) | ❌ | Not shipped (Stripe Connect Tax may cover *some* Connect payouts externally) |
-| Export to QuickBooks / Xero / NetSuite | ❌ | Not shipped |
+| **Accounting export** (`accounting export`) | ✅ | Period CSV/JSON/QB/Xero subledger from WORM |
+| **Event → accounting enrichment** | ✅ | Auto on new WORM writes; heuristics for legacy |
+| **`accounting-map.json` CoA override** | ✅ | Customer GL codes under `$CLAWQL_HOME/Payments/` |
+| **Tax profile gate** (`TaxProfileService`) | ✅ | Opt-in via `CLAWQL_TAX_PROFILE_ENFORCE=1` |
+| **Year-end tax evidence pack** | ✅ | Markdown + JSON evidence (not IRS PDF) |
+| Double-entry journal / period close UI | ❌ | Not shipped (export + CPA / ERP) |
+| Tax forms e-file (W-9 PDF, 1099 NEC filing) | ❌ | Stripe Connect Tax / CPA / banking vertical |
 
 **Principle:** every durable money event already has (or should have) enough fields to *feed* accounting. ClawQL should not become the ERP.
 
 ---
 
-## 2. Accounting best practices (target model)
+## 2. Accounting best practices (model)
 
 Treat the payment WORM as the **subledger of record for ClawQL-mediated flows**, with a clean handoff to the customer’s GL.
 
 ### 2.1 Event → journal line
 
-Every append should be mappable to one or more journal lines:
-
-| Dimension | Why |
-| --------- | --- |
-| `eventKind` | Maps to account / journal template |
-| `provider` | Rail (stripe, x402, ramp, payouts, credits, …) |
-| `amount_usd` / `amount_usdc` | Monetary magnitude (document currency) |
-| `tenant_id` | Entity / cost center |
-| `agent_id` / `creator_id` | Counterparty (payee / agent) |
-| `correlation_id` | Trace to tool call / inference / document job |
-| `resource` | Stripe invoice id, payout id, wallet id, … |
-| Timestamp (WORM) | Recognition date |
-
-**Target enrichment (Phase 1):** optional structured fields on new events (backward compatible):
+Every append is mappable via optional `accounting` on the WORM entry (auto-filled by `buildPaymentWormEntry`):
 
 ```ts
 accounting?: {
@@ -74,50 +64,68 @@ Existing events remain valid without `accounting`; exporters use heuristics from
 
 ### 2.2 Chart of accounts (customer-owned)
 
-ClawQL ships a **default mapping template**, not a fixed CoA:
+Default template (override in `$CLAWQL_HOME/Payments/accounting-map.json`):
 
-| Category | Example GL (customer maps) |
-| -------- | -------------------------- |
+| Category | Default GL |
+| -------- | ---------- |
 | `saas_revenue` | 4000 Subscription revenue |
 | `usage_revenue` / `micropayment_revenue` | 4100 Usage / agent API revenue |
 | `prepaid_liability` | 2500 Customer credits liability |
-| `prepaid_redemption` | Dr 2500 / Cr 4100 |
+| `prepaid_redemption` | 4100 (usage recognition) |
 | `creator_payout` | 6000 Creator COGS / payouts |
 | `agent_compensation` | 6100 Agent compensation expense |
 | `agent_spend` | 6200 Agent procurement / Ramp |
-| Fees | 6300 Payment processing fees |
-
-Operators override mapping in `$CLAWQL_HOME/Payments/accounting-map.json` (proposed).
+| Fees / other | 6300 / 6999 |
 
 ### 2.3 Recognition rules (document, don’t invent GAAP)
 
 | Flow | Recognition sketch |
 | ---- | ------------------ |
-| Stripe subscription / invoice paid | Revenue when Stripe says paid (already WORM’d) |
+| Stripe subscription / invoice paid | Revenue when Stripe says paid |
 | Credits ACH top-up settled | **Liability** ↑ (not revenue) |
-| Credits deducted on inference | Liability ↓ + usage revenue (or contra) |
-| x402 / MPP received | Usage / micropayment revenue when verified |
-| Connect / USDC payout | Expense (or contra-revenue) when `PAYOUT_PAID` |
+| Credits deducted on inference | Liability ↓ + usage revenue |
+| x402 / MPP received | Micropayment revenue when verified |
+| Connect / USDC payout | Expense when `PAYOUT_PAID` |
 | Compensation deposit confirmed | Agent payable / liability |
 | Compensation cash-out completed | Clear payable + bank/USDC outflow |
-| Ramp / CF Virtual Wallet issue | Memo / commitment; expense on settlement if available |
-
-Publish these as operator guidance; CPAs choose entity-specific treatment.
 
 ### 2.4 Period close
 
-1. `clawql payments audit verify` — integrity gate  
-2. `spend report` + proposed `accounting export --from --to` — subledger  
-3. Customer imports into QB/Xero/NetSuite  
+1. `clawql payments audit verify` — integrity gate (export refuses if chain fails)  
+2. `clawql payments accounting export --from … --to …` — subledger  
+3. Customer imports into QB/Xero/NetSuite (`--format qb-csv` / `xero-csv`)  
 4. Reconcile Stripe balance / USDC wallet / ACH pending separately  
-
-ClawQL owns steps 1–2. The GL owns 3–4.
 
 ---
 
-## 3. Tax forms — what belongs where
+## 3. CLI
 
-### Decision
+```bash
+# Subledger export (refuses if audit verify fails unless --skip-verify)
+clawql payments accounting export \
+  --date-from 2026-01-01 --date-to 2026-12-31 \
+  --format csv \
+  --output ./books/2026-subledger.csv
+
+# QuickBooks / Xero bank-style templates
+clawql payments accounting export --from 2026-01-01 --to 2026-03-31 --format qb-csv
+clawql payments accounting export --from 2026-01-01 --to 2026-03-31 --format xero-csv
+
+# Year-end evidence pack (JSON + Markdown under Payments/tax-evidence/<year>/)
+clawql payments accounting tax-evidence --tax-year 2026
+
+# Tax profile (no SSN — opaque refs only)
+clawql payments tax-profile set --party-id creator-1 --tax-form 1099nec --collected \
+  --tax-profile-ref vault:w9_abc
+clawql payments tax-profile show --party-id creator-1
+
+# Enforce gate on payouts (opt-in)
+export CLAWQL_TAX_PROFILE_ENFORCE=1
+```
+
+---
+
+## 4. Tax forms — what belongs where
 
 **Do not build a full tax-filing product inside `clawql-payments`.**  
 Generate **evidence packages** and **delegate e-file / forms** to Stripe Tax / Connect Tax, the customer’s CPA tools, or a banking/HR vertical.
@@ -125,55 +133,35 @@ Generate **evidence packages** and **delegate e-file / forms** to Stripe Tax / C
 | Form / obligation | Typical trigger in ClawQL | Owner |
 | ----------------- | ------------------------- | ----- |
 | **Stripe hosted invoices / receipts** | SaaS AR | Stripe via existing billing ✅ |
-| **1099-NEC / 1099-K (US)** | Creator Connect payouts above thresholds | Prefer **Stripe Connect Tax / reporting**; ClawQL exports payout WORM as evidence |
-| **W-9 / W-8BEN collection** | Before taxable payouts | Onboarding / banking vertical (KYC-adjacent) — not micropayment core |
-| **VAT / GST tax invoices** | EU/UK/AU B2B | Stripe Tax or regional processor (Adyen); ClawQL stores invoice refs in WORM |
-| **Agent compensation tax** | SGDOP / bounty cash-out | Classify payee (contractor vs employee) outside ClawQL; export cash-out ledger for CPA |
-| **Crypto / USDC info reporting** | Base USDC payouts | Evidence = tx hash + amount + wallet in WORM; filing rules are jurisdiction-specific |
+| **1099-NEC / 1099-K (US)** | Creator Connect payouts | Prefer **Stripe Connect Tax**; ClawQL exports evidence |
+| **W-9 / W-8BEN collection** | Before taxable payouts | Onboarding / banking vertical; payments stores readiness only |
+| **VAT / GST tax invoices** | EU/UK/AU B2B | Stripe Tax / Adyen; invoice refs in WORM |
+| **Agent compensation tax** | SGDOP / bounty cash-out | Export cash-out ledger for CPA |
+| **Crypto / USDC info reporting** | Base USDC payouts | Evidence = tx hash + amount + wallet in WORM |
 
-### Thin surfaces that *do* belong in payments
+### Thin surfaces in payments
 
-1. **Tax classification tags** on payout / compensation counterparties (`taxForm: "1099nec" | "none" | "unknown"`).  
-2. **Year-end export:** CSV/JSON of payouts and compensation cash-outs with payee id, amounts, dates, payment method.  
-3. **Block high-impact payout** if W-9/tax profile missing — same pattern as proposed `KycGatePort` (port implemented by vertical / ops).  
-4. **Never store SSNs in the payment WORM** — only opaque tax-profile ids or “collected=true” flags; PII in vault / Stripe / KYC vendor.
-
----
-
-## 4. Proposed package surface (phased)
-
-### Phase 0 — This document
-
-- [x] Gap analysis vs WORM / ledgers  
-- [x] Accounting vs tax ownership  
-- [ ] Tracking issue (human)
-
-### Phase 1 — Accounting-grade export (MVP in payments)
-
-1. Document default `eventKind` → `accounting.category` map  
-2. `clawql payments accounting export --from --to [--format csv|json]`  
-   - One row per WORM money event (or exploded journal lines)  
-   - Columns: date, eventKind, category, direction, amount, currency, tenant, counterparty, correlation_id, external refs  
-3. Optional `accounting-map.json` for customer CoA codes  
-4. Tests: fixture WORM → stable CSV snapshot  
-
-**Difficulty:** low–moderate. Reuses existing audit store.
-
-### Phase 2 — Enrichment + gates
-
-- Populate `accounting` on new WORM writes (payout, compensation, credits, x402)  
-- `TaxProfilePort`: payout blocked if required tax profile missing  
-- QuickBooks Online / Xero CSV templates (IIF / bank-style) as documented formats  
-
-### Phase 3 — Forms & partner filing
-
-- Prefer Stripe Connect Tax for US 1099 on Connect payouts  
-- Banking / payroll vertical or external CPA tool for W-9 lifecycle and e-file  
-- Optional Documents pack: “year-end tax evidence” PDF bundle from export + vault decisions  
+1. **Tax classification tags** (`taxForm: "1099nec" | "none" | "unknown"`) in `tax-profiles.json`  
+2. **Year-end export** via `accounting tax-evidence`  
+3. **Block high-impact payout** when `CLAWQL_TAX_PROFILE_ENFORCE=1` and profile missing / not collected  
+4. **Never store SSNs in the payment WORM** — refuse SSN-like strings in tax profile fields  
 
 ---
 
-## 5. What *not* to do
+## 5. Package surface
+
+| Module | Role |
+| ------ | ---- |
+| `src/accounting/classify.ts` | `eventKind` → category / direction / tax treatment |
+| `src/accounting/export.ts` | Period filter, CSV/JSON/QB/Xero serialize, verify gate |
+| `src/accounting/map.ts` | Default CoA + `accounting-map.json` |
+| `src/accounting/tax-profile.ts` | File store + `TaxProfileService` Effect port |
+| `src/accounting/tax-evidence.ts` | Year-end evidence pack writer |
+| `src/cli/accounting.ts` | CLI runners |
+
+---
+
+## 6. What *not* to do
 
 | Anti-pattern | Why |
 | ------------ | --- |
@@ -185,19 +173,13 @@ Generate **evidence packages** and **delegate e-file / forms** to Stripe Tax / C
 
 ---
 
-## 6. Relationship to banking vertical
+## 7. Relationship to banking vertical
 
-[`clawql-banking`](../design/clawql-banking-vertical.md) may own:
-
-- W-9 / tax-profile collection UX next to KYC  
-- Neobank CoA presets  
-- Dispute / case packs that attach to journal lines  
-
-Payments owns the **exportable subledger**. Banking owns **onboarding evidence**. Neither replaces the customer’s accountant.
+[`clawql-banking`](../design/clawql-banking-vertical.md) may own W-9 / tax-profile collection UX next to KYC. Payments owns the **exportable subledger** and the **readiness gate**. Neither replaces the customer’s accountant.
 
 ---
 
-## 7. Success criteria
+## 8. Success criteria
 
 | Metric | Signal |
 | ------ | ------ |
@@ -206,13 +188,3 @@ Payments owns the **exportable subledger**. Banking owns **onboarding evidence**
 | Correctness | Credits top-up classified as liability, not revenue, in default map |
 | Privacy | No raw tax ID in payment WORM |
 | Handoff | CPA can import CSV into a spreadsheet / QB without ClawQL UI |
-
----
-
-## 8. Immediate recommendation
-
-1. **Accept the gap** — today you have ops audit + Stripe invoices, not books/tax.  
-2. **Do Phase 1 export next** when prioritized (highest leverage, no ERP).  
-3. **Lean on Stripe Connect Tax** for creator 1099s where Connect is the payout path.  
-4. **Keep tax PII + form e-file out of payments**; use ports + banking/onboarding vertical.  
-5. Do **not** block Cloudflare Wallets / agent rails on a full GL.
