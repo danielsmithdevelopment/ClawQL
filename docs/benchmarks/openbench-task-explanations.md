@@ -244,14 +244,14 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 
 ### `idp-safe-pipeline-lite`
 
-|                             |                                                                                                                                                                                                 |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Claim**                   | Agents complete a **stubbed 7-stage IDP pipeline**: search → dry_run×2 → audit → onyx cite → notify → memory_ingest, then write `pipeline.json` with shared `correlation_id` / `deal_id`.     |
-| **Why it matters**          | First OpenBench proof of IDP-shaped multi-hop orchestration without burning live Stirling/Argo/ConeShare on every PR.                                                                          |
-| **How**                     | `CLAWQL_BUNDLED_PROVIDERS=github,slack,onyx` + notify/onyx stubs (URL-dispatched). Graders require all seven tool stages + artifact markers (`quartz-21`, `nebula-55`).                          |
-| **What success looks like** | on: stages_passed=7 + pipeline.json; off: missing ClawQL tools → 0.0 (partial score = stages/7 on fail path).                                                                                   |
-| **Evidence**                | Live A/B pending (B-2.0 / B2.1 pack 2026-08-05).                                                                                                                                                |
-| **Does _not_ prove**        | Live vendor IDP (Stirling/Docling/LangExtract/ConeShare/Argo) — that is scheduled **B2.3**, not `pr_active`.                                                                                     |
+|                             |                                                                                                                                                                                           |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Claim**                   | Agents complete a **stubbed 7-stage IDP pipeline**: search → dry_run×2 → audit → onyx cite → notify → memory_ingest, then write `pipeline.json` with shared `correlation_id` / `deal_id`. |
+| **Why it matters**          | First OpenBench proof of IDP-shaped multi-hop orchestration without burning live Stirling/Argo/ConeShare on every PR.                                                                     |
+| **How**                     | `CLAWQL_BUNDLED_PROVIDERS=github,slack,onyx` + notify/onyx stubs (URL-dispatched). Graders require all seven tool stages + artifact markers (`quartz-21`, `nebula-55`).                   |
+| **What success looks like** | on: stages_passed=7 + pipeline.json; off: missing ClawQL tools → 0.0 (partial score = stages/7 on fail path).                                                                             |
+| **Evidence**                | Live A/B pending (B-2.0 / B2.1 pack 2026-08-05).                                                                                                                                          |
+| **Does _not_ prove**        | Live vendor IDP (Stirling/Docling/LangExtract/ConeShare/Argo) — that is scheduled **B2.3**, not `pr_active`.                                                                              |
 
 ---
 
