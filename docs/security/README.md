@@ -15,6 +15,8 @@ This section tracks ClawQL security architecture, shipped controls, and roadmap 
 - **Deploy-time** Cosign enforcement (Kyverno policy fields, digest pins, forks): [`image-signature-enforcement.md`](image-signature-enforcement.md)
 - **Runtime containment** (Kata vs gVisor, **`security.kata`**, Kyverno **`runtimeClassPolicy`**, issue [#274](https://github.com/danielsmithdevelopment/ClawQL/issues/274)): [`runtime-class-containment.md`](runtime-class-containment.md)
 - **Local Privacy Filter** (gateway backup after Presidio, [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)): [`privacy-filter-local.md`](privacy-filter-local.md)
+- **clawql-auth OIDC consumer + step-up** (not a full IdP): [`clawql-auth-oidc-stepup.md`](clawql-auth-oidc-stepup.md)
+- **MCP proxy JWT ATR** (mesh / Panguard chokepoint): [`mcp-proxy-jwt-atr.md`](mcp-proxy-jwt-atr.md)
 
 ## Supply-chain pipeline (summary)
 

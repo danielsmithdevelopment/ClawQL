@@ -148,7 +148,7 @@ The entire platform is built on Effect-TS. For non-technical readers: when a new
 
 ### Partially delivered
 
-**`clawql-auth` expansion** — OIDC/SAML/OAuth2, RBAC/ABAC beyond gateway `noAuth`/`apiKey`. Phase 1 basics shipped.
+**`clawql-auth` expansion** — OIDC JWT **consumer** (`CLAWQL_AUTH_MODE=oidc`), shared TOTP step-up + WebAuthn hooks, MFA policy for financial tools. Not a full IdP. SAML/LDAP client modes and full RBAC/ABAC remain roadmap. See [`docs/security/clawql-auth-oidc-stepup.md`](../security/clawql-auth-oidc-stepup.md).
 
 **Presidio & gateway depth** — Opt-in gateway redaction shipped (`CLAWQL_ENABLE_PRESIDIO=1`); mandatory uniform redaction on every IDP hop, circuit breakers, and full WORM defaults remain roadmap.
 

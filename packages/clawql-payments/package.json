@@ -107,6 +107,7 @@
   },
   "dependencies": {
     "clawql-api": "7.2.0",
+    "clawql-auth": "7.2.0",
     "clawql-core": "7.2.0",
     "effect": "^3.21.4",
     "nats": "^2.29.3",
