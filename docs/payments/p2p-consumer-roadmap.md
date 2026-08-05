@@ -13,6 +13,7 @@ ClawQL is **not** a consumer bank. Balances are prepaid credits; bank/USDC off-r
 | Stage → confirm (+ optional TOTP) | ✅ | High-impact 2PC |
 | Pay-by-email (default) + optional `@username` | ✅ | `$CLAWQL_HOME/Payments/directory.json` |
 | `credits pay --to email\|@user` | ✅ | Alias over transfer + directory resolve |
+| Request / invoice + email invite | ✅ | [`money-requests.md`](./money-requests.md) |
 | OIDC / MFA policy (gateway) | ✅ (stacked) | [`clawql-auth-oidc-stepup.md`](../security/clawql-auth-oidc-stepup.md) |
 
 ## Addressing model
@@ -27,11 +28,12 @@ Emails are stored only under `$CLAWQL_HOME/Payments/directory.json` (mode `0600`
 
 ## Next bits (suggested order)
 
-1. **Request money** — inert request record `@alice` asks `@bob` for $X; bob confirms → same transfer path
+1. ~~**Request money**~~ — ✅ email invoice + invite — [`money-requests.md`](./money-requests.md)
 2. **Activity feed** — recent sent/received/requests for a handle (read model over ledger + directory)
-3. **QR / deep link** — `clawql://pay/@bob?amount=10` for mobile / agent handoff
-4. **Contacts** — optional phone/email → handle (customer IdP or verified claim; not a full IdP)
+3. **QR / deep link** — `clawql://pay/@bob?amount=10` / request invite deep links
+4. **Contacts** — optional phone → email (customer IdP or verified claim; not a full IdP)
 5. **Hosted mini UI** — one-screen pay/request (brand-first; not a dashboard)
+6. **Outbound email delivery** — actually send the invite (SendGrid/SES); today CLI prints inviteUrl
 
 ## Explicit non-goals (for now)
 

@@ -43,6 +43,26 @@ export {
   type ResolvedRecipient,
 } from "./directory.js";
 export {
+  acceptMoneyRequest,
+  buildRequestInviteUrl,
+  cancelMoneyRequest,
+  claimMoneyRequestInvite,
+  createMoneyRequest,
+  declineMoneyRequest,
+  getMoneyRequest,
+  listMoneyRequests,
+  markMoneyRequestAccepted,
+  markMoneyRequestPaid,
+  moneyRequestTtlSec,
+  publicMoneyRequest,
+  resetMoneyRequestsForTests,
+  type CreateMoneyRequestInput,
+  type CreateMoneyRequestResult,
+  type MoneyRequest,
+  type MoneyRequestStatus,
+  type StageTransferFn,
+} from "./requests.js";
+export {
   appendCreditEntry,
   captureHold,
   getCreditAccount,

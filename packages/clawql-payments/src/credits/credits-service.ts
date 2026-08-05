@@ -32,6 +32,7 @@ import {
   type CreditTransferResult,
 } from "./ledger.js";
 import { requireStepUpTotp } from "./step-up.js";
+import { markMoneyRequestPaid } from "./requests.js";
 
 export const CREDITS_TRANSFER_STAGE_TOOL = "payments_credits_transfer_stage";
 export const CREDITS_TRANSFER_CONFIRM_TOOL = "payments_credits_transfer_confirm";
@@ -102,6 +103,8 @@ export class CreditsService extends Context.Tag("clawql/CreditsService")<
       idempotencyKey?: string;
       correlationId?: string;
       note?: string;
+      /** When set, confirm marks the money request paid. */
+      requestId?: string;
     }) => Effect.Effect<StagedCreditTransfer, CreditsError>;
     /** Confirm staged transfer; optional TOTP when CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1. */
     readonly confirmTransfer: (input: {
@@ -321,6 +324,7 @@ export function creditsLiveLayer(
         idempotencyKey?: string;
         correlationId?: string;
         note?: string;
+        requestId?: string;
       }) =>
         Effect.gen(function* () {
           if (!isCreditsEnabled(env)) {
@@ -359,6 +363,7 @@ export function creditsLiveLayer(
                     amountCents: Math.round(input.amountCents),
                     idempotencyKey: input.idempotencyKey,
                     note: input.note,
+                    requestId: input.requestId?.trim() || undefined,
                   },
                 },
                 env
@@ -475,6 +480,22 @@ export function creditsLiveLayer(
                 cause,
               }),
           });
+
+          const requestId =
+            typeof record.args.requestId === "string" ? record.args.requestId.trim() : "";
+          if (requestId) {
+            yield* Effect.promise(async () => {
+              try {
+                await markMoneyRequestPaid(
+                  { requestId, transferId: result.transferId },
+                  env
+                );
+              } catch {
+                /* best-effort — transfer already succeeded */
+              }
+            });
+          }
+
           return result;
         });
 

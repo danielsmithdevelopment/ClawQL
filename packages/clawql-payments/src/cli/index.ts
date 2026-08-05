@@ -71,6 +71,14 @@ export {
   runPaymentsCreditsDirectoryShow,
   runPaymentsCreditsDirectoryList,
   runPaymentsCreditsDirectoryRelease,
+  runPaymentsCreditsRequestCreate,
+  runPaymentsCreditsInvoice,
+  runPaymentsCreditsRequestList,
+  runPaymentsCreditsRequestShow,
+  runPaymentsCreditsRequestClaimInvite,
+  runPaymentsCreditsRequestAccept,
+  runPaymentsCreditsRequestDecline,
+  runPaymentsCreditsRequestCancel,
   runPaymentsCreditsStepUpEnroll,
   runPaymentsCreditsStepUpShow,
   type PaymentsCreditsShowOptions,
@@ -78,6 +86,7 @@ export {
   type PaymentsCreditsTopupOptions,
   type PaymentsCreditsTransferOptions,
   type PaymentsCreditsDirectoryOptions,
+  type PaymentsCreditsRequestOptions,
   type PaymentsCreditsStepUpOptions,
 } from "./credits.js";
 export {

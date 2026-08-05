@@ -39,6 +39,14 @@ import {
   runPaymentsCreditsDirectoryShow,
   runPaymentsCreditsDirectoryList,
   runPaymentsCreditsDirectoryRelease,
+  runPaymentsCreditsRequestCreate,
+  runPaymentsCreditsInvoice,
+  runPaymentsCreditsRequestList,
+  runPaymentsCreditsRequestShow,
+  runPaymentsCreditsRequestClaimInvite,
+  runPaymentsCreditsRequestAccept,
+  runPaymentsCreditsRequestDecline,
+  runPaymentsCreditsRequestCancel,
   runPaymentsCreditsStepUpEnroll,
   runPaymentsCreditsStepUpShow,
   runPaymentsCompensationBalance,
@@ -85,6 +93,10 @@ export type PaymentsCliOptions = {
   /** Venmo-style payee from context-aware --to */
   payTo?: string;
   displayName?: string;
+  requestId?: string;
+  inviteToken?: string;
+  requestRole?: "requester" | "payer" | "any";
+  requestStatus?: string;
   idempotencyKey?: string;
   note?: string;
   totp?: string;
@@ -516,6 +528,104 @@ export async function runPaymentsCreditsDirectoryReleaseCmd(
   return runPaymentsCreditsDirectoryRelease({
     handle: options.handle ?? options.toHandle,
     email: options.directoryEmail ?? options.email,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsRequestCreateCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsRequestCreate({
+    fromTenantId: options.fromTenantId,
+    tenantId: options.tenantId,
+    payTo: options.payTo,
+    toHandle: options.toHandle ?? options.handle,
+    toTenantId: options.toTenantId,
+    email: options.directoryEmail ?? options.email,
+    amountUsd: options.amount,
+    note: options.note,
+    correlationId: options.correlationId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsInvoiceCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsInvoice({
+    fromTenantId: options.fromTenantId,
+    tenantId: options.tenantId,
+    payTo: options.payTo,
+    toHandle: options.toHandle ?? options.handle,
+    toTenantId: options.toTenantId,
+    email: options.directoryEmail ?? options.email,
+    amountUsd: options.amount,
+    note: options.note,
+    correlationId: options.correlationId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsRequestListCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsRequestList({
+    tenantId: options.tenantId ?? options.fromTenantId,
+    role: options.requestRole,
+    status: options.requestStatus,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsRequestShowCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsRequestShow({
+    requestId: options.requestId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsRequestClaimInviteCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsRequestClaimInvite({
+    requestId: options.requestId,
+    inviteToken: options.inviteToken,
+    tenantId: options.tenantId,
+    email: options.directoryEmail ?? options.email,
+    handle: options.handle ?? options.toHandle,
+    displayName: options.displayName ?? options.name,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsRequestAcceptCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsRequestAccept({
+    requestId: options.requestId,
+    tenantId: options.tenantId ?? options.fromTenantId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsRequestDeclineCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsRequestDecline({
+    requestId: options.requestId,
+    tenantId: options.tenantId ?? options.fromTenantId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsRequestCancelCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsRequestCancel({
+    requestId: options.requestId,
+    tenantId: options.tenantId ?? options.fromTenantId,
     json: options.json,
   });
 }

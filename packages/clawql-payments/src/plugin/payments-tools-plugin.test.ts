@@ -24,6 +24,10 @@ describe("payments tools MCP plugin", () => {
       "payments_credits_directory_claim",
       "payments_credits_directory_resolve",
       "payments_credits_directory_list",
+      "payments_credits_request_create",
+      "payments_credits_request_list",
+      "payments_credits_request_claim_invite",
+      "payments_credits_request_accept",
       "payments_credits_transfer_stage",
       "payments_credits_transfer_confirm",
       "agent_compensation_deposit_stage",
@@ -32,7 +36,8 @@ describe("payments tools MCP plugin", () => {
       "agent_compensation_cashout_confirm",
     ]);
     expect(descriptions.get("payments_credits_transfer_stage")).toMatch(/Safe entry point/i);
-    expect(descriptions.get("payments_credits_directory_claim")).toMatch(/email/i);
+    expect(descriptions.get("payments_credits_request_create")).toMatch(/invoice|request|invite/i);
+
     expect(descriptions.get("payments_credits_transfer_confirm")).toMatch(/High-impact/i);
     expect(descriptions.get("agent_compensation_deposit_stage")).toMatch(/Safe entry point/i);
     expect(descriptions.get("agent_compensation_deposit_confirm")).toMatch(/High-impact/i);

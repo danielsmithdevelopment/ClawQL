@@ -22,6 +22,13 @@ import {
   listDirectory,
   resolveRecipient,
 } from "../credits/directory.js";
+import {
+  acceptMoneyRequest,
+  claimMoneyRequestInvite,
+  createMoneyRequest,
+  listMoneyRequests,
+  publicMoneyRequest,
+} from "../credits/requests.js";
 import { Ap2MandateService } from "../ap2/ap2-mandate-service.js";
 import { isAp2Enabled } from "../ap2/config.js";
 
@@ -191,6 +198,29 @@ const creditsDirectoryResolveSchema = {
     .describe("Email, @username, or tenant id"),
   email: z.string().optional(),
   handle: z.string().optional().describe("Username e.g. @alice"),
+};
+
+const creditsRequestCreateSchema = {
+  to: z.string().describe("Payer email (invites if unknown), @username, or tenant id"),
+  amountUsd: z.number().positive(),
+  fromTenantId: z.string().optional().describe("Requester tenant"),
+  note: z.string().optional().describe("Invoice memo"),
+  mandateJwt: z.string().optional(),
+};
+
+const creditsRequestAcceptSchema = {
+  requestId: z.string(),
+  payerTenantId: z.string().optional(),
+  mandateJwt: z.string().optional(),
+};
+
+const creditsRequestClaimInviteSchema = {
+  requestId: z.string(),
+  token: z.string().describe("Invite token from create response (shown once)"),
+  tenantId: z.string().describe("New or existing tenant id for the invitee"),
+  email: z.string().optional(),
+  handle: z.string().optional(),
+  displayName: z.string().optional(),
 };
 
 /** High-impact: confirm staged P2P transfer (+ optional TOTP). */
@@ -394,6 +424,130 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
           description: "List payments directory profiles (email + optional @username).",
           schema: {},
           handler: async () => textResult({ profiles: await listDirectory() }),
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_request_create",
+          description:
+            "Create a money request / invoice. Prefer email — unknown emails get an invite URL to join ClawQL and pay.",
+          schema: creditsRequestCreateSchema,
+          handler: async (args) => {
+            const a = args as {
+              to: string;
+              amountUsd: number;
+              fromTenantId?: string;
+              note?: string;
+              mandateJwt?: string;
+            };
+            await assertAp2IfRequired(env, a.mandateJwt);
+            const result = await createMoneyRequest(
+              {
+                requesterTenantId: a.fromTenantId?.trim() || "default",
+                to: a.to,
+                amountCents: Math.round(a.amountUsd * 100),
+                note: a.note,
+              },
+              env
+            );
+            return textResult({
+              ...publicMoneyRequest(result.request),
+              invite: result.invite,
+              inviteToken: result.inviteToken,
+              next: result.invite
+                ? "Share inviteUrl / inviteToken; payer runs claim-invite then accept."
+                : "Payer: payments_credits_request_accept with requestId.",
+            });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_request_list",
+          description: "List money requests / invoices for a tenant.",
+          schema: {
+            tenantId: z.string().optional(),
+            role: z.enum(["requester", "payer", "any"]).optional(),
+          },
+          handler: async (args) => {
+            const a = args as { tenantId?: string; role?: "requester" | "payer" | "any" };
+            const rows = await listMoneyRequests(
+              { tenantId: a.tenantId, role: a.role ?? "any" },
+              env
+            );
+            return textResult({ requests: rows.map(publicMoneyRequest) });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_request_claim_invite",
+          description:
+            "Claim an email invite from a money request: registers directory identity and links payer tenant.",
+          schema: creditsRequestClaimInviteSchema,
+          handler: async (args) => {
+            const a = args as {
+              requestId: string;
+              token: string;
+              tenantId: string;
+              email?: string;
+              handle?: string;
+              displayName?: string;
+            };
+            const result = await claimMoneyRequestInvite(
+              {
+                requestId: a.requestId,
+                token: a.token,
+                tenantId: a.tenantId,
+                email: a.email,
+                handle: a.handle,
+                displayName: a.displayName,
+              },
+              env
+            );
+            return textResult({
+              request: publicMoneyRequest(result.request),
+              directoryCreated: result.directoryCreated,
+              next: "Call payments_credits_request_accept to stage payment.",
+            });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_request_accept",
+          description:
+            "Payer accepts a money request: stages a credits transfer (confirm with payments_credits_transfer_confirm).",
+          schema: creditsRequestAcceptSchema,
+          handler: async (args) => {
+            const a = args as {
+              requestId: string;
+              payerTenantId?: string;
+              mandateJwt?: string;
+            };
+            await assertAp2IfRequired(env, a.mandateJwt);
+            const payerTenantId = a.payerTenantId?.trim() || "default";
+            const { request, staged } = await acceptMoneyRequest(
+              { requestId: a.requestId, payerTenantId },
+              async (input) =>
+                runPaymentsEffect(
+                  Effect.gen(function* () {
+                    const credits = yield* CreditsService;
+                    return yield* credits.stageTransfer({
+                      fromTenantId: input.fromTenantId,
+                      toTenantId: input.toTenantId,
+                      amountCents: input.amountCents,
+                      note: input.note,
+                      correlationId: input.correlationId,
+                      requestId: input.requestId,
+                    });
+                  }),
+                  env
+                ),
+              env
+            );
+            return textResult({
+              request: publicMoneyRequest(request),
+              staged,
+              next: "High-impact: payments_credits_transfer_confirm with actionId + code (+ totp if required).",
+            });
+          },
         });
 
         yield* api.registerMcpTool({

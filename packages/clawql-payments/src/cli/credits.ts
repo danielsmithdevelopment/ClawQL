@@ -17,6 +17,16 @@ import {
   releaseHandle,
   resolveRecipient,
 } from "../credits/directory.js";
+import {
+  acceptMoneyRequest,
+  cancelMoneyRequest,
+  claimMoneyRequestInvite,
+  createMoneyRequest,
+  declineMoneyRequest,
+  getMoneyRequest,
+  listMoneyRequests,
+  publicMoneyRequest,
+} from "../credits/requests.js";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
 import { loadPaymentsConfig } from "../config/store.js";
 
@@ -552,6 +562,309 @@ export async function runPaymentsCreditsStepUpShow(
     `Transfer TOTP gate: ${isCreditsTransferTotpRequired() ? "ON" : "off (set CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1)"}`
   );
   return 0;
+}
+
+export type PaymentsCreditsRequestOptions = {
+  fromTenantId?: string;
+  /** Requester tenant (alias of fromTenantId for request create). */
+  tenantId?: string;
+  payTo?: string;
+  toHandle?: string;
+  toTenantId?: string;
+  amountUsd?: number;
+  note?: string;
+  correlationId?: string;
+  requestId?: string;
+  inviteToken?: string;
+  handle?: string;
+  email?: string;
+  displayName?: string;
+  role?: "requester" | "payer" | "any";
+  status?: string;
+  json?: boolean;
+};
+
+export async function runPaymentsCreditsRequestCreate(
+  options: PaymentsCreditsRequestOptions = {}
+): Promise<number> {
+  if (!isCreditsEnabled()) {
+    console.error("Credits disabled — set CLAWQL_CREDITS_ENABLED=1");
+    return 1;
+  }
+  const config = await loadPaymentsConfig();
+  const requesterTenantId =
+    options.fromTenantId?.trim() || options.tenantId?.trim() || config.tenantId || "default";
+  const to =
+    options.payTo?.trim() ||
+    options.toHandle?.trim() ||
+    options.toTenantId?.trim() ||
+    options.email?.trim();
+  const amountUsd = options.amountUsd;
+  if (!to || amountUsd === undefined || !Number.isFinite(amountUsd) || amountUsd <= 0) {
+    console.error(
+      "Usage: clawql payments credits request --to newbie@acme.com|--to @bob --amount 25 [--note invoice]\n" +
+        "       clawql payments credits invoice …  (alias)"
+    );
+    return 1;
+  }
+  try {
+    const result = await createMoneyRequest({
+      requesterTenantId,
+      to,
+      amountCents: Math.round(amountUsd * 100),
+      note: options.note,
+      correlationId: options.correlationId,
+    });
+    if (options.json) {
+      console.log(
+        JSON.stringify(
+          {
+            ...publicMoneyRequest(result.request),
+            invite: result.invite,
+            inviteToken: result.inviteToken,
+          },
+          null,
+          2
+        )
+      );
+      return 0;
+    }
+    const r = result.request;
+    console.log(
+      `Request ${r.requestId}: $${(r.amountCents / 100).toFixed(2)} from ${requesterTenantId} → ${
+        r.payerHandle ? `@${r.payerHandle}` : r.payerEmail || r.payerTenantId || to
+      }`
+    );
+    if (r.note) console.log(`Note: ${r.note}`);
+    console.log(`Status: ${r.status} (expires ${r.expiresAt})`);
+    if (result.invite) {
+      console.log("Payer is not on ClawQL yet — share this invite:");
+      console.log(`  ${r.inviteUrl}`);
+      console.log(
+        `  clawql payments credits request claim-invite --request-id ${r.requestId} --token ${result.inviteToken} --tenant-id <new> [--handle …]`
+      );
+    } else {
+      console.log(
+        `Payer accepts: clawql payments credits request accept --request-id ${r.requestId} --tenant-id ${r.payerTenantId}`
+      );
+    }
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
+}
+
+/** Alias for request create (invoice language). */
+export async function runPaymentsCreditsInvoice(
+  options: PaymentsCreditsRequestOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsRequestCreate(options);
+}
+
+export async function runPaymentsCreditsRequestList(
+  options: PaymentsCreditsRequestOptions = {}
+): Promise<number> {
+  const config = await loadPaymentsConfig();
+  const tenantId = options.tenantId?.trim() || config.tenantId;
+  const role = options.role ?? "any";
+  const status = options.status?.trim() as
+    | "pending"
+    | "accepted"
+    | "paid"
+    | "declined"
+    | "cancelled"
+    | "expired"
+    | undefined;
+  const rows = await listMoneyRequests({ tenantId, role, status });
+  if (options.json) {
+    console.log(JSON.stringify(rows.map(publicMoneyRequest), null, 2));
+    return 0;
+  }
+  if (rows.length === 0) {
+    console.log("No money requests.");
+    return 0;
+  }
+  for (const r of rows) {
+    const who = r.payerHandle
+      ? `@${r.payerHandle}`
+      : r.payerEmail || r.payerTenantId || "(invite)";
+    console.log(
+      `${r.requestId.slice(0, 8)}…  $${(r.amountCents / 100).toFixed(2).padStart(8)}  ${r.status.padEnd(10)}  ${r.requesterTenantId} ← ${who}${r.note ? `  (${r.note})` : ""}`
+    );
+  }
+  return 0;
+}
+
+export async function runPaymentsCreditsRequestShow(
+  options: PaymentsCreditsRequestOptions = {}
+): Promise<number> {
+  const requestId = options.requestId?.trim();
+  if (!requestId) {
+    console.error("Usage: clawql payments credits request show --request-id UUID");
+    return 1;
+  }
+  const req = await getMoneyRequest(requestId);
+  if (!req) {
+    console.error("Unknown request id");
+    return 1;
+  }
+  if (options.json) {
+    console.log(JSON.stringify(publicMoneyRequest(req), null, 2));
+    return 0;
+  }
+  const pub = publicMoneyRequest(req);
+  console.log(JSON.stringify(pub, null, 2));
+  return 0;
+}
+
+export async function runPaymentsCreditsRequestClaimInvite(
+  options: PaymentsCreditsRequestOptions = {}
+): Promise<number> {
+  const requestId = options.requestId?.trim();
+  const token = options.inviteToken?.trim();
+  const tenantId = options.tenantId?.trim();
+  if (!requestId || !token || !tenantId) {
+    console.error(
+      "Usage: clawql payments credits request claim-invite --request-id UUID --token TOKEN --tenant-id ID [--email …] [--handle …]"
+    );
+    return 1;
+  }
+  try {
+    const { request, directoryCreated } = await claimMoneyRequestInvite({
+      requestId,
+      token,
+      tenantId,
+      email: options.email,
+      handle: options.handle,
+      displayName: options.displayName,
+    });
+    if (options.json) {
+      console.log(JSON.stringify({ request: publicMoneyRequest(request), directoryCreated }, null, 2));
+      return 0;
+    }
+    console.log(
+      directoryCreated
+        ? `Joined ClawQL as tenant ${tenantId} (directory created)`
+        : `Linked invite to tenant ${tenantId}`
+    );
+    if (request.payerEmail) console.log(`Email: ${request.payerEmail}`);
+    if (request.payerHandle) console.log(`Username: @${request.payerHandle}`);
+    console.log(
+      `Accept & pay: clawql payments credits request accept --request-id ${request.requestId} --tenant-id ${tenantId}`
+    );
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
+}
+
+export async function runPaymentsCreditsRequestAccept(
+  options: PaymentsCreditsRequestOptions = {}
+): Promise<number> {
+  if (!isCreditsEnabled()) {
+    console.error("Credits disabled — set CLAWQL_CREDITS_ENABLED=1");
+    return 1;
+  }
+  const config = await loadPaymentsConfig();
+  const requestId = options.requestId?.trim();
+  const payerTenantId =
+    options.tenantId?.trim() || options.fromTenantId?.trim() || config.tenantId || "default";
+  if (!requestId) {
+    console.error(
+      "Usage: clawql payments credits request accept --request-id UUID [--tenant-id payer]"
+    );
+    return 1;
+  }
+  try {
+    const { request, staged } = await acceptMoneyRequest(
+      { requestId, payerTenantId },
+      async (input) =>
+        runPaymentsEffect(
+          Effect.gen(function* () {
+            const credits = yield* CreditsService;
+            return yield* credits.stageTransfer({
+              fromTenantId: input.fromTenantId,
+              toTenantId: input.toTenantId,
+              amountCents: input.amountCents,
+              note: input.note,
+              correlationId: input.correlationId,
+              requestId: input.requestId,
+            });
+          })
+        )
+    );
+    if (options.json) {
+      console.log(JSON.stringify({ request: publicMoneyRequest(request), staged }, null, 2));
+      return 0;
+    }
+    console.log(
+      `Accepted request ${request.requestId} — staged $${staged.amountUsd.toFixed(2)} ${staged.fromTenantId} → ${staged.toTenantId}`
+    );
+    console.log(`action_id: ${staged.actionId}`);
+    console.log(`confirmation_code: ${staged.confirmationCode}`);
+    if (staged.totpRequired || isCreditsTransferTotpRequired()) {
+      console.log("TOTP required on confirm");
+    }
+    console.log(
+      `Confirm: clawql payments credits transfer --confirm --action-id ${staged.actionId} --code ${staged.confirmationCode}${staged.totpRequired ? " --totp NNNNNN" : ""}`
+    );
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
+}
+
+export async function runPaymentsCreditsRequestDecline(
+  options: PaymentsCreditsRequestOptions = {}
+): Promise<number> {
+  const config = await loadPaymentsConfig();
+  const requestId = options.requestId?.trim();
+  const payerTenantId =
+    options.tenantId?.trim() || options.fromTenantId?.trim() || config.tenantId || "default";
+  if (!requestId) {
+    console.error("Usage: clawql payments credits request decline --request-id UUID");
+    return 1;
+  }
+  try {
+    const req = await declineMoneyRequest({ requestId, payerTenantId });
+    if (options.json) {
+      console.log(JSON.stringify(publicMoneyRequest(req), null, 2));
+      return 0;
+    }
+    console.log(`Declined request ${req.requestId}`);
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
+}
+
+export async function runPaymentsCreditsRequestCancel(
+  options: PaymentsCreditsRequestOptions = {}
+): Promise<number> {
+  const config = await loadPaymentsConfig();
+  const requestId = options.requestId?.trim();
+  const requesterTenantId =
+    options.tenantId?.trim() || options.fromTenantId?.trim() || config.tenantId || "default";
+  if (!requestId) {
+    console.error("Usage: clawql payments credits request cancel --request-id UUID");
+    return 1;
+  }
+  try {
+    const req = await cancelMoneyRequest({ requestId, requesterTenantId });
+    if (options.json) {
+      console.log(JSON.stringify(publicMoneyRequest(req), null, 2));
+      return 0;
+    }
+    console.log(`Cancelled request ${req.requestId}`);
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
 }
 
 function formatErr(err: unknown): string {

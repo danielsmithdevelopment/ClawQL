@@ -100,6 +100,14 @@ import {
   runPaymentsCreditsDirectoryShowCmd,
   runPaymentsCreditsDirectoryListCmd,
   runPaymentsCreditsDirectoryReleaseCmd,
+  runPaymentsCreditsRequestCreateCmd,
+  runPaymentsCreditsInvoiceCmd,
+  runPaymentsCreditsRequestListCmd,
+  runPaymentsCreditsRequestShowCmd,
+  runPaymentsCreditsRequestClaimInviteCmd,
+  runPaymentsCreditsRequestAcceptCmd,
+  runPaymentsCreditsRequestDeclineCmd,
+  runPaymentsCreditsRequestCancelCmd,
   runPaymentsCreditsStepUpEnrollCmd,
   runPaymentsCreditsStepUpShowCmd,
   runPaymentsCompensationBalanceCmd,
@@ -304,6 +312,10 @@ function parse(argv: string[]): {
     }
     else if (a === "--to-handle" || a === "--handle") flags.toHandle = argv[++i] ?? "";
     else if (a === "--display-name") flags.displayName = argv[++i] ?? "";
+    else if (a === "--request-id") flags.requestId = argv[++i] ?? "";
+    else if (a === "--token" || a === "--invite-token") flags.inviteToken = argv[++i] ?? "";
+    else if (a === "--role") flags.requestRole = argv[++i] ?? "";
+    else if (a === "--status") flags.requestStatus = argv[++i] ?? "";
     else if (a === "--tax-year") flags.taxYear = argv[++i] ?? "";
     else if (a === "--party-id") flags.partyId = argv[++i] ?? "";
     else if (a === "--tax-form") flags.taxForm = argv[++i] ?? "";
@@ -409,6 +421,8 @@ Usage:
   clawql payments credits directory claim --email you@acme.com [--handle alice] [--name Alice]
   clawql payments credits directory show|list|release --email … | --handle @alice
   clawql payments credits pay --to you@acme.com|--to @alice --amount 10 [--note coffee]
+  clawql payments credits request|invoice --to newbie@acme.com|--to @bob --amount 25 [--note …]
+  clawql payments credits request list|show|accept|decline|cancel|claim-invite …
   clawql payments credits transfer --to-tenant other-tenant --amount 10
   clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
   clawql payments credits step-up enroll|show [--tenant-id ID] [--show-secrets]
@@ -1154,6 +1168,16 @@ async function main(): Promise<void> {
           : typeof flags.name === "string"
             ? flags.name
             : undefined,
+      requestId: typeof flags.requestId === "string" ? flags.requestId : undefined,
+      inviteToken: typeof flags.inviteToken === "string" ? flags.inviteToken : undefined,
+      requestRole:
+        typeof flags.requestRole === "string" &&
+        (flags.requestRole === "requester" ||
+          flags.requestRole === "payer" ||
+          flags.requestRole === "any")
+          ? flags.requestRole
+          : undefined,
+      requestStatus: typeof flags.requestStatus === "string" ? flags.requestStatus : undefined,
       idempotencyKey: typeof flags.idempotencyKey === "string" ? flags.idempotencyKey : undefined,
       note: typeof flags.note === "string" ? flags.note : undefined,
       totp: typeof flags.totp === "string" ? flags.totp : undefined,
@@ -1356,6 +1380,48 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsCreditsPayCmd(paymentsOpts);
         return;
       }
+      if (creditsAction === "request" || creditsAction === "invoice") {
+        const known = new Set([
+          "create",
+          "list",
+          "show",
+          "accept",
+          "decline",
+          "cancel",
+          "claim-invite",
+        ]);
+        const action =
+          rest[1] && known.has(rest[1]) ? rest[1] : "create";
+        if (action === "list") {
+          process.exitCode = await runPaymentsCreditsRequestListCmd(paymentsOpts);
+          return;
+        }
+        if (action === "show") {
+          process.exitCode = await runPaymentsCreditsRequestShowCmd(paymentsOpts);
+          return;
+        }
+        if (action === "claim-invite") {
+          process.exitCode = await runPaymentsCreditsRequestClaimInviteCmd(paymentsOpts);
+          return;
+        }
+        if (action === "accept") {
+          process.exitCode = await runPaymentsCreditsRequestAcceptCmd(paymentsOpts);
+          return;
+        }
+        if (action === "decline") {
+          process.exitCode = await runPaymentsCreditsRequestDeclineCmd(paymentsOpts);
+          return;
+        }
+        if (action === "cancel") {
+          process.exitCode = await runPaymentsCreditsRequestCancelCmd(paymentsOpts);
+          return;
+        }
+        process.exitCode =
+          creditsAction === "invoice"
+            ? await runPaymentsCreditsInvoiceCmd(paymentsOpts)
+            : await runPaymentsCreditsRequestCreateCmd(paymentsOpts);
+        return;
+      }
       if (creditsAction === "directory") {
         const dirAction = rest[1] ?? "list";
         if (dirAction === "claim") {
@@ -1383,7 +1449,7 @@ async function main(): Promise<void> {
         return;
       }
       console.error(
-        "Usage: clawql payments credits show | bank-link | topup | pay | transfer | directory | step-up"
+        "Usage: clawql payments credits show | bank-link | topup | pay | transfer | request|invoice | directory | step-up"
       );
       process.exitCode = 1;
       return;

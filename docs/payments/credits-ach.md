@@ -143,7 +143,8 @@ Wired into `paymentsServicesLiveLayer()`. Discovery advertises `type: "credits"`
 
 ## Follow-ups
 
-- Request money + activity feed + QR deep links ([consumer roadmap](./p2p-consumer-roadmap.md))
+- Activity feed + QR deep links ([consumer roadmap](./p2p-consumer-roadmap.md))
+- Outbound email delivery of invite URLs (today: print invite for the requester to share)
 - Hosted checkout / Billing Portal bank payment method UX
 - Optional direct Plaid Link only if product needs non-Stripe bank data
 - Valkey Lua hot counter + Postgres durable grants (same DeductionService API)
