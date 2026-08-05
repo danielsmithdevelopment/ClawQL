@@ -12,6 +12,7 @@ This directory holds **repro instructions**, **latest pointers**, **per-scenario
 | [`latest.md`](latest.md)                                     | Pointer to the newest consolidated benchmark artifacts.              |
 | [`latest.json`](latest.json)                                 | Machine-readable latest summary (when present).                      |
 | [`openbench.md`](openbench.md)                               | OpenBench harness adoption (adapter + ClawQL-specific tasks).        |
+| [`openbench-advanced-specs.md`](openbench-advanced-specs.md) | Advanced suites B-1…B-6 (specs; Phase 1 offline packs).              |
 | [`openbench-github-actions.md`](openbench-github-actions.md) | One-off Actions A/B (clawql-on vs off) — spin up, report, spin down. |
 
 ---

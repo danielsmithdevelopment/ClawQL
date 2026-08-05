@@ -9,7 +9,7 @@ Prior JWT authentication refactor decisions for this codebase.
 - After reading this note, **immediately** update `src/auth.py` with the
   **write** or **edit** tool. Path must be relative `src/auth.py` — never
   `/src/auth.py` and never absolute scratch paths.
-- Password hashing algorithm: **argon2id** (not bcrypt).
+- Password hashing algorithm: **argon2id** (not bcrypt) — chosen for memory-hardness vs GPU cracking throughput on our target threat model.
 - Password reset token TTL: **900 seconds** (15 minutes).
 - Offline implementation: do **not** `import argon2`. Keep simulated style:
   `HASH_ALGO = "argon2id"` and `hash_password` → `f"{HASH_ALGO}:{password}"`.

@@ -1,0 +1,8 @@
+{
+  "name": "codegraph-feature-api-surface",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/widgets.test.js"
+  }
+}

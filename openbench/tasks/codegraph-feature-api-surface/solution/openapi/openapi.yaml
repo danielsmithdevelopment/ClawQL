@@ -1,0 +1,25 @@
+openapi: 3.0.3
+info:
+  title: Widgets API
+  version: 0.1.0
+paths:
+  /widgets:
+    get:
+      summary: List widgets
+      responses:
+        "200":
+          description: OK
+  /widgets/{id}:
+    get:
+      summary: Get widget by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Widget found
+        "404":
+          description: Widget not found

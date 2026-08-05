@@ -23,10 +23,17 @@ openbench/
     memory-dependent-continuation/
     token-budget-constrained/
     multi-provider-api-workflow/
+    codegraph-feature-api-surface/   # B-3.1 Phase 1
+    memory-conflict-pricing/         # B-4.1 Phase 1
+    memory-stale-after-update/       # B-4.2 Phase 1
+    memory-injection-attempt/        # B-4.3 Phase 1
   validate_tasks.py           # fail-on-workspace / pass-on-solution
   scripts/run-with-openbench.sh
   README.md
 ```
+
+Advanced suites B-1…B-6 (specs + Phase 1 packs):
+[`docs/benchmarks/openbench-advanced-specs.md`](../docs/benchmarks/openbench-advanced-specs.md).
 
 ## Prerequisites
 
