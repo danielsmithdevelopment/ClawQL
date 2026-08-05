@@ -2,8 +2,10 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "codegraph-feature-api-surface retired WIN [30981709304]. pr_active empty pending next cell (B-4.2/B-4.3 spike or P0 n≥3 / proven-cell RTP recollect).",
-  "pr_active": [],
+  "live_resume_note": "Recollect composed-safe-rollout under OpenBenchTrace v1.1/RTP for suitable_for_training corpus growth (prior WIN 30891002305).",
+  "pr_active": [
+    "composed-safe-rollout"
+  ],
   "retired": {
     "codegraph-impact-edit": {
       "reason": "Verified WIN + durable R2 traces (on 1.0 / off 0.0; call_store=17; r2://clawql-openbench-traces)",
