@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { assertCreditsP2pEnabled, isCreditsP2pEnabled, isManagedHosting } from "./config.js";
-import { assertCompensationEnabled, isCompensationEnabled } from "../compensation/config.js";
+import {
+  assertCreditsP2pEnabled,
+  isCreditsOrgTransferEnabled,
+  isCreditsP2pEnabled,
+  isManagedHosting,
+} from "./config.js";
+import {
+  assertCompensationEnabled,
+  isCompensationEnabled,
+} from "../compensation/config.js";
 
 describe("payments compliance gates", () => {
   afterEach(() => {
@@ -26,6 +34,15 @@ describe("payments compliance gates", () => {
     const env = { CLAWQL_MANAGED_HOSTING: "1", CLAWQL_CREDITS_P2P_ENABLED: "1" };
     expect(isCreditsP2pEnabled(env)).toBe(false);
     expect(() => assertCreditsP2pEnabled(env)).toThrow(/managed hosting/i);
+  });
+
+  it("allows org transfers by default when credits are on (including managed)", () => {
+    expect(
+      isCreditsOrgTransferEnabled({
+        CLAWQL_CREDITS_ENABLED: "1",
+        CLAWQL_MANAGED_HOSTING: "1",
+      })
+    ).toBe(true);
   });
 
   it("allows compensation when explicitly enabled on self-hosted", () => {

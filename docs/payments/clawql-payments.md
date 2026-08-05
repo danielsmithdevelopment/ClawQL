@@ -6,7 +6,7 @@
 
 `clawql-payments` is ClawQL's unified payments layer for **human fiat** and **agent micropayments**.
 
-**Positioning:** ClawQL speaks **Stripe**, **[x402](https://www.x402.org/)**, **[MPP](https://docs.stripe.com/mcp)**, **[AP2](https://ap2-protocol.org/)**, and **[ACP](https://developers.openai.com/commerce/specs/checkout)** — plus **PayPal Orders** and **Adyen Checkout** — with a **WORM-audited** payment event trail. On **managed hosting**, those rails collect **platform fees** and gate tool/API access; they are **not** a consumer P2P network. Peer credit transfer and agent compensation ship for **self-hosted** operators who enable them under their own compliance framework — see [hosted vs self-hosted compliance](./hosted-vs-self-hosted-compliance.md).
+**Positioning:** ClawQL speaks **Stripe**, **[x402](https://www.x402.org/)**, **[MPP](https://docs.stripe.com/mcp)**, **[AP2](https://ap2-protocol.org/)**, and **[ACP](https://developers.openai.com/commerce/specs/checkout)** — plus **PayPal Orders** and **Adyen Checkout** — with a **WORM-audited** payment event trail. On **managed hosting**, those rails collect **platform fees** and support **closed-loop company credits** (role budgets / within-org transfers — [org-credits](./org-credits.md)); they are **not** a consumer P2P network. Cross-tenant peer payments and agent compensation ship for **self-hosted** operators — see [hosted vs self-hosted compliance](./hosted-vs-self-hosted-compliance.md).
 
 It powers ClawQL's own managed tiers (Developer / Teams / Shared / Dedicated / Enterprise) via **Stripe** and is available to self-hosted operators who want to bill their own customers.
 

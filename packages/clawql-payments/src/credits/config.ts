@@ -127,3 +127,24 @@ export function isCreditsTransferDirectAllowed(env: NodeJS.ProcessEnv = process.
 export function isCreditsTransferTotpRequired(env: NodeJS.ProcessEnv = process.env): boolean {
   return parseTruthy(env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP);
 }
+
+/**
+ * Within-company org credit allocate / peer transfer (closed-loop).
+ * Default **on** when credits are enabled — allowed on managed hosting.
+ * Set CLAWQL_CREDITS_ORG_TRANSFER_ENABLED=0 to disable.
+ * Distinct from cross-tenant Venmo P2P (`CLAWQL_CREDITS_P2P_ENABLED`).
+ */
+export function isCreditsOrgTransferEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  if (!isCreditsEnabled(env)) return false;
+  if (parseFalsey(env.CLAWQL_CREDITS_ORG_TRANSFER_ENABLED)) return false;
+  if (parseTruthy(env.CLAWQL_CREDITS_ORG_TRANSFER_ENABLED)) return true;
+  return true;
+}
+
+export function assertCreditsOrgTransferEnabled(env: NodeJS.ProcessEnv = process.env): void {
+  if (isCreditsOrgTransferEnabled(env)) return;
+  throw new Error(
+    "Org credit transfers are disabled. Enable CLAWQL_CREDITS_ENABLED=1 " +
+      "(and do not set CLAWQL_CREDITS_ORG_TRANSFER_ENABLED=0)."
+  );
+}

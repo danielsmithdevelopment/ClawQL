@@ -2,7 +2,7 @@
 
 Unified payments layer for ClawQL — **Stripe** billing + **Connect payouts**, **Ramp** agent cards, **x402** micropayments, **MPP** session streaming, **AP2** Payment Mandates, **ACP** checkout, **PayPal** Orders, **Adyen** Checkout, managed plan entitlements, and **WORM-auditable** payment events.
 
-**Managed vs self-hosted:** On ClawQL managed hosting, use Stripe (and optional agentic rails) for **platform fees and gated access**. Prepaid **P2P** and **agent compensation** default **off** and stay off when `CLAWQL_MANAGED_HOSTING=1`. Self-hosted operators may set `CLAWQL_CREDITS_P2P_ENABLED=1` / `CLAWQL_COMPENSATION_ENABLED=1` and own compliance. Details: [`docs/payments/hosted-vs-self-hosted-compliance.md`](../../docs/payments/hosted-vs-self-hosted-compliance.md).
+**Managed vs self-hosted:** On ClawQL managed hosting, use Stripe for **platform fees** plus optional **closed-loop company credits** (role budgets, within-org transfers — [`org-credits.md`](../../docs/payments/org-credits.md)). Cross-tenant **P2P** and **agent compensation** default **off** and stay off when `CLAWQL_MANAGED_HOSTING=1`. Details: [`docs/payments/hosted-vs-self-hosted-compliance.md`](../../docs/payments/hosted-vs-self-hosted-compliance.md).
 
 **Docs:** [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md), [`docs/payments/payouts-ramp.md`](../../docs/payments/payouts-ramp.md), [`docs/payments/credits-ach.md`](../../docs/payments/credits-ach.md), [`docs/payments/agent-compensation.md`](../../docs/payments/agent-compensation.md).
 

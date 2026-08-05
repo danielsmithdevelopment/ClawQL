@@ -43,11 +43,12 @@ export default function Page() {
         <h2>Payments on managed hosting</h2>
         <p>
           Managed ClawQL plans are billed through <strong>Stripe</strong> (and related payment processors). ClawQL is
-          not a bank and does not offer FDIC-insured balances. Managed hosting does <strong>not</strong> provide
-          peer-to-peer credit transfer or agent-to-agent compensation ledgers between customers — those software
-          features exist for self-hosted operators who enable them under their own compliance programs. Optional
-          prepaid credits on managed plans, when offered, are intended as closed-loop balances redeemable for ClawQL
-          services only.
+          not a bank and does not offer FDIC-insured balances. Optional prepaid credits on managed plans are{' '}
+          <strong>closed-loop platform credits</strong> redeemable only for ClawQL services: a company may allocate
+          budgets by role, top up individuals, and allow transfers only among members of the same company plan.
+          Public Venmo-like transfers between unrelated customers and cash-out of credits are not part of managed
+          hosting. Agent compensation ledgers for self-hosted operators are separate and opt-in under the operator&apos;s
+          compliance program.
         </p>
         <h2>Sharing and retention</h2>
         <p>

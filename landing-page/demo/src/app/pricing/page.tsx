@@ -458,7 +458,7 @@ export default function Page() {
         <Faq
           id="faq-payments-p2p"
           question="Does managed ClawQL offer peer-to-peer payments or Venmo-like transfers?"
-          answer="No. Managed hosting bills through Stripe for ClawQL plans and optional gated access. We are not a bank and do not run a consumer P2P network on managed SaaS. Peer credit transfer and agent compensation software exist for self-hosted operators who enable them under their own compliance programs."
+          answer="Managed hosting does not offer a public Venmo-like payments network. Companies can use closed-loop ClawQL credits: a company pool, role budgets (for example intern / employee / senior), CFO top-ups, and transfers only between people on the same company plan — redeemable solely for ClawQL services. Stripe handles real money in for subscriptions. Cross-company peer payments are not part of managed SaaS."
         />
         <Faq
           id="faq-4"

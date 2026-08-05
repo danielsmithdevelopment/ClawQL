@@ -37,6 +37,11 @@ export function resolveCreditsLedgerPath(env: NodeJS.ProcessEnv = process.env): 
   return join(resolvePaymentsDir(env), "credits-ledger.json");
 }
 
+/** Closed-loop enterprise org credit pools, membership, and role allocations. */
+export function resolveOrgCreditsPath(env: NodeJS.ProcessEnv = process.env): string {
+  return join(resolvePaymentsDir(env), "org-credits.json");
+}
+
 /** Agent compensation ledger (credits + funds balances). */
 export function resolveAgentAccountsPath(env: NodeJS.ProcessEnv = process.env): string {
   return join(resolvePaymentsDir(env), "agent-accounts.json");

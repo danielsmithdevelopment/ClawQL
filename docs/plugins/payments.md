@@ -18,23 +18,23 @@ next: hitl-label-studio
 
 ## Positioning
 
-**Read first:** [hosted vs self-hosted compliance](../payments/hosted-vs-self-hosted-compliance.md). Managed hosting uses Stripe (and optional agentic rails) for **platform fees and gated access**. **P2P** and **agent compensation** are self-hosted opt-in and forced off when `CLAWQL_MANAGED_HOSTING=1`.
+**Read first:** [hosted vs self-hosted compliance](../payments/hosted-vs-self-hosted-compliance.md). Managed hosting uses Stripe for **platform fees** and optional **closed-loop company credits** ([org-credits](../payments/org-credits.md)). **Cross-tenant P2P** and **agent compensation** are self-hosted opt-in and forced off when `CLAWQL_MANAGED_HOSTING=1`.
 
 ClawQL’s Agentic Gateway includes native **Stripe + x402 + MPP + AP2 + ACP** surfaces, **PayPal**, **Adyen**, **Connect payouts / Ramp / off-ramp**, **closed-loop prepaid credits**, optional **self-hosted P2P / agent compensation**, a **WORM-audited** payment trail, and an **accounting subledger export**:
 
-| Rail               | Role                                                                                    |
-| ------------------ | --------------------------------------------------------------------------------------- |
-| **Stripe**         | Human fiat — subscriptions, invoices, Billing Meters, Shared Payment Tokens             |
-| **x402**           | Per-request USDC micropayments (one chain settlement per paid call)                     |
-| **MPP**            | Session-based streaming micropayments (pre-authorize once; high-frequency agent spend)  |
-| **AP2**            | Cryptographic Payment Mandates (authorization / non-repudiation under MCP)              |
-| **ACP**            | Merchant-side agentic checkout sessions (ChatGPT Instant Checkout–style)                |
-| **PayPal**         | Human wallet Orders v2 create/capture                                                   |
-| **Adyen**          | Enterprise Checkout sessions, payments, HMAC-verified webhooks                          |
-| **Payouts / Ramp** | Creator bank + Base USDC; Ramp agent cards; Moonpay/Transak off-ramp                    |
-| **Credits**        | Prepaid ledger + ACH/FC; **P2P** only with `CLAWQL_CREDITS_P2P_ENABLED=1` (self-hosted) |
-| **Compensation**   | Agent deposit / cash-out — `CLAWQL_COMPENSATION_ENABLED=1` (self-hosted)                |
-| **Accounting**     | Period subledger CSV/JSON/QB/Xero; tax profile gate; year-end evidence pack             |
+| Rail               | Role                                                                                   |
+| ------------------ | -------------------------------------------------------------------------------------- |
+| **Stripe**         | Human fiat — subscriptions, invoices, Billing Meters, Shared Payment Tokens            |
+| **x402**           | Per-request USDC micropayments (one chain settlement per paid call)                    |
+| **MPP**            | Session-based streaming micropayments (pre-authorize once; high-frequency agent spend) |
+| **AP2**            | Cryptographic Payment Mandates (authorization / non-repudiation under MCP)             |
+| **ACP**            | Merchant-side agentic checkout sessions (ChatGPT Instant Checkout–style)               |
+| **PayPal**         | Human wallet Orders v2 create/capture                                                  |
+| **Adyen**          | Enterprise Checkout sessions, payments, HMAC-verified webhooks                         |
+| **Payouts / Ramp** | Creator bank + Base USDC; Ramp agent cards; Moonpay/Transak off-ramp                   |
+| **Credits**        | Prepaid ledger + ACH/FC; **org closed-loop** budgets; **cross-tenant P2P** only with `CLAWQL_CREDITS_P2P_ENABLED=1` |
+| **Compensation**   | Agent deposit / cash-out — `CLAWQL_COMPENSATION_ENABLED=1` (self-hosted)               |
+| **Accounting**     | Period subledger CSV/JSON/QB/Xero; tax profile gate; year-end evidence pack            |
 
 Operator guide: [clawql-payments](../payments/clawql-payments.md) → `/payments/clawql-payments` (includes [Accounting & tax](../payments/clawql-payments.md#accounting--tax)).
 
