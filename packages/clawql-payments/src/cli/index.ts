@@ -84,6 +84,7 @@ export {
   runPaymentsCreditsRequestAccept,
   runPaymentsCreditsRequestDecline,
   runPaymentsCreditsRequestCancel,
+  runPaymentsCreditsRequestSendInvite,
   runPaymentsCreditsLink,
   runPaymentsCreditsQr,
   runPaymentsCreditsStepUpEnroll,

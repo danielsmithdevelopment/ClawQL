@@ -19,6 +19,7 @@ import {
   getEmailEntry,
   getHandleEntry,
   getPhoneEntry,
+  getTenantEntry,
   listDirectory,
   looksLikePhone,
   maskEmail,
@@ -38,6 +39,10 @@ import {
   listMoneyRequests,
   publicMoneyRequest,
 } from "../credits/requests.js";
+import {
+  sendMoneyRequestInviteEmail,
+  shouldSendInviteEmailOnCreate,
+} from "../credits/invite-email.js";
 import { formatActivityLine, getActivityFeed } from "../credits/activity.js";
 import {
   buildClawqlPayUri,
@@ -700,6 +705,10 @@ export type PaymentsCreditsRequestOptions = {
   displayName?: string;
   role?: "requester" | "payer" | "any";
   status?: string;
+  /** Attempt invite email on create (dry-run by default). */
+  sendEmail?: boolean;
+  /** Force dry-run preview even if live provider configured. */
+  emailDryRun?: boolean;
   json?: boolean;
 };
 
@@ -734,6 +743,36 @@ export async function runPaymentsCreditsRequestCreate(
       note: options.note,
       correlationId: options.correlationId,
     });
+
+    let emailResult: Awaited<ReturnType<typeof sendMoneyRequestInviteEmail>> | undefined;
+    if (
+      result.invite &&
+      result.inviteToken &&
+      result.request.inviteUrl &&
+      result.request.payerEmail &&
+      shouldSendInviteEmailOnCreate({ sendEmail: options.sendEmail })
+    ) {
+      const requester = await getTenantEntry(requesterTenantId);
+      emailResult = await sendMoneyRequestInviteEmail(
+        {
+          toEmail: result.request.payerEmail,
+          inviteUrl: result.request.inviteUrl,
+          requestId: result.request.requestId,
+          amountCents: result.request.amountCents,
+          note: result.request.note,
+          fromLabel:
+            requester?.displayName ||
+            (requester?.handle ? `@${requester.handle}` : undefined) ||
+            requester?.email ||
+            requesterTenantId,
+          inviteToken: result.inviteToken,
+          expiresAt: result.request.expiresAt,
+        },
+        process.env,
+        { dryRun: options.emailDryRun === true ? true : options.emailDryRun }
+      );
+    }
+
     if (options.json) {
       console.log(
         JSON.stringify(
@@ -741,12 +780,13 @@ export async function runPaymentsCreditsRequestCreate(
             ...publicMoneyRequest(result.request),
             invite: result.invite,
             inviteToken: result.inviteToken,
+            email: emailResult,
           },
           null,
           2
         )
       );
-      return 0;
+      return emailResult && !emailResult.ok ? 1 : 0;
     }
     const r = result.request;
     console.log(
@@ -762,6 +802,32 @@ export async function runPaymentsCreditsRequestCreate(
       console.log(
         `  clawql payments credits request claim-invite --request-id ${r.requestId} --token ${result.inviteToken} --tenant-id <new> [--handle …]`
       );
+      if (emailResult) {
+        if (emailResult.dryRun) {
+          console.log(
+            `\nInvite email dry-run → ${emailResult.to} (${emailResult.provider})`
+          );
+          console.log(`Subject: ${emailResult.subject}`);
+          console.log("---");
+          console.log(emailResult.previewText);
+          console.log("---");
+          console.log(
+            "Set CLAWQL_CREDITS_INVITE_EMAIL_DRY_RUN=0 + provider to send for real."
+          );
+        } else if (emailResult.ok) {
+          console.log(
+            `Invite email sent via ${emailResult.provider} → ${emailResult.to}` +
+              (emailResult.messageId ? ` (id ${emailResult.messageId})` : "")
+          );
+        } else {
+          console.error(`Invite email failed: ${emailResult.error}`);
+          return 1;
+        }
+      } else {
+        console.log(
+          "(Email not sent — pass --send-email or set CLAWQL_CREDITS_INVITE_EMAIL=1; default is dry-run)"
+        );
+      }
     } else {
       console.log(
         `Payer accepts: clawql payments credits request accept --request-id ${r.requestId} --tenant-id ${r.payerTenantId}`
@@ -779,6 +845,85 @@ export async function runPaymentsCreditsInvoice(
   options: PaymentsCreditsRequestOptions = {}
 ): Promise<number> {
   return runPaymentsCreditsRequestCreate(options);
+}
+
+/**
+ * Preview or (re)send an invite email for an existing request.
+ * Requires the cleartext token (only available at create time unless operator still has it).
+ */
+export async function runPaymentsCreditsRequestSendInvite(
+  options: PaymentsCreditsRequestOptions = {}
+): Promise<number> {
+  const requestId = options.requestId?.trim();
+  const token = options.inviteToken?.trim();
+  if (!requestId || !token) {
+    console.error(
+      "Usage: clawql payments credits request send-invite --request-id UUID --token TOKEN [--email …] [--dry-run]"
+    );
+    return 1;
+  }
+  try {
+    const req = await getMoneyRequest(requestId);
+    if (!req) {
+      console.error("Unknown request id");
+      return 1;
+    }
+    if (!req.inviteUrl && !req.inviteTokenHash) {
+      console.error("Request has no invite (payer already on platform)");
+      return 1;
+    }
+    const toEmail = options.email?.trim() || req.payerEmail;
+    if (!toEmail) {
+      console.error("No payer email — pass --email");
+      return 1;
+    }
+    // Rebuild invite URL if missing from storage (URL may have been stored at create).
+    const { buildRequestInviteUrl } = await import("../credits/requests.js");
+    const inviteUrl = req.inviteUrl || buildRequestInviteUrl(requestId, token);
+    const requester = await getTenantEntry(req.requesterTenantId);
+    const emailResult = await sendMoneyRequestInviteEmail(
+      {
+        toEmail,
+        inviteUrl,
+        requestId,
+        amountCents: req.amountCents,
+        note: req.note,
+        fromLabel:
+          requester?.displayName ||
+          (requester?.handle ? `@${requester.handle}` : undefined) ||
+          requester?.email ||
+          req.requesterTenantId,
+        inviteToken: token,
+        expiresAt: req.expiresAt,
+      },
+      process.env,
+      { dryRun: options.emailDryRun === true ? true : options.emailDryRun }
+    );
+    if (options.json) {
+      console.log(JSON.stringify(emailResult, null, 2));
+      return emailResult.ok ? 0 : 1;
+    }
+    if (emailResult.dryRun) {
+      console.log(`Invite email dry-run → ${emailResult.to}`);
+      console.log(`Subject: ${emailResult.subject}`);
+      console.log("---");
+      console.log(emailResult.previewText);
+      console.log("---");
+      return 0;
+    }
+    if (!emailResult.ok) {
+      console.error(`Invite email failed: ${emailResult.error}`);
+      return 1;
+    }
+    console.log(
+      `Invite email sent via ${emailResult.provider} → ${emailResult.to}` +
+        (emailResult.messageId ? ` (id ${emailResult.messageId})` : "")
+    );
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
 }
 
 export async function runPaymentsCreditsRequestList(

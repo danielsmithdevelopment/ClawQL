@@ -43,6 +43,9 @@ clawql payments credits invoice --to bob@acme.com --amount 25 --note "March cons
 # Invite someone new by email
 clawql payments credits request --to newbie@acme.com --amount 40 --note "dinner"
 # → share inviteUrl / token once
+# Optional email preview / send (dry-run by default):
+# clawql payments credits request --to newbie@acme.com --amount 40 --send-email
+# clawql payments credits request send-invite --request-id UUID --token TOKEN
 
 # Invitee joins + links the request
 clawql payments credits request claim-invite \
@@ -79,7 +82,8 @@ clawql payments credits request decline|cancel --request-id UUID
 | -------- | ------- | ------- |
 | `CLAWQL_CREDITS_REQUEST_TTL_SEC` | 7 days | Request expiry |
 | `CLAWQL_CREDITS_HATEOAS_BASE` | compensation / `clawql://tool` | Public origin for invite / request deep links |
+| `CLAWQL_CREDITS_INVITE_EMAIL` | off | Attempt invite email on create (still dry-runs by default) |
 
-Invite URLs use the [deep link](./credits-deeplinks.md) builders (`/credits/request/invite?request_id=…&token=…`). Print the URL for now — outbound email is deferred.
+Invite URLs use the [deep link](./credits-deeplinks.md) builders (`/credits/request/invite?request_id=…&token=…`). Outbound delivery: [invite email](./credits-invite-email.md).
 
-See also: [consumer roadmap](./p2p-consumer-roadmap.md), [credits ACH / P2P](./credits-ach.md), [deep links](./credits-deeplinks.md).
+See also: [consumer roadmap](./p2p-consumer-roadmap.md), [credits ACH / P2P](./credits-ach.md), [deep links](./credits-deeplinks.md), [invite email](./credits-invite-email.md).

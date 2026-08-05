@@ -115,6 +115,7 @@ import {
   runPaymentsCreditsRequestAcceptCmd,
   runPaymentsCreditsRequestDeclineCmd,
   runPaymentsCreditsRequestCancelCmd,
+  runPaymentsCreditsRequestSendInviteCmd,
   runPaymentsCreditsStepUpEnrollCmd,
   runPaymentsCreditsStepUpShowCmd,
   runPaymentsCompensationBalanceCmd,
@@ -337,6 +338,8 @@ function parse(argv: string[]): {
     else if (a === "--verified") flags.phoneVerified = true;
     else if (a === "--contact-id") flags.contactId = argv[++i] ?? "";
     else if (a === "--label") flags.label = argv[++i] ?? "";
+    else if (a === "--send-email") flags.sendEmail = true;
+    else if (a === "--email-dry-run" || a === "--dry-run-email") flags.emailDryRun = true;
     else if (a === "--totp") flags.totp = argv[++i] ?? "";
     else if (a === "--direct") flags.direct = true;
     else if (a.startsWith("--image-digest=")) {
@@ -439,7 +442,8 @@ Usage:
   clawql payments credits qr --to @alice [--amount 10] [--out pay.svg]
   clawql payments credits activity [--tenant-id ID] [--limit 25] [--filter money|transfers|requests|all]
   clawql payments credits request|invoice --to newbie@acme.com|--to @bob --amount 25 [--note …]
-  clawql payments credits request list|show|accept|decline|cancel|claim-invite …
+  clawql payments credits request list|show|accept|decline|cancel|claim-invite|send-invite …
+  clawql payments credits request --to newbie@acme.com --amount 25 --send-email [--email-dry-run]
   clawql payments credits transfer --to-tenant other-tenant --amount 10
   clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
   clawql payments credits step-up enroll|show [--tenant-id ID] [--show-secrets]
@@ -1210,6 +1214,8 @@ async function main(): Promise<void> {
       phoneVerified: Boolean(flags.phoneVerified),
       contactId: typeof flags.contactId === "string" ? flags.contactId : undefined,
       label: typeof flags.label === "string" ? flags.label : undefined,
+      sendEmail: Boolean(flags.sendEmail),
+      emailDryRun: Boolean(flags.emailDryRun),
     };
 
     if (subcmd === "plan") {
@@ -1429,6 +1435,7 @@ async function main(): Promise<void> {
           "decline",
           "cancel",
           "claim-invite",
+          "send-invite",
         ]);
         const action =
           rest[1] && known.has(rest[1]) ? rest[1] : "create";
@@ -1442,6 +1449,10 @@ async function main(): Promise<void> {
         }
         if (action === "claim-invite") {
           process.exitCode = await runPaymentsCreditsRequestClaimInviteCmd(paymentsOpts);
+          return;
+        }
+        if (action === "send-invite") {
+          process.exitCode = await runPaymentsCreditsRequestSendInviteCmd(paymentsOpts);
           return;
         }
         if (action === "accept") {

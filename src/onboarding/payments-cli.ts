@@ -52,6 +52,7 @@ import {
   runPaymentsCreditsRequestAccept,
   runPaymentsCreditsRequestDecline,
   runPaymentsCreditsRequestCancel,
+  runPaymentsCreditsRequestSendInvite,
   runPaymentsCreditsLink,
   runPaymentsCreditsQr,
   runPaymentsCreditsStepUpEnroll,
@@ -164,6 +165,10 @@ export type PaymentsCliOptions = {
   phoneVerified?: boolean;
   contactId?: string;
   label?: string;
+  /** Send invite email on request create / send-invite. */
+  sendEmail?: boolean;
+  /** Force invite email dry-run preview. */
+  emailDryRun?: boolean;
 };
 
 export async function runPaymentsPlanShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
@@ -651,6 +656,8 @@ export async function runPaymentsCreditsRequestCreateCmd(
     amountUsd: options.amount,
     note: options.note,
     correlationId: options.correlationId,
+    sendEmail: options.sendEmail,
+    emailDryRun: options.emailDryRun,
     json: options.json,
   });
 }
@@ -668,6 +675,8 @@ export async function runPaymentsCreditsInvoiceCmd(
     amountUsd: options.amount,
     note: options.note,
     correlationId: options.correlationId,
+    sendEmail: options.sendEmail,
+    emailDryRun: options.emailDryRun,
     json: options.json,
   });
 }
@@ -732,6 +741,18 @@ export async function runPaymentsCreditsRequestCancelCmd(
   return runPaymentsCreditsRequestCancel({
     requestId: options.requestId,
     tenantId: options.tenantId ?? options.fromTenantId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsRequestSendInviteCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsRequestSendInvite({
+    requestId: options.requestId,
+    inviteToken: options.inviteToken,
+    email: options.directoryEmail ?? options.email,
+    emailDryRun: options.emailDryRun,
     json: options.json,
   });
 }

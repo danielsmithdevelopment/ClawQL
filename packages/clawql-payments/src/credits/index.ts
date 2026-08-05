@@ -118,6 +118,20 @@ export {
 } from "./hateoas-html.js";
 export { attachCreditsHateoasRoutes } from "./hateoas-http.js";
 export {
+  buildMoneyRequestInviteEmail,
+  creditsInviteEmailFrom,
+  creditsInviteEmailProvider,
+  isCreditsInviteEmailDryRun,
+  isCreditsInviteEmailEnabled,
+  sendMoneyRequestInviteEmail,
+  shouldSendInviteEmailOnCreate,
+  type InviteEmailPayload,
+  type InviteEmailProvider,
+  type InviteEmailResult,
+  type MoneyRequestInviteEmailInput,
+  type SendInviteEmailOptions,
+} from "./invite-email.js";
+export {
   appendCreditEntry,
   captureHold,
   getCreditAccount,

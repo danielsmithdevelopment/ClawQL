@@ -26,6 +26,7 @@ import {
   getEmailEntry,
   getHandleEntry,
   getPhoneEntry,
+  getTenantEntry,
   listDirectory,
   resolveRecipient,
 } from "../credits/directory.js";
@@ -36,6 +37,10 @@ import {
   listMoneyRequests,
   publicMoneyRequest,
 } from "../credits/requests.js";
+import {
+  sendMoneyRequestInviteEmail,
+  shouldSendInviteEmailOnCreate,
+} from "../credits/invite-email.js";
 import { getActivityFeed } from "../credits/activity.js";
 import {
   buildClawqlPayUri,
@@ -230,6 +235,11 @@ const creditsRequestCreateSchema = {
   amountUsd: z.number().positive(),
   fromTenantId: z.string().optional().describe("Requester tenant"),
   note: z.string().optional().describe("Invoice memo"),
+  sendEmail: z
+    .boolean()
+    .optional()
+    .describe("Send invite email (dry-run by default; set CLAWQL_CREDITS_INVITE_EMAIL=1)"),
+  emailDryRun: z.boolean().optional().describe("Force email dry-run preview"),
   mandateJwt: z.string().optional(),
 };
 
@@ -619,7 +629,7 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
         yield* api.registerMcpTool({
           name: "payments_credits_request_create",
           description:
-            "Create a money request / invoice. Prefer email — unknown emails get an invite URL to join ClawQL and pay.",
+            "Create a money request / invoice. Prefer email — unknown emails get an invite URL to join ClawQL and pay. Optional invite email (dry-run by default).",
           schema: creditsRequestCreateSchema,
           handler: async (args) => {
             const a = args as {
@@ -627,26 +637,110 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               amountUsd: number;
               fromTenantId?: string;
               note?: string;
+              sendEmail?: boolean;
+              emailDryRun?: boolean;
               mandateJwt?: string;
             };
             await assertAp2IfRequired(env, a.mandateJwt);
+            const fromTenantId = a.fromTenantId?.trim() || "default";
             const result = await createMoneyRequest(
               {
-                requesterTenantId: a.fromTenantId?.trim() || "default",
+                requesterTenantId: fromTenantId,
                 to: a.to,
                 amountCents: Math.round(a.amountUsd * 100),
                 note: a.note,
               },
               env
             );
+            let email:
+              | Awaited<ReturnType<typeof sendMoneyRequestInviteEmail>>
+              | undefined;
+            if (
+              result.invite &&
+              result.inviteToken &&
+              result.request.inviteUrl &&
+              result.request.payerEmail &&
+              shouldSendInviteEmailOnCreate({ sendEmail: a.sendEmail }, env)
+            ) {
+              const requester = await getTenantEntry(fromTenantId, env);
+              email = await sendMoneyRequestInviteEmail(
+                {
+                  toEmail: result.request.payerEmail,
+                  inviteUrl: result.request.inviteUrl,
+                  requestId: result.request.requestId,
+                  amountCents: result.request.amountCents,
+                  note: result.request.note,
+                  fromLabel:
+                    requester?.displayName ||
+                    (requester?.handle ? `@${requester.handle}` : undefined) ||
+                    requester?.email ||
+                    fromTenantId,
+                  inviteToken: result.inviteToken,
+                  expiresAt: result.request.expiresAt,
+                },
+                env,
+                { dryRun: a.emailDryRun === true ? true : a.emailDryRun }
+              );
+            }
             return textResult({
               ...publicMoneyRequest(result.request),
               invite: result.invite,
               inviteToken: result.inviteToken,
+              email,
               next: result.invite
-                ? "Share inviteUrl / inviteToken; payer runs claim-invite then accept."
+                ? "Share inviteUrl / inviteToken (or use email preview); payer runs claim-invite then accept."
                 : "Payer: payments_credits_request_accept with requestId.",
             });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_request_send_invite",
+          description:
+            "Preview or send the money-request invite email (needs cleartext token from create). Dry-run by default.",
+          schema: {
+            requestId: z.string(),
+            token: z.string().describe("Cleartext invite token from create"),
+            email: z.string().optional().describe("Override recipient email"),
+            emailDryRun: z.boolean().optional(),
+          },
+          handler: async (args) => {
+            const a = args as {
+              requestId: string;
+              token: string;
+              email?: string;
+              emailDryRun?: boolean;
+            };
+            const { getMoneyRequest, buildRequestInviteUrl } = await import(
+              "../credits/requests.js"
+            );
+            const req = await getMoneyRequest(a.requestId, env);
+            if (!req) throw new Error("Unknown request id");
+            const toEmail = a.email?.trim() || req.payerEmail;
+            if (!toEmail) throw new Error("No payer email — pass email");
+            const inviteUrl =
+              req.inviteUrl || buildRequestInviteUrl(a.requestId, a.token, env);
+            const requester = await getTenantEntry(req.requesterTenantId, env);
+            return textResult(
+              await sendMoneyRequestInviteEmail(
+                {
+                  toEmail,
+                  inviteUrl,
+                  requestId: a.requestId,
+                  amountCents: req.amountCents,
+                  note: req.note,
+                  fromLabel:
+                    requester?.displayName ||
+                    (requester?.handle ? `@${requester.handle}` : undefined) ||
+                    requester?.email ||
+                    req.requesterTenantId,
+                  inviteToken: a.token,
+                  expiresAt: req.expiresAt,
+                },
+                env,
+                { dryRun: a.emailDryRun === true ? true : a.emailDryRun }
+              )
+            );
           },
         });
 
