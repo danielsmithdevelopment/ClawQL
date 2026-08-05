@@ -132,16 +132,16 @@ Plan usage drives **quota enforcement** and optional **Stripe Billing Meters**. 
 
 All local state lives under `$CLAWQL_HOME/Payments/` (default `~/.clawql/Payments/`):
 
-| File              | Contents                                                                  |
-| ----------------- | ------------------------------------------------------------------------- |
-| `payments.json`   | Tenant id, plan tier, Stripe metadata, x402 wallet/facilitator            |
-| `x402-gates.json` | Payment-gated HTTP paths and MCP tool names                               |
-| `usage.json`      | Monthly counters per tenant (`inference_calls`, `documents`, `memory_mb`) |
-| `audit.jsonl`           | Append-only hash-chained payment audit log                                |
-| `audit.meta.json`       | Chain head (`seq`, `last_hash`) for fast append                           |
-| `accounting-map.json`   | Optional customer chart-of-accounts overrides (GL codes)                  |
-| `tax-profiles.json`     | Opaque tax readiness tags (`1099nec` / collected) — never SSNs            |
-| `tax-evidence/<year>/`  | Year-end evidence packs (`evidence.json` + `evidence.md`)                 |
+| File                   | Contents                                                                  |
+| ---------------------- | ------------------------------------------------------------------------- |
+| `payments.json`        | Tenant id, plan tier, Stripe metadata, x402 wallet/facilitator            |
+| `x402-gates.json`      | Payment-gated HTTP paths and MCP tool names                               |
+| `usage.json`           | Monthly counters per tenant (`inference_calls`, `documents`, `memory_mb`) |
+| `audit.jsonl`          | Append-only hash-chained payment audit log                                |
+| `audit.meta.json`      | Chain head (`seq`, `last_hash`) for fast append                           |
+| `accounting-map.json`  | Optional customer chart-of-accounts overrides (GL codes)                  |
+| `tax-profiles.json`    | Opaque tax readiness tags (`1099nec` / collected) — never SSNs            |
+| `tax-evidence/<year>/` | Year-end evidence packs (`evidence.json` + `evidence.md`)                 |
 
 Example `payments.json`:
 
@@ -653,15 +653,15 @@ The payment WORM is the **subledger of record** for ClawQL-mediated money flows.
 
 Deep dive: [accounting-and-tax.md](./accounting-and-tax.md).
 
-| Capability | What it does |
-| ---------- | ------------ |
-| **Period export** | One row per monetary WORM event → CSV / JSON / QuickBooks-style / Xero-style |
+| Capability         | What it does                                                                                                                  |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| **Period export**  | One row per monetary WORM event → CSV / JSON / QuickBooks-style / Xero-style                                                  |
 | **Classification** | New WORM writes carry `accounting` (direction, category, tax treatment); credits top-ups = **prepaid liability**, not revenue |
-| **CoA mapping** | Default GL codes; override with `$CLAWQL_HOME/Payments/accounting-map.json` |
-| **Integrity gate** | Export refuses to run if `audit verify` fails (unless `--skip-verify`) |
-| **Tax profiles** | Opaque readiness tags only (no SSN/ITIN in payments storage) |
-| **Payout gate** | Opt-in: `CLAWQL_TAX_PROFILE_ENFORCE=1` blocks creator/agent payouts without a collected profile |
-| **Year-end pack** | Markdown + JSON evidence for payouts / compensation cash-outs (not an e-file) |
+| **CoA mapping**    | Default GL codes; override with `$CLAWQL_HOME/Payments/accounting-map.json`                                                   |
+| **Integrity gate** | Export refuses to run if `audit verify` fails (unless `--skip-verify`)                                                        |
+| **Tax profiles**   | Opaque readiness tags only (no SSN/ITIN in payments storage)                                                                  |
+| **Payout gate**    | Opt-in: `CLAWQL_TAX_PROFILE_ENFORCE=1` blocks creator/agent payouts without a collected profile                               |
+| **Year-end pack**  | Markdown + JSON evidence for payouts / compensation cash-outs (not an e-file)                                                 |
 
 ### Period close (operator recipe)
 
@@ -702,19 +702,19 @@ clawql payments tax-profile show --party-id creator-1
 export CLAWQL_TAX_PROFILE_ENFORCE=1
 ```
 
-| Form / obligation | Owner |
-| ----------------- | ----- |
-| Stripe invoices / receipts | Stripe (existing billing) |
-| US 1099-NEC / 1099-K on Connect | Prefer **Stripe Connect Tax**; ClawQL exports evidence |
-| W-9 / W-8 collection UX | Banking / onboarding vertical; payments stores readiness |
-| VAT / GST invoices | Stripe Tax / regional processor; invoice refs in WORM |
-| Agent compensation classification | CPA outside ClawQL; cash-out rows in tax-evidence pack |
+| Form / obligation                 | Owner                                                    |
+| --------------------------------- | -------------------------------------------------------- |
+| Stripe invoices / receipts        | Stripe (existing billing)                                |
+| US 1099-NEC / 1099-K on Connect   | Prefer **Stripe Connect Tax**; ClawQL exports evidence   |
+| W-9 / W-8 collection UX           | Banking / onboarding vertical; payments stores readiness |
+| VAT / GST invoices                | Stripe Tax / regional processor; invoice refs in WORM    |
+| Agent compensation classification | CPA outside ClawQL; cash-out rows in tax-evidence pack   |
 
 ### Environment
 
-| Variable | Default | Purpose |
-| -------- | ------- | ------- |
-| `CLAWQL_TAX_PROFILE_ENFORCE` | off | When `1`, `PayoutService.createPayout` requires a collected tax profile (or `taxForm=none`) for the party |
+| Variable                     | Default | Purpose                                                                                                   |
+| ---------------------------- | ------- | --------------------------------------------------------------------------------------------------------- |
+| `CLAWQL_TAX_PROFILE_ENFORCE` | off     | When `1`, `PayoutService.createPayout` requires a collected tax profile (or `taxForm=none`) for the party |
 
 ### Example `accounting-map.json`
 
