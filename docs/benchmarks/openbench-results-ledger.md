@@ -1,3 +1,12 @@
+### 2026-08-05 — `composed-safe-rollout` RTP v1.1 recollect WIN
+
+| Arm | Score             | Notes                                                      |
+| --- | ----------------- | ---------------------------------------------------------- |
+| on  | **1.0** (5t, 91s) | search + dry_run×2 + audit + memory_ingest; multi-tool RTP |
+| off | **0.0** (2t, 12s) | no ClawQL tools                                            |
+
+Run: [30985126247](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30985126247). Gate OK. **Durable R2:** 2 traces → `r2://clawql-openbench-traces/raw/2026/08/05/run-30985126247/composed-safe-rollout/` (schema **1.1**, on-arm `suitable_for_training: true` + RTP). Prior WIN [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305). **Verdict:** clear `pr_active` (keep retired; evidence_run bumped).
+
 ### 2026-08-05 — `codegraph-feature-api-surface` WIN (RTP 1.1)
 
 | Arm | Score             | Notes                                          |
@@ -305,7 +314,7 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 ## Open gaps (not yet headline WIN)
 
 1. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2) — Phase 0 in [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
-2. **Phase 1 advanced:** `memory-conflict-pricing` (B-4.1) + `codegraph-impact-edit` (B-3.1) **retired WIN**; next B-4.2/B-4.3 spikes or P0 n≥3.
+2. **Phase 1 advanced:** B-4.1 / B-3.1 / `codegraph-feature-api-surface` / composed RTP recollect **retired WIN**; next B-4.2/B-4.3 spikes (`memory-stale-after-update`, `memory-injection-attempt` task folders exist) or P0 n≥3.
 3. **Trace collection:** GHA call-store JSONL now persists — [`openbench-trace-collection.md`](./openbench-trace-collection.md).
 4. Optional later: agentic external benches / domain HLE-analog (B-6) after fine-tune — not closed-book HLE.
 5. Blocked: B-1 flywheel (needs FT v1), B-5 NSV (needs metric export), full live IDP pipeline (ops).
