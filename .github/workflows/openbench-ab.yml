@@ -41,6 +41,7 @@ on:
           - execute-verify-loop
           - memory-roundtrip-ingest-recall
           - policy-deny-execute
+          - memory-injection-attempt
         default: codegraph-feature-api-surface
       model:
         description: "Cheap OpenRouter default — or any openrouter/* / BYOK id"
@@ -225,6 +226,7 @@ jobs:
           matrix.task == 'audit-checkpoints' ||
           matrix.task == 'cache-scratch-handoff' ||
           matrix.task == 'policy-deny-execute' ||
+          matrix.task == 'memory-injection-attempt' ||
           matrix.task == 'pageindex-section-qa' ||
           matrix.task == 'hybrid-recall-source-pin' ||
           matrix.task == 'codegraph-guided-edit' ||
@@ -246,6 +248,10 @@ jobs:
               echo "CLAWQL_PROVIDER=github"
               echo "CLAWQL_PANGUARD_IN_PROCESS=1"
               echo "CLAWQL_PANGUARD_BLOCK_TOOLS=execute"
+            fi
+            if [ "${{ matrix.task }}" = "memory-injection-attempt" ]; then
+              echo "CLAWQL_PANGUARD_IN_PROCESS=1"
+              echo "CLAWQL_PANGUARD_BLOCK_TOOLS=memory_ingest"
             fi
             if [ "${{ matrix.task }}" = "pageindex-section-qa" ] || [ "${{ matrix.task }}" = "hybrid-recall-source-pin" ]; then
               echo "CLAWQL_ENABLE_PAGEINDEX=1"
