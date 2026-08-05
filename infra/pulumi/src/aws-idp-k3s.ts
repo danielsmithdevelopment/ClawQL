@@ -23,17 +23,15 @@ export function createAwsIdpK3s(inputs: ProvisionInputs): AwsIdpK3sOutputs {
 
   const amiId =
     inputs.goldenImageId ??
-    aws.ec2
-      .getAmiOutput({
-        mostRecent: true,
-        owners: ["099720109477"], // Canonical
-        filters: [
-          { name: "name", values: ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"] },
-          { name: "virtualization-type", values: ["hvm"] },
-          { name: "architecture", values: ["x86_64"] },
-        ],
-      })
-      .id;
+    aws.ec2.getAmiOutput({
+      mostRecent: true,
+      owners: ["099720109477"], // Canonical
+      filters: [
+        { name: "name", values: ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"] },
+        { name: "virtualization-type", values: ["hvm"] },
+        { name: "architecture", values: ["x86_64"] },
+      ],
+    }).id;
 
   const role = new aws.iam.Role("clawql-idp-k3s-role", {
     assumeRolePolicy: JSON.stringify({
@@ -62,8 +60,18 @@ export function createAwsIdpK3s(inputs: ProvisionInputs): AwsIdpK3sOutputs {
   const sg = new aws.ec2.SecurityGroup("clawql-idp-k3s-sg", {
     description: "ClawQL IDP K3s — API, HTTPS ingress, NodePorts",
     ingress: [
-      { protocol: "tcp", fromPort: 22, toPort: 22, cidrBlocks: inputs.sshCidrBlocks ?? ["0.0.0.0/0"] },
-      { protocol: "tcp", fromPort: 6443, toPort: 6443, cidrBlocks: inputs.apiCidrBlocks ?? ["0.0.0.0/0"] },
+      {
+        protocol: "tcp",
+        fromPort: 22,
+        toPort: 22,
+        cidrBlocks: inputs.sshCidrBlocks ?? ["0.0.0.0/0"],
+      },
+      {
+        protocol: "tcp",
+        fromPort: 6443,
+        toPort: 6443,
+        cidrBlocks: inputs.apiCidrBlocks ?? ["0.0.0.0/0"],
+      },
       { protocol: "tcp", fromPort: 80, toPort: 80, cidrBlocks: ["0.0.0.0/0"] },
       { protocol: "tcp", fromPort: 443, toPort: 443, cidrBlocks: ["0.0.0.0/0"] },
       // Kubelet / Flannel VXLAN optional for multi-node later

@@ -50,10 +50,11 @@ export function createAwsEks(inputs: ProvisionInputs): AwsEksOutputs {
 
   const subnetIds = inputs.subnetIds
     ? pulumi.output(inputs.subnetIds)
-    : vpcId.apply((id) =>
-        aws.ec2.getSubnetsOutput({
-          filters: [{ name: "vpc-id", values: [id] }],
-        }).ids
+    : vpcId.apply(
+        (id) =>
+          aws.ec2.getSubnetsOutput({
+            filters: [{ name: "vpc-id", values: [id] }],
+          }).ids
       );
 
   const clusterSg = new aws.ec2.SecurityGroup("clawql-eks-cluster-sg", {
@@ -152,9 +153,7 @@ export function createAwsEks(inputs: ProvisionInputs): AwsEksOutputs {
               },
             },
             // Document account for operators
-            ...(accountId
-              ? []
-              : []),
+            ...(accountId ? [] : []),
           ],
         });
       }),

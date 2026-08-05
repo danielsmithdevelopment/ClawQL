@@ -23,9 +23,9 @@ inline Workflow specs (v1 is template-ref only).
 
 ## Packs
 
-| File | Purpose |
-| --- | --- |
-| `vault-daily-digest.cqw` | Daily vault digest over Obsidian PVC |
+| File                        | Purpose                                                                      |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| `vault-daily-digest.cqw`    | Daily vault digest over Obsidian PVC                                         |
 | `idp-document-pipeline.cqw` | Smoke / batch IDP: inspect → classify → extract (MCP via curl to clawql-mcp) |
 
 Plain YAML without kinetic annotations can stay under `deployment/argo-workflows/templates/`

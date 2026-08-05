@@ -6,29 +6,29 @@ Live runbook: [`docs/deployment/hosted-live-bootstrap.md`](../../docs/deployment
 
 ## Profiles (`clawql:profile`)
 
-| Profile | Cloud | What it creates |
-| --- | --- | --- |
-| `edge` | cloudflare | R2 vault, KV cache, D1 tenants, Queues, optional Worker stub (Developer/Teams) |
-| `team-vault` | cloudflare | R2 team-vault bucket only (legacy) |
-| `golden-host` | aws / gcp | EC2/GCE from Packer image |
-| `idp-k3s` | aws | `r7i.2xlarge` + EBS + K3s bootstrap user-data (first IDP customer) |
-| `eks` | aws | EKS + reserved node group + Karpenter IAM (shared tenancy) |
+| Profile       | Cloud      | What it creates                                                                |
+| ------------- | ---------- | ------------------------------------------------------------------------------ |
+| `edge`        | cloudflare | R2 vault, KV cache, D1 tenants, Queues, optional Worker stub (Developer/Teams) |
+| `team-vault`  | cloudflare | R2 team-vault bucket only (legacy)                                             |
+| `golden-host` | aws / gcp  | EC2/GCE from Packer image                                                      |
+| `idp-k3s`     | aws        | `r7i.2xlarge` + EBS + K3s bootstrap user-data (first IDP customer)             |
+| `eks`         | aws        | EKS + reserved node group + Karpenter IAM (shared tenancy)                     |
 
 If `clawql:profile` is omitted: `cloudflare` → `team-vault`, `aws`/`gcp` → `golden-host`.
 
 ## Layout
 
-| Path | Role |
-|------|------|
-| `src/index.ts` | Stack entry — routes by profile |
-| `src/cloudflare-edge.ts` | Edge launch stack |
-| `src/cloudflare.ts` | R2 team-vault only |
-| `src/aws-idp-k3s.ts` | K3s bootstrap EC2 |
-| `src/aws-eks.ts` | EKS + Karpenter roles |
-| `src/aws.ts` / `src/gcp.ts` | Golden hosts |
-| `src/k3s-user-data.ts` | K3s install script |
-| `src/profiles.ts` | Profile enum + defaults |
-| `src/automation.ts` | Automation API (`stack.up` from Node) |
+| Path                        | Role                                  |
+| --------------------------- | ------------------------------------- |
+| `src/index.ts`              | Stack entry — routes by profile       |
+| `src/cloudflare-edge.ts`    | Edge launch stack                     |
+| `src/cloudflare.ts`         | R2 team-vault only                    |
+| `src/aws-idp-k3s.ts`        | K3s bootstrap EC2                     |
+| `src/aws-eks.ts`            | EKS + Karpenter roles                 |
+| `src/aws.ts` / `src/gcp.ts` | Golden hosts                          |
+| `src/k3s-user-data.ts`      | K3s install script                    |
+| `src/profiles.ts`           | Profile enum + defaults               |
+| `src/automation.ts`         | Automation API (`stack.up` from Node) |
 
 ## Quick start
 
@@ -65,10 +65,10 @@ pulumi preview && pulumi up
 
 ## GitOps after Pulumi
 
-1. Install Argo CD on the cluster  
-2. Apply `deployment/gitops/projects/clawql.yaml`  
-3. Apply `deployment/gitops/applications/root.yaml`  
-4. Sync IDP Helm + `deployment/workflows/*.cqw`  
+1. Install Argo CD on the cluster
+2. Apply `deployment/gitops/projects/clawql.yaml`
+3. Apply `deployment/gitops/applications/root.yaml`
+4. Sync IDP Helm + `deployment/workflows/*.cqw`
 
 Deterministic pipelines are **`.cqw` → WorkflowTemplate → Argo Workflows**; agents submit via MCP `workflow` (template-ref only).
 

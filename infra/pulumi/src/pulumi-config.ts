@@ -26,9 +26,7 @@ export function loadProvisionInputs(): ProvisionInputs {
   const cloud = parseCloudTarget(cfg.require("cloud"));
 
   const profileRaw = cfg.get("profile");
-  const profile = profileRaw
-    ? parseProvisionProfile(profileRaw)
-    : defaultProfileForCloud(cloud);
+  const profile = profileRaw ? parseProvisionProfile(profileRaw) : defaultProfileForCloud(cloud);
 
   const syncBucket =
     cfg.get("syncBucket") ??
@@ -46,19 +44,18 @@ export function loadProvisionInputs(): ProvisionInputs {
         tenantId,
         customPrefix: cfg.get("syncPrefix") ?? undefined,
       })
-    : cfg.get("syncPrefix") ??
-      (tenantId ? `tenant/${tenantId}/` : "shared/");
+    : (cfg.get("syncPrefix") ?? (tenantId ? `tenant/${tenantId}/` : "shared/"));
 
   const needsGoldenImage = profile === "golden-host" && (cloud === "aws" || cloud === "gcp");
   const goldenImageId = needsGoldenImage
     ? cfg.require("goldenImageId")
     : (cfg.get("goldenImageId") ?? undefined);
 
-  const region = cfg.get("region") ?? (cloud === "aws" || profile === "idp-k3s" || profile === "eks" ? "us-east-1" : "us-central1");
+  const region =
+    cfg.get("region") ??
+    (cloud === "aws" || profile === "idp-k3s" || profile === "eks" ? "us-east-1" : "us-central1");
   const instanceType =
-    cfg.get("instanceType") ??
-    PROFILE_DEFAULT_INSTANCE[profile] ??
-    DEFAULT_INSTANCE_TYPES[cloud];
+    cfg.get("instanceType") ?? PROFILE_DEFAULT_INSTANCE[profile] ?? DEFAULT_INSTANCE_TYPES[cloud];
 
   const useSsmSecrets = cfg.getBoolean("useSsmSecrets") ?? tier === "dedicated";
   const ssmParameterPrefix =

@@ -17,7 +17,7 @@ spec:
     path: deployment/gitops/applications
     directory:
       recurse: false
-      exclude: '{root.yaml}'
+      exclude: "{root.yaml}"
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

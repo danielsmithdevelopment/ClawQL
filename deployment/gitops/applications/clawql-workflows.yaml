@@ -15,7 +15,7 @@ spec:
     path: deployment/workflows
     directory:
       recurse: true
-      include: '{*.yaml,*.cqw}'
+      include: "{*.yaml,*.cqw}"
   destination:
     server: https://kubernetes.default.svc
     namespace: argo

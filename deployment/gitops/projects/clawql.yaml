@@ -10,7 +10,7 @@ spec:
   sourceRepos:
     - https://github.com/danielsmithdevelopment/ClawQL.git
     - https://github.com/danielsmithdevelopment/ClawQL
-    - '*' # allow forks — tighten in production
+    - "*" # allow forks — tighten in production
   destinations:
     - namespace: clawql
       server: https://kubernetes.default.svc
@@ -31,8 +31,8 @@ spec:
     - namespace: tenant-*
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
-    - group: '*'
-      kind: '*'
+    - group: "*"
+      kind: "*"
   namespaceResourceWhitelist:
-    - group: '*'
-      kind: '*'
+    - group: "*"
+      kind: "*"

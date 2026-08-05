@@ -32,19 +32,19 @@ deployment/workflows/            # .cqw packs (synced by clawql-workflows)
 
 ## Why Argo CD unlocks Workflows
 
-| Concern | Mechanism |
-| --- | --- |
-| Desired cluster state | Argo CD Applications → Helm + directories |
-| Deterministic pipelines | `.cqw` → WorkflowTemplate CRs → Argo Workflows |
-| Agent safety | MCP `workflow` is **template-ref only**; promotion is PR → sync (#258) |
-| Spot / reserved pools | Karpenter NodePools labeled `clawql.dev/pool`; `.cqw` sets nodeSelector/tolerations |
+| Concern                 | Mechanism                                                                           |
+| ----------------------- | ----------------------------------------------------------------------------------- |
+| Desired cluster state   | Argo CD Applications → Helm + directories                                           |
+| Deterministic pipelines | `.cqw` → WorkflowTemplate CRs → Argo Workflows                                      |
+| Agent safety            | MCP `workflow` is **template-ref only**; promotion is PR → sync (#258)              |
+| Spot / reserved pools   | Karpenter NodePools labeled `clawql.dev/pool`; `.cqw` sets nodeSelector/tolerations |
 
 ## ClawQL chart sources
 
-| Target | Helm chart | Values |
-| ------ | ---------- | ------ |
+| Target   | Helm chart          | Values                                |
+| -------- | ------------------- | ------------------------------------- |
 | Lean MCP | `charts/clawql-mcp` | `values.yaml` or env-specific overlay |
-| Full IDP | `charts/clawql-idp` | `values-idp-full.yaml` |
+| Full IDP | `charts/clawql-idp` | `values-idp-full.yaml`                |
 
 Point Argo CD `source.repoURL` at this GitHub repo (or your fork) and set `targetRevision` to a release tag (e.g. `v7.2.0`) for production.
 

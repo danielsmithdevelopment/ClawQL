@@ -17,8 +17,7 @@ export function buildK3sBootstrapUserData(opts: K3sBootstrapUserDataOpts = {}): 
   const nodeName = opts.nodeName ?? "clawql-idp-k3s";
   const disableTraefik = opts.disableTraefik !== false;
   const r2Bucket = opts.r2Bucket ?? "";
-  const gitopsRepo =
-    opts.gitopsRepoUrl ?? "https://github.com/danielsmithdevelopment/ClawQL.git";
+  const gitopsRepo = opts.gitopsRepoUrl ?? "https://github.com/danielsmithdevelopment/ClawQL.git";
 
   const k3sInstallFlags = [
     `--tls-san $(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || hostname -I | awk '{print $1}')`,

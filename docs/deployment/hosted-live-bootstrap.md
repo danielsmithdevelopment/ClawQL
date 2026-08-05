@@ -5,12 +5,12 @@
 
 ## Separation of concerns
 
-| Layer | Tool | Owns |
-| --- | --- | --- |
-| Cloud / account infra | **Pulumi** (`infra/pulumi`) | Cloudflare edge bindings, EC2/K3s, EKS + Karpenter IAM |
-| Cluster desired state | **Argo CD** (`deployment/gitops`) | Helm charts, WorkflowTemplates, Karpenter NodePools |
-| Deterministic pipelines | **Argo Workflows** + **`.cqw`** (`deployment/workflows`) | IDP DAGs, vault digest, fair queues |
-| Agent / MCP | ClawQL `workflow` + `argocd` tools | Submit templates, observe sync (no inline Workflow specs) |
+| Layer                   | Tool                                                     | Owns                                                      |
+| ----------------------- | -------------------------------------------------------- | --------------------------------------------------------- |
+| Cloud / account infra   | **Pulumi** (`infra/pulumi`)                              | Cloudflare edge bindings, EC2/K3s, EKS + Karpenter IAM    |
+| Cluster desired state   | **Argo CD** (`deployment/gitops`)                        | Helm charts, WorkflowTemplates, Karpenter NodePools       |
+| Deterministic pipelines | **Argo Workflows** + **`.cqw`** (`deployment/workflows`) | IDP DAGs, vault digest, fair queues                       |
+| Agent / MCP             | ClawQL `workflow` + `argocd` tools                       | Submit templates, observe sync (no inline Workflow specs) |
 
 Pulumi does **not** replace Argo CD. Pulumi creates the plane; Argo CD continuously reconciles apps and `.cqw` packs onto it.
 
@@ -27,13 +27,13 @@ gateway Worker (stub → full MCP) ──proxy──► AWS K3s/EKS ingress
 
 ## Profiles (`clawql:profile`)
 
-| Profile | Cloud | Provisions |
-| --- | --- | --- |
-| `edge` | cloudflare | R2 vault, KV semantic cache, D1 tenants, Queues, optional Worker stub |
-| `team-vault` | cloudflare | R2 only (legacy ADR 0007 path) |
-| `golden-host` | aws / gcp | Packer AMI → EC2/GCE |
-| `idp-k3s` | aws | `r7i.2xlarge` + 200GB gp3 + K3s user-data (first IDP customer) |
-| `eks` | aws | EKS + reserved node group + Karpenter IAM (Phase 3) |
+| Profile       | Cloud      | Provisions                                                            |
+| ------------- | ---------- | --------------------------------------------------------------------- |
+| `edge`        | cloudflare | R2 vault, KV semantic cache, D1 tenants, Queues, optional Worker stub |
+| `team-vault`  | cloudflare | R2 only (legacy ADR 0007 path)                                        |
+| `golden-host` | aws / gcp  | Packer AMI → EC2/GCE                                                  |
+| `idp-k3s`     | aws        | `r7i.2xlarge` + 200GB gp3 + K3s user-data (first IDP customer)        |
+| `eks`         | aws        | EKS + reserved node group + Karpenter IAM (Phase 3)                   |
 
 ## Phase 1 — Cloudflare edge (Developer/Teams)
 
