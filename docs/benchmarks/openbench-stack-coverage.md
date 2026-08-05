@@ -53,7 +53,7 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 
 Still missing after this wave: n≥3 trials; ops-only (Argo / live Onyx / live Slack / R2). Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. All graded cells above are **`retired`** (`pr_active` empty). Ouroboros workflow is dispatch-only.
+**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Graded cells above are **`retired`**; **`codegraph-impact-edit` (B-3.1)** is on `pr_active` pending a live WIN. Ouroboros workflow is dispatch-only.
 
 Explanations for every verified cell: [`openbench-task-explanations.md`](./openbench-task-explanations.md).
 
@@ -170,7 +170,7 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 ### Phase 1 advanced (frugal tool delta — no fine-tune)
 
 19. **`memory-conflict-pricing` (B-4.1)** — **WIN** retired ([30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746)).  
-20. **`codegraph-impact-edit` (B-3.1 lite)** — cross-file edit via index/query/neighbors; miss dependents = fail.  
+20. **`codegraph-impact-edit` (B-3.1 lite)** — shipped on `pr_active`; cross-file rename via index/query/neighbors; miss dependents = fail. Pending live A/B WIN.  
 21. Spikes only: B-4.2 stale cache · B-4.3 Panguard×`memory_ingest` — ship only if product behavior matches claim.
 
 Full breakdown (B-1 flywheel → B-6 domain HLE-analog): [`openbench-advanced-suites.md`](./openbench-advanced-suites.md). Trace collection from GHA: [`openbench-trace-collection.md`](./openbench-trace-collection.md).

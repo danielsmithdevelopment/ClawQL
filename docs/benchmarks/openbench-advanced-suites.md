@@ -192,7 +192,7 @@ Work **in this order** unless blocked:
 3b. **[Trace-1]** Publish-ready corpus: OpenBenchTrace v1, write-time scrub, WORM manifests, fail-loud R2. ✅  
 3c. **[Trace-2]** Productize as protocol + managed service docs + `packages/openbench-dataset` scaffold. ✅  
 3d. **[Trace-3]** Full collect/sync package path (S3/R2, arm correlation, GHA composite). ✅  
-4. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire. ← **next**  
+4. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire. ← **in flight on #759**  
 5. **[B4.2-0] / [B4.3-0]** Spikes; only then optional cells.  
 6. **[P0-c]** First n=3 dispatch on one headline cell.  
 7. Park B-1/B-2-full/B-5/B-6 until their gates open; keep specs updated here. Collect traces on every live cell in the meantime.

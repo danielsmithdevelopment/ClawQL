@@ -182,6 +182,17 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "require_codegraph": True,
         "enable_codegraph": True,
     },
+    "codegraph-impact-edit": {
+        "max_turns": 50,
+        "max_tokens": 12000,
+        "max_wall_s": 300,
+        "default_timeout_s": 300,
+        "disable_memory": False,
+        "empty_vault": True,
+        "require_codegraph": True,
+        "enable_codegraph": True,
+        "codegraph_impact": True,
+    },
     "schedule-synthetic-dry-run": {
         "max_turns": 30,
         "max_tokens": 8000,
@@ -422,6 +433,17 @@ CODEGRAPH_NUDGE = """Continue the codegraph task.
    {"marker":"cg-alpha-9","file":"payments/ledger.py","source":"codegraph"}
 
 Ignore decoy/. Call codegraph tools now.
+"""
+
+CODEGRAPH_IMPACT_NUDGE = """Continue the codegraph impact rename.
+
+1. Call clawql_codegraph_index with root = repo (relative path).
+2. Call clawql_codegraph_query / neighbors / path for compute_total and every caller.
+3. Rename compute_total → compute_grand_total in definition + ALL callers + test.
+4. write relative filePath impact.json:
+   {"old_name":"compute_total","new_name":"compute_grand_total","files":["core/pricing.py","api/checkout.py","api/invoice.py","workers/batch.py","reports/summary.py","cli/main.py","tests/test_pricing.py"],"source":"codegraph"}
+
+Ignore decoy/. Missing any of the 7 files fails. Call codegraph tools now.
 """
 
 SCHEDULE_NUDGE = """Continue the schedule dry_run task.
@@ -1164,6 +1186,40 @@ def codegraph_incomplete(combined: str, workdir: Path) -> bool:
     return not queried
 
 
+def codegraph_impact_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "impact.json").is_file():
+        return True
+    pricing = workdir / "repo" / "core" / "pricing.py"
+    if not pricing.is_file():
+        return True
+    try:
+        text = pricing.read_text(encoding="utf-8")
+    except OSError:
+        return True
+    if "def compute_grand_total" not in text or "def compute_total" in text:
+        return True
+    tools = real_opencode_tools(combined)
+    indexed = bool(tools & {"clawql_codegraph_index", "codegraph_index"})
+    if not indexed:
+        return True
+    queried = bool(
+        tools
+        & {
+            "clawql_codegraph_query",
+            "codegraph_query",
+            "clawql_codegraph_explain",
+            "codegraph_explain",
+            "clawql_codegraph_neighbors",
+            "codegraph_neighbors",
+            "clawql_codegraph_path",
+            "codegraph_path",
+        }
+    )
+    return not queried
+
+
 def schedule_incomplete(combined: str, workdir: Path) -> bool:
     if agent_idle(combined):
         return True
@@ -1314,6 +1370,7 @@ def run_arm_on(
     enable_pageindex: bool = False,
     require_codegraph: bool = False,
     enable_codegraph: bool = False,
+    codegraph_impact: bool = False,
     require_schedule: bool = False,
     enable_schedule: bool = False,
     require_external_ingest: bool = False,
@@ -1725,19 +1782,26 @@ def run_arm_on(
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
 
-    # codegraph: missing index/query/answer.
+    # codegraph: missing index/query/answer (guided) or impact rename.
     if (
         require_codegraph
         and arm == "clawql-on"
         and not timed_out
-        and codegraph_incomplete(combined, workdir)
+        and (
+            codegraph_impact_incomplete(combined, workdir)
+            if codegraph_impact
+            else codegraph_incomplete(combined, workdir)
+        )
     ):
         elapsed = time.monotonic() - t0
         remaining = int(timeout_s) - int(elapsed)
         if remaining >= 25:
             cont_file = workdir / ".openbench_codegraph_nudge.md"
-            cont_file.write_text(CODEGRAPH_NUDGE, encoding="utf-8")
-            cont_timeout = max(25, min(90, remaining))
+            cont_file.write_text(
+                CODEGRAPH_IMPACT_NUDGE if codegraph_impact else CODEGRAPH_NUDGE,
+                encoding="utf-8",
+            )
+            cont_timeout = max(25, min(120 if codegraph_impact else 90, remaining))
             cmd = build_cmd(cont_file, cont_timeout)
             try:
                 proc_cg = subprocess.run(
@@ -2339,6 +2403,10 @@ def render_markdown(report: dict) -> str:
         interp.append(
             "- Both arms graded for real codegraph index + query evidence; off lacks tools."
         )
+    elif task == "codegraph-impact-edit":
+        interp.append(
+            "- Both arms graded for real codegraph + full rename impact set (7 files); off lacks tools."
+        )
     elif task == "schedule-synthetic-dry-run":
         interp.append(
             "- Both arms graded for ≥2 real schedule tool_use + dry_run pass artifact."
@@ -2467,6 +2535,7 @@ def run_trial(
                 enable_pageindex=bool(caps.get("enable_pageindex")),
                 require_codegraph=bool(caps.get("require_codegraph")),
                 enable_codegraph=bool(caps.get("enable_codegraph")),
+                codegraph_impact=bool(caps.get("codegraph_impact")),
                 require_schedule=bool(caps.get("require_schedule")),
                 enable_schedule=bool(caps.get("enable_schedule")),
                 require_external_ingest=bool(caps.get("require_external_ingest")),
