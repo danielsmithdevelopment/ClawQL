@@ -5,7 +5,7 @@
 
 **Audience:** Investors · Developers & architects · Operators
 
-**Related:** [IDP GTM strategy & landing brief](./clawql-idp-gtm.md) · [Public IDP GTM playbook](https://clawql.com/idp/gtm) · [IDP pipeline hub](../providers/idp-pipeline.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Token efficiency (12 layers)](../architecture/clawql-token-efficiency.md) · [OpenBench advanced specs](../benchmarks/openbench-advanced-specs.md) · [Master enablement guide](./clawql-master-enablement-guide.md) · [Deployment guide](../deployment/clawql-deployment-operations-guide.md)
+**Related:** [IDP GTM strategy & landing brief](./clawql-idp-gtm.md) · [Go-to-market playbook (zero → shared tenancy)](../gtm/clawql-gtm-playbook.md) · [Public IDP GTM playbook](https://clawql.com/idp/gtm) · [IDP pipeline hub](../providers/idp-pipeline.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Token efficiency (12 layers)](../architecture/clawql-token-efficiency.md) · [OpenBench advanced specs](../benchmarks/openbench-advanced-specs.md) · [Master enablement guide](./clawql-master-enablement-guide.md) · [Deployment guide](../deployment/clawql-deployment-operations-guide.md)
 
 ---
 
@@ -74,7 +74,7 @@ ClawQL is available in configurations that run identical pipeline logic.
 
 The GPL-3.0 Paperless-ngx dependency is **removed from the hosted stack**. The ClawQL-native archive layer (Nextcloud + Postgres + Onyx) replaces it. Self-hosted operators who prefer Paperless-ngx can enable it via feature toggle. See [Licensing Summary](#licensing-summary).
 
-Plugin-bundle pricing detail (Developer/Teams/Starter/…): see [Hosted plan pricing](#hosted-plan-pricing-july-2026--plugin-bundles) and [IDP GTM](./clawql-idp-gtm.md).
+Plugin-bundle pricing detail (Developer/Teams/Starter/…): see [Hosted plan pricing](#hosted-plan-pricing-july-2026--plugin-bundles), [IDP GTM](./clawql-idp-gtm.md), and the [GTM playbook](../gtm/clawql-gtm-playbook.md).
 
 ---
 
@@ -362,7 +362,7 @@ executor.sh is a **stateless tool router**. ClawQL is a **stateful agent operati
 | Enterprise              | from $3,500/mo | SLA, HITL, vertical adapters, multi-region                                                        |
 | Sovereign Security Pack | +$200/mo       | Kata, weight integrity, WORM Merkle, Panguard, YubiKey signing, Presidio pre-log, monthly posture |
 
-> Indicative GTM numbers — validate against infrastructure cost modeling before launch. See also [clawql-idp-gtm.md](./clawql-idp-gtm.md) for Starter/Business ladder variants.
+> Indicative GTM numbers — validate against infrastructure cost modeling before launch. See also [clawql-idp-gtm.md](./clawql-idp-gtm.md) for Starter/Business ladder variants and [clawql-gtm-playbook.md](../gtm/clawql-gtm-playbook.md) for corrected bootstrap burn and shared-tenancy economics.
 
 ### Full Stack Replacement Value
 
