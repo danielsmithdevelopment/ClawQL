@@ -2,10 +2,8 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "RTP OpenBenchTrace v1.1 landed. Next live cell: codegraph-feature-api-surface (B-3 API impact set) to grow OBT/RTP corpus.",
-  "pr_active": [
-    "codegraph-feature-api-surface"
-  ],
+  "live_resume_note": "RTP OpenBenchTrace v1.1 ready to merge. codegraph-feature-api-surface first live attempt [30980340926] on=0.5/off=0.0 (partial wiring; RTP traces synced). Harden cell then re-activate; meanwhile prefer P0 n>=3 on proven cells via dispatch.",
+  "pr_active": [],
   "retired": {
     "codegraph-impact-edit": {
       "reason": "Verified WIN + durable R2 traces (on 1.0 / off 0.0; call_store=17; r2://clawql-openbench-traces)",

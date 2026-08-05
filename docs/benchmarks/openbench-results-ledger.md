@@ -1,3 +1,12 @@
+### 2026-08-05 — `codegraph-feature-api-surface` first live (RTP 1.1)
+
+| Arm | Score              | Notes                                                                   |
+| --- | ------------------ | ----------------------------------------------------------------------- |
+| on  | **0.5** (4t, 151s) | handler+router ok; schema/openapi/tests incomplete; indexed `/` not `.` |
+| off | **0.0** (3t, 51s)  | no codegraph tools (correct fail under REQUIRE_CODEGRAPH)               |
+
+Run: [30980340926](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30980340926). **Durable R2:** 2× OpenBenchTrace **v1.1** packs synced (`rtp` present). Not a headline WIN — clear `pr_active`, merge RTP, harden nudge/instruction (root=`.`, finish full impact set) before re-activate.
+
 # OpenBench results ledger
 
 **Canonical log of live ClawQL OpenBench A/B cells.** Update this file after every
