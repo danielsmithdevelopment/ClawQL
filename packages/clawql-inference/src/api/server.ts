@@ -10,6 +10,8 @@ import type { ProviderRegistry } from "../providers/types.js";
 import { createVirtualKeyAuthMiddleware } from "./auth.js";
 import { createOpenAiCompatRouter } from "./openai-compat.js";
 import { maybeInitInferenceOtelTracing } from "../observability/otel-tracing.js";
+import { createInferenceStore } from "../store/create.js";
+import type { InferenceStore } from "../store/types.js";
 import { registerInferencePoolShutdownHooks } from "../store/postgres-pool.js";
 import { resolveInferenceEffectiveEnv } from "../policy/manifest.js";
 
@@ -17,6 +19,8 @@ export type CreateInferenceHttpAppOptions = {
   gateway?: InferenceGateway;
   registry?: ProviderRegistry;
   env?: NodeJS.ProcessEnv;
+  /** Override inference call store (defaults from CLAWQL_INFERENCE_STORE*). */
+  store?: InferenceStore | null;
 };
 
 export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = {}): Express {
@@ -28,6 +32,7 @@ export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = 
       plugins: composeDefaultProviderPlugins(),
     });
   const gateway = options.gateway ?? createInferenceGateway({ env, providers: registry });
+  const store = options.store === undefined ? createInferenceStore({ env }) : options.store;
   const app = express();
   app.use(express.json({ limit: "2mb" }));
   app.get("/healthz", (_req, res) => {
@@ -46,7 +51,8 @@ export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = 
   }
   app.use(createX402PaymentMiddleware({ env }));
   app.use(createVirtualKeyAuthMiddleware({ env }));
-  app.use(createOpenAiCompatRouter({ gateway, registry, env }));
+  // Pass store explicitly so tool-calling passthrough (OpenBench / OpenCode) still records.
+  app.use(createOpenAiCompatRouter({ gateway, registry, env, store }));
   return app;
 }
 

@@ -20,6 +20,7 @@ import {
   resolveInferenceTenantId,
 } from "../entitlements/enforced-gateway.js";
 import { isStripeMeterReportingActive } from "clawql-payments";
+import { buildInferenceRecord, type InferenceStore } from "../store/types.js";
 
 type OpenAiChatCompletionRequest = {
   model?: string;
@@ -39,7 +40,69 @@ export type CreateOpenAiCompatRouterOptions = {
   gateway: InferenceGateway;
   registry?: ProviderRegistry;
   env?: NodeJS.ProcessEnv;
+  /** When set, tool-calling passthrough (and other bypass paths) still append FT/observability records. */
+  store?: InferenceStore | null;
 };
+
+async function recordPassthroughCall(opts: {
+  store?: InferenceStore | null;
+  messages: ChatMessage[];
+  provider: string;
+  model: string;
+  publicModelId: string;
+  correlationId?: string;
+  team?: string;
+  virtualKeyId?: string;
+  latencyMs: number;
+  responseContent: string;
+  usage?: { inputTokens: number; outputTokens: number };
+}): Promise<void> {
+  if (!opts.store) return;
+  try {
+    await opts.store.append(
+      buildInferenceRecord({
+        id: randomUUID(),
+        request: {
+          messages: opts.messages,
+          model: opts.publicModelId,
+          correlationId: opts.correlationId,
+          team: opts.team,
+          virtualKeyId: opts.virtualKeyId,
+        },
+        response: {
+          content: opts.responseContent,
+          model: opts.publicModelId,
+          usage: opts.usage,
+          correlationId: opts.correlationId,
+        },
+        provider: opts.provider,
+        model: opts.model,
+        latencyMs: opts.latencyMs,
+      })
+    );
+  } catch (error) {
+    // Observability must not fail the client completion.
+    console.warn(
+      "[clawql-inference] failed to append passthrough call-store record:",
+      error instanceof Error ? error.message : error
+    );
+  }
+}
+
+function usageFromOpenAiPayload(payload: Record<string, unknown>):
+  | { inputTokens: number; outputTokens: number }
+  | undefined {
+  const usage = payload.usage;
+  if (!usage || typeof usage !== "object") return undefined;
+  const u = usage as Record<string, unknown>;
+  const input = Number(u.prompt_tokens ?? u.input_tokens ?? 0);
+  const output = Number(u.completion_tokens ?? u.output_tokens ?? 0);
+  if (!Number.isFinite(input) && !Number.isFinite(output)) return undefined;
+  return {
+    inputTokens: Number.isFinite(input) ? input : 0,
+    outputTokens: Number.isFinite(output) ? output : 0,
+  };
+}
 
 function readCorrelationId(req: Request, body?: OpenAiChatCompletionRequest): string | undefined {
   const header =
@@ -176,10 +239,14 @@ async function tryToolCallingPassthrough(opts: {
   res: Response;
   env: NodeJS.ProcessEnv;
   team?: string;
+  virtualKeyId?: string;
   correlationId?: string;
+  messages: ChatMessage[];
+  store?: InferenceStore | null;
 }): Promise<boolean> {
   if (!requestUsesToolCalling(opts.body)) return false;
   const stream = Boolean(opts.body.stream);
+  const started = Date.now();
   if (stream) {
     if (!opts.adapter.proxyChatCompletionStream) {
       sendOpenAiError(
@@ -201,6 +268,19 @@ async function tryToolCallingPassthrough(opts: {
       publicModelId: opts.publicModelId,
     });
     await bill();
+    // Streaming bodies are not buffered here; record a slim companion line for correlation.
+    await recordPassthroughCall({
+      store: opts.store,
+      messages: opts.messages,
+      provider: opts.adapter.provider,
+      model: opts.resolvedModel,
+      publicModelId: opts.publicModelId,
+      correlationId: opts.correlationId,
+      team: opts.team,
+      virtualKeyId: opts.virtualKeyId,
+      latencyMs: Date.now() - started,
+      responseContent: "[streamed tool-calling passthrough]",
+    });
     return true;
   }
 
@@ -219,15 +299,30 @@ async function tryToolCallingPassthrough(opts: {
     correlationId: opts.correlationId,
   });
   const upstream = await opts.adapter.proxyChatCompletion(opts.resolvedModel, opts.reqBody);
+  const rewritten = rewritePublicModel(upstream, opts.publicModelId);
   if (opts.correlationId) opts.res.setHeader("X-Correlation-Id", opts.correlationId);
-  opts.res.json(rewritePublicModel(upstream, opts.publicModelId));
+  opts.res.json(rewritten);
   await bill();
+  await recordPassthroughCall({
+    store: opts.store,
+    messages: opts.messages,
+    provider: opts.adapter.provider,
+    model: opts.resolvedModel,
+    publicModelId: opts.publicModelId,
+    correlationId: opts.correlationId,
+    team: opts.team,
+    virtualKeyId: opts.virtualKeyId,
+    latencyMs: Date.now() - started,
+    responseContent: JSON.stringify(rewritten),
+    usage: usageFromOpenAiPayload(rewritten),
+  });
   return true;
 }
 
 export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOptions): express.Router {
   const router = express.Router();
   const registry = options.registry;
+  const store = options.store;
   const models = registry ? createModelsHandlers(registry, options.env) : null;
 
   if (models) {
@@ -291,7 +386,10 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
             res,
             env,
             team: keyContext?.team,
+            virtualKeyId: keyContext?.id,
             correlationId,
+            messages,
+            store,
           });
           if (handled) return;
         }
@@ -309,6 +407,7 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
               team: keyContext?.team,
               correlationId,
             });
+            const started = Date.now();
             await streamCompletionAsOpenAiSse(res, {
               completionId,
               model: publicModelId,
@@ -317,6 +416,18 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
               chunks: adapter.streamComplete(resolved.model, messages, completeOptions),
             });
             await bill();
+            await recordPassthroughCall({
+              store,
+              messages,
+              provider: resolved.provider,
+              model: resolved.model,
+              publicModelId,
+              correlationId,
+              team: keyContext?.team,
+              virtualKeyId: keyContext?.id,
+              latencyMs: Date.now() - started,
+              responseContent: "[streamed adapter completion]",
+            });
             return;
           }
         }

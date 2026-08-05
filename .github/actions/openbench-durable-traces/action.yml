@@ -65,8 +65,19 @@ runs:
         if [ "${{ inputs.require_durable }}" = "0" ] || [ "${{ inputs.require_durable }}" = "false" ]; then
           EXTRA+=(--allow-missing-r2)
         fi
-        node packages/openbench-dataset/dist/cli.js sync \
+        if ! node packages/openbench-dataset/dist/cli.js sync \
           --artifact-dir "${{ inputs.artifact_dir }}" \
           --run-id "${{ inputs.run_id }}" \
           --task "${{ inputs.task }}" \
-          "${EXTRA[@]}"
+          "${EXTRA[@]}"; then
+          {
+            echo "### OpenBench durable R2 sync failed"
+            echo ""
+            echo "Warm GH artifact still uploaded. Corpus-of-record R2 did **not** land."
+            echo "Set \`CLOUDFLARE_ACCOUNT_ID\` (or \`CLAWQL_R2_ACCOUNT_ID\`) alongside \`CLOUDFLARE_API_TOKEN\`,"
+            echo "or provide \`CLAWQL_SYNC_*\` / \`R2_*\` S3 keys. See \`docs/benchmarks/openbench-trace-collection.md\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::OpenBench durable R2 sync failed — FT corpus not persisted to R2 (see step summary)"
+          exit 1
+        fi
+        echo "Durable R2 sync OK for task=${{ inputs.task }} run=${{ inputs.run_id }}" >> "$GITHUB_STEP_SUMMARY"
