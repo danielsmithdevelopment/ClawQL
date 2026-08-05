@@ -96,6 +96,7 @@ import {
   runPaymentsCreditsTopupCmd,
   runPaymentsCreditsTransferCmd,
   runPaymentsCreditsPayCmd,
+  runPaymentsCreditsActivityCmd,
   runPaymentsCreditsDirectoryClaimCmd,
   runPaymentsCreditsDirectoryShowCmd,
   runPaymentsCreditsDirectoryListCmd,
@@ -421,6 +422,7 @@ Usage:
   clawql payments credits directory claim --email you@acme.com [--handle alice] [--name Alice]
   clawql payments credits directory show|list|release --email … | --handle @alice
   clawql payments credits pay --to you@acme.com|--to @alice --amount 10 [--note coffee]
+  clawql payments credits activity [--tenant-id ID] [--limit 25] [--filter money|transfers|requests|all]
   clawql payments credits request|invoice --to newbie@acme.com|--to @bob --amount 25 [--note …]
   clawql payments credits request list|show|accept|decline|cancel|claim-invite …
   clawql payments credits transfer --to-tenant other-tenant --amount 10
@@ -1065,6 +1067,11 @@ async function main(): Promise<void> {
           : undefined,
       correlationId: typeof flags.correlationId === "string" ? flags.correlationId : undefined,
       limit: Number.isFinite(limit) ? limit : undefined,
+      activityFilter:
+        typeof flags.filter === "string" &&
+        ["all", "transfers", "requests", "money", "ledger"].includes(flags.filter)
+          ? (flags.filter as "all" | "transfers" | "requests" | "money" | "ledger")
+          : undefined,
       json: Boolean(flags.json),
       email: typeof flags.email === "string" ? flags.email : undefined,
       name: typeof flags.name === "string" ? flags.name : undefined,
@@ -1380,6 +1387,10 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsCreditsPayCmd(paymentsOpts);
         return;
       }
+      if (creditsAction === "activity") {
+        process.exitCode = await runPaymentsCreditsActivityCmd(paymentsOpts);
+        return;
+      }
       if (creditsAction === "request" || creditsAction === "invoice") {
         const known = new Set([
           "create",
@@ -1449,7 +1460,7 @@ async function main(): Promise<void> {
         return;
       }
       console.error(
-        "Usage: clawql payments credits show | bank-link | topup | pay | transfer | request|invoice | directory | step-up"
+        "Usage: clawql payments credits show | bank-link | topup | pay | activity | transfer | request|invoice | directory | step-up"
       );
       process.exitCode = 1;
       return;

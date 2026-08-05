@@ -29,6 +29,7 @@ import {
   listMoneyRequests,
   publicMoneyRequest,
 } from "../credits/requests.js";
+import { getActivityFeed } from "../credits/activity.js";
 import { Ap2MandateService } from "../ap2/ap2-mandate-service.js";
 import { isAp2Enabled } from "../ap2/config.js";
 
@@ -424,6 +425,33 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
           description: "List payments directory profiles (email + optional @username).",
           schema: {},
           handler: async () => textResult({ profiles: await listDirectory() }),
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_activity",
+          description:
+            "Recent prepaid activity for a tenant: transfers, money requests/invoices, top-ups (Venmo-style feed).",
+          schema: {
+            tenantId: z.string().optional(),
+            limit: z.number().int().positive().max(100).optional(),
+            filter: z.enum(["all", "transfers", "requests", "money", "ledger"]).optional(),
+          },
+          handler: async (args) => {
+            const a = args as {
+              tenantId?: string;
+              limit?: number;
+              filter?: "all" | "transfers" | "requests" | "money" | "ledger";
+            };
+            const feed = await getActivityFeed(
+              {
+                tenantId: a.tenantId?.trim() || "default",
+                limit: a.limit,
+                filter: a.filter ?? "money",
+              },
+              env
+            );
+            return textResult(feed);
+          },
         });
 
         yield* api.registerMcpTool({

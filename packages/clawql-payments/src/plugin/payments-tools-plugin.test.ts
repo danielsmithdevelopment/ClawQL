@@ -24,6 +24,7 @@ describe("payments tools MCP plugin", () => {
       "payments_credits_directory_claim",
       "payments_credits_directory_resolve",
       "payments_credits_directory_list",
+      "payments_credits_activity",
       "payments_credits_request_create",
       "payments_credits_request_list",
       "payments_credits_request_claim_invite",

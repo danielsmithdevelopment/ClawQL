@@ -43,6 +43,14 @@ export {
   type ResolvedRecipient,
 } from "./directory.js";
 export {
+  formatActivityLine,
+  getActivityFeed,
+  type ActivityFeed,
+  type ActivityItem,
+  type ActivityKind,
+  type GetActivityFeedOptions,
+} from "./activity.js";
+export {
   acceptMoneyRequest,
   buildRequestInviteUrl,
   cancelMoneyRequest,

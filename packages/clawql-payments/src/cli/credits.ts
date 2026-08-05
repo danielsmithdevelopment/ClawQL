@@ -27,6 +27,7 @@ import {
   listMoneyRequests,
   publicMoneyRequest,
 } from "../credits/requests.js";
+import { formatActivityLine, getActivityFeed } from "../credits/activity.js";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
 import { loadPaymentsConfig } from "../config/store.js";
 
@@ -562,6 +563,50 @@ export async function runPaymentsCreditsStepUpShow(
     `Transfer TOTP gate: ${isCreditsTransferTotpRequired() ? "ON" : "off (set CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1)"}`
   );
   return 0;
+}
+
+export type PaymentsCreditsActivityOptions = {
+  tenantId?: string;
+  limit?: number;
+  filter?: "all" | "transfers" | "requests" | "money" | "ledger";
+  json?: boolean;
+};
+
+export async function runPaymentsCreditsActivity(
+  options: PaymentsCreditsActivityOptions = {}
+): Promise<number> {
+  if (!isCreditsEnabled()) {
+    console.error("Credits disabled — set CLAWQL_CREDITS_ENABLED=1");
+    return 1;
+  }
+  const config = await loadPaymentsConfig();
+  const tenantId = options.tenantId?.trim() || config.tenantId || "default";
+  try {
+    const feed = await getActivityFeed({
+      tenantId,
+      limit: options.limit,
+      filter: options.filter ?? "money",
+    });
+    if (options.json) {
+      console.log(JSON.stringify(feed, null, 2));
+      return 0;
+    }
+    console.log(
+      `${feed.label ?? feed.tenantId}  balance $${(feed.balanceCents / 100).toFixed(2)}`
+    );
+    if (feed.items.length === 0) {
+      console.log("No recent activity.");
+      return 0;
+    }
+    for (const item of feed.items) {
+      const day = item.ts.slice(0, 10);
+      console.log(`${day}  ${formatActivityLine(item)}`);
+    }
+    return 0;
+  } catch (err) {
+    console.error(formatErr(err));
+    return 1;
+  }
 }
 
 export type PaymentsCreditsRequestOptions = {

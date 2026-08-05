@@ -35,6 +35,7 @@ import {
   runPaymentsCreditsTopup,
   runPaymentsCreditsTransfer,
   runPaymentsCreditsPay,
+  runPaymentsCreditsActivity,
   runPaymentsCreditsDirectoryClaim,
   runPaymentsCreditsDirectoryShow,
   runPaymentsCreditsDirectoryList,
@@ -72,6 +73,7 @@ export type PaymentsCliOptions = {
   groupBy?: SpendGroupBy;
   correlationId?: string;
   limit?: number;
+  activityFilter?: "all" | "transfers" | "requests" | "money" | "ledger";
   json?: boolean;
   dateFrom?: string;
   dateTo?: string;
@@ -487,6 +489,17 @@ export async function runPaymentsCreditsPayCmd(
     code: options.code,
     totp: options.totp,
     direct: options.direct,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsCreditsActivityCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsActivity({
+    tenantId: options.tenantId ?? options.fromTenantId,
+    limit: options.limit,
+    filter: options.activityFilter,
     json: options.json,
   });
 }
