@@ -90,8 +90,8 @@ and uploads via the Cloudflare R2 REST API — **no extra R2 S3 secrets required
 | `CLAWQL_R2_TRACES_BUCKET` or `CLAWQL_OPENBENCH_R2_BUCKET`                 | secret   | Optional override (default **`clawql-openbench-traces`**)                                                                                                              |
 | `CLAWQL_SYNC_ACCESS_KEY_ID` + `CLAWQL_SYNC_SECRET_ACCESS_KEY` (or `R2_*`) | secret   | Optional — prefer S3 put when already present from team sync                                                                                                           |
 | `CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES`                                 | variable | Default **fail-loud** (`1`). Set `0` only for emergency dry-runs                                                                                                       |
-| `CLAWQL_OPENBENCH_CONSENT_TOKEN`                                          | secret   | Optional pre-issued RTP consent JWT (job start). When unset, writer mints HS256 with `CLAWQL_RTP_CONSENT_SECRET` or a CI-dev fallback. |
-| `CLAWQL_RTP_CONSENT_SECRET` / `CLAWQL_OPENBENCH_CONSENT_SECRET`           | secret   | Optional HMAC secret for minting consent JWTs (`community_model` + `dataset_licensing`)                                              |
+| `CLAWQL_OPENBENCH_CONSENT_TOKEN`                                          | secret   | Optional pre-issued RTP consent JWT (job start). When unset, writer mints HS256 with `CLAWQL_RTP_CONSENT_SECRET` or a CI-dev fallback.                                 |
+| `CLAWQL_RTP_CONSENT_SECRET` / `CLAWQL_OPENBENCH_CONSENT_SECRET`           | secret   | Optional HMAC secret for minting consent JWTs (`community_model` + `dataset_licensing`)                                                                                |
 | `CLAWQL_ENABLE_PRESIDIO`                                                  | variable | `1` to also run Presidio at write time (needs analyzer URLs)                                                                                                           |
 
 Do **not** point traces at `CLAWQL_SYNC_BUCKET` (team Memory vault). Traces use a
