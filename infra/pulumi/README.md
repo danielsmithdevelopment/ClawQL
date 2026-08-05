@@ -1,18 +1,43 @@
 # ClawQL provision (Pulumi)
 
-TypeScript Pulumi programs to provision managed-tier infrastructure. **Packer** builds the golden host artifact; **Pulumi** creates the cloud resources that run it.
+TypeScript Pulumi programs for ClawQL hosted infra. **Packer** builds golden host AMIs; **Pulumi** provisions cloud resources; **Argo CD** GitOps the cluster (Helm + `.cqw` WorkflowTemplates).
+
+Live runbook: [`docs/deployment/hosted-live-bootstrap.md`](../../docs/deployment/hosted-live-bootstrap.md)
+
+## CI/CD (Cloudflare edge)
+
+GitHub Actions: **Pulumi Cloudflare edge** (`.github/workflows/pulumi-cloudflare-edge.yml`).
+
+- PR: `npm test` / typecheck in this package (via workspace `npm ci`)
+- Dispatch: creates R2 state bucket `clawql-pulumi-state`, logs Pulumi into that backend, runs `preview` or `up` for `edge` profile
+
+See [hosted-live-bootstrap.md](../../docs/deployment/hosted-live-bootstrap.md#cicd-cloudflare-edge).
+
+## Profiles (`clawql:profile`)
+
+| Profile       | Cloud      | What it creates                                                                |
+| ------------- | ---------- | ------------------------------------------------------------------------------ |
+| `edge`        | cloudflare | R2 vault, KV cache, D1 tenants, Queues, optional Worker stub (Developer/Teams) |
+| `team-vault`  | cloudflare | R2 team-vault bucket only (legacy)                                             |
+| `golden-host` | aws / gcp  | EC2/GCE from Packer image                                                      |
+| `idp-k3s`     | aws        | `r7i.2xlarge` + EBS + K3s bootstrap user-data (first IDP customer)             |
+| `eks`         | aws        | EKS + reserved node group + Karpenter IAM (shared tenancy)                     |
+
+If `clawql:profile` is omitted: `cloudflare` → `team-vault`, `aws`/`gcp` → `golden-host`.
 
 ## Layout
 
-| Path | Role |
-|------|------|
-| `src/index.ts` | Stack entry — routes by `clawql:cloud` |
-| `src/aws.ts` | EC2 instance, IAM, security group, user-data |
-| `src/gcp.ts` | GCE instance + startup-script metadata |
-| `src/cloudflare.ts` | R2 team-vault bucket |
-| `src/tiers.ts` | Tier → sync prefix mapping |
-| `src/user-data.ts` | Boot bash for golden images |
-| `src/automation.ts` | Automation API (`stack.up` from Node) |
+| Path                        | Role                                  |
+| --------------------------- | ------------------------------------- |
+| `src/index.ts`              | Stack entry — routes by profile       |
+| `src/cloudflare-edge.ts`    | Edge launch stack                     |
+| `src/cloudflare.ts`         | R2 team-vault only                    |
+| `src/aws-idp-k3s.ts`        | K3s bootstrap EC2                     |
+| `src/aws-eks.ts`            | EKS + Karpenter roles                 |
+| `src/aws.ts` / `src/gcp.ts` | Golden hosts                          |
+| `src/k3s-user-data.ts`      | K3s install script                    |
+| `src/profiles.ts`           | Profile enum + defaults               |
+| `src/automation.ts`         | Automation API (`stack.up` from Node) |
 
 ## Quick start
 
@@ -27,77 +52,61 @@ export AWS_ACCESS_KEY_ID=...
 export AWS_SECRET_ACCESS_KEY=...
 pulumi login 's3://clawql-pulumi-state?region=auto&endpoint=https://<accountid>.r2.cloudflarestorage.com&awssdk=v2'
 
-# Cloudflare R2 only (no VM / no golden image)
-cp Pulumi.cloudflare.example.yaml Pulumi.dev-r2.yaml
-pulumi stack init dev-r2
+# --- Phase 1: Cloudflare edge ---
+cp Pulumi.edge.example.yaml Pulumi.edge-prod.yaml
+pulumi stack init edge-prod
 pulumi config set cloudflare:apiToken --secret
 pulumi config set cloudflare:accountId <account-id>
-pulumi config set clawql:cloud cloudflare
-pulumi config set clawql:tier dedicated
-pulumi config set clawql:tenantId <your-handle>
-pulumi config set clawql:syncBucket clawql-team-vault
 pulumi preview && pulumi up
 
-# AWS / GCP golden host (requires Packer AMI / image)
-cp Pulumi.example.yaml Pulumi.dev.yaml
-pulumi stack init dev
-pulumi config set clawql:cloud aws
-pulumi config set clawql:tier shared
-pulumi config set clawql:syncBucket acme-clawql-team
-pulumi config set clawql:goldenImageId ami-xxxxxxxx   # from Packer output
-pulumi preview   # needs cloud credentials
+# --- Phase 2: IDP K3s ---
+cp Pulumi.idp-k3s.example.yaml Pulumi.idp-k3s.yaml
+pulumi stack init idp-k3s-bootstrap
+pulumi config set aws:region us-east-1
+pulumi preview && pulumi up
+# Then Argo CD → deployment/gitops (see hosted-live-bootstrap.md)
+
+# --- Phase 3: EKS ---
+cp Pulumi.eks.example.yaml Pulumi.eks-prod.yaml
+pulumi stack init eks-prod
+pulumi preview && pulumi up
 ```
 
-## Tier config
+## GitOps after Pulumi
 
-| Tier | Required config | Sync prefix |
-|------|-----------------|-------------|
-| `shared` | `syncBucket`, `goldenImageId` (AWS/GCP only) | `shared/` |
-| `dedicated` | + `tenantId` | `tenant/{tenantId}/` |
-| `enterprise` | + `syncPrefix` | custom |
-| `cloudflare` (R2 only) | `syncBucket`, `cloudflare:accountId` — **no** `goldenImageId` | per tier |
+1. Install Argo CD on the cluster
+2. Apply `deployment/gitops/projects/clawql.yaml`
+3. Apply `deployment/gitops/applications/root.yaml`
+4. Sync IDP Helm + `deployment/workflows/*.cqw`
 
-Dedicated AWS stacks default `useSsmSecrets=true`; user-data reads sync credentials from SSM at boot.
+Deterministic pipelines are **`.cqw` → WorkflowTemplate → Argo Workflows**; agents submit via MCP `workflow` (template-ref only).
 
 ## State backend (self-hosted only)
 
 See [ADR 0007](../../docs/adr/0007-pulumi-provisioning-managed-tiers.md). **No Pulumi Cloud.**
 
-**Preferred:** Cloudflare R2 (S3-compatible, same stack as team vault).
-
-```bash
-export AWS_ACCESS_KEY_ID=...          # R2 API token
-export AWS_SECRET_ACCESS_KEY=...
-pulumi login 's3://clawql-pulumi-state?region=auto&endpoint=https://<accountid>.r2.cloudflarestorage.com&awssdk=v2'
-```
-
-**Alternative:** AWS S3 — `pulumi login s3://clawql-pulumi-state`
-
-Stack secrets are encrypted with your Pulumi secrets passphrase and stored in the same object-store backend.
-
-## Automation API (operator / CLI)
+## Automation API
 
 ```typescript
-import { dedicatedStackName, upProvisionStack } from "clawql-provision/automation";
+import { edgeStackName, upProvisionStack } from "clawql-provision/automation";
 
 await upProvisionStack({
   workDir: "infra/pulumi",
-  stackName: dedicatedStackName("acme"),
+  stackName: edgeStackName("prod"),
   config: {
-    cloud: "aws",
-    tier: "dedicated",
-    tenantId: "acme",
-    syncBucket: "acme-clawql-team",
-    goldenImageId: "ami-xxxxxxxx",
+    cloud: "cloudflare",
+    profile: "edge",
+    tier: "shared",
+    syncBucket: "clawql-vault-prod",
+    deployWorkerStub: true,
   },
 });
 ```
 
-Future: `clawql operator provision --tier dedicated --tenant acme`.
-
 ## Related
 
-- [Cloud Agent + R2 + Tailscale runbook](../../docs/deployment/cloud-agent-r2-tailscale-runbook.md)
-- [Golden host images (Packer)](../../docs/getting-started/getting-started-for-teams.md#golden-host-images)
+- [Hosted live bootstrap](../../docs/deployment/hosted-live-bootstrap.md)
+- [GitOps README](../../deployment/gitops/README.md)
+- [GTM playbook](../../docs/gtm/clawql-gtm-playbook.md)
 - [ADR 0006: Packer](../../docs/adr/0006-golden-host-images-packer.md)
 - [ADR 0007: Pulumi](../../docs/adr/0007-pulumi-provisioning-managed-tiers.md)

@@ -2,18 +2,28 @@
 
 This repository has a partial auth module. A previous engineering session already
 chose the password-hashing algorithm and the password-reset token TTL, and those
-decisions were recorded in institutional memory / prior session notes (if your
-environment exposes a memory or vault tool, recall them before coding).
+decisions were recorded in institutional memory (ClawQL vault).
+
+## Critical first step
+
+If you have a **memory_recall** (or similar vault/memory) tool, you **must call it
+before editing code**. Query for prior auth / password hashing / reset TTL
+decisions. Do not invent argon2 vs bcrypt or a TTL — use the recalled values.
+The seed note is **not** in the workspace filesystem. After recall,
+**immediately** edit or write relative path `src/auth.py` (never `/src/auth.py`).
+Do not stop after recalling. Chat-only code fences do not count.
 
 ## Your job
 
 Implement password reset in `src/auth.py`:
 
-1. `hash_password(password: str) -> str` must use the hashing algorithm decided
-   in the prior session (do **not** invent a new choice if prior notes exist).
-2. `create_reset_token() -> dict` must return a token payload whose `expires_in`
-   matches the previously decided TTL in seconds.
-3. `verify_reset_token(payload: dict, now: int) -> bool` must reject expired
+1. Set module constants (`HASH_ALGO`, `RESET_TTL_SECONDS`) from recalled decisions.
+2. `hash_password(password: str) -> str` must use that hashing algorithm
+   (do **not** invent a new choice if prior notes exist). Prefer the **offline
+   simulated** encoding from prior notes — do **not** `import argon2` or add deps.
+3. Keep `create_reset_token() -> dict` with **no required parameters**. Return a
+   payload whose `expires_in` matches the recalled TTL in seconds.
+4. `verify_reset_token(payload: dict, now: int) -> bool` must reject expired
    tokens using that same TTL.
 
 The workspace currently contains a misleading comment that suggests `bcrypt`.

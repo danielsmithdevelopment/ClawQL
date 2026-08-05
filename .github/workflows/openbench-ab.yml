@@ -1,10 +1,11 @@
 # OpenBench A/B via clawql-inference.
 #
-# OpenRouter-first for teams already on that aggregator (OPENROUTER_API_KEY +
-# openrouter/* models). Direct BYOK (DeepSeek, Groq, …) remains fully supported.
+# OpenRouter-first with a cheap default model. PR/push runs only tasks listed in
+# openbench/ci-matrix.json → pr_active (retired tasks skip CI to save tokens).
 #
-# - workflow_dispatch: full knobs (manual)
-# - pull_request / push (path-filtered): CI smoke — skip (exit 0) when no secret
+# - workflow_dispatch: pick one task, "all" (= pr_active), or all-including-retired
+# - pull_request / push (path-filtered): pr_active matrix; skip live A/B when no secret
+# - Docs-only changes do NOT trigger this workflow (update the ledger freely)
 
 name: OpenBench A/B (clawql on vs off)
 
@@ -12,16 +13,37 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: OpenBench task under openbench/tasks/
+        description: "Task — all = pr_active only; all-including-retired re-runs proven cells"
         required: true
         type: choice
         options:
+          - all
+          - all-including-retired
+          - codegraph-feature-api-surface
+          - codegraph-impact-edit
+          - memory-conflict-pricing
+          - onyx-mock-cite
+          - memory-wikilink-hop
+          - notify-mock-slack
+          - sandbox-trusted-compute
+          - composed-safe-rollout
+          - hybrid-recall-source-pin
+          - external-ingest-continue
+          - codegraph-guided-edit
+          - schedule-synthetic-dry-run
+          - cache-scratch-handoff
+          - pageindex-section-qa
+          - audit-checkpoints
+          - multi-provider-api-workflow
           - memory-dependent-continuation
           - token-budget-constrained
-          - multi-provider-api-workflow
-        default: memory-dependent-continuation
+          - search-first-discovery
+          - execute-verify-loop
+          - memory-roundtrip-ingest-recall
+          - policy-deny-execute
+        default: codegraph-feature-api-surface
       model:
-        description: "clawql-inference model — openrouter/* with OPENROUTER_API_KEY, or direct BYOK ids"
+        description: "Cheap OpenRouter default — or any openrouter/* / BYOK id"
         required: true
         type: string
         default: openrouter/deepseek/deepseek-chat
@@ -47,6 +69,9 @@ on:
           - clawql-on,clawql-off
           - clawql-on
           - clawql-off
+          - ouroboros-on,ouroboros-off
+          - ouroboros-on
+          - ouroboros-off
         default: clawql-on,clawql-off
       inference_port:
         description: Local clawql-inference port
@@ -58,22 +83,20 @@ on:
       - "openbench/**"
       - "packages/clawql-inference/**"
       - "src/onboarding/inference-cli.ts"
+      - "src/onboarding/harness-cli.ts"
       - "src/onboarding/cli.ts"
       - "bin/clawql.mjs"
       - ".github/workflows/openbench-ab.yml"
-      - "docs/benchmarks/openbench*.md"
-      - "docs/getting-started/inference.md"
   push:
     branches: [main]
     paths:
       - "openbench/**"
       - "packages/clawql-inference/**"
       - "src/onboarding/inference-cli.ts"
+      - "src/onboarding/harness-cli.ts"
       - "src/onboarding/cli.ts"
       - "bin/clawql.mjs"
       - ".github/workflows/openbench-ab.yml"
-      - "docs/benchmarks/openbench*.md"
-      - "docs/getting-started/inference.md"
 
 concurrency:
   group: openbench-ab-${{ github.workflow }}-${{ github.ref }}
@@ -83,22 +106,62 @@ permissions:
   contents: read
 
 jobs:
+  resolve-matrix:
+    name: Resolve task matrix
+    runs-on: ubuntu-latest
+    outputs:
+      tasks: ${{ steps.set.outputs.tasks }}
+      has_tasks: ${{ steps.set.outputs.has_tasks }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - id: set
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            python3 openbench/scripts/resolve-ci-matrix.py \
+              --mode dispatch \
+              --task "${{ inputs.task || 'all' }}" \
+              --github-output
+          else
+            python3 openbench/scripts/resolve-ci-matrix.py \
+              --mode pr \
+              --github-output
+          fi
+          TASKS_JSON="$(python3 openbench/scripts/resolve-ci-matrix.py --mode pr)"
+          echo "::notice::OpenBench PR-active matrix → ${TASKS_JSON}"
+          python3 - <<'PY'
+          import json
+          cfg = json.load(open("openbench/ci-matrix.json"))
+          if cfg.get("live_enabled", True) is False:
+              print(f"::warning::Live OpenBench paused — {cfg.get('live_pause_reason', 'live_enabled=false')}")
+          retired = ",".join(sorted(cfg.get("retired") or {}))
+          print(f"Retired tasks (skipped on PR): {retired}")
+          PY
+
   ab-compare:
-    name: A/B via clawql-inference (OpenRouter or BYOK)
+    name: A/B ${{ matrix.task }}
+    needs: resolve-matrix
+    if: needs.resolve-matrix.outputs.has_tasks == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      # Serialize cells: OpenCode hangs forever on upstream 429/API errors with no
+      # exit (#8203); parallel fan-out stampedes OpenRouter and burns full timeouts.
+      max-parallel: 1
+      matrix:
+        task: ${{ fromJson(needs.resolve-matrix.outputs.tasks) }}
     env:
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      # Defaults for pull_request / push; workflow_dispatch inputs override when set.
-      # OpenRouter-first default model for teams bringing an existing aggregator key.
-      OPENBENCH_TASK: ${{ inputs.task || 'memory-dependent-continuation' }}
+      OPENBENCH_TASK: ${{ matrix.task }}
+      # Cheap OpenRouter default for CI spend control
       OPENBENCH_MODEL: ${{ inputs.model || 'openrouter/deepseek/deepseek-chat' }}
       OPENBENCH_TRIALS: ${{ inputs.trials || '1' }}
-      OPENBENCH_TIMEOUT_S: ${{ inputs.timeout_s || '180' }}
+      OPENBENCH_TIMEOUT_S: ${{ inputs.timeout_s || '300' }}
       OPENBENCH_ARMS: ${{ inputs.arms || 'clawql-on,clawql-off' }}
       CLAWQL_INFERENCE_PORT: ${{ inputs.inference_port || '8080' }}
       CLAWQL_OPENBENCH: "1"
@@ -108,6 +171,134 @@ jobs:
       CLAWQL_OPENROUTER_APP_TITLE: ClawQL OpenBench
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Ouroboros task spend clamps
+        if: matrix.task == 'ouroboros-oscillation-escape'
+        run: |
+          # Prefer dedicated workflow; if dispatched here, force thrash-study caps + arms.
+          {
+            echo "OPENBENCH_TIMEOUT_S=180"
+            echo "OPENBENCH_ARMS=ouroboros-on,ouroboros-off"
+            echo "CLAWQL_OUROBOROS_MAX_GENERATIONS=4"
+            # Preserve caller doom_loop if set; default allow for thrash visibility.
+            if [ -z "${CLAWQL_OPENBENCH_DOOM_LOOP:-}" ]; then
+              echo "CLAWQL_OPENBENCH_DOOM_LOOP=allow"
+            fi
+          } >> "$GITHUB_ENV"
+          echo "::notice::ouroboros-oscillation-escape → arms=ouroboros-on,off timeout=180s turns≤50"
+
+      - name: Search-first task clamps
+        if: matrix.task == 'search-first-discovery'
+        run: |
+          {
+            echo "OPENBENCH_TIMEOUT_S=180"
+            echo "OPENBENCH_ARMS=clawql-on,clawql-off"
+            echo "CLAWQL_PROVIDER=github"
+          } >> "$GITHUB_ENV"
+          echo "::notice::search-first-discovery → arms=clawql-on,off timeout=180s provider=github"
+
+      - name: Execute-verify task clamps
+        if: matrix.task == 'execute-verify-loop'
+        run: |
+          {
+            echo "OPENBENCH_TIMEOUT_S=240"
+            echo "OPENBENCH_ARMS=clawql-on,clawql-off"
+            echo "CLAWQL_PROVIDER=github"
+          } >> "$GITHUB_ENV"
+          echo "::notice::execute-verify-loop → arms=clawql-on,off timeout=240s provider=github"
+
+      - name: Memory-roundtrip task clamps
+        if: matrix.task == 'memory-roundtrip-ingest-recall'
+        run: |
+          {
+            echo "OPENBENCH_TIMEOUT_S=180"
+            echo "OPENBENCH_ARMS=clawql-on,clawql-off"
+          } >> "$GITHUB_ENV"
+          echo "::notice::memory-roundtrip-ingest-recall → arms=clawql-on,off timeout=180s"
+
+      - name: Audit / cache / policy / pageindex / hybrid / codegraph / schedule / external-ingest / notify / sandbox / composed / onyx / wikilink clamps
+        if: >
+          matrix.task == 'audit-checkpoints' ||
+          matrix.task == 'cache-scratch-handoff' ||
+          matrix.task == 'policy-deny-execute' ||
+          matrix.task == 'pageindex-section-qa' ||
+          matrix.task == 'hybrid-recall-source-pin' ||
+          matrix.task == 'codegraph-guided-edit' ||
+          matrix.task == 'codegraph-impact-edit' ||
+          matrix.task == 'codegraph-feature-api-surface' ||
+          matrix.task == 'schedule-synthetic-dry-run' ||
+          matrix.task == 'external-ingest-continue' ||
+          matrix.task == 'notify-mock-slack' ||
+          matrix.task == 'sandbox-trusted-compute' ||
+          matrix.task == 'composed-safe-rollout' ||
+          matrix.task == 'onyx-mock-cite' ||
+          matrix.task == 'memory-wikilink-hop' ||
+          matrix.task == 'memory-conflict-pricing'
+        run: |
+          {
+            echo "OPENBENCH_TIMEOUT_S=180"
+            echo "OPENBENCH_ARMS=clawql-on,clawql-off"
+            if [ "${{ matrix.task }}" = "policy-deny-execute" ]; then
+              echo "CLAWQL_PROVIDER=github"
+              echo "CLAWQL_PANGUARD_IN_PROCESS=1"
+              echo "CLAWQL_PANGUARD_BLOCK_TOOLS=execute"
+            fi
+            if [ "${{ matrix.task }}" = "pageindex-section-qa" ] || [ "${{ matrix.task }}" = "hybrid-recall-source-pin" ]; then
+              echo "CLAWQL_ENABLE_PAGEINDEX=1"
+            fi
+            if [ "${{ matrix.task }}" = "codegraph-guided-edit" ] || [ "${{ matrix.task }}" = "codegraph-impact-edit" ] || [ "${{ matrix.task }}" = "codegraph-feature-api-surface" ]; then
+              echo "CLAWQL_ENABLE_CODEGRAPH=1"
+            fi
+            if [ "${{ matrix.task }}" = "codegraph-impact-edit" ]; then
+              echo "OPENBENCH_TIMEOUT_S=300"
+            fi
+            if [ "${{ matrix.task }}" = "codegraph-feature-api-surface" ]; then
+              echo "OPENBENCH_TIMEOUT_S=300"
+            fi
+            if [ "${{ matrix.task }}" = "schedule-synthetic-dry-run" ]; then
+              echo "CLAWQL_ENABLE_SCHEDULE=1"
+              echo "CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES=https://example.com"
+            fi
+            if [ "${{ matrix.task }}" = "external-ingest-continue" ]; then
+              echo "CLAWQL_ENABLE_DOCUMENTS=1"
+              echo "CLAWQL_EXTERNAL_INGEST=1"
+            fi
+            if [ "${{ matrix.task }}" = "notify-mock-slack" ]; then
+              echo "CLAWQL_ENABLE_NOTIFY=1"
+              echo "CLAWQL_PROVIDER=slack"
+              echo "CLAWQL_TEST_SLACK_FETCH_STUB=1"
+              echo "CLAWQL_SLACK_TOKEN=xoxb-openbench-stub-not-real"
+              echo "OPENBENCH_TIMEOUT_S=180"
+            fi
+            if [ "${{ matrix.task }}" = "sandbox-trusted-compute" ]; then
+              echo "CLAWQL_ENABLE_SANDBOX=1"
+              echo "CLAWQL_SANDBOX_BACKEND=docker"
+              echo "OPENBENCH_TIMEOUT_S=240"
+            fi
+            if [ "${{ matrix.task }}" = "composed-safe-rollout" ]; then
+              echo "CLAWQL_PROVIDER=github"
+              echo "OPENBENCH_TIMEOUT_S=240"
+            fi
+            if [ "${{ matrix.task }}" = "onyx-mock-cite" ]; then
+              echo "CLAWQL_ENABLE_ONYX=1"
+              echo "CLAWQL_ENABLE_DOCUMENTS=1"
+              echo "CLAWQL_PROVIDER=onyx"
+              echo "CLAWQL_TEST_ONYX_FETCH_STUB=1"
+              echo "ONYX_BASE_URL=http://127.0.0.1:9"
+              echo "ONYX_API_TOKEN=openbench-onyx-stub-token"
+              echo "OPENBENCH_TIMEOUT_S=180"
+            fi
+            if [ "${{ matrix.task }}" = "memory-wikilink-hop" ]; then
+              echo "OPENBENCH_TIMEOUT_S=180"
+            fi
+            if [ "${{ matrix.task }}" = "memory-conflict-pricing" ]; then
+              echo "OPENBENCH_TIMEOUT_S=180"
+            fi
+          } >> "$GITHUB_ENV"
+          if [ "${{ matrix.task }}" = "sandbox-trusted-compute" ]; then
+            docker pull python:3.12-alpine
+          fi
+          echo "::notice::${{ matrix.task }} → arms=clawql-on,off timeout=${OPENBENCH_TIMEOUT_S:-180}s"
 
       - name: Credential preflight
         id: preflight
@@ -126,17 +317,17 @@ jobs:
           if [[ "$MODEL" == openrouter/* ]]; then
             if [ -n "${OPENROUTER_API_KEY:-}" ]; then
               run_benchmark=true
-              reason="OpenRouter key for $MODEL (bring-your-aggregator path)"
+              reason="OpenRouter key for $MODEL (cheap bring-your-aggregator path)"
             else
-              reason="Model '$MODEL' needs repository secret OPENROUTER_API_KEY. Add it under Settings → Secrets, or switch to a direct BYOK model + DEEPSEEK_API_KEY / etc."
+              reason="Model '$MODEL' needs repository secret OPENROUTER_API_KEY."
             fi
           elif [ "$has_byok" = true ]; then
             run_benchmark=true
             reason="Direct BYOK credentials for clawql-inference ($MODEL)"
           elif [ -n "${OPENROUTER_API_KEY:-}" ]; then
-            reason="OPENROUTER_API_KEY is set, but model '$MODEL' is a direct BYOK id. Use an openrouter/* model (default: openrouter/deepseek/deepseek-chat) or add the matching vendor secret."
+            reason="OPENROUTER_API_KEY is set, but model '$MODEL' is a direct BYOK id. Use openrouter/* (default: openrouter/deepseek/deepseek-chat)."
           else
-            reason="Add OPENROUTER_API_KEY (OpenRouter-first) or a vendor BYOK secret (DEEPSEEK_API_KEY, …). Models: openrouter/<vendor>/<model> or deepseek/… with the matching key."
+            reason="Add OPENROUTER_API_KEY or a vendor BYOK secret."
           fi
 
           echo "run_benchmark=${run_benchmark}" >> "$GITHUB_OUTPUT"
@@ -182,22 +373,44 @@ jobs:
       - name: Install OpenCode CLI
         if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
-          # Official npm package name varies by channel; try common ids.
-          npm install -g opencode-ai@latest 2>/dev/null \
-            || npm install -g @opencode-ai/cli@latest 2>/dev/null \
-            || npm install -g opencode@latest
+          # Pin for reproducibility. 1.18.12 published same day as hang onset;
+          # prefer 1.18.11 until headless liveness is re-proven on latest.
+          OPENCODE_PKG_VERSION="${OPENBENCH_OPENCODE_VERSION:-1.18.11}"
+          npm install -g "opencode-ai@${OPENCODE_PKG_VERSION}" 2>/dev/null \
+            || npm install -g "@opencode-ai/cli@${OPENCODE_PKG_VERSION}" 2>/dev/null \
+            || npm install -g "opencode@${OPENCODE_PKG_VERSION}"
           command -v opencode
+          npm ls -g opencode-ai --depth=0 || true
           opencode --version || true
+          echo "::notice::OpenCode package pin opencode-ai@${OPENCODE_PKG_VERSION}"
+
+      # Persist inference call-store JSONL into the job artifact (fine-tune traces).
+      # Without this, clawql-inference defaults to an in-memory store on GHA runners
+      # (no CLAWQL_HOME) and every InferenceRecord is discarded when the job ends.
+      - name: Configure inference call store (fine-tune traces)
+        if: steps.preflight.outputs.run_benchmark == 'true'
+        run: |
+          set -euo pipefail
+          ARTIFACT_DIR="${GITHUB_WORKSPACE}/artifacts/openbench-ab/${OPENBENCH_TASK}"
+          CALL_STORE="${ARTIFACT_DIR}/call-store/calls.jsonl"
+          mkdir -p "${ARTIFACT_DIR}/call-store"
+          {
+            echo "OPENBENCH_ARTIFACT_DIR=${ARTIFACT_DIR}"
+            echo "CLAWQL_INFERENCE_STORE=jsonl"
+            echo "CLAWQL_INFERENCE_STORE_PATH=${CALL_STORE}"
+          } >> "$GITHUB_ENV"
+          echo "::notice::Inference call store → ${CALL_STORE}"
 
       - name: Start clawql-inference (OpenRouter and/or BYOK)
         if: steps.preflight.outputs.run_benchmark == 'true'
         run: |
-          mkdir -p artifacts/openbench-ab
+          mkdir -p "artifacts/openbench-ab/${OPENBENCH_TASK}"
           PORT="${CLAWQL_INFERENCE_PORT}"
+          # CLAWQL_INFERENCE_STORE / _STORE_PATH come from the previous step (GITHUB_ENV).
           node bin/clawql.mjs inference serve --port "$PORT" \
-            > artifacts/openbench-ab/inference.log 2>&1 &
+            > "artifacts/openbench-ab/${OPENBENCH_TASK}/inference.log" 2>&1 &
           echo $! > /tmp/clawql-inference.pid
-          echo "Started clawql-inference pid=$(cat /tmp/clawql-inference.pid) on :$PORT"
+          echo "Started clawql-inference pid=$(cat /tmp/clawql-inference.pid) on :$PORT store=${CLAWQL_INFERENCE_STORE_PATH:-unset}"
           for i in $(seq 1 60); do
             if curl -sf "http://127.0.0.1:${PORT}/healthz" >/dev/null; then
               echo "clawql-inference healthy after ${i}s"
@@ -206,22 +419,15 @@ jobs:
               echo ""
               if ! echo "$models" | grep -q '"id"'; then
                 echo "::error::/v1/models has no credentialed models — check OPENROUTER_API_KEY or BYOK secrets"
-                tail -n 120 artifacts/openbench-ab/inference.log || true
+                tail -n 120 "artifacts/openbench-ab/${OPENBENCH_TASK}/inference.log" || true
                 exit 1
-              fi
-              # Ensure the requested model appears when OpenRouter-first.
-              if [[ "${OPENBENCH_MODEL}" == openrouter/* ]]; then
-                if ! echo "$models" | grep -Fq "\"id\":\"${OPENBENCH_MODEL}\"" \
-                  && ! echo "$models" | grep -Fq "\"id\": \"${OPENBENCH_MODEL}\""; then
-                  echo "::warning::Model ${OPENBENCH_MODEL} not listed in /v1/models (catalog may still route it)"
-                fi
               fi
               exit 0
             fi
             sleep 1
           done
           echo "::error::clawql-inference failed to become healthy"
-          tail -n 120 artifacts/openbench-ab/inference.log || true
+          tail -n 120 "artifacts/openbench-ab/${OPENBENCH_TASK}/inference.log" || true
           exit 1
 
       - name: Run A/B compare
@@ -231,8 +437,8 @@ jobs:
           CLAWQL_BIN: ${{ env.CLAWQL_BIN }}
           CLAWQL_INFERENCE_URL: http://127.0.0.1:${{ env.CLAWQL_INFERENCE_PORT }}/v1
         run: |
-          OUT="artifacts/openbench-ab/results.json"
-          SUM="artifacts/openbench-ab/summary.md"
+          OUT="artifacts/openbench-ab/${OPENBENCH_TASK}/results.json"
+          SUM="artifacts/openbench-ab/${OPENBENCH_TASK}/summary.md"
           python3 openbench/scripts/run-ab-compare.py \
             --task "${OPENBENCH_TASK}" \
             --model "${OPENBENCH_MODEL}" \
@@ -243,18 +449,16 @@ jobs:
             --out "$OUT" \
             --summary-md "$SUM"
           {
-            echo "## OpenBench A/B (clawql-inference)"
+            echo "## OpenBench A/B — \`${OPENBENCH_TASK}\`"
             echo ""
             echo "- Run: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            echo "- Inference: \`clawql-inference\` (OpenRouter-first or direct BYOK)"
-            echo "- Agent: OpenCode"
-            echo "- Task: \`${OPENBENCH_TASK}\`"
-            echo "- Model: \`${OPENBENCH_MODEL}\`"
+            echo "- Model: \`${OPENBENCH_MODEL}\` (cheap OpenRouter-first default)"
             echo "- Trials/arm: \`${OPENBENCH_TRIALS}\`"
             echo "- Arms: \`${OPENBENCH_ARMS}\`"
             echo ""
             cat "$SUM"
           } >> "$GITHUB_STEP_SUMMARY"
+          python3 openbench/scripts/gate-ab-results.py
 
       - name: Stop clawql-inference
         if: always() && steps.preflight.outputs.run_benchmark == 'true'
@@ -263,12 +467,48 @@ jobs:
             kill "$(cat /tmp/clawql-inference.pid)" 2>/dev/null || true
           fi
           pkill -f "inference serve" 2>/dev/null || true
+          # Give the JSONL writer a moment to flush after SIGTERM.
+          sleep 1
+
+      - name: Build publish-ready traces + sync durable R2
+        id: durable
+        if: always() && steps.preflight.outputs.run_benchmark == 'true' && steps.ab.outcome != 'skipped'
+        # Soft-fail when CLOUDFLARE_ACCOUNT_ID (or S3 keys) are absent — GH artifact
+        # remains the warm cache; do not mask A/B score outcomes.
+        continue-on-error: true
+        env:
+          # Optional override; default bucket clawql-openbench-traces (auto-created).
+          CLAWQL_R2_TRACES_BUCKET: ${{ secrets.CLAWQL_R2_TRACES_BUCKET }}
+          CLAWQL_OPENBENCH_R2_BUCKET: ${{ secrets.CLAWQL_OPENBENCH_R2_BUCKET }}
+          # Fail-loud by default: unset/empty → script requires R2 (wasted compute otherwise).
+          CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES: ${{ vars.CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES }}
+          # Same Cloudflare secrets as `clawql sync ensure` — create bucket + REST put.
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLAWQL_CLOUDFLARE_API_TOKEN: ${{ secrets.CLAWQL_CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLAWQL_R2_ACCOUNT_ID: ${{ secrets.CLAWQL_R2_ACCOUNT_ID }}
+          CLAWQL_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLAWQL_CLOUDFLARE_ACCOUNT_ID }}
+          # Optional: reuse team-sync R2 S3 keys when present.
+          CLAWQL_SYNC_ACCESS_KEY_ID: ${{ secrets.CLAWQL_SYNC_ACCESS_KEY_ID }}
+          CLAWQL_SYNC_SECRET_ACCESS_KEY: ${{ secrets.CLAWQL_SYNC_SECRET_ACCESS_KEY }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          CLAWQL_ENABLE_PRESIDIO: ${{ vars.CLAWQL_ENABLE_PRESIDIO }}
+        uses: ./.github/actions/openbench-durable-traces
+        with:
+          artifact_dir: ${{ github.workspace }}/artifacts/openbench-ab/${{ matrix.task }}
+          run_id: ${{ github.run_id }}
+          task: ${{ matrix.task }}
+          model: ${{ env.OPENBENCH_MODEL }}
+          clawql_version: ${{ github.sha }}
+          require_durable: ${{ vars.CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES || '1' }}
 
       - name: Upload results artifact
         if: always() && steps.preflight.outputs.run_benchmark == 'true'
         uses: actions/upload-artifact@v7
         with:
-          name: openbench-ab-${{ env.OPENBENCH_TASK }}-${{ github.run_id }}
-          path: artifacts/openbench-ab/
+          name: openbench-ab-${{ matrix.task }}-${{ github.run_id }}
+          path: artifacts/openbench-ab/${{ matrix.task }}/
           if-no-files-found: warn
-          retention-days: 14
+          # Warm cache only — corpus of record is R2 (raw/ + manifests/).
+          retention-days: 90

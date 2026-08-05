@@ -18,6 +18,21 @@ export interface InferenceProviderAdapter {
     messages: ChatMessage[],
     options?: InferenceCompleteOptions
   ): AsyncIterable<string>;
+  /**
+   * Raw OpenAI-compatible chat completion passthrough (preserves tools / tool_calls).
+   * Used when the client sends tool schemas that the text-only gateway path strips.
+   */
+  proxyChatCompletion?(
+    upstreamModel: string,
+    body: Record<string, unknown>,
+    options?: { signal?: AbortSignal }
+  ): Promise<Record<string, unknown>>;
+  /** Raw upstream SSE body for streaming tool calling. */
+  proxyChatCompletionStream?(
+    upstreamModel: string,
+    body: Record<string, unknown>,
+    options?: { signal?: AbortSignal }
+  ): Promise<ReadableStream<Uint8Array>>;
 }
 
 export type InferenceCompleteOptions = {

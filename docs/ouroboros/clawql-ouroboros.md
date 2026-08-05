@@ -233,6 +233,7 @@ stop();
 
 ## See also
 
+- **[OpenBench value evidence](../benchmarks/ouroboros-value-evidence.md)** — verified A/B: Ouroboros on converges vs off strategy thrash under hard spend caps ([run 30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642)).
 - **[Upstream Q00 sync roadmap](./upstream-q00-sync-roadmap.md)** — what to port from [Q00/ouroboros](https://github.com/Q00/ouroboros) v0.50.3+ (PAL Router upstream, drift measurement, model tier escalation + agent coordination sequencing) and linked GitHub tickets.
 - **[`docs/adr/0001-ouroboros-workflow-engine.md`](../adr/0001-ouroboros-workflow-engine.md)** — architecture decision record for in-process routing, seed contract, and persistence model ([#110](https://github.com/danielsmithdevelopment/ClawQL/issues/110)).
 - **[`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md)** — ClawQL MCP tools, including optional **`ouroboros_*`** wiring.

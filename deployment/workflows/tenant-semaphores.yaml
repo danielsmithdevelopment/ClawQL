@@ -1,0 +1,15 @@
+# Per-tenant Argo Workflow semaphores (fair concurrency)
+# Referenced by idp-document-pipeline.cqw synchronization.semaphore
+# Keys = tenant_id; values = max concurrent workflow steps for that tenant
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clawql-tenant-semaphores
+  namespace: argo
+  labels:
+    clawql.dev/managed: "true"
+data:
+  # Default bootstrap tenants — raise per Shared/Dedicated contract
+  internal-dev: "2"
+  alpha: "2"
+  # shared-tenant-example: "2"

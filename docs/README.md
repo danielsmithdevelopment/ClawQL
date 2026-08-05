@@ -19,6 +19,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - **ClawQL Modularization v2.1** (package boundaries companion; public hub is Architecture): [`vision/clawql-modularization-v2.md`](vision/clawql-modularization-v2.md) — redirects to [`/architecture`](https://docs.clawql.com/architecture)
 - **ClawQL IDP Platform** (July 2026 — eight-vendor pipeline, umbrella Helm, observability, OpenClaw runbooks): [`vision/clawql-idp-platform.md`](vision/clawql-idp-platform.md) — [`/vision/idp-platform`](https://docs.clawql.com/vision/idp-platform)
 - **ClawQL IDP GTM** (standalone IDP motion — market, positioning, landing brief, sales tables): [`vision/clawql-idp-gtm.md`](vision/clawql-idp-gtm.md) — [`clawql.com/idp/gtm`](https://clawql.com/idp/gtm)
+- **ClawQL GTM playbook** (zero → shared tenancy — Cloudflare→AWS hybrid, phases, unit economics, GPU staging, risk register): [`gtm/clawql-gtm-playbook.md`](gtm/clawql-gtm-playbook.md)
 - **Immutable releases — hybrid decentralized GitHub alternative** (Layer 0: `clawql-release`, Arweave, Radicle, Rift, release manifest): [`vision/clawql-hybrid-decentralized-github-alternative.md`](vision/clawql-hybrid-decentralized-github-alternative.md) — [`/vision/immutable-releases`](https://docs.clawql.com/vision/immutable-releases)
 
 ## Contributing
@@ -77,6 +78,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - **IDP observability bundle** (Grafana + trace/metrics guide, #252): [`observability/README.md`](observability/README.md)
 - **Slack-first IDP runbook** (OpenClaw, #256): [`openclaw/slack-first-idp-runbook.md`](openclaw/slack-first-idp-runbook.md)
 - **Agent PR → Argo CD pipeline** (GitOps contract, #258): [`gitops/agent-pr-argocd-pipeline.md`](gitops/agent-pr-argocd-pipeline.md)
+- **Hosted live bootstrap** (Pulumi profiles + Argo CD + `.cqw`): [`deployment/hosted-live-bootstrap.md`](deployment/hosted-live-bootstrap.md) · [`infra/pulumi`](../infra/pulumi/) · [`deployment/gitops`](../deployment/gitops/) · [`deployment/workflows`](../deployment/workflows/)
 - **Docling onboarding** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)): [`providers/docling-onboarding.md`](providers/docling-onboarding.md)
 - **pdf-inspector onboarding** (Firecrawl local PDF route): [`providers/pdf-inspector-onboarding.md`](providers/pdf-inspector-onboarding.md)
 - **LangExtract onboarding** ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)): [`providers/langextract-onboarding.md`](providers/langextract-onboarding.md)
@@ -133,7 +135,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - Security references: `security/` — reference [`security/clawql-security-defense-in-depth.md`](security/clawql-security-defense-in-depth.md) and engineering matrix [`security/clawql-security-defense-deliverables.md`](security/clawql-security-defense-deliverables.md) ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164))
 - Roadmaps: `roadmap/` — prioritized gap closure: [`roadmap/gap-closure-plan-prioritized-2026.md`](roadmap/gap-closure-plan-prioritized-2026.md) ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)–[#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)); **IDP master requirements matrix**: [`roadmap/idp-master-requirements-matrix.md`](roadmap/idp-master-requirements-matrix.md); **epic checklist** [#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)–[#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258) → [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259)
 - Integrations: `integrations/` — MCP chokepoint / Panguard + Helm **`mcpProxy`**: [`integrations/panguard-kubernetes.md`](integrations/panguard-kubernetes.md), [`integrations/panguard-http-grpc-bridge.md`](integrations/panguard-http-grpc-bridge.md); JWT ATR binding: [`security/mcp-proxy-jwt-atr.md`](security/mcp-proxy-jwt-atr.md) ([#272](https://github.com/danielsmithdevelopment/ClawQL/issues/272))
-- GTM: [`gtm/pragmaticvectors/`](gtm/pragmaticvectors/) (PV essay drafts); **MCP OpenAPI on-ramp positioning:** [`gtm/mcp-api-adapter-positioning.md`](gtm/mcp-api-adapter-positioning.md)
+- GTM: [`gtm/clawql-gtm-playbook.md`](gtm/clawql-gtm-playbook.md) (bootstrap playbook); [`gtm/pragmaticvectors/`](gtm/pragmaticvectors/) (PV essay drafts); **MCP OpenAPI on-ramp positioning:** [`gtm/mcp-api-adapter-positioning.md`](gtm/mcp-api-adapter-positioning.md)
 - Backlog notes: `backlog/` (active); satisfied test mirrors: [`backlog/archive/`](backlog/archive/)
 - Workflows: `workflows/`
 - Website operations notes: `website/`

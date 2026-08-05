@@ -1,0 +1,9 @@
+{
+  "conflict": true,
+  "values": [
+    {"price": 42, "asOf": "2026-01-15"},
+    {"price": 55, "asOf": "2026-06-01"}
+  ],
+  "chosen": null,
+  "source": "memory_recall"
+}

@@ -1,5 +1,5 @@
 name: clawql-provision
-description: Provision ClawQL golden hosts and team vault infrastructure (AWS / GCP / Cloudflare)
+description: Provision ClawQL hosted infra — Cloudflare edge, IDP K3s, EKS/Karpenter, golden hosts (AWS/GCP)
 runtime:
   name: nodejs
   options:

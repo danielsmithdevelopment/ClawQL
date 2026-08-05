@@ -41,6 +41,8 @@ Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** /
 | `/specs/cq-extensions` (+ `/cqe` `/cqm` `/cqk` `/cqw`) | `docs/specs/cq-extensions/*` | `scripts/sync-cq-extensions-docs.mjs` |
 | `/architecture/agentic-fabric` | `docs/architecture/zero-trust-agentic-fabric.md` | `scripts/sync-zero-trust-agentic-fabric-doc.mjs` |
 | `/inference/clawql-inference` | `docs/inference/clawql-inference.md` | `scripts/sync-clawql-inference-doc.mjs` |
+| `/payments/clawql-payments` | `docs/payments/clawql-payments.md` | `scripts/sync-clawql-payments-doc.mjs` |
+| `/surveillance/clawql-surveillance` | `docs/surveillance/clawql-surveillance.md` | `scripts/sync-clawql-surveillance-doc.mjs` |
 | `/architecture` | `docs/vision/clawql-master-enablement-guide.md` (full technical reference)| `scripts/sync-clawql-master-enablement-doc.mjs` |
 | `/architecture`       | `docs/vision/clawql-modularization-v2.md` (companion)                     | `scripts/sync-clawql-modularization-doc.mjs`    |
 | `/vision/immutable-releases`   | `docs/vision/clawql-hybrid-decentralized-github-alternative.md` (Layer 0) | `scripts/sync-clawql-hybrid-decentralized-doc.mjs` |

@@ -1,0 +1,18 @@
+# Example stack — Cloudflare edge (Developer/Teams Phase 1)
+#
+#   cd infra/pulumi
+#   cp Pulumi.edge.example.yaml Pulumi.edge-prod.yaml
+#   pulumi stack init edge-prod
+#   pulumi config set cloudflare:apiToken --secret
+#   pulumi config set cloudflare:accountId <account-id>
+#   pulumi preview && pulumi up
+#
+config:
+  clawql:cloud: cloudflare
+  clawql:profile: edge
+  clawql:tier: shared
+  clawql:syncBucket: clawql-vault-prod
+  clawql:syncProvider: r2
+  clawql:edgeNamePrefix: clawql
+  clawql:deployWorkerStub: "true"
+  cloudflare:accountId: "<cloudflare-account-id>"
