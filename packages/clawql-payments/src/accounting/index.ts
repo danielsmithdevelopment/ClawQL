@@ -13,11 +13,7 @@ export type {
   TaxProfile,
   TaxTreatment,
 } from "./types.js";
-export {
-  classifyAccounting,
-  entryHasMonetaryAmount,
-  resolveEntryAccounting,
-} from "./classify.js";
+export { classifyAccounting, entryHasMonetaryAmount, resolveEntryAccounting } from "./classify.js";
 export {
   DEFAULT_ACCOUNTING_MAP,
   loadAccountingMap,

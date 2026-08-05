@@ -108,8 +108,7 @@ export function formatAccountingCsv(rows: AccountingExportRow[]): string {
 export function formatQbCsv(rows: AccountingExportRow[]): string {
   const header = "Date,Description,Amount,Account,Currency,Memo";
   const lines = rows.map((row) => {
-    const signed =
-      row.direction === "outflow" ? -Math.abs(row.amount) : Math.abs(row.amount);
+    const signed = row.direction === "outflow" ? -Math.abs(row.amount) : Math.abs(row.amount);
     const desc = `${row.eventKind} ${row.category}`.trim();
     return [
       csvEscape(row.date.slice(0, 10)),
@@ -127,8 +126,7 @@ export function formatQbCsv(rows: AccountingExportRow[]): string {
 export function formatXeroCsv(rows: AccountingExportRow[]): string {
   const header = "Date,Amount,Payee,Description,Reference,AccountCode";
   const lines = rows.map((row) => {
-    const signed =
-      row.direction === "outflow" ? -Math.abs(row.amount) : Math.abs(row.amount);
+    const signed = row.direction === "outflow" ? -Math.abs(row.amount) : Math.abs(row.amount);
     return [
       csvEscape(row.date.slice(0, 10)),
       csvEscape(signed.toFixed(2)),

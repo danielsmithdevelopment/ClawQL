@@ -8,10 +8,7 @@ import { Context, Effect, Layer } from "effect";
 import { Data } from "effect";
 import type Stripe from "stripe";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
-import {
-  TaxProfileError,
-  TaxProfileService,
-} from "../accounting/tax-profile.js";
+import { TaxProfileError, TaxProfileService } from "../accounting/tax-profile.js";
 import {
   buildConnectAccountCreatedEntry,
   buildPayoutFailedEntry,
@@ -296,14 +293,15 @@ export function payoutLiveLayer(
           const amountCents = Math.round(input.amountUsd * 100);
           const creatorId = input.creatorId?.trim() || undefined;
 
-          yield* taxProfiles.requireForPayout(creatorId ?? "").pipe(
-            Effect.mapError(
-              (cause) =>
+          yield* taxProfiles
+            .requireForPayout(creatorId ?? "")
+            .pipe(
+              Effect.mapError((cause) =>
                 cause instanceof TaxProfileError
                   ? new PayoutError({ reason: cause.reason })
                   : new PayoutError({ reason: "tax profile check failed", cause })
-            )
-          );
+              )
+            );
 
           let destination = input.destination;
           let connectAccountId = input.connectAccountId?.trim();

@@ -15,18 +15,9 @@ export type AccountingCategory =
   | "other";
 
 export type TaxTreatment =
-  | "taxable_revenue"
-  | "passthrough"
-  | "expense"
-  | "non_taxable"
-  | "unknown";
+  "taxable_revenue" | "passthrough" | "expense" | "non_taxable" | "unknown";
 
-export type AccountingCounterpartyKind =
-  | "customer"
-  | "creator"
-  | "agent"
-  | "vendor"
-  | "treasury";
+export type AccountingCounterpartyKind = "customer" | "creator" | "agent" | "vendor" | "treasury";
 
 export type PaymentAccounting = {
   direction: AccountingDirection;

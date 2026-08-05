@@ -80,9 +80,7 @@ export async function setTaxProfile(
   return profile;
 }
 
-export async function listTaxProfiles(
-  env: NodeJS.ProcessEnv = process.env
-): Promise<TaxProfile[]> {
+export async function listTaxProfiles(env: NodeJS.ProcessEnv = process.env): Promise<TaxProfile[]> {
   const file = await loadFile(env);
   return Object.values(file.parties).sort((a, b) => a.partyId.localeCompare(b.partyId));
 }

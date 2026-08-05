@@ -1,9 +1,6 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
-import {
-  buildAccountingExport,
-  serializeAccountingExport,
-} from "../accounting/export.js";
+import { buildAccountingExport, serializeAccountingExport } from "../accounting/export.js";
 import {
   buildTaxEvidencePack,
   formatTaxEvidenceMarkdown,

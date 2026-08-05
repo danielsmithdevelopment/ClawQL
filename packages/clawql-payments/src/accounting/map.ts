@@ -50,10 +50,7 @@ export async function loadAccountingMap(
   }
 }
 
-export function resolveGlCode(
-  category: AccountingCategory,
-  map: AccountingMapFile = {}
-): string {
+export function resolveGlCode(category: AccountingCategory, map: AccountingMapFile = {}): string {
   return map.categories?.[category] ?? DEFAULT_ACCOUNTING_MAP.categories[category] ?? "6999";
 }
 

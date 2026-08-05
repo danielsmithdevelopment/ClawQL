@@ -98,8 +98,7 @@ export function buildPaymentWormEntry(input: {
   correlationId?: string;
   accounting?: PaymentAccounting;
 }): PaymentWormEntry {
-  const accounting =
-    input.accounting ?? classifyAccounting(input.eventKind, input.payload);
+  const accounting = input.accounting ?? classifyAccounting(input.eventKind, input.payload);
   return {
     ts: new Date().toISOString(),
     category: "payment",

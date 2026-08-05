@@ -9,16 +9,9 @@ import {
   buildStripeInvoicePaidEntry,
   buildX402PaymentReceivedEntry,
 } from "../audit/events.js";
-import {
-  appendPaymentWormEntry,
-  resetPaymentAuditStoreForTests,
-} from "../audit/worm.js";
+import { appendPaymentWormEntry, resetPaymentAuditStoreForTests } from "../audit/worm.js";
 import { classifyAccounting, resolveEntryAccounting } from "./classify.js";
-import {
-  buildAccountingExport,
-  buildAccountingExportRows,
-  formatAccountingCsv,
-} from "./export.js";
+import { buildAccountingExport, buildAccountingExportRows, formatAccountingCsv } from "./export.js";
 import { DEFAULT_ACCOUNTING_MAP, resolveAccountingMapPath } from "./map.js";
 import { buildTaxEvidencePack } from "./tax-evidence.js";
 import { setTaxProfile } from "./tax-profile.js";
@@ -112,9 +105,7 @@ describe("accounting export + tax evidence", () => {
       JSON.stringify({ categories: { saas_revenue: "4010" } }, null, 2)
     );
     const rows = buildAccountingExportRows(
-      [
-        buildStripeInvoicePaidEntry({ tenantId: "t", amountUsd: 1 }),
-      ],
+      [buildStripeInvoicePaidEntry({ tenantId: "t", amountUsd: 1 })],
       { categories: { saas_revenue: "4010" } }
     );
     expect(rows[0]?.glCode).toBe("4010");

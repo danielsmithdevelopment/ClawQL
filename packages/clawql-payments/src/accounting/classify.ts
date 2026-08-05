@@ -298,10 +298,7 @@ export function classifyAccounting(
       externalRefs.stripeInvoiceId = resource;
     } else if (resource.startsWith("0x") || /^[0-9a-f]{64}$/i.test(resource)) {
       externalRefs.txHash = resource;
-    } else if (
-      eventKind.startsWith("PAYOUT_") ||
-      eventKind.startsWith("COMPENSATION_CASHOUT_")
-    ) {
+    } else if (eventKind.startsWith("PAYOUT_") || eventKind.startsWith("COMPENSATION_CASHOUT_")) {
       externalRefs.payoutId = resource;
     }
   }

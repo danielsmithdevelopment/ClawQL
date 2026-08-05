@@ -1144,9 +1144,7 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsTaxEvidenceCmd(paymentsOpts);
         return;
       }
-      console.error(
-        "Usage: clawql payments accounting export | tax-evidence"
-      );
+      console.error("Usage: clawql payments accounting export | tax-evidence");
       process.exitCode = 1;
       return;
     }

@@ -487,12 +487,7 @@ export async function runPaymentsCompensationCancelCmd(
 }
 
 function asAccountingFormat(format?: string): AccountingExportFormat | undefined {
-  if (
-    format === "csv" ||
-    format === "json" ||
-    format === "qb-csv" ||
-    format === "xero-csv"
-  ) {
+  if (format === "csv" || format === "json" || format === "qb-csv" || format === "xero-csv") {
     return format;
   }
   return undefined;
@@ -511,9 +506,7 @@ export async function runPaymentsAccountingExportCmd(
   });
 }
 
-export async function runPaymentsTaxEvidenceCmd(
-  options: PaymentsCliOptions = {}
-): Promise<number> {
+export async function runPaymentsTaxEvidenceCmd(options: PaymentsCliOptions = {}): Promise<number> {
   const format =
     options.format === "json" || options.format === "markdown" || options.format === "pack"
       ? options.format

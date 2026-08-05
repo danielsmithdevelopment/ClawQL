@@ -45,11 +45,11 @@ It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is ava
 
 ### Roadmap
 
-| Tier  | Item                            | Role                                         | Notes                                                    |
-| ----- | ------------------------------- | -------------------------------------------- | -------------------------------------------------------- |
-| ~~1~~ | ~~**Accounting export**~~       | Period CSV/JSON subledger from payment WORM  | ✅ Shipped — [accounting-and-tax.md](./accounting-and-tax.md) |
-| ~~2~~ | ~~**Tax profile gate + year-end**~~ | Tags + export; Stripe Connect Tax for 1099s | ✅ Gate + evidence pack; no in-process IRS e-file        |
-| **3** | **Mollie / Razorpay**           | Regional processors                          | Add when regional traction requires them                 |
+| Tier  | Item                                | Role                                        | Notes                                                         |
+| ----- | ----------------------------------- | ------------------------------------------- | ------------------------------------------------------------- |
+| ~~1~~ | ~~**Accounting export**~~           | Period CSV/JSON subledger from payment WORM | ✅ Shipped — [accounting-and-tax.md](./accounting-and-tax.md) |
+| ~~2~~ | ~~**Tax profile gate + year-end**~~ | Tags + export; Stripe Connect Tax for 1099s | ✅ Gate + evidence pack; no in-process IRS e-file             |
+| **3** | **Mollie / Razorpay**               | Regional processors                         | Add when regional traction requires them                      |
 
 **Already covered (do not duplicate):** Shopify Payments (Stripe-powered), ACH Direct Debit via Stripe's APIs, card/subscription/invoice flows via Stripe, **bank ACH top-ups via Stripe Financial Connections** (Plaid-backed Link UI — no separate Plaid SDK), **Stripe Connect payouts**, **live Base USDC payouts with receipt confirmation**, **consumer off-ramp + webhooks (Moonpay/Transak)**, **Ramp vault + native agentic cards**. **Not planned:** Zelle (no merchant API), Square POS-first adapters, raw Plaid SDK unless non-payment bank data is required, **full GL / tax e-file product** (subledger export + Stripe Connect Tax / CPA handoff — [accounting-and-tax.md](./accounting-and-tax.md)).
 
