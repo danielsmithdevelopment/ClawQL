@@ -5,6 +5,7 @@ import { AuditLive, resetDefaultAuditRingBufferForTests } from "clawql-core";
 import { paymentsConfigLiveLayer } from "../config/payments-config-service.js";
 import { listPaymentAuditEntries, resetPaymentAuditStoreForTests } from "../audit/worm.js";
 import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
+import { lokiPushLiveLayer } from "../audit/loki.js";
 import { resetPaymentsEffectRuntimeForTests } from "../runtime/payments-effect-runtime.js";
 import { StripeClientService } from "./stripe-client-service.js";
 import { StripeMeterService, stripeMeterLiveLayer } from "./stripe-meter-service.js";
@@ -82,7 +83,7 @@ describe("stripe meter reporting", () => {
         Layer.mergeAll(
           stubClientLayer,
           paymentsConfigLiveLayer(env),
-          paymentAuditLiveLayer(env).pipe(Layer.provide(AuditLive))
+          paymentAuditLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(env))))
         )
       )
     );

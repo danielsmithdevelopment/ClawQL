@@ -278,7 +278,7 @@ These vision items are **not** done by package extraction alone:
 
 | Vision item                                   | Status                                                                                     |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `clawql-auth` package                         | ✅ Gateway `noAuth`/`apiKey`, ATR claims, provider headers; HTTP MCP middleware            |
+| `clawql-auth` package                         | ✅ Gateway `noAuth`/`apiKey`/`oidc`, ATR claims, provider headers; Effect services (`OidcAuthService`, `GatewayAuthService`, `StepUpStoreService`, `AwsSigV4Service`, `AuthLive`); HTTP MCP middleware |
 | `clawql-pageindex`                            | ✅ MIT package + `pageindex_*` MCP tools (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide) |
 | Document pipeline (Tika → … → Paperless)      | 🚧 Vendors + `run_idp_pipeline` shipped; retries/Merkle per hop roadmap                    |
 | NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                                      |

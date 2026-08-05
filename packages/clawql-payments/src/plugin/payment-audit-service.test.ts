@@ -8,6 +8,7 @@ import { Effect, Either, Layer } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildX402PaymentReceivedEntry } from "../audit/events.js";
 import { PaymentAuditService, paymentAuditLiveLayer } from "./payment-audit-service.js";
+import { lokiPushLiveLayer } from "../audit/loki.js";
 import { PaymentError } from "../errors/payment-errors.js";
 
 describe("PaymentAuditService", () => {
@@ -33,7 +34,7 @@ describe("PaymentAuditService", () => {
     });
 
     await Effect.runPromise(
-      program.pipe(Effect.provide(paymentAuditLiveLayer(env)), Effect.provide(AuditTestLayer))
+      program.pipe(Effect.provide(paymentAuditLiveLayer(env)), Effect.provide(lokiPushLiveLayer(env)), Effect.provide(AuditTestLayer))
     );
   });
 
@@ -54,7 +55,7 @@ describe("PaymentAuditService", () => {
         yield* paymentAudit.appendEntry(entry);
         const clawqlAudit = yield* AuditService;
         return yield* clawqlAudit.list(5);
-      }).pipe(Effect.provide(paymentAuditLiveLayer(env)), Effect.provide(AuditTestLayer))
+      }).pipe(Effect.provide(paymentAuditLiveLayer(env)), Effect.provide(lokiPushLiveLayer(env)), Effect.provide(AuditTestLayer))
     );
     expect(listed.entries.some((e) => e.correlationId === "c-mirror")).toBe(true);
     expect(getDefaultAuditRingBuffer().list(5).entries).toHaveLength(0);

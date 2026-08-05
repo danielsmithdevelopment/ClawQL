@@ -104,7 +104,10 @@ export function paymentsServicesLiveLayer(
   if (cached) return cached;
 
   const config = paymentsConfigLiveLayer(env);
-  const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(AuditLive));
+  const lokiPush = lokiPushLiveLayer(env);
+  const audit = paymentAuditLiveLayer(env).pipe(
+    Layer.provide(Layer.mergeAll(AuditLive, lokiPush))
+  );
   const gate = x402GateLiveLayer(env);
   const usage = usageStoreLiveLayer(env);
   const entitlement = entitlementLiveLayer();
@@ -119,7 +122,6 @@ export function paymentsServicesLiveLayer(
   const accountingExport = accountingExportLiveLayer(env);
   const taxEvidence = taxEvidenceLiveLayer(env);
   const auditReconcile = paymentAuditReconcileLiveLayer();
-  const lokiPush = lokiPushLiveLayer(env);
   const payoutPreferences = payoutPreferencesLiveLayer(env);
   const payouts = payoutLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(audit, stripeClient, taxProfiles, payoutPreferences))

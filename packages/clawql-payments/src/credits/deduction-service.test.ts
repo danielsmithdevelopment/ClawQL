@@ -5,6 +5,7 @@ import { Effect, Layer } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AuditLive } from "clawql-core";
 import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
+import { lokiPushLiveLayer } from "../audit/loki.js";
 import { resetPaymentAuditStoreForTests } from "../audit/index.js";
 import { resolveDeductionOutboxPath } from "../config/paths.js";
 import { AchTopupService, achTopupLiveLayer } from "./ach-topup-service.js";
@@ -45,7 +46,7 @@ describe("DeductionService (sync hold → capture/release → outbox)", () => {
   });
 
   const testLayer = () => {
-    const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(AuditLive));
+    const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(process.env))));
     const stripe = stripeClientLiveLayer(process.env);
     const ledger = creditsLedgerLiveLayer(process.env);
     const stepUp = creditsStepUpLiveLayer(process.env);

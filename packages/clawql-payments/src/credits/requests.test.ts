@@ -5,6 +5,7 @@ import { Effect, Layer } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AuditLive } from "clawql-core";
 import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
+import { lokiPushLiveLayer } from "../audit/loki.js";
 import { resetPaymentAuditStoreForTests } from "../audit/worm.js";
 import { resetPaymentsEffectRuntimeForTests } from "../runtime/payments-effect-runtime.js";
 import {
@@ -57,7 +58,7 @@ describe("money requests / invoices", () => {
   });
 
   const layer = () => {
-    const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(AuditLive));
+    const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(process.env))));
     const ledger = creditsLedgerLiveLayer(process.env);
     const stepUp = creditsStepUpLiveLayer(process.env);
     const pending = pendingActionsLiveLayer(process.env);
