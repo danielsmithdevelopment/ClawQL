@@ -3,8 +3,8 @@ import { Link } from '@/components/elements/link'
 import { Section } from '@/components/elements/section'
 import { ArrowNarrowRightIcon } from '@/components/icons/arrow-narrow-right-icon'
 import { CallToActionSimple } from '@/components/sections/call-to-action-simple'
-import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
 import { NewsletterForm } from '@/components/sections/footer-with-newsletter-form-categories-and-social-icons'
+import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
 import type { Industry, IndustryStackRow } from '@/lib/industries'
 import { site } from '@/lib/site'
 
@@ -59,9 +59,7 @@ function StackTable({
           <tr className="border-b border-mist-950/10 dark:border-white/10">
             <th className="py-2 pr-3 font-semibold text-mist-950 dark:text-white">{systemLabel}</th>
             <th className="py-2 pr-3 font-semibold text-mist-950 dark:text-white">{roleLabel}</th>
-            {hasProvider ? (
-              <th className="py-2 font-semibold text-mist-950 dark:text-white">Who provides it</th>
-            ) : null}
+            {hasProvider ? <th className="py-2 font-semibold text-mist-950 dark:text-white">Who provides it</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -69,9 +67,7 @@ function StackTable({
             <tr key={row.system} className="border-b border-mist-950/5 dark:border-white/5">
               <td className="py-2 pr-3 font-medium text-mist-950 dark:text-white">{row.system}</td>
               <td className="py-2 pr-3 text-mist-700 dark:text-mist-400">{row.role}</td>
-              {hasProvider ? (
-                <td className="py-2 text-mist-700 dark:text-mist-400">{row.provider ?? '—'}</td>
-              ) : null}
+              {hasProvider ? <td className="py-2 text-mist-700 dark:text-mist-400">{row.provider ?? '—'}</td> : null}
             </tr>
           ))}
         </tbody>
@@ -143,8 +139,8 @@ function PlannedIndustryStub({ industry }: { industry: Industry }) {
         headline="Need lending or document automation today?"
         subheadline={
           <p>
-            Explore the lending vertical or self-host ClawQL Core with the full IDP pipeline while {industry.name}{' '}
-            tools are in development.
+            Explore the lending vertical or self-host ClawQL Core with the full IDP pipeline while {industry.name} tools
+            are in development.
           </p>
         }
         cta={
@@ -251,7 +247,7 @@ export function IndustryPage({ industry }: { industry: Industry }) {
               <article
                 key={audience.id}
                 id={audience.id}
-                className="scroll-mt-24 flex flex-col gap-5 rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 dark:border-white/10 dark:bg-white/5"
+                className="flex scroll-mt-24 flex-col gap-5 rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 dark:border-white/10 dark:bg-white/5"
               >
                 <div className="flex flex-col gap-2">
                   <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
@@ -477,8 +473,8 @@ export function IndustryPage({ industry }: { industry: Industry }) {
           headline="Example agent workflows"
           subheadline={
             <p>
-              Representative MCP tool sequences with step-by-step detail — production deployments add tenant classifiers,
-              RBAC, and your compliance policies on top.
+              Representative MCP tool sequences with step-by-step detail — production deployments add tenant
+              classifiers, RBAC, and your compliance policies on top.
             </p>
           }
         >
@@ -530,8 +526,8 @@ export function IndustryPage({ industry }: { industry: Industry }) {
           <p>
             {industry.complianceSubheadline ?? (
               <>
-                Industry pages summarize platform capabilities — your legal, compliance, and security teams should review{' '}
-                <Link href={`${site.urls.docs}/security`}>docs.clawql.com/security</Link> before production data.
+                Industry pages summarize platform capabilities — your legal, compliance, and security teams should
+                review <Link href={`${site.urls.docs}/security`}>docs.clawql.com/security</Link> before production data.
               </>
             )}
           </p>

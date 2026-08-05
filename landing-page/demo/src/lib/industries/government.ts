@@ -12,7 +12,7 @@ export const governmentIndustry: Industry = {
   heroEyebrow: 'Measurable outcomes · immutable baselines · independently verifiable records',
   overviewHeadline: 'ClawQL for government outcome accountability',
   overview:
-    'California has issued about $196 billion in general obligation bonds since 2000, with roughly $81.8 billion still outstanding and nearly $8.6 billion in debt service this fiscal year alone. Schools, water systems, climate programs, housing — voters approved them all. The state can track how bond dollars are spent. It cannot consistently answer whether those investments achieved the outcomes voters were promised. Spending accountability and outcome accountability are not the same thing. Governments have built robust infrastructure for the first and almost nothing for the second. That is not a California problem. It is a government technology problem with a precise technical solution: define measurable outcomes at authorization, record immutable baselines before programs begin, and maintain append-only, externally anchored outcome records that any qualified party can verify without trusting the program being measured. clawql-government composes ClawQL\'s WORM audit, Merkle chaining, and Arweave anchoring into that outcome layer — the same architecture used for AI agent trails and surveillance evidence integrity, under a different authorization surface. The framing that works: financial audit has required immutable baseline records for decades. Outcome measurement deserves the same standard. Programs that cannot be measured cannot be found to have failed — and that incentive is why the infrastructure must push integrity outside the control of the party being measured.',
+    "California has issued about $196 billion in general obligation bonds since 2000, with roughly $81.8 billion still outstanding and nearly $8.6 billion in debt service this fiscal year alone. Schools, water systems, climate programs, housing — voters approved them all. The state can track how bond dollars are spent. It cannot consistently answer whether those investments achieved the outcomes voters were promised. Spending accountability and outcome accountability are not the same thing. Governments have built robust infrastructure for the first and almost nothing for the second. That is not a California problem. It is a government technology problem with a precise technical solution: define measurable outcomes at authorization, record immutable baselines before programs begin, and maintain append-only, externally anchored outcome records that any qualified party can verify without trusting the program being measured. clawql-government composes ClawQL's WORM audit, Merkle chaining, and Arweave anchoring into that outcome layer — the same architecture used for AI agent trails and surveillance evidence integrity, under a different authorization surface. The framing that works: financial audit has required immutable baseline records for decades. Outcome measurement deserves the same standard. Programs that cannot be measured cannot be found to have failed — and that incentive is why the infrastructure must push integrity outside the control of the party being measured.",
   marketHeadline: 'Spending records are not outcome records',
   marketSubheadline:
     'California tracks where bond dollars go. It does not consistently measure whether those investments delivered what voters expected — and new bond measures are still moving without that requirement.',
@@ -91,7 +91,7 @@ export const governmentIndustry: Industry = {
     },
     {
       title: 'Program-controlled logs are not independent evidence',
-      body: 'Operational databases designed for management can be amended, selectively retained, or purged. Outcome integrity requires append-only storage, cryptographic chaining, and an external anchor outside the program\'s control — the same properties that make financial audit trails trustworthy.',
+      body: "Operational databases designed for management can be amended, selectively retained, or purged. Outcome integrity requires append-only storage, cryptographic chaining, and an external anchor outside the program's control — the same properties that make financial audit trails trustworthy.",
     },
     {
       title: 'FOIA and citizen access without a second system of record',
@@ -117,13 +117,11 @@ export const governmentIndustry: Industry = {
     },
     {
       name: 'outcome_baseline_record',
-      description:
-        'Lock an immutable baseline at program inception — hash-chained and scheduled for external anchor.',
+      description: 'Lock an immutable baseline at program inception — hash-chained and scheduled for external anchor.',
     },
     {
       name: 'outcome_measure_ingest',
-      description:
-        'Ingest a timed outcome measurement against the registered definition; append to the WORM chain.',
+      description: 'Ingest a timed outcome measurement against the registered definition; append to the WORM chain.',
     },
     {
       name: 'outcome_verify',
@@ -137,7 +135,8 @@ export const governmentIndustry: Industry = {
     },
     {
       name: 'foia_route',
-      description: 'Classify and route FOIA / public records requests with redaction checkpoints and audit correlation IDs.',
+      description:
+        'Classify and route FOIA / public records requests with redaction checkpoints and audit correlation IDs.',
     },
     {
       name: 'permit_classify',
@@ -197,7 +196,10 @@ export const governmentIndustry: Industry = {
     { event: 'BASELINE_RECORDED', trigger: 'Immutable baseline locked at program inception' },
     { event: 'OUTCOME_MEASURE_INGESTED', trigger: 'Timed outcome measurement appended to the chain' },
     { event: 'OUTCOME_VERIFIED', trigger: 'Verification pass or fail against Merkle chain + anchor' },
-    { event: 'OUTCOME_DEFINITION_REJECTED', trigger: 'Registration blocked — outcome not measurable / baseline missing' },
+    {
+      event: 'OUTCOME_DEFINITION_REJECTED',
+      trigger: 'Registration blocked — outcome not measurable / baseline missing',
+    },
     { event: 'MERKLE_ROOT_COMPUTED', trigger: 'New Merkle root calculated for an outcome window' },
     { event: 'ARWEAVE_ANCHOR_CONFIRMED', trigger: 'Root published to Arweave, transaction ID recorded' },
     { event: 'AUTHORIZATION_COMPLIANCE_VERIFIED', trigger: 'Compliance report generated against model language' },
