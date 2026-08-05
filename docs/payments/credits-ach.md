@@ -72,13 +72,13 @@ clawql payments credits transfer --from-tenant alice --to-tenant bob --amount 5 
 
 `CreditsService.transfer` debits the sender and credits the recipient **atomically** (ordered tenant locks; shared `transferId` on both ledger legs).
 
-| Property | Behavior |
-| -------- | -------- |
-| Scope | Tenant ↔ tenant prepaid credits (not Stripe Connect / USDC chain send) |
-| Overdraft | Rejected — sender must have spendable grant balance |
-| Idempotency | Optional `--idempotency-key` / `idempotencyKey` replays the same transfer |
-| WORM | `CREDIT_TRANSFER_SENT` + `CREDIT_TRANSFER_RECEIVED` (accounting category `peer_transfer`) |
-| MCP | `payments_credits_transfer` when `CLAWQL_PAYMENTS_MCP_TOOLS=1` (high-impact / financial) |
+| Property    | Behavior                                                                                  |
+| ----------- | ----------------------------------------------------------------------------------------- |
+| Scope       | Tenant ↔ tenant prepaid credits (not Stripe Connect / USDC chain send)                    |
+| Overdraft   | Rejected — sender must have spendable grant balance                                       |
+| Idempotency | Optional `--idempotency-key` / `idempotencyKey` replays the same transfer                 |
+| WORM        | `CREDIT_TRANSFER_SENT` + `CREDIT_TRANSFER_RECEIVED` (accounting category `peer_transfer`) |
+| MCP         | `payments_credits_transfer` when `CLAWQL_PAYMENTS_MCP_TOOLS=1` (high-impact / financial)  |
 
 ```mermaid
 sequenceDiagram

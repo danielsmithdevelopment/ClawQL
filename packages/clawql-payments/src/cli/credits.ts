@@ -173,7 +173,9 @@ export async function runPaymentsCreditsTransfer(
     console.log(
       `Transferred $${(result.amountCents / 100).toFixed(2)} ${result.fromTenantId} → ${result.toTenantId}`
     );
-    console.log(`Transfer id: ${result.transferId}${result.alreadyExisted ? " (idempotent replay)" : ""}`);
+    console.log(
+      `Transfer id: ${result.transferId}${result.alreadyExisted ? " (idempotent replay)" : ""}`
+    );
     console.log(
       `Sender balance: $${(result.fromEntry.balanceAfterCents / 100).toFixed(2)} | Recipient: $${(result.toEntry.balanceAfterCents / 100).toFixed(2)}`
     );
