@@ -4,14 +4,21 @@
  */
 
 import { timingSafeEqual } from "node:crypto";
+import { Data, Effect } from "effect";
 
 import {
   loadOidcAuthConfig,
-  resolveOidcAtrClaimsFromHeaders,
+  resolveOidcAtrClaimsFromHeadersEffect,
   type OidcAuthConfig,
 } from "./oidc.js";
 
 export type AuthMode = "noAuth" | "apiKey" | "oidc";
+
+/** Typed failure for gateway auth resolution (Effect failure channel). */
+export class GatewayAuthError extends Data.TaggedError("GatewayAuthError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
 
 function apiKeysEqual(presented: string, expected: string): boolean {
   const a = Buffer.from(presented, "utf8");
@@ -161,16 +168,46 @@ export function resolveAtrClaimsFromHeaders(
 }
 
 /**
- * Async claim resolution — supports `oidc` JWT verify plus sync modes.
+ * Effect claim resolution — supports `oidc` JWT verify plus sync modes.
+ * Failures surface on the typed {@link GatewayAuthError} channel.
+ */
+export function resolveAtrClaimsFromHeadersEffect(
+  headers: AuthHeaderSource = {},
+  config: GatewayAuthConfig = loadGatewayAuthConfig()
+): Effect.Effect<AtrClaims, GatewayAuthError> {
+  if (config.mode === "oidc") {
+    return resolveOidcAtrClaimsFromHeadersEffect(headers, config.oidc ?? loadOidcAuthConfig()).pipe(
+      Effect.mapError((err) => new GatewayAuthError({ reason: err.reason, cause: err.cause }))
+    );
+  }
+  const result = resolveAtrClaimsFromHeaders(headers, config);
+  return result.ok
+    ? Effect.succeed(result.claims)
+    : Effect.fail(new GatewayAuthError({ reason: result.error }));
+}
+
+/** Assert gateway auth (Effect form) — fails with {@link GatewayAuthError}. */
+export function assertGatewayAuthEffect(
+  headers: AuthHeaderSource = {},
+  config: GatewayAuthConfig = loadGatewayAuthConfig()
+): Effect.Effect<AtrClaims, GatewayAuthError> {
+  return resolveAtrClaimsFromHeadersEffect(headers, config);
+}
+
+/**
+ * Promise façade over {@link resolveAtrClaimsFromHeadersEffect} for forced edges
+ * (Express / MCP hosts) that consume the discriminated-union shape.
  */
 export async function resolveAtrClaimsFromHeadersAsync(
   headers: AuthHeaderSource = {},
   config: GatewayAuthConfig = loadGatewayAuthConfig()
 ): Promise<{ ok: true; claims: AtrClaims } | { ok: false; error: string }> {
-  if (config.mode === "oidc") {
-    return resolveOidcAtrClaimsFromHeaders(headers, config.oidc ?? loadOidcAuthConfig());
-  }
-  return resolveAtrClaimsFromHeaders(headers, config);
+  return Effect.runPromise(
+    resolveAtrClaimsFromHeadersEffect(headers, config).pipe(
+      Effect.map((claims) => ({ ok: true, claims }) as const),
+      Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason } as const))
+    )
+  );
 }
 
 export function assertGatewayAuth(headers: AuthHeaderSource = {}): AtrClaims {
@@ -181,6 +218,7 @@ export function assertGatewayAuth(headers: AuthHeaderSource = {}): AtrClaims {
   return result.claims;
 }
 
+/** Promise façade over {@link assertGatewayAuthEffect} for forced edges. */
 export async function assertGatewayAuthAsync(
   headers: AuthHeaderSource = {},
   config?: GatewayAuthConfig

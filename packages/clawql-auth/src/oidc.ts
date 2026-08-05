@@ -4,6 +4,7 @@
  */
 
 import { readFileSync } from "node:fs";
+import { Data, Effect } from "effect";
 import {
   createRemoteJWKSet,
   importSPKI,
@@ -14,6 +15,12 @@ import {
 
 import type { AtrClaims, AuthHeaderSource } from "./gateway.js";
 import { assertEmailDomainAllowed } from "./policy.js";
+
+/** Typed failure for OIDC/JWT verification (Effect failure channel). */
+export class OidcAuthError extends Data.TaggedError("OidcAuthError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
 
 export type OidcAuthConfig = {
   jwksUrl?: string;
@@ -277,10 +284,64 @@ function finalizeMfaClaims(claims: AtrClaims, payload: JWTPayload): AtrClaims {
   return claims;
 }
 
+/**
+ * Verify a bearer JWT and map it to ATR claims (Effect form).
+ * All IO (JWKS fetch, SPKI/PEM read, signature verify) runs inside the Effect;
+ * failures surface on the typed {@link OidcAuthError} channel.
+ */
+export function verifyOidcBearerTokenEffect(
+  token: string,
+  config: OidcAuthConfig = loadOidcAuthConfig()
+): Effect.Effect<{ claims: AtrClaims; payload: JWTPayload }, OidcAuthError> {
+  return Effect.gen(function* () {
+    const key = yield* Effect.try({
+      try: () => resolveVerifyKey(config),
+      catch: (cause) => new OidcAuthError({ reason: errorMessage(cause), cause }),
+    });
+    const { payload } = yield* Effect.tryPromise({
+      try: () =>
+        jwtVerify(token, key, {
+          ...(config.issuer ? { issuer: config.issuer } : {}),
+          ...(config.audience ? { audience: config.audience } : {}),
+        }),
+      catch: (cause) =>
+        new OidcAuthError({
+          reason: cause instanceof Error ? cause.message : "OIDC JWT verification failed",
+          cause,
+        }),
+    });
+    return { claims: atrClaimsFromJwtPayload(payload, config), payload };
+  });
+}
+
+/**
+ * Resolve ATR claims from request headers in OIDC mode (Effect form).
+ * Fails with {@link OidcAuthError} when the bearer is missing or verification fails.
+ */
+export function resolveOidcAtrClaimsFromHeadersEffect(
+  headers: AuthHeaderSource,
+  config: OidcAuthConfig = loadOidcAuthConfig()
+): Effect.Effect<AtrClaims, OidcAuthError> {
+  const token = extractBearer(headers);
+  if (!token) {
+    return Effect.fail(new OidcAuthError({ reason: "Missing Bearer JWT (CLAWQL_AUTH_MODE=oidc)" }));
+  }
+  return verifyOidcBearerTokenEffect(token, config).pipe(Effect.map((r) => r.claims));
+}
+
+function errorMessage(cause: unknown): string {
+  return cause instanceof Error ? cause.message : "OIDC JWT verification failed";
+}
+
+/**
+ * Promise façade over {@link verifyOidcBearerTokenEffect} for forced edges
+ * (Express / MCP bridges) that still consume the discriminated-union shape.
+ */
 export async function verifyOidcBearerToken(
   token: string,
   config: OidcAuthConfig = loadOidcAuthConfig()
 ): Promise<{ ok: true; claims: AtrClaims; payload: JWTPayload } | { ok: false; error: string }> {
+<<<<<<< HEAD
   try {
     const key = resolveVerifyKey(config);
     const { payload } = await jwtVerify(token, key, {
@@ -299,19 +360,31 @@ export async function verifyOidcBearerToken(
       error: err instanceof Error ? err.message : "OIDC JWT verification failed",
     };
   }
+=======
+  return Effect.runPromise(
+    verifyOidcBearerTokenEffect(token, config).pipe(
+      Effect.map(
+        (r) => ({ ok: true, claims: r.claims, payload: r.payload }) as const
+      ),
+      Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason } as const))
+    )
+  );
+>>>>>>> cd52e237 (feat(auth): Effect services for OIDC, gateway, step-up, SigV4)
 }
 
+/**
+ * Promise façade over {@link resolveOidcAtrClaimsFromHeadersEffect} for forced edges.
+ */
 export async function resolveOidcAtrClaimsFromHeaders(
   headers: AuthHeaderSource,
   config: OidcAuthConfig = loadOidcAuthConfig()
 ): Promise<{ ok: true; claims: AtrClaims } | { ok: false; error: string }> {
-  const token = extractBearer(headers);
-  if (!token) {
-    return { ok: false, error: "Missing Bearer JWT (CLAWQL_AUTH_MODE=oidc)" };
-  }
-  const result = await verifyOidcBearerToken(token, config);
-  if (!result.ok) return result;
-  return { ok: true, claims: result.claims };
+  return Effect.runPromise(
+    resolveOidcAtrClaimsFromHeadersEffect(headers, config).pipe(
+      Effect.map((claims) => ({ ok: true, claims }) as const),
+      Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason } as const))
+    )
+  );
 }
 
 /** Fail-fast when oidc mode is selected but verify keys are missing. */

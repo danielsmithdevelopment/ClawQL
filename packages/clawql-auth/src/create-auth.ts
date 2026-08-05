@@ -3,13 +3,17 @@
  * ClawQL remains an auth *consumer* / step-up library, not a full IdP.
  */
 
+import type { Effect } from "effect";
+
 import {
   loadGatewayAuthConfig,
   resolveAtrClaimsFromHeaders,
   resolveAtrClaimsFromHeadersAsync,
+  resolveAtrClaimsFromHeadersEffect,
   type AtrClaims,
   type AuthHeaderSource,
   type AuthMode,
+  type GatewayAuthError,
   type GatewayAuthConfig,
 } from "./gateway.js";
 import { assertToolPolicy, type AssertToolPolicyOptions } from "./policy.js";
@@ -44,6 +48,8 @@ export type ClawQLAuth = {
   resolveClaimsAsync(
     headers?: AuthHeaderSource
   ): Promise<{ ok: true; claims: AtrClaims } | { ok: false; error: string }>;
+  /** Effect form of claim resolution (supports oidc JWT verify + sync modes). */
+  resolveClaimsEffect(headers?: AuthHeaderSource): Effect.Effect<AtrClaims, GatewayAuthError>;
   assertToolAccess(claims: AtrClaims, toolName: string, options?: AssertToolPolicyOptions): void;
   stepUp: {
     totp: {
@@ -78,6 +84,9 @@ export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLA
     },
     resolveClaimsAsync(headers = {}) {
       return resolveAtrClaimsFromHeadersAsync(headers, config);
+    },
+    resolveClaimsEffect(headers = {}) {
+      return resolveAtrClaimsFromHeadersEffect(headers, config);
     },
     assertToolAccess(claims, toolName, policyOptions) {
       // RBAC flag reserved for future role matrices; MFA financial gate is active today.

@@ -5,7 +5,17 @@ export {
   totpOtpauthUrl,
   verifyTotp,
 } from "./totp.js";
-export { createFileStepUpStore, type FileStepUpStore, type StepUpTotpEnrollment } from "./store.js";
+export {
+  createFileStepUpStore,
+  createStepUpStoreLayer,
+  StepUpStoreError,
+  StepUpStoreService,
+  stepUpStoreServiceFromPath,
+  type FileStepUpStore,
+  type StepUpEnrollInput,
+  type StepUpEnrollResult,
+  type StepUpTotpEnrollment,
+} from "./store.js";
 export {
   createUnimplementedWebAuthnVerifier,
   requireWebAuthnStepUp,

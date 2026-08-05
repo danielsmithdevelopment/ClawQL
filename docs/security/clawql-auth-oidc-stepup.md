@@ -35,7 +35,7 @@ export CLAWQL_AUTH_OIDC_AUDIENCE=clawql-mcp
 export CLAWQL_AUTH_OIDC_ATR_CLAIM=atr
 ```
 
-Bearer JWT on MCP HTTP routes is verified asynchronously (`resolveAtrClaimsFromHeadersAsync`). Prefer an embedded `atr` object; otherwise flat `sub` / `role` / `scope` / `tenant_id` plus OIDC `acr` / `amr` are mapped into `AtrClaims`.
+Bearer JWT on MCP HTTP routes is verified via Effect. Domain code uses `resolveAtrClaimsFromHeadersEffect` / the `GatewayAuthService` and `OidcAuthService` (`Context.Tag` + `Layer`, composed by `AuthLive`); JWT verify and JWKS/PEM IO run on the typed `OidcAuthError` / `GatewayAuthError` channels. Forced edges (Express / MCP hosts) use the thin Promise façade `resolveAtrClaimsFromHeadersAsync`, which is `Effect.runPromise` over the Effect. Prefer an embedded `atr` object; otherwise flat `sub` / `role` / `scope` / `tenant_id` plus OIDC `acr` / `amr` are mapped into `AtrClaims`.
 
 Dev-only: `CLAWQL_AUTH_OIDC_HS256_SECRET` (never production).
 
