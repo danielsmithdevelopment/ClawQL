@@ -13,6 +13,7 @@ import {
 } from "jose";
 
 import type { AtrClaims, AuthHeaderSource } from "./gateway.js";
+import { assertEmailDomainAllowed } from "./policy.js";
 
 export type OidcAuthConfig = {
   jwksUrl?: string;
@@ -27,6 +28,20 @@ export type OidcAuthConfig = {
   scopeClaim?: string;
   tenantClaim?: string;
   subjectClaim?: string;
+  /** JWT claim for work email (default `email`). */
+  emailClaim?: string;
+  /**
+   * Allowed email domains for company SSO (lowercased, no `@`).
+   * From `CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS` (comma-separated).
+   */
+  allowedEmailDomains?: string[];
+  /**
+   * When true (or when allowedEmailDomains is non-empty), reject tokens whose
+   * email domain is missing or not in the allowlist.
+   */
+  requireEmailDomain?: boolean;
+  /** JWT claim for company org id (default `org_id`). */
+  orgIdClaim?: string;
 };
 
 function envFlag(name: string, env: NodeJS.ProcessEnv): boolean {
@@ -46,7 +61,20 @@ function parseAudience(raw: string | undefined): string | string[] | undefined {
   return t;
 }
 
+function parseDomainList(raw: string | undefined): string[] | undefined {
+  if (!raw?.trim()) return undefined;
+  const domains = raw
+    .split(/[\s,]+/)
+    .map((s) => s.trim().toLowerCase().replace(/^@/, ""))
+    .filter(Boolean);
+  return domains.length > 0 ? domains : undefined;
+}
+
 export function loadOidcAuthConfig(env: NodeJS.ProcessEnv = process.env): OidcAuthConfig {
+  const allowedEmailDomains = parseDomainList(env.CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS);
+  const requireEmailDomain =
+    envFlag("CLAWQL_AUTH_OIDC_REQUIRE_EMAIL_DOMAIN", env) ||
+    (allowedEmailDomains !== undefined && allowedEmailDomains.length > 0);
   return {
     jwksUrl: env.CLAWQL_AUTH_OIDC_JWKS_URL?.trim() || undefined,
     publicKeyPemPath: env.CLAWQL_AUTH_OIDC_PUBLIC_KEY_PEM_PATH?.trim() || undefined,
@@ -58,6 +86,10 @@ export function loadOidcAuthConfig(env: NodeJS.ProcessEnv = process.env): OidcAu
     scopeClaim: env.CLAWQL_AUTH_OIDC_SCOPE_CLAIM?.trim() || "scope",
     tenantClaim: env.CLAWQL_AUTH_OIDC_TENANT_CLAIM?.trim() || "tenant_id",
     subjectClaim: env.CLAWQL_AUTH_OIDC_SUBJECT_CLAIM?.trim() || "sub",
+    emailClaim: env.CLAWQL_AUTH_OIDC_EMAIL_CLAIM?.trim() || "email",
+    orgIdClaim: env.CLAWQL_AUTH_OIDC_ORG_CLAIM?.trim() || "org_id",
+    allowedEmailDomains,
+    requireEmailDomain,
   };
 }
 
@@ -175,6 +207,8 @@ export function atrClaimsFromJwtPayload(
     };
     if (typeof atr.tenantId === "string") claims.tenantId = atr.tenantId;
     else if (typeof atr.tenant_id === "string") claims.tenantId = atr.tenant_id;
+    if (typeof atr.orgId === "string") claims.orgId = atr.orgId;
+    else if (typeof atr.org_id === "string") claims.orgId = atr.org_id;
     if (Array.isArray(atr.verticals)) {
       claims.verticals = atr.verticals.filter((x): x is string => typeof x === "string");
     }
@@ -182,18 +216,20 @@ export function atrClaimsFromJwtPayload(
     if (Array.isArray(atr.amr)) {
       claims.amr = atr.amr.filter((x): x is string => typeof x === "string");
     }
-    return finalizeMfaClaims(claims, payload);
+    return attachEmailClaims(finalizeMfaClaims(claims, payload), payload, config);
   }
 
   const subjectClaim = config.subjectClaim ?? "sub";
   const roleClaim = config.roleClaim ?? "role";
   const scopeClaim = config.scopeClaim ?? "scope";
   const tenantClaim = config.tenantClaim ?? "tenant_id";
+  const orgIdClaim = config.orgIdClaim ?? "org_id";
 
   const subRaw = readNested(payload, subjectClaim);
   const roleRaw = readNested(payload, roleClaim);
   const scopeRaw = readNested(payload, scopeClaim);
   const tenantRaw = readNested(payload, tenantClaim);
+  const orgRaw = readNested(payload, orgIdClaim);
 
   const claims: AtrClaims = {
     sub: typeof subRaw === "string" && subRaw ? subRaw : "oidc",
@@ -204,7 +240,32 @@ export function atrClaimsFromJwtPayload(
     })(),
   };
   if (typeof tenantRaw === "string" && tenantRaw) claims.tenantId = tenantRaw;
-  return finalizeMfaClaims(claims, payload);
+  if (typeof orgRaw === "string" && orgRaw) claims.orgId = orgRaw;
+  return attachEmailClaims(finalizeMfaClaims(claims, payload), payload, config);
+}
+
+function attachEmailClaims(
+  claims: AtrClaims,
+  payload: JWTPayload,
+  config: OidcAuthConfig
+): AtrClaims {
+  const emailClaim = config.emailClaim ?? "email";
+  const emailRaw = readNested(payload, emailClaim);
+  const email =
+    typeof emailRaw === "string" && emailRaw.includes("@")
+      ? emailRaw.trim().toLowerCase()
+      : undefined;
+  if (email) {
+    claims.email = email;
+    claims.emailDomain = email.split("@")[1] || undefined;
+  }
+  if (!claims.emailDomain && typeof payload.hd === "string" && payload.hd.trim()) {
+    claims.emailDomain = payload.hd.trim().toLowerCase();
+  }
+  if (typeof payload.email_verified === "boolean") {
+    claims.emailVerified = payload.email_verified;
+  }
+  return claims;
 }
 
 function finalizeMfaClaims(claims: AtrClaims, payload: JWTPayload): AtrClaims {
@@ -226,7 +287,12 @@ export async function verifyOidcBearerToken(
       ...(config.issuer ? { issuer: config.issuer } : {}),
       ...(config.audience ? { audience: config.audience } : {}),
     });
-    return { ok: true, claims: atrClaimsFromJwtPayload(payload, config), payload };
+    const claims = atrClaimsFromJwtPayload(payload, config);
+    assertEmailDomainAllowed(claims, {
+      allowedDomains: config.allowedEmailDomains,
+      require: config.requireEmailDomain,
+    });
+    return { ok: true, claims, payload };
   } catch (err) {
     return {
       ok: false,

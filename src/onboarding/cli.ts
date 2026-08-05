@@ -118,6 +118,16 @@ import {
   runPaymentsCreditsRequestSendInviteCmd,
   runPaymentsCreditsStepUpEnrollCmd,
   runPaymentsCreditsStepUpShowCmd,
+  runPaymentsOrgAllocateCmd,
+  runPaymentsOrgCreateCmd,
+  runPaymentsOrgDistributeCmd,
+  runPaymentsOrgInviteCmd,
+  runPaymentsOrgMembersCmd,
+  runPaymentsOrgRemoveCmd,
+  runPaymentsOrgShowCmd,
+  runPaymentsOrgSpendCmd,
+  runPaymentsOrgSsoCmd,
+  runPaymentsOrgSuspendCmd,
   runPaymentsCompensationBalanceCmd,
   runPaymentsCompensationDepositCmd,
   runPaymentsCompensationCashoutCmd,
@@ -293,6 +303,13 @@ function parse(argv: string[]): {
     else if (a === "--process") flags.process = true;
     else if (a === "--facilitator-url") flags.facilitatorUrl = argv[++i] ?? "";
     else if (a === "--tenant-id") flags.tenantId = argv[++i] ?? "";
+    else if (a === "--org-id") flags.orgId = argv[++i] ?? "";
+    else if (a === "--actor-tenant") flags.actorTenantId = argv[++i] ?? "";
+    else if (a === "--member-tenant") flags.memberTenantId = argv[++i] ?? "";
+    else if (a === "--domains") flags.domains = argv[++i] ?? "";
+    else if (a === "--allocation-role") flags.allocationRoleId = argv[++i] ?? "";
+    else if (a === "--prometheus") flags.prometheus = true;
+    else if (a === "--include-worm") flags.includeWorm = true;
     else if (a === "--destination") flags.destination = argv[++i] ?? "";
     else if (a === "--creator" || a === "--creator-id") flags.creatorId = argv[++i] ?? "";
     else if (a === "--wallet") flags.wallet = argv[++i] ?? "";
@@ -446,6 +463,10 @@ Usage:
   clawql payments credits transfer --to-tenant other-tenant --amount 10
   clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
   clawql payments credits step-up enroll|show [--tenant-id ID] [--show-secrets]
+  clawql payments org create --org-id acme --actor-tenant cfo [--domains acme.com]
+  clawql payments org sso --org-id acme --actor-tenant cfo --domains acme.com
+  clawql payments org invite --org-id acme --actor-tenant cfo --email intern@acme.com [--role intern]
+  clawql payments org members|spend|allocate|distribute|suspend|remove --org-id acme …
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql claude --non-interactive --model <id> --task-file <path> [--workdir DIR] [--timeout SECS]
   clawql operator status
@@ -1202,6 +1223,19 @@ async function main(): Promise<void> {
           flags.requestRole === "any")
           ? flags.requestRole
           : undefined,
+      allocationRoleId:
+        typeof flags.allocationRoleId === "string"
+          ? flags.allocationRoleId
+          : typeof flags.requestRole === "string" &&
+              !["requester", "payer", "any"].includes(flags.requestRole)
+            ? flags.requestRole
+            : undefined,
+      orgId: typeof flags.orgId === "string" ? flags.orgId : undefined,
+      actorTenantId: typeof flags.actorTenantId === "string" ? flags.actorTenantId : undefined,
+      memberTenantId: typeof flags.memberTenantId === "string" ? flags.memberTenantId : undefined,
+      domains: typeof flags.domains === "string" ? flags.domains : undefined,
+      prometheus: Boolean(flags.prometheus),
+      includeWorm: Boolean(flags.includeWorm),
       requestStatus: typeof flags.requestStatus === "string" ? flags.requestStatus : undefined,
       idempotencyKey: typeof flags.idempotencyKey === "string" ? flags.idempotencyKey : undefined,
       note: typeof flags.note === "string" ? flags.note : undefined,
@@ -1520,6 +1554,54 @@ async function main(): Promise<void> {
       process.exitCode = 1;
       return;
     }
+    if (subcmd === "org") {
+      const action = rest[0] ?? "show";
+      if (action === "create") {
+        process.exitCode = await runPaymentsOrgCreateCmd(paymentsOpts);
+        return;
+      }
+      if (action === "show") {
+        process.exitCode = await runPaymentsOrgShowCmd(paymentsOpts);
+        return;
+      }
+      if (action === "sso") {
+        process.exitCode = await runPaymentsOrgSsoCmd(paymentsOpts);
+        return;
+      }
+      if (action === "invite") {
+        process.exitCode = await runPaymentsOrgInviteCmd(paymentsOpts);
+        return;
+      }
+      if (action === "members" || action === "users") {
+        process.exitCode = await runPaymentsOrgMembersCmd(paymentsOpts);
+        return;
+      }
+      if (action === "suspend") {
+        process.exitCode = await runPaymentsOrgSuspendCmd(paymentsOpts);
+        return;
+      }
+      if (action === "remove" || action === "rm") {
+        process.exitCode = await runPaymentsOrgRemoveCmd(paymentsOpts);
+        return;
+      }
+      if (action === "allocate") {
+        process.exitCode = await runPaymentsOrgAllocateCmd(paymentsOpts);
+        return;
+      }
+      if (action === "distribute") {
+        process.exitCode = await runPaymentsOrgDistributeCmd(paymentsOpts);
+        return;
+      }
+      if (action === "spend" || action === "billing") {
+        process.exitCode = await runPaymentsOrgSpendCmd(paymentsOpts);
+        return;
+      }
+      console.error(
+        "Usage: clawql payments org create|show|sso|invite|members|spend|allocate|distribute|suspend|remove"
+      );
+      process.exitCode = 1;
+      return;
+    }
     if (subcmd === "compensation") {
       const action = rest[0];
       if (action === "balance") {
@@ -1553,7 +1635,7 @@ async function main(): Promise<void> {
       return;
     }
     console.error(
-      "Usage: clawql payments plan | usage | spend | audit | stripe | x402 | payout | ramp | offramp | credits | compensation"
+      "Usage: clawql payments plan | usage | spend | audit | stripe | x402 | payout | ramp | offramp | credits | org | compensation"
     );
     process.exitCode = 1;
     return;

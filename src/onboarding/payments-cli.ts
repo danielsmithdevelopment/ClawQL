@@ -63,6 +63,16 @@ import {
   runPaymentsCompensationApprove,
   runPaymentsCompensationConfirm,
   runPaymentsCompensationCancel,
+  runPaymentsOrgAllocate,
+  runPaymentsOrgCreate,
+  runPaymentsOrgDistribute,
+  runPaymentsOrgInvite,
+  runPaymentsOrgMembers,
+  runPaymentsOrgRemove,
+  runPaymentsOrgShow,
+  runPaymentsOrgSpend,
+  runPaymentsOrgSso,
+  runPaymentsOrgSuspend,
   runPaymentsAccountingExport,
   runPaymentsTaxEvidence,
   runPaymentsTaxProfileSet,
@@ -169,6 +179,18 @@ export type PaymentsCliOptions = {
   sendEmail?: boolean;
   /** Force invite email dry-run preview. */
   emailDryRun?: boolean;
+  /** Enterprise org id (`clawql payments org …`). */
+  orgId?: string;
+  /** Billing admin / actor tenant for org admin commands. */
+  actorTenantId?: string;
+  /** Target member tenant for allocate/suspend/remove. */
+  memberTenantId?: string;
+  /** Comma-separated company email domains for SSO. */
+  domains?: string;
+  /** Allocation role (intern|employee|senior|…). */
+  allocationRoleId?: string;
+  prometheus?: boolean;
+  includeWorm?: boolean;
 };
 
 export async function runPaymentsPlanShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
@@ -894,4 +916,62 @@ export async function runPaymentsTaxProfileShowCmd(
     partyId: options.partyId ?? options.creatorId ?? options.agentId,
     json: options.json,
   });
+}
+
+function orgCliOpts(options: PaymentsCliOptions) {
+  return {
+    orgId: options.orgId,
+    actorTenantId: options.actorTenantId ?? options.tenantId,
+    displayName: options.displayName ?? options.name,
+    email: options.email ?? options.directoryEmail,
+    memberTenantId: options.memberTenantId ?? options.toTenantId,
+    allocationRoleId: options.allocationRoleId ?? options.requestRole,
+    domains: options.domains,
+    amountUsd: options.amount,
+    json: options.json,
+    prometheus: options.prometheus,
+    includeWorm: options.includeWorm,
+  };
+}
+
+export async function runPaymentsOrgCreateCmd(options: PaymentsCliOptions = {}): Promise<number> {
+  return runPaymentsOrgCreate(orgCliOpts(options));
+}
+
+export async function runPaymentsOrgShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
+  return runPaymentsOrgShow(orgCliOpts(options));
+}
+
+export async function runPaymentsOrgSsoCmd(options: PaymentsCliOptions = {}): Promise<number> {
+  return runPaymentsOrgSso(orgCliOpts(options));
+}
+
+export async function runPaymentsOrgInviteCmd(options: PaymentsCliOptions = {}): Promise<number> {
+  return runPaymentsOrgInvite(orgCliOpts(options));
+}
+
+export async function runPaymentsOrgMembersCmd(options: PaymentsCliOptions = {}): Promise<number> {
+  return runPaymentsOrgMembers(orgCliOpts(options));
+}
+
+export async function runPaymentsOrgSuspendCmd(options: PaymentsCliOptions = {}): Promise<number> {
+  return runPaymentsOrgSuspend(orgCliOpts(options));
+}
+
+export async function runPaymentsOrgRemoveCmd(options: PaymentsCliOptions = {}): Promise<number> {
+  return runPaymentsOrgRemove(orgCliOpts(options));
+}
+
+export async function runPaymentsOrgAllocateCmd(options: PaymentsCliOptions = {}): Promise<number> {
+  return runPaymentsOrgAllocate(orgCliOpts(options));
+}
+
+export async function runPaymentsOrgDistributeCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsOrgDistribute(orgCliOpts(options));
+}
+
+export async function runPaymentsOrgSpendCmd(options: PaymentsCliOptions = {}): Promise<number> {
+  return runPaymentsOrgSpend(orgCliOpts(options));
 }

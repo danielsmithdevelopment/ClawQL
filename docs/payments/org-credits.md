@@ -73,4 +73,5 @@ Flags:
 
 - [`credits-ach.md`](./credits-ach.md) — funding the pool via Stripe FC/ACH
 - [`deduction-service.md`](./deduction-service.md) — spend path
+- [`../enterprise/control-plane.md`](../enterprise/control-plane.md) — SSO domains, user admin, unified spend
 - [`p2p-consumer-roadmap.md`](./p2p-consumer-roadmap.md) — cross-tenant P2P (self-hosted only)

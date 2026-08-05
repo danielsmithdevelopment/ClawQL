@@ -39,6 +39,14 @@ export type AtrClaims = {
   acr?: string;
   /** Authentication Methods References from the IdP (OIDC `amr`). */
   amr?: string[];
+  /** Work email from the IdP (`email` claim) — used for company-domain SSO. */
+  email?: string;
+  /** IdP `email_verified` when present. */
+  emailVerified?: boolean;
+  /** Lowercased domain portion of `email` (or Google Workspace `hd`). */
+  emailDomain?: string;
+  /** Company org id when resolved from email domain / claim. */
+  orgId?: string;
 };
 
 /**

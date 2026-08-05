@@ -3,6 +3,7 @@
 ### Changed
 
 - **Payments compliance posture** — prepaid cross-tenant P2P and agent compensation default **off**; forced off when `CLAWQL_MANAGED_HOSTING=1`. Closed-loop **company org credits** (role budgets, CFO allocate, within-org transfer) allowed on managed — [`docs/payments/org-credits.md`](docs/payments/org-credits.md), [`hosted-vs-self-hosted-compliance.md`](docs/payments/hosted-vs-self-hosted-compliance.md).
+- **Enterprise control plane (scaffold)** — company-email SSO domain enforcement (`CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS`), org user admin (invite/suspend/remove), unified org spend summary + Prometheus gauges, CLI `clawql payments org …` — [`docs/enterprise/control-plane.md`](docs/enterprise/control-plane.md).
 
 ### Fixed
 

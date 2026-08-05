@@ -25,6 +25,9 @@ Gateway authentication and shared step-up primitives for the Agentic Gateway.
 | `CLAWQL_AUTH_OIDC_ISSUER`               | Optional `iss` check                                     |
 | `CLAWQL_AUTH_OIDC_AUDIENCE`             | Optional `aud` (comma-separated)                         |
 | `CLAWQL_AUTH_OIDC_ATR_CLAIM`            | Claim holding ATR object (default `atr`)                 |
+| `CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS`| Company SSO allowlist (`acme.com,acme.co.uk`)             |
+| `CLAWQL_AUTH_OIDC_REQUIRE_EMAIL_DOMAIN` | Force email/hd even without allowlist                    |
+| `CLAWQL_AUTH_OIDC_EMAIL_CLAIM`          | Email claim name (default `email`)                       |
 | `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL` | Require MFA-class `acr`/`amr` for financial MCP tools    |
 | `CLAWQL_AUTH_FINANCIAL_TOOLS`           | Override financial tool name list (comma-separated)      |
 

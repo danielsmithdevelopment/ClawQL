@@ -5,6 +5,53 @@
 
 import type { AtrClaims } from "./gateway.js";
 
+export type EmailDomainPolicyOptions = {
+  /** Allowed domains without `@` (e.g. `acme.com`). Empty/undefined = no domain gate. */
+  allowedDomains?: string[];
+  /** When true, require a resolvable email domain even if allowlist is empty. */
+  require?: boolean;
+};
+
+/** Extract the domain from an email address (lowercased). */
+export function extractEmailDomain(email: string | undefined | null): string | undefined {
+  if (!email || typeof email !== "string") return undefined;
+  const at = email.lastIndexOf("@");
+  if (at < 0 || at === email.length - 1) return undefined;
+  return email.slice(at + 1).trim().toLowerCase() || undefined;
+}
+
+export function normalizeEmailDomain(domain: string): string {
+  return domain.trim().toLowerCase().replace(/^@/, "");
+}
+
+/**
+ * Enforce company-email SSO: claims.emailDomain (or email) must be in the allowlist
+ * when a policy is configured.
+ */
+export function assertEmailDomainAllowed(
+  claims: AtrClaims,
+  options: EmailDomainPolicyOptions = {}
+): void {
+  const allowed = (options.allowedDomains ?? [])
+    .map(normalizeEmailDomain)
+    .filter(Boolean);
+  const require = options.require === true || allowed.length > 0;
+  if (!require) return;
+
+  const domain =
+    claims.emailDomain?.trim().toLowerCase() || extractEmailDomain(claims.email);
+  if (!domain) {
+    throw new Error(
+      "Company SSO requires a work email (or hd) claim on the IdP token"
+    );
+  }
+  if (allowed.length > 0 && !allowed.includes(domain)) {
+    throw new Error(
+      `Email domain "${domain}" is not allowed for this ClawQL tenant (allowed: ${allowed.join(", ")})`
+    );
+  }
+}
+
 /** Default MCP tool names treated as financial / high-impact when MFA policy is on. */
 export const DEFAULT_FINANCIAL_TOOL_NAMES: readonly string[] = [
   "payments_credits_transfer_stage",

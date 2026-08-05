@@ -206,17 +206,27 @@ export {
 export {
   addOrgMember,
   allocateFromPoolToMember,
+  assertEmailMatchesOrgDomains,
   createOrg,
   distributeOrgPeriod,
+  emailDomainOf,
   findMembership,
+  findOrgByEmailDomain,
   getOrg,
+  inviteOrgMember,
+  listOrgMembers,
   loadOrgCreditsFile,
   orgCreditsAllowedOnManagedHosting,
   poolTenantIdForOrg,
+  reactivateOrgMember,
+  removeOrgMember,
   resetOrgCreditsForTests,
   setOrgRolePolicies,
+  setOrgSsoPolicy,
+  suspendOrgMember,
   transferWithinOrg,
   type DistributePeriodResult,
+  type InviteOrgMemberInput,
   type OrgCreditPeriodPolicy,
   type OrgCreditsFile,
   type OrgMemberRole,
@@ -224,4 +234,14 @@ export {
   type OrgRecord,
   type OrgRoleId,
   type OrgRolePolicy,
+  type OrgSsoPolicy,
 } from "./org.js";
+export {
+  getOrgUnifiedSpendSummary,
+  type OrgMemberBalanceRow,
+  type OrgUnifiedSpendSummary,
+} from "./org-spend.js";
+export {
+  renderAllOrgCreditsPrometheus,
+  renderOrgSpendPrometheus,
+} from "./org-metrics.js";
