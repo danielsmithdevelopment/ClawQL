@@ -6,6 +6,7 @@ import { ap2MandateLiveLayer } from "../ap2/ap2-mandate-service.js";
 import { acpCheckoutLiveLayer } from "../acp/acp-checkout-service.js";
 import { paypalOrdersLiveLayer } from "../paypal/paypal-orders-service.js";
 import { adyenCheckoutLiveLayer } from "../adyen/adyen-checkout-service.js";
+import { taxProfileLiveLayer } from "../accounting/tax-profile.js";
 import { payoutLiveLayer } from "../payouts/payout-service.js";
 import { rampLiveLayer } from "../ramp/ramp-service.js";
 import { consumerOffRampLiveLayer } from "../offramp/consumer-offramp-service.js";
@@ -51,6 +52,7 @@ export type PaymentsServices =
   | import("../acp/acp-checkout-service.js").AcpCheckoutService
   | import("../paypal/paypal-orders-service.js").PaypalOrdersService
   | import("../adyen/adyen-checkout-service.js").AdyenCheckoutService
+  | import("../accounting/tax-profile.js").TaxProfileService
   | import("../payouts/payout-service.js").PayoutService
   | import("../ramp/ramp-service.js").RampService
   | import("../offramp/consumer-offramp-service.js").ConsumerOffRampService
@@ -82,7 +84,10 @@ export function paymentsServicesLiveLayer(
   const acp = acpCheckoutLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(audit, stripeClient)));
   const paypal = paypalOrdersLiveLayer(env).pipe(Layer.provide(audit));
   const adyen = adyenCheckoutLiveLayer(env).pipe(Layer.provide(audit));
-  const payouts = payoutLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(audit, stripeClient)));
+  const taxProfiles = taxProfileLiveLayer(env);
+  const payouts = payoutLiveLayer(env).pipe(
+    Layer.provide(Layer.mergeAll(audit, stripeClient, taxProfiles))
+  );
   const ramp = rampLiveLayer(env).pipe(Layer.provide(audit));
   const offramp = consumerOffRampLiveLayer(env).pipe(Layer.provide(audit));
   const offrampWebhook = offrampWebhookLiveLayer(env).pipe(Layer.provide(audit));
@@ -143,6 +148,7 @@ export function paymentsServicesLiveLayer(
     acp,
     paypal,
     adyen,
+    taxProfiles,
     payouts,
     ramp,
     offramp,

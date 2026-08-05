@@ -5,6 +5,7 @@ ClawQL's unified billing layer — **Stripe** (human fiat), **x402** (per-reques
 | Doc                                                                                      | Audience                             | Contents                                                                                                |
 | ---------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | [**clawql-payments.md**](clawql-payments.md)                                             | Operators, integrators, contributors | Architecture, setup, env vars, HTTP flows, CLI, Tier 3 roadmap (Mollie/Razorpay), inference integration |
+| [**accounting-and-tax.md**](accounting-and-tax.md)                                       | Finance / ops / CPA handoff          | Subledger export, CoA map, tax profile gate, year-end evidence (1099 / VAT / W-9 ownership)             |
 | [**credits-ach.md**](credits-ach.md)                                                     | Prepaid balance operators            | Credits ledger, Stripe Financial Connections / ACH top-up, WORM events                                  |
 | [**deduction-service.md**](deduction-service.md)                                         | Inference / metering operators       | Sync hold/capture on the request path; post-commit NATS / outbox                                        |
 | [**payouts-ramp.md**](payouts-ramp.md)                                                   | Platforms paying creators / agents   | Stripe Connect, Base USDC, Ramp agent cards, Moonpay/Transak off-ramp                                   |
@@ -22,4 +23,5 @@ ClawQL's unified billing layer — **Stripe** (human fiat), **x402** (per-reques
 
 - [clawql-inference](../inference/clawql-inference.md) — gateway, call store, export/finetune flywheel
 - [clawql-idp-platform](../vision/clawql-idp-platform.md) — product pricing philosophy
+- [**accounting-and-tax.md**](accounting-and-tax.md) — WORM → books handoff; tax form ownership
 - GitHub [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) — `.well-known/payments.json` discovery (dynamic on self-hosted HTTP; static on docs site)
