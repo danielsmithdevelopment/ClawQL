@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   buildClawqlPayUri,
+  buildCreditsTransferApproveUrl,
+  buildCreditsTransferCancelUrl,
   buildInviteDeepLink,
   buildPayDeepLink,
   buildPayQrPayload,
@@ -68,5 +70,15 @@ describe("credits deeplinks", () => {
     expect(env.links.self).toContain("/credits/pay?");
     expect(env.links.clawql).toMatch(/^clawql:\/\/pay\?/);
     expect(env.approval_url).toBe(env.links.self);
+  });
+
+  it("builds transfer magic-link approve/cancel URLs", () => {
+    process.env.CLAWQL_CREDITS_HATEOAS_BASE = "https://pay.example";
+    expect(buildCreditsTransferApproveUrl("aid", "abc123")).toBe(
+      "https://pay.example/credits/transfer/approve?action_id=aid&code=abc123"
+    );
+    expect(buildCreditsTransferCancelUrl("aid", "abc123")).toContain(
+      "/credits/transfer/cancel?"
+    );
   });
 });

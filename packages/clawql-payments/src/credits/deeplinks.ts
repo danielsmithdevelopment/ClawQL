@@ -18,6 +18,43 @@ export function isHttpCreditsHateoasBase(env: NodeJS.ProcessEnv = process.env): 
   return /^https?:\/\//i.test(base);
 }
 
+function transferActionQuery(actionId: string, code: string): string {
+  return new URLSearchParams({
+    action_id: actionId.trim(),
+    code: code.trim(),
+  }).toString();
+}
+
+/**
+ * Magic-link approve view (GET-safe). Possession of action_id + code is the
+ * capability; confirm still requires an explicit POST (and TOTP when gated).
+ */
+export function buildCreditsTransferApproveUrl(
+  actionId: string,
+  code: string,
+  env: NodeJS.ProcessEnv = process.env
+): string {
+  return `${creditsHateoasBase(env)}/credits/transfer/approve?${transferActionQuery(actionId, code)}`;
+}
+
+/** POST target for confirming a staged transfer (not GET-safe). */
+export function buildCreditsTransferConfirmUrl(
+  actionId: string,
+  code: string,
+  env: NodeJS.ProcessEnv = process.env
+): string {
+  return `${creditsHateoasBase(env)}/credits/transfer/confirm?${transferActionQuery(actionId, code)}`;
+}
+
+/** GET-safe cancel for a staged transfer. */
+export function buildCreditsTransferCancelUrl(
+  actionId: string,
+  code: string,
+  env: NodeJS.ProcessEnv = process.env
+): string {
+  return `${creditsHateoasBase(env)}/credits/transfer/cancel?${transferActionQuery(actionId, code)}`;
+}
+
 export type PayDeepLink = {
   to: string;
   amountUsd?: number;

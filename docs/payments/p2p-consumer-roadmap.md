@@ -18,6 +18,7 @@ ClawQL is **not** a consumer bank. Balances are prepaid credits; bank/USDC off-r
 | QR / deep links (HATEOAS + HTMX) | ✅ | [`credits-deeplinks.md`](./credits-deeplinks.md) |
 | Contacts + phone alias | ✅ | [`credits-contacts.md`](./credits-contacts.md) |
 | Hosted mini UI | ✅ | `/credits` balance + verbs + activity — [`credits-deeplinks.md`](./credits-deeplinks.md) |
+| Magic-link authorize | ✅ | After HTMX stage/accept → `/credits/transfer/approve` — [`credits-deeplinks.md`](./credits-deeplinks.md) |
 | Invite email (dry-run first) | ✅ | [`credits-invite-email.md`](./credits-invite-email.md) |
 | OIDC / MFA policy (gateway) | ✅ (stacked) | [`clawql-auth-oidc-stepup.md`](../security/clawql-auth-oidc-stepup.md) |
 
@@ -41,6 +42,7 @@ Emails and phones are stored only under `$CLAWQL_HOME/Payments/` (mode `0600`) �
 4. ~~**Contacts**~~ — ✅ phone alias + contacts book — [`credits-contacts.md`](./credits-contacts.md)
 5. ~~**Hosted mini UI**~~ — ✅ balance + verbs + activity at `/credits` — [`credits-deeplinks.md`](./credits-deeplinks.md)
 6. ~~**Outbound email delivery**~~ — ✅ dry-run-first invite email — [`credits-invite-email.md`](./credits-invite-email.md)
+7. ~~**Magic-link authorize**~~ — ✅ after stage/accept — [`credits-deeplinks.md`](./credits-deeplinks.md)
 
 ## Explicit non-goals (for now)
 

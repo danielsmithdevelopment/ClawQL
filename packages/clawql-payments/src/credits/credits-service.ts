@@ -10,9 +10,6 @@ import {
 } from "../audit/events.js";
 import {
   assertPendingCode,
-  buildApprovalUrl,
-  buildCancelUrl,
-  buildConfirmUrl,
   savePendingAction,
   stagePendingAction,
   type PendingActionRecord,
@@ -22,6 +19,11 @@ import {
   isCreditsTransferDirectAllowed,
   isCreditsTransferTotpRequired,
 } from "./config.js";
+import {
+  buildCreditsTransferApproveUrl,
+  buildCreditsTransferCancelUrl,
+  buildCreditsTransferConfirmUrl,
+} from "./deeplinks.js";
 import {
   appendCreditEntry,
   getCreditAccount,
@@ -382,20 +384,17 @@ export function creditsLiveLayer(
             fromTenantId,
             toTenantId,
             amountUsd: Math.round(input.amountCents) / 100,
-            approvalUrl: buildApprovalUrl(
-              CREDITS_TRANSFER_CONFIRM_TOOL,
+            approvalUrl: buildCreditsTransferApproveUrl(
               record.actionId,
               record.confirmationCode,
               env
             ),
-            confirmUrl: buildConfirmUrl(
-              CREDITS_TRANSFER_CONFIRM_TOOL,
+            confirmUrl: buildCreditsTransferConfirmUrl(
               record.actionId,
               record.confirmationCode,
               env
             ),
-            cancelUrl: buildCancelUrl(
-              CREDITS_TRANSFER_CONFIRM_TOOL,
+            cancelUrl: buildCreditsTransferCancelUrl(
               record.actionId,
               record.confirmationCode,
               env

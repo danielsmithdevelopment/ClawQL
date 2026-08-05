@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { attachCreditsHateoasRoutes } from "./hateoas-http.js";
 import { claimDirectory, resetDirectoryForTests } from "./directory.js";
+import { appendCreditEntry } from "./ledger.js";
 import { createMoneyRequest, resetMoneyRequestsForTests } from "./requests.js";
 
 async function withApp(run: (base: string) => Promise<void>): Promise<void> {
@@ -35,6 +36,8 @@ describe("credits hateoas http", () => {
     process.env.CLAWQL_HOME = home;
     process.env.CLAWQL_CREDITS_ENABLED = "1";
     process.env.CLAWQL_CREDITS_HATEOAS_BASE = "http://127.0.0.1:9";
+    delete process.env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP;
+    delete process.env.CLAWQL_CREDITS_TRANSFER_DIRECT;
     await resetDirectoryForTests(process.env);
     await resetMoneyRequestsForTests(process.env);
   });
@@ -93,6 +96,8 @@ describe("credits hateoas http", () => {
       expect(body).toContain("$10.00");
       expect(body).toContain("htmx.org");
       expect(body).toContain("Payment QR");
+      expect(body).toContain('hx-post="/credits/pay/stage"');
+      expect(body).toContain("Stage payment");
 
       const json = await fetch(`${base}/credits/pay?to=%40bob&amount=10`, {
         headers: { Accept: "application/json" },
@@ -151,6 +156,98 @@ describe("credits hateoas http", () => {
       expect(reqPage.status).toBe(200);
       const data = (await reqPage.json()) as { data: { payerTenantId: string } };
       expect(data.data.payerTenantId).toBe("newbie");
+    });
+  });
+
+  it("accept → magic-link authorize confirms transfer", async () => {
+    await claimDirectory({ email: "alice@acme.com", tenantId: "alice" });
+    await claimDirectory({ email: "bob@acme.com", tenantId: "bob" });
+    await appendCreditEntry({
+      tenantId: "bob",
+      kind: "topup_settled",
+      deltaCents: 10_000,
+      grantSource: "topup",
+      note: "seed",
+    });
+    const { request } = await createMoneyRequest({
+      requesterTenantId: "alice",
+      to: "bob@acme.com",
+      amountCents: 1200,
+      note: "lunch",
+    });
+
+    await withApp(async (base) => {
+      const accept = await fetch(`${base}/credits/request/${request.requestId}/accept`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ payerTenantId: "bob" }).toString(),
+      });
+      expect(accept.status).toBe(200);
+      const acceptBody = await accept.text();
+      expect(acceptBody).toContain("Authorize with magic link");
+      expect(acceptBody).toContain("/credits/transfer/approve?");
+      const approveHref = acceptBody
+        .match(/href="(\/credits\/transfer\/approve\?[^"]+)"/)?.[1]
+        ?.replace(/&amp;/g, "&");
+      expect(approveHref).toBeTruthy();
+
+      const approve = await fetch(`${base}${approveHref}`);
+      expect(approve.status).toBe(200);
+      const approveBody = await approve.text();
+      expect(approveBody).toContain("Authorize transfer");
+      expect(approveBody).toContain("$12.00");
+      expect(approveBody).toContain('action="/credits/transfer/confirm"');
+
+      const actionId = approveBody.match(/name="action_id" value="([^"]+)"/)?.[1];
+      const code = approveBody.match(/name="code" value="([^"]+)"/)?.[1];
+      expect(actionId && code).toBeTruthy();
+
+      const confirm = await fetch(`${base}/credits/transfer/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ action_id: actionId!, code: code! }).toString(),
+      });
+      expect(confirm.status).toBe(200);
+      const confirmBody = await confirm.text();
+      expect(confirmBody).toContain("Transfer authorized");
+      expect(confirmBody).toContain("$12.00");
+    });
+  });
+
+  it("pay/stage → magic link → cancel", async () => {
+    await claimDirectory({ email: "alice@acme.com", tenantId: "alice", handle: "alice" });
+    await claimDirectory({ email: "bob@acme.com", tenantId: "bob", handle: "bob" });
+    await appendCreditEntry({
+      tenantId: "alice",
+      kind: "topup_settled",
+      deltaCents: 5000,
+      grantSource: "topup",
+    });
+
+    await withApp(async (base) => {
+      const stage = await fetch(`${base}/credits/pay/stage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          from: "alice",
+          to: "@bob",
+          amount: "7.5",
+          note: "coffee",
+        }).toString(),
+      });
+      expect(stage.status).toBe(200);
+      const stageBody = await stage.text();
+      expect(stageBody).toContain("Authorize with magic link");
+      const approveHref = stageBody
+        .match(/href="(\/credits\/transfer\/approve\?[^"]+)"/)?.[1]
+        ?.replace(/&amp;/g, "&");
+      expect(approveHref).toBeTruthy();
+      const qs = new URL(approveHref!, "http://local").searchParams;
+      const cancel = await fetch(
+        `${base}/credits/transfer/cancel?action_id=${qs.get("action_id")}&code=${qs.get("code")}`
+      );
+      expect(cancel.status).toBe(200);
+      expect(await cancel.text()).toContain("Cancelled");
     });
   });
 });

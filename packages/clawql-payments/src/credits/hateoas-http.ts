@@ -8,10 +8,16 @@
 import { Effect } from "effect";
 import type { Express, Request, Response } from "express";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
+import {
+  assertPendingCode,
+  savePendingAction,
+} from "../compensation/pending-actions.js";
 import { getActivityFeed, type ActivityItem } from "./activity.js";
+import { isCreditsTransferTotpRequired } from "./config.js";
 import { CreditsService } from "./credits-service.js";
 import {
   buildClawqlPayUri,
+  buildCreditsTransferApproveUrl,
   buildPayDeepLink,
   buildPayQrPayload,
   buildRequestDeepLink,
@@ -20,6 +26,7 @@ import {
   payHateoasEnvelope,
   type PayDeepLink,
 } from "./deeplinks.js";
+import { resolveRecipient } from "./directory.js";
 import {
   escapeHtml,
   renderCreditsActivityHtml,
@@ -27,7 +34,11 @@ import {
   renderCreditsMiniHomeHtml,
   renderCreditsPayComposeHtml,
   renderCreditsRequestComposeHtml,
+  renderCreditsStagedTransferHtml,
   renderCreditsTopupHtml,
+  renderCreditsTransferApproveHtml,
+  renderCreditsTransferCancelledHtml,
+  renderCreditsTransferConfirmedHtml,
   renderQrSvg,
   wantsHtml,
   type MiniHomeRecentItem,
@@ -123,11 +134,27 @@ function payPageHtml(pay: PayDeepLink): string {
     <section class="hero" aria-label="Payment">
       <p class="amount">${esc(amountLabel)}</p>
       <p class="payee">to <strong>${esc(pay.to)}</strong>${pay.note ? ` · ${esc(pay.note)}` : ""}</p>
-      <p class="lede">This page does not move money — confirm in the CLI.</p>
-      <div class="cta-row">
+      <p class="lede">Stage here, then authorize with the magic link — or confirm in the CLI.</p>
+      ${
+        pay.amountUsd != null
+          ? `<form hx-post="/credits/pay/stage" hx-target="#stage-result" hx-swap="innerHTML" class="compose-grid">
+        <input type="hidden" name="to" value="${esc(pay.to)}" />
+        <input type="hidden" name="amount" value="${esc(String(pay.amountUsd))}" />
+        ${pay.note ? `<input type="hidden" name="note" value="${esc(pay.note)}" />` : ""}
+        <label>From tenant
+          <input name="from" value="${esc(pay.fromTenantId ?? "")}" required placeholder="your-tenant" autocomplete="username" />
+        </label>
+        <div class="cta-row">
+          <button class="primary" type="submit">Stage payment</button>
+          <a class="btn ghost" href="${esc(clawql)}">Open clawql://</a>
+        </div>
+      </form>
+      <div id="stage-result"></div>`
+          : `<div class="cta-row">
         <a class="btn" href="${esc(clawql)}">Open clawql://</a>
         <button type="button" class="btn ghost" data-cli="${esc(cli)}" onclick="navigator.clipboard.writeText(this.dataset.cli)">Copy CLI</button>
-      </div>
+      </div>`
+      }
     </section>
     <div class="visual" aria-label="Payment QR">
       <img alt="Payment QR code" width="280" height="280" src="/credits/qr.svg?${esc(qrQs)}" />
@@ -189,7 +216,7 @@ function requestPageHtml(reqRow: MoneyRequest): string {
       <h1 class="brand">Claw<span>QL</span></h1>
     </div>
     <section class="hero">
-      <p class="lede">Money request · ${esc(reqRow.status)}. Accept only stages payment.</p>
+      <p class="lede">Money request · ${esc(reqRow.status)}. Accept stages payment; authorize with the magic link.</p>
       <p class="amount">$${esc(amountUsd)}</p>
       <p class="payee">from <strong>${esc(reqRow.requesterTenantId)}</strong>
         → ${esc(reqRow.payerTenantId ?? "invite pending")}${reqRow.note ? ` · ${esc(reqRow.note)}` : ""}</p>
@@ -216,7 +243,7 @@ function requestPageHtml(reqRow: MoneyRequest): string {
       <div id="result"></div>
     </section>
     <div class="meta-block">
-      <p class="muted">After accept: <code>clawql payments credits transfer --confirm --action-id … --code …</code></p>
+      <p class="muted">After accept: open the magic link, or <code>clawql payments credits transfer --confirm --action-id … --code …</code></p>
     </div>
   `;
   return renderCreditsHateoasPage({
@@ -308,6 +335,165 @@ export function attachCreditsHateoasRoutes(app: Express): void {
       res.type("image/svg+xml").send(svg);
     } catch (e) {
       res.status(400).type("text/plain").send(e instanceof Error ? e.message : String(e));
+    }
+  });
+
+  app.post("/credits/pay/stage", async (req: Request, res: Response) => {
+    try {
+      const to = String(req.body?.to ?? "").trim();
+      const fromTenantId = String(req.body?.from ?? req.body?.fromTenantId ?? "").trim();
+      const amountRaw = String(req.body?.amount ?? "").trim();
+      const note = String(req.body?.note ?? "").trim();
+      const amountUsd = Number(amountRaw);
+      if (!to || !fromTenantId) throw new Error("from and to are required");
+      if (!Number.isFinite(amountUsd) || amountUsd <= 0) throw new Error("amount must be > 0");
+      const recipient = await resolveRecipient(to);
+      const staged = await runPaymentsEffect(
+        Effect.gen(function* () {
+          const credits = yield* CreditsService;
+          return yield* credits.stageTransfer({
+            fromTenantId,
+            toTenantId: recipient.tenantId,
+            amountCents: Math.round(amountUsd * 100),
+            ...(note ? { note } : {}),
+          });
+        })
+      );
+      res.type("html").send(
+        renderCreditsStagedTransferHtml({
+          actionId: staged.actionId,
+          confirmationCode: staged.confirmationCode,
+          approvalUrl: staged.approvalUrl,
+          totpRequired: staged.totpRequired,
+        })
+      );
+    } catch (e) {
+      res
+        .status(400)
+        .type("html")
+        .send(`<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>`);
+    }
+  });
+
+  app.get("/credits/transfer/approve", async (req: Request, res: Response) => {
+    try {
+      const actionId = String(req.query.action_id ?? req.query.actionId ?? "").trim();
+      const code = String(req.query.code ?? "").trim();
+      if (!actionId || !code) {
+        res.status(400).type("html").send(
+          renderCreditsHateoasPage({
+            title: "Authorize",
+            heading: "Missing parameters",
+            bodyHtml: "<p>Add <code>?action_id=…&amp;code=…</code> from your magic link.</p>",
+            hideLinksPanel: true,
+          })
+        );
+        return;
+      }
+      const record = await assertPendingCode(actionId, code);
+      if (record.kind !== "credits_transfer") {
+        throw new Error(`action is kind=${record.kind}; expected credits_transfer`);
+      }
+      const amountCents = Number(record.args.amountCents ?? 0);
+      res.type("html").send(
+        renderCreditsTransferApproveHtml({
+          actionId: record.actionId,
+          code: record.confirmationCode,
+          fromTenantId: String(record.args.fromTenantId ?? record.agentId),
+          toTenantId: String(record.args.toTenantId ?? ""),
+          amountUsd: amountCents / 100,
+          note: typeof record.args.note === "string" ? record.args.note : undefined,
+          expiresAt: record.expiresAt,
+          totpRequired: isCreditsTransferTotpRequired(),
+          status: record.status,
+        })
+      );
+    } catch (e) {
+      res
+        .status(400)
+        .type("html")
+        .send(
+          renderCreditsHateoasPage({
+            title: "Authorize",
+            heading: "Invalid magic link",
+            bodyHtml: `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>`,
+            hideLinksPanel: true,
+          })
+        );
+    }
+  });
+
+  app.post("/credits/transfer/confirm", async (req: Request, res: Response) => {
+    try {
+      const actionId = String(
+        req.body?.action_id ?? req.body?.actionId ?? req.query.action_id ?? ""
+      ).trim();
+      const code = String(req.body?.code ?? req.query.code ?? "").trim();
+      const totp = String(req.body?.totp ?? "").trim();
+      const result = await runPaymentsEffect(
+        Effect.gen(function* () {
+          const credits = yield* CreditsService;
+          return yield* credits.confirmTransfer({
+            actionId,
+            code,
+            ...(totp ? { totp } : {}),
+          });
+        })
+      );
+      res.type("html").send(
+        renderCreditsTransferConfirmedHtml({
+          fromTenantId: result.fromTenantId,
+          toTenantId: result.toTenantId,
+          amountUsd: result.amountCents / 100,
+          transferId: result.transferId,
+        })
+      );
+    } catch (e) {
+      res
+        .status(400)
+        .type("html")
+        .send(
+          renderCreditsHateoasPage({
+            title: "Authorize failed",
+            heading: "Could not confirm",
+            bodyHtml: `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>
+              <p class="note"><a href="/credits">Back home</a></p>`,
+            hideLinksPanel: true,
+          })
+        );
+    }
+  });
+
+  app.get("/credits/transfer/cancel", async (req: Request, res: Response) => {
+    try {
+      const actionId = String(req.query.action_id ?? req.query.actionId ?? "").trim();
+      const code = String(req.query.code ?? "").trim();
+      const record = await assertPendingCode(actionId, code);
+      if (record.kind !== "credits_transfer") {
+        throw new Error(`action is kind=${record.kind}; expected credits_transfer`);
+      }
+      if (record.status === "pending") {
+        await savePendingAction({
+          ...record,
+          status: "cancelled",
+          cancelledAt: new Date().toISOString(),
+        });
+      } else if (record.status === "executed") {
+        throw new Error("Transfer already executed — cannot cancel");
+      }
+      res.type("html").send(renderCreditsTransferCancelledHtml(actionId));
+    } catch (e) {
+      res
+        .status(400)
+        .type("html")
+        .send(
+          renderCreditsHateoasPage({
+            title: "Cancel failed",
+            heading: "Could not cancel",
+            bodyHtml: `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>`,
+            hideLinksPanel: true,
+          })
+        );
     }
   });
 
@@ -407,13 +593,18 @@ export function attachCreditsHateoasRoutes(app: Express): void {
             })
           )
       );
-      res.type("html").send(`
-        <p>Accepted — transfer staged (money not moved yet).</p>
-        <p>action_id: <code>${esc(staged.actionId)}</code></p>
-        <p>confirmation_code: <code>${esc(staged.confirmationCode)}</code></p>
-        <pre>clawql payments credits transfer --confirm --action-id ${esc(staged.actionId)} --code ${esc(staged.confirmationCode)}${staged.totpRequired ? " --totp NNNNNN" : ""}</pre>
-        <p class="muted">Request status: ${esc(request.status)}</p>
-      `);
+      res.type("html").send(
+        renderCreditsStagedTransferHtml({
+          actionId: staged.actionId,
+          confirmationCode: staged.confirmationCode,
+          approvalUrl: buildCreditsTransferApproveUrl(
+            staged.actionId,
+            staged.confirmationCode
+          ),
+          totpRequired: staged.totpRequired,
+          requestStatus: request.status,
+        })
+      );
     } catch (e) {
       res
         .status(400)

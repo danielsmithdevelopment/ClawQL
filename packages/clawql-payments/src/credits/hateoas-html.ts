@@ -413,7 +413,7 @@ export function renderCreditsMiniHomeHtml(input: MiniHomeInput): string {
         </button>
       </p>
       <p class="amount" id="bal-amount">$${esc(dollars)}</p>
-      <p class="lede">Prepaid credits · money moves only after CLI confirm.</p>
+      <p class="lede">Prepaid credits · authorize with a magic link or CLI confirm.</p>
     </section>
     <nav class="verbs" aria-label="Actions">
       <a class="verb" href="/credits/topup?${esc(q)}">${ICON_DEPOSIT}<span>Top up</span></a>
@@ -587,6 +587,141 @@ export function renderCreditsActivityHtml(input: {
     bodyHtml: body,
     hideLinksPanel: true,
   });
+}
+
+export type TransferApproveInput = {
+  actionId: string;
+  code: string;
+  fromTenantId: string;
+  toTenantId: string;
+  amountUsd: number;
+  note?: string;
+  expiresAt: string;
+  totpRequired: boolean;
+  status: string;
+};
+
+/** GET-safe magic-link review before money moves. */
+export function renderCreditsTransferApproveHtml(input: TransferApproveInput): string {
+  const dollars = input.amountUsd.toFixed(2);
+  const pending = input.status === "pending";
+  const body = `
+    <a class="back" href="/credits">← Home</a>
+    <div class="topbar" style="margin-top:0.75rem">
+      <h1 class="brand">Claw<span>QL</span></h1>
+    </div>
+    <section class="hero" aria-label="Authorize transfer">
+      <p class="lede">Magic link · review before money moves</p>
+      <p class="amount">$${esc(dollars)}</p>
+      <p class="payee"><strong>${esc(input.fromTenantId)}</strong> → <strong>${esc(input.toTenantId)}</strong>${
+        input.note ? ` · ${esc(input.note)}` : ""
+      }</p>
+      <p class="note">Status: <code>${esc(input.status)}</code> · expires ${esc(input.expiresAt.slice(0, 19))}Z</p>
+      ${
+        pending
+          ? `
+      <form method="post" action="/credits/transfer/confirm" class="compose-grid">
+        <input type="hidden" name="action_id" value="${esc(input.actionId)}" />
+        <input type="hidden" name="code" value="${esc(input.code)}" />
+        ${
+          input.totpRequired
+            ? `<label>Authenticator code (TOTP)
+                <input name="totp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" placeholder="6-digit code" />
+              </label>`
+            : `<p class="note">Confirming moves prepaid credits on the ledger.</p>`
+        }
+        <div class="cta-row">
+          <button class="primary" type="submit">Authorize transfer</button>
+          <a class="btn ghost" href="/credits/transfer/cancel?action_id=${esc(input.actionId)}&amp;code=${esc(input.code)}">Cancel</a>
+        </div>
+      </form>`
+          : `<p class="note">This magic link is no longer pending — nothing else to authorize.</p>
+             <div class="cta-row"><a class="btn" href="/credits">Back home</a></div>`
+      }
+    </section>
+  `;
+  return renderCreditsHateoasPage({
+    title: "Authorize transfer",
+    heading: "ClawQL",
+    summary: `Authorize $${dollars} transfer`,
+    bodyHtml: body,
+    hideLinksPanel: true,
+  });
+}
+
+export function renderCreditsTransferConfirmedHtml(input: {
+  fromTenantId: string;
+  toTenantId: string;
+  amountUsd: number;
+  transferId: string;
+}): string {
+  const body = `
+    <a class="back" href="/credits">← Home</a>
+    <div class="topbar" style="margin-top:0.75rem">
+      <h1 class="brand">Claw<span>QL</span></h1>
+    </div>
+    <section class="hero">
+      <p class="lede">Transfer authorized</p>
+      <p class="amount">$${esc(input.amountUsd.toFixed(2))}</p>
+      <p class="payee"><strong>${esc(input.fromTenantId)}</strong> → <strong>${esc(input.toTenantId)}</strong></p>
+      <p class="note">Ledger id <code>${esc(input.transferId)}</code></p>
+      <div class="cta-row">
+        <a class="btn" href="/credits/activity?tenant=${esc(input.fromTenantId)}">View activity</a>
+      </div>
+    </section>
+  `;
+  return renderCreditsHateoasPage({
+    title: "Transfer authorized",
+    heading: "ClawQL",
+    summary: "Credits transfer confirmed",
+    bodyHtml: body,
+    hideLinksPanel: true,
+  });
+}
+
+export function renderCreditsTransferCancelledHtml(actionId: string): string {
+  const body = `
+    <a class="back" href="/credits">← Home</a>
+    <section class="hero">
+      <h1 class="page-title" style="margin-top:0">Cancelled</h1>
+      <p class="lede">Staged transfer <code>${esc(actionId)}</code> was cancelled. No money moved.</p>
+      <div class="cta-row"><a class="btn" href="/credits">Back home</a></div>
+    </section>
+  `;
+  return renderCreditsHateoasPage({
+    title: "Transfer cancelled",
+    heading: "Cancelled",
+    summary: "Staged transfer cancelled",
+    bodyHtml: body,
+    hideLinksPanel: true,
+  });
+}
+
+/** HTMX fragment after accept/stage — points at magic-link authorize. */
+export function renderCreditsStagedTransferHtml(input: {
+  actionId: string;
+  confirmationCode: string;
+  approvalUrl: string;
+  totpRequired: boolean;
+  requestStatus?: string;
+}): string {
+  const path = `/credits/transfer/approve?action_id=${encodeURIComponent(input.actionId)}&code=${encodeURIComponent(input.confirmationCode)}`;
+  return `
+    <div class="hero" style="padding-top:0.5rem">
+      <p><strong>Staged</strong> — money not moved yet.</p>
+      <p class="lede">Open the magic link to authorize (or cancel).</p>
+      <div class="cta-row">
+        <a class="btn" href="${esc(path)}">Authorize with magic link</a>
+      </div>
+      <p class="note" style="margin-top:0.85rem">Also: <a href="${esc(input.approvalUrl)}">${esc(input.approvalUrl)}</a></p>
+      ${input.totpRequired ? `<p class="note">TOTP required on authorize.</p>` : ""}
+      ${input.requestStatus ? `<p class="muted">Request status: ${esc(input.requestStatus)}</p>` : ""}
+      <details class="meta-block">
+        <summary>CLI fallback</summary>
+        <pre>clawql payments credits transfer --confirm --action-id ${esc(input.actionId)} --code ${esc(input.confirmationCode)}${input.totpRequired ? " --totp NNNNNN" : ""}</pre>
+      </details>
+    </div>
+  `;
 }
 
 export function wantsHtml(acceptHeader: string | undefined): boolean {

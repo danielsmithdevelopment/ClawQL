@@ -462,7 +462,7 @@ export type StageTransferFn = (input: {
 
 /**
  * Payer accepts: stages a credits transfer (payer → requester).
- * Then confirm with the usual transfer --confirm path (+ optional TOTP).
+ * Then authorize via magic link (`/credits/transfer/approve`) or CLI confirm (+ optional TOTP).
  */
 export async function acceptMoneyRequest(
   input: { requestId: string; payerTenantId: string },

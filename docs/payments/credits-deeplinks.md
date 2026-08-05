@@ -28,22 +28,27 @@ When the MCP HTTP server is up, these are mounted under `/credits/*`:
 - **GET** `/credits` · `/credits/ui` — home: Total balance + Top up / Pay / Request / Activity + recent
 - **GET** `/credits/topup` — ACH top-up CLI hints
 - **GET** `/credits/pay` — without `to`: pay compose; with `to`: pay landing + QR (Accept: HTML or JSON HATEOAS)
+- **POST** `/credits/pay/stage` — HTMX stage from pay landing (`from` + `to` + `amount`) → magic-link fragment
 - **GET** `/credits/qr.svg` — payment QR
+- **GET** `/credits/transfer/approve` — magic-link review (GET-safe; `?action_id=&code=`)
+- **POST** `/credits/transfer/confirm` — authorize staged transfer (optional TOTP when gated)
+- **GET** `/credits/transfer/cancel` — cancel staged transfer (GET-safe)
 - **GET** `/credits/request/new` — request compose (copies CLI)
 - **GET** `/credits/activity` — full recent list for `?tenant=`
 - **GET** `/credits/request/invite` — claim form (token-gated)
 - **POST** `/credits/request/invite/claim` — HTMX claim
 - **GET** `/credits/request/:id` — status + accept/decline forms
-- **POST** `…/accept` — stages transfer (still needs `transfer --confirm`)
+- **POST** `…/accept` — stages transfer; returns magic-link CTA (still needs authorize/confirm)
 - **POST** `…/decline`
 
-Put these behind gateway auth in production; accept only **stages** — confirm (+ optional TOTP) remains the money-moving gate.
+Put these behind gateway auth in production. **Accept / Stage** only stage — money moves on **magic-link authorize** (POST confirm) or CLI `transfer --confirm` (+ optional TOTP).
 
 ### Mini UI notes
 
 - Grammar mirrors consumer P2P home: **balance → verbs → activity** (no debit/APY/card tiles)
 - Brand (**ClawQL**) leads the shell; amount is the primary number; QR is the visual plane on pay landing
-- No money movement in the browser — CTAs stage via CLI / `clawql://`
+- After HTMX stage/accept: **Authorize with magic link** opens GET-safe review, then POST confirm
+- Possession of `action_id` + `code` is the capability; when `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1`, the approve form also requires TOTP
 - Motion: rise-in sections + amount scale-in (respects `prefers-reduced-motion`)
 
 ## CLI
