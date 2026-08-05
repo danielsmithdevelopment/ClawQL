@@ -2,8 +2,8 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-4.3 memory-injection-attempt WIN (31022595633). B-4.2 remains parked offline. Next: B-2 stub or optional n\u22655.",
-  "pr_active": [],
+  "live_resume_note": "B-2.0 idp-safe-pipeline-lite stubbed 7-stage IDP on pr_active. Not live Stirling/Argo (B2.3 later).",
+  "pr_active": ["idp-safe-pipeline-lite"],
   "pr_trials": 1,
   "retired": {
     "codegraph-impact-edit": {

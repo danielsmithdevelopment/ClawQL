@@ -169,10 +169,12 @@ Phase 7  B-1.3 cycle-over-cycle; B-3.2 langs; B-6.3 legal
 | ID     | Subtask                                                                                                                                              | Size | Notes                        |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ---------------------------- |
 | B2-0   | Define **stubbed** 5–7 stage chain using tools already graded: search/execute dry_run, audit Merkle-ish trail, memory_ingest, notify stub, onyx stub | M    | Map stages → existing MCP    |
-| B2.1-a | Task `idp-safe-pipeline-lite`: agent must complete ordered stages; score stages_passed/N                                                             | L    | Extend composed-safe-rollout |
-| B2.1-b | Artifacts: `pipeline.json` + trail with correlation_id                                                                                               | M    |                              |
+| B2.1-a | Task `idp-safe-pipeline-lite`: agent must complete ordered stages; score stages_passed/N                                                             | L    | ✅ Pack + harness shipped    |
+| B2.1-b | Artifacts: `pipeline.json` + trail with correlation_id                                                                                               | M    | ✅ `pipeline.json` graded    |
 | B2.2   | Inject failure + Ouroboros recovery (optional cell)                                                                                                  | L    | After B2.1 WIN               |
 | B2.3   | Scheduled **integration** job with real services (not `pr_active`)                                                                                   | XL   | Secrets / cluster            |
+
+**Live cell (B-2.0 / B2.1):** `idp-safe-pipeline-lite` on `pr_active`. Seven stubbed stages — discover → plan_extract → plan_redact → audit_trail → onyx_cite → notify_handoff → persist. Dual Slack/Onyx fetch stubs are URL-dispatched so both can coexist. **Does not** prove live Stirling/Argo/ConeShare (that is B2.3).
 
 ---
 
@@ -228,7 +230,7 @@ Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger,
 | B-3.1 | `codegraph-impact-edit`                   | ✅ retired WIN        |
 | B-4.2 | `memory-stale-after-update`               | Parked (offline only) |
 | B-4.3 | `memory-injection-attempt`                | ✅ retired WIN        |
-| B-2   | `idp-safe-pipeline-lite`                  | After Phase 1 WINs    |
+| B-2   | `idp-safe-pipeline-lite`                  | **Live on `pr_active`** (stubbed; awaiting WIN) |
 | B-1   | reuse retired IDs under FT matrix         | After FT v1           |
 | B-6   | `compliance-mortgage-qa` (custom harness) | After B-1 + corpus    |
 | B-5   | `daos-multiperspective-*`                 | After metric export   |

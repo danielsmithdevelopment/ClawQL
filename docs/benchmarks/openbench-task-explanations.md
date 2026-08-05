@@ -242,6 +242,17 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | **Evidence**                | on **1.0** (5 turns, ~79s) / off **0.0** — [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305). Tools: clawql_search, clawql_execute×2+, clawql_audit, clawql_memory_ingest, write. |
 | **Does _not_ prove**        | Live (non-dry_run) side effects; notify/Onyx/Argo in the same cell.                                                                                                                                                      |
 
+### `idp-safe-pipeline-lite`
+
+|                             |                                                                                                                                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Claim**                   | Agents complete a **stubbed 7-stage IDP pipeline**: search → dry_run×2 → audit → onyx cite → notify → memory_ingest, then write `pipeline.json` with shared `correlation_id` / `deal_id`.     |
+| **Why it matters**          | First OpenBench proof of IDP-shaped multi-hop orchestration without burning live Stirling/Argo/ConeShare on every PR.                                                                          |
+| **How**                     | `CLAWQL_BUNDLED_PROVIDERS=github,slack,onyx` + notify/onyx stubs (URL-dispatched). Graders require all seven tool stages + artifact markers (`quartz-21`, `nebula-55`).                          |
+| **What success looks like** | on: stages_passed=7 + pipeline.json; off: missing ClawQL tools → 0.0 (partial score = stages/7 on fail path).                                                                                   |
+| **Evidence**                | Live A/B pending (B-2.0 / B2.1 pack 2026-08-05).                                                                                                                                                |
+| **Does _not_ prove**        | Live vendor IDP (Stirling/Docling/LangExtract/ConeShare/Argo) — that is scheduled **B2.3**, not `pr_active`.                                                                                     |
+
 ---
 
 ## Security / policy
@@ -340,6 +351,6 @@ Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../o
 4. ~~**`codegraph-impact-edit` (B-3.1 lite)**~~ — verified on [30969554941](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30969554941); retired. Next: B-4.2/B-4.3 spikes or P0 n≥3. Full plan: [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
 5. **n≥3 trials** on headline WINs (Phase 0 / dispatch).
 6. **Trace collection** from GHA is live — [`openbench-trace-collection.md`](./openbench-trace-collection.md).
-7. Later: B-1 flywheel (blocked on FT), B-2 stubbed IDP pipeline, B-6 domain compliance (not closed-book HLE).
+7. Later: B-1 flywheel (blocked on FT), B-2 stubbed IDP pipeline (`idp-safe-pipeline-lite` on `pr_active`), B-6 domain compliance (not closed-book HLE).
 
 Append new run IDs to the [ledger](./openbench-results-ledger.md).

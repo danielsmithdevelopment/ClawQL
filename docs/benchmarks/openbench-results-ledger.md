@@ -331,7 +331,11 @@ Run: [31022595633](https://github.com/danielsmithdevelopment/ClawQL/actions/runs
 2. **Phase 1 advanced:** B-4.1 / B-3.1 / `codegraph-feature-api-surface` / composed RTP recollect **retired WIN**; next B-4.2/B-4.3 spikes (`memory-stale-after-update`, `memory-injection-attempt` task folders exist) or remaining P0 n≥3.
 3. **Trace collection:** GHA call-store JSONL now persists — [`openbench-trace-collection.md`](./openbench-trace-collection.md).
 4. Optional later: agentic external benches / domain HLE-analog (B-6) after fine-tune — not closed-book HLE.
-5. Blocked: B-1 flywheel (needs FT v1), B-5 NSV (needs metric export), full live IDP pipeline (ops).
+5. Blocked: B-1 flywheel (needs FT v1), B-5 NSV (needs metric export), **live** IDP vendor matrix (B2.3 ops). Stubbed B-2 `idp-safe-pipeline-lite` is on `pr_active`.
+
+### 2026-08-05 — B-2.0 `idp-safe-pipeline-lite` shipped (awaiting CI)
+
+`pr_active` = `idp-safe-pipeline-lite`. Seven stubbed stages map IDP hops onto graded MCP tools (search, dry_run execute×2, audit, onyx stub, notify stub, memory_ingest) with `pipeline.json` + `correlation_id`. Dual Slack/Onyx REST stubs are URL-dispatched. **Not** live Stirling/Argo.
 
 ### 2026-08-05 — next cell: `codegraph-feature-api-surface`
 
