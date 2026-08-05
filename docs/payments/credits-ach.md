@@ -43,17 +43,17 @@ ACH can take **1–3 business days**. Credits settle on `payment_intent.succeede
 
 ## Feature flags
 
-| Env                                    | Default                               | Meaning                                                         |
-| -------------------------------------- | ------------------------------------- | --------------------------------------------------------------- |
-| `CLAWQL_CREDITS_ENABLED`               | off                                   | Enable prepaid credit ledger                                    |
-| `CLAWQL_ACH_TOPUP_ENABLED`             | on when credits + `STRIPE_SECRET_KEY` | Enable FC + ACH top-up path                                     |
-| `CLAWQL_ACH_TOPUP_DRY_RUN`             | off                                   | Create sessions / settle without live Stripe/ACH (tests, demos) |
-| `CLAWQL_CREDITS_RETURN_URL`            | —                                     | Optional return URL for Financial Connections                   |
-| `CLAWQL_CREDITS_TRANSFER_DIRECT`       | off                                   | Skip stage/confirm (break-glass / tests only)                   |
-| `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP` | off                                   | Require enrolled TOTP on transfer confirm                       |
-| `CLAWQL_CREDITS_HATEOAS_BASE`          | compensation / `clawql://tool`        | Public origin for pay/request/invite deep links + HTMX          |
-| `CLAWQL_CREDITS_PHONE_REQUIRE_VERIFIED`| off                                   | Require `--verified` when claiming a phone alias                |
-| `CLAWQL_CREDITS_PHONE_DEFAULT_CC`      | `1`                                   | Default country code for 10-digit national numbers              |
+| Env                                     | Default                               | Meaning                                                         |
+| --------------------------------------- | ------------------------------------- | --------------------------------------------------------------- |
+| `CLAWQL_CREDITS_ENABLED`                | off                                   | Enable prepaid credit ledger                                    |
+| `CLAWQL_ACH_TOPUP_ENABLED`              | on when credits + `STRIPE_SECRET_KEY` | Enable FC + ACH top-up path                                     |
+| `CLAWQL_ACH_TOPUP_DRY_RUN`              | off                                   | Create sessions / settle without live Stripe/ACH (tests, demos) |
+| `CLAWQL_CREDITS_RETURN_URL`             | —                                     | Optional return URL for Financial Connections                   |
+| `CLAWQL_CREDITS_TRANSFER_DIRECT`        | off                                   | Skip stage/confirm (break-glass / tests only)                   |
+| `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP`  | off                                   | Require enrolled TOTP on transfer confirm                       |
+| `CLAWQL_CREDITS_HATEOAS_BASE`           | compensation / `clawql://tool`        | Public origin for pay/request/invite deep links + HTMX          |
+| `CLAWQL_CREDITS_PHONE_REQUIRE_VERIFIED` | off                                   | Require `--verified` when claiming a phone alias                |
+| `CLAWQL_CREDITS_PHONE_DEFAULT_CC`       | `1`                                   | Default country code for 10-digit national numbers              |
 
 ## CLI
 

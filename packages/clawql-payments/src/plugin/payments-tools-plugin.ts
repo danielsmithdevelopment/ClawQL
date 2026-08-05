@@ -181,14 +181,8 @@ const creditsTransferStageSchema = {
     .string()
     .optional()
     .describe("Recipient ClawQL tenant id (use toHandle for @payee)"),
-  toHandle: z
-    .string()
-    .optional()
-    .describe("Recipient @username from payments directory"),
-  toEmail: z
-    .string()
-    .optional()
-    .describe("Recipient email (default directory identity)"),
+  toHandle: z.string().optional().describe("Recipient @username from payments directory"),
+  toEmail: z.string().optional().describe("Recipient email (default directory identity)"),
   amountUsd: z.number().positive().describe("Amount in USD to transfer from prepaid credits"),
   fromTenantId: z
     .string()
@@ -211,7 +205,9 @@ const creditsDirectoryClaimSchema = {
   phone: z
     .string()
     .optional()
-    .describe("Optional E.164 phone alias (+15551234567). Not a full IdP — verify via customer IdP."),
+    .describe(
+      "Optional E.164 phone alias (+15551234567). Not a full IdP — verify via customer IdP."
+    ),
   phoneVerified: z
     .boolean()
     .optional()
@@ -221,10 +217,7 @@ const creditsDirectoryClaimSchema = {
 };
 
 const creditsDirectoryResolveSchema = {
-  payee: z
-    .string()
-    .optional()
-    .describe("Email, @username, phone (+E.164), or tenant id"),
+  payee: z.string().optional().describe("Email, @username, phone (+E.164), or tenant id"),
   email: z.string().optional(),
   handle: z.string().optional().describe("Username e.g. @alice"),
   phone: z.string().optional().describe("E.164 phone e.g. +15551234567"),
@@ -449,8 +442,7 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               handle?: string;
               phone?: string;
             };
-            const raw =
-              a.payee?.trim() || a.email?.trim() || a.handle?.trim() || a.phone?.trim();
+            const raw = a.payee?.trim() || a.email?.trim() || a.handle?.trim() || a.phone?.trim();
             if (!raw) throw new Error("Provide payee, email, handle, or phone");
             if (a.email?.trim() && !a.payee) {
               const entry = await getEmailEntry(a.email);
@@ -477,7 +469,8 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
 
         yield* api.registerMcpTool({
           name: "payments_credits_contacts_add",
-          description: "Save a frequent payee (email / @username / phone) to the owner contacts book.",
+          description:
+            "Save a frequent payee (email / @username / phone) to the owner contacts book.",
           schema: {
             to: z.string().describe("Payee email, @username, phone, or tenant id"),
             label: z.string().optional(),
@@ -579,7 +572,10 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             amountUsd: z.number().positive().optional(),
             note: z.string().optional(),
             fromTenantId: z.string().optional(),
-            requestId: z.string().optional().describe("When set, emit a request deep link instead of pay"),
+            requestId: z
+              .string()
+              .optional()
+              .describe("When set, emit a request deep link instead of pay"),
             includeQrSvg: z
               .boolean()
               .optional()
@@ -652,9 +648,7 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               },
               env
             );
-            let email:
-              | Awaited<ReturnType<typeof sendMoneyRequestInviteEmail>>
-              | undefined;
+            let email: Awaited<ReturnType<typeof sendMoneyRequestInviteEmail>> | undefined;
             if (
               result.invite &&
               result.inviteToken &&
@@ -711,15 +705,13 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               email?: string;
               emailDryRun?: boolean;
             };
-            const { getMoneyRequest, buildRequestInviteUrl } = await import(
-              "../credits/requests.js"
-            );
+            const { getMoneyRequest, buildRequestInviteUrl } =
+              await import("../credits/requests.js");
             const req = await getMoneyRequest(a.requestId, env);
             if (!req) throw new Error("Unknown request id");
             const toEmail = a.email?.trim() || req.payerEmail;
             if (!toEmail) throw new Error("No payer email — pass email");
-            const inviteUrl =
-              req.inviteUrl || buildRequestInviteUrl(a.requestId, a.token, env);
+            const inviteUrl = req.inviteUrl || buildRequestInviteUrl(a.requestId, a.token, env);
             const requester = await getTenantEntry(req.requesterTenantId, env);
             return textResult(
               await sendMoneyRequestInviteEmail(

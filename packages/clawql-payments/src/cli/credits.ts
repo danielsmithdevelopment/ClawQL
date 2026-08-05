@@ -340,11 +340,7 @@ export async function runPaymentsCreditsTransfer(
       );
       if (options.json) {
         console.log(
-          JSON.stringify(
-            { ...result, toHandle: resolvedHandle, toEmail: resolvedEmail },
-            null,
-            2
-          )
+          JSON.stringify({ ...result, toHandle: resolvedHandle, toEmail: resolvedEmail }, null, 2)
         );
         return 0;
       }
@@ -502,16 +498,8 @@ export async function runPaymentsCreditsDirectoryList(
   }
   for (const e of entries) {
     const uname = e.handle ? `@${e.handle}` : "(no username)";
-    const mail = e.email
-      ? options.showEmail
-        ? e.email
-        : maskEmail(e.email)
-      : "(no email)";
-    const phone = e.phone
-      ? options.showEmail
-        ? e.phone
-        : maskPhone(e.phone)
-      : "";
+    const mail = e.email ? (options.showEmail ? e.email : maskEmail(e.email)) : "(no email)";
+    const phone = e.phone ? (options.showEmail ? e.phone : maskPhone(e.phone)) : "";
     console.log(
       `${uname.padEnd(16)} ${mail.padEnd(28)} ${phone.padEnd(14)} ${e.tenantId}${e.displayName ? `  (${e.displayName})` : ""}`
     );
@@ -670,9 +658,7 @@ export async function runPaymentsCreditsActivity(
       console.log(JSON.stringify(feed, null, 2));
       return 0;
     }
-    console.log(
-      `${feed.label ?? feed.tenantId}  balance $${(feed.balanceCents / 100).toFixed(2)}`
-    );
+    console.log(`${feed.label ?? feed.tenantId}  balance $${(feed.balanceCents / 100).toFixed(2)}`);
     if (feed.items.length === 0) {
       console.log("No recent activity.");
       return 0;
@@ -804,16 +790,12 @@ export async function runPaymentsCreditsRequestCreate(
       );
       if (emailResult) {
         if (emailResult.dryRun) {
-          console.log(
-            `\nInvite email dry-run → ${emailResult.to} (${emailResult.provider})`
-          );
+          console.log(`\nInvite email dry-run → ${emailResult.to} (${emailResult.provider})`);
           console.log(`Subject: ${emailResult.subject}`);
           console.log("---");
           console.log(emailResult.previewText);
           console.log("---");
-          console.log(
-            "Set CLAWQL_CREDITS_INVITE_EMAIL_DRY_RUN=0 + provider to send for real."
-          );
+          console.log("Set CLAWQL_CREDITS_INVITE_EMAIL_DRY_RUN=0 + provider to send for real.");
         } else if (emailResult.ok) {
           console.log(
             `Invite email sent via ${emailResult.provider} → ${emailResult.to}` +
@@ -933,13 +915,7 @@ export async function runPaymentsCreditsRequestList(
   const tenantId = options.tenantId?.trim() || config.tenantId;
   const role = options.role ?? "any";
   const status = options.status?.trim() as
-    | "pending"
-    | "accepted"
-    | "paid"
-    | "declined"
-    | "cancelled"
-    | "expired"
-    | undefined;
+    "pending" | "accepted" | "paid" | "declined" | "cancelled" | "expired" | undefined;
   const rows = await listMoneyRequests({ tenantId, role, status });
   if (options.json) {
     console.log(JSON.stringify(rows.map(publicMoneyRequest), null, 2));
@@ -950,9 +926,7 @@ export async function runPaymentsCreditsRequestList(
     return 0;
   }
   for (const r of rows) {
-    const who = r.payerHandle
-      ? `@${r.payerHandle}`
-      : r.payerEmail || r.payerTenantId || "(invite)";
+    const who = r.payerHandle ? `@${r.payerHandle}` : r.payerEmail || r.payerTenantId || "(invite)";
     console.log(
       `${r.requestId.slice(0, 8)}…  $${(r.amountCents / 100).toFixed(2).padStart(8)}  ${r.status.padEnd(10)}  ${r.requesterTenantId} ← ${who}${r.note ? `  (${r.note})` : ""}`
     );
@@ -1004,7 +978,9 @@ export async function runPaymentsCreditsRequestClaimInvite(
       displayName: options.displayName,
     });
     if (options.json) {
-      console.log(JSON.stringify({ request: publicMoneyRequest(request), directoryCreated }, null, 2));
+      console.log(
+        JSON.stringify({ request: publicMoneyRequest(request), directoryCreated }, null, 2)
+      );
       return 0;
     }
     console.log(
@@ -1181,9 +1157,7 @@ export async function runPaymentsCreditsContactsList(
     }
     for (const c of contacts) {
       const payee = options.showSecrets ? c.payee : maskContactPayee(c.payee);
-      console.log(
-        `${c.contactId.slice(0, 8)}…  ${(c.label ?? "").padEnd(16)} ${payee}`
-      );
+      console.log(`${c.contactId.slice(0, 8)}…  ${(c.label ?? "").padEnd(16)} ${payee}`);
     }
     return 0;
   } catch (err) {
