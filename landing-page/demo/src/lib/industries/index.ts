@@ -1,4 +1,5 @@
 import { educationIndustry } from './education'
+import { governmentIndustry } from './government'
 import { healthcareIndustry } from './healthcare'
 import { insuranceIndustry } from './insurance'
 import { legalIndustry } from './legal'
@@ -7,14 +8,18 @@ import { realEstateIndustry } from './real-estate'
 
 export type {
   Industry,
+  IndustryAudience,
+  IndustryAuditEvent,
   IndustryExample,
   IndustryResource,
+  IndustryStackRow,
   IndustryWorkflowStep,
 } from './types'
 
 export const industries = [
   lendingIndustry,
   realEstateIndustry,
+  governmentIndustry,
   healthcareIndustry,
   legalIndustry,
   insuranceIndustry,
