@@ -54,7 +54,7 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 
 Still missing after this wave: n≥3 trials; ops-only (Argo / live Onyx / live Slack / R2). Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Graded cells above are **`retired`**; **`pr_active`:** `codegraph-feature-api-surface` (grow OBT/RTP under schema 1.1). Ouroboros workflow is dispatch-only.
+**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Graded cells above are **`retired`**; **`pr_active` is empty** after `codegraph-feature-api-surface` WIN ([30981709304](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30981709304)); pending B-4.2/B-4.3 or P0 n≥3. Ouroboros workflow is dispatch-only.
 
 Explanations for every verified cell: [`openbench-task-explanations.md`](./openbench-task-explanations.md).
 

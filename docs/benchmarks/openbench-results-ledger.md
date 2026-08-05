@@ -1,3 +1,12 @@
+### 2026-08-05 — `codegraph-feature-api-surface` WIN (RTP 1.1)
+
+| Arm | Score             | Notes                                          |
+| --- | ----------------- | ---------------------------------------------- |
+| on  | **1.0** (6t, 53s) | Full widgets impact set + real codegraph tools |
+| off | **0.0** (8t, 79s) | No codegraph tools under REQUIRE_CODEGRAPH     |
+
+Run: [30981709304](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30981709304). Gate OK. **Durable R2:** 2 traces → `r2://clawql-openbench-traces/raw/2026/08/05/run-30981709304/codegraph-feature-api-surface/` (schema **1.1**, on-arm `suitable_for_training: true` + RTP). Prior partial [30980340926](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30980340926) (on 0.5). **Verdict:** retire from `pr_active`.
+
 ### 2026-08-05 — `codegraph-feature-api-surface` first live (RTP 1.1)
 
 | Arm | Score              | Notes                                                                   |

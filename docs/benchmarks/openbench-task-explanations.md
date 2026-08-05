@@ -166,6 +166,14 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | **Evidence**                | on **1.0** (3 turns, ~53s) / off **0.0** — [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377).                                                      |
 | **Does _not_ prove**        | Multi-language graphs; incremental re-index after edits; hybrid memory_recall `sources=[codegraph]`.                                                                                      |
 
+### `codegraph-feature-api-surface` (B-3 API surface)
+
+|                      |                                                                                                                                                |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Claim**            | Frugal model + codegraph finishes a multi-file GET /widgets/:id impact set; without tools it fails the codegraph evidence gate.                |
+| **Does _not_ prove** | Full SWE-bench Verified; `codegraph_impact` MCP name.                                                                                          |
+| **Evidence**         | Live WIN [30981709304](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30981709304) (on 1.0 / off 0.0); RTP v1.1 durable traces. |
+
 ### `codegraph-impact-edit` (B-3.1 lite)
 
 |                             |                                                                                                                                                                                                              |
