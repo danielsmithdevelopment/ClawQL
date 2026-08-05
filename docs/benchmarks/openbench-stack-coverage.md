@@ -42,6 +42,7 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 | `pageindex-section-qa`           | PageIndex build+synthesize finds buried code                | on **1.0** / off **0.0** ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522))                                                                                                 |
 | `codegraph-guided-edit`          | Structural index locates SECRET_MARKER                      | on **1.0** / off **0.0** ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377))                                                                                                 |
 | `codegraph-impact-edit`          | Cross-file rename via codegraph impact set (B-3.1)          | on **1.0** / off **0.0** ([30977578882](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30977578882))                                                                                                 |
+| `codegraph-feature-api-surface`  | Full GET /widgets/:id impact set via codegraph              | on **1.0** / off **0.0** ([30981709304](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30981709304))                                                                                                 |
 | `schedule-synthetic-dry-run`     | schedule create + dry_run trigger                           | on **1.0** / off **0.0** ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377))                                                                                                 |
 | `external-ingest-continue`       | Bulk MD ingest → recall                                     | on **1.0** / off **0.0** ([30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038))                                                                                                 |
 | `hybrid-recall-source-pin`       | PageIndex retrieves buried handbook code                    | on **1.0** / off **0.0** ([30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063))                                                                                                 |
@@ -172,7 +173,8 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 
 19. **`memory-conflict-pricing` (B-4.1)** — **WIN** retired ([30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746)).
 20. **`codegraph-impact-edit` (B-3.1 lite)** — **WIN** retired ([30977578882](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30977578882)).
-21. Spikes only: B-4.2 stale cache · B-4.3 Panguard×`memory_ingest` — ship only if product behavior matches claim.
+21. **`codegraph-feature-api-surface`** — **WIN** retired ([30981709304](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30981709304)); RTP v1.1 durable.
+22. Spikes only: B-4.2 stale cache · B-4.3 Panguard×`memory_ingest` — ship only if product behavior matches claim.
 
 Full breakdown (B-1 flywheel → B-6 domain HLE-analog): [`openbench-advanced-suites.md`](./openbench-advanced-suites.md). Trace collection from GHA: [`openbench-trace-collection.md`](./openbench-trace-collection.md).
 
