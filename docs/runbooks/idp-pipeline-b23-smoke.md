@@ -11,12 +11,12 @@ The stub cell [`idp-safe-pipeline-lite`](../benchmarks/openbench-task-explanatio
 
 ## What each tier proves
 
-| Tier | Real services? | Proves | Missing |
-| --- | --- | --- | --- |
-| **stub** (OpenBench) | No | Agent can sequence ClawQL tools | Any real PDF/vendor hop |
-| **offline** | No | Helm NATS wiring + `run_idp_pipeline` dry_run unit tests | Network I/O to vendors |
-| **compose** (default) | **Yes — Tika + Gotenberg** | Containers up; Tika actually parses text | Stirling, Nextcloud, Onyx, ConeShare, Argo |
-| **live** | Yes — your cluster/HTTP | Webhook dry_run against deployed ClawQL | Needs GitHub secrets |
+| Tier                  | Real services?             | Proves                                                   | Missing                                    |
+| --------------------- | -------------------------- | -------------------------------------------------------- | ------------------------------------------ |
+| **stub** (OpenBench)  | No                         | Agent can sequence ClawQL tools                          | Any real PDF/vendor hop                    |
+| **offline**           | No                         | Helm NATS wiring + `run_idp_pipeline` dry_run unit tests | Network I/O to vendors                     |
+| **compose** (default) | **Yes — Tika + Gotenberg** | Containers up; Tika actually parses text                 | Stirling, Nextcloud, Onyx, ConeShare, Argo |
+| **live**              | Yes — your cluster/HTTP    | Webhook dry_run against deployed ClawQL                  | Needs GitHub secrets                       |
 
 **Recommended proof path:** land **compose** green on every B2.3 PR → later add Stirling to compose → then **live** with staging secrets for full chain.
 
@@ -50,9 +50,9 @@ Artifacts: `artifacts/idp-b23-smoke/` (`pipeline-smoke.json`, `summary.json`).
 
 ### Live secrets
 
-| Secret | Purpose |
-| --- | --- |
-| `CLAWQL_HTTP_BASE` | ClawQL MCP HTTP base URL |
+| Secret                           | Purpose                       |
+| -------------------------------- | ----------------------------- |
+| `CLAWQL_HTTP_BASE`               | ClawQL MCP HTTP base URL      |
 | `CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN` | `POST /idp/nextcloud/webhook` |
 | `CLAWQL_CONESHARE_WEBHOOK_TOKEN` | `POST /idp/coneshare/webhook` |
 
