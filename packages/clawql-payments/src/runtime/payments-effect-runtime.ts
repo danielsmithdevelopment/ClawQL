@@ -12,6 +12,8 @@ import { rampLiveLayer } from "../ramp/ramp-service.js";
 import { consumerOffRampLiveLayer } from "../offramp/consumer-offramp-service.js";
 import { offrampWebhookLiveLayer } from "../offramp/offramp-webhook-service.js";
 import { creditsLiveLayer } from "../credits/credits-service.js";
+import { creditsLedgerLiveLayer } from "../credits/ledger.js";
+import { creditsDirectoryLiveLayer } from "../credits/directory.js";
 import { achTopupLiveLayer } from "../credits/ach-topup-service.js";
 import { agentCompensationLiveLayer } from "../compensation/agent-compensation-service.js";
 import { deductionLiveLayer } from "../credits/deduction-service.js";
@@ -58,6 +60,8 @@ export type PaymentsServices =
   | import("../offramp/consumer-offramp-service.js").ConsumerOffRampService
   | import("../offramp/offramp-webhook-service.js").OfframpWebhookService
   | import("../credits/credits-service.js").CreditsService
+  | import("../credits/ledger.js").CreditsLedgerService
+  | import("../credits/directory.js").CreditsDirectoryService
   | import("../credits/ach-topup-service.js").AchTopupService
   | import("../compensation/agent-compensation-service.js").AgentCompensationService
   | import("../credits/deduction-service.js").DeductionService
@@ -91,7 +95,9 @@ export function paymentsServicesLiveLayer(
   const ramp = rampLiveLayer(env).pipe(Layer.provide(audit));
   const offramp = consumerOffRampLiveLayer(env).pipe(Layer.provide(audit));
   const offrampWebhook = offrampWebhookLiveLayer(env).pipe(Layer.provide(audit));
-  const credits = creditsLiveLayer(env).pipe(Layer.provide(audit));
+  const ledger = creditsLedgerLiveLayer(env);
+  const directory = creditsDirectoryLiveLayer(env);
+  const credits = creditsLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(audit, ledger)));
   const achTopup = achTopupLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(audit, stripeClient, credits))
   );
@@ -100,7 +106,7 @@ export function paymentsServicesLiveLayer(
   );
   const deductionBus = deductionEventBusLiveLayer(env);
   const deduction = deductionLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(audit, deductionBus))
+    Layer.provide(Layer.mergeAll(audit, deductionBus, ledger))
   );
 
   const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
@@ -153,6 +159,8 @@ export function paymentsServicesLiveLayer(
     ramp,
     offramp,
     offrampWebhook,
+    ledger,
+    directory,
     credits,
     achTopup,
     compensation,

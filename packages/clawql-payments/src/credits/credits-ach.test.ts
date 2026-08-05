@@ -9,7 +9,11 @@ import { stripeClientLiveLayer } from "../stripe/stripe-client-service.js";
 import { resetPaymentAuditStoreForTests } from "../audit/index.js";
 import { AchTopupService, achTopupLiveLayer } from "./ach-topup-service.js";
 import { CreditsService, creditsLiveLayer } from "./credits-service.js";
-import { getCreditAccount, resetCreditsLedgerForTests } from "./ledger.js";
+import {
+  creditsLedgerLiveLayer,
+  getCreditAccount,
+  resetCreditsLedgerForTests,
+} from "./ledger.js";
 import { Layer } from "effect";
 
 describe("credits + ACH top-up (dry-run)", () => {
@@ -38,11 +42,12 @@ describe("credits + ACH top-up (dry-run)", () => {
   const testLayer = () => {
     const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(AuditLive));
     const stripe = stripeClientLiveLayer(process.env);
-    const credits = creditsLiveLayer(process.env).pipe(Layer.provide(audit));
+    const ledger = creditsLedgerLiveLayer(process.env);
+    const credits = creditsLiveLayer(process.env).pipe(Layer.provide(Layer.mergeAll(audit, ledger)));
     const ach = achTopupLiveLayer(process.env).pipe(
       Layer.provide(Layer.mergeAll(audit, stripe, credits))
     );
-    return Layer.mergeAll(audit, stripe, credits, ach);
+    return Layer.mergeAll(audit, stripe, ledger, credits, ach);
   };
 
   it("bank-link + topup dry-run settles credits", async () => {

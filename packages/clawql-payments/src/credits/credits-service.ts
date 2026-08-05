@@ -26,13 +26,11 @@ import {
   buildCreditsTransferConfirmUrl,
 } from "./deeplinks.js";
 import {
-  appendCreditEntry,
-  getCreditAccount,
-  settleTopupByPaymentIntent,
-  transferCredits,
+  CreditsLedgerService,
   type CreditAccount,
   type CreditLedgerEntry,
   type CreditTransferResult,
+  type LedgerError,
 } from "./ledger.js";
 import { requireStepUpTotp } from "./step-up.js";
 import { markMoneyRequestPaid } from "./requests.js";
@@ -120,26 +118,24 @@ export class CreditsService extends Context.Tag("clawql/CreditsService")<
 
 export function creditsLiveLayer(
   env: NodeJS.ProcessEnv = process.env
-): Layer.Layer<CreditsService, never, PaymentAuditService> {
+): Layer.Layer<CreditsService, never, PaymentAuditService | CreditsLedgerService> {
   return Layer.effect(
     CreditsService,
     Effect.gen(function* () {
       const audit = yield* PaymentAuditService;
+      const ledger = yield* CreditsLedgerService;
+
+      const toCreditsError = (error: LedgerError) =>
+        new CreditsError({ reason: error.reason, cause: error.cause });
 
       const getBalance = (tenantId: string) =>
-        Effect.tryPromise({
-          try: async () => {
-            if (!isCreditsEnabled(env)) {
-              throw new CreditsError({
-                reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1",
-              });
-            }
-            return getCreditAccount(tenantId, env);
-          },
-          catch: (cause) =>
-            cause instanceof CreditsError
-              ? cause
-              : new CreditsError({ reason: "Failed to load credit balance", cause }),
+        Effect.gen(function* () {
+          if (!isCreditsEnabled(env)) {
+            return yield* Effect.fail(
+              new CreditsError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
+            );
+          }
+          return yield* ledger.getAccount(tenantId).pipe(Effect.mapError(toCreditsError));
         });
 
       const debit = (input: {
@@ -158,24 +154,15 @@ export function creditsLiveLayer(
           if (!Number.isFinite(input.amountCents) || input.amountCents <= 0) {
             return yield* Effect.fail(new CreditsError({ reason: "amountCents must be > 0" }));
           }
-          const entry = yield* Effect.tryPromise({
-            try: () =>
-              appendCreditEntry(
-                {
-                  tenantId: input.tenantId,
-                  kind: "debit",
-                  deltaCents: -Math.round(input.amountCents),
-                  correlationId: input.correlationId,
-                  note: input.note ?? input.resource,
-                },
-                env
-              ),
-            catch: (cause) =>
-              new CreditsError({
-                reason: cause instanceof Error ? cause.message : "Credit debit failed",
-                cause,
-              }),
-          });
+          const entry = yield* ledger
+            .appendEntry({
+              tenantId: input.tenantId,
+              kind: "debit",
+              deltaCents: -Math.round(input.amountCents),
+              correlationId: input.correlationId,
+              note: input.note ?? input.resource,
+            })
+            .pipe(Effect.mapError(toCreditsError));
           yield* audit
             .appendEntry(
               buildCreditDebitedEntry({
@@ -202,14 +189,7 @@ export function creditsLiveLayer(
               new CreditsError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
             );
           }
-          const result = yield* Effect.tryPromise({
-            try: () => settleTopupByPaymentIntent(input, env),
-            catch: (cause) =>
-              new CreditsError({
-                reason: cause instanceof Error ? cause.message : "Top-up settle failed",
-                cause,
-              }),
-          });
+          const result = yield* ledger.settleTopup(input).pipe(Effect.mapError(toCreditsError));
           if (!result.alreadySettled) {
             yield* audit
               .appendEntry(
@@ -234,26 +214,17 @@ export function creditsLiveLayer(
         correlationId?: string;
       }) =>
         Effect.gen(function* () {
-          const entry = yield* Effect.tryPromise({
-            try: () =>
-              appendCreditEntry(
-                {
-                  tenantId: input.tenantId,
-                  kind: "topup_failed",
-                  deltaCents: 0,
-                  paymentIntentId: input.paymentIntentId,
-                  correlationId: input.correlationId,
-                  note: input.reason,
-                  id: `fail_${input.paymentIntentId}`,
-                },
-                env
-              ),
-            catch: (cause) =>
-              new CreditsError({
-                reason: cause instanceof Error ? cause.message : "Top-up fail mark failed",
-                cause,
-              }),
-          });
+          const entry = yield* ledger
+            .appendEntry({
+              tenantId: input.tenantId,
+              kind: "topup_failed",
+              deltaCents: 0,
+              paymentIntentId: input.paymentIntentId,
+              correlationId: input.correlationId,
+              note: input.reason,
+              id: `fail_${input.paymentIntentId}`,
+            })
+            .pipe(Effect.mapError(toCreditsError));
           yield* audit
             .appendEntry(
               buildCreditTopupFailedEntry({
@@ -292,14 +263,7 @@ export function creditsLiveLayer(
               })
             );
           }
-          const result = yield* Effect.tryPromise({
-            try: () => transferCredits(input, env),
-            catch: (cause) =>
-              new CreditsError({
-                reason: cause instanceof Error ? cause.message : "Credit transfer failed",
-                cause,
-              }),
-          });
+          const result = yield* ledger.transfer(input).pipe(Effect.mapError(toCreditsError));
           if (!result.alreadyExisted) {
             const amountUsd = result.amountCents / 100;
             yield* audit

@@ -19,13 +19,11 @@ import {
 } from "../audit/events.js";
 import { isCreditsEnabled } from "./config.js";
 import {
-  captureHold,
-  getCreditAccount,
-  holdCredits,
-  releaseHold,
+  CreditsLedgerService,
   type CreditAccount,
   type CreditHold,
   type CreditLedgerEntry,
+  type LedgerError,
 } from "./ledger.js";
 import { DeductionEventBus, buildDeductionEvent } from "./deduction-event-bus.js";
 
@@ -94,32 +92,28 @@ export class DeductionService extends Context.Tag("clawql/DeductionService")<
   }
 >() {}
 
-function mapLedgerError(cause: unknown): DeductionError {
-  if (cause instanceof DeductionError) return cause;
-  const message = cause instanceof Error ? cause.message : "Deduction failed";
-  return new DeductionError({ reason: message, cause });
+function mapLedgerError(error: LedgerError): DeductionError {
+  return new DeductionError({ reason: error.reason, cause: error.cause });
 }
 
 export function deductionLiveLayer(
   env: NodeJS.ProcessEnv = process.env
-): Layer.Layer<DeductionService, never, PaymentAuditService | DeductionEventBus> {
+): Layer.Layer<DeductionService, never, PaymentAuditService | DeductionEventBus | CreditsLedgerService> {
   return Layer.effect(
     DeductionService,
     Effect.gen(function* () {
       const audit = yield* PaymentAuditService;
       const bus = yield* DeductionEventBus;
+      const ledger = yield* CreditsLedgerService;
 
       const getSpendableBalance = (tenantId: string) =>
-        Effect.tryPromise({
-          try: async () => {
-            if (!isCreditsEnabled(env)) {
-              throw new DeductionError({
-                reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1",
-              });
-            }
-            return getCreditAccount(tenantId, env);
-          },
-          catch: mapLedgerError,
+        Effect.gen(function* () {
+          if (!isCreditsEnabled(env)) {
+            return yield* Effect.fail(
+              new DeductionError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
+            );
+          }
+          return yield* ledger.getAccount(tenantId).pipe(Effect.mapError(mapLedgerError));
         });
 
       const hold = (input: {
@@ -138,10 +132,7 @@ export function deductionLiveLayer(
               })
             );
           }
-          const result = yield* Effect.tryPromise({
-            try: () => holdCredits(input, env),
-            catch: mapLedgerError,
-          });
+          const result = yield* ledger.hold(input).pipe(Effect.mapError(mapLedgerError));
           if (!result.alreadyExisted) {
             yield* audit
               .appendEntry(
@@ -182,10 +173,7 @@ export function deductionLiveLayer(
         note?: string;
       }) =>
         Effect.gen(function* () {
-          const result = yield* Effect.tryPromise({
-            try: () => captureHold(input, env),
-            catch: mapLedgerError,
-          });
+          const result = yield* ledger.capture(input).pipe(Effect.mapError(mapLedgerError));
           if (!result.alreadyCaptured) {
             yield* audit
               .appendEntry(
@@ -225,10 +213,7 @@ export function deductionLiveLayer(
         note?: string;
       }) =>
         Effect.gen(function* () {
-          const result = yield* Effect.tryPromise({
-            try: () => releaseHold(input, env),
-            catch: mapLedgerError,
-          });
+          const result = yield* ledger.release(input).pipe(Effect.mapError(mapLedgerError));
           if (!result.alreadyReleased) {
             yield* audit
               .appendEntry(

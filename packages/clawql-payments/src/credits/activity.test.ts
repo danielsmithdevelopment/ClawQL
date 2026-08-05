@@ -7,7 +7,11 @@ import { AuditLive } from "clawql-core";
 import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
 import { resetPaymentAuditStoreForTests } from "../audit/worm.js";
 import { resetPaymentsEffectRuntimeForTests } from "../runtime/payments-effect-runtime.js";
-import { appendCreditEntry, resetCreditsLedgerForTests } from "./ledger.js";
+import {
+  appendCreditEntry,
+  creditsLedgerLiveLayer,
+  resetCreditsLedgerForTests,
+} from "./ledger.js";
 import { claimDirectory, resetDirectoryForTests } from "./directory.js";
 import { CreditsService, creditsLiveLayer } from "./credits-service.js";
 import { acceptMoneyRequest, createMoneyRequest, resetMoneyRequestsForTests } from "./requests.js";
@@ -42,7 +46,8 @@ describe("credits activity feed", () => {
 
   const layer = () => {
     const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(AuditLive));
-    return creditsLiveLayer(process.env).pipe(Layer.provide(audit));
+    const ledger = creditsLedgerLiveLayer(process.env);
+    return creditsLiveLayer(process.env).pipe(Layer.provide(Layer.mergeAll(audit, ledger)));
   };
 
   it("merges transfers and open requests with directory labels", async () => {

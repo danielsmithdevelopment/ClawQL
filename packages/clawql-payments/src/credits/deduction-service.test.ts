@@ -11,7 +11,11 @@ import { AchTopupService, achTopupLiveLayer } from "./ach-topup-service.js";
 import { CreditsService, creditsLiveLayer } from "./credits-service.js";
 import { DeductionService, deductionLiveLayer } from "./deduction-service.js";
 import { deductionEventBusLiveLayer } from "./deduction-event-bus.js";
-import { getCreditAccount, resetCreditsLedgerForTests } from "./ledger.js";
+import {
+  creditsLedgerLiveLayer,
+  getCreditAccount,
+  resetCreditsLedgerForTests,
+} from "./ledger.js";
 import { stripeClientLiveLayer } from "../stripe/stripe-client-service.js";
 
 describe("DeductionService (sync hold → capture/release → outbox)", () => {
@@ -41,15 +45,16 @@ describe("DeductionService (sync hold → capture/release → outbox)", () => {
   const testLayer = () => {
     const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(AuditLive));
     const stripe = stripeClientLiveLayer(process.env);
-    const credits = creditsLiveLayer(process.env).pipe(Layer.provide(audit));
+    const ledger = creditsLedgerLiveLayer(process.env);
+    const credits = creditsLiveLayer(process.env).pipe(Layer.provide(Layer.mergeAll(audit, ledger)));
     const ach = achTopupLiveLayer(process.env).pipe(
       Layer.provide(Layer.mergeAll(audit, stripe, credits))
     );
     const bus = deductionEventBusLiveLayer(process.env);
     const deduction = deductionLiveLayer(process.env).pipe(
-      Layer.provide(Layer.mergeAll(audit, bus))
+      Layer.provide(Layer.mergeAll(audit, bus, ledger))
     );
-    return Layer.mergeAll(audit, stripe, credits, ach, bus, deduction);
+    return Layer.mergeAll(audit, stripe, ledger, credits, ach, bus, deduction);
   };
 
   async function fund(tenantId: string, amountUsd: number) {

@@ -8,7 +8,11 @@ import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
 import { listPaymentAuditEntries, resetPaymentAuditStoreForTests } from "../audit/worm.js";
 import { resetPaymentsEffectRuntimeForTests } from "../runtime/payments-effect-runtime.js";
 import { CreditsService, creditsLiveLayer } from "./credits-service.js";
-import { appendCreditEntry, resetCreditsLedgerForTests } from "./ledger.js";
+import {
+  appendCreditEntry,
+  creditsLedgerLiveLayer,
+  resetCreditsLedgerForTests,
+} from "./ledger.js";
 
 describe("credits P2P transfer", () => {
   let home: string;
@@ -39,7 +43,8 @@ describe("credits P2P transfer", () => {
 
   const layer = () => {
     const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(AuditLive));
-    return creditsLiveLayer(process.env).pipe(Layer.provide(audit));
+    const ledger = creditsLedgerLiveLayer(process.env);
+    return creditsLiveLayer(process.env).pipe(Layer.provide(Layer.mergeAll(audit, ledger)));
   };
 
   it("moves balance from sender to recipient and writes WORM legs", async () => {

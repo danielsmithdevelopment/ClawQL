@@ -7,6 +7,7 @@
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { Context, Data, Effect, Layer } from "effect";
 import { resolvePaymentsDir } from "../config/paths.js";
 
 export type DirectoryEntry = {
@@ -601,4 +602,70 @@ export async function resolveRecipient(
 /** Reset directory file (tests). */
 export async function resetDirectoryForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveFile(emptyFile(), env);
+}
+
+export class DirectoryError extends Data.TaggedError("DirectoryError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+type ResolveRecipientOptions = { forceHandle?: boolean; forceEmail?: boolean; forcePhone?: boolean };
+
+/** Effect surface over the payments directory (email / handle / phone → tenant). */
+export class CreditsDirectoryService extends Context.Tag("clawql/CreditsDirectoryService")<
+  CreditsDirectoryService,
+  {
+    readonly getEmail: (email: string) => Effect.Effect<DirectoryEntry | undefined, DirectoryError>;
+    readonly getHandle: (
+      handle: string
+    ) => Effect.Effect<DirectoryEntry | undefined, DirectoryError>;
+    readonly getPhone: (phone: string) => Effect.Effect<DirectoryEntry | undefined, DirectoryError>;
+    readonly getTenant: (
+      tenantId: string
+    ) => Effect.Effect<DirectoryEntry | undefined, DirectoryError>;
+    readonly list: () => Effect.Effect<DirectoryEntry[], DirectoryError>;
+    readonly claim: (
+      input: ClaimDirectoryInput
+    ) => Effect.Effect<{ entry: DirectoryEntry; created: boolean }, DirectoryError>;
+    readonly releaseEmail: (email: string) => Effect.Effect<boolean, DirectoryError>;
+    readonly releaseHandle: (handle: string) => Effect.Effect<boolean, DirectoryError>;
+    readonly releasePhone: (phone: string) => Effect.Effect<boolean, DirectoryError>;
+    readonly resolveRecipient: (
+      raw: string,
+      options?: ResolveRecipientOptions
+    ) => Effect.Effect<ResolvedRecipient, DirectoryError>;
+    readonly reset: () => Effect.Effect<void, DirectoryError>;
+  }
+>() {}
+
+export function creditsDirectoryLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<CreditsDirectoryService> {
+  const run = <A>(reason: string, task: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: task,
+      catch: (cause) =>
+        cause instanceof DirectoryError
+          ? cause
+          : new DirectoryError({ reason: cause instanceof Error ? cause.message : reason, cause }),
+    });
+
+  return Layer.succeed(
+    CreditsDirectoryService,
+    CreditsDirectoryService.of({
+      getEmail: (email) => run("Failed to load email entry", () => getEmailEntry(email, env)),
+      getHandle: (handle) => run("Failed to load handle entry", () => getHandleEntry(handle, env)),
+      getPhone: (phone) => run("Failed to load phone entry", () => getPhoneEntry(phone, env)),
+      getTenant: (tenantId) =>
+        run("Failed to load tenant entry", () => getTenantEntry(tenantId, env)),
+      list: () => run("Failed to list directory", () => listDirectory(env)),
+      claim: (input) => run("Failed to claim directory entry", () => claimDirectory(input, env)),
+      releaseEmail: (email) => run("Failed to release email", () => releaseEmail(email, env)),
+      releaseHandle: (handle) => run("Failed to release handle", () => releaseHandle(handle, env)),
+      releasePhone: (phone) => run("Failed to release phone", () => releasePhone(phone, env)),
+      resolveRecipient: (raw, options) =>
+        run("Failed to resolve recipient", () => resolveRecipient(raw, env, options)),
+      reset: () => run("Failed to reset directory", () => resetDirectoryForTests(env)),
+    })
+  );
 }
