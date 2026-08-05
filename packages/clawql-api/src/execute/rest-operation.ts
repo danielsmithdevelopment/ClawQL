@@ -69,7 +69,7 @@ function getFetchImplForRest(): typeof baseFetch {
     const slackFetch = createTestSlackFetch();
     const onyxFetch = createTestOnyxFetch();
     return ((url: string | URL, init?: FetchRequestInit) => {
-      let host = "";
+      let host: string;
       try {
         host = new URL(String(url)).hostname.toLowerCase();
       } catch {
