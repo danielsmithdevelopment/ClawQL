@@ -3,13 +3,12 @@
  * Mount with {@link attachCreditsHateoasRoutes} on the MCP HTTP gateway.
  *
  * Money movement still requires stage → confirm (accept only stages).
- * These routes are for deep-link landing + local/dev HTMX; put them behind
- * gateway auth in production.
  */
 
 import { Effect } from "effect";
 import type { Express, Request, Response } from "express";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
+import { getActivityFeed, type ActivityItem } from "./activity.js";
 import { CreditsService } from "./credits-service.js";
 import {
   buildClawqlPayUri,
@@ -23,10 +22,15 @@ import {
 } from "./deeplinks.js";
 import {
   escapeHtml,
+  renderCreditsActivityHtml,
   renderCreditsHateoasPage,
   renderCreditsMiniHomeHtml,
+  renderCreditsPayComposeHtml,
+  renderCreditsRequestComposeHtml,
+  renderCreditsTopupHtml,
   renderQrSvg,
   wantsHtml,
+  type MiniHomeRecentItem,
 } from "./hateoas-html.js";
 import {
   acceptMoneyRequest,
@@ -38,6 +42,66 @@ import {
 } from "./requests.js";
 
 const esc = escapeHtml;
+
+function tenantFromQuery(req: Request): string {
+  const q = req.query as Record<string, string | undefined>;
+  return String(q.tenant ?? q.tenantId ?? "default").trim() || "default";
+}
+
+function recentFromFeed(items: ActivityItem[]): MiniHomeRecentItem[] {
+  return items.slice(0, 8).map((item) => {
+    const signed = item.amountCents;
+    const dollars = Math.abs(signed) / 100;
+    const sign = signed > 0 ? "+" : signed < 0 ? "−" : "";
+    const who = item.counterpartyLabel ?? item.counterpartyTenantId ?? "";
+    let title: string;
+    switch (item.kind) {
+      case "transfer_sent":
+        title = who ? `Sent to ${who}` : "Sent";
+        break;
+      case "transfer_received":
+        title = who ? `From ${who}` : "Received";
+        break;
+      case "request_out":
+        title = who ? `Request → ${who}` : "Request out";
+        break;
+      case "request_in":
+        title = who ? `Request ← ${who}` : "Request in";
+        break;
+      case "topup":
+        title = "Top up";
+        break;
+      default:
+        title = item.kind.replace(/_/g, " ");
+    }
+    if (item.note) title = `${title} · ${item.note}`;
+    return {
+      title,
+      when: item.ts.slice(0, 10),
+      amountLabel: `${sign}$${dollars.toFixed(2)}`,
+      positive: signed > 0,
+      href: item.requestId ? `/credits/request/${item.requestId}` : undefined,
+    };
+  });
+}
+
+async function homeHtml(tenantId: string): Promise<string> {
+  try {
+    const feed = await getActivityFeed({ tenantId, limit: 5, filter: "money" });
+    return renderCreditsMiniHomeHtml({
+      tenantId: feed.tenantId,
+      label: feed.label,
+      balanceCents: feed.balanceCents,
+      recent: recentFromFeed(feed.items),
+    });
+  } catch {
+    return renderCreditsMiniHomeHtml({
+      tenantId,
+      balanceCents: 0,
+      recent: [],
+    });
+  }
+}
 
 function payPageHtml(pay: PayDeepLink): string {
   const envelope = payHateoasEnvelope(pay);
@@ -52,13 +116,14 @@ function payPageHtml(pay: PayDeepLink): string {
     pay.amountUsd != null ? `$${Number(pay.amountUsd).toFixed(2)}` : "Credits";
 
   const body = `
-    <header>
+    <a class="back" href="/credits">← Home</a>
+    <div class="topbar" style="margin-top:0.75rem">
       <h1 class="brand">Claw<span>QL</span></h1>
-      <p class="lede">Send prepaid credits. This page does not move money — confirm in the CLI.</p>
-    </header>
+    </div>
     <section class="hero" aria-label="Payment">
       <p class="amount">${esc(amountLabel)}</p>
       <p class="payee">to <strong>${esc(pay.to)}</strong>${pay.note ? ` · ${esc(pay.note)}` : ""}</p>
+      <p class="lede">This page does not move money — confirm in the CLI.</p>
       <div class="cta-row">
         <a class="btn" href="${esc(clawql)}">Open clawql://</a>
         <button type="button" class="btn ghost" data-cli="${esc(cli)}" onclick="navigator.clipboard.writeText(this.dataset.cli)">Copy CLI</button>
@@ -87,11 +152,13 @@ function payPageHtml(pay: PayDeepLink): string {
 
 function invitePageHtml(token: string, requestId: string): string {
   const body = `
-    <header>
+    <a class="back" href="/credits">← Home</a>
+    <div class="topbar" style="margin-top:0.75rem">
       <h1 class="brand">Claw<span>QL</span></h1>
-      <p class="lede">Join and link this money request to your directory identity.</p>
-    </header>
+    </div>
     <section class="hero">
+      <h1 class="page-title" style="margin-top:0">Invite</h1>
+      <p class="lede">Join and link this money request to your directory identity.</p>
       <p class="payee">Request <code>${esc(requestId)}</code></p>
       <form hx-post="/credits/request/invite/claim" hx-target="#result" hx-swap="innerHTML" class="compose-grid">
         <input type="hidden" name="token" value="${esc(token)}" />
@@ -99,7 +166,7 @@ function invitePageHtml(token: string, requestId: string): string {
         <label>Tenant id <input name="tenantId" required autocomplete="username" placeholder="your-tenant" /></label>
         <label>Email <input name="email" type="email" autocomplete="email" placeholder="optional if invite email known" /></label>
         <label>Optional @username <input name="handle" type="text" autocomplete="nickname" placeholder="optional" /></label>
-        <div class="cta-row"><button type="submit">Claim invite</button></div>
+        <div class="cta-row"><button class="primary" type="submit">Claim invite</button></div>
       </form>
       <div id="result"></div>
     </section>
@@ -117,11 +184,12 @@ function requestPageHtml(reqRow: MoneyRequest): string {
   const amountUsd = (reqRow.amountCents / 100).toFixed(2);
   const self = buildRequestDeepLink({ requestId: reqRow.requestId });
   const body = `
-    <header>
+    <a class="back" href="/credits">← Home</a>
+    <div class="topbar" style="margin-top:0.75rem">
       <h1 class="brand">Claw<span>QL</span></h1>
-      <p class="lede">Money request · ${esc(reqRow.status)}. Accept only stages payment.</p>
-    </header>
+    </div>
     <section class="hero">
+      <p class="lede">Money request · ${esc(reqRow.status)}. Accept only stages payment.</p>
       <p class="amount">$${esc(amountUsd)}</p>
       <p class="payee">from <strong>${esc(reqRow.requesterTenantId)}</strong>
         → ${esc(reqRow.payerTenantId ?? "invite pending")}${reqRow.note ? ` · ${esc(reqRow.note)}` : ""}</p>
@@ -131,7 +199,7 @@ function requestPageHtml(reqRow: MoneyRequest): string {
       <form hx-post="/credits/request/${esc(reqRow.requestId)}/accept" hx-target="#result" hx-swap="innerHTML" class="compose-grid">
         <label>Payer tenant id <input name="payerTenantId" value="${esc(reqRow.payerTenantId ?? "")}" required /></label>
         <div class="cta-row">
-          <button type="submit">Accept (stage)</button>
+          <button class="primary" type="submit">Accept (stage)</button>
         </div>
       </form>
       <form hx-post="/credits/request/${esc(reqRow.requestId)}/decline" hx-target="#result" hx-swap="innerHTML" class="compose-grid">
@@ -186,18 +254,42 @@ function sendJsonOrHtml(
  * Attach GET/POST routes under `/credits/*` for deep-link landing + HTMX actions.
  */
 export function attachCreditsHateoasRoutes(app: Express): void {
-  app.get("/credits", (_req: Request, res: Response) => {
-    res.type("html").send(renderCreditsMiniHomeHtml());
+  app.get("/credits", async (req: Request, res: Response) => {
+    res.type("html").send(await homeHtml(tenantFromQuery(req)));
   });
-  app.get("/credits/ui", (_req: Request, res: Response) => {
-    res.type("html").send(renderCreditsMiniHomeHtml());
+  app.get("/credits/ui", async (req: Request, res: Response) => {
+    res.type("html").send(await homeHtml(tenantFromQuery(req)));
+  });
+
+  app.get("/credits/topup", (req: Request, res: Response) => {
+    res.type("html").send(renderCreditsTopupHtml(tenantFromQuery(req)));
+  });
+
+  app.get("/credits/activity", async (req: Request, res: Response) => {
+    const tenantId = tenantFromQuery(req);
+    try {
+      const feed = await getActivityFeed({ tenantId, limit: 40, filter: "money" });
+      res.type("html").send(
+        renderCreditsActivityHtml({
+          tenantId: feed.tenantId,
+          label: feed.label,
+          balanceCents: feed.balanceCents,
+          recent: recentFromFeed(feed.items),
+        })
+      );
+    } catch (e) {
+      res
+        .status(500)
+        .type("text/plain")
+        .send(e instanceof Error ? e.message : String(e));
+    }
   });
 
   app.get("/credits/pay", (req: Request, res: Response) => {
     try {
       const q = req.query as Record<string, string | undefined>;
       if (!String(q.to ?? "").trim()) {
-        res.type("html").send(renderCreditsMiniHomeHtml());
+        res.type("html").send(renderCreditsPayComposeHtml(tenantFromQuery(req)));
         return;
       }
       const pay = parsePayDeepLinkQuery(q);
@@ -217,6 +309,10 @@ export function attachCreditsHateoasRoutes(app: Express): void {
     } catch (e) {
       res.status(400).type("text/plain").send(e instanceof Error ? e.message : String(e));
     }
+  });
+
+  app.get("/credits/request/new", (req: Request, res: Response) => {
+    res.type("html").send(renderCreditsRequestComposeHtml(tenantFromQuery(req)));
   });
 
   app.get("/credits/request/invite", (req: Request, res: Response) => {

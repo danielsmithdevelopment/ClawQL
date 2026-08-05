@@ -2,16 +2,20 @@
 
 Shareable pay and money-request links for prepaid P2P — same addressing as `credits pay` / `credits request`, without moving money until stage → confirm.
 
-Also hosts a **one-screen mini UI** (brand-first, not a dashboard) at `/credits`.
+Also hosts a **brand-first mini UI** at `/credits`: total balance, four verbs (Top up · Pay · Request · Activity), and a recent strip — X Money grammar, ClawQL voice (not a bank dashboard).
 
 ## URLs
 
 | Kind | Shape |
 | ---- | ----- |
-| Mini home | `{base}/credits` or `{base}/credits/ui` |
-| Pay (HTTP) | `{base}/credits/pay?to=@bob&amount=10&note=coffee` |
+| Mini home | `{base}/credits` or `{base}/credits/ui` (`?tenant=`) |
+| Top up | `{base}/credits/topup?tenant=` |
+| Pay compose | `{base}/credits/pay?tenant=` (no `to`) |
+| Pay landing | `{base}/credits/pay?to=@bob&amount=10&note=coffee` |
 | Pay (scheme) | `clawql://pay?to=@bob&amount=10` |
+| Request compose | `{base}/credits/request/new?tenant=` |
 | Request | `{base}/credits/request/{requestId}` |
+| Activity | `{base}/credits/activity?tenant=` |
 | Invite | `{base}/credits/request/invite?request_id=…&token=…` |
 | QR SVG | `{base}/credits/qr.svg?to=…&amount=…` (encodes `clawql://pay?…`) |
 
@@ -21,9 +25,12 @@ Also hosts a **one-screen mini UI** (brand-first, not a dashboard) at `/credits`
 
 When the MCP HTTP server is up, these are mounted under `/credits/*`:
 
-- **GET** `/credits` · `/credits/ui` — compose home (to / amount / note → pay link)
-- **GET** `/credits/pay` — brand-first pay landing + QR (Accept: HTML or JSON HATEOAS envelope); empty `to` → compose home
+- **GET** `/credits` · `/credits/ui` — home: Total balance + Top up / Pay / Request / Activity + recent
+- **GET** `/credits/topup` — ACH top-up CLI hints
+- **GET** `/credits/pay` — without `to`: pay compose; with `to`: pay landing + QR (Accept: HTML or JSON HATEOAS)
 - **GET** `/credits/qr.svg` — payment QR
+- **GET** `/credits/request/new` — request compose (copies CLI)
+- **GET** `/credits/activity` — full recent list for `?tenant=`
 - **GET** `/credits/request/invite` — claim form (token-gated)
 - **POST** `/credits/request/invite/claim` — HTMX claim
 - **GET** `/credits/request/:id` — status + accept/decline forms
@@ -34,9 +41,10 @@ Put these behind gateway auth in production; accept only **stages** — confirm 
 
 ### Mini UI notes
 
-- Brand (**ClawQL**) is the hero signal; one headline amount + payee; QR is the full-bleed visual plane
-- No money movement in the browser — CTAs copy CLI / open `clawql://`
-- Motion: brand rise, amount scale-in, QR fade (respects `prefers-reduced-motion`)
+- Grammar mirrors consumer P2P home: **balance → verbs → activity** (no debit/APY/card tiles)
+- Brand (**ClawQL**) leads the shell; amount is the primary number; QR is the visual plane on pay landing
+- No money movement in the browser — CTAs stage via CLI / `clawql://`
+- Motion: rise-in sections + amount scale-in (respects `prefers-reduced-motion`)
 
 ## CLI
 

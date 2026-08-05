@@ -17,7 +17,7 @@ ClawQL is **not** a consumer bank. Balances are prepaid credits; bank/USDC off-r
 | Activity feed | ✅ | [`activity-feed.md`](./activity-feed.md) |
 | QR / deep links (HATEOAS + HTMX) | ✅ | [`credits-deeplinks.md`](./credits-deeplinks.md) |
 | Contacts + phone alias | ✅ | [`credits-contacts.md`](./credits-contacts.md) |
-| Hosted mini UI | ✅ | `/credits` brand-first compose + pay landing — [`credits-deeplinks.md`](./credits-deeplinks.md) |
+| Hosted mini UI | ✅ | `/credits` balance + verbs + activity — [`credits-deeplinks.md`](./credits-deeplinks.md) |
 | Invite email (dry-run first) | ✅ | [`credits-invite-email.md`](./credits-invite-email.md) |
 | OIDC / MFA policy (gateway) | ✅ (stacked) | [`clawql-auth-oidc-stepup.md`](../security/clawql-auth-oidc-stepup.md) |
 
@@ -39,7 +39,7 @@ Emails and phones are stored only under `$CLAWQL_HOME/Payments/` (mode `0600`) �
 2. ~~**Activity feed**~~ — ✅ [`activity-feed.md`](./activity-feed.md)
 3. ~~**QR / deep link**~~ — ✅ HATEOAS + HTMX + `clawql://pay` — [`credits-deeplinks.md`](./credits-deeplinks.md)
 4. ~~**Contacts**~~ — ✅ phone alias + contacts book — [`credits-contacts.md`](./credits-contacts.md)
-5. ~~**Hosted mini UI**~~ — ✅ brand-first `/credits` — [`credits-deeplinks.md`](./credits-deeplinks.md)
+5. ~~**Hosted mini UI**~~ — ✅ balance + verbs + activity at `/credits` — [`credits-deeplinks.md`](./credits-deeplinks.md)
 6. ~~**Outbound email delivery**~~ — ✅ dry-run-first invite email — [`credits-invite-email.md`](./credits-invite-email.md)
 
 ## Explicit non-goals (for now)

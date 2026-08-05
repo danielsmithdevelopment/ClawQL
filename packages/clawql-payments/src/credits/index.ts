@@ -110,11 +110,17 @@ export {
 } from "./deeplinks.js";
 export {
   escapeHtml,
+  renderCreditsActivityHtml,
   renderCreditsHateoasPage,
   renderCreditsMiniHomeHtml,
+  renderCreditsPayComposeHtml,
+  renderCreditsRequestComposeHtml,
+  renderCreditsTopupHtml,
   renderHateoasHtml,
   renderQrSvg,
   wantsHtml,
+  type MiniHomeInput,
+  type MiniHomeRecentItem,
 } from "./hateoas-html.js";
 export { attachCreditsHateoasRoutes } from "./hateoas-http.js";
 export {

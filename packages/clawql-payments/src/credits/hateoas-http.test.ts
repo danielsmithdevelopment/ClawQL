@@ -44,14 +44,44 @@ describe("credits hateoas http", () => {
     await rm(home, { recursive: true, force: true });
   });
 
-  it("GET /credits mini home and pay landing", async () => {
+  it("GET /credits mini home, compose screens, and pay landing", async () => {
     await withApp(async (base) => {
       const home = await fetch(`${base}/credits`);
       expect(home.status).toBe(200);
       const homeBody = await home.text();
       expect(homeBody).toContain("Claw");
       expect(homeBody).toContain("Fraunces");
-      expect(homeBody).toContain('action="/credits/pay"');
+      expect(homeBody).toContain("Total balance");
+      expect(homeBody).toContain(">Top up<");
+      expect(homeBody).toContain(">Pay<");
+      expect(homeBody).toContain(">Request<");
+      expect(homeBody).toContain(">Activity<");
+      expect(homeBody).toContain('href="/credits/topup?tenant=default"');
+      expect(homeBody).toContain('href="/credits/pay?tenant=default"');
+      expect(homeBody).toContain('href="/credits/request/new?tenant=default"');
+      expect(homeBody).toContain('href="/credits/activity?tenant=default"');
+      expect(homeBody).not.toContain('action="/credits/pay"');
+
+      const payCompose = await fetch(`${base}/credits/pay?tenant=default`);
+      expect(payCompose.status).toBe(200);
+      const payComposeBody = await payCompose.text();
+      expect(payComposeBody).toContain("Pay");
+      expect(payComposeBody).toContain('action="/credits/pay"');
+      expect(payComposeBody).toContain('name="to"');
+
+      const requestCompose = await fetch(`${base}/credits/request/new?tenant=default`);
+      expect(requestCompose.status).toBe(200);
+      expect(await requestCompose.text()).toContain("Request");
+
+      const topup = await fetch(`${base}/credits/topup?tenant=default`);
+      expect(topup.status).toBe(200);
+      expect(await topup.text()).toContain("Top up");
+
+      const activity = await fetch(`${base}/credits/activity?tenant=default`);
+      expect(activity.status).toBe(200);
+      const activityBody = await activity.text();
+      expect(activityBody).toContain("Activity");
+      expect(activityBody).toContain("$0.00");
 
       const html = await fetch(`${base}/credits/pay?to=%40bob&amount=10`, {
         headers: { Accept: "text/html" },
