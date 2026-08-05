@@ -89,9 +89,9 @@ async function recordPassthroughCall(opts: {
   }
 }
 
-function usageFromOpenAiPayload(payload: Record<string, unknown>):
-  | { inputTokens: number; outputTokens: number }
-  | undefined {
+function usageFromOpenAiPayload(
+  payload: Record<string, unknown>
+): { inputTokens: number; outputTokens: number } | undefined {
   const usage = payload.usage;
   if (!usage || typeof usage !== "object") return undefined;
   const u = usage as Record<string, unknown>;
