@@ -29,6 +29,10 @@ nats:
     coneshareFollowup: true
     # Defaults to in-cluster MCP Service when empty.
     mcpInternalUrl: ""
+  # #128 — terminal/viewer → MCP memory (Hermes/Pi use the same MCP HTTP endpoint).
+  agentBridge:
+    enabled: true
+    # notifyChannel: C01234567
   keda:
     enabled: false
     # Set true when KEDA is installed — scales on HITL + document durables.

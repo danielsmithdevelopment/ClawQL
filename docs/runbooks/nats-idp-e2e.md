@@ -2,7 +2,7 @@
 
 Prove the **document JetStream** path: Nextcloud inbox → `run_idp_pipeline` → (optional) Coneshare viewer follow-up.
 
-**Related:** [nats-keda-worker.md](../deployment/nats-keda-worker.md) · [idp-pipeline-runner.md](../mcp/idp-pipeline-runner.md) · [lending W-2 pack](../../deployment/samples/lending-w2/README.md) · Helm example [`values-nats-idp.example.yaml`](../../charts/clawql-mcp/values-nats-idp.example.yaml)
+**Related:** [nats-keda-worker.md](../deployment/nats-keda-worker.md) · [idp-pipeline-runner.md](../mcp/idp-pipeline-runner.md) · [lending W-2 pack](../../deployment/samples/lending-w2/README.md) · Helm example [`values-nats-idp.example.yaml`](../../charts/clawql-mcp/values-nats-idp.example.yaml) · Agent bridge (Hermes/Pi) [idp-nats-agent-bridge.md](idp-nats-agent-bridge.md)
 
 ---
 

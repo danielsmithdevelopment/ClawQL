@@ -58,6 +58,16 @@
       "import": "./dist/nats/bootstrap-cli.js",
       "require": "./dist/nats/bootstrap-cli.cjs"
     },
+    "./nats/agent-bridge-cli": {
+      "types": "./dist/nats/agent-bridge-cli.d.ts",
+      "import": "./dist/nats/agent-bridge-cli.js",
+      "require": "./dist/nats/agent-bridge-cli.cjs"
+    },
+    "./nats/agent-bridge": {
+      "types": "./dist/nats/agent-bridge.d.ts",
+      "import": "./dist/nats/agent-bridge.js",
+      "require": "./dist/nats/agent-bridge.cjs"
+    },
     "./workflow/vault-digest/run-vault-digest": {
       "types": "./dist/workflow/vault-digest/run-vault-digest.d.ts",
       "import": "./dist/workflow/vault-digest/run-vault-digest.js",
@@ -89,6 +99,7 @@
   },
   "dependencies": {
     "@kubernetes/client-node": "^1.3.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "clawql-api": "7.2.0",
     "clawql-core": "7.2.0",
     "clawql-documents": "7.2.0",

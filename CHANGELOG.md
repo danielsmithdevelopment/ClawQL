@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **IDP NATS agent bridge (#128)** — second JetStream durable `clawql-idp-agent-bridge` on `clawql.document.>` maps `pipeline.completed` / `pipeline.failed` / `coneshare.viewer` into ClawQL MCP `memory_ingest` (+ optional `notify` / `audit`). Runtime-agnostic for Hermes / Pi / OpenClaw. CLI: `npm run nats:agent-bridge`. Helm: `nats.agentBridge.enabled`. Samples: [`deployment/samples/idp-nats-agent/`](deployment/samples/idp-nats-agent/). Runbook: [`docs/runbooks/idp-nats-agent-bridge.md`](docs/runbooks/idp-nats-agent-bridge.md).
+
 ## [7.2.0] - 2026-08-04
 
 Minor release on the **7.0 Agentic Gateway** line: **Memory Stack 2.0**, Convergence Week **MCP 2026-07-28 / OKF v0.2 / PorTAL**, native **CodeGraph**, **mcp-api-adapter**, Managed Edge Gateway wedge, Cloud Agent / team-sync hardening, and a completed **IDP** document-event wave (including Stirling + NATS). No intentional semver-major breaks vs **7.1.0** — see behavioral notes in release notes. Release notes: **[`RELEASE_NOTES_v7.2.0.md`](RELEASE_NOTES_v7.2.0.md)**. Announcement drafts: **[`docs/announcements/announcement-drafts-v7.2.0.md`](docs/announcements/announcement-drafts-v7.2.0.md)**. Inventory: **48** product/deps PRs merged after `v7.1.0` (excluding the 7.1.0 prep PR itself).

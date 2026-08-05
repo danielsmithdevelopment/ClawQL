@@ -57,4 +57,10 @@ spec:
             - name: CLAWQL_NATS_CONSUMER_CONESHARE_FOLLOWUP
               value: "1"
             {{- end }}
+            {{- if .Values.nats.agentBridge.enabled }}
+            - name: CLAWQL_NATS_AGENT_BRIDGE
+              value: "1"
+            - name: CLAWQL_NATS_AGENT_BRIDGE_DURABLE
+              value: {{ .Values.nats.agentBridge.durable | quote }}
+            {{- end }}
 {{- end }}

@@ -1,0 +1,72 @@
+{{- if and .Values.nats.agentBridge.enabled (include "clawql-mcp.natsConfigured" .) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.natsAgentBridgeName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats-agent-bridge
+spec:
+  replicas: {{ .Values.nats.agentBridge.replicas }}
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: nats-agent-bridge
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: nats-agent-bridge
+    spec:
+      serviceAccountName: {{ include "clawql-mcp.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: nats-agent-bridge
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "node_modules/clawql-automation/dist/nats/agent-bridge-cli.js"]
+          env:
+            - name: NODE_OPTIONS
+              value: {{ .Values.nodeOptions | quote }}
+            {{- if .Values.nats.url }}
+            - name: CLAWQL_NATS_URL
+              value: {{ .Values.nats.url | quote }}
+            {{- else if .Values.nats.enabled }}
+            - name: CLAWQL_NATS_URL
+              value: "nats://{{ include "clawql-mcp.natsName" . }}:{{ .Values.nats.service.clientPort }}"
+            {{- end }}
+            {{- if and .Values.nats.enabled .Values.nats.jetStream.enabled }}
+            - name: CLAWQL_NATS_JETSTREAM
+              value: "1"
+            {{- end }}
+            - name: CLAWQL_NATS_ENABLE_CONSUMER
+              value: "1"
+            - name: CLAWQL_NATS_AGENT_BRIDGE
+              value: "1"
+            - name: CLAWQL_NATS_AGENT_BRIDGE_DURABLE
+              value: {{ .Values.nats.agentBridge.durable | quote }}
+            - name: CLAWQL_NATS_STREAM_WORKFLOW
+              value: {{ include "clawql-mcp.natsJetStreamStream" . | quote }}
+            - name: CLAWQL_NATS_SUBJECT_DOCUMENT
+              value: {{ .Values.nats.subjectConvention.document | quote }}
+            {{- if .Values.nats.agentBridge.mcpHttpUrl }}
+            - name: CLAWQL_MCP_HTTP_URL
+              value: {{ .Values.nats.agentBridge.mcpHttpUrl | quote }}
+            {{- else }}
+            - name: CLAWQL_MCP_HTTP_URL
+              value: "http://{{ include "clawql-mcp.fullname" . }}:{{ .Values.service.http.targetPort }}/mcp"
+            {{- end }}
+            {{- if .Values.nats.agentBridge.notifyChannel }}
+            - name: CLAWQL_NATS_AGENT_BRIDGE_NOTIFY_CHANNEL
+              value: {{ .Values.nats.agentBridge.notifyChannel | quote }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- include "clawql-mcp.envFromSecretRefs" . | nindent 10 }}
+          resources:
+            {{- toYaml .Values.nats.agentBridge.resources | nindent 12 }}
+{{- end }}

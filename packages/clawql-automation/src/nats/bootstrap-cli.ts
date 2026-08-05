@@ -6,14 +6,18 @@
 
 import {
   ensureConeshareFollowupConsumer,
+  ensureDurableConsumer,
   ensureHitlResumeConsumer,
   ensureIdpPipelineConsumer,
 } from "./client.js";
 import {
+  natsAgentBridgeDurable,
+  natsAgentBridgeEnabled,
   natsConeshareFollowupConsumerDurable,
   natsConsumerConeshareFollowupEnabled,
   natsConsumerIdpPipelineEnabled,
   natsConsumerResumeWorkflowEnabled,
+  natsDocumentSubjectRoot,
   natsHitlResumeConsumerDurable,
   natsIdpPipelineConsumerDurable,
   natsStreamName,
@@ -32,6 +36,13 @@ async function main(): Promise<void> {
   if (natsConsumerConeshareFollowupEnabled()) {
     await ensureConeshareFollowupConsumer();
     created.push(natsConeshareFollowupConsumerDurable());
+  }
+  if (natsAgentBridgeEnabled()) {
+    await ensureDurableConsumer({
+      durable: natsAgentBridgeDurable(),
+      filterSubject: `${natsDocumentSubjectRoot()}.>`,
+    });
+    created.push(natsAgentBridgeDurable());
   }
   if (created.length === 0) {
     // Default: bootstrap HITL durable for backward compatibility with KEDA charts.
