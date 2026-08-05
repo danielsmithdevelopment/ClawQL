@@ -113,3 +113,7 @@ Extend `infra/pulumi` with explicit **`clawql:profile`** values for the GTM hybr
 **Cluster desired state** (Helm charts, `.cqw` WorkflowTemplates, Karpenter NodePools) remains **Argo CD** under [`deployment/gitops/`](../../deployment/gitops/). Pulumi provisions the plane; Argo CD reconciles apps. Deterministic pipelines are authored as [`.cqw`](../specs/cq-extensions/cqw.md) and synced to Argo Workflows.
 
 Canonical operator guide: [`docs/deployment/hosted-live-bootstrap.md`](../deployment/hosted-live-bootstrap.md).
+
+### CI/CD (Cloudflare edge)
+
+GitHub Actions workflow **Pulumi Cloudflare edge** deploys the `edge` profile with state on R2 (`s3://clawql-pulumi-state` via account endpoint). PR CI runs unit tests only; `workflow_dispatch` runs `pulumi preview` / `pulumi up` using `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` (same secrets as docs deploy). R2 S3 credentials for the backend are either explicit `CLAWQL_R2_*` secrets or derived from the API token per Cloudflare’s Access Key ID = token id / Secret = SHA-256(token value) mapping.
