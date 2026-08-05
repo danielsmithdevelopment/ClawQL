@@ -4,6 +4,15 @@ TypeScript Pulumi programs for ClawQL hosted infra. **Packer** builds golden hos
 
 Live runbook: [`docs/deployment/hosted-live-bootstrap.md`](../../docs/deployment/hosted-live-bootstrap.md)
 
+## CI/CD (Cloudflare edge)
+
+GitHub Actions: **Pulumi Cloudflare edge** (`.github/workflows/pulumi-cloudflare-edge.yml`).
+
+- PR: `npm test` / typecheck in this package (via workspace `npm ci`)
+- Dispatch: creates R2 state bucket `clawql-pulumi-state`, logs Pulumi into that backend, runs `preview` or `up` for `edge` profile
+
+See [hosted-live-bootstrap.md](../../docs/deployment/hosted-live-bootstrap.md#cicd-cloudflare-edge).
+
 ## Profiles (`clawql:profile`)
 
 | Profile       | Cloud      | What it creates                                                                |

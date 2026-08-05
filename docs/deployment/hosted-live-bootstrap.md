@@ -3,6 +3,25 @@
 **Audience:** operators bringing ClawQL hosted tiers live (GTM Phase 1–3).  
 **Related:** [GTM playbook](../gtm/clawql-gtm-playbook.md) · [ADR 0007 Pulumi](../adr/0007-pulumi-provisioning-managed-tiers.md) · [ADR 0004 Argo](../adr/0004-argo-cd-workflows-clawql-pipelines.md) · [GitOps agent contract](../gitops/agent-pr-argocd-pipeline.md)
 
+## CI/CD (Cloudflare edge)
+
+Workflow: [`.github/workflows/pulumi-cloudflare-edge.yml`](../../.github/workflows/pulumi-cloudflare-edge.yml)
+
+| Trigger                           | Behavior                                                                                                   |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| PR / push touching `infra/pulumi` | Unit tests + typecheck only                                                                                |
+| `workflow_dispatch`               | Ensure R2 bucket `clawql-pulumi-state`, `pulumi login` to R2, then `preview` or `up` for stack `edge-prod` |
+
+**Secrets (reuse docs/landing):** `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.  
+Optional: `CLAWQL_R2_ACCESS_KEY_ID` / `CLAWQL_R2_SECRET_ACCESS_KEY` (else derived from API token per [Cloudflare R2 token docs](https://developers.cloudflare.com/r2/api/tokens/)); `PULUMI_CONFIG_PASSPHRASE` (stable passphrase — recommended).
+
+```bash
+gh workflow run pulumi-cloudflare-edge.yml -f action=preview -f stack=edge-prod
+gh workflow run pulumi-cloudflare-edge.yml -f action=up -f stack=edge-prod -f deploy_worker_stub=true
+```
+
+Token needs **Workers R2 Storage Write** (and Workers Scripts Edit if deploying the stub). Account-scoped tokens that cannot call `/user/tokens/verify` must use explicit R2 access key secrets.
+
 ## Separation of concerns
 
 | Layer                   | Tool                                                     | Owns                                                      |
