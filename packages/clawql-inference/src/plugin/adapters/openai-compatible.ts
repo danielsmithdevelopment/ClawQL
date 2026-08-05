@@ -80,6 +80,18 @@ function authHeaders(config: OpenAiCompatibleAdapterConfig): Record<string, stri
   };
 }
 
+function rewriteUpstreamBody(
+  upstreamModel: string,
+  body: Record<string, unknown>,
+  stream: boolean
+): Record<string, unknown> {
+  return {
+    ...body,
+    model: upstreamModel,
+    stream,
+  };
+}
+
 /**
  * Shared OpenAI-compatible chat-completions adapter used by OpenAI, OpenRouter,
  * DeepSeek, Groq, Fireworks, Together, Mistral, xAI, and other BYOK upstreams.
@@ -132,6 +144,35 @@ export function createOpenAiCompatibleAdapter(
         throw new Error(`${provider} stream response missing body`);
       }
       yield* parseOpenAiSseStream(res.body);
+    },
+    async proxyChatCompletion(upstreamModel, body, options) {
+      if (!config.apiKey) throw missingKeyError(config);
+      const res = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: authHeaders(config),
+        body: JSON.stringify(rewriteUpstreamBody(upstreamModel, body, false)),
+        signal: options?.signal,
+      });
+      if (!res.ok) {
+        throw new Error(`${provider} HTTP ${res.status}: ${await readHttpError(res)}`);
+      }
+      return (await res.json()) as Record<string, unknown>;
+    },
+    async proxyChatCompletionStream(upstreamModel, body, options) {
+      if (!config.apiKey) throw missingKeyError(config);
+      const res = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: authHeaders(config),
+        body: JSON.stringify(rewriteUpstreamBody(upstreamModel, body, true)),
+        signal: options?.signal,
+      });
+      if (!res.ok) {
+        throw new Error(`${provider} HTTP ${res.status}: ${await readHttpError(res)}`);
+      }
+      if (!res.body) {
+        throw new Error(`${provider} stream response missing body`);
+      }
+      return res.body;
     },
   };
 }

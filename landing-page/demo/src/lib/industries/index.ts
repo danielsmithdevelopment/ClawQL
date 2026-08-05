@@ -5,6 +5,7 @@ import { insuranceIndustry } from './insurance'
 import { legalIndustry } from './legal'
 import { lendingIndustry } from './lending'
 import { realEstateIndustry } from './real-estate'
+import { surveillanceIndustry } from './surveillance'
 
 export type {
   Industry,
@@ -19,6 +20,7 @@ export type {
 export const industries = [
   lendingIndustry,
   realEstateIndustry,
+  surveillanceIndustry,
   governmentIndustry,
   healthcareIndustry,
   legalIndustry,

@@ -5,10 +5,14 @@ Workflow: [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openben
 Spins up **clawql-inference**, runs the same model with and without ClawQL MCP
 (via OpenCode), posts a Step Summary, uploads JSON, tears down.
 
-**OpenRouter-first:** if you already have an OpenRouter key and do not yet have
-per-provider Anthropic/OpenAI/DeepSeek keys, set **`OPENROUTER_API_KEY`** and
-keep the default `openrouter/*` model. Direct BYOK remains fully supported when
-you add vendor secrets later.
+**OpenRouter-first + cheap default:** set **`OPENROUTER_API_KEY`** and keep the
+default model `openrouter/deepseek/deepseek-chat`. CI runs **all three**
+OpenBench tasks in a matrix on PR/push. Direct BYOK remains fully supported.
+
+**Tool calling:** clawql-inference passthroughs OpenAI `tools` / `tool_calls` to
+upstream (required for OpenCode edit/bash/MCP). See
+[`openbench-failure-root-cause-2026-07.md`](./openbench-failure-root-cause-2026-07.md).
+Artifacts include `agent-logs/` for each trial/arm.
 
 ## When it runs
 
@@ -24,7 +28,6 @@ Path filters include `openbench/**`, `packages/clawql-inference/**`, and the wor
 
 1. Repository secret **`OPENROUTER_API_KEY`** (recommended start — default model
    is `openrouter/deepseek/deepseek-chat`), **or** a direct vendor BYOK secret
-   (`DEEPSEEK_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, …)
    when you choose a non-`openrouter/*` model
 2. Branch containing `openbench/` + `.github/workflows/openbench-ab.yml`
 
@@ -54,14 +57,15 @@ clawql inference serve
 
 | Input    | Value                               |
 | -------- | ----------------------------------- |
-| `task`   | `memory-dependent-continuation`     |
+| `task`   | `all`                               |
 | `model`  | `openrouter/deepseek/deepseek-chat` |
 | `trials` | `1`                                 |
 | `arms`   | `clawql-on,clawql-off`              |
 
-OpenRouter examples:
+OpenRouter examples (prefer cheaper for CI):
 
-- `openrouter/deepseek/deepseek-chat`
+- `openrouter/deepseek/deepseek-chat` (default)
+- `openrouter/google/gemini-2.5-flash-lite` (cheaper / noisier)
 - `openrouter/qwen/qwen3.6-plus`
 
 Direct BYOK (when you have vendor keys):
@@ -76,7 +80,7 @@ Via `gh`:
 ```bash
 gh workflow run openbench-ab.yml \
   --ref main \
-  -f task=memory-dependent-continuation \
+  -f task=all \
   -f model=openrouter/deepseek/deepseek-chat \
   -f trials=1
 ```

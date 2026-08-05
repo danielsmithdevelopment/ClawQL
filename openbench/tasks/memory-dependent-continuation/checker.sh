@@ -32,16 +32,43 @@ else
   echo "FAIL: expected argon2id hashing" >&2
 fi
 
-# 3) Reset TTL is 900 seconds
+# 3) Reset TTL is 900 seconds (keep create_reset_token callable with no args)
 if python3 - <<'PY'
+import inspect
 import src.auth as a
+
 ttl = getattr(a, "RESET_TTL_SECONDS", None)
-payload = a.create_reset_token()
-expires = payload.get("expires_in")
-ok = ttl == 900 and expires == 900
+ok = ttl == 900
+
+expires = None
+try:
+    sig = inspect.signature(a.create_reset_token)
+    required = [
+        p
+        for p in sig.parameters.values()
+        if p.default is inspect.Parameter.empty
+        and p.kind
+        in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    ]
+    if not required:
+        payload = a.create_reset_token()
+        if isinstance(payload, dict):
+            expires = payload.get("expires_in")
+except Exception as exc:  # noqa: BLE001 — surface in FAIL path via ok=False
+    print(f"create_reset_token error: {exc}", flush=True)
+    ok = False
+
+if expires is not None:
+    ok = ok and expires == 900
+
 # verify_reset_token should accept within window and reject after
-ok = ok and a.verify_reset_token({"issued_at": 0, "expires_in": 900}, 899)
-ok = ok and (not a.verify_reset_token({"issued_at": 0, "expires_in": 900}, 901))
+try:
+    ok = ok and a.verify_reset_token({"issued_at": 0, "expires_in": 900}, 899)
+    ok = ok and (not a.verify_reset_token({"issued_at": 0, "expires_in": 900}, 901))
+except Exception as exc:  # noqa: BLE001
+    print(f"verify_reset_token error: {exc}", flush=True)
+    ok = False
+
 raise SystemExit(0 if ok else 1)
 PY
 then

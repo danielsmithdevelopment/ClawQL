@@ -9,6 +9,10 @@ OpenBench answers: _same model, same task — how much does the harness matter?_
 ClawQL answers: _how much does a governed MCP gateway (search/execute/memory)
 change correctness, tokens, and turns?_
 
+Live CI A/B (`openbench-ab.yml`) runs **clawql-on vs clawql-off** on the cheap
+OpenRouter default; vault seeds + tool passthrough are what make clawql-on win
+or tie each task fairly.
+
 ## Layout
 
 ```
@@ -123,12 +127,13 @@ To contribute these upstream, copy `tasks/<name>/` into OpenBench's `tasks/`
 
 Manual workflow **OpenBench A/B (clawql on vs off)** — starts
 **clawql-inference**, runs OpenCode on/off. Preferred secret:
-`OPENROUTER_API_KEY` with default model `openrouter/deepseek/deepseek-chat`. See
+`OPENROUTER_API_KEY` with default model `openrouter/deepseek/deepseek-chat`.
+CI matrix runs all three tasks. See
 [`docs/benchmarks/openbench-github-actions.md`](../docs/benchmarks/openbench-github-actions.md).
 
 ```bash
 gh workflow run openbench-ab.yml \
-  -f task=memory-dependent-continuation \
+  -f task=all \
   -f model=openrouter/deepseek/deepseek-chat \
   -f trials=1
 ```

@@ -33,15 +33,15 @@ Python adapter: [`openbench/adapters/clawql.py`](../../openbench/adapters/clawql
 
 ### Track B — ClawQL-specific tasks
 
-| Task                            | Differentiator                                          |
-| ------------------------------- | ------------------------------------------------------- |
-| `memory-dependent-continuation` | Prior decisions only in vault memory after seed removal |
-| `token-budget-constrained`      | Correctness + ≤5k-token budget scoring                  |
-| `multi-provider-api-workflow`   | Offline multi-API Worker scaffold                       |
-| `codegraph-feature-api-surface` | Cross-file API wiring (B-3.1 Phase 1)                   |
-| `memory-conflict-pricing`       | Flag vault price conflict; no confabulation (B-4.1)     |
-| `memory-stale-after-update`     | Cache invalidation after write (B-4.2)                  |
-| `memory-injection-attempt`      | Deny adversarial `memory_ingest` (B-4.3)                |
+| Task                            | Differentiator                                                              |
+| ------------------------------- | --------------------------------------------------------------------------- |
+| `memory-dependent-continuation` | Prior auth decisions only in vault memory after seed removal                |
+| `token-budget-constrained`      | Nested YAML list recipe in vault memory; ignore `decoy/`; ≤5k-token scoring |
+| `multi-provider-api-workflow`   | Offline Worker scaffold; wrangler/GitHub URL notes in vault when clawql-on  |
+| `codegraph-feature-api-surface` | Cross-file API wiring (B-3.1 Phase 1)                                       |
+| `memory-conflict-pricing`       | Flag vault price conflict; no confabulation (B-4.1)                         |
+| `memory-stale-after-update`     | Cache invalidation after write (B-4.2)                                      |
+| `memory-injection-attempt`      | Deny adversarial `memory_ingest` (B-4.3)                                    |
 
 Advanced suite ledger (B-1…B-6 specs): [`openbench-advanced-specs.md`](openbench-advanced-specs.md).
 
@@ -55,9 +55,11 @@ python3 openbench/validate_tasks.py
 
 - **Offline:** main CI always runs `python3 openbench/validate_tasks.py`.
 - **Live A/B:** [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml) runs on path-filtered PR/push to `main` and via `workflow_dispatch`.
-- **Default model:** `openrouter/deepseek/deepseek-chat` — preferred secret: **`OPENROUTER_API_KEY`** (bring your existing aggregator key; no per-provider BYOK required).
+- **Default model:** `openrouter/deepseek/deepseek-chat` (cheap OpenRouter default; flash-lite also supported) — preferred secret: **`OPENROUTER_API_KEY`**.
+- **Tool calling:** clawql-inference must passthrough OpenAI `tools` / `tool_calls` for OpenCode; see [`openbench-failure-root-cause-2026-07.md`](./openbench-failure-root-cause-2026-07.md).
+- **Matrix:** PR/push runs all three tasks (`memory-dependent-continuation`, `token-budget-constrained`, `multi-provider-api-workflow`) when secrets are present.
 - Missing secrets → live A/B **skipped** on PR/push (exit 0); manual dispatch still fails closed.
-- Optional later: switch `model` to direct BYOK ids (`deepseek/*`, `anthropic/*`, …) when you add vendor keys.
+- Optional later: switch `model` to direct BYOK ids when you add vendor keys.
 
 See [`openbench-github-actions.md`](openbench-github-actions.md).
 
