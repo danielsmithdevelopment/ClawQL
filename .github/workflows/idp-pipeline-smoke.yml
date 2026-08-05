@@ -60,12 +60,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build clawql-documents (pipeline packages)
-        run: |
-          npm run build -w clawql-core
-          npm run build -w clawql-auth
-          npm run build -w clawql-api
-          npm run build -w clawql-documents
+      - name: Build workspace packages
+        run: npm run build
 
       - name: Resolve smoke tier
         id: tier
