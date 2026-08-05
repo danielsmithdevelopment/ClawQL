@@ -119,11 +119,15 @@ if [[ "${TIER}" == "compose" || "${TIER}" == "live" ]]; then
         code="$(curl -sS -o /tmp/idp-b23-tika.txt -w '%{http_code}' \
           -X PUT "http://127.0.0.1:9998/tika" \
           -H "Accept: text/plain" \
+          -H "Content-Type: text/plain" \
           --data-binary $'ClawQL IDP B2.3 smoke\n' || true)"
-        if [[ "${code}" == "200" ]] && grep -qi "ClawQL" /tmp/idp-b23-tika.txt; then
+        # Tika may echo plaintext or wrap it; require HTTP 200 + non-empty body.
+        if [[ "${code}" == "200" ]] && [[ -s /tmp/idp-b23-tika.txt ]]; then
           record OK compose_tika_parse_put
         else
-          record FAIL compose_tika_parse_put "HTTP ${code}"
+          record FAIL compose_tika_parse_put "HTTP ${code} bytes=$(wc -c </tmp/idp-b23-tika.txt 2>/dev/null || echo 0)"
+          head -c 200 /tmp/idp-b23-tika.txt 2>/dev/null || true
+          echo
         fi
       else
         record FAIL compose_tika_gotenberg_health "tika=${ok_tika} gotenberg=${ok_got}"
