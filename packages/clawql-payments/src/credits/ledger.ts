@@ -16,9 +16,11 @@ export type CreditLedgerKind =
   | "hold"
   | "capture"
   | "release"
-  | "grant";
+  | "grant"
+  | "transfer_out"
+  | "transfer_in";
 
-export type CreditGrantSource = "plan" | "topup" | "promo" | "rollover" | "adjust";
+export type CreditGrantSource = "plan" | "topup" | "promo" | "rollover" | "adjust" | "transfer";
 
 export type CreditGrant = {
   readonly id: string;
@@ -63,6 +65,10 @@ export type CreditLedgerEntry = {
   readonly note?: string;
   readonly idempotencyKey?: string;
   readonly holdId?: string;
+  /** Peer tenant for P2P transfers. */
+  readonly counterpartyTenantId?: string;
+  /** Shared id linking transfer_out + transfer_in legs. */
+  readonly transferId?: string;
 };
 
 export type CreditAccount = {
@@ -85,6 +91,7 @@ const SOURCE_PRIORITY: Record<CreditGrantSource, number> = {
   promo: 0,
   plan: 1,
   topup: 2,
+  transfer: 2,
   rollover: 3,
   adjust: 4,
 };
@@ -644,4 +651,146 @@ export async function resetCreditsLedgerForTests(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<void> {
   await saveFile({ accounts: {} }, env);
+}
+
+export type CreditTransferResult = {
+  readonly transferId: string;
+  readonly amountCents: number;
+  readonly fromTenantId: string;
+  readonly toTenantId: string;
+  readonly fromEntry: CreditLedgerEntry;
+  readonly toEntry: CreditLedgerEntry;
+  readonly alreadyExisted: boolean;
+};
+
+/**
+ * Atomic prepaid credit transfer between two tenants (P2P).
+ * Locks tenants in sorted order to avoid deadlock; idempotent on `idempotencyKey`.
+ */
+export async function transferCredits(
+  input: {
+    fromTenantId: string;
+    toTenantId: string;
+    amountCents: number;
+    idempotencyKey?: string;
+    correlationId?: string;
+    note?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<CreditTransferResult> {
+  const fromTenantId = input.fromTenantId.trim();
+  const toTenantId = input.toTenantId.trim();
+  if (!fromTenantId || !toTenantId) {
+    throw new Error("fromTenantId and toTenantId are required");
+  }
+  if (fromTenantId === toTenantId) {
+    throw new Error("Cannot transfer credits to the same tenant");
+  }
+  const amountCents = Math.round(input.amountCents);
+  if (!Number.isFinite(amountCents) || amountCents <= 0) {
+    throw new Error("amountCents must be > 0");
+  }
+
+  const first = fromTenantId < toTenantId ? fromTenantId : toTenantId;
+  const second = fromTenantId < toTenantId ? toTenantId : fromTenantId;
+
+  return withTenantLedgerLock(first, () =>
+    withTenantLedgerLock(second, async () => {
+      const file = await loadFile(env);
+      let from = normalizeAccount(fromTenantId, file.accounts[fromTenantId]);
+      let to = normalizeAccount(toTenantId, file.accounts[toTenantId]);
+      const key = input.idempotencyKey?.trim();
+
+      if (key) {
+        const existingOut = from.entries.find(
+          (e) => e.idempotencyKey === key && e.kind === "transfer_out"
+        );
+        if (existingOut?.transferId) {
+          const existingIn = to.entries.find(
+            (e) => e.transferId === existingOut.transferId && e.kind === "transfer_in"
+          );
+          if (existingIn) {
+            return {
+              transferId: existingOut.transferId,
+              amountCents,
+              fromTenantId,
+              toTenantId,
+              fromEntry: existingOut,
+              toEntry: existingIn,
+              alreadyExisted: true,
+            };
+          }
+        }
+      }
+
+      const now = new Date();
+      const { grants: fromGrants } = applyWaterfallDeduct(from.grants, amountCents, now);
+      const transferId = newId("xfer");
+      const grantId = `grant_${transferId}`;
+      const toGrants: CreditGrant[] = [
+        ...to.grants,
+        {
+          id: grantId,
+          source: "transfer",
+          balanceCents: amountCents,
+          createdAt: now.toISOString(),
+          note: input.note ?? `transfer from ${fromTenantId}`,
+        },
+      ];
+
+      const fromEntry: CreditLedgerEntry = {
+        id: newId("cred"),
+        ts: now.toISOString(),
+        tenantId: fromTenantId,
+        kind: "transfer_out",
+        deltaCents: -amountCents,
+        balanceAfterCents: sumGrants(fromGrants, now),
+        correlationId: input.correlationId,
+        note: input.note ?? `transfer to ${toTenantId}`,
+        idempotencyKey: key,
+        counterpartyTenantId: toTenantId,
+        transferId,
+      };
+      const toEntry: CreditLedgerEntry = {
+        id: newId("cred"),
+        ts: now.toISOString(),
+        tenantId: toTenantId,
+        kind: "transfer_in",
+        deltaCents: amountCents,
+        balanceAfterCents: sumGrants(toGrants, now),
+        correlationId: input.correlationId,
+        note: input.note ?? `transfer from ${fromTenantId}`,
+        idempotencyKey: key,
+        counterpartyTenantId: fromTenantId,
+        transferId,
+      };
+
+      from = {
+        ...from,
+        grants: fromGrants,
+        balanceCents: fromEntry.balanceAfterCents,
+        updatedAt: fromEntry.ts,
+        entries: [...from.entries, fromEntry],
+      };
+      to = {
+        ...to,
+        grants: toGrants,
+        balanceCents: toEntry.balanceAfterCents,
+        updatedAt: toEntry.ts,
+        entries: [...to.entries, toEntry],
+      };
+      file.accounts[fromTenantId] = from;
+      file.accounts[toTenantId] = to;
+      await saveFile(file, env);
+      return {
+        transferId,
+        amountCents,
+        fromTenantId,
+        toTenantId,
+        fromEntry,
+        toEntry,
+        alreadyExisted: false,
+      };
+    })
+  );
 }

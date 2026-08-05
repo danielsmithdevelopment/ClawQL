@@ -20,6 +20,8 @@ export {
   buildCreditDebitedEntry,
   buildCreditHeldEntry,
   buildCreditReleasedEntry,
+  buildCreditTransferReceivedEntry,
+  buildCreditTransferSentEntry,
   buildCreditTopupFailedEntry,
   buildCreditTopupPendingEntry,
   buildCreditTopupSettledEntry,

@@ -21,11 +21,31 @@ describe("payments tools MCP plugin", () => {
       "payments_ramp_agent_card_issue",
       "payments_offramp_session_create",
       "payments_offramp_webhook_process",
+      "payments_credits_directory_claim",
+      "payments_credits_directory_resolve",
+      "payments_credits_directory_list",
+      "payments_credits_contacts_add",
+      "payments_credits_contacts_list",
+      "payments_credits_contacts_remove",
+      "payments_credits_contacts_resolve",
+      "payments_credits_activity",
+      "payments_credits_link",
+      "payments_credits_request_create",
+      "payments_credits_request_send_invite",
+      "payments_credits_request_list",
+      "payments_credits_request_claim_invite",
+      "payments_credits_request_accept",
+      "payments_credits_transfer_stage",
+      "payments_credits_transfer_confirm",
       "agent_compensation_deposit_stage",
       "agent_compensation_deposit_confirm",
       "agent_compensation_cashout_stage",
       "agent_compensation_cashout_confirm",
     ]);
+    expect(descriptions.get("payments_credits_transfer_stage")).toMatch(/Safe entry point/i);
+    expect(descriptions.get("payments_credits_request_create")).toMatch(/invoice|request|invite/i);
+
+    expect(descriptions.get("payments_credits_transfer_confirm")).toMatch(/High-impact/i);
     expect(descriptions.get("agent_compensation_deposit_stage")).toMatch(/Safe entry point/i);
     expect(descriptions.get("agent_compensation_deposit_confirm")).toMatch(/High-impact/i);
     expect(descriptions.get("agent_compensation_cashout_stage")).toMatch(/Safe entry point/i);

@@ -94,6 +94,30 @@ import {
   runPaymentsCreditsShowCmd,
   runPaymentsCreditsBankLinkCmd,
   runPaymentsCreditsTopupCmd,
+  runPaymentsCreditsTransferCmd,
+  runPaymentsCreditsPayCmd,
+  runPaymentsCreditsActivityCmd,
+  runPaymentsCreditsLinkCmd,
+  runPaymentsCreditsQrCmd,
+  runPaymentsCreditsDirectoryClaimCmd,
+  runPaymentsCreditsDirectoryShowCmd,
+  runPaymentsCreditsDirectoryListCmd,
+  runPaymentsCreditsDirectoryReleaseCmd,
+  runPaymentsCreditsContactsAddCmd,
+  runPaymentsCreditsContactsListCmd,
+  runPaymentsCreditsContactsRemoveCmd,
+  runPaymentsCreditsContactsShowCmd,
+  runPaymentsCreditsRequestCreateCmd,
+  runPaymentsCreditsInvoiceCmd,
+  runPaymentsCreditsRequestListCmd,
+  runPaymentsCreditsRequestShowCmd,
+  runPaymentsCreditsRequestClaimInviteCmd,
+  runPaymentsCreditsRequestAcceptCmd,
+  runPaymentsCreditsRequestDeclineCmd,
+  runPaymentsCreditsRequestCancelCmd,
+  runPaymentsCreditsRequestSendInviteCmd,
+  runPaymentsCreditsStepUpEnrollCmd,
+  runPaymentsCreditsStepUpShowCmd,
   runPaymentsCompensationBalanceCmd,
   runPaymentsCompensationDepositCmd,
   runPaymentsCompensationCashoutCmd,
@@ -288,12 +312,35 @@ function parse(argv: string[]): {
     else if (a === "--confirm") flags.confirm = true;
     else if (a === "--skip-verify") flags.skipVerify = true;
     else if (a === "--from") flags.dateFrom = argv[++i] ?? "";
-    else if (a === "--to") flags.dateTo = argv[++i] ?? "";
+    else if (a === "--to") {
+      const v = argv[++i] ?? "";
+      // Accounting uses ISO dates; P2P pay uses @handle / payee strings.
+      if (/^\d{4}-\d{2}-\d{2}/.test(v)) flags.dateTo = v;
+      else flags.payTo = v;
+    } else if (a === "--to-handle" || a === "--handle") flags.toHandle = argv[++i] ?? "";
+    else if (a === "--display-name") flags.displayName = argv[++i] ?? "";
+    else if (a === "--request-id") flags.requestId = argv[++i] ?? "";
+    else if (a === "--token" || a === "--invite-token") flags.inviteToken = argv[++i] ?? "";
+    else if (a === "--role") flags.requestRole = argv[++i] ?? "";
+    else if (a === "--status") flags.requestStatus = argv[++i] ?? "";
     else if (a === "--tax-year") flags.taxYear = argv[++i] ?? "";
     else if (a === "--party-id") flags.partyId = argv[++i] ?? "";
     else if (a === "--tax-form") flags.taxForm = argv[++i] ?? "";
     else if (a === "--collected") flags.collected = true;
     else if (a === "--tax-profile-ref") flags.taxProfileRef = argv[++i] ?? "";
+    else if (a === "--to-tenant" || a === "--recipient") flags.toTenantId = argv[++i] ?? "";
+    else if (a === "--from-tenant") flags.fromTenantId = argv[++i] ?? "";
+    else if (a === "--idempotency-key") flags.idempotencyKey = argv[++i] ?? "";
+    else if (a === "--note") flags.note = argv[++i] ?? "";
+    else if (a === "--parse") flags.parseDeepLink = argv[++i] ?? "";
+    else if (a === "--phone") flags.phone = argv[++i] ?? "";
+    else if (a === "--verified") flags.phoneVerified = true;
+    else if (a === "--contact-id") flags.contactId = argv[++i] ?? "";
+    else if (a === "--label") flags.label = argv[++i] ?? "";
+    else if (a === "--send-email") flags.sendEmail = true;
+    else if (a === "--email-dry-run" || a === "--dry-run-email") flags.emailDryRun = true;
+    else if (a === "--totp") flags.totp = argv[++i] ?? "";
+    else if (a === "--direct") flags.direct = true;
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
       flags.imageDigest = prev
@@ -385,6 +432,20 @@ Usage:
   clawql payments tax-profile set --party-id ID --tax-form 1099nec|none|unknown [--collected]
   clawql payments tax-profile show [--party-id ID]
   clawql payments credits show | bank-link --customer cus_xxx | topup --customer cus_xxx --amount 25
+  clawql payments credits directory claim --email you@acme.com [--handle alice] [--phone +1555…] [--verified]
+  clawql payments credits directory show|list|release --email … | --handle @alice | --phone +1555…
+  clawql payments credits contacts add|list|show|remove --to … | --contact-id UUID [--label …]
+  clawql payments credits pay --to +15551234567|--to you@acme.com|--to @alice --amount 10
+  clawql payments credits pay --to you@acme.com|--to @alice --amount 10 [--note coffee]
+  clawql payments credits link --to @alice|--to you@acme.com [--amount 10] | --request-id UUID | --parse URI
+  clawql payments credits qr --to @alice [--amount 10] [--out pay.svg]
+  clawql payments credits activity [--tenant-id ID] [--limit 25] [--filter money|transfers|requests|all]
+  clawql payments credits request|invoice --to newbie@acme.com|--to @bob --amount 25 [--note …]
+  clawql payments credits request list|show|accept|decline|cancel|claim-invite|send-invite …
+  clawql payments credits request --to newbie@acme.com --amount 25 --send-email [--email-dry-run]
+  clawql payments credits transfer --to-tenant other-tenant --amount 10
+  clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
+  clawql payments credits step-up enroll|show [--tenant-id ID] [--show-secrets]
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql claude --non-interactive --model <id> --task-file <path> [--workdir DIR] [--timeout SECS]
   clawql operator status
@@ -1024,6 +1085,11 @@ async function main(): Promise<void> {
           : undefined,
       correlationId: typeof flags.correlationId === "string" ? flags.correlationId : undefined,
       limit: Number.isFinite(limit) ? limit : undefined,
+      activityFilter:
+        typeof flags.filter === "string" &&
+        ["all", "transfers", "requests", "money", "ledger"].includes(flags.filter)
+          ? (flags.filter as "all" | "transfers" | "requests" | "money" | "ledger")
+          : undefined,
       json: Boolean(flags.json),
       email: typeof flags.email === "string" ? flags.email : undefined,
       name: typeof flags.name === "string" ? flags.name : undefined,
@@ -1115,6 +1181,40 @@ async function main(): Promise<void> {
       taxForm: typeof flags.taxForm === "string" ? flags.taxForm : undefined,
       collected: Boolean(flags.collected),
       taxProfileRef: typeof flags.taxProfileRef === "string" ? flags.taxProfileRef : undefined,
+      toTenantId: typeof flags.toTenantId === "string" ? flags.toTenantId : undefined,
+      fromTenantId: typeof flags.fromTenantId === "string" ? flags.fromTenantId : undefined,
+      handle: typeof flags.toHandle === "string" ? flags.toHandle : undefined,
+      toHandle: typeof flags.toHandle === "string" ? flags.toHandle : undefined,
+      directoryEmail: typeof flags.email === "string" ? flags.email : undefined,
+      payTo: typeof flags.payTo === "string" ? flags.payTo : undefined,
+      displayName:
+        typeof flags.displayName === "string"
+          ? flags.displayName
+          : typeof flags.name === "string"
+            ? flags.name
+            : undefined,
+      requestId: typeof flags.requestId === "string" ? flags.requestId : undefined,
+      inviteToken: typeof flags.inviteToken === "string" ? flags.inviteToken : undefined,
+      requestRole:
+        typeof flags.requestRole === "string" &&
+        (flags.requestRole === "requester" ||
+          flags.requestRole === "payer" ||
+          flags.requestRole === "any")
+          ? flags.requestRole
+          : undefined,
+      requestStatus: typeof flags.requestStatus === "string" ? flags.requestStatus : undefined,
+      idempotencyKey: typeof flags.idempotencyKey === "string" ? flags.idempotencyKey : undefined,
+      note: typeof flags.note === "string" ? flags.note : undefined,
+      totp: typeof flags.totp === "string" ? flags.totp : undefined,
+      direct: Boolean(flags.direct),
+      parseDeepLink: typeof flags.parseDeepLink === "string" ? flags.parseDeepLink : undefined,
+      out: typeof flags.out === "string" ? flags.out : undefined,
+      phone: typeof flags.phone === "string" ? flags.phone : undefined,
+      phoneVerified: Boolean(flags.phoneVerified),
+      contactId: typeof flags.contactId === "string" ? flags.contactId : undefined,
+      label: typeof flags.label === "string" ? flags.label : undefined,
+      sendEmail: Boolean(flags.sendEmail),
+      emailDryRun: Boolean(flags.emailDryRun),
     };
 
     if (subcmd === "plan") {
@@ -1305,7 +1405,118 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsCreditsTopupCmd(paymentsOpts);
         return;
       }
-      console.error("Usage: clawql payments credits show | bank-link | topup");
+      if (creditsAction === "transfer") {
+        process.exitCode = await runPaymentsCreditsTransferCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "pay") {
+        process.exitCode = await runPaymentsCreditsPayCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "activity") {
+        process.exitCode = await runPaymentsCreditsActivityCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "link") {
+        process.exitCode = await runPaymentsCreditsLinkCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "qr") {
+        process.exitCode = await runPaymentsCreditsQrCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "request" || creditsAction === "invoice") {
+        const known = new Set([
+          "create",
+          "list",
+          "show",
+          "accept",
+          "decline",
+          "cancel",
+          "claim-invite",
+          "send-invite",
+        ]);
+        const action = rest[1] && known.has(rest[1]) ? rest[1] : "create";
+        if (action === "list") {
+          process.exitCode = await runPaymentsCreditsRequestListCmd(paymentsOpts);
+          return;
+        }
+        if (action === "show") {
+          process.exitCode = await runPaymentsCreditsRequestShowCmd(paymentsOpts);
+          return;
+        }
+        if (action === "claim-invite") {
+          process.exitCode = await runPaymentsCreditsRequestClaimInviteCmd(paymentsOpts);
+          return;
+        }
+        if (action === "send-invite") {
+          process.exitCode = await runPaymentsCreditsRequestSendInviteCmd(paymentsOpts);
+          return;
+        }
+        if (action === "accept") {
+          process.exitCode = await runPaymentsCreditsRequestAcceptCmd(paymentsOpts);
+          return;
+        }
+        if (action === "decline") {
+          process.exitCode = await runPaymentsCreditsRequestDeclineCmd(paymentsOpts);
+          return;
+        }
+        if (action === "cancel") {
+          process.exitCode = await runPaymentsCreditsRequestCancelCmd(paymentsOpts);
+          return;
+        }
+        process.exitCode =
+          creditsAction === "invoice"
+            ? await runPaymentsCreditsInvoiceCmd(paymentsOpts)
+            : await runPaymentsCreditsRequestCreateCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "directory") {
+        const dirAction = rest[1] ?? "list";
+        if (dirAction === "claim") {
+          process.exitCode = await runPaymentsCreditsDirectoryClaimCmd(paymentsOpts);
+          return;
+        }
+        if (dirAction === "show") {
+          process.exitCode = await runPaymentsCreditsDirectoryShowCmd(paymentsOpts);
+          return;
+        }
+        if (dirAction === "release") {
+          process.exitCode = await runPaymentsCreditsDirectoryReleaseCmd(paymentsOpts);
+          return;
+        }
+        process.exitCode = await runPaymentsCreditsDirectoryListCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "contacts" || creditsAction === "contact") {
+        const action = rest[1] ?? "list";
+        if (action === "add") {
+          process.exitCode = await runPaymentsCreditsContactsAddCmd(paymentsOpts);
+          return;
+        }
+        if (action === "show") {
+          process.exitCode = await runPaymentsCreditsContactsShowCmd(paymentsOpts);
+          return;
+        }
+        if (action === "remove" || action === "rm" || action === "delete") {
+          process.exitCode = await runPaymentsCreditsContactsRemoveCmd(paymentsOpts);
+          return;
+        }
+        process.exitCode = await runPaymentsCreditsContactsListCmd(paymentsOpts);
+        return;
+      }
+      if (creditsAction === "step-up") {
+        const step = rest[1] ?? "show";
+        if (step === "enroll") {
+          process.exitCode = await runPaymentsCreditsStepUpEnrollCmd(paymentsOpts);
+          return;
+        }
+        process.exitCode = await runPaymentsCreditsStepUpShowCmd(paymentsOpts);
+        return;
+      }
+      console.error(
+        "Usage: clawql payments credits show | bank-link | topup | pay | link | qr | activity | transfer | request|invoice | directory | contacts | step-up"
+      );
       process.exitCode = 1;
       return;
     }

@@ -219,6 +219,18 @@ const KIND_MAP: Record<PaymentEventKind, Classified> = {
     taxTreatment: "taxable_revenue",
     counterpartyKind: "customer",
   },
+  CREDIT_TRANSFER_SENT: {
+    direction: "outflow",
+    category: "peer_transfer",
+    taxTreatment: "non_taxable",
+    counterpartyKind: "customer",
+  },
+  CREDIT_TRANSFER_RECEIVED: {
+    direction: "inflow",
+    category: "peer_transfer",
+    taxTreatment: "non_taxable",
+    counterpartyKind: "customer",
+  },
   CREDIT_HELD: {
     direction: "internal",
     category: "prepaid_liability",

@@ -14,7 +14,12 @@ import type { HighImpactClassification } from "./high-impact.js";
 
 export type PendingActionStatus = "pending" | "executed" | "cancelled" | "expired";
 
-export type CompensationPendingKind = "deposit_credits" | "deposit_funds" | "cashout";
+export type CompensationPendingKind =
+  | "deposit_credits"
+  | "deposit_funds"
+  | "cashout"
+  /** Prepaid credit P2P transfer (CreditsService). */
+  | "credits_transfer";
 
 export type PendingActionRecord = {
   readonly actionId: string;
@@ -23,6 +28,7 @@ export type PendingActionRecord = {
   readonly kind: CompensationPendingKind;
   readonly classification: HighImpactClassification;
   readonly args: Record<string, unknown>;
+  /** Subject of the action (agent id, or sender tenant for credits_transfer). */
   readonly agentId: string;
   readonly tenantId: string;
   readonly correlationId?: string;
