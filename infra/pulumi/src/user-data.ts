@@ -25,7 +25,7 @@ export function buildBootstrapUserData(opts: BootstrapUserDataOptions): string {
     const p = escapeShellDoubleQuoted(opts.ssmParameterPrefix);
     lines.push(
       `SSM_PREFIX="${p}"`,
-      'if command -v aws >/dev/null 2>&1; then',
+      "if command -v aws >/dev/null 2>&1; then",
       '  export CLAWQL_SYNC_ACCESS_KEY_ID="$(aws ssm get-parameter --name "${SSM_PREFIX}/access-key-id" --with-decryption --query Parameter.Value --output text 2>/dev/null || true)"',
       '  export CLAWQL_SYNC_SECRET_ACCESS_KEY="$(aws ssm get-parameter --name "${SSM_PREFIX}/secret-access-key" --with-decryption --query Parameter.Value --output text 2>/dev/null || true)"',
       '  export CLAWQL_R2_ACCOUNT_ID="$(aws ssm get-parameter --name "${SSM_PREFIX}/r2-account-id" --with-decryption --query Parameter.Value --output text 2>/dev/null || true)"',
@@ -34,7 +34,7 @@ export function buildBootstrapUserData(opts: BootstrapUserDataOptions): string {
   }
 
   lines.push(
-    'if [ -x /usr/local/bin/bootstrap-team-vault.sh ]; then',
+    "if [ -x /usr/local/bin/bootstrap-team-vault.sh ]; then",
     "  exec /usr/local/bin/bootstrap-team-vault.sh",
     "fi",
     'echo "[user-data] bootstrap-team-vault.sh not found" >&2',

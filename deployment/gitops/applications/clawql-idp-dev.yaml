@@ -1,8 +1,6 @@
-# Sample Argo CD Application — ClawQL IDP dev
-# Apply after Argo CD is installed. Adjust repoURL/targetRevision for your fork.
-#
+# Sample Argo CD Application — ClawQL IDP (dev / first customer)
+# Synced by clawql-root app-of-apps, or apply directly:
 #   kubectl apply -f deployment/gitops/applications/clawql-idp-dev.yaml -n argocd
-#
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -10,8 +8,10 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  labels:
+    clawql.dev/surface: idp
 spec:
-  project: default
+  project: clawql
   source:
     repoURL: https://github.com/danielsmithdevelopment/ClawQL.git
     targetRevision: main
@@ -22,6 +22,10 @@ spec:
       parameters:
         - name: clawql-mcp.envFromSecret
           value: clawql-provider-env
+        - name: clawql-mcp.workflow.enabled
+          value: "true"
+        - name: clawql-mcp.argocd.enabled
+          value: "true"
   destination:
     server: https://kubernetes.default.svc
     namespace: clawql

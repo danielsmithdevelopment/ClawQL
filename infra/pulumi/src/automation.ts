@@ -11,16 +11,20 @@ const { LocalWorkspace } = automation;
 
 export type AutomationStackConfig = {
   cloud: CloudTarget;
+  /** Provisioning profile (defaults from cloud when omitted). */
+  profile?: import("./profiles.js").ProvisionProfile;
   tier: ManagedTier;
   tenantId?: string;
   syncBucket: string;
   syncProvider?: SyncProvider;
   syncPrefix?: string;
-  /** Required for `aws` / `gcp`; omit for `cloudflare` R2-only stacks. */
+  /** Required for `aws` / `gcp` golden-host; omit for cloudflare / idp-k3s. */
   goldenImageId?: string;
   region?: string;
   instanceType?: string;
   useSsmSecrets?: boolean;
+  deployWorkerStub?: boolean;
+  eksClusterName?: string;
 };
 
 export type UpStackOptions = {
@@ -40,6 +44,7 @@ function toPulumiConfig(cfg: AutomationStackConfig): Record<string, string> {
     "clawql:syncBucket": cfg.syncBucket,
     "clawql:syncProvider": cfg.syncProvider ?? "r2",
   };
+  if (cfg.profile) out["clawql:profile"] = cfg.profile;
   if (cfg.goldenImageId) out["clawql:goldenImageId"] = cfg.goldenImageId;
   if (cfg.tenantId) out["clawql:tenantId"] = cfg.tenantId;
   if (cfg.syncPrefix) out["clawql:syncPrefix"] = cfg.syncPrefix;
@@ -48,6 +53,10 @@ function toPulumiConfig(cfg: AutomationStackConfig): Record<string, string> {
   if (cfg.useSsmSecrets !== undefined) {
     out["clawql:useSsmSecrets"] = cfg.useSsmSecrets ? "true" : "false";
   }
+  if (cfg.deployWorkerStub !== undefined) {
+    out["clawql:deployWorkerStub"] = cfg.deployWorkerStub ? "true" : "false";
+  }
+  if (cfg.eksClusterName) out["clawql:eksClusterName"] = cfg.eksClusterName;
   return out;
 }
 
@@ -82,4 +91,19 @@ export async function previewProvisionStack(opts: UpStackOptions) {
 export function dedicatedStackName(tenantId: string): string {
   const safe = tenantId.replace(/[^a-zA-Z0-9-]/g, "-").toLowerCase();
   return `dedicated-${safe}`;
+}
+
+/** Stack name helpers for live profiles. */
+export function edgeStackName(env = "prod"): string {
+  return `edge-${env}`;
+}
+
+export function idpK3sStackName(tenantId?: string): string {
+  return tenantId
+    ? `idp-k3s-${tenantId.replace(/[^a-zA-Z0-9-]/g, "-").toLowerCase()}`
+    : "idp-k3s-bootstrap";
+}
+
+export function eksStackName(env = "prod"): string {
+  return `eks-${env}`;
 }

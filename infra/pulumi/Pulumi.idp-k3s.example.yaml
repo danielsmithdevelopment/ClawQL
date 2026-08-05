@@ -1,0 +1,21 @@
+# Example stack — AWS IDP K3s bootstrap (first Shared/Dedicated customer)
+#
+#   cd infra/pulumi
+#   cp Pulumi.idp-k3s.example.yaml Pulumi.idp-k3s.yaml
+#   pulumi stack init idp-k3s-bootstrap
+#   pulumi config set aws:region us-east-1
+#   pulumi preview && pulumi up
+#
+config:
+  clawql:cloud: aws
+  clawql:profile: idp-k3s
+  clawql:tier: dedicated
+  clawql:tenantId: alpha
+  clawql:syncBucket: clawql-vault-prod
+  clawql:syncProvider: r2
+  clawql:instanceType: r7i.2xlarge
+  clawql:ebsVolumeSizeGb: "200"
+  clawql:region: us-east-1
+  clawql:gitopsRepoUrl: https://github.com/danielsmithdevelopment/ClawQL.git
+  # clawql:sshCidrBlocks: 203.0.113.0/32
+  # clawql:apiCidrBlocks: 203.0.113.0/32

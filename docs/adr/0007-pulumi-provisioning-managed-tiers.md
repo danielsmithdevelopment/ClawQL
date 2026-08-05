@@ -94,3 +94,22 @@ Unit tests for tier prefixes, user-data bash, and stack naming — no cloud cred
 - **Terraform** — rejected for reasons above (HCL, weaker in-repo agent story)
 - **Pulumi only, no Packer** — rejected; slower boot, drift, secrets-in-user-data-only story weaker
 - **Helm-only** — does not cover EC2/GCE dedicated tiers (K8s path unchanged via `teamSync`)
+
+---
+
+## Amendment (2026-08) — Live hosted profiles + Argo CD
+
+**Status:** Accepted  
+**Date:** 2026-08-05
+
+Extend `infra/pulumi` with explicit **`clawql:profile`** values for the GTM hybrid path:
+
+| Profile   | Purpose                                                                       |
+| --------- | ----------------------------------------------------------------------------- |
+| `edge`    | Cloudflare R2 + KV + D1 + Queues (+ optional Worker stub) for Developer/Teams |
+| `idp-k3s` | AWS `r7i.2xlarge` K3s bootstrap for first IDP customer                        |
+| `eks`     | EKS control plane + reserved node group + Karpenter IAM for shared tenancy    |
+
+**Cluster desired state** (Helm charts, `.cqw` WorkflowTemplates, Karpenter NodePools) remains **Argo CD** under [`deployment/gitops/`](../../deployment/gitops/). Pulumi provisions the plane; Argo CD reconciles apps. Deterministic pipelines are authored as [`.cqw`](../specs/cq-extensions/cqw.md) and synced to Argo Workflows.
+
+Canonical operator guide: [`docs/deployment/hosted-live-bootstrap.md`](../deployment/hosted-live-bootstrap.md).

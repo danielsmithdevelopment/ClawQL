@@ -1,0 +1,57 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: clawql-vault-daily-digest
+  labels:
+    clawql.dev/managed: "true"
+    clawql.dev/template: vault-digest
+  annotations:
+    clawql.dev/kinetic: "true"
+    clawql.dev/risk-level: "LOW"
+    clawql.dev/blast-radius: "SINGLE_RECORD"
+    clawql.dev/rollback-protocol: "WORKFLOW_CANCEL"
+    clawql.dev/executor: "ARGO_WORKFLOW"
+    clawql.dev/requires-mandate: "false"
+    clawql.dev/correlation-id-param: "correlation_id"
+spec:
+  entrypoint: vault-digest
+  volumes:
+    - name: vault
+      persistentVolumeClaim:
+        claimName: clawql-vault
+  arguments:
+    parameters:
+      - name: hours_back
+        value: "24"
+      - name: clawql_image
+        value: ghcr.io/danielsmithdevelopment/clawql-mcp:latest
+      - name: correlation_id
+        value: ""
+  templates:
+    - name: vault-digest
+      inputs:
+        parameters:
+          - name: hours_back
+          - name: clawql_image
+          - name: correlation_id
+      container:
+        image: "{{inputs.parameters.clawql_image}}"
+        command: ["node"]
+        args:
+          - "node_modules/clawql-automation/dist/workflow/vault-digest/cli.js"
+          - "--hours"
+          - "{{inputs.parameters.hours_back}}"
+        env:
+          - name: CLAWQL_OBSIDIAN_VAULT_PATH
+            value: /vault
+          - name: CLAWQL_VAULT_DIGEST_HOURS
+            value: "{{inputs.parameters.hours_back}}"
+          - name: CLAWQL_CORRELATION_ID
+            value: "{{inputs.parameters.correlation_id}}"
+        volumeMounts:
+          - name: vault
+            mountPath: /vault
+      # Prefer reserved pool when Karpenter taints spot
+      nodeSelector:
+        clawql.dev/pool: reserved
+      tolerations: []
