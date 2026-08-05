@@ -384,7 +384,7 @@ Run: [31014040293](https://github.com/danielsmithdevelopment/ClawQL/actions/runs
 | -------------------------------- | -------- | ------------------------------------------------------------------------------------------------- |
 | `search-first-discovery`         | 3        | **done** [31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064) |
 | `memory-roundtrip-ingest-recall` | 3        | **done** [31014040293](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31014040293) |
-| `policy-deny-execute`            | 3        | queued                                                                                            |
+| `policy-deny-execute`            | 3        | **in progress** via `pr_active` + `pr_trials: 3`                                                  |
 
 ### 2026-08-05 — Phase 0 n≥3 kickoff (`pr_trials`)
 
