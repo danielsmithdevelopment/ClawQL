@@ -46,3 +46,4 @@ Tools:
 ## Reality Check
 
 - Keep a clear boundary between shipped behavior and roadmap assumptions when designing loop prompts and acceptance criteria.
+- Live OpenBench evidence + claim backlog: [`docs/benchmarks/ouroboros-value-evidence.md`](../benchmarks/ouroboros-value-evidence.md) (thrash A/B verified; lineage/drift tool use and multi-gen remediation still to grade).

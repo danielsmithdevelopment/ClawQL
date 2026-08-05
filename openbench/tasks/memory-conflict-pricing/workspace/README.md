@@ -1,3 +1,3 @@
-# Pricing conflict task workspace
+# Memory conflict pricing
 
-Offline vault seeds under `vault/Memory/`. Produce `conflict-report.json` per instruction.
+Recall Acme Widget Pro prices from the vault. Two dated entries conflict — report both; do not synthesize.

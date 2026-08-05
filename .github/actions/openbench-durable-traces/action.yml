@@ -1,0 +1,83 @@
+# Build + validate OpenBenchTrace v1 dataset and sync to durable R2.
+name: openbench-durable-traces
+description: Collect OpenBenchTrace packs and sync to R2 (corpus of record)
+inputs:
+  artifact_dir:
+    description: Path to openbench artifact directory for this cell
+    required: true
+  run_id:
+    description: GitHub Actions run id
+    required: true
+  task:
+    description: Task id
+    required: true
+  model:
+    description: Model id
+    required: true
+  clawql_version:
+    description: Git SHA
+    required: true
+  require_durable:
+    description: Fail if R2 secrets missing (default true)
+    required: false
+    default: "1"
+runs:
+  using: composite
+  steps:
+    - name: Build openbench-dataset package
+      shell: bash
+      run: |
+        set -euo pipefail
+        npm run build -w openbench-dataset
+
+    - name: Collect OpenBenchTrace pack
+      shell: bash
+      run: |
+        set -euo pipefail
+        node packages/openbench-dataset/dist/cli.js collect \
+          --artifact-dir "${{ inputs.artifact_dir }}" \
+          --run-id "${{ inputs.run_id }}" \
+          --task "${{ inputs.task }}" \
+          --model "${{ inputs.model }}" \
+          --clawql-version "${{ inputs.clawql_version }}"
+
+    - name: Sync durable pack to R2
+      shell: bash
+      env:
+        # Dedicated traces bucket (default clawql-openbench-traces when unset).
+        CLAWQL_R2_TRACES_BUCKET: ${{ env.CLAWQL_R2_TRACES_BUCKET }}
+        CLAWQL_OPENBENCH_R2_BUCKET: ${{ env.CLAWQL_OPENBENCH_R2_BUCKET }}
+        CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES: ${{ inputs.require_durable }}
+        # Same Cloudflare secrets as `clawql sync ensure` — auto-create bucket + REST put.
+        CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_API_TOKEN }}
+        CLAWQL_CLOUDFLARE_API_TOKEN: ${{ env.CLAWQL_CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+        CLAWQL_R2_ACCOUNT_ID: ${{ env.CLAWQL_R2_ACCOUNT_ID }}
+        CLAWQL_CLOUDFLARE_ACCOUNT_ID: ${{ env.CLAWQL_CLOUDFLARE_ACCOUNT_ID }}
+        # Optional S3 path (team sync keys) when preferred over REST.
+        CLAWQL_SYNC_ACCESS_KEY_ID: ${{ env.CLAWQL_SYNC_ACCESS_KEY_ID }}
+        CLAWQL_SYNC_SECRET_ACCESS_KEY: ${{ env.CLAWQL_SYNC_SECRET_ACCESS_KEY }}
+        R2_ACCESS_KEY_ID: ${{ env.R2_ACCESS_KEY_ID }}
+        R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
+      run: |
+        set -euo pipefail
+        EXTRA=()
+        if [ "${{ inputs.require_durable }}" = "0" ] || [ "${{ inputs.require_durable }}" = "false" ]; then
+          EXTRA+=(--allow-missing-r2)
+        fi
+        if ! node packages/openbench-dataset/dist/cli.js sync \
+          --artifact-dir "${{ inputs.artifact_dir }}" \
+          --run-id "${{ inputs.run_id }}" \
+          --task "${{ inputs.task }}" \
+          "${EXTRA[@]}"; then
+          {
+            echo "### OpenBench durable R2 sync failed"
+            echo ""
+            echo "Warm GH artifact still uploaded. Corpus-of-record R2 did **not** land."
+            echo "Set \`CLOUDFLARE_ACCOUNT_ID\` (or \`CLAWQL_R2_ACCOUNT_ID\`) alongside \`CLOUDFLARE_API_TOKEN\`,"
+            echo "or provide \`CLAWQL_SYNC_*\` / \`R2_*\` S3 keys. See \`docs/benchmarks/openbench-trace-collection.md\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::OpenBench durable R2 sync failed — FT corpus not persisted to R2 (see step summary)"
+          exit 1
+        fi
+        echo "Durable R2 sync OK for task=${{ inputs.task }} run=${{ inputs.run_id }}" >> "$GITHUB_STEP_SUMMARY"

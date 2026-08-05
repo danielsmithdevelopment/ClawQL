@@ -3,6 +3,7 @@ import { once } from "node:events";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConfiguredInferenceGateway } from "../gateway.js";
 import { createOpenAiAdapter } from "../plugin/adapters/openai.js";
+import { InMemoryInferenceStore } from "../store/in-memory.js";
 import { createInferenceHttpApp } from "./server.js";
 import { requestUsesToolCalling } from "./openai-compat.js";
 
@@ -131,7 +132,8 @@ describe("tool calling passthrough", () => {
     });
     const registry = new Map([["openai", openai]]);
     const gateway = new ConfiguredInferenceGateway(registry);
-    const app = createInferenceHttpApp({ gateway, registry });
+    const store = new InMemoryInferenceStore();
+    const app = createInferenceHttpApp({ gateway, registry, store });
     const server = createServer(app);
     server.listen(0, "127.0.0.1");
     await once(server, "listening");
@@ -141,6 +143,7 @@ describe("tool calling passthrough", () => {
     try {
       const res = await httpJson(`http://127.0.0.1:${address.port}/v1/chat/completions`, {
         method: "POST",
+        headers: { "x-correlation-id": "openbench/clawql-on/1/99" },
         body: JSON.stringify({
           model: "openai/gpt-4o-mini",
           messages: [{ role: "user", content: "recall auth decisions" }],
@@ -166,6 +169,10 @@ describe("tool calling passthrough", () => {
         function: { name: "memory_recall" },
       });
       expect(fetchMock).toHaveBeenCalledTimes(1);
+      const recorded = await store.getByCorrelationId("openbench/clawql-on/1/99");
+      expect(recorded).toHaveLength(1);
+      expect(recorded[0]?.response).toContain("tool_calls");
+      expect(recorded[0]?.provider).toBe("openai");
     } finally {
       await closeHttpServer(server);
     }

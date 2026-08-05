@@ -18,10 +18,12 @@ Also update `src/index.js` only if needed to re-export the router.
 
 ## Hints
 
-When ClawQL **codegraph** tools are available (`codegraph_explore`,
-`codegraph_impact`, `codegraph_sync`), use them to discover dependents of
-`getWidgetById` / `handler.js` instead of guessing. Do not leave orphan
-handler code that nothing routes to.
+When ClawQL **codegraph** tools are available (`codegraph_index`,
+`codegraph_query`, `codegraph_neighbors`, `codegraph_path`,
+`codegraph_explain`), use them to discover dependents of
+`getWidgetById` / `handler.js` instead of guessing. Index with
+`root` = `.` (workspace root). Do not leave orphan handler code that
+nothing routes to.
 
 ## Done when
 

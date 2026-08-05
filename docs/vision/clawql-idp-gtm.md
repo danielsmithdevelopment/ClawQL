@@ -2,7 +2,7 @@ IDP-first GTM · July 2026
 
 # Document Processing That Doesn't Stop at Extraction
 
-Standalone Intelligent Document Processing motion for ops, compliance, legal, lending, and M&A — full lifecycle from ingest to secure distribution, Merkle audit trails, MCP-native agents, Starter at $299/mo. Developer motion: [inference-first GTM](https://clawql.com/inference/gtm/). Enterprise motion: [enterprise GTM](https://clawql.com/enterprise/gtm/).
+Standalone Intelligent Document Processing motion for ops, compliance, legal, lending, and M&A — full lifecycle from ingest to secure distribution, Merkle audit trails, MCP-native agents, Starter at $299/mo. Developer motion: [inference-first GTM](https://clawql.com/inference/gtm/). Enterprise motion: [enterprise GTM](https://clawql.com/enterprise/gtm/). Live gateway/memory A/B: [OpenBench results ledger](../benchmarks/openbench-results-ledger.md). Dataset protocol: [OpenBench dataset product](../benchmarks/openbench-dataset-product.md).
 
 [View IDP landing](https://clawql.com/idp/) · [Start free trial](https://clawql.com/signup/) · [IDP platform docs](https://docs.clawql.com/vision/idp-platform) · [Deploy with Helm](https://docs.clawql.com/deployment/kubernetes)
 
@@ -68,6 +68,21 @@ A sovereign, modular IDP that closes the full document lifecycle in one system: 
 4. Merkle audit trail per step — independently verifiable for regulated industries.
 5. Self-hosted / air-gapped / data-sovereign — no document data must leave the environment.
 6. Deploy in hours, not months — `helm install clawql charts/clawql-full-stack --namespace clawql`.
+
+7. **Persistent vault memory on frugal models (OpenBench A/B).** Live cells on `openrouter/deepseek/deepseek-chat` show clawql-on **1.0** vs off **0.0** for ingest→recall, **1.0** vs **0.333** after seed removal, and **1.0** vs **0.0** under token-budget pressure ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516), [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811); [results ledger](../benchmarks/openbench-results-ledger.md)).
+
+### Gateway competitive proof (supports IDP → platform expansion)
+
+| Objection                                              | Answer with run evidence                                                                                                                                                                                       |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Does vault memory actually work?"                     | Yes — frugal DeepSeek A/B WINs above; same model class cheap-router customers use.                                                                                                                             |
+| "Is search/execute just marketing?"                    | Search-first discovery **1.0/0.0** with graders requiring real `tool:clawql_*` calls ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)).                               |
+| "Will policy actually block bad execute?"              | Panguard policy-deny-execute **1.0/0.0** ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)).                                                                           |
+| "Does orchestration reduce thrash/cost?"               | Ouroboros on **1.0** in ~78s / 5 turns vs off **0.0** thrashing ~167s ([30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642)); still wins with production `doom_loop=deny`. |
+| "Can agents notify / sandbox / compose safely?"        | Stubbed Slack notify, Docker sandbox_exec, and composed dry-run rollout each **1.0/0.0** ([30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305)).                           |
+| "Does Onyx / vault graph memory work on cheap models?" | Stubbed `knowledge_search_onyx` and wikilink-hop `memory_recall` each **1.0/0.0** ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)).                                  |
+
+**Do not overclaim in sales:** most headline cells are still **n=1–2** — expand to n=3–5 before quoting statistical confidence. Live Onyx / live Slack / Argo / R2 sync are ops-integration, not PR OpenBench. Multi-provider remains a margin WIN (on 1.0 / off 0.75). Detail: [OpenBench results ledger — open gaps](../benchmarks/openbench-results-ledger.md#open-gaps-not-yet-headline-win).
 
 Avoid "best IDP on the planet" until earned. Prefer: _best IDP for teams that need pipeline integration, data sovereignty, agentic access, and price efficiency_.
 

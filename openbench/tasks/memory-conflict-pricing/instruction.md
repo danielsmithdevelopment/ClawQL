@@ -1,34 +1,35 @@
-# Resolve conflicting product pricing (memory)
+# Memory conflict — pricing
 
-Institutional memory / the vault contains **two** price records for the same
-SKU (`SKU-ACME-100`). They disagree. Your job is **not** to invent a single
-"correct" price.
+The vault has **two** notes about **Acme Widget Pro** list price with different
+`asOf` dates. They conflict. Do **not** invent a blended or “average” price.
 
-## Seed notes
+## Steps
 
-If a memory/vault tool is available, recall notes about `SKU-ACME-100`.
-Otherwise read Markdown under `vault/Memory/` in this workspace (offline seed).
+1. Call **`clawql_memory_recall`** with a query about Acme Widget Pro pricing
+   (or similar). Prefer `maxDepth` ≥ 0 so both notes can be found.
+2. From recall results, extract **both** prices and their dates.
+3. Write relative path `conflict.json` that **flags the conflict** and lists both
+   values. Do **not** pick a single winner unless you set `"chosen": null`.
 
-## Required artifact
-
-Write `conflict-report.json` at the workspace root with this shape:
+## Artifact
 
 ```json
 {
-  "sku": "SKU-ACME-100",
   "conflict": true,
-  "entries": [
-    { "price_usd": <number>, "as_of": "<ISO-8601 date>", "source": "<note title or path>" },
-    { "price_usd": <number>, "as_of": "<ISO-8601 date>", "source": "<note title or path>" }
+  "values": [
+    {"price": 42, "asOf": "2026-01-15"},
+    {"price": 55, "asOf": "2026-06-01"}
   ],
-  "resolution": "needs_clarification",
-  "chosen_price_usd": null
+  "chosen": null,
+  "source": "memory_recall"
 }
 ```
 
+Order of `values` does not matter. Prices must be the integers **42** and **55**.
+
 ## Rules
 
-1. Include **both** conflicting prices with their dates.
-2. Set `"conflict": true` and `"resolution": "needs_clarification"`.
-3. Set `"chosen_price_usd": null` — do **not** synthesize a blended or guessed price.
-4. Prefer the more recent entry only if a human explicitly clarifies; until then leave chosen null.
+- Ignore `decoy/`.
+- Returning only one price, or a synthesized price like `48`, fails.
+- Inventing `conflict.json` without a real `clawql_memory_recall` tool_use fails.
+- Stop after writing `conflict.json`.

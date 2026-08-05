@@ -13,6 +13,14 @@ Live CI A/B (`openbench-ab.yml`) runs **clawql-on vs clawql-off** on the cheap
 OpenRouter default; vault seeds + tool passthrough are what make clawql-on win
 or tie each task fairly.
 
+**Ouroboros A/B** (`openbench-ouroboros-ab.yml`) runs **ouroboros-on vs
+ouroboros-off** on `ouroboros-oscillation-escape` with hard spend caps (180s /
+50 turns / 8000 tokens / maxGenerations≤4) and a **doom_loop allow|deny**
+matrix. See
+[`docs/benchmarks/openbench-ouroboros-oscillation.md`](../docs/benchmarks/openbench-ouroboros-oscillation.md).
+
+Stack coverage map: [`docs/benchmarks/openbench-stack-coverage.md`](../docs/benchmarks/openbench-stack-coverage.md).
+
 ## Layout
 
 ```
@@ -23,10 +31,16 @@ openbench/
     memory-dependent-continuation/
     token-budget-constrained/
     multi-provider-api-workflow/
-    codegraph-feature-api-surface/   # B-3.1 Phase 1
-    memory-conflict-pricing/         # B-4.1 Phase 1
-    memory-stale-after-update/       # B-4.2 Phase 1
-    memory-injection-attempt/        # B-4.3 Phase 1
+    search-first-discovery/
+    execute-verify-loop/
+    memory-roundtrip-ingest-recall/
+    ouroboros-oscillation-escape/
+    codegraph-impact-edit/           # B-3.1 lite (live WIN)
+    codegraph-feature-api-surface/   # B-3.1 Phase 1 offline pack
+    memory-conflict-pricing/         # B-4.1 (live WIN)
+    memory-stale-after-update/       # B-4.2 Phase 1 offline pack
+    memory-injection-attempt/        # B-4.3 Phase 1 offline pack
+    …                                # see docs/benchmarks/openbench-stack-coverage.md
   validate_tasks.py           # fail-on-workspace / pass-on-solution
   scripts/run-with-openbench.sh
   README.md
@@ -34,6 +48,7 @@ openbench/
 
 Advanced suites B-1…B-6 (specs + Phase 1 packs):
 [`docs/benchmarks/openbench-advanced-specs.md`](../docs/benchmarks/openbench-advanced-specs.md).
+CI matrix / retired list: [`ci-matrix.json`](ci-matrix.json).
 
 ## Prerequisites
 
@@ -128,7 +143,9 @@ To contribute these upstream, copy `tasks/<name>/` into OpenBench's `tasks/`
 Manual workflow **OpenBench A/B (clawql on vs off)** — starts
 **clawql-inference**, runs OpenCode on/off. Preferred secret:
 `OPENROUTER_API_KEY` with default model `openrouter/deepseek/deepseek-chat`.
-CI matrix runs all three tasks. See
+CI matrix runs **`pr_active`** tasks only (see
+[`ci-matrix.json`](./ci-matrix.json)). Move thoroughly verified tasks to
+`retired` so they stop spending tokens. Docs:
 [`docs/benchmarks/openbench-github-actions.md`](../docs/benchmarks/openbench-github-actions.md).
 
 ```bash
@@ -136,6 +153,9 @@ gh workflow run openbench-ab.yml \
   -f task=all \
   -f model=openrouter/deepseek/deepseek-chat \
   -f trials=1
+# Re-run proven cells intentionally:
+#   -f task=all-including-retired
+#   -f task=search-first-discovery
 ```
 
 Local dry path (same script):

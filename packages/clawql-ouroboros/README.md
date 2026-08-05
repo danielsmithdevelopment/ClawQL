@@ -4,12 +4,13 @@
 
 **Works as a standalone npm library today.** You do **not** need the ClawQL MCP server: bring your own `EventStore`, LLM calls inside Wonder/Reflect, and real side effects inside `Executor`. ClawQL uses this package as one consumer; others can embed the same loop in agents, job workers, or internal tools.
 
-| Resource                                       | Link                                                                                                                                |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **Long-form guide + copy-paste examples**      | [docs/ouroboros/clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md) |
-| **Human-friendly overview (ClawQL docs site)** | [docs.clawql.com/ouroboros](https://docs.clawql.com/ouroboros)                                                                      |
-| **Source**                                     | [packages/clawql-ouroboros](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-ouroboros)                   |
-| **Issues / discussions**                       | [ClawQL issues](https://github.com/danielsmithdevelopment/ClawQL/issues)                                                            |
+| Resource                                       | Link                                                                                                                                                  |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Long-form guide + copy-paste examples**      | [docs/ouroboros/clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md)                   |
+| **OpenBench value evidence (thrash A/B)**      | [docs/benchmarks/ouroboros-value-evidence.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/ouroboros-value-evidence.md) |
+| **Human-friendly overview (ClawQL docs site)** | [docs.clawql.com/ouroboros](https://docs.clawql.com/ouroboros)                                                                                        |
+| **Source**                                     | [packages/clawql-ouroboros](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-ouroboros)                                     |
+| **Issues / discussions**                       | [ClawQL issues](https://github.com/danielsmithdevelopment/ClawQL/issues)                                                                              |
 
 ## Requirements
 

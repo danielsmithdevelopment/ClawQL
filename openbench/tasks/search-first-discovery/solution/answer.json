@@ -1,0 +1,4 @@
+{
+  "operationId": "security_advisories_list_global_advisories",
+  "provider": "github"
+}

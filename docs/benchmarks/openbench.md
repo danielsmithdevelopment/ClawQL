@@ -33,17 +33,22 @@ Python adapter: [`openbench/adapters/clawql.py`](../../openbench/adapters/clawql
 
 ### Track B — ClawQL-specific tasks
 
-| Task                            | Differentiator                                                              |
-| ------------------------------- | --------------------------------------------------------------------------- |
-| `memory-dependent-continuation` | Prior auth decisions only in vault memory after seed removal                |
-| `token-budget-constrained`      | Nested YAML list recipe in vault memory; ignore `decoy/`; ≤5k-token scoring |
-| `multi-provider-api-workflow`   | Offline Worker scaffold; wrangler/GitHub URL notes in vault when clawql-on  |
-| `codegraph-feature-api-surface` | Cross-file API wiring (B-3.1 Phase 1)                                       |
-| `memory-conflict-pricing`       | Flag vault price conflict; no confabulation (B-4.1)                         |
-| `memory-stale-after-update`     | Cache invalidation after write (B-4.2)                                      |
-| `memory-injection-attempt`      | Deny adversarial `memory_ingest` (B-4.3)                                    |
+| Task                             | Differentiator                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| `memory-dependent-continuation`  | Prior auth decisions only in vault memory after seed removal                                |
+| `token-budget-constrained`       | Nested YAML list recipe in vault memory; ignore `decoy/`; ≤5k-token scoring                 |
+| `multi-provider-api-workflow`    | Offline Worker scaffold; wrangler/GitHub URL notes in vault when clawql-on                  |
+| `search-first-discovery`         | Must `search` for global GHSA list op; decoy names wrong id                                 |
+| `execute-verify-loop`            | `search` + ≥2 dry-run `execute` trail; decoy skips tools                                    |
+| `memory-roundtrip-ingest-recall` | Empty vault: ingest marker → recall → `answer.json`                                         |
+| `ouroboros-oscillation-escape`   | Ouroboros on vs off under decoy thrash; see [value evidence](./ouroboros-value-evidence.md) |
+| `codegraph-impact-edit`          | Cross-file rename via codegraph impact set (B-3.1 lite; **live WIN**)                       |
+| `codegraph-feature-api-surface`  | Cross-file API wiring (B-3.1 Phase 1 offline pack)                                          |
+| `memory-conflict-pricing`        | Flag vault price conflict; no confabulation (B-4.1; **live WIN**)                           |
+| `memory-stale-after-update`      | Cache invalidation after write (B-4.2 offline pack)                                         |
+| `memory-injection-attempt`       | Deny adversarial `memory_ingest` (B-4.3 offline pack)                                       |
 
-Advanced suite ledger (B-1…B-6 specs): [`openbench-advanced-specs.md`](openbench-advanced-specs.md).
+Full live scoreboard: [`openbench-results-ledger.md`](openbench-results-ledger.md). Advanced suite ledger (B-1…B-6 specs): [`openbench-advanced-specs.md`](openbench-advanced-specs.md) · execution checklist: [`openbench-advanced-suites.md`](openbench-advanced-suites.md).
 
 Offline checker validation (no model):
 
@@ -54,10 +59,11 @@ python3 openbench/validate_tasks.py
 ## GitHub Actions A/B (CI + manual)
 
 - **Offline:** main CI always runs `python3 openbench/validate_tasks.py`.
-- **Live A/B:** [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml) runs on path-filtered PR/push to `main` and via `workflow_dispatch`.
+- **Live A/B (ClawQL on vs off):** [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml) runs on path-filtered PR/push to `main` and via `workflow_dispatch`.
+- **Live A/B (Ouroboros on vs off):** [`.github/workflows/openbench-ouroboros-ab.yml`](../../.github/workflows/openbench-ouroboros-ab.yml) — thrash-escape evidence; see [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md).
 - **Default model:** `openrouter/deepseek/deepseek-chat` (cheap OpenRouter default; flash-lite also supported) — preferred secret: **`OPENROUTER_API_KEY`**.
 - **Tool calling:** clawql-inference must passthrough OpenAI `tools` / `tool_calls` for OpenCode; see [`openbench-failure-root-cause-2026-07.md`](./openbench-failure-root-cause-2026-07.md).
-- **Matrix:** PR/push runs all three tasks (`memory-dependent-continuation`, `token-budget-constrained`, `multi-provider-api-workflow`) when secrets are present.
+- **Matrix (clawql on/off):** PR/push runs memory / token / multi-provider / **search-first** / **execute-verify** / **memory-roundtrip** when secrets are present.
 - Missing secrets → live A/B **skipped** on PR/push (exit 0); manual dispatch still fails closed.
 - Optional later: switch `model` to direct BYOK ids when you add vendor keys.
 
@@ -76,3 +82,14 @@ Existing [`latest.md`](latest.md) / workflow stats measure **planning-context**
 compression (full specs vs search outputs). OpenBench measures **agent
 execution** (harness + model + task). Use both: context math for gateway
 efficiency, OpenBench for end-to-end harness competition.
+
+## Whole-stack coverage
+
+Live task pack covers gateway core (search / execute / cache / audit / policy),
+memory depth (roundtrip, seed-removal, token pressure, PageIndex, hybrid,
+codegraph, external ingest, wikilink hops), automation (`schedule`, `notify`),
+sandbox, composed safe-rollout, and stubbed Onyx knowledge cite — all with
+clawql-on/off (or ouroboros on/off) and hard spend caps. Remaining gaps: n≥3
+Wilson trials; ops-only live Slack/Onyx/Argo/R2.
+Full map: [`openbench-stack-coverage.md`](./openbench-stack-coverage.md).
+Scoreboard: [`openbench-results-ledger.md`](./openbench-results-ledger.md).

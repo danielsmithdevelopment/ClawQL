@@ -214,6 +214,21 @@ Layers 1–3 are on by default for MCP workloads. Layer 4 and Layer 5 are on by 
 
 ---
 
+## Live behavioral evidence (OpenBench)
+
+Architecture alone is not the claim. On a frugal model (`openrouter/deepseek/deepseek-chat`), OpenBench A/B cells with tool-evidence graders show:
+
+| Efficiency story                                         | Behavioral result                                                           | Run                                                                                      |
+| -------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Search-first / Code Mode surface (Layer 1 behavior)**  | clawql-on must call `clawql_search` → **1.0**; off prompt-guesses → **0.0** | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) |
+| **Vault offload under token pressure (Layer 6 pairing)** | Nested recipe with constrained budget → on **1.0** / off **0.0**            | [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811) |
+| **Durable memory roundtrip**                             | Empty-vault ingest→recall → on **1.0** / off **0.0**                        | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516) |
+| **Composed safe rollout (search→dry_run→audit→ingest)**  | Multi-tool sequence evidence → on **1.0** / off **0.0**                     | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305) |
+
+Full scoreboard, replications, and honest gaps (n=1–2; ops-only Onyx/Slack/Argo/R2): [`docs/benchmarks/openbench-results-ledger.md`](../benchmarks/openbench-results-ledger.md). Do not treat these n=1 cells as Wilson CIs yet.
+
+---
+
 ## Known Trade-offs
 
 **Code Mode needs a capable model.** The savings are real, but the model writes code rather than picking from a list. Test on your actual model before depending on it in production — traditional tool-calling remains available as a fallback.
@@ -240,6 +255,6 @@ Token estimates throughout use a roughly 4-characters-per-token approximation, c
 
 ---
 
-_For the search/execute workflow, see [`docs/mcp/mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md). For inference gateway layers and env vars, see [`docs/inference/clawql-inference.md`](https://docs.clawql.com/inference/clawql-inference). For platform context, see the [Vision & Roadmap document](https://docs.clawql.com/vision/roadmap)._
+_For the search/execute workflow, see [`docs/mcp/mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md). For inference gateway layers and env vars, see [`docs/inference/clawql-inference.md`](https://docs.clawql.com/inference/clawql-inference). For live A/B scoreboard, see [`docs/benchmarks/openbench-results-ledger.md`](../benchmarks/openbench-results-ledger.md). For platform context, see the [Vision & Roadmap document](https://docs.clawql.com/vision/roadmap)._
 
 © Copyright 2026. All rights reserved. · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL)

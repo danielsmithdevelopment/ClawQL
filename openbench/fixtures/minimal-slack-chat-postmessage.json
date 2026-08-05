@@ -1,0 +1,50 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "Slack chat.postMessage (minimal, tests only)", "version": "1" },
+  "servers": [{ "url": "https://slack.example.invalid/api" }],
+  "paths": {
+    "/chat.postMessage": {
+      "post": {
+        "operationId": "chat_postMessage",
+        "summary": "Sends a message to a channel.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "channel": { "type": "string" },
+                  "text": { "type": "string" }
+                },
+                "required": ["channel", "text"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "channel": { "type": "string" },
+                    "ts": { "type": "string" },
+                    "message": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": { "schemas": {} }
+}

@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://clawql.dev/schemas/openbench-trace/v1.1.json",
+  "title": "OpenBenchTrace",
+  "description": "Publish-ready OpenBench session/trial trace for fine-tuning and public dataset release. Schema 1.1 adds required RTP-compatible inner structure (`rtp`).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trace_id",
+    "run_id",
+    "task_id",
+    "arm",
+    "arm_label",
+    "phase",
+    "model",
+    "harness",
+    "clawql_version",
+    "messages",
+    "tool_calls",
+    "verdict",
+    "verdict_source",
+    "score",
+    "grader_id",
+    "turns",
+    "elapsed_ms",
+    "total_tokens",
+    "hit_turn_cap",
+    "hit_time_cap",
+    "hit_token_cap",
+    "presidio_version",
+    "redaction_policy_hash",
+    "pii_fields_redacted",
+    "content_hash",
+    "redacted_hash",
+    "manifest_id",
+    "collected_at",
+    "suitable_for_training",
+    "rtp"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.1" },
+    "trace_id": { "type": "string", "minLength": 8 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "arm": { "type": "string", "enum": ["on", "off"] },
+    "arm_label": {
+      "type": "string",
+      "description": "Full harness arm id (clawql-on, ouroboros-off, …)"
+    },
+    "phase": { "type": "number" },
+    "model": { "type": "string", "minLength": 1 },
+    "harness": { "type": "string", "minLength": 1 },
+    "clawql_version": { "type": "string", "minLength": 1 },
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["role", "content"],
+        "additionalProperties": true,
+        "properties": {
+          "role": { "type": "string" },
+          "content": { "type": ["string", "null", "array", "object"] }
+        }
+      }
+    },
+    "tool_calls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["tool"],
+        "additionalProperties": true,
+        "properties": {
+          "tool": { "type": "string" },
+          "input": {},
+          "output": {}
+        }
+      }
+    },
+    "verdict": { "type": "string", "enum": ["pass", "fail", "partial"] },
+    "verdict_source": { "const": "grader" },
+    "score": { "type": "number", "minimum": 0, "maximum": 1 },
+    "grader_id": { "type": "string" },
+    "turns": { "type": ["integer", "null"] },
+    "elapsed_ms": { "type": ["integer", "null"] },
+    "total_tokens": { "type": ["integer", "null"] },
+    "hit_turn_cap": { "type": "boolean" },
+    "hit_time_cap": { "type": "boolean" },
+    "hit_token_cap": { "type": "boolean" },
+    "presidio_version": { "type": "string" },
+    "redaction_policy_hash": { "type": "string", "minLength": 8 },
+    "pii_fields_redacted": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "content_hash": { "type": "string", "minLength": 16 },
+    "redacted_hash": { "type": "string", "minLength": 16 },
+    "manifest_id": { "type": "string", "minLength": 8 },
+    "collected_at": { "type": "string", "minLength": 10 },
+    "suitable_for_training": { "type": "boolean" },
+    "inference_call_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional links into the companion call-store JSONL for this run"
+    },
+    "rtp": { "$ref": "#/$defs/rtpSession" }
+  },
+  "$defs": {
+    "rtpSession": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "protocolVersion",
+        "consentToken",
+        "turnSequence",
+        "verdict"
+      ],
+      "properties": {
+        "protocol": { "const": "rtp" },
+        "protocolVersion": { "type": "string", "minLength": 1 },
+        "consentToken": { "$ref": "#/$defs/rtpConsentToken" },
+        "turnSequence": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/rtpTurnNode" }
+        },
+        "verdict": { "$ref": "#/$defs/rtpVerdict" }
+      }
+    },
+    "rtpConsentToken": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["token", "scopes", "issuedAt", "issuer", "subject"],
+      "properties": {
+        "token": { "type": "string", "minLength": 8 },
+        "scopes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "issuedAt": { "type": "string", "minLength": 10 },
+        "issuer": { "type": "string", "minLength": 1 },
+        "subject": { "type": "string", "minLength": 1 }
+      }
+    },
+    "rtpVerdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome", "evaluatorTier", "source", "graderId", "score"],
+      "properties": {
+        "outcome": { "type": "string", "enum": ["pass", "fail", "partial"] },
+        "evaluatorTier": { "type": "integer", "enum": [1, 2, 3] },
+        "source": { "const": "grader" },
+        "graderId": { "type": "string" },
+        "score": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "rtpTurnNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "turnIndex", "turnHash", "prevTurnHash"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "intent",
+            "retrieval",
+            "reasoning",
+            "execution",
+            "delta",
+            "verdict"
+          ]
+        },
+        "turnIndex": { "type": "integer", "minimum": 0 },
+        "turnHash": { "type": "string", "minLength": 16 },
+        "prevTurnHash": { "type": ["string", "null"] },
+        "intent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["rawPrompt", "parsedGoal"],
+          "properties": {
+            "rawPrompt": { "type": "string" },
+            "parsedGoal": { "type": "string" }
+          }
+        },
+        "retrieval": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["queries", "sources"],
+          "properties": {
+            "queries": { "type": "array", "items": { "type": "string" } },
+            "sources": { "type": "array", "items": { "type": "string" } },
+            "tool": { "type": "string" }
+          }
+        },
+        "reasoning": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["seedChain"],
+          "properties": {
+            "seedChain": { "type": "array", "items": { "type": "string" } },
+            "selectedTool": { "type": "string" }
+          }
+        },
+        "execution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["toolName"],
+          "properties": {
+            "toolName": { "type": "string" },
+            "payload": {},
+            "output": {}
+          }
+        },
+        "delta": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["stateBeforeHash", "stateAfterHash"],
+          "properties": {
+            "stateBeforeHash": { "type": "string", "minLength": 16 },
+            "stateAfterHash": { "type": "string", "minLength": 16 }
+          }
+        },
+        "verdict": { "$ref": "#/$defs/rtpVerdict" }
+      }
+    }
+  }
+}

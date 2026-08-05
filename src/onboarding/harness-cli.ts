@@ -113,7 +113,8 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
   };
   if (process.env.CLAWQL_OPENBENCH?.trim()) {
     env.CLAWQL_OPENBENCH = process.env.CLAWQL_OPENBENCH.trim();
-    // Slim tool surface for cheap OpenBench models — avoid pageindex/docs noise.
+    // Slim tool surface for cheap OpenBench models — avoid pageindex/docs noise
+    // unless the task explicitly enables them (forwarded below).
     if (!process.env.CLAWQL_ENABLE_PAGEINDEX?.trim()) env.CLAWQL_ENABLE_PAGEINDEX = "0";
     if (!process.env.CLAWQL_ENABLE_DOCUMENTS?.trim()) env.CLAWQL_ENABLE_DOCUMENTS = "0";
     // Default recall snippets (520) truncate OpenBench vault recipes (full YAML
@@ -122,16 +123,117 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
       env.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS = "8192";
     }
   }
+  // Explicit overrides must reach the MCP child (OpenCode does not inherit parent env).
+  if (process.env.CLAWQL_ENABLE_PAGEINDEX?.trim()) {
+    env.CLAWQL_ENABLE_PAGEINDEX = process.env.CLAWQL_ENABLE_PAGEINDEX.trim();
+  }
+  if (process.env.CLAWQL_ENABLE_DOCUMENTS?.trim()) {
+    env.CLAWQL_ENABLE_DOCUMENTS = process.env.CLAWQL_ENABLE_DOCUMENTS.trim();
+  }
+  // Forward Ouroboros enablement + generation ceiling into the MCP child.
+  // Parent env alone is not inherited by OpenCode's local MCP `environment` map.
+  if (process.env.CLAWQL_ENABLE_OUROBOROS?.trim()) {
+    env.CLAWQL_ENABLE_OUROBOROS = process.env.CLAWQL_ENABLE_OUROBOROS.trim();
+  }
+  if (process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS?.trim()) {
+    env.CLAWQL_OUROBOROS_MAX_GENERATIONS = process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS.trim();
+  }
+  // Provider pin + in-process Panguard deny list for OpenBench policy cells.
+  if (process.env.CLAWQL_PROVIDER?.trim()) {
+    env.CLAWQL_PROVIDER = process.env.CLAWQL_PROVIDER.trim();
+  }
+  if (process.env.CLAWQL_PANGUARD_IN_PROCESS?.trim()) {
+    env.CLAWQL_PANGUARD_IN_PROCESS = process.env.CLAWQL_PANGUARD_IN_PROCESS.trim();
+  }
+  if (process.env.CLAWQL_PANGUARD_BLOCK_TOOLS?.trim()) {
+    env.CLAWQL_PANGUARD_BLOCK_TOOLS = process.env.CLAWQL_PANGUARD_BLOCK_TOOLS.trim();
+  }
+  if (process.env.CLAWQL_ENABLE_CODEGRAPH?.trim()) {
+    env.CLAWQL_ENABLE_CODEGRAPH = process.env.CLAWQL_ENABLE_CODEGRAPH.trim();
+  }
+  if (process.env.CLAWQL_CODEGRAPH_ROOT?.trim()) {
+    env.CLAWQL_CODEGRAPH_ROOT = process.env.CLAWQL_CODEGRAPH_ROOT.trim();
+  }
+  if (process.env.CLAWQL_CODEGRAPH_PATH?.trim()) {
+    env.CLAWQL_CODEGRAPH_PATH = process.env.CLAWQL_CODEGRAPH_PATH.trim();
+  }
+  if (process.env.CLAWQL_ENABLE_SCHEDULE?.trim()) {
+    env.CLAWQL_ENABLE_SCHEDULE = process.env.CLAWQL_ENABLE_SCHEDULE.trim();
+  }
+  if (process.env.CLAWQL_SCHEDULE_DB_PATH?.trim()) {
+    env.CLAWQL_SCHEDULE_DB_PATH = process.env.CLAWQL_SCHEDULE_DB_PATH.trim();
+  }
+  if (process.env.CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES?.trim()) {
+    env.CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES =
+      process.env.CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES.trim();
+  }
+  if (process.env.CLAWQL_EXTERNAL_INGEST?.trim()) {
+    env.CLAWQL_EXTERNAL_INGEST = process.env.CLAWQL_EXTERNAL_INGEST.trim();
+  }
+  if (process.env.CLAWQL_ENABLE_NOTIFY?.trim()) {
+    env.CLAWQL_ENABLE_NOTIFY = process.env.CLAWQL_ENABLE_NOTIFY.trim();
+  }
+  if (process.env.CLAWQL_SLACK_TOKEN?.trim()) {
+    env.CLAWQL_SLACK_TOKEN = process.env.CLAWQL_SLACK_TOKEN.trim();
+  }
+  if (process.env.CLAWQL_TEST_SLACK_FETCH_STUB?.trim()) {
+    env.CLAWQL_TEST_SLACK_FETCH_STUB = process.env.CLAWQL_TEST_SLACK_FETCH_STUB.trim();
+  }
+  if (process.env.CLAWQL_TEST_SLACK_FETCH_BODY?.trim()) {
+    env.CLAWQL_TEST_SLACK_FETCH_BODY = process.env.CLAWQL_TEST_SLACK_FETCH_BODY.trim();
+  }
+  if (process.env.CLAWQL_SPEC_PATH?.trim()) {
+    env.CLAWQL_SPEC_PATH = process.env.CLAWQL_SPEC_PATH.trim();
+  }
+  if (process.env.CLAWQL_ENABLE_SANDBOX?.trim()) {
+    env.CLAWQL_ENABLE_SANDBOX = process.env.CLAWQL_ENABLE_SANDBOX.trim();
+  }
+  if (process.env.CLAWQL_SANDBOX_BACKEND?.trim()) {
+    env.CLAWQL_SANDBOX_BACKEND = process.env.CLAWQL_SANDBOX_BACKEND.trim();
+  }
+  if (process.env.CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON?.trim()) {
+    env.CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON = process.env.CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON.trim();
+  }
+  if (process.env.CLAWQL_ENABLE_ONYX?.trim()) {
+    env.CLAWQL_ENABLE_ONYX = process.env.CLAWQL_ENABLE_ONYX.trim();
+  }
+  if (process.env.ONYX_BASE_URL?.trim()) {
+    env.ONYX_BASE_URL = process.env.ONYX_BASE_URL.trim();
+  }
+  if (process.env.ONYX_API_TOKEN?.trim()) {
+    env.ONYX_API_TOKEN = process.env.ONYX_API_TOKEN.trim();
+  }
+  if (process.env.CLAWQL_TEST_ONYX_FETCH_STUB?.trim()) {
+    env.CLAWQL_TEST_ONYX_FETCH_STUB = process.env.CLAWQL_TEST_ONYX_FETCH_STUB.trim();
+  }
+  if (process.env.CLAWQL_TEST_ONYX_FETCH_BODY?.trim()) {
+    env.CLAWQL_TEST_ONYX_FETCH_BODY = process.env.CLAWQL_TEST_ONYX_FETCH_BODY.trim();
+  }
   return env;
 }
 
 /**
- * Headless OpenBench permissions: auto-approve normal tools, but deny doom_loop
- * so identical tool spam (e.g. re-reading the same file 200×) cannot burn the timeout.
+ * Headless OpenBench permissions: auto-approve normal tools.
+ *
+ * Default: deny `doom_loop` so identical tool spam cannot burn the timeout.
+ * Set `CLAWQL_OPENBENCH_DOOM_LOOP=allow` for Ouroboros thrash experiments that
+ * must observe strategy loops without OpenCode's built-in guard (spend still
+ * bounded by OpenBench hard turn/token/wall caps).
  */
 export function openbenchOpencodePermissions(): Record<string, string> {
-  return {
+  // Explicit classes close known headless hang paths (permission → "ask" with no TTY).
+  // See anomalyco/opencode#36762 / #11899.
+  const base: Record<string, string> = {
     "*": "allow",
+    question: "deny",
+    external_directory: "allow",
+  };
+  const doom = process.env.CLAWQL_OPENBENCH_DOOM_LOOP?.trim().toLowerCase();
+  if (doom === "allow" || doom === "1" || doom === "true") {
+    return base;
+  }
+  return {
+    ...base,
     doom_loop: "deny",
   };
 }
@@ -145,6 +247,8 @@ export function buildOpencodeConfigContent(opts: {
   inferenceUrl: string;
   gatewayModel: string;
   home?: string;
+  /** Stamped onto inference call-store via x-correlation-id (OpenBench arm/trial). */
+  correlationId?: string;
 }): string {
   const home = opts.home ?? getClawqlHome();
   const base = opts.inferenceUrl.trim().replace(/\/$/, "");
@@ -157,6 +261,18 @@ export function buildOpencodeConfigContent(opts: {
   if (!mcpEnv.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS) {
     mcpEnv.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS = "8192";
   }
+  const correlationId =
+    opts.correlationId?.trim() || process.env.CLAWQL_OPENBENCH_CORRELATION_ID?.trim() || "";
+  const providerOptions: Record<string, unknown> = {
+    baseURL: inferenceUrl,
+    apiKey: process.env.CLAWQL_INFERENCE_CLIENT_KEY?.trim() || "clawql-openbench",
+  };
+  if (correlationId) {
+    providerOptions.headers = {
+      "x-correlation-id": correlationId,
+      "x-clawql-correlation-id": correlationId,
+    };
+  }
   return JSON.stringify({
     $schema: "https://opencode.ai/config.json",
     permission: openbenchOpencodePermissions(),
@@ -164,11 +280,17 @@ export function buildOpencodeConfigContent(opts: {
       clawql: {
         npm: "@ai-sdk/openai-compatible",
         name: "ClawQL Inference",
-        options: {
-          baseURL: inferenceUrl,
-          apiKey: process.env.CLAWQL_INFERENCE_CLIENT_KEY?.trim() || "clawql-openbench",
+        options: providerOptions,
+        // Cap default completion budget — OpenRouter 402s when the key cannot
+        // afford the client's requested max_tokens (often 16k).
+        models: {
+          [gatewayModel]: {
+            limit: {
+              context: Number(process.env.OPENBENCH_MODEL_CONTEXT || 32000),
+              output: Number(process.env.OPENBENCH_MODEL_MAX_OUTPUT || 2048),
+            },
+          },
         },
-        models: { [gatewayModel]: {} },
       },
     },
     mcp: {
@@ -503,6 +625,10 @@ function buildHeadlessArgv(
         "--title",
         "clawql-openbench",
       ];
+      // Surface API/permission hangs in CI artifacts (OpenCode often prints nothing otherwise).
+      if (process.env.CLAWQL_OPENBENCH === "1" || process.env.CLAWQL_OPENBENCH_PRINT_LOGS === "1") {
+        args.push("--print-logs", "--log-level", "WARN");
+      }
       if (model) args.push("-m", model);
       args.push(instruction, ...extra);
       return args;
