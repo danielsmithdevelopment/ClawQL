@@ -39,12 +39,12 @@ Phase 7  B-1.3 cycle-over-cycle; B-3.2 langs; B-6.3 legal
 
 ## Phase 0 — Statistical credibility (small tasks)
 
-| ID   | Task                                                                                                                                                        | Size | Done when                                        |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ------------------------------------------------ |
-| P0-a | Pick 3–5 cells for n=3: `search-first-discovery`, `memory-roundtrip-ingest-recall`, `policy-deny-execute`, optionally `notify-mock-slack`, `onyx-mock-cite` | S    | List committed in ledger “replication queue”     |
-| P0-b | Add workflow_dispatch preset or script: `OPENBENCH_TRIALS=3` + `task=…` / `all-including-retired` subset                                                    | S    | Docs in `openbench-github-actions.md`            |
-| P0-c | Run first n=3 matrix (one task) via dispatch                                                                                                                | M    | Run ID + Wilson note in ledger (even if CI-only) |
-| P0-d | Repeat for remaining queue; update “honest gaps”                                                                                                            | M    | Gaps say which cells have n≥3                    |
+| ID   | Task                                                                                                                                                        | Size | Done when                                                                                               |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------- |
+| P0-a | Pick 3–5 cells for n=3: `search-first-discovery`, `memory-roundtrip-ingest-recall`, `policy-deny-execute`, optionally `notify-mock-slack`, `onyx-mock-cite` | S    | List committed in ledger “replication queue”                                                            |
+| P0-b | Add `OPENBENCH_TRIALS=3` via dispatch **or** `ci-matrix.json` → `pr_trials` (PR fallback when dispatch unavailable)                                         | S    | Docs in `openbench-github-actions.md`                                                                   |
+| P0-c | Run first n=3 matrix (one task) via dispatch **or** `pr_trials` PR fallback                                                                                 | M    | ✅ [31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064) Wilson note |
+| P0-d | Repeat for remaining queue; update “honest gaps”                                                                                                            | M    | Gaps say which cells have n≥3                                                                           |
 
 **Do not** burn PR `pr_active` for pure replication — prefer `workflow_dispatch`.
 
@@ -197,8 +197,9 @@ Work **in this order** unless blocked:
    3d. **[Trace-3]** Full collect/sync package path (S3/R2, arm correlation, GHA composite). ✅
 4. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire. ✅ [30969554941](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30969554941)
 5. **[B4.2-0] / [B4.3-0]** Spikes; only then optional cells. ← **next**
-6. **[P0-c]** First n=3 dispatch on one headline cell.
-7. Park B-1/B-2-full/B-5/B-6 until their gates open; keep specs updated here. Collect traces on every live cell in the meantime.
+6. **[P0-c]** First n=3 on `search-first-discovery`. ✅ [31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064)
+7. **[P0-d]** Remaining queue: `memory-roundtrip-ingest-recall`, `policy-deny-execute`.
+8. Park B-1/B-2-full/B-5/B-6 until their gates open; keep specs updated here. Collect traces on every live cell in the meantime.
 
 Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger, stack-coverage, and (for product claims) vision/GTM tables when headline-worthy.
 

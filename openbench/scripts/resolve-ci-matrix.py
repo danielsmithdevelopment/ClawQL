@@ -47,6 +47,21 @@ def all_known(cfg: dict) -> list[str]:
     return names
 
 
+def resolve_pr_trials(cfg: dict) -> int:
+    """PR/push trial count from ci-matrix.json (default 1; clamp 1–3).
+
+    Prefer workflow_dispatch `trials` for operator-controlled n≥3. When the
+    Actions token cannot dispatch (common for cloud agents), set `pr_trials`
+    and put the cell in `pr_active` instead.
+    """
+    raw = cfg.get("pr_trials", 1)
+    try:
+        n = int(raw)
+    except (TypeError, ValueError):
+        n = 1
+    return max(1, min(3, n))
+
+
 def resolve(mode: str, task: str | None) -> list[str]:
     cfg = load_matrix()
     active = list(cfg.get("pr_active") or [])
@@ -91,7 +106,9 @@ def main() -> int:
     p.add_argument("--github-output", action="store_true", help="Also write tasks=… to $GITHUB_OUTPUT")
     args = p.parse_args()
 
+    cfg = load_matrix()
     tasks = resolve(args.mode, args.task)
+    trials = resolve_pr_trials(cfg)
     payload = json.dumps(tasks)
     print(payload)
     if args.github_output:
@@ -99,6 +116,7 @@ def main() -> int:
         with out.open("a", encoding="utf-8") as fh:
             fh.write(f"tasks={payload}\n")
             fh.write(f"has_tasks={'true' if tasks else 'false'}\n")
+            fh.write(f"trials={trials}\n")
     return 0
 
 

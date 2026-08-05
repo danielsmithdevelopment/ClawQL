@@ -67,7 +67,7 @@ history). Move the best WIN into the headline table if it improves the claim.
 | `token-budget-constrained`                         | Nested recipe under token pressure              | **1.0**                | **0.0**                 | [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811)           | **WIN**                                                                                                               |
 | `multi-provider-api-workflow`                      | Vault → Worker/wrangler scaffold                | **1.0** (3 turns, 33s) | **0.75**                | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)           | **WIN** (margin; also early [30868287877](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30868287877)) |
 | `memory-roundtrip-ingest-recall`                   | Empty vault ingest→recall                       | **1.0**                | **0.0**                 | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)           | **WIN**                                                                                                               |
-| `search-first-discovery`                           | Must call `clawql_search`                       | **1.0**                | **0.0**                 | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)           | **WIN** (after anti-guess)                                                                                            |
+| `search-first-discovery`                           | Must call `clawql_search`                       | **1.0** (n=3)          | **0.0** (n=3)           | [31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064)           | **WIN** (Phase 0 n=3; prior [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)) |
 | `execute-verify-loop`                              | search + ≥2 dry_run execute                     | **1.0**                | **0.0**                 | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)           | **WIN**                                                                                                               |
 | `audit-checkpoints`                                | audit append×3 + list → trail                   | **1.0** (2 turns, 29s) | **0.0**                 | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)           | **WIN** (replicated after idle flake)                                                                                 |
 | `policy-deny-execute`                              | Panguard blocks execute                         | **1.0**                | **0.0**                 | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)           | **WIN**                                                                                                               |
@@ -313,8 +313,8 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 ## Open gaps (not yet headline WIN)
 
-1. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals (most headline cells still n=1–2) — Phase 0 in [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
-2. **Phase 1 advanced:** B-4.1 / B-3.1 / `codegraph-feature-api-surface` / composed RTP recollect **retired WIN**; next B-4.2/B-4.3 spikes (`memory-stale-after-update`, `memory-injection-attempt` task folders exist) or P0 n≥3.
+1. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals — `search-first-discovery` **done** ([31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064)); remaining: memory-roundtrip, policy-deny — Phase 0 in [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
+2. **Phase 1 advanced:** B-4.1 / B-3.1 / `codegraph-feature-api-surface` / composed RTP recollect **retired WIN**; next B-4.2/B-4.3 spikes (`memory-stale-after-update`, `memory-injection-attempt` task folders exist) or remaining P0 n≥3.
 3. **Trace collection:** GHA call-store JSONL now persists — [`openbench-trace-collection.md`](./openbench-trace-collection.md).
 4. Optional later: agentic external benches / domain HLE-analog (B-6) after fine-tune — not closed-book HLE.
 5. Blocked: B-1 flywheel (needs FT v1), B-5 NSV (needs metric export), full live IDP pipeline (ops).
@@ -352,13 +352,30 @@ Goal: grow OBT+RTP corpus with real `codegraph_*` tool traces after `codegraph-i
 
 `pr_active` = `memory-conflict-pricing`. Multi-file vault seed with Acme Widget Pro prices 42 (2026-01-15) vs 55 (2026-06-01). Graders require both prices + `conflict:true` + real `memory_recall` (reject single-price or synthesized 48).
 
+### 2026-08-05 — Phase 0 n=3 WIN: `search-first-discovery`
+
+| Arm        | Success | Mean score | Mean turns | Mean wall (s) |
+| ---------- | ------- | ---------- | ---------- | ------------- |
+| clawql-on  | **3/3** | **1.0**    | 3          | 17.0          |
+| clawql-off | **0/3** | **0.0**    | 2.7        | 40.0          |
+
+Run: [31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064). Gate OK (`on_score=1.0`, successes=3). **Durable R2:** 6× schema **1.1** RTP traces → `r2://clawql-openbench-traces/raw/2026/08/05/run-31011980064/search-first-discovery/` (on-arm `suitable_for_training: true`).
+
+**Wilson 95% (success rate):** on `[0.438, 1.000]` · off `[0.000, 0.562]` — CIs still overlap at n=3; point estimates are clean 1.0 vs 0.0. Prefer n≥5 before non-overlap claims.
+
+**Verdict:** first Phase 0 cell done; clear `pr_active`, reset `pr_trials=1`. Next queue: `memory-roundtrip-ingest-recall`, `policy-deny-execute`.
+
 ### Replication queue (Phase 0)
 
-| Task                             | Target n | Status            |
-| -------------------------------- | -------- | ----------------- |
-| `search-first-discovery`         | 3        | queued (dispatch) |
-| `memory-roundtrip-ingest-recall` | 3        | queued            |
-| `policy-deny-execute`            | 3        | queued            |
+| Task                             | Target n | Status                                                                                            |
+| -------------------------------- | -------- | ------------------------------------------------------------------------------------------------- |
+| `search-first-discovery`         | 3        | **done** [31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064) |
+| `memory-roundtrip-ingest-recall` | 3        | queued                                                                                            |
+| `policy-deny-execute`            | 3        | queued                                                                                            |
+
+### 2026-08-05 — Phase 0 n≥3 kickoff (`pr_trials`)
+
+`workflow_dispatch` unavailable to cloud agent (HTTP 403). Enabled `ci-matrix.json` → `pr_trials` (clamp 1–3) so PR A/B can run n=3. First cell: `search-first-discovery` → WIN above.
 
 ### 2026-08-04 — [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189) (P2.5 — both WIN)
 
