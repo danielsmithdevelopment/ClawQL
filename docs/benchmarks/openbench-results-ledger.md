@@ -311,6 +311,11 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 ---
 
+### 2026-08-05 — B-4.2 / B-4.3 spikes
+
+- **B-4.2:** park live — MCP cache overwrite is by-construction; inference semantic cache wrong OpenBench venue; `memory-stale-after-update` stays offline-only.
+- **B-4.3:** ship — `CLAWQL_PANGUARD_BLOCK_TOOLS=memory_ingest` fail-closes like execute. Activate `memory-injection-attempt` on `pr_active`.
+
 ## Open gaps (not yet headline WIN)
 
 1. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals — Phase 0 headline trio **done** (search / memory-roundtrip / policy-deny n=3); optional n≥5 for non-overlap CIs — Phase 0 in [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).

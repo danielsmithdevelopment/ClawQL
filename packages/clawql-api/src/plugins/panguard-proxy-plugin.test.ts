@@ -24,6 +24,28 @@ describe("createPanguardProxyPlugin", () => {
     else process.env.CLAWQL_PANGUARD_IN_PROCESS = saved;
   });
 
+  it("blocks memory_ingest when listed in CLAWQL_PANGUARD_BLOCK_TOOLS (B-4.3 spike)", async () => {
+    const { Effect, Exit } = await import("effect");
+    const savedIn = process.env.CLAWQL_PANGUARD_IN_PROCESS;
+    const savedBlock = process.env.CLAWQL_PANGUARD_BLOCK_TOOLS;
+    process.env.CLAWQL_PANGUARD_IN_PROCESS = "1";
+    process.env.CLAWQL_PANGUARD_BLOCK_TOOLS = "memory_ingest";
+    const plugin = createPanguardProxyPlugin();
+    expect(plugin.beforeCallTool).toBeDefined();
+    const blocked = await Effect.runPromiseExit(
+      plugin.beforeCallTool!({ toolName: "memory_ingest", args: {} })
+    );
+    expect(Exit.isFailure(blocked)).toBe(true);
+    const allowed = await Effect.runPromiseExit(
+      plugin.beforeCallTool!({ toolName: "memory_recall", args: {} })
+    );
+    expect(Exit.isSuccess(allowed)).toBe(true);
+    if (savedIn === undefined) delete process.env.CLAWQL_PANGUARD_IN_PROCESS;
+    else process.env.CLAWQL_PANGUARD_IN_PROCESS = savedIn;
+    if (savedBlock === undefined) delete process.env.CLAWQL_PANGUARD_BLOCK_TOOLS;
+    else process.env.CLAWQL_PANGUARD_BLOCK_TOOLS = savedBlock;
+  });
+
   it("defaultPlugins includes Panguard unless disabled", () => {
     const saved = process.env.CLAWQL_PANGUARD_PROXY_PLUGIN;
     delete process.env.CLAWQL_PANGUARD_PROXY_PLUGIN;

@@ -38,8 +38,8 @@ openbench/
     codegraph-impact-edit/           # B-3.1 lite (live WIN)
     codegraph-feature-api-surface/   # B-3.1 Phase 1 offline pack
     memory-conflict-pricing/         # B-4.1 (live WIN)
-    memory-stale-after-update/       # B-4.2 Phase 1 offline pack
-    memory-injection-attempt/        # B-4.3 Phase 1 offline pack
+    memory-stale-after-update/       # B-4.2 offline pack (live parked)
+    memory-injection-attempt/        # B-4.3 Panguard×memory_ingest (live)
     …                                # see docs/benchmarks/openbench-stack-coverage.md
   validate_tasks.py           # fail-on-workspace / pass-on-solution
   scripts/run-with-openbench.sh

@@ -116,6 +116,16 @@ Phase 7  B-1.3 cycle-over-cycle; B-3.2 langs; B-6.3 legal
 
 **Gate:** Do not put on `pr_active` until B4.2-0 says “ship.”
 
+#### B4.2-0 spike decision (2026-08-05)
+
+| Claim surface                         | Finding                                                                                                                                  | Live OpenBench? |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| MCP `cache` set→overwrite→get         | Overwrite is by-construction fresh (no separate invalidate API). Overlaps `cache-scratch-handoff` (already retired WIN).                 | **No** — park    |
+| Inference semantic `invalidateByTags` | Real product surface, but agent-visible OpenBench A/B is the wrong venue (gateway/inference benches).                                    | **No** — park    |
+| Offline `memory-stale-after-update`   | Local Python read-through cache bugfix (SWE-lite fixture). Valid offline pack; both arms have bash/edit so ClawQL A/B delta is weak. | Offline only     |
+
+**Verdict:** keep offline pack; do **not** activate on `pr_active` as a ClawQL product claim.
+
 ---
 
 ### B-4.3 — Panguard blocks hostile `memory_ingest` (spike before shipping)
@@ -125,6 +135,10 @@ Phase 7  B-1.3 cycle-over-cycle; B-3.2 langs; B-6.3 legal
 | B4.3-0 | Spike: can `CLAWQL_PANGUARD_BLOCK_TOOLS=memory_ingest` (or ATR rule) fail-closed like `execute`? | S    | Yes/no in notes            |
 | B4.3-a | If yes: task prompts inject of contradictory record; grader requires deny evidence               | M    | Reuse policy-deny patterns |
 | B4.3-b | If no: product issue first (“policy should cover ingest”), then bench                            | L    | Not OpenBench until fixed  |
+
+#### B4.3-0 spike decision (2026-08-05)
+
+**Yes.** In-process Panguard (`CLAWQL_PANGUARD_IN_PROCESS=1`) matches MCP tool names; `memory_ingest` is registered under that name (same path as `execute`). Unit coverage: `panguard-proxy-plugin.test.ts` blocks `memory_ingest` when listed. Live cell: `memory-injection-attempt` (hardened like `policy-deny-execute`).
 
 ---
 
@@ -196,10 +210,11 @@ Work **in this order** unless blocked:
    3c. **[Trace-2]** Productize as protocol + managed service docs + `packages/openbench-dataset` scaffold. ✅  
    3d. **[Trace-3]** Full collect/sync package path (S3/R2, arm correlation, GHA composite). ✅
 4. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire. ✅ [30969554941](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30969554941)
-5. **[B4.2-0] / [B4.3-0]** Spikes; only then optional cells. ← **next**
-6. **[P0-c]** First n=3 on `search-first-discovery`. ✅ [31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064)
-7. **[P0-d]** Remaining queue complete: memory-roundtrip ✅ [31014040293](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31014040293); policy-deny ✅ [31016004063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31016004063).
-8. Park B-1/B-2-full/B-5/B-6 until their gates open; keep specs updated here. Collect traces on every live cell in the meantime.
+5. **[B4.2-0]** Spike → **park live** (MCP overwrite trivial; inference semantic wrong venue; offline pack remains). ✅
+6. **[B4.3-0]/a]** Spike yes + ship `memory-injection-attempt` live. ← **now**
+7. **[P0-c]** First n=3 on `search-first-discovery`. ✅ [31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064)
+8. **[P0-d]** Remaining queue complete: memory-roundtrip ✅ [31014040293](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31014040293); policy-deny ✅ [31016004063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31016004063).
+9. Park B-1/B-2-full/B-5/B-6 until their gates open; keep specs updated here. Collect traces on every live cell in the meantime.
 
 Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger, stack-coverage, and (for product claims) vision/GTM tables when headline-worthy.
 
@@ -211,8 +226,8 @@ Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger,
 | ----- | ----------------------------------------- | ------------------- |
 | B-4.1 | `memory-conflict-pricing`                 | ✅ retired WIN      |
 | B-3.1 | `codegraph-impact-edit`                   | ✅ retired WIN      |
-| B-4.2 | `cache-stale-after-write`                 | After spike OK      |
-| B-4.3 | `policy-deny-memory-ingest`               | After spike OK      |
+| B-4.2 | `memory-stale-after-update`               | Parked (offline only) |
+| B-4.3 | `memory-injection-attempt`                | Live after B4.3-0 ✅  |
 | B-2   | `idp-safe-pipeline-lite`                  | After Phase 1 WINs  |
 | B-1   | reuse retired IDs under FT matrix         | After FT v1         |
 | B-6   | `compliance-mortgage-qa` (custom harness) | After B-1 + corpus  |
