@@ -2,7 +2,7 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "RTP OpenBenchTrace v1.1 ready to merge. codegraph-feature-api-surface first live attempt [30980340926] on=0.5/off=0.0 (partial wiring; RTP traces synced). Harden cell then re-activate; meanwhile prefer P0 n>=3 on proven cells via dispatch.",
+  "live_resume_note": "codegraph-feature-api-surface retired WIN [30981709304]. pr_active empty pending next cell (B-4.2/B-4.3 spike or P0 n≥3 / proven-cell RTP recollect).",
   "pr_active": [],
   "retired": {
     "codegraph-impact-edit": {
@@ -92,6 +92,10 @@
     "memory-conflict-pricing": {
       "reason": "Verified WIN — conflict.json surfaces both vault prices (on 1.0 / off 0.0)",
       "evidence_run": "30930194746"
+    },
+    "codegraph-feature-api-surface": {
+      "reason": "Verified WIN + durable R2 RTP v1.1 traces (on 1.0 / off 0.0; suitable_for_training on-arm)",
+      "evidence_run": "30981709304"
     }
   },
   "ouroboros_pr_enabled": false,

@@ -253,7 +253,7 @@ jobs:
               echo "OPENBENCH_TIMEOUT_S=300"
             fi
             if [ "${{ matrix.task }}" = "codegraph-feature-api-surface" ]; then
-              echo "OPENBENCH_TIMEOUT_S=240"
+              echo "OPENBENCH_TIMEOUT_S=300"
             fi
             if [ "${{ matrix.task }}" = "schedule-synthetic-dry-run" ]; then
               echo "CLAWQL_ENABLE_SCHEDULE=1"
