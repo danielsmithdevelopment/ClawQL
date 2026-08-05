@@ -55,7 +55,7 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 
 Still missing after this wave: n≥3 trials; ops-only (Argo / live Onyx / live Slack / R2). Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Graded cells above are **`retired`**; **`pr_active`** = `memory-injection-attempt` (B-4.3); B-4.2 parked offline.
+**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Graded cells above are **`retired`**; **`pr_active` empty** after B-4.3 WIN ([31022595633](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31022595633)); B-4.2 parked offline.
 
 Explanations for every verified cell: [`openbench-task-explanations.md`](./openbench-task-explanations.md).
 
@@ -174,7 +174,7 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 19. **`memory-conflict-pricing` (B-4.1)** — **WIN** retired ([30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746)).
 20. **`codegraph-impact-edit` (B-3.1 lite)** — **WIN** retired ([30977578882](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30977578882)).
 21. **`codegraph-feature-api-surface`** — **WIN** retired ([30981709304](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30981709304)); RTP v1.1 durable.
-22. B-4.2 **parked** (offline only). B-4.3 **shipping** `memory-injection-attempt` (Panguard×`memory_ingest`).
+22. B-4.2 **parked** (offline only). B-4.3 **WIN** `memory-injection-attempt` ([31022595633](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31022595633)).
 
 Full breakdown (B-1 flywheel → B-6 domain HLE-analog): [`openbench-advanced-suites.md`](./openbench-advanced-suites.md). Trace collection from GHA: [`openbench-trace-collection.md`](./openbench-trace-collection.md).
 

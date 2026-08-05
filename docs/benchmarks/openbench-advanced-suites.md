@@ -211,7 +211,7 @@ Work **in this order** unless blocked:
    3d. **[Trace-3]** Full collect/sync package path (S3/R2, arm correlation, GHA composite). ✅
 4. **[B3.1-a→e]** Ship `codegraph-impact-edit` to `pr_active`, watch CI, retire. ✅ [30969554941](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30969554941)
 5. **[B4.2-0]** Spike → **park live** (MCP overwrite trivial; inference semantic wrong venue; offline pack remains). ✅
-6. **[B4.3-0]/a]** Spike yes + ship `memory-injection-attempt` live. ← **now**
+6. **[B4.3-0]/a]** Spike yes + ship `memory-injection-attempt` live. ✅ [31022595633](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31022595633)
 7. **[P0-c]** First n=3 on `search-first-discovery`. ✅ [31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064)
 8. **[P0-d]** Remaining queue complete: memory-roundtrip ✅ [31014040293](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31014040293); policy-deny ✅ [31016004063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31016004063).
 9. Park B-1/B-2-full/B-5/B-6 until their gates open; keep specs updated here. Collect traces on every live cell in the meantime.
@@ -227,7 +227,7 @@ Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger,
 | B-4.1 | `memory-conflict-pricing`                 | ✅ retired WIN        |
 | B-3.1 | `codegraph-impact-edit`                   | ✅ retired WIN        |
 | B-4.2 | `memory-stale-after-update`               | Parked (offline only) |
-| B-4.3 | `memory-injection-attempt`                | Live after B4.3-0 ✅  |
+| B-4.3 | `memory-injection-attempt`                | ✅ retired WIN        |
 | B-2   | `idp-safe-pipeline-lite`                  | After Phase 1 WINs    |
 | B-1   | reuse retired IDs under FT matrix         | After FT v1           |
 | B-6   | `compliance-mortgage-qa` (custom harness) | After B-1 + corpus    |
