@@ -56,11 +56,12 @@ describe("credits invite email", () => {
   });
 
   it("posts to webhook provider when live", async () => {
-    const fetchImpl = vi.fn(async () =>
-      new Response(JSON.stringify({ id: "wh-1" }), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      })
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "wh-1" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
     );
     const result = await sendMoneyRequestInviteEmail(
       {
@@ -95,8 +96,8 @@ describe("credits invite email", () => {
   });
 
   it("posts to Resend when configured", async () => {
-    const fetchImpl = vi.fn(async () =>
-      new Response(JSON.stringify({ id: "re_123" }), { status: 200 })
+    const fetchImpl = vi.fn(
+      async () => new Response(JSON.stringify({ id: "re_123" }), { status: 200 })
     );
     const result = await sendMoneyRequestInviteEmail(
       {
@@ -144,15 +145,10 @@ describe("credits invite email", () => {
 
   it("shouldSendInviteEmailOnCreate respects flag and explicit override", () => {
     expect(shouldSendInviteEmailOnCreate({}, {})).toBe(false);
-    expect(
-      shouldSendInviteEmailOnCreate({}, { CLAWQL_CREDITS_INVITE_EMAIL: "1" })
-    ).toBe(true);
+    expect(shouldSendInviteEmailOnCreate({}, { CLAWQL_CREDITS_INVITE_EMAIL: "1" })).toBe(true);
     expect(shouldSendInviteEmailOnCreate({ sendEmail: true }, {})).toBe(true);
     expect(
-      shouldSendInviteEmailOnCreate(
-        { sendEmail: false },
-        { CLAWQL_CREDITS_INVITE_EMAIL: "1" }
-      )
+      shouldSendInviteEmailOnCreate({ sendEmail: false }, { CLAWQL_CREDITS_INVITE_EMAIL: "1" })
     ).toBe(false);
   });
 });

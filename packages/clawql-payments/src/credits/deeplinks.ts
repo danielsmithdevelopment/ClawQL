@@ -6,10 +6,10 @@
 import { compensationApprovalBaseUrl } from "../compensation/config.js";
 
 export function creditsHateoasBase(env: NodeJS.ProcessEnv = process.env): string {
-  return (
-    env.CLAWQL_CREDITS_HATEOAS_BASE?.trim() ||
-    compensationApprovalBaseUrl(env)
-  ).replace(/\/$/, "");
+  return (env.CLAWQL_CREDITS_HATEOAS_BASE?.trim() || compensationApprovalBaseUrl(env)).replace(
+    /\/$/,
+    ""
+  );
 }
 
 /** True when the configured HATEOAS base is an http(s) origin (mountable HTML). */
@@ -71,10 +71,7 @@ export type InviteDeepLink = {
   token: string;
 };
 
-export function buildPayDeepLink(
-  input: PayDeepLink,
-  env: NodeJS.ProcessEnv = process.env
-): string {
+export function buildPayDeepLink(input: PayDeepLink, env: NodeJS.ProcessEnv = process.env): string {
   const base = creditsHateoasBase(env);
   const q = new URLSearchParams();
   q.set("to", input.to.trim());
@@ -133,8 +130,7 @@ export function parsePayDeepLinkQuery(
   const to = get("to")?.trim();
   if (!to) throw new Error("Missing to= payee");
   const amountRaw = get("amount");
-  const amountUsd =
-    amountRaw && Number.isFinite(Number(amountRaw)) ? Number(amountRaw) : undefined;
+  const amountUsd = amountRaw && Number.isFinite(Number(amountRaw)) ? Number(amountRaw) : undefined;
   return {
     to,
     amountUsd,
@@ -146,9 +142,9 @@ export function parsePayDeepLinkQuery(
 /**
  * Parse `clawql://pay?…`, absolute HATEOAS pay URLs, or bare query strings.
  */
-export function parseCreditsDeepLink(raw: string):
-  | ({ ok: true } & PayDeepLink)
-  | { ok: false; error: string } {
+export function parseCreditsDeepLink(
+  raw: string
+): ({ ok: true } & PayDeepLink) | { ok: false; error: string } {
   const trimmed = raw.trim();
   if (!trimmed) return { ok: false, error: "Empty deep link" };
   try {

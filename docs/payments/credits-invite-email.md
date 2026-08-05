@@ -45,33 +45,33 @@ clawql payments credits request send-invite \
 
 ## Providers
 
-| Provider | Behavior |
-| -------- | -------- |
-| `dry-run` (default) | Returns subject + text preview; no network |
-| `webhook` | `POST` JSON `{ type, to, from, subject, text, html, meta }` |
-| `resend` | Resend HTTP API `POST /emails` |
+| Provider            | Behavior                                                    |
+| ------------------- | ----------------------------------------------------------- |
+| `dry-run` (default) | Returns subject + text preview; no network                  |
+| `webhook`           | `POST` JSON `{ type, to, from, subject, text, html, meta }` |
+| `resend`            | Resend HTTP API `POST /emails`                              |
 
 ## CLI / MCP
 
-| Surface | Role |
-| ------- | ---- |
-| `request --send-email` | Create + attempt delivery |
-| `request send-invite` | Preview/send for existing invite |
-| `payments_credits_request_create` (`sendEmail`) | MCP create + optional email |
-| `payments_credits_request_send_invite` | MCP preview/send |
+| Surface                                         | Role                             |
+| ----------------------------------------------- | -------------------------------- |
+| `request --send-email`                          | Create + attempt delivery        |
+| `request send-invite`                           | Preview/send for existing invite |
+| `payments_credits_request_create` (`sendEmail`) | MCP create + optional email      |
+| `payments_credits_request_send_invite`          | MCP preview/send                 |
 
 ## Env
 
-| Variable | Default | Meaning |
-| -------- | ------- | ------- |
-| `CLAWQL_CREDITS_INVITE_EMAIL` | off | Auto-attempt on create when invite |
-| `CLAWQL_CREDITS_INVITE_EMAIL_DRY_RUN` | on | Preview only until `0` |
-| `CLAWQL_CREDITS_INVITE_EMAIL_PROVIDER` | auto | `dry-run` \| `webhook` \| `resend` |
-| `CLAWQL_CREDITS_INVITE_EMAIL_FROM` | local placeholder | From header |
-| `CLAWQL_CREDITS_INVITE_EMAIL_SUBJECT` | derived | Subject override |
-| `CLAWQL_CREDITS_INVITE_EMAIL_WEBHOOK_URL` | — | Webhook endpoint |
-| `CLAWQL_CREDITS_INVITE_EMAIL_WEBHOOK_TOKEN` | — | Optional Bearer token |
-| `CLAWQL_CREDITS_INVITE_EMAIL_RESEND_API_KEY` | — | Resend API key |
+| Variable                                     | Default           | Meaning                            |
+| -------------------------------------------- | ----------------- | ---------------------------------- |
+| `CLAWQL_CREDITS_INVITE_EMAIL`                | off               | Auto-attempt on create when invite |
+| `CLAWQL_CREDITS_INVITE_EMAIL_DRY_RUN`        | on                | Preview only until `0`             |
+| `CLAWQL_CREDITS_INVITE_EMAIL_PROVIDER`       | auto              | `dry-run` \| `webhook` \| `resend` |
+| `CLAWQL_CREDITS_INVITE_EMAIL_FROM`           | local placeholder | From header                        |
+| `CLAWQL_CREDITS_INVITE_EMAIL_SUBJECT`        | derived           | Subject override                   |
+| `CLAWQL_CREDITS_INVITE_EMAIL_WEBHOOK_URL`    | —                 | Webhook endpoint                   |
+| `CLAWQL_CREDITS_INVITE_EMAIL_WEBHOOK_TOKEN`  | —                 | Optional Bearer token              |
+| `CLAWQL_CREDITS_INVITE_EMAIL_RESEND_API_KEY` | —                 | Resend API key                     |
 
 ## Non-goals
 

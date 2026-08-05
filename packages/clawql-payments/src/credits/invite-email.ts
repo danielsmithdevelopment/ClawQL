@@ -48,10 +48,7 @@ export function creditsInviteEmailProvider(
 }
 
 export function creditsInviteEmailFrom(env: NodeJS.ProcessEnv = process.env): string {
-  return (
-    env.CLAWQL_CREDITS_INVITE_EMAIL_FROM?.trim() ||
-    "ClawQL Payments <noreply@clawql.local>"
-  );
+  return env.CLAWQL_CREDITS_INVITE_EMAIL_FROM?.trim() || "ClawQL Payments <noreply@clawql.local>";
 }
 
 export type MoneyRequestInviteEmailInput = {
@@ -180,7 +177,7 @@ export async function sendMoneyRequestInviteEmail(
     (options.dryRun !== false && (payload.meta.dryRun || options.provider === "dry-run"));
   const provider: InviteEmailProvider = dryRun
     ? "dry-run"
-    : options.provider ?? creditsInviteEmailProvider(env);
+    : (options.provider ?? creditsInviteEmailProvider(env));
 
   const base: InviteEmailResult = {
     ok: true,

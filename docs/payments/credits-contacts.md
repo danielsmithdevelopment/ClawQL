@@ -20,19 +20,19 @@ clawql payments credits directory claim \
 clawql payments credits pay --from-tenant alice --to +15559876543 --amount 5 --note lunch
 ```
 
-| CLI | Role |
-| --- | ---- |
-| `directory claim --phone +1… [--verified]` | Claim / update phone alias |
-| `directory show --phone +1…` | Lookup |
-| `directory release --phone +1…` | Drop phone, keep email/@username |
-| `pay --to +1…` | Resolve via directory |
+| CLI                                        | Role                             |
+| ------------------------------------------ | -------------------------------- |
+| `directory claim --phone +1… [--verified]` | Claim / update phone alias       |
+| `directory show --phone +1…`               | Lookup                           |
+| `directory release --phone +1…`            | Drop phone, keep email/@username |
+| `pay --to +1…`                             | Resolve via directory            |
 
 ### Verification gate
 
-| Variable | Default | Meaning |
-| -------- | ------- | ------- |
-| `CLAWQL_CREDITS_PHONE_REQUIRE_VERIFIED` | off | When `1`, `--phone` claims require `--verified` |
-| `CLAWQL_CREDITS_PHONE_DEFAULT_CC` | `1` | Country code for 10-digit national numbers |
+| Variable                                | Default | Meaning                                         |
+| --------------------------------------- | ------- | ----------------------------------------------- |
+| `CLAWQL_CREDITS_PHONE_REQUIRE_VERIFIED` | off     | When `1`, `--phone` claims require `--verified` |
+| `CLAWQL_CREDITS_PHONE_DEFAULT_CC`       | `1`     | Country code for 10-digit national numbers      |
 
 `--verified` records `phoneVerifiedAt` — a soft claim that IdP/SMS proof happened elsewhere.
 
@@ -53,14 +53,14 @@ List masks email/phone unless `--show-secrets`. Resolving a contact still goes t
 
 ## MCP (`CLAWQL_PAYMENTS_MCP_TOOLS=1`)
 
-| Tool | Role |
-| ---- | ---- |
-| `payments_credits_directory_claim` | email / handle / phone (+ `phoneVerified`) |
-| `payments_credits_directory_resolve` | email / handle / phone / payee |
-| `payments_credits_contacts_add` | Save payee |
-| `payments_credits_contacts_list` | List |
-| `payments_credits_contacts_remove` | Remove |
-| `payments_credits_contacts_resolve` | Contact id or payee → tenant |
+| Tool                                 | Role                                       |
+| ------------------------------------ | ------------------------------------------ |
+| `payments_credits_directory_claim`   | email / handle / phone (+ `phoneVerified`) |
+| `payments_credits_directory_resolve` | email / handle / phone / payee             |
+| `payments_credits_contacts_add`      | Save payee                                 |
+| `payments_credits_contacts_list`     | List                                       |
+| `payments_credits_contacts_remove`   | Remove                                     |
+| `payments_credits_contacts_resolve`  | Contact id or payee → tenant               |
 
 ## Non-goals
 

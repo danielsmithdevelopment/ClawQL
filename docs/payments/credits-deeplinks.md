@@ -6,18 +6,18 @@ Also hosts a **brand-first mini UI** at `/credits`: total balance, four verbs (T
 
 ## URLs
 
-| Kind | Shape |
-| ---- | ----- |
-| Mini home | `{base}/credits` or `{base}/credits/ui` (`?tenant=`) |
-| Top up | `{base}/credits/topup?tenant=` |
-| Pay compose | `{base}/credits/pay?tenant=` (no `to`) |
-| Pay landing | `{base}/credits/pay?to=@bob&amount=10&note=coffee` |
-| Pay (scheme) | `clawql://pay?to=@bob&amount=10` |
-| Request compose | `{base}/credits/request/new?tenant=` |
-| Request | `{base}/credits/request/{requestId}` |
-| Activity | `{base}/credits/activity?tenant=` |
-| Invite | `{base}/credits/request/invite?request_id=…&token=…` |
-| QR SVG | `{base}/credits/qr.svg?to=…&amount=…` (encodes `clawql://pay?…`) |
+| Kind            | Shape                                                            |
+| --------------- | ---------------------------------------------------------------- |
+| Mini home       | `{base}/credits` or `{base}/credits/ui` (`?tenant=`)             |
+| Top up          | `{base}/credits/topup?tenant=`                                   |
+| Pay compose     | `{base}/credits/pay?tenant=` (no `to`)                           |
+| Pay landing     | `{base}/credits/pay?to=@bob&amount=10&note=coffee`               |
+| Pay (scheme)    | `clawql://pay?to=@bob&amount=10`                                 |
+| Request compose | `{base}/credits/request/new?tenant=`                             |
+| Request         | `{base}/credits/request/{requestId}`                             |
+| Activity        | `{base}/credits/activity?tenant=`                                |
+| Invite          | `{base}/credits/request/invite?request_id=…&token=…`             |
+| QR SVG          | `{base}/credits/qr.svg?to=…&amount=…` (encodes `clawql://pay?…`) |
 
 `base` comes from **`CLAWQL_CREDITS_HATEOAS_BASE`**, else `CLAWQL_COMPENSATION_APPROVAL_BASE` / gateway URL, else `clawql://tool` (same fallback as compensation approval links).
 
@@ -68,8 +68,8 @@ clawql payments credits qr --to bob@acme.com --amount 5 --out pay.svg
 
 ## Env
 
-| Variable | Default | Meaning |
-| -------- | ------- | ------- |
+| Variable                      | Default                          | Meaning                                   |
+| ----------------------------- | -------------------------------- | ----------------------------------------- |
 | `CLAWQL_CREDITS_HATEOAS_BASE` | (compensation / `clawql://tool`) | Public origin for pay/request/invite URLs |
 
 See also: [contacts & phone](./credits-contacts.md), [money requests](./money-requests.md), [activity feed](./activity-feed.md), [consumer roadmap](./p2p-consumer-roadmap.md).

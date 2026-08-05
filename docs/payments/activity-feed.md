@@ -11,13 +11,13 @@ clawql payments credits activity --filter transfers --limit 10
 clawql payments credits activity --filter requests --json
 ```
 
-| `--filter` | Includes |
-| ---------- | -------- |
+| `--filter`        | Includes                                         |
+| ----------------- | ------------------------------------------------ |
 | `money` (default) | P2P transfers + requests (dedupes paid requests) |
-| `transfers` | `transfer_in` / `transfer_out` only |
-| `requests` | Money requests / invoices only |
-| `ledger` | All ledger kinds (top-ups, debits, holds, …) |
-| `all` | Ledger + requests |
+| `transfers`       | `transfer_in` / `transfer_out` only              |
+| `requests`        | Money requests / invoices only                   |
+| `ledger`          | All ledger kinds (top-ups, debits, holds, …)     |
+| `all`             | Ledger + requests                                |
 
 ## MCP
 

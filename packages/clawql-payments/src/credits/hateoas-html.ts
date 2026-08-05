@@ -306,8 +306,7 @@ export function renderHateoasHtml(input: {
   const links = Object.entries(input.envelope.links)
     .filter(([, v]) => v)
     .map(
-      ([rel, href]) =>
-        `<li><a rel="${esc(rel)}" href="${esc(String(href))}">${esc(rel)}</a></li>`
+      ([rel, href]) => `<li><a rel="${esc(rel)}" href="${esc(String(href))}">${esc(rel)}</a></li>`
     )
     .join("\n");
 
@@ -393,9 +392,7 @@ export function renderCreditsMiniHomeHtml(input: MiniHomeInput): string {
             const inner = `<div><span class="who">${esc(r.title)}</span><span class="when">${esc(r.when)}</span></div>
             <span class="amt${r.positive ? " pos" : ""}">${esc(r.amountLabel)}</span>`;
             return `<li>${
-              r.href
-                ? `<a href="${esc(r.href)}" style="display:contents">${inner}</a>`
-                : inner
+              r.href ? `<a href="${esc(r.href)}" style="display:contents">${inner}</a>` : inner
             }</li>`;
           })
           .join("")}</ul>`;

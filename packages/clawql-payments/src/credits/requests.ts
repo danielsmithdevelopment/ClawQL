@@ -20,12 +20,7 @@ import {
 import { buildInviteDeepLink } from "./deeplinks.js";
 
 export type MoneyRequestStatus =
-  | "pending"
-  | "accepted"
-  | "paid"
-  | "declined"
-  | "cancelled"
-  | "expired";
+  "pending" | "accepted" | "paid" | "declined" | "cancelled" | "expired";
 
 export type MoneyRequest = {
   readonly requestId: string;

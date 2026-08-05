@@ -69,20 +69,20 @@ clawql payments credits request decline|cancel --request-id UUID
 
 ## MCP (`CLAWQL_PAYMENTS_MCP_TOOLS=1`)
 
-| Tool | Role |
-| ---- | ---- |
-| `payments_credits_request_create` | Create / invite |
-| `payments_credits_request_list` | List |
-| `payments_credits_request_claim_invite` | Join via email invite |
-| `payments_credits_request_accept` | Stage payer → requester transfer |
+| Tool                                    | Role                             |
+| --------------------------------------- | -------------------------------- |
+| `payments_credits_request_create`       | Create / invite                  |
+| `payments_credits_request_list`         | List                             |
+| `payments_credits_request_claim_invite` | Join via email invite            |
+| `payments_credits_request_accept`       | Stage payer → requester transfer |
 
 ## Env
 
-| Variable | Default | Meaning |
-| -------- | ------- | ------- |
-| `CLAWQL_CREDITS_REQUEST_TTL_SEC` | 7 days | Request expiry |
-| `CLAWQL_CREDITS_HATEOAS_BASE` | compensation / `clawql://tool` | Public origin for invite / request deep links |
-| `CLAWQL_CREDITS_INVITE_EMAIL` | off | Attempt invite email on create (still dry-runs by default) |
+| Variable                         | Default                        | Meaning                                                    |
+| -------------------------------- | ------------------------------ | ---------------------------------------------------------- |
+| `CLAWQL_CREDITS_REQUEST_TTL_SEC` | 7 days                         | Request expiry                                             |
+| `CLAWQL_CREDITS_HATEOAS_BASE`    | compensation / `clawql://tool` | Public origin for invite / request deep links              |
+| `CLAWQL_CREDITS_INVITE_EMAIL`    | off                            | Attempt invite email on create (still dry-runs by default) |
 
 Invite URLs use the [deep link](./credits-deeplinks.md) builders (`/credits/request/invite?request_id=…&token=…`). Outbound delivery: [invite email](./credits-invite-email.md).
 

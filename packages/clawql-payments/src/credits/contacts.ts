@@ -53,8 +53,7 @@ async function loadFile(env: NodeJS.ProcessEnv): Promise<ContactsFile> {
     if (!parsed || typeof parsed !== "object" || parsed.version !== 1) return emptyFile();
     return {
       version: 1,
-      byOwner:
-        parsed.byOwner && typeof parsed.byOwner === "object" ? parsed.byOwner : {},
+      byOwner: parsed.byOwner && typeof parsed.byOwner === "object" ? parsed.byOwner : {},
     };
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return emptyFile();
@@ -132,9 +131,7 @@ export async function addContact(
       label: label ?? existing.label,
       updatedAt: now,
     };
-    book.contacts = book.contacts.map((c) =>
-      c.contactId === existing.contactId ? updated : c
-    );
+    book.contacts = book.contacts.map((c) => (c.contactId === existing.contactId ? updated : c));
     file.byOwner[owner] = book;
     await saveFile(file, env);
     return { contact: updated, created: false };
@@ -194,8 +191,6 @@ export async function resolveContactPayee(
   return { contact, recipient, payee };
 }
 
-export async function resetContactsForTests(
-  env: NodeJS.ProcessEnv = process.env
-): Promise<void> {
+export async function resetContactsForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveFile(emptyFile(), env);
 }

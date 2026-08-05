@@ -6,31 +6,31 @@ ClawQL is **not** a consumer bank. Balances are prepaid credits; bank/USDC off-r
 
 ## Shipped (bit by bit)
 
-| Bit | Status | Notes |
-| --- | ------ | ----- |
-| Prepaid ledger + ACH top-up | ✅ | [`credits-ach.md`](./credits-ach.md) |
-| Tenant ↔ tenant transfer | ✅ | Dual-lock ledger; WORM `peer_transfer` |
-| Stage → confirm (+ optional TOTP) | ✅ | High-impact 2PC |
-| Pay-by-email (default) + optional `@username` | ✅ | `$CLAWQL_HOME/Payments/directory.json` |
-| `credits pay --to email\|@user` | ✅ | Alias over transfer + directory resolve |
-| Request / invoice + email invite | ✅ | [`money-requests.md`](./money-requests.md) |
-| Activity feed | ✅ | [`activity-feed.md`](./activity-feed.md) |
-| QR / deep links (HATEOAS + HTMX) | ✅ | [`credits-deeplinks.md`](./credits-deeplinks.md) |
-| Contacts + phone alias | ✅ | [`credits-contacts.md`](./credits-contacts.md) |
-| Hosted mini UI | ✅ | `/credits` balance + verbs + activity — [`credits-deeplinks.md`](./credits-deeplinks.md) |
-| Magic-link authorize | ✅ | After HTMX stage/accept → `/credits/transfer/approve` — [`credits-deeplinks.md`](./credits-deeplinks.md) |
-| Invite email (dry-run first) | ✅ | [`credits-invite-email.md`](./credits-invite-email.md) |
-| OIDC / MFA policy (gateway) | ✅ (stacked) | [`clawql-auth-oidc-stepup.md`](../security/clawql-auth-oidc-stepup.md) |
+| Bit                                           | Status       | Notes                                                                                                    |
+| --------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------- |
+| Prepaid ledger + ACH top-up                   | ✅           | [`credits-ach.md`](./credits-ach.md)                                                                     |
+| Tenant ↔ tenant transfer                      | ✅           | Dual-lock ledger; WORM `peer_transfer`                                                                   |
+| Stage → confirm (+ optional TOTP)             | ✅           | High-impact 2PC                                                                                          |
+| Pay-by-email (default) + optional `@username` | ✅           | `$CLAWQL_HOME/Payments/directory.json`                                                                   |
+| `credits pay --to email\|@user`               | ✅           | Alias over transfer + directory resolve                                                                  |
+| Request / invoice + email invite              | ✅           | [`money-requests.md`](./money-requests.md)                                                               |
+| Activity feed                                 | ✅           | [`activity-feed.md`](./activity-feed.md)                                                                 |
+| QR / deep links (HATEOAS + HTMX)              | ✅           | [`credits-deeplinks.md`](./credits-deeplinks.md)                                                         |
+| Contacts + phone alias                        | ✅           | [`credits-contacts.md`](./credits-contacts.md)                                                           |
+| Hosted mini UI                                | ✅           | `/credits` balance + verbs + activity — [`credits-deeplinks.md`](./credits-deeplinks.md)                 |
+| Magic-link authorize                          | ✅           | After HTMX stage/accept → `/credits/transfer/approve` — [`credits-deeplinks.md`](./credits-deeplinks.md) |
+| Invite email (dry-run first)                  | ✅           | [`credits-invite-email.md`](./credits-invite-email.md)                                                   |
+| OIDC / MFA policy (gateway)                   | ✅ (stacked) | [`clawql-auth-oidc-stepup.md`](../security/clawql-auth-oidc-stepup.md)                                   |
 
 ## Addressing model
 
-| Identity | Role |
-| -------- | ---- |
-| **Email** | Default payee (like Venmo / Cash App). Claim with `--email`. |
-| **`@username`** | Optional privacy alias — payers who know `@alice` never see the email. |
+| Identity          | Role                                                                           |
+| ----------------- | ------------------------------------------------------------------------------ |
+| **Email**         | Default payee (like Venmo / Cash App). Claim with `--email`.                   |
+| **`@username`**   | Optional privacy alias — payers who know `@alice` never see the email.         |
 | **Phone (E.164)** | Optional alias → tenant/email. Verified claim via customer IdP (`--verified`). |
-| **Tenant id** | Escape hatch for agents / ops (`--to-tenant`). |
-| **Contacts book** | Per-owner saved payees (`contacts.json`) — not a public graph. |
+| **Tenant id**     | Escape hatch for agents / ops (`--to-tenant`).                                 |
+| **Contacts book** | Per-owner saved payees (`contacts.json`) — not a public graph.                 |
 
 Emails and phones are stored only under `$CLAWQL_HOME/Payments/` (mode `0600`) — **never** in payment WORM. CLI list/mask unless `--show-secrets`.
 

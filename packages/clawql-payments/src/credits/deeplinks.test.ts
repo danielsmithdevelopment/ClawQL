@@ -32,9 +32,9 @@ describe("credits deeplinks", () => {
   it("builds http pay + invite links when base is set", () => {
     process.env.CLAWQL_CREDITS_HATEOAS_BASE = "https://pay.example/";
     expect(isHttpCreditsHateoasBase()).toBe(true);
-    expect(
-      buildPayDeepLink({ to: "@bob", amountUsd: 10, note: "coffee" })
-    ).toBe("https://pay.example/credits/pay?to=%40bob&amount=10&note=coffee");
+    expect(buildPayDeepLink({ to: "@bob", amountUsd: 10, note: "coffee" })).toBe(
+      "https://pay.example/credits/pay?to=%40bob&amount=10&note=coffee"
+    );
     expect(buildRequestDeepLink({ requestId: "req-1" })).toBe(
       "https://pay.example/credits/request/req-1"
     );
@@ -46,18 +46,14 @@ describe("credits deeplinks", () => {
   it("builds clawql:// pay URI and QR payload", () => {
     const uri = buildClawqlPayUri({ to: "bob@acme.com", amountUsd: 5 });
     expect(uri).toBe("clawql://pay?to=bob%40acme.com&amount=5");
-    expect(buildPayQrPayload({ to: "@bob", amountUsd: 1 })).toBe(
-      "clawql://pay?to=%40bob&amount=1"
-    );
+    expect(buildPayQrPayload({ to: "@bob", amountUsd: 1 })).toBe("clawql://pay?to=%40bob&amount=1");
   });
 
   it("parses clawql and http pay links", () => {
     const a = parseCreditsDeepLink("clawql://pay?to=@bob&amount=10&note=hi");
     expect(a).toMatchObject({ ok: true, to: "@bob", amountUsd: 10, note: "hi" });
     process.env.CLAWQL_CREDITS_HATEOAS_BASE = "https://pay.example";
-    const b = parseCreditsDeepLink(
-      buildPayDeepLink({ to: "alice@acme.com", amountUsd: 2.5 })
-    );
+    const b = parseCreditsDeepLink(buildPayDeepLink({ to: "alice@acme.com", amountUsd: 2.5 }));
     expect(b).toMatchObject({ ok: true, to: "alice@acme.com", amountUsd: 2.5 });
   });
 
@@ -77,8 +73,6 @@ describe("credits deeplinks", () => {
     expect(buildCreditsTransferApproveUrl("aid", "abc123")).toBe(
       "https://pay.example/credits/transfer/approve?action_id=aid&code=abc123"
     );
-    expect(buildCreditsTransferCancelUrl("aid", "abc123")).toContain(
-      "/credits/transfer/cancel?"
-    );
+    expect(buildCreditsTransferCancelUrl("aid", "abc123")).toContain("/credits/transfer/cancel?");
   });
 });

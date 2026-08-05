@@ -394,11 +394,7 @@ export function creditsLiveLayer(
               record.confirmationCode,
               env
             ),
-            cancelUrl: buildCreditsTransferCancelUrl(
-              record.actionId,
-              record.confirmationCode,
-              env
-            ),
+            cancelUrl: buildCreditsTransferCancelUrl(record.actionId, record.confirmationCode, env),
             expiresAt: record.expiresAt,
             classification: "financial" as const,
             totpRequired: isCreditsTransferTotpRequired(env),
@@ -485,10 +481,7 @@ export function creditsLiveLayer(
           if (requestId) {
             yield* Effect.promise(async () => {
               try {
-                await markMoneyRequestPaid(
-                  { requestId, transferId: result.transferId },
-                  env
-                );
+                await markMoneyRequestPaid({ requestId, transferId: result.transferId }, env);
               } catch {
                 /* best-effort — transfer already succeeded */
               }

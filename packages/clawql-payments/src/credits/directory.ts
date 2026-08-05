@@ -361,9 +361,7 @@ export async function claimDirectory(
   const tenantId = input.tenantId.trim();
   if (!tenantId) throw new Error("tenantId required");
   if (!input.email?.trim() && !input.handle?.trim() && !input.phone?.trim()) {
-    throw new Error(
-      "Provide --email (default) and/or --handle and/or --phone (optional aliases)"
-    );
+    throw new Error("Provide --email (default) and/or --handle and/or --phone (optional aliases)");
   }
 
   const email = input.email?.trim() ? normalizeEmail(input.email) : undefined;

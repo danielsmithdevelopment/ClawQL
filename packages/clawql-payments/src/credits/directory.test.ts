@@ -80,10 +80,7 @@ describe("payments directory email + username", () => {
     });
 
     // Add privacy username later
-    const updated = await claimDirectory(
-      { tenantId: "t-alice", handle: "@alice" },
-      env
-    );
+    const updated = await claimDirectory({ tenantId: "t-alice", handle: "@alice" }, env);
     expect(updated.created).toBe(false);
     expect(updated.entry.handle).toBe("alice");
     expect(updated.entry.email).toBe("alice@acme.com");
@@ -101,9 +98,9 @@ describe("payments directory email + username", () => {
 
   it("enforces uniqueness on email and username", async () => {
     await claimDirectory({ email: "a@x.com", tenantId: "t1" }, env);
-    await expect(
-      claimDirectory({ email: "a@x.com", tenantId: "t2" }, env)
-    ).rejects.toThrow(/already claimed/);
+    await expect(claimDirectory({ email: "a@x.com", tenantId: "t2" }, env)).rejects.toThrow(
+      /already claimed/
+    );
 
     await claimHandle({ handle: "alice", tenantId: "t1" }, env);
     await expect(claimHandle({ handle: "alice", tenantId: "t2" }, env)).rejects.toThrow(
@@ -167,9 +164,9 @@ describe("payments directory email + username", () => {
   it("requires verified assertion when phone gate is on", async () => {
     const gated = { ...env, CLAWQL_CREDITS_PHONE_REQUIRE_VERIFIED: "1" };
     await claimDirectory({ email: "c@x.com", tenantId: "c" }, gated);
-    await expect(
-      claimDirectory({ phone: "+15551112222", tenantId: "c" }, gated)
-    ).rejects.toThrow(/verified assertion/);
+    await expect(claimDirectory({ phone: "+15551112222", tenantId: "c" }, gated)).rejects.toThrow(
+      /verified assertion/
+    );
     const ok = await claimDirectory(
       { phone: "+15551112222", tenantId: "c", phoneVerified: true },
       gated

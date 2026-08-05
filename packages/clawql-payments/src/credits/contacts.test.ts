@@ -66,11 +66,7 @@ describe("credits contacts book", () => {
       { ownerTenantId: "alice", payee: "@bob", label: "Bobby" },
       env
     );
-    const resolved = await resolveContactPayee(
-      "alice",
-      { contactId: contact.contactId },
-      env
-    );
+    const resolved = await resolveContactPayee("alice", { contactId: contact.contactId }, env);
     expect(resolved.recipient.tenantId).toBe("bob");
     expect(resolved.recipient.via).toBe("handle");
     expect(resolved.payee).toBe("@bob");

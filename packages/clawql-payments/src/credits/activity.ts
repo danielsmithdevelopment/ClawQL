@@ -87,10 +87,7 @@ function ledgerKindToActivity(kind: CreditLedgerKind): ActivityKind {
   }
 }
 
-function fromLedgerEntry(
-  entry: CreditLedgerEntry,
-  counterpartyLabel?: string
-): ActivityItem {
+function fromLedgerEntry(entry: CreditLedgerEntry, counterpartyLabel?: string): ActivityItem {
   return {
     id: `ledger:${entry.id}`,
     ts: entry.ts,
@@ -182,9 +179,9 @@ export async function getActivityFeed(
     })
   );
 
-  const includeLedger = filter === "all" || filter === "ledger" || filter === "money" || filter === "transfers";
-  const includeRequests =
-    filter === "all" || filter === "requests" || filter === "money";
+  const includeLedger =
+    filter === "all" || filter === "ledger" || filter === "money" || filter === "transfers";
+  const includeRequests = filter === "all" || filter === "requests" || filter === "money";
 
   const items: ActivityItem[] = [];
 
@@ -193,9 +190,7 @@ export async function getActivityFeed(
       if (filter === "transfers" && entry.kind !== "transfer_out" && entry.kind !== "transfer_in") {
         continue;
       }
-      const cp = entry.counterpartyTenantId
-        ? labels.get(entry.counterpartyTenantId)
-        : undefined;
+      const cp = entry.counterpartyTenantId ? labels.get(entry.counterpartyTenantId) : undefined;
       items.push(fromLedgerEntry(entry, cp));
     }
   }

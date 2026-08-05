@@ -493,9 +493,7 @@ export async function runPaymentsCreditsTransferCmd(
   });
 }
 
-export async function runPaymentsCreditsPayCmd(
-  options: PaymentsCliOptions = {}
-): Promise<number> {
+export async function runPaymentsCreditsPayCmd(options: PaymentsCliOptions = {}): Promise<number> {
   return runPaymentsCreditsPay({
     fromTenantId: options.fromTenantId ?? options.tenantId,
     toTenantId: options.toTenantId,
@@ -525,9 +523,7 @@ export async function runPaymentsCreditsActivityCmd(
   });
 }
 
-export async function runPaymentsCreditsLinkCmd(
-  options: PaymentsCliOptions = {}
-): Promise<number> {
+export async function runPaymentsCreditsLinkCmd(options: PaymentsCliOptions = {}): Promise<number> {
   return runPaymentsCreditsLink({
     payTo: options.payTo,
     toHandle: options.toHandle ?? options.handle,
@@ -540,9 +536,7 @@ export async function runPaymentsCreditsLinkCmd(
   });
 }
 
-export async function runPaymentsCreditsQrCmd(
-  options: PaymentsCliOptions = {}
-): Promise<number> {
+export async function runPaymentsCreditsQrCmd(options: PaymentsCliOptions = {}): Promise<number> {
   return runPaymentsCreditsQr({
     payTo: options.payTo,
     toHandle: options.toHandle ?? options.handle,

@@ -10,11 +10,7 @@ import { resetPaymentsEffectRuntimeForTests } from "../runtime/payments-effect-r
 import { appendCreditEntry, resetCreditsLedgerForTests } from "./ledger.js";
 import { claimDirectory, resetDirectoryForTests } from "./directory.js";
 import { CreditsService, creditsLiveLayer } from "./credits-service.js";
-import {
-  acceptMoneyRequest,
-  createMoneyRequest,
-  resetMoneyRequestsForTests,
-} from "./requests.js";
+import { acceptMoneyRequest, createMoneyRequest, resetMoneyRequestsForTests } from "./requests.js";
 import { formatActivityLine, getActivityFeed } from "./activity.js";
 
 describe("credits activity feed", () => {

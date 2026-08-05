@@ -317,8 +317,7 @@ function parse(argv: string[]): {
       // Accounting uses ISO dates; P2P pay uses @handle / payee strings.
       if (/^\d{4}-\d{2}-\d{2}/.test(v)) flags.dateTo = v;
       else flags.payTo = v;
-    }
-    else if (a === "--to-handle" || a === "--handle") flags.toHandle = argv[++i] ?? "";
+    } else if (a === "--to-handle" || a === "--handle") flags.toHandle = argv[++i] ?? "";
     else if (a === "--display-name") flags.displayName = argv[++i] ?? "";
     else if (a === "--request-id") flags.requestId = argv[++i] ?? "";
     else if (a === "--token" || a === "--invite-token") flags.inviteToken = argv[++i] ?? "";
@@ -1437,8 +1436,7 @@ async function main(): Promise<void> {
           "claim-invite",
           "send-invite",
         ]);
-        const action =
-          rest[1] && known.has(rest[1]) ? rest[1] : "create";
+        const action = rest[1] && known.has(rest[1]) ? rest[1] : "create";
         if (action === "list") {
           process.exitCode = await runPaymentsCreditsRequestListCmd(paymentsOpts);
           return;

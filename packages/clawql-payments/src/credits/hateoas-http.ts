@@ -8,10 +8,7 @@
 import { Effect } from "effect";
 import type { Express, Request, Response } from "express";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
-import {
-  assertPendingCode,
-  savePendingAction,
-} from "../compensation/pending-actions.js";
+import { assertPendingCode, savePendingAction } from "../compensation/pending-actions.js";
 import { getActivityFeed, type ActivityItem } from "./activity.js";
 import { isCreditsTransferTotpRequired } from "./config.js";
 import { CreditsService } from "./credits-service.js";
@@ -123,8 +120,7 @@ function payPageHtml(pay: PayDeepLink): string {
     ...(pay.amountUsd != null ? { amount: String(pay.amountUsd) } : {}),
     ...(pay.note ? { note: pay.note } : {}),
   }).toString();
-  const amountLabel =
-    pay.amountUsd != null ? `$${Number(pay.amountUsd).toFixed(2)}` : "Credits";
+  const amountLabel = pay.amountUsd != null ? `$${Number(pay.amountUsd).toFixed(2)}` : "Credits";
 
   const body = `
     <a class="back" href="/credits">← Home</a>
@@ -334,7 +330,10 @@ export function attachCreditsHateoasRoutes(app: Express): void {
       const svg = await renderQrSvg(buildPayQrPayload(pay));
       res.type("image/svg+xml").send(svg);
     } catch (e) {
-      res.status(400).type("text/plain").send(e instanceof Error ? e.message : String(e));
+      res
+        .status(400)
+        .type("text/plain")
+        .send(e instanceof Error ? e.message : String(e));
     }
   });
 
@@ -380,14 +379,17 @@ export function attachCreditsHateoasRoutes(app: Express): void {
       const actionId = String(req.query.action_id ?? req.query.actionId ?? "").trim();
       const code = String(req.query.code ?? "").trim();
       if (!actionId || !code) {
-        res.status(400).type("html").send(
-          renderCreditsHateoasPage({
-            title: "Authorize",
-            heading: "Missing parameters",
-            bodyHtml: "<p>Add <code>?action_id=…&amp;code=…</code> from your magic link.</p>",
-            hideLinksPanel: true,
-          })
-        );
+        res
+          .status(400)
+          .type("html")
+          .send(
+            renderCreditsHateoasPage({
+              title: "Authorize",
+              heading: "Missing parameters",
+              bodyHtml: "<p>Add <code>?action_id=…&amp;code=…</code> from your magic link.</p>",
+              hideLinksPanel: true,
+            })
+          );
         return;
       }
       const record = await assertPendingCode(actionId, code);
@@ -503,18 +505,18 @@ export function attachCreditsHateoasRoutes(app: Express): void {
 
   app.get("/credits/request/invite", (req: Request, res: Response) => {
     const token = String(req.query.token ?? "").trim();
-    const requestId = String(
-      req.query.request_id ?? req.query.requestId ?? ""
-    ).trim();
+    const requestId = String(req.query.request_id ?? req.query.requestId ?? "").trim();
     if (!token || !requestId) {
-      res.status(400).type("html").send(
-        renderCreditsHateoasPage({
-          title: "Invite",
-          heading: "Missing parameters",
-          bodyHtml:
-            "<p>Add <code>?request_id=…&amp;token=…</code> from your invite URL.</p>",
-        }),
-      );
+      res
+        .status(400)
+        .type("html")
+        .send(
+          renderCreditsHateoasPage({
+            title: "Invite",
+            heading: "Missing parameters",
+            bodyHtml: "<p>Add <code>?request_id=…&amp;token=…</code> from your invite URL.</p>",
+          })
+        );
       return;
     }
     res.type("html").send(invitePageHtml(token, requestId));
@@ -524,13 +526,16 @@ export function attachCreditsHateoasRoutes(app: Express): void {
     const requestId = String(req.params.requestId ?? "").trim();
     const row = await getMoneyRequest(requestId);
     if (!row) {
-      res.status(404).type("html").send(
-        renderCreditsHateoasPage({
-          title: "Not found",
-          heading: "Request not found",
-          bodyHtml: `<p>No request <code>${esc(requestId)}</code>.</p>`,
-        }),
-      );
+      res
+        .status(404)
+        .type("html")
+        .send(
+          renderCreditsHateoasPage({
+            title: "Not found",
+            heading: "Request not found",
+            bodyHtml: `<p>No request <code>${esc(requestId)}</code>.</p>`,
+          })
+        );
       return;
     }
     const html = requestPageHtml(row);
@@ -597,10 +602,7 @@ export function attachCreditsHateoasRoutes(app: Express): void {
         renderCreditsStagedTransferHtml({
           actionId: staged.actionId,
           confirmationCode: staged.confirmationCode,
-          approvalUrl: buildCreditsTransferApproveUrl(
-            staged.actionId,
-            staged.confirmationCode
-          ),
+          approvalUrl: buildCreditsTransferApproveUrl(staged.actionId, staged.confirmationCode),
           totpRequired: staged.totpRequired,
           requestStatus: request.status,
         })
