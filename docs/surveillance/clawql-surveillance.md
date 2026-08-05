@@ -73,19 +73,19 @@ The legal and procurement consequences of this gap are accelerating. Active fede
 
 Tools registered when `CLAWQL_SURVEILLANCE_ENABLED=1`:
 
-| Tool | Description |
-| --- | --- |
-| `footage_ingest` | Ingest a footage segment with hardware attestation proof |
-| `footage_verify` | Verify a footage file against the Merkle chain and external anchor |
-| `footage_query` | Query footage with mandatory case number enforcement |
-| `footage_export` | Export footage with full chain of custody documentation |
-| `audit_log_query` | Query the access audit log for a camera, time range, or officer |
-| `merkle_verify` | Verify chain integrity from any entry forward |
-| `arweave_anchor_status` | Check anchoring status and retrieve transaction IDs |
-| `accuracy_report_ingest` | Ingest third-party accuracy certification results |
-| `accuracy_report_query` | Query current accuracy certification status |
-| `agency_access_provision` | Provision a new agency with scoped access credentials |
-| `federal_access_log` | Specialized logging for federal agency access events |
+| Tool                         | Description                                                           |
+| ---------------------------- | --------------------------------------------------------------------- |
+| `footage_ingest`             | Ingest a footage segment with hardware attestation proof              |
+| `footage_verify`             | Verify a footage file against the Merkle chain and external anchor    |
+| `footage_query`              | Query footage with mandatory case number enforcement                  |
+| `footage_export`             | Export footage with full chain of custody documentation               |
+| `audit_log_query`            | Query the access audit log for a camera, time range, or officer       |
+| `merkle_verify`              | Verify chain integrity from any entry forward                         |
+| `arweave_anchor_status`      | Check anchoring status and retrieve transaction IDs                   |
+| `accuracy_report_ingest`     | Ingest third-party accuracy certification results                     |
+| `accuracy_report_query`      | Query current accuracy certification status                           |
+| `agency_access_provision`    | Provision a new agency with scoped access credentials                 |
+| `federal_access_log`         | Specialized logging for federal agency access events                  |
 | `contract_compliance_report` | Generate a compliance report against model contract language sections |
 
 ---
@@ -98,11 +98,11 @@ Validates hardware attestation proofs from camera HSEs before footage is accepte
 
 ```typescript
 interface AttestationProof {
-  cameraId: string // device identity burned into HSE at manufacture
-  segmentHash: string // SHA-256 of the raw footage segment
-  timestamp: string // ISO 8601, from HSE clock
-  attestationSig: string // HSE signature over (cameraId + segmentHash + timestamp)
-  firmwareVersion: string // signed firmware hash for supply chain verification
+  cameraId: string; // device identity burned into HSE at manufacture
+  segmentHash: string; // SHA-256 of the raw footage segment
+  timestamp: string; // ISO 8601, from HSE clock
+  attestationSig: string; // HSE signature over (cameraId + segmentHash + timestamp)
+  firmwareVersion: string; // signed firmware hash for supply chain verification
 }
 
 // Rejects footage where:
@@ -120,37 +120,37 @@ Extends the `PaymentAuditService` pattern from `clawql-payments`. Every surveill
 
 ```typescript
 type SurveillanceAuditEventType =
-  | 'FOOTAGE_INGESTED' // new segment received and attested
-  | 'FOOTAGE_VERIFIED' // verification pass or fail
-  | 'FOOTAGE_QUERY' // search against footage or metadata
-  | 'FOOTAGE_EXPORT' // footage exported to agency or court
-  | 'FOOTAGE_FEDERAL_ACCESS' // federal agency access event
-  | 'FOOTAGE_DELETION' // footage deleted per retention policy
-  | 'AUDIT_LOG_QUERY' // access log queried
-  | 'MERKLE_ROOT_COMPUTED' // new Merkle root calculated
-  | 'ARWEAVE_ANCHOR_CONFIRMED' // root published to Arweave, tx ID recorded
-  | 'ACCURACY_REPORT_INGESTED' // new certification result recorded
-  | 'CASE_NUMBER_REJECTED' // query blocked for missing case number
-  | 'UNAUTHORIZED_ACCESS_BLOCKED' // access attempt from unprovisioned agency
-  | 'ATTESTATION_FAILED' // footage rejected due to invalid HSE proof
-  | 'FLEET_KEY_REGISTERED' // new camera HSE key registered
-  | 'FLEET_KEY_REVOKED' // camera key revoked
-  | 'CONTRACT_COMPLIANCE_VERIFIED' // compliance report generated
+  | "FOOTAGE_INGESTED" // new segment received and attested
+  | "FOOTAGE_VERIFIED" // verification pass or fail
+  | "FOOTAGE_QUERY" // search against footage or metadata
+  | "FOOTAGE_EXPORT" // footage exported to agency or court
+  | "FOOTAGE_FEDERAL_ACCESS" // federal agency access event
+  | "FOOTAGE_DELETION" // footage deleted per retention policy
+  | "AUDIT_LOG_QUERY" // access log queried
+  | "MERKLE_ROOT_COMPUTED" // new Merkle root calculated
+  | "ARWEAVE_ANCHOR_CONFIRMED" // root published to Arweave, tx ID recorded
+  | "ACCURACY_REPORT_INGESTED" // new certification result recorded
+  | "CASE_NUMBER_REJECTED" // query blocked for missing case number
+  | "UNAUTHORIZED_ACCESS_BLOCKED" // access attempt from unprovisioned agency
+  | "ATTESTATION_FAILED" // footage rejected due to invalid HSE proof
+  | "FLEET_KEY_REGISTERED" // new camera HSE key registered
+  | "FLEET_KEY_REVOKED" // camera key revoked
+  | "CONTRACT_COMPLIANCE_VERIFIED"; // compliance report generated
 
 interface SurveillanceAuditEntry {
-  seq: number
-  prev_hash: string
-  hash: string // SHA-256 over canonical JSON of this entry
-  timestamp: string
-  event_type: SurveillanceAuditEventType
-  camera_id?: string
-  agency_id?: string
-  officer_id?: string
-  case_number?: string
-  segment_hash?: string
-  arweave_tx?: string
-  correlation_id: string // links to inference call store if AI-assisted
-  payload: Record<string, unknown> // event-specific structured data
+  seq: number;
+  prev_hash: string;
+  hash: string; // SHA-256 over canonical JSON of this entry
+  timestamp: string;
+  event_type: SurveillanceAuditEventType;
+  camera_id?: string;
+  agency_id?: string;
+  officer_id?: string;
+  case_number?: string;
+  segment_hash?: string;
+  arweave_tx?: string;
+  correlation_id: string; // links to inference call store if AI-assisted
+  payload: Record<string, unknown>; // event-specific structured data
 }
 ```
 
@@ -184,13 +184,13 @@ Enforces mandatory case number and agency provisioning on all queries.
 ```typescript
 // Every query requires:
 interface FootageQueryRequest {
-  case_number: string // REQUIRED — query blocked if missing or blank
-  agency_id: string // REQUIRED — must match provisioned agency
-  officer_id: string // REQUIRED
-  query_purpose: string // REQUIRED — brief free-text justification
-  footage_range?: DateRange
-  camera_ids?: string[]
-  plate?: string
+  case_number: string; // REQUIRED — query blocked if missing or blank
+  agency_id: string; // REQUIRED — must match provisioned agency
+  officer_id: string; // REQUIRED
+  query_purpose: string; // REQUIRED — brief free-text justification
+  footage_range?: DateRange;
+  camera_ids?: string[];
+  plate?: string;
 }
 
 // Blocked queries generate:
@@ -208,17 +208,17 @@ Ingests and publishes third-party accuracy certification results.
 
 ```typescript
 interface AccuracyReport {
-  vendor: string
-  testing_organization: string // must be independent of vendor
-  test_date: string
-  test_methodology: string // description of test dataset and conditions
-  total_reads: number
-  correct_reads: number
-  error_rate: number // errors / total_reads
-  error_breakdown: CharacterConfusionMatrix // by character pair
-  certification_status: 'PASS' | 'FAIL' // PASS requires max error rate 0.001
-  arweave_tx?: string // published to Arweave on ingestion
-  valid_until: string // 12 months from test_date
+  vendor: string;
+  testing_organization: string; // must be independent of vendor
+  test_date: string;
+  test_methodology: string; // description of test dataset and conditions
+  total_reads: number;
+  correct_reads: number;
+  error_rate: number; // errors / total_reads
+  error_breakdown: CharacterConfusionMatrix; // by character pair
+  certification_status: "PASS" | "FAIL"; // PASS requires max error rate 0.001
+  arweave_tx?: string; // published to Arweave on ingestion
+  valid_until: string; // 12 months from test_date
 }
 ```
 
@@ -234,42 +234,42 @@ Generates a machine-readable compliance report against each section of the model
 
 ```typescript
 interface ContractComplianceReport {
-  vendor: string
-  report_date: string
-  arweave_tx: string // report itself published to Arweave
+  vendor: string;
+  report_date: string;
+  arweave_tx: string; // report itself published to Arweave
   sections: {
     section_1_hash_at_capture: {
-      status: 'COMPLIANT' | 'NON_COMPLIANT' | 'PARTIAL'
-      evidence: string[] // attestation proof samples, HSE registration records
-    }
+      status: "COMPLIANT" | "NON_COMPLIANT" | "PARTIAL";
+      evidence: string[]; // attestation proof samples, HSE registration records
+    };
     section_2_merkle_chain: {
-      status: 'COMPLIANT' | 'NON_COMPLIANT' | 'PARTIAL'
-      evidence: string[] // chain integrity verification results
-    }
+      status: "COMPLIANT" | "NON_COMPLIANT" | "PARTIAL";
+      evidence: string[]; // chain integrity verification results
+    };
     section_3_external_anchor: {
-      status: 'COMPLIANT' | 'NON_COMPLIANT' | 'PARTIAL'
-      evidence: string[] // Arweave transaction IDs, anchoring schedule adherence
-    }
+      status: "COMPLIANT" | "NON_COMPLIANT" | "PARTIAL";
+      evidence: string[]; // Arweave transaction IDs, anchoring schedule adherence
+    };
     section_4_audit_log: {
-      status: 'COMPLIANT' | 'NON_COMPLIANT' | 'PARTIAL'
-      evidence: string[] // case number enforcement rate, federal access log completeness
-    }
+      status: "COMPLIANT" | "NON_COMPLIANT" | "PARTIAL";
+      evidence: string[]; // case number enforcement rate, federal access log completeness
+    };
     section_5_alteration_prohibition: {
-      status: 'COMPLIANT' | 'NON_COMPLIANT' | 'PARTIAL'
-      evidence: string[] // integration partner due diligence records
-    }
+      status: "COMPLIANT" | "NON_COMPLIANT" | "PARTIAL";
+      evidence: string[]; // integration partner due diligence records
+    };
     section_6_audit_rights: {
-      status: 'COMPLIANT' | 'NON_COMPLIANT' | 'PARTIAL'
-      evidence: string[] // third-party audit results if conducted
-    }
+      status: "COMPLIANT" | "NON_COMPLIANT" | "PARTIAL";
+      evidence: string[]; // third-party audit results if conducted
+    };
     accuracy_certification: {
-      status: 'COMPLIANT' | 'NON_COMPLIANT' | 'EXPIRED'
-      error_rate: number
-      valid_until: string
-      arweave_tx: string
-    }
-  }
-  overall_status: 'FULLY_COMPLIANT' | 'PARTIALLY_COMPLIANT' | 'NON_COMPLIANT'
+      status: "COMPLIANT" | "NON_COMPLIANT" | "EXPIRED";
+      error_rate: number;
+      valid_until: string;
+      arweave_tx: string;
+    };
+  };
+  overall_status: "FULLY_COMPLIANT" | "PARTIALLY_COMPLIANT" | "NON_COMPLIANT";
 }
 ```
 
