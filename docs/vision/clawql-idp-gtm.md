@@ -7,6 +7,8 @@ Standalone Intelligent Document Processing motion for ops, compliance, legal, le
 [View IDP landing](https://clawql.com/idp/) · [Start free trial](https://clawql.com/signup/) · [IDP platform docs](https://docs.clawql.com/vision/idp-platform) · [Deploy with Helm](https://docs.clawql.com/deployment/kubernetes)
 
 > Internal strategy + landing-page brief (July 2026). Do not distribute externally without review. Canonical markdown: `docs/vision/clawql-idp-gtm.md`.
+>
+> For the full bootstrap path (Cloudflare → AWS hybrid, phases 0→N, unit economics, GPU staging, risk register), see the [Go-to-market playbook](../gtm/clawql-gtm-playbook.md).
 
 ---
 
