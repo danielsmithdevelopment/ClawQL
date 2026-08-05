@@ -7,6 +7,11 @@ import { acpCheckoutLiveLayer } from "../acp/acp-checkout-service.js";
 import { paypalOrdersLiveLayer } from "../paypal/paypal-orders-service.js";
 import { adyenCheckoutLiveLayer } from "../adyen/adyen-checkout-service.js";
 import { taxProfileLiveLayer } from "../accounting/tax-profile.js";
+import { accountingMapLiveLayer } from "../accounting/map.js";
+import { accountingExportLiveLayer } from "../accounting/export.js";
+import { taxEvidenceLiveLayer } from "../accounting/tax-evidence.js";
+import { paymentAuditReconcileLiveLayer } from "../audit/reconcile.js";
+import { lokiPushLiveLayer } from "../audit/loki.js";
 import { payoutPreferencesLiveLayer } from "../payouts/preferences.js";
 import { payoutLiveLayer } from "../payouts/payout-service.js";
 import { rampLiveLayer } from "../ramp/ramp-service.js";
@@ -63,6 +68,11 @@ export type PaymentsServices =
   | import("../paypal/paypal-orders-service.js").PaypalOrdersService
   | import("../adyen/adyen-checkout-service.js").AdyenCheckoutService
   | import("../accounting/tax-profile.js").TaxProfileService
+  | import("../accounting/map.js").AccountingMapService
+  | import("../accounting/export.js").AccountingExportService
+  | import("../accounting/tax-evidence.js").TaxEvidenceService
+  | import("../audit/reconcile.js").PaymentAuditReconcileService
+  | import("../audit/loki.js").LokiPushService
   | import("../payouts/preferences.js").PayoutPreferencesService
   | import("../payouts/payout-service.js").PayoutService
   | import("../ramp/ramp-service.js").RampService
@@ -105,6 +115,11 @@ export function paymentsServicesLiveLayer(
   const paypal = paypalOrdersLiveLayer(env).pipe(Layer.provide(audit));
   const adyen = adyenCheckoutLiveLayer(env).pipe(Layer.provide(audit));
   const taxProfiles = taxProfileLiveLayer(env);
+  const accountingMap = accountingMapLiveLayer(env);
+  const accountingExport = accountingExportLiveLayer(env);
+  const taxEvidence = taxEvidenceLiveLayer(env);
+  const auditReconcile = paymentAuditReconcileLiveLayer();
+  const lokiPush = lokiPushLiveLayer(env);
   const payoutPreferences = payoutPreferencesLiveLayer(env);
   const payouts = payoutLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(audit, stripeClient, taxProfiles, payoutPreferences))
@@ -183,6 +198,11 @@ export function paymentsServicesLiveLayer(
     paypal,
     adyen,
     taxProfiles,
+    accountingMap,
+    accountingExport,
+    taxEvidence,
+    auditReconcile,
+    lokiPush,
     payoutPreferences,
     payouts,
     ramp,

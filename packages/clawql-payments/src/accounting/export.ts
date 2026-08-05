@@ -1,5 +1,6 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
+import { Context, Data, Effect, Layer } from "effect";
 import type { PaymentWormEntry } from "../audit/events.js";
 import { listPaymentAuditEntries, verifyPaymentAuditLog } from "../audit/worm.js";
 import { entryHasMonetaryAmount, resolveEntryAccounting } from "./classify.js";
@@ -160,6 +161,7 @@ export type BuildAccountingExportOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
+/** @deprecated Prefer AccountingExportService.build — Promise façade retained for legacy callers. */
 export async function buildAccountingExport(
   options: BuildAccountingExportOptions
 ): Promise<AccountingExportResult> {
@@ -199,10 +201,76 @@ export async function buildAccountingExport(
   };
 }
 
+/** @deprecated Prefer AccountingExportService.write — Promise façade retained for legacy callers. */
 export async function writeAccountingExport(
   result: AccountingExportResult,
   outputPath: string
 ): Promise<void> {
   await mkdir(dirname(outputPath), { recursive: true });
   await writeFile(outputPath, serializeAccountingExport(result, result.format), "utf8");
+}
+
+export class AccountingExportError extends Data.TaggedError("AccountingExportError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+/**
+ * Effect surface over accounting exports (WORM audit → CSV/QuickBooks/Xero/JSON).
+ * `build` refuses to emit when the payment audit chain fails verification.
+ */
+export class AccountingExportService extends Context.Tag("clawql/AccountingExportService")<
+  AccountingExportService,
+  {
+    readonly build: (
+      options: BuildAccountingExportOptions
+    ) => Effect.Effect<AccountingExportResult, AccountingExportError>;
+    readonly write: (
+      result: AccountingExportResult,
+      outputPath: string
+    ) => Effect.Effect<void, AccountingExportError>;
+    readonly serialize: (
+      result: AccountingExportResult,
+      format: AccountingExportFormat
+    ) => Effect.Effect<string, AccountingExportError>;
+  }
+>() {}
+
+export function accountingExportLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<AccountingExportService> {
+  const run = <A>(reason: string, task: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: task,
+      catch: (cause) =>
+        cause instanceof AccountingExportError
+          ? cause
+          : new AccountingExportError({
+              reason: cause instanceof Error ? cause.message : reason,
+              cause,
+            }),
+    });
+
+  return Layer.succeed(
+    AccountingExportService,
+    AccountingExportService.of({
+      build: (options) =>
+        run("Failed to build accounting export", () =>
+          buildAccountingExport({ ...options, env: options.env ?? env })
+        ),
+      write: (result, outputPath) =>
+        run("Failed to write accounting export", () =>
+          writeAccountingExport(result, outputPath)
+        ),
+      serialize: (result, format) =>
+        Effect.try({
+          try: () => serializeAccountingExport(result, format),
+          catch: (cause) =>
+            new AccountingExportError({
+              reason: cause instanceof Error ? cause.message : "Failed to serialize export",
+              cause,
+            }),
+        }),
+    })
+  );
 }

@@ -15,13 +15,19 @@ export type {
 } from "./types.js";
 export { classifyAccounting, entryHasMonetaryAmount, resolveEntryAccounting } from "./classify.js";
 export {
+  AccountingMapError,
+  AccountingMapService,
   DEFAULT_ACCOUNTING_MAP,
+  accountingMapLiveLayer,
   loadAccountingMap,
   mergeAccountingMap,
   resolveAccountingMapPath,
   resolveGlCode,
 } from "./map.js";
 export {
+  AccountingExportError,
+  AccountingExportService,
+  accountingExportLiveLayer,
   buildAccountingExport,
   buildAccountingExportRows,
   filterEntriesByPeriod,
@@ -44,9 +50,13 @@ export {
   taxProfileLiveLayer,
 } from "./tax-profile.js";
 export {
+  TaxEvidenceError,
+  TaxEvidenceService,
   buildTaxEvidencePack,
   formatTaxEvidenceMarkdown,
   isEvidenceKind,
   resolveTaxEvidenceDir,
+  taxEvidenceLiveLayer,
   writeTaxEvidencePack,
+  type BuildTaxEvidencePackOptions,
 } from "./tax-evidence.js";

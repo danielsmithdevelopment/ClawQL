@@ -1,3 +1,4 @@
+import { Context, Data, Effect, Layer } from "effect";
 import type { PaymentProvider, PaymentWormEntry } from "./events.js";
 import { listPaymentAuditEntries } from "./worm.js";
 
@@ -57,6 +58,7 @@ export function buildSpendReport(
   };
 }
 
+/** @deprecated Prefer PaymentAuditReconcileService.spendReport — Promise façade retained for legacy callers. */
 export async function loadSpendReport(
   groupBy: SpendGroupBy = "provider",
   limit = 10_000
@@ -72,10 +74,59 @@ export function filterAuditByCorrelationId(
   return entries.filter((e) => e.correlationId === correlationId);
 }
 
+/** @deprecated Prefer PaymentAuditReconcileService.byCorrelationId — Promise façade retained for legacy callers. */
 export async function loadAuditByCorrelationId(
   correlationId: string,
   limit = 10_000
 ): Promise<PaymentWormEntry[]> {
   const entries = await listPaymentAuditEntries(limit);
   return filterAuditByCorrelationId(correlationId, entries);
+}
+
+export class PaymentAuditReconcileError extends Data.TaggedError("PaymentAuditReconcileError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+/** Effect surface over payment audit reconciliation (spend rollups + correlation lookups). */
+export class PaymentAuditReconcileService extends Context.Tag(
+  "clawql/PaymentAuditReconcileService"
+)<
+  PaymentAuditReconcileService,
+  {
+    readonly spendReport: (
+      groupBy?: SpendGroupBy,
+      limit?: number
+    ) => Effect.Effect<SpendReport, PaymentAuditReconcileError>;
+    readonly byCorrelationId: (
+      correlationId: string,
+      limit?: number
+    ) => Effect.Effect<PaymentWormEntry[], PaymentAuditReconcileError>;
+  }
+>() {}
+
+export function paymentAuditReconcileLiveLayer(): Layer.Layer<PaymentAuditReconcileService> {
+  const run = <A>(reason: string, task: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: task,
+      catch: (cause) =>
+        cause instanceof PaymentAuditReconcileError
+          ? cause
+          : new PaymentAuditReconcileError({
+              reason: cause instanceof Error ? cause.message : reason,
+              cause,
+            }),
+    });
+
+  return Layer.succeed(
+    PaymentAuditReconcileService,
+    PaymentAuditReconcileService.of({
+      spendReport: (groupBy = "provider", limit = 10_000) =>
+        run("Failed to build spend report", () => loadSpendReport(groupBy, limit)),
+      byCorrelationId: (correlationId, limit = 10_000) =>
+        run("Failed to load audit by correlation id", () =>
+          loadAuditByCorrelationId(correlationId, limit)
+        ),
+    })
+  );
 }

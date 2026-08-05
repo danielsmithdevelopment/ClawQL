@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { Context, Data, Effect, Layer } from "effect";
 import { resolvePaymentsDir } from "../config/paths.js";
 import type { AccountingCategory, AccountingMapFile } from "./types.js";
 
@@ -37,6 +38,7 @@ export function resolveAccountingMapPath(env: NodeJS.ProcessEnv = process.env): 
   return join(resolvePaymentsDir(env), "accounting-map.json");
 }
 
+/** @deprecated Prefer AccountingMapService.load — Promise façade retained for legacy callers. */
 export async function loadAccountingMap(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<AccountingMapFile> {
@@ -61,4 +63,47 @@ export function mergeAccountingMap(overrides: AccountingMapFile = {}): Accountin
     categories: { ...DEFAULT_ACCOUNTING_MAP.categories, ...overrides.categories },
     labels: { ...DEFAULT_ACCOUNTING_MAP.labels, ...overrides.labels },
   };
+}
+
+export class AccountingMapError extends Data.TaggedError("AccountingMapError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+/** Effect surface over the chart-of-accounts / GL mapping (accounting-map.json overrides). */
+export class AccountingMapService extends Context.Tag("clawql/AccountingMapService")<
+  AccountingMapService,
+  {
+    readonly load: () => Effect.Effect<AccountingMapFile, AccountingMapError>;
+    readonly resolveGlCode: (
+      category: AccountingCategory
+    ) => Effect.Effect<string, AccountingMapError>;
+  }
+>() {}
+
+export function accountingMapLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<AccountingMapService> {
+  const run = <A>(reason: string, task: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: task,
+      catch: (cause) =>
+        cause instanceof AccountingMapError
+          ? cause
+          : new AccountingMapError({
+              reason: cause instanceof Error ? cause.message : reason,
+              cause,
+            }),
+    });
+
+  return Layer.succeed(
+    AccountingMapService,
+    AccountingMapService.of({
+      load: () => run("Failed to load accounting map", () => loadAccountingMap(env)),
+      resolveGlCode: (category) =>
+        run("Failed to resolve GL code", () => loadAccountingMap(env)).pipe(
+          Effect.map((map) => resolveGlCode(category, map))
+        ),
+    })
+  );
 }
