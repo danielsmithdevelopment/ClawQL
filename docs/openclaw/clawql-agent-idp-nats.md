@@ -1,6 +1,6 @@
 # ClawQL-Agent ↔ IDP NATS contract ([#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128))
 
-**Boundary:** Runtime loops (LangGraph, OpenClaw governance UI) live in [ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent) (and related repos). **ClawQL** owns MCP tools, JetStream subject conventions, and Helm workers. This page is the **in-repo contract** so Agent work does not invent parallel queues.
+**Boundary:** Interactive agent loops may run in **Hermes**, **Pi**, Goose, OpenClaw, or an external ClawQL-Agent repo. **ClawQL** owns MCP tools, JetStream subject conventions, Helm workers, and the **`nats:agent-bridge`** process that closes async document events into MCP (`memory_ingest` / `notify`). This page is the contract so agents do not invent parallel queues.
 
 ## Subjects (document bus)
 
@@ -35,10 +35,12 @@ Envelope: `schema_version: 1`, `event_type`, `subject`, `correlation_id`, option
 - [x] Document JetStream subjects + durables shipped (NATS IDP consumers)
 - [x] Operator enablement runbook: [nats-idp-e2e.md](../runbooks/nats-idp-e2e.md)
 - [x] This contract linked from Agent PR / OpenClaw IDP docs
-- [ ] ClawQL-Agent repo references this page and implements subscribe/publish adapters (external)
+- [x] Subscribe/publish **agent bridge** in-repo: `npm run nats:agent-bridge` + Hermes/Pi samples ([idp-nats-agent](../../deployment/samples/idp-nats-agent/README.md), [idp-nats-agent-bridge.md](../runbooks/idp-nats-agent-bridge.md))
+- [ ] Optional: external ClawQL-Agent LangGraph repo may wrap the same subjects (not required for Hermes/Pi)
 
 ## Related
 
+- [idp-nats-agent-bridge.md](../runbooks/idp-nats-agent-bridge.md)
 - [nats-keda-worker.md](../deployment/nats-keda-worker.md)
 - [Slack-first IDP runbook](slack-first-idp-runbook.md)
 - [OpenClaw IDP skill profile](openclaw-idp-skill-profile.md)

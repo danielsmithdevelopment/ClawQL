@@ -153,3 +153,4 @@ curl -sS -X POST http://localhost:8080/idp/nextcloud/webhook \
 - **External NATS** (`nats.url`) without in-cluster monitoring requires a future `nats.keda.monitoringEndpoint` override — use in-cluster NATS for KEDA today.
 - Worker shares the MCP **ServiceAccount**; IDP path prefers `CLAWQL_MCP_INTERNAL_URL` → `POST /idp/pipeline/run` when documents deps are not embedded in the worker image process.
 - Operator e2e: [nats-idp-e2e.md](../runbooks/nats-idp-e2e.md).
+- Agent bridge (Hermes/Pi, `#128`): [idp-nats-agent-bridge.md](../runbooks/idp-nats-agent-bridge.md) — Helm `nats.agentBridge.enabled`.
