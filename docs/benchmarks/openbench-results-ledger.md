@@ -313,7 +313,7 @@ Those four were retired after this run; later wave added hybrid/codegraph/schedu
 
 ## Open gaps (not yet headline WIN)
 
-1. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals — `search-first-discovery` + `memory-roundtrip-ingest-recall` **done**; remaining: `policy-deny-execute` — Phase 0 in [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
+1. **n≥3 (ideally ≥5)** trials per cell for Wilson intervals — Phase 0 headline trio **done** (search / memory-roundtrip / policy-deny n=3); optional n≥5 for non-overlap CIs — Phase 0 in [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
 2. **Phase 1 advanced:** B-4.1 / B-3.1 / `codegraph-feature-api-surface` / composed RTP recollect **retired WIN**; next B-4.2/B-4.3 spikes (`memory-stale-after-update`, `memory-injection-attempt` task folders exist) or remaining P0 n≥3.
 3. **Trace collection:** GHA call-store JSONL now persists — [`openbench-trace-collection.md`](./openbench-trace-collection.md).
 4. Optional later: agentic external benches / domain HLE-analog (B-6) after fine-tune — not closed-book HLE.
@@ -378,13 +378,26 @@ Run: [31014040293](https://github.com/danielsmithdevelopment/ClawQL/actions/runs
 
 **Verdict:** clear `pr_active`, reset `pr_trials=1`. Next: `policy-deny-execute` n=3.
 
+### 2026-08-05 — Phase 0 n=3 WIN: `policy-deny-execute`
+
+| Arm        | Success | Mean score | Mean turns | Mean wall (s) |
+| ---------- | ------- | ---------- | ---------- | ------------- |
+| clawql-on  | **3/3** | **1.0**    | 3          | 22.9          |
+| clawql-off | **0/3** | **0.0**    | 3.333      | 23.4          |
+
+Run: [31016004063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31016004063). Gate OK. **Durable R2:** 6× schema **1.1** RTP → `r2://clawql-openbench-traces/raw/2026/08/05/run-31016004063/policy-deny-execute/`.
+
+**Wilson 95%:** on `[0.438, 1.000]` · off `[0.000, 0.562]`.
+
+**Verdict:** Phase 0 replication queue **complete**. Clear `pr_active`, reset `pr_trials=1`. Next: B-4.2/B-4.3 spikes or optional n≥5.
+
 ### Replication queue (Phase 0)
 
 | Task                             | Target n | Status                                                                                            |
 | -------------------------------- | -------- | ------------------------------------------------------------------------------------------------- |
 | `search-first-discovery`         | 3        | **done** [31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064) |
 | `memory-roundtrip-ingest-recall` | 3        | **done** [31014040293](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31014040293) |
-| `policy-deny-execute`            | 3        | **in progress** via `pr_active` + `pr_trials: 3`                                                  |
+| `policy-deny-execute`            | 3        | **done** [31016004063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31016004063) |
 
 ### 2026-08-05 — Phase 0 n≥3 kickoff (`pr_trials`)
 
