@@ -222,16 +222,16 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   attachPaymentsWellKnownRoutes(app, { serverName: "ClawQL MCP" });
   // HTMX forms on /credits/* (invite claim / accept / decline)
   app.use("/credits", express.urlencoded({ extended: false }));
-  attachCreditsHateoasRoutes(app);
-  if (isMppOpenApiEnabled(process.env)) {
-    attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });
-  }
-
   /**
    * Gateway auth: `noAuth` | `apiKey` (static + inference VKs) | `oidc` (JWT consumer).
    * OIDC verifies IdP-issued bearer tokens asynchronously — ClawQL is not an IdP.
    */
   const gatewayAuthConfig = buildGatewayAuthConfig();
+  attachCreditsHateoasRoutes(app, { authConfig: gatewayAuthConfig });
+  if (isMppOpenApiEnabled(process.env)) {
+    attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });
+  }
+
   function applyGatewayAuth(
     req: import("express").Request,
     res: import("express").Response,

@@ -59,6 +59,12 @@ assertToolPolicy(claims, "payments_credits_transfer_confirm");
 
 Hosts should call `assertToolPolicy` when dispatching MCP tools once request ATR claims are available. Full claim threading into every tool handler is a follow-up.
 
+## Hosted `/credits/*` gate
+
+When the MCP HTTP gateway runs with `CLAWQL_AUTH_MODE=apiKey|oidc`, non-public credits HATEOAS routes require the same ATR claims as MCP. Shareable pay / QR / invite landings stay public; **stage**, **accept**, **approve**, and **confirm** require auth. With `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL=1`, stage/accept/confirm also need MFA-class `acr`/`amr`.
+
+See [`credits-deeplinks.md`](../payments/credits-deeplinks.md).
+
 ## Shared step-up
 
 | Primitive             | Module                        | Notes                             |

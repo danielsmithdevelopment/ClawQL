@@ -117,6 +117,14 @@ export {
   type RequestDeepLink,
 } from "./deeplinks.js";
 export {
+  createCreditsHateoasAuthMiddleware,
+  creditsHateoasHighImpactTool,
+  isCreditsHateoasAuthRequired,
+  isCreditsHateoasPublicPath,
+  type CreditsAuthenticatedRequest,
+  type CreditsHateoasAuthOptions,
+} from "./hateoas-auth.js";
+export {
   escapeHtml,
   renderCreditsActivityHtml,
   renderCreditsHateoasPage,
