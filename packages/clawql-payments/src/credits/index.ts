@@ -10,12 +10,7 @@ export {
   creditsReturnUrl,
   natsPaymentsSubjectRoot,
 } from "./config.js";
-export {
-  generateTotp,
-  generateTotpSecret,
-  totpOtpauthUrl,
-  verifyTotp,
-} from "./totp.js";
+export { generateTotp, generateTotpSecret, totpOtpauthUrl, verifyTotp } from "./totp.js";
 export {
   enrollStepUpTotp,
   getStepUpEnrollment,

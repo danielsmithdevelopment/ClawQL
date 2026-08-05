@@ -43,14 +43,14 @@ ACH can take **1–3 business days**. Credits settle on `payment_intent.succeede
 
 ## Feature flags
 
-| Env                         | Default                               | Meaning                                                         |
-| --------------------------- | ------------------------------------- | --------------------------------------------------------------- |
-| `CLAWQL_CREDITS_ENABLED`    | off                                   | Enable prepaid credit ledger                                    |
-| `CLAWQL_ACH_TOPUP_ENABLED`  | on when credits + `STRIPE_SECRET_KEY` | Enable FC + ACH top-up path                                     |
-| `CLAWQL_ACH_TOPUP_DRY_RUN`  | off                                   | Create sessions / settle without live Stripe/ACH (tests, demos) |
-| `CLAWQL_CREDITS_RETURN_URL` | —                                     | Optional return URL for Financial Connections                   |
-| `CLAWQL_CREDITS_TRANSFER_DIRECT` | off                              | Skip stage/confirm (break-glass / tests only)                   |
-| `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP` | off                        | Require enrolled TOTP on transfer confirm                       |
+| Env                                    | Default                               | Meaning                                                         |
+| -------------------------------------- | ------------------------------------- | --------------------------------------------------------------- |
+| `CLAWQL_CREDITS_ENABLED`               | off                                   | Enable prepaid credit ledger                                    |
+| `CLAWQL_ACH_TOPUP_ENABLED`             | on when credits + `STRIPE_SECRET_KEY` | Enable FC + ACH top-up path                                     |
+| `CLAWQL_ACH_TOPUP_DRY_RUN`             | off                                   | Create sessions / settle without live Stripe/ACH (tests, demos) |
+| `CLAWQL_CREDITS_RETURN_URL`            | —                                     | Optional return URL for Financial Connections                   |
+| `CLAWQL_CREDITS_TRANSFER_DIRECT`       | off                                   | Skip stage/confirm (break-glass / tests only)                   |
+| `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP` | off                                   | Require enrolled TOTP on transfer confirm                       |
 
 ## CLI
 
@@ -111,9 +111,9 @@ sequenceDiagram
 
 ClawQL is not an IdP — phishing-resistant MFA for human SSO stays a **customer** concern. For prepaid P2P:
 
-1. **Confirmation code** (always, unless `CLAWQL_CREDITS_TRANSFER_DIRECT=1`) — second factor for CLI/MCP/agent flows  
-2. **Optional TOTP** — enroll via `credits step-up enroll`; gate with `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1`  
-3. Secrets live in `$CLAWQL_HOME/Payments/step-up-totp.json` (mode `0600`) — **never** in the payment WORM  
+1. **Confirmation code** (always, unless `CLAWQL_CREDITS_TRANSFER_DIRECT=1`) — second factor for CLI/MCP/agent flows
+2. **Optional TOTP** — enroll via `credits step-up enroll`; gate with `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1`
+3. Secrets live in `$CLAWQL_HOME/Payments/step-up-totp.json` (mode `0600`) — **never** in the payment WORM
 
 Platform liability is unchanged (credits move between tenants). Withdraw to bank/USDC remains via [payouts / off-ramp](./payouts-ramp.md).
 

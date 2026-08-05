@@ -1,9 +1,6 @@
 import { Effect } from "effect";
 import { AchTopupService } from "../credits/ach-topup-service.js";
-import {
-  CreditsService,
-  creditsTransferShouldStage,
-} from "../credits/credits-service.js";
+import { CreditsService, creditsTransferShouldStage } from "../credits/credits-service.js";
 import {
   isAchTopupDryRun,
   isCreditsEnabled,

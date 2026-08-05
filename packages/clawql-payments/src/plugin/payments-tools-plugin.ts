@@ -157,10 +157,7 @@ const creditsTransferStageSchema = {
 const creditsTransferConfirmSchema = {
   actionId: z.string().describe("Pending action_id from payments_credits_transfer_stage"),
   code: z.string().describe("confirmation_code from the stage response"),
-  totp: z
-    .string()
-    .optional()
-    .describe("6-digit TOTP when CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1"),
+  totp: z.string().optional().describe("6-digit TOTP when CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1"),
   mandateJwt: z.string().optional(),
 };
 
