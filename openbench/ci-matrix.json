@@ -31,7 +31,7 @@
       "evidence_run": "30872913516"
     },
     "policy-deny-execute": {
-      "reason": "Verified WIN + Phase 0 n=3 Wilson (on 3/3 / off 0/3; RTP v1.1 R2; prior 30872913516)",
+      "reason": "Verified WIN + Phase 0 n=3 margin (on 2/3 / off 0/3; RTP v1.1 R2; prior clean 1.0 @ 30872913516)",
       "evidence_run": "31016004063"
     },
     "ouroboros-oscillation-escape": {

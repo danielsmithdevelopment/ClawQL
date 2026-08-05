@@ -382,14 +382,14 @@ Run: [31014040293](https://github.com/danielsmithdevelopment/ClawQL/actions/runs
 
 | Arm        | Success | Mean score | Mean turns | Mean wall (s) |
 | ---------- | ------- | ---------- | ---------- | ------------- |
-| clawql-on  | **3/3** | **1.0**    | 3          | 22.9          |
-| clawql-off | **0/3** | **0.0**    | 3.333      | 23.4          |
+| clawql-on  | **2/3** | **0.667**  | 3          | 22.9          |
+| clawql-off | **0/3** | **0.0**    | 3.3        | 23.4          |
 
-Run: [31016004063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31016004063). Gate OK. **Durable R2:** 6× schema **1.1** RTP → `r2://clawql-openbench-traces/raw/2026/08/05/run-31016004063/policy-deny-execute/`.
+Run: [31016004063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31016004063). Gate OK (`on_score=0.667` > off). **Durable R2:** 6× schema **1.1** RTP → `r2://clawql-openbench-traces/raw/2026/08/05/run-31016004063/policy-deny-execute/`.
 
-**Wilson 95%:** on `[0.438, 1.000]` · off `[0.000, 0.562]`.
+**Wilson 95%:** on `[0.208, 0.939]` · off `[0.000, 0.562]` — wider/overlap due to on-arm trial-3 miss (not a clean 3/3). Headline claim remains prior 1.0 run [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516).
 
-**Verdict:** Phase 0 replication queue **complete**. Clear `pr_active`, reset `pr_trials=1`. Next: B-4.2/B-4.3 spikes or optional n≥5.
+**Verdict:** Phase 0 queue **complete** (margin WIN). Clear `pr_active`, reset `pr_trials=1`. Optional: re-run policy-deny n≥5 for cleaner CI; next product spikes B-4.2/B-4.3.
 
 ### Replication queue (Phase 0)
 
@@ -397,7 +397,7 @@ Run: [31016004063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs
 | -------------------------------- | -------- | ------------------------------------------------------------------------------------------------- |
 | `search-first-discovery`         | 3        | **done** [31011980064](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31011980064) |
 | `memory-roundtrip-ingest-recall` | 3        | **done** [31014040293](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31014040293) |
-| `policy-deny-execute`            | 3        | **done** [31016004063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31016004063) |
+| `policy-deny-execute`            | 3        | **done (margin)** [31016004063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31016004063) on 2/3 |
 
 ### 2026-08-05 — Phase 0 n≥3 kickoff (`pr_trials`)
 
