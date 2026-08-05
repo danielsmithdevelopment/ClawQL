@@ -94,6 +94,7 @@ import {
   runPaymentsCreditsShowCmd,
   runPaymentsCreditsBankLinkCmd,
   runPaymentsCreditsTopupCmd,
+  runPaymentsCreditsTransferCmd,
   runPaymentsCompensationBalanceCmd,
   runPaymentsCompensationDepositCmd,
   runPaymentsCompensationCashoutCmd,
@@ -294,6 +295,10 @@ function parse(argv: string[]): {
     else if (a === "--tax-form") flags.taxForm = argv[++i] ?? "";
     else if (a === "--collected") flags.collected = true;
     else if (a === "--tax-profile-ref") flags.taxProfileRef = argv[++i] ?? "";
+    else if (a === "--to-tenant" || a === "--recipient") flags.toTenantId = argv[++i] ?? "";
+    else if (a === "--from-tenant") flags.fromTenantId = argv[++i] ?? "";
+    else if (a === "--idempotency-key") flags.idempotencyKey = argv[++i] ?? "";
+    else if (a === "--note") flags.note = argv[++i] ?? "";
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
       flags.imageDigest = prev
@@ -385,6 +390,7 @@ Usage:
   clawql payments tax-profile set --party-id ID --tax-form 1099nec|none|unknown [--collected]
   clawql payments tax-profile show [--party-id ID]
   clawql payments credits show | bank-link --customer cus_xxx | topup --customer cus_xxx --amount 25
+  clawql payments credits transfer --to-tenant other-tenant --amount 10 [--from-tenant me] [--idempotency-key KEY]
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql claude --non-interactive --model <id> --task-file <path> [--workdir DIR] [--timeout SECS]
   clawql operator status
@@ -1115,6 +1121,10 @@ async function main(): Promise<void> {
       taxForm: typeof flags.taxForm === "string" ? flags.taxForm : undefined,
       collected: Boolean(flags.collected),
       taxProfileRef: typeof flags.taxProfileRef === "string" ? flags.taxProfileRef : undefined,
+      toTenantId: typeof flags.toTenantId === "string" ? flags.toTenantId : undefined,
+      fromTenantId: typeof flags.fromTenantId === "string" ? flags.fromTenantId : undefined,
+      idempotencyKey: typeof flags.idempotencyKey === "string" ? flags.idempotencyKey : undefined,
+      note: typeof flags.note === "string" ? flags.note : undefined,
     };
 
     if (subcmd === "plan") {
@@ -1305,7 +1315,11 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsCreditsTopupCmd(paymentsOpts);
         return;
       }
-      console.error("Usage: clawql payments credits show | bank-link | topup");
+      if (creditsAction === "transfer") {
+        process.exitCode = await runPaymentsCreditsTransferCmd(paymentsOpts);
+        return;
+      }
+      console.error("Usage: clawql payments credits show | bank-link | topup | transfer");
       process.exitCode = 1;
       return;
     }

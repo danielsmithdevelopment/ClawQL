@@ -103,5 +103,6 @@ export function toPaymentWormEntry(record: PaymentWormRecord): PaymentWormEntry 
     summary: record.summary,
     correlationId: record.correlationId,
     payload: record.payload,
+    accounting: record.accounting,
   };
 }

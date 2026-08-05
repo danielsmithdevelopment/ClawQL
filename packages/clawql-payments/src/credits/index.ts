@@ -18,11 +18,13 @@ export {
   resolveCreditsLedgerPath,
   settleTopupByPaymentIntent,
   spendableBalanceCents,
+  transferCredits,
   type CreditAccount,
   type CreditGrant,
   type CreditHold,
   type CreditLedgerEntry,
   type CreditLedgerKind,
+  type CreditTransferResult,
 } from "./ledger.js";
 export { CreditsError, CreditsService, creditsLiveLayer } from "./credits-service.js";
 export {

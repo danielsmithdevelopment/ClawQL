@@ -65,9 +65,11 @@ export {
   runPaymentsCreditsShow,
   runPaymentsCreditsBankLink,
   runPaymentsCreditsTopup,
+  runPaymentsCreditsTransfer,
   type PaymentsCreditsShowOptions,
   type PaymentsCreditsBankLinkOptions,
   type PaymentsCreditsTopupOptions,
+  type PaymentsCreditsTransferOptions,
 } from "./credits.js";
 export {
   runPaymentsCompensationBalance,

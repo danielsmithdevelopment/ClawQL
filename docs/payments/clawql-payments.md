@@ -39,7 +39,7 @@ It powers ClawQL's own managed tiers (Free / Pro / Team / Enterprise) and is ava
 | **Ramp** agent virtual / agentic cards                          | ✅     | `RampService` — vault path + native `cards:read_agentic` when enabled                                                                    |
 | **Consumer off-ramp** (Moonpay / Transak)                       | ✅     | Sessions + `OfframpWebhookService` completion settle                                                                                     |
 | **Payments MCP tools** (payout / ramp / offramp / compensation) | ✅     | `CLAWQL_PAYMENTS_MCP_TOOLS=1`; optional AP2 gate; includes `agent_compensation_*`                                                        |
-| **Prepaid credits + bank top-up**                               | ✅     | Grant ledger + Stripe FC/ACH top-up; sync [`DeductionService`](./deduction-service.md) on inference — [credits-ach.md](./credits-ach.md) |
+| **Prepaid credits + bank top-up + P2P transfer**                | ✅     | Grant ledger + FC/ACH top-up + tenant↔tenant `transfer`; sync [`DeductionService`](./deduction-service.md) — [credits-ach.md](./credits-ach.md) |
 | **Agent compensation** (credits + 2PC cash-out)                 | ✅     | `AgentCompensationService` — stage/confirm MCP + FAILED WORM; reuses `PayoutService`                                                     |
 | **Accounting export + tax evidence**                            | ✅     | Subledger CSV/JSON/QB/Xero; `TaxProfileService` gate; year-end pack — [accounting-and-tax.md](./accounting-and-tax.md)                   |
 
@@ -69,7 +69,7 @@ clawql-payments
 ├── payouts/    Stripe Connect bank payouts + Base USDC sends
 ├── ramp/       Ramp funds + virtual / agent cards
 ├── offramp/    Consumer USDC → fiat (Moonpay / Transak)
-├── credits/    Prepaid ledger + Stripe FC / ACH bank top-up
+├── credits/    Prepaid ledger + FC/ACH top-up + P2P tenant transfer
 ├── compensation/  Agent credits ledger + DAOS-aligned 2PC staging
 ├── accounting/ Subledger export, CoA map, tax profile gate, evidence pack
 ├── plans/      Tier definitions, entitlements, usage.json counters
@@ -385,6 +385,12 @@ See [agent-compensation.md](./agent-compensation.md) and [sgdop-coordinator-comp
 | `CLAWQL_CREDITS_RETURN_URL`           | —       | Optional Financial Connections return URL                               |
 
 See [credits-ach.md](./credits-ach.md) and [deduction-service.md](./deduction-service.md).
+
+```bash
+export CLAWQL_CREDITS_ENABLED=1
+clawql payments credits show
+clawql payments credits transfer --to-tenant other-tenant --amount 10 [--idempotency-key KEY]
+```
 
 ### Setup flow
 
@@ -777,6 +783,10 @@ clawql payments accounting export --date-from 2026-01-01 --date-to 2026-12-31 --
 clawql payments accounting tax-evidence --tax-year 2026
 clawql payments tax-profile set --party-id creator-1 --tax-form 1099nec --collected
 clawql payments tax-profile show [--party-id creator-1]
+
+# Prepaid credits (top-up + P2P)
+clawql payments credits show | bank-link | topup --customer cus_xxx --amount 25
+clawql payments credits transfer --to-tenant other-tenant --amount 10 [--from-tenant me] [--idempotency-key KEY]
 ```
 
 ---

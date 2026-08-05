@@ -14,6 +14,7 @@ import { RampService } from "../ramp/ramp-service.js";
 import { ConsumerOffRampService } from "../offramp/consumer-offramp-service.js";
 import { OfframpWebhookService } from "../offramp/offramp-webhook-service.js";
 import { AgentCompensationService } from "../compensation/agent-compensation-service.js";
+import { CreditsService } from "../credits/credits-service.js";
 import { Ap2MandateService } from "../ap2/ap2-mandate-service.js";
 import { isAp2Enabled } from "../ap2/config.js";
 
@@ -136,6 +137,19 @@ const compensationCashoutStageSchema = {
 const compensationConfirmSchema = {
   actionId: z.string().describe("Pending action_id from the stage response"),
   code: z.string().describe("confirmation_code from the stage response"),
+  mandateJwt: z.string().optional(),
+};
+
+/** High-impact: prepaid credit P2P between ClawQL tenants. */
+const creditsTransferSchema = {
+  toTenantId: z.string().describe("Recipient ClawQL tenant id"),
+  amountUsd: z.number().positive().describe("Amount in USD to transfer from prepaid credits"),
+  fromTenantId: z
+    .string()
+    .optional()
+    .describe("Sender tenant (defaults to payments.json tenant / default)"),
+  idempotencyKey: z.string().optional().describe("Replay-safe transfer key"),
+  note: z.string().optional(),
   mandateJwt: z.string().optional(),
 };
 
@@ -276,6 +290,38 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
                   rawBody: a.rawBody,
                   signatureHeader: a.signatureHeader,
                   tenantId: a.tenantId,
+                });
+              }),
+              env
+            );
+            return textResult(result);
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_credits_transfer",
+          description:
+            "High-impact: transfer prepaid credits between ClawQL tenants (P2P). Debits sender and credits recipient atomically; idempotent when idempotencyKey is set.",
+          schema: creditsTransferSchema,
+          handler: async (args) => {
+            const a = args as {
+              toTenantId: string;
+              amountUsd: number;
+              fromTenantId?: string;
+              idempotencyKey?: string;
+              note?: string;
+              mandateJwt?: string;
+            };
+            await assertAp2IfRequired(env, a.mandateJwt);
+            const result = await runPaymentsEffect(
+              Effect.gen(function* () {
+                const credits = yield* CreditsService;
+                return yield* credits.transfer({
+                  fromTenantId: a.fromTenantId?.trim() || "default",
+                  toTenantId: a.toTenantId,
+                  amountCents: Math.round(a.amountUsd * 100),
+                  idempotencyKey: a.idempotencyKey,
+                  note: a.note,
                 });
               }),
               env

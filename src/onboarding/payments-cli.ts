@@ -33,6 +33,7 @@ import {
   runPaymentsCreditsShow,
   runPaymentsCreditsBankLink,
   runPaymentsCreditsTopup,
+  runPaymentsCreditsTransfer,
   runPaymentsCompensationBalance,
   runPaymentsCompensationDeposit,
   runPaymentsCompensationCashout,
@@ -67,6 +68,10 @@ export type PaymentsCliOptions = {
   taxForm?: string;
   collected?: boolean;
   taxProfileRef?: string;
+  toTenantId?: string;
+  fromTenantId?: string;
+  idempotencyKey?: string;
+  note?: string;
   email?: string;
   name?: string;
   customer?: string;
@@ -412,6 +417,20 @@ export async function runPaymentsCreditsTopupCmd(
     amountUsd: options.amount,
     paymentMethodId: options.paymentMethodId,
     tenantId: options.tenantId,
+  });
+}
+
+export async function runPaymentsCreditsTransferCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsCreditsTransfer({
+    fromTenantId: options.fromTenantId ?? options.tenantId,
+    toTenantId: options.toTenantId,
+    amountUsd: options.amount,
+    idempotencyKey: options.idempotencyKey,
+    correlationId: options.correlationId,
+    note: options.note,
+    json: options.json,
   });
 }
 

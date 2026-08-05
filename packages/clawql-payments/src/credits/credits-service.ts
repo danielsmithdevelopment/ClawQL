@@ -3,6 +3,8 @@ import { Data } from "effect";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
 import {
   buildCreditDebitedEntry,
+  buildCreditTransferReceivedEntry,
+  buildCreditTransferSentEntry,
   buildCreditTopupFailedEntry,
   buildCreditTopupSettledEntry,
 } from "../audit/events.js";
@@ -11,8 +13,10 @@ import {
   appendCreditEntry,
   getCreditAccount,
   settleTopupByPaymentIntent,
+  transferCredits,
   type CreditAccount,
   type CreditLedgerEntry,
+  type CreditTransferResult,
 } from "./ledger.js";
 
 export class CreditsError extends Data.TaggedError("CreditsError")<{
@@ -45,6 +49,15 @@ export class CreditsService extends Context.Tag("clawql/CreditsService")<
       reason: string;
       correlationId?: string;
     }) => Effect.Effect<CreditLedgerEntry, CreditsError>;
+    /** P2P prepaid credit transfer between ClawQL tenants. */
+    readonly transfer: (input: {
+      fromTenantId: string;
+      toTenantId: string;
+      amountCents: number;
+      idempotencyKey?: string;
+      correlationId?: string;
+      note?: string;
+    }) => Effect.Effect<CreditTransferResult, CreditsError>;
   }
 >() {}
 
@@ -198,11 +211,64 @@ export function creditsLiveLayer(
           return entry;
         });
 
+      const transfer = (input: {
+        fromTenantId: string;
+        toTenantId: string;
+        amountCents: number;
+        idempotencyKey?: string;
+        correlationId?: string;
+        note?: string;
+      }) =>
+        Effect.gen(function* () {
+          if (!isCreditsEnabled(env)) {
+            return yield* Effect.fail(
+              new CreditsError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
+            );
+          }
+          const result = yield* Effect.tryPromise({
+            try: () => transferCredits(input, env),
+            catch: (cause) =>
+              new CreditsError({
+                reason: cause instanceof Error ? cause.message : "Credit transfer failed",
+                cause,
+              }),
+          });
+          if (!result.alreadyExisted) {
+            const amountUsd = result.amountCents / 100;
+            yield* audit
+              .appendEntry(
+                buildCreditTransferSentEntry({
+                  tenantId: result.fromTenantId,
+                  toTenantId: result.toTenantId,
+                  amountUsd,
+                  balanceUsd: result.fromEntry.balanceAfterCents / 100,
+                  transferId: result.transferId,
+                  correlationId: input.correlationId,
+                })
+              )
+              .pipe(Effect.catchAll(() => Effect.void));
+            yield* audit
+              .appendEntry(
+                buildCreditTransferReceivedEntry({
+                  tenantId: result.toTenantId,
+                  fromTenantId: result.fromTenantId,
+                  amountUsd,
+                  balanceUsd: result.toEntry.balanceAfterCents / 100,
+                  transferId: result.transferId,
+                  correlationId: input.correlationId,
+                })
+              )
+              .pipe(Effect.catchAll(() => Effect.void));
+          }
+          return result;
+        });
+
       return CreditsService.of({
         getBalance,
         debit,
         settleTopup,
         markTopupFailed,
+        transfer,
       });
     })
   );

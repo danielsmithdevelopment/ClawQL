@@ -8,6 +8,7 @@ export type AccountingCategory =
   | "micropayment_revenue"
   | "prepaid_liability"
   | "prepaid_redemption"
+  | "peer_transfer"
   | "creator_payout"
   | "agent_compensation"
   | "agent_spend"

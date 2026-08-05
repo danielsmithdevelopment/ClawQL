@@ -22,6 +22,18 @@ export type PaymentsCreditsTopupOptions = {
   tenantId?: string;
 };
 
+export type PaymentsCreditsTransferOptions = {
+  /** Sender tenant (defaults to payments.json tenant). */
+  fromTenantId?: string;
+  /** Recipient ClawQL tenant id. */
+  toTenantId?: string;
+  amountUsd?: number;
+  idempotencyKey?: string;
+  correlationId?: string;
+  note?: string;
+  json?: boolean;
+};
+
 export async function runPaymentsCreditsShow(
   options: PaymentsCreditsShowOptions = {}
 ): Promise<number> {
@@ -121,4 +133,59 @@ export async function runPaymentsCreditsTopup(
     console.log("Credits settle on payment_intent.succeeded webhook (ACH may take days).");
   }
   return 0;
+}
+
+export async function runPaymentsCreditsTransfer(
+  options: PaymentsCreditsTransferOptions = {}
+): Promise<number> {
+  if (!isCreditsEnabled()) {
+    console.error("Credits disabled — set CLAWQL_CREDITS_ENABLED=1");
+    return 1;
+  }
+  const config = await loadPaymentsConfig();
+  const fromTenantId = options.fromTenantId?.trim() || config.tenantId || "default";
+  const toTenantId = options.toTenantId?.trim();
+  const amountUsd = options.amountUsd;
+  if (!toTenantId || amountUsd === undefined || !Number.isFinite(amountUsd) || amountUsd <= 0) {
+    console.error(
+      "Usage: clawql payments credits transfer --to-tenant <tenantId> --amount 10 [--from-tenant <tenantId>] [--idempotency-key KEY]"
+    );
+    return 1;
+  }
+  try {
+    const result = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const credits = yield* CreditsService;
+        return yield* credits.transfer({
+          fromTenantId,
+          toTenantId,
+          amountCents: Math.round(amountUsd * 100),
+          idempotencyKey: options.idempotencyKey,
+          correlationId: options.correlationId,
+          note: options.note,
+        });
+      })
+    );
+    if (options.json) {
+      console.log(JSON.stringify(result, null, 2));
+      return 0;
+    }
+    console.log(
+      `Transferred $${(result.amountCents / 100).toFixed(2)} ${result.fromTenantId} → ${result.toTenantId}`
+    );
+    console.log(`Transfer id: ${result.transferId}${result.alreadyExisted ? " (idempotent replay)" : ""}`);
+    console.log(
+      `Sender balance: $${(result.fromEntry.balanceAfterCents / 100).toFixed(2)} | Recipient: $${(result.toEntry.balanceAfterCents / 100).toFixed(2)}`
+    );
+    return 0;
+  } catch (err) {
+    const reason =
+      err && typeof err === "object" && "reason" in err
+        ? String((err as { reason: unknown }).reason)
+        : err instanceof Error
+          ? err.message
+          : String(err);
+    console.error(reason);
+    return 1;
+  }
 }

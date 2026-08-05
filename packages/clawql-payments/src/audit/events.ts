@@ -40,6 +40,8 @@ export type PaymentEventKind =
   | "CREDIT_TOPUP_SETTLED"
   | "CREDIT_TOPUP_FAILED"
   | "CREDIT_DEBITED"
+  | "CREDIT_TRANSFER_SENT"
+  | "CREDIT_TRANSFER_RECEIVED"
   | "CREDIT_HELD"
   | "CREDIT_CAPTURED"
   | "CREDIT_RELEASED"
@@ -77,6 +79,8 @@ export type PaymentWormPayload = {
   reason?: string;
   /** SGDOP recruitment / blind-spot correlation. */
   recruitment_id?: string;
+  /** Counterparty tenant for P2P credit transfers. */
+  counterparty_tenant_id?: string;
 };
 
 /** Durable payment audit entry with hash-chained integrity fields on disk. */
@@ -772,6 +776,54 @@ export function buildCreditDebitedEntry(input: {
       balance_usd: input.balanceUsd,
       tenant_id: input.tenantId,
       resource: input.resource,
+    },
+  });
+}
+
+export function buildCreditTransferSentEntry(input: {
+  tenantId: string;
+  toTenantId: string;
+  amountUsd: number;
+  balanceUsd: number;
+  transferId: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "CREDIT_TRANSFER_SENT",
+    summary: `Credits transferred $${input.amountUsd.toFixed(2)} ${input.tenantId} → ${input.toTenantId} (${input.transferId})`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "credits",
+      amount_usd: input.amountUsd,
+      balance_usd: input.balanceUsd,
+      tenant_id: input.tenantId,
+      counterparty_tenant_id: input.toTenantId,
+      resource: input.transferId,
+      agent_id: input.toTenantId,
+    },
+  });
+}
+
+export function buildCreditTransferReceivedEntry(input: {
+  tenantId: string;
+  fromTenantId: string;
+  amountUsd: number;
+  balanceUsd: number;
+  transferId: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "CREDIT_TRANSFER_RECEIVED",
+    summary: `Credits received $${input.amountUsd.toFixed(2)} ${input.fromTenantId} → ${input.tenantId} (${input.transferId})`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "credits",
+      amount_usd: input.amountUsd,
+      balance_usd: input.balanceUsd,
+      tenant_id: input.tenantId,
+      counterparty_tenant_id: input.fromTenantId,
+      resource: input.transferId,
+      agent_id: input.fromTenantId,
     },
   });
 }
