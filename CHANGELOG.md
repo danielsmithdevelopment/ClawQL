@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Pulumi edge CI 401 on account-scoped Cloudflare tokens** — `/user/tokens/verify` often returns 401 for Workers account tokens after R2 bucket create succeeds. Accept `CLOUDFLARE_API_TOKEN_ID` (or explicit `CLAWQL_R2_*` S3 keys) when deriving R2 credentials for the Pulumi state backend ([`scripts/pulumi/ensure-r2-state-backend.sh`](scripts/pulumi/ensure-r2-state-backend.sh)).
+
 ### Added
 
 - **Pulumi Cloudflare edge CI/CD** — [`.github/workflows/pulumi-cloudflare-edge.yml`](.github/workflows/pulumi-cloudflare-edge.yml) runs unit tests on PR and `workflow_dispatch` `preview`/`up` against R2-backed Pulumi state (`clawql-pulumi-state`). Scripts: [`scripts/pulumi/ensure-r2-state-backend.sh`](scripts/pulumi/ensure-r2-state-backend.sh), [`scripts/pulumi/deploy-edge.sh`](scripts/pulumi/deploy-edge.sh). Reuses `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`.

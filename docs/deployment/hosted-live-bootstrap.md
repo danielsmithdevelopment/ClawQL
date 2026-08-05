@@ -13,14 +13,18 @@ Workflow: [`.github/workflows/pulumi-cloudflare-edge.yml`](../../.github/workflo
 | `workflow_dispatch`               | Ensure R2 bucket `clawql-pulumi-state`, `pulumi login` to R2, then `preview` or `up` for stack `edge-prod` |
 
 **Secrets (reuse docs/landing):** `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.  
-Optional: `CLAWQL_R2_ACCESS_KEY_ID` / `CLAWQL_R2_SECRET_ACCESS_KEY` (else derived from API token per [Cloudflare R2 token docs](https://developers.cloudflare.com/r2/api/tokens/)); `PULUMI_CONFIG_PASSPHRASE` (stable passphrase — recommended).
+Optional:
+
+- `CLOUDFLARE_API_TOKEN_ID` — required when the token is **account-scoped** (Workers template). Those tokens 401 on `/user/tokens/verify`; the Token ID from the dashboard is the R2 Access Key ID.
+- `CLAWQL_R2_ACCESS_KEY_ID` / `CLAWQL_R2_SECRET_ACCESS_KEY` — dedicated R2 S3 keys (clearest for CI).
+- `PULUMI_CONFIG_PASSPHRASE` — stable passphrase (recommended).
 
 ```bash
 gh workflow run pulumi-cloudflare-edge.yml -f action=preview -f stack=edge-prod
 gh workflow run pulumi-cloudflare-edge.yml -f action=up -f stack=edge-prod -f deploy_worker_stub=true
 ```
 
-Token needs **Workers R2 Storage Write** (and Workers Scripts Edit if deploying the stub). Account-scoped tokens that cannot call `/user/tokens/verify` must use explicit R2 access key secrets.
+Token needs **Workers R2 Storage Write** (and Workers Scripts Edit if deploying the stub). If preview fails with HTTP 401 on credential derivation, add `CLOUDFLARE_API_TOKEN_ID` or R2 S3 key secrets and re-run.
 
 ## Separation of concerns
 
