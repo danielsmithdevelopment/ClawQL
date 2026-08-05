@@ -77,6 +77,7 @@ Minor release on the **7.0 Agentic Gateway** line: **Memory Stack 2.0**, Converg
 
 ### Fixed
 
+- **npm publish localPackExtras auth** — soft-fail `mcp-grpc-transport` / `mcp-api-adapter` publish when OIDC/NPM_TOKEN is unavailable (`ENEEDAUTH`) so `clawql-mcp` can still publish (own-cadence extras no longer abort the tag workflow).
 - **MCP stdio / Cursor discovery** ([#799](https://github.com/danielsmithdevelopment/ClawQL/pull/799)) — quiet `dotenv` (`quiet: true`) so stdout banners do not corrupt JSON-RPC.
 - **MCP stdio Ready latency** ([#799](https://github.com/danielsmithdevelopment/ClawQL/pull/799)) — default six-vendor `loadSpec()` warms after **Ready**.
 - **mcp-api-adapter gRPC CallTool content** normalization for `/mcp` ([#796](https://github.com/danielsmithdevelopment/ClawQL/pull/796)).
