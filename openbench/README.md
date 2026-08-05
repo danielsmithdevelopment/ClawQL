@@ -5,9 +5,9 @@ ClawQL as a coding-agent harness layer (Track A) and to ship ClawQL-specific
 tasks that exercise memory, token efficiency, and multi-provider API scaffolding
 (Track B).
 
-OpenBench answers: *same model, same task — how much does the harness matter?*
-ClawQL answers: *how much does a governed MCP gateway (search/execute/memory)
-change correctness, tokens, and turns?*
+OpenBench answers: _same model, same task — how much does the harness matter?_
+ClawQL answers: _how much does a governed MCP gateway (search/execute/memory)
+change correctness, tokens, and turns?_
 
 ## Layout
 
@@ -93,11 +93,11 @@ Prefer the Python adapter: it writes the instruction file, parses
 
 ## Track B — ClawQL-specific tasks
 
-| Task | What it measures |
-|------|------------------|
+| Task                            | What it measures                                                                                                                                |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `memory-dependent-continuation` | Prior argon2id + 900s TTL decisions live only in vault memory after seed removal; raw harnesses that follow the misleading bcrypt comment fail. |
-| `token-budget-constrained` | Correct YAML `parse_config` under a 5k-token budget; exploration-heavy agents overspend. |
-| `multi-provider-api-workflow` | Offline Cloudflare Worker + GitHub releases scaffold; rewards structured API discovery over dumping specs. |
+| `token-budget-constrained`      | Correct YAML `parse_config` under a 5k-token budget; exploration-heavy agents overspend.                                                        |
+| `multi-provider-api-workflow`   | Offline Cloudflare Worker + GitHub releases scaffold; rewards structured API discovery over dumping specs.                                      |
 
 Validate checkers offline (no model, no network):
 
@@ -110,14 +110,14 @@ To contribute these upstream, copy `tasks/<name>/` into OpenBench's `tasks/`
 
 ## Environment
 
-| Variable | Purpose |
-|----------|---------|
-| `CLAWQL_OPENBENCH=1` | Allow unsandboxed harness on Linux CI; mark bench mode |
-| `CLAWQL_HARNESS_ALLOW_UNSANDBOXED=1` | Same soft-fail for Seatbelt gate |
-| `CLAWQL_OPENBENCH_HARNESS` | Underlying CLI (`opencode` for A/B) |
-| `CLAWQL_INFERENCE_URL` / `OPENBENCH_INFERENCE_URL` | clawql-inference OpenAI-compat base |
-| `OPENROUTER_API_KEY` (preferred start) | Aggregator key for default `openrouter/*` models |
-| `DEEPSEEK_API_KEY` (etc.) | Direct BYOK when you skip OpenRouter |
+| Variable                                           | Purpose                                                |
+| -------------------------------------------------- | ------------------------------------------------------ |
+| `CLAWQL_OPENBENCH=1`                               | Allow unsandboxed harness on Linux CI; mark bench mode |
+| `CLAWQL_HARNESS_ALLOW_UNSANDBOXED=1`               | Same soft-fail for Seatbelt gate                       |
+| `CLAWQL_OPENBENCH_HARNESS`                         | Underlying CLI (`opencode` for A/B)                    |
+| `CLAWQL_INFERENCE_URL` / `OPENBENCH_INFERENCE_URL` | clawql-inference OpenAI-compat base                    |
+| `OPENROUTER_API_KEY` (preferred start)             | Aggregator key for default `openrouter/*` models       |
+| `DEEPSEEK_API_KEY` (etc.)                          | Direct BYOK when you skip OpenRouter                   |
 
 ## One-off GitHub Actions A/B
 
