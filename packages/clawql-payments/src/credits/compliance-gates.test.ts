@@ -1,13 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  assertCreditsP2pEnabled,
-  isCreditsP2pEnabled,
-  isManagedHosting,
-} from "./config.js";
-import {
-  assertCompensationEnabled,
-  isCompensationEnabled,
-} from "../compensation/config.js";
+import { assertCreditsP2pEnabled, isCreditsP2pEnabled, isManagedHosting } from "./config.js";
+import { assertCompensationEnabled, isCompensationEnabled } from "../compensation/config.js";
 
 describe("payments compliance gates", () => {
   afterEach(() => {

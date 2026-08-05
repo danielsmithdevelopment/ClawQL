@@ -917,143 +917,143 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
 
         // High-impact compensation — self-hosted opt-in only (CLAWQL_COMPENSATION_ENABLED=1).
         if (isCompensationEnabled(env)) {
-        yield* api.registerMcpTool({
-          name: "agent_compensation_deposit_stage",
-          description:
-            "Safe entry point: stage an agent compensation deposit (credits/funds). Inert until agent_compensation_deposit_confirm — does not credit the ledger. Self-hosted; CLAWQL_COMPENSATION_ENABLED=1.",
-          schema: compensationDepositStageSchema,
-          handler: async (args) => {
-            const a = args as {
-              agentId: string;
-              amountUsd: number;
-              asset?: "credits" | "funds";
-              reason?: "sgdop_recruit" | "diversity_dividend" | "task_bounty" | "manual";
-              recruitmentId?: string;
-              tenantId?: string;
-              mandateJwt?: string;
-            };
-            await assertAp2IfRequired(env, a.mandateJwt);
-            const result = await runPaymentsEffect(
-              Effect.gen(function* () {
-                const comp = yield* AgentCompensationService;
-                return yield* comp.stageDeposit({
-                  agentId: a.agentId,
-                  amountUsd: a.amountUsd,
-                  asset: a.asset ?? "credits",
-                  reason: a.reason ?? "manual",
-                  recruitmentId: a.recruitmentId,
-                  tenantId: a.tenantId,
-                });
-              }),
-              env
-            );
-            return textResult({
-              ...result,
-              next: "High-impact next step: call agent_compensation_deposit_confirm with actionId + code to credit the ledger.",
-            });
-          },
-        });
-
-        yield* api.registerMcpTool({
-          name: "agent_compensation_deposit_confirm",
-          description:
-            "High-impact: confirm a staged deposit and credit the agent ledger. Prefer agent_compensation_deposit_stage first; rejects non-deposit pending kinds.",
-          schema: compensationConfirmSchema,
-          handler: async (args) => {
-            const a = args as { actionId: string; code: string; mandateJwt?: string };
-            await assertAp2IfRequired(env, a.mandateJwt);
-            const view = await runPaymentsEffect(
-              Effect.gen(function* () {
-                const comp = yield* AgentCompensationService;
-                return yield* comp.approve({ actionId: a.actionId, code: a.code });
-              }),
-              env
-            );
-            if (view.kind !== "deposit_credits" && view.kind !== "deposit_funds") {
-              throw new Error(
-                `action ${a.actionId} is kind=${view.kind}; use agent_compensation_cashout_confirm`
+          yield* api.registerMcpTool({
+            name: "agent_compensation_deposit_stage",
+            description:
+              "Safe entry point: stage an agent compensation deposit (credits/funds). Inert until agent_compensation_deposit_confirm — does not credit the ledger. Self-hosted; CLAWQL_COMPENSATION_ENABLED=1.",
+            schema: compensationDepositStageSchema,
+            handler: async (args) => {
+              const a = args as {
+                agentId: string;
+                amountUsd: number;
+                asset?: "credits" | "funds";
+                reason?: "sgdop_recruit" | "diversity_dividend" | "task_bounty" | "manual";
+                recruitmentId?: string;
+                tenantId?: string;
+                mandateJwt?: string;
+              };
+              await assertAp2IfRequired(env, a.mandateJwt);
+              const result = await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const comp = yield* AgentCompensationService;
+                  return yield* comp.stageDeposit({
+                    agentId: a.agentId,
+                    amountUsd: a.amountUsd,
+                    asset: a.asset ?? "credits",
+                    reason: a.reason ?? "manual",
+                    recruitmentId: a.recruitmentId,
+                    tenantId: a.tenantId,
+                  });
+                }),
+                env
               );
-            }
-            const result = await runPaymentsEffect(
-              Effect.gen(function* () {
-                const comp = yield* AgentCompensationService;
-                return yield* comp.confirm({ actionId: a.actionId, code: a.code });
-              }),
-              env
-            );
-            return textResult(result);
-          },
-        });
+              return textResult({
+                ...result,
+                next: "High-impact next step: call agent_compensation_deposit_confirm with actionId + code to credit the ledger.",
+              });
+            },
+          });
 
-        yield* api.registerMcpTool({
-          name: "agent_compensation_cashout_stage",
-          description:
-            "Safe entry point: stage an agent cash-out. Inert until agent_compensation_cashout_confirm — does not debit or call PayoutService.",
-          schema: compensationCashoutStageSchema,
-          handler: async (args) => {
-            const a = args as {
-              agentId: string;
-              amountUsd: number;
-              source?: "credits" | "funds";
-              destination?: "bank" | "usdc";
-              connectAccountId?: string;
-              usdcWallet?: string;
-              tenantId?: string;
-              mandateJwt?: string;
-            };
-            await assertAp2IfRequired(env, a.mandateJwt);
-            const result = await runPaymentsEffect(
-              Effect.gen(function* () {
-                const comp = yield* AgentCompensationService;
-                return yield* comp.stageCashout({
-                  agentId: a.agentId,
-                  amountUsd: a.amountUsd,
-                  source: a.source,
-                  destination: a.destination,
-                  connectAccountId: a.connectAccountId,
-                  usdcWallet: a.usdcWallet,
-                  tenantId: a.tenantId,
-                });
-              }),
-              env
-            );
-            return textResult({
-              ...result,
-              next: "High-impact next step: call agent_compensation_cashout_confirm with actionId + code to debit and pay out.",
-            });
-          },
-        });
-
-        yield* api.registerMcpTool({
-          name: "agent_compensation_cashout_confirm",
-          description:
-            "High-impact: confirm a staged cash-out (ledger debit + PayoutService). Prefer agent_compensation_cashout_stage first; rejects non-cashout pending kinds.",
-          schema: compensationConfirmSchema,
-          handler: async (args) => {
-            const a = args as { actionId: string; code: string; mandateJwt?: string };
-            await assertAp2IfRequired(env, a.mandateJwt);
-            const view = await runPaymentsEffect(
-              Effect.gen(function* () {
-                const comp = yield* AgentCompensationService;
-                return yield* comp.approve({ actionId: a.actionId, code: a.code });
-              }),
-              env
-            );
-            if (view.kind !== "cashout") {
-              throw new Error(
-                `action ${a.actionId} is kind=${view.kind}; use agent_compensation_deposit_confirm`
+          yield* api.registerMcpTool({
+            name: "agent_compensation_deposit_confirm",
+            description:
+              "High-impact: confirm a staged deposit and credit the agent ledger. Prefer agent_compensation_deposit_stage first; rejects non-deposit pending kinds.",
+            schema: compensationConfirmSchema,
+            handler: async (args) => {
+              const a = args as { actionId: string; code: string; mandateJwt?: string };
+              await assertAp2IfRequired(env, a.mandateJwt);
+              const view = await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const comp = yield* AgentCompensationService;
+                  return yield* comp.approve({ actionId: a.actionId, code: a.code });
+                }),
+                env
               );
-            }
-            const result = await runPaymentsEffect(
-              Effect.gen(function* () {
-                const comp = yield* AgentCompensationService;
-                return yield* comp.confirm({ actionId: a.actionId, code: a.code });
-              }),
-              env
-            );
-            return textResult(result);
-          },
-        });
+              if (view.kind !== "deposit_credits" && view.kind !== "deposit_funds") {
+                throw new Error(
+                  `action ${a.actionId} is kind=${view.kind}; use agent_compensation_cashout_confirm`
+                );
+              }
+              const result = await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const comp = yield* AgentCompensationService;
+                  return yield* comp.confirm({ actionId: a.actionId, code: a.code });
+                }),
+                env
+              );
+              return textResult(result);
+            },
+          });
+
+          yield* api.registerMcpTool({
+            name: "agent_compensation_cashout_stage",
+            description:
+              "Safe entry point: stage an agent cash-out. Inert until agent_compensation_cashout_confirm — does not debit or call PayoutService.",
+            schema: compensationCashoutStageSchema,
+            handler: async (args) => {
+              const a = args as {
+                agentId: string;
+                amountUsd: number;
+                source?: "credits" | "funds";
+                destination?: "bank" | "usdc";
+                connectAccountId?: string;
+                usdcWallet?: string;
+                tenantId?: string;
+                mandateJwt?: string;
+              };
+              await assertAp2IfRequired(env, a.mandateJwt);
+              const result = await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const comp = yield* AgentCompensationService;
+                  return yield* comp.stageCashout({
+                    agentId: a.agentId,
+                    amountUsd: a.amountUsd,
+                    source: a.source,
+                    destination: a.destination,
+                    connectAccountId: a.connectAccountId,
+                    usdcWallet: a.usdcWallet,
+                    tenantId: a.tenantId,
+                  });
+                }),
+                env
+              );
+              return textResult({
+                ...result,
+                next: "High-impact next step: call agent_compensation_cashout_confirm with actionId + code to debit and pay out.",
+              });
+            },
+          });
+
+          yield* api.registerMcpTool({
+            name: "agent_compensation_cashout_confirm",
+            description:
+              "High-impact: confirm a staged cash-out (ledger debit + PayoutService). Prefer agent_compensation_cashout_stage first; rejects non-cashout pending kinds.",
+            schema: compensationConfirmSchema,
+            handler: async (args) => {
+              const a = args as { actionId: string; code: string; mandateJwt?: string };
+              await assertAp2IfRequired(env, a.mandateJwt);
+              const view = await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const comp = yield* AgentCompensationService;
+                  return yield* comp.approve({ actionId: a.actionId, code: a.code });
+                }),
+                env
+              );
+              if (view.kind !== "cashout") {
+                throw new Error(
+                  `action ${a.actionId} is kind=${view.kind}; use agent_compensation_deposit_confirm`
+                );
+              }
+              const result = await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const comp = yield* AgentCompensationService;
+                  return yield* comp.confirm({ actionId: a.actionId, code: a.code });
+                }),
+                env
+              );
+              return textResult(result);
+            },
+          });
         } // isCompensationEnabled
       }),
   };

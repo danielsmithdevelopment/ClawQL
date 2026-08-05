@@ -4,10 +4,10 @@
 
 ## Managed / hosted ClawQL (clawql.com SaaS)
 
-| Allowed | Not offered on managed |
-| --- | --- |
-| Stripe subscriptions, invoices, and platform fees for ClawQL plans | Tenant↔tenant prepaid **P2P** (Venmo-like) transfers |
-| Stripe-mediated billing for your usage of ClawQL | Agent compensation deposit / cash-out ledgers between agents |
+| Allowed                                                                                                                                  | Not offered on managed                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Stripe subscriptions, invoices, and platform fees for ClawQL plans                                                                       | Tenant↔tenant prepaid **P2P** (Venmo-like) transfers                                  |
+| Stripe-mediated billing for your usage of ClawQL                                                                                         | Agent compensation deposit / cash-out ledgers between agents                          |
 | Optional **closed-loop** prepaid credits redeemable only for ClawQL inference / gateway / IDP services (when `CLAWQL_CREDITS_ENABLED=1`) | General-purpose peer payments or cash float held as ClawQL balances for arbitrary P2P |
 
 Set `CLAWQL_MANAGED_HOSTING=1` (aliases: `CLAWQL_HOSTED_MODE`, `CLAWQL_GATEWAY_MANAGED`) on managed fleets. That **forces off** P2P and agent compensation even if other flags are set.
