@@ -80,6 +80,8 @@ export type PaymentsCliOptions = {
   /** Payments directory handle (@alice). */
   handle?: string;
   toHandle?: string;
+  /** Directory email (pay-by-email); may share --email with Stripe when in directory cmds. */
+  directoryEmail?: string;
   /** Venmo-style payee from context-aware --to */
   payTo?: string;
   displayName?: string;
@@ -482,6 +484,7 @@ export async function runPaymentsCreditsDirectoryClaimCmd(
 ): Promise<number> {
   return runPaymentsCreditsDirectoryClaim({
     handle: options.handle ?? options.toHandle,
+    email: options.directoryEmail ?? options.email,
     tenantId: options.tenantId ?? options.fromTenantId,
     displayName: options.displayName ?? options.name,
     json: options.json,
@@ -493,6 +496,7 @@ export async function runPaymentsCreditsDirectoryShowCmd(
 ): Promise<number> {
   return runPaymentsCreditsDirectoryShow({
     handle: options.handle ?? options.toHandle,
+    email: options.directoryEmail ?? options.email,
     json: options.json,
   });
 }
@@ -500,7 +504,10 @@ export async function runPaymentsCreditsDirectoryShowCmd(
 export async function runPaymentsCreditsDirectoryListCmd(
   options: PaymentsCliOptions = {}
 ): Promise<number> {
-  return runPaymentsCreditsDirectoryList({ json: options.json });
+  return runPaymentsCreditsDirectoryList({
+    json: options.json,
+    showEmail: options.showSecrets,
+  });
 }
 
 export async function runPaymentsCreditsDirectoryReleaseCmd(
@@ -508,6 +515,7 @@ export async function runPaymentsCreditsDirectoryReleaseCmd(
 ): Promise<number> {
   return runPaymentsCreditsDirectoryRelease({
     handle: options.handle ?? options.toHandle,
+    email: options.directoryEmail ?? options.email,
     json: options.json,
   });
 }

@@ -406,8 +406,9 @@ Usage:
   clawql payments tax-profile set --party-id ID --tax-form 1099nec|none|unknown [--collected]
   clawql payments tax-profile show [--party-id ID]
   clawql payments credits show | bank-link --customer cus_xxx | topup --customer cus_xxx --amount 25
-  clawql payments credits directory claim --handle alice [--name Alice] | show|list|release --handle @alice
-  clawql payments credits pay --to @bob --amount 10 [--note coffee]   # stages (confirm next)
+  clawql payments credits directory claim --email you@acme.com [--handle alice] [--name Alice]
+  clawql payments credits directory show|list|release --email … | --handle @alice
+  clawql payments credits pay --to you@acme.com|--to @alice --amount 10 [--note coffee]
   clawql payments credits transfer --to-tenant other-tenant --amount 10
   clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
   clawql payments credits step-up enroll|show [--tenant-id ID] [--show-secrets]
@@ -1145,6 +1146,7 @@ async function main(): Promise<void> {
       fromTenantId: typeof flags.fromTenantId === "string" ? flags.fromTenantId : undefined,
       handle: typeof flags.toHandle === "string" ? flags.toHandle : undefined,
       toHandle: typeof flags.toHandle === "string" ? flags.toHandle : undefined,
+      directoryEmail: typeof flags.email === "string" ? flags.email : undefined,
       payTo: typeof flags.payTo === "string" ? flags.payTo : undefined,
       displayName:
         typeof flags.displayName === "string"

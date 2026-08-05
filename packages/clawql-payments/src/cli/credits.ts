@@ -8,9 +8,12 @@ import {
 } from "../credits/config.js";
 import { enrollStepUpTotp, getStepUpEnrollment } from "../credits/step-up.js";
 import {
-  claimHandle,
+  claimDirectory,
+  getEmailEntry,
   getHandleEntry,
   listDirectory,
+  maskEmail,
+  releaseEmail,
   releaseHandle,
   resolveRecipient,
 } from "../credits/directory.js";
@@ -60,9 +63,12 @@ export type PaymentsCreditsTransferOptions = {
 
 export type PaymentsCreditsDirectoryOptions = {
   handle?: string;
+  email?: string;
   tenantId?: string;
   displayName?: string;
   json?: boolean;
+  /** Show full email in list (default masks local part). */
+  showEmail?: boolean;
 };
 
 export type PaymentsCreditsStepUpOptions = {
@@ -222,14 +228,17 @@ export async function runPaymentsCreditsTransfer(
 
   let toTenantId = options.toTenantId?.trim();
   let resolvedHandle: string | undefined;
+  let resolvedEmail: string | undefined;
   const payee = options.toHandle?.trim() || options.payTo?.trim();
   if (payee) {
     try {
       const resolved = await resolveRecipient(payee, process.env, {
         forceHandle: Boolean(options.toHandle?.trim()) || payee.startsWith("@"),
+        forceEmail: payee.includes("@") && !payee.startsWith("@"),
       });
       toTenantId = resolved.tenantId;
       resolvedHandle = resolved.handle;
+      resolvedEmail = resolved.email;
     } catch (err) {
       console.error(formatErr(err));
       return 1;
@@ -238,7 +247,8 @@ export async function runPaymentsCreditsTransfer(
 
   if (!toTenantId || amountUsd === undefined || !Number.isFinite(amountUsd) || amountUsd <= 0) {
     console.error(
-      "Usage: clawql payments credits pay --to @bob --amount 10\n" +
+      "Usage: clawql payments credits pay --to bob@acme.com --amount 10\n" +
+        "       clawql payments credits pay --to @bob --amount 10\n" +
         "       clawql payments credits transfer --to-tenant <tenantId> --amount 10\n" +
         "       clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]"
     );
@@ -247,7 +257,12 @@ export async function runPaymentsCreditsTransfer(
 
   const amountCents = Math.round(amountUsd * 100);
   const shouldStage = creditsTransferShouldStage() && !options.direct;
-  const payeeLabel = resolvedHandle ? `@${resolvedHandle}` : toTenantId;
+  // Prefer privacy username when set; else email; else tenant id.
+  const payeeLabel = resolvedHandle
+    ? `@${resolvedHandle}`
+    : resolvedEmail
+      ? resolvedEmail
+      : toTenantId;
 
   try {
     if (!shouldStage) {
@@ -271,7 +286,13 @@ export async function runPaymentsCreditsTransfer(
         })
       );
       if (options.json) {
-        console.log(JSON.stringify({ ...result, toHandle: resolvedHandle }, null, 2));
+        console.log(
+          JSON.stringify(
+            { ...result, toHandle: resolvedHandle, toEmail: resolvedEmail },
+            null,
+            2
+          )
+        );
         return 0;
       }
       console.log(
@@ -295,7 +316,9 @@ export async function runPaymentsCreditsTransfer(
       })
     );
     if (options.json) {
-      console.log(JSON.stringify({ ...staged, toHandle: resolvedHandle }, null, 2));
+      console.log(
+        JSON.stringify({ ...staged, toHandle: resolvedHandle, toEmail: resolvedEmail }, null, 2)
+      );
       return 0;
     }
     console.log(
@@ -322,15 +345,18 @@ export async function runPaymentsCreditsDirectoryClaim(
 ): Promise<number> {
   const config = await loadPaymentsConfig();
   const handle = options.handle?.trim();
+  const email = options.email?.trim();
   const tenantId = options.tenantId?.trim() || config.tenantId || "default";
-  if (!handle) {
+  if (!handle && !email) {
     console.error(
-      "Usage: clawql payments credits directory claim --handle alice [--tenant-id …] [--name …]"
+      "Usage: clawql payments credits directory claim --email you@acme.com [--handle alice] [--tenant-id …] [--name …]\n" +
+        "       (email is the default payee; --handle is an optional privacy username)"
     );
     return 1;
   }
   try {
-    const { entry, created } = await claimHandle({
+    const { entry, created } = await claimDirectory({
+      email,
       handle,
       tenantId,
       displayName: options.displayName,
@@ -339,11 +365,11 @@ export async function runPaymentsCreditsDirectoryClaim(
       console.log(JSON.stringify({ entry, created }, null, 2));
       return 0;
     }
-    console.log(
-      created
-        ? `Claimed @${entry.handle} → tenant ${entry.tenantId}`
-        : `Updated @${entry.handle} → tenant ${entry.tenantId}`
-    );
+    console.log(created ? "Directory profile created" : "Directory profile updated");
+    console.log(`Tenant: ${entry.tenantId}`);
+    if (entry.email) console.log(`Email (default): ${entry.email}`);
+    if (entry.handle) console.log(`Username (privacy): @${entry.handle}`);
+    else console.log("Username: (none — others pay you by email; set --handle for privacy)");
     if (entry.displayName) console.log(`Display name: ${entry.displayName}`);
     return 0;
   } catch (err) {
@@ -356,21 +382,28 @@ export async function runPaymentsCreditsDirectoryShow(
   options: PaymentsCreditsDirectoryOptions = {}
 ): Promise<number> {
   const handle = options.handle?.trim();
-  if (!handle) {
-    console.error("Usage: clawql payments credits directory show --handle @alice");
+  const email = options.email?.trim();
+  if (!handle && !email) {
+    console.error(
+      "Usage: clawql payments credits directory show --email you@acme.com | --handle @alice"
+    );
     return 1;
   }
   try {
-    const entry = await getHandleEntry(handle);
+    const entry = email ? await getEmailEntry(email) : await getHandleEntry(handle!);
     if (!entry) {
-      console.error(`No directory entry for @${handle.replace(/^@+/, "")}`);
+      console.error(
+        email ? `No directory entry for ${email}` : `No directory entry for @${handle!.replace(/^@+/, "")}`
+      );
       return 1;
     }
     if (options.json) {
       console.log(JSON.stringify(entry, null, 2));
       return 0;
     }
-    console.log(`@${entry.handle} → ${entry.tenantId}`);
+    console.log(`Tenant: ${entry.tenantId}`);
+    if (entry.email) console.log(`Email: ${entry.email}`);
+    if (entry.handle) console.log(`Username: @${entry.handle}`);
     if (entry.displayName) console.log(`Display name: ${entry.displayName}`);
     console.log(`Claimed: ${entry.claimedAt}`);
     return 0;
@@ -389,12 +422,18 @@ export async function runPaymentsCreditsDirectoryList(
     return 0;
   }
   if (entries.length === 0) {
-    console.log("No handles claimed yet.");
+    console.log("No directory profiles yet.");
     return 0;
   }
   for (const e of entries) {
+    const uname = e.handle ? `@${e.handle}` : "(no username)";
+    const mail = e.email
+      ? options.showEmail
+        ? e.email
+        : maskEmail(e.email)
+      : "(no email)";
     console.log(
-      `@${e.handle.padEnd(16)} ${e.tenantId}${e.displayName ? `  (${e.displayName})` : ""}`
+      `${uname.padEnd(16)} ${mail.padEnd(28)} ${e.tenantId}${e.displayName ? `  (${e.displayName})` : ""}`
     );
   }
   return 0;
@@ -404,17 +443,29 @@ export async function runPaymentsCreditsDirectoryRelease(
   options: PaymentsCreditsDirectoryOptions = {}
 ): Promise<number> {
   const handle = options.handle?.trim();
-  if (!handle) {
-    console.error("Usage: clawql payments credits directory release --handle @alice");
+  const email = options.email?.trim();
+  if (!handle && !email) {
+    console.error(
+      "Usage: clawql payments credits directory release --handle @alice | --email you@acme.com"
+    );
     return 1;
   }
   try {
-    const ok = await releaseHandle(handle);
+    if (email) {
+      const ok = await releaseEmail(email);
+      if (!ok) {
+        console.error(`No directory entry for ${email}`);
+        return 1;
+      }
+      console.log(`Released email ${email} (username kept if present)`);
+      return 0;
+    }
+    const ok = await releaseHandle(handle!);
     if (!ok) {
       console.error(`No directory entry for ${handle}`);
       return 1;
     }
-    console.log(`Released ${handle.startsWith("@") ? handle : `@${handle}`}`);
+    console.log(`Released username ${handle!.startsWith("@") ? handle : `@${handle}`}`);
     return 0;
   } catch (err) {
     console.error(formatErr(err));

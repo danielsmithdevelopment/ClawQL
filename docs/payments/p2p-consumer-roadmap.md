@@ -11,9 +11,19 @@ ClawQL is **not** a consumer bank. Balances are prepaid credits; bank/USDC off-r
 | Prepaid ledger + ACH top-up | ✅ | [`credits-ach.md`](./credits-ach.md) |
 | Tenant ↔ tenant transfer | ✅ | Dual-lock ledger; WORM `peer_transfer` |
 | Stage → confirm (+ optional TOTP) | ✅ | High-impact 2PC |
-| `@handle` directory | ✅ | `$CLAWQL_HOME/Payments/directory.json` |
-| `credits pay --to @bob` | ✅ | Alias over transfer + handle resolve |
+| Pay-by-email (default) + optional `@username` | ✅ | `$CLAWQL_HOME/Payments/directory.json` |
+| `credits pay --to email\|@user` | ✅ | Alias over transfer + directory resolve |
 | OIDC / MFA policy (gateway) | ✅ (stacked) | [`clawql-auth-oidc-stepup.md`](../security/clawql-auth-oidc-stepup.md) |
+
+## Addressing model
+
+| Identity | Role |
+| -------- | ---- |
+| **Email** | Default payee (like Venmo / Cash App). Claim with `--email`. |
+| **`@username`** | Optional privacy alias — payers who know `@alice` never see the email. |
+| **Tenant id** | Escape hatch for agents / ops (`--to-tenant`). |
+
+Emails are stored only under `$CLAWQL_HOME/Payments/directory.json` (mode `0600`) — **never** in payment WORM. CLI `directory list` masks emails unless `--show-secrets`.
 
 ## Next bits (suggested order)
 
@@ -33,9 +43,15 @@ ClawQL is **not** a consumer bank. Balances are prepaid credits; bank/USDC off-r
 
 ```bash
 export CLAWQL_CREDITS_ENABLED=1
-clawql payments credits directory claim --handle alice --tenant-id alice --name Alice
-clawql payments credits directory claim --handle bob --tenant-id bob --name Bob
+# Default: pay-by-email
+clawql payments credits directory claim --email alice@acme.com --tenant-id alice --name Alice
+clawql payments credits directory claim --email bob@acme.com --tenant-id bob
+# Optional privacy usernames
+clawql payments credits directory claim --tenant-id alice --handle alice
+clawql payments credits directory claim --tenant-id bob --handle bob
 # fund alice ledger, then:
-clawql payments credits pay --from-tenant alice --to @bob --amount 5 --note coffee
+clawql payments credits pay --from-tenant alice --to bob@acme.com --amount 5 --note coffee
+# or, if bob claimed @bob:
+clawql payments credits pay --from-tenant alice --to @bob --amount 5
 clawql payments credits transfer --confirm --action-id … --code …
 ```

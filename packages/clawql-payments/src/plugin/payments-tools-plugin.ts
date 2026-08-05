@@ -15,7 +15,13 @@ import { ConsumerOffRampService } from "../offramp/consumer-offramp-service.js";
 import { OfframpWebhookService } from "../offramp/offramp-webhook-service.js";
 import { AgentCompensationService } from "../compensation/agent-compensation-service.js";
 import { CreditsService } from "../credits/credits-service.js";
-import { claimHandle, getHandleEntry, listDirectory, resolveRecipient } from "../credits/directory.js";
+import {
+  claimDirectory,
+  getEmailEntry,
+  getHandleEntry,
+  listDirectory,
+  resolveRecipient,
+} from "../credits/directory.js";
 import { Ap2MandateService } from "../ap2/ap2-mandate-service.js";
 import { isAp2Enabled } from "../ap2/config.js";
 
@@ -150,7 +156,11 @@ const creditsTransferStageSchema = {
   toHandle: z
     .string()
     .optional()
-    .describe("Recipient @handle from payments directory (e.g. @bob)"),
+    .describe("Recipient @username from payments directory"),
+  toEmail: z
+    .string()
+    .optional()
+    .describe("Recipient email (default directory identity)"),
   amountUsd: z.number().positive().describe("Amount in USD to transfer from prepaid credits"),
   fromTenantId: z
     .string()
@@ -162,13 +172,25 @@ const creditsTransferStageSchema = {
 };
 
 const creditsDirectoryClaimSchema = {
-  handle: z.string().describe("Handle to claim (with or without @)"),
-  tenantId: z.string().optional().describe("Tenant that owns the handle"),
+  email: z
+    .string()
+    .optional()
+    .describe("Primary payee identity (recommended default, like Venmo/Cash App email)"),
+  handle: z
+    .string()
+    .optional()
+    .describe("Optional privacy username (@alice) — hide email from payers who use @handle"),
+  tenantId: z.string().optional().describe("Tenant that owns the profile"),
   displayName: z.string().optional(),
 };
 
 const creditsDirectoryResolveSchema = {
-  handle: z.string().describe("Handle to resolve (e.g. @alice)"),
+  payee: z
+    .string()
+    .optional()
+    .describe("Email, @username, or tenant id"),
+  email: z.string().optional(),
+  handle: z.string().optional().describe("Username e.g. @alice"),
 };
 
 /** High-impact: confirm staged P2P transfer (+ optional TOTP). */
@@ -327,11 +349,17 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
         yield* api.registerMcpTool({
           name: "payments_credits_directory_claim",
           description:
-            "Claim a Venmo-style @handle for a tenant in the payments directory (alias → tenantId).",
+            "Register pay-by-email (default) and optional privacy @username in the payments directory.",
           schema: creditsDirectoryClaimSchema,
           handler: async (args) => {
-            const a = args as { handle: string; tenantId?: string; displayName?: string };
-            const result = await claimHandle({
+            const a = args as {
+              email?: string;
+              handle?: string;
+              tenantId?: string;
+              displayName?: string;
+            };
+            const result = await claimDirectory({
+              email: a.email,
               handle: a.handle,
               tenantId: a.tenantId?.trim() || "default",
               displayName: a.displayName,
@@ -342,33 +370,42 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
 
         yield* api.registerMcpTool({
           name: "payments_credits_directory_resolve",
-          description: "Resolve an @handle (or payee string) to a tenant id via the payments directory.",
+          description:
+            "Resolve email, @username, or payee string to a tenant id via the payments directory.",
           schema: creditsDirectoryResolveSchema,
           handler: async (args) => {
-            const a = args as { handle: string };
-            const entry = await getHandleEntry(a.handle);
-            if (entry) return textResult(entry);
-            const resolved = await resolveRecipient(a.handle);
-            return textResult(resolved);
+            const a = args as { payee?: string; email?: string; handle?: string };
+            const raw = a.payee?.trim() || a.email?.trim() || a.handle?.trim();
+            if (!raw) throw new Error("Provide payee, email, or handle");
+            if (a.email?.trim() && !a.payee) {
+              const entry = await getEmailEntry(a.email);
+              if (entry) return textResult(entry);
+            }
+            if (a.handle?.trim() && !a.payee) {
+              const entry = await getHandleEntry(a.handle);
+              if (entry) return textResult(entry);
+            }
+            return textResult(await resolveRecipient(raw, env));
           },
         });
 
         yield* api.registerMcpTool({
           name: "payments_credits_directory_list",
-          description: "List claimed @handles in the payments directory.",
+          description: "List payments directory profiles (email + optional @username).",
           schema: {},
-          handler: async () => textResult({ handles: await listDirectory() }),
+          handler: async () => textResult({ profiles: await listDirectory() }),
         });
 
         yield* api.registerMcpTool({
           name: "payments_credits_transfer_stage",
           description:
-            "Safe entry point: stage a prepaid credit P2P transfer. Prefer toHandle (@bob) for Venmo-style pay. Inert until payments_credits_transfer_confirm.",
+            "Safe entry point: stage a prepaid credit P2P transfer. Prefer toEmail or toHandle (@bob). Inert until payments_credits_transfer_confirm.",
           schema: creditsTransferStageSchema,
           handler: async (args) => {
             const a = args as {
               toTenantId?: string;
               toHandle?: string;
+              toEmail?: string;
               amountUsd: number;
               fromTenantId?: string;
               idempotencyKey?: string;
@@ -378,12 +415,19 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             await assertAp2IfRequired(env, a.mandateJwt);
             let toTenantId = a.toTenantId?.trim();
             let toHandle: string | undefined;
-            if (a.toHandle?.trim()) {
+            let toEmail: string | undefined;
+            if (a.toEmail?.trim()) {
+              const resolved = await resolveRecipient(a.toEmail, env, { forceEmail: true });
+              toTenantId = resolved.tenantId;
+              toHandle = resolved.handle;
+              toEmail = resolved.email;
+            } else if (a.toHandle?.trim()) {
               const resolved = await resolveRecipient(a.toHandle, env, { forceHandle: true });
               toTenantId = resolved.tenantId;
               toHandle = resolved.handle;
+              toEmail = resolved.email;
             } else if (!toTenantId) {
-              throw new Error("Provide toHandle (@bob) or toTenantId");
+              throw new Error("Provide toEmail, toHandle (@bob), or toTenantId");
             }
             const result = await runPaymentsEffect(
               Effect.gen(function* () {
@@ -401,6 +445,7 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             return textResult({
               ...result,
               toHandle,
+              toEmail,
               next: "High-impact next step: call payments_credits_transfer_confirm with actionId + code (+ totp if required).",
             });
           },

@@ -789,9 +789,10 @@ clawql payments accounting tax-evidence --tax-year 2026
 clawql payments tax-profile set --party-id creator-1 --tax-form 1099nec --collected
 clawql payments tax-profile show [--party-id creator-1]
 
-# Prepaid credits (top-up + P2P with stage/confirm step-up)
+# Prepaid credits (top-up + P2P @handle pay with stage/confirm step-up)
 clawql payments credits show | bank-link | topup --customer cus_xxx --amount 25
-clawql payments credits transfer --to-tenant other-tenant --amount 10
+clawql payments credits directory claim --handle bob --tenant-id other-tenant
+clawql payments credits pay --to @bob --amount 10
 clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
 clawql payments credits step-up enroll|show
 ```

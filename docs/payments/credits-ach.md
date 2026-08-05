@@ -64,9 +64,11 @@ clawql payments credits topup --customer cus_xxx --amount 25
 # live:
 # clawql payments credits topup --customer cus_xxx --amount 25 --payment-method pm_xxx
 
-# Claim @handles, then pay (stages by default)
-clawql payments credits directory claim --handle bob --tenant-id bob
-clawql payments credits pay --to @bob --amount 10 --note coffee
+# Claim email (default) + optional privacy username
+clawql payments credits directory claim --email bob@acme.com --tenant-id bob
+clawql payments credits directory claim --tenant-id bob --handle bob
+clawql payments credits pay --to bob@acme.com --amount 10 --note coffee
+# or: clawql payments credits pay --to @bob --amount 10
 # → prints action_id + confirmation_code (balances unchanged)
 clawql payments credits transfer --confirm --action-id <uuid> --code <hex>
 
@@ -83,11 +85,11 @@ clawql payments credits transfer --confirm --action-id <uuid> --code <hex> --tot
 
 Transfers are **high-impact**. Default path is DAOS-style **2PC** (stage → confirm). Money does not move until confirm.
 
-Payees can be **`@handles`** ([consumer roadmap](./p2p-consumer-roadmap.md)) or raw tenant ids.
+Payees can be **email** (default), **`@username`** (optional privacy), or raw tenant ids — see [consumer P2P roadmap](./p2p-consumer-roadmap.md).
 
 | Property    | Behavior                                                                                  |
 | ----------- | ----------------------------------------------------------------------------------------- |
-| Addressing  | `@handle` via `directory.json`, or `--to-tenant`                                          |
+| Addressing  | Email (default), optional `@username`, or `--to-tenant`                                   |
 | Scope       | Tenant ↔ tenant prepaid credits (not Stripe Connect / USDC chain send)                    |
 | Staging     | Default — `stageTransfer` returns `action_id` + `confirmation_code`                       |
 | Confirm     | `confirmTransfer` with code; optional TOTP when `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1`  |
@@ -106,8 +108,8 @@ sequenceDiagram
   participant Ledger as credits-ledger.json
   participant WORM as payment audit
 
-  A->>CLI: pay --to @bob --amount 10
-  CLI->>Dir: resolve @bob → tenant
+  A->>CLI: pay --to bob@acme.com|--to @bob --amount 10
+  CLI->>Dir: resolve email or @username → tenant
   CLI->>Pend: stage (inert) + confirmation_code
   CLI-->>A: action_id + code
   A->>CLI: transfer --confirm --action-id --code [--totp]
@@ -129,7 +131,7 @@ Platform liability is unchanged (credits move between tenants). Withdraw to bank
 ## Storage
 
 - Ledger: `$CLAWQL_HOME/Payments/credits-ledger.json` (append-only entries, USD cents)
-- Directory: `$CLAWQL_HOME/Payments/directory.json` (`@handle` → tenantId; mode `0600`)
+- Directory: `$CLAWQL_HOME/Payments/directory.json` (email + optional `@username` → tenantId; mode `0600`; emails never in WORM)
 - WORM kinds: `BANK_LINKED`, `CREDIT_TOPUP_PENDING`, `CREDIT_TOPUP_SETTLED`, `CREDIT_TOPUP_FAILED`, `CREDIT_DEBITED`, `CREDIT_TRANSFER_SENT`, `CREDIT_TRANSFER_RECEIVED`
 
 ## Effect services
