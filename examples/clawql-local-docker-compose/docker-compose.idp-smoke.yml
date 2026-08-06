@@ -1,0 +1,99 @@
+# IDP B-2.3 smoke stack — compose-able DEFAULT_IDP_PIPELINE vendors.
+# Used by scripts/dev/smoke-idp-pipeline-b23.sh (tier=compose).
+#
+# Included: tika, gotenberg, stirling, paperless (+postgres/redis), nextcloud
+# Optional profile `docling`: quay.io/docling-project/docling-serve-cpu (large ~4GiB)
+# Not compose-able here: onyx (multi-service), coneshare (external/commercial)
+
+name: clawql-idp-smoke
+
+services:
+  tika:
+    image: apache/tika:2.9.2.1
+    container_name: clawql-idp-tika
+    ports:
+      - "9998:9998"
+
+  gotenberg:
+    image: gotenberg/gotenberg:8.8
+    container_name: clawql-idp-gotenberg
+    command: ["gotenberg", "--api-timeout=60s"]
+    ports:
+      - "3000:3000"
+
+  stirling:
+    image: frooodle/s-pdf:0.45.0
+    container_name: clawql-idp-stirling
+    environment:
+      DOCKER_ENABLE_SECURITY: "false"
+      SECURITY_ENABLE_LOGIN: "false"
+      # Match Helm lab default when auth is off — empty key is fine for smoke.
+      API_KEY: ""
+    ports:
+      - "18080:8080"
+
+  redis:
+    image: redis:7-alpine
+    container_name: clawql-idp-redis
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: clawql-idp-postgres
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: paperless
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paperless -d paperless"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  paperless-ngx:
+    image: ghcr.io/paperless-ngx/paperless-ngx:2.15.0
+    container_name: clawql-idp-paperless
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      tika:
+        condition: service_started
+      gotenberg:
+        condition: service_started
+    environment:
+      PAPERLESS_URL: http://paperless-ngx:8000
+      PAPERLESS_TIKA_ENABLED: "1"
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_REDIS: redis://redis:6379
+      PAPERLESS_DBHOST: postgres
+      PAPERLESS_DBPORT: "5432"
+      PAPERLESS_DBNAME: paperless
+      PAPERLESS_DBUSER: paperless
+      PAPERLESS_DBPASS: paperless
+      PAPERLESS_SECRET_KEY: clawql-idp-smoke-secret
+      PAPERLESS_ADMIN_USER: admin
+      PAPERLESS_ADMIN_PASSWORD: admin
+      PAPERLESS_ADMIN_MAIL: admin@localhost
+    ports:
+      - "8000:8000"
+
+  nextcloud:
+    image: nextcloud:29-apache
+    container_name: clawql-idp-nextcloud
+    environment:
+      SQLITE_DATABASE: nextcloud
+      NEXTCLOUD_ADMIN_USER: admin
+      NEXTCLOUD_ADMIN_PASSWORD: admin
+      NEXTCLOUD_TRUSTED_DOMAINS: localhost 127.0.0.1 nextcloud
+    ports:
+      - "18081:80"
+
+  # Optional — enable with: docker compose --profile docling up -d
+  docling:
+    profiles: ["docling"]
+    image: quay.io/docling-project/docling-serve-cpu:v1.14.3
+    container_name: clawql-idp-docling
+    ports:
+      - "5001:5001"

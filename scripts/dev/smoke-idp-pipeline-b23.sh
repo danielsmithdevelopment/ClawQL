@@ -2,13 +2,14 @@
 # B-2.3 IDP pipeline smoke — scheduled / dispatch only (not OpenBench pr_active).
 #
 # Tiers:
-#   offline (default)  Helm NATS IDP templates + vitest pipeline dry_run + plan artifact
-#   compose            offline + local Tika/Gotenberg health (docker compose)
-#   live               offline + HTTP webhook dry_run against CLAWQL_HTTP_BASE
+#   offline   Helm NATS IDP templates + vitest pipeline dry_run + plan artifact
+#   compose   offline + ordered hops on docker-compose.idp-smoke.yml
+#   live      compose + HTTP webhook dry_run against CLAWQL_HTTP_BASE
 #
 # Usage:
 #   bash scripts/dev/smoke-idp-pipeline-b23.sh
 #   IDP_SMOKE_TIER=compose bash scripts/dev/smoke-idp-pipeline-b23.sh
+#   IDP_SMOKE_INCLUDE_DOCLING=1 IDP_SMOKE_TIER=compose bash scripts/dev/smoke-idp-pipeline-b23.sh
 #   IDP_SMOKE_TIER=live CLAWQL_HTTP_BASE=… CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN=… \
 #     bash scripts/dev/smoke-idp-pipeline-b23.sh
 set -euo pipefail
@@ -98,46 +99,15 @@ print(f"wrote {out_dir}/pipeline-smoke.json")
 PY
 record OK pipeline_smoke_artifact
 
-# --- Tier compose: Tika + Gotenberg health ---
+# --- Tier compose: ordered IDP hops (Tika→…→Nextcloud; skip external) ---
 if [[ "${TIER}" == "compose" || "${TIER}" == "live" ]]; then
-  if ! command -v docker >/dev/null 2>&1; then
-    record SKIP compose_tika_gotenberg "docker not available"
+  export IDP_SMOKE_OUT_DIR="${OUT_DIR}"
+  export IDP_SMOKE_CORR="${CORR}"
+  export IDP_SMOKE_WORK_DIR="${OUT_DIR}/work"
+  if bash "${ROOT}/scripts/dev/smoke-idp-ordered-compose.sh"; then
+    record OK compose_ordered_pipeline
   else
-    COMPOSE_FILE="${ROOT}/examples/clawql-local-docker-compose/docker-compose.yml"
-    echo "== Compose: start tika + gotenberg =="
-    if docker compose -f "${COMPOSE_FILE}" up -d tika gotenberg; then
-      ok_tika=0
-      ok_got=0
-      for _ in $(seq 1 30); do
-        if curl -sf "http://127.0.0.1:9998/version" >/dev/null 2>&1; then ok_tika=1; fi
-        if curl -sf "http://127.0.0.1:3000/health" >/dev/null 2>&1; then ok_got=1; fi
-        if [[ "${ok_tika}" == "1" && "${ok_got}" == "1" ]]; then break; fi
-        sleep 2
-      done
-      if [[ "${ok_tika}" == "1" && "${ok_got}" == "1" ]]; then
-        record OK compose_tika_gotenberg_health
-        code="$(curl -sS -o /tmp/idp-b23-tika.txt -w '%{http_code}' \
-          -X PUT "http://127.0.0.1:9998/tika" \
-          -H "Accept: text/plain" \
-          -H "Content-Type: text/plain" \
-          --data-binary $'ClawQL IDP B2.3 smoke\n' || true)"
-        # Tika may echo plaintext or wrap it; require HTTP 200 + non-empty body.
-        if [[ "${code}" == "200" ]] && [[ -s /tmp/idp-b23-tika.txt ]]; then
-          record OK compose_tika_parse_put
-        else
-          record FAIL compose_tika_parse_put "HTTP ${code} bytes=$(wc -c </tmp/idp-b23-tika.txt 2>/dev/null || echo 0)"
-          head -c 200 /tmp/idp-b23-tika.txt 2>/dev/null || true
-          echo
-        fi
-      else
-        record FAIL compose_tika_gotenberg_health "tika=${ok_tika} gotenberg=${ok_got}"
-      fi
-      if [[ "${IDP_SMOKE_COMPOSE_KEEP:-0}" != "1" ]]; then
-        docker compose -f "${COMPOSE_FILE}" stop tika gotenberg >/dev/null 2>&1 || true
-      fi
-    else
-      record FAIL compose_tika_gotenberg "docker compose up failed"
-    fi
+    record FAIL compose_ordered_pipeline "see stage_* rows above / pipeline-smoke.json"
   fi
 fi
 

@@ -1,65 +1,72 @@
 # IDP pipeline smoke (B-2.3)
 
-Proves **real document services** (at least Tika + Gotenberg via Docker Compose), not the OpenBench stub.
+Proves **real IDP vendors in order** via Docker Compose (and optional external secrets).
 
-The stub cell [`idp-safe-pipeline-lite`](../benchmarks/openbench-task-explanations.md#idp-safe-pipeline-lite) only proves agent tool orchestration with fake Onyx/Slack. Useful as a cheap regression, **not** as proof that IDP works.
+OpenBench stub [`idp-safe-pipeline-lite`](../benchmarks/openbench-task-explanations.md#idp-safe-pipeline-lite) is only agent-tool sequencing — **not** this smoke.
 
-**Script:** [`scripts/dev/smoke-idp-pipeline-b23.sh`](../../scripts/dev/smoke-idp-pipeline-b23.sh)  
+**Compose file:** [`docker-compose.idp-smoke.yml`](../../examples/clawql-local-docker-compose/docker-compose.idp-smoke.yml)  
+**Ordered hops:** [`scripts/dev/smoke-idp-ordered-compose.sh`](../../scripts/dev/smoke-idp-ordered-compose.sh)  
+**Wrapper:** [`scripts/dev/smoke-idp-pipeline-b23.sh`](../../scripts/dev/smoke-idp-pipeline-b23.sh)  
 **Workflow:** [`.github/workflows/idp-pipeline-smoke.yml`](../../.github/workflows/idp-pipeline-smoke.yml)
 
 ---
 
-## What each tier proves
+## Ordered stages (DEFAULT_IDP_PIPELINE)
 
-| Tier                  | Real services?             | Proves                                                   | Missing                                    |
-| --------------------- | -------------------------- | -------------------------------------------------------- | ------------------------------------------ |
-| **stub** (OpenBench)  | No                         | Agent can sequence ClawQL tools                          | Any real PDF/vendor hop                    |
-| **offline**           | No                         | Helm NATS wiring + `run_idp_pipeline` dry_run unit tests | Network I/O to vendors                     |
-| **compose** (default) | **Yes — Tika + Gotenberg** | Containers up; Tika actually parses text                 | Stirling, Nextcloud, Onyx, ConeShare, Argo |
-| **live**              | Yes — your cluster/HTTP    | Webhook dry_run against deployed ClawQL                  | Needs GitHub secrets                       |
+| #   | Stage              | In compose smoke? | Needs                                                                         |
+| --- | ------------------ | ----------------- | ----------------------------------------------------------------------------- |
+| 1   | Nextcloud download | **Yes**           | bundled `nextcloud:29-apache`                                                 |
+| 2   | Docling            | Optional          | `IDP_SMOKE_INCLUDE_DOCLING=1` (~4 GiB image) **or** secret `DOCLING_BASE_URL` |
+| 3   | Tika               | **Yes**           | bundled                                                                       |
+| 4   | Gotenberg          | **Yes**           | bundled (HTML→PDF)                                                            |
+| 5   | Stirling redact    | **Yes**           | bundled `frooodle/s-pdf`                                                      |
+| 6   | Paperless archive  | **Yes**           | bundled paperless-ngx + postgres/redis                                        |
+| 7   | Onyx index         | **No (external)** | secrets `ONYX_BASE_URL` + `ONYX_API_TOKEN`                                    |
+| 8   | Nextcloud upload   | **Yes**           | same Nextcloud                                                                |
+| 9   | ConeShare VDR      | **No (external)** | secrets `CONESHARE_BASE_URL` + `CONESHARE_API_TOKEN`                          |
 
-**Recommended proof path:** land **compose** green on every B2.3 PR → later add Stirling to compose → then **live** with staging secrets for full chain.
+Compose proves hops **1,3,4,5,6,8** chained with a real PDF artifact. 2/7/9 are SKIP unless you provide the env/secrets above.
+
+---
+
+## Why some stages are not in compose
+
+| Component                   | Why not default-compose                                           | How to include                                                                                         |
+| --------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Docling**                 | CPU image ~4 GiB; slow pull/boot on GHA                           | `IDP_SMOKE_INCLUDE_DOCLING=1` or point `DOCLING_BASE_URL` at a running serve                           |
+| **Onyx**                    | Multi-service (API + Vespa/Postgres/etc.), not a single container | Deploy Onyx separately; set `ONYX_BASE_URL` + `ONYX_API_TOKEN`                                         |
+| **ConeShare**               | External/commercial product                                       | Set `CONESHARE_BASE_URL` + `CONESHARE_API_TOKEN`                                                       |
+| **Live ClawQL HTTP / NATS** | Needs a deployed MCP + webhook tokens                             | `CLAWQL_HTTP_BASE` + `CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN` / `CLAWQL_CONESHARE_WEBHOOK_TOKEN` (tier=`live`) |
+| **Argo Workflows**          | Cluster/kind optional CI                                          | `vars.CLAWQL_ENABLE_ARGO_WORKFLOWS_KIND_CI=1` (separate job)                                           |
 
 ---
 
 ## Local
 
 ```bash
-# Real Tika + Gotenberg (needs Docker)
+# Full compose-able chain (recommended)
 IDP_SMOKE_TIER=compose bash scripts/dev/smoke-idp-pipeline-b23.sh
 
-# Wiring only
-IDP_SMOKE_TIER=offline bash scripts/dev/smoke-idp-pipeline-b23.sh
+# Also boot Docling (large)
+IDP_SMOKE_INCLUDE_DOCLING=1 IDP_SMOKE_TIER=compose bash scripts/dev/smoke-idp-pipeline-b23.sh
 
-# Deployed MCP HTTP (port-forward / staging)
-export CLAWQL_HTTP_BASE=http://127.0.0.1:8080
-export CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN=…
-export CLAWQL_CONESHARE_WEBHOOK_TOKEN=…
-IDP_SMOKE_TIER=live bash scripts/dev/smoke-idp-pipeline-b23.sh
+# External Onyx / ConeShare / Docling when you have them
+export ONYX_BASE_URL=… ONYX_API_TOKEN=…
+export CONESHARE_BASE_URL=… CONESHARE_API_TOKEN=…
+IDP_SMOKE_TIER=compose bash scripts/dev/smoke-idp-pipeline-b23.sh
 ```
 
-Artifacts: `artifacts/idp-b23-smoke/` (`pipeline-smoke.json`, `summary.json`).
+Artifacts: `artifacts/idp-b23-smoke/pipeline-smoke.json`, `summary.json`, `work/`.
 
 ---
 
-## GitHub Actions
+## GitHub Actions secrets (optional upgrades)
 
-- **PR** (when smoke/script/compose paths change): always **compose**
-- **Weekly schedule**: **compose**
-- **Dispatch**: pick offline / compose / live (live falls back to compose if secrets missing)
+| Secret                                       | Unlocks                                     |
+| -------------------------------------------- | ------------------------------------------- |
+| `DOCLING_BASE_URL`                           | stage_docling without pulling the big image |
+| `ONYX_BASE_URL` + `ONYX_API_TOKEN`           | stage_onyx                                  |
+| `CONESHARE_BASE_URL` + `CONESHARE_API_TOKEN` | stage_coneshare                             |
+| `CLAWQL_HTTP_BASE` + webhook tokens          | tier=`live` NATS webhook dry_run            |
 
-### Live secrets
-
-| Secret                           | Purpose                       |
-| -------------------------------- | ----------------------------- |
-| `CLAWQL_HTTP_BASE`               | ClawQL MCP HTTP base URL      |
-| `CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN` | `POST /idp/nextcloud/webhook` |
-| `CLAWQL_CONESHARE_WEBHOOK_TOKEN` | `POST /idp/coneshare/webhook` |
-
----
-
-## Next increments
-
-1. Add **Stirling** to the compose overlay (redact hop).
-2. Gated non-dry_run against staging (Nextcloud inbox → processed → Onyx → ConeShare).
-3. Optional OpenBench B-2.2 (failure + Ouroboros) — separate from this smoke.
+PR + weekly schedule always run **compose** (path-filtered).

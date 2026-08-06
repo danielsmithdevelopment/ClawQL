@@ -16,6 +16,8 @@ on:
     paths:
       - ".github/workflows/idp-pipeline-smoke.yml"
       - "scripts/dev/smoke-idp-pipeline-b23.sh"
+      - "scripts/dev/smoke-idp-ordered-compose.sh"
+      - "examples/clawql-local-docker-compose/docker-compose.idp-smoke.yml"
       - "examples/clawql-local-docker-compose/docker-compose.yml"
       - "packages/clawql-documents/**"
       - "docs/runbooks/idp-pipeline-b23-smoke.md"
@@ -44,7 +46,7 @@ jobs:
   smoke:
     name: IDP B-2.3 smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
@@ -71,9 +73,13 @@ jobs:
           CLAWQL_HTTP_BASE: ${{ secrets.CLAWQL_HTTP_BASE }}
           CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN: ${{ secrets.CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN }}
           CLAWQL_CONESHARE_WEBHOOK_TOKEN: ${{ secrets.CLAWQL_CONESHARE_WEBHOOK_TOKEN }}
+          ONYX_BASE_URL: ${{ secrets.ONYX_BASE_URL }}
+          ONYX_API_TOKEN: ${{ secrets.ONYX_API_TOKEN }}
+          CONESHARE_BASE_URL: ${{ secrets.CONESHARE_BASE_URL }}
+          CONESHARE_API_TOKEN: ${{ secrets.CONESHARE_API_TOKEN }}
+          DOCLING_BASE_URL: ${{ secrets.DOCLING_BASE_URL }}
         run: |
           set -euo pipefail
-          # PR + schedule default to compose (real local vendors). Dispatch uses input.
           if [ "${EVENT_NAME}" = "pull_request" ] || [ "${EVENT_NAME}" = "schedule" ]; then
             TIER=compose
           else
@@ -97,6 +103,11 @@ jobs:
           CLAWQL_HTTP_BASE: ${{ secrets.CLAWQL_HTTP_BASE }}
           CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN: ${{ secrets.CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN }}
           CLAWQL_CONESHARE_WEBHOOK_TOKEN: ${{ secrets.CLAWQL_CONESHARE_WEBHOOK_TOKEN }}
+          ONYX_BASE_URL: ${{ secrets.ONYX_BASE_URL }}
+          ONYX_API_TOKEN: ${{ secrets.ONYX_API_TOKEN }}
+          CONESHARE_BASE_URL: ${{ secrets.CONESHARE_BASE_URL }}
+          CONESHARE_API_TOKEN: ${{ secrets.CONESHARE_API_TOKEN }}
+          DOCLING_BASE_URL: ${{ secrets.DOCLING_BASE_URL }}
           IDP_SMOKE_OUT_DIR: ${{ github.workspace }}/artifacts/idp-b23-smoke
         run: bash scripts/dev/smoke-idp-pipeline-b23.sh
 
