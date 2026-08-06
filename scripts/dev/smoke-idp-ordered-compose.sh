@@ -300,31 +300,8 @@ if [[ -z "${ONYX_BASE}" || -z "${ONYX_TOKEN}" ]]; then
     record FAIL stage_onyx "onyx-api never healthy"
   else
     ONYX_BASE="http://127.0.0.1:18082"
-    # Register first admin (ignore already-exists), login, create API key.
-    curl -sS -o "${WORK}/onyx-register.json" -w '%{http_code}' \
-      -X POST "${ONYX_BASE}/auth/register" \
-      -H "Content-Type: application/json" \
-      -d '{"email":"admin@localhost","password":"Adminadmin1!","is_active":true,"is_superuser":true,"is_verified":true,"role":"admin"}' \
-      >/dev/null || true
-    COOKIE_JAR="${WORK}/onyx-cookies.txt"
-    rm -f "${COOKIE_JAR}"
-    login_code="$(curl -sS -o "${WORK}/onyx-login.json" -w '%{http_code}' \
-      -c "${COOKIE_JAR}" -b "${COOKIE_JAR}" \
-      -X POST "${ONYX_BASE}/auth/login" \
-      -H "Content-Type: application/x-www-form-urlencoded" \
-      --data-urlencode "username=admin@localhost" \
-      --data-urlencode "password=Adminadmin1!" || true)"
-    key_json="$(curl -sS -c "${COOKIE_JAR}" -b "${COOKIE_JAR}" \
-      -X POST "${ONYX_BASE}/admin/api-key" \
-      -H "Content-Type: application/json" \
-      -d '{"name":"idp-b23-smoke","role":"admin"}' || true)"
-    ONYX_TOKEN="$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("api_key") or "")' <<<"${key_json}" 2>/dev/null || true)"
-    if [[ -z "${ONYX_TOKEN}" ]]; then
-      record FAIL stage_onyx "login=${login_code} could not create API key: ${key_json:0:240}"
-    else
-      export ONYX_API_TOKEN="${ONYX_TOKEN}"
-      DOC_ID="idp-b23-${CORR}"
-      ingest_body="$(python3 - "${DOC_ID}" "${CORR}" <<'PY'
+    DOC_ID="idp-b23-${CORR}"
+    ingest_body="$(python3 - "${DOC_ID}" "${CORR}" <<'PY'
 import json, sys
 doc_id, corr = sys.argv[1], sys.argv[2]
 print(json.dumps({
@@ -340,26 +317,59 @@ print(json.dumps({
 }))
 PY
 )"
+    # Register first admin (ignore already-exists), then login for session cookie.
+    # Prefer cookie auth for upsert — /admin/api-key is Business-tier gated on recent Onyx.
+    reg_code="$(curl -sS -o "${WORK}/onyx-register.json" -w '%{http_code}' \
+      -X POST "${ONYX_BASE}/auth/register" \
+      -H "Content-Type: application/json" \
+      -d '{"email":"admin@localhost","password":"Adminadmin1!","is_active":true,"is_superuser":true,"is_verified":true,"role":"admin"}' || true)"
+    COOKIE_JAR="${WORK}/onyx-cookies.txt"
+    rm -f "${COOKIE_JAR}"
+    login_code="$(curl -sS -o "${WORK}/onyx-login.json" -w '%{http_code}' \
+      -c "${COOKIE_JAR}" -b "${COOKIE_JAR}" \
+      -X POST "${ONYX_BASE}/auth/login" \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      --data-urlencode "username=admin@localhost" \
+      --data-urlencode "password=Adminadmin1!" || true)"
+    # Optional API key when EE/license flags allow it
+    key_json="$(curl -sS -c "${COOKIE_JAR}" -b "${COOKIE_JAR}" \
+      -X POST "${ONYX_BASE}/admin/api-key" \
+      -H "Content-Type: application/json" \
+      -d '{"name":"idp-b23-smoke","role":"admin"}' 2>/dev/null || true)"
+    ONYX_TOKEN="$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("api_key") or "")' <<<"${key_json}" 2>/dev/null || true)"
+
+    upsert_ok=0
+    auth_mode=""
+    if [[ -n "${ONYX_TOKEN}" ]]; then
       code="$(curl -sS -o "${WORK}/onyx-ingest.json" -w '%{http_code}' \
         -X POST "${ONYX_BASE}/onyx-api/ingestion" \
         -H "Authorization: Bearer ${ONYX_TOKEN}" \
         -H "Content-Type: application/json" \
         -d "${ingest_body}" || true)"
       if [[ "${code}" == "200" || "${code}" == "201" ]]; then
-        record OK stage_onyx "compose upsert_ingestion_doc HTTP ${code}"
-      else
-        # Some builds mount under /api
-        code2="$(curl -sS -o "${WORK}/onyx-ingest.json" -w '%{http_code}' \
-          -X POST "${ONYX_BASE}/api/onyx-api/ingestion" \
-          -H "Authorization: Bearer ${ONYX_TOKEN}" \
+        upsert_ok=1
+        auth_mode="api-key HTTP ${code}"
+      fi
+    fi
+    if [[ "${upsert_ok}" != "1" ]]; then
+      # Session-cookie upsert (community path; matches APIKeyCookie security scheme)
+      for path in "/onyx-api/ingestion" "/api/onyx-api/ingestion"; do
+        code="$(curl -sS -o "${WORK}/onyx-ingest.json" -w '%{http_code}' \
+          -c "${COOKIE_JAR}" -b "${COOKIE_JAR}" \
+          -X POST "${ONYX_BASE}${path}" \
           -H "Content-Type: application/json" \
           -d "${ingest_body}" || true)"
-        if [[ "${code2}" == "200" || "${code2}" == "201" ]]; then
-          record OK stage_onyx "compose upsert via /api HTTP ${code2}"
-        else
-          record FAIL stage_onyx "upsert HTTP ${code}/${code2} body=$(head -c 200 "${WORK}/onyx-ingest.json" 2>/dev/null || true)"
+        if [[ "${code}" == "200" || "${code}" == "201" ]]; then
+          upsert_ok=1
+          auth_mode="session-cookie ${path} HTTP ${code}"
+          break
         fi
-      fi
+      done
+    fi
+    if [[ "${upsert_ok}" == "1" ]]; then
+      record OK stage_onyx "compose upsert_ingestion_doc via ${auth_mode} (reg=${reg_code} login=${login_code})"
+    else
+      record FAIL stage_onyx "reg=${reg_code} login=${login_code} key=${key_json:0:120} upsert=$(head -c 200 "${WORK}/onyx-ingest.json" 2>/dev/null || true)"
     fi
   fi
 else
@@ -419,10 +429,18 @@ if [[ -z "${CS_BASE}" || -z "${CS_TOKEN}" ]]; then
       -e DJANGO_SUPERUSER_EMAIL=admin@localhost \
       clawql-idp-coneshare-web \
       python3 manage.py createsuperuser --noinput >/dev/null 2>&1 || true
+    # Upstream JWT obtain uses email (SimpleJWT / custom serializer), not username.
     token_json="$(curl -sS -X POST "${CS_BASE}/api/v1/token/" \
       -H "Content-Type: application/json" \
-      -d '{"username":"admin","password":"adminadmin1"}' || true)"
+      -d '{"email":"admin@localhost","password":"adminadmin1"}' || true)"
     CS_TOKEN="$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("access") or d.get("token") or "")' <<<"${token_json}" 2>/dev/null || true)"
+    if [[ -z "${CS_TOKEN}" ]]; then
+      # Fallback: some builds accept username or email+username together.
+      token_json="$(curl -sS -X POST "${CS_BASE}/api/v1/token/" \
+        -H "Content-Type: application/json" \
+        -d '{"username":"admin","email":"admin@localhost","password":"adminadmin1"}' || true)"
+      CS_TOKEN="$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("access") or d.get("token") or "")' <<<"${token_json}" 2>/dev/null || true)"
+    fi
     if [[ -z "${CS_TOKEN}" ]]; then
       record FAIL stage_coneshare "token create failed: ${token_json:0:240}"
     else

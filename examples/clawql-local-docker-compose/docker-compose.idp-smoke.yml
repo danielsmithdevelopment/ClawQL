@@ -153,6 +153,10 @@ services:
       # Skip slow document-index retries when vector DB is disabled.
       NUM_RETRIES_ON_STARTUP: "2"
       ENABLE_CRAFT: "false"
+      # Self-hosted: avoid Business-tier gate on /admin/api-key; use session cookie for ingest.
+      LICENSE_ENFORCEMENT_ENABLED: "false"
+      ENABLE_PAID_ENTERPRISE_EDITION_FEATURES: "true"
+      REQUIRE_EMAIL_VERIFICATION: "false"
     ports:
       - "18082:8080"
     healthcheck:
