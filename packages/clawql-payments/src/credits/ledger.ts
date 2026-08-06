@@ -99,7 +99,7 @@ const SOURCE_PRIORITY: Record<CreditGrantSource, number> = {
 
 const tenantLocks = new Map<string, Promise<unknown>>();
 
-export async function withTenantLedgerLock<T>(tenantId: string, fn: () => Promise<T>): Promise<T> {
+async function withTenantLedgerLock<T>(tenantId: string, fn: () => Promise<T>): Promise<T> {
   const key = tenantId.trim() || "default";
   const prev = tenantLocks.get(key) ?? Promise.resolve();
   let release!: () => void;
@@ -213,7 +213,7 @@ export function spendableBalanceCents(account: CreditAccount, now: Date = new Da
   return sumGrants(account.grants, now);
 }
 
-export async function getCreditAccount(
+async function getCreditAccount(
   tenantId: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<CreditAccount> {
@@ -273,7 +273,7 @@ function applyAllocationsCredit(
   return [...byId.values()];
 }
 
-export async function appendCreditEntry(
+async function appendCreditEntry(
   input: {
     tenantId: string;
     kind: CreditLedgerKind;
@@ -354,7 +354,7 @@ export type HoldResult = {
   spendableAfterCents: number;
 };
 
-export async function holdCredits(
+async function holdCredits(
   input: {
     tenantId: string;
     amountCents: number;
@@ -443,7 +443,7 @@ export type CaptureResult = {
   alreadyCaptured: boolean;
 };
 
-export async function captureHold(
+async function captureHold(
   input: {
     tenantId: string;
     idempotencyKey: string;
@@ -535,7 +535,7 @@ export type ReleaseResult = {
   alreadyReleased: boolean;
 };
 
-export async function releaseHold(
+async function releaseHold(
   input: {
     tenantId: string;
     idempotencyKey: string;
@@ -597,7 +597,7 @@ export async function releaseHold(
 }
 
 /** Idempotent settle: if PI already settled, return existing entry. */
-export async function settleTopupByPaymentIntent(
+async function settleTopupByPaymentIntent(
   input: {
     tenantId: string;
     paymentIntentId: string;
@@ -648,7 +648,7 @@ export async function settleTopupByPaymentIntent(
   });
 }
 
-export async function resetCreditsLedgerForTests(
+async function resetCreditsLedgerForTests(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<void> {
   await saveFile({ accounts: {} }, env);
@@ -668,7 +668,7 @@ export type CreditTransferResult = {
  * Atomic prepaid credit transfer between two tenants (P2P).
  * Locks tenants in sorted order to avoid deadlock; idempotent on `idempotencyKey`.
  */
-export async function transferCredits(
+async function transferCredits(
   input: {
     fromTenantId: string;
     toTenantId: string;

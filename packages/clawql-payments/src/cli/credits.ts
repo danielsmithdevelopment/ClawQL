@@ -6,44 +6,21 @@ import {
   isCreditsEnabled,
   isCreditsTransferTotpRequired,
 } from "../credits/config.js";
-import { enrollStepUpTotp, getStepUpEnrollment } from "../credits/step-up.js";
+import { CreditsStepUpService } from "../credits/step-up.js";
+import { CreditsContactsService, maskContactPayee } from "../credits/contacts.js";
 import {
-  addContact,
-  listContacts,
-  maskContactPayee,
-  removeContact,
-  resolveContactPayee,
-} from "../credits/contacts.js";
-import {
-  claimDirectory,
-  getEmailEntry,
-  getHandleEntry,
-  getPhoneEntry,
-  getTenantEntry,
-  listDirectory,
+  CreditsDirectoryService,
   looksLikePhone,
   maskEmail,
   maskPhone,
-  releaseEmail,
-  releaseHandle,
-  releasePhone,
-  resolveRecipient,
 } from "../credits/directory.js";
+import { CreditsRequestsService, publicMoneyRequest } from "../credits/requests.js";
 import {
-  acceptMoneyRequest,
-  cancelMoneyRequest,
-  claimMoneyRequestInvite,
-  createMoneyRequest,
-  declineMoneyRequest,
-  getMoneyRequest,
-  listMoneyRequests,
-  publicMoneyRequest,
-} from "../credits/requests.js";
-import {
-  sendMoneyRequestInviteEmail,
+  CreditsInviteEmailService,
   shouldSendInviteEmailOnCreate,
+  type InviteEmailResult,
 } from "../credits/invite-email.js";
-import { formatActivityLine, getActivityFeed } from "../credits/activity.js";
+import { CreditsActivityService, formatActivityLine } from "../credits/activity.js";
 import {
   buildClawqlPayUri,
   buildPayDeepLink,
@@ -284,11 +261,16 @@ export async function runPaymentsCreditsTransfer(
   const payee = options.toHandle?.trim() || options.payTo?.trim();
   if (payee) {
     try {
-      const resolved = await resolveRecipient(payee, process.env, {
-        forceHandle: Boolean(options.toHandle?.trim()) || payee.startsWith("@"),
-        forceEmail: payee.includes("@") && !payee.startsWith("@"),
-        forcePhone: looksLikePhone(payee),
-      });
+      const resolved = await runPaymentsEffect(
+        Effect.gen(function* () {
+          const directory = yield* CreditsDirectoryService;
+          return yield* directory.resolveRecipient(payee, {
+            forceHandle: Boolean(options.toHandle?.trim()) || payee.startsWith("@"),
+            forceEmail: payee.includes("@") && !payee.startsWith("@"),
+            forcePhone: looksLikePhone(payee),
+          });
+        })
+      );
       toTenantId = resolved.tenantId;
       resolvedHandle = resolved.handle;
       resolvedEmail = resolved.email;
@@ -406,14 +388,19 @@ export async function runPaymentsCreditsDirectoryClaim(
     return 1;
   }
   try {
-    const { entry, created } = await claimDirectory({
-      email,
-      handle,
-      phone,
-      phoneVerified: options.phoneVerified,
-      tenantId,
-      displayName: options.displayName,
-    });
+    const { entry, created } = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const directory = yield* CreditsDirectoryService;
+        return yield* directory.claim({
+          email,
+          handle,
+          phone,
+          phoneVerified: options.phoneVerified,
+          tenantId,
+          displayName: options.displayName,
+        });
+      })
+    );
     if (options.json) {
       console.log(JSON.stringify({ entry, created }, null, 2));
       return 0;
@@ -449,11 +436,14 @@ export async function runPaymentsCreditsDirectoryShow(
     return 1;
   }
   try {
-    const entry = email
-      ? await getEmailEntry(email)
-      : phone
-        ? await getPhoneEntry(phone)
-        : await getHandleEntry(handle!);
+    const entry = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const directory = yield* CreditsDirectoryService;
+        if (email) return yield* directory.getEmail(email);
+        if (phone) return yield* directory.getPhone(phone);
+        return yield* directory.getHandle(handle!);
+      })
+    );
     if (!entry) {
       console.error(
         email
@@ -488,7 +478,12 @@ export async function runPaymentsCreditsDirectoryShow(
 export async function runPaymentsCreditsDirectoryList(
   options: PaymentsCreditsDirectoryOptions = {}
 ): Promise<number> {
-  const entries = await listDirectory();
+  const entries = await runPaymentsEffect(
+    Effect.gen(function* () {
+      const directory = yield* CreditsDirectoryService;
+      return yield* directory.list();
+    })
+  );
   if (options.json) {
     console.log(JSON.stringify(entries, null, 2));
     return 0;
@@ -522,7 +517,12 @@ export async function runPaymentsCreditsDirectoryRelease(
   }
   try {
     if (email) {
-      const ok = await releaseEmail(email);
+      const ok = await runPaymentsEffect(
+        Effect.gen(function* () {
+          const directory = yield* CreditsDirectoryService;
+          return yield* directory.releaseEmail(email);
+        })
+      );
       if (!ok) {
         console.error(`No directory entry for ${email}`);
         return 1;
@@ -531,7 +531,12 @@ export async function runPaymentsCreditsDirectoryRelease(
       return 0;
     }
     if (phone) {
-      const ok = await releasePhone(phone);
+      const ok = await runPaymentsEffect(
+        Effect.gen(function* () {
+          const directory = yield* CreditsDirectoryService;
+          return yield* directory.releasePhone(phone);
+        })
+      );
       if (!ok) {
         console.error(`No directory entry for ${phone}`);
         return 1;
@@ -539,7 +544,12 @@ export async function runPaymentsCreditsDirectoryRelease(
       console.log(`Released phone ${phone} (other aliases kept if present)`);
       return 0;
     }
-    const ok = await releaseHandle(handle!);
+    const ok = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const directory = yield* CreditsDirectoryService;
+        return yield* directory.releaseHandle(handle!);
+      })
+    );
     if (!ok) {
       console.error(`No directory entry for ${handle}`);
       return 1;
@@ -565,7 +575,12 @@ export async function runPaymentsCreditsStepUpEnroll(
   const config = await loadPaymentsConfig();
   const tenantId = options.tenantId?.trim() || config.tenantId || "default";
   try {
-    const result = await enrollStepUpTotp({ tenantId });
+    const result = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const stepUp = yield* CreditsStepUpService;
+        return yield* stepUp.enroll({ tenantId });
+      })
+    );
     if (options.json) {
       console.log(
         JSON.stringify(
@@ -606,7 +621,12 @@ export async function runPaymentsCreditsStepUpShow(
 ): Promise<number> {
   const config = await loadPaymentsConfig();
   const tenantId = options.tenantId?.trim() || config.tenantId || "default";
-  const enrollment = await getStepUpEnrollment(tenantId);
+  const enrollment = await runPaymentsEffect(
+    Effect.gen(function* () {
+      const stepUp = yield* CreditsStepUpService;
+      return yield* stepUp.getEnrollment(tenantId);
+    })
+  );
   if (options.json) {
     console.log(
       JSON.stringify(
@@ -650,11 +670,16 @@ export async function runPaymentsCreditsActivity(
   const config = await loadPaymentsConfig();
   const tenantId = options.tenantId?.trim() || config.tenantId || "default";
   try {
-    const feed = await getActivityFeed({
-      tenantId,
-      limit: options.limit,
-      filter: options.filter ?? "money",
-    });
+    const feed = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const activity = yield* CreditsActivityService;
+        return yield* activity.getFeed({
+          tenantId,
+          limit: options.limit,
+          filter: options.filter ?? "money",
+        });
+      })
+    );
     if (options.json) {
       console.log(JSON.stringify(feed, null, 2));
       return 0;
@@ -723,42 +748,49 @@ export async function runPaymentsCreditsRequestCreate(
     return 1;
   }
   try {
-    const result = await createMoneyRequest({
-      requesterTenantId,
-      to,
-      amountCents: Math.round(amountUsd * 100),
-      note: options.note,
-      correlationId: options.correlationId,
-    });
+    const { result, emailResult } = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const requests = yield* CreditsRequestsService;
+        const created = yield* requests.create({
+          requesterTenantId,
+          to,
+          amountCents: Math.round(amountUsd * 100),
+          note: options.note,
+          correlationId: options.correlationId,
+        });
 
-    let emailResult: Awaited<ReturnType<typeof sendMoneyRequestInviteEmail>> | undefined;
-    if (
-      result.invite &&
-      result.inviteToken &&
-      result.request.inviteUrl &&
-      result.request.payerEmail &&
-      shouldSendInviteEmailOnCreate({ sendEmail: options.sendEmail })
-    ) {
-      const requester = await getTenantEntry(requesterTenantId);
-      emailResult = await sendMoneyRequestInviteEmail(
-        {
-          toEmail: result.request.payerEmail,
-          inviteUrl: result.request.inviteUrl,
-          requestId: result.request.requestId,
-          amountCents: result.request.amountCents,
-          note: result.request.note,
-          fromLabel:
-            requester?.displayName ||
-            (requester?.handle ? `@${requester.handle}` : undefined) ||
-            requester?.email ||
-            requesterTenantId,
-          inviteToken: result.inviteToken,
-          expiresAt: result.request.expiresAt,
-        },
-        process.env,
-        { dryRun: options.emailDryRun === true ? true : options.emailDryRun }
-      );
-    }
+        let email: InviteEmailResult | undefined;
+        if (
+          created.invite &&
+          created.inviteToken &&
+          created.request.inviteUrl &&
+          created.request.payerEmail &&
+          shouldSendInviteEmailOnCreate({ sendEmail: options.sendEmail })
+        ) {
+          const directory = yield* CreditsDirectoryService;
+          const inviteEmail = yield* CreditsInviteEmailService;
+          const requester = yield* directory.getTenant(requesterTenantId);
+          email = yield* inviteEmail.send(
+            {
+              toEmail: created.request.payerEmail,
+              inviteUrl: created.request.inviteUrl,
+              requestId: created.request.requestId,
+              amountCents: created.request.amountCents,
+              note: created.request.note,
+              fromLabel:
+                requester?.displayName ||
+                (requester?.handle ? `@${requester.handle}` : undefined) ||
+                requester?.email ||
+                requesterTenantId,
+              inviteToken: created.inviteToken,
+              expiresAt: created.request.expiresAt,
+            },
+            { dryRun: options.emailDryRun === true ? true : options.emailDryRun }
+          );
+        }
+        return { result: created, emailResult: email };
+      })
+    );
 
     if (options.json) {
       console.log(
@@ -846,7 +878,12 @@ export async function runPaymentsCreditsRequestSendInvite(
     return 1;
   }
   try {
-    const req = await getMoneyRequest(requestId);
+    const req = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const requests = yield* CreditsRequestsService;
+        return yield* requests.get(requestId);
+      })
+    );
     if (!req) {
       console.error("Unknown request id");
       return 1;
@@ -863,24 +900,29 @@ export async function runPaymentsCreditsRequestSendInvite(
     // Rebuild invite URL if missing from storage (URL may have been stored at create).
     const { buildRequestInviteUrl } = await import("../credits/requests.js");
     const inviteUrl = req.inviteUrl || Effect.runSync(buildRequestInviteUrl(requestId, token));
-    const requester = await getTenantEntry(req.requesterTenantId);
-    const emailResult = await sendMoneyRequestInviteEmail(
-      {
-        toEmail,
-        inviteUrl,
-        requestId,
-        amountCents: req.amountCents,
-        note: req.note,
-        fromLabel:
-          requester?.displayName ||
-          (requester?.handle ? `@${requester.handle}` : undefined) ||
-          requester?.email ||
-          req.requesterTenantId,
-        inviteToken: token,
-        expiresAt: req.expiresAt,
-      },
-      process.env,
-      { dryRun: options.emailDryRun === true ? true : options.emailDryRun }
+    const emailResult = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const directory = yield* CreditsDirectoryService;
+        const inviteEmail = yield* CreditsInviteEmailService;
+        const requester = yield* directory.getTenant(req.requesterTenantId);
+        return yield* inviteEmail.send(
+          {
+            toEmail,
+            inviteUrl,
+            requestId,
+            amountCents: req.amountCents,
+            note: req.note,
+            fromLabel:
+              requester?.displayName ||
+              (requester?.handle ? `@${requester.handle}` : undefined) ||
+              requester?.email ||
+              req.requesterTenantId,
+            inviteToken: token,
+            expiresAt: req.expiresAt,
+          },
+          { dryRun: options.emailDryRun === true ? true : options.emailDryRun }
+        );
+      })
     );
     if (options.json) {
       console.log(JSON.stringify(emailResult, null, 2));
@@ -917,7 +959,12 @@ export async function runPaymentsCreditsRequestList(
   const role = options.role ?? "any";
   const status = options.status?.trim() as
     "pending" | "accepted" | "paid" | "declined" | "cancelled" | "expired" | undefined;
-  const rows = await listMoneyRequests({ tenantId, role, status });
+  const rows = await runPaymentsEffect(
+    Effect.gen(function* () {
+      const requests = yield* CreditsRequestsService;
+      return yield* requests.list({ tenantId, role, status });
+    })
+  );
   if (options.json) {
     console.log(JSON.stringify(rows.map(publicMoneyRequest), null, 2));
     return 0;
@@ -943,7 +990,12 @@ export async function runPaymentsCreditsRequestShow(
     console.error("Usage: clawql payments credits request show --request-id UUID");
     return 1;
   }
-  const req = await getMoneyRequest(requestId);
+  const req = await runPaymentsEffect(
+    Effect.gen(function* () {
+      const requests = yield* CreditsRequestsService;
+      return yield* requests.get(requestId);
+    })
+  );
   if (!req) {
     console.error("Unknown request id");
     return 1;
@@ -970,14 +1022,19 @@ export async function runPaymentsCreditsRequestClaimInvite(
     return 1;
   }
   try {
-    const { request, directoryCreated } = await claimMoneyRequestInvite({
-      requestId,
-      token,
-      tenantId,
-      email: options.email,
-      handle: options.handle,
-      displayName: options.displayName,
-    });
+    const { request, directoryCreated } = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const requests = yield* CreditsRequestsService;
+        return yield* requests.claimInvite({
+          requestId,
+          token,
+          tenantId,
+          email: options.email,
+          handle: options.handle,
+          displayName: options.displayName,
+        });
+      })
+    );
     if (options.json) {
       console.log(
         JSON.stringify({ request: publicMoneyRequest(request), directoryCreated }, null, 2)
@@ -1019,22 +1076,41 @@ export async function runPaymentsCreditsRequestAccept(
     return 1;
   }
   try {
-    const { request, staged } = await acceptMoneyRequest(
-      { requestId, payerTenantId },
-      async (input) =>
-        runPaymentsEffect(
-          Effect.gen(function* () {
-            const credits = yield* CreditsService;
-            return yield* credits.stageTransfer({
-              fromTenantId: input.fromTenantId,
-              toTenantId: input.toTenantId,
-              amountCents: input.amountCents,
-              note: input.note,
-              correlationId: input.correlationId,
-              requestId: input.requestId,
-            });
-          })
-        )
+    const { request, staged } = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const requests = yield* CreditsRequestsService;
+        const credits = yield* CreditsService;
+        const reqRow = yield* requests.get(requestId);
+        if (!reqRow) return yield* Effect.fail(new Error("Unknown request id"));
+        if (reqRow.status === "expired") return yield* Effect.fail(new Error("Request expired"));
+        if (reqRow.status !== "pending") {
+          return yield* Effect.fail(new Error(`Request is ${reqRow.status}`));
+        }
+        if (!reqRow.payerTenantId) {
+          return yield* Effect.fail(
+            new Error(
+              "Payer has not joined yet — claim the invite first: clawql payments credits request claim-invite …"
+            )
+          );
+        }
+        if (reqRow.payerTenantId !== payerTenantId) {
+          return yield* Effect.fail(new Error("Only the payer can accept this request"));
+        }
+        const stagedResult = yield* credits.stageTransfer({
+          fromTenantId: reqRow.payerTenantId,
+          toTenantId: reqRow.requesterTenantId,
+          amountCents: reqRow.amountCents,
+          note: reqRow.note ?? `Payment for request ${reqRow.requestId}`,
+          correlationId: reqRow.correlationId,
+          requestId: reqRow.requestId,
+        });
+        const updated = yield* requests.markAccepted({
+          requestId: reqRow.requestId,
+          payerTenantId,
+          stagedTransferActionId: stagedResult.actionId,
+        });
+        return { request: updated, staged: stagedResult };
+      })
     );
     if (options.json) {
       console.log(JSON.stringify({ request: publicMoneyRequest(request), staged }, null, 2));
@@ -1070,7 +1146,12 @@ export async function runPaymentsCreditsRequestDecline(
     return 1;
   }
   try {
-    const req = await declineMoneyRequest({ requestId, payerTenantId });
+    const req = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const requests = yield* CreditsRequestsService;
+        return yield* requests.decline({ requestId, payerTenantId });
+      })
+    );
     if (options.json) {
       console.log(JSON.stringify(publicMoneyRequest(req), null, 2));
       return 0;
@@ -1095,7 +1176,12 @@ export async function runPaymentsCreditsRequestCancel(
     return 1;
   }
   try {
-    const req = await cancelMoneyRequest({ requestId, requesterTenantId });
+    const req = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const requests = yield* CreditsRequestsService;
+        return yield* requests.cancel({ requestId, requesterTenantId });
+      })
+    );
     if (options.json) {
       console.log(JSON.stringify(publicMoneyRequest(req), null, 2));
       return 0;
@@ -1121,11 +1207,12 @@ export async function runPaymentsCreditsContactsAdd(
     return 1;
   }
   try {
-    const { contact, created } = await addContact({
-      ownerTenantId,
-      payee,
-      label: options.label,
-    });
+    const { contact, created } = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const contacts = yield* CreditsContactsService;
+        return yield* contacts.add({ ownerTenantId, payee, label: options.label });
+      })
+    );
     if (options.json) {
       console.log(JSON.stringify({ contact, created }, null, 2));
       return 0;
@@ -1147,7 +1234,12 @@ export async function runPaymentsCreditsContactsList(
   const config = await loadPaymentsConfig();
   const ownerTenantId = options.tenantId?.trim() || config.tenantId || "default";
   try {
-    const contacts = await listContacts(ownerTenantId);
+    const contacts = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const svc = yield* CreditsContactsService;
+        return yield* svc.list(ownerTenantId);
+      })
+    );
     if (options.json) {
       console.log(JSON.stringify({ ownerTenantId, contacts }, null, 2));
       return 0;
@@ -1180,7 +1272,12 @@ export async function runPaymentsCreditsContactsRemove(
     return 1;
   }
   try {
-    const ok = await removeContact(ownerTenantId, contactId);
+    const ok = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const contacts = yield* CreditsContactsService;
+        return yield* contacts.remove(ownerTenantId, contactId);
+      })
+    );
     if (!ok) {
       console.error("Unknown contact id");
       return 1;
@@ -1204,10 +1301,15 @@ export async function runPaymentsCreditsContactsShow(
   const config = await loadPaymentsConfig();
   const ownerTenantId = options.tenantId?.trim() || config.tenantId || "default";
   try {
-    const { contact, recipient, payee } = await resolveContactPayee(ownerTenantId, {
-      contactId: options.contactId,
-      payee: options.payTo || options.toHandle,
-    });
+    const { contact, recipient, payee } = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const contacts = yield* CreditsContactsService;
+        return yield* contacts.resolvePayee(ownerTenantId, {
+          contactId: options.contactId,
+          payee: options.payTo || options.toHandle,
+        });
+      })
+    );
     if (options.json) {
       console.log(JSON.stringify({ contact, recipient, payee }, null, 2));
       return 0;

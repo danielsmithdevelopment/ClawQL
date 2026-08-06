@@ -135,8 +135,8 @@ export function paymentsServicesLiveLayer(
   const creditsDeeplinks = creditsDeeplinkLiveLayer(env);
   const ledger = creditsLedgerLiveLayer(env);
   const directory = creditsDirectoryLiveLayer(env);
-  const contacts = creditsContactsLiveLayer(env);
-  const requests = creditsRequestsLiveLayer(env);
+  const contacts = creditsContactsLiveLayer(env).pipe(Layer.provide(directory));
+  const requests = creditsRequestsLiveLayer(env).pipe(Layer.provide(directory));
   const activity = creditsActivityLiveLayer().pipe(
     Layer.provide(Layer.mergeAll(ledger, directory, requests))
   );
@@ -145,10 +145,10 @@ export function paymentsServicesLiveLayer(
   const pendingActions = pendingActionsLiveLayer(env);
   const compensationAccounts = compensationAccountsLiveLayer(env);
   const credits = creditsLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(audit, ledger, stepUp, pendingActions))
+    Layer.provide(Layer.mergeAll(audit, ledger, stepUp, pendingActions, requests))
   );
   const achTopup = achTopupLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(audit, stripeClient, credits))
+    Layer.provide(Layer.mergeAll(audit, stripeClient, credits, ledger))
   );
   const compensation = agentCompensationLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(audit, payouts, compensationAccounts, pendingActions))
@@ -174,7 +174,9 @@ export function paymentsServicesLiveLayer(
   const discovery = paymentsDiscoveryLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(config, runtimeConfig, gate))
   );
-  const stripeWebhook = stripeWebhookLiveLayer().pipe(Layer.provide(Layer.mergeAll(config, audit)));
+  const stripeWebhook = stripeWebhookLiveLayer().pipe(
+    Layer.provide(Layer.mergeAll(config, audit, ledger))
+  );
   const stripeMeter = stripeMeterLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(stripeClient, config, audit))
   );

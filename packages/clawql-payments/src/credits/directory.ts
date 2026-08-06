@@ -279,7 +279,7 @@ function unindexEntry(file: DirectoryFile, entry: DirectoryEntry): void {
   if (entry.phone) delete file.phones[entry.phone];
 }
 
-export async function getEmailEntry(
+async function getEmailEntry(
   email: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<DirectoryEntry | undefined> {
@@ -288,7 +288,7 @@ export async function getEmailEntry(
   return file.emails[key];
 }
 
-export async function getHandleEntry(
+async function getHandleEntry(
   handle: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<DirectoryEntry | undefined> {
@@ -297,7 +297,7 @@ export async function getHandleEntry(
   return file.handles[key];
 }
 
-export async function getPhoneEntry(
+async function getPhoneEntry(
   phone: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<DirectoryEntry | undefined> {
@@ -306,7 +306,7 @@ export async function getPhoneEntry(
   return file.phones[key];
 }
 
-export async function getTenantEntry(
+async function getTenantEntry(
   tenantId: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<DirectoryEntry | undefined> {
@@ -316,15 +316,7 @@ export async function getTenantEntry(
   return file.byTenant[id];
 }
 
-/** @deprecated Prefer getTenantEntry */
-export async function getTenantHandle(
-  tenantId: string,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<DirectoryEntry | undefined> {
-  return getTenantEntry(tenantId, env);
-}
-
-export async function listDirectory(
+async function listDirectory(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<DirectoryEntry[]> {
   const file = await loadFile(env);
@@ -355,7 +347,7 @@ export type ClaimDirectoryInput = {
  * Claim or update directory identity for a tenant.
  * Email is the default payee; username (`handle`) and phone are optional aliases.
  */
-export async function claimDirectory(
+async function claimDirectory(
   input: ClaimDirectoryInput,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<{ entry: DirectoryEntry; created: boolean }> {
@@ -427,43 +419,12 @@ export async function claimDirectory(
   return { entry, created: !existing };
 }
 
-/** Convenience: claim email as primary (Venmo-style default). */
-export async function claimEmail(
-  input: { email: string; tenantId: string; displayName?: string; handle?: string },
-  env: NodeJS.ProcessEnv = process.env
-): Promise<{ entry: DirectoryEntry; created: boolean }> {
-  return claimDirectory(input, env);
-}
-
-/** Convenience: set optional privacy username. */
-export async function claimHandle(
-  input: { handle: string; tenantId: string; displayName?: string; email?: string },
-  env: NodeJS.ProcessEnv = process.env
-): Promise<{ entry: DirectoryEntry; created: boolean }> {
-  return claimDirectory(input, env);
-}
-
-/** Convenience: claim phone alias (optionally mark verified). */
-export async function claimPhone(
-  input: {
-    phone: string;
-    tenantId: string;
-    email?: string;
-    handle?: string;
-    displayName?: string;
-    phoneVerified?: boolean;
-  },
-  env: NodeJS.ProcessEnv = process.env
-): Promise<{ entry: DirectoryEntry; created: boolean }> {
-  return claimDirectory(input, env);
-}
-
 function keepEntryIfAddressable(entry: DirectoryEntry): DirectoryEntry | null {
   if (entry.email || entry.handle || entry.phone) return entry;
   return null;
 }
 
-export async function releaseHandle(
+async function releaseHandle(
   handle: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<boolean> {
@@ -482,7 +443,7 @@ export async function releaseHandle(
   return true;
 }
 
-export async function releaseEmail(
+async function releaseEmail(
   email: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<boolean> {
@@ -501,7 +462,7 @@ export async function releaseEmail(
   return true;
 }
 
-export async function releasePhone(
+async function releasePhone(
   phone: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<boolean> {
@@ -528,7 +489,7 @@ export async function releasePhone(
  * - Leading `@` / username → directory
  * - Otherwise → raw tenant id
  */
-export async function resolveRecipient(
+async function resolveRecipient(
   raw: string,
   env: NodeJS.ProcessEnv = process.env,
   options: { forceHandle?: boolean; forceEmail?: boolean; forcePhone?: boolean } = {}
@@ -599,8 +560,8 @@ export async function resolveRecipient(
   return { tenantId: input, via: "tenantId" };
 }
 
-/** Reset directory file (tests). */
-export async function resetDirectoryForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+/** Reset directory file. Internal helper used by the service `reset` op. */
+async function resetDirectoryForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveFile(emptyFile(), env);
 }
 

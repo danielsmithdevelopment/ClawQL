@@ -4,7 +4,6 @@
  */
 
 import {
-  createFileStepUpStore,
   createStepUpStoreLayer,
   StepUpStoreError,
   StepUpStoreService,
@@ -25,10 +24,6 @@ export function resolveStepUpTotpPath(env: NodeJS.ProcessEnv = process.env): str
   return join(resolvePaymentsDir(env), "step-up-totp.json");
 }
 
-function store(env: NodeJS.ProcessEnv = process.env) {
-  return createFileStepUpStore(resolveStepUpTotpPath(env));
-}
-
 function toTenantEnrollment(row: AuthEnrollment): StepUpTotpEnrollment {
   return {
     tenantId: row.subjectId,
@@ -36,51 +31,6 @@ function toTenantEnrollment(row: AuthEnrollment): StepUpTotpEnrollment {
     enrolledAt: row.enrolledAt,
     label: row.label,
   };
-}
-
-/** @deprecated Promise façade — prefer CreditsStepUpService / Effect APIs. Forced edge only. */
-export async function getStepUpEnrollment(
-  tenantId: string,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<StepUpTotpEnrollment | undefined> {
-  const row = await store(env).getEnrollment(tenantId);
-  return row ? toTenantEnrollment(row) : undefined;
-}
-
-/** @deprecated Promise façade — prefer CreditsStepUpService / Effect APIs. Forced edge only. */
-export async function enrollStepUpTotp(
-  input: { tenantId: string; label?: string; secretBase32?: string },
-  env: NodeJS.ProcessEnv = process.env
-): Promise<{ enrollment: StepUpTotpEnrollment; otpauthUrl: string; created: boolean }> {
-  const result = await store(env).enroll({
-    subjectId: input.tenantId,
-    label: input.label,
-    secretBase32: input.secretBase32,
-    issuer: "ClawQL Payments",
-  });
-  return {
-    enrollment: toTenantEnrollment(result.enrollment),
-    otpauthUrl: result.otpauthUrl,
-    created: result.created,
-  };
-}
-
-/** @deprecated Promise façade — prefer CreditsStepUpService / Effect APIs. Forced edge only. */
-export async function verifyStepUpTotp(
-  tenantId: string,
-  token: string,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<boolean> {
-  return store(env).verify(tenantId, token);
-}
-
-/** @deprecated Promise façade — prefer CreditsStepUpService / Effect APIs. Forced edge only. */
-export async function requireStepUpTotp(
-  tenantId: string,
-  token: string | undefined,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<void> {
-  await store(env).require(tenantId, token, stepUpEnrollHint(tenantId));
 }
 
 function stepUpEnrollHint(tenantId: string): string {

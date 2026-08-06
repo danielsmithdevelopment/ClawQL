@@ -6,19 +6,12 @@
 import { Context, Data, Effect, Layer } from "effect";
 import {
   CreditsLedgerService,
-  getCreditAccount,
   type CreditLedgerEntry,
   type CreditLedgerKind,
 } from "./ledger.js";
-import {
-  CreditsDirectoryService,
-  getTenantEntry,
-  maskEmail,
-  type DirectoryEntry,
-} from "./directory.js";
+import { CreditsDirectoryService, maskEmail, type DirectoryEntry } from "./directory.js";
 import {
   CreditsRequestsService,
-  listMoneyRequests,
   publicMoneyRequest,
   type MoneyRequest,
   type MoneyRequestStatus,
@@ -151,86 +144,6 @@ export type GetActivityFeedOptions = {
   /** Filter: all | transfers | requests | money (transfers+requests) | ledger */
   filter?: "all" | "transfers" | "requests" | "money" | "ledger";
 };
-
-/**
- * Build a recent activity feed for a tenant.
- * Dedupes paid requests that already appear as transfer ledger legs (prefer ledger).
- * @deprecated Promise façade — prefer CreditsActivityService / Effect APIs. Forced edge only.
- */
-export async function getActivityFeed(
-  options: GetActivityFeedOptions,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<ActivityFeed> {
-  const tenantId = options.tenantId.trim();
-  if (!tenantId) throw new Error("tenantId required");
-
-  const limit = Math.min(Math.max(options.limit ?? 25, 1), 100);
-  const filter = options.filter ?? "money";
-
-  const [account, selfDir, requests] = await Promise.all([
-    getCreditAccount(tenantId, env),
-    getTenantEntry(tenantId, env),
-    filter === "ledger"
-      ? Promise.resolve([] as MoneyRequest[])
-      : listMoneyRequests({ tenantId, role: "any" }, env),
-  ]);
-
-  const counterpartyIds = new Set<string>();
-  for (const e of account.entries) {
-    if (e.counterpartyTenantId) counterpartyIds.add(e.counterpartyTenantId);
-  }
-  for (const r of requests) {
-    if (r.requesterTenantId !== tenantId) counterpartyIds.add(r.requesterTenantId);
-    if (r.payerTenantId && r.payerTenantId !== tenantId) counterpartyIds.add(r.payerTenantId);
-  }
-
-  const labels = new Map<string, string>();
-  await Promise.all(
-    [...counterpartyIds].map(async (id) => {
-      const entry = await getTenantEntry(id, env);
-      labels.set(id, directoryLabel(entry, id));
-    })
-  );
-
-  const includeLedger =
-    filter === "all" || filter === "ledger" || filter === "money" || filter === "transfers";
-  const includeRequests = filter === "all" || filter === "requests" || filter === "money";
-
-  const items: ActivityItem[] = [];
-
-  if (includeLedger) {
-    for (const entry of account.entries) {
-      if (filter === "transfers" && entry.kind !== "transfer_out" && entry.kind !== "transfer_in") {
-        continue;
-      }
-      const cp = entry.counterpartyTenantId ? labels.get(entry.counterpartyTenantId) : undefined;
-      items.push(fromLedgerEntry(entry, cp));
-    }
-  }
-
-  const paidTransferIds = new Set(
-    account.entries.filter((e) => e.transferId).map((e) => e.transferId!)
-  );
-
-  if (includeRequests) {
-    for (const req of requests) {
-      // Prefer ledger legs once paid (avoid double-counting).
-      if (req.status === "paid" && req.paidTransferId && paidTransferIds.has(req.paidTransferId)) {
-        continue;
-      }
-      items.push(fromRequest(req, tenantId));
-    }
-  }
-
-  items.sort((a, b) => b.ts.localeCompare(a.ts));
-
-  return {
-    tenantId,
-    label: selfLabel(selfDir, tenantId),
-    balanceCents: account.balanceCents,
-    items: items.slice(0, limit),
-  };
-}
 
 /** Human-readable one-liner for CLI. */
 export function formatActivityLine(item: ActivityItem): string {

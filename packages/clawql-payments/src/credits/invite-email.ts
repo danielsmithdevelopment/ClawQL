@@ -167,9 +167,9 @@ export type SendInviteEmailOptions = {
 /**
  * Deliver (or dry-run) a money-request invite email.
  * Does not throw on provider HTTP errors — returns `{ ok: false, error }`.
- * @deprecated Promise façade — prefer CreditsInviteEmailService / Effect APIs. Forced edge only.
+ * Private IO helper backing {@link CreditsInviteEmailService}; not a public API.
  */
-export async function sendMoneyRequestInviteEmail(
+async function sendInviteEmailImpl(
   input: MoneyRequestInviteEmailInput,
   env: NodeJS.ProcessEnv = process.env,
   options: SendInviteEmailOptions = {}
@@ -346,9 +346,7 @@ export function creditsInviteEmailLiveLayer(
       build: (input) =>
         run("Failed to build invite email", () => buildMoneyRequestInviteEmail(input, env)),
       send: (input, options) =>
-        run("Failed to send invite email", () =>
-          sendMoneyRequestInviteEmail(input, env, options ?? {})
-        ),
+        run("Failed to send invite email", () => sendInviteEmailImpl(input, env, options ?? {})),
     })
   );
 }

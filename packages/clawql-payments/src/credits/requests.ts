@@ -12,11 +12,10 @@ import { dirname } from "node:path";
 import { Context, Data, Effect, Layer } from "effect";
 import { resolveMoneyRequestsPath } from "../config/paths.js";
 import {
-  claimDirectory,
-  getTenantEntry,
+  CreditsDirectoryService,
   looksLikeEmail,
   normalizeEmail,
-  resolveRecipient,
+  type DirectoryEntry,
 } from "./directory.js";
 import { buildInviteDeepLink } from "./deeplinks.js";
 
@@ -106,8 +105,8 @@ function touchExpired(req: MoneyRequest): MoneyRequest {
   return { ...req, status: "expired", updatedAt: new Date().toISOString() };
 }
 
-/** @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only. */
-export async function getMoneyRequest(
+/** Private IO helper backing {@link CreditsRequestsService}. */
+async function getMoneyRequestImpl(
   requestId: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<MoneyRequest | undefined> {
@@ -122,13 +121,15 @@ export async function getMoneyRequest(
   return req;
 }
 
-/** @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only. */
-export async function listMoneyRequests(
-  options: {
-    tenantId?: string;
-    role?: "requester" | "payer" | "any";
-    status?: MoneyRequestStatus;
-  } = {},
+type ListMoneyRequestsOptions = {
+  tenantId?: string;
+  role?: "requester" | "payer" | "any";
+  status?: MoneyRequestStatus;
+};
+
+/** Private IO helper backing {@link CreditsRequestsService}. */
+async function listMoneyRequestsImpl(
+  options: ListMoneyRequestsOptions = {},
   env: NodeJS.ProcessEnv = process.env
 ): Promise<MoneyRequest[]> {
   const file = await loadFile(env);
@@ -174,55 +175,26 @@ export type CreateMoneyRequestResult = {
   invite: boolean;
 };
 
+/** Directory data resolved (via CreditsDirectoryService) before persisting a new request. */
+type ResolvedRequestParties = {
+  requester: DirectoryEntry | undefined;
+  payerTenantId?: string;
+  payerEmail?: string;
+  payerHandle?: string;
+  invite: boolean;
+};
+
 /**
- * Create a money request / invoice.
- * If `to` is an unknown email, attaches an invite URL so they can join and pay.
- * @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only.
+ * Private IO helper backing {@link CreditsRequestsService.create}.
+ * Directory resolution happens in the Effect layer; this only persists the record.
  */
-export async function createMoneyRequest(
+async function persistNewMoneyRequest(
   input: CreateMoneyRequestInput,
+  parties: ResolvedRequestParties,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<CreateMoneyRequestResult> {
   const requesterTenantId = input.requesterTenantId.trim();
-  if (!requesterTenantId) throw new Error("requesterTenantId required");
-  if (!Number.isFinite(input.amountCents) || input.amountCents <= 0) {
-    throw new Error("amountCents must be > 0");
-  }
-
-  const to = input.to.trim();
-  if (!to) throw new Error("Recipient required (--to email | @user | tenant)");
-
-  const requester = await getTenantEntry(requesterTenantId, env);
-
-  let payerTenantId: string | undefined;
-  let payerEmail: string | undefined;
-  let payerHandle: string | undefined;
-  let invite = false;
-
-  if (looksLikeEmail(to)) {
-    payerEmail = normalizeEmail(to);
-    try {
-      const resolved = await resolveRecipient(to, env, { forceEmail: true });
-      payerTenantId = resolved.tenantId;
-      payerHandle = resolved.handle;
-    } catch {
-      invite = true;
-    }
-  } else {
-    const resolved = await resolveRecipient(to, env, {
-      forceHandle: to.startsWith("@"),
-    });
-    payerTenantId = resolved.tenantId;
-    payerEmail = resolved.email;
-    payerHandle = resolved.handle;
-    if (!payerEmail && looksLikeEmail(to)) {
-      payerEmail = normalizeEmail(to);
-    }
-  }
-
-  if (payerTenantId && payerTenantId === requesterTenantId) {
-    throw new Error("Cannot request money from yourself");
-  }
+  const { requester, payerTenantId, payerEmail, payerHandle, invite } = parties;
 
   const requestId = randomUUID();
   const now = new Date().toISOString();
@@ -261,7 +233,7 @@ export async function createMoneyRequest(
   file.requests[requestId] = request;
   await saveFile(file, env);
 
-  return { request, inviteToken, invite: invite };
+  return { request, inviteToken, invite };
 }
 
 /** Public view — never exposes inviteTokenHash. */
@@ -275,19 +247,24 @@ export function publicMoneyRequest(req: MoneyRequest): Omit<MoneyRequest, "invit
   };
 }
 
-/** @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only. */
-export async function claimMoneyRequestInvite(
-  input: {
-    requestId: string;
-    token: string;
-    tenantId: string;
-    /** Defaults to request.payerEmail */
-    email?: string;
-    handle?: string;
-    displayName?: string;
-  },
+export type ClaimMoneyRequestInviteInput = {
+  requestId: string;
+  token: string;
+  tenantId: string;
+  /** Defaults to request.payerEmail */
+  email?: string;
+  handle?: string;
+  displayName?: string;
+};
+
+/**
+ * Private IO helper backing {@link CreditsRequestsService.claimInvite}.
+ * Loads + validates the invite before the directory claim happens in the layer.
+ */
+async function loadInviteForClaim(
+  input: ClaimMoneyRequestInviteInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<{ request: MoneyRequest; directoryCreated: boolean }> {
+): Promise<{ req: MoneyRequest; email: string }> {
   const file = await loadFile(env);
   let req = file.requests[input.requestId.trim()];
   if (!req) throw new Error("Unknown request id");
@@ -302,20 +279,23 @@ export async function claimMoneyRequestInvite(
   if (!tokensEqual(hashToken(input.token.trim()), req.inviteTokenHash)) {
     throw new Error("Invalid invite token");
   }
-
   const email = input.email?.trim() || req.payerEmail;
   if (!email) throw new Error("Email required to claim invite");
+  return { req, email };
+}
 
-  const { entry, created } = await claimDirectory(
-    {
-      email,
-      handle: input.handle,
-      tenantId: input.tenantId.trim(),
-      displayName: input.displayName,
-    },
-    env
-  );
-
+/**
+ * Private IO helper backing {@link CreditsRequestsService.claimInvite}.
+ * Persists the claimed request after the directory identity was claimed in the layer.
+ */
+async function persistClaimedInvite(
+  req: MoneyRequest,
+  entry: DirectoryEntry,
+  email: string,
+  created: boolean,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<{ request: MoneyRequest; directoryCreated: boolean }> {
+  const file = await loadFile(env);
   const updated: MoneyRequest = {
     requestId: req.requestId,
     requesterTenantId: req.requesterTenantId,
@@ -338,16 +318,16 @@ export async function claimMoneyRequestInvite(
   return { request: updated, directoryCreated: created };
 }
 
-/** @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only. */
-export async function declineMoneyRequest(
+/** Private IO helper backing {@link CreditsRequestsService.decline}. */
+async function declineMoneyRequestImpl(
   input: { requestId: string; payerTenantId: string },
   env: NodeJS.ProcessEnv = process.env
 ): Promise<MoneyRequest> {
   return updateAsPayer(input.requestId, input.payerTenantId, "declined", env);
 }
 
-/** @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only. */
-export async function cancelMoneyRequest(
+/** Private IO helper backing {@link CreditsRequestsService.cancel}. */
+async function cancelMoneyRequestImpl(
   input: { requestId: string; requesterTenantId: string },
   env: NodeJS.ProcessEnv = process.env
 ): Promise<MoneyRequest> {
@@ -405,11 +385,8 @@ async function updateAsPayer(
   return updated;
 }
 
-/**
- * Mark request accepted and attach staged transfer action id.
- * @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only.
- */
-export async function markMoneyRequestAccepted(
+/** Private IO helper backing {@link CreditsRequestsService.markAccepted}. */
+async function markMoneyRequestAcceptedImpl(
   input: {
     requestId: string;
     payerTenantId: string;
@@ -446,75 +423,8 @@ export async function markMoneyRequestAccepted(
   return updated;
 }
 
-export type StageTransferFn = (input: {
-  fromTenantId: string;
-  toTenantId: string;
-  amountCents: number;
-  note?: string;
-  correlationId?: string;
-  requestId?: string;
-}) => Promise<{
-  actionId: string;
-  confirmationCode: string;
-  expiresAt: string;
-  totpRequired: boolean;
-  amountUsd: number;
-  fromTenantId: string;
-  toTenantId: string;
-}>;
-
-/**
- * Payer accepts: stages a credits transfer (payer → requester).
- * Then authorize via magic link (`/credits/transfer/approve`) or CLI confirm (+ optional TOTP).
- * @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only.
- */
-export async function acceptMoneyRequest(
-  input: { requestId: string; payerTenantId: string },
-  stageTransfer: StageTransferFn,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<{
-  request: MoneyRequest;
-  staged: Awaited<ReturnType<StageTransferFn>>;
-}> {
-  const req = await getMoneyRequest(input.requestId, env);
-  if (!req) throw new Error("Unknown request id");
-  if (req.status === "expired") throw new Error("Request expired");
-  if (req.status !== "pending") throw new Error(`Request is ${req.status}`);
-  if (!req.payerTenantId) {
-    throw new Error(
-      "Payer has not joined yet — claim the invite first: clawql payments credits request claim-invite …"
-    );
-  }
-  if (req.payerTenantId !== input.payerTenantId.trim()) {
-    throw new Error("Only the payer can accept this request");
-  }
-
-  const staged = await stageTransfer({
-    fromTenantId: req.payerTenantId,
-    toTenantId: req.requesterTenantId,
-    amountCents: req.amountCents,
-    note: req.note ?? `Payment for request ${req.requestId}`,
-    correlationId: req.correlationId,
-    requestId: req.requestId,
-  });
-
-  const updated = await markMoneyRequestAccepted(
-    {
-      requestId: req.requestId,
-      payerTenantId: input.payerTenantId,
-      stagedTransferActionId: staged.actionId,
-    },
-    env
-  );
-
-  return { request: updated, staged };
-}
-
-/**
- * Called after credits transfer confirm when args.requestId is set.
- * @deprecated Promise façade — prefer CreditsRequestsService / Effect APIs. Forced edge only.
- */
-export async function markMoneyRequestPaid(
+/** Private IO helper backing {@link CreditsRequestsService.markPaid}. */
+async function markMoneyRequestPaidImpl(
   input: { requestId: string; transferId: string },
   env: NodeJS.ProcessEnv = process.env
 ): Promise<MoneyRequest | undefined> {
@@ -533,9 +443,8 @@ export async function markMoneyRequestPaid(
   return updated;
 }
 
-export async function resetMoneyRequestsForTests(
-  env: NodeJS.ProcessEnv = process.env
-): Promise<void> {
+/** Private IO helper backing {@link CreditsRequestsService.reset}. */
+async function resetMoneyRequestsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveFile(emptyFile(), env);
 }
 
@@ -544,12 +453,11 @@ export class RequestsError extends Data.TaggedError("RequestsError")<{
   readonly cause?: unknown;
 }> {}
 
-type ListMoneyRequestsOptions = Parameters<typeof listMoneyRequests>[0];
-type ClaimInviteInput = Parameters<typeof claimMoneyRequestInvite>[0];
-type DeclineInput = Parameters<typeof declineMoneyRequest>[0];
-type CancelInput = Parameters<typeof cancelMoneyRequest>[0];
-type MarkAcceptedInput = Parameters<typeof markMoneyRequestAccepted>[0];
-type MarkPaidInput = Parameters<typeof markMoneyRequestPaid>[0];
+type ClaimInviteInput = ClaimMoneyRequestInviteInput;
+type DeclineInput = { requestId: string; payerTenantId: string };
+type CancelInput = { requestId: string; requesterTenantId: string };
+type MarkAcceptedInput = { requestId: string; payerTenantId: string; stagedTransferActionId: string };
+type MarkPaidInput = { requestId: string; transferId: string };
 
 /** Effect surface over money requests / invoices. */
 export class CreditsRequestsService extends Context.Tag("clawql/CreditsRequestsService")<
@@ -577,7 +485,7 @@ export class CreditsRequestsService extends Context.Tag("clawql/CreditsRequestsS
 
 export function creditsRequestsLiveLayer(
   env: NodeJS.ProcessEnv = process.env
-): Layer.Layer<CreditsRequestsService> {
+): Layer.Layer<CreditsRequestsService, never, CreditsDirectoryService> {
   const run = <A>(reason: string, task: () => Promise<A>) =>
     Effect.tryPromise({
       try: task,
@@ -587,26 +495,113 @@ export function creditsRequestsLiveLayer(
           : new RequestsError({ reason: cause instanceof Error ? cause.message : reason, cause }),
     });
 
-  return Layer.succeed(
+  return Layer.effect(
     CreditsRequestsService,
-    CreditsRequestsService.of({
-      get: (requestId) =>
-        run("Failed to load money request", () => getMoneyRequest(requestId, env)),
-      list: (options) =>
-        run("Failed to list money requests", () => listMoneyRequests(options ?? {}, env)),
-      create: (input) =>
-        run("Failed to create money request", () => createMoneyRequest(input, env)),
-      claimInvite: (input) =>
-        run("Failed to claim money request invite", () => claimMoneyRequestInvite(input, env)),
-      decline: (input) =>
-        run("Failed to decline money request", () => declineMoneyRequest(input, env)),
-      cancel: (input) =>
-        run("Failed to cancel money request", () => cancelMoneyRequest(input, env)),
-      markAccepted: (input) =>
-        run("Failed to mark money request accepted", () => markMoneyRequestAccepted(input, env)),
-      markPaid: (input) =>
-        run("Failed to mark money request paid", () => markMoneyRequestPaid(input, env)),
-      reset: () => run("Failed to reset money requests", () => resetMoneyRequestsForTests(env)),
+    Effect.gen(function* () {
+      const directory = yield* CreditsDirectoryService;
+      const toRequestsError = (error: { reason: string; cause?: unknown }) =>
+        new RequestsError({ reason: error.reason, cause: error.cause });
+
+      const create = (input: CreateMoneyRequestInput) =>
+        Effect.gen(function* () {
+          const requesterTenantId = input.requesterTenantId.trim();
+          if (!requesterTenantId) {
+            return yield* Effect.fail(new RequestsError({ reason: "requesterTenantId required" }));
+          }
+          if (!Number.isFinite(input.amountCents) || input.amountCents <= 0) {
+            return yield* Effect.fail(new RequestsError({ reason: "amountCents must be > 0" }));
+          }
+          const to = input.to.trim();
+          if (!to) {
+            return yield* Effect.fail(
+              new RequestsError({ reason: "Recipient required (--to email | @user | tenant)" })
+            );
+          }
+
+          const requester = yield* directory
+            .getTenant(requesterTenantId)
+            .pipe(Effect.mapError(toRequestsError));
+
+          let payerTenantId: string | undefined;
+          let payerEmail: string | undefined;
+          let payerHandle: string | undefined;
+          let invite = false;
+
+          if (looksLikeEmail(to)) {
+            payerEmail = normalizeEmail(to);
+            const resolved = yield* directory
+              .resolveRecipient(to, { forceEmail: true })
+              .pipe(Effect.either);
+            if (resolved._tag === "Right") {
+              payerTenantId = resolved.right.tenantId;
+              payerHandle = resolved.right.handle;
+            } else {
+              invite = true;
+            }
+          } else {
+            const resolved = yield* directory
+              .resolveRecipient(to, { forceHandle: to.startsWith("@") })
+              .pipe(Effect.mapError(toRequestsError));
+            payerTenantId = resolved.tenantId;
+            payerEmail = resolved.email;
+            payerHandle = resolved.handle;
+            if (!payerEmail && looksLikeEmail(to)) {
+              payerEmail = normalizeEmail(to);
+            }
+          }
+
+          if (payerTenantId && payerTenantId === requesterTenantId) {
+            return yield* Effect.fail(
+              new RequestsError({ reason: "Cannot request money from yourself" })
+            );
+          }
+
+          return yield* run("Failed to create money request", () =>
+            persistNewMoneyRequest(
+              input,
+              { requester, payerTenantId, payerEmail, payerHandle, invite },
+              env
+            )
+          );
+        });
+
+      const claimInvite = (input: ClaimInviteInput) =>
+        Effect.gen(function* () {
+          const { req, email } = yield* run("Failed to load money request invite", () =>
+            loadInviteForClaim(input, env)
+          );
+          const { entry, created } = yield* directory
+            .claim({
+              email,
+              handle: input.handle,
+              tenantId: input.tenantId.trim(),
+              displayName: input.displayName,
+            })
+            .pipe(Effect.mapError(toRequestsError));
+          return yield* run("Failed to claim money request invite", () =>
+            persistClaimedInvite(req, entry, email, created, env)
+          );
+        });
+
+      return CreditsRequestsService.of({
+        get: (requestId) =>
+          run("Failed to load money request", () => getMoneyRequestImpl(requestId, env)),
+        list: (options) =>
+          run("Failed to list money requests", () => listMoneyRequestsImpl(options ?? {}, env)),
+        create,
+        claimInvite,
+        decline: (input) =>
+          run("Failed to decline money request", () => declineMoneyRequestImpl(input, env)),
+        cancel: (input) =>
+          run("Failed to cancel money request", () => cancelMoneyRequestImpl(input, env)),
+        markAccepted: (input) =>
+          run("Failed to mark money request accepted", () =>
+            markMoneyRequestAcceptedImpl(input, env)
+          ),
+        markPaid: (input) =>
+          run("Failed to mark money request paid", () => markMoneyRequestPaidImpl(input, env)),
+        reset: () => run("Failed to reset money requests", () => resetMoneyRequestsImpl(env)),
+      });
     })
   );
 }

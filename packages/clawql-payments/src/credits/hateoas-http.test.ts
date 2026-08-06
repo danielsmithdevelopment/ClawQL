@@ -3,10 +3,15 @@ import express from "express";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Effect } from "effect";
+import {
+  resetPaymentsEffectRuntimeForTests,
+  runPaymentsEffect,
+} from "../runtime/payments-effect-runtime.js";
 import { attachCreditsHateoasRoutes } from "./hateoas-http.js";
-import { claimDirectory, resetDirectoryForTests } from "./directory.js";
-import { appendCreditEntry } from "./ledger.js";
-import { createMoneyRequest, resetMoneyRequestsForTests } from "./requests.js";
+import { CreditsDirectoryService } from "./directory.js";
+import { CreditsLedgerService } from "./ledger.js";
+import { CreditsRequestsService, type CreateMoneyRequestInput } from "./requests.js";
 
 async function withApp(run: (base: string) => Promise<void>): Promise<void> {
   const app = express();
@@ -28,6 +33,36 @@ async function withApp(run: (base: string) => Promise<void>): Promise<void> {
   }
 }
 
+const claim = (input: { email: string; tenantId: string; handle?: string }) =>
+  runPaymentsEffect(
+    Effect.gen(function* () {
+      const directory = yield* CreditsDirectoryService;
+      yield* directory.claim(input);
+    })
+  );
+
+const seedTopup = (tenantId: string, deltaCents: number, note?: string) =>
+  runPaymentsEffect(
+    Effect.gen(function* () {
+      const ledger = yield* CreditsLedgerService;
+      yield* ledger.appendEntry({
+        tenantId,
+        kind: "topup_settled",
+        deltaCents,
+        grantSource: "topup",
+        ...(note ? { note } : {}),
+      });
+    })
+  );
+
+const createRequest = (input: CreateMoneyRequestInput) =>
+  runPaymentsEffect(
+    Effect.gen(function* () {
+      const requests = yield* CreditsRequestsService;
+      return yield* requests.create(input);
+    })
+  );
+
 describe("credits hateoas http", () => {
   let home: string;
 
@@ -39,11 +74,11 @@ describe("credits hateoas http", () => {
     process.env.CLAWQL_CREDITS_HATEOAS_BASE = "http://127.0.0.1:9";
     delete process.env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP;
     delete process.env.CLAWQL_CREDITS_TRANSFER_DIRECT;
-    await resetDirectoryForTests(process.env);
-    await resetMoneyRequestsForTests(process.env);
+    resetPaymentsEffectRuntimeForTests();
   });
 
   afterEach(async () => {
+    resetPaymentsEffectRuntimeForTests();
     delete process.env.CLAWQL_CREDITS_HATEOAS_BASE;
     delete process.env.CLAWQL_CREDITS_P2P_ENABLED;
     await rm(home, { recursive: true, force: true });
@@ -122,8 +157,8 @@ describe("credits hateoas http", () => {
   });
 
   it("invite page + claim via HTMX form post", async () => {
-    await claimDirectory({ email: "alice@acme.com", tenantId: "alice" });
-    const { request, inviteToken } = await createMoneyRequest({
+    await claim({ email: "alice@acme.com", tenantId: "alice" });
+    const { request, inviteToken } = await createRequest({
       requesterTenantId: "alice",
       to: "newbie@acme.com",
       amountCents: 2500,
@@ -137,7 +172,7 @@ describe("credits hateoas http", () => {
       expect(page.status).toBe(200);
       expect(await page.text()).toContain("Claim invite");
 
-      const claim = await fetch(`${base}/credits/request/invite/claim`, {
+      const claimRes = await fetch(`${base}/credits/request/invite/claim`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
@@ -147,8 +182,8 @@ describe("credits hateoas http", () => {
           handle: "newb",
         }).toString(),
       });
-      expect(claim.status).toBe(200);
-      const claimBody = await claim.text();
+      expect(claimRes.status).toBe(200);
+      const claimBody = await claimRes.text();
       expect(claimBody).toContain("Claimed");
       expect(claimBody).toContain("newbie");
 
@@ -162,16 +197,10 @@ describe("credits hateoas http", () => {
   });
 
   it("accept → magic-link authorize confirms transfer", async () => {
-    await claimDirectory({ email: "alice@acme.com", tenantId: "alice" });
-    await claimDirectory({ email: "bob@acme.com", tenantId: "bob" });
-    await appendCreditEntry({
-      tenantId: "bob",
-      kind: "topup_settled",
-      deltaCents: 10_000,
-      grantSource: "topup",
-      note: "seed",
-    });
-    const { request } = await createMoneyRequest({
+    await claim({ email: "alice@acme.com", tenantId: "alice" });
+    await claim({ email: "bob@acme.com", tenantId: "bob" });
+    await seedTopup("bob", 10_000, "seed");
+    const { request } = await createRequest({
       requesterTenantId: "alice",
       to: "bob@acme.com",
       amountCents: 1200,
@@ -217,14 +246,9 @@ describe("credits hateoas http", () => {
   });
 
   it("pay/stage → magic link → cancel", async () => {
-    await claimDirectory({ email: "alice@acme.com", tenantId: "alice", handle: "alice" });
-    await claimDirectory({ email: "bob@acme.com", tenantId: "bob", handle: "bob" });
-    await appendCreditEntry({
-      tenantId: "alice",
-      kind: "topup_settled",
-      deltaCents: 5000,
-      grantSource: "topup",
-    });
+    await claim({ email: "alice@acme.com", tenantId: "alice", handle: "alice" });
+    await claim({ email: "bob@acme.com", tenantId: "bob", handle: "bob" });
+    await seedTopup("alice", 5000);
 
     await withApp(async (base) => {
       const stage = await fetch(`${base}/credits/pay/stage`, {

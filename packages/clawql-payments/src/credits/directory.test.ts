@@ -1,17 +1,13 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Effect } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
-  claimDirectory,
-  claimHandle,
-  claimPhone,
-  getEmailEntry,
-  getHandleEntry,
-  getPhoneEntry,
-  getTenantEntry,
-  listDirectory,
+  creditsDirectoryLiveLayer,
+  CreditsDirectoryService,
+  DirectoryError,
   looksLikeEmail,
   looksLikeHandle,
   looksLikePhone,
@@ -20,11 +16,6 @@ import {
   normalizeEmail,
   normalizeHandle,
   normalizePhone,
-  releaseEmail,
-  releaseHandle,
-  releasePhone,
-  resetDirectoryForTests,
-  resolveRecipient,
   RESERVED_HANDLES,
 } from "./directory.js";
 
@@ -32,10 +23,39 @@ describe("payments directory email + username", () => {
   let home: string;
   let env: NodeJS.ProcessEnv;
 
+  const run = <A, E>(
+    program: Effect.Effect<A, E, CreditsDirectoryService>,
+    e: NodeJS.ProcessEnv = env
+  ): Promise<A> => Effect.runPromise(program.pipe(Effect.provide(creditsDirectoryLiveLayer(e))));
+
+  const withDir = <A, E>(
+    body: (directory: CreditsDirectoryService["Type"]) => Effect.Effect<A, E, never>,
+    e: NodeJS.ProcessEnv = env
+  ): Promise<A> =>
+    run(
+      Effect.gen(function* () {
+        const directory = yield* CreditsDirectoryService;
+        return yield* body(directory);
+      }),
+      e
+    );
+
+  /** Run an expected-failure directory op and return the DirectoryError. */
+  const failure = (
+    body: (directory: CreditsDirectoryService["Type"]) => Effect.Effect<unknown, DirectoryError>,
+    e: NodeJS.ProcessEnv = env
+  ): Promise<DirectoryError> =>
+    run(
+      Effect.gen(function* () {
+        const directory = yield* CreditsDirectoryService;
+        return yield* body(directory).pipe(Effect.flip);
+      }),
+      e
+    );
+
   beforeEach(async () => {
     home = await mkdtemp(join(tmpdir(), "clawql-dir-"));
     env = { ...process.env, CLAWQL_HOME: home };
-    await resetDirectoryForTests(env);
   });
 
   afterEach(async () => {
@@ -60,124 +80,166 @@ describe("payments directory email + username", () => {
   });
 
   it("claims email as default and optional privacy username", async () => {
-    const { entry, created } = await claimDirectory(
-      {
-        email: "Alice@Acme.com",
-        tenantId: "t-alice",
-        displayName: "Alice",
-      },
-      env
+    const result = await withDir((directory) =>
+      Effect.gen(function* () {
+        const claimed = yield* directory.claim({
+          email: "Alice@Acme.com",
+          tenantId: "t-alice",
+          displayName: "Alice",
+        });
+        const byEmail = yield* directory.resolveRecipient("alice@acme.com");
+        const updated = yield* directory.claim({ tenantId: "t-alice", handle: "@alice" });
+        const byHandle = yield* directory.resolveRecipient("@alice");
+        const tenant = yield* directory.getTenant("t-alice");
+        const emailEntry = yield* directory.getEmail("alice@acme.com");
+        const handleEntry = yield* directory.getHandle("alice");
+        return { claimed, byEmail, updated, byHandle, tenant, emailEntry, handleEntry };
+      })
     );
-    expect(created).toBe(true);
-    expect(entry.email).toBe("alice@acme.com");
-    expect(entry.handle).toBeUndefined();
 
-    const byEmail = await resolveRecipient("alice@acme.com", env);
-    expect(byEmail).toMatchObject({
+    expect(result.claimed.created).toBe(true);
+    expect(result.claimed.entry.email).toBe("alice@acme.com");
+    expect(result.claimed.entry.handle).toBeUndefined();
+
+    expect(result.byEmail).toMatchObject({
       tenantId: "t-alice",
       via: "email",
       email: "alice@acme.com",
     });
 
-    // Add privacy username later
-    const updated = await claimDirectory({ tenantId: "t-alice", handle: "@alice" }, env);
-    expect(updated.created).toBe(false);
-    expect(updated.entry.handle).toBe("alice");
-    expect(updated.entry.email).toBe("alice@acme.com");
+    expect(result.updated.created).toBe(false);
+    expect(result.updated.entry.handle).toBe("alice");
+    expect(result.updated.entry.email).toBe("alice@acme.com");
 
-    const byHandle = await resolveRecipient("@alice", env);
-    expect(byHandle.tenantId).toBe("t-alice");
-    expect(byHandle.via).toBe("handle");
-    // Prefer showing username; email still on profile
-    expect(byHandle.email).toBe("alice@acme.com");
+    expect(result.byHandle.tenantId).toBe("t-alice");
+    expect(result.byHandle.via).toBe("handle");
+    expect(result.byHandle.email).toBe("alice@acme.com");
 
-    expect((await getTenantEntry("t-alice", env))?.handle).toBe("alice");
-    expect((await getEmailEntry("alice@acme.com", env))?.handle).toBe("alice");
-    expect((await getHandleEntry("alice", env))?.email).toBe("alice@acme.com");
+    expect(result.tenant?.handle).toBe("alice");
+    expect(result.emailEntry?.handle).toBe("alice");
+    expect(result.handleEntry?.email).toBe("alice@acme.com");
   });
 
   it("enforces uniqueness on email and username", async () => {
-    await claimDirectory({ email: "a@x.com", tenantId: "t1" }, env);
-    await expect(claimDirectory({ email: "a@x.com", tenantId: "t2" }, env)).rejects.toThrow(
-      /already claimed/
+    await withDir((directory) => directory.claim({ email: "a@x.com", tenantId: "t1" }));
+    const emailDup = await failure((directory) =>
+      directory.claim({ email: "a@x.com", tenantId: "t2" })
     );
+    expect(emailDup.reason).toMatch(/already claimed/);
 
-    await claimHandle({ handle: "alice", tenantId: "t1" }, env);
-    await expect(claimHandle({ handle: "alice", tenantId: "t2" }, env)).rejects.toThrow(
-      /already claimed/
+    await withDir((directory) => directory.claim({ handle: "alice", tenantId: "t1" }));
+    const handleDup = await failure((directory) =>
+      directory.claim({ handle: "alice", tenantId: "t2" })
     );
+    expect(handleDup.reason).toMatch(/already claimed/);
   });
 
   it("replaces prior username for same tenant", async () => {
-    await claimDirectory({ email: "a@x.com", handle: "oldname", tenantId: "t1" }, env);
-    await claimDirectory({ handle: "newname", tenantId: "t1" }, env);
-    expect(await getHandleEntry("oldname", env)).toBeUndefined();
-    expect((await getTenantEntry("t1", env))?.handle).toBe("newname");
-    expect((await getTenantEntry("t1", env))?.email).toBe("a@x.com");
+    const result = await withDir((directory) =>
+      Effect.gen(function* () {
+        yield* directory.claim({ email: "a@x.com", handle: "oldname", tenantId: "t1" });
+        yield* directory.claim({ handle: "newname", tenantId: "t1" });
+        const oldHandle = yield* directory.getHandle("oldname");
+        const tenant = yield* directory.getTenant("t1");
+        return { oldHandle, tenant };
+      })
+    );
+    expect(result.oldHandle).toBeUndefined();
+    expect(result.tenant?.handle).toBe("newname");
+    expect(result.tenant?.email).toBe("a@x.com");
   });
 
   it("releases username but keeps email", async () => {
-    await claimDirectory({ email: "a@x.com", handle: "temp", tenantId: "t" }, env);
-    expect(await releaseHandle("@temp", env)).toBe(true);
-    await expect(resolveRecipient("@temp", env)).rejects.toThrow(/Unknown username/);
-    expect((await resolveRecipient("a@x.com", env)).tenantId).toBe("t");
+    await withDir((directory) =>
+      directory.claim({ email: "a@x.com", handle: "temp", tenantId: "t" })
+    );
+    const released = await withDir((directory) => directory.releaseHandle("@temp"));
+    expect(released).toBe(true);
+    const missing = await failure((directory) => directory.resolveRecipient("@temp"));
+    expect(missing.reason).toMatch(/Unknown username/);
+    const byEmail = await withDir((directory) => directory.resolveRecipient("a@x.com"));
+    expect(byEmail.tenantId).toBe("t");
   });
 
   it("releases email but keeps username", async () => {
-    await claimDirectory({ email: "a@x.com", handle: "alice", tenantId: "t" }, env);
-    expect(await releaseEmail("a@x.com", env)).toBe(true);
-    await expect(resolveRecipient("a@x.com", env)).rejects.toThrow(/Unknown email/);
-    expect((await resolveRecipient("@alice", env)).tenantId).toBe("t");
+    await withDir((directory) =>
+      directory.claim({ email: "a@x.com", handle: "alice", tenantId: "t" })
+    );
+    const released = await withDir((directory) => directory.releaseEmail("a@x.com"));
+    expect(released).toBe(true);
+    const missing = await failure((directory) => directory.resolveRecipient("a@x.com"));
+    expect(missing.reason).toMatch(/Unknown email/);
+    const byHandle = await withDir((directory) => directory.resolveRecipient("@alice"));
+    expect(byHandle.tenantId).toBe("t");
   });
 
   it("lists profiles", async () => {
-    await claimDirectory({ email: "b@x.com", tenantId: "tb", handle: "bob" }, env);
-    await claimDirectory({ email: "a@x.com", tenantId: "ta" }, env);
-    const list = await listDirectory(env);
+    const list = await withDir((directory) =>
+      Effect.gen(function* () {
+        yield* directory.claim({ email: "b@x.com", tenantId: "tb", handle: "bob" });
+        yield* directory.claim({ email: "a@x.com", tenantId: "ta" });
+        return yield* directory.list();
+      })
+    );
     expect(list.map((e) => e.tenantId).sort()).toEqual(["ta", "tb"]);
   });
 
   it("claims phone alias and resolves pay-by-phone", async () => {
-    await claimDirectory({ email: "bob@acme.com", tenantId: "bob" }, env);
-    const { entry } = await claimPhone(
-      { phone: "+1 555 987 6543", tenantId: "bob", phoneVerified: true },
-      env
+    const result = await withDir((directory) =>
+      Effect.gen(function* () {
+        yield* directory.claim({ email: "bob@acme.com", tenantId: "bob" });
+        const claimed = yield* directory.claim({
+          phone: "+1 555 987 6543",
+          tenantId: "bob",
+          phoneVerified: true,
+        });
+        const byPhone = yield* directory.resolveRecipient("+15559876543");
+        const phoneEntry = yield* directory.getPhone("555-987-6543");
+        const released = yield* directory.releasePhone("+15559876543");
+        return { claimed, byPhone, phoneEntry, released };
+      })
     );
-    expect(entry.phone).toBe("+15559876543");
-    expect(entry.phoneVerifiedAt).toBeTruthy();
-    expect(entry.email).toBe("bob@acme.com");
+    expect(result.claimed.entry.phone).toBe("+15559876543");
+    expect(result.claimed.entry.phoneVerifiedAt).toBeTruthy();
+    expect(result.claimed.entry.email).toBe("bob@acme.com");
 
-    const byPhone = await resolveRecipient("+15559876543", env);
-    expect(byPhone).toMatchObject({
+    expect(result.byPhone).toMatchObject({
       tenantId: "bob",
       via: "phone",
       email: "bob@acme.com",
       phone: "+15559876543",
     });
-    expect((await getPhoneEntry("555-987-6543", env))?.tenantId).toBe("bob");
+    expect(result.phoneEntry?.tenantId).toBe("bob");
+    expect(result.released).toBe(true);
 
-    expect(await releasePhone("+15559876543", env)).toBe(true);
-    await expect(resolveRecipient("+15559876543", env)).rejects.toThrow(/Unknown phone/);
-    expect((await resolveRecipient("bob@acme.com", env)).tenantId).toBe("bob");
+    const missing = await failure((directory) => directory.resolveRecipient("+15559876543"));
+    expect(missing.reason).toMatch(/Unknown phone/);
+    const byEmail = await withDir((directory) => directory.resolveRecipient("bob@acme.com"));
+    expect(byEmail.tenantId).toBe("bob");
   });
 
   it("requires verified assertion when phone gate is on", async () => {
     const gated = { ...env, CLAWQL_CREDITS_PHONE_REQUIRE_VERIFIED: "1" };
-    await claimDirectory({ email: "c@x.com", tenantId: "c" }, gated);
-    await expect(claimDirectory({ phone: "+15551112222", tenantId: "c" }, gated)).rejects.toThrow(
-      /verified assertion/
+    await withDir((directory) => directory.claim({ email: "c@x.com", tenantId: "c" }), gated);
+    const denied = await failure(
+      (directory) => directory.claim({ phone: "+15551112222", tenantId: "c" }),
+      gated
     );
-    const ok = await claimDirectory(
-      { phone: "+15551112222", tenantId: "c", phoneVerified: true },
+    expect(denied.reason).toMatch(/verified assertion/);
+    const ok = await withDir(
+      (directory) => directory.claim({ phone: "+15551112222", tenantId: "c", phoneVerified: true }),
       gated
     );
     expect(ok.entry.phone).toBe("+15551112222");
   });
 
   it("enforces phone uniqueness", async () => {
-    await claimDirectory({ email: "a@x.com", phone: "+15550001111", tenantId: "t1" }, env);
-    await expect(
-      claimDirectory({ email: "b@x.com", phone: "+15550001111", tenantId: "t2" }, env)
-    ).rejects.toThrow(/already claimed/);
+    await withDir((directory) =>
+      directory.claim({ email: "a@x.com", phone: "+15550001111", tenantId: "t1" })
+    );
+    const dup = await failure((directory) =>
+      directory.claim({ email: "b@x.com", phone: "+15550001111", tenantId: "t2" })
+    );
+    expect(dup.reason).toMatch(/already claimed/);
   });
 });

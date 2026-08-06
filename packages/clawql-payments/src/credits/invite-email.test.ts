@@ -1,12 +1,29 @@
+import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 import {
   buildMoneyRequestInviteEmail,
+  creditsInviteEmailLiveLayer,
   creditsInviteEmailProvider,
+  CreditsInviteEmailService,
   isCreditsInviteEmailDryRun,
   isCreditsInviteEmailEnabled,
-  sendMoneyRequestInviteEmail,
   shouldSendInviteEmailOnCreate,
+  type InviteEmailResult,
+  type MoneyRequestInviteEmailInput,
+  type SendInviteEmailOptions,
 } from "./invite-email.js";
+
+const sendInvite = (
+  input: MoneyRequestInviteEmailInput,
+  env: NodeJS.ProcessEnv,
+  options?: SendInviteEmailOptions
+): Promise<InviteEmailResult> =>
+  Effect.runPromise(
+    Effect.gen(function* () {
+      const svc = yield* CreditsInviteEmailService;
+      return yield* svc.send(input, options);
+    }).pipe(Effect.provide(creditsInviteEmailLiveLayer(env)))
+  );
 
 describe("credits invite email", () => {
   it("defaults to dry-run provider", () => {
@@ -40,7 +57,7 @@ describe("credits invite email", () => {
   });
 
   it("dry-runs by default even when invite email enabled", async () => {
-    const result = await sendMoneyRequestInviteEmail(
+    const result = await sendInvite(
       {
         toEmail: "n@x.com",
         inviteUrl: "https://x/invite",
@@ -63,7 +80,7 @@ describe("credits invite email", () => {
           headers: { "content-type": "application/json" },
         })
     );
-    const result = await sendMoneyRequestInviteEmail(
+    const result = await sendInvite(
       {
         toEmail: "n@x.com",
         inviteUrl: "https://x/invite",
@@ -99,7 +116,7 @@ describe("credits invite email", () => {
     const fetchImpl = vi.fn(
       async () => new Response(JSON.stringify({ id: "re_123" }), { status: 200 })
     );
-    const result = await sendMoneyRequestInviteEmail(
+    const result = await sendInvite(
       {
         toEmail: "n@x.com",
         inviteUrl: "https://x/invite",
@@ -125,7 +142,7 @@ describe("credits invite email", () => {
 
   it("returns error on webhook failure", async () => {
     const fetchImpl = vi.fn(async () => new Response("nope", { status: 500 }));
-    const result = await sendMoneyRequestInviteEmail(
+    const result = await sendInvite(
       {
         toEmail: "n@x.com",
         inviteUrl: "https://x/invite",

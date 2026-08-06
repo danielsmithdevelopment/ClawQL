@@ -3,17 +3,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Effect } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { AuditLive } from "clawql-core";
-import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
-import { lokiPushLiveLayer } from "../audit/loki.js";
-import { stripeClientLiveLayer } from "../stripe/stripe-client-service.js";
 import { resetPaymentAuditStoreForTests } from "../audit/index.js";
-import { AchTopupService, achTopupLiveLayer } from "./ach-topup-service.js";
-import { CreditsService, creditsLiveLayer } from "./credits-service.js";
-import { creditsLedgerLiveLayer, getCreditAccount, resetCreditsLedgerForTests } from "./ledger.js";
-import { creditsStepUpLiveLayer } from "./step-up.js";
-import { pendingActionsLiveLayer } from "../compensation/pending-actions.js";
-import { Layer } from "effect";
+import {
+  resetPaymentsEffectRuntimeForTests,
+  runPaymentsEffect,
+} from "../runtime/payments-effect-runtime.js";
+import { AchTopupService } from "./ach-topup-service.js";
+import { CreditsService } from "./credits-service.js";
+import { CreditsLedgerService } from "./ledger.js";
 
 describe("credits + ACH top-up (dry-run)", () => {
   let home: string;
@@ -25,11 +22,12 @@ describe("credits + ACH top-up (dry-run)", () => {
     process.env.CLAWQL_ACH_TOPUP_ENABLED = "1";
     process.env.CLAWQL_ACH_TOPUP_DRY_RUN = "1";
     delete process.env.STRIPE_SECRET_KEY;
+    resetPaymentsEffectRuntimeForTests();
     resetPaymentAuditStoreForTests();
-    await resetCreditsLedgerForTests();
   });
 
   afterEach(async () => {
+    resetPaymentsEffectRuntimeForTests();
     resetPaymentAuditStoreForTests();
     delete process.env.CLAWQL_HOME;
     delete process.env.CLAWQL_CREDITS_ENABLED;
@@ -38,25 +36,16 @@ describe("credits + ACH top-up (dry-run)", () => {
     await rm(home, { recursive: true, force: true });
   });
 
-  const testLayer = () => {
-    const audit = paymentAuditLiveLayer(process.env).pipe(
-      Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(process.env)))
+  const accountBalance = (tenantId: string) =>
+    runPaymentsEffect(
+      Effect.gen(function* () {
+        const ledger = yield* CreditsLedgerService;
+        return yield* ledger.getAccount(tenantId);
+      })
     );
-    const stripe = stripeClientLiveLayer(process.env);
-    const ledger = creditsLedgerLiveLayer(process.env);
-    const stepUp = creditsStepUpLiveLayer(process.env);
-    const pending = pendingActionsLiveLayer(process.env);
-    const credits = creditsLiveLayer(process.env).pipe(
-      Layer.provide(Layer.mergeAll(audit, ledger, stepUp, pending))
-    );
-    const ach = achTopupLiveLayer(process.env).pipe(
-      Layer.provide(Layer.mergeAll(audit, stripe, credits))
-    );
-    return Layer.mergeAll(audit, stripe, ledger, credits, ach);
-  };
 
   it("bank-link + topup dry-run settles credits", async () => {
-    const result = await Effect.runPromise(
+    const result = await runPaymentsEffect(
       Effect.gen(function* () {
         const ach = yield* AchTopupService;
         const link = yield* ach.createBankLinkSession({
@@ -71,7 +60,7 @@ describe("credits + ACH top-up (dry-run)", () => {
         const credits = yield* CreditsService;
         const bal = yield* credits.getBalance("t1");
         return { link, topup, bal };
-      }).pipe(Effect.provide(testLayer()))
+      })
     );
 
     expect(result.link.dryRun).toBe(true);
@@ -82,22 +71,22 @@ describe("credits + ACH top-up (dry-run)", () => {
   });
 
   it("debit reduces balance and rejects overdraft", async () => {
-    await Effect.runPromise(
+    await runPaymentsEffect(
       Effect.gen(function* () {
         const ach = yield* AchTopupService;
         yield* ach.createTopup({ customerId: "cus_test", amountUsd: 10, tenantId: "t1" });
         const credits = yield* CreditsService;
         yield* credits.debit({ tenantId: "t1", amountCents: 400, resource: "inference" });
-      }).pipe(Effect.provide(testLayer()))
+      })
     );
-    const account = await getCreditAccount("t1");
+    const account = await accountBalance("t1");
     expect(account.balanceCents).toBe(600);
 
-    const overdraft = await Effect.runPromise(
+    const overdraft = await runPaymentsEffect(
       Effect.gen(function* () {
         const credits = yield* CreditsService;
         return yield* credits.debit({ tenantId: "t1", amountCents: 9999 }).pipe(Effect.either);
-      }).pipe(Effect.provide(testLayer()))
+      })
     );
     expect(overdraft._tag).toBe("Left");
     if (overdraft._tag === "Left") {

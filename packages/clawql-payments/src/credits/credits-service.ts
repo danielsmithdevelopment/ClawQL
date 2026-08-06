@@ -30,7 +30,7 @@ import {
   type CreditTransferResult,
 } from "./ledger.js";
 import { CreditsStepUpService } from "./step-up.js";
-import { markMoneyRequestPaid } from "./requests.js";
+import { CreditsRequestsService } from "./requests.js";
 
 export const CREDITS_TRANSFER_STAGE_TOOL = "payments_credits_transfer_stage";
 export const CREDITS_TRANSFER_CONFIRM_TOOL = "payments_credits_transfer_confirm";
@@ -118,7 +118,11 @@ export function creditsLiveLayer(
 ): Layer.Layer<
   CreditsService,
   never,
-  PaymentAuditService | CreditsLedgerService | CreditsStepUpService | PendingActionsService
+  | PaymentAuditService
+  | CreditsLedgerService
+  | CreditsStepUpService
+  | PendingActionsService
+  | CreditsRequestsService
 > {
   return Layer.effect(
     CreditsService,
@@ -127,6 +131,7 @@ export function creditsLiveLayer(
       const ledger = yield* CreditsLedgerService;
       const stepUp = yield* CreditsStepUpService;
       const pendingActions = yield* PendingActionsService;
+      const requestsSvc = yield* CreditsRequestsService;
 
       const toCreditsError = (error: { readonly reason: string; readonly cause?: unknown }) =>
         new CreditsError({ reason: error.reason, cause: error.cause });
@@ -463,13 +468,9 @@ export function creditsLiveLayer(
           const requestId =
             typeof record.args.requestId === "string" ? record.args.requestId.trim() : "";
           if (requestId) {
-            yield* Effect.promise(async () => {
-              try {
-                await markMoneyRequestPaid({ requestId, transferId: result.transferId }, env);
-              } catch {
-                /* best-effort — transfer already succeeded */
-              }
-            });
+            yield* requestsSvc
+              .markPaid({ requestId, transferId: result.transferId })
+              .pipe(Effect.catchAll(() => Effect.void));
           }
 
           return result;
