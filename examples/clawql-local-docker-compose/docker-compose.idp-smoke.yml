@@ -64,8 +64,8 @@ services:
     environment:
       # Host URL — CSRF / absolute links when hitting published port 8000
       PAPERLESS_URL: http://127.0.0.1:8000
-      PAPERLESS_CSRF_TRUSTED_ORIGINS: http://127.0.0.1:8000
-      PAPERLESS_ALLOWED_HOSTS: "*"
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: http://127.0.0.1:8000,http://localhost:8000
+      PAPERLESS_ALLOWED_HOSTS: localhost,127.0.0.1,paperless-ngx
       PAPERLESS_TIKA_ENABLED: "1"
       PAPERLESS_TIKA_ENDPOINT: http://tika:9998
       PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000

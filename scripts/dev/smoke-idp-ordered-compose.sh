@@ -68,6 +68,19 @@ trap cleanup EXIT
 dump_compose_diag() {
   echo "== compose diag ==" >&2
   docker compose -f "${COMPOSE_FILE}" ps -a >&2 || true
+  echo "---- host probes ----" >&2
+  for url in \
+    "http://127.0.0.1:8000/" \
+    "http://127.0.0.1:8000/api/" \
+    "http://127.0.0.1:8000/api/token/" \
+    "http://127.0.0.1:18081/status.php" \
+    "http://127.0.0.1:18080/" \
+    "http://127.0.0.1:9998/version" \
+    "http://127.0.0.1:3000/health"
+  do
+    code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 "${url}" 2>/dev/null || echo err)"
+    echo "  ${code}  ${url}" >&2
+  done
   for c in clawql-idp-paperless clawql-idp-stirling clawql-idp-nextcloud clawql-idp-tika clawql-idp-gotenberg; do
     echo "---- logs ${c} (tail) ----" >&2
     docker logs --tail 80 "${c}" 2>&1 || true
@@ -90,23 +103,24 @@ for _ in $(seq 1 90); do
 done
 [[ "${stirling_ok}" == "1" ]] || ok_core=0
 
-# Paperless first migrate can take several minutes on cold GHA runners
+# Paperless: docker healthcheck hits `/` successfully; `/api/` status codes vary by version.
+# Prefer container health, fall back to host HTTP on `/` or `/api/`.
 paperless_ok=0
+last_api=""
+last_root=""
+pl_health=""
 for _ in $(seq 1 150); do
-  code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8000/api/" 2>/dev/null || true)"
-  # 200 / 401 / 403 means API is up
-  if [[ "${code}" == "200" || "${code}" == "401" || "${code}" == "403" ]]; then
+  pl_health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' clawql-idp-paperless 2>/dev/null || echo missing)"
+  if [[ "${pl_health}" == "healthy" ]]; then
     paperless_ok=1
     break
   fi
-  # Root redirect also means gunicorn is serving (API may lag one tick)
-  root_code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8000/" 2>/dev/null || true)"
-  if [[ "${root_code}" == "200" || "${root_code}" == "302" || "${root_code}" == "301" ]]; then
-    api2="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8000/api/" 2>/dev/null || true)"
-    if [[ "${api2}" == "200" || "${api2}" == "401" || "${api2}" == "403" ]]; then
-      paperless_ok=1
-      break
-    fi
+  last_api="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:8000/api/" 2>/dev/null || true)"
+  last_root="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:8000/" 2>/dev/null || true)"
+  if [[ "${last_root}" =~ ^(200|301|302)$ ]] \
+    || [[ "${last_api}" =~ ^(200|301|302|401|403)$ ]]; then
+    paperless_ok=1
+    break
   fi
   sleep 3
 done
@@ -129,7 +143,8 @@ fi
 
 if [[ "${ok_core}" != "1" ]]; then
   dump_compose_diag
-  record FAIL compose_stack_health "tika/gotenberg/stirling=${stirling_ok} paperless=${paperless_ok} nextcloud=${nextcloud_ok}"
+  record FAIL compose_stack_health \
+    "tika/gotenberg/stirling=${stirling_ok} paperless=${paperless_ok}(health=${pl_health:-?} api=${last_api:-?} root=${last_root:-?}) nextcloud=${nextcloud_ok}"
   exit 1
 fi
 record OK compose_stack_health "tika gotenberg stirling paperless nextcloud"
