@@ -237,7 +237,9 @@ export function authPolicyServiceFromEnv(env: NodeJS.ProcessEnv = process.env) {
 }
 
 /** Live policy service backed by `process.env` (re-read once at layer build). */
-export const AuthPolicyServiceLive = Layer.sync(AuthPolicyService, () => authPolicyServiceFromEnv());
+export const AuthPolicyServiceLive = Layer.sync(AuthPolicyService, () =>
+  authPolicyServiceFromEnv()
+);
 
 /** Build an isolated policy service layer for tests / explicit env. */
 export function createAuthPolicyServiceLayer(
