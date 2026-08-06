@@ -58,7 +58,9 @@ describe("credits deeplinks", () => {
     const a = run(parseCreditsDeepLink("clawql://pay?to=@bob&amount=10&note=hi"));
     expect(a).toMatchObject({ ok: true, to: "@bob", amountUsd: 10, note: "hi" });
     process.env.CLAWQL_CREDITS_HATEOAS_BASE = "https://pay.example";
-    const b = run(parseCreditsDeepLink(run(buildPayDeepLink({ to: "alice@acme.com", amountUsd: 2.5 }))));
+    const b = run(
+      parseCreditsDeepLink(run(buildPayDeepLink({ to: "alice@acme.com", amountUsd: 2.5 })))
+    );
     expect(b).toMatchObject({ ok: true, to: "alice@acme.com", amountUsd: 2.5 });
   });
 

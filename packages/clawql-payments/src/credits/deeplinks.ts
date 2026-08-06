@@ -10,9 +10,7 @@
 import { Context, Effect, Layer } from "effect";
 import { compensationApprovalBaseUrl } from "../compensation/config.js";
 
-export const creditsHateoasBase = (
-  env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<string> =>
+export const creditsHateoasBase = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<string> =>
   Effect.sync(() =>
     (env.CLAWQL_CREDITS_HATEOAS_BASE?.trim() || compensationApprovalBaseUrl(env)).replace(/\/$/, "")
   );
@@ -97,7 +95,10 @@ export const buildPayDeepLink = (
   input: PayDeepLink,
   env: NodeJS.ProcessEnv = process.env
 ): Effect.Effect<string> =>
-  Effect.map(creditsHateoasBase(env), (base) => `${base}/credits/pay?${payQuery(input).toString()}`);
+  Effect.map(
+    creditsHateoasBase(env),
+    (base) => `${base}/credits/pay?${payQuery(input).toString()}`
+  );
 
 export const buildRequestDeepLink = (
   input: RequestDeepLink,

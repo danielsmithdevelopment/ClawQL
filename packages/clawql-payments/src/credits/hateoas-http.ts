@@ -132,13 +132,13 @@ function payPageHtml(pay: PayDeepLink): Effect.Effect<string> {
     const cli = yield* payCliHint(pay);
     const clawql = yield* buildClawqlPayUri(pay);
     const qrQs = new URLSearchParams({
-    to: pay.to,
-    ...(pay.amountUsd != null ? { amount: String(pay.amountUsd) } : {}),
-    ...(pay.note ? { note: pay.note } : {}),
-  }).toString();
-  const amountLabel = pay.amountUsd != null ? `$${Number(pay.amountUsd).toFixed(2)}` : "Credits";
+      to: pay.to,
+      ...(pay.amountUsd != null ? { amount: String(pay.amountUsd) } : {}),
+      ...(pay.note ? { note: pay.note } : {}),
+    }).toString();
+    const amountLabel = pay.amountUsd != null ? `$${Number(pay.amountUsd).toFixed(2)}` : "Credits";
 
-  const body = `
+    const body = `
     <a class="back" href="/credits">← Home</a>
     <div class="topbar" style="margin-top:0.75rem">
       <h1 class="brand">Claw<span>QL</span></h1>
@@ -359,7 +359,9 @@ export function attachCreditsHateoasRoutes(
 
   app.get("/credits/qr.svg", async (req: Request, res: Response) => {
     try {
-      const pay = Effect.runSync(parsePayDeepLinkQuery(req.query as Record<string, string | undefined>));
+      const pay = Effect.runSync(
+        parsePayDeepLinkQuery(req.query as Record<string, string | undefined>)
+      );
       const svg = await Effect.runPromise(
         Effect.flatMap(buildPayQrPayload(pay), (payload) => renderQrSvg(payload))
       );

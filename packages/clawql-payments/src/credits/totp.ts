@@ -31,8 +31,7 @@ export const verifyTotp = (
   secretBase32: string,
   token: string,
   options?: { timeMs?: number; stepSec?: number; digits?: number; window?: number }
-): Effect.Effect<boolean, Error> =>
-  Effect.try(() => verifyTotpSync(secretBase32, token, options));
+): Effect.Effect<boolean, Error> => Effect.try(() => verifyTotpSync(secretBase32, token, options));
 
 export const totpOtpauthUrl = (input: {
   secretBase32: string;
