@@ -4,7 +4,10 @@ import { join } from "node:path";
 import { Effect } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resetPaymentAuditStoreForTests } from "../audit/worm.js";
-import { resetPaymentsEffectRuntimeForTests, runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
+import {
+  resetPaymentsEffectRuntimeForTests,
+  runPaymentsEffect,
+} from "../runtime/payments-effect-runtime.js";
 import { CreditsLedgerService } from "./ledger.js";
 import { CreditsDirectoryService } from "./directory.js";
 import { CreditsService } from "./credits-service.js";

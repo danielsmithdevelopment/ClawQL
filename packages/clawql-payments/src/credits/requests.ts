@@ -456,7 +456,11 @@ export class RequestsError extends Data.TaggedError("RequestsError")<{
 type ClaimInviteInput = ClaimMoneyRequestInviteInput;
 type DeclineInput = { requestId: string; payerTenantId: string };
 type CancelInput = { requestId: string; requesterTenantId: string };
-type MarkAcceptedInput = { requestId: string; payerTenantId: string; stagedTransferActionId: string };
+type MarkAcceptedInput = {
+  requestId: string;
+  payerTenantId: string;
+  stagedTransferActionId: string;
+};
 type MarkPaidInput = { requestId: string; transferId: string };
 
 /** Effect surface over money requests / invoices. */

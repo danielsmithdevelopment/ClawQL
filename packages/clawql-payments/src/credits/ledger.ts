@@ -648,9 +648,7 @@ async function settleTopupByPaymentIntent(
   });
 }
 
-async function resetCreditsLedgerForTests(
-  env: NodeJS.ProcessEnv = process.env
-): Promise<void> {
+async function resetCreditsLedgerForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveFile({ accounts: {} }, env);
 }
 

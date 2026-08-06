@@ -4,11 +4,7 @@
  */
 
 import { Context, Data, Effect, Layer } from "effect";
-import {
-  CreditsLedgerService,
-  type CreditLedgerEntry,
-  type CreditLedgerKind,
-} from "./ledger.js";
+import { CreditsLedgerService, type CreditLedgerEntry, type CreditLedgerKind } from "./ledger.js";
 import { CreditsDirectoryService, maskEmail, type DirectoryEntry } from "./directory.js";
 import {
   CreditsRequestsService,

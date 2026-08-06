@@ -316,9 +316,7 @@ async function getTenantEntry(
   return file.byTenant[id];
 }
 
-async function listDirectory(
-  env: NodeJS.ProcessEnv = process.env
-): Promise<DirectoryEntry[]> {
+async function listDirectory(env: NodeJS.ProcessEnv = process.env): Promise<DirectoryEntry[]> {
   const file = await loadFile(env);
   return Object.values(file.byTenant).sort((a, b) => {
     const ak = a.handle ?? a.email ?? a.phone ?? a.tenantId;
@@ -443,10 +441,7 @@ async function releaseHandle(
   return true;
 }
 
-async function releaseEmail(
-  email: string,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<boolean> {
+async function releaseEmail(email: string, env: NodeJS.ProcessEnv = process.env): Promise<boolean> {
   const key = normalizeEmail(email);
   const file = await loadFile(env);
   const entry = file.emails[key];
@@ -462,10 +457,7 @@ async function releaseEmail(
   return true;
 }
 
-async function releasePhone(
-  phone: string,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<boolean> {
+async function releasePhone(phone: string, env: NodeJS.ProcessEnv = process.env): Promise<boolean> {
   const key = normalizePhone(phone, env);
   const file = await loadFile(env);
   const entry = file.phones[key];
