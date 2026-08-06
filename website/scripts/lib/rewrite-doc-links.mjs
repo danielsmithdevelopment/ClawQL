@@ -39,6 +39,7 @@ export const DOC_SITE_ROUTES = {
   'docs/deployment/helm.md': '/helm',
   'docs/providers/idp-pipeline.md': '/learn/document-pipeline',
   'docs/mcp/mcp-tools.md': '/tools',
+  'docs/mcp/mcp-api-adapter.md': '/mcp/mcp-api-adapter',
   'docs/mcp/workflow-tool.md': '/learn/schedule-notify-workflows',
   'docs/mcp/notify-tool.md': '/notify',
   'docs/mcp/argocd-tool.md': '/learn/schedule-notify-workflows',

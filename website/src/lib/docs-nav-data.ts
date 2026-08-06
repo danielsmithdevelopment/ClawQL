@@ -105,6 +105,7 @@ export const docsNavigation: Array<NavGroup> = [
     links: [
       { title: 'Reference', href: '/reference' },
       { title: 'MCP tools', href: '/tools' },
+      { title: 'mcp-api-adapter', href: '/mcp/mcp-api-adapter' },
       { title: 'Configuration', href: '/spec-configuration' },
       {
         title: 'Contributor spec',

@@ -6,15 +6,20 @@ This file helps AI agents and crawlers find canonical documentation. For full-te
 
 ## Getting started
 - [Agent setup](https://docs.clawql.com/agent-setup): Desktop onboarding, Cursor iOS Cloud Agents, local sandbox
+- [Inference setup](https://docs.clawql.com/getting-started/inference): clawql-inference five-minute start, BYOK, MCP + memory
 - [Quickstart](https://docs.clawql.com/quickstart): Fastest path to a running gateway
 - [Getting started](https://docs.clawql.com/getting-started): Quickstart paths, teams, and install options
 - [Quickstart](https://docs.clawql.com/quickstart): npx, install options, and first MCP connect
 
 ## Core reference
 - [MCP tools](https://docs.clawql.com/tools): search, execute, audit, cache, and optional tools
+- [mcp-api-adapter](https://docs.clawql.com/mcp/mcp-api-adapter): Any MCP server → OpenAPI, GraphQL, /mcp, gRPC, and gen-cli
 - [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric): Regional Hubs, Dedicated Virtual Gateways, Edge swarm
+- [Enterprise Ontology](https://docs.clawql.com/architecture/enterprise-ontology): Open YAML/OKF typed entities, kinetic actions, Git vs R2
+- [.cq* file extensions](https://docs.clawql.com/specs/cq-extensions): Draft specs for .cqe, .cqm, .cqk, .cqw (ADR 0010)
+- [Token efficiency](https://docs.clawql.com/architecture/token-efficiency): Twelve compounding layers for cost and reasoning quality
 - [Agentic Gateway (inference)](https://docs.clawql.com/inference/clawql-inference): OpenAI drop-in, flywheel, WORM path to Auditable Production AI
-- [Plugins](https://docs.clawql.com/plugins): Agentic Gateway core and optional plugin packages
+- [Plugins](https://docs.clawql.com/plugins): Searchable registry — horizontal plugins and domain verticals
 - [Protocol](https://docs.clawql.com/reference/protocol): Uniform envelope and approval flows
 - [Spec configuration](https://docs.clawql.com/spec-configuration): OpenAPI and provider sources
 

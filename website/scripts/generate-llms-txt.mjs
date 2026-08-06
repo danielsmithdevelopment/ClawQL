@@ -42,6 +42,11 @@ const SECTIONS = [
     links: [
       ['MCP tools', '/tools', 'search, execute, audit, cache, and optional tools'],
       [
+        'mcp-api-adapter',
+        '/mcp/mcp-api-adapter',
+        'Any MCP server → OpenAPI, GraphQL, /mcp, gRPC, and gen-cli',
+      ],
+      [
         'Zero-Trust Agentic Fabric',
         '/architecture/agentic-fabric',
         'Regional Hubs, Dedicated Virtual Gateways, Edge swarm',
