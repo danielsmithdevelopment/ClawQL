@@ -10,9 +10,9 @@ import {
 } from "./oidc.js";
 import {
   assertToolPolicyEffect,
-  claimsHaveMfa,
-  isFinancialTool,
-  isMfaRequiredForFinancialTools,
+  claimsHaveMfaEffect,
+  isFinancialToolEffect,
+  isMfaRequiredForFinancialToolsEffect,
 } from "./policy.js";
 import { createClawQLAuth } from "./create-auth.js";
 import {
@@ -106,7 +106,7 @@ describe("clawql-auth oidc", () => {
       expect(result.claims.tenantId).toBe("acme");
       expect(result.claims.acr).toBe("mfa");
       expect(result.claims.amr).toEqual(["pwd", "otp"]);
-      expect(claimsHaveMfa(result.claims)).toBe(true);
+      expect(Effect.runSync(claimsHaveMfaEffect(result.claims))).toBe(true);
     }
   });
 
@@ -122,7 +122,7 @@ describe("clawql-auth oidc", () => {
     expect(claims.role).toBe("admin");
     expect(claims.scope).toContain("execute");
     expect(claims.tenantId).toBe("t1");
-    expect(claimsHaveMfa(claims)).toBe(false);
+    expect(Effect.runSync(claimsHaveMfaEffect(claims))).toBe(false);
   });
 
   it("rejects missing bearer in oidc mode", async () => {
@@ -150,8 +150,8 @@ describe("clawql-auth policy", () => {
 
   it("gates financial tools when MFA required", () => {
     process.env.CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL = "1";
-    expect(isMfaRequiredForFinancialTools()).toBe(true);
-    expect(isFinancialTool("payments_credits_transfer_confirm")).toBe(true);
+    expect(Effect.runSync(isMfaRequiredForFinancialToolsEffect())).toBe(true);
+    expect(Effect.runSync(isFinancialToolEffect("payments_credits_transfer_confirm"))).toBe(true);
 
     const noMfa: AtrClaims = { sub: "u", role: "operator", scope: ["*"] };
     const gated = Effect.runSyncExit(

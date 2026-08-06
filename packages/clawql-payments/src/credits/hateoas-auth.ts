@@ -8,10 +8,11 @@
  */
 
 import type { NextFunction, Request, Response } from "express";
+import { Effect } from "effect";
 import {
-  assertToolPolicy,
+  assertToolPolicyEffect,
   loadGatewayAuthConfig,
-  resolveAtrClaimsFromHeadersAsync,
+  resolveAtrClaimsFromHeadersEffect,
   resolveAuthMode,
   type AtrClaims,
   type GatewayAuthConfig,
@@ -144,24 +145,37 @@ export function createCreditsHateoasAuthMiddleware(
           return;
         }
 
-        const result = await resolveAtrClaimsFromHeadersAsync(req.headers, authConfig);
-        if (!result.ok) {
-          sendAuthFailure(req, res, 401, "Sign in required", result.error);
-          return;
-        }
+        const claims = await Effect.runPromise(
+          resolveAtrClaimsFromHeadersEffect(req.headers, authConfig)
+        ).catch((e: unknown) => {
+          const msg = e instanceof Error ? e.message : String(e);
+          // GatewayAuthError / OidcAuthError use .reason
+          const reason =
+            e && typeof e === "object" && "reason" in e
+              ? String((e as { reason: unknown }).reason)
+              : msg;
+          sendAuthFailure(req, res, 401, "Sign in required", reason);
+          return null;
+        });
+        if (!claims) return;
 
         const tool = creditsHateoasHighImpactTool(req.method, rel);
         if (tool) {
           try {
-            assertToolPolicy(result.claims, tool, { env });
+            Effect.runSync(assertToolPolicyEffect(claims, tool, { env }));
           } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
+            const msg =
+              e && typeof e === "object" && "reason" in e
+                ? String((e as { reason: unknown }).reason)
+                : e instanceof Error
+                  ? e.message
+                  : String(e);
             sendAuthFailure(req, res, 403, "MFA required", msg);
             return;
           }
         }
 
-        (req as CreditsAuthenticatedRequest).clawqlClaims = result.claims;
+        (req as CreditsAuthenticatedRequest).clawqlClaims = claims;
         next();
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);

@@ -80,7 +80,7 @@ function envFlag(name: string, env: NodeJS.ProcessEnv): boolean {
 }
 
 /** When true, financial MCP tools require MFA-class ACR/AMR on ATR claims. */
-export function isMfaRequiredForFinancialTools(env: NodeJS.ProcessEnv = process.env): boolean {
+function isMfaRequiredForFinancialTools(env: NodeJS.ProcessEnv = process.env): boolean {
   return envFlag("CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL", env);
 }
 
@@ -93,7 +93,7 @@ function parseToolList(env: NodeJS.ProcessEnv): string[] | undefined {
     .filter(Boolean);
 }
 
-export function resolveFinancialToolNames(env: NodeJS.ProcessEnv = process.env): readonly string[] {
+function resolveFinancialToolNames(env: NodeJS.ProcessEnv = process.env): readonly string[] {
   return parseToolList(env) ?? DEFAULT_FINANCIAL_TOOL_NAMES;
 }
 
@@ -110,7 +110,7 @@ const MFA_AMR_HINTS = ["mfa", "otp", "totp", "hotp", "sms", "hwk", "swk", "face"
  * Conservative: `amr` must include a second factor hint beyond password-only when both pwd+otp present,
  * or any known MFA method token.
  */
-export function claimsHaveMfa(claims: AtrClaims): boolean {
+function claimsHaveMfa(claims: AtrClaims): boolean {
   const acr = claims.acr?.trim().toLowerCase() ?? "";
   if (acr) {
     if (MFA_ACR_HINTS.some((h) => acr === h || acr.includes(h))) return true;
@@ -127,7 +127,7 @@ export function claimsHaveMfa(claims: AtrClaims): boolean {
   return MFA_AMR_HINTS.some((h) => amr.includes(h) && h !== "pwd");
 }
 
-export function isFinancialTool(toolName: string, env: NodeJS.ProcessEnv = process.env): boolean {
+function isFinancialTool(toolName: string, env: NodeJS.ProcessEnv = process.env): boolean {
   const name = toolName.trim();
   if (!name) return false;
   return resolveFinancialToolNames(env).includes(name);
@@ -179,6 +179,9 @@ export const isFinancialToolEffect = (
 export const isMfaRequiredForFinancialToolsEffect = (
   env: NodeJS.ProcessEnv = process.env
 ): Effect.Effect<boolean> => Effect.sync(() => isMfaRequiredForFinancialTools(env));
+export const resolveFinancialToolNamesEffect = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<readonly string[]> => Effect.sync(() => resolveFinancialToolNames(env));
 
 /** Effect service wrapping tool-access policy for DI in gateway / MCP hosts. */
 export class AuthPolicyService extends Context.Tag("clawql/AuthPolicyService")<
