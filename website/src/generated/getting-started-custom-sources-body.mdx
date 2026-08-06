@@ -22,12 +22,12 @@ Custom entries live in **`~/.ClawQL/sources.json`** and are merged into gateway 
 
 Generic MCP servers are point integrations — one tool set, one backend, one trust boundary each. ClawQL consolidates them:
 
-| Without ClawQL | With ClawQL custom sources |
-| --- | --- |
-| Agent config lists many MCP servers | Agent connects to **one** ClawQL MCP |
-| Policy/allowlists per server (or none) | Permit and deny at the **gateway** (Panguard, ATR, sandbox) |
-| No shared search / audit | **`search`** ranks ops; **`execute`** validates; **audit** trails calls |
-| Seatbelt / sandbox per process | One gateway process under Seatbelt / sandbox; tools fan out behind it |
+| Without ClawQL                         | With ClawQL custom sources                                              |
+| -------------------------------------- | ----------------------------------------------------------------------- |
+| Agent config lists many MCP servers    | Agent connects to **one** ClawQL MCP                                    |
+| Policy/allowlists per server (or none) | Permit and deny at the **gateway** (Panguard, ATR, sandbox)             |
+| No shared search / audit               | **`search`** ranks ops; **`execute`** validates; **audit** trails calls |
+| Seatbelt / sandbox per process         | One gateway process under Seatbelt / sandbox; tools fan out behind it   |
 
 Related lockdown surfaces:
 
@@ -68,13 +68,13 @@ In **ClawQL Desktop** mode, the dashboard exposes **`GET/POST/DELETE /api/local/
 
 ## Source kinds
 
-| Kind | How it loads |
-| --- | --- |
-| OpenAPI / Discovery | Cached spec under `~/.ClawQL/sources/<id>/` |
-| GraphQL | SDL or introspection file + `graphqlEndpoint` |
-| gRPC | `.proto` on disk + `grpcEndpoint` |
-| **MCP** | Proxies `tools/list` / `tools/call` from the remote MCP server |
-| CLI | One `execute` op runs configured command + args |
+| Kind                | How it loads                                                   |
+| ------------------- | -------------------------------------------------------------- |
+| OpenAPI / Discovery | Cached spec under `~/.ClawQL/sources/<id>/`                    |
+| GraphQL             | SDL or introspection file + `graphqlEndpoint`                  |
+| gRPC                | `.proto` on disk + `grpcEndpoint`                              |
+| **MCP**             | Proxies `tools/list` / `tools/call` from the remote MCP server |
+| CLI                 | One `execute` op runs configured command + args                |
 
 Bundled providers and custom sources share the same **`search` / `execute`** index. Custom sources extend that index; they do not require a second MCP client entry in Cursor/Claude.
 
