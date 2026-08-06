@@ -76,13 +76,11 @@ export function moneyRequestTtlSec(env: NodeJS.ProcessEnv = process.env): number
   return 7 * 24 * 60 * 60; // 7 days
 }
 
-export function buildRequestInviteUrl(
+export const buildRequestInviteUrl = (
   requestId: string,
   token: string,
   env: NodeJS.ProcessEnv = process.env
-): string {
-  return buildInviteDeepLink({ requestId, token }, env);
-}
+): Effect.Effect<string> => buildInviteDeepLink({ requestId, token }, env);
 
 async function loadFile(env: NodeJS.ProcessEnv): Promise<RequestsFile> {
   try {
@@ -237,7 +235,7 @@ export async function createMoneyRequest(
     if (!payerEmail) throw new Error("Invite requires a payer email");
     inviteToken = randomBytes(24).toString("base64url");
     inviteTokenHash = hashToken(inviteToken);
-    inviteUrl = buildRequestInviteUrl(requestId, inviteToken, env);
+    inviteUrl = Effect.runSync(buildRequestInviteUrl(requestId, inviteToken, env));
   }
 
   const request: MoneyRequest = {

@@ -17,6 +17,8 @@ import { payoutLiveLayer } from "../payouts/payout-service.js";
 import { rampLiveLayer } from "../ramp/ramp-service.js";
 import { consumerOffRampLiveLayer } from "../offramp/consumer-offramp-service.js";
 import { offrampWebhookLiveLayer } from "../offramp/offramp-webhook-service.js";
+import { creditsConfigLiveLayer } from "../credits/config.js";
+import { creditsDeeplinkLiveLayer } from "../credits/deeplinks.js";
 import { creditsLiveLayer } from "../credits/credits-service.js";
 import { creditsLedgerLiveLayer } from "../credits/ledger.js";
 import { creditsDirectoryLiveLayer } from "../credits/directory.js";
@@ -78,6 +80,8 @@ export type PaymentsServices =
   | import("../ramp/ramp-service.js").RampService
   | import("../offramp/consumer-offramp-service.js").ConsumerOffRampService
   | import("../offramp/offramp-webhook-service.js").OfframpWebhookService
+  | import("../credits/config.js").CreditsConfigService
+  | import("../credits/deeplinks.js").CreditsDeeplinkService
   | import("../credits/credits-service.js").CreditsService
   | import("../credits/ledger.js").CreditsLedgerService
   | import("../credits/directory.js").CreditsDirectoryService
@@ -127,6 +131,8 @@ export function paymentsServicesLiveLayer(
   const ramp = rampLiveLayer(env).pipe(Layer.provide(audit));
   const offramp = consumerOffRampLiveLayer(env).pipe(Layer.provide(audit));
   const offrampWebhook = offrampWebhookLiveLayer(env).pipe(Layer.provide(audit));
+  const creditsConfig = creditsConfigLiveLayer(env);
+  const creditsDeeplinks = creditsDeeplinkLiveLayer(env);
   const ledger = creditsLedgerLiveLayer(env);
   const directory = creditsDirectoryLiveLayer(env);
   const contacts = creditsContactsLiveLayer(env);
@@ -208,6 +214,8 @@ export function paymentsServicesLiveLayer(
     ramp,
     offramp,
     offrampWebhook,
+    creditsConfig,
+    creditsDeeplinks,
     ledger,
     directory,
     contacts,

@@ -249,7 +249,7 @@ describe("credits P2P transfer", () => {
     );
     expect(denied._tag).toBe("Left");
 
-    const totp = generateTotp(enrolled.enrollment.secretBase32);
+    const totp = Effect.runSync(generateTotp(enrolled.enrollment.secretBase32));
     const ok = await Effect.runPromise(
       Effect.gen(function* () {
         const credits = yield* CreditsService;

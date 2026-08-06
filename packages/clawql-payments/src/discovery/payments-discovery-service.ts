@@ -331,7 +331,7 @@ export function paymentsDiscoveryLiveLayer(
             });
           }
 
-          if (isCreditsEnabled(runEnv) && isAchTopupEnabled(runEnv)) {
+          if ((yield* isCreditsEnabled(runEnv)) && (yield* isAchTopupEnabled(runEnv))) {
             paymentMethods.push({
               type: "credits",
               enabled: true,

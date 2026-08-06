@@ -4,7 +4,7 @@ Use this file when an **MCP client** (Cursor, IDE agents, or automation) talks t
 
 ## Effect-TS (hard rule)
 
-Production code that can be Effect-based **must** be. Never ship domain IO, orchestration, or policy as bare `async`/`Promise` APIs when an Effect `Context.Tag` + `Layer` is possible. Forced Promise edges (Express / MCP SDK) stay thin façades over `run*Effect`. Pure sync helpers are fine. Details: [`.cursor/rules/effect-ts-everywhere.mdc`](.cursor/rules/effect-ts-everywhere.mdc).
+Production code that **can** be Effect-based **must** be — there is no "pure sync is fine" carve-out. Never ship domain IO, orchestration, policy, or even sync helpers (URL/HTML builders, sync crypto, env flag readers) as bare `async`/`Promise`/plain-value APIs when an Effect `Context.Tag` + `Layer` or `Effect.sync` is possible. Forced Promise edges (Express / MCP SDK) stay thin façades over `run*Effect`; run `Effect.runSync` only at those absolute host boundaries. Only types-only modules are exempt. Details: [`.cursor/rules/effect-ts-everywhere.mdc`](.cursor/rules/effect-ts-everywhere.mdc).
 
 ## Blocked or denied tool calls
 

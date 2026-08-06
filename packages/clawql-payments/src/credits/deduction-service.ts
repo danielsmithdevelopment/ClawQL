@@ -112,7 +112,7 @@ export function deductionLiveLayer(
 
       const getSpendableBalance = (tenantId: string) =>
         Effect.gen(function* () {
-          if (!isCreditsEnabled(env)) {
+          if (!(yield* isCreditsEnabled(env))) {
             return yield* Effect.fail(
               new DeductionError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
             );
@@ -129,7 +129,7 @@ export function deductionLiveLayer(
         note?: string;
       }) =>
         Effect.gen(function* () {
-          if (!isCreditsEnabled(env)) {
+          if (!(yield* isCreditsEnabled(env))) {
             return yield* Effect.fail(
               new DeductionError({
                 reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1",
@@ -151,7 +151,7 @@ export function deductionLiveLayer(
               )
               .pipe(Effect.catchAll(() => Effect.void));
             yield* bus.publish(
-              buildDeductionEvent(
+              yield* buildDeductionEvent(
                 "credits.held",
                 {
                   tenantId: input.tenantId,
@@ -192,7 +192,7 @@ export function deductionLiveLayer(
               )
               .pipe(Effect.catchAll(() => Effect.void));
             yield* bus.publish(
-              buildDeductionEvent(
+              yield* buildDeductionEvent(
                 "credits.captured",
                 {
                   tenantId: input.tenantId,
@@ -231,7 +231,7 @@ export function deductionLiveLayer(
               )
               .pipe(Effect.catchAll(() => Effect.void));
             yield* bus.publish(
-              buildDeductionEvent(
+              yield* buildDeductionEvent(
                 "credits.released",
                 {
                   tenantId: input.tenantId,
@@ -257,7 +257,7 @@ export function deductionLiveLayer(
         note?: string;
       }) =>
         Effect.gen(function* () {
-          if (!isCreditsEnabled(env)) {
+          if (!(yield* isCreditsEnabled(env))) {
             return yield* Effect.fail(
               new DeductionError({
                 reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1",
@@ -276,7 +276,7 @@ export function deductionLiveLayer(
             note: input.note,
           });
           yield* bus.publish(
-            buildDeductionEvent(
+            yield* buildDeductionEvent(
               "credits.debited",
               {
                 tenantId: input.tenantId,

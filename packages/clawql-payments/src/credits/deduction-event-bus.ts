@@ -28,14 +28,13 @@ export type DeductionEvent = {
   readonly payload?: Record<string, unknown>;
 };
 
-export function deductionEventSubject(
+export const deductionEventSubject = (
   eventType: DeductionEventType,
   env: NodeJS.ProcessEnv = process.env
-): string {
-  return `${natsPaymentsSubjectRoot(env)}.${eventType}`;
-}
+): Effect.Effect<string> =>
+  Effect.map(natsPaymentsSubjectRoot(env), (root) => `${root}.${eventType}`);
 
-export function buildDeductionEvent(
+export const buildDeductionEvent = (
   eventType: DeductionEventType,
   fields: {
     tenantId: string;
@@ -48,23 +47,25 @@ export function buildDeductionEvent(
     payload?: Record<string, unknown>;
   },
   env: NodeJS.ProcessEnv = process.env
-): DeductionEvent {
-  return {
-    schema_version: 1,
-    event_type: eventType,
-    subject: deductionEventSubject(eventType, env),
-    tenant_id: fields.tenantId,
-    idempotency_key: fields.idempotencyKey,
-    amount_cents: fields.amountCents,
-    balance_after_cents: fields.balanceAfterCents,
-    correlation_id: fields.correlationId,
-    resource: fields.resource,
-    hold_id: fields.holdId,
-    source: "clawql-payments/deduction",
-    ts: new Date().toISOString(),
-    payload: fields.payload,
-  };
-}
+): Effect.Effect<DeductionEvent> =>
+  Effect.gen(function* () {
+    const subject = yield* deductionEventSubject(eventType, env);
+    return {
+      schema_version: 1,
+      event_type: eventType,
+      subject,
+      tenant_id: fields.tenantId,
+      idempotency_key: fields.idempotencyKey,
+      amount_cents: fields.amountCents,
+      balance_after_cents: fields.balanceAfterCents,
+      correlation_id: fields.correlationId,
+      resource: fields.resource,
+      hold_id: fields.holdId,
+      source: "clawql-payments/deduction",
+      ts: new Date().toISOString(),
+      payload: fields.payload,
+    };
+  });
 
 async function appendOutbox(event: DeductionEvent, env: NodeJS.ProcessEnv): Promise<void> {
   const path = resolveDeductionOutboxPath(env);
@@ -73,7 +74,7 @@ async function appendOutbox(event: DeductionEvent, env: NodeJS.ProcessEnv): Prom
 }
 
 async function tryPublishNats(event: DeductionEvent, env: NodeJS.ProcessEnv): Promise<boolean> {
-  if (!isDeductionNatsPublishEnabled(env)) return false;
+  if (!Effect.runSync(isDeductionNatsPublishEnabled(env))) return false;
   const url = env.CLAWQL_NATS_URL?.trim();
   if (!url) return false;
   try {
@@ -83,7 +84,7 @@ async function tryPublishNats(event: DeductionEvent, env: NodeJS.ProcessEnv): Pr
       const js = nc.jetstream();
       const jsm = await nc.jetstreamManager();
       const streamName = env.CLAWQL_NATS_STREAM?.trim() || "CLAWQL";
-      const root = natsPaymentsSubjectRoot(env);
+      const root = Effect.runSync(natsPaymentsSubjectRoot(env));
       try {
         await jsm.streams.info(streamName);
       } catch {

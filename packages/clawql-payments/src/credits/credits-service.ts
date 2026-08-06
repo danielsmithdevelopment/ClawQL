@@ -133,7 +133,7 @@ export function creditsLiveLayer(
 
       const getBalance = (tenantId: string) =>
         Effect.gen(function* () {
-          if (!isCreditsEnabled(env)) {
+          if (!(yield* isCreditsEnabled(env))) {
             return yield* Effect.fail(
               new CreditsError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
             );
@@ -149,7 +149,7 @@ export function creditsLiveLayer(
         note?: string;
       }) =>
         Effect.gen(function* () {
-          if (!isCreditsEnabled(env)) {
+          if (!(yield* isCreditsEnabled(env))) {
             return yield* Effect.fail(
               new CreditsError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
             );
@@ -187,7 +187,7 @@ export function creditsLiveLayer(
         correlationId?: string;
       }) =>
         Effect.gen(function* () {
-          if (!isCreditsEnabled(env)) {
+          if (!(yield* isCreditsEnabled(env))) {
             return yield* Effect.fail(
               new CreditsError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
             );
@@ -251,7 +251,7 @@ export function creditsLiveLayer(
         note?: string;
       }) =>
         Effect.gen(function* () {
-          if (!isCreditsEnabled(env)) {
+          if (!(yield* isCreditsEnabled(env))) {
             return yield* Effect.fail(
               new CreditsError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
             );
@@ -307,7 +307,7 @@ export function creditsLiveLayer(
         requestId?: string;
       }) =>
         Effect.gen(function* () {
-          if (!isCreditsEnabled(env)) {
+          if (!(yield* isCreditsEnabled(env))) {
             return yield* Effect.fail(
               new CreditsError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
             );
@@ -355,6 +355,22 @@ export function creditsLiveLayer(
               },
             })
             .pipe(Effect.mapError(toCreditsError));
+          const approvalUrl = yield* buildCreditsTransferApproveUrl(
+            record.actionId,
+            record.confirmationCode,
+            env
+          );
+          const confirmUrl = yield* buildCreditsTransferConfirmUrl(
+            record.actionId,
+            record.confirmationCode,
+            env
+          );
+          const cancelUrl = yield* buildCreditsTransferCancelUrl(
+            record.actionId,
+            record.confirmationCode,
+            env
+          );
+          const totpRequired = yield* isCreditsTransferTotpRequired(env);
           return {
             actionId: record.actionId,
             confirmationCode: record.confirmationCode,
@@ -363,26 +379,18 @@ export function creditsLiveLayer(
             fromTenantId,
             toTenantId,
             amountUsd: Math.round(input.amountCents) / 100,
-            approvalUrl: buildCreditsTransferApproveUrl(
-              record.actionId,
-              record.confirmationCode,
-              env
-            ),
-            confirmUrl: buildCreditsTransferConfirmUrl(
-              record.actionId,
-              record.confirmationCode,
-              env
-            ),
-            cancelUrl: buildCreditsTransferCancelUrl(record.actionId, record.confirmationCode, env),
+            approvalUrl,
+            confirmUrl,
+            cancelUrl,
             expiresAt: record.expiresAt,
             classification: "financial" as const,
-            totpRequired: isCreditsTransferTotpRequired(env),
+            totpRequired,
           } satisfies StagedCreditTransfer;
         });
 
       const confirmTransfer = (input: { actionId: string; code: string; totp?: string }) =>
         Effect.gen(function* () {
-          if (!isCreditsEnabled(env)) {
+          if (!(yield* isCreditsEnabled(env))) {
             return yield* Effect.fail(
               new CreditsError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
             );
@@ -421,7 +429,7 @@ export function creditsLiveLayer(
           }
 
           const fromTenantId = String(record.args.fromTenantId ?? record.agentId);
-          if (isCreditsTransferTotpRequired(env)) {
+          if (yield* isCreditsTransferTotpRequired(env)) {
             yield* stepUp
               .require(fromTenantId, input.totp)
               .pipe(
@@ -481,6 +489,6 @@ export function creditsLiveLayer(
 }
 
 /** @internal — used by CLI when deciding stage vs direct. */
-export function creditsTransferShouldStage(env: NodeJS.ProcessEnv = process.env): boolean {
-  return !isCreditsTransferDirectAllowed(env);
-}
+export const creditsTransferShouldStage = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<boolean> => Effect.map(isCreditsTransferDirectAllowed(env), (direct) => !direct);

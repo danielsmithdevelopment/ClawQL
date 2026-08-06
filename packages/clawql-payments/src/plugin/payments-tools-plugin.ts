@@ -594,7 +594,7 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             };
             const requestId = a.requestId?.trim();
             if (requestId) {
-              const url = buildRequestDeepLink({ requestId }, env);
+              const url = Effect.runSync(buildRequestDeepLink({ requestId }, env));
               return textResult({
                 ok: true,
                 kind: "credits.request",
@@ -610,15 +610,17 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               note: a.note,
               fromTenantId: a.fromTenantId,
             };
-            const envelope = payHateoasEnvelope(pay, env);
+            const envelope = Effect.runSync(payHateoasEnvelope(pay, env));
             let qrSvg: string | undefined;
             if (a.includeQrSvg) {
-              qrSvg = await renderQrSvg(buildPayQrPayload(pay));
+              qrSvg = await Effect.runPromise(
+                Effect.flatMap(buildPayQrPayload(pay), (payload) => renderQrSvg(payload))
+              );
             }
             return textResult({
               ...envelope,
-              clawql: buildClawqlPayUri(pay),
-              http: buildPayDeepLink(pay, env),
+              clawql: Effect.runSync(buildClawqlPayUri(pay)),
+              http: Effect.runSync(buildPayDeepLink(pay, env)),
               qrSvg,
             });
           },
@@ -713,7 +715,8 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             if (!req) throw new Error("Unknown request id");
             const toEmail = a.email?.trim() || req.payerEmail;
             if (!toEmail) throw new Error("No payer email — pass email");
-            const inviteUrl = req.inviteUrl || buildRequestInviteUrl(a.requestId, a.token, env);
+            const inviteUrl =
+              req.inviteUrl || Effect.runSync(buildRequestInviteUrl(a.requestId, a.token, env));
             const requester = await getTenantEntry(req.requesterTenantId, env);
             return textResult(
               await sendMoneyRequestInviteEmail(

@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../gateway.js";
 import { isCreditsInferenceEnforcementActive, isStripeMeterReportingActive } from "clawql-payments";
 import {
@@ -24,7 +25,7 @@ export function withEntitlementEnforcement(
   if (
     !isInferenceEntitlementEnforcementActive(env) &&
     !isStripeMeterReportingActive(env) &&
-    !isCreditsInferenceEnforcementActive(env)
+    !Effect.runSync(isCreditsInferenceEnforcementActive(env))
   ) {
     return gateway;
   }

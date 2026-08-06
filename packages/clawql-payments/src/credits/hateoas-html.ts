@@ -4,6 +4,7 @@
  */
 
 import QRCode from "qrcode";
+import { Data, Effect } from "effect";
 import type { HateoasEnvelope } from "./deeplinks.js";
 
 function esc(s: string): string {
@@ -14,19 +15,30 @@ function esc(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-export function escapeHtml(s: string): string {
-  return esc(s);
-}
+export const escapeHtml = (s: string): Effect.Effect<string> => Effect.sync(() => esc(s));
 
-export async function renderQrSvg(payload: string): Promise<string> {
-  return QRCode.toString(payload, {
-    type: "svg",
-    errorCorrectionLevel: "M",
-    margin: 1,
-    width: 320,
-    color: { dark: "#0b1f1c", light: "#00000000" },
+/** QR render failure (qrcode lib). */
+export class QrRenderError extends Data.TaggedError("QrRenderError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+export const renderQrSvg = (payload: string): Effect.Effect<string, QrRenderError> =>
+  Effect.tryPromise({
+    try: () =>
+      QRCode.toString(payload, {
+        type: "svg",
+        errorCorrectionLevel: "M",
+        margin: 1,
+        width: 320,
+        color: { dark: "#0b1f1c", light: "#00000000" },
+      }),
+    catch: (cause) =>
+      new QrRenderError({
+        reason: cause instanceof Error ? cause.message : "QR render failed",
+        cause,
+      }),
   });
-}
 
 const MINI_UI_STYLES = `
   :root {
@@ -296,7 +308,7 @@ const ICON_SEND = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20
 const ICON_REQUEST = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v4H8zM4 10h6v6H4zM14 10h6v6h-6zM9 17h6v3H9z"/></svg>`;
 const ICON_ACTIVITY = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14h4l2-6 3 10 2-5h5"/></svg>`;
 
-export function renderHateoasHtml(input: {
+function renderHateoasHtmlDoc(input: {
   title: string;
   summary: string;
   envelope: HateoasEnvelope;
@@ -338,7 +350,15 @@ export function renderHateoasHtml(input: {
 </html>`;
 }
 
-export function renderCreditsHateoasPage(input: {
+export const renderHateoasHtml = (input: {
+  title: string;
+  summary: string;
+  envelope: HateoasEnvelope;
+  bodyHtml: string;
+  hideLinksPanel?: boolean;
+}): Effect.Effect<string> => Effect.sync(() => renderHateoasHtmlDoc(input));
+
+function renderCreditsHateoasPageDoc(input: {
   title: string;
   heading?: string;
   summary?: string;
@@ -356,7 +376,7 @@ export function renderCreditsHateoasPage(input: {
       links: { self: "#" },
       approval_url: null,
     } satisfies HateoasEnvelope);
-  return renderHateoasHtml({
+  return renderHateoasHtmlDoc({
     title: input.heading ?? input.title,
     summary: input.summary ?? envelope.summary,
     envelope,
@@ -364,6 +384,15 @@ export function renderCreditsHateoasPage(input: {
     hideLinksPanel: input.hideLinksPanel,
   });
 }
+
+export const renderCreditsHateoasPage = (input: {
+  title: string;
+  heading?: string;
+  summary?: string;
+  bodyHtml: string;
+  envelope?: HateoasEnvelope;
+  hideLinksPanel?: boolean;
+}): Effect.Effect<string> => Effect.sync(() => renderCreditsHateoasPageDoc(input));
 
 export type MiniHomeRecentItem = {
   title: string;
@@ -381,7 +410,10 @@ export type MiniHomeInput = {
 };
 
 /** Home: brand + balance + four verbs + recent (X Money grammar, ClawQL voice). */
-export function renderCreditsMiniHomeHtml(input: MiniHomeInput): string {
+export const renderCreditsMiniHomeHtml = (input: MiniHomeInput): Effect.Effect<string> =>
+  Effect.sync(() => renderCreditsMiniHomeDoc(input));
+
+function renderCreditsMiniHomeDoc(input: MiniHomeInput): string {
   const dollars = (input.balanceCents / 100).toFixed(2);
   const q = new URLSearchParams({ tenant: input.tenantId }).toString();
   const recent =
@@ -439,7 +471,7 @@ export function renderCreditsMiniHomeHtml(input: MiniHomeInput): string {
       })();
     </script>
   `;
-  return renderCreditsHateoasPage({
+  return renderCreditsHateoasPageDoc({
     title: "ClawQL Payments",
     heading: "ClawQL",
     summary: "Prepaid credits home",
@@ -449,7 +481,10 @@ export function renderCreditsMiniHomeHtml(input: MiniHomeInput): string {
 }
 
 /** Pay compose — Send screen. */
-export function renderCreditsPayComposeHtml(tenantId: string): string {
+export const renderCreditsPayComposeHtml = (tenantId: string): Effect.Effect<string> =>
+  Effect.sync(() => renderCreditsPayComposeDoc(tenantId));
+
+function renderCreditsPayComposeDoc(tenantId: string): string {
   const q = new URLSearchParams({ tenant: tenantId }).toString();
   const body = `
     <a class="back" href="/credits?${esc(q)}">← Home</a>
@@ -471,7 +506,7 @@ export function renderCreditsPayComposeHtml(tenantId: string): string {
       </div>
     </form>
   `;
-  return renderCreditsHateoasPage({
+  return renderCreditsHateoasPageDoc({
     title: "Pay",
     heading: "Pay",
     summary: "Compose a credits payment",
@@ -481,7 +516,10 @@ export function renderCreditsPayComposeHtml(tenantId: string): string {
 }
 
 /** Request compose. */
-export function renderCreditsRequestComposeHtml(tenantId: string): string {
+export const renderCreditsRequestComposeHtml = (tenantId: string): Effect.Effect<string> =>
+  Effect.sync(() => renderCreditsRequestComposeDoc(tenantId));
+
+function renderCreditsRequestComposeDoc(tenantId: string): string {
   const q = new URLSearchParams({ tenant: tenantId }).toString();
   const body = `
     <a class="back" href="/credits?${esc(q)}">← Home</a>
@@ -523,7 +561,7 @@ export function renderCreditsRequestComposeHtml(tenantId: string): string {
       });
     </script>
   `;
-  return renderCreditsHateoasPage({
+  return renderCreditsHateoasPageDoc({
     title: "Request",
     heading: "Request",
     summary: "Compose a money request",
@@ -532,7 +570,10 @@ export function renderCreditsRequestComposeHtml(tenantId: string): string {
   });
 }
 
-export function renderCreditsTopupHtml(tenantId: string): string {
+export const renderCreditsTopupHtml = (tenantId: string): Effect.Effect<string> =>
+  Effect.sync(() => renderCreditsTopupDoc(tenantId));
+
+function renderCreditsTopupDoc(tenantId: string): string {
   const q = new URLSearchParams({ tenant: tenantId }).toString();
   const body = `
     <a class="back" href="/credits?${esc(q)}">← Home</a>
@@ -542,7 +583,7 @@ export function renderCreditsTopupHtml(tenantId: string): string {
 clawql payments credits topup --tenant-id ${esc(tenantId)} --amount 50</pre>
     <p class="note" style="margin-top:1rem">No debit card or cash deposit in this surface — bank ACH only.</p>
   `;
-  return renderCreditsHateoasPage({
+  return renderCreditsHateoasPageDoc({
     title: "Top up",
     heading: "Top up",
     summary: "ACH top-up via CLI",
@@ -551,7 +592,14 @@ clawql payments credits topup --tenant-id ${esc(tenantId)} --amount 50</pre>
   });
 }
 
-export function renderCreditsActivityHtml(input: {
+export const renderCreditsActivityHtml = (input: {
+  tenantId: string;
+  label?: string;
+  balanceCents: number;
+  recent: MiniHomeRecentItem[];
+}): Effect.Effect<string> => Effect.sync(() => renderCreditsActivityDoc(input));
+
+function renderCreditsActivityDoc(input: {
   tenantId: string;
   label?: string;
   balanceCents: number;
@@ -577,7 +625,7 @@ export function renderCreditsActivityHtml(input: {
     )}</p>
     <section class="section">${list}</section>
   `;
-  return renderCreditsHateoasPage({
+  return renderCreditsHateoasPageDoc({
     title: "Activity",
     heading: "Activity",
     summary: "Recent credits activity",
@@ -599,7 +647,11 @@ export type TransferApproveInput = {
 };
 
 /** GET-safe magic-link review before money moves. */
-export function renderCreditsTransferApproveHtml(input: TransferApproveInput): string {
+export const renderCreditsTransferApproveHtml = (
+  input: TransferApproveInput
+): Effect.Effect<string> => Effect.sync(() => renderCreditsTransferApproveDoc(input));
+
+function renderCreditsTransferApproveDoc(input: TransferApproveInput): string {
   const dollars = input.amountUsd.toFixed(2);
   const pending = input.status === "pending";
   const body = `
@@ -637,7 +689,7 @@ export function renderCreditsTransferApproveHtml(input: TransferApproveInput): s
       }
     </section>
   `;
-  return renderCreditsHateoasPage({
+  return renderCreditsHateoasPageDoc({
     title: "Authorize transfer",
     heading: "ClawQL",
     summary: `Authorize $${dollars} transfer`,
@@ -646,7 +698,14 @@ export function renderCreditsTransferApproveHtml(input: TransferApproveInput): s
   });
 }
 
-export function renderCreditsTransferConfirmedHtml(input: {
+export const renderCreditsTransferConfirmedHtml = (input: {
+  fromTenantId: string;
+  toTenantId: string;
+  amountUsd: number;
+  transferId: string;
+}): Effect.Effect<string> => Effect.sync(() => renderCreditsTransferConfirmedDoc(input));
+
+function renderCreditsTransferConfirmedDoc(input: {
   fromTenantId: string;
   toTenantId: string;
   amountUsd: number;
@@ -667,7 +726,7 @@ export function renderCreditsTransferConfirmedHtml(input: {
       </div>
     </section>
   `;
-  return renderCreditsHateoasPage({
+  return renderCreditsHateoasPageDoc({
     title: "Transfer authorized",
     heading: "ClawQL",
     summary: "Credits transfer confirmed",
@@ -676,7 +735,10 @@ export function renderCreditsTransferConfirmedHtml(input: {
   });
 }
 
-export function renderCreditsTransferCancelledHtml(actionId: string): string {
+export const renderCreditsTransferCancelledHtml = (actionId: string): Effect.Effect<string> =>
+  Effect.sync(() => renderCreditsTransferCancelledDoc(actionId));
+
+function renderCreditsTransferCancelledDoc(actionId: string): string {
   const body = `
     <a class="back" href="/credits">← Home</a>
     <section class="hero">
@@ -685,7 +747,7 @@ export function renderCreditsTransferCancelledHtml(actionId: string): string {
       <div class="cta-row"><a class="btn" href="/credits">Back home</a></div>
     </section>
   `;
-  return renderCreditsHateoasPage({
+  return renderCreditsHateoasPageDoc({
     title: "Transfer cancelled",
     heading: "Cancelled",
     summary: "Staged transfer cancelled",
@@ -695,7 +757,15 @@ export function renderCreditsTransferCancelledHtml(actionId: string): string {
 }
 
 /** HTMX fragment after accept/stage — points at magic-link authorize. */
-export function renderCreditsStagedTransferHtml(input: {
+export const renderCreditsStagedTransferHtml = (input: {
+  actionId: string;
+  confirmationCode: string;
+  approvalUrl: string;
+  totpRequired: boolean;
+  requestStatus?: string;
+}): Effect.Effect<string> => Effect.sync(() => renderCreditsStagedTransferDoc(input));
+
+function renderCreditsStagedTransferDoc(input: {
   actionId: string;
   confirmationCode: string;
   approvalUrl: string;
@@ -721,9 +791,10 @@ export function renderCreditsStagedTransferHtml(input: {
   `;
 }
 
-export function wantsHtml(acceptHeader: string | undefined): boolean {
-  const a = (acceptHeader ?? "").toLowerCase();
-  if (a.includes("application/json") && !a.includes("text/html")) return false;
-  if (a.includes("text/html")) return true;
-  return a.includes("mozilla");
-}
+export const wantsHtml = (acceptHeader: string | undefined): Effect.Effect<boolean> =>
+  Effect.sync(() => {
+    const a = (acceptHeader ?? "").toLowerCase();
+    if (a.includes("application/json") && !a.includes("text/html")) return false;
+    if (a.includes("text/html")) return true;
+    return a.includes("mozilla");
+  });

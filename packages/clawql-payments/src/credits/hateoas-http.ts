@@ -25,7 +25,6 @@ import {
 } from "./deeplinks.js";
 import { CreditsDirectoryService } from "./directory.js";
 import {
-  escapeHtml,
   renderCreditsActivityHtml,
   renderCreditsHateoasPage,
   renderCreditsMiniHomeHtml,
@@ -46,7 +45,17 @@ import {
 } from "./hateoas-auth.js";
 import { CreditsRequestsService, publicMoneyRequest, type MoneyRequest } from "./requests.js";
 
-const esc = escapeHtml;
+/** Sync HTML escape used inside `Effect.sync` render bodies at the Express edge. */
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Run a pure (env-only) render/deeplink Effect at the Express host boundary. */
+const runHtmlSync = <A>(program: Effect.Effect<A>): A => Effect.runSync(program);
 
 function tenantFromQuery(req: Request): string {
   const q = req.query as Record<string, string | undefined>;
@@ -98,26 +107,31 @@ async function homeHtml(tenantId: string): Promise<string> {
         return yield* activity.getFeed({ tenantId, limit: 5, filter: "money" });
       })
     );
-    return renderCreditsMiniHomeHtml({
-      tenantId: feed.tenantId,
-      label: feed.label,
-      balanceCents: feed.balanceCents,
-      recent: recentFromFeed(feed.items),
-    });
+    return runHtmlSync(
+      renderCreditsMiniHomeHtml({
+        tenantId: feed.tenantId,
+        label: feed.label,
+        balanceCents: feed.balanceCents,
+        recent: recentFromFeed(feed.items),
+      })
+    );
   } catch {
-    return renderCreditsMiniHomeHtml({
-      tenantId,
-      balanceCents: 0,
-      recent: [],
-    });
+    return runHtmlSync(
+      renderCreditsMiniHomeHtml({
+        tenantId,
+        balanceCents: 0,
+        recent: [],
+      })
+    );
   }
 }
 
-function payPageHtml(pay: PayDeepLink): string {
-  const envelope = payHateoasEnvelope(pay);
-  const cli = payCliHint(pay);
-  const clawql = buildClawqlPayUri(pay);
-  const qrQs = new URLSearchParams({
+function payPageHtml(pay: PayDeepLink): Effect.Effect<string> {
+  return Effect.gen(function* () {
+    const envelope = yield* payHateoasEnvelope(pay);
+    const cli = yield* payCliHint(pay);
+    const clawql = yield* buildClawqlPayUri(pay);
+    const qrQs = new URLSearchParams({
     to: pay.to,
     ...(pay.amountUsd != null ? { amount: String(pay.amountUsd) } : {}),
     ...(pay.note ? { note: pay.note } : {}),
@@ -165,17 +179,18 @@ function payPageHtml(pay: PayDeepLink): string {
       </details>
     </div>
   `;
-  return renderCreditsHateoasPage({
-    title: "Pay with ClawQL",
-    heading: "ClawQL",
-    summary: envelope.summary,
-    bodyHtml: body,
-    envelope,
-    hideLinksPanel: true,
+    return yield* renderCreditsHateoasPage({
+      title: "Pay with ClawQL",
+      heading: "ClawQL",
+      summary: envelope.summary,
+      bodyHtml: body,
+      envelope,
+      hideLinksPanel: true,
+    });
   });
 }
 
-function invitePageHtml(token: string, requestId: string): string {
+function invitePageHtml(token: string, requestId: string): Effect.Effect<string> {
   const body = `
     <a class="back" href="/credits">← Home</a>
     <div class="topbar" style="margin-top:0.75rem">
@@ -205,10 +220,11 @@ function invitePageHtml(token: string, requestId: string): string {
   });
 }
 
-function requestPageHtml(reqRow: MoneyRequest): string {
-  const amountUsd = (reqRow.amountCents / 100).toFixed(2);
-  const self = buildRequestDeepLink({ requestId: reqRow.requestId });
-  const body = `
+function requestPageHtml(reqRow: MoneyRequest): Effect.Effect<string> {
+  return Effect.gen(function* () {
+    const amountUsd = (reqRow.amountCents / 100).toFixed(2);
+    const self = yield* buildRequestDeepLink({ requestId: reqRow.requestId });
+    const body = `
     <a class="back" href="/credits">← Home</a>
     <div class="topbar" style="margin-top:0.75rem">
       <h1 class="brand">Claw<span>QL</span></h1>
@@ -244,20 +260,21 @@ function requestPageHtml(reqRow: MoneyRequest): string {
       <p class="muted">After accept: open the magic link, or <code>clawql payments credits transfer --confirm --action-id … --code …</code></p>
     </div>
   `;
-  return renderCreditsHateoasPage({
-    title: `Request ${reqRow.requestId}`,
-    heading: "ClawQL",
-    summary: `$${amountUsd} · ${reqRow.status}`,
-    bodyHtml: body,
-    envelope: {
-      ok: true,
-      kind: "credits.request",
-      summary: `Request ${reqRow.requestId}`,
-      data: publicMoneyRequest(reqRow) as unknown as Record<string, unknown>,
-      links: { self, approval_url: self },
-      approval_url: self,
-    },
-    hideLinksPanel: true,
+    return yield* renderCreditsHateoasPage({
+      title: `Request ${reqRow.requestId}`,
+      heading: "ClawQL",
+      summary: `$${amountUsd} · ${reqRow.status}`,
+      bodyHtml: body,
+      envelope: {
+        ok: true,
+        kind: "credits.request",
+        summary: `Request ${reqRow.requestId}`,
+        data: publicMoneyRequest(reqRow) as unknown as Record<string, unknown>,
+        links: { self, approval_url: self },
+        approval_url: self,
+      },
+      hideLinksPanel: true,
+    });
   });
 }
 
@@ -268,7 +285,7 @@ function sendJsonOrHtml(
   json: unknown,
   status = 200
 ): void {
-  if (wantsHtml(req.get("accept") ?? undefined)) {
+  if (Effect.runSync(wantsHtml(req.get("accept") ?? undefined))) {
     res.status(status).type("html").send(html);
     return;
   }
@@ -294,7 +311,7 @@ export function attachCreditsHateoasRoutes(
   });
 
   app.get("/credits/topup", (req: Request, res: Response) => {
-    res.type("html").send(renderCreditsTopupHtml(tenantFromQuery(req)));
+    res.type("html").send(runHtmlSync(renderCreditsTopupHtml(tenantFromQuery(req))));
   });
 
   app.get("/credits/activity", async (req: Request, res: Response) => {
@@ -307,12 +324,14 @@ export function attachCreditsHateoasRoutes(
         })
       );
       res.type("html").send(
-        renderCreditsActivityHtml({
-          tenantId: feed.tenantId,
-          label: feed.label,
-          balanceCents: feed.balanceCents,
-          recent: recentFromFeed(feed.items),
-        })
+        runHtmlSync(
+          renderCreditsActivityHtml({
+            tenantId: feed.tenantId,
+            label: feed.label,
+            balanceCents: feed.balanceCents,
+            recent: recentFromFeed(feed.items),
+          })
+        )
       );
     } catch (e) {
       res
@@ -326,12 +345,12 @@ export function attachCreditsHateoasRoutes(
     try {
       const q = req.query as Record<string, string | undefined>;
       if (!String(q.to ?? "").trim()) {
-        res.type("html").send(renderCreditsPayComposeHtml(tenantFromQuery(req)));
+        res.type("html").send(runHtmlSync(renderCreditsPayComposeHtml(tenantFromQuery(req))));
         return;
       }
-      const pay = parsePayDeepLinkQuery(q);
-      const html = payPageHtml(pay);
-      sendJsonOrHtml(req, res, html, payHateoasEnvelope(pay));
+      const pay = Effect.runSync(parsePayDeepLinkQuery(q));
+      const html = runHtmlSync(payPageHtml(pay));
+      sendJsonOrHtml(req, res, html, Effect.runSync(payHateoasEnvelope(pay)));
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.status(400).type("text/plain").send(msg);
@@ -340,8 +359,10 @@ export function attachCreditsHateoasRoutes(
 
   app.get("/credits/qr.svg", async (req: Request, res: Response) => {
     try {
-      const pay = parsePayDeepLinkQuery(req.query as Record<string, string | undefined>);
-      const svg = await renderQrSvg(buildPayQrPayload(pay));
+      const pay = Effect.runSync(parsePayDeepLinkQuery(req.query as Record<string, string | undefined>));
+      const svg = await Effect.runPromise(
+        Effect.flatMap(buildPayQrPayload(pay), (payload) => renderQrSvg(payload))
+      );
       res.type("image/svg+xml").send(svg);
     } catch (e) {
       res
@@ -374,12 +395,14 @@ export function attachCreditsHateoasRoutes(
         })
       );
       res.type("html").send(
-        renderCreditsStagedTransferHtml({
-          actionId: staged.actionId,
-          confirmationCode: staged.confirmationCode,
-          approvalUrl: staged.approvalUrl,
-          totpRequired: staged.totpRequired,
-        })
+        runHtmlSync(
+          renderCreditsStagedTransferHtml({
+            actionId: staged.actionId,
+            confirmationCode: staged.confirmationCode,
+            approvalUrl: staged.approvalUrl,
+            totpRequired: staged.totpRequired,
+          })
+        )
       );
     } catch (e) {
       res
@@ -398,12 +421,14 @@ export function attachCreditsHateoasRoutes(
           .status(400)
           .type("html")
           .send(
-            renderCreditsHateoasPage({
-              title: "Authorize",
-              heading: "Missing parameters",
-              bodyHtml: "<p>Add <code>?action_id=…&amp;code=…</code> from your magic link.</p>",
-              hideLinksPanel: true,
-            })
+            runHtmlSync(
+              renderCreditsHateoasPage({
+                title: "Authorize",
+                heading: "Missing parameters",
+                bodyHtml: "<p>Add <code>?action_id=…&amp;code=…</code> from your magic link.</p>",
+                hideLinksPanel: true,
+              })
+            )
           );
         return;
       }
@@ -413,29 +438,33 @@ export function attachCreditsHateoasRoutes(
       }
       const amountCents = Number(record.args.amountCents ?? 0);
       res.type("html").send(
-        renderCreditsTransferApproveHtml({
-          actionId: record.actionId,
-          code: record.confirmationCode,
-          fromTenantId: String(record.args.fromTenantId ?? record.agentId),
-          toTenantId: String(record.args.toTenantId ?? ""),
-          amountUsd: amountCents / 100,
-          note: typeof record.args.note === "string" ? record.args.note : undefined,
-          expiresAt: record.expiresAt,
-          totpRequired: isCreditsTransferTotpRequired(),
-          status: record.status,
-        })
+        runHtmlSync(
+          renderCreditsTransferApproveHtml({
+            actionId: record.actionId,
+            code: record.confirmationCode,
+            fromTenantId: String(record.args.fromTenantId ?? record.agentId),
+            toTenantId: String(record.args.toTenantId ?? ""),
+            amountUsd: amountCents / 100,
+            note: typeof record.args.note === "string" ? record.args.note : undefined,
+            expiresAt: record.expiresAt,
+            totpRequired: Effect.runSync(isCreditsTransferTotpRequired()),
+            status: record.status,
+          })
+        )
       );
     } catch (e) {
       res
         .status(400)
         .type("html")
         .send(
-          renderCreditsHateoasPage({
-            title: "Authorize",
-            heading: "Invalid magic link",
-            bodyHtml: `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>`,
-            hideLinksPanel: true,
-          })
+          runHtmlSync(
+            renderCreditsHateoasPage({
+              title: "Authorize",
+              heading: "Invalid magic link",
+              bodyHtml: `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>`,
+              hideLinksPanel: true,
+            })
+          )
         );
     }
   });
@@ -458,25 +487,29 @@ export function attachCreditsHateoasRoutes(
         })
       );
       res.type("html").send(
-        renderCreditsTransferConfirmedHtml({
-          fromTenantId: result.fromTenantId,
-          toTenantId: result.toTenantId,
-          amountUsd: result.amountCents / 100,
-          transferId: result.transferId,
-        })
+        runHtmlSync(
+          renderCreditsTransferConfirmedHtml({
+            fromTenantId: result.fromTenantId,
+            toTenantId: result.toTenantId,
+            amountUsd: result.amountCents / 100,
+            transferId: result.transferId,
+          })
+        )
       );
     } catch (e) {
       res
         .status(400)
         .type("html")
         .send(
-          renderCreditsHateoasPage({
-            title: "Authorize failed",
-            heading: "Could not confirm",
-            bodyHtml: `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>
+          runHtmlSync(
+            renderCreditsHateoasPage({
+              title: "Authorize failed",
+              heading: "Could not confirm",
+              bodyHtml: `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>
               <p class="note"><a href="/credits">Back home</a></p>`,
-            hideLinksPanel: true,
-          })
+              hideLinksPanel: true,
+            })
+          )
         );
     }
   });
@@ -498,24 +531,26 @@ export function attachCreditsHateoasRoutes(
       } else if (record.status === "executed") {
         throw new Error("Transfer already executed — cannot cancel");
       }
-      res.type("html").send(renderCreditsTransferCancelledHtml(actionId));
+      res.type("html").send(runHtmlSync(renderCreditsTransferCancelledHtml(actionId)));
     } catch (e) {
       res
         .status(400)
         .type("html")
         .send(
-          renderCreditsHateoasPage({
-            title: "Cancel failed",
-            heading: "Could not cancel",
-            bodyHtml: `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>`,
-            hideLinksPanel: true,
-          })
+          runHtmlSync(
+            renderCreditsHateoasPage({
+              title: "Cancel failed",
+              heading: "Could not cancel",
+              bodyHtml: `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>`,
+              hideLinksPanel: true,
+            })
+          )
         );
     }
   });
 
   app.get("/credits/request/new", (req: Request, res: Response) => {
-    res.type("html").send(renderCreditsRequestComposeHtml(tenantFromQuery(req)));
+    res.type("html").send(runHtmlSync(renderCreditsRequestComposeHtml(tenantFromQuery(req))));
   });
 
   app.get("/credits/request/invite", (req: Request, res: Response) => {
@@ -526,15 +561,17 @@ export function attachCreditsHateoasRoutes(
         .status(400)
         .type("html")
         .send(
-          renderCreditsHateoasPage({
-            title: "Invite",
-            heading: "Missing parameters",
-            bodyHtml: "<p>Add <code>?request_id=…&amp;token=…</code> from your invite URL.</p>",
-          })
+          runHtmlSync(
+            renderCreditsHateoasPage({
+              title: "Invite",
+              heading: "Missing parameters",
+              bodyHtml: "<p>Add <code>?request_id=…&amp;token=…</code> from your invite URL.</p>",
+            })
+          )
         );
       return;
     }
-    res.type("html").send(invitePageHtml(token, requestId));
+    res.type("html").send(runHtmlSync(invitePageHtml(token, requestId)));
   });
 
   app.get("/credits/request/:requestId", async (req: Request, res: Response) => {
@@ -550,21 +587,24 @@ export function attachCreditsHateoasRoutes(
         .status(404)
         .type("html")
         .send(
-          renderCreditsHateoasPage({
-            title: "Not found",
-            heading: "Request not found",
-            bodyHtml: `<p>No request <code>${esc(requestId)}</code>.</p>`,
-          })
+          runHtmlSync(
+            renderCreditsHateoasPage({
+              title: "Not found",
+              heading: "Request not found",
+              bodyHtml: `<p>No request <code>${esc(requestId)}</code>.</p>`,
+            })
+          )
         );
       return;
     }
-    const html = requestPageHtml(row);
+    const html = runHtmlSync(requestPageHtml(row));
+    const self = Effect.runSync(buildRequestDeepLink({ requestId }));
     sendJsonOrHtml(req, res, html, {
       ok: true,
       kind: "credits.request",
       data: publicMoneyRequest(row),
-      links: { self: buildRequestDeepLink({ requestId }) },
-      approval_url: buildRequestDeepLink({ requestId }),
+      links: { self },
+      approval_url: self,
     });
   });
 
@@ -587,7 +627,7 @@ export function attachCreditsHateoasRoutes(
           });
         })
       );
-      const next = buildRequestDeepLink({ requestId: result.request.requestId });
+      const next = Effect.runSync(buildRequestDeepLink({ requestId: result.request.requestId }));
       res.type("html").send(`
         <p>Claimed${result.directoryCreated ? " (directory created)" : ""}.</p>
         <p>Status: <strong>${esc(result.request.status)}</strong> · tenant <code>${esc(result.request.payerTenantId ?? "")}</code></p>
@@ -643,13 +683,17 @@ export function attachCreditsHateoasRoutes(
         })
       );
       res.type("html").send(
-        renderCreditsStagedTransferHtml({
-          actionId: staged.actionId,
-          confirmationCode: staged.confirmationCode,
-          approvalUrl: buildCreditsTransferApproveUrl(staged.actionId, staged.confirmationCode),
-          totpRequired: staged.totpRequired,
-          requestStatus: request.status,
-        })
+        runHtmlSync(
+          renderCreditsStagedTransferHtml({
+            actionId: staged.actionId,
+            confirmationCode: staged.confirmationCode,
+            approvalUrl: Effect.runSync(
+              buildCreditsTransferApproveUrl(staged.actionId, staged.confirmationCode)
+            ),
+            totpRequired: staged.totpRequired,
+            requestStatus: request.status,
+          })
+        )
       );
     } catch (e) {
       res
@@ -680,9 +724,10 @@ export function attachCreditsHateoasRoutes(
 }
 
 /** @deprecated Use attachCreditsHateoasRoutes — kept for discoverability. */
-export function creditsPayDeepLinkPath(input: PayDeepLink): string {
-  return buildPayDeepLink(input).replace(/^[^?]*/, (p) => {
-    const idx = p.indexOf("/credits/");
-    return idx >= 0 ? p.slice(idx) : "/credits/pay";
-  });
-}
+export const creditsPayDeepLinkPath = (input: PayDeepLink): Effect.Effect<string> =>
+  Effect.map(buildPayDeepLink(input), (url) =>
+    url.replace(/^[^?]*/, (p) => {
+      const idx = p.indexOf("/credits/");
+      return idx >= 0 ? p.slice(idx) : "/credits/pay";
+    })
+  );

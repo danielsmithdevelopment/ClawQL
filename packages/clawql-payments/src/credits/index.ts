@@ -1,4 +1,6 @@
 export {
+  CreditsConfigService,
+  creditsConfigLiveLayer,
   assertCreditsOrgTransferEnabled,
   assertCreditsP2pEnabled,
   isAchTopupDryRun,
@@ -120,6 +122,8 @@ export {
   buildCreditsTransferApproveUrl,
   buildCreditsTransferCancelUrl,
   buildCreditsTransferConfirmUrl,
+  CreditsDeeplinkService,
+  creditsDeeplinkLiveLayer,
   isHttpCreditsHateoasBase,
   parseCreditsDeepLink,
   parsePayDeepLinkQuery,
@@ -132,15 +136,8 @@ export {
   type RequestDeepLink,
 } from "./deeplinks.js";
 export {
-  createCreditsHateoasAuthMiddleware,
-  creditsHateoasHighImpactTool,
-  isCreditsHateoasAuthRequired,
-  isCreditsHateoasPublicPath,
-  type CreditsAuthenticatedRequest,
-  type CreditsHateoasAuthOptions,
-} from "./hateoas-auth.js";
-export {
   escapeHtml,
+  QrRenderError,
   renderCreditsActivityHtml,
   renderCreditsHateoasPage,
   renderCreditsMiniHomeHtml,
@@ -232,63 +229,3 @@ export {
   type DeductionEvent,
   type DeductionEventType,
 } from "./deduction-event-bus.js";
-export {
-  addOrgMember,
-  allocateFromPoolToMember,
-  assertEmailMatchesOrgDomains,
-  assertManagerOrBillingAdmin,
-  assertOrgSeatAvailable,
-  countActiveSeats,
-  createOrg,
-  distributeOrgPeriod,
-  emailDomainOf,
-  findMembership,
-  findOrgByEmailDomain,
-  getOrg,
-  inviteOrgMember,
-  isReportOfManager,
-  listOrgMembers,
-  loadOrgCreditsFile,
-  orgCreditsAllowedOnManagedHosting,
-  poolTenantIdForOrg,
-  reactivateOrgMember,
-  removeOrgMember,
-  resetOrgCreditsForTests,
-  resolveOrgSeatLimit,
-  setMemberReportsTo,
-  setOrgRolePolicies,
-  setOrgSeatPolicy,
-  setOrgSsoPolicy,
-  suspendOrgMember,
-  transferManagerToReport,
-  transferWithinOrg,
-  type DistributePeriodResult,
-  type InviteOrgMemberInput,
-  type OrgCreditPeriodPolicy,
-  type OrgCreditsFile,
-  type OrgMemberRole,
-  type OrgMembership,
-  type OrgRecord,
-  type OrgRoleId,
-  type OrgRolePolicy,
-  type OrgSsoPolicy,
-} from "./org.js";
-export {
-  getOrgUnifiedSpendSummary,
-  type OrgMemberBalanceRow,
-  type OrgUnifiedSpendSummary,
-} from "./org-spend.js";
-export { renderAllOrgCreditsPrometheus, renderOrgSpendPrometheus } from "./org-metrics.js";
-export { createOrgCreditsIdpRouter } from "./org-idp-router.js";
-export {
-  holdOrgWaterfall,
-  type HoldOrgWaterfallInput,
-  type OrgWaterfallHoldResult,
-  type WaterfallSlice,
-  type WaterfallSourceKind,
-} from "./org-waterfall.js";
-export {
-  renderOrgWaterfallPrometheus,
-  resetOrgWaterfallMetricsForTests,
-  snapshotOrgWaterfallMetrics,
-} from "./org-waterfall-metrics.js";

@@ -309,7 +309,8 @@ export async function runPaymentsCreditsTransfer(
   }
 
   const amountCents = Math.round(amountUsd * 100);
-  const shouldStage = creditsTransferShouldStage() && !options.direct;
+  const shouldStageFlag = Effect.runSync(creditsTransferShouldStage());
+  const shouldStage = shouldStageFlag && !options.direct;
   // Prefer privacy username when set; else email; else phone; else tenant id.
   const payeeLabel = resolvedHandle
     ? `@${resolvedHandle}`
@@ -319,7 +320,7 @@ export async function runPaymentsCreditsTransfer(
 
   try {
     if (!shouldStage) {
-      if (creditsTransferShouldStage() && options.direct) {
+      if (shouldStageFlag && options.direct) {
         console.error(
           "Direct transfer refused — set CLAWQL_CREDITS_TRANSFER_DIRECT=1 for break-glass execute (not recommended)"
         );
@@ -861,7 +862,7 @@ export async function runPaymentsCreditsRequestSendInvite(
     }
     // Rebuild invite URL if missing from storage (URL may have been stored at create).
     const { buildRequestInviteUrl } = await import("../credits/requests.js");
-    const inviteUrl = req.inviteUrl || buildRequestInviteUrl(requestId, token);
+    const inviteUrl = req.inviteUrl || Effect.runSync(buildRequestInviteUrl(requestId, token));
     const requester = await getTenantEntry(req.requesterTenantId);
     const emailResult = await sendMoneyRequestInviteEmail(
       {
@@ -1251,25 +1252,25 @@ export async function runPaymentsCreditsLink(
   options: PaymentsCreditsLinkOptions = {}
 ): Promise<number> {
   if (options.parse?.trim()) {
-    const parsed = parseCreditsDeepLink(options.parse);
+    const parsed = Effect.runSync(parseCreditsDeepLink(options.parse));
     if (!parsed.ok) {
       console.error(parsed.error);
       return 1;
     }
     const { ok: _ok, ...pay } = parsed;
     if (options.json) {
-      console.log(JSON.stringify(payHateoasEnvelope(pay), null, 2));
+      console.log(JSON.stringify(Effect.runSync(payHateoasEnvelope(pay)), null, 2));
       return 0;
     }
-    console.log(payCliHint(pay));
-    console.log(buildPayDeepLink(pay));
-    console.log(buildClawqlPayUri(pay));
+    console.log(Effect.runSync(payCliHint(pay)));
+    console.log(Effect.runSync(buildPayDeepLink(pay)));
+    console.log(Effect.runSync(buildClawqlPayUri(pay)));
     return 0;
   }
 
   const requestId = options.requestId?.trim();
   if (requestId) {
-    const url = buildRequestDeepLink({ requestId });
+    const url = Effect.runSync(buildRequestDeepLink({ requestId }));
     if (options.json) {
       console.log(
         JSON.stringify(
@@ -1278,7 +1279,7 @@ export async function runPaymentsCreditsLink(
             kind: "credits.request",
             links: { self: url, approval_url: url },
             approval_url: url,
-            base: creditsHateoasBase(),
+            base: Effect.runSync(creditsHateoasBase()),
           },
           null,
           2
@@ -1305,7 +1306,7 @@ export async function runPaymentsCreditsLink(
     note: options.note,
     fromTenantId: options.fromTenantId,
   };
-  const envelope = payHateoasEnvelope(pay);
+  const envelope = Effect.runSync(payHateoasEnvelope(pay));
   if (options.json) {
     console.log(JSON.stringify(envelope, null, 2));
     return 0;
@@ -1313,7 +1314,7 @@ export async function runPaymentsCreditsLink(
   console.log(envelope.links.self);
   console.log(envelope.links.clawql);
   console.log(`CLI: ${envelope.links.cli}`);
-  console.log(`HATEOAS base: ${creditsHateoasBase()}`);
+  console.log(`HATEOAS base: ${Effect.runSync(creditsHateoasBase())}`);
   return 0;
 }
 
@@ -1334,9 +1335,9 @@ export async function runPaymentsCreditsQr(
     note: options.note,
     fromTenantId: options.fromTenantId,
   };
-  const payload = buildPayQrPayload(pay);
+  const payload = Effect.runSync(buildPayQrPayload(pay));
   try {
-    const svg = await renderQrSvg(payload);
+    const svg = await Effect.runPromise(renderQrSvg(payload));
     const out = options.out?.trim();
     if (out) {
       await writeFile(out, svg, "utf8");
@@ -1353,8 +1354,8 @@ export async function runPaymentsCreditsQr(
           {
             ok: true,
             payload,
-            http: buildPayDeepLink(pay),
-            clawql: buildClawqlPayUri(pay),
+            http: Effect.runSync(buildPayDeepLink(pay)),
+            clawql: Effect.runSync(buildClawqlPayUri(pay)),
             out: out ?? null,
             svg: out ? undefined : svg,
           },

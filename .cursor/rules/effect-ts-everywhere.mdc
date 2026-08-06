@@ -1,25 +1,33 @@
 # Effect-TS everywhere (hard rule)
 
-ClawQL production code that **can** be Effect-based **must** be Effect-based.
+ClawQL production code that **can** be Effect-based **must** be Effect-based. There is no “pure sync is fine” exception and no standing exception for Promise domain APIs.
+
+## Must be Effect
+
+- Domain IO (fs, net, DB, crypto that participates in workflows)
+- Orchestration, policy gates, config reads used by domain code
+- URL/HTML builders, sync crypto helpers, env flag readers — expose as `Effect` (`Effect.sync` / `Effect.succeed` / service methods), not bare functions returning plain values as the primary API
+- Multi-step workflows — `Effect.gen` + `Context.Tag` / `Layer`
+
+## Only exception: forced host boundary
+
+Express handlers, MCP `server.tool` callbacks, and similar hosts that **literally require** a `Promise` return may use a **thin** `async` façade whose entire body is `Effect.runPromise` / `run*Effect` / `ManagedRuntime`. No business logic in the façade.
+
+Types-only modules (interfaces, type aliases) are not executable code and need no Effect wrapper.
 
 ## Never ship
 
-- New or changed **prod** modules that perform IO, orchestration, policy gates, or multi-step workflows as bare `async`/`Promise` APIs when they could be `Effect` / `Context.Tag` / `Layer`.
-- “Temporary” Promise domain APIs that are not forced by an external SDK boundary.
-- Docs or comments that treat bare `async`/`await` as an acceptable default for domain packages.
+- Bare `async` / `Promise` as the primary API of a domain module
+- Bare sync functions as the primary API when the same work can be `Effect.sync` / a Tag method
+- Docs that carve out “pure sync” or “legacy async at IO edges” as acceptable defaults
+- Growing Promise façades “for convenience” when callers can `yield*` or `Effect.runPromise` a service
 
-## Allowed non-Effect surfaces
+## Required shape
 
-1. **Forced Promise edges** — Express handlers, MCP `server.tool` callbacks, and similar hosts that require `Promise`. These must be thin façades over `run*Effect` / `Effect.runPromise` / `ManagedRuntime`.
-2. **Pure sync** — types, URL/HTML builders, sync crypto helpers, env flag readers, and other code with no IO, no fibers, and no typed failure channel that needs a Layer.
-3. **`Effect.tryPromise` / `*FromPromise`** — only at the absolute external IO edge (fs, fetch, SDK clients), inside Effect programs — not as the public shape of domain modules.
-
-## Required shape for domain IO
-
-- Prefer `Context.Tag` + `Layer` services with methods returning `Effect.Effect<A, E, R>`.
-- Compose via live Layers (e.g. `paymentsServicesLiveLayer`, auth live Layers).
-- Tests provide test Layers or `Effect.provide` — do not grow new Promise-only domain APIs for test convenience.
+- Prefer `Context.Tag` + `Layer` with methods returning `Effect.Effect<A, E, R>`
+- Absolute external IO (fs/fetch/SDK) only via `Effect.tryPromise` / `*FromPromise` **inside** Effect programs
+- Tests use Layers / `Effect.provide` — do not invent Promise-only domain APIs for tests
 
 ## Reviewer checklist
 
-Before merge: if a changed file does fs/net/DB/crypto-async or multi-step business logic and exports `async function` / `Promise<…>` as its primary API, **reject** unless it is explicitly a forced edge façade documented as such.
+Reject if a changed executable domain export is not Effect-based and is not a documented one-line forced-host façade.

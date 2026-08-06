@@ -88,7 +88,7 @@ export function achTopupLiveLayer(
 
       const createBankLinkSession = (input: CreateBankLinkSessionInput) =>
         Effect.gen(function* () {
-          if (!isCreditsEnabled(env) || !isAchTopupEnabled(env)) {
+          if (!(yield* isCreditsEnabled(env)) || !(yield* isAchTopupEnabled(env))) {
             return yield* Effect.fail(
               new AchTopupError({
                 reason:
@@ -97,9 +97,9 @@ export function achTopupLiveLayer(
             );
           }
           const tenantId = input.tenantId?.trim() || "default";
-          const returnUrl = input.returnUrl?.trim() || creditsReturnUrl(env);
+          const returnUrl = input.returnUrl?.trim() || (yield* creditsReturnUrl(env));
 
-          if (isAchTopupDryRun(env)) {
+          if (yield* isAchTopupDryRun(env)) {
             const id = `fcs_dry_${Date.now().toString(36)}`;
             yield* audit
               .appendEntry(
@@ -159,7 +159,7 @@ export function achTopupLiveLayer(
 
       const createTopup = (input: CreateAchTopupInput) =>
         Effect.gen(function* () {
-          if (!isCreditsEnabled(env) || !isAchTopupEnabled(env)) {
+          if (!(yield* isCreditsEnabled(env)) || !(yield* isAchTopupEnabled(env))) {
             return yield* Effect.fail(
               new AchTopupError({
                 reason:
@@ -173,7 +173,7 @@ export function achTopupLiveLayer(
           const amountCents = Math.round(input.amountUsd * 100);
           const tenantId = input.tenantId?.trim() || "default";
 
-          if (isAchTopupDryRun(env)) {
+          if (yield* isAchTopupDryRun(env)) {
             const paymentIntentId = `pi_dry_${Date.now().toString(36)}`;
             yield* Effect.tryPromise({
               try: () =>

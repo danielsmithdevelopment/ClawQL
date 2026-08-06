@@ -202,7 +202,7 @@ Priority = **dependency order** + **test coverage** + **user impact**.
 **Hard rule:** production code that can be Effect-based **must** be. Do not merge domain IO / orchestration / policy as bare `async`/`Promise` APIs. See [`.cursor/rules/effect-ts-everywhere.mdc`](../../.cursor/rules/effect-ts-everywhere.mdc).
 
 1. **All prod code in extracted packages is Effect-first** — `Context.Tag` + `Layer` + methods returning `Effect`. No new `async` business logic in `clawql-api` / `clawql-core` / domain packages.
-2. **Forced edges only:** Express / MCP SDK Promise handlers are thin façades over `run*Effect` / `ManagedRuntime`. Pure sync (types, HTML/URL builders, sync crypto, env flags) may stay sync.
+2. **Forced edges only:** Express / MCP SDK Promise handlers are thin façades over `run*Effect` / `ManagedRuntime`, with `Effect.runSync` used only at that absolute host boundary. There is **no "pure sync may stay" carve-out** — HTML/URL builders, sync crypto, and env flag readers are exposed as `Effect.sync` / `Context.Tag` methods (their primary API), and only types-only modules remain non-Effect.
 3. **External IO:** `Effect.tryPromise` / `Effect.promise` / `*FromPromise` only at the absolute fs/net/SDK edge **inside** Effect programs — not as the public shape of domain modules.
 4. **Errors:** never throw across Layer boundaries; map to tagged errors / `ClawQLError` with `Effect.catchTag`.
 5. **Resources:** pools (Postgres, pgvector) via `Effect.acquireRelease` scoped services.
