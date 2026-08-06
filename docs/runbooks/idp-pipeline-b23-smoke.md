@@ -32,9 +32,9 @@ Compose proves hops **1,3,4,5,6,7,8,9** chained. Docling stays opt-in (image siz
 
 ## What each late stage actually calls
 
-| Stage     | Operation                                                  |
-| --------- | ---------------------------------------------------------- |
-| Onyx      | Register/login → create API key → `POST /onyx-api/ingestion` |
+| Stage     | Operation                                                                                    |
+| --------- | -------------------------------------------------------------------------------------------- |
+| Onyx      | Register/login → create API key → `POST /onyx-api/ingestion`                                 |
 | ConeShare | `createsuperuser` → `POST /api/v1/token/` → `POST /api/v1/datarooms/` (+ share-link attempt) |
 
 Onyx uses the same **minimal** mode as Helm `onyx.fullVectorStack=false` (no OpenSearch/Vespa/model servers) so it fits GHA RAM while still exercising the IDP ingest API. Full RAG search needs the vector stack (or external `ONYX_*` secrets).
@@ -45,13 +45,13 @@ ConeShare follows [coneshare-compose](https://github.com/coneshare/coneshare-com
 
 ## Optional overrides
 
-| Env / secret                                 | Effect                                      |
-| -------------------------------------------- | ------------------------------------------- |
-| `IDP_SMOKE_INCLUDE_DOCLING=1`                | Boot Docling profile                        |
-| `DOCLING_BASE_URL`                           | Use remote Docling                          |
-| `ONYX_BASE_URL` + `ONYX_API_TOKEN`           | Skip compose Onyx; hit external             |
-| `CONESHARE_BASE_URL` + `CONESHARE_API_TOKEN` | Skip compose ConeShare; hit external        |
-| `CLAWQL_HTTP_BASE` + webhook tokens          | `tier=live` NATS webhook dry_run            |
+| Env / secret                                 | Effect                               |
+| -------------------------------------------- | ------------------------------------ |
+| `IDP_SMOKE_INCLUDE_DOCLING=1`                | Boot Docling profile                 |
+| `DOCLING_BASE_URL`                           | Use remote Docling                   |
+| `ONYX_BASE_URL` + `ONYX_API_TOKEN`           | Skip compose Onyx; hit external      |
+| `CONESHARE_BASE_URL` + `CONESHARE_API_TOKEN` | Skip compose ConeShare; hit external |
+| `CLAWQL_HTTP_BASE` + webhook tokens          | `tier=live` NATS webhook dry_run     |
 
 ---
 
