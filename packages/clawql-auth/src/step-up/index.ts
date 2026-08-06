@@ -1,9 +1,15 @@
 export {
   decodeBase32,
+  decodeBase32Effect,
   generateTotp,
+  generateTotpEffect,
   generateTotpSecret,
+  generateTotpSecretEffect,
   totpOtpauthUrl,
+  totpOtpauthUrlEffect,
+  TotpError,
   verifyTotp,
+  verifyTotpEffect,
 } from "./totp.js";
 export {
   createFileStepUpStore,
@@ -19,6 +25,8 @@ export {
 export {
   createUnimplementedWebAuthnVerifier,
   requireWebAuthnStepUp,
+  requireWebAuthnStepUpEffect,
+  WebAuthnStepUpError,
   type WebAuthnAssertionInput,
   type WebAuthnStepUpVerifier,
 } from "./webauthn.js";

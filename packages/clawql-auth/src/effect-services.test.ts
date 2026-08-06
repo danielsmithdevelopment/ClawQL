@@ -6,12 +6,40 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { AwsSigV4Service, AwsSigV4ServiceLive } from "./aws-sigv4.js";
+import {
+  AwsAuthError,
+  AwsAuthHelpers,
+  AwsAuthHelpersLive,
+  resolveAwsApiBaseUrlEffect,
+  resolveAwsRegionEffect,
+} from "./aws-auth.js";
 import type { OpenAPIDoc } from "./openapi-types.js";
 import { createGatewayAuthServiceLayer, GatewayAuthService } from "./gateway-service.js";
 import { loadGatewayAuthConfig, resolveAtrClaimsFromHeadersEffect } from "./gateway.js";
 import { createOidcAuthServiceLayer, OidcAuthService } from "./oidc-service.js";
 import { loadOidcAuthConfig, resetOidcVerifyCaches } from "./oidc.js";
-import { createStepUpStoreLayer, generateTotp, StepUpStoreService } from "./step-up/index.js";
+import {
+  AuthPolicyService,
+  assertToolPolicyEffect,
+  createAuthPolicyServiceLayer,
+} from "./policy.js";
+import {
+  mergedAuthHeadersEffect,
+  ProviderAuthHeadersService,
+  ProviderAuthHeadersServiceLive,
+} from "./provider-auth-headers.js";
+import {
+  createStepUpStoreLayer,
+  createUnimplementedWebAuthnVerifier,
+  generateTotp,
+  generateTotpEffect,
+  generateTotpSecretEffect,
+  requireWebAuthnStepUpEffect,
+  StepUpStoreService,
+  TotpError,
+  verifyTotpEffect,
+  type WebAuthnStepUpVerifier,
+} from "./step-up/index.js";
 
 const emptyDoc = { openapi: "3.0.0", paths: {} } as OpenAPIDoc;
 
@@ -166,5 +194,99 @@ describe("clawql-auth Effect services", () => {
     });
     const signed = await Effect.runPromise(program.pipe(Effect.provide(AwsSigV4ServiceLive)));
     expect(signed).toBeUndefined();
+  });
+
+  it("TOTP Effect API: generate + verify round-trip", async () => {
+    const secret = await Effect.runPromise(generateTotpSecretEffect());
+    const code = await Effect.runPromise(generateTotpEffect(secret));
+    const ok = await Effect.runPromise(verifyTotpEffect(secret, code));
+    expect(ok).toBe(true);
+    const bad = await Effect.runPromise(verifyTotpEffect(secret, "000000"));
+    expect(bad).toBe(false);
+    expect(new TotpError({ reason: "x" })._tag).toBe("TotpError");
+  });
+
+  it("assertToolPolicyEffect fails with AuthPolicyError for financial tool without MFA", async () => {
+    stash("CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL");
+    process.env.CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL = "1";
+    const exit = await Effect.runPromiseExit(
+      assertToolPolicyEffect(
+        { sub: "u", role: "operator", scope: ["*"] },
+        "payments_credits_transfer_confirm"
+      )
+    );
+    expect(Exit.isFailure(exit)).toBe(true);
+    const okExit = await Effect.runPromiseExit(
+      assertToolPolicyEffect(
+        { sub: "u", role: "operator", scope: ["*"], acr: "mfa" },
+        "payments_credits_transfer_confirm"
+      )
+    );
+    expect(Exit.isSuccess(okExit)).toBe(true);
+  });
+
+  it("AuthPolicyService gates financial tools via layer", async () => {
+    const program = Effect.gen(function* () {
+      const svc = yield* AuthPolicyService;
+      return yield* svc.assertToolAccess(
+        { sub: "u", role: "operator", scope: ["*"] },
+        "payments_credits_transfer_confirm"
+      );
+    });
+    const exit = await Effect.runPromiseExit(
+      program.pipe(
+        Effect.provide(
+          createAuthPolicyServiceLayer({
+            ...process.env,
+            CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL: "1",
+          })
+        )
+      )
+    );
+    expect(Exit.isFailure(exit)).toBe(true);
+  });
+
+  it("AwsAuthHelpers service resolves region and errors on empty servers", async () => {
+    const region = await Effect.runPromise(
+      Effect.gen(function* () {
+        const helpers = yield* AwsAuthHelpers;
+        return yield* helpers.resolveRegion();
+      }).pipe(Effect.provide(AwsAuthHelpersLive))
+    );
+    expect(typeof region).toBe("string");
+
+    const exit = await Effect.runPromiseExit(
+      resolveAwsApiBaseUrlEffect({ openapi: "3.0.0", paths: {} } as OpenAPIDoc)
+    );
+    expect(Exit.isFailure(exit)).toBe(true);
+    expect(new AwsAuthError({ reason: "x" })._tag).toBe("AwsAuthError");
+    await Effect.runPromise(resolveAwsRegionEffect());
+  });
+
+  it("ProviderAuthHeadersService.mergedAuthHeaders yields a headers object", async () => {
+    const headers = await Effect.runPromise(
+      Effect.gen(function* () {
+        const svc = yield* ProviderAuthHeadersService;
+        return yield* svc.mergedAuthHeaders("github");
+      }).pipe(Effect.provide(ProviderAuthHeadersServiceLive))
+    );
+    expect(typeof headers).toBe("object");
+    const direct = await Effect.runPromise(mergedAuthHeadersEffect());
+    expect(typeof direct).toBe("object");
+  });
+
+  it("requireWebAuthnStepUpEffect fails with WebAuthnStepUpError for unimplemented verifier", async () => {
+    const verifier = createUnimplementedWebAuthnVerifier();
+    const exit = await Effect.runPromiseExit(
+      requireWebAuthnStepUpEffect(verifier, { assertion: {}, expectedChallenge: "c" })
+    );
+    expect(Exit.isFailure(exit)).toBe(true);
+
+    const okVerifier: WebAuthnStepUpVerifier = {
+      verifyAssertion: async () => ({ ok: true as const }),
+    };
+    await Effect.runPromise(
+      requireWebAuthnStepUpEffect(okVerifier, { assertion: {}, expectedChallenge: "c" })
+    );
   });
 });

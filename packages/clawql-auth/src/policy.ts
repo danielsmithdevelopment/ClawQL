@@ -1,10 +1,18 @@
 /**
  * Policy hooks for gateway / MCP tools.
  * ClawQL enforces IdP-issued ACR/AMR — it does not replace the IdP.
+ *
+ * Effect is the primary surface: {@link assertToolPolicyEffect} / {@link assertClaimsHaveMfaEffect}
+ * fail on the typed {@link AuthPolicyError} channel, and {@link AuthPolicyService} wraps them for DI.
+ * The sync `assertToolPolicy` / `assertClaimsHaveMfa` are forced-edge façades that throw, retained
+ * for existing hosts (create-auth, clawql-api re-exports).
  */
+
+import { Context, Data, Effect, Layer } from "effect";
 
 import type { AtrClaims } from "./gateway.js";
 
+/** Typed failure for tool-access policy (Effect failure channel). */
 export type EmailDomainPolicyOptions = {
   /** Allowed domains without `@` (e.g. `acme.com`). Empty/undefined = no domain gate. */
   allowedDomains?: string[];
@@ -51,6 +59,12 @@ export function assertEmailDomainAllowed(
     );
   }
 }
+
+/** Default MCP tool names treated as financial / high-impact when MFA policy is on. */
+export class AuthPolicyError extends Data.TaggedError("AuthPolicyError")<{
+  readonly reason: string;
+  readonly toolName?: string;
+}> {}
 
 /** Default MCP tool names treated as financial / high-impact when MFA policy is on. */
 export const DEFAULT_FINANCIAL_TOOL_NAMES: readonly string[] = [
@@ -126,9 +140,50 @@ export type AssertToolPolicyOptions = {
   requireMfaForFinancial?: boolean;
 };
 
+function financialMfaReason(toolName: string): string {
+  return `Tool "${toolName}" requires MFA-class ATR claims (acr/amr). Set CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL=0 to disable, or obtain an IdP token with MFA.`;
+}
+
+/**
+ * Effect: enforce tool access policy against ATR claims.
+ * Today: optional MFA gate for financial tools. Extensible for RBAC/ABAC later.
+ * Fails on the typed {@link AuthPolicyError} channel.
+ */
+export function assertToolPolicyEffect(
+  claims: AtrClaims,
+  toolName: string,
+  options: AssertToolPolicyOptions = {}
+): Effect.Effect<void, AuthPolicyError> {
+  const env = options.env ?? process.env;
+  const requireMfa = options.requireMfaForFinancial ?? isMfaRequiredForFinancialTools(env);
+  if (!requireMfa) return Effect.void;
+  if (!isFinancialTool(toolName, env)) return Effect.void;
+  if (claimsHaveMfa(claims)) return Effect.void;
+  return Effect.fail(new AuthPolicyError({ reason: financialMfaReason(toolName), toolName }));
+}
+
+/** Effect: require MFA on claims regardless of tool name; fails with {@link AuthPolicyError}. */
+export function assertClaimsHaveMfaEffect(
+  claims: AtrClaims,
+  reason = "MFA required"
+): Effect.Effect<void, AuthPolicyError> {
+  return claimsHaveMfa(claims) ? Effect.void : Effect.fail(new AuthPolicyError({ reason }));
+}
+
+/** Effect: predicate wrappers for the MFA/financial policy surface. */
+export const claimsHaveMfaEffect = (claims: AtrClaims): Effect.Effect<boolean> =>
+  Effect.sync(() => claimsHaveMfa(claims));
+export const isFinancialToolEffect = (
+  toolName: string,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<boolean> => Effect.sync(() => isFinancialTool(toolName, env));
+export const isMfaRequiredForFinancialToolsEffect = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<boolean> => Effect.sync(() => isMfaRequiredForFinancialTools(env));
+
 /**
  * Enforce tool access policy against ATR claims.
- * Today: optional MFA gate for financial tools. Extensible for RBAC/ABAC later.
+ * Forced-edge façade — throws; prefer {@link assertToolPolicyEffect}.
  */
 export function assertToolPolicy(
   claims: AtrClaims,
@@ -140,14 +195,53 @@ export function assertToolPolicy(
   if (!requireMfa) return;
   if (!isFinancialTool(toolName, env)) return;
   if (claimsHaveMfa(claims)) return;
-  throw new Error(
-    `Tool "${toolName}" requires MFA-class ATR claims (acr/amr). Set CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL=0 to disable, or obtain an IdP token with MFA.`
-  );
+  throw new Error(financialMfaReason(toolName));
 }
 
-/** Convenience: require MFA on claims regardless of tool name. */
+/**
+ * Convenience: require MFA on claims regardless of tool name.
+ * Forced-edge façade — throws; prefer {@link assertClaimsHaveMfaEffect}.
+ */
 export function assertClaimsHaveMfa(claims: AtrClaims, reason = "MFA required"): void {
   if (!claimsHaveMfa(claims)) {
     throw new Error(reason);
   }
+}
+
+/** Effect service wrapping tool-access policy for DI in gateway / MCP hosts. */
+export class AuthPolicyService extends Context.Tag("clawql/AuthPolicyService")<
+  AuthPolicyService,
+  {
+    readonly assertToolAccess: (
+      claims: AtrClaims,
+      toolName: string,
+      options?: AssertToolPolicyOptions
+    ) => Effect.Effect<void, AuthPolicyError>;
+    readonly assertClaimsHaveMfa: (
+      claims: AtrClaims,
+      reason?: string
+    ) => Effect.Effect<void, AuthPolicyError>;
+    readonly claimsHaveMfa: (claims: AtrClaims) => Effect.Effect<boolean>;
+    readonly isFinancialTool: (toolName: string) => Effect.Effect<boolean>;
+  }
+>() {}
+
+export function authPolicyServiceFromEnv(env: NodeJS.ProcessEnv = process.env) {
+  return AuthPolicyService.of({
+    assertToolAccess: (claims, toolName, options) =>
+      assertToolPolicyEffect(claims, toolName, { env, ...options }),
+    assertClaimsHaveMfa: (claims, reason) => assertClaimsHaveMfaEffect(claims, reason),
+    claimsHaveMfa: (claims) => claimsHaveMfaEffect(claims),
+    isFinancialTool: (toolName) => isFinancialToolEffect(toolName, env),
+  });
+}
+
+/** Live policy service backed by `process.env` (re-read once at layer build). */
+export const AuthPolicyServiceLive = Layer.sync(AuthPolicyService, () => authPolicyServiceFromEnv());
+
+/** Build an isolated policy service layer for tests / explicit env. */
+export function createAuthPolicyServiceLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<AuthPolicyService> {
+  return Layer.sync(AuthPolicyService, () => authPolicyServiceFromEnv(env));
 }

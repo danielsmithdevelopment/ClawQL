@@ -1,11 +1,27 @@
 /**
  * Minimal RFC 6238 TOTP (SHA-1, 30s, 6 digits) for gateway / payments step-up.
  * No third-party OTP dependency — callers own secret storage.
+ *
+ * Effect is the primary surface: {@link generateTotpSecretEffect}, {@link decodeBase32Effect},
+ * {@link generateTotpEffect}, {@link verifyTotpEffect}, {@link totpOtpauthUrlEffect}. The plain
+ * sync functions are retained as forced-edge façades for existing hosts that consume clawql-auth
+ * synchronously (e.g. clawql-payments credits, clawql-api re-exports).
  */
 
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { Data, Effect } from "effect";
 
 const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+/** Typed failure for TOTP primitives (Effect failure channel). */
+export class TotpError extends Data.TaggedError("TotpError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+function totpErrMsg(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause);
+}
 
 export function generateTotpSecret(bytes = 20): string {
   const buf = randomBytes(bytes);
@@ -94,3 +110,42 @@ export function totpOtpauthUrl(input: {
   const account = encodeURIComponent(input.accountName);
   return `otpauth://totp/${issuer}:${account}?secret=${input.secretBase32}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
 }
+
+/** Effect: generate a random base32 TOTP secret. */
+export const generateTotpSecretEffect = (bytes = 20): Effect.Effect<string> =>
+  Effect.sync(() => generateTotpSecret(bytes));
+
+/** Effect: decode a base32 secret to bytes; fails with {@link TotpError} on invalid input. */
+export const decodeBase32Effect = (secret: string): Effect.Effect<Buffer, TotpError> =>
+  Effect.try({
+    try: () => decodeBase32(secret),
+    catch: (cause) => new TotpError({ reason: totpErrMsg(cause), cause }),
+  });
+
+/** Effect: compute a TOTP code; fails with {@link TotpError} on invalid secret. */
+export const generateTotpEffect = (
+  secretBase32: string,
+  options: { timeMs?: number; stepSec?: number; digits?: number } = {}
+): Effect.Effect<string, TotpError> =>
+  Effect.try({
+    try: () => generateTotp(secretBase32, options),
+    catch: (cause) => new TotpError({ reason: totpErrMsg(cause), cause }),
+  });
+
+/** Effect: verify a TOTP code within the window; fails with {@link TotpError} on invalid secret. */
+export const verifyTotpEffect = (
+  secretBase32: string,
+  token: string,
+  options: { timeMs?: number; stepSec?: number; digits?: number; window?: number } = {}
+): Effect.Effect<boolean, TotpError> =>
+  Effect.try({
+    try: () => verifyTotp(secretBase32, token, options),
+    catch: (cause) => new TotpError({ reason: totpErrMsg(cause), cause }),
+  });
+
+/** Effect: build an otpauth:// enrollment URL. */
+export const totpOtpauthUrlEffect = (input: {
+  secretBase32: string;
+  accountName: string;
+  issuer?: string;
+}): Effect.Effect<string> => Effect.sync(() => totpOtpauthUrl(input));

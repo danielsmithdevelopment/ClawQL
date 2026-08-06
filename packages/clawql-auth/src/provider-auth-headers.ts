@@ -29,6 +29,8 @@
  * **`onyx`** → `ONYX_API_TOKEN` / `CLAWQL_ONYX_API_TOKEN` as `Authorization: Bearer …`.
  */
 
+import { Context, Effect, Layer } from "effect";
+
 function trimEnv(...keys: string[]): string | undefined {
   for (const k of keys) {
     const v = process.env[k]?.trim();
@@ -302,3 +304,30 @@ export function mergedAuthHeaders(specLabel?: string): Record<string, string> {
 
   return collapseAuthorization(out);
 }
+
+/** Effect: resolve upstream HTTP headers for **`execute`** / GraphQL→REST. */
+export const mergedAuthHeadersEffect = (
+  specLabel?: string
+): Effect.Effect<Record<string, string>> => Effect.sync(() => mergedAuthHeaders(specLabel));
+
+/** Effect: true for merged-preset id `google` or Google Cloud Discovery API slugs. */
+export const isGoogleDiscoverySpecLabelEffect = (label: string): Effect.Effect<boolean> =>
+  Effect.sync(() => isGoogleDiscoverySpecLabel(label));
+
+/** Effect service exposing provider upstream auth-header resolution for DI in execute hosts. */
+export class ProviderAuthHeadersService extends Context.Tag("clawql/ProviderAuthHeadersService")<
+  ProviderAuthHeadersService,
+  {
+    readonly mergedAuthHeaders: (specLabel?: string) => Effect.Effect<Record<string, string>>;
+    readonly isGoogleDiscoverySpecLabel: (label: string) => Effect.Effect<boolean>;
+  }
+>() {}
+
+/** Live provider auth-headers service backed by `process.env`. */
+export const ProviderAuthHeadersServiceLive = Layer.succeed(
+  ProviderAuthHeadersService,
+  ProviderAuthHeadersService.of({
+    mergedAuthHeaders: mergedAuthHeadersEffect,
+    isGoogleDiscoverySpecLabel: isGoogleDiscoverySpecLabelEffect,
+  })
+);

@@ -11,7 +11,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { Cause, Context, Data, Effect, Exit, Layer, Option } from "effect";
 
-import { generateTotpSecret, totpOtpauthUrl, verifyTotp } from "./totp.js";
+import { generateTotpSecretEffect, totpOtpauthUrlEffect, verifyTotpEffect } from "./totp.js";
 
 export type StepUpTotpEnrollment = {
   readonly subjectId: string;
@@ -151,17 +151,18 @@ export function stepUpStoreServiceFromPath(path: string) {
         const existing = file.subjects[subjectId];
         const issuer = input.issuer ?? "ClawQL";
         if (existing) {
+          const otpauthUrl = yield* totpOtpauthUrlEffect({
+            secretBase32: existing.secretBase32,
+            accountName: subjectId,
+            issuer,
+          });
           return {
             enrollment: existing,
-            otpauthUrl: totpOtpauthUrl({
-              secretBase32: existing.secretBase32,
-              accountName: subjectId,
-              issuer,
-            }),
+            otpauthUrl,
             created: false,
           } satisfies StepUpEnrollResult;
         }
-        const secretBase32 = input.secretBase32?.trim() || generateTotpSecret();
+        const secretBase32 = input.secretBase32?.trim() || (yield* generateTotpSecretEffect());
         const enrollment: StepUpTotpEnrollment = {
           subjectId,
           secretBase32,
@@ -170,16 +171,27 @@ export function stepUpStoreServiceFromPath(path: string) {
         };
         file.subjects[subjectId] = enrollment;
         yield* saveFileEffect(path, file);
+        const otpauthUrl = yield* totpOtpauthUrlEffect({
+          secretBase32,
+          accountName: subjectId,
+          issuer,
+        });
         return {
           enrollment,
-          otpauthUrl: totpOtpauthUrl({ secretBase32, accountName: subjectId, issuer }),
+          otpauthUrl,
           created: true,
         } satisfies StepUpEnrollResult;
       }),
     verify: (subjectId, token) =>
       getEnrollment(subjectId).pipe(
-        Effect.map((enrollment) =>
-          enrollment ? verifyTotp(enrollment.secretBase32, token) : false
+        Effect.flatMap((enrollment) =>
+          enrollment
+            ? verifyTotpEffect(enrollment.secretBase32, token).pipe(
+                Effect.mapError(
+                  (err) => new StepUpStoreError({ reason: err.reason, cause: err.cause })
+                )
+              )
+            : Effect.succeed(false)
         )
       ),
     require: (subjectId, token, enrollHint) =>
@@ -197,7 +209,10 @@ export function stepUpStoreServiceFromPath(path: string) {
         if (!token?.trim()) {
           return yield* Effect.fail(new StepUpStoreError({ reason: "TOTP code required" }));
         }
-        if (!verifyTotp(enrollment.secretBase32, token)) {
+        const valid = yield* verifyTotpEffect(enrollment.secretBase32, token).pipe(
+          Effect.mapError((err) => new StepUpStoreError({ reason: err.reason, cause: err.cause }))
+        );
+        if (!valid) {
           return yield* Effect.fail(new StepUpStoreError({ reason: "Invalid TOTP code" }));
         }
       }),
