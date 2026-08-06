@@ -31,8 +31,8 @@ record() {
 
 wait_http() {
   local url="$1" tries="${2:-60}"
-  local i
-  for i in $(seq 1 "${tries}"); do
+  local _
+  for _ in $(seq 1 "${tries}"); do
     if curl -sf -o /dev/null "${url}"; then return 0; fi
     sleep 2
   done
@@ -49,18 +49,30 @@ if [[ "${IDP_SMOKE_INCLUDE_DOCLING:-0}" == "1" ]]; then
   PROFILES+=(--profile docling)
 fi
 
-echo "== Compose IDP stack up =="
-# shellcheck disable=SC2086
+echo "== Compose IDP stack up (staggered: core → paperless → nextcloud) =="
+# Stagger boots so Paperless migrate + Nextcloud install do not fight for RAM on GHA.
 docker compose -f "${COMPOSE_FILE}" "${PROFILES[@]}" up -d \
-  tika gotenberg stirling redis postgres paperless-ngx nextcloud \
-  ${IDP_SMOKE_INCLUDE_DOCLING:+docling}
+  tika gotenberg stirling redis postgres
+docker compose -f "${COMPOSE_FILE}" "${PROFILES[@]}" up -d paperless-ngx
+if [[ "${IDP_SMOKE_INCLUDE_DOCLING:-0}" == "1" ]]; then
+  docker compose -f "${COMPOSE_FILE}" --profile docling up -d docling
+fi
 
 cleanup() {
   if [[ "${IDP_SMOKE_COMPOSE_KEEP:-0}" != "1" ]]; then
-    docker compose -f "${COMPOSE_FILE}" --profile docling down --remove-orphans >/dev/null 2>&1 || true
+    docker compose -f "${COMPOSE_FILE}" --profile docling down --remove-orphans -v >/dev/null 2>&1 || true
   fi
 }
 trap cleanup EXIT
+
+dump_compose_diag() {
+  echo "== compose diag ==" >&2
+  docker compose -f "${COMPOSE_FILE}" ps -a >&2 || true
+  for c in clawql-idp-paperless clawql-idp-stirling clawql-idp-nextcloud clawql-idp-tika clawql-idp-gotenberg; do
+    echo "---- logs ${c} (tail) ----" >&2
+    docker logs --tail 80 "${c}" 2>&1 || true
+  done
+}
 
 # --- Health waits ---
 ok_core=1
@@ -78,38 +90,53 @@ for _ in $(seq 1 90); do
 done
 [[ "${stirling_ok}" == "1" ]] || ok_core=0
 
+# Paperless first migrate can take several minutes on cold GHA runners
 paperless_ok=0
-for _ in $(seq 1 90); do
-  code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8000/api/" || true)"
-  # 200 or 401 means API is up
+for _ in $(seq 1 150); do
+  code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8000/api/" 2>/dev/null || true)"
+  # 200 / 401 / 403 means API is up
   if [[ "${code}" == "200" || "${code}" == "401" || "${code}" == "403" ]]; then
     paperless_ok=1
     break
+  fi
+  # Root redirect also means gunicorn is serving (API may lag one tick)
+  root_code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8000/" 2>/dev/null || true)"
+  if [[ "${root_code}" == "200" || "${root_code}" == "302" || "${root_code}" == "301" ]]; then
+    api2="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8000/api/" 2>/dev/null || true)"
+    if [[ "${api2}" == "200" || "${api2}" == "401" || "${api2}" == "403" ]]; then
+      paperless_ok=1
+      break
+    fi
   fi
   sleep 3
 done
 [[ "${paperless_ok}" == "1" ]] || ok_core=0
 
 nextcloud_ok=0
-for _ in $(seq 1 90); do
-  code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:18081/status.php" || true)"
-  if [[ "${code}" == "200" ]]; then
-    nextcloud_ok=1
-    break
-  fi
-  sleep 3
-done
+if [[ "${paperless_ok}" == "1" ]]; then
+  # Start Nextcloud after Paperless is healthy to reduce RAM spikes
+  docker compose -f "${COMPOSE_FILE}" up -d nextcloud
+  for _ in $(seq 1 120); do
+    code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:18081/status.php" 2>/dev/null || true)"
+    if [[ "${code}" == "200" ]]; then
+      nextcloud_ok=1
+      break
+    fi
+    sleep 3
+  done
+fi
 [[ "${nextcloud_ok}" == "1" ]] || ok_core=0
 
 if [[ "${ok_core}" != "1" ]]; then
+  dump_compose_diag
   record FAIL compose_stack_health "tika/gotenberg/stirling=${stirling_ok} paperless=${paperless_ok} nextcloud=${nextcloud_ok}"
   exit 1
 fi
 record OK compose_stack_health "tika gotenberg stirling paperless nextcloud"
 
 # --- Stage 1: nextcloud_download (upload fixture then download) ---
-NC_USER=admin
-NC_PASS=admin
+NC_USER="admin"
+NC_PASS="admin"
 NC_BASE="http://127.0.0.1:18081"
 FIXTURE_TXT="${WORK}/inbox-smoke.txt"
 printf 'ClawQL IDP B2.3 smoke SSN 123-45-6789 deal=%s\n' "${CORR}" >"${FIXTURE_TXT}"
