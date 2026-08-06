@@ -165,6 +165,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: BoltIcon,
   }),
   card({
+    href: '/getting-started/custom-sources',
+    name: 'Custom sources (MCP gateway)',
+    description:
+      'Register other MCP servers and APIs into one search/execute surface — permit and lock down with Seatbelt / Panguard.',
+    icon: LinkIcon,
+  }),
+  card({
     href: '/inference/clawql-inference',
     name: 'Agentic Gateway (clawql-inference)',
     description:

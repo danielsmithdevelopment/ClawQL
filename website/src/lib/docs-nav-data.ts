@@ -24,6 +24,11 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'Quickstart', href: '/quickstart' },
       { title: 'Agent setup', href: '/agent-setup' },
       { title: 'Inference setup', href: '/getting-started/inference' },
+      {
+        title: 'Custom sources',
+        href: '/getting-started/custom-sources',
+        tag: 'MCP',
+      },
       { title: 'MCP clients', href: '/mcp-clients' },
       { title: 'For teams', href: '/getting-started/for-teams' },
       {

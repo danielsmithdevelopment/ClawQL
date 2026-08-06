@@ -33,6 +33,7 @@ export const DOC_SITE_ROUTES = {
   'docs/getting-started/agent-setup.md': '/agent-setup',
   'docs/getting-started/agent-setup-prompt.md': '/agent-setup',
   'docs/getting-started/inference.md': '/getting-started/inference',
+  'docs/getting-started/custom-sources.md': '/getting-started/custom-sources',
   'docs/deployment/clawql-deployment-operations-guide.md':
     '/deployment/operations-guide',
   'docs/deployment/helm.md': '/helm',
