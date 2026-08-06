@@ -1,9 +1,10 @@
 # IDP B-2.3 smoke stack — compose-able DEFAULT_IDP_PIPELINE vendors.
 # Used by scripts/dev/smoke-idp-pipeline-b23.sh (tier=compose).
 #
-# Included: tika, gotenberg, stirling, paperless (+postgres/redis), nextcloud
+# Included: tika, gotenberg, stirling, paperless (+postgres/redis), nextcloud,
+#           onyx (minimal postgres-backed API — Helm fullVectorStack=false),
+#           coneshare (open-source conesharedev/coneshare + postgres/redis)
 # Optional profile `docling`: quay.io/docling-project/docling-serve-cpu (large ~4GiB)
-# Not compose-able here: onyx (multi-service), coneshare (external/commercial)
 
 name: clawql-idp-smoke
 
@@ -108,6 +109,131 @@ services:
     ports:
       - "18081:80"
 
+  # --- Onyx (minimal / Helm fullVectorStack=false) ---
+  # Upsert ingestion API without OpenSearch/Vespa/model servers (fits GHA RAM).
+  onyx-postgres:
+    image: postgres:15.2-alpine
+    container_name: clawql-idp-onyx-postgres
+    environment:
+      POSTGRES_DB: onyx
+      POSTGRES_USER: onyx
+      POSTGRES_PASSWORD: onyx
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U onyx -d onyx"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - onyx-pg-data:/var/lib/postgresql/data
+
+  onyx-api:
+    image: onyxdotapp/onyx-backend:latest
+    container_name: clawql-idp-onyx-api
+    depends_on:
+      onyx-postgres:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -c
+      - >
+        alembic upgrade head &&
+        echo "Starting Onyx Api Server" &&
+        uvicorn onyx.main:app --host 0.0.0.0 --port 8080
+    environment:
+      AUTH_TYPE: basic
+      USER_AUTH_SECRET: clawql-idp-smoke-onyx-user-auth-secret
+      POSTGRES_HOST: onyx-postgres
+      POSTGRES_USER: onyx
+      POSTGRES_PASSWORD: onyx
+      POSTGRES_DB: onyx
+      DISABLE_VECTOR_DB: "true"
+      FILE_STORE_BACKEND: postgres
+      CACHE_BACKEND: postgres
+      AUTH_BACKEND: postgres
+      # Skip slow document-index retries when vector DB is disabled.
+      NUM_RETRIES_ON_STARTUP: "2"
+      ENABLE_CRAFT: "false"
+    ports:
+      - "18082:8080"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 180s
+
+  # --- ConeShare (open-source: https://github.com/coneshare/coneshare-compose) ---
+  coneshare-postgres:
+    image: postgres:14-bullseye
+    container_name: clawql-idp-coneshare-postgres
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - coneshare-pg-data:/var/lib/postgresql/data
+
+  coneshare-redis:
+    image: redis:6.2.14-alpine
+    container_name: clawql-idp-coneshare-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    volumes:
+      - coneshare-redis-data:/data
+
+  coneshare-web:
+    image: conesharedev/coneshare:rolling
+    container_name: clawql-idp-coneshare-web
+    env_file:
+      - ./coneshare-smoke.env
+    depends_on:
+      coneshare-postgres:
+        condition: service_healthy
+      coneshare-redis:
+        condition: service_healthy
+    volumes:
+      - coneshare-data:/data
+      - coneshare-media:/home/coneshare/app/media
+      - coneshare-logs:/home/coneshare/logs
+    ports:
+      - "8999:80"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1/api/v1/_health/"]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 120s
+
+  coneshare-celery:
+    image: conesharedev/coneshare:rolling
+    container_name: clawql-idp-coneshare-celery
+    env_file:
+      - ./coneshare-smoke.env
+    command: celery -A backend worker --loglevel=info -Q celery --concurrency=1
+    depends_on:
+      coneshare-postgres:
+        condition: service_healthy
+      coneshare-redis:
+        condition: service_healthy
+      coneshare-web:
+        condition: service_started
+    volumes:
+      - coneshare-data:/data
+      - coneshare-media:/home/coneshare/app/media
+      - coneshare-logs:/home/coneshare/logs
+
   # Optional — enable with: docker compose --profile docling up -d
   docling:
     profiles: ["docling"]
@@ -121,3 +247,9 @@ volumes:
   paperless-media:
   paperless-export:
   paperless-consume:
+  onyx-pg-data:
+  coneshare-pg-data:
+  coneshare-redis-data:
+  coneshare-data:
+  coneshare-media:
+  coneshare-logs:

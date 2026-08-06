@@ -18,6 +18,7 @@ on:
       - "scripts/dev/smoke-idp-pipeline-b23.sh"
       - "scripts/dev/smoke-idp-ordered-compose.sh"
       - "examples/clawql-local-docker-compose/docker-compose.idp-smoke.yml"
+      - "examples/clawql-local-docker-compose/coneshare-smoke.env"
       - "examples/clawql-local-docker-compose/docker-compose.yml"
       - "packages/clawql-documents/**"
       - "docs/runbooks/idp-pipeline-b23-smoke.md"
@@ -46,7 +47,7 @@ jobs:
   smoke:
     name: IDP B-2.3 smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 

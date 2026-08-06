@@ -72,7 +72,8 @@ dump_compose_diag() {
   for url in \
     "http://127.0.0.1:8000/" \
     "http://127.0.0.1:8000/api/" \
-    "http://127.0.0.1:8000/api/token/" \
+    "http://127.0.0.1:18082/health" \
+    "http://127.0.0.1:8999/api/v1/_health/" \
     "http://127.0.0.1:18081/status.php" \
     "http://127.0.0.1:18080/" \
     "http://127.0.0.1:9998/version" \
@@ -81,7 +82,11 @@ dump_compose_diag() {
     code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 "${url}" 2>/dev/null || echo err)"
     echo "  ${code}  ${url}" >&2
   done
-  for c in clawql-idp-paperless clawql-idp-stirling clawql-idp-nextcloud clawql-idp-tika clawql-idp-gotenberg; do
+  for c in \
+    clawql-idp-paperless clawql-idp-stirling clawql-idp-nextcloud \
+    clawql-idp-onyx-api clawql-idp-coneshare-web \
+    clawql-idp-tika clawql-idp-gotenberg
+  do
     echo "---- logs ${c} (tail) ----" >&2
     docker logs --tail 80 "${c}" 2>&1 || true
   done
@@ -267,20 +272,107 @@ else
   fi
 fi
 
-# --- Stage 7: onyx ---
-if [[ -n "${ONYX_BASE_URL:-}" && -n "${ONYX_API_TOKEN:-}" ]]; then
+# --- Stage 7: onyx (compose upsert_ingestion_doc, or external secrets) ---
+# Free Stirling RAM before pulling/starting Onyx on GHA runners.
+docker stop clawql-idp-stirling >/dev/null 2>&1 || true
+
+ONYX_BASE="${ONYX_BASE_URL:-}"
+ONYX_TOKEN="${ONYX_API_TOKEN:-}"
+if [[ -z "${ONYX_BASE}" || -z "${ONYX_TOKEN}" ]]; then
+  echo "== Start Onyx (minimal postgres-backed API) =="
+  docker compose -f "${COMPOSE_FILE}" up -d onyx-postgres onyx-api
+  onyx_ok=0
+  for _ in $(seq 1 120); do
+    oh="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' clawql-idp-onyx-api 2>/dev/null || echo missing)"
+    if [[ "${oh}" == "healthy" ]]; then
+      onyx_ok=1
+      break
+    fi
+    code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:18082/health" 2>/dev/null || true)"
+    if [[ "${code}" == "200" ]]; then
+      onyx_ok=1
+      break
+    fi
+    sleep 3
+  done
+  if [[ "${onyx_ok}" != "1" ]]; then
+    dump_compose_diag
+    record FAIL stage_onyx "onyx-api never healthy"
+  else
+    ONYX_BASE="http://127.0.0.1:18082"
+    # Register first admin (ignore already-exists), login, create API key.
+    curl -sS -o "${WORK}/onyx-register.json" -w '%{http_code}' \
+      -X POST "${ONYX_BASE}/auth/register" \
+      -H "Content-Type: application/json" \
+      -d '{"email":"admin@localhost","password":"Adminadmin1!","is_active":true,"is_superuser":true,"is_verified":true,"role":"admin"}' \
+      >/dev/null || true
+    COOKIE_JAR="${WORK}/onyx-cookies.txt"
+    rm -f "${COOKIE_JAR}"
+    login_code="$(curl -sS -o "${WORK}/onyx-login.json" -w '%{http_code}' \
+      -c "${COOKIE_JAR}" -b "${COOKIE_JAR}" \
+      -X POST "${ONYX_BASE}/auth/login" \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      --data-urlencode "username=admin@localhost" \
+      --data-urlencode "password=Adminadmin1!" || true)"
+    key_json="$(curl -sS -c "${COOKIE_JAR}" -b "${COOKIE_JAR}" \
+      -X POST "${ONYX_BASE}/admin/api-key" \
+      -H "Content-Type: application/json" \
+      -d '{"name":"idp-b23-smoke","role":"admin"}' || true)"
+    ONYX_TOKEN="$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("api_key") or "")' <<<"${key_json}" 2>/dev/null || true)"
+    if [[ -z "${ONYX_TOKEN}" ]]; then
+      record FAIL stage_onyx "login=${login_code} could not create API key: ${key_json:0:240}"
+    else
+      export ONYX_API_TOKEN="${ONYX_TOKEN}"
+      DOC_ID="idp-b23-${CORR}"
+      ingest_body="$(python3 - "${DOC_ID}" "${CORR}" <<'PY'
+import json, sys
+doc_id, corr = sys.argv[1], sys.argv[2]
+print(json.dumps({
+  "document": {
+    "id": doc_id,
+    "semantic_identifier": f"ClawQL IDP B2.3 smoke {corr}",
+    "title": f"clawql-idp-b23-{corr}",
+    "source": "ingestion_api",
+    "from_ingestion_api": True,
+    "sections": [{"type": "text", "text": f"ClawQL IDP B2.3 ordered smoke correlation {corr}. SSN redacted upstream."}],
+    "metadata": {"pipeline": "idp-b23", "correlation_id": corr},
+  }
+}))
+PY
+)"
+      code="$(curl -sS -o "${WORK}/onyx-ingest.json" -w '%{http_code}' \
+        -X POST "${ONYX_BASE}/onyx-api/ingestion" \
+        -H "Authorization: Bearer ${ONYX_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "${ingest_body}" || true)"
+      if [[ "${code}" == "200" || "${code}" == "201" ]]; then
+        record OK stage_onyx "compose upsert_ingestion_doc HTTP ${code}"
+      else
+        # Some builds mount under /api
+        code2="$(curl -sS -o "${WORK}/onyx-ingest.json" -w '%{http_code}' \
+          -X POST "${ONYX_BASE}/api/onyx-api/ingestion" \
+          -H "Authorization: Bearer ${ONYX_TOKEN}" \
+          -H "Content-Type: application/json" \
+          -d "${ingest_body}" || true)"
+        if [[ "${code2}" == "200" || "${code2}" == "201" ]]; then
+          record OK stage_onyx "compose upsert via /api HTTP ${code2}"
+        else
+          record FAIL stage_onyx "upsert HTTP ${code}/${code2} body=$(head -c 200 "${WORK}/onyx-ingest.json" 2>/dev/null || true)"
+        fi
+      fi
+    fi
+  fi
+else
   code="$(curl -sS -o "${WORK}/onyx.json" -w '%{http_code}' \
-    -X POST "${ONYX_BASE_URL%/}/search/send-search-message" \
-    -H "Authorization: Bearer ${ONYX_API_TOKEN}" \
+    -X POST "${ONYX_BASE%/}/search/send-search-message" \
+    -H "Authorization: Bearer ${ONYX_TOKEN}" \
     -H "Content-Type: application/json" \
     -d '{"search_query":"clawql idp smoke","num_hits":1,"include_content":true}' || true)"
   if [[ "${code}" == "200" ]]; then
     record OK stage_onyx "external search HTTP 200"
   else
-    record FAIL stage_onyx "HTTP ${code}"
+    record FAIL stage_onyx "external HTTP ${code}"
   fi
-else
-  record SKIP stage_onyx "needs ONYX_BASE_URL + ONYX_API_TOKEN (multi-service stack; not in compose smoke)"
 fi
 
 # --- Stage 8: nextcloud_upload (processed) ---
@@ -294,19 +386,72 @@ else
   record FAIL stage_nextcloud_upload
 fi
 
-# --- Stage 9: coneshare ---
-if [[ -n "${CONESHARE_BASE_URL:-}" && -n "${CONESHARE_API_TOKEN:-}" ]]; then
-  code="$(curl -sS -o "${WORK}/coneshare.json" -w '%{http_code}' \
-    -X GET "${CONESHARE_BASE_URL%/}/" \
-    -H "Authorization: Bearer ${CONESHARE_API_TOKEN}" || true)"
-  if [[ "${code}" == "200" || "${code}" == "401" || "${code}" == "403" || "${code}" == "404" ]]; then
-    # Reachability / auth surface is enough for smoke; full dataroom create is product-specific.
-    record OK stage_coneshare "reachable HTTP ${code}"
+# --- Stage 9: coneshare (compose dataroom + share link, or external secrets) ---
+CS_BASE="${CONESHARE_BASE_URL:-}"
+CS_TOKEN="${CONESHARE_API_TOKEN:-}"
+if [[ -z "${CS_BASE}" || -z "${CS_TOKEN}" ]]; then
+  echo "== Start ConeShare (open-source compose) =="
+  docker compose -f "${COMPOSE_FILE}" up -d \
+    coneshare-postgres coneshare-redis coneshare-web coneshare-celery
+  cs_ok=0
+  for _ in $(seq 1 120); do
+    ch="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' clawql-idp-coneshare-web 2>/dev/null || echo missing)"
+    if [[ "${ch}" == "healthy" ]]; then
+      cs_ok=1
+      break
+    fi
+    code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:8999/api/v1/_health/" 2>/dev/null || true)"
+    if [[ "${code}" == "200" ]]; then
+      cs_ok=1
+      break
+    fi
+    sleep 3
+  done
+  if [[ "${cs_ok}" != "1" ]]; then
+    dump_compose_diag
+    record FAIL stage_coneshare "coneshare-web never healthy"
   else
-    record FAIL stage_coneshare "HTTP ${code}"
+    CS_BASE="http://127.0.0.1:8999"
+    # Ensure smoke admin exists (idempotent).
+    docker exec \
+      -e DJANGO_SUPERUSER_USERNAME=admin \
+      -e DJANGO_SUPERUSER_PASSWORD=adminadmin1 \
+      -e DJANGO_SUPERUSER_EMAIL=admin@localhost \
+      clawql-idp-coneshare-web \
+      python3 manage.py createsuperuser --noinput >/dev/null 2>&1 || true
+    token_json="$(curl -sS -X POST "${CS_BASE}/api/v1/token/" \
+      -H "Content-Type: application/json" \
+      -d '{"username":"admin","password":"adminadmin1"}' || true)"
+    CS_TOKEN="$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("access") or d.get("token") or "")' <<<"${token_json}" 2>/dev/null || true)"
+    if [[ -z "${CS_TOKEN}" ]]; then
+      record FAIL stage_coneshare "token create failed: ${token_json:0:240}"
+    else
+      dr_code="$(curl -sS -o "${WORK}/coneshare-dataroom.json" -w '%{http_code}' \
+        -X POST "${CS_BASE}/api/v1/datarooms/" \
+        -H "Authorization: Bearer ${CS_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "{\"title\":\"clawql-idp-b23-${CORR}\",\"description\":\"IDP B2.3 ordered smoke\"}" || true)"
+      sl_code="$(curl -sS -o "${WORK}/coneshare-share.json" -w '%{http_code}' \
+        -X POST "${CS_BASE}/api/v1/share-links/" \
+        -H "Authorization: Bearer ${CS_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "{\"title\":\"clawql-idp-b23-${CORR}-share\"}" || true)"
+      if [[ "${dr_code}" == "200" || "${dr_code}" == "201" ]]; then
+        record OK stage_coneshare "dataroom HTTP ${dr_code}; share-link HTTP ${sl_code}"
+      else
+        record FAIL stage_coneshare "dataroom HTTP ${dr_code} body=$(head -c 200 "${WORK}/coneshare-dataroom.json" 2>/dev/null || true)"
+      fi
+    fi
   fi
 else
-  record SKIP stage_coneshare "needs CONESHARE_BASE_URL + CONESHARE_API_TOKEN (external/commercial; not in compose smoke)"
+  code="$(curl -sS -o "${WORK}/coneshare.json" -w '%{http_code}' \
+    -X GET "${CS_BASE%/}/api/v1/_health/" \
+    -H "Authorization: Bearer ${CS_TOKEN}" || true)"
+  if [[ "${code}" == "200" || "${code}" == "401" || "${code}" == "403" ]]; then
+    record OK stage_coneshare "external health HTTP ${code}"
+  else
+    record FAIL stage_coneshare "external HTTP ${code}"
+  fi
 fi
 
 # --- Ordered artifact ---
@@ -347,11 +492,17 @@ out = {
     "stages_passed": passed,
     "stages_total": len(order),
     "source": "idp-pipeline-b23-ordered",
-    "compose_included": ["nextcloud", "tika", "gotenberg", "stirling", "paperless"],
+    "compose_included": [
+        "nextcloud",
+        "tika",
+        "gotenberg",
+        "stirling",
+        "paperless",
+        "onyx",
+        "coneshare",
+    ],
     "external_or_optional": {
         "docling": "IDP_SMOKE_INCLUDE_DOCLING=1 or DOCLING_BASE_URL",
-        "onyx": "ONYX_BASE_URL + ONYX_API_TOKEN",
-        "coneshare": "CONESHARE_BASE_URL + CONESHARE_API_TOKEN",
     },
 }
 Path(out_dir, "pipeline-smoke.json").write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")

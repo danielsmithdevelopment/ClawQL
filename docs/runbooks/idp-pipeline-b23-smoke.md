@@ -5,6 +5,7 @@ Proves **real IDP vendors in order** via Docker Compose (and optional external s
 OpenBench stub [`idp-safe-pipeline-lite`](../benchmarks/openbench-task-explanations.md#idp-safe-pipeline-lite) is only agent-tool sequencing — **not** this smoke.
 
 **Compose file:** [`docker-compose.idp-smoke.yml`](../../examples/clawql-local-docker-compose/docker-compose.idp-smoke.yml)  
+**ConeShare env:** [`coneshare-smoke.env`](../../examples/clawql-local-docker-compose/coneshare-smoke.env)  
 **Ordered hops:** [`scripts/dev/smoke-idp-ordered-compose.sh`](../../scripts/dev/smoke-idp-ordered-compose.sh)  
 **Wrapper:** [`scripts/dev/smoke-idp-pipeline-b23.sh`](../../scripts/dev/smoke-idp-pipeline-b23.sh)  
 **Workflow:** [`.github/workflows/idp-pipeline-smoke.yml`](../../.github/workflows/idp-pipeline-smoke.yml)
@@ -13,60 +14,51 @@ OpenBench stub [`idp-safe-pipeline-lite`](../benchmarks/openbench-task-explanati
 
 ## Ordered stages (DEFAULT_IDP_PIPELINE)
 
-| #   | Stage              | In compose smoke? | Needs                                                                         |
-| --- | ------------------ | ----------------- | ----------------------------------------------------------------------------- |
-| 1   | Nextcloud download | **Yes**           | bundled `nextcloud:29-apache`                                                 |
-| 2   | Docling            | Optional          | `IDP_SMOKE_INCLUDE_DOCLING=1` (~4 GiB image) **or** secret `DOCLING_BASE_URL` |
-| 3   | Tika               | **Yes**           | bundled                                                                       |
-| 4   | Gotenberg          | **Yes**           | bundled (HTML→PDF)                                                            |
-| 5   | Stirling redact    | **Yes**           | bundled `frooodle/s-pdf`                                                      |
-| 6   | Paperless archive  | **Yes**           | bundled paperless-ngx + postgres/redis                                        |
-| 7   | Onyx index         | **No (external)** | secrets `ONYX_BASE_URL` + `ONYX_API_TOKEN`                                    |
-| 8   | Nextcloud upload   | **Yes**           | same Nextcloud                                                                |
-| 9   | ConeShare VDR      | **No (external)** | secrets `CONESHARE_BASE_URL` + `CONESHARE_API_TOKEN`                          |
+| #   | Stage              | In compose smoke? | Notes                                                                 |
+| --- | ------------------ | ----------------- | --------------------------------------------------------------------- |
+| 1   | Nextcloud download | **Yes**           | WebDAV inbox fixture                                                  |
+| 2   | Docling            | Optional          | `IDP_SMOKE_INCLUDE_DOCLING=1` (~4 GiB) **or** `DOCLING_BASE_URL`      |
+| 3   | Tika               | **Yes**           | text extract                                                          |
+| 4   | Gotenberg          | **Yes**           | HTML→PDF                                                              |
+| 5   | Stirling redact    | **Yes**           | auto-redact (stopped after use to free RAM for Onyx)                  |
+| 6   | Paperless archive  | **Yes**           | token upload                                                          |
+| 7   | Onyx index         | **Yes**           | minimal postgres-backed API → `upsert_ingestion_doc` (port `18082`)   |
+| 8   | Nextcloud upload   | **Yes**           | processed PDF                                                         |
+| 9   | ConeShare VDR      | **Yes**           | open-source `conesharedev/coneshare` → token + dataroom (port `8999`) |
 
-Compose proves hops **1,3,4,5,6,8** chained with a real PDF artifact. 2/7/9 are SKIP unless you provide the env/secrets above.
+Compose proves hops **1,3,4,5,6,7,8,9** chained. Docling stays opt-in (image size).
 
 ---
 
-## Why some stages are not in compose
+## What each late stage actually calls
 
-| Component                   | Why not default-compose                                           | How to include                                                                                         |
-| --------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| **Docling**                 | CPU image ~4 GiB; slow pull/boot on GHA                           | `IDP_SMOKE_INCLUDE_DOCLING=1` or point `DOCLING_BASE_URL` at a running serve                           |
-| **Onyx**                    | Multi-service (API + Vespa/Postgres/etc.), not a single container | Deploy Onyx separately; set `ONYX_BASE_URL` + `ONYX_API_TOKEN`                                         |
-| **ConeShare**               | External/commercial product                                       | Set `CONESHARE_BASE_URL` + `CONESHARE_API_TOKEN`                                                       |
-| **Live ClawQL HTTP / NATS** | Needs a deployed MCP + webhook tokens                             | `CLAWQL_HTTP_BASE` + `CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN` / `CLAWQL_CONESHARE_WEBHOOK_TOKEN` (tier=`live`) |
-| **Argo Workflows**          | Cluster/kind optional CI                                          | `vars.CLAWQL_ENABLE_ARGO_WORKFLOWS_KIND_CI=1` (separate job)                                           |
+| Stage     | Operation                                                  |
+| --------- | ---------------------------------------------------------- |
+| Onyx      | Register/login → create API key → `POST /onyx-api/ingestion` |
+| ConeShare | `createsuperuser` → `POST /api/v1/token/` → `POST /api/v1/datarooms/` (+ share-link attempt) |
+
+Onyx uses the same **minimal** mode as Helm `onyx.fullVectorStack=false` (no OpenSearch/Vespa/model servers) so it fits GHA RAM while still exercising the IDP ingest API. Full RAG search needs the vector stack (or external `ONYX_*` secrets).
+
+ConeShare follows [coneshare-compose](https://github.com/coneshare/coneshare-compose) (web + postgres + redis + celery).
+
+---
+
+## Optional overrides
+
+| Env / secret                                 | Effect                                      |
+| -------------------------------------------- | ------------------------------------------- |
+| `IDP_SMOKE_INCLUDE_DOCLING=1`                | Boot Docling profile                        |
+| `DOCLING_BASE_URL`                           | Use remote Docling                          |
+| `ONYX_BASE_URL` + `ONYX_API_TOKEN`           | Skip compose Onyx; hit external             |
+| `CONESHARE_BASE_URL` + `CONESHARE_API_TOKEN` | Skip compose ConeShare; hit external        |
+| `CLAWQL_HTTP_BASE` + webhook tokens          | `tier=live` NATS webhook dry_run            |
 
 ---
 
 ## Local
 
 ```bash
-# Full compose-able chain (recommended)
-IDP_SMOKE_TIER=compose bash scripts/dev/smoke-idp-pipeline-b23.sh
-
-# Also boot Docling (large)
-IDP_SMOKE_INCLUDE_DOCLING=1 IDP_SMOKE_TIER=compose bash scripts/dev/smoke-idp-pipeline-b23.sh
-
-# External Onyx / ConeShare / Docling when you have them
-export ONYX_BASE_URL=… ONYX_API_TOKEN=…
-export CONESHARE_BASE_URL=… CONESHARE_API_TOKEN=…
 IDP_SMOKE_TIER=compose bash scripts/dev/smoke-idp-pipeline-b23.sh
 ```
 
 Artifacts: `artifacts/idp-b23-smoke/pipeline-smoke.json`, `summary.json`, `work/`.
-
----
-
-## GitHub Actions secrets (optional upgrades)
-
-| Secret                                       | Unlocks                                     |
-| -------------------------------------------- | ------------------------------------------- |
-| `DOCLING_BASE_URL`                           | stage_docling without pulling the big image |
-| `ONYX_BASE_URL` + `ONYX_API_TOKEN`           | stage_onyx                                  |
-| `CONESHARE_BASE_URL` + `CONESHARE_API_TOKEN` | stage_coneshare                             |
-| `CLAWQL_HTTP_BASE` + webhook tokens          | tier=`live` NATS webhook dry_run            |
-
-PR + weekly schedule always run **compose** (path-filtered).
