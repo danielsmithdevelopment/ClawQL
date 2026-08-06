@@ -4,15 +4,14 @@
  */
 
 import { Buffer } from "node:buffer";
+import { Effect } from "effect";
 import baseFetch from "node-fetch";
 import type { RequestInit as FetchRequestInit, Response } from "node-fetch";
-import { mergedAuthHeaders } from "../auth/auth-headers.js";
-import { isAwsSpecLabel } from "../auth/aws-auth.js";
-import { maybeSignAwsRequest, normalizeAwsExecuteUrl } from "../auth/aws-sigv4.js";
+import { mergedAuthHeadersEffect } from "../auth/auth-headers.js";
+import { isAwsSpecLabelEffect } from "../auth/aws-auth.js";
+import { maybeSignAwsRequestEffect, normalizeAwsExecuteUrlEffect } from "../auth/aws-sigv4.js";
 import type { Operation } from "../spec/operation-types.js";
 import { resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
-
-export { mergedAuthHeaders };
 
 /**
  * When **`CLAWQL_TEST_SLACK_FETCH_STUB=1`**, `executeRestOperation` does not open a real socket.
@@ -209,7 +208,7 @@ export async function executeRestOperation(
     if (p?.location !== "query") continue;
     url.searchParams.append(k, String(v));
   }
-  normalizeAwsExecuteUrl(url, pathTemplate, op.specLabel);
+  Effect.runSync(normalizeAwsExecuteUrlEffect(url, pathTemplate, op.specLabel));
 
   const method = op.method.toUpperCase();
   const wantsBinary =
@@ -234,7 +233,7 @@ export async function executeRestOperation(
           : wantsBinary
             ? "*/*"
             : "application/json",
-    ...mergedAuthHeaders(op.specLabel),
+    ...Effect.runSync(mergedAuthHeadersEffect(op.specLabel)),
   };
   if (isNextcloudPropfind) {
     headers.Depth =
@@ -294,10 +293,11 @@ export async function executeRestOperation(
   }
 
   try {
-    const awsSigned = await maybeSignAwsRequest(
-      url,
-      pathTemplate,
-      {
+    const awsSigned = await Effect.runPromise(
+      maybeSignAwsRequestEffect(
+        url,
+        pathTemplate,
+        {
         method,
         headers,
         body:
@@ -310,9 +310,10 @@ export async function executeRestOperation(
                 : init.body instanceof Uint8Array
                   ? Buffer.from(init.body)
                   : undefined,
-      },
-      openapi,
-      op.specLabel
+        },
+        openapi,
+        op.specLabel
+      )
     );
     if (awsSigned) {
       Object.assign(headers, awsSigned.headers);
@@ -321,8 +322,8 @@ export async function executeRestOperation(
         init.body = awsSigned.body as never;
       }
     } else if (
-      isAwsSpecLabel(op.specLabel ?? "") ||
-      isAwsSpecLabel(process.env.CLAWQL_PROVIDER?.trim().toLowerCase() ?? "")
+      Effect.runSync(isAwsSpecLabelEffect(op.specLabel ?? "")) ||
+      Effect.runSync(isAwsSpecLabelEffect(process.env.CLAWQL_PROVIDER?.trim().toLowerCase() ?? ""))
     ) {
       return {
         ok: false,

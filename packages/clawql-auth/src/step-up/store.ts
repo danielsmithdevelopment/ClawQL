@@ -3,13 +3,13 @@
  * Callers choose the path (e.g. `$CLAWQL_HOME/Payments/step-up-totp.json`).
  * Never put secrets in payment WORM or audit logs.
  *
- * IO is Effect-based via {@link StepUpStoreService}. {@link createFileStepUpStore}
- * is a Promise façade retained for forced edges / existing hosts (e.g. clawql-payments).
+ * IO is Effect-based via {@link StepUpStoreService}; hosts provide {@link createStepUpStoreLayer}
+ * (e.g. clawql-payments' CreditsStepUpService) and run it at their own boundary.
  */
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { Cause, Context, Data, Effect, Exit, Layer, Option } from "effect";
+import { Context, Data, Effect, Layer } from "effect";
 
 import { generateTotpSecretEffect, totpOtpauthUrlEffect, verifyTotpEffect } from "./totp.js";
 
@@ -222,41 +222,4 @@ export function stepUpStoreServiceFromPath(path: string) {
 /** Build an isolated step-up store service layer for a given file path. */
 export function createStepUpStoreLayer(path: string): Layer.Layer<StepUpStoreService> {
   return Layer.succeed(StepUpStoreService, stepUpStoreServiceFromPath(path));
-}
-
-async function runStepUp<A>(eff: Effect.Effect<A, StepUpStoreError>): Promise<A> {
-  const exit = await Effect.runPromiseExit(eff);
-  if (Exit.isSuccess(exit)) return exit.value;
-  const failure = Option.getOrUndefined(Cause.failureOption(exit.cause));
-  if (failure) {
-    throw new Error(
-      failure.reason,
-      failure.cause !== undefined ? { cause: failure.cause } : undefined
-    );
-  }
-  throw new Error("Step-up store operation failed");
-}
-
-export type FileStepUpStore = {
-  readonly path: string;
-  getEnrollment(subjectId: string): Promise<StepUpTotpEnrollment | undefined>;
-  enroll(input: StepUpEnrollInput): Promise<StepUpEnrollResult>;
-  verify(subjectId: string, token: string): Promise<boolean>;
-  require(subjectId: string, token: string | undefined, enrollHint?: string): Promise<void>;
-};
-
-/**
- * Promise façade over {@link StepUpStoreService} for forced edges / existing hosts
- * (e.g. clawql-payments) that consume a Promise-based store.
- */
-export function createFileStepUpStore(path: string): FileStepUpStore {
-  const service = stepUpStoreServiceFromPath(path);
-  return {
-    path,
-    getEnrollment: (subjectId) => runStepUp(service.getEnrollment(subjectId)),
-    enroll: (input) => runStepUp(service.enroll(input)),
-    verify: (subjectId, token) => runStepUp(service.verify(subjectId, token)),
-    require: (subjectId, token, enrollHint) =>
-      runStepUp(service.require(subjectId, token, enrollHint)),
-  };
 }

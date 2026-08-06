@@ -124,8 +124,6 @@ export function isGoogleDiscoverySpecLabel(label: string): boolean {
   return /^[a-z0-9][a-z0-9-]*-v[a-z0-9]+$/i.test(s);
 }
 
-export { isAwsSpecLabel } from "./aws-auth.js";
-
 function envResolvedAuthHeaders(specLabel?: string): Record<string, string> {
   const label = specLabel?.trim().toLowerCase();
   const prov = process.env.CLAWQL_PROVIDER?.trim().toLowerCase();

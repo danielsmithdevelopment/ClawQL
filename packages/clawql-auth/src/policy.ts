@@ -2,10 +2,9 @@
  * Policy hooks for gateway / MCP tools.
  * ClawQL enforces IdP-issued ACR/AMR — it does not replace the IdP.
  *
- * Effect is the primary surface: {@link assertToolPolicyEffect} / {@link assertClaimsHaveMfaEffect}
+ * Effect is the only public surface: {@link assertToolPolicyEffect} / {@link assertClaimsHaveMfaEffect}
  * fail on the typed {@link AuthPolicyError} channel, and {@link AuthPolicyService} wraps them for DI.
- * The sync `assertToolPolicy` / `assertClaimsHaveMfa` are forced-edge façades that throw, retained
- * for existing hosts (create-auth, clawql-api re-exports).
+ * Hosts that need a throwing edge run these with `Effect.runSync`.
  */
 
 import { Context, Data, Effect, Layer } from "effect";
@@ -180,33 +179,6 @@ export const isFinancialToolEffect = (
 export const isMfaRequiredForFinancialToolsEffect = (
   env: NodeJS.ProcessEnv = process.env
 ): Effect.Effect<boolean> => Effect.sync(() => isMfaRequiredForFinancialTools(env));
-
-/**
- * Enforce tool access policy against ATR claims.
- * Forced-edge façade — throws; prefer {@link assertToolPolicyEffect}.
- */
-export function assertToolPolicy(
-  claims: AtrClaims,
-  toolName: string,
-  options: AssertToolPolicyOptions = {}
-): void {
-  const env = options.env ?? process.env;
-  const requireMfa = options.requireMfaForFinancial ?? isMfaRequiredForFinancialTools(env);
-  if (!requireMfa) return;
-  if (!isFinancialTool(toolName, env)) return;
-  if (claimsHaveMfa(claims)) return;
-  throw new Error(financialMfaReason(toolName));
-}
-
-/**
- * Convenience: require MFA on claims regardless of tool name.
- * Forced-edge façade — throws; prefer {@link assertClaimsHaveMfaEffect}.
- */
-export function assertClaimsHaveMfa(claims: AtrClaims, reason = "MFA required"): void {
-  if (!claimsHaveMfa(claims)) {
-    throw new Error(reason);
-  }
-}
 
 /** Effect service wrapping tool-access policy for DI in gateway / MCP hosts. */
 export class AuthPolicyService extends Context.Tag("clawql/AuthPolicyService")<

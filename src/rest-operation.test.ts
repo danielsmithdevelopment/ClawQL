@@ -1,6 +1,10 @@
+import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
-import { executeRestOperation, mergedAuthHeaders, renderPath } from "clawql-api";
+import { executeRestOperation, mergedAuthHeadersEffect, renderPath } from "clawql-api";
 import type { OpenAPIDoc } from "clawql-api";
+
+const mergedAuthHeaders = (specLabel?: string): Record<string, string> =>
+  Effect.runSync(mergedAuthHeadersEffect(specLabel));
 import type { Operation } from "clawql-api";
 import { INLINE_OPENAPI_REQUEST_BODY } from "clawql-api";
 import { withFetchServer } from "./test-utils/fetch-test-server.js";

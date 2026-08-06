@@ -6,9 +6,10 @@ import { readFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 import type { GraphQLArgument, GraphQLSchema, IntrospectionQuery } from "graphql";
 import { buildClientSchema, buildSchema, getIntrospectionQuery, isNonNullType } from "graphql";
+import { Effect } from "effect";
 import fetch from "node-fetch";
 import type { Operation, ParameterInfo } from "./operation-types.js";
-import { mergedAuthHeaders } from "../auth/auth-headers.js";
+import { mergedAuthHeadersEffect } from "../auth/auth-headers.js";
 import { normalizeOperationId } from "./spec-kind.js";
 import type { GraphQLSourceConfig } from "./native-protocol-env.js";
 import { parseGraphQLSourcesEnv } from "./native-protocol-env.js";
@@ -157,7 +158,7 @@ async function loadOne(cfg: GraphQLSourceConfig): Promise<Operation[]> {
     schema = buildSchema(cfg.schemaContent);
   } else {
     const headerMerge = {
-      ...mergedAuthHeaders(label),
+      ...Effect.runSync(mergedAuthHeadersEffect(label)),
       ...(cfg.headers ?? {}),
     };
     const introspectionData = await introspectRemote(cfg.endpoint, headerMerge);

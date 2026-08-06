@@ -2,8 +2,9 @@
  * Execute a native GraphQL root field via HTTP POST (spec introspection + runtime fetch).
  */
 
+import { Effect } from "effect";
 import fetch from "node-fetch";
-import { mergedAuthHeaders } from "../auth/auth-headers.js";
+import { mergedAuthHeadersEffect } from "../auth/auth-headers.js";
 import { recordNativeGraphqlExecute } from "../spec/native-protocol-metrics.js";
 import { getGraphQLSource } from "../spec/native-protocol-registry.js";
 import type { Operation } from "../spec/operation-types.js";
@@ -27,7 +28,7 @@ export async function executeNativeGraphQL(
   }
 
   const headers = {
-    ...mergedAuthHeaders(meta.sourceLabel),
+    ...Effect.runSync(mergedAuthHeadersEffect(meta.sourceLabel)),
     ...src.headers,
   };
 

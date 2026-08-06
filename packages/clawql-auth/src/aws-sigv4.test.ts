@@ -1,6 +1,15 @@
+import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
-import { maybeSignAwsRequest } from "./aws-sigv4.js";
+import { maybeSignAwsRequestEffect } from "./aws-sigv4.js";
 import type { OpenAPIDoc } from "./openapi-types.js";
+
+const maybeSignAwsRequest = (
+  url: URL,
+  pathTemplate: string,
+  init: { method: string; headers: Record<string, string>; body?: string | Buffer | Uint8Array },
+  openapi: OpenAPIDoc,
+  specLabel?: string
+) => Effect.runPromise(maybeSignAwsRequestEffect(url, pathTemplate, init, openapi, specLabel));
 
 const emptyDoc = { openapi: "3.0.0", paths: {} } as OpenAPIDoc;
 

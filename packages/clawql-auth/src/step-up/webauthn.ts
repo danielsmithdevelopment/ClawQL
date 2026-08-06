@@ -5,8 +5,9 @@
  * This package exposes a hook so high-impact tools (payments, etc.) can require a
  * second factor when the host wires a verifier (e.g. @simplewebauthn/server).
  *
- * Effect is the primary surface: {@link requireWebAuthnStepUpEffect} fails on the typed
- * {@link WebAuthnStepUpError} channel. The Promise `requireWebAuthnStepUp` is a forced-edge façade.
+ * Effect is the only public surface: {@link requireWebAuthnStepUpEffect} fails on the typed
+ * {@link WebAuthnStepUpError} channel. The injected {@link WebAuthnStepUpVerifier} is a host
+ * boundary (external authenticators are inherently Promise-based).
  */
 
 import { Data, Effect } from "effect";
@@ -68,18 +69,4 @@ export function requireWebAuthnStepUpEffect(
         : Effect.fail(new WebAuthnStepUpError({ reason: "WebAuthn step-up failed" }))
     )
   );
-}
-
-/**
- * Require a successful WebAuthn assertion.
- * Forced-edge Promise façade — prefer {@link requireWebAuthnStepUpEffect}.
- */
-export async function requireWebAuthnStepUp(
-  verifier: WebAuthnStepUpVerifier,
-  input: WebAuthnAssertionInput
-): Promise<void> {
-  const result = await verifier.verifyAssertion(input);
-  if (!result.ok) {
-    throw new Error("WebAuthn step-up failed");
-  }
 }

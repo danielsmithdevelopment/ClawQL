@@ -342,37 +342,6 @@ function errorMessage(cause: unknown): string {
   return cause instanceof Error ? cause.message : "OIDC JWT verification failed";
 }
 
-/**
- * Promise façade over {@link verifyOidcBearerTokenEffect} for forced edges
- * (Express / MCP bridges) that still consume the discriminated-union shape.
- */
-export async function verifyOidcBearerToken(
-  token: string,
-  config: OidcAuthConfig = loadOidcAuthConfig()
-): Promise<{ ok: true; claims: AtrClaims; payload: JWTPayload } | { ok: false; error: string }> {
-  return Effect.runPromise(
-    verifyOidcBearerTokenEffect(token, config).pipe(
-      Effect.map((r) => ({ ok: true, claims: r.claims, payload: r.payload }) as const),
-      Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason } as const))
-    )
-  );
-}
-
-/**
- * Promise façade over {@link resolveOidcAtrClaimsFromHeadersEffect} for forced edges.
- */
-export async function resolveOidcAtrClaimsFromHeaders(
-  headers: AuthHeaderSource,
-  config: OidcAuthConfig = loadOidcAuthConfig()
-): Promise<{ ok: true; claims: AtrClaims } | { ok: false; error: string }> {
-  return Effect.runPromise(
-    resolveOidcAtrClaimsFromHeadersEffect(headers, config).pipe(
-      Effect.map((claims) => ({ ok: true, claims }) as const),
-      Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason } as const))
-    )
-  );
-}
-
 /** Fail-fast when oidc mode is selected but verify keys are missing. */
 export function assertOidcConfigReady(config: OidcAuthConfig = loadOidcAuthConfig()): void {
   resolveVerifyKey(config);

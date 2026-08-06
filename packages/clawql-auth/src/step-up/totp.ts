@@ -2,10 +2,10 @@
  * Minimal RFC 6238 TOTP (SHA-1, 30s, 6 digits) for gateway / payments step-up.
  * No third-party OTP dependency — callers own secret storage.
  *
- * Effect is the primary surface: {@link generateTotpSecretEffect}, {@link decodeBase32Effect},
+ * Effect is the only public surface: {@link generateTotpSecretEffect}, {@link decodeBase32Effect},
  * {@link generateTotpEffect}, {@link verifyTotpEffect}, {@link totpOtpauthUrlEffect}. The plain
- * sync functions are retained as forced-edge façades for existing hosts that consume clawql-auth
- * synchronously (e.g. clawql-payments credits, clawql-api re-exports).
+ * sync functions below are module-internal implementation detail for those wrappers and are not
+ * re-exported from the package entry.
  */
 
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";

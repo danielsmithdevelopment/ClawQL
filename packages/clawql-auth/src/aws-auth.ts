@@ -3,9 +3,9 @@
  *
  * OpenAPI specs come from APIs.guru (aws2openapi). Execute uses SigV4 signing — not Bearer headers.
  *
- * Effect is the primary surface via the `*Effect` wrappers and {@link AwsAuthHelpers} service.
- * The plain sync functions are forced-edge façades retained for existing hosts (clawql-api
- * re-exports, SigV4 signer) that call them synchronously.
+ * Effect is the only public surface via the `*Effect` wrappers and {@link AwsAuthHelpers} service.
+ * The plain sync functions are module-internal implementation detail (used by the Effect wrappers
+ * and the SigV4 signer) and are not re-exported from the package entry.
  */
 
 import { Context, Data, Effect, Layer } from "effect";

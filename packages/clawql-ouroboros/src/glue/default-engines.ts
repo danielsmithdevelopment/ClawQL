@@ -5,7 +5,8 @@
 
 import type { Evaluator, Executor, ReflectEngine, WonderEngine } from "../interfaces.js";
 import type { Seed } from "../seed.js";
-import { isGoogleDiscoverySpecLabel } from "clawql-api";
+import { Effect } from "effect";
+import { isGoogleDiscoverySpecLabelEffect } from "clawql-api";
 
 type ToolTextResponse = { content?: Array<{ type?: string; text?: string }> };
 const KNOWN_PROVIDERS = ["github", "cloudflare", "slack", "jira", "gcp", "google"] as const;
@@ -72,7 +73,7 @@ function addProvidersFromMergedPrefix(operationId: string, providers: Set<string
   if (prefix === "slack") providers.add("slack");
   if (prefix === "onyx") providers.add("onyx");
   if (prefix === "jira" || prefix === "bitbucket") providers.add("jira");
-  if (isGoogleDiscoverySpecLabel(prefix)) {
+  if (Effect.runSync(isGoogleDiscoverySpecLabelEffect(prefix))) {
     providers.add("google");
     providers.add("gcp");
   }

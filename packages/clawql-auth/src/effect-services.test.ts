@@ -17,7 +17,7 @@ import type { OpenAPIDoc } from "./openapi-types.js";
 import { createGatewayAuthServiceLayer, GatewayAuthService } from "./gateway-service.js";
 import { loadGatewayAuthConfig, resolveAtrClaimsFromHeadersEffect } from "./gateway.js";
 import { createOidcAuthServiceLayer, OidcAuthService } from "./oidc-service.js";
-import { loadOidcAuthConfig, resetOidcVerifyCaches } from "./oidc.js";
+import { resetOidcVerifyCaches } from "./oidc.js";
 import {
   AuthPolicyService,
   assertToolPolicyEffect,
@@ -31,7 +31,6 @@ import {
 import {
   createStepUpStoreLayer,
   createUnimplementedWebAuthnVerifier,
-  generateTotp,
   generateTotpEffect,
   generateTotpSecretEffect,
   requireWebAuthnStepUpEffect,
@@ -150,7 +149,7 @@ describe("clawql-auth Effect services", () => {
       const program = Effect.gen(function* () {
         const store = yield* StepUpStoreService;
         const { enrollment, created } = yield* store.enroll({ subjectId: "tenant-x" });
-        const code = generateTotp(enrollment.secretBase32);
+        const code = yield* generateTotpEffect(enrollment.secretBase32);
         yield* store.require("tenant-x", code);
         return { created };
       });

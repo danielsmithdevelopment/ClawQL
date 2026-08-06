@@ -1,14 +1,17 @@
 /**
  * createClawQLAuth — composition helper for gateway hosts (modularization §4.3).
  * ClawQL remains an auth *consumer* / step-up library, not a full IdP.
+ *
+ * The surface is Effect-first: `resolveClaimsEffect` / `assertToolAccessEffect` and an Effect
+ * step-up layer. A single `resolveClaimsAsync` Promise method is kept as a thin `Effect.runPromise`
+ * wrapper for MCP / Express hosts that consume the discriminated-union shape at their edge.
  */
 
-import { Effect } from "effect";
+import { Effect, type Layer } from "effect";
 
 import {
   loadGatewayAuthConfig,
   resolveAtrClaimsFromHeaders,
-  resolveAtrClaimsFromHeadersAsync,
   resolveAtrClaimsFromHeadersEffect,
   type AtrClaims,
   type AuthHeaderSource,
@@ -17,23 +20,18 @@ import {
   type GatewayAuthConfig,
 } from "./gateway.js";
 import {
-  assertToolPolicy,
   assertToolPolicyEffect,
   type AssertToolPolicyOptions,
   type AuthPolicyError,
 } from "./policy.js";
 import {
-  createFileStepUpStore,
+  createStepUpStoreLayer,
   createUnimplementedWebAuthnVerifier,
-  generateTotp,
   generateTotpEffect,
-  generateTotpSecret,
   generateTotpSecretEffect,
-  totpOtpauthUrl,
+  StepUpStoreService,
   totpOtpauthUrlEffect,
-  verifyTotp,
   verifyTotpEffect,
-  type FileStepUpStore,
   type WebAuthnStepUpVerifier,
 } from "./step-up/index.js";
 
@@ -51,15 +49,16 @@ export type CreateClawQLAuthOptions = {
 export type ClawQLAuth = {
   readonly mode: AuthMode;
   readonly config: GatewayAuthConfig;
+  /** Sync claim resolution for `noAuth` / `apiKey`; `oidc` requires the Effect/async forms. */
   resolveClaims(
     headers?: AuthHeaderSource
   ): { ok: true; claims: AtrClaims } | { ok: false; error: string };
+  /** Thin `Effect.runPromise` wrapper for MCP / Express hosts (supports oidc JWT verify). */
   resolveClaimsAsync(
     headers?: AuthHeaderSource
   ): Promise<{ ok: true; claims: AtrClaims } | { ok: false; error: string }>;
   /** Effect form of claim resolution (supports oidc JWT verify + sync modes). */
   resolveClaimsEffect(headers?: AuthHeaderSource): Effect.Effect<AtrClaims, GatewayAuthError>;
-  assertToolAccess(claims: AtrClaims, toolName: string, options?: AssertToolPolicyOptions): void;
   /** Effect form of tool-access policy — fails on the typed AuthPolicyError channel. */
   assertToolAccessEffect(
     claims: AtrClaims,
@@ -67,20 +66,15 @@ export type ClawQLAuth = {
     options?: AssertToolPolicyOptions
   ): Effect.Effect<void, AuthPolicyError>;
   stepUp: {
+    /** Effect-primary TOTP surface. */
     totp: {
-      generateSecret: typeof generateTotpSecret;
-      generate: typeof generateTotp;
-      verify: typeof verifyTotp;
-      otpauthUrl: typeof totpOtpauthUrl;
-    };
-    /** Effect-primary TOTP surface (mirrors `totp`). */
-    totpEffect: {
       generateSecret: typeof generateTotpSecretEffect;
       generate: typeof generateTotpEffect;
       verify: typeof verifyTotpEffect;
       otpauthUrl: typeof totpOtpauthUrlEffect;
     };
-    store: FileStepUpStore | undefined;
+    /** Layer providing {@link StepUpStoreService} when `stepUpStorePath` was set. */
+    storeLayer: Layer.Layer<StepUpStoreService> | undefined;
     webauthn: WebAuthnStepUpVerifier;
   };
 };
@@ -94,8 +88,8 @@ export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLA
     oidc: options.oidc ?? base.oidc,
   };
 
-  const store = options.stepUpStorePath
-    ? createFileStepUpStore(options.stepUpStorePath)
+  const storeLayer = options.stepUpStorePath
+    ? createStepUpStoreLayer(options.stepUpStorePath)
     : undefined;
 
   return {
@@ -105,15 +99,15 @@ export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLA
       return resolveAtrClaimsFromHeaders(headers, config);
     },
     resolveClaimsAsync(headers = {}) {
-      return resolveAtrClaimsFromHeadersAsync(headers, config);
+      return Effect.runPromise(
+        resolveAtrClaimsFromHeadersEffect(headers, config).pipe(
+          Effect.map((claims) => ({ ok: true, claims }) as const),
+          Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason } as const))
+        )
+      );
     },
     resolveClaimsEffect(headers = {}) {
       return resolveAtrClaimsFromHeadersEffect(headers, config);
-    },
-    assertToolAccess(claims, toolName, policyOptions) {
-      // RBAC flag reserved for future role matrices; MFA financial gate is active today.
-      if (options.rbac?.enabled === false) return;
-      assertToolPolicy(claims, toolName, policyOptions);
     },
     assertToolAccessEffect(claims, toolName, policyOptions) {
       if (options.rbac?.enabled === false) return Effect.void;
@@ -121,18 +115,12 @@ export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLA
     },
     stepUp: {
       totp: {
-        generateSecret: generateTotpSecret,
-        generate: generateTotp,
-        verify: verifyTotp,
-        otpauthUrl: totpOtpauthUrl,
-      },
-      totpEffect: {
         generateSecret: generateTotpSecretEffect,
         generate: generateTotpEffect,
         verify: verifyTotpEffect,
         otpauthUrl: totpOtpauthUrlEffect,
       },
-      store,
+      storeLayer,
       webauthn: options.webauthnVerifier ?? createUnimplementedWebAuthnVerifier(),
     },
   };

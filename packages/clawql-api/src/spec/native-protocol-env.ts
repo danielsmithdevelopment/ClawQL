@@ -13,11 +13,11 @@ import {
 } from "./provider-registry.js";
 
 export interface GraphQLSourceConfig {
-  /** Short label for operation ids and `mergedAuthHeaders(name)`. */
+  /** Short label for operation ids and `mergedAuthHeadersEffect(name)`. */
   name: string;
   /** GraphQL HTTP endpoint (`execute` POST target). Required even when the index is built from disk (introspection disabled upstream). */
   endpoint: string;
-  /** Optional static headers (merged; override same keys from `mergedAuthHeaders`). */
+  /** Optional static headers (merged; override same keys from `mergedAuthHeadersEffect`). */
   headers?: Record<string, string>;
   /**
    * Path to `.graphql` / `.gql` SDL on disk — builds the operation index without live introspection.

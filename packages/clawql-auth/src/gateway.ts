@@ -110,8 +110,8 @@ function headerValue(headers: AuthHeaderSource, name: string): string | undefine
 }
 
 /**
- * Sync claim resolution for `noAuth` / `apiKey`.
- * For `oidc`, returns an error directing callers to {@link resolveAtrClaimsFromHeadersAsync}.
+ * Sync claim resolution for `noAuth` / `apiKey` (internal helper).
+ * For `oidc`, returns an error directing callers to {@link resolveAtrClaimsFromHeadersEffect}.
  */
 export function resolveAtrClaimsFromHeaders(
   headers: AuthHeaderSource = {},
@@ -121,7 +121,7 @@ export function resolveAtrClaimsFromHeaders(
     return {
       ok: false,
       error:
-        "CLAWQL_AUTH_MODE=oidc requires async JWT verification — use resolveAtrClaimsFromHeadersAsync",
+        "CLAWQL_AUTH_MODE=oidc requires async JWT verification — use resolveAtrClaimsFromHeadersEffect",
     };
   }
 
@@ -192,40 +192,4 @@ export function assertGatewayAuthEffect(
   config: GatewayAuthConfig = loadGatewayAuthConfig()
 ): Effect.Effect<AtrClaims, GatewayAuthError> {
   return resolveAtrClaimsFromHeadersEffect(headers, config);
-}
-
-/**
- * Promise façade over {@link resolveAtrClaimsFromHeadersEffect} for forced edges
- * (Express / MCP hosts) that consume the discriminated-union shape.
- */
-export async function resolveAtrClaimsFromHeadersAsync(
-  headers: AuthHeaderSource = {},
-  config: GatewayAuthConfig = loadGatewayAuthConfig()
-): Promise<{ ok: true; claims: AtrClaims } | { ok: false; error: string }> {
-  return Effect.runPromise(
-    resolveAtrClaimsFromHeadersEffect(headers, config).pipe(
-      Effect.map((claims) => ({ ok: true, claims }) as const),
-      Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason } as const))
-    )
-  );
-}
-
-export function assertGatewayAuth(headers: AuthHeaderSource = {}): AtrClaims {
-  const result = resolveAtrClaimsFromHeaders(headers);
-  if (!result.ok) {
-    throw new Error(result.error);
-  }
-  return result.claims;
-}
-
-/** Promise façade over {@link assertGatewayAuthEffect} for forced edges. */
-export async function assertGatewayAuthAsync(
-  headers: AuthHeaderSource = {},
-  config?: GatewayAuthConfig
-): Promise<AtrClaims> {
-  const result = await resolveAtrClaimsFromHeadersAsync(headers, config);
-  if (!result.ok) {
-    throw new Error(result.error);
-  }
-  return result.claims;
 }

@@ -16,8 +16,6 @@ import {
 } from "./aws-auth.js";
 import type { OpenAPIDoc } from "./openapi-types.js";
 
-export { isAwsSpecLabel, resolveAwsCredentials, resolveAwsRegion, resolveAwsServiceName };
-
 export interface AwsSignableRequestInit {
   method: string;
   headers: Record<string, string>;
@@ -111,20 +109,6 @@ export function maybeSignAwsRequestEffect(
   );
 }
 
-/**
- * Promise façade over {@link maybeSignAwsRequestEffect} for forced edges
- * (execute path bridges) that consume a Promise.
- */
-export async function maybeSignAwsRequest(
-  url: URL,
-  pathTemplate: string,
-  init: AwsSignableRequestInit,
-  openapi: OpenAPIDoc,
-  specLabel?: string
-): Promise<AwsSignableRequestInit | undefined> {
-  return Effect.runPromise(maybeSignAwsRequestEffect(url, pathTemplate, init, openapi, specLabel));
-}
-
 export class AwsSigV4Service extends Context.Tag("clawql/AwsSigV4Service")<
   AwsSigV4Service,
   {
@@ -147,10 +131,17 @@ export const AwsSigV4ServiceLive = Layer.succeed(
   })
 );
 
-/** Sync URL normalization for non-signing path (Action query param). */
-export function normalizeAwsExecuteUrl(url: URL, pathTemplate: string, specLabel?: string): void {
+/** URL normalization for the non-signing path (Action query param); mutates `url`. */
+function normalizeAwsExecuteUrl(url: URL, pathTemplate: string, specLabel?: string): void {
   const label = specLabel?.trim().toLowerCase();
   const effective = label || process.env.CLAWQL_PROVIDER?.trim().toLowerCase();
   if (!effective || !isAwsSpecLabel(effective)) return;
   applyAwsQueryActionPath(url, pathTemplate);
 }
+
+/** Effect: normalize AWS query-protocol `#Action=` into the URL query string (mutates `url`). */
+export const normalizeAwsExecuteUrlEffect = (
+  url: URL,
+  pathTemplate: string,
+  specLabel?: string
+): Effect.Effect<void> => Effect.sync(() => normalizeAwsExecuteUrl(url, pathTemplate, specLabel));

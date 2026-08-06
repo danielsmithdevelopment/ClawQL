@@ -1,5 +1,16 @@
+import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
-import { isAwsSpecLabel, isGoogleDiscoverySpecLabel, mergedAuthHeaders } from "clawql-api";
+import {
+  isAwsSpecLabelEffect,
+  isGoogleDiscoverySpecLabelEffect,
+  mergedAuthHeadersEffect,
+} from "clawql-api";
+
+const isAwsSpecLabel = (label: string): boolean => Effect.runSync(isAwsSpecLabelEffect(label));
+const isGoogleDiscoverySpecLabel = (label: string): boolean =>
+  Effect.runSync(isGoogleDiscoverySpecLabelEffect(label));
+const mergedAuthHeaders = (specLabel?: string): Record<string, string> =>
+  Effect.runSync(mergedAuthHeadersEffect(specLabel));
 
 afterEach(() => {
   delete process.env.CLAWQL_HTTP_HEADERS;
