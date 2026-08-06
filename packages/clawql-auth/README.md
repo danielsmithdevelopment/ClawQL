@@ -43,11 +43,7 @@ sync-throwing or Promise façades on the package surface.
 
 ```ts
 import { Effect } from "effect";
-import {
-  createClawQLAuth,
-  createStepUpStoreLayer,
-  StepUpStoreService,
-} from "clawql-auth";
+import { createClawQLAuth, createStepUpStoreLayer, StepUpStoreService } from "clawql-auth";
 
 const auth = createClawQLAuth({ mode: "oidc", stepUpStorePath: "/path/step-up.json" });
 

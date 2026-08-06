@@ -298,18 +298,18 @@ export async function executeRestOperation(
         url,
         pathTemplate,
         {
-        method,
-        headers,
-        body:
-          init.body === undefined
-            ? undefined
-            : typeof init.body === "string"
-              ? init.body
-              : Buffer.isBuffer(init.body)
+          method,
+          headers,
+          body:
+            init.body === undefined
+              ? undefined
+              : typeof init.body === "string"
                 ? init.body
-                : init.body instanceof Uint8Array
-                  ? Buffer.from(init.body)
-                  : undefined,
+                : Buffer.isBuffer(init.body)
+                  ? init.body
+                  : init.body instanceof Uint8Array
+                    ? Buffer.from(init.body)
+                    : undefined,
         },
         openapi,
         op.specLabel

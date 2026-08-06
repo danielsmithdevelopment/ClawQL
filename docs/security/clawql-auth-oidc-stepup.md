@@ -53,9 +53,7 @@ export CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL=1
 import { Effect } from "effect";
 import { assertToolPolicyEffect, claimsHaveMfa } from "clawql-auth";
 
-await Effect.runPromise(
-  assertToolPolicyEffect(claims, "payments_credits_transfer_confirm")
-);
+await Effect.runPromise(assertToolPolicyEffect(claims, "payments_credits_transfer_confirm"));
 ```
 
 `claimsHaveMfa` treats common `acr` / `amr` hints (`mfa`, `otp`, `totp`, ACR level ≥ 2, etc.).
