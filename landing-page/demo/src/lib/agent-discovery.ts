@@ -377,6 +377,8 @@ ClawQL exposes tiered MCP tools (search, execute, memory, optional IDP and enter
 
 /** Paths exported in agent-markdown.json for Accept: text/markdown negotiation. */
 export function getAgentMarkdownMap(origin = getSiteOriginString()): Record<string, string> {
+  const docs = site.urls.docs.replace(/\/$/, '')
+
   return {
     '/': buildHomeMarkdown(origin),
     '/pricing': `# Pricing\n\nClawQL pricing — self-host free on Apache 2.0 or start a 14-day Developer trial.\n\nSee ${origin}/pricing/ for tier details.`,
@@ -387,6 +389,7 @@ export function getAgentMarkdownMap(origin = getSiteOriginString()): Record<stri
     '/inference/gtm': `# Inference-first GTM playbook\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Zero-Trust Agentic Fabric.\n\nSee ${origin}/inference/gtm/.`,
     '/idp': `# Intelligent Document Processing\n\nClawQL IDP — full document lifecycle (ingest → VDR), flat Starter pricing vs ABBYY / Hyperscience / Intralinks, Helm deploy or 14-day trial.\n\nSee ${origin}/idp/.`,
     '/idp/gtm': `# IDP-first GTM playbook\n\nStandalone ClawQL Intelligent Document Processing go-to-market — market reality, honest positioning, sales motion, and landing-page brief vs ABBYY, Hyperscience, and Intralinks.\n\nSee ${origin}/idp/gtm/.`,
+    '/streams': `# ClawQL Streams\n\nEvent-driven autonomous agents with WORM audit, Protocol Fabric (Core + mcp-api-adapter), and Durable Object / K8s scale — the self-sovereign alternative to managed agent runtimes.\n\nSee ${origin}/streams/.\n\nSpecs: ${docs}/streams/clawql-streams · ${docs}/streams/clawql-durable-objects`,
     '/enterprise/gtm': `# Enterprise GTM playbook\n\nSecondary enterprise motion — Auditable Production AI on the Zero-Trust Agentic Fabric.\n\nSee ${origin}/enterprise/gtm/.`,
   }
 }

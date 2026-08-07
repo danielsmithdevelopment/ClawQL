@@ -1,0 +1,300 @@
+/* ClawQL Streams marketing landing — page-scoped atmosphere + motion */
+
+.streams-page {
+  --streams-ink: oklch(16% 0.02 210);
+  --streams-foam: oklch(97% 0.01 195);
+  --streams-signal: oklch(68% 0.09 195);
+  --streams-signal-deep: oklch(48% 0.07 205);
+  --streams-mid: oklch(32% 0.035 210);
+}
+
+.streams-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: min(100svh, 52rem);
+  display: flex;
+  align-items: flex-end;
+  padding-block: 5rem 4.5rem;
+  color: var(--streams-foam);
+  background:
+    radial-gradient(120% 80% at 50% -10%, oklch(28% 0.04 200 / 0.55), transparent 55%),
+    radial-gradient(90% 70% at 100% 100%, oklch(30% 0.05 185 / 0.35), transparent 50%),
+    linear-gradient(165deg, oklch(14% 0.02 220) 0%, var(--streams-ink) 42%, oklch(18% 0.03 195) 100%);
+}
+
+.streams-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(oklch(100% 0 0 / 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(100% 0 0 / 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(180deg, oklch(0% 0 0 / 0.55), transparent 85%);
+  pointer-events: none;
+}
+
+.streams-hero__visual {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.streams-hero__visual svg {
+  width: 100%;
+  height: 100%;
+}
+
+.streams-path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.streams-path--a {
+  stroke: oklch(72% 0.08 195 / 0.55);
+  stroke-width: 1.5;
+  stroke-dasharray: 8 14;
+  animation: streams-flow 18s linear infinite;
+}
+
+.streams-path--b {
+  stroke: oklch(62% 0.1 185 / 0.4);
+  stroke-width: 2.25;
+  stroke-dasharray: 2 18;
+  animation: streams-flow 24s linear infinite reverse;
+}
+
+.streams-path--c {
+  stroke: oklch(78% 0.06 210 / 0.28);
+  stroke-width: 1;
+  animation: streams-drift 12s ease-in-out infinite alternate;
+}
+
+.streams-node {
+  fill: var(--streams-signal);
+  animation: streams-pulse 3.2s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.streams-node--late {
+  animation-delay: 1.1s;
+}
+
+.streams-hero__content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  animation: streams-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.streams-brand {
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 112.5;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  font-size: clamp(2.75rem, 7vw, 5.25rem);
+  line-height: 0.95;
+  color: var(--streams-foam);
+  text-wrap: balance;
+}
+
+.streams-brand span {
+  display: block;
+  font-weight: 450;
+  font-size: 0.42em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--streams-signal);
+  margin-bottom: 0.55rem;
+}
+
+.streams-section-band {
+  background:
+    linear-gradient(180deg, oklch(96% 0.008 200) 0%, oklch(93% 0.012 205) 100%);
+}
+
+:is(html.dark) .streams-section-band,
+.dark .streams-section-band {
+  background: linear-gradient(180deg, oklch(18% 0.015 215) 0%, oklch(15% 0.012 220) 100%);
+}
+
+.streams-mode {
+  position: relative;
+  padding-block: 1.25rem;
+  padding-inline-start: 1.25rem;
+  border-inline-start: 2px solid var(--streams-signal-deep);
+  animation: streams-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.streams-mode:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.streams-mode:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.streams-mode__label {
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 112.5;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-mist-950);
+}
+
+.dark .streams-mode__label {
+  color: white;
+}
+
+.streams-compare {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.streams-compare th,
+.streams-compare td {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid oklch(70% 0.01 210 / 0.35);
+}
+
+.streams-compare th {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-mist-950);
+  white-space: nowrap;
+}
+
+.dark .streams-compare th {
+  color: white;
+  border-bottom-color: oklch(40% 0.02 210 / 0.4);
+}
+
+.dark .streams-compare td {
+  border-bottom-color: oklch(40% 0.02 210 / 0.4);
+}
+
+.streams-compare th:last-child,
+.streams-compare td:last-child {
+  background: oklch(68% 0.09 195 / 0.08);
+}
+
+.dark .streams-compare th:last-child,
+.dark .streams-compare td:last-child {
+  background: oklch(68% 0.09 195 / 0.12);
+}
+
+.streams-fabric {
+  display: grid;
+  gap: 0.75rem;
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 112.5;
+  letter-spacing: -0.02em;
+}
+
+.streams-fabric__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  animation: streams-rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.streams-fabric__row:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.streams-fabric__row:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.streams-fabric__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid oklch(55% 0.04 205 / 0.35);
+  color: var(--color-mist-800);
+  background: oklch(100% 0 0 / 0.35);
+}
+
+.dark .streams-fabric__chip {
+  color: var(--color-mist-200);
+  background: oklch(20% 0.02 210 / 0.5);
+  border-color: oklch(55% 0.04 205 / 0.25);
+}
+
+.streams-fabric__arrow {
+  color: var(--streams-signal-deep);
+  font-size: 1.1rem;
+}
+
+.streams-fabric__core {
+  font-weight: 650;
+  color: var(--streams-signal-deep);
+  letter-spacing: -0.03em;
+}
+
+.dark .streams-fabric__core {
+  color: var(--streams-signal);
+}
+
+@keyframes streams-flow {
+  to {
+    stroke-dashoffset: -220;
+  }
+}
+
+@keyframes streams-drift {
+  from {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0.7;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes streams-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes streams-rise {
+  from {
+    opacity: 0;
+    transform: translateY(1.1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streams-path--a,
+  .streams-path--b,
+  .streams-path--c,
+  .streams-node,
+  .streams-hero__content,
+  .streams-mode,
+  .streams-fabric__row {
+    animation: none !important;
+  }
+}

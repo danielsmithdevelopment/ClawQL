@@ -138,6 +138,8 @@ npm install -g clawql-mcp
     '/about': `# About\n\nSee ${origin}/about/.`,
     '/inference/gtm': `# Inference-first GTM playbook\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Zero-Trust Agentic Fabric (Regional Hubs, Dedicated Virtual Gateways with NATS/Valkey, Edge swarm).\n\nSee ${origin}/inference/gtm/.`,
     '/enterprise/gtm': `# Enterprise GTM playbook\n\nSecondary enterprise / Palantir-facing motion — Auditable Production AI on the Zero-Trust Agentic Fabric; sovereign alternative to Palantir AIP.\n\nSee ${origin}/enterprise/gtm/.`,
+    '/streams': `# ClawQL Streams\n\nEvent-driven autonomous agents with WORM audit, Protocol Fabric, and Durable Object / K8s scale.\n\nSee ${origin}/streams/.\n\nSpecs: ${docs}/streams/clawql-streams · ${docs}/streams/clawql-durable-objects`,
+    '/idp': `# Intelligent Document Processing\n\nSee ${origin}/idp/.`,
     '/signup': `# Sign up\n\n${origin}/signup/`,
     '/privacy-policy': `# Privacy Policy\n\n${origin}/privacy-policy/`,
     '/industries': `# Industries\n\n${origin}/industries/`,
@@ -407,6 +409,7 @@ writeText(
 
 - [Docs](${docs})
 - [Getting started](${docs}/getting-started)
+- [ClawQL Streams](${origin}/streams/)
 - [Inference-first GTM playbook](${origin}/inference/gtm/)
 - [Enterprise GTM playbook](${origin}/enterprise/gtm/)
 - [MCP Server Card](/.well-known/mcp/server-card.json)
