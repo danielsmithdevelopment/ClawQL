@@ -81,7 +81,7 @@ Shared OpenBench rules still apply: real `tool:clawql_*` evidence · hard spend 
 | B-7.3 | `institutional-amortized-session`   | Same vault; 5 related prompts; cost + completeness   | Spec only (needs session harness)      |
 | B-7.4 | Full C&H mount                      | Mount open-sourced filesystem + Harvey task set      | Blocked on stable corpus download path |
 
-Do **not** put B-7.1 on `pr_active` until a clean live WIN; prefer `workflow_dispatch`.
+B-7.1 is on `pr_active` for the same PR-burn path as prior OpenBench cells (three-arm A/B). Retire after a clean live WIN.
 
 ### Phase-1 arms (B-7.1)
 
