@@ -118,7 +118,7 @@
   },
   "optionalDependencies": {
     "mppx": "^0.8.14",
-    "viem": "^2.55.4"
+    "viem": "^2.55.10"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
