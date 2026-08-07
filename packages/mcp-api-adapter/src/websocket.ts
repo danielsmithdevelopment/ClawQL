@@ -11,7 +11,7 @@
  */
 
 import type { Server as HttpServer, IncomingMessage } from "node:http";
-import { WebSocketServer, type WebSocket } from "ws";
+import { WebSocketServer, type RawData, type WebSocket } from "ws";
 import { httpBodyFromCollapsed } from "./call.js";
 import type { CallToolFn, ToolCatalog } from "./types.js";
 
@@ -121,7 +121,7 @@ export function attachWebSocketSurface(
       })
     );
 
-    socket.on("message", (data) => {
+    socket.on("message", (data: RawData) => {
       void (async () => {
         let parsed: unknown;
         try {
@@ -191,7 +191,7 @@ export function attachWebSocketSurface(
     path,
     close: async () => {
       await new Promise<void>((resolve, reject) => {
-        wss.close((err) => (err ? reject(err) : resolve()));
+        wss.close((err: Error | undefined) => (err ? reject(err) : resolve()));
       });
     },
   };
