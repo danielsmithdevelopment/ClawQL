@@ -19,6 +19,7 @@ export {
 } from "./config.js";
 export {
   appendWebAudit,
+  installWebAuditWormSink,
   listWebAuditEvents,
   resetWebAuditForTests,
   setWebAuditSink,
@@ -26,6 +27,17 @@ export {
   type WebAuditEventType,
   type WebAuditSink,
 } from "./audit.js";
+export {
+  appendWebWormEvent,
+  listWebWormRecords,
+  resetWebWormStoreForTests,
+  resolveWebAuditStoreMode,
+  verifyWebWormLog,
+  type WebAuditStoreMode,
+  type WebAuditVerifyResult,
+  type WebWormRecord,
+} from "./audit/worm.js";
+export { resolveCdpWebSocketUrl } from "./providers/browser/cdp.js";
 export {
   WebCapabilityError,
   isWebCapabilityError,

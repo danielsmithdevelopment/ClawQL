@@ -2,6 +2,7 @@ import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import type { Plugin } from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
+import { installWebAuditWormSink } from "../audit.js";
 import { isWebEnabled } from "../config.js";
 import { isWebCapabilityError } from "../errors.js";
 import { createWebService } from "../service.js";
@@ -66,6 +67,7 @@ function toolError(err: unknown): { content: { type: "text"; text: string }[]; i
 
 export function createWebPlugin(env: NodeJS.ProcessEnv = process.env): Plugin {
   const web = createWebService(env);
+  installWebAuditWormSink(env);
   return {
     id: WEB_PLUGIN_ID,
     version: "0.1.0",

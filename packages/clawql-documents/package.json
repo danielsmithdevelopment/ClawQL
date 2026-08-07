@@ -43,6 +43,7 @@
     "clawql-api": "7.2.0",
     "clawql-core": "7.2.0",
     "clawql-memory": "7.2.0",
+    "clawql-web": "7.2.0",
     "effect": "^3.21.4",
     "node-html-markdown": "^2.0.0",
     "zod": "4.3.6"

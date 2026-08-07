@@ -27,9 +27,11 @@ When no search provider is configured and `CLAWQL_WEB_SEARCH_FALLBACK_DISABLED` 
 | Tool | Role |
 | --- | --- |
 | `web_search` | Query → ranked results (+ fallback) |
-| `web_fetch` | URL → markdown/text |
-| `web_screenshot` | URL → image (capability-gated) |
-| `web_interact` | URL + steps → page (capability-gated) |
+| `web_fetch` | URL → markdown/text, or `raw: true` → bytes + content-type (IDP) |
+| `web_screenshot` | URL → image (CDP when configured; capability-gated) |
+| `web_interact` | URL + steps → page (live CDP; capability-gated) |
+
+IDP URL ingest (`clawql-documents`) uses `fetchRawUrl`. Audit events are hash-chained WORM + MCP `audit` ring.
 
 ## Quick start
 
