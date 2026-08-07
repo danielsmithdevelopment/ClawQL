@@ -313,6 +313,23 @@ argocd:
 #   Enterprise: https://docs.humansignal.com/guide/install — SAML/RBAC; license required; not redistributed in this chart.
 enableHitlLabelStudio: false
 
+# clawql-web — pluggable web_search / web_fetch (docs/web/clawql-web.md).
+# enableWeb auto-on when a provider/key is set; set false to force off in regulated clusters.
+enableWeb: false
+webSearch:
+  provider: none # tavily|brave|searxng|opensearch|none
+  searxng:
+    enabled: false
+    bundled: false # future: deploy SearXNG subchart
+  opensearch:
+    enabled: false
+    bundled: false # future: deploy OpenSearch subchart (or reuse Onyx OpenSearch)
+webBrowser:
+  provider: kitesurf # kitesurf|chromium|playwright|puppeteer|firecrawl|none
+  chromium:
+    enabled: false
+    bundled: false
+
 # MCP knowledge_search_onyx — Onyx POST /search/send-search-message (#118). Requires onyx in provider merge + ONYX_BASE_URL + Bearer token (extraEnv / secret).
 enableOnyx: false
 # When set, injects ONYX_BASE_URL (non-secret). Prefer extraEnv / envFromSecret for ONYX_API_TOKEN.

@@ -14,6 +14,7 @@ describe("composeHorizontalPluginLayers", () => {
       enableMemory: true,
       enableDocuments: false,
       enableSandbox: true,
+      enableWeb: false,
       enableOuroboros: false,
       enableSchedule: false,
       enableNotify: false,
@@ -32,6 +33,12 @@ describe("composeHorizontalPluginLayers", () => {
       externalIngestPreview: false,
       enableVision: false,
       enableConeshare: false,
+      enableCodeGraph: false,
+      enableOntology: false,
+      enableOntologyWrites: false,
+      enableGoogle: false,
+      enableCloudflare: true,
+      enableAws: false,
     });
     const api = createClawQLApi({ plugins: [], pluginLayers: layers });
     const ids = api.registry.list().map((p) => p.id);
