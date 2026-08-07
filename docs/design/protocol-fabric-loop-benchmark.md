@@ -3,7 +3,7 @@
 **Status:** Spike / smoke (August 2026)  
 **Package touchpoints:** `mcp-api-adapter@0.6` · ClawQL Core custom CLI sources · `gen-cli`  
 **Smoke:** [`scripts/dev/smoke-protocol-fabric-loop.sh`](../../scripts/dev/smoke-protocol-fabric-loop.sh)  
-**Related:** [Protocol Fabric](../gtm/protocol-fabric.md) · [ClawQL Streams](./clawql-streams.md) · [custom sources](../getting-started/custom-sources.md)
+**Related:** [Protocol Fabric](../gtm/protocol-fabric.md) · [ClawQL Streams](../streams/clawql-streams.md) · [custom sources](../getting-started/custom-sources.md)
 
 ---
 
