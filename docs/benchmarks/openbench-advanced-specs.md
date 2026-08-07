@@ -199,15 +199,15 @@ Harvey + EngramLab open-sourced **Calderwood & Harkness (C&H)** — a ~100M+ tok
 
 ### B-7.1 — Exhaustive feature enumeration
 
-| Field         | Value                                                                                                                                      |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Product claim | ClawQL memory recall recovers the **complete** set of matters matching multi-field institutional criteria; bare agents return partial sets |
-| Arms          | OpenBench `clawql-on` vs `clawql-off` (Phase-1). Full suite also defines `arm-clawql-no-memory` for wipe-per-task amortization contrasts   |
-| Task IDs      | `institutional-knowledge-enumerate` (**offline pack landed**)                                                                              |
-| Grader        | Exact matter-id set match; reject near-misses; require real `clawql_memory_recall` when `OPENBENCH_REQUIRE_INSTITUTIONAL=1`                |
-| Spend cap     | 30 turns / 240s / 8,000 tokens                                                                                                             |
-| Expected      | on 1.0 / off 0.0 by construction (no memory tools ⇒ cannot read vault seed)                                                                |
-| Status        | Offline pack ready; live A/B via `workflow_dispatch` — **not** on `pr_active` until WIN                                                    |
+| Field         | Value                                                                                                                                   |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Product claim | ClawQL memory recall recovers more of the matching matter set than bare / no-memory; vault persistence is the Harvey-baseline delta     |
+| Arms          | Phase-1: `clawql-on` + `clawql-off` + `clawql-no-memory` (tools without seeded vault)                                                   |
+| Task IDs      | `institutional-knowledge-enumerate` (**offline pack landed**)                                                                           |
+| Grader        | Partial credit `hits/5`; emit `MATTERS_FOUND: k/5`; reject false positives; require real `memory_recall` when `REQUIRE_INSTITUTIONAL=1` |
+| Spend cap     | 30 turns / 240s / 8,000 tokens (single cell); B-7.3 adds first-task vs reuse asymmetry                                                  |
+| Expected      | on mean matters_found ≫ off / no-memory; headline copy uses `k/5` not only mean score                                                   |
+| Status        | Offline pack ready; live A/B via `workflow_dispatch` — **not** on `pr_active` until WIN                                                 |
 
 **In-repo offline pack:** [`openbench/tasks/institutional-knowledge-enumerate/`](../../openbench/tasks/institutional-knowledge-enumerate/)
 

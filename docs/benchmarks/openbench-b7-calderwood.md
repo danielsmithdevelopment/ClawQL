@@ -61,12 +61,12 @@ ClawQL memory + search-first tools (+ optional Ouroboros) enable a frugal model 
 
 ## Grader criteria
 
-| #   | Criterion                                         | Notes                                                                       |
-| --- | ------------------------------------------------- | --------------------------------------------------------------------------- |
-| 1   | Completeness vs ground-truth feature / matter set | Prefer exact-set match; Harvey short-form matter specs when full C&H mounts |
-| 2   | Search-sufficiency signal                         | Agent states why it stopped (optional rubric field in later cells)          |
-| 3   | Amortized latency / tokens                        | Primary for sequence cells; secondary for single-shot                       |
-| 4   | Provenance                                        | Which matter IDs / files informed the answer (RTP Delta + OpenBenchTrace)   |
+| #   | Criterion                                         | Notes                                                                     |
+| --- | ------------------------------------------------- | ------------------------------------------------------------------------- |
+| 1   | Completeness vs ground-truth feature / matter set | Partial credit `hits/N`; emit `MATTERS_FOUND: k/N` as headline diagnostic |
+| 2   | Search-sufficiency signal                         | Agent states why it stopped (optional rubric field in later cells)        |
+| 3   | Amortized latency / tokens                        | Primary for sequence cells; secondary for single-shot                     |
+| 4   | Provenance                                        | Which matter IDs / files informed the answer (RTP Delta + OpenBenchTrace) |
 
 Shared OpenBench rules still apply: real `tool:clawql_*` evidence · hard spend caps · link GHA run IDs · n≥3 before statistical language.
 
@@ -82,6 +82,30 @@ Shared OpenBench rules still apply: real `tool:clawql_*` evidence · hard spend 
 | B-7.4 | Full C&H mount                      | Mount open-sourced filesystem + Harvey task set      | Blocked on stable corpus download path |
 
 Do **not** put B-7.1 on `pr_active` until a clean live WIN; prefer `workflow_dispatch`.
+
+### Phase-1 arms (B-7.1)
+
+| Arm                | What it isolates                                                |
+| ------------------ | --------------------------------------------------------------- |
+| `clawql-on`        | ClawQL MCP + **seeded vault** (memory representation available) |
+| `clawql-no-memory` | ClawQL MCP tools present but **memory disabled / no seed**      |
+| `clawql-off`       | Bare OpenCode — no ClawQL MCP                                   |
+
+Dispatch defaults to all three for this task (override via the workflow `arms` input).
+
+### Grader diagnostics (B-7.1)
+
+| Output               | Meaning                                                                      |
+| -------------------- | ---------------------------------------------------------------------------- |
+| `MATTERS_FOUND: k/5` | Headline count — prefer this in ledger / PragmaticVectors / Harvey outreach  |
+| `SCORE`              | `k/5` as a float (partial credit); false positives → 0                       |
+| Tool evidence        | Live runs require real `clawql_memory_recall` tool_use (no fixture guessing) |
+
+Harvey’s baseline failure mode is “finds some, stops confidently.” Capture **how many of 5** each arm found before stopping — not only mean score.
+
+### Spend-cap asymmetry (B-7.3 note)
+
+Single-cell Phase-1 uses one cap (30 turns / 240s / 8k tokens). For the amortized session cell, use **higher caps on task 1** (building the vault representation) and **lower caps on tasks 2–N** (reuse) so the cumulative token curve is legible in results.
 
 ---
 

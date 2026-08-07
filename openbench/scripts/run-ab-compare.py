@@ -15,6 +15,8 @@ Arms:
 
   clawql-on   = OpenCode via ``clawql opencode --non-interactive`` + ClawQL MCP
   clawql-off  = raw OpenCode pointed at the same inference URL (no ClawQL MCP)
+  clawql-no-memory = clawql-on tools/MCP but memory disabled + no vault seed
+                   (isolates tool presence from persistent vault representation)
   ouroboros-on  = clawql-on + ``CLAWQL_ENABLE_OUROBOROS=1`` (stagnation / oscillation)
   ouroboros-off = clawql-on MCP/memory but Ouroboros tools disabled
 
@@ -80,6 +82,7 @@ KNOWN_TASKS = discover_known_tasks()
 KNOWN_ARMS = (
     "clawql-on",
     "clawql-off",
+    "clawql-no-memory",
     "ouroboros-on",
     "ouroboros-off",
 )
@@ -839,6 +842,41 @@ def parse_score(output: str):
     return score
 
 
+def parse_matters_found(output: str) -> dict | None:
+    """Parse ``MATTERS_FOUND: k/n`` (+ optional ``MATTERS_IDS:``) from checker stdout.
+
+    Headline diagnostic for B-7.1 exhaustive enumeration — prefer reporting
+    ``2.4/5 matters`` over a bare mean score in ledger / outreach copy.
+    """
+    found = None
+    expected = None
+    ids: list[str] = []
+    for line in (output or "").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("MATTERS_FOUND:"):
+            body = stripped[len("MATTERS_FOUND:") :].strip()
+            if "/" in body:
+                left, right = body.split("/", 1)
+                try:
+                    found = int(left.strip())
+                    expected = int(right.strip())
+                except ValueError:
+                    continue
+        elif stripped.startswith("MATTERS_IDS:"):
+            raw = stripped[len("MATTERS_IDS:") :].strip()
+            if raw:
+                ids = [p.strip() for p in raw.split(",") if p.strip()]
+    if found is None or expected is None:
+        return None
+    return {
+        "found": found,
+        "expected": expected,
+        "ids": ids,
+        "ratio": round(found / expected, 4) if expected else 0.0,
+        "label": f"{found}/{expected}",
+    }
+
+
 def effective_score(exit_code: int, parsed_score):
     if exit_code == 0:
         return 1.0
@@ -995,12 +1033,19 @@ def run_checker(task_dir: Path, workdir: Path, env_extra: dict | None = None) ->
         out = (exc.stdout or "") if isinstance(exc.stdout, str) else ""
         code = 124
     score = effective_score(code, parse_score(out))
-    return {
+    result = {
         "exit_code": code,
         "success": code == 0,
         "score": score,
         "output_tail": out[-1500:],
     }
+    matters = parse_matters_found(out)
+    if matters is not None:
+        result["matters_found"] = matters["found"]
+        result["matters_expected"] = matters["expected"]
+        result["matters_found_label"] = matters["label"]
+        result["matters_ids"] = matters["ids"]
+    return result
 
 
 def resolve_clawql() -> str:
@@ -2653,7 +2698,7 @@ def run_arm_on(
     # institutional knowledge: missing memory_recall / matters.json.
     if (
         require_institutional
-        and arm == "clawql-on"
+        and arm in ("clawql-on", "clawql-no-memory")
         and not timed_out
         and institutional_incomplete(combined, workdir)
     ):
@@ -2891,7 +2936,7 @@ def mean_or_none(values):
 
 
 def summarize(arm_rows: list[dict]) -> dict:
-    return {
+    out = {
         "n": len(arm_rows),
         "successes": sum(1 for r in arm_rows if r.get("checker", {}).get("success")),
         "success_rate": round(
@@ -2904,6 +2949,25 @@ def summarize(arm_rows: list[dict]) -> dict:
         "mean_wall_s": mean_or_none([r.get("agent", {}).get("wall_s") for r in arm_rows]),
         "cli_completed": sum(1 for r in arm_rows if r.get("agent", {}).get("completed")),
     }
+    found_vals = [
+        r.get("checker", {}).get("matters_found")
+        for r in arm_rows
+        if isinstance(r.get("checker", {}).get("matters_found"), (int, float))
+    ]
+    expected_vals = [
+        r.get("checker", {}).get("matters_expected")
+        for r in arm_rows
+        if isinstance(r.get("checker", {}).get("matters_expected"), (int, float))
+    ]
+    if found_vals and expected_vals:
+        mean_found = mean_or_none(found_vals)
+        # expected is constant per task; take max for label stability
+        exp = int(max(expected_vals))
+        out["mean_matters_found"] = mean_found
+        out["matters_expected"] = exp
+        if mean_found is not None:
+            out["mean_matters_found_label"] = f"{mean_found}/{exp}"
+    return out
 
 
 def render_markdown(report: dict) -> str:
@@ -2925,20 +2989,46 @@ def render_markdown(report: dict) -> str:
         "",
         "## Results",
         "",
-        "| Arm | Success | Mean score | Mean tokens | Mean turns | Mean wall (s) |",
-        "|-----|---------|------------|-------------|------------|---------------|",
     ]
+    show_matters = any(
+        (report.get("summary") or {}).get(a, {}).get("mean_matters_found_label")
+        for a in arms
+    )
+    if show_matters:
+        lines.extend(
+            [
+                "| Arm | Success | Matters found | Mean score | Mean tokens | Mean turns | Mean wall (s) |",
+                "|-----|---------|---------------|------------|-------------|------------|---------------|",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "| Arm | Success | Mean score | Mean tokens | Mean turns | Mean wall (s) |",
+                "|-----|---------|------------|-------------|------------|---------------|",
+            ]
+        )
     for arm in arms:
         s = report["summary"].get(arm)
         if not s:
             continue
-        lines.append(
-            f"| `{arm}` | {s['successes']}/{s['n']} ({s['success_rate']*100:.0f}%) | "
-            f"{s['mean_score'] if s['mean_score'] is not None else '—'} | "
-            f"{s['mean_tokens'] if s['mean_tokens'] is not None else '—'} | "
-            f"{s['mean_turns'] if s['mean_turns'] is not None else '—'} | "
-            f"{s['mean_wall_s'] if s['mean_wall_s'] is not None else '—'} |"
-        )
+        if show_matters:
+            lines.append(
+                f"| `{arm}` | {s['successes']}/{s['n']} ({s['success_rate']*100:.0f}%) | "
+                f"{s.get('mean_matters_found_label') or '—'} | "
+                f"{s['mean_score'] if s['mean_score'] is not None else '—'} | "
+                f"{s['mean_tokens'] if s['mean_tokens'] is not None else '—'} | "
+                f"{s['mean_turns'] if s['mean_turns'] is not None else '—'} | "
+                f"{s['mean_wall_s'] if s['mean_wall_s'] is not None else '—'} |"
+            )
+        else:
+            lines.append(
+                f"| `{arm}` | {s['successes']}/{s['n']} ({s['success_rate']*100:.0f}%) | "
+                f"{s['mean_score'] if s['mean_score'] is not None else '—'} | "
+                f"{s['mean_tokens'] if s['mean_tokens'] is not None else '—'} | "
+                f"{s['mean_turns'] if s['mean_turns'] is not None else '—'} | "
+                f"{s['mean_wall_s'] if s['mean_wall_s'] is not None else '—'} |"
+            )
     interp = [
         "",
         "## Interpretation",
@@ -3122,8 +3212,14 @@ def render_markdown(report: dict) -> str:
         )
     elif task == "institutional-knowledge-enumerate":
         interp.append(
-            "- Both arms graded for exhaustive matter enumeration via memory_recall "
-            "(escrow≥10 and noncompete>18); partial sets score 0.0."
+            "- Arms graded for exhaustive matter enumeration via memory_recall "
+            "(escrow≥10 and noncompete>18); score = hits/5 (partial credit); "
+            "false positives → 0.0; require real memory_recall tool_use."
+        )
+        interp.append(
+            "- **clawql-on** = seeded vault + memory tools; **clawql-no-memory** = "
+            "ClawQL tools but empty/disabled memory (isolates persistence); "
+            "**clawql-off** = no ClawQL MCP."
         )
     interp.append("")
     lines.extend(interp)
@@ -3204,6 +3300,14 @@ def run_trial(
                 ouro = True
             elif arm == "ouroboros-off":
                 ouro = False
+            # clawql-no-memory: same MCP surface as clawql-on, but wipe seed +
+            # disable memory so wins cannot come from persistent vault state.
+            disable_memory = bool(caps.get("disable_memory"))
+            if arm == "clawql-no-memory":
+                disable_memory = True
+                if vault:
+                    shutil.rmtree(vault, ignore_errors=True)
+                    vault = None
             agent = run_arm_on(
                 instruction,
                 tmp,
@@ -3214,7 +3318,7 @@ def run_trial(
                 arm=arm,
                 ouroboros=ouro,
                 ouroboros_max_generations=caps.get("ouroboros_max_generations"),
-                disable_memory=bool(caps.get("disable_memory")),
+                disable_memory=disable_memory,
                 task_hard_caps=caps,
                 require_search=bool(caps.get("require_search")),
                 require_execute=bool(caps.get("require_execute")),
@@ -3355,7 +3459,7 @@ def main(argv=None) -> int:
     parser.add_argument(
         "--arms",
         default="clawql-on,clawql-off",
-        help="Comma list: clawql-on,clawql-off,ouroboros-on,ouroboros-off",
+        help="Comma list: clawql-on,clawql-off,clawql-no-memory,ouroboros-on,ouroboros-off",
     )
     args = parser.parse_args(argv)
 

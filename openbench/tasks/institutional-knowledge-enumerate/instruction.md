@@ -36,8 +36,15 @@ List **every** matter that has **both**:
 }
 ```
 
+## Scoring
+
+- **Partial credit:** `SCORE = hits / 5` (how many of the five matching matters you found).
+- Checker also emits **`MATTERS_FOUND: k/5`** — the headline diagnostic (not just the float).
+- Extra / near-miss IDs → `0/5` and `SCORE: 0.0`.
+- Live A/B requires a real `clawql_memory_recall` tool_use (guessing IDs without tools scores 0).
+
 ## Rules
 
-- Ignore `decoy/`. Partial lists fail. Extra matter IDs fail.
-- Inventing `matters.json` without a real `clawql_memory_recall` tool_use fails.
+- Ignore `decoy/`. Prefer the complete set; partial sets score proportionally.
+- Inventing `matters.json` without a real `clawql_memory_recall` tool_use fails under live grading.
 - Stop after writing `matters.json`.

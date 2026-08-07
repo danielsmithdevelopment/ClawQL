@@ -356,14 +356,14 @@ Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../o
 
 ### `institutional-knowledge-enumerate` (B-7.1)
 
-|                             |                                                                                                                                                                                                    |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Claim**                   | Distributed firm-matter features (escrow + non-compete) are recovered as a **complete** matter-id set via vault `memory_recall` — not a partial keyword hit.                                       |
-| **Why it matters**          | Harvey C&H baseline: agents reason well on what they find but fail exhaustive search. First OpenBench cell for institutional / amortized firm knowledge (mini-firm fixture until full C&H mounts). |
-| **How**                     | 12 seeded matter notes; exact match set `{MAT-2388, MAT-2401, MAT-2415, MAT-2450, MAT-2462}` for escrow≥10 ∧ NC>18; near-misses must not appear. Require real `clawql_memory_recall` in live A/B.  |
-| **What success looks like** | on: recall → complete `matters.json`; off: no memory tools → 0.0.                                                                                                                                  |
-| **Evidence**                | Offline pack validated; live A/B pending `workflow_dispatch`.                                                                                                                                      |
-| **Does _not_ prove**        | Full 100M-token C&H mount; multi-session amortized cost (B-7.3); fine-tune flywheel (B-1).                                                                                                         |
+|                             |                                                                                                                                                                                     |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Claim**                   | Distributed firm-matter features are recovered via vault `memory_recall` with higher completeness than bare / no-memory arms.                                                       |
+| **Why it matters**          | Harvey C&H baseline: agents find _some_ material and stop confidently. Headline diagnostic is `MATTERS_FOUND: k/5`, not only mean score.                                            |
+| **How**                     | 12 seeded matter notes; match set of 5 for escrow≥10 ∧ NC>18. Partial credit `hits/5` + `MATTERS_FOUND`. Live A/B requires real `clawql_memory_recall`. Arms: on / off / no-memory. |
+| **What success looks like** | on: high matters found (ideally 5/5); off/no-memory: finds 2–3 then stops (Harvey failure mode).                                                                                    |
+| **Evidence**                | Offline pack validated; live A/B pending `workflow_dispatch`.                                                                                                                       |
+| **Does _not_ prove**        | Full 100M-token C&H mount; multi-session amortized cost (B-7.3); fine-tune flywheel (B-1).                                                                                          |
 
 ## Next cells (backlog)
 
