@@ -28,7 +28,6 @@ COPY packages/clawql-payments/package.json ./packages/clawql-payments/
 COPY packages/clawql-release/package.json ./packages/clawql-release/
 COPY packages/mcp-grpc-transport/package.json ./packages/mcp-grpc-transport/
 COPY packages/mcp-api-adapter/package.json ./packages/mcp-api-adapter/
-COPY packages/clawql-web/package.json ./packages/clawql-web/
 COPY packages/clawql-ouroboros/package.json ./packages/clawql-ouroboros/
 COPY packages/clawql-operator/package.json ./packages/clawql-operator/
 COPY packages/panguard-mcp-bridge/package.json ./packages/panguard-mcp-bridge/
