@@ -1,3 +1,12 @@
+### 2026-08-07 — `idp-pipeline-resilience` (B-2.2) WIN
+
+| Arm           | Score                                     | Notes                                         |
+| ------------- | ----------------------------------------- | --------------------------------------------- |
+| ouroboros-on  | **1.0** (2t, 40s)                         | seed + evolutionary loop + recovered pipeline |
+| ouroboros-off | fail (partial 0.857 before grader harden) | no ouroboros / wrong decoy cites              |
+
+Run: [31139014771](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31139014771). Gate OK. **Verdict:** retire from `pr_active`. Grader hardened post-WIN to score **0.0** on wrong cite (no partial).
+
 ### 2026-08-05 — `composed-safe-rollout` RTP v1.1 recollect WIN
 
 | Arm | Score             | Notes                                                      |

@@ -1,0 +1,20 @@
+{
+  "correlation_id": "idp-resilience-openbench-01",
+  "deal_id": "deal-idp-resilience-01",
+  "dryRunOnly": true,
+  "recovered": true,
+  "failure_stage": "onyx_cite",
+  "stages_passed": 7,
+  "stages": [
+    "discover",
+    "plan_extract",
+    "plan_redact",
+    "audit_trail",
+    "recover_onyx",
+    "notify_handoff",
+    "persist"
+  ],
+  "onyx_code": "quartz-21",
+  "notify_marker": "nebula-55",
+  "source": "idp-pipeline-resilience"
+}
