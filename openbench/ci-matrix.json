@@ -2,8 +2,8 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-2.2 idp-pipeline-resilience WIN (31139014771). Next: optional n\u22653 replication or B2.3 compose merge (PR #850).",
-  "pr_active": [],
+  "live_resume_note": "Next pr_active: memory-recall-pageindex-pin (true memory_recall sources=[pageindex]). B-2.2 idp-pipeline-resilience retired WIN (31139014771). B-2.3 compose smoke: PR #850.",
+  "pr_active": ["memory-recall-pageindex-pin"],
   "pr_trials": 1,
   "retired": {
     "idp-safe-pipeline-lite": {
