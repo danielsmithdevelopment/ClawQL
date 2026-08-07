@@ -30,4 +30,5 @@ ClawQL's unified billing layer — **Stripe** (human fiat / platform fees), **x4
 - [clawql-inference](../inference/clawql-inference.md) — gateway, call store, export/finetune flywheel
 - [clawql-idp-platform](../vision/clawql-idp-platform.md) — product pricing philosophy
 - [**accounting-and-tax.md**](accounting-and-tax.md) — WORM → books handoff; tax form ownership
+- [**clawql-banking vertical (design)**](../design/clawql-banking-vertical.md) — neobank / BaaS preset; **KYC stays out of payments** (Documents + Memory + vertical)
 - GitHub [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) — `.well-known/payments.json` discovery (dynamic on self-hosted HTTP; static on docs site)
