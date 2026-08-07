@@ -77,6 +77,11 @@ const SECTIONS = [
         'Event-driven autonomous agents — draft spec (WORM, NATS, DO/K8s)',
       ],
       [
+        'Durable Objects runtime',
+        '/streams/clawql-durable-objects',
+        'Streams DO sidecars — audit, inference virtual keys, RTP/OBT',
+      ],
+      [
         'Plugins',
         '/plugins',
         'Searchable registry — horizontal plugins and domain verticals',

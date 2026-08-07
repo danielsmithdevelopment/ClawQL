@@ -40,6 +40,13 @@ export default function ClawqlStreamsPage() {
           </a>
           . Complements{' '}
           <a
+            href="/streams/clawql-durable-objects"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Durable Objects runtime
+          </a>
+          ,{' '}
+          <a
             href="/mcp/mcp-api-adapter"
             className="font-medium text-inherit underline underline-offset-2"
           >

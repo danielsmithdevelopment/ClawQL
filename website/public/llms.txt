@@ -21,6 +21,7 @@ This file helps AI agents and crawlers find canonical documentation. For full-te
 - [Token efficiency](https://docs.clawql.com/architecture/token-efficiency): Twelve compounding layers for cost and reasoning quality
 - [Agentic Gateway (inference)](https://docs.clawql.com/inference/clawql-inference): OpenAI drop-in, flywheel, WORM path to Auditable Production AI
 - [ClawQL Streams](https://docs.clawql.com/streams/clawql-streams): Event-driven autonomous agents — draft spec (WORM, NATS, DO/K8s)
+- [Durable Objects runtime](https://docs.clawql.com/streams/clawql-durable-objects): Streams DO sidecars — audit, inference virtual keys, RTP/OBT
 - [Plugins](https://docs.clawql.com/plugins): Searchable registry — horizontal plugins and domain verticals
 - [Protocol](https://docs.clawql.com/reference/protocol): Uniform envelope and approval flows
 - [Spec configuration](https://docs.clawql.com/spec-configuration): OpenAPI and provider sources

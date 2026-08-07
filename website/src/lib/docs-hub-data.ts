@@ -199,6 +199,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
       'Event-driven autonomous agents — WebSocket/NATS triggers, WORM audit, DO or K8s scale.',
     icon: BoltIcon,
   }),
+  card({
+    href: '/streams/clawql-durable-objects',
+    name: 'Durable Objects (draft)',
+    description:
+      'Streams session runtime — Audit / Inference / Training sidecars, virtual key lifecycle.',
+    icon: SquaresPlusIcon,
+  }),
 ]
 
 /** Deployment hub — ops/infra only (not getting-started entry points). */

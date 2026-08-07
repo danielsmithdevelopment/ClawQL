@@ -1,9 +1,9 @@
 # ClawQL Streams — Specification v0.1
 
-**Status:** Draft · August 2026  
+**Status:** Draft · August 2026 · v0.1.1  
 **Package:** `clawql-streams` (planned)  
-**Depends on:** `clawql-web` · `clawql-inference` · `clawql-payments` · `clawql-ouroboros` · NATS JetStream  
-**Related:** [`mcp-api-adapter`](/mcp/mcp-api-adapter) (MCP → APIs) · [Agentic Gateway](/inference/clawql-inference) · [Ouroboros](../ouroboros/)
+**Depends on:** `clawql-web` · `clawql-inference` · `clawql-payments` · `clawql-ouroboros` · NATS JetStream · OpenBenchTrace / RTP (training emission)  
+**Related:** [`mcp-api-adapter`](/mcp/mcp-api-adapter) · [Agentic Gateway](/inference/clawql-inference) · [Durable Objects](/streams/clawql-durable-objects) · [Ouroboros](../ouroboros/) · [OpenBenchTrace collection](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-trace-collection.md)
 
 ---
 
@@ -87,9 +87,9 @@ Filter types (configurable per subscription):
 - **Always** — every event spawns an agent (high-value, low-volume sources)
 - **Never** — buffer and ambient delivery only (high-volume, audit-only sources)
 
-### 3.4 Agent session
+### 3.4 Agent session (clawql-inference + virtual key lifecycle)
 
-When the significance filter passes, ClawQL spawns an agent session:
+When the significance filter passes, ClawQL spawns an agent session. The **model layer is always [`clawql-inference`](/inference/clawql-inference)** — not a raw Anthropic/OpenAI credential. The `model` field on `stream_subscribe` is a **policy alias** that resolves through PAL routing (`Frugal` → `Standard` → `Frontier`), not a bare model string.
 
 ```ts
 // Internal — not user-facing API
@@ -100,13 +100,24 @@ const session = await agentSession({
     vaultSnapshot: await memoryRecall(subscription.recallQuery),
     priorEvents: await streamRead(subscription.topic, { limit: 5 }),
   },
+  // Policy alias → clawql-inference PAL + virtual key budget
   model: subscription.model ?? 'claude-sonnet-4-6',
   tools: subscription.allowedTools,
   maxTurns: subscription.maxTurns ?? 10,
   budgetTokens: subscription.budgetTokens ?? 8000,
   auditLevel: 'WORM',
+  rtpConsent: subscription.rtpConsent, // see §14
 })
 ```
+
+Every session gets:
+
+- Policy manifest enforcement (`policy.yaml`) before any model call
+- PAL routing based on task complexity
+- WORM call-store entry for every inference call
+- Langfuse + OTel tracing on the model call (not only tool calls)
+- Semantic cache (similar events may cache-hit across DO sessions)
+- Budget enforcement via a **per-session virtual key** (see below)
 
 The agent has access to the full ClawQL MCP tool surface, scoped by ATR claims on the subscription definition. It cannot call tools outside its declared scope regardless of what the event content requests — same Panguard enforcement as interactive sessions.
 
@@ -116,6 +127,53 @@ After the session completes, the result is:
 - Published to NATS (available for downstream consumers)
 - Optionally: sent via `notify` to a Slack channel or webhook
 - Optionally: passed to an Ouroboros loop for ensemble validation before action
+- Optionally: flushed as an RTP/OpenBenchTrace training record (§14)
+
+#### Virtual key bind-on-create / expire-on-destroy
+
+Credentials for the model layer are **ephemeral and bound to the session (DO) instance**:
+
+```text
+stream_subscribe event passes significance filter
+         │
+         ▼
+Gateway creates Agent DO (or K8s session worker)
+         │
+         ├─ clawql-inference issues virtual key
+         │    scoped to: this DO / session instance ID
+         │    budget: subscription.budgetTokens (or budgetUsd → tokens)
+         │    TTL: maxTurns × estimated_turn_duration
+         │    PAL policy: from subscription.model alias
+         │
+         ├─ virtual key ID stored in DO SQLite
+         │
+         └─ InferenceSidecar initialized with that key only
+```
+
+```text
+Session completes (converged / budget hit / timeout / eviction)
+         │
+         ├─ DeductionService capture (actual tokens) if credit-gated
+         ├─ TrainingDataSidecar flushes RTP/OBT (§14)
+         ├─ AuditSidecar writes WORM session-close (includes virtual key ID)
+         └─ clawql-inference expires virtual key → further calls 401
+              DO / worker destroys itself
+```
+
+**Why this matters:** a leaked key from a destroyed DO is useless — scope is the instance ID, and TTL is seconds to minutes. Managed agent runtimes typically reuse long-lived service credentials across sessions; Streams does not.
+
+Gateway generates **both** the DO instance ID and the virtual key ID **before** spawn, writes `DO_CREATED` to WORM with both IDs, then injects them into the DO. That avoids an audit gap between create and key issuance.
+
+| WORM event            | Includes                                            |
+| --------------------- | --------------------------------------------------- |
+| `DO_CREATED`          | virtual key ID + subscription ID + event hash       |
+| `INFERENCE_CALL`      | virtual key ID + PAL tier + tokens + cache hit/miss |
+| `TOOL_CALL`           | virtual key ID + tool name + ATR check result       |
+| `BUDGET_EXHAUSTED`    | virtual key ID + tokens consumed                    |
+| `DO_DESTROYED`        | virtual key ID + exit reason + total spend          |
+| `VIRTUAL_KEY_EXPIRED` | key ID (from inference gateway)                     |
+
+Credit-gated subscriptions (`budgetUsd`): virtual key creation triggers `DeductionService.hold`; destroy triggers `capture(actual)` (or hold TTL expiry on abnormal destroy).
 
 ### 3.5 Rate control
 
@@ -294,18 +352,21 @@ Gateway Worker (stateless, routes by topic)
        ▼
 Subscription DO (one per subscription)
   ├─ WebSocket connection (hibernated between events)
-  ├─ SQLite: subscription config, last event, buffer stats
+  ├─ SQLite: subscription config, last event, buffer stats, rtpConsent
   ├─ on message: significance filter
   │
   └─ above threshold:
           │
           ▼
      Agent DO (one per event, ephemeral)
-       ├─ Claude API call
+       ├─ AuditSidecar → WORM (forensic; virtual key threaded)
+       ├─ InferenceSidecar → clawql-inference (PAL + virtual key)
+       ├─ TrainingDataSidecar → RTP/OBT accumulator (§14)
        ├─ MCP tool calls (back into ClawQL)
-       ├─ WORM write + NATS publish
-       └─ self-destructs
+       └─ self-destructs + virtual key expiry
 ```
+
+See [`clawql-durable-objects.md`](/streams/clawql-durable-objects) for the DO implementation contract.
 
 ### 6.2 Kubernetes HPA (self-hosted path)
 
@@ -393,17 +454,34 @@ Every subscription declares `maxTurns` and `budgetTokens`. The agent session har
 
 ## 8. Relationship to existing ClawQL packages
 
-| Package            | Role in Streams                                                         |
-| ------------------ | ----------------------------------------------------------------------- |
-| `clawql-web`       | `WebSocketSourceProvider` — holds connections, receives messages        |
-| `clawql-inference` | Runs the agent subprocess / API call for agent sessions                 |
-| `clawql-memory`    | `memory_ingest` for WORM audit; `memory_recall` for context             |
-| NATS JetStream     | Durable event buffer; consumer groups for K8s HPA                       |
-| `clawql-payments`  | `DeductionService` for credit-gated agent sessions                      |
-| `clawql-ouroboros` | Optional ensemble validation before kinetic actions                     |
-| Panguard           | ATR enforcement on every tool call within agent sessions                |
-| `clawql-audit`     | WORM writes for every event received and action taken                   |
-| `mcp-api-adapter`  | MCP → OpenAPI / GraphQL / `/mcp` / gRPC / CLI (and DO-native WebSocket) |
+| Package              | Role in Streams                                                                         |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| `clawql-web`         | `WebSocketSourceProvider` — holds connections, receives messages                        |
+| `clawql-inference`   | **Required** model layer for every agent session — PAL, virtual keys, call store, cache |
+| `clawql-memory`      | `memory_ingest` for WORM audit; `memory_recall` for context                             |
+| NATS JetStream       | Durable event buffer; consumer groups for K8s HPA                                       |
+| `clawql-payments`    | `DeductionService` for credit-gated agent sessions                                      |
+| `clawql-ouroboros`   | Optional ensemble validation before kinetic actions                                     |
+| Panguard             | ATR enforcement on every tool call within agent sessions                                |
+| `clawql-audit`       | WORM writes for every event received and action taken                                   |
+| `mcp-api-adapter`    | MCP → OpenAPI / GraphQL / `/mcp` / gRPC / CLI (and DO-native WebSocket)                 |
+| OpenBenchTrace / RTP | Training-data emission from sessions (§14)                                              |
+
+```text
+clawql-streams
+  ├─ clawql-web (event sources)
+  ├─ clawql-inference (model layer for DO / K8s sessions)
+  │     └─ policy.yaml (PAL routing + virtual key budgets)
+  ├─ clawql-memory (vault recall + WORM)
+  ├─ clawql-payments (DeductionService for credit-gated sessions)
+  ├─ clawql-ouroboros (ensemble validation before kinetic actions)
+  └─ NATS JetStream (durable event buffer)
+
+Agent DO / session
+  ├─ AuditSidecar → WORM (forensic)
+  ├─ InferenceSidecar → clawql-inference (PAL + tracing + virtual key)
+  └─ TrainingDataSidecar → RTP/OBT → export destination
+```
 
 `clawql-streams` is a thin coordination layer over these existing packages. Most of the implementation is wiring, not new code.
 
@@ -454,6 +532,13 @@ streams:
     budgetTokens: 8000
     maxTurns: 10
 
+  # Training emission (§14)
+  trainingData:
+    enabled: false
+    defaultRtpConsentScopes: [community_model] # optional: dataset_licensing
+    export:
+      kind: none # none | r2 | postgres | huggingface
+
   auditLevel: WORM # WORM | LOG | none
   subscriptionStore: postgres # postgres | jsonl
 ```
@@ -499,19 +584,112 @@ clawql streams <subcommand>
 
 ## 13. Open questions
 
-1. **DO identity for WORM.** When an Agent DO writes a WORM entry, what identity does it carry — the subscription owner, the DO instance, or both? This matters for multi-tenant deployments.
+1. **DO identity for WORM.** When an Agent DO writes a WORM entry, what identity does it carry — the subscription owner, the DO instance, the virtual key ID, or a combination? Default proposal: all three (owner + DO ID + virtual key ID).
 2. **Cross-subscription coordination.** Two subscriptions fire on the same event source simultaneously. Should they see each other's agent outputs? Default no; shared NATS subject for opt-in coordination is worth specifying.
 3. **Replay and idempotency.** When NATS replays events (outage recovery), the significance filter re-runs and agent sessions may re-spawn. Need idempotency keys on agent sessions keyed to event ID + subscription ID.
-4. **DO to self-hosted parity.** Some features (WebSocket hibernation, per-event DO isolation) are Cloudflare-native. The K8s path approximates them but does not have exact parity — document what differs.
+4. **DO to self-hosted parity.** Some features (WebSocket hibernation, per-event DO isolation) are Cloudflare-native. The K8s path approximates them but does not have exact parity — document what differs in [`clawql-durable-objects.md`](/streams/clawql-durable-objects).
 5. **Kafka / Kinesis for enterprise.** High-volume regulated sources may already publish to Kafka or Kinesis. First-class in v0.1 or v0.2?
+6. **Consent granularity.** Subscription-level `rtpConsent` (default) vs per-event re-consent for regulated tenants.
+
+---
+
+## 14. Training data emission (RTP + OpenBenchTrace)
+
+ClawQL Streams is not only an event-processing platform. Every agent session is a potential **training example with cryptographic provenance**. The same infrastructure that makes agents trustworthy in production makes the training data trustworthy.
+
+### 14.1 RTP as the inner structure
+
+OpenBenchTrace (OBT) is the **collection envelope** (benchmark / session metadata). RTP is the **reasoning schema** (domain-agnostic six-node sequence). They compose: OBT wraps RTP.
+
+Every Streams agent session already produces the six RTP nodes as a structural property of execution:
+
+| RTP node      | Streams / DO source                                                                      |
+| ------------- | ---------------------------------------------------------------------------------------- |
+| **Intent**    | Subscription `prompt` + summarized event                                                 |
+| **Retrieval** | `memory_recall` / `search` tool calls before reasoning                                   |
+| **Reasoning** | Tool-selection chain + clawql-inference metadata (PAL tier, cache hit, tokens, model id) |
+| **Execution** | Tool calls with arguments (also in WORM)                                                 |
+| **Delta**     | State before/after via WORM Merkle hashes                                                |
+| **Verdict**   | Session outcome (converged / timeout / budget) + optional Ouroboros evaluator            |
+
+WORM is append-only **forensic** evidence. RTP is structured **training** data. Both are written; destinations differ.
+
+### 14.2 OpenBenchTrace outer envelope (DO / session mapping)
+
+| OBT field        | Streams / DO source                                   |
+| ---------------- | ----------------------------------------------------- |
+| `run_id`         | DO instance ID (or K8s session ID)                    |
+| `arm`            | `on` (Streams sessions always have ClawQL tools)      |
+| `task_id`        | `subscriptionId` + `eventId`                          |
+| `grader_verdict` | Significance filter result + session outcome          |
+| `clawql_version` | Injected from Cosign-signed Layer 0 manifest at spawn |
+| `spend_caps`     | `maxTurns` + `budgetTokens` from subscription         |
+| `manifest_id`    | Layer 0 release manifest hash                         |
+| `virtual_key_id` | Inference virtual key bound to this DO                |
+
+`manifest_id` is supply-chain provenance for training data: which codebase version produced each example.
+
+### 14.3 Consent at subscription time
+
+RTP requires a consent token before the session. Streams issues it when the **subscription is created**, not on every event:
+
+```ts
+stream_subscribe({
+  // ...
+  rtpConsent: {
+    scopes: ['community_model', 'dataset_licensing'], // dataset_licensing optional
+  },
+})
+```
+
+Default scope: `community_model`. Every DO session inherits the subscription JWT. Consent is once per subscription; each session is a fulfillment of that consent.
+
+In OpenBench GHA, consent is often implicit (own infra); mint a gateway JWT at job start with the same scopes so datasets are commercially licensable without retroactive cleanup. See [`openbench-trace-collection.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-trace-collection.md#rtp-alignment).
+
+### 14.4 Accumulation and export
+
+1. InferenceSidecar runs model calls under the virtual key.
+2. TrainingDataSidecar accumulates RTP `turnSequence` in DO SQLite as tools execute.
+3. On session close: wrap RTP in OBT envelope; flush to export destination:
+
+| Destination              | Use                       |
+| ------------------------ | ------------------------- |
+| Hugging Face dataset API | Public / community corpus |
+| R2 (team vault sync)     | Team-owned training store |
+| Postgres                 | On-prem / regulated       |
+| `none`                   | Training emission off     |
+
+### 14.5 Intelligence flywheel
+
+```text
+DO session → clawql-inference (PAL + virtual key)
+           → WORM call store (every inference call)
+           → RTP trace (reasoning + tools)
+           → OBT envelope (manifest hash + virtual key ID)
+           → fine-tune on verified traces
+           → custom Frugal model in tier-map.json
+           → next DO session PAL-routes to custom Frugal first
+           → cheaper sessions → more sessions → more traces
+```
+
+DO-per-event makes model rollout zero-downtime: update `tier-map.json`, new DOs pick it up, in-flight DOs finish on the prior model.
+
+### 14.6 NSV / SGDOP (same math, two applications)
+
+RTP uses NSV/SGDOP for **schema governance** (coverage of reasoning concepts). ClawQL Agent Coordination uses NSV/SGDOP for **ensemble coordination** (coverage of embedding / J-space). Blind-spot vector → add a schema node or recruit a model. Same geometry; different layer.
 
 ---
 
 ## Further reading
 
+- [`docs/streams/clawql-durable-objects.md`](/streams/clawql-durable-objects) — DO sidecars, virtual key bind/expire, training sidecar
 - [`docs/mcp/mcp-api-adapter.md`](/mcp/mcp-api-adapter) — MCP → APIs (inverse of ClawQL Core)
-- [`docs/inference/clawql-inference.md`](/inference/clawql-inference) — Agentic Gateway / inference path
+- [`docs/inference/clawql-inference.md`](/inference/clawql-inference) — Agentic Gateway / virtual keys / PAL
+- [`docs/benchmarks/openbench-trace-collection.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-trace-collection.md) — OpenBenchTrace + RTP alignment
+- [`docs/benchmarks/openbench-results-ledger.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-results-ledger.md) — Convergence Week ledger
 - [`docs/mcp/schedule-synthetic-checks.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/schedule-synthetic-checks.md) — existing cron pattern Streams unifies
+- Essay: [What Convergence Week actually proved](https://pragmaticvectors.com/posts/openbench-convergence-week/)
+- Essay: [OpenBenchTrace and RTP](https://pragmaticvectors.com/posts/openbench-rtp-relationship/)
 - NATS JetStream — existing event backbone in Helm / compose
 
 export function wrapper({ children }) {
