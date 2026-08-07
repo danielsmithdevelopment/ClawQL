@@ -915,7 +915,7 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
                 mandateJwt?: string;
               };
               await assertAp2IfRequired(env, a.mandateJwt);
-              let toTenantId = a.toTenantId?.trim();
+              const toTenantId = a.toTenantId?.trim();
               if (!a.toEmail?.trim() && !a.toHandle?.trim() && !toTenantId) {
                 throw new Error("Provide toEmail, toHandle (@bob), or toTenantId");
               }

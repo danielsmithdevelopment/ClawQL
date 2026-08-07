@@ -444,7 +444,9 @@ async function markMoneyRequestPaidImpl(
 }
 
 /** Private IO helper backing {@link CreditsRequestsService.reset}. */
-export async function resetMoneyRequestsForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+export async function resetMoneyRequestsForTests(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<void> {
   await saveFile(emptyFile(), env);
 }
 
