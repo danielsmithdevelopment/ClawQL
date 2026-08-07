@@ -444,7 +444,7 @@ async function markMoneyRequestPaidImpl(
 }
 
 /** Private IO helper backing {@link CreditsRequestsService.reset}. */
-async function resetMoneyRequestsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+export async function resetMoneyRequestsForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveFile(emptyFile(), env);
 }
 
@@ -604,7 +604,7 @@ export function creditsRequestsLiveLayer(
           ),
         markPaid: (input) =>
           run("Failed to mark money request paid", () => markMoneyRequestPaidImpl(input, env)),
-        reset: () => run("Failed to reset money requests", () => resetMoneyRequestsImpl(env)),
+        reset: () => run("Failed to reset money requests", () => resetMoneyRequestsForTests(env)),
       });
     })
   );

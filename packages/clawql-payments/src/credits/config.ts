@@ -25,7 +25,6 @@ function falsey(value: string | undefined): boolean {
 export const isCreditsEnabled = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> =>
   Effect.sync(() => truthy(env.CLAWQL_CREDITS_ENABLED));
 
-
 /** Managed / hosted ClawQL SaaS — peer P2P and agent compensation stay off. */
 export const isManagedHosting = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> =>
   Effect.sync(
@@ -38,9 +37,7 @@ export const isManagedHosting = (env: NodeJS.ProcessEnv = process.env): Effect.E
 /**
  * Cross-tenant Venmo-like P2P. Default off; forced off on managed hosting.
  */
-export const isCreditsP2pEnabled = (
-  env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<boolean> =>
+export const isCreditsP2pEnabled = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> =>
   Effect.gen(function* () {
     if (yield* isManagedHosting(env)) return false;
     if (falsey(env.CLAWQL_CREDITS_P2P_ENABLED)) return false;
@@ -86,7 +83,6 @@ export function assertCreditsOrgTransferEnabled(env: NodeJS.ProcessEnv = process
     throw new Error("Org credit transfers disabled — unset CLAWQL_CREDITS_ORG_TRANSFER_ENABLED=0");
   }
 }
-
 
 /** Stripe Financial Connections + ACH debit for credit top-ups. */
 export const isAchTopupEnabled = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> =>

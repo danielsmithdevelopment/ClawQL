@@ -213,7 +213,7 @@ export function spendableBalanceCents(account: CreditAccount, now: Date = new Da
   return sumGrants(account.grants, now);
 }
 
-async function getCreditAccount(
+export async function getCreditAccount(
   tenantId: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<CreditAccount> {
@@ -273,7 +273,7 @@ function applyAllocationsCredit(
   return [...byId.values()];
 }
 
-async function appendCreditEntry(
+export async function appendCreditEntry(
   input: {
     tenantId: string;
     kind: CreditLedgerKind;
@@ -354,7 +354,7 @@ export type HoldResult = {
   spendableAfterCents: number;
 };
 
-async function holdCredits(
+export async function holdCredits(
   input: {
     tenantId: string;
     amountCents: number;
@@ -443,7 +443,7 @@ export type CaptureResult = {
   alreadyCaptured: boolean;
 };
 
-async function captureHold(
+export async function captureHold(
   input: {
     tenantId: string;
     idempotencyKey: string;
@@ -535,7 +535,7 @@ export type ReleaseResult = {
   alreadyReleased: boolean;
 };
 
-async function releaseHold(
+export async function releaseHold(
   input: {
     tenantId: string;
     idempotencyKey: string;
@@ -597,7 +597,7 @@ async function releaseHold(
 }
 
 /** Idempotent settle: if PI already settled, return existing entry. */
-async function settleTopupByPaymentIntent(
+export async function settleTopupByPaymentIntent(
   input: {
     tenantId: string;
     paymentIntentId: string;
@@ -648,7 +648,7 @@ async function settleTopupByPaymentIntent(
   });
 }
 
-async function resetCreditsLedgerForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+export async function resetCreditsLedgerForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveFile({ accounts: {} }, env);
 }
 
@@ -666,7 +666,7 @@ export type CreditTransferResult = {
  * Atomic prepaid credit transfer between two tenants (P2P).
  * Locks tenants in sorted order to avoid deadlock; idempotent on `idempotencyKey`.
  */
-async function transferCredits(
+export async function transferCredits(
   input: {
     fromTenantId: string;
     toTenantId: string;

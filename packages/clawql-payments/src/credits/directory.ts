@@ -345,7 +345,7 @@ export type ClaimDirectoryInput = {
  * Claim or update directory identity for a tenant.
  * Email is the default payee; username (`handle`) and phone are optional aliases.
  */
-async function claimDirectory(
+export async function claimDirectory(
   input: ClaimDirectoryInput,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<{ entry: DirectoryEntry; created: boolean }> {
@@ -553,7 +553,7 @@ async function resolveRecipient(
 }
 
 /** Reset directory file. Internal helper used by the service `reset` op. */
-async function resetDirectoryForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+export async function resetDirectoryForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveFile(emptyFile(), env);
 }
 

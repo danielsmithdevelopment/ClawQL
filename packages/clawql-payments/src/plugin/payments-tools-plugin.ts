@@ -839,188 +839,188 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
         });
 
         if (Effect.runSync(isCreditsP2pEnabled(env))) {
-        yield* api.registerMcpTool({
-          name: "payments_credits_request_accept",
-          description:
-            "Payer accepts a money request: stages a credits transfer (confirm with payments_credits_transfer_confirm).",
-          schema: creditsRequestAcceptSchema,
-          handler: async (args) => {
-            const a = args as {
-              requestId: string;
-              payerTenantId?: string;
-              mandateJwt?: string;
-            };
-            await assertAp2IfRequired(env, a.mandateJwt);
-            const payerTenantId = a.payerTenantId?.trim() || "default";
-            const { request, staged } = await runPaymentsEffect(
-              Effect.gen(function* () {
-                const requests = yield* CreditsRequestsService;
-                const credits = yield* CreditsService;
-                const reqRow = yield* requests.get(a.requestId);
-                if (!reqRow) return yield* Effect.fail(new Error("Unknown request id"));
-                if (reqRow.status === "expired")
-                  return yield* Effect.fail(new Error("Request expired"));
-                if (reqRow.status !== "pending") {
-                  return yield* Effect.fail(new Error(`Request is ${reqRow.status}`));
-                }
-                if (!reqRow.payerTenantId) {
-                  return yield* Effect.fail(
-                    new Error(
-                      "Payer has not joined yet — claim the invite first: clawql payments credits request claim-invite …"
-                    )
-                  );
-                }
-                if (reqRow.payerTenantId !== payerTenantId) {
-                  return yield* Effect.fail(new Error("Only the payer can accept this request"));
-                }
-                const stagedResult = yield* credits.stageTransfer({
-                  fromTenantId: reqRow.payerTenantId,
-                  toTenantId: reqRow.requesterTenantId,
-                  amountCents: reqRow.amountCents,
-                  note: reqRow.note ?? `Payment for request ${reqRow.requestId}`,
-                  correlationId: reqRow.correlationId,
-                  requestId: reqRow.requestId,
-                });
-                const updated = yield* requests.markAccepted({
-                  requestId: reqRow.requestId,
-                  payerTenantId,
-                  stagedTransferActionId: stagedResult.actionId,
-                });
-                return { request: updated, staged: stagedResult };
-              }),
-              env
-            );
-            return textResult({
-              request: publicMoneyRequest(request),
-              staged,
-              next: "High-impact: payments_credits_transfer_confirm with actionId + code (+ totp if required).",
-            });
-          },
-        });
+          yield* api.registerMcpTool({
+            name: "payments_credits_request_accept",
+            description:
+              "Payer accepts a money request: stages a credits transfer (confirm with payments_credits_transfer_confirm).",
+            schema: creditsRequestAcceptSchema,
+            handler: async (args) => {
+              const a = args as {
+                requestId: string;
+                payerTenantId?: string;
+                mandateJwt?: string;
+              };
+              await assertAp2IfRequired(env, a.mandateJwt);
+              const payerTenantId = a.payerTenantId?.trim() || "default";
+              const { request, staged } = await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const requests = yield* CreditsRequestsService;
+                  const credits = yield* CreditsService;
+                  const reqRow = yield* requests.get(a.requestId);
+                  if (!reqRow) return yield* Effect.fail(new Error("Unknown request id"));
+                  if (reqRow.status === "expired")
+                    return yield* Effect.fail(new Error("Request expired"));
+                  if (reqRow.status !== "pending") {
+                    return yield* Effect.fail(new Error(`Request is ${reqRow.status}`));
+                  }
+                  if (!reqRow.payerTenantId) {
+                    return yield* Effect.fail(
+                      new Error(
+                        "Payer has not joined yet — claim the invite first: clawql payments credits request claim-invite …"
+                      )
+                    );
+                  }
+                  if (reqRow.payerTenantId !== payerTenantId) {
+                    return yield* Effect.fail(new Error("Only the payer can accept this request"));
+                  }
+                  const stagedResult = yield* credits.stageTransfer({
+                    fromTenantId: reqRow.payerTenantId,
+                    toTenantId: reqRow.requesterTenantId,
+                    amountCents: reqRow.amountCents,
+                    note: reqRow.note ?? `Payment for request ${reqRow.requestId}`,
+                    correlationId: reqRow.correlationId,
+                    requestId: reqRow.requestId,
+                  });
+                  const updated = yield* requests.markAccepted({
+                    requestId: reqRow.requestId,
+                    payerTenantId,
+                    stagedTransferActionId: stagedResult.actionId,
+                  });
+                  return { request: updated, staged: stagedResult };
+                }),
+                env
+              );
+              return textResult({
+                request: publicMoneyRequest(request),
+                staged,
+                next: "High-impact: payments_credits_transfer_confirm with actionId + code (+ totp if required).",
+              });
+            },
+          });
 
-        yield* api.registerMcpTool({
-          name: "payments_credits_transfer_stage",
-          description:
-            "Safe entry point: stage a prepaid credit P2P transfer. Prefer toEmail or toHandle (@bob). Inert until payments_credits_transfer_confirm.",
-          schema: creditsTransferStageSchema,
-          handler: async (args) => {
-            const a = args as {
-              toTenantId?: string;
-              toHandle?: string;
-              toEmail?: string;
-              amountUsd: number;
-              fromTenantId?: string;
-              idempotencyKey?: string;
-              note?: string;
-              mandateJwt?: string;
-            };
-            await assertAp2IfRequired(env, a.mandateJwt);
-            let toTenantId = a.toTenantId?.trim();
-            if (!a.toEmail?.trim() && !a.toHandle?.trim() && !toTenantId) {
-              throw new Error("Provide toEmail, toHandle (@bob), or toTenantId");
-            }
-            const { result, toHandle, toEmail } = await runPaymentsEffect(
-              Effect.gen(function* () {
-                let resolvedTenantId = toTenantId;
-                let resolvedHandle: string | undefined;
-                let resolvedEmail: string | undefined;
-                if (a.toEmail?.trim() || a.toHandle?.trim()) {
-                  const directory = yield* CreditsDirectoryService;
-                  const resolved = a.toEmail?.trim()
-                    ? yield* directory.resolveRecipient(a.toEmail, { forceEmail: true })
-                    : yield* directory.resolveRecipient(a.toHandle!, { forceHandle: true });
-                  resolvedTenantId = resolved.tenantId;
-                  resolvedHandle = resolved.handle;
-                  resolvedEmail = resolved.email;
-                }
-                const credits = yield* CreditsService;
-                const staged = yield* credits.stageTransfer({
-                  fromTenantId: a.fromTenantId?.trim() || "default",
-                  toTenantId: resolvedTenantId!,
-                  amountCents: Math.round(a.amountUsd * 100),
-                  idempotencyKey: a.idempotencyKey,
-                  note: a.note,
-                });
-                return { result: staged, toHandle: resolvedHandle, toEmail: resolvedEmail };
-              }),
-              env
-            );
-            return textResult({
-              ...result,
-              toHandle,
-              toEmail,
-              next: "High-impact next step: call payments_credits_transfer_confirm with actionId + code (+ totp if required).",
-            });
-          },
-        });
+          yield* api.registerMcpTool({
+            name: "payments_credits_transfer_stage",
+            description:
+              "Safe entry point: stage a prepaid credit P2P transfer. Prefer toEmail or toHandle (@bob). Inert until payments_credits_transfer_confirm.",
+            schema: creditsTransferStageSchema,
+            handler: async (args) => {
+              const a = args as {
+                toTenantId?: string;
+                toHandle?: string;
+                toEmail?: string;
+                amountUsd: number;
+                fromTenantId?: string;
+                idempotencyKey?: string;
+                note?: string;
+                mandateJwt?: string;
+              };
+              await assertAp2IfRequired(env, a.mandateJwt);
+              let toTenantId = a.toTenantId?.trim();
+              if (!a.toEmail?.trim() && !a.toHandle?.trim() && !toTenantId) {
+                throw new Error("Provide toEmail, toHandle (@bob), or toTenantId");
+              }
+              const { result, toHandle, toEmail } = await runPaymentsEffect(
+                Effect.gen(function* () {
+                  let resolvedTenantId = toTenantId;
+                  let resolvedHandle: string | undefined;
+                  let resolvedEmail: string | undefined;
+                  if (a.toEmail?.trim() || a.toHandle?.trim()) {
+                    const directory = yield* CreditsDirectoryService;
+                    const resolved = a.toEmail?.trim()
+                      ? yield* directory.resolveRecipient(a.toEmail, { forceEmail: true })
+                      : yield* directory.resolveRecipient(a.toHandle!, { forceHandle: true });
+                    resolvedTenantId = resolved.tenantId;
+                    resolvedHandle = resolved.handle;
+                    resolvedEmail = resolved.email;
+                  }
+                  const credits = yield* CreditsService;
+                  const staged = yield* credits.stageTransfer({
+                    fromTenantId: a.fromTenantId?.trim() || "default",
+                    toTenantId: resolvedTenantId!,
+                    amountCents: Math.round(a.amountUsd * 100),
+                    idempotencyKey: a.idempotencyKey,
+                    note: a.note,
+                  });
+                  return { result: staged, toHandle: resolvedHandle, toEmail: resolvedEmail };
+                }),
+                env
+              );
+              return textResult({
+                ...result,
+                toHandle,
+                toEmail,
+                next: "High-impact next step: call payments_credits_transfer_confirm with actionId + code (+ totp if required).",
+              });
+            },
+          });
 
-        yield* api.registerMcpTool({
-          name: "payments_credits_transfer_confirm",
-          description:
-            "High-impact: confirm a staged prepaid credit P2P transfer (ledger move). Prefer payments_credits_transfer_stage first. Requires TOTP when CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1.",
-          schema: creditsTransferConfirmSchema,
-          handler: async (args) => {
-            const a = args as {
-              actionId: string;
-              code: string;
-              totp?: string;
-              mandateJwt?: string;
-            };
-            await assertAp2IfRequired(env, a.mandateJwt);
-            const result = await runPaymentsEffect(
-              Effect.gen(function* () {
-                const credits = yield* CreditsService;
-                return yield* credits.confirmTransfer({
-                  actionId: a.actionId,
-                  code: a.code,
-                  totp: a.totp,
-                });
-              }),
-              env
-            );
-            return textResult(result);
-          },
-        });
+          yield* api.registerMcpTool({
+            name: "payments_credits_transfer_confirm",
+            description:
+              "High-impact: confirm a staged prepaid credit P2P transfer (ledger move). Prefer payments_credits_transfer_stage first. Requires TOTP when CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1.",
+            schema: creditsTransferConfirmSchema,
+            handler: async (args) => {
+              const a = args as {
+                actionId: string;
+                code: string;
+                totp?: string;
+                mandateJwt?: string;
+              };
+              await assertAp2IfRequired(env, a.mandateJwt);
+              const result = await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const credits = yield* CreditsService;
+                  return yield* credits.confirmTransfer({
+                    actionId: a.actionId,
+                    code: a.code,
+                    totp: a.totp,
+                  });
+                }),
+                env
+              );
+              return textResult(result);
+            },
+          });
 
-        // High-impact compensation (logical dotted names → underscores for MCP):
-        // agent.compensation.deposit.stage / .confirm
-        // agent.compensation.cashout.stage / .confirm
-        yield* api.registerMcpTool({
-          name: "agent_compensation_deposit_stage",
-          description:
-            "Safe entry point: stage an agent compensation deposit (credits/funds). Inert until agent_compensation_deposit_confirm — does not credit the ledger.",
-          schema: compensationDepositStageSchema,
-          handler: async (args) => {
-            const a = args as {
-              agentId: string;
-              amountUsd: number;
-              asset?: "credits" | "funds";
-              reason?: "sgdop_recruit" | "diversity_dividend" | "task_bounty" | "manual";
-              recruitmentId?: string;
-              tenantId?: string;
-              mandateJwt?: string;
-            };
-            await assertAp2IfRequired(env, a.mandateJwt);
-            const result = await runPaymentsEffect(
-              Effect.gen(function* () {
-                const comp = yield* AgentCompensationService;
-                return yield* comp.stageDeposit({
-                  agentId: a.agentId,
-                  amountUsd: a.amountUsd,
-                  asset: a.asset ?? "credits",
-                  reason: a.reason ?? "manual",
-                  recruitmentId: a.recruitmentId,
-                  tenantId: a.tenantId,
-                });
-              }),
-              env
-            );
-            return textResult({
-              ...result,
-              next: "High-impact next step: call agent_compensation_deposit_confirm with actionId + code to credit the ledger.",
-            });
-          },
-        });
+          // High-impact compensation (logical dotted names → underscores for MCP):
+          // agent.compensation.deposit.stage / .confirm
+          // agent.compensation.cashout.stage / .confirm
+          yield* api.registerMcpTool({
+            name: "agent_compensation_deposit_stage",
+            description:
+              "Safe entry point: stage an agent compensation deposit (credits/funds). Inert until agent_compensation_deposit_confirm — does not credit the ledger.",
+            schema: compensationDepositStageSchema,
+            handler: async (args) => {
+              const a = args as {
+                agentId: string;
+                amountUsd: number;
+                asset?: "credits" | "funds";
+                reason?: "sgdop_recruit" | "diversity_dividend" | "task_bounty" | "manual";
+                recruitmentId?: string;
+                tenantId?: string;
+                mandateJwt?: string;
+              };
+              await assertAp2IfRequired(env, a.mandateJwt);
+              const result = await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const comp = yield* AgentCompensationService;
+                  return yield* comp.stageDeposit({
+                    agentId: a.agentId,
+                    amountUsd: a.amountUsd,
+                    asset: a.asset ?? "credits",
+                    reason: a.reason ?? "manual",
+                    recruitmentId: a.recruitmentId,
+                    tenantId: a.tenantId,
+                  });
+                }),
+                env
+              );
+              return textResult({
+                ...result,
+                next: "High-impact next step: call agent_compensation_deposit_confirm with actionId + code to credit the ledger.",
+              });
+            },
+          });
         }
 
         yield* api.registerMcpTool({

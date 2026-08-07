@@ -28,6 +28,8 @@ export {
 export {
   creditsDirectoryLiveLayer,
   CreditsDirectoryService,
+  claimDirectory,
+  resetDirectoryForTests,
   DirectoryError,
   isPhoneVerifiedClaimRequired,
   looksLikeEmail,
@@ -70,6 +72,7 @@ export {
   CreditsRequestsService,
   moneyRequestTtlSec,
   publicMoneyRequest,
+  resetMoneyRequestsForTests,
   RequestsError,
   type CreateMoneyRequestInput,
   type CreateMoneyRequestResult,
@@ -136,11 +139,15 @@ export {
   type SendInviteEmailOptions,
 } from "./invite-email.js";
 export {
+  appendCreditEntry,
   creditsLedgerLiveLayer,
   CreditsLedgerService,
+  getCreditAccount,
   LedgerError,
+  resetCreditsLedgerForTests,
   resolveCreditsLedgerPath,
   spendableBalanceCents,
+  transferCredits,
   type CreditAccount,
   type CreditGrant,
   type CreditHold,
