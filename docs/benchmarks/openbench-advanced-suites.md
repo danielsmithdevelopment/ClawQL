@@ -233,14 +233,14 @@ Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger,
 
 **Claim:** When prior-matter features are distributed across a vault without keyword titles, clawql-on recovers the **complete** matching matter set; clawql-off cannot.
 
-| ID     | Subtask                                                                                                                              | Size | Notes                                      |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------ | ---- | ------------------------------------------ |
-| B7.1-a | Mini-firm fixture: 12 matter seeds; 5 matches (escrow≥10 ∧ NC>18); 7 near-misses                                                     | S    | ✅ landed under `.openbench/memory-seed/`  |
-| B7.1-b | `instruction.md` + `matters.json` artifact + decoy partial list                                                                      | S    | ✅                                         |
-| B7.1-c | Checker: exact set; reject near-miss; optional real `memory_recall` evidence                                                         | M    | ✅                                         |
-| B7.1-d | Caps / nudge / incomplete helpers in `run-ab-compare.py` + workflow_dispatch option                                                  | S    | ✅                                         |
-| B7.1-e | Live A/B via dispatch → retire on WIN; explanations + ledger                                                                         | M    | Next                                       |
-| B7.1-f | Mount full C&H corpus when download path stable; swap fixture → B-7.4                                                                | L    | Blocked on upstream release layout         |
+| ID     | Subtask                                                                             | Size | Notes                                     |
+| ------ | ----------------------------------------------------------------------------------- | ---- | ----------------------------------------- |
+| B7.1-a | Mini-firm fixture: 12 matter seeds; 5 matches (escrow≥10 ∧ NC>18); 7 near-misses    | S    | ✅ landed under `.openbench/memory-seed/` |
+| B7.1-b | `instruction.md` + `matters.json` artifact + decoy partial list                     | S    | ✅                                        |
+| B7.1-c | Checker: exact set; reject near-miss; optional real `memory_recall` evidence        | M    | ✅                                        |
+| B7.1-d | Caps / nudge / incomplete helpers in `run-ab-compare.py` + workflow_dispatch option | S    | ✅                                        |
+| B7.1-e | Live A/B via dispatch → retire on WIN; explanations + ledger                        | M    | Next                                      |
+| B7.1-f | Mount full C&H corpus when download path stable; swap fixture → B-7.4               | L    | Blocked on upstream release layout        |
 
 **Task folder:** `institutional-knowledge-enumerate`
 

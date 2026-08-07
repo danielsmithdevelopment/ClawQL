@@ -10,14 +10,14 @@ Related: [`openbench.md`](openbench.md) · [`openbench/README.md`](../../openben
 
 ## Suite index
 
-| Suite | Claim category                             | Priority | Status                                              |
-| ----- | ------------------------------------------ | -------- | --------------------------------------------------- |
-| B-1   | Fine-tuning flywheel delta                 | Highest  | Spec only                                           |
-| B-2   | Multi-turn IDP pipeline                    | Highest  | Spec only                                           |
-| B-3   | Long-horizon codegraph (SWE-bench style)   | High     | Spec only — Phase 1 task packs landed               |
-| B-4   | Adversarial memory / conflict resolution   | High     | Spec only — Phase 1 task packs landed               |
-| B-5   | NSV/SGDOP ensemble diversity               | High     | Spec only                                           |
-| B-6   | Domain-specific compliance QA (HLE analog) | Medium   | Spec only                                           |
+| Suite | Claim category                             | Priority | Status                                                            |
+| ----- | ------------------------------------------ | -------- | ----------------------------------------------------------------- |
+| B-1   | Fine-tuning flywheel delta                 | Highest  | Spec only                                                         |
+| B-2   | Multi-turn IDP pipeline                    | Highest  | Spec only                                                         |
+| B-3   | Long-horizon codegraph (SWE-bench style)   | High     | Spec only — Phase 1 task packs landed                             |
+| B-4   | Adversarial memory / conflict resolution   | High     | Spec only — Phase 1 task packs landed                             |
+| B-5   | NSV/SGDOP ensemble diversity               | High     | Spec only                                                         |
+| B-6   | Domain-specific compliance QA (HLE analog) | Medium   | Spec only                                                         |
 | B-7   | Institutional knowledge (C&H / amortized)  | Highest  | Spec + Phase-1 offline pack (`institutional-knowledge-enumerate`) |
 
 ---
@@ -199,15 +199,15 @@ Harvey + EngramLab open-sourced **Calderwood & Harkness (C&H)** — a ~100M+ tok
 
 ### B-7.1 — Exhaustive feature enumeration
 
-| Field         | Value                                                                                                                                                                                                 |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Product claim | ClawQL memory recall recovers the **complete** set of matters matching multi-field institutional criteria; bare agents return partial sets                                                                 |
-| Arms          | OpenBench `clawql-on` vs `clawql-off` (Phase-1). Full suite also defines `arm-clawql-no-memory` for wipe-per-task amortization contrasts                                                               |
-| Task IDs      | `institutional-knowledge-enumerate` (**offline pack landed**)                                                                                                                                         |
-| Grader        | Exact matter-id set match; reject near-misses; require real `clawql_memory_recall` when `OPENBENCH_REQUIRE_INSTITUTIONAL=1`                                                                              |
-| Spend cap     | 30 turns / 240s / 8,000 tokens                                                                                                                                                                        |
-| Expected      | on 1.0 / off 0.0 by construction (no memory tools ⇒ cannot read vault seed)                                                                                                                           |
-| Status        | Offline pack ready; live A/B via `workflow_dispatch` — **not** on `pr_active` until WIN                                                                                                               |
+| Field         | Value                                                                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Product claim | ClawQL memory recall recovers the **complete** set of matters matching multi-field institutional criteria; bare agents return partial sets |
+| Arms          | OpenBench `clawql-on` vs `clawql-off` (Phase-1). Full suite also defines `arm-clawql-no-memory` for wipe-per-task amortization contrasts   |
+| Task IDs      | `institutional-knowledge-enumerate` (**offline pack landed**)                                                                              |
+| Grader        | Exact matter-id set match; reject near-misses; require real `clawql_memory_recall` when `OPENBENCH_REQUIRE_INSTITUTIONAL=1`                |
+| Spend cap     | 30 turns / 240s / 8,000 tokens                                                                                                             |
+| Expected      | on 1.0 / off 0.0 by construction (no memory tools ⇒ cannot read vault seed)                                                                |
+| Status        | Offline pack ready; live A/B via `workflow_dispatch` — **not** on `pr_active` until WIN                                                    |
 
 **In-repo offline pack:** [`openbench/tasks/institutional-knowledge-enumerate/`](../../openbench/tasks/institutional-knowledge-enumerate/)
 

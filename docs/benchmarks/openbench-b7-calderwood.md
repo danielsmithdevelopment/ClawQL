@@ -19,13 +19,13 @@ B-7 turns that failure mode into OpenBench cells with hardened graders, frugal m
 
 ### Upstream pointers (track these — release is hours old)
 
-| Resource | URL |
-| -------- | --- |
-| Harvey announcement | https://x.com/harvey/status/2085778520220049891 |
-| Deep dive (X Article) | https://x.com/i/article/2084850442614554624 |
-| EngramLab announcement | https://x.com/EngramLab/status/2085780822720909424 |
-| Parent LAB repo | https://github.com/harveyai/harvey-labs |
-| LAB blog | https://www.harvey.ai/blog/introducing-harveys-legal-agent-benchmark |
+| Resource               | URL                                                                  |
+| ---------------------- | -------------------------------------------------------------------- |
+| Harvey announcement    | https://x.com/harvey/status/2085778520220049891                      |
+| Deep dive (X Article)  | https://x.com/i/article/2084850442614554624                          |
+| EngramLab announcement | https://x.com/EngramLab/status/2085780822720909424                   |
+| Parent LAB repo        | https://github.com/harveyai/harvey-labs                              |
+| LAB blog               | https://www.harvey.ai/blog/introducing-harveys-legal-agent-benchmark |
 
 **Mount note (2026-08-07):** C&H is described as open-sourced with LAB; the full 100M-token filesystem may still be landing as a release/tag or external mirror. Until the corpus path is stable, Phase-1 cells use an **in-repo mini-firm fixture** that preserves the same failure modes (distributed features, exhaustive enumeration, no keyword shortcuts).
 
@@ -39,11 +39,11 @@ ClawQL memory + search-first tools (+ optional Ouroboros) enable a frugal model 
 
 ## Arms (full suite)
 
-| Arm | Wiring |
-| --- | ------ |
-| `arm-clawql-memory` | Full vault + `memory_recall` / ingest + search tools; vault **persists across related tasks in a session** |
-| `arm-clawql-no-memory` | ClawQL tools present but vault wiped / memory disabled every task |
-| `arm-bare` | Same model/harness; no ClawQL MCP (OpenBench `clawql-off`) |
+| Arm                    | Wiring                                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `arm-clawql-memory`    | Full vault + `memory_recall` / ingest + search tools; vault **persists across related tasks in a session** |
+| `arm-clawql-no-memory` | ClawQL tools present but vault wiped / memory disabled every task                                          |
+| `arm-bare`             | Same model/harness; no ClawQL MCP (OpenBench `clawql-off`)                                                 |
 
 **Phase-1 OpenBench A/B** uses the proven two-arm pattern `clawql-on` vs `clawql-off` (on ≈ memory arm). Three-arm amortized sessions are Phase-1b+.
 
@@ -61,12 +61,12 @@ ClawQL memory + search-first tools (+ optional Ouroboros) enable a frugal model 
 
 ## Grader criteria
 
-| # | Criterion | Notes |
-| - | --------- | ----- |
-| 1 | Completeness vs ground-truth feature / matter set | Prefer exact-set match; Harvey short-form matter specs when full C&H mounts |
-| 2 | Search-sufficiency signal | Agent states why it stopped (optional rubric field in later cells) |
-| 3 | Amortized latency / tokens | Primary for sequence cells; secondary for single-shot |
-| 4 | Provenance | Which matter IDs / files informed the answer (RTP Delta + OpenBenchTrace) |
+| #   | Criterion                                         | Notes                                                                       |
+| --- | ------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1   | Completeness vs ground-truth feature / matter set | Prefer exact-set match; Harvey short-form matter specs when full C&H mounts |
+| 2   | Search-sufficiency signal                         | Agent states why it stopped (optional rubric field in later cells)          |
+| 3   | Amortized latency / tokens                        | Primary for sequence cells; secondary for single-shot                       |
+| 4   | Provenance                                        | Which matter IDs / files informed the answer (RTP Delta + OpenBenchTrace)   |
 
 Shared OpenBench rules still apply: real `tool:clawql_*` evidence · hard spend caps · link GHA run IDs · n≥3 before statistical language.
 
@@ -74,12 +74,12 @@ Shared OpenBench rules still apply: real `tool:clawql_*` evidence · hard spend 
 
 ## Phase-1 (ship now)
 
-| Cell | Task id | Fixture | Status |
-| ---- | ------- | ------- | ------ |
-| B-7.1 | `institutional-knowledge-enumerate` | In-repo mini-firm vault seed (12 matters; 5 matches) | Offline pack landed |
-| B-7.2 | `institutional-client-preference` | Mini-firm client X preferences across 4 matters | Spec only |
-| B-7.3 | `institutional-amortized-session` | Same vault; 5 related prompts; cost + completeness | Spec only (needs session harness) |
-| B-7.4 | Full C&H mount | Mount open-sourced filesystem + Harvey task set | Blocked on stable corpus download path |
+| Cell  | Task id                             | Fixture                                              | Status                                 |
+| ----- | ----------------------------------- | ---------------------------------------------------- | -------------------------------------- |
+| B-7.1 | `institutional-knowledge-enumerate` | In-repo mini-firm vault seed (12 matters; 5 matches) | Offline pack landed                    |
+| B-7.2 | `institutional-client-preference`   | Mini-firm client X preferences across 4 matters      | Spec only                              |
+| B-7.3 | `institutional-amortized-session`   | Same vault; 5 related prompts; cost + completeness   | Spec only (needs session harness)      |
+| B-7.4 | Full C&H mount                      | Mount open-sourced filesystem + Harvey task set      | Blocked on stable corpus download path |
 
 Do **not** put B-7.1 on `pr_active` until a clean live WIN; prefer `workflow_dispatch`.
 
@@ -87,12 +87,12 @@ Do **not** put B-7.1 on `pr_active` until a clean live WIN; prefer `workflow_dis
 
 ## Extensions into other suites
 
-| Suite | How C&H / B-7 feeds it |
-| ----- | ---------------------- |
-| **B-1** | Fine-tune on RTP traces from successful C&H / mini-firm runs; re-measure held-out enumeration |
-| **B-4** | Inject conflicting draft vs executed versions into the firm vault |
-| **B-5** | Multi-practice-area clause analysis spanning C&H cross-group matters |
-| **B-2 / B-6** | Multi-stage retrieve → extract → memo → provenance; compliance overlays |
+| Suite         | How C&H / B-7 feeds it                                                                        |
+| ------------- | --------------------------------------------------------------------------------------------- |
+| **B-1**       | Fine-tune on RTP traces from successful C&H / mini-firm runs; re-measure held-out enumeration |
+| **B-4**       | Inject conflicting draft vs executed versions into the firm vault                             |
+| **B-5**       | Multi-practice-area clause analysis spanning C&H cross-group matters                          |
+| **B-2 / B-6** | Multi-stage retrieve → extract → memo → provenance; compliance overlays                       |
 
 ---
 
