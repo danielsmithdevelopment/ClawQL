@@ -73,12 +73,17 @@ jobs:
             fi
           done
 
-          npx --yes lighthouse@13.1.0 "http://127.0.0.1:4321/" \
-            --preset=desktop \
-            --only-categories=performance,accessibility,best-practices,seo \
-            --chrome-flags="--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage" \
-            --output=json \
-            --output-path=lighthouse-ci.json \
-            --quiet
+          for path in "/" "/streams/"; do
+            safe_name="$(echo "$path" | tr '/' '_' | sed 's/^_//;s/_$//;s/^$/home/')"
+            report="lighthouse-ci-${safe_name}.json"
+            echo "Lighthouse: ${path}"
+            npx --yes lighthouse@13.1.0 "http://127.0.0.1:4321${path}" \
+              --preset=desktop \
+              --only-categories=performance,accessibility,best-practices,seo \
+              --chrome-flags="--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage" \
+              --output=json \
+              --output-path="$report" \
+              --quiet
 
-          node ../../scripts/dev/assert-lighthouse-scores.mjs lighthouse-ci.json
+            node ../../scripts/dev/assert-lighthouse-scores.mjs "$report"
+          done

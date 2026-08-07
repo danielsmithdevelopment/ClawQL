@@ -1,7 +1,6 @@
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
 import { Link } from '@/components/elements/link'
 import { Section } from '@/components/elements/section'
-import { Text } from '@/components/elements/text'
 import { ArrowNarrowRightIcon } from '@/components/icons/arrow-narrow-right-icon'
 import { CallToActionSimpleCentered } from '@/components/sections/call-to-action-simple-centered'
 import { site } from '@/lib/site'
@@ -67,8 +66,8 @@ const compareRows = [
 
 function StreamField() {
   return (
-    <div className="streams-hero__visual" aria-hidden>
-      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" role="presentation">
+    <div className="streams-hero__visual" aria-hidden="true">
+      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" role="presentation" focusable="false">
         <path
           className="streams-path streams-path--c"
           d="M-40 180 C 220 120, 380 260, 620 210 S 980 80, 1220 160 S 1480 280, 1520 240"
@@ -104,10 +103,10 @@ export function StreamsLanding() {
               <span>ClawQL</span>
               Streams
             </h1>
-            <p className="mt-6 max-w-xl font-display text-xl/8 font-medium tracking-tight text-balance text-white/90 sm:text-2xl/9">
+            <p className="streams-hero__headline">
               Event-driven autonomous agents you own — not a metered lab runtime.
             </p>
-            <p className="mt-4 max-w-lg text-base/7 text-white/70 sm:text-lg/8">
+            <p className="streams-hero__lede">
               World events enter. WORM records everything. Significance filters decide when agents wake — with full MCP
               tools, virtual-key budgets, and Durable Object scale.
             </p>
@@ -139,7 +138,7 @@ export function StreamsLanding() {
           {modes.map((mode) => (
             <div key={mode.name} className="streams-mode">
               <h3 className="streams-mode__label">{mode.name}</h3>
-              <Text className="mt-3">{mode.detail}</Text>
+              <p className="streams-mode__detail">{mode.detail}</p>
             </div>
           ))}
         </div>
@@ -147,6 +146,7 @@ export function StreamsLanding() {
 
       <Section
         id="fabric"
+        className="streams-surface"
         eyebrow="Protocol Fabric"
         headline="Anything in. Anything out. MCP as the IR."
         subheadline={
@@ -164,23 +164,23 @@ export function StreamsLanding() {
             <span className="streams-fabric__chip">gRPC</span>
             <span className="streams-fabric__chip">WebSocket</span>
             <span className="streams-fabric__chip">CLI</span>
-            <span className="streams-fabric__arrow" aria-hidden>
+            <span className="streams-fabric__arrow" aria-hidden="true">
               →
             </span>
             <span className="streams-fabric__core">ClawQL Core</span>
           </div>
           <div className="streams-fabric__row">
-            <span className="streams-fabric__arrow" aria-hidden>
+            <span className="streams-fabric__arrow" aria-hidden="true">
               ↓
             </span>
             <span className="streams-fabric__core">MCP · common IR</span>
-            <span className="streams-fabric__arrow" aria-hidden>
+            <span className="streams-fabric__arrow" aria-hidden="true">
               ↓
             </span>
           </div>
           <div className="streams-fabric__row">
             <span className="streams-fabric__core">mcp-api-adapter</span>
-            <span className="streams-fabric__arrow" aria-hidden>
+            <span className="streams-fabric__arrow" aria-hidden="true">
               →
             </span>
             <span className="streams-fabric__chip">OpenAPI</span>
@@ -190,10 +190,10 @@ export function StreamsLanding() {
             <span className="streams-fabric__chip">CLI</span>
           </div>
         </div>
-        <Text className="mt-10 max-w-2xl">
+        <p className="streams-mode__detail mt-10 max-w-2xl">
           ESB lesson, agent era: N×M protocol integrations collapse to N+M. Streams is how the fabric reacts to
           webhooks, NATS topics, cron, and live sockets — not only interactive MCP clients.
-        </Text>
+        </p>
       </Section>
 
       <Section
@@ -211,37 +211,32 @@ export function StreamsLanding() {
       >
         <ul className="grid max-w-4xl gap-8 sm:grid-cols-3">
           <li>
-            <h3 className="font-display text-lg font-semibold tracking-tight text-mist-950 dark:text-white">
-              Virtual-key budgets
-            </h3>
-            <Text className="mt-2">
+            <h3 className="streams-scale-title">Virtual-key budgets</h3>
+            <p className="streams-mode__detail">
               Keys bind on session create and expire on destroy — every autonomous wake has a hard spend ceiling through{' '}
               <code className="font-mono text-[0.9em]">clawql-inference</code>.
-            </Text>
+            </p>
           </li>
           <li>
-            <h3 className="font-display text-lg font-semibold tracking-tight text-mist-950 dark:text-white">
-              WORM on every action
-            </h3>
-            <Text className="mt-2">
+            <h3 className="streams-scale-title">WORM on every action</h3>
+            <p className="streams-mode__detail">
               Reactive ingest never waits on the model. Forensic reconstruction is a hash chain you own, not a vendor
               console export.
-            </Text>
+            </p>
           </li>
           <li>
-            <h3 className="font-display text-lg font-semibold tracking-tight text-mist-950 dark:text-white">
-              Training emission
-            </h3>
-            <Text className="mt-2">
+            <h3 className="streams-scale-title">Training emission</h3>
+            <p className="streams-mode__detail">
               Optional RTP + OpenBenchTrace export with consent scopes — the Intelligence Flywheel without surrendering
               sovereignty.
-            </Text>
+            </p>
           </li>
         </ul>
       </Section>
 
       <Section
         id="compare"
+        className="streams-surface"
         eyebrow="Positioning"
         headline="The pattern labs built for themselves — as a platform"
         subheadline={
@@ -253,9 +248,10 @@ export function StreamsLanding() {
       >
         <div className="-mx-6 overflow-x-auto px-6 sm:mx-0 sm:px-0">
           <table className="streams-compare min-w-[44rem]">
+            <caption>ClawQL Streams compared to managed agent runtimes</caption>
             <thead>
               <tr>
-                <th scope="col"> </th>
+                <th scope="col">Capability</th>
                 <th scope="col">Stripe Minions</th>
                 <th scope="col">Managed Agents</th>
                 <th scope="col">Agents SDK</th>
@@ -266,10 +262,10 @@ export function StreamsLanding() {
               {compareRows.map((row) => (
                 <tr key={row.axis}>
                   <th scope="row">{row.axis}</th>
-                  <td className="text-mist-700 dark:text-mist-400">{row.stripe}</td>
-                  <td className="text-mist-700 dark:text-mist-400">{row.anthropic}</td>
-                  <td className="text-mist-700 dark:text-mist-400">{row.openai}</td>
-                  <td className="text-mist-900 dark:text-mist-100">{row.clawql}</td>
+                  <td>{row.stripe}</td>
+                  <td>{row.anthropic}</td>
+                  <td>{row.openai}</td>
+                  <td>{row.clawql}</td>
                 </tr>
               ))}
             </tbody>
@@ -289,7 +285,7 @@ export function StreamsLanding() {
           </p>
         }
       >
-        <ul className="flex max-w-2xl flex-col gap-4 text-base/7 text-mist-800 dark:text-mist-300">
+        <ul className="streams-spec-list">
           <li>
             <Link href={STREAMS_SPEC}>ClawQL Streams specification</Link> — event loop, delivery modes, significance
             filters, training emission
@@ -306,6 +302,7 @@ export function StreamsLanding() {
 
       <CallToActionSimpleCentered
         id="cta"
+        className="streams-surface"
         headline="Put an event loop under your agents"
         subheadline={
           <p>
