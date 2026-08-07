@@ -1,9 +1,9 @@
 # Protocol Fabric loop — basic benchmark
 
-**Status:** Spike / smoke (August 2026)  
+**Status:** Proven on `main` (August 2026) — public write-up [`mcp/protocol-fabric.md`](../mcp/protocol-fabric.md)  
 **Package touchpoints:** `mcp-api-adapter@0.6` · ClawQL Core custom CLI sources · `gen-cli`  
 **Smoke:** [`scripts/dev/smoke-protocol-fabric-loop.sh`](../../scripts/dev/smoke-protocol-fabric-loop.sh)  
-**Related:** [Protocol Fabric](../gtm/protocol-fabric.md) · [ClawQL Streams](../streams/clawql-streams.md) · [custom sources](../getting-started/custom-sources.md)
+**Related:** [Protocol Fabric](../mcp/protocol-fabric.md) · [ClawQL Streams](../streams/clawql-streams.md) · [custom sources](../getting-started/custom-sources.md)
 
 ---
 

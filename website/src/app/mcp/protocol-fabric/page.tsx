@@ -1,20 +1,20 @@
 import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import McpApiAdapterBody from '@/generated/mcp-api-adapter-body.mdx'
+import ProtocolFabricBody from '@/generated/protocol-fabric-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'mcp-api-adapter — six surfaces, one catalog',
+  title: 'Protocol Fabric — any protocol ↔ any protocol via MCP',
   description:
-    'Language-agnostic MCP → APIs adapter: wrap any MCP server (stdio, HTTP, or gRPC) and expose OpenAPI, GraphQL, Streamable HTTP /mcp, gRPC, WebSocket, and a generated CLI from one catalog. Multi-surface alternative to mcpo.',
-  path: '/mcp/mcp-api-adapter',
+    'ClawQL Protocol Fabric: Core + mcp-api-adapter with MCP as the common IR. Proven end-to-end loop — WebSocket → execute CLI source → gen-cli REST → memory_ingest → vault recall.',
+  path: '/mcp/protocol-fabric',
   ogType: 'article',
 })
 
 export const dynamic = 'force-static'
 
-export default function McpApiAdapterPage() {
+export default function ProtocolFabricPage() {
   return (
     <article className="flex h-full flex-col pt-10 pb-10">
       <div className="not-prose mb-6 flex flex-wrap items-center gap-2">
@@ -22,7 +22,7 @@ export default function McpApiAdapterPage() {
           MCP
         </Tag>
         <Tag color="claw" variant="medium">
-          Adapter
+          Protocol Fabric
         </Tag>
         <Tag color="sky" variant="medium">
           Shipped
@@ -31,47 +31,40 @@ export default function McpApiAdapterPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>MCP → APIs (inverse of ClawQL Core).</strong> Generated from{' '}
+          <strong>Any protocol ↔ any protocol via MCP.</strong> Generated from{' '}
           <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-api-adapter.md"
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/protocol-fabric.md"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            docs/mcp/mcp-api-adapter.md
+            docs/mcp/protocol-fabric.md
           </a>{' '}
-          on <code className="font-mono text-xs">main</code>. Essay:{' '}
+          on <code className="font-mono text-xs">main</code>. Related:{' '}
           <a
-            href="https://pragmaticvectors.com/posts/mcp-api-adapter-five-surfaces/"
+            href="/mcp/mcp-api-adapter"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            Five surfaces, one catalog
-          </a>
-          . Related:{' '}
-          <a
-            href="/mcp/protocol-fabric"
-            className="font-medium text-inherit underline underline-offset-2"
-          >
-            Protocol Fabric
+            mcp-api-adapter
           </a>
           ,{' '}
           <a
-            href="/tools"
+            href="/getting-started/custom-sources"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            MCP tools
+            custom sources
           </a>
           ,{' '}
           <a
-            href="/graphql-proxy"
+            href="/streams/clawql-streams"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            GraphQL layer
+            ClawQL Streams
           </a>
           .
         </Note>
       </div>
 
       <DocProse className="flex-auto">
-        <McpApiAdapterBody />
+        <ProtocolFabricBody />
       </DocProse>
     </article>
   )

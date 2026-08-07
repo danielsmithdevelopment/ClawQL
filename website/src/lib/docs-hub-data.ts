@@ -301,6 +301,13 @@ export const referenceHubCards: Array<ReferenceCard> = [
     icon: PackageIcon,
   }),
   card({
+    href: '/mcp/protocol-fabric',
+    name: 'Protocol Fabric',
+    description:
+      'Any protocol ↔ any protocol via MCP — proven WS → CLI → REST → vault loop.',
+    icon: LinkIcon,
+  }),
+  card({
     href: '/spec-configuration',
     name: 'Configuration',
     description: 'CLAWQL_* env vars, spec loading, provider presets.',

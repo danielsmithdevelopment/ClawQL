@@ -5,7 +5,7 @@
 **Essay:** [Five surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter-five-surfaces/)  
 **Design:** [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)  
 **Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)  
-**Fabric loop smoke:** [`docs/design/protocol-fabric-loop-benchmark.md`](../design/protocol-fabric-loop-benchmark.md)
+**Protocol Fabric:** [`protocol-fabric.md`](./protocol-fabric.md) (proven WS → CLI → REST → vault loop)
 
 `mcp-api-adapter` wraps **any** MCP server — stdio, Streamable HTTP, or gRPC — and exposes **six API surfaces** from one tool catalog without changing the server. No ClawQL install required.
 
@@ -45,7 +45,7 @@ MCP standardized how agents discover and call tools. It did not standardize how 
 
 The usual answer is a custom adapter per consumer — or Python **[mcpo](https://github.com/open-webui/mcpo)** (Open WebUI) for **OpenAPI/REST only**. **`mcp-api-adapter`** is the multi-surface option: OpenAPI + GraphQL + Streamable HTTP `/mcp` + gRPC + WebSocket + gen-cli from one MCP upstream. Prefer **mcpo** when Open WebUI users already expect that single REST surface; prefer the adapter when one REST facade is not enough.
 
-Together with ClawQL Core (APIs → MCP), this is the **[Protocol Fabric](../gtm/protocol-fabric.md)** — MCP as the common IR in both directions.
+Together with ClawQL Core (APIs → MCP), this is the **[Protocol Fabric](./protocol-fabric.md)** — MCP as the common IR in both directions.
 
 ## Direction: MCP → APIs (inverse of ClawQL Core)
 
@@ -142,7 +142,7 @@ Persistent JSON tool-call channel (default path `/ws`; disable with `--no-ws`):
 
 or MCP-shaped `{ "method": "tools/call", "params": { "name": "…", "arguments": { … } } }`. Replies `{ "id", "ok", "result" | "error" }`. Prefer WebSocket for long-lived clients and DO hibernation; keep Streamable HTTP `/mcp` for IDE clients that cannot speak WS. **gen-cli** remains build-time (disk), not a DO runtime surface.
 
-Protocol Fabric loop (WS → execute CLI source → gen-cli → `memory_ingest`): see [`protocol-fabric-loop-benchmark.md`](../design/protocol-fabric-loop-benchmark.md) and `scripts/dev/smoke-protocol-fabric-loop.sh`.
+Protocol Fabric loop (WS → execute CLI source → gen-cli → `memory_ingest`): see [`protocol-fabric.md`](./protocol-fabric.md) and `scripts/dev/smoke-protocol-fabric-loop.sh`.
 
 ### gen-cli — generated CLI
 
@@ -254,16 +254,15 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 
 ## Relationship to other ClawQL pieces
 
-| Piece                                                                    | Role                                                      |
-| ------------------------------------------------------------------------ | --------------------------------------------------------- |
-| **[Protocol Fabric](../gtm/protocol-fabric.md)**                         | Named claim for Core + adapter (any protocol ↔ any)       |
-| **`mcp-api-adapter`**                                                    | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli |
-| **ClawQL `search` / `execute`**                                          | OpenAPI → MCP tools (inverse)                             |
-| **[Custom sources](../getting-started/custom-sources.md)**               | Register other MCP servers **into** the ClawQL gateway    |
-| **`mcp-grpc-transport`**                                                 | Production TypeScript MCP gRPC transport                  |
-| **Panguard bridge**                                                      | Policy / JWT ATR in front of MCP                          |
-| **[ClawQL Streams](../streams/clawql-streams.md)** (draft)               | Event-driven agents; WebSocket sources into Core          |
-| **[Fabric loop benchmark](../design/protocol-fabric-loop-benchmark.md)** | WS → CLI source → gen-cli → `memory_ingest` smoke         |
+| Piece                                                      | Role                                                             |
+| ---------------------------------------------------------- | ---------------------------------------------------------------- |
+| **[Protocol Fabric](./protocol-fabric.md)**                | Named claim for Core + adapter (any protocol ↔ any); proven loop |
+| **`mcp-api-adapter`**                                      | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli        |
+| **ClawQL `search` / `execute`**                            | OpenAPI → MCP tools (inverse)                                    |
+| **[Custom sources](../getting-started/custom-sources.md)** | Register other MCP servers **into** the ClawQL gateway           |
+| **`mcp-grpc-transport`**                                   | Production TypeScript MCP gRPC transport                         |
+| **Panguard bridge**                                        | Policy / JWT ATR in front of MCP                                 |
+| **[ClawQL Streams](../streams/clawql-streams.md)** (draft) | Event-driven agents; WebSocket sources into Core                 |
 
 ## Troubleshooting
 
@@ -280,8 +279,7 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 - Package README: [`packages/mcp-api-adapter/README.md`](../../packages/mcp-api-adapter/README.md)
 - Design & non-goals: [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)
 - GTM positioning: [`docs/gtm/mcp-api-adapter-positioning.md`](../gtm/mcp-api-adapter-positioning.md)
-- Protocol Fabric: [`docs/gtm/protocol-fabric.md`](../gtm/protocol-fabric.md)
-- Fabric loop smoke: [`docs/design/protocol-fabric-loop-benchmark.md`](../design/protocol-fabric-loop-benchmark.md)
+- Protocol Fabric (proven loop): [`docs/mcp/protocol-fabric.md`](./protocol-fabric.md)
 - ClawQL Streams (draft): [`docs/streams/clawql-streams.md`](../streams/clawql-streams.md)
 - Earlier post: [MCP tools as APIs](https://pragmaticvectors.com/posts/mcp-tools-as-apis/)
 - gRPC transport: [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/)

@@ -40,6 +40,10 @@ export const DOC_SITE_ROUTES = {
   'docs/providers/idp-pipeline.md': '/learn/document-pipeline',
   'docs/mcp/mcp-tools.md': '/tools',
   'docs/mcp/mcp-api-adapter.md': '/mcp/mcp-api-adapter',
+  'docs/mcp/protocol-fabric.md': '/mcp/protocol-fabric',
+  'docs/gtm/protocol-fabric.md': '/mcp/protocol-fabric',
+  'docs/design/protocol-fabric-loop-benchmark.md':
+    '/mcp/protocol-fabric#proven-end-to-end-loop',
   'docs/mcp/workflow-tool.md': '/learn/schedule-notify-workflows',
   'docs/mcp/notify-tool.md': '/notify',
   'docs/mcp/argocd-tool.md': '/learn/schedule-notify-workflows',

@@ -1,0 +1,177 @@
+# ClawQL Protocol Fabric
+
+**Status:** Shipped (loop proven August 2026)  
+**Depends on:** ClawQL Core (`search` / `execute` / `memory_*`) · [`mcp-api-adapter`](/mcp/mcp-api-adapter) `@0.6+` · [`mcp-grpc-transport`](../../packages/mcp-grpc-transport/)  
+**Smoke:** [`scripts/dev/smoke-protocol-fabric-loop.sh`](../../scripts/dev/smoke-protocol-fabric-loop.sh) · design notes in [`protocol-fabric-loop-benchmark.md`](/mcp/protocol-fabric#proven-end-to-end-loop)
+
+---
+
+## One-liner
+
+**ClawQL’s Protocol Fabric connects any protocol to any other protocol with MCP as the common intermediate representation.**
+
+Not a gateway product name for one port — the **bidirectional** protocol translation layer formed by Core + `mcp-api-adapter`.
+
+---
+
+## Both directions
+
+```text
+Any input protocol
+  CLI · OpenAPI · GraphQL · gRPC · WebSocket · MCP
+           │
+           ▼
+    ClawQL Core (→ MCP)
+           │
+           ▼
+      MCP (common IR)
+           │
+           ▼
+  mcp-api-adapter (MCP →)
+           │
+           ▼
+Any output protocol
+  CLI · OpenAPI · GraphQL · gRPC · WebSocket · MCP
+```
+
+| Direction         | Package           | Claim                                                                                                |
+| ----------------- | ----------------- | ---------------------------------------------------------------------------------------------------- |
+| **Any API → MCP** | ClawQL Core       | Agents discover and call upstream REST / GraphQL / gRPC / CLI via MCP tools                          |
+| **MCP → any API** | `mcp-api-adapter` | Wrap **any** MCP server (any language) and expose OpenAPI, GraphQL, `/mcp`, gRPC, WebSocket, gen-cli |
+
+Together: gRPC service ↔ GraphQL consumer, CLI ↔ REST, OpenAPI ↔ gRPC, WebSocket event ↔ MCP tools — **any combination, either direction**.
+
+---
+
+## Proven end-to-end loop
+
+In August 2026 we ran a deterministic smoke that crosses **both** fabric directions in one path and lands a real vault note:
+
+```text
+WebSocket event
+    → mcp-api-adapter (/ws tools/call)
+    → clawql-mcp execute(cli__fabric_event__run)
+    → gen-cli subprocess
+    → POST /memory_ingest on the adapter (REST)
+    → clawql-mcp memory_ingest
+    → vault note with marker FABRIC_LOOP_*
+    → memory_recall finds the marker
+```
+
+What that proves in plain language:
+
+1. **WS → MCP** — a WebSocket client calls `execute` through the adapter without speaking MCP itself.
+2. **MCP → CLI** — Core runs a **CLI custom source** (`cli__fabric_event__run`) that shells out to gen-cli.
+3. **CLI → REST → MCP** — gen-cli POSTs adapter REST `/memory_ingest`; the adapter translates that back into the MCP `memory_ingest` tool.
+4. **Data lands** — the vault receives the event marker; `memory_recall` returns it. Smoke exit code **0** on `main`.
+
+This is **not** an LLM benchmark cell. It is a protocol loop: if any hop fails, the marker never shows up in recall.
+
+### Topology (recursion-safe)
+
+| Layer                   | Role                                                                          |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| **A** ClawQL MCP        | Real tools: `execute`, `memory_ingest`, `memory_recall`, …                    |
+| **B** mcp-api-adapter   | Wraps A — OpenAPI + GraphQL + `/mcp` + gRPC + **WebSocket `/ws`**             |
+| **C** gen-cli           | Thin CLI generated from B’s catalog; POSTs to B’s REST surface                |
+| **D** CLI custom source | `sources.json` → one op that runs C with `memory_ingest` baked into `cliArgs` |
+
+**Why this does not recurse:** `execute` spawns gen-cli → REST `POST /memory_ingest` → adapter CallTool `memory_ingest`. That path never calls `execute` again. Do **not** point gen-cli at an `execute` of the same CLI op.
+
+```text
+WS tools/call execute
+        │
+        ▼
+ clawql execute(cli__fabric_event__run)
+        │ spawn
+        ▼
+ gen-cli memory_ingest --args '{event…}'
+        │ POST
+        ▼
+ adapter /memory_ingest
+        │
+        ▼
+ clawql memory_ingest  ← terminal hop
+```
+
+### Run it locally
+
+From the repo root (after `npm ci` / workspace builds the smoke triggers):
+
+```bash
+scripts/dev/smoke-protocol-fabric-loop.sh
+```
+
+Pass criteria the script enforces:
+
+- Adapter `/healthz` lists `websocket` in `surfaces`
+- Two distinct WS `execute` calls return `ok: true`
+- `memory_recall` finds the `FABRIC_LOOP_*` markers
+- Exit **0**
+
+Default ports: ClawQL MCP `18080`, adapter `18090` (overridable via `CLAW_PORT` / `ADAPTER_PORT`). The script clears leftover listeners on those ports before starting.
+
+### WebSocket message shape
+
+```json
+{
+  "id": "evt-1",
+  "tool": "execute",
+  "arguments": {
+    "operationId": "cli__fabric_event__run",
+    "args": {
+      "args": [
+        "--args",
+        "{\"title\":\"Fabric loop evt-1\",\"insights\":\"marker FABRIC_LOOP_evt-1\",\"tags\":[\"fabric-loop\"],\"append\":true}"
+      ]
+    }
+  }
+}
+```
+
+Reply: `\{ "id": "evt-1", "ok": true, "result": … \}`.
+
+Direct `tool: "memory_ingest"` over WS is valid but **does not** prove the CLI custom-source hop — the smoke uses `execute` for that.
+
+---
+
+## Why “Protocol Fabric” (not two package names)
+
+Marketing and GTM need a **single** claim. Explaining “Core plus mcp-api-adapter” every time buries the product.
+
+**Use:** “ClawQL Protocol Fabric — MCP as the connective tissue between protocols.”  
+**Avoid:** Calling Core an “OpenAPI gateway” or the adapter “the OpenAPI gateway” without direction — those collide.
+
+---
+
+## Competitive framing
+
+| Alternative                        | What it does                 | Gap                                               |
+| ---------------------------------- | ---------------------------- | ------------------------------------------------- |
+| **mcpo** (Open WebUI)              | MCP → OpenAPI only (Python)  | One surface, one direction                        |
+| **Kong / Apigee**                  | Classic protocol translation | No MCP IR, not agent-native                       |
+| **APIAgent / OpenAPI→MCP proxies** | APIs → MCP                   | Inverse of the adapter; not multi-surface outward |
+
+Nobody else ships **both directions** with MCP as IR and the full multi-surface outward adapter in one product story.
+
+Enterprise Service Buses reduced N×M integrations to N+M via a common bus. Protocol Fabric is the agent-era analogue: **MCP is the message format**, full protocol surface on both sides.
+
+---
+
+## Language-agnostic
+
+The adapter is **implemented in TypeScript** (`npx mcp-api-adapter`). Upstream MCP servers may be Python, Go, Rust, or anything that speaks MCP over stdio, Streamable HTTP, or gRPC. Users do not write TypeScript to use the fabric.
+
+---
+
+## Related docs
+
+- Adapter guide: [`mcp-api-adapter.md`](/mcp/mcp-api-adapter)
+- Custom sources (CLI ops into Core): [`getting-started/custom-sources.md`](/getting-started/custom-sources)
+- Streams (event-driven autonomous execution): [`streams/clawql-streams.md`](/streams/clawql-streams)
+- GTM positioning: [`gtm/protocol-fabric.md`](/mcp/protocol-fabric)
+- Loop design / non-goals: [`design/protocol-fabric-loop-benchmark.md`](/mcp/protocol-fabric#proven-end-to-end-loop)
+
+export function wrapper({ children }) {
+  return children
+}
