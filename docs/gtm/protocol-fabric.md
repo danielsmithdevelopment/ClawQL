@@ -1,8 +1,10 @@
-# ClawQL Protocol Fabric
+# ClawQL Protocol Fabric (GTM)
 
-**Status:** Positioning (shipped pieces exist; name is the combined claim)  
-**Date:** August 2026  
+**Status:** Positioning + proven loop (August 2026)  
+**Public docs (canonical):** [`mcp/protocol-fabric.md`](../mcp/protocol-fabric.md) → site route `/mcp/protocol-fabric`  
 **Depends on:** ClawQL Core (`search` / `execute`) · [`mcp-api-adapter`](../mcp/mcp-api-adapter.md) · [`mcp-grpc-transport`](../../packages/mcp-grpc-transport/)
+
+This file is the short GTM claim. The worked end-to-end example (WS → CLI → REST → vault) lives on the public page.
 
 ---
 
@@ -34,7 +36,7 @@ Any output protocol
   CLI · OpenAPI · GraphQL · gRPC · WebSocket* · MCP
 ```
 
-\* WebSocket is now a first-class **adapter** surface (`/ws` in `mcp-api-adapter@0.6`). ClawQL Streams still covers WebSocket as an **event source** into Core — see [`streams/clawql-streams.md`](../streams/clawql-streams.md). Fabric loop smoke: [`design/protocol-fabric-loop-benchmark.md`](../design/protocol-fabric-loop-benchmark.md).
+\* WebSocket is a first-class **adapter** surface (`/ws` in `mcp-api-adapter@0.6`). Proven fabric loop: [`mcp/protocol-fabric.md`](../mcp/protocol-fabric.md). Streams still covers WebSocket as an **event source** into Core — see [`streams/clawql-streams.md`](../streams/clawql-streams.md).
 
 | Direction         | Package           | Claim                                                                                     |
 | ----------------- | ----------------- | ----------------------------------------------------------------------------------------- |
@@ -78,6 +80,7 @@ The adapter is **implemented in TypeScript** (`npx mcp-api-adapter`). Upstream M
 
 ## Related docs
 
+- Public Protocol Fabric (loop example): [`mcp/protocol-fabric.md`](../mcp/protocol-fabric.md)
 - User guide: [`mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md)
 - Adapter GTM: [`mcp-api-adapter-positioning.md`](./mcp-api-adapter-positioning.md)
 - Streams (event-driven autonomous execution): [`streams/clawql-streams.md`](../streams/clawql-streams.md)

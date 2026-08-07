@@ -2,7 +2,7 @@
 
 **Standalone package:** point it at **any** MCP server (any language that speaks MCP) and instantly get **OpenAPI + GraphQL + Streamable HTTP `/mcp` + gRPC + WebSocket `/ws`** for the same tools — plus an optional generated CLI. The adapter itself is TypeScript (`npx`); the upstream is language-agnostic. No ClawQL install required.
 
-Closest single-surface alternative: Python **[mcpo](https://github.com/open-webui/mcpo)** (OpenAPI only). Prefer this package when you need all six surfaces — see [Protocol Fabric](../../docs/gtm/protocol-fabric.md).
+Closest single-surface alternative: Python **[mcpo](https://github.com/open-webui/mcpo)** (OpenAPI only). Prefer this package when you need all six surfaces — see [Protocol Fabric](../../docs/mcp/protocol-fabric.md).
 
 ```bash
 # Instant — wrap a remote MCP server

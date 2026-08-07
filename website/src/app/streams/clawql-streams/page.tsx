@@ -54,6 +54,13 @@ export default function ClawqlStreamsPage() {
           </a>
           ,{' '}
           <a
+            href="/mcp/protocol-fabric"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Protocol Fabric
+          </a>
+          ,{' '}
+          <a
             href="/mcp/mcp-api-adapter"
             className="font-medium text-inherit underline underline-offset-2"
           >

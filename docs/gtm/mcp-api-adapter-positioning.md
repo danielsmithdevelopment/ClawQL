@@ -6,7 +6,7 @@
 **Package:** [`packages/mcp-api-adapter`](../../packages/mcp-api-adapter/README.md)  
 **Example demos:** [`examples/mcp-api-adapter`](../../examples/mcp-api-adapter/README.md)  
 **Transport:** [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md)  
-**Protocol Fabric:** [`docs/gtm/protocol-fabric.md`](./protocol-fabric.md)
+**Protocol Fabric:** [`docs/mcp/protocol-fabric.md`](../mcp/protocol-fabric.md) (public) · GTM note [`protocol-fabric.md`](./protocol-fabric.md)
 
 ---
 
