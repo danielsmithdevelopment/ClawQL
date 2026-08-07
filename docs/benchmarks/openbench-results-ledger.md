@@ -490,3 +490,13 @@ Stakeholder framing: these headline WINs upgrade **architectural** statements to
 - [ ] If a task is thoroughly verified: move it `pr_active` → `retired` in [`ci-matrix.json`](../../openbench/ci-matrix.json).
 - [ ] Point [`openbench-stack-coverage.md`](./openbench-stack-coverage.md) “Live OpenBench today” at this ledger for detail.
 - [ ] Optional: `memory_ingest` a short pointer to the new run id under vault title `OpenBench ClawQL stack coverage`.
+
+### 2026-08-07 — [31189112838](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31189112838) (memory-recall-pageindex-pin — WIN)
+
+| Arm | Score | Notes |
+| --- | ----- | ----- |
+| clawql-on | **1.0** | `pageindex_build_tree` + `memory_recall(sources=[pageindex])` → cedar-31 |
+| clawql-off | **0.0** | No memory/pageindex tools |
+
+**Verdict:** retire from `pr_active`. True hybrid `sources` pin closed.
+
