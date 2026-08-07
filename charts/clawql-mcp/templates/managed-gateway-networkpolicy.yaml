@@ -1,0 +1,50 @@
+{{- if and .Values.managedGateway.enabled .Values.managedGateway.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "clawql-mcp.managedGatewayName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: managed-gateway
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: managed-gateway
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: {{ .Values.managedGateway.service.http.targetPort }}
+  egress:
+    # DNS (kube-dns / CoreDNS in kube-system or any ns)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # MCP upstream (main chart Deployment uses app=<fullname>)
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "clawql-mcp.selectorLabels" . | nindent 14 }}
+              app: {{ include "clawql-mcp.fullname" . }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.managedGateway.mcpUpstreamPort | default .Values.service.http.port }}
+    {{- if .Values.inference.enabled }}
+    # Inference upstream
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "clawql-mcp.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: inference
+      ports:
+        - protocol: TCP
+          port: {{ .Values.managedGateway.inferenceUpstreamPort | default .Values.inference.service.http.port }}
+    {{- end }}
+{{- end }}
