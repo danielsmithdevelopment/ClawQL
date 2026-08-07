@@ -2,9 +2,13 @@
 # Used by scripts/dev/smoke-idp-pipeline-b23.sh (tier=compose).
 #
 # Included: tika, gotenberg, stirling, paperless (+postgres/redis), nextcloud,
-#           onyx (minimal postgres-backed API — Helm fullVectorStack=false),
+#           onyx (OpenSearch + redis + indexing model — ingest needs vector DB),
 #           coneshare (open-source conesharedev/coneshare + postgres/redis)
 # Optional profile `docling`: quay.io/docling-project/docling-serve-cpu (large ~4GiB)
+#
+# Onyx note: DISABLE_VECTOR_DB=true (Helm fullVectorStack=false / Onyx Lite) does
+# NOT expose usable POST /onyx-api/ingestion (require_vector_db → 501 / route miss).
+# Smoke therefore boots a trimmed vector stack (no Vespa/MinIO/background/web).
 
 name: clawql-idp-smoke
 
@@ -109,8 +113,9 @@ services:
     ports:
       - "18081:80"
 
-  # --- Onyx (minimal / Helm fullVectorStack=false) ---
-  # Upsert ingestion API without OpenSearch/Vespa/model servers (fits GHA RAM).
+  # --- Onyx (trimmed vector stack for POST /onyx-api/ingestion) ---
+  # Matches upstream compose search backend (OpenSearch), not Vespa. No web UI,
+  # MinIO, or Celery background — API indexes in-process for upsert smoke.
   onyx-postgres:
     image: postgres:15.2-alpine
     container_name: clawql-idp-onyx-postgres
@@ -126,12 +131,69 @@ services:
     volumes:
       - onyx-pg-data:/var/lib/postgresql/data
 
+  onyx-redis:
+    image: redis:7.4-alpine
+    container_name: clawql-idp-onyx-redis
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  onyx-opensearch:
+    image: opensearchproject/opensearch:3.6.0
+    container_name: clawql-idp-onyx-opensearch
+    environment:
+      discovery.type: single-node
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: StrongPassword123!
+      # Small heap for GHA (~7 GiB free after stopping Paperless/Stirling/Tika).
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      bootstrap.memory_lock: "true"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      # Host probe only (smoke script); not required by Onyx API (uses Docker DNS).
+      - "19200:9200"
+
+  # Single model server for indexing embeddings (inference host points here too).
+  onyx-indexing-model:
+    image: onyxdotapp/onyx-model-server:latest
+    container_name: clawql-idp-onyx-indexing-model
+    environment:
+      INDEXING_ONLY: "True"
+    volumes:
+      - onyx-indexing-hf-cache:/app/.cache/huggingface/
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/api/health')",
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 60
+      start_period: 600s
+
   onyx-api:
     image: onyxdotapp/onyx-backend:latest
     container_name: clawql-idp-onyx-api
     depends_on:
       onyx-postgres:
         condition: service_healthy
+      onyx-redis:
+        condition: service_healthy
+      onyx-opensearch:
+        condition: service_started
+      onyx-indexing-model:
+        condition: service_started
     command:
       - /bin/sh
       - -c
@@ -146,13 +208,23 @@ services:
       POSTGRES_USER: onyx
       POSTGRES_PASSWORD: onyx
       POSTGRES_DB: onyx
-      DISABLE_VECTOR_DB: "true"
+      # Vector DB required for upsert_ingestion_doc (Onyx Lite hides/gates it).
+      DISABLE_VECTOR_DB: "false"
       FILE_STORE_BACKEND: postgres
-      CACHE_BACKEND: postgres
-      AUTH_BACKEND: postgres
-      # Skip slow document-index retries when vector DB is disabled.
-      NUM_RETRIES_ON_STARTUP: "2"
+      # redis required when DISABLE_VECTOR_DB=false
+      CACHE_BACKEND: redis
+      AUTH_BACKEND: redis
+      REDIS_HOST: onyx-redis
+      OPENSEARCH_HOST: onyx-opensearch
+      OPENSEARCH_ADMIN_PASSWORD: StrongPassword123!
+      OPENSEARCH_USE_SSL: "true"
+      OPENSEARCH_VERIFY_CERTS: "false"
+      # Hostnames only — client prepends http://
+      MODEL_SERVER_HOST: onyx-indexing-model
+      INDEXING_MODEL_SERVER_HOST: onyx-indexing-model
+      NUM_RETRIES_ON_STARTUP: "60"
       ENABLE_CRAFT: "false"
+      ENABLE_PUBLIC_DOCS: "true"
       # Self-hosted: avoid Business-tier gate on /admin/api-key; use session cookie for ingest.
       LICENSE_ENFORCEMENT_ENABLED: "false"
       ENABLE_PAID_ENTERPRISE_EDITION_FEATURES: "true"
@@ -169,8 +241,8 @@ services:
         ]
       interval: 15s
       timeout: 10s
-      retries: 40
-      start_period: 180s
+      retries: 60
+      start_period: 300s
 
   # --- ConeShare (open-source: https://github.com/coneshare/coneshare-compose) ---
   coneshare-postgres:
@@ -252,6 +324,7 @@ volumes:
   paperless-export:
   paperless-consume:
   onyx-pg-data:
+  onyx-indexing-hf-cache:
   coneshare-pg-data:
   coneshare-redis-data:
   coneshare-data:

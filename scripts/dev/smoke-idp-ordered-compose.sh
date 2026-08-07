@@ -73,6 +73,7 @@ dump_compose_diag() {
     "http://127.0.0.1:8000/" \
     "http://127.0.0.1:8000/api/" \
     "http://127.0.0.1:18082/health" \
+    "https://127.0.0.1:19200/" \
     "http://127.0.0.1:8999/api/v1/_health/" \
     "http://127.0.0.1:18081/status.php" \
     "http://127.0.0.1:18080/" \
@@ -84,7 +85,8 @@ dump_compose_diag() {
   done
   for c in \
     clawql-idp-paperless clawql-idp-stirling clawql-idp-nextcloud \
-    clawql-idp-onyx-api clawql-idp-coneshare-web \
+    clawql-idp-onyx-api clawql-idp-onyx-opensearch clawql-idp-onyx-indexing-model \
+    clawql-idp-coneshare-web \
     clawql-idp-tika clawql-idp-gotenberg
   do
     echo "---- logs ${c} (tail) ----" >&2
@@ -273,33 +275,69 @@ else
 fi
 
 # --- Stage 7: onyx (compose upsert_ingestion_doc, or external secrets) ---
-# Free Stirling RAM before pulling/starting Onyx on GHA runners.
-docker stop clawql-idp-stirling >/dev/null 2>&1 || true
+# Free RAM before OpenSearch + model server on GHA (~7 GiB). Keep Nextcloud for stage 8.
+echo "== Free RAM before Onyx vector stack =="
+docker stop \
+  clawql-idp-stirling \
+  clawql-idp-paperless \
+  clawql-idp-tika \
+  clawql-idp-gotenberg \
+  clawql-idp-postgres \
+  clawql-idp-redis \
+  >/dev/null 2>&1 || true
 
 ONYX_BASE="${ONYX_BASE_URL:-}"
 ONYX_TOKEN="${ONYX_API_TOKEN:-}"
 if [[ -z "${ONYX_BASE}" || -z "${ONYX_TOKEN}" ]]; then
-  echo "== Start Onyx (minimal postgres-backed API) =="
-  docker compose -f "${COMPOSE_FILE}" up -d onyx-postgres onyx-api
+  echo "== Start Onyx deps (postgres/redis/OpenSearch/model) =="
+  docker compose -f "${COMPOSE_FILE}" up -d \
+    onyx-postgres onyx-redis onyx-opensearch onyx-indexing-model
+
+  os_ok=0
+  model_ok=0
   onyx_ok=0
-  for _ in $(seq 1 120); do
-    oh="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' clawql-idp-onyx-api 2>/dev/null || echo missing)"
-    if [[ "${oh}" == "healthy" ]]; then
-      onyx_ok=1
-      break
-    fi
-    code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:18082/health" 2>/dev/null || true)"
+  for _ in $(seq 1 80); do
+    code="$(curl -sk -o /dev/null -w '%{http_code}' --max-time 5 \
+      -u admin:StrongPassword123! "https://127.0.0.1:19200/" 2>/dev/null || true)"
     if [[ "${code}" == "200" ]]; then
-      onyx_ok=1
+      os_ok=1
       break
     fi
     sleep 3
   done
-  if [[ "${onyx_ok}" != "1" ]]; then
+  # Model server may download HF weights on first boot (start_period up to 10m).
+  for _ in $(seq 1 200); do
+    st="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' clawql-idp-onyx-indexing-model 2>/dev/null || echo missing)"
+    if [[ "${st}" == "healthy" ]]; then
+      model_ok=1
+      break
+    fi
+    sleep 3
+  done
+  if [[ "${os_ok}" != "1" || "${model_ok}" != "1" ]]; then
     dump_compose_diag
-    record FAIL stage_onyx "onyx-api never healthy"
+    record FAIL stage_onyx "deps not ready opensearch=${os_ok} model=${model_ok}"
   else
-    ONYX_BASE="http://127.0.0.1:18082"
+    echo "== Start Onyx API (deps healthy) =="
+    docker compose -f "${COMPOSE_FILE}" up -d onyx-api
+    for _ in $(seq 1 160); do
+      oh="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' clawql-idp-onyx-api 2>/dev/null || echo missing)"
+      if [[ "${oh}" == "healthy" ]]; then
+        onyx_ok=1
+        break
+      fi
+      code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:18082/health" 2>/dev/null || true)"
+      if [[ "${code}" == "200" ]]; then
+        onyx_ok=1
+        break
+      fi
+      sleep 3
+    done
+    if [[ "${onyx_ok}" != "1" ]]; then
+      dump_compose_diag
+      record FAIL stage_onyx "onyx-api never healthy (opensearch=${os_ok} model=${model_ok})"
+    else
+      ONYX_BASE="http://127.0.0.1:18082"
     DOC_ID="idp-b23-${CORR}"
     ingest_body="$(python3 - "${DOC_ID}" "${CORR}" <<'PY'
 import json, sys
@@ -338,7 +376,7 @@ PY
       -d '{"name":"idp-b23-smoke","role":"admin"}' 2>/dev/null || true)"
     ONYX_TOKEN="$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("api_key") or "")' <<<"${key_json}" 2>/dev/null || true)"
 
-    # Discover ingest paths from live OpenAPI (server root may be / or /api).
+    # Discover ingest paths from live OpenAPI (ENABLE_PUBLIC_DOCS=true in compose).
     mapfile -t ONYX_INGEST_PATHS < <(python3 - "${ONYX_BASE}" <<'PY' || true
 import json, sys, urllib.request
 base = sys.argv[1].rstrip("/")
@@ -347,18 +385,16 @@ paths = [
     "/onyx-api/ingestion/",
     "/api/onyx-api/ingestion",
     "/api/onyx-api/ingestion/",
-    "/api/ingestion",
-    "/ingestion",
 ]
 for suffix in ("/openapi.json", "/api/openapi.json"):
     try:
         with urllib.request.urlopen(base + suffix, timeout=10) as r:
             spec = json.load(r)
         for p in spec.get("paths", {}):
-            if "ingestion" in p and "document_id" not in p:
+            methods = spec["paths"][p] or {}
+            if "ingestion" in p and "document_id" not in p and "post" in {k.lower() for k in methods}:
                 if p not in paths:
                     paths.insert(0, p if p.startswith("/") else "/" + p)
-                # also try with /api prefix when openapi is rooted at /api
                 if not p.startswith("/api/") and ("/api" + p) not in paths:
                     paths.insert(0, "/api" + p)
         break
@@ -369,46 +405,63 @@ PY
 )
     upsert_ok=0
     auth_mode=""
-    last_probe=""
+    probe_log="${WORK}/onyx-ingest-probes.txt"
+    : >"${probe_log}"
+    best_probe=""
     for path in "${ONYX_INGEST_PATHS[@]}"; do
       [[ -n "${path}" ]] || continue
       if [[ -n "${ONYX_TOKEN}" ]]; then
-        code="$(curl -sS -o "${WORK}/onyx-ingest.json" -w '%{http_code}' \
+        code="$(curl -sS -o "${WORK}/onyx-ingest.json" -w '%{http_code}' --max-time 300 \
           -X POST "${ONYX_BASE}${path}" \
           -H "Authorization: Bearer ${ONYX_TOKEN}" \
           -H "Content-Type: application/json" \
           -d "${ingest_body}" || true)"
-        last_probe="bearer ${path}->${code}"
+        echo "bearer ${path}->${code}" >>"${probe_log}"
+        best_probe="bearer ${path}->${code}"
         if [[ "${code}" == "200" || "${code}" == "201" ]]; then
           upsert_ok=1
           auth_mode="api-key ${path} HTTP ${code}"
           break
         fi
       fi
-      code="$(curl -sS -o "${WORK}/onyx-ingest.json" -w '%{http_code}' \
+      code="$(curl -sS -o "${WORK}/onyx-ingest.json" -w '%{http_code}' --max-time 300 \
         -c "${COOKIE_JAR}" -b "${COOKIE_JAR}" \
         -X POST "${ONYX_BASE}${path}" \
         -H "Content-Type: application/json" \
         -d "${ingest_body}" || true)"
-      last_probe="cookie ${path}->${code}"
+      echo "cookie ${path}->${code}" >>"${probe_log}"
+      best_probe="cookie ${path}->${code}"
       if [[ "${code}" == "200" || "${code}" == "201" ]]; then
         upsert_ok=1
         auth_mode="session-cookie ${path} HTTP ${code}"
+        break
+      fi
+      # 501 = require_vector_db still gated — do not keep probing junk paths.
+      if [[ "${code}" == "501" ]]; then
         break
       fi
     done
     if [[ "${upsert_ok}" == "1" ]]; then
       record OK stage_onyx "compose upsert_ingestion_doc via ${auth_mode} (reg=${reg_code} login=${login_code})"
     else
-      # Save openapi path list for debugging
       printf '%s\n' "${ONYX_INGEST_PATHS[@]}" >"${WORK}/onyx-ingest-paths.txt"
       curl -sS -o "${WORK}/onyx-openapi-head.json" \
         "${ONYX_BASE}/openapi.json" 2>/dev/null \
         || curl -sS -o "${WORK}/onyx-openapi-head.json" \
           "${ONYX_BASE}/api/openapi.json" 2>/dev/null || true
-      record FAIL stage_onyx "reg=${reg_code} login=${login_code} last=${last_probe} upsert=$(head -c 200 "${WORK}/onyx-ingest.json" 2>/dev/null || true)"
+      record FAIL stage_onyx "reg=${reg_code} login=${login_code} best=${best_probe} upsert=$(head -c 200 "${WORK}/onyx-ingest.json" 2>/dev/null || true)"
     fi
   fi
+  fi
+  # Tear down heavy Onyx deps before ConeShare (keep Nextcloud).
+  echo "== Stop Onyx vector stack to free RAM for ConeShare =="
+  docker stop \
+    clawql-idp-onyx-api \
+    clawql-idp-onyx-indexing-model \
+    clawql-idp-onyx-opensearch \
+    clawql-idp-onyx-redis \
+    clawql-idp-onyx-postgres \
+    >/dev/null 2>&1 || true
 else
   code="$(curl -sS -o "${WORK}/onyx.json" -w '%{http_code}' \
     -X POST "${ONYX_BASE%/}/search/send-search-message" \
