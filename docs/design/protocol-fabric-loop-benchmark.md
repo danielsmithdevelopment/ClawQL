@@ -26,11 +26,11 @@ This is **not** an OpenBench LLM cell. It is a **deterministic protocol loop** s
 
 ## Topology (safe — no recursion)
 
-| Layer | Role |
-| ----- | ---- |
-| **A** ClawQL MCP | Real tools: `execute`, `memory_ingest`, `memory_recall`, … |
-| **B** mcp-api-adapter | Wraps A — OpenAPI + GraphQL + `/mcp` + gRPC + **WebSocket `/ws`** |
-| **C** gen-cli | Thin CLI generated from B’s catalog; POSTs to B REST |
+| Layer                   | Role                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| **A** ClawQL MCP        | Real tools: `execute`, `memory_ingest`, `memory_recall`, …                                             |
+| **B** mcp-api-adapter   | Wraps A — OpenAPI + GraphQL + `/mcp` + gRPC + **WebSocket `/ws`**                                      |
+| **C** gen-cli           | Thin CLI generated from B’s catalog; POSTs to B REST                                                   |
 | **D** CLI custom source | `sources.json` → one op `cli__fabric_event__run` that runs C with `memory_ingest` baked into `cliArgs` |
 
 **Why this does not recurse:** `execute` spawns gen-cli → REST `POST /memory_ingest` → adapter CallTool `memory_ingest`. That path never calls `execute` again. Do **not** point gen-cli at an `execute` of the same CLI op.
@@ -55,13 +55,13 @@ WS tools/call execute
 
 ## Setup order
 
-1. Start ClawQL HTTP MCP with isolated `CLAWQL_HOME` (memory on; heavy plugins off).  
-2. Start adapter pointing at that `/mcp`.  
-3. `mcp-api-adapter gen-cli --out $HOME/fabric-cli --mcp-url … --base-url <adapter>`.  
-4. Write `$CLAWQL_HOME/sources.json` with CLI source → `node …/mcp-tools.mjs memory_ingest`.  
-5. **Restart** ClawQL so the CLI op is indexed.  
-6. Restart or `refreshCatalog` on the adapter.  
-7. Dispatch 1–N WebSocket events: `execute` with `args: ["--args", "<json>"]`.  
+1. Start ClawQL HTTP MCP with isolated `CLAWQL_HOME` (memory on; heavy plugins off).
+2. Start adapter pointing at that `/mcp`.
+3. `mcp-api-adapter gen-cli --out $HOME/fabric-cli --mcp-url … --base-url <adapter>`.
+4. Write `$CLAWQL_HOME/sources.json` with CLI source → `node …/mcp-tools.mjs memory_ingest`.
+5. **Restart** ClawQL so the CLI op is indexed.
+6. Restart or `refreshCatalog` on the adapter.
+7. Dispatch 1–N WebSocket events: `execute` with `args: ["--args", "<json>"]`.
 8. `memory_recall` (REST or WS) for the event marker → pass.
 
 ---
@@ -92,23 +92,23 @@ Direct `tool: "memory_ingest"` over WS is also valid but **does not** prove the 
 
 ## Pass criteria
 
-- Adapter `/healthz` lists `websocket` in `surfaces`.  
-- Two distinct WS events both return `ok: true` on `execute`.  
-- `memory_recall` for the markers finds vault hits.  
+- Adapter `/healthz` lists `websocket` in `surfaces`.
+- Two distinct WS events both return `ok: true` on `execute`.
+- `memory_recall` for the markers finds vault hits.
 - Exit 0 from `smoke-protocol-fabric-loop.sh`.
 
 ---
 
 ## Non-goals (this spike)
 
-- NATS ambient delivery / Streams autonomous `claude -p` (see Streams spec).  
-- OpenBench `pr_active` token burn.  
+- NATS ambient delivery / Streams autonomous `claude -p` (see Streams spec).
+- OpenBench `pr_active` token burn.
 - Registering gen-cli as a custom source that calls `execute` of itself.
 
 ---
 
 ## Next
 
-- Optional OpenBench task grading only the vault artifact (no LLM) or a tiny agent that must dispatch via WS.  
-- DO-hosted adapter hibernation using this `/ws` surface.  
+- Optional OpenBench task grading only the vault artifact (no LLM) or a tiny agent that must dispatch via WS.
+- DO-hosted adapter hibernation using this `/ws` surface.
 - Fold into ClawQL Streams reactive mode once `stream_subscribe` lands.

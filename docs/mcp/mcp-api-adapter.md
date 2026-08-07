@@ -182,10 +182,10 @@ npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
 | `--listen` / `MCP_API_ADAPTER_LISTEN`           | HTTP bind (default `0.0.0.0:8090`)             |
 | `--grpc-listen` / `MCP_API_ADAPTER_GRPC_LISTEN` | Scaffolded gRPC bind (default `127.0.0.1:0`)   |
 | `--no-grpc`                                     | Do not scaffold local gRPC (stdio/HTTP only)   |
-| `--mcp-path` / `MCP_API_ADAPTER_MCP_PATH`   | Streamable HTTP path (default `/mcp`)          |
-| `--no-mcp`                                  | Disable `/mcp`                                 |
-| `--ws-path` / `MCP_API_ADAPTER_WS_PATH`     | WebSocket path (default `/ws`)                 |
-| `--no-ws`                                   | Disable WebSocket surface                      |
+| `--mcp-path` / `MCP_API_ADAPTER_MCP_PATH`       | Streamable HTTP path (default `/mcp`)          |
+| `--no-mcp`                                      | Disable `/mcp`                                 |
+| `--ws-path` / `MCP_API_ADAPTER_WS_PATH`         | WebSocket path (default `/ws`)                 |
+| `--no-ws`                                       | Disable WebSocket surface                      |
 | `--api-key` / `MCP_API_ADAPTER_API_KEY`         | Require `X-API-Key` or `Authorization: Bearer` |
 | `--refresh-ms`                                  | Re-`ListTools` poll interval                   |
 | `--title`                                       | Swagger / GraphiQL title                       |
@@ -254,16 +254,16 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 
 ## Relationship to other ClawQL pieces
 
-| Piece                                                      | Role                                                   |
-| ---------------------------------------------------------- | ------------------------------------------------------ |
-| **[Protocol Fabric](../gtm/protocol-fabric.md)**           | Named claim for Core + adapter (any protocol ↔ any)    |
-| **`mcp-api-adapter`**                                      | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli |
-| **ClawQL `search` / `execute`**                            | OpenAPI → MCP tools (inverse)                          |
-| **[Custom sources](../getting-started/custom-sources.md)** | Register other MCP servers **into** the ClawQL gateway |
-| **`mcp-grpc-transport`**                                   | Production TypeScript MCP gRPC transport               |
-| **Panguard bridge**                                        | Policy / JWT ATR in front of MCP                       |
-| **[ClawQL Streams](../streams/clawql-streams.md)** (draft)  | Event-driven agents; WebSocket sources into Core       |
-| **[Fabric loop benchmark](../design/protocol-fabric-loop-benchmark.md)** | WS → CLI source → gen-cli → `memory_ingest` smoke |
+| Piece                                                                    | Role                                                      |
+| ------------------------------------------------------------------------ | --------------------------------------------------------- |
+| **[Protocol Fabric](../gtm/protocol-fabric.md)**                         | Named claim for Core + adapter (any protocol ↔ any)       |
+| **`mcp-api-adapter`**                                                    | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli |
+| **ClawQL `search` / `execute`**                                          | OpenAPI → MCP tools (inverse)                             |
+| **[Custom sources](../getting-started/custom-sources.md)**               | Register other MCP servers **into** the ClawQL gateway    |
+| **`mcp-grpc-transport`**                                                 | Production TypeScript MCP gRPC transport                  |
+| **Panguard bridge**                                                      | Policy / JWT ATR in front of MCP                          |
+| **[ClawQL Streams](../streams/clawql-streams.md)** (draft)               | Event-driven agents; WebSocket sources into Core          |
+| **[Fabric loop benchmark](../design/protocol-fabric-loop-benchmark.md)** | WS → CLI source → gen-cli → `memory_ingest` smoke         |
 
 ## Troubleshooting
 
