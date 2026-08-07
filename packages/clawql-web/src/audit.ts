@@ -1,33 +1,18 @@
 /**
  * In-memory + optional callback audit for web search/fetch provenance.
  * Regulated operators need fallback decisions recorded before the fallback runs.
+ * Durable WORM is installed via {@link installWebAuditWormSink}.
  */
 
-export type WebAuditEventType =
-  | "WEB_SEARCH"
-  | "WEB_SEARCH_FALLBACK"
-  | "WEB_FETCH"
-  | "WEB_SCREENSHOT"
-  | "WEB_INTERACT"
-  | "WEB_ERROR";
+import { getDefaultAuditRingBuffer } from "clawql-core";
+import type { WebAuditEvent, WebAuditSink } from "./audit-types.js";
+import { appendWebWormEvent } from "./audit/worm.js";
 
-export type WebAuditEvent = {
-  type: WebAuditEventType;
-  ts: string;
-  provider?: string;
-  query?: string;
-  url?: string;
-  reason?: string;
-  fallback?: string;
-  correlationId?: string;
-  ok?: boolean;
-  detail?: string;
-};
-
-export type WebAuditSink = (event: WebAuditEvent) => void | Promise<void>;
+export type { WebAuditEvent, WebAuditEventType, WebAuditSink } from "./audit-types.js";
 
 const buffer: WebAuditEvent[] = [];
 let sink: WebAuditSink | undefined;
+let wormInstalled = false;
 
 export function setWebAuditSink(next: WebAuditSink | undefined): void {
   sink = next;
@@ -36,13 +21,16 @@ export function setWebAuditSink(next: WebAuditSink | undefined): void {
 export function resetWebAuditForTests(): void {
   buffer.length = 0;
   sink = undefined;
+  wormInstalled = false;
 }
 
 export function listWebAuditEvents(): readonly WebAuditEvent[] {
   return [...buffer];
 }
 
-export async function appendWebAudit(event: Omit<WebAuditEvent, "ts"> & { ts?: string }): Promise<WebAuditEvent> {
+export async function appendWebAudit(
+  event: Omit<WebAuditEvent, "ts"> & { ts?: string }
+): Promise<WebAuditEvent> {
   const full: WebAuditEvent = {
     ...event,
     ts: event.ts ?? new Date().toISOString(),
@@ -51,4 +39,30 @@ export async function appendWebAudit(event: Omit<WebAuditEvent, "ts"> & { ts?: s
   if (buffer.length > 500) buffer.shift();
   if (sink) await sink(full);
   return full;
+}
+
+/**
+ * Install the default compliance sink: hash-chained WORM (memory|jsonl) +
+ * mirror into the process-wide clawql-core audit ring buffer (MCP `audit` tool).
+ * Idempotent — safe to call from plugin registration.
+ */
+export function installWebAuditWormSink(env: NodeJS.ProcessEnv = process.env): void {
+  if (wormInstalled) return;
+  wormInstalled = true;
+  setWebAuditSink(async (event) => {
+    await appendWebWormEvent(event, env);
+    try {
+      getDefaultAuditRingBuffer().append({
+        ts: event.ts,
+        category: "web",
+        action: event.type,
+        summary: [event.type, event.provider, event.query ?? event.url, event.reason]
+          .filter(Boolean)
+          .join(" · "),
+        correlationId: event.correlationId,
+      });
+    } catch {
+      /* ring buffer optional outside MCP process */
+    }
+  });
 }

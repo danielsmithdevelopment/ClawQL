@@ -56,6 +56,8 @@ export async function fetchRawUrl(
     maxBytes?: number;
     dryRun?: boolean;
     fetchImpl?: typeof fetch;
+    /** Override User-Agent (IDP may pass legacy `clawql-mcp-external-ingest/1.0`). */
+    userAgent?: string;
   } = {}
 ): Promise<RawFetchResult> {
   if (options.dryRun) {
@@ -72,6 +74,7 @@ export async function fetchRawUrl(
   const fetchImpl = options.fetchImpl ?? fetch;
   const maxBytes = options.maxBytes ?? MAX_URL_RESPONSE_BYTES;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const userAgent = options.userAgent?.trim() || DEFAULT_UA;
   let current = assertSafeWebUrl(urlStr).href;
 
   for (let hop = 0; hop <= MAX_URL_REDIRECTS; hop += 1) {
@@ -79,7 +82,7 @@ export async function fetchRawUrl(
       redirect: "manual",
       signal: AbortSignal.timeout(timeoutMs),
       headers: {
-        "User-Agent": DEFAULT_UA,
+        "User-Agent": userAgent,
         Accept: "*/*",
       },
     });

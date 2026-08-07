@@ -97,7 +97,8 @@ export function executeExternalIngestCoreEffect(
           prelude.targetRel,
           resource.finalUrl,
           resource.body,
-          resource.contentType
+          resource.contentType,
+          resource.bytes
         )
       );
       yield* vaultWritePostSyncEffect(prelude.vault);

@@ -1,17 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   WebCapabilityError,
+  appendWebAudit,
   createWebService,
   envImpliesWebEnabled,
+  installWebAuditWormSink,
   isWebEnabled,
   listWebAuditEvents,
+  listWebWormRecords,
   loadWebConfig,
   resetWebAuditForTests,
+  resetWebWormStoreForTests,
+  resolveCdpWebSocketUrl,
+  verifyWebWormLog,
 } from "./index.js";
 
 describe("clawql-web", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     resetWebAuditForTests();
+    process.env.CLAWQL_WEB_AUDIT_STORE = "memory";
+    await resetWebWormStoreForTests(process.env);
     delete process.env.CLAWQL_ENABLE_WEB;
     delete process.env.CLAWQL_WEB_SEARCH_PROVIDER;
     delete process.env.CLAWQL_WEB_BROWSER_PROVIDER;
@@ -22,8 +30,10 @@ describe("clawql-web", () => {
     delete process.env.CLAWQL_WEB_SEARCH_FALLBACK_DISABLED;
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     resetWebAuditForTests();
+    await resetWebWormStoreForTests(process.env);
+    delete process.env.CLAWQL_WEB_AUDIT_STORE;
   });
 
   it("loadWebConfig defaults to none/none", () => {
@@ -171,5 +181,57 @@ describe("clawql-web", () => {
       name: "WebCapabilityError",
       code: "NO_SEARCH_PROVIDER",
     });
+  });
+
+  it("WORM sink hash-chains web audit events and verifies", async () => {
+    process.env.CLAWQL_WEB_AUDIT_STORE = "memory";
+    installWebAuditWormSink(process.env);
+    await appendWebAudit({
+      type: "WEB_SEARCH_FALLBACK",
+      reason: "no_search_provider_configured",
+      fallback: "browser",
+      provider: "kitesurf",
+      query: "q",
+    });
+    await appendWebAudit({
+      type: "WEB_SEARCH",
+      provider: "browser:kitesurf",
+      query: "q",
+      ok: true,
+      detail: "fallback",
+    });
+    const records = await listWebWormRecords(10, process.env);
+    expect(records.length).toBe(2);
+    expect(records[0]?.seq).toBe(1);
+    expect(records[1]?.prev_hash).toBe(records[0]?.hash);
+    const verified = await verifyWebWormLog(process.env);
+    expect(verified.ok).toBe(true);
+    expect(verified.records).toBe(2);
+  });
+
+  it("resolveCdpWebSocketUrl passes through ws and resolves http /json/version", async () => {
+    await expect(resolveCdpWebSocketUrl("ws://chromium:9222/devtools/browser/x")).resolves.toBe(
+      "ws://chromium:9222/devtools/browser/x"
+    );
+    const fetchImpl = (async () =>
+      new Response(JSON.stringify({ webSocketDebuggerUrl: "ws://127.0.0.1:9222/devtools/browser/abc" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })) as typeof fetch;
+    await expect(resolveCdpWebSocketUrl("http://chromium:9222", fetchImpl)).resolves.toBe(
+      "ws://127.0.0.1:9222/devtools/browser/abc"
+    );
+  });
+
+  it("chromium dry-run interact succeeds (live CDP gated on CLAWQL_CHROMIUM_CDP_URL)", async () => {
+    process.env.CLAWQL_WEB_BROWSER_PROVIDER = "chromium";
+    process.env.CLAWQL_WEB_DRY_RUN = "1";
+    const web = createWebService(process.env);
+    const page = await web.interact("https://example.com", [
+      { action: "click", selector: "#go" },
+      { action: "type", selector: "input", text: "hi" },
+    ]);
+    expect(page.provider).toBe("chromium");
+    expect(page.markdown).toMatch(/Steps:/);
   });
 });
