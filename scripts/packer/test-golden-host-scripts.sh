@@ -13,11 +13,29 @@ shellcheck scripts/packer/*.sh
 echo "==> Golden-host script smoke (bake dry structure)"
 test -x scripts/packer/bake-clawql.sh
 test -x scripts/packer/bootstrap-team-vault.sh
+test -x scripts/packer/bootstrap-dedicated-gateway.sh
 test -x scripts/packer/cloudflare-bootstrap.sh
+test -x bin/clawql-gateway-proxy.mjs
 
 # Bootstrap must fail without bucket (no silent success)
 if CLAWQL_SYNC_BUCKET='' scripts/packer/bootstrap-team-vault.sh 2>/dev/null; then
   echo "bootstrap-team-vault.sh should fail when CLAWQL_SYNC_BUCKET is empty" >&2
+  exit 1
+fi
+
+# Dedicated gateway bootstrap must fail closed when vault bootstrap fails (empty bucket)
+if CLAWQL_SYNC_BUCKET='' scripts/packer/bootstrap-dedicated-gateway.sh 2>/dev/null; then
+  echo "bootstrap-dedicated-gateway.sh should fail when team vault bootstrap fails" >&2
+  exit 1
+fi
+
+# Dedicated script must invoke vault bootstrap first (ordering)
+if ! grep -q 'bootstrap-team-vault' scripts/packer/bootstrap-dedicated-gateway.sh; then
+  echo "bootstrap-dedicated-gateway.sh must call bootstrap-team-vault" >&2
+  exit 1
+fi
+if ! grep -q 'gateway create' scripts/packer/bootstrap-dedicated-gateway.sh; then
+  echo "bootstrap-dedicated-gateway.sh must start Managed Edge Gateway" >&2
   exit 1
 fi
 

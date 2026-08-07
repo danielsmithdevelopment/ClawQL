@@ -14,6 +14,7 @@
     "bin": {
         "clawql-mcp": "bin/clawql-mcp.mjs",
         "clawql-mcp-http": "bin/clawql-mcp-http.mjs",
+        "clawql-gateway-proxy": "bin/clawql-gateway-proxy.mjs",
         "clawql": "bin/clawql.mjs"
     },
     "engines": {
@@ -193,6 +194,7 @@
         "path-to-regexp": "8.4.0",
         "picomatch": "4.0.4",
         "postcss": "8.5.23",
+        "nanoid": "3.3.17",
         "undici": "6.28.0",
         "qs": "6.15.2",
         "protobufjs": "8.7.1",

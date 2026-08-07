@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 /**
  * Lightweight Managed Edge Gateway proxy (process profile).
- * Canonical published binary: `bin/clawql-gateway-proxy.mjs` (`clawql-gateway-proxy`).
- * Keep this file aligned with that copy for local checkout demos.
+ * Routes:
+ *   /mcp*  → MCP_UPSTREAM (default http://127.0.0.1:18080)
+ *   /v1*   → INFERENCE_UPSTREAM (default http://127.0.0.1:18081)
+ *   /healthz → local JSON
+ *
+ * Canonical copy for npm installs (`clawql-gateway-proxy`) and Packer/process profile.
+ * examples/managed-gateway/gateway-proxy.mjs stays in sync for local checkout demos.
  */
 import http from "node:http";
 import { URL } from "node:url";

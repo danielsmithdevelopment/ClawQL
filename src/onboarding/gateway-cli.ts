@@ -8,6 +8,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, openSync } from "node:fs";
 import { chmod, copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { createServer } from "node:net";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -50,6 +51,12 @@ export type ManagedGatewayState = {
   };
 };
 
+type ProcessRuntimePaths = {
+  mcpEntry: string;
+  inferenceBin: string;
+  proxyBin: string;
+};
+
 function managedDir(home: string): string {
   return join(home, "ManagedGateway");
 }
@@ -77,6 +84,88 @@ function findRepoRoot(): string | null {
     dir = parent;
   }
   return null;
+}
+
+/** Installed clawql-mcp package root (global/npm) — has bin/ + dist/. */
+function findInstalledPackageRoot(): string | null {
+  let dir = dirname(fileURLToPath(import.meta.url));
+  for (let i = 0; i < 8; i++) {
+    const pkgJson = join(dir, "package.json");
+    if (
+      existsSync(pkgJson) &&
+      existsSync(join(dir, "dist", "server-http.js")) &&
+      existsSync(join(dir, "bin", "clawql-mcp-http.mjs"))
+    ) {
+      return dir;
+    }
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return null;
+}
+
+function resolveInferenceBin(repoRoot: string | null, packageRoot: string | null): string | null {
+  if (repoRoot) {
+    const fromRepo = join(repoRoot, "packages", "clawql-inference", "bin", "clawql-inference.mjs");
+    if (existsSync(fromRepo)) return fromRepo;
+  }
+  try {
+    const require = createRequire(import.meta.url);
+    const pkgJson = require.resolve("clawql-inference/package.json");
+    const fromDep = join(dirname(pkgJson), "bin", "clawql-inference.mjs");
+    if (existsSync(fromDep)) return fromDep;
+  } catch {
+    // fall through
+  }
+  if (packageRoot) {
+    const nested = join(
+      packageRoot,
+      "node_modules",
+      "clawql-inference",
+      "bin",
+      "clawql-inference.mjs"
+    );
+    if (existsSync(nested)) return nested;
+  }
+  return null;
+}
+
+function resolveProxyBin(repoRoot: string | null, packageRoot: string | null): string | null {
+  const candidates = [
+    packageRoot ? join(packageRoot, "bin", "clawql-gateway-proxy.mjs") : null,
+    repoRoot ? join(repoRoot, "bin", "clawql-gateway-proxy.mjs") : null,
+    repoRoot ? join(repoRoot, "examples", "managed-gateway", "gateway-proxy.mjs") : null,
+  ];
+  for (const c of candidates) {
+    if (c && existsSync(c)) return c;
+  }
+  return null;
+}
+
+/**
+ * Resolve MCP HTTP + inference + edge proxy entrypoints for process profile.
+ * Works from a git checkout (dev) or an npm-installed clawql-mcp (golden hosts).
+ */
+export function resolveProcessRuntimePaths(
+  repoRoot: string | null = findRepoRoot()
+): ProcessRuntimePaths {
+  const packageRoot = findInstalledPackageRoot();
+  const mcpCandidates = [
+    repoRoot ? join(repoRoot, "dist", "server-http.js") : null,
+    packageRoot ? join(packageRoot, "dist", "server-http.js") : null,
+  ];
+  const mcpEntry = mcpCandidates.find((p) => p && existsSync(p)) ?? null;
+  const inferenceBin = resolveInferenceBin(repoRoot, packageRoot);
+  const proxyBin = resolveProxyBin(repoRoot, packageRoot);
+
+  if (!mcpEntry || !inferenceBin || !proxyBin) {
+    throw new Error(
+      "Could not resolve Managed Edge Gateway runtimes (mcp/inference/proxy). " +
+        "Install clawql-mcp (with clawql-inference) or run from a built ClawQL checkout."
+    );
+  }
+  return { mcpEntry, inferenceBin, proxyBin };
 }
 
 function managedExampleDir(repoRoot: string): string {
@@ -264,34 +353,24 @@ function spawnDetached(
 async function startProcessProfile(
   state: ManagedGatewayState,
   secret: string,
-  repoRoot: string
+  repoRoot: string | null
 ): Promise<ManagedGatewayState> {
   const home = state.home;
   const mgDir = managedDir(home);
   const mcpPort = state.port + 10000; // e.g. 18080 when gateway is 8080
   const inferencePort = state.port + 10001;
   const nodeBin = process.execPath;
-  const mcpEntry = join(repoRoot, "dist", "server-http.js");
-  const inferenceBin = join(
-    repoRoot,
-    "packages",
-    "clawql-inference",
-    "bin",
-    "clawql-inference.mjs"
-  );
-  const proxyBin = join(repoRoot, "examples", "managed-gateway", "gateway-proxy.mjs");
-
-  if (!existsSync(mcpEntry)) {
-    throw new Error(`Missing ${mcpEntry} — run npm run build first`);
-  }
-  if (!existsSync(inferenceBin)) {
-    throw new Error(`Missing ${inferenceBin}`);
-  }
+  const { mcpEntry, inferenceBin, proxyBin } = resolveProcessRuntimePaths(repoRoot);
 
   const freeGateway = await waitForPortFree(state.port);
   if (!freeGateway) {
     throw new Error(`Port ${state.port} is already in use`);
   }
+
+  // Dedicated VG / networked hosts set CLAWQL_GATEWAY_HOST=0.0.0.0 (or CLAWQL_DEDICATED_VG=1).
+  const gatewayHost =
+    process.env.CLAWQL_GATEWAY_HOST?.trim() ||
+    (process.env.CLAWQL_DEDICATED_VG === "1" ? "0.0.0.0" : "127.0.0.1");
 
   const baseEnv: NodeJS.ProcessEnv = {
     ...process.env,
@@ -326,7 +405,7 @@ async function startProcessProfile(
     {
       ...baseEnv,
       CLAWQL_GATEWAY_PORT: String(state.port),
-      CLAWQL_GATEWAY_HOST: "127.0.0.1",
+      CLAWQL_GATEWAY_HOST: gatewayHost,
       CLAWQL_MCP_UPSTREAM: `http://127.0.0.1:${mcpPort}`,
       CLAWQL_INFERENCE_UPSTREAM: `http://127.0.0.1:${inferencePort}`,
     },
@@ -457,15 +536,15 @@ export async function runGatewayCreate(options: GatewayCliOptions = {}): Promise
 
     if (!options.noStart) {
       if (profile === "process") {
-        if (!repoRoot) {
-          console.error("Could not locate ClawQL repo root for process profile start.");
-          console.error("Materials were written; start manually or use --profile local-docker.");
+        try {
+          const started = await startProcessProfile(state, secret, repoRoot);
+          printCreateResult(started, secret, Boolean(options.json));
+          return 0;
+        } catch (startErr) {
+          console.error(startErr instanceof Error ? startErr.message : String(startErr));
           printCreateResult(state, secret, Boolean(options.json));
           return 1;
         }
-        const started = await startProcessProfile(state, secret, repoRoot);
-        printCreateResult(started, secret, Boolean(options.json));
-        return 0;
       }
       if (!repoRoot) {
         console.error("Could not locate examples/managed-gateway for Docker profile.");

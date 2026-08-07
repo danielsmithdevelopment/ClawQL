@@ -27,6 +27,11 @@ export type ProvisionInputs = {
   /** When true, user-data fetches sync credentials from SSM at boot (AWS). */
   useSsmSecrets?: boolean;
   ssmParameterPrefix?: string;
+  /**
+   * When true, boot starts Managed Edge Gateway after team vault sync
+   * (Dedicated VG alpha). Defaults on for dedicated/enterprise tiers.
+   */
+  startManagedGateway?: boolean;
   cloudflareAccountId?: string;
   gcpProject?: string;
   gcpZone?: string;

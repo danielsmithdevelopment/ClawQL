@@ -234,6 +234,7 @@ Example compose: [`examples/managed-gateway/`](../../examples/managed-gateway/).
 Kubernetes (chart defaults **off**): set `inference.enabled=true` and `managedGateway.enabled=true` on `charts/clawql-mcp` for an in-cluster `/mcp` + `/v1` edge. MCP accepts the same inference virtual key (`tenantId` = `key.team`); optional shared home via `inference.home`.
 
 3. **Dedicated Virtual Gateway** — customer VPC, WORM, Vault, team sync ([For teams](/getting-started/for-teams), Packer / Pulumi).
+   **Alpha now:** Packer golden host + Pulumi dedicated tier boots team vault, then Managed Edge Gateway (`/mcp` + `/v1`) via `bootstrap-dedicated-gateway.sh`. Full WORM/NATS/Valkey + JWT ATR remain follow-ups.
 4. **Regional Hub** — ClawQL-managed metering / routing pipe only — never holds your sovereign vault.
 
 GTM narrative: [Inference-first GTM](https://clawql.com/inference/gtm) · Architecture: [Agentic Fabric](/architecture/agentic-fabric)

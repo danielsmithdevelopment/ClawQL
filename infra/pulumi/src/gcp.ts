@@ -21,6 +21,8 @@ export function createGcpGoldenHost(inputs: ProvisionInputs): GcpGoldenHostOutpu
     bucket: inputs.syncBucket,
     prefix: inputs.syncPrefix,
     syncProvider: inputs.syncProvider,
+    startManagedGateway: inputs.startManagedGateway,
+    gatewayTeam: inputs.tenantId,
   });
 
   const instance = new gcp.compute.Instance("clawql-golden-host", {

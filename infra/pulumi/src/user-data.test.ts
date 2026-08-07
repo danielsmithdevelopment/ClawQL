@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildBootstrapUserData, buildGcpStartupScript } from "./user-data.js";
 
 describe("buildBootstrapUserData", () => {
-  it("emits bucket, prefix, provider, and bootstrap script", () => {
+  it("emits bucket, prefix, provider, and vault-only bootstrap script", () => {
     const script = buildBootstrapUserData({
       bucket: "acme-team",
       prefix: "shared/",
@@ -14,6 +14,7 @@ describe("buildBootstrapUserData", () => {
     expect(script).toContain('export CLAWQL_SYNC_PREFIX="shared/"');
     expect(script).toContain('export CLAWQL_SYNC_PROVIDER="r2"');
     expect(script).toContain("exec /usr/local/bin/bootstrap-team-vault.sh");
+    expect(script).not.toContain("bootstrap-dedicated-gateway");
     expect(script).not.toContain("SSM_PREFIX");
   });
 
@@ -28,6 +29,24 @@ describe("buildBootstrapUserData", () => {
     expect(script).toContain('SSM_PREFIX="/clawql/tenants/acme/sync"');
     expect(script).toContain("aws ssm get-parameter");
     expect(script).toContain("CLAWQL_SYNC_ACCESS_KEY_ID");
+  });
+
+  it("starts Managed Edge Gateway after vault sync when startManagedGateway is set", () => {
+    const script = buildBootstrapUserData({
+      bucket: "acme-team",
+      prefix: "tenant/acme/",
+      syncProvider: "r2",
+      startManagedGateway: true,
+      gatewayTeam: "acme",
+      gatewayPort: 8080,
+    });
+
+    expect(script).toContain('export CLAWQL_GATEWAY_TEAM="acme"');
+    expect(script).toContain('export CLAWQL_GATEWAY_PORT="8080"');
+    expect(script).toContain('export CLAWQL_GATEWAY_HOST="0.0.0.0"');
+    expect(script).toContain('export CLAWQL_DEDICATED_VG="1"');
+    expect(script).toContain("exec /usr/local/bin/bootstrap-dedicated-gateway.sh");
+    expect(script).not.toContain("exec /usr/local/bin/bootstrap-team-vault.sh");
   });
 
   it("escapes shell metacharacters in values", () => {
