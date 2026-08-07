@@ -37,7 +37,11 @@ Local document conversion (pdf-inspector / anydoc) stays in `clawql-documents`. 
 - `bytes` — raw `Uint8Array` for pdf-inspector / anydoc / Docling
 - `contentType` + `finalUrl`
 
-Binary content types (PDF / Office / octet-stream) are written as base64 vault notes so classification can run without lossy UTF-8 decode.
+Binary content types (PDF / Office / octet-stream) are enriched when local tools are enabled:
+
+- **`CLAWQL_ENABLE_PDF_INSPECTOR=1`** — classify / extract markdown; Docling-routed PDFs keep base64 + `route` in frontmatter
+- **`CLAWQL_ENABLE_ANYDOC=1`** — Office (and other anydoc formats) → GFM markdown when possible
+- Otherwise — base64 vault notes so pdf-inspector / Docling can still consume bytes later
 
 | Behavior                  | Preserved via `fetchRawUrl`                                                 |
 | ------------------------- | --------------------------------------------------------------------------- |

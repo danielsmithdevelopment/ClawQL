@@ -14,6 +14,11 @@ import { Effect } from "effect";
 import { memoryDbLiveLayer } from "clawql-memory/plugin";
 import { assertSafeWebUrl, fetchRawUrl } from "clawql-web";
 import { buildUrlIngestNote, formatUrlResponseAsMarkdown } from "./url-format.js";
+import {
+  buildEnrichedUrlIngestNote,
+  enrichBinaryUrlIngest,
+  isBinaryDocumentContentType,
+} from "./url-binary-enrich.js";
 import { slugifyTitle } from "clawql-memory/ingest/slug";
 import {
   resolveVaultPath,
@@ -194,17 +199,6 @@ export async function writePlannedMarkdownDocuments(
   });
 }
 
-function isBinaryDocumentContentType(contentType: string | null): boolean {
-  const ct = (contentType ?? "").toLowerCase();
-  return (
-    ct.includes("application/pdf") ||
-    ct.includes("application/msword") ||
-    ct.includes("application/vnd.openxmlformats") ||
-    ct.includes("application/vnd.ms-") ||
-    ct.includes("application/octet-stream")
-  );
-}
-
 export async function writeUrlIngestNote(
   vault: string,
   targetRel: string,
@@ -215,33 +209,8 @@ export async function writeUrlIngestNote(
 ): Promise<void> {
   let note: string;
   if (bytes && isBinaryDocumentContentType(contentType)) {
-    const b64 = Buffer.from(bytes).toString("base64");
-    let host = "external";
-    try {
-      host = new URL(finalUrl).hostname;
-    } catch {
-      /* keep external */
-    }
-    const title = `Binary · ${host}`;
-    note = [
-      "---",
-      `title: ${JSON.stringify(title)}`,
-      `date: ${isoNow()}`,
-      "tags: [clawql-external-ingest]",
-      "clawql_external_ingest: true",
-      "clawql_external_ingest_kind: binary",
-      `content_type: ${JSON.stringify(contentType ?? "application/octet-stream")}`,
-      `byte_length: ${bytes.byteLength}`,
-      `source_url: ${JSON.stringify(finalUrl)}`,
-      "---",
-      "",
-      "Raw bytes preserved for pdf-inspector / anydoc / Docling (base64).",
-      "",
-      "```base64",
-      b64,
-      "```",
-      "",
-    ].join("\n");
+    const enriched = await enrichBinaryUrlIngest(bytes, contentType, finalUrl);
+    note = buildEnrichedUrlIngestNote(finalUrl, enriched, isoNow());
   } else {
     const formatted = formatUrlResponseAsMarkdown(body, contentType, finalUrl);
     note = buildUrlIngestNote(finalUrl, formatted, isoNow());
