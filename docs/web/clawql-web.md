@@ -10,12 +10,12 @@ Every managed web search/scrape API is paid or burns free tiers under agent load
 
 For regulated and air-gapped tenants, the intended posture is:
 
-| Control | Default / recommendation |
-| ------- | ------------------------ |
-| **Search** | **Disabled** (`CLAWQL_WEB_SEARCH_PROVIDER=none`) — no Tavily/Brave egress |
-| **Browser** | **Self-hosted Chromium** (or `none`) — no Cloudflare Browser Run / Firecrawl SaaS |
-| **External calls** | **None** unless an operator explicitly enables a provider |
-| **Helm** | `enableWeb: false`; `webSearch.provider: none`; leave `*.bundled: false` |
+| Control            | Default / recommendation                                                          |
+| ------------------ | --------------------------------------------------------------------------------- |
+| **Search**         | **Disabled** (`CLAWQL_WEB_SEARCH_PROVIDER=none`) — no Tavily/Brave egress         |
+| **Browser**        | **Self-hosted Chromium** (or `none`) — no Cloudflare Browser Run / Firecrawl SaaS |
+| **External calls** | **None** unless an operator explicitly enables a provider                         |
+| **Helm**           | `enableWeb: false`; `webSearch.provider: none`; leave `*.bundled: false`          |
 
 That combination is sales collateral for the enterprise motion: ClawQL can run with **zero outbound web** while still offering optional self-hosted search (OpenSearch / BYO SearXNG) and on-box browser fetch when policy allows.
 
@@ -34,16 +34,16 @@ Local document conversion (pdf-inspector / anydoc) stays in `clawql-documents` �
 
 Today IDP URL ingest lives in `packages/clawql-documents/src/ingest/external-ingest.ts` (`fetchUrlResource`). Behaviors the migration must preserve or deliberately change:
 
-| Behavior | Current IDP (`fetchUrlResource`) | `clawql-web` target |
-| -------- | -------------------------------- | ------------------- |
-| User-Agent | `clawql-mcp-external-ingest/1.0` | `clawql-web/1.0` (intentional rename; document in migration PR) |
-| Accept | `*/*` | same |
-| Redirects | Manual, max **5**, re-check SSRF each hop | same (`fetchRawUrl`) |
-| Timeout | **60s** | same (overridable via `timeoutMs`) |
-| Body / Content-Length cap | **2 MiB** | same |
-| SSRF | https, or http only for localhost; block private/link-local + metadata hosts | same (`assertSafeWebUrl`) |
-| Return shape | UTF-8 **string** body + content-type + finalUrl | `raw: true` → **bytes** + content-type + finalUrl (needed so pdf-inspector can classify before Docling) |
-| Content types | PDF, Office, HTML, raw text | unchanged — classification stays in documents/pdf-inspector |
+| Behavior                  | Current IDP (`fetchUrlResource`)                                             | `clawql-web` target                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| User-Agent                | `clawql-mcp-external-ingest/1.0`                                             | `clawql-web/1.0` (intentional rename; document in migration PR)                                         |
+| Accept                    | `*/*`                                                                        | same                                                                                                    |
+| Redirects                 | Manual, max **5**, re-check SSRF each hop                                    | same (`fetchRawUrl`)                                                                                    |
+| Timeout                   | **60s**                                                                      | same (overridable via `timeoutMs`)                                                                      |
+| Body / Content-Length cap | **2 MiB**                                                                    | same                                                                                                    |
+| SSRF                      | https, or http only for localhost; block private/link-local + metadata hosts | same (`assertSafeWebUrl`)                                                                               |
+| Return shape              | UTF-8 **string** body + content-type + finalUrl                              | `raw: true` → **bytes** + content-type + finalUrl (needed so pdf-inspector can classify before Docling) |
+| Content types             | PDF, Office, HTML, raw text                                                  | unchanged — classification stays in documents/pdf-inspector                                             |
 
 ### `web_fetch` and `raw: true`
 
@@ -101,12 +101,12 @@ The fallback decision is appended **before** the browser call so a WORM/complian
 
 ## MCP tools
 
-| Tool             | Behavior                                                                 |
-| ---------------- | ------------------------------------------------------------------------ |
-| `web_search`     | Search provider, else browser fallback (audited before execute)          |
-| `web_fetch`      | Browser markdown fetch; or `raw: true` for bytes + content-type (IDP)    |
-| `web_screenshot` | Capability-gated (`NO_BROWSER_PROVIDER` / `CAPABILITY_UNSUPPORTED`)      |
-| `web_interact`   | Capability-gated (chromium family)                                       |
+| Tool             | Behavior                                                              |
+| ---------------- | --------------------------------------------------------------------- |
+| `web_search`     | Search provider, else browser fallback (audited before execute)       |
+| `web_fetch`      | Browser markdown fetch; or `raw: true` for bytes + content-type (IDP) |
+| `web_screenshot` | Capability-gated (`NO_BROWSER_PROVIDER` / `CAPABILITY_UNSUPPORTED`)   |
+| `web_interact`   | Capability-gated (chromium family)                                    |
 
 ## Helm sketch (optional subcharts — **not wired yet**)
 
