@@ -11,7 +11,7 @@ next: ouroboros
 
 # Web (`clawql-web`)
 
-**Status:** Tier-1 scaffold  
+**Status:** Tier-1 + IDP/CDP/WORM follow-ons  
 **Package:** [`packages/clawql-web`](../../packages/clawql-web)  
 **Toggle:** `CLAWQL_ENABLE_WEB` (or auto-on when a provider/API key is configured)  
 **Plugin:** `clawql-web`
@@ -22,8 +22,10 @@ next: ouroboros
 | -------------------- | ------------------------------------------------------------------------------ |
 | **`web_search`**     | Web enabled — falls back to browser-as-search with audit if no search provider |
 | **`web_fetch`**      | Browser markdown, or `raw: true` for bytes + content-type (IDP; no browser)    |
-| **`web_screenshot`** | Capability-gated; structured error if browser is `none` / unsupported          |
-| **`web_interact`**   | Chromium / Playwright / Puppeteer; structured capability errors                |
+| **`web_screenshot`** | Capability-gated; live CDP when `CLAWQL_CHROMIUM_CDP_URL` is set               |
+| **`web_interact`**   | Chromium family + live CDP; structured capability errors otherwise             |
+
+IDP `ingest_external_knowledge` URL fetch uses `clawql-web` `fetchRawUrl`. Web audit events are WORM-chained and mirrored to the MCP `audit` ring.
 
 ## Enable
 

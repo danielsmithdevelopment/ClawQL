@@ -1,0 +1,123 @@
+{{- /*
+  Optional in-cluster SearXNG + Chromium for clawql-web.
+  Gated by webSearch.searxng.bundled / webBrowser.chromium.bundled (default false).
+  Not Helm subchart dependencies — lightweight Deployments, same pattern as document-pipeline sidecars.
+*/ -}}
+{{- if and .Values.webSearch.searxng.enabled .Values.webSearch.searxng.bundled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.fullname" . }}-searxng
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: searxng
+spec:
+  replicas: {{ .Values.webSearch.searxng.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: searxng
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: searxng
+    spec:
+      containers:
+        - name: searxng
+          image: "{{ .Values.webSearch.searxng.image.repository }}:{{ .Values.webSearch.searxng.image.tag }}"
+          imagePullPolicy: {{ .Values.webSearch.searxng.image.pullPolicy | default "IfNotPresent" }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.webSearch.searxng.port | default 8080 }}
+          env:
+            - name: SEARXNG_BASE_URL
+              value: {{ printf "http://%s-searxng:%v/" (include "clawql-mcp.fullname" .) (.Values.webSearch.searxng.port | default 8080) | quote }}
+          resources:
+            {{- toYaml (.Values.webSearch.searxng.resources | default dict) | nindent 12 }}
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.fullname" . }}-searxng
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: searxng
+spec:
+  selector:
+    app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: searxng
+  ports:
+    - name: http
+      port: {{ .Values.webSearch.searxng.port | default 8080 }}
+      targetPort: http
+{{- end }}
+{{- if and .Values.webBrowser.chromium.enabled .Values.webBrowser.chromium.bundled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.fullname" . }}-chromium
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: chromium
+spec:
+  replicas: {{ .Values.webBrowser.chromium.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: chromium
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: chromium
+    spec:
+      containers:
+        - name: chromium
+          image: "{{ .Values.webBrowser.chromium.image.repository }}:{{ .Values.webBrowser.chromium.image.tag }}"
+          imagePullPolicy: {{ .Values.webBrowser.chromium.image.pullPolicy | default "IfNotPresent" }}
+          args:
+            {{- $cdpArgs := .Values.webBrowser.chromium.args }}
+            {{- if not $cdpArgs }}
+            {{- $cdpArgs = list "--remote-debugging-address=0.0.0.0" "--remote-debugging-port=9222" "--headless=new" "--no-sandbox" "--disable-gpu" }}
+            {{- end }}
+            {{- toYaml $cdpArgs | nindent 12 }}
+          ports:
+            - name: cdp
+              containerPort: {{ .Values.webBrowser.chromium.port | default 9222 }}
+          resources:
+            {{- toYaml (.Values.webBrowser.chromium.resources | default dict) | nindent 12 }}
+          readinessProbe:
+            tcpSocket:
+              port: cdp
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.fullname" . }}-chromium
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: chromium
+spec:
+  selector:
+    app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: chromium
+  ports:
+    - name: cdp
+      port: {{ .Values.webBrowser.chromium.port | default 9222 }}
+      targetPort: cdp
+{{- end }}

@@ -81,17 +81,7 @@ export interface WebBrowserProvider {
   interact?(url: string, steps: BrowserStep[], options?: FetchOptions): Promise<PageContent>;
 }
 
-export type WebSearchProviderId =
-  | "tavily"
-  | "brave"
-  | "searxng"
-  | "opensearch"
-  | "none";
+export type WebSearchProviderId = "tavily" | "brave" | "searxng" | "opensearch" | "none";
 
 export type WebBrowserProviderId =
-  | "kitesurf"
-  | "chromium"
-  | "playwright"
-  | "puppeteer"
-  | "firecrawl"
-  | "none";
+  "kitesurf" | "chromium" | "playwright" | "puppeteer" | "firecrawl" | "none";

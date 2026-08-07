@@ -8,10 +8,11 @@
  * Orchestration: native Effect.gen in {@link executeExternalIngestCoreEffect}.
  */
 
-import { getClawqlOptionalToolFlags, isPrivateOrLoopbackIp } from "clawql-api";
+import { getClawqlOptionalToolFlags } from "clawql-api";
 import { gatewayRedactionEnabled, maybeGatewayRedactText } from "clawql-api";
 import { Effect } from "effect";
 import { memoryDbLiveLayer } from "clawql-memory/plugin";
+import { assertSafeWebUrl, fetchRawUrl } from "clawql-web";
 import { buildUrlIngestNote, formatUrlResponseAsMarkdown } from "./url-format.js";
 import { slugifyTitle } from "clawql-memory/ingest/slug";
 import {
@@ -22,36 +23,13 @@ import {
 
 const MAX_DOCUMENTS = 50;
 const MAX_MARKDOWN_BYTES = 2 * 1024 * 1024;
-const MAX_URL_RESPONSE_BYTES = 2 * 1024 * 1024;
-const MAX_URL_REDIRECTS = 5;
-const BLOCKED_INGEST_HOSTNAMES = new Set(["metadata.google.internal", "metadata.google"]);
 
 /**
- * SSRF gate for URL ingest. Allows loopback only for explicit localhost / 127.0.0.1 / ::1
- * (local dry-run servers); blocks other private/link-local and cloud metadata hostnames.
+ * SSRF gate for URL ingest — delegates to clawql-web `assertSafeWebUrl`
+ * (same https / localhost-http / private+metadata blocks).
  */
 export function assertSafeExternalIngestUrl(urlStr: string): URL {
-  let u: URL;
-  try {
-    u = new URL(urlStr);
-  } catch {
-    throw new Error("invalid url");
-  }
-  if (u.protocol !== "https:" && u.protocol !== "http:") {
-    throw new Error("only http and https URLs are allowed");
-  }
-  const host = u.hostname.trim().toLowerCase();
-  const isLoopbackHost = host === "localhost" || host === "127.0.0.1" || host === "::1";
-  if (u.protocol === "http:" && !isLoopbackHost) {
-    throw new Error("http is only allowed for localhost; use https");
-  }
-  if (BLOCKED_INGEST_HOSTNAMES.has(host) || host.endsWith(".localhost")) {
-    throw new Error("URL host is not allowed");
-  }
-  if (!isLoopbackHost && isPrivateOrLoopbackIp(host)) {
-    throw new Error("URL must not target private or link-local addresses");
-  }
-  return u;
+  return assertSafeWebUrl(urlStr);
 }
 
 export type ExternalIngestDocumentInput = {
@@ -144,49 +122,25 @@ export function defaultPathForUrl(urlStr: string): string {
   return `Memory/external/${slug}.md`;
 }
 
+/**
+ * Fetch a URL for IDP / external ingest via clawql-web (`fetchRawUrl`).
+ * Returns UTF-8 `body` for markdown formatting plus raw `bytes` for
+ * pdf-inspector / anydoc classification before Docling.
+ */
 export async function fetchUrlResource(urlStr: string): Promise<{
   body: string;
+  bytes: Uint8Array;
   contentType: string | null;
   finalUrl: string;
 }> {
-  let current = assertSafeExternalIngestUrl(urlStr).href;
-  const headers = {
-    "User-Agent":
-      "Mozilla/5.0 (compatible; clawql-mcp-external-ingest/1.0; +https://github.com/danielsmithdevelopment/ClawQL)",
-    Accept: "*/*",
+  const raw = await fetchRawUrl(urlStr);
+  const body = new TextDecoder("utf-8", { fatal: false }).decode(raw.bytes);
+  return {
+    body,
+    bytes: raw.bytes,
+    contentType: raw.contentType,
+    finalUrl: raw.finalUrl,
   };
-
-  for (let hop = 0; hop <= MAX_URL_REDIRECTS; hop += 1) {
-    const res = await fetch(current, {
-      redirect: "manual",
-      signal: AbortSignal.timeout(60_000),
-      headers,
-    });
-    if (res.status >= 300 && res.status < 400) {
-      const loc = res.headers.get("location");
-      if (!loc?.trim()) {
-        throw new Error(`HTTP ${res.status} redirect without Location`);
-      }
-      current = assertSafeExternalIngestUrl(new URL(loc, current).href).href;
-      continue;
-    }
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    const len = res.headers.get("content-length");
-    if (len && Number.parseInt(len, 10) > MAX_URL_RESPONSE_BYTES) {
-      throw new Error("Content-Length exceeds cap");
-    }
-    const buf = await res.arrayBuffer();
-    if (buf.byteLength > MAX_URL_RESPONSE_BYTES) {
-      throw new Error("response body exceeds cap");
-    }
-    const rawCt = res.headers.get("content-type");
-    const contentType = rawCt?.split(";")[0]?.trim() ?? null;
-    const body = new TextDecoder("utf-8", { fatal: false }).decode(buf);
-    return { body, contentType, finalUrl: current };
-  }
-  throw new Error("too many redirects");
 }
 
 export type PlannedMarkdownDoc = { rel: string; markdown: string };
@@ -240,15 +194,58 @@ export async function writePlannedMarkdownDocuments(
   });
 }
 
+function isBinaryDocumentContentType(contentType: string | null): boolean {
+  const ct = (contentType ?? "").toLowerCase();
+  return (
+    ct.includes("application/pdf") ||
+    ct.includes("application/msword") ||
+    ct.includes("application/vnd.openxmlformats") ||
+    ct.includes("application/vnd.ms-") ||
+    ct.includes("application/octet-stream")
+  );
+}
+
 export async function writeUrlIngestNote(
   vault: string,
   targetRel: string,
   finalUrl: string,
   body: string,
-  contentType: string | null
+  contentType: string | null,
+  bytes?: Uint8Array
 ): Promise<void> {
-  const formatted = formatUrlResponseAsMarkdown(body, contentType, finalUrl);
-  const note = buildUrlIngestNote(finalUrl, formatted, isoNow());
+  let note: string;
+  if (bytes && isBinaryDocumentContentType(contentType)) {
+    const b64 = Buffer.from(bytes).toString("base64");
+    let host = "external";
+    try {
+      host = new URL(finalUrl).hostname;
+    } catch {
+      /* keep external */
+    }
+    const title = `Binary · ${host}`;
+    note = [
+      "---",
+      `title: ${JSON.stringify(title)}`,
+      `date: ${isoNow()}`,
+      "tags: [clawql-external-ingest]",
+      "clawql_external_ingest: true",
+      "clawql_external_ingest_kind: binary",
+      `content_type: ${JSON.stringify(contentType ?? "application/octet-stream")}`,
+      `byte_length: ${bytes.byteLength}`,
+      `source_url: ${JSON.stringify(finalUrl)}`,
+      "---",
+      "",
+      "Raw bytes preserved for pdf-inspector / anydoc / Docling (base64).",
+      "",
+      "```base64",
+      b64,
+      "```",
+      "",
+    ].join("\n");
+  } else {
+    const formatted = formatUrlResponseAsMarkdown(body, contentType, finalUrl);
+    note = buildUrlIngestNote(finalUrl, formatted, isoNow());
+  }
   await withVaultWriteLock(vault, async () => {
     await writeVaultTextFileAtomic(vault, targetRel, note);
   });

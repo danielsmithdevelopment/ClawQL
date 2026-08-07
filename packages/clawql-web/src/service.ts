@@ -48,7 +48,7 @@ function requireBrowser(
 function requireCapability(
   browser: WebBrowserProvider,
   capability: "fetch" | "screenshot" | "interact",
-  tool: string
+  _tool: string
 ): void {
   const caps = browser.capabilities;
   const supported =
