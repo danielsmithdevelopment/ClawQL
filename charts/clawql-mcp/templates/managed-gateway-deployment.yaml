@@ -30,18 +30,14 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.managedGateway.podSecurityContext }}
       securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- toYaml .Values.managedGateway.podSecurityContext | nindent 8 }}
       containers:
         - name: managed-gateway
           image: "{{ .Values.managedGateway.image.repository }}:{{ .Values.managedGateway.image.tag }}"
           imagePullPolicy: {{ .Values.managedGateway.image.pullPolicy }}
-          {{- with .Values.managedGateway.securityContext }}
           securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            {{- toYaml .Values.managedGateway.securityContext | nindent 12 }}
           ports:
             - name: http
               containerPort: {{ .Values.managedGateway.service.http.targetPort }}
@@ -50,22 +46,32 @@ spec:
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
               readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
           readinessProbe:
             httpGet:
               path: /healthz
               port: http
-            initialDelaySeconds: 2
-            periodSeconds: 5
+            initialDelaySeconds: {{ .Values.managedGateway.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.managedGateway.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.managedGateway.probes.readiness.timeoutSeconds }}
           livenessProbe:
             httpGet:
               path: /healthz
               port: http
-            initialDelaySeconds: 5
-            periodSeconds: 20
+            initialDelaySeconds: {{ .Values.managedGateway.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.managedGateway.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.managedGateway.probes.liveness.timeoutSeconds }}
           resources:
             {{- toYaml .Values.managedGateway.resources | nindent 12 }}
       volumes:
         - name: nginx-config
           configMap:
             name: {{ include "clawql-mcp.managedGatewayName" . }}-config
+        - name: tmp
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
 {{- end }}

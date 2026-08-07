@@ -189,6 +189,7 @@ inference:
 
 # Optional nginx edge in front of MCP + inference (Managed Edge Gateway). Defaults **off**.
 # Requires inference.enabled=true for /v1 routes. Routes mirror examples/managed-gateway/nginx.conf.
+# JWT ATR stays on the MCP/proxy upstream — see docs/security/mcp-proxy-jwt-atr.md.
 managedGateway:
   enabled: false
   replicaCount: 1
@@ -203,10 +204,34 @@ managedGateway:
     limits:
       cpu: "1"
       memory: 256Mi
-  securityContext: {}
+  # nginx alpine runs as uid/gid 101; read-only root + emptyDir for /tmp and cache.
+  podSecurityContext:
+    fsGroup: 101
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 101
+    runAsGroup: 101
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
   podAnnotations: {}
   podLabels: {}
-  podSecurityContext: {}
+  probes:
+    readiness:
+      initialDelaySeconds: 2
+      periodSeconds: 5
+      timeoutSeconds: 3
+    liveness:
+      initialDelaySeconds: 5
+      periodSeconds: 20
+      timeoutSeconds: 3
+  networkPolicy:
+    # When managedGateway.enabled, default to least-privilege egress (DNS + MCP + inference).
+    enabled: true
   service:
     type: ClusterIP
     annotations: {}

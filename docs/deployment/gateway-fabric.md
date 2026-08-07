@@ -7,7 +7,7 @@ ClawQL exposes one customer-facing hostname (`gateway.clawql.app`) while backend
 | **1. Edge Worker**       | Developer / Teams / trial / demo                   | Cloudflare Worker + R2 / KV / D1                                                           | Phase 1 shipped ([`cloudflare/gateway`](../../cloudflare/gateway))                |
 | **2. Edge → IDP proxy**  | Shared / Dedicated / Enterprise (when AWS is live) | Worker reverse-proxies to K3s/EKS ingress                                                  | Phase 2 (this doc)                                                                |
 | **3. Dedicated VG**      | Dedicated / enterprise golden hosts                | Packer/Pulumi host boots Managed Edge Gateway (`/mcp` + `/v1` on `:8080`) after vault sync | Alpha shipped ([#748](https://github.com/danielsmithdevelopment/ClawQL/pull/748)) |
-| **4. Helm Managed Edge** | In-cluster one-hostname edge                       | `charts/clawql-mcp` `managedGateway` (off by default)                                      | Wedge shipped; production hardening follow-up                                     |
+| **4. Helm Managed Edge** | In-cluster one-hostname edge                       | `charts/clawql-mcp` `managedGateway` (off by default)                                      | Wedge + hardening (non-root, NetworkPolicy); JWT ATR on MCP upstream              |
 | **5. Full VG fabric**    | Enterprise Regional Hub path                       | WORM / NATS / Valkey + native JWT ATR                                                      | Not yet                                                                           |
 
 See also: [hosted-live-bootstrap.md](./hosted-live-bootstrap.md), [GTM playbook](../gtm/clawql-gtm-playbook.md), [inference / Managed Edge Gateway](../getting-started/inference.md).
@@ -48,7 +48,8 @@ Developer/Teams traffic stays native on the Worker (R2 vault, KV Layer 5, D1 aud
 - [x] Hop headers for upstream ATR / audit
 - [ ] Live `gateway.clawql.app` → first customer K3s ingress (operator)
 - [ ] Teams→Shared upgrade path with R2 vault continuity (GTM Phase 2 exit)
-- [ ] Helm `managedGateway` production hardening (probes, NetworkPolicy, JWT ATR)
+- [x] Helm `managedGateway` hardening (non-root, read-only root, NetworkPolicy, tunable probes)
+- [ ] JWT ATR at nginx edge (prefer MCP/proxy upstream — [`mcp-proxy-jwt-atr.md`](../security/mcp-proxy-jwt-atr.md))
 
 ## Related configs
 

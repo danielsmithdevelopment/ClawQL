@@ -9,7 +9,7 @@ metadata:
 data:
   nginx.conf: |
     worker_processes auto;
-    error_log /var/log/nginx/error.log warn;
+    error_log /dev/stderr warn;
     pid /tmp/nginx.pid;
     events {
       worker_connections 1024;
@@ -17,7 +17,7 @@ data:
     http {
       include /etc/nginx/mime.types;
       default_type application/octet-stream;
-      access_log /var/log/nginx/access.log;
+      access_log /dev/stdout;
       sendfile on;
       client_max_body_size 32m;
       proxy_read_timeout 600s;
