@@ -1,8 +1,8 @@
 # MCP API Adapter — technical design
 
-**Status:** ✅ Implemented (`mcp-api-adapter@0.5.0`) — any MCP upstream → OpenAPI + GraphQL + `/mcp` + gRPC (+ gen-cli)  
+**Status:** ✅ Implemented (`mcp-api-adapter@0.5.1`) — any MCP upstream → OpenAPI + GraphQL + `/mcp` + gRPC (+ gen-cli); **npm registry publish still pending**  
 **Date:** 2026-08-04  
-**Package:** `mcp-api-adapter` (npm; workspace `packages/mcp-api-adapter`)  
+**Package:** `mcp-api-adapter` (workspace `packages/mcp-api-adapter`; not yet on npmjs)  
 **Depends on:** [`mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md) **1.0.0+**, `@modelcontextprotocol/sdk`  
 **User guide:** [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md)  
 **Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)  

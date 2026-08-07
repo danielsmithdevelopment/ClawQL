@@ -25,13 +25,21 @@ export default function McpApiAdapterPage() {
           Adapter
         </Tag>
         <Tag color="sky" variant="medium">
-          Shipped
+          In-repo
+        </Tag>
+        <Tag color="amber" variant="medium">
+          npm pending
         </Tag>
       </div>
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>MCP → APIs (inverse of ClawQL Core).</strong> Generated from{' '}
+          <strong>MCP → APIs (inverse of ClawQL Core).</strong>{' '}
+          <code className="font-mono text-xs">mcp-api-adapter@0.5.1</code> ships
+          in the monorepo but is <strong>not on npm yet</strong> — use the
+          from-source quick start until{' '}
+          <code className="font-mono text-xs">npm view mcp-api-adapter</code>{' '}
+          succeeds. Generated from{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-api-adapter.md"
             className="font-medium text-inherit underline underline-offset-2"

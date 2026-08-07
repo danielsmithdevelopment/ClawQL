@@ -1,7 +1,7 @@
 # mcp-api-adapter — six surfaces, one catalog
 
 **Package:** [`mcp-api-adapter`](../../packages/mcp-api-adapter/) (`0.6.0+`)  
-**Status:** Shipped  
+**Status:** Shipped in-repo · **npm not published yet** (`npm view mcp-api-adapter` → 404)  
 **Essay:** [Five surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter-five-surfaces/)  
 **Design:** [`docs/design/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md)  
 **Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)  
@@ -10,6 +10,8 @@
 `mcp-api-adapter` wraps **any** MCP server — stdio, Streamable HTTP, or gRPC — and exposes **six API surfaces** from one tool catalog without changing the server. No ClawQL install required.
 
 **Language-agnostic.** The adapter process is TypeScript (`npx mcp-api-adapter`); the upstream may be Python, Go, Rust, or any language that speaks MCP. Users do not write TypeScript to use it — same Node baseline as `npx clawql-mcp`.
+
+> **Install note:** The package lives under [`packages/mcp-api-adapter`](../../packages/mcp-api-adapter/) and is on the npm publish extras list (`scripts/release/npm-publish-order.json`), but the name is not on the registry yet — so bare `npx mcp-api-adapter` fails until the first publish. Use the **from-source** commands below until then.
 
 ```text
 Any MCP server
@@ -63,17 +65,40 @@ Related: [Custom sources](/getting-started/custom-sources) registers upstream MC
 
 ## Quick start
 
+### From source (works today)
+
 ```bash
+git clone https://github.com/danielsmithdevelopment/ClawQL.git
+cd ClawQL
+npm ci
+npm run build -w mcp-grpc-transport
+npm run build -w mcp-api-adapter
+
+# Alias the CLI for the snippets below
+alias mcp-api-adapter='node "$(pwd)/packages/mcp-api-adapter/bin/mcp-api-adapter.mjs"'
+
 # Wrap a remote Streamable HTTP server
-npx mcp-api-adapter --mcp-url http://127.0.0.1:8080/mcp
+mcp-api-adapter --mcp-url http://127.0.0.1:8080/mcp
 
 # Wrap a stdio package; expose /mcp for IDEs
-npx mcp-api-adapter --stdio -- npx -y @modelcontextprotocol/server-everything
+mcp-api-adapter --stdio -- npx -y @modelcontextprotocol/server-everything
 
 # Front an existing gRPC MCP server
-npx mcp-api-adapter --grpc-address 127.0.0.1:50051
+mcp-api-adapter --grpc-address 127.0.0.1:50051
 
 # Generate a CLI from the tool catalog
+mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
+  npx -y @modelcontextprotocol/server-everything
+```
+
+### After npm publish
+
+Once `npm view mcp-api-adapter` succeeds, the same CLI is:
+
+```bash
+npx mcp-api-adapter --mcp-url http://127.0.0.1:8080/mcp
+npx mcp-api-adapter --stdio -- npx -y @modelcontextprotocol/server-everything
+npx mcp-api-adapter --grpc-address 127.0.0.1:50051
 npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
   npx -y @modelcontextprotocol/server-everything
 ```
@@ -83,7 +108,7 @@ Defaults: HTTP listen `0.0.0.0:8090`. Then open `/docs`, try `POST /\{toolName\}
 ### Streamable HTTP with explicit binds
 
 ```bash
-npx mcp-api-adapter \
+mcp-api-adapter \
   --mcp-url http://127.0.0.1:8080/mcp \
   --listen 0.0.0.0:8090 \
   --grpc-listen 127.0.0.1:50051
@@ -153,7 +178,7 @@ Protocol Fabric loop (WS → execute CLI source → gen-cli → `memory_ingest`)
 `gen-cli` reads the catalog and generates a thin Node CLI with one subcommand per tool. Arguments map from `inputSchema`. The CLI POSTs to the REST surface. PrintingPress will handle signed binary distribution when ready.
 
 ```bash
-npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
+mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
   npx -y @modelcontextprotocol/server-everything
 
 ./my-cli echo --message "hello"

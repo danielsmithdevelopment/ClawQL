@@ -4,17 +4,28 @@
 
 Closest single-surface alternative: Python **[mcpo](https://github.com/open-webui/mcpo)** (OpenAPI only). Prefer this package when you need all six surfaces — see [Protocol Fabric](../../docs/mcp/protocol-fabric.md).
 
+**npm status:** in-repo at `0.5.1` — **not published yet** (`npm view mcp-api-adapter` → 404). Use from-source until the first registry publish (listed under `localPackExtras` in `scripts/release/npm-publish-order.json`).
+
+### From source (works today)
+
 ```bash
-# Instant — wrap a remote MCP server
+# From ClawQL repo root
+npm ci
+npm run build -w mcp-grpc-transport
+npm run build -w mcp-api-adapter
+node packages/mcp-api-adapter/bin/mcp-api-adapter.mjs --mcp-url http://127.0.0.1:8080/mcp
+node packages/mcp-api-adapter/bin/mcp-api-adapter.mjs --stdio -- npx -y @modelcontextprotocol/server-everything
+node packages/mcp-api-adapter/bin/mcp-api-adapter.mjs --grpc-address 127.0.0.1:50051
+node packages/mcp-api-adapter/bin/mcp-api-adapter.mjs gen-cli --out ./my-cli --stdio -- \
+  npx -y @modelcontextprotocol/server-everything
+```
+
+### After npm publish
+
+```bash
 npx mcp-api-adapter --mcp-url http://127.0.0.1:8080/mcp
-
-# Instant — spawn a stdio MCP package (exposes /mcp for IDEs)
 npx mcp-api-adapter --stdio -- npx -y @modelcontextprotocol/server-everything
-
-# Instant — on-ramp in front of gRPC MCP
 npx mcp-api-adapter --grpc-address 127.0.0.1:50051
-
-# Generate a thin CLI over the adapter REST API
 npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- npx -y @modelcontextprotocol/server-everything
 ```
 
@@ -37,25 +48,25 @@ npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- npx -y @modelcontextprotoc
 
 > Distinct from ClawQL’s **Agentic Gateway**. This package only adapts MCP tools onto APIs (including re-exporting MCP itself when useful).
 
-| Doc | Path |
-| --- | ---- |
-| User guide | [`docs/mcp/mcp-api-adapter.md`](../../docs/mcp/mcp-api-adapter.md) |
-| Design | [`docs/design/mcp-api-adapter.md`](../../docs/design/mcp-api-adapter.md) |
-| Example | [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/) |
+| Doc        | Path                                                                     |
+| ---------- | ------------------------------------------------------------------------ |
+| User guide | [`docs/mcp/mcp-api-adapter.md`](../../docs/mcp/mcp-api-adapter.md)       |
+| Design     | [`docs/design/mcp-api-adapter.md`](../../docs/design/mcp-api-adapter.md) |
+| Example    | [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)           |
 
 ## HTTP routes
 
-| Path | Purpose |
-| ---- | ------- |
-| `GET /docs` | Swagger UI |
-| `GET /openapi.json` | OpenAPI 3.1 |
-| `POST /{toolName}` | REST tool call |
-| `POST /graphql` | GraphQL |
-| `GET /graphiql` | GraphiQL |
+| Path                   | Purpose                          |
+| ---------------------- | -------------------------------- |
+| `GET /docs`            | Swagger UI                       |
+| `GET /openapi.json`    | OpenAPI 3.1                      |
+| `POST /{toolName}`     | REST tool call                   |
+| `POST /graphql`        | GraphQL                          |
+| `GET /graphiql`        | GraphiQL                         |
 | `POST/GET/DELETE /mcp` | Streamable HTTP MCP (same tools) |
-| `WS /ws` | WebSocket JSON tool calls |
-| `GET /tools` | Catalog |
-| `GET /healthz` | Liveness |
+| `WS /ws`               | WebSocket JSON tool calls        |
+| `GET /tools`           | Catalog                          |
+| `GET /healthz`         | Liveness                         |
 
 Disable MCP with `--no-mcp`. Disable WebSocket with `--no-ws`. Change paths with `--mcp-path` / `--ws-path`.
 
