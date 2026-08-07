@@ -106,15 +106,12 @@ export function cloudflareWalletLiveLayer(
           if (!isCloudflareWalletsEnabled(env)) {
             return yield* Effect.fail(
               new CloudflareWalletError({
-                reason:
-                  "Cloudflare Wallets disabled — set CLAWQL_CLOUDFLARE_WALLETS=1",
+                reason: "Cloudflare Wallets disabled — set CLAWQL_CLOUDFLARE_WALLETS=1",
               })
             );
           }
           const configured = cloudflareWalletsHandle(env);
-          const requested = normalizeCloudflarePayHandle(
-            input.handle?.trim() || configured
-          );
+          const requested = normalizeCloudflarePayHandle(input.handle?.trim() || configured);
           const reserved = requested === configured;
           const dryRun = isCloudflareWalletsDryRun(env);
           const identity: CloudflareHandleIdentity = {
@@ -128,20 +125,21 @@ export function cloudflareWalletLiveLayer(
             dryRun,
           };
 
-          yield* audit.append(
-            buildCloudflareHandleResolvedEntry({
-              tenantId: input.tenantId ?? "default",
-              handle: identity.handle,
-              reserved,
-              dryRun,
-              correlationId: input.correlationId,
-            })
-          ).pipe(
-            Effect.mapError(
-              (cause) =>
-                new CloudflareWalletError({ reason: "audit append failed", cause })
+          yield* audit
+            .append(
+              buildCloudflareHandleResolvedEntry({
+                tenantId: input.tenantId ?? "default",
+                handle: identity.handle,
+                reserved,
+                dryRun,
+                correlationId: input.correlationId,
+              })
             )
-          );
+            .pipe(
+              Effect.mapError(
+                (cause) => new CloudflareWalletError({ reason: "audit append failed", cause })
+              )
+            );
 
           return identity;
         });
@@ -159,15 +157,12 @@ export function cloudflareWalletLiveLayer(
           if (!isCloudflareWalletsEnabled(env)) {
             return yield* Effect.fail(
               new CloudflareWalletError({
-                reason:
-                  "Cloudflare Wallets disabled — set CLAWQL_CLOUDFLARE_WALLETS=1",
+                reason: "Cloudflare Wallets disabled — set CLAWQL_CLOUDFLARE_WALLETS=1",
               })
             );
           }
           if (!input.agentId?.trim()) {
-            return yield* Effect.fail(
-              new CloudflareWalletError({ reason: "agentId is required" })
-            );
+            return yield* Effect.fail(new CloudflareWalletError({ reason: "agentId is required" }));
           }
           if (!Number.isFinite(input.allowanceUsd) || input.allowanceUsd <= 0) {
             return yield* Effect.fail(
@@ -221,22 +216,23 @@ export function cloudflareWalletLiveLayer(
               new CloudflareWalletError({ reason: "failed to persist virtual wallet", cause }),
           });
 
-          yield* audit.append(
-            buildCloudflareVirtualWalletIssuedEntry({
-              tenantId: input.tenantId ?? "default",
-              walletId: saved.id,
-              agentId: saved.agentId,
-              allowanceUsd: saved.allowanceUsd,
-              handle: saved.handle,
-              dryRun: true,
-              correlationId: input.correlationId,
-            })
-          ).pipe(
-            Effect.mapError(
-              (cause) =>
-                new CloudflareWalletError({ reason: "audit append failed", cause })
+          yield* audit
+            .append(
+              buildCloudflareVirtualWalletIssuedEntry({
+                tenantId: input.tenantId ?? "default",
+                walletId: saved.id,
+                agentId: saved.agentId,
+                allowanceUsd: saved.allowanceUsd,
+                handle: saved.handle,
+                dryRun: true,
+                correlationId: input.correlationId,
+              })
             )
-          );
+            .pipe(
+              Effect.mapError(
+                (cause) => new CloudflareWalletError({ reason: "audit append failed", cause })
+              )
+            );
 
           return toResult(saved);
         });
@@ -248,8 +244,7 @@ export function cloudflareWalletLiveLayer(
           if (!isCloudflareWalletsEnabled(env)) {
             return yield* Effect.fail(
               new CloudflareWalletError({
-                reason:
-                  "Cloudflare Wallets disabled — set CLAWQL_CLOUDFLARE_WALLETS=1",
+                reason: "Cloudflare Wallets disabled — set CLAWQL_CLOUDFLARE_WALLETS=1",
               })
             );
           }
@@ -275,8 +270,7 @@ export function cloudflareWalletLiveLayer(
           if (!isCloudflareWalletsEnabled(env)) {
             return yield* Effect.fail(
               new CloudflareWalletError({
-                reason:
-                  "Cloudflare Wallets disabled — set CLAWQL_CLOUDFLARE_WALLETS=1",
+                reason: "Cloudflare Wallets disabled — set CLAWQL_CLOUDFLARE_WALLETS=1",
               })
             );
           }
@@ -303,20 +297,21 @@ export function cloudflareWalletLiveLayer(
               new CloudflareWalletError({ reason: "failed to revoke virtual wallet", cause }),
           });
 
-          yield* audit.append(
-            buildCloudflareVirtualWalletRevokedEntry({
-              tenantId: input.tenantId ?? existing.tenantId ?? "default",
-              walletId: saved.id,
-              agentId: saved.agentId,
-              dryRun: saved.dryRun,
-              correlationId: input.correlationId,
-            })
-          ).pipe(
-            Effect.mapError(
-              (cause) =>
-                new CloudflareWalletError({ reason: "audit append failed", cause })
+          yield* audit
+            .append(
+              buildCloudflareVirtualWalletRevokedEntry({
+                tenantId: input.tenantId ?? existing.tenantId ?? "default",
+                walletId: saved.id,
+                agentId: saved.agentId,
+                dryRun: saved.dryRun,
+                correlationId: input.correlationId,
+              })
             )
-          );
+            .pipe(
+              Effect.mapError(
+                (cause) => new CloudflareWalletError({ reason: "audit append failed", cause })
+              )
+            );
 
           return toResult(saved);
         });
@@ -328,8 +323,7 @@ export function cloudflareWalletLiveLayer(
           if (!isCloudflareWalletsEnabled(env)) {
             return yield* Effect.fail(
               new CloudflareWalletError({
-                reason:
-                  "Cloudflare Wallets disabled — set CLAWQL_CLOUDFLARE_WALLETS=1",
+                reason: "Cloudflare Wallets disabled — set CLAWQL_CLOUDFLARE_WALLETS=1",
               })
             );
           }

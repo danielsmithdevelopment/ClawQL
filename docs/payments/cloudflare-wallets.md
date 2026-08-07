@@ -10,14 +10,14 @@
 
 Cloudflare Wallets announces **stable agent identity + capped delegated spend** on **x402** (stablecoin micropayments attached to HTTP). That sits next to ClawQL’s existing stack:
 
-| ClawQL piece | Cloudflare fit |
-| ------------ | -------------- |
-| x402 gates / facilitator | Native payment rail |
-| `RampService` agentic cards | Complementary spend (PAN vs API-key Virtual Wallet) |
-| `AgentCompensationService` | Optional funding / compensation vehicle for recruits |
-| `PayoutService` / offramp | Still required for bank / USDC cash-out (CF is spend-focused) |
-| Ouroboros / SGDOP | Capped Virtual Wallets for recruited agents |
-| MCP / `.well-known` discovery | Public `*.cloudflare.pay` identity |
+| ClawQL piece                  | Cloudflare fit                                                |
+| ----------------------------- | ------------------------------------------------------------- |
+| x402 gates / facilitator      | Native payment rail                                           |
+| `RampService` agentic cards   | Complementary spend (PAN vs API-key Virtual Wallet)           |
+| `AgentCompensationService`    | Optional funding / compensation vehicle for recruits          |
+| `PayoutService` / offramp     | Still required for bank / USDC cash-out (CF is spend-focused) |
+| Ouroboros / SGDOP             | Capped Virtual Wallets for recruited agents                   |
+| MCP / `.well-known` discovery | Public `*.cloudflare.pay` identity                            |
 
 **Default positioning until the API lands:** identity + light micropayment / capped-spend prep — **not** a Ramp replacement.
 
@@ -44,26 +44,26 @@ Same Effect pattern as Ramp: `Context.Tag("clawql/CloudflareWalletService")` →
 
 ## What ships now (prep)
 
-| Capability | Behavior |
-| ---------- | -------- |
-| Handle resolve | Normalizes `@clawql` / `clawql` → `clawql.cloudflare.pay`; marks reserved vs unknown |
-| Virtual Wallet create | Dry-run local ledger under `$CLAWQL_HOME/Payments/cloudflare-virtual-wallets.json` |
-| Spend status / revoke | Local store only |
-| Discovery | `.well-known/payments.json` advertises `type: "cloudflare_wallets"` when enabled |
-| WORM audit | `CLOUDFLARE_HANDLE_RESOLVED`, `CLOUDFLARE_VIRTUAL_WALLET_ISSUED`, `CLOUDFLARE_VIRTUAL_WALLET_REVOKED` |
-| MCP tools | `payments_cloudflare_handle_resolve`, `payments_cloudflare_virtual_wallet_create` |
+| Capability            | Behavior                                                                                              |
+| --------------------- | ----------------------------------------------------------------------------------------------------- |
+| Handle resolve        | Normalizes `@clawql` / `clawql` → `clawql.cloudflare.pay`; marks reserved vs unknown                  |
+| Virtual Wallet create | Dry-run local ledger under `$CLAWQL_HOME/Payments/cloudflare-virtual-wallets.json`                    |
+| Spend status / revoke | Local store only                                                                                      |
+| Discovery             | `.well-known/payments.json` advertises `type: "cloudflare_wallets"` when enabled                      |
+| WORM audit            | `CLOUDFLARE_HANDLE_RESOLVED`, `CLOUDFLARE_VIRTUAL_WALLET_ISSUED`, `CLOUDFLARE_VIRTUAL_WALLET_REVOKED` |
+| MCP tools             | `payments_cloudflare_handle_resolve`, `payments_cloudflare_virtual_wallet_create`                     |
 
 Live HTTP calls fail closed until `CLOUDFLARE_WALLETS_API_BASE` is documented by Cloudflare **and** ClawQL implements the client.
 
 ## Flags
 
-| Env | Purpose |
-| --- | ------- |
-| `CLAWQL_CLOUDFLARE_WALLETS=1` | Enable adapter (default **off**) |
-| `CLAWQL_CLOUDFLARE_WALLETS_HANDLE` | Reserved handle (default `clawql.cloudflare.pay`) |
-| `CLAWQL_CLOUDFLARE_WALLETS_DRY_RUN` | Force dry-run (default **on**) |
-| `CLOUDFLARE_WALLETS_API_BASE` | Future HTTP API base (empty = not available) |
-| `CLOUDFLARE_WALLETS_API_TOKEN` / `CLOUDFLARE_API_TOKEN` | Future auth |
+| Env                                                     | Purpose                                           |
+| ------------------------------------------------------- | ------------------------------------------------- |
+| `CLAWQL_CLOUDFLARE_WALLETS=1`                           | Enable adapter (default **off**)                  |
+| `CLAWQL_CLOUDFLARE_WALLETS_HANDLE`                      | Reserved handle (default `clawql.cloudflare.pay`) |
+| `CLAWQL_CLOUDFLARE_WALLETS_DRY_RUN`                     | Force dry-run (default **on**)                    |
+| `CLOUDFLARE_WALLETS_API_BASE`                           | Future HTTP API base (empty = not available)      |
+| `CLOUDFLARE_WALLETS_API_TOKEN` / `CLOUDFLARE_API_TOKEN` | Future auth                                       |
 
 ## CLI
 
@@ -99,8 +99,8 @@ CloudflareWalletService {
 
 ## Decision matrix
 
-| Mode | When |
-| ---- | ---- |
-| **Identity + light x402** (default) | Handle reserved; no Virtual Wallet API yet |
+| Mode                                 | When                                                                        |
+| ------------------------------------ | --------------------------------------------------------------------------- |
+| **Identity + light x402** (default)  | Handle reserved; no Virtual Wallet API yet                                  |
 | **Complementary spend next to Ramp** | After CF API: cards for PAN merchants; CF for API-native allow-listed spend |
-| **Primary agent spend rail** | Only if CF coverage + policy knobs beat Ramp for your merchants |
+| **Primary agent spend rail**         | Only if CF coverage + policy knobs beat Ramp for your merchants             |

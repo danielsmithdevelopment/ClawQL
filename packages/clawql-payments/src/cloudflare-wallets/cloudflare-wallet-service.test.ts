@@ -7,10 +7,7 @@ import { AuditLive } from "clawql-core";
 import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
 import { resetPaymentsEffectRuntimeForTests } from "../runtime/payments-effect-runtime.js";
 import { normalizeCloudflarePayHandle } from "./config.js";
-import {
-  CloudflareWalletService,
-  cloudflareWalletLiveLayer,
-} from "./cloudflare-wallet-service.js";
+import { CloudflareWalletService, cloudflareWalletLiveLayer } from "./cloudflare-wallet-service.js";
 
 function provideService(env: NodeJS.ProcessEnv) {
   return cloudflareWalletLiveLayer(env).pipe(

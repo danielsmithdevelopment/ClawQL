@@ -27,9 +27,7 @@ export function isCloudflareWalletsEnabled(env: NodeJS.ProcessEnv = process.env)
  * Until Cloudflare ships the API, dry-run is always the effective mode.
  */
 export function isCloudflareWalletsConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
-  return Boolean(
-    env.CLOUDFLARE_WALLETS_API_TOKEN?.trim() || env.CLOUDFLARE_API_TOKEN?.trim()
-  );
+  return Boolean(env.CLOUDFLARE_WALLETS_API_TOKEN?.trim() || env.CLOUDFLARE_API_TOKEN?.trim());
 }
 
 export function isCloudflareWalletsDryRun(env: NodeJS.ProcessEnv = process.env): boolean {

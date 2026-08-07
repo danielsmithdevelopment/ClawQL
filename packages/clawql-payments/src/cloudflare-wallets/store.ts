@@ -27,9 +27,7 @@ type StoreFile = {
   wallets: Record<string, CloudflareVirtualWalletRecord>;
 };
 
-export function resolveCloudflareVirtualWalletsPath(
-  env: NodeJS.ProcessEnv = process.env
-): string {
+export function resolveCloudflareVirtualWalletsPath(env: NodeJS.ProcessEnv = process.env): string {
   return `${resolvePaymentsDir(env)}/cloudflare-virtual-wallets.json`;
 }
 
