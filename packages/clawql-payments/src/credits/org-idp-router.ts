@@ -17,9 +17,7 @@ function routeFromOrg(org: OrgRecord): OrgIdpRoute | undefined {
 }
 
 /** Build an OrgIdpRouter that reads `$CLAWQL_HOME/Payments/org-credits.json`. */
-export function createOrgCreditsIdpRouter(
-  env: NodeJS.ProcessEnv = process.env
-): OrgIdpRouter {
+export function createOrgCreditsIdpRouter(env: NodeJS.ProcessEnv = process.env): OrgIdpRouter {
   return {
     async resolveByEmailDomain(domain: string) {
       const needle = domain.trim().toLowerCase().replace(/^@/, "");

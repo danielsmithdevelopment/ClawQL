@@ -7,20 +7,20 @@ ClawQL is building a **company-scoped control plane** on top of closed-loop org 
 
 ## Product shape
 
-| Capability | Status |
-| --- | --- |
-| **SSO under company email** | OIDC maps `email` / `hd`; domain allowlists; **per-org IdP routing** (`issuer` / `jwksUrl` by domain) |
-| **User management** | Invite / list / suspend / remove; **seat entitlements**; **manager scopes** + transfer to reports |
-| **Unified spend + billing** | Pool + member snapshot; **member → pool → Stripe overage** waterfall holds |
-| **Observability** | Prometheus `clawql_org_*` + waterfall counters; **Grafana** [`clawql-enterprise-org-spend.json`](../grafana/clawql-enterprise-org-spend.json) |
+| Capability                  | Status                                                                                                                                        |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **SSO under company email** | OIDC maps `email` / `hd`; domain allowlists; **per-org IdP routing** (`issuer` / `jwksUrl` by domain)                                         |
+| **User management**         | Invite / list / suspend / remove; **seat entitlements**; **manager scopes** + transfer to reports                                             |
+| **Unified spend + billing** | Pool + member snapshot; **member → pool → Stripe overage** waterfall holds                                                                    |
+| **Observability**           | Prometheus `clawql_org_*` + waterfall counters; **Grafana** [`clawql-enterprise-org-spend.json`](../grafana/clawql-enterprise-org-spend.json) |
 
 ## Roles
 
-| Role | Typical persona | Capabilities |
-| --- | --- | --- |
-| `billing_admin` | CFO / owner | SSO domains, invites, seats, suspend/remove, allocate, period distribute, full spend view |
-| `manager` | Team lead | View self + direct reports; transfer from own balance to reports |
-| `member` | Employee / intern | Spend credits; within-org peer transfer |
+| Role            | Typical persona   | Capabilities                                                                              |
+| --------------- | ----------------- | ----------------------------------------------------------------------------------------- |
+| `billing_admin` | CFO / owner       | SSO domains, invites, seats, suspend/remove, allocate, period distribute, full spend view |
+| `manager`       | Team lead         | View self + direct reports; transfer from own balance to reports                          |
+| `member`        | Employee / intern | Spend credits; within-org peer transfer                                                   |
 
 ## SSO under `@company.com` (+ per-org IdP)
 
@@ -93,7 +93,7 @@ Managed hosting may enable **closed-loop company credits** and company-email SSO
 
 ## Related packages
 
-- [`clawql-auth`](../../packages/clawql-auth) — OIDC consumer, email-domain policy, **org IdP routing**  
-- [`org.ts`](../../packages/clawql-payments/src/credits/org.ts) — membership, seats, managers  
-- [`org-waterfall.ts`](../../packages/clawql-payments/src/credits/org-waterfall.ts) — spend hierarchy  
+- [`clawql-auth`](../../packages/clawql-auth) — OIDC consumer, email-domain policy, **org IdP routing**
+- [`org.ts`](../../packages/clawql-payments/src/credits/org.ts) — membership, seats, managers
+- [`org-waterfall.ts`](../../packages/clawql-payments/src/credits/org-waterfall.ts) — spend hierarchy
 - [`org-idp-router.ts`](../../packages/clawql-payments/src/credits/org-idp-router.ts) — payments → auth bridge

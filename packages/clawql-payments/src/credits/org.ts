@@ -357,19 +357,18 @@ export function isReportOfManager(
 
 function normalizeDomains(domains: string[] | undefined): string[] {
   if (!domains?.length) return [];
-  return [
-    ...new Set(
-      domains
-        .map((d) => d.trim().toLowerCase().replace(/^@/, ""))
-        .filter(Boolean)
-    ),
-  ];
+  return [...new Set(domains.map((d) => d.trim().toLowerCase().replace(/^@/, "")).filter(Boolean))];
 }
 
 export function emailDomainOf(email: string): string | undefined {
   const at = email.lastIndexOf("@");
   if (at < 0) return undefined;
-  return email.slice(at + 1).trim().toLowerCase() || undefined;
+  return (
+    email
+      .slice(at + 1)
+      .trim()
+      .toLowerCase() || undefined
+  );
 }
 
 export function assertEmailMatchesOrgDomains(org: OrgRecord, email: string): void {
@@ -391,9 +390,7 @@ export async function findOrgByEmailDomain(
   const needle = domain.trim().toLowerCase().replace(/^@/, "");
   if (!needle) return undefined;
   const file = await loadOrgCreditsFile(env);
-  return Object.values(file.orgs).find((o) =>
-    (o.sso?.allowedEmailDomains ?? []).includes(needle)
-  );
+  return Object.values(file.orgs).find((o) => (o.sso?.allowedEmailDomains ?? []).includes(needle));
 }
 
 /**
@@ -511,14 +508,13 @@ export async function listOrgMembers(
   if (!org) throw new Error(`Unknown org: ${orgId}`);
   if (options.actorTenantId) assertManagerOrBillingAdmin(org, options.actorTenantId);
   const status = options.status ?? "active";
-  let members = status === "any" ? [...org.members] : org.members.filter((m) => m.status === status);
+  let members =
+    status === "any" ? [...org.members] : org.members.filter((m) => m.status === status);
   // Managers see only themselves + direct reports unless billing admin
   if (options.actorTenantId) {
     const actor = options.actorTenantId.trim();
     if (!org.billingAdminTenantIds.includes(actor)) {
-      members = members.filter(
-        (m) => m.memberTenantId === actor || m.reportsToTenantId === actor
-      );
+      members = members.filter((m) => m.memberTenantId === actor || m.reportsToTenantId === actor);
     }
   }
   return members;

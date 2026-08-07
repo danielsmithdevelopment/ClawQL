@@ -34,12 +34,8 @@ export type OrgIdpRouter = {
   resolveByEmailDomain: (
     domain: string
   ) => OrgIdpRoute | undefined | Promise<OrgIdpRoute | undefined>;
-  resolveByIssuer?: (
-    issuer: string
-  ) => OrgIdpRoute | undefined | Promise<OrgIdpRoute | undefined>;
-  resolveByOrgId?: (
-    orgId: string
-  ) => OrgIdpRoute | undefined | Promise<OrgIdpRoute | undefined>;
+  resolveByIssuer?: (issuer: string) => OrgIdpRoute | undefined | Promise<OrgIdpRoute | undefined>;
+  resolveByOrgId?: (orgId: string) => OrgIdpRoute | undefined | Promise<OrgIdpRoute | undefined>;
 };
 
 /** Decode JWT payload without verifying signature (routing peek only). */
@@ -66,10 +62,7 @@ export function emailDomainFromJwtPayload(
   return undefined;
 }
 
-export function mergeOidcConfigWithRoute(
-  base: OidcAuthConfig,
-  route: OrgIdpRoute
-): OidcAuthConfig {
+export function mergeOidcConfigWithRoute(base: OidcAuthConfig, route: OrgIdpRoute): OidcAuthConfig {
   return {
     ...base,
     issuer: route.issuer ?? base.issuer,
@@ -78,11 +71,8 @@ export function mergeOidcConfigWithRoute(
     hs256Secret: route.hs256Secret ?? base.hs256Secret,
     audience: route.audience ?? base.audience,
     allowedEmailDomains:
-      route.allowedEmailDomains.length > 0
-        ? route.allowedEmailDomains
-        : base.allowedEmailDomains,
-    requireEmailDomain:
-      route.allowedEmailDomains.length > 0 ? true : base.requireEmailDomain,
+      route.allowedEmailDomains.length > 0 ? route.allowedEmailDomains : base.allowedEmailDomains,
+    requireEmailDomain: route.allowedEmailDomains.length > 0 ? true : base.requireEmailDomain,
   };
 }
 

@@ -7,10 +7,7 @@ import {
   resetOidcVerifyCaches,
   verifyOidcBearerToken,
 } from "./oidc.js";
-import {
-  assertEmailDomainAllowed,
-  extractEmailDomain,
-} from "./policy.js";
+import { assertEmailDomainAllowed, extractEmailDomain } from "./policy.js";
 
 describe("company email SSO domain policy", () => {
   const prev: Record<string, string | undefined> = {};

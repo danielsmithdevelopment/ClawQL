@@ -69,9 +69,7 @@ export function renderOrgWaterfallPrometheus(): string {
     lines.push(
       `clawql_org_waterfall_hold_cents_total{org_id="${o}",source="member"} ${b.memberCents}`
     );
-    lines.push(
-      `clawql_org_waterfall_hold_cents_total{org_id="${o}",source="pool"} ${b.poolCents}`
-    );
+    lines.push(`clawql_org_waterfall_hold_cents_total{org_id="${o}",source="pool"} ${b.poolCents}`);
     lines.push(
       `clawql_org_waterfall_hold_cents_total{org_id="${o}",source="overage"} ${b.overageCents}`
     );

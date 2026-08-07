@@ -89,9 +89,7 @@ describe("enterprise org admin + spend", () => {
       process.env
     );
     const after = await listOrgMembers("acme", { status: "any" }, process.env);
-    expect(after.find((m) => m.memberTenantId === intern.memberTenantId)?.status).toBe(
-      "suspended"
-    );
+    expect(after.find((m) => m.memberTenantId === intern.memberTenantId)?.status).toBe("suspended");
 
     await removeOrgMember(
       { orgId: "acme", actorTenantId: "cfo", memberTenantId: intern.memberTenantId },

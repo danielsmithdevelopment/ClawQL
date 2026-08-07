@@ -249,10 +249,7 @@ export {
   type OrgMemberBalanceRow,
   type OrgUnifiedSpendSummary,
 } from "./org-spend.js";
-export {
-  renderAllOrgCreditsPrometheus,
-  renderOrgSpendPrometheus,
-} from "./org-metrics.js";
+export { renderAllOrgCreditsPrometheus, renderOrgSpendPrometheus } from "./org-metrics.js";
 export { createOrgCreditsIdpRouter } from "./org-idp-router.js";
 export {
   holdOrgWaterfall,

@@ -17,7 +17,12 @@ export function extractEmailDomain(email: string | undefined | null): string | u
   if (!email || typeof email !== "string") return undefined;
   const at = email.lastIndexOf("@");
   if (at < 0 || at === email.length - 1) return undefined;
-  return email.slice(at + 1).trim().toLowerCase() || undefined;
+  return (
+    email
+      .slice(at + 1)
+      .trim()
+      .toLowerCase() || undefined
+  );
 }
 
 export function normalizeEmailDomain(domain: string): string {
@@ -32,18 +37,13 @@ export function assertEmailDomainAllowed(
   claims: AtrClaims,
   options: EmailDomainPolicyOptions = {}
 ): void {
-  const allowed = (options.allowedDomains ?? [])
-    .map(normalizeEmailDomain)
-    .filter(Boolean);
+  const allowed = (options.allowedDomains ?? []).map(normalizeEmailDomain).filter(Boolean);
   const require = options.require === true || allowed.length > 0;
   if (!require) return;
 
-  const domain =
-    claims.emailDomain?.trim().toLowerCase() || extractEmailDomain(claims.email);
+  const domain = claims.emailDomain?.trim().toLowerCase() || extractEmailDomain(claims.email);
   if (!domain) {
-    throw new Error(
-      "Company SSO requires a work email (or hd) claim on the IdP token"
-    );
+    throw new Error("Company SSO requires a work email (or hd) claim on the IdP token");
   }
   if (allowed.length > 0 && !allowed.includes(domain)) {
     throw new Error(

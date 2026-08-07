@@ -62,10 +62,7 @@ describe("enterprise next slices: seats, manager, waterfall, idp router", () => 
       )
     ).rejects.toThrow(/seat limit/i);
 
-    await setOrgSeatPolicy(
-      { orgId: "acme", actorTenantId: "cfo", seatLimit: 5 },
-      process.env
-    );
+    await setOrgSeatPolicy({ orgId: "acme", actorTenantId: "cfo", seatLimit: 5 }, process.env);
     await inviteOrgMember(
       {
         orgId: "acme",

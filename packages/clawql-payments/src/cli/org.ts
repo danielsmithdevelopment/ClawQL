@@ -38,7 +38,9 @@ export async function runPaymentsOrgCreate(options: OrgCliOptions): Promise<numb
   const orgId = options.orgId?.trim();
   const admin = options.actorTenantId?.trim();
   if (!orgId || !admin) {
-    console.error("Usage: clawql payments org create --org-id acme --actor-tenant cfo [--domains acme.com]");
+    console.error(
+      "Usage: clawql payments org create --org-id acme --actor-tenant cfo [--domains acme.com]"
+    );
     return 1;
   }
   const domains = options.domains
@@ -93,7 +95,8 @@ export async function runPaymentsOrgSso(options: OrgCliOptions): Promise<number>
     allowedEmailDomains: domains,
   });
   if (options.json) console.log(JSON.stringify(org.sso, null, 2));
-  else console.log(`SSO domains for ${org.orgId}: ${(org.sso?.allowedEmailDomains ?? []).join(", ")}`);
+  else
+    console.log(`SSO domains for ${org.orgId}: ${(org.sso?.allowedEmailDomains ?? []).join(", ")}`);
   return 0;
 }
 
