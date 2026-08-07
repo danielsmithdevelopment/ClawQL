@@ -30,6 +30,7 @@ on:
           - idp-safe-pipeline-lite
           - idp-pipeline-resilience
           - hybrid-recall-source-pin
+          - memory-recall-pageindex-pin
           - external-ingest-continue
           - codegraph-guided-edit
           - schedule-synthetic-dry-run
@@ -248,6 +249,7 @@ jobs:
           matrix.task == 'memory-injection-attempt' ||
           matrix.task == 'pageindex-section-qa' ||
           matrix.task == 'hybrid-recall-source-pin' ||
+          matrix.task == 'memory-recall-pageindex-pin' ||
           matrix.task == 'codegraph-guided-edit' ||
           matrix.task == 'codegraph-impact-edit' ||
           matrix.task == 'codegraph-feature-api-surface' ||
@@ -273,7 +275,7 @@ jobs:
               echo "CLAWQL_PANGUARD_IN_PROCESS=1"
               echo "CLAWQL_PANGUARD_BLOCK_TOOLS=memory_ingest"
             fi
-            if [ "${{ matrix.task }}" = "pageindex-section-qa" ] || [ "${{ matrix.task }}" = "hybrid-recall-source-pin" ]; then
+            if [ "${{ matrix.task }}" = "pageindex-section-qa" ] || [ "${{ matrix.task }}" = "hybrid-recall-source-pin" ] || [ "${{ matrix.task }}" = "memory-recall-pageindex-pin" ]; then
               echo "CLAWQL_ENABLE_PAGEINDEX=1"
             fi
             if [ "${{ matrix.task }}" = "codegraph-guided-edit" ] || [ "${{ matrix.task }}" = "codegraph-impact-edit" ] || [ "${{ matrix.task }}" = "codegraph-feature-api-surface" ]; then

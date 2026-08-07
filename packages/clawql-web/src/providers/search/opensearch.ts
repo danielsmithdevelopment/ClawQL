@@ -1,6 +1,27 @@
 import type { SearchOptions, SearchResponse, WebSearchProvider } from "../../interfaces.js";
 import type { WebConfig } from "../../config.js";
 
+/** Build OpenSearch / Elasticsearch Authorization header from config. */
+export function buildOpensearchAuthHeaders(config: WebConfig): Record<string, string> {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (config.opensearchAuthorization?.trim()) {
+    headers.Authorization = config.opensearchAuthorization.trim();
+    return headers;
+  }
+  if (config.opensearchApiKey?.trim()) {
+    const key = config.opensearchApiKey.trim();
+    // Accept raw token or already-prefixed ApiKey/Bearer values
+    headers.Authorization = /^(ApiKey|Bearer)\s+/i.test(key) ? key : `Bearer ${key}`;
+    return headers;
+  }
+  if (config.opensearchUsername?.trim()) {
+    const user = config.opensearchUsername.trim();
+    const pass = config.opensearchPassword ?? "";
+    headers.Authorization = `Basic ${Buffer.from(`${user}:${pass}`, "utf8").toString("base64")}`;
+  }
+  return headers;
+}
+
 /** Self-hosted OpenSearch / Elasticsearch index search (maximum sovereignty). */
 export function createOpensearchSearchProvider(
   config: WebConfig,
@@ -31,16 +52,17 @@ export function createOpensearchSearchProvider(
       const index = config.opensearchIndex ?? "clawql-web";
       const res = await fetchImpl(`${base}/${encodeURIComponent(index)}/_search`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: buildOpensearchAuthHeaders(config),
         body: JSON.stringify({
           size: limit,
           query: {
             multi_match: {
               query,
-              fields: ["title^2", "content", "text", "snippet"],
+              fields: ["title^2", "content", "text", "snippet", "url"],
             },
           },
         }),
+        signal: AbortSignal.timeout(30_000),
       });
       if (!res.ok) {
         throw new Error(`OpenSearch search failed: HTTP ${res.status}`);
@@ -49,7 +71,7 @@ export function createOpensearchSearchProvider(
         hits?: {
           hits?: Array<{
             _score?: number;
-            _source?: { title?: string; url?: string; content?: string; snippet?: string };
+            _source?: { title?: string; url?: string; content?: string; snippet?: string; text?: string };
           }>;
         };
       };
@@ -59,7 +81,7 @@ export function createOpensearchSearchProvider(
         results: (body.hits?.hits ?? []).map((h) => ({
           title: h._source?.title ?? "",
           url: h._source?.url ?? "",
-          snippet: h._source?.snippet ?? h._source?.content,
+          snippet: h._source?.snippet ?? h._source?.content ?? h._source?.text,
           score: h._score,
           source: "opensearch",
         })),

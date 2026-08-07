@@ -272,6 +272,14 @@ spec:
             - name: CLAWQL_SEARXNG_URL
               value: {{ printf "http://%s-searxng:%v" (include "clawql-mcp.fullname" .) (.Values.webSearch.searxng.port | default 8080) | quote }}
             {{- end }}
+            {{- if and .Values.webSearch.opensearch.enabled .Values.webSearch.opensearch.url }}
+            - name: CLAWQL_OPENSEARCH_URL
+              value: {{ .Values.webSearch.opensearch.url | quote }}
+            {{- end }}
+            {{- if and .Values.webSearch.opensearch.enabled .Values.webSearch.opensearch.index }}
+            - name: CLAWQL_OPENSEARCH_INDEX
+              value: {{ .Values.webSearch.opensearch.index | quote }}
+            {{- end }}
             {{- if and .Values.webBrowser.chromium.enabled .Values.webBrowser.chromium.bundled }}
             - name: CLAWQL_CHROMIUM_CDP_URL
               value: {{ printf "http://%s-chromium:%v" (include "clawql-mcp.fullname" .) (.Values.webBrowser.chromium.port | default 9222) | quote }}
