@@ -207,7 +207,7 @@ Harvey + EngramLab open-sourced **Calderwood & Harkness (C&H)** — a ~100M+ tok
 | Grader        | Partial credit `hits/5`; emit `MATTERS_FOUND: k/5`; reject false positives; require real `memory_recall` when `REQUIRE_INSTITUTIONAL=1` |
 | Spend cap     | 30 turns / 240s / 8,000 tokens (single cell); B-7.3 adds first-task vs reuse asymmetry                                                  |
 | Expected      | on mean matters_found ≫ off / no-memory; headline copy uses `k/5` not only mean score                                                   |
-| Status        | Offline pack ready; live A/B via `workflow_dispatch` — **not** on `pr_active` until WIN                                                 |
+| Status        | **WIN** three-arm [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796): on 5/5 / off 0/5 / no-memory 0/5 — retired |
 
 **In-repo offline pack:** [`openbench/tasks/institutional-knowledge-enumerate/`](../../openbench/tasks/institutional-knowledge-enumerate/)
 
