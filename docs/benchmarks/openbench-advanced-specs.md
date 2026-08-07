@@ -2,7 +2,7 @@
 
 **Status:** Spec only (August 2026). Extends the OpenBench ledger from [#759](https://github.com/danielsmithdevelopment/ClawQL/pull/759) and the in-repo pack under [`openbench/`](../../openbench/).
 
-**These are specifications, not results.** No run IDs exist yet for B-7 live cells. Update suite status when cells land. Every live cell must link a GitHub Actions run ID; use **n≥3** before statistical claim confidence.
+**These are specifications, not results** except where a suite row links a live run ID (e.g. B-7.1). Update suite status when cells land. Every live cell must link a GitHub Actions run ID; use **n≥3** before statistical claim confidence.
 
 Related: [`openbench.md`](openbench.md) · [`openbench/README.md`](../../openbench/README.md) · [`openbench-github-actions.md`](openbench-github-actions.md) · [`openbench-b7-calderwood.md`](openbench-b7-calderwood.md)
 
@@ -18,7 +18,7 @@ Related: [`openbench.md`](openbench.md) · [`openbench/README.md`](../../openben
 | B-4   | Adversarial memory / conflict resolution   | High     | Spec only — Phase 1 task packs landed                             |
 | B-5   | NSV/SGDOP ensemble diversity               | High     | Spec only                                                         |
 | B-6   | Domain-specific compliance QA (HLE analog) | Medium   | Spec only                                                         |
-| B-7   | Institutional knowledge (C&H / amortized)  | Highest  | Spec + Phase-1 offline pack (`institutional-knowledge-enumerate`) |
+| B-7   | Institutional knowledge (C&H / amortized)  | Highest  | B-7.1 **WIN** [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796); B-7.2–7.4 next |
 
 ---
 
@@ -230,7 +230,7 @@ Mount Harvey/EngramLab open-sourced filesystem + short-form matter specs as grou
 | Phase       | What runs                                                                | Dependency                                     |
 | ----------- | ------------------------------------------------------------------------ | ---------------------------------------------- |
 | **1 (now)** | B-3.1, B-4.1, B-4.2, B-4.3 offline packs + live A/B when secrets present | Already on `main` infra                        |
-| **1d**      | B-7.1 mini-firm enumerate live A/B                                       | Offline pack on branch; dispatch when ready    |
+| **1d**      | B-7.1 mini-firm enumerate live A/B                                       | **Done** WIN [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796) |
 | **2**       | B-1.1, B-1.2                                                             | Fine-tune v1 in `tier-map.json`                |
 | **3**       | B-2.1–B-2.3                                                              | Post B-1; vendor-live IDP + provenance graders |
 | **4**       | B-6.1                                                                    | Fine-tune + vertical adapter + Onyx corpus     |
