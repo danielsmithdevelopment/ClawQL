@@ -8,21 +8,21 @@ Every managed web search/scrape API is paid or burns free tiers under agent load
 
 ## Taxonomy
 
-| Kind | Providers | Notes |
-| --- | --- | --- |
-| **Search** | Tavily, Brave, SearXNG, OpenSearch | Find content by query |
+| Kind                | Providers                                            | Notes                                 |
+| ------------------- | ---------------------------------------------------- | ------------------------------------- |
+| **Search**          | Tavily, Brave, SearXNG, OpenSearch                   | Find content by query                 |
 | **Browser / fetch** | Kitesurf, Chromium, Playwright, Puppeteer, Firecrawl | URL → content / screenshot / interact |
 
 Local document conversion (pdf-inspector / anydoc) stays in `clawql-documents` — zero-cost, on-box. `clawql-web` owns **external** web access; IDP URL ingestion should import from here over time.
 
 ## Defaults by deployment
 
-| Environment | Search | Browser |
-| --- | --- | --- |
-| Developer / Teams hosted | Tavily (if key) or none | **Kitesurf** (Browser Run beta) |
-| Self-hosted open | SearXNG (optional bundle) | Kitesurf or Chromium |
-| Regulated / air-gapped | OpenSearch (internal) or **disabled** | Chromium self-hosted or **disabled** |
-| Enterprise managed | Brave (DPA) or OpenSearch | Kitesurf or Chromium |
+| Environment              | Search                                | Browser                              |
+| ------------------------ | ------------------------------------- | ------------------------------------ |
+| Developer / Teams hosted | Tavily (if key) or none               | **Kitesurf** (Browser Run beta)      |
+| Self-hosted open         | SearXNG (optional bundle)             | Kitesurf or Chromium                 |
+| Regulated / air-gapped   | OpenSearch (internal) or **disabled** | Chromium self-hosted or **disabled** |
+| Enterprise managed       | Brave (DPA) or OpenSearch             | Kitesurf or Chromium                 |
 
 ## Env
 
@@ -55,31 +55,31 @@ The fallback decision is appended **before** the browser call.
 
 ## MCP tools
 
-| Tool | Behavior |
-| --- | --- |
-| `web_search` | Search provider, else browser fallback |
-| `web_fetch` | Browser provider fetch |
-| `web_screenshot` | Capability-gated |
-| `web_interact` | Capability-gated (chromium family) |
+| Tool             | Behavior                               |
+| ---------------- | -------------------------------------- |
+| `web_search`     | Search provider, else browser fallback |
+| `web_fetch`      | Browser provider fetch                 |
+| `web_screenshot` | Capability-gated                       |
+| `web_interact`   | Capability-gated (chromium family)     |
 
 ## Helm sketch (optional subcharts)
 
 ```yaml
 webSearch:
-  provider: none          # tavily|brave|searxng|opensearch|none
+  provider: none # tavily|brave|searxng|opensearch|none
   tavily:
     enabled: false
   brave:
     enabled: false
   searxng:
     enabled: false
-    bundled: false        # deploy SearXNG subchart
+    bundled: false # deploy SearXNG subchart
   opensearch:
     enabled: false
     bundled: false
 
 webBrowser:
-  provider: kitesurf      # recommended zero-cost fetch in Cloudflare stack
+  provider: kitesurf # recommended zero-cost fetch in Cloudflare stack
   chromium:
     enabled: false
     bundled: false
@@ -89,5 +89,5 @@ SearXNG/OpenSearch as bundled subcharts follow the same opt-in pattern as Onyx �
 
 ## Related
 
-- [`docs/plugins/web.md`](../plugins/web.md) — plugin page  
+- [`docs/plugins/web.md`](../plugins/web.md) — plugin page
 - Local docs convert: [`docs/providers/anydoc-onboarding.md`](../providers/anydoc-onboarding.md), [`pdf-inspector-onboarding.md`](../providers/pdf-inspector-onboarding.md)

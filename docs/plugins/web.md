@@ -18,12 +18,12 @@ next: ouroboros
 
 ## MCP tools
 
-| Tool | When |
-| --- | --- |
-| **`web_search`** | Web enabled — falls back to browser-as-search with audit if no search provider |
-| **`web_fetch`** | Browser provider configured |
-| **`web_screenshot`** | Browser provider with screenshot capability |
-| **`web_interact`** | Chromium / Playwright / Puppeteer |
+| Tool                 | When                                                                           |
+| -------------------- | ------------------------------------------------------------------------------ |
+| **`web_search`**     | Web enabled — falls back to browser-as-search with audit if no search provider |
+| **`web_fetch`**      | Browser provider configured                                                    |
+| **`web_screenshot`** | Browser provider with screenshot capability                                    |
+| **`web_interact`**   | Chromium / Playwright / Puppeteer                                              |
 
 ## Enable
 
