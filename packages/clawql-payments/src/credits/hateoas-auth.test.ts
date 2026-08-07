@@ -102,6 +102,7 @@ describe("credits hateoas oidc gate", () => {
     delete process.env.CLAWQL_AUTH_OIDC_HS256_SECRET;
     delete process.env.CLAWQL_AUTH_OIDC_ISSUER;
     delete process.env.CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL;
+    delete process.env.CLAWQL_CREDITS_P2P_ENABLED;
     delete process.env.CLAWQL_CREDITS_HATEOAS_BASE;
     await rm(home, { recursive: true, force: true });
   });
@@ -152,6 +153,8 @@ describe("credits hateoas oidc gate", () => {
 
   it("requires MFA claims for pay/stage when financial MFA policy is on", async () => {
     process.env.CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL = "1";
+    // Cross-tenant stage needs P2P (defaults off after hosted-compliance gates).
+    process.env.CLAWQL_CREDITS_P2P_ENABLED = "1";
     await claimDirectory({ email: "alice@acme.com", tenantId: "alice", handle: "alice" });
     await claimDirectory({ email: "bob@acme.com", tenantId: "bob", handle: "bob" });
     await appendCreditEntry({
