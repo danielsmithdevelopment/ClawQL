@@ -28,6 +28,7 @@ on:
           - sandbox-trusted-compute
           - composed-safe-rollout
           - idp-safe-pipeline-lite
+          - idp-pipeline-resilience
           - hybrid-recall-source-pin
           - external-ingest-continue
           - codegraph-guided-edit
@@ -192,6 +193,23 @@ jobs:
             fi
           } >> "$GITHUB_ENV"
           echo "::notice::ouroboros-oscillation-escape → arms=ouroboros-on,off timeout=180s turns≤50"
+
+      - name: IDP resilience (B-2.2) Ouroboros clamps
+        if: matrix.task == 'idp-pipeline-resilience'
+        run: |
+          {
+            echo "OPENBENCH_TIMEOUT_S=300"
+            echo "OPENBENCH_ARMS=ouroboros-on,ouroboros-off"
+            echo "CLAWQL_OUROBOROS_MAX_GENERATIONS=4"
+            # Production doom_loop for resilience claim (B-2.2).
+            echo "CLAWQL_OPENBENCH_DOOM_LOOP=deny"
+            echo "CLAWQL_BUNDLED_PROVIDERS=github,slack"
+            echo "CLAWQL_ENABLE_NOTIFY=1"
+            echo "CLAWQL_ENABLE_ONYX=0"
+            echo "CLAWQL_TEST_SLACK_FETCH_STUB=1"
+            echo "CLAWQL_SLACK_TOKEN=xoxb-openbench-stub-not-real"
+          } >> "$GITHUB_ENV"
+          echo "::notice::idp-pipeline-resilience → arms=ouroboros-on,off doom_loop=deny timeout=300s"
 
       - name: Search-first task clamps
         if: matrix.task == 'search-first-discovery'
