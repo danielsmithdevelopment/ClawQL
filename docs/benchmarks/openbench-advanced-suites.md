@@ -3,7 +3,7 @@
 **Status:** Spec / plan only (no live run IDs yet for B-*).  
 **Companion:** [`openbench-stack-coverage.md`](./openbench-stack-coverage.md) · [`openbench-results-ledger.md`](./openbench-results-ledger.md) · PR [#759](https://github.com/danielsmithdevelopment/ClawQL/pull/759)
 
-This document turns the six “impressive” suites (fine-tune flywheel → IDP pipeline → SWE-style codegraph → adversarial memory → NSV/SGDOP → domain HLE-analog) into **small, sequenced work items** with dependencies, acceptance criteria, and what is blocked.
+This document turns the advanced suites (fine-tune flywheel → IDP pipeline → SWE-style codegraph → adversarial memory → NSV/SGDOP → domain HLE-analog → **institutional knowledge / C&H**) into **small, sequenced work items** with dependencies, acceptance criteria, and what is blocked.
 
 ---
 
@@ -33,7 +33,10 @@ Phase 4  B-2 stubbed IDP orchestration             (not live Stirling/Argo in PR
 Phase 5  B-6.1 mortgage compliance exam            (FT + corpus)
 Phase 6  B-5 NSV/SGDOP                             (blocked on metric export)
 Phase 7  B-1.3 cycle-over-cycle; B-3.2 langs; B-6.3 legal
+Phase 1d B-7.1 institutional enumerate (mini C&H)   (now — no fine-tune; dispatch)
 ```
+
+Full B-7 narrative + upstream links: [`openbench-b7-calderwood.md`](./openbench-b7-calderwood.md).
 
 ---
 
@@ -226,6 +229,23 @@ Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger,
 
 ---
 
+## Phase 1d — B-7.1 Institutional knowledge enumerate (ship now)
+
+**Claim:** When prior-matter features are distributed across a vault without keyword titles, clawql-on recovers the **complete** matching matter set; clawql-off cannot.
+
+| ID     | Subtask                                                                             | Size | Notes                                     |
+| ------ | ----------------------------------------------------------------------------------- | ---- | ----------------------------------------- |
+| B7.1-a | Mini-firm fixture: 12 matter seeds; 5 matches (escrow≥10 ∧ NC>18); 7 near-misses    | S    | ✅ landed under `.openbench/memory-seed/` |
+| B7.1-b | `instruction.md` + `matters.json` artifact + decoy partial list                     | S    | ✅                                        |
+| B7.1-c | Checker: exact set; reject near-miss; optional real `memory_recall` evidence        | M    | ✅                                        |
+| B7.1-d | Caps / nudge / incomplete helpers in `run-ab-compare.py` + workflow_dispatch option | S    | ✅                                        |
+| B7.1-e | Live A/B via dispatch → retire on WIN; explanations + ledger                        | M    | Next                                      |
+| B7.1-f | Mount full C&H corpus when download path stable; swap fixture → B-7.4               | L    | Blocked on upstream release layout        |
+
+**Task folder:** `institutional-knowledge-enumerate`
+
+---
+
 ## Mapping: suite → first OpenBench task IDs
 
 | Suite | First concrete task ID                    | `pr_active` when?                                                                                       |
@@ -236,6 +256,7 @@ Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger,
 | B-4.3 | `memory-injection-attempt`                | ✅ retired WIN                                                                                          |
 | B-2   | `idp-safe-pipeline-lite`                  | ✅ Retired WIN [31039035892](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31039035892) |
 | B-2.2 | `idp-pipeline-resilience`                 | ✅ retired WIN [31139014771](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31139014771) |
+| B-7.1 | `institutional-knowledge-enumerate`       | After live WIN (dispatch first; not on PR burn)                                                         |
 | B-1   | reuse retired IDs under FT matrix         | After FT v1                                                                                             |
 | B-6   | `compliance-mortgage-qa` (custom harness) | After B-1 + corpus                                                                                      |
 | B-5   | `daos-multiperspective-*`                 | After metric export                                                                                     |
@@ -256,6 +277,7 @@ Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger,
 - [Stack coverage / backlog](./openbench-stack-coverage.md)
 - [Results ledger](./openbench-results-ledger.md)
 - [Task explanations](./openbench-task-explanations.md)
+- [B-7 Calderwood & Harkness](./openbench-b7-calderwood.md)
 - [GitHub Actions A/B](./openbench-github-actions.md)
 - [Ouroboros value evidence](./ouroboros-value-evidence.md)
 - Codegraph tools: [`packages/clawql-codegraph/README.md`](../../packages/clawql-codegraph/README.md)

@@ -354,14 +354,26 @@ Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../o
 | **Evidence**                | on **1.0** (3 turns, ~29s) / off **0.0** — [30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746).                                                                      |
 | **Does _not_ prove**        | Automatic resolution policy; Presidio; Panguard blocking hostile ingest (B-4.3).                                                                                                                          |
 
+### `institutional-knowledge-enumerate` (B-7.1)
+
+|                             |                                                                                                                                                                                     |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Claim**                   | Distributed firm-matter features are recovered via vault `memory_recall` with higher completeness than bare / no-memory arms.                                                       |
+| **Why it matters**          | Harvey C&H baseline: agents find _some_ material and stop confidently. Headline diagnostic is `MATTERS_FOUND: k/5`, not only mean score.                                            |
+| **How**                     | 12 seeded matter notes; match set of 5 for escrow≥10 ∧ NC>18. Partial credit `hits/5` + `MATTERS_FOUND`. Live A/B requires real `clawql_memory_recall`. Arms: on / off / no-memory. |
+| **What success looks like** | on: high matters found (ideally 5/5); off/no-memory: finds 2–3 then stops (Harvey failure mode).                                                                                    |
+| **Evidence**                | Offline pack validated; live A/B pending `workflow_dispatch`.                                                                                                                       |
+| **Does _not_ prove**        | Full 100M-token C&H mount; multi-session amortized cost (B-7.3); fine-tune flywheel (B-1).                                                                                          |
+
 ## Next cells (backlog)
 
 1. ~~**notify / sandbox / composed**~~ — verified WINs on [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305); retired.
 2. ~~**Onyx mock cite** + **memory wikilink hop**~~ — verified on [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189); retired.
 3. ~~**`memory-conflict-pricing` (B-4.1)**~~ — verified on [30930194746](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30930194746); retired.
 4. ~~**`codegraph-impact-edit` (B-3.1 lite)**~~ — verified on [30969554941](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30969554941); retired. Next: B-4.2/B-4.3 spikes or P0 n≥3. Full plan: [`openbench-advanced-suites.md`](./openbench-advanced-suites.md).
-5. **n≥3 trials** on headline WINs (Phase 0 / dispatch).
-6. **Trace collection** from GHA is live — [`openbench-trace-collection.md`](./openbench-trace-collection.md).
-7. Later: B-1 flywheel (blocked on FT), B-2 stubbed IDP pipeline (**retired WIN** `idp-safe-pipeline-lite`), B-6 domain compliance (not closed-book HLE). Live vendor IDP = B2.3 scheduled.
+5. **`institutional-knowledge-enumerate` (B-7.1)** — offline pack ready; dispatch live A/B next ([`openbench-b7-calderwood.md`](./openbench-b7-calderwood.md)).
+6. **n≥3 trials** on headline WINs (Phase 0 / dispatch).
+7. **Trace collection** from GHA is live — [`openbench-trace-collection.md`](./openbench-trace-collection.md).
+8. Later: B-1 flywheel (blocked on FT), B-2 stubbed IDP pipeline (**retired WIN** `idp-safe-pipeline-lite`), B-6 domain compliance (not closed-book HLE). Live vendor IDP = B2.3 scheduled.
 
 Append new run IDs to the [ledger](./openbench-results-ledger.md).

@@ -1,23 +1,24 @@
-# OpenBench advanced benchmark specifications (B-1 … B-6)
+# OpenBench advanced benchmark specifications (B-1 … B-7)
 
 **Status:** Spec only (August 2026). Extends the OpenBench ledger from [#759](https://github.com/danielsmithdevelopment/ClawQL/pull/759) and the in-repo pack under [`openbench/`](../../openbench/).
 
-**These are specifications, not results.** No run IDs exist yet. Update suite status when cells land. Every live cell must link a GitHub Actions run ID; use **n≥3** before statistical claim confidence.
+**These are specifications, not results.** No run IDs exist yet for B-7 live cells. Update suite status when cells land. Every live cell must link a GitHub Actions run ID; use **n≥3** before statistical claim confidence.
 
-Related: [`openbench.md`](openbench.md) · [`openbench/README.md`](../../openbench/README.md) · [`openbench-github-actions.md`](openbench-github-actions.md)
+Related: [`openbench.md`](openbench.md) · [`openbench/README.md`](../../openbench/README.md) · [`openbench-github-actions.md`](openbench-github-actions.md) · [`openbench-b7-calderwood.md`](openbench-b7-calderwood.md)
 
 ---
 
 ## Suite index
 
-| Suite | Claim category                             | Priority | Status                                |
-| ----- | ------------------------------------------ | -------- | ------------------------------------- |
-| B-1   | Fine-tuning flywheel delta                 | Highest  | Spec only                             |
-| B-2   | Multi-turn IDP pipeline                    | Highest  | Spec only                             |
-| B-3   | Long-horizon codegraph (SWE-bench style)   | High     | Spec only — Phase 1 task packs landed |
-| B-4   | Adversarial memory / conflict resolution   | High     | Spec only — Phase 1 task packs landed |
-| B-5   | NSV/SGDOP ensemble diversity               | High     | Spec only                             |
-| B-6   | Domain-specific compliance QA (HLE analog) | Medium   | Spec only                             |
+| Suite | Claim category                             | Priority | Status                                                            |
+| ----- | ------------------------------------------ | -------- | ----------------------------------------------------------------- |
+| B-1   | Fine-tuning flywheel delta                 | Highest  | Spec only                                                         |
+| B-2   | Multi-turn IDP pipeline                    | Highest  | Spec only                                                         |
+| B-3   | Long-horizon codegraph (SWE-bench style)   | High     | Spec only — Phase 1 task packs landed                             |
+| B-4   | Adversarial memory / conflict resolution   | High     | Spec only — Phase 1 task packs landed                             |
+| B-5   | NSV/SGDOP ensemble diversity               | High     | Spec only                                                         |
+| B-6   | Domain-specific compliance QA (HLE analog) | Medium   | Spec only                                                         |
+| B-7   | Institutional knowledge (C&H / amortized)  | Highest  | Spec + Phase-1 offline pack (`institutional-knowledge-enumerate`) |
 
 ---
 
@@ -188,7 +189,39 @@ Decompose fine-tune vs retrieval contribution (`arm-retrieval`, `arm-frontier-ba
 
 ### B-6.3 — Legal/M&A due diligence QA
 
-Blocked on legal vertical adapter. After B-6.1.
+Blocked on legal vertical adapter. After B-6.1. Prefer B-7 C&H institutional cells when the legal claim is **firm memory / precedent**, not closed-book exam QA.
+
+---
+
+## B-7: Institutional knowledge & amortized understanding (Calderwood & Harkness)
+
+Harvey + EngramLab open-sourced **Calderwood & Harkness (C&H)** — a ~100M+ token synthetic law firm (46 clients, 250+ matters, ~10k files) to stress **search completeness** and **reusable corpus models**. Full narrative: [`openbench-b7-calderwood.md`](openbench-b7-calderwood.md).
+
+### B-7.1 — Exhaustive feature enumeration
+
+| Field         | Value                                                                                                                                   |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Product claim | ClawQL memory recall recovers more of the matching matter set than bare / no-memory; vault persistence is the Harvey-baseline delta     |
+| Arms          | Phase-1: `clawql-on` + `clawql-off` + `clawql-no-memory` (tools without seeded vault)                                                   |
+| Task IDs      | `institutional-knowledge-enumerate` (**offline pack landed**)                                                                           |
+| Grader        | Partial credit `hits/5`; emit `MATTERS_FOUND: k/5`; reject false positives; require real `memory_recall` when `REQUIRE_INSTITUTIONAL=1` |
+| Spend cap     | 30 turns / 240s / 8,000 tokens (single cell); B-7.3 adds first-task vs reuse asymmetry                                                  |
+| Expected      | on mean matters_found ≫ off / no-memory; headline copy uses `k/5` not only mean score                                                   |
+| Status        | Offline pack ready; live A/B via `workflow_dispatch` — **not** on `pr_active` until WIN                                                 |
+
+**In-repo offline pack:** [`openbench/tasks/institutional-knowledge-enumerate/`](../../openbench/tasks/institutional-knowledge-enumerate/)
+
+### B-7.2 — Client preference reconstruction
+
+Synthesize Client X governing-law / dispute-resolution preferences across multiple matters. Spec only until mini-firm preference fixture lands.
+
+### B-7.3 — Amortized multi-question session
+
+Five related questions on one client; measure total tokens + completeness with persistent vault vs wiped vault. Needs session-capable harness. Spec only.
+
+### B-7.4 — Full C&H mount
+
+Mount Harvey/EngramLab open-sourced filesystem + short-form matter specs as ground truth. **Blocked** on a stable public download path (as of 2026-08-07 the announcement points at [`harveyai/harvey-labs`](https://github.com/harveyai/harvey-labs); full corpus may still be landing).
 
 ---
 
@@ -197,11 +230,12 @@ Blocked on legal vertical adapter. After B-6.1.
 | Phase       | What runs                                                                | Dependency                                     |
 | ----------- | ------------------------------------------------------------------------ | ---------------------------------------------- |
 | **1 (now)** | B-3.1, B-4.1, B-4.2, B-4.3 offline packs + live A/B when secrets present | Already on `main` infra                        |
+| **1d**      | B-7.1 mini-firm enumerate live A/B                                       | Offline pack on branch; dispatch when ready    |
 | **2**       | B-1.1, B-1.2                                                             | Fine-tune v1 in `tier-map.json`                |
 | **3**       | B-2.1–B-2.3                                                              | Post B-1; vendor-live IDP + provenance graders |
 | **4**       | B-6.1                                                                    | Fine-tune + vertical adapter + Onyx corpus     |
 | **5**       | B-5.1–B-5.2                                                              | NSV/SGDOP instrumentation                      |
-| **6**       | B-1.3, B-3.2, B-6.3                                                      | Long-horizon / second cycle                    |
+| **6**       | B-1.3, B-3.2, B-6.3, B-7.3–B-7.4                                         | Long-horizon / full C&H mount                  |
 
 ### What a full B-1.2 win would mean
 
@@ -211,6 +245,6 @@ Fine-tuned ~27B + ClawQL tools beating frontier bare on ClawQL-specific classes 
 
 ## Maintenance
 
-1. Keep this page as the **canonical advanced ledger**; suite rows update status when packs or live cells land.
+1. Keep this page as the **canonical advanced ledger** (B-1…B-7); suite rows update status when packs or live cells land.
 2. Offline checkers must keep `python3 openbench/validate_tasks.py` green.
 3. Live cells: prefer [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml) with DeepSeek via OpenRouter; link run IDs in a future results table (do not invent IDs).

@@ -22,6 +22,7 @@ on:
           - codegraph-feature-api-surface
           - codegraph-impact-edit
           - memory-conflict-pricing
+          - institutional-knowledge-enumerate
           - onyx-mock-cite
           - memory-wikilink-hop
           - notify-mock-slack
@@ -71,8 +72,10 @@ on:
         type: choice
         options:
           - clawql-on,clawql-off
+          - clawql-on,clawql-off,clawql-no-memory
           - clawql-on
           - clawql-off
+          - clawql-no-memory
           - ouroboros-on,ouroboros-off
           - ouroboros-on
           - ouroboros-off
@@ -261,7 +264,8 @@ jobs:
           matrix.task == 'idp-safe-pipeline-lite' ||
           matrix.task == 'onyx-mock-cite' ||
           matrix.task == 'memory-wikilink-hop' ||
-          matrix.task == 'memory-conflict-pricing'
+          matrix.task == 'memory-conflict-pricing' ||
+          matrix.task == 'institutional-knowledge-enumerate'
         run: |
           {
             echo "OPENBENCH_TIMEOUT_S=180"
@@ -337,6 +341,18 @@ jobs:
             fi
             if [ "${{ matrix.task }}" = "memory-conflict-pricing" ]; then
               echo "OPENBENCH_TIMEOUT_S=180"
+            fi
+            if [ "${{ matrix.task }}" = "institutional-knowledge-enumerate" ]; then
+              echo "OPENBENCH_TIMEOUT_S=240"
+              # Three-arm isolate (tools+vault vs tools/no-vault vs bare) unless
+              # dispatch explicitly chose a different arms set.
+              if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                case "${{ inputs.arms }}" in
+                  clawql-on,clawql-off|"")
+                    echo "OPENBENCH_ARMS=clawql-on,clawql-off,clawql-no-memory"
+                    ;;
+                esac
+              fi
             fi
           } >> "$GITHUB_ENV"
           if [ "${{ matrix.task }}" = "sandbox-trusted-compute" ]; then

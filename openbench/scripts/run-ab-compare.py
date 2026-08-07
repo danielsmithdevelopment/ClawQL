@@ -15,6 +15,8 @@ Arms:
 
   clawql-on   = OpenCode via ``clawql opencode --non-interactive`` + ClawQL MCP
   clawql-off  = raw OpenCode pointed at the same inference URL (no ClawQL MCP)
+  clawql-no-memory = clawql-on tools/MCP but memory disabled + no vault seed
+                   (isolates tool presence from persistent vault representation)
   ouroboros-on  = clawql-on + ``CLAWQL_ENABLE_OUROBOROS=1`` (stagnation / oscillation)
   ouroboros-off = clawql-on MCP/memory but Ouroboros tools disabled
 
@@ -80,6 +82,7 @@ KNOWN_TASKS = discover_known_tasks()
 KNOWN_ARMS = (
     "clawql-on",
     "clawql-off",
+    "clawql-no-memory",
     "ouroboros-on",
     "ouroboros-off",
 )
@@ -321,6 +324,14 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "default_timeout_s": 180,
         "disable_memory": False,
         "require_conflict": True,
+    },
+    "institutional-knowledge-enumerate": {
+        "max_turns": 30,
+        "max_tokens": 8000,
+        "max_wall_s": 240,
+        "default_timeout_s": 240,
+        "disable_memory": False,
+        "require_institutional": True,
     },
 }
 
@@ -699,6 +710,16 @@ CONFLICT_NUDGE = """Continue the memory conflict pricing task.
 Do NOT invent 48 or pick only one price. Call memory_recall now.
 """
 
+INSTITUTIONAL_NUDGE = """Continue the institutional knowledge enumeration task (B-7.1).
+
+1. clawql_memory_recall across the vault (matter notes with CLAWQL_MATTER_ID / ESCROW_PCT / NONCOMPETE_MONTHS)
+2. Keep ONLY matters with escrow_pct >= 10 AND noncompete_months > 18
+3. write relative filePath matters.json with the COMPLETE set (order free):
+   {"matters":["MAT-2388","MAT-2401","MAT-2415","MAT-2450","MAT-2462"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"memory_recall","search_sufficiency":"…"}
+
+Partial lists fail. Near-misses (9% escrow, exactly 18 months NC) must not appear. Call memory_recall now.
+"""
+
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.
 
 Write relative path `policy.json` now (filePath exactly `policy.json`):
@@ -819,6 +840,41 @@ def parse_score(output: str):
             continue
         score = max(0.0, min(1.0, val))
     return score
+
+
+def parse_matters_found(output: str) -> dict | None:
+    """Parse ``MATTERS_FOUND: k/n`` (+ optional ``MATTERS_IDS:``) from checker stdout.
+
+    Headline diagnostic for B-7.1 exhaustive enumeration — prefer reporting
+    ``2.4/5 matters`` over a bare mean score in ledger / outreach copy.
+    """
+    found = None
+    expected = None
+    ids: list[str] = []
+    for line in (output or "").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("MATTERS_FOUND:"):
+            body = stripped[len("MATTERS_FOUND:") :].strip()
+            if "/" in body:
+                left, right = body.split("/", 1)
+                try:
+                    found = int(left.strip())
+                    expected = int(right.strip())
+                except ValueError:
+                    continue
+        elif stripped.startswith("MATTERS_IDS:"):
+            raw = stripped[len("MATTERS_IDS:") :].strip()
+            if raw:
+                ids = [p.strip() for p in raw.split(",") if p.strip()]
+    if found is None or expected is None:
+        return None
+    return {
+        "found": found,
+        "expected": expected,
+        "ids": ids,
+        "ratio": round(found / expected, 4) if expected else 0.0,
+        "label": f"{found}/{expected}",
+    }
 
 
 def effective_score(exit_code: int, parsed_score):
@@ -977,12 +1033,19 @@ def run_checker(task_dir: Path, workdir: Path, env_extra: dict | None = None) ->
         out = (exc.stdout or "") if isinstance(exc.stdout, str) else ""
         code = 124
     score = effective_score(code, parse_score(out))
-    return {
+    result = {
         "exit_code": code,
         "success": code == 0,
         "score": score,
         "output_tail": out[-1500:],
     }
+    matters = parse_matters_found(out)
+    if matters is not None:
+        result["matters_found"] = matters["found"]
+        result["matters_expected"] = matters["expected"]
+        result["matters_found_label"] = matters["label"]
+        result["matters_ids"] = matters["ids"]
+    return result
 
 
 def resolve_clawql() -> str:
@@ -1638,6 +1701,15 @@ def conflict_incomplete(combined: str, workdir: Path) -> bool:
     return not bool(tools & {"clawql_memory_recall", "memory_recall"})
 
 
+def institutional_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "matters.json").is_file():
+        return True
+    tools = real_opencode_tools(combined)
+    return not bool(tools & {"clawql_memory_recall", "memory_recall"})
+
+
 def policy_missing_artifact(workdir: Path) -> bool:
     return not (workdir / "policy.json").is_file()
 
@@ -1722,6 +1794,7 @@ def run_arm_on(
     enable_onyx: bool = False,
     require_wikilink: bool = False,
     require_conflict: bool = False,
+    require_institutional: bool = False,
     correlation_id: str | None = None,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
@@ -2622,6 +2695,37 @@ def run_arm_on(
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
 
+    # institutional knowledge: missing memory_recall / matters.json.
+    if (
+        require_institutional
+        and arm in ("clawql-on", "clawql-no-memory")
+        and not timed_out
+        and institutional_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 20:
+            cont_file = workdir / ".openbench_institutional_nudge.md"
+            cont_file.write_text(INSTITUTIONAL_NUDGE, encoding="utf-8")
+            cont_timeout = max(20, min(80, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_ik = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_ik.stdout or "") + (proc_ik.stderr or "")
+                code = proc_ik.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
     # Cheap models often stop after memory_recall; one write-focused nudge with
     # vault notes inlined so a second recall is unnecessary.
     if vault and not disable_memory and not timed_out and recalled_without_writes(combined):
@@ -2832,7 +2936,7 @@ def mean_or_none(values):
 
 
 def summarize(arm_rows: list[dict]) -> dict:
-    return {
+    out = {
         "n": len(arm_rows),
         "successes": sum(1 for r in arm_rows if r.get("checker", {}).get("success")),
         "success_rate": round(
@@ -2845,6 +2949,25 @@ def summarize(arm_rows: list[dict]) -> dict:
         "mean_wall_s": mean_or_none([r.get("agent", {}).get("wall_s") for r in arm_rows]),
         "cli_completed": sum(1 for r in arm_rows if r.get("agent", {}).get("completed")),
     }
+    found_vals = [
+        r.get("checker", {}).get("matters_found")
+        for r in arm_rows
+        if isinstance(r.get("checker", {}).get("matters_found"), (int, float))
+    ]
+    expected_vals = [
+        r.get("checker", {}).get("matters_expected")
+        for r in arm_rows
+        if isinstance(r.get("checker", {}).get("matters_expected"), (int, float))
+    ]
+    if found_vals and expected_vals:
+        mean_found = mean_or_none(found_vals)
+        # expected is constant per task; take max for label stability
+        exp = int(max(expected_vals))
+        out["mean_matters_found"] = mean_found
+        out["matters_expected"] = exp
+        if mean_found is not None:
+            out["mean_matters_found_label"] = f"{mean_found}/{exp}"
+    return out
 
 
 def render_markdown(report: dict) -> str:
@@ -2866,20 +2989,46 @@ def render_markdown(report: dict) -> str:
         "",
         "## Results",
         "",
-        "| Arm | Success | Mean score | Mean tokens | Mean turns | Mean wall (s) |",
-        "|-----|---------|------------|-------------|------------|---------------|",
     ]
+    show_matters = any(
+        (report.get("summary") or {}).get(a, {}).get("mean_matters_found_label")
+        for a in arms
+    )
+    if show_matters:
+        lines.extend(
+            [
+                "| Arm | Success | Matters found | Mean score | Mean tokens | Mean turns | Mean wall (s) |",
+                "|-----|---------|---------------|------------|-------------|------------|---------------|",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "| Arm | Success | Mean score | Mean tokens | Mean turns | Mean wall (s) |",
+                "|-----|---------|------------|-------------|------------|---------------|",
+            ]
+        )
     for arm in arms:
         s = report["summary"].get(arm)
         if not s:
             continue
-        lines.append(
-            f"| `{arm}` | {s['successes']}/{s['n']} ({s['success_rate']*100:.0f}%) | "
-            f"{s['mean_score'] if s['mean_score'] is not None else '—'} | "
-            f"{s['mean_tokens'] if s['mean_tokens'] is not None else '—'} | "
-            f"{s['mean_turns'] if s['mean_turns'] is not None else '—'} | "
-            f"{s['mean_wall_s'] if s['mean_wall_s'] is not None else '—'} |"
-        )
+        if show_matters:
+            lines.append(
+                f"| `{arm}` | {s['successes']}/{s['n']} ({s['success_rate']*100:.0f}%) | "
+                f"{s.get('mean_matters_found_label') or '—'} | "
+                f"{s['mean_score'] if s['mean_score'] is not None else '—'} | "
+                f"{s['mean_tokens'] if s['mean_tokens'] is not None else '—'} | "
+                f"{s['mean_turns'] if s['mean_turns'] is not None else '—'} | "
+                f"{s['mean_wall_s'] if s['mean_wall_s'] is not None else '—'} |"
+            )
+        else:
+            lines.append(
+                f"| `{arm}` | {s['successes']}/{s['n']} ({s['success_rate']*100:.0f}%) | "
+                f"{s['mean_score'] if s['mean_score'] is not None else '—'} | "
+                f"{s['mean_tokens'] if s['mean_tokens'] is not None else '—'} | "
+                f"{s['mean_turns'] if s['mean_turns'] is not None else '—'} | "
+                f"{s['mean_wall_s'] if s['mean_wall_s'] is not None else '—'} |"
+            )
     interp = [
         "",
         "## Interpretation",
@@ -3061,6 +3210,17 @@ def render_markdown(report: dict) -> str:
         interp.append(
             "- Both arms graded for memory_recall that surfaces BOTH prices and conflict=true."
         )
+    elif task == "institutional-knowledge-enumerate":
+        interp.append(
+            "- Arms graded for exhaustive matter enumeration via memory_recall "
+            "(escrow≥10 and noncompete>18); score = hits/5 (partial credit); "
+            "false positives → 0.0; require real memory_recall tool_use."
+        )
+        interp.append(
+            "- **clawql-on** = seeded vault + memory tools; **clawql-no-memory** = "
+            "ClawQL tools but empty/disabled memory (isolates persistence); "
+            "**clawql-off** = no ClawQL MCP."
+        )
     interp.append("")
     lines.extend(interp)
     return "\n".join(lines)
@@ -3140,6 +3300,14 @@ def run_trial(
                 ouro = True
             elif arm == "ouroboros-off":
                 ouro = False
+            # clawql-no-memory: same MCP surface as clawql-on, but wipe seed +
+            # disable memory so wins cannot come from persistent vault state.
+            disable_memory = bool(caps.get("disable_memory"))
+            if arm == "clawql-no-memory":
+                disable_memory = True
+                if vault:
+                    shutil.rmtree(vault, ignore_errors=True)
+                    vault = None
             agent = run_arm_on(
                 instruction,
                 tmp,
@@ -3150,7 +3318,7 @@ def run_trial(
                 arm=arm,
                 ouroboros=ouro,
                 ouroboros_max_generations=caps.get("ouroboros_max_generations"),
-                disable_memory=bool(caps.get("disable_memory")),
+                disable_memory=disable_memory,
                 task_hard_caps=caps,
                 require_search=bool(caps.get("require_search")),
                 require_execute=bool(caps.get("require_execute")),
@@ -3185,6 +3353,7 @@ def run_trial(
                 enable_onyx=bool(caps.get("enable_onyx")),
                 require_wikilink=bool(caps.get("require_wikilink")),
                 require_conflict=bool(caps.get("require_conflict")),
+                require_institutional=bool(caps.get("require_institutional")),
                 correlation_id=corr,
             )
         agent["correlation_id"] = corr
@@ -3252,6 +3421,8 @@ def run_trial(
             checker_env_extra["OPENBENCH_REQUIRE_WIKILINK"] = "1"
         if caps.get("require_conflict"):
             checker_env_extra["OPENBENCH_REQUIRE_CONFLICT"] = "1"
+        if caps.get("require_institutional"):
+            checker_env_extra["OPENBENCH_REQUIRE_INSTITUTIONAL"] = "1"
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
         return {
@@ -3288,7 +3459,7 @@ def main(argv=None) -> int:
     parser.add_argument(
         "--arms",
         default="clawql-on,clawql-off",
-        help="Comma list: clawql-on,clawql-off,ouroboros-on,ouroboros-off",
+        help="Comma list: clawql-on,clawql-off,clawql-no-memory,ouroboros-on,ouroboros-off",
     )
     args = parser.parse_args(argv)
 
