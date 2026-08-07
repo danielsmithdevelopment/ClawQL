@@ -49,6 +49,20 @@ export type WebConfig = {
   searxngUrl?: string;
   opensearchUrl?: string;
   opensearchIndex?: string;
+  /** Basic auth username (OpenSearch security plugin). */
+  opensearchUsername?: string;
+  /** Basic auth password. Prefer secrets / envFromSecret in Helm. */
+  opensearchPassword?: string;
+  /**
+   * Bearer / API key value for `Authorization: Bearer …` or raw header when
+   * `opensearchAuthHeader` is set (e.g. `ApiKey <base64>`).
+   */
+  opensearchApiKey?: string;
+  /**
+   * Full Authorization header value override (takes precedence over username/password
+   * and apiKey helpers). Example: `Basic …` or `ApiKey …`.
+   */
+  opensearchAuthorization?: string;
   firecrawlApiKey?: string;
   firecrawlBaseUrl?: string;
   /** Cloudflare Browser Run / Browser Rendering token for Kitesurf & Chromium. */
@@ -94,6 +108,10 @@ export function loadWebConfig(env: NodeJS.ProcessEnv = process.env): WebConfig {
     searxngUrl: env.CLAWQL_SEARXNG_URL?.trim() || undefined,
     opensearchUrl: env.CLAWQL_OPENSEARCH_URL?.trim() || undefined,
     opensearchIndex: env.CLAWQL_OPENSEARCH_INDEX?.trim() || "clawql-web",
+    opensearchUsername: env.CLAWQL_OPENSEARCH_USERNAME?.trim() || undefined,
+    opensearchPassword: env.CLAWQL_OPENSEARCH_PASSWORD?.trim() || undefined,
+    opensearchApiKey: env.CLAWQL_OPENSEARCH_API_KEY?.trim() || undefined,
+    opensearchAuthorization: env.CLAWQL_OPENSEARCH_AUTHORIZATION?.trim() || undefined,
     firecrawlApiKey: env.CLAWQL_FIRECRAWL_API_KEY?.trim() || undefined,
     firecrawlBaseUrl: env.CLAWQL_FIRECRAWL_BASE_URL?.trim() || "https://api.firecrawl.dev",
     browserRunApiToken: env.CLAWQL_BROWSER_RUN_API_TOKEN?.trim() || undefined,
