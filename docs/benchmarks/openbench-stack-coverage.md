@@ -182,7 +182,7 @@ Full breakdown (B-1 flywheel → B-7 institutional / C&H): [`openbench-advanced-
 
 ### Phase 1d — Institutional knowledge (Harvey C&H)
 
-23. **`institutional-knowledge-enumerate` (B-7.1)** — offline pack landed (mini-firm vault; exhaustive escrow≥10 ∧ NC>18). Live A/B via `workflow_dispatch` next; keep off `pr_active` until WIN.
+23. **`institutional-knowledge-enumerate` (B-7.1)** — offline pack landed (mini-firm vault; exhaustive escrow≥10 ∧ NC>18). On `pr_active` for live three-arm A/B (same burn path as prior cells); retire after clean WIN.
 
 ### P3 — keep out of PR OpenBench (ops / cluster / paid SaaS)
 
