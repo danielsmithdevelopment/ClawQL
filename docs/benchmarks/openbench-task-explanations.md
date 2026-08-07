@@ -261,7 +261,7 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | **Why it matters**          | B-2.2 resilience — proves recovery under stage failure, not only happy-path `idp-safe-pipeline-lite`.                                                                                                                                             |
 | **How**                     | Arms `ouroboros-on` vs `ouroboros-off`, `doom_loop=deny`. Onyx disabled; seed appendix (on only) carries `quartz-21`. Graders require search + dry_run×2 + audit + notify + ingest + ouroboros loop (on) + `pipeline.json` with `recovered=true`. |
 | **What success looks like** | on: recovered pipeline + ouroboros evidence; off: thrash/decoy wrong codes → 0.0 under spend caps.                                                                                                                                                |
-| **Evidence**                | on **1.0** / off fail — [31139014771](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31139014771).                                                                                                                                  |
+| **Evidence**                | on **1.0** / off fail — [31139014771](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31139014771).                                                                                                                                 |
 | **Does _not_ prove**        | Live Stirling timeout / real Onyx outage / Argo DAG recovery — keep those as scheduled integration.                                                                                                                                               |
 
 ---

@@ -235,7 +235,7 @@ Each shipped cell must also update: `ci-matrix.json`, task explanations, ledger,
 | B-4.2 | `memory-stale-after-update`               | Parked (offline only)                                                                                   |
 | B-4.3 | `memory-injection-attempt`                | ✅ retired WIN                                                                                          |
 | B-2   | `idp-safe-pipeline-lite`                  | ✅ Retired WIN [31039035892](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31039035892) |
-| B-2.2 | `idp-pipeline-resilience`                 | ✅ retired WIN [31139014771](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31139014771)                                                                    |
+| B-2.2 | `idp-pipeline-resilience`                 | ✅ retired WIN [31139014771](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31139014771) |
 | B-1   | reuse retired IDs under FT matrix         | After FT v1                                                                                             |
 | B-6   | `compliance-mortgage-qa` (custom harness) | After B-1 + corpus                                                                                      |
 | B-5   | `daos-multiperspective-*`                 | After metric export                                                                                     |
