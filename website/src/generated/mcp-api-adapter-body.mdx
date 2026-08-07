@@ -48,7 +48,8 @@ MCP standardized how agents discover and call tools. Every other consumer still 
 The usual answer is a custom adapter per consumer — or Python **[mcpo](https://github.com/open-webui/mcpo)** (Open WebUI) for **OpenAPI/REST only**. **`mcp-api-adapter`** is the multi-surface option: OpenAPI + GraphQL + Streamable HTTP `/mcp` + gRPC + WebSocket + gen-cli from one MCP upstream. Prefer **mcpo** when Open WebUI users already expect that single REST surface; prefer the adapter when one REST facade is not enough.
 
 Together with ClawQL Core (APIs → MCP), this is the **[Protocol Fabric](/mcp/protocol-fabric)** — MCP as the common IR in both directions.
->>>>>>> 19d2cfe7 (docs(mcp-api-adapter): language-agnostic upstream + mcpo positioning)
+
+> > > > > > > 19d2cfe7 (docs(mcp-api-adapter): language-agnostic upstream + mcpo positioning)
 
 ## Direction: MCP → APIs
 
@@ -298,7 +299,8 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 | **`mcp-grpc-transport`**                              | Production TypeScript MCP gRPC transport                         |
 | **Panguard bridge**                                   | Policy / JWT ATR in front of MCP                                 |
 | **[ClawQL Streams](/streams/clawql-streams)** (draft) | Event-driven agents; WebSocket sources into Core                 |
->>>>>>> 508459b5 (docs(mcp-api-adapter): cross-link ClawQL Streams draft)
+
+> > > > > > > 508459b5 (docs(mcp-api-adapter): cross-link ClawQL Streams draft)
 
 ## Troubleshooting
 
@@ -321,7 +323,7 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 - gRPC transport: [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/)
 - Local smoke: [`scripts/dev/smoke-mcp-api-adapter.sh`](../../scripts/dev/smoke-mcp-api-adapter.sh) · [`scripts/dev/smoke-protocol-fabric-loop.sh`](../../scripts/dev/smoke-protocol-fabric-loop.sh)
 - Protocol Fabric / event loop (draft): [`docs/streams/clawql-streams.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-streams.md)
->>>>>>> 19d2cfe7 (docs(mcp-api-adapter): language-agnostic upstream + mcpo positioning)
+  > > > > > > > 19d2cfe7 (docs(mcp-api-adapter): language-agnostic upstream + mcpo positioning)
 
 export function wrapper({ children }) {
   return children
