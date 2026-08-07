@@ -1,8 +1,8 @@
 # mcp-api-adapter
 
-**Standalone package:** point it at **any** MCP server (any language that speaks MCP) and instantly get **OpenAPI + GraphQL + Streamable HTTP `/mcp` + gRPC** for the same tools — plus an optional generated CLI. The adapter itself is TypeScript (`npx`); the upstream is language-agnostic. No ClawQL install required.
+**Standalone package:** point it at **any** MCP server (any language that speaks MCP) and instantly get **OpenAPI + GraphQL + Streamable HTTP `/mcp` + gRPC + WebSocket `/ws`** for the same tools — plus an optional generated CLI. The adapter itself is TypeScript (`npx`); the upstream is language-agnostic. No ClawQL install required.
 
-Closest single-surface alternative: Python **[mcpo](https://github.com/open-webui/mcpo)** (OpenAPI only). Prefer this package when you need all five surfaces — see [Protocol Fabric](../../docs/gtm/protocol-fabric.md).
+Closest single-surface alternative: Python **[mcpo](https://github.com/open-webui/mcpo)** (OpenAPI only). Prefer this package when you need all six surfaces — see [Protocol Fabric](../../docs/gtm/protocol-fabric.md).
 
 ```bash
 # Instant — wrap a remote MCP server
@@ -31,6 +31,7 @@ npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- npx -y @modelcontextprotoc
            ├── GraphQL     POST /graphql     · /graphiql
            ├── MCP         Streamable HTTP   · /mcp
            ├── gRPC        CallTool (upstream or local scaffold)
+           ├── WebSocket   JSON tool calls   · /ws
            └── gen-cli     thin Node CLI (PrintingPress later)
 ```
 
@@ -52,10 +53,11 @@ npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- npx -y @modelcontextprotoc
 | `POST /graphql` | GraphQL |
 | `GET /graphiql` | GraphiQL |
 | `POST/GET/DELETE /mcp` | Streamable HTTP MCP (same tools) |
+| `WS /ws` | WebSocket JSON tool calls |
 | `GET /tools` | Catalog |
 | `GET /healthz` | Liveness |
 
-Disable MCP with `--no-mcp`. Change path with `--mcp-path /mcp`.
+Disable MCP with `--no-mcp`. Disable WebSocket with `--no-ws`. Change paths with `--mcp-path` / `--ws-path`.
 
 ## Programmatic API
 

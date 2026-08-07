@@ -33,6 +33,8 @@ HTTP APIs:
   --listen <host:port>   Bind OpenAPI + GraphQL + /mcp (default 0.0.0.0:8090)
   --mcp-path <path>      Streamable HTTP MCP path (default /mcp)
   --no-mcp               Disable Streamable HTTP /mcp surface
+  --ws-path <path>       WebSocket tool-call path (default /ws)
+  --no-ws                Disable WebSocket surface
   --api-key <key>        Optional edge API key
   --refresh-ms <n>       Catalog poll interval (default 0 = off)
   --title <string>       Docs / GraphiQL title
@@ -131,6 +133,8 @@ const sharedOpts = {
   "no-grpc": { type: "boolean", default: false },
   "mcp-path": { type: "string" },
   "no-mcp": { type: "boolean", default: false },
+  "ws-path": { type: "string" },
+  "no-ws": { type: "boolean", default: false },
   listen: { type: "string" },
   "api-key": { type: "string" },
   "refresh-ms": { type: "string" },
@@ -218,6 +222,12 @@ async function runServe(argv: string[]): Promise<void> {
       envFirst("MCP_API_ADAPTER_MCP_PATH") ||
       "/mcp";
 
+  const wsPath: string | false = values["no-ws"]
+    ? false
+    : values["ws-path"]?.trim() ||
+      envFirst("MCP_API_ADAPTER_WS_PATH") ||
+      "/ws";
+
   const started = await startMcpApiAdapter({
     upstream,
     host,
@@ -227,6 +237,7 @@ async function runServe(argv: string[]): Promise<void> {
     title: values.title?.trim(),
     grpcListen,
     mcpPath,
+    wsPath,
     protocolVersion: process.env.MCP_PROTOCOL_VERSION?.trim(),
   });
 
@@ -245,6 +256,9 @@ async function runServe(argv: string[]): Promise<void> {
   console.log(`[mcp-api-adapter] graphql:  ${started.url}/graphql`);
   if (started.mcpPath) {
     console.log(`[mcp-api-adapter] mcp:      ${started.url}${started.mcpPath}`);
+  }
+  if (started.wsUrl) {
+    console.log(`[mcp-api-adapter] websocket: ${started.wsUrl}`);
   }
   if (started.grpcAddress) {
     console.log(

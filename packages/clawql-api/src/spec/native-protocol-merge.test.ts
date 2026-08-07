@@ -44,17 +44,57 @@ function gqlNativeOp(id: string, specLabel?: string): Operation {
 describe("mergeNativeProtocolOperations", () => {
   const gqlSpy = vi.spyOn(gqlLoader, "loadGraphqlNativeOperations");
   const grpcSpy = vi.spyOn(grpcLoader, "loadGrpcNativeOperations");
+  let prevHome: string | undefined;
+  let emptyHome: string;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     gqlSpy.mockReset();
     grpcSpy.mockReset();
     gqlSpy.mockResolvedValue([]);
     grpcSpy.mockResolvedValue([]);
     resetNativeProtocolMetricsForTests();
+    prevHome = process.env.CLAWQL_HOME;
+    const { mkdtemp } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    emptyHome = await mkdtemp(join(tmpdir(), "clawql-no-sources-"));
+    process.env.CLAWQL_HOME = emptyHome;
   });
 
   afterEach(() => {
     resetNativeProtocolMetricsForTests();
+    if (prevHome === undefined) delete process.env.CLAWQL_HOME;
+    else process.env.CLAWQL_HOME = prevHome;
+  });
+
+  it("still merges custom CLI sources when native loaders yield nothing", async () => {
+    const { writeFile } = await import("node:fs/promises");
+    const { join } = await import("node:path");
+    await writeFile(
+      join(emptyHome, "sources.json"),
+      JSON.stringify({
+        version: 1,
+        sources: [
+          {
+            id: "fabric-event",
+            kind: "cli",
+            name: "Fabric",
+            addedAt: new Date().toISOString(),
+            cliCommand: "node",
+            cliArgs: ["-e", "console.log(1)"],
+          },
+        ],
+      }),
+      "utf8"
+    );
+    const loaded: LoadedSpec = {
+      operations: [restOp("listPets")],
+      rawSource: {},
+      openapi: minimalOpenapi(),
+    };
+    const out = await mergeNativeProtocolOperations(loaded);
+    expect(out.operations.map((o) => o.id)).toContain("cli__fabric_event__run");
+    expect(out.operations.map((o) => o.id)).toContain("listPets");
   });
 
   it("returns loaded unchanged when native loaders yield nothing", async () => {

@@ -138,7 +138,7 @@ describe("mcp-api-adapter e2e (gRPC upstream)", () => {
       surfaces: string[];
     };
     expect(toolsBody.upstreamKind).toBe("grpc");
-    expect(toolsBody.surfaces).toEqual(["openapi", "graphql", "mcp", "grpc"]);
+    expect(toolsBody.surfaces).toEqual(["openapi", "graphql", "mcp", "grpc", "websocket"]);
     expect(toolsBody.tools.map((t) => t.name).sort()).toEqual(["add", "echo"]);
 
     const restEcho = await fetch(`${gateway.url}/echo`, {
@@ -229,7 +229,7 @@ describe("mcp-api-adapter e2e (HTTP upstream → scaffold OpenAPI+GraphQL+gRPC)"
     };
     expect(healthBody.upstreamKind).toBe("http");
     expect(healthBody.mcpPath).toBe("/mcp");
-    expect(healthBody.surfaces).toEqual(["openapi", "graphql", "mcp", "grpc"]);
+    expect(healthBody.surfaces).toEqual(["openapi", "graphql", "mcp", "grpc", "websocket"]);
 
     const restAdd = await fetch(`${gateway.url}/add`, {
       method: "POST",

@@ -19,6 +19,7 @@ import {
   connectUpstream,
   type UpstreamConnection,
 } from "./upstream.js";
+import { attachWebSocketSurface, DEFAULT_WS_PATH } from "./websocket.js";
 
 function readApiKey(req: Request): string | undefined {
   const headerKey = req.header("x-api-key")?.trim();
@@ -38,6 +39,14 @@ function resolveMcpPath(mcpPath: string | false | undefined): string | undefined
   return trimmed.startsWith("/") ? trimmed.replace(/\/$/, "") || "/mcp" : `/${trimmed}`;
 }
 
+function resolveWsPath(wsPath: string | false | undefined): string | undefined {
+  if (wsPath === false) return undefined;
+  if (wsPath === undefined) return DEFAULT_WS_PATH;
+  const trimmed = wsPath.trim();
+  if (!trimmed || trimmed === "/") return DEFAULT_WS_PATH;
+  return trimmed.startsWith("/") ? trimmed.replace(/\/$/, "") || DEFAULT_WS_PATH : `/${trimmed}`;
+}
+
 export type CreateMcpApiAdapterAppOptions = {
   getCatalog: () => ToolCatalog;
   callTool: CallToolFn;
@@ -47,6 +56,8 @@ export type CreateMcpApiAdapterAppOptions = {
   grpcAddress?: string;
   /** When set, mount Streamable HTTP MCP at this path (before `/:toolName`). */
   mcpPath?: string;
+  /** WebSocket path when enabled (advertised on /healthz). */
+  wsPath?: string;
   createBridgedMcpServer?: () => import("@modelcontextprotocol/sdk/server/mcp.js").McpServer;
 };
 
@@ -76,6 +87,7 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
       upstreamKind: catalog.upstreamKind,
       grpcAddress: catalog.grpcAddress ?? options.grpcAddress,
       mcpPath: catalog.mcpPath ?? options.mcpPath,
+      wsPath: options.wsPath,
       toolCount: catalog.tools.length,
       fetchedAt: catalog.fetchedAt,
       surfaces: catalog.surfaces,
@@ -122,7 +134,7 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
   }
 
   const reserved = new Set(
-    ["tools", "docs", "openapi.json", "healthz", "graphql", "graphiql", "mcp"].concat(
+    ["tools", "docs", "openapi.json", "healthz", "graphql", "graphiql", "mcp", "ws"].concat(
       options.mcpPath ? [options.mcpPath.replace(/^\//, "")] : []
     )
   );
@@ -206,12 +218,13 @@ async function listenHttp(
 function attachRefreshTimer(
   upstream: UpstreamConnection,
   mcpPath: string | undefined,
+  wsPath: string | undefined,
   setCatalog: (c: ToolCatalog) => void,
   refreshMs: number
 ): ReturnType<typeof setInterval> | undefined {
   if (refreshMs <= 0) return undefined;
   const timer = setInterval(() => {
-    void refreshCatalog(upstream, mcpPath)
+    void refreshCatalog(upstream, mcpPath, wsPath)
       .then((next) => setCatalog(next))
       .catch((err) => {
         console.error("[mcp-api-adapter] catalog refresh failed:", err);
@@ -223,17 +236,18 @@ function attachRefreshTimer(
 
 /**
  * Point at any MCP server (stdio | Streamable HTTP | gRPC) and serve
- * OpenAPI + GraphQL + Streamable HTTP `/mcp` + (optional) gRPC for the same tools.
+ * OpenAPI + GraphQL + Streamable HTTP `/mcp` + WebSocket `/ws` + (optional) gRPC for the same tools.
  */
 export async function startMcpApiAdapter(
   options: McpApiAdapterOptions
 ): Promise<StartedMcpApiAdapter> {
   const mcpPath = resolveMcpPath(options.mcpPath);
+  const wsPath = resolveWsPath(options.wsPath);
   const upstream = await connectUpstream(options.upstream, {
     grpcListen: options.grpcListen,
   });
 
-  let catalog = buildCatalogFromUpstream(upstream, { mcpPath });
+  let catalog = buildCatalogFromUpstream(upstream, { mcpPath, wsPath });
 
   const app = createMcpApiAdapterApp({
     getCatalog: () => catalog,
@@ -243,6 +257,7 @@ export async function startMcpApiAdapter(
     serverName: options.serverName,
     grpcAddress: upstream.grpcAddress ?? options.grpcAddress,
     mcpPath,
+    wsPath,
     createBridgedMcpServer: mcpPath ? upstream.createBridgedMcpServer : undefined,
   });
 
@@ -250,31 +265,50 @@ export async function startMcpApiAdapter(
   const port = options.port ?? 8090;
   const { server, boundPort } = await listenHttp(app, host, port);
 
+  const ws =
+    wsPath != null
+      ? attachWebSocketSurface({
+          server,
+          path: wsPath,
+          getCatalog: () => catalog,
+          callTool: upstream.callTool,
+          apiKey: options.apiKey,
+        })
+      : undefined;
+
   const refreshTimer = attachRefreshTimer(
     upstream,
     mcpPath,
+    wsPath,
     (next) => {
       catalog = next;
     },
     options.refreshMs ?? 0
   );
 
+  const publicHost = host === "0.0.0.0" ? "127.0.0.1" : host;
+  const url = `http://${publicHost}:${boundPort}`;
+  const wsUrl = ws ? `ws://${publicHost}:${boundPort}${ws.path}` : undefined;
+
   return {
-    url: `http://${host === "0.0.0.0" ? "127.0.0.1" : host}:${boundPort}`,
+    url,
     host,
     port: boundPort,
     grpcAddress: upstream.grpcAddress,
     mcpPath,
+    wsPath: ws?.path,
+    wsUrl,
     upstream: upstream.label,
     upstreamKind: upstream.kind,
     getCatalog: () => catalog,
     refreshCatalog: async () => {
       const tools = await upstream.refreshTools();
-      catalog = buildCatalogFromUpstream(upstream, { tools, mcpPath });
+      catalog = buildCatalogFromUpstream(upstream, { tools, mcpPath, wsPath });
       return catalog;
     },
     close: async () => {
       if (refreshTimer) clearInterval(refreshTimer);
+      if (ws) await ws.close();
       await new Promise<void>((resolve, reject) => {
         server.close((err) => (err ? reject(err) : resolve()));
       });

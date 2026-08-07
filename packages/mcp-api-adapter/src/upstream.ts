@@ -24,7 +24,7 @@ import type {
   UpstreamOptions,
 } from "./types.js";
 
-const ADAPTER_VERSION = "0.5.1";
+const ADAPTER_VERSION = "0.6.0";
 
 const BRIDGE_CAPS = {
   capabilities: {
@@ -76,19 +76,22 @@ function asListedTools(
 export function catalogSurfaces(options: {
   grpcAddress?: string;
   mcpPath?: string;
+  wsPath?: string;
 }): ApiSurface[] {
   const surfaces: ApiSurface[] = ["openapi", "graphql"];
   if (options.mcpPath) surfaces.push("mcp");
   if (options.grpcAddress) surfaces.push("grpc");
+  if (options.wsPath) surfaces.push("websocket");
   return surfaces;
 }
 
 export function buildCatalogFromUpstream(
   upstream: UpstreamConnection,
-  extras?: { tools?: ListedMcpTool[]; mcpPath?: string }
+  extras?: { tools?: ListedMcpTool[]; mcpPath?: string; wsPath?: string }
 ): ToolCatalog {
   const list = extras?.tools ?? upstream.tools;
   const mcpPath = extras?.mcpPath;
+  const wsPath = extras?.wsPath;
   return {
     tools: list,
     fetchedAt: new Date().toISOString(),
@@ -99,6 +102,7 @@ export function buildCatalogFromUpstream(
     surfaces: catalogSurfaces({
       grpcAddress: upstream.grpcAddress,
       mcpPath,
+      wsPath,
     }),
   };
 }

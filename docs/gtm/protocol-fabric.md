@@ -34,7 +34,7 @@ Any output protocol
   CLI · OpenAPI · GraphQL · gRPC · WebSocket* · MCP
 ```
 
-\* WebSocket as a first-class adapter surface is **planned** (sixth surface; DO-native). ClawQL Streams covers WebSocket as an **event source** into Core — see [`design/clawql-streams.md`](../design/clawql-streams.md).
+\* WebSocket is now a first-class **adapter** surface (`/ws` in `mcp-api-adapter@0.6`). ClawQL Streams still covers WebSocket as an **event source** into Core — see [`streams/clawql-streams.md`](../streams/clawql-streams.md). Fabric loop smoke: [`design/protocol-fabric-loop-benchmark.md`](../design/protocol-fabric-loop-benchmark.md).
 
 | Direction         | Package           | Claim                                                                                     |
 | ----------------- | ----------------- | ----------------------------------------------------------------------------------------- |
@@ -80,5 +80,5 @@ The adapter is **implemented in TypeScript** (`npx mcp-api-adapter`). Upstream M
 
 - User guide: [`mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md)
 - Adapter GTM: [`mcp-api-adapter-positioning.md`](./mcp-api-adapter-positioning.md)
-- Streams (event-driven autonomous execution): [`design/clawql-streams.md`](../design/clawql-streams.md)
+- Streams (event-driven autonomous execution): [`streams/clawql-streams.md`](../streams/clawql-streams.md)
 - Custom sources (MCP **into** ClawQL): [`getting-started/custom-sources.md`](../getting-started/custom-sources.md)

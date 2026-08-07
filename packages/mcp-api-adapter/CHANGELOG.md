@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0
+
+- **WebSocket surface** (`/ws`): JSON tool-call messages over a persistent connection (sixth surface). `--ws-path`, `--no-ws`.
+- Protocol Fabric loop smoke: `scripts/dev/smoke-protocol-fabric-loop.sh` (gen-cli → CLI custom source → MCP → adapter → `memory_ingest`).
+
 ## 0.5.1
 
 - Fix Streamable HTTP `/mcp` when upstream is **gRPC**: normalize protobuf CallTool content oneofs into MCP `{ type: "text", text }` blocks (SDK validation was rejecting raw wire shapes).
