@@ -117,6 +117,12 @@ When `CLAWQL_CHROMIUM_CDP_URL` is set (and dry-run is off), the chromium-family 
 
 HTTP base URLs are resolved via `/json/version` → `webSocketDebuggerUrl`.
 
+Optional live smoke (skipped in CI unless the env is set):
+
+```bash
+CLAWQL_CHROMIUM_CDP_URL=http://127.0.0.1:9222 npm test -w clawql-web -- src/cdp.live.test.ts
+```
+
 ## MCP tools
 
 | Tool             | Behavior                                                              |
