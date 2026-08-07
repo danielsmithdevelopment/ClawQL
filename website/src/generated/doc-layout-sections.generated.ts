@@ -13,42 +13,122 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     },
     { title: 'Next steps', id: 'next-steps' },
   ],
+  '/architecture/agentic-fabric': [
+    { title: 'Terminology', id: 'terminology' },
+    { title: 'Three-layer topology', id: 'three-layer-topology' },
+    { title: 'Layer 1 — Regional Hub', id: 'layer-1-regional-hub' },
+    {
+      title: 'Layer 2 — Dedicated Virtual Gateway',
+      id: 'layer-2-dedicated-virtual-gateway',
+    },
+    { title: 'Layer 3 — Edge Gateway', id: 'layer-3-edge-gateway' },
+    {
+      title: 'Event-driven fabric — NATS JetStream',
+      id: 'event-driven-fabric-nats-jet-stream',
+    },
+    {
+      title: 'Valkey shared-state schemas (target)',
+      id: 'valkey-shared-state-schemas-target',
+    },
+    {
+      title: 'Swarm diversity (NSV / SGDOP) — target',
+      id: 'swarm-diversity-nsv-sgdop-target',
+    },
+    {
+      title: 'Sovereign execution environment',
+      id: 'sovereign-execution-environment',
+    },
+    { title: 'Hardened primitives table', id: 'hardened-primitives-table' },
+    { title: 'Glossary vs other “layers”', id: 'glossary-vs-other-layers' },
+    { title: 'Related', id: 'related' },
+  ],
+  '/architecture/enterprise-ontology': [
+    { title: 'One-Sentence Pitch', id: 'one-sentence-pitch' },
+    {
+      title: 'Ontology Enables Token Efficiency (Tier 1)',
+      id: 'ontology-enables-token-efficiency-tier-1',
+    },
+    {
+      title: 'Why Formalize — and Why Differently from Palantir',
+      id: 'why-formalize-and-why-differently-from-palantir',
+    },
+    {
+      title: 'OOP Taken Seriously for Enterprise AI',
+      id: 'oop-taken-seriously-for-enterprise-ai',
+    },
+    { title: 'Three-Layer Architecture', id: 'three-layer-architecture' },
+    {
+      title: 'Kinetic Governance: MCP First, GraphQL as Transport Later',
+      id: 'kinetic-governance-mcp-first-graph-ql-as-transport-later',
+    },
+    {
+      title: 'Kinetic Executors (the Triad + Native)',
+      id: 'kinetic-executors-the-triad-native',
+    },
+    { title: 'OKF and the Memory Vault', id: 'okf-and-the-memory-vault' },
+    { title: 'Git vs R2 — What Lives Where', id: 'git-vs-r2-what-lives-where' },
+    {
+      title: 'Ontology Builder (Yes — Sequenced)',
+      id: 'ontology-builder-yes-sequenced',
+    },
+    { title: 'Try It Today', id: 'try-it-today' },
+    {
+      title: 'Industry Context (Not Dependencies)',
+      id: 'industry-context-not-dependencies',
+    },
+    { title: 'Design-Partner Gate', id: 'design-partner-gate' },
+    { title: 'Phased Delivery Checklist', id: 'phased-delivery-checklist' },
+    { title: 'See Also', id: 'see-also' },
+  ],
   '/architecture/token-efficiency': [
     {
-      title: 'The wrong conversation about LLM cost',
-      id: 'the-wrong-conversation-about-llm-cost',
+      title: "The Problem: API Surfaces Don't Fit in a Context Window",
+      id: 'the-problem-api-surfaces-dont-fit-in-a-context-window',
     },
     {
-      title: 'Why context bloat is a performance issue (not just cost)',
-      id: 'why-context-bloat-is-a-performance-issue-not-just-cost',
+      title: 'Layer 1: Code Mode — The Foundation',
+      id: 'layer-1-code-mode-the-foundation',
     },
     {
-      title: 'The architecture of compounding efficiency',
-      id: 'the-architecture-of-compounding-efficiency',
+      title: 'Layer 2: Trimming What Comes Back',
+      id: 'layer-2-trimming-what-comes-back',
     },
     {
-      title: 'Tier 1: Structural efficiency — what never enters context',
-      id: 'tier-1-structural-efficiency-what-never-enters-context',
+      title: 'Layer 3: Cutting Prose Filler',
+      id: 'layer-3-cutting-prose-filler',
     },
     {
-      title: 'Tier 2: Smart inference — processing less, routing better',
-      id: 'tier-2-smart-inference-processing-less-routing-better',
+      title: 'Layer 4: Prompt Caching — Making Repetition Cheap',
+      id: 'layer-4-prompt-caching-making-repetition-cheap',
     },
     {
-      title: 'Tier 3: Continuous optimization — cheaper over time',
-      id: 'tier-3-continuous-optimization-cheaper-over-time',
+      title: 'Layer 5: Skipping Repeated Work Entirely',
+      id: 'layer-5-skipping-repeated-work-entirely',
     },
-    { title: 'The compounding math', id: 'the-compounding-math' },
     {
-      title: 'Observability: proving the savings',
-      id: 'observability-proving-the-savings',
+      title: 'Layer 6: Compressing History in Long Sessions',
+      id: 'layer-6-compressing-history-in-long-sessions',
     },
-    { title: 'Known trade-offs', id: 'known-trade-offs' },
     {
-      title: 'Efficiency is the path to sovereignty',
-      id: 'efficiency-is-the-path-to-sovereignty',
+      title: 'Layer 7: Trimming the Final Prompt',
+      id: 'layer-7-trimming-the-final-prompt',
     },
-    { title: 'Getting started', id: 'getting-started' },
+    {
+      title: 'Layer 8: Routing Tasks to the Right Model',
+      id: 'layer-8-routing-tasks-to-the-right-model',
+    },
+    { title: 'Beyond These Eight Layers', id: 'beyond-these-eight-layers' },
+    {
+      title: 'Layers 9–12 (Inference Gateway Extensions)',
+      id: 'layers-9-12-inference-gateway-extensions',
+    },
+    { title: 'Implementation Map', id: 'implementation-map' },
+    { title: 'Putting It Together', id: 'putting-it-together' },
+    { title: 'Known Trade-offs', id: 'known-trade-offs' },
+    {
+      title: 'Comparison to Published Benchmarks',
+      id: 'comparison-to-published-benchmarks',
+    },
   ],
   '/benchmarks': [
     { title: 'What the highlights measure', id: 'what-the-highlights-measure' },
@@ -115,20 +195,20 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
   ],
   '/case-studies/cross-thread-vault-recall': [
     {
-      title: '1. Problem: conversation context is ephemeral',
-      id: '1-problem-conversation-context-is-ephemeral',
+      title: '1. The problem: conversation context is ephemeral',
+      id: '1-the-problem-conversation-context-is-ephemeral',
     },
     {
-      title: '2. Negative control: ask the repo alone',
-      id: '2-negative-control-ask-the-repo-alone',
+      title: '2. What the repo alone can answer',
+      id: '2-what-the-repo-alone-can-answer',
     },
     {
       title: '3. What a week of memory_ingest can look like (Obsidian graph)',
       id: '3-what-a-week-of-memory-ingest-can-look-like-obsidian-graph',
     },
     {
-      title: '4. Positive control: memory_recall() surfaces vault-only plans',
-      id: '4-positive-control-memory-recall-surfaces-vault-only-plans',
+      title: '4. memory_recall() surfacing vault-only plans',
+      id: '4-memory-recall-surfacing-vault-only-plans',
     },
     {
       title: '5. Follow-up: search + execute to create GitHub issues',
@@ -239,8 +319,8 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       id: '7-memory-ingest-when-the-work-is-done',
     },
     {
-      title: '8. Scratch, trail, and durable memory (summary)',
-      id: '8-scratch-trail-and-durable-memory-summary',
+      title: '8. Scratch, trail, and durable memory',
+      id: '8-scratch-trail-and-durable-memory',
     },
     { title: '9. References', id: '9-references' },
     { title: 'Case study metadata', id: 'case-study-metadata' },
@@ -259,60 +339,60 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       id: '3-initial-symptoms-and-user-actions-true-nas-side',
     },
     {
-      title: '4. Phase A — Cursor agent host vs your LAN (first ping / curl)',
-      id: '4-phase-a-cursor-agent-host-vs-your-lan-first-ping-curl',
+      title: '4. Phase A: Cursor agent host probes',
+      id: '4-phase-a-cursor-agent-host-probes',
     },
     {
-      title: '5. Phase B — memory_recall then memory_ingest (durable trail)',
-      id: '5-phase-b-memory-recall-then-memory-ingest-durable-trail',
+      title: '5. Phase B: memory_recall then memory_ingest',
+      id: '5-phase-b-memory-recall-then-memory-ingest',
     },
     {
-      title: '6. Phase C — Another Mac on a richer path (ARP + TCP semantics)',
-      id: '6-phase-c-another-mac-on-a-richer-path-arp-tcp-semantics',
+      title: '6. Phase C: Another Mac on a richer path',
+      id: '6-phase-c-another-mac-on-a-richer-path',
     },
     {
-      title: '7. Phase D — Thunderbolt console path (critical correction)',
-      id: '7-phase-d-thunderbolt-console-path-critical-correction',
+      title: '7. Phase D: Thunderbolt console path',
+      id: '7-phase-d-thunderbolt-console-path',
     },
     {
-      title: '8. Phase E — Homelab topology: “offline” island vs “no UI”',
-      id: '8-phase-e-homelab-topology-offline-island-vs-no-ui',
+      title: '8. Phase E: Homelab topology — the office island',
+      id: '8-phase-e-homelab-topology-the-office-island',
     },
     {
-      title: '9. Phase F — Mac mini curl openssl errno 49 EADDRNOTAVAIL',
+      title: '9. Phase F: Mac mini curl openssl errno 49 EADDRNOTAVAIL',
       id: '9-phase-f-mac-mini-curl-openssl-errno-49-eaddrnotavail',
     },
     {
-      title: '10. Phase G — SSH enablement (UI path) and first-login friction',
-      id: '10-phase-g-ssh-enablement-ui-path-and-first-login-friction',
+      title: '10. Phase G: SSH enablement and first-login friction',
+      id: '10-phase-g-ssh-enablement-and-first-login-friction',
     },
     {
       title: '11. Preventive runbook (condensed)',
       id: '11-preventive-runbook-condensed',
     },
     {
-      title: '12. memory_recall on this topic (what comes back)',
-      id: '12-memory-recall-on-this-topic-what-comes-back',
+      title: '12. memory_recall on this topic',
+      id: '12-memory-recall-on-this-topic',
     },
     {
       title: '13. memory_ingest of this case study',
       id: '13-memory-ingest-of-this-case-study',
     },
-    { title: '14. References (in-repo)', id: '14-references-in-repo' },
+    { title: '14. References', id: '14-references' },
     {
       title: '15. Detailed chronological timeline (cross-thread)',
       id: '15-detailed-chronological-timeline-cross-thread',
     },
     {
-      title: '16. Appendix A — Command snippets (reference)',
+      title: '16. Appendix A: Command snippets (reference)',
       id: '16-appendix-a-command-snippets-reference',
     },
     {
-      title: '17. Appendix B — Vault memory_ingest session IDs (2026-04-20)',
+      title: '17. Appendix B: Vault memory_ingest session IDs (2026-04-20)',
       id: '17-appendix-b-vault-memory-ingest-session-ids-2026-04-20',
     },
     {
-      title: '18. Appendix C — Evidence hygiene (Gemini vs measured)',
+      title: '18. Appendix C: Evidence hygiene (Gemini vs measured)',
       id: '18-appendix-c-evidence-hygiene-gemini-vs-measured',
     },
     { title: '19. Changelog', id: '19-changelog' },
@@ -356,10 +436,7 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
   ],
   '/concepts': [
     { title: 'Architecture', id: 'architecture' },
-    {
-      title: 'Feature tiers (what is on by default)',
-      id: 'feature-tiers-what-is-on-by-default',
-    },
+    { title: 'Feature tiers', id: 'feature-tiers' },
     { title: 'Design principles', id: 'design-principles' },
     {
       title: 'Ouroboros (library + optional MCP tools)',
@@ -566,6 +643,15 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Deployment options', id: 'deployment-options' },
     { title: 'Next steps', id: 'next-steps' },
   ],
+  '/getting-started/custom-sources': [
+    { title: 'Why this exists', id: 'why-this-exists' },
+    { title: 'Register another MCP server', id: 'register-another-mcp-server' },
+    { title: 'Desktop / dashboard', id: 'desktop-dashboard' },
+    { title: 'Source kinds', id: 'source-kinds' },
+    { title: 'Harness wrappers', id: 'harness-wrappers' },
+    { title: 'Install', id: 'install' },
+    { title: 'See also', id: 'see-also' },
+  ],
   '/getting-started/for-teams': [
     { title: 'What teams need', id: 'what-teams-need' },
     { title: 'Architecture', id: 'architecture' },
@@ -578,6 +664,19 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Observability for team MCP', id: 'observability-for-team-mcp' },
     { title: 'Verify end-to-end', id: 'verify-end-to-end' },
     { title: 'Next steps', id: 'next-steps' },
+  ],
+  '/getting-started/inference': [
+    { title: 'Already on OpenRouter?', id: 'already-on-open-router' },
+    { title: 'What you get', id: 'what-you-get' },
+    { title: 'How it works', id: 'how-it-works' },
+    { title: 'Pick your path', id: 'pick-your-path' },
+    { title: 'Five-minute start', id: 'five-minute-start' },
+    { title: 'Point a client', id: 'point-a-client' },
+    { title: 'Add MCP and memory', id: 'add-mcp-and-memory' },
+    { title: 'Security defaults', id: 'security-defaults' },
+    { title: 'What “good” looks like next', id: 'what-good-looks-like-next' },
+    { title: 'Troubleshooting', id: 'troubleshooting' },
+    { title: 'Next reading', id: 'next-reading' },
   ],
   '/graphql-proxy': [
     {
@@ -631,34 +730,33 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Testing and repo references', id: 'testing-and-repo-references' },
   ],
   '/inference/clawql-inference': [
-    { title: 'What it does', id: 'what-it-does' },
-    { title: 'Quick start', id: 'quick-start' },
-    { title: 'Architecture overview', id: 'architecture-overview' },
-    { title: 'Gateway decorator stack', id: 'gateway-decorator-stack' },
-    { title: 'HTTP API layer', id: 'http-api-layer' },
-    { title: 'Provider plugins', id: 'provider-plugins' },
-    { title: 'Model tier escalation', id: 'model-tier-escalation' },
-    { title: 'Semantic cache', id: 'semantic-cache' },
-    { title: 'Fallback chains', id: 'fallback-chains' },
-    { title: 'Virtual keys and HTTP auth', id: 'virtual-keys-and-http-auth' },
+    { title: 'What It Does', id: 'what-it-does' },
+    { title: 'Quick Start', id: 'quick-start' },
+    { title: 'Architecture Overview', id: 'architecture-overview' },
+    { title: 'Gateway Decorator Stack', id: 'gateway-decorator-stack' },
+    { title: 'HTTP API Layer', id: 'http-api-layer' },
+    { title: 'Provider Plugins', id: 'provider-plugins' },
+    { title: 'Model Tier Escalation', id: 'model-tier-escalation' },
+    { title: 'Semantic Cache', id: 'semantic-cache' },
+    { title: 'Fallback Chains', id: 'fallback-chains' },
+    { title: 'Virtual Keys and HTTP Auth', id: 'virtual-keys-and-http-auth' },
     {
-      title: 'Plan entitlements and payments (clawql-payments)',
-      id: 'plan-entitlements-and-payments-clawql-payments',
+      title: 'Plan Entitlements and Payments',
+      id: 'plan-entitlements-and-payments',
     },
-    { title: 'Inference call store', id: 'inference-call-store' },
+    { title: 'Inference Call Store', id: 'inference-call-store' },
     {
-      title: 'Export and fine-tuning flywheel',
+      title: 'Export and Fine-Tuning Flywheel',
       id: 'export-and-fine-tuning-flywheel',
     },
-    { title: 'Pipeline automation', id: 'pipeline-automation' },
-    { title: 'Agent coordination', id: 'agent-coordination' },
+    { title: 'Pipeline Automation', id: 'pipeline-automation' },
+    { title: 'Agent Coordination', id: 'agent-coordination' },
     { title: 'Policy', id: 'policy' },
-    { title: 'Persistence layout', id: 'persistence-layout' },
-    { title: 'CLI wiring', id: 'cli-wiring' },
-    { title: 'Environment variables', id: 'environment-variables' },
-    { title: 'Package exports', id: 'package-exports' },
+    { title: 'Persistence Layout', id: 'persistence-layout' },
+    { title: 'CLI Wiring', id: 'cli-wiring' },
+    { title: 'Environment Variables', id: 'environment-variables' },
+    { title: 'Package Exports', id: 'package-exports' },
     { title: 'Differentiation vs LiteLLM', id: 'differentiation-vs-lite-llm' },
-    { title: 'Implementation phasing', id: 'implementation-phasing' },
     { title: 'References', id: 'references' },
   ],
   '/learn': [
@@ -712,6 +810,10 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       id: 'what-the-eight-vendor-document-stack-is',
     },
     { title: 'Recommended IDP data flow', id: 'recommended-idp-data-flow' },
+    {
+      title: 'anydoc convert (optional, in-process)',
+      id: 'anydoc-convert-optional-in-process',
+    },
     {
       title: 'pdf-inspector route (optional, in-process)',
       id: 'pdf-inspector-route-optional-in-process',
@@ -834,48 +936,48 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     },
   ],
   '/learn/memory': [
-    { title: 'What problem memory solves', id: 'what-problem-memory-solves' },
-    { title: 'Core design principles', id: 'core-design-principles' },
-    { title: 'Memory 2.0 components', id: 'memory-2-0-components' },
+    { title: 'What Problem Memory Solves', id: 'what-problem-memory-solves' },
+    { title: 'Core Design Principles', id: 'core-design-principles' },
+    { title: 'Memory 2.0 Components', id: 'memory-2-0-components' },
     {
-      title: 'Architecture: how the pieces connect',
+      title: 'Architecture: How the Pieces Connect',
       id: 'architecture-how-the-pieces-connect',
     },
-    { title: 'MCP tools and enablement', id: 'mcp-tools-and-enablement' },
+    { title: 'MCP Tools and Enablement', id: 'mcp-tools-and-enablement' },
     {
-      title: 'Hands-on: memory between chats',
+      title: 'Hands-On: Memory Between Chats',
       id: 'hands-on-memory-between-chats',
     },
     {
-      title: 'Ingestion: from agent summary to vault page',
+      title: 'Ingestion: From Agent Summary to Vault Page',
       id: 'ingestion-from-agent-summary-to-vault-page',
     },
     {
-      title: 'Wiki-style linking and the knowledge graph',
+      title: 'Wiki-Style Linking and the Knowledge Graph',
       id: 'wiki-style-linking-and-the-knowledge-graph',
     },
     {
-      title: 'Hybrid recall: keywords, wikilinks, and vectors',
+      title: 'Hybrid Recall: Keywords, Wikilinks, and Vectors',
       id: 'hybrid-recall-keywords-wikilinks-and-vectors',
     },
     {
-      title: 'Team sync: shared vaults across agents and teammates',
+      title: 'Team Sync: Shared Vaults Across Agents and Teammates',
       id: 'team-sync-shared-vaults-across-agents-and-teammates',
     },
     {
-      title: 'Self-improving loop: memory meets inference',
+      title: 'Self-Improving Loop: Memory Meets Inference',
       id: 'self-improving-loop-memory-meets-inference',
     },
     {
-      title: 'Semantic pruning and pre-pruning snapshots (roadmap)',
+      title: 'Semantic Pruning and Pre-Pruning Snapshots (Roadmap)',
       id: 'semantic-pruning-and-pre-pruning-snapshots-roadmap',
     },
     {
-      title: 'Governance, security, and observability',
+      title: 'Governance, Security, and Observability',
       id: 'governance-security-and-observability',
     },
     {
-      title: 'Related guides and references',
+      title: 'Related Guides and References',
       id: 'related-guides-and-references',
     },
   ],
@@ -997,9 +1099,42 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'stdio (npm)', id: 'stdio-npm' },
     { title: 'stdio (git checkout)', id: 'stdio-git-checkout' },
     { title: 'Streamable HTTP', id: 'streamable-http' },
-    { title: 'Gateway API key auth', id: 'gateway-api-key-auth' },
+    { title: 'Gateway auth', id: 'gateway-auth' },
     { title: 'Presidio redaction', id: 'presidio-redaction' },
+    {
+      title: 'Privacy Filter (local backup)',
+      id: 'privacy-filter-local-backup',
+    },
     { title: 'OpenClaw', id: 'open-claw' },
+  ],
+  '/mcp/mcp-api-adapter': [
+    {
+      title: 'The client fragmentation problem',
+      id: 'the-client-fragmentation-problem',
+    },
+    {
+      title: 'Direction: MCP → APIs (inverse of ClawQL Core)',
+      id: 'direction-mcp-apis-inverse-of-claw-ql-core',
+    },
+    { title: 'Quick start', id: 'quick-start' },
+    { title: 'The five surfaces', id: 'the-five-surfaces' },
+    { title: 'What shipped', id: 'what-shipped' },
+    {
+      title: 'Planned — WebSocket (sixth surface)',
+      id: 'planned-web-socket-sixth-surface',
+    },
+    { title: 'When to use it', id: 'when-to-use-it' },
+    { title: 'CLI reference', id: 'cli-reference' },
+    { title: 'Programmatic API', id: 'programmatic-api' },
+    { title: 'HTTP surface map', id: 'http-surface-map' },
+    { title: 'GraphQL conventions', id: 'graph-ql-conventions' },
+    { title: 'Auth', id: 'auth' },
+    {
+      title: 'Relationship to other ClawQL pieces',
+      id: 'relationship-to-other-claw-ql-pieces',
+    },
+    { title: 'Troubleshooting', id: 'troubleshooting' },
+    { title: 'Further reading', id: 'further-reading' },
   ],
   '/nats-jetstream': [
     { title: 'Why this exists', id: 'why-this-exists' },
@@ -1032,8 +1167,8 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
   ],
   '/openclaw': [
     {
-      title: 'What OpenClaw is vs ClawQL MCP',
-      id: 'what-open-claw-is-vs-claw-ql-mcp',
+      title: 'OpenClaw and ClawQL MCP — what each one is',
+      id: 'open-claw-and-claw-ql-mcp-what-each-one-is',
     },
     {
       title: 'Why run OpenClaw with ClawQL',
@@ -1042,8 +1177,8 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Prerequisites', id: 'prerequisites' },
     { title: 'Install the OpenClaw CLI', id: 'install-the-open-claw-cli' },
     {
-      title: 'Run ClawQL MCP pick HTTP or stdio',
-      id: 'run-claw-ql-mcp-pick-http-or-stdio',
+      title: 'Run ClawQL MCP — HTTP or stdio',
+      id: 'run-claw-ql-mcp-http-or-stdio',
     },
     {
       title: 'Register ClawQL in OpenClaw',
@@ -1055,7 +1190,7 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       id: 'environment-variables-and-remote-mcp',
     },
     {
-      title: 'Next steps document IDP workflows',
+      title: 'Next steps — document IDP workflows',
       id: 'next-steps-document-idp-workflows',
     },
     {
@@ -1145,7 +1280,19 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Why add this?', id: 'why-add-this' },
     { title: 'MCP tools', id: 'mcp-tools' },
     { title: 'Enable', id: 'enable' },
-    { title: 'Graphify integration', id: 'graphify-integration' },
+    { title: 'Languages', id: 'languages' },
+    {
+      title: 'TypeScript / JavaScript depth',
+      id: 'type-script-java-script-depth',
+    },
+    {
+      title: 'Preferred workflow: codegraph_sync',
+      id: 'preferred-workflow-codegraph-sync',
+    },
+    {
+      title: 'Optional external Graphify import',
+      id: 'optional-external-graphify-import',
+    },
     { title: 'Hybrid recall', id: 'hybrid-recall' },
     { title: 'Typical workflow', id: 'typical-workflow' },
   ],
@@ -1160,7 +1307,9 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
   ],
   '/plugins/documents': [
     { title: 'MCP tools', id: 'mcp-tools' },
+    { title: 'Recommended agent path', id: 'recommended-agent-path' },
     { title: 'Enable / disable', id: 'enable-disable' },
+    { title: 'Helm / Compose', id: 'helm-compose' },
     { title: 'Onyx note', id: 'onyx-note' },
     { title: 'Learn more', id: 'learn-more' },
   ],
@@ -1224,15 +1373,10 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Learn more', id: 'learn-more' },
   ],
   '/quickstart': [
-    {
-      title: '0. First-time setup (recommended)',
-      id: '0-first-time-setup-recommended',
-    },
     { title: '1. Start the MCP server', id: '1-start-the-mcp-server' },
     { title: '2. Connect your client', id: '2-connect-your-client' },
     { title: '3. Use your own API spec', id: '3-use-your-own-api-spec' },
     { title: '4. HTTP transport (optional)', id: '4-http-transport-optional' },
-    { title: 'Install options', id: 'install-options' },
     {
       title: '5. Local bundled docs via Helm (Docker Desktop)',
       id: '5-local-bundled-docs-via-helm-docker-desktop',
@@ -1250,59 +1394,9 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       id: 'natural-language-dashboard-planned',
     },
   ],
-  '/reference/plugins': [
-    { title: '1. One-sentence summary', id: '1-one-sentence-summary' },
-    {
-      title: '2. Today: plugins register via onRegister (Phase 2 shipped)',
-      id: '2-today-plugins-register-via-on-register-phase-2-shipped',
-    },
-    {
-      title: '3. Horizontal plugins (shipped)',
-      id: '3-horizontal-plugins-shipped',
-    },
-    {
-      title: '4. Plugins are more than tool registration',
-      id: '4-plugins-are-more-than-tool-registration',
-    },
-    {
-      title: '5. Shipped vs target (honest matrix)',
-      id: '5-shipped-vs-target-honest-matrix',
-    },
-    {
-      title:
-        '6. What extraction already did vs what “becoming plugins” finishes',
-      id: '6-what-extraction-already-did-vs-what-becoming-plugins-finishes',
-    },
-    {
-      title: '7. Third-party and vertical plugins',
-      id: '7-third-party-and-vertical-plugins',
-    },
-    { title: '8. Request flow (target)', id: '8-request-flow-target' },
-    { title: '9. References', id: '9-references' },
-    { title: '1. Plugin kinds', id: '1-plugin-kinds' },
-    { title: '2. Registry (all plugins)', id: '2-registry-all-plugins' },
-    {
-      title: '3. MCP tools by owning plugin',
-      id: '3-mcp-tools-by-owning-plugin',
-    },
-    {
-      title: '4. Composition at startup (target)',
-      id: '4-composition-at-startup-target',
-    },
-    {
-      title: '5. Third-party plugin checklist (roadmap)',
-      id: '5-third-party-plugin-checklist-roadmap',
-    },
-    { title: '6. References', id: '6-references' },
-  ],
   '/reference/protocol': [
     { title: 'Core concepts', id: 'core-concepts' },
     { title: 'Related', id: 'related' },
-  ],
-  '/reference/verticals': [
-    { title: 'Design rules', id: 'design-rules' },
-    { title: 'Enabling a vertical', id: 'enabling-a-vertical' },
-    { title: 'Building a new vertical', id: 'building-a-new-vertical' },
   ],
   '/resources/changelog': [
     { title: 'Where to look', id: 'where-to-look' },
@@ -2329,6 +2423,123 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Environment variables', id: 'environment-variables' },
     { title: 'Google Discovery', id: 'google-discovery' },
   ],
+  '/specs/cq-extensions': [
+    { title: 'Sequencing', id: 'sequencing' },
+    { title: 'Design rule', id: 'design-rule' },
+  ],
+  '/specs/cq-extensions/cqe': [
+    { title: 'Purpose', id: 'purpose' },
+    { title: 'Serialization', id: 'serialization' },
+    { title: 'Required fields (YAML form)', id: 'required-fields-yaml-form' },
+    {
+      title: 'ClawQL-specific conventions',
+      id: 'claw-ql-specific-conventions',
+    },
+    { title: 'Tooling hooks', id: 'tooling-hooks' },
+    {
+      title: 'Dual-accept (YAML still valid)',
+      id: 'dual-accept-yaml-still-valid',
+    },
+    { title: 'Example', id: 'example' },
+  ],
+  '/specs/cq-extensions/cqk': [
+    { title: 'Purpose', id: 'purpose' },
+    { title: 'Serialization', id: 'serialization' },
+    { title: 'Required frontmatter', id: 'required-frontmatter' },
+    { title: 'Recommended frontmatter', id: 'recommended-frontmatter' },
+    {
+      title: 'Distinguishing .cqk vs .md vs .cqe',
+      id: 'distinguishing-cqk-vs-md-vs-cqe',
+    },
+    { title: 'Tooling hooks', id: 'tooling-hooks' },
+    { title: 'Non-goals', id: 'non-goals' },
+    { title: 'Example', id: 'example' },
+  ],
+  '/specs/cq-extensions/cqm': [
+    { title: 'Purpose', id: 'purpose' },
+    { title: 'Serialization', id: 'serialization' },
+    { title: 'Required top-level fields', id: 'required-top-level-fields' },
+    { title: 'Recommended fields', id: 'recommended-fields' },
+    { title: 'Tooling hooks', id: 'tooling-hooks' },
+    { title: 'Non-goals', id: 'non-goals' },
+    { title: 'Example (illustrative)', id: 'example-illustrative' },
+  ],
+  '/specs/cq-extensions/cqw': [
+    { title: 'Purpose', id: 'purpose' },
+    { title: 'Serialization', id: 'serialization' },
+    {
+      title: 'Required ClawQL annotations',
+      id: 'required-claw-ql-annotations',
+    },
+    { title: 'Tooling hooks', id: 'tooling-hooks' },
+    { title: 'Non-goals', id: 'non-goals' },
+    { title: 'Example (illustrative)', id: 'example-illustrative' },
+  ],
+  '/streams/clawql-durable-objects': [
+    { title: '1. Purpose', id: '1-purpose' },
+    { title: '2. Object types', id: '2-object-types' },
+    {
+      title: '3. Sidecars (AgentSessionDO)',
+      id: '3-sidecars-agent-session-do',
+    },
+    { title: '4. Spawn contract (gateway)', id: '4-spawn-contract-gateway' },
+    { title: '5. Virtual key lifecycle', id: '5-virtual-key-lifecycle' },
+    {
+      title: '6. WebSocket and hibernation',
+      id: '6-web-socket-and-hibernation',
+    },
+    {
+      title: '7. SQLite schema (AgentSessionDO, illustrative)',
+      id: '7-sq-lite-schema-agent-session-do-illustrative',
+    },
+    { title: '8. Session close sequence', id: '8-session-close-sequence' },
+    { title: '9. Self-hosted parity', id: '9-self-hosted-parity' },
+    { title: '10. mcp-api-adapter on DOs', id: '10-mcp-api-adapter-on-dos' },
+    { title: '11. Security checklist', id: '11-security-checklist' },
+    { title: '12. Open questions', id: '12-open-questions' },
+    { title: 'Further reading', id: 'further-reading' },
+  ],
+  '/streams/clawql-streams': [
+    { title: '1. What this is', id: '1-what-this-is' },
+    { title: '2. Problem statement', id: '2-problem-statement' },
+    { title: '3. Core architecture', id: '3-core-architecture' },
+    { title: '4. Event sources', id: '4-event-sources' },
+    { title: '5. MCP tools', id: '5-mcp-tools' },
+    { title: '6. WORM via LTX', id: '6-worm-via-ltx' },
+    {
+      title: '7. Training data emission (RTP + OpenBenchTrace)',
+      id: '7-training-data-emission-rtp-open-bench-trace',
+    },
+    { title: '8. Security', id: '8-security' },
+    { title: '9. Scaling', id: '9-scaling' },
+    { title: '10. Helm values', id: '10-helm-values' },
+    { title: '11. CLI', id: '11-cli' },
+    { title: '12. Package dependencies', id: '12-package-dependencies' },
+    {
+      title: '13. Comparison to alternatives',
+      id: '13-comparison-to-alternatives',
+    },
+    { title: '14. Positioning', id: '14-positioning' },
+    { title: '15. Open questions', id: '15-open-questions' },
+    { title: 'Further reading', id: 'further-reading' },
+  ],
+  '/surveillance/clawql-surveillance': [
+    {
+      title: 'The problem this vertical solves',
+      id: 'the-problem-this-vertical-solves',
+    },
+    { title: 'Architecture', id: 'architecture' },
+    { title: 'Domain tools (MCP)', id: 'domain-tools-mcp' },
+    { title: 'Core services', id: 'core-services' },
+    { title: 'Environment variables', id: 'environment-variables' },
+    { title: 'CLI reference', id: 'cli-reference' },
+    { title: 'Pricing and GTM', id: 'pricing-and-gtm' },
+    {
+      title: 'Relationship to challengethefootage.com',
+      id: 'relationship-to-challengethefootage-com',
+    },
+    { title: 'Related docs', id: 'related-docs' },
+  ],
   '/tailscale': [
     { title: 'Why bother?', id: 'why-bother' },
     { title: 'Concepts (quick)', id: 'concepts-quick' },
@@ -2384,10 +2595,6 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'The ClawQL Solution', id: 'the-claw-ql-solution' },
     { title: 'Business Value at a Glance', id: 'business-value-at-a-glance' },
     { title: 'Deployment Models', id: 'deployment-models' },
-    {
-      title: 'Hosted Plan: Architecture Decisions',
-      id: 'hosted-plan-architecture-decisions',
-    },
     { title: 'Platform Overview', id: 'platform-overview' },
     {
       title: 'ClawQL Core: Orchestration and Agent Interface',
@@ -2397,17 +2604,40 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       title: 'Document Processing Pipeline',
       id: 'document-processing-pipeline',
     },
+    { title: 'Knowledge Layer: Onyx', id: 'knowledge-layer-onyx' },
+    {
+      title: 'Durable Agent Memory: Obsidian Vault',
+      id: 'durable-agent-memory-obsidian-vault',
+    },
+    {
+      title: 'Storage and Collaboration: Nextcloud',
+      id: 'storage-and-collaboration-nextcloud',
+    },
+    {
+      title: 'Secure Sharing and VDRs: Coneshare',
+      id: 'secure-sharing-and-vdrs-coneshare',
+    },
     {
       title: 'Security, Audit, and Resilience',
       id: 'security-audit-and-resilience',
     },
     { title: 'End-to-End Workflow Example', id: 'end-to-end-workflow-example' },
-    { title: 'Competitive Positioning', id: 'competitive-positioning' },
+    {
+      title: 'Competitive Positioning, Pricing, and Verticals',
+      id: 'competitive-positioning-pricing-and-verticals',
+    },
     { title: 'Deployment Architecture', id: 'deployment-architecture' },
+    {
+      title: 'Sovereign AI: Multi-Model Fleet',
+      id: 'sovereign-ai-multi-model-fleet',
+    },
+    {
+      title: 'OpenBench: Live A/B Benchmark Results',
+      id: 'open-bench-live-a-b-benchmark-results',
+    },
     { title: 'Licensing Summary', id: 'licensing-summary' },
     { title: 'Roadmap', id: 'roadmap' },
     { title: 'Frequently Asked Questions', id: 'frequently-asked-questions' },
-    { title: 'Operator references', id: 'operator-references' },
   ],
   '/vision/immutable-releases': [
     { title: 'The Problem', id: 'the-problem' },
@@ -2427,13 +2657,10 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
   ],
   '/vision/roadmap': [
     { title: 'Read This First', id: 'read-this-first' },
-    {
-      title: '1. What ClawQL Is (and Isn’t)',
-      id: '1-what-claw-ql-is-and-isn-t',
-    },
+    { title: '1. What ClawQL Is', id: '1-what-claw-ql-is' },
     { title: '2. The Problem Space', id: '2-the-problem-space' },
     { title: '3. The Approach', id: '3-the-approach' },
-    { title: '4. What Exists Today', id: '4-what-exists-today' },
+    { title: '4. What Exists Today (7.1.0)', id: '4-what-exists-today-7-1-0' },
     {
       title: '5. What Gets Built Next and Why',
       id: '5-what-gets-built-next-and-why',

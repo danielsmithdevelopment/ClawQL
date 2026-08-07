@@ -1,15 +1,17 @@
-# ClawQL Durable Objects — Implementation Spec v0.1
+# ClawQL Durable Objects — Implementation Spec v0.1.1
 
-**Status:** Draft · August 2026  
-**Package surface:** Cloudflare Durable Objects (hosted) · Node worker approximation (self-hosted / Miniflare)  
-**Depends on:** [`clawql-streams`](./clawql-streams.md) · [`clawql-inference`](../inference/clawql-inference.md) · OpenBenchTrace / RTP  
-**Related:** [`mcp-api-adapter`](../mcp/mcp-api-adapter.md) · [PorTAL flywheel](../inference/portal-flywheel.md)
+**Status:** Draft · August 2026 · v0.1.1 (companion to [Streams v0.2](./clawql-streams.md))  
+**Package surface:** Cloudflare Durable Objects (hosted) · [celld](https://celld.dev/) (self-hosted) · Kubernetes HPA (regulated)  
+**Depends on:** [`clawql-streams`](./clawql-streams.md) · [`clawql-celld.md`](./clawql-celld.md) · [`clawql-inference`](../inference/clawql-inference.md) · OpenBenchTrace / RTP  
+**Related:** [`mcp-api-adapter`](../mcp/mcp-api-adapter.md) · [PorTAL flywheel](../inference/portal-flywheel.md) · [celld docs](https://celld.dev/docs/)
 
 ---
 
 ## 1. Purpose
 
-This document specifies how ClawQL Streams agent sessions run inside **Durable Objects** (or a Node-compatible DO runtime such as Miniflare / a future Node `DurableObjectRuntime`).
+This document specifies how ClawQL Streams agent sessions run inside **Durable Objects**.
+
+**Self-hosted DO runtime:** **[celld](https://celld.dev/)** (Apache 2.0, [denoland/celld](https://github.com/denoland/celld)) — not a custom ClawQL runtime on Node `worker_threads`. Hosted path remains **Cloudflare Workers / Durable Objects**. Regulated / air-gapped path remains **Kubernetes HPA** until celld is production-stable. Integration detail (constraints, LTX, deploy): [`clawql-celld.md`](./clawql-celld.md). Product decisions: [Streams Specification v0.2](./clawql-streams.md).
 
 Goals:
 
@@ -18,18 +20,22 @@ Goals:
 3. **Three sidecars** — forensic audit, inference, training-data emission — without conflating them.
 4. **Parity path** — same session contract on K8s workers when DOs are unavailable (regulated / air-gapped).
 
-The Durable Objects API is an **interface**, not a Cloudflare-only capability. A Node implementation can back the same class shape with `worker_threads`, `better-sqlite3`, HTTP/WebSocket handlers, and hibernation via ref/unref — same pattern Miniflare uses for local Workers. Cloudflare remains the hosted path; Node/K8s remains the sovereign path.
+The Durable Objects API is the **session contract**. Cloudflare implements it on the edge; **celld** implements it on operator machines with SQLite + LTX replication to an S3-compatible bucket (RPO=0). Miniflare remains a **CI / local** approximation, not a production self-hosted fleet.
+
+**Do not build a custom ClawQL DO runtime on Node `worker_threads`.**
 
 ---
 
 ## 2. Object types
 
-| DO class         | Lifetime                | Responsibility                                                                                             |
-| ---------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `SubscriptionDO` | Long-lived (hibernates) | Holds WebSocket/source connection, significance filter, subscription config + `rtpConsent`, NATS publisher |
-| `AgentSessionDO` | Ephemeral (per event)   | Runs one agent session with three sidecars; destroys itself on exit                                        |
+| DO class         | Lifetime                | Responsibility                                                                                           |
+| ---------------- | ----------------------- | -------------------------------------------------------------------------------------------------------- |
+| `SubscriptionDO` | Long-lived (hibernates) | Holds WebSocket/source connection, significance filter, subscription config + `rtpConsent`, event buffer |
+| `AgentSessionDO` | Ephemeral (per event)   | Runs one agent session with three sidecars; destroys itself on exit                                      |
 
-Gateway Worker (stateless) routes by topic → `SubscriptionDO`. `SubscriptionDO` spawns `AgentSessionDO` when the significance filter passes.
+On celld, a `GatewayDO` (or Gateway Worker) may sit in front for webhook routing and idempotent naming — see [`clawql-celld.md`](./clawql-celld.md) §4.
+
+Gateway routes by topic → `SubscriptionDO`. `SubscriptionDO` spawns `AgentSessionDO` when the significance filter passes.
 
 ---
 
@@ -42,24 +48,26 @@ AgentSessionDO
   └─ TrainingDataSidecar   → RTP turnSequence → OBT envelope → export
 ```
 
+Sidecars remain **logical concerns** (in-process modules). Under **celld**, `AuditSidecar` maps to **`storage.put` on the cell SQLite**, which celld replicates as **LTX** to the fleet bucket — that LTX stream is the operator-owned WORM trail (auditor: `sqlite3` on bucket artifacts). Under **Cloudflare**, the same `storage.put` API writes to platform DO storage. Under **Kubernetes**, AuditSidecar may write Postgres/JSONL instead; the logical event schema is unchanged.
+
 ### 3.1 AuditSidecar
 
-Append-only WORM writer. Threads **virtual key ID** through every entry (§5). Does not store PII event bodies — payload hashes only (Streams §7.2).
+Append-only WORM writer. Threads **virtual key ID** through every entry (§5). Does not store PII event bodies — payload hashes only (Streams §6). On celld this is LTX-backed SQLite; see [`clawql-celld.md`](./clawql-celld.md) §6.
 
 ### 3.2 InferenceSidecar
 
-Embeds or calls [`clawql-inference`](../inference/clawql-inference.md) with a **constrained surface**:
+Calls [`clawql-inference`](../inference/clawql-inference.md) over **`fetch()`** (not subprocess, not embedded in the DO bundle) with a **constrained surface**:
 
 - No unrestricted filesystem (DO storage / SQLite only)
-- HTTP egress only to approved model endpoints (policy manifest)
+- HTTP egress only to approved model endpoints (policy manifest via inference gateway)
 - Virtual key required for every `/v1/*` call
 - PAL routing + semantic cache + Langfuse/OTel as on the standalone gateway
 
-DO is an additional **deployment context** for clawql-inference alongside stdio / HTTP / K8s.
+DO/cell is an additional **deployment context** for sessions that use clawql-inference alongside stdio / HTTP / K8s. Bundle limits (64 MiB code / 1 MiB env) require inference to stay out of process — Streams v0.2 §3.1.
 
 ### 3.3 TrainingDataSidecar
 
-Accumulates RTP six-node `turnSequence` in DO SQLite as tools and model calls complete. On session close, wraps in OpenBenchTrace outer envelope and flushes to the configured export destination (Streams §14). Distinct from WORM: training structure vs forensic chain.
+Accumulates RTP six-node `turnSequence` in DO SQLite as tools and model calls complete. On session close, wraps in OpenBenchTrace outer envelope and flushes to the configured export destination (Streams §7). Distinct from WORM: training structure vs forensic chain.
 
 ---
 
@@ -67,11 +75,11 @@ Accumulates RTP six-node `turnSequence` in DO SQLite as tools and model calls co
 
 Before the AgentSessionDO exists, the **gateway** (not the DO) atomically:
 
-1. Allocates `doInstanceId`
+1. Allocates `doInstanceId` (and stable celld/Cloudflare name, e.g. `sess:{subscriptionId}:{eventId}`)
 2. Asks clawql-inference to issue `virtualKeyId` scoped to `doInstanceId`
 3. Writes WORM `DO_CREATED` with `{ doInstanceId, virtualKeyId, subscriptionId, eventHash, manifestId }`
 4. If credit-gated: `DeductionService.hold(estimatedCost)`
-5. Spawns DO with environment bindings: `DO_INSTANCE_ID`, `VIRTUAL_KEY`, `SUBSCRIPTION_ID`, `MANIFEST_ID`, `RTP_CONSENT_JWT`, `POLICY_ALIAS`
+5. Spawns DO with environment bindings: `DO_INSTANCE_ID`, `VIRTUAL_KEY`, `SUBSCRIPTION_ID`, `MANIFEST_ID`, `RTP_CONSENT_JWT`, `POLICY_ALIAS`, `INFERENCE_URL`
 
 If key issuance fails, no DO is spawned and no hold is left open.
 
@@ -82,9 +90,9 @@ If key issuance fails, no DO is spawned and no hold is left open.
 | Phase    | Action                                                                                                                                                                   |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Create   | Issue key scoped to DO instance ID; budget = `budgetTokens` or derived from `budgetUsd`; TTL = `maxTurns × estimated_turn_duration`; PAL from subscription `model` alias |
-| Run      | Every model call uses only this key; call-store rows include `virtual_key_id`                                                                                            |
+| Run      | Every model call uses only this key via `fetch(clawql-inference)`; call-store rows include `virtual_key_id`                                                              |
 | Close    | Capture actual spend; flush training record; WORM `DO_DESTROYED`; expire key → subsequent use is 401; DO destroys itself                                                 |
-| Abnormal | Cloudflare eviction / timeout: hold expires with key TTL; WORM best-effort close; key still expired by TTL                                                               |
+| Abnormal | Eviction / timeout / cell migration: hold expires with key TTL; WORM best-effort close; key still expired by TTL                                                         |
 
 **Security property:** compromised credentials from a finished session are already dead. Long-lived service accounts across sessions are out of scope for Streams agent DOs.
 
@@ -92,9 +100,10 @@ If key issuance fails, no DO is spawned and no hold is left open.
 
 ## 6. WebSocket and hibernation
 
-- **SubscriptionDO** uses WebSocket (or DO-compatible transport) so Cloudflare **hibernation** can sleep between events while keeping the connection.
+- **SubscriptionDO** uses WebSocket (or DO-compatible transport) so **hibernation** can sleep between events while keeping the connection (Cloudflare and celld).
+- Outbound source WebSockets: persist **reconnect intent** in SQLite and use **`setAlarm`** — never `setInterval` (throws on celld). Outbound sockets do not survive celld node migration — reconnect after activation ([`clawql-celld.md`](./clawql-celld.md) §3).
 - Agent sessions that need a persistent client channel (e.g. mcp-api-adapter sixth surface) also prefer WebSocket for hibernation-friendly sessions; Streamable HTTP remains the fallback for clients that cannot do WebSocket.
-- HTTP-only long polls do not hibernate cleanly on Cloudflare DOs — document as a hosted-path limitation; K8s path may keep HTTP workers warm instead.
+- HTTP-only long polls do not hibernate cleanly on Cloudflare/celld DOs — document as a DO-path limitation; K8s path may keep HTTP workers warm instead.
 
 ---
 
@@ -108,6 +117,8 @@ If key issuance fails, no DO is spawned and no hold is left open.
 | `tool_calls`      | tool name, args hash, ATR result                                              |
 | `export_status`   | pending / flushed / failed + destination                                      |
 
+On celld, append-only `worm:*` keys/tables in the same SQLite are replicated via LTX and constitute the forensic trail.
+
 ---
 
 ## 8. Session close sequence
@@ -116,7 +127,7 @@ If key issuance fails, no DO is spawned and no hold is left open.
 1. Agent loop exits (converged | maxTurns | budget | error | timeout)
 2. TrainingDataSidecar: finalize RTP Verdict node; wrap OBT; export
 3. DeductionService.capture(actual) or release on failure (if held)
-4. AuditSidecar: DO_DESTROYED + spend summary
+4. AuditSidecar: DO_DESTROYED + spend summary  (storage.put → LTX on celld)
 5. InferenceSidecar: expire virtual key
 6. Clear sensitive SQLite; DO stub destroys / becomes reclaimable
 ```
@@ -125,24 +136,25 @@ Order matters: export and capture before key expiry so the last inference metada
 
 ---
 
-## 9. Self-hosted parity (K8s)
+## 9. Self-hosted parity
 
-| Concern      | Cloudflare DO             | K8s session worker                             |
-| ------------ | ------------------------- | ---------------------------------------------- |
-| Isolation    | Per-object isolate        | Pod / Job per event (or pool with hard reset)  |
-| SQLite       | DO storage                | Ephemeral volume or `better-sqlite3` in worker |
-| Hibernation  | Native WS hibernation     | Scale-to-zero / idle timeout (not identical)   |
-| Virtual key  | Same clawql-inference API | Same                                           |
-| Sidecars     | In-process modules        | In-process modules (same code)                 |
-| Scale signal | DO platform               | NATS consumer lag → HPA (Streams §6.2)         |
+| Concern      | Cloudflare DO             | celld                                 | K8s session worker                             |
+| ------------ | ------------------------- | ------------------------------------- | ---------------------------------------------- |
+| Isolation    | Per-object isolate        | Per-cell isolate (single writer)      | Pod / Job per event (or pool with hard reset)  |
+| SQLite       | DO storage                | DO storage + LTX → operator bucket    | Ephemeral volume or `better-sqlite3` in worker |
+| Hibernation  | Native WS hibernation     | Same DO state model                   | Scale-to-zero / idle timeout (not identical)   |
+| Virtual key  | Same clawql-inference API | Same                                  | Same                                           |
+| Sidecars     | In-process modules        | In-process modules (same code)        | In-process modules (same code)                 |
+| WORM         | Platform DO storage       | LTX on fleet bucket (`sqlite3` audit) | Postgres / JSONL                               |
+| Scale signal | DO platform               | Fleet density / alarms                | NATS consumer lag → HPA (Streams §9)           |
 
-Parity target: **same session contract and WORM/RTP schemas**. Exact hibernation and cold-start numbers will differ — document in operator runbooks, do not pretend they are identical.
+Parity target: **same session contract and WORM/RTP schemas**. Exact hibernation and cold-start numbers will differ — document in operator runbooks. Prefer celld over inventing a Node DO runtime; prefer K8s HPA when celld's alpha / single-app-fleet limits are unacceptable ([`clawql-celld.md`](./clawql-celld.md) §8, §11).
 
 ---
 
 ## 10. mcp-api-adapter on DOs
 
-Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / `/mcp` / gRPC / WebSocket from SQLite-cached `ListTools`. gen-cli stays build-time. Catalog refresh on wake avoids re-`ListTools` on every request after hibernation. See Streams §6.4 and [`mcp-api-adapter`](../mcp/mcp-api-adapter.md).
+Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / `/mcp` / gRPC / WebSocket from SQLite-cached `ListTools`. On Streams v0.2, **mcp-api-adapter is embedded in the DO/cell bundle** alongside clawql-core (64 MiB budget). gen-cli stays build-time. Catalog refresh on wake avoids re-`ListTools` on every request after hibernation. See Streams §3.1 / §12 and [`mcp-api-adapter`](../mcp/mcp-api-adapter.md).
 
 ---
 
@@ -150,26 +162,30 @@ Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / 
 
 - [ ] Virtual key never logged in plaintext; WORM stores key **ID** only
 - [ ] ATR `allowedTools` enforced on every tool call inside the DO
-- [ ] Event payload hashed for WORM; full body only in TTL-bounded NATS / encrypted cold store
-- [ ] Egress allowlist for InferenceSidecar
+- [ ] Event payload hashed for WORM; full body only in TTL-bounded buffer / encrypted cold store
+- [ ] Egress allowlist for InferenceSidecar (`fetch` to clawql-inference only as designed)
 - [ ] `rtpConsent` JWT validated before TrainingDataSidecar export
 - [ ] Manifest ID injected from Cosign-signed release, not free-form client input
+- [ ] celld: peers on private/WireGuard mesh; ingress TLS; bucket creds scoped ([`clawql-celld.md`](./clawql-celld.md) §8)
 
 ---
 
 ## 12. Open questions
 
-1. In-process InferenceSidecar vs remote clawql-inference HTTP from the DO (latency vs blast radius).
-2. Whether SubscriptionDO and AgentSessionDO share a DO namespace or separate script names for IAM.
-3. Miniflare / Node DO runtime maturity for CI parity tests.
+1. Bundle fit: full `clawql-core` + `mcp-api-adapter` under 64 MiB vs Streams-slim profile ([Streams §15](./clawql-streams.md)).
+2. Whether SubscriptionDO and AgentSessionDO share a DO namespace or separate script names for IAM (Cloudflare) / fleet isolation (celld).
+3. Miniflare maturity vs `celld diagnose` smoke for CI parity.
 4. Batching: one AgentSessionDO per batch window vs N DOs with a parent batch coordinator.
+5. celld multi-tenant: separate fleets per org until upstream scheduler exists.
 
 ---
 
 ## Further reading
 
-- [`docs/streams/clawql-streams.md`](./clawql-streams.md) — Streams v0.1.1 (§3.4 virtual keys, §14 RTP/OBT)
+- [`docs/streams/clawql-streams.md`](./clawql-streams.md) — Streams Specification v0.2
+- [`docs/streams/clawql-celld.md`](./clawql-celld.md) — celld integration (constraints, LTX, deploy)
 - [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md) — virtual keys, PAL, call store
 - [`docs/benchmarks/openbench-trace-collection.md`](../benchmarks/openbench-trace-collection.md) — OBT + RTP
+- [celld](https://celld.dev/) · [docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security)
 - Essay: [OpenBenchTrace and RTP](https://pragmaticvectors.com/posts/openbench-rtp-relationship/)
 - Essay: [What Convergence Week actually proved](https://pragmaticvectors.com/posts/openbench-convergence-week/)
