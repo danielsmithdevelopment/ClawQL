@@ -10,6 +10,7 @@
     "clawql-ontology",
     "clawql-release",
     "clawql-sandbox",
+    "clawql-web",
     "clawql-documents",
     "clawql-automation",
     "clawql-payments",
@@ -28,6 +29,7 @@
     "mcp-api-adapter depends on mcp-grpc-transport — pack/publish transport first.",
     "clawql-telemetry is not yet a package (see #313).",
     "clawql-ontology has no clawql-* deps (ajv/yaml only) — safe early in the order.",
+    "clawql-web before clawql-documents (documents depends on web for IDP URL fetch).",
     "clawql-payments before clawql-inference (inference depends on payments for entitlements/credits).",
     "npm publish replaces workspace:* with concrete versions in published package.json.",
     "Monorepo dev uses matching 7.2.0 semver; npm workspaces link packages locally."

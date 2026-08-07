@@ -2,6 +2,7 @@ import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import type { Plugin } from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
+import { installWebAuditWormSink } from "../audit.js";
 import { isWebEnabled } from "../config.js";
 import { isWebCapabilityError } from "../errors.js";
 import { createWebService } from "../service.js";
@@ -66,6 +67,7 @@ function toolError(err: unknown): { content: { type: "text"; text: string }[]; i
 
 export function createWebPlugin(env: NodeJS.ProcessEnv = process.env): Plugin {
   const web = createWebService(env);
+  installWebAuditWormSink(env);
   return {
     id: WEB_PLUGIN_ID,
     version: "0.1.0",
@@ -175,9 +177,14 @@ export function createWebPlugin(env: NodeJS.ProcessEnv = process.env): Plugin {
             logMcpToolShape("web_interact", { url: a.url, steps: a.steps?.length ?? 0 });
             try {
               const steps = (a.steps ?? []).map((s) => {
-                if (s.action === "click") return { action: "click" as const, selector: s.selector ?? "" };
+                if (s.action === "click")
+                  return { action: "click" as const, selector: s.selector ?? "" };
                 if (s.action === "type")
-                  return { action: "type" as const, selector: s.selector ?? "", text: s.text ?? "" };
+                  return {
+                    action: "type" as const,
+                    selector: s.selector ?? "",
+                    text: s.text ?? "",
+                  };
                 if (s.action === "wait") return { action: "wait" as const, ms: s.ms ?? 0 };
                 return { action: "navigate" as const, url: s.url ?? a.url };
               });

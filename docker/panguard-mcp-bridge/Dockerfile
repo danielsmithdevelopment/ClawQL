@@ -16,6 +16,7 @@ COPY package.json package-lock.json ./
 COPY packages/clawql-core/package.json ./packages/clawql-core/package.json
 COPY packages/clawql-api/package.json ./packages/clawql-api/package.json
 COPY packages/clawql-memory/package.json ./packages/clawql-memory/package.json
+COPY packages/clawql-web/package.json ./packages/clawql-web/package.json
 COPY packages/clawql-documents/package.json ./packages/clawql-documents/package.json
 COPY packages/clawql-automation/package.json ./packages/clawql-automation/package.json
 COPY packages/clawql-sandbox/package.json ./packages/clawql-sandbox/package.json
