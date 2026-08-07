@@ -338,38 +338,75 @@ PY
       -d '{"name":"idp-b23-smoke","role":"admin"}' 2>/dev/null || true)"
     ONYX_TOKEN="$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("api_key") or "")' <<<"${key_json}" 2>/dev/null || true)"
 
+    # Discover ingest paths from live OpenAPI (server root may be / or /api).
+    mapfile -t ONYX_INGEST_PATHS < <(python3 - "${ONYX_BASE}" <<'PY' || true
+import json, sys, urllib.request
+base = sys.argv[1].rstrip("/")
+paths = [
+    "/onyx-api/ingestion",
+    "/onyx-api/ingestion/",
+    "/api/onyx-api/ingestion",
+    "/api/onyx-api/ingestion/",
+    "/api/ingestion",
+    "/ingestion",
+]
+for suffix in ("/openapi.json", "/api/openapi.json"):
+    try:
+        with urllib.request.urlopen(base + suffix, timeout=10) as r:
+            spec = json.load(r)
+        for p in spec.get("paths", {}):
+            if "ingestion" in p and "document_id" not in p:
+                if p not in paths:
+                    paths.insert(0, p if p.startswith("/") else "/" + p)
+                # also try with /api prefix when openapi is rooted at /api
+                if not p.startswith("/api/") and ("/api" + p) not in paths:
+                    paths.insert(0, "/api" + p)
+        break
+    except Exception:
+        pass
+print("\n".join(paths))
+PY
+)
     upsert_ok=0
     auth_mode=""
-    if [[ -n "${ONYX_TOKEN}" ]]; then
-      code="$(curl -sS -o "${WORK}/onyx-ingest.json" -w '%{http_code}' \
-        -X POST "${ONYX_BASE}/onyx-api/ingestion" \
-        -H "Authorization: Bearer ${ONYX_TOKEN}" \
-        -H "Content-Type: application/json" \
-        -d "${ingest_body}" || true)"
-      if [[ "${code}" == "200" || "${code}" == "201" ]]; then
-        upsert_ok=1
-        auth_mode="api-key HTTP ${code}"
-      fi
-    fi
-    if [[ "${upsert_ok}" != "1" ]]; then
-      # Session-cookie upsert (community path; matches APIKeyCookie security scheme)
-      for path in "/onyx-api/ingestion" "/api/onyx-api/ingestion"; do
+    last_probe=""
+    for path in "${ONYX_INGEST_PATHS[@]}"; do
+      [[ -n "${path}" ]] || continue
+      if [[ -n "${ONYX_TOKEN}" ]]; then
         code="$(curl -sS -o "${WORK}/onyx-ingest.json" -w '%{http_code}' \
-          -c "${COOKIE_JAR}" -b "${COOKIE_JAR}" \
           -X POST "${ONYX_BASE}${path}" \
+          -H "Authorization: Bearer ${ONYX_TOKEN}" \
           -H "Content-Type: application/json" \
           -d "${ingest_body}" || true)"
+        last_probe="bearer ${path}->${code}"
         if [[ "${code}" == "200" || "${code}" == "201" ]]; then
           upsert_ok=1
-          auth_mode="session-cookie ${path} HTTP ${code}"
+          auth_mode="api-key ${path} HTTP ${code}"
           break
         fi
-      done
-    fi
+      fi
+      code="$(curl -sS -o "${WORK}/onyx-ingest.json" -w '%{http_code}' \
+        -c "${COOKIE_JAR}" -b "${COOKIE_JAR}" \
+        -X POST "${ONYX_BASE}${path}" \
+        -H "Content-Type: application/json" \
+        -d "${ingest_body}" || true)"
+      last_probe="cookie ${path}->${code}"
+      if [[ "${code}" == "200" || "${code}" == "201" ]]; then
+        upsert_ok=1
+        auth_mode="session-cookie ${path} HTTP ${code}"
+        break
+      fi
+    done
     if [[ "${upsert_ok}" == "1" ]]; then
       record OK stage_onyx "compose upsert_ingestion_doc via ${auth_mode} (reg=${reg_code} login=${login_code})"
     else
-      record FAIL stage_onyx "reg=${reg_code} login=${login_code} key=${key_json:0:120} upsert=$(head -c 200 "${WORK}/onyx-ingest.json" 2>/dev/null || true)"
+      # Save openapi path list for debugging
+      printf '%s\n' "${ONYX_INGEST_PATHS[@]}" >"${WORK}/onyx-ingest-paths.txt"
+      curl -sS -o "${WORK}/onyx-openapi-head.json" \
+        "${ONYX_BASE}/openapi.json" 2>/dev/null \
+        || curl -sS -o "${WORK}/onyx-openapi-head.json" \
+          "${ONYX_BASE}/api/openapi.json" 2>/dev/null || true
+      record FAIL stage_onyx "reg=${reg_code} login=${login_code} last=${last_probe} upsert=$(head -c 200 "${WORK}/onyx-ingest.json" 2>/dev/null || true)"
     fi
   fi
 else
@@ -448,16 +485,17 @@ if [[ -z "${CS_BASE}" || -z "${CS_TOKEN}" ]]; then
       printf '%s' "${token_json}" >"${WORK}/coneshare-token-error.txt"
       record FAIL stage_coneshare "token create failed: $(python3 -c 'import sys; t=sys.stdin.read(); print(t[:240].replace(chr(10)," "))' <<<"${token_json}")"
     else
+      # Upstream serializer requires `name` (title alone → 400).
       dr_code="$(curl -sS -o "${WORK}/coneshare-dataroom.json" -w '%{http_code}' \
         -X POST "${CS_BASE}/api/v1/datarooms/" \
         -H "Authorization: Bearer ${CS_TOKEN}" \
         -H "Content-Type: application/json" \
-        -d "{\"title\":\"clawql-idp-b23-${CORR}\",\"description\":\"IDP B2.3 ordered smoke\"}" || true)"
+        -d "{\"name\":\"clawql-idp-b23-${CORR}\",\"title\":\"clawql-idp-b23-${CORR}\",\"description\":\"IDP B2.3 ordered smoke\"}" || true)"
       sl_code="$(curl -sS -o "${WORK}/coneshare-share.json" -w '%{http_code}' \
         -X POST "${CS_BASE}/api/v1/share-links/" \
         -H "Authorization: Bearer ${CS_TOKEN}" \
         -H "Content-Type: application/json" \
-        -d "{\"title\":\"clawql-idp-b23-${CORR}-share\"}" || true)"
+        -d "{\"name\":\"clawql-idp-b23-${CORR}-share\",\"title\":\"clawql-idp-b23-${CORR}-share\"}" || true)"
       if [[ "${dr_code}" == "200" || "${dr_code}" == "201" ]]; then
         record OK stage_coneshare "dataroom HTTP ${dr_code}; share-link HTTP ${sl_code}"
       else
