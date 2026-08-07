@@ -60,6 +60,7 @@
     "body-parser": "2.3.0",
     "sharp": "0.35.3",
     "postcss": "8.5.23",
+    "nanoid": "3.3.17",
     "undici": "7.29.0",
     "next": {
       "postcss": "8.5.23"
