@@ -41,7 +41,22 @@ export type OrgMembership = {
   orgRole: OrgMemberRole;
   status: "active" | "suspended" | "left";
   displayName?: string;
+  /** Work email used for SSO / invites (must match allowedEmailDomains when set). */
+  email?: string;
+  /** Manager this member reports to (tenant id of an org manager/billing_admin). */
+  reportsToTenantId?: string;
+  invitedAt?: string;
+  invitedByTenantId?: string;
   joinedAt: string;
+};
+
+export type OrgSsoPolicy = {
+  /** Company email domains that may join via SSO (e.g. `acme.com`). */
+  allowedEmailDomains: string[];
+  /** Optional per-org IdP issuer (multi-tenant SaaS). */
+  issuer?: string;
+  /** Optional per-org JWKS URL. */
+  jwksUrl?: string;
 };
 
 export type OrgCreditPeriodPolicy = "expire_to_pool" | "rollover";
@@ -54,6 +69,15 @@ export type OrgRecord = {
   billingAdminTenantIds: string[];
   rolePolicies: OrgRolePolicy[];
   members: OrgMembership[];
+  /** Company-email SSO binding (domains + optional IdP). */
+  sso?: OrgSsoPolicy;
+  /**
+   * Plan tier for seat entitlements (`free`/`pro`/`team`/`enterprise`).
+   * Defaults to `team` when unset.
+   */
+  planId?: "free" | "pro" | "team" | "enterprise";
+  /** Optional hard seat cap override (takes precedence over plan seats when set). */
+  seatLimit?: number;
   /** What happens to unused member credits at period redistribute. Default expire_to_pool. */
   periodEndPolicy: OrgCreditPeriodPolicy;
   createdAt: string;
@@ -117,6 +141,13 @@ export type CreateOrgInput = {
   billingAdminTenantId: string;
   rolePolicies?: OrgRolePolicy[];
   periodEndPolicy?: OrgCreditPeriodPolicy;
+  /** Seed company-email SSO domains (e.g. `["acme.com"]`). */
+  allowedEmailDomains?: string[];
+  ssoIssuer?: string;
+  ssoJwksUrl?: string;
+  billingAdminEmail?: string;
+  planId?: OrgRecord["planId"];
+  seatLimit?: number;
 };
 
 export async function createOrg(
@@ -138,6 +169,7 @@ export async function createOrg(
   if (file.orgs[orgId]) throw new Error(`Org already exists: ${orgId}`);
 
   const now = new Date().toISOString();
+  const domains = normalizeDomains(input.allowedEmailDomains);
   const org: OrgRecord = {
     orgId,
     displayName: input.displayName?.trim() || orgId,
@@ -150,10 +182,22 @@ export async function createOrg(
         allocationRoleId: "staff",
         orgRole: "billing_admin",
         status: "active",
+        email: input.billingAdminEmail?.trim().toLowerCase() || undefined,
         joinedAt: now,
       },
     ],
+    ...(domains.length || input.ssoIssuer || input.ssoJwksUrl
+      ? {
+          sso: {
+            allowedEmailDomains: domains,
+            issuer: input.ssoIssuer?.trim() || undefined,
+            jwksUrl: input.ssoJwksUrl?.trim() || undefined,
+          },
+        }
+      : {}),
     periodEndPolicy: input.periodEndPolicy ?? "expire_to_pool",
+    planId: input.planId ?? "team",
+    seatLimit: input.seatLimit,
     createdAt: now,
     updatedAt: now,
   };
@@ -198,7 +242,11 @@ export type AddOrgMemberInput = {
   allocationRoleId: OrgRoleId;
   orgRole?: OrgMemberRole;
   displayName?: string;
+  email?: string;
+  reportsToTenantId?: string;
   actorTenantId: string;
+  /** Skip seat entitlement check (billing admin override). */
+  bypassSeatCheck?: boolean;
 };
 
 export async function addOrgMember(
@@ -214,14 +262,23 @@ export async function addOrgMember(
   const memberId = input.memberTenantId.trim();
   if (!memberId) throw new Error("memberTenantId is required");
   if (memberId === org.poolTenantId) throw new Error("Cannot add pool account as a member");
+  if (input.email) assertEmailMatchesOrgDomains(org, input.email);
 
   const existing = org.members.find((m) => m.memberTenantId === memberId);
   const now = new Date().toISOString();
+  const becomingActive = !existing || existing.status !== "active";
+  if (becomingActive && !input.bypassSeatCheck) {
+    assertOrgSeatAvailable(org);
+  }
   if (existing) {
     existing.status = "active";
     existing.allocationRoleId = input.allocationRoleId;
     existing.orgRole = input.orgRole ?? existing.orgRole;
     if (input.displayName) existing.displayName = input.displayName;
+    if (input.email) existing.email = input.email.trim().toLowerCase();
+    if (input.reportsToTenantId !== undefined) {
+      existing.reportsToTenantId = input.reportsToTenantId.trim() || undefined;
+    }
   } else {
     org.members.push({
       memberTenantId: memberId,
@@ -229,6 +286,8 @@ export async function addOrgMember(
       orgRole: input.orgRole ?? "member",
       status: "active",
       displayName: input.displayName,
+      email: input.email?.trim().toLowerCase(),
+      reportsToTenantId: input.reportsToTenantId?.trim() || undefined,
       joinedAt: now,
     });
   }
@@ -246,6 +305,373 @@ function assertBillingAdmin(org: OrgRecord, actorTenantId: string): void {
   if (!org.billingAdminTenantIds.includes(actor)) {
     throw new Error(`Actor ${actor} is not a billing admin for org ${org.orgId}`);
   }
+}
+
+export function countActiveSeats(org: OrgRecord): number {
+  return org.members.filter((m) => m.status === "active").length;
+}
+
+/** Effective seat limit: explicit seatLimit, else plan seats (default team). */
+export function resolveOrgSeatLimit(org: OrgRecord): number {
+  if (org.seatLimit !== undefined && Number.isFinite(org.seatLimit)) {
+    return Math.max(0, Math.round(org.seatLimit));
+  }
+  const planId = org.planId ?? "team";
+  // Inline plan seats to avoid circular imports at module load in tests.
+  const seatsByPlan: Record<string, number> = {
+    free: 1,
+    pro: 1,
+    team: 20,
+    enterprise: Number.POSITIVE_INFINITY,
+  };
+  return seatsByPlan[planId] ?? 20;
+}
+
+export function assertOrgSeatAvailable(org: OrgRecord, additionalSeats = 1): void {
+  const limit = resolveOrgSeatLimit(org);
+  if (!Number.isFinite(limit)) return;
+  const used = countActiveSeats(org);
+  if (used + additionalSeats > limit) {
+    throw new Error(
+      `Org ${org.orgId} seat limit reached (${used}/${limit}). Upgrade plan or raise seatLimit.`
+    );
+  }
+}
+
+export function assertManagerOrBillingAdmin(org: OrgRecord, actorTenantId: string): void {
+  const actor = actorTenantId.trim();
+  if (org.billingAdminTenantIds.includes(actor)) return;
+  const m = findMembership(org, actor);
+  if (m?.orgRole === "manager") return;
+  throw new Error(`Actor ${actor} is not a manager or billing admin for org ${org.orgId}`);
+}
+
+export function isReportOfManager(
+  org: OrgRecord,
+  managerTenantId: string,
+  reportTenantId: string
+): boolean {
+  const report = findMembership(org, reportTenantId);
+  return report?.reportsToTenantId === managerTenantId.trim();
+}
+
+function normalizeDomains(domains: string[] | undefined): string[] {
+  if (!domains?.length) return [];
+  return [...new Set(domains.map((d) => d.trim().toLowerCase().replace(/^@/, "")).filter(Boolean))];
+}
+
+export function emailDomainOf(email: string): string | undefined {
+  const at = email.lastIndexOf("@");
+  if (at < 0) return undefined;
+  return (
+    email
+      .slice(at + 1)
+      .trim()
+      .toLowerCase() || undefined
+  );
+}
+
+export function assertEmailMatchesOrgDomains(org: OrgRecord, email: string): void {
+  const domains = org.sso?.allowedEmailDomains ?? [];
+  if (!domains.length) return;
+  const domain = emailDomainOf(email.trim().toLowerCase());
+  if (!domain || !domains.includes(domain)) {
+    throw new Error(
+      `Email must be under company domain(s) ${domains.join(", ")} for org ${org.orgId}`
+    );
+  }
+}
+
+/** Resolve the company org that owns a work-email domain (first match). */
+export async function findOrgByEmailDomain(
+  domain: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord | undefined> {
+  const needle = domain.trim().toLowerCase().replace(/^@/, "");
+  if (!needle) return undefined;
+  const file = await loadOrgCreditsFile(env);
+  return Object.values(file.orgs).find((o) => (o.sso?.allowedEmailDomains ?? []).includes(needle));
+}
+
+/**
+ * Billing admin: bind company email domains (+ optional IdP) for SSO under @company.com.
+ */
+export async function setOrgSsoPolicy(
+  input: {
+    orgId: string;
+    actorTenantId: string;
+    allowedEmailDomains: string[];
+    issuer?: string;
+    jwksUrl?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  const file = await loadOrgCreditsFile(env);
+  const key = input.orgId.trim().toLowerCase();
+  const org = file.orgs[key];
+  if (!org) throw new Error(`Unknown org: ${input.orgId}`);
+  assertBillingAdmin(org, input.actorTenantId);
+  const domains = normalizeDomains(input.allowedEmailDomains);
+  if (!domains.length) throw new Error("At least one allowedEmailDomain is required");
+  org.sso = {
+    allowedEmailDomains: domains,
+    issuer: input.issuer?.trim() || org.sso?.issuer,
+    jwksUrl: input.jwksUrl?.trim() || org.sso?.jwksUrl,
+  };
+  org.updatedAt = new Date().toISOString();
+  file.orgs[key] = org;
+  await saveOrgCreditsFile(file, env);
+  return org;
+}
+
+export type InviteOrgMemberInput = {
+  orgId: string;
+  email: string;
+  memberTenantId?: string;
+  allocationRoleId: OrgRoleId;
+  orgRole?: OrgMemberRole;
+  displayName?: string;
+  reportsToTenantId?: string;
+  actorTenantId: string;
+  bypassSeatCheck?: boolean;
+};
+
+/**
+ * Billing admin: invite a colleague by company email.
+ * `memberTenantId` defaults to a slug derived from the email local-part + org.
+ */
+export async function inviteOrgMember(
+  input: InviteOrgMemberInput,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  const email = input.email.trim().toLowerCase();
+  if (!email.includes("@")) throw new Error("Valid work email is required");
+  const memberTenantId =
+    input.memberTenantId?.trim() ||
+    `${input.orgId.trim().toLowerCase()}:${email.replace(/[^a-z0-9]+/gi, "-")}`;
+
+  const file = await loadOrgCreditsFile(env);
+  const key = input.orgId.trim().toLowerCase();
+  const org = file.orgs[key];
+  if (!org) throw new Error(`Unknown org: ${input.orgId}`);
+  assertBillingAdmin(org, input.actorTenantId);
+  assertEmailMatchesOrgDomains(org, email);
+
+  const now = new Date().toISOString();
+  const existing = org.members.find(
+    (m) => m.memberTenantId === memberTenantId || m.email === email
+  );
+  const becomingActive = !existing || existing.status !== "active";
+  if (becomingActive && !input.bypassSeatCheck) {
+    assertOrgSeatAvailable(org);
+  }
+  if (existing) {
+    existing.status = "active";
+    existing.email = email;
+    existing.allocationRoleId = input.allocationRoleId;
+    existing.orgRole = input.orgRole ?? existing.orgRole;
+    if (input.displayName) existing.displayName = input.displayName;
+    if (input.reportsToTenantId !== undefined) {
+      existing.reportsToTenantId = input.reportsToTenantId.trim() || undefined;
+    }
+    existing.invitedAt = now;
+    existing.invitedByTenantId = input.actorTenantId.trim();
+  } else {
+    org.members.push({
+      memberTenantId,
+      allocationRoleId: input.allocationRoleId,
+      orgRole: input.orgRole ?? "member",
+      status: "active",
+      displayName: input.displayName,
+      email,
+      reportsToTenantId: input.reportsToTenantId?.trim() || undefined,
+      invitedAt: now,
+      invitedByTenantId: input.actorTenantId.trim(),
+      joinedAt: now,
+    });
+  }
+  if (input.orgRole === "billing_admin" && !org.billingAdminTenantIds.includes(memberTenantId)) {
+    org.billingAdminTenantIds.push(memberTenantId);
+  }
+  org.updatedAt = now;
+  file.orgs[key] = org;
+  await saveOrgCreditsFile(file, env);
+  return org;
+}
+
+export async function listOrgMembers(
+  orgId: string,
+  options: { status?: OrgMembership["status"] | "any"; actorTenantId?: string } = {},
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgMembership[]> {
+  const org = await getOrg(orgId, env);
+  if (!org) throw new Error(`Unknown org: ${orgId}`);
+  if (options.actorTenantId) assertManagerOrBillingAdmin(org, options.actorTenantId);
+  const status = options.status ?? "active";
+  let members =
+    status === "any" ? [...org.members] : org.members.filter((m) => m.status === status);
+  // Managers see only themselves + direct reports unless billing admin
+  if (options.actorTenantId) {
+    const actor = options.actorTenantId.trim();
+    if (!org.billingAdminTenantIds.includes(actor)) {
+      members = members.filter((m) => m.memberTenantId === actor || m.reportsToTenantId === actor);
+    }
+  }
+  return members;
+}
+
+/**
+ * Billing admin: set plan + optional seat cap for entitlement enforcement on invite/add.
+ */
+export async function setOrgSeatPolicy(
+  input: {
+    orgId: string;
+    actorTenantId: string;
+    planId?: OrgRecord["planId"];
+    seatLimit?: number;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  const file = await loadOrgCreditsFile(env);
+  const key = input.orgId.trim().toLowerCase();
+  const org = file.orgs[key];
+  if (!org) throw new Error(`Unknown org: ${input.orgId}`);
+  assertBillingAdmin(org, input.actorTenantId);
+  if (input.planId) org.planId = input.planId;
+  if (input.seatLimit !== undefined) {
+    org.seatLimit = Math.max(0, Math.round(input.seatLimit));
+  }
+  org.updatedAt = new Date().toISOString();
+  file.orgs[key] = org;
+  await saveOrgCreditsFile(file, env);
+  return org;
+}
+
+/** Assign a member's manager (reports-to). Billing admin only. */
+export async function setMemberReportsTo(
+  input: {
+    orgId: string;
+    memberTenantId: string;
+    reportsToTenantId: string | null;
+    actorTenantId: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  const file = await loadOrgCreditsFile(env);
+  const key = input.orgId.trim().toLowerCase();
+  const org = file.orgs[key];
+  if (!org) throw new Error(`Unknown org: ${input.orgId}`);
+  assertBillingAdmin(org, input.actorTenantId);
+  const member = org.members.find((m) => m.memberTenantId === input.memberTenantId.trim());
+  if (!member) throw new Error(`Unknown member: ${input.memberTenantId}`);
+  if (input.reportsToTenantId) {
+    const manager = findMembership(org, input.reportsToTenantId);
+    if (!manager || (manager.orgRole !== "manager" && manager.orgRole !== "billing_admin")) {
+      throw new Error("reportsToTenantId must be an active manager or billing_admin");
+    }
+    member.reportsToTenantId = input.reportsToTenantId.trim();
+  } else {
+    member.reportsToTenantId = undefined;
+  }
+  org.updatedAt = new Date().toISOString();
+  file.orgs[key] = org;
+  await saveOrgCreditsFile(file, env);
+  return org;
+}
+
+/**
+ * Manager (or billing admin): transfer from own balance to a direct report.
+ */
+export async function transferManagerToReport(
+  input: {
+    orgId: string;
+    managerTenantId: string;
+    reportTenantId: string;
+    amountCents: number;
+    note?: string;
+    idempotencyKey?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<CreditTransferResult> {
+  const org = await getOrg(input.orgId, env);
+  if (!org) throw new Error(`Unknown org: ${input.orgId}`);
+  assertManagerOrBillingAdmin(org, input.managerTenantId);
+  const isAdmin = org.billingAdminTenantIds.includes(input.managerTenantId.trim());
+  if (!isAdmin && !isReportOfManager(org, input.managerTenantId, input.reportTenantId)) {
+    throw new Error(
+      `${input.reportTenantId} is not a direct report of manager ${input.managerTenantId}`
+    );
+  }
+  return transferWithinOrg(
+    {
+      orgId: input.orgId,
+      fromMemberTenantId: input.managerTenantId,
+      toMemberTenantId: input.reportTenantId,
+      amountCents: input.amountCents,
+      note: input.note ?? `manager top-up to report`,
+      idempotencyKey: input.idempotencyKey,
+    },
+    env
+  );
+}
+
+export async function suspendOrgMember(
+  input: { orgId: string; memberTenantId: string; actorTenantId: string },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  return setMemberStatus({ ...input, status: "suspended" }, env);
+}
+
+export async function removeOrgMember(
+  input: { orgId: string; memberTenantId: string; actorTenantId: string },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  return setMemberStatus({ ...input, status: "left" }, env);
+}
+
+export async function reactivateOrgMember(
+  input: { orgId: string; memberTenantId: string; actorTenantId: string },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  const org = await getOrg(input.orgId, env);
+  if (!org) throw new Error(`Unknown org: ${input.orgId}`);
+  const member = org.members.find((m) => m.memberTenantId === input.memberTenantId.trim());
+  if (member && member.status !== "active") {
+    assertOrgSeatAvailable(org);
+  }
+  return setMemberStatus({ ...input, status: "active" }, env);
+}
+
+async function setMemberStatus(
+  input: {
+    orgId: string;
+    memberTenantId: string;
+    actorTenantId: string;
+    status: OrgMembership["status"];
+  },
+  env: NodeJS.ProcessEnv
+): Promise<OrgRecord> {
+  const file = await loadOrgCreditsFile(env);
+  const key = input.orgId.trim().toLowerCase();
+  const org = file.orgs[key];
+  if (!org) throw new Error(`Unknown org: ${input.orgId}`);
+  assertBillingAdmin(org, input.actorTenantId);
+  const memberId = input.memberTenantId.trim();
+  const member = org.members.find((m) => m.memberTenantId === memberId);
+  if (!member) throw new Error(`Unknown member: ${memberId}`);
+  if (member.orgRole === "billing_admin" && input.status !== "active") {
+    const otherAdmins = org.billingAdminTenantIds.filter((id) => id !== memberId);
+    if (otherAdmins.length === 0) {
+      throw new Error("Cannot suspend/remove the last billing admin");
+    }
+    org.billingAdminTenantIds = otherAdmins;
+    member.orgRole = "member";
+  }
+  member.status = input.status;
+  org.updatedAt = new Date().toISOString();
+  file.orgs[key] = org;
+  await saveOrgCreditsFile(file, env);
+  return org;
 }
 
 export function findMembership(org: OrgRecord, memberTenantId: string): OrgMembership | undefined {

@@ -1,6 +1,7 @@
 export * from "./gateway.js";
 export * from "./oidc.js";
 export * from "./policy.js";
+export * from "./org-idp-routing.js";
 export * from "./create-auth.js";
 export * from "./step-up/index.js";
 export * from "./provider-auth-headers.js";

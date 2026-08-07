@@ -4,10 +4,11 @@
 
 ## Bundled dashboard
 
-| File                                                                 | UID                         | Description                                                                                                                                             |
-| -------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`clawql-core-observability.json`](./clawql-core-observability.json) | `clawql-core-observability` | **Native protocol** counters/gauges exposed on **`GET /metrics`** (see [`src/native-protocol-prometheus.ts`](../../src/native-protocol-prometheus.ts)). |
-| [`clawql-idp-observability.json`](./clawql-idp-observability.json)   | `clawql-idp-observability`  | **IDP operator** panels — audit rate, buffer depth, native protocol ([#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)).              |
+| File                                                                     | UID                           | Description                                                                                                                                                        |
+| ------------------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`clawql-core-observability.json`](./clawql-core-observability.json)     | `clawql-core-observability`   | **Native protocol** counters/gauges exposed on **`GET /metrics`** (see [`src/native-protocol-prometheus.ts`](../../src/native-protocol-prometheus.ts)).            |
+| [`clawql-idp-observability.json`](./clawql-idp-observability.json)       | `clawql-idp-observability`    | **IDP operator** panels — audit rate, buffer depth, native protocol ([#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)).                         |
+| [`clawql-enterprise-org-spend.json`](./clawql-enterprise-org-spend.json) | `clawql-enterprise-org-spend` | **Enterprise FinOps** — org pool/member credit gauges + waterfall (member/pool/overage). See [`docs/enterprise/control-plane.md`](../enterprise/control-plane.md). |
 
 ### Import (any Grafana)
 

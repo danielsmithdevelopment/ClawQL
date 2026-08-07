@@ -14,19 +14,26 @@ Gateway authentication and shared step-up primitives for the Agentic Gateway.
 
 ## Environment
 
-| Variable                                | Purpose                                                  |
-| --------------------------------------- | -------------------------------------------------------- |
-| `CLAWQL_AUTH_MODE`                      | `noAuth` \| `apiKey` \| `oidc`                           |
-| `CLAWQL_API_KEY`                        | Required when mode is `apiKey` (unless VK resolver only) |
-| `CLAWQL_PROVIDER_AUTH_JSON`             | Per-provider upstream headers for `execute`              |
-| `CLAWQL_AUTH_OIDC_JWKS_URL`             | OIDC JWKS URL (RS256)                                    |
-| `CLAWQL_AUTH_OIDC_PUBLIC_KEY_PEM_PATH`  | PEM public key path (RS256)                              |
-| `CLAWQL_AUTH_OIDC_HS256_SECRET`         | **Tests/dev only** HS256 secret                          |
-| `CLAWQL_AUTH_OIDC_ISSUER`               | Optional `iss` check                                     |
-| `CLAWQL_AUTH_OIDC_AUDIENCE`             | Optional `aud` (comma-separated)                         |
-| `CLAWQL_AUTH_OIDC_ATR_CLAIM`            | Claim holding ATR object (default `atr`)                 |
-| `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL` | Require MFA-class `acr`/`amr` for financial MCP tools    |
-| `CLAWQL_AUTH_FINANCIAL_TOOLS`           | Override financial tool name list (comma-separated)      |
+| Variable                                 | Purpose                                                  |
+| ---------------------------------------- | -------------------------------------------------------- |
+| `CLAWQL_AUTH_MODE`                       | `noAuth` \| `apiKey` \| `oidc`                           |
+| `CLAWQL_API_KEY`                         | Required when mode is `apiKey` (unless VK resolver only) |
+| `CLAWQL_PROVIDER_AUTH_JSON`              | Per-provider upstream headers for `execute`              |
+| `CLAWQL_AUTH_OIDC_JWKS_URL`              | OIDC JWKS URL (RS256)                                    |
+| `CLAWQL_AUTH_OIDC_PUBLIC_KEY_PEM_PATH`   | PEM public key path (RS256)                              |
+| `CLAWQL_AUTH_OIDC_HS256_SECRET`          | **Tests/dev only** HS256 secret                          |
+| `CLAWQL_AUTH_OIDC_ISSUER`                | Optional `iss` check                                     |
+| `CLAWQL_AUTH_OIDC_AUDIENCE`              | Optional `aud` (comma-separated)                         |
+| `CLAWQL_AUTH_OIDC_ATR_CLAIM`             | Claim holding ATR object (default `atr`)                 |
+| `CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS` | Company SSO allowlist (`acme.com,acme.co.uk`)            |
+| `CLAWQL_AUTH_OIDC_REQUIRE_EMAIL_DOMAIN`  | Force email/hd even without allowlist                    |
+| `CLAWQL_AUTH_OIDC_EMAIL_CLAIM`           | Email claim name (default `email`)                       |
+| `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL`  | Require MFA-class `acr`/`amr` for financial MCP tools    |
+| `CLAWQL_AUTH_FINANCIAL_TOOLS`            | Override financial tool name list (comma-separated)      |
+
+## Per-org IdP routing (multi-tenant)
+
+For SaaS with one IdP per company, inject an `OrgIdpRouter` (e.g. from `createOrgCreditsIdpRouter` in `clawql-payments`) and call `verifyOidcBearerTokenWithOrgRouting`. The router selects JWKS/issuer/domains from the JWT email domain (or `iss`). ClawQL still does **not** issue login tokens.
 
 ## Step-up (not SSO)
 

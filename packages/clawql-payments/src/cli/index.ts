@@ -113,6 +113,19 @@ export {
   type PaymentsCompensationApproveOptions,
 } from "./compensation.js";
 export {
+  runPaymentsOrgAllocate,
+  runPaymentsOrgCreate,
+  runPaymentsOrgDistribute,
+  runPaymentsOrgInvite,
+  runPaymentsOrgMembers,
+  runPaymentsOrgRemove,
+  runPaymentsOrgShow,
+  runPaymentsOrgSpend,
+  runPaymentsOrgSso,
+  runPaymentsOrgSuspend,
+  type OrgCliOptions,
+} from "./org.js";
+export {
   runPaymentsAccountingExport,
   runPaymentsTaxEvidence,
   runPaymentsTaxProfileSet,
