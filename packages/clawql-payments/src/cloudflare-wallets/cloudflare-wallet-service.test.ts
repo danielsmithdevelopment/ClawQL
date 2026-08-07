@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Effect, Layer } from "effect";
 import { AuditLive } from "clawql-core";
+import { lokiPushLiveLayer } from "../audit/loki.js";
 import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
 import { resetPaymentsEffectRuntimeForTests } from "../runtime/payments-effect-runtime.js";
 import { normalizeCloudflarePayHandle } from "./config.js";
@@ -11,7 +12,11 @@ import { CloudflareWalletService, cloudflareWalletLiveLayer } from "./cloudflare
 
 function provideService(env: NodeJS.ProcessEnv) {
   return cloudflareWalletLiveLayer(env).pipe(
-    Layer.provide(paymentAuditLiveLayer(env).pipe(Layer.provide(AuditLive)))
+    Layer.provide(
+      paymentAuditLiveLayer(env).pipe(
+        Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(env)))
+      )
+    )
   );
 }
 
