@@ -163,7 +163,6 @@ export type PaymentsCliOptions = {
   maxTxUsd?: number;
   merchants?: string[];
   walletId?: string;
-  handle?: string;
   interval?: "DAILY" | "WEEKLY" | "MONTHLY" | "TOTAL" | "ANNUAL";
   provider?: OffRampProvider;
   paymentMethodId?: string;

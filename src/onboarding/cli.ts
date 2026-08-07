@@ -1235,7 +1235,6 @@ async function main(): Promise<void> {
       taxProfileRef: typeof flags.taxProfileRef === "string" ? flags.taxProfileRef : undefined,
       toTenantId: typeof flags.toTenantId === "string" ? flags.toTenantId : undefined,
       fromTenantId: typeof flags.fromTenantId === "string" ? flags.fromTenantId : undefined,
-      handle: typeof flags.toHandle === "string" ? flags.toHandle : undefined,
       toHandle: typeof flags.toHandle === "string" ? flags.toHandle : undefined,
       directoryEmail: typeof flags.email === "string" ? flags.email : undefined,
       payTo: typeof flags.payTo === "string" ? flags.payTo : undefined,
