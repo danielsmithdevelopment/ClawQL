@@ -256,7 +256,7 @@ export function EnterpriseGtmPlaybook() {
                 <tr>
                   <td>8 — Interface</td>
                   <td>CLI + Desktop + payments + Virtual Gateway</td>
-                  <td>Developer portals, policy CLI, payment rails, per-tenant delegated sovereignty</td>
+                  <td>Developer portals, policy CLI, Stripe/platform payment rails, per-tenant delegated sovereignty</td>
                 </tr>
               </tbody>
             </table>

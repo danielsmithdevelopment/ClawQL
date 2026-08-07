@@ -1,13 +1,16 @@
 # Agent compensation & credits (SGDOP-ready)
 
-**Status:** Tier-1 scaffold (July 2026)  
+**Status:** Tier-1 scaffold (July 2026) — **self-hosted opt-in**  
 **Package:** `clawql-payments`  
 **Service:** `AgentCompensationService`  
-**CLI:** `clawql payments compensation *`
+**CLI:** `clawql payments compensation *`  
+**Enable:** `CLAWQL_COMPENSATION_ENABLED=1` (default **off**; always off on managed hosting)
+
+**Not available on ClawQL managed SaaS.** See [hosted vs self-hosted compliance](./hosted-vs-self-hosted-compliance.md).
 
 ## Why this exists
 
-Ouroboros / DAOS will use **SGDOP** to detect directional blind spots and recruit diverse agents. Those agents need to be **paid for covering the gap**, then **cash out**.
+Ouroboros / DAOS will use **SGDOP** to detect directional blind spots and recruit diverse agents. Those agents need to be **paid for covering the gap**, then **cash out**. Regulated self-hosted customers bring their own compliance; ClawQL provides the software rails.
 
 This layer sits on top of the Jonah money-out rails (PR #713):
 
@@ -57,7 +60,7 @@ Failure events are symmetric with staged/completed so SGDOP and ops can alert on
 
 ## MCP tools
 
-With `CLAWQL_PAYMENTS_MCP_TOOLS=1`. Underscores are MCP-safe; logical dotted form in comments.
+With `CLAWQL_PAYMENTS_MCP_TOOLS=1` **and** `CLAWQL_COMPENSATION_ENABLED=1`. Underscores are MCP-safe; logical dotted form in comments.
 
 **Safety pattern:** always call `_stage` first (safe / inert). Only call `_confirm` when ready for the irreversible ledger or payout step.
 

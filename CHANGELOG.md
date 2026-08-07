@@ -1,15 +1,8 @@
-# Changelog
-
-All notable changes to this project are documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [Unreleased]
 
-### Added
+### Changed
 
-- **`clawql-web` package** — pluggable `WebSearchProvider` / `WebBrowserProvider` (Tavily, Brave, SearXNG, OpenSearch, Kitesurf, Chromium/Playwright/Puppeteer, Firecrawl), search→browser fallback with pre-flight audit, MCP tools `web_search` / `web_fetch` / `web_screenshot` / `web_interact`. Docs: [`docs/web/clawql-web.md`](docs/web/clawql-web.md), [`docs/plugins/web.md`](docs/plugins/web.md).
+- **Payments compliance posture** — prepaid cross-tenant P2P and agent compensation default **off**; forced off when `CLAWQL_MANAGED_HOSTING=1`. Closed-loop **company org credits** (role budgets, CFO allocate, within-org transfer) allowed on managed — [`docs/payments/org-credits.md`](docs/payments/org-credits.md), [`hosted-vs-self-hosted-compliance.md`](docs/payments/hosted-vs-self-hosted-compliance.md).
 
 ### Fixed
 
@@ -17,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`clawql-web` package** — pluggable `WebSearchProvider` / `WebBrowserProvider` (Tavily, Brave, SearXNG, OpenSearch, Kitesurf, Chromium/Playwright/Puppeteer, Firecrawl), search→browser fallback with pre-flight audit, MCP tools `web_search` / `web_fetch` / `web_screenshot` / `web_interact`. Docs: [`docs/web/clawql-web.md`](docs/web/clawql-web.md), [`docs/plugins/web.md`](docs/plugins/web.md).
 - **Pulumi Cloudflare edge CI/CD** — [`.github/workflows/pulumi-cloudflare-edge.yml`](.github/workflows/pulumi-cloudflare-edge.yml) runs unit tests on PR and `workflow_dispatch` `preview`/`up` against R2-backed Pulumi state (`clawql-pulumi-state`). Scripts: [`scripts/pulumi/ensure-r2-state-backend.sh`](scripts/pulumi/ensure-r2-state-backend.sh), [`scripts/pulumi/deploy-edge.sh`](scripts/pulumi/deploy-edge.sh). Reuses `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`.
 - **Hosted live IaC (Pulumi profiles + Argo CD GitOps)** — extend [`infra/pulumi`](infra/pulumi) with `edge` (Cloudflare R2/KV/D1/Queues + optional Worker stub), `idp-k3s` (r7i.2xlarge K3s bootstrap), and `eks` (EKS + Karpenter IAM) profiles. Expand [`deployment/gitops`](deployment/gitops) (AppProject, app-of-apps, workflows + Karpenter Applications). Add kinetic [`.cqw`](deployment/workflows/) packs synced by Argo CD into Argo Workflows. Operator guide: [`docs/deployment/hosted-live-bootstrap.md`](docs/deployment/hosted-live-bootstrap.md). ADR 0007 amended.
 - **Go-to-market playbook (June 2026)** — [`docs/gtm/clawql-gtm-playbook.md`](docs/gtm/clawql-gtm-playbook.md): zero → shared tenancy bootstrap path aligned with IDP Platform v2 — Cloudflare-first Developer/Teams economics, AWS on first IDP customer, Karpenter shared-tenancy model, staged GPU fleet, pricing/plugin bundles, competitive one-pagers, benchmark service, checklists, and risk register.

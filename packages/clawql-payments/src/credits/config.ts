@@ -1,8 +1,63 @@
 /** Prepaid credits + bank top-up feature flags. */
 
+function parseTruthy(value: string | undefined): boolean {
+  if (value === undefined) return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
+
+function parseFalsey(value: string | undefined): boolean {
+  if (value === undefined) return false;
+  const normalized = value.trim().toLowerCase();
+  return (
+    normalized === "0" || normalized === "false" || normalized === "no" || normalized === "off"
+  );
+}
+
+/**
+ * Managed / hosted ClawQL SaaS. When set, peer credit transfer and agent compensation
+ * stay disabled regardless of other flags (compliance perimeter).
+ */
+export function isManagedHosting(env: NodeJS.ProcessEnv = process.env): boolean {
+  return (
+    parseTruthy(env.CLAWQL_MANAGED_HOSTING) ||
+    parseTruthy(env.CLAWQL_HOSTED_MODE) ||
+    parseTruthy(env.CLAWQL_GATEWAY_MANAGED)
+  );
+}
+
 export function isCreditsEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   const raw = env.CLAWQL_CREDITS_ENABLED?.trim().toLowerCase();
   return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+}
+
+/**
+ * Tenant↔tenant prepaid P2P (Venmo-like). Default **off**.
+ * Opt in only on self-hosted: `CLAWQL_CREDITS_P2P_ENABLED=1`.
+ * Always off when `CLAWQL_MANAGED_HOSTING=1` (or aliases).
+ *
+ * Closed-loop credits redeemable for ClawQL services do not require this flag —
+ * only peer transfer / money-request accept that moves balance between tenants.
+ */
+export function isCreditsP2pEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  if (isManagedHosting(env)) return false;
+  if (parseFalsey(env.CLAWQL_CREDITS_P2P_ENABLED)) return false;
+  return parseTruthy(env.CLAWQL_CREDITS_P2P_ENABLED);
+}
+
+export function assertCreditsP2pEnabled(env: NodeJS.ProcessEnv = process.env): void {
+  if (isCreditsP2pEnabled(env)) return;
+  if (isManagedHosting(env)) {
+    throw new Error(
+      "Prepaid P2P credit transfer is not available on ClawQL managed hosting. " +
+        "Managed plans use Stripe for platform billing only. " +
+        "Self-hosted operators may enable CLAWQL_CREDITS_P2P_ENABLED=1 and own compliance."
+    );
+  }
+  throw new Error(
+    "Prepaid P2P credit transfer is disabled. Set CLAWQL_CREDITS_P2P_ENABLED=1 on self-hosted " +
+      "deployments only after you accept compliance responsibility (not a money transmitter product)."
+  );
 }
 
 /** Stripe Financial Connections + ACH debit for credit top-ups. */
@@ -22,20 +77,6 @@ export function isAchTopupDryRun(env: NodeJS.ProcessEnv = process.env): boolean 
 
 export function creditsReturnUrl(env: NodeJS.ProcessEnv = process.env): string | undefined {
   return env.CLAWQL_CREDITS_RETURN_URL?.trim() || undefined;
-}
-
-function parseTruthy(value: string | undefined): boolean {
-  if (value === undefined) return false;
-  const normalized = value.trim().toLowerCase();
-  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
-}
-
-function parseFalsey(value: string | undefined): boolean {
-  if (value === undefined) return false;
-  const normalized = value.trim().toLowerCase();
-  return (
-    normalized === "0" || normalized === "false" || normalized === "no" || normalized === "off"
-  );
 }
 
 /**
@@ -85,4 +126,25 @@ export function isCreditsTransferDirectAllowed(env: NodeJS.ProcessEnv = process.
  */
 export function isCreditsTransferTotpRequired(env: NodeJS.ProcessEnv = process.env): boolean {
   return parseTruthy(env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP);
+}
+
+/**
+ * Within-company org credit allocate / peer transfer (closed-loop).
+ * Default **on** when credits are enabled — allowed on managed hosting.
+ * Set CLAWQL_CREDITS_ORG_TRANSFER_ENABLED=0 to disable.
+ * Distinct from cross-tenant Venmo P2P (`CLAWQL_CREDITS_P2P_ENABLED`).
+ */
+export function isCreditsOrgTransferEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  if (!isCreditsEnabled(env)) return false;
+  if (parseFalsey(env.CLAWQL_CREDITS_ORG_TRANSFER_ENABLED)) return false;
+  if (parseTruthy(env.CLAWQL_CREDITS_ORG_TRANSFER_ENABLED)) return true;
+  return true;
+}
+
+export function assertCreditsOrgTransferEnabled(env: NodeJS.ProcessEnv = process.env): void {
+  if (isCreditsOrgTransferEnabled(env)) return;
+  throw new Error(
+    "Org credit transfers are disabled. Enable CLAWQL_CREDITS_ENABLED=1 " +
+      "(and do not set CLAWQL_CREDITS_ORG_TRANSFER_ENABLED=0)."
+  );
 }

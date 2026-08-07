@@ -549,7 +549,7 @@ LiteLLM (~40k stars, YC) is a larger inference-proxy competitor. March 2026 supp
 
 **ClawQL trust model:** TypeScript-native; CycloneDX SBOM; Cosign images; Layer 0 Arweave-anchored release manifest; `clawql doctor --smoke` verifies binary hash at startup.
 
-**Beyond routing:** WORM call store → fine-tune flywheel; Layer 5 semantic cache (embedding similarity); outcome-driven escalation; payment rails (x402, MPP, Stripe). Honest gap: LiteLLM still leads on raw provider breadth.
+**Beyond routing:** WORM call store → fine-tune flywheel; Layer 5 semantic cache (embedding similarity); outcome-driven escalation; payment rails (x402, MPP, Stripe) for **platform fees / gated access** on managed hosting — P2P and agent compensation are self-hosted opt-in ([compliance posture](../payments/hosted-vs-self-hosted-compliance.md)). Honest gap: LiteLLM still leads on raw provider breadth.
 
 ### Market 2: IDP vendors
 

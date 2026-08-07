@@ -15,6 +15,7 @@ import {
   type PendingActionRecord,
 } from "../compensation/pending-actions.js";
 import {
+  assertCreditsP2pEnabled,
   isCreditsEnabled,
   isCreditsTransferDirectAllowed,
   isCreditsTransferTotpRequired,
@@ -281,6 +282,16 @@ export function creditsLiveLayer(
               new CreditsError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
             );
           }
+          try {
+            assertCreditsP2pEnabled(env);
+          } catch (cause) {
+            return yield* Effect.fail(
+              new CreditsError({
+                reason: cause instanceof Error ? cause.message : "P2P credits disabled",
+                cause,
+              })
+            );
+          }
           const result = yield* Effect.tryPromise({
             try: () => transferCredits(input, env),
             catch: (cause) =>
@@ -332,6 +343,16 @@ export function creditsLiveLayer(
           if (!isCreditsEnabled(env)) {
             return yield* Effect.fail(
               new CreditsError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
+            );
+          }
+          try {
+            assertCreditsP2pEnabled(env);
+          } catch (cause) {
+            return yield* Effect.fail(
+              new CreditsError({
+                reason: cause instanceof Error ? cause.message : "P2P credits disabled",
+                cause,
+              })
             );
           }
           const fromTenantId = input.fromTenantId.trim();
@@ -406,6 +427,16 @@ export function creditsLiveLayer(
           if (!isCreditsEnabled(env)) {
             return yield* Effect.fail(
               new CreditsError({ reason: "Credits disabled — set CLAWQL_CREDITS_ENABLED=1" })
+            );
+          }
+          try {
+            assertCreditsP2pEnabled(env);
+          } catch (cause) {
+            return yield* Effect.fail(
+              new CreditsError({
+                reason: cause instanceof Error ? cause.message : "P2P credits disabled",
+                cause,
+              })
             );
           }
           const record = yield* Effect.tryPromise({

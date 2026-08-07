@@ -13,26 +13,28 @@ next: hitl-label-studio
 
 **Status:** Shipped (foundation + Tier 1 protocols + Adyen + Connect payouts / Ramp / off-ramp + prepaid credits + agent compensation + accounting export / tax evidence)  
 **Package:** [`packages/clawql-payments`](../../packages/clawql-payments)  
-**Toggle:** Always available as a library; gate rails via `CLAWQL_X402_ENFORCE`, `CLAWQL_MPP_ENABLED`, `CLAWQL_AP2_ENABLED`, `CLAWQL_ACP_ENABLED`, `CLAWQL_PAYPAL_ENABLED`, `CLAWQL_ADYEN_ENABLED`, `CLAWQL_CREDITS_ENABLED`, `CLAWQL_COMPENSATION_ENABLED`, `CLAWQL_PAYMENTS_MCP_TOOLS`, `CLAWQL_TAX_PROFILE_ENFORCE`, plan entitlements  
+**Toggle:** Always available as a library; gate rails via `CLAWQL_X402_ENFORCE`, `CLAWQL_MPP_ENABLED`, `CLAWQL_AP2_ENABLED`, `CLAWQL_ACP_ENABLED`, `CLAWQL_PAYPAL_ENABLED`, `CLAWQL_ADYEN_ENABLED`, `CLAWQL_CREDITS_ENABLED`, `CLAWQL_CREDITS_P2P_ENABLED` (default off), `CLAWQL_COMPENSATION_ENABLED` (default off), `CLAWQL_MANAGED_HOSTING`, `CLAWQL_PAYMENTS_MCP_TOOLS`, `CLAWQL_TAX_PROFILE_ENFORCE`, plan entitlements  
 **Plugin:** `PaymentsX402ProxyPlugin` (`payments-x402-mcp-proxy`) for MCP tool-level x402 enforcement (+ optional AP2 mandate checks); optional payout / compensation tools via `CLAWQL_PAYMENTS_MCP_TOOLS=1`
 
 ## Positioning
 
-ClawQL is the only Agentic Gateway with native **Stripe + x402 + MPP + AP2 + ACP** payment surfaces, **PayPal Orders**, **Adyen Checkout** (enterprise), **Connect payouts / Ramp / consumer off-ramp**, **prepaid credits**, **agent compensation**, a **WORM-audited** payment event trail, and an **accounting subledger export** for books / CPA handoff:
+**Read first:** [hosted vs self-hosted compliance](../payments/hosted-vs-self-hosted-compliance.md). Managed hosting uses Stripe for **platform fees** and optional **closed-loop company credits** ([org-credits](../payments/org-credits.md)). **Cross-tenant P2P** and **agent compensation** are self-hosted opt-in and forced off when `CLAWQL_MANAGED_HOSTING=1`.
 
-| Rail               | Role                                                                                   |
-| ------------------ | -------------------------------------------------------------------------------------- |
-| **Stripe**         | Human fiat — subscriptions, invoices, Billing Meters, Shared Payment Tokens            |
-| **x402**           | Per-request USDC micropayments (one chain settlement per paid call)                    |
-| **MPP**            | Session-based streaming micropayments (pre-authorize once; high-frequency agent spend) |
-| **AP2**            | Cryptographic Payment Mandates (authorization / non-repudiation under MCP)             |
-| **ACP**            | Merchant-side agentic checkout sessions (ChatGPT Instant Checkout–style)               |
-| **PayPal**         | Human wallet Orders v2 create/capture                                                  |
-| **Adyen**          | Enterprise Checkout sessions, payments, HMAC-verified webhooks                         |
-| **Payouts / Ramp** | Creator bank + Base USDC; Ramp agent cards; Moonpay/Transak off-ramp                   |
-| **Credits**        | Prepaid ledger + ACH/FC + P2P pay/request/activity (email invite) + step-up            |
-| **Compensation**   | Agent deposit / cash-out with DAOS-aligned 2PC staging                                 |
-| **Accounting**     | Period subledger CSV/JSON/QB/Xero; tax profile gate; year-end evidence pack            |
+ClawQL’s Agentic Gateway includes native **Stripe + x402 + MPP + AP2 + ACP** surfaces, **PayPal**, **Adyen**, **Connect payouts / Ramp / off-ramp**, **closed-loop prepaid credits**, optional **self-hosted P2P / agent compensation**, a **WORM-audited** payment trail, and an **accounting subledger export**:
+
+| Rail               | Role                                                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| **Stripe**         | Human fiat — subscriptions, invoices, Billing Meters, Shared Payment Tokens                                         |
+| **x402**           | Per-request USDC micropayments (one chain settlement per paid call)                                                 |
+| **MPP**            | Session-based streaming micropayments (pre-authorize once; high-frequency agent spend)                              |
+| **AP2**            | Cryptographic Payment Mandates (authorization / non-repudiation under MCP)                                          |
+| **ACP**            | Merchant-side agentic checkout sessions (ChatGPT Instant Checkout–style)                                            |
+| **PayPal**         | Human wallet Orders v2 create/capture                                                                               |
+| **Adyen**          | Enterprise Checkout sessions, payments, HMAC-verified webhooks                                                      |
+| **Payouts / Ramp** | Creator bank + Base USDC; Ramp agent cards; Moonpay/Transak off-ramp                                                |
+| **Credits**        | Prepaid ledger + ACH/FC; **org closed-loop** budgets; **cross-tenant P2P** only with `CLAWQL_CREDITS_P2P_ENABLED=1` |
+| **Compensation**   | Agent deposit / cash-out — `CLAWQL_COMPENSATION_ENABLED=1` (self-hosted)                                            |
+| **Accounting**     | Period subledger CSV/JSON/QB/Xero; tax profile gate; year-end evidence pack                                         |
 
 Operator guide: [clawql-payments](../payments/clawql-payments.md) → `/payments/clawql-payments` (includes [Accounting & tax](../payments/clawql-payments.md#accounting--tax)).
 

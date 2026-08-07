@@ -30,6 +30,7 @@ describe("money requests / invoices", () => {
     process.env.CLAWQL_HOME = home;
     process.env.CLAWQL_PAYMENTS_AUDIT_STORE = "memory";
     process.env.CLAWQL_CREDITS_ENABLED = "1";
+    process.env.CLAWQL_CREDITS_P2P_ENABLED = "1";
     delete process.env.CLAWQL_CREDITS_TRANSFER_DIRECT;
     delete process.env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP;
     resetPaymentsEffectRuntimeForTests();
@@ -44,6 +45,7 @@ describe("money requests / invoices", () => {
     delete process.env.CLAWQL_HOME;
     delete process.env.CLAWQL_PAYMENTS_AUDIT_STORE;
     delete process.env.CLAWQL_CREDITS_ENABLED;
+    delete process.env.CLAWQL_CREDITS_P2P_ENABLED;
     delete process.env.CLAWQL_CREDITS_TRANSFER_DIRECT;
     await rm(home, { recursive: true, force: true });
   });

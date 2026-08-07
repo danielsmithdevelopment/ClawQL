@@ -142,7 +142,10 @@ export function InferenceGtmPlaybook() {
               A fine-tuning Flywheel that turns production traffic into proprietary models with verifiable supply-chain
               integrity.
             </li>
-            <li>Native payment rails at the gateway layer.</li>
+            <li>
+              Native payment rails at the gateway layer for <strong>platform billing and gated access</strong> (Stripe /
+              x402 / MPP) — not a consumer P2P network on managed hosting.
+            </li>
           </ul>
 
           <h2 id="two-entry-points">02 The two entry points</h2>
@@ -553,8 +556,8 @@ clawql sources add https://your-nextcloud-instance/api
             completion WORM entry. Mandates are system events — not email.
           </p>
           <Callout>
-            Orchestration loop: Broadcast → Pull → Execute → Report. Optional agentic payment rails can credit
-            identities for completed automation work.
+            Orchestration loop: Broadcast → Pull → Execute → Report. Self-hosted operators may optionally enable agent
+            compensation rails under their own compliance framework; managed hosting uses Stripe for platform fees only.
           </Callout>
           <h4>Federated mesh</h4>
           <ul>
@@ -685,8 +688,9 @@ clawql sources add https://your-nextcloud-instance/api
             </li>
             <li>
               <strong>Any layer → Payments:</strong> <code>clawql-payments</code> gates tool calls, APIs, documents, or
-              VDR links behind Stripe, x402, MPP, ACP, or AP2. Payment is integrated at the MCP layer via the{' '}
-              <code>McpProxyPipeline</code>.
+              VDR links behind Stripe, x402, MPP, ACP, or AP2 for <strong>platform fees and access control</strong> on
+              managed hosting. Peer credit transfer and agent compensation are self-hosted opt-in features — not part of
+              the managed SaaS money path.
             </li>
           </ul>
 
@@ -753,7 +757,7 @@ clawql sources add https://your-nextcloud-instance/api
                   <td>✓</td>
                 </tr>
                 <tr>
-                  <td>Agentic payment rails</td>
+                  <td>Agentic payment rails (platform fees / gated access)</td>
                   <td>✗</td>
                   <td>✗</td>
                   <td>✗</td>

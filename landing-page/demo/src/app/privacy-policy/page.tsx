@@ -13,7 +13,7 @@ export const metadata = pageMetadata({
 export default function Page() {
   return (
     <>
-      <DocumentCentered id="document" headline="Privacy Policy" subheadline={<p>Last updated on July 2, 2026.</p>}>
+      <DocumentCentered id="document" headline="Privacy Policy" subheadline={<p>Last updated on August 5, 2026.</p>}>
         <p>
           ClawQL (&quot;<strong>we</strong>,&quot; &quot;<strong>us</strong>,&quot; or &quot;<strong>our</strong>&quot;)
           respects your privacy. This policy describes how we collect, use, and protect information when you use the
@@ -39,6 +39,16 @@ export default function Page() {
           When you use a managed ClawQL account, API tokens and vault content you configure remain yours. We process
           this data only to provide the hosted MCP service. We do not sell your personal information or use your API
           credentials for purposes unrelated to operating your account.
+        </p>
+        <h2>Payments on managed hosting</h2>
+        <p>
+          Managed ClawQL plans are billed through <strong>Stripe</strong> (and related payment processors). ClawQL is
+          not a bank and does not offer FDIC-insured balances. Optional prepaid credits on managed plans are{' '}
+          <strong>closed-loop platform credits</strong> redeemable only for ClawQL services: a company may allocate
+          budgets by role, top up individuals, and allow transfers only among members of the same company plan.
+          Public Venmo-like transfers between unrelated customers and cash-out of credits are not part of managed
+          hosting. Agent compensation ledgers for self-hosted operators are separate and opt-in under the operator&apos;s
+          compliance program.
         </p>
         <h2>Sharing and retention</h2>
         <p>

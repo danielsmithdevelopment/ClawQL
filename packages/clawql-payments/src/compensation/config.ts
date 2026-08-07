@@ -12,10 +12,36 @@ function parseFalsey(value: string | undefined): boolean {
   return n === "0" || n === "false" || n === "no" || n === "off";
 }
 
+function isManagedHosting(env: NodeJS.ProcessEnv): boolean {
+  return (
+    parseTruthy(env.CLAWQL_MANAGED_HOSTING) ||
+    parseTruthy(env.CLAWQL_HOSTED_MODE) ||
+    parseTruthy(env.CLAWQL_GATEWAY_MANAGED)
+  );
+}
+
+/**
+ * Agent compensation deposit/cash-out. Default **off**.
+ * Opt in on self-hosted: `CLAWQL_COMPENSATION_ENABLED=1`.
+ * Always off on managed hosting (`CLAWQL_MANAGED_HOSTING=1`).
+ */
 export function isCompensationEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  if (isManagedHosting(env)) return false;
   if (parseFalsey(env.CLAWQL_COMPENSATION_ENABLED)) return false;
-  if (parseTruthy(env.CLAWQL_COMPENSATION_ENABLED)) return true;
-  return true; // on by default — ledger is local/inert until confirm
+  return parseTruthy(env.CLAWQL_COMPENSATION_ENABLED);
+}
+
+export function assertCompensationEnabled(env: NodeJS.ProcessEnv = process.env): void {
+  if (isCompensationEnabled(env)) return;
+  if (isManagedHosting(env)) {
+    throw new Error(
+      "Agent compensation is not available on ClawQL managed hosting. " +
+        "Self-hosted operators with their own compliance framework may set CLAWQL_COMPENSATION_ENABLED=1."
+    );
+  }
+  throw new Error(
+    "Agent compensation is disabled. Set CLAWQL_COMPENSATION_ENABLED=1 on self-hosted only."
+  );
 }
 
 /** When true, deposit/cashout skip staging (tests / trusted operators only). */
