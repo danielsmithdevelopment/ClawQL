@@ -36,9 +36,9 @@ Any output protocol
 
 \* WebSocket as a first-class adapter surface is **planned** (sixth surface; DO-native). ClawQL Streams covers WebSocket as an **event source** into Core — see [`design/clawql-streams.md`](../design/clawql-streams.md).
 
-| Direction | Package | Claim |
-| --------- | ------- | ----- |
-| **Any API → MCP** | ClawQL Core | Agents discover and call upstream REST / GraphQL / gRPC / CLI via MCP tools |
+| Direction         | Package           | Claim                                                                                     |
+| ----------------- | ----------------- | ----------------------------------------------------------------------------------------- |
+| **Any API → MCP** | ClawQL Core       | Agents discover and call upstream REST / GraphQL / gRPC / CLI via MCP tools               |
 | **MCP → any API** | `mcp-api-adapter` | Wrap **any** MCP server (any language) and expose OpenAPI, GraphQL, `/mcp`, gRPC, gen-cli |
 
 Together: gRPC service ↔ GraphQL consumer, CLI ↔ REST, OpenAPI ↔ gRPC, WebSocket stream ↔ MCP tools — **any combination, either direction**.
@@ -56,11 +56,11 @@ Marketing and GTM need a **single** claim. Explaining “Core plus mcp-api-adapt
 
 ## Competitive framing
 
-| Alternative | What it does | Gap |
-| ----------- | ------------ | --- |
-| **mcpo** (Open WebUI) | MCP → OpenAPI only (Python) | One surface, one direction |
-| **Kong / Apigee** | Classic protocol translation | No MCP IR, not agent-native |
-| **APIAgent / OpenAPI→MCP proxies** | APIs → MCP | Inverse of the adapter; not multi-surface outward |
+| Alternative                        | What it does                 | Gap                                               |
+| ---------------------------------- | ---------------------------- | ------------------------------------------------- |
+| **mcpo** (Open WebUI)              | MCP → OpenAPI only (Python)  | One surface, one direction                        |
+| **Kong / Apigee**                  | Classic protocol translation | No MCP IR, not agent-native                       |
+| **APIAgent / OpenAPI→MCP proxies** | APIs → MCP                   | Inverse of the adapter; not multi-surface outward |
 
 Nobody else ships **both directions** with MCP as IR and the full multi-surface outward adapter in one product story.
 
