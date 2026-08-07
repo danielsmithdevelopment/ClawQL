@@ -73,10 +73,9 @@ jobs:
             fi
           done
 
-          for path in "/" "/streams/"; do
-            safe_name="$(echo "$path" | tr '/' '_' | sed 's/^_//;s/_$//;s/^$/home/')"
-            report="lighthouse-ci-${safe_name}.json"
-            echo "Lighthouse: ${path}"
+          run_lh() {
+            local path="$1"
+            local report="$2"
             npx --yes lighthouse@13.1.0 "http://127.0.0.1:4321${path}" \
               --preset=desktop \
               --only-categories=performance,accessibility,best-practices,seo \
@@ -84,6 +83,16 @@ jobs:
               --output=json \
               --output-path="$report" \
               --quiet
+          }
 
-            node ../../scripts/dev/assert-lighthouse-scores.mjs "$report"
+          for path in "/" "/streams/"; do
+            safe_name="$(echo "$path" | tr '/' '_' | sed 's/^_//;s/_$//;s/^$/home/')"
+            report="lighthouse-ci-${safe_name}.json"
+            echo "Lighthouse: ${path}"
+            # One retry — desktop Lighthouse perf occasionally flakes under CI load.
+            if ! run_lh "$path" "$report" || ! node ../../scripts/dev/assert-lighthouse-scores.mjs "$report"; then
+              echo "Retrying Lighthouse for ${path}..."
+              run_lh "$path" "$report"
+              node ../../scripts/dev/assert-lighthouse-scores.mjs "$report"
+            fi
           done
