@@ -235,13 +235,13 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 
 ## Relationship to other ClawQL pieces
 
-| Piece                                                 | Role                                                   |
-| ----------------------------------------------------- | ------------------------------------------------------ |
-| **`mcp-api-adapter`**                                 | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + gen-cli      |
-| **ClawQL `search` / `execute`**                       | OpenAPI → MCP tools (inverse)                          |
-| **[Custom sources](/getting-started/custom-sources)** | Register other MCP servers **into** the ClawQL gateway |
-| **`mcp-grpc-transport`**                              | Production TypeScript MCP gRPC transport               |
-| **Panguard bridge**                                   | Policy / JWT ATR in front of MCP                       |
+| Piece                                                                                                                   | Role                                                   |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| **`mcp-api-adapter`**                                                                                                   | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + gen-cli      |
+| **ClawQL `search` / `execute`**                                                                                         | OpenAPI → MCP tools (inverse)                          |
+| **[Custom sources](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/custom-sources.md)** | Register other MCP servers **into** the ClawQL gateway |
+| **`mcp-grpc-transport`**                                                                                                | Production TypeScript MCP gRPC transport               |
+| **Panguard bridge**                                                                                                     | Policy / JWT ATR in front of MCP                       |
 
 ## Troubleshooting
 
