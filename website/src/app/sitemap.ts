@@ -118,6 +118,11 @@ const ENTRIES: Array<Entry> = [
     priority: 0.88,
   },
   {
+    path: '/streams/clawql-streams',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  {
     path: '/mcp/mcp-api-adapter',
     changeFrequency: 'monthly',
     priority: 0.9,

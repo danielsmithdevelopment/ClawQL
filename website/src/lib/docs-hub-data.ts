@@ -192,6 +192,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
       'Planned vertical: HSE attestation, Merkle/WORM audit, Arweave anchors, case-number enforcement.',
     icon: SquaresPlusIcon,
   }),
+  card({
+    href: '/streams/clawql-streams',
+    name: 'ClawQL Streams (draft)',
+    description:
+      'Event-driven autonomous agents — WebSocket/NATS triggers, WORM audit, DO or K8s scale.',
+    icon: BoltIcon,
+  }),
 ]
 
 /** Deployment hub — ops/infra only (not getting-started entry points). */

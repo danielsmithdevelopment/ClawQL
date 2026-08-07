@@ -7,6 +7,7 @@ This file helps AI agents and crawlers find canonical documentation. For full-te
 ## Getting started
 - [Agent setup](https://docs.clawql.com/agent-setup): Desktop onboarding, Cursor iOS Cloud Agents, local sandbox
 - [Inference setup](https://docs.clawql.com/getting-started/inference): clawql-inference five-minute start, BYOK, MCP + memory
+- [Custom sources](https://docs.clawql.com/getting-started/custom-sources): Register other MCP servers into one gateway surface
 - [Quickstart](https://docs.clawql.com/quickstart): Fastest path to a running gateway
 - [Getting started](https://docs.clawql.com/getting-started): Quickstart paths, teams, and install options
 - [Quickstart](https://docs.clawql.com/quickstart): npx, install options, and first MCP connect
@@ -19,6 +20,7 @@ This file helps AI agents and crawlers find canonical documentation. For full-te
 - [.cq* file extensions](https://docs.clawql.com/specs/cq-extensions): Draft specs for .cqe, .cqm, .cqk, .cqw (ADR 0010)
 - [Token efficiency](https://docs.clawql.com/architecture/token-efficiency): Twelve compounding layers for cost and reasoning quality
 - [Agentic Gateway (inference)](https://docs.clawql.com/inference/clawql-inference): OpenAI drop-in, flywheel, WORM path to Auditable Production AI
+- [ClawQL Streams](https://docs.clawql.com/streams/clawql-streams): Event-driven autonomous agents — draft spec (WORM, NATS, DO/K8s)
 - [Plugins](https://docs.clawql.com/plugins): Searchable registry — horizontal plugins and domain verticals
 - [Protocol](https://docs.clawql.com/reference/protocol): Uniform envelope and approval flows
 - [Spec configuration](https://docs.clawql.com/spec-configuration): OpenAPI and provider sources

@@ -71,6 +71,7 @@ export const DOC_SITE_ROUTES = {
   'docs/payments/clawql-payments.md': '/payments/clawql-payments',
   'docs/surveillance/clawql-surveillance.md':
     '/surveillance/clawql-surveillance',
+  'docs/streams/clawql-streams.md': '/streams/clawql-streams',
   'docs/architecture/clawql-token-efficiency.md':
     '/architecture/token-efficiency',
   'docs/architecture/enterprise-ontology.md':
