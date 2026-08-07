@@ -181,6 +181,17 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "require_pageindex": True,
         "enable_pageindex": True,
     },
+    "memory-recall-pageindex-pin": {
+        "max_turns": 30,
+        "max_tokens": 8000,
+        "max_wall_s": 180,
+        "default_timeout_s": 180,
+        # Empty vault — truth via PageIndex through memory_recall(sources).
+        "disable_memory": False,
+        "empty_vault": True,
+        "require_memory_recall_pageindex": True,
+        "enable_pageindex": True,
+    },
     "codegraph-guided-edit": {
         "max_turns": 35,
         "max_tokens": 8000,
@@ -498,6 +509,25 @@ CRITICAL: use handbook.md contents — not this instruction text.
    {"code":"fern-42","source":"pageindex"}
 
 Ignore decoy/. Call pageindex tools now — do not stop after read.
+"""
+
+MEMORY_RECALL_PAGEINDEX_NUDGE = """Continue the memory_recall PageIndex pin task.
+
+CRITICAL: use handbook.md contents — not this instruction text.
+
+1. read file handbook.md
+2. clawql_pageindex_build_tree with:
+   - docId=openbench-recall-pi-handbook
+   - markdown= the handbook.md text you read (must include
+     CLAWQL_RECALL_PI_CODE=cedar-31 — never markdown:"")
+3. clawql_memory_recall with:
+   - query=CLAWQL_RECALL_PI_CODE / rare accession
+   - sources=["pageindex"]   ← required
+4. write relative filePath answer.json EXACTLY:
+   {"code":"cedar-31","source":"memory_recall"}
+
+Do NOT use pageindex_synthesize instead of memory_recall.
+Ignore decoy/. Call build_tree + memory_recall now.
 """
 
 CODEGRAPH_NUDGE = """Continue the codegraph task.
@@ -1327,6 +1357,33 @@ def pageindex_incomplete(combined: str, workdir: Path) -> bool:
     return True
 
 
+def memory_recall_pageindex_incomplete(combined: str, workdir: Path) -> bool:
+    """True when build_tree + memory_recall(sources=pageindex) + answer are incomplete."""
+    tools = real_opencode_tools(combined)
+    built = bool(tools & {"clawql_pageindex_build_tree", "pageindex_build_tree"})
+    recalled = bool(tools & {"clawql_memory_recall", "memory_recall"})
+    empty_build = '"markdown":""' in (combined or "") or '"markdown": ""' in (combined or "")
+    # Prefer evidence of sources:["pageindex"] in the log (JSON or yaml-ish).
+    sources_pin = (
+        '"pageindex"' in (combined or "")
+        or "'pageindex'" in (combined or "")
+    )
+    answer = workdir / "answer.json"
+    answer_ok = False
+    if answer.is_file():
+        try:
+            d = json.loads(answer.read_text(encoding="utf-8"))
+            code = str(d.get("code") or d.get("CLAWQL_RECALL_PI_CODE") or "").strip()
+            if code.upper().startswith("CLAWQL_RECALL_PI_CODE="):
+                code = code.split("=", 1)[1].strip()
+            answer_ok = code == "cedar-31"
+        except Exception:  # noqa: BLE001
+            answer_ok = False
+    if answer_ok and built and recalled and sources_pin and not empty_build:
+        return False
+    return True
+
+
 def codegraph_incomplete(combined: str, workdir: Path) -> bool:
     if agent_idle(combined):
         return True
@@ -1641,6 +1698,7 @@ def run_arm_on(
     require_cache: bool = False,
     require_policy_block: bool = False,
     require_pageindex: bool = False,
+    require_memory_recall_pageindex: bool = False,
     panguard_block_tools: str | None = None,
     enable_pageindex: bool = False,
     require_codegraph: bool = False,
@@ -2168,6 +2226,37 @@ def run_arm_on(
                 )
                 combined = combined + "\n" + (proc_pi.stdout or "") + (proc_pi.stderr or "")
                 code = proc_pi.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
+    # memory_recall(sources=[pageindex]): missing build / recall pin / answer.
+    if (
+        require_memory_recall_pageindex
+        and arm == "clawql-on"
+        and not timed_out
+        and memory_recall_pageindex_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 25:
+            cont_file = workdir / ".openbench_memory_recall_pageindex_nudge.md"
+            cont_file.write_text(MEMORY_RECALL_PAGEINDEX_NUDGE, encoding="utf-8")
+            cont_timeout = max(25, min(90, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_mrpi = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_mrpi.stdout or "") + (proc_mrpi.stderr or "")
+                code = proc_mrpi.returncode
             except subprocess.TimeoutExpired as exc:
                 timed_out = True
                 combined = combined + "\n" + _dec_timeout_output(exc)
@@ -2903,6 +2992,13 @@ def render_markdown(report: dict) -> str:
                 "- Correct code fern-42 is buried in handbook.md; decoy rose-99 fails.",
             ]
         )
+    elif task == "memory-recall-pageindex-pin":
+        interp.extend(
+            [
+                "- Both arms require pageindex_build_tree + memory_recall(sources=[pageindex]).",
+                "- synthesize-only paths fail; correct code cedar-31 is buried in handbook.md.",
+            ]
+        )
     elif task == "external-ingest-continue":
         interp.extend(
             [
@@ -3063,6 +3159,9 @@ def run_trial(
                 require_cache=bool(caps.get("require_cache")),
                 require_policy_block=bool(caps.get("require_policy_block")),
                 require_pageindex=bool(caps.get("require_pageindex")),
+                require_memory_recall_pageindex=bool(
+                    caps.get("require_memory_recall_pageindex")
+                ),
                 panguard_block_tools=caps.get("panguard_block_tools"),
                 enable_pageindex=bool(caps.get("enable_pageindex")),
                 require_codegraph=bool(caps.get("require_codegraph")),
@@ -3131,6 +3230,8 @@ def run_trial(
             checker_env_extra["OPENBENCH_REQUIRE_POLICY_BLOCK"] = "1"
         if caps.get("require_pageindex"):
             checker_env_extra["OPENBENCH_REQUIRE_PAGEINDEX"] = "1"
+        if caps.get("require_memory_recall_pageindex"):
+            checker_env_extra["OPENBENCH_REQUIRE_MEMORY_RECALL_PAGEINDEX"] = "1"
         if caps.get("require_codegraph"):
             checker_env_extra["OPENBENCH_REQUIRE_CODEGRAPH"] = "1"
         if caps.get("require_schedule"):
