@@ -22,6 +22,7 @@ on:
           - codegraph-feature-api-surface
           - codegraph-impact-edit
           - memory-conflict-pricing
+          - institutional-knowledge-enumerate
           - onyx-mock-cite
           - memory-wikilink-hop
           - notify-mock-slack
@@ -261,7 +262,8 @@ jobs:
           matrix.task == 'idp-safe-pipeline-lite' ||
           matrix.task == 'onyx-mock-cite' ||
           matrix.task == 'memory-wikilink-hop' ||
-          matrix.task == 'memory-conflict-pricing'
+          matrix.task == 'memory-conflict-pricing' ||
+          matrix.task == 'institutional-knowledge-enumerate'
         run: |
           {
             echo "OPENBENCH_TIMEOUT_S=180"
@@ -337,6 +339,9 @@ jobs:
             fi
             if [ "${{ matrix.task }}" = "memory-conflict-pricing" ]; then
               echo "OPENBENCH_TIMEOUT_S=180"
+            fi
+            if [ "${{ matrix.task }}" = "institutional-knowledge-enumerate" ]; then
+              echo "OPENBENCH_TIMEOUT_S=240"
             fi
           } >> "$GITHUB_ENV"
           if [ "${{ matrix.task }}" = "sandbox-trusted-compute" ]; then

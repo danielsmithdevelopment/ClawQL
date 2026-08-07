@@ -178,7 +178,11 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 21. **`codegraph-feature-api-surface`** — **WIN** retired ([30981709304](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30981709304)); RTP v1.1 durable.
 22. B-4.2 **parked** (offline only). B-4.3 **WIN** `memory-injection-attempt` ([31022595633](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31022595633)).
 
-Full breakdown (B-1 flywheel → B-6 domain HLE-analog): [`openbench-advanced-suites.md`](./openbench-advanced-suites.md). Trace collection from GHA: [`openbench-trace-collection.md`](./openbench-trace-collection.md).
+Full breakdown (B-1 flywheel → B-7 institutional / C&H): [`openbench-advanced-suites.md`](./openbench-advanced-suites.md) · [`openbench-b7-calderwood.md`](./openbench-b7-calderwood.md). Trace collection from GHA: [`openbench-trace-collection.md`](./openbench-trace-collection.md).
+
+### Phase 1d — Institutional knowledge (Harvey C&H)
+
+23. **`institutional-knowledge-enumerate` (B-7.1)** — offline pack landed (mini-firm vault; exhaustive escrow≥10 ∧ NC>18). Live A/B via `workflow_dispatch` next; keep off `pr_active` until WIN.
 
 ### P3 — keep out of PR OpenBench (ops / cluster / paid SaaS)
 
@@ -212,7 +216,8 @@ Ouroboros remains **on vs off** (both have ClawQL) when the claim is the loop, n
 - [OpenBench overview](./openbench.md)
 - [Results ledger](./openbench-results-ledger.md)
 - [Task explanations (prove / why / how)](./openbench-task-explanations.md)
-- [Advanced suites plan (B-1…B-6 task breakdown)](./openbench-advanced-suites.md)
+- [Advanced suites plan (B-1…B-7 task breakdown)](./openbench-advanced-suites.md)
+- [B-7 Calderwood & Harkness / institutional knowledge](./openbench-b7-calderwood.md)
 - [Trace collection from GitHub Actions (call store → export)](./openbench-trace-collection.md)
 - [Stack coverage / backlog](./openbench-stack-coverage.md)
 - [Ouroboros evidence](./ouroboros-value-evidence.md)

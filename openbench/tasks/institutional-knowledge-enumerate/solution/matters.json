@@ -1,0 +1,9 @@
+{
+  "matters": ["MAT-2388", "MAT-2401", "MAT-2415", "MAT-2450", "MAT-2462"],
+  "criteria": {
+    "escrow_pct_min": 10,
+    "noncompete_months_gt": 18
+  },
+  "source": "memory_recall",
+  "search_sufficiency": "Recalled all seeded matter notes and retained only those with escrow_pct>=10 and noncompete_months>18."
+}

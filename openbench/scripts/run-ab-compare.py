@@ -322,6 +322,14 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "disable_memory": False,
         "require_conflict": True,
     },
+    "institutional-knowledge-enumerate": {
+        "max_turns": 30,
+        "max_tokens": 8000,
+        "max_wall_s": 240,
+        "default_timeout_s": 240,
+        "disable_memory": False,
+        "require_institutional": True,
+    },
 }
 
 # Appended only to ouroboros-on so off cannot one-shot the correct recipe.
@@ -697,6 +705,16 @@ CONFLICT_NUDGE = """Continue the memory conflict pricing task.
    {"conflict":true,"values":[{"price":42,"asOf":"2026-01-15"},{"price":55,"asOf":"2026-06-01"}],"chosen":null,"source":"memory_recall"}
 
 Do NOT invent 48 or pick only one price. Call memory_recall now.
+"""
+
+INSTITUTIONAL_NUDGE = """Continue the institutional knowledge enumeration task (B-7.1).
+
+1. clawql_memory_recall across the vault (matter notes with CLAWQL_MATTER_ID / ESCROW_PCT / NONCOMPETE_MONTHS)
+2. Keep ONLY matters with escrow_pct >= 10 AND noncompete_months > 18
+3. write relative filePath matters.json with the COMPLETE set (order free):
+   {"matters":["MAT-2388","MAT-2401","MAT-2415","MAT-2450","MAT-2462"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"memory_recall","search_sufficiency":"…"}
+
+Partial lists fail. Near-misses (9% escrow, exactly 18 months NC) must not appear. Call memory_recall now.
 """
 
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.
@@ -1638,6 +1656,15 @@ def conflict_incomplete(combined: str, workdir: Path) -> bool:
     return not bool(tools & {"clawql_memory_recall", "memory_recall"})
 
 
+def institutional_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "matters.json").is_file():
+        return True
+    tools = real_opencode_tools(combined)
+    return not bool(tools & {"clawql_memory_recall", "memory_recall"})
+
+
 def policy_missing_artifact(workdir: Path) -> bool:
     return not (workdir / "policy.json").is_file()
 
@@ -1722,6 +1749,7 @@ def run_arm_on(
     enable_onyx: bool = False,
     require_wikilink: bool = False,
     require_conflict: bool = False,
+    require_institutional: bool = False,
     correlation_id: str | None = None,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
@@ -2622,6 +2650,37 @@ def run_arm_on(
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
 
+    # institutional knowledge: missing memory_recall / matters.json.
+    if (
+        require_institutional
+        and arm == "clawql-on"
+        and not timed_out
+        and institutional_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 20:
+            cont_file = workdir / ".openbench_institutional_nudge.md"
+            cont_file.write_text(INSTITUTIONAL_NUDGE, encoding="utf-8")
+            cont_timeout = max(20, min(80, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_ik = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_ik.stdout or "") + (proc_ik.stderr or "")
+                code = proc_ik.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
     # Cheap models often stop after memory_recall; one write-focused nudge with
     # vault notes inlined so a second recall is unnecessary.
     if vault and not disable_memory and not timed_out and recalled_without_writes(combined):
@@ -3061,6 +3120,11 @@ def render_markdown(report: dict) -> str:
         interp.append(
             "- Both arms graded for memory_recall that surfaces BOTH prices and conflict=true."
         )
+    elif task == "institutional-knowledge-enumerate":
+        interp.append(
+            "- Both arms graded for exhaustive matter enumeration via memory_recall "
+            "(escrow≥10 and noncompete>18); partial sets score 0.0."
+        )
     interp.append("")
     lines.extend(interp)
     return "\n".join(lines)
@@ -3185,6 +3249,7 @@ def run_trial(
                 enable_onyx=bool(caps.get("enable_onyx")),
                 require_wikilink=bool(caps.get("require_wikilink")),
                 require_conflict=bool(caps.get("require_conflict")),
+                require_institutional=bool(caps.get("require_institutional")),
                 correlation_id=corr,
             )
         agent["correlation_id"] = corr
@@ -3252,6 +3317,8 @@ def run_trial(
             checker_env_extra["OPENBENCH_REQUIRE_WIKILINK"] = "1"
         if caps.get("require_conflict"):
             checker_env_extra["OPENBENCH_REQUIRE_CONFLICT"] = "1"
+        if caps.get("require_institutional"):
+            checker_env_extra["OPENBENCH_REQUIRE_INSTITUTIONAL"] = "1"
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
         return {
