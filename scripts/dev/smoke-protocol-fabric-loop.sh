@@ -29,11 +29,12 @@ ADAPTER_PID=""
 
 wait_http() {
   local url="$1"
-  local i
-  for i in $(seq 1 90); do
+  local attempt=0
+  while [ "$attempt" -lt 90 ]; do
     if curl -sf "$url" >/dev/null 2>&1; then
       return 0
     fi
+    attempt=$((attempt + 1))
     sleep 0.5
   done
   echo "FAIL: timeout waiting for $url" >&2
@@ -42,14 +43,15 @@ wait_http() {
 
 wait_port_free() {
   local port="$1"
+  local attempt=0
   if command -v fuser >/dev/null 2>&1; then
     fuser -k "${port}/tcp" 2>/dev/null || true
   fi
-  local i
-  for i in $(seq 1 40); do
+  while [ "$attempt" -lt 40 ]; do
     if ! curl -sf --max-time 0.2 "http://127.0.0.1:${port}/healthz" >/dev/null 2>&1; then
       return 0
     fi
+    attempt=$((attempt + 1))
     sleep 0.25
   done
   echo "WARN: port $port still answering /healthz" >&2
