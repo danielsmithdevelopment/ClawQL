@@ -1,10 +1,10 @@
 ### 2026-08-07 — `institutional-knowledge-enumerate` (B-7.1) WIN
 
-| Arm                 | Matters found | Score              | Notes                                      |
-| ------------------- | ------------- | ------------------ | ------------------------------------------ |
-| clawql-on           | **5/5**       | **1.0** (3t, 30s)  | seeded vault + `memory_recall`             |
-| clawql-off          | **0/5**       | **0.0** (2t, 11s)  | no ClawQL MCP; `matters.json` missing      |
-| clawql-no-memory    | **0/5**       | **0.0** (2t, 41s)  | tools without seeded vault; no artifact    |
+| Arm              | Matters found | Score             | Notes                                   |
+| ---------------- | ------------- | ----------------- | --------------------------------------- |
+| clawql-on        | **5/5**       | **1.0** (3t, 30s) | seeded vault + `memory_recall`          |
+| clawql-off       | **0/5**       | **0.0** (2t, 11s) | no ClawQL MCP; `matters.json` missing   |
+| clawql-no-memory | **0/5**       | **0.0** (2t, 41s) | tools without seeded vault; no artifact |
 
 Run: [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796) (PR [#871](https://github.com/danielsmithdevelopment/ClawQL/pull/871)). Gate OK. Three-arm isolate. **Verdict:** retire from `pr_active`. Headline: exhaustive matter enumeration needs persisted vault memory, not tools alone.
 
