@@ -41,14 +41,15 @@ When the MCP HTTP server is up, these are mounted under `/credits/*`:
 - **POST** `…/accept` — stages transfer; returns magic-link CTA (still needs authorize/confirm)
 - **POST** `…/decline`
 
-Put these behind gateway auth in production. **Accept / Stage** only stage — money moves on **magic-link authorize** (POST confirm) or CLI `transfer --confirm` (+ optional TOTP).
+Put these behind gateway auth in production. When `CLAWQL_AUTH_MODE` is `apiKey` or `oidc` (or `CLAWQL_CREDITS_HATEOAS_REQUIRE_AUTH=1`), non-public `/credits/*` routes require ATR claims (Bearer JWT / API key). Shareable **pay**, **QR**, and **invite claim** stay public (invite remains token-gated). **Stage / accept / confirm** also honor `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL` (MFA-class `acr`/`amr`). Set `CLAWQL_CREDITS_HATEOAS_PUBLIC=1` only as break-glass. Money still moves only after magic-link authorize (POST confirm) or CLI `transfer --confirm` (+ optional TOTP).
 
 ### Mini UI notes
 
 - Grammar mirrors consumer P2P home: **balance → verbs → activity** (no debit/APY/card tiles)
 - Brand (**ClawQL**) leads the shell; amount is the primary number; QR is the visual plane on pay landing
-- After HTMX stage/accept: **Authorize with magic link** opens GET-safe review, then POST confirm
-- Possession of `action_id` + `code` is the capability; when `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1`, the approve form also requires TOTP
+- After HTMX stage/accept: **Authorize with magic link** opens GET-safe review, then POST confirm (auth + optional MFA)
+- Possession of `action_id` + `code` is not enough alone when gateway auth is on — bring a Bearer/API key
+- When `CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1`, the approve form also requires TOTP
 - Motion: rise-in sections + amount scale-in (respects `prefers-reduced-motion`)
 
 ## CLI
@@ -68,8 +69,10 @@ clawql payments credits qr --to bob@acme.com --amount 5 --out pay.svg
 
 ## Env
 
-| Variable                      | Default                          | Meaning                                   |
-| ----------------------------- | -------------------------------- | ----------------------------------------- |
-| `CLAWQL_CREDITS_HATEOAS_BASE` | (compensation / `clawql://tool`) | Public origin for pay/request/invite URLs |
+| Variable                              | Default                          | Meaning                                                        |
+| ------------------------------------- | -------------------------------- | -------------------------------------------------------------- |
+| `CLAWQL_CREDITS_HATEOAS_BASE`         | (compensation / `clawql://tool`) | Public origin for pay/request/invite URLs                      |
+| `CLAWQL_CREDITS_HATEOAS_REQUIRE_AUTH` | (on for apiKey/oidc)             | Force gateway auth on non-public `/credits/*` (`0` to disable) |
+| `CLAWQL_CREDITS_HATEOAS_PUBLIC`       | off                              | Break-glass: leave all `/credits/*` ungated                    |
 
-See also: [contacts & phone](./credits-contacts.md), [money requests](./money-requests.md), [activity feed](./activity-feed.md), [consumer roadmap](./p2p-consumer-roadmap.md).
+See also: [OIDC + step-up](../security/clawql-auth-oidc-stepup.md), [contacts & phone](./credits-contacts.md), [money requests](./money-requests.md), [activity feed](./activity-feed.md), [consumer roadmap](./p2p-consumer-roadmap.md).

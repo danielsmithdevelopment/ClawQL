@@ -41,6 +41,10 @@ import {
   type MiniHomeRecentItem,
 } from "./hateoas-html.js";
 import {
+  createCreditsHateoasAuthMiddleware,
+  type CreditsHateoasAuthOptions,
+} from "./hateoas-auth.js";
+import {
   acceptMoneyRequest,
   claimMoneyRequestInvite,
   declineMoneyRequest,
@@ -275,8 +279,15 @@ function sendJsonOrHtml(
 
 /**
  * Attach GET/POST routes under `/credits/*` for deep-link landing + HTMX actions.
+ * When gateway auth is apiKey/oidc (or CLAWQL_CREDITS_HATEOAS_REQUIRE_AUTH=1),
+ * non-public paths require ATR claims; stage/confirm also honor MFA financial policy.
  */
-export function attachCreditsHateoasRoutes(app: Express): void {
+export function attachCreditsHateoasRoutes(
+  app: Express,
+  options: CreditsHateoasAuthOptions = {}
+): void {
+  app.use("/credits", createCreditsHateoasAuthMiddleware(options));
+
   app.get("/credits", async (req: Request, res: Response) => {
     res.type("html").send(await homeHtml(tenantFromQuery(req)));
   });
