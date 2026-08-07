@@ -54,9 +54,9 @@ describe("clawql-web", () => {
   it("envImpliesWebEnabled follows keys and explicit off", () => {
     expect(envImpliesWebEnabled({})).toBe(false);
     expect(envImpliesWebEnabled({ CLAWQL_TAVILY_API_KEY: "x" })).toBe(true);
-    expect(
-      envImpliesWebEnabled({ CLAWQL_ENABLE_WEB: "0", CLAWQL_TAVILY_API_KEY: "x" })
-    ).toBe(false);
+    expect(envImpliesWebEnabled({ CLAWQL_ENABLE_WEB: "0", CLAWQL_TAVILY_API_KEY: "x" })).toBe(
+      false
+    );
   });
 
   it("fallback chain: no search provider → audit then browser-as-search", async () => {
@@ -97,9 +97,9 @@ describe("clawql-web", () => {
     expect(fallback).toBeDefined();
     expect(fallback?.reason).toBe("no_search_provider_configured");
     expect(fallback?.provider).toBe("kitesurf");
-    expect(events.some((e) => e.type === "WEB_ERROR" && e.reason === "browser_fallback_failed")).toBe(
-      true
-    );
+    expect(
+      events.some((e) => e.type === "WEB_ERROR" && e.reason === "browser_fallback_failed")
+    ).toBe(true);
     // Fallback must precede the error (WORM order)
     const fallbackIdx = events.findIndex((e) => e.type === "WEB_SEARCH_FALLBACK");
     const errorIdx = events.findIndex((e) => e.type === "WEB_ERROR");
@@ -214,10 +214,13 @@ describe("clawql-web", () => {
       "ws://chromium:9222/devtools/browser/x"
     );
     const fetchImpl = (async () =>
-      new Response(JSON.stringify({ webSocketDebuggerUrl: "ws://127.0.0.1:9222/devtools/browser/abc" }), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      })) as typeof fetch;
+      new Response(
+        JSON.stringify({ webSocketDebuggerUrl: "ws://127.0.0.1:9222/devtools/browser/abc" }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }
+      )) as typeof fetch;
     await expect(resolveCdpWebSocketUrl("http://chromium:9222", fetchImpl)).resolves.toBe(
       "ws://127.0.0.1:9222/devtools/browser/abc"
     );

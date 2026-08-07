@@ -60,8 +60,8 @@ export type WebConfig = {
 };
 
 export function loadWebConfig(env: NodeJS.ProcessEnv = process.env): WebConfig {
-  let searchProvider: WebSearchProviderId = "none";
-  let browserProvider: WebBrowserProviderId = "none";
+  let searchProvider: WebSearchProviderId;
+  let browserProvider: WebBrowserProviderId;
   try {
     searchProvider = parseSearchProvider(env.CLAWQL_WEB_SEARCH_PROVIDER);
   } catch {

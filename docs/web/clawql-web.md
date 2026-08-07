@@ -10,13 +10,13 @@ Every managed web search/scrape API is paid or burns free tiers under agent load
 
 For regulated and air-gapped tenants, the intended posture is:
 
-| Control | Default / recommendation |
-| ------- | ------------------------ |
-| **Search** | **Disabled** (`CLAWQL_WEB_SEARCH_PROVIDER=none`) — no Tavily/Brave egress |
-| **Browser** | **Self-hosted Chromium** (or `none`) — no Cloudflare Browser Run / Firecrawl SaaS |
-| **External calls** | **None** unless an operator explicitly enables a provider |
-| **Helm** | `enableWeb: false`; `webSearch.provider: none`; leave `*.bundled: false` unless policy allows in-cluster SearXNG/Chromium |
-| **Audit** | Hash-chained WORM under `$CLAWQL_HOME/Web/audit.jsonl` (+ MCP `audit` ring mirror) |
+| Control            | Default / recommendation                                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| **Search**         | **Disabled** (`CLAWQL_WEB_SEARCH_PROVIDER=none`) — no Tavily/Brave egress                                                 |
+| **Browser**        | **Self-hosted Chromium** (or `none`) — no Cloudflare Browser Run / Firecrawl SaaS                                         |
+| **External calls** | **None** unless an operator explicitly enables a provider                                                                 |
+| **Helm**           | `enableWeb: false`; `webSearch.provider: none`; leave `*.bundled: false` unless policy allows in-cluster SearXNG/Chromium |
+| **Audit**          | Hash-chained WORM under `$CLAWQL_HOME/Web/audit.jsonl` (+ MCP `audit` ring mirror)                                        |
 
 That combination is sales collateral for the enterprise motion: ClawQL can run with **zero outbound web** while still offering optional self-hosted search (OpenSearch / BYO or bundled SearXNG) and on-box browser fetch when policy allows.
 
@@ -39,14 +39,14 @@ Local document conversion (pdf-inspector / anydoc) stays in `clawql-documents`. 
 
 Binary content types (PDF / Office / octet-stream) are written as base64 vault notes so classification can run without lossy UTF-8 decode.
 
-| Behavior | Preserved via `fetchRawUrl` |
-| -------- | --------------------------- |
-| Accept | `*/*` |
-| Redirects | Manual, max **5**, SSRF re-check each hop |
-| Timeout | **60s** (overridable) |
-| Body / Content-Length cap | **2 MiB** |
-| SSRF | https, or http only for localhost; block private/link-local + metadata |
-| User-Agent | `clawql-web/1.0` (intentional rename from `clawql-mcp-external-ingest/1.0`) |
+| Behavior                  | Preserved via `fetchRawUrl`                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| Accept                    | `*/*`                                                                       |
+| Redirects                 | Manual, max **5**, SSRF re-check each hop                                   |
+| Timeout                   | **60s** (overridable)                                                       |
+| Body / Content-Length cap | **2 MiB**                                                                   |
+| SSRF                      | https, or http only for localhost; block private/link-local + metadata      |
+| User-Agent                | `clawql-web/1.0` (intentional rename from `clawql-mcp-external-ingest/1.0`) |
 
 ### `web_fetch` and `raw: true`
 

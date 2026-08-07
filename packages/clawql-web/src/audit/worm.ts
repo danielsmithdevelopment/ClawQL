@@ -258,7 +258,9 @@ export function getWebWormStore(env: NodeJS.ProcessEnv = process.env): WebWormSt
   return defaultStore;
 }
 
-export async function resetWebWormStoreForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+export async function resetWebWormStoreForTests(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<void> {
   if (defaultStore) await defaultStore.reset();
   defaultStore = null;
   defaultMode = null;

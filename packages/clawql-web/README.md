@@ -6,9 +6,9 @@ ClawQL does not pick one vendor as truth. Operators choose providers by environm
 
 ## Interfaces
 
-| Interface | Purpose |
-| --- | --- |
-| `WebSearchProvider` | `query → SearchResult[]` |
+| Interface            | Purpose                                                |
+| -------------------- | ------------------------------------------------------ |
+| `WebSearchProvider`  | `query → SearchResult[]`                               |
 | `WebBrowserProvider` | `url → PageContent` (+ optional screenshot / interact) |
 
 ## Providers
@@ -24,12 +24,12 @@ When no search provider is configured and `CLAWQL_WEB_SEARCH_FALLBACK_DISABLED` 
 
 ## MCP tools (`CLAWQL_ENABLE_WEB` / auto)
 
-| Tool | Role |
-| --- | --- |
-| `web_search` | Query → ranked results (+ fallback) |
-| `web_fetch` | URL → markdown/text, or `raw: true` → bytes + content-type (IDP) |
-| `web_screenshot` | URL → image (CDP when configured; capability-gated) |
-| `web_interact` | URL + steps → page (live CDP; capability-gated) |
+| Tool             | Role                                                             |
+| ---------------- | ---------------------------------------------------------------- |
+| `web_search`     | Query → ranked results (+ fallback)                              |
+| `web_fetch`      | URL → markdown/text, or `raw: true` → bytes + content-type (IDP) |
+| `web_screenshot` | URL → image (CDP when configured; capability-gated)              |
+| `web_interact`   | URL + steps → page (live CDP; capability-gated)                  |
 
 IDP URL ingest (`clawql-documents`) uses `fetchRawUrl`. Audit events are hash-chained WORM + MCP `audit` ring.
 
