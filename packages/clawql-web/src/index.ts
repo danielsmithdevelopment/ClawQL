@@ -26,8 +26,18 @@ export {
   type WebAuditEventType,
   type WebAuditSink,
 } from "./audit.js";
+export {
+  WebCapabilityError,
+  isWebCapabilityError,
+  type WebCapabilityErrorCode,
+} from "./errors.js";
 export { createWebService, type WebService } from "./service.js";
 export { browserAsSearch } from "./providers/fallback-search.js";
 export { resolveSearchProvider } from "./providers/search/resolve.js";
 export { resolveBrowserProvider } from "./providers/browser/resolve.js";
+export {
+  assertSafeWebUrl,
+  fetchRawUrl,
+  type RawFetchResult,
+} from "./providers/browser/raw-fetch.js";
 export { createWebPlugin, makeWebLayer, WEB_PLUGIN_ID } from "./plugin/index.js";

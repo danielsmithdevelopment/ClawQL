@@ -38,6 +38,12 @@ export interface WebSearchProvider {
 export type FetchOptions = {
   /** Prefer markdown / text extraction when provider supports it. */
   format?: "markdown" | "html" | "text";
+  /**
+   * When true, return raw response bytes + content-type (IDP / pdf-inspector path).
+   * Uses the clawql-web direct HTTPS fetcher with IDP-parity SSRF/redirect/timeout caps —
+   * not the markdown-converting browser provider.
+   */
+  raw?: boolean;
   timeoutMs?: number;
   correlationId?: string;
 };
@@ -48,6 +54,10 @@ export type PageContent = {
   markdown?: string;
   html?: string;
   text?: string;
+  /** Present when `FetchOptions.raw` was true. */
+  bytes?: Uint8Array;
+  contentType?: string | null;
+  finalUrl?: string;
   provider: string;
 };
 

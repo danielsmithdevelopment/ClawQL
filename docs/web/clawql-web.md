@@ -6,6 +6,19 @@
 
 Every managed web search/scrape API is paid or burns free tiers under agent load. ClawQL therefore treats web access as **pluggable**: mix a search provider and a browser provider, or run fully self-hosted / disabled for regulated environments.
 
+## Regulated / enterprise posture
+
+For regulated and air-gapped tenants, the intended posture is:
+
+| Control | Default / recommendation |
+| ------- | ------------------------ |
+| **Search** | **Disabled** (`CLAWQL_WEB_SEARCH_PROVIDER=none`) — no Tavily/Brave egress |
+| **Browser** | **Self-hosted Chromium** (or `none`) — no Cloudflare Browser Run / Firecrawl SaaS |
+| **External calls** | **None** unless an operator explicitly enables a provider |
+| **Helm** | `enableWeb: false`; `webSearch.provider: none`; leave `*.bundled: false` |
+
+That combination is sales collateral for the enterprise motion: ClawQL can run with **zero outbound web** while still offering optional self-hosted search (OpenSearch / BYO SearXNG) and on-box browser fetch when policy allows.
+
 ## Taxonomy
 
 | Kind                | Providers                                            | Notes                                 |
@@ -13,14 +26,36 @@ Every managed web search/scrape API is paid or burns free tiers under agent load
 | **Search**          | Tavily, Brave, SearXNG, OpenSearch                   | Find content by query                 |
 | **Browser / fetch** | Kitesurf, Chromium, Playwright, Puppeteer, Firecrawl | URL → content / screenshot / interact |
 
-Local document conversion (pdf-inspector / anydoc) stays in `clawql-documents` — zero-cost, on-box. `clawql-web` owns **external** web access; IDP URL ingestion should import from here over time.
+Local document conversion (pdf-inspector / anydoc) stays in `clawql-documents` — zero-cost, on-box. **`clawql-web` is the single package for external web access.** The IDP pipeline **will** import URL ingestion from here (follow-on PR after this scaffold lands) so agent `web_fetch` and IDP URL ingest share one provider surface — including Firecrawl as one browser provider serving both consumers.
+
+## IDP migration (follow-on)
+
+**Do not migrate IDP in the scaffold PR.** Ship `clawql-web` first (tests green, Helm sketch reviewed), then switch IDP in a separate PR for a cleaner bisect.
+
+Today IDP URL ingest lives in `packages/clawql-documents/src/ingest/external-ingest.ts` (`fetchUrlResource`). Behaviors the migration must preserve or deliberately change:
+
+| Behavior | Current IDP (`fetchUrlResource`) | `clawql-web` target |
+| -------- | -------------------------------- | ------------------- |
+| User-Agent | `clawql-mcp-external-ingest/1.0` | `clawql-web/1.0` (intentional rename; document in migration PR) |
+| Accept | `*/*` | same |
+| Redirects | Manual, max **5**, re-check SSRF each hop | same (`fetchRawUrl`) |
+| Timeout | **60s** | same (overridable via `timeoutMs`) |
+| Body / Content-Length cap | **2 MiB** | same |
+| SSRF | https, or http only for localhost; block private/link-local + metadata hosts | same (`assertSafeWebUrl`) |
+| Return shape | UTF-8 **string** body + content-type + finalUrl | `raw: true` → **bytes** + content-type + finalUrl (needed so pdf-inspector can classify before Docling) |
+| Content types | PDF, Office, HTML, raw text | unchanged — classification stays in documents/pdf-inspector |
+
+### `web_fetch` and `raw: true`
+
+- Default `web_fetch`: browser provider → clean markdown/text for agents.
+- `web_fetch` with **`raw: true`**: direct HTTPS fetcher (`fetchRawUrl`) → `{ bytes, contentType, finalUrl }` — **no browser provider required**. This is the IDP / pdf-inspector path.
 
 ## Defaults by deployment
 
 | Environment              | Search                                | Browser                              |
 | ------------------------ | ------------------------------------- | ------------------------------------ |
 | Developer / Teams hosted | Tavily (if key) or none               | **Kitesurf** (Browser Run beta)      |
-| Self-hosted open         | SearXNG (optional bundle)             | Kitesurf or Chromium                 |
+| Self-hosted open         | SearXNG (optional future bundle)      | Kitesurf or Chromium                 |
 | Regulated / air-gapped   | OpenSearch (internal) or **disabled** | Chromium self-hosted or **disabled** |
 | Enterprise managed       | Brave (DPA) or OpenSearch             | Kitesurf or Chromium                 |
 
@@ -49,20 +84,31 @@ CLAWQL_CHROMIUM_CDP_URL=ws://chromium:9222
 ```text
 WEB_SEARCH_FALLBACK { reason: no_search_provider_configured, fallback: browser, provider: kitesurf }
 WEB_SEARCH          { provider: browser:kitesurf, detail: fallback, ok: true }
+# or, if browser throws after the fallback decision:
+WEB_ERROR           { reason: browser_fallback_failed, ok: false }
 ```
 
-The fallback decision is appended **before** the browser call.
+The fallback decision is appended **before** the browser call so a WORM/compliance sink still records `WEB_SEARCH_FALLBACK` even when the browser provider fails.
+
+## Capability degradation
+
+`web_screenshot` and `web_interact` check capabilities **before** execute. When the browser provider is `none` (or search-only / unsupported), tools return a structured `WebCapabilityError`:
+
+```json
+{ "error": { "code": "NO_BROWSER_PROVIDER", "reason": "…" } }
+{ "error": { "code": "CAPABILITY_UNSUPPORTED", "provider": "firecrawl", "capability": "screenshot" } }
+```
 
 ## MCP tools
 
-| Tool             | Behavior                               |
-| ---------------- | -------------------------------------- |
-| `web_search`     | Search provider, else browser fallback |
-| `web_fetch`      | Browser provider fetch                 |
-| `web_screenshot` | Capability-gated                       |
-| `web_interact`   | Capability-gated (chromium family)     |
+| Tool             | Behavior                                                                 |
+| ---------------- | ------------------------------------------------------------------------ |
+| `web_search`     | Search provider, else browser fallback (audited before execute)          |
+| `web_fetch`      | Browser markdown fetch; or `raw: true` for bytes + content-type (IDP)    |
+| `web_screenshot` | Capability-gated (`NO_BROWSER_PROVIDER` / `CAPABILITY_UNSUPPORTED`)      |
+| `web_interact`   | Capability-gated (chromium family)                                       |
 
-## Helm sketch (optional subcharts)
+## Helm sketch (optional subcharts — **not wired yet**)
 
 ```yaml
 webSearch:
@@ -73,21 +119,22 @@ webSearch:
     enabled: false
   searxng:
     enabled: false
-    bundled: false # deploy SearXNG subchart
+    bundled: false # FUTURE ONLY — does not deploy a SearXNG subchart today
   opensearch:
     enabled: false
-    bundled: false
+    bundled: false # FUTURE ONLY — does not deploy OpenSearch for web today
 
 webBrowser:
   provider: kitesurf # recommended zero-cost fetch in Cloudflare stack
   chromium:
     enabled: false
-    bundled: false
+    bundled: false # FUTURE ONLY
 ```
 
-SearXNG/OpenSearch as bundled subcharts follow the same opt-in pattern as Onyx — one flag for regulated operators who accept the quality/ops tradeoffs documented in product discussions (rate limits, scraping gray zone, LLM post-processing).
+**`webSearch.searxng.bundled` is a flag for a future item**, not a live Helm dependency. Setting `bundled: true` does **not** install SearXNG; operators must BYO `CLAWQL_SEARXNG_URL` until a subchart is wired (same opt-in pattern as Onyx). Charts values already comment these as `future:`.
 
 ## Related
 
 - [`docs/plugins/web.md`](../plugins/web.md) — plugin page
 - Local docs convert: [`docs/providers/anydoc-onboarding.md`](../providers/anydoc-onboarding.md), [`pdf-inspector-onboarding.md`](../providers/pdf-inspector-onboarding.md)
+- Current IDP URL ingest (pre-migration): `packages/clawql-documents/src/ingest/external-ingest.ts`

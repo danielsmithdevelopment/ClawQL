@@ -21,9 +21,9 @@ next: ouroboros
 | Tool                 | When                                                                           |
 | -------------------- | ------------------------------------------------------------------------------ |
 | **`web_search`**     | Web enabled — falls back to browser-as-search with audit if no search provider |
-| **`web_fetch`**      | Browser provider configured                                                    |
-| **`web_screenshot`** | Browser provider with screenshot capability                                    |
-| **`web_interact`**   | Chromium / Playwright / Puppeteer                                              |
+| **`web_fetch`**      | Browser markdown, or `raw: true` for bytes + content-type (IDP; no browser)    |
+| **`web_screenshot`** | Capability-gated; structured error if browser is `none` / unsupported          |
+| **`web_interact`**   | Chromium / Playwright / Puppeteer; structured capability errors                |
 
 ## Enable
 
