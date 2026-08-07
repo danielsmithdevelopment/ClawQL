@@ -58,8 +58,8 @@
         ".cursor/mcp.json.example"
     ],
     "scripts": {
-        "clean": "rm -rf dist packages/clawql-core/dist packages/clawql-auth/dist packages/clawql-pageindex/dist packages/clawql-codegraph/dist packages/clawql-api/dist packages/clawql-memory/dist packages/clawql-documents/dist packages/clawql-automation/dist packages/clawql-sandbox/dist packages/mcp-grpc-transport/dist packages/mcp-api-adapter/dist packages/clawql-inference/dist packages/clawql-payments/dist packages/clawql-ouroboros/dist packages/panguard-mcp-bridge/dist packages/clawql-operator/dist packages/clawql-release/dist packages/clawql-ontology/dist",
-        "build": "npm run clean && npm run build -w clawql-core && npm run build -w clawql-auth && npm run build -w clawql-pageindex && npm run build -w clawql-codegraph && npm run build -w clawql-api && npm run build -w clawql-memory && npm run build -w clawql-documents && npm run build -w clawql-automation && npm run build -w clawql-sandbox && npm run build -w mcp-grpc-transport && npm run build -w mcp-api-adapter && npm run build -w clawql-payments && npm run build -w clawql-inference && npm run build -w clawql-ouroboros && npm run build -w panguard-mcp-bridge && npm run build -w clawql-operator && npm run build -w clawql-release && npm run build -w clawql-ontology && tsc",
+        "clean": "rm -rf dist packages/clawql-core/dist packages/clawql-auth/dist packages/clawql-pageindex/dist packages/clawql-codegraph/dist packages/clawql-api/dist packages/clawql-memory/dist packages/clawql-documents/dist packages/clawql-automation/dist packages/clawql-sandbox/dist packages/clawql-web/dist packages/mcp-grpc-transport/dist packages/mcp-api-adapter/dist packages/clawql-inference/dist packages/clawql-payments/dist packages/clawql-ouroboros/dist packages/panguard-mcp-bridge/dist packages/clawql-operator/dist packages/clawql-release/dist packages/clawql-ontology/dist",
+        "build": "npm run clean && npm run build -w clawql-core && npm run build -w clawql-auth && npm run build -w clawql-pageindex && npm run build -w clawql-codegraph && npm run build -w clawql-api && npm run build -w clawql-memory && npm run build -w clawql-documents && npm run build -w clawql-automation && npm run build -w clawql-sandbox && npm run build -w clawql-web && npm run build -w mcp-grpc-transport && npm run build -w mcp-api-adapter && npm run build -w clawql-payments && npm run build -w clawql-inference && npm run build -w clawql-ouroboros && npm run build -w panguard-mcp-bridge && npm run build -w clawql-operator && npm run build -w clawql-release && npm run build -w clawql-ontology && tsc",
         "ontology:lint": "npm run build -w clawql-ontology && node packages/clawql-ontology/dist/cli.js lint --dir examples/ontology/entities",
         "ontology:generate": "npm run build -w clawql-ontology && node packages/clawql-ontology/dist/cli.js generate --dir examples/ontology/entities --out generated/ontology",
         "build:turbo": "turbo run build",
@@ -149,6 +149,7 @@
         "clawql-payments": "7.2.0",
         "clawql-release": "7.2.0",
         "clawql-sandbox": "7.2.0",
+        "clawql-web": "7.2.0",
         "dotenv": "^17.4.2",
         "effect": "3.22.0",
         "express": "^5.2.1",

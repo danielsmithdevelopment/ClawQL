@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`clawql-web` package** — pluggable `WebSearchProvider` / `WebBrowserProvider` (Tavily, Brave, SearXNG, OpenSearch, Kitesurf, Chromium/Playwright/Puppeteer, Firecrawl), search→browser fallback with pre-flight audit, MCP tools `web_search` / `web_fetch` / `web_screenshot` / `web_interact`. Docs: [`docs/web/clawql-web.md`](docs/web/clawql-web.md), [`docs/plugins/web.md`](docs/plugins/web.md).
+
 ### Fixed
 
 - **Pulumi edge CI 401 on account-scoped Cloudflare tokens** — `/user/tokens/verify` often returns 401 for Workers account tokens after R2 bucket create succeeds. Accept `CLOUDFLARE_API_TOKEN_ID` (or explicit `CLAWQL_R2_*` S3 keys) when deriving R2 credentials for the Pulumi state backend ([`scripts/pulumi/ensure-r2-state-backend.sh`](scripts/pulumi/ensure-r2-state-backend.sh)).

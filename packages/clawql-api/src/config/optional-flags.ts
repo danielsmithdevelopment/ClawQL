@@ -39,6 +39,16 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_ONYX: z.string().optional(),
   CLAWQL_ENABLE_OUROBOROS: z.string().optional(),
   CLAWQL_ENABLE_SANDBOX: z.string().optional(),
+  /** Web search/fetch MCP tools (`web_*`). Auto-on when a provider/key is set; `0` forces off. */
+  CLAWQL_ENABLE_WEB: z.string().optional(),
+  CLAWQL_WEB_SEARCH_PROVIDER: z.string().optional(),
+  CLAWQL_WEB_BROWSER_PROVIDER: z.string().optional(),
+  CLAWQL_TAVILY_API_KEY: z.string().optional(),
+  CLAWQL_BRAVE_API_KEY: z.string().optional(),
+  CLAWQL_SEARXNG_URL: z.string().optional(),
+  CLAWQL_OPENSEARCH_URL: z.string().optional(),
+  CLAWQL_FIRECRAWL_API_KEY: z.string().optional(),
+  CLAWQL_BROWSER_RUN_API_TOKEN: z.string().optional(),
   /** Structural code graph MCP tools (`codegraph_*`). Default false — register with `CLAWQL_ENABLE_CODEGRAPH=1`. */
   CLAWQL_ENABLE_CODEGRAPH: z.string().optional(),
   /** Enterprise Ontology fixture MCP tools (`get_contract`, …). Default false — `CLAWQL_ENABLE_ONTOLOGY=1`. */
@@ -144,6 +154,11 @@ export type ClawqlOptionalToolFlags = {
    */
   enableSandbox: boolean;
   /**
+   * MCP **`web_search` / `web_fetch` / `web_screenshot` / `web_interact`** (`clawql-web`).
+   * Default false unless `CLAWQL_ENABLE_WEB=1` or a web provider/API key is configured.
+   */
+  enableWeb: boolean;
+  /**
    * Structural code knowledge graph (`codegraph_*`) — Graphify-style AST indexing for TypeScript/JavaScript. Default false.
    */
   enableCodeGraph: boolean;
@@ -201,6 +216,23 @@ export type ClawqlOptionalToolFlags = {
   enableAws: boolean;
 };
 
+function resolveEnableWeb(raw: z.infer<typeof rawOptionalFlagsSchema>): boolean {
+  const flag = raw.CLAWQL_ENABLE_WEB?.trim().toLowerCase();
+  if (flag === "0" || flag === "false" || flag === "no") return false;
+  if (flag === "1" || flag === "true" || flag === "yes") return true;
+  const search = raw.CLAWQL_WEB_SEARCH_PROVIDER?.trim().toLowerCase();
+  const browser = raw.CLAWQL_WEB_BROWSER_PROVIDER?.trim().toLowerCase();
+  if (search && search !== "none" && search !== "off" && search !== "0") return true;
+  if (browser && browser !== "none" && browser !== "off" && browser !== "0") return true;
+  if (raw.CLAWQL_TAVILY_API_KEY?.trim()) return true;
+  if (raw.CLAWQL_BRAVE_API_KEY?.trim()) return true;
+  if (raw.CLAWQL_SEARXNG_URL?.trim()) return true;
+  if (raw.CLAWQL_OPENSEARCH_URL?.trim()) return true;
+  if (raw.CLAWQL_FIRECRAWL_API_KEY?.trim()) return true;
+  if (raw.CLAWQL_BROWSER_RUN_API_TOKEN?.trim()) return true;
+  return false;
+}
+
 function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptionalToolFlags {
   return {
     enableGrpc: envTruthy(raw.ENABLE_GRPC),
@@ -216,6 +248,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
     enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
+    enableWeb: resolveEnableWeb(raw),
     enableCodeGraph: envTruthy(raw.CLAWQL_ENABLE_CODEGRAPH),
     enableOntology:
       envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY) || envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY_WRITES),
