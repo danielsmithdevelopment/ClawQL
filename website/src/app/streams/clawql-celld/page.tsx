@@ -31,7 +31,8 @@ export default function ClawqlCelldPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Self-hosted DO runtime — not yet shipped.</strong> Companion to{' '}
+          <strong>Self-hosted DO runtime — not yet shipped.</strong> Companion
+          to{' '}
           <a
             href="/streams/clawql-streams"
             className="font-medium text-inherit underline underline-offset-2"
