@@ -8,7 +8,10 @@ export type GatewayEnv = {
   CLAWQL_BOOTSTRAP_TOKEN?: string;
   /** Stripe webhook signing secret (`whsec_...`). */
   STRIPE_WEBHOOK_SECRET?: string;
-  /** Optional origin for Shared+ IDP proxy (K3s/EKS ingress). */
+  /**
+   * Default origin for Shared+ IDP proxy (K3s/EKS ingress).
+   * Per-tenant override: D1 `feature_flags.idp_proxy_origin`.
+   */
   CLAWQL_IDP_PROXY_ORIGIN?: string;
   CLAWQL_GATEWAY_PROFILE?: string;
 };

@@ -91,6 +91,7 @@ export function loadProvisionInputs(): ProvisionInputs {
     d1LocationHint: cfg.get("d1LocationHint") ?? undefined,
     deployWorkerStub: cfg.getBoolean("deployWorkerStub") ?? false,
     workerScriptName: cfg.get("workerScriptName") ?? undefined,
+    idpProxyOrigin: cfg.get("idpProxyOrigin") ?? undefined,
 
     ebsVolumeSizeGb: cfg.getNumber("ebsVolumeSizeGb") ?? 200,
     sshCidrBlocks: parseCsv(cfg.get("sshCidrBlocks")),

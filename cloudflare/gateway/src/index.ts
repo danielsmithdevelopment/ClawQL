@@ -1,8 +1,9 @@
 import { extractBearerToken } from "./auth.js";
 import { createDemoSession, simulateDemoPipeline } from "./demo.js";
-import type { GatewayEnv } from "./env.js";
+import type { GatewayEnv, TenantRow } from "./env.js";
 import { isIdpTier } from "./env.js";
 import { correlationId, jsonResponse, optionsResponse } from "./http.js";
+import { buildIdpProxyInit, resolveIdpProxyOrigin } from "./idp-proxy.js";
 import { processStripeEventForTenants, verifyStripeWebhook } from "./stripe-webhook.js";
 import { resolveTenantFromRequest } from "./tenants.js";
 import {
@@ -42,7 +43,7 @@ async function requireAuthedContext(
     });
   }
   if (isIdpTier(resolved.tenant.tier)) {
-    return await idpProxyOrUpgrade(request, env, corr);
+    return await idpProxyOrUpgrade(request, env, corr, resolved.tenant);
   }
   return { env, tenant: resolved.tenant, correlationId: corr };
 }
@@ -50,15 +51,16 @@ async function requireAuthedContext(
 async function idpProxyOrUpgrade(
   request: Request,
   env: GatewayEnv,
-  corr: string
+  corr: string,
+  tenant?: TenantRow | null
 ): Promise<Response> {
-  const origin = env.CLAWQL_IDP_PROXY_ORIGIN?.trim().replace(/\/$/, "");
+  const origin = resolveIdpProxyOrigin(env, tenant);
   if (!origin) {
     return jsonResponse(
       {
         error: "upgrade_required",
         message:
-          "IDP tiers require AWS K3s/EKS. Provision idp-k3s or eks profile, set CLAWQL_IDP_PROXY_ORIGIN, then retry.",
+          "IDP tiers require AWS K3s/EKS. Provision idp-k3s or eks profile, set CLAWQL_IDP_PROXY_ORIGIN (or tenant feature_flags.idp_proxy_origin), then retry.",
       },
       503,
       { "X-Correlation-Id": corr }
@@ -66,19 +68,16 @@ async function idpProxyOrUpgrade(
   }
   const url = new URL(request.url);
   const target = origin + url.pathname + url.search;
-  const headers = new Headers(request.headers);
-  headers.delete("host");
-  const init: RequestInit = {
-    method: request.method,
-    headers,
-    redirect: "manual",
-  };
-  if (request.method !== "GET" && request.method !== "HEAD") {
-    init.body = request.body;
-  }
+  const init = buildIdpProxyInit(request, {
+    tenantId: tenant?.tenant_id,
+    correlationId: corr,
+  });
   const upstream = await fetch(target, init);
   const out = new Headers(upstream.headers);
   out.set("X-Correlation-Id", corr);
+  if (tenant?.tenant_id) {
+    out.set("X-ClawQL-Tenant-Id", tenant.tenant_id);
+  }
   return new Response(upstream.body, { status: upstream.status, headers: out });
 }
 
@@ -328,9 +327,18 @@ export default {
       return jsonResponse(simulateDemoPipeline(filename, content));
     }
 
-    // Explicit IDP path always uses proxy/upgrade stub
+    // Explicit IDP path always uses proxy/upgrade (resolve tenant when Bearer present)
     if (path.startsWith("/idp") || url.searchParams.get("tier") === "shared") {
-      return idpProxyOrUpgrade(request, env, correlationId(request));
+      const corr = correlationId(request);
+      const token = extractBearerToken(request);
+      let tenant: TenantRow | null = null;
+      if (token) {
+        const resolved = await resolveTenantFromRequest(env, request, token);
+        if (!("error" in resolved)) {
+          tenant = resolved.tenant;
+        }
+      }
+      return idpProxyOrUpgrade(request, env, corr, tenant);
     }
 
     if (path === "/mcp" && request.method === "POST") {

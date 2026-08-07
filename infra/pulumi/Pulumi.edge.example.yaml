@@ -15,4 +15,6 @@ config:
   clawql:syncProvider: r2
   clawql:edgeNamePrefix: clawql
   clawql:deployWorkerStub: "true"
+  # Phase 2 — Shared+/IDP reverse-proxy origin (K3s/EKS ingress). Omit until first IDP customer.
+  # clawql:idpProxyOrigin: "https://idp.example.com"
   cloudflare:accountId: "<cloudflare-account-id>"

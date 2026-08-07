@@ -28,5 +28,7 @@ queue = "clawql-edge-requests"
 
 [vars]
 CLAWQL_GATEWAY_PROFILE = "edge"
-# Set secrets via `wrangler secret put`:
-#   CLAWQL_BOOTSTRAP_TOKEN, STRIPE_WEBHOOK_SECRET, CLAWQL_IDP_PROXY_ORIGIN
+# Phase 2 IDP proxy (or set via Pulumi clawql:idpProxyOrigin):
+# CLAWQL_IDP_PROXY_ORIGIN = "https://idp.example.com"
+# Secrets via `wrangler secret put`:
+#   CLAWQL_BOOTSTRAP_TOKEN, STRIPE_WEBHOOK_SECRET

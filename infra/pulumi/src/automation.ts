@@ -24,6 +24,8 @@ export type AutomationStackConfig = {
   instanceType?: string;
   useSsmSecrets?: boolean;
   deployWorkerStub?: boolean;
+  /** Edge Phase 2 — Worker plain_text binding CLAWQL_IDP_PROXY_ORIGIN. */
+  idpProxyOrigin?: string;
   eksClusterName?: string;
 };
 
@@ -56,6 +58,7 @@ function toPulumiConfig(cfg: AutomationStackConfig): Record<string, string> {
   if (cfg.deployWorkerStub !== undefined) {
     out["clawql:deployWorkerStub"] = cfg.deployWorkerStub ? "true" : "false";
   }
+  if (cfg.idpProxyOrigin) out["clawql:idpProxyOrigin"] = cfg.idpProxyOrigin;
   if (cfg.eksClusterName) out["clawql:eksClusterName"] = cfg.eksClusterName;
   return out;
 }

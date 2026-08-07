@@ -736,7 +736,7 @@ NAS (TrueNAS Scale) = **dev only** for AWS-side IDP. Cloudflare work uses Wrangl
 - [ ] Full pipeline smoke (pdf-inspector → … → Coneshare)
 - [ ] LGTM+ dashboards live
 - [ ] Istio mTLS between services
-- [ ] Routing Worker proxies IDP tenants to K3s ingress
+- [x] Routing Worker proxies IDP tenants to K3s ingress — `CLAWQL_IDP_PROXY_ORIGIN` + per-tenant `feature_flags.idp_proxy_origin` ([gateway-fabric.md](../deployment/gateway-fabric.md)); live ingress URL remains operator-owned
 - [ ] R2 IDP prefix isolated from Dev/Teams
 - [ ] Per-tenant Onyx; no search bleed
 - [ ] ResourceQuotas on all namespaces
