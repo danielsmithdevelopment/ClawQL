@@ -97,6 +97,16 @@ export const docsNavigation: Array<NavGroup> = [
         href: '/surveillance/clawql-surveillance',
         tag: 'Spec',
       },
+      {
+        title: 'ClawQL Streams',
+        href: '/streams/clawql-streams',
+        tag: 'Draft',
+      },
+      {
+        title: 'Durable Objects',
+        href: '/streams/clawql-durable-objects',
+        tag: 'Draft',
+      },
       { title: 'Ouroboros', href: '/ouroboros' },
     ],
   },

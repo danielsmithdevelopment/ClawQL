@@ -72,6 +72,16 @@ const SECTIONS = [
         'OpenAI drop-in, flywheel, WORM path to Auditable Production AI',
       ],
       [
+        'ClawQL Streams',
+        '/streams/clawql-streams',
+        'Event-driven autonomous agents — draft spec (WORM, NATS, DO/K8s)',
+      ],
+      [
+        'Durable Objects runtime',
+        '/streams/clawql-durable-objects',
+        'Streams DO sidecars — audit, inference virtual keys, RTP/OBT',
+      ],
+      [
         'Plugins',
         '/plugins',
         'Searchable registry — horizontal plugins and domain verticals',
