@@ -8,6 +8,8 @@
 
 `mcp-api-adapter` wraps **any** MCP server — stdio, Streamable HTTP, or gRPC — and exposes **five API surfaces** from one tool catalog without changing the server. No ClawQL install required.
 
+**Language-agnostic.** The adapter process is TypeScript (`npx mcp-api-adapter`); the upstream may be Python, Go, Rust, or any language that speaks MCP. Users do not write TypeScript to use it — same Node baseline as `npx clawql-mcp`.
+
 ```text
 Any MCP server
   ├─ stdio
@@ -39,7 +41,9 @@ MCP standardized how agents discover and call tools. It did not standardize how 
 | Cursor / Claude Desktop         | Streamable HTTP `/mcp`                 |
 | Data / ops scripts              | A thin CLI                             |
 
-The usual answer is a custom adapter per consumer — or Python **mcpo** for OpenAPI only. **`mcp-api-adapter`** is the TypeScript answer for all five.
+The usual answer is a custom adapter per consumer — or Python **[mcpo](https://github.com/open-webui/mcpo)** (Open WebUI) for **OpenAPI/REST only**. **`mcp-api-adapter`** is the multi-surface option: OpenAPI + GraphQL + Streamable HTTP `/mcp` + gRPC + gen-cli from one MCP upstream. Prefer **mcpo** when Open WebUI users already expect that single REST surface; prefer the adapter when one REST facade is not enough.
+
+Together with ClawQL Core (APIs → MCP), this is the **[Protocol Fabric](../gtm/protocol-fabric.md)** — MCP as the common IR in both directions.
 
 ## Direction: MCP → APIs (inverse of ClawQL Core)
 
@@ -146,6 +150,10 @@ npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
 | 0.5.0   | Streamable HTTP `/mcp` + `gen-cli`                      |
 | 0.5.1   | gRPC → `/mcp` content normalization for MCP SDK clients |
 
+## Planned — WebSocket (sixth surface)
+
+WebSocket was deferred on classic always-on servers (session hold + reconnect cost). With **Durable Objects** (hibernation on WebSocket), it becomes the natural persistent session transport for DO-hosted adapters: bidirectional progress / notifications for long tools, and DO sleep between calls. Document Streamable HTTP `/mcp` as the fallback for clients that cannot do WebSocket. **gen-cli** stays build-time (writes to disk) — not a DO runtime surface. See [ClawQL Streams](../design/clawql-streams.md) for WebSocket as an **event source** into Core (inverse concern).
+
 ## When to use it
 
 **Use the adapter** when you have a working MCP server and need Workers, OpenAPI panels, GraphQL, IDEs, mesh, or CLI access without writing glue per consumer.
@@ -232,11 +240,13 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 
 | Piece                                                      | Role                                                   |
 | ---------------------------------------------------------- | ------------------------------------------------------ |
+| **[Protocol Fabric](../gtm/protocol-fabric.md)**           | Named claim for Core + adapter (any protocol ↔ any)    |
 | **`mcp-api-adapter`**                                      | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + gen-cli      |
 | **ClawQL `search` / `execute`**                            | OpenAPI → MCP tools (inverse)                          |
 | **[Custom sources](../getting-started/custom-sources.md)** | Register other MCP servers **into** the ClawQL gateway |
 | **`mcp-grpc-transport`**                                   | Production TypeScript MCP gRPC transport               |
 | **Panguard bridge**                                        | Policy / JWT ATR in front of MCP                       |
+| **[ClawQL Streams](../design/clawql-streams.md)** (draft)  | Event-driven agents; WebSocket sources into Core       |
 
 ## Troubleshooting
 
@@ -253,5 +263,8 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 - Package README: [`packages/mcp-api-adapter/README.md`](../../packages/mcp-api-adapter/README.md)
 - Design & non-goals: [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)
 - GTM positioning: [`docs/gtm/mcp-api-adapter-positioning.md`](../gtm/mcp-api-adapter-positioning.md)
+- Protocol Fabric: [`docs/gtm/protocol-fabric.md`](../gtm/protocol-fabric.md)
+- ClawQL Streams (draft): [`docs/design/clawql-streams.md`](../design/clawql-streams.md)
 - Earlier post: [MCP tools as APIs](https://pragmaticvectors.com/posts/mcp-tools-as-apis/)
 - gRPC transport: [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/)
+- Local smoke: [`scripts/dev/smoke-mcp-api-adapter.sh`](../../scripts/dev/smoke-mcp-api-adapter.sh)
