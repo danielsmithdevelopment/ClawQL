@@ -9,6 +9,7 @@ import './streams-landing.css'
 
 const STREAMS_SPEC = `${site.urls.docs}/streams/clawql-streams`
 const DO_SPEC = `${site.urls.docs}/streams/clawql-durable-objects`
+const CELLD_SPEC = `${site.urls.docs}/streams/clawql-celld`
 const ADAPTER_DOCS = `${site.urls.docs}/mcp/mcp-api-adapter`
 
 const modes = [
@@ -60,7 +61,7 @@ const compareRows = [
     stripe: 'Custom',
     anthropic: 'Session hours',
     openai: 'Managed',
-    clawql: 'Durable Objects or K8s HPA',
+    clawql: 'celld · Cloudflare DO · K8s HPA',
   },
 ] as const
 
@@ -199,13 +200,14 @@ export function StreamsLanding() {
       <Section
         id="scale"
         className="streams-section-band"
-        eyebrow="Durable Objects · Kubernetes"
+        eyebrow="celld · Cloudflare · Kubernetes"
         headline="Infinite session scale without losing the audit trail"
         subheadline={
           <p>
-            <Link href={DO_SPEC}>SubscriptionDO</Link> holds the event buffer and significance state.{' '}
-            <Link href={DO_SPEC}>AgentSessionDO</Link> runs the wake — with Audit, Inference, and TrainingData sidecars.
-            Same mental model on Cloudflare Workers or Kubernetes HPA.
+            Write-once Durable Object code runs on Cloudflare or{' '}
+            <Link href={CELLD_SPEC}>celld</Link> — Deno&apos;s self-hosted DO runtime with LTX replication to your
+            bucket (~$0.05 per resident cell-month). Regulated tenants keep{' '}
+            <Link href={DO_SPEC}>Kubernetes HPA</Link> until celld is production-stable.
           </p>
         }
       >
@@ -292,6 +294,10 @@ export function StreamsLanding() {
           </li>
           <li>
             <Link href={DO_SPEC}>ClawQL Durable Objects</Link> — SubscriptionDO, AgentSessionDO, sidecars, K8s parity
+          </li>
+          <li>
+            <Link href={CELLD_SPEC}>ClawQL celld integration</Link> — self-hosted DO runtime, LTX WORM trail, fleet
+            deploy
           </li>
           <li>
             <Link href={ADAPTER_DOCS}>mcp-api-adapter</Link> — five (plus WebSocket) surfaces that complete the Protocol
