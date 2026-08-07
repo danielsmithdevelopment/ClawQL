@@ -1,0 +1,32 @@
+name = "clawql-gateway"
+main = "dist/index.js"
+compatibility_date = "2026-06-01"
+workers_dev = true
+
+# Bindings match Pulumi edge profile (infra/pulumi/src/cloudflare-edge.ts).
+# For local `wrangler dev`, create resources or use remote bindings.
+
+[[r2_buckets]]
+binding = "CLAWQL_VAULT"
+bucket_name = "clawql-vault-prod"
+preview_bucket_name = "clawql-vault-preview"
+
+[[kv_namespaces]]
+binding = "CLAWQL_SEMANTIC_CACHE"
+id = "00000000000000000000000000000000"
+preview_id = "00000000000000000000000000000000"
+
+[[d1_databases]]
+binding = "CLAWQL_TENANTS"
+database_name = "clawql-tenants"
+database_id = "00000000000000000000000000000000"
+preview_database_id = "00000000000000000000000000000000"
+
+[[queues.producers]]
+binding = "CLAWQL_QUEUE"
+queue = "clawql-edge-requests"
+
+[vars]
+CLAWQL_GATEWAY_PROFILE = "edge"
+# Set secrets via `wrangler secret put`:
+#   CLAWQL_BOOTSTRAP_TOKEN, STRIPE_WEBHOOK_SECRET, CLAWQL_IDP_PROXY_ORIGIN

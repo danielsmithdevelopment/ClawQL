@@ -1,0 +1,29 @@
+{
+  "name": "clawql-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ClawQL Phase 1 edge gateway Worker \u2014 routing, MCP tools, R2 vault, KV L5, Stripe\u2192D1",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js --platform=neutral --target=es2022 --conditions=worker",
+    "dev": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250620.0",
+    "esbuild": "^0.25.5",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.76.0"
+  },
+  "overrides": {
+    "@cloudflare/workers-types": "^4.20250620.0",
+    "undici": "7.29.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

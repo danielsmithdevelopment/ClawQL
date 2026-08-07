@@ -3,6 +3,7 @@ import { ClawQLLogo } from '@/components/elements/clawql-logo'
 import { Main } from '@/components/elements/main'
 import { NavbarIndustriesMenu } from '@/components/elements/navbar-industries-menu'
 import { GitHubIcon } from '@/components/icons/social/github-icon'
+import { XIcon } from '@/components/icons/social/x-icon'
 import {
   FooterCategory,
   FooterLink,
@@ -129,6 +130,9 @@ export default function RootLayout({
                 <NavbarIndustriesMenu />
                 <NavbarLink href="/#security">Security</NavbarLink>
                 <NavbarLink href={site.urls.pricing}>Pricing</NavbarLink>
+                <NavbarLink href={site.urls.demo} className="max-lg:hidden">
+                  Demo
+                </NavbarLink>
                 <NavbarLink href={site.urls.docs}>Docs</NavbarLink>
                 <NavbarLink href={site.urls.signup} className="sm:hidden">
                   Sign up
@@ -174,7 +178,9 @@ export default function RootLayout({
                   <FooterLink href={site.urls.streams}>Streams</FooterLink>
                   <FooterLink href="/#security">Security</FooterLink>
                   <FooterLink href={site.urls.pricing}>Pricing</FooterLink>
+                  <FooterLink href={site.urls.demo}>Interactive demo</FooterLink>
                   <FooterLink href={site.urls.signup}>Sign up</FooterLink>
+                  <FooterLink href={site.urls.status}>Status</FooterLink>
                   <FooterLink href={site.urls.docs}>Documentation</FooterLink>
                 </FooterCategory>
                 <FooterCategory title="Industries">
@@ -213,6 +219,9 @@ export default function RootLayout({
               <>
                 <SocialLink href={site.urls.github} name="GitHub">
                   <GitHubIcon />
+                </SocialLink>
+                <SocialLink href={site.urls.twitter} name="X">
+                  <XIcon />
                 </SocialLink>
               </>
             }

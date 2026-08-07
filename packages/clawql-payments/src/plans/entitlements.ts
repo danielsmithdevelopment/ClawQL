@@ -11,6 +11,8 @@ export type Entitlements = {
   seats: number;
   x402Enabled: boolean;
   stripePriceId: string | null;
+  /** Hosted MCP search/execute are never metered (GTM Phase 1). */
+  mcpExecutionsUnlimited: true;
 };
 
 export function entitlementsFromPlan(planId: ClawqlPlanId): Entitlements {
@@ -23,6 +25,7 @@ export function entitlementsFromPlan(planId: ClawqlPlanId): Entitlements {
     seats: plan.seats,
     x402Enabled: plan.x402_enabled,
     stripePriceId: plan.stripe_price_id,
+    mcpExecutionsUnlimited: true,
   };
 }
 

@@ -21,11 +21,13 @@ on:
     paths:
       - "infra/pulumi/**"
       - "scripts/pulumi/**"
+      - "cloudflare/gateway/**"
       - ".github/workflows/pulumi-cloudflare-edge.yml"
   pull_request:
     paths:
       - "infra/pulumi/**"
       - "scripts/pulumi/**"
+      - "cloudflare/gateway/**"
       - ".github/workflows/pulumi-cloudflare-edge.yml"
   workflow_dispatch:
     inputs:
@@ -41,7 +43,7 @@ on:
         required: false
         default: edge-prod
       deploy_worker_stub:
-        description: "Deploy gateway Worker health/IDP stub"
+        description: "Deploy clawql-gateway Worker (full Phase 1 module)"
         type: boolean
         default: true
       sync_bucket:
@@ -78,6 +80,14 @@ jobs:
           set -euo pipefail
           npm test
           npm run typecheck
+
+      - name: Test + build clawql-gateway Worker
+        working-directory: cloudflare/gateway
+        run: |
+          set -euo pipefail
+          npm install --legacy-peer-deps
+          npm test
+          npm run build
 
   deploy:
     name: Edge deploy

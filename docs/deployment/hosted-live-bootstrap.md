@@ -41,7 +41,7 @@ Pulumi does **not** replace Argo CD. Pulumi creates the plane; Argo CD continuou
 Cloudflare edge (Pulumi profile=edge)
         │
         ▼
-gateway Worker (stub → full MCP) ──proxy──► AWS K3s/EKS ingress
+gateway Worker (MCP + vault + Stripe→D1) ──proxy──► AWS K3s/EKS ingress
                                               │
                          Argo CD ◄── Git (charts + deployment/workflows/*.cqw)
                                               │
@@ -50,13 +50,13 @@ gateway Worker (stub → full MCP) ──proxy──► AWS K3s/EKS ingress
 
 ## Profiles (`clawql:profile`)
 
-| Profile       | Cloud      | Provisions                                                            |
-| ------------- | ---------- | --------------------------------------------------------------------- |
-| `edge`        | cloudflare | R2 vault, KV semantic cache, D1 tenants, Queues, optional Worker stub |
-| `team-vault`  | cloudflare | R2 only (legacy ADR 0007 path)                                        |
-| `golden-host` | aws / gcp  | Packer AMI → EC2/GCE                                                  |
-| `idp-k3s`     | aws        | `r7i.2xlarge` + 200GB gp3 + K3s user-data (first IDP customer)        |
-| `eks`         | aws        | EKS + reserved node group + Karpenter IAM (Phase 3)                   |
+| Profile       | Cloud      | Provisions                                                                             |
+| ------------- | ---------- | -------------------------------------------------------------------------------------- |
+| `edge`        | cloudflare | R2 vault, KV semantic cache, D1 tenants, Queues, gateway Worker (`cloudflare/gateway`) |
+| `team-vault`  | cloudflare | R2 only (legacy ADR 0007 path)                                                         |
+| `golden-host` | aws / gcp  | Packer AMI → EC2/GCE                                                                   |
+| `idp-k3s`     | aws        | `r7i.2xlarge` + 200GB gp3 + K3s user-data (first IDP customer)                         |
+| `eks`         | aws        | EKS + reserved node group + Karpenter IAM (Phase 3)                                    |
 
 ## Phase 1 — Cloudflare edge (Developer/Teams)
 
@@ -73,7 +73,32 @@ pulumi config set clawql:deployWorkerStub true   # optional health/IDP stub
 pulumi preview && pulumi up
 ```
 
-Stack outputs: vault bucket, KV id, D1 id, queue id, optional Worker name. Next product work: real MCP handlers on those bindings (see GTM Phase 1 checklist).
+Stack outputs: vault bucket, KV id, D1 id, queue id, optional Worker name.
+
+### Gateway Worker (Phase 1 product)
+
+Source: [`cloudflare/gateway`](../../cloudflare/gateway). Pulumi deploys `dist/index.js` when `clawql:deployWorkerStub=true` (name kept for config compatibility — content is the full gateway, not a stub).
+
+| Surface | Notes                                                                         |
+| ------- | ----------------------------------------------------------------------------- |
+| Auth    | Bearer API token → D1 `api_token_hash`; `CLAWQL_BOOTSTRAP_TOKEN` for operator |
+| Tools   | REST `POST /search\|/execute\|/memory_*\|/cache` + JSON-RPC `POST /mcp`       |
+| Vault   | R2 `tenant-{id}/vault/Memory/…`                                               |
+| Audit   | D1 `audit_log` with `tenant_id` + `correlation_id`                            |
+| Layer 5 | KV `CLAWQL_SEMANTIC_CACHE`                                                    |
+| Stripe  | `POST /webhooks/stripe` → upsert D1 tenant (trial/developer/teams/…)          |
+| Demo    | `POST /demo/session` (5‑min TTL) + `/demo/pipeline`                           |
+| IDP     | Proxy via `CLAWQL_IDP_PROXY_ORIGIN` or `503 upgrade_required`                 |
+| Policy  | **Unlimited MCP executions** — no Worker-side meter                           |
+
+Secrets after deploy: `wrangler secret put CLAWQL_BOOTSTRAP_TOKEN`, `STRIPE_WEBHOOK_SECRET`, optional `CLAWQL_IDP_PROXY_ORIGIN`. Attach custom domain `gateway.clawql.app` in Cloudflare dashboard / Wrangler routes.
+
+```bash
+cd cloudflare/gateway && npm install --legacy-peer-deps && npm test && npm run build
+# then pulumi up with deployWorkerStub=true (CI deploy-edge.sh builds first)
+```
+
+Landing: clawql.com `/demo` (interactive), `/status` (gateway probe), footer X → `https://x.com/clawql`.
 
 ## Phase 2 — First IDP customer (K3s)
 

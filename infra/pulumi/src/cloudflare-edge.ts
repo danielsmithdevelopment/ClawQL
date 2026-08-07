@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import * as cloudflare from "@pulumi/cloudflare";
 import * as pulumi from "@pulumi/pulumi";
 import type { ProvisionInputs } from "./types.js";
@@ -20,54 +23,43 @@ export type CloudflareEdgeOutputs = {
   };
 };
 
-const EDGE_WORKER_STUB = `/**
- * ClawQL gateway routing Worker stub (Pulumi-provisioned).
- * Replace with full MCP + memory + tier routing before Phase 1 exit.
- * @see docs/deployment/hosted-live-bootstrap.md
+const FALLBACK_WORKER_STUB = `/**
+ * Fallback only — prefer cloudflare/gateway/dist/index.js (full Phase 1 gateway).
  */
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === "/healthz" || url.pathname === "/health") {
-      return Response.json({
-        ok: true,
-        service: "clawql-gateway",
-        profile: "edge",
-        bindings: {
-          vault: Boolean(env.CLAWQL_VAULT),
-          cache: Boolean(env.CLAWQL_SEMANTIC_CACHE),
-          tenants: Boolean(env.CLAWQL_TENANTS),
-          queue: Boolean(env.CLAWQL_QUEUE),
-        },
-      });
+    if (url.pathname === "/healthz" || url.pathname === "/health" || url.pathname === "/status") {
+      return Response.json({ ok: true, service: "clawql-gateway", profile: "edge", fallback: true });
     }
-    // IDP proxy stub until AWS is provisioned for Shared+ tenants
-    if (url.pathname.startsWith("/idp") || url.searchParams.get("tier") === "shared") {
-      return Response.json(
-        {
-          error: "upgrade_required",
-          message:
-            "IDP tiers require AWS K3s/EKS. Provision idp-k3s or eks profile, then update routing.",
-        },
-        { status: 503 }
-      );
-    }
-    return Response.json(
-      {
-        error: "not_implemented",
-        message:
-          "Edge MCP gateway logic not yet deployed. Bindings are ready — ship Worker handlers next.",
-        docs: "docs/deployment/hosted-live-bootstrap.md",
-      },
-      { status: 501 }
-    );
+    return Response.json({
+      error: "gateway_bundle_missing",
+      message: "Build cloudflare/gateway (npm run build) before pulumi up.",
+      docs: "docs/deployment/hosted-live-bootstrap.md",
+    }, { status: 501 });
   },
 };
 `;
 
+function loadGatewayWorkerModule(): { content: string; source: string } {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    path.resolve(here, "../../../cloudflare/gateway/dist/index.js"),
+    path.resolve(process.cwd(), "../../cloudflare/gateway/dist/index.js"),
+    path.resolve(process.cwd(), "cloudflare/gateway/dist/index.js"),
+    path.resolve(process.cwd(), "../cloudflare/gateway/dist/index.js"),
+  ];
+  for (const file of candidates) {
+    if (existsSync(file)) {
+      return { content: readFileSync(file, "utf8"), source: file };
+    }
+  }
+  return { content: FALLBACK_WORKER_STUB, source: "fallback-stub" };
+}
+
 /**
  * Cloudflare edge stack for Developer/Teams launch (GTM Phase 1).
- * Provisions R2 vault, KV semantic cache, D1 tenants/audit, Queues, optional Worker stub.
+ * Provisions R2 vault, KV semantic cache, D1 tenants/audit, Queues, optional gateway Worker.
  */
 export function createCloudflareEdge(inputs: ProvisionInputs): CloudflareEdgeOutputs {
   if (!inputs.cloudflareAccountId) {
@@ -111,11 +103,13 @@ export function createCloudflareEdge(inputs: ProvisionInputs): CloudflareEdgeOut
 
   let workerScriptName: pulumi.Output<string> | undefined;
   if (inputs.deployWorkerStub) {
+    const { content, source } = loadGatewayWorkerModule();
+    pulumi.log.info(`Deploying clawql-gateway Worker module from ${source}`);
     const scriptName = inputs.workerScriptName ?? `${nameBase}-gateway`;
-    const script = new cloudflare.WorkersScript("clawql-gateway-stub", {
+    const script = new cloudflare.WorkersScript("clawql-gateway", {
       accountId,
       scriptName,
-      content: EDGE_WORKER_STUB,
+      content,
       mainModule: "index.js",
       compatibilityDate: "2026-06-01",
       bindings: [
