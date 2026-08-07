@@ -1,3 +1,11 @@
+/**
+ * @module audit/postgres-pool
+ * @internal
+ *
+ * Postgres pool/migration infrastructure backing the Postgres audit store. These are
+ * internal façades consumed by {@link PaymentAuditService} via the store factory, not a
+ * public Effect surface.
+ */
 import pg from "pg";
 import { runPaymentsAuditPostgresMigrations } from "./postgres-migrations.js";
 

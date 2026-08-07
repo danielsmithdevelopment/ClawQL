@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   assertCreditsP2pEnabled,
@@ -17,28 +18,30 @@ describe("payments compliance gates", () => {
   });
 
   it("defaults P2P and compensation off", () => {
-    expect(isCreditsP2pEnabled({})).toBe(false);
+    expect(Effect.runSync(isCreditsP2pEnabled({}))).toBe(false);
     expect(isCompensationEnabled({})).toBe(false);
-    expect(isManagedHosting({})).toBe(false);
+    expect(Effect.runSync(isManagedHosting({}))).toBe(false);
   });
 
   it("allows P2P when explicitly enabled on self-hosted", () => {
-    expect(isCreditsP2pEnabled({ CLAWQL_CREDITS_P2P_ENABLED: "1" })).toBe(true);
+    expect(Effect.runSync(isCreditsP2pEnabled({ CLAWQL_CREDITS_P2P_ENABLED: "1" }))).toBe(true);
     expect(() => assertCreditsP2pEnabled({ CLAWQL_CREDITS_P2P_ENABLED: "1" })).not.toThrow();
   });
 
   it("blocks P2P on managed hosting even if flag is set", () => {
     const env = { CLAWQL_MANAGED_HOSTING: "1", CLAWQL_CREDITS_P2P_ENABLED: "1" };
-    expect(isCreditsP2pEnabled(env)).toBe(false);
+    expect(Effect.runSync(isCreditsP2pEnabled(env))).toBe(false);
     expect(() => assertCreditsP2pEnabled(env)).toThrow(/managed hosting/i);
   });
 
   it("allows org transfers by default when credits are on (including managed)", () => {
     expect(
-      isCreditsOrgTransferEnabled({
-        CLAWQL_CREDITS_ENABLED: "1",
-        CLAWQL_MANAGED_HOSTING: "1",
-      })
+      Effect.runSync(
+        isCreditsOrgTransferEnabled({
+          CLAWQL_CREDITS_ENABLED: "1",
+          CLAWQL_MANAGED_HOSTING: "1",
+        })
+      )
     ).toBe(true);
   });
 

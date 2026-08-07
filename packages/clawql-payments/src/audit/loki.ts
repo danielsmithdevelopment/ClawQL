@@ -1,3 +1,4 @@
+import { Context, Data, Effect, Layer } from "effect";
 import type { PaymentWormEntry } from "./events.js";
 
 function lokiPushUrl(env: NodeJS.ProcessEnv): string | undefined {
@@ -11,18 +12,20 @@ function nsTimestamp(entry: PaymentWormEntry): string {
   return String(Math.floor(t * 1e6));
 }
 
-/**
- * Push one payment audit entry to Loki. Callers should gate with
- * {@link isPaymentAuditLokiPushEnabled} before invoking.
- */
-export function maybePushPaymentAuditEntryToLoki(
+type LokiRequest = {
+  readonly url: string;
+  readonly body: string;
+  readonly headers: Record<string, string>;
+  readonly timeoutMs: number;
+};
+
+/** Build the Loki push request for an entry, or `undefined` when no push URL is configured. */
+function buildLokiRequest(
   entry: PaymentWormEntry,
-  env: NodeJS.ProcessEnv = process.env
-): void {
+  env: NodeJS.ProcessEnv
+): LokiRequest | undefined {
   const url = lokiPushUrl(env);
-  if (!url) {
-    return;
-  }
+  if (!url) return undefined;
 
   const job =
     env.CLAWQL_PAYMENTS_LOKI_JOB?.trim() || env.CLAWQL_LOKI_JOB?.trim() || "clawql-payments-audit";
@@ -57,26 +60,85 @@ export function maybePushPaymentAuditEntryToLoki(
     headers["X-Scope-OrgID"] = tenant;
   }
 
-  const timeoutMs = Number.parseInt(env.CLAWQL_LOKI_PUSH_TIMEOUT_MS?.trim() ?? "5000", 10);
-  const ms = Number.isFinite(timeoutMs) ? Math.min(Math.max(timeoutMs, 500), 60_000) : 5000;
+  const timeoutRaw = Number.parseInt(env.CLAWQL_LOKI_PUSH_TIMEOUT_MS?.trim() ?? "5000", 10);
+  const timeoutMs = Number.isFinite(timeoutRaw)
+    ? Math.min(Math.max(timeoutRaw, 500), 60_000)
+    : 5000;
 
-  void fetch(url, {
+  return { url, body, headers, timeoutMs };
+}
+
+async function performLokiPush(req: LokiRequest): Promise<void> {
+  const res = await fetch(req.url, {
     method: "POST",
-    headers,
-    body,
-    signal: AbortSignal.timeout(ms),
-  })
-    .then((res) => {
-      if (!res.ok) {
-        return res.text().then((t) => {
-          throw new Error(`HTTP ${res.status}: ${t.slice(0, 200)}`);
-        });
-      }
+    headers: req.headers,
+    body: req.body,
+    signal: AbortSignal.timeout(req.timeoutMs),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
+  }
+}
+
+export class LokiPushError extends Data.TaggedError("LokiPushError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+/**
+ * Effect surface for pushing payment audit entries to Loki. `push` no-ops when
+ * {@link isPaymentAuditLokiPushEnabled} / CLAWQL_LOKI_PUSH_URL are unset, and fails
+ * with {@link LokiPushError} on HTTP/transport errors so callers can decide policy.
+ */
+export class LokiPushService extends Context.Tag("clawql/LokiPushService")<
+  LokiPushService,
+  {
+    readonly push: (entry: PaymentWormEntry) => Effect.Effect<void, LokiPushError>;
+  }
+>() {}
+
+export function lokiPushLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<LokiPushService> {
+  return Layer.succeed(
+    LokiPushService,
+    LokiPushService.of({
+      push: (entry) =>
+        Effect.suspend(() => {
+          const req = buildLokiRequest(entry, env);
+          if (!req) return Effect.void;
+          return Effect.tryPromise({
+            try: () => performLokiPush(req),
+            catch: (cause) =>
+              new LokiPushError({
+                reason: cause instanceof Error ? cause.message : "Loki push failed",
+                cause,
+              }),
+          });
+        }),
     })
-    .catch((err: unknown) => {
-      console.error(
-        "[clawql-payments-audit-loki] push failed:",
-        err instanceof Error ? err.message : err
-      );
-    });
+  );
+}
+
+/**
+ * Push one payment audit entry to Loki (fire-and-forget). Callers should gate with
+ * {@link isPaymentAuditLokiPushEnabled} before invoking.
+ *
+ * @deprecated Prefer LokiPushService.push — this Promise/fire-and-forget façade is
+ * retained for legacy callers that cannot await the push.
+ */
+export function maybePushPaymentAuditEntryToLoki(
+  entry: PaymentWormEntry,
+  env: NodeJS.ProcessEnv = process.env
+): void {
+  const req = buildLokiRequest(entry, env);
+  if (!req) return;
+
+  void performLokiPush(req).catch((err: unknown) => {
+    console.error(
+      "[clawql-payments-audit-loki] push failed:",
+      err instanceof Error ? err.message : err
+    );
+  });
 }

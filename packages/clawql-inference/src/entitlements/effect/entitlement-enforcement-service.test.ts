@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { Effect, Layer } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resetPaymentsEffectRuntimeForTests } from "clawql-payments/plugin";
-import { AchTopupService, createUsageStore, getCreditAccount } from "clawql-payments";
+import { AchTopupService, createUsageStore, CreditsLedgerService } from "clawql-payments";
 import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../../gateway.js";
 import { InferenceGatewayService } from "../../fallback/effect/inference-gateway-service.js";
 import { EntitlementLimitError } from "../errors.js";
@@ -178,7 +178,12 @@ describe("EntitlementEnforcementService", () => {
         }).pipe(Effect.provide(layer))
       );
 
-      const account = await getCreditAccount("default", env);
+      const account = await Effect.runPromise(
+        Effect.gen(function* () {
+          const ledger = yield* CreditsLedgerService;
+          return yield* ledger.getAccount("default");
+        }).pipe(Effect.provide(paymentsServicesLiveLayer(env)))
+      );
       expect(account.balanceCents).toBe(75);
       expect(inner.calls).toHaveLength(1);
     }

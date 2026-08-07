@@ -15,33 +15,17 @@ import { ConsumerOffRampService } from "../offramp/consumer-offramp-service.js";
 import { OfframpWebhookService } from "../offramp/offramp-webhook-service.js";
 import { AgentCompensationService } from "../compensation/agent-compensation-service.js";
 import { CreditsService } from "../credits/credits-service.js";
+import { CreditsContactsService } from "../credits/contacts.js";
+import { CreditsDirectoryService } from "../credits/directory.js";
+import { CreditsRequestsService, publicMoneyRequest } from "../credits/requests.js";
+import { isCreditsP2pEnabled } from "../credits/config.js";
+import { isCompensationEnabled } from "../compensation/config.js";
 import {
-  addContact,
-  listContacts,
-  removeContact,
-  resolveContactPayee,
-} from "../credits/contacts.js";
-import {
-  claimDirectory,
-  getEmailEntry,
-  getHandleEntry,
-  getPhoneEntry,
-  getTenantEntry,
-  listDirectory,
-  resolveRecipient,
-} from "../credits/directory.js";
-import {
-  acceptMoneyRequest,
-  claimMoneyRequestInvite,
-  createMoneyRequest,
-  listMoneyRequests,
-  publicMoneyRequest,
-} from "../credits/requests.js";
-import {
-  sendMoneyRequestInviteEmail,
+  CreditsInviteEmailService,
   shouldSendInviteEmailOnCreate,
+  type InviteEmailResult,
 } from "../credits/invite-email.js";
-import { getActivityFeed } from "../credits/activity.js";
+import { CreditsActivityService } from "../credits/activity.js";
 import {
   buildClawqlPayUri,
   buildPayDeepLink,
@@ -52,8 +36,6 @@ import {
 import { renderQrSvg } from "../credits/hateoas-html.js";
 import { Ap2MandateService } from "../ap2/ap2-mandate-service.js";
 import { isAp2Enabled } from "../ap2/config.js";
-import { isCreditsP2pEnabled } from "../credits/config.js";
-import { isCompensationEnabled } from "../compensation/config.js";
 
 export const PAYMENTS_TOOLS_PLUGIN_ID = "clawql-payments-tools";
 
@@ -420,14 +402,20 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               tenantId?: string;
               displayName?: string;
             };
-            const result = await claimDirectory({
-              email: a.email,
-              handle: a.handle,
-              phone: a.phone,
-              phoneVerified: a.phoneVerified,
-              tenantId: a.tenantId?.trim() || "default",
-              displayName: a.displayName,
-            });
+            const result = await runPaymentsEffect(
+              Effect.gen(function* () {
+                const directory = yield* CreditsDirectoryService;
+                return yield* directory.claim({
+                  email: a.email,
+                  handle: a.handle,
+                  phone: a.phone,
+                  phoneVerified: a.phoneVerified,
+                  tenantId: a.tenantId?.trim() || "default",
+                  displayName: a.displayName,
+                });
+              }),
+              env
+            );
             return textResult(result);
           },
         });
@@ -446,19 +434,26 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             };
             const raw = a.payee?.trim() || a.email?.trim() || a.handle?.trim() || a.phone?.trim();
             if (!raw) throw new Error("Provide payee, email, handle, or phone");
-            if (a.email?.trim() && !a.payee) {
-              const entry = await getEmailEntry(a.email);
-              if (entry) return textResult(entry);
-            }
-            if (a.handle?.trim() && !a.payee) {
-              const entry = await getHandleEntry(a.handle);
-              if (entry) return textResult(entry);
-            }
-            if (a.phone?.trim() && !a.payee) {
-              const entry = await getPhoneEntry(a.phone);
-              if (entry) return textResult(entry);
-            }
-            return textResult(await resolveRecipient(raw, env));
+            const resolved = await runPaymentsEffect(
+              Effect.gen(function* () {
+                const directory = yield* CreditsDirectoryService;
+                if (a.email?.trim() && !a.payee) {
+                  const entry = yield* directory.getEmail(a.email);
+                  if (entry) return entry;
+                }
+                if (a.handle?.trim() && !a.payee) {
+                  const entry = yield* directory.getHandle(a.handle);
+                  if (entry) return entry;
+                }
+                if (a.phone?.trim() && !a.payee) {
+                  const entry = yield* directory.getPhone(a.phone);
+                  if (entry) return entry;
+                }
+                return yield* directory.resolveRecipient(raw);
+              }),
+              env
+            );
+            return textResult(resolved);
           },
         });
 
@@ -466,7 +461,16 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
           name: "payments_credits_directory_list",
           description: "List payments directory profiles (email + optional @username / phone).",
           schema: {},
-          handler: async () => textResult({ profiles: await listDirectory() }),
+          handler: async () =>
+            textResult({
+              profiles: await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const directory = yield* CreditsDirectoryService;
+                  return yield* directory.list();
+                }),
+                env
+              ),
+            }),
         });
 
         yield* api.registerMcpTool({
@@ -481,11 +485,17 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
           handler: async (args) => {
             const a = args as { to: string; label?: string; ownerTenantId?: string };
             return textResult(
-              await addContact({
-                ownerTenantId: a.ownerTenantId?.trim() || "default",
-                payee: a.to,
-                label: a.label,
-              })
+              await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const contacts = yield* CreditsContactsService;
+                  return yield* contacts.add({
+                    ownerTenantId: a.ownerTenantId?.trim() || "default",
+                    payee: a.to,
+                    label: a.label,
+                  });
+                }),
+                env
+              )
             );
           },
         });
@@ -499,7 +509,13 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             const ownerTenantId = a.ownerTenantId?.trim() || "default";
             return textResult({
               ownerTenantId,
-              contacts: await listContacts(ownerTenantId),
+              contacts: await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const contacts = yield* CreditsContactsService;
+                  return yield* contacts.list(ownerTenantId);
+                }),
+                env
+              ),
             });
           },
         });
@@ -513,7 +529,13 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
           },
           handler: async (args) => {
             const a = args as { contactId: string; ownerTenantId?: string };
-            const ok = await removeContact(a.ownerTenantId?.trim() || "default", a.contactId);
+            const ok = await runPaymentsEffect(
+              Effect.gen(function* () {
+                const contacts = yield* CreditsContactsService;
+                return yield* contacts.remove(a.ownerTenantId?.trim() || "default", a.contactId);
+              }),
+              env
+            );
             if (!ok) throw new Error("Unknown contact id");
             return textResult({ removed: true, contactId: a.contactId });
           },
@@ -530,10 +552,16 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
           handler: async (args) => {
             const a = args as { contactId?: string; to?: string; ownerTenantId?: string };
             return textResult(
-              await resolveContactPayee(a.ownerTenantId?.trim() || "default", {
-                contactId: a.contactId,
-                payee: a.to,
-              })
+              await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const contacts = yield* CreditsContactsService;
+                  return yield* contacts.resolvePayee(a.ownerTenantId?.trim() || "default", {
+                    contactId: a.contactId,
+                    payee: a.to,
+                  });
+                }),
+                env
+              )
             );
           },
         });
@@ -553,12 +581,15 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               limit?: number;
               filter?: "all" | "transfers" | "requests" | "money" | "ledger";
             };
-            const feed = await getActivityFeed(
-              {
-                tenantId: a.tenantId?.trim() || "default",
-                limit: a.limit,
-                filter: a.filter ?? "money",
-              },
+            const feed = await runPaymentsEffect(
+              Effect.gen(function* () {
+                const activity = yield* CreditsActivityService;
+                return yield* activity.getFeed({
+                  tenantId: a.tenantId?.trim() || "default",
+                  limit: a.limit,
+                  filter: a.filter ?? "money",
+                });
+              }),
               env
             );
             return textResult(feed);
@@ -594,7 +625,7 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             };
             const requestId = a.requestId?.trim();
             if (requestId) {
-              const url = buildRequestDeepLink({ requestId }, env);
+              const url = Effect.runSync(buildRequestDeepLink({ requestId }, env));
               return textResult({
                 ok: true,
                 kind: "credits.request",
@@ -610,15 +641,17 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               note: a.note,
               fromTenantId: a.fromTenantId,
             };
-            const envelope = payHateoasEnvelope(pay, env);
+            const envelope = Effect.runSync(payHateoasEnvelope(pay, env));
             let qrSvg: string | undefined;
             if (a.includeQrSvg) {
-              qrSvg = await renderQrSvg(buildPayQrPayload(pay));
+              qrSvg = await Effect.runPromise(
+                Effect.flatMap(buildPayQrPayload(pay), (payload) => renderQrSvg(payload))
+              );
             }
             return textResult({
               ...envelope,
-              clawql: buildClawqlPayUri(pay),
-              http: buildPayDeepLink(pay, env),
+              clawql: Effect.runSync(buildClawqlPayUri(pay)),
+              http: Effect.runSync(buildPayDeepLink(pay, env)),
               qrSvg,
             });
           },
@@ -641,43 +674,48 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
             };
             await assertAp2IfRequired(env, a.mandateJwt);
             const fromTenantId = a.fromTenantId?.trim() || "default";
-            const result = await createMoneyRequest(
-              {
-                requesterTenantId: fromTenantId,
-                to: a.to,
-                amountCents: Math.round(a.amountUsd * 100),
-                note: a.note,
-              },
+            const { result, email } = await runPaymentsEffect(
+              Effect.gen(function* () {
+                const requests = yield* CreditsRequestsService;
+                const created = yield* requests.create({
+                  requesterTenantId: fromTenantId,
+                  to: a.to,
+                  amountCents: Math.round(a.amountUsd * 100),
+                  note: a.note,
+                });
+                let sent: InviteEmailResult | undefined;
+                if (
+                  created.invite &&
+                  created.inviteToken &&
+                  created.request.inviteUrl &&
+                  created.request.payerEmail &&
+                  shouldSendInviteEmailOnCreate({ sendEmail: a.sendEmail }, env)
+                ) {
+                  const directory = yield* CreditsDirectoryService;
+                  const inviteEmail = yield* CreditsInviteEmailService;
+                  const requester = yield* directory.getTenant(fromTenantId);
+                  sent = yield* inviteEmail.send(
+                    {
+                      toEmail: created.request.payerEmail,
+                      inviteUrl: created.request.inviteUrl,
+                      requestId: created.request.requestId,
+                      amountCents: created.request.amountCents,
+                      note: created.request.note,
+                      fromLabel:
+                        requester?.displayName ||
+                        (requester?.handle ? `@${requester.handle}` : undefined) ||
+                        requester?.email ||
+                        fromTenantId,
+                      inviteToken: created.inviteToken,
+                      expiresAt: created.request.expiresAt,
+                    },
+                    { dryRun: a.emailDryRun === true ? true : a.emailDryRun }
+                  );
+                }
+                return { result: created, email: sent };
+              }),
               env
             );
-            let email: Awaited<ReturnType<typeof sendMoneyRequestInviteEmail>> | undefined;
-            if (
-              result.invite &&
-              result.inviteToken &&
-              result.request.inviteUrl &&
-              result.request.payerEmail &&
-              shouldSendInviteEmailOnCreate({ sendEmail: a.sendEmail }, env)
-            ) {
-              const requester = await getTenantEntry(fromTenantId, env);
-              email = await sendMoneyRequestInviteEmail(
-                {
-                  toEmail: result.request.payerEmail,
-                  inviteUrl: result.request.inviteUrl,
-                  requestId: result.request.requestId,
-                  amountCents: result.request.amountCents,
-                  note: result.request.note,
-                  fromLabel:
-                    requester?.displayName ||
-                    (requester?.handle ? `@${requester.handle}` : undefined) ||
-                    requester?.email ||
-                    fromTenantId,
-                  inviteToken: result.inviteToken,
-                  expiresAt: result.request.expiresAt,
-                },
-                env,
-                { dryRun: a.emailDryRun === true ? true : a.emailDryRun }
-              );
-            }
             return textResult({
               ...publicMoneyRequest(result.request),
               invite: result.invite,
@@ -707,32 +745,39 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               email?: string;
               emailDryRun?: boolean;
             };
-            const { getMoneyRequest, buildRequestInviteUrl } =
-              await import("../credits/requests.js");
-            const req = await getMoneyRequest(a.requestId, env);
-            if (!req) throw new Error("Unknown request id");
-            const toEmail = a.email?.trim() || req.payerEmail;
-            if (!toEmail) throw new Error("No payer email — pass email");
-            const inviteUrl = req.inviteUrl || buildRequestInviteUrl(a.requestId, a.token, env);
-            const requester = await getTenantEntry(req.requesterTenantId, env);
+            const { buildRequestInviteUrl } = await import("../credits/requests.js");
             return textResult(
-              await sendMoneyRequestInviteEmail(
-                {
-                  toEmail,
-                  inviteUrl,
-                  requestId: a.requestId,
-                  amountCents: req.amountCents,
-                  note: req.note,
-                  fromLabel:
-                    requester?.displayName ||
-                    (requester?.handle ? `@${requester.handle}` : undefined) ||
-                    requester?.email ||
-                    req.requesterTenantId,
-                  inviteToken: a.token,
-                  expiresAt: req.expiresAt,
-                },
-                env,
-                { dryRun: a.emailDryRun === true ? true : a.emailDryRun }
+              await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const requests = yield* CreditsRequestsService;
+                  const req = yield* requests.get(a.requestId);
+                  if (!req) return yield* Effect.fail(new Error("Unknown request id"));
+                  const toEmail = a.email?.trim() || req.payerEmail;
+                  if (!toEmail) return yield* Effect.fail(new Error("No payer email — pass email"));
+                  const inviteUrl =
+                    req.inviteUrl || (yield* buildRequestInviteUrl(a.requestId, a.token, env));
+                  const directory = yield* CreditsDirectoryService;
+                  const inviteEmail = yield* CreditsInviteEmailService;
+                  const requester = yield* directory.getTenant(req.requesterTenantId);
+                  return yield* inviteEmail.send(
+                    {
+                      toEmail,
+                      inviteUrl,
+                      requestId: a.requestId,
+                      amountCents: req.amountCents,
+                      note: req.note,
+                      fromLabel:
+                        requester?.displayName ||
+                        (requester?.handle ? `@${requester.handle}` : undefined) ||
+                        requester?.email ||
+                        req.requesterTenantId,
+                      inviteToken: a.token,
+                      expiresAt: req.expiresAt,
+                    },
+                    { dryRun: a.emailDryRun === true ? true : a.emailDryRun }
+                  );
+                }),
+                env
               )
             );
           },
@@ -747,8 +792,11 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
           },
           handler: async (args) => {
             const a = args as { tenantId?: string; role?: "requester" | "payer" | "any" };
-            const rows = await listMoneyRequests(
-              { tenantId: a.tenantId, role: a.role ?? "any" },
+            const rows = await runPaymentsEffect(
+              Effect.gen(function* () {
+                const requests = yield* CreditsRequestsService;
+                return yield* requests.list({ tenantId: a.tenantId, role: a.role ?? "any" });
+              }),
               env
             );
             return textResult({ requests: rows.map(publicMoneyRequest) });
@@ -769,28 +817,29 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               handle?: string;
               displayName?: string;
             };
-            const result = await claimMoneyRequestInvite(
-              {
-                requestId: a.requestId,
-                token: a.token,
-                tenantId: a.tenantId,
-                email: a.email,
-                handle: a.handle,
-                displayName: a.displayName,
-              },
+            const result = await runPaymentsEffect(
+              Effect.gen(function* () {
+                const requests = yield* CreditsRequestsService;
+                return yield* requests.claimInvite({
+                  requestId: a.requestId,
+                  token: a.token,
+                  tenantId: a.tenantId,
+                  email: a.email,
+                  handle: a.handle,
+                  displayName: a.displayName,
+                });
+              }),
               env
             );
             return textResult({
               request: publicMoneyRequest(result.request),
               directoryCreated: result.directoryCreated,
-              next: isCreditsP2pEnabled(env)
-                ? "Call payments_credits_request_accept to stage payment."
-                : "P2P accept/transfer is disabled on this deployment (CLAWQL_CREDITS_P2P_ENABLED).",
+              next: "Call payments_credits_request_accept to stage payment.",
             });
           },
         });
 
-        if (isCreditsP2pEnabled(env)) {
+        if (Effect.runSync(isCreditsP2pEnabled(env))) {
           yield* api.registerMcpTool({
             name: "payments_credits_request_accept",
             description:
@@ -804,23 +853,42 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               };
               await assertAp2IfRequired(env, a.mandateJwt);
               const payerTenantId = a.payerTenantId?.trim() || "default";
-              const { request, staged } = await acceptMoneyRequest(
-                { requestId: a.requestId, payerTenantId },
-                async (input) =>
-                  runPaymentsEffect(
-                    Effect.gen(function* () {
-                      const credits = yield* CreditsService;
-                      return yield* credits.stageTransfer({
-                        fromTenantId: input.fromTenantId,
-                        toTenantId: input.toTenantId,
-                        amountCents: input.amountCents,
-                        note: input.note,
-                        correlationId: input.correlationId,
-                        requestId: input.requestId,
-                      });
-                    }),
-                    env
-                  ),
+              const { request, staged } = await runPaymentsEffect(
+                Effect.gen(function* () {
+                  const requests = yield* CreditsRequestsService;
+                  const credits = yield* CreditsService;
+                  const reqRow = yield* requests.get(a.requestId);
+                  if (!reqRow) return yield* Effect.fail(new Error("Unknown request id"));
+                  if (reqRow.status === "expired")
+                    return yield* Effect.fail(new Error("Request expired"));
+                  if (reqRow.status !== "pending") {
+                    return yield* Effect.fail(new Error(`Request is ${reqRow.status}`));
+                  }
+                  if (!reqRow.payerTenantId) {
+                    return yield* Effect.fail(
+                      new Error(
+                        "Payer has not joined yet — claim the invite first: clawql payments credits request claim-invite …"
+                      )
+                    );
+                  }
+                  if (reqRow.payerTenantId !== payerTenantId) {
+                    return yield* Effect.fail(new Error("Only the payer can accept this request"));
+                  }
+                  const stagedResult = yield* credits.stageTransfer({
+                    fromTenantId: reqRow.payerTenantId,
+                    toTenantId: reqRow.requesterTenantId,
+                    amountCents: reqRow.amountCents,
+                    note: reqRow.note ?? `Payment for request ${reqRow.requestId}`,
+                    correlationId: reqRow.correlationId,
+                    requestId: reqRow.requestId,
+                  });
+                  const updated = yield* requests.markAccepted({
+                    requestId: reqRow.requestId,
+                    payerTenantId,
+                    stagedTransferActionId: stagedResult.actionId,
+                  });
+                  return { request: updated, staged: stagedResult };
+                }),
                 env
               );
               return textResult({
@@ -848,32 +916,33 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
                 mandateJwt?: string;
               };
               await assertAp2IfRequired(env, a.mandateJwt);
-              let toTenantId = a.toTenantId?.trim();
-              let toHandle: string | undefined;
-              let toEmail: string | undefined;
-              if (a.toEmail?.trim()) {
-                const resolved = await resolveRecipient(a.toEmail, env, { forceEmail: true });
-                toTenantId = resolved.tenantId;
-                toHandle = resolved.handle;
-                toEmail = resolved.email;
-              } else if (a.toHandle?.trim()) {
-                const resolved = await resolveRecipient(a.toHandle, env, { forceHandle: true });
-                toTenantId = resolved.tenantId;
-                toHandle = resolved.handle;
-                toEmail = resolved.email;
-              } else if (!toTenantId) {
+              const toTenantId = a.toTenantId?.trim();
+              if (!a.toEmail?.trim() && !a.toHandle?.trim() && !toTenantId) {
                 throw new Error("Provide toEmail, toHandle (@bob), or toTenantId");
               }
-              const result = await runPaymentsEffect(
+              const { result, toHandle, toEmail } = await runPaymentsEffect(
                 Effect.gen(function* () {
+                  let resolvedTenantId = toTenantId;
+                  let resolvedHandle: string | undefined;
+                  let resolvedEmail: string | undefined;
+                  if (a.toEmail?.trim() || a.toHandle?.trim()) {
+                    const directory = yield* CreditsDirectoryService;
+                    const resolved = a.toEmail?.trim()
+                      ? yield* directory.resolveRecipient(a.toEmail, { forceEmail: true })
+                      : yield* directory.resolveRecipient(a.toHandle!, { forceHandle: true });
+                    resolvedTenantId = resolved.tenantId;
+                    resolvedHandle = resolved.handle;
+                    resolvedEmail = resolved.email;
+                  }
                   const credits = yield* CreditsService;
-                  return yield* credits.stageTransfer({
+                  const staged = yield* credits.stageTransfer({
                     fromTenantId: a.fromTenantId?.trim() || "default",
-                    toTenantId: toTenantId!,
+                    toTenantId: resolvedTenantId!,
                     amountCents: Math.round(a.amountUsd * 100),
                     idempotencyKey: a.idempotencyKey,
                     note: a.note,
                   });
+                  return { result: staged, toHandle: resolvedHandle, toEmail: resolvedEmail };
                 }),
                 env
               );
@@ -915,7 +984,6 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
           });
         }
 
-        // High-impact compensation — self-hosted opt-in only (CLAWQL_COMPENSATION_ENABLED=1).
         if (isCompensationEnabled(env)) {
           yield* api.registerMcpTool({
             name: "agent_compensation_deposit_stage",
@@ -988,7 +1056,7 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
           yield* api.registerMcpTool({
             name: "agent_compensation_cashout_stage",
             description:
-              "Safe entry point: stage an agent cash-out. Inert until agent_compensation_cashout_confirm — does not debit or call PayoutService.",
+              "Safe entry point: stage an agent cash-out. Inert until agent_compensation_cashout_confirm — does not debit or call PayoutService. Self-hosted; CLAWQL_COMPENSATION_ENABLED=1.",
             schema: compensationCashoutStageSchema,
             handler: async (args) => {
               const a = args as {

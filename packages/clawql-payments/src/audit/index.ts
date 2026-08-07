@@ -74,12 +74,20 @@ export {
 } from "./store.js";
 export { createJsonlPaymentAuditStore } from "./jsonl-store.js";
 export { createPostgresPaymentAuditStore } from "./postgres-store.js";
-export { maybePushPaymentAuditEntryToLoki } from "./loki.js";
 export {
+  LokiPushError,
+  LokiPushService,
+  lokiPushLiveLayer,
+  maybePushPaymentAuditEntryToLoki,
+} from "./loki.js";
+export {
+  PaymentAuditReconcileError,
+  PaymentAuditReconcileService,
   buildSpendReport,
   filterAuditByCorrelationId,
   loadAuditByCorrelationId,
   loadSpendReport,
+  paymentAuditReconcileLiveLayer,
   type SpendGroupBy,
   type SpendReport,
   type SpendReportRow,

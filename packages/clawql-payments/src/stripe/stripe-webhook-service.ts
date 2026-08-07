@@ -10,7 +10,7 @@ import {
   buildStripeInvoicePaidEntry,
 } from "../audit/events.js";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
-import { TOPUP_META_KEY, appendCreditEntry, settleTopupByPaymentIntent } from "../credits/index.js";
+import { CreditsLedgerService, TOPUP_META_KEY } from "../credits/index.js";
 import type { ConfigError } from "../errors/payment-errors.js";
 import type { PaymentError } from "../errors/payment-errors.js";
 import { StripeSignatureError } from "./stripe-errors.js";
@@ -86,13 +86,14 @@ export class StripeWebhookService extends Context.Tag("clawql/StripeWebhookServi
 export function stripeWebhookLiveLayer(): Layer.Layer<
   StripeWebhookService,
   never,
-  PaymentsConfigService | PaymentAuditService
+  PaymentsConfigService | PaymentAuditService | CreditsLedgerService
 > {
   return Layer.effect(
     StripeWebhookService,
     Effect.gen(function* () {
       const configService = yield* PaymentsConfigService;
       const audit = yield* PaymentAuditService;
+      const ledger = yield* CreditsLedgerService;
 
       const verifySignature = (payload: string | Buffer, signature: string, secret: string) =>
         Effect.sync(() => verifyStripeWebhookSignature(payload, signature, secret)).pipe(
@@ -242,27 +243,19 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
               }
               const topupTenant = tenantFromEvent(event, tenantId);
               const amountCents = pi.amount_received || pi.amount || 0;
-              const settled = yield* Effect.promise(async () => {
-                try {
-                  return {
-                    ok: true as const,
-                    ...(await settleTopupByPaymentIntent(
-                      {
-                        tenantId: topupTenant,
-                        paymentIntentId: pi.id,
-                        amountCents,
-                        correlationId: options.correlationId ?? event.id,
-                      },
-                      options.env
-                    )),
-                  };
-                } catch (cause) {
-                  return {
-                    ok: false as const,
-                    reason: cause instanceof Error ? cause.message : String(cause),
-                  };
-                }
-              });
+              const settled = yield* ledger
+                .settleTopup({
+                  tenantId: topupTenant,
+                  paymentIntentId: pi.id,
+                  amountCents,
+                  correlationId: options.correlationId ?? event.id,
+                })
+                .pipe(
+                  Effect.map((result) => ({ ok: true as const, ...result })),
+                  Effect.catchAll((cause) =>
+                    Effect.succeed({ ok: false as const, reason: cause.reason })
+                  )
+                );
               if (!settled.ok) {
                 yield* audit.appendEntry(
                   buildCreditTopupFailedEntry({
@@ -295,24 +288,17 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
               }
               const failTenant = tenantFromEvent(event, tenantId);
               const failReason = pi.last_payment_error?.message || "payment_intent.payment_failed";
-              yield* Effect.promise(async () => {
-                try {
-                  await appendCreditEntry(
-                    {
-                      tenantId: failTenant,
-                      kind: "topup_failed",
-                      deltaCents: 0,
-                      paymentIntentId: pi.id,
-                      correlationId: options.correlationId ?? event.id,
-                      note: failReason,
-                      id: `fail_${pi.id}`,
-                    },
-                    options.env
-                  );
-                } catch {
-                  /* idempotent / best-effort ledger mark */
-                }
-              });
+              yield* ledger
+                .appendEntry({
+                  tenantId: failTenant,
+                  kind: "topup_failed",
+                  deltaCents: 0,
+                  paymentIntentId: pi.id,
+                  correlationId: options.correlationId ?? event.id,
+                  note: failReason,
+                  id: `fail_${pi.id}`,
+                })
+                .pipe(Effect.catchAll(() => Effect.void));
               yield* audit.appendEntry(
                 buildCreditTopupFailedEntry({
                   tenantId: failTenant,

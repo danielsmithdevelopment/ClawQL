@@ -1,8 +1,14 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Effect } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { appendCreditEntry, getCreditAccount, resetCreditsLedgerForTests } from "./ledger.js";
+import {
+  resetPaymentsEffectRuntimeForTests,
+  runPaymentsEffect,
+} from "../runtime/payments-effect-runtime.js";
+import { isCreditsOrgTransferEnabled } from "./config.js";
+import { CreditsLedgerService } from "./ledger.js";
 import {
   addOrgMember,
   allocateFromPoolToMember,
@@ -12,10 +18,31 @@ import {
   setOrgRolePolicies,
   transferWithinOrg,
 } from "./org.js";
-import { isCreditsOrgTransferEnabled } from "./config.js";
 
 describe("org closed-loop credits", () => {
   let home: string;
+
+  const append = (input: {
+    tenantId: string;
+    kind: "topup_settled" | "grant";
+    deltaCents: number;
+    grantSource: "topup" | "adjust";
+    note?: string;
+  }) =>
+    runPaymentsEffect(
+      Effect.gen(function* () {
+        const ledger = yield* CreditsLedgerService;
+        yield* ledger.appendEntry(input);
+      })
+    );
+
+  const balance = (tenantId: string) =>
+    runPaymentsEffect(
+      Effect.gen(function* () {
+        const ledger = yield* CreditsLedgerService;
+        return yield* ledger.getAccount(tenantId);
+      })
+    ).then((a) => a.balanceCents);
 
   beforeEach(async () => {
     home = await mkdtemp(join(tmpdir(), "clawql-org-"));
@@ -24,11 +51,18 @@ describe("org closed-loop credits", () => {
     process.env.CLAWQL_MANAGED_HOSTING = "1";
     delete process.env.CLAWQL_CREDITS_P2P_ENABLED;
     delete process.env.CLAWQL_CREDITS_ORG_TRANSFER_ENABLED;
-    await resetCreditsLedgerForTests(process.env);
+    resetPaymentsEffectRuntimeForTests();
+    await runPaymentsEffect(
+      Effect.gen(function* () {
+        const ledger = yield* CreditsLedgerService;
+        yield* ledger.reset();
+      })
+    );
     await resetOrgCreditsForTests(process.env);
   });
 
   afterEach(async () => {
+    resetPaymentsEffectRuntimeForTests();
     delete process.env.CLAWQL_HOME;
     delete process.env.CLAWQL_CREDITS_ENABLED;
     delete process.env.CLAWQL_MANAGED_HOSTING;
@@ -37,7 +71,7 @@ describe("org closed-loop credits", () => {
   });
 
   it("allows org transfer on managed hosting without P2P flag", () => {
-    expect(isCreditsOrgTransferEnabled(process.env)).toBe(true);
+    expect(Effect.runSync(isCreditsOrgTransferEnabled(process.env))).toBe(true);
   });
 
   it("creates org, allocates from pool, and peer-transfers within company only", async () => {
@@ -76,17 +110,13 @@ describe("org closed-loop credits", () => {
       process.env
     );
 
-    // Fund company pool (Stripe top-up analogue)
-    await appendCreditEntry(
-      {
-        tenantId: org.poolTenantId,
-        kind: "topup_settled",
-        deltaCents: 20_000,
-        grantSource: "topup",
-        note: "monthly included credits",
-      },
-      process.env
-    );
+    await append({
+      tenantId: org.poolTenantId,
+      kind: "topup_settled",
+      deltaCents: 20_000,
+      grantSource: "topup",
+      note: "monthly included credits",
+    });
 
     await allocateFromPoolToMember(
       {
@@ -107,10 +137,9 @@ describe("org closed-loop credits", () => {
       process.env
     );
 
-    expect((await getCreditAccount("intern1", process.env)).balanceCents).toBe(1000);
-    expect((await getCreditAccount("senior1", process.env)).balanceCents).toBe(5000);
+    expect(await balance("intern1")).toBe(1000);
+    expect(await balance("senior1")).toBe(5000);
 
-    // Senior helps intern within company
     await transferWithinOrg(
       {
         orgId: "acme",
@@ -120,10 +149,9 @@ describe("org closed-loop credits", () => {
       },
       process.env
     );
-    expect((await getCreditAccount("intern1", process.env)).balanceCents).toBe(1500);
-    expect((await getCreditAccount("senior1", process.env)).balanceCents).toBe(4500);
+    expect(await balance("intern1")).toBe(1500);
+    expect(await balance("senior1")).toBe(4500);
 
-    // Cross-org / outsider blocked
     await expect(
       transferWithinOrg(
         {
@@ -159,26 +187,19 @@ describe("org closed-loop credits", () => {
       },
       process.env
     );
-    await appendCreditEntry(
-      {
-        tenantId: org.poolTenantId,
-        kind: "topup_settled",
-        deltaCents: 50_000,
-        grantSource: "topup",
-      },
-      process.env
-    );
-    // Seed leftover on intern that should recall
-    await appendCreditEntry(
-      {
-        tenantId: "intern1",
-        kind: "grant",
-        deltaCents: 300,
-        grantSource: "adjust",
-        note: "leftover",
-      },
-      process.env
-    );
+    await append({
+      tenantId: org.poolTenantId,
+      kind: "topup_settled",
+      deltaCents: 50_000,
+      grantSource: "topup",
+    });
+    await append({
+      tenantId: "intern1",
+      kind: "grant",
+      deltaCents: 300,
+      grantSource: "adjust",
+      note: "leftover",
+    });
 
     const result = await distributeOrgPeriod(
       { orgId: "beta", actorTenantId: "cfo", idempotencyPrefix: "2026-08" },
@@ -188,6 +209,6 @@ describe("org closed-loop credits", () => {
     expect(
       result.distributed.some((d) => d.memberTenantId === "intern1" && d.amountCents === 1000)
     ).toBe(true);
-    expect((await getCreditAccount("intern1", process.env)).balanceCents).toBe(1000);
+    expect(await balance("intern1")).toBe(1000);
   });
 });

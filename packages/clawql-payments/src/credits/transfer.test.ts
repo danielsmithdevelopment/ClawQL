@@ -1,17 +1,34 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Effect, Layer } from "effect";
+import { Effect } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { AuditLive } from "clawql-core";
-import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
 import { listPaymentAuditEntries, resetPaymentAuditStoreForTests } from "../audit/worm.js";
-import { resetPaymentsEffectRuntimeForTests } from "../runtime/payments-effect-runtime.js";
-import { CreditsService, creditsLiveLayer } from "./credits-service.js";
-import { appendCreditEntry, resetCreditsLedgerForTests } from "./ledger.js";
+import {
+  resetPaymentsEffectRuntimeForTests,
+  runPaymentsEffect,
+} from "../runtime/payments-effect-runtime.js";
+import { CreditsService } from "./credits-service.js";
+import { CreditsLedgerService } from "./ledger.js";
+import { CreditsStepUpService } from "./step-up.js";
+import { generateTotp } from "./totp.js";
 
 describe("credits P2P transfer", () => {
   let home: string;
+
+  const seedTopup = (tenantId: string, deltaCents: number, note?: string) =>
+    runPaymentsEffect(
+      Effect.gen(function* () {
+        const ledger = yield* CreditsLedgerService;
+        yield* ledger.appendEntry({
+          tenantId,
+          kind: "topup_settled",
+          deltaCents,
+          grantSource: "topup",
+          ...(note ? { note } : {}),
+        });
+      })
+    );
 
   beforeEach(async () => {
     home = await mkdtemp(join(tmpdir(), "clawql-xfer-"));
@@ -23,7 +40,6 @@ describe("credits P2P transfer", () => {
     delete process.env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP;
     resetPaymentsEffectRuntimeForTests();
     await resetPaymentAuditStoreForTests(process.env);
-    await resetCreditsLedgerForTests(process.env);
   });
 
   afterEach(async () => {
@@ -37,24 +53,10 @@ describe("credits P2P transfer", () => {
     await rm(home, { recursive: true, force: true });
   });
 
-  const layer = () => {
-    const audit = paymentAuditLiveLayer(process.env).pipe(Layer.provide(AuditLive));
-    return creditsLiveLayer(process.env).pipe(Layer.provide(audit));
-  };
-
   it("moves balance from sender to recipient and writes WORM legs", async () => {
-    await appendCreditEntry(
-      {
-        tenantId: "alice",
-        kind: "topup_settled",
-        deltaCents: 5000,
-        grantSource: "topup",
-        note: "seed",
-      },
-      process.env
-    );
+    await seedTopup("alice", 5000, "seed");
 
-    const result = await Effect.runPromise(
+    const result = await runPaymentsEffect(
       Effect.gen(function* () {
         const credits = yield* CreditsService;
         const xfer = yield* credits.transfer({
@@ -67,7 +69,7 @@ describe("credits P2P transfer", () => {
         const alice = yield* credits.getBalance("alice");
         const bob = yield* credits.getBalance("bob");
         return { xfer, alice, bob };
-      }).pipe(Effect.provide(layer()))
+      })
     );
 
     expect(result.xfer.alreadyExisted).toBe(false);
@@ -85,13 +87,10 @@ describe("credits P2P transfer", () => {
   });
 
   it("is idempotent on the same key", async () => {
-    await appendCreditEntry(
-      { tenantId: "a", kind: "topup_settled", deltaCents: 1000, grantSource: "topup" },
-      process.env
-    );
+    await seedTopup("a", 1000);
 
     const run = () =>
-      Effect.runPromise(
+      runPaymentsEffect(
         Effect.gen(function* () {
           const credits = yield* CreditsService;
           return yield* credits.transfer({
@@ -100,7 +99,7 @@ describe("credits P2P transfer", () => {
             amountCents: 400,
             idempotencyKey: "same-key",
           });
-        }).pipe(Effect.provide(layer()))
+        })
       );
 
     const first = await run();
@@ -108,26 +107,23 @@ describe("credits P2P transfer", () => {
     expect(second.alreadyExisted).toBe(true);
     expect(second.transferId).toBe(first.transferId);
 
-    const bal = await Effect.runPromise(
+    const bal = await runPaymentsEffect(
       Effect.gen(function* () {
         const credits = yield* CreditsService;
         return {
           a: yield* credits.getBalance("a"),
           b: yield* credits.getBalance("b"),
         };
-      }).pipe(Effect.provide(layer()))
+      })
     );
     expect(bal.a.balanceCents).toBe(600);
     expect(bal.b.balanceCents).toBe(400);
   });
 
   it("rejects same-tenant and overdraft", async () => {
-    await appendCreditEntry(
-      { tenantId: "solo", kind: "topup_settled", deltaCents: 100, grantSource: "topup" },
-      process.env
-    );
+    await seedTopup("solo", 100);
 
-    const same = await Effect.runPromise(
+    const same = await runPaymentsEffect(
       Effect.gen(function* () {
         const credits = yield* CreditsService;
         return yield* credits
@@ -137,14 +133,14 @@ describe("credits P2P transfer", () => {
             amountCents: 50,
           })
           .pipe(Effect.either);
-      }).pipe(Effect.provide(layer()))
+      })
     );
     expect(same._tag).toBe("Left");
     if (same._tag === "Left") {
       expect(same.left.reason).toMatch(/same tenant/i);
     }
 
-    const over = await Effect.runPromise(
+    const over = await runPaymentsEffect(
       Effect.gen(function* () {
         const credits = yield* CreditsService;
         return yield* credits
@@ -154,7 +150,7 @@ describe("credits P2P transfer", () => {
             amountCents: 9999,
           })
           .pipe(Effect.either);
-      }).pipe(Effect.provide(layer()))
+      })
     );
     expect(over._tag).toBe("Left");
     if (over._tag === "Left") {
@@ -164,12 +160,10 @@ describe("credits P2P transfer", () => {
 
   it("stages then confirms (2PC) without moving funds on stage", async () => {
     delete process.env.CLAWQL_CREDITS_TRANSFER_DIRECT;
-    await appendCreditEntry(
-      { tenantId: "alice", kind: "topup_settled", deltaCents: 2000, grantSource: "topup" },
-      process.env
-    );
+    resetPaymentsEffectRuntimeForTests();
+    await seedTopup("alice", 2000);
 
-    const staged = await Effect.runPromise(
+    const staged = await runPaymentsEffect(
       Effect.gen(function* () {
         const credits = yield* CreditsService;
         return yield* credits.stageTransfer({
@@ -177,26 +171,26 @@ describe("credits P2P transfer", () => {
           toTenantId: "bob",
           amountCents: 700,
         });
-      }).pipe(Effect.provide(layer()))
+      })
     );
     expect(staged.confirmationCode).toHaveLength(6);
 
-    const mid = await Effect.runPromise(
+    const mid = await runPaymentsEffect(
       Effect.gen(function* () {
         const credits = yield* CreditsService;
         return yield* credits.getBalance("alice");
-      }).pipe(Effect.provide(layer()))
+      })
     );
     expect(mid.balanceCents).toBe(2000);
 
-    const done = await Effect.runPromise(
+    const done = await runPaymentsEffect(
       Effect.gen(function* () {
         const credits = yield* CreditsService;
         return yield* credits.confirmTransfer({
           actionId: staged.actionId,
           code: staged.confirmationCode,
         });
-      }).pipe(Effect.provide(layer()))
+      })
     );
     expect(done.amountCents).toBe(700);
     expect(done.toTenantId).toBe("bob");
@@ -205,16 +199,18 @@ describe("credits P2P transfer", () => {
   it("requires TOTP on confirm when gate is enabled", async () => {
     delete process.env.CLAWQL_CREDITS_TRANSFER_DIRECT;
     process.env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP = "1";
-    const { enrollStepUpTotp } = await import("./step-up.js");
-    const { generateTotp } = await import("./totp.js");
-    const enrolled = await enrollStepUpTotp({ tenantId: "alice" }, process.env);
+    resetPaymentsEffectRuntimeForTests();
 
-    await appendCreditEntry(
-      { tenantId: "alice", kind: "topup_settled", deltaCents: 1000, grantSource: "topup" },
-      process.env
+    const enrolled = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const stepUp = yield* CreditsStepUpService;
+        return yield* stepUp.enroll({ tenantId: "alice" });
+      })
     );
 
-    const staged = await Effect.runPromise(
+    await seedTopup("alice", 1000);
+
+    const staged = await runPaymentsEffect(
       Effect.gen(function* () {
         const credits = yield* CreditsService;
         return yield* credits.stageTransfer({
@@ -222,11 +218,11 @@ describe("credits P2P transfer", () => {
           toTenantId: "bob",
           amountCents: 100,
         });
-      }).pipe(Effect.provide(layer()))
+      })
     );
     expect(staged.totpRequired).toBe(true);
 
-    const denied = await Effect.runPromise(
+    const denied = await runPaymentsEffect(
       Effect.gen(function* () {
         const credits = yield* CreditsService;
         return yield* credits
@@ -235,12 +231,12 @@ describe("credits P2P transfer", () => {
             code: staged.confirmationCode,
           })
           .pipe(Effect.either);
-      }).pipe(Effect.provide(layer()))
+      })
     );
     expect(denied._tag).toBe("Left");
 
-    const totp = generateTotp(enrolled.enrollment.secretBase32);
-    const ok = await Effect.runPromise(
+    const totp = Effect.runSync(generateTotp(enrolled.enrollment.secretBase32));
+    const ok = await runPaymentsEffect(
       Effect.gen(function* () {
         const credits = yield* CreditsService;
         return yield* credits.confirmTransfer({
@@ -248,7 +244,7 @@ describe("credits P2P transfer", () => {
           code: staged.confirmationCode,
           totp,
         });
-      }).pipe(Effect.provide(layer()))
+      })
     );
     expect(ok.amountCents).toBe(100);
   });

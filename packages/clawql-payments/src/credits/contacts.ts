@@ -6,8 +6,10 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { Context, Data, Effect, Layer } from "effect";
 import { resolvePaymentsDir } from "../config/paths.js";
 import {
+  CreditsDirectoryService,
   looksLikeEmail,
   looksLikeHandle,
   looksLikePhone,
@@ -16,7 +18,6 @@ import {
   normalizeEmail,
   normalizeHandle,
   normalizePhone,
-  resolveRecipient,
   type ResolvedRecipient,
 } from "./directory.js";
 
@@ -83,7 +84,8 @@ export function maskContactPayee(payee: string): string {
   return payee;
 }
 
-export async function listContacts(
+/** Private IO helper backing {@link CreditsContactsService}. */
+async function listContactsImpl(
   ownerTenantId: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<ContactEntry[]> {
@@ -95,12 +97,13 @@ export async function listContacts(
   return [...book.contacts].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
-export async function getContact(
+/** Private IO helper backing {@link CreditsContactsService}. */
+async function getContactImpl(
   ownerTenantId: string,
   contactId: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<ContactEntry | undefined> {
-  const list = await listContacts(ownerTenantId, env);
+  const list = await listContactsImpl(ownerTenantId, env);
   return list.find((c) => c.contactId === contactId.trim());
 }
 
@@ -110,7 +113,8 @@ export type AddContactInput = {
   label?: string;
 };
 
-export async function addContact(
+/** Private IO helper backing {@link CreditsContactsService}. */
+async function addContactImpl(
   input: AddContactInput,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<{ contact: ContactEntry; created: boolean }> {
@@ -150,7 +154,8 @@ export async function addContact(
   return { contact, created: true };
 }
 
-export async function removeContact(
+/** Private IO helper backing {@link CreditsContactsService}. */
+async function removeContactImpl(
   ownerTenantId: string,
   contactId: string,
   env: NodeJS.ProcessEnv = process.env
@@ -169,28 +174,110 @@ export async function removeContact(
   return true;
 }
 
-/** Resolve a contact id or raw payee to a directory recipient. */
-export async function resolveContactPayee(
-  ownerTenantId: string,
-  input: { contactId?: string; payee?: string },
-  env: NodeJS.ProcessEnv = process.env
-): Promise<{ contact?: ContactEntry; recipient: ResolvedRecipient; payee: string }> {
-  let payee = input.payee?.trim();
-  let contact: ContactEntry | undefined;
-  if (input.contactId?.trim()) {
-    contact = await getContact(ownerTenantId, input.contactId, env);
-    if (!contact) throw new Error(`Unknown contact id ${input.contactId.trim()}`);
-    payee = contact.payee;
-  }
-  if (!payee) throw new Error("Provide --contact-id or --to payee");
-  const recipient = await resolveRecipient(payee, env, {
-    forceEmail: looksLikeEmail(payee),
-    forceHandle: payee.startsWith("@"),
-    forcePhone: looksLikePhone(payee),
-  });
-  return { contact, recipient, payee };
+/** Private IO helper backing {@link CreditsContactsService}. */
+async function resetContactsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+  await saveFile(emptyFile(), env);
 }
 
-export async function resetContactsForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
-  await saveFile(emptyFile(), env);
+export class ContactsError extends Data.TaggedError("ContactsError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+type ResolveContactPayeeInput = { contactId?: string; payee?: string };
+type ResolveContactPayeeResult = {
+  contact?: ContactEntry;
+  recipient: ResolvedRecipient;
+  payee: string;
+};
+
+/** Effect surface over the per-tenant contacts book (frequent payees). */
+export class CreditsContactsService extends Context.Tag("clawql/CreditsContactsService")<
+  CreditsContactsService,
+  {
+    readonly list: (ownerTenantId: string) => Effect.Effect<ContactEntry[], ContactsError>;
+    readonly get: (
+      ownerTenantId: string,
+      contactId: string
+    ) => Effect.Effect<ContactEntry | undefined, ContactsError>;
+    readonly add: (
+      input: AddContactInput
+    ) => Effect.Effect<{ contact: ContactEntry; created: boolean }, ContactsError>;
+    readonly remove: (
+      ownerTenantId: string,
+      contactId: string
+    ) => Effect.Effect<boolean, ContactsError>;
+    readonly resolvePayee: (
+      ownerTenantId: string,
+      input: ResolveContactPayeeInput
+    ) => Effect.Effect<ResolveContactPayeeResult, ContactsError>;
+    readonly reset: () => Effect.Effect<void, ContactsError>;
+  }
+>() {}
+
+export function creditsContactsLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<CreditsContactsService, never, CreditsDirectoryService> {
+  const run = <A>(reason: string, task: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: task,
+      catch: (cause) =>
+        cause instanceof ContactsError
+          ? cause
+          : new ContactsError({ reason: cause instanceof Error ? cause.message : reason, cause }),
+    });
+
+  return Layer.effect(
+    CreditsContactsService,
+    Effect.gen(function* () {
+      const directory = yield* CreditsDirectoryService;
+
+      const resolvePayee = (ownerTenantId: string, input: ResolveContactPayeeInput) =>
+        Effect.gen(function* () {
+          let payee = input.payee?.trim();
+          let contact: ContactEntry | undefined;
+          if (input.contactId?.trim()) {
+            contact = yield* run("Failed to load contact", () =>
+              getContactImpl(ownerTenantId, input.contactId!, env)
+            );
+            if (!contact) {
+              return yield* Effect.fail(
+                new ContactsError({ reason: `Unknown contact id ${input.contactId.trim()}` })
+              );
+            }
+            payee = contact.payee;
+          }
+          if (!payee) {
+            return yield* Effect.fail(
+              new ContactsError({ reason: "Provide --contact-id or --to payee" })
+            );
+          }
+          const resolvedPayee = payee;
+          const recipient = yield* directory
+            .resolveRecipient(resolvedPayee, {
+              forceEmail: looksLikeEmail(resolvedPayee),
+              forceHandle: resolvedPayee.startsWith("@"),
+              forcePhone: looksLikePhone(resolvedPayee),
+            })
+            .pipe(
+              Effect.mapError(
+                (error) => new ContactsError({ reason: error.reason, cause: error.cause })
+              )
+            );
+          return { contact, recipient, payee: resolvedPayee } satisfies ResolveContactPayeeResult;
+        });
+
+      return CreditsContactsService.of({
+        list: (ownerTenantId) =>
+          run("Failed to list contacts", () => listContactsImpl(ownerTenantId, env)),
+        get: (ownerTenantId, contactId) =>
+          run("Failed to load contact", () => getContactImpl(ownerTenantId, contactId, env)),
+        add: (input) => run("Failed to add contact", () => addContactImpl(input, env)),
+        remove: (ownerTenantId, contactId) =>
+          run("Failed to remove contact", () => removeContactImpl(ownerTenantId, contactId, env)),
+        resolvePayee,
+        reset: () => run("Failed to reset contacts", () => resetContactsImpl(env)),
+      });
+    })
+  );
 }

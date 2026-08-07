@@ -1,12 +1,20 @@
-/** Prepaid credits + bank top-up feature flags. */
+/**
+ * Prepaid credits + bank top-up feature flags.
+ *
+ * Effect-first: every flag reader is an `Effect` (primary API). `CreditsConfigService`
+ * bundles them behind a `Context.Tag` so domain code can `yield* config.isCreditsEnabled`
+ * instead of calling bare sync functions.
+ */
 
-function parseTruthy(value: string | undefined): boolean {
+import { Context, Effect, Layer } from "effect";
+
+function truthy(value: string | undefined): boolean {
   if (value === undefined) return false;
   const normalized = value.trim().toLowerCase();
   return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
 }
 
-function parseFalsey(value: string | undefined): boolean {
+function falsey(value: string | undefined): boolean {
   if (value === undefined) return false;
   const normalized = value.trim().toLowerCase();
   return (
@@ -14,137 +22,185 @@ function parseFalsey(value: string | undefined): boolean {
   );
 }
 
-/**
- * Managed / hosted ClawQL SaaS. When set, peer credit transfer and agent compensation
- * stay disabled regardless of other flags (compliance perimeter).
- */
-export function isManagedHosting(env: NodeJS.ProcessEnv = process.env): boolean {
-  return (
-    parseTruthy(env.CLAWQL_MANAGED_HOSTING) ||
-    parseTruthy(env.CLAWQL_HOSTED_MODE) ||
-    parseTruthy(env.CLAWQL_GATEWAY_MANAGED)
+export const isCreditsEnabled = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> =>
+  Effect.sync(() => truthy(env.CLAWQL_CREDITS_ENABLED));
+
+/** Managed / hosted ClawQL SaaS — peer P2P and agent compensation stay off. */
+export const isManagedHosting = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> =>
+  Effect.sync(
+    () =>
+      truthy(env.CLAWQL_MANAGED_HOSTING) ||
+      truthy(env.CLAWQL_HOSTED_MODE) ||
+      truthy(env.CLAWQL_GATEWAY_MANAGED)
   );
-}
-
-export function isCreditsEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  const raw = env.CLAWQL_CREDITS_ENABLED?.trim().toLowerCase();
-  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
-}
 
 /**
- * Tenant↔tenant prepaid P2P (Venmo-like). Default **off**.
- * Opt in only on self-hosted: `CLAWQL_CREDITS_P2P_ENABLED=1`.
- * Always off when `CLAWQL_MANAGED_HOSTING=1` (or aliases).
- *
- * Closed-loop credits redeemable for ClawQL services do not require this flag —
- * only peer transfer / money-request accept that moves balance between tenants.
+ * Cross-tenant Venmo-like P2P. Default off; forced off on managed hosting.
  */
-export function isCreditsP2pEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  if (isManagedHosting(env)) return false;
-  if (parseFalsey(env.CLAWQL_CREDITS_P2P_ENABLED)) return false;
-  return parseTruthy(env.CLAWQL_CREDITS_P2P_ENABLED);
-}
+export const isCreditsP2pEnabled = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> =>
+  Effect.gen(function* () {
+    if (yield* isManagedHosting(env)) return false;
+    if (falsey(env.CLAWQL_CREDITS_P2P_ENABLED)) return false;
+    return truthy(env.CLAWQL_CREDITS_P2P_ENABLED);
+  });
 
+/** Sync assert for Effect.gen try/catch edges (throws Error). */
 export function assertCreditsP2pEnabled(env: NodeJS.ProcessEnv = process.env): void {
-  if (isCreditsP2pEnabled(env)) return;
-  if (isManagedHosting(env)) {
+  const managed =
+    truthy(env.CLAWQL_MANAGED_HOSTING) ||
+    truthy(env.CLAWQL_HOSTED_MODE) ||
+    truthy(env.CLAWQL_GATEWAY_MANAGED);
+  if (managed) {
     throw new Error(
-      "Prepaid P2P credit transfer is not available on ClawQL managed hosting. " +
-        "Managed plans use Stripe for platform billing only. " +
-        "Self-hosted operators may enable CLAWQL_CREDITS_P2P_ENABLED=1 and own compliance."
+      "Cross-tenant credits P2P is disabled on managed hosting (CLAWQL_MANAGED_HOSTING)"
     );
   }
-  throw new Error(
-    "Prepaid P2P credit transfer is disabled. Set CLAWQL_CREDITS_P2P_ENABLED=1 on self-hosted " +
-      "deployments only after you accept compliance responsibility (not a money transmitter product)."
-  );
+  if (!truthy(env.CLAWQL_CREDITS_P2P_ENABLED)) {
+    throw new Error("Credits P2P disabled — set CLAWQL_CREDITS_P2P_ENABLED=1");
+  }
+}
+
+/**
+ * Within-company org credit allocate / peer transfer (closed-loop).
+ * Default on when credits enabled; allowed on managed hosting.
+ */
+export const isCreditsOrgTransferEnabled = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<boolean> =>
+  Effect.gen(function* () {
+    if (!(yield* isCreditsEnabled(env))) return false;
+    if (falsey(env.CLAWQL_CREDITS_ORG_TRANSFER_ENABLED)) return false;
+    if (truthy(env.CLAWQL_CREDITS_ORG_TRANSFER_ENABLED)) return true;
+    return true;
+  });
+
+export function assertCreditsOrgTransferEnabled(env: NodeJS.ProcessEnv = process.env): void {
+  const creditsOn = truthy(env.CLAWQL_CREDITS_ENABLED);
+  if (!creditsOn) {
+    throw new Error("Credits disabled — set CLAWQL_CREDITS_ENABLED=1");
+  }
+  if (falsey(env.CLAWQL_CREDITS_ORG_TRANSFER_ENABLED)) {
+    throw new Error("Org credit transfers disabled — unset CLAWQL_CREDITS_ORG_TRANSFER_ENABLED=0");
+  }
 }
 
 /** Stripe Financial Connections + ACH debit for credit top-ups. */
-export function isAchTopupEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  const raw = env.CLAWQL_ACH_TOPUP_ENABLED?.trim().toLowerCase();
-  if (raw === "0" || raw === "false" || raw === "no" || raw === "off") return false;
-  if (raw === "1" || raw === "true" || raw === "yes" || raw === "on") return true;
-  // Default on when credits are enabled and Stripe is configured.
-  return isCreditsEnabled(env) && Boolean(env.STRIPE_SECRET_KEY?.trim());
-}
+export const isAchTopupEnabled = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> =>
+  Effect.gen(function* () {
+    const raw = env.CLAWQL_ACH_TOPUP_ENABLED;
+    if (falsey(raw)) return false;
+    if (truthy(raw)) return true;
+    // Default on when credits are enabled and Stripe is configured.
+    return (yield* isCreditsEnabled(env)) && Boolean(env.STRIPE_SECRET_KEY?.trim());
+  });
 
 /** Complete top-ups without a live ACH debit (tests / local demos). */
-export function isAchTopupDryRun(env: NodeJS.ProcessEnv = process.env): boolean {
-  const raw = env.CLAWQL_ACH_TOPUP_DRY_RUN?.trim().toLowerCase();
-  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
-}
+export const isAchTopupDryRun = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> =>
+  Effect.sync(() => truthy(env.CLAWQL_ACH_TOPUP_DRY_RUN));
 
-export function creditsReturnUrl(env: NodeJS.ProcessEnv = process.env): string | undefined {
-  return env.CLAWQL_CREDITS_RETURN_URL?.trim() || undefined;
-}
+export const creditsReturnUrl = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<string | undefined> =>
+  Effect.sync(() => env.CLAWQL_CREDITS_RETURN_URL?.trim() || undefined);
 
 /**
  * Sync credit hold/capture on the inference hot path.
  * Defaults on when credits are enabled; set CLAWQL_CREDITS_ENFORCE_INFERENCE=0 to disable.
  */
-export function isCreditsInferenceEnforcementActive(env: NodeJS.ProcessEnv = process.env): boolean {
-  if (!isCreditsEnabled(env)) return false;
-  if (parseFalsey(env.CLAWQL_CREDITS_ENFORCE_INFERENCE)) return false;
-  if (parseTruthy(env.CLAWQL_CREDITS_ENFORCE_INFERENCE)) return true;
-  return true;
-}
+export const isCreditsInferenceEnforcementActive = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<boolean> =>
+  Effect.gen(function* () {
+    if (!(yield* isCreditsEnabled(env))) return false;
+    if (falsey(env.CLAWQL_CREDITS_ENFORCE_INFERENCE)) return false;
+    if (truthy(env.CLAWQL_CREDITS_ENFORCE_INFERENCE)) return true;
+    return true;
+  });
 
 /** Estimated credit cost (USD cents) reserved per inference completion. Default 1¢. */
-export function inferenceCreditCostCents(env: NodeJS.ProcessEnv = process.env): number {
-  const raw = env.CLAWQL_CREDITS_INFERENCE_COST_CENTS?.trim();
-  if (!raw) return 1;
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < 0) return 1;
-  return Math.round(n);
-}
+export const inferenceCreditCostCents = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<number> =>
+  Effect.sync(() => {
+    const raw = env.CLAWQL_CREDITS_INFERENCE_COST_CENTS?.trim();
+    if (!raw) return 1;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < 0) return 1;
+    return Math.round(n);
+  });
 
 /** Publish deduction events to NATS after outbox append (requires CLAWQL_NATS_URL). */
-export function isDeductionNatsPublishEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  if (parseFalsey(env.CLAWQL_NATS_ENABLE_PUBLISH)) return false;
-  if (!env.CLAWQL_NATS_URL?.trim()) return false;
-  if (parseTruthy(env.CLAWQL_NATS_ENABLE_PUBLISH)) return true;
-  // Default: publish when JetStream flag is on (same as automation).
-  return parseTruthy(env.CLAWQL_NATS_JETSTREAM);
-}
+export const isDeductionNatsPublishEnabled = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<boolean> =>
+  Effect.sync(() => {
+    if (falsey(env.CLAWQL_NATS_ENABLE_PUBLISH)) return false;
+    if (!env.CLAWQL_NATS_URL?.trim()) return false;
+    if (truthy(env.CLAWQL_NATS_ENABLE_PUBLISH)) return true;
+    // Default: publish when JetStream flag is on (same as automation).
+    return truthy(env.CLAWQL_NATS_JETSTREAM);
+  });
 
-export function natsPaymentsSubjectRoot(env: NodeJS.ProcessEnv = process.env): string {
-  return env.CLAWQL_NATS_SUBJECT_PAYMENTS?.trim() || "clawql.payments";
-}
+export const natsPaymentsSubjectRoot = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<string> =>
+  Effect.sync(() => env.CLAWQL_NATS_SUBJECT_PAYMENTS?.trim() || "clawql.payments");
 
 /**
  * When true, `credits transfer` executes immediately (tests / break-glass only).
  * Default off — transfers must stage then confirm (confirmation code).
  */
-export function isCreditsTransferDirectAllowed(env: NodeJS.ProcessEnv = process.env): boolean {
-  return parseTruthy(env.CLAWQL_CREDITS_TRANSFER_DIRECT);
-}
+export const isCreditsTransferDirectAllowed = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<boolean> => Effect.sync(() => truthy(env.CLAWQL_CREDITS_TRANSFER_DIRECT));
 
 /**
  * When true, confirm also requires a valid TOTP from the sender tenant's enrolled
  * step-up secret (`Payments/step-up-totp.json`).
  */
-export function isCreditsTransferTotpRequired(env: NodeJS.ProcessEnv = process.env): boolean {
-  return parseTruthy(env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP);
-}
+export const isCreditsTransferTotpRequired = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<boolean> => Effect.sync(() => truthy(env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP));
 
-/**
- * Within-company org credit allocate / peer transfer (closed-loop).
- * Default **on** when credits are enabled — allowed on managed hosting.
- * Set CLAWQL_CREDITS_ORG_TRANSFER_ENABLED=0 to disable.
- * Distinct from cross-tenant Venmo P2P (`CLAWQL_CREDITS_P2P_ENABLED`).
- */
-export function isCreditsOrgTransferEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  if (!isCreditsEnabled(env)) return false;
-  if (parseFalsey(env.CLAWQL_CREDITS_ORG_TRANSFER_ENABLED)) return false;
-  if (parseTruthy(env.CLAWQL_CREDITS_ORG_TRANSFER_ENABLED)) return true;
-  return true;
-}
+/** Effect surface over prepaid credits feature flags (yield methods inside `Effect.gen`). */
+export class CreditsConfigService extends Context.Tag("clawql/CreditsConfigService")<
+  CreditsConfigService,
+  {
+    readonly isCreditsEnabled: Effect.Effect<boolean>;
+    readonly isAchTopupEnabled: Effect.Effect<boolean>;
+    readonly isAchTopupDryRun: Effect.Effect<boolean>;
+    readonly creditsReturnUrl: Effect.Effect<string | undefined>;
+    readonly isCreditsInferenceEnforcementActive: Effect.Effect<boolean>;
+    readonly inferenceCreditCostCents: Effect.Effect<number>;
+    readonly isDeductionNatsPublishEnabled: Effect.Effect<boolean>;
+    readonly natsPaymentsSubjectRoot: Effect.Effect<string>;
+    readonly isCreditsTransferDirectAllowed: Effect.Effect<boolean>;
+    readonly isCreditsTransferTotpRequired: Effect.Effect<boolean>;
+    readonly isManagedHosting: Effect.Effect<boolean>;
+    readonly isCreditsP2pEnabled: Effect.Effect<boolean>;
+    readonly isCreditsOrgTransferEnabled: Effect.Effect<boolean>;
+  }
+>() {}
 
-export function assertCreditsOrgTransferEnabled(env: NodeJS.ProcessEnv = process.env): void {
-  if (isCreditsOrgTransferEnabled(env)) return;
-  throw new Error(
-    "Org credit transfers are disabled. Enable CLAWQL_CREDITS_ENABLED=1 " +
-      "(and do not set CLAWQL_CREDITS_ORG_TRANSFER_ENABLED=0)."
+/** Live flag service bound to a specific environment snapshot. */
+export const creditsConfigLiveLayer = (
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<CreditsConfigService> =>
+  Layer.succeed(
+    CreditsConfigService,
+    CreditsConfigService.of({
+      isCreditsEnabled: isCreditsEnabled(env),
+      isAchTopupEnabled: isAchTopupEnabled(env),
+      isAchTopupDryRun: isAchTopupDryRun(env),
+      creditsReturnUrl: creditsReturnUrl(env),
+      isCreditsInferenceEnforcementActive: isCreditsInferenceEnforcementActive(env),
+      inferenceCreditCostCents: inferenceCreditCostCents(env),
+      isDeductionNatsPublishEnabled: isDeductionNatsPublishEnabled(env),
+      natsPaymentsSubjectRoot: natsPaymentsSubjectRoot(env),
+      isCreditsTransferDirectAllowed: isCreditsTransferDirectAllowed(env),
+      isCreditsTransferTotpRequired: isCreditsTransferTotpRequired(env),
+      isManagedHosting: isManagedHosting(env),
+      isCreditsP2pEnabled: isCreditsP2pEnabled(env),
+      isCreditsOrgTransferEnabled: isCreditsOrgTransferEnabled(env),
+    })
   );
-}

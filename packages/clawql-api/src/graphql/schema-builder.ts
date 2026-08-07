@@ -4,8 +4,9 @@
  */
 
 import loadGraphQLSchemaFromOpenAPI from "@omnigraph/openapi";
+import { Effect } from "effect";
 import type { GraphQLSchema } from "graphql";
-import { mergedAuthHeaders } from "../auth/auth-headers.js";
+import { mergedAuthHeadersEffect } from "../auth/auth-headers.js";
 import { getPackageRoot } from "../spec/package-root.js";
 
 interface SchemaResult {
@@ -14,7 +15,7 @@ interface SchemaResult {
 }
 
 export async function buildGraphQLSchema(openapi: object, baseUrl: string): Promise<SchemaResult> {
-  const headers = mergedAuthHeaders();
+  const headers = Effect.runSync(mergedAuthHeadersEffect());
 
   const schema = await loadGraphQLSchemaFromOpenAPI("ClawQL", {
     source: openapi as never,

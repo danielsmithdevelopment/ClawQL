@@ -1,3 +1,11 @@
+/**
+ * @module audit/factory
+ * @internal
+ *
+ * Store selection/lifecycle helpers backing {@link PaymentAuditService}. These are
+ * infrastructure façades (not a domain Effect surface); `PaymentAuditService` remains
+ * the only public Effect API for payment audit.
+ */
 import { createJsonlPaymentAuditStore } from "./jsonl-store.js";
 import { MemoryPaymentAuditStore } from "./memory-store.js";
 import { createPostgresPaymentAuditStore } from "./postgres-store.js";

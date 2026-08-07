@@ -9,6 +9,7 @@ import { resetPaymentsEffectRuntimeForTests } from "../runtime/payments-effect-r
 import { MppVerificationService } from "./verification-service.js";
 import { paymentsConfigLiveLayer } from "../config/payments-config-service.js";
 import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
+import { lokiPushLiveLayer } from "../audit/loki.js";
 import { x402RuntimeConfigLiveLayer } from "../x402/x402-runtime-config-service.js";
 import { X402FacilitatorService } from "../x402/x402-facilitator-service.js";
 import { stripeClientLiveLayer, StripeClientService } from "../stripe/stripe-client-service.js";
@@ -70,7 +71,9 @@ describe("MppVerificationService", () => {
     const token = Buffer.from(JSON.stringify(credential), "utf8").toString("base64url");
 
     const config = paymentsConfigLiveLayer(env);
-    const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(AuditLive));
+    const audit = paymentAuditLiveLayer(env).pipe(
+      Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(env)))
+    );
     const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
     const facilitator = Layer.succeed(
       X402FacilitatorService,
@@ -132,7 +135,9 @@ describe("MppVerificationService", () => {
     );
 
     const config = paymentsConfigLiveLayer(env);
-    const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(AuditLive));
+    const audit = paymentAuditLiveLayer(env).pipe(
+      Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(env)))
+    );
     const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
     const facilitator = Layer.succeed(
       X402FacilitatorService,
@@ -211,7 +216,9 @@ describe("MppVerificationService", () => {
     }));
 
     const config = paymentsConfigLiveLayer({ ...env, STRIPE_SECRET_KEY: "sk_test_xxx" });
-    const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(AuditLive));
+    const audit = paymentAuditLiveLayer(env).pipe(
+      Layer.provide(Layer.mergeAll(AuditLive, lokiPushLiveLayer(env)))
+    );
     const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
     const facilitator = Layer.succeed(
       X402FacilitatorService,

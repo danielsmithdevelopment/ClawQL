@@ -3,7 +3,8 @@
  */
 
 import * as grpc from "@grpc/grpc-js";
-import { mergedAuthHeaders } from "../auth/auth-headers.js";
+import { Effect } from "effect";
+import { mergedAuthHeadersEffect } from "../auth/auth-headers.js";
 import { recordNativeGrpcExecute } from "../spec/native-protocol-metrics.js";
 import { getGrpcClient } from "../spec/native-protocol-registry.js";
 import type { Operation } from "../spec/operation-types.js";
@@ -26,7 +27,7 @@ export async function executeNativeGrpc(
   }
 
   const metadata = new grpc.Metadata();
-  for (const [k, v] of Object.entries(mergedAuthHeaders(meta.sourceLabel))) {
+  for (const [k, v] of Object.entries(Effect.runSync(mergedAuthHeadersEffect(meta.sourceLabel)))) {
     metadata.set(k, v);
   }
 

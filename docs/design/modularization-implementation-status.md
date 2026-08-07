@@ -268,7 +268,7 @@ From enablement §5.4 and the Effect plan §8:
 | ManagedRuntime `dispose` + process shutdown                                      | ✅ `ClawQLApiHandle.dispose` → plugin `teardownAll` + `runtime.dispose`; MCP registers `disposeClawqlApi` on SIGINT/SIGTERM                                                              |
 | Postgres / NATS `acquireRelease`                                                 | ✅ Scoped Effect helpers for Ouroboros + pgvector pools and NATS HITL consumer (singleton façades retained)                                                                              |
 
-**Rule for new code in extracted packages:** prefer Effect in `clawql-core` / `clawql-api`; legacy `async` is acceptable **only** at IO edges (`Effect.tryPromise`). See plan §7.
+**Hard rule — Effect everywhere:** production code that can be Effect-based **must** be, with **no "pure sync" carve-out**. Bare `async`/`Promise` domain APIs — and bare sync functions returning plain values (URL/HTML builders, sync crypto, env flag readers) — are not acceptable primary APIs when `Effect.sync` / `Context.Tag` + `Layer` can express them. Allowed non-Effect surfaces are only (1) forced Promise edges (Express / MCP SDK) as thin façades over `run*Effect` (with `Effect.runSync` only at that absolute host boundary), (2) types-only modules, and (3) `Effect.tryPromise` / `*FromPromise` at the absolute external IO edge **inside** Effect programs. See [`.cursor/rules/effect-ts-everywhere.mdc`](../../.cursor/rules/effect-ts-everywhere.mdc) and plan §7.
 
 ---
 
@@ -276,19 +276,19 @@ From enablement §5.4 and the Effect plan §8:
 
 These vision items are **not** done by package extraction alone:
 
-| Vision item                                   | Status                                                                                     |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `clawql-auth` package                         | ✅ Gateway `noAuth`/`apiKey`, ATR claims, provider headers; HTTP MCP middleware            |
-| `clawql-pageindex`                            | ✅ MIT package + `pageindex_*` MCP tools (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide) |
-| Document pipeline (Tika → … → Paperless)      | 🚧 Vendors + `run_idp_pipeline` shipped; retries/Merkle per hop roadmap                    |
-| NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                                      |
-| Layer 0 immutable releases                    | 🚧 MVP (`clawql-release`); Arweave/Rift/Radicle roadmap                                    |
-| Release manifest verification at gateway      | ✅ `clawql doctor --smoke` + optional `CLAWQL_RELEASE_MANIFEST` at MCP startup             |
-| Kubernetes Operator Layer composition         | 🚧 Phase 1 scaffold (CRD + ConfigMap + tier layers; no NL dashboard)                       |
-| Tier 1 Docker Compose                         | ✅ `examples/clawql-local-docker-compose` + `make compose-tier1-config-test`               |
-| Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains                                   |
-| Presidio gateway hooks                        | ✅ Execute + memory ingest + external ingest redaction when `CLAWQL_ENABLE_PRESIDIO=1`     |
-| All vertical packages                         | 📋 Not started                                                                             |
+| Vision item                                   | Status                                                                                                                                                                                                 |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `clawql-auth` package                         | ✅ Gateway `noAuth`/`apiKey`/`oidc`, ATR claims, provider headers; Effect services (`OidcAuthService`, `GatewayAuthService`, `StepUpStoreService`, `AwsSigV4Service`, `AuthLive`); HTTP MCP middleware |
+| `clawql-pageindex`                            | ✅ MIT package + `pageindex_*` MCP tools (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide)                                                                                                             |
+| Document pipeline (Tika → … → Paperless)      | 🚧 Vendors + `run_idp_pipeline` shipped; retries/Merkle per hop roadmap                                                                                                                                |
+| NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                                                                                                                                                  |
+| Layer 0 immutable releases                    | 🚧 MVP (`clawql-release`); Arweave/Rift/Radicle roadmap                                                                                                                                                |
+| Release manifest verification at gateway      | ✅ `clawql doctor --smoke` + optional `CLAWQL_RELEASE_MANIFEST` at MCP startup                                                                                                                         |
+| Kubernetes Operator Layer composition         | 🚧 Phase 1 scaffold (CRD + ConfigMap + tier layers; no NL dashboard)                                                                                                                                   |
+| Tier 1 Docker Compose                         | ✅ `examples/clawql-local-docker-compose` + `make compose-tier1-config-test`                                                                                                                           |
+| Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains                                                                                                                                               |
+| Presidio gateway hooks                        | ✅ Execute + memory ingest + external ingest redaction when `CLAWQL_ENABLE_PRESIDIO=1`                                                                                                                 |
+| All vertical packages                         | 📋 Not started                                                                                                                                                                                         |
 
 ---
 

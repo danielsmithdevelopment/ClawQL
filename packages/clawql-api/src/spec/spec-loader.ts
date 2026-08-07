@@ -16,9 +16,10 @@
 
 import { readFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
+import { Effect } from "effect";
 import fetch from "node-fetch";
 import { parse as parseYaml } from "yaml";
-import { isAwsSpecLabel, resolveAwsApiBaseUrl } from "../auth/aws-auth.js";
+import { isAwsSpecLabelEffect, resolveAwsApiBaseUrlEffect } from "../auth/aws-auth.js";
 import { convertObj } from "swagger2openapi";
 import type { Operation, ParameterInfo } from "./operation-types.js";
 import { loadGraphqlNativeOperationsFromConfigs } from "./graphql-native-loader.js";
@@ -928,8 +929,8 @@ export function resolveApiBaseUrl(openapi: OpenAPIDoc, specLabel?: string): stri
 
   const label = specLabel?.trim().toLowerCase();
   const effective = label || process.env.CLAWQL_PROVIDER?.trim().toLowerCase();
-  if (effective && isAwsSpecLabel(effective)) {
-    return resolveAwsApiBaseUrl(openapi);
+  if (effective && Effect.runSync(isAwsSpecLabelEffect(effective))) {
+    return Effect.runSync(resolveAwsApiBaseUrlEffect(openapi));
   }
 
   const server = openapi.servers?.[0]?.url;

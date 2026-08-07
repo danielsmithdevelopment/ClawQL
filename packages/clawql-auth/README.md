@@ -37,21 +37,31 @@ For SaaS with one IdP per company, inject an `OrgIdpRouter` (e.g. from `createOr
 
 ## Step-up (not SSO)
 
+The public API is **Effect-first**: functions return `Effect`, and services/Layers are used for DI.
+Hosts run the effects with `Effect.runSync` / `Effect.runPromise` at their own boundary. There are no
+sync-throwing or Promise façades on the package surface.
+
 ```ts
-import {
-  createClawQLAuth,
-  createFileStepUpStore,
-  generateTotp,
-  assertToolPolicy,
-} from "clawql-auth";
+import { Effect } from "effect";
+import { createClawQLAuth, createStepUpStoreLayer, StepUpStoreService } from "clawql-auth";
 
 const auth = createClawQLAuth({ mode: "oidc", stepUpStorePath: "/path/step-up.json" });
-const claims = await auth.resolveClaimsAsync({ authorization: `Bearer ${jwt}` });
-if (claims.ok) auth.assertToolAccess(claims.claims, "payments_credits_transfer_confirm");
 
-// Shared TOTP — payments uses the same primitives under $CLAWQL_HOME/Payments/
-const store = createFileStepUpStore("/path/step-up.json");
-await store.enroll({ subjectId: "tenant-a", issuer: "ClawQL" });
+// `resolveClaimsAsync` is a thin runPromise wrapper for Express / MCP hosts.
+const claims = await auth.resolveClaimsAsync({ authorization: `Bearer ${jwt}` });
+if (claims.ok) {
+  await Effect.runPromise(
+    auth.assertToolAccessEffect(claims.claims, "payments_credits_transfer_confirm")
+  );
+}
+
+// Shared TOTP store — payments uses the same primitives under $CLAWQL_HOME/Payments/.
+await Effect.runPromise(
+  Effect.gen(function* () {
+    const store = yield* StepUpStoreService;
+    yield* store.enroll({ subjectId: "tenant-a", issuer: "ClawQL" });
+  }).pipe(Effect.provide(createStepUpStoreLayer("/path/step-up.json")))
+);
 ```
 
 WebAuthn is a **pluggable** `WebAuthnStepUpVerifier` (fails closed until injected). Prefer IdP passkeys for human login.

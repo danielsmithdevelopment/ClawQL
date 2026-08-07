@@ -85,8 +85,8 @@ export function entitlementEnforcementLiveLayer(
             }
           }
 
-          const creditsActive = isCreditsInferenceEnforcementActive(env);
-          const costCents = inferenceCreditCostCents(env);
+          const creditsActive = yield* isCreditsInferenceEnforcementActive(env);
+          const costCents = yield* inferenceCreditCostCents(env);
           const idempotencyKey = inferenceIdempotencyKey(tenantId, request);
           let held = false;
 

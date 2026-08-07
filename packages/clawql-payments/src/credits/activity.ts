@@ -3,10 +3,11 @@
  * Venmo-style "recent" for a tenant (enrich counterparties via directory).
  */
 
-import { getCreditAccount, type CreditLedgerEntry, type CreditLedgerKind } from "./ledger.js";
-import { getTenantEntry, maskEmail, type DirectoryEntry } from "./directory.js";
+import { Context, Data, Effect, Layer } from "effect";
+import { CreditsLedgerService, type CreditLedgerEntry, type CreditLedgerKind } from "./ledger.js";
+import { CreditsDirectoryService, maskEmail, type DirectoryEntry } from "./directory.js";
 import {
-  listMoneyRequests,
+  CreditsRequestsService,
   publicMoneyRequest,
   type MoneyRequest,
   type MoneyRequestStatus,
@@ -140,85 +141,6 @@ export type GetActivityFeedOptions = {
   filter?: "all" | "transfers" | "requests" | "money" | "ledger";
 };
 
-/**
- * Build a recent activity feed for a tenant.
- * Dedupes paid requests that already appear as transfer ledger legs (prefer ledger).
- */
-export async function getActivityFeed(
-  options: GetActivityFeedOptions,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<ActivityFeed> {
-  const tenantId = options.tenantId.trim();
-  if (!tenantId) throw new Error("tenantId required");
-
-  const limit = Math.min(Math.max(options.limit ?? 25, 1), 100);
-  const filter = options.filter ?? "money";
-
-  const [account, selfDir, requests] = await Promise.all([
-    getCreditAccount(tenantId, env),
-    getTenantEntry(tenantId, env),
-    filter === "ledger"
-      ? Promise.resolve([] as MoneyRequest[])
-      : listMoneyRequests({ tenantId, role: "any" }, env),
-  ]);
-
-  const counterpartyIds = new Set<string>();
-  for (const e of account.entries) {
-    if (e.counterpartyTenantId) counterpartyIds.add(e.counterpartyTenantId);
-  }
-  for (const r of requests) {
-    if (r.requesterTenantId !== tenantId) counterpartyIds.add(r.requesterTenantId);
-    if (r.payerTenantId && r.payerTenantId !== tenantId) counterpartyIds.add(r.payerTenantId);
-  }
-
-  const labels = new Map<string, string>();
-  await Promise.all(
-    [...counterpartyIds].map(async (id) => {
-      const entry = await getTenantEntry(id, env);
-      labels.set(id, directoryLabel(entry, id));
-    })
-  );
-
-  const includeLedger =
-    filter === "all" || filter === "ledger" || filter === "money" || filter === "transfers";
-  const includeRequests = filter === "all" || filter === "requests" || filter === "money";
-
-  const items: ActivityItem[] = [];
-
-  if (includeLedger) {
-    for (const entry of account.entries) {
-      if (filter === "transfers" && entry.kind !== "transfer_out" && entry.kind !== "transfer_in") {
-        continue;
-      }
-      const cp = entry.counterpartyTenantId ? labels.get(entry.counterpartyTenantId) : undefined;
-      items.push(fromLedgerEntry(entry, cp));
-    }
-  }
-
-  const paidTransferIds = new Set(
-    account.entries.filter((e) => e.transferId).map((e) => e.transferId!)
-  );
-
-  if (includeRequests) {
-    for (const req of requests) {
-      // Prefer ledger legs once paid (avoid double-counting).
-      if (req.status === "paid" && req.paidTransferId && paidTransferIds.has(req.paidTransferId)) {
-        continue;
-      }
-      items.push(fromRequest(req, tenantId));
-    }
-  }
-
-  items.sort((a, b) => b.ts.localeCompare(a.ts));
-
-  return {
-    tenantId,
-    label: selfLabel(selfDir, tenantId),
-    balanceCents: account.balanceCents,
-    items: items.slice(0, limit),
-  };
-}
-
 /** Human-readable one-liner for CLI. */
 export function formatActivityLine(item: ActivityItem): string {
   const usd = (Math.abs(item.amountCents) / 100).toFixed(2);
@@ -243,3 +165,131 @@ export function formatActivityLine(item: ActivityItem): string {
 
 /** Re-export for MCP JSON without invite hashes. */
 export { publicMoneyRequest };
+
+export class ActivityError extends Data.TaggedError("ActivityError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+/** Effect surface over the activity read model (ledger + money requests, directory-enriched). */
+export class CreditsActivityService extends Context.Tag("clawql/CreditsActivityService")<
+  CreditsActivityService,
+  {
+    readonly getFeed: (
+      options: GetActivityFeedOptions
+    ) => Effect.Effect<ActivityFeed, ActivityError>;
+  }
+>() {}
+
+export function creditsActivityLiveLayer(): Layer.Layer<
+  CreditsActivityService,
+  never,
+  CreditsLedgerService | CreditsDirectoryService | CreditsRequestsService
+> {
+  return Layer.effect(
+    CreditsActivityService,
+    Effect.gen(function* () {
+      const ledger = yield* CreditsLedgerService;
+      const directory = yield* CreditsDirectoryService;
+      const requestsSvc = yield* CreditsRequestsService;
+
+      const toActivityError = (cause: { reason: string; cause?: unknown }) =>
+        new ActivityError({ reason: cause.reason, cause: cause.cause });
+
+      const getFeed = (options: GetActivityFeedOptions) =>
+        Effect.gen(function* () {
+          const tenantId = options.tenantId.trim();
+          if (!tenantId) {
+            return yield* Effect.fail(new ActivityError({ reason: "tenantId required" }));
+          }
+
+          const limit = Math.min(Math.max(options.limit ?? 25, 1), 100);
+          const filter = options.filter ?? "money";
+
+          const account = yield* ledger.getAccount(tenantId).pipe(Effect.mapError(toActivityError));
+          const selfDir = yield* directory
+            .getTenant(tenantId)
+            .pipe(Effect.mapError(toActivityError));
+          const requests =
+            filter === "ledger"
+              ? ([] as MoneyRequest[])
+              : yield* requestsSvc
+                  .list({ tenantId, role: "any" })
+                  .pipe(Effect.mapError(toActivityError));
+
+          const counterpartyIds = new Set<string>();
+          for (const e of account.entries) {
+            if (e.counterpartyTenantId) counterpartyIds.add(e.counterpartyTenantId);
+          }
+          for (const r of requests) {
+            if (r.requesterTenantId !== tenantId) counterpartyIds.add(r.requesterTenantId);
+            if (r.payerTenantId && r.payerTenantId !== tenantId)
+              counterpartyIds.add(r.payerTenantId);
+          }
+
+          const labels = new Map<string, string>();
+          yield* Effect.forEach(
+            [...counterpartyIds],
+            (id) =>
+              directory.getTenant(id).pipe(
+                Effect.mapError(toActivityError),
+                Effect.map((entry) => {
+                  labels.set(id, directoryLabel(entry, id));
+                })
+              ),
+            { concurrency: "unbounded", discard: true }
+          );
+
+          const includeLedger =
+            filter === "all" || filter === "ledger" || filter === "money" || filter === "transfers";
+          const includeRequests = filter === "all" || filter === "requests" || filter === "money";
+
+          const items: ActivityItem[] = [];
+
+          if (includeLedger) {
+            for (const entry of account.entries) {
+              if (
+                filter === "transfers" &&
+                entry.kind !== "transfer_out" &&
+                entry.kind !== "transfer_in"
+              ) {
+                continue;
+              }
+              const cp = entry.counterpartyTenantId
+                ? labels.get(entry.counterpartyTenantId)
+                : undefined;
+              items.push(fromLedgerEntry(entry, cp));
+            }
+          }
+
+          const paidTransferIds = new Set(
+            account.entries.filter((e) => e.transferId).map((e) => e.transferId!)
+          );
+
+          if (includeRequests) {
+            for (const req of requests) {
+              if (
+                req.status === "paid" &&
+                req.paidTransferId &&
+                paidTransferIds.has(req.paidTransferId)
+              ) {
+                continue;
+              }
+              items.push(fromRequest(req, tenantId));
+            }
+          }
+
+          items.sort((a, b) => b.ts.localeCompare(a.ts));
+
+          return {
+            tenantId,
+            label: selfLabel(selfDir, tenantId),
+            balanceCents: account.balanceCents,
+            items: items.slice(0, limit),
+          } satisfies ActivityFeed;
+        });
+
+      return CreditsActivityService.of({ getFeed });
+    })
+  );
+}

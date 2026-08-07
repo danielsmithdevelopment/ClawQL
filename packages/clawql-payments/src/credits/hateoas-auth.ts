@@ -8,10 +8,11 @@
  */
 
 import type { NextFunction, Request, Response } from "express";
+import { Cause, Effect, Exit } from "effect";
 import {
-  assertToolPolicy,
+  assertToolPolicyEffect,
   loadGatewayAuthConfig,
-  resolveAtrClaimsFromHeadersAsync,
+  resolveAtrClaimsFromHeadersEffect,
   resolveAuthMode,
   type AtrClaims,
   type GatewayAuthConfig,
@@ -91,25 +92,40 @@ function sendAuthFailure(
   title: string,
   message: string
 ): void {
-  if (wantsHtml(req.get("accept") ?? undefined)) {
+  if (Effect.runSync(wantsHtml(req.get("accept") ?? undefined))) {
     res
       .status(status)
       .type("html")
       .send(
-        renderCreditsHateoasPage({
-          title,
-          heading: title,
-          summary: message,
-          bodyHtml: `<p class="err">${escapeLite(message)}</p>
+        Effect.runSync(
+          renderCreditsHateoasPage({
+            title,
+            heading: title,
+            summary: message,
+            bodyHtml: `<p class="err">${escapeLite(message)}</p>
           <p class="note">Sign in via your IdP (Bearer JWT) or API key, then retry.
           Set <code>CLAWQL_AUTH_MODE=noAuth</code> only for local solo use.</p>
           <div class="cta-row"><a class="btn" href="/credits">Home</a></div>`,
-          hideLinksPanel: true,
-        })
+            hideLinksPanel: true,
+          })
+        )
       );
     return;
   }
   res.status(status).json({ error: message });
+}
+
+function authErrorMessage(e: unknown): string {
+  if (e && typeof e === "object") {
+    const rec = e as Record<string, unknown>;
+    if (typeof rec.reason === "string" && rec.reason.trim()) return rec.reason;
+    // Effect Data.TaggedError often exposes message via toString / Inspectable
+    if (typeof rec.message === "string" && rec.message && rec.message !== "An error has occurred") {
+      return rec.message;
+    }
+  }
+  if (e instanceof Error && e.message && e.message !== "An error has occurred") return e.message;
+  return "Missing or invalid credentials (Bearer JWT / API key required)";
 }
 
 function escapeLite(s: string): string {
@@ -144,24 +160,32 @@ export function createCreditsHateoasAuthMiddleware(
           return;
         }
 
-        const result = await resolveAtrClaimsFromHeadersAsync(req.headers, authConfig);
-        if (!result.ok) {
-          sendAuthFailure(req, res, 401, "Sign in required", result.error);
+        const exit = await Effect.runPromiseExit(
+          resolveAtrClaimsFromHeadersEffect(req.headers, authConfig)
+        );
+        if (Exit.isFailure(exit)) {
+          sendAuthFailure(
+            req,
+            res,
+            401,
+            "Sign in required",
+            authErrorMessage(Cause.squash(exit.cause))
+          );
           return;
         }
+        const claims = exit.value;
 
         const tool = creditsHateoasHighImpactTool(req.method, rel);
         if (tool) {
           try {
-            assertToolPolicy(result.claims, tool, { env });
+            Effect.runSync(assertToolPolicyEffect(claims, tool, { env }));
           } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            sendAuthFailure(req, res, 403, "MFA required", msg);
+            sendAuthFailure(req, res, 403, "MFA required", authErrorMessage(e));
             return;
           }
         }
 
-        (req as CreditsAuthenticatedRequest).clawqlClaims = result.claims;
+        (req as CreditsAuthenticatedRequest).clawqlClaims = claims;
         next();
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);

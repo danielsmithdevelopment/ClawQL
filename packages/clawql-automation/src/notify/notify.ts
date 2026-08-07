@@ -5,7 +5,7 @@
  * Orchestration: native Effect.gen in {@link executeNotifySlackCoreEffect}.
  */
 
-import { loadSpec, mergedAuthHeaders } from "clawql-api";
+import { loadSpec, mergedAuthHeadersEffect } from "clawql-api";
 import { Effect } from "effect";
 import type { McpTextResult } from "../effect/automation-effect-utils.js";
 
@@ -70,7 +70,7 @@ function mcpError(error: string): McpTextResult {
 
 /** Sync validation before loadSpec / execute (soft MCP JSON errors). */
 export function evaluateNotifySlackPrelude(params: NotifySlackInput): NotifySlackPrelude {
-  const auth = mergedAuthHeaders("slack");
+  const auth = Effect.runSync(mergedAuthHeadersEffect("slack"));
   if (!auth.Authorization) {
     return {
       kind: "result",

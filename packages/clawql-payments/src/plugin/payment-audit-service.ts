@@ -3,7 +3,7 @@ import { Context, Effect, Layer } from "effect";
 import type { PaymentAuditVerifyResult } from "../audit/chain.js";
 import type { PaymentWormEntry } from "../audit/events.js";
 import { getPaymentAuditStore } from "../audit/factory.js";
-import { maybePushPaymentAuditEntryToLoki } from "../audit/loki.js";
+import { LokiPushService } from "../audit/loki.js";
 import type { PaymentAuditStore } from "../audit/store.js";
 import { isPaymentAuditLokiPushEnabled } from "../audit/store.js";
 import type { PaymentWormRecord } from "../audit/chain.js";
@@ -27,11 +27,12 @@ export class PaymentAuditService extends Context.Tag("clawql/PaymentAuditService
 
 /**
  * Live payment audit Layer. Requires {@link AuditService} for MCP ring-buffer mirror
- * (`appendEntry`). Callers should `Layer.provide(AuditLive)` (or `AuditTestLayer`).
+ * (`appendEntry`) and {@link LokiPushService} for optional Loki push.
+ * Callers should `Layer.provide` `AuditLive` (or `AuditTestLayer`) and `lokiPushLiveLayer`.
  */
 export function paymentAuditLiveLayer(
   env: NodeJS.ProcessEnv = process.env
-): Layer.Layer<PaymentAuditService, never, AuditService> {
+): Layer.Layer<PaymentAuditService, never, AuditService | LokiPushService> {
   const store = getPaymentAuditStore(env);
 
   const appendRaw = (entry: PaymentWormEntry) =>
@@ -48,6 +49,7 @@ export function paymentAuditLiveLayer(
     PaymentAuditService,
     Effect.gen(function* () {
       const clawqlAudit = yield* AuditService;
+      const loki = yield* LokiPushService;
       return PaymentAuditService.of({
         store,
         append: appendRaw,
@@ -61,7 +63,16 @@ export function paymentAuditLiveLayer(
               correlationId: entry.correlationId,
             });
             if (isPaymentAuditLokiPushEnabled(env)) {
-              maybePushPaymentAuditEntryToLoki(entry, env);
+              // Fire-and-forget: Loki must not block WORM append.
+              yield* Effect.forkDaemon(
+                loki.push(entry).pipe(
+                  Effect.catchAll((err) =>
+                    Effect.sync(() => {
+                      console.error("[clawql-payments-audit-loki] push failed:", err.reason);
+                    })
+                  )
+                )
+              );
             }
             return record;
           }),

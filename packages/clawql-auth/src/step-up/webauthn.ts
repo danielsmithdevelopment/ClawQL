@@ -4,7 +4,13 @@
  * ClawQL is not an IdP. Prefer enterprise IdP WebAuthn (passkeys) for human SSO.
  * This package exposes a hook so high-impact tools (payments, etc.) can require a
  * second factor when the host wires a verifier (e.g. @simplewebauthn/server).
+ *
+ * Effect is the only public surface: {@link requireWebAuthnStepUpEffect} fails on the typed
+ * {@link WebAuthnStepUpError} channel. The injected {@link WebAuthnStepUpVerifier} is a host
+ * boundary (external authenticators are inherently Promise-based).
  */
+
+import { Data, Effect } from "effect";
 
 export type WebAuthnAssertionInput = {
   /** Credential / assertion JSON from the authenticator. */
@@ -35,12 +41,32 @@ export function createUnimplementedWebAuthnVerifier(): WebAuthnStepUpVerifier {
   };
 }
 
-export async function requireWebAuthnStepUp(
+/** Typed failure for WebAuthn step-up (Effect failure channel). */
+export class WebAuthnStepUpError extends Data.TaggedError("WebAuthnStepUpError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+/**
+ * Effect: require a successful WebAuthn assertion via the injected verifier.
+ * Fails with {@link WebAuthnStepUpError} when the verifier throws or the assertion is rejected.
+ */
+export function requireWebAuthnStepUpEffect(
   verifier: WebAuthnStepUpVerifier,
   input: WebAuthnAssertionInput
-): Promise<void> {
-  const result = await verifier.verifyAssertion(input);
-  if (!result.ok) {
-    throw new Error("WebAuthn step-up failed");
-  }
+): Effect.Effect<void, WebAuthnStepUpError> {
+  return Effect.tryPromise({
+    try: () => verifier.verifyAssertion(input),
+    catch: (cause) =>
+      new WebAuthnStepUpError({
+        reason: cause instanceof Error ? cause.message : String(cause),
+        cause,
+      }),
+  }).pipe(
+    Effect.flatMap((result) =>
+      result.ok
+        ? Effect.void
+        : Effect.fail(new WebAuthnStepUpError({ reason: "WebAuthn step-up failed" }))
+    )
+  );
 }

@@ -18,7 +18,7 @@ import {
   isAchTopupEnabled,
   isCreditsEnabled,
 } from "./config.js";
-import { appendCreditEntry } from "./ledger.js";
+import { CreditsLedgerService } from "./ledger.js";
 import { CreditsError, CreditsService } from "./credits-service.js";
 
 export class AchTopupError extends Data.TaggedError("AchTopupError")<{
@@ -78,17 +78,22 @@ export class AchTopupService extends Context.Tag("clawql/AchTopupService")<
 
 export function achTopupLiveLayer(
   env: NodeJS.ProcessEnv = process.env
-): Layer.Layer<AchTopupService, never, PaymentAuditService | StripeClientService | CreditsService> {
+): Layer.Layer<
+  AchTopupService,
+  never,
+  PaymentAuditService | StripeClientService | CreditsService | CreditsLedgerService
+> {
   return Layer.effect(
     AchTopupService,
     Effect.gen(function* () {
       const audit = yield* PaymentAuditService;
       const stripeClient = yield* StripeClientService;
       const credits = yield* CreditsService;
+      const ledger = yield* CreditsLedgerService;
 
       const createBankLinkSession = (input: CreateBankLinkSessionInput) =>
         Effect.gen(function* () {
-          if (!isCreditsEnabled(env) || !isAchTopupEnabled(env)) {
+          if (!(yield* isCreditsEnabled(env)) || !(yield* isAchTopupEnabled(env))) {
             return yield* Effect.fail(
               new AchTopupError({
                 reason:
@@ -97,9 +102,9 @@ export function achTopupLiveLayer(
             );
           }
           const tenantId = input.tenantId?.trim() || "default";
-          const returnUrl = input.returnUrl?.trim() || creditsReturnUrl(env);
+          const returnUrl = input.returnUrl?.trim() || (yield* creditsReturnUrl(env));
 
-          if (isAchTopupDryRun(env)) {
+          if (yield* isAchTopupDryRun(env)) {
             const id = `fcs_dry_${Date.now().toString(36)}`;
             yield* audit
               .appendEntry(
@@ -159,7 +164,7 @@ export function achTopupLiveLayer(
 
       const createTopup = (input: CreateAchTopupInput) =>
         Effect.gen(function* () {
-          if (!isCreditsEnabled(env) || !isAchTopupEnabled(env)) {
+          if (!(yield* isCreditsEnabled(env)) || !(yield* isAchTopupEnabled(env))) {
             return yield* Effect.fail(
               new AchTopupError({
                 reason:
@@ -173,27 +178,22 @@ export function achTopupLiveLayer(
           const amountCents = Math.round(input.amountUsd * 100);
           const tenantId = input.tenantId?.trim() || "default";
 
-          if (isAchTopupDryRun(env)) {
+          if (yield* isAchTopupDryRun(env)) {
             const paymentIntentId = `pi_dry_${Date.now().toString(36)}`;
-            yield* Effect.tryPromise({
-              try: () =>
-                appendCreditEntry(
-                  {
-                    tenantId,
-                    kind: "topup_pending",
-                    deltaCents: 0,
-                    paymentIntentId,
-                    correlationId: input.correlationId,
-                    note: "dry-run ACH top-up pending",
-                  },
-                  env
-                ),
-              catch: (cause) =>
-                new AchTopupError({
-                  reason: cause instanceof Error ? cause.message : "ledger write failed",
-                  cause,
-                }),
-            });
+            yield* ledger
+              .appendEntry({
+                tenantId,
+                kind: "topup_pending",
+                deltaCents: 0,
+                paymentIntentId,
+                correlationId: input.correlationId,
+                note: "dry-run ACH top-up pending",
+              })
+              .pipe(
+                Effect.mapError(
+                  (cause) => new AchTopupError({ reason: cause.reason, cause: cause.cause })
+                )
+              );
             yield* audit
               .appendEntry(
                 buildCreditTopupPendingEntry({
@@ -259,25 +259,20 @@ export function achTopupLiveLayer(
               })
           );
 
-          yield* Effect.tryPromise({
-            try: () =>
-              appendCreditEntry(
-                {
-                  tenantId,
-                  kind: "topup_pending",
-                  deltaCents: 0,
-                  paymentIntentId: pi.id,
-                  correlationId: input.correlationId,
-                  note: `ACH PI ${pi.status}`,
-                },
-                env
-              ),
-            catch: (cause) =>
-              new AchTopupError({
-                reason: cause instanceof Error ? cause.message : "ledger write failed",
-                cause,
-              }),
-          });
+          yield* ledger
+            .appendEntry({
+              tenantId,
+              kind: "topup_pending",
+              deltaCents: 0,
+              paymentIntentId: pi.id,
+              correlationId: input.correlationId,
+              note: `ACH PI ${pi.status}`,
+            })
+            .pipe(
+              Effect.mapError(
+                (cause) => new AchTopupError({ reason: cause.reason, cause: cause.cause })
+              )
+            );
           yield* audit
             .appendEntry(
               buildCreditTopupPendingEntry({

@@ -7,6 +7,7 @@
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { Context, Data, Effect, Layer } from "effect";
 import { resolvePaymentsDir } from "../config/paths.js";
 
 export type DirectoryEntry = {
@@ -278,7 +279,7 @@ function unindexEntry(file: DirectoryFile, entry: DirectoryEntry): void {
   if (entry.phone) delete file.phones[entry.phone];
 }
 
-export async function getEmailEntry(
+async function getEmailEntry(
   email: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<DirectoryEntry | undefined> {
@@ -287,7 +288,7 @@ export async function getEmailEntry(
   return file.emails[key];
 }
 
-export async function getHandleEntry(
+async function getHandleEntry(
   handle: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<DirectoryEntry | undefined> {
@@ -296,7 +297,7 @@ export async function getHandleEntry(
   return file.handles[key];
 }
 
-export async function getPhoneEntry(
+async function getPhoneEntry(
   phone: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<DirectoryEntry | undefined> {
@@ -305,7 +306,7 @@ export async function getPhoneEntry(
   return file.phones[key];
 }
 
-export async function getTenantEntry(
+async function getTenantEntry(
   tenantId: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<DirectoryEntry | undefined> {
@@ -315,17 +316,7 @@ export async function getTenantEntry(
   return file.byTenant[id];
 }
 
-/** @deprecated Prefer getTenantEntry */
-export async function getTenantHandle(
-  tenantId: string,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<DirectoryEntry | undefined> {
-  return getTenantEntry(tenantId, env);
-}
-
-export async function listDirectory(
-  env: NodeJS.ProcessEnv = process.env
-): Promise<DirectoryEntry[]> {
+async function listDirectory(env: NodeJS.ProcessEnv = process.env): Promise<DirectoryEntry[]> {
   const file = await loadFile(env);
   return Object.values(file.byTenant).sort((a, b) => {
     const ak = a.handle ?? a.email ?? a.phone ?? a.tenantId;
@@ -426,43 +417,12 @@ export async function claimDirectory(
   return { entry, created: !existing };
 }
 
-/** Convenience: claim email as primary (Venmo-style default). */
-export async function claimEmail(
-  input: { email: string; tenantId: string; displayName?: string; handle?: string },
-  env: NodeJS.ProcessEnv = process.env
-): Promise<{ entry: DirectoryEntry; created: boolean }> {
-  return claimDirectory(input, env);
-}
-
-/** Convenience: set optional privacy username. */
-export async function claimHandle(
-  input: { handle: string; tenantId: string; displayName?: string; email?: string },
-  env: NodeJS.ProcessEnv = process.env
-): Promise<{ entry: DirectoryEntry; created: boolean }> {
-  return claimDirectory(input, env);
-}
-
-/** Convenience: claim phone alias (optionally mark verified). */
-export async function claimPhone(
-  input: {
-    phone: string;
-    tenantId: string;
-    email?: string;
-    handle?: string;
-    displayName?: string;
-    phoneVerified?: boolean;
-  },
-  env: NodeJS.ProcessEnv = process.env
-): Promise<{ entry: DirectoryEntry; created: boolean }> {
-  return claimDirectory(input, env);
-}
-
 function keepEntryIfAddressable(entry: DirectoryEntry): DirectoryEntry | null {
   if (entry.email || entry.handle || entry.phone) return entry;
   return null;
 }
 
-export async function releaseHandle(
+async function releaseHandle(
   handle: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<boolean> {
@@ -481,10 +441,7 @@ export async function releaseHandle(
   return true;
 }
 
-export async function releaseEmail(
-  email: string,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<boolean> {
+async function releaseEmail(email: string, env: NodeJS.ProcessEnv = process.env): Promise<boolean> {
   const key = normalizeEmail(email);
   const file = await loadFile(env);
   const entry = file.emails[key];
@@ -500,10 +457,7 @@ export async function releaseEmail(
   return true;
 }
 
-export async function releasePhone(
-  phone: string,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<boolean> {
+async function releasePhone(phone: string, env: NodeJS.ProcessEnv = process.env): Promise<boolean> {
   const key = normalizePhone(phone, env);
   const file = await loadFile(env);
   const entry = file.phones[key];
@@ -527,7 +481,7 @@ export async function releasePhone(
  * - Leading `@` / username → directory
  * - Otherwise → raw tenant id
  */
-export async function resolveRecipient(
+async function resolveRecipient(
   raw: string,
   env: NodeJS.ProcessEnv = process.env,
   options: { forceHandle?: boolean; forceEmail?: boolean; forcePhone?: boolean } = {}
@@ -598,7 +552,77 @@ export async function resolveRecipient(
   return { tenantId: input, via: "tenantId" };
 }
 
-/** Reset directory file (tests). */
+/** Reset directory file. Internal helper used by the service `reset` op. */
 export async function resetDirectoryForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveFile(emptyFile(), env);
+}
+
+export class DirectoryError extends Data.TaggedError("DirectoryError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+type ResolveRecipientOptions = {
+  forceHandle?: boolean;
+  forceEmail?: boolean;
+  forcePhone?: boolean;
+};
+
+/** Effect surface over the payments directory (email / handle / phone → tenant). */
+export class CreditsDirectoryService extends Context.Tag("clawql/CreditsDirectoryService")<
+  CreditsDirectoryService,
+  {
+    readonly getEmail: (email: string) => Effect.Effect<DirectoryEntry | undefined, DirectoryError>;
+    readonly getHandle: (
+      handle: string
+    ) => Effect.Effect<DirectoryEntry | undefined, DirectoryError>;
+    readonly getPhone: (phone: string) => Effect.Effect<DirectoryEntry | undefined, DirectoryError>;
+    readonly getTenant: (
+      tenantId: string
+    ) => Effect.Effect<DirectoryEntry | undefined, DirectoryError>;
+    readonly list: () => Effect.Effect<DirectoryEntry[], DirectoryError>;
+    readonly claim: (
+      input: ClaimDirectoryInput
+    ) => Effect.Effect<{ entry: DirectoryEntry; created: boolean }, DirectoryError>;
+    readonly releaseEmail: (email: string) => Effect.Effect<boolean, DirectoryError>;
+    readonly releaseHandle: (handle: string) => Effect.Effect<boolean, DirectoryError>;
+    readonly releasePhone: (phone: string) => Effect.Effect<boolean, DirectoryError>;
+    readonly resolveRecipient: (
+      raw: string,
+      options?: ResolveRecipientOptions
+    ) => Effect.Effect<ResolvedRecipient, DirectoryError>;
+    readonly reset: () => Effect.Effect<void, DirectoryError>;
+  }
+>() {}
+
+export function creditsDirectoryLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<CreditsDirectoryService> {
+  const run = <A>(reason: string, task: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: task,
+      catch: (cause) =>
+        cause instanceof DirectoryError
+          ? cause
+          : new DirectoryError({ reason: cause instanceof Error ? cause.message : reason, cause }),
+    });
+
+  return Layer.succeed(
+    CreditsDirectoryService,
+    CreditsDirectoryService.of({
+      getEmail: (email) => run("Failed to load email entry", () => getEmailEntry(email, env)),
+      getHandle: (handle) => run("Failed to load handle entry", () => getHandleEntry(handle, env)),
+      getPhone: (phone) => run("Failed to load phone entry", () => getPhoneEntry(phone, env)),
+      getTenant: (tenantId) =>
+        run("Failed to load tenant entry", () => getTenantEntry(tenantId, env)),
+      list: () => run("Failed to list directory", () => listDirectory(env)),
+      claim: (input) => run("Failed to claim directory entry", () => claimDirectory(input, env)),
+      releaseEmail: (email) => run("Failed to release email", () => releaseEmail(email, env)),
+      releaseHandle: (handle) => run("Failed to release handle", () => releaseHandle(handle, env)),
+      releasePhone: (phone) => run("Failed to release phone", () => releasePhone(phone, env)),
+      resolveRecipient: (raw, options) =>
+        run("Failed to resolve recipient", () => resolveRecipient(raw, env, options)),
+      reset: () => run("Failed to reset directory", () => resetDirectoryForTests(env)),
+    })
+  );
 }

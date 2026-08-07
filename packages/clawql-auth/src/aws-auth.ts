@@ -2,11 +2,23 @@
  * AWS bundled-provider helpers: spec label detection, region/credentials, base URL, request normalization.
  *
  * OpenAPI specs come from APIs.guru (aws2openapi). Execute uses SigV4 signing — not Bearer headers.
+ *
+ * Effect is the only public surface via the `*Effect` wrappers and {@link AwsAuthHelpers} service.
+ * The plain sync functions are module-internal implementation detail (used by the Effect wrappers
+ * and the SigV4 signer) and are not re-exported from the package entry.
  */
+
+import { Context, Data, Effect, Layer } from "effect";
 
 import type { OpenAPIDoc } from "./openapi-types.js";
 
 const AWS_SPEC_LABEL_RE = /^[a-z0-9][a-z0-9-]*-\d{4}-\d{2}-\d{2}$/;
+
+/** Typed failure for AWS helper resolution (Effect failure channel). */
+export class AwsAuthError extends Data.TaggedError("AwsAuthError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
 
 /** True for merged preset `aws` or bundled manifest slugs (e.g. `ec2-2016-11-15`). */
 export function isAwsSpecLabel(label: string): boolean {
@@ -139,3 +151,75 @@ export function applyAwsQueryActionPath(url: URL, pathTemplate: string): void {
 export function awsSigningHost(url: URL): string {
   return url.port ? `${url.hostname}:${url.port}` : url.hostname;
 }
+
+/** Effect: true for merged preset `aws` or bundled manifest slugs. */
+export const isAwsSpecLabelEffect = (label: string): Effect.Effect<boolean> =>
+  Effect.sync(() => isAwsSpecLabel(label));
+
+/** Effect: resolve AWS credentials from env (undefined when unset). */
+export const resolveAwsCredentialsEffect = (): Effect.Effect<AwsCredentials | undefined> =>
+  Effect.sync(() => resolveAwsCredentials());
+
+/** Effect: resolve AWS region from env (defaults to us-east-1). */
+export const resolveAwsRegionEffect = (): Effect.Effect<string> =>
+  Effect.sync(() => resolveAwsRegion());
+
+/** Effect: resolve the AWS service id for signing. */
+export const resolveAwsServiceNameEffect = (
+  specLabel: string | undefined,
+  openapi: OpenAPIDoc
+): Effect.Effect<string> => Effect.sync(() => resolveAwsServiceName(specLabel, openapi));
+
+/** Effect: resolve an HTTPS base URL; fails with {@link AwsAuthError} when no server URL exists. */
+export const resolveAwsApiBaseUrlEffect = (
+  openapi: OpenAPIDoc
+): Effect.Effect<string, AwsAuthError> =>
+  Effect.try({
+    try: () => resolveAwsApiBaseUrl(openapi),
+    catch: (cause) =>
+      new AwsAuthError({
+        reason: cause instanceof Error ? cause.message : String(cause),
+        cause,
+      }),
+  });
+
+/** Effect: move AWS query-protocol `#Action=` into the URL query string (mutates `url`). */
+export const applyAwsQueryActionPathEffect = (
+  url: URL,
+  pathTemplate: string
+): Effect.Effect<void> => Effect.sync(() => applyAwsQueryActionPath(url, pathTemplate));
+
+/** Effect: hostname for SigV4 signing (without port). */
+export const awsSigningHostEffect = (url: URL): Effect.Effect<string> =>
+  Effect.sync(() => awsSigningHost(url));
+
+/** Effect service exposing AWS bundled-provider helpers for DI in execute hosts. */
+export class AwsAuthHelpers extends Context.Tag("clawql/AwsAuthHelpers")<
+  AwsAuthHelpers,
+  {
+    readonly isAwsSpecLabel: (label: string) => Effect.Effect<boolean>;
+    readonly resolveCredentials: () => Effect.Effect<AwsCredentials | undefined>;
+    readonly resolveRegion: () => Effect.Effect<string>;
+    readonly resolveServiceName: (
+      specLabel: string | undefined,
+      openapi: OpenAPIDoc
+    ) => Effect.Effect<string>;
+    readonly resolveApiBaseUrl: (openapi: OpenAPIDoc) => Effect.Effect<string, AwsAuthError>;
+    readonly applyQueryActionPath: (url: URL, pathTemplate: string) => Effect.Effect<void>;
+    readonly signingHost: (url: URL) => Effect.Effect<string>;
+  }
+>() {}
+
+/** Live AWS helpers service backed by `process.env`. */
+export const AwsAuthHelpersLive = Layer.succeed(
+  AwsAuthHelpers,
+  AwsAuthHelpers.of({
+    isAwsSpecLabel: isAwsSpecLabelEffect,
+    resolveCredentials: resolveAwsCredentialsEffect,
+    resolveRegion: resolveAwsRegionEffect,
+    resolveServiceName: resolveAwsServiceNameEffect,
+    resolveApiBaseUrl: resolveAwsApiBaseUrlEffect,
+    applyQueryActionPath: applyAwsQueryActionPathEffect,
+    signingHost: awsSigningHostEffect,
+  })
+);

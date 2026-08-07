@@ -4,14 +4,21 @@
  */
 
 import { timingSafeEqual } from "node:crypto";
+import { Data, Effect } from "effect";
 
 import {
   loadOidcAuthConfig,
-  resolveOidcAtrClaimsFromHeaders,
+  resolveOidcAtrClaimsFromHeadersEffect,
   type OidcAuthConfig,
 } from "./oidc.js";
 
 export type AuthMode = "noAuth" | "apiKey" | "oidc";
+
+/** Typed failure for gateway auth resolution (Effect failure channel). */
+export class GatewayAuthError extends Data.TaggedError("GatewayAuthError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
 
 function apiKeysEqual(presented: string, expected: string): boolean {
   const a = Buffer.from(presented, "utf8");
@@ -103,8 +110,8 @@ function headerValue(headers: AuthHeaderSource, name: string): string | undefine
 }
 
 /**
- * Sync claim resolution for `noAuth` / `apiKey`.
- * For `oidc`, returns an error directing callers to {@link resolveAtrClaimsFromHeadersAsync}.
+ * Sync claim resolution for `noAuth` / `apiKey` (internal helper).
+ * For `oidc`, returns an error directing callers to {@link resolveAtrClaimsFromHeadersEffect}.
  */
 export function resolveAtrClaimsFromHeaders(
   headers: AuthHeaderSource = {},
@@ -114,7 +121,7 @@ export function resolveAtrClaimsFromHeaders(
     return {
       ok: false,
       error:
-        "CLAWQL_AUTH_MODE=oidc requires async JWT verification — use resolveAtrClaimsFromHeadersAsync",
+        "CLAWQL_AUTH_MODE=oidc requires async JWT verification — use resolveAtrClaimsFromHeadersEffect",
     };
   }
 
@@ -161,33 +168,28 @@ export function resolveAtrClaimsFromHeaders(
 }
 
 /**
- * Async claim resolution — supports `oidc` JWT verify plus sync modes.
+ * Effect claim resolution — supports `oidc` JWT verify plus sync modes.
+ * Failures surface on the typed {@link GatewayAuthError} channel.
  */
-export async function resolveAtrClaimsFromHeadersAsync(
+export function resolveAtrClaimsFromHeadersEffect(
   headers: AuthHeaderSource = {},
   config: GatewayAuthConfig = loadGatewayAuthConfig()
-): Promise<{ ok: true; claims: AtrClaims } | { ok: false; error: string }> {
+): Effect.Effect<AtrClaims, GatewayAuthError> {
   if (config.mode === "oidc") {
-    return resolveOidcAtrClaimsFromHeaders(headers, config.oidc ?? loadOidcAuthConfig());
+    return resolveOidcAtrClaimsFromHeadersEffect(headers, config.oidc ?? loadOidcAuthConfig()).pipe(
+      Effect.mapError((err) => new GatewayAuthError({ reason: err.reason, cause: err.cause }))
+    );
   }
-  return resolveAtrClaimsFromHeaders(headers, config);
+  const result = resolveAtrClaimsFromHeaders(headers, config);
+  return result.ok
+    ? Effect.succeed(result.claims)
+    : Effect.fail(new GatewayAuthError({ reason: result.error }));
 }
 
-export function assertGatewayAuth(headers: AuthHeaderSource = {}): AtrClaims {
-  const result = resolveAtrClaimsFromHeaders(headers);
-  if (!result.ok) {
-    throw new Error(result.error);
-  }
-  return result.claims;
-}
-
-export async function assertGatewayAuthAsync(
+/** Assert gateway auth (Effect form) — fails with {@link GatewayAuthError}. */
+export function assertGatewayAuthEffect(
   headers: AuthHeaderSource = {},
-  config?: GatewayAuthConfig
-): Promise<AtrClaims> {
-  const result = await resolveAtrClaimsFromHeadersAsync(headers, config);
-  if (!result.ok) {
-    throw new Error(result.error);
-  }
-  return result.claims;
+  config: GatewayAuthConfig = loadGatewayAuthConfig()
+): Effect.Effect<AtrClaims, GatewayAuthError> {
+  return resolveAtrClaimsFromHeadersEffect(headers, config);
 }

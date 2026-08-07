@@ -35,7 +35,7 @@ export CLAWQL_AUTH_OIDC_AUDIENCE=clawql-mcp
 export CLAWQL_AUTH_OIDC_ATR_CLAIM=atr
 ```
 
-Bearer JWT on MCP HTTP routes is verified asynchronously (`resolveAtrClaimsFromHeadersAsync`). Prefer an embedded `atr` object; otherwise flat `sub` / `role` / `scope` / `tenant_id` plus OIDC `acr` / `amr` are mapped into `AtrClaims`.
+Bearer JWT on MCP HTTP routes is verified via Effect. Domain code uses `resolveAtrClaimsFromHeadersEffect` / the `GatewayAuthService` and `OidcAuthService` (`Context.Tag` + `Layer`, composed by `AuthLive`); JWT verify and JWKS/PEM IO run on the typed `OidcAuthError` / `GatewayAuthError` channels. Forced edges (Express / MCP hosts) use the thin Promise façade `resolveAtrClaimsFromHeadersAsync`, which is `Effect.runPromise` over the Effect. Prefer an embedded `atr` object; otherwise flat `sub` / `role` / `scope` / `tenant_id` plus OIDC `acr` / `amr` are mapped into `AtrClaims`.
 
 Dev-only: `CLAWQL_AUTH_OIDC_HS256_SECRET` (never production).
 
@@ -50,14 +50,15 @@ export CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL=1
 ```
 
 ```ts
-import { assertToolPolicy, claimsHaveMfa } from "clawql-auth";
+import { Effect } from "effect";
+import { assertToolPolicyEffect, claimsHaveMfa } from "clawql-auth";
 
-assertToolPolicy(claims, "payments_credits_transfer_confirm");
+await Effect.runPromise(assertToolPolicyEffect(claims, "payments_credits_transfer_confirm"));
 ```
 
 `claimsHaveMfa` treats common `acr` / `amr` hints (`mfa`, `otp`, `totp`, ACR level ≥ 2, etc.).
 
-Hosts should call `assertToolPolicy` when dispatching MCP tools once request ATR claims are available. Full claim threading into every tool handler is a follow-up.
+Hosts should run `assertToolPolicyEffect` (via `Effect.runSync` / `Effect.runPromise`, or the `AuthPolicyService` layer) when dispatching MCP tools once request ATR claims are available. Full claim threading into every tool handler is a follow-up.
 
 ## Hosted `/credits/*` gate
 
@@ -67,26 +68,30 @@ See [`credits-deeplinks.md`](../payments/credits-deeplinks.md).
 
 ## Shared step-up
 
-| Primitive             | Module                        | Notes                             |
-| --------------------- | ----------------------------- | --------------------------------- |
-| TOTP (RFC 6238)       | `clawql-auth` `step-up/totp`  | Used by `clawql-payments` credits |
-| File enrollment store | `createFileStepUpStore(path)` | Caller-owned path; mode `0600`    |
-| WebAuthn              | `WebAuthnStepUpVerifier`      | Pluggable; default fails closed   |
+| Primitive             | Module                         | Notes                             |
+| --------------------- | ------------------------------ | --------------------------------- |
+| TOTP (RFC 6238)       | `clawql-auth` `step-up/totp`   | `*Effect` API; used by payments   |
+| File enrollment store | `createStepUpStoreLayer(path)` | `StepUpStoreService`; mode `0600` |
+| WebAuthn              | `WebAuthnStepUpVerifier`       | Pluggable; default fails closed   |
 
 Payments path: `$CLAWQL_HOME/Payments/step-up-totp.json` via `clawql payments credits step-up enroll`. Secrets never go in payment WORM.
 
 ## `createClawQLAuth`
 
 ```ts
+import { Effect } from "effect";
 import { createClawQLAuth } from "clawql-auth";
 
 const auth = createClawQLAuth({
   mode: "oidc",
   stepUpStorePath: process.env.CLAWQL_STEP_UP_PATH,
 });
+// `resolveClaimsAsync` is a thin runPromise wrapper kept for Express / MCP hosts.
 const result = await auth.resolveClaimsAsync(req.headers);
 if (result.ok) {
-  auth.assertToolAccess(result.claims, "payments_credits_transfer_confirm");
+  await Effect.runPromise(
+    auth.assertToolAccessEffect(result.claims, "payments_credits_transfer_confirm")
+  );
 }
 ```
 

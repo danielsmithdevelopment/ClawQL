@@ -1,17 +1,14 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Effect } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  addContact,
-  listContacts,
-  maskContactPayee,
-  normalizeContactPayee,
-  removeContact,
-  resetContactsForTests,
-  resolveContactPayee,
-} from "./contacts.js";
-import { claimDirectory, resetDirectoryForTests } from "./directory.js";
+  resetPaymentsEffectRuntimeForTests,
+  runPaymentsEffect,
+} from "../runtime/payments-effect-runtime.js";
+import { CreditsContactsService, maskContactPayee, normalizeContactPayee } from "./contacts.js";
+import { CreditsDirectoryService } from "./directory.js";
 
 describe("credits contacts book", () => {
   let home: string;
@@ -20,11 +17,11 @@ describe("credits contacts book", () => {
   beforeEach(async () => {
     home = await mkdtemp(join(tmpdir(), "clawql-contacts-"));
     env = { ...process.env, CLAWQL_HOME: home };
-    await resetDirectoryForTests(env);
-    await resetContactsForTests(env);
+    resetPaymentsEffectRuntimeForTests();
   });
 
   afterEach(async () => {
+    resetPaymentsEffectRuntimeForTests();
     await rm(home, { recursive: true, force: true });
   });
 
@@ -37,46 +34,75 @@ describe("credits contacts book", () => {
   });
 
   it("adds, lists, updates, removes contacts", async () => {
-    const { contact, created } = await addContact(
-      { ownerTenantId: "alice", payee: "bob@acme.com", label: "Bob" },
+    const result = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const contacts = yield* CreditsContactsService;
+        const added = yield* contacts.add({
+          ownerTenantId: "alice",
+          payee: "bob@acme.com",
+          label: "Bob",
+        });
+        const again = yield* contacts.add({
+          ownerTenantId: "alice",
+          payee: "Bob@Acme.com",
+          label: "Bobby",
+        });
+        const listBefore = yield* contacts.list("alice");
+        const removed = yield* contacts.remove("alice", added.contact.contactId);
+        const listAfter = yield* contacts.list("alice");
+        return { added, again, listBefore, removed, listAfter };
+      }),
       env
     );
-    expect(created).toBe(true);
-    expect(contact.payee).toBe("bob@acme.com");
-    expect(contact.label).toBe("Bob");
 
-    const again = await addContact(
-      { ownerTenantId: "alice", payee: "Bob@Acme.com", label: "Bobby" },
-      env
-    );
-    expect(again.created).toBe(false);
-    expect(again.contact.contactId).toBe(contact.contactId);
-    expect(again.contact.label).toBe("Bobby");
+    expect(result.added.created).toBe(true);
+    expect(result.added.contact.payee).toBe("bob@acme.com");
+    expect(result.added.contact.label).toBe("Bob");
 
-    const list = await listContacts("alice", env);
-    expect(list).toHaveLength(1);
+    expect(result.again.created).toBe(false);
+    expect(result.again.contact.contactId).toBe(result.added.contact.contactId);
+    expect(result.again.contact.label).toBe("Bobby");
 
-    expect(await removeContact("alice", contact.contactId, env)).toBe(true);
-    expect(await listContacts("alice", env)).toHaveLength(0);
+    expect(result.listBefore).toHaveLength(1);
+    expect(result.removed).toBe(true);
+    expect(result.listAfter).toHaveLength(0);
   });
 
   it("resolves contact through directory", async () => {
-    await claimDirectory({ email: "bob@acme.com", handle: "bob", tenantId: "bob" }, env);
-    const { contact } = await addContact(
-      { ownerTenantId: "alice", payee: "@bob", label: "Bobby" },
+    const resolved = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const directory = yield* CreditsDirectoryService;
+        yield* directory.claim({ email: "bob@acme.com", handle: "bob", tenantId: "bob" });
+        const contacts = yield* CreditsContactsService;
+        const { contact } = yield* contacts.add({
+          ownerTenantId: "alice",
+          payee: "@bob",
+          label: "Bobby",
+        });
+        return yield* contacts.resolvePayee("alice", { contactId: contact.contactId });
+      }),
       env
     );
-    const resolved = await resolveContactPayee("alice", { contactId: contact.contactId }, env);
     expect(resolved.recipient.tenantId).toBe("bob");
     expect(resolved.recipient.via).toBe("handle");
     expect(resolved.payee).toBe("@bob");
   });
 
   it("keeps owner books separate", async () => {
-    await addContact({ ownerTenantId: "alice", payee: "a@x.com" }, env);
-    await addContact({ ownerTenantId: "carol", payee: "c@x.com" }, env);
-    expect(await listContacts("alice", env)).toHaveLength(1);
-    expect(await listContacts("carol", env)).toHaveLength(1);
-    expect((await listContacts("alice", env))[0]!.payee).toBe("a@x.com");
+    const result = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const contacts = yield* CreditsContactsService;
+        yield* contacts.add({ ownerTenantId: "alice", payee: "a@x.com" });
+        yield* contacts.add({ ownerTenantId: "carol", payee: "c@x.com" });
+        return {
+          alice: yield* contacts.list("alice"),
+          carol: yield* contacts.list("carol"),
+        };
+      }),
+      env
+    );
+    expect(result.alice).toHaveLength(1);
+    expect(result.carol).toHaveLength(1);
+    expect(result.alice[0]!.payee).toBe("a@x.com");
   });
 });

@@ -5,6 +5,7 @@
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { Context, Data, Effect, Layer } from "effect";
 import { resolveCreditsLedgerPath } from "../config/paths.js";
 
 export type CreditLedgerKind =
@@ -98,7 +99,7 @@ const SOURCE_PRIORITY: Record<CreditGrantSource, number> = {
 
 const tenantLocks = new Map<string, Promise<unknown>>();
 
-export async function withTenantLedgerLock<T>(tenantId: string, fn: () => Promise<T>): Promise<T> {
+async function withTenantLedgerLock<T>(tenantId: string, fn: () => Promise<T>): Promise<T> {
   const key = tenantId.trim() || "default";
   const prev = tenantLocks.get(key) ?? Promise.resolve();
   let release!: () => void;
@@ -791,6 +792,69 @@ export async function transferCredits(
         toEntry,
         alreadyExisted: false,
       };
+    })
+  );
+}
+
+export class LedgerError extends Data.TaggedError("LedgerError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+type AppendCreditEntryInput = Parameters<typeof appendCreditEntry>[0];
+type HoldCreditsInput = Parameters<typeof holdCredits>[0];
+type CaptureHoldInput = Parameters<typeof captureHold>[0];
+type ReleaseHoldInput = Parameters<typeof releaseHold>[0];
+type SettleTopupInput = Parameters<typeof settleTopupByPaymentIntent>[0];
+type TransferCreditsInput = Parameters<typeof transferCredits>[0];
+
+/** Effect surface over the prepaid credit ledger (authoritative balances + holds). */
+export class CreditsLedgerService extends Context.Tag("clawql/CreditsLedgerService")<
+  CreditsLedgerService,
+  {
+    readonly getAccount: (tenantId: string) => Effect.Effect<CreditAccount, LedgerError>;
+    readonly appendEntry: (
+      input: AppendCreditEntryInput
+    ) => Effect.Effect<CreditLedgerEntry, LedgerError>;
+    readonly hold: (input: HoldCreditsInput) => Effect.Effect<HoldResult, LedgerError>;
+    readonly capture: (input: CaptureHoldInput) => Effect.Effect<CaptureResult, LedgerError>;
+    readonly release: (input: ReleaseHoldInput) => Effect.Effect<ReleaseResult, LedgerError>;
+    readonly settleTopup: (
+      input: SettleTopupInput
+    ) => Effect.Effect<{ entry: CreditLedgerEntry; alreadySettled: boolean }, LedgerError>;
+    readonly transfer: (
+      input: TransferCreditsInput
+    ) => Effect.Effect<CreditTransferResult, LedgerError>;
+    readonly reset: () => Effect.Effect<void, LedgerError>;
+  }
+>() {}
+
+export function creditsLedgerLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<CreditsLedgerService> {
+  const run = <A>(reason: string, task: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: task,
+      catch: (cause) =>
+        cause instanceof LedgerError
+          ? cause
+          : new LedgerError({ reason: cause instanceof Error ? cause.message : reason, cause }),
+    });
+
+  return Layer.succeed(
+    CreditsLedgerService,
+    CreditsLedgerService.of({
+      getAccount: (tenantId) =>
+        run("Failed to load credit account", () => getCreditAccount(tenantId, env)),
+      appendEntry: (input) =>
+        run("Failed to append credit entry", () => appendCreditEntry(input, env)),
+      hold: (input) => run("Failed to hold credits", () => holdCredits(input, env)),
+      capture: (input) => run("Failed to capture hold", () => captureHold(input, env)),
+      release: (input) => run("Failed to release hold", () => releaseHold(input, env)),
+      settleTopup: (input) =>
+        run("Failed to settle top-up", () => settleTopupByPaymentIntent(input, env)),
+      transfer: (input) => run("Failed to transfer credits", () => transferCredits(input, env)),
+      reset: () => run("Failed to reset ledger", () => resetCreditsLedgerForTests(env)),
     })
   );
 }

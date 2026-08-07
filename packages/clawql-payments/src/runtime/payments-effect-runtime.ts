@@ -7,12 +7,29 @@ import { acpCheckoutLiveLayer } from "../acp/acp-checkout-service.js";
 import { paypalOrdersLiveLayer } from "../paypal/paypal-orders-service.js";
 import { adyenCheckoutLiveLayer } from "../adyen/adyen-checkout-service.js";
 import { taxProfileLiveLayer } from "../accounting/tax-profile.js";
+import { accountingMapLiveLayer } from "../accounting/map.js";
+import { accountingExportLiveLayer } from "../accounting/export.js";
+import { taxEvidenceLiveLayer } from "../accounting/tax-evidence.js";
+import { paymentAuditReconcileLiveLayer } from "../audit/reconcile.js";
+import { lokiPushLiveLayer } from "../audit/loki.js";
+import { payoutPreferencesLiveLayer } from "../payouts/preferences.js";
 import { payoutLiveLayer } from "../payouts/payout-service.js";
 import { rampLiveLayer } from "../ramp/ramp-service.js";
 import { consumerOffRampLiveLayer } from "../offramp/consumer-offramp-service.js";
 import { offrampWebhookLiveLayer } from "../offramp/offramp-webhook-service.js";
+import { creditsConfigLiveLayer } from "../credits/config.js";
+import { creditsDeeplinkLiveLayer } from "../credits/deeplinks.js";
 import { creditsLiveLayer } from "../credits/credits-service.js";
+import { creditsLedgerLiveLayer } from "../credits/ledger.js";
+import { creditsDirectoryLiveLayer } from "../credits/directory.js";
+import { creditsContactsLiveLayer } from "../credits/contacts.js";
+import { creditsRequestsLiveLayer } from "../credits/requests.js";
+import { creditsActivityLiveLayer } from "../credits/activity.js";
+import { creditsInviteEmailLiveLayer } from "../credits/invite-email.js";
+import { creditsStepUpLiveLayer } from "../credits/step-up.js";
 import { achTopupLiveLayer } from "../credits/ach-topup-service.js";
+import { pendingActionsLiveLayer } from "../compensation/pending-actions.js";
+import { compensationAccountsLiveLayer } from "../compensation/accounts.js";
 import { agentCompensationLiveLayer } from "../compensation/agent-compensation-service.js";
 import { deductionLiveLayer } from "../credits/deduction-service.js";
 import { deductionEventBusLiveLayer } from "../credits/deduction-event-bus.js";
@@ -53,12 +70,29 @@ export type PaymentsServices =
   | import("../paypal/paypal-orders-service.js").PaypalOrdersService
   | import("../adyen/adyen-checkout-service.js").AdyenCheckoutService
   | import("../accounting/tax-profile.js").TaxProfileService
+  | import("../accounting/map.js").AccountingMapService
+  | import("../accounting/export.js").AccountingExportService
+  | import("../accounting/tax-evidence.js").TaxEvidenceService
+  | import("../audit/reconcile.js").PaymentAuditReconcileService
+  | import("../audit/loki.js").LokiPushService
+  | import("../payouts/preferences.js").PayoutPreferencesService
   | import("../payouts/payout-service.js").PayoutService
   | import("../ramp/ramp-service.js").RampService
   | import("../offramp/consumer-offramp-service.js").ConsumerOffRampService
   | import("../offramp/offramp-webhook-service.js").OfframpWebhookService
+  | import("../credits/config.js").CreditsConfigService
+  | import("../credits/deeplinks.js").CreditsDeeplinkService
   | import("../credits/credits-service.js").CreditsService
+  | import("../credits/ledger.js").CreditsLedgerService
+  | import("../credits/directory.js").CreditsDirectoryService
+  | import("../credits/contacts.js").CreditsContactsService
+  | import("../credits/requests.js").CreditsRequestsService
+  | import("../credits/activity.js").CreditsActivityService
+  | import("../credits/invite-email.js").CreditsInviteEmailService
+  | import("../credits/step-up.js").CreditsStepUpService
   | import("../credits/ach-topup-service.js").AchTopupService
+  | import("../compensation/pending-actions.js").PendingActionsService
+  | import("../compensation/accounts.js").CompensationAccountsService
   | import("../compensation/agent-compensation-service.js").AgentCompensationService
   | import("../credits/deduction-service.js").DeductionService
   | import("../credits/deduction-event-bus.js").DeductionEventBus;
@@ -74,7 +108,8 @@ export function paymentsServicesLiveLayer(
   if (cached) return cached;
 
   const config = paymentsConfigLiveLayer(env);
-  const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(AuditLive));
+  const lokiPush = lokiPushLiveLayer(env);
+  const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(AuditLive, lokiPush)));
   const gate = x402GateLiveLayer(env);
   const usage = usageStoreLiveLayer(env);
   const entitlement = entitlementLiveLayer();
@@ -85,22 +120,42 @@ export function paymentsServicesLiveLayer(
   const paypal = paypalOrdersLiveLayer(env).pipe(Layer.provide(audit));
   const adyen = adyenCheckoutLiveLayer(env).pipe(Layer.provide(audit));
   const taxProfiles = taxProfileLiveLayer(env);
+  const accountingMap = accountingMapLiveLayer(env);
+  const accountingExport = accountingExportLiveLayer(env);
+  const taxEvidence = taxEvidenceLiveLayer(env);
+  const auditReconcile = paymentAuditReconcileLiveLayer();
+  const payoutPreferences = payoutPreferencesLiveLayer(env);
   const payouts = payoutLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(audit, stripeClient, taxProfiles))
+    Layer.provide(Layer.mergeAll(audit, stripeClient, taxProfiles, payoutPreferences))
   );
   const ramp = rampLiveLayer(env).pipe(Layer.provide(audit));
   const offramp = consumerOffRampLiveLayer(env).pipe(Layer.provide(audit));
   const offrampWebhook = offrampWebhookLiveLayer(env).pipe(Layer.provide(audit));
-  const credits = creditsLiveLayer(env).pipe(Layer.provide(audit));
+  const creditsConfig = creditsConfigLiveLayer(env);
+  const creditsDeeplinks = creditsDeeplinkLiveLayer(env);
+  const ledger = creditsLedgerLiveLayer(env);
+  const directory = creditsDirectoryLiveLayer(env);
+  const contacts = creditsContactsLiveLayer(env).pipe(Layer.provide(directory));
+  const requests = creditsRequestsLiveLayer(env).pipe(Layer.provide(directory));
+  const activity = creditsActivityLiveLayer().pipe(
+    Layer.provide(Layer.mergeAll(ledger, directory, requests))
+  );
+  const inviteEmail = creditsInviteEmailLiveLayer(env);
+  const stepUp = creditsStepUpLiveLayer(env);
+  const pendingActions = pendingActionsLiveLayer(env);
+  const compensationAccounts = compensationAccountsLiveLayer(env);
+  const credits = creditsLiveLayer(env).pipe(
+    Layer.provide(Layer.mergeAll(audit, ledger, stepUp, pendingActions, requests))
+  );
   const achTopup = achTopupLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(audit, stripeClient, credits))
+    Layer.provide(Layer.mergeAll(audit, stripeClient, credits, ledger))
   );
   const compensation = agentCompensationLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(audit, payouts))
+    Layer.provide(Layer.mergeAll(audit, payouts, compensationAccounts, pendingActions))
   );
   const deductionBus = deductionEventBusLiveLayer(env);
   const deduction = deductionLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(audit, deductionBus))
+    Layer.provide(Layer.mergeAll(audit, deductionBus, ledger))
   );
 
   const runtimeConfig = x402RuntimeConfigLiveLayer(env).pipe(Layer.provide(config));
@@ -119,7 +174,9 @@ export function paymentsServicesLiveLayer(
   const discovery = paymentsDiscoveryLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(config, runtimeConfig, gate))
   );
-  const stripeWebhook = stripeWebhookLiveLayer().pipe(Layer.provide(Layer.mergeAll(config, audit)));
+  const stripeWebhook = stripeWebhookLiveLayer().pipe(
+    Layer.provide(Layer.mergeAll(config, audit, ledger))
+  );
   const stripeMeter = stripeMeterLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(stripeClient, config, audit))
   );
@@ -149,12 +206,29 @@ export function paymentsServicesLiveLayer(
     paypal,
     adyen,
     taxProfiles,
+    accountingMap,
+    accountingExport,
+    taxEvidence,
+    auditReconcile,
+    lokiPush,
+    payoutPreferences,
     payouts,
     ramp,
     offramp,
     offrampWebhook,
+    creditsConfig,
+    creditsDeeplinks,
+    ledger,
+    directory,
+    contacts,
+    requests,
+    activity,
+    inviteEmail,
+    stepUp,
     credits,
     achTopup,
+    pendingActions,
+    compensationAccounts,
     compensation,
     deductionBus,
     deduction

@@ -13,6 +13,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { resolveOrgCreditsPath } from "../config/paths.js";
 import { getCreditAccount, transferCredits, type CreditTransferResult } from "./ledger.js";
+import { Effect } from "effect";
 import {
   assertCreditsOrgTransferEnabled,
   isCreditsEnabled,
@@ -154,7 +155,7 @@ export async function createOrg(
   input: CreateOrgInput,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgRecord> {
-  if (!isCreditsEnabled(env)) {
+  if (!Effect.runSync(isCreditsEnabled(env))) {
     throw new Error("Credits disabled — set CLAWQL_CREDITS_ENABLED=1");
   }
   const orgId = input.orgId
@@ -867,5 +868,5 @@ export async function distributeOrgPeriod(
 /** Compliance helper: managed hosting may use org credits; general P2P still blocked. */
 export function orgCreditsAllowedOnManagedHosting(env: NodeJS.ProcessEnv = process.env): boolean {
   // Documented posture — org transfers are closed-loop even when isManagedHosting.
-  return isCreditsOrgTransferEnabled(env) || !isManagedHosting(env);
+  return Effect.runSync(isCreditsOrgTransferEnabled(env)) || !Effect.runSync(isManagedHosting(env));
 }

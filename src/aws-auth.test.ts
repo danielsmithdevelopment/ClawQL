@@ -1,11 +1,23 @@
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import {
-  applyAwsQueryActionPath,
-  isAwsSpecLabel,
-  resolveAwsApiBaseUrl,
-  resolveAwsRegion,
-  resolveAwsServiceName,
+  applyAwsQueryActionPathEffect,
+  isAwsSpecLabelEffect,
+  resolveAwsApiBaseUrlEffect,
+  resolveAwsRegionEffect,
+  resolveAwsServiceNameEffect,
 } from "clawql-api";
+
+type AwsDoc = Parameters<typeof resolveAwsApiBaseUrlEffect>[0];
+
+const applyAwsQueryActionPath = (url: URL, pathTemplate: string): void =>
+  Effect.runSync(applyAwsQueryActionPathEffect(url, pathTemplate));
+const isAwsSpecLabel = (label: string): boolean => Effect.runSync(isAwsSpecLabelEffect(label));
+const resolveAwsApiBaseUrl = (openapi: AwsDoc): string =>
+  Effect.runSync(resolveAwsApiBaseUrlEffect(openapi));
+const resolveAwsRegion = (): string => Effect.runSync(resolveAwsRegionEffect());
+const resolveAwsServiceName = (specLabel: string | undefined, openapi: AwsDoc): string =>
+  Effect.runSync(resolveAwsServiceNameEffect(specLabel, openapi));
 
 describe("aws-auth helpers", () => {
   it("moves #Action= into query string", () => {

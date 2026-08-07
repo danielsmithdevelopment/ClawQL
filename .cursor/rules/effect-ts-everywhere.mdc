@@ -1,0 +1,33 @@
+# Effect-TS everywhere (hard rule)
+
+ClawQL production code that **can** be Effect-based **must** be Effect-based. There is no “pure sync is fine” exception and no standing exception for Promise domain APIs.
+
+## Must be Effect
+
+- Domain IO (fs, net, DB, crypto that participates in workflows)
+- Orchestration, policy gates, config reads used by domain code
+- URL/HTML builders, sync crypto helpers, env flag readers — expose as `Effect` (`Effect.sync` / `Effect.succeed` / service methods), not bare functions returning plain values as the primary API
+- Multi-step workflows — `Effect.gen` + `Context.Tag` / `Layer`
+
+## Only exception: forced host boundary
+
+Express handlers, MCP `server.tool` callbacks, and similar hosts that **literally require** a `Promise` return may use a **thin** `async` façade whose entire body is `Effect.runPromise` / `run*Effect` / `ManagedRuntime`. No business logic in the façade.
+
+Types-only modules (interfaces, type aliases) are not executable code and need no Effect wrapper.
+
+## Never ship
+
+- Bare `async` / `Promise` as the primary API of a domain module
+- Bare sync functions as the primary API when the same work can be `Effect.sync` / a Tag method
+- Docs that carve out “pure sync” or “legacy async at IO edges” as acceptable defaults
+- Growing Promise façades “for convenience” when callers can `yield*` or `Effect.runPromise` a service
+
+## Required shape
+
+- Prefer `Context.Tag` + `Layer` with methods returning `Effect.Effect<A, E, R>`
+- Absolute external IO (fs/fetch/SDK) only via `Effect.tryPromise` / `*FromPromise` **inside** Effect programs
+- Tests use Layers / `Effect.provide` — do not invent Promise-only domain APIs for tests
+
+## Reviewer checklist
+
+Reject if a changed executable domain export is not Effect-based and is not a documented one-line forced-host façade.

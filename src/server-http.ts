@@ -46,10 +46,11 @@ import { handleLangfuseEvalWebhookRequest } from "./langfuse-eval-webhook.js";
 import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
 import {
   loadGatewayAuthConfig,
-  resolveAtrClaimsFromHeadersAsync,
+  resolveAtrClaimsFromHeadersEffect,
   type ApiKeyClaimsResolver,
   type GatewayAuthConfig,
 } from "clawql-auth";
+import { Effect } from "effect";
 import { validateVirtualKey } from "clawql-inference";
 import { attachCreditsHateoasRoutes } from "clawql-payments";
 import { attachPaymentsWellKnownRoutes } from "clawql-payments/discovery";
@@ -238,7 +239,12 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     next: import("express").NextFunction
   ): void {
     void (async () => {
-      const result = await resolveAtrClaimsFromHeadersAsync(req.headers, gatewayAuthConfig);
+      const result = await Effect.runPromise(
+        resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig).pipe(
+          Effect.map((claims) => ({ ok: true, claims }) as const),
+          Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason } as const))
+        )
+      );
       if (!result.ok) {
         res.status(401).json({ error: result.error });
         return;

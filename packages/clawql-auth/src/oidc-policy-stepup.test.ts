@@ -1,34 +1,46 @@
+import { Effect, Exit } from "effect";
 import { SignJWT } from "jose";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
   atrClaimsFromJwtPayload,
   resetOidcVerifyCaches,
-  resolveOidcAtrClaimsFromHeaders,
-  verifyOidcBearerToken,
+  resolveOidcAtrClaimsFromHeadersEffect,
+  verifyOidcBearerTokenEffect,
 } from "./oidc.js";
 import {
-  assertToolPolicy,
-  claimsHaveMfa,
-  isFinancialTool,
-  isMfaRequiredForFinancialTools,
+  assertToolPolicyEffect,
+  claimsHaveMfaEffect,
+  isFinancialToolEffect,
+  isMfaRequiredForFinancialToolsEffect,
 } from "./policy.js";
 import { createClawQLAuth } from "./create-auth.js";
 import {
   loadGatewayAuthConfig,
   resolveAtrClaimsFromHeaders,
-  resolveAtrClaimsFromHeadersAsync,
+  resolveAtrClaimsFromHeadersEffect,
   resolveAuthMode,
+  type AtrClaims,
 } from "./gateway.js";
 import {
-  createFileStepUpStore,
-  generateTotp,
-  generateTotpSecret,
-  verifyTotp,
+  generateTotpEffect,
+  generateTotpSecretEffect,
+  stepUpStoreServiceFromPath,
+  verifyTotpEffect,
 } from "./step-up/index.js";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+/** Run the gateway Effect at the test edge, mapping to the discriminated-union shape. */
+function resolveClaimsUnion(headers: Record<string, string | string[] | undefined>) {
+  return Effect.runPromise(
+    resolveAtrClaimsFromHeadersEffect(headers, loadGatewayAuthConfig()).pipe(
+      Effect.map((claims) => ({ ok: true as const, claims })),
+      Effect.catchAll((err) => Effect.succeed({ ok: false as const, error: err.reason }))
+    )
+  );
+}
 
 describe("clawql-auth oidc", () => {
   const prev: Record<string, string | undefined> = {};
@@ -87,17 +99,14 @@ describe("clawql-auth oidc", () => {
       .setExpirationTime("2h")
       .sign(key);
 
-    const result = await resolveAtrClaimsFromHeadersAsync(
-      { authorization: `Bearer ${token}` },
-      loadGatewayAuthConfig()
-    );
+    const result = await resolveClaimsUnion({ authorization: `Bearer ${token}` });
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.claims.sub).toBe("user-1");
       expect(result.claims.tenantId).toBe("acme");
       expect(result.claims.acr).toBe("mfa");
       expect(result.claims.amr).toEqual(["pwd", "otp"]);
-      expect(claimsHaveMfa(result.claims)).toBe(true);
+      expect(Effect.runSync(claimsHaveMfaEffect(result.claims))).toBe(true);
     }
   });
 
@@ -113,21 +122,21 @@ describe("clawql-auth oidc", () => {
     expect(claims.role).toBe("admin");
     expect(claims.scope).toContain("execute");
     expect(claims.tenantId).toBe("t1");
-    expect(claimsHaveMfa(claims)).toBe(false);
+    expect(Effect.runSync(claimsHaveMfaEffect(claims))).toBe(false);
   });
 
   it("rejects missing bearer in oidc mode", async () => {
     stash("CLAWQL_AUTH_OIDC_HS256_SECRET");
     process.env.CLAWQL_AUTH_OIDC_HS256_SECRET = "test-secret-at-least-32-chars!!";
-    const r = await resolveOidcAtrClaimsFromHeaders({});
-    expect(r.ok).toBe(false);
+    const exit = await Effect.runPromiseExit(resolveOidcAtrClaimsFromHeadersEffect({}));
+    expect(Exit.isFailure(exit)).toBe(true);
   });
 
-  it("verifyOidcBearerToken fails on bad signature", async () => {
+  it("verifyOidcBearerTokenEffect fails on bad signature", async () => {
     stash("CLAWQL_AUTH_OIDC_HS256_SECRET");
     process.env.CLAWQL_AUTH_OIDC_HS256_SECRET = "test-secret-at-least-32-chars!!";
-    const r = await verifyOidcBearerToken("not.a.jwt");
-    expect(r.ok).toBe(false);
+    const exit = await Effect.runPromiseExit(verifyOidcBearerTokenEffect("not.a.jwt"));
+    expect(Exit.isFailure(exit)).toBe(true);
   });
 });
 
@@ -141,43 +150,43 @@ describe("clawql-auth policy", () => {
 
   it("gates financial tools when MFA required", () => {
     process.env.CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL = "1";
-    expect(isMfaRequiredForFinancialTools()).toBe(true);
-    expect(isFinancialTool("payments_credits_transfer_confirm")).toBe(true);
-    expect(() =>
-      assertToolPolicy(
-        { sub: "u", role: "operator", scope: ["*"] },
-        "payments_credits_transfer_confirm"
-      )
-    ).toThrow(/MFA/);
-    expect(() =>
-      assertToolPolicy(
-        { sub: "u", role: "operator", scope: ["*"], acr: "mfa" },
-        "payments_credits_transfer_confirm"
-      )
-    ).not.toThrow();
+    expect(Effect.runSync(isMfaRequiredForFinancialToolsEffect())).toBe(true);
+    expect(Effect.runSync(isFinancialToolEffect("payments_credits_transfer_confirm"))).toBe(true);
+
+    const noMfa: AtrClaims = { sub: "u", role: "operator", scope: ["*"] };
+    const gated = Effect.runSyncExit(
+      assertToolPolicyEffect(noMfa, "payments_credits_transfer_confirm")
+    );
+    expect(Exit.isFailure(gated)).toBe(true);
+
+    const withMfa: AtrClaims = { sub: "u", role: "operator", scope: ["*"], acr: "mfa" };
+    const allowed = Effect.runSyncExit(
+      assertToolPolicyEffect(withMfa, "payments_credits_transfer_confirm")
+    );
+    expect(Exit.isSuccess(allowed)).toBe(true);
   });
 });
 
 describe("clawql-auth step-up", () => {
   it("TOTP round-trip", () => {
-    const secret = generateTotpSecret();
-    const code = generateTotp(secret);
-    expect(verifyTotp(secret, code)).toBe(true);
-    expect(verifyTotp(secret, "000000")).toBe(false);
+    const secret = Effect.runSync(generateTotpSecretEffect());
+    const code = Effect.runSync(generateTotpEffect(secret));
+    expect(Effect.runSync(verifyTotpEffect(secret, code))).toBe(true);
+    expect(Effect.runSync(verifyTotpEffect(secret, "000000"))).toBe(false);
   });
 
   it("file store enroll + require", async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-auth-stepup-"));
     try {
-      const store = createFileStepUpStore(join(dir, "step-up.json"));
-      const { enrollment, created } = await store.enroll({
-        subjectId: "tenant-a",
-        issuer: "ClawQL Test",
-      });
+      const store = stepUpStoreServiceFromPath(join(dir, "step-up.json"));
+      const { enrollment, created } = await Effect.runPromise(
+        store.enroll({ subjectId: "tenant-a", issuer: "ClawQL Test" })
+      );
       expect(created).toBe(true);
-      const code = generateTotp(enrollment.secretBase32);
-      await expect(store.require("tenant-a", code)).resolves.toBeUndefined();
-      await expect(store.require("tenant-a", "000000")).rejects.toThrow(/Invalid/);
+      const code = Effect.runSync(generateTotpEffect(enrollment.secretBase32));
+      await Effect.runPromise(store.require("tenant-a", code));
+      const bad = await Effect.runPromiseExit(store.require("tenant-a", "000000"));
+      expect(Exit.isFailure(bad)).toBe(true);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -188,6 +197,6 @@ describe("clawql-auth step-up", () => {
     expect(auth.mode).toBe("noAuth");
     const r = auth.resolveClaims({});
     expect(r.ok).toBe(true);
-    expect(auth.stepUp.totp.generateSecret().length).toBeGreaterThan(10);
+    expect(Effect.runSync(auth.stepUp.totp.generateSecret()).length).toBeGreaterThan(10);
   });
 });
