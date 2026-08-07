@@ -1,3 +1,28 @@
+# ClawQL plugin registry
+
+**Status:** Living reference (July 2026)  
+**Audience:** Operators, contributors, third-party plugin authors  
+**Companion:** [ClawQL plugin model](../design/clawql-plugin-model.md) (concepts and target architecture)
+
+This page is the **registry** of ClawQL plugins: what exists today, what horizontal packages are becoming plugins, **domain verticals** (industry plugins on the same model), and how to enable or compose each one. For a searchable UI with kind/status filters, use the site [Plugins](https://docs.clawql.com/plugins#registry) page. For the full explanation of “becoming a plugin” vs package extraction, read the [plugin model](../design/clawql-plugin-model.md).
+
+---
+
+## 1. Plugin kinds
+
+| Kind            | Registers MCP tools? | Primary hook               | Example                                                                              |
+| --------------- | -------------------- | -------------------------- | ------------------------------------------------------------------------------------ |
+| **`default`**   | Yes (when composed)  | `onRegister`, `onTeardown` | `clawql-memory` (✅ shipped); domain verticals such as `clawql-lending` (📋 planned) |
+| **`mcp-proxy`** | No                   | `beforeCallTool`           | `panguard-mcp-proxy` (shipped)                                                       |
+
+**Domain verticals** are `default`-kind plugins with industry scope (`verticals/clawql-*`): **presets** that compose horizontal plugins (typically Memory + Documents) and ship domain-tailored boilerplate (e.g. `.cqw` workflows). They are not a separate extension mechanism — see [Verticals guide](https://docs.clawql.com/plugins#verticals) and the searchable [Plugins](https://docs.clawql.com/plugins#registry) registry.
+
+**Not plugins:** `search`, `execute`, `cache`, and `audit` are **gateway core** — always composed in `clawql-api`, not optional plugin Layers.
+
+---
+
+## 2. Registry (all plugins)
+
 | Plugin ID                      | Package / location                       | Kind        | Registration                                                                                                       | MCP tools                                                                                                                                                                                             | Enable / compose                                                                                                                                                                                                                                                      | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ------------------------------ | ---------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`panguard-mcp-proxy`**       | `clawql-api` (`PanguardProxyPlugin`)     | `mcp-proxy` | ✅ Shipped — `createClawQLApi()` default                                                                           | _(none)_                                                                                                                                                                                              | Default on; **`CLAWQL_PANGUARD_PROXY_PLUGIN=0`** to omit. Active policy: **`CLAWQL_PANGUARD_IN_PROCESS=1`**                                                                                                                                                           | `beforeCallTool` chokepoint ([#272](https://github.com/danielsmithdevelopment/ClawQL/issues/272))                                                                                                                                                                                                                                                                                                                                                                   |
