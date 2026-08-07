@@ -117,6 +117,11 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'monthly',
     priority: 0.88,
   },
+  {
+    path: '/mcp/mcp-api-adapter',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
   { path: '/agent-setup', changeFrequency: 'weekly', priority: 0.97 },
   { path: '/architecture', changeFrequency: 'monthly', priority: 0.93 },
   { path: '/reference', changeFrequency: 'weekly', priority: 0.9 },

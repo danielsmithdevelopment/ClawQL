@@ -280,6 +280,13 @@ export const referenceHubCards: Array<ReferenceCard> = [
     icon: BoltIcon,
   }),
   card({
+    href: '/mcp/mcp-api-adapter',
+    name: 'mcp-api-adapter',
+    description:
+      'Any MCP server → OpenAPI, GraphQL, /mcp, gRPC, and gen-cli from one catalog.',
+    icon: PackageIcon,
+  }),
+  card({
     href: '/spec-configuration',
     name: 'Configuration',
     description: 'CLAWQL_* env vars, spec loading, provider presets.',
