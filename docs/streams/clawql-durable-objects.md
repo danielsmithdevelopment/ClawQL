@@ -28,10 +28,10 @@ The Durable Objects API is the **session contract**. Cloudflare implements it on
 
 ## 2. Object types
 
-| DO class         | Lifetime                | Responsibility                                                                                             |
-| ---------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `SubscriptionDO` | Long-lived (hibernates) | Holds WebSocket/source connection, significance filter, subscription config + `rtpConsent`, event buffer   |
-| `AgentSessionDO` | Ephemeral (per event)   | Runs one agent session with three sidecars; destroys itself on exit                                        |
+| DO class         | Lifetime                | Responsibility                                                                                           |
+| ---------------- | ----------------------- | -------------------------------------------------------------------------------------------------------- |
+| `SubscriptionDO` | Long-lived (hibernates) | Holds WebSocket/source connection, significance filter, subscription config + `rtpConsent`, event buffer |
+| `AgentSessionDO` | Ephemeral (per event)   | Runs one agent session with three sidecars; destroys itself on exit                                      |
 
 On celld, a `GatewayDO` (or Gateway Worker) may sit in front for webhook routing and idempotent naming — see [`clawql-celld.md`](./clawql-celld.md) §4.
 
@@ -138,15 +138,15 @@ Order matters: export and capture before key expiry so the last inference metada
 
 ## 9. Self-hosted parity
 
-| Concern      | Cloudflare DO             | celld                                      | K8s session worker                             |
-| ------------ | ------------------------- | ------------------------------------------ | ---------------------------------------------- |
-| Isolation    | Per-object isolate        | Per-cell isolate (single writer)           | Pod / Job per event (or pool with hard reset)  |
-| SQLite       | DO storage                | DO storage + LTX → operator bucket         | Ephemeral volume or `better-sqlite3` in worker |
-| Hibernation  | Native WS hibernation     | Same DO state model                        | Scale-to-zero / idle timeout (not identical)   |
-| Virtual key  | Same clawql-inference API | Same                                       | Same                                           |
-| Sidecars     | In-process modules        | In-process modules (same code)             | In-process modules (same code)                 |
-| WORM         | Platform DO storage       | LTX on fleet bucket (`sqlite3` audit)      | Postgres / JSONL                               |
-| Scale signal | DO platform               | Fleet density / alarms                     | NATS consumer lag → HPA (Streams §9)           |
+| Concern      | Cloudflare DO             | celld                                 | K8s session worker                             |
+| ------------ | ------------------------- | ------------------------------------- | ---------------------------------------------- |
+| Isolation    | Per-object isolate        | Per-cell isolate (single writer)      | Pod / Job per event (or pool with hard reset)  |
+| SQLite       | DO storage                | DO storage + LTX → operator bucket    | Ephemeral volume or `better-sqlite3` in worker |
+| Hibernation  | Native WS hibernation     | Same DO state model                   | Scale-to-zero / idle timeout (not identical)   |
+| Virtual key  | Same clawql-inference API | Same                                  | Same                                           |
+| Sidecars     | In-process modules        | In-process modules (same code)        | In-process modules (same code)                 |
+| WORM         | Platform DO storage       | LTX on fleet bucket (`sqlite3` audit) | Postgres / JSONL                               |
+| Scale signal | DO platform               | Fleet density / alarms                | NATS consumer lag → HPA (Streams §9)           |
 
 Parity target: **same session contract and WORM/RTP schemas**. Exact hibernation and cold-start numbers will differ — document in operator runbooks. Prefer celld over inventing a Node DO runtime; prefer K8s HPA when celld's alpha / single-app-fleet limits are unacceptable ([`clawql-celld.md`](./clawql-celld.md) §8, §11).
 

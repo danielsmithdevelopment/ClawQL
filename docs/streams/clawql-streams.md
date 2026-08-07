@@ -15,13 +15,13 @@ Together with ClawQL Core (any protocol → MCP) and [`mcp-api-adapter`](../mcp/
 
 ### v0.2 changes (from v0.1.x)
 
-| Decision | v0.1.x | v0.2 |
-| -------- | ------ | ---- |
-| Self-hosted DO runtime | Custom Node `worker_threads` / Miniflare approximation | **[celld](https://celld.dev/)** (Apache 2.0, [denoland/celld](https://github.com/denoland/celld)) |
-| Bundle contents | Ambiguous; subprocess spawn to Claude / local tools | **`clawql-streams` + `clawql-core` + `mcp-api-adapter` embedded in the DO/cell bundle** |
-| Model calls | Subprocess (`claude -p`) or mixed | **`fetch()` to [`clawql-inference`](../inference/clawql-inference.md)** only — no `child_process` |
-| WORM replication | Postgres / JSONL (K8s) or DO storage | On celld: **LTX → S3-compatible bucket is the WORM trail** (RPO=0); auditor uses `sqlite3` on the bucket |
-| Scaling backends | `kubernetes` \| `durable-objects` | **`kubernetes` \| `celld` \| `cloudflare`** |
+| Decision               | v0.1.x                                                 | v0.2                                                                                                     |
+| ---------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Self-hosted DO runtime | Custom Node `worker_threads` / Miniflare approximation | **[celld](https://celld.dev/)** (Apache 2.0, [denoland/celld](https://github.com/denoland/celld))        |
+| Bundle contents        | Ambiguous; subprocess spawn to Claude / local tools    | **`clawql-streams` + `clawql-core` + `mcp-api-adapter` embedded in the DO/cell bundle**                  |
+| Model calls            | Subprocess (`claude -p`) or mixed                      | **`fetch()` to [`clawql-inference`](../inference/clawql-inference.md)** only — no `child_process`        |
+| WORM replication       | Postgres / JSONL (K8s) or DO storage                   | On celld: **LTX → S3-compatible bucket is the WORM trail** (RPO=0); auditor uses `sqlite3` on the bucket |
+| Scaling backends       | `kubernetes` \| `durable-objects`                      | **`kubernetes` \| `celld` \| `cloudflare`**                                                              |
 
 **Do not build a custom ClawQL DO runtime on Node `worker_threads`.** Use celld for self-hosted Durable Objects; Cloudflare Workers/DOs for hosted; Kubernetes HPA for regulated / air-gapped deployments until celld is production-stable.
 
@@ -73,12 +73,12 @@ On the **celld / Cloudflare** path, each agent cell is an in-process stack — n
 
 **Constraints (Workers / celld Code Mode):**
 
-| Limit | Value | Implication |
-| ----- | ----- | ----------- |
-| Bundle size | **64 MiB** code | Tree-shake; exclude Node-only deps; CI fails if `esbuild` output exceeds 64MB |
-| Env / bindings | **1 MiB** env | Provider specs and secrets must stay lean; large catalogs live in SQLite or remote fetch |
-| Process model | No `child_process` | Model and tools via in-process MCP + `fetch()` |
-| Timers | No `setInterval` | Use `setAlarm` + SQLite intent rows |
+| Limit          | Value              | Implication                                                                              |
+| -------------- | ------------------ | ---------------------------------------------------------------------------------------- |
+| Bundle size    | **64 MiB** code    | Tree-shake; exclude Node-only deps; CI fails if `esbuild` output exceeds 64MB            |
+| Env / bindings | **1 MiB** env      | Provider specs and secrets must stay lean; large catalogs live in SQLite or remote fetch |
+| Process model  | No `child_process` | Model and tools via in-process MCP + `fetch()`                                           |
+| Timers         | No `setInterval`   | Use `setAlarm` + SQLite intent rows                                                      |
 
 `clawql-inference` stays **out of process** — called over HTTP — so the DO bundle does not embed model SDKs, credential stores, or PAL routing tables that change independently of Streams releases.
 
@@ -118,11 +118,11 @@ ClawQL Streams is the event loop itself. The MCP client-initiated limitation onl
 
 Every event source supports all three simultaneously:
 
-| Mode           | Mechanism                                                    | Best for                                      |
-| -------------- | ------------------------------------------------------------ | --------------------------------------------- |
-| **Reactive**   | Event → WORM immediately                                     | Audit trail, compliance, always-on recording  |
-| **Ambient**    | Event → buffer → delivered on next MCP tool call             | Agent awareness without spawning a session    |
-| **Autonomous** | Event → significance filter → AgentSessionDO + inference     | Act on events without human initiation        |
+| Mode           | Mechanism                                                | Best for                                     |
+| -------------- | -------------------------------------------------------- | -------------------------------------------- |
+| **Reactive**   | Event → WORM immediately                                 | Audit trail, compliance, always-on recording |
+| **Ambient**    | Event → buffer → delivered on next MCP tool call         | Agent awareness without spawning a session   |
+| **Autonomous** | Event → significance filter → AgentSessionDO + inference | Act on events without human initiation       |
 
 Autonomous mode is the primary new capability. Reactive and ambient modes extend existing ClawQL behavior (WORM audit and buffered delivery).
 
@@ -423,24 +423,24 @@ The agent decides whether to call `stream_read` for the full events or continue 
 
 On **celld**, every acknowledged `storage.put` is replicated as **LTX** (Litestream replica format) to the operator-owned S3-compatible bucket with **RPO=0** — celld does not acknowledge a write before the data is in the bucket. That replication stream **is** the Streams forensic WORM trail for the self-hosted DO path.
 
-| Property | Behavior |
-| -------- | -------- |
-| Append model | SQLite rows keyed by monotonic `worm:*` / event tables; never update-in-place for audit rows |
-| Replication | LTX segments → fleet bucket |
+| Property         | Behavior                                                                                                                     |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Append model     | SQLite rows keyed by monotonic `worm:*` / event tables; never update-in-place for audit rows                                 |
+| Replication      | LTX segments → fleet bucket                                                                                                  |
 | Auditor workflow | Download cell SQLite / LTX from bucket; inspect with **`sqlite3`** (and `grep` on ownership records) — no vendor status page |
-| Payload policy | Event bodies **hashed** for WORM; full body only in TTL-bounded buffer / encrypted cold store |
+| Payload policy   | Event bodies **hashed** for WORM; full body only in TTL-bounded buffer / encrypted cold store                                |
 
 ### WORM event types
 
-| WORM event            | Includes                                            |
-| --------------------- | --------------------------------------------------- |
-| `STREAM_EVENT_RECEIVED` | topic, significance result, payload hash          |
-| `DO_CREATED`          | virtual key ID + subscription ID + event hash       |
-| `INFERENCE_CALL`      | virtual key ID + PAL tier + tokens + cache hit/miss |
-| `TOOL_CALL`           | virtual key ID + tool name + ATR check result       |
-| `BUDGET_EXHAUSTED`    | virtual key ID + tokens consumed                    |
-| `DO_DESTROYED`        | virtual key ID + exit reason + total spend          |
-| `VIRTUAL_KEY_EXPIRED` | key ID (from inference gateway)                     |
+| WORM event              | Includes                                            |
+| ----------------------- | --------------------------------------------------- |
+| `STREAM_EVENT_RECEIVED` | topic, significance result, payload hash            |
+| `DO_CREATED`            | virtual key ID + subscription ID + event hash       |
+| `INFERENCE_CALL`        | virtual key ID + PAL tier + tokens + cache hit/miss |
+| `TOOL_CALL`             | virtual key ID + tool name + ATR check result       |
+| `BUDGET_EXHAUSTED`      | virtual key ID + tokens consumed                    |
+| `DO_DESTROYED`          | virtual key ID + exit reason + total spend          |
+| `VIRTUAL_KEY_EXPIRED`   | key ID (from inference gateway)                     |
 
 On **Cloudflare**, DO storage is the source of truth with platform replication. On **Kubernetes**, WORM continues to use Postgres (multi-replica) or JSONL (single replica) as in v0.1 — LTX applies specifically to the celld backend.
 
@@ -536,11 +536,11 @@ Partial Web Crypto: `digest`, HMAC sign/verify, AES-GCM, RSA-OAEP decrypt, Ed255
 
 ## 9. Scaling
 
-| Backend | When | Mechanism |
-| ------- | ---- | --------- |
-| **celld** | Self-hosted DO parity | Cells = DOs; LTX to operator bucket; ~1000 resident cells / 8 GB node; ~$0.05 / resident cell-month |
-| **Cloudflare** | Hosted / SaaS | Native Durable Objects + hibernation |
-| **Kubernetes HPA** | Regulated / air-gapped / until celld GA | NATS consumer lag → HPA; Postgres WORM |
+| Backend            | When                                    | Mechanism                                                                                           |
+| ------------------ | --------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **celld**          | Self-hosted DO parity                   | Cells = DOs; LTX to operator bucket; ~1000 resident cells / 8 GB node; ~$0.05 / resident cell-month |
+| **Cloudflare**     | Hosted / SaaS                           | Native Durable Objects + hibernation                                                                |
+| **Kubernetes HPA** | Regulated / air-gapped / until celld GA | NATS consumer lag → HPA; Postgres WORM                                                              |
 
 **Do not build a custom ClawQL DO runtime on Node `worker_threads`.** celld (Apache 2.0, ~58 MB binary) is the self-hosted DO runtime; Cloudflare remains the hosted DO path; K8s HPA remains the regulated path.
 
@@ -700,19 +700,19 @@ Operational detail: [`clawql-celld.md`](./clawql-celld.md) §7.
 
 ## 12. Package dependencies
 
-| Package / system     | Role in Streams                                                                         |
-| -------------------- | --------------------------------------------------------------------------------------- |
-| `clawql-streams`     | Coordination: subscriptions, filter, spawn, MCP `stream_*`                              |
-| `clawql-core`        | Embedded in DO bundle — `search` / `execute` / memory tools                             |
-| `mcp-api-adapter`    | Embedded in DO bundle — MCP → OpenAPI / GraphQL / gRPC / WebSocket                      |
-| `clawql-inference`   | **Out of process** — `fetch()` only; PAL, virtual keys, call store, cache               |
-| celld                | Self-hosted Durable Objects runtime (Apache 2.0)                                        |
-| Cloudflare Workers   | Hosted Durable Objects path                                                             |
-| NATS JetStream       | Durable event buffer for Kubernetes HPA path                                            |
-| `clawql-payments`    | `DeductionService` for credit-gated agent sessions                                      |
-| `clawql-ouroboros`   | Optional ensemble validation before kinetic actions                                     |
-| Panguard / ATR       | Tool-scope enforcement inside agent sessions                                            |
-| OpenBenchTrace / RTP | Training-data emission                                                                  |
+| Package / system     | Role in Streams                                                           |
+| -------------------- | ------------------------------------------------------------------------- |
+| `clawql-streams`     | Coordination: subscriptions, filter, spawn, MCP `stream_*`                |
+| `clawql-core`        | Embedded in DO bundle — `search` / `execute` / memory tools               |
+| `mcp-api-adapter`    | Embedded in DO bundle — MCP → OpenAPI / GraphQL / gRPC / WebSocket        |
+| `clawql-inference`   | **Out of process** — `fetch()` only; PAL, virtual keys, call store, cache |
+| celld                | Self-hosted Durable Objects runtime (Apache 2.0)                          |
+| Cloudflare Workers   | Hosted Durable Objects path                                               |
+| NATS JetStream       | Durable event buffer for Kubernetes HPA path                              |
+| `clawql-payments`    | `DeductionService` for credit-gated agent sessions                        |
+| `clawql-ouroboros`   | Optional ensemble validation before kinetic actions                       |
+| Panguard / ATR       | Tool-scope enforcement inside agent sessions                              |
+| OpenBenchTrace / RTP | Training-data emission                                                    |
 
 ```text
 clawql-streams (coordination)
@@ -729,19 +729,19 @@ clawql-streams (coordination)
 
 ## 13. Comparison to alternatives
 
-|                      | Stripe Minions              | Anthropic Managed Agents | OpenAI Agents SDK | ClawQL Streams                                              |
-| -------------------- | --------------------------- | ------------------------ | ----------------- | ----------------------------------------------------------- |
-| **Trigger**          | Slack reaction              | Cron / API call          | API call          | WebSocket · NATS · webhook · cron · poll · gRPC · SSE       |
-| **Tool catalog**     | Custom (Toolshed, internal) | Built-in + custom        | Built-in + custom | Any MCP server via mcp-api-adapter                          |
-| **Audit trail**      | Internal                    | Provider-managed         | Provider-managed  | WORM / LTX on operator bucket, or Postgres                  |
-| **Sovereignty**      | Internal only               | Provider servers         | Provider servers  | celld · air-gapped K8s · Cloudflare                         |
-| **Scale**            | Internal K8s                | Provider-managed         | Provider-managed  | celld cells · CF DOs · K8s HPA                              |
-| **Protocol surface** | Internal                    | API only                 | API only          | Any protocol both directions                                |
-| **Model**            | Goose + Claude Code         | Claude only              | OpenAI only       | Any model via clawql-inference                              |
+|                      | Stripe Minions              | Anthropic Managed Agents | OpenAI Agents SDK | ClawQL Streams                                                |
+| -------------------- | --------------------------- | ------------------------ | ----------------- | ------------------------------------------------------------- |
+| **Trigger**          | Slack reaction              | Cron / API call          | API call          | WebSocket · NATS · webhook · cron · poll · gRPC · SSE         |
+| **Tool catalog**     | Custom (Toolshed, internal) | Built-in + custom        | Built-in + custom | Any MCP server via mcp-api-adapter                            |
+| **Audit trail**      | Internal                    | Provider-managed         | Provider-managed  | WORM / LTX on operator bucket, or Postgres                    |
+| **Sovereignty**      | Internal only               | Provider servers         | Provider servers  | celld · air-gapped K8s · Cloudflare                           |
+| **Scale**            | Internal K8s                | Provider-managed         | Provider-managed  | celld cells · CF DOs · K8s HPA                                |
+| **Protocol surface** | Internal                    | API only                 | API only          | Any protocol both directions                                  |
+| **Model**            | Goose + Claude Code         | Claude only              | OpenAI only       | Any model via clawql-inference                                |
 | **DO runtime**       | N/A                         | Provider                 | Provider          | celld (self-host) · Cloudflare (hosted) — **not** custom Node |
-| **Payments**         | x402 demo                   | None                     | None              | Full economics stack                                        |
-| **Open source**      | No                          | No                       | Partial           | Apache 2.0 core + celld Apache 2.0                          |
-| **Multi-agent**      | No                          | Research preview         | Yes               | Ouroboros ensemble                                          |
+| **Payments**         | x402 demo                   | None                     | None              | Full economics stack                                          |
+| **Open source**      | No                          | No                       | Partial           | Apache 2.0 core + celld Apache 2.0                            |
+| **Multi-agent**      | No                          | Research preview         | Yes               | Ouroboros ensemble                                            |
 
 ---
 

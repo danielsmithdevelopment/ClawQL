@@ -15,13 +15,13 @@ ClawQL's decision (Streams v0.2): **do not build a custom DO runtime on Node `wo
 
 ### Why celld vs build-own
 
-| Option | Effort | API parity with CF DOs | Replication / WORM | Ops burden | Verdict |
-| ------ | ------ | ---------------------- | ------------------ | ---------- | ------- |
-| **celld** | Integrate + constrain bundle | High (Workers DO surface) | Built-in LTX → bucket, RPO=0 | Install ~58 MB binary; fleet via bucket leases | **Adopt** |
-| Custom Node `worker_threads` + SQLite | Large (hibernation, ownership, WS, alarms) | Partial / drift-prone | Homegrown | Own failure detector, placement, backup | **Do not build** |
-| Miniflare only | Low for CI | Dev approximation | Local | Not a production fleet | **CI / unit tests only** |
-| Cloudflare only | Low for SaaS | Native | Platform | Vendor tenancy / pricing | **Hosted path** |
-| K8s HPA only | Medium | Different model | Postgres / NATS | Familiar regulated ops | **Regulated until celld GA** |
+| Option                                | Effort                                     | API parity with CF DOs    | Replication / WORM           | Ops burden                                     | Verdict                      |
+| ------------------------------------- | ------------------------------------------ | ------------------------- | ---------------------------- | ---------------------------------------------- | ---------------------------- |
+| **celld**                             | Integrate + constrain bundle               | High (Workers DO surface) | Built-in LTX → bucket, RPO=0 | Install ~58 MB binary; fleet via bucket leases | **Adopt**                    |
+| Custom Node `worker_threads` + SQLite | Large (hibernation, ownership, WS, alarms) | Partial / drift-prone     | Homegrown                    | Own failure detector, placement, backup        | **Do not build**             |
+| Miniflare only                        | Low for CI                                 | Dev approximation         | Local                        | Not a production fleet                         | **CI / unit tests only**     |
+| Cloudflare only                       | Low for SaaS                               | Native                    | Platform                     | Vendor tenancy / pricing                       | **Hosted path**              |
+| K8s HPA only                          | Medium                                     | Different model           | Postgres / NATS              | Familiar regulated ops                         | **Regulated until celld GA** |
 
 **Facts of record:** Apache 2.0 · ~58 MB binary · ~$0.05 / resident cell-month · ~1000 resident cells / 8 GB node · RPO=0 LTX · one application per fleet (alpha).
 
@@ -33,35 +33,35 @@ Source of truth: [Cloudflare compatibility](https://celld.dev/docs/cloudflare-co
 
 ### Available (use these)
 
-| API / capability | Notes for ClawQL |
-| ---------------- | ---------------- |
-| Module Workers + DO bindings | Gateway + named DO classes |
-| `fetch` / Request / Response | Inference + webhooks + egress |
-| DO SQLite storage | Sync storage ops; session + WORM rows |
-| `setAlarm` / `alarm` handler | TTL, reconnect, api_poll, batch windows |
-| Inbound hibernatable WebSockets | SubscriptionDO client channels |
-| Outbound `ws:` / `wss:` | Stream sources (persist intent — §3) |
-| JS RPC on DO stubs | Spawn / coordinate sessions |
-| Web Crypto (partial) | `digest`, HMAC, AES-GCM, Ed25519/ECDSA sign, `getRandomValues`, `randomUUID` |
-| `node:buffer`, `path`, `stream`, `assert`, `events`, `util`, timers/promises | Bundle-friendly subsets |
-| Static assets | Optional admin UI from fleet bucket |
-| Worker Loader (experimental) | 64 MiB code / 1 MiB env limits still apply |
+| API / capability                                                             | Notes for ClawQL                                                             |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Module Workers + DO bindings                                                 | Gateway + named DO classes                                                   |
+| `fetch` / Request / Response                                                 | Inference + webhooks + egress                                                |
+| DO SQLite storage                                                            | Sync storage ops; session + WORM rows                                        |
+| `setAlarm` / `alarm` handler                                                 | TTL, reconnect, api_poll, batch windows                                      |
+| Inbound hibernatable WebSockets                                              | SubscriptionDO client channels                                               |
+| Outbound `ws:` / `wss:`                                                      | Stream sources (persist intent — §3)                                         |
+| JS RPC on DO stubs                                                           | Spawn / coordinate sessions                                                  |
+| Web Crypto (partial)                                                         | `digest`, HMAC, AES-GCM, Ed25519/ECDSA sign, `getRandomValues`, `randomUUID` |
+| `node:buffer`, `path`, `stream`, `assert`, `events`, `util`, timers/promises | Bundle-friendly subsets                                                      |
+| Static assets                                                                | Optional admin UI from fleet bucket                                          |
+| Worker Loader (experimental)                                                 | 64 MiB code / 1 MiB env limits still apply                                   |
 
 ### Unavailable or unsafe (avoid + workaround)
 
-| Gap | Behavior on celld | ClawQL workaround |
-| --- | ----------------- | ----------------- |
-| `setInterval` | **Throws** | `setAlarm` + SQLite intent |
-| `child_process` / `worker_threads` | Inert stub / not implemented | In-process MCP; `fetch(clawql-inference)` |
-| `node:http(s)`, `net`, `tls`, `dns` | Inert stubs | `fetch` / WebSocket only |
-| Cache API (`caches`) | No | Inference semantic cache stays on clawql-inference |
-| `deriveKey` / `deriveBits` / wrap-unwrap | Missing | Pre-derive outside DO; or HMAC/AES-GCM only |
-| R2 / KV bindings | Out of scope (R2 methods throw) | Fleet bucket via celld; app data via `fetch` to object APIs if needed |
-| Platform `scheduled` / cron | No handler | `setAlarm` chains for cron sources |
-| TLS on peer protocol | Plain HTTP + HMAC | WireGuard / Tailscale / private net; ingress TLS |
-| TCP sockets (`cloudflare:sockets`) | **Silent** inert stub | Do not use; prefer HTTP/WS |
-| Facets / undeclared DO classes via `ctx.exports` | Absent | Declare all DO classes in wrangler.json(c) |
-| Multi-app fleet scheduler | One app per fleet | Separate bucket/fleet per ClawQL deployment |
+| Gap                                              | Behavior on celld               | ClawQL workaround                                                     |
+| ------------------------------------------------ | ------------------------------- | --------------------------------------------------------------------- |
+| `setInterval`                                    | **Throws**                      | `setAlarm` + SQLite intent                                            |
+| `child_process` / `worker_threads`               | Inert stub / not implemented    | In-process MCP; `fetch(clawql-inference)`                             |
+| `node:http(s)`, `net`, `tls`, `dns`              | Inert stubs                     | `fetch` / WebSocket only                                              |
+| Cache API (`caches`)                             | No                              | Inference semantic cache stays on clawql-inference                    |
+| `deriveKey` / `deriveBits` / wrap-unwrap         | Missing                         | Pre-derive outside DO; or HMAC/AES-GCM only                           |
+| R2 / KV bindings                                 | Out of scope (R2 methods throw) | Fleet bucket via celld; app data via `fetch` to object APIs if needed |
+| Platform `scheduled` / cron                      | No handler                      | `setAlarm` chains for cron sources                                    |
+| TLS on peer protocol                             | Plain HTTP + HMAC               | WireGuard / Tailscale / private net; ingress TLS                      |
+| TCP sockets (`cloudflare:sockets`)               | **Silent** inert stub           | Do not use; prefer HTTP/WS                                            |
+| Facets / undeclared DO classes via `ctx.exports` | Absent                          | Declare all DO classes in wrangler.json(c)                            |
+| Multi-app fleet scheduler                        | One app per fleet               | Separate bucket/fleet per ClawQL deployment                           |
 
 ---
 
@@ -123,11 +123,11 @@ Prefer pinning ingress for a cell to its owner node when latency matters; cross-
 
 Logical types match [`clawql-durable-objects.md`](./clawql-durable-objects.md); celld is the self-hosted runtime.
 
-| DO class            | Lifetime                | Responsibility |
-| ------------------- | ----------------------- | -------------- |
-| `GatewayDO`         | Long-lived / entry      | Route webhooks and admin; resolve subscription names; issue spawn to AgentSessionDO |
-| `SubscriptionDO`    | Long-lived (hibernates) | Source connection, significance filter, config + `rtpConsent`, ambient buffer stats |
-| `AgentSessionDO`    | Ephemeral (per event)   | One agent session + Audit / Inference / Training sidecars; self-exit |
+| DO class         | Lifetime                | Responsibility                                                                      |
+| ---------------- | ----------------------- | ----------------------------------------------------------------------------------- |
+| `GatewayDO`      | Long-lived / entry      | Route webhooks and admin; resolve subscription names; issue spawn to AgentSessionDO |
+| `SubscriptionDO` | Long-lived (hibernates) | Source connection, significance filter, config + `rtpConsent`, ambient buffer stats |
+| `AgentSessionDO` | Ephemeral (per event)   | One agent session + Audit / Inference / Training sidecars; self-exit                |
 
 ```text
 Ingress (TLS terminator)
@@ -148,10 +148,10 @@ Gateway Worker / GatewayDO
 
 Stable DO names make replay safe:
 
-| Object | Name pattern | Effect |
-| ------ | ------------ | ------ |
-| Subscription | `sub:{subscriptionId}` | One cell per subscription |
-| Session | `sess:{subscriptionId}:{eventId}` | Same event + sub → same cell; second spawn is idempotent wake |
+| Object       | Name pattern                      | Effect                                                        |
+| ------------ | --------------------------------- | ------------------------------------------------------------- |
+| Subscription | `sub:{subscriptionId}`            | One cell per subscription                                     |
+| Session      | `sess:{subscriptionId}:{eventId}` | Same event + sub → same cell; second spawn is idempotent wake |
 
 Gateway still allocates `doInstanceId` / `virtualKeyId` before first spawn and writes `DO_CREATED` once (guard with a `spawned` flag in session SQLite).
 
@@ -159,24 +159,24 @@ Gateway still allocates `doInstanceId` / `virtualKeyId` before first spawn and w
 
 **SubscriptionDO**
 
-| Table / key        | Contents |
-| ------------------ | -------- |
-| `config`           | prompt, significance, allowedTools, model alias, budgets, rtpConsent |
-| `ws_intent`        | reconnect fields (§3.3) |
-| `last_event`       | id, hash, timestamp |
-| `buffer_stats`     | pending counts for ambient delivery |
-| `worm:*`           | subscription-level reactive audit rows |
+| Table / key    | Contents                                                             |
+| -------------- | -------------------------------------------------------------------- |
+| `config`       | prompt, significance, allowedTools, model alias, budgets, rtpConsent |
+| `ws_intent`    | reconnect fields (§3.3)                                              |
+| `last_event`   | id, hash, timestamp                                                  |
+| `buffer_stats` | pending counts for ambient delivery                                  |
+| `worm:*`       | subscription-level reactive audit rows                               |
 
 **AgentSessionDO** — same contract as DO companion:
 
-| Table             | Contents |
-| ----------------- | -------- |
+| Table             | Contents                                                                      |
+| ----------------- | ----------------------------------------------------------------------------- |
 | `session_meta`    | doInstanceId, subscriptionId, virtualKeyId, manifestId, startedAt, exitReason |
-| `rtp_turns`       | ordered RTP nodes as JSON rows |
-| `inference_calls` | tier, tokens, cache, virtual_key_id |
-| `tool_calls`      | tool name, args hash, ATR result |
-| `export_status`   | pending / flushed / failed |
-| `worm:*`          | append-only forensic trail |
+| `rtp_turns`       | ordered RTP nodes as JSON rows                                                |
+| `inference_calls` | tier, tokens, cache, virtual_key_id                                           |
+| `tool_calls`      | tool name, args hash, ATR result                                              |
+| `export_status`   | pending / flushed / failed                                                    |
+| `worm:*`          | append-only forensic trail                                                    |
 
 ---
 
@@ -215,11 +215,11 @@ CI must fail closed on oversize bundles. Prefer:
 
 celld uses **one fleet bucket** as administrative authority (deployments, SQLite/LTX, ownership leases, peer secret). ClawQL still separates **concerns**:
 
-| Bucket / prefix | Purpose |
-| --------------- | ------- |
-| `s3://clawql-streams-state` (fleet `CELLD_BUCKET`) | celld deployments, cell SQLite + **LTX WORM**, ownership, node leases |
-| Team vault sync bucket (existing ClawQL R2/S3) | Obsidian vault / `memory_sync` — **not** the celld fleet bucket |
-| Training export (optional) | RTP/OBT datasets (HF / dedicated prefix) — distinct from fleet authority |
+| Bucket / prefix                                    | Purpose                                                                  |
+| -------------------------------------------------- | ------------------------------------------------------------------------ |
+| `s3://clawql-streams-state` (fleet `CELLD_BUCKET`) | celld deployments, cell SQLite + **LTX WORM**, ownership, node leases    |
+| Team vault sync bucket (existing ClawQL R2/S3)     | Obsidian vault / `memory_sync` — **not** the celld fleet bucket          |
+| Training export (optional)                         | RTP/OBT datasets (HF / dedicated prefix) — distinct from fleet authority |
 
 Do not reuse fleet-bucket credentials for vault sync or public dataset upload. Scope each credential to one role ([security](https://celld.dev/docs/security)).
 
@@ -303,15 +303,15 @@ CLI wrappers: `clawql streams celld install|deploy|start|diagnose|bundle-check` 
 
 ## 8. Security hardening
 
-| Control | Requirement |
-| ------- | ----------- |
-| Peer traffic | HMAC + body signature + clock/replay — **no TLS**; private net or **WireGuard/Tailscale** |
-| Public ingress | Terminate **TLS** at reverse proxy / mesh gateway; do not expose peer port |
-| Bucket creds | One fleet bucket scope; rotate on suspicion; root of authority |
-| Alpha caveat | **Not safe for hostile multi-tenant**; fixes on latest release only |
-| Build attestation | `gh attestation verify --repo denoland/celld` on install |
-| App auth | celld does not authenticate end users — ClawQL ATR / OIDC / virtual keys remain mandatory |
-| WORM | LTX on operator bucket; auditors use `sqlite3` locally |
+| Control           | Requirement                                                                               |
+| ----------------- | ----------------------------------------------------------------------------------------- |
+| Peer traffic      | HMAC + body signature + clock/replay — **no TLS**; private net or **WireGuard/Tailscale** |
+| Public ingress    | Terminate **TLS** at reverse proxy / mesh gateway; do not expose peer port                |
+| Bucket creds      | One fleet bucket scope; rotate on suspicion; root of authority                            |
+| Alpha caveat      | **Not safe for hostile multi-tenant**; fixes on latest release only                       |
+| Build attestation | `gh attestation verify --repo denoland/celld` on install                                  |
+| App auth          | celld does not authenticate end users — ClawQL ATR / OIDC / virtual keys remain mandatory |
+| WORM              | LTX on operator bucket; auditors use `sqlite3` locally                                    |
 
 Regulated tenants that need hostile multi-tenant isolation or certified controls should use **`scalingBackend: kubernetes`** until celld exits alpha.
 
@@ -319,31 +319,31 @@ Regulated tenants that need hostile multi-tenant isolation or certified controls
 
 ## 9. Cloudflare vs celld
 
-| Concern | Cloudflare Durable Objects | celld |
-| ------- | -------------------------- | ----- |
-| API | Workers DO | Same core DO/Workers surface |
-| State | Platform SQLite | SQLite + **LTX → your bucket** (RPO=0) |
-| Hibernation | Native | Resident / idle / hibernated / inactive (same model) |
-| Pricing | CF DO request/duration | ~$0.05/resident cell-mo; inactive ≈ S3 only |
-| Density | Platform | ~1000 resident / 8 GB |
-| KV / R2 bindings | Available | **Not provided** as DO bindings |
-| Cron triggers | `scheduled` | Use `setAlarm` |
-| Peer / mesh | Cloudflare edge | Operator mesh; peer HTTP plaintext+HMAC |
-| Multi-tenant | CF accounts | One app per fleet (alpha) |
-| Local CI | Miniflare / workerd | Miniflare + `celld diagnose` smoke |
-| ClawQL inference | `fetch` | `fetch` (identical contract) |
+| Concern          | Cloudflare Durable Objects | celld                                                |
+| ---------------- | -------------------------- | ---------------------------------------------------- |
+| API              | Workers DO                 | Same core DO/Workers surface                         |
+| State            | Platform SQLite            | SQLite + **LTX → your bucket** (RPO=0)               |
+| Hibernation      | Native                     | Resident / idle / hibernated / inactive (same model) |
+| Pricing          | CF DO request/duration     | ~$0.05/resident cell-mo; inactive ≈ S3 only          |
+| Density          | Platform                   | ~1000 resident / 8 GB                                |
+| KV / R2 bindings | Available                  | **Not provided** as DO bindings                      |
+| Cron triggers    | `scheduled`                | Use `setAlarm`                                       |
+| Peer / mesh      | Cloudflare edge            | Operator mesh; peer HTTP plaintext+HMAC              |
+| Multi-tenant     | CF accounts                | One app per fleet (alpha)                            |
+| Local CI         | Miniflare / workerd        | Miniflare + `celld diagnose` smoke                   |
+| ClawQL inference | `fetch`                    | `fetch` (identical contract)                         |
 
 ---
 
 ## 10. Testing
 
-| Layer | Tooling | Purpose |
-| ----- | ------- | ------- |
-| Unit / DO logic | **Miniflare** (or workerd) | Alarm, storage, significance, idempotent names |
-| Bundle | `clawql streams celld bundle-check` | Enforce ≤64 MiB |
-| Fleet | `celld diagnose` | Lease + peer health |
-| Smoke | Deploy counter/example then Streams fixture | Webhook → SubscriptionDO → AgentSessionDO → `fetch` inference mock → WORM row present in SQLite/LTX |
-| Security | Attestation verify in CI | Supply chain |
+| Layer           | Tooling                                     | Purpose                                                                                             |
+| --------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Unit / DO logic | **Miniflare** (or workerd)                  | Alarm, storage, significance, idempotent names                                                      |
+| Bundle          | `clawql streams celld bundle-check`         | Enforce ≤64 MiB                                                                                     |
+| Fleet           | `celld diagnose`                            | Lease + peer health                                                                                 |
+| Smoke           | Deploy counter/example then Streams fixture | Webhook → SubscriptionDO → AgentSessionDO → `fetch` inference mock → WORM row present in SQLite/LTX |
+| Security        | Attestation verify in CI                    | Supply chain                                                                                        |
 
 Do not treat Miniflare alone as production parity for LTX, peer HMAC, or cross-node WebSocket behavior.
 
