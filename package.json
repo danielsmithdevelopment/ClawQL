@@ -188,7 +188,7 @@
         "@opentelemetry/core": "2.9.0",
         "esbuild": "0.28.1",
         "hono": "4.12.34",
-        "js-yaml": "4.3.0",
+        "js-yaml": "4.3.1",
         "path-to-regexp": "8.4.0",
         "picomatch": "4.0.4",
         "postcss": "8.5.23",

@@ -27,6 +27,11 @@ const SECTIONS = [
         '/getting-started/inference',
         'clawql-inference five-minute start, BYOK, MCP + memory',
       ],
+      [
+        'Custom sources',
+        '/getting-started/custom-sources',
+        'Register other MCP servers into one gateway surface',
+      ],
       ['Quickstart', '/quickstart', 'Fastest path to a running gateway'],
       ['Getting started', '/getting-started', 'Quickstart paths, teams, and install options'],
       ['Quickstart', '/quickstart', 'npx, install options, and first MCP connect'],

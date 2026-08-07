@@ -43,6 +43,11 @@ const ENTRIES: Array<Entry> = [
     priority: 0.96,
   },
   {
+    path: '/getting-started/custom-sources',
+    changeFrequency: 'weekly',
+    priority: 0.95,
+  },
+  {
     path: '/getting-started/immutable-releases',
     changeFrequency: 'weekly',
     priority: 0.94,
