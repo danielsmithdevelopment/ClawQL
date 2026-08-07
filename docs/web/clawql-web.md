@@ -81,6 +81,11 @@ CLAWQL_BRAVE_API_KEY=…
 CLAWQL_SEARXNG_URL=http://searxng:8080
 CLAWQL_OPENSEARCH_URL=https://opensearch:9200
 CLAWQL_OPENSEARCH_INDEX=clawql-web
+# Auth (pick one): basic, API key / Bearer, or full Authorization override
+CLAWQL_OPENSEARCH_USERNAME=admin
+CLAWQL_OPENSEARCH_PASSWORD=…
+# CLAWQL_OPENSEARCH_API_KEY=…
+# CLAWQL_OPENSEARCH_AUTHORIZATION='ApiKey …'
 CLAWQL_FIRECRAWL_API_KEY=…
 CLAWQL_BROWSER_RUN_API_TOKEN=…
 CLAWQL_CLOUDFLARE_ACCOUNT_ID=…
@@ -132,6 +137,20 @@ CLAWQL_CHROMIUM_CDP_URL=http://127.0.0.1:9222 npm test -w clawql-web -- src/cdp.
 | `web_screenshot` | Capability-gated; live CDP when configured                            |
 | `web_interact`   | Capability-gated; live CDP when configured                            |
 
+## OpenSearch (internal corpus)
+
+OpenSearch is for **indexed / internal** search — not open-web SERP. Use a **dedicated index** (`CLAWQL_OPENSEARCH_INDEX`, default `clawql-web`) with documents shaped as `{ title, url, content|text|snippet }`.
+
+**Do not** point this at Onyx’s document indexes by default. Onyx OpenSearch uses the security plugin + different mappings; sharing risks auth mismatches and colliding with Onyx data. Advanced operators may set `webSearch.opensearch.url` to the Onyx OpenSearch service **only** with a separate `clawql-web` index and credentials wired via `envFromSecret`.
+
+Auth (first match wins):
+
+1. `CLAWQL_OPENSEARCH_AUTHORIZATION` — full `Authorization` header
+2. `CLAWQL_OPENSEARCH_API_KEY` — sent as `Bearer …` (or keep an `ApiKey ` / `Bearer ` prefix if already present)
+3. `CLAWQL_OPENSEARCH_USERNAME` + `CLAWQL_OPENSEARCH_PASSWORD` — HTTP Basic
+
+Helm injects non-secret `url` / `index` when `webSearch.opensearch.enabled` is true; put passwords in Vault/ESO.
+
 ## Helm — bundled SearXNG / Chromium
 
 `charts/clawql-mcp/templates/web-stack.yaml` deploys optional in-cluster workloads when:
@@ -143,6 +162,11 @@ webSearch:
   searxng:
     enabled: true
     bundled: true # deploys Deployment+Service; injects CLAWQL_SEARXNG_URL
+  # Or indexed internal search (BYO / optional Onyx OS host — dedicated index only):
+  # opensearch:
+  #   enabled: true
+  #   url: https://opensearch:9200
+  #   index: clawql-web
 webBrowser:
   provider: chromium
   chromium:
@@ -151,7 +175,7 @@ webBrowser:
 webAuditStore: jsonl # optional
 ```
 
-These are **in-chart Deployments**, not Chart.yaml Helm dependencies. OpenSearch for web is **not** bundled here — BYO `CLAWQL_OPENSEARCH_URL` or reuse the Onyx OpenSearch stack.
+These are **in-chart Deployments**, not Chart.yaml Helm dependencies. OpenSearch for web is **not** bundled as a Deployment — BYO `CLAWQL_OPENSEARCH_URL` (or point at Onyx OS with a dedicated index + auth).
 
 ## Related
 

@@ -37,6 +37,7 @@ export { WebCapabilityError, isWebCapabilityError, type WebCapabilityErrorCode }
 export { createWebService, type WebService } from "./service.js";
 export { browserAsSearch } from "./providers/fallback-search.js";
 export { resolveSearchProvider } from "./providers/search/resolve.js";
+export { buildOpensearchAuthHeaders } from "./providers/search/opensearch.js";
 export { resolveBrowserProvider } from "./providers/browser/resolve.js";
 export {
   assertSafeWebUrl,

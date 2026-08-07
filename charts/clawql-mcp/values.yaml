@@ -333,7 +333,14 @@ webSearch:
     resources: {}
   opensearch:
     enabled: false
-    bundled: false # not wired — reuse onyx OpenSearch or BYO CLAWQL_OPENSEARCH_URL
+    bundled: false # not wired as a chart Deployment — BYO URL or advanced reuse of Onyx OS
+    # Non-secret URL/index injected when enabled + url set. Auth via envFromSecret / extraEnv.
+    url: "" # e.g. https://opensearch:9200 or http://{{ release }}-onyx-opensearch:9200
+    index: clawql-web # dedicated index; do not share Onyx document indexes
+    # Prefer Vault/ESO secrets for:
+    #   CLAWQL_OPENSEARCH_USERNAME / CLAWQL_OPENSEARCH_PASSWORD
+    #   CLAWQL_OPENSEARCH_API_KEY
+    #   CLAWQL_OPENSEARCH_AUTHORIZATION (full header override)
 webBrowser:
   provider: kitesurf # kitesurf|chromium|playwright|puppeteer|firecrawl|none
   chromium:

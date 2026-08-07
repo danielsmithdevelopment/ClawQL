@@ -237,4 +237,59 @@ describe("clawql-web", () => {
     expect(page.provider).toBe("chromium");
     expect(page.markdown).toMatch(/Steps:/);
   });
+
+  it("OpenSearch sends Basic auth and searches the configured index", async () => {
+    delete process.env.CLAWQL_WEB_DRY_RUN;
+    const calls: Array<{ url: string; auth?: string | null }> = [];
+    const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const headers = new Headers(init?.headers);
+      calls.push({ url, auth: headers.get("Authorization") });
+      return new Response(
+        JSON.stringify({
+          hits: {
+            hits: [
+              {
+                _score: 1.2,
+                _source: {
+                  title: "Internal runbook",
+                  url: "https://intranet.example/runbook",
+                  snippet: "How to rotate keys",
+                },
+              },
+            ],
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      );
+    }) as typeof fetch;
+
+    const web = createWebService(
+      {
+        CLAWQL_WEB_SEARCH_PROVIDER: "opensearch",
+        CLAWQL_OPENSEARCH_URL: "https://os.internal:9200",
+        CLAWQL_OPENSEARCH_INDEX: "clawql-web",
+        CLAWQL_OPENSEARCH_USERNAME: "admin",
+        CLAWQL_OPENSEARCH_PASSWORD: "s3cret",
+        CLAWQL_WEB_BROWSER_PROVIDER: "none",
+        CLAWQL_WEB_SEARCH_FALLBACK_DISABLED: "1",
+      },
+      fetchImpl
+    );
+    const result = await web.search("rotate keys", { limit: 3 });
+    expect(result.provider).toBe("opensearch");
+    expect(result.results[0]?.title).toBe("Internal runbook");
+    expect(calls[0]?.url).toBe("https://os.internal:9200/clawql-web/_search");
+    expect(calls[0]?.auth).toBe(`Basic ${Buffer.from("admin:s3cret", "utf8").toString("base64")}`);
+  });
+
+  it("OpenSearch prefers CLAWQL_OPENSEARCH_AUTHORIZATION over username/password", async () => {
+    const { buildOpensearchAuthHeaders, loadWebConfig } = await import("./index.js");
+    const cfg = loadWebConfig({
+      CLAWQL_OPENSEARCH_AUTHORIZATION: "ApiKey abc.def",
+      CLAWQL_OPENSEARCH_USERNAME: "ignored",
+      CLAWQL_OPENSEARCH_PASSWORD: "ignored",
+    });
+    expect(buildOpensearchAuthHeaders(cfg).Authorization).toBe("ApiKey abc.def");
+  });
 });
