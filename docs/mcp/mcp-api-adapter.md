@@ -294,6 +294,7 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 | **`mcp-grpc-transport`**                                   | Production TypeScript MCP gRPC transport                         |
 | **Panguard bridge**                                        | Policy / JWT ATR in front of MCP                                 |
 | **[ClawQL Streams](../streams/clawql-streams.md)** (draft) | Event-driven agents; WebSocket sources into Core                 |
+>>>>>>> 508459b5 (docs(mcp-api-adapter): cross-link ClawQL Streams draft)
 
 ## Troubleshooting
 
