@@ -27,6 +27,8 @@ export const site = {
     idp: '/idp',
     /** IDP-first GTM playbook — strategy source of truth for the IDP motion. */
     idpGtm: '/idp/gtm',
+    /** ClawQL Streams — event-driven autonomous agents / Protocol Fabric. */
+    streams: '/streams',
     /** Secondary enterprise / Palantir-facing GTM motion. */
     enterpriseGtm: '/enterprise/gtm',
     privacy: '/privacy-policy',

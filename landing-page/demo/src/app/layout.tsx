@@ -123,6 +123,9 @@ export default function RootLayout({
                   Workflows
                 </NavbarLink>
                 <NavbarLink href={site.urls.idp}>IDP</NavbarLink>
+                <NavbarLink href={site.urls.streams} className="max-lg:hidden">
+                  Streams
+                </NavbarLink>
                 <NavbarIndustriesMenu />
                 <NavbarLink href="/#security">Security</NavbarLink>
                 <NavbarLink href={site.urls.pricing}>Pricing</NavbarLink>
@@ -168,6 +171,7 @@ export default function RootLayout({
                   <FooterLink href="/#tools">Tools</FooterLink>
                   <FooterLink href="/#workflows">Workflows</FooterLink>
                   <FooterLink href={site.urls.idp}>IDP</FooterLink>
+                  <FooterLink href={site.urls.streams}>Streams</FooterLink>
                   <FooterLink href="/#security">Security</FooterLink>
                   <FooterLink href={site.urls.pricing}>Pricing</FooterLink>
                   <FooterLink href={site.urls.signup}>Sign up</FooterLink>
