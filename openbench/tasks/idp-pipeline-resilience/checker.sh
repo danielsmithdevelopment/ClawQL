@@ -202,10 +202,8 @@ PY
 fi
 
 if [ "$cap_fail" -ne 0 ] || [ "$pass" -ne 1 ]; then
-  python3 - <<PY
-sp = int("${stages_passed:-0}")
-print(f"SCORE: {min(sp, 7) / 7.0:.4f}")
-PY
+  # No partial credit — wrong cite / missing recovery must be a clean 0.0 vs on-arm 1.0.
+  echo "SCORE: 0.0"
   exit 1
 fi
 

@@ -1,6 +1,12 @@
-### 2026-08-07 — `idp-pipeline-resilience` (B-2.2) shipped to `pr_active`
+### 2026-08-07 — `idp-pipeline-resilience` (B-2.2) WIN
 
-New OpenBench cell: mid-pipeline Onyx cite outage; arms **ouroboros-on** vs **ouroboros-off** (`doom_loop=deny`). Seed appendix (on only) crystallizes fallback cite `quartz-21`. Live A/B pending — append WIN/FAIL when Actions returns.
+| Arm | Score | Notes |
+| --- | --- | --- |
+| ouroboros-on | **1.0** (2t, 40s) | seed + evolutionary loop + recovered pipeline |
+| ouroboros-off | fail (partial 0.857 before grader harden) | no ouroboros / wrong decoy cites |
+
+Run: [31139014771](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31139014771). Gate OK. **Verdict:** retire from `pr_active`. Grader hardened post-WIN to score **0.0** on wrong cite (no partial).
+
 
 ### 2026-08-05 — `composed-safe-rollout` RTP v1.1 recollect WIN
 
