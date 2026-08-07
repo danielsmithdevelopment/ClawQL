@@ -255,14 +255,14 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 
 ### `idp-pipeline-resilience`
 
-|                             |                                                                                                                                                                                                 |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Claim**                   | When a mid-pipeline Onyx cite stage is **down**, **Ouroboros** remediates (evolutionary loop + crystallized fallback cite) and the agent finishes the remaining stubbed IDP stages.           |
-| **Why it matters**          | B-2.2 resilience — proves recovery under stage failure, not only happy-path `idp-safe-pipeline-lite`.                                                                                           |
+|                             |                                                                                                                                                                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Claim**                   | When a mid-pipeline Onyx cite stage is **down**, **Ouroboros** remediates (evolutionary loop + crystallized fallback cite) and the agent finishes the remaining stubbed IDP stages.                                                               |
+| **Why it matters**          | B-2.2 resilience — proves recovery under stage failure, not only happy-path `idp-safe-pipeline-lite`.                                                                                                                                             |
 | **How**                     | Arms `ouroboros-on` vs `ouroboros-off`, `doom_loop=deny`. Onyx disabled; seed appendix (on only) carries `quartz-21`. Graders require search + dry_run×2 + audit + notify + ingest + ouroboros loop (on) + `pipeline.json` with `recovered=true`. |
-| **What success looks like** | on: recovered pipeline + ouroboros evidence; off: thrash/decoy wrong codes → 0.0 under spend caps.                                                                                               |
-| **Evidence**                | Live A/B pending (cell shipped to `pr_active`).                                                                                                                                                 |
-| **Does _not_ prove**        | Live Stirling timeout / real Onyx outage / Argo DAG recovery — keep those as scheduled integration.                                                                                             |
+| **What success looks like** | on: recovered pipeline + ouroboros evidence; off: thrash/decoy wrong codes → 0.0 under spend caps.                                                                                                                                                |
+| **Evidence**                | Live A/B pending (cell shipped to `pr_active`).                                                                                                                                                                                                   |
+| **Does _not_ prove**        | Live Stirling timeout / real Onyx outage / Argo DAG recovery — keep those as scheduled integration.                                                                                                                                               |
 
 ---
 
