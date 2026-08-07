@@ -254,8 +254,8 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 
 ## Relationship to other ClawQL pieces
 
-| Piece                                                                    | Role                                                      |
-| ------------------------------------------------------------------------ | --------------------------------------------------------- |
+| Piece                                                      | Role                                                             |
+| ---------------------------------------------------------- | ---------------------------------------------------------------- |
 | **[Protocol Fabric](./protocol-fabric.md)**                | Named claim for Core + adapter (any protocol ↔ any); proven loop |
 | **`mcp-api-adapter`**                                      | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli        |
 | **ClawQL `search` / `execute`**                            | OpenAPI → MCP tools (inverse)                                    |

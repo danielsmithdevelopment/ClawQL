@@ -34,9 +34,9 @@ Any output protocol
   CLI · OpenAPI · GraphQL · gRPC · WebSocket · MCP
 ```
 
-| Direction         | Package           | Claim                                                                                               |
-| ----------------- | ----------------- | --------------------------------------------------------------------------------------------------- |
-| **Any API → MCP** | ClawQL Core       | Agents discover and call upstream REST / GraphQL / gRPC / CLI via MCP tools                         |
+| Direction         | Package           | Claim                                                                                                |
+| ----------------- | ----------------- | ---------------------------------------------------------------------------------------------------- |
+| **Any API → MCP** | ClawQL Core       | Agents discover and call upstream REST / GraphQL / gRPC / CLI via MCP tools                          |
 | **MCP → any API** | `mcp-api-adapter` | Wrap **any** MCP server (any language) and expose OpenAPI, GraphQL, `/mcp`, gRPC, WebSocket, gen-cli |
 
 Together: gRPC service ↔ GraphQL consumer, CLI ↔ REST, OpenAPI ↔ gRPC, WebSocket event ↔ MCP tools — **any combination, either direction**.
@@ -69,12 +69,12 @@ This is **not** an LLM benchmark cell. It is a protocol loop: if any hop fails, 
 
 ### Topology (recursion-safe)
 
-| Layer                   | Role                                                                                              |
-| ----------------------- | ------------------------------------------------------------------------------------------------- |
-| **A** ClawQL MCP        | Real tools: `execute`, `memory_ingest`, `memory_recall`, …                                        |
-| **B** mcp-api-adapter   | Wraps A — OpenAPI + GraphQL + `/mcp` + gRPC + **WebSocket `/ws`**                                 |
-| **C** gen-cli           | Thin CLI generated from B’s catalog; POSTs to B’s REST surface                                    |
-| **D** CLI custom source | `sources.json` → one op that runs C with `memory_ingest` baked into `cliArgs`                     |
+| Layer                   | Role                                                                          |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| **A** ClawQL MCP        | Real tools: `execute`, `memory_ingest`, `memory_recall`, …                    |
+| **B** mcp-api-adapter   | Wraps A — OpenAPI + GraphQL + `/mcp` + gRPC + **WebSocket `/ws`**             |
+| **C** gen-cli           | Thin CLI generated from B’s catalog; POSTs to B’s REST surface                |
+| **D** CLI custom source | `sources.json` → one op that runs C with `memory_ingest` baked into `cliArgs` |
 
 **Why this does not recurse:** `execute` spawns gen-cli → REST `POST /memory_ingest` → adapter CallTool `memory_ingest`. That path never calls `execute` again. Do **not** point gen-cli at an `execute` of the same CLI op.
 
