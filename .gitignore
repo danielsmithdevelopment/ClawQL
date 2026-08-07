@@ -77,6 +77,9 @@ __pycache__/
 graphify-out/
 codegraph-out/
 
+# Local / CI smoke outputs (B-2.3 IDP, OpenBench scratch, etc.)
+artifacts/
+
 # Managed Edge Gateway local runtime
 examples/managed-gateway/.env
 examples/managed-gateway/data/

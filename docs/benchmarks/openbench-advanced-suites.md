@@ -166,19 +166,19 @@ Phase 7  B-1.3 cycle-over-cycle; B-3.2 langs; B-6.3 legal
 
 **Do not** put live Stirling / Coneshare / Argo / live Onyx in PR OpenBench (ops confounds).
 
-| ID     | Subtask                                                                                                                                              | Size | Notes                                                                                           |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ----------------------------------------------------------------------------------------------- |
-| B2-0   | Define **stubbed** 5–7 stage chain using tools already graded: search/execute dry_run, audit Merkle-ish trail, memory_ingest, notify stub, onyx stub | M    | Map stages → existing MCP                                                                       |
-| B2.1-a | Task `idp-safe-pipeline-lite`: agent must complete ordered stages; score stages_passed/N                                                             | L    | ✅ WIN [31039035892](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31039035892) |
-| B2.1-b | Artifacts: `pipeline.json` + trail with correlation_id                                                                                               | M    | ✅ `pipeline.json` graded                                                                       |
-| B2.2   | Inject failure + Ouroboros recovery (optional cell)                                                                                                  | L    | ✅ WIN [31139014771](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31139014771) |
-| B2.3   | Scheduled **integration** job with real services (not `pr_active`)                                                                                   | XL   | Compose smoke (PR #850); Docling optional                                                       |
+| ID     | Subtask                                                                                                                                              | Size | Notes                                                                                                                                                                                 |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B2-0   | Define **stubbed** 5–7 stage chain using tools already graded: search/execute dry_run, audit Merkle-ish trail, memory_ingest, notify stub, onyx stub | M    | Map stages → existing MCP                                                                                                                                                             |
+| B2.1-a | Task `idp-safe-pipeline-lite`: agent must complete ordered stages; score stages_passed/N                                                             | L    | ✅ WIN [31039035892](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31039035892)                                                                                       |
+| B2.1-b | Artifacts: `pipeline.json` + trail with correlation_id                                                                                               | M    | ✅ `pipeline.json` graded                                                                                                                                                             |
+| B2.2   | Inject failure + Ouroboros recovery (optional cell)                                                                                                  | L    | ✅ WIN [31139014771](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31139014771)                                                                                       |
+| B2.3   | Scheduled **integration** job with real services (not `pr_active`)                                                                                   | XL   | ✅ Ordered compose: Nextcloud→Tika→Gotenberg→Stirling→Paperless→**Onyx upsert**→Nextcloud→**ConeShare dataroom**; Docling optional ([runbook](../runbooks/idp-pipeline-b23-smoke.md)) |
 
 **Live cell (B-2.0 / B2.1):** `idp-safe-pipeline-lite` **retired WIN** ([31039035892](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31039035892) on 1.0 / off 0.0). Seven stubbed stages — discover → plan_extract → plan_redact → audit_trail → onyx_cite → notify_handoff → persist. Dual Slack/Onyx fetch stubs are URL-dispatched so both can coexist. **Does not** prove live Stirling/Argo/ConeShare (that is B2.3).
 
 **B2.2:** `idp-pipeline-resilience` — Onyx cite stage injected as down; **ouroboros-on** recovers via evolutionary loop + seed fallback cite (`quartz-21`); **ouroboros-off** thrash/decoy fail. Arms `ouroboros-on,ouroboros-off`, `doom_loop=deny`.
 
-**B2.3:** Scheduled compose smoke (not `pr_active`) — see [idp-pipeline-b23-smoke](../runbooks/idp-pipeline-b23-smoke.md) / PR #850.
+**B2.3 status:** Ordered compose smoke includes Nextcloud, Tika, Gotenberg, Stirling, Paperless, **Onyx** (minimal postgres API + `upsert_ingestion_doc`), and **ConeShare** (open-source compose + dataroom). Docling optional (large image).
 
 ---
 

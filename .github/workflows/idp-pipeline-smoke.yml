@@ -1,0 +1,121 @@
+# B-2.3 IDP pipeline smoke (scheduled / dispatch / PR path-filtered)
+#
+# Proves real IDP document hops with local Docker (compose) or remote HTTP (live).
+# Stubbed OpenBench orchestration remains `idp-safe-pipeline-lite` (retired WIN) —
+# that does NOT replace this smoke.
+#
+# - pull_request (path-filtered): always runs **compose** (Tika + Gotenberg)
+# - schedule: weekly compose
+# - workflow_dispatch: offline | compose | live
+# - Never burns OpenBench `pr_active` tokens
+
+name: IDP pipeline smoke (B-2.3)
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/idp-pipeline-smoke.yml"
+      - "scripts/dev/smoke-idp-pipeline-b23.sh"
+      - "scripts/dev/smoke-idp-ordered-compose.sh"
+      - "examples/clawql-local-docker-compose/docker-compose.idp-smoke.yml"
+      - "examples/clawql-local-docker-compose/coneshare-smoke.env"
+      - "examples/clawql-local-docker-compose/docker-compose.yml"
+      - "packages/clawql-documents/**"
+      - "docs/runbooks/idp-pipeline-b23-smoke.md"
+  schedule:
+    - cron: "0 14 * * 1"
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: "offline = Helm+vitest; compose = + Tika/Gotenberg; live = + remote webhooks"
+        required: true
+        type: choice
+        options:
+          - offline
+          - compose
+          - live
+        default: compose
+
+permissions:
+  contents: read
+
+concurrency:
+  group: idp-pipeline-b23-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: IDP B-2.3 smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310
+        with:
+          version: v3.16.3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build workspace packages
+        run: npm run build
+
+      - name: Resolve smoke tier
+        id: tier
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REQ_TIER: ${{ github.event.inputs.tier || '' }}
+          CLAWQL_HTTP_BASE: ${{ secrets.CLAWQL_HTTP_BASE }}
+          CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN: ${{ secrets.CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN }}
+          CLAWQL_CONESHARE_WEBHOOK_TOKEN: ${{ secrets.CLAWQL_CONESHARE_WEBHOOK_TOKEN }}
+          ONYX_BASE_URL: ${{ secrets.ONYX_BASE_URL }}
+          ONYX_API_TOKEN: ${{ secrets.ONYX_API_TOKEN }}
+          CONESHARE_BASE_URL: ${{ secrets.CONESHARE_BASE_URL }}
+          CONESHARE_API_TOKEN: ${{ secrets.CONESHARE_API_TOKEN }}
+          DOCLING_BASE_URL: ${{ secrets.DOCLING_BASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ "${EVENT_NAME}" = "pull_request" ] || [ "${EVENT_NAME}" = "schedule" ]; then
+            TIER=compose
+          else
+            TIER="${REQ_TIER:-compose}"
+          fi
+          if [ "${TIER}" = "live" ]; then
+            if [ -z "${CLAWQL_HTTP_BASE:-}" ] || {
+              [ -z "${CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN:-}" ] &&
+                [ -z "${CLAWQL_CONESHARE_WEBHOOK_TOKEN:-}" ]
+            }; then
+              echo "::notice::live tier requested but webhook secrets missing — falling back to compose"
+              TIER=compose
+            fi
+          fi
+          echo "tier=${TIER}" >> "$GITHUB_OUTPUT"
+          echo "IDP_SMOKE_TIER=${TIER}" >> "$GITHUB_ENV"
+          echo "::notice::IDP B-2.3 smoke tier=${TIER}"
+
+      - name: Run B-2.3 smoke script
+        env:
+          CLAWQL_HTTP_BASE: ${{ secrets.CLAWQL_HTTP_BASE }}
+          CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN: ${{ secrets.CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN }}
+          CLAWQL_CONESHARE_WEBHOOK_TOKEN: ${{ secrets.CLAWQL_CONESHARE_WEBHOOK_TOKEN }}
+          ONYX_BASE_URL: ${{ secrets.ONYX_BASE_URL }}
+          ONYX_API_TOKEN: ${{ secrets.ONYX_API_TOKEN }}
+          CONESHARE_BASE_URL: ${{ secrets.CONESHARE_BASE_URL }}
+          CONESHARE_API_TOKEN: ${{ secrets.CONESHARE_API_TOKEN }}
+          DOCLING_BASE_URL: ${{ secrets.DOCLING_BASE_URL }}
+          IDP_SMOKE_OUT_DIR: ${{ github.workspace }}/artifacts/idp-b23-smoke
+        run: bash scripts/dev/smoke-idp-pipeline-b23.sh
+
+      - name: Upload smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: idp-b23-smoke-${{ github.run_id }}
+          path: artifacts/idp-b23-smoke/
+          if-no-files-found: warn
