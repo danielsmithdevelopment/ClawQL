@@ -2,8 +2,8 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-2.0 idp-safe-pipeline-lite WIN (31039035892). Next: optional B2.2 resilience, or scheduled B2.3 live-vendor smoke (not pr_active).",
-  "pr_active": [],
+  "live_resume_note": "B-2.2 idp-pipeline-resilience on pr_active (ouroboros-on vs off; Onyx outage recovery). B-2.0 lite retired; B2.3 = scheduled compose smoke (not pr_active).",
+  "pr_active": ["idp-pipeline-resilience"],
   "pr_trials": 1,
   "retired": {
     "idp-safe-pipeline-lite": {

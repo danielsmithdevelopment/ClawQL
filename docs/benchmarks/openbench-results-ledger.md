@@ -1,3 +1,7 @@
+### 2026-08-07 — `idp-pipeline-resilience` (B-2.2) shipped to `pr_active`
+
+New OpenBench cell: mid-pipeline Onyx cite outage; arms **ouroboros-on** vs **ouroboros-off** (`doom_loop=deny`). Seed appendix (on only) crystallizes fallback cite `quartz-21`. Live A/B pending — append WIN/FAIL when Actions returns.
+
 ### 2026-08-05 — `composed-safe-rollout` RTP v1.1 recollect WIN
 
 | Arm | Score             | Notes                                                      |

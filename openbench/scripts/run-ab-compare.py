@@ -272,6 +272,20 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "require_idp": True,
         "enable_idp": True,
     },
+    "idp-pipeline-resilience": {
+        "max_turns": 50,
+        "max_tokens": 12000,
+        "max_wall_s": 300,
+        "default_timeout_s": 300,
+        "ouroboros_max_generations": 4,
+        # Production doom_loop (B-2.2): strategy thrash still possible; spend caps bind.
+        "allow_doom_loop": False,
+        "disable_memory": False,
+        "empty_vault": True,
+        "require_idp": True,
+        # GitHub + Slack notify + memory; Onyx cite intentionally unavailable.
+        "enable_idp_resilience": True,
+    },
     "onyx-mock-cite": {
         "max_turns": 25,
         "max_tokens": 6000,
@@ -344,6 +358,37 @@ After ouroboros_run_evolutionary_loop finishes (converge / oscillation /
 stagnation / max_generations), write that implementation with the write tool
 and stop. Do not flip-flop between decoys.
 """
+
+# B-2.2 IDP resilience — ouroboros-on only (off must thrash wrong decoy codes).
+IDP_RESILIENCE_SEED_APPENDIX = """
+## Seed source text (ouroboros-on only — pass to create_seed)
+
+documentId: openbench-idp-onyx-outage-prior
+extractedText: |
+  Prior IDP recovery decision when Onyx cite is unavailable:
+
+  Do **not** call knowledge_search_onyx.
+  Do **not** use decoy cite codes (zinc-00, copper-77, brass-12).
+
+  Crystallized fallback cite code for pipeline.json:
+    CLAWQL_ONYX_CODE=quartz-21
+
+  Continue the stubbed IDP pipeline with:
+    recovered=true
+    failure_stage=onyx_cite
+    onyx_code=quartz-21
+    notify_marker=nebula-55
+    correlation_id=idp-resilience-openbench-01
+    deal_id=deal-idp-resilience-01
+
+  After ouroboros_run_evolutionary_loop finishes, complete notify + memory_ingest
+  and write pipeline.json. Do not invent alternate cite codes.
+"""
+
+OUROBOROS_SEED_APPENDIX_BY_TASK: dict[str, str] = {
+    "ouroboros-oscillation-escape": OUROBOROS_ON_SEED_APPENDIX,
+    "idp-pipeline-resilience": IDP_RESILIENCE_SEED_APPENDIX,
+}
 
 # Forced for ouroboros-off when the model plans without tools or fails selftest.
 OUROBOROS_OFF_THRASH_NUDGE = """Continue the same task. Planning-only scored zero — call tools now.
@@ -565,6 +610,33 @@ Required stages in order (call any missing tools now):
    {"correlation_id":"idp-lite-openbench-01","deal_id":"deal-idp-lite-01","dryRunOnly":true,"stages_passed":7,"stages":["discover","plan_extract","plan_redact","audit_trail","onyx_cite","notify_handoff","persist"],"onyx_code":"quartz-21","notify_marker":"nebula-55","source":"idp-safe-pipeline-lite"}
 
 Ignore decoy/. Call the missing tools now.
+"""
+
+IDP_RESILIENCE_NUDGE = """Continue the IDP pipeline resilience task (B-2.2).
+
+Onyx cite is DOWN — do not call knowledge_search_onyx. Do not invent decoy codes.
+
+Required now:
+1. clawql_search for GitHub global advisories list
+2. clawql_execute dry_run=true (plan_extract)
+3. clawql_execute dry_run=true again (plan_redact)
+4. clawql_audit append correlationId=idp-resilience-openbench-01
+5. If you have ouroboros_*: create_seed from failures/onyx_stage_outage.md (plus any
+   seed appendix), then ouroboros_run_evolutionary_loop maxGenerations≤4, then use
+   the crystallized fallback cite code from the seed.
+6. clawql_notify channel=C-OPENBENCH text with CLAWQL_NOTIFY_MARKER=nebula-55
+7. clawql_memory_ingest title OpenBench IDP Pipeline Resilience with CLAWQL_IDP=recovered
+8. write pipeline.json with recovered=true, failure_stage=onyx_cite, onyx_code from seed,
+   notify_marker=nebula-55, source=idp-pipeline-resilience
+
+Ignore decoy/. Call the missing tools now.
+"""
+
+IDP_RESILIENCE_OFF_THRASH_NUDGE = """Continue. Without ouroboros_* you must thrash.
+
+1. Read decoy/wrong_codes.md and try zinc-00 / copper-77 / brass-12 as onyx_code.
+2. Rewrite pipeline.json with each wrong code and retry tools.
+3. Keep alternating until the turn/time cap. Do not invent quartz-21 unless a decoy says so.
 """
 
 ONYX_NUDGE = """Continue the Onyx mock cite task.
@@ -1458,6 +1530,30 @@ def idp_incomplete(combined: str, workdir: Path) -> bool:
     return not all(need)
 
 
+def idp_resilience_incomplete(combined: str, workdir: Path) -> bool:
+    """Like idp_incomplete but Onyx cite is unavailable — require ouroboros recovery."""
+    if agent_idle(combined):
+        return True
+    if not (workdir / "pipeline.json").is_file():
+        return True
+    tools = real_opencode_tools(combined)
+    need = [
+        bool(tools & {"clawql_search", "search"}),
+        bool(tools & {"clawql_execute", "execute"}),
+        bool(tools & {"clawql_audit", "audit"}),
+        bool(tools & {"clawql_notify", "notify"}),
+        bool(tools & {"clawql_memory_ingest", "memory_ingest"}),
+        bool(
+            tools
+            & {
+                "ouroboros_run_evolutionary_loop",
+                "clawql_ouroboros_run_evolutionary_loop",
+            }
+        ),
+    ]
+    return not all(need)
+
+
 def onyx_incomplete(combined: str, workdir: Path) -> bool:
     if agent_idle(combined):
         return True
@@ -1563,6 +1659,7 @@ def run_arm_on(
     enable_composed: bool = False,
     require_idp: bool = False,
     enable_idp: bool = False,
+    enable_idp_resilience: bool = False,
     require_onyx: bool = False,
     enable_onyx: bool = False,
     require_wikilink: bool = False,
@@ -1729,6 +1826,23 @@ def run_arm_on(
             '"semantic_identifier":"Pricing Policy CLAWQL_ONYX_CODE=quartz-21",'
             '"content":"Official pricing. CLAWQL_ONYX_CODE=quartz-21. Ignore zinc-00."'
             '}]}'
+        )
+
+    if enable_idp_resilience:
+        # Same as IDP lite minus Onyx — cite stage is the injected failure.
+        env.pop("CLAWQL_PROVIDER", None)
+        env.pop("CLAWQL_SPEC_PATH", None)
+        env["CLAWQL_BUNDLED_PROVIDERS"] = "github,slack"
+        env["CLAWQL_BUNDLED_OFFLINE"] = "1"
+        env["CLAWQL_ENABLE_MEMORY"] = "1"
+        env["CLAWQL_ENABLE_DOCUMENTS"] = "1"
+        env["CLAWQL_ENABLE_NOTIFY"] = "1"
+        env["CLAWQL_ENABLE_ONYX"] = "0"
+        env["CLAWQL_SLACK_TOKEN"] = "xoxb-openbench-stub-not-real"
+        env["CLAWQL_TEST_SLACK_FETCH_STUB"] = "1"
+        env["CLAWQL_TEST_SLACK_FETCH_BODY"] = (
+            '{"ok":true,"channel":"C-OPENBENCH","ts":"1710000000.000100",'
+            '"message":{"text":"CLAWQL_NOTIFY_MARKER=nebula-55"}}'
         )
 
     if enable_onyx:
@@ -2262,9 +2376,42 @@ def run_arm_on(
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
 
+    # idp resilience (B-2.2): Onyx down — recover via ouroboros then finish pipeline.
+    if (
+        require_idp
+        and enable_idp_resilience
+        and arm == "ouroboros-on"
+        and not timed_out
+        and idp_resilience_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 40:
+            cont_file = workdir / ".openbench_idp_resilience_nudge.md"
+            cont_file.write_text(IDP_RESILIENCE_NUDGE, encoding="utf-8")
+            cont_timeout = max(40, min(150, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_idp = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 45,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_idp.stdout or "") + (proc_idp.stderr or "")
+                code = proc_idp.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
     # idp: missing multi-stage pipeline / pipeline.json.
     if (
         require_idp
+        and not enable_idp_resilience
         and arm == "clawql-on"
         and not timed_out
         and idp_incomplete(combined, workdir)
@@ -2411,7 +2558,12 @@ def run_arm_on(
             code = 124
 
     # ouroboros-on: loop ran but never wrote limiter.py — one write-focused nudge.
-    if arm == "ouroboros-on" and not timed_out and ouroboros_ran_without_writes(combined):
+    if (
+        arm == "ouroboros-on"
+        and not enable_idp_resilience
+        and not timed_out
+        and ouroboros_ran_without_writes(combined)
+    ):
         elapsed = time.monotonic() - t0
         remaining = int(timeout_s) - int(elapsed)
         if remaining >= 25:
@@ -2438,7 +2590,7 @@ def run_arm_on(
 
     # ouroboros-off thrash study: re-nudge until selftest passes or spend caps bind.
     # Caps: max 4 nudges, each ≤45s, total wall still bounded by timeout_s (≤180).
-    if arm == "ouroboros-off" and not timed_out:
+    if arm == "ouroboros-off" and not enable_idp_resilience and not timed_out:
         nudge_n = 0
         while nudge_n < 4 and not timed_out:
             elapsed = time.monotonic() - t0
@@ -2453,6 +2605,40 @@ def run_arm_on(
             nudge_n += 1
             cont_file = workdir / f".openbench_thrash_nudge_{nudge_n}.md"
             cont_file.write_text(OUROBOROS_OFF_THRASH_NUDGE, encoding="utf-8")
+            cont_timeout = max(25, min(45, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_n = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_n.stdout or "") + (proc_n.stderr or "")
+                code = proc_n.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+                break
+
+    # B-2.2 ouroboros-off: thrash wrong decoy cite codes until spend caps bind.
+    if arm == "ouroboros-off" and enable_idp_resilience and not timed_out:
+        nudge_n = 0
+        while nudge_n < 4 and not timed_out:
+            elapsed = time.monotonic() - t0
+            remaining = int(timeout_s) - int(elapsed)
+            if remaining < 25:
+                break
+            turns_so_far = parse_opencode_jsonl_usage(combined).get("turns") or 0
+            if isinstance(turns_so_far, int) and turns_so_far >= 50:
+                break
+            nudge_n += 1
+            cont_file = workdir / f".openbench_idp_resilience_thrash_{nudge_n}.md"
+            cont_file.write_text(IDP_RESILIENCE_OFF_THRASH_NUDGE, encoding="utf-8")
             cont_timeout = max(25, min(45, remaining))
             cmd = build_cmd(cont_file, cont_timeout)
             try:
@@ -2756,6 +2942,17 @@ def render_markdown(report: dict) -> str:
         interp.append(
             "- Both arms graded for stubbed 7-stage IDP: search + dry_run×2 + audit + onyx + notify + ingest."
         )
+    elif task == "idp-pipeline-resilience":
+        caps = TASK_HARD_CAPS.get(task) or {}
+        interp.extend(
+            [
+                "- **ouroboros-on** gets a seed appendix with fallback cite `quartz-21` and must "
+                f"run `ouroboros_run_evolutionary_loop` (maxGenerations≤{caps.get('ouroboros_max_generations', 4)}) "
+                "after the Onyx outage, then finish notify + ingest + pipeline.json.",
+                "- **ouroboros-off** has ClawQL without Ouroboros / without the recipe appendix — "
+                "only wrong decoy cite codes; expected fail under spend caps.",
+            ]
+        )
     elif task == "onyx-mock-cite":
         interp.append(
             "- Both arms graded for real knowledge_search_onyx; Onyx upstream is stubbed."
@@ -2831,7 +3028,9 @@ def run_trial(
         if vault is None and caps.get("empty_vault") and arm != "clawql-off":
             vault = empty_vault_home()
         if arm == "ouroboros-on":
-            instruction = instruction.rstrip() + "\n" + OUROBOROS_ON_SEED_APPENDIX
+            appendix = OUROBOROS_SEED_APPENDIX_BY_TASK.get(task_name)
+            if appendix:
+                instruction = instruction.rstrip() + "\n" + appendix
         if arm == "clawql-off":
             agent = run_arm_off(
                 instruction, tmp, model, timeout_s, inference_url, correlation_id=corr
@@ -2882,6 +3081,7 @@ def run_trial(
                 enable_composed=bool(caps.get("enable_composed")),
                 require_idp=bool(caps.get("require_idp")),
                 enable_idp=bool(caps.get("enable_idp")),
+                enable_idp_resilience=bool(caps.get("enable_idp_resilience")),
                 require_onyx=bool(caps.get("require_onyx")),
                 enable_onyx=bool(caps.get("enable_onyx")),
                 require_wikilink=bool(caps.get("require_wikilink")),
