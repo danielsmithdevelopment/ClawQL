@@ -322,14 +322,14 @@ PY
     reg_code="$(curl -sS -o "${WORK}/onyx-register.json" -w '%{http_code}' \
       -X POST "${ONYX_BASE}/auth/register" \
       -H "Content-Type: application/json" \
-      -d '{"email":"admin@localhost","password":"Adminadmin1!","is_active":true,"is_superuser":true,"is_verified":true,"role":"admin"}' || true)"
+      -d '{"email":"admin@example.com","password":"Adminadmin1!","is_active":true,"is_superuser":true,"is_verified":true,"role":"admin"}' || true)"
     COOKIE_JAR="${WORK}/onyx-cookies.txt"
     rm -f "${COOKIE_JAR}"
     login_code="$(curl -sS -o "${WORK}/onyx-login.json" -w '%{http_code}' \
       -c "${COOKIE_JAR}" -b "${COOKIE_JAR}" \
       -X POST "${ONYX_BASE}/auth/login" \
       -H "Content-Type: application/x-www-form-urlencoded" \
-      --data-urlencode "username=admin@localhost" \
+      --data-urlencode "username=admin@example.com" \
       --data-urlencode "password=Adminadmin1!" || true)"
     # Optional API key when EE/license flags allow it
     key_json="$(curl -sS -c "${COOKIE_JAR}" -b "${COOKIE_JAR}" \
@@ -422,27 +422,31 @@ if [[ -z "${CS_BASE}" || -z "${CS_TOKEN}" ]]; then
     record FAIL stage_coneshare "coneshare-web never healthy"
   else
     CS_BASE="http://127.0.0.1:8999"
-    # Ensure smoke admin exists (idempotent).
+    # Apply migrations then create smoke admin (idempotent).
+    docker exec clawql-idp-coneshare-web \
+      python3 manage.py migrate --noinput >/dev/null 2>&1 || true
     docker exec \
       -e DJANGO_SUPERUSER_USERNAME=admin \
       -e DJANGO_SUPERUSER_PASSWORD=adminadmin1 \
-      -e DJANGO_SUPERUSER_EMAIL=admin@localhost \
+      -e DJANGO_SUPERUSER_EMAIL=admin@example.com \
       clawql-idp-coneshare-web \
       python3 manage.py createsuperuser --noinput >/dev/null 2>&1 || true
     # Upstream JWT obtain uses email (SimpleJWT / custom serializer), not username.
     token_json="$(curl -sS -X POST "${CS_BASE}/api/v1/token/" \
       -H "Content-Type: application/json" \
-      -d '{"email":"admin@localhost","password":"adminadmin1"}' || true)"
+      -d '{"email":"admin@example.com","password":"adminadmin1"}' || true)"
     CS_TOKEN="$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("access") or d.get("token") or "")' <<<"${token_json}" 2>/dev/null || true)"
     if [[ -z "${CS_TOKEN}" ]]; then
       # Fallback: some builds accept username or email+username together.
       token_json="$(curl -sS -X POST "${CS_BASE}/api/v1/token/" \
         -H "Content-Type: application/json" \
-        -d '{"username":"admin","email":"admin@localhost","password":"adminadmin1"}' || true)"
+        -d '{"username":"admin","email":"admin@example.com","password":"adminadmin1"}' || true)"
       CS_TOKEN="$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("access") or d.get("token") or "")' <<<"${token_json}" 2>/dev/null || true)"
     fi
     if [[ -z "${CS_TOKEN}" ]]; then
-      record FAIL stage_coneshare "token create failed: ${token_json:0:240}"
+      # Capture non-HTML error detail for artifacts
+      printf '%s' "${token_json}" >"${WORK}/coneshare-token-error.txt"
+      record FAIL stage_coneshare "token create failed: $(python3 -c 'import sys; t=sys.stdin.read(); print(t[:240].replace(chr(10)," "))' <<<"${token_json}")"
     else
       dr_code="$(curl -sS -o "${WORK}/coneshare-dataroom.json" -w '%{http_code}' \
         -X POST "${CS_BASE}/api/v1/datarooms/" \
