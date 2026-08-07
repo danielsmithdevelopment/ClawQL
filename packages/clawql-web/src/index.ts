@@ -11,12 +11,7 @@ export type {
   WebSearchProvider,
   WebSearchProviderId,
 } from "./interfaces.js";
-export {
-  envImpliesWebEnabled,
-  isWebEnabled,
-  loadWebConfig,
-  type WebConfig,
-} from "./config.js";
+export { envImpliesWebEnabled, isWebEnabled, loadWebConfig, type WebConfig } from "./config.js";
 export {
   appendWebAudit,
   installWebAuditWormSink,
@@ -38,11 +33,7 @@ export {
   type WebWormRecord,
 } from "./audit/worm.js";
 export { resolveCdpWebSocketUrl } from "./providers/browser/cdp.js";
-export {
-  WebCapabilityError,
-  isWebCapabilityError,
-  type WebCapabilityErrorCode,
-} from "./errors.js";
+export { WebCapabilityError, isWebCapabilityError, type WebCapabilityErrorCode } from "./errors.js";
 export { createWebService, type WebService } from "./service.js";
 export { browserAsSearch } from "./providers/fallback-search.js";
 export { resolveSearchProvider } from "./providers/search/resolve.js";

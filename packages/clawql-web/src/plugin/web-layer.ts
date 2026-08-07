@@ -8,9 +8,7 @@ import { Effect, Layer } from "effect";
 import { createWebPlugin } from "./web-plugin.js";
 
 export type WebLayerError =
-  | PluginAlreadyRegisteredError
-  | ClawQLError
-  | McpToolAlreadyRegisteredError;
+  PluginAlreadyRegisteredError | ClawQLError | McpToolAlreadyRegisteredError;
 
 /** Effect Layer that registers {@link createWebPlugin} via `ClawQLApi.registerPlugin`. */
 export function makeWebLayer(
