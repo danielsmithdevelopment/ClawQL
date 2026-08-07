@@ -19,6 +19,7 @@ COPY packages/clawql-codegraph/package.json ./packages/clawql-codegraph/
 COPY packages/clawql-api/package.json ./packages/clawql-api/
 COPY packages/clawql-memory/package.json ./packages/clawql-memory/
 COPY packages/clawql-ontology/package.json ./packages/clawql-ontology/
+COPY packages/clawql-web/package.json ./packages/clawql-web/
 COPY packages/clawql-documents/package.json ./packages/clawql-documents/
 COPY packages/clawql-automation/package.json ./packages/clawql-automation/
 COPY packages/clawql-sandbox/package.json ./packages/clawql-sandbox/
