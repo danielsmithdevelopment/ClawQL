@@ -113,7 +113,7 @@ export function FooterWithNewsletterFormCategoriesAndSocialIcons({
             </nav>
           </div>
           <div className="flex items-center justify-between gap-10 text-sm/7">
-            <div className="text-mist-600 dark:text-mist-600">{fineprint}</div>
+            <div className="text-mist-700 dark:text-mist-300">{fineprint}</div>
             {socialLinks && <div className="flex items-center gap-4 sm:gap-10">{socialLinks}</div>}
           </div>
         </Container>

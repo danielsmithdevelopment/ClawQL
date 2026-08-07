@@ -1,11 +1,37 @@
-/* ClawQL Streams marketing landing — page-scoped atmosphere + motion */
+/* ClawQL Streams marketing landing — atmosphere, motion, WCAG contrast */
 
 .streams-page {
+  /* Light-surface defaults (AAA vs band/surface backgrounds) */
   --streams-ink: oklch(16% 0.02 210);
-  --streams-foam: oklch(97% 0.01 195);
-  --streams-signal: oklch(68% 0.09 195);
-  --streams-signal-deep: oklch(48% 0.07 205);
-  --streams-mid: oklch(32% 0.035 210);
+  --streams-foam: oklch(98% 0.005 195);
+  --streams-signal: oklch(82% 0.07 195);
+  --streams-signal-deep: oklch(34% 0.055 205);
+  --streams-body: oklch(28% 0.015 215);
+  --streams-muted: oklch(35% 0.018 215);
+  --streams-surface: oklch(97.5% 0.006 200);
+  --streams-surface-band: oklch(94.5% 0.01 205);
+  --streams-table-accent: oklch(34% 0.055 205 / 0.1);
+  --streams-border: oklch(45% 0.02 210 / 0.35);
+  color: var(--streams-body);
+}
+
+/*
+ * Tailwind v4 `dark:` uses prefers-color-scheme. Keep Streams surfaces in sync
+ * so headings never render light-on-light (the illegible failure mode).
+ */
+@media (prefers-color-scheme: dark) {
+  .streams-page {
+    --streams-ink: oklch(98% 0.005 195);
+    --streams-foam: oklch(98% 0.005 195);
+    --streams-signal: oklch(82% 0.07 195);
+    --streams-signal-deep: oklch(82% 0.07 195);
+    --streams-body: oklch(90% 0.015 210);
+    --streams-muted: oklch(82% 0.02 210);
+    --streams-surface: oklch(16% 0.015 215);
+    --streams-surface-band: oklch(13.5% 0.012 220);
+    --streams-table-accent: oklch(82% 0.07 195 / 0.14);
+    --streams-border: oklch(70% 0.02 210 / 0.35);
+  }
 }
 
 .streams-hero {
@@ -20,7 +46,7 @@
   background:
     radial-gradient(120% 80% at 50% -10%, oklch(28% 0.04 200 / 0.55), transparent 55%),
     radial-gradient(90% 70% at 100% 100%, oklch(30% 0.05 185 / 0.35), transparent 50%),
-    linear-gradient(165deg, oklch(14% 0.02 220) 0%, var(--streams-ink) 42%, oklch(18% 0.03 195) 100%);
+    linear-gradient(165deg, oklch(14% 0.02 220) 0%, oklch(16% 0.02 210) 42%, oklch(18% 0.03 195) 100%);
 }
 
 .streams-hero::before {
@@ -55,21 +81,21 @@
 }
 
 .streams-path--a {
-  stroke: oklch(72% 0.08 195 / 0.55);
+  stroke: oklch(82% 0.07 195 / 0.55);
   stroke-width: 1.5;
   stroke-dasharray: 8 14;
   animation: streams-flow 18s linear infinite;
 }
 
 .streams-path--b {
-  stroke: oklch(62% 0.1 185 / 0.4);
+  stroke: oklch(78% 0.08 185 / 0.45);
   stroke-width: 2.25;
   stroke-dasharray: 2 18;
   animation: streams-flow 24s linear infinite reverse;
 }
 
 .streams-path--c {
-  stroke: oklch(78% 0.06 210 / 0.28);
+  stroke: oklch(88% 0.04 210 / 0.35);
   stroke-width: 1;
   animation: streams-drift 12s ease-in-out infinite alternate;
 }
@@ -113,14 +139,67 @@
   margin-bottom: 0.55rem;
 }
 
-.streams-section-band {
-  background:
-    linear-gradient(180deg, oklch(96% 0.008 200) 0%, oklch(93% 0.012 205) 100%);
+.streams-hero__headline {
+  margin-top: 1.5rem;
+  max-width: 36rem;
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 112.5;
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  line-height: 1.35;
+  font-weight: 550;
+  letter-spacing: -0.02em;
+  color: oklch(98% 0.005 195);
+  text-wrap: balance;
 }
 
-:is(html.dark) .streams-section-band,
-.dark .streams-section-band {
-  background: linear-gradient(180deg, oklch(18% 0.015 215) 0%, oklch(15% 0.012 220) 100%);
+.streams-hero__lede {
+  margin-top: 1rem;
+  max-width: 32rem;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: oklch(94% 0.015 200);
+}
+
+.streams-surface {
+  background: var(--streams-surface);
+  color: var(--streams-body);
+}
+
+.streams-section-band {
+  background: linear-gradient(180deg, var(--streams-surface-band) 0%, var(--streams-surface) 100%);
+  color: var(--streams-body);
+}
+
+/* Beat Tailwind dark:/light utilities that otherwise desync from our surfaces */
+.streams-page section:not(.streams-hero) :is(h2, h3) {
+  color: var(--streams-ink) !important;
+}
+
+.streams-page section:not(.streams-hero) :is(p, li, td, .streams-mode p) {
+  color: var(--streams-body);
+}
+
+/* Content links only — never restyle filled/plain CTA buttons (bg-* / rounded-full button chrome) */
+.streams-page section:not(.streams-hero) a:not([class*='bg-']):not([class*='rounded-full']) {
+  color: var(--streams-ink);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.streams-page section:not(.streams-hero) a:not([class*='bg-']):not([class*='rounded-full']):hover,
+.streams-page section:not(.streams-hero) a:not([class*='bg-']):not([class*='rounded-full']):focus-visible {
+  color: var(--streams-signal-deep);
+}
+
+.streams-page section:not(.streams-hero) a:not([class*='bg-']):not([class*='rounded-full']):focus-visible {
+  outline: 2px solid var(--streams-signal-deep);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Eyebrow / muted labels — override Tailwind mist utilities that desync in dark mode */
+.streams-page section:not(.streams-hero) :is([class*='text-mist-700'], [class*='text-mist-400'], [class*='text-mist-600']) {
+  color: var(--streams-muted) !important;
 }
 
 .streams-mode {
@@ -145,17 +224,30 @@
   font-size: 1.35rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--color-mist-950);
+  color: var(--streams-ink);
 }
 
-.dark .streams-mode__label {
-  color: white;
+.streams-mode__detail {
+  margin-top: 0.75rem;
+  color: var(--streams-body);
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .streams-compare {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
+  color: var(--streams-body);
+}
+
+.streams-compare caption {
+  caption-side: top;
+  text-align: left;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--streams-ink);
 }
 
 .streams-compare th,
@@ -163,34 +255,23 @@
   padding: 0.85rem 1rem;
   text-align: left;
   vertical-align: top;
-  border-bottom: 1px solid oklch(70% 0.01 210 / 0.35);
+  border-bottom: 1px solid var(--streams-border);
+  color: var(--streams-body);
 }
 
 .streams-compare th {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.01em;
-  color: var(--color-mist-950);
+  color: var(--streams-ink);
   white-space: nowrap;
-}
-
-.dark .streams-compare th {
-  color: white;
-  border-bottom-color: oklch(40% 0.02 210 / 0.4);
-}
-
-.dark .streams-compare td {
-  border-bottom-color: oklch(40% 0.02 210 / 0.4);
 }
 
 .streams-compare th:last-child,
 .streams-compare td:last-child {
-  background: oklch(68% 0.09 195 / 0.08);
-}
-
-.dark .streams-compare th:last-child,
-.dark .streams-compare td:last-child {
-  background: oklch(68% 0.09 195 / 0.12);
+  background: var(--streams-table-accent);
+  color: var(--streams-ink);
+  font-weight: 550;
 }
 
 .streams-fabric {
@@ -221,15 +302,15 @@
   display: inline-flex;
   align-items: center;
   padding: 0.45rem 0.85rem;
-  border: 1px solid oklch(55% 0.04 205 / 0.35);
-  color: var(--color-mist-800);
-  background: oklch(100% 0 0 / 0.35);
+  border: 1px solid var(--streams-border);
+  color: var(--streams-ink);
+  background: oklch(100% 0 0 / 0.45);
 }
 
-.dark .streams-fabric__chip {
-  color: var(--color-mist-200);
-  background: oklch(20% 0.02 210 / 0.5);
-  border-color: oklch(55% 0.04 205 / 0.25);
+@media (prefers-color-scheme: dark) {
+  .streams-fabric__chip {
+    background: oklch(22% 0.02 210 / 0.65);
+  }
 }
 
 .streams-fabric__arrow {
@@ -243,8 +324,22 @@
   letter-spacing: -0.03em;
 }
 
-.dark .streams-fabric__core {
-  color: var(--streams-signal);
+.streams-scale-title {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--streams-ink);
+}
+
+.streams-spec-list {
+  display: flex;
+  max-width: 42rem;
+  flex-direction: column;
+  gap: 1rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--streams-body);
 }
 
 @keyframes streams-flow {
@@ -255,11 +350,11 @@
 
 @keyframes streams-drift {
   from {
-    opacity: 0.35;
+    opacity: 0.45;
     transform: translateY(0);
   }
   to {
-    opacity: 0.7;
+    opacity: 0.85;
     transform: translateY(-6px);
   }
 }
@@ -267,7 +362,7 @@
 @keyframes streams-pulse {
   0%,
   100% {
-    opacity: 0.45;
+    opacity: 0.55;
     transform: scale(0.85);
   }
   50% {
