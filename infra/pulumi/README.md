@@ -27,17 +27,17 @@ If `clawql:profile` is omitted: `cloudflare` → `team-vault`, `aws`/`gcp` → `
 
 ## Layout
 
-| Path                        | Role                                  |
-| --------------------------- | ------------------------------------- |
-| `src/index.ts`              | Stack entry — routes by profile       |
+| Path                        | Role                                                |
+| --------------------------- | --------------------------------------------------- |
+| `src/index.ts`              | Stack entry — routes by profile                     |
 | `src/cloudflare-edge.ts`    | Edge launch stack (R2/KV/D1/Queue + gateway Worker) |
-| `src/cloudflare.ts`         | R2 team-vault only                    |
-| `src/aws-idp-k3s.ts`        | K3s bootstrap EC2                     |
-| `src/aws-eks.ts`            | EKS + Karpenter roles                 |
-| `src/aws.ts` / `src/gcp.ts` | Golden hosts                          |
-| `src/k3s-user-data.ts`      | K3s install script                    |
-| `src/profiles.ts`           | Profile enum + defaults               |
-| `src/automation.ts`         | Automation API (`stack.up` from Node) |
+| `src/cloudflare.ts`         | R2 team-vault only                                  |
+| `src/aws-idp-k3s.ts`        | K3s bootstrap EC2                                   |
+| `src/aws-eks.ts`            | EKS + Karpenter roles                               |
+| `src/aws.ts` / `src/gcp.ts` | Golden hosts                                        |
+| `src/k3s-user-data.ts`      | K3s install script                                  |
+| `src/profiles.ts`           | Profile enum + defaults                             |
+| `src/automation.ts`         | Automation API (`stack.up` from Node)               |
 
 ## Quick start
 

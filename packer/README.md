@@ -4,11 +4,11 @@ Immutable VM images with ClawQL installed and `~/.ClawQL` prepared for boot-time
 
 ## Targets
 
-| Build name | Cloud | Artifact |
-|------------|-------|----------|
-| `validate.docker.clawql` | Docker (CI) | Syntax + bake smoke |
-| `aws-ami.amazon-ebs.clawql` | AWS | AMI per region |
-| `gcp-image.googlecompute.clawql` | GCP | Custom Compute image |
+| Build name                       | Cloud       | Artifact             |
+| -------------------------------- | ----------- | -------------------- |
+| `validate.docker.clawql`         | Docker (CI) | Syntax + bake smoke  |
+| `aws-ami.amazon-ebs.clawql`      | AWS         | AMI per region       |
+| `gcp-image.googlecompute.clawql` | GCP         | Custom Compute image |
 
 Cloudflare managed tier uses `scripts/packer/cloudflare-bootstrap.sh` at Worker/container boot (verified R2 state — no AMI).
 
@@ -46,10 +46,10 @@ packer build -only=gcp-image.googlecompute.clawql \
 
 ## Tier seeding
 
-| Tier | Boot configuration |
-|------|-------------------|
-| Shared | `CLAWQL_SYNC_PREFIX=shared/` + tenant isolation via operator |
-| Dedicated | `CLAWQL_SYNC_PREFIX=tenant/{id}/` from instance metadata |
-| Enterprise | Customer bucket + Vault; image unchanged |
+| Tier       | Boot configuration                                           |
+| ---------- | ------------------------------------------------------------ |
+| Shared     | `CLAWQL_SYNC_PREFIX=shared/` + tenant isolation via operator |
+| Dedicated  | `CLAWQL_SYNC_PREFIX=tenant/{id}/` from instance metadata     |
+| Enterprise | Customer bucket + Vault; image unchanged                     |
 
 See [Getting started for teams — Golden host images](../docs/getting-started/getting-started-for-teams.md#golden-host-images) and [ADR 0006](../docs/adr/0006-golden-host-images-packer.md).
