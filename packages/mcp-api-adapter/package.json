@@ -1,7 +1,7 @@
 {
   "name": "mcp-api-adapter",
-  "version": "0.5.1",
-  "description": "Standalone adapter: point at any MCP server and instantly serve OpenAPI + GraphQL + Streamable HTTP /mcp + gRPC, plus gen-cli for a thin tool CLI",
+  "version": "0.6.0",
+  "description": "Standalone adapter: point at any MCP server and instantly serve OpenAPI + GraphQL + Streamable HTTP /mcp + gRPC + WebSocket, plus gen-cli for a thin tool CLI",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -49,11 +49,13 @@
     "@modelcontextprotocol/sdk": "^1.27.1",
     "express": "^5.2.1",
     "graphql": "^16.14.0",
-    "mcp-grpc-transport": "1.0.0"
+    "mcp-grpc-transport": "1.0.0",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^26.1.1",
+    "@types/ws": "^8.18.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.1",
     "zod": "^3.24.0"

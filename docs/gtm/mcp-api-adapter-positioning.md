@@ -1,17 +1,20 @@
 # GTM: MCP API Adapter (gRPC on-ramp)
 
-**Status:** ✅ Shipped in-repo (`mcp-api-adapter@0.4.0` — any MCP → OpenAPI + GraphQL + gRPC) — npm publish on independent cadence  
+**Status:** ✅ Shipped in-repo (`mcp-api-adapter@0.5.1` — any MCP → OpenAPI + GraphQL + `/mcp` + gRPC + gen-cli) — npm publish on independent cadence  
 **Canonical design:** [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)  
 **User guide:** [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md)  
 **Package:** [`packages/mcp-api-adapter`](../../packages/mcp-api-adapter/README.md)  
 **Example demos:** [`examples/mcp-api-adapter`](../../examples/mcp-api-adapter/README.md)  
-**Transport:** [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md)
+**Transport:** [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md)  
+**Protocol Fabric:** [`docs/gtm/protocol-fabric.md`](./protocol-fabric.md)
 
 ---
 
 ## One-liner
 
-Call MCP tools by name over HTTP **or GraphQL**. Production deployments use **`mcp-grpc-transport`** — the only production TypeScript gRPC transport for MCP.
+Call MCP tools by name over HTTP **or GraphQL**. Production deployments use **`mcp-grpc-transport`** — the only production TypeScript gRPC transport for MCP. Wrap **any-language** MCP upstream; the adapter runtime is TypeScript.
+
+**Protocol Fabric:** together with ClawQL Core (APIs → MCP), this is MCP as the common IR both directions — see [`protocol-fabric.md`](./protocol-fabric.md).
 
 ---
 
@@ -19,8 +22,10 @@ Call MCP tools by name over HTTP **or GraphQL**. Production deployments use **`m
 
 - Most published MCP servers use **stdio** (local) or **Streamable HTTP** (remote). **gRPC is the gap.**
 - Google has proposed gRPC as a first-class MCP transport; ClawQL already ships the TypeScript production implementation (`mcp-grpc-transport` 1.0, MCP 2026-07-28).
-- Python **mcpo** covers MCP → OpenAPI for OpenWebUI-style consumers but is stdio/FastAPI-centric and does not funnel to our transport.
-- A **gRPC-first** TypeScript on-ramp (`POST /{toolName}` + OpenAPI + GraphQL) is the missing adoption wedge: every Swagger / GraphiQL visitor sees the path to `:50051`.
+- Python **[mcpo](https://github.com/open-webui/mcpo)** covers MCP → OpenAPI for OpenWebUI-style consumers (widely known there). It is the right choice when **one REST surface** is enough. It does not offer GraphQL mutations, Streamable HTTP re-export, gRPC scaffolding, or gen-cli — and does not funnel to our transport.
+- A **multi-surface** TypeScript on-ramp (`POST /{toolName}` + OpenAPI + GraphQL + `/mcp` + gRPC + gen-cli) is the missing adoption wedge: every Swagger / GraphiQL visitor sees the path to `:50051`.
+
+**Status note:** shipped as `mcp-api-adapter@0.5.1` (five surfaces). GTM one-liner above still emphasizes the REST/GraphQL → gRPC funnel.
 
 ---
 

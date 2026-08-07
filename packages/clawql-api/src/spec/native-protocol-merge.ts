@@ -26,7 +26,10 @@ export async function mergeNativeProtocolOperations(loaded: LoadedSpec): Promise
   recordNativeMergeFromOperations(gql, grpc);
   const extra = gql.concat(grpc);
 
-  if (extra.length === 0) return loaded;
+  if (extra.length === 0) {
+    // Still merge ~/.ClawQL/sources.json (CLI / MCP / OpenAPI custom sources).
+    return mergeCustomSourceOperations(loaded);
+  }
 
   const seen = new Set(loaded.operations.map((o) => o.id));
   const merged: Operation[] = [...loaded.operations];

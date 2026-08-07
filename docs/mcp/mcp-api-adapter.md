@@ -1,12 +1,15 @@
-# mcp-api-adapter — five surfaces, one catalog
+# mcp-api-adapter — six surfaces, one catalog
 
-**Package:** [`mcp-api-adapter`](../../packages/mcp-api-adapter/) (`0.5.1+`)  
+**Package:** [`mcp-api-adapter`](../../packages/mcp-api-adapter/) (`0.6.0+`)  
 **Status:** Shipped  
 **Essay:** [Five surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter-five-surfaces/)  
 **Design:** [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)  
-**Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)
+**Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)  
+**Fabric loop smoke:** [`docs/design/protocol-fabric-loop-benchmark.md`](../design/protocol-fabric-loop-benchmark.md)
 
-`mcp-api-adapter` wraps **any** MCP server — stdio, Streamable HTTP, or gRPC — and exposes **five API surfaces** from one tool catalog without changing the server. No ClawQL install required.
+`mcp-api-adapter` wraps **any** MCP server — stdio, Streamable HTTP, or gRPC — and exposes **six API surfaces** from one tool catalog without changing the server. No ClawQL install required.
+
+**Language-agnostic.** The adapter process is TypeScript (`npx mcp-api-adapter`); the upstream may be Python, Go, Rust, or any language that speaks MCP. Users do not write TypeScript to use it — same Node baseline as `npx clawql-mcp`.
 
 ```text
 Any MCP server
@@ -21,10 +24,11 @@ mcp-api-adapter
          ├── POST /graphql        GraphQL mutations + GraphiQL at /graphiql
          ├── /mcp                 Streamable HTTP re-export for IDE clients
          ├── :50051               gRPC (upstream or locally scaffolded)
+         ├── /ws                  WebSocket tool-call surface
          └── gen-cli              Generated zero-dependency Node CLI
 ```
 
-Point the adapter at one upstream. It calls `ListTools` at startup, builds the OpenAPI spec and GraphQL schema from each tool's `inputSchema`, and mounts all five surfaces.
+Point the adapter at one upstream. It calls `ListTools` at startup, builds the OpenAPI spec and GraphQL schema from each tool's `inputSchema`, and mounts the HTTP/WS/gRPC surfaces.
 
 ## The client fragmentation problem
 
@@ -39,7 +43,9 @@ MCP standardized how agents discover and call tools. It did not standardize how 
 | Cursor / Claude Desktop         | Streamable HTTP `/mcp`                 |
 | Data / ops scripts              | A thin CLI                             |
 
-The usual answer is a custom adapter per consumer — or Python **mcpo** for OpenAPI only. **`mcp-api-adapter`** is the TypeScript answer for all five.
+The usual answer is a custom adapter per consumer — or Python **[mcpo](https://github.com/open-webui/mcpo)** (Open WebUI) for **OpenAPI/REST only**. **`mcp-api-adapter`** is the multi-surface option: OpenAPI + GraphQL + Streamable HTTP `/mcp` + gRPC + WebSocket + gen-cli from one MCP upstream. Prefer **mcpo** when Open WebUI users already expect that single REST surface; prefer the adapter when one REST facade is not enough.
+
+Together with ClawQL Core (APIs → MCP), this is the **[Protocol Fabric](../gtm/protocol-fabric.md)** — MCP as the common IR in both directions.
 
 ## Direction: MCP → APIs (inverse of ClawQL Core)
 
@@ -99,7 +105,7 @@ Everything after `--stdio --` is the child command. The gateway keeps the stdio 
 
 With `--grpc-address`, no second gRPC server is started; `/openapi.json` advertises the upstream address in `info.x-clawql-grpc`.
 
-## The five surfaces
+## The six surfaces
 
 ### OpenAPI — `POST /{toolName}`
 
@@ -126,6 +132,18 @@ Either way, `:50051` is available for grpcurl, mesh routing, and protobuf client
 
 Google proposed gRPC as a first-class MCP transport (February 2026). ClawQL ships the production TypeScript implementation as **`mcp-grpc-transport`**; the adapter makes it reachable from clients that cannot speak gRPC natively.
 
+### `/ws` — WebSocket tool calls
+
+Persistent JSON tool-call channel (default path `/ws`; disable with `--no-ws`):
+
+```json
+{ "id": "1", "tool": "memory_ingest", "arguments": { "title": "…", "insights": "…" } }
+```
+
+or MCP-shaped `{ "method": "tools/call", "params": { "name": "…", "arguments": { … } } }`. Replies `{ "id", "ok", "result" | "error" }`. Prefer WebSocket for long-lived clients and DO hibernation; keep Streamable HTTP `/mcp` for IDE clients that cannot speak WS. **gen-cli** remains build-time (disk), not a DO runtime surface.
+
+Protocol Fabric loop (WS → execute CLI source → gen-cli → `memory_ingest`): see [`protocol-fabric-loop-benchmark.md`](../design/protocol-fabric-loop-benchmark.md) and `scripts/dev/smoke-protocol-fabric-loop.sh`.
+
 ### gen-cli — generated CLI
 
 `gen-cli` reads the catalog and generates a thin Node CLI with one subcommand per tool. Arguments map from `inputSchema`. The CLI POSTs to the REST surface. PrintingPress will handle signed binary distribution when ready.
@@ -145,6 +163,7 @@ npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
 | 0.4.0   | Renamed from `mcp-openapi-gateway` to `mcp-api-adapter` |
 | 0.5.0   | Streamable HTTP `/mcp` + `gen-cli`                      |
 | 0.5.1   | gRPC → `/mcp` content normalization for MCP SDK clients |
+| 0.6.0   | **WebSocket `/ws`** tool-call surface (sixth surface)   |
 
 ## When to use it
 
@@ -163,6 +182,10 @@ npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
 | `--listen` / `MCP_API_ADAPTER_LISTEN`           | HTTP bind (default `0.0.0.0:8090`)             |
 | `--grpc-listen` / `MCP_API_ADAPTER_GRPC_LISTEN` | Scaffolded gRPC bind (default `127.0.0.1:0`)   |
 | `--no-grpc`                                     | Do not scaffold local gRPC (stdio/HTTP only)   |
+| `--mcp-path` / `MCP_API_ADAPTER_MCP_PATH`       | Streamable HTTP path (default `/mcp`)          |
+| `--no-mcp`                                      | Disable `/mcp`                                 |
+| `--ws-path` / `MCP_API_ADAPTER_WS_PATH`         | WebSocket path (default `/ws`)                 |
+| `--no-ws`                                       | Disable WebSocket surface                      |
 | `--api-key` / `MCP_API_ADAPTER_API_KEY`         | Require `X-API-Key` or `Authorization: Bearer` |
 | `--refresh-ms`                                  | Re-`ListTools` poll interval                   |
 | `--title`                                       | Swagger / GraphiQL title                       |
@@ -212,6 +235,7 @@ Compatibility: `startMcpOpenApiGateway({ grpcAddress })` ≡ `startMcpApiAdapter
 | `GET /graphiql`               | GraphiQL IDE                                         |
 | `GET /graphql/schema.graphql` | SDL                                                  |
 | Streamable HTTP `/mcp`        | MCP re-export for IDE / SDK clients                  |
+| WebSocket `/ws`               | Persistent JSON tool calls                           |
 
 ## GraphQL conventions
 
@@ -230,13 +254,16 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 
 ## Relationship to other ClawQL pieces
 
-| Piece                                                      | Role                                                   |
-| ---------------------------------------------------------- | ------------------------------------------------------ |
-| **`mcp-api-adapter`**                                      | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + gen-cli      |
-| **ClawQL `search` / `execute`**                            | OpenAPI → MCP tools (inverse)                          |
-| **[Custom sources](../getting-started/custom-sources.md)** | Register other MCP servers **into** the ClawQL gateway |
-| **`mcp-grpc-transport`**                                   | Production TypeScript MCP gRPC transport               |
-| **Panguard bridge**                                        | Policy / JWT ATR in front of MCP                       |
+| Piece                                                                    | Role                                                      |
+| ------------------------------------------------------------------------ | --------------------------------------------------------- |
+| **[Protocol Fabric](../gtm/protocol-fabric.md)**                         | Named claim for Core + adapter (any protocol ↔ any)       |
+| **`mcp-api-adapter`**                                                    | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli |
+| **ClawQL `search` / `execute`**                                          | OpenAPI → MCP tools (inverse)                             |
+| **[Custom sources](../getting-started/custom-sources.md)**               | Register other MCP servers **into** the ClawQL gateway    |
+| **`mcp-grpc-transport`**                                                 | Production TypeScript MCP gRPC transport                  |
+| **Panguard bridge**                                                      | Policy / JWT ATR in front of MCP                          |
+| **[ClawQL Streams](../streams/clawql-streams.md)** (draft)               | Event-driven agents; WebSocket sources into Core          |
+| **[Fabric loop benchmark](../design/protocol-fabric-loop-benchmark.md)** | WS → CLI source → gen-cli → `memory_ingest` smoke         |
 
 ## Troubleshooting
 
@@ -253,5 +280,9 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 - Package README: [`packages/mcp-api-adapter/README.md`](../../packages/mcp-api-adapter/README.md)
 - Design & non-goals: [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)
 - GTM positioning: [`docs/gtm/mcp-api-adapter-positioning.md`](../gtm/mcp-api-adapter-positioning.md)
+- Protocol Fabric: [`docs/gtm/protocol-fabric.md`](../gtm/protocol-fabric.md)
+- Fabric loop smoke: [`docs/design/protocol-fabric-loop-benchmark.md`](../design/protocol-fabric-loop-benchmark.md)
+- ClawQL Streams (draft): [`docs/streams/clawql-streams.md`](../streams/clawql-streams.md)
 - Earlier post: [MCP tools as APIs](https://pragmaticvectors.com/posts/mcp-tools-as-apis/)
 - gRPC transport: [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/)
+- Local smoke: [`scripts/dev/smoke-mcp-api-adapter.sh`](../../scripts/dev/smoke-mcp-api-adapter.sh) · [`scripts/dev/smoke-protocol-fabric-loop.sh`](../../scripts/dev/smoke-protocol-fabric-loop.sh)

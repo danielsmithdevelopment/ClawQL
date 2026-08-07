@@ -7,7 +7,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'mcp-api-adapter — five surfaces, one catalog',
   description:
-    'mcp-api-adapter wraps any MCP server (stdio, HTTP, or gRPC) and exposes OpenAPI, GraphQL, Streamable HTTP /mcp, gRPC, and a generated CLI from the same tool catalog.',
+    'Language-agnostic MCP → APIs adapter: wrap any MCP server (stdio, HTTP, or gRPC) and expose OpenAPI, GraphQL, Streamable HTTP /mcp, gRPC, and a generated CLI from one catalog. Multi-surface alternative to mcpo.',
   path: '/mcp/mcp-api-adapter',
   ogType: 'article',
 })

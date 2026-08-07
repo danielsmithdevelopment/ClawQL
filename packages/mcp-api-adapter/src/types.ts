@@ -5,7 +5,7 @@ export type { ListedMcpTool };
 
 export type UpstreamKind = "grpc" | "stdio" | "http";
 
-export type ApiSurface = "openapi" | "graphql" | "mcp" | "grpc";
+export type ApiSurface = "openapi" | "graphql" | "mcp" | "grpc" | "websocket";
 
 export type ToolCatalog = {
   tools: ListedMcpTool[];
@@ -81,6 +81,11 @@ export type McpApiAdapterOptions = McpApiAdapterHttpOptions & {
    * Set `false` to disable the MCP HTTP surface.
    */
   mcpPath?: string | false;
+  /**
+   * WebSocket tool-call path (default `/ws`).
+   * Set `false` to disable the WebSocket surface.
+   */
+  wsPath?: string | false;
 };
 
 export type StartedMcpApiAdapter = {
@@ -91,6 +96,10 @@ export type StartedMcpApiAdapter = {
   grpcAddress?: string;
   /** Streamable HTTP MCP path when enabled. */
   mcpPath?: string;
+  /** WebSocket tool-call path when enabled (e.g. `/ws`). */
+  wsPath?: string;
+  /** `ws://host:port/ws` when the WebSocket surface is enabled. */
+  wsUrl?: string;
   upstream: string;
   upstreamKind: UpstreamKind;
   close: () => Promise<void>;
