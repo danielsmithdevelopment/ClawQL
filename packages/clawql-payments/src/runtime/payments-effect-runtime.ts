@@ -15,6 +15,7 @@ import { lokiPushLiveLayer } from "../audit/loki.js";
 import { payoutPreferencesLiveLayer } from "../payouts/preferences.js";
 import { payoutLiveLayer } from "../payouts/payout-service.js";
 import { rampLiveLayer } from "../ramp/ramp-service.js";
+import { cloudflareWalletLiveLayer } from "../cloudflare-wallets/cloudflare-wallet-service.js";
 import { consumerOffRampLiveLayer } from "../offramp/consumer-offramp-service.js";
 import { offrampWebhookLiveLayer } from "../offramp/offramp-webhook-service.js";
 import { creditsConfigLiveLayer } from "../credits/config.js";
@@ -78,6 +79,7 @@ export type PaymentsServices =
   | import("../payouts/preferences.js").PayoutPreferencesService
   | import("../payouts/payout-service.js").PayoutService
   | import("../ramp/ramp-service.js").RampService
+  | import("../cloudflare-wallets/cloudflare-wallet-service.js").CloudflareWalletService
   | import("../offramp/consumer-offramp-service.js").ConsumerOffRampService
   | import("../offramp/offramp-webhook-service.js").OfframpWebhookService
   | import("../credits/config.js").CreditsConfigService
@@ -129,6 +131,7 @@ export function paymentsServicesLiveLayer(
     Layer.provide(Layer.mergeAll(audit, stripeClient, taxProfiles, payoutPreferences))
   );
   const ramp = rampLiveLayer(env).pipe(Layer.provide(audit));
+  const cloudflareWallets = cloudflareWalletLiveLayer(env).pipe(Layer.provide(audit));
   const offramp = consumerOffRampLiveLayer(env).pipe(Layer.provide(audit));
   const offrampWebhook = offrampWebhookLiveLayer(env).pipe(Layer.provide(audit));
   const creditsConfig = creditsConfigLiveLayer(env);
@@ -214,6 +217,7 @@ export function paymentsServicesLiveLayer(
     payoutPreferences,
     payouts,
     ramp,
+    cloudflareWallets,
     offramp,
     offrampWebhook,
     creditsConfig,

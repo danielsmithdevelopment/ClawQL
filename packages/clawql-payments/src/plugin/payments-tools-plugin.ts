@@ -11,6 +11,7 @@ import { z } from "zod";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
 import { PayoutService } from "../payouts/payout-service.js";
 import { RampService } from "../ramp/ramp-service.js";
+import { CloudflareWalletService } from "../cloudflare-wallets/cloudflare-wallet-service.js";
 import { ConsumerOffRampService } from "../offramp/consumer-offramp-service.js";
 import { OfframpWebhookService } from "../offramp/offramp-webhook-service.js";
 import { AgentCompensationService } from "../compensation/agent-compensation-service.js";
@@ -91,6 +92,25 @@ const rampAgentCardSchema = {
   agentId: z.string().optional(),
   displayName: z.string().optional(),
   allowedVendorIds: z.array(z.string()).optional(),
+  tenantId: z.string().optional(),
+  mandateJwt: z.string().optional(),
+};
+
+const cfwHandleSchema = {
+  handle: z
+    .string()
+    .optional()
+    .describe("Handle to resolve (default CLAWQL_CLOUDFLARE_WALLETS_HANDLE)"),
+  tenantId: z.string().optional(),
+  mandateJwt: z.string().optional(),
+};
+
+const cfwVirtualWalletSchema = {
+  agentId: z.string().describe("Agent id receiving the Virtual Wallet"),
+  allowanceUsd: z.number().positive().describe("Total spend allowance in USD"),
+  maxTxUsd: z.number().positive().optional().describe("Max single transaction USD"),
+  merchantAllowList: z.array(z.string()).optional().describe("Allowed merchant URLs/ids"),
+  handle: z.string().optional(),
   tenantId: z.string().optional(),
   mandateJwt: z.string().optional(),
 };
@@ -323,6 +343,62 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
               issuancePath: result.issuancePath,
               dryRun: result.dryRun,
             });
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_cloudflare_handle_resolve",
+          description:
+            "Resolve a Cloudflare Wallets handle (e.g. clawql.cloudflare.pay) for agent identity.",
+          schema: cfwHandleSchema,
+          handler: async (args) => {
+            const a = args as { handle?: string; tenantId?: string; mandateJwt?: string };
+            await assertAp2IfRequired(env, a.mandateJwt);
+            const result = await runPaymentsEffect(
+              Effect.gen(function* () {
+                const cfw = yield* CloudflareWalletService;
+                return yield* cfw.resolveHandle({
+                  handle: a.handle,
+                  tenantId: a.tenantId,
+                });
+              }),
+              env
+            );
+            return textResult(result);
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "payments_cloudflare_virtual_wallet_create",
+          description:
+            "Create a capped Cloudflare Virtual Wallet for an agent (dry-run until CF API ships).",
+          schema: cfwVirtualWalletSchema,
+          handler: async (args) => {
+            const a = args as {
+              agentId: string;
+              allowanceUsd: number;
+              maxTxUsd?: number;
+              merchantAllowList?: string[];
+              handle?: string;
+              tenantId?: string;
+              mandateJwt?: string;
+            };
+            await assertAp2IfRequired(env, a.mandateJwt);
+            const result = await runPaymentsEffect(
+              Effect.gen(function* () {
+                const cfw = yield* CloudflareWalletService;
+                return yield* cfw.createVirtualWallet({
+                  agentId: a.agentId,
+                  allowanceUsd: a.allowanceUsd,
+                  maxTxUsd: a.maxTxUsd,
+                  merchantAllowList: a.merchantAllowList,
+                  handle: a.handle,
+                  tenantId: a.tenantId,
+                });
+              }),
+              env
+            );
+            return textResult(result);
           },
         });
 

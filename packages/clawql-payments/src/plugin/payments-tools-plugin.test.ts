@@ -17,6 +17,8 @@ describe("payments tools MCP plugin", () => {
     expect(names).toEqual([
       "payments_payout_create",
       "payments_ramp_agent_card_issue",
+      "payments_cloudflare_handle_resolve",
+      "payments_cloudflare_virtual_wallet_create",
       "payments_offramp_session_create",
       "payments_offramp_webhook_process",
       "payments_credits_directory_claim",

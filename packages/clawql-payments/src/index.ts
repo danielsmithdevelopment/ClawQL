@@ -10,6 +10,7 @@ export * from "./paypal/index.js";
 export * from "./adyen/index.js";
 export * from "./payouts/index.js";
 export * from "./ramp/index.js";
+export * from "./cloudflare-wallets/index.js";
 export * from "./offramp/index.js";
 export * from "./credits/index.js";
 export * from "./compensation/index.js";

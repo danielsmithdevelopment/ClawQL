@@ -89,6 +89,10 @@ import {
   runPaymentsRampFundCreateCmd,
   runPaymentsRampCardIssueCmd,
   runPaymentsRampAgentCardIssueCmd,
+  runPaymentsCfwHandleResolveCmd,
+  runPaymentsCfwWalletCreateCmd,
+  runPaymentsCfwWalletStatusCmd,
+  runPaymentsCfwWalletRevokeCmd,
   runPaymentsOfframpSessionCmd,
   runPaymentsOfframpWebhookCmd,
   runPaymentsCreditsShowCmd,
@@ -320,6 +324,14 @@ function parse(argv: string[]): {
     else if (a === "--agent-id" || a === "--agent") flags.agentId = argv[++i] ?? "";
     else if (a === "--show-secrets") flags.showSecrets = true;
     else if (a === "--vendor-ids") flags.vendorIds = argv[++i] ?? "";
+    else if (a === "--allowance") flags.allowance = argv[++i] ?? "";
+    else if (a === "--max-tx") flags.maxTx = argv[++i] ?? "";
+    else if (a === "--merchant") {
+      const v = argv[++i] ?? "";
+      const prev = typeof flags.merchant === "string" ? flags.merchant : "";
+      flags.merchant = prev ? `${prev},${v}` : v;
+    } else if (a === "--wallet-id") flags.walletId = argv[++i] ?? "";
+    else if (a === "--handle") flags.handle = argv[++i] ?? "";
     else if (a === "--interval") flags.interval = argv[++i] ?? "";
     else if (a === "--action-id") flags.actionId = argv[++i] ?? "";
     else if (a === "--code") flags.code = argv[++i] ?? "";
@@ -440,6 +452,8 @@ Usage:
   clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
   clawql payments payout connect create --email creator@x.com | connect link --account acct_xxx | create --amount 25 | prefer --creator id --method bank
   clawql payments ramp fund create --limit 500 | card issue --user-id U --limit 100 | agent-card issue --user-id U --amount 25
+  clawql payments cloudflare-wallet handle resolve [--handle clawql.cloudflare.pay]
+  clawql payments cloudflare-wallet virtual-wallet create --agent A --allowance 50 [--max-tx 10]
   clawql payments offramp session --amount 25 --wallet 0x… [--provider moonpay|transak]
   clawql payments offramp webhook --provider moonpay --payload ./body.json --signature t=…,s=… --process
   clawql payments compensation balance|deposit|cashout|approve|confirm|cancel --agent ID …
@@ -1096,6 +1110,12 @@ async function main(): Promise<void> {
       typeof flags.value === "string" && flags.value ? Number.parseFloat(flags.value) : undefined;
     const limit =
       typeof flags.limit === "string" && flags.limit ? Number.parseInt(flags.limit, 10) : undefined;
+    const allowance =
+      typeof flags.allowance === "string" && flags.allowance
+        ? Number.parseFloat(flags.allowance)
+        : undefined;
+    const maxTx =
+      typeof flags.maxTx === "string" && flags.maxTx ? Number.parseFloat(flags.maxTx) : undefined;
     const paymentsOpts: PaymentsCliOptions = {
       tier: typeof flags.tier === "string" ? flags.tier : undefined,
       month: typeof flags.month === "string" ? flags.month : undefined,
@@ -1153,6 +1173,17 @@ async function main(): Promise<void> {
       userId: typeof flags.userId === "string" ? flags.userId : undefined,
       agentId: typeof flags.agentId === "string" ? flags.agentId : undefined,
       showSecrets: Boolean(flags.showSecrets),
+      allowanceUsd: Number.isFinite(allowance) ? allowance : undefined,
+      maxTxUsd: Number.isFinite(maxTx) ? maxTx : undefined,
+      walletId: typeof flags.walletId === "string" ? flags.walletId : undefined,
+      handle: typeof flags.handle === "string" ? flags.handle : undefined,
+      merchants:
+        typeof flags.merchant === "string" && flags.merchant
+          ? flags.merchant
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : undefined,
       vendorIds:
         typeof flags.vendorIds === "string" && flags.vendorIds
           ? flags.vendorIds
@@ -1204,7 +1235,6 @@ async function main(): Promise<void> {
       taxProfileRef: typeof flags.taxProfileRef === "string" ? flags.taxProfileRef : undefined,
       toTenantId: typeof flags.toTenantId === "string" ? flags.toTenantId : undefined,
       fromTenantId: typeof flags.fromTenantId === "string" ? flags.fromTenantId : undefined,
-      handle: typeof flags.toHandle === "string" ? flags.toHandle : undefined,
       toHandle: typeof flags.toHandle === "string" ? flags.toHandle : undefined,
       directoryEmail: typeof flags.email === "string" ? flags.email : undefined,
       payTo: typeof flags.payTo === "string" ? flags.payTo : undefined,
@@ -1407,6 +1437,29 @@ async function main(): Promise<void> {
         return;
       }
       console.error("Usage: clawql payments ramp fund create | card issue | agent-card issue");
+      process.exitCode = 1;
+      return;
+    }
+    if (subcmd === "cloudflare-wallet" || subcmd === "cfw") {
+      if (rest[0] === "handle" && rest[1] === "resolve") {
+        process.exitCode = await runPaymentsCfwHandleResolveCmd(paymentsOpts);
+        return;
+      }
+      if (rest[0] === "virtual-wallet" && rest[1] === "create") {
+        process.exitCode = await runPaymentsCfwWalletCreateCmd(paymentsOpts);
+        return;
+      }
+      if (rest[0] === "virtual-wallet" && rest[1] === "status") {
+        process.exitCode = await runPaymentsCfwWalletStatusCmd(paymentsOpts);
+        return;
+      }
+      if (rest[0] === "virtual-wallet" && rest[1] === "revoke") {
+        process.exitCode = await runPaymentsCfwWalletRevokeCmd(paymentsOpts);
+        return;
+      }
+      console.error(
+        "Usage: clawql payments cloudflare-wallet handle resolve | virtual-wallet create|status|revoke"
+      );
       process.exitCode = 1;
       return;
     }
@@ -1635,7 +1688,7 @@ async function main(): Promise<void> {
       return;
     }
     console.error(
-      "Usage: clawql payments plan | usage | spend | audit | stripe | x402 | payout | ramp | offramp | credits | org | compensation"
+      "Usage: clawql payments plan | usage | spend | audit | stripe | x402 | payout | ramp | cloudflare-wallet | offramp | credits | org | compensation"
     );
     process.exitCode = 1;
     return;

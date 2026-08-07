@@ -13,6 +13,11 @@ import {
   isRampEnabled,
   rampEnvironment,
 } from "../ramp/config.js";
+import {
+  cloudflareWalletsHandle,
+  isCloudflareWalletsDryRun,
+  isCloudflareWalletsEnabled,
+} from "../cloudflare-wallets/config.js";
 import { defaultOffRampProvider, isOffRampDryRun, isOffRampEnabled } from "../offramp/config.js";
 import { isAchTopupEnabled, isCreditsEnabled } from "../credits/config.js";
 import { X402GateService } from "../x402/x402-gate-service.js";
@@ -36,6 +41,7 @@ export type PaymentsWellKnownMethod = {
     | "adyen"
     | "payouts"
     | "ramp"
+    | "cloudflare_wallets"
     | "offramp"
     | "credits";
   enabled: boolean;
@@ -105,6 +111,14 @@ export type PaymentsWellKnownRampMethod = PaymentsWellKnownMethod & {
   documentation: string;
 };
 
+export type PaymentsWellKnownCloudflareWalletsMethod = PaymentsWellKnownMethod & {
+  type: "cloudflare_wallets";
+  handle: string;
+  capabilities: Array<"identity" | "virtual_wallets" | "x402">;
+  dry_run: boolean;
+  documentation: string;
+};
+
 export type PaymentsWellKnownOfframpMethod = PaymentsWellKnownMethod & {
   type: "offramp";
   providers: Array<"moonpay" | "transak">;
@@ -136,6 +150,7 @@ export type PaymentsWellKnownDocument = {
     | PaymentsWellKnownAdyenMethod
     | PaymentsWellKnownPayoutsMethod
     | PaymentsWellKnownRampMethod
+    | PaymentsWellKnownCloudflareWalletsMethod
     | PaymentsWellKnownOfframpMethod
     | PaymentsWellKnownCreditsMethod
   >;
@@ -148,6 +163,7 @@ export type PaymentsWellKnownDocument = {
     | "adyen"
     | "payouts"
     | "ramp"
+    | "cloudflare_wallets"
     | "offramp"
     | "credits"
     | null;
@@ -316,6 +332,18 @@ export function paymentsDiscoveryLiveLayer(
               documentation: isRampAgenticEnabled(runEnv)
                 ? "https://docs.ramp.com/developer-api/v1/agent-cards"
                 : "https://docs.ramp.com/developer-api/v1/virtual-cards",
+            });
+          }
+
+          if (isCloudflareWalletsEnabled(runEnv)) {
+            paymentMethods.push({
+              type: "cloudflare_wallets",
+              enabled: true,
+              handle: cloudflareWalletsHandle(runEnv),
+              capabilities: ["identity", "virtual_wallets", "x402"],
+              dry_run: isCloudflareWalletsDryRun(runEnv),
+              documentation:
+                "https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/payments/cloudflare-wallets.md",
             });
           }
 

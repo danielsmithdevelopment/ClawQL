@@ -169,6 +169,23 @@ const KIND_MAP: Record<PaymentEventKind, Classified> = {
     taxTreatment: "expense",
     counterpartyKind: "agent",
   },
+  CLOUDFLARE_HANDLE_RESOLVED: {
+    direction: "internal",
+    category: "other",
+    taxTreatment: "non_taxable",
+  },
+  CLOUDFLARE_VIRTUAL_WALLET_ISSUED: {
+    direction: "internal",
+    category: "agent_spend",
+    taxTreatment: "expense",
+    counterpartyKind: "agent",
+  },
+  CLOUDFLARE_VIRTUAL_WALLET_REVOKED: {
+    direction: "internal",
+    category: "other",
+    taxTreatment: "non_taxable",
+    counterpartyKind: "agent",
+  },
   OFFRAMP_SESSION_CREATED: {
     direction: "internal",
     category: "other",

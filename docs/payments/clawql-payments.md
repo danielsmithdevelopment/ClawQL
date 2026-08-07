@@ -37,6 +37,7 @@ It powers ClawQL's own managed tiers (Developer / Teams / Shared / Dedicated / E
 | **Adyen** Checkout                                              | ✅     | `AdyenCheckoutService` — sessions, payments, HMAC webhooks (enterprise)                                                                                                                       |
 | **Creator payouts** (Stripe Connect + Base USDC)                | ✅     | `PayoutService` — bank transfers + live USDC with receipt confirmation                                                                                                                        |
 | **Ramp** agent virtual / agentic cards                          | ✅     | `RampService` — vault path + native `cards:read_agentic` when enabled                                                                                                                         |
+| **Cloudflare Wallets** (identity + Virtual Wallets)             | 🚧     | `CloudflareWalletService` — dry-run prep; handle `clawql.cloudflare.pay` reserved — [cloudflare-wallets.md](./cloudflare-wallets.md)                                                          |
 | **Consumer off-ramp** (Moonpay / Transak)                       | ✅     | Sessions + `OfframpWebhookService` completion settle                                                                                                                                          |
 | **Payments MCP tools** (payout / ramp / offramp / compensation) | ✅     | `CLAWQL_PAYMENTS_MCP_TOOLS=1`; optional AP2 gate; includes `agent_compensation_*`                                                                                                             |
 | **Prepaid credits + bank top-up + P2P transfer**                | ✅*    | Grant ledger + FC/ACH top-up; **P2P transfer self-hosted opt-in** (`CLAWQL_CREDITS_P2P_ENABLED=1`) — [credits-ach.md](./credits-ach.md) / [compliance](./hosted-vs-self-hosted-compliance.md) |
@@ -49,6 +50,7 @@ It powers ClawQL's own managed tiers (Developer / Teams / Shared / Dedicated / E
 | ----- | ----------------------------------- | ------------------------------------------- | ------------------------------------------------------------- |
 | ~~1~~ | ~~**Accounting export**~~           | Period CSV/JSON subledger from payment WORM | ✅ Shipped — [accounting-and-tax.md](./accounting-and-tax.md) |
 | ~~2~~ | ~~**Tax profile gate + year-end**~~ | Tags + export; Stripe Connect Tax for 1099s | ✅ Gate + evidence pack; no in-process IRS e-file             |
+| **1** | **Cloudflare Wallets live**         | Identity + capped Virtual Wallet HTTP API   | Scaffold shipped; wire client when CF API is public           |
 | **3** | **Mollie / Razorpay**               | Regional processors                         | Add when regional traction requires them                      |
 
 **Already covered (do not duplicate):** Shopify Payments (Stripe-powered), ACH Direct Debit via Stripe's APIs, card/subscription/invoice flows via Stripe, **bank ACH top-ups via Stripe Financial Connections** (Plaid-backed Link UI — no separate Plaid SDK), **Stripe Connect payouts**, **live Base USDC payouts with receipt confirmation**, **consumer off-ramp + webhooks (Moonpay/Transak)**, **Ramp vault + native agentic cards**. **Not planned:** Zelle (no merchant API), Square POS-first adapters, raw Plaid SDK unless non-payment bank data is required, **full GL / tax e-file product** (subledger export + Stripe Connect Tax / CPA handoff — [accounting-and-tax.md](./accounting-and-tax.md)).
@@ -68,6 +70,7 @@ clawql-payments
 ├── adyen/      Adyen Checkout sessions, payments, HMAC webhooks
 ├── payouts/    Stripe Connect bank payouts + Base USDC sends
 ├── ramp/       Ramp funds + virtual / agent cards
+├── cloudflare-wallets/  Cloudflare identity + Virtual Wallets (dry-run prep)
 ├── offramp/    Consumer USDC → fiat (Moonpay / Transak)
 ├── credits/    Prepaid ledger + FC/ACH top-up + P2P tenant transfer
 ├── compensation/  Agent credits ledger + DAOS-aligned 2PC staging
@@ -77,7 +80,7 @@ clawql-payments
 └── cli/        clawql payments * implementations
 ```
 
-See also [accounting-and-tax.md](./accounting-and-tax.md) (subledger export + tax ownership), [payouts-ramp.md](./payouts-ramp.md), [credits-ach.md](./credits-ach.md), [agent-compensation.md](./agent-compensation.md), and [sgdop-coordinator-compensation-bridge.md](./sgdop-coordinator-compensation-bridge.md) (`CompensationStagingPort` shipped; Coordinator integration still roadmap).
+See also [accounting-and-tax.md](./accounting-and-tax.md) (subledger export + tax ownership), [payouts-ramp.md](./payouts-ramp.md), [cloudflare-wallets.md](./cloudflare-wallets.md), [credits-ach.md](./credits-ach.md), [agent-compensation.md](./agent-compensation.md), and [sgdop-coordinator-compensation-bridge.md](./sgdop-coordinator-compensation-bridge.md) (`CompensationStagingPort` shipped; Coordinator integration still roadmap).
 
 ```mermaid
 flowchart TB

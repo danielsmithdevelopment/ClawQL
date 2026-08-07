@@ -67,6 +67,10 @@ export { AdyenCheckoutService, adyenCheckoutLiveLayer } from "../adyen/adyen-che
 export { PayoutService, payoutLiveLayer } from "../payouts/payout-service.js";
 export { RampService, rampLiveLayer } from "../ramp/ramp-service.js";
 export {
+  CloudflareWalletService,
+  cloudflareWalletLiveLayer,
+} from "../cloudflare-wallets/cloudflare-wallet-service.js";
+export {
   ConsumerOffRampService,
   consumerOffRampLiveLayer,
 } from "../offramp/consumer-offramp-service.js";
