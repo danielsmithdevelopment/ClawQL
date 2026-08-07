@@ -42,6 +42,11 @@ export type ProvisionInputs = {
   d1LocationHint?: string;
   deployWorkerStub?: boolean;
   workerScriptName?: string;
+  /**
+   * Optional plain-text Worker binding `CLAWQL_IDP_PROXY_ORIGIN` — K3s/EKS ingress
+   * origin for Shared+/IDP tier reverse-proxy (edge gateway Phase 2).
+   */
+  idpProxyOrigin?: string;
 
   // --- idp-k3s ---
   ebsVolumeSizeGb?: number;

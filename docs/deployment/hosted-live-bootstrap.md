@@ -79,19 +79,21 @@ Stack outputs: vault bucket, KV id, D1 id, queue id, optional Worker name.
 
 Source: [`cloudflare/gateway`](../../cloudflare/gateway). Pulumi deploys `dist/index.js` when `clawql:deployWorkerStub=true` (name kept for config compatibility — content is the full gateway, not a stub).
 
-| Surface | Notes                                                                         |
-| ------- | ----------------------------------------------------------------------------- |
-| Auth    | Bearer API token → D1 `api_token_hash`; `CLAWQL_BOOTSTRAP_TOKEN` for operator |
-| Tools   | REST `POST /search\|/execute\|/memory_*\|/cache` + JSON-RPC `POST /mcp`       |
-| Vault   | R2 `tenant-{id}/vault/Memory/…`                                               |
-| Audit   | D1 `audit_log` with `tenant_id` + `correlation_id`                            |
-| Layer 5 | KV `CLAWQL_SEMANTIC_CACHE`                                                    |
-| Stripe  | `POST /webhooks/stripe` → upsert D1 tenant (trial/developer/teams/…)          |
-| Demo    | `POST /demo/session` (5‑min TTL) + `/demo/pipeline`                           |
-| IDP     | Proxy via `CLAWQL_IDP_PROXY_ORIGIN` or `503 upgrade_required`                 |
-| Policy  | **Unlimited MCP executions** — no Worker-side meter                           |
+| Surface | Notes                                                                                                          |
+| ------- | -------------------------------------------------------------------------------------------------------------- |
+| Auth    | Bearer API token → D1 `api_token_hash`; `CLAWQL_BOOTSTRAP_TOKEN` for operator                                  |
+| Tools   | REST `POST /search\|/execute\|/memory_*\|/cache` + JSON-RPC `POST /mcp`                                        |
+| Vault   | R2 `tenant-{id}/vault/Memory/…`                                                                                |
+| Audit   | D1 `audit_log` with `tenant_id` + `correlation_id`                                                             |
+| Layer 5 | KV `CLAWQL_SEMANTIC_CACHE`                                                                                     |
+| Stripe  | `POST /webhooks/stripe` → upsert D1 tenant (trial/developer/teams/…)                                           |
+| Demo    | `POST /demo/session` (5‑min TTL) + `/demo/pipeline`                                                            |
+| IDP     | Proxy via `CLAWQL_IDP_PROXY_ORIGIN` / per-tenant `feature_flags.idp_proxy_origin`, else `503 upgrade_required` |
+| Policy  | **Unlimited MCP executions** — no Worker-side meter                                                            |
 
-Secrets after deploy: `wrangler secret put CLAWQL_BOOTSTRAP_TOKEN`, `STRIPE_WEBHOOK_SECRET`, optional `CLAWQL_IDP_PROXY_ORIGIN`. Attach custom domain `gateway.clawql.app` in Cloudflare dashboard / Wrangler routes.
+Secrets after deploy: `wrangler secret put CLAWQL_BOOTSTRAP_TOKEN`, `STRIPE_WEBHOOK_SECRET`. Optional IDP proxy: `pulumi config set clawql:idpProxyOrigin 'https://…'` (or Wrangler var). Attach custom domain `gateway.clawql.app` in Cloudflare dashboard / Wrangler routes.
+
+**Fabric ladder** (edge → IDP proxy → Dedicated VG → Helm managedGateway): [gateway-fabric.md](./gateway-fabric.md).
 
 ```bash
 cd cloudflare/gateway && npm install --legacy-peer-deps && npm test && npm run build
@@ -124,6 +126,15 @@ After instance is Ready:
 4. `kubectl apply -f deployment/gitops/applications/root.yaml -n argocd`
 5. Sync **clawql-idp-dev** + **clawql-workflows**.
 6. Enable MCP: `CLAWQL_ENABLE_WORKFLOW=1`, `CLAWQL_ENABLE_ARGO_CD=1`.
+7. Point the edge Worker at the ingress (edge stack):
+
+   ```bash
+   pulumi stack select edge-prod   # or your edge stack
+   pulumi config set clawql:idpProxyOrigin 'https://<k3s-ingress-host>'
+   pulumi up
+   ```
+
+   Optional per-tenant override in D1: `feature_flags.idp_proxy_origin`. See [gateway-fabric.md](./gateway-fabric.md).
 
 ## Phase 3 — EKS + Karpenter
 

@@ -99,6 +99,8 @@ export function createCloudflareEdge(inputs: ProvisionInputs): CloudflareEdgeOut
     semanticCacheKv: "CLAWQL_SEMANTIC_CACHE",
     tenantsD1: "CLAWQL_TENANTS",
     requestQueue: "CLAWQL_QUEUE",
+    idpProxyOrigin: "CLAWQL_IDP_PROXY_ORIGIN",
+    gatewayProfile: "CLAWQL_GATEWAY_PROFILE",
   };
 
   let workerScriptName: pulumi.Output<string> | undefined;
@@ -106,18 +108,28 @@ export function createCloudflareEdge(inputs: ProvisionInputs): CloudflareEdgeOut
     const { content, source } = loadGatewayWorkerModule();
     pulumi.log.info(`Deploying clawql-gateway Worker module from ${source}`);
     const scriptName = inputs.workerScriptName ?? `${nameBase}-gateway`;
+    const bindings: cloudflare.types.input.WorkersScriptBinding[] = [
+      { name: bindingHints.vaultBucket, type: "r2_bucket", bucketName: vaultBucket.name },
+      { name: bindingHints.semanticCacheKv, type: "kv_namespace", namespaceId: kv.id },
+      { name: bindingHints.tenantsD1, type: "d1", id: d1.id },
+      { name: bindingHints.requestQueue, type: "queue", queueName: queue.queueName },
+      { name: bindingHints.gatewayProfile, type: "plain_text", text: "edge" },
+    ];
+    const idpOrigin = inputs.idpProxyOrigin?.trim();
+    if (idpOrigin) {
+      bindings.push({
+        name: bindingHints.idpProxyOrigin,
+        type: "plain_text",
+        text: idpOrigin.replace(/\/$/, ""),
+      });
+    }
     const script = new cloudflare.WorkersScript("clawql-gateway", {
       accountId,
       scriptName,
       content,
       mainModule: "index.js",
       compatibilityDate: "2026-06-01",
-      bindings: [
-        { name: bindingHints.vaultBucket, type: "r2_bucket", bucketName: vaultBucket.name },
-        { name: bindingHints.semanticCacheKv, type: "kv_namespace", namespaceId: kv.id },
-        { name: bindingHints.tenantsD1, type: "d1", id: d1.id },
-        { name: bindingHints.requestQueue, type: "queue", queueName: queue.queueName },
-      ],
+      bindings,
     });
     workerScriptName = script.scriptName;
   }

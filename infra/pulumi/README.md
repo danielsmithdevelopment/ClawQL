@@ -59,12 +59,16 @@ pulumi config set cloudflare:apiToken --secret
 pulumi config set cloudflare:accountId <account-id>
 pulumi preview && pulumi up
 
-# --- Phase 2: IDP K3s ---
+# --- Phase 2: IDP K3s (+ wire edge Worker proxy) ---
 cp Pulumi.idp-k3s.example.yaml Pulumi.idp-k3s.yaml
 pulumi stack init idp-k3s-bootstrap
 pulumi config set aws:region us-east-1
 pulumi preview && pulumi up
 # Then Argo CD → deployment/gitops (see hosted-live-bootstrap.md)
+# On the edge stack, after ingress exists:
+#   pulumi config set clawql:idpProxyOrigin 'https://<k3s-ingress-host>'
+#   pulumi up
+# Fabric ladder: docs/deployment/gateway-fabric.md
 
 # --- Phase 3: EKS ---
 cp Pulumi.eks.example.yaml Pulumi.eks-prod.yaml

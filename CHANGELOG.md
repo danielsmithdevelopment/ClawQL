@@ -13,6 +13,7 @@
 
 ### Added
 
+- **Edge gateway Phase 2 (IDP proxy)** — Worker resolves Shared+/IDP upstream from per-tenant `feature_flags.idp_proxy_origin` or `CLAWQL_IDP_PROXY_ORIGIN`; Pulumi `clawql:idpProxyOrigin` plain_text binding; hop headers `X-ClawQL-Tenant-Id` / `X-Correlation-Id`. Fabric ladder: [`docs/deployment/gateway-fabric.md`](docs/deployment/gateway-fabric.md).
 - **Dedicated VG Managed Edge Gateway boot** — Packer/Pulumi dedicated hosts sync the team vault then start `clawql gateway` (`/mcp` + `/v1` on `:8080`) via `bootstrap-dedicated-gateway.sh`. Package-safe `--profile process` resolves MCP/inference/proxy from checkout or npm `clawql-mcp`; published `bin/clawql-gateway-proxy.mjs`. Config: `clawql:startManagedGateway` (default on for dedicated/enterprise).
 - **Cloudflare Wallets prep** — `CloudflareWalletService` (dry-run) for reserved handle `clawql.cloudflare.pay`, local Virtual Wallet ledger, discovery advert, MCP tools, and CLI (`clawql payments cloudflare-wallet *`). Design: [`docs/payments/cloudflare-wallets.md`](docs/payments/cloudflare-wallets.md). Enable with `CLAWQL_CLOUDFLARE_WALLETS=1`.
 - **Credits HATEOAS gateway auth** — non-public `/credits/*` routes require ATR claims when `CLAWQL_AUTH_MODE` is `apiKey`/`oidc` (pay/QR/invite stay public; MFA for stage/confirm when `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL=1`). Overrides: `CLAWQL_CREDITS_HATEOAS_REQUIRE_AUTH`, `CLAWQL_CREDITS_HATEOAS_PUBLIC`.
