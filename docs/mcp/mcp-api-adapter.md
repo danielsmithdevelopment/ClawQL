@@ -1,7 +1,7 @@
 # mcp-api-adapter — six surfaces, one catalog
 
 **Package:** [`mcp-api-adapter`](../../packages/mcp-api-adapter/) (`0.6.0+`)  
-**Status:** Shipped  
+**Status:** Shipped in-repo · **npm not published yet** (`npm view mcp-api-adapter` → 404)  
 **Essay:** [Five surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter-five-surfaces/)  
 **Design:** [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)  
 **Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)  
@@ -10,6 +10,8 @@
 `mcp-api-adapter` wraps **any** MCP server — stdio, Streamable HTTP, or gRPC — and exposes **six API surfaces** from one tool catalog without changing the server. No ClawQL install required.
 
 **Language-agnostic.** The adapter process is TypeScript (`npx mcp-api-adapter`); the upstream may be Python, Go, Rust, or any language that speaks MCP. Users do not write TypeScript to use it — same Node baseline as `npx clawql-mcp`.
+
+> **Install note:** The package lives under [`packages/mcp-api-adapter`](../../packages/mcp-api-adapter/) and is listed in `localPackExtras` for the npm publish workflow, but the name is not on the registry yet — bare `npx mcp-api-adapter` fails until the first publish. Use the **from-source** commands below until then.
 
 ```text
 Any MCP server
@@ -32,7 +34,7 @@ Point the adapter at one upstream. It calls `ListTools` at startup, builds the O
 
 ## The client fragmentation problem
 
-MCP standardized how agents discover and call tools. It did not standardize how every other consumer reaches those tools.
+MCP standardized how agents discover and call tools. Every other consumer still needs its own on-ramp.
 
 | Consumer                        | Wants                                  |
 | ------------------------------- | -------------------------------------- |
@@ -47,9 +49,13 @@ The usual answer is a custom adapter per consumer — or Python **[mcpo](https:/
 
 Together with ClawQL Core (APIs → MCP), this is the **[Protocol Fabric](./protocol-fabric.md)** — MCP as the common IR in both directions.
 
-## Direction: MCP → APIs (inverse of ClawQL Core)
+> > > > > > > 19d2cfe7 (docs(mcp-api-adapter): language-agnostic upstream + mcpo positioning)
 
-These two directions are complementary and easy to confuse:
+## Direction: MCP → APIs
+
+ClawQL Core (`search` / `execute`) runs **OpenAPI → MCP**: it wraps REST/GraphQL/Discovery APIs and exposes them as MCP tools for agents. **`mcp-api-adapter`** runs the inverse: it wraps an MCP server and exposes the tool catalog outward as REST, GraphQL, gRPC, Streamable HTTP, and CLI for non-agent consumers.
+
+Position this as the **OpenAPI on-ramp** or **MCP tools as REST/GraphQL** — not “the OpenAPI gateway,” which collides with ClawQL Core’s direction.
 
 | Piece                                | Direction                             | Upstream                        | Consumer                                |
 | ------------------------------------ | ------------------------------------- | ------------------------------- | --------------------------------------- |
@@ -57,33 +63,54 @@ These two directions are complementary and easy to confuse:
 | **`mcp-api-adapter`**                | MCP → APIs                            | Any MCP server                  | Workers, REST, GraphQL, IDEs, mesh, CLI |
 | **Custom sources**                   | MCP (and APIs) → ClawQL gateway index | Other MCP servers / APIs        | Agents talking to **one** ClawQL MCP    |
 
-In marketing: call this the **OpenAPI on-ramp**, **GraphQL on-ramp**, or **MCP tools as REST/GraphQL** — not “the OpenAPI gateway” (that phrase collides with ClawQL Core’s inverse direction).
-
-Related: [Custom sources](../getting-started/custom-sources.md) registers upstream MCP servers **into** ClawQL. `mcp-api-adapter` exposes an MCP server **outward** to non-MCP clients.
+[Custom sources](../getting-started/custom-sources.md) registers upstream MCP servers **into** ClawQL. `mcp-api-adapter` exposes an MCP server **outward** to non-MCP clients.
 
 ## Quick start
 
+### From source (works today)
+
 ```bash
+git clone https://github.com/danielsmithdevelopment/ClawQL.git
+cd ClawQL
+npm ci
+npm run build -w mcp-grpc-transport
+npm run build -w mcp-api-adapter
+
+# Alias the CLI for the snippets below
+alias mcp-api-adapter='node "$(pwd)/packages/mcp-api-adapter/bin/mcp-api-adapter.mjs"'
+
 # Wrap a remote Streamable HTTP server
-npx mcp-api-adapter --mcp-url http://127.0.0.1:8080/mcp
+mcp-api-adapter --mcp-url http://127.0.0.1:8080/mcp
 
 # Wrap a stdio package; expose /mcp for IDEs
-npx mcp-api-adapter --stdio -- npx -y @modelcontextprotocol/server-everything
+mcp-api-adapter --stdio -- npx -y @modelcontextprotocol/server-everything
 
 # Front an existing gRPC MCP server
-npx mcp-api-adapter --grpc-address 127.0.0.1:50051
+mcp-api-adapter --grpc-address 127.0.0.1:50051
 
 # Generate a CLI from the tool catalog
+mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
+  npx -y @modelcontextprotocol/server-everything
+```
+
+### After npm publish
+
+Once `npm view mcp-api-adapter` succeeds, the same CLI is:
+
+```bash
+npx mcp-api-adapter --mcp-url http://127.0.0.1:8080/mcp
+npx mcp-api-adapter --stdio -- npx -y @modelcontextprotocol/server-everything
+npx mcp-api-adapter --grpc-address 127.0.0.1:50051
 npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
   npx -y @modelcontextprotocol/server-everything
 ```
 
-Defaults: HTTP listen `0.0.0.0:8090`. Then open `/docs`, try `POST /{toolName}`, open `/graphiql`, point an IDE at `/mcp`, and `grpcurl -plaintext 127.0.0.1:50051 list`.
+Defaults: HTTP listen `0.0.0.0:8090`. Open `/docs`, try `POST /{toolName}`, open `/graphiql`, point an IDE at `/mcp`, and run `grpcurl -plaintext 127.0.0.1:50051 list`.
 
 ### Streamable HTTP with explicit binds
 
 ```bash
-npx mcp-api-adapter \
+mcp-api-adapter \
   --mcp-url http://127.0.0.1:8080/mcp \
   --listen 0.0.0.0:8090 \
   --grpc-listen 127.0.0.1:50051
@@ -111,11 +138,11 @@ With `--grpc-address`, no second gRPC server is started; `/openapi.json` adverti
 
 Every tool becomes a named REST route. The body is JSON matching the tool's `inputSchema`. Responses prefer MCP `structuredContent`, else parse single text content as JSON, else return a `{ content, text, isError }` envelope.
 
-Swagger UI lives at `/docs`. Every path includes `x-clawql-grpc` extensions (gRPC endpoint, proto URL, example `grpcurl`). REST is an **on-ramp**, not a destination — `/docs` points developers at gRPC.
+Swagger UI lives at `/docs`. Every path includes `x-clawql-grpc` extensions (gRPC endpoint, proto URL, example `grpcurl`). REST is an on-ramp — `/docs` points developers at gRPC for production use.
 
 ### GraphQL — mutations per tool
 
-Enterprise tooling is often GraphQL-native. Each tool gets a typed mutation derived from `inputSchema`. GraphiQL is at `/graphiql`. Schema includes `callTool(name: String!, arguments: JSON): ToolResult` for dynamic callers.
+Each tool gets a typed mutation derived from `inputSchema`. GraphiQL is at `/graphiql`. Schema includes `callTool(name: String!, arguments: JSON): ToolResult` for dynamic callers.
 
 ### `/mcp` — Streamable HTTP re-export
 
@@ -130,7 +157,7 @@ If the upstream is already gRPC, REST and GraphQL forward into it. If the upstre
 
 Either way, `:50051` is available for grpcurl, mesh routing, and protobuf clients. `model_context_protocol.Mcp/CallTool` takes a tool name and `google.protobuf.Struct` arguments. Argument schemas live in OpenAPI and GraphQL — clients do not need generated stubs.
 
-Google proposed gRPC as a first-class MCP transport (February 2026). ClawQL ships the production TypeScript implementation as **`mcp-grpc-transport`**; the adapter makes it reachable from clients that cannot speak gRPC natively.
+Google proposed gRPC as a first-class MCP transport in February 2026. ClawQL ships the production TypeScript implementation as **`mcp-grpc-transport`**; the adapter makes it reachable from clients that cannot speak gRPC natively.
 
 ### `/ws` — WebSocket tool calls
 
@@ -149,7 +176,7 @@ Protocol Fabric loop (WS → execute CLI source → gen-cli → `memory_ingest`)
 `gen-cli` reads the catalog and generates a thin Node CLI with one subcommand per tool. Arguments map from `inputSchema`. The CLI POSTs to the REST surface. PrintingPress will handle signed binary distribution when ready.
 
 ```bash
-npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
+mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
   npx -y @modelcontextprotocol/server-everything
 
 ./my-cli echo --message "hello"
@@ -167,9 +194,9 @@ npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
 
 ## When to use it
 
-**Use the adapter** when you have a working MCP server and need Workers, OpenAPI panels, GraphQL, IDEs, mesh, or CLI access without writing glue per consumer.
+Use the adapter when you have a working MCP server and need Workers, OpenAPI panels, GraphQL, IDEs, mesh, or CLI access without writing glue per consumer.
 
-**Write your own** when you need a surface the adapter does not have, significant custom auth, or generality works against you.
+A custom adapter makes more sense when you need a surface this package does not have, significant custom auth, or the generality works against you.
 
 ## CLI reference
 
@@ -217,7 +244,12 @@ Upstream union:
 type UpstreamOptions =
   | { kind: "grpc"; address: string; protocolVersion?: string }
   | { kind: "http"; url: string }
-  | { kind: "stdio"; command: string; args?: string[]; env?: Record<string, string> };
+  | {
+      kind: "stdio";
+      command: string;
+      args?: string[];
+      env?: Record<string, string>;
+    };
 ```
 
 Compatibility: `startMcpOpenApiGateway({ grpcAddress })` ≡ `startMcpApiAdapter({ upstream: { kind: "grpc", address }, grpcListen: false })`.
@@ -250,7 +282,7 @@ When auth is set via `--api-key` (or `MCP_API_ADAPTER_API_KEY` / legacy `MCP_OPE
 - `X-API-Key: <key>`, or
 - `Authorization: Bearer <key>`
 
-gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc-transport` for production gRPC.
+gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-transport` for production gRPC.
 
 ## Relationship to other ClawQL pieces
 
@@ -263,6 +295,8 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 | **`mcp-grpc-transport`**                                   | Production TypeScript MCP gRPC transport                         |
 | **Panguard bridge**                                        | Policy / JWT ATR in front of MCP                                 |
 | **[ClawQL Streams](../streams/clawql-streams.md)** (draft) | Event-driven agents; WebSocket sources into Core                 |
+
+> > > > > > > 508459b5 (docs(mcp-api-adapter): cross-link ClawQL Streams draft)
 
 ## Troubleshooting
 
@@ -284,3 +318,6 @@ gRPC auth is **not** invented here — use mesh/mTLS / interceptors on `mcp-grpc
 - Earlier post: [MCP tools as APIs](https://pragmaticvectors.com/posts/mcp-tools-as-apis/)
 - gRPC transport: [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/)
 - Local smoke: [`scripts/dev/smoke-mcp-api-adapter.sh`](../../scripts/dev/smoke-mcp-api-adapter.sh) · [`scripts/dev/smoke-protocol-fabric-loop.sh`](../../scripts/dev/smoke-protocol-fabric-loop.sh)
+- Protocol Fabric / event loop (draft): [`docs/streams/clawql-streams.md`](../streams/clawql-streams.md)
+
+> > > > > > > 19d2cfe7 (docs(mcp-api-adapter): language-agnostic upstream + mcpo positioning)

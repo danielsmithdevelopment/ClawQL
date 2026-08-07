@@ -1,6 +1,6 @@
 # GTM: MCP API Adapter (gRPC on-ramp)
 
-**Status:** ✅ Shipped in-repo (`mcp-api-adapter@0.5.1` — any MCP → OpenAPI + GraphQL + `/mcp` + gRPC + gen-cli) — npm publish on independent cadence  
+**Status:** ✅ Shipped in-repo (`mcp-api-adapter@0.6.0` — any MCP → OpenAPI + GraphQL + `/mcp` + gRPC + gen-cli) — **npm not published yet** (own cadence / `localPackExtras`)  
 **Canonical design:** [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)  
 **User guide:** [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md)  
 **Package:** [`packages/mcp-api-adapter`](../../packages/mcp-api-adapter/README.md)  

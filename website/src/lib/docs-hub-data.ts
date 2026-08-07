@@ -297,7 +297,7 @@ export const referenceHubCards: Array<ReferenceCard> = [
     href: '/mcp/mcp-api-adapter',
     name: 'mcp-api-adapter',
     description:
-      'Any MCP server → OpenAPI, GraphQL, /mcp, gRPC, and gen-cli from one catalog.',
+      'Any MCP server → OpenAPI, GraphQL, /mcp, gRPC, gen-cli (in-repo; npm pending).',
     icon: PackageIcon,
   }),
   card({

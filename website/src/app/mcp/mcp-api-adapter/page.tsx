@@ -7,7 +7,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'mcp-api-adapter — six surfaces, one catalog',
   description:
-    'Language-agnostic MCP → APIs adapter: wrap any MCP server (stdio, HTTP, or gRPC) and expose OpenAPI, GraphQL, Streamable HTTP /mcp, gRPC, WebSocket, and a generated CLI from one catalog. Multi-surface alternative to mcpo.',
+    'Language-agnostic MCP → APIs adapter: wrap any MCP server (stdio, HTTP, or gRPC) and expose OpenAPI, GraphQL, Streamable HTTP /mcp, gRPC, WebSocket, and a generated CLI from one catalog. In-repo at 0.6.0; npm publish pending. Multi-surface alternative to mcpo.',
   path: '/mcp/mcp-api-adapter',
   ogType: 'article',
 })
@@ -25,20 +25,28 @@ export default function McpApiAdapterPage() {
           Adapter
         </Tag>
         <Tag color="sky" variant="medium">
-          Shipped
+          In-repo
+        </Tag>
+        <Tag color="amber" variant="medium">
+          npm pending
         </Tag>
       </div>
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>MCP → APIs (inverse of ClawQL Core).</strong> Generated from{' '}
+          <strong>MCP → APIs (inverse of ClawQL Core).</strong>{' '}
+          <code className="font-mono text-xs">mcp-api-adapter@0.5.1</code> is
+          shipped in the monorepo but <strong>not on npm yet</strong> — use the
+          from-source quick start until{' '}
+          <code className="font-mono text-xs">npm view mcp-api-adapter</code>{' '}
+          succeeds. Source:{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-api-adapter.md"
             className="font-medium text-inherit underline underline-offset-2"
           >
             docs/mcp/mcp-api-adapter.md
-          </a>{' '}
-          on <code className="font-mono text-xs">main</code>. Essay:{' '}
+          </a>
+          . Essay:{' '}
           <a
             href="https://pragmaticvectors.com/posts/mcp-api-adapter-five-surfaces/"
             className="font-medium text-inherit underline underline-offset-2"
@@ -65,6 +73,13 @@ export default function McpApiAdapterPage() {
             className="font-medium text-inherit underline underline-offset-2"
           >
             GraphQL layer
+          </a>
+          ,{' '}
+          <a
+            href="/getting-started/custom-sources"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Custom sources
           </a>
           .
         </Note>
