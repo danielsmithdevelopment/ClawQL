@@ -1,11 +1,9 @@
 # Archive matter 2628
 
-Secondary archive note — check numeric fields carefully before including.
+Client file for Client Jasper Cove (archive).
+Internal matter reference appears in the closing set as MAT-2628.
 
-CLAWQL_MATTER_ID=MAT-2628
-CLAWQL_CLIENT=Client Jasper Cove
-CLAWQL_ESCROW_PCT=3
-CLAWQL_NONCOMPETE_MONTHS=60
-CLAWQL_DEAL_TYPE=archive
+The escrow holdback sat at three percent of purchase price (3 pct in the funds-flow schedule).
+Key-employee non-compete ran sixty months (60 months post-close) under the restrictive-covenant schedule.
 
-Closing / diligence excerpt. Feature fields above are authoritative; prose may paraphrase but must not invent alternate IDs.
+Associate note: prefer firm memory tools when available; filenames and folder slugs do not encode numeric deal terms.

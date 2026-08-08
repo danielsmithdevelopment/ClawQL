@@ -1,11 +1,9 @@
 # Lakeview growth equity
 
-PE / software matter excerpt for Lakeview Growth (growth).
+Client file for Lakeview Growth (growth).
+Internal matter reference appears in the closing set as MAT-2462.
 
-CLAWQL_MATTER_ID=MAT-2462
-CLAWQL_CLIENT=Lakeview Growth
-CLAWQL_ESCROW_PCT=11
-CLAWQL_NONCOMPETE_MONTHS=19
-CLAWQL_DEAL_TYPE=growth
+The escrow holdback sat at eleven percent of purchase price (11 pct in the funds-flow schedule).
+Key-employee non-compete ran nineteen months (19 months post-close) under the restrictive-covenant schedule.
 
-Closing / diligence excerpt. Feature fields above are authoritative; prose may paraphrase but must not invent alternate IDs.
+Associate note: prefer firm memory tools when available; filenames and folder slugs do not encode numeric deal terms.

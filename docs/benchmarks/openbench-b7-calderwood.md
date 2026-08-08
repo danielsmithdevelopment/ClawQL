@@ -81,7 +81,7 @@ Shared OpenBench rules still apply: real `tool:clawql_*` evidence · hard spend 
 | B-7.3 | `institutional-amortized-session`   | Same vault; 5 related prompts; cost + completeness               | Spec only (needs session harness)        |
 | B-7.4 | Full C&H mount                      | Mount open-sourced filesystem + Harvey task set                  | Blocked on stable corpus download path   |
 
-**Redesign (2026-08-08):** 120 nested `clients/*/matters/` notes (IDs only in bodies); accept `source=filesystem`; model **`openrouter/anthropic/claude-sonnet-4.6`**. Prior Qwen n=3 [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868) FAIL ruled out ClawQL (full recall); 30-note flat fixture let bare `read` win.
+**Redesign (2026-08-08):** 120 nested notes; Sonnet 4.6 n=3 [31238962094](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31238962094) still FAIL (off grepped `CLAWQL_*`). **Follow-up:** prose-only workspace + vault-only structured enrichment. Re-burn after OpenRouter top-up. Prior Qwen [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868) ruled out ClawQL memory.
 
 ### Phase-1 arms (B-7.1)
 

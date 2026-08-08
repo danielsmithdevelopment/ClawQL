@@ -1,11 +1,9 @@
 # Archive matter 2615
 
-Secondary archive note — check numeric fields carefully before including.
+Client file for Client Umbra Ridge (archive).
+Internal matter reference appears in the closing set as MAT-2615.
 
-CLAWQL_MATTER_ID=MAT-2615
-CLAWQL_CLIENT=Client Umbra Ridge
-CLAWQL_ESCROW_PCT=10
-CLAWQL_NONCOMPETE_MONTHS=9
-CLAWQL_DEAL_TYPE=archive
+The escrow holdback sat at ten percent of purchase price (10 pct in the funds-flow schedule).
+Key-employee non-compete ran nine months (9 months post-close) under the restrictive-covenant schedule.
 
-Closing / diligence excerpt. Feature fields above are authoritative; prose may paraphrase but must not invent alternate IDs.
+Associate note: prefer firm memory tools when available; filenames and folder slugs do not encode numeric deal terms.

@@ -1,10 +1,9 @@
 # Archive matter 2704
 
-Secondary archive note — check numeric fields carefully before including.
+Client file for Client Nimbus Reach (archive).
+Internal matter reference appears in the closing set as MAT-2704.
 
-CLAWQL_MATTER_ID=MAT-2704
-CLAWQL_CLIENT=Client Nimbus Reach
-CLAWQL_NONCOMPETE_MONTHS=36
-CLAWQL_DEAL_TYPE=archive
+Purchase-price holdback / escrow percentage was never recorded in the executed closing binder excerpt on file.
+Key-employee non-compete ran thirty-six months (36 months post-close) under the restrictive-covenant schedule.
 
-Closing / diligence excerpt. Feature fields above are authoritative; prose may paraphrase but must not invent alternate IDs.
+Associate note: prefer firm memory tools when available; filenames and folder slugs do not encode numeric deal terms.

@@ -1,6 +1,14 @@
-### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) Sonnet 4.6 redesign — pending
+### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) Sonnet 4.6 n=3 — gate FAIL + follow-up fix
 
-Fixture redesign: **120** nested notes (IDs in bodies only), grader accepts `source=filesystem|memory_recall|…`, model **`openrouter/anthropic/claude-sonnet-4.6`**, `pr_trials=3` three-arm. Live burn on redesign PR — ledger row to be filled when the Actions run completes.
+Model **`openrouter/anthropic/claude-sonnet-4.6`**; 120 nested notes; three-arm n=3.
+
+| Arm              | Success | Mean matters | Mean score | Notes                                                                         |
+| ---------------- | ------- | ------------ | ---------- | ----------------------------------------------------------------------------- |
+| clawql-on        | 1/3     | **2.5/5**    | 0.333      | t1 checker crash on bare-list `matters.json`; t3 OpenRouter **403** key limit |
+| clawql-off       | 2/3     | **5/5**      | 0.667      | ~11 turns — `bash`/`grep` on `CLAWQL_*` tags still too easy                   |
+| clawql-no-memory | 0/3     | **0/5**      | 0.0        | expected; later trials hit key limit / skip                                   |
+
+Run: [31238962094](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31238962094) (PR [#874](https://github.com/danielsmithdevelopment/ClawQL/pull/874)). **Gate FAIL.** Nesting alone does not stop Sonnet filesystem search when machine tags are present. **Follow-up in same PR:** prose-only workspace notes + vault-only `CLAWQL_*` enrichment; checker accepts list-shaped `matters.json`. **Blocked on OpenRouter credit** before re-burn (`pr_active` cleared).
 
 ### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) qwen3.6-plus n=3 — gate FAIL (ClawQL OK)
 

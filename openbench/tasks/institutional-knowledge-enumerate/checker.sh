@@ -53,9 +53,18 @@ def emit(found: int, score: float, ids=None, err=None) -> None:
     print(f"SCORE:{score:.4f}")
 
 try:
-    d = json.loads(Path("matters.json").read_text(encoding="utf-8"))
+    parsed = json.loads(Path("matters.json").read_text(encoding="utf-8"))
 except Exception as exc:
     emit(0, 0.0, err=f"FAIL: matters.json parse error: {exc}")
+    raise SystemExit(0)
+
+# Accept either {"matters":[...], "source":...} or a bare list of IDs.
+if isinstance(parsed, list):
+    d = {"matters": parsed, "source": ""}
+elif isinstance(parsed, dict):
+    d = parsed
+else:
+    emit(0, 0.0, err=f"FAIL: matters.json must be object or list; got {type(parsed).__name__}")
     raise SystemExit(0)
 
 raw = d.get("matters")

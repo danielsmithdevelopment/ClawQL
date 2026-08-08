@@ -1,11 +1,9 @@
 # Archive matter 2693
 
-Secondary archive note — check numeric fields carefully before including.
+Client file for Client Copper Fen (archive).
+Internal matter reference appears in the closing set as MAT-2693.
 
-CLAWQL_MATTER_ID=MAT-2693
-CLAWQL_CLIENT=Client Copper Fen
-CLAWQL_ESCROW_PCT=25
-CLAWQL_NONCOMPETE_MONTHS=12
-CLAWQL_DEAL_TYPE=archive
+The escrow holdback sat at twenty-five percent of purchase price (25 pct in the funds-flow schedule).
+Key-employee non-compete ran twelve months (12 months post-close) under the restrictive-covenant schedule.
 
-Closing / diligence excerpt. Feature fields above are authoritative; prose may paraphrase but must not invent alternate IDs.
+Associate note: prefer firm memory tools when available; filenames and folder slugs do not encode numeric deal terms.

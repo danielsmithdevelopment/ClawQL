@@ -1,11 +1,9 @@
 # Archive matter 2677
 
-Secondary archive note — check numeric fields carefully before including.
+Client file for Client Kelp Strand (archive).
+Internal matter reference appears in the closing set as MAT-2677.
 
-CLAWQL_MATTER_ID=MAT-2677
-CLAWQL_CLIENT=Client Kelp Strand
-CLAWQL_ESCROW_PCT=16
-CLAWQL_NONCOMPETE_MONTHS=17
-CLAWQL_DEAL_TYPE=archive
+The escrow holdback sat at sixteen percent of purchase price (16 pct in the funds-flow schedule).
+Key-employee non-compete ran seventeen months (17 months post-close) under the restrictive-covenant schedule.
 
-Closing / diligence excerpt. Feature fields above are authoritative; prose may paraphrase but must not invent alternate IDs.
+Associate note: prefer firm memory tools when available; filenames and folder slugs do not encode numeric deal terms.

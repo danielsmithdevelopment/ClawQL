@@ -133,5 +133,5 @@
     "MAT-2713",
     "MAT-2714"
   ],
-  "layout": "nested clients/*/matters/*.md \u2014 IDs only in note bodies"
+  "layout": "prose-only workspace notes; CLAWQL_* injected into vault only"
 }

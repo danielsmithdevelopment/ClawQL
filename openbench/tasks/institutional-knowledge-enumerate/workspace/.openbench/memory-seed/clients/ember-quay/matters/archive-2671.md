@@ -1,11 +1,9 @@
 # Archive matter 2671
 
-Secondary archive note — check numeric fields carefully before including.
+Client file for Client Ember Quay (archive).
+Internal matter reference appears in the closing set as MAT-2671.
 
-CLAWQL_MATTER_ID=MAT-2671
-CLAWQL_CLIENT=Client Ember Quay
-CLAWQL_ESCROW_PCT=0
-CLAWQL_NONCOMPETE_MONTHS=48
-CLAWQL_DEAL_TYPE=archive
+The escrow holdback sat at zero percent of purchase price (0 pct in the funds-flow schedule).
+Key-employee non-compete ran forty-eight months (48 months post-close) under the restrictive-covenant schedule.
 
-Closing / diligence excerpt. Feature fields above are authoritative; prose may paraphrase but must not invent alternate IDs.
+Associate note: prefer firm memory tools when available; filenames and folder slugs do not encode numeric deal terms.

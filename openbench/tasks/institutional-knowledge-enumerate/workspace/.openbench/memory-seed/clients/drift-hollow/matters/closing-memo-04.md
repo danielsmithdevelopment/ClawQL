@@ -1,11 +1,9 @@
 # Riverton SaaS bolt-on
 
-PE / software matter excerpt for Riverton Equity (saas-bolt).
+Client file for Riverton Equity (saas bolt).
+Internal matter reference appears in the closing set as MAT-2450.
 
-CLAWQL_MATTER_ID=MAT-2450
-CLAWQL_CLIENT=Riverton Equity
-CLAWQL_ESCROW_PCT=20
-CLAWQL_NONCOMPETE_MONTHS=30
-CLAWQL_DEAL_TYPE=saas-bolt
+The escrow holdback sat at twenty percent of purchase price (20 pct in the funds-flow schedule).
+Key-employee non-compete ran thirty months (30 months post-close) under the restrictive-covenant schedule.
 
-Closing / diligence excerpt. Feature fields above are authoritative; prose may paraphrase but must not invent alternate IDs.
+Associate note: prefer firm memory tools when available; filenames and folder slugs do not encode numeric deal terms.

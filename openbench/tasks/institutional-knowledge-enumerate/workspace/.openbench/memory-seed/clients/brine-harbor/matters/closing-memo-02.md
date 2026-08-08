@@ -1,11 +1,9 @@
 # Northwind software carve-out
 
-PE / software matter excerpt for Northwind Holdings (pe-software).
+Client file for Northwind Holdings (pe software).
+Internal matter reference appears in the closing set as MAT-2401.
 
-CLAWQL_MATTER_ID=MAT-2401
-CLAWQL_CLIENT=Northwind Holdings
-CLAWQL_ESCROW_PCT=12
-CLAWQL_NONCOMPETE_MONTHS=24
-CLAWQL_DEAL_TYPE=pe-software
+The escrow holdback sat at twelve percent of purchase price (12 pct in the funds-flow schedule).
+Key-employee non-compete ran twenty-four months (24 months post-close) under the restrictive-covenant schedule.
 
-Closing / diligence excerpt. Feature fields above are authoritative; prose may paraphrase but must not invent alternate IDs.
+Associate note: prefer firm memory tools when available; filenames and folder slugs do not encode numeric deal terms.

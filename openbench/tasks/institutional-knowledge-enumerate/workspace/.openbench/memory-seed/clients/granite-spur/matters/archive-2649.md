@@ -1,10 +1,9 @@
 # Archive matter 2649
 
-Secondary archive note — check numeric fields carefully before including.
+Client file for Client Granite Spur (archive).
+Internal matter reference appears in the closing set as MAT-2649.
 
-CLAWQL_MATTER_ID=MAT-2649
-CLAWQL_CLIENT=Client Granite Spur
-CLAWQL_ESCROW_PCT=30
-CLAWQL_DEAL_TYPE=archive
+The escrow holdback sat at thirty percent of purchase price (30 pct in the funds-flow schedule).
+No non-compete term is stated in this excerpt.
 
-Closing / diligence excerpt. Feature fields above are authoritative; prose may paraphrase but must not invent alternate IDs.
+Associate note: prefer firm memory tools when available; filenames and folder slugs do not encode numeric deal terms.

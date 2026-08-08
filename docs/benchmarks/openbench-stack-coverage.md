@@ -182,7 +182,7 @@ Full breakdown (B-1 flywheel → B-7 institutional / C&H): [`openbench-advanced-
 
 ### Phase 1d — Institutional knowledge (Harvey C&H)
 
-23. **`institutional-knowledge-enumerate` (B-7.1)** — Qwen FAIL ruled out ClawQL ([31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868)); **redesign live**: 120 nested notes + Claude Sonnet 4.6 n=3 on `pr_active`.
+23. **`institutional-knowledge-enumerate` (B-7.1)** — Sonnet n=3 FAIL [31238962094](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31238962094) (off grepped tags); prose/vault split landed; re-burn after OpenRouter credit. Qwen [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868) ruled out ClawQL.
 
 ### P3 — keep out of PR OpenBench (ops / cluster / paid SaaS)
 

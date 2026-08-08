@@ -21,10 +21,12 @@ List **every** matter that has **both**:
      `.openbench/memory-seed/` (including nested `clients/*/matters/`; ignore
      `decoy/`). There are **~120** notes; you must check each note’s fields
      before finishing (filenames do not encode the criteria).
-2. Machine-readable fields to collect:
-   - `CLAWQL_MATTER_ID=…`
-   - `CLAWQL_ESCROW_PCT=…`
-   - `CLAWQL_NONCOMPETE_MONTHS=…`
+2. Fields to collect (prefer vault / `memory_recall` — structured `CLAWQL_*`
+   tags are available there; workspace files are prose and may bury numbers in
+   words):
+   - matter id
+   - escrow percentage
+   - non-compete duration in months
 3. Apply the filters above. Near-misses (e.g. 9% escrow, exactly 18 months NC,
    missing escrow) must **not** appear in the answer.
 4. Write **relative** path `matters.json` (exactly that name — not `/tmp/…` or an
