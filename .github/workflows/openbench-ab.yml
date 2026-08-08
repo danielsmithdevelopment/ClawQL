@@ -153,7 +153,8 @@ jobs:
     needs: resolve-matrix
     if: needs.resolve-matrix.outputs.has_tasks == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # B-7.1 Sonnet three-arm n=3 can approach ~90m; keep headroom for retries.
+    timeout-minutes: 150
     strategy:
       fail-fast: false
       # Serialize cells: OpenCode hangs forever on upstream 429/API errors with no
@@ -343,14 +344,10 @@ jobs:
               echo "OPENBENCH_TIMEOUT_S=180"
             fi
             if [ "${{ matrix.task }}" = "institutional-knowledge-enumerate" ]; then
-              # Hardened 30-note fixture + n≥3; give off-arm room to try exhaustively.
-              # Use Qwen3.6 Plus (standard) — DeepSeek frugal flaked on post-recall
-              # write/filter; this re-burn rules out ClawQL memory as the failure.
-              echo "OPENBENCH_TIMEOUT_S=400"
-              echo "OPENBENCH_MODEL=openrouter/qwen/qwen3.6-plus"
-              # Three-arm isolate by default (tools+vault vs tools/no-vault vs bare).
-              # On dispatch, honor an explicit non-default arms input; on PR/push
-              # always use the three-arm set (same burn path as every other cell).
+              # Redesigned ~120 nested notes; Claude Sonnet 4.6 for agent follow-through
+              # (Harvey LAB family). Three-arm n≥3 via ci-matrix pr_trials.
+              echo "OPENBENCH_TIMEOUT_S=480"
+              echo "OPENBENCH_MODEL=openrouter/anthropic/claude-sonnet-4.6"
               if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                 case "${{ inputs.arms }}" in
                   clawql-on,clawql-off|"")

@@ -168,5 +168,13 @@ export const DEFAULT_INFERENCE_MODEL_CATALOG: InferenceModelCatalog = {
       tier_hint: "standard",
       tags: ["chat", "openrouter"],
     },
+    {
+      id: "openrouter/anthropic/claude-sonnet-4.6",
+      provider: "openrouter",
+      upstream_model: "anthropic/claude-sonnet-4.6",
+      display_name: "Claude Sonnet 4.6 (via OpenRouter)",
+      tier_hint: "frontier",
+      tags: ["chat", "openrouter", "openbench-b7"],
+    },
   ],
 };

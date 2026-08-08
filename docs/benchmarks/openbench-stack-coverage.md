@@ -182,7 +182,7 @@ Full breakdown (B-1 flywheel → B-7 institutional / C&H): [`openbench-advanced-
 
 ### Phase 1d — Institutional knowledge (Harvey C&H)
 
-23. **`institutional-knowledge-enumerate` (B-7.1)** — qwen3.6-plus n=3 [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868): on **1.67/5** < off **3.33/5**; recall 30/30 — not a ClawQL memory bug. Pack kept; redesign needed.
+23. **`institutional-knowledge-enumerate` (B-7.1)** — Sonnet n=3 FAIL [31238962094](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31238962094) (off grepped tags); prose/vault split landed; re-burn after OpenRouter credit. Qwen [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868) ruled out ClawQL.
 
 ### P3 — keep out of PR OpenBench (ops / cluster / paid SaaS)
 
