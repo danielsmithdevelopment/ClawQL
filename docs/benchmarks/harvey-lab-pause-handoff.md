@@ -89,3 +89,23 @@ export OPENROUTER_API_KEY=…   # from GHA / local only — never commit
 - Do not compare Sonnet vs Opus across arms
 - Do not run Phase E until Phases A–D are clean
 - Do not rely on Cursor Cloud Agent secrets for LAB inference
+
+## Cleanup completed (2026-08-08 pause)
+
+### Merged
+
+- #878 B-7.2 preference + B-7.1-blind
+- #880 B-7.3 amortized session (retired WIN in ci-matrix)
+- #881 Harvey LAB overlay + GHA/OpenRouter + pause handoff
+- #879 clawql-cellrt v0.1 spec
+- Dependabot: #773 checkout, #770 setup-node, #763 wrangler-action, #784 google-proto-files
+
+### Closed (conflicting / red CI — not mergeable without separate work)
+
+- #876, #749, #626, #464, #659, #718, #719 (conflicted stale)
+- #777 TypeScript 7, #788/#787/#786 codeql-action, #775 upload-artifact v7, #774 viem, #772 web-tree-sitter (failing checks)
+
+### Resume next
+
+1. `gh workflow run harvey-lab-firm-knowledge.yml` Phase A
+2. Fill ledgers after scores land
