@@ -85,10 +85,10 @@ Prior n=1 WIN [31228280796](https://github.com/danielsmithdevelopment/ClawQL/act
 
 ### Phase-1 arms (B-7.1)
 
-| Arm                | What it isolates                                                |
-| ------------------ | --------------------------------------------------------------- |
-| `clawql-on`        | ClawQL MCP + **seeded vault** (memory representation available) |
-| `clawql-no-memory` | ClawQL MCP tools present but **memory disabled / no seed**      |
+| Arm                | What it isolates                                                  |
+| ------------------ | ----------------------------------------------------------------- |
+| `clawql-on`        | ClawQL MCP + **seeded vault** (memory representation available)   |
+| `clawql-no-memory` | ClawQL MCP tools present but **memory disabled / no seed**        |
 | `clawql-off`       | Bare OpenCode — no ClawQL MCP; may read `.openbench/memory-seed/` |
 
 PR/push defaults to all three arms (override via workflow `arms` on dispatch).
