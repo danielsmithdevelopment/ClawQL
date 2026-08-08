@@ -12,6 +12,8 @@ Open, one-page specifications for ClawQL-owned file types. Base content remains 
 | [cqw.md](./cqw.md) | `.cqw`    | Kinetic-aware workflow                 |
 | [cqk.md](./cqk.md) | `.cqk`    | Provenanced knowledge entry            |
 
+Related domain specs (not file-extension specs): [ontology/legal-domain-v0.1.md](../ontology/legal-domain-v0.1.md), [memory/memory-recall-structured-filter-v0.1.md](../memory/memory-recall-structured-filter-v0.1.md).
+
 ## Sequencing
 
 1. OKF on vault `.md` — [memory/okf.md](../../memory/okf.md) (shipped)

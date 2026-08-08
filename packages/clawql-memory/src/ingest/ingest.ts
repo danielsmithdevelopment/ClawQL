@@ -382,6 +382,12 @@ export async function writeMemoryIngestPage(
             ].join("\n")
           : provisional;
       await writeVaultTextFileAtomic(vault, rel, body);
+      try {
+        const { upsertOntologyFromVaultNote } = await import("../ontology/ontology-sync.js");
+        await upsertOntologyFromVaultNote(vault, rel, body);
+      } catch {
+        // Ontology index is best-effort; vault write already succeeded.
+      }
       const { emitMemoryWormEvent } = await import("../okf/worm-events.js");
       await emitMemoryWormEvent({
         kind: "MEMORY_INGESTED",
@@ -406,6 +412,12 @@ export async function writeMemoryIngestPage(
       sealedContent: nextProvisional,
     });
     await writeVaultTextFileAtomic(vault, rel, nextProvisional);
+    try {
+      const { upsertOntologyFromVaultNote } = await import("../ontology/ontology-sync.js");
+      await upsertOntologyFromVaultNote(vault, rel, nextProvisional);
+    } catch {
+      // Ontology index is best-effort; vault write already succeeded.
+    }
     const { emitMemoryWormEvent } = await import("../okf/worm-events.js");
     await emitMemoryWormEvent({
       kind: "MEMORY_INGESTED",

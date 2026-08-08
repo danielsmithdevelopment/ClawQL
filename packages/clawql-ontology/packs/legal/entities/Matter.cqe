@@ -5,28 +5,74 @@ metadata:
   labels:
     vertical: legal
 spec:
-  description: Legal matter or case file grouping related Contracts and documents
+  description: >
+    Legal matter / deal file. B-7.1 filter fields (escrowPct, nonCompeteMonths)
+    power structured memory_recall against ontology.db
+    (docs/specs/ontology/legal-domain-v0.1.md).
   properties:
     matter_id:
       type: string
       required: true
       indexed: true
+      description: MatterID /^MAT-\d{4}$/
     title:
       type: string
       required: true
     status:
       type: enum
-      values: [intake, active, closed]
+      values: [Active, Closed, Pending, OnHold, intake, active, closed]
       required: true
+    practice_area:
+      type: enum
+      values: [MA, IP, Litigation, RealEstate, Employment, Corporate, Tax, Other]
+    matter_type:
+      type: enum
+      values:
+        [
+          Acquisition,
+          Merger,
+          Divestiture,
+          JointVenture,
+          AssetSale,
+          StockSale,
+          IPLicense,
+          Dispute,
+          Advisory,
+          Other,
+        ]
+    deal_value_usd:
+      type: integer
+      description: Deal value in whole USD
+    escrow_pct:
+      type: number
+      description: Escrow holdback percentage 0–100 (B-7.1)
+    escrow_duration_months:
+      type: integer
+    non_compete_months:
+      type: integer
+      description: Non-compete duration in months (B-7.1)
+    non_compete_geography:
+      type: string
+    client_id:
+      type: string
+      description: ClientID /^CLT-\d{4}$/
+    vault_note_path:
+      type: string
   sources:
     - type: sql
-      connection: ${VAULT:contracts_db}
+      connection: ${VAULT:ontology_db}
       table: matters
-      id_column: matter_id
+      id_column: id
   relationships:
     - entity: Contract
       type: one_to_many
       via: matter_contracts
+    - entity: Client
+      type: many_to_one
+      via: client_id
+    - entity: Document
+      type: one_to_many
+      via: matter_id
   actions:
     - name: search_matters
       kind: read

@@ -3,7 +3,8 @@
 **Status:** Spec + Phase-1 offline pack (August 2026)  
 **Suite id:** B-7  
 **Canonical ledger rows:** [`openbench-advanced-specs.md`](./openbench-advanced-specs.md) · plan breakdown: [`openbench-advanced-suites.md`](./openbench-advanced-suites.md)  
-**Upstream corpus:** Harvey + EngramLab **Calderwood & Harkness (C&H)** synthetic law firm (announced 2026-08-07)
+**Upstream corpus:** Harvey + EngramLab **Calderwood & Harkness (C&H)** synthetic law firm (announced 2026-08-07)  
+**Ontology (exact enumeration):** [`docs/specs/ontology/legal-domain-v0.1.md`](../specs/ontology/legal-domain-v0.1.md) · [`memory_recall` structured filters](../specs/memory/memory-recall-structured-filter-v0.1.md)
 
 ---
 

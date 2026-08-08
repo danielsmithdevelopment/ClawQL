@@ -1,0 +1,42 @@
+apiVersion: clawql.dev/ontology/v1alpha1
+kind: Entity
+metadata:
+  name: Document
+  labels:
+    vertical: legal
+spec:
+  description: Work product tied to a Matter (legal-domain-v0.1)
+  properties:
+    document_id:
+      type: string
+      required: true
+      indexed: true
+      description: DocumentID /^DOC-\d{4}$/
+    title:
+      type: string
+      required: true
+    document_type:
+      type: enum
+      values: [Agreement, Memo, Brief, Filing, DueDiligence, Correspondence, Other]
+    matter_id:
+      type: string
+      required: true
+    status:
+      type: enum
+      values: [Draft, UnderReview, Executed, Filed]
+    vault_note_path:
+      type: string
+  sources:
+    - type: sql
+      connection: ${VAULT:ontology_db}
+      table: documents
+      id_column: id
+  relationships:
+    - entity: Matter
+      type: many_to_one
+      via: matter_id
+  actions:
+    - name: search_documents
+      kind: read
+    - name: get_document
+      kind: read
