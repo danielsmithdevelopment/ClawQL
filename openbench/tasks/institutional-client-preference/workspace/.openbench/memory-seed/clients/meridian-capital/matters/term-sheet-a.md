@@ -1,6 +1,7 @@
 # Term sheet A — Northline option A
 
-Option identifier: MAT-2801-A (annex to MAT-2801).
+Option identifier: MAT-2801-A
+Annex to active matter: MAT-2801.
 
 - Headline purchase price: USD 48,000,000
 - Indemnity cap: 8% of purchase price (closed basket)

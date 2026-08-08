@@ -228,7 +228,8 @@ fourth option. Ranking must be grounded in Meridian history.
         "clients/meridian-capital/matters/term-sheet-a.md",
         f"""# Term sheet A — Northline option A
 
-Option identifier: {TOP1} (annex to {ACTIVE}).
+Option identifier: {TOP1}
+Annex to active matter: {ACTIVE}.
 
 - Headline purchase price: USD 48,000,000
 - Indemnity cap: 8% of purchase price (closed basket)
@@ -252,7 +253,8 @@ the certainty screen Meridian applied in Apex and Helios.
         "clients/meridian-capital/matters/term-sheet-b.md",
         f"""# Term sheet B — Northline option B
 
-Option identifier: MAT-2801-B (annex to {ACTIVE}).
+Option identifier: MAT-2801-B
+Annex to active matter: {ACTIVE}.
 
 - Headline purchase price: USD 56,500,000 (highest of the three)
 - Indemnity cap: 20% of purchase price with survival beyond escrow
@@ -276,7 +278,8 @@ rejected historically — high price does not compensate for that exposure.
         "clients/meridian-capital/matters/term-sheet-c.md",
         f"""# Term sheet C — Northline option C
 
-Option identifier: MAT-2801-C (annex to {ACTIVE}).
+Option identifier: MAT-2801-C
+Annex to active matter: {ACTIVE}.
 
 - Headline purchase price: USD 52,000,000
 - Indemnity cap: 12% of purchase price (standard basket)

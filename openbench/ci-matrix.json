@@ -2,10 +2,9 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "Post-#877: activate B-7.2 preference + B-7.1-blind (n=3). Fair/ontology B-7.1 already retired as WIN.",
+  "live_resume_note": "Blind B-7.1 retired WIN @ 31267585806. Keep B-7.2 preference active for clean 3/3 after annex-suffix normalize.",
   "pr_active": [
-    "institutional-client-preference",
-    "institutional-knowledge-enumerate-blind"
+    "institutional-client-preference"
   ],
   "pr_trials": 3,
   "retired": {
@@ -124,6 +123,10 @@
     "institutional-knowledge-enumerate-ontology": {
       "reason": "Verified WIN — efficiency cell under 5-turn/4k/90s caps (on 3/3 / off 0/3; structured_predicate + write; mean wall ~27s)",
       "evidence_run": "31256241850"
+    },
+    "institutional-knowledge-enumerate-blind": {
+      "reason": "Verified WIN — filter-shape CRITICAL + structured_predicate recovery (on 3/3 5/5 / off 0/3; FP→0 still applies)",
+      "evidence_run": "31267585806"
     }
   },
   "ouroboros_pr_enabled": false,

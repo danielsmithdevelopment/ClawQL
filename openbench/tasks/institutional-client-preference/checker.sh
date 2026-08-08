@@ -41,7 +41,13 @@ aliases = {
 aliases.add(expected)
 
 def normalize(raw: str) -> str:
+    import re
+
     s = " ".join(str(raw or "").strip().upper().split())
+    # Agents sometimes paste "MAT-2801-A (ANNEX TO MAT-2801)" — keep the ID.
+    m = re.search(r"\b(MAT-\d+-[A-Z])\b", s)
+    if m:
+        return m.group(1)
     # Accept "TERM SHEET A" / "OPTION A" / bare "A" as aliases when listed.
     return s
 

@@ -1,6 +1,7 @@
 # Term sheet B — Northline option B
 
-Option identifier: MAT-2801-B (annex to MAT-2801).
+Option identifier: MAT-2801-B
+Annex to active matter: MAT-2801.
 
 - Headline purchase price: USD 56,500,000 (highest of the three)
 - Indemnity cap: 20% of purchase price with survival beyond escrow

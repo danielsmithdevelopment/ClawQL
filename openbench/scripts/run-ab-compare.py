@@ -1930,6 +1930,17 @@ def preference_correct_top1_values(gt: dict) -> set[str]:
     return vals
 
 
+def normalize_preference_top1(raw: str) -> str:
+    """Normalize top1; strip annex parentheticals like 'MAT-2801-A (ANNEX TO …)'."""
+    import re
+
+    s = " ".join(str(raw or "").strip().upper().split())
+    m = re.search(r"\b(MAT-\d+-[A-Z])\b", s)
+    if m:
+        return m.group(1)
+    return s
+
+
 def preference_artifact_needs_fix(workdir: Path, task_dir: Path | None) -> str | None:
     """Return reason string if preference.json is missing/unusable for grading."""
     path = workdir / "preference.json"
@@ -1941,7 +1952,7 @@ def preference_artifact_needs_fix(workdir: Path, task_dir: Path | None) -> str |
         return "parse_error"
     if not isinstance(parsed, dict):
         return "parse_error"
-    top1 = " ".join(str(parsed.get("top1") or "").strip().upper().split())
+    top1 = normalize_preference_top1(str(parsed.get("top1") or ""))
     if not top1:
         return "missing_top1"
     if "XXXX" in top1 or top1.endswith("-Y") or top1 in {"MAT-XXXX-Y", "MAT-XXXX"}:
