@@ -81,7 +81,7 @@ Shared OpenBench rules still apply: real `tool:clawql_*` evidence · hard spend 
 | B-7.3 | `institutional-amortized-session`   | Same vault; 5 related prompts; cost + completeness   | Spec only (needs session harness)      |
 | B-7.4 | Full C&H mount                      | Mount open-sourced filesystem + Harvey task set      | Blocked on stable corpus download path |
 
-Prior n=1 WIN [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796). Hardening in flight: strip prompt IDs, restore off-arm note access + exhaustive nudge, expand 12→30 matters, `pr_trials=3`.
+Hardened n=3 [31230837116](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31230837116): on mean **2.67/5** < off mean **4/5** (gate FAIL). Prior n=1 [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796) was confounded (off had no seed files + early stop). Do not outreach a vault WIN until a fixture where exhaustive bare read fails.
 
 ### Phase-1 arms (B-7.1)
 
