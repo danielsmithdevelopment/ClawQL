@@ -3424,8 +3424,9 @@ def render_markdown(report: dict) -> str:
     elif task == "institutional-knowledge-enumerate-ontology":
         interp.append(
             "- B-7.1-ontology: same fair fixture; on-arm must use structured "
-            "memory_recall (schema+filters). Tight caps (5 turns / 4k tokens) "
-            "prove exact enumeration in ~2 turns. Keyword near-misses → 0."
+            "memory_recall (schema+filters). Tight caps (5 turns / 4k tokens / 90s) "
+            "prove exact enumeration in ~2 turns (+ write-only nudge). "
+            "Keyword near-misses → 0."
         )
     interp.append("")
     lines.extend(interp)
