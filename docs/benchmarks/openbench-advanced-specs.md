@@ -10,14 +10,14 @@ Related: [`openbench.md`](openbench.md) · [`openbench/README.md`](../../openben
 
 ## Suite index
 
-| Suite | Claim category                             | Priority | Status                                                                                                                                                                    |
-| ----- | ------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| B-1   | Fine-tuning flywheel delta                 | Highest  | Spec only                                                                                                                                                                 |
-| B-2   | Multi-turn IDP pipeline                    | Highest  | Spec only                                                                                                                                                                 |
-| B-3   | Long-horizon codegraph (SWE-bench style)   | High     | Spec only — Phase 1 task packs landed                                                                                                                                     |
-| B-4   | Adversarial memory / conflict resolution   | High     | Spec only — Phase 1 task packs landed                                                                                                                                     |
-| B-5   | NSV/SGDOP ensemble diversity               | High     | Spec only                                                                                                                                                                 |
-| B-6   | Domain-specific compliance QA (HLE analog) | Medium   | Spec only                                                                                                                                                                 |
+| Suite | Claim category                             | Priority | Status                                                                                                                                                                  |
+| ----- | ------------------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B-1   | Fine-tuning flywheel delta                 | Highest  | Spec only                                                                                                                                                               |
+| B-2   | Multi-turn IDP pipeline                    | Highest  | Spec only                                                                                                                                                               |
+| B-3   | Long-horizon codegraph (SWE-bench style)   | High     | Spec only — Phase 1 task packs landed                                                                                                                                   |
+| B-4   | Adversarial memory / conflict resolution   | High     | Spec only — Phase 1 task packs landed                                                                                                                                   |
+| B-5   | NSV/SGDOP ensemble diversity               | High     | Spec only                                                                                                                                                               |
+| B-6   | Domain-specific compliance QA (HLE analog) | Medium   | Spec only                                                                                                                                                               |
 | B-7   | Institutional knowledge (C&H / amortized)  | Highest  | B-7.1 redesign live (120 nested + Sonnet 4.6); prior Qwen FAIL [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868); B-7.2–7.4 next |
 
 ---
@@ -205,7 +205,7 @@ Harvey + EngramLab open-sourced **Calderwood & Harkness (C&H)** — a ~100M+ tok
 | Arms          | Phase-1: `clawql-on` + `clawql-off` + `clawql-no-memory` (tools without seeded vault)                                                                                                         |
 | Task IDs      | `institutional-knowledge-enumerate` (**offline pack landed**)                                                                                                                                 |
 | Grader        | Partial credit `hits/5`; emit `MATTERS_FOUND: k/5`; reject false positives; require real `memory_recall` when `REQUIRE_INSTITUTIONAL=1`                                                       |
-| Spend cap     | 30 turns / 240s / 8,000 tokens (single cell); B-7.3 adds first-task vs reuse asymmetry                                                                                                        |
+| Spend cap     | 50 turns / 480s / 16,000 tokens (redesign); B-7.3 adds first-task vs reuse asymmetry                                                                                                          |
 | Expected      | on mean matters_found ≫ off / no-memory; headline copy uses `k/5` not only mean score                                                                                                         |
 | Status        | **Redesign live** — 120 nested notes + Sonnet 4.6 n=3 (prior Qwen [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868) / DeepSeek FAIL; ClawQL recall OK) |
 
