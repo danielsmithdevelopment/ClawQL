@@ -14,36 +14,36 @@ Publishable comparison requires **Opus vs Opus**. Sonnet is for Phases A–D onl
 
 ## Arm A — Baseline (standard harness)
 
-| Metric | Value |
-|---|---|
+| Metric              | Value     |
+| ------------------- | --------- |
 | Criterion pass rate | _pending_ |
-| All-pass rate | _pending_ |
-| Mean turns | _pending_ |
-| Mean tokens | _pending_ |
+| All-pass rate       | _pending_ |
+| Mean turns          | _pending_ |
+| Mean tokens         | _pending_ |
 
 ## Arm B — ClawQL (vault + MCP + priority DMS seed)
 
-| Metric | Value |
-|---|---|
+| Metric              | Value     |
+| ------------------- | --------- |
 | Criterion pass rate | _pending_ |
-| All-pass rate | _pending_ |
-| Mean turns | _pending_ |
-| Mean tokens | _pending_ |
+| All-pass rate       | _pending_ |
+| Mean turns          | _pending_ |
+| Mean tokens         | _pending_ |
 
 ## Delta
 
-| Metric | Value |
-|---|---|
+| Metric              | Value     |
+| ------------------- | --------- |
 | Criterion pass rate | _pending_ |
-| All-pass rate | _pending_ |
-| Turn reduction | _pending_ |
-| Token reduction | _pending_ |
+| All-pass rate       | _pending_ |
+| Turn reduction      | _pending_ |
+| Token reduction     | _pending_ |
 
 ## Per-task breakdown
 
-| Task | Baseline CPR | ClawQL CPR | Delta | Baseline all-pass | ClawQL all-pass |
-|---|---|---|---|---|---|
-| firm-knowledge/tasks/001 | — | — | — | — | — |
+| Task                     | Baseline CPR | ClawQL CPR | Delta | Baseline all-pass | ClawQL all-pass |
+| ------------------------ | ------------ | ---------- | ----- | ----------------- | --------------- |
+| firm-knowledge/tasks/001 | —            | —          | —     | —                 | —               |
 
 ## Implementation notes
 
