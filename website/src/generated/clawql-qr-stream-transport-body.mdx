@@ -13,12 +13,12 @@ QR stream transport is the **seventh surface** in mcp-api-adapter and a new even
 
 The other six surfaces (OpenAPI, GraphQL, Streamable HTTP `/mcp`, gRPC, gen-cli, WebSocket) assume a network. QR stream is for when there is no network, must not be one, or the channel must be physically verifiable and unidirectional.
 
-| Property                    | Meaning                                                                      |
-| --------------------------- | ---------------------------------------------------------------------------- |
-| **Unidirectional by default** | Display → camera; no return channel required                               |
-| **Cryptographically verifiable** | Merkle chain, per-frame HMAC, optional TEE attestation                  |
-| **Network-independent**     | Air gap is structural, not policy                                            |
-| **Physically auditable**    | Thermal printer → paper QR sequence, scan/verify later                       |
+| Property                         | Meaning                                                |
+| -------------------------------- | ------------------------------------------------------ |
+| **Unidirectional by default**    | Display → camera; no return channel required           |
+| **Cryptographically verifiable** | Merkle chain, per-frame HMAC, optional TEE attestation |
+| **Network-independent**          | Air gap is structural, not policy                      |
+| **Physically auditable**         | Thermal printer → paper QR sequence, scan/verify later |
 
 Frame format extends the [TEE air-gap audit](/streams/clawql-tee-airgap-audit) `AuditFrame` with MCP and election payload types.
 
@@ -94,22 +94,31 @@ Encoding matches air-gap audit: CBOR → zstd → ~2 KB chunks → QR v40 ECC M;
 
 ```typescript
 interface QrStreamProvider {
-  streamOutput(toolResult: McpToolResult, options: QrOutputOptions): AsyncIterable<QrFrame>
-  scanInput(camera: CameraDevice, options: QrInputOptions): AsyncIterable<McpToolCall>
-  streamEvents(events: AsyncIterable<StreamEvent>, options: QrOutputOptions): AsyncIterable<QrFrame>
+  streamOutput(
+    toolResult: McpToolResult,
+    options: QrOutputOptions,
+  ): AsyncIterable<QrFrame>
+  scanInput(
+    camera: CameraDevice,
+    options: QrInputOptions,
+  ): AsyncIterable<McpToolCall>
+  streamEvents(
+    events: AsyncIterable<StreamEvent>,
+    options: QrOutputOptions,
+  ): AsyncIterable<QrFrame>
 }
 
 interface QrOutputOptions {
-  output: "hdmi" | "serial" | "eink" | "thermal" | "stdout"
-  frameIntervalMs: number        // default 500
-  ecLevel: "L" | "M" | "Q" | "H"
+  output: 'hdmi' | 'serial' | 'eink' | 'thermal' | 'stdout'
+  frameIntervalMs: number // default 500
+  ecLevel: 'L' | 'M' | 'Q' | 'H'
   encrypt: boolean
   includeAttestation: boolean
   thermalPrinter?: { device: string }
 }
 
 interface QrInputOptions {
-  camera: string                 // camera:/dev/video0 | rtsp://... | v4l2://...
+  camera: string // camera:/dev/video0 | rtsp://... | v4l2://...
   verifyMerkleChain: boolean
   expectedMeasurement?: string
   timeoutMs: number
@@ -139,12 +148,12 @@ Env: `CLAWQL_QR_OUTPUT`, `CLAWQL_QR_INPUT`, `MCP_API_ADAPTER_QR_*`.
 
 ### 4.3 HTTP surface (planned)
 
-| Route                 | Role                                              |
-| --------------------- | ------------------------------------------------- |
-| `GET /qr/session`     | Current QR session status                         |
-| `GET /qr/frame/:index`| Frame as PNG (testing)                            |
-| `POST /qr/scan`       | Submit scanned frame bytes (bidirectional)        |
-| `GET /qr/stream`      | SSE of QR PNGs (**dev preview only**, not air-gap)|
+| Route                  | Role                                               |
+| ---------------------- | -------------------------------------------------- |
+| `GET /qr/session`      | Current QR session status                          |
+| `GET /qr/frame/:index` | Frame as PNG (testing)                             |
+| `POST /qr/scan`        | Submit scanned frame bytes (bidirectional)         |
+| `GET /qr/stream`       | SSE of QR PNGs (**dev preview only**, not air-gap) |
 
 WIT (cellrt WASM world): `import clawql:transport/qr-stream`.
 
@@ -166,20 +175,20 @@ Camera → clawql-streams QrStreamSourceProvider
 
 ```typescript
 stream_subscribe({
-  sourceType: "qr",
-  device: "camera:/dev/video0",
-  topic: "airgap.financial.audit",
+  sourceType: 'qr',
+  device: 'camera:/dev/video0',
+  topic: 'airgap.financial.audit',
   verifyMerkleChain: true,
-  expectedMeasurement: "sha256:abc...", // optional TEE verify
+  expectedMeasurement: 'sha256:abc...', // optional TEE verify
   significance: {
-    type: "pattern",
-    path: "$.frameType",
-    pattern: "AuditChunk|ElectionBallot|StreamEvent",
+    type: 'pattern',
+    path: '$.frameType',
+    pattern: 'AuditChunk|ElectionBallot|StreamEvent',
   },
   prompt: `Process air-gapped QR stream data. Verify Merkle integrity.
 Ingest structured payloads; flag gaps / invalid proofs; notify #security-ops on failure.`,
-  allowedTools: ["memory_ingest", "memory_recall", "notify", "audit"],
-  auditLevel: "WORM",
+  allowedTools: ['memory_ingest', 'memory_recall', 'notify', 'audit'],
+  auditLevel: 'WORM',
 })
 ```
 
@@ -243,15 +252,15 @@ Agent verifies ZK proofs, checks duplicate commitments, updates **homomorphic ru
 
 ### 6.4 What becomes provably harder
 
-| Threat                    | Mitigation                                              |
-| ------------------------- | ------------------------------------------------------- |
-| Remote hacking            | Air-gapped machine; no inbound network                  |
-| Software tampering        | TEE attestation + Cosign measurement                    |
-| Ballot stuffing           | ZK validity proofs rejected if malformed                |
-| Post-cast manipulation    | Merkle + voter commitment receipt                       |
-| Vote suppression          | Public commitment list vs QR frame count                |
-| Individual vote reveal    | Homomorphic + ZK (math, not policy)                     |
-| QR interception/mod       | Merkle + HMAC + TEE attestation                         |
+| Threat                 | Mitigation                               |
+| ---------------------- | ---------------------------------------- |
+| Remote hacking         | Air-gapped machine; no inbound network   |
+| Software tampering     | TEE attestation + Cosign measurement     |
+| Ballot stuffing        | ZK validity proofs rejected if malformed |
+| Post-cast manipulation | Merkle + voter commitment receipt        |
+| Vote suppression       | Public commitment list vs QR frame count |
+| Individual vote reveal | Homomorphic + ZK (math, not policy)      |
+| QR interception/mod    | Merkle + HMAC + TEE attestation          |
 
 ### 6.5 Honest limitations
 
@@ -293,39 +302,39 @@ mcpApiAdapter:
       encrypt: true
       includeAttestation: false
     input:
-      device: ""
+      device: ''
       verifyMerkleChain: true
-      expectedMeasurement: ""
+      expectedMeasurement: ''
 
 streams:
   sources:
     qr:
       enabled: false
-      defaultDevice: ""
+      defaultDevice: ''
       verifyMerkleChain: true
       batchFrames: 50
       batchWindowMs: 30000
 
 election:
   enabled: false # explicit opt-in
-  electionPublicKeyPath: ""
-  certifiedMeasurement: ""
-  precinctId: ""
+  electionPublicKeyPath: ''
+  certifiedMeasurement: ''
+  precinctId: ''
 ```
 
 ---
 
 ## 9. Positioning
 
-| Surface              | Network | Role                                              |
-| -------------------- | ------- | ------------------------------------------------- |
-| OpenAPI              | Yes     | REST / OpenAPI panels                             |
-| GraphQL              | Yes     | GraphQL stacks                                    |
-| Streamable HTTP `/mcp` | Yes   | IDE clients                                       |
-| gRPC                 | Yes     | Mesh / protobuf                                   |
-| gen-cli              | Build   | Shell / ops                                       |
-| WebSocket            | Yes     | Real-time / DO hibernation                        |
-| **QR stream**        | **No**  | **Air-gap, elections, regulated optical channel** |
+| Surface                | Network | Role                                              |
+| ---------------------- | ------- | ------------------------------------------------- |
+| OpenAPI                | Yes     | REST / OpenAPI panels                             |
+| GraphQL                | Yes     | GraphQL stacks                                    |
+| Streamable HTTP `/mcp` | Yes     | IDE clients                                       |
+| gRPC                   | Yes     | Mesh / protobuf                                   |
+| gen-cli                | Build   | Shell / ops                                       |
+| WebSocket              | Yes     | Real-time / DO hibernation                        |
+| **QR stream**          | **No**  | **Air-gap, elections, regulated optical channel** |
 
 First six connect anything over a network. The seventh connects air-gapped systems to the ClawQL agent surface over a physical channel with per-frame crypto and optional TEE binding.
 
@@ -343,8 +352,8 @@ First six connect anything over a network. The seventh connects air-gapped syste
 
 ---
 
-*ClawQL QR Stream Transport · Spec v0.1 · August 2026 · Draft*  
-*Companion: clawql-tee Air-Gap Audit · Streams v0.2 · mcp-api-adapter*
+_ClawQL QR Stream Transport · Spec v0.1 · August 2026 · Draft_  
+_Companion: clawql-tee Air-Gap Audit · Streams v0.2 · mcp-api-adapter_
 
 export function wrapper({ children }) {
   return children

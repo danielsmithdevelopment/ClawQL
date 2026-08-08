@@ -16,12 +16,12 @@ Together with ClawQL Core (any protocol → MCP) and [`mcp-api-adapter`](/mcp/mc
 ### v0.2 changes (from v0.1.x)
 
 | Decision               | v0.1.x                                                 | v0.2                                                                                                     |
-| ---------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| ---------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------- | ---------- | ----------------------------------------- |
 | Self-hosted DO runtime | Custom Node `worker_threads` / Miniflare approximation | **[celld](https://celld.dev/)** (Apache 2.0, [denoland/celld](https://github.com/denoland/celld))        |
 | Bundle contents        | Ambiguous; subprocess spawn to Claude / local tools    | **`clawql-streams` + `clawql-core` + `mcp-api-adapter` embedded in the DO/cell bundle**                  |
-| Model calls            | Subprocess (`claude -p`) or mixed                      | **`fetch()` to [`clawql-inference`](/inference/clawql-inference)** only — no `child_process`        |
+| Model calls            | Subprocess (`claude -p`) or mixed                      | **`fetch()` to [`clawql-inference`](/inference/clawql-inference)** only — no `child_process`             |
 | WORM replication       | Postgres / JSONL (K8s) or DO storage                   | On celld: **LTX → S3-compatible bucket is the WORM trail** (RPO=0); auditor uses `sqlite3` on the bucket |
-| Scaling backends       | `kubernetes` \\| `durable-objects`                      | **`kubernetes` \\| `celld` \\| `cloudflare`** (+ planned **`cellrt`**)                                     |
+| Scaling backends       | `kubernetes` \\                                        | `durable-objects`                                                                                        | \*\*`kubernetes` \\ | `celld` \\ | `cloudflare`** (+ planned **`cellrt`\*\*) |
 
 **Do not build a custom ClawQL DO runtime on Node `worker_threads`.** Use **[celld](https://celld.dev/)** for Workers/DO-compatible self-hosted Durable Objects; Cloudflare Workers/DOs for hosted; Kubernetes HPA for regulated / air-gapped until a DO runtime is production-stable. **[`clawql-cellrt`](/streams/clawql-cellrt)** is the ClawQL-owned Rust + Wasmtime production runtime (security-first, embedded Vault/inference/observability) — not a Node rewrite.
 
@@ -144,24 +144,24 @@ Filter types (configurable per subscription):
 When the significance filter passes, Streams spawns an `AgentSessionDO`. The **model layer is always [`clawql-inference`](/inference/clawql-inference)** via `fetch()` — not a raw Anthropic/OpenAI credential and not a subprocess. The `model` field on `stream_subscribe` is a **policy alias** that resolves through PAL routing (`Frugal` → `Standard` → `Frontier`).
 
 ```ts
-import { DurableObject } from "cloudflare:workers";
+import { DurableObject } from 'cloudflare:workers'
 
 export class AgentSessionDO extends DurableObject {
   async fetch(request: Request): Promise<Response> {
-    const env = this.env as AgentEnv;
-    const body = await request.json<SpawnPayload>();
+    const env = this.env as AgentEnv
+    const body = await request.json<SpawnPayload>()
 
     // WORM: bind IDs before any model call
-    await this.ctx.storage.put("session_meta", {
+    await this.ctx.storage.put('session_meta', {
       doInstanceId: body.doInstanceId,
       virtualKeyId: body.virtualKeyId,
       subscriptionId: body.subscriptionId,
       eventHash: body.eventHash,
       startedAt: Date.now(),
-    });
+    })
 
     // Schedule hard TTL (no setInterval)
-    await this.ctx.storage.setAlarm(Date.now() + body.ttlMs);
+    await this.ctx.storage.setAlarm(Date.now() + body.ttlMs)
 
     const result = await runAgentLoop({
       prompt: body.prompt,
@@ -173,30 +173,30 @@ export class AgentSessionDO extends DurableObject {
       // Model: fetch only — never child_process
       inference: async (req) =>
         fetch(env.INFERENCE_URL, {
-          method: "POST",
+          method: 'POST',
           headers: {
             Authorization: `Bearer ${body.virtualKey}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify(req),
         }),
       onWorm: async (entry) => {
         // Append-only trail; LTX ships to bucket (celld) / DO storage (CF)
-        const seq = ((await this.ctx.storage.get<number>("worm_seq")) ?? 0) + 1;
-        await this.ctx.storage.put(`worm:${seq}`, entry);
-        await this.ctx.storage.put("worm_seq", seq);
+        const seq = ((await this.ctx.storage.get<number>('worm_seq')) ?? 0) + 1
+        await this.ctx.storage.put(`worm:${seq}`, entry)
+        await this.ctx.storage.put('worm_seq', seq)
       },
-    });
+    })
 
-    await this.closeSession(result);
-    return Response.json(result);
+    await this.closeSession(result)
+    return Response.json(result)
   }
 
   async alarm(): Promise<void> {
     // TTL / reconnect / batch drain — same handler, intent in SQLite
-    const intent = await this.ctx.storage.get<AlarmIntent>("alarm_intent");
-    if (intent?.kind === "session_ttl") {
-      await this.closeSession({ exitReason: "timeout" });
+    const intent = await this.ctx.storage.get<AlarmIntent>('alarm_intent')
+    if (intent?.kind === 'session_ttl') {
+      await this.closeSession({ exitReason: 'timeout' })
     }
   }
 }
@@ -279,48 +279,48 @@ All event sources implement the `StreamSource` interface:
 
 ```ts
 interface StreamSource {
-  connect(): Promise<void>;
-  disconnect(): Promise<void>;
-  on(event: "message", handler: (msg: StreamMessage) => void): void;
-  topic: string;
-  sourceType: StreamSourceType;
+  connect(): Promise<void>
+  disconnect(): Promise<void>
+  on(event: 'message', handler: (msg: StreamMessage) => void): void
+  topic: string
+  sourceType: StreamSourceType
 }
 
 type StreamSourceType =
-  | "websocket"
-  | "nats"
-  | "webhook"
-  | "cron" // existing schedule tool, unified here
-  | "api_poll" // polling via setAlarm, not setInterval
-  | "grpc_stream" // gRPC server streaming (K8s path; DO via adapter where feasible)
-  | "sse" // Server-Sent Events
-  | "qr" // optical air-gap — see clawql-qr-stream-transport.md
-  | "kafka" // optional, enterprise — open question §15
-  | "kinesis"; // optional, AWS regulated
+  | 'websocket'
+  | 'nats'
+  | 'webhook'
+  | 'cron' // existing schedule tool, unified here
+  | 'api_poll' // polling via setAlarm, not setInterval
+  | 'grpc_stream' // gRPC server streaming (K8s path; DO via adapter where feasible)
+  | 'sse' // Server-Sent Events
+  | 'qr' // optical air-gap — see clawql-qr-stream-transport.md
+  | 'kafka' // optional, enterprise — open question §15
+  | 'kinesis' // optional, AWS regulated
 ```
 
 ### 4.1 WebSocket source
 
 ```ts
 stream_subscribe({
-  source: "wss://stream.example.com/events",
-  topic: "market.AAPL",
-  sourceType: "websocket",
-  auth: { type: "bearer", tokenEnv: "STREAM_API_KEY" },
-  prompt: "Analyze this price event. If delta > 2% notify #trading-desk.",
-  recallQuery: "AAPL prior positions and thresholds",
+  source: 'wss://stream.example.com/events',
+  topic: 'market.AAPL',
+  sourceType: 'websocket',
+  auth: { type: 'bearer', tokenEnv: 'STREAM_API_KEY' },
+  prompt: 'Analyze this price event. If delta > 2% notify #trading-desk.',
+  recallQuery: 'AAPL prior positions and thresholds',
   significance: {
-    type: "threshold",
-    path: "$.delta_pct",
-    operator: ">",
+    type: 'threshold',
+    path: '$.delta_pct',
+    operator: '>',
     value: 1.0,
   },
-  model: "claude-sonnet-4-6",
+  model: 'claude-sonnet-4-6',
   maxTurns: 5,
   budgetTokens: 4000,
-  allowedTools: ["memory_recall", "notify", "memory_ingest"],
-  auditLevel: "WORM",
-});
+  allowedTools: ['memory_recall', 'notify', 'memory_ingest'],
+  auditLevel: 'WORM',
+})
 ```
 
 ### 4.2 Webhook source
@@ -329,12 +329,12 @@ ClawQL exposes `POST /streams/webhook/\{subscriptionId\}` as an inbound HTTP end
 
 ```ts
 stream_subscribe({
-  sourceType: "webhook",
-  topic: "github.pr_merged",
-  prompt: "A PR was merged. Update the vault with what changed and why.",
-  significance: { type: "always" },
-  allowedTools: ["memory_ingest", "web_fetch"],
-});
+  sourceType: 'webhook',
+  topic: 'github.pr_merged',
+  prompt: 'A PR was merged. Update the vault with what changed and why.',
+  significance: { type: 'always' },
+  allowedTools: ['memory_ingest', 'web_fetch'],
+})
 // Returns: { webhookUrl: 'https://your-clawql/streams/webhook/sub_abc123' }
 ```
 
@@ -348,12 +348,13 @@ Subscribe to a NATS subject as an event source — useful when other ClawQL inst
 
 ```ts
 stream_subscribe({
-  sourceType: "nats",
-  topic: "clawql.idp.document_processed",
-  prompt: "A document finished processing. Ingest the extraction summary to vault.",
-  significance: { type: "always" },
-  allowedTools: ["memory_ingest", "knowledge_search_onyx"],
-});
+  sourceType: 'nats',
+  topic: 'clawql.idp.document_processed',
+  prompt:
+    'A document finished processing. Ingest the extraction summary to vault.',
+  significance: { type: 'always' },
+  allowedTools: ['memory_ingest', 'knowledge_search_onyx'],
+})
 ```
 
 ### 4.5 API poll source
@@ -362,15 +363,15 @@ Poll a REST endpoint on an interval, treating each changed response as an event.
 
 ```ts
 stream_subscribe({
-  sourceType: "api_poll",
-  url: "https://api.example.com/status",
+  sourceType: 'api_poll',
+  url: 'https://api.example.com/status',
   intervalMs: 30000,
-  topic: "system.status",
-  changeDetection: "json_diff",
-  prompt: "System status changed. If any service is degraded, notify #ops.",
-  significance: { type: "pattern", path: "$.status", pattern: "degraded|down" },
-  allowedTools: ["notify", "memory_ingest"],
-});
+  topic: 'system.status',
+  changeDetection: 'json_diff',
+  prompt: 'System status changed. If any service is degraded, notify #ops.',
+  significance: { type: 'pattern', path: '$.status', pattern: 'degraded|down' },
+  allowedTools: ['notify', 'memory_ingest'],
+})
 ```
 
 ---
@@ -474,9 +475,9 @@ WORM is append-only **forensic** evidence. RTP is structured **training** data. 
 stream_subscribe({
   // ...
   rtpConsent: {
-    scopes: ["community_model", "dataset_licensing"], // dataset_licensing optional
+    scopes: ['community_model', 'dataset_licensing'], // dataset_licensing optional
   },
-});
+})
 ```
 
 Default scope: `community_model`. Every session inherits the subscription JWT. Consent is once per subscription; each session fulfills that consent.
@@ -592,7 +593,7 @@ services:
   inference:
     image: clawql-inference:local
     # Agent cells fetch() here — not embedded in the 64MB bundle
-    ports: ["8787:8787"]
+    ports: ['8787:8787']
 
 networks:
   celld-mesh:
@@ -621,7 +622,7 @@ spec:
           name: clawql_streams_nats_consumer_lag
         target:
           type: AverageValue
-          averageValue: "100"
+          averageValue: '100'
 ```
 
 Same `stream_subscribe` interface across all three backends. The deployment target determines which scaling backend fires.
@@ -643,8 +644,8 @@ streams:
 
   celld:
     enabled: false
-    bucket: "" # s3://clawql-streams-state
-    endpoint: ""
+    bucket: '' # s3://clawql-streams-state
+    endpoint: ''
     region: auto
     advertiseMesh: wireguard # operator-managed
 

@@ -31,7 +31,9 @@ export default function ClawqlQrStreamTransportPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Planned 7th mcp-api-adapter surface — not yet shipped.</strong>{' '}
+          <strong>
+            Planned 7th mcp-api-adapter surface — not yet shipped.
+          </strong>{' '}
           Extends{' '}
           <a
             href="/streams/clawql-tee-airgap-audit"

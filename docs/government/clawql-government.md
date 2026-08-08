@@ -107,29 +107,29 @@ That is the government accountability problem in miniature: a program funded on 
 
 Tools registered when `CLAWQL_GOVERNMENT_ENABLED=1`:
 
-| Tool | Description |
-|---|---|
-| `program_create` | Create a new government program with structured outcome definitions |
-| `program_authorize` | Authorize a program, anchor baseline, begin outcome tracking |
-| `outcome_define` | Define a measurable outcome metric with baseline, target, and measurement schedule |
-| `outcome_record` | Record a periodic outcome measurement against a defined metric |
-| `outcome_compare` | Compare current outcomes to baseline and stated targets |
-| `outcome_report` | Generate a full outcome report for a program, publishable to Arweave |
-| `baseline_anchor` | Anchor baseline metrics to Arweave at program inception |
-| `baseline_verify` | Verify baseline against Arweave anchor — detects retroactive adjustment |
-| `document_ingest` | Ingest a government document with hash, classification, and chain of custody |
-| `document_retrieve` | Retrieve a document with full provenance proof |
-| `document_export_foia` | Export documents in FOIA-compliant format with chain of custody |
-| `contract_ingest` | Ingest a vendor contract with outcome requirements extracted |
-| `contract_monitor` | Monitor vendor contract compliance against outcome requirements |
-| `audit_log_query` | Query the immutable audit log for a program, agency, or time range |
-| `bond_validate` | Validate bond measure language against measurability standards |
-| `bond_authorize` | Create a program record from authorized bond measure |
-| `spending_record` | Record spending against a program with correlation to outcome metrics |
-| `spending_outcome_correlate` | Correlate spending records with outcome records for a program |
-| `auditor_export` | Export program records for state auditor in standard format |
-| `public_dashboard_publish` | Publish outcome report to public dashboard with Arweave anchor |
-| `whistleblower_ingest` | Ingest a whistleblower report with identity protection and tamper-evident storage |
+| Tool                         | Description                                                                        |
+| ---------------------------- | ---------------------------------------------------------------------------------- |
+| `program_create`             | Create a new government program with structured outcome definitions                |
+| `program_authorize`          | Authorize a program, anchor baseline, begin outcome tracking                       |
+| `outcome_define`             | Define a measurable outcome metric with baseline, target, and measurement schedule |
+| `outcome_record`             | Record a periodic outcome measurement against a defined metric                     |
+| `outcome_compare`            | Compare current outcomes to baseline and stated targets                            |
+| `outcome_report`             | Generate a full outcome report for a program, publishable to Arweave               |
+| `baseline_anchor`            | Anchor baseline metrics to Arweave at program inception                            |
+| `baseline_verify`            | Verify baseline against Arweave anchor — detects retroactive adjustment            |
+| `document_ingest`            | Ingest a government document with hash, classification, and chain of custody       |
+| `document_retrieve`          | Retrieve a document with full provenance proof                                     |
+| `document_export_foia`       | Export documents in FOIA-compliant format with chain of custody                    |
+| `contract_ingest`            | Ingest a vendor contract with outcome requirements extracted                       |
+| `contract_monitor`           | Monitor vendor contract compliance against outcome requirements                    |
+| `audit_log_query`            | Query the immutable audit log for a program, agency, or time range                 |
+| `bond_validate`              | Validate bond measure language against measurability standards                     |
+| `bond_authorize`             | Create a program record from authorized bond measure                               |
+| `spending_record`            | Record spending against a program with correlation to outcome metrics              |
+| `spending_outcome_correlate` | Correlate spending records with outcome records for a program                      |
+| `auditor_export`             | Export program records for state auditor in standard format                        |
+| `public_dashboard_publish`   | Publish outcome report to public dashboard with Arweave anchor                     |
+| `whistleblower_ingest`       | Ingest a whistleblower report with identity protection and tamper-evident storage  |
 
 ---
 
@@ -141,22 +141,22 @@ Enforces structured, measurable outcome definitions at program creation. Rejects
 
 ```typescript
 interface OutcomeDefinition {
-  programId:           string;
-  metricName:          string;         // e.g. "system_failure_events_per_year"
-  metricDescription:   string;         // plain English
-  baselineValue:       number;         // measured value at T=0
-  baselineUnit:        string;         // e.g. "events_per_year"
-  baselineSource:      string;         // documented source of baseline measurement
-  targetValue:         number;         // promised outcome value
-  targetDirection:     'increase' | 'decrease' | 'maintain';
-  targetPct:           number;         // e.g. 30 for "30% reduction"
-  measurementSchedule: 'monthly' | 'quarterly' | 'annual';
-  measurementMethod:   string;         // how outcomes will be measured
-  measurementSource:   string;         // who measures (independent preferred)
-  measurementEndDate:  string;         // ISO date — when the target is due
-  authorizedAt?:       string;         // ISO date of program authorization
-  authorizedBy?:       string;         // signing authority
-  arweaveTxId?:        string;         // anchor of this definition at authorization
+  programId: string;
+  metricName: string; // e.g. "system_failure_events_per_year"
+  metricDescription: string; // plain English
+  baselineValue: number; // measured value at T=0
+  baselineUnit: string; // e.g. "events_per_year"
+  baselineSource: string; // documented source of baseline measurement
+  targetValue: number; // promised outcome value
+  targetDirection: "increase" | "decrease" | "maintain";
+  targetPct: number; // e.g. 30 for "30% reduction"
+  measurementSchedule: "monthly" | "quarterly" | "annual";
+  measurementMethod: string; // how outcomes will be measured
+  measurementSource: string; // who measures (independent preferred)
+  measurementEndDate: string; // ISO date — when the target is due
+  authorizedAt?: string; // ISO date of program authorization
+  authorizedBy?: string; // signing authority
+  arweaveTxId?: string; // anchor of this definition at authorization
 }
 
 // Measurability validator rejects:
@@ -173,13 +173,13 @@ Captures and permanently anchors baseline metrics at the moment of program autho
 
 ```typescript
 interface BaselineRecord {
-  programId:      string;
-  authorizedAt:   string;           // ISO date — the T=0 moment
-  metrics:        BaselineMetric[]; // all defined outcome metrics at T=0
-  dataHash:       string;           // SHA-256 of the complete baseline record
-  authoritySignature: string;       // signature of authorizing official
-  arweaveTxId:    string;           // permanent anchor — published immediately
-  arweaveUrl:     string;           // https://arweave.net/{txId}
+  programId: string;
+  authorizedAt: string; // ISO date — the T=0 moment
+  metrics: BaselineMetric[]; // all defined outcome metrics at T=0
+  dataHash: string; // SHA-256 of the complete baseline record
+  authoritySignature: string; // signature of authorizing official
+  arweaveTxId: string; // permanent anchor — published immediately
+  arweaveUrl: string; // https://arweave.net/{txId}
 }
 
 // Key property: arweaveTxId is published BEFORE any spending begins
@@ -195,42 +195,42 @@ Every government program event appends a hash-chained, tamper-evident record:
 
 ```typescript
 type GovernmentAuditEventType =
-  | 'PROGRAM_CREATED'
-  | 'PROGRAM_AUTHORIZED'
-  | 'OUTCOME_DEFINED'
-  | 'BASELINE_ANCHORED'
-  | 'BASELINE_ADJUSTMENT_ATTEMPTED'   // triggers alert
-  | 'OUTCOME_RECORDED'
-  | 'OUTCOME_TARGET_MET'
-  | 'OUTCOME_TARGET_MISSED'
-  | 'OUTCOME_REPORT_GENERATED'
-  | 'OUTCOME_REPORT_PUBLISHED'
-  | 'DOCUMENT_INGESTED'
-  | 'DOCUMENT_RETRIEVED'
-  | 'DOCUMENT_EXPORTED_FOIA'
-  | 'CONTRACT_INGESTED'
-  | 'CONTRACT_OUTCOME_MISSED'         // vendor contract outcome failure
-  | 'SPENDING_RECORDED'
-  | 'SPENDING_OUTCOME_CORRELATED'
-  | 'AUDIT_INITIATED'
-  | 'AUDIT_COMPLETED'
-  | 'MERKLE_ROOT_COMPUTED'
-  | 'ARWEAVE_ANCHOR_CONFIRMED'
-  | 'PUBLIC_DASHBOARD_PUBLISHED'
-  | 'WHISTLEBLOWER_REPORT_INGESTED';  // identity protected
+  | "PROGRAM_CREATED"
+  | "PROGRAM_AUTHORIZED"
+  | "OUTCOME_DEFINED"
+  | "BASELINE_ANCHORED"
+  | "BASELINE_ADJUSTMENT_ATTEMPTED" // triggers alert
+  | "OUTCOME_RECORDED"
+  | "OUTCOME_TARGET_MET"
+  | "OUTCOME_TARGET_MISSED"
+  | "OUTCOME_REPORT_GENERATED"
+  | "OUTCOME_REPORT_PUBLISHED"
+  | "DOCUMENT_INGESTED"
+  | "DOCUMENT_RETRIEVED"
+  | "DOCUMENT_EXPORTED_FOIA"
+  | "CONTRACT_INGESTED"
+  | "CONTRACT_OUTCOME_MISSED" // vendor contract outcome failure
+  | "SPENDING_RECORDED"
+  | "SPENDING_OUTCOME_CORRELATED"
+  | "AUDIT_INITIATED"
+  | "AUDIT_COMPLETED"
+  | "MERKLE_ROOT_COMPUTED"
+  | "ARWEAVE_ANCHOR_CONFIRMED"
+  | "PUBLIC_DASHBOARD_PUBLISHED"
+  | "WHISTLEBLOWER_REPORT_INGESTED"; // identity protected
 
 interface GovernmentAuditEntry {
-  seq:            number;
-  prev_hash:      string;
-  hash:           string;
-  timestamp:      string;
-  event_type:     GovernmentAuditEventType;
-  program_id?:    string;
-  agency_id?:     string;
-  actor_id?:      string;         // official or system taking the action
-  arweave_tx?:    string;
+  seq: number;
+  prev_hash: string;
+  hash: string;
+  timestamp: string;
+  event_type: GovernmentAuditEventType;
+  program_id?: string;
+  agency_id?: string;
+  actor_id?: string; // official or system taking the action
+  arweave_tx?: string;
   correlation_id: string;
-  payload:        Record<string, unknown>;
+  payload: Record<string, unknown>;
 }
 ```
 
@@ -240,22 +240,29 @@ High-trust document management for government records — contracts, RFPs, compl
 
 ```typescript
 interface GovernmentDocument {
-  documentId:      string;
-  programId:       string;
-  agencyId:        string;
-  documentType:    'contract' | 'rfp' | 'compliance_filing' | 'audit_report'
-                 | 'outcome_report' | 'bond_measure' | 'foia_response'
-                 | 'whistleblower_report' | 'other';
-  classificationLevel: 'public' | 'internal' | 'restricted' | 'privileged';
-  title:           string;
-  ingestedAt:      string;
-  ingestedBy:      string;
-  documentHash:    string;        // SHA-256 of document content
-  merklePosition:  string;        // position in program Merkle chain
-  arweaveTxId?:    string;        // for public documents
-  redactedFields?: string[];      // fields redacted before archive
-  retentionPolicy: string;        // legal retention requirement
-  foiaExemptions?: string[];      // applicable FOIA exemption codes
+  documentId: string;
+  programId: string;
+  agencyId: string;
+  documentType:
+    | "contract"
+    | "rfp"
+    | "compliance_filing"
+    | "audit_report"
+    | "outcome_report"
+    | "bond_measure"
+    | "foia_response"
+    | "whistleblower_report"
+    | "other";
+  classificationLevel: "public" | "internal" | "restricted" | "privileged";
+  title: string;
+  ingestedAt: string;
+  ingestedBy: string;
+  documentHash: string; // SHA-256 of document content
+  merklePosition: string; // position in program Merkle chain
+  arweaveTxId?: string; // for public documents
+  redactedFields?: string[]; // fields redacted before archive
+  retentionPolicy: string; // legal retention requirement
+  foiaExemptions?: string[]; // applicable FOIA exemption codes
 }
 
 // FOIA-ready export:
@@ -271,20 +278,20 @@ Periodic measurement of program outcomes against the anchored baseline.
 
 ```typescript
 interface OutcomeRecord {
-  programId:          string;
-  metricName:         string;
-  measuredAt:         string;           // ISO date of measurement
-  measuredValue:      number;
-  measuredBy:         string;           // measurement authority
-  measurementMethod:  string;
-  baselineTxId:       string;           // Arweave TX of the baseline this compares to
-  baselineValue:      number;           // snapshot from baseline for comparison
-  targetValue:        number;
-  progress:           number;           // pct of target achieved
-  onTrack:            boolean;
-  notes?:             string;
-  dataHash:           string;
-  arweaveTxId?:       string;
+  programId: string;
+  metricName: string;
+  measuredAt: string; // ISO date of measurement
+  measuredValue: number;
+  measuredBy: string; // measurement authority
+  measurementMethod: string;
+  baselineTxId: string; // Arweave TX of the baseline this compares to
+  baselineValue: number; // snapshot from baseline for comparison
+  targetValue: number;
+  progress: number; // pct of target achieved
+  onTrack: boolean;
+  notes?: string;
+  dataHash: string;
+  arweaveTxId?: string;
 }
 
 // Discrepancy detection:
@@ -300,18 +307,18 @@ Validates ballot measure and bond authorization language against measurability s
 
 ```typescript
 interface BondAuthorizationValidation {
-  measureId:        string;
-  measureText:      string;          // full ballot text
-  validationDate:   string;
-  outcomes:         OutcomeDefinition[];  // extracted from text
+  measureId: string;
+  measureText: string; // full ballot text
+  validationDate: string;
+  outcomes: OutcomeDefinition[]; // extracted from text
   gaps: {
-    vagueLanguage:          string[];    // phrases that don't yield measurable outcomes
-    missingBaselines:       string[];    // promised outcomes with no baseline defined
+    vagueLanguage: string[]; // phrases that don't yield measurable outcomes
+    missingBaselines: string[]; // promised outcomes with no baseline defined
     missingMeasurementMethods: string[]; // outcomes with no defined measurement process
-    missingEndDates:        string[];    // outcomes with no timeframe
+    missingEndDates: string[]; // outcomes with no timeframe
   };
-  measurabilityScore:  number;          // 0-100, 100 = fully measurable
-  recommendation:      'approve' | 'revise' | 'reject';
+  measurabilityScore: number; // 0-100, 100 = fully measurable
+  recommendation: "approve" | "revise" | "reject";
   recommendationNotes: string;
 }
 ```
@@ -322,26 +329,26 @@ Generates periodic outcome reports comparing measured outcomes to promised outco
 
 ```typescript
 interface ProgramComplianceReport {
-  programId:       string;
-  reportDate:      string;
-  reportPeriod:    string;           // e.g. "FY2025-Q3"
-  authorizedAt:    string;
-  baselineTxId:    string;           // Arweave TX of original baseline
+  programId: string;
+  reportDate: string;
+  reportPeriod: string; // e.g. "FY2025-Q3"
+  authorizedAt: string;
+  baselineTxId: string; // Arweave TX of original baseline
   outcomes: {
-    metricName:    string;
-    baseline:      number;
-    target:        number;
-    measured:      number;
-    progress:      number;
-    status:        'on_track' | 'at_risk' | 'missed' | 'achieved';
-    trend:         'improving' | 'stable' | 'declining';
+    metricName: string;
+    baseline: number;
+    target: number;
+    measured: number;
+    progress: number;
+    status: "on_track" | "at_risk" | "missed" | "achieved";
+    trend: "improving" | "stable" | "declining";
   }[];
-  spendingToDate:  number;
-  spendingUnit:    string;
-  costPerOutcomeUnit?: number;       // spending / outcome achieved
-  overallStatus:   'on_track' | 'at_risk' | 'failing' | 'complete';
-  arweaveTxId?:    string;          // published on report generation
-  publicUrl?:      string;          // public dashboard URL
+  spendingToDate: number;
+  spendingUnit: string;
+  costPerOutcomeUnit?: number; // spending / outcome achieved
+  overallStatus: "on_track" | "at_risk" | "failing" | "complete";
+  arweaveTxId?: string; // published on report generation
+  publicUrl?: string; // public dashboard URL
 }
 ```
 
@@ -600,6 +607,7 @@ California AB and SB proposals addressing nonprofit accountability for public co
 The `clawql-government` approach is different: it makes the accountability prospective and independently verifiable rather than retrospective and self-reported. The legislative language is a natural extension of the bond accountability bill:
 
 Any nonprofit contractor receiving more than $1,000,000 annually in public funds shall:
+
 - Anchor executive compensation records to an external immutable store before payment
 - Define measurable service delivery outcomes with independent baseline records at contract signing
 - Record periodic outcome measurements from independent sources on a defined schedule
@@ -651,14 +659,14 @@ Differentiation: every government records system produces documents. `clawql-gov
 
 **The Hardened Security Dossier mapping:**
 
-| Stage | Essay |
-|---|---|
-| Inference Gateway | Twelve Layers of LLM Cost |
-| Memory / IDP | Local Data Residency |
-| Dedicated Virtual Gateway | The Observability Loop |
-| Edge Agentic Swarm | The Kernel Said No |
-| Governance / CISO | Mini Shai-Hulud |
-| **Government** | **California Spent $196 Billion and Can't Tell You What It Got** |
+| Stage                     | Essay                                                            |
+| ------------------------- | ---------------------------------------------------------------- |
+| Inference Gateway         | Twelve Layers of LLM Cost                                        |
+| Memory / IDP              | Local Data Residency                                             |
+| Dedicated Virtual Gateway | The Observability Loop                                           |
+| Edge Agentic Swarm        | The Kernel Said No                                               |
+| Governance / CISO         | Mini Shai-Hulud                                                  |
+| **Government**            | **California Spent $196 Billion and Can't Tell You What It Got** |
 
 ---
 
@@ -692,5 +700,5 @@ On-site state auditors without network access to the agency VPC can still receiv
 
 ---
 
-*clawql-government · Specification · August 2026 · Draft*  
-*Package: `packages/clawql-government` (planned)*
+_clawql-government · Specification · August 2026 · Draft_  
+_Package: `packages/clawql-government` (planned)_

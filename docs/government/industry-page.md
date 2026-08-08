@@ -185,29 +185,29 @@ Audit events
 
 Every program event appends a hash-chained entry to the WORM audit log.
 
-| Event | Trigger |
-|---|---|
-| `PROGRAM_CREATED` | New program record created |
-| `PROGRAM_AUTHORIZED` | Program authorized, baseline anchored |
-| `OUTCOME_DEFINED` | New outcome metric defined |
-| `BASELINE_ANCHORED` | Baseline anchored to Arweave |
-| `BASELINE_ADJUSTMENT_ATTEMPTED` | Attempt to modify anchored baseline — triggers alert |
-| `OUTCOME_RECORDED` | Periodic outcome measurement logged |
-| `OUTCOME_DISCREPANCY_DETECTED` | Reported and measured outcomes diverge beyond threshold |
-| `OUTCOME_TARGET_MET` | Outcome metric achieved |
-| `OUTCOME_TARGET_MISSED` | Outcome metric missed at measurement date |
-| `OUTCOME_REPORT_GENERATED` | Compliance report generated |
-| `OUTCOME_REPORT_PUBLISHED` | Report published to Arweave and public dashboard |
-| `DOCUMENT_INGESTED` | Government document added to vault |
-| `DOCUMENT_EXPORTED_FOIA` | Document produced in FOIA response |
-| `CONTRACT_INGESTED` | Vendor contract added with outcome requirements |
-| `CONTRACT_OUTCOME_MISSED` | Vendor contract outcome requirement missed |
-| `SPENDING_RECORDED` | Disbursement logged |
-| `SPENDING_OUTCOME_CORRELATED` | Cost-per-outcome ratio computed |
-| `MERKLE_ROOT_COMPUTED` | New Merkle root calculated |
-| `ARWEAVE_ANCHOR_CONFIRMED` | Root published to Arweave, transaction ID recorded |
-| `PUBLIC_DASHBOARD_PUBLISHED` | Outcome report published publicly |
-| `WHISTLEBLOWER_REPORT_INGESTED` | Whistleblower report received and secured |
+| Event                           | Trigger                                                 |
+| ------------------------------- | ------------------------------------------------------- |
+| `PROGRAM_CREATED`               | New program record created                              |
+| `PROGRAM_AUTHORIZED`            | Program authorized, baseline anchored                   |
+| `OUTCOME_DEFINED`               | New outcome metric defined                              |
+| `BASELINE_ANCHORED`             | Baseline anchored to Arweave                            |
+| `BASELINE_ADJUSTMENT_ATTEMPTED` | Attempt to modify anchored baseline — triggers alert    |
+| `OUTCOME_RECORDED`              | Periodic outcome measurement logged                     |
+| `OUTCOME_DISCREPANCY_DETECTED`  | Reported and measured outcomes diverge beyond threshold |
+| `OUTCOME_TARGET_MET`            | Outcome metric achieved                                 |
+| `OUTCOME_TARGET_MISSED`         | Outcome metric missed at measurement date               |
+| `OUTCOME_REPORT_GENERATED`      | Compliance report generated                             |
+| `OUTCOME_REPORT_PUBLISHED`      | Report published to Arweave and public dashboard        |
+| `DOCUMENT_INGESTED`             | Government document added to vault                      |
+| `DOCUMENT_EXPORTED_FOIA`        | Document produced in FOIA response                      |
+| `CONTRACT_INGESTED`             | Vendor contract added with outcome requirements         |
+| `CONTRACT_OUTCOME_MISSED`       | Vendor contract outcome requirement missed              |
+| `SPENDING_RECORDED`             | Disbursement logged                                     |
+| `SPENDING_OUTCOME_CORRELATED`   | Cost-per-outcome ratio computed                         |
+| `MERKLE_ROOT_COMPUTED`          | New Merkle root calculated                              |
+| `ARWEAVE_ANCHOR_CONFIRMED`      | Root published to Arweave, transaction ID recorded      |
+| `PUBLIC_DASHBOARD_PUBLISHED`    | Outcome report published publicly                       |
+| `WHISTLEBLOWER_REPORT_INGESTED` | Whistleblower report received and secured               |
 
 ---
 

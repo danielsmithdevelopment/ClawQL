@@ -288,16 +288,16 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 
 ## Relationship to other ClawQL pieces
 
-| Piece                                                      | Role                                                             |
-| ---------------------------------------------------------- | ---------------------------------------------------------------- |
-| **[Protocol Fabric](./protocol-fabric.md)**                | Named claim for Core + adapter (any protocol ↔ any); proven loop |
-| **`mcp-api-adapter`**                                      | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli (+ QR planned) |
-| **ClawQL `search` / `execute`**                            | OpenAPI → MCP tools (inverse)                                    |
-| **[Custom sources](../getting-started/custom-sources.md)** | Register other MCP servers **into** the ClawQL gateway           |
-| **`mcp-grpc-transport`**                                   | Production TypeScript MCP gRPC transport                         |
-| **Panguard bridge**                                        | Policy / JWT ATR in front of MCP                                 |
-| **[ClawQL Streams](../streams/clawql-streams.md)** (draft) | Event-driven agents; WebSocket / QR sources into Core            |
-| **[QR stream transport](../streams/clawql-qr-stream-transport.md)** (draft) | Planned **7th surface** — optical air-gap MCP + Streams source |
+| Piece                                                                       | Role                                                                     |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **[Protocol Fabric](./protocol-fabric.md)**                                 | Named claim for Core + adapter (any protocol ↔ any); proven loop         |
+| **`mcp-api-adapter`**                                                       | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli (+ QR planned) |
+| **ClawQL `search` / `execute`**                                             | OpenAPI → MCP tools (inverse)                                            |
+| **[Custom sources](../getting-started/custom-sources.md)**                  | Register other MCP servers **into** the ClawQL gateway                   |
+| **`mcp-grpc-transport`**                                                    | Production TypeScript MCP gRPC transport                                 |
+| **Panguard bridge**                                                         | Policy / JWT ATR in front of MCP                                         |
+| **[ClawQL Streams](../streams/clawql-streams.md)** (draft)                  | Event-driven agents; WebSocket / QR sources into Core                    |
+| **[QR stream transport](../streams/clawql-qr-stream-transport.md)** (draft) | Planned **7th surface** — optical air-gap MCP + Streams source           |
 
 ## Troubleshooting
 
