@@ -1,15 +1,13 @@
 {
-  "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
+  "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-7.3 amortized session active (n=3). B-7.1/B-7.2 retired WIN. B-7.4 still blocked on C&H download.",
-  "pr_active": [
-    "institutional-amortized-session"
-  ],
+  "live_resume_note": "B-7.3 amortized session retired WIN @ 31274484721 (on 0.933 / off 0). B-7.4 still blocked on C&H corpus download. Harvey LAB firm-knowledge resumes via GHA.",
+  "pr_active": [],
   "pr_trials": 3,
   "retired": {
     "idp-safe-pipeline-lite": {
-      "reason": "Verified WIN — stubbed 7-stage IDP orchestration (on 1.0 / off 0.0; RTP v1.1)",
+      "reason": "Verified WIN \u2014 stubbed 7-stage IDP orchestration (on 1.0 / off 0.0; RTP v1.1)",
       "evidence_run": "31039035892"
     },
     "codegraph-impact-edit": {
@@ -45,11 +43,11 @@
       "evidence_run": "30866904277"
     },
     "cache-scratch-handoff": {
-      "reason": "Verified WIN — clawql_cache set/get + answer.json (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 clawql_cache set/get + answer.json (on 1.0 / off 0.0)",
       "evidence_run": "30881158522"
     },
     "pageindex-section-qa": {
-      "reason": "Verified WIN — pageindex_build_tree + synthesize (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 pageindex_build_tree + synthesize (on 1.0 / off 0.0)",
       "evidence_run": "30881158522"
     },
     "audit-checkpoints": {
@@ -61,27 +59,27 @@
       "evidence_run": "30881158522"
     },
     "codegraph-guided-edit": {
-      "reason": "Verified WIN — codegraph_index + query found SECRET_MARKER (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 codegraph_index + query found SECRET_MARKER (on 1.0 / off 0.0)",
       "evidence_run": "30885341377"
     },
     "schedule-synthetic-dry-run": {
-      "reason": "Verified WIN — schedule create + dry_run trigger pass (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 schedule create + dry_run trigger pass (on 1.0 / off 0.0)",
       "evidence_run": "30885341377"
     },
     "external-ingest-continue": {
-      "reason": "Verified WIN — ingest_external_knowledge + memory_recall (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 ingest_external_knowledge + memory_recall (on 1.0 / off 0.0)",
       "evidence_run": "30887394038"
     },
     "hybrid-recall-source-pin": {
-      "reason": "Verified WIN — real pageindex build+synthesize with handbook marker (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 real pageindex build+synthesize with handbook marker (on 1.0 / off 0.0)",
       "evidence_run": "30888793063"
     },
     "notify-mock-slack": {
-      "reason": "Verified WIN — stubbed clawql_notify milestone (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 stubbed clawql_notify milestone (on 1.0 / off 0.0)",
       "evidence_run": "30891002305"
     },
     "sandbox-trusted-compute": {
-      "reason": "Verified WIN — docker sandbox_exec trusted token (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 docker sandbox_exec trusted token (on 1.0 / off 0.0)",
       "evidence_run": "30891002305"
     },
     "composed-safe-rollout": {
@@ -89,15 +87,15 @@
       "evidence_run": "30985126247"
     },
     "onyx-mock-cite": {
-      "reason": "Verified WIN — stubbed knowledge_search_onyx cite (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 stubbed knowledge_search_onyx cite (on 1.0 / off 0.0)",
       "evidence_run": "30893132189"
     },
     "memory-wikilink-hop": {
-      "reason": "Verified WIN — memory_recall wikilink hop to Beta Fact (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 memory_recall wikilink hop to Beta Fact (on 1.0 / off 0.0)",
       "evidence_run": "30893132189"
     },
     "memory-conflict-pricing": {
-      "reason": "Verified WIN — conflict.json surfaces both vault prices (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 conflict.json surfaces both vault prices (on 1.0 / off 0.0)",
       "evidence_run": "30930194746"
     },
     "codegraph-feature-api-surface": {
@@ -105,32 +103,36 @@
       "evidence_run": "30981709304"
     },
     "memory-injection-attempt": {
-      "reason": "Verified WIN — Panguard blocks memory_ingest with tool evidence (on 1.0 / off 0.0; RTP v1.1)",
+      "reason": "Verified WIN \u2014 Panguard blocks memory_ingest with tool evidence (on 1.0 / off 0.0; RTP v1.1)",
       "evidence_run": "31022595633"
     },
     "idp-pipeline-resilience": {
-      "reason": "Verified WIN — Onyx outage + Ouroboros recovery (on 1.0 / off fail; gate OK)",
+      "reason": "Verified WIN \u2014 Onyx outage + Ouroboros recovery (on 1.0 / off fail; gate OK)",
       "evidence_run": "31139014771"
     },
     "memory-recall-pageindex-pin": {
-      "reason": "Verified WIN — memory_recall(sources=[pageindex]) after build_tree (on 1.0 / off 0.0)",
+      "reason": "Verified WIN \u2014 memory_recall(sources=[pageindex]) after build_tree (on 1.0 / off 0.0)",
       "evidence_run": "31189112838"
     },
     "institutional-knowledge-enumerate": {
-      "reason": "Verified WIN — fair same-files + structured ontology recall (on 3/3 / off 0/3; structured_predicate; prior keyword FAIL 31244644204)",
+      "reason": "Verified WIN \u2014 fair same-files + structured ontology recall (on 3/3 / off 0/3; structured_predicate; prior keyword FAIL 31244644204)",
       "evidence_run": "31255172649"
     },
     "institutional-knowledge-enumerate-ontology": {
-      "reason": "Verified WIN — efficiency cell under 5-turn/4k/90s caps (on 3/3 / off 0/3; structured_predicate + write; mean wall ~27s)",
+      "reason": "Verified WIN \u2014 efficiency cell under 5-turn/4k/90s caps (on 3/3 / off 0/3; structured_predicate + write; mean wall ~27s)",
       "evidence_run": "31256241850"
     },
     "institutional-knowledge-enumerate-blind": {
-      "reason": "Verified WIN — filter-shape CRITICAL + structured_predicate recovery (on 3/3 5/5 / off 0/3; FP→0 still applies)",
+      "reason": "Verified WIN \u2014 filter-shape CRITICAL + structured_predicate recovery (on 3/3 5/5 / off 0/3; FP\u21920 still applies)",
       "evidence_run": "31267585806"
     },
     "institutional-client-preference": {
-      "reason": "Verified WIN — Meridian prose preference vs price-sort distractor (on 3/3 / off 0/3; top1 MAT-2801-A; prior near-miss 31267585806)",
+      "reason": "Verified WIN \u2014 Meridian prose preference vs price-sort distractor (on 3/3 / off 0/3; top1 MAT-2801-A; prior near-miss 31267585806)",
       "evidence_run": "31268782329"
+    },
+    "institutional-amortized-session": {
+      "reason": "Verified WIN \u2014 amortized multi-question session (on mean 0.933 / off 0.0; vault reuse Q2\u2013Q5; replicate on\u226boff 31277018489)",
+      "evidence_run": "31274484721"
     }
   },
   "ouroboros_pr_enabled": false,

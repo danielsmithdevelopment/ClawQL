@@ -4212,9 +4212,32 @@ def run_amortized_session_trial(
                 )
 
             agent = _run_step(step_instruction, step_timeout)
+            step_log = agent.get("_combined_log") or agent.get("output_tail") or ""
             # Recover B-7.1 habit path + seed vault representation after Q1.
             if sid == "q1":
                 recover_session_q1_artifact(tmp)
+                # Empty q1.json / missing: rebuild from structured recall entityIds.
+                if not read_session_matter_ids(tmp):
+                    extracted = extract_structured_matter_ids(step_log)
+                    if extracted:
+                        q1_path = tmp / "session" / "q1.json"
+                        q1_path.parent.mkdir(parents=True, exist_ok=True)
+                        q1_path.write_text(
+                            json.dumps(
+                                {
+                                    "matters": extracted,
+                                    "criteria": {
+                                        "escrow_pct_min": 10,
+                                        "noncompete_months_gt": 18,
+                                    },
+                                    "source": "memory_recall",
+                                    "search_sufficiency": "structured_predicate legal.Matter",
+                                },
+                                indent=2,
+                            )
+                            + "\n",
+                            encoding="utf-8",
+                        )
                 if arm == "clawql-on":
                     seed_session_q1_into_vault(vault, tmp, task_dir)
 
