@@ -807,6 +807,18 @@ PREFERENCE_NUDGE = """Continue B-7.2 client preference reconstruction.
 Chat JSON is not graded. Call the write tool now.
 """
 
+PREFERENCE_WRITE_NUDGE = """Continue B-7.2. You already recalled Meridian context.
+
+Do **not** call memory_recall again. Do **not** paste JSON in chat.
+Call the OpenCode **write** tool NOW for relative filePath `preference.json`.
+
+top1 = exact Option identifier from the winning term-sheet annex
+(the MAT-…-A/B/C string printed in that annex). source=memory_recall.
+Include a one-sentence rationale citing a prior Meridian matter.
+
+Only the write tool is graded.
+"""
+
 PREFERENCE_OFF_NUDGE = """Continue. Memory tools are unavailable — that is expected on this arm.
 
 1. Under `.openbench/memory-seed/`, find Meridian Capital client notes and prior matters.
@@ -2929,8 +2941,11 @@ def run_arm_on(
         elapsed = time.monotonic() - t0
         remaining = int(timeout_s) - int(elapsed)
         if remaining >= 20:
+            tools = real_opencode_tools(combined)
+            recalled = bool(tools & {"clawql_memory_recall", "memory_recall"})
+            nudge = PREFERENCE_WRITE_NUDGE if recalled else PREFERENCE_NUDGE
             cont_file = workdir / ".openbench_preference_nudge.md"
-            cont_file.write_text(PREFERENCE_NUDGE, encoding="utf-8")
+            cont_file.write_text(nudge, encoding="utf-8")
             cont_timeout = max(20, min(90, remaining))
             cmd = build_cmd(cont_file, cont_timeout)
             try:
@@ -2949,6 +2964,35 @@ def run_arm_on(
                 timed_out = True
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
+        # Second chance: still no artifact after recall — write-only again.
+        if (
+            not timed_out
+            and not (workdir / "preference.json").is_file()
+            and recalled_without_writes(combined)
+        ):
+            elapsed = time.monotonic() - t0
+            remaining = int(timeout_s) - int(elapsed)
+            if remaining >= 15:
+                cont_file = workdir / ".openbench_preference_write2.md"
+                cont_file.write_text(PREFERENCE_WRITE_NUDGE, encoding="utf-8")
+                cont_timeout = max(15, min(60, remaining))
+                cmd = build_cmd(cont_file, cont_timeout)
+                try:
+                    proc_pw = subprocess.run(
+                        cmd,
+                        cwd=str(workdir),
+                        capture_output=True,
+                        text=True,
+                        timeout=cont_timeout + 30,
+                        stdin=subprocess.DEVNULL,
+                        env=env,
+                    )
+                    combined = combined + "\n" + (proc_pw.stdout or "") + (proc_pw.stderr or "")
+                    code = proc_pw.returncode
+                except subprocess.TimeoutExpired as exc:
+                    timed_out = True
+                    combined = combined + "\n" + _dec_timeout_output(exc)
+                    code = 124
 
     # institutional knowledge: missing memory_recall / matters.json.
     # Prefer write-only when structured recall already returned entityIds —

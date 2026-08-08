@@ -17,7 +17,7 @@
     "MAT-2801-C",
     "MAT-2801-B"
   ],
-  "note_count": 40,
+  "note_count": 128,
   "layout": "prose preference signal; no preferred= field; CLAWQL_* vault-only",
   "anti_patterns": [
     "field sort on deal value must NOT yield top1",

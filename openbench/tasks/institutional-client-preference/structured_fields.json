@@ -80,6 +80,16 @@
     "client_id": "CLT-0042",
     "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3005\nCLAWQL_CLIENT_ID=CLT-0042\nCLAWQL_STATUS=Active\n"
   },
+  "clients/apex-harbor/matters/archive-MAT-3006.md": {
+    "matter_id": "MAT-3006",
+    "client_id": "CLT-0042",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3006\nCLAWQL_CLIENT_ID=CLT-0042\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/apex-harbor/matters/archive-MAT-3007.md": {
+    "matter_id": "MAT-3007",
+    "client_id": "CLT-0042",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3007\nCLAWQL_CLIENT_ID=CLT-0042\nCLAWQL_STATUS=Active\n"
+  },
   "clients/silverpine/client.md": {
     "client_id": "CLT-0055",
     "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_CLIENT_NAME=Silverpine Equity\n"
@@ -89,35 +99,45 @@
     "client_id": "CLT-0055",
     "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2901\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
   },
-  "clients/silverpine/matters/archive-MAT-3010.md": {
-    "matter_id": "MAT-3010",
+  "clients/silverpine/matters/archive-MAT-3020.md": {
+    "matter_id": "MAT-3020",
     "client_id": "CLT-0055",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3010\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3020\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
   },
-  "clients/silverpine/matters/archive-MAT-3011.md": {
-    "matter_id": "MAT-3011",
+  "clients/silverpine/matters/archive-MAT-3021.md": {
+    "matter_id": "MAT-3021",
     "client_id": "CLT-0055",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3011\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3021\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
   },
-  "clients/silverpine/matters/archive-MAT-3012.md": {
-    "matter_id": "MAT-3012",
+  "clients/silverpine/matters/archive-MAT-3022.md": {
+    "matter_id": "MAT-3022",
     "client_id": "CLT-0055",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3012\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3022\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
   },
-  "clients/silverpine/matters/archive-MAT-3013.md": {
-    "matter_id": "MAT-3013",
+  "clients/silverpine/matters/archive-MAT-3023.md": {
+    "matter_id": "MAT-3023",
     "client_id": "CLT-0055",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3013\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3023\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
   },
-  "clients/silverpine/matters/archive-MAT-3014.md": {
-    "matter_id": "MAT-3014",
+  "clients/silverpine/matters/archive-MAT-3024.md": {
+    "matter_id": "MAT-3024",
     "client_id": "CLT-0055",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3014\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3024\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
   },
-  "clients/silverpine/matters/archive-MAT-3015.md": {
-    "matter_id": "MAT-3015",
+  "clients/silverpine/matters/archive-MAT-3025.md": {
+    "matter_id": "MAT-3025",
     "client_id": "CLT-0055",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3015\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3025\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/silverpine/matters/archive-MAT-3026.md": {
+    "matter_id": "MAT-3026",
+    "client_id": "CLT-0055",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3026\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/silverpine/matters/archive-MAT-3027.md": {
+    "matter_id": "MAT-3027",
+    "client_id": "CLT-0055",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3027\nCLAWQL_CLIENT_ID=CLT-0055\nCLAWQL_STATUS=Active\n"
   },
   "clients/northfork/client.md": {
     "client_id": "CLT-0068",
@@ -128,35 +148,45 @@
     "client_id": "CLT-0068",
     "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2902\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
   },
-  "clients/northfork/matters/archive-MAT-3020.md": {
-    "matter_id": "MAT-3020",
+  "clients/northfork/matters/archive-MAT-3040.md": {
+    "matter_id": "MAT-3040",
     "client_id": "CLT-0068",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3020\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3040\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
   },
-  "clients/northfork/matters/archive-MAT-3021.md": {
-    "matter_id": "MAT-3021",
+  "clients/northfork/matters/archive-MAT-3041.md": {
+    "matter_id": "MAT-3041",
     "client_id": "CLT-0068",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3021\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3041\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
   },
-  "clients/northfork/matters/archive-MAT-3022.md": {
-    "matter_id": "MAT-3022",
+  "clients/northfork/matters/archive-MAT-3042.md": {
+    "matter_id": "MAT-3042",
     "client_id": "CLT-0068",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3022\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3042\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
   },
-  "clients/northfork/matters/archive-MAT-3023.md": {
-    "matter_id": "MAT-3023",
+  "clients/northfork/matters/archive-MAT-3043.md": {
+    "matter_id": "MAT-3043",
     "client_id": "CLT-0068",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3023\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3043\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
   },
-  "clients/northfork/matters/archive-MAT-3024.md": {
-    "matter_id": "MAT-3024",
+  "clients/northfork/matters/archive-MAT-3044.md": {
+    "matter_id": "MAT-3044",
     "client_id": "CLT-0068",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3024\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3044\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
   },
-  "clients/northfork/matters/archive-MAT-3025.md": {
-    "matter_id": "MAT-3025",
+  "clients/northfork/matters/archive-MAT-3045.md": {
+    "matter_id": "MAT-3045",
     "client_id": "CLT-0068",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3025\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3045\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/northfork/matters/archive-MAT-3046.md": {
+    "matter_id": "MAT-3046",
+    "client_id": "CLT-0068",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3046\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/northfork/matters/archive-MAT-3047.md": {
+    "matter_id": "MAT-3047",
+    "client_id": "CLT-0068",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3047\nCLAWQL_CLIENT_ID=CLT-0068\nCLAWQL_STATUS=Active\n"
   },
   "clients/cedarline/client.md": {
     "client_id": "CLT-0071",
@@ -167,34 +197,436 @@
     "client_id": "CLT-0071",
     "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2903\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
   },
-  "clients/cedarline/matters/archive-MAT-3030.md": {
-    "matter_id": "MAT-3030",
+  "clients/cedarline/matters/archive-MAT-3060.md": {
+    "matter_id": "MAT-3060",
     "client_id": "CLT-0071",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3030\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3060\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
   },
-  "clients/cedarline/matters/archive-MAT-3031.md": {
-    "matter_id": "MAT-3031",
+  "clients/cedarline/matters/archive-MAT-3061.md": {
+    "matter_id": "MAT-3061",
     "client_id": "CLT-0071",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3031\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3061\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
   },
-  "clients/cedarline/matters/archive-MAT-3032.md": {
-    "matter_id": "MAT-3032",
+  "clients/cedarline/matters/archive-MAT-3062.md": {
+    "matter_id": "MAT-3062",
     "client_id": "CLT-0071",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3032\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3062\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
   },
-  "clients/cedarline/matters/archive-MAT-3033.md": {
-    "matter_id": "MAT-3033",
+  "clients/cedarline/matters/archive-MAT-3063.md": {
+    "matter_id": "MAT-3063",
     "client_id": "CLT-0071",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3033\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3063\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
   },
-  "clients/cedarline/matters/archive-MAT-3034.md": {
-    "matter_id": "MAT-3034",
+  "clients/cedarline/matters/archive-MAT-3064.md": {
+    "matter_id": "MAT-3064",
     "client_id": "CLT-0071",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3034\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3064\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
   },
-  "clients/cedarline/matters/archive-MAT-3035.md": {
-    "matter_id": "MAT-3035",
+  "clients/cedarline/matters/archive-MAT-3065.md": {
+    "matter_id": "MAT-3065",
     "client_id": "CLT-0071",
-    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3035\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3065\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/cedarline/matters/archive-MAT-3066.md": {
+    "matter_id": "MAT-3066",
+    "client_id": "CLT-0071",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3066\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/cedarline/matters/archive-MAT-3067.md": {
+    "matter_id": "MAT-3067",
+    "client_id": "CLT-0071",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3067\nCLAWQL_CLIENT_ID=CLT-0071\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/ironbark/client.md": {
+    "client_id": "CLT-0080",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_CLIENT_ID=CLT-0080\nCLAWQL_CLIENT_NAME=Ironbark Partners\n"
+  },
+  "clients/ironbark/matters/active-MAT-2904.md": {
+    "matter_id": "MAT-2904",
+    "client_id": "CLT-0080",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2904\nCLAWQL_CLIENT_ID=CLT-0080\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/ironbark/matters/archive-MAT-3080.md": {
+    "matter_id": "MAT-3080",
+    "client_id": "CLT-0080",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3080\nCLAWQL_CLIENT_ID=CLT-0080\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/ironbark/matters/archive-MAT-3081.md": {
+    "matter_id": "MAT-3081",
+    "client_id": "CLT-0080",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3081\nCLAWQL_CLIENT_ID=CLT-0080\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/ironbark/matters/archive-MAT-3082.md": {
+    "matter_id": "MAT-3082",
+    "client_id": "CLT-0080",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3082\nCLAWQL_CLIENT_ID=CLT-0080\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/ironbark/matters/archive-MAT-3083.md": {
+    "matter_id": "MAT-3083",
+    "client_id": "CLT-0080",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3083\nCLAWQL_CLIENT_ID=CLT-0080\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/ironbark/matters/archive-MAT-3084.md": {
+    "matter_id": "MAT-3084",
+    "client_id": "CLT-0080",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3084\nCLAWQL_CLIENT_ID=CLT-0080\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/ironbark/matters/archive-MAT-3085.md": {
+    "matter_id": "MAT-3085",
+    "client_id": "CLT-0080",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3085\nCLAWQL_CLIENT_ID=CLT-0080\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/ironbark/matters/archive-MAT-3086.md": {
+    "matter_id": "MAT-3086",
+    "client_id": "CLT-0080",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3086\nCLAWQL_CLIENT_ID=CLT-0080\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/ironbark/matters/archive-MAT-3087.md": {
+    "matter_id": "MAT-3087",
+    "client_id": "CLT-0080",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3087\nCLAWQL_CLIENT_ID=CLT-0080\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/quarry-peak/client.md": {
+    "client_id": "CLT-0083",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_CLIENT_ID=CLT-0083\nCLAWQL_CLIENT_NAME=Quarry Peak Holdings\n"
+  },
+  "clients/quarry-peak/matters/active-MAT-2905.md": {
+    "matter_id": "MAT-2905",
+    "client_id": "CLT-0083",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2905\nCLAWQL_CLIENT_ID=CLT-0083\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/quarry-peak/matters/archive-MAT-3100.md": {
+    "matter_id": "MAT-3100",
+    "client_id": "CLT-0083",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3100\nCLAWQL_CLIENT_ID=CLT-0083\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/quarry-peak/matters/archive-MAT-3101.md": {
+    "matter_id": "MAT-3101",
+    "client_id": "CLT-0083",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3101\nCLAWQL_CLIENT_ID=CLT-0083\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/quarry-peak/matters/archive-MAT-3102.md": {
+    "matter_id": "MAT-3102",
+    "client_id": "CLT-0083",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3102\nCLAWQL_CLIENT_ID=CLT-0083\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/quarry-peak/matters/archive-MAT-3103.md": {
+    "matter_id": "MAT-3103",
+    "client_id": "CLT-0083",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3103\nCLAWQL_CLIENT_ID=CLT-0083\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/quarry-peak/matters/archive-MAT-3104.md": {
+    "matter_id": "MAT-3104",
+    "client_id": "CLT-0083",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3104\nCLAWQL_CLIENT_ID=CLT-0083\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/quarry-peak/matters/archive-MAT-3105.md": {
+    "matter_id": "MAT-3105",
+    "client_id": "CLT-0083",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3105\nCLAWQL_CLIENT_ID=CLT-0083\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/quarry-peak/matters/archive-MAT-3106.md": {
+    "matter_id": "MAT-3106",
+    "client_id": "CLT-0083",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3106\nCLAWQL_CLIENT_ID=CLT-0083\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/quarry-peak/matters/archive-MAT-3107.md": {
+    "matter_id": "MAT-3107",
+    "client_id": "CLT-0083",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3107\nCLAWQL_CLIENT_ID=CLT-0083\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/westfen/client.md": {
+    "client_id": "CLT-0088",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_CLIENT_ID=CLT-0088\nCLAWQL_CLIENT_NAME=Westfen Capital\n"
+  },
+  "clients/westfen/matters/active-MAT-2906.md": {
+    "matter_id": "MAT-2906",
+    "client_id": "CLT-0088",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2906\nCLAWQL_CLIENT_ID=CLT-0088\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/westfen/matters/archive-MAT-3120.md": {
+    "matter_id": "MAT-3120",
+    "client_id": "CLT-0088",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3120\nCLAWQL_CLIENT_ID=CLT-0088\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/westfen/matters/archive-MAT-3121.md": {
+    "matter_id": "MAT-3121",
+    "client_id": "CLT-0088",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3121\nCLAWQL_CLIENT_ID=CLT-0088\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/westfen/matters/archive-MAT-3122.md": {
+    "matter_id": "MAT-3122",
+    "client_id": "CLT-0088",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3122\nCLAWQL_CLIENT_ID=CLT-0088\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/westfen/matters/archive-MAT-3123.md": {
+    "matter_id": "MAT-3123",
+    "client_id": "CLT-0088",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3123\nCLAWQL_CLIENT_ID=CLT-0088\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/westfen/matters/archive-MAT-3124.md": {
+    "matter_id": "MAT-3124",
+    "client_id": "CLT-0088",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3124\nCLAWQL_CLIENT_ID=CLT-0088\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/westfen/matters/archive-MAT-3125.md": {
+    "matter_id": "MAT-3125",
+    "client_id": "CLT-0088",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3125\nCLAWQL_CLIENT_ID=CLT-0088\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/westfen/matters/archive-MAT-3126.md": {
+    "matter_id": "MAT-3126",
+    "client_id": "CLT-0088",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3126\nCLAWQL_CLIENT_ID=CLT-0088\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/westfen/matters/archive-MAT-3127.md": {
+    "matter_id": "MAT-3127",
+    "client_id": "CLT-0088",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3127\nCLAWQL_CLIENT_ID=CLT-0088\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/amberly/client.md": {
+    "client_id": "CLT-0091",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_CLIENT_ID=CLT-0091\nCLAWQL_CLIENT_NAME=Amberly Growth\n"
+  },
+  "clients/amberly/matters/active-MAT-2907.md": {
+    "matter_id": "MAT-2907",
+    "client_id": "CLT-0091",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2907\nCLAWQL_CLIENT_ID=CLT-0091\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/amberly/matters/archive-MAT-3140.md": {
+    "matter_id": "MAT-3140",
+    "client_id": "CLT-0091",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3140\nCLAWQL_CLIENT_ID=CLT-0091\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/amberly/matters/archive-MAT-3141.md": {
+    "matter_id": "MAT-3141",
+    "client_id": "CLT-0091",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3141\nCLAWQL_CLIENT_ID=CLT-0091\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/amberly/matters/archive-MAT-3142.md": {
+    "matter_id": "MAT-3142",
+    "client_id": "CLT-0091",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3142\nCLAWQL_CLIENT_ID=CLT-0091\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/amberly/matters/archive-MAT-3143.md": {
+    "matter_id": "MAT-3143",
+    "client_id": "CLT-0091",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3143\nCLAWQL_CLIENT_ID=CLT-0091\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/amberly/matters/archive-MAT-3144.md": {
+    "matter_id": "MAT-3144",
+    "client_id": "CLT-0091",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3144\nCLAWQL_CLIENT_ID=CLT-0091\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/amberly/matters/archive-MAT-3145.md": {
+    "matter_id": "MAT-3145",
+    "client_id": "CLT-0091",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3145\nCLAWQL_CLIENT_ID=CLT-0091\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/amberly/matters/archive-MAT-3146.md": {
+    "matter_id": "MAT-3146",
+    "client_id": "CLT-0091",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3146\nCLAWQL_CLIENT_ID=CLT-0091\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/amberly/matters/archive-MAT-3147.md": {
+    "matter_id": "MAT-3147",
+    "client_id": "CLT-0091",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3147\nCLAWQL_CLIENT_ID=CLT-0091\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/stoneharbor/client.md": {
+    "client_id": "CLT-0094",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_CLIENT_ID=CLT-0094\nCLAWQL_CLIENT_NAME=Stoneharbor Equity\n"
+  },
+  "clients/stoneharbor/matters/active-MAT-2908.md": {
+    "matter_id": "MAT-2908",
+    "client_id": "CLT-0094",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2908\nCLAWQL_CLIENT_ID=CLT-0094\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/stoneharbor/matters/archive-MAT-3160.md": {
+    "matter_id": "MAT-3160",
+    "client_id": "CLT-0094",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3160\nCLAWQL_CLIENT_ID=CLT-0094\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/stoneharbor/matters/archive-MAT-3161.md": {
+    "matter_id": "MAT-3161",
+    "client_id": "CLT-0094",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3161\nCLAWQL_CLIENT_ID=CLT-0094\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/stoneharbor/matters/archive-MAT-3162.md": {
+    "matter_id": "MAT-3162",
+    "client_id": "CLT-0094",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3162\nCLAWQL_CLIENT_ID=CLT-0094\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/stoneharbor/matters/archive-MAT-3163.md": {
+    "matter_id": "MAT-3163",
+    "client_id": "CLT-0094",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3163\nCLAWQL_CLIENT_ID=CLT-0094\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/stoneharbor/matters/archive-MAT-3164.md": {
+    "matter_id": "MAT-3164",
+    "client_id": "CLT-0094",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3164\nCLAWQL_CLIENT_ID=CLT-0094\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/stoneharbor/matters/archive-MAT-3165.md": {
+    "matter_id": "MAT-3165",
+    "client_id": "CLT-0094",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3165\nCLAWQL_CLIENT_ID=CLT-0094\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/stoneharbor/matters/archive-MAT-3166.md": {
+    "matter_id": "MAT-3166",
+    "client_id": "CLT-0094",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3166\nCLAWQL_CLIENT_ID=CLT-0094\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/stoneharbor/matters/archive-MAT-3167.md": {
+    "matter_id": "MAT-3167",
+    "client_id": "CLT-0094",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3167\nCLAWQL_CLIENT_ID=CLT-0094\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/bluefinch/client.md": {
+    "client_id": "CLT-0097",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_CLIENT_ID=CLT-0097\nCLAWQL_CLIENT_NAME=Bluefinch Ventures\n"
+  },
+  "clients/bluefinch/matters/active-MAT-2909.md": {
+    "matter_id": "MAT-2909",
+    "client_id": "CLT-0097",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2909\nCLAWQL_CLIENT_ID=CLT-0097\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/bluefinch/matters/archive-MAT-3180.md": {
+    "matter_id": "MAT-3180",
+    "client_id": "CLT-0097",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3180\nCLAWQL_CLIENT_ID=CLT-0097\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/bluefinch/matters/archive-MAT-3181.md": {
+    "matter_id": "MAT-3181",
+    "client_id": "CLT-0097",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3181\nCLAWQL_CLIENT_ID=CLT-0097\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/bluefinch/matters/archive-MAT-3182.md": {
+    "matter_id": "MAT-3182",
+    "client_id": "CLT-0097",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3182\nCLAWQL_CLIENT_ID=CLT-0097\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/bluefinch/matters/archive-MAT-3183.md": {
+    "matter_id": "MAT-3183",
+    "client_id": "CLT-0097",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3183\nCLAWQL_CLIENT_ID=CLT-0097\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/bluefinch/matters/archive-MAT-3184.md": {
+    "matter_id": "MAT-3184",
+    "client_id": "CLT-0097",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3184\nCLAWQL_CLIENT_ID=CLT-0097\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/bluefinch/matters/archive-MAT-3185.md": {
+    "matter_id": "MAT-3185",
+    "client_id": "CLT-0097",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3185\nCLAWQL_CLIENT_ID=CLT-0097\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/bluefinch/matters/archive-MAT-3186.md": {
+    "matter_id": "MAT-3186",
+    "client_id": "CLT-0097",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3186\nCLAWQL_CLIENT_ID=CLT-0097\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/bluefinch/matters/archive-MAT-3187.md": {
+    "matter_id": "MAT-3187",
+    "client_id": "CLT-0097",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3187\nCLAWQL_CLIENT_ID=CLT-0097\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/redwood-bridge/client.md": {
+    "client_id": "CLT-0102",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_CLIENT_ID=CLT-0102\nCLAWQL_CLIENT_NAME=Redwood Bridge Cap\n"
+  },
+  "clients/redwood-bridge/matters/active-MAT-2910.md": {
+    "matter_id": "MAT-2910",
+    "client_id": "CLT-0102",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2910\nCLAWQL_CLIENT_ID=CLT-0102\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/redwood-bridge/matters/archive-MAT-3200.md": {
+    "matter_id": "MAT-3200",
+    "client_id": "CLT-0102",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3200\nCLAWQL_CLIENT_ID=CLT-0102\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/redwood-bridge/matters/archive-MAT-3201.md": {
+    "matter_id": "MAT-3201",
+    "client_id": "CLT-0102",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3201\nCLAWQL_CLIENT_ID=CLT-0102\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/redwood-bridge/matters/archive-MAT-3202.md": {
+    "matter_id": "MAT-3202",
+    "client_id": "CLT-0102",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3202\nCLAWQL_CLIENT_ID=CLT-0102\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/redwood-bridge/matters/archive-MAT-3203.md": {
+    "matter_id": "MAT-3203",
+    "client_id": "CLT-0102",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3203\nCLAWQL_CLIENT_ID=CLT-0102\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/redwood-bridge/matters/archive-MAT-3204.md": {
+    "matter_id": "MAT-3204",
+    "client_id": "CLT-0102",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3204\nCLAWQL_CLIENT_ID=CLT-0102\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/redwood-bridge/matters/archive-MAT-3205.md": {
+    "matter_id": "MAT-3205",
+    "client_id": "CLT-0102",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3205\nCLAWQL_CLIENT_ID=CLT-0102\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/redwood-bridge/matters/archive-MAT-3206.md": {
+    "matter_id": "MAT-3206",
+    "client_id": "CLT-0102",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3206\nCLAWQL_CLIENT_ID=CLT-0102\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/redwood-bridge/matters/archive-MAT-3207.md": {
+    "matter_id": "MAT-3207",
+    "client_id": "CLT-0102",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3207\nCLAWQL_CLIENT_ID=CLT-0102\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/palisade/client.md": {
+    "client_id": "CLT-0105",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_CLIENT_ID=CLT-0105\nCLAWQL_CLIENT_NAME=Palisade Markets\n"
+  },
+  "clients/palisade/matters/active-MAT-2911.md": {
+    "matter_id": "MAT-2911",
+    "client_id": "CLT-0105",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2911\nCLAWQL_CLIENT_ID=CLT-0105\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/palisade/matters/archive-MAT-3220.md": {
+    "matter_id": "MAT-3220",
+    "client_id": "CLT-0105",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3220\nCLAWQL_CLIENT_ID=CLT-0105\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/palisade/matters/archive-MAT-3221.md": {
+    "matter_id": "MAT-3221",
+    "client_id": "CLT-0105",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3221\nCLAWQL_CLIENT_ID=CLT-0105\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/palisade/matters/archive-MAT-3222.md": {
+    "matter_id": "MAT-3222",
+    "client_id": "CLT-0105",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3222\nCLAWQL_CLIENT_ID=CLT-0105\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/palisade/matters/archive-MAT-3223.md": {
+    "matter_id": "MAT-3223",
+    "client_id": "CLT-0105",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3223\nCLAWQL_CLIENT_ID=CLT-0105\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/palisade/matters/archive-MAT-3224.md": {
+    "matter_id": "MAT-3224",
+    "client_id": "CLT-0105",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3224\nCLAWQL_CLIENT_ID=CLT-0105\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/palisade/matters/archive-MAT-3225.md": {
+    "matter_id": "MAT-3225",
+    "client_id": "CLT-0105",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3225\nCLAWQL_CLIENT_ID=CLT-0105\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/palisade/matters/archive-MAT-3226.md": {
+    "matter_id": "MAT-3226",
+    "client_id": "CLT-0105",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3226\nCLAWQL_CLIENT_ID=CLT-0105\nCLAWQL_STATUS=Active\n"
+  },
+  "clients/palisade/matters/archive-MAT-3227.md": {
+    "matter_id": "MAT-3227",
+    "client_id": "CLT-0105",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-3227\nCLAWQL_CLIENT_ID=CLT-0105\nCLAWQL_STATUS=Active\n"
   }
 }

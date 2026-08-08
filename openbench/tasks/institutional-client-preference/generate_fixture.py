@@ -35,7 +35,16 @@ DISTRACTOR_CLIENTS = [
     ("CLT-0055", "Silverpine Equity", "silverpine"),
     ("CLT-0068", "Northfork Ventures", "northfork"),
     ("CLT-0071", "Cedarline Capital", "cedarline"),
+    ("CLT-0080", "Ironbark Partners", "ironbark"),
+    ("CLT-0083", "Quarry Peak Holdings", "quarry-peak"),
+    ("CLT-0088", "Westfen Capital", "westfen"),
+    ("CLT-0091", "Amberly Growth", "amberly"),
+    ("CLT-0094", "Stoneharbor Equity", "stoneharbor"),
+    ("CLT-0097", "Bluefinch Ventures", "bluefinch"),
+    ("CLT-0102", "Redwood Bridge Cap", "redwood-bridge"),
+    ("CLT-0105", "Palisade Markets", "palisade"),
 ]
+ARCHIVES_PER_DISTRACTOR = 8
 
 
 def vault_matter(matter_id: str, client_id: str, title: str | None = None) -> str:
@@ -303,15 +312,17 @@ This client's preference pattern is the opposite of Meridian Capital's.
             matter_id=mid,
             client_id=cid,
         )
-        for j in range(6):
-            aid = f"MAT-{3000 + i * 10 + j}"
+        for j in range(ARCHIVES_PER_DISTRACTOR):
+            aid = f"MAT-{3000 + i * 20 + j}"
             put(
                 structured,
                 f"clients/{slug}/matters/archive-{aid}.md",
                 f"""# {aid} — archive note
 
 Client file for {name}. Historical matter {aid} with routine closing terms.
-Deal value discussed in the mid tens of millions; not Meridian Capital.
+Deal value discussed in the mid tens of millions. Preference pattern for this
+client is price-maximizing with earn-out comfort — opposite of Meridian Capital.
+Partner notes mention indemnity as secondary to headline value.
 """,
                 matter_id=aid,
                 client_id=cid,
