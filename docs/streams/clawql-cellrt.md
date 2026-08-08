@@ -272,7 +272,7 @@ Idempotent cell naming mirrors Streams / celld: `agent:{subscriptionId}:{eventId
 
 The WASM component (`clawql-core.wasm`) declares host capabilities via WIT. cellrt grants only what is declared. Undeclared capabilities are **structurally absent** (not linked), not merely blocked at runtime.
 
-```wit
+```text
 // clawql-core.wit
 world clawql-core {
   // Network — fetch only, no raw TCP
