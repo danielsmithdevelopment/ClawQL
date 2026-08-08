@@ -20,16 +20,16 @@ Pause / resume: [`docs/benchmarks/harvey-lab-pause-handoff.md`](../../docs/bench
 
 ## What this provides
 
-| Path | Purpose |
-|---|---|
-| `harness/adapters/clawql.py` | Anthropic adapter + MCP tools + pre-ingest / cleanup |
-| `harness/adapters/clawql_openrouter.py` | OpenRouter Anthropic client (GHA) |
-| `harness/adapters/clawql_system_prompt.md` | Recall-first guidance for ClawQL arm |
-| `harness/clawql_tools.py` | Routes `clawql_*` tool calls to MCP |
-| `scripts/apply_clawql_adapter.py` | Copies + patches into a harvey-labs checkout |
-| `scripts/run-lab-gha.sh` | GHA entrypoint (clone, both arms, scorecard) |
-| `tests/test_vault_isolation.py` | Task-scoped vault isolation unit tests |
-| `../../scripts/start-clawql-for-lab.sh` | Task-scoped vault + MCP HTTP startup |
+| Path                                       | Purpose                                              |
+| ------------------------------------------ | ---------------------------------------------------- |
+| `harness/adapters/clawql.py`               | Anthropic adapter + MCP tools + pre-ingest / cleanup |
+| `harness/adapters/clawql_openrouter.py`    | OpenRouter Anthropic client (GHA)                    |
+| `harness/adapters/clawql_system_prompt.md` | Recall-first guidance for ClawQL arm                 |
+| `harness/clawql_tools.py`                  | Routes `clawql_*` tool calls to MCP                  |
+| `scripts/apply_clawql_adapter.py`          | Copies + patches into a harvey-labs checkout         |
+| `scripts/run-lab-gha.sh`                   | GHA entrypoint (clone, both arms, scorecard)         |
+| `tests/test_vault_isolation.py`            | Task-scoped vault isolation unit tests               |
+| `../../scripts/start-clawql-for-lab.sh`    | Task-scoped vault + MCP HTTP startup                 |
 
 ## Firm-knowledge specifics
 
@@ -55,11 +55,11 @@ export CLAWQL_MCP_URL=http://127.0.0.1:8080/mcp
 
 ## Phases (cost discipline)
 
-| Phase | Model | Scope |
-|---|---|---|
-| A–D | Sonnet (OpenRouter) | 1→few tasks, isolation, prompt |
-| E | Opus both arms | Publishable ledger |
-| Judge | Sonnet | Always |
+| Phase | Model               | Scope                          |
+| ----- | ------------------- | ------------------------------ |
+| A–D   | Sonnet (OpenRouter) | 1→few tasks, isolation, prompt |
+| E     | Opus both arms      | Publishable ledger             |
+| Judge | Sonnet              | Always                         |
 
 ## Results ledgers
 
