@@ -1,4 +1,4 @@
-# mcp-api-adapter — six surfaces, one catalog
+# mcp-api-adapter — six surfaces today, seven planned
 
 **Package:** [`mcp-api-adapter`](../../packages/mcp-api-adapter/) (`0.6.0+`)  
 **Status:** Shipped in-repo · **npm not published yet** (`npm view mcp-api-adapter` → 404)  
@@ -7,7 +7,9 @@
 **Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)  
 **Protocol Fabric:** [`protocol-fabric.md`](/mcp/protocol-fabric) (proven WS → CLI → REST → vault loop)
 
-`mcp-api-adapter` wraps **any** MCP server — stdio, Streamable HTTP, or gRPC — and exposes **six API surfaces** from one tool catalog without changing the server. No ClawQL install required.
+`mcp-api-adapter` wraps **any** MCP server — stdio, Streamable HTTP, or gRPC — and exposes **six API surfaces** from one tool catalog without changing the server (OpenAPI, GraphQL, Streamable HTTP `/mcp`, gRPC, WebSocket `/ws`, gen-cli). No ClawQL install required.
+
+**Planned seventh surface:** [QR stream transport](/streams/clawql-qr-stream-transport) — physical optical channel for air-gapped MCP and Streams event sources (unidirectional by default; optional bidirectional).
 
 **Language-agnostic.** The adapter process is TypeScript (`npx mcp-api-adapter`); the upstream may be Python, Go, Rust, or any language that speaks MCP. Users do not write TypeScript to use it — same Node baseline as `npx clawql-mcp`.
 
@@ -164,11 +166,7 @@ Google proposed gRPC as a first-class MCP transport in February 2026. ClawQL shi
 Persistent JSON tool-call channel (default path `/ws`; disable with `--no-ws`):
 
 ```json
-{
-  "id": "1",
-  "tool": "memory_ingest",
-  "arguments": { "title": "…", "insights": "…" }
-}
+{ "id": "1", "tool": "memory_ingest", "arguments": { "title": "…", "insights": "…" } }
 ```
 
 or MCP-shaped `\{ "method": "tools/call", "params": \{ "name": "…", "arguments": \{ … \} \} \}`. Replies `\{ "id", "ok", "result" | "error" \}`. Prefer WebSocket for long-lived clients and DO hibernation; keep Streamable HTTP `/mcp` for IDE clients that cannot speak WS. **gen-cli** remains build-time (disk), not a DO runtime surface.
@@ -226,34 +224,34 @@ Legacy env `MCP_OPENAPI_GATEWAY_*` is still accepted. Exactly one upstream mode 
 ## Programmatic API
 
 ```ts
-import { startMcpApiAdapter } from 'mcp-api-adapter'
+import { startMcpApiAdapter } from "mcp-api-adapter";
 
 const adapter = await startMcpApiAdapter({
-  upstream: { kind: 'http', url: 'http://127.0.0.1:8080/mcp' },
-  host: '0.0.0.0',
+  upstream: { kind: "http", url: "http://127.0.0.1:8080/mcp" },
+  host: "0.0.0.0",
   port: 8090,
-  grpcListen: '127.0.0.1:50051',
+  grpcListen: "127.0.0.1:50051",
   apiKey: process.env.MCP_API_ADAPTER_API_KEY,
-})
+});
 
 // adapter.url — OpenAPI + GraphQL
 // adapter.grpcAddress — upstream or scaffolded gRPC
 // adapter.getCatalog() — tools + surfaces + upstreamKind
-await adapter.close()
+await adapter.close();
 ```
 
 Upstream union:
 
 ```ts
 type UpstreamOptions =
-  | { kind: 'grpc'; address: string; protocolVersion?: string }
-  | { kind: 'http'; url: string }
+  | { kind: "grpc"; address: string; protocolVersion?: string }
+  | { kind: "http"; url: string }
   | {
-      kind: 'stdio'
-      command: string
-      args?: string[]
-      env?: Record<string, string>
-    }
+      kind: "stdio";
+      command: string;
+      args?: string[];
+      env?: Record<string, string>;
+    };
 ```
 
 Compatibility: `startMcpOpenApiGateway(\{ grpcAddress \})` ≡ `startMcpApiAdapter(\{ upstream: \{ kind: "grpc", address \}, grpcListen: false \})`.
@@ -266,7 +264,7 @@ Compatibility: `startMcpOpenApiGateway(\{ grpcAddress \})` ≡ `startMcpApiAdapt
 | `GET /tools`                  | Full catalog JSON                                    |
 | `GET /openapi.json`           | OpenAPI 3.1 from tool `inputSchema`                  |
 | `GET /docs`                   | Swagger UI                                           |
-| `POST /\{toolName\}`          | Invoke tool; JSON body = tool arguments              |
+| `POST /\{toolName\}`            | Invoke tool; JSON body = tool arguments              |
 | `POST /graphql`               | GraphQL endpoint                                     |
 | `GET /graphiql`               | GraphiQL IDE                                         |
 | `GET /graphql/schema.graphql` | SDL                                                  |
@@ -290,26 +288,25 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 
 ## Relationship to other ClawQL pieces
 
-| Piece                                                 | Role                                                             |
-| ----------------------------------------------------- | ---------------------------------------------------------------- |
-| **[Protocol Fabric](/mcp/protocol-fabric)**           | Named claim for Core + adapter (any protocol ↔ any); proven loop |
-| **`mcp-api-adapter`**                                 | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli        |
-| **ClawQL `search` / `execute`**                       | OpenAPI → MCP tools (inverse)                                    |
+| Piece                                                      | Role                                                             |
+| ---------------------------------------------------------- | ---------------------------------------------------------------- |
+| **[Protocol Fabric](/mcp/protocol-fabric)**                | Named claim for Core + adapter (any protocol ↔ any); proven loop |
+| **`mcp-api-adapter`**                                      | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli (+ QR planned) |
+| **ClawQL `search` / `execute`**                            | OpenAPI → MCP tools (inverse)                                    |
 | **[Custom sources](/getting-started/custom-sources)** | Register other MCP servers **into** the ClawQL gateway           |
-| **`mcp-grpc-transport`**                              | Production TypeScript MCP gRPC transport                         |
-| **Panguard bridge**                                   | Policy / JWT ATR in front of MCP                                 |
-| **[ClawQL Streams](/streams/clawql-streams)** (draft) | Event-driven agents; WebSocket sources into Core                 |
-
-> > > > > > > 508459b5 (docs(mcp-api-adapter): cross-link ClawQL Streams draft)
+| **`mcp-grpc-transport`**                                   | Production TypeScript MCP gRPC transport                         |
+| **Panguard bridge**                                        | Policy / JWT ATR in front of MCP                                 |
+| **[ClawQL Streams](/streams/clawql-streams)** (draft) | Event-driven agents; WebSocket / QR sources into Core            |
+| **[QR stream transport](/streams/clawql-qr-stream-transport)** (draft) | Planned **7th surface** — optical air-gap MCP + Streams source |
 
 ## Troubleshooting
 
-| Symptom                        | Check                                                                                |
-| ------------------------------ | ------------------------------------------------------------------------------------ |
-| `Provide exactly one upstream` | Only one of `--mcp-url` / `--stdio` / `--grpc-address`                               |
-| No gRPC surface for HTTP/stdio | Ensure `--no-grpc` is unset; gateway sets `ENABLE_GRPC` while scaffolding            |
+| Symptom                        | Check                                                                              |
+| ------------------------------ | ---------------------------------------------------------------------------------- |
+| `Provide exactly one upstream` | Only one of `--mcp-url` / `--stdio` / `--grpc-address`                             |
+| No gRPC surface for HTTP/stdio | Ensure `--no-grpc` is unset; gateway sets `ENABLE_GRPC` while scaffolding          |
 | Empty GraphQL args             | Upstream `ListTools` `inputSchema` missing/empty — use `callTool(name, args: \{…\})` |
-| `502 upstream CallTool failed` | Upstream down, wrong URL, or tool threw `isError`                                    |
+| `502 upstream CallTool failed` | Upstream down, wrong URL, or tool threw `isError`                                  |
 
 ## Further reading
 
@@ -319,11 +316,13 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 - GTM positioning: [`docs/gtm/mcp-api-adapter-positioning.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/gtm/mcp-api-adapter-positioning.md)
 - Protocol Fabric (proven loop): [`docs/mcp/protocol-fabric.md`](/mcp/protocol-fabric)
 - ClawQL Streams (draft): [`docs/streams/clawql-streams.md`](/streams/clawql-streams)
+- QR stream transport (draft, 7th surface): [`docs/streams/clawql-qr-stream-transport.md`](/streams/clawql-qr-stream-transport)
 - Earlier post: [MCP tools as APIs](https://pragmaticvectors.com/posts/mcp-tools-as-apis/)
 - gRPC transport: [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/)
 - Local smoke: [`scripts/dev/smoke-mcp-api-adapter.sh`](../../scripts/dev/smoke-mcp-api-adapter.sh) · [`scripts/dev/smoke-protocol-fabric-loop.sh`](../../scripts/dev/smoke-protocol-fabric-loop.sh)
-- Protocol Fabric / event loop (draft): [`docs/streams/clawql-streams.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-streams.md)
-  > > > > > > > 19d2cfe7 (docs(mcp-api-adapter): language-agnostic upstream + mcpo positioning)
+- Protocol Fabric / event loop (draft): [`docs/streams/clawql-streams.md`](/streams/clawql-streams)
+
+> > > > > > > 19d2cfe7 (docs(mcp-api-adapter): language-agnostic upstream + mcpo positioning)
 
 export function wrapper({ children }) {
   return children

@@ -1,4 +1,4 @@
-# mcp-api-adapter — six surfaces, one catalog
+# mcp-api-adapter — six surfaces today, seven planned
 
 **Package:** [`mcp-api-adapter`](../../packages/mcp-api-adapter/) (`0.6.0+`)  
 **Status:** Shipped in-repo · **npm not published yet** (`npm view mcp-api-adapter` → 404)  
@@ -7,7 +7,9 @@
 **Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)  
 **Protocol Fabric:** [`protocol-fabric.md`](./protocol-fabric.md) (proven WS → CLI → REST → vault loop)
 
-`mcp-api-adapter` wraps **any** MCP server — stdio, Streamable HTTP, or gRPC — and exposes **six API surfaces** from one tool catalog without changing the server. No ClawQL install required.
+`mcp-api-adapter` wraps **any** MCP server — stdio, Streamable HTTP, or gRPC — and exposes **six API surfaces** from one tool catalog without changing the server (OpenAPI, GraphQL, Streamable HTTP `/mcp`, gRPC, WebSocket `/ws`, gen-cli). No ClawQL install required.
+
+**Planned seventh surface:** [QR stream transport](../streams/clawql-qr-stream-transport.md) — physical optical channel for air-gapped MCP and Streams event sources (unidirectional by default; optional bidirectional).
 
 **Language-agnostic.** The adapter process is TypeScript (`npx mcp-api-adapter`); the upstream may be Python, Go, Rust, or any language that speaks MCP. Users do not write TypeScript to use it — same Node baseline as `npx clawql-mcp`.
 
@@ -289,14 +291,13 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 | Piece                                                      | Role                                                             |
 | ---------------------------------------------------------- | ---------------------------------------------------------------- |
 | **[Protocol Fabric](./protocol-fabric.md)**                | Named claim for Core + adapter (any protocol ↔ any); proven loop |
-| **`mcp-api-adapter`**                                      | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli        |
+| **`mcp-api-adapter`**                                      | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli (+ QR planned) |
 | **ClawQL `search` / `execute`**                            | OpenAPI → MCP tools (inverse)                                    |
 | **[Custom sources](../getting-started/custom-sources.md)** | Register other MCP servers **into** the ClawQL gateway           |
 | **`mcp-grpc-transport`**                                   | Production TypeScript MCP gRPC transport                         |
 | **Panguard bridge**                                        | Policy / JWT ATR in front of MCP                                 |
-| **[ClawQL Streams](../streams/clawql-streams.md)** (draft) | Event-driven agents; WebSocket sources into Core                 |
-
-> > > > > > > 508459b5 (docs(mcp-api-adapter): cross-link ClawQL Streams draft)
+| **[ClawQL Streams](../streams/clawql-streams.md)** (draft) | Event-driven agents; WebSocket / QR sources into Core            |
+| **[QR stream transport](../streams/clawql-qr-stream-transport.md)** (draft) | Planned **7th surface** — optical air-gap MCP + Streams source |
 
 ## Troubleshooting
 
@@ -315,6 +316,7 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 - GTM positioning: [`docs/gtm/mcp-api-adapter-positioning.md`](../gtm/mcp-api-adapter-positioning.md)
 - Protocol Fabric (proven loop): [`docs/mcp/protocol-fabric.md`](./protocol-fabric.md)
 - ClawQL Streams (draft): [`docs/streams/clawql-streams.md`](../streams/clawql-streams.md)
+- QR stream transport (draft, 7th surface): [`docs/streams/clawql-qr-stream-transport.md`](../streams/clawql-qr-stream-transport.md)
 - Earlier post: [MCP tools as APIs](https://pragmaticvectors.com/posts/mcp-tools-as-apis/)
 - gRPC transport: [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/)
 - Local smoke: [`scripts/dev/smoke-mcp-api-adapter.sh`](../../scripts/dev/smoke-mcp-api-adapter.sh) · [`scripts/dev/smoke-protocol-fabric-loop.sh`](../../scripts/dev/smoke-protocol-fabric-loop.sh)

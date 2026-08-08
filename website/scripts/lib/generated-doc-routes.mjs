@@ -12,6 +12,8 @@ export const GENERATED_BODY_ROUTES = {
   'clawql-cellrt-body.mdx': '/streams/clawql-cellrt',
   'clawql-tee-body.mdx': '/streams/clawql-tee',
   'clawql-tee-airgap-audit-body.mdx': '/streams/clawql-tee-airgap-audit',
+  'clawql-qr-stream-transport-body.mdx': '/streams/clawql-qr-stream-transport',
+  'clawql-government-body.mdx': '/government/clawql-government',
   'mcp-api-adapter-body.mdx': '/mcp/mcp-api-adapter',
   'clawql-token-efficiency-body.mdx': '/architecture/token-efficiency',
   'enterprise-ontology-body.mdx': '/architecture/enterprise-ontology',

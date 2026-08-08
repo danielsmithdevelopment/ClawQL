@@ -227,6 +227,20 @@ export const architectureHubCards: Array<ReferenceCard> = [
       'Unidirectional QR streaming of WORM + attestation for regulator verification.',
     icon: SquaresPlusIcon,
   }),
+  card({
+    href: '/streams/clawql-qr-stream-transport',
+    name: 'QR stream transport (draft)',
+    description:
+      '7th mcp-api-adapter surface + Streams qr source — air-gap MCP and election ballots.',
+    icon: BoltIcon,
+  }),
+  card({
+    href: '/government/clawql-government',
+    name: 'clawql-government (draft)',
+    description:
+      'Outcome accountability — Arweave baselines, bond validation, FOIA vault, auditor API.',
+    icon: SquaresPlusIcon,
+  }),
 ]
 
 /** Deployment hub — ops/infra only (not getting-started entry points). */

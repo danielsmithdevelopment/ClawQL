@@ -308,8 +308,10 @@ Ship separately from the cellrt binary so regulators can download and audit the 
 ## Further reading
 
 - [`docs/streams/clawql-tee.md`](./clawql-tee.md) — hardware TEE + attestation-gated secrets
+- [`docs/streams/clawql-qr-stream-transport.md`](./clawql-qr-stream-transport.md) — 7th mcp-api-adapter surface + Streams `qr` source (generalizes this frame format)
 - [`docs/streams/clawql-cellrt.md`](./clawql-cellrt.md) — owned cell runtime
 - [`docs/streams/clawql-streams.md`](./clawql-streams.md) — WORM event types / session lifecycle
+- [`docs/government/clawql-government.md`](../government/clawql-government.md) — auditor on-site QR export consumer
 - [`docs/security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md)
 
 ---

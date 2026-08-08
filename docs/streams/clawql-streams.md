@@ -294,6 +294,7 @@ type StreamSourceType =
   | "api_poll" // polling via setAlarm, not setInterval
   | "grpc_stream" // gRPC server streaming (K8s path; DO via adapter where feasible)
   | "sse" // Server-Sent Events
+  | "qr" // optical air-gap — see clawql-qr-stream-transport.md
   | "kafka" // optional, enterprise — open question §15
   | "kinesis"; // optional, AWS regulated
 ```
@@ -732,7 +733,7 @@ clawql-streams (coordination)
 
 |                      | Stripe Minions              | Anthropic Managed Agents | OpenAI Agents SDK | ClawQL Streams                                                                   |
 | -------------------- | --------------------------- | ------------------------ | ----------------- | -------------------------------------------------------------------------------- |
-| **Trigger**          | Slack reaction              | Cron / API call          | API call          | WebSocket · NATS · webhook · cron · poll · gRPC · SSE                            |
+| **Trigger**          | Slack reaction              | Cron / API call          | API call          | WebSocket · NATS · webhook · cron · poll · gRPC · SSE · **QR**                   |
 | **Tool catalog**     | Custom (Toolshed, internal) | Built-in + custom        | Built-in + custom | Any MCP server via mcp-api-adapter                                               |
 | **Audit trail**      | Internal                    | Provider-managed         | Provider-managed  | WORM / LTX on operator bucket, or Postgres                                       |
 | **Sovereignty**      | Internal only               | Provider servers         | Provider servers  | celld · cellrt · air-gapped K8s · Cloudflare                                     |
@@ -771,7 +772,8 @@ Streams + Core + mcp-api-adapter is the **Protocol Fabric with an event loop**: 
 
 - [`docs/streams/clawql-cellrt.md`](./clawql-cellrt.md) — ClawQL-owned Rust + Wasmtime cell runtime (monorepo `crates/`)
 - [`docs/streams/clawql-tee.md`](./clawql-tee.md) — hardware TEE + attestation-gated secrets
-- [`docs/streams/clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) — QR air-gap audit transport
+- [`docs/streams/clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) — QR air-gap audit transport (TEE)
+- [`docs/streams/clawql-qr-stream-transport.md`](./clawql-qr-stream-transport.md) — 7th mcp-api-adapter surface + Streams `qr` source + election module
 - [`docs/streams/clawql-celld.md`](./clawql-celld.md) — celld integration: constraints, DO classes, bucket layout, deploy
 - [`docs/streams/clawql-durable-objects.md`](./clawql-durable-objects.md) — session contract, sidecars, virtual keys
 - [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md) — MCP → APIs (inverse of ClawQL Core)

@@ -127,6 +127,16 @@ export const docsNavigation: Array<NavGroup> = [
         href: '/streams/clawql-tee-airgap-audit',
         tag: 'Draft',
       },
+      {
+        title: 'QR stream transport',
+        href: '/streams/clawql-qr-stream-transport',
+        tag: 'Draft',
+      },
+      {
+        title: 'clawql-government',
+        href: '/government/clawql-government',
+        tag: 'Draft',
+      },
       { title: 'Ouroboros', href: '/ouroboros' },
     ],
   },

@@ -1,0 +1,700 @@
+# clawql-government
+
+**Status:** Specification (not yet shipped) · Draft · August 2026  
+**Package:** `packages/clawql-government` (planned)  
+**Vertical:** Government program integrity, auditable document management, and outcome accountability  
+**Enable:** `CLAWQL_GOVERNMENT_ENABLED=1`  
+**CLI:** `clawql government *`  
+**Related:** [`clawql-surveillance`](/surveillance/clawql-surveillance) · [`clawql-qr-stream-transport`](/streams/clawql-qr-stream-transport) · [`clawql-tee-airgap-audit`](/streams/clawql-tee-airgap-audit) · [industry page](https://clawql.com/industries/government/)
+
+`clawql-government` is ClawQL's vertical package for government agencies, contractors, and oversight bodies that need independently verifiable records of program documents, decisions, and outcomes. It sits alongside `clawql-lending`, `clawql-real-estate`, and `clawql-surveillance` in the modularization v2.1 architecture — a domain-specific opt-in package on the same Agentic Gateway, sharing security, memory, audit, and the WORM pipeline.
+
+---
+
+## The problem this vertical solves
+
+California has issued $196 billion in general obligation bonds since 2000. This fiscal year alone the state will spend $8.6 billion servicing bond debt. The money went out. Whether the outcomes materialized is, in the words of a CalMatters commentary published August 3, 2026, "surprisingly difficult to answer."
+
+The distinction that matters: California tracks how bond dollars are spent. It does not consistently measure whether those investments achieved the outcomes voters expected. Spending accountability and outcome accountability are not the same thing.
+
+This is not a California problem. It is a government technology problem that appears at every level of government, in every category of program, every time:
+
+- Outcome definitions are written in language too vague to measure
+- Baseline records are held by the program being evaluated and can be retroactively adjusted
+- Outcome records are stored in systems controlled by the party whose performance they document
+- Verification requires trusting the party with the most incentive to hide problems
+
+The Oak Park, Illinois surveillance case is the clearest recent example of what this failure mode looks like at the contract level. The city's oversight board concluded in 2025 that Flock Safety license plate reader cameras had played no meaningful role in any crime investigation during three years of operation. The cameras were deployed, the contracts were paid, the city was promised crime reduction outcomes, and nobody measured whether those outcomes materialized until a board specifically tasked with looking actually looked. Oak Park ended the contract.
+
+That is the government accountability problem in miniature: a program funded on the basis of promised outcomes, operated for years, never measured against those promises, and discovered to be delivering nothing only when someone with the time and mandate to check actually checked.
+
+`clawql-government` provides the technical infrastructure to make this failure mode structurally impossible — or at minimum, structurally visible before years of spending have passed.
+
+---
+
+## Three requirements outcome measurement currently lacks
+
+**Outcome definitions that are measurable at authorization.** A bond measure that promises to "improve water systems" cannot be measured because "improved" is not defined in a form that survives contact with data. A bond measure that promises to reduce system failure events by 30% within five years, measured against a defined baseline, can be measured. `clawql-government` enforces structured outcome definitions at program creation — machine-readable, versioned, signed, and permanently recorded.
+
+**Immutable baseline records.** You cannot measure change without a baseline. The baseline must be established before the program begins, recorded in a form that cannot be retroactively adjusted, and held outside the control of the program being measured. `clawql-government` writes baselines to WORM storage and anchors them to Arweave at the moment of program authorization — before any spending begins.
+
+**Independent, machine-verifiable outcome records.** The records of program outcomes need to be independently verifiable — meaning any qualified party can verify their integrity without asking the program itself for confirmation. `clawql-government` provides append-only outcome logging, Merkle chaining, and external Arweave anchoring so verification is mathematical rather than trust-based.
+
+---
+
+## Architecture
+
+```
+[Program Authorization]
+    |
+    | OutcomeDefinition (structured, versioned, signed)
+    | BaselineRecord (immutable, Arweave-anchored at T=0)
+    v
+[clawql-government ingest layer]
+    |
+    +-- [OutcomeDefinitionService]
+    |       validates structure of outcome definitions
+    |       enforces measurability requirements
+    |       versions and signs each definition
+    |       writes to WORM storage + Arweave at authorization
+    |
+    +-- [BaselineAnchorService]
+    |       captures baseline metrics at program inception
+    |       hashes baseline record
+    |       anchors to Arweave immediately
+    |       provides baseline transaction ID for all future comparison
+    |
+    +-- [GovernmentWORMAuditService]
+    |       extends PaymentAuditService pattern
+    |       hash-chained JSONL or Postgres
+    |       all program events: authorization, spending, milestone, outcome, audit
+    |
+    +-- [OutcomeRecordService]
+    |       periodic outcome measurements logged against baseline
+    |       each record hashes prior record (Merkle chain)
+    |       independent measurement sources supported
+    |       discrepancy detection between reported and measured outcomes
+    |
+    +-- [DocumentVaultService]
+    |       high-trust document management for government records
+    |       contracts, RFPs, compliance filings, audit reports
+    |       each document hashed, chained, Arweave-anchored
+    |       privilege-aware (redact before archive)
+    |       FOIA-ready export with chain of custody proof
+    |
+    +-- [ArweaveAnchorService]
+    |       publishes Merkle roots on configured schedule
+    |       baseline anchors published immediately at T=0
+    |       outcome record roots published on measurement schedule
+    |       public verification endpoint, no auth required
+    |
+    +-- [ComplianceReportService]
+    |       generates outcome reports against defined metrics
+    |       compares measured outcomes to promised outcomes
+    |       publishes to Arweave for public record
+    |       feeds state auditor API
+    |
+    +-- [BondAuthorizationService]
+            validates bond measure language against measurability standards
+            generates machine-readable outcome specification from ballot text
+            creates program record at authorization
+            enforces spending-outcome correlation tracking
+```
+
+---
+
+## Domain tools (MCP)
+
+Tools registered when `CLAWQL_GOVERNMENT_ENABLED=1`:
+
+| Tool | Description |
+|---|---|
+| `program_create` | Create a new government program with structured outcome definitions |
+| `program_authorize` | Authorize a program, anchor baseline, begin outcome tracking |
+| `outcome_define` | Define a measurable outcome metric with baseline, target, and measurement schedule |
+| `outcome_record` | Record a periodic outcome measurement against a defined metric |
+| `outcome_compare` | Compare current outcomes to baseline and stated targets |
+| `outcome_report` | Generate a full outcome report for a program, publishable to Arweave |
+| `baseline_anchor` | Anchor baseline metrics to Arweave at program inception |
+| `baseline_verify` | Verify baseline against Arweave anchor — detects retroactive adjustment |
+| `document_ingest` | Ingest a government document with hash, classification, and chain of custody |
+| `document_retrieve` | Retrieve a document with full provenance proof |
+| `document_export_foia` | Export documents in FOIA-compliant format with chain of custody |
+| `contract_ingest` | Ingest a vendor contract with outcome requirements extracted |
+| `contract_monitor` | Monitor vendor contract compliance against outcome requirements |
+| `audit_log_query` | Query the immutable audit log for a program, agency, or time range |
+| `bond_validate` | Validate bond measure language against measurability standards |
+| `bond_authorize` | Create a program record from authorized bond measure |
+| `spending_record` | Record spending against a program with correlation to outcome metrics |
+| `spending_outcome_correlate` | Correlate spending records with outcome records for a program |
+| `auditor_export` | Export program records for state auditor in standard format |
+| `public_dashboard_publish` | Publish outcome report to public dashboard with Arweave anchor |
+| `whistleblower_ingest` | Ingest a whistleblower report with identity protection and tamper-evident storage |
+
+---
+
+## Core services
+
+### OutcomeDefinitionService
+
+Enforces structured, measurable outcome definitions at program creation. Rejects vague language.
+
+```typescript
+interface OutcomeDefinition {
+  programId:           string;
+  metricName:          string;         // e.g. "system_failure_events_per_year"
+  metricDescription:   string;         // plain English
+  baselineValue:       number;         // measured value at T=0
+  baselineUnit:        string;         // e.g. "events_per_year"
+  baselineSource:      string;         // documented source of baseline measurement
+  targetValue:         number;         // promised outcome value
+  targetDirection:     'increase' | 'decrease' | 'maintain';
+  targetPct:           number;         // e.g. 30 for "30% reduction"
+  measurementSchedule: 'monthly' | 'quarterly' | 'annual';
+  measurementMethod:   string;         // how outcomes will be measured
+  measurementSource:   string;         // who measures (independent preferred)
+  measurementEndDate:  string;         // ISO date — when the target is due
+  authorizedAt?:       string;         // ISO date of program authorization
+  authorizedBy?:       string;         // signing authority
+  arweaveTxId?:        string;         // anchor of this definition at authorization
+}
+
+// Measurability validator rejects:
+// - metricName with no unit
+// - targetValue identical to baselineValue
+// - measurementMethod that is "subjective" or "qualitative"
+// - measurementEndDate in the past
+// - baselineSource that is "internal" without independent verification flag
+```
+
+### BaselineAnchorService
+
+Captures and permanently anchors baseline metrics at the moment of program authorization.
+
+```typescript
+interface BaselineRecord {
+  programId:      string;
+  authorizedAt:   string;           // ISO date — the T=0 moment
+  metrics:        BaselineMetric[]; // all defined outcome metrics at T=0
+  dataHash:       string;           // SHA-256 of the complete baseline record
+  authoritySignature: string;       // signature of authorizing official
+  arweaveTxId:    string;           // permanent anchor — published immediately
+  arweaveUrl:     string;           // https://arweave.net/{txId}
+}
+
+// Key property: arweaveTxId is published BEFORE any spending begins
+// Any subsequent attempt to adjust baseline values will:
+//   a) fail to match the arweaveTxId anchor
+//   b) generate a BASELINE_ADJUSTMENT_ATTEMPTED audit event
+//   c) trigger an alert to the program's designated oversight authority
+```
+
+### GovernmentWORMAuditService
+
+Every government program event appends a hash-chained, tamper-evident record:
+
+```typescript
+type GovernmentAuditEventType =
+  | 'PROGRAM_CREATED'
+  | 'PROGRAM_AUTHORIZED'
+  | 'OUTCOME_DEFINED'
+  | 'BASELINE_ANCHORED'
+  | 'BASELINE_ADJUSTMENT_ATTEMPTED'   // triggers alert
+  | 'OUTCOME_RECORDED'
+  | 'OUTCOME_TARGET_MET'
+  | 'OUTCOME_TARGET_MISSED'
+  | 'OUTCOME_REPORT_GENERATED'
+  | 'OUTCOME_REPORT_PUBLISHED'
+  | 'DOCUMENT_INGESTED'
+  | 'DOCUMENT_RETRIEVED'
+  | 'DOCUMENT_EXPORTED_FOIA'
+  | 'CONTRACT_INGESTED'
+  | 'CONTRACT_OUTCOME_MISSED'         // vendor contract outcome failure
+  | 'SPENDING_RECORDED'
+  | 'SPENDING_OUTCOME_CORRELATED'
+  | 'AUDIT_INITIATED'
+  | 'AUDIT_COMPLETED'
+  | 'MERKLE_ROOT_COMPUTED'
+  | 'ARWEAVE_ANCHOR_CONFIRMED'
+  | 'PUBLIC_DASHBOARD_PUBLISHED'
+  | 'WHISTLEBLOWER_REPORT_INGESTED';  // identity protected
+
+interface GovernmentAuditEntry {
+  seq:            number;
+  prev_hash:      string;
+  hash:           string;
+  timestamp:      string;
+  event_type:     GovernmentAuditEventType;
+  program_id?:    string;
+  agency_id?:     string;
+  actor_id?:      string;         // official or system taking the action
+  arweave_tx?:    string;
+  correlation_id: string;
+  payload:        Record<string, unknown>;
+}
+```
+
+### DocumentVaultService
+
+High-trust document management for government records — contracts, RFPs, compliance filings, audit reports, FOIA-responsive records.
+
+```typescript
+interface GovernmentDocument {
+  documentId:      string;
+  programId:       string;
+  agencyId:        string;
+  documentType:    'contract' | 'rfp' | 'compliance_filing' | 'audit_report'
+                 | 'outcome_report' | 'bond_measure' | 'foia_response'
+                 | 'whistleblower_report' | 'other';
+  classificationLevel: 'public' | 'internal' | 'restricted' | 'privileged';
+  title:           string;
+  ingestedAt:      string;
+  ingestedBy:      string;
+  documentHash:    string;        // SHA-256 of document content
+  merklePosition:  string;        // position in program Merkle chain
+  arweaveTxId?:    string;        // for public documents
+  redactedFields?: string[];      // fields redacted before archive
+  retentionPolicy: string;        // legal retention requirement
+  foiaExemptions?: string[];      // applicable FOIA exemption codes
+}
+
+// FOIA-ready export:
+// document_export_foia() returns the document with:
+//   - complete chain of custody (ingestion hash, Merkle position, Arweave TX)
+//   - redaction log (what was redacted and under which exemption)
+//   - verification instructions for independent authenticity check
+```
+
+### OutcomeRecordService
+
+Periodic measurement of program outcomes against the anchored baseline.
+
+```typescript
+interface OutcomeRecord {
+  programId:          string;
+  metricName:         string;
+  measuredAt:         string;           // ISO date of measurement
+  measuredValue:      number;
+  measuredBy:         string;           // measurement authority
+  measurementMethod:  string;
+  baselineTxId:       string;           // Arweave TX of the baseline this compares to
+  baselineValue:      number;           // snapshot from baseline for comparison
+  targetValue:        number;
+  progress:           number;           // pct of target achieved
+  onTrack:            boolean;
+  notes?:             string;
+  dataHash:           string;
+  arweaveTxId?:       string;
+}
+
+// Discrepancy detection:
+// If measuredValue differs from agency-reported value by > configurable threshold:
+//   - OUTCOME_DISCREPANCY_DETECTED audit event
+//   - alert to oversight authority
+//   - flag in public dashboard
+```
+
+### BondAuthorizationService
+
+Validates ballot measure and bond authorization language against measurability standards. Generates machine-readable outcome specifications from legislative text.
+
+```typescript
+interface BondAuthorizationValidation {
+  measureId:        string;
+  measureText:      string;          // full ballot text
+  validationDate:   string;
+  outcomes:         OutcomeDefinition[];  // extracted from text
+  gaps: {
+    vagueLanguage:          string[];    // phrases that don't yield measurable outcomes
+    missingBaselines:       string[];    // promised outcomes with no baseline defined
+    missingMeasurementMethods: string[]; // outcomes with no defined measurement process
+    missingEndDates:        string[];    // outcomes with no timeframe
+  };
+  measurabilityScore:  number;          // 0-100, 100 = fully measurable
+  recommendation:      'approve' | 'revise' | 'reject';
+  recommendationNotes: string;
+}
+```
+
+### ComplianceReportService
+
+Generates periodic outcome reports comparing measured outcomes to promised outcomes, publishable to Arweave for the public record.
+
+```typescript
+interface ProgramComplianceReport {
+  programId:       string;
+  reportDate:      string;
+  reportPeriod:    string;           // e.g. "FY2025-Q3"
+  authorizedAt:    string;
+  baselineTxId:    string;           // Arweave TX of original baseline
+  outcomes: {
+    metricName:    string;
+    baseline:      number;
+    target:        number;
+    measured:      number;
+    progress:      number;
+    status:        'on_track' | 'at_risk' | 'missed' | 'achieved';
+    trend:         'improving' | 'stable' | 'declining';
+  }[];
+  spendingToDate:  number;
+  spendingUnit:    string;
+  costPerOutcomeUnit?: number;       // spending / outcome achieved
+  overallStatus:   'on_track' | 'at_risk' | 'failing' | 'complete';
+  arweaveTxId?:    string;          // published on report generation
+  publicUrl?:      string;          // public dashboard URL
+}
+```
+
+---
+
+## Environment variables
+
+```bash
+# Core
+CLAWQL_GOVERNMENT_ENABLED=1
+CLAWQL_GOVERNMENT_AUDIT_STORE=postgres        # jsonl or postgres
+CLAWQL_GOVERNMENT_DATABASE_URL=postgres://...
+
+# Arweave anchoring
+CLAWQL_GOVERNMENT_ARWEAVE_WALLET_PATH=~/.ClawQL/Government/arweave-key.json
+CLAWQL_GOVERNMENT_ANCHOR_INTERVAL_MINUTES=60
+CLAWQL_GOVERNMENT_BASELINE_ANCHOR_IMMEDIATE=1  # always anchor baselines immediately
+
+# Outcome measurement
+CLAWQL_GOVERNMENT_MEASURABILITY_REQUIRED=1     # reject vague outcome definitions
+CLAWQL_GOVERNMENT_INDEPENDENT_MEASUREMENT_PREFERRED=1  # warn if self-reported only
+CLAWQL_GOVERNMENT_DISCREPANCY_THRESHOLD_PCT=5  # alert if reported vs measured diverges > 5%
+
+# Document vault
+CLAWQL_GOVERNMENT_DOCUMENT_VAULT_ENABLED=1
+CLAWQL_GOVERNMENT_FOIA_EXPORT_ENABLED=1
+CLAWQL_GOVERNMENT_PRIVILEGE_REDACTION=1        # redact_privilege before archive
+
+# Public dashboard
+CLAWQL_GOVERNMENT_PUBLIC_DASHBOARD_ENABLED=1
+CLAWQL_GOVERNMENT_PUBLIC_VERIFY_PORT=8091
+
+# Whistleblower
+CLAWQL_GOVERNMENT_WHISTLEBLOWER_ENABLED=1
+CLAWQL_GOVERNMENT_WHISTLEBLOWER_IDENTITY_PROTECTION=1
+
+# Bond authorization
+CLAWQL_GOVERNMENT_BOND_VALIDATION_ENABLED=1
+CLAWQL_GOVERNMENT_BOND_MEASURABILITY_FLOOR=70  # reject measures scoring below 70/100
+
+# Auditor integration
+CLAWQL_GOVERNMENT_AUDITOR_API_ENABLED=1
+CLAWQL_GOVERNMENT_AUDITOR_API_KEY=...          # issued to state auditor office
+```
+
+---
+
+## CLI reference
+
+```bash
+# Program lifecycle
+clawql government program create --name "CA Water Infrastructure Bond 2024" --bond-id PROP-3
+clawql government program authorize --program-id PROG-001 --authority "State Treasurer"
+clawql government program status --program-id PROG-001
+
+# Outcome management
+clawql government outcome define \
+  --program-id PROG-001 \
+  --metric "system_failure_events_per_year" \
+  --baseline 847 \
+  --target 593 \
+  --direction decrease \
+  --by 2029-12-31 \
+  --measured-by "DWR Independent Auditor"
+
+clawql government outcome record \
+  --program-id PROG-001 \
+  --metric "system_failure_events_per_year" \
+  --value 721 \
+  --measured-by "DWR Independent Auditor"
+
+clawql government outcome compare --program-id PROG-001
+clawql government outcome report --program-id PROG-001 --publish-arweave
+
+# Baseline
+clawql government baseline anchor --program-id PROG-001
+clawql government baseline verify --program-id PROG-001
+clawql government baseline status --program-id PROG-001
+
+# Document vault
+clawql government document ingest \
+  --program-id PROG-001 \
+  --file ./flock-contract-2022.pdf \
+  --type contract \
+  --classification internal
+
+clawql government document export-foia \
+  --program-id PROG-001 \
+  --request-id FOIA-2026-1847
+
+# Bond authorization
+clawql government bond validate --measure-text ./prop3-full-text.txt
+clawql government bond authorize --measure-id PROP-3
+
+# Spending
+clawql government spending record \
+  --program-id PROG-001 \
+  --amount 47500000 \
+  --period "FY2025-Q2" \
+  --category "construction"
+
+clawql government spending correlate --program-id PROG-001
+
+# Audit
+clawql government audit query --program-id PROG-001 --date-from 2024-01-01
+clawql government audit verify --program-id PROG-001
+clawql government auditor export --program-id PROG-001 --format state-auditor
+
+# Public dashboard
+clawql government dashboard publish --program-id PROG-001
+clawql government dashboard status
+```
+
+---
+
+## Use cases
+
+### Bond measure outcome accountability
+
+California authorizes a $10 billion housing bond. Before the first dollar is spent:
+
+1. `bond_validate()` analyzes the ballot text and identifies vague language, missing baselines, and unmeasurable promises
+2. `bond_authorize()` creates a program record with structured outcome definitions extracted from the measure
+3. `baseline_anchor()` captures current housing metrics (units available, affordability index, vacancy rates) and anchors them to Arweave immediately
+4. The Arweave transaction ID is published in the program record — anyone can verify what the baseline was before any spending began
+
+As money is spent:
+
+5. `spending_record()` logs each disbursement against the program
+6. `outcome_record()` logs periodic measurements from independent sources
+7. `outcome_report()` generates quarterly compliance reports published to Arweave
+8. `public_dashboard_publish()` makes progress visible without revealing sensitive documents
+
+If outcomes aren't materializing:
+
+9. `OUTCOME_TARGET_MISSED` audit events trigger alerts to the oversight authority
+10. `spending_outcome_correlate()` surfaces the ratio of spending to outcomes achieved
+11. The full record — baseline, spending, outcomes, discrepancies — is independently verifiable by the state auditor, journalists, and the public
+
+### Government technology contract monitoring
+
+A city contracts with a surveillance camera vendor promising crime reduction outcomes. Instead of running the contract for three years before an oversight board asks whether it worked:
+
+1. `contract_ingest()` extracts outcome requirements from the contract
+2. `outcome_define()` creates machine-readable metrics: response time improvement, crime rate change, false positive rate
+3. `baseline_anchor()` captures pre-deployment crime statistics, response times, and false positive rates from independent sources
+4. `contract_monitor()` runs periodic checks against defined outcome metrics
+5. At contract renewal, `outcome_report()` provides an independently verifiable record of whether the vendor delivered
+
+The Oak Park outcome — three years of operation, zero meaningful crime investigations — would have been visible at the end of year one rather than discovered at contract renewal.
+
+### FOIA-compliant document management
+
+A state agency receives a FOIA request for documents related to a bond-funded program:
+
+1. Relevant documents are in the Document Vault with full chain of custody
+2. `document_export_foia()` generates a compliant response with:
+   - Documents with applied exemption redactions
+   - Redaction log documenting what was removed and under which exemption
+   - Chain of custody proof for each document (hash, Merkle position, Arweave TX)
+   - Verification instructions so the requester can independently confirm the documents are unaltered
+3. The FOIA response itself is logged as a `DOCUMENT_EXPORTED_FOIA` audit event
+
+### State auditor integration
+
+The state auditor's office has standing access to the auditor API:
+
+```
+GET /government/auditor/programs              → all active programs with status
+GET /government/auditor/program/{id}/report  → full outcome report with Arweave anchors
+GET /government/auditor/verify/{arweaveTxId} → independent verification of any anchor
+```
+
+No cooperation from the program being audited is required. The auditor retrieves records from the WORM audit log and verifies them against Arweave anchors independently. The audit trail is mathematically tamper-evident.
+
+### Whistleblower protection
+
+A program employee observes outcome data being manipulated:
+
+1. `whistleblower_ingest()` accepts a report with identity protection — reporter identity is encrypted separately from report content
+2. Report is stored in WORM storage — cannot be deleted by the agency being reported
+3. Report generates an audit event that the oversight authority can see but the reported agency cannot
+4. The Arweave-anchored baseline provides the independent reference point for evaluating the report
+
+---
+
+## Deployment topology
+
+```
+[State or Local Government Agency]
+    |
+    +-- [Edge Agentic Gateway] (per-agency, developer laptop / workstation)
+    |       MCP tools for program staff
+    |       vault memory for institutional knowledge
+    |       WORM relay → Dedicated Virtual Gateway
+    |
+    +-- [Dedicated Virtual Gateway] (agency VPC or ClawQL region)
+    |       EnterpriseGovernance manifest
+    |       PII/sensitive data scrubbing (Presidio)
+    |       Private WORM sink
+    |       Arweave anchoring
+    |       Auditor API (read-only, state auditor access)
+    |
+    +-- [Public Verification Endpoint] (no auth required)
+            /government/verify/{arweaveTxId}
+            /government/program/{id}/dashboard
+            /government/program/{id}/outcomes
+```
+
+The private WORM sink stays inside the agency's perimeter. The Arweave anchors are public. The state auditor accesses the auditor API with a read-only key. Journalists and the public access the verification endpoint with no credentials.
+
+---
+
+## The legislative opportunity
+
+The model legislation written for `clawql-surveillance` (minimum cryptographic integrity standards for surveillance footage as evidence) establishes the template for a parallel bill: minimum outcome measurement standards for government programs funded by bond proceeds.
+
+Draft statutory language for a California bond accountability bill would require:
+
+**At authorization:** Every bond measure must include machine-readable outcome definitions with baseline values, measurement methods, measurement sources, target values, and measurement end dates. Measures that do not meet the measurability standard (`bond_validate()` score ≥ 70) are returned to the ballot with required revisions.
+
+**Before spending:** Baseline metrics must be captured from independent sources and anchored to an external immutable store before the first disbursement. The Arweave transaction ID must be filed with the State Treasurer and published on the program's public dashboard.
+
+**During the program:** Outcome measurements must be recorded at the defined schedule, from the defined independent sources, and published to the public dashboard within 30 days of each measurement period.
+
+**For state auditors:** The State Auditor has standing API access to all program records. The auditor can independently verify any record without requesting cooperation from the program being audited.
+
+**For the public:** All non-exempt program records are publicly accessible through a standardized API. Arweave transaction IDs are published so any party can verify independently.
+
+This is the same structure as the surveillance model legislation — technical standards written into authorization language so the program cannot exist without producing verifiable evidence of its own performance.
+
+---
+
+## Nonprofit contractor accountability
+
+A substantial fraction of California's homelessness, housing, and social services spending flows not directly to government agencies but to nonprofit contractors — organizations receiving public money to deliver services on the government's behalf. These contractors file IRS Form 990 tax returns, but the 990 is a retrospective disclosure mechanism: it reports what happened up to two years after the fact, after the money is already spent and the compensation is already paid.
+
+The 1736 Family Crisis Center case, reported by the Los Angeles Times in August 2026, illustrates the failure mode precisely. A Southern California nonprofit receiving public homelessness funding paid its CEO — a Hawaii resident — more than $1.6 million in salary and vacation over two years, far exceeding peer organizations. The 2024 Form 990 is the latest public record. By the time the disclosure was public, the compensation had already been paid. The board governance that should have caught this failed for decades.
+
+This is the bond accountability problem at the contractor level: public money, promised outcomes, no independent prospective verification mechanism, accountability discovered only when a journalist looked at a tax form two years after the fact.
+
+`clawql-government` addresses this with the same architecture as bond accountability:
+
+**Prospective compensation anchoring.** Any nonprofit receiving above a threshold of public funding — recommended: $1 million annually — anchors executive compensation records to Arweave before payment. The anchor is public. The IRS reasonable compensation standard has a benchmark; the anchor records whether the board evaluated against it and what they concluded.
+
+**Outcome records before disbursement.** Nonprofit contractors receiving public money for service delivery define measurable outcomes at contract signing. Baseline metrics are anchored before the contract period begins. Periodic outcome records from independent sources — not the contractor's own reports — are logged against the baseline.
+
+**Board governance audit trail.** Board decisions affecting executive compensation, contract renewals, and material expenditures are logged in WORM storage. The record of what the board knew and when is tamper-evident. A board that rubber-stamped compensation increases for 40 years without independent benchmarking leaves a permanent record of that failure.
+
+**990-equivalent public disclosure, prospectively.** Rather than waiting for the IRS filing cycle, contracting agencies can require quarterly WORM-anchored disclosure reports as a condition of receiving public funds. These are published to a public dashboard. The data is live, not two years stale.
+
+### The legislative opportunity
+
+California AB and SB proposals addressing nonprofit accountability for public contractors are perennially introduced and rarely pass because the accountability mechanism proposed is always more reporting — more forms, more filings, more paperwork that lands in the same retrospective disclosure cycle.
+
+The `clawql-government` approach is different: it makes the accountability prospective and independently verifiable rather than retrospective and self-reported. The legislative language is a natural extension of the bond accountability bill:
+
+Any nonprofit contractor receiving more than $1,000,000 annually in public funds shall:
+- Anchor executive compensation records to an external immutable store before payment
+- Define measurable service delivery outcomes with independent baseline records at contract signing
+- Record periodic outcome measurements from independent sources on a defined schedule
+- Make all records accessible via a public verification API without requiring agency cooperation
+
+This doesn't add paperwork. It changes when and how the record is created — before the money moves rather than two years after.
+
+### Domain tools for nonprofit contractor monitoring
+
+`contract_ingest()` already handles vendor contracts with outcome extraction. Two additional tools cover the nonprofit-specific accountability layer:
+
+`nonprofit_compensation_anchor()` — records and anchors executive compensation before payment. Parameters: organization ID, executive identifier, compensation components, board approval reference, peer benchmark comparison, Arweave anchor.
+
+`nonprofit_990_correlate()` — when a 990 is eventually filed, correlates it against the anchored prospective records. Flags discrepancies between what was anchored before payment and what was reported after. Generates a discrepancy report for the contracting agency and state auditor.
+
+---
+
+## Relationship to other ClawQL verticals
+
+**clawql-surveillance:** Provides chain of custody for government technology contracts — surveillance camera footage. `clawql-government` monitors the outcome accountability layer of those same contracts. When a city contracts for surveillance cameras promising crime reduction, `clawql-surveillance` authenticates the footage and `clawql-government` tracks whether the crime reduction materialized.
+
+**clawql-lending:** Regulated lending has outcome obligations — fair lending compliance, ECOA requirements. The same WORM audit and Merkle-chaining that `clawql-lending` uses for underwriting decisions applies to regulatory outcome reporting.
+
+**challengethefootage.com:** The Oak Park finding — zero meaningful crime investigations in three years — is the concrete example of what `clawql-government`'s contract monitoring would have surfaced at year one. The public interest tool creates political pressure for the government accountability infrastructure.
+
+---
+
+## Pricing and GTM
+
+`clawql-government` is available at the Business tier and above ($599/mo), or as a dedicated Virtual Gateway deployment for agencies requiring data sovereignty.
+
+**The sales conversation:**
+
+Entry: a state or local government CIO/CTO who has read the CalMatters bond accountability piece, seen an oversight board conclude that a technology contract delivered nothing, or been asked by a journalist or auditor to produce outcome records that don't exist in verifiable form.
+
+Value proposition: the first agency that can hand a journalist or auditor an Arweave transaction ID and say "here is the independently verifiable record of what we promised, what we measured, and what we delivered" is the agency that doesn't end up in a CalMatters investigation.
+
+Differentiation: every government records system produces documents. `clawql-government` produces independently verifiable documents whose integrity and completeness can be proven mathematically without trusting the agency that created them. That distinction matters to auditors, journalists, oversight boards, and courts.
+
+**PragmaticVectors essay:** "California Spent $196 Billion and Can't Tell You What It Got" — published August 3, 2026, anchored to the CalMatters commentary, connects the Oak Park surveillance finding to the bond accountability problem, arrives at `clawql-government` as the infrastructure. Published the same day as the CalMatters piece while it was circulating in California policy circles.
+
+**Target outreach:**
+
+- Cathy Cockrum Dean, Elevate California (authored the CalMatters piece) — the most direct entry point into California policy reform conversations
+- California State Auditor's office — they have the mandate to audit bond programs and the technical capacity to use an API-based audit tool
+- California Legislative Analyst's Office — they evaluate bond measures before they go to voters
+- National Association of State Auditors, Comptrollers and Treasurers (NASACT) — reaches state auditors across all 50 states
+- Government Technology magazine and StateScoop — the trade press that reaches state CIOs
+
+**The Hardened Security Dossier mapping:**
+
+| Stage | Essay |
+|---|---|
+| Inference Gateway | Twelve Layers of LLM Cost |
+| Memory / IDP | Local Data Residency |
+| Dedicated Virtual Gateway | The Observability Loop |
+| Edge Agentic Swarm | The Kernel Said No |
+| Governance / CISO | Mini Shai-Hulud |
+| **Government** | **California Spent $196 Billion and Can't Tell You What It Got** |
+
+---
+
+## Design principles specific to this vertical
+
+**Assume adversarial self-reporting.** The party with the most incentive to report favorable outcomes is the party running the program. Every design decision should assume that self-reported outcomes will be optimistic. Independent measurement sources are preferred. Discrepancy detection is mandatory. Baseline anchoring before spending begins is non-negotiable.
+
+**Transparency is the product.** Government programs funded by public money owe the public independently verifiable records of their performance. The public verification endpoint is not a feature — it is the core value proposition. If the public cannot verify independently, the system has not solved the problem.
+
+**Make failure visible early, not catastrophically late.** The Oak Park finding came after three years and a full contract cycle. `OUTCOME_TARGET_MISSED` events, trend analysis, and spending-outcome correlation are designed to surface failure at the first measurement period, not at the end of a contract.
+
+**The paper trail protects good actors too.** Program administrators who are delivering results have as much interest in an independently verifiable record as taxpayers do. The audit trail is not only accountability infrastructure — it is protection against false accusations, political manipulation of outcome claims, and the kind of "selective memory" about what was promised that often characterizes program evaluations.
+
+---
+
+## Relationship to QR / TEE air-gap transport
+
+On-site state auditors without network access to the agency VPC can still receive program WORM trails via the [QR stream transport](/streams/clawql-qr-stream-transport) and [TEE air-gap audit](/streams/clawql-tee-airgap-audit) path: `auditor_export` → QR sequence (HDMI or thermal) → `clawql-tee-verifier` on the auditor's device. The air gap is preserved; Merkle + optional TEE attestation make the export independently verifiable.
+
+[`clawql-surveillance`](/surveillance/clawql-surveillance) authenticates footage / evidence integrity for government technology contracts; this vertical tracks whether those contracts delivered promised **outcomes**.
+
+---
+
+## Further reading
+
+- Industry page: [clawql.com/industries/government](https://clawql.com/industries/government/)
+- [`docs/surveillance/clawql-surveillance.md`](/surveillance/clawql-surveillance)
+- [`docs/streams/clawql-qr-stream-transport.md`](/streams/clawql-qr-stream-transport)
+- [`docs/streams/clawql-tee-airgap-audit.md`](/streams/clawql-tee-airgap-audit)
+- [`docs/streams/clawql-streams.md`](/streams/clawql-streams)
+
+---
+
+*clawql-government · Specification · August 2026 · Draft*  
+*Package: `packages/clawql-government` (planned)*
+
+export function wrapper({ children }) {
+  return children
+}
