@@ -17,6 +17,11 @@ List **every** matter that has **both**:
 1. When `clawql_memory_recall` is available, prefer exact field filters over
    keyword/semantic search. Keyword hits include near-misses (e.g. 9% escrow or
    exactly 18 months NC) that fail the criteria and zero the score.
+
+   The tool accepts optional structured parameters (see tool schema): `schema`
+   (e.g. `legal.Matter`) and `filters` with numeric predicates such as
+   `escrowPct` / `nonCompeteMonths` using `gte` / `gt`. Map the Goal thresholds
+   into those predicates yourself — do not keyword-search the criteria.
 2. You may also read markdown under `.openbench/memory-seed/` (nested
    `clients/*/matters/`; ignore `decoy/`) if memory tools are unavailable.
    Workspace notes are **prose** (~120 files); numbers may be written as words.
