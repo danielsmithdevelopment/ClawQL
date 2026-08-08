@@ -1,0 +1,5 @@
+{
+  "matters": ["MAT-2415", "MAT-2450"],
+  "criteria": {"escrow_pct_min": 15, "base": "q1"},
+  "source": "memory_recall"
+}

@@ -121,6 +121,7 @@ Prefer the Python adapter: it writes the instruction file, parses
 | `institutional-knowledge-enumerate-ontology` | B-7.1-ontology — same fixture; structured `schema`+`filters` under 5-turn / 4k-token caps (efficiency claim). |
 | `institutional-knowledge-enumerate-blind` | B-7.1-blind — same fixture; no taught filter JSON (model must invent structured recall). |
 | `institutional-client-preference` | B-7.2 — Meridian Capital preference reconstruction from institutional prose (top-1 grader). |
+| `institutional-amortized-session` | B-7.3 — five related prompts; Q1 builds match set, Q2–5 reuse under tight caps; persistent vault on clawql-on. |
 
 Validate checkers offline (no model, no network):
 

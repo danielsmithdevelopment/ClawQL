@@ -217,7 +217,7 @@ Synthesize Client X governing-law / dispute-resolution preferences across multip
 
 ### B-7.3 — Amortized multi-question session
 
-Five related questions on one client; measure total tokens + completeness with persistent vault vs wiped vault. Needs session-capable harness. Spec only.
+Five related questions on the mini-firm corpus; measure mean step score + cumulative wall/tokens with persistent vault vs wiped/bare. **WIN** ([31274484721](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31274484721): on mean 0.933 / off 0.0). Pack: [`institutional-amortized-session`](../../openbench/tasks/institutional-amortized-session/).
 
 ### B-7.4 — Full C&H mount
 

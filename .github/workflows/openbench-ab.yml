@@ -24,6 +24,7 @@ on:
           - memory-conflict-pricing
           - institutional-knowledge-enumerate
           - institutional-knowledge-enumerate-ontology
+          - institutional-amortized-session
           - onyx-mock-cite
           - memory-wikilink-hop
           - notify-mock-slack
@@ -270,7 +271,8 @@ jobs:
           matrix.task == 'institutional-knowledge-enumerate' ||
           matrix.task == 'institutional-knowledge-enumerate-ontology' ||
           matrix.task == 'institutional-knowledge-enumerate-blind' ||
-          matrix.task == 'institutional-client-preference'
+          matrix.task == 'institutional-client-preference' ||
+          matrix.task == 'institutional-amortized-session'
         run: |
           {
             echo "OPENBENCH_TIMEOUT_S=180"
@@ -385,6 +387,12 @@ jobs:
             if [ "${{ matrix.task }}" = "institutional-client-preference" ]; then
               # B-7.2 preference: three-arm fair cell + rewrite-nudge budget.
               echo "OPENBENCH_TIMEOUT_S=480"
+              echo "OPENBENCH_MODEL=openrouter/deepseek/deepseek-chat"
+              echo "OPENBENCH_ARMS=clawql-off,clawql-on,clawql-no-memory"
+            fi
+            if [ "${{ matrix.task }}" = "institutional-amortized-session" ]; then
+              # B-7.3: 5-prompt session; Q1 build + Q2–5 reuse (+ write nudges).
+              echo "OPENBENCH_TIMEOUT_S=780"
               echo "OPENBENCH_MODEL=openrouter/deepseek/deepseek-chat"
               echo "OPENBENCH_ARMS=clawql-off,clawql-on,clawql-no-memory"
             fi

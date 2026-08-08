@@ -1,0 +1,52 @@
+{
+  "task": "institutional-amortized-session",
+  "suite": "B-7.3",
+  "client_focus": "firm-wide PE closing memos (same corpus as B-7.1)",
+  "note_count": 120,
+  "base_criteria": {
+    "escrow_pct_min": 10,
+    "noncompete_months_gt": 18
+  },
+  "steps": {
+    "q1": {
+      "artifact": "session/q1.json",
+      "kind": "matter_set",
+      "expected_matters": [
+        "MAT-2388",
+        "MAT-2401",
+        "MAT-2415",
+        "MAT-2450",
+        "MAT-2462"
+      ]
+    },
+    "q2": {
+      "artifact": "session/q2.json",
+      "kind": "matter_set",
+      "expected_matters": ["MAT-2415", "MAT-2450"],
+      "note": "Q1 matches with escrow_pct >= 15"
+    },
+    "q3": {
+      "artifact": "session/q3.json",
+      "kind": "count",
+      "expected_count": 2,
+      "note": "Q1 matches with noncompete_months > 24"
+    },
+    "q4": {
+      "artifact": "session/q4.json",
+      "kind": "client_set",
+      "expected_clients": [
+        "Blue Harbor Partners",
+        "Cedar Peak Capital",
+        "Lakeview Growth",
+        "Northwind Holdings",
+        "Riverton Equity"
+      ]
+    },
+    "q5": {
+      "artifact": "session/q5.json",
+      "kind": "matter_id",
+      "expected_matter": "MAT-2415",
+      "note": "Q1 match with longest non-compete (36 months)"
+    }
+  }
+}
