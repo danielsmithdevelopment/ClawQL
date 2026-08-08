@@ -10,15 +10,15 @@ Related: [`openbench.md`](openbench.md) · [`openbench/README.md`](../../openben
 
 ## Suite index
 
-| Suite | Claim category                             | Priority | Status                                                                                                                 |
-| ----- | ------------------------------------------ | -------- | ---------------------------------------------------------------------------------------------------------------------- |
-| B-1   | Fine-tuning flywheel delta                 | Highest  | Spec only                                                                                                              |
-| B-2   | Multi-turn IDP pipeline                    | Highest  | Spec only                                                                                                              |
-| B-3   | Long-horizon codegraph (SWE-bench style)   | High     | Spec only — Phase 1 task packs landed                                                                                  |
-| B-4   | Adversarial memory / conflict resolution   | High     | Spec only — Phase 1 task packs landed                                                                                  |
-| B-5   | NSV/SGDOP ensemble diversity               | High     | Spec only                                                                                                              |
-| B-6   | Domain-specific compliance QA (HLE analog) | Medium   | Spec only                                                                                                              |
-| B-7   | Institutional knowledge (C&H / amortized)  | Highest  | B-7.1 **WIN** [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796); B-7.2–7.4 next |
+| Suite | Claim category                             | Priority | Status                                                                                                                                                                    |
+| ----- | ------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B-1   | Fine-tuning flywheel delta                 | Highest  | Spec only                                                                                                                                                                 |
+| B-2   | Multi-turn IDP pipeline                    | Highest  | Spec only                                                                                                                                                                 |
+| B-3   | Long-horizon codegraph (SWE-bench style)   | High     | Spec only — Phase 1 task packs landed                                                                                                                                     |
+| B-4   | Adversarial memory / conflict resolution   | High     | Spec only — Phase 1 task packs landed                                                                                                                                     |
+| B-5   | NSV/SGDOP ensemble diversity               | High     | Spec only                                                                                                                                                                 |
+| B-6   | Domain-specific compliance QA (HLE analog) | Medium   | Spec only                                                                                                                                                                 |
+| B-7   | Institutional knowledge (C&H / amortized)  | Highest  | B-7.1 **FAIL** (Qwen+DeepSeek; ClawQL OK) [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868); redesign before claim; B-7.2–7.4 next |
 
 ---
 
@@ -199,15 +199,15 @@ Harvey + EngramLab open-sourced **Calderwood & Harkness (C&H)** — a ~100M+ tok
 
 ### B-7.1 — Exhaustive feature enumeration
 
-| Field         | Value                                                                                                                                                  |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Product claim | ClawQL memory recall recovers more of the matching matter set than bare / no-memory; vault persistence is the Harvey-baseline delta                    |
-| Arms          | Phase-1: `clawql-on` + `clawql-off` + `clawql-no-memory` (tools without seeded vault)                                                                  |
-| Task IDs      | `institutional-knowledge-enumerate` (**offline pack landed**)                                                                                          |
-| Grader        | Partial credit `hits/5`; emit `MATTERS_FOUND: k/5`; reject false positives; require real `memory_recall` when `REQUIRE_INSTITUTIONAL=1`                |
-| Spend cap     | 30 turns / 240s / 8,000 tokens (single cell); B-7.3 adds first-task vs reuse asymmetry                                                                 |
-| Expected      | on mean matters_found ≫ off / no-memory; headline copy uses `k/5` not only mean score                                                                  |
-| Status        | **WIN** three-arm [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796): on 5/5 / off 0/5 / no-memory 0/5 — retired |
+| Field         | Value                                                                                                                                                                                                                                                                                               |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Product claim | ClawQL memory recall recovers more of the matching matter set than bare / no-memory; vault persistence is the Harvey-baseline delta                                                                                                                                                                 |
+| Arms          | Phase-1: `clawql-on` + `clawql-off` + `clawql-no-memory` (tools without seeded vault)                                                                                                                                                                                                               |
+| Task IDs      | `institutional-knowledge-enumerate` (**offline pack landed**)                                                                                                                                                                                                                                       |
+| Grader        | Partial credit `hits/5`; emit `MATTERS_FOUND: k/5`; reject false positives; require real `memory_recall` when `REQUIRE_INSTITUTIONAL=1`                                                                                                                                                             |
+| Spend cap     | 30 turns / 240s / 8,000 tokens (single cell); B-7.3 adds first-task vs reuse asymmetry                                                                                                                                                                                                              |
+| Expected      | on mean matters_found ≫ off / no-memory; headline copy uses `k/5` not only mean score                                                                                                                                                                                                               |
+| Status        | **FAIL** — Qwen n=3 [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868) on 1.67 < off 3.33; DeepSeek n=3 [31230837116](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31230837116) same; n=1 WIN confounded. ClawQL recall OK; redesign fixture |
 
 **In-repo offline pack:** [`openbench/tasks/institutional-knowledge-enumerate/`](../../openbench/tasks/institutional-knowledge-enumerate/)
 
@@ -227,15 +227,15 @@ Mount Harvey/EngramLab open-sourced filesystem + short-form matter specs as grou
 
 ## Recommended sequencing
 
-| Phase       | What runs                                                                | Dependency                                                                                            |
-| ----------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| **1 (now)** | B-3.1, B-4.1, B-4.2, B-4.3 offline packs + live A/B when secrets present | Already on `main` infra                                                                               |
-| **1d**      | B-7.1 mini-firm enumerate live A/B                                       | **Done** WIN [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796) |
-| **2**       | B-1.1, B-1.2                                                             | Fine-tune v1 in `tier-map.json`                                                                       |
-| **3**       | B-2.1–B-2.3                                                              | Post B-1; vendor-live IDP + provenance graders                                                        |
-| **4**       | B-6.1                                                                    | Fine-tune + vertical adapter + Onyx corpus                                                            |
-| **5**       | B-5.1–B-5.2                                                              | NSV/SGDOP instrumentation                                                                             |
-| **6**       | B-1.3, B-3.2, B-6.3, B-7.3–B-7.4                                         | Long-horizon / full C&H mount                                                                         |
+| Phase       | What runs                                                                | Dependency                                                                                                                                |
+| ----------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **1 (now)** | B-3.1, B-4.1, B-4.2, B-4.3 offline packs + live A/B when secrets present | Already on `main` infra                                                                                                                   |
+| **1d**      | B-7.1 mini-firm enumerate live A/B                                       | **Done** FAIL (ClawQL ruled out) [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868) — redesign next |
+| **2**       | B-1.1, B-1.2                                                             | Fine-tune v1 in `tier-map.json`                                                                                                           |
+| **3**       | B-2.1–B-2.3                                                              | Post B-1; vendor-live IDP + provenance graders                                                                                            |
+| **4**       | B-6.1                                                                    | Fine-tune + vertical adapter + Onyx corpus                                                                                                |
+| **5**       | B-5.1–B-5.2                                                              | NSV/SGDOP instrumentation                                                                                                                 |
+| **6**       | B-1.3, B-3.2, B-6.3, B-7.3–B-7.4                                         | Long-horizon / full C&H mount                                                                                                             |
 
 ### What a full B-1.2 win would mean
 
