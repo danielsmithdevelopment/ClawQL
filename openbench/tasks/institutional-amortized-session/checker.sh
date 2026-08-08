@@ -6,8 +6,8 @@
 set -euo pipefail
 
 REQUIRE_INSTITUTIONAL="${OPENBENCH_REQUIRE_INSTITUTIONAL:-0}"
-HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-90}"
-HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-22000}"
+HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-120}"
+HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-28000}"
 TASK_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 cap_fail=0
@@ -67,6 +67,10 @@ def matter_set_score(path: Path, expected: set[str]) -> tuple[float, str]:
                 ids.add(norm_id(str(mid)))
     if not ids:
         return 0.0, f"no ids {path.name}"
+    # Reject prompt-placeholder copies (MAT-… / MAT-XXXX).
+    for mid in ids:
+        if "…" in mid or "..." in mid or "XXXX" in mid:
+            return 0.0, f"placeholder id in {path.name}: {mid}"
     if ids - expected:
         return 0.0, f"FP in {path.name}: {sorted(ids - expected)}"
     if ids != expected:

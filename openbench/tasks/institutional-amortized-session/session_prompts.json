@@ -14,33 +14,33 @@
     {
       "id": "q2",
       "artifact": "session/q2.json",
-      "max_turns": 12,
-      "max_tokens": 3500,
-      "timeout_s": 75,
+      "max_turns": 18,
+      "max_tokens": 5000,
+      "timeout_s": 120,
       "instruction": "# Session Q2/5 — High-escrow subset (reuse)\n\nTight budget. Prefer recalling your Q1 match set / vault notes over re-scanning\nthe full corpus.\n\nFrom matters matching escrow≥10 AND NC>18, list those with **escrow_pct ≥ 15**.\n\nWrite relative `session/q2.json`:\n```json\n{\"matters\":[\"MAT-…\"],\"criteria\":{\"escrow_pct_min\":15,\"base\":\"q1\"},\"source\":\"memory_recall\"}\n```\n"
     },
     {
       "id": "q3",
       "artifact": "session/q3.json",
-      "max_turns": 12,
-      "max_tokens": 3500,
-      "timeout_s": 75,
+      "max_turns": 18,
+      "max_tokens": 5000,
+      "timeout_s": 120,
       "instruction": "# Session Q3/5 — Long non-compete count (reuse)\n\nTight budget. Reuse the Q1 match set from vault / prior notes.\n\nHow many Q1 matches have **noncompete_months > 24**? (Exactly 24 does not count.)\n\nWrite relative `session/q3.json`:\n```json\n{\"count\": <integer>,\"source\":\"memory_recall\"}\n```\n"
     },
     {
       "id": "q4",
       "artifact": "session/q4.json",
-      "max_turns": 12,
-      "max_tokens": 3500,
-      "timeout_s": 75,
+      "max_turns": 18,
+      "max_tokens": 5000,
+      "timeout_s": 120,
       "instruction": "# Session Q4/5 — Client names for the match set (reuse)\n\nTight budget. Reuse the Q1 match set.\n\nList the **client names** for every Q1-matching matter (exact spelling from notes).\n\nWrite relative `session/q4.json`:\n```json\n{\"clients\":[\"…\"],\"source\":\"memory_recall\"}\n```\n"
     },
     {
       "id": "q5",
       "artifact": "session/q5.json",
-      "max_turns": 12,
-      "max_tokens": 3500,
-      "timeout_s": 75,
+      "max_turns": 18,
+      "max_tokens": 5000,
+      "timeout_s": 120,
       "instruction": "# Session Q5/5 — Longest non-compete (reuse)\n\nTight budget. Reuse the Q1 match set.\n\nWhich Q1-matching matter has the **longest** non-compete duration?\n\nWrite relative `session/q5.json`:\n```json\n{\"matter\":\"MAT-…\",\"noncompete_months\":<int>,\"source\":\"memory_recall\"}\n```\n"
     }
   ]

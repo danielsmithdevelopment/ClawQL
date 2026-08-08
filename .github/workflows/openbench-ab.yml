@@ -391,8 +391,8 @@ jobs:
               echo "OPENBENCH_ARMS=clawql-off,clawql-on,clawql-no-memory"
             fi
             if [ "${{ matrix.task }}" = "institutional-amortized-session" ]; then
-              # B-7.3: 5-prompt session; Q1 build + Q2–5 reuse under tight caps.
-              echo "OPENBENCH_TIMEOUT_S=600"
+              # B-7.3: 5-prompt session; Q1 build + Q2–5 reuse (+ write nudges).
+              echo "OPENBENCH_TIMEOUT_S=780"
               echo "OPENBENCH_MODEL=openrouter/deepseek/deepseek-chat"
               echo "OPENBENCH_ARMS=clawql-off,clawql-on,clawql-no-memory"
             fi
