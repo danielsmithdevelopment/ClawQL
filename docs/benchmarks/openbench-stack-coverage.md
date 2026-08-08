@@ -182,7 +182,7 @@ Full breakdown (B-1 flywheel → B-7 institutional / C&H): [`openbench-advanced-
 
 ### Phase 1d — Institutional knowledge (Harvey C&H)
 
-23. **`institutional-knowledge-enumerate` (B-7.1)** — **WIN** three-arm [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796): on **5/5** / off **0/5** / no-memory **0/5**. Retired.
+23. **`institutional-knowledge-enumerate` (B-7.1)** — prior n=1 WIN [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796). Hardened re-burn on `pr_active`: 30-note fixture, stripped prompt IDs, exhaustive off nudge, `pr_trials=3`.
 
 ### P3 — keep out of PR OpenBench (ops / cluster / paid SaaS)
 

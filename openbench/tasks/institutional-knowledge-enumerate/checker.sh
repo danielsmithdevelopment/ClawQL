@@ -34,6 +34,7 @@ import sys
 from pathlib import Path
 
 expected = {"MAT-2388", "MAT-2401", "MAT-2415", "MAT-2450", "MAT-2462"}
+# All other seeded matter IDs (12→30 fixture). Including any → 0/5.
 near_miss = {
     "MAT-2390",
     "MAT-2405",
@@ -42,6 +43,24 @@ near_miss = {
     "MAT-2433",
     "MAT-2444",
     "MAT-2470",
+    "MAT-2501",
+    "MAT-2502",
+    "MAT-2503",
+    "MAT-2504",
+    "MAT-2505",
+    "MAT-2506",
+    "MAT-2507",
+    "MAT-2508",
+    "MAT-2509",
+    "MAT-2510",
+    "MAT-2511",
+    "MAT-2512",
+    "MAT-2513",
+    "MAT-2514",
+    "MAT-2515",
+    "MAT-2516",
+    "MAT-2517",
+    "MAT-2518",
 }
 n_exp = len(expected)
 
@@ -90,9 +109,20 @@ if false_pos:
 hits = sorted(ids & expected)
 partial = len(hits) / float(n_exp)
 src = str(d.get("source") or "").strip().lower()
-ok_src = "memory" in src or "recall" in src
+# On-arm uses memory_recall; off-arm may cite workspace note reads after exhaustive search.
+ok_src = (
+    "memory" in src
+    or "recall" in src
+    or "workspace" in src
+    or "note" in src
+    or "seed" in src
+)
 if not ok_src:
-    emit(0, 0.0, err=f"FAIL: source must reference memory_recall; got {src!r}")
+    emit(
+        0,
+        0.0,
+        err=f"FAIL: source must reference memory_recall or workspace notes; got {src!r}",
+    )
     raise SystemExit(0)
 
 emit(len(hits), partial, ids=hits)

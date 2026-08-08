@@ -326,10 +326,11 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "require_conflict": True,
     },
     "institutional-knowledge-enumerate": {
-        "max_turns": 30,
-        "max_tokens": 8000,
-        "max_wall_s": 240,
-        "default_timeout_s": 240,
+        # Hardened B-7.1: 30-note fixture + exhaustive off-arm try; n≥3 via pr_trials.
+        "max_turns": 50,
+        "max_tokens": 12000,
+        "max_wall_s": 400,
+        "default_timeout_s": 400,
         "disable_memory": False,
         "require_institutional": True,
     },
@@ -712,12 +713,28 @@ Do NOT invent 48 or pick only one price. Call memory_recall now.
 
 INSTITUTIONAL_NUDGE = """Continue the institutional knowledge enumeration task (B-7.1).
 
-1. clawql_memory_recall across the vault (matter notes with CLAWQL_MATTER_ID / ESCROW_PCT / NONCOMPETE_MONTHS)
+1. clawql_memory_recall across the vault (raise limit/maxDepth — there are many matter notes).
+   Fields: CLAWQL_MATTER_ID / ESCROW_PCT / NONCOMPETE_MONTHS
 2. Keep ONLY matters with escrow_pct >= 10 AND noncompete_months > 18
 3. write relative filePath matters.json with the COMPLETE set (order free):
-   {"matters":["MAT-2388","MAT-2401","MAT-2415","MAT-2450","MAT-2462"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"memory_recall","search_sufficiency":"…"}
+   {"matters":["MAT-XXXX","MAT-YYYY"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"memory_recall","search_sufficiency":"how many notes you checked"}
 
-Partial lists fail. Near-misses (9% escrow, exactly 18 months NC) must not appear. Call memory_recall now.
+Do NOT copy placeholder IDs. Discover real IDs from recall. Partial lists fail.
+Near-misses (9% escrow, exactly 18 months NC, missing escrow) must not appear.
+Search exhaustively — do not stop after the first hits. Call memory_recall now.
+"""
+
+INSTITUTIONAL_OFF_NUDGE = """Continue. Memory tools are unavailable — that is expected on this arm.
+
+You MUST still finish the task by exhaustively searching the workspace:
+
+1. List and read EVERY markdown note under `.openbench/memory-seed/` (ignore `decoy/`).
+2. For each note, record CLAWQL_MATTER_ID, CLAWQL_ESCROW_PCT, CLAWQL_NONCOMPETE_MONTHS when present.
+3. Keep ONLY matters with escrow_pct >= 10 AND noncompete_months > 18.
+4. write relative filePath matters.json:
+   {"matters":["MAT-XXXX"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"workspace_notes","search_sufficiency":"checked all notes under .openbench/memory-seed"}
+
+Do not stop after 1–2 files. Do not invent IDs. Exhaust the directory, then write.
 """
 
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.
@@ -3212,14 +3229,15 @@ def render_markdown(report: dict) -> str:
         )
     elif task == "institutional-knowledge-enumerate":
         interp.append(
-            "- Arms graded for exhaustive matter enumeration via memory_recall "
+            "- Arms graded for exhaustive matter enumeration on the 30-note mini-firm "
             "(escrow≥10 and noncompete>18); score = hits/5 (partial credit); "
-            "false positives → 0.0; require real memory_recall tool_use."
+            "false positives → 0.0. On / no-memory require real memory_recall tool_use; "
+            "off may score via exhaustive workspace note reads."
         )
         interp.append(
             "- **clawql-on** = seeded vault + memory tools; **clawql-no-memory** = "
             "ClawQL tools but empty/disabled memory (isolates persistence); "
-            "**clawql-off** = no ClawQL MCP."
+            "**clawql-off** = no ClawQL MCP (nudged to read `.openbench/memory-seed/`)."
         )
     interp.append("")
     lines.extend(interp)
@@ -3278,8 +3296,16 @@ def run_trial(
     task_name = task_dir.name
     caps = TASK_HARD_CAPS.get(task_name) or {}
     corr = openbench_correlation_id(arm, trial)
+    seed_snapshot: Path | None = None
     try:
         materialize_workspace(task_dir, tmp)
+        # Snapshot multi-file seeds before seed_and_remove_memory deletes them from
+        # the workdir. Off-arm needs those notes to attempt exhaustive filesystem
+        # search; on-arm keeps them vault-only so wins require memory_recall.
+        seed_dir_src = tmp / ".openbench" / "memory-seed"
+        if caps.get("require_institutional") and seed_dir_src.is_dir():
+            seed_snapshot = Path(tempfile.mkdtemp(prefix="ik_seed_snap_"))
+            shutil.copytree(seed_dir_src, seed_snapshot / "memory-seed")
         vault = seed_and_remove_memory(tmp)
         if vault is None and caps.get("empty_vault") and arm != "clawql-off":
             vault = empty_vault_home()
@@ -3288,9 +3314,47 @@ def run_trial(
             if appendix:
                 instruction = instruction.rstrip() + "\n" + appendix
         if arm == "clawql-off":
+            if seed_snapshot and (seed_snapshot / "memory-seed").is_dir():
+                dest = tmp / ".openbench" / "memory-seed"
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                if dest.exists():
+                    shutil.rmtree(dest)
+                shutil.copytree(seed_snapshot / "memory-seed", dest)
             agent = run_arm_off(
                 instruction, tmp, model, timeout_s, inference_url, correlation_id=corr
             )
+            # B-7.1: force a genuine exhaustive try (Risk: early give-up).
+            if (
+                caps.get("require_institutional")
+                and not agent.get("timed_out")
+                and not (tmp / "matters.json").is_file()
+            ):
+                used = float(agent.get("wall_s") or 0.0)
+                remaining = int(timeout_s) - int(used)
+                if remaining >= 40:
+                    cont_timeout = max(40, min(200, remaining))
+                    agent2 = run_arm_off(
+                        INSTITUTIONAL_OFF_NUDGE,
+                        tmp,
+                        model,
+                        cont_timeout,
+                        inference_url,
+                        correlation_id=corr,
+                    )
+                    log1 = agent.pop("_combined_log", "") or ""
+                    log2 = agent2.pop("_combined_log", "") or ""
+                    merged = (log1 + "\n" + log2).strip()
+                    turns1 = agent.get("turns")
+                    agent = dict(agent2)
+                    agent["arm"] = "clawql-off"
+                    agent["_combined_log"] = merged
+                    agent["wall_s"] = round(used + float(agent2.get("wall_s") or 0.0), 3)
+                    try:
+                        if turns1 is not None and agent2.get("turns") is not None:
+                            agent["turns"] = int(turns1) + int(agent2.get("turns") or 0)
+                    except (TypeError, ValueError):
+                        pass
+                    agent["output_tail"] = merged[-2000:]
             if vault:
                 shutil.rmtree(vault, ignore_errors=True)
                 vault = None
@@ -3421,7 +3485,12 @@ def run_trial(
             checker_env_extra["OPENBENCH_REQUIRE_WIKILINK"] = "1"
         if caps.get("require_conflict"):
             checker_env_extra["OPENBENCH_REQUIRE_CONFLICT"] = "1"
-        if caps.get("require_institutional"):
+        # Memory-tool evidence is required for MCP arms only. Off may score via
+        # exhaustive reads of `.openbench/memory-seed/` (hardened B-7.1).
+        if caps.get("require_institutional") and arm in (
+            "clawql-on",
+            "clawql-no-memory",
+        ):
             checker_env_extra["OPENBENCH_REQUIRE_INSTITUTIONAL"] = "1"
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
@@ -3433,6 +3502,8 @@ def run_trial(
             "workdir": str(tmp),
         }
     finally:
+        if seed_snapshot:
+            shutil.rmtree(seed_snapshot, ignore_errors=True)
         if vault:
             shutil.rmtree(vault, ignore_errors=True)
         if os.environ.get("CLAWQL_AB_KEEP_WORKDIR") != "1":

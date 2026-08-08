@@ -76,12 +76,12 @@ Shared OpenBench rules still apply: real `tool:clawql_*` evidence · hard spend 
 
 | Cell  | Task id                             | Fixture                                              | Status                                 |
 | ----- | ----------------------------------- | ---------------------------------------------------- | -------------------------------------- |
-| B-7.1 | `institutional-knowledge-enumerate` | In-repo mini-firm vault seed (12 matters; 5 matches) | Offline pack landed                    |
+| B-7.1 | `institutional-knowledge-enumerate` | In-repo mini-firm vault seed (30 matters; 5 matches) | Hardened n=3 re-burn on `pr_active`    |
 | B-7.2 | `institutional-client-preference`   | Mini-firm client X preferences across 4 matters      | Spec only                              |
 | B-7.3 | `institutional-amortized-session`   | Same vault; 5 related prompts; cost + completeness   | Spec only (needs session harness)      |
 | B-7.4 | Full C&H mount                      | Mount open-sourced filesystem + Harvey task set      | Blocked on stable corpus download path |
 
-B-7.1 live WIN on [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796) (on 5/5 / off 0/5 / no-memory 0/5) — retired from `pr_active`.
+Prior n=1 WIN [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796). Hardening in flight: strip prompt IDs, restore off-arm note access + exhaustive nudge, expand 12→30 matters, `pr_trials=3`.
 
 ### Phase-1 arms (B-7.1)
 
@@ -89,9 +89,9 @@ B-7.1 live WIN on [31228280796](https://github.com/danielsmithdevelopment/ClawQL
 | ------------------ | --------------------------------------------------------------- |
 | `clawql-on`        | ClawQL MCP + **seeded vault** (memory representation available) |
 | `clawql-no-memory` | ClawQL MCP tools present but **memory disabled / no seed**      |
-| `clawql-off`       | Bare OpenCode — no ClawQL MCP                                   |
+| `clawql-off`       | Bare OpenCode — no ClawQL MCP; may read `.openbench/memory-seed/` |
 
-Dispatch defaults to all three for this task (override via the workflow `arms` input).
+PR/push defaults to all three arms (override via workflow `arms` on dispatch).
 
 ### Grader diagnostics (B-7.1)
 
