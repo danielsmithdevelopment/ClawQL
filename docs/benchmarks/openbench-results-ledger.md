@@ -1,3 +1,22 @@
+### 2026-08-08 — B-7.2 + B-7.1-blind activated (pre-C&H)
+
+| Cell | Task id | Status |
+| ---- | ------- | ------ |
+| B-7.2 | `institutional-client-preference` | Active on PR [#878](https://github.com/danielsmithdevelopment/ClawQL/pull/878) — Meridian prose preference, top-1 grader |
+| B-7.1-blind | `institutional-knowledge-enumerate-blind` | Active on [#878](https://github.com/danielsmithdevelopment/ClawQL/pull/878) — no taught filter JSON |
+
+### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) structured ontology — **WIN**
+
+Fair same-files; model DeepSeek; taught filter shape (not answer IDs).
+
+| Arm | Success | Mean score | Notes |
+| --- | ------- | ---------- | ----- |
+| clawql-on | **3/3** | **1.0** | `structured_predicate` → 5/5 |
+| clawql-off | 0/3 | 0.133 | |
+| clawql-no-memory | 0/3 | 0.0 | |
+
+Run: [31255172649](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31255172649) (PR [#877](https://github.com/danielsmithdevelopment/ClawQL/pull/877)). Ontology efficiency twin **WIN** [31256241850](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31256241850). Prior keyword FAIL [31244644204](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31244644204).
+
 ### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) fair same-files harness — landed; burn blocked
 
 **Harness fix:** identical prose notes on disk for on / off / no-memory; on also gets vault `CLAWQL_*`. Off-first arm order; HTTP 403 key-limit treated as credit exhaustion.
