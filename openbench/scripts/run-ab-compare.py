@@ -716,11 +716,12 @@ INSTITUTIONAL_NUDGE = """Continue the institutional knowledge enumeration task (
 1. clawql_memory_recall across the vault (raise limit/maxDepth — there are many matter notes).
    Fields: CLAWQL_MATTER_ID / ESCROW_PCT / NONCOMPETE_MONTHS
 2. Keep ONLY matters with escrow_pct >= 10 AND noncompete_months > 18
-3. write relative filePath matters.json with the COMPLETE set (order free):
+3. write relative filePath **matters.json** only (never /tmp/matters.json) with the COMPLETE set:
    {"matters":["MAT-XXXX","MAT-YYYY"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"memory_recall","search_sufficiency":"how many notes you checked"}
 
 Do NOT copy placeholder IDs. Discover real IDs from recall. Partial lists fail.
 Near-misses (9% escrow, exactly 18 months NC, missing escrow) must not appear.
+After recall returns the vault notes, filter carefully — all matches must appear.
 Search exhaustively — do not stop after the first hits. Call memory_recall now.
 """
 

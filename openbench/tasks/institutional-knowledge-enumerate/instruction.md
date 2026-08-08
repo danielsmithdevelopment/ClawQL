@@ -25,7 +25,8 @@ List **every** matter that has **both**:
    - `CLAWQL_NONCOMPETE_MONTHS=…`
 3. Apply the filters above. Near-misses (e.g. 9% escrow, exactly 18 months NC,
    missing escrow) must **not** appear in the answer.
-4. Write relative path `matters.json` with the **complete** matching set (order free).
+4. Write **relative** path `matters.json` (exactly that name — not `/tmp/…` or an
+   absolute path) with the **complete** matching set (order free).
 
 ## Artifact
 

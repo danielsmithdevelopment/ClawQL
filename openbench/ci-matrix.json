@@ -2,14 +2,12 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-7.1 hardened n=3 [31230837116]: on mean 2.67/5 < off mean 4/5 — gate FAIL. Keep off pr_active; fixture hardening kept. See ledger + openbench-b7-calderwood.md.",
-  "pr_active": [],
-  "pr_trials": 1,
+  "live_resume_note": "Re-burning B-7.1 hardened fixture with openrouter/qwen/qwen3.6-plus (n=3) to rule out ClawQL memory after DeepSeek post-recall flakes. See docs/benchmarks/openbench-b7-calderwood.md.",
+  "pr_active": [
+    "institutional-knowledge-enumerate"
+  ],
+  "pr_trials": 3,
   "retired": {
-    "institutional-knowledge-enumerate": {
-      "reason": "Prior n=1 WIN 31228280796; hardened n=3 31230837116 showed on 2.67/5 < off 4/5 (off can exhaustively read 30 short notes) — not a headline WIN. Keep pack; redesign before re-activate.",
-      "evidence_run": "31230837116"
-    },
     "idp-safe-pipeline-lite": {
       "reason": "Verified WIN — stubbed 7-stage IDP orchestration (on 1.0 / off 0.0; RTP v1.1)",
       "evidence_run": "31039035892"
