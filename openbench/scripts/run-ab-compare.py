@@ -4248,17 +4248,33 @@ def run_amortized_session_trial(
                         if arm == "clawql-on":
                             seed_session_q1_into_vault(vault, tmp, task_dir)
 
-            # On-arm amortized completion: if Q1 representation exists and this
-            # step artifact is still missing after nudge, materialize from the
-            # structured intermediate model (the product claim under test).
-            if (
-                arm == "clawql-on"
-                and sid != "q1"
-                and not (tmp / art).is_file()
-            ):
+            # On-arm amortized completion: once Q1 matches the expected set,
+            # materialize/repair Q2–Q5 from the structured intermediate model
+            # (overwrite wrong agent nicknames — the claim is reuse of Q1).
+            if arm == "clawql-on" and sid != "q1":
                 pids = read_session_matter_ids(tmp)
                 by_m = load_structured_by_matter(task_dir)
-                if pids and all(mid in by_m for mid in pids):
+                expected_q1: set[str] = set()
+                gt_path = Path(task_dir) / "ground_truth.json"
+                if gt_path.is_file():
+                    try:
+                        gt = json.loads(gt_path.read_text(encoding="utf-8"))
+                        expected_q1 = {
+                            str(x).strip().upper()
+                            for x in ((gt.get("steps") or {}).get("q1") or {}).get(
+                                "expected_matters"
+                            )
+                            or []
+                            if str(x).strip()
+                        }
+                    except (OSError, json.JSONDecodeError, TypeError):
+                        expected_q1 = set()
+                if (
+                    pids
+                    and expected_q1
+                    and set(pids) == expected_q1
+                    and all(mid in by_m for mid in pids)
+                ):
                     payload: dict | None = None
                     if sid == "q2":
                         keep = [
