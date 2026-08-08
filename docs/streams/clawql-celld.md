@@ -367,6 +367,8 @@ Track against upstream celld alpha:
 
 - [`docs/streams/clawql-streams.md`](./clawql-streams.md) — Streams Specification v0.2
 - [`docs/streams/clawql-cellrt.md`](./clawql-cellrt.md) — ClawQL-owned Rust + Wasmtime cell runtime
+- [`docs/streams/clawql-tee.md`](./clawql-tee.md) — hardware TEE path on cellrt
+- [`docs/streams/clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) — QR air-gap audit transport
 - [`docs/streams/clawql-durable-objects.md`](./clawql-durable-objects.md) — session / sidecar / virtual key contract
 - [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md) — virtual keys, PAL
 - [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md) — embedded adapter surface

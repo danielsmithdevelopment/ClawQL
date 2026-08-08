@@ -769,7 +769,9 @@ Streams + Core + mcp-api-adapter is the **Protocol Fabric with an event loop**: 
 
 ## Further reading
 
-- [`docs/streams/clawql-cellrt.md`](./clawql-cellrt.md) — ClawQL-owned Rust + Wasmtime cell runtime (planned)
+- [`docs/streams/clawql-cellrt.md`](./clawql-cellrt.md) — ClawQL-owned Rust + Wasmtime cell runtime (monorepo `crates/`)
+- [`docs/streams/clawql-tee.md`](./clawql-tee.md) — hardware TEE + attestation-gated secrets
+- [`docs/streams/clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) — QR air-gap audit transport
 - [`docs/streams/clawql-celld.md`](./clawql-celld.md) — celld integration: constraints, DO classes, bucket layout, deploy
 - [`docs/streams/clawql-durable-objects.md`](./clawql-durable-objects.md) — session contract, sidecars, virtual keys
 - [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md) — MCP → APIs (inverse of ClawQL Core)

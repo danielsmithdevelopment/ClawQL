@@ -117,6 +117,16 @@ export const docsNavigation: Array<NavGroup> = [
         href: '/streams/clawql-cellrt',
         tag: 'Draft',
       },
+      {
+        title: 'clawql-tee',
+        href: '/streams/clawql-tee',
+        tag: 'Draft',
+      },
+      {
+        title: 'TEE air-gap audit',
+        href: '/streams/clawql-tee-airgap-audit',
+        tag: 'Draft',
+      },
       { title: 'Ouroboros', href: '/ouroboros' },
     ],
   },

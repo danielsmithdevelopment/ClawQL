@@ -213,6 +213,20 @@ export const architectureHubCards: Array<ReferenceCard> = [
       'ClawQL-owned Rust + Wasmtime cell runtime — LTX WORM, Vault, WASM sandbox, HTTP bootstrap.',
     icon: SquaresPlusIcon,
   }),
+  card({
+    href: '/streams/clawql-tee',
+    name: 'clawql-tee (draft)',
+    description:
+      'Hardware TEE for cellrt — SEV-SNP/TDX attestation, Vault-gated secrets, optional GPU CC.',
+    icon: SquaresPlusIcon,
+  }),
+  card({
+    href: '/streams/clawql-tee-airgap-audit',
+    name: 'TEE air-gap audit (draft)',
+    description:
+      'Unidirectional QR streaming of WORM + attestation for regulator verification.',
+    icon: SquaresPlusIcon,
+  }),
 ]
 
 /** Deployment hub — ops/infra only (not getting-started entry points). */

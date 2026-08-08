@@ -185,6 +185,8 @@ Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / 
 - [`docs/streams/clawql-streams.md`](./clawql-streams.md) — Streams Specification v0.2
 - [`docs/streams/clawql-celld.md`](./clawql-celld.md) — celld integration (constraints, LTX, deploy)
 - [`docs/streams/clawql-cellrt.md`](./clawql-cellrt.md) — ClawQL-owned Rust + Wasmtime cell runtime
+- [`docs/streams/clawql-tee.md`](./clawql-tee.md) — hardware TEE + attestation-gated secrets
+- [`docs/streams/clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) — QR air-gap audit transport
 - [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md) — virtual keys, PAL, call store
 - [`docs/benchmarks/openbench-trace-collection.md`](../benchmarks/openbench-trace-collection.md) — OBT + RTP
 - [celld](https://celld.dev/) · [docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security)

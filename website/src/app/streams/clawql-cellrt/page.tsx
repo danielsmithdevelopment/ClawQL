@@ -38,15 +38,30 @@ export default function ClawqlCellrtPage() {
             className="font-medium text-inherit underline underline-offset-2"
           >
             ClawQL Streams v0.2
-          </a>{' '}
-          and the{' '}
+          </a>
+          ,{' '}
           <a
             href="/streams/clawql-celld"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            celld integration
-          </a>{' '}
-          (Workers/DO-compatible path). Source:{' '}
+            celld
+          </a>
+          ,{' '}
+          <a
+            href="/streams/clawql-tee"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            clawql-tee
+          </a>
+          , and{' '}
+          <a
+            href="/streams/clawql-tee-airgap-audit"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            air-gap audit
+          </a>
+          . Lives in the ClawQL monorepo under{' '}
+          <code className="text-sm">crates/clawql-cellrt/</code>. Source:{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-cellrt.md"
             className="font-medium text-inherit underline underline-offset-2"

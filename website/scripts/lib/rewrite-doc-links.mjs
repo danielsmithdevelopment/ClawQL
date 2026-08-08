@@ -79,6 +79,9 @@ export const DOC_SITE_ROUTES = {
   'docs/streams/clawql-durable-objects.md': '/streams/clawql-durable-objects',
   'docs/streams/clawql-celld.md': '/streams/clawql-celld',
   'docs/streams/clawql-cellrt.md': '/streams/clawql-cellrt',
+  'docs/streams/clawql-tee.md': '/streams/clawql-tee',
+  'docs/streams/clawql-tee-airgap-audit.md':
+    '/streams/clawql-tee-airgap-audit',
   'docs/architecture/clawql-token-efficiency.md':
     '/architecture/token-efficiency',
   'docs/architecture/enterprise-ontology.md':

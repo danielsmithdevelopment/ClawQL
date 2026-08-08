@@ -4,7 +4,8 @@
 **Language:** Rust (+ Wasmtime; Effect-TS tool surface via WASM component)  
 **Package:** `clawql-cellrt` (planned — `crates/clawql-cellrt`)  
 **Depends on:** [`clawql-streams`](/streams/clawql-streams) v0.2 · [`clawql-celld.md`](/streams/clawql-celld) · [`clawql-inference`](/inference/clawql-inference) · `@clawql/wasm-polyfills` (planned) · `@clawql/effect-wasm` (planned)  
-**Related:** [`clawql-durable-objects.md`](/streams/clawql-durable-objects) · [`mcp-api-adapter`](/mcp/mcp-api-adapter) · [defense-in-depth](/security/defense-in-depth) · [codegraph](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/codegraph.md)
+**Repo home:** ClawQL monorepo — `crates/clawql-cellrt/` (not a separate product repo)  
+**Related:** [`clawql-tee.md`](/streams/clawql-tee) · [`clawql-tee-airgap-audit.md`](/streams/clawql-tee-airgap-audit) · [`clawql-durable-objects.md`](/streams/clawql-durable-objects) · [`mcp-api-adapter`](/mcp/mcp-api-adapter) · [defense-in-depth](/security/defense-in-depth) · [codegraph](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/codegraph.md)
 
 ---
 
@@ -29,9 +30,28 @@ It is **not** a general-purpose DO runtime and **not** a Node `worker_threads` r
 
 **Do not build a custom DO runtime on Node `worker_threads`.** cellrt is Rust + Wasmtime. celld remains the Workers-API-compatible self-hosted option.
 
+### Repo placement (decision of record)
+
+cellrt is **not** a general-purpose DO runtime (unlike celld). It is tightly coupled to ClawQL:
+
+- Virtual keys issued/validated by clawql-inference
+- WORM event types and LTX bucket layout are ClawQL-specific
+- WASM component is `clawql-core.wasm` with a ClawQL WIT world
+- Vault injects ClawQL provider secret shapes
+- Streams significance filters / subscriptions drive cell spawn
+- RTP/OBT emission uses ClawQL training-data formats
+
+**Keep cellrt in the ClawQL monorepo** under `crates/clawql-cellrt/`. Accept Rust toolchain friction in a TypeScript-primary repo; cross-repo integration tests and Helm/release coordination would cost more. TypeScript companions (`@clawql/wasm-polyfills`, `@clawql/effect-wasm`) stay under `packages/`.
+
+**Extractable standalone:** the bucket coordination layer (compare-and-swap leases, LTX replication, peer HMAC) has no ClawQL-specific dependencies — publish later as `bucket-coordinator` on crates.io. Everything else remains ClawQL infrastructure.
+
 ### Bootstrap path
 
 HTTP boundary ships first. Cells call a local `clawql-mcp` HTTP server for tool execution while the WASM path is built. Each tool that runs in-process replaces one HTTP call. The transition is invisible to MCP clients. Nothing blocks shipping cellrt coordination + lifecycle before Effect-TS → WASM is complete.
+
+### Path to clawql-tee
+
+cellrt as specified is **software security** (Rust, eBPF, WASM sandbox, Cosign, WORM). [`clawql-tee`](/streams/clawql-tee) adds hardware-enforced guarantees (AMD SEV-SNP / Intel TDX, attestation-gated Vault secrets, optional NVIDIA GPU CC) and [`air-gap QR audit transport`](/streams/clawql-tee-airgap-audit) so a verifier need not trust the operator or the network path.
 
 ---
 
@@ -93,72 +113,44 @@ clawql-cellrt binary (Rust, static, ~50–80 MB target)
 
 ## 3. Rust crate structure
 
+Monorepo layout (ClawQL repo root):
+
 ```text
-clawql-cellrt/
-  Cargo.toml                    — workspace root
+packages/                         — TypeScript (npm)
+  clawql-core/
+  clawql-streams/
+  mcp-api-adapter/
+  wasm-polyfills/                 — @clawql/wasm-polyfills (planned)
+  effect-wasm/                    — @clawql/effect-wasm (planned)
 
-  crates/
-    cellrt-coordinator/         — fleet coordination (S3, LTX, peer auth)
-      src/
-        bucket.rs               — S3/R2 client (aws-sdk-rust)
-        lease.rs                — compare-and-swap ownership leases
-        ltx.rs                  — LTX segment writer/reader
-        peer.rs                 — peer discovery + HMAC auth
-        node.rs                 — node lifecycle
+crates/
+  clawql-cellrt/                  — Cargo workspace (ClawQL-specific)
+    Cargo.toml
+    cellrt-coordinator/           — wraps bucket-coordinator + ClawQL fleet semantics
+    cellrt-runtime/               — cell lifecycle, Wasmtime, HTTP/WS, alarms
+    cellrt-storage/               — SQLite + LTX WORM
+    cellrt-security/              — eBPF, capability enforcer, Cosign startup
+    cellrt-attestation/           — SEV-SNP/TDX remote attestation (tee path)
+    cellrt-inference/             — PAL, virtual keys, call store
+    cellrt-vault/                 — AppRole bootstrap; attestation auth for tee
+    cellrt-observability/         — OTel, Prometheus, Langfuse
+    cellrt-cli/                   — start / deploy / diagnose / audit export
 
-    cellrt-runtime/             — per-cell execution
-      src/
-        cell.rs                 — Cell struct (Tokio task, lifecycle)
-        wasm.rs                 — Wasmtime engine + component instantiation
-        http.rs                 — axum HTTP handler per cell
-        websocket.rs            — tokio-tungstenite WebSocket handler
-        alarm.rs                — durable alarm scheduler
-        capabilities.rs         — WIT capability grant/revoke
-
-    cellrt-storage/             — SQLite + LTX per cell
-      src/
-        db.rs                   — rusqlite WAL connection
-        ltx_writer.rs           — WAL segment streaming to bucket
-        worm.rs                 — WORM write guarantees (ack after replication)
-        schema.rs               — SQLite schema migrations
-
-    cellrt-security/            — clawql-security embedded
-      src/
-        ebpf.rs                 — libbpf-rs program loader
-        rules.rs                — Falco-equivalent rules engine
-        capability_enforcer.rs  — WASM WIT import validation
-        virtual_key.rs          — virtual key struct + lifecycle
-        attestation.rs          — Cosign binary verification (sigstore-rs)
-
-    cellrt-inference/           — clawql-inference embedded
-      src/
-        pal.rs                  — PAL router (policy.yaml parsing)
-        virtual_key_manager.rs  — issue/expire/rotate virtual keys
-        budget.rs               — token budget enforcement
-        call_store.rs           — WORM inference call log
-
-    cellrt-vault/               — HashiCorp Vault client
-      src/
-        auth.rs                 — AppRole authentication
-        lease.rs                — dynamic secret lease lifecycle
-        inject.rs               — secret injection into WASM env
-
-    cellrt-observability/       — OTel + Prometheus + Langfuse
-      src/
-        otel.rs                 — opentelemetry-rust SDK setup
-        prometheus.rs           — metrics endpoint
-        langfuse.rs             — RTP/OBT forwarder
-        logging.rs              — tracing → JSON → Loki
-
-    cellrt-cli/                 — binary entry point + CLI
-      src/
-        main.rs
-        commands/
-          start.rs              — start fleet node
-          deploy.rs             — deploy WASM bundle to bucket
-          diagnose.rs           — fleet health check
-          cell.rs               — manual cell spawn/destroy
+# Extract later (crates.io, no ClawQL deps):
+bucket-coordinator                — CAS leases, LTX, peer HMAC over S3/R2
 ```
+
+| Crate                  | Responsibility                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| `cellrt-coordinator`   | Fleet join, leases, peer auth (depends on `bucket-coordinator` when extracted) |
+| `cellrt-runtime`       | Per-cell Tokio task, Wasmtime / HTTP bootstrap, axum, WebSocket, alarms        |
+| `cellrt-storage`       | rusqlite WAL, LTX writer, WORM ack-after-replication                           |
+| `cellrt-security`      | eBPF rules, WIT import validation, Cosign binary verify                        |
+| `cellrt-attestation`   | AMD SEV-SNP / Intel TDX reports, VCEK/PCS chain, JWT delivery, QR frame bind   |
+| `cellrt-inference`     | PAL router, virtual key issue/expire, budget, WORM call store                  |
+| `cellrt-vault`         | Dynamic secrets; AppRole → attestation-gated release when tee enabled          |
+| `cellrt-observability` | OTel, Prometheus `/metrics`, Langfuse RTP/OBT                                  |
+| `cellrt-cli`           | Binary entry + `audit export` for air-gap QR sequence                          |
 
 ---
 
@@ -512,16 +504,22 @@ cellrt:
   bucket: clawql-streams-state
   vault:
     enabled: true
-    addr: ''
+    addr: ""
   inference:
-    endpoint: ''
+    endpoint: ""
   security:
     ebpf: true # Linux only — disable for macOS/dev
-    attestation: true
+    attestation: true # Cosign binary verification on startup
+  tee:
+    enabled: false # AMD SEV-SNP / Intel TDX — see clawql-tee.md
+    substrate: sev-snp # sev-snp | tdx | nitro
+    attestationGatedVault: false
+    airgapAudit:
+      enabled: false # see clawql-tee-airgap-audit.md
   observability:
     otel:
       enabled: true
-      endpoint: ''
+      endpoint: ""
     langfuse:
       enabled: false
     prometheus:
@@ -530,27 +528,30 @@ cellrt:
   wasmMode: http # http (bootstrap) | wasm (full)
 ```
 
-CLI surface under Streams: `clawql streams cellrt start|deploy|diagnose|scale` (alongside existing `clawql streams celld …`).
+CLI surface under Streams: `clawql streams cellrt start|deploy|diagnose|scale|audit export` (alongside existing `clawql streams celld …`).
 
 ---
 
 ## 12. Comparison
 
-|                        | celld                          | clawql-cellrt                            |
-| ---------------------- | ------------------------------ | ---------------------------------------- |
-| **Runtime**            | V8 (Workers/DO JS API)         | Wasmtime (Rust host)                     |
-| **Language**           | JavaScript / TypeScript        | Rust + WASM component                    |
-| **Security**           | Alpha; no hostile multi-tenant | Rust memory safety + eBPF + WASM sandbox |
-| **Vault**              | External sidecar               | Embedded dynamic secret injection        |
-| **Inference**          | External HTTP                  | Embedded PAL routing + virtual keys      |
-| **Observability**      | External                       | Embedded OTel + Langfuse + Prometheus    |
-| **Binary attestation** | Upstream GH attestation        | Cosign verify on startup                 |
-| **Capability model**   | Isolate ambient APIs           | WIT — explicit capability grants         |
-| **Bootstrap**          | N/A                            | HTTP → clawql-mcp (ships immediately)    |
-| **Full path**          | JS bundle in V8                | `clawql-core.wasm` in-process            |
-| **Coordination**       | S3 bucket                      | S3 bucket (same pattern)                 |
-| **LTX / WORM**         | Yes                            | Yes                                      |
-| **License**            | Apache 2.0                     | Apache 2.0                               |
+|                        | celld                          | clawql-cellrt                                              |
+| ---------------------- | ------------------------------ | ---------------------------------------------------------- |
+| **Runtime**            | V8 (Workers/DO JS API)         | Wasmtime (Rust host)                                       |
+| **Language**           | JavaScript / TypeScript        | Rust + WASM component                                      |
+| **Security**           | Alpha; no hostile multi-tenant | Rust memory safety + eBPF + WASM sandbox                   |
+| **Vault**              | External sidecar               | Embedded dynamic secret injection                          |
+| **Inference**          | External HTTP                  | Embedded PAL routing + virtual keys                        |
+| **Observability**      | External                       | Embedded OTel + Langfuse + Prometheus                      |
+| **Binary attestation** | Upstream GH attestation        | Cosign verify on startup                                   |
+| **Hardware TEE**       | No                             | Planned — [`clawql-tee`](/streams/clawql-tee) (SEV-SNP / TDX)  |
+| **Air-gap audit**      | No                             | Planned — [`QR transport`](/streams/clawql-tee-airgap-audit)   |
+| **Capability model**   | Isolate ambient APIs           | WIT — explicit capability grants                           |
+| **Bootstrap**          | N/A                            | HTTP → clawql-mcp (ships immediately)                      |
+| **Full path**          | JS bundle in V8                | `clawql-core.wasm` in-process                              |
+| **Repo**               | denoland/celld                 | ClawQL monorepo `crates/clawql-cellrt/`                    |
+| **Coordination**       | S3 bucket                      | S3 bucket (same pattern; extractable `bucket-coordinator`) |
+| **LTX / WORM**         | Yes                            | Yes                                                        |
+| **License**            | Apache 2.0                     | Apache 2.0                                                 |
 
 ### Three deployment modes
 
@@ -580,6 +581,8 @@ celld remains available as Mode B' for operators who want Workers API parity on 
 
 Shipable surface at **week 4** (HTTP bootstrap). Full Wasmtime path at **week 10**.
 
+**TEE track (after week 4 bootstrap):** `cellrt-attestation` + Vault attestation auth → SEV-SNP demo → optional GPU CC → air-gap QR export. See [`clawql-tee.md`](/streams/clawql-tee) § build sequence.
+
 ---
 
 ## 14. Open questions
@@ -590,6 +593,8 @@ Shipable surface at **week 4** (HTTP bootstrap). Full Wasmtime path at **week 10
 4. **Bundle size at full tool surface.** ComponentizeJS embeds SpiderMonkey (~7 MB). Trim via `CLAWQL_PROVIDER=` subsets; CI fails above 64 MiB.
 5. **Cloudflare Workers adapter for the same WASM component.** Verify wrangler / Workers component-model support for the WIT world before locking host import names.
 6. **Relationship to celld in Helm defaults.** Until cellrt ships, `streams.scalingBackend` remains `kubernetes` \\| `celld` \\| `cloudflare`. Add `cellrt` when week-4 bootstrap lands.
+7. **`bucket-coordinator` extract timing.** When to publish the coordination layer to crates.io vs keep it private to the cellrt workspace.
+8. **TEE substrate default.** Prefer AMD SEV-SNP for sovereign root-of-trust; keep Nitro as simplest demo path. Confirm first customer hardware.
 
 ---
 
@@ -597,6 +602,8 @@ Shipable surface at **week 4** (HTTP bootstrap). Full Wasmtime path at **week 10
 
 - [`docs/streams/clawql-streams.md`](/streams/clawql-streams) — Streams Specification v0.2
 - [`docs/streams/clawql-celld.md`](/streams/clawql-celld) — Workers/DO-compatible self-hosted path
+- [`docs/streams/clawql-tee.md`](/streams/clawql-tee) — hardware TEE + attestation-gated secrets
+- [`docs/streams/clawql-tee-airgap-audit.md`](/streams/clawql-tee-airgap-audit) — QR air-gap audit transport
 - [`docs/streams/clawql-durable-objects.md`](/streams/clawql-durable-objects) — session / sidecar / virtual key contract
 - [`docs/inference/clawql-inference.md`](/inference/clawql-inference) — PAL, virtual keys, call store
 - [`docs/mcp/mcp-api-adapter.md`](/mcp/mcp-api-adapter) — six protocol surfaces
@@ -607,8 +614,8 @@ Shipable surface at **week 4** (HTTP bootstrap). Full Wasmtime path at **week 10
 ---
 
 _clawql-cellrt · Specification v0.1 · August 2026 · Draft_  
-_Companion: ClawQL Streams Spec v0.2 · ClawQL Celld Integration Spec_  
-_Planned crate path: `crates/clawql-cellrt`_
+_Companion: ClawQL Streams Spec v0.2 · ClawQL Celld Integration Spec · clawql-tee_  
+_Planned crate path: `crates/clawql-cellrt` (ClawQL monorepo)_
 
 export function wrapper({ children }) {
   return children

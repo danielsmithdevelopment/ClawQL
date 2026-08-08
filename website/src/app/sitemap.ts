@@ -138,6 +138,16 @@ const ENTRIES: Array<Entry> = [
     priority: 0.88,
   },
   {
+    path: '/streams/clawql-tee',
+    changeFrequency: 'monthly',
+    priority: 0.88,
+  },
+  {
+    path: '/streams/clawql-tee-airgap-audit',
+    changeFrequency: 'monthly',
+    priority: 0.87,
+  },
+  {
     path: '/mcp/mcp-api-adapter',
     changeFrequency: 'monthly',
     priority: 0.9,
