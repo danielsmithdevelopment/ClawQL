@@ -151,11 +151,11 @@ Default hold: **500 ms/frame**. Optional IR/acoustic ACK advances early; without
 
 ### 4.2 Display outputs
 
-| Method            | Notes                                              |
-| ----------------- | -------------------------------------------------- |
-| **HDMI**          | Standard monitor on TEE VM — most practical        |
-| **Serial**        | ASCII QR via console — headless                    |
-| **E-ink**         | Slower refresh; persistent between frames          |
+| Method            | Notes                                               |
+| ----------------- | --------------------------------------------------- |
+| **HDMI**          | Standard monitor on TEE VM — most practical         |
+| **Serial**        | ASCII QR via console — headless                     |
+| **E-ink**         | Slower refresh; persistent between frames           |
 | **Thermal print** | Paper strip — physical artifact; scan later offline |
 
 Thermal printer is especially useful for regulated workflows: regulator takes the printout, scans at leisure with `clawql-tee-verifier`.
@@ -220,9 +220,9 @@ cellrt:
     attestation: true
     airgapAudit:
       enabled: false
-      displayOutput: hdmi       # hdmi | serial | eink | thermal
+      displayOutput: hdmi # hdmi | serial | eink | thermal
       frameIntervalMs: 500
-      ecLevel: M                # L | M | Q | H
+      ecLevel: M # L | M | Q | H
       autoExportOnCellDestroy: false
       encryptPayload: true
       thermalPrinter:
@@ -256,14 +256,14 @@ clawql-tee-verifier verify \
 
 ## 7. Threat model coverage
 
-| Threat                                              | Without QR transport      | With QR transport                          |
-| --------------------------------------------------- | ------------------------- | ------------------------------------------ |
-| Compromised network modifies audit entries          | Undetected                | Merkle break — rejected                    |
-| Operator selectively filters events                 | Undetected                | Frame gap — rejected                       |
-| Cloud provider replays old trail                    | Partial (timestamps)      | + session binding to event hash            |
-| TEE binary tampered                                 | SEV-SNP measurement       | Same — attestation in sequence             |
-| QR sequence from another session interleaved        | N/A                       | HMAC / ephemeral key detects               |
-| Partial scan                                        | N/A                       | Frame gap — rescan                         |
+| Threat                                       | Without QR transport | With QR transport               |
+| -------------------------------------------- | -------------------- | ------------------------------- |
+| Compromised network modifies audit entries   | Undetected           | Merkle break — rejected         |
+| Operator selectively filters events          | Undetected           | Frame gap — rejected            |
+| Cloud provider replays old trail             | Partial (timestamps) | + session binding to event hash |
+| TEE binary tampered                          | SEV-SNP measurement  | Same — attestation in sequence  |
+| QR sequence from another session interleaved | N/A                  | HMAC / ephemeral key detects    |
+| Partial scan                                 | N/A                  | Frame gap — rescan              |
 
 **Out of scope / known limitation:** a threat actor who controls the display path (compromised display driver / GPU) could show false QR codes. Mitigate with TEE→display TCB when hardware allows; document as limitation otherwise. Verifier device trust is also out of scope (regulator's device).
 
@@ -314,8 +314,8 @@ Ship separately from the cellrt binary so regulators can download and audit the 
 
 ---
 
-*clawql-tee Air-Gap Audit Transport · Spec v0.1 · August 2026 · Draft*  
-*Companion: clawql-cellrt Spec v0.1 · clawql-tee Spec v0.1*
+_clawql-tee Air-Gap Audit Transport · Spec v0.1 · August 2026 · Draft_  
+_Companion: clawql-cellrt Spec v0.1 · clawql-tee Spec v0.1_
 
 export function wrapper({ children }) {
   return children

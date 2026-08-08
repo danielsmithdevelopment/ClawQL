@@ -504,9 +504,9 @@ cellrt:
   bucket: clawql-streams-state
   vault:
     enabled: true
-    addr: ""
+    addr: ''
   inference:
-    endpoint: ""
+    endpoint: ''
   security:
     ebpf: true # Linux only — disable for macOS/dev
     attestation: true # Cosign binary verification on startup
@@ -519,7 +519,7 @@ cellrt:
   observability:
     otel:
       enabled: true
-      endpoint: ""
+      endpoint: ''
     langfuse:
       enabled: false
     prometheus:
@@ -534,24 +534,24 @@ CLI surface under Streams: `clawql streams cellrt start|deploy|diagnose|scale|au
 
 ## 12. Comparison
 
-|                        | celld                          | clawql-cellrt                                              |
-| ---------------------- | ------------------------------ | ---------------------------------------------------------- |
-| **Runtime**            | V8 (Workers/DO JS API)         | Wasmtime (Rust host)                                       |
-| **Language**           | JavaScript / TypeScript        | Rust + WASM component                                      |
-| **Security**           | Alpha; no hostile multi-tenant | Rust memory safety + eBPF + WASM sandbox                   |
-| **Vault**              | External sidecar               | Embedded dynamic secret injection                          |
-| **Inference**          | External HTTP                  | Embedded PAL routing + virtual keys                        |
-| **Observability**      | External                       | Embedded OTel + Langfuse + Prometheus                      |
-| **Binary attestation** | Upstream GH attestation        | Cosign verify on startup                                   |
-| **Hardware TEE**       | No                             | Planned — [`clawql-tee`](/streams/clawql-tee) (SEV-SNP / TDX)  |
-| **Air-gap audit**      | No                             | Planned — [`QR transport`](/streams/clawql-tee-airgap-audit)   |
-| **Capability model**   | Isolate ambient APIs           | WIT — explicit capability grants                           |
-| **Bootstrap**          | N/A                            | HTTP → clawql-mcp (ships immediately)                      |
-| **Full path**          | JS bundle in V8                | `clawql-core.wasm` in-process                              |
-| **Repo**               | denoland/celld                 | ClawQL monorepo `crates/clawql-cellrt/`                    |
-| **Coordination**       | S3 bucket                      | S3 bucket (same pattern; extractable `bucket-coordinator`) |
-| **LTX / WORM**         | Yes                            | Yes                                                        |
-| **License**            | Apache 2.0                     | Apache 2.0                                                 |
+|                        | celld                          | clawql-cellrt                                                 |
+| ---------------------- | ------------------------------ | ------------------------------------------------------------- |
+| **Runtime**            | V8 (Workers/DO JS API)         | Wasmtime (Rust host)                                          |
+| **Language**           | JavaScript / TypeScript        | Rust + WASM component                                         |
+| **Security**           | Alpha; no hostile multi-tenant | Rust memory safety + eBPF + WASM sandbox                      |
+| **Vault**              | External sidecar               | Embedded dynamic secret injection                             |
+| **Inference**          | External HTTP                  | Embedded PAL routing + virtual keys                           |
+| **Observability**      | External                       | Embedded OTel + Langfuse + Prometheus                         |
+| **Binary attestation** | Upstream GH attestation        | Cosign verify on startup                                      |
+| **Hardware TEE**       | No                             | Planned — [`clawql-tee`](/streams/clawql-tee) (SEV-SNP / TDX) |
+| **Air-gap audit**      | No                             | Planned — [`QR transport`](/streams/clawql-tee-airgap-audit)  |
+| **Capability model**   | Isolate ambient APIs           | WIT — explicit capability grants                              |
+| **Bootstrap**          | N/A                            | HTTP → clawql-mcp (ships immediately)                         |
+| **Full path**          | JS bundle in V8                | `clawql-core.wasm` in-process                                 |
+| **Repo**               | denoland/celld                 | ClawQL monorepo `crates/clawql-cellrt/`                       |
+| **Coordination**       | S3 bucket                      | S3 bucket (same pattern; extractable `bucket-coordinator`)    |
+| **LTX / WORM**         | Yes                            | Yes                                                           |
+| **License**            | Apache 2.0                     | Apache 2.0                                                    |
 
 ### Three deployment modes
 

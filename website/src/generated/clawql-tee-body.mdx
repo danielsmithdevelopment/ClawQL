@@ -11,16 +11,16 @@
 
 `clawql-tee` turns cellrt from a **security-hardened runtime** into a **cryptographically verifiable runtime**.
 
-| Layer                         | Guarantee                                                                 | Trust assumption removed              |
-| ----------------------------- | ------------------------------------------------------------------------- | ------------------------------------- |
-| cellrt (software)             | Rust memory safety, eBPF, WASM sandbox, Cosign, LTX WORM                  | “Trust the binary we published”       |
-| **clawql-tee (hardware)**     | CPU memory encryption + remote attestation                                | “Trust the host OS / hypervisor”      |
-| Attestation-gated Vault       | Secrets/virtual keys only after measurement matches                       | “Trust AppRole credentials alone”     |
-| Air-gap QR audit              | Unidirectional physical audit delivery                                    | “Trust the network transport”         |
-| GPU CC (optional)             | Measured model weights + encrypted inference I/O                          | “Trust GPU memory on the host”        |
+| Layer                     | Guarantee                                                | Trust assumption removed          |
+| ------------------------- | -------------------------------------------------------- | --------------------------------- |
+| cellrt (software)         | Rust memory safety, eBPF, WASM sandbox, Cosign, LTX WORM | “Trust the binary we published”   |
+| **clawql-tee (hardware)** | CPU memory encryption + remote attestation               | “Trust the host OS / hypervisor”  |
+| Attestation-gated Vault   | Secrets/virtual keys only after measurement matches      | “Trust AppRole credentials alone” |
+| Air-gap QR audit          | Unidirectional physical audit delivery                   | “Trust the network transport”     |
+| GPU CC (optional)         | Measured model weights + encrypted inference I/O         | “Trust GPU memory on the host”    |
 
-cellrt alone: *trust us, here's the source and Cosign signature.*  
-clawql-tee: *don't trust us — verify the attestation; the hardware proves what's running.*
+cellrt alone: _trust us, here's the source and Cosign signature._  
+clawql-tee: _don't trust us — verify the attestation; the hardware proves what's running._
 
 ---
 
@@ -28,17 +28,17 @@ clawql-tee: *don't trust us — verify the attestation; the hardware proves what
 
 ### Gap 1: Hardware isolation — TEE substrate
 
-| Substrate          | Properties                                      | Availability                         | Root of trust   | Recommendation                          |
-| ------------------ | ----------------------------------------------- | ------------------------------------ | --------------- | --------------------------------------- |
-| **AMD SEV-SNP**    | Full VM memory encryption; hypervisor-blind     | AWS m6a/r6a, Azure DCasv5, GCP N2D | AMD KDS         | **Default** for sovereign story         |
-| **Intel TDX**      | VM-level isolation (Sapphire Rapids+)           | Azure DCesv5, GCP C3                 | Intel PCS       | Alternative when SEV-SNP unavailable    |
-| **AWS Nitro**      | Docker → enclave; simplest ops                  | AWS Nitro Enclaves                   | AWS             | Fastest demo; weaker sovereignty claim  |
+| Substrate       | Properties                                  | Availability                       | Root of trust | Recommendation                         |
+| --------------- | ------------------------------------------- | ---------------------------------- | ------------- | -------------------------------------- |
+| **AMD SEV-SNP** | Full VM memory encryption; hypervisor-blind | AWS m6a/r6a, Azure DCasv5, GCP N2D | AMD KDS       | **Default** for sovereign story        |
+| **Intel TDX**   | VM-level isolation (Sapphire Rapids+)       | Azure DCesv5, GCP C3               | Intel PCS     | Alternative when SEV-SNP unavailable   |
+| **AWS Nitro**   | Docker → enclave; simplest ops              | AWS Nitro Enclaves                 | AWS           | Fastest demo; weaker sovereignty claim |
 
 Prefer **SEV-SNP**: attestation root is the CPU vendor, not the cloud operator. Existing Rust binary runs inside a confidential VM with no code changes for basic isolation; attestation APIs are the additive work.
 
 ### Gap 2: Remote attestation
 
-A third party asks: *Is this really clawql-cellrt vX, on genuine SEV-SNP, with these measurements?* Hardware produces a signed report; the verifier checks it against AMD KDS / Intel PCS — **no trust in the operator**.
+A third party asks: _Is this really clawql-cellrt vX, on genuine SEV-SNP, with these measurements?_ Hardware produces a signed report; the verifier checks it against AMD KDS / Intel PCS — **no trust in the operator**.
 
 ```rust
 // crates/clawql-cellrt/cellrt-attestation/
@@ -67,7 +67,7 @@ Fleet surface: `GET /attestation` returns the current report + cert chain for cl
 
 ### Gap 3: Attestation-gated secret release
 
-AppRole alone trusts that the caller *has* role credentials. TEE path: Vault (or verifier) releases secrets only after the attestation measurement matches the expected cellrt binary hash.
+AppRole alone trusts that the caller _has_ role credentials. TEE path: Vault (or verifier) releases secrets only after the attestation measurement matches the expected cellrt binary hash.
 
 ```text
 Cell spawn
@@ -136,24 +136,24 @@ The attestation is only as interesting as what it attests. Attesting an agentic 
 
 ## 5. `cellrt-attestation` crate
 
-| Module              | Role                                                              |
-| ------------------- | ----------------------------------------------------------------- |
-| `sev.rs` / `tdx.rs` | Firmware guest report APIs (`sev` crate / TDX quote)              |
-| `kds.rs`            | Fetch VCEK / PCS cert chain                                       |
-| `bind.rs`           | Pack `cell_id \\|\\| virtual_key_id \\|\\| event_hash` into user_data |
-| `jwt.rs`            | Encode attestation JWT for Vault / clients                        |
-| `endpoint.rs`       | `GET /attestation` on fleet HTTP                                  |
-| `airgap.rs`         | Frame binding for QR export (see air-gap spec)                    |
+| Module              | Role                                                 |
+| ------------------- | ---------------------------------------------------- | --- | ----------------- | --- | -------------------------- |
+| `sev.rs` / `tdx.rs` | Firmware guest report APIs (`sev` crate / TDX quote) |
+| `kds.rs`            | Fetch VCEK / PCS cert chain                          |
+| `bind.rs`           | Pack `cell_id \\                                     | \\  | virtual_key_id \\ | \\  | event_hash` into user_data |
+| `jwt.rs`            | Encode attestation JWT for Vault / clients           |
+| `endpoint.rs`       | `GET /attestation` on fleet HTTP                     |
+| `airgap.rs`         | Frame binding for QR export (see air-gap spec)       |
 
 ---
 
 ## 6. Hardware requirements
 
-| Need                         | Hardware                                      |
-| ---------------------------- | --------------------------------------------- |
-| Working tee demo (CPU only)  | One SEV-SNP instance (AWS/Azure/GCP)          |
-| Sovereign inference (GPU)    | H100/H200 CC + CPU TEE (e.g. AWS p5 / Azure ND H100) |
-| Air-gap QR export            | Display (HDMI/serial/e-ink) or thermal printer |
+| Need                        | Hardware                                             |
+| --------------------------- | ---------------------------------------------------- |
+| Working tee demo (CPU only) | One SEV-SNP instance (AWS/Azure/GCP)                 |
+| Sovereign inference (GPU)   | H100/H200 CC + CPU TEE (e.g. AWS p5 / Azure ND H100) |
+| Air-gap QR export           | Display (HDMI/serial/e-ink) or thermal printer       |
 
 macOS/dev: no TEE — stub attestation; document non-production.
 
@@ -165,9 +165,9 @@ macOS/dev: no TEE — stub attestation; document non-production.
 cellrt:
   tee:
     enabled: false
-    substrate: sev-snp          # sev-snp | tdx | nitro
+    substrate: sev-snp # sev-snp | tdx | nitro
     attestationGatedVault: false
-    expectedMeasurement: ""     # pinned release measurement
+    expectedMeasurement: '' # pinned release measurement
     gpuCc:
       enabled: false
     airgapAudit:
@@ -179,13 +179,13 @@ cellrt:
 
 ## 8. Build sequence (tee track)
 
-| Phase | Work                                                         | Exit criteria                                      |
-| ----- | ------------------------------------------------------------ | -------------------------------------------------- |
-| T0    | cellrt HTTP bootstrap (cellrt weeks 1–4)                     | Cell spawn + WORM without TEE                      |
-| T1    | `cellrt-attestation` SEV-SNP report + `/attestation`         | External verifier validates against AMD KDS        |
-| T2    | Vault attestation auth; pin expected measurement             | Tampered binary gets no virtual key                |
-| T3    | Air-gap QR export + `clawql-tee-verifier`                    | Regulator reconstructs Merkle chain offline        |
-| T4    | GPU CC composite attestation (optional)                      | CPU+GPU binding verified                           |
+| Phase | Work                                                 | Exit criteria                               |
+| ----- | ---------------------------------------------------- | ------------------------------------------- |
+| T0    | cellrt HTTP bootstrap (cellrt weeks 1–4)             | Cell spawn + WORM without TEE               |
+| T1    | `cellrt-attestation` SEV-SNP report + `/attestation` | External verifier validates against AMD KDS |
+| T2    | Vault attestation auth; pin expected measurement     | Tampered binary gets no virtual key         |
+| T3    | Air-gap QR export + `clawql-tee-verifier`            | Regulator reconstructs Merkle chain offline |
+| T4    | GPU CC composite attestation (optional)              | CPU+GPU binding verified                    |
 
 ---
 
@@ -208,8 +208,8 @@ cellrt:
 
 ---
 
-*clawql-tee · Specification v0.1 · August 2026 · Draft*  
-*Companion: clawql-cellrt · clawql-tee Air-Gap Audit Transport*
+_clawql-tee · Specification v0.1 · August 2026 · Draft_  
+_Companion: clawql-cellrt · clawql-tee Air-Gap Audit Transport_
 
 export function wrapper({ children }) {
   return children
