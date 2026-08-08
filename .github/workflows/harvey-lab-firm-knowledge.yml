@@ -1,0 +1,105 @@
+# Harvey LAB × ClawQL — firm-knowledge two-arm runs (GHA / OpenRouter).
+#
+# Same secret pattern as OpenBench: OPENROUTER_API_KEY from repo secrets.
+# workflow_dispatch only — full firm-knowledge is 250 tasks; keep runs intentional.
+
+name: Harvey LAB firm-knowledge (ClawQL vs baseline)
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Harvey LAB task id under tasks/"
+        required: true
+        type: string
+        default: firm-knowledge/tasks/001
+      model:
+        description: "Short Claude id (mapped to OpenRouter anthropic/*)"
+        required: true
+        type: string
+        default: claude-sonnet-4-6
+      max_turns:
+        description: "Agent max turns (15 debug / 40 fuller)"
+        required: true
+        type: string
+        default: "15"
+      arms:
+        description: "Comma-separated arms"
+        required: true
+        type: choice
+        options:
+          - baseline,clawql
+          - baseline
+          - clawql
+        default: baseline,clawql
+      judge_model:
+        description: "Judge model short id"
+        required: true
+        type: string
+        default: claude-sonnet-4-6
+      max_matters:
+        description: "Optional DMS ingest cap (0 = all matters). Use 5–20 for cheap smoke."
+        required: true
+        type: string
+        default: "0"
+
+concurrency:
+  group: harvey-lab-fk-${{ github.workflow }}-${{ github.ref }}-${{ inputs.task }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lab-two-arm:
+    name: LAB ${{ inputs.task }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CLAWQL_LAB_USE_OPENROUTER: "1"
+      CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+      CLAWQL_OPENROUTER_APP_TITLE: ClawQL Harvey LAB
+      LAB_TASK: ${{ inputs.task }}
+      LAB_MODEL: ${{ inputs.model }}
+      LAB_MAX_TURNS: ${{ inputs.max_turns }}
+      LAB_ARMS: ${{ inputs.arms }}
+      LAB_JUDGE_MODEL: ${{ inputs.judge_model }}
+      CLAWQL_LAB_MAX_MATTERS: ${{ inputs.max_matters }}
+      CLAWQL_ENABLE_MEMORY: "1"
+      CLAWQL_ONTOLOGY_DB: "1"
+      CLAWQL_ONTOLOGY_LLM_EXTRACTION: "0"
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Require OpenRouter (or Anthropic) secret
+        run: |
+          if [ -z "${OPENROUTER_API_KEY:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+            echo "::error::Set repository secret OPENROUTER_API_KEY (preferred, same as OpenBench) or ANTHROPIC_API_KEY."
+            exit 1
+          fi
+          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            echo "::notice::Using OPENROUTER_API_KEY for Harvey LAB (GHA path)."
+          fi
+
+      - name: Setup Node (ClawQL MCP)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: npm ci (for local clawql-mcp-http)
+        run: npm ci --ignore-scripts
+
+      - name: Run Harvey LAB arms
+        run: bash integrations/harvey-labs/scripts/run-lab-gha.sh
+
+      - name: Upload scorecard + arm artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harvey-lab-${{ inputs.task }}-${{ github.run_id }}
+          path: integrations/harvey-labs/results/
+          if-no-files-found: warn
+          retention-days: 30

@@ -60,6 +60,10 @@ def copy_files(src_root: Path, dest_root: Path) -> None:
             dest_root / "harness" / "adapters" / "clawql_vault.py",
         ),
         (
+            src_root / "harness" / "adapters" / "clawql_openrouter.py",
+            dest_root / "harness" / "adapters" / "clawql_openrouter.py",
+        ),
+        (
             src_root / "harness" / "clawql_tools.py",
             dest_root / "harness" / "clawql_tools.py",
         ),
@@ -225,6 +229,61 @@ def patch_run_py(run_py: Path) -> None:
         print(f"no changes needed for {run_py}")
 
 
+def patch_openrouter_clients(harvey_labs: Path) -> None:
+    """Route Anthropic agent + judge clients through OpenRouter when configured."""
+    anth = harvey_labs / "harness" / "adapters" / "anthropic.py"
+    text = anth.read_text(encoding="utf-8")
+    begin, end = "# --- clawql-openrouter begin ---", "# --- clawql-openrouter end ---"
+    block = f"""{begin}
+        from harness.adapters.clawql_openrouter import (
+            make_anthropic_client,
+            maybe_rewrite_model,
+        )
+        self.model = maybe_rewrite_model(model)
+        self.client = make_anthropic_client()
+{end}
+"""
+    if begin in text:
+        text = _replace_block(text, begin, end, block)
+    else:
+        old = "        self.max_tokens = max_tokens\n        self.client = anthropic.Anthropic()\n"
+        if old not in text:
+            raise SystemExit("anthropic.py client init anchor not found")
+        text = text.replace(
+            old,
+            "        self.max_tokens = max_tokens\n" + block + "\n",
+            1,
+        )
+    anth.write_text(text, encoding="utf-8")
+    print(f"patched {anth}")
+
+    judge = harvey_labs / "evaluation" / "judge.py"
+    jtext = judge.read_text(encoding="utf-8")
+    jbegin, jend = "# --- clawql-openrouter-judge begin ---", "# --- clawql-openrouter-judge end ---"
+    jblock = f"""{jbegin}
+        from harness.adapters.clawql_openrouter import (
+            make_anthropic_client,
+            maybe_rewrite_model,
+        )
+        self.model = maybe_rewrite_model(model)
+        self.client = make_anthropic_client()
+{jend}
+"""
+    if jbegin in jtext:
+        jtext = _replace_block(jtext, jbegin, jend, jblock)
+    else:
+        old = '        if self.provider == "anthropic":\n            self.client = anthropic.Anthropic(max_retries=1)\n'
+        if old not in jtext:
+            raise SystemExit("judge.py anthropic client anchor not found")
+        jtext = jtext.replace(
+            old,
+            '        if self.provider == "anthropic":\n' + jblock + "\n",
+            1,
+        )
+    judge.write_text(jtext, encoding="utf-8")
+    print(f"patched {judge}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -245,6 +304,7 @@ def main() -> int:
         return 1
     copy_files(args.integration_root, args.harvey_labs)
     patch_run_py(args.harvey_labs / "harness" / "run.py")
+    patch_openrouter_clients(args.harvey_labs)
     return 0
 
 

@@ -26,6 +26,10 @@ import requests
 
 from harness.adapters.anthropic import AnthropicAdapter
 from harness.adapters.base import ModelResponse
+from harness.adapters.clawql_openrouter import (
+    make_anthropic_client,
+    maybe_rewrite_model,
+)
 from harness.adapters.clawql_vault import resolve_task_vault, vault_root
 
 CLAWQL_MCP_URL = os.environ.get("CLAWQL_MCP_URL", "http://localhost:8080/mcp")
@@ -211,10 +215,12 @@ class ClawQLAdapter(AnthropicAdapter):
         arm: str = "clawql",
     ):
         super().__init__(
-            model=model,
+            model=maybe_rewrite_model(model),
             temperature=temperature,
             reasoning_effort=reasoning_effort,
         )
+        # Ensure OpenRouter path even if upstream AnthropicAdapter ignored env.
+        self.client = make_anthropic_client()
         self.task_id = task_id
         self.documents_dir = Path(documents_dir)
         self.arm = arm
