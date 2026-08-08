@@ -1,0 +1,962 @@
+{
+  "clients/alpha-ridge/matters/closing-memo-01.md": {
+    "matter_id": "MAT-2388",
+    "client": "Cedar Peak Capital",
+    "escrow_pct": 10,
+    "noncompete_months": 24,
+    "deal_type": "pe-minority",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2388\nCLAWQL_CLIENT=Cedar Peak Capital\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=pe-minority\n"
+  },
+  "clients/brine-harbor/matters/closing-memo-02.md": {
+    "matter_id": "MAT-2401",
+    "client": "Northwind Holdings",
+    "escrow_pct": 12,
+    "noncompete_months": 24,
+    "deal_type": "pe-software",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2401\nCLAWQL_CLIENT=Northwind Holdings\nCLAWQL_ESCROW_PCT=12\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=pe-software\n"
+  },
+  "clients/copper-fen/matters/closing-memo-03.md": {
+    "matter_id": "MAT-2415",
+    "client": "Blue Harbor Partners",
+    "escrow_pct": 15,
+    "noncompete_months": 36,
+    "deal_type": "add-on",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2415\nCLAWQL_CLIENT=Blue Harbor Partners\nCLAWQL_ESCROW_PCT=15\nCLAWQL_NONCOMPETE_MONTHS=36\nCLAWQL_DEAL_TYPE=add-on\n"
+  },
+  "clients/drift-hollow/matters/closing-memo-04.md": {
+    "matter_id": "MAT-2450",
+    "client": "Riverton Equity",
+    "escrow_pct": 20,
+    "noncompete_months": 30,
+    "deal_type": "saas-bolt",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2450\nCLAWQL_CLIENT=Riverton Equity\nCLAWQL_ESCROW_PCT=20\nCLAWQL_NONCOMPETE_MONTHS=30\nCLAWQL_DEAL_TYPE=saas-bolt\n"
+  },
+  "clients/ember-quay/matters/closing-memo-05.md": {
+    "matter_id": "MAT-2462",
+    "client": "Lakeview Growth",
+    "escrow_pct": 11,
+    "noncompete_months": 19,
+    "deal_type": "growth",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2462\nCLAWQL_CLIENT=Lakeview Growth\nCLAWQL_ESCROW_PCT=11\nCLAWQL_NONCOMPETE_MONTHS=19\nCLAWQL_DEAL_TYPE=growth\n"
+  },
+  "clients/flint-meadow/matters/archive-2600.md": {
+    "matter_id": "MAT-2600",
+    "client": "Client Flint Meadow",
+    "escrow_pct": 9,
+    "noncompete_months": 24,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2600\nCLAWQL_CLIENT=Client Flint Meadow\nCLAWQL_ESCROW_PCT=9\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/granite-spur/matters/archive-2601.md": {
+    "matter_id": "MAT-2601",
+    "client": "Client Granite Spur",
+    "escrow_pct": 12,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2601\nCLAWQL_CLIENT=Client Granite Spur\nCLAWQL_ESCROW_PCT=12\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/heather-ford/matters/archive-2602.md": {
+    "matter_id": "MAT-2602",
+    "client": "Client Heather Ford",
+    "escrow_pct": 10,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2602\nCLAWQL_CLIENT=Client Heather Ford\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/iron-basin/matters/archive-2603.md": {
+    "matter_id": "MAT-2603",
+    "client": "Client Iron Basin",
+    "escrow_pct": 25,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2603\nCLAWQL_CLIENT=Client Iron Basin\nCLAWQL_ESCROW_PCT=25\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/jasper-cove/matters/archive-2604.md": {
+    "matter_id": "MAT-2604",
+    "client": "Client Jasper Cove",
+    "escrow_pct": 10,
+    "noncompete_months": 6,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2604\nCLAWQL_CLIENT=Client Jasper Cove\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=6\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/kelp-strand/matters/archive-2605.md": {
+    "matter_id": "MAT-2605",
+    "client": "Client Kelp Strand",
+    "escrow_pct": 5,
+    "noncompete_months": 36,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2605\nCLAWQL_CLIENT=Client Kelp Strand\nCLAWQL_ESCROW_PCT=5\nCLAWQL_NONCOMPETE_MONTHS=36\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/lumen-falls/matters/archive-2606.md": {
+    "matter_id": "MAT-2606",
+    "client": "Client Lumen Falls",
+    "escrow_pct": null,
+    "noncompete_months": 24,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2606\nCLAWQL_CLIENT=Client Lumen Falls\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/marble-glen/matters/archive-2607.md": {
+    "matter_id": "MAT-2607",
+    "client": "Client Marble Glen",
+    "escrow_pct": 14,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2607\nCLAWQL_CLIENT=Client Marble Glen\nCLAWQL_ESCROW_PCT=14\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/nimbus-reach/matters/archive-2608.md": {
+    "matter_id": "MAT-2608",
+    "client": "Client Nimbus Reach",
+    "escrow_pct": 8,
+    "noncompete_months": 30,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2608\nCLAWQL_CLIENT=Client Nimbus Reach\nCLAWQL_ESCROW_PCT=8\nCLAWQL_NONCOMPETE_MONTHS=30\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/onyx-creek/matters/archive-2609.md": {
+    "matter_id": "MAT-2609",
+    "client": "Client Onyx Creek",
+    "escrow_pct": 22,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2609\nCLAWQL_CLIENT=Client Onyx Creek\nCLAWQL_ESCROW_PCT=22\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/pine-saddle/matters/archive-2610.md": {
+    "matter_id": "MAT-2610",
+    "client": "Client Pine Saddle",
+    "escrow_pct": 5,
+    "noncompete_months": 6,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2610\nCLAWQL_CLIENT=Client Pine Saddle\nCLAWQL_ESCROW_PCT=5\nCLAWQL_NONCOMPETE_MONTHS=6\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/quarry-bend/matters/archive-2611.md": {
+    "matter_id": "MAT-2611",
+    "client": "Client Quarry Bend",
+    "escrow_pct": 0,
+    "noncompete_months": 48,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2611\nCLAWQL_CLIENT=Client Quarry Bend\nCLAWQL_ESCROW_PCT=0\nCLAWQL_NONCOMPETE_MONTHS=48\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/reed-marsh/matters/archive-2612.md": {
+    "matter_id": "MAT-2612",
+    "client": "Client Reed Marsh",
+    "escrow_pct": 11,
+    "noncompete_months": 15,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2612\nCLAWQL_CLIENT=Client Reed Marsh\nCLAWQL_ESCROW_PCT=11\nCLAWQL_NONCOMPETE_MONTHS=15\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/slate-point/matters/archive-2613.md": {
+    "matter_id": "MAT-2613",
+    "client": "Client Slate Point",
+    "escrow_pct": 13,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2613\nCLAWQL_CLIENT=Client Slate Point\nCLAWQL_ESCROW_PCT=13\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/timber-bay/matters/archive-2614.md": {
+    "matter_id": "MAT-2614",
+    "client": "Client Timber Bay",
+    "escrow_pct": null,
+    "noncompete_months": 36,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2614\nCLAWQL_CLIENT=Client Timber Bay\nCLAWQL_NONCOMPETE_MONTHS=36\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/umbra-ridge/matters/archive-2615.md": {
+    "matter_id": "MAT-2615",
+    "client": "Client Umbra Ridge",
+    "escrow_pct": 10,
+    "noncompete_months": 9,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2615\nCLAWQL_CLIENT=Client Umbra Ridge\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=9\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/violet-ford/matters/archive-2616.md": {
+    "matter_id": "MAT-2616",
+    "client": "Client Violet Ford",
+    "escrow_pct": 7,
+    "noncompete_months": 24,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2616\nCLAWQL_CLIENT=Client Violet Ford\nCLAWQL_ESCROW_PCT=7\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/willow-crag/matters/archive-2617.md": {
+    "matter_id": "MAT-2617",
+    "client": "Client Willow Crag",
+    "escrow_pct": 16,
+    "noncompete_months": 17,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2617\nCLAWQL_CLIENT=Client Willow Crag\nCLAWQL_ESCROW_PCT=16\nCLAWQL_NONCOMPETE_MONTHS=17\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/xenon-docks/matters/archive-2618.md": {
+    "matter_id": "MAT-2618",
+    "client": "Client Xenon Docks",
+    "escrow_pct": 12,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2618\nCLAWQL_CLIENT=Client Xenon Docks\nCLAWQL_ESCROW_PCT=12\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/alpha-ridge/matters/archive-2619.md": {
+    "matter_id": "MAT-2619",
+    "client": "Client Alpha Ridge",
+    "escrow_pct": 30,
+    "noncompete_months": null,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2619\nCLAWQL_CLIENT=Client Alpha Ridge\nCLAWQL_ESCROW_PCT=30\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/brine-harbor/matters/archive-2620.md": {
+    "matter_id": "MAT-2620",
+    "client": "Client Brine Harbor",
+    "escrow_pct": 4,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2620\nCLAWQL_CLIENT=Client Brine Harbor\nCLAWQL_ESCROW_PCT=4\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/copper-fen/matters/archive-2621.md": {
+    "matter_id": "MAT-2621",
+    "client": "Client Copper Fen",
+    "escrow_pct": 9,
+    "noncompete_months": 19,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2621\nCLAWQL_CLIENT=Client Copper Fen\nCLAWQL_ESCROW_PCT=9\nCLAWQL_NONCOMPETE_MONTHS=19\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/drift-hollow/matters/archive-2622.md": {
+    "matter_id": "MAT-2622",
+    "client": "Client Drift Hollow",
+    "escrow_pct": 18,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2622\nCLAWQL_CLIENT=Client Drift Hollow\nCLAWQL_ESCROW_PCT=18\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/ember-quay/matters/archive-2623.md": {
+    "matter_id": "MAT-2623",
+    "client": "Client Ember Quay",
+    "escrow_pct": 10,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2623\nCLAWQL_CLIENT=Client Ember Quay\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/flint-meadow/matters/archive-2624.md": {
+    "matter_id": "MAT-2624",
+    "client": "Client Flint Meadow",
+    "escrow_pct": 6,
+    "noncompete_months": 40,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2624\nCLAWQL_CLIENT=Client Flint Meadow\nCLAWQL_ESCROW_PCT=6\nCLAWQL_NONCOMPETE_MONTHS=40\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/granite-spur/matters/archive-2625.md": {
+    "matter_id": "MAT-2625",
+    "client": "Client Granite Spur",
+    "escrow_pct": 15,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2625\nCLAWQL_CLIENT=Client Granite Spur\nCLAWQL_ESCROW_PCT=15\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/heather-ford/matters/archive-2626.md": {
+    "matter_id": "MAT-2626",
+    "client": "Client Heather Ford",
+    "escrow_pct": 9,
+    "noncompete_months": 36,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2626\nCLAWQL_CLIENT=Client Heather Ford\nCLAWQL_ESCROW_PCT=9\nCLAWQL_NONCOMPETE_MONTHS=36\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/iron-basin/matters/archive-2627.md": {
+    "matter_id": "MAT-2627",
+    "client": "Client Iron Basin",
+    "escrow_pct": 20,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2627\nCLAWQL_CLIENT=Client Iron Basin\nCLAWQL_ESCROW_PCT=20\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/jasper-cove/matters/archive-2628.md": {
+    "matter_id": "MAT-2628",
+    "client": "Client Jasper Cove",
+    "escrow_pct": 3,
+    "noncompete_months": 60,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2628\nCLAWQL_CLIENT=Client Jasper Cove\nCLAWQL_ESCROW_PCT=3\nCLAWQL_NONCOMPETE_MONTHS=60\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/kelp-strand/matters/archive-2629.md": {
+    "matter_id": "MAT-2629",
+    "client": "Client Kelp Strand",
+    "escrow_pct": 11,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2629\nCLAWQL_CLIENT=Client Kelp Strand\nCLAWQL_ESCROW_PCT=11\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/lumen-falls/matters/archive-2630.md": {
+    "matter_id": "MAT-2630",
+    "client": "Client Lumen Falls",
+    "escrow_pct": 9,
+    "noncompete_months": 24,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2630\nCLAWQL_CLIENT=Client Lumen Falls\nCLAWQL_ESCROW_PCT=9\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/marble-glen/matters/archive-2631.md": {
+    "matter_id": "MAT-2631",
+    "client": "Client Marble Glen",
+    "escrow_pct": 12,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2631\nCLAWQL_CLIENT=Client Marble Glen\nCLAWQL_ESCROW_PCT=12\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/nimbus-reach/matters/archive-2632.md": {
+    "matter_id": "MAT-2632",
+    "client": "Client Nimbus Reach",
+    "escrow_pct": 10,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2632\nCLAWQL_CLIENT=Client Nimbus Reach\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/onyx-creek/matters/archive-2633.md": {
+    "matter_id": "MAT-2633",
+    "client": "Client Onyx Creek",
+    "escrow_pct": 25,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2633\nCLAWQL_CLIENT=Client Onyx Creek\nCLAWQL_ESCROW_PCT=25\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/pine-saddle/matters/archive-2634.md": {
+    "matter_id": "MAT-2634",
+    "client": "Client Pine Saddle",
+    "escrow_pct": 10,
+    "noncompete_months": 6,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2634\nCLAWQL_CLIENT=Client Pine Saddle\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=6\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/quarry-bend/matters/archive-2635.md": {
+    "matter_id": "MAT-2635",
+    "client": "Client Quarry Bend",
+    "escrow_pct": 5,
+    "noncompete_months": 36,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2635\nCLAWQL_CLIENT=Client Quarry Bend\nCLAWQL_ESCROW_PCT=5\nCLAWQL_NONCOMPETE_MONTHS=36\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/reed-marsh/matters/archive-2636.md": {
+    "matter_id": "MAT-2636",
+    "client": "Client Reed Marsh",
+    "escrow_pct": null,
+    "noncompete_months": 24,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2636\nCLAWQL_CLIENT=Client Reed Marsh\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/slate-point/matters/archive-2637.md": {
+    "matter_id": "MAT-2637",
+    "client": "Client Slate Point",
+    "escrow_pct": 14,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2637\nCLAWQL_CLIENT=Client Slate Point\nCLAWQL_ESCROW_PCT=14\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/timber-bay/matters/archive-2638.md": {
+    "matter_id": "MAT-2638",
+    "client": "Client Timber Bay",
+    "escrow_pct": 8,
+    "noncompete_months": 30,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2638\nCLAWQL_CLIENT=Client Timber Bay\nCLAWQL_ESCROW_PCT=8\nCLAWQL_NONCOMPETE_MONTHS=30\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/umbra-ridge/matters/archive-2639.md": {
+    "matter_id": "MAT-2639",
+    "client": "Client Umbra Ridge",
+    "escrow_pct": 22,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2639\nCLAWQL_CLIENT=Client Umbra Ridge\nCLAWQL_ESCROW_PCT=22\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/violet-ford/matters/archive-2640.md": {
+    "matter_id": "MAT-2640",
+    "client": "Client Violet Ford",
+    "escrow_pct": 5,
+    "noncompete_months": 6,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2640\nCLAWQL_CLIENT=Client Violet Ford\nCLAWQL_ESCROW_PCT=5\nCLAWQL_NONCOMPETE_MONTHS=6\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/willow-crag/matters/archive-2641.md": {
+    "matter_id": "MAT-2641",
+    "client": "Client Willow Crag",
+    "escrow_pct": 0,
+    "noncompete_months": 48,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2641\nCLAWQL_CLIENT=Client Willow Crag\nCLAWQL_ESCROW_PCT=0\nCLAWQL_NONCOMPETE_MONTHS=48\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/xenon-docks/matters/archive-2642.md": {
+    "matter_id": "MAT-2642",
+    "client": "Client Xenon Docks",
+    "escrow_pct": 11,
+    "noncompete_months": 15,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2642\nCLAWQL_CLIENT=Client Xenon Docks\nCLAWQL_ESCROW_PCT=11\nCLAWQL_NONCOMPETE_MONTHS=15\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/alpha-ridge/matters/archive-2643.md": {
+    "matter_id": "MAT-2643",
+    "client": "Client Alpha Ridge",
+    "escrow_pct": 13,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2643\nCLAWQL_CLIENT=Client Alpha Ridge\nCLAWQL_ESCROW_PCT=13\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/brine-harbor/matters/archive-2644.md": {
+    "matter_id": "MAT-2644",
+    "client": "Client Brine Harbor",
+    "escrow_pct": null,
+    "noncompete_months": 36,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2644\nCLAWQL_CLIENT=Client Brine Harbor\nCLAWQL_NONCOMPETE_MONTHS=36\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/copper-fen/matters/archive-2645.md": {
+    "matter_id": "MAT-2645",
+    "client": "Client Copper Fen",
+    "escrow_pct": 10,
+    "noncompete_months": 9,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2645\nCLAWQL_CLIENT=Client Copper Fen\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=9\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/drift-hollow/matters/archive-2646.md": {
+    "matter_id": "MAT-2646",
+    "client": "Client Drift Hollow",
+    "escrow_pct": 7,
+    "noncompete_months": 24,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2646\nCLAWQL_CLIENT=Client Drift Hollow\nCLAWQL_ESCROW_PCT=7\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/ember-quay/matters/archive-2647.md": {
+    "matter_id": "MAT-2647",
+    "client": "Client Ember Quay",
+    "escrow_pct": 16,
+    "noncompete_months": 17,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2647\nCLAWQL_CLIENT=Client Ember Quay\nCLAWQL_ESCROW_PCT=16\nCLAWQL_NONCOMPETE_MONTHS=17\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/flint-meadow/matters/archive-2648.md": {
+    "matter_id": "MAT-2648",
+    "client": "Client Flint Meadow",
+    "escrow_pct": 12,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2648\nCLAWQL_CLIENT=Client Flint Meadow\nCLAWQL_ESCROW_PCT=12\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/granite-spur/matters/archive-2649.md": {
+    "matter_id": "MAT-2649",
+    "client": "Client Granite Spur",
+    "escrow_pct": 30,
+    "noncompete_months": null,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2649\nCLAWQL_CLIENT=Client Granite Spur\nCLAWQL_ESCROW_PCT=30\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/heather-ford/matters/archive-2650.md": {
+    "matter_id": "MAT-2650",
+    "client": "Client Heather Ford",
+    "escrow_pct": 4,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2650\nCLAWQL_CLIENT=Client Heather Ford\nCLAWQL_ESCROW_PCT=4\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/iron-basin/matters/archive-2651.md": {
+    "matter_id": "MAT-2651",
+    "client": "Client Iron Basin",
+    "escrow_pct": 9,
+    "noncompete_months": 19,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2651\nCLAWQL_CLIENT=Client Iron Basin\nCLAWQL_ESCROW_PCT=9\nCLAWQL_NONCOMPETE_MONTHS=19\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/jasper-cove/matters/archive-2652.md": {
+    "matter_id": "MAT-2652",
+    "client": "Client Jasper Cove",
+    "escrow_pct": 18,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2652\nCLAWQL_CLIENT=Client Jasper Cove\nCLAWQL_ESCROW_PCT=18\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/kelp-strand/matters/archive-2653.md": {
+    "matter_id": "MAT-2653",
+    "client": "Client Kelp Strand",
+    "escrow_pct": 10,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2653\nCLAWQL_CLIENT=Client Kelp Strand\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/lumen-falls/matters/archive-2654.md": {
+    "matter_id": "MAT-2654",
+    "client": "Client Lumen Falls",
+    "escrow_pct": 6,
+    "noncompete_months": 40,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2654\nCLAWQL_CLIENT=Client Lumen Falls\nCLAWQL_ESCROW_PCT=6\nCLAWQL_NONCOMPETE_MONTHS=40\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/marble-glen/matters/archive-2655.md": {
+    "matter_id": "MAT-2655",
+    "client": "Client Marble Glen",
+    "escrow_pct": 15,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2655\nCLAWQL_CLIENT=Client Marble Glen\nCLAWQL_ESCROW_PCT=15\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/nimbus-reach/matters/archive-2656.md": {
+    "matter_id": "MAT-2656",
+    "client": "Client Nimbus Reach",
+    "escrow_pct": 9,
+    "noncompete_months": 36,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2656\nCLAWQL_CLIENT=Client Nimbus Reach\nCLAWQL_ESCROW_PCT=9\nCLAWQL_NONCOMPETE_MONTHS=36\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/onyx-creek/matters/archive-2657.md": {
+    "matter_id": "MAT-2657",
+    "client": "Client Onyx Creek",
+    "escrow_pct": 20,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2657\nCLAWQL_CLIENT=Client Onyx Creek\nCLAWQL_ESCROW_PCT=20\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/pine-saddle/matters/archive-2658.md": {
+    "matter_id": "MAT-2658",
+    "client": "Client Pine Saddle",
+    "escrow_pct": 3,
+    "noncompete_months": 60,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2658\nCLAWQL_CLIENT=Client Pine Saddle\nCLAWQL_ESCROW_PCT=3\nCLAWQL_NONCOMPETE_MONTHS=60\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/quarry-bend/matters/archive-2659.md": {
+    "matter_id": "MAT-2659",
+    "client": "Client Quarry Bend",
+    "escrow_pct": 11,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2659\nCLAWQL_CLIENT=Client Quarry Bend\nCLAWQL_ESCROW_PCT=11\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/reed-marsh/matters/archive-2660.md": {
+    "matter_id": "MAT-2660",
+    "client": "Client Reed Marsh",
+    "escrow_pct": 9,
+    "noncompete_months": 24,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2660\nCLAWQL_CLIENT=Client Reed Marsh\nCLAWQL_ESCROW_PCT=9\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/slate-point/matters/archive-2661.md": {
+    "matter_id": "MAT-2661",
+    "client": "Client Slate Point",
+    "escrow_pct": 12,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2661\nCLAWQL_CLIENT=Client Slate Point\nCLAWQL_ESCROW_PCT=12\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/timber-bay/matters/archive-2662.md": {
+    "matter_id": "MAT-2662",
+    "client": "Client Timber Bay",
+    "escrow_pct": 10,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2662\nCLAWQL_CLIENT=Client Timber Bay\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/umbra-ridge/matters/archive-2663.md": {
+    "matter_id": "MAT-2663",
+    "client": "Client Umbra Ridge",
+    "escrow_pct": 25,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2663\nCLAWQL_CLIENT=Client Umbra Ridge\nCLAWQL_ESCROW_PCT=25\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/violet-ford/matters/archive-2664.md": {
+    "matter_id": "MAT-2664",
+    "client": "Client Violet Ford",
+    "escrow_pct": 10,
+    "noncompete_months": 6,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2664\nCLAWQL_CLIENT=Client Violet Ford\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=6\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/willow-crag/matters/archive-2665.md": {
+    "matter_id": "MAT-2665",
+    "client": "Client Willow Crag",
+    "escrow_pct": 5,
+    "noncompete_months": 36,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2665\nCLAWQL_CLIENT=Client Willow Crag\nCLAWQL_ESCROW_PCT=5\nCLAWQL_NONCOMPETE_MONTHS=36\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/xenon-docks/matters/archive-2666.md": {
+    "matter_id": "MAT-2666",
+    "client": "Client Xenon Docks",
+    "escrow_pct": null,
+    "noncompete_months": 24,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2666\nCLAWQL_CLIENT=Client Xenon Docks\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/alpha-ridge/matters/archive-2667.md": {
+    "matter_id": "MAT-2667",
+    "client": "Client Alpha Ridge",
+    "escrow_pct": 14,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2667\nCLAWQL_CLIENT=Client Alpha Ridge\nCLAWQL_ESCROW_PCT=14\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/brine-harbor/matters/archive-2668.md": {
+    "matter_id": "MAT-2668",
+    "client": "Client Brine Harbor",
+    "escrow_pct": 8,
+    "noncompete_months": 30,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2668\nCLAWQL_CLIENT=Client Brine Harbor\nCLAWQL_ESCROW_PCT=8\nCLAWQL_NONCOMPETE_MONTHS=30\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/copper-fen/matters/archive-2669.md": {
+    "matter_id": "MAT-2669",
+    "client": "Client Copper Fen",
+    "escrow_pct": 22,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2669\nCLAWQL_CLIENT=Client Copper Fen\nCLAWQL_ESCROW_PCT=22\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/drift-hollow/matters/archive-2670.md": {
+    "matter_id": "MAT-2670",
+    "client": "Client Drift Hollow",
+    "escrow_pct": 5,
+    "noncompete_months": 6,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2670\nCLAWQL_CLIENT=Client Drift Hollow\nCLAWQL_ESCROW_PCT=5\nCLAWQL_NONCOMPETE_MONTHS=6\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/ember-quay/matters/archive-2671.md": {
+    "matter_id": "MAT-2671",
+    "client": "Client Ember Quay",
+    "escrow_pct": 0,
+    "noncompete_months": 48,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2671\nCLAWQL_CLIENT=Client Ember Quay\nCLAWQL_ESCROW_PCT=0\nCLAWQL_NONCOMPETE_MONTHS=48\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/flint-meadow/matters/archive-2672.md": {
+    "matter_id": "MAT-2672",
+    "client": "Client Flint Meadow",
+    "escrow_pct": 11,
+    "noncompete_months": 15,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2672\nCLAWQL_CLIENT=Client Flint Meadow\nCLAWQL_ESCROW_PCT=11\nCLAWQL_NONCOMPETE_MONTHS=15\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/granite-spur/matters/archive-2673.md": {
+    "matter_id": "MAT-2673",
+    "client": "Client Granite Spur",
+    "escrow_pct": 13,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2673\nCLAWQL_CLIENT=Client Granite Spur\nCLAWQL_ESCROW_PCT=13\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/heather-ford/matters/archive-2674.md": {
+    "matter_id": "MAT-2674",
+    "client": "Client Heather Ford",
+    "escrow_pct": null,
+    "noncompete_months": 36,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2674\nCLAWQL_CLIENT=Client Heather Ford\nCLAWQL_NONCOMPETE_MONTHS=36\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/iron-basin/matters/archive-2675.md": {
+    "matter_id": "MAT-2675",
+    "client": "Client Iron Basin",
+    "escrow_pct": 10,
+    "noncompete_months": 9,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2675\nCLAWQL_CLIENT=Client Iron Basin\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=9\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/jasper-cove/matters/archive-2676.md": {
+    "matter_id": "MAT-2676",
+    "client": "Client Jasper Cove",
+    "escrow_pct": 7,
+    "noncompete_months": 24,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2676\nCLAWQL_CLIENT=Client Jasper Cove\nCLAWQL_ESCROW_PCT=7\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/kelp-strand/matters/archive-2677.md": {
+    "matter_id": "MAT-2677",
+    "client": "Client Kelp Strand",
+    "escrow_pct": 16,
+    "noncompete_months": 17,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2677\nCLAWQL_CLIENT=Client Kelp Strand\nCLAWQL_ESCROW_PCT=16\nCLAWQL_NONCOMPETE_MONTHS=17\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/lumen-falls/matters/archive-2678.md": {
+    "matter_id": "MAT-2678",
+    "client": "Client Lumen Falls",
+    "escrow_pct": 12,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2678\nCLAWQL_CLIENT=Client Lumen Falls\nCLAWQL_ESCROW_PCT=12\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/marble-glen/matters/archive-2679.md": {
+    "matter_id": "MAT-2679",
+    "client": "Client Marble Glen",
+    "escrow_pct": 30,
+    "noncompete_months": null,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2679\nCLAWQL_CLIENT=Client Marble Glen\nCLAWQL_ESCROW_PCT=30\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/nimbus-reach/matters/archive-2680.md": {
+    "matter_id": "MAT-2680",
+    "client": "Client Nimbus Reach",
+    "escrow_pct": 4,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2680\nCLAWQL_CLIENT=Client Nimbus Reach\nCLAWQL_ESCROW_PCT=4\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/onyx-creek/matters/archive-2681.md": {
+    "matter_id": "MAT-2681",
+    "client": "Client Onyx Creek",
+    "escrow_pct": 9,
+    "noncompete_months": 19,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2681\nCLAWQL_CLIENT=Client Onyx Creek\nCLAWQL_ESCROW_PCT=9\nCLAWQL_NONCOMPETE_MONTHS=19\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/pine-saddle/matters/archive-2682.md": {
+    "matter_id": "MAT-2682",
+    "client": "Client Pine Saddle",
+    "escrow_pct": 18,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2682\nCLAWQL_CLIENT=Client Pine Saddle\nCLAWQL_ESCROW_PCT=18\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/quarry-bend/matters/archive-2683.md": {
+    "matter_id": "MAT-2683",
+    "client": "Client Quarry Bend",
+    "escrow_pct": 10,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2683\nCLAWQL_CLIENT=Client Quarry Bend\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/reed-marsh/matters/archive-2684.md": {
+    "matter_id": "MAT-2684",
+    "client": "Client Reed Marsh",
+    "escrow_pct": 6,
+    "noncompete_months": 40,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2684\nCLAWQL_CLIENT=Client Reed Marsh\nCLAWQL_ESCROW_PCT=6\nCLAWQL_NONCOMPETE_MONTHS=40\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/slate-point/matters/archive-2685.md": {
+    "matter_id": "MAT-2685",
+    "client": "Client Slate Point",
+    "escrow_pct": 15,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2685\nCLAWQL_CLIENT=Client Slate Point\nCLAWQL_ESCROW_PCT=15\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/timber-bay/matters/archive-2686.md": {
+    "matter_id": "MAT-2686",
+    "client": "Client Timber Bay",
+    "escrow_pct": 9,
+    "noncompete_months": 36,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2686\nCLAWQL_CLIENT=Client Timber Bay\nCLAWQL_ESCROW_PCT=9\nCLAWQL_NONCOMPETE_MONTHS=36\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/umbra-ridge/matters/archive-2687.md": {
+    "matter_id": "MAT-2687",
+    "client": "Client Umbra Ridge",
+    "escrow_pct": 20,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2687\nCLAWQL_CLIENT=Client Umbra Ridge\nCLAWQL_ESCROW_PCT=20\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/violet-ford/matters/archive-2688.md": {
+    "matter_id": "MAT-2688",
+    "client": "Client Violet Ford",
+    "escrow_pct": 3,
+    "noncompete_months": 60,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2688\nCLAWQL_CLIENT=Client Violet Ford\nCLAWQL_ESCROW_PCT=3\nCLAWQL_NONCOMPETE_MONTHS=60\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/willow-crag/matters/archive-2689.md": {
+    "matter_id": "MAT-2689",
+    "client": "Client Willow Crag",
+    "escrow_pct": 11,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2689\nCLAWQL_CLIENT=Client Willow Crag\nCLAWQL_ESCROW_PCT=11\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/xenon-docks/matters/archive-2690.md": {
+    "matter_id": "MAT-2690",
+    "client": "Client Xenon Docks",
+    "escrow_pct": 9,
+    "noncompete_months": 24,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2690\nCLAWQL_CLIENT=Client Xenon Docks\nCLAWQL_ESCROW_PCT=9\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/alpha-ridge/matters/archive-2691.md": {
+    "matter_id": "MAT-2691",
+    "client": "Client Alpha Ridge",
+    "escrow_pct": 12,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2691\nCLAWQL_CLIENT=Client Alpha Ridge\nCLAWQL_ESCROW_PCT=12\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/brine-harbor/matters/archive-2692.md": {
+    "matter_id": "MAT-2692",
+    "client": "Client Brine Harbor",
+    "escrow_pct": 10,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2692\nCLAWQL_CLIENT=Client Brine Harbor\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/copper-fen/matters/archive-2693.md": {
+    "matter_id": "MAT-2693",
+    "client": "Client Copper Fen",
+    "escrow_pct": 25,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2693\nCLAWQL_CLIENT=Client Copper Fen\nCLAWQL_ESCROW_PCT=25\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/drift-hollow/matters/archive-2694.md": {
+    "matter_id": "MAT-2694",
+    "client": "Client Drift Hollow",
+    "escrow_pct": 10,
+    "noncompete_months": 6,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2694\nCLAWQL_CLIENT=Client Drift Hollow\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=6\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/ember-quay/matters/archive-2695.md": {
+    "matter_id": "MAT-2695",
+    "client": "Client Ember Quay",
+    "escrow_pct": 5,
+    "noncompete_months": 36,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2695\nCLAWQL_CLIENT=Client Ember Quay\nCLAWQL_ESCROW_PCT=5\nCLAWQL_NONCOMPETE_MONTHS=36\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/flint-meadow/matters/archive-2696.md": {
+    "matter_id": "MAT-2696",
+    "client": "Client Flint Meadow",
+    "escrow_pct": null,
+    "noncompete_months": 24,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2696\nCLAWQL_CLIENT=Client Flint Meadow\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/granite-spur/matters/archive-2697.md": {
+    "matter_id": "MAT-2697",
+    "client": "Client Granite Spur",
+    "escrow_pct": 14,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2697\nCLAWQL_CLIENT=Client Granite Spur\nCLAWQL_ESCROW_PCT=14\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/heather-ford/matters/archive-2698.md": {
+    "matter_id": "MAT-2698",
+    "client": "Client Heather Ford",
+    "escrow_pct": 8,
+    "noncompete_months": 30,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2698\nCLAWQL_CLIENT=Client Heather Ford\nCLAWQL_ESCROW_PCT=8\nCLAWQL_NONCOMPETE_MONTHS=30\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/iron-basin/matters/archive-2699.md": {
+    "matter_id": "MAT-2699",
+    "client": "Client Iron Basin",
+    "escrow_pct": 22,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2699\nCLAWQL_CLIENT=Client Iron Basin\nCLAWQL_ESCROW_PCT=22\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/jasper-cove/matters/archive-2700.md": {
+    "matter_id": "MAT-2700",
+    "client": "Client Jasper Cove",
+    "escrow_pct": 5,
+    "noncompete_months": 6,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2700\nCLAWQL_CLIENT=Client Jasper Cove\nCLAWQL_ESCROW_PCT=5\nCLAWQL_NONCOMPETE_MONTHS=6\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/kelp-strand/matters/archive-2701.md": {
+    "matter_id": "MAT-2701",
+    "client": "Client Kelp Strand",
+    "escrow_pct": 0,
+    "noncompete_months": 48,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2701\nCLAWQL_CLIENT=Client Kelp Strand\nCLAWQL_ESCROW_PCT=0\nCLAWQL_NONCOMPETE_MONTHS=48\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/lumen-falls/matters/archive-2702.md": {
+    "matter_id": "MAT-2702",
+    "client": "Client Lumen Falls",
+    "escrow_pct": 11,
+    "noncompete_months": 15,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2702\nCLAWQL_CLIENT=Client Lumen Falls\nCLAWQL_ESCROW_PCT=11\nCLAWQL_NONCOMPETE_MONTHS=15\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/marble-glen/matters/archive-2703.md": {
+    "matter_id": "MAT-2703",
+    "client": "Client Marble Glen",
+    "escrow_pct": 13,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2703\nCLAWQL_CLIENT=Client Marble Glen\nCLAWQL_ESCROW_PCT=13\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/nimbus-reach/matters/archive-2704.md": {
+    "matter_id": "MAT-2704",
+    "client": "Client Nimbus Reach",
+    "escrow_pct": null,
+    "noncompete_months": 36,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2704\nCLAWQL_CLIENT=Client Nimbus Reach\nCLAWQL_NONCOMPETE_MONTHS=36\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/onyx-creek/matters/archive-2705.md": {
+    "matter_id": "MAT-2705",
+    "client": "Client Onyx Creek",
+    "escrow_pct": 10,
+    "noncompete_months": 9,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2705\nCLAWQL_CLIENT=Client Onyx Creek\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=9\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/pine-saddle/matters/archive-2706.md": {
+    "matter_id": "MAT-2706",
+    "client": "Client Pine Saddle",
+    "escrow_pct": 7,
+    "noncompete_months": 24,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2706\nCLAWQL_CLIENT=Client Pine Saddle\nCLAWQL_ESCROW_PCT=7\nCLAWQL_NONCOMPETE_MONTHS=24\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/quarry-bend/matters/archive-2707.md": {
+    "matter_id": "MAT-2707",
+    "client": "Client Quarry Bend",
+    "escrow_pct": 16,
+    "noncompete_months": 17,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2707\nCLAWQL_CLIENT=Client Quarry Bend\nCLAWQL_ESCROW_PCT=16\nCLAWQL_NONCOMPETE_MONTHS=17\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/reed-marsh/matters/archive-2708.md": {
+    "matter_id": "MAT-2708",
+    "client": "Client Reed Marsh",
+    "escrow_pct": 12,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2708\nCLAWQL_CLIENT=Client Reed Marsh\nCLAWQL_ESCROW_PCT=12\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/slate-point/matters/archive-2709.md": {
+    "matter_id": "MAT-2709",
+    "client": "Client Slate Point",
+    "escrow_pct": 30,
+    "noncompete_months": null,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2709\nCLAWQL_CLIENT=Client Slate Point\nCLAWQL_ESCROW_PCT=30\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/timber-bay/matters/archive-2710.md": {
+    "matter_id": "MAT-2710",
+    "client": "Client Timber Bay",
+    "escrow_pct": 4,
+    "noncompete_months": 12,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2710\nCLAWQL_CLIENT=Client Timber Bay\nCLAWQL_ESCROW_PCT=4\nCLAWQL_NONCOMPETE_MONTHS=12\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/umbra-ridge/matters/archive-2711.md": {
+    "matter_id": "MAT-2711",
+    "client": "Client Umbra Ridge",
+    "escrow_pct": 9,
+    "noncompete_months": 19,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2711\nCLAWQL_CLIENT=Client Umbra Ridge\nCLAWQL_ESCROW_PCT=9\nCLAWQL_NONCOMPETE_MONTHS=19\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/violet-ford/matters/archive-2712.md": {
+    "matter_id": "MAT-2712",
+    "client": "Client Violet Ford",
+    "escrow_pct": 18,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2712\nCLAWQL_CLIENT=Client Violet Ford\nCLAWQL_ESCROW_PCT=18\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/willow-crag/matters/archive-2713.md": {
+    "matter_id": "MAT-2713",
+    "client": "Client Willow Crag",
+    "escrow_pct": 10,
+    "noncompete_months": 18,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2713\nCLAWQL_CLIENT=Client Willow Crag\nCLAWQL_ESCROW_PCT=10\nCLAWQL_NONCOMPETE_MONTHS=18\nCLAWQL_DEAL_TYPE=archive\n"
+  },
+  "clients/xenon-docks/matters/archive-2714.md": {
+    "matter_id": "MAT-2714",
+    "client": "Client Xenon Docks",
+    "escrow_pct": 6,
+    "noncompete_months": 40,
+    "deal_type": "archive",
+    "vault_appendix": "\n<!-- clawql-structured (vault-only enrichment) -->\nCLAWQL_MATTER_ID=MAT-2714\nCLAWQL_CLIENT=Client Xenon Docks\nCLAWQL_ESCROW_PCT=6\nCLAWQL_NONCOMPETE_MONTHS=40\nCLAWQL_DEAL_TYPE=archive\n"
+  }
+}

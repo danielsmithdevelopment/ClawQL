@@ -327,13 +327,23 @@ TASK_HARD_CAPS: dict[str, dict] = {
     },
     "institutional-knowledge-enumerate": {
         # Redesigned B-7.1: ~120 nested notes so bare linear read cannot exhaust
-        # under the turn budget; on-arm must use multi-query memory_recall.
+        # under the turn budget; on-arm must use structured ontology recall.
         "max_turns": 50,
         "max_tokens": 16000,
         "max_wall_s": 480,
         "default_timeout_s": 480,
         "disable_memory": False,
         "require_institutional": True,
+    },
+    "institutional-knowledge-enumerate-ontology": {
+        # B-7.1-ontology: same fixture; tight caps prove structured filters (~2 turns).
+        "max_turns": 5,
+        "max_tokens": 4000,
+        "max_wall_s": 60,
+        "default_timeout_s": 90,
+        "disable_memory": False,
+        "require_institutional": True,
+        "require_structured_ontology": True,
     },
 }
 
@@ -710,6 +720,18 @@ CONFLICT_NUDGE = """Continue the memory conflict pricing task.
    {"conflict":true,"values":[{"price":42,"asOf":"2026-01-15"},{"price":55,"asOf":"2026-06-01"}],"chosen":null,"source":"memory_recall"}
 
 Do NOT invent 48 or pick only one price. Call memory_recall now.
+"""
+
+INSTITUTIONAL_ONTOLOGY_NUDGE = """Continue B-7.1-ontology (tight-cap structured enumeration).
+
+Call clawql_memory_recall ONCE with:
+  schema: "legal.Matter"
+  filters: {"escrowPct":{"gte":10},"nonCompeteMonths":{"gt":18}}
+  confidenceMinimum: "EXTRACTED"
+  limit: 20
+  query: "matters matching escrow and non-compete criteria"
+
+Write relative matters.json from entityIds. No keyword search. Caps: 5 turns.
 """
 
 INSTITUTIONAL_NUDGE = """Continue the institutional knowledge enumeration task (B-7.1).
@@ -1850,6 +1872,7 @@ def run_arm_on(
     require_wikilink: bool = False,
     require_conflict: bool = False,
     require_institutional: bool = False,
+    require_structured_ontology: bool = False,
     correlation_id: str | None = None,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
@@ -2761,7 +2784,12 @@ def run_arm_on(
         remaining = int(timeout_s) - int(elapsed)
         if remaining >= 20:
             cont_file = workdir / ".openbench_institutional_nudge.md"
-            cont_file.write_text(INSTITUTIONAL_NUDGE, encoding="utf-8")
+            nudge = (
+                INSTITUTIONAL_ONTOLOGY_NUDGE
+                if require_structured_ontology
+                else INSTITUTIONAL_NUDGE
+            )
+            cont_file.write_text(nudge, encoding="utf-8")
             cont_timeout = max(20, min(80, remaining))
             cmd = build_cmd(cont_file, cont_timeout)
             try:
@@ -3269,13 +3297,20 @@ def render_markdown(report: dict) -> str:
         interp.append(
             "- Fair cell: identical prose corpus on disk for all arms (120 nested notes; "
             "escrow≥10 ∧ NC>18). Score = hits/5; false positives → 0.0. CLAWQL_* tags "
-            "are vault-only (on-arm memory_recall advantage). On / no-memory require "
-            "real memory_recall evidence; off uses filesystem only."
+            "are vault-only and indexed into ontology.db. On-arm must use structured "
+            "memory_recall (schema=legal.Matter + filters); keyword recall near-misses "
+            "zero the trial. Off uses filesystem prose only."
         )
         interp.append(
-            "- **clawql-on** = same files + seeded vault + memory tools; "
+            "- **clawql-on** = same files + seeded vault + ontology filters; "
             "**clawql-no-memory** = same files + ClawQL tools but no vault; "
             "**clawql-off** = same files, no ClawQL MCP."
+        )
+    elif task == "institutional-knowledge-enumerate-ontology":
+        interp.append(
+            "- B-7.1-ontology: same fair fixture; on-arm must use structured "
+            "memory_recall (schema+filters). Tight caps (5 turns / 4k tokens) "
+            "prove exact enumeration in ~2 turns. Keyword near-misses → 0."
         )
     interp.append("")
     lines.extend(interp)
@@ -3457,6 +3492,7 @@ def run_trial(
                 require_wikilink=bool(caps.get("require_wikilink")),
                 require_conflict=bool(caps.get("require_conflict")),
                 require_institutional=bool(caps.get("require_institutional")),
+                require_structured_ontology=bool(caps.get("require_structured_ontology")),
                 correlation_id=corr,
             )
         agent["correlation_id"] = corr
@@ -3531,6 +3567,13 @@ def run_trial(
             "clawql-no-memory",
         ):
             checker_env_extra["OPENBENCH_REQUIRE_INSTITUTIONAL"] = "1"
+        if caps.get("require_structured_ontology") and arm in (
+            "clawql-on",
+            "clawql-no-memory",
+        ):
+            checker_env_extra["OPENBENCH_REQUIRE_STRUCTURED_ONTOLOGY"] = "1"
+            checker_env_extra["OPENBENCH_HARD_MAX_TURNS"] = str(caps.get("max_turns", 5))
+            checker_env_extra["OPENBENCH_HARD_MAX_TOKENS"] = str(caps.get("max_tokens", 4000))
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
         return {

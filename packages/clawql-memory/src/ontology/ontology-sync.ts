@@ -9,6 +9,7 @@ import {
   openOntologyDb,
   ontologyDbEnabled,
   upsertMatter,
+  withOntologyWriteLock,
   type OntologyDbHandle,
 } from "./ontology-db.js";
 
@@ -28,15 +29,17 @@ export async function upsertOntologyFromVaultNote(
   if (!ontologyDbEnabled()) return { upserted: false };
   const extracted = extractMatterFromClawqlFields(markdown);
   if (!extracted) return { upserted: false };
-  const handle = await openOntologyDb(vault);
-  if (!handle) return { upserted: false };
-  try {
-    upsertMatter(handle.db, extracted, relPath, extracted.fields.title);
-    await handle.persist();
-    return { upserted: true, matterId: extracted.fields.id };
-  } finally {
-    handle.close();
-  }
+  return withOntologyWriteLock(vault, async () => {
+    const handle = await openOntologyDb(vault);
+    if (!handle) return { upserted: false };
+    try {
+      upsertMatter(handle.db, extracted, relPath, extracted.fields.title);
+      await handle.persist();
+      return { upserted: true, matterId: extracted.fields.id };
+    } finally {
+      handle.close();
+    }
+  });
 }
 
 /** Scan vault Markdown and upsert all machine-readable Matter blocks. */

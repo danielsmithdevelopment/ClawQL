@@ -132,6 +132,8 @@ export type MemoryRecallResult = {
   scannedEntities?: number;
   filteredEntities?: number;
   confidenceMinimum?: OntologyConfidenceMinimum;
+  /** Present on structured-path failures (e.g. `ontology_disabled` when CLAWQL_ONTOLOGY_DB=0). */
+  errorType?: string;
 };
 
 function tokenize(text: string): string[] {

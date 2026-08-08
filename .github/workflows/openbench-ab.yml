@@ -23,6 +23,7 @@ on:
           - codegraph-impact-edit
           - memory-conflict-pricing
           - institutional-knowledge-enumerate
+          - institutional-knowledge-enumerate-ontology
           - onyx-mock-cite
           - memory-wikilink-hop
           - notify-mock-slack
@@ -266,7 +267,8 @@ jobs:
           matrix.task == 'onyx-mock-cite' ||
           matrix.task == 'memory-wikilink-hop' ||
           matrix.task == 'memory-conflict-pricing' ||
-          matrix.task == 'institutional-knowledge-enumerate'
+          matrix.task == 'institutional-knowledge-enumerate' ||
+          matrix.task == 'institutional-knowledge-enumerate-ontology'
         run: |
           {
             echo "OPENBENCH_TIMEOUT_S=180"
@@ -344,10 +346,23 @@ jobs:
               echo "OPENBENCH_TIMEOUT_S=180"
             fi
             if [ "${{ matrix.task }}" = "institutional-knowledge-enumerate" ]; then
-              # Fair same-files cell. Off first so a provider credit failure on-arm
-              # cannot skip the filesystem baseline. DeepSeek until OpenRouter
-              # Sonnet key limit is raised (403 on prior Sonnet burns).
+              # Fair same-files cell. Off first so a provider budget failure on-arm
+              # cannot skip the filesystem baseline.
               echo "OPENBENCH_TIMEOUT_S=480"
+              echo "OPENBENCH_MODEL=openrouter/deepseek/deepseek-chat"
+              if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                case "${{ inputs.arms }}" in
+                  clawql-on,clawql-off|"")
+                    echo "OPENBENCH_ARMS=clawql-off,clawql-on,clawql-no-memory"
+                    ;;
+                esac
+              else
+                echo "OPENBENCH_ARMS=clawql-off,clawql-on,clawql-no-memory"
+              fi
+            fi
+            if [ "${{ matrix.task }}" = "institutional-knowledge-enumerate-ontology" ]; then
+              # Efficiency cell: structured filters under tight caps (5 turns / 60s).
+              echo "OPENBENCH_TIMEOUT_S=90"
               echo "OPENBENCH_MODEL=openrouter/deepseek/deepseek-chat"
               if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                 case "${{ inputs.arms }}" in

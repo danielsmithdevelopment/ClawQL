@@ -115,8 +115,12 @@
       "evidence_run": "31189112838"
     },
     "institutional-knowledge-enumerate": {
-      "reason": "Fair same-files harness on main via #875; live A/B blocked on OpenRouter credits. Re-activate after top-up.",
-      "evidence_run": "31242620062"
+      "reason": "Fair same-files on main (#875). Keyword on-arm FAILS like Harvey (near-miss FP→0 @ 31244644204). Re-activate with structured ontology (#877) after merge.",
+      "evidence_run": "31244644204"
+    },
+    "institutional-knowledge-enumerate-ontology": {
+      "reason": "B-7.1-ontology efficiency cell (5 turns / 4k tokens / schema+filters). Activate after #877 lands + keyword cell shows before/after.",
+      "evidence_run": ""
     }
   },
   "ouroboros_pr_enabled": false,

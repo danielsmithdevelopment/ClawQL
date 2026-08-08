@@ -1,16 +1,22 @@
 /**
  * Structured predicate queries against ontology.db for memory_recall.
  * Spec: docs/specs/memory/memory-recall-structured-filter-v0.1.md
+ *
+ * `query` remains required by the MCP contract (backward compatible). In structured
+ * mode it is an audit/logging hint — filters drive retrieval.
  */
 
 import { readVaultTextFile } from "../vault/utils.js";
 import { stripVaultFrontmatter } from "../vault/markdown.js";
 import type { FieldConfidence } from "./clawql-fields.js";
+import { MATTER_FILTER_COLUMNS } from "./field-map.js";
 import {
   countMatters,
   openOntologyDb,
   ontologyDbEnabled,
+  ontologyDbExplicitlyDisabled,
   queryMattersSql,
+  withOntologyWriteLock,
   type MatterRow,
 } from "./ontology-db.js";
 import { syncOntologyMattersFromVault } from "./ontology-sync.js";
@@ -23,6 +29,7 @@ export type OntologyFilter = Record<string, FilterPredicate>;
 export type OntologyOrderBy = { field: string; direction: "asc" | "desc" };
 
 export type OntologyRecallInput = {
+  /** Required MCP field — audit/logging hint in structured mode (does not drive filters). */
   query: string;
   schema: OntologySchema;
   filters: OntologyFilter;
@@ -64,19 +71,16 @@ export type OntologyRecallResult = {
   sourcesUsed: ["vault"];
 };
 
-const MATTER_COLUMNS: Record<string, string> = {
-  id: "m.id",
-  title: "m.title",
-  status: "m.status",
-  practiceArea: "m.practice_area",
-  matterType: "m.matter_type",
-  dealValueUSD: "m.deal_value_usd",
-  escrowPct: "m.escrow_pct",
-  escrowDurationMonths: "m.escrow_duration_months",
-  nonCompeteMonths: "m.non_compete_months",
-  nonCompeteGeography: "m.non_compete_geography",
-  client: "m.client_id",
-  clientId: "m.client_id",
+export type OntologyRecallErrorType =
+  | "ontology_disabled"
+  | "ontology_unsupported_schema"
+  | "ontology_invalid_filters"
+  | "ontology_open_failed";
+
+export type OntologyRecallFailure = {
+  ok: false;
+  error: string;
+  errorType: OntologyRecallErrorType;
 };
 
 function confidenceLevelsAtOrAbove(minimum: FieldConfidence): FieldConfidence[] {
@@ -110,11 +114,7 @@ function buildPredicate(col: string, predicate: FilterPredicate, values: unknown
     values.push(predicate.lt);
     return `${col} < ?`;
   }
-  if (
-    "between" in predicate &&
-    Array.isArray(predicate.between) &&
-    predicate.between.length === 2
-  ) {
+  if ("between" in predicate && Array.isArray(predicate.between) && predicate.between.length === 2) {
     values.push(predicate.between[0], predicate.between[1]);
     return `${col} BETWEEN ? AND ?`;
   }
@@ -150,7 +150,7 @@ export function buildMatterWhereClause(
   const values: unknown[] = [];
 
   for (const [field, predicate] of Object.entries(filters)) {
-    const col = MATTER_COLUMNS[field];
+    const col = MATTER_FILTER_COLUMNS[field];
     if (!col || !predicate || typeof predicate !== "object") {
       throw new Error(`Unsupported ontology filter field: ${field}`);
     }
@@ -164,7 +164,6 @@ export function buildMatterWhereClause(
   if (confidenceMinimum) {
     const levels = confidenceLevelsAtOrAbove(confidenceMinimum);
     const placeholders = levels.map(() => "?").join(", ");
-    // Fields with no confidence row are treated as EXTRACTED.
     clauses.push(
       `(
         NOT EXISTS (
@@ -212,38 +211,92 @@ async function snippetFor(vault: string, path: string): Promise<string> {
   }
 }
 
+/**
+ * Double-checked lazy sync under ontology write lock — safe for concurrent
+ * schema+filters recalls hitting an empty matters table.
+ */
+export async function ensureOntologyMattersIndexed(vault: string): Promise<void> {
+  {
+    const probe = await openOntologyDb(vault);
+    if (!probe) return;
+    try {
+      if (countMatters(probe.db) > 0) return;
+    } finally {
+      probe.close();
+    }
+  }
+
+  await withOntologyWriteLock(vault, async () => {
+    const handle = await openOntologyDb(vault);
+    if (!handle) return;
+    try {
+      if (countMatters(handle.db) > 0) return;
+      await syncOntologyMattersFromVault(vault, handle);
+    } finally {
+      handle.close();
+    }
+  });
+}
+
 export async function runOntologyRecall(
   vault: string,
   input: OntologyRecallInput
-): Promise<OntologyRecallResult | { ok: false; error: string }> {
+): Promise<OntologyRecallResult | OntologyRecallFailure> {
+  if (ontologyDbExplicitlyDisabled()) {
+    return {
+      ok: false,
+      error: "CLAWQL_ONTOLOGY_DB=0; ontology.db sync disabled",
+      errorType: "ontology_disabled",
+    };
+  }
   if (!ontologyDbEnabled()) {
     return {
       ok: false,
-      error: "Ontology index disabled (CLAWQL_ONTOLOGY_DB=0) or vault not configured.",
+      error: "CLAWQL_ONTOLOGY_DB disabled or vault not configured (set CLAWQL_OBSIDIAN_VAULT_PATH)",
+      errorType: "ontology_disabled",
     };
   }
   if (input.schema !== "legal.Matter") {
     return {
       ok: false,
       error: `Structured ontology query for schema '${input.schema}' is not implemented yet (Phase 1: legal.Matter only).`,
+      errorType: "ontology_unsupported_schema",
     };
   }
   if (!input.filters || Object.keys(input.filters).length === 0) {
-    return { ok: false, error: "filters are required for structured ontology recall" };
+    return {
+      ok: false,
+      error: "filters are required for structured ontology recall",
+      errorType: "ontology_invalid_filters",
+    };
   }
+
+  await ensureOntologyMattersIndexed(vault);
 
   const handle = await openOntologyDb(vault);
   if (!handle) {
-    return { ok: false, error: "Could not open ontology.db" };
+    return {
+      ok: false,
+      error: "Could not open ontology.db",
+      errorType: "ontology_open_failed",
+    };
   }
 
   try {
-    if (countMatters(handle.db) === 0) {
-      await syncOntologyMattersFromVault(vault, handle);
+    let where: string;
+    let values: unknown[];
+    try {
+      const confidenceMinimum = input.confidenceMinimum ?? "EXTRACTED";
+      ({ where, values } = buildMatterWhereClause(input.filters, confidenceMinimum));
+    } catch (err) {
+      return {
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+        errorType: "ontology_invalid_filters",
+      };
     }
 
     const confidenceMinimum = input.confidenceMinimum ?? "EXTRACTED";
-    const { where, values } = buildMatterWhereClause(input.filters, confidenceMinimum);
     const limit = input.limit ?? 20;
     const scannedEntities = countMatters(handle.db);
     const rows = queryMattersSql(handle.db, where, values, limit);

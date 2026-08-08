@@ -6,15 +6,22 @@
  */
 
 import { createRequire } from "node:module";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, open, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join } from "node:path";
 import initSqlJs, { type Database } from "sql.js";
 import { getObsidianVaultPath } from "../vault/config.js";
 import { resolveVaultPath } from "../vault/utils.js";
 import type { ExtractedMatter, FieldConfidence, MatterFields } from "./clawql-fields.js";
+import { matterFieldsFromSqlRow } from "./field-map.js";
 
 const SCHEMA_VERSION = 1;
 const INGEST_VERSION = "legal-domain-v0.1";
+const ONTOLOGY_LOCK_NAME = ".clawql-ontology-write.lock";
+const LOCK_POLL_MS = 50;
+const LOCK_MAX_ATTEMPTS = 200;
+
+/** In-process mutex so concurrent recalls share one lazy-sync (sql.js is not multi-writer safe). */
+const ontologyLocks = new Map<string, Promise<unknown>>();
 
 let sqlJsPromise: ReturnType<typeof initSqlJs> | null = null;
 
@@ -32,11 +39,69 @@ export function ontologyDbEnabled(): boolean {
   return getObsidianVaultPath() !== null;
 }
 
+/** True when the operator explicitly disabled ontology.db (`CLAWQL_ONTOLOGY_DB=0`). */
+export function ontologyDbExplicitlyDisabled(): boolean {
+  return process.env.CLAWQL_ONTOLOGY_DB === "0";
+}
+
 export function resolveOntologyDatabasePath(vaultRoot: string): string {
   const raw = process.env.CLAWQL_ONTOLOGY_DB_PATH?.trim();
   if (raw && isAbsolute(raw)) return raw;
   const rel = (raw || "ontology.db").replace(/\\/g, "/").replace(/^\/+/, "");
   return resolveVaultPath(vaultRoot, rel);
+}
+
+/**
+ * Exclusive cooperative lock for ontology.db writes / lazy vault sync.
+ * Combines an on-disk lock (cross-process) with an in-process queue (same event loop).
+ */
+export async function withOntologyWriteLock<T>(
+  vaultRoot: string,
+  fn: () => Promise<T>
+): Promise<T> {
+  const key = resolveOntologyDatabasePath(vaultRoot);
+  const prev = ontologyLocks.get(key) ?? Promise.resolve();
+  let release!: () => void;
+  const gate = new Promise<void>((r) => {
+    release = r;
+  });
+  const chained = prev.then(() => gate);
+  ontologyLocks.set(key, chained);
+
+  await prev.catch(() => undefined);
+
+  const lockPath = resolveVaultPath(vaultRoot, ONTOLOGY_LOCK_NAME);
+  let handle: Awaited<ReturnType<typeof open>> | null = null;
+  try {
+    await mkdir(dirname(lockPath), { recursive: true });
+    for (let i = 0; i < LOCK_MAX_ATTEMPTS; i++) {
+      try {
+        handle = await open(lockPath, "wx");
+        break;
+      } catch {
+        await new Promise((r) => setTimeout(r, LOCK_POLL_MS));
+      }
+    }
+    if (!handle) {
+      throw new Error(
+        `Ontology write lock timeout after ${LOCK_MAX_ATTEMPTS * LOCK_POLL_MS}ms: ${lockPath}`
+      );
+    }
+    return await fn();
+  } finally {
+    if (handle) {
+      await handle.close();
+      try {
+        await unlink(lockPath);
+      } catch {
+        /* ignore */
+      }
+    }
+    release();
+    if (ontologyLocks.get(key) === chained) {
+      ontologyLocks.delete(key);
+    }
+  }
 }
 
 function isoNow(): string {
@@ -273,21 +338,9 @@ export function queryMattersSql(
   const rows: MatterRow[] = [];
   while (stmt.step()) {
     const r = stmt.getAsObject() as Record<string, unknown>;
+    const fields = matterFieldsFromSqlRow(r);
     rows.push({
-      id: String(r.id),
-      title: r.title != null ? String(r.title) : undefined,
-      status: r.status != null ? String(r.status) : undefined,
-      practiceArea: r.practice_area != null ? String(r.practice_area) : undefined,
-      matterType: r.matter_type != null ? String(r.matter_type) : undefined,
-      dealValueUSD: r.deal_value_usd != null ? Number(r.deal_value_usd) : undefined,
-      escrowPct: r.escrow_pct != null ? Number(r.escrow_pct) : undefined,
-      escrowDurationMonths:
-        r.escrow_duration_months != null ? Number(r.escrow_duration_months) : undefined,
-      nonCompeteMonths: r.non_compete_months != null ? Number(r.non_compete_months) : undefined,
-      nonCompeteGeography:
-        r.non_compete_geography != null ? String(r.non_compete_geography) : undefined,
-      clientId: r.client_id != null ? String(r.client_id) : undefined,
-      vaultNotePath: String(r.vault_note_path),
+      ...fields,
       confidence: (r.confidence as FieldConfidence | null) ?? "EXTRACTED",
       extractionMethod:
         r.extraction_method != null ? String(r.extraction_method) : "machine_readable",

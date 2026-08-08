@@ -135,7 +135,12 @@ export function executeMemoryRecallCoreEffect(
         });
       });
       if (!ontologyResult.ok) {
-        return { ok: false, error: ontologyResult.error };
+        return {
+          ok: false,
+          error: ontologyResult.error,
+          // Mirror CLAWQL_MEMORY_DB=0 skip shape for operators (`ontology_disabled`).
+          ...(ontologyResult.errorType ? { errorType: ontologyResult.errorType } : {}),
+        };
       }
       const normalizedHits = ontologyResult.hits.map((h) => ({
         source: "vault" as const,

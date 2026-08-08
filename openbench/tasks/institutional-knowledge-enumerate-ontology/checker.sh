@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+# Grades institutional-knowledge-enumerate-ontology (B-7.1-ontology):
+# - Same matter set / FP→0 rules as institutional-knowledge-enumerate
+# - Tight hard caps (5 turns / 4k tokens) for the efficiency claim
+# - When OPENBENCH_REQUIRE_STRUCTURED_ONTOLOGY=1, require memory_recall
+#   tool_use with schema=legal.Matter + filters
+set -euo pipefail
+
+REQUIRE_INSTITUTIONAL="${OPENBENCH_REQUIRE_INSTITUTIONAL:-0}"
+REQUIRE_STRUCTURED="${OPENBENCH_REQUIRE_STRUCTURED_ONTOLOGY:-0}"
+HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-5}"
+HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-4000}"
+TASK_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+cap_fail=0
+EXPECTED_N=5
+
+emit_zero() {
+  echo "MATTERS_FOUND: 0/${EXPECTED_N}"
+  echo "SCORE: 0.0"
+  exit 1
+}
+
+if [ ! -f matters.json ]; then
+  echo "FAIL: matters.json missing" >&2
+  emit_zero
+fi
+
+eval_out="$(
+  TASK_DIR="$TASK_DIR" python3 - <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+task_dir = Path(os.environ["TASK_DIR"])
+manifest_path = task_dir / "ground_truth.json"
+if manifest_path.is_file():
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    expected = {str(x).strip().upper() for x in manifest.get("expected_matters", [])}
+else:
+    expected = {"MAT-2388", "MAT-2401", "MAT-2415", "MAT-2450", "MAT-2462"}
+
+n_exp = len(expected)
+
+def emit(found: int, score: float, ids=None, err=None) -> None:
+    if err:
+        print(err, file=sys.stderr, flush=True)
+    print(f"MATTERS_FOUND:{found}/{n_exp}")
+    if ids is not None:
+        print("MATTERS_IDS:" + ",".join(ids))
+    print(f"SCORE:{score:.4f}")
+
+try:
+    parsed = json.loads(Path("matters.json").read_text(encoding="utf-8"))
+except Exception as exc:
+    emit(0, 0.0, err=f"FAIL: matters.json parse error: {exc}")
+    raise SystemExit(0)
+
+if isinstance(parsed, list):
+    d = {"matters": parsed, "source": ""}
+elif isinstance(parsed, dict):
+    d = parsed
+else:
+    emit(0, 0.0, err=f"FAIL: matters.json must be object or list; got {type(parsed).__name__}")
+    raise SystemExit(0)
+
+raw = d.get("matters")
+if not isinstance(raw, list):
+    emit(0, 0.0, err=f"FAIL: matters must be a list; got {d!r}")
+    raise SystemExit(0)
+
+ids = set()
+for item in raw:
+    if isinstance(item, str):
+        mid = item.strip().upper()
+        if mid:
+            ids.add(mid)
+    elif isinstance(item, dict):
+        mid = item.get("id") or item.get("matter_id") or item.get("matter")
+        if mid:
+            ids.add(str(mid).strip().upper())
+
+false_pos = ids - expected
+if false_pos:
+    emit(0, 0.0, err=f"FAIL: unknown/extra matter id(s): {sorted(false_pos)}")
+    raise SystemExit(0)
+
+hits = sorted(ids & expected)
+partial = len(hits) / float(n_exp)
+src = str(d.get("source") or "").strip().lower()
+ok_src = (
+    "memory" in src
+    or "recall" in src
+    or "workspace" in src
+    or "filesystem" in src
+    or "file" in src
+    or "note" in src
+    or "seed" in src
+)
+if not ok_src:
+    emit(
+        0,
+        0.0,
+        err=(
+            "FAIL: source must reference memory_recall, workspace notes, "
+            f"or filesystem reads; got {src!r}"
+        ),
+    )
+    raise SystemExit(0)
+
+emit(len(hits), partial, ids=hits)
+PY
+)"
+
+matters_found_line="$(printf '%s\n' "$eval_out" | grep -E '^MATTERS_FOUND:' | tail -1 || true)"
+matters_ids_line="$(printf '%s\n' "$eval_out" | grep -E '^MATTERS_IDS:' | tail -1 || true)"
+score_line="$(printf '%s\n' "$eval_out" | grep -E '^SCORE:' | tail -1 || true)"
+score="${score_line#SCORE:}"
+score="${score:-0.0}"
+found_raw="${matters_found_line#MATTERS_FOUND:}"
+found_raw="${found_raw:-0/${EXPECTED_N}}"
+
+if [ -f .openbench_usage.json ]; then
+  eval "$(python3 - <<'PY'
+import json
+from pathlib import Path
+try:
+    d = json.loads(Path(".openbench_usage.json").read_text())
+except Exception:
+    d = {}
+turns = d.get("turns")
+tokens = d.get("tokens")
+timed_out = bool(d.get("timed_out"))
+print(f"usage_turns={turns if isinstance(turns, int) else ''}")
+print(f"usage_tokens={tokens if isinstance(tokens, int) else ''}")
+print(f"usage_timed_out={'1' if timed_out else '0'}")
+PY
+)"
+  if [ "${usage_timed_out:-0}" = "1" ]; then
+    echo "FAIL: hard cap — agent timed out" >&2
+    cap_fail=1
+  fi
+  if [ -n "${usage_turns:-}" ] && [ "$usage_turns" -gt "$HARD_MAX_TURNS" ]; then
+    echo "FAIL: hard cap — turns=$usage_turns > max=$HARD_MAX_TURNS" >&2
+    cap_fail=1
+  fi
+  if [ -n "${usage_tokens:-}" ] && [ "$usage_tokens" -gt "$HARD_MAX_TOKENS" ]; then
+    echo "FAIL: hard cap — tokens=$usage_tokens > max=$HARD_MAX_TOKENS" >&2
+    cap_fail=1
+  fi
+fi
+
+if [ "$REQUIRE_INSTITUTIONAL" = "1" ] || [ "$REQUIRE_STRUCTURED" = "1" ]; then
+  if [ ! -f .openbench_agent.log ]; then
+    echo "FAIL: missing .openbench_agent.log for ontology evidence" >&2
+    cap_fail=1
+  else
+    scripts_dir="${TASK_DIR}/../../scripts"
+    if [ ! -d "$scripts_dir" ]; then
+      scripts_dir="$(cd "$(dirname "$0")/../.." && pwd)/scripts"
+    fi
+    if [ "$REQUIRE_INSTITUTIONAL" = "1" ]; then
+      if ! python3 "$scripts_dir/require-real-clawql-tools.py" .openbench_agent.log \
+        'clawql_memory_recall|memory_recall'; then
+        echo "FAIL: required real memory_recall tool_use" >&2
+        cap_fail=1
+      fi
+    fi
+    if [ "$REQUIRE_STRUCTURED" = "1" ]; then
+      if ! python3 "$scripts_dir/require-structured-ontology-recall.py" .openbench_agent.log; then
+        echo "FAIL: required structured ontology memory_recall (schema+filters)" >&2
+        cap_fail=1
+      fi
+    fi
+  fi
+fi
+
+if [ "$cap_fail" -ne 0 ]; then
+  echo "MATTERS_FOUND: 0/${EXPECTED_N}"
+  echo "SCORE: 0.0"
+  exit 1
+fi
+
+echo "MATTERS_FOUND: ${found_raw}"
+if [ -n "${matters_ids_line:-}" ]; then
+  echo "${matters_ids_line}"
+fi
+score_fmt="$(python3 -c "print(f'{float(\"$score\"):g}')")"
+echo "SCORE: $score_fmt"
+python3 -c "import sys; sys.exit(0 if float('$score') >= 1.0 - 1e-9 else 1)"

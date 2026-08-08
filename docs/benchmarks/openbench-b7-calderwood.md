@@ -4,7 +4,7 @@
 **Suite id:** B-7  
 **Canonical ledger rows:** [`openbench-advanced-specs.md`](./openbench-advanced-specs.md) · plan breakdown: [`openbench-advanced-suites.md`](./openbench-advanced-suites.md)  
 **Upstream corpus:** Harvey + EngramLab **Calderwood & Harkness (C&H)** synthetic law firm (announced 2026-08-07)  
-**Ontology (exact enumeration):** [`docs/specs/ontology/legal-domain-v0.1.md`](../specs/ontology/legal-domain-v0.1.md) · [`memory_recall` structured filters](../specs/memory/memory-recall-structured-filter-v0.1.md)
+**Ontology (exact enumeration):** [`legal-domain-v0.1.md`](../specs/ontology/legal-domain-v0.1.md) · [`memory-recall-structured-filter-v0.1.md`](../specs/memory/memory-recall-structured-filter-v0.1.md) — these specs are what enable beating Harvey’s exhaustive-search failure mode.
 
 ---
 
@@ -75,14 +75,26 @@ Shared OpenBench rules still apply: real `tool:clawql_*` evidence · hard spend 
 
 ## Phase-1 (ship now)
 
-| Cell  | Task id                             | Fixture                                                          | Status                                   |
-| ----- | ----------------------------------- | ---------------------------------------------------------------- | ---------------------------------------- |
-| B-7.1 | `institutional-knowledge-enumerate` | In-repo mini-firm vault seed (**120** nested matters; 5 matches) | Sonnet 4.6 redesign on `pr_active` (n=3) |
-| B-7.2 | `institutional-client-preference`   | Mini-firm client X preferences across 4 matters                  | Spec only                                |
-| B-7.3 | `institutional-amortized-session`   | Same vault; 5 related prompts; cost + completeness               | Spec only (needs session harness)        |
-| B-7.4 | Full C&H mount                      | Mount open-sourced filesystem + Harvey task set                  | Blocked on stable corpus download path   |
+| Cell           | Task id                                        | Fixture                                                          | Status                                                                                         |
+| -------------- | ---------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| B-7.1          | `institutional-knowledge-enumerate`            | In-repo mini-firm vault seed (**120** nested matters; 5 matches) | Fair same-files; keyword on-arm reproduced Harvey near-miss FAIL ([31244644204](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31244644204)) |
+| B-7.1-ontology | `institutional-knowledge-enumerate-ontology`   | Same fixture; **5 turns / 60s / 4k tokens**; require schema+filters | Spec + pack in #877 — proves structured filters complete in ~2 turns                         |
+| B-7.2          | `institutional-client-preference`              | Mini-firm client X preferences across 4 matters                  | Spec only                                                                                      |
+| B-7.3          | `institutional-amortized-session`              | Same vault; 5 related prompts; cost + completeness               | Spec only (needs session harness)                                                              |
+| B-7.4          | Full C&H mount                                 | Mount open-sourced filesystem + Harvey task set                  | Blocked on stable corpus download path                                                         |
 
-**Fair cell (2026-08-08):** Identical prose corpus on disk for **all** arms; on additionally gets vault with `CLAWQL_*` enrichment. Prior confounded design hid files from on-arm — retired. Sonnet burn [31238962094](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31238962094) invalid for Harvey claim.
+**Fair cell (2026-08-08):** Identical prose corpus on disk for **all** arms; on additionally gets vault with `CLAWQL_*` enrichment → `ontology.db`. Prior confounded design hid files from on-arm — retired.
+
+**Before/after (Harvey outreach story):**
+
+| State | Arm | Score | Failure mode |
+| --- | --- | --- | --- |
+| Before structured filters | on (keyword) | 0 (false positives) | Semantic approximation — same as Harvey |
+| Before structured filters | off | 0 | Couldn't complete prose scan |
+| After structured filters | on (`schema`+`filters`) | Expected 1.0 | Exact predicate, ~2 turns |
+| After structured filters | off | Expected 0 | No structured filter available |
+
+Implementation specs: [`legal-domain-v0.1`](../specs/ontology/legal-domain-v0.1.md) · [`structured-filter-v0.1`](../specs/memory/memory-recall-structured-filter-v0.1.md).
 
 ### Phase-1 arms (B-7.1)
 
