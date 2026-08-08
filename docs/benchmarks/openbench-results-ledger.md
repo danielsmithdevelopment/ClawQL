@@ -1,12 +1,24 @@
-### 2026-08-07 — `institutional-knowledge-enumerate` (B-7.1) WIN
+### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) hardened n=3 — gate FAIL
+
+Hardening: 30-note fixture (still 5 matches), stripped prompt IDs, off-arm seed restore + exhaustive nudge, caps 50/400s, `pr_trials=3`.
+
+| Arm              | Matters / trial   | Mean matters | Mean score | Notes |
+| ---------------- | ----------------- | ------------ | ---------- | ----- |
+| clawql-on        | 5/5, **0/5**, 3/5 | **2.67/5**   | 0.533      | high variance; t2 wrote `/tmp/matters.json` (wrong path) |
+| clawql-off       | 5/5, 3/5, 4/5     | **4.0/5**    | **0.8**    | ~30×`read` of seed dir — exhaustive file search works |
+| clawql-no-memory | 0/5, 0/5, 0/5     | **0/5**      | 0.0        | tools without vault still useless |
+
+Run: [31230837116](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31230837116) (PR [#872](https://github.com/danielsmithdevelopment/ClawQL/pull/872)). **Gate FAIL** (`on_score < off_score`). **Verdict:** clear `pr_active`; do **not** claim vault WIN. At 30 short machine-readable notes, a persistent bare agent nearly enumerates by reading files; `memory_recall` is not uniquely necessary and is less reliable (n=3). `no-memory` still 0/5. Next: harder distribution / larger corpus / features not trivially file-grepable before re-activate.
+
+### 2026-08-07 — `institutional-knowledge-enumerate` (B-7.1) n=1 (historical; confounded)
 
 | Arm              | Matters found | Score             | Notes                                   |
 | ---------------- | ------------- | ----------------- | --------------------------------------- |
 | clawql-on        | **5/5**       | **1.0** (3t, 30s) | seeded vault + `memory_recall`          |
-| clawql-off       | **0/5**       | **0.0** (2t, 11s) | no ClawQL MCP; `matters.json` missing   |
+| clawql-off       | **0/5**       | **0.0** (2t, 11s) | early give-up; seed stripped from workdir |
 | clawql-no-memory | **0/5**       | **0.0** (2t, 41s) | tools without seeded vault; no artifact |
 
-Run: [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796) (PR [#871](https://github.com/danielsmithdevelopment/ClawQL/pull/871)). Gate OK. Three-arm isolate. **Verdict:** retire from `pr_active`. Headline: exhaustive matter enumeration needs persisted vault memory, not tools alone.
+Run: [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796) (PR [#871](https://github.com/danielsmithdevelopment/ClawQL/pull/871)). Gate OK at the time, but **not outreach-ready** after hardening exposed the confound.
 
 ### 2026-08-07 — `idp-pipeline-resilience` (B-2.2) WIN
 
