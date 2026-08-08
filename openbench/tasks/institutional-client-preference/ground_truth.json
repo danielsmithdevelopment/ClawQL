@@ -1,0 +1,27 @@
+{
+  "task": "institutional-client-preference",
+  "client_id": "CLT-0017",
+  "client_name": "Meridian Capital",
+  "active_matter": "MAT-2801",
+  "top1": "MAT-2801-A",
+  "top1_aliases": [
+    "MAT-2801-A",
+    "A",
+    "OPTION A",
+    "TERM SHEET A",
+    "SHEET A",
+    "NORTHLINE OPTION A"
+  ],
+  "ranking": [
+    "MAT-2801-A",
+    "MAT-2801-C",
+    "MAT-2801-B"
+  ],
+  "note_count": 128,
+  "layout": "prose preference signal; no preferred= field; CLAWQL_* vault-only",
+  "anti_patterns": [
+    "field sort on deal value must NOT yield top1",
+    "answer IDs not in task prompt",
+    "ground-truth rationale lives in docs/ only"
+  ]
+}

@@ -2,9 +2,9 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-7.1 double WIN: fair @ 31255172649 + ontology efficiency @ 31256241850 (both on 3/3 structured_predicate / off 0/3). pr_active cleared pending #877 merge.",
+  "live_resume_note": "B-7.2 preference + B-7.1-blind both retired WIN. Next: B-7.3 session harness / B-7.4 C&H corpus when available.",
   "pr_active": [],
-  "pr_trials": 1,
+  "pr_trials": 3,
   "retired": {
     "idp-safe-pipeline-lite": {
       "reason": "Verified WIN — stubbed 7-stage IDP orchestration (on 1.0 / off 0.0; RTP v1.1)",
@@ -121,6 +121,14 @@
     "institutional-knowledge-enumerate-ontology": {
       "reason": "Verified WIN — efficiency cell under 5-turn/4k/90s caps (on 3/3 / off 0/3; structured_predicate + write; mean wall ~27s)",
       "evidence_run": "31256241850"
+    },
+    "institutional-knowledge-enumerate-blind": {
+      "reason": "Verified WIN — filter-shape CRITICAL + structured_predicate recovery (on 3/3 5/5 / off 0/3; FP→0 still applies)",
+      "evidence_run": "31267585806"
+    },
+    "institutional-client-preference": {
+      "reason": "Verified WIN — Meridian prose preference vs price-sort distractor (on 3/3 / off 0/3; top1 MAT-2801-A; prior near-miss 31267585806)",
+      "evidence_run": "31268782329"
     }
   },
   "ouroboros_pr_enabled": false,

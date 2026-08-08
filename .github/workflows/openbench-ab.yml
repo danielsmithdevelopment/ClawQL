@@ -268,7 +268,9 @@ jobs:
           matrix.task == 'memory-wikilink-hop' ||
           matrix.task == 'memory-conflict-pricing' ||
           matrix.task == 'institutional-knowledge-enumerate' ||
-          matrix.task == 'institutional-knowledge-enumerate-ontology'
+          matrix.task == 'institutional-knowledge-enumerate-ontology' ||
+          matrix.task == 'institutional-knowledge-enumerate-blind' ||
+          matrix.task == 'institutional-client-preference'
         run: |
           {
             echo "OPENBENCH_TIMEOUT_S=180"
@@ -373,6 +375,18 @@ jobs:
               else
                 echo "OPENBENCH_ARMS=clawql-off,clawql-on,clawql-no-memory"
               fi
+            fi
+            if [ "${{ matrix.task }}" = "institutional-knowledge-enumerate-blind" ]; then
+              # Blind cell: invent structured filters; higher off budget.
+              echo "OPENBENCH_TIMEOUT_S=600"
+              echo "OPENBENCH_MODEL=openrouter/deepseek/deepseek-chat"
+              echo "OPENBENCH_ARMS=clawql-off,clawql-on,clawql-no-memory"
+            fi
+            if [ "${{ matrix.task }}" = "institutional-client-preference" ]; then
+              # B-7.2 preference: three-arm fair cell + rewrite-nudge budget.
+              echo "OPENBENCH_TIMEOUT_S=480"
+              echo "OPENBENCH_MODEL=openrouter/deepseek/deepseek-chat"
+              echo "OPENBENCH_ARMS=clawql-off,clawql-on,clawql-no-memory"
             fi
           } >> "$GITHUB_ENV"
           if [ "${{ matrix.task }}" = "sandbox-trusted-compute" ]; then
