@@ -730,19 +730,19 @@ clawql-streams (coordination)
 
 ## 13. Comparison to alternatives
 
-|                      | Stripe Minions              | Anthropic Managed Agents | OpenAI Agents SDK | ClawQL Streams                                                |
-| -------------------- | --------------------------- | ------------------------ | ----------------- | ------------------------------------------------------------- |
-| **Trigger**          | Slack reaction              | Cron / API call          | API call          | WebSocket · NATS · webhook · cron · poll · gRPC · SSE         |
-| **Tool catalog**     | Custom (Toolshed, internal) | Built-in + custom        | Built-in + custom | Any MCP server via mcp-api-adapter                            |
-| **Audit trail**      | Internal                    | Provider-managed         | Provider-managed  | WORM / LTX on operator bucket, or Postgres                    |
-| **Sovereignty**      | Internal only               | Provider servers         | Provider servers  | celld · cellrt · air-gapped K8s · Cloudflare                  |
-| **Scale**            | Internal K8s                | Provider-managed         | Provider-managed  | celld/cellrt cells · CF DOs · K8s HPA                         |
-| **Protocol surface** | Internal                    | API only                 | API only          | Any protocol both directions                                  |
-| **Model**            | Goose + Claude Code         | Claude only              | OpenAI only       | Any model via clawql-inference                                |
+|                      | Stripe Minions              | Anthropic Managed Agents | OpenAI Agents SDK | ClawQL Streams                                                                   |
+| -------------------- | --------------------------- | ------------------------ | ----------------- | -------------------------------------------------------------------------------- |
+| **Trigger**          | Slack reaction              | Cron / API call          | API call          | WebSocket · NATS · webhook · cron · poll · gRPC · SSE                            |
+| **Tool catalog**     | Custom (Toolshed, internal) | Built-in + custom        | Built-in + custom | Any MCP server via mcp-api-adapter                                               |
+| **Audit trail**      | Internal                    | Provider-managed         | Provider-managed  | WORM / LTX on operator bucket, or Postgres                                       |
+| **Sovereignty**      | Internal only               | Provider servers         | Provider servers  | celld · cellrt · air-gapped K8s · Cloudflare                                     |
+| **Scale**            | Internal K8s                | Provider-managed         | Provider-managed  | celld/cellrt cells · CF DOs · K8s HPA                                            |
+| **Protocol surface** | Internal                    | API only                 | API only          | Any protocol both directions                                                     |
+| **Model**            | Goose + Claude Code         | Claude only              | OpenAI only       | Any model via clawql-inference                                                   |
 | **DO runtime**       | N/A                         | Provider                 | Provider          | celld (Workers API) · **cellrt** (owned Rust) · Cloudflare — **not** custom Node |
-| **Payments**         | x402 demo                   | None                     | None              | Full economics stack                                          |
-| **Open source**      | No                          | No                       | Partial           | Apache 2.0 core + celld / cellrt Apache 2.0                   |
-| **Multi-agent**      | No                          | Research preview         | Yes               | Ouroboros ensemble                                            |
+| **Payments**         | x402 demo                   | None                     | None              | Full economics stack                                                             |
+| **Open source**      | No                          | No                       | Partial           | Apache 2.0 core + celld / cellrt Apache 2.0                                      |
+| **Multi-agent**      | No                          | Research preview         | Yes               | Ouroboros ensemble                                                               |
 
 ---
 

@@ -86,14 +86,14 @@ async alarm() {
 Model calls never spawn a process. The DO holds a virtual key and calls the inference gateway:
 
 ```ts
-const res = await fetch(env.INFERENCE_URL + "/v1/messages", {
-  method: "POST",
+const res = await fetch(env.INFERENCE_URL + '/v1/messages', {
+  method: 'POST',
   headers: {
     Authorization: `Bearer ${virtualKey}`,
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
   body: JSON.stringify(payload),
-});
+})
 ```
 
 PAL, provider SDKs, and credential vaults stay in clawql-inference — outside the 64 MiB cell bundle.
@@ -103,16 +103,16 @@ PAL, provider SDKs, and credential vaults stay in clawql-inference — outside t
 Outbound sockets keep a cell resident and **do not continue when the cell moves nodes** ([limitations](https://celld.dev/docs/limitations)). Persist intent and reconnect after activation:
 
 ```ts
-await this.ctx.storage.put("ws_intent", {
+await this.ctx.storage.put('ws_intent', {
   reconnect: true,
   sourceUrl,
   authRef,
   lastEventId,
   backoffMs: 1000,
-});
+})
 
 // on close / after constructor wake:
-await this.ctx.storage.setAlarm(Date.now() + backoffMs);
+await this.ctx.storage.setAlarm(Date.now() + backoffMs)
 ```
 
 Prefer pinning ingress for a cell to its owner node when latency matters; cross-node WS close/reconnect coverage is thinner than single-node.
@@ -148,9 +148,9 @@ Gateway Worker / GatewayDO
 
 Stable DO names make replay safe:
 
-| Object       | Name pattern                      | Effect                                                        |
-| ------------ | --------------------------------- | ------------------------------------------------------------- |
-| Subscription | `sub:\{subscriptionId\}`            | One cell per subscription                                     |
+| Object       | Name pattern                          | Effect                                                        |
+| ------------ | ------------------------------------- | ------------------------------------------------------------- |
+| Subscription | `sub:\{subscriptionId\}`              | One cell per subscription                                     |
 | Session      | `sess:\{subscriptionId\}:\{eventId\}` | Same event + sub → same cell; second spawn is idempotent wake |
 
 Gateway still allocates `doInstanceId` / `virtualKeyId` before first spawn and writes `DO_CREATED` once (guard with a `spawned` flag in session SQLite).

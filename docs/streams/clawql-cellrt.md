@@ -16,14 +16,14 @@ It is **not** a general-purpose DO runtime and **not** a Node `worker_threads` r
 
 ### Why build rather than only use celld
 
-| Concern              | celld (adopt)                                      | clawql-cellrt (own)                                                                 |
-| -------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Status               | Alpha; hostile multi-tenant not supported          | ClawQL-owned; production target                                                     |
-| Security story       | V8 isolate + operator mesh                         | Rust memory safety + eBPF + WASM capability sandbox                                 |
-| Vault / inference    | External sidecars / HTTP                           | Embedded dynamic secrets + PAL + virtual keys                                       |
-| Observability        | External                                           | Embedded OTel + Prometheus + Langfuse                                               |
-| Tool execution       | JS bundle in V8                                    | Bootstrap: HTTP → clawql-mcp; full: `clawql-core.wasm` in Wasmtime                  |
-| Workers API parity   | High (same surface as Cloudflare)                  | Different API (Rust cell trait + WIT); session *contract* shared with Streams       |
+| Concern            | celld (adopt)                             | clawql-cellrt (own)                                                           |
+| ------------------ | ----------------------------------------- | ----------------------------------------------------------------------------- |
+| Status             | Alpha; hostile multi-tenant not supported | ClawQL-owned; production target                                               |
+| Security story     | V8 isolate + operator mesh                | Rust memory safety + eBPF + WASM capability sandbox                           |
+| Vault / inference  | External sidecars / HTTP                  | Embedded dynamic secrets + PAL + virtual keys                                 |
+| Observability      | External                                  | Embedded OTel + Prometheus + Langfuse                                         |
+| Tool execution     | JS bundle in V8                           | Bootstrap: HTTP → clawql-mcp; full: `clawql-core.wasm` in Wasmtime            |
+| Workers API parity | High (same surface as Cloudflare)         | Different API (Rust cell trait + WIT); session _contract_ shared with Streams |
 
 **Streams v0.2 still adopts celld** for the Workers/DO JavaScript path and as an interim self-hosted option. **cellrt is the ClawQL-owned production path** when sovereignty, security-in-depth, and embedded ClawQL capabilities matter more than Cloudflare Workers API parity.
 
@@ -516,7 +516,7 @@ cellrt:
   inference:
     endpoint: ""
   security:
-    ebpf: true            # Linux only — disable for macOS/dev
+    ebpf: true # Linux only — disable for macOS/dev
     attestation: true
   observability:
     otel:
@@ -527,7 +527,7 @@ cellrt:
     prometheus:
       enabled: true
       port: 9090
-  wasmMode: http          # http (bootstrap) | wasm (full)
+  wasmMode: http # http (bootstrap) | wasm (full)
 ```
 
 CLI surface under Streams: `clawql streams cellrt start|deploy|diagnose|scale` (alongside existing `clawql streams celld …`).
@@ -536,29 +536,29 @@ CLI surface under Streams: `clawql streams cellrt start|deploy|diagnose|scale` (
 
 ## 12. Comparison
 
-|                          | celld                         | clawql-cellrt                                              |
-| ------------------------ | ----------------------------- | ---------------------------------------------------------- |
-| **Runtime**              | V8 (Workers/DO JS API)        | Wasmtime (Rust host)                                       |
-| **Language**             | JavaScript / TypeScript       | Rust + WASM component                                      |
-| **Security**             | Alpha; no hostile multi-tenant| Rust memory safety + eBPF + WASM sandbox                   |
-| **Vault**                | External sidecar              | Embedded dynamic secret injection                          |
-| **Inference**            | External HTTP                 | Embedded PAL routing + virtual keys                        |
-| **Observability**        | External                      | Embedded OTel + Langfuse + Prometheus                      |
-| **Binary attestation**   | Upstream GH attestation       | Cosign verify on startup                                   |
-| **Capability model**     | Isolate ambient APIs          | WIT — explicit capability grants                           |
-| **Bootstrap**            | N/A                           | HTTP → clawql-mcp (ships immediately)                      |
-| **Full path**            | JS bundle in V8               | `clawql-core.wasm` in-process                              |
-| **Coordination**         | S3 bucket                     | S3 bucket (same pattern)                                   |
-| **LTX / WORM**           | Yes                           | Yes                                                        |
-| **License**              | Apache 2.0                    | Apache 2.0                                                 |
+|                        | celld                          | clawql-cellrt                            |
+| ---------------------- | ------------------------------ | ---------------------------------------- |
+| **Runtime**            | V8 (Workers/DO JS API)         | Wasmtime (Rust host)                     |
+| **Language**           | JavaScript / TypeScript        | Rust + WASM component                    |
+| **Security**           | Alpha; no hostile multi-tenant | Rust memory safety + eBPF + WASM sandbox |
+| **Vault**              | External sidecar               | Embedded dynamic secret injection        |
+| **Inference**          | External HTTP                  | Embedded PAL routing + virtual keys      |
+| **Observability**      | External                       | Embedded OTel + Langfuse + Prometheus    |
+| **Binary attestation** | Upstream GH attestation        | Cosign verify on startup                 |
+| **Capability model**   | Isolate ambient APIs           | WIT — explicit capability grants         |
+| **Bootstrap**          | N/A                            | HTTP → clawql-mcp (ships immediately)    |
+| **Full path**          | JS bundle in V8                | `clawql-core.wasm` in-process            |
+| **Coordination**       | S3 bucket                      | S3 bucket (same pattern)                 |
+| **LTX / WORM**         | Yes                            | Yes                                      |
+| **License**            | Apache 2.0                     | Apache 2.0                               |
 
 ### Three deployment modes
 
-| Mode | Mechanism                                      | Best for                                      |
-| ---- | ---------------------------------------------- | --------------------------------------------- |
-| A    | Cloudflare Workers (existing DO code path)     | Hosted SaaS                                   |
-| B    | **cellrt** self-hosted (bucket coordinator)    | Sovereign / security-first production         |
-| C    | K8s HPA on NATS lag                            | Regulated / air-gapped; no DO runtime         |
+| Mode | Mechanism                                   | Best for                              |
+| ---- | ------------------------------------------- | ------------------------------------- |
+| A    | Cloudflare Workers (existing DO code path)  | Hosted SaaS                           |
+| B    | **cellrt** self-hosted (bucket coordinator) | Sovereign / security-first production |
+| C    | K8s HPA on NATS lag                         | Regulated / air-gapped; no DO runtime |
 
 celld remains available as Mode B' for operators who want Workers API parity on self-hosted hardware while cellrt matures.
 
@@ -566,17 +566,17 @@ celld remains available as Mode B' for operators who want Workers API parity on 
 
 ## 13. Build sequence
 
-| Week   | Focus                                                                 | Exit criteria                                                      |
-| ------ | --------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| 1      | Coordination: leases, LTX, peer HMAC                                  | Multi-node acquire/fail/recover tests green                        |
-| 2      | Cell runtime HTTP bootstrap + Vault + virtual keys                    | Spawn cell → tool via clawql-mcp → WORM in bucket                  |
-| 3      | Security: Cosign, eBPF (Linux), capability enforcer stub              | Tampered binary rejected; denied import fails instantiate          |
-| 4      | Observability + CLI + Helm                                            | `diagnose`, `/metrics`, Langfuse opt-in                            |
-| 5–6    | `@clawql/wasm-polyfills`                                              | Standalone npm; polyfill surface tests                             |
-| 7      | `@clawql/effect-wasm` + Effect-team scheduler hook issue              | Minimal fiber schedule works in Wasmtime                           |
-| 8      | clawql-core WASM build (`cache`, `audit` first)                       | Valid component &lt; 64 MiB                                        |
-| 9      | Wasmtime integration (replace HTTP for ported tools)                  | In-process tool calls + WORM correct                               |
-| 10     | Hardening, Wasmtime vs WasmEdge bench, C&H B-7.1 smoke via cellrt     | Production readiness checklist                                     |
+| Week | Focus                                                             | Exit criteria                                             |
+| ---- | ----------------------------------------------------------------- | --------------------------------------------------------- |
+| 1    | Coordination: leases, LTX, peer HMAC                              | Multi-node acquire/fail/recover tests green               |
+| 2    | Cell runtime HTTP bootstrap + Vault + virtual keys                | Spawn cell → tool via clawql-mcp → WORM in bucket         |
+| 3    | Security: Cosign, eBPF (Linux), capability enforcer stub          | Tampered binary rejected; denied import fails instantiate |
+| 4    | Observability + CLI + Helm                                        | `diagnose`, `/metrics`, Langfuse opt-in                   |
+| 5–6  | `@clawql/wasm-polyfills`                                          | Standalone npm; polyfill surface tests                    |
+| 7    | `@clawql/effect-wasm` + Effect-team scheduler hook issue          | Minimal fiber schedule works in Wasmtime                  |
+| 8    | clawql-core WASM build (`cache`, `audit` first)                   | Valid component &lt; 64 MiB                               |
+| 9    | Wasmtime integration (replace HTTP for ported tools)              | In-process tool calls + WORM correct                      |
+| 10   | Hardening, Wasmtime vs WasmEdge bench, C&H B-7.1 smoke via cellrt | Production readiness checklist                            |
 
 Shipable surface at **week 4** (HTTP bootstrap). Full Wasmtime path at **week 10**.
 
@@ -585,7 +585,7 @@ Shipable surface at **week 4** (HTTP bootstrap). Full Wasmtime path at **week 10
 ## 14. Open questions
 
 1. **Wasmtime vs WasmEdge.** Prefer Wasmtime (Bytecode Alliance, component model maturity). Re-benchmark WasmEdge in week 10.
-2. **Effect scheduler shim correctness.** Highest technical risk. Open Effect-team issue in week 7 *before* relying on internal patches. Use codegraph for Node-API blast radius first.
+2. **Effect scheduler shim correctness.** Highest technical risk. Open Effect-team issue in week 7 _before_ relying on internal patches. Use codegraph for Node-API blast radius first.
 3. **eBPF on non-Linux.** macOS/dev is stub-only; document in Helm and PICERL that production security monitoring requires Linux.
 4. **Bundle size at full tool surface.** ComponentizeJS embeds SpiderMonkey (~7 MB). Trim via `CLAWQL_PROVIDER=` subsets; CI fails above 64 MiB.
 5. **Cloudflare Workers adapter for the same WASM component.** Verify wrangler / Workers component-model support for the WIT world before locking host import names.
@@ -606,6 +606,6 @@ Shipable surface at **week 4** (HTTP bootstrap). Full Wasmtime path at **week 10
 
 ---
 
-*clawql-cellrt · Specification v0.1 · August 2026 · Draft*  
-*Companion: ClawQL Streams Spec v0.2 · ClawQL Celld Integration Spec*  
-*Planned crate path: `crates/clawql-cellrt`*
+_clawql-cellrt · Specification v0.1 · August 2026 · Draft_  
+_Companion: ClawQL Streams Spec v0.2 · ClawQL Celld Integration Spec_  
+_Planned crate path: `crates/clawql-cellrt`_
