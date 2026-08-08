@@ -8,6 +8,8 @@ export const GENERATED_BODY_ROUTES = {
   'clawql-surveillance-body.mdx': '/surveillance/clawql-surveillance',
   'clawql-streams-body.mdx': '/streams/clawql-streams',
   'clawql-durable-objects-body.mdx': '/streams/clawql-durable-objects',
+  'clawql-celld-body.mdx': '/streams/clawql-celld',
+  'clawql-cellrt-body.mdx': '/streams/clawql-cellrt',
   'mcp-api-adapter-body.mdx': '/mcp/mcp-api-adapter',
   'clawql-token-efficiency-body.mdx': '/architecture/token-efficiency',
   'enterprise-ontology-body.mdx': '/architecture/enterprise-ontology',

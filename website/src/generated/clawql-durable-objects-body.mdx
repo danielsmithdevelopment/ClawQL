@@ -1,8 +1,8 @@
 # ClawQL Durable Objects — Implementation Spec v0.1.1
 
 **Status:** Draft · August 2026 · v0.1.1 (companion to [Streams v0.2](/streams/clawql-streams))  
-**Package surface:** Cloudflare Durable Objects (hosted) · [celld](https://celld.dev/) (self-hosted) · Kubernetes HPA (regulated)  
-**Depends on:** [`clawql-streams`](/streams/clawql-streams) · [`clawql-celld.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-celld.md) · [`clawql-inference`](/inference/clawql-inference) · OpenBenchTrace / RTP  
+**Package surface:** Cloudflare Durable Objects (hosted) · [celld](https://celld.dev/) (self-hosted Workers API) · [`clawql-cellrt`](/streams/clawql-cellrt) (ClawQL-owned, planned) · Kubernetes HPA (regulated)  
+**Depends on:** [`clawql-streams`](/streams/clawql-streams) · [`clawql-celld.md`](/streams/clawql-celld) · [`clawql-cellrt.md`](/streams/clawql-cellrt) · [`clawql-inference`](/inference/clawql-inference) · OpenBenchTrace / RTP  
 **Related:** [`mcp-api-adapter`](/mcp/mcp-api-adapter) · [PorTAL flywheel](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/inference/portal-flywheel.md) · [celld docs](https://celld.dev/docs/)
 
 ---
@@ -11,7 +11,7 @@
 
 This document specifies how ClawQL Streams agent sessions run inside **Durable Objects**.
 
-**Self-hosted DO runtime:** **[celld](https://celld.dev/)** (Apache 2.0, [denoland/celld](https://github.com/denoland/celld)) — not a custom ClawQL runtime on Node `worker_threads`. Hosted path remains **Cloudflare Workers / Durable Objects**. Regulated / air-gapped path remains **Kubernetes HPA** until celld is production-stable. Integration detail (constraints, LTX, deploy): [`clawql-celld.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-celld.md). Product decisions: [Streams Specification v0.2](/streams/clawql-streams).
+**Self-hosted DO runtimes:** **[celld](https://celld.dev/)** (Apache 2.0, Workers/DO API parity) and planned **[`clawql-cellrt`](/streams/clawql-cellrt)** (ClawQL-owned Rust + Wasmtime). **Not** a custom ClawQL runtime on Node `worker_threads`. Hosted path remains **Cloudflare Workers / Durable Objects**. Regulated / air-gapped path remains **Kubernetes HPA** until a DO runtime is production-stable. Integration detail: [`clawql-celld.md`](/streams/clawql-celld) · [`clawql-cellrt.md`](/streams/clawql-cellrt). Product decisions: [Streams Specification v0.2](/streams/clawql-streams).
 
 Goals:
 
@@ -33,7 +33,7 @@ The Durable Objects API is the **session contract**. Cloudflare implements it on
 | `SubscriptionDO` | Long-lived (hibernates) | Holds WebSocket/source connection, significance filter, subscription config + `rtpConsent`, event buffer |
 | `AgentSessionDO` | Ephemeral (per event)   | Runs one agent session with three sidecars; destroys itself on exit                                      |
 
-On celld, a `GatewayDO` (or Gateway Worker) may sit in front for webhook routing and idempotent naming — see [`clawql-celld.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-celld.md) §4.
+On celld, a `GatewayDO` (or Gateway Worker) may sit in front for webhook routing and idempotent naming — see [`clawql-celld.md`](/streams/clawql-celld) §4.
 
 Gateway routes by topic → `SubscriptionDO`. `SubscriptionDO` spawns `AgentSessionDO` when the significance filter passes.
 
@@ -52,7 +52,7 @@ Sidecars remain **logical concerns** (in-process modules). Under **celld**, `Aud
 
 ### 3.1 AuditSidecar
 
-Append-only WORM writer. Threads **virtual key ID** through every entry (§5). Does not store PII event bodies — payload hashes only (Streams §6). On celld this is LTX-backed SQLite; see [`clawql-celld.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-celld.md) §6.
+Append-only WORM writer. Threads **virtual key ID** through every entry (§5). Does not store PII event bodies — payload hashes only (Streams §6). On celld this is LTX-backed SQLite; see [`clawql-celld.md`](/streams/clawql-celld) §6.
 
 ### 3.2 InferenceSidecar
 
@@ -101,7 +101,7 @@ If key issuance fails, no DO is spawned and no hold is left open.
 ## 6. WebSocket and hibernation
 
 - **SubscriptionDO** uses WebSocket (or DO-compatible transport) so **hibernation** can sleep between events while keeping the connection (Cloudflare and celld).
-- Outbound source WebSockets: persist **reconnect intent** in SQLite and use **`setAlarm`** — never `setInterval` (throws on celld). Outbound sockets do not survive celld node migration — reconnect after activation ([`clawql-celld.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-celld.md) §3).
+- Outbound source WebSockets: persist **reconnect intent** in SQLite and use **`setAlarm`** — never `setInterval` (throws on celld). Outbound sockets do not survive celld node migration — reconnect after activation ([`clawql-celld.md`](/streams/clawql-celld) §3).
 - Agent sessions that need a persistent client channel (e.g. mcp-api-adapter sixth surface) also prefer WebSocket for hibernation-friendly sessions; Streamable HTTP remains the fallback for clients that cannot do WebSocket.
 - HTTP-only long polls do not hibernate cleanly on Cloudflare/celld DOs — document as a DO-path limitation; K8s path may keep HTTP workers warm instead.
 
@@ -148,7 +148,7 @@ Order matters: export and capture before key expiry so the last inference metada
 | WORM         | Platform DO storage       | LTX on fleet bucket (`sqlite3` audit) | Postgres / JSONL                               |
 | Scale signal | DO platform               | Fleet density / alarms                | NATS consumer lag → HPA (Streams §9)           |
 
-Parity target: **same session contract and WORM/RTP schemas**. Exact hibernation and cold-start numbers will differ — document in operator runbooks. Prefer celld over inventing a Node DO runtime; prefer K8s HPA when celld's alpha / single-app-fleet limits are unacceptable ([`clawql-celld.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-celld.md) §8, §11).
+Parity target: **same session contract and WORM/RTP schemas**. Exact hibernation and cold-start numbers will differ — document in operator runbooks. Prefer celld or [`clawql-cellrt`](/streams/clawql-cellrt) over inventing a Node DO runtime; prefer K8s HPA when alpha / single-app-fleet limits are unacceptable ([`clawql-celld.md`](/streams/clawql-celld) §8, §11).
 
 ---
 
@@ -166,7 +166,7 @@ Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / 
 - [ ] Egress allowlist for InferenceSidecar (`fetch` to clawql-inference only as designed)
 - [ ] `rtpConsent` JWT validated before TrainingDataSidecar export
 - [ ] Manifest ID injected from Cosign-signed release, not free-form client input
-- [ ] celld: peers on private/WireGuard mesh; ingress TLS; bucket creds scoped ([`clawql-celld.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-celld.md) §8)
+- [ ] celld: peers on private/WireGuard mesh; ingress TLS; bucket creds scoped ([`clawql-celld.md`](/streams/clawql-celld) §8)
 
 ---
 
@@ -183,7 +183,8 @@ Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / 
 ## Further reading
 
 - [`docs/streams/clawql-streams.md`](/streams/clawql-streams) — Streams Specification v0.2
-- [`docs/streams/clawql-celld.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-celld.md) — celld integration (constraints, LTX, deploy)
+- [`docs/streams/clawql-celld.md`](/streams/clawql-celld) — celld integration (constraints, LTX, deploy)
+- [`docs/streams/clawql-cellrt.md`](/streams/clawql-cellrt) — ClawQL-owned Rust + Wasmtime cell runtime
 - [`docs/inference/clawql-inference.md`](/inference/clawql-inference) — virtual keys, PAL, call store
 - [`docs/benchmarks/openbench-trace-collection.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-trace-collection.md) — OBT + RTP
 - [celld](https://celld.dev/) · [docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security)

@@ -112,6 +112,11 @@ export const docsNavigation: Array<NavGroup> = [
         href: '/streams/clawql-celld',
         tag: 'Draft',
       },
+      {
+        title: 'clawql-cellrt',
+        href: '/streams/clawql-cellrt',
+        tag: 'Draft',
+      },
       { title: 'Ouroboros', href: '/ouroboros' },
     ],
   },

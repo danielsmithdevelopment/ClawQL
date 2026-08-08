@@ -45,6 +45,8 @@ Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** /
 | `/surveillance/clawql-surveillance` | `docs/surveillance/clawql-surveillance.md` | `scripts/sync-clawql-surveillance-doc.mjs` |
 | `/streams/clawql-streams` | `docs/streams/clawql-streams.md` | `scripts/sync-clawql-streams-doc.mjs` |
 | `/streams/clawql-durable-objects` | `docs/streams/clawql-durable-objects.md` | `scripts/sync-clawql-durable-objects-doc.mjs` |
+| `/streams/clawql-celld` | `docs/streams/clawql-celld.md` | `scripts/sync-clawql-celld-doc.mjs` |
+| `/streams/clawql-cellrt` | `docs/streams/clawql-cellrt.md` | `scripts/sync-clawql-cellrt-doc.mjs` |
 | `/mcp/mcp-api-adapter` | `docs/mcp/mcp-api-adapter.md` | `scripts/sync-mcp-api-adapter-doc.mjs` |
 | `/mcp/protocol-fabric` | `docs/mcp/protocol-fabric.md` | `scripts/sync-protocol-fabric-doc.mjs` |
 | `/architecture` | `docs/vision/clawql-master-enablement-guide.md` (full technical reference)| `scripts/sync-clawql-master-enablement-doc.mjs` |

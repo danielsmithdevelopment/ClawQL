@@ -77,6 +77,8 @@ export const DOC_SITE_ROUTES = {
     '/surveillance/clawql-surveillance',
   'docs/streams/clawql-streams.md': '/streams/clawql-streams',
   'docs/streams/clawql-durable-objects.md': '/streams/clawql-durable-objects',
+  'docs/streams/clawql-celld.md': '/streams/clawql-celld',
+  'docs/streams/clawql-cellrt.md': '/streams/clawql-cellrt',
   'docs/architecture/clawql-token-efficiency.md':
     '/architecture/token-efficiency',
   'docs/architecture/enterprise-ontology.md':

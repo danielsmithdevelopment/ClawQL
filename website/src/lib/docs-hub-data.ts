@@ -206,6 +206,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
       'Streams session runtime — Audit / Inference / Training sidecars, virtual key lifecycle.',
     icon: SquaresPlusIcon,
   }),
+  card({
+    href: '/streams/clawql-cellrt',
+    name: 'clawql-cellrt (draft)',
+    description:
+      'ClawQL-owned Rust + Wasmtime cell runtime — LTX WORM, Vault, WASM sandbox, HTTP bootstrap.',
+    icon: SquaresPlusIcon,
+  }),
 ]
 
 /** Deployment hub — ops/infra only (not getting-started entry points). */

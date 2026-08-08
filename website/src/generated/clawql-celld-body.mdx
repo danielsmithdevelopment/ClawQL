@@ -3,7 +3,7 @@
 **Status:** Draft · August 2026 · v0.1  
 **Package surface:** [celld](https://celld.dev/) (self-hosted Durable Objects) for ClawQL Streams  
 **Depends on:** [`clawql-streams`](/streams/clawql-streams) v0.2 · [`clawql-durable-objects.md`](/streams/clawql-durable-objects) · [`clawql-inference`](/inference/clawql-inference) · `clawql-core` · `mcp-api-adapter`  
-**Related:** [celld docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [Cloudflare compat](https://celld.dev/docs/cloudflare-compat) · [denoland/celld](https://github.com/denoland/celld) (Apache 2.0)
+**Related:** [`clawql-cellrt.md`](/streams/clawql-cellrt) (ClawQL-owned Rust runtime) · [celld docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [Cloudflare compat](https://celld.dev/docs/cloudflare-compat) · [denoland/celld](https://github.com/denoland/celld) (Apache 2.0)
 
 ---
 
@@ -11,7 +11,7 @@
 
 This document specifies how ClawQL Streams runs on **[celld](https://celld.dev/)** — Deno's self-hosted, S3-backed Durable Objects runtime. celld exposes the same Workers / Durable Object JavaScript API as Cloudflare, with SQLite per cell and **LTX** replication to an operator-owned bucket (**RPO=0**).
 
-ClawQL's decision (Streams v0.2): **do not build a custom DO runtime on Node `worker_threads`.** Adopt celld for self-hosted DO parity; keep Cloudflare for hosted; keep Kubernetes HPA for regulated until celld is production-stable.
+ClawQL's decision (Streams v0.2): **do not build a custom DO runtime on Node `worker_threads`.** Adopt celld for **Workers/DO API–compatible** self-hosted Durable Objects; keep Cloudflare for hosted; keep Kubernetes HPA for regulated until a DO runtime is production-stable. The ClawQL-owned production runtime is **[`clawql-cellrt`](/streams/clawql-cellrt)** (Rust + Wasmtime) — complementary to celld, not a Node rewrite.
 
 ### Why celld vs build-own
 
@@ -86,14 +86,14 @@ async alarm() {
 Model calls never spawn a process. The DO holds a virtual key and calls the inference gateway:
 
 ```ts
-const res = await fetch(env.INFERENCE_URL + '/v1/messages', {
-  method: 'POST',
+const res = await fetch(env.INFERENCE_URL + "/v1/messages", {
+  method: "POST",
   headers: {
     Authorization: `Bearer ${virtualKey}`,
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   body: JSON.stringify(payload),
-})
+});
 ```
 
 PAL, provider SDKs, and credential vaults stay in clawql-inference — outside the 64 MiB cell bundle.
@@ -103,16 +103,16 @@ PAL, provider SDKs, and credential vaults stay in clawql-inference — outside t
 Outbound sockets keep a cell resident and **do not continue when the cell moves nodes** ([limitations](https://celld.dev/docs/limitations)). Persist intent and reconnect after activation:
 
 ```ts
-await this.ctx.storage.put('ws_intent', {
+await this.ctx.storage.put("ws_intent", {
   reconnect: true,
   sourceUrl,
   authRef,
   lastEventId,
   backoffMs: 1000,
-})
+});
 
 // on close / after constructor wake:
-await this.ctx.storage.setAlarm(Date.now() + backoffMs)
+await this.ctx.storage.setAlarm(Date.now() + backoffMs);
 ```
 
 Prefer pinning ingress for a cell to its owner node when latency matters; cross-node WS close/reconnect coverage is thinner than single-node.
@@ -148,9 +148,9 @@ Gateway Worker / GatewayDO
 
 Stable DO names make replay safe:
 
-| Object       | Name pattern                          | Effect                                                        |
-| ------------ | ------------------------------------- | ------------------------------------------------------------- |
-| Subscription | `sub:\{subscriptionId\}`              | One cell per subscription                                     |
+| Object       | Name pattern                      | Effect                                                        |
+| ------------ | --------------------------------- | ------------------------------------------------------------- |
+| Subscription | `sub:\{subscriptionId\}`            | One cell per subscription                                     |
 | Session      | `sess:\{subscriptionId\}:\{eventId\}` | Same event + sub → same cell; second spawn is idempotent wake |
 
 Gateway still allocates `doInstanceId` / `virtualKeyId` before first spawn and writes `DO_CREATED` once (guard with a `spawned` flag in session SQLite).
@@ -366,6 +366,7 @@ Track against upstream celld alpha:
 ## Further reading
 
 - [`docs/streams/clawql-streams.md`](/streams/clawql-streams) — Streams Specification v0.2
+- [`docs/streams/clawql-cellrt.md`](/streams/clawql-cellrt) — ClawQL-owned Rust + Wasmtime cell runtime
 - [`docs/streams/clawql-durable-objects.md`](/streams/clawql-durable-objects) — session / sidecar / virtual key contract
 - [`docs/inference/clawql-inference.md`](/inference/clawql-inference) — virtual keys, PAL
 - [`docs/mcp/mcp-api-adapter.md`](/mcp/mcp-api-adapter) — embedded adapter surface
