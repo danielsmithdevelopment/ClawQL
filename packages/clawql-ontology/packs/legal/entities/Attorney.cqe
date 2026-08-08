@@ -1,0 +1,37 @@
+apiVersion: clawql.dev/ontology/v1alpha1
+kind: Entity
+metadata:
+  name: Attorney
+  labels:
+    vertical: legal
+spec:
+  description: Firm attorney (legal-domain-v0.1)
+  properties:
+    attorney_id:
+      type: string
+      required: true
+      indexed: true
+      description: AttorneyID /^ATY-\d{4}$/
+    name:
+      type: string
+      required: true
+    title:
+      type: enum
+      values: [Partner, SeniorAssociate, Associate, Counsel]
+      required: true
+    vault_note_path:
+      type: string
+  sources:
+    - type: sql
+      connection: ${VAULT:ontology_db}
+      table: attorneys
+      id_column: id
+  relationships:
+    - entity: Matter
+      type: one_to_many
+      via: supervised_matters
+  actions:
+    - name: search_attorneys
+      kind: read
+    - name: get_attorney
+      kind: read

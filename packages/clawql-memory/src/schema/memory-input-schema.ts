@@ -84,7 +84,17 @@ export const MEMORY_RECALL_CODE_GRAPH_ID_DESCRIPTION =
 export const MEMORY_RECALL_SOURCES_DESCRIPTION =
   "Which recall backends to query. Omit for defaults: vault+vector, plus hybrids from env " +
   "(CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH / _PAGEINDEX / _ONYX) or includeCodeGraph. " +
-  "Returns normalized hits[] + followUps for specialist tools.";
+  "Returns normalized hits[] + followUps for specialist tools. " +
+  "Ignored when schema + filters select structured ontology recall.";
+export const MEMORY_RECALL_SCHEMA_DESCRIPTION =
+  "Ontology schema for structured predicate mode (e.g. legal.Matter). Requires filters. " +
+  "Exact field matching via ontology.db — use for enumeration (escrowPct >= 10), not narrative search.";
+export const MEMORY_RECALL_FILTERS_DESCRIPTION =
+  "Field predicate filters for structured mode. Keys are camelCase field names. " +
+  "Values are predicates: { gte: 10 }, { gt: 18 }, { eq: 'Active' }, { in: ['A','B'] }, { between: [10, 20] }.";
+export const MEMORY_RECALL_CONFIDENCE_MINIMUM_DESCRIPTION =
+  "Minimum extraction confidence for ontology hits. EXTRACTED = machine-readable CLAWQL_* only (default). " +
+  "INFERRED includes pattern matches. AMBIGUOUS includes conflicting extractions.";
 
 const EnterpriseCitationSchema = Schema.Struct({
   title: Schema.optional(Schema.String.pipe(Schema.maxLength(500))),
@@ -104,6 +114,22 @@ const MemoryRebuildSchema = Schema.Struct({
 }).annotations({ description: MEMORY_INGEST_REBUILD_DESCRIPTION });
 
 const MemoryRecallSourceSchema = Schema.Literal(...MEMORY_RECALL_SOURCES);
+const OntologySchemaNameSchema = Schema.Literal(
+  "legal.Matter",
+  "legal.Client",
+  "legal.Attorney",
+  "legal.Document"
+);
+const OntologyConfidenceSchema = Schema.Literal("EXTRACTED", "INFERRED", "AMBIGUOUS");
+/** Predicate object — keys like gte/gt/eq; values validated at query time. */
+const OntologyFilterPredicateSchema = Schema.Record({
+  key: Schema.String,
+  value: Schema.Unknown,
+});
+const OntologyFiltersSchema = Schema.Record({
+  key: Schema.String,
+  value: OntologyFilterPredicateSchema,
+});
 
 /** MCP `memory_ingest` tool arguments — Effect Schema (source of truth). */
 export const MemoryIngestInputSchema = Schema.Struct({
@@ -243,6 +269,17 @@ export const MemoryRecallInputSchema = Schema.Struct({
     Schema.mutable(Schema.Array(MemoryRecallSourceSchema))
       .pipe(Schema.minItems(1))
       .annotations({ description: MEMORY_RECALL_SOURCES_DESCRIPTION })
+  ),
+  schema: Schema.optional(
+    OntologySchemaNameSchema.annotations({ description: MEMORY_RECALL_SCHEMA_DESCRIPTION })
+  ),
+  filters: Schema.optional(
+    OntologyFiltersSchema.annotations({ description: MEMORY_RECALL_FILTERS_DESCRIPTION })
+  ),
+  confidenceMinimum: Schema.optional(
+    OntologyConfidenceSchema.annotations({
+      description: MEMORY_RECALL_CONFIDENCE_MINIMUM_DESCRIPTION,
+    })
   ),
 });
 

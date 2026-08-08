@@ -122,6 +122,57 @@ export function executeMemoryRecallCoreEffect(
       return { ok: false, error: "query is required" };
     }
 
+    // Structured ontology path — exact predicate evaluation (B-7.1 / legal domain).
+    if (input.schema && input.filters && Object.keys(input.filters).length > 0) {
+      const ontologyResult = yield* memoryFromPromise(async () => {
+        const { runOntologyRecall } = await import("../ontology/ontology-query.js");
+        return runOntologyRecall(vault, {
+          query,
+          schema: input.schema!,
+          filters: input.filters!,
+          confidenceMinimum: input.confidenceMinimum,
+          limit: input.limit,
+        });
+      });
+      if (!ontologyResult.ok) {
+        return {
+          ok: false,
+          error: ontologyResult.error,
+          // Mirror CLAWQL_MEMORY_DB=0 skip shape for operators (`ontology_disabled`).
+          ...(ontologyResult.errorType ? { errorType: ontologyResult.errorType } : {}),
+        };
+      }
+      const normalizedHits = ontologyResult.hits.map((h) => ({
+        source: "vault" as const,
+        id: h.path,
+        score: h.score,
+        snippet: h.snippet,
+        path: h.path,
+        meta: {
+          entityId: h.entityId,
+          entityType: h.entityType,
+          fields: h.fields,
+          confidence: h.confidence,
+          extractionMethod: h.extractionMethod,
+        },
+      }));
+      return {
+        ok: true,
+        query: ontologyResult.query,
+        results: ontologyResult.results,
+        hits: normalizedHits,
+        sourcesUsed: ontologyResult.sourcesUsed,
+        queryType: ontologyResult.queryType,
+        indexUsed: ontologyResult.indexUsed,
+        schema: ontologyResult.schema,
+        filters: ontologyResult.filters,
+        scannedEntities: ontologyResult.scannedEntities,
+        filteredEntities: ontologyResult.filteredEntities,
+        confidenceMinimum: ontologyResult.confidenceMinimum,
+        scannedFiles: ontologyResult.scannedEntities,
+      };
+    }
+
     const sources = resolveMemoryRecallSources({
       sources: input.sources,
       includeCodeGraph: input.includeCodeGraph,

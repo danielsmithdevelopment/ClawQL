@@ -118,6 +118,7 @@ Prefer the Python adapter: it writes the instruction file, parses
 | `token-budget-constrained`      | Correct YAML `parse_config` under a 5k-token budget; exploration-heavy agents overspend.                                                        |
 | `multi-provider-api-workflow`   | Offline Cloudflare Worker + GitHub releases scaffold; rewards structured API discovery over dumping specs.                                      |
 | `institutional-knowledge-enumerate` | B-7.1 mini Calderwood & Harkness fixture (120 nested notes / 5 matches) — exhaustive escrow≥10 ∧ NC>18 via vault `memory_recall`.            |
+| `institutional-knowledge-enumerate-ontology` | B-7.1-ontology — same fixture; structured `schema`+`filters` under 5-turn / 4k-token caps (efficiency claim). |
 
 Validate checkers offline (no model, no network):
 

@@ -1,0 +1,42 @@
+apiVersion: clawql.dev/ontology/v1alpha1
+kind: Entity
+metadata:
+  name: Client
+  labels:
+    vertical: legal
+spec:
+  description: Client / legal entity for matters (legal-domain-v0.1)
+  properties:
+    client_id:
+      type: string
+      required: true
+      indexed: true
+      description: ClientID /^CLT-\d{4}$/
+    name:
+      type: string
+      required: true
+    short_name:
+      type: string
+    industry:
+      type: string
+    jurisdiction:
+      type: string
+    tier:
+      type: enum
+      values: [Platinum, Gold, Silver, Standard]
+    vault_note_path:
+      type: string
+  sources:
+    - type: sql
+      connection: ${VAULT:ontology_db}
+      table: clients
+      id_column: id
+  relationships:
+    - entity: Matter
+      type: one_to_many
+      via: client_id
+  actions:
+    - name: search_clients
+      kind: read
+    - name: get_client
+      kind: read

@@ -57,4 +57,21 @@ describe("MemoryRecallInputSchema", () => {
       Effect.runPromise(decodeMemoryRecallInput({ query: "x", sources: [] }))
     ).rejects.toThrow();
   });
+
+  it("decodes structured ontology schema + filters", async () => {
+    const decoded = await Effect.runPromise(
+      decodeMemoryRecallInput({
+        query: "escrow matters",
+        schema: "legal.Matter",
+        filters: { escrowPct: { gte: 10 }, nonCompeteMonths: { gt: 18 } },
+        confidenceMinimum: "EXTRACTED",
+      })
+    );
+    expect(decoded.schema).toBe("legal.Matter");
+    expect(decoded.filters).toEqual({
+      escrowPct: { gte: 10 },
+      nonCompeteMonths: { gt: 18 },
+    });
+    expect(decoded.confidenceMinimum).toBe("EXTRACTED");
+  });
 });

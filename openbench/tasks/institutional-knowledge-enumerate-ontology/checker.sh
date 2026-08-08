@@ -1,18 +1,15 @@
 #!/usr/bin/env bash
-# Grades institutional-knowledge-enumerate:
-# - Partial credit = |hits ∩ expected| / |expected|
-# - Emits MATTERS_FOUND: k/5 (headline diagnostic) + SCORE
-# - Any false positive (near-miss or unknown id) → 0.0 / 0/5
-# - When OPENBENCH_REQUIRE_INSTITUTIONAL=1, require real memory_recall tool_use
-#   (on / no-memory arms cannot score by guessing the fixture set).
-# - When OPENBENCH_REQUIRE_STRUCTURED_ONTOLOGY=1, also require schema+filters
-#   (keyword near-miss path zeros the trial — B-7.1 product win).
+# Grades institutional-knowledge-enumerate-ontology (B-7.1-ontology):
+# - Same matter set / FP→0 rules as institutional-knowledge-enumerate
+# - Tight hard caps (5 turns / 4k tokens) for the efficiency claim
+# - When OPENBENCH_REQUIRE_STRUCTURED_ONTOLOGY=1, require memory_recall
+#   tool_use with schema=legal.Matter + filters
 set -euo pipefail
 
 REQUIRE_INSTITUTIONAL="${OPENBENCH_REQUIRE_INSTITUTIONAL:-0}"
 REQUIRE_STRUCTURED="${OPENBENCH_REQUIRE_STRUCTURED_ONTOLOGY:-0}"
-HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-30}"
-HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-8000}"
+HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-5}"
+HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-4000}"
 TASK_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 cap_fail=0
@@ -29,7 +26,6 @@ if [ ! -f matters.json ]; then
   emit_zero
 fi
 
-# stdout lines: MATTERS_FOUND:k/n  then SCORE:x  (plus optional MATTERS_IDS)
 eval_out="$(
   TASK_DIR="$TASK_DIR" python3 - <<'PY'
 import json
@@ -61,7 +57,6 @@ except Exception as exc:
     emit(0, 0.0, err=f"FAIL: matters.json parse error: {exc}")
     raise SystemExit(0)
 
-# Accept either {"matters":[...], "source":...} or a bare list of IDs.
 if isinstance(parsed, list):
     d = {"matters": parsed, "source": ""}
 elif isinstance(parsed, dict):
@@ -94,7 +89,6 @@ if false_pos:
 hits = sorted(ids & expected)
 partial = len(hits) / float(n_exp)
 src = str(d.get("source") or "").strip().lower()
-# On-arm: memory_recall. Off-arm: workspace / filesystem note reads after search.
 ok_src = (
     "memory" in src
     or "recall" in src
@@ -159,7 +153,7 @@ fi
 
 if [ "$REQUIRE_INSTITUTIONAL" = "1" ] || [ "$REQUIRE_STRUCTURED" = "1" ]; then
   if [ ! -f .openbench_agent.log ]; then
-    echo "FAIL: missing .openbench_agent.log for institutional evidence" >&2
+    echo "FAIL: missing .openbench_agent.log for ontology evidence" >&2
     cap_fail=1
   else
     scripts_dir="${TASK_DIR}/../../scripts"
@@ -169,7 +163,7 @@ if [ "$REQUIRE_INSTITUTIONAL" = "1" ] || [ "$REQUIRE_STRUCTURED" = "1" ]; then
     if [ "$REQUIRE_INSTITUTIONAL" = "1" ]; then
       if ! python3 "$scripts_dir/require-real-clawql-tools.py" .openbench_agent.log \
         'clawql_memory_recall|memory_recall'; then
-        echo "FAIL: required real memory_recall tool_use (guessing fixture IDs without tools scores 0)" >&2
+        echo "FAIL: required real memory_recall tool_use" >&2
         cap_fail=1
       fi
     fi

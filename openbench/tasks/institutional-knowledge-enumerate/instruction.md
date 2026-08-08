@@ -2,8 +2,8 @@
 
 You are an associate at a synthetic firm (mini **Calderwood & Harkness** fixture).
 The same matter notes are available in the workspace for every run. When ClawQL
-memory is available, the vault also holds structured field tags for faster,
-more complete recall.
+memory is available, the vault also holds structured field tags indexed for
+**exact** predicate queries (not keyword similarity).
 
 ## Goal
 
@@ -14,15 +14,35 @@ List **every** matter that has **both**:
 
 ## Steps
 
-1. **Search exhaustively.** Do **not** stop after the first few hits.
-   - Prefer **`clawql_memory_recall`** when available (structured `CLAWQL_*`
-     tags in the vault). Use **multiple** queries with `limit` up to 50.
-   - You may also read markdown notes under `.openbench/memory-seed/`
-     (nested `clients/*/matters/`; ignore `decoy/`). Workspace notes are
-     **prose** (~120 files); numbers may be written as words.
-2. Fields to collect: matter id, escrow %, non-compete months.
-3. Near-misses (e.g. 9% escrow, exactly 18 months NC, missing escrow) must
-   **not** appear in the answer.
+1. **Prefer structured ontology recall** when `clawql_memory_recall` is available.
+   Do **not** rely on keyword/semantic search alone — it returns near-misses
+   (e.g. 9% escrow or exactly 18 months NC) that look similar but fail the criteria.
+
+   Call **once**:
+
+   ```json
+   {
+     "query": "matters matching escrow and non-compete criteria",
+     "schema": "legal.Matter",
+     "filters": {
+       "escrowPct": { "gte": 10 },
+       "nonCompeteMonths": { "gt": 18 }
+     },
+     "confidenceMinimum": "EXTRACTED",
+     "limit": 20
+   }
+   ```
+
+   Use the returned `entityId` / `fields` (or hit paths) as the complete set.
+   Expect `queryType: "structured_predicate"`.
+
+2. You may also read markdown under `.openbench/memory-seed/` (nested
+   `clients/*/matters/`; ignore `decoy/`) if memory tools are unavailable.
+   Workspace notes are **prose** (~120 files); numbers may be written as words.
+
+3. Near-misses (9% escrow, exactly 18 months NC, missing escrow) must **not**
+   appear in the answer.
+
 4. Write **relative** path `matters.json` (not `/tmp/…`) with the complete
    matching set and a non-empty `source`.
 
@@ -36,7 +56,7 @@ List **every** matter that has **both**:
     "noncompete_months_gt": 18
   },
   "source": "memory_recall",
-  "search_sufficiency": "short note on why the set is complete — how many notes you checked"
+  "search_sufficiency": "structured_predicate legal.Matter filters; N hits"
 }
 ```
 

@@ -228,6 +228,9 @@ export async function handleMemoryRecallToolInput(
     minScore: parsed.minScore,
     sources: parsed.sources,
     includeCodeGraph: parsed.includeCodeGraph,
+    schema: parsed.schema,
+    filterKeys: parsed.filters ? Object.keys(parsed.filters) : undefined,
+    confidenceMinimum: parsed.confidenceMinimum,
   });
   const result = await runMemoryRecall(parsed);
   return {

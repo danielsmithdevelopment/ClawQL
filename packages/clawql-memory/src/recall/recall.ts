@@ -13,6 +13,13 @@ import { stripVaultFrontmatter } from "../vault/markdown.js";
 /** Re-export for tests and callers that imported from this module. */
 export { extractWikilinkTargets } from "../vault/markdown.js";
 
+export type OntologySchemaName =
+  "legal.Matter" | "legal.Client" | "legal.Attorney" | "legal.Document";
+
+export type OntologyFilterPredicate = Record<string, unknown>;
+export type OntologyFilterMap = Record<string, OntologyFilterPredicate>;
+export type OntologyConfidenceMinimum = "EXTRACTED" | "INFERRED" | "AMBIGUOUS";
+
 export type MemoryRecallInput = {
   query: string;
   /** Max notes to return (default from CLAWQL_MEMORY_RECALL_LIMIT). */
@@ -24,12 +31,22 @@ export type MemoryRecallInput = {
   /**
    * Which backends to query: `vault` | `vector` | `codegraph` | `pageindex` | `onyx`.
    * Omit for defaults (vault + vector; plus hybrid env flags / includeCodeGraph).
+   * Ignored when `schema` + `filters` select structured ontology recall.
    */
   sources?: MemoryRecallSource[];
   /** When true, include codegraph even if hybrid env flag is off (same as sources including codegraph). */
   includeCodeGraph?: boolean;
   /** Code graph id for hybrid supplement (default CLAWQL_CODEGRAPH_ID or repo name). */
   codeGraphId?: string;
+  /**
+   * Ontology schema for structured predicate recall (requires `filters`).
+   * Spec: docs/specs/memory/memory-recall-structured-filter-v0.1.md
+   */
+  schema?: OntologySchemaName;
+  /** Typed field predicates against ontology.db (requires `schema`). */
+  filters?: OntologyFilterMap;
+  /** Minimum extraction confidence for ontology hits (default EXTRACTED). */
+  confidenceMinimum?: OntologyConfidenceMinimum;
 };
 
 export type RecallHit = {
@@ -107,6 +124,16 @@ export type MemoryRecallResult = {
   indexFirstBodyLoad?: boolean;
   /** Paths whose bodies were loaded when index-first body restriction applied. */
   bodiesLoaded?: number;
+  /** Present for structured ontology recall (`schema` + `filters`). */
+  queryType?: "structured_predicate" | "schema_typed_semantic" | "semantic";
+  indexUsed?: "ontology" | "vector" | "vault" | "hybrid";
+  schema?: OntologySchemaName;
+  filters?: OntologyFilterMap;
+  scannedEntities?: number;
+  filteredEntities?: number;
+  confidenceMinimum?: OntologyConfidenceMinimum;
+  /** Present on structured-path failures (e.g. `ontology_disabled` when CLAWQL_ONTOLOGY_DB=0). */
+  errorType?: string;
 };
 
 function tokenize(text: string): string[] {

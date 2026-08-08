@@ -39,6 +39,9 @@ import {
   MEMORY_RECALL_MIN_SCORE_DESCRIPTION,
   MEMORY_RECALL_QUERY_DESCRIPTION,
   MEMORY_RECALL_SOURCES_DESCRIPTION,
+  MEMORY_RECALL_SCHEMA_DESCRIPTION,
+  MEMORY_RECALL_FILTERS_DESCRIPTION,
+  MEMORY_RECALL_CONFIDENCE_MINIMUM_DESCRIPTION,
 } from "./memory-input-schema.js";
 
 const memoryEnterpriseCitationZod = z.object({
@@ -129,4 +132,16 @@ export const memoryRecallToolZodShape = {
     .min(1)
     .optional()
     .describe(MEMORY_RECALL_SOURCES_DESCRIPTION),
+  schema: z
+    .enum(["legal.Matter", "legal.Client", "legal.Attorney", "legal.Document"])
+    .optional()
+    .describe(MEMORY_RECALL_SCHEMA_DESCRIPTION),
+  filters: z
+    .record(z.string(), z.record(z.string(), z.unknown()))
+    .optional()
+    .describe(MEMORY_RECALL_FILTERS_DESCRIPTION),
+  confidenceMinimum: z
+    .enum(["EXTRACTED", "INFERRED", "AMBIGUOUS"])
+    .optional()
+    .describe(MEMORY_RECALL_CONFIDENCE_MINIMUM_DESCRIPTION),
 } as const;

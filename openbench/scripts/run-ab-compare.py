@@ -327,13 +327,26 @@ TASK_HARD_CAPS: dict[str, dict] = {
     },
     "institutional-knowledge-enumerate": {
         # Redesigned B-7.1: ~120 nested notes so bare linear read cannot exhaust
-        # under the turn budget; on-arm must use multi-query memory_recall.
+        # under the turn budget; on-arm must use structured ontology recall.
         "max_turns": 50,
         "max_tokens": 16000,
         "max_wall_s": 480,
         "default_timeout_s": 480,
         "disable_memory": False,
         "require_institutional": True,
+        # Keyword near-misses reproduced Harvey FAIL — require schema+filters.
+        "require_structured_ontology": True,
+    },
+    "institutional-knowledge-enumerate-ontology": {
+        # B-7.1-ontology: same fixture; tight caps prove structured filters (~2 turns).
+        # Wall 90s leaves room for one write-only nudge after a ~30s recall win path.
+        "max_turns": 5,
+        "max_tokens": 4000,
+        "max_wall_s": 90,
+        "default_timeout_s": 90,
+        "disable_memory": False,
+        "require_institutional": True,
+        "require_structured_ontology": True,
     },
 }
 
@@ -712,20 +725,38 @@ CONFLICT_NUDGE = """Continue the memory conflict pricing task.
 Do NOT invent 48 or pick only one price. Call memory_recall now.
 """
 
+INSTITUTIONAL_ONTOLOGY_NUDGE = """Continue B-7.1-ontology (tight-cap structured enumeration).
+
+Call clawql_memory_recall ONCE with:
+  schema: "legal.Matter"
+  filters: {"escrowPct":{"gte":10},"nonCompeteMonths":{"gt":18}}
+  confidenceMinimum: "EXTRACTED"
+  limit: 20
+  query: "matters matching escrow and non-compete criteria"
+
+Then IMMEDIATELY call the **write** tool (not chat) for relative matters.json
+from every returned entityId. Chat/code-fence JSON is not graded. Caps: 5 turns.
+"""
+
 INSTITUTIONAL_NUDGE = """Continue the institutional knowledge enumeration task (B-7.1).
 
 Same prose notes are on disk under `.openbench/memory-seed/` for every arm.
-Your advantage is the vault: structured CLAWQL_* tags live in memory.
+Your advantage is the vault ontology index — use **structured** memory_recall,
+NOT keyword search (keyword hits include near-misses like NC=18 and score 0).
 
-1. clawql_memory_recall across the vault — use MULTIPLE queries (limit=50 each).
-   Fields: CLAWQL_MATTER_ID / ESCROW_PCT / NONCOMPETE_MONTHS
-2. Keep ONLY matters with escrow_pct >= 10 AND noncompete_months > 18
-3. write relative filePath **matters.json** only (never /tmp/matters.json) with the COMPLETE set:
-   {"matters":["MAT-XXXX","MAT-YYYY"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"memory_recall","search_sufficiency":"how many notes you checked"}
+1. Call clawql_memory_recall ONCE with:
+   query: "matters matching escrow and non-compete criteria"
+   schema: "legal.Matter"
+   filters: {"escrowPct":{"gte":10},"nonCompeteMonths":{"gt":18}}
+   confidenceMinimum: "EXTRACTED"
+   limit: 20
+2. Copy every returned entityId into matters.json (expect exactly the complete set).
+3. write relative filePath **matters.json** only (never /tmp/matters.json):
+   {"matters":["MAT-XXXX","MAT-YYYY"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"memory_recall","search_sufficiency":"structured_predicate legal.Matter"}
    `source` MUST be non-empty (empty source grades 0).
 
-Do NOT copy placeholder IDs. Partial lists fail. Near-misses must not appear.
-Call memory_recall now (again if needed), then write relative matters.json.
+Do NOT copy placeholder IDs. Do NOT submit near-misses from semantic search.
+Call structured memory_recall now, then write relative matters.json.
 """
 
 INSTITUTIONAL_OFF_NUDGE = """Continue. Memory tools are unavailable — that is expected on this arm.
@@ -1245,6 +1276,23 @@ def credit_exhausted(agent: dict) -> bool:
     )
 
 
+def provider_budget_abort_reason(agent: dict, arm: str) -> str:
+    """Human message for credit_exhausted aborts — distinguish key cap vs account balance."""
+    blob = (agent.get("output_tail") or "") + (agent.get("error") or "")
+    if "Key limit exceeded" in blob or "key limit exceeded" in blob:
+        return (
+            f"OpenRouter per-key spend limit hit on {arm} "
+            f"(HTTP 403 Key limit exceeded — not the same as account balance). "
+            f"Raise or remove the limit on the GitHub secret OPENROUTER_API_KEY "
+            f"at https://openrouter.ai/settings/keys (or rotate the secret to a key "
+            f"with a higher/unlimited cap), then re-run. Account credits alone do not clear this."
+        )
+    return (
+        f"provider credits exhausted on {arm} (HTTP 402 / openrouter_credits / affordability). "
+        f"Top up the OpenRouter account balance for OPENROUTER_API_KEY (or use BYOK) before re-running."
+    )
+
+
 def _dec_timeout_output(exc) -> str:
     def _dec(x):
         if x is None:
@@ -1760,6 +1808,67 @@ def institutional_incomplete(combined: str, workdir: Path) -> bool:
     return not bool(tools & {"clawql_memory_recall", "memory_recall"})
 
 
+def extract_structured_matter_ids(combined: str) -> list[str]:
+    """Pull entityIds from structured ontology memory_recall tool outputs."""
+    import re
+
+    ids: list[str] = []
+    seen: set[str] = set()
+    text = combined or ""
+    for line in text.splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(obj, dict):
+            continue
+        part = obj.get("part")
+        if not isinstance(part, dict):
+            continue
+        tool = part.get("tool")
+        if tool not in ("clawql_memory_recall", "memory_recall"):
+            continue
+        state = part.get("state") if isinstance(part.get("state"), dict) else {}
+        inp = state.get("input") if isinstance(state.get("input"), dict) else {}
+        if not inp:
+            inp = part.get("input") if isinstance(part.get("input"), dict) else {}
+        if str(inp.get("schema") or "") != "legal.Matter":
+            continue
+        if not isinstance(inp.get("filters"), dict) or not inp.get("filters"):
+            continue
+        out = state.get("output")
+        blob = out if isinstance(out, str) else json.dumps(out) if out else ""
+        if "structured_predicate" not in blob and '"entityId"' not in blob:
+            continue
+        for mid in re.findall(r'"entityId"\s*:\s*"(MAT-\d+)"', blob):
+            if mid not in seen:
+                seen.add(mid)
+                ids.append(mid)
+    return ids
+
+
+def build_institutional_matters_write_nudge(matter_ids: list[str]) -> str:
+    """Write-only nudge with exact matters.json body (no second recall)."""
+    payload = {
+        "matters": matter_ids,
+        "criteria": {"escrow_pct_min": 10, "noncompete_months_gt": 18},
+        "source": "memory_recall",
+        "search_sufficiency": "structured_predicate legal.Matter",
+    }
+    body = json.dumps(payload, indent=2)
+    return (
+        "Continue B-7.1. You already ran structured memory_recall successfully.\n"
+        "Do **not** call memory_recall again. Do **not** paste JSON in chat.\n"
+        "Call the OpenCode **write** tool NOW with filePath exactly `matters.json` "
+        "and this exact content:\n\n"
+        f"```json\n{body}\n```\n\n"
+        "Chat code fences are not graded — only the write tool counts.\n"
+    )
+
+
 def policy_missing_artifact(workdir: Path) -> bool:
     return not (workdir / "policy.json").is_file()
 
@@ -1845,13 +1954,23 @@ def run_arm_on(
     require_wikilink: bool = False,
     require_conflict: bool = False,
     require_institutional: bool = False,
+    require_structured_ontology: bool = False,
     correlation_id: str | None = None,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
     clawql = resolve_clawql()
     gateway_model = normalize_model_id(model)
     inst_file = workdir / ".openbench_instruction.md"
-    inst_file.write_text(instruction, encoding="utf-8")
+    effective_instruction = instruction
+    if require_structured_ontology:
+        effective_instruction = (
+            "CRITICAL (scores 0 if ignored): Call clawql_memory_recall with "
+            'schema="legal.Matter" and filters={"escrowPct":{"gte":10},'
+            '"nonCompeteMonths":{"gt":18}} — NOT keyword search. '
+            "Keyword near-misses (NC=18, escrow=9) zero the trial.\n\n"
+            + instruction
+        )
+    inst_file.write_text(effective_instruction, encoding="utf-8")
 
     prefix = ["node", clawql] if clawql.endswith(".mjs") else [clawql]
 
@@ -2746,6 +2865,9 @@ def run_arm_on(
                 code = 124
 
     # institutional knowledge: missing memory_recall / matters.json.
+    # Prefer write-only when structured recall already returned entityIds —
+    # DeepSeek often dumps JSON in chat and wastes the tight ontology cap on
+    # a second recall.
     if (
         require_institutional
         and arm in ("clawql-on", "clawql-no-memory")
@@ -2754,51 +2876,77 @@ def run_arm_on(
     ):
         elapsed = time.monotonic() - t0
         remaining = int(timeout_s) - int(elapsed)
-        if remaining >= 20:
-            cont_file = workdir / ".openbench_institutional_nudge.md"
-            cont_file.write_text(INSTITUTIONAL_NUDGE, encoding="utf-8")
-            cont_timeout = max(20, min(80, remaining))
-            cmd = build_cmd(cont_file, cont_timeout)
-            try:
-                proc_ik = subprocess.run(
-                    cmd,
-                    cwd=str(workdir),
-                    capture_output=True,
-                    text=True,
-                    timeout=cont_timeout + 30,
-                    stdin=subprocess.DEVNULL,
-                    env=env,
-                )
-                combined = combined + "\n" + (proc_ik.stdout or "") + (proc_ik.stderr or "")
-                code = proc_ik.returncode
-            except subprocess.TimeoutExpired as exc:
-                timed_out = True
-                combined = combined + "\n" + _dec_timeout_output(exc)
-                code = 124
+        if remaining >= 15:
+            matter_ids = extract_structured_matter_ids(combined)
+            tools = real_opencode_tools(combined)
+            recalled = bool(tools & {"clawql_memory_recall", "memory_recall"})
+            if matter_ids:
+                nudge = build_institutional_matters_write_nudge(matter_ids)
+            elif require_structured_ontology:
+                nudge = INSTITUTIONAL_ONTOLOGY_NUDGE
+            else:
+                nudge = INSTITUTIONAL_NUDGE
+            # Skip re-recall nudge when we already recalled but have no ids yet;
+            # fall through to generic write continuation below.
+            if matter_ids or not recalled:
+                cont_file = workdir / ".openbench_institutional_nudge.md"
+                cont_file.write_text(nudge, encoding="utf-8")
+                cont_timeout = max(15, min(80, remaining))
+                cmd = build_cmd(cont_file, cont_timeout)
+                try:
+                    proc_ik = subprocess.run(
+                        cmd,
+                        cwd=str(workdir),
+                        capture_output=True,
+                        text=True,
+                        timeout=cont_timeout + 30,
+                        stdin=subprocess.DEVNULL,
+                        env=env,
+                    )
+                    combined = combined + "\n" + (proc_ik.stdout or "") + (proc_ik.stderr or "")
+                    code = proc_ik.returncode
+                except subprocess.TimeoutExpired as exc:
+                    timed_out = True
+                    combined = combined + "\n" + _dec_timeout_output(exc)
+                    code = 124
 
     # Cheap models often stop after memory_recall; one write-focused nudge with
     # vault notes inlined so a second recall is unnecessary.
-    if vault and not disable_memory and not timed_out and recalled_without_writes(combined):
-        cont_file = workdir / ".openbench_continuation.md"
-        cont_file.write_text(build_write_continuation(vault), encoding="utf-8")
-        cont_timeout = max(60, min(int(timeout_s), 180))
-        cmd = build_cmd(cont_file, cont_timeout)
-        try:
-            proc2 = subprocess.run(
-                cmd,
-                cwd=str(workdir),
-                capture_output=True,
-                text=True,
-                timeout=cont_timeout + 45,
-                stdin=subprocess.DEVNULL,
-                env=env,
-            )
-            combined = combined + "\n" + (proc2.stdout or "") + (proc2.stderr or "")
-            code = proc2.returncode
-        except subprocess.TimeoutExpired as exc:
-            timed_out = True
-            combined = combined + "\n" + _dec_timeout_output(exc)
-            code = 124
+    # Institutional: prefer exact matters.json body from prior structured hits.
+    if not timed_out and recalled_without_writes(combined):
+        matter_ids = (
+            extract_structured_matter_ids(combined) if require_institutional else []
+        )
+        needs_matters = require_institutional and not (workdir / "matters.json").is_file()
+        cont_body: str | None = None
+        if matter_ids and needs_matters:
+            cont_body = build_institutional_matters_write_nudge(matter_ids)
+        elif vault and not disable_memory:
+            cont_body = build_write_continuation(vault)
+        if cont_body is not None:
+            cont_file = workdir / ".openbench_continuation.md"
+            cont_file.write_text(cont_body, encoding="utf-8")
+            elapsed = time.monotonic() - t0
+            remaining = int(timeout_s) - int(elapsed)
+            cont_timeout = max(20, min(int(timeout_s), 180))
+            if remaining >= 15:
+                cmd = build_cmd(cont_file, min(cont_timeout, remaining))
+                try:
+                    proc2 = subprocess.run(
+                        cmd,
+                        cwd=str(workdir),
+                        capture_output=True,
+                        text=True,
+                        timeout=min(cont_timeout, remaining) + 45,
+                        stdin=subprocess.DEVNULL,
+                        env=env,
+                    )
+                    combined = combined + "\n" + (proc2.stdout or "") + (proc2.stderr or "")
+                    code = proc2.returncode
+                except subprocess.TimeoutExpired as exc:
+                    timed_out = True
+                    combined = combined + "\n" + _dec_timeout_output(exc)
+                    code = 124
 
     # ouroboros-on: loop ran but never wrote limiter.py — one write-focused nudge.
     if (
@@ -3264,13 +3412,21 @@ def render_markdown(report: dict) -> str:
         interp.append(
             "- Fair cell: identical prose corpus on disk for all arms (120 nested notes; "
             "escrow≥10 ∧ NC>18). Score = hits/5; false positives → 0.0. CLAWQL_* tags "
-            "are vault-only (on-arm memory_recall advantage). On / no-memory require "
-            "real memory_recall evidence; off uses filesystem only."
+            "are vault-only and indexed into ontology.db. On-arm must use structured "
+            "memory_recall (schema=legal.Matter + filters); keyword recall near-misses "
+            "zero the trial. Off uses filesystem prose only."
         )
         interp.append(
-            "- **clawql-on** = same files + seeded vault + memory tools; "
+            "- **clawql-on** = same files + seeded vault + ontology filters; "
             "**clawql-no-memory** = same files + ClawQL tools but no vault; "
             "**clawql-off** = same files, no ClawQL MCP."
+        )
+    elif task == "institutional-knowledge-enumerate-ontology":
+        interp.append(
+            "- B-7.1-ontology: same fair fixture; on-arm must use structured "
+            "memory_recall (schema+filters). Tight caps (5 turns / 4k tokens / 90s) "
+            "prove exact enumeration in ~2 turns (+ write-only nudge). "
+            "Keyword near-misses → 0."
         )
     interp.append("")
     lines.extend(interp)
@@ -3452,6 +3608,7 @@ def run_trial(
                 require_wikilink=bool(caps.get("require_wikilink")),
                 require_conflict=bool(caps.get("require_conflict")),
                 require_institutional=bool(caps.get("require_institutional")),
+                require_structured_ontology=bool(caps.get("require_structured_ontology")),
                 correlation_id=corr,
             )
         agent["correlation_id"] = corr
@@ -3526,6 +3683,13 @@ def run_trial(
             "clawql-no-memory",
         ):
             checker_env_extra["OPENBENCH_REQUIRE_INSTITUTIONAL"] = "1"
+        if caps.get("require_structured_ontology") and arm in (
+            "clawql-on",
+            "clawql-no-memory",
+        ):
+            checker_env_extra["OPENBENCH_REQUIRE_STRUCTURED_ONTOLOGY"] = "1"
+            checker_env_extra["OPENBENCH_HARD_MAX_TURNS"] = str(caps.get("max_turns", 5))
+            checker_env_extra["OPENBENCH_HARD_MAX_TOKENS"] = str(caps.get("max_tokens", 4000))
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
         return {
@@ -3682,10 +3846,7 @@ def main(argv=None) -> int:
             if credit_exhausted(ag):
                 abort_all = True
                 skip_remaining = True
-                abort_reason = (
-                    f"provider credits exhausted on {arm} (HTTP 402 / openrouter_credits). "
-                    "Top up OPENROUTER_API_KEY (or use BYOK) before re-running."
-                )
+                abort_reason = provider_budget_abort_reason(ag, arm)
                 skip_reason = abort_reason
                 print(f"    !! {abort_reason} — aborting remaining arms/trials", flush=True)
                 continue
