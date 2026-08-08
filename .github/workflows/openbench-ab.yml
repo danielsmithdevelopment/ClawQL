@@ -343,7 +343,8 @@ jobs:
               echo "OPENBENCH_TIMEOUT_S=180"
             fi
             if [ "${{ matrix.task }}" = "institutional-knowledge-enumerate" ]; then
-              echo "OPENBENCH_TIMEOUT_S=240"
+              # Hardened 30-note fixture + n≥3; give off-arm room to try exhaustively.
+              echo "OPENBENCH_TIMEOUT_S=400"
               # Three-arm isolate by default (tools+vault vs tools/no-vault vs bare).
               # On dispatch, honor an explicit non-default arms input; on PR/push
               # always use the three-arm set (same burn path as every other cell).
