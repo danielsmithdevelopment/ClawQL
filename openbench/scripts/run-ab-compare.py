@@ -1229,12 +1229,15 @@ def is_infra_hang(agent: dict) -> bool:
 
 
 def credit_exhausted(agent: dict) -> bool:
-    """OpenRouter (or similar) rejected the call for insufficient credits."""
+    """OpenRouter (or similar) rejected the call for insufficient credits / key limit."""
     blob = (agent.get("output_tail") or "") + (agent.get("error") or "")
     return any(
         s in blob
         for s in (
             "HTTP 402",
+            "HTTP 403",
+            "Key limit exceeded",
+            "key limit exceeded",
             "openrouter_credits",
             "requires more credits",
             "can only afford",

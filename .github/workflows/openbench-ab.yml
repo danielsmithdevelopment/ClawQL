@@ -344,18 +344,19 @@ jobs:
               echo "OPENBENCH_TIMEOUT_S=180"
             fi
             if [ "${{ matrix.task }}" = "institutional-knowledge-enumerate" ]; then
-              # Redesigned ~120 nested notes; Claude Sonnet 4.6 for agent follow-through
-              # (Harvey LAB family). Three-arm n≥3 via ci-matrix pr_trials.
+              # Fair same-files cell. Off first so a provider credit failure on-arm
+              # cannot skip the filesystem baseline. DeepSeek until OpenRouter
+              # Sonnet key limit is raised (403 on prior Sonnet burns).
               echo "OPENBENCH_TIMEOUT_S=480"
-              echo "OPENBENCH_MODEL=openrouter/anthropic/claude-sonnet-4.6"
+              echo "OPENBENCH_MODEL=openrouter/deepseek/deepseek-chat"
               if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                 case "${{ inputs.arms }}" in
                   clawql-on,clawql-off|"")
-                    echo "OPENBENCH_ARMS=clawql-on,clawql-off,clawql-no-memory"
+                    echo "OPENBENCH_ARMS=clawql-off,clawql-on,clawql-no-memory"
                     ;;
                 esac
               else
-                echo "OPENBENCH_ARMS=clawql-on,clawql-off,clawql-no-memory"
+                echo "OPENBENCH_ARMS=clawql-off,clawql-on,clawql-no-memory"
               fi
             fi
           } >> "$GITHUB_ENV"

@@ -2,7 +2,7 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-7.1 fair same-files cell: identical prose corpus all arms; on=+vault. Sonnet n=3 burn.",
+  "live_resume_note": "B-7.1 fair same-files: identical prose all arms; on=+vault. DeepSeek n=3 (Sonnet blocked by OpenRouter key limit).",
   "pr_active": [
     "institutional-knowledge-enumerate"
   ],

@@ -1,6 +1,6 @@
 ### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) fair same-files — pending
 
-**Apples-to-apples:** identical prose notes on disk for on / off / no-memory; on also gets vault `CLAWQL_*` via `memory_recall`. Prior burns that hid files from on-arm are **confounded** (not Harvey-comparable). Live Sonnet n=3 on PR — fill when run completes.
+**Apples-to-apples:** identical prose notes on disk for on / off / no-memory; on also gets vault `CLAWQL_*`. Sonnet attempt [31241200178](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31241200178) aborted — OpenRouter **key limit 403** on every on trial (off skipped). Re-burn on DeepSeek with off-first arm order.
 
 ### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) Sonnet 4.6 n=3 — CONFOUNDED (files hidden from on)
 
