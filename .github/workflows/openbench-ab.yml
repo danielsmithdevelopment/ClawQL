@@ -344,9 +344,9 @@ jobs:
               echo "OPENBENCH_TIMEOUT_S=180"
             fi
             if [ "${{ matrix.task }}" = "institutional-knowledge-enumerate" ]; then
-              # Fair same-files cell. Off first so a provider credit failure on-arm
-              # cannot skip the filesystem baseline. DeepSeek until OpenRouter
-              # Sonnet key limit is raised (403 on prior Sonnet burns).
+              # Fair same-files cell. Off first so a provider budget failure on-arm
+              # cannot skip the filesystem baseline. DeepSeek until the CI key's
+              # per-key spend cap is raised (403 Key limit exceeded ≠ account $).
               echo "OPENBENCH_TIMEOUT_S=480"
               echo "OPENBENCH_MODEL=openrouter/deepseek/deepseek-chat"
               if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -395,6 +395,28 @@ jobs:
             reason="Add OPENROUTER_API_KEY or a vendor BYOK secret."
           fi
 
+          # OpenRouter: account balance ≠ per-key spend cap. Probe GET /api/v1/key
+          # and fail fast when limit_remaining is exhausted (no secret leak).
+          or_key_note=""
+          if [ "$run_benchmark" = true ] && [[ "$MODEL" == openrouter/* ]] && [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            key_json="$(curl -fsS --max-time 20 \
+              -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
+              https://openrouter.ai/api/v1/key)" || {
+              run_benchmark=false
+              reason="OPENROUTER_API_KEY present but GET https://openrouter.ai/api/v1/key failed (network/auth)."
+              key_json=""
+            }
+            if [ -n "${key_json}" ]; then
+              eval "$(printf '%s' "$key_json" | python3 openbench/scripts/openrouter-key-preflight.py)"
+              or_key_note="OpenRouter key label='${OR_LABEL}' limit=\$${OR_LIMIT} remaining=\$${OR_REMAINING} usage=\$${OR_USAGE} reset=${OR_RESET}"
+              echo "::notice::${or_key_note}"
+              if [ "${OR_EXHAUSTED}" = "1" ]; then
+                run_benchmark=false
+                reason="OpenRouter per-key spend limit exhausted (limit_remaining=\$${OR_REMAINING}, key limit=\$${OR_LIMIT}). Account credits are separate — raise/remove this key's limit at https://openrouter.ai/settings/keys or rotate OPENROUTER_API_KEY to an uncapped key."
+              fi
+            fi
+          fi
+
           echo "run_benchmark=${run_benchmark}" >> "$GITHUB_OUTPUT"
           {
             echo "## OpenBench credential preflight"
@@ -406,10 +428,15 @@ jobs:
             echo "- Trials/arm: \`${OPENBENCH_TRIALS}\`"
             echo "- Run live benchmark: \`${run_benchmark}\`"
             echo "- Note: ${reason}"
+            if [ -n "${or_key_note}" ]; then
+              echo "- OpenRouter key: ${or_key_note}"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
           if [ "$run_benchmark" != "true" ]; then
-            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Key-limit / auth failures must fail CI (not silent skip) so we do not
+            # misread empty matrices as green A/B results.
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [[ "${reason}" == *"per-key spend limit"* ]] || [[ "${reason}" == *"GET https://openrouter.ai/api/v1/key failed"* ]]; then
               echo "::error::${reason}"
               exit 1
             fi

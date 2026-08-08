@@ -2,9 +2,11 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-7.1 fair same-files harness landed (PR #875). Burns blocked: OpenRouter key limit/credits (Sonnet 403 @ 31241200178; DeepSeek 402 @ 31242620062). Top up OPENROUTER_API_KEY then re-activate pr_active.",
-  "pr_active": [],
-  "pr_trials": 1,
+  "live_resume_note": "B-7.1 fair same-files on main (#875). Prior abort was OpenRouter per-key spend cap (403 Key limit exceeded on CI key …c145e2f7), not account balance. Raise that key's limit, then this pr_active burn runs (DeepSeek, off→on→no-memory, n=3).",
+  "pr_active": [
+    "institutional-knowledge-enumerate"
+  ],
+  "pr_trials": 3,
   "retired": {
     "idp-safe-pipeline-lite": {
       "reason": "Verified WIN \u2014 stubbed 7-stage IDP orchestration (on 1.0 / off 0.0; RTP v1.1)",
@@ -113,10 +115,6 @@
     "memory-recall-pageindex-pin": {
       "reason": "Verified WIN \u2014 memory_recall(sources=[pageindex]) after build_tree (on 1.0 / off 0.0)",
       "evidence_run": "31189112838"
-    },
-    "institutional-knowledge-enumerate": {
-      "reason": "Fair same-files harness on main via #875; live A/B blocked on OpenRouter credits. Re-activate after top-up.",
-      "evidence_run": "31242620062"
     }
   },
   "ouroboros_pr_enabled": false,
