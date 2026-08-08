@@ -2,10 +2,14 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "pr_active empty. Next candidate: institutional-knowledge-enumerate (B-7.1) via workflow_dispatch after offline pack — keep off PR burn until WIN. See docs/benchmarks/openbench-b7-calderwood.md.",
+  "live_resume_note": "pr_active empty after B-7.1 WIN. Next: B-7.2 preference / B-7.3 amortized session when harness ready. See docs/benchmarks/openbench-b7-calderwood.md.",
   "pr_active": [],
   "pr_trials": 1,
   "retired": {
+    "institutional-knowledge-enumerate": {
+      "reason": "Verified WIN — mini-firm exhaustive escrow≥10 ∧ NC>18 (on 5/5 / off 0/5 / no-memory 0/5)",
+      "evidence_run": "31228280796"
+    },
     "idp-safe-pipeline-lite": {
       "reason": "Verified WIN — stubbed 7-stage IDP orchestration (on 1.0 / off 0.0; RTP v1.1)",
       "evidence_run": "31039035892"

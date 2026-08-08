@@ -344,21 +344,24 @@ jobs:
             fi
             if [ "${{ matrix.task }}" = "institutional-knowledge-enumerate" ]; then
               echo "OPENBENCH_TIMEOUT_S=240"
-              # Three-arm isolate (tools+vault vs tools/no-vault vs bare) unless
-              # dispatch explicitly chose a different arms set.
+              # Three-arm isolate by default (tools+vault vs tools/no-vault vs bare).
+              # On dispatch, honor an explicit non-default arms input; on PR/push
+              # always use the three-arm set (same burn path as every other cell).
               if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                 case "${{ inputs.arms }}" in
                   clawql-on,clawql-off|"")
                     echo "OPENBENCH_ARMS=clawql-on,clawql-off,clawql-no-memory"
                     ;;
                 esac
+              else
+                echo "OPENBENCH_ARMS=clawql-on,clawql-off,clawql-no-memory"
               fi
             fi
           } >> "$GITHUB_ENV"
           if [ "${{ matrix.task }}" = "sandbox-trusted-compute" ]; then
             docker pull python:3.12-alpine
           fi
-          echo "::notice::${{ matrix.task }} → arms=clawql-on,off timeout=${OPENBENCH_TIMEOUT_S:-180}s"
+          echo "::notice::${{ matrix.task }} → arms=${OPENBENCH_ARMS:-clawql-on,clawql-off} timeout=${OPENBENCH_TIMEOUT_S:-180}s"
 
       - name: Credential preflight
         id: preflight

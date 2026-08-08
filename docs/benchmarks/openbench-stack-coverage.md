@@ -182,7 +182,7 @@ Full breakdown (B-1 flywheel → B-7 institutional / C&H): [`openbench-advanced-
 
 ### Phase 1d — Institutional knowledge (Harvey C&H)
 
-23. **`institutional-knowledge-enumerate` (B-7.1)** — offline pack landed (mini-firm vault; exhaustive escrow≥10 ∧ NC>18). Live A/B via `workflow_dispatch` next; keep off `pr_active` until WIN.
+23. **`institutional-knowledge-enumerate` (B-7.1)** — **WIN** three-arm [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796): on **5/5** / off **0/5** / no-memory **0/5**. Retired.
 
 ### P3 — keep out of PR OpenBench (ops / cluster / paid SaaS)
 
