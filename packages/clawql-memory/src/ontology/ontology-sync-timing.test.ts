@@ -49,7 +49,6 @@ describe("ontology lazy sync @ 120 notes", () => {
     // Budget: leave ≥30s of a 60s wall for the agent turn. Local WASM sync
     // of 120 small notes should be far below 5s on CI runners.
     expect(ms).toBeLessThan(5_000);
-    // eslint-disable-next-line no-console
     console.log(`lazy sync 120 notes: ${ms}ms`);
   });
 

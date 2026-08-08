@@ -2,9 +2,8 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-7.1 structured ontology path on #877. Activating fair cell + ontology efficiency cell (n=3) to prove on ≫ off after Harvey-style keyword FAIL @ 31244644204.",
+  "live_resume_note": "B-7.1 fair cell WIN @ 31255172649 (on 3/3 structured_predicate / off 0/3). Reburning ontology efficiency cell after write-tool nudge harden.",
   "pr_active": [
-    "institutional-knowledge-enumerate",
     "institutional-knowledge-enumerate-ontology"
   ],
   "pr_trials": 3,
@@ -116,6 +115,10 @@
     "memory-recall-pageindex-pin": {
       "reason": "Verified WIN — memory_recall(sources=[pageindex]) after build_tree (on 1.0 / off 0.0)",
       "evidence_run": "31189112838"
+    },
+    "institutional-knowledge-enumerate": {
+      "reason": "Verified WIN — fair same-files + structured ontology recall (on 3/3 / off 0/3; structured_predicate; prior keyword FAIL 31244644204)",
+      "evidence_run": "31255172649"
     }
   },
   "ouroboros_pr_enabled": false,

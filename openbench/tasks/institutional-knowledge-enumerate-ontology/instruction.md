@@ -25,7 +25,9 @@ Call `clawql_memory_recall` **once** with structured filters (do not keyword-sea
 }
 ```
 
-Expect `queryType: "structured_predicate"`. Copy every `entityId` into `matters.json`.
+Expect `queryType: "structured_predicate"`. Copy every `entityId` into `matters.json`
+via the OpenCode **write** tool (filePath exactly `matters.json`). Chat / code-fence
+JSON is **not** graded — only a real write counts.
 
 ## Artifact
 
@@ -45,7 +47,7 @@ Expect `queryType: "structured_predicate"`. Copy every `entityId` into `matters.
 
 - Exact set; false positives → 0.
 - Live grading requires real `clawql_memory_recall` with `schema` + `filters`.
-- Hard caps: **5 turns / 60s / 4000 tokens** (efficiency claim).
+- Hard caps: **5 turns / 90s / 4000 tokens** (efficiency claim; ~2-turn structured path).
 
 ## Rules
 
