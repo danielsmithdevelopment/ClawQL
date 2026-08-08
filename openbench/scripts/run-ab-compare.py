@@ -348,6 +348,26 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "require_institutional": True,
         "require_structured_ontology": True,
     },
+    "institutional-knowledge-enumerate-blind": {
+        # B-7.1-blind: same fair fixture; no taught filter JSON / no CRITICAL banner.
+        # Higher off budget so off cannot be accused of giving up early.
+        "max_turns": 60,
+        "max_tokens": 20000,
+        "max_wall_s": 600,
+        "default_timeout_s": 600,
+        "disable_memory": False,
+        "require_institutional": True,
+        "require_structured_ontology": False,
+    },
+    "institutional-client-preference": {
+        # B-7.2: Meridian preference reconstruction from prose (top-1 grader).
+        "max_turns": 40,
+        "max_tokens": 12000,
+        "max_wall_s": 360,
+        "default_timeout_s": 360,
+        "disable_memory": False,
+        "require_preference": True,
+    },
 }
 
 # Appended only to ouroboros-on so off cannot one-shot the correct recipe.
@@ -772,6 +792,30 @@ Workspace notes are **prose** (no CLAWQL_* machine tags). You must read and inte
    {"matters":["MAT-XXXX"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"filesystem","search_sufficiency":"checked all notes under .openbench/memory-seed"}
 
 Do not stop after 1–2 files. Do not invent IDs. Exhaust the tree, then write.
+"""
+
+PREFERENCE_NUDGE = """Continue B-7.2 client preference reconstruction.
+
+1. Call clawql_memory_recall for Meridian Capital / CLT-0017 and related matters.
+2. Read Meridian risk profile + prior outcomes (what they accepted/rejected).
+3. Read the three term-sheet annexes for the active Northline matter.
+4. Choose top-1 by institutional preference — NOT by highest purchase price.
+5. write relative filePath preference.json:
+   {"client":"Meridian Capital","active_matter":"MAT-XXXX","top1":"MAT-XXXX-Y","ranking":["..."],"rationale":"...","source":"memory_recall"}
+
+Chat JSON is not graded. Call write now.
+"""
+
+PREFERENCE_OFF_NUDGE = """Continue. Memory tools are unavailable — that is expected on this arm.
+
+1. Under `.openbench/memory-seed/`, find Meridian Capital client notes and prior matters.
+2. Read the three term-sheet annexes for Meridian's active Northline matter.
+3. Rank by Meridian's historical preference (certainty / capped indemnity / no earn-out),
+   not by highest headline price (other clients maximize price — ignore that pattern).
+4. write relative filePath preference.json with non-empty source:
+   {"client":"Meridian Capital","top1":"MAT-XXXX-Y","ranking":["..."],"rationale":"...","source":"filesystem"}
+
+Do not invent option IDs. Cite prior matter behavior in rationale.
 """
 
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.
@@ -1808,6 +1852,15 @@ def institutional_incomplete(combined: str, workdir: Path) -> bool:
     return not bool(tools & {"clawql_memory_recall", "memory_recall"})
 
 
+def preference_incomplete(combined: str, workdir: Path) -> bool:
+    if agent_idle(combined):
+        return True
+    if not (workdir / "preference.json").is_file():
+        return True
+    tools = real_opencode_tools(combined)
+    return not bool(tools & {"clawql_memory_recall", "memory_recall"})
+
+
 def extract_structured_matter_ids(combined: str) -> list[str]:
     """Pull entityIds from structured ontology memory_recall tool outputs."""
     import re
@@ -1955,6 +2008,7 @@ def run_arm_on(
     require_conflict: bool = False,
     require_institutional: bool = False,
     require_structured_ontology: bool = False,
+    require_preference: bool = False,
     correlation_id: str | None = None,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
@@ -2864,6 +2918,37 @@ def run_arm_on(
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
 
+    # B-7.2 preference: missing memory_recall / preference.json.
+    if (
+        require_preference
+        and arm in ("clawql-on", "clawql-no-memory")
+        and not timed_out
+        and preference_incomplete(combined, workdir)
+    ):
+        elapsed = time.monotonic() - t0
+        remaining = int(timeout_s) - int(elapsed)
+        if remaining >= 20:
+            cont_file = workdir / ".openbench_preference_nudge.md"
+            cont_file.write_text(PREFERENCE_NUDGE, encoding="utf-8")
+            cont_timeout = max(20, min(90, remaining))
+            cmd = build_cmd(cont_file, cont_timeout)
+            try:
+                proc_pref = subprocess.run(
+                    cmd,
+                    cwd=str(workdir),
+                    capture_output=True,
+                    text=True,
+                    timeout=cont_timeout + 30,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                )
+                combined = combined + "\n" + (proc_pref.stdout or "") + (proc_pref.stderr or "")
+                code = proc_pref.returncode
+            except subprocess.TimeoutExpired as exc:
+                timed_out = True
+                combined = combined + "\n" + _dec_timeout_output(exc)
+                code = 124
+
     # institutional knowledge: missing memory_recall / matters.json.
     # Prefer write-only when structured recall already returned entityIds —
     # DeepSeek often dumps JSON in chat and wastes the tight ontology cap on
@@ -3428,6 +3513,22 @@ def render_markdown(report: dict) -> str:
             "prove exact enumeration in ~2 turns (+ write-only nudge). "
             "Keyword near-misses → 0."
         )
+    elif task == "institutional-knowledge-enumerate-blind":
+        interp.append(
+            "- B-7.1-blind: same fair fixture as B-7.1, but the instruction does "
+            "**not** teach the exact schema+filters JSON (no CRITICAL banner). "
+            "Tests whether on-arm invents structured ontology recall from the "
+            "tool description. Higher off-arm budget. FP→0 still applies."
+        )
+    elif task == "institutional-client-preference":
+        interp.append(
+            "- B-7.2: Meridian Capital preference reconstruction. Preference "
+            "signal lives only in institutional prose (risk profile / prior "
+            "outcomes). Term sheets expose surface attributes but never a "
+            "preferred label. Top-1 grader; price-sort distractor ranks B>C>A "
+            "while ground truth is A>C>B. Ontology graph helps traverse "
+            "Client→Matter; it does not encode the answer."
+        )
     interp.append("")
     lines.extend(interp)
     return "\n".join(lines)
@@ -3493,7 +3594,9 @@ def run_trial(
         # every arm. On = files + memory; off/no-memory = files only. Do NOT
         # hide the corpus from on-arm (that confounded earlier burns).
         seed_dir_src = tmp / ".openbench" / "memory-seed"
-        if caps.get("require_institutional") and seed_dir_src.is_dir():
+        if (
+            caps.get("require_institutional") or caps.get("require_preference")
+        ) and seed_dir_src.is_dir():
             seed_snapshot = Path(tempfile.mkdtemp(prefix="ik_seed_snap_"))
             shutil.copytree(seed_dir_src, seed_snapshot / "memory-seed")
         vault = seed_and_remove_memory(tmp, task_dir=task_dir)
@@ -3513,18 +3616,22 @@ def run_trial(
             agent = run_arm_off(
                 instruction, tmp, model, timeout_s, inference_url, correlation_id=corr
             )
-            # B-7.1: force a genuine exhaustive try (Risk: early give-up).
-            if (
-                caps.get("require_institutional")
-                and not agent.get("timed_out")
-                and not (tmp / "matters.json").is_file()
-            ):
+            # B-7.1 / B-7.2: force a genuine try (Risk: early give-up).
+            off_nudge = None
+            off_missing = False
+            if caps.get("require_institutional") and not (tmp / "matters.json").is_file():
+                off_nudge = INSTITUTIONAL_OFF_NUDGE
+                off_missing = True
+            elif caps.get("require_preference") and not (tmp / "preference.json").is_file():
+                off_nudge = PREFERENCE_OFF_NUDGE
+                off_missing = True
+            if off_nudge and off_missing and not agent.get("timed_out"):
                 used = float(agent.get("wall_s") or 0.0)
                 remaining = int(timeout_s) - int(used)
                 if remaining >= 40:
                     cont_timeout = max(40, min(200, remaining))
                     agent2 = run_arm_off(
-                        INSTITUTIONAL_OFF_NUDGE,
+                        off_nudge,
                         tmp,
                         model,
                         cont_timeout,
@@ -3609,6 +3716,7 @@ def run_trial(
                 require_conflict=bool(caps.get("require_conflict")),
                 require_institutional=bool(caps.get("require_institutional")),
                 require_structured_ontology=bool(caps.get("require_structured_ontology")),
+                require_preference=bool(caps.get("require_preference")),
                 correlation_id=corr,
             )
         agent["correlation_id"] = corr
@@ -3690,6 +3798,11 @@ def run_trial(
             checker_env_extra["OPENBENCH_REQUIRE_STRUCTURED_ONTOLOGY"] = "1"
             checker_env_extra["OPENBENCH_HARD_MAX_TURNS"] = str(caps.get("max_turns", 5))
             checker_env_extra["OPENBENCH_HARD_MAX_TOKENS"] = str(caps.get("max_tokens", 4000))
+        if caps.get("require_preference") and arm in (
+            "clawql-on",
+            "clawql-no-memory",
+        ):
+            checker_env_extra["OPENBENCH_REQUIRE_PREFERENCE"] = "1"
         checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
         checker = apply_hard_caps(task_name, agent, checker)
         return {

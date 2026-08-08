@@ -119,6 +119,8 @@ Prefer the Python adapter: it writes the instruction file, parses
 | `multi-provider-api-workflow`   | Offline Cloudflare Worker + GitHub releases scaffold; rewards structured API discovery over dumping specs.                                      |
 | `institutional-knowledge-enumerate` | B-7.1 mini Calderwood & Harkness fixture (120 nested notes / 5 matches) — exhaustive escrow≥10 ∧ NC>18 via vault `memory_recall`.            |
 | `institutional-knowledge-enumerate-ontology` | B-7.1-ontology — same fixture; structured `schema`+`filters` under 5-turn / 4k-token caps (efficiency claim). |
+| `institutional-knowledge-enumerate-blind` | B-7.1-blind — same fixture; no taught filter JSON (model must invent structured recall). |
+| `institutional-client-preference` | B-7.2 — Meridian Capital preference reconstruction from institutional prose (top-1 grader). |
 
 Validate checkers offline (no model, no network):
 

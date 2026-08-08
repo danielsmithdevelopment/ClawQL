@@ -2,9 +2,12 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-7.1 double WIN: fair @ 31255172649 + ontology efficiency @ 31256241850 (both on 3/3 structured_predicate / off 0/3). pr_active cleared pending #877 merge.",
-  "pr_active": [],
-  "pr_trials": 1,
+  "live_resume_note": "Post-#877: activate B-7.2 preference + B-7.1-blind (n=3). Fair/ontology B-7.1 already retired as WIN.",
+  "pr_active": [
+    "institutional-client-preference",
+    "institutional-knowledge-enumerate-blind"
+  ],
+  "pr_trials": 3,
   "retired": {
     "idp-safe-pipeline-lite": {
       "reason": "Verified WIN — stubbed 7-stage IDP orchestration (on 1.0 / off 0.0; RTP v1.1)",
