@@ -268,7 +268,9 @@ jobs:
           matrix.task == 'memory-wikilink-hop' ||
           matrix.task == 'memory-conflict-pricing' ||
           matrix.task == 'institutional-knowledge-enumerate' ||
-          matrix.task == 'institutional-knowledge-enumerate-ontology'
+          matrix.task == 'institutional-knowledge-enumerate-ontology' ||
+          matrix.task == 'institutional-knowledge-enumerate-blind' ||
+          matrix.task == 'institutional-client-preference'
         run: |
           {
             echo "OPENBENCH_TIMEOUT_S=180"
