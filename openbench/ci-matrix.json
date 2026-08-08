@@ -2,8 +2,10 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-7.2 preference + B-7.1-blind both retired WIN. Next: B-7.3 session harness / B-7.4 C&H corpus when available.",
-  "pr_active": [],
+  "live_resume_note": "B-7.3 amortized session active (n=3). B-7.1/B-7.2 retired WIN. B-7.4 still blocked on C&H download.",
+  "pr_active": [
+    "institutional-amortized-session"
+  ],
   "pr_trials": 3,
   "retired": {
     "idp-safe-pipeline-lite": {

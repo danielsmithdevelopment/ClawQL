@@ -217,7 +217,7 @@ Synthesize Client X governing-law / dispute-resolution preferences across multip
 
 ### B-7.3 — Amortized multi-question session
 
-Five related questions on one client; measure total tokens + completeness with persistent vault vs wiped vault. Needs session-capable harness. Spec only.
+Five related questions on the mini-firm corpus; measure mean step score + cumulative wall/tokens with persistent vault vs wiped/bare. Live pack: [`institutional-amortized-session`](../../openbench/tasks/institutional-amortized-session/) (session harness in `run-ab-compare.py`).
 
 ### B-7.4 — Full C&H mount
 

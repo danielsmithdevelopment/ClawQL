@@ -370,6 +370,17 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "disable_memory": False,
         "require_preference": True,
     },
+    "institutional-amortized-session": {
+        # B-7.3: five related prompts; Q1 builds representation, Q2–5 reuse.
+        # Session wall ≈ 240 + 4×75; hard caps bound cumulative spend.
+        "max_turns": 90,
+        "max_tokens": 22000,
+        "max_wall_s": 600,
+        "default_timeout_s": 600,
+        "disable_memory": False,
+        "require_institutional": True,
+        "require_amortized_session": True,
+    },
 }
 
 # Appended only to ouroboros-on so off cannot one-shot the correct recipe.
@@ -3663,6 +3674,17 @@ def render_markdown(report: dict) -> str:
                 f"tokens≤{caps.get('max_tokens')}, wall≤{caps.get('max_wall_s')}s.",
             ]
         )
+    elif task == "institutional-amortized-session":
+        interp.extend(
+            [
+                "- B-7.3 amortized session: five related prompts in one workdir.",
+                "- **clawql-on** keeps the seeded vault across Q1–Q5 (ingest after Q1 "
+                "helps reuse under tight Q2–Q5 caps).",
+                "- **clawql-no-memory** / **clawql-off** must re-derive each answer "
+                "without persistent vault state; reuse caps make full re-scans fail.",
+                "- Headline: `SESSION_STEPS: k/5` + mean SCORE; compare cumulative wall/tokens.",
+            ]
+        )
     elif task == "search-first-discovery":
         interp.extend(
             [
@@ -3870,6 +3892,229 @@ def write_agent_log(out_dir: Path | None, arm: str, trial: int, combined: str) -
     return str(path)
 
 
+def load_session_prompts(task_dir: Path) -> list[dict]:
+    path = Path(task_dir) / "session_prompts.json"
+    if not path.is_file():
+        return []
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    steps = raw.get("steps") if isinstance(raw, dict) else None
+    if not isinstance(steps, list):
+        return []
+    return [s for s in steps if isinstance(s, dict) and s.get("id")]
+
+
+def run_amortized_session_trial(
+    task_dir: Path,
+    arm: str,
+    model: str,
+    timeout_s: int,
+    trial: int,
+    inference_url: str,
+    log_dir: Path | None = None,
+) -> dict:
+    """B-7.3: run 5 related prompts in one workdir; vault persists on clawql-on."""
+    tmp = Path(tempfile.mkdtemp(prefix=f"ab-sess-{arm}-{trial}-"))
+    vault = None
+    task_name = task_dir.name
+    caps = TASK_HARD_CAPS.get(task_name) or {}
+    corr = openbench_correlation_id(arm, trial)
+    seed_snapshot: Path | None = None
+    steps = load_session_prompts(task_dir)
+    if not steps:
+        return {
+            "trial": trial,
+            "arm": arm,
+            "agent": {
+                "arm": arm,
+                "completed": False,
+                "error": "missing session_prompts.json",
+                "wall_s": 0,
+                "tokens": None,
+                "turns": None,
+            },
+            "checker": {"success": False, "score": 0.0, "stdout": "", "stderr": "no steps"},
+            "workdir": str(tmp),
+        }
+    session_meta: list[dict] = []
+    combined_all = ""
+    total_wall = 0.0
+    total_turns = 0
+    total_tokens = 0
+    tokens_known = False
+    timed_out_any = False
+    last_agent: dict = {"arm": arm, "harness": DEFAULT_HARNESS}
+    try:
+        materialize_workspace(task_dir, tmp)
+        (tmp / "session").mkdir(parents=True, exist_ok=True)
+        seed_dir_src = tmp / ".openbench" / "memory-seed"
+        if seed_dir_src.is_dir():
+            seed_snapshot = Path(tempfile.mkdtemp(prefix="ik_sess_seed_"))
+            shutil.copytree(seed_dir_src, seed_snapshot / "memory-seed")
+        vault = seed_and_remove_memory(tmp, task_dir=task_dir)
+        if seed_snapshot and (seed_snapshot / "memory-seed").is_dir():
+            dest = tmp / ".openbench" / "memory-seed"
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            if dest.exists():
+                shutil.rmtree(dest)
+            shutil.copytree(seed_snapshot / "memory-seed", dest)
+
+        disable_memory = False
+        if arm == "clawql-no-memory":
+            disable_memory = True
+            if vault:
+                shutil.rmtree(vault, ignore_errors=True)
+                vault = None
+        if arm == "clawql-off" and vault:
+            # Off never uses the vault; free it early.
+            shutil.rmtree(vault, ignore_errors=True)
+            vault = None
+
+        budget_left = int(timeout_s)
+        for idx, step in enumerate(steps):
+            sid = str(step.get("id") or f"q{idx+1}")
+            step_timeout = min(int(step.get("timeout_s") or 75), max(20, budget_left))
+            if budget_left < 20:
+                timed_out_any = True
+                session_meta.append({"id": sid, "skipped": True, "reason": "session_budget"})
+                break
+            step_instruction = str(step.get("instruction") or "").strip()
+            if not step_instruction:
+                step_instruction = (task_dir / "instruction.md").read_text(encoding="utf-8")
+            # Prefix with session context so DeepSeek knows prior artifacts exist.
+            if idx > 0:
+                step_instruction = (
+                    f"Continuing amortized session ({sid}). Prior answers may exist under "
+                    f"`session/`. Vault memory persists on clawql-on.\n\n{step_instruction}"
+                )
+            step_caps = dict(caps)
+            step_caps["max_turns"] = int(step.get("max_turns") or caps.get("max_turns") or 12)
+            step_caps["max_tokens"] = int(step.get("max_tokens") or caps.get("max_tokens") or 3500)
+            step_caps["max_wall_s"] = step_timeout
+            require_structured = bool(step.get("require_structured_ontology"))
+
+            print(
+                f"    session step {idx+1}/{len(steps)} id={sid} "
+                f"timeout={step_timeout}s arm={arm}",
+                flush=True,
+            )
+            step_corr = f"{corr}/{sid}"
+            if arm == "clawql-off":
+                agent = run_arm_off(
+                    step_instruction,
+                    tmp,
+                    model,
+                    step_timeout,
+                    inference_url,
+                    correlation_id=step_corr,
+                )
+            else:
+                agent = run_arm_on(
+                    step_instruction,
+                    tmp,
+                    model,
+                    step_timeout,
+                    inference_url,
+                    vault,
+                    arm=arm,
+                    disable_memory=disable_memory,
+                    task_hard_caps=step_caps,
+                    require_institutional=True,
+                    require_structured_ontology=require_structured,
+                    correlation_id=step_corr,
+                )
+            last_agent = agent
+            log = agent.pop("_combined_log", "") or agent.get("output_tail") or ""
+            dump = tmp / ".openbench_harness.jsonl"
+            if dump.is_file():
+                try:
+                    dump_text = dump.read_text(encoding="utf-8", errors="replace")
+                    if dump_text and dump_text not in log:
+                        log = (log + "\n" + dump_text) if log else dump_text
+                except OSError:
+                    pass
+            combined_all = (combined_all + "\n" + log).strip() if combined_all else log
+            wall = float(agent.get("wall_s") or 0.0)
+            total_wall += wall
+            budget_left = max(0, budget_left - int(wall) - 1)
+            try:
+                if agent.get("turns") is not None:
+                    total_turns += int(agent.get("turns") or 0)
+            except (TypeError, ValueError):
+                pass
+            try:
+                if agent.get("tokens") is not None:
+                    total_tokens += int(agent.get("tokens") or 0)
+                    tokens_known = True
+            except (TypeError, ValueError):
+                pass
+            if agent.get("timed_out"):
+                timed_out_any = True
+            art = str(step.get("artifact") or f"session/{sid}.json")
+            session_meta.append(
+                {
+                    "id": sid,
+                    "artifact": art,
+                    "artifact_present": (tmp / art).is_file(),
+                    "wall_s": wall,
+                    "turns": agent.get("turns"),
+                    "timed_out": bool(agent.get("timed_out")),
+                    "exit_code": agent.get("exit_code"),
+                }
+            )
+            if credit_exhausted(agent):
+                break
+
+        agent_out = dict(last_agent)
+        agent_out["arm"] = arm
+        agent_out["harness"] = DEFAULT_HARNESS
+        agent_out["correlation_id"] = corr
+        agent_out["session_steps"] = session_meta
+        agent_out["wall_s"] = round(total_wall, 3)
+        agent_out["turns"] = total_turns
+        agent_out["tokens"] = total_tokens if tokens_known else None
+        agent_out["timed_out"] = timed_out_any
+        agent_out["completed"] = not timed_out_any
+        agent_out["_combined_log"] = combined_all
+        agent_out["output_tail"] = (combined_all or "")[-2000:]
+
+        log_path = write_agent_log(log_dir, arm, trial, combined_all)
+        if log_path:
+            agent_out["log_path"] = log_path
+        write_usage_sidecar(tmp, agent_out)
+        (tmp / ".openbench_agent.log").write_text(combined_all or "", encoding="utf-8")
+        (tmp / ".openbench_session.json").write_text(
+            json.dumps({"steps": session_meta}, indent=2) + "\n", encoding="utf-8"
+        )
+
+        checker_env_extra = {
+            "OPENBENCH_HARD_MAX_TURNS": str(caps.get("max_turns", 90)),
+            "OPENBENCH_HARD_MAX_TOKENS": str(caps.get("max_tokens", 22000)),
+        }
+        if arm in ("clawql-on", "clawql-no-memory"):
+            checker_env_extra["OPENBENCH_REQUIRE_INSTITUTIONAL"] = "1"
+        checker = run_checker(task_dir, tmp, env_extra=checker_env_extra)
+        checker = apply_hard_caps(task_name, agent_out, checker)
+        # Attach amortized diagnostics for summary.md / results.json.
+        checker["session_steps"] = session_meta
+        return {
+            "trial": trial,
+            "arm": arm,
+            "agent": agent_out,
+            "checker": checker,
+            "workdir": str(tmp),
+        }
+    finally:
+        if seed_snapshot:
+            shutil.rmtree(seed_snapshot, ignore_errors=True)
+        if vault:
+            shutil.rmtree(vault, ignore_errors=True)
+        if os.environ.get("CLAWQL_AB_KEEP_WORKDIR") != "1":
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
 def run_trial(
     task_dir: Path,
     arm: str,
@@ -3879,11 +4124,15 @@ def run_trial(
     inference_url: str,
     log_dir: Path | None = None,
 ) -> dict:
+    task_name = task_dir.name
+    caps = TASK_HARD_CAPS.get(task_name) or {}
+    if caps.get("require_amortized_session"):
+        return run_amortized_session_trial(
+            task_dir, arm, model, timeout_s, trial, inference_url, log_dir=log_dir
+        )
     instruction = (task_dir / "instruction.md").read_text(encoding="utf-8")
     tmp = Path(tempfile.mkdtemp(prefix=f"ab-{arm}-{trial}-"))
     vault = None
-    task_name = task_dir.name
-    caps = TASK_HARD_CAPS.get(task_name) or {}
     corr = openbench_correlation_id(arm, trial)
     seed_snapshot: Path | None = None
     try:
