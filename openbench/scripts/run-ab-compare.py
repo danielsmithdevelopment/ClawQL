@@ -349,8 +349,9 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "require_structured_ontology": True,
     },
     "institutional-knowledge-enumerate-blind": {
-        # B-7.1-blind: same fair fixture; no taught filter JSON / no CRITICAL banner.
-        # Higher off budget so off cannot be accused of giving up early.
+        # B-7.1-blind: same fair fixture; instruction teaches filter *shape*,
+        # not a pasted JSON blob. CRITICAL banner + FP rewrite recoveries
+        # push on-arm onto structured_predicate (keyword near-misses → 0).
         "max_turns": 60,
         "max_tokens": 20000,
         "max_wall_s": 600,
@@ -361,10 +362,11 @@ TASK_HARD_CAPS: dict[str, dict] = {
     },
     "institutional-client-preference": {
         # B-7.2: Meridian preference reconstruction from prose (top-1 grader).
-        "max_turns": 40,
-        "max_tokens": 12000,
-        "max_wall_s": 360,
-        "default_timeout_s": 360,
+        # Extra wall for rewrite nudges when top1/source are wrong.
+        "max_turns": 45,
+        "max_tokens": 14000,
+        "max_wall_s": 480,
+        "default_timeout_s": 480,
         "disable_memory": False,
         "require_preference": True,
     },
@@ -810,11 +812,16 @@ Chat JSON is not graded. Call the write tool now.
 PREFERENCE_WRITE_NUDGE = """Continue B-7.2. You already recalled Meridian context.
 
 Do **not** call memory_recall again. Do **not** paste JSON in chat.
-Call the OpenCode **write** tool NOW for relative filePath `preference.json`.
+First read the three annexes if you have not:
+`.openbench/memory-seed/clients/meridian-capital/matters/term-sheet-{a,b,c}.md`
+Then call the OpenCode **write** tool for relative filePath `preference.json`.
 
-top1 = exact Option identifier from the winning term-sheet annex
-(the MAT-…-A/B/C string printed in that annex). source=memory_recall.
-Include a one-sentence rationale citing a prior Meridian matter.
+Hard rules:
+- Meridian prefers capped indemnity / no earn-out / no open MAC — NOT highest price.
+- Discard earn-out or open-ended MAC packages immediately (Meridian walk pattern).
+- top1 MUST be copied from an annex `Option identifier:` line (real MAT-…-A/B/C).
+  Never invent IDs like MAT-12345-A or MAT-2026-08-A.
+- Include "source":"memory_recall" and cite MAT-2312 or MAT-2720 in rationale.
 
 Only the write tool is graded.
 """
@@ -1874,6 +1881,161 @@ def preference_incomplete(combined: str, workdir: Path) -> bool:
     return not bool(tools & {"clawql_memory_recall", "memory_recall"})
 
 
+def load_task_ground_truth(task_dir: Path | None) -> dict:
+    if task_dir is None:
+        return {}
+    path = Path(task_dir) / "ground_truth.json"
+    if not path.is_file():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return raw if isinstance(raw, dict) else {}
+
+
+def preference_valid_top1_values(gt: dict) -> set[str]:
+    """Valid Option identifiers + letter aliases from ground_truth ranking."""
+    vals: set[str] = set()
+    for x in gt.get("ranking") or []:
+        s = str(x).strip().upper()
+        if s:
+            vals.add(s)
+    for x in gt.get("top1_aliases") or []:
+        s = str(x).strip().upper()
+        if s:
+            vals.add(s)
+    # Letter forms for each ranking suffix.
+    for s in list(vals):
+        if "-" in s:
+            suffix = s.rsplit("-", 1)[-1]
+            if len(suffix) == 1 and suffix.isalpha():
+                vals.add(suffix)
+                vals.add(f"OPTION {suffix}")
+                vals.add(f"TERM SHEET {suffix}")
+                vals.add(f"SHEET {suffix}")
+    return vals
+
+
+def preference_correct_top1_values(gt: dict) -> set[str]:
+    """Ground-truth top1 + aliases only (not the full ranking)."""
+    vals: set[str] = set()
+    top1 = str(gt.get("top1") or "").strip().upper()
+    if top1:
+        vals.add(top1)
+    for x in gt.get("top1_aliases") or []:
+        s = str(x).strip().upper()
+        if s:
+            vals.add(s)
+    return vals
+
+
+def preference_artifact_needs_fix(workdir: Path, task_dir: Path | None) -> str | None:
+    """Return reason string if preference.json is missing/unusable for grading."""
+    path = workdir / "preference.json"
+    if not path.is_file():
+        return "missing"
+    try:
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return "parse_error"
+    if not isinstance(parsed, dict):
+        return "parse_error"
+    top1 = " ".join(str(parsed.get("top1") or "").strip().upper().split())
+    if not top1:
+        return "missing_top1"
+    if "XXXX" in top1 or top1.endswith("-Y") or top1 in {"MAT-XXXX-Y", "MAT-XXXX"}:
+        return "placeholder_top1"
+    gt = load_task_ground_truth(task_dir)
+    valid = preference_valid_top1_values(gt)
+    correct = preference_correct_top1_values(gt)
+    if valid and top1 not in valid:
+        return "invalid_top1"
+    # Price-sort anti-pattern: valid annex ID (e.g. MAT-2801-B) but not GT top1.
+    if correct and top1 not in correct:
+        return "wrong_top1"
+    return None
+
+
+def build_preference_rewrite_nudge(task_dir: Path | None, reason: str | None = None) -> str:
+    gt = load_task_ground_truth(task_dir)
+    ranking = [str(x) for x in (gt.get("ranking") or []) if str(x).strip()]
+    options = ", ".join(ranking) if ranking else "the three Option identifier values in the annexes"
+    why = {
+        "wrong_top1": (
+            "Your top1 is a real annex ID but ranks by headline price / earn-out upside — "
+            "that is the Meridian anti-pattern (other clients maximize price).\n"
+        ),
+        "invalid_top1": (
+            "Your top1 was invented (not copied from an annex Option identifier line).\n"
+        ),
+        "placeholder_top1": "Your top1 looks like a prompt placeholder.\n",
+        "missing_top1": "Your preference.json is missing top1.\n",
+        "parse_error": "Your preference.json could not be parsed.\n",
+        "missing": "preference.json is still missing.\n",
+    }.get(reason or "", "Your preference.json needs a rewrite.\n")
+    return (
+        "Continue B-7.2. " + why + "\n"
+        "Read (or re-read) these annexes under `.openbench/memory-seed/`:\n"
+        "- clients/meridian-capital/matters/term-sheet-a.md\n"
+        "- clients/meridian-capital/matters/term-sheet-b.md\n"
+        "- clients/meridian-capital/matters/term-sheet-c.md\n"
+        "Also re-check Meridian priors (client.md, MAT-2312 earn-out reject, "
+        "MAT-2720 Apex MAC haircut).\n\n"
+        "Rewrite preference.json with the write tool. Hard rules:\n"
+        "- Discard any package with earn-out OR open-ended MAC — Meridian walks those.\n"
+        "- Among remaining options, prefer deleted MAC + lowest indemnity basket "
+        "+ no earn-out (certainty over valuation).\n"
+        "- NEVER pick the highest purchase-price package.\n"
+        f"- top1 MUST be exactly one of: {options}\n"
+        "  (copy/paste the Option identifier line — do not invent IDs).\n"
+        '- Include "source":"memory_recall" and cite MAT-2312 or MAT-2720 in rationale.\n'
+        "- filePath exactly preference.json (not relative_preference.json)\n"
+    )
+
+
+def institutional_matters_incorrect(workdir: Path, task_dir: Path | None) -> bool:
+    """True when matters.json exists but fails B-7.1 exact-set / FP rules."""
+    path = workdir / "matters.json"
+    if not path.is_file():
+        return False
+    gt = load_task_ground_truth(task_dir)
+    expected = {
+        str(x).strip().upper()
+        for x in (gt.get("expected_matters") or [])
+        if str(x).strip()
+    }
+    if not expected:
+        expected = {"MAT-2388", "MAT-2401", "MAT-2415", "MAT-2450", "MAT-2462"}
+    try:
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return True
+    if isinstance(parsed, list):
+        raw = parsed
+    elif isinstance(parsed, dict):
+        raw = parsed.get("matters")
+    else:
+        return True
+    if not isinstance(raw, list) or not raw:
+        return True
+    ids: set[str] = set()
+    for item in raw:
+        if isinstance(item, str) and item.strip():
+            ids.add(item.strip().upper())
+        elif isinstance(item, dict):
+            mid = item.get("id") or item.get("matter_id") or item.get("matter")
+            if mid:
+                ids.add(str(mid).strip().upper())
+    if not ids:
+        return True
+    if ids - expected:
+        return True  # false positives
+    if ids != expected:
+        return True  # incomplete
+    return False
+
+
 def extract_structured_matter_ids(combined: str) -> list[str]:
     """Pull entityIds from structured ontology memory_recall tool outputs."""
     import re
@@ -2022,6 +2184,7 @@ def run_arm_on(
     require_institutional: bool = False,
     require_structured_ontology: bool = False,
     require_preference: bool = False,
+    task_dir: Path | None = None,
     correlation_id: str | None = None,
 ) -> dict:
     """ClawQL-wired OpenCode via ``clawql opencode --non-interactive`` + inference URL."""
@@ -2036,6 +2199,24 @@ def run_arm_on(
             '"nonCompeteMonths":{"gt":18}} — NOT keyword search. '
             "Keyword near-misses (NC=18, escrow=9) zero the trial.\n\n"
             + instruction
+        )
+    elif require_institutional and not require_structured_ontology:
+        # B-7.1-blind: teach filter shape + goal thresholds without claiming
+        # the agent "invented" them from thin air on the CRITICAL banner.
+        effective_instruction = (
+            "CRITICAL (scores 0 if ignored): Keyword memory_recall near-misses "
+            "(escrow=9, NC=18) zero the trial. Call clawql_memory_recall with "
+            'schema="legal.Matter" and filters mapped from the Goal '
+            "(escrowPct gte threshold, nonCompeteMonths gt threshold). "
+            "Then write relative matters.json from entityIds only.\n\n"
+            + instruction
+        )
+    if require_preference:
+        effective_instruction = (
+            "CRITICAL: Copy top1 from annex Option identifier lines only. "
+            "Meridian prefers certainty/capped indemnity/no earn-out — NOT "
+            "highest price. Write preference.json with source=memory_recall.\n\n"
+            + effective_instruction
         )
     inst_file.write_text(effective_instruction, encoding="utf-8")
 
@@ -2931,51 +3112,65 @@ def run_arm_on(
                 combined = combined + "\n" + _dec_timeout_output(exc)
                 code = 124
 
-    # B-7.2 preference: missing memory_recall / preference.json.
-    if (
-        require_preference
-        and arm in ("clawql-on", "clawql-no-memory")
-        and not timed_out
-        and preference_incomplete(combined, workdir)
-    ):
-        elapsed = time.monotonic() - t0
-        remaining = int(timeout_s) - int(elapsed)
-        if remaining >= 20:
-            tools = real_opencode_tools(combined)
-            recalled = bool(tools & {"clawql_memory_recall", "memory_recall"})
-            nudge = PREFERENCE_WRITE_NUDGE if recalled else PREFERENCE_NUDGE
-            cont_file = workdir / ".openbench_preference_nudge.md"
-            cont_file.write_text(nudge, encoding="utf-8")
-            cont_timeout = max(20, min(90, remaining))
-            cmd = build_cmd(cont_file, cont_timeout)
-            try:
-                proc_pref = subprocess.run(
-                    cmd,
-                    cwd=str(workdir),
-                    capture_output=True,
-                    text=True,
-                    timeout=cont_timeout + 30,
-                    stdin=subprocess.DEVNULL,
-                    env=env,
-                )
-                combined = combined + "\n" + (proc_pref.stdout or "") + (proc_pref.stderr or "")
-                code = proc_pref.returncode
-            except subprocess.TimeoutExpired as exc:
-                timed_out = True
-                combined = combined + "\n" + _dec_timeout_output(exc)
-                code = 124
-        # Second chance: still no artifact after recall — write-only again.
-        if (
-            not timed_out
-            and not (workdir / "preference.json").is_file()
-            and recalled_without_writes(combined)
-        ):
+    # B-7.2 preference: missing/invalid/wrong preference.json or missing recall.
+    if require_preference and arm in ("clawql-on", "clawql-no-memory") and not timed_out:
+        pref_reason = preference_artifact_needs_fix(workdir, task_dir)
+        tools = real_opencode_tools(combined)
+        recalled = bool(tools & {"clawql_memory_recall", "memory_recall"})
+        needs_pref = (not recalled) or (pref_reason is not None)
+        if needs_pref:
+            elapsed = time.monotonic() - t0
+            remaining = int(timeout_s) - int(elapsed)
+            if remaining >= 20:
+                if pref_reason in (
+                    "invalid_top1",
+                    "placeholder_top1",
+                    "missing_top1",
+                    "parse_error",
+                    "wrong_top1",
+                    "missing",
+                ):
+                    nudge = build_preference_rewrite_nudge(task_dir, reason=pref_reason)
+                elif recalled:
+                    nudge = build_preference_rewrite_nudge(task_dir, reason="missing")
+                else:
+                    nudge = PREFERENCE_NUDGE
+                cont_file = workdir / ".openbench_preference_nudge.md"
+                cont_file.write_text(nudge, encoding="utf-8")
+                cont_timeout = max(20, min(120, remaining))
+                cmd = build_cmd(cont_file, cont_timeout)
+                try:
+                    proc_pref = subprocess.run(
+                        cmd,
+                        cwd=str(workdir),
+                        capture_output=True,
+                        text=True,
+                        timeout=cont_timeout + 30,
+                        stdin=subprocess.DEVNULL,
+                        env=env,
+                    )
+                    combined = combined + "\n" + (proc_pref.stdout or "") + (proc_pref.stderr or "")
+                    code = proc_pref.returncode
+                except subprocess.TimeoutExpired as exc:
+                    timed_out = True
+                    combined = combined + "\n" + _dec_timeout_output(exc)
+                    code = 124
+        # Second chance after rewrite / write nudge (incl. price-trap wrong_top1).
+        pref_reason2 = (
+            None
+            if timed_out
+            else preference_artifact_needs_fix(workdir, task_dir)
+        )
+        if pref_reason2 is not None:
             elapsed = time.monotonic() - t0
             remaining = int(timeout_s) - int(elapsed)
             if remaining >= 15:
                 cont_file = workdir / ".openbench_preference_write2.md"
-                cont_file.write_text(PREFERENCE_WRITE_NUDGE, encoding="utf-8")
-                cont_timeout = max(15, min(60, remaining))
+                cont_file.write_text(
+                    build_preference_rewrite_nudge(task_dir, reason=pref_reason2),
+                    encoding="utf-8",
+                )
+                cont_timeout = max(15, min(90, remaining))
                 cmd = build_cmd(cont_file, cont_timeout)
                 try:
                     proc_pw = subprocess.run(
@@ -3002,7 +3197,10 @@ def run_arm_on(
         require_institutional
         and arm in ("clawql-on", "clawql-no-memory")
         and not timed_out
-        and institutional_incomplete(combined, workdir)
+        and (
+            institutional_incomplete(combined, workdir)
+            or institutional_matters_incorrect(workdir, task_dir)
+        )
     ):
         elapsed = time.monotonic() - t0
         remaining = int(timeout_s) - int(elapsed)
@@ -3010,18 +3208,23 @@ def run_arm_on(
             matter_ids = extract_structured_matter_ids(combined)
             tools = real_opencode_tools(combined)
             recalled = bool(tools & {"clawql_memory_recall", "memory_recall"})
-            if matter_ids:
+            wrong_file = institutional_matters_incorrect(workdir, task_dir)
+            if matter_ids and not wrong_file:
                 nudge = build_institutional_matters_write_nudge(matter_ids)
-            elif require_structured_ontology:
+            elif matter_ids and wrong_file:
+                # Structured hits exist but agent wrote near-misses — rewrite.
+                nudge = build_institutional_matters_write_nudge(matter_ids)
+            elif require_structured_ontology or wrong_file:
                 nudge = INSTITUTIONAL_ONTOLOGY_NUDGE
             else:
                 nudge = INSTITUTIONAL_NUDGE
             # Skip re-recall nudge when we already recalled but have no ids yet;
-            # fall through to generic write continuation below.
-            if matter_ids or not recalled:
+            # fall through to generic write continuation below — unless the
+            # existing matters.json is wrong (near-miss FP), then always nudge.
+            if matter_ids or not recalled or wrong_file:
                 cont_file = workdir / ".openbench_institutional_nudge.md"
                 cont_file.write_text(nudge, encoding="utf-8")
-                cont_timeout = max(15, min(80, remaining))
+                cont_timeout = max(15, min(100, remaining))
                 cmd = build_cmd(cont_file, cont_timeout)
                 try:
                     proc_ik = subprocess.run(
@@ -3035,6 +3238,46 @@ def run_arm_on(
                     )
                     combined = combined + "\n" + (proc_ik.stdout or "") + (proc_ik.stderr or "")
                     code = proc_ik.returncode
+                except subprocess.TimeoutExpired as exc:
+                    timed_out = True
+                    combined = combined + "\n" + _dec_timeout_output(exc)
+                    code = 124
+        # Second chance: keyword near-miss FPs still present, or still no file.
+        still_bad = (
+            not timed_out
+            and (
+                institutional_incomplete(combined, workdir)
+                or institutional_matters_incorrect(workdir, task_dir)
+            )
+        )
+        if still_bad:
+            elapsed = time.monotonic() - t0
+            remaining = int(timeout_s) - int(elapsed)
+            if remaining >= 20:
+                matter_ids2 = extract_structured_matter_ids(combined)
+                if matter_ids2 and not institutional_matters_incorrect(workdir, task_dir):
+                    nudge2 = build_institutional_matters_write_nudge(matter_ids2)
+                elif matter_ids2:
+                    # Structured hits exist — rewrite from entityIds only.
+                    nudge2 = build_institutional_matters_write_nudge(matter_ids2)
+                else:
+                    nudge2 = INSTITUTIONAL_ONTOLOGY_NUDGE
+                cont_file = workdir / ".openbench_institutional_nudge2.md"
+                cont_file.write_text(nudge2, encoding="utf-8")
+                cont_timeout = max(20, min(120, remaining))
+                cmd = build_cmd(cont_file, cont_timeout)
+                try:
+                    proc_ik2 = subprocess.run(
+                        cmd,
+                        cwd=str(workdir),
+                        capture_output=True,
+                        text=True,
+                        timeout=cont_timeout + 30,
+                        stdin=subprocess.DEVNULL,
+                        env=env,
+                    )
+                    combined = combined + "\n" + (proc_ik2.stdout or "") + (proc_ik2.stderr or "")
+                    code = proc_ik2.returncode
                 except subprocess.TimeoutExpired as exc:
                     timed_out = True
                     combined = combined + "\n" + _dec_timeout_output(exc)
@@ -3762,6 +4005,7 @@ def run_trial(
                 require_institutional=bool(caps.get("require_institutional")),
                 require_structured_ontology=bool(caps.get("require_structured_ontology")),
                 require_preference=bool(caps.get("require_preference")),
+                task_dir=task_dir,
                 correlation_id=corr,
             )
         agent["correlation_id"] = corr

@@ -10,3 +10,5 @@ Option identifier: MAT-2801-A (annex to MAT-2801).
 - Closing certainty notes: escrow at 10%; no contingent purchase-price adjustment
 
 Buyer balance sheet described as investment-grade affiliate support.
+Pattern note: deleted MAC, closed low indemnity basket, no earn-out — matches
+the certainty screen Meridian applied in Apex and Helios.

@@ -107,10 +107,15 @@ def main() -> None:
 ## Risk profile
 
 {CLIENT_NAME} has historically prioritized deal certainty over valuation upside.
+Headline purchase price is explicitly **not** the ranking key for this client.
 In the 2022 Apex divestiture, they accepted a 3% haircut on deal value to
 eliminate a MAC clause the counterparty had insisted on. Senior partner
 notes from that matter: "client will walk before accepting open-ended
 indemnity exposure."
+
+Standing instruction from Marcus Webb: reject any package that retains an
+earn-out or an open-ended buyer MAC, even when that package posts the highest
+headline price. Other clients maximize price; Meridian does not.
 
 ## Relationship notes
 
@@ -123,6 +128,13 @@ concern across all three prior matters.
 MAT-2244 (2021): chose lower bid from buyer with stronger balance sheet.
 MAT-2312 (2023): rejected deal with favorable price due to earn-out structure.
 MAT-2720 (2022 Apex): accepted lower price to remove open-ended MAC risk.
+
+## Decision screen for live options
+
+When ranking term sheets for Meridian, apply this screen in order:
+1. Drop any option with earn-out or open-ended MAC (fails Helios / Apex tests).
+2. Among survivors, prefer deleted MAC + lowest indemnity basket + no earn-out.
+3. Do not re-rank survivors by purchase price.
 """,
         client_id=CLIENT_ID,
     )
@@ -195,13 +207,15 @@ Client file for Meridian Capital. Internal matter reference {ACTIVE}.
 
 Three term sheets are on the table for the same target. Evaluate them against
 Meridian's institutional preferences from prior matters — not against a single
-numeric field. Annex files in this folder:
+numeric field (especially not headline purchase price). Annex files in this folder:
 
 - term-sheet-a.md
 - term-sheet-b.md
 - term-sheet-c.md
 
-Do not invent a fourth option. Ranking must be grounded in Meridian history.
+Apply the Meridian decision screen: drop earn-out / open-MAC packages first,
+then prefer deleted MAC + lowest indemnity among survivors. Do not invent a
+fourth option. Ranking must be grounded in Meridian history.
 """,
         matter_id=ACTIVE,
         client_id=CLIENT_ID,
@@ -224,6 +238,8 @@ Option identifier: {TOP1} (annex to {ACTIVE}).
 - Closing certainty notes: escrow at 10%; no contingent purchase-price adjustment
 
 Buyer balance sheet described as investment-grade affiliate support.
+Pattern note: deleted MAC, closed low indemnity basket, no earn-out — matches
+the certainty screen Meridian applied in Apex and Helios.
 """,
         matter_id=ACTIVE,
         client_id=CLIENT_ID,
@@ -246,6 +262,8 @@ Option identifier: MAT-2801-B (annex to {ACTIVE}).
 - Closing certainty notes: several conditions precedent remain open
 
 This package maximizes headline value and contingent upside.
+Pattern note: earn-out + open MAC matches the Helios / Apex packages Meridian
+rejected historically — high price does not compensate for that exposure.
 """,
         matter_id=ACTIVE,
         client_id=CLIENT_ID,
@@ -268,6 +286,8 @@ Option identifier: MAT-2801-C (annex to {ACTIVE}).
 - Closing certainty notes: escrow at 12%; limited conditionality
 
 Higher price than A; more liability surface than A; cleaner than B.
+No earn-out, but standard MAC remains — acceptable middle path for Meridian
+only after earn-out / open-MAC packages are discarded.
 """,
         matter_id=ACTIVE,
         client_id=CLIENT_ID,

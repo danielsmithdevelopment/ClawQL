@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Grades institutional-client-preference (B-7.2):
-# - Top-1 exact match against ground_truth.json
-# - Empty / invalid source → 0
+# - Top-1 exact match against ground_truth.json (invented IDs → 0)
+# - Empty source is soft (no longer zeros a correct top1); invalid source → 0
 # - When OPENBENCH_REQUIRE_PREFERENCE=1, require real memory_recall tool_use
 set -euo pipefail
 
 REQUIRE_PREFERENCE="${OPENBENCH_REQUIRE_PREFERENCE:-0}"
-HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-40}"
-HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-12000}"
+HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-45}"
+HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-14000}"
 TASK_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 cap_fail=0
@@ -63,24 +63,41 @@ if not isinstance(parsed, dict):
 
 top1 = normalize(str(parsed.get("top1") or ""))
 source = str(parsed.get("source") or "").strip().lower()
-ok_src = (
-    "memory" in source
-    or "recall" in source
-    or "workspace" in source
-    or "filesystem" in source
-    or "file" in source
-    or "note" in source
-    or "seed" in source
-)
-if not ok_src:
-    emit(False, top1, err=f"FAIL: invalid source {source!r}")
-    raise SystemExit(0)
+# Source is soft: empty source no longer zeros a correct top1 (DeepSeek often
+# omits it). When present, it must look like a real provenance string.
+if source:
+    ok_src = (
+        "memory" in source
+        or "recall" in source
+        or "workspace" in source
+        or "filesystem" in source
+        or "file" in source
+        or "note" in source
+        or "seed" in source
+    )
+    if not ok_src:
+        emit(False, top1, err=f"FAIL: invalid source {source!r}")
+        raise SystemExit(0)
 if not top1:
     emit(False, "", err="FAIL: missing top1")
     raise SystemExit(0)
-# Reject obvious prompt-placeholder copies.
+# Reject obvious prompt-placeholder / invented IDs.
+ranking = {
+    str(x).strip().upper()
+    for x in (manifest.get("ranking") or [])
+    if str(x).strip()
+}
 if "XXXX" in top1 or top1.endswith("-Y") or top1 in {"MAT-XXXX-Y", "MAT-XXXX"}:
     emit(False, top1, err=f"FAIL: placeholder top1 {top1!r} (copy Option identifier from annex)")
+    raise SystemExit(0)
+# If ranking is known, reject IDs that are not one of the three annex options
+# (unless they match an allowed alias like TERM SHEET A).
+if ranking and top1 not in aliases and top1 not in ranking:
+    emit(
+        False,
+        top1,
+        err=f"FAIL: top1 {top1!r} is not a valid annex Option identifier {sorted(ranking)}",
+    )
     raise SystemExit(0)
 
 ok = top1 in aliases

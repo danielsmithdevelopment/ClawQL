@@ -10,3 +10,5 @@ Option identifier: MAT-2801-C (annex to MAT-2801).
 - Closing certainty notes: escrow at 12%; limited conditionality
 
 Higher price than A; more liability surface than A; cleaner than B.
+No earn-out, but standard MAC remains — acceptable middle path for Meridian
+only after earn-out / open-MAC packages are discarded.

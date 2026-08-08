@@ -10,3 +10,5 @@ Option identifier: MAT-2801-B (annex to MAT-2801).
 - Closing certainty notes: several conditions precedent remain open
 
 This package maximizes headline value and contingent upside.
+Pattern note: earn-out + open MAC matches the Helios / Apex packages Meridian
+rejected historically — high price does not compensate for that exposure.

@@ -383,8 +383,8 @@ jobs:
               echo "OPENBENCH_ARMS=clawql-off,clawql-on,clawql-no-memory"
             fi
             if [ "${{ matrix.task }}" = "institutional-client-preference" ]; then
-              # B-7.2 preference: three-arm fair cell.
-              echo "OPENBENCH_TIMEOUT_S=360"
+              # B-7.2 preference: three-arm fair cell + rewrite-nudge budget.
+              echo "OPENBENCH_TIMEOUT_S=480"
               echo "OPENBENCH_MODEL=openrouter/deepseek/deepseek-chat"
               echo "OPENBENCH_ARMS=clawql-off,clawql-on,clawql-no-memory"
             fi

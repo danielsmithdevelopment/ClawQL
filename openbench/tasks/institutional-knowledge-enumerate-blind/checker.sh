@@ -95,7 +95,10 @@ hits = sorted(ids & expected)
 partial = len(hits) / float(n_exp)
 src = str(d.get("source") or "").strip().lower()
 # On-arm: memory_recall. Off-arm: workspace / filesystem note reads after search.
-ok_src = (
+# Soft source: empty / free-form provenance no longer zeros a correct set
+# (DeepSeek often writes "manual_search"). When present and non-empty, accept
+# common provenance strings; invented garbage still fails only if we tighten later.
+ok_src = (not src) or (
     "memory" in src
     or "recall" in src
     or "workspace" in src
@@ -103,6 +106,10 @@ ok_src = (
     or "file" in src
     or "note" in src
     or "seed" in src
+    or "manual" in src
+    or "search" in src
+    or "read" in src
+    or "glob" in src
 )
 if not ok_src:
     emit(

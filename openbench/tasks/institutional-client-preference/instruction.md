@@ -1,9 +1,17 @@
 # Institutional knowledge — client preference reconstruction (B-7.2)
 
+CRITICAL (scores 0 if ignored):
+1. Call `clawql_memory_recall` for Meridian Capital, then **read** the three
+   term-sheet annexes. Copy `top1` from an annex line `Option identifier: …`
+   — never invent IDs (no `MAT-12345-A`, no dates, no placeholders).
+2. Meridian prefers **deal certainty / capped indemnity / no earn-out**, not
+   highest headline price. Highest price is a trap used by other clients.
+3. Write relative `preference.json` via the **write** tool. Include
+   `"source":"memory_recall"` (non-empty). Chat JSON is not graded.
+
 You are an associate at a synthetic firm (mini **Calderwood & Harkness** fixture).
 Client **Meridian Capital** is evaluating three term sheets for an active matter.
-Your job is to reconstruct which option Meridian would prefer from **institutional
-history in the notes** — not from a single numeric field.
+Reconstruct which option Meridian would prefer from **institutional history**.
 
 ## Goal
 
@@ -12,21 +20,14 @@ Northline add-on matter, grounded in prior Meridian deal behavior.
 
 ## Steps
 
-1. When ClawQL memory is available, use `clawql_memory_recall` to find Meridian
-   Capital / client notes and related matters. The vault may expose client↔matter
-   links that help you traverse prior deals without knowing every path up front.
-2. Read Meridian's risk profile and prior matter outcomes (what they accepted or
-   rejected historically).
-3. Read the three term-sheet annexes for the active matter. Each annex states
-   surface terms (price, indemnity, MAC, earn-out). None is labeled preferred.
-4. Rank by Meridian's institutional preferences. Do **not** sort solely by
-   headline purchase price — that is a distractor pattern used by other clients.
-5. Write relative `preference.json` with your top-1 choice and brief cite-backed
-   rationale. Chat JSON is not graded.
-
-**Critical:** `top1` must be the exact **Option identifier** printed in the winning
-term-sheet annex (the `MAT-…-A/B/C` string). Do **not** invent placeholders like
-`MAT-XXXX-Y`. Do not write "Term sheet A" — copy the option identifier.
+1. Use `clawql_memory_recall` to find Meridian Capital / CLT-0017 notes and
+   related matters (client↔matter links may help).
+2. Read Meridian's risk profile and prior outcomes (what they accepted/rejected).
+3. Read **all three** term-sheet annexes for the active Northline matter. Each
+   has surface terms (price, indemnity, MAC, earn-out) and an Option identifier.
+   None is labeled preferred.
+4. Rank by Meridian history: certainty and liability caps beat headline price.
+5. Write relative `preference.json`.
 
 ## Artifact
 
@@ -34,22 +35,18 @@ term-sheet annex (the `MAT-…-A/B/C` string). Do **not** invent placeholders li
 {
   "client": "Meridian Capital",
   "active_matter": "<id from Meridian active matter note>",
-  "top1": "<Option identifier from winning annex>",
+  "top1": "<Option identifier copied from winning annex>",
   "ranking": ["<best>", "<middle>", "<worst>"],
-  "rationale": "short prose citing prior matters / risk notes",
+  "rationale": "cite prior Meridian matters (e.g. rejected earn-out / MAC haircut)",
   "source": "memory_recall"
 }
 ```
 
-Use `source`: `memory_recall` when you used vault tools; `filesystem` when you
-only read seed files under `.openbench/memory-seed/`.
-
 ## Scoring
 
-- Top-1 must match ground truth. Wrong top-1 → 0.
-- Empty `source` → 0.
-- When memory tools are available, live grading requires a real
-  `clawql_memory_recall` tool_use.
+- Top-1 must match ground truth. Invented or price-only rankings → 0.
+- When memory tools are available, live grading requires real `memory_recall`.
+- Prefer a non-empty `source`; empty source no longer zeros a correct top1.
 
 ## Rules
 
