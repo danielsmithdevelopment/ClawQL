@@ -714,17 +714,17 @@ Do NOT invent 48 or pick only one price. Call memory_recall now.
 
 INSTITUTIONAL_NUDGE = """Continue the institutional knowledge enumeration task (B-7.1).
 
+Same prose notes are on disk under `.openbench/memory-seed/` for every arm.
+Your advantage is the vault: structured CLAWQL_* tags live in memory.
+
 1. clawql_memory_recall across the vault — use MULTIPLE queries (limit=50 each).
-   There are ~120 nested matter notes; one recall is not enough.
    Fields: CLAWQL_MATTER_ID / ESCROW_PCT / NONCOMPETE_MONTHS
 2. Keep ONLY matters with escrow_pct >= 10 AND noncompete_months > 18
 3. write relative filePath **matters.json** only (never /tmp/matters.json) with the COMPLETE set:
    {"matters":["MAT-XXXX","MAT-YYYY"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"memory_recall","search_sufficiency":"how many notes you checked"}
    `source` MUST be non-empty (empty source grades 0).
 
-Do NOT copy placeholder IDs. Discover real IDs from recall. Partial lists fail.
-Near-misses (9% escrow, exactly 18 months NC, missing escrow) must not appear.
-After recall returns notes, filter carefully — all matches must appear.
+Do NOT copy placeholder IDs. Partial lists fail. Near-misses must not appear.
 Call memory_recall now (again if needed), then write relative matters.json.
 """
 
@@ -3259,16 +3259,15 @@ def render_markdown(report: dict) -> str:
         )
     elif task == "institutional-knowledge-enumerate":
         interp.append(
-            "- Arms graded for exhaustive matter enumeration on the 120-note nested "
-            "mini-firm (escrow≥10 and noncompete>18); score = hits/5 (partial credit); "
-            "false positives → 0.0. Workspace notes are prose-only; CLAWQL_* tags are "
-            "vault-injected for on-arm memory_recall. On / no-memory require real "
-            "memory_recall; off may attempt prose filesystem search."
+            "- Fair cell: identical prose corpus on disk for all arms (120 nested notes; "
+            "escrow≥10 ∧ NC>18). Score = hits/5; false positives → 0.0. CLAWQL_* tags "
+            "are vault-only (on-arm memory_recall advantage). On / no-memory require "
+            "real memory_recall evidence; off uses filesystem only."
         )
         interp.append(
-            "- **clawql-on** = seeded vault + memory tools; **clawql-no-memory** = "
-            "ClawQL tools but empty/disabled memory (isolates persistence); "
-            "**clawql-off** = no ClawQL MCP (nudged to read `.openbench/memory-seed/`)."
+            "- **clawql-on** = same files + seeded vault + memory tools; "
+            "**clawql-no-memory** = same files + ClawQL tools but no vault; "
+            "**clawql-off** = same files, no ClawQL MCP."
         )
     interp.append("")
     lines.extend(interp)
@@ -3330,14 +3329,21 @@ def run_trial(
     seed_snapshot: Path | None = None
     try:
         materialize_workspace(task_dir, tmp)
-        # Snapshot multi-file seeds before seed_and_remove_memory deletes them from
-        # the workdir. Off-arm needs those notes to attempt exhaustive filesystem
-        # search; on-arm keeps them vault-only so wins require memory_recall.
+        # B-7.1 fair cell: snapshot prose seed, copy into vault (with optional
+        # CLAWQL_* enrichment), then restore the SAME seed into the workdir for
+        # every arm. On = files + memory; off/no-memory = files only. Do NOT
+        # hide the corpus from on-arm (that confounded earlier burns).
         seed_dir_src = tmp / ".openbench" / "memory-seed"
         if caps.get("require_institutional") and seed_dir_src.is_dir():
             seed_snapshot = Path(tempfile.mkdtemp(prefix="ik_seed_snap_"))
             shutil.copytree(seed_dir_src, seed_snapshot / "memory-seed")
         vault = seed_and_remove_memory(tmp, task_dir=task_dir)
+        if seed_snapshot and (seed_snapshot / "memory-seed").is_dir():
+            dest = tmp / ".openbench" / "memory-seed"
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            if dest.exists():
+                shutil.rmtree(dest)
+            shutil.copytree(seed_snapshot / "memory-seed", dest)
         if vault is None and caps.get("empty_vault") and arm != "clawql-off":
             vault = empty_vault_home()
         if arm == "ouroboros-on":
@@ -3345,12 +3351,6 @@ def run_trial(
             if appendix:
                 instruction = instruction.rstrip() + "\n" + appendix
         if arm == "clawql-off":
-            if seed_snapshot and (seed_snapshot / "memory-seed").is_dir():
-                dest = tmp / ".openbench" / "memory-seed"
-                dest.parent.mkdir(parents=True, exist_ok=True)
-                if dest.exists():
-                    shutil.rmtree(dest)
-                shutil.copytree(seed_snapshot / "memory-seed", dest)
             agent = run_arm_off(
                 instruction, tmp, model, timeout_s, inference_url, correlation_id=corr
             )

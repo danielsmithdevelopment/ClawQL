@@ -81,15 +81,15 @@ Shared OpenBench rules still apply: real `tool:clawql_*` evidence · hard spend 
 | B-7.3 | `institutional-amortized-session`   | Same vault; 5 related prompts; cost + completeness               | Spec only (needs session harness)        |
 | B-7.4 | Full C&H mount                      | Mount open-sourced filesystem + Harvey task set                  | Blocked on stable corpus download path   |
 
-**Redesign (2026-08-08):** 120 nested notes; Sonnet 4.6 n=3 [31238962094](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31238962094) still FAIL (off grepped `CLAWQL_*`). **Follow-up:** prose-only workspace + vault-only structured enrichment. Re-burn after OpenRouter top-up. Prior Qwen [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868) ruled out ClawQL memory.
+**Fair cell (2026-08-08):** Identical prose corpus on disk for **all** arms; on additionally gets vault with `CLAWQL_*` enrichment. Prior confounded design hid files from on-arm — retired. Sonnet burn [31238962094](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31238962094) invalid for Harvey claim.
 
 ### Phase-1 arms (B-7.1)
 
-| Arm                | What it isolates                                                  |
-| ------------------ | ----------------------------------------------------------------- |
-| `clawql-on`        | ClawQL MCP + **seeded vault** (memory representation available)   |
-| `clawql-no-memory` | ClawQL MCP tools present but **memory disabled / no seed**        |
-| `clawql-off`       | Bare OpenCode — no ClawQL MCP; may read `.openbench/memory-seed/` |
+| Arm                | What it isolates                                                                   |
+| ------------------ | ---------------------------------------------------------------------------------- |
+| `clawql-on`        | Same prose files + ClawQL MCP + **seeded vault** (structured `CLAWQL_*` in memory) |
+| `clawql-no-memory` | Same prose files + ClawQL MCP but **no vault**                                     |
+| `clawql-off`       | Same prose files; bare OpenCode — no ClawQL MCP                                    |
 
 PR/push defaults to all three arms (override via workflow `arms` on dispatch).
 
