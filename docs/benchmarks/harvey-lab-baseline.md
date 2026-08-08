@@ -13,16 +13,16 @@ Notes: standard harness, no ClawQL
 
 Harness readiness completed without scoring:
 
-| Check | Result |
-|---|---|
-| Clone `harveyai/harvey-labs` | OK |
-| Docs (`tutorial`, `architecture`, `eval-strategies`) | Read |
-| `firm-knowledge` inventory | 250 tasks; shared DMS via `docs_dir: ../../dms` |
-| First task | `firm-knowledge/tasks/001` — *Antitrust Deals Receiving HSR Second Requests* (11 criteria) |
-| `uv sync` | OK |
-| Podman | Installed 4.9.3 |
-| Sandbox image `lab-sandbox:latest` | Pulled from `ghcr.io/harveyai/lab-sandbox` |
-| Agent / judge API key | **Missing** — requested via environment setup |
+| Check                                                | Result                                                                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Clone `harveyai/harvey-labs`                         | OK                                                                                         |
+| Docs (`tutorial`, `architecture`, `eval-strategies`) | Read                                                                                       |
+| `firm-knowledge` inventory                           | 250 tasks; shared DMS via `docs_dir: ../../dms`                                            |
+| First task                                           | `firm-knowledge/tasks/001` — _Antitrust Deals Receiving HSR Second Requests_ (11 criteria) |
+| `uv sync`                                            | OK                                                                                         |
+| Podman                                               | Installed 4.9.3                                                                            |
+| Sandbox image `lab-sandbox:latest`                   | Pulled from `ghcr.io/harveyai/lab-sandbox`                                                 |
+| Agent / judge API key                                | **Missing** — requested via environment setup                                              |
 
 ## Criterion pass rate
 
