@@ -1,4 +1,17 @@
-### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) Sonnet 4.6 n=3 — gate FAIL + follow-up fix
+### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) fair same-files harness — landed; burn blocked
+
+**Harness fix:** identical prose notes on disk for on / off / no-memory; on also gets vault `CLAWQL_*`. Off-first arm order; HTTP 403 key-limit treated as credit exhaustion.
+
+| Attempt                                                                                  | Model         | Result                                                    |
+| ---------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------- |
+| [31241200178](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31241200178) | Sonnet 4.6    | **aborted** — OpenRouter key limit 403                    |
+| [31242620062](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31242620062) | DeepSeek chat | **aborted** — OpenRouter credits 402 after off t1 timeout |
+
+`pr_active` cleared. **Top up `OPENROUTER_API_KEY`**, then re-activate for a real fair n=3.
+
+### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) Sonnet 4.6 n=3 — CONFOUNDED (files hidden from on)
+
+_Invalid for product claim — on-arm lacked workspace seed while off had it._
 
 Model **`openrouter/anthropic/claude-sonnet-4.6`**; 120 nested notes; three-arm n=3.
 

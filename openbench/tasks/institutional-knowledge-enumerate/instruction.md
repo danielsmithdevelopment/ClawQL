@@ -1,8 +1,9 @@
 # Institutional knowledge — exhaustive matter enumeration (B-7.1)
 
 You are an associate at a synthetic firm (mini **Calderwood & Harkness** fixture).
-Prior matter notes live in the vault / workspace. Feature fields are **distributed
-across nested notes** and are **not** in the filenames.
+The same matter notes are available in the workspace for every run. When ClawQL
+memory is available, the vault also holds structured field tags for faster,
+more complete recall.
 
 ## Goal
 
@@ -14,24 +15,16 @@ List **every** matter that has **both**:
 ## Steps
 
 1. **Search exhaustively.** Do **not** stop after the first few hits.
-   - Prefer **`clawql_memory_recall`** when available. Issue **multiple** queries
-     (different keywords / clients) with `limit` up to 50 until the firm notes
-     are covered — a single recall may not return the whole vault.
-   - If memory tools are unavailable, walk **every** markdown note under
-     `.openbench/memory-seed/` (including nested `clients/*/matters/`; ignore
-     `decoy/`). There are **~120** notes; you must check each note’s fields
-     before finishing (filenames do not encode the criteria).
-2. Fields to collect (prefer vault / `memory_recall` — structured `CLAWQL_*`
-   tags are available there; workspace files are prose and may bury numbers in
-   words):
-   - matter id
-   - escrow percentage
-   - non-compete duration in months
-3. Apply the filters above. Near-misses (e.g. 9% escrow, exactly 18 months NC,
-   missing escrow) must **not** appear in the answer.
-4. Write **relative** path `matters.json` (exactly that name — not `/tmp/…` or an
-   absolute path) with the **complete** matching set (order free). Always include
-   a non-empty `source` string.
+   - Prefer **`clawql_memory_recall`** when available (structured `CLAWQL_*`
+     tags in the vault). Use **multiple** queries with `limit` up to 50.
+   - You may also read markdown notes under `.openbench/memory-seed/`
+     (nested `clients/*/matters/`; ignore `decoy/`). Workspace notes are
+     **prose** (~120 files); numbers may be written as words.
+2. Fields to collect: matter id, escrow %, non-compete months.
+3. Near-misses (e.g. 9% escrow, exactly 18 months NC, missing escrow) must
+   **not** appear in the answer.
+4. Write **relative** path `matters.json` (not `/tmp/…`) with the complete
+   matching set and a non-empty `source`.
 
 ## Artifact
 
@@ -48,20 +41,16 @@ List **every** matter that has **both**:
 ```
 
 Use `source`: `memory_recall` when you used vault tools; `filesystem` or
-`workspace_notes` when you read seed files. Use placeholder IDs in the schema
-only. Discover real IDs from the notes.
+`workspace_notes` when you only read seed files.
 
 ## Scoring
 
-- **Partial credit:** `SCORE = hits / N` (how many of the matching matters you found).
-- Checker also emits **`MATTERS_FOUND: k/N`** — the headline diagnostic.
-- Extra / near-miss IDs → `0/N` and `SCORE: 0.0`.
-- Live on-arm grading requires a real `clawql_memory_recall` tool_use when memory tools are available.
-- Empty `source` → score 0.
+- Partial credit: `SCORE = hits / N`. Headline: `MATTERS_FOUND: k/N`.
+- Extra / near-miss IDs → `0/N`. Empty `source` → 0.
+- When memory tools are available, live grading requires a real
+  `clawql_memory_recall` tool_use.
 
 ## Rules
 
-- Ignore `decoy/`. Prefer the complete set; partial sets score proportionally.
-- Do not invent matter IDs. Exhaust the corpus before writing `matters.json`.
-- Stop only after writing relative `matters.json` with the complete set and a
-  non-empty `source`.
+- Ignore `decoy/`. Do not invent matter IDs.
+- Stop only after writing relative `matters.json` with the complete set.

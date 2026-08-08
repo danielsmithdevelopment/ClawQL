@@ -2,7 +2,7 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active \u2192 retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-7.1 Sonnet 31238962094 FAIL (on 0.333<off 0.667): off grepped CLAWQL_*; OpenRouter key limit mid-run. Prose-only+vault-enrichment fix landed \u2014 re-activate after OpenRouter top-up.",
+  "live_resume_note": "B-7.1 fair same-files harness landed (PR #875). Burns blocked: OpenRouter key limit/credits (Sonnet 403 @ 31241200178; DeepSeek 402 @ 31242620062). Top up OPENROUTER_API_KEY then re-activate pr_active.",
   "pr_active": [],
   "pr_trials": 1,
   "retired": {
@@ -115,8 +115,8 @@
       "evidence_run": "31189112838"
     },
     "institutional-knowledge-enumerate": {
-      "reason": "Sonnet n=3 31238962094 FAIL \u2014 off won via CLAWQL_* grep; key limit. Prose/vault split landed; re-burn after OpenRouter credit.",
-      "evidence_run": "31238962094"
+      "reason": "Fair same-files harness on main via #875; live A/B blocked on OpenRouter credits. Re-activate after top-up.",
+      "evidence_run": "31242620062"
     }
   },
   "ouroboros_pr_enabled": false,
