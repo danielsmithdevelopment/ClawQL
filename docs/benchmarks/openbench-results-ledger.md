@@ -2,11 +2,11 @@
 
 Same hardened 30-note fixture; model **`openrouter/qwen/qwen3.6-plus`**.
 
-| Arm              | Matters / trial   | Mean matters | Mean score | Notes |
-| ---------------- | ----------------- | ------------ | ---------- | ----- |
-| clawql-on        | 0/5, 0/5*, 5/5    | **1.67/5**   | 0.333      | Recall returned 30/30 repeatedly; t1 thrashed writing seed files (no `matters.json`); t2 wrote artifact but empty `source` → grader 0; t3 clean 5/5 |
-| clawql-off       | 5/5, 0/5†, 5/5    | **3.33/5**   | 0.667      | Exhaustive file read still wins when it finishes; †`source=filesystem` rejected by grader |
-| clawql-no-memory | 0/5 ×3            | **0/5**      | 0.0        | Still no vault → no win |
+| Arm              | Matters / trial | Mean matters | Mean score | Notes                                                                                                                                               |
+| ---------------- | --------------- | ------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| clawql-on        | 0/5, 0/5*, 5/5  | **1.67/5**   | 0.333      | Recall returned 30/30 repeatedly; t1 thrashed writing seed files (no `matters.json`); t2 wrote artifact but empty `source` → grader 0; t3 clean 5/5 |
+| clawql-off       | 5/5, 0/5†, 5/5  | **3.33/5**   | 0.667      | Exhaustive file read still wins when it finishes; †`source=filesystem` rejected by grader                                                           |
+| clawql-no-memory | 0/5 ×3          | **0/5**      | 0.0        | Still no vault → no win                                                                                                                             |
 
 Run: [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868) (PR [#873](https://github.com/danielsmithdevelopment/ClawQL/pull/873)). **Gate FAIL.** **Verdict:** ClawQL memory is **not** the bottleneck (full recall confirmed on Qwen). Stronger model still flaky on post-recall agent steps; fixture still lets bare `read` compete. Clear `pr_active`; redesign cell before claims.
 
