@@ -32,24 +32,20 @@ Structured filter extension routes predicate queries to the ontology index, bypa
 ```typescript
 interface MemoryRecallParams {
   // Existing — unchanged
-  query: string
-  limit?: number                        // default 10
-  maxDepth?: number                     // wikilink graph traversal depth
-  sources?: MemorySource[]              // vault | vector | codegraph | pageindex | onyx
+  query: string;
+  limit?: number; // default 10
+  maxDepth?: number; // wikilink graph traversal depth
+  sources?: MemorySource[]; // vault | vector | codegraph | pageindex | onyx
 
   // New — ontology filter extension
-  schema?: OntologySchema               // "legal.Matter" | "legal.Client" | etc.
-  filters?: OntologyFilter              // typed predicate filters
-  confidenceMinimum?: ConfidenceLevel   // EXTRACTED | INFERRED | AMBIGUOUS
-  includeConfidenceTags?: boolean       // include confidence in each result (default true)
-  orderBy?: OrderByClause               // sort ontology results
+  schema?: OntologySchema; // "legal.Matter" | "legal.Client" | etc.
+  filters?: OntologyFilter; // typed predicate filters
+  confidenceMinimum?: ConfidenceLevel; // EXTRACTED | INFERRED | AMBIGUOUS
+  includeConfidenceTags?: boolean; // include confidence in each result (default true)
+  orderBy?: OrderByClause; // sort ontology results
 }
 
-type OntologySchema =
-  | "legal.Matter"
-  | "legal.Client"
-  | "legal.Attorney"
-  | "legal.Document"
+type OntologySchema = "legal.Matter" | "legal.Client" | "legal.Attorney" | "legal.Document";
 
 type FilterPredicate =
   | { eq: string | number | boolean }
@@ -65,11 +61,11 @@ type FilterPredicate =
   | { between: [number, number] }
   | { isNull: boolean }
   | { and: FilterPredicate[] }
-  | { or: FilterPredicate[] }
+  | { or: FilterPredicate[] };
 
-type OntologyFilter = Record<string, FilterPredicate>
-type ConfidenceLevel = "EXTRACTED" | "INFERRED" | "AMBIGUOUS"
-type OrderByClause = { field: string; direction: "asc" | "desc" }[]
+type OntologyFilter = Record<string, FilterPredicate>;
+type ConfidenceLevel = "EXTRACTED" | "INFERRED" | "AMBIGUOUS";
+type OrderByClause = { field: string; direction: "asc" | "desc" }[];
 ```
 
 ---
@@ -79,12 +75,12 @@ type OrderByClause = { field: string; direction: "asc" | "desc" }[]
 ```typescript
 async function memoryRecall(params: MemoryRecallParams): Promise<RecallResult> {
   if (params.schema && params.filters) {
-    return await ontologyQuery(params)          // structured predicate
+    return await ontologyQuery(params); // structured predicate
   }
   if (params.schema && !params.filters) {
-    return await hybridQuery(params)            // schema-typed semantic (Phase 2)
+    return await hybridQuery(params); // schema-typed semantic (Phase 2)
   }
-  return await semanticQuery(params)            // existing path
+  return await semanticQuery(params); // existing path
 }
 ```
 
@@ -143,10 +139,10 @@ When `schema` + `filters` are present, other `sources` are not queried — struc
 
 ## 8. Benchmarks: Before and After
 
-| Mode | Turns (mini-firm) | At 250 matters |
-| --- | --- | --- |
-| Semantic + read-verify | ~13 | ~50+ |
-| Structured filter | ~2 | ~2 |
+| Mode                   | Turns (mini-firm) | At 250 matters |
+| ---------------------- | ----------------- | -------------- |
+| Semantic + read-verify | ~13               | ~50+           |
+| Structured filter      | ~2                | ~2             |
 
 OpenBench variant (follow-up): `institutional-knowledge-enumerate-ontology` with tight caps (5 turns / 60s / 4k tokens) requiring `schema: legal.Matter`.
 
@@ -169,6 +165,6 @@ Ontology query integrates into `executeMemoryRecallCoreEffect` behind the `schem
 
 ---
 
-*memory_recall Structured Filter Extension · Spec v0.1 · August 2026 · Draft*
-*Companion: ClawQL Ontology Legal Domain Spec v0.1*
-*Tracked in: clawql-memory package, ontology.db schema migration*
+_memory_recall Structured Filter Extension · Spec v0.1 · August 2026 · Draft_
+_Companion: ClawQL Ontology Legal Domain Spec v0.1_
+_Tracked in: clawql-memory package, ontology.db schema migration_

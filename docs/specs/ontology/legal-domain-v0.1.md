@@ -13,11 +13,11 @@ Companion to: ClawQL Streams Spec v0.2, B-7 Suite Spec, memory_recall Structured
 
 ## Repo alignment
 
-| Draft path | Shipped path |
-| --- | --- |
+| Draft path                       | Shipped path                                                                              |
+| -------------------------------- | ----------------------------------------------------------------------------------------- |
 | `clawql-ontology/domains/legal/` | [`packages/clawql-ontology/packs/legal/`](../../../packages/clawql-ontology/packs/legal/) |
-| `*.cqe` entity files | `packs/legal/entities/*.cqe` (ADR 0010) |
-| `ontology.db` | Colocated with `memory.db` under `CLAWQL_OBSIDIAN_VAULT_PATH` (`packages/clawql-memory`) |
+| `*.cqe` entity files             | `packs/legal/entities/*.cqe` (ADR 0010)                                                   |
+| `ontology.db`                    | Colocated with `memory.db` under `CLAWQL_OBSIDIAN_VAULT_PATH` (`packages/clawql-memory`)  |
 
 API field names remain camelCase (`escrowPct`); CQE/SQL use snake_case (`escrow_pct`).
 
@@ -204,17 +204,17 @@ CLAWQL_NONCOMPETE_MONTHS=24
 
 Parser rules:
 
-| Raw field name | Ontology field | Type | Normalization |
-|---|---|---|---|
-| `CLAWQL_MATTER_ID` | `Matter.id` | MatterID | Validate /^MAT-\d{4}$/ |
-| `CLAWQL_ESCROW_PCT` | `Matter.escrowPct` | Percentage | Parse float, validate 0-100 |
-| `CLAWQL_NONCOMPETE_MONTHS` | `Matter.nonCompeteMonths` | Integer | Parse int |
-| `CLAWQL_DEAL_VALUE_USD` | `Matter.dealValueUSD` | Integer | Parse int |
-| `CLAWQL_CLIENT_ID` | `Matter.client` | ClientRef | Validate /^CLT-\d{4}$/ |
-| `CLAWQL_PRACTICE_AREA` | `Matter.practiceArea` | PracticeArea | Enum match |
-| `CLAWQL_STATUS` | `Matter.status` | MatterStatus | Enum match |
-| `CLAWQL_ESCROW_DURATION_MONTHS` | `Matter.escrowDurationMonths` | Integer | Parse int |
-| `CLAWQL_NC_GEOGRAPHY` | `Matter.nonCompeteGeography` | string | Trim |
+| Raw field name                  | Ontology field                | Type         | Normalization               |
+| ------------------------------- | ----------------------------- | ------------ | --------------------------- |
+| `CLAWQL_MATTER_ID`              | `Matter.id`                   | MatterID     | Validate /^MAT-\d{4}$/      |
+| `CLAWQL_ESCROW_PCT`             | `Matter.escrowPct`            | Percentage   | Parse float, validate 0-100 |
+| `CLAWQL_NONCOMPETE_MONTHS`      | `Matter.nonCompeteMonths`     | Integer      | Parse int                   |
+| `CLAWQL_DEAL_VALUE_USD`         | `Matter.dealValueUSD`         | Integer      | Parse int                   |
+| `CLAWQL_CLIENT_ID`              | `Matter.client`               | ClientRef    | Validate /^CLT-\d{4}$/      |
+| `CLAWQL_PRACTICE_AREA`          | `Matter.practiceArea`         | PracticeArea | Enum match                  |
+| `CLAWQL_STATUS`                 | `Matter.status`               | MatterStatus | Enum match                  |
+| `CLAWQL_ESCROW_DURATION_MONTHS` | `Matter.escrowDurationMonths` | Integer      | Parse int                   |
+| `CLAWQL_NC_GEOGRAPHY`           | `Matter.nonCompeteGeography`  | string       | Trim                        |
 
 ### 3.2 Structured heading extraction (second priority)
 
@@ -222,6 +222,7 @@ For notes without explicit field blocks, extract from Markdown structure:
 
 ```markdown
 ## Deal Terms
+
 - Escrow: 12% (24 months)
 - Non-compete: 24 months, nationwide
 - Deal value: $45M
@@ -249,7 +250,7 @@ const extracted = await inferenceClient.extract({
   text: noteContent,
   fieldsToExtract: ["escrowPct", "nonCompeteMonths", "dealValueUSD"],
   confidenceThreshold: 0.8,
-})
+});
 // All LLM-extracted fields tagged INFERRED
 ```
 
@@ -357,7 +358,7 @@ memory_recall({
   },
   confidenceMinimum: "EXTRACTED",
   limit: 20,
-})
+});
 ```
 
 ---
@@ -385,6 +386,7 @@ Client joins, amortized multi-question sessions, and full C&H mount follow the s
 ## 8. Implementation Sequence
 
 **Phase 1 (before B-7.2):**
+
 - Legal domain schema file (`Matter.cqe` + Client/Attorney/Document)
 - Machine-readable field parser for CLAWQL_* blocks
 - `ontology.db` SQLite schema and population via `memory_ingest` (+ lazy vault sync)
@@ -392,12 +394,14 @@ Client joins, amortized multi-question sessions, and full C&H mount follow the s
 - B-7.1 rerun with ontology-typed query to validate 1-call enumeration
 
 **Phase 2 (before B-7.4):**
+
 - Pattern matching extraction for unstructured notes
 - Relationship graph population
 - `clawql ontology generate` for missing field stubs
 - Full C&H ingestion with lint report
 
 **Phase 3 (after B-7.4):**
+
 - LLM extraction fallback (opt-in)
 - Cross-domain ontology
 - Ontology-guided fine-tuning (GRPO / RTP structured_predicate traces)
@@ -410,6 +414,6 @@ When ClawQL Streams processes C&H tasks as events, each Agent DO session has acc
 
 ---
 
-*ClawQL Ontology — Legal Domain Spec v0.1 · August 2026 · Draft*
-*Companion: memory_recall Structured Filter Extension Spec*
-*Related: B-7 Suite Spec, clawql-streams Spec v0.2, clawql-inference Training Pipeline Spec*
+_ClawQL Ontology — Legal Domain Spec v0.1 · August 2026 · Draft_
+_Companion: memory_recall Structured Filter Extension Spec_
+_Related: B-7 Suite Spec, clawql-streams Spec v0.2, clawql-inference Training Pipeline Spec_

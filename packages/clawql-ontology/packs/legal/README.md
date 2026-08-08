@@ -17,7 +17,7 @@ memory_recall({
   query: "matters matching escrow and non-compete",
   schema: "legal.Matter",
   filters: { escrowPct: { gte: 10 }, nonCompeteMonths: { gt: 18 } },
-})
+});
 ```
 
 Other verticals (healthcare, financial, real-estate) are roadmap placeholders — see [../README.md](../README.md).

@@ -15,11 +15,7 @@ import {
 } from "./ontology-db.js";
 import { syncOntologyMattersFromVault } from "./ontology-sync.js";
 
-export type OntologySchema =
-  | "legal.Matter"
-  | "legal.Client"
-  | "legal.Attorney"
-  | "legal.Document";
+export type OntologySchema = "legal.Matter" | "legal.Client" | "legal.Attorney" | "legal.Document";
 
 export type FilterPredicate = Record<string, unknown>;
 export type OntologyFilter = Record<string, FilterPredicate>;
@@ -89,11 +85,7 @@ function confidenceLevelsAtOrAbove(minimum: FieldConfidence): FieldConfidence[] 
   return hierarchy.slice(0, idx < 0 ? 1 : idx + 1);
 }
 
-function buildPredicate(
-  col: string,
-  predicate: FilterPredicate,
-  values: unknown[]
-): string | null {
+function buildPredicate(col: string, predicate: FilterPredicate, values: unknown[]): string | null {
   if ("eq" in predicate) {
     values.push(predicate.eq);
     return `${col} = ?`;
@@ -118,7 +110,11 @@ function buildPredicate(
     values.push(predicate.lt);
     return `${col} < ?`;
   }
-  if ("between" in predicate && Array.isArray(predicate.between) && predicate.between.length === 2) {
+  if (
+    "between" in predicate &&
+    Array.isArray(predicate.between) &&
+    predicate.between.length === 2
+  ) {
     values.push(predicate.between[0], predicate.between[1]);
     return `${col} BETWEEN ? AND ?`;
   }

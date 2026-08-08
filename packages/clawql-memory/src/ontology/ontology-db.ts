@@ -128,9 +128,10 @@ function migrate(db: Database): void {
       CREATE INDEX idx_matters_practice ON matters(practice_area);
       CREATE INDEX idx_matters_status ON matters(status);
     `);
-    db.run("INSERT INTO schema_migrations (version, name, applied_at) VALUES (1, 'legal_v0_1', ?)", [
-      isoNow(),
-    ]);
+    db.run(
+      "INSERT INTO schema_migrations (version, name, applied_at) VALUES (1, 'legal_v0_1', ?)",
+      [isoNow()]
+    );
   }
 }
 
@@ -288,7 +289,8 @@ export function queryMattersSql(
       clientId: r.client_id != null ? String(r.client_id) : undefined,
       vaultNotePath: String(r.vault_note_path),
       confidence: (r.confidence as FieldConfidence | null) ?? "EXTRACTED",
-      extractionMethod: r.extraction_method != null ? String(r.extraction_method) : "machine_readable",
+      extractionMethod:
+        r.extraction_method != null ? String(r.extraction_method) : "machine_readable",
     });
   }
   stmt.free();
