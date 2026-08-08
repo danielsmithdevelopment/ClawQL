@@ -75,6 +75,7 @@ OpenRouter examples (prefer cheaper for CI):
 - `openrouter/deepseek/deepseek-chat` (default)
 - `openrouter/google/gemini-2.5-flash-lite` (cheaper / noisier)
 - `openrouter/qwen/qwen3.6-plus`
+- `openrouter/anthropic/claude-sonnet-4.6` (B-7.1 / Harvey-track)
 
 Direct BYOK (when you have vendor keys):
 

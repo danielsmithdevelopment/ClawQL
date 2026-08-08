@@ -1,3 +1,7 @@
+### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) Sonnet 4.6 redesign — pending
+
+Fixture redesign: **120** nested notes (IDs in bodies only), grader accepts `source=filesystem|memory_recall|…`, model **`openrouter/anthropic/claude-sonnet-4.6`**, `pr_trials=3` three-arm. Live burn on redesign PR — ledger row to be filled when the Actions run completes.
+
 ### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) qwen3.6-plus n=3 — gate FAIL (ClawQL OK)
 
 Same hardened 30-note fixture; model **`openrouter/qwen/qwen3.6-plus`**.

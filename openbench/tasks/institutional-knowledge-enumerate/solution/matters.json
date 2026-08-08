@@ -5,5 +5,5 @@
     "noncompete_months_gt": 18
   },
   "source": "memory_recall",
-  "search_sufficiency": "Recalled all 30 seeded matter notes and retained only the five with escrow_pct>=10 and noncompete_months>18."
+  "search_sufficiency": "solution overlay — all five ground-truth matches"
 }

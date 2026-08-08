@@ -117,7 +117,7 @@ Prefer the Python adapter: it writes the instruction file, parses
 | `memory-dependent-continuation` | Prior argon2id + 900s TTL decisions live only in vault memory after seed removal; raw harnesses that follow the misleading bcrypt comment fail. |
 | `token-budget-constrained`      | Correct YAML `parse_config` under a 5k-token budget; exploration-heavy agents overspend.                                                        |
 | `multi-provider-api-workflow`   | Offline Cloudflare Worker + GitHub releases scaffold; rewards structured API discovery over dumping specs.                                      |
-| `institutional-knowledge-enumerate` | B-7.1 mini Calderwood & Harkness fixture (30 notes / 5 matches) — exhaustive escrow≥10 ∧ NC>18 via vault `memory_recall`.                  |
+| `institutional-knowledge-enumerate` | B-7.1 mini Calderwood & Harkness fixture (120 nested notes / 5 matches) — exhaustive escrow≥10 ∧ NC>18 via vault `memory_recall`.            |
 
 Validate checkers offline (no model, no network):
 

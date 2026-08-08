@@ -74,14 +74,14 @@ Shared OpenBench rules still apply: real `tool:clawql_*` evidence · hard spend 
 
 ## Phase-1 (ship now)
 
-| Cell  | Task id                             | Fixture                                              | Status                                 |
-| ----- | ----------------------------------- | ---------------------------------------------------- | -------------------------------------- |
-| B-7.1 | `institutional-knowledge-enumerate` | In-repo mini-firm vault seed (30 matters; 5 matches) | Hardened n=3 re-burn on `pr_active`    |
-| B-7.2 | `institutional-client-preference`   | Mini-firm client X preferences across 4 matters      | Spec only                              |
-| B-7.3 | `institutional-amortized-session`   | Same vault; 5 related prompts; cost + completeness   | Spec only (needs session harness)      |
-| B-7.4 | Full C&H mount                      | Mount open-sourced filesystem + Harvey task set      | Blocked on stable corpus download path |
+| Cell  | Task id                             | Fixture                                                          | Status                                   |
+| ----- | ----------------------------------- | ---------------------------------------------------------------- | ---------------------------------------- |
+| B-7.1 | `institutional-knowledge-enumerate` | In-repo mini-firm vault seed (**120** nested matters; 5 matches) | Sonnet 4.6 redesign on `pr_active` (n=3) |
+| B-7.2 | `institutional-client-preference`   | Mini-firm client X preferences across 4 matters                  | Spec only                                |
+| B-7.3 | `institutional-amortized-session`   | Same vault; 5 related prompts; cost + completeness               | Spec only (needs session harness)        |
+| B-7.4 | Full C&H mount                      | Mount open-sourced filesystem + Harvey task set                  | Blocked on stable corpus download path   |
 
-Qwen3.6-plus n=3 [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868): on **1.67/5** < off **3.33/5** — **ClawQL recall OK** (30/30); failures are agent follow-through + off file-read fixture. DeepSeek n=3 [31230837116](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31230837116) same pattern. Prior n=1 [31228280796](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31228280796) confounded.
+**Redesign (2026-08-08):** 120 nested `clients/*/matters/` notes (IDs only in bodies); accept `source=filesystem`; model **`openrouter/anthropic/claude-sonnet-4.6`**. Prior Qwen n=3 [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868) FAIL ruled out ClawQL (full recall); 30-note flat fixture let bare `read` win.
 
 ### Phase-1 arms (B-7.1)
 

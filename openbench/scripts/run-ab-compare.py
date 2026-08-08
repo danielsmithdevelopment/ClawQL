@@ -326,11 +326,12 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "require_conflict": True,
     },
     "institutional-knowledge-enumerate": {
-        # Hardened B-7.1: 30-note fixture + exhaustive off-arm try; n≥3 via pr_trials.
+        # Redesigned B-7.1: ~120 nested notes so bare linear read cannot exhaust
+        # under the turn budget; on-arm must use multi-query memory_recall.
         "max_turns": 50,
-        "max_tokens": 12000,
-        "max_wall_s": 400,
-        "default_timeout_s": 400,
+        "max_tokens": 16000,
+        "max_wall_s": 480,
+        "default_timeout_s": 480,
         "disable_memory": False,
         "require_institutional": True,
     },
@@ -713,29 +714,32 @@ Do NOT invent 48 or pick only one price. Call memory_recall now.
 
 INSTITUTIONAL_NUDGE = """Continue the institutional knowledge enumeration task (B-7.1).
 
-1. clawql_memory_recall across the vault (raise limit/maxDepth — there are many matter notes).
+1. clawql_memory_recall across the vault — use MULTIPLE queries (limit=50 each).
+   There are ~120 nested matter notes; one recall is not enough.
    Fields: CLAWQL_MATTER_ID / ESCROW_PCT / NONCOMPETE_MONTHS
 2. Keep ONLY matters with escrow_pct >= 10 AND noncompete_months > 18
 3. write relative filePath **matters.json** only (never /tmp/matters.json) with the COMPLETE set:
    {"matters":["MAT-XXXX","MAT-YYYY"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"memory_recall","search_sufficiency":"how many notes you checked"}
+   `source` MUST be non-empty (empty source grades 0).
 
 Do NOT copy placeholder IDs. Discover real IDs from recall. Partial lists fail.
 Near-misses (9% escrow, exactly 18 months NC, missing escrow) must not appear.
-After recall returns the vault notes, filter carefully — all matches must appear.
-Search exhaustively — do not stop after the first hits. Call memory_recall now.
+After recall returns notes, filter carefully — all matches must appear.
+Call memory_recall now (again if needed), then write relative matters.json.
 """
 
 INSTITUTIONAL_OFF_NUDGE = """Continue. Memory tools are unavailable — that is expected on this arm.
 
-You MUST still finish the task by exhaustively searching the workspace:
+You MUST still finish by exhaustively searching the workspace:
 
-1. List and read EVERY markdown note under `.openbench/memory-seed/` (ignore `decoy/`).
+1. Recursively list and read EVERY markdown note under `.openbench/memory-seed/`
+   (including nested `clients/*/matters/`; ignore `decoy/`). ~120 notes.
 2. For each note, record CLAWQL_MATTER_ID, CLAWQL_ESCROW_PCT, CLAWQL_NONCOMPETE_MONTHS when present.
 3. Keep ONLY matters with escrow_pct >= 10 AND noncompete_months > 18.
-4. write relative filePath matters.json:
-   {"matters":["MAT-XXXX"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"workspace_notes","search_sufficiency":"checked all notes under .openbench/memory-seed"}
+4. write relative filePath matters.json with non-empty source:
+   {"matters":["MAT-XXXX"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"filesystem","search_sufficiency":"checked all notes under .openbench/memory-seed"}
 
-Do not stop after 1–2 files. Do not invent IDs. Exhaust the directory, then write.
+Do not stop after 1–2 files. Do not invent IDs. Exhaust the tree, then write.
 """
 
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.

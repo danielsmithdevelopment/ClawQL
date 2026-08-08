@@ -4,7 +4,7 @@
 # - Emits MATTERS_FOUND: k/5 (headline diagnostic) + SCORE
 # - Any false positive (near-miss or unknown id) → 0.0 / 0/5
 # - When OPENBENCH_REQUIRE_INSTITUTIONAL=1, require real memory_recall tool_use
-#   (off arm cannot score by guessing the fixture set).
+#   (on / no-memory arms cannot score by guessing the fixture set).
 set -euo pipefail
 
 REQUIRE_INSTITUTIONAL="${OPENBENCH_REQUIRE_INSTITUTIONAL:-0}"
@@ -28,40 +28,20 @@ fi
 
 # stdout lines: MATTERS_FOUND:k/n  then SCORE:x  (plus optional MATTERS_IDS)
 eval_out="$(
-  python3 - <<'PY'
+  TASK_DIR="$TASK_DIR" python3 - <<'PY'
 import json
+import os
 import sys
 from pathlib import Path
 
-expected = {"MAT-2388", "MAT-2401", "MAT-2415", "MAT-2450", "MAT-2462"}
-# All other seeded matter IDs (12→30 fixture). Including any → 0/5.
-near_miss = {
-    "MAT-2390",
-    "MAT-2405",
-    "MAT-2410",
-    "MAT-2420",
-    "MAT-2433",
-    "MAT-2444",
-    "MAT-2470",
-    "MAT-2501",
-    "MAT-2502",
-    "MAT-2503",
-    "MAT-2504",
-    "MAT-2505",
-    "MAT-2506",
-    "MAT-2507",
-    "MAT-2508",
-    "MAT-2509",
-    "MAT-2510",
-    "MAT-2511",
-    "MAT-2512",
-    "MAT-2513",
-    "MAT-2514",
-    "MAT-2515",
-    "MAT-2516",
-    "MAT-2517",
-    "MAT-2518",
-}
+task_dir = Path(os.environ["TASK_DIR"])
+manifest_path = task_dir / "ground_truth.json"
+if manifest_path.is_file():
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    expected = {str(x).strip().upper() for x in manifest.get("expected_matters", [])}
+else:
+    expected = {"MAT-2388", "MAT-2401", "MAT-2415", "MAT-2450", "MAT-2462"}
+
 n_exp = len(expected)
 
 def emit(found: int, score: float, ids=None, err=None) -> None:
@@ -95,13 +75,6 @@ for item in raw:
             ids.add(str(mid).strip().upper())
 
 false_pos = ids - expected
-if false_pos & near_miss:
-    emit(
-        0,
-        0.0,
-        err=f"FAIL: near-miss matter(s) included: {sorted(false_pos & near_miss)}",
-    )
-    raise SystemExit(0)
 if false_pos:
     emit(0, 0.0, err=f"FAIL: unknown/extra matter id(s): {sorted(false_pos)}")
     raise SystemExit(0)
@@ -109,11 +82,13 @@ if false_pos:
 hits = sorted(ids & expected)
 partial = len(hits) / float(n_exp)
 src = str(d.get("source") or "").strip().lower()
-# On-arm uses memory_recall; off-arm may cite workspace note reads after exhaustive search.
+# On-arm: memory_recall. Off-arm: workspace / filesystem note reads after search.
 ok_src = (
     "memory" in src
     or "recall" in src
     or "workspace" in src
+    or "filesystem" in src
+    or "file" in src
     or "note" in src
     or "seed" in src
 )
@@ -121,7 +96,10 @@ if not ok_src:
     emit(
         0,
         0.0,
-        err=f"FAIL: source must reference memory_recall or workspace notes; got {src!r}",
+        err=(
+            "FAIL: source must reference memory_recall, workspace notes, "
+            f"or filesystem reads; got {src!r}"
+        ),
     )
     raise SystemExit(0)
 

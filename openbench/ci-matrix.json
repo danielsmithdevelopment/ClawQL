@@ -2,14 +2,10 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-7.1 qwen3.6-plus n=3 [31236859868]: on 1.67/5 < off 3.33/5 — ClawQL recall OK (30/30); agent/fixture still fail gate. Keep off pr_active.",
-  "pr_active": [],
-  "pr_trials": 1,
+  "live_resume_note": "B-7.1 redesign: 120 nested notes + Claude Sonnet 4.6 n=3 three-arm on pr_active (prior Qwen FAIL ruled out ClawQL).",
+  "pr_active": ["institutional-knowledge-enumerate"],
+  "pr_trials": 3,
   "retired": {
-    "institutional-knowledge-enumerate": {
-      "reason": "Qwen3.6-plus n=3 31236859868: recall returns full vault; on mean 1.67/5 < off 3.33/5. Not ClawQL memory failure — agent follow-through + off file-read fixture. Redesign before re-activate.",
-      "evidence_run": "31236859868"
-    },
     "idp-safe-pipeline-lite": {
       "reason": "Verified WIN — stubbed 7-stage IDP orchestration (on 1.0 / off 0.0; RTP v1.1)",
       "evidence_run": "31039035892"
