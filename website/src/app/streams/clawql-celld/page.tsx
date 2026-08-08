@@ -46,6 +46,13 @@ export default function ClawqlCelldPage() {
           >
             Durable Objects session contract
           </a>
+          . ClawQL-owned runtime:{' '}
+          <a
+            href="/streams/clawql-cellrt"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            clawql-cellrt
+          </a>
           . Upstream:{' '}
           <a
             href="https://celld.dev/docs/"

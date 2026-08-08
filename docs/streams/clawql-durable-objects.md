@@ -1,8 +1,8 @@
 # ClawQL Durable Objects — Implementation Spec v0.1.1
 
 **Status:** Draft · August 2026 · v0.1.1 (companion to [Streams v0.2](./clawql-streams.md))  
-**Package surface:** Cloudflare Durable Objects (hosted) · [celld](https://celld.dev/) (self-hosted) · Kubernetes HPA (regulated)  
-**Depends on:** [`clawql-streams`](./clawql-streams.md) · [`clawql-celld.md`](./clawql-celld.md) · [`clawql-inference`](../inference/clawql-inference.md) · OpenBenchTrace / RTP  
+**Package surface:** Cloudflare Durable Objects (hosted) · [celld](https://celld.dev/) (self-hosted Workers API) · [`clawql-cellrt`](./clawql-cellrt.md) (ClawQL-owned, planned) · Kubernetes HPA (regulated)  
+**Depends on:** [`clawql-streams`](./clawql-streams.md) · [`clawql-celld.md`](./clawql-celld.md) · [`clawql-cellrt.md`](./clawql-cellrt.md) · [`clawql-inference`](../inference/clawql-inference.md) · OpenBenchTrace / RTP  
 **Related:** [`mcp-api-adapter`](../mcp/mcp-api-adapter.md) · [PorTAL flywheel](../inference/portal-flywheel.md) · [celld docs](https://celld.dev/docs/)
 
 ---
@@ -11,7 +11,7 @@
 
 This document specifies how ClawQL Streams agent sessions run inside **Durable Objects**.
 
-**Self-hosted DO runtime:** **[celld](https://celld.dev/)** (Apache 2.0, [denoland/celld](https://github.com/denoland/celld)) — not a custom ClawQL runtime on Node `worker_threads`. Hosted path remains **Cloudflare Workers / Durable Objects**. Regulated / air-gapped path remains **Kubernetes HPA** until celld is production-stable. Integration detail (constraints, LTX, deploy): [`clawql-celld.md`](./clawql-celld.md). Product decisions: [Streams Specification v0.2](./clawql-streams.md).
+**Self-hosted DO runtimes:** **[celld](https://celld.dev/)** (Apache 2.0, Workers/DO API parity) and planned **[`clawql-cellrt`](./clawql-cellrt.md)** (ClawQL-owned Rust + Wasmtime). **Not** a custom ClawQL runtime on Node `worker_threads`. Hosted path remains **Cloudflare Workers / Durable Objects**. Regulated / air-gapped path remains **Kubernetes HPA** until a DO runtime is production-stable. Integration detail: [`clawql-celld.md`](./clawql-celld.md) · [`clawql-cellrt.md`](./clawql-cellrt.md). Product decisions: [Streams Specification v0.2](./clawql-streams.md).
 
 Goals:
 
@@ -148,7 +148,7 @@ Order matters: export and capture before key expiry so the last inference metada
 | WORM         | Platform DO storage       | LTX on fleet bucket (`sqlite3` audit) | Postgres / JSONL                               |
 | Scale signal | DO platform               | Fleet density / alarms                | NATS consumer lag → HPA (Streams §9)           |
 
-Parity target: **same session contract and WORM/RTP schemas**. Exact hibernation and cold-start numbers will differ — document in operator runbooks. Prefer celld over inventing a Node DO runtime; prefer K8s HPA when celld's alpha / single-app-fleet limits are unacceptable ([`clawql-celld.md`](./clawql-celld.md) §8, §11).
+Parity target: **same session contract and WORM/RTP schemas**. Exact hibernation and cold-start numbers will differ — document in operator runbooks. Prefer celld or [`clawql-cellrt`](./clawql-cellrt.md) over inventing a Node DO runtime; prefer K8s HPA when alpha / single-app-fleet limits are unacceptable ([`clawql-celld.md`](./clawql-celld.md) §8, §11).
 
 ---
 
@@ -184,6 +184,9 @@ Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / 
 
 - [`docs/streams/clawql-streams.md`](./clawql-streams.md) — Streams Specification v0.2
 - [`docs/streams/clawql-celld.md`](./clawql-celld.md) — celld integration (constraints, LTX, deploy)
+- [`docs/streams/clawql-cellrt.md`](./clawql-cellrt.md) — ClawQL-owned Rust + Wasmtime cell runtime
+- [`docs/streams/clawql-tee.md`](./clawql-tee.md) — hardware TEE + attestation-gated secrets
+- [`docs/streams/clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) — QR air-gap audit transport
 - [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md) — virtual keys, PAL, call store
 - [`docs/benchmarks/openbench-trace-collection.md`](../benchmarks/openbench-trace-collection.md) — OBT + RTP
 - [celld](https://celld.dev/) · [docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security)

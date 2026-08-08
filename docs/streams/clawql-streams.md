@@ -2,8 +2,8 @@
 
 **Status:** Draft · August 2026 · v0.2  
 **Package:** `clawql-streams` (planned)  
-**Depends on:** `clawql-core` · `mcp-api-adapter` · `clawql-inference` · `clawql-payments` · `clawql-ouroboros` · [celld](https://celld.dev/) (self-hosted DO) · NATS JetStream (K8s path) · OpenBenchTrace / RTP (training emission)  
-**Related:** [`mcp-api-adapter`](../mcp/mcp-api-adapter.md) · [`clawql-inference`](../inference/clawql-inference.md) · [`clawql-durable-objects.md`](./clawql-durable-objects.md) · [`clawql-celld.md`](./clawql-celld.md) · [Ouroboros](../ouroboros/) · [OpenBenchTrace collection](../benchmarks/openbench-trace-collection.md) · [celld docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [Cloudflare compat](https://celld.dev/docs/cloudflare-compat)
+**Depends on:** `clawql-core` · `mcp-api-adapter` · `clawql-inference` · `clawql-payments` · `clawql-ouroboros` · [celld](https://celld.dev/) (self-hosted DO) · [`clawql-cellrt`](./clawql-cellrt.md) (ClawQL-owned runtime, planned) · NATS JetStream (K8s path) · OpenBenchTrace / RTP (training emission)  
+**Related:** [`mcp-api-adapter`](../mcp/mcp-api-adapter.md) · [`clawql-inference`](../inference/clawql-inference.md) · [`clawql-durable-objects.md`](./clawql-durable-objects.md) · [`clawql-celld.md`](./clawql-celld.md) · [`clawql-cellrt.md`](./clawql-cellrt.md) · [Ouroboros](../ouroboros/) · [OpenBenchTrace collection](../benchmarks/openbench-trace-collection.md) · [celld docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [Cloudflare compat](https://celld.dev/docs/cloudflare-compat)
 
 ---
 
@@ -21,9 +21,9 @@ Together with ClawQL Core (any protocol → MCP) and [`mcp-api-adapter`](../mcp/
 | Bundle contents        | Ambiguous; subprocess spawn to Claude / local tools    | **`clawql-streams` + `clawql-core` + `mcp-api-adapter` embedded in the DO/cell bundle**                  |
 | Model calls            | Subprocess (`claude -p`) or mixed                      | **`fetch()` to [`clawql-inference`](../inference/clawql-inference.md)** only — no `child_process`        |
 | WORM replication       | Postgres / JSONL (K8s) or DO storage                   | On celld: **LTX → S3-compatible bucket is the WORM trail** (RPO=0); auditor uses `sqlite3` on the bucket |
-| Scaling backends       | `kubernetes` \| `durable-objects`                      | **`kubernetes` \| `celld` \| `cloudflare`**                                                              |
+| Scaling backends       | `kubernetes` \| `durable-objects`                      | **`kubernetes` \| `celld` \| `cloudflare`** (+ planned **`cellrt`**)                                     |
 
-**Do not build a custom ClawQL DO runtime on Node `worker_threads`.** Use celld for self-hosted Durable Objects; Cloudflare Workers/DOs for hosted; Kubernetes HPA for regulated / air-gapped deployments until celld is production-stable.
+**Do not build a custom ClawQL DO runtime on Node `worker_threads`.** Use **[celld](https://celld.dev/)** for Workers/DO-compatible self-hosted Durable Objects; Cloudflare Workers/DOs for hosted; Kubernetes HPA for regulated / air-gapped until a DO runtime is production-stable. **[`clawql-cellrt`](./clawql-cellrt.md)** is the ClawQL-owned Rust + Wasmtime production runtime (security-first, embedded Vault/inference/observability) — not a Node rewrite.
 
 ---
 
@@ -294,6 +294,7 @@ type StreamSourceType =
   | "api_poll" // polling via setAlarm, not setInterval
   | "grpc_stream" // gRPC server streaming (K8s path; DO via adapter where feasible)
   | "sse" // Server-Sent Events
+  | "qr" // optical air-gap — see clawql-qr-stream-transport.md
   | "kafka" // optional, enterprise — open question §15
   | "kinesis"; // optional, AWS regulated
 ```
@@ -706,7 +707,8 @@ Operational detail: [`clawql-celld.md`](./clawql-celld.md) §7.
 | `clawql-core`        | Embedded in DO bundle — `search` / `execute` / memory tools               |
 | `mcp-api-adapter`    | Embedded in DO bundle — MCP → OpenAPI / GraphQL / gRPC / WebSocket        |
 | `clawql-inference`   | **Out of process** — `fetch()` only; PAL, virtual keys, call store, cache |
-| celld                | Self-hosted Durable Objects runtime (Apache 2.0)                          |
+| celld                | Self-hosted Durable Objects runtime (Apache 2.0, Workers API)             |
+| `clawql-cellrt`      | ClawQL-owned Rust + Wasmtime cell runtime (planned)                       |
 | Cloudflare Workers   | Hosted Durable Objects path                                               |
 | NATS JetStream       | Durable event buffer for Kubernetes HPA path                              |
 | `clawql-payments`    | `DeductionService` for credit-gated agent sessions                        |
@@ -720,7 +722,7 @@ clawql-streams (coordination)
   │     ├─ clawql-core (in-process)
   │     └─ mcp-api-adapter (in-process)
   ├─ fetch → clawql-inference
-  ├─ celld | Cloudflare | K8s HPA
+  ├─ celld | cellrt (planned) | Cloudflare | K8s HPA
   ├─ clawql-payments (optional holds)
   └─ clawql-ouroboros (optional ensemble)
 ```
@@ -729,44 +731,49 @@ clawql-streams (coordination)
 
 ## 13. Comparison to alternatives
 
-|                      | Stripe Minions              | Anthropic Managed Agents | OpenAI Agents SDK | ClawQL Streams                                                |
-| -------------------- | --------------------------- | ------------------------ | ----------------- | ------------------------------------------------------------- |
-| **Trigger**          | Slack reaction              | Cron / API call          | API call          | WebSocket · NATS · webhook · cron · poll · gRPC · SSE         |
-| **Tool catalog**     | Custom (Toolshed, internal) | Built-in + custom        | Built-in + custom | Any MCP server via mcp-api-adapter                            |
-| **Audit trail**      | Internal                    | Provider-managed         | Provider-managed  | WORM / LTX on operator bucket, or Postgres                    |
-| **Sovereignty**      | Internal only               | Provider servers         | Provider servers  | celld · air-gapped K8s · Cloudflare                           |
-| **Scale**            | Internal K8s                | Provider-managed         | Provider-managed  | celld cells · CF DOs · K8s HPA                                |
-| **Protocol surface** | Internal                    | API only                 | API only          | Any protocol both directions                                  |
-| **Model**            | Goose + Claude Code         | Claude only              | OpenAI only       | Any model via clawql-inference                                |
-| **DO runtime**       | N/A                         | Provider                 | Provider          | celld (self-host) · Cloudflare (hosted) — **not** custom Node |
-| **Payments**         | x402 demo                   | None                     | None              | Full economics stack                                          |
-| **Open source**      | No                          | No                       | Partial           | Apache 2.0 core + celld Apache 2.0                            |
-| **Multi-agent**      | No                          | Research preview         | Yes               | Ouroboros ensemble                                            |
+|                      | Stripe Minions              | Anthropic Managed Agents | OpenAI Agents SDK | ClawQL Streams                                                                   |
+| -------------------- | --------------------------- | ------------------------ | ----------------- | -------------------------------------------------------------------------------- |
+| **Trigger**          | Slack reaction              | Cron / API call          | API call          | WebSocket · NATS · webhook · cron · poll · gRPC · SSE · **QR**                   |
+| **Tool catalog**     | Custom (Toolshed, internal) | Built-in + custom        | Built-in + custom | Any MCP server via mcp-api-adapter                                               |
+| **Audit trail**      | Internal                    | Provider-managed         | Provider-managed  | WORM / LTX on operator bucket, or Postgres                                       |
+| **Sovereignty**      | Internal only               | Provider servers         | Provider servers  | celld · cellrt · air-gapped K8s · Cloudflare                                     |
+| **Scale**            | Internal K8s                | Provider-managed         | Provider-managed  | celld/cellrt cells · CF DOs · K8s HPA                                            |
+| **Protocol surface** | Internal                    | API only                 | API only          | Any protocol both directions                                                     |
+| **Model**            | Goose + Claude Code         | Claude only              | OpenAI only       | Any model via clawql-inference                                                   |
+| **DO runtime**       | N/A                         | Provider                 | Provider          | celld (Workers API) · **cellrt** (owned Rust) · Cloudflare — **not** custom Node |
+| **Payments**         | x402 demo                   | None                     | None              | Full economics stack                                                             |
+| **Open source**      | No                          | No                       | Partial           | Apache 2.0 core + celld / cellrt Apache 2.0                                      |
+| **Multi-agent**      | No                          | Research preview         | Yes               | Ouroboros ensemble                                                               |
 
 ---
 
 ## 14. Positioning
 
-ClawQL Streams is the self-sovereign alternative to Anthropic Managed Agents, with Stripe Minions-level tool integration and Agents SDK-level orchestration — triggered by any event source, audited to WORM (LTX on celld), deployable on **celld**, **Cloudflare**, or **Kubernetes**.
+ClawQL Streams is the self-sovereign alternative to Anthropic Managed Agents, with Stripe Minions-level tool integration and Agents SDK-level orchestration — triggered by any event source, audited to WORM (LTX on celld/cellrt), deployable on **celld**, **cellrt**, **Cloudflare**, or **Kubernetes**.
 
-Streams + Core + mcp-api-adapter is the **Protocol Fabric with an event loop**: world events enter, agents act under ATR and virtual keys, results leave on any protocol surface — without a human at the console and without building a custom Durable Object runtime.
+Streams + Core + mcp-api-adapter is the **Protocol Fabric with an event loop**: world events enter, agents act under ATR and virtual keys, results leave on any protocol surface — without a human at the console and without building a custom Durable Object runtime on Node.
 
 ---
 
 ## 15. Open questions
 
 1. **Bundle size.** Can `clawql-core` + `mcp-api-adapter` + Streams fit under **64 MiB** with aggressive tree-shaking, or do we need a Streams-slim core profile?
-2. **celld alpha timeline.** When is celld production-stable enough to prefer over K8s HPA for regulated tenants?
-3. **Replay and idempotency.** On buffer replay, significance may re-fire. Idempotency keys: `eventId + subscriptionId` (and stable DO names — see celld naming).
+2. **celld alpha vs cellrt.** When is celld production-stable enough to prefer over K8s HPA? When does Helm default self-hosted Streams to **`cellrt`** instead of (or alongside) celld?
+3. **Replay and idempotency.** On buffer replay, significance may re-fire. Idempotency keys: `eventId + subscriptionId` (and stable DO/cell names — see celld / cellrt naming).
 4. **Kafka / Kinesis.** First-class `StreamSourceType` in v0.2 or defer to enterprise add-on?
-5. **Multi-tenant celld.** celld fleets are one application deployment ([limitations](https://celld.dev/docs/limitations)) — how do we isolate ClawQL orgs (separate fleets/buckets vs wait for scheduler)?
+5. **Multi-tenant celld / cellrt.** celld fleets are one application deployment ([limitations](https://celld.dev/docs/limitations)) — how do we isolate ClawQL orgs (separate fleets/buckets vs wait for scheduler)? cellrt targets the same isolation model initially.
 6. **Consent granularity.** Subscription-level `rtpConsent` (default) vs per-event re-consent for regulated tenants.
 7. **Cross-subscription coordination.** Default isolated; shared subject for opt-in?
+8. **Effect-TS → WASM.** Feasibility of `@clawql/wasm-polyfills` + `@clawql/effect-wasm` for in-process `clawql-core.wasm` inside cellrt (see [cellrt §10](./clawql-cellrt.md#10-effect-ts--wasm-build-path)).
 
 ---
 
 ## Further reading
 
+- [`docs/streams/clawql-cellrt.md`](./clawql-cellrt.md) — ClawQL-owned Rust + Wasmtime cell runtime (monorepo `crates/`)
+- [`docs/streams/clawql-tee.md`](./clawql-tee.md) — hardware TEE + attestation-gated secrets
+- [`docs/streams/clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) — QR air-gap audit transport (TEE)
+- [`docs/streams/clawql-qr-stream-transport.md`](./clawql-qr-stream-transport.md) — 7th mcp-api-adapter surface + Streams `qr` source + election module
 - [`docs/streams/clawql-celld.md`](./clawql-celld.md) — celld integration: constraints, DO classes, bucket layout, deploy
 - [`docs/streams/clawql-durable-objects.md`](./clawql-durable-objects.md) — session contract, sidecars, virtual keys
 - [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md) — MCP → APIs (inverse of ClawQL Core)

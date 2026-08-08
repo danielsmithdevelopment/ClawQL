@@ -206,6 +206,41 @@ export const architectureHubCards: Array<ReferenceCard> = [
       'Streams session runtime — Audit / Inference / Training sidecars, virtual key lifecycle.',
     icon: SquaresPlusIcon,
   }),
+  card({
+    href: '/streams/clawql-cellrt',
+    name: 'clawql-cellrt (draft)',
+    description:
+      'ClawQL-owned Rust + Wasmtime cell runtime — LTX WORM, Vault, WASM sandbox, HTTP bootstrap.',
+    icon: SquaresPlusIcon,
+  }),
+  card({
+    href: '/streams/clawql-tee',
+    name: 'clawql-tee (draft)',
+    description:
+      'Hardware TEE for cellrt — SEV-SNP/TDX attestation, Vault-gated secrets, optional GPU CC.',
+    icon: SquaresPlusIcon,
+  }),
+  card({
+    href: '/streams/clawql-tee-airgap-audit',
+    name: 'TEE air-gap audit (draft)',
+    description:
+      'Unidirectional QR streaming of WORM + attestation for regulator verification.',
+    icon: SquaresPlusIcon,
+  }),
+  card({
+    href: '/streams/clawql-qr-stream-transport',
+    name: 'QR stream transport (draft)',
+    description:
+      '7th mcp-api-adapter surface + Streams qr source — air-gap MCP and election ballots.',
+    icon: BoltIcon,
+  }),
+  card({
+    href: '/government/clawql-government',
+    name: 'clawql-government (draft)',
+    description:
+      'Outcome accountability — Arweave baselines, bond validation, FOIA vault, auditor API.',
+    icon: SquaresPlusIcon,
+  }),
 ]
 
 /** Deployment hub — ops/infra only (not getting-started entry points). */

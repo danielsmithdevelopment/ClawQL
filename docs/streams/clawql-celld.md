@@ -3,7 +3,7 @@
 **Status:** Draft · August 2026 · v0.1  
 **Package surface:** [celld](https://celld.dev/) (self-hosted Durable Objects) for ClawQL Streams  
 **Depends on:** [`clawql-streams`](./clawql-streams.md) v0.2 · [`clawql-durable-objects.md`](./clawql-durable-objects.md) · [`clawql-inference`](../inference/clawql-inference.md) · `clawql-core` · `mcp-api-adapter`  
-**Related:** [celld docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [Cloudflare compat](https://celld.dev/docs/cloudflare-compat) · [denoland/celld](https://github.com/denoland/celld) (Apache 2.0)
+**Related:** [`clawql-cellrt.md`](./clawql-cellrt.md) (ClawQL-owned Rust runtime) · [celld docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [Cloudflare compat](https://celld.dev/docs/cloudflare-compat) · [denoland/celld](https://github.com/denoland/celld) (Apache 2.0)
 
 ---
 
@@ -11,7 +11,7 @@
 
 This document specifies how ClawQL Streams runs on **[celld](https://celld.dev/)** — Deno's self-hosted, S3-backed Durable Objects runtime. celld exposes the same Workers / Durable Object JavaScript API as Cloudflare, with SQLite per cell and **LTX** replication to an operator-owned bucket (**RPO=0**).
 
-ClawQL's decision (Streams v0.2): **do not build a custom DO runtime on Node `worker_threads`.** Adopt celld for self-hosted DO parity; keep Cloudflare for hosted; keep Kubernetes HPA for regulated until celld is production-stable.
+ClawQL's decision (Streams v0.2): **do not build a custom DO runtime on Node `worker_threads`.** Adopt celld for **Workers/DO API–compatible** self-hosted Durable Objects; keep Cloudflare for hosted; keep Kubernetes HPA for regulated until a DO runtime is production-stable. The ClawQL-owned production runtime is **[`clawql-cellrt`](./clawql-cellrt.md)** (Rust + Wasmtime) — complementary to celld, not a Node rewrite.
 
 ### Why celld vs build-own
 
@@ -366,6 +366,9 @@ Track against upstream celld alpha:
 ## Further reading
 
 - [`docs/streams/clawql-streams.md`](./clawql-streams.md) — Streams Specification v0.2
+- [`docs/streams/clawql-cellrt.md`](./clawql-cellrt.md) — ClawQL-owned Rust + Wasmtime cell runtime
+- [`docs/streams/clawql-tee.md`](./clawql-tee.md) — hardware TEE path on cellrt
+- [`docs/streams/clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) — QR air-gap audit transport
 - [`docs/streams/clawql-durable-objects.md`](./clawql-durable-objects.md) — session / sidecar / virtual key contract
 - [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md) — virtual keys, PAL
 - [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md) — embedded adapter surface

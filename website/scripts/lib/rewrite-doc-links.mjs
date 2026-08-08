@@ -77,6 +77,14 @@ export const DOC_SITE_ROUTES = {
     '/surveillance/clawql-surveillance',
   'docs/streams/clawql-streams.md': '/streams/clawql-streams',
   'docs/streams/clawql-durable-objects.md': '/streams/clawql-durable-objects',
+  'docs/streams/clawql-celld.md': '/streams/clawql-celld',
+  'docs/streams/clawql-cellrt.md': '/streams/clawql-cellrt',
+  'docs/streams/clawql-tee.md': '/streams/clawql-tee',
+  'docs/streams/clawql-tee-airgap-audit.md':
+    '/streams/clawql-tee-airgap-audit',
+  'docs/streams/clawql-qr-stream-transport.md':
+    '/streams/clawql-qr-stream-transport',
+  'docs/government/clawql-government.md': '/government/clawql-government',
   'docs/architecture/clawql-token-efficiency.md':
     '/architecture/token-efficiency',
   'docs/architecture/enterprise-ontology.md':

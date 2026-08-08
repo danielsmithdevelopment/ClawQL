@@ -54,6 +54,13 @@ export default function ClawqlStreamsPage() {
           </a>
           ,{' '}
           <a
+            href="/streams/clawql-cellrt"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            clawql-cellrt
+          </a>
+          ,{' '}
+          <a
             href="/mcp/protocol-fabric"
             className="font-medium text-inherit underline underline-offset-2"
           >

@@ -1,28 +1,28 @@
 import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import DurableObjectsBody from '@/generated/clawql-durable-objects-body.mdx'
+import AirgapBody from '@/generated/clawql-tee-airgap-audit-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'ClawQL Durable Objects — session runtime',
+  title: 'clawql-tee Air-Gap Audit Transport',
   description:
-    'ClawQL Streams Durable Objects session contract: Audit / Inference / TrainingData sidecars, virtual keys, Cloudflare hosted path, celld self-hosted path, and Kubernetes HPA parity.',
-  path: '/streams/clawql-durable-objects',
+    'Unidirectional QR code streaming of WORM audit trails and SEV-SNP attestation out of a TEE — Merkle-chained frames for regulator verification without network trust.',
+  path: '/streams/clawql-tee-airgap-audit',
   ogType: 'article',
 })
 
 export const dynamic = 'force-static'
 
-export default function ClawqlDurableObjectsPage() {
+export default function ClawqlTeeAirgapAuditPage() {
   return (
     <article className="flex h-full flex-col pt-10 pb-10">
       <div className="not-prose mb-6 flex flex-wrap items-center gap-2">
         <Tag color="claw" variant="medium">
-          Platform
+          Security
         </Tag>
         <Tag color="claw" variant="medium">
-          Durable Objects
+          Air-gap
         </Tag>
         <Tag color="amber" variant="medium">
           Draft
@@ -31,21 +31,14 @@ export default function ClawqlDurableObjectsPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Planned runtime — not yet shipped.</strong> Companion to{' '}
+          <strong>QR air-gap audit — not yet shipped.</strong> Companion to{' '}
           <a
-            href="/streams/clawql-streams"
+            href="/streams/clawql-tee"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            ClawQL Streams v0.2
-          </a>
-          . Self-hosted DO runtime detail:{' '}
-          <a
-            href="/streams/clawql-celld"
-            className="font-medium text-inherit underline underline-offset-2"
-          >
-            celld integration
+            clawql-tee
           </a>{' '}
-          ·{' '}
+          and{' '}
           <a
             href="/streams/clawql-cellrt"
             className="font-medium text-inherit underline underline-offset-2"
@@ -54,17 +47,17 @@ export default function ClawqlDurableObjectsPage() {
           </a>
           . Source:{' '}
           <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-durable-objects.md"
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-tee-airgap-audit.md"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            docs/streams/clawql-durable-objects.md
+            docs/streams/clawql-tee-airgap-audit.md
           </a>
           .
         </Note>
       </div>
 
       <DocProse className="flex-auto">
-        <DurableObjectsBody />
+        <AirgapBody />
       </DocProse>
     </article>
   )

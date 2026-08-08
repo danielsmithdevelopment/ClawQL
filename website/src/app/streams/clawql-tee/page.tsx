@@ -1,28 +1,28 @@
 import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import DurableObjectsBody from '@/generated/clawql-durable-objects-body.mdx'
+import TeeBody from '@/generated/clawql-tee-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'ClawQL Durable Objects — session runtime',
+  title: 'clawql-tee — Trusted Execution Environment',
   description:
-    'ClawQL Streams Durable Objects session contract: Audit / Inference / TrainingData sidecars, virtual keys, Cloudflare hosted path, celld self-hosted path, and Kubernetes HPA parity.',
-  path: '/streams/clawql-durable-objects',
+    'Hardware TEE for ClawQL cellrt: AMD SEV-SNP / Intel TDX remote attestation, attestation-gated Vault secrets, optional GPU CC, and air-gap QR audit transport.',
+  path: '/streams/clawql-tee',
   ogType: 'article',
 })
 
 export const dynamic = 'force-static'
 
-export default function ClawqlDurableObjectsPage() {
+export default function ClawqlTeePage() {
   return (
     <article className="flex h-full flex-col pt-10 pb-10">
       <div className="not-prose mb-6 flex flex-wrap items-center gap-2">
         <Tag color="claw" variant="medium">
-          Platform
+          Security
         </Tag>
         <Tag color="claw" variant="medium">
-          Durable Objects
+          TEE
         </Tag>
         <Tag color="amber" variant="medium">
           Draft
@@ -31,40 +31,33 @@ export default function ClawqlDurableObjectsPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Planned runtime — not yet shipped.</strong> Companion to{' '}
-          <a
-            href="/streams/clawql-streams"
-            className="font-medium text-inherit underline underline-offset-2"
-          >
-            ClawQL Streams v0.2
-          </a>
-          . Self-hosted DO runtime detail:{' '}
-          <a
-            href="/streams/clawql-celld"
-            className="font-medium text-inherit underline underline-offset-2"
-          >
-            celld integration
-          </a>{' '}
-          ·{' '}
+          <strong>Hardware TEE path — not yet shipped.</strong> Builds on{' '}
           <a
             href="/streams/clawql-cellrt"
             className="font-medium text-inherit underline underline-offset-2"
           >
             clawql-cellrt
           </a>
-          . Source:{' '}
+          . Air-gap audit:{' '}
           <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-durable-objects.md"
+            href="/streams/clawql-tee-airgap-audit"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            docs/streams/clawql-durable-objects.md
+            QR transport
+          </a>
+          . Source:{' '}
+          <a
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-tee.md"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            docs/streams/clawql-tee.md
           </a>
           .
         </Note>
       </div>
 
       <DocProse className="flex-auto">
-        <DurableObjectsBody />
+        <TeeBody />
       </DocProse>
     </article>
   )

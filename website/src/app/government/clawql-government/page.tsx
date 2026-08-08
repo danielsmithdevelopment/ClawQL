@@ -1,28 +1,28 @@
 import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import DurableObjectsBody from '@/generated/clawql-durable-objects-body.mdx'
+import GovernmentBody from '@/generated/clawql-government-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'ClawQL Durable Objects — session runtime',
+  title: 'clawql-government — outcome accountability specification',
   description:
-    'ClawQL Streams Durable Objects session contract: Audit / Inference / TrainingData sidecars, virtual keys, Cloudflare hosted path, celld self-hosted path, and Kubernetes HPA parity.',
-  path: '/streams/clawql-durable-objects',
+    'Government vertical: measurable outcome definitions, Arweave-anchored baselines, Merkle/WORM audit, FOIA vault, bond validation, and nonprofit contractor accountability.',
+  path: '/government/clawql-government',
   ogType: 'article',
 })
 
 export const dynamic = 'force-static'
 
-export default function ClawqlDurableObjectsPage() {
+export default function ClawqlGovernmentPage() {
   return (
     <article className="flex h-full flex-col pt-10 pb-10">
       <div className="not-prose mb-6 flex flex-wrap items-center gap-2">
         <Tag color="claw" variant="medium">
-          Platform
+          Vertical
         </Tag>
         <Tag color="claw" variant="medium">
-          Durable Objects
+          Government
         </Tag>
         <Tag color="amber" variant="medium">
           Draft
@@ -31,40 +31,33 @@ export default function ClawqlDurableObjectsPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Planned runtime — not yet shipped.</strong> Companion to{' '}
+          <strong>Planned package — not yet shipped.</strong> Source:{' '}
           <a
-            href="/streams/clawql-streams"
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/government/clawql-government.md"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            ClawQL Streams v0.2
+            docs/government/clawql-government.md
           </a>
-          . Self-hosted DO runtime detail:{' '}
+          . Industry page:{' '}
           <a
-            href="/streams/clawql-celld"
+            href="https://clawql.com/industries/government/"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            celld integration
-          </a>{' '}
-          ·{' '}
-          <a
-            href="/streams/clawql-cellrt"
-            className="font-medium text-inherit underline underline-offset-2"
-          >
-            clawql-cellrt
+            clawql.com/industries/government
           </a>
-          . Source:{' '}
+          . Air-gap auditor export via{' '}
           <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-durable-objects.md"
+            href="/streams/clawql-qr-stream-transport"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            docs/streams/clawql-durable-objects.md
+            QR stream transport
           </a>
           .
         </Note>
       </div>
 
       <DocProse className="flex-auto">
-        <DurableObjectsBody />
+        <GovernmentBody />
       </DocProse>
     </article>
   )

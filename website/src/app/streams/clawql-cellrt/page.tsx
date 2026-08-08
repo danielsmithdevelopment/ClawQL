@@ -1,20 +1,20 @@
 import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import DurableObjectsBody from '@/generated/clawql-durable-objects-body.mdx'
+import CellrtBody from '@/generated/clawql-cellrt-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'ClawQL Durable Objects — session runtime',
+  title: 'clawql-cellrt — ClawQL Cell Runtime',
   description:
-    'ClawQL Streams Durable Objects session contract: Audit / Inference / TrainingData sidecars, virtual keys, Cloudflare hosted path, celld self-hosted path, and Kubernetes HPA parity.',
-  path: '/streams/clawql-durable-objects',
+    'ClawQL-owned Rust + Wasmtime cell runtime: fleet coordination, LTX WORM, Vault, embedded inference, WASM capability sandbox, and HTTP bootstrap to clawql-mcp.',
+  path: '/streams/clawql-cellrt',
   ogType: 'article',
 })
 
 export const dynamic = 'force-static'
 
-export default function ClawqlDurableObjectsPage() {
+export default function ClawqlCellrtPage() {
   return (
     <article className="flex h-full flex-col pt-10 pb-10">
       <div className="not-prose mb-6 flex flex-wrap items-center gap-2">
@@ -22,7 +22,7 @@ export default function ClawqlDurableObjectsPage() {
           Platform
         </Tag>
         <Tag color="claw" variant="medium">
-          Durable Objects
+          cellrt
         </Tag>
         <Tag color="amber" variant="medium">
           Draft
@@ -31,40 +31,49 @@ export default function ClawqlDurableObjectsPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Planned runtime — not yet shipped.</strong> Companion to{' '}
+          <strong>ClawQL-owned cell runtime — not yet shipped.</strong>{' '}
+          Companion to{' '}
           <a
             href="/streams/clawql-streams"
             className="font-medium text-inherit underline underline-offset-2"
           >
             ClawQL Streams v0.2
           </a>
-          . Self-hosted DO runtime detail:{' '}
+          ,{' '}
           <a
             href="/streams/clawql-celld"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            celld integration
-          </a>{' '}
-          ·{' '}
-          <a
-            href="/streams/clawql-cellrt"
-            className="font-medium text-inherit underline underline-offset-2"
-          >
-            clawql-cellrt
+            celld
           </a>
-          . Source:{' '}
+          ,{' '}
           <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-durable-objects.md"
+            href="/streams/clawql-tee"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            docs/streams/clawql-durable-objects.md
+            clawql-tee
+          </a>
+          , and{' '}
+          <a
+            href="/streams/clawql-tee-airgap-audit"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            air-gap audit
+          </a>
+          . Lives in the ClawQL monorepo under{' '}
+          <code className="text-sm">crates/clawql-cellrt/</code>. Source:{' '}
+          <a
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-cellrt.md"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            docs/streams/clawql-cellrt.md
           </a>
           .
         </Note>
       </div>
 
       <DocProse className="flex-auto">
-        <DurableObjectsBody />
+        <CellrtBody />
       </DocProse>
     </article>
   )
