@@ -715,17 +715,22 @@ Do NOT invent 48 or pick only one price. Call memory_recall now.
 INSTITUTIONAL_NUDGE = """Continue the institutional knowledge enumeration task (B-7.1).
 
 Same prose notes are on disk under `.openbench/memory-seed/` for every arm.
-Your advantage is the vault: structured CLAWQL_* tags live in memory.
+Your advantage is the vault ontology index — use **structured** memory_recall,
+NOT keyword search (keyword hits include near-misses like NC=18 and score 0).
 
-1. clawql_memory_recall across the vault — use MULTIPLE queries (limit=50 each).
-   Fields: CLAWQL_MATTER_ID / ESCROW_PCT / NONCOMPETE_MONTHS
-2. Keep ONLY matters with escrow_pct >= 10 AND noncompete_months > 18
-3. write relative filePath **matters.json** only (never /tmp/matters.json) with the COMPLETE set:
-   {"matters":["MAT-XXXX","MAT-YYYY"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"memory_recall","search_sufficiency":"how many notes you checked"}
+1. Call clawql_memory_recall ONCE with:
+   query: "matters matching escrow and non-compete criteria"
+   schema: "legal.Matter"
+   filters: {"escrowPct":{"gte":10},"nonCompeteMonths":{"gt":18}}
+   confidenceMinimum: "EXTRACTED"
+   limit: 20
+2. Copy every returned entityId into matters.json (expect exactly the complete set).
+3. write relative filePath **matters.json** only (never /tmp/matters.json):
+   {"matters":["MAT-XXXX","MAT-YYYY"],"criteria":{"escrow_pct_min":10,"noncompete_months_gt":18},"source":"memory_recall","search_sufficiency":"structured_predicate legal.Matter"}
    `source` MUST be non-empty (empty source grades 0).
 
-Do NOT copy placeholder IDs. Partial lists fail. Near-misses must not appear.
-Call memory_recall now (again if needed), then write relative matters.json.
+Do NOT copy placeholder IDs. Do NOT submit near-misses from semantic search.
+Call structured memory_recall now, then write relative matters.json.
 """
 
 INSTITUTIONAL_OFF_NUDGE = """Continue. Memory tools are unavailable — that is expected on this arm.
