@@ -33,6 +33,17 @@ from pathlib import Path
 task_dir = Path(os.environ["TASK_DIR"])
 manifest = json.loads((task_dir / "ground_truth.json").read_text(encoding="utf-8"))
 expected = str(manifest.get("top1") or "").strip().upper()
+aliases = {
+    str(a).strip().upper()
+    for a in (manifest.get("top1_aliases") or [])
+    if str(a).strip()
+}
+aliases.add(expected)
+
+def normalize(raw: str) -> str:
+    s = " ".join(str(raw or "").strip().upper().split())
+    # Accept "TERM SHEET A" / "OPTION A" / bare "A" as aliases when listed.
+    return s
 
 def emit(ok: bool, top1: str, err: str | None = None) -> None:
     if err:
@@ -50,7 +61,7 @@ if not isinstance(parsed, dict):
     emit(False, "", err="FAIL: preference.json must be an object")
     raise SystemExit(0)
 
-top1 = str(parsed.get("top1") or "").strip().upper()
+top1 = normalize(str(parsed.get("top1") or ""))
 source = str(parsed.get("source") or "").strip().lower()
 ok_src = (
     "memory" in source
@@ -67,10 +78,14 @@ if not ok_src:
 if not top1:
     emit(False, "", err="FAIL: missing top1")
     raise SystemExit(0)
+# Reject obvious prompt-placeholder copies.
+if "XXXX" in top1 or top1.endswith("-Y") or top1 in {"MAT-XXXX-Y", "MAT-XXXX"}:
+    emit(False, top1, err=f"FAIL: placeholder top1 {top1!r} (copy Option identifier from annex)")
+    raise SystemExit(0)
 
-ok = top1 == expected
+ok = top1 in aliases
 if not ok:
-    emit(False, top1, err=f"FAIL: top1 {top1} != expected {expected}")
+    emit(False, top1, err=f"FAIL: top1 {top1} != expected {expected} (aliases={sorted(aliases)})")
 else:
     emit(True, top1)
 PY

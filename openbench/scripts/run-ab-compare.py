@@ -796,26 +796,27 @@ Do not stop after 1–2 files. Do not invent IDs. Exhaust the tree, then write.
 
 PREFERENCE_NUDGE = """Continue B-7.2 client preference reconstruction.
 
-1. Call clawql_memory_recall for Meridian Capital / CLT-0017 and related matters.
+1. Call clawql_memory_recall for Meridian Capital and related matters.
 2. Read Meridian risk profile + prior outcomes (what they accepted/rejected).
-3. Read the three term-sheet annexes for the active Northline matter.
+3. Read all three term-sheet annexes. Each has an "Option identifier:" line.
 4. Choose top-1 by institutional preference — NOT by highest purchase price.
-5. write relative filePath preference.json:
-   {"client":"Meridian Capital","active_matter":"MAT-XXXX","top1":"MAT-XXXX-Y","ranking":["..."],"rationale":"...","source":"memory_recall"}
+5. write relative preference.json. top1 MUST be the exact Option identifier string
+   from the winning annex (copy/paste it). Never invent placeholder IDs.
+   Include non-empty source=memory_recall and a short cite-backed rationale.
 
-Chat JSON is not graded. Call write now.
+Chat JSON is not graded. Call the write tool now.
 """
 
 PREFERENCE_OFF_NUDGE = """Continue. Memory tools are unavailable — that is expected on this arm.
 
 1. Under `.openbench/memory-seed/`, find Meridian Capital client notes and prior matters.
-2. Read the three term-sheet annexes for Meridian's active Northline matter.
+2. Read the three term-sheet annexes (each has an "Option identifier:" line).
 3. Rank by Meridian's historical preference (certainty / capped indemnity / no earn-out),
    not by highest headline price (other clients maximize price — ignore that pattern).
-4. write relative filePath preference.json with non-empty source:
-   {"client":"Meridian Capital","top1":"MAT-XXXX-Y","ranking":["..."],"rationale":"...","source":"filesystem"}
+4. write relative preference.json. top1 MUST be the exact Option identifier from
+   the winning annex. source=filesystem. Cite prior matter behavior in rationale.
 
-Do not invent option IDs. Cite prior matter behavior in rationale.
+Do not invent option IDs. Do not use placeholder strings.
 """
 
 POLICY_WRITE_NUDGE = """Continue. execute was blocked by policy.

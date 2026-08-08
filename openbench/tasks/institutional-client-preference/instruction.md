@@ -24,14 +24,18 @@ Northline add-on matter, grounded in prior Meridian deal behavior.
 5. Write relative `preference.json` with your top-1 choice and brief cite-backed
    rationale. Chat JSON is not graded.
 
+**Critical:** `top1` must be the exact **Option identifier** printed in the winning
+term-sheet annex (the `MAT-…-A/B/C` string). Do **not** invent placeholders like
+`MAT-XXXX-Y`. Do not write "Term sheet A" — copy the option identifier.
+
 ## Artifact
 
 ```json
 {
   "client": "Meridian Capital",
-  "active_matter": "MAT-XXXX",
-  "top1": "MAT-XXXX-Y",
-  "ranking": ["MAT-XXXX-Y", "...", "..."],
+  "active_matter": "<id from Meridian active matter note>",
+  "top1": "<Option identifier from winning annex>",
+  "ranking": ["<best>", "<middle>", "<worst>"],
   "rationale": "short prose citing prior matters / risk notes",
   "source": "memory_recall"
 }

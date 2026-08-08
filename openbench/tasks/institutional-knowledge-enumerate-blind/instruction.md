@@ -23,7 +23,9 @@ List **every** matter that has **both**:
 3. Near-misses (9% escrow, exactly 18 months NC, missing escrow) must **not**
    appear in the answer.
 4. Write **relative** path `matters.json` (not `/tmp/…`) with the complete
-   matching set and a non-empty `source`.
+   matching set and a non-empty `source`. Do not stop after a partial list —
+   verify the filter returned every match (including edge cases just above the
+   thresholds) before writing.
 
 ## Artifact
 
