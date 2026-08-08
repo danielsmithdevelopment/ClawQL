@@ -114,7 +114,11 @@ function buildPredicate(col: string, predicate: FilterPredicate, values: unknown
     values.push(predicate.lt);
     return `${col} < ?`;
   }
-  if ("between" in predicate && Array.isArray(predicate.between) && predicate.between.length === 2) {
+  if (
+    "between" in predicate &&
+    Array.isArray(predicate.between) &&
+    predicate.between.length === 2
+  ) {
     values.push(predicate.between[0], predicate.between[1]);
     return `${col} BETWEEN ? AND ?`;
   }
