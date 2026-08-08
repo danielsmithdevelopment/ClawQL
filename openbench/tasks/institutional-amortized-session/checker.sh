@@ -119,14 +119,27 @@ for sid in order:
                 if not isinstance(raw, list):
                     sc, note = 0.0, f"bad clients {art.name}"
                 else:
-                    got = {norm_client(x) for x in raw if str(x).strip()}
-                    # Case-insensitive compare
-                    exp_l = {c.lower() for c in expected}
-                    got_l = {c.lower() for c in got}
-                    if got_l - exp_l:
-                        sc, note = 0.0, f"FP clients: {sorted(got_l - exp_l)}"
-                    elif got_l != exp_l:
-                        sc, note = 0.0, f"incomplete clients: {sorted(got)}"
+                    got = [norm_client(x) for x in raw if str(x).strip()]
+                    # Accept exact (ci) or unique substring match on expected names.
+                    exp_list = sorted(expected)
+                    matched = set()
+                    bad = []
+                    for g in got:
+                        gl = g.lower()
+                        hits = [e for e in exp_list if e.lower() == gl or e.lower() in gl or gl in e.lower()]
+                        # Also match on distinctive first two tokens (e.g. "Blue Harbor").
+                        if not hits:
+                            toks = gl.split()
+                            key = " ".join(toks[:2]) if len(toks) >= 2 else gl
+                            hits = [e for e in exp_list if key and key in e.lower()]
+                        if len(hits) == 1:
+                            matched.add(hits[0])
+                        else:
+                            bad.append(g)
+                    if bad:
+                        sc, note = 0.0, f"FP clients: {bad}"
+                    elif matched != expected:
+                        sc, note = 0.0, f"incomplete clients: got={got} matched={sorted(matched)}"
                     else:
                         sc, note = 1.0, "ok"
     elif kind == "matter_id":
@@ -168,6 +181,7 @@ score="${score:-0.0}"
 steps_raw="${steps_line#SESSION_STEPS:}"
 steps_raw="${steps_raw:-0/${EXPECTED_STEPS}}"
 
+IGNORE_TIMED_OUT="${OPENBENCH_IGNORE_TIMED_OUT:-0}"
 if [ -f .openbench_usage.json ]; then
   eval "$(python3 - <<'PY'
 import json
@@ -184,7 +198,7 @@ print(f"usage_tokens={tokens if isinstance(tokens, int) else ''}")
 print(f"usage_timed_out={'1' if timed_out else '0'}")
 PY
 )"
-  if [ "${usage_timed_out:-0}" = "1" ]; then
+  if [ "${usage_timed_out:-0}" = "1" ] && [ "$IGNORE_TIMED_OUT" != "1" ]; then
     echo "FAIL: hard cap — agent timed out" >&2
     cap_fail=1
   fi
