@@ -2,11 +2,9 @@
   "$schema_comment": "Controls which OpenBench tasks burn tokens on PR/push. Move a task from pr_active → retired when thoroughly verified (headline WIN + replication preferred). workflow_dispatch can still select any individual task, or all-including-retired.",
   "live_enabled": true,
   "live_pause_reason": "",
-  "live_resume_note": "B-7.1 fair cell WIN @ 31255172649 (on 3/3 structured_predicate / off 0/3). Reburning ontology efficiency cell after write-tool nudge harden.",
-  "pr_active": [
-    "institutional-knowledge-enumerate-ontology"
-  ],
-  "pr_trials": 3,
+  "live_resume_note": "B-7.1 double WIN: fair @ 31255172649 + ontology efficiency @ 31256241850 (both on 3/3 structured_predicate / off 0/3). pr_active cleared pending #877 merge.",
+  "pr_active": [],
+  "pr_trials": 1,
   "retired": {
     "idp-safe-pipeline-lite": {
       "reason": "Verified WIN — stubbed 7-stage IDP orchestration (on 1.0 / off 0.0; RTP v1.1)",
@@ -119,6 +117,10 @@
     "institutional-knowledge-enumerate": {
       "reason": "Verified WIN — fair same-files + structured ontology recall (on 3/3 / off 0/3; structured_predicate; prior keyword FAIL 31244644204)",
       "evidence_run": "31255172649"
+    },
+    "institutional-knowledge-enumerate-ontology": {
+      "reason": "Verified WIN — efficiency cell under 5-turn/4k/90s caps (on 3/3 / off 0/3; structured_predicate + write; mean wall ~27s)",
+      "evidence_run": "31256241850"
     }
   },
   "ouroboros_pr_enabled": false,
