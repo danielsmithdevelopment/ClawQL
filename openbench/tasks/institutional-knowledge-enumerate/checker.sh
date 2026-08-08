@@ -5,9 +5,12 @@
 # - Any false positive (near-miss or unknown id) → 0.0 / 0/5
 # - When OPENBENCH_REQUIRE_INSTITUTIONAL=1, require real memory_recall tool_use
 #   (on / no-memory arms cannot score by guessing the fixture set).
+# - When OPENBENCH_REQUIRE_STRUCTURED_ONTOLOGY=1, also require schema+filters
+#   (keyword near-miss path zeros the trial — B-7.1 product win).
 set -euo pipefail
 
 REQUIRE_INSTITUTIONAL="${OPENBENCH_REQUIRE_INSTITUTIONAL:-0}"
+REQUIRE_STRUCTURED="${OPENBENCH_REQUIRE_STRUCTURED_ONTOLOGY:-0}"
 HARD_MAX_TURNS="${OPENBENCH_HARD_MAX_TURNS:-30}"
 HARD_MAX_TOKENS="${OPENBENCH_HARD_MAX_TOKENS:-8000}"
 TASK_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -154,18 +157,27 @@ PY
   fi
 fi
 
-if [ "$REQUIRE_INSTITUTIONAL" = "1" ]; then
+if [ "$REQUIRE_INSTITUTIONAL" = "1" ] || [ "$REQUIRE_STRUCTURED" = "1" ]; then
   if [ ! -f .openbench_agent.log ]; then
     echo "FAIL: missing .openbench_agent.log for institutional evidence" >&2
     cap_fail=1
   else
-    helper="${TASK_DIR}/../../scripts/require-real-clawql-tools.py"
-    if [ ! -f "$helper" ]; then
-      helper="$(cd "$(dirname "$0")/../.." && pwd)/scripts/require-real-clawql-tools.py"
+    scripts_dir="${TASK_DIR}/../../scripts"
+    if [ ! -d "$scripts_dir" ]; then
+      scripts_dir="$(cd "$(dirname "$0")/../.." && pwd)/scripts"
     fi
-    if ! python3 "$helper" .openbench_agent.log 'clawql_memory_recall|memory_recall'; then
-      echo "FAIL: required real memory_recall tool_use (guessing fixture IDs without tools scores 0)" >&2
-      cap_fail=1
+    if [ "$REQUIRE_INSTITUTIONAL" = "1" ]; then
+      if ! python3 "$scripts_dir/require-real-clawql-tools.py" .openbench_agent.log \
+        'clawql_memory_recall|memory_recall'; then
+        echo "FAIL: required real memory_recall tool_use (guessing fixture IDs without tools scores 0)" >&2
+        cap_fail=1
+      fi
+    fi
+    if [ "$REQUIRE_STRUCTURED" = "1" ]; then
+      if ! python3 "$scripts_dir/require-structured-ontology-recall.py" .openbench_agent.log; then
+        echo "FAIL: required structured ontology memory_recall (schema+filters)" >&2
+        cap_fail=1
+      fi
     fi
   fi
 fi

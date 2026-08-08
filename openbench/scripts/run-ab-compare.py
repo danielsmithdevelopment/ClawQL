@@ -334,6 +334,8 @@ TASK_HARD_CAPS: dict[str, dict] = {
         "default_timeout_s": 480,
         "disable_memory": False,
         "require_institutional": True,
+        # Keyword near-misses reproduced Harvey FAIL — require schema+filters.
+        "require_structured_ontology": True,
     },
     "institutional-knowledge-enumerate-ontology": {
         # B-7.1-ontology: same fixture; tight caps prove structured filters (~2 turns).
@@ -1272,6 +1274,23 @@ def credit_exhausted(agent: dict) -> bool:
     )
 
 
+def provider_budget_abort_reason(agent: dict, arm: str) -> str:
+    """Human message for credit_exhausted aborts — distinguish key cap vs account balance."""
+    blob = (agent.get("output_tail") or "") + (agent.get("error") or "")
+    if "Key limit exceeded" in blob or "key limit exceeded" in blob:
+        return (
+            f"OpenRouter per-key spend limit hit on {arm} "
+            f"(HTTP 403 Key limit exceeded — not the same as account balance). "
+            f"Raise or remove the limit on the GitHub secret OPENROUTER_API_KEY "
+            f"at https://openrouter.ai/settings/keys (or rotate the secret to a key "
+            f"with a higher/unlimited cap), then re-run. Account credits alone do not clear this."
+        )
+    return (
+        f"provider credits exhausted on {arm} (HTTP 402 / openrouter_credits / affordability). "
+        f"Top up the OpenRouter account balance for OPENROUTER_API_KEY (or use BYOK) before re-running."
+    )
+
+
 def _dec_timeout_output(exc) -> str:
     def _dec(x):
         if x is None:
@@ -1879,7 +1898,16 @@ def run_arm_on(
     clawql = resolve_clawql()
     gateway_model = normalize_model_id(model)
     inst_file = workdir / ".openbench_instruction.md"
-    inst_file.write_text(instruction, encoding="utf-8")
+    effective_instruction = instruction
+    if require_structured_ontology:
+        effective_instruction = (
+            "CRITICAL (scores 0 if ignored): Call clawql_memory_recall with "
+            'schema="legal.Matter" and filters={"escrowPct":{"gte":10},'
+            '"nonCompeteMonths":{"gt":18}} — NOT keyword search. '
+            "Keyword near-misses (NC=18, escrow=9) zero the trial.\n\n"
+            + instruction
+        )
+    inst_file.write_text(effective_instruction, encoding="utf-8")
 
     prefix = ["node", clawql] if clawql.endswith(".mjs") else [clawql]
 
@@ -3730,10 +3758,7 @@ def main(argv=None) -> int:
             if credit_exhausted(ag):
                 abort_all = True
                 skip_remaining = True
-                abort_reason = (
-                    f"provider credits exhausted on {arm} (HTTP 402 / openrouter_credits). "
-                    "Top up OPENROUTER_API_KEY (or use BYOK) before re-running."
-                )
+                abort_reason = provider_budget_abort_reason(ag, arm)
                 skip_reason = abort_reason
                 print(f"    !! {abort_reason} — aborting remaining arms/trials", flush=True)
                 continue
