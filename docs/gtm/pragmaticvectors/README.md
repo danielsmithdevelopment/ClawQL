@@ -4,6 +4,7 @@ Markdown drafts for publication on [pragmaticvectors.com](https://pragmaticvecto
 
 - `clawql-buzz-nostr.md` — ClawQL + Buzz / Nostr
 - `clawql-security.md` — When Agents Escape — Part 6: The Defense Layer
+- `memory-finds-ontology-decides.md` — Memory Finds. Ontology Decides. (OpenBench B-7 / clawql-ontology)
 
 Related: `../clawql-gtm-synthesis.pdf`
 
