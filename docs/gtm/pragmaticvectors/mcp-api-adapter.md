@@ -19,7 +19,7 @@ Architecture · August 2026 · ~12 min read
 - [Protocol Fabric](https://pragmaticvectors.com/tags/protocol-fabric)
 - [Air Gap](https://pragmaticvectors.com/tags/air-gap)
 
-*Earlier draft of this post lived at `/posts/mcp-api-adapter-five-surfaces/` and covered five surfaces (through gen-cli). Canonical slug is now `/posts/mcp-api-adapter/`. WebSocket landed as the sixth in `0.6.0`. QR stream is the planned seventh — same catalog, physical channel. Redirect the old five-surfaces URL here.*
+_Earlier draft of this post lived at `/posts/mcp-api-adapter-five-surfaces/` and covered five surfaces (through gen-cli). Canonical slug is now `/posts/mcp-api-adapter/`. WebSocket landed as the sixth in `0.6.0`. QR stream is the planned seventh — same catalog, physical channel. Redirect the old five-surfaces URL here._
 
 ---
 
@@ -186,14 +186,14 @@ In marketing, `mcp-api-adapter` is the “OpenAPI on-ramp,” the “GraphQL on-
 
 ## What shipped (and what is next)
 
-| Version | What landed |
-| ------- | ----------- |
-| 0.3.x   | Any MCP upstream + OpenAPI + GraphQL + gRPC scaffold |
-| 0.4.0   | Renamed from `mcp-openapi-gateway` to `mcp-api-adapter` |
-| 0.5.0   | Streamable HTTP `/mcp` + `gen-cli` |
-| 0.5.1   | gRPC → `/mcp` content normalization for MCP SDK clients |
-| **0.6.0** | **WebSocket `/ws`** (sixth surface) + Protocol Fabric loop smoke |
-| Next    | **QR stream** (seventh surface) — optical encode/decode, Streams `qr` source |
+| Version   | What landed                                                                  |
+| --------- | ---------------------------------------------------------------------------- |
+| 0.3.x     | Any MCP upstream + OpenAPI + GraphQL + gRPC scaffold                         |
+| 0.4.0     | Renamed from `mcp-openapi-gateway` to `mcp-api-adapter`                      |
+| 0.5.0     | Streamable HTTP `/mcp` + `gen-cli`                                           |
+| 0.5.1     | gRPC → `/mcp` content normalization for MCP SDK clients                      |
+| **0.6.0** | **WebSocket `/ws`** (sixth surface) + Protocol Fabric loop smoke             |
+| Next      | **QR stream** (seventh surface) — optical encode/decode, Streams `qr` source |
 
 Six surfaces are live in-repo today (`mcp-api-adapter@0.6.0`; npm publish on its own cadence). QR is the draft that extends the fabric past the network.
 
@@ -232,4 +232,4 @@ npx mcp-api-adapter --stdio -- your-mcp-server
 
 ---
 
-*Draft for pragmaticvectors.com — publish at `/posts/mcp-api-adapter/`. Redirect `/posts/mcp-api-adapter-five-surfaces/` → `/posts/mcp-api-adapter/`.*
+_Draft for pragmaticvectors.com — publish at `/posts/mcp-api-adapter/`. Redirect `/posts/mcp-api-adapter-five-surfaces/` → `/posts/mcp-api-adapter/`._
