@@ -7,7 +7,7 @@
 **Example demos:** [`examples/mcp-api-adapter`](../../examples/mcp-api-adapter/README.md)  
 **Transport:** [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md)  
 **Protocol Fabric:** [`docs/mcp/protocol-fabric.md`](../mcp/protocol-fabric.md) (public) · GTM note [`protocol-fabric.md`](./protocol-fabric.md)  
-**Essay draft (publish to PV):** [`pragmaticvectors/mcp-api-adapter-seven-surfaces.md`](./pragmaticvectors/mcp-api-adapter-seven-surfaces.md)
+**Essay draft (publish to PV):** [`pragmaticvectors/mcp-api-adapter.md`](./pragmaticvectors/mcp-api-adapter.md) → `https://pragmaticvectors.com/posts/mcp-api-adapter/`
 
 ---
 

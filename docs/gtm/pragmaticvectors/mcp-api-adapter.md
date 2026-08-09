@@ -1,8 +1,9 @@
 ---
-canonical: https://pragmaticvectors.com/posts/mcp-api-adapter-five-surfaces/
-slug_note: Keep the existing URL when publishing; title and body update five → seven surfaces. Optional redirect alias: /posts/mcp-api-adapter-seven-surfaces/
+canonical: https://pragmaticvectors.com/posts/mcp-api-adapter/
+slug: mcp-api-adapter
 meta-description: mcp-api-adapter wraps any MCP server and exposes seven API surfaces from one tool catalog — MCP, OpenAPI, GraphQL, gRPC, CLI, WebSocket, and QR — without changing the server.
 meta-og:title: Seven Surfaces, One Catalog · PragmaticVectors
+meta-og:url: https://pragmaticvectors.com/posts/mcp-api-adapter/
 ---
 
 Architecture · August 2026 · ~12 min read
@@ -18,7 +19,7 @@ Architecture · August 2026 · ~12 min read
 - [Protocol Fabric](https://pragmaticvectors.com/tags/protocol-fabric)
 - [Air Gap](https://pragmaticvectors.com/tags/air-gap)
 
-*Earlier draft of this post covered five surfaces (through gen-cli). WebSocket landed as the sixth in `0.6.0`. QR stream is the planned seventh — same catalog, physical channel.*
+*Earlier draft of this post lived at `/posts/mcp-api-adapter-five-surfaces/` and covered five surfaces (through gen-cli). Canonical slug is now `/posts/mcp-api-adapter/`. WebSocket landed as the sixth in `0.6.0`. QR stream is the planned seventh — same catalog, physical channel. Redirect the old five-surfaces URL here.*
 
 ---
 
@@ -231,4 +232,4 @@ npx mcp-api-adapter --stdio -- your-mcp-server
 
 ---
 
-*Draft for pragmaticvectors.com — publish by updating the existing `/posts/mcp-api-adapter-five-surfaces/` page (title + body). Keep the URL stable for inbound links.*
+*Draft for pragmaticvectors.com — publish at `/posts/mcp-api-adapter/`. Redirect `/posts/mcp-api-adapter-five-surfaces/` → `/posts/mcp-api-adapter/`.*
