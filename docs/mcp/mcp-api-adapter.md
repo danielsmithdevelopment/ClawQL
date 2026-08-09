@@ -2,7 +2,7 @@
 
 **Package:** [`mcp-api-adapter`](../../packages/mcp-api-adapter/) (`0.6.0+`)  
 **Status:** Shipped in-repo · **npm not published yet** (`npm view mcp-api-adapter` → 404)  
-**Essay:** [Five surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter-five-surfaces/)  
+**Essay:** [Seven surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter-five-surfaces/) (draft: [`docs/gtm/pragmaticvectors/mcp-api-adapter-seven-surfaces.md`](../gtm/pragmaticvectors/mcp-api-adapter-seven-surfaces.md) — publish as update to that URL)  
 **Design:** [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)  
 **Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)  
 **Protocol Fabric:** [`protocol-fabric.md`](./protocol-fabric.md) (proven WS → CLI → REST → vault loop)
@@ -310,7 +310,7 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 
 ## Further reading
 
-- Essay: [Five surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter-five-surfaces/)
+- Essay: [Seven surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter-five-surfaces/) · draft [`../gtm/pragmaticvectors/mcp-api-adapter-seven-surfaces.md`](../gtm/pragmaticvectors/mcp-api-adapter-seven-surfaces.md)
 - Package README: [`packages/mcp-api-adapter/README.md`](../../packages/mcp-api-adapter/README.md)
 - Design & non-goals: [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)
 - GTM positioning: [`docs/gtm/mcp-api-adapter-positioning.md`](../gtm/mcp-api-adapter-positioning.md)

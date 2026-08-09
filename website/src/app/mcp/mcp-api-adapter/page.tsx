@@ -51,7 +51,7 @@ export default function McpApiAdapterPage() {
             href="https://pragmaticvectors.com/posts/mcp-api-adapter-five-surfaces/"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            Five surfaces, one catalog
+            Seven surfaces, one catalog
           </a>
           . Related:{' '}
           <a
