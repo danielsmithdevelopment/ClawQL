@@ -48,10 +48,10 @@ export default function McpApiAdapterPage() {
           </a>
           . Essay:{' '}
           <a
-            href="https://pragmaticvectors.com/posts/mcp-api-adapter-five-surfaces/"
+            href="https://pragmaticvectors.com/posts/mcp-api-adapter/"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            Five surfaces, one catalog
+            Seven surfaces, one catalog
           </a>
           . Related:{' '}
           <a
