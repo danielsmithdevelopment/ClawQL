@@ -43,9 +43,7 @@ export function createHarveyLabReward(options?: {
   runEval?: HarveyEvalRunner;
 }): RewardFunction {
   const judgeModel =
-    options?.judgeModel ??
-    process.env.CLAWQL_HARVEY_JUDGE_MODEL?.trim() ??
-    "claude-sonnet-4-6";
+    options?.judgeModel ?? process.env.CLAWQL_HARVEY_JUDGE_MODEL?.trim() ?? "claude-sonnet-4-6";
   const runEval = options?.runEval ?? defaultHarveyEvalRunner;
 
   return {

@@ -7,7 +7,11 @@ export type * from "./types.js";
 export { TraceFormatter, formatForMethod } from "./data/formatter.js";
 export { filterTraces, hasToolEvidenceInTrace } from "./data/filter.js";
 export { collectTraces } from "./data/collector.js";
-export { harveyLabReward, createHarveyLabReward, defaultHarveyEvalRunner } from "./rewards/harvey.js";
+export {
+  harveyLabReward,
+  createHarveyLabReward,
+  defaultHarveyEvalRunner,
+} from "./rewards/harvey.js";
 export { mattersFoundReward } from "./rewards/matters_found.js";
 export { compositeReward, toolUsageReward, harveyWithToolReward } from "./rewards/composite.js";
 export { buildTrainingWorkflow, scheduleTrainingRun } from "./scheduler.js";

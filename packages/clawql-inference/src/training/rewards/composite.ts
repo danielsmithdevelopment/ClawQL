@@ -17,9 +17,7 @@ export const toolUsageReward: RewardFunction = {
   },
 };
 
-export function compositeReward(
-  rewards: { fn: RewardFunction; weight: number }[]
-): RewardFunction {
+export function compositeReward(rewards: { fn: RewardFunction; weight: number }[]): RewardFunction {
   return {
     id: `composite_${rewards.map((r) => r.fn.id).join("_")}`,
     async score(rollout: string, task: GrpoTask): Promise<RewardScore> {

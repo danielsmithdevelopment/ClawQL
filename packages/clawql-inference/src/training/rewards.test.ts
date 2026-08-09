@@ -71,10 +71,10 @@ describe("compositeReward", () => {
       },
       { fn: toolUsageReward, weight: 0.5 },
     ]);
-    const scored = await fn.score(
-      'clawql_memory_recall {"schema":"x","filters":{}}',
-      { taskId: "t", taskMeta: {} }
-    );
+    const scored = await fn.score('clawql_memory_recall {"schema":"x","filters":{}}', {
+      taskId: "t",
+      taskMeta: {},
+    });
     expect(scored.score).toBeCloseTo(1, 5);
   });
 });

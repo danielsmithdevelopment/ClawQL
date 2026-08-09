@@ -73,11 +73,11 @@ The model learns: on institutional knowledge tasks, use structured recall rather
 
 **DPO variants:**
 
-| Variant | When to use |
-| ------- | ----------- |
-| **IPO** | More conservative than DPO; less prone to overfitting on small datasets. Use when you have fewer than 500 paired examples. |
-| **KTO** | Individual good/bad labels without pairs. Use when many individually scored traces lack clean chosen/rejected counterparts — Harvey rubric scores each trace without needing a pair. |
-| **ORPO** | Combines SFT and DPO in one pass. Use for first-pass training + preference alignment without separate stages. |
+| Variant  | When to use                                                                                                                                                                          |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **IPO**  | More conservative than DPO; less prone to overfitting on small datasets. Use when you have fewer than 500 paired examples.                                                           |
+| **KTO**  | Individual good/bad labels without pairs. Use when many individually scored traces lack clean chosen/rejected counterparts — Harvey rubric scores each trace without needing a pair. |
+| **ORPO** | Combines SFT and DPO in one pass. Use for first-pass training + preference alignment without separate stages.                                                                        |
 
 ### 2.5 GRPO (Group Relative Policy Optimization) — best for Harvey LAB
 
@@ -184,88 +184,88 @@ Existing provider fine-tune jobs (`src/finetune/`) remain for OpenAI/Anthropic A
 
 ```typescript
 interface TrainingConfig {
-  runId: string
-  description: string
+  runId: string;
+  description: string;
 
-  baseModel: string                       // "qwen3.6-27b" | "llama-3-70b" | custom
-  adapterMethod: "qlora" | "lora" | "full"
-  loraRank?: number                       // default 16
-  loraAlpha?: number                      // default 32
-  loraTargetModules?: string[]            // default: ["q_proj", "v_proj"]
+  baseModel: string; // "qwen3.6-27b" | "llama-3-70b" | custom
+  adapterMethod: "qlora" | "lora" | "full";
+  loraRank?: number; // default 16
+  loraAlpha?: number; // default 32
+  loraTargetModules?: string[]; // default: ["q_proj", "v_proj"]
 
-  method: TrainingMethod
+  method: TrainingMethod;
 
   dataSource: {
-    bucket: string
-    prefix?: string
-    filter: TraceFilter
-    splitRatio: number                    // default 0.9
-    maxSamples?: number
-  }
+    bucket: string;
+    prefix?: string;
+    filter: TraceFilter;
+    splitRatio: number; // default 0.9
+    maxSamples?: number;
+  };
 
   gpuConfig: {
-    gpuType: "h100" | "a100" | "rtx5090" | "auto"
-    gpuCount: number
-    vramBudgetGB?: number
-  }
+    gpuType: "h100" | "a100" | "rtx5090" | "auto";
+    gpuCount: number;
+    vramBudgetGB?: number;
+  };
 
   hyperparams: {
-    epochs: number
-    batchSize: number
-    gradientAccumulationSteps: number
-    learningRate: number
-    warmupSteps?: number
-    maxSeqLen: number
-    packSequences: boolean
-  }
+    epochs: number;
+    batchSize: number;
+    gradientAccumulationSteps: number;
+    learningRate: number;
+    warmupSteps?: number;
+    maxSeqLen: number;
+    packSequences: boolean;
+  };
 
-  outputPath: string
-  pushToHub?: string
+  outputPath: string;
+  pushToHub?: string;
 
-  evalAfterTraining: boolean
-  evalBenchmark: "openbench-b7" | "harvey-lab-firm-knowledge" | "none"
-  evalPassThreshold: number
+  evalAfterTraining: boolean;
+  evalBenchmark: "openbench-b7" | "harvey-lab-firm-knowledge" | "none";
+  evalPassThreshold: number;
 
-  autoPromote: boolean
-  domain: string                          // "legal" | "lending" | "general"
-  adapterVersion: string
+  autoPromote: boolean;
+  domain: string; // "legal" | "lending" | "general"
+  adapterVersion: string;
 }
 
 type TrainingMethod =
   | { type: "sft" }
   | { type: "dpo"; variant: "standard" | "ipo" | "kto" | "orpo"; beta: number }
   | {
-      type: "grpo"
-      rewardFunctions: RewardFunction[]
-      numRollouts: number
-      rolloutServer: string
-      rolloutModel: string
+      type: "grpo";
+      rewardFunctions: RewardFunction[];
+      numRollouts: number;
+      rolloutServer: string;
+      rolloutModel: string;
     }
   | { type: "rlhf"; rewardModelPath?: string; ppoEpochs: number }
   | {
-      type: "constitutional"
-      critiquePrompt: string
-      revisionPrompt: string
-      principleSet: string[]
+      type: "constitutional";
+      critiquePrompt: string;
+      revisionPrompt: string;
+      principleSet: string[];
     }
-  | { type: "spin"; previousModelPath: string; spinRound: number }
+  | { type: "spin"; previousModelPath: string; spinRound: number };
 
 interface TraceFilter {
-  minCriterionPassRate?: number
-  maxCriterionPassRate?: number
-  requireAllPass?: boolean
-  requireToolEvidence?: string[]
-  minTurns?: number
-  maxTurns?: number
-  benchmarkId?: string
-  domain?: string
-  taskFamily?: string
-  arm?: string
-  model?: string
-  after?: string
-  before?: string
-  requirePairs?: boolean
-  maxChosenRejectedRatio?: number         // default 2.0 — length-bias guard
+  minCriterionPassRate?: number;
+  maxCriterionPassRate?: number;
+  requireAllPass?: boolean;
+  requireToolEvidence?: string[];
+  minTurns?: number;
+  maxTurns?: number;
+  benchmarkId?: string;
+  domain?: string;
+  taskFamily?: string;
+  arm?: string;
+  model?: string;
+  after?: string;
+  before?: string;
+  requirePairs?: boolean;
+  maxChosenRejectedRatio?: number; // default 2.0 — length-bias guard
 }
 ```
 
@@ -316,10 +316,10 @@ collect-traces  →  format-dataset  →  train (GPU)  →  evaluate  →  promo
 
 Images (intended):
 
-| Step | Image |
-| ---- | ----- |
+| Step                              | Image                                                   |
+| --------------------------------- | ------------------------------------------------------- |
 | collect / format / eval / promote | `ghcr.io/danielsmithdevelopment/clawql-training:latest` |
-| train | `ghcr.io/danielsmithdevelopment/clawql-unsloth:latest` |
+| train                             | `ghcr.io/danielsmithdevelopment/clawql-unsloth:latest`  |
 
 Scheduler scaffold: [`scheduler.ts`](../../packages/clawql-inference/src/training/scheduler.ts) builds the workflow object; submit is gated on Argo client configuration.
 
@@ -371,15 +371,15 @@ PAL routing checks domain adapters before every inference call. Adapter path is 
 
 When `CLAWQL_ENABLE_TRAINING=1`:
 
-| Tool | Purpose |
-| ---- | ------- |
-| `training_run` | Start fine-tune job (method, data source, base model, adapter config) as Argo Workflow |
-| `training_status` | Current step, ETA, GPU utilization by `runId` |
-| `training_promote` | Manually promote adapter to `tier-map.json` after review |
-| `training_rollback` | Revert domain to previous adapter version |
-| `training_list` | List adapters by domain with eval scores |
-| `training_compare` | A/B two adapters on a benchmark (OpenBench cells) |
-| `training_dataset_stats` | Trace counts, quality distribution, method-specific pair counts |
+| Tool                     | Purpose                                                                                |
+| ------------------------ | -------------------------------------------------------------------------------------- |
+| `training_run`           | Start fine-tune job (method, data source, base model, adapter config) as Argo Workflow |
+| `training_status`        | Current step, ETA, GPU utilization by `runId`                                          |
+| `training_promote`       | Manually promote adapter to `tier-map.json` after review                               |
+| `training_rollback`      | Revert domain to previous adapter version                                              |
+| `training_list`          | List adapters by domain with eval scores                                               |
+| `training_compare`       | A/B two adapters on a benchmark (OpenBench cells)                                      |
+| `training_dataset_stats` | Trace counts, quality distribution, method-specific pair counts                        |
 
 ---
 
@@ -514,15 +514,15 @@ CLAWQL_ARGO_SERVICE_ACCOUNT=clawql-training-sa
 
 ## 14. Implementation status
 
-| Surface | Status |
-| ------- | ------ |
-| This specification | Draft v0.1 |
+| Surface                                                  | Status                                                |
+| -------------------------------------------------------- | ----------------------------------------------------- |
+| This specification                                       | Draft v0.1                                            |
 | Types + TraceFormatter + rewards + Argo workflow builder | Scaffold in `packages/clawql-inference/src/training/` |
-| Unsloth/TRL trainers, MCP tools, live Argo submit | Not yet |
-| Domain-adapter `tier-map.json` object form + PAL load | Target; today's map is string aliases |
-| Harvey LAB sweep → training data | Blocked on LAB resume (Phases A–E) |
+| Unsloth/TRL trainers, MCP tools, live Argo submit        | Not yet                                               |
+| Domain-adapter `tier-map.json` object form + PAL load    | Target; today's map is string aliases                 |
+| Harvey LAB sweep → training data                         | Blocked on LAB resume (Phases A–E)                    |
 
 ---
 
-*clawql-inference Training Pipeline · Spec v0.1 · August 2026 · Draft*  
-*Companion: Harvey LAB × ClawQL Action Plan · clawql-streams RTP/OBT emission · OpenBench B-7 suite · PorTAL flywheel*
+_clawql-inference Training Pipeline · Spec v0.1 · August 2026 · Draft_  
+_Companion: Harvey LAB × ClawQL Action Plan · clawql-streams RTP/OBT emission · OpenBench B-7 suite · PorTAL flywheel_

@@ -150,8 +150,7 @@ export class TraceFormatter {
       return traces.map((t) => ({
         prompt: this.buildPrompt(t),
         completion: this.buildResponse(t),
-        label:
-          t.rtp.verdict.criterionPassRate >= this.config.ktoGoodThreshold ? "good" : "bad",
+        label: t.rtp.verdict.criterionPassRate >= this.config.ktoGoodThreshold ? "good" : "bad",
       })) satisfies KtoExample[];
     }
 

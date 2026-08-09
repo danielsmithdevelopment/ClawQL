@@ -34,15 +34,11 @@ describe("buildTrainingWorkflow", () => {
     expect(wf.metadata.name).toBe("clawql-training-abc123");
     const names = wf.spec.dag.tasks.map((t) => t.name);
     expect(names).toEqual(["collect", "format", "train", "evaluate", "promote"]);
-    expect(wf.spec.dag.tasks.find((t) => t.name === "promote")?.dependencies).toEqual([
-      "evaluate",
-    ]);
+    expect(wf.spec.dag.tasks.find((t) => t.name === "promote")?.dependencies).toEqual(["evaluate"]);
   });
 
   it("omits evaluate/promote when eval disabled", () => {
-    const wf = buildTrainingWorkflow(
-      baseConfig({ evalAfterTraining: false, autoPromote: false })
-    );
+    const wf = buildTrainingWorkflow(baseConfig({ evalAfterTraining: false, autoPromote: false }));
     expect(wf.spec.dag.tasks.map((t) => t.name)).toEqual(["collect", "format", "train"]);
   });
 });
