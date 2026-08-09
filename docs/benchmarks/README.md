@@ -21,6 +21,7 @@ This directory holds **repro instructions**, **latest pointers**, **per-scenario
 | [`harvey-lab-baseline.md`](harvey-lab-baseline.md)                         | Harvey LAB **firm-knowledge** baseline (standard harness).                  |
 | [`harvey-lab-clawql-results.md`](harvey-lab-clawql-results.md)             | Harvey LAB × ClawQL two-arm ledger (Opus vs Opus when complete).            |
 | [`harvey-lab-pause-handoff.md`](harvey-lab-pause-handoff.md)               | **Pause/resume** for LAB × ClawQL (GHA + OpenRouter next steps).            |
+| [`../inference/clawql-inference-training-pipeline.md`](../inference/clawql-inference-training-pipeline.md) | Post-LAB fine-tune flywheel (SFT → DPO → GRPO → SPIN). |
 | [`ouroboros-value-evidence.md`](ouroboros-value-evidence.md)               | **Evidence:** Ouroboros on converges vs off strategy thrash (verified A/B). |
 | [`openbench-ouroboros-oscillation.md`](openbench-ouroboros-oscillation.md) | Ouroboros oscillation-escape task design, caps, repro.                      |
 | [`openbench-github-actions.md`](openbench-github-actions.md)               | One-off Actions A/B (clawql-on vs off) — spin up, report, spin down.        |

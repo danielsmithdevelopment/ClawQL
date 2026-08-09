@@ -109,3 +109,14 @@ export OPENROUTER_API_KEY=…   # from GHA / local only — never commit
 
 1. `gh workflow run harvey-lab-firm-knowledge.yml` Phase A
 2. Fill ledgers after scores land
+
+## After the LAB sweep — training flywheel
+
+Once Opus two-arm ledgers exist and RTP/OBT traces are in the training bucket, run the four-round sequence in **[Training Pipeline v0.1](../inference/clawql-inference-training-pipeline.md)** (§13):
+
+1. **SFT** on passing ClawQL traces (`CPR ≥ 0.85`, tool evidence)
+2. **DPO** on ClawQL-pass vs baseline-fail pairs (length-ratio guard)
+3. **GRPO** with Harvey rubric F1 + structured-recall bonus (best method for this domain)
+4. **SPIN** (vN vs vN−1) until CPR gains drop below ~1pp
+
+Do **not** start training rounds until LAB scores exist — synthetic B-7 wins are not training labels for Harvey CPR.
