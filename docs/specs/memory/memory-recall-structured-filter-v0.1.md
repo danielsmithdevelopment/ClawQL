@@ -11,6 +11,8 @@ depends_on: "clawql-ontology (legal domain spec) · ontology.db"
 
 Companion: [ClawQL Ontology Legal Domain Spec v0.1](../ontology/legal-domain-v0.1.md)
 
+**Essay (value + OpenBench proof):** [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/) — semantic near-misses → grader hard-zero; `schema` + `filters` closed the set on B-7.1.
+
 ---
 
 ## 1. Problem

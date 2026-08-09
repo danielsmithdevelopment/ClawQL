@@ -414,6 +414,10 @@ clawql sources add https://your-nextcloud-instance/api
             <Link href={`${site.urls.docs}/architecture/enterprise-ontology`}>
               docs.clawql.com/architecture/enterprise-ontology
             </Link>
+            . Why ontology beats vault memory alone on institutional enumeration (OpenBench B-7):{' '}
+            <Link href="https://pragmaticvectors.com/posts/memory-finds-ontology-decides/">
+              Memory Finds. Ontology Decides.
+            </Link>
             .
           </p>
           <Callout>

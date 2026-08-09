@@ -6,6 +6,8 @@
 **Upstream corpus:** Harvey + EngramLab **Calderwood & Harkness (C&H)** synthetic law firm (announced 2026-08-07)  
 **Ontology (exact enumeration):** [`legal-domain-v0.1.md`](../specs/ontology/legal-domain-v0.1.md) · [`memory-recall-structured-filter-v0.1.md`](../specs/memory/memory-recall-structured-filter-v0.1.md) — these specs are what enable beating Harvey’s exhaustive-search failure mode.
 
+**Essay:** [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/) — narrative of the B-7 evidence ladder (keyword FAIL → structured-filter WIN → blind / preference / amortized). Mechanism validation only; not Harvey LAB CPR.
+
 ---
 
 ## Why this suite exists

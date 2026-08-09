@@ -6,6 +6,8 @@
 **Audience:** architects, design partners, implementers of ontology lint/generate and kinetic governance
 **Related:** [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [Token efficiency (12 layers)](https://docs.clawql.com/architecture/token-efficiency) · [Memory / Obsidian](https://docs.clawql.com/learn/memory) · [OKF decision rationale](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf-decision-rationale.md) · [Command Deck ontology builder UX](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/architecture/command-deck-ontology-builder-ux.md) · [Team vault sync](https://docs.clawql.com/getting-started/for-teams) · [ADR 0004](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0004-argo-cd-workflows-clawql-pipelines.md) · [ADR 0007](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0007-pulumi-provisioning-managed-tiers.md)
 
+**Essay (why ontology beats memory alone — OpenBench B-7 proof):** [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/) · draft copy [`docs/gtm/pragmaticvectors/memory-finds-ontology-decides.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/gtm/pragmaticvectors/memory-finds-ontology-decides.md) · legal pack [`legal-domain-v0.1`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/ontology/legal-domain-v0.1.md) · structured filters [`memory-recall-structured-filter-v0.1`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/memory/memory-recall-structured-filter-v0.1.md) · [OpenBench B-7](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-b7-calderwood.md)
+
 > **Shipped vs target:** This document is the source of truth for design intent. Entity schema format and examples in-repo are provisional. Automatic MCP generation, graph traversal, kinetic Transaction Sandbox, and the Command Deck builder are phased — verify against [modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md) before external claims.
 
 ---
@@ -29,6 +31,8 @@ Typed entity / relationship / action schemas are not only a grounding story — 
 | **8 Routing**          | `kinetic_level` / risk informs Frugal → Frontier                                                                                                                 |
 
 Full stack: [Twelve layers of LLM cost](https://docs.clawql.com/architecture/token-efficiency). Ontology without those layers becomes a typed landfill; layers without ontology answer cheaply about the wrong objects.
+
+**Proof point (OpenBench B-7):** vault `memory_recall` alone still scored **zero** on institutional enumeration when semantic near-misses became false positives. Typed predicates via `clawql-ontology` (`schema` + `filters` over `ontology.db`) closed the set. Narrative + linked GHA runs: [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/).
 
 ---
 

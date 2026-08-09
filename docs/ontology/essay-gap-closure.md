@@ -5,7 +5,7 @@
 **Status language:** Each workstream ends in **Done-when** criteria tied to essay claims.  
 **Bands:** **A** = days with existing patterns · **B** = needs a product decision · **C** = multi-sprint / external deps.
 
-**Related:** [ADR 0009](../adr/0009-enterprise-ontology.md) · [ADR 0010](../adr/0010-cq-file-extensions.md) · [enterprise-ontology.md](../architecture/enterprise-ontology.md) · [ontology CLI](./cli.md)
+**Related:** [ADR 0009](../adr/0009-enterprise-ontology.md) · [ADR 0010](../adr/0010-cq-file-extensions.md) · [enterprise-ontology.md](../architecture/enterprise-ontology.md) · [ontology CLI](./cli.md) · **shipped proof essay:** [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/) (OpenBench B-7 — distinct from the OOP/Palantir framing essay this backlog tracks)
 
 ---
 

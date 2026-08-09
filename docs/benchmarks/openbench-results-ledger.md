@@ -17,6 +17,8 @@ Fair same-files; model DeepSeek; taught filter shape (not answer IDs).
 
 Run: [31255172649](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31255172649) (PR [#877](https://github.com/danielsmithdevelopment/ClawQL/pull/877)). Ontology efficiency twin **WIN** [31256241850](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31256241850). Prior keyword FAIL [31244644204](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31244644204).
 
+**Narrative:** [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/) — memory alone vs typed predicates.
+
 ### 2026-08-08 — `institutional-knowledge-enumerate` (B-7.1) fair same-files harness — landed; burn blocked
 
 **Harness fix:** identical prose notes on disk for on / off / no-memory; on also gets vault `CLAWQL_*`. Off-first arm order; HTTP 403 key-limit treated as credit exhaustion.

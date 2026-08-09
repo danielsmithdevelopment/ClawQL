@@ -40,7 +40,14 @@ export default function EnterpriseOntologyPage() {
           >
             docs/architecture/enterprise-ontology.md
           </a>
-          . Related:{' '}
+          . Essay:{' '}
+          <a
+            href="https://pragmaticvectors.com/posts/memory-finds-ontology-decides/"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Memory Finds. Ontology Decides.
+          </a>{' '}
+          (OpenBench B-7 — why typed predicates beat memory alone). Related:{' '}
           <a
             href="/architecture/token-efficiency"
             className="font-medium text-inherit underline underline-offset-2"
