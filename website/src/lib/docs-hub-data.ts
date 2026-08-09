@@ -99,7 +99,7 @@ export const architectureHubCards: Array<ReferenceCard> = [
     href: '/architecture/enterprise-ontology',
     name: 'Enterprise Ontology',
     description:
-      'Open YAML/OKF typed entities, kinetic @kinetic actions, Git vs R2 — without Palantir lock-in.',
+      'Open YAML/OKF typed entities, kinetic @kinetic actions, Git vs R2 — OpenBench B-7 proof that typed predicates beat memory alone.',
     icon: DocumentIcon,
   }),
   card({

@@ -2,6 +2,8 @@
 
 Lint, scaffold, and generate tooling for ClawQL’s **enterprise Ontology** ([ADR 0009](../../docs/adr/0009-enterprise-ontology.md)).
 
+**Why it matters (OpenBench B-7):** vault memory alone still hard-zeros on institutional enumeration when semantic near-misses become false positives. Typed predicates (`schema` + `filters` over the legal pack / `ontology.db`) closed the set — [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/).
+
 ## Commands
 
 ```bash

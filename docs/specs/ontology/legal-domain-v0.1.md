@@ -11,6 +11,8 @@ depends_on: "clawql-ontology (ADR 0009/0010) · clawql-memory · memory_recall s
 
 Companion to: ClawQL Streams Spec v0.2, B-7 Suite Spec, memory_recall Structured Filter Extension Spec
 
+**Essay (value + OpenBench proof):** [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/) — why typed predicates beat semantic vault recall for firm-knowledge enumeration.
+
 ## Repo alignment
 
 | Draft path                       | Shipped path                                                                              |
