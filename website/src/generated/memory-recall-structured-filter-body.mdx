@@ -29,21 +29,22 @@ That is why memory capability was extended: vault recall **finds** narrative con
 ```typescript
 interface MemoryRecallParams {
   // Existing — unchanged
-  query: string;
-  limit?: number; // default 10
-  maxDepth?: number; // wikilink graph traversal depth
-  sources?: MemorySource[]; // vault | vector | codegraph | pageindex | onyx
+  query: string
+  limit?: number // default 10
+  maxDepth?: number // wikilink graph traversal depth
+  sources?: MemorySource[] // vault | vector | codegraph | pageindex | onyx
 
   // New — ontology filter extension
-  schema?: OntologySchema; // "legal.Matter" | "legal.Client" | etc.
-  filters?: OntologyFilter; // typed predicate filters
-  confidenceMinimum?: ConfidenceLevel; // EXTRACTED | INFERRED | AMBIGUOUS
-  includeConfidenceTags?: boolean; // include confidence in each result (default true)
-  orderBy?: OrderByClause; // sort ontology results
+  schema?: OntologySchema // "legal.Matter" | "legal.Client" | etc.
+  filters?: OntologyFilter // typed predicate filters
+  confidenceMinimum?: ConfidenceLevel // EXTRACTED | INFERRED | AMBIGUOUS
+  includeConfidenceTags?: boolean // include confidence in each result (default true)
+  orderBy?: OrderByClause // sort ontology results
 }
 
 // Ontology schema identifiers
-type OntologySchema = "legal.Matter" | "legal.Client" | "legal.Attorney" | "legal.Document";
+type OntologySchema =
+  'legal.Matter' | 'legal.Client' | 'legal.Attorney' | 'legal.Document'
 // extensible — new domains add new schema identifiers
 
 // Filter predicate types
@@ -61,21 +62,21 @@ type FilterPredicate =
   | { between: [number, number] } // inclusive range
   | { isNull: boolean } // field is null / not null
   | { and: FilterPredicate[] } // compound AND
-  | { or: FilterPredicate[] }; // compound OR
+  | { or: FilterPredicate[] } // compound OR
 
-type OntologyFilter = Record<string, FilterPredicate>;
+type OntologyFilter = Record<string, FilterPredicate>
 
 // Confidence levels — controls which extraction methods are trusted
-type ConfidenceLevel = "EXTRACTED" | "INFERRED" | "AMBIGUOUS";
+type ConfidenceLevel = 'EXTRACTED' | 'INFERRED' | 'AMBIGUOUS'
 // EXTRACTED: machine-readable fields only (most precise)
 // INFERRED: pattern matching allowed
 // AMBIGUOUS: all extractions including conflicting ones
 
 // Order by clause
 type OrderByClause = {
-  field: string;
-  direction: "asc" | "desc";
-}[];
+  field: string
+  direction: 'asc' | 'desc'
+}[]
 ```
 
 ---
@@ -89,17 +90,17 @@ async function memoryRecall(params: MemoryRecallParams): Promise<RecallResult> {
   // Route based on presence of schema + filters
   if (params.schema && params.filters) {
     // Structured predicate path — ontology index
-    return await ontologyQuery(params);
+    return await ontologyQuery(params)
   }
 
   if (params.schema && !params.filters) {
     // Schema-typed semantic search — hybrid path
     // Semantic search scoped to entities of the given schema type
-    return await hybridQuery(params);
+    return await hybridQuery(params)
   }
 
   // Default: existing semantic search path — unchanged
-  return await semanticQuery(params);
+  return await semanticQuery(params)
 }
 ```
 
@@ -116,17 +117,19 @@ Phase 1 ships path 1. Path 2 may fall back to semantic with a `sourceNotes` hint
 ## 4. Ontology Query Implementation
 
 ```typescript
-async function ontologyQuery(params: MemoryRecallParams): Promise<RecallResult> {
-  const { schema, filters, confidenceMinimum, limit, orderBy } = params;
+async function ontologyQuery(
+  params: MemoryRecallParams,
+): Promise<RecallResult> {
+  const { schema, filters, confidenceMinimum, limit, orderBy } = params
 
   // Parse schema to table name
-  const tableName = schemaToTable(schema); // "legal.Matter" → "matters"
+  const tableName = schemaToTable(schema) // "legal.Matter" → "matters"
 
   // Build SQL predicate from filters
-  const { where, values } = buildWhereClause(filters, confidenceMinimum);
+  const { where, values } = buildWhereClause(filters, confidenceMinimum)
 
   // Build ORDER BY
-  const orderClause = buildOrderBy(orderBy);
+  const orderClause = buildOrderBy(orderBy)
 
   // Execute against ontology.db
   const rows = await ontologyDb.query(
@@ -139,28 +142,28 @@ async function ontologyQuery(params: MemoryRecallParams): Promise<RecallResult> 
     ${orderClause}
     LIMIT ?
   `,
-    [schemaToEntityType(schema), ...values, limit ?? 20]
-  );
+    [schemaToEntityType(schema), ...values, limit ?? 20],
+  )
 
   // Enrich with vault note snippets for context
   const enriched = await Promise.all(
     rows.map(async (row) => ({
       ...row,
       vaultSnippet: await getVaultSnippet(row.vault_note_path),
-      queryType: "structured_predicate" as const,
-    }))
-  );
+      queryType: 'structured_predicate' as const,
+    })),
+  )
 
   return {
     hits: enriched,
-    queryType: "structured_predicate",
-    indexUsed: "ontology",
+    queryType: 'structured_predicate',
+    indexUsed: 'ontology',
     schema,
     filters,
     scannedEntities: await ontologyDb.count(tableName),
     filteredEntities: enriched.length,
-    confidenceMinimum: confidenceMinimum ?? "EXTRACTED",
-  };
+    confidenceMinimum: confidenceMinimum ?? 'EXTRACTED',
+  }
 }
 ```
 
@@ -169,73 +172,81 @@ async function ontologyQuery(params: MemoryRecallParams): Promise<RecallResult> 
 ```typescript
 function buildWhereClause(
   filters: OntologyFilter,
-  confidenceMinimum?: ConfidenceLevel
+  confidenceMinimum?: ConfidenceLevel,
 ): { where: string; values: any[] } {
-  const clauses: string[] = [];
-  const values: any[] = [];
+  const clauses: string[] = []
+  const values: any[] = []
 
   for (const [field, predicate] of Object.entries(filters)) {
-    const col = camelToSnake(field); // escrowPct → escrow_pct
+    const col = camelToSnake(field) // escrowPct → escrow_pct
 
-    if ("eq" in predicate) {
-      clauses.push(`${col} = ?`);
-      values.push(predicate.eq);
-    } else if ("gte" in predicate) {
-      clauses.push(`${col} >= ?`);
-      values.push(predicate.gte);
-    } else if ("gt" in predicate) {
-      clauses.push(`${col} > ?`);
-      values.push(predicate.gt);
-    } else if ("lte" in predicate) {
-      clauses.push(`${col} <= ?`);
-      values.push(predicate.lte);
-    } else if ("lt" in predicate) {
-      clauses.push(`${col} < ?`);
-      values.push(predicate.lt);
-    } else if ("between" in predicate) {
-      clauses.push(`${col} BETWEEN ? AND ?`);
-      values.push(predicate.between[0], predicate.between[1]);
-    } else if ("in" in predicate) {
-      const placeholders = predicate.in.map(() => "?").join(", ");
-      clauses.push(`${col} IN (${placeholders})`);
-      values.push(...predicate.in);
-    } else if ("isNull" in predicate) {
-      clauses.push(predicate.isNull ? `${col} IS NULL` : `${col} IS NOT NULL`);
-    } else if ("contains" in predicate) {
-      clauses.push(`LOWER(${col}) LIKE LOWER(?)`);
-      values.push(`%${predicate.contains}%`);
-    } else if ("and" in predicate) {
-      const sub = predicate.and.map((p) => buildWhereClause({ [field]: p }, undefined));
-      clauses.push(`(${sub.map((s) => s.where).join(" AND ")})`);
-      sub.forEach((s) => values.push(...s.values));
-    } else if ("or" in predicate) {
-      const sub = predicate.or.map((p) => buildWhereClause({ [field]: p }, undefined));
-      clauses.push(`(${sub.map((s) => s.where).join(" OR ")})`);
-      sub.forEach((s) => values.push(...s.values));
+    if ('eq' in predicate) {
+      clauses.push(`${col} = ?`)
+      values.push(predicate.eq)
+    } else if ('gte' in predicate) {
+      clauses.push(`${col} >= ?`)
+      values.push(predicate.gte)
+    } else if ('gt' in predicate) {
+      clauses.push(`${col} > ?`)
+      values.push(predicate.gt)
+    } else if ('lte' in predicate) {
+      clauses.push(`${col} <= ?`)
+      values.push(predicate.lte)
+    } else if ('lt' in predicate) {
+      clauses.push(`${col} < ?`)
+      values.push(predicate.lt)
+    } else if ('between' in predicate) {
+      clauses.push(`${col} BETWEEN ? AND ?`)
+      values.push(predicate.between[0], predicate.between[1])
+    } else if ('in' in predicate) {
+      const placeholders = predicate.in.map(() => '?').join(', ')
+      clauses.push(`${col} IN (${placeholders})`)
+      values.push(...predicate.in)
+    } else if ('isNull' in predicate) {
+      clauses.push(predicate.isNull ? `${col} IS NULL` : `${col} IS NOT NULL`)
+    } else if ('contains' in predicate) {
+      clauses.push(`LOWER(${col}) LIKE LOWER(?)`)
+      values.push(`%${predicate.contains}%`)
+    } else if ('and' in predicate) {
+      const sub = predicate.and.map((p) =>
+        buildWhereClause({ [field]: p }, undefined),
+      )
+      clauses.push(`(${sub.map((s) => s.where).join(' AND ')})`)
+      sub.forEach((s) => values.push(...s.values))
+    } else if ('or' in predicate) {
+      const sub = predicate.or.map((p) =>
+        buildWhereClause({ [field]: p }, undefined),
+      )
+      clauses.push(`(${sub.map((s) => s.where).join(' OR ')})`)
+      sub.forEach((s) => values.push(...s.values))
     }
   }
 
   // Confidence filter — join with field_confidence table
   if (confidenceMinimum) {
-    const confidenceLevels = confidenceLevelsAtOrAbove(confidenceMinimum);
-    const placeholders = confidenceLevels.map(() => "?").join(", ");
+    const confidenceLevels = confidenceLevelsAtOrAbove(confidenceMinimum)
+    const placeholders = confidenceLevels.map(() => '?').join(', ')
     // Only filter on confidence for fields that have a confidence record
     // Fields with no confidence record are included (assumed EXTRACTED for machine-readable)
-    clauses.push(`(fc.confidence IS NULL OR fc.confidence IN (${placeholders}))`);
-    values.push(...confidenceLevels);
+    clauses.push(
+      `(fc.confidence IS NULL OR fc.confidence IN (${placeholders}))`,
+    )
+    values.push(...confidenceLevels)
   }
 
   return {
-    where: clauses.length > 0 ? clauses.join(" AND ") : "1=1",
+    where: clauses.length > 0 ? clauses.join(' AND ') : '1=1',
     values,
-  };
+  }
 }
 
 // Confidence hierarchy
-function confidenceLevelsAtOrAbove(minimum: ConfidenceLevel): ConfidenceLevel[] {
-  const hierarchy: ConfidenceLevel[] = ["EXTRACTED", "INFERRED", "AMBIGUOUS"];
-  const idx = hierarchy.indexOf(minimum);
-  return hierarchy.slice(0, idx + 1);
+function confidenceLevelsAtOrAbove(
+  minimum: ConfidenceLevel,
+): ConfidenceLevel[] {
+  const hierarchy: ConfidenceLevel[] = ['EXTRACTED', 'INFERRED', 'AMBIGUOUS']
+  const idx = hierarchy.indexOf(minimum)
+  return hierarchy.slice(0, idx + 1)
   // EXTRACTED → ["EXTRACTED"]
   // INFERRED  → ["EXTRACTED", "INFERRED"]
   // AMBIGUOUS → ["EXTRACTED", "INFERRED", "AMBIGUOUS"]
@@ -249,31 +260,31 @@ function confidenceLevelsAtOrAbove(minimum: ConfidenceLevel): ConfidenceLevel[] 
 ```typescript
 interface RecallResult {
   // Existing fields — unchanged for semantic path
-  hits: RecallHit[];
-  query: string;
+  hits: RecallHit[]
+  query: string
 
   // New fields — present when schema/filters used
-  queryType?: "structured_predicate" | "schema_typed_semantic" | "semantic";
-  indexUsed?: "ontology" | "vector" | "vault" | "hybrid";
-  schema?: OntologySchema;
-  filters?: OntologyFilter;
-  scannedEntities?: number; // total entities in index
-  filteredEntities?: number; // entities matching filters
-  confidenceMinimum?: ConfidenceLevel;
+  queryType?: 'structured_predicate' | 'schema_typed_semantic' | 'semantic'
+  indexUsed?: 'ontology' | 'vector' | 'vault' | 'hybrid'
+  schema?: OntologySchema
+  filters?: OntologyFilter
+  scannedEntities?: number // total entities in index
+  filteredEntities?: number // entities matching filters
+  confidenceMinimum?: ConfidenceLevel
 }
 
 interface RecallHit {
   // Existing fields
-  path: string; // vault note path
-  score: number; // relevance score (1.0 for exact predicate match)
-  snippet: string; // vault note excerpt
+  path: string // vault note path
+  score: number // relevance score (1.0 for exact predicate match)
+  snippet: string // vault note excerpt
 
   // New fields — present for ontology hits
-  entityId?: string; // MAT-XXXX | CLT-XXXX | etc.
-  entityType?: string; // Matter | Client | etc.
-  fields?: Record<string, any>; // extracted field values
-  confidence?: ConfidenceLevel; // extraction confidence
-  extractionMethod?: string; // machine_readable | pattern | llm
+  entityId?: string // MAT-XXXX | CLT-XXXX | etc.
+  entityType?: string // Matter | Client | etc.
+  fields?: Record<string, any> // extracted field values
+  confidence?: ConfidenceLevel // extraction confidence
+  extractionMethod?: string // machine_readable | pattern | llm
 }
 ```
 
@@ -439,76 +450,84 @@ Turn reduction: 13 → 2. This scales: at 250 matters the unstructured path take
 ### Unit tests
 
 ```typescript
-describe("memory_recall structured filter", () => {
-  test("B-7.1 exact enumeration", async () => {
+describe('memory_recall structured filter', () => {
+  test('B-7.1 exact enumeration', async () => {
     // Seed 12 matters into ontology.db
-    await seedMiniIrmFixture();
+    await seedMiniIrmFixture()
 
     const result = await memoryRecall({
-      query: "matters matching escrow and non-compete criteria",
-      schema: "legal.Matter",
+      query: 'matters matching escrow and non-compete criteria',
+      schema: 'legal.Matter',
       filters: {
         escrowPct: { gte: 10 },
         nonCompeteMonths: { gt: 18 },
       },
-      confidenceMinimum: "EXTRACTED",
-    });
+      confidenceMinimum: 'EXTRACTED',
+    })
 
-    expect(result.queryType).toBe("structured_predicate");
-    expect(result.filteredEntities).toBe(5);
+    expect(result.queryType).toBe('structured_predicate')
+    expect(result.filteredEntities).toBe(5)
     expect(result.hits.map((h) => h.entityId).sort()).toEqual([
-      "MAT-2388",
-      "MAT-2401",
-      "MAT-2415",
-      "MAT-2450",
-      "MAT-2462",
-    ]);
+      'MAT-2388',
+      'MAT-2401',
+      'MAT-2415',
+      'MAT-2450',
+      'MAT-2462',
+    ])
     // Near-misses must not appear
-    expect(result.hits.map((h) => h.entityId)).not.toContain("MAT-2433"); // 9% escrow
-  });
+    expect(result.hits.map((h) => h.entityId)).not.toContain('MAT-2433') // 9% escrow
+  })
 
-  test("near-miss exclusion", async () => {
+  test('near-miss exclusion', async () => {
     const result = await memoryRecall({
-      query: "escrow matters",
-      schema: "legal.Matter",
+      query: 'escrow matters',
+      schema: 'legal.Matter',
       filters: { escrowPct: { gte: 10 } },
-    });
-    const escrowValues = result.hits.map((h) => h.fields?.escrowPct);
-    expect(escrowValues.every((v) => v >= 10)).toBe(true);
-  });
+    })
+    const escrowValues = result.hits.map((h) => h.fields?.escrowPct)
+    expect(escrowValues.every((v) => v >= 10)).toBe(true)
+  })
 
-  test("confidence filtering excludes INFERRED when minimum is EXTRACTED", async () => {
+  test('confidence filtering excludes INFERRED when minimum is EXTRACTED', async () => {
     const result = await memoryRecall({
-      query: "",
-      schema: "legal.Matter",
+      query: '',
+      schema: 'legal.Matter',
       filters: { escrowPct: { gte: 10 } },
-      confidenceMinimum: "EXTRACTED",
-    });
-    expect(result.hits.every((h) => h.confidence === "EXTRACTED")).toBe(true);
-  });
+      confidenceMinimum: 'EXTRACTED',
+    })
+    expect(result.hits.every((h) => h.confidence === 'EXTRACTED')).toBe(true)
+  })
 
-  test("falls back to semantic when no filters provided", async () => {
-    const result = await memoryRecall({ query: "M&A matters with high escrow" });
-    expect(result.queryType).toBe("semantic");
-  });
+  test('falls back to semantic when no filters provided', async () => {
+    const result = await memoryRecall({ query: 'M&A matters with high escrow' })
+    expect(result.queryType).toBe('semantic')
+  })
 
-  test("O(1) query time independent of vault size", async () => {
+  test('O(1) query time independent of vault size', async () => {
     // Seed 12 matters
-    const t1 = Date.now();
-    await memoryRecall({ query: "", schema: "legal.Matter", filters: { escrowPct: { gte: 10 } } });
-    const duration12 = Date.now() - t1;
+    const t1 = Date.now()
+    await memoryRecall({
+      query: '',
+      schema: 'legal.Matter',
+      filters: { escrowPct: { gte: 10 } },
+    })
+    const duration12 = Date.now() - t1
 
     // Seed 250 matters
-    await seedFullCHFixture();
-    const t2 = Date.now();
-    await memoryRecall({ query: "", schema: "legal.Matter", filters: { escrowPct: { gte: 10 } } });
-    const duration250 = Date.now() - t2;
+    await seedFullCHFixture()
+    const t2 = Date.now()
+    await memoryRecall({
+      query: '',
+      schema: 'legal.Matter',
+      filters: { escrowPct: { gte: 10 } },
+    })
+    const duration250 = Date.now() - t2
 
     // Query time should not grow proportionally with corpus size
     // Allow 3x headroom for index overhead but reject O(n) growth
-    expect(duration250).toBeLessThan(duration12 * 3);
-  });
-});
+    expect(duration250).toBeLessThan(duration12 * 3)
+  })
+})
 ```
 
 ### OpenBench integration
@@ -536,22 +555,22 @@ The ontology query runs as an Effect service and integrates into the existing `m
 
 ```typescript
 // clawql-memory/src/ontology-query.ts
-import { Effect, Layer } from "effect";
-import { OntologyDb } from "./ontology-db";
+import { Effect, Layer } from 'effect'
+import { OntologyDb } from './ontology-db'
 
 export const OntologyQuery = {
   query: (params: MemoryRecallParams) =>
     Effect.gen(function* () {
-      const db = yield* OntologyDb;
-      const tableName = yield* Effect.sync(() => schemaToTable(params.schema!));
+      const db = yield* OntologyDb
+      const tableName = yield* Effect.sync(() => schemaToTable(params.schema!))
       const { where, values } = yield* Effect.sync(() =>
-        buildWhereClause(params.filters!, params.confidenceMinimum)
-      );
-      const rows = yield* db.query(tableName, where, values, params.limit ?? 20);
-      const enriched = yield* Effect.forEach(rows, enrichWithVaultSnippet);
-      return buildRecallResult(enriched, params);
+        buildWhereClause(params.filters!, params.confidenceMinimum),
+      )
+      const rows = yield* db.query(tableName, where, values, params.limit ?? 20)
+      const enriched = yield* Effect.forEach(rows, enrichWithVaultSnippet)
+      return buildRecallResult(enriched, params)
     }),
-};
+}
 ```
 
 ---

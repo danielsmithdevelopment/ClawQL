@@ -56,7 +56,7 @@ Competitive wedge: _"Your Ontology is a YAML/OKF tree in Git, signed with your r
 
 | Layer               | Analogy                                                |
 | ------------------- | ------------------------------------------------------ |
-| OOP class           | `Contract \{ parties, status, sign() \}`                 |
+| OOP class           | `Contract \{ parties, status, sign() \}`               |
 | Database schema     | `CREATE TABLE contracts (...)`                         |
 | Enterprise Ontology | Typed object + sources + graph edges + kinetic methods |
 
@@ -148,7 +148,11 @@ Illustrative GraphQL shape (target — not shipped until **3.8**):
 
 ```graphql
 type Mutation {
-  initiatePayment(accountId: ID!, amount: Money!, recipient: ID!): PaymentResult
+  initiatePayment(
+    accountId: ID!
+    amount: Money!
+    recipient: ID!
+  ): PaymentResult
     @kinetic(
       riskLevel: HIGH
       requiresMandate: true

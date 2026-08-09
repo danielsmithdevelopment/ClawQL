@@ -33,8 +33,8 @@ export default function OntologyLegalDomainPage() {
         <Note>
           <strong>Legal domain pack for clawql-ontology.</strong> Typed entities
           that seed <code className="text-sm">ontology.db</code> so{' '}
-          <code className="text-sm">memory_recall</code> can evaluate exact field
-          predicates. Source:{' '}
+          <code className="text-sm">memory_recall</code> can evaluate exact
+          field predicates. Source:{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/ontology/legal-domain-v0.1.md"
             className="font-medium text-inherit underline underline-offset-2"
