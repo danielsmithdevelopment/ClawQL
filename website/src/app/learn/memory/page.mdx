@@ -25,6 +25,7 @@ Agents lose context when the MCP server restarts or Kubernetes reschedules a pod
 - **Markdown as source of truth** — Notes live under `Memory/` as plain `.md` with YAML frontmatter. Humans can open the vault in Obsidian or any editor. Derived indexes cite back into this canon.
 - **One job per layer** — Wikilinks/`memory.db` for explicit graph; embeddings for fuzzy semantics; PageIndex for heading trees; codegraph for source structure; Onyx for external enterprise search.
 - **Hybrid retrieval facade** — `memory_recall` with optional `sources` returns normalized `hits[]` and specialist `followUps`; deep tools stay typed.
+- **Ontology structured filters** — for exact field predicates (`schema` + `filters` → `ontology.db` via clawql-ontology), not semantic similarity. See [memory_recall structured filters](/specs/memory/memory-recall-structured-filter).
 - **Derived indexes are disposable** — `memory.db`, embeddings, and PageIndex rebuild from Markdown; they are not the canonical store.
 - **Governance where it matters** — Optional Presidio redaction at the gateway, vault path allowlists, and team sync that never uploads API secrets. Full ATRClaims filtering on every recall and WORM on every memory mutation are **roadmap** (see [DAOS Layer 3](https://docs.clawql.com/ouroboros/daos)).
 - **Fail-closed sync** — Team sync failures are logged but do not block ingest/recall locally.
@@ -61,11 +62,16 @@ Parses source with the **TypeScript compiler** (TS/JS) and **tree-sitter WASM** 
 
 Queried via `knowledge_search_onyx` (or `memory_recall` with `sources: ["onyx"]`) and optionally pulling `enterpriseCitations` back into the vault during `memory_ingest` as short citation blocks. The external search peer that supplies organizational knowledge without ClawQL assembling or owning the enterprise corpus itself.
 
+### Ontology index (`ontology.db`)
+
+When vault notes carry machine-readable fields (for example legal `CLAWQL_*` tags from the [legal domain pack](/specs/ontology/legal-domain)), ClawQL syncs them into `ontology.db`. `memory_recall` with `schema` + `filters` evaluates typed predicates against that index — exact matches, no near-miss ranking. This is what closed OpenBench B-7 enumeration after semantic-only recall scored zero on false positives. Spec: [memory_recall structured filters](/specs/memory/memory-recall-structured-filter). Essay: [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/).
+
 ### How Agents Should Use Them
 
 | Habit                                                                         | Why                                                             |
 | ----------------------------------------------------------------------------- | --------------------------------------------------------------- |
 | Start with `memory_recall` (+ `sources` when needed)                          | One facade → normalized `hits[]` + specialist `followUps`       |
+| Use `schema` + `filters` for “all X where field ≥ N” tasks                    | Ontology index — exact set, not semantic near-misses            |
 | Open `pageindex_*` / `codegraph_*` / Onyx specialists when `followUps` say so | Deep path, tree walk, and filtered enterprise search stay typed |
 | Write once with `memory_ingest`; use `rebuild` for derived indexes            | Never paste the same prose into five stores                     |
 

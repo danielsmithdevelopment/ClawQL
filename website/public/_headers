@@ -41,6 +41,12 @@
 /specs/cq-extensions/*
   Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900
 
+/specs/memory/memory-recall-structured-filter
+  Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900
+
+/specs/ontology/legal-domain
+  Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900
+
 /architecture/agentic-fabric
   Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900
 

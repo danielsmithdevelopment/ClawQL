@@ -42,6 +42,9 @@ export const GENERATED_BODY_ROUTES = {
   'cq-extensions-cqm-body.mdx': '/specs/cq-extensions/cqm',
   'cq-extensions-cqk-body.mdx': '/specs/cq-extensions/cqk',
   'cq-extensions-cqw-body.mdx': '/specs/cq-extensions/cqw',
+  'memory-recall-structured-filter-body.mdx':
+    '/specs/memory/memory-recall-structured-filter',
+  'ontology-legal-domain-body.mdx': '/specs/ontology/legal-domain',
   'getting-started-for-teams-body.mdx': '/getting-started/for-teams',
   'getting-started-inference-body.mdx': '/getting-started/inference',
   'getting-started-custom-sources-body.mdx': '/getting-started/custom-sources',

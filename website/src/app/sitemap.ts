@@ -98,6 +98,16 @@ const ENTRIES: Array<Entry> = [
     priority: 0.85,
   },
   {
+    path: '/specs/memory/memory-recall-structured-filter',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  {
+    path: '/specs/ontology/legal-domain',
+    changeFrequency: 'monthly',
+    priority: 0.85,
+  },
+  {
     path: '/architecture/agentic-fabric',
     changeFrequency: 'monthly',
     priority: 0.92,

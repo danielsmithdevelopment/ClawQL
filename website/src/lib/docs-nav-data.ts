@@ -90,6 +90,16 @@ export const docsNavigation: Array<NavGroup> = [
         title: 'Enterprise Ontology',
         href: '/architecture/enterprise-ontology',
       },
+      {
+        title: 'memory_recall structured filters',
+        href: '/specs/memory/memory-recall-structured-filter',
+        tag: 'Draft',
+      },
+      {
+        title: 'Legal domain ontology',
+        href: '/specs/ontology/legal-domain',
+        tag: 'Draft',
+      },
       { title: '.cq* extensions', href: '/specs/cq-extensions' },
       { title: 'clawql-inference', href: '/inference/clawql-inference' },
       {

@@ -51,6 +51,24 @@ Retrieve relevant prior context before making changes or claims. Prefer **`memor
 2. `memory_recall` with `sources: ["vault","codegraph"]` (or includeCodeGraph / hybrid env).
 3. Use vault snippets for _why_ and codegraph hits for _where_ in source.
 
+### Pattern E: Exact field enumeration (ontology)
+
+Use when the question is a typed predicate, not a narrative search — e.g. “all matters with escrowPct ≥ 10 AND nonCompeteMonths > 18”.
+
+```json
+{
+  "query": "matters matching escrow and non-compete criteria",
+  "schema": "legal.Matter",
+  "filters": {
+    "escrowPct": { "gte": 10 },
+    "nonCompeteMonths": { "gt": 18 }
+  },
+  "confidenceMinimum": "EXTRACTED"
+}
+```
+
+Do **not** rely on keyword/vector recall for these tasks — near-misses fail exact-set graders. Spec: [memory_recall structured filters](../specs/memory/memory-recall-structured-filter-v0.1.md).
+
 ## Tips
 
 - Use multiple focused recalls rather than one broad query.
