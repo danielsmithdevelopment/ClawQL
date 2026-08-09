@@ -325,6 +325,8 @@ Production traffic
 
 **PorTAL (Ramp Labs):** ClawQL intends to make Flywheel adapters **portable across base models** via task-latent + per-base alignment. See **[PorTAL + Intelligence Flywheel](./portal-flywheel.md)** for staged CLI shapes (`--format portal-bundle`, `finetune refit`) and trade-offs.
 
+**Local / Argo GPU training (SFT → DPO → GRPO → SPIN):** When RTP/OBT traces from Harvey LAB (or OpenBench) land in the training bucket, the method-aware pipeline formats datasets, schedules Unsloth/TRL jobs, and promotes domain adapters. Spec + scaffold: **[Training Pipeline v0.1](./clawql-inference-training-pipeline.md)**. GRPO is the strongest fit for Harvey LAB because rubric criteria are verifiable rewards.
+
 ### Export
 
 ```bash

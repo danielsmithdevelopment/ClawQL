@@ -6,24 +6,25 @@ This directory holds **repro instructions**, **latest pointers**, **per-scenario
 
 ## Start here
 
-| Document                                                                   | Use                                                                         |
-| -------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| [`REPRODUCE.md`](REPRODUCE.md)                                             | Step-by-step commands to regenerate benchmark numbers locally.              |
-| [`latest.md`](latest.md)                                                   | Pointer to the newest consolidated benchmark artifacts.                     |
-| [`latest.json`](latest.json)                                               | Machine-readable latest summary (when present).                             |
-| [`openbench.md`](openbench.md)                                             | OpenBench harness adoption (adapter + ClawQL-specific tasks).               |
-| [`openbench-stack-coverage.md`](openbench-stack-coverage.md)               | **Whole-stack** OpenBench coverage map + benchmark backlog.                 |
-| [`openbench-results-ledger.md`](openbench-results-ledger.md)               | **Full live A/B scoreboard + run diary** (update after every matrix).       |
-| [`openbench-task-explanations.md`](openbench-task-explanations.md)         | **Thorough prove / why / how** for every verified OpenBench task.           |
-| [`openbench-advanced-suites.md`](openbench-advanced-suites.md)             | **Next-gen suites (B-1…B-7)** broken into small tasks, phases, and gates.   |
-| [`openbench-advanced-specs.md`](openbench-advanced-specs.md)               | Advanced suites B-1…B-7 (specs; Phase 1 offline packs).                     |
-| [`openbench-b7-calderwood.md`](openbench-b7-calderwood.md)                 | **B-7** Harvey/EngramLab C&H institutional knowledge + amortization.        |
-| [`harvey-lab-baseline.md`](harvey-lab-baseline.md)                         | Harvey LAB **firm-knowledge** baseline (standard harness).                  |
-| [`harvey-lab-clawql-results.md`](harvey-lab-clawql-results.md)             | Harvey LAB × ClawQL two-arm ledger (Opus vs Opus when complete).            |
-| [`harvey-lab-pause-handoff.md`](harvey-lab-pause-handoff.md)               | **Pause/resume** for LAB × ClawQL (GHA + OpenRouter next steps).            |
-| [`ouroboros-value-evidence.md`](ouroboros-value-evidence.md)               | **Evidence:** Ouroboros on converges vs off strategy thrash (verified A/B). |
-| [`openbench-ouroboros-oscillation.md`](openbench-ouroboros-oscillation.md) | Ouroboros oscillation-escape task design, caps, repro.                      |
-| [`openbench-github-actions.md`](openbench-github-actions.md)               | One-off Actions A/B (clawql-on vs off) — spin up, report, spin down.        |
+| Document                                                                                                   | Use                                                                         |
+| ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [`REPRODUCE.md`](REPRODUCE.md)                                                                             | Step-by-step commands to regenerate benchmark numbers locally.              |
+| [`latest.md`](latest.md)                                                                                   | Pointer to the newest consolidated benchmark artifacts.                     |
+| [`latest.json`](latest.json)                                                                               | Machine-readable latest summary (when present).                             |
+| [`openbench.md`](openbench.md)                                                                             | OpenBench harness adoption (adapter + ClawQL-specific tasks).               |
+| [`openbench-stack-coverage.md`](openbench-stack-coverage.md)                                               | **Whole-stack** OpenBench coverage map + benchmark backlog.                 |
+| [`openbench-results-ledger.md`](openbench-results-ledger.md)                                               | **Full live A/B scoreboard + run diary** (update after every matrix).       |
+| [`openbench-task-explanations.md`](openbench-task-explanations.md)                                         | **Thorough prove / why / how** for every verified OpenBench task.           |
+| [`openbench-advanced-suites.md`](openbench-advanced-suites.md)                                             | **Next-gen suites (B-1…B-7)** broken into small tasks, phases, and gates.   |
+| [`openbench-advanced-specs.md`](openbench-advanced-specs.md)                                               | Advanced suites B-1…B-7 (specs; Phase 1 offline packs).                     |
+| [`openbench-b7-calderwood.md`](openbench-b7-calderwood.md)                                                 | **B-7** Harvey/EngramLab C&H institutional knowledge + amortization.        |
+| [`harvey-lab-baseline.md`](harvey-lab-baseline.md)                                                         | Harvey LAB **firm-knowledge** baseline (standard harness).                  |
+| [`harvey-lab-clawql-results.md`](harvey-lab-clawql-results.md)                                             | Harvey LAB × ClawQL two-arm ledger (Opus vs Opus when complete).            |
+| [`harvey-lab-pause-handoff.md`](harvey-lab-pause-handoff.md)                                               | **Pause/resume** for LAB × ClawQL (GHA + OpenRouter next steps).            |
+| [`../inference/clawql-inference-training-pipeline.md`](../inference/clawql-inference-training-pipeline.md) | Post-LAB fine-tune flywheel (SFT → DPO → GRPO → SPIN).                      |
+| [`ouroboros-value-evidence.md`](ouroboros-value-evidence.md)                                               | **Evidence:** Ouroboros on converges vs off strategy thrash (verified A/B). |
+| [`openbench-ouroboros-oscillation.md`](openbench-ouroboros-oscillation.md)                                 | Ouroboros oscillation-escape task design, caps, repro.                      |
+| [`openbench-github-actions.md`](openbench-github-actions.md)                                               | One-off Actions A/B (clawql-on vs off) — spin up, report, spin down.        |
 
 ---
 

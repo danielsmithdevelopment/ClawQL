@@ -1,7 +1,7 @@
 # PorTAL and the Intelligence Flywheel
 
 **Status:** Intention / design commitment (implementation staged)  
-**Related:** [clawql-inference](./clawql-inference.md) · [Token efficiency Layer 12](../architecture/clawql-token-efficiency.md) · [OKF v0.2](../memory/okf.md) · [Convergence Week](https://pragmaticvectors.com/posts/convergence-week/)
+**Related:** [clawql-inference](./clawql-inference.md) · [Training Pipeline (SFT/DPO/GRPO/SPIN)](./clawql-inference-training-pipeline.md) · [Token efficiency Layer 12](../architecture/clawql-token-efficiency.md) · [OKF v0.2](../memory/okf.md) · [Convergence Week](https://pragmaticvectors.com/posts/convergence-week/)
 
 ClawQL intends to integrate [**PorTAL**](https://github.com/ramp-public/portallib) (Portable Task-specific Adapter Learning, Ramp Labs) into the **Intelligence Flywheel** (Layer 12 of the twelve-layer token-efficiency stack). This document records what that means operationally — what stays the same, what changes, and what ships when.
 
