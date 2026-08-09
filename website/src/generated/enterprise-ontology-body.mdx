@@ -6,7 +6,7 @@
 **Audience:** architects, design partners, implementers of ontology lint/generate and kinetic governance
 **Related:** [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [Token efficiency (12 layers)](https://docs.clawql.com/architecture/token-efficiency) · [Memory / Obsidian](https://docs.clawql.com/learn/memory) · [OKF decision rationale](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf-decision-rationale.md) · [Command Deck ontology builder UX](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/architecture/command-deck-ontology-builder-ux.md) · [Team vault sync](https://docs.clawql.com/getting-started/for-teams) · [ADR 0004](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0004-argo-cd-workflows-clawql-pipelines.md) · [ADR 0007](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0007-pulumi-provisioning-managed-tiers.md)
 
-**Essay (why ontology beats memory alone — OpenBench B-7 proof):** [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/) · draft copy [`docs/gtm/pragmaticvectors/memory-finds-ontology-decides.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/gtm/pragmaticvectors/memory-finds-ontology-decides.md) · legal pack [`legal-domain-v0.1`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/ontology/legal-domain-v0.1.md) · structured filters [`memory-recall-structured-filter-v0.1`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/memory/memory-recall-structured-filter-v0.1.md) · [OpenBench B-7](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-b7-calderwood.md)
+**Essay (why ontology beats memory alone — OpenBench B-7 proof):** [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/) · draft copy [`docs/gtm/pragmaticvectors/memory-finds-ontology-decides.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/gtm/pragmaticvectors/memory-finds-ontology-decides.md) · site: [structured filters](https://docs.clawql.com/specs/memory/memory-recall-structured-filter) · [legal domain](https://docs.clawql.com/specs/ontology/legal-domain) · repo: [`legal-domain-v0.1`](/specs/ontology/legal-domain) · [`memory-recall-structured-filter-v0.1`](/specs/memory/memory-recall-structured-filter) · [OpenBench B-7](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-b7-calderwood.md)
 
 > **Shipped vs target:** This document is the source of truth for design intent. Entity schema format and examples in-repo are provisional. Automatic MCP generation, graph traversal, kinetic Transaction Sandbox, and the Command Deck builder are phased — verify against [modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md) before external claims.
 
@@ -56,7 +56,7 @@ Competitive wedge: _"Your Ontology is a YAML/OKF tree in Git, signed with your r
 
 | Layer               | Analogy                                                |
 | ------------------- | ------------------------------------------------------ |
-| OOP class           | `Contract \{ parties, status, sign() \}`               |
+| OOP class           | `Contract \{ parties, status, sign() \}`                 |
 | Database schema     | `CREATE TABLE contracts (...)`                         |
 | Enterprise Ontology | Typed object + sources + graph edges + kinetic methods |
 
@@ -148,11 +148,7 @@ Illustrative GraphQL shape (target — not shipped until **3.8**):
 
 ```graphql
 type Mutation {
-  initiatePayment(
-    accountId: ID!
-    amount: Money!
-    recipient: ID!
-  ): PaymentResult
+  initiatePayment(accountId: ID!, amount: Money!, recipient: ID!): PaymentResult
     @kinetic(
       riskLevel: HIGH
       requiresMandate: true

@@ -47,7 +47,21 @@ export default function EnterpriseOntologyPage() {
           >
             Memory Finds. Ontology Decides.
           </a>{' '}
-          (OpenBench B-7 — why typed predicates beat memory alone). Related:{' '}
+          (OpenBench B-7 — why typed predicates beat memory alone). Specs:{' '}
+          <a
+            href="/specs/memory/memory-recall-structured-filter"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            memory_recall structured filters
+          </a>
+          {' · '}
+          <a
+            href="/specs/ontology/legal-domain"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            legal domain
+          </a>
+          . Related:{' '}
           <a
             href="/architecture/token-efficiency"
             className="font-medium text-inherit underline underline-offset-2"

@@ -35,6 +35,8 @@ export const HEAVY_HTML_ROUTE_SOURCES = [
   '/specs/cq-extensions/cqm',
   '/specs/cq-extensions/cqk',
   '/specs/cq-extensions/cqw',
+  '/specs/memory/memory-recall-structured-filter',
+  '/specs/ontology/legal-domain',
   '/architecture/agentic-fabric',
   '/inference/:path*',
   '/examples/:path*',

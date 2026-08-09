@@ -1,15 +1,8 @@
----
-title: "ClawQL Ontology — Legal Domain Spec v0.1"
-status: "Draft · August 2026"
-package: "clawql-ontology/packs/legal/"
-depends_on: "clawql-ontology (ADR 0009/0010) · clawql-memory · memory_recall structured filter extension"
----
-
 # ClawQL Ontology — Legal Domain Spec v0.1
 
 **August 2026 · Draft**
 
-Companion to: ClawQL Streams Spec v0.2, B-7 Suite Spec, [memory_recall Structured Filter Extension Spec](../memory/memory-recall-structured-filter-v0.1.md)
+Companion to: ClawQL Streams Spec v0.2, B-7 Suite Spec, [memory_recall Structured Filter Extension Spec](/specs/memory/memory-recall-structured-filter)
 
 **Essay (value + OpenBench proof):** [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/) — why typed predicates beat semantic vault recall for firm-knowledge enumeration.
 
@@ -208,11 +201,11 @@ Parser rules:
 
 | Raw field name                  | Ontology field                | Type         | Normalization               |
 | ------------------------------- | ----------------------------- | ------------ | --------------------------- |
-| `CLAWQL_MATTER_ID`              | `Matter.id`                   | MatterID     | Validate /^MAT-\d{4}$/      |
+| `CLAWQL_MATTER_ID`              | `Matter.id`                   | MatterID     | Validate /^MAT-\\d\{4\}$/      |
 | `CLAWQL_ESCROW_PCT`             | `Matter.escrowPct`            | Percentage   | Parse float, validate 0-100 |
 | `CLAWQL_NONCOMPETE_MONTHS`      | `Matter.nonCompeteMonths`     | Integer      | Parse int                   |
 | `CLAWQL_DEAL_VALUE_USD`         | `Matter.dealValueUSD`         | Integer      | Parse int                   |
-| `CLAWQL_CLIENT_ID`              | `Matter.client`               | ClientRef    | Validate /^CLT-\d{4}$/      |
+| `CLAWQL_CLIENT_ID`              | `Matter.client`               | ClientRef    | Validate /^CLT-\\d\{4\}$/      |
 | `CLAWQL_PRACTICE_AREA`          | `Matter.practiceArea`         | PracticeArea | Enum match                  |
 | `CLAWQL_STATUS`                 | `Matter.status`               | MatterStatus | Enum match                  |
 | `CLAWQL_ESCROW_DURATION_MONTHS` | `Matter.escrowDurationMonths` | Integer      | Parse int                   |
@@ -346,7 +339,7 @@ CREATE INDEX idx_matters_status ON matters(status);
 
 ## 5. Integration with memory_recall
 
-See companion [memory-recall-structured-filter-v0.1.md](../memory/memory-recall-structured-filter-v0.1.md).
+See companion [memory-recall-structured-filter-v0.1.md](/specs/memory/memory-recall-structured-filter).
 
 ### 5.1 B-7.1 query shape
 
@@ -381,7 +374,7 @@ memory_recall({
 
 ### B-7.2–B-7.4
 
-Client joins, amortized multi-question sessions, and full C&H mount follow the suite plan in [`docs/benchmarks/openbench-b7-calderwood.md`](../../benchmarks/openbench-b7-calderwood.md).
+Client joins, amortized multi-question sessions, and full C&H mount follow the suite plan in [`docs/benchmarks/openbench-b7-calderwood.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-b7-calderwood.md).
 
 ---
 
@@ -419,3 +412,7 @@ When ClawQL Streams processes C&H tasks as events, each Agent DO session has acc
 _ClawQL Ontology — Legal Domain Spec v0.1 · August 2026 · Draft_
 _Companion: memory_recall Structured Filter Extension Spec_
 _Related: B-7 Suite Spec, clawql-streams Spec v0.2, clawql-inference Training Pipeline Spec_
+
+export function wrapper({ children }) {
+  return children
+}

@@ -103,6 +103,20 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: DocumentIcon,
   }),
   card({
+    href: '/specs/memory/memory-recall-structured-filter',
+    name: 'memory_recall structured filters',
+    description:
+      'How and why memory_recall gained schema + filters via clawql-ontology — exact enumeration without semantic near-misses.',
+    icon: DocumentIcon,
+  }),
+  card({
+    href: '/specs/ontology/legal-domain',
+    name: 'Legal domain ontology',
+    description:
+      'Matter / Client / Attorney / Document pack that backs ontology.db for structured recall.',
+    icon: DocumentIcon,
+  }),
+  card({
     href: '/specs/cq-extensions',
     name: '.cq* file extensions',
     description:

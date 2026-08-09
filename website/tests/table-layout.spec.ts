@@ -34,6 +34,10 @@ test.describe('mobile table layout', () => {
     { path: '/inference/clawql-inference', name: 'inference' },
     { path: '/architecture/token-efficiency', name: 'token efficiency' },
     { path: '/architecture/enterprise-ontology', name: 'enterprise ontology' },
+    {
+      path: '/specs/memory/memory-recall-structured-filter',
+      name: 'memory recall structured filter',
+    },
     { path: '/specs/cq-extensions', name: 'cq extensions' },
     { path: '/security/defense-in-depth', name: 'defense in depth' },
     { path: '/plugins', name: 'plugin registry' },

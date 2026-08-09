@@ -94,6 +94,9 @@ export const DOC_SITE_ROUTES = {
   'docs/specs/cq-extensions/cqm.md': '/specs/cq-extensions/cqm',
   'docs/specs/cq-extensions/cqk.md': '/specs/cq-extensions/cqk',
   'docs/specs/cq-extensions/cqw.md': '/specs/cq-extensions/cqw',
+  'docs/specs/memory/memory-recall-structured-filter-v0.1.md':
+    '/specs/memory/memory-recall-structured-filter',
+  'docs/specs/ontology/legal-domain-v0.1.md': '/specs/ontology/legal-domain',
   'docs/architecture/zero-trust-agentic-fabric.md':
     '/architecture/agentic-fabric',
   'docs/security/clawql-security-defense-in-depth.md':

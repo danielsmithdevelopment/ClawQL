@@ -1,15 +1,8 @@
----
-title: "memory_recall Structured Filter Extension — Spec v0.1"
-status: "Draft · August 2026"
-package: "clawql-memory"
-depends_on: "clawql-ontology (legal domain spec) · ontology.db"
----
-
 # memory_recall Structured Filter Extension — Spec v0.1
 
 **August 2026 · Draft**
 
-Companion: [ClawQL Ontology Legal Domain Spec v0.1](../ontology/legal-domain-v0.1.md) · [Enterprise Ontology](../../architecture/enterprise-ontology.md) · [OpenBench B-7](../../benchmarks/openbench-b7-calderwood.md)
+Companion: [ClawQL Ontology Legal Domain Spec v0.1](/specs/ontology/legal-domain) · [Enterprise Ontology](/architecture/enterprise-ontology) · [OpenBench B-7](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-b7-calderwood.md)
 
 **Essay (value + OpenBench proof):** [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/) — semantic near-misses → grader hard-zero; `schema` + `filters` closed the set on B-7.1.
 
@@ -563,3 +556,7 @@ export const OntologyQuery = {
 _memory_recall Structured Filter Extension · Spec v0.1 · August 2026 · Draft_
 _Companion: ClawQL Ontology Legal Domain Spec v0.1_
 _Tracked in: clawql-memory package, ontology.db schema migration_
+
+export function wrapper({ children }) {
+  return children
+}
