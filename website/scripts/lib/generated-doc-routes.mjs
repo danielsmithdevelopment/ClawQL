@@ -15,6 +15,7 @@ export const GENERATED_BODY_ROUTES = {
   'clawql-qr-stream-transport-body.mdx': '/streams/clawql-qr-stream-transport',
   'clawql-government-body.mdx': '/government/clawql-government',
   'mcp-api-adapter-body.mdx': '/mcp/mcp-api-adapter',
+  'mcp-ui-body.mdx': '/mcp/mcp-ui',
   'clawql-token-efficiency-body.mdx': '/architecture/token-efficiency',
   'enterprise-ontology-body.mdx': '/architecture/enterprise-ontology',
   'zero-trust-agentic-fabric-body.mdx': '/architecture/agentic-fabric',

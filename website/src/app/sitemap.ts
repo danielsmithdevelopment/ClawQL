@@ -173,6 +173,11 @@ const ENTRIES: Array<Entry> = [
     priority: 0.9,
   },
   {
+    path: '/mcp/mcp-ui',
+    changeFrequency: 'monthly',
+    priority: 0.85,
+  },
+  {
     path: '/mcp/protocol-fabric',
     changeFrequency: 'monthly',
     priority: 0.9,
