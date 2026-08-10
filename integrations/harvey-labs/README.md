@@ -16,7 +16,8 @@ gh workflow run harvey-lab-firm-knowledge.yml \
 ```
 
 Workflow: [`.github/workflows/harvey-lab-firm-knowledge.yml`](../../.github/workflows/harvey-lab-firm-knowledge.yml)  
-Pause / resume: [`docs/benchmarks/harvey-lab-pause-handoff.md`](../../docs/benchmarks/harvey-lab-pause-handoff.md)
+Pause / resume: [`docs/benchmarks/harvey-lab-pause-handoff.md`](../../docs/benchmarks/harvey-lab-pause-handoff.md)  
+Campaign memory / Constitutional Ouroboros: [`docs/benchmarks/harvey-lab-campaign-memory.md`](../../docs/benchmarks/harvey-lab-campaign-memory.md)
 
 ## What this provides
 
@@ -36,7 +37,8 @@ Pause / resume: [`docs/benchmarks/harvey-lab-pause-handoff.md`](../../docs/bench
 - Tasks: `tasks/firm-knowledge/tasks/<id>/task.json` (**250**)
 - Documents: shared DMS via `docs_dir: "../../dms"` (~266 matters, ~9k files)
 - Pre-ingest seeds priority docs per matter (not every binary)
-- Vault isolation is per task (delete/recreate)
+- **Task vault** isolation is per task (delete/recreate) — required for answer hygiene
+- **Campaign memory** (structural lessons + demotion→prompt extensions across the family sweep) is a separate layer — design: [`docs/benchmarks/harvey-lab-campaign-memory.md`](../../docs/benchmarks/harvey-lab-campaign-memory.md)
 
 ## Local overlay (optional debug)
 

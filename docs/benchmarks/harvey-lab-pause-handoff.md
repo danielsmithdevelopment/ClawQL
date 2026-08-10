@@ -10,16 +10,17 @@ Run ClawQL against Harvey LAB [`firm-knowledge`](https://github.com/harveyai/har
 
 ## Decision locked in before pause
 
-| Topic                  | Decision                                                                                     |
-| ---------------------- | -------------------------------------------------------------------------------------------- |
-| Where to run           | **GitHub Actions**, same as OpenBench — use repo secret `OPENROUTER_API_KEY`                 |
-| Not Cursor Cloud Agent | Cloud Agent pods do **not** inherit GHA secrets; do not block on Cursor env keys             |
-| Debug model            | Sonnet via OpenRouter (`claude-sonnet-4-6` → `anthropic/claude-sonnet-4.6`)                  |
-| Publishable model      | Opus both arms (OpenRouter Anthropic ids)                                                    |
-| Judge                  | Sonnet                                                                                       |
-| Vault isolation        | Task-scoped vault; delete/recreate between tasks                                             |
-| DMS ingest             | Priority docs per matter (closing / engagement / HSR / second-request), not all ~9k binaries |
-| Cost note              | **250** firm-knowledge tasks (not ~50) — gate full Opus sweep                                |
+| Topic                  | Decision                                                                                                                                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Where to run           | **GitHub Actions**, same as OpenBench — use repo secret `OPENROUTER_API_KEY`                                                                                                              |
+| Not Cursor Cloud Agent | Cloud Agent pods do **not** inherit GHA secrets; do not block on Cursor env keys                                                                                                          |
+| Debug model            | Sonnet via OpenRouter (`claude-sonnet-4-6` → `anthropic/claude-sonnet-4.6`)                                                                                                               |
+| Publishable model      | Opus both arms (OpenRouter Anthropic ids)                                                                                                                                                 |
+| Judge                  | Sonnet                                                                                                                                                                                    |
+| Vault isolation        | **Task vault** delete/recreate between tasks (answers/DMS seed). **Campaign layer** (structural lessons only) is separate — see [campaign memory design](./harvey-lab-campaign-memory.md) |
+| DMS ingest             | Priority docs per matter (closing / engagement / HSR / second-request), not all ~9k binaries                                                                                              |
+| Cost note              | **250** firm-knowledge tasks (not ~50) — gate full Opus sweep; track **\$ / promoted CPR point**, not only \$/run                                                                         |
+| Self-critique          | Constitutional Ouroboros (Wonder/Reflect vs rubric + confident-incompleteness principle) — **not** operator bullying                                                                      |
 
 ## What’s already landed (in #881 / tree)
 
@@ -120,3 +121,5 @@ Once Opus two-arm ledgers exist and RTP/OBT traces are in the training bucket, r
 4. **SPIN** (vN vs vN−1) until CPR gains drop below ~1pp
 
 Do **not** start training rounds until LAB scores exist — synthetic B-7 wins are not training labels for Harvey CPR.
+
+**During the sweep (in-sweep, not training):** maintain **campaign memory** + demotion→prompt extensions + optional Constitutional Ouroboros Wonder/Reflect — see **[harvey-lab-campaign-memory.md](./harvey-lab-campaign-memory.md)**. Only **promoted** traces feed the training flywheel.

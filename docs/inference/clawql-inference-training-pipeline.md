@@ -123,6 +123,8 @@ def harvey_lab_reward(rollout: str, task: HarveyTask) -> float:
 
 **When to use it:** After DPO/GRPO establishes the basic task pattern. Constitutional AI adds a layer of self-monitoring that makes the model aware of when it should search further vs when it can stop. That's the search termination signal Harvey identified as missing.
 
+**Runtime counterpart (LAB / agents):** Prefer **Constitutional Ouroboros** — Seed `evaluation_principles` + Wonder/Reflect against Harvey rubric criteria, including an explicit **confident incompleteness** Wonder check — over operator “bullying.” See [harvey-lab-campaign-memory.md](../benchmarks/harvey-lab-campaign-memory.md) §6. Training-time critique–revision (this section) hardens the same habit into weights.
+
 ### 2.8 SPIN (Self-Play Fine-Tuning)
 
 **What it is:** The model plays against an earlier version of itself. Current model generates responses, previous model generates responses to the same prompts, DPO trains current model to beat previous one. Iterative — each round's current model becomes next round's previous model.

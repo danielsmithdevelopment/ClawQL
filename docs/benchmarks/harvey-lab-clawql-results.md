@@ -39,18 +39,27 @@ Publishable comparison requires **Opus vs Opus**. Sonnet is for Phases A–D onl
 | Turn reduction      | _pending_ |
 | Token reduction     | _pending_ |
 
+## Economics (promoted traces only)
+
+Track **cost per promoted CPR point** — USD (inference + judge) ÷ ΔCPR on gated/promoted traces. Prefer this over raw \$/run when choosing task families and model configs. Design: [`harvey-lab-campaign-memory.md`](./harvey-lab-campaign-memory.md) §5.
+
+| Sweep / phase | Model | Campaign memory | Spend (USD) | Promoted ΔCPR | \$ / promoted CPR point | Notes |
+| ------------- | ----- | --------------- | ----------- | ------------- | ----------------------- | ----- |
+| —             | —     | —               | _pending_   | _pending_     | _pending_               | —     |
+
 ## Per-task breakdown
 
-| Task                     | Baseline CPR | ClawQL CPR | Delta | Baseline all-pass | ClawQL all-pass |
-| ------------------------ | ------------ | ---------- | ----- | ----------------- | --------------- |
-| firm-knowledge/tasks/001 | —            | —          | —     | —                 | —               |
+| Task                     | Baseline CPR | ClawQL CPR | Delta | Baseline all-pass | ClawQL all-pass | Promoted? | Spend |
+| ------------------------ | ------------ | ---------- | ----- | ----------------- | --------------- | --------- | ----- |
+| firm-knowledge/tasks/001 | —            | —          | —     | —                 | —               | —         | —     |
 
 ## Implementation notes
 
 - Overlay: `integrations/harvey-labs/`
 - GHA: `.github/workflows/harvey-lab-firm-knowledge.yml` + `scripts/run-lab-gha.sh`
 - OpenRouter: `CLAWQL_LAB_USE_OPENROUTER=1` + `OPENROUTER_API_KEY`
-- Startup: `scripts/start-clawql-for-lab.sh` (task-scoped vault)
+- Startup: `scripts/start-clawql-for-lab.sh` (**task** vault isolation)
+- Campaign memory / prompt extensions / Constitutional Ouroboros: [`harvey-lab-campaign-memory.md`](./harvey-lab-campaign-memory.md)
 - Isolation tests: `integrations/harvey-labs/tests/test_vault_isolation.py`
 - Ontology LLM extraction off for benches
 

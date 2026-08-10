@@ -6,6 +6,7 @@ Matter documents (or a firm-knowledge DMS catalog) have been pre-ingested into t
 ## When to use clawql_memory_recall
 
 Use `clawql_memory_recall` INSTEAD OF reading documents sequentially when:
+
 - You need to find all documents or matters matching specific criteria
 - You need to enumerate entities with specific field values
 - You need to cross-reference information across multiple matter documents
@@ -25,6 +26,7 @@ If structured ontology filters are available, you may also pass `schema` and `fi
 ## When to use the standard read tool
 
 Use the standard `read` tool when:
+
 - Reading a specific known document path returned by recall or glob
 - The task requires full text of a document
 - Producing a deliverable that must cite specific document passages
@@ -37,4 +39,19 @@ Use the standard `read` tool when:
 
 Do not invent matter numbers. Only report matters supported by vault recall or document reads.
 Use `clawql_memory_ingest` to persist intermediate enumerations if helpful within this task.
-Do not rely on memory from any other task — the vault is task-scoped.
+
+## Vault scope
+
+- **This task’s vault** holds matter documents for the current task only. Do not assume answers from other tasks live here.
+- When a **campaign extension** is appended below (or injected by the harness), treat it as strategy guidance learned earlier in this firm-knowledge sweep — not as ground truth for the current criteria.
+
+## Constitutional checks before finishing
+
+Before claiming you are done:
+
+1. List each rubric criterion and whether you attempted it.
+2. For every criterion you claim to have met, cite tool evidence (`clawql_memory_recall` results and/or document paths).
+3. Prefer `schema` + `filters` for enumeration; do not stop after the first plausible hit.
+4. **Do not claim set closure without exhaustive tool evidence** (Harvey confident-incompleteness failure mode).
+
+<!-- CLAWQL_LAB_CAMPAIGN_EXT: harness may append system-prompt.ext.md here -->
