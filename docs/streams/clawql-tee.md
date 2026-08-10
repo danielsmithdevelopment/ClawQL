@@ -2,7 +2,8 @@
 
 **Status:** Draft · August 2026 · v0.1  
 **Builds on:** [`clawql-cellrt`](./clawql-cellrt.md) v0.1 (software security baseline)  
-**Companions:** [`clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) · [`clawql-streams`](./clawql-streams.md) v0.2 · [`clawql-inference`](../inference/clawql-inference.md)  
+**Companions:** [`clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) · [`clawql-streams`](./clawql-streams.md) v0.2 · [`clawql-inference`](../inference/clawql-inference.md) · **correctness stack:** [`correctness-by-construction.md`](../design/correctness-by-construction.md) (NASA/SPARK → Rust + TLA+)
+
 **Repo home:** ClawQL monorepo — `crates/clawql-cellrt/cellrt-attestation/` (+ Vault/inference tee paths)
 
 ---

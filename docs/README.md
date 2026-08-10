@@ -38,6 +38,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - **Plugin registry** (shipped vs planned plugins, MCP tool ownership, enable flags): [`reference/clawql-plugin-registry.md`](reference/clawql-plugin-registry.md) — [`/plugins`](https://docs.clawql.com/plugins)
 - **Plugins hub** (one page per plugin — core, memory, documents, bundled providers, …): [`plugins/README.md`](plugins/README.md) — [`/plugins`](https://docs.clawql.com/plugins)
 - **Effect-TS + plugin rearchitecture plan** (Layer composition, plugin checklist): [`design/effect-ts-modularization-rearchitecture-plan.md`](design/effect-ts-modularization-rearchitecture-plan.md)
+- **Correctness by construction** (NASA Power of 10 / SPARK → Effect-TS + Rust + TLA+): [`design/correctness-by-construction.md`](design/correctness-by-construction.md)
 - **ClawQL Modularization v1.9** (companion — **historical** package matrix, May 2026; do not use for 7.0 delivery claims): [`vision/clawql-modularization.md`](vision/clawql-modularization.md) — package delivery epic [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)
 - ClawQL ecosystem (vision deck — core loop, hybrid memory, pipeline, Onyx, Ouroboros, infra, roadmap): [`clawql-ecosystem.md`](clawql-ecosystem.md)
 - Feature tiers (always on / default-on opt-out / default-off opt-in): `readme/configuration.md` § **Feature tiers** — diagram: [`readme/images/clawql-feature-tiers.png`](readme/images/clawql-feature-tiers.png)
