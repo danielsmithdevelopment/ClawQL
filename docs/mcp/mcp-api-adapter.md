@@ -1,15 +1,20 @@
-# mcp-api-adapter — six surfaces today, seven planned
+# mcp-api-adapter — six surfaces today, eight planned
 
 **Package:** [`mcp-api-adapter`](../../packages/mcp-api-adapter/) (`0.6.0+`)  
 **Status:** Shipped in-repo · **npm not published yet** (`npm view mcp-api-adapter` → 404)  
-**Essay:** [Seven surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter/) (draft: [`docs/gtm/pragmaticvectors/mcp-api-adapter.md`](../gtm/pragmaticvectors/mcp-api-adapter.md))  
+**Essay:** [Eight surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter/) (draft: [`docs/gtm/pragmaticvectors/mcp-api-adapter.md`](../gtm/pragmaticvectors/mcp-api-adapter.md))  
 **Design:** [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)  
 **Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)  
 **Protocol Fabric:** [`protocol-fabric.md`](./protocol-fabric.md) (proven WS → CLI → REST → vault loop)
 
 `mcp-api-adapter` wraps **any** MCP server — stdio, Streamable HTTP, or gRPC — and exposes **six API surfaces** from one tool catalog without changing the server (OpenAPI, GraphQL, Streamable HTTP `/mcp`, gRPC, WebSocket `/ws`, gen-cli). No ClawQL install required.
 
-**Planned seventh surface:** [QR stream transport](../streams/clawql-qr-stream-transport.md) — physical optical channel for air-gapped MCP and Streams event sources (unidirectional by default; optional bidirectional).
+**Planned surfaces:**
+
+| #   | Surface                                                         | Role                                                               |
+| --- | --------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 7   | [QR stream transport](../streams/clawql-qr-stream-transport.md) | Optical air-gap MCP + Streams event source                         |
+| 8   | [`/mcp-ui`](./mcp-ui.md)                                        | Swagger UI for MCP — HTMX forms auto-scaffolded from `inputSchema` |
 
 **Language-agnostic.** The adapter process is TypeScript (`npx mcp-api-adapter`); the upstream may be Python, Go, Rust, or any language that speaks MCP. Users do not write TypeScript to use it — same Node baseline as `npx clawql-mcp`.
 
@@ -29,10 +34,12 @@ mcp-api-adapter
          ├── /mcp                 Streamable HTTP re-export for IDE clients
          ├── :50051               gRPC (upstream or locally scaffolded)
          ├── /ws                  WebSocket tool-call surface
-         └── gen-cli              Generated zero-dependency Node CLI
+         ├── gen-cli              Generated zero-dependency Node CLI
+         ├── QR stream            Optical channel (planned)
+         └── /mcp-ui              HTMX playground (planned) — Swagger UI for MCP
 ```
 
-Point the adapter at one upstream. It calls `ListTools` at startup, builds the OpenAPI spec and GraphQL schema from each tool's `inputSchema`, and mounts the HTTP/WS/gRPC surfaces.
+Point the adapter at one upstream. It calls `ListTools` at startup, builds the OpenAPI spec, GraphQL schema, and (planned) `/mcp-ui` forms from each tool's `inputSchema`, and mounts the HTTP/WS/gRPC surfaces.
 
 ## The client fragmentation problem
 
@@ -46,16 +53,15 @@ MCP standardized how agents discover and call tools. Every other consumer still 
 | SREs / service mesh             | `grpcurl` on `:50051`                  |
 | Cursor / Claude Desktop         | Streamable HTTP `/mcp`                 |
 | Data / ops scripts              | A thin CLI                             |
+| Operators / non-technical users | A browser form UI (planned `/mcp-ui`)  |
 
-The usual answer is a custom adapter per consumer — or Python **[mcpo](https://github.com/open-webui/mcpo)** (Open WebUI) for **OpenAPI/REST only**. **`mcp-api-adapter`** is the multi-surface option: OpenAPI + GraphQL + Streamable HTTP `/mcp` + gRPC + WebSocket + gen-cli from one MCP upstream. Prefer **mcpo** when Open WebUI users already expect that single REST surface; prefer the adapter when one REST facade is not enough.
+The usual answer is a custom adapter per consumer — or Python **[mcpo](https://github.com/open-webui/mcpo)** (Open WebUI) for **OpenAPI/REST only**. **`mcp-api-adapter`** is the multi-surface option: OpenAPI + GraphQL + Streamable HTTP `/mcp` + gRPC + WebSocket + gen-cli from one MCP upstream (plus planned QR and `/mcp-ui`). Prefer **mcpo** when Open WebUI users already expect that single REST surface; prefer the adapter when one REST facade is not enough.
 
-Together with ClawQL Core (APIs → MCP), this is the **[Protocol Fabric](./protocol-fabric.md)** — MCP as the common IR in both directions.
-
-> > > > > > > 19d2cfe7 (docs(mcp-api-adapter): language-agnostic upstream + mcpo positioning)
+Together with ClawQL Core (APIs → MCP), this is the **[Protocol Fabric](./protocol-fabric.md)** — MCP as the common IR in both directions. ClawQL Core turns any API into MCP; `/mcp-ui` then makes that catalog human-navigable in a browser.
 
 ## Direction: MCP → APIs
 
-ClawQL Core (`search` / `execute`) runs **OpenAPI → MCP**: it wraps REST/GraphQL/Discovery APIs and exposes them as MCP tools for agents. **`mcp-api-adapter`** runs the inverse: it wraps an MCP server and exposes the tool catalog outward as REST, GraphQL, gRPC, Streamable HTTP, and CLI for non-agent consumers.
+ClawQL Core (`search` / `execute`) runs **OpenAPI → MCP**: it wraps REST/GraphQL/Discovery APIs and exposes them as MCP tools for agents. **`mcp-api-adapter`** runs the inverse: it wraps an MCP server and exposes the tool catalog outward as REST, GraphQL, gRPC, Streamable HTTP, CLI, and (planned) browser UI for non-agent consumers.
 
 Position this as the **OpenAPI on-ramp** or **MCP tools as REST/GraphQL** — not “the OpenAPI gateway,” which collides with ClawQL Core’s direction.
 
@@ -107,7 +113,7 @@ npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
   npx -y @modelcontextprotocol/server-everything
 ```
 
-Defaults: HTTP listen `0.0.0.0:8090`. Open `/docs`, try `POST /{toolName}`, open `/graphiql`, point an IDE at `/mcp`, and run `grpcurl -plaintext 127.0.0.1:50051 list`.
+Defaults: HTTP listen `0.0.0.0:8090`. Open `/docs`, try `POST /{toolName}`, open `/graphiql`, point an IDE at `/mcp`, run `grpcurl -plaintext 127.0.0.1:50051 list`, and (when shipped) open `/mcp-ui` for the form playground.
 
 ### Streamable HTTP with explicit binds
 
@@ -134,7 +140,7 @@ Everything after `--stdio --` is the child command. The gateway keeps the stdio 
 
 With `--grpc-address`, no second gRPC server is started; `/openapi.json` advertises the upstream address in `info.x-clawql-grpc`.
 
-## The six surfaces
+## The surfaces
 
 ### OpenAPI — `POST /{toolName}`
 
@@ -184,6 +190,22 @@ mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
 ./my-cli echo --message "hello"
 ```
 
+### QR stream — optical channel (planned, 7th)
+
+Physical optical MCP / Streams channel for air-gapped deployments. Spec: [`../streams/clawql-qr-stream-transport.md`](../streams/clawql-qr-stream-transport.md).
+
+### `/mcp-ui` — Swagger UI for MCP (planned, 8th)
+
+Auto-scaffolded HTMX playground at **`/mcp-ui`**: one card per tool, forms generated from `inputSchema`, inline results, next-action links in the response (HATEOAS). Same catalog as `/docs` and `/graphiql` — human-first instead of OpenAPI/GraphQL IDE.
+
+```text
+GET /mcp-ui → tool cards
+  └─ form from inputSchema → hx-post /mcp-ui/execute/{tool}
+                          → result fragment under the card
+```
+
+Full draft: [`mcp-ui.md`](./mcp-ui.md). Differentiation vs standalone MCP playgrounds: **embedded and zero-config** (ships with the adapter, like Swagger at `/docs`). With ClawQL Core ingesting any API into MCP, `/mcp-ui` becomes a browser UI for every connected source — REST, gRPC, CLI, WebSocket — without writing a frontend.
+
 ## What shipped
 
 | Version | What landed                                             |
@@ -193,31 +215,45 @@ mcp-api-adapter gen-cli --out ./my-cli --stdio -- \
 | 0.5.0   | Streamable HTTP `/mcp` + `gen-cli`                      |
 | 0.5.1   | gRPC → `/mcp` content normalization for MCP SDK clients |
 | 0.6.0   | **WebSocket `/ws`** tool-call surface (sixth surface)   |
+| Next    | **QR** (7th) · **`/mcp-ui`** (8th)                      |
+
+## Candidates considered (not yet surfaces)
+
+Evaluated for later backlog; not committed alongside QR / `/mcp-ui`:
+
+| Candidate                         | Notes                                                                 |
+| --------------------------------- | --------------------------------------------------------------------- |
+| Explicit SSE surface              | Partially covered by Streamable HTTP; expose if non-MCP SSE consumers |
+| MQTT                              | IoT / industrial; pairs with TEE + Streams story                      |
+| AMQP                              | Enterprise brokers that require RabbitMQ-class protocols              |
+| Outbound webhooks as adapter path | Streams already has inbound webhooks; outbound tool→URL is common     |
 
 ## When to use it
 
-Use the adapter when you have a working MCP server and need Workers, OpenAPI panels, GraphQL, IDEs, mesh, or CLI access without writing glue per consumer.
+Use the adapter when you have a working MCP server and need Workers, OpenAPI panels, GraphQL, IDEs, mesh, CLI, or (planned) browser-form access without writing glue per consumer.
 
 A custom adapter makes more sense when you need a surface this package does not have, significant custom auth, or the generality works against you.
 
 ## CLI reference
 
-| Flag / env                                      | Meaning                                        |
-| ----------------------------------------------- | ---------------------------------------------- |
-| `--mcp-url`                                     | Streamable HTTP MCP URL                        |
-| `--stdio -- <cmd…>`                             | Spawn MCP over stdio                           |
-| `--grpc-address` / `CLAWQL_MCP_GRPC_ADDR`       | Upstream gRPC `host:port`                      |
-| `--grpc-host` / `--grpc-port`                   | Alternate gRPC address pieces                  |
-| `--listen` / `MCP_API_ADAPTER_LISTEN`           | HTTP bind (default `0.0.0.0:8090`)             |
-| `--grpc-listen` / `MCP_API_ADAPTER_GRPC_LISTEN` | Scaffolded gRPC bind (default `127.0.0.1:0`)   |
-| `--no-grpc`                                     | Do not scaffold local gRPC (stdio/HTTP only)   |
-| `--mcp-path` / `MCP_API_ADAPTER_MCP_PATH`       | Streamable HTTP path (default `/mcp`)          |
-| `--no-mcp`                                      | Disable `/mcp`                                 |
-| `--ws-path` / `MCP_API_ADAPTER_WS_PATH`         | WebSocket path (default `/ws`)                 |
-| `--no-ws`                                       | Disable WebSocket surface                      |
-| `--api-key` / `MCP_API_ADAPTER_API_KEY`         | Require `X-API-Key` or `Authorization: Bearer` |
-| `--refresh-ms`                                  | Re-`ListTools` poll interval                   |
-| `--title`                                       | Swagger / GraphiQL title                       |
+| Flag / env                                      | Meaning                                           |
+| ----------------------------------------------- | ------------------------------------------------- |
+| `--mcp-url`                                     | Streamable HTTP MCP URL                           |
+| `--stdio -- <cmd…>`                             | Spawn MCP over stdio                              |
+| `--grpc-address` / `CLAWQL_MCP_GRPC_ADDR`       | Upstream gRPC `host:port`                         |
+| `--grpc-host` / `--grpc-port`                   | Alternate gRPC address pieces                     |
+| `--listen` / `MCP_API_ADAPTER_LISTEN`           | HTTP bind (default `0.0.0.0:8090`)                |
+| `--grpc-listen` / `MCP_API_ADAPTER_GRPC_LISTEN` | Scaffolded gRPC bind (default `127.0.0.1:0`)      |
+| `--no-grpc`                                     | Do not scaffold local gRPC (stdio/HTTP only)      |
+| `--mcp-path` / `MCP_API_ADAPTER_MCP_PATH`       | Streamable HTTP path (default `/mcp`)             |
+| `--no-mcp`                                      | Disable `/mcp`                                    |
+| `--ws-path` / `MCP_API_ADAPTER_WS_PATH`         | WebSocket path (default `/ws`)                    |
+| `--no-ws`                                       | Disable WebSocket surface                         |
+| `--mcp-ui-path` / `MCP_API_ADAPTER_MCP_UI_PATH` | HTMX playground path (default `/mcp-ui`, planned) |
+| `--no-mcp-ui`                                   | Disable `/mcp-ui` (planned)                       |
+| `--api-key` / `MCP_API_ADAPTER_API_KEY`         | Require `X-API-Key` or `Authorization: Bearer`    |
+| `--refresh-ms`                                  | Re-`ListTools` poll interval                      |
+| `--title`                                       | Swagger / GraphiQL / mcp-ui title                 |
 
 Legacy env `MCP_OPENAPI_GATEWAY_*` is still accepted. Exactly one upstream mode is required (`--mcp-url`, `--stdio`, or `--grpc-address` / env default).
 
@@ -270,6 +306,8 @@ Compatibility: `startMcpOpenApiGateway({ grpcAddress })` ≡ `startMcpApiAdapter
 | `GET /graphql/schema.graphql` | SDL                                                  |
 | Streamable HTTP `/mcp`        | MCP re-export for IDE / SDK clients                  |
 | WebSocket `/ws`               | Persistent JSON tool calls                           |
+| `GET /mcp-ui` (planned)       | HTMX tool playground — Swagger UI for MCP            |
+| `POST /mcp-ui/execute/{tool}` | HTMX form invoke → HTML result fragment (planned)    |
 
 ## GraphQL conventions
 
@@ -288,16 +326,17 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 
 ## Relationship to other ClawQL pieces
 
-| Piece                                                                       | Role                                                                     |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| **[Protocol Fabric](./protocol-fabric.md)**                                 | Named claim for Core + adapter (any protocol ↔ any); proven loop         |
-| **`mcp-api-adapter`**                                                       | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli (+ QR planned) |
-| **ClawQL `search` / `execute`**                                             | OpenAPI → MCP tools (inverse)                                            |
-| **[Custom sources](../getting-started/custom-sources.md)**                  | Register other MCP servers **into** the ClawQL gateway                   |
-| **`mcp-grpc-transport`**                                                    | Production TypeScript MCP gRPC transport                                 |
-| **Panguard bridge**                                                         | Policy / JWT ATR in front of MCP                                         |
-| **[ClawQL Streams](../streams/clawql-streams.md)** (draft)                  | Event-driven agents; WebSocket / QR sources into Core                    |
-| **[QR stream transport](../streams/clawql-qr-stream-transport.md)** (draft) | Planned **7th surface** — optical air-gap MCP + Streams source           |
+| Piece                                                                       | Role                                                                                 |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **[Protocol Fabric](./protocol-fabric.md)**                                 | Named claim for Core + adapter (any protocol ↔ any); proven loop                     |
+| **`mcp-api-adapter`**                                                       | MCP → OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli (+ QR + `/mcp-ui` planned) |
+| **ClawQL `search` / `execute`**                                             | OpenAPI → MCP tools (inverse)                                                        |
+| **[Custom sources](../getting-started/custom-sources.md)**                  | Register other MCP servers **into** the ClawQL gateway                               |
+| **`mcp-grpc-transport`**                                                    | Production TypeScript MCP gRPC transport                                             |
+| **Panguard bridge**                                                         | Policy / JWT ATR in front of MCP                                                     |
+| **[ClawQL Streams](../streams/clawql-streams.md)** (draft)                  | Event-driven agents; WebSocket / QR sources into Core                                |
+| **[QR stream transport](../streams/clawql-qr-stream-transport.md)** (draft) | Planned **7th surface** — optical air-gap MCP + Streams source                       |
+| **[`/mcp-ui`](./mcp-ui.md)** (draft)                                        | Planned **8th surface** — HTMX / HATEOAS Swagger UI for MCP                          |
 
 ## Troubleshooting
 
@@ -310,16 +349,15 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 
 ## Further reading
 
-- Essay: [Seven surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter/) · draft [`../gtm/pragmaticvectors/mcp-api-adapter.md`](../gtm/pragmaticvectors/mcp-api-adapter.md)
+- Essay: [Eight surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter/) · draft [`../gtm/pragmaticvectors/mcp-api-adapter.md`](../gtm/pragmaticvectors/mcp-api-adapter.md)
 - Package README: [`packages/mcp-api-adapter/README.md`](../../packages/mcp-api-adapter/README.md)
 - Design & non-goals: [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)
 - GTM positioning: [`docs/gtm/mcp-api-adapter-positioning.md`](../gtm/mcp-api-adapter-positioning.md)
 - Protocol Fabric (proven loop): [`docs/mcp/protocol-fabric.md`](./protocol-fabric.md)
 - ClawQL Streams (draft): [`docs/streams/clawql-streams.md`](../streams/clawql-streams.md)
 - QR stream transport (draft, 7th surface): [`docs/streams/clawql-qr-stream-transport.md`](../streams/clawql-qr-stream-transport.md)
+- `/mcp-ui` (draft, 8th surface): [`docs/mcp/mcp-ui.md`](./mcp-ui.md)
 - Earlier post: [MCP tools as APIs](https://pragmaticvectors.com/posts/mcp-tools-as-apis/)
 - gRPC transport: [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/)
 - Local smoke: [`scripts/dev/smoke-mcp-api-adapter.sh`](../../scripts/dev/smoke-mcp-api-adapter.sh) · [`scripts/dev/smoke-protocol-fabric-loop.sh`](../../scripts/dev/smoke-protocol-fabric-loop.sh)
 - Protocol Fabric / event loop (draft): [`docs/streams/clawql-streams.md`](../streams/clawql-streams.md)
-
-> > > > > > > 19d2cfe7 (docs(mcp-api-adapter): language-agnostic upstream + mcpo positioning)

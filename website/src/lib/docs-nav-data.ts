@@ -156,6 +156,11 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'Reference', href: '/reference' },
       { title: 'MCP tools', href: '/tools' },
       { title: 'mcp-api-adapter', href: '/mcp/mcp-api-adapter' },
+      {
+        title: '/mcp-ui',
+        href: '/mcp/mcp-ui',
+        tag: 'Draft',
+      },
       { title: 'Protocol Fabric', href: '/mcp/protocol-fabric' },
       { title: 'Configuration', href: '/spec-configuration' },
       {
