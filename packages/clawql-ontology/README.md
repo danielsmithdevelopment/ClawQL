@@ -4,6 +4,8 @@ Lint, scaffold, and generate tooling for ClawQL’s **enterprise Ontology** ([AD
 
 **Why it matters (OpenBench B-7):** vault memory alone still hard-zeros on institutional enumeration when semantic near-misses become false positives. Typed predicates (`schema` + `filters` over the legal pack / `ontology.db`) closed the set — [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/).
 
+**Also:** negative-path entities (`FailedStrategy`), append-only evidentiary field history, and coverage lint — plus the security↔ontology event loop — [`docs/security/security-ontology-knowledge-loop.md`](../../docs/security/security-ontology-knowledge-loop.md).
+
 ## Commands
 
 ```bash

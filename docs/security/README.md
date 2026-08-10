@@ -17,6 +17,7 @@ This section tracks ClawQL security architecture, shipped controls, and roadmap 
 - **Local Privacy Filter** (gateway backup after Presidio, [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)): [`privacy-filter-local.md`](privacy-filter-local.md)
 - **clawql-auth OIDC consumer + step-up** (not a full IdP): [`clawql-auth-oidc-stepup.md`](clawql-auth-oidc-stepup.md)
 - **MCP proxy JWT ATR** (mesh / Panguard chokepoint): [`mcp-proxy-jwt-atr.md`](mcp-proxy-jwt-atr.md)
+- **Security ↔ ontology knowledge loop** (ATR gates as grammar-adversarial validation, `SecurityEvent` / `FailedStrategy`, capability Gate 3, one loop with WORM): [`security-ontology-knowledge-loop.md`](security-ontology-knowledge-loop.md)
 
 ## Supply-chain pipeline (summary)
 

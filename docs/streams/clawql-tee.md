@@ -124,11 +124,12 @@ Client / regulator
 Six links — each removes one trust assumption:
 
 1. **Binary attestation** (Cosign + SEV-SNP measurement) — binary is exactly published cellrt
-2. **WASM capability sandbox** — tools cannot exceed granted WIT imports
-3. **Attestation-gated virtual keys** — model access only after hardware verification
-4. **WORM audit** (LTX, RPO=0) — every action recorded before ack
-5. **QR air-gap transport** — audit reaches verifier on a channel the operator cannot influence ([spec](./clawql-tee-airgap-audit.md))
-6. **GPU CC** — weights and inputs never exposed to the host
+2. **WASM capability sandbox** — tools cannot exceed granted WIT imports at instantiation
+3. **Per-call capability accounting (planned)** — WORM records `capabilitiesExercised[]`; success via undeclared ambient host power is a Gate 3 failure ([security-ontology knowledge loop](../security/security-ontology-knowledge-loop.md) §2.3)
+4. **Attestation-gated virtual keys** — model access only after hardware verification
+5. **WORM audit** (LTX, RPO=0) — every action recorded before ack
+6. **QR air-gap transport** — audit reaches verifier on a channel the operator cannot influence ([spec](./clawql-tee-airgap-audit.md))
+7. **GPU CC** — weights and inputs never exposed to the host
 
 The attestation is only as interesting as what it attests. Attesting an agentic execution environment with capability-constrained tools and provable audit is the product claim — not “nginx is unmodified.”
 
