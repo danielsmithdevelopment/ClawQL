@@ -52,13 +52,13 @@ Use **“OpenAPI on-ramp”**, **“GraphQL on-ramp”**, or **“MCP tools as R
 
 ## Channels
 
-| Channel                                   | When                                                        |
-| ----------------------------------------- | ----------------------------------------------------------- |
-| Vision & Roadmap planned row              | Now (design merged)                                         |
-| npm README + Compose/Helm sidecar example | At MVP ship                                                 |
-| pragmaticvectors / blog                   | After MVP: “MCP tools as OpenAPI/GraphQL — gRPC underneath” |
-| Managed Edge Gateway docs                 | Optional companion port once edge hardening lands           |
-| Announcement drafts                       | Bundle with next minor that publishes the package           |
+| Channel                                   | When                                                                                                                                           |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Vision & Roadmap planned row              | Now (design merged)                                                                                                                            |
+| npm README + Compose/Helm sidecar example | At MVP ship                                                                                                                                    |
+| pragmaticvectors / blog                   | Shipped drafts: [Anything to MCP](./pragmaticvectors/anything-to-mcp-to-anything.md) · [Seven Surfaces](./pragmaticvectors/mcp-api-adapter.md) |
+| Managed Edge Gateway docs                 | Optional companion port once edge hardening lands                                                                                              |
+| Announcement drafts                       | Bundle with next minor that publishes the package                                                                                              |
 
 ---
 
