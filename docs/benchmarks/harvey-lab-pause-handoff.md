@@ -13,11 +13,11 @@ Run ClawQL against Harvey LAB [`firm-knowledge`](https://github.com/harveyai/har
 
 Harvey + Trajectory published LAB results for **NVIDIA Nemotron 3.5 Lightning** (post-trained on LAB): **8.3% all-pass** (vs base 0%; beats Opus 4.6 at 6.6%). That changes the strategy:
 
-| Arm | Model | ClawQL | Purpose |
-| --- | ----- | ------ | ------- |
-| **A** | Opus 4.8 | no | Frontier baseline |
-| **B** | Opus 4.8 | yes | Does ClawQL improve frontier? |
-| **C** | Nemotron 3.5 Lightning | yes | Does ClawQL compound LAB post-training? If >8.3% all-pass, publishable reply to Harvey’s announcement |
+| Arm   | Model                  | ClawQL | Purpose                                                                                               |
+| ----- | ---------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
+| **A** | Opus 4.8               | no     | Frontier baseline                                                                                     |
+| **B** | Opus 4.8               | yes    | Does ClawQL improve frontier?                                                                         |
+| **C** | Nemotron 3.5 Lightning | yes    | Does ClawQL compound LAB post-training? If >8.3% all-pass, publishable reply to Harvey’s announcement |
 
 Valid comparisons: **A vs B** (same Opus). Arm C is compared to Harvey’s published Nemotron 8.3% (and optionally a future Nemotron-without-ClawQL arm). Do **not** compare Sonnet vs Opus across arms.
 
@@ -25,32 +25,32 @@ Valid comparisons: **A vs B** (same Opus). Arm C is compared to Harvey’s publi
 
 ## Decision locked
 
-| Topic | Decision |
-| ----- | -------- |
-| Where to run | **GitHub Actions** — repo secret `OPENROUTER_API_KEY` |
-| Not Cursor Cloud Agent | Cloud Agent pods do **not** inherit GHA secrets |
-| Debug model | Sonnet via OpenRouter (`claude-sonnet-4-6`) |
-| Publishable A/B | Opus 4.8 both arms |
-| Arm C | `clawql-cc/nvidia/nemotron-3.5-lightning` (OpenRouter chat; default `:free`) |
-| Judge | Sonnet (all arms) |
-| Vault isolation | Task-scoped vault; delete/recreate between tasks |
-| DMS ingest | Priority docs per matter (not all ~9k binaries) |
-| Cost note | **250** firm-knowledge tasks — gate full Opus sweep |
+| Topic                  | Decision                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| Where to run           | **GitHub Actions** — repo secret `OPENROUTER_API_KEY`                        |
+| Not Cursor Cloud Agent | Cloud Agent pods do **not** inherit GHA secrets                              |
+| Debug model            | Sonnet via OpenRouter (`claude-sonnet-4-6`)                                  |
+| Publishable A/B        | Opus 4.8 both arms                                                           |
+| Arm C                  | `clawql-cc/nvidia/nemotron-3.5-lightning` (OpenRouter chat; default `:free`) |
+| Judge                  | Sonnet (all arms)                                                            |
+| Vault isolation        | Task-scoped vault; delete/recreate between tasks                             |
+| DMS ingest             | Priority docs per matter (not all ~9k binaries)                              |
+| Cost note              | **250** firm-knowledge tasks — gate full Opus sweep                          |
 
 ## What’s landed
 
-| Path | Status |
-| ---- | ------ |
-| `integrations/harvey-labs/harness/adapters/clawql.py` | Anthropic + ClawQL (Arms B) |
-| `integrations/harvey-labs/harness/adapters/clawql_chat.py` | OpenRouter chat + ClawQL (Arm C) |
-| `integrations/harvey-labs/harness/adapters/clawql_lab_session.py` | Shared vault / MCP / ingest |
-| `integrations/harvey-labs/harness/adapters/clawql_openrouter.py` | Anthropic + OpenAI OpenRouter clients |
-| `integrations/harvey-labs/scripts/apply_clawql_adapter.py` | Overlay + `clawql` / `clawql-cc` routing |
-| `integrations/harvey-labs/scripts/run-lab-gha.sh` | GHA entrypoint (3 arms) |
-| `.github/workflows/harvey-lab-firm-knowledge.yml` | `workflow_dispatch` |
-| `scripts/start-clawql-for-lab.sh` | Task-scoped MCP + vault |
-| `integrations/harvey-labs/tests/test_vault_isolation.py` | Unit tests |
-| `docs/benchmarks/harvey-lab-*.md` | Ledgers + this handoff |
+| Path                                                              | Status                                   |
+| ----------------------------------------------------------------- | ---------------------------------------- |
+| `integrations/harvey-labs/harness/adapters/clawql.py`             | Anthropic + ClawQL (Arms B)              |
+| `integrations/harvey-labs/harness/adapters/clawql_chat.py`        | OpenRouter chat + ClawQL (Arm C)         |
+| `integrations/harvey-labs/harness/adapters/clawql_lab_session.py` | Shared vault / MCP / ingest              |
+| `integrations/harvey-labs/harness/adapters/clawql_openrouter.py`  | Anthropic + OpenAI OpenRouter clients    |
+| `integrations/harvey-labs/scripts/apply_clawql_adapter.py`        | Overlay + `clawql` / `clawql-cc` routing |
+| `integrations/harvey-labs/scripts/run-lab-gha.sh`                 | GHA entrypoint (3 arms)                  |
+| `.github/workflows/harvey-lab-firm-knowledge.yml`                 | `workflow_dispatch`                      |
+| `scripts/start-clawql-for-lab.sh`                                 | Task-scoped MCP + vault                  |
+| `integrations/harvey-labs/tests/test_vault_isolation.py`          | Unit tests                               |
+| `docs/benchmarks/harvey-lab-*.md`                                 | Ledgers + this handoff                   |
 
 ## Verified before pause (still true)
 
@@ -98,10 +98,10 @@ gh workflow run harvey-lab-firm-knowledge.yml \
 
 ## Related OpenBench (mechanism, not LAB scores)
 
-| Cell | Note |
-| ---- | ---- |
+| Cell                  | Note                                                |
+| --------------------- | --------------------------------------------------- |
 | B-7.1 / B-7.2 / B-7.3 | Synthetic fixture wins — validate architecture only |
-| B-7.4 full C&H corpus | LAB DMS is the real firm corpus for LAB scores |
+| B-7.4 full C&H corpus | LAB DMS is the real firm corpus for LAB scores      |
 
 ## Anti-patterns
 

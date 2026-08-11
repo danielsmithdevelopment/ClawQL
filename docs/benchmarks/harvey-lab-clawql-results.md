@@ -14,46 +14,46 @@ Publishable A/B requires **Opus vs Opus**. Arm C (Nemotron + ClawQL) is compared
 
 ## Arm A — Baseline (Opus, standard harness)
 
-| Metric | Value |
-| ------ | ----- |
+| Metric              | Value     |
+| ------------------- | --------- |
 | Criterion pass rate | _pending_ |
-| All-pass rate | _pending_ |
-| Mean turns | _pending_ |
-| Mean tokens | _pending_ |
+| All-pass rate       | _pending_ |
+| Mean turns          | _pending_ |
+| Mean tokens         | _pending_ |
 
 ## Arm B — Opus + ClawQL (vault + MCP + priority DMS seed)
 
-| Metric | Value |
-| ------ | ----- |
+| Metric              | Value     |
+| ------------------- | --------- |
 | Criterion pass rate | _pending_ |
-| All-pass rate | _pending_ |
-| Mean turns | _pending_ |
-| Mean tokens | _pending_ |
+| All-pass rate       | _pending_ |
+| Mean turns          | _pending_ |
+| Mean tokens         | _pending_ |
 
 ## Arm C — Nemotron 3.5 Lightning + ClawQL
 
-| Metric | Value |
-| ------ | ----- |
-| Criterion pass rate | _pending_ |
-| All-pass rate | _pending_ |
-| Mean turns | _pending_ |
-| Mean tokens | _pending_ |
+| Metric                                    | Value     |
+| ----------------------------------------- | --------- |
+| Criterion pass rate                       | _pending_ |
+| All-pass rate                             | _pending_ |
+| Mean turns                                | _pending_ |
+| Mean tokens                               | _pending_ |
 | vs published Nemotron LAB (8.3% all-pass) | _pending_ |
 
 ## Delta (B − A)
 
-| Metric | Value |
-| ------ | ----- |
+| Metric              | Value     |
+| ------------------- | --------- |
 | Criterion pass rate | _pending_ |
-| All-pass rate | _pending_ |
-| Turn reduction | _pending_ |
-| Token reduction | _pending_ |
+| All-pass rate       | _pending_ |
+| Turn reduction      | _pending_ |
+| Token reduction     | _pending_ |
 
 ## Per-task breakdown
 
-| Task | A CPR | B CPR | C CPR | A all-pass | B all-pass | C all-pass |
-| ---- | ----- | ----- | ----- | ---------- | ---------- | ---------- |
-| firm-knowledge/tasks/001 | — | — | — | — | — | — |
+| Task                     | A CPR | B CPR | C CPR | A all-pass | B all-pass | C all-pass |
+| ------------------------ | ----- | ----- | ----- | ---------- | ---------- | ---------- |
+| firm-knowledge/tasks/001 | —     | —     | —     | —          | —          | —          |
 
 ## Implementation notes
 
