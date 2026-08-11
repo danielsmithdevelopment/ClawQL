@@ -24,6 +24,18 @@ NEMOTRON_MODEL="${LAB_NEMOTRON_MODEL:-nvidia/nemotron-3.5-lightning:free}"
 RESULTS_OUT="${CLAWQL_ROOT}/integrations/harvey-labs/results"
 mkdir -p "${RESULTS_OUT}"
 
+# Arm C–first: OpenRouter-only. Default Claude judge needs Anthropic — auto-switch
+# to an OpenRouter chat judge unless explicitly forced.
+_arms_norm="$(echo "${ARMS}" | tr -d '[:space:]')"
+if [[ "${_arms_norm}" == "nemotron-clawql" || "${_arms_norm}" == "clawql-nemotron" ]]; then
+  if [[ "${JUDGE}" == claude* ]] && [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+    if [[ "${CLAWQL_LAB_ALLOW_CLAUDE_JUDGE_VIA_OPENROUTER:-0}" != "1" ]]; then
+      JUDGE="${LAB_OPENROUTER_JUDGE_MODEL:-openai/gpt-4o-mini}"
+      echo "::notice::Arm C-only + no ANTHROPIC_API_KEY → judge=${JUDGE} (OpenRouter chat). Set CLAWQL_LAB_ALLOW_CLAUDE_JUDGE_VIA_OPENROUTER=1 to keep Claude via OpenRouter."
+    fi
+  fi
+fi
+
 if [[ -z "${OPENROUTER_API_KEY:-}" && -z "${ANTHROPIC_API_KEY:-}" ]]; then
   echo "Need OPENROUTER_API_KEY (preferred) or ANTHROPIC_API_KEY" >&2
   exit 1

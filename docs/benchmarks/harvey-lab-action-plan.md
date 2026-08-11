@@ -31,16 +31,16 @@ Harvey LAB itself stays upstream (`harveyai/harvey-labs`). ClawQL owns an **over
 ## Execution sequence (unchanged cost discipline)
 
 ```
-Phase A: Sonnet, 1 task, A/B (+ optional C) — smoke
+★ Arm C first: Nemotron + ClawQL on OpenRouter only (judge: openai/gpt-4o-mini)
+Phase A: Sonnet A/B (needs Anthropic)
 Phase B: Sonnet, ~5 tasks — adapter correctness
 Phase C: Sonnet, 2 tasks back-to-back — vault isolation
 Phase D: Sonnet, prompt tune
-Phase E: Opus A/B (+ C) — publishable ledger
-Phase F: Sonnet judge — already part of each arm
+Phase E: Opus A/B (+ C) — publishable ledger (Sonnet judge preferred)
+Phase F: Sonnet judge — already part of each arm when Anthropic available
 ```
 
-Trigger via GHA only (`OPENROUTER_API_KEY`). Do not wait on Cursor Cloud Agent secrets.
-
+Trigger via GHA only (`OPENROUTER_API_KEY`). Arm C does **not** need `ANTHROPIC_API_KEY`. Do not wait on Cursor Cloud Agent secrets.
 ## Success criteria (from plan)
 
 1. Sweeps complete on firm-knowledge with Opus for A/B (C optional but preferred)

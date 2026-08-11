@@ -61,31 +61,33 @@ Valid comparisons: **A vs B** (same Opus). Arm C is compared to Harvey’s publi
 
 ## Not done (resume here)
 
-1. **Phase A (Sonnet):** `firm-knowledge/tasks/001`, arms `baseline,clawql`, `LAB_MAX_TURNS=15`
-2. Optional Arm C smoke: add `nemotron-clawql` with `max_matters=5`
+1. **★ Arm C first (OpenRouter only):** `arms=nemotron-clawql`, judge `openai/gpt-4o-mini`, `max_matters=5`, task `001`
+2. **Phase A (Sonnet A/B):** needs Anthropic — `baseline,clawql`, judge Sonnet
 3. **Phases B–D:** 5-task sample, vault isolation live check, prompt tune — still Sonnet
-4. **Phase E:** Opus A/B (+ Arm C) firm-knowledge sweep
+4. **Phase E:** Opus A/B (+ Arm C) firm-knowledge sweep; prefer Sonnet judge for all arms
 5. Fill `harvey-lab-baseline.md` + `harvey-lab-clawql-results.md`
 6. Optional: RTP/OBT Cloudflare traces with `community_model` consent
-
 ## Resume commands
 
 ```bash
-# Phase A — Sonnet A/B
+# ★ Arm C first (OpenRouter only — no Anthropic required)
+# Use workflow defaults: arms=nemotron-clawql, judge=openai/gpt-4o-mini, max_matters=5
+gh workflow run harvey-lab-firm-knowledge.yml \
+  --ref cursor/harvey-lab-three-arm-nemotron-4ff0 \
+  -f task=firm-knowledge/tasks/001 \
+  -f arms=nemotron-clawql \
+  -f nemotron_model=nvidia/nemotron-3.5-lightning:free \
+  -f judge_model=openai/gpt-4o-mini \
+  -f max_turns=15 \
+  -f max_matters=5
+
+# Phase A — Sonnet A/B (needs Anthropic or Claude-on-OpenRouter)
 gh workflow run harvey-lab-firm-knowledge.yml \
   -f task=firm-knowledge/tasks/001 \
   -f model=claude-sonnet-4-6 \
   -f max_turns=15 \
   -f arms=baseline,clawql \
-  -f max_matters=5
-
-# Phase A′ — include Arm C (Nemotron + ClawQL)
-gh workflow run harvey-lab-firm-knowledge.yml \
-  -f task=firm-knowledge/tasks/001 \
-  -f model=claude-sonnet-4-6 \
-  -f nemotron_model=nvidia/nemotron-3.5-lightning:free \
-  -f max_turns=15 \
-  -f arms=baseline,clawql,nemotron-clawql \
+  -f judge_model=claude-sonnet-4-6 \
   -f max_matters=5
 
 # Phase E — Opus A/B (+ optional C)
@@ -93,9 +95,11 @@ gh workflow run harvey-lab-firm-knowledge.yml \
   -f task=firm-knowledge/tasks/001 \
   -f model=claude-opus-4-8 \
   -f max_turns=40 \
-  -f arms=baseline,clawql,nemotron-clawql
+  -f arms=baseline,clawql,nemotron-clawql \
+  -f judge_model=claude-sonnet-4-6
 ```
 
+**Arm C judge note:** Default Sonnet judge needs Anthropic. For OpenRouter-only Arm C, use `openai/gpt-4o-mini` (or another OpenRouter chat model). Re-score with Sonnet later for publishable ledger parity with A/B.
 ## Related OpenBench (mechanism, not LAB scores)
 
 | Cell                  | Note                                                |

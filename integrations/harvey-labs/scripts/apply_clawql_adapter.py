@@ -90,6 +90,10 @@ def copy_files(src_root: Path, dest_root: Path) -> None:
             src_root / "harness" / "clawql_tools.py",
             dest_root / "harness" / "clawql_tools.py",
         ),
+        (
+            src_root / "evaluation" / "clawql_openrouter_judge.py",
+            dest_root / "evaluation" / "clawql_openrouter_judge.py",
+        ),
     ]
     for src, dest in pairs:
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -308,6 +312,39 @@ def patch_openrouter_clients(harvey_labs: Path) -> None:
     print(f"patched {judge}")
 
 
+def patch_run_eval_judge_factory(harvey_labs: Path) -> None:
+    """Route Arm C / OpenRouter judge models through OpenRouterChatJudge."""
+    run_eval = harvey_labs / "evaluation" / "run_eval.py"
+    text = run_eval.read_text(encoding="utf-8")
+    begin = "# --- clawql-judge-factory begin ---"
+    end = "# --- clawql-judge-factory end ---"
+    factory = f"""{begin}
+def _clawql_make_judge(model: str):
+    from harness.adapters.clawql_openrouter import make_lab_judge
+    return make_lab_judge(model)
+{end}
+"""
+    if begin in text:
+        text = _replace_block(text, begin, end, factory)
+    else:
+        anchor = "from evaluation.judge import Judge\n"
+        if anchor not in text:
+            raise SystemExit("run_eval.py Judge import anchor not found")
+        text = text.replace(anchor, anchor + "\n" + factory + "\n", 1)
+
+    # Prefer factory for CLI judge construction.
+    text = text.replace(
+        "judge = Judge(model=args.judge_model)",
+        "judge = _clawql_make_judge(args.judge_model)",
+    )
+    text = text.replace(
+        "judge = Judge(model=judge_model)",
+        "judge = _clawql_make_judge(judge_model)",
+    )
+    run_eval.write_text(text, encoding="utf-8")
+    print(f"patched {run_eval}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -329,6 +366,7 @@ def main() -> int:
     copy_files(args.integration_root, args.harvey_labs)
     patch_run_py(args.harvey_labs / "harness" / "run.py")
     patch_openrouter_clients(args.harvey_labs)
+    patch_run_eval_judge_factory(args.harvey_labs)
     return 0
 
 

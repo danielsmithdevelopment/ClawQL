@@ -17,28 +17,29 @@ Publishable A/B is Opus vs Opus. Arm C compounds Harvey/Trajectory’s LAB post-
 Same as OpenBench: use repo secret **`OPENROUTER_API_KEY`**. Do not depend on Cursor Cloud Agent env secrets.
 
 ```bash
-# Phase A — Sonnet A/B
+# ★ Arm C first — OpenRouter only
+gh workflow run harvey-lab-firm-knowledge.yml \
+  --ref cursor/harvey-lab-three-arm-nemotron-4ff0 \
+  -f task=firm-knowledge/tasks/001 \
+  -f arms=nemotron-clawql \
+  -f nemotron_model=nvidia/nemotron-3.5-lightning:free \
+  -f judge_model=openai/gpt-4o-mini \
+  -f max_turns=15 \
+  -f max_matters=5
+
+# Later: Sonnet A/B (needs Anthropic)
 gh workflow run harvey-lab-firm-knowledge.yml \
   -f task=firm-knowledge/tasks/001 \
   -f model=claude-sonnet-4-6 \
   -f max_turns=15 \
   -f arms=baseline,clawql \
-  -f max_matters=5
-
-# Include Arm C
-gh workflow run harvey-lab-firm-knowledge.yml \
-  -f task=firm-knowledge/tasks/001 \
-  -f model=claude-sonnet-4-6 \
-  -f nemotron_model=nvidia/nemotron-3.5-lightning:free \
-  -f max_turns=15 \
-  -f arms=baseline,clawql,nemotron-clawql \
+  -f judge_model=claude-sonnet-4-6 \
   -f max_matters=5
 ```
 
-Workflow: [`.github/workflows/harvey-lab-firm-knowledge.yml`](../../.github/workflows/harvey-lab-firm-knowledge.yml)  
+Workflow defaults are now **Arm C–first** (`nemotron-clawql` + OpenRouter judge).  
 Pause / resume: [`docs/benchmarks/harvey-lab-pause-handoff.md`](../../docs/benchmarks/harvey-lab-pause-handoff.md)  
 Plan reconciliation: [`docs/benchmarks/harvey-lab-action-plan.md`](../../docs/benchmarks/harvey-lab-action-plan.md)
-
 ## What this provides
 
 | Path | Purpose |
