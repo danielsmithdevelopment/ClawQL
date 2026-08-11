@@ -134,7 +134,7 @@ run_and_eval() {
     return "${rc}"
   fi
   local run_id
-  run_id="$(rg -o 'Run complete: \K.+' "${run_log}" | tail -1)"
+  run_id="$(grep -oE 'Run complete: .+' "${run_log}" | tail -1 | sed 's/^Run complete: //')"
   if [[ -z "${run_id}" ]]; then
     echo "::error::Could not parse run id for arm ${arm}"
     return 1
