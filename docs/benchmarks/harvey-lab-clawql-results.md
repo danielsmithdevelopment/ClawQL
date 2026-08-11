@@ -60,9 +60,15 @@ Publishable Opus A/B still blocked on Anthropic. Re-judge with Sonnet before any
 
 ## Next
 
-1. Prompt/harness: require final answer under `/workspace/output/` before ending
+1. ~~Prompt/harness: require final answer under `/workspace/output/`~~ shipped (prompt + deliverable-guard nudge)
 2. Re-run `nemotron-clawql` — expect CPR jump if deliverable is written
 3. Opus A/B when Anthropic available; Sonnet re-judge before Harvey outreach
+
+### ClawQL bugs fixed along the way
+
+- Ontology structured recalls mislabeled `results[].reason` as `keyword` → now `structured_predicate`
+- LAB recall enrichment: `sandboxDocumentRoot` + `labGuidance` so agents do not `read` vault `Memory/` paths
+- Deliverable guard: one forced nudge when ClawQL arm finishes with empty `/workspace/output/`
 
 ## Notes
 

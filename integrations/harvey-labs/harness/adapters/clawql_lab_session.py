@@ -312,6 +312,105 @@ def _clawql_field_block(
     )
 
 
+def _unwrap_mcp_tool_payload(result: Any) -> Any:
+    """Normalize MCP tools/call payloads that wrap JSON in content[].text."""
+    if not isinstance(result, dict):
+        return result
+    content = result.get("content")
+    if (
+        isinstance(content, list)
+        and content
+        and isinstance(content[0], dict)
+        and content[0].get("type") == "text"
+        and isinstance(content[0].get("text"), str)
+    ):
+        text = content[0]["text"]
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            return result
+    return result
+
+
+def _enrich_lab_memory_recall(result: Any) -> dict[str, Any]:
+    """Attach sandbox document roots + deliverable reminder for LAB agents.
+
+    Vault note paths (Memory/...) are not readable via the harness ``read`` tool.
+    Agents must use ``/workspace/documents/matters/<id>`` and write graded
+    output under ``/workspace/output/``.
+    """
+    payload = _unwrap_mcp_tool_payload(result)
+    if not isinstance(payload, dict):
+        return {"raw": result}
+
+    hits = payload.get("hits")
+    if not isinstance(hits, list):
+        hits = []
+
+    enriched_hits: list[dict[str, Any]] = []
+    matter_ids: list[str] = []
+    for hit in hits:
+        if not isinstance(hit, dict):
+            continue
+        h = dict(hit)
+        meta = dict(h.get("meta") or {})
+        fields = dict(h.get("fields") or meta.get("fields") or {})
+        entity_id = (
+            h.get("entityId")
+            or fields.get("id")
+            or meta.get("entityId")
+        )
+        # Fallback: parse Matter:… from vault path / title
+        if not entity_id:
+            path = str(h.get("path") or "")
+            m = re.search(r"(\d{4}-\d{5}|MAT-\d{4})", path)
+            if m:
+                entity_id = m.group(1)
+        if entity_id:
+            matter_ids.append(str(entity_id))
+            h["entityId"] = str(entity_id)
+            h["sandboxDocumentRoot"] = f"/workspace/documents/matters/{entity_id}"
+            fields = {**fields, "id": str(entity_id)}
+            h["fields"] = fields
+            if payload.get("queryType") == "structured_predicate" or payload.get(
+                "indexUsed"
+            ) == "ontology":
+                meta["reason"] = "structured_predicate"
+                h["meta"] = meta
+        enriched_hits.append(h)
+
+    # Keep results[] reason aligned with ontology path (enterprise clarity).
+    results = payload.get("results")
+    if isinstance(results, list) and (
+        payload.get("queryType") == "structured_predicate"
+        or payload.get("indexUsed") == "ontology"
+    ):
+        fixed_results = []
+        for row in results:
+            if isinstance(row, dict):
+                r = dict(row)
+                r["reason"] = "structured_predicate"
+                fixed_results.append(r)
+            else:
+                fixed_results.append(row)
+        payload["results"] = fixed_results
+
+    payload["hits"] = enriched_hits
+    payload["labGuidance"] = {
+        "sandboxDocumentRoots": [
+            f"/workspace/documents/matters/{mid}" for mid in matter_ids
+        ],
+        "vaultPathsNotReadableViaHarnessRead": True,
+        "requiredDeliverable": (
+            "Before finishing, call the harness `write` tool to create a file "
+            "under /workspace/output/ (e.g. matters-enumeration.md). "
+            "Chat-only answers are not graded."
+        ),
+        "matterIds": matter_ids,
+    }
+    return payload
+
+
 def is_clawql_lab_adapter(adapter: Any) -> bool:
     """True for Anthropic or chat-completions ClawQL LAB adapters."""
     return getattr(adapter, "__class__", type(None)).__name__ in {
@@ -405,6 +504,8 @@ class ClawQLLabSession:
             args["type"] = "context"
         try:
             result = self._call_clawql_mcp(mcp_name, args)
+            if mcp_name == "memory_recall":
+                result = _enrich_lab_memory_recall(result)
             return json.dumps(result, indent=2, default=str)[:20000]
         except Exception as exc:  # noqa: BLE001
             return f"Error calling ClawQL MCP tool {mcp_name}: {exc}"
