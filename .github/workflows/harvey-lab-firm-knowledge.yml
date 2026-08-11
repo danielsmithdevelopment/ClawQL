@@ -1,15 +1,15 @@
-# Harvey LAB × ClawQL — firm-knowledge runs (GHA / OpenRouter).
+# Harvey LAB × ClawQL — firm-knowledge matrix (GHA / OpenRouter).
 #
-# Nemotron pair (OpenRouter-only, no Anthropic):
+# OpenBench-style:
+#   - pull_request / push (path-filtered): Nemotron ± ClawQL matrix (OpenRouter-only)
+#   - workflow_dispatch: pick task / arms / models
+#
+# Nemotron pair (no Anthropic):
 #   nemotron            — Nemotron 3.5 Lightning, no ClawQL
 #   nemotron-clawql     — Nemotron 3.5 Lightning + ClawQL
-# Judge default: openai/gpt-5.4-mini (OpenRouter)
+# Judge default: openai/gpt-5.4-mini
 #
-# Claude pair (needs Anthropic or Claude-on-OpenRouter):
-#   baseline / clawql
-#
-# Same secret pattern as OpenBench: OPENROUTER_API_KEY from repo secrets.
-# workflow_dispatch only — full firm-knowledge is 250 tasks; keep runs intentional.
+# Secret: OPENROUTER_API_KEY (same as OpenBench). Skip live run when missing on PR.
 
 name: Harvey LAB firm-knowledge (ClawQL vs baseline)
 
@@ -37,7 +37,7 @@ on:
         type: string
         default: "15"
       arms:
-        description: "Comma-separated arms (default = Nemotron ± ClawQL, OpenRouter-only)"
+        description: "Comma-separated arms (default = Nemotron ± ClawQL)"
         required: true
         type: choice
         options:
@@ -50,60 +50,135 @@ on:
           - clawql
         default: nemotron,nemotron-clawql
       judge_model:
-        description: "Judge — openai/gpt-5.4-mini (OpenRouter, no Anthropic); claude-sonnet-4-6 when Anthropic available"
+        description: "Judge — openai/gpt-5.4-mini (OpenRouter); claude-sonnet-4-6 when Anthropic available"
         required: true
         type: string
         default: openai/gpt-5.4-mini
       max_matters:
-        description: "Optional DMS ingest cap (0 = all matters). Use 5–20 for cheap smoke."
+        description: "Optional DMS ingest cap (0 = all). PR smoke uses 5."
         required: true
         type: string
         default: "5"
+  pull_request:
+    paths:
+      - "integrations/harvey-labs/**"
+      - "scripts/start-clawql-for-lab.sh"
+      - ".github/workflows/harvey-lab-firm-knowledge.yml"
+  push:
+    branches: [main]
+    paths:
+      - "integrations/harvey-labs/**"
+      - "scripts/start-clawql-for-lab.sh"
+      - ".github/workflows/harvey-lab-firm-knowledge.yml"
 
 concurrency:
-  group: harvey-lab-fk-${{ github.workflow }}-${{ github.ref }}-${{ inputs.task }}
+  group: harvey-lab-fk-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  lab-arms:
-    name: LAB ${{ inputs.task }}
+  resolve-matrix:
+    name: Resolve arm matrix
+    runs-on: ubuntu-latest
+    outputs:
+      arms: ${{ steps.set.outputs.arms }}
+      has_arms: ${{ steps.set.outputs.has_arms }}
+      task: ${{ steps.set.outputs.task }}
+      model: ${{ steps.set.outputs.model }}
+      nemotron_model: ${{ steps.set.outputs.nemotron_model }}
+      max_turns: ${{ steps.set.outputs.max_turns }}
+      judge_model: ${{ steps.set.outputs.judge_model }}
+      max_matters: ${{ steps.set.outputs.max_matters }}
+      has_openrouter: ${{ steps.secret.outputs.has_openrouter }}
+    steps:
+      - id: secret
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            echo "has_openrouter=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "has_openrouter=false" >>"$GITHUB_OUTPUT"
+            echo "::warning::OPENROUTER_API_KEY missing — live Harvey LAB matrix will be skipped."
+          fi
+
+      - id: set
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ARMS_CSV="${{ inputs.arms }}"
+            TASK="${{ inputs.task }}"
+            MODEL="${{ inputs.model }}"
+            NEMO="${{ inputs.nemotron_model }}"
+            TURNS="${{ inputs.max_turns }}"
+            JUDGE="${{ inputs.judge_model }}"
+            MATTERS="${{ inputs.max_matters }}"
+          else
+            # PR / push smoke — Nemotron ± ClawQL only (OpenRouter-only, no Anthropic)
+            ARMS_CSV="nemotron,nemotron-clawql"
+            TASK="firm-knowledge/tasks/001"
+            MODEL="claude-sonnet-4-6"
+            NEMO="nvidia/nemotron-3.5-lightning:free"
+            TURNS="15"
+            JUDGE="openai/gpt-5.4-mini"
+            MATTERS="5"
+          fi
+          # Build JSON array for strategy.matrix.arm
+          ARMS_JSON="$(
+            ARMS_CSV="${ARMS_CSV}" python3 -c \
+              'import json,os; print(json.dumps([a.strip() for a in os.environ["ARMS_CSV"].split(",") if a.strip()]))'
+          )"
+          {
+            echo "arms=${ARMS_JSON}"
+            echo "has_arms=true"
+            echo "task=${TASK}"
+            echo "model=${MODEL}"
+            echo "nemotron_model=${NEMO}"
+            echo "max_turns=${TURNS}"
+            echo "judge_model=${JUDGE}"
+            echo "max_matters=${MATTERS}"
+          } >>"$GITHUB_OUTPUT"
+          echo "::notice::Harvey LAB matrix arms=${ARMS_JSON} task=${TASK} judge=${JUDGE}"
+
+  lab-arm:
+    name: LAB ${{ matrix.arm }}
+    needs: resolve-matrix
+    if: needs.resolve-matrix.outputs.has_openrouter == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        arm: ${{ fromJson(needs.resolve-matrix.outputs.arms) }}
     env:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       CLAWQL_LAB_USE_OPENROUTER: "1"
       CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
       CLAWQL_OPENROUTER_APP_TITLE: ClawQL Harvey LAB
-      LAB_TASK: ${{ inputs.task }}
-      LAB_MODEL: ${{ inputs.model }}
-      LAB_NEMOTRON_MODEL: ${{ inputs.nemotron_model }}
-      LAB_MAX_TURNS: ${{ inputs.max_turns }}
-      LAB_ARMS: ${{ inputs.arms }}
-      LAB_JUDGE_MODEL: ${{ inputs.judge_model }}
-      CLAWQL_LAB_MAX_MATTERS: ${{ inputs.max_matters }}
+      LAB_TASK: ${{ needs.resolve-matrix.outputs.task }}
+      LAB_MODEL: ${{ needs.resolve-matrix.outputs.model }}
+      LAB_NEMOTRON_MODEL: ${{ needs.resolve-matrix.outputs.nemotron_model }}
+      LAB_MAX_TURNS: ${{ needs.resolve-matrix.outputs.max_turns }}
+      LAB_ARMS: ${{ matrix.arm }}
+      LAB_JUDGE_MODEL: ${{ needs.resolve-matrix.outputs.judge_model }}
+      CLAWQL_LAB_MAX_MATTERS: ${{ needs.resolve-matrix.outputs.max_matters }}
       CLAWQL_ENABLE_MEMORY: "1"
       CLAWQL_ONTOLOGY_DB: "1"
       CLAWQL_ONTOLOGY_LLM_EXTRACTION: "0"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
-      - name: Require OpenRouter (or Anthropic) secret
+      - name: Guard credentials for this arm
         run: |
-          if [ -z "${OPENROUTER_API_KEY:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
-            echo "::error::Set repository secret OPENROUTER_API_KEY (preferred, same as OpenBench) or ANTHROPIC_API_KEY."
-            exit 1
-          fi
+          set -euo pipefail
+          echo "::notice::Arm=${LAB_ARMS} task=${LAB_TASK} nemotron=${LAB_NEMOTRON_MODEL} judge=${LAB_JUDGE_MODEL}"
           if echo "${LAB_ARMS}" | tr ',' '\n' | grep -qxE 'baseline|clawql'; then
             if [ -z "${ANTHROPIC_API_KEY:-}" ] && [ -z "${OPENROUTER_API_KEY:-}" ]; then
               echo "::error::Claude arms require ANTHROPIC_API_KEY or OPENROUTER_API_KEY."
               exit 1
-            fi
-            if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
-              echo "::notice::Claude arms without ANTHROPIC_API_KEY — will attempt Claude via OpenRouter."
             fi
           fi
           if echo "${LAB_ARMS}" | tr ',' '\n' | grep -qE '^nemotron'; then
@@ -111,10 +186,6 @@ jobs:
               echo "::error::Nemotron arms require OPENROUTER_API_KEY."
               exit 1
             fi
-            echo "::notice::Nemotron path: OpenRouter agent + OpenRouter judge (no Anthropic required)."
-          fi
-          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
-            echo "::notice::Using OPENROUTER_API_KEY for Harvey LAB (GHA path)."
           fi
 
       - name: Setup Node (ClawQL MCP)
@@ -126,14 +197,23 @@ jobs:
       - name: npm ci (for local clawql-mcp-http)
         run: npm ci --ignore-scripts
 
-      - name: Run Harvey LAB arms
+      - name: Run Harvey LAB arm
         run: bash integrations/harvey-labs/scripts/run-lab-gha.sh
 
       - name: Upload scorecard + arm artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: harvey-lab-${{ inputs.task }}-${{ github.run_id }}
+          name: harvey-lab-${{ matrix.arm }}-${{ github.run_id }}
           path: integrations/harvey-labs/results/
           if-no-files-found: warn
           retention-days: 30
+
+  lab-skip:
+    name: Skip (no OpenRouter secret)
+    needs: resolve-matrix
+    if: needs.resolve-matrix.outputs.has_openrouter != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::warning::Skipped Harvey LAB live matrix — set repo secret OPENROUTER_API_KEY (same as OpenBench)."
