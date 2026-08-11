@@ -50,21 +50,37 @@ class OpenRouterChatAdapter(ModelAdapter):
             kwargs["temperature"] = self.temperature
 
         response = None
+        last_err: Exception | None = None
         for attempt in range(_MAX_RETRIES):
             try:
                 response = self.client.chat.completions.create(**kwargs)
+                if response is None or not getattr(response, "choices", None):
+                    raise RuntimeError(
+                        f"OpenRouter returned empty choices for model={self.model} "
+                        f"(attempt {attempt + 1}/{_MAX_RETRIES}): {response!r}"
+                    )
                 break
             except (
                 openai.RateLimitError,
                 openai.APITimeoutError,
                 openai.InternalServerError,
-            ):
+                RuntimeError,
+            ) as e:
+                last_err = e
                 if attempt == _MAX_RETRIES - 1:
                     raise
                 time.sleep(min(30, 2**attempt) + random.uniform(0, 1))
 
-        assert response is not None
+        if response is None or not response.choices:
+            raise RuntimeError(
+                f"OpenRouter chat failed after {_MAX_RETRIES} attempts: {last_err}"
+            )
+
         message_obj = response.choices[0].message
+        if message_obj is None:
+            raise RuntimeError(
+                f"OpenRouter returned empty message for model={self.model}: {response!r}"
+            )
         message = message_obj.model_dump(exclude_none=True)
         tool_calls = [
             ToolCall(
