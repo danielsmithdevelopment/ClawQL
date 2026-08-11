@@ -43,20 +43,24 @@ export HOST="${HOST:-127.0.0.1}"
 echo "Vault: ${VAULT_PATH}"
 echo "Starting clawql-mcp-http on ${HOST}:${PORT}"
 
-cd "${ROOT}"
 # Prefer built local dist; the bin alone is not enough (imports dist/server-http.js).
+# npx from the ClawQL repo root resolves the *local* bin — use a clean temp dir.
 if [[ -f "${ROOT}/dist/server-http.js" ]]; then
+  cd "${ROOT}"
   nohup node "${ROOT}/bin/clawql-mcp-http.mjs" >"${LOG_FILE}" 2>&1 &
+  CLAWQL_PID=$!
 else
-  echo "dist/server-http.js missing — starting published clawql-mcp-http via npx"
-  nohup npx -y clawql-mcp-http >"${LOG_FILE}" 2>&1 &
+  echo "dist/server-http.js missing — starting published clawql-mcp-http via npx (clean dir)"
+  NPX_DIR="$(mktemp -d /tmp/clawql-mcp-npx.XXXXXX)"
+  cd "${NPX_DIR}"
+  nohup npx --yes clawql-mcp-http >"${LOG_FILE}" 2>&1 &
+  CLAWQL_PID=$!
 fi
-CLAWQL_PID=$!
 echo "${CLAWQL_PID}" >"${PID_FILE}"
 echo "ClawQL MCP started with PID ${CLAWQL_PID} (log: ${LOG_FILE})"
 
 # Wait for healthz
-for i in $(seq 1 30); do
+for i in $(seq 1 60); do
   if curl -sf "http://${HOST}:${PORT}/healthz" >/dev/null 2>&1; then
     echo "ClawQL ready at http://${HOST}:${PORT}/mcp"
     echo "export CLAWQL_MCP_URL=http://${HOST}:${PORT}/mcp"
