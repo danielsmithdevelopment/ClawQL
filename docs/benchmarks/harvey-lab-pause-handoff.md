@@ -67,6 +67,7 @@ Valid comparisons: **A vs B** (same Opus). Arm C is compared to Harvey’s publi
 4. **Phase E:** Opus A/B (+ Arm C) firm-knowledge sweep; prefer Sonnet judge for all arms
 5. Fill `harvey-lab-baseline.md` + `harvey-lab-clawql-results.md`
 6. Optional: RTP/OBT Cloudflare traces with `community_model` consent
+
 ## Resume commands
 
 ```bash
@@ -100,6 +101,7 @@ gh workflow run harvey-lab-firm-knowledge.yml \
 ```
 
 **Arm C judge note:** Default Sonnet judge needs Anthropic. For OpenRouter-only Arm C, use `openai/gpt-4o-mini` (or another OpenRouter chat model). Re-score with Sonnet later for publishable ledger parity with A/B.
+
 ## Related OpenBench (mechanism, not LAB scores)
 
 | Cell                  | Note                                                |
