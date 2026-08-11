@@ -41,6 +41,7 @@ Phase F: Sonnet judge — already part of each arm when Anthropic available
 ```
 
 Trigger via GHA only (`OPENROUTER_API_KEY`). Arm C does **not** need `ANTHROPIC_API_KEY`. Do not wait on Cursor Cloud Agent secrets.
+
 ## Success criteria (from plan)
 
 1. Sweeps complete on firm-knowledge with Opus for A/B (C optional but preferred)
