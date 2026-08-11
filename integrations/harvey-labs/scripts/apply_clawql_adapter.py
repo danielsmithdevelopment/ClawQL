@@ -23,14 +23,28 @@ CREATE_ADAPTER_HOOK = '''
 
         # clawql/<model> or clawql/anthropic/<model>
         underlying = model_id
-        if "/" in underlying:
-            _p, underlying = underlying.split("/", 1)
+        if underlying.startswith("anthropic/"):
+            underlying = underlying.split("/", 1)[1]
         return ClawQLAdapter(
             model=underlying,
             task_id=os.environ.get("CLAWQL_LAB_TASK_ID", "unknown"),
             documents_dir=Path(os.environ.get("CLAWQL_LAB_DOCUMENTS_DIR", ".")),
             temperature=temperature,
             reasoning_effort=reasoning_effort,
+            arm=os.environ.get("CLAWQL_LAB_ARM", "clawql"),
+        )
+
+    if provider == "clawql-cc":
+        from harness.adapters.clawql_chat import ClawQLChatAdapter
+
+        # clawql-cc/<openrouter-model> — Nemotron Arm C / chat completions
+        return ClawQLChatAdapter(
+            model=model_id,
+            task_id=os.environ.get("CLAWQL_LAB_TASK_ID", "unknown"),
+            documents_dir=Path(os.environ.get("CLAWQL_LAB_DOCUMENTS_DIR", ".")),
+            temperature=temperature,
+            reasoning_effort=reasoning_effort,
+            arm=os.environ.get("CLAWQL_LAB_ARM", "nemotron-clawql"),
         )
 {end}
 '''.format(begin=MARKER_BEGIN, end=MARKER_END)
@@ -38,7 +52,8 @@ CREATE_ADAPTER_HOOK = '''
 MAIN_HOOK = '''
 {begin}
     clawql_adapter = None
-    if args.model.startswith("clawql/") or args.model.split("/", 1)[0] == "clawql":
+    _prov = args.model.split("/", 1)[0]
+    if _prov in {{"clawql", "clawql-cc"}}:
         os.environ["CLAWQL_LAB_TASK_ID"] = args.task
         os.environ["CLAWQL_LAB_DOCUMENTS_DIR"] = task["docs_dir"]
 {end}
@@ -50,6 +65,14 @@ def copy_files(src_root: Path, dest_root: Path) -> None:
         (
             src_root / "harness" / "adapters" / "clawql.py",
             dest_root / "harness" / "adapters" / "clawql.py",
+        ),
+        (
+            src_root / "harness" / "adapters" / "clawql_chat.py",
+            dest_root / "harness" / "adapters" / "clawql_chat.py",
+        ),
+        (
+            src_root / "harness" / "adapters" / "clawql_lab_session.py",
+            dest_root / "harness" / "adapters" / "clawql_lab_session.py",
         ),
         (
             src_root / "harness" / "adapters" / "clawql_system_prompt.md",
@@ -109,7 +132,8 @@ def patch_run_py(run_py: Path) -> None:
     main_end = MARKER_END + "-main"
     main_hook = (
         f"    {main_begin}\n"
-        "    if args.model.startswith(\"clawql/\") or args.model.split(\"/\", 1)[0] == \"clawql\":\n"
+        "    _prov = args.model.split(\"/\", 1)[0]\n"
+        "    if _prov in {\"clawql\", \"clawql-cc\"}:\n"
         "        os.environ[\"CLAWQL_LAB_TASK_ID\"] = args.task\n"
         "        os.environ[\"CLAWQL_LAB_DOCUMENTS_DIR\"] = task[\"docs_dir\"]\n"
         f"    {main_end}\n"
@@ -133,9 +157,8 @@ def patch_run_py(run_py: Path) -> None:
         reasoning_effort=args.reasoning_effort,
     )
 
-    if isinstance(adapter, object) and adapter.__class__.__name__ == "ClawQLAdapter":
-        from harness.adapters.clawql import ClawQLAdapter as _ClawQLAdapter
-        assert isinstance(adapter, _ClawQLAdapter)
+    from harness.adapters.clawql_lab_session import is_clawql_lab_adapter
+    if is_clawql_lab_adapter(adapter):
         adapter.pre_task_setup()
         tool_executor = ClawQLToolExecutor(
             clawql_adapter=adapter,
@@ -195,7 +218,8 @@ def patch_run_py(run_py: Path) -> None:
         )
     finally:
         sandbox.stop()
-        if adapter.__class__.__name__ == "ClawQLAdapter":
+        from harness.adapters.clawql_lab_session import is_clawql_lab_adapter as _is_clawql
+        if _is_clawql(adapter):
             try:
                 adapter.post_task_cleanup()
             except Exception as cleanup_exc:  # noqa: BLE001
