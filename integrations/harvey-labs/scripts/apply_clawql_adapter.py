@@ -46,6 +46,16 @@ CREATE_ADAPTER_HOOK = '''
             reasoning_effort=reasoning_effort,
             arm=os.environ.get("CLAWQL_LAB_ARM", "nemotron-clawql"),
         )
+
+    if provider == "openrouter":
+        from harness.adapters.openrouter_chat import OpenRouterChatAdapter
+
+        # openrouter/<model> — Nemotron baseline (no ClawQL)
+        return OpenRouterChatAdapter(
+            model=model_id,
+            temperature=temperature,
+            reasoning_effort=reasoning_effort,
+        )
 {end}
 '''.format(begin=MARKER_BEGIN, end=MARKER_END)
 
@@ -69,6 +79,10 @@ def copy_files(src_root: Path, dest_root: Path) -> None:
         (
             src_root / "harness" / "adapters" / "clawql_chat.py",
             dest_root / "harness" / "adapters" / "clawql_chat.py",
+        ),
+        (
+            src_root / "harness" / "adapters" / "openrouter_chat.py",
+            dest_root / "harness" / "adapters" / "openrouter_chat.py",
         ),
         (
             src_root / "harness" / "adapters" / "clawql_lab_session.py",
