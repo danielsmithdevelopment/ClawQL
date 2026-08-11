@@ -20,7 +20,10 @@ MODEL="${LAB_MODEL:-claude-sonnet-4-6}"
 MAX_TURNS="${LAB_MAX_TURNS:-15}"
 ARMS="${LAB_ARMS:-nemotron,nemotron-clawql}"
 JUDGE="${LAB_JUDGE_MODEL:-openai/gpt-5.4-mini}"
-NEMOTRON_MODEL="${LAB_NEMOTRON_MODEL:-nvidia/nemotron-3.5-lightning:free}"
+NEMOTRON_MODEL="${LAB_NEMOTRON_MODEL:-nvidia/nemotron-3.5-lightning}"
+# Podman volume paths break on ':' (OpenRouter ':free' suffix). Keep a path-safe
+# harness model id; OpenRouter mapping still resolves to :free for the API call.
+NEMOTRON_HARNESS_MODEL="${NEMOTRON_MODEL%%:*}"
 RESULTS_OUT="${CLAWQL_ROOT}/integrations/harvey-labs/results"
 mkdir -p "${RESULTS_OUT}"
 
@@ -51,6 +54,10 @@ export CLAWQL_LAB_USE_OPENROUTER="${CLAWQL_LAB_USE_OPENROUTER:-1}"
 export CLAWQL_OPENROUTER_HTTP_REFERER="${CLAWQL_OPENROUTER_HTTP_REFERER:-https://clawql.com}"
 export CLAWQL_OPENROUTER_APP_TITLE="${CLAWQL_OPENROUTER_APP_TITLE:-ClawQL Harvey LAB}"
 export CLAWQL_LAB_NEMOTRON_MODEL="${NEMOTRON_MODEL}"
+# Ensure API resolution still prefers :free when harness id has no variant suffix.
+if [[ "${NEMOTRON_HARNESS_MODEL}" == "${NEMOTRON_MODEL}" ]]; then
+  export CLAWQL_LAB_NEMOTRON_MODEL="${NEMOTRON_HARNESS_MODEL}"
+fi
 
 echo "::group::Clone harvey-labs"
 # GitHub Actions runners occasionally lack CA bundle → "CAfile: none" on clone.
@@ -192,7 +199,7 @@ for arm in "${ARM_LIST[@]}"; do
         echo "::error::Nemotron baseline requires OPENROUTER_API_KEY" >&2
         exit 1
       fi
-      run_and_eval nemotron "openrouter/${NEMOTRON_MODEL}"
+      run_and_eval nemotron "openrouter/${NEMOTRON_HARNESS_MODEL}"
       ;;
     nemotron-clawql|clawql-nemotron)
       if [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
@@ -200,7 +207,7 @@ for arm in "${ARM_LIST[@]}"; do
         exit 1
       fi
       ensure_clawql_mcp
-      run_and_eval nemotron-clawql "clawql-cc/${NEMOTRON_MODEL}"
+      run_and_eval nemotron-clawql "clawql-cc/${NEMOTRON_HARNESS_MODEL}"
       ;;
     *)
       echo "Unknown arm: ${arm}" >&2
