@@ -1,5 +1,7 @@
 # ClawQL
 
+[![MCP Toplist](https://mcptoplist.com/badge/glama%2Fdanielsmithdevelopment%2FClawQL.svg)](https://mcptoplist.com/server/glama%2Fdanielsmithdevelopment%2FClawQL)
+
 **ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.**
 
 The Agentic Gateway is an MCP + OpenAI-compatible control plane for API discovery and execution with a token-efficient `search -> execute` workflow over **OpenAPI**, **Google Discovery**, and optional **native GraphQL** and **gRPC** sources (see **`CLAWQL_GRAPHQL_URL`** / **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** in `.env.example` and [ADR 0002](docs/adr/0002-multi-protocol-supergraph.md)). GraphQL-only vendors (e.g. Linear) need no OpenAPI spec: use **`CLAWQL_PROVIDER=linear`** (bundled SDL under **`providers/linear/`** + **`LINEAR_API_KEY`**), or point **`CLAWQL_GRAPHQL_URL`** at their HTTP endpoint and auth headers, or load **`search`** from **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** (or per-source **`schemaPath`** / **`introspectionPath`**) when upstream introspection is disabled — without **`CLAWQL_SPEC_*`** / **`CLAWQL_PROVIDER`**, the default bundled REST specs are not loaded.
