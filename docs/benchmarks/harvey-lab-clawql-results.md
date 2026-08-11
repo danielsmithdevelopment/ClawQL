@@ -9,10 +9,10 @@ Judge: `openai/gpt-5.4-mini` (OpenRouter)
 
 **Partial live matrix (GHA, OpenRouter-only, no Anthropic).**
 
-| Arm | CPR | All-pass | Turns | Docs read | Notes |
-| --- | --- | -------- | ----- | --------- | ----- |
-| `nemotron` | **14.3%** (1/7) | 0% | 15 | 0 | Run [31530157458](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31530157458) — listed dirs only; C-007 precision pass (vacuous). Later 40-turn retry hit empty OpenRouter `choices` |
-| `nemotron-clawql` | **14.3%** (1/7) | 0% | 27 | 12 | Run [31531113976](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31531113976) — MCP up; used `clawql_memory_recall`×1 + `read`×17; still failed enumeration criteria |
+| Arm               | CPR             | All-pass | Turns | Docs read | Notes                                                                                                                                                                                               |
+| ----------------- | --------------- | -------- | ----- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nemotron`        | **14.3%** (1/7) | 0%       | 15    | 0         | Run [31530157458](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31530157458) — listed dirs only; C-007 precision pass (vacuous). Later 40-turn retry hit empty OpenRouter `choices` |
+| `nemotron-clawql` | **14.3%** (1/7) | 0%       | 27    | 12        | Run [31531113976](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31531113976) — MCP up; used `clawql_memory_recall`×1 + `read`×17; still failed enumeration criteria                 |
 
 Same CPR so far — not a ClawQL win yet. Agent behavior is the bottleneck (dir-walking / incomplete deliverable), not grading plumbing.
 
@@ -20,25 +20,25 @@ Publishable Opus A/B still blocked on Anthropic. Re-judge with Sonnet before any
 
 ## Arm A — Baseline (Opus, standard harness)
 
-| Metric | Value |
-| ------ | ----- |
+| Metric              | Value               |
+| ------------------- | ------------------- |
 | Criterion pass rate | _pending Anthropic_ |
-| All-pass rate | _pending_ |
+| All-pass rate       | _pending_           |
 
 ## Arm B — Opus + ClawQL
 
-| Metric | Value |
-| ------ | ----- |
+| Metric              | Value               |
+| ------------------- | ------------------- |
 | Criterion pass rate | _pending Anthropic_ |
-| All-pass rate | _pending_ |
+| All-pass rate       | _pending_           |
 
 ## Arm C pair — Nemotron ± ClawQL (OpenRouter)
 
-| Metric | `nemotron` | `nemotron-clawql` |
-| ------ | ---------- | ----------------- |
-| Criterion pass rate | 14.3% | 14.3% |
-| All-pass rate | 0% | 0% |
-| vs published Nemotron LAB (8.3% all-pass) | below (single task; empty/incomplete output) | below |
+| Metric                                    | `nemotron`                                   | `nemotron-clawql` |
+| ----------------------------------------- | -------------------------------------------- | ----------------- |
+| Criterion pass rate                       | 14.3%                                        | 14.3%             |
+| All-pass rate                             | 0%                                           | 0%                |
+| vs published Nemotron LAB (8.3% all-pass) | below (single task; empty/incomplete output) | below             |
 
 ## Implementation notes
 
