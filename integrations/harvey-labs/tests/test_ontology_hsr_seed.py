@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 import unittest
@@ -13,6 +14,7 @@ sys.path.insert(0, str(INTEGRATION / "harness" / "adapters"))
 
 from clawql_lab_session import (  # noqa: E402
     _clawql_field_block,
+    _enrich_lab_memory_recall,
     detect_hsr_second_request,
 )
 
@@ -86,6 +88,47 @@ class HsrSecondRequestDetectionTests(unittest.TestCase):
         )
         self.assertIn("CLAWQL_MATTER_ID=1003-00001", block)
         self.assertIn("HSR_SECOND_REQUEST", block)
+
+    def test_enrich_recall_adds_sandbox_roots_and_guidance(self) -> None:
+        raw = {
+            "content": [
+                {
+                    "type": "text",
+                    "text": json.dumps(
+                        {
+                            "ok": True,
+                            "queryType": "structured_predicate",
+                            "indexUsed": "ontology",
+                            "hits": [
+                                {
+                                    "path": "Memory/matter-1003-00001.md",
+                                    "entityId": "1003-00001",
+                                    "fields": {"id": "1003-00001", "title": "x"},
+                                    "snippet": "…",
+                                }
+                            ],
+                            "results": [
+                                {
+                                    "path": "Memory/matter-1003-00001.md",
+                                    "score": 1,
+                                    "depth": 0,
+                                    "reason": "keyword",
+                                    "snippet": "…",
+                                }
+                            ],
+                        }
+                    ),
+                }
+            ]
+        }
+        enriched = _enrich_lab_memory_recall(raw)
+        self.assertEqual(
+            enriched["hits"][0]["sandboxDocumentRoot"],
+            "/workspace/documents/matters/1003-00001",
+        )
+        self.assertEqual(enriched["results"][0]["reason"], "structured_predicate")
+        self.assertIn("requiredDeliverable", enriched["labGuidance"])
+        self.assertIn("/workspace/output/", enriched["labGuidance"]["requiredDeliverable"])
 
 
 if __name__ == "__main__":
