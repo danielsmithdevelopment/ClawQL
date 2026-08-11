@@ -31,7 +31,7 @@ Harvey LAB itself stays upstream (`harveyai/harvey-labs`). ClawQL owns an **over
 ## Execution sequence (unchanged cost discipline)
 
 ```
-★ Arm C first: Nemotron + ClawQL on OpenRouter only (judge: openai/gpt-4o-mini)
+★ Arm C first: Nemotron + ClawQL on OpenRouter only (judge: openai/gpt-5.4-mini)
 Phase A: Sonnet A/B (needs Anthropic)
 Phase B: Sonnet, ~5 tasks — adapter correctness
 Phase C: Sonnet, 2 tasks back-to-back — vault isolation

@@ -51,7 +51,7 @@ class OpenRouterMappingTests(unittest.TestCase):
 
     def test_chat_judge_routing(self) -> None:
         self.assertFalse(should_use_openrouter_chat_judge("claude-sonnet-4-6"))
-        self.assertTrue(should_use_openrouter_chat_judge("openai/gpt-4o-mini"))
+        self.assertTrue(should_use_openrouter_chat_judge("openai/gpt-5.4-mini"))
         self.assertTrue(
             should_use_openrouter_chat_judge("nvidia/nemotron-3.5-lightning:free")
         )

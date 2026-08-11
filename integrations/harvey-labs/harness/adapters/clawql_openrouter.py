@@ -151,7 +151,7 @@ def should_use_openrouter_chat_judge(model: str) -> bool:
         "nemotron-lightning",
     }:
         return True
-    # OpenRouter-style provider/model (nvidia/..., openai/gpt-4o-mini, …)
+    # OpenRouter-style provider/model (nvidia/..., openai/gpt-5.4-mini, …)
     if "/" in name and not lower.startswith("anthropic/"):
         return True
     return False

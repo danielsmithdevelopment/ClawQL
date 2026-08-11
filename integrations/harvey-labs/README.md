@@ -23,7 +23,7 @@ gh workflow run harvey-lab-firm-knowledge.yml \
   -f task=firm-knowledge/tasks/001 \
   -f arms=nemotron-clawql \
   -f nemotron_model=nvidia/nemotron-3.5-lightning:free \
-  -f judge_model=openai/gpt-4o-mini \
+  -f judge_model=openai/gpt-5.4-mini \
   -f max_turns=15 \
   -f max_matters=5
 
