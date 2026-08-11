@@ -105,7 +105,7 @@ const rylTiers = [
 const verticals = [
   {
     name: 'Legal',
-    body: 'Matter ontology, institutional knowledge enumeration, client preference reconstruction, Harvey LAB verified',
+    body: 'Matter ontology, institutional knowledge enumeration, client preference reconstruction — OpenBench B-7 mechanism-proven',
   },
   {
     name: 'Government',
@@ -186,8 +186,8 @@ export function AgentsLanding() {
             </p>
             <p className="agents-hero__lede">
               Agentic infrastructure for regulated production work — event-driven sessions, structured institutional
-              recall, hardware-verified execution, and a WORM trail on every action. Benchmark-verified on Harvey&apos;s
-              Legal Agent Benchmark.
+              recall, hardware-verified execution, and a WORM trail on every action. Mechanism-proven on OpenBench
+              mini-firm Calderwood &amp; Harkness tasks (B-7).
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
               <ButtonLink href={site.urls.signup} size="lg" color="light">
@@ -208,7 +208,7 @@ export function AgentsLanding() {
         headline="Built for production, not demo loops"
         subheadline={
           <p>
-            Apache 2.0 core · Event-driven, not prompt-driven · Harvey LAB verified · TEE-ready from day one
+            Apache 2.0 core · Event-driven, not prompt-driven · OpenBench mini-firm proven · TEE-ready from day one
           </p>
         }
       >
@@ -251,9 +251,10 @@ export function AgentsLanding() {
         }
       >
         <p className="mb-8 max-w-3xl text-[1.05rem] leading-relaxed">
-          Harvey AI published the Calderwood &amp; Harkness benchmark documenting a specific failure mode: agents
-          retrieve near-misses and stop confidently. We rebuilt that failure in our own harness, then fixed it
-          structurally.
+          Harvey AI published the Calderwood &amp; Harkness failure mode: agents retrieve near-misses and stop
+          confidently, missing exhaustive institutional criteria. We rebuilt that failure in OpenBench as a mini-firm
+          harness (B-7), then fixed it structurally with ontology-typed recall — reproducible GitHub Actions runs, not
+          Harvey LAB criterion pass rates.
         </p>
         <div className="agents-diff max-w-5xl">
           <div className="agents-diff__panel">
@@ -284,11 +285,12 @@ export function AgentsLanding() {
           </div>
         </div>
         <p className="mt-8 text-sm" style={{ color: 'var(--agents-muted)' }}>
-          B-7.1 fair same-files result — run 31255172649
+          OpenBench B-7.1 fair same-files (mini-firm) — run{' '}
+          <Link href="https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31255172649">31255172649</Link>
         </p>
         <div className="-mx-6 mt-4 overflow-x-auto px-6 sm:mx-0 sm:px-0">
           <table className="agents-compare min-w-[36rem]">
-            <caption>Same notes. Same model. Different retrieval mechanism.</caption>
+            <caption>OpenBench mini-firm — same notes, same model, different retrieval mechanism.</caption>
             <thead>
               <tr>
                 <th scope="col">Arm</th>
@@ -422,7 +424,8 @@ export function AgentsLanding() {
         subheadline={
           <p>
             Hardened OpenClaw, Hermes, Pi, and Goose agents — running in clawql-tee, preconfigured with ClawQL&apos;s
-            32-module security curriculum, benchmark-verified on Harvey&apos;s Legal Agent Benchmark.
+            32-module security curriculum. Structured recall is mechanism-proven on OpenBench mini-firm (B-7); Harvey
+            LAB firm-knowledge remains the next evidence tier.
           </p>
         }
       >
@@ -468,8 +471,9 @@ export function AgentsLanding() {
         }
       >
         <p className="max-w-3xl leading-relaxed">
-          The Harvey LAB benchmark result — when published — closes the loop: third-party verified improvement becomes
-          ground truth for the fine-tune that improves the next result.
+          OpenBench mini-firm traces already close a local loop: structured-predicate wins become preferred SFT/DPO
+          arms. When a Harvey LAB firm-knowledge ledger exists, that third-party scoreboard becomes the next ground
+          truth for the fine-tune that improves the next result — it is not published yet.
         </p>
         <p className="mt-4">
           <Link href={RUBRICS_ESSAY}>When Rubrics Become Rewards →</Link>
