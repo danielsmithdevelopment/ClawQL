@@ -30,7 +30,7 @@ on:
         description: "OpenRouter model id for Nemotron arms"
         required: true
         type: string
-        default: nvidia/nemotron-3.5-lightning:free
+        default: nvidia/nemotron-3.5-lightning
       max_turns:
         description: "Agent max turns (15 debug / 40 fuller)"
         required: true
@@ -120,7 +120,7 @@ jobs:
             ARMS_CSV="nemotron,nemotron-clawql"
             TASK="firm-knowledge/tasks/001"
             MODEL="claude-sonnet-4-6"
-            NEMO="nvidia/nemotron-3.5-lightning:free"
+            NEMO="nvidia/nemotron-3.5-lightning"
             TURNS="15"
             JUDGE="openai/gpt-5.4-mini"
             MATTERS="5"

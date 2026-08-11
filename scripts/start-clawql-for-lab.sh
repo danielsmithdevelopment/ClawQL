@@ -44,10 +44,11 @@ echo "Vault: ${VAULT_PATH}"
 echo "Starting clawql-mcp-http on ${HOST}:${PORT}"
 
 cd "${ROOT}"
-# Prefer local workspace binary; fall back to npx published package.
-if [[ -x "${ROOT}/bin/clawql-mcp-http.mjs" ]]; then
+# Prefer built local dist; the bin alone is not enough (imports dist/server-http.js).
+if [[ -f "${ROOT}/dist/server-http.js" ]]; then
   nohup node "${ROOT}/bin/clawql-mcp-http.mjs" >"${LOG_FILE}" 2>&1 &
 else
+  echo "dist/server-http.js missing — starting published clawql-mcp-http via npx"
   nohup npx -y clawql-mcp-http >"${LOG_FILE}" 2>&1 &
 fi
 CLAWQL_PID=$!
