@@ -15,14 +15,14 @@ Action-plan reconciliation: [`harvey-lab-action-plan.md`](harvey-lab-action-plan
 
 Harness readiness completed without scoring:
 
-| Check | Result |
-| ----- | ------ |
-| Clone `harveyai/harvey-labs` | OK |
-| Docs (`tutorial`, `architecture`, `eval-strategies`) | Read |
-| `firm-knowledge` inventory | 250 tasks; shared DMS via `docs_dir: ../../dms` |
-| First task | `firm-knowledge/tasks/001` — Antitrust HSR Second Requests |
-| `uv sync` / Podman / sandbox | OK (agent smoke) |
-| Inference path | **GHA** `harvey-lab-firm-knowledge.yml` + OpenRouter |
+| Check                                                | Result                                                     |
+| ---------------------------------------------------- | ---------------------------------------------------------- |
+| Clone `harveyai/harvey-labs`                         | OK                                                         |
+| Docs (`tutorial`, `architecture`, `eval-strategies`) | Read                                                       |
+| `firm-knowledge` inventory                           | 250 tasks; shared DMS via `docs_dir: ../../dms`            |
+| First task                                           | `firm-knowledge/tasks/001` — Antitrust HSR Second Requests |
+| `uv sync` / Podman / sandbox                         | OK (agent smoke)                                           |
+| Inference path                                       | **GHA** `harvey-lab-firm-knowledge.yml` + OpenRouter       |
 
 ## Criterion pass rate
 

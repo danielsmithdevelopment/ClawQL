@@ -8,15 +8,15 @@ This note maps the pasted action plan onto what already ships in ClawQL so agent
 
 ## Already shipped (do not re-implement)
 
-| Plan deliverable | ClawQL location |
-| ---------------- | --------------- |
+| Plan deliverable             | ClawQL location                                                                   |
+| ---------------------------- | --------------------------------------------------------------------------------- |
 | `harness/adapters/clawql.py` | `integrations/harvey-labs/harness/adapters/clawql.py` (+ `clawql_lab_session.py`) |
-| ClawQL MCP + vault lifecycle | Shared `ClawQLLabSession`; `scripts/start-clawql-for-lab.sh` |
-| Wire into harness | `scripts/apply_clawql_adapter.py` patches a harvey-labs checkout |
-| Startup script | `scripts/start-clawql-for-lab.sh` |
-| Baseline / results ledgers | `docs/benchmarks/harvey-lab-baseline.md`, `harvey-lab-clawql-results.md` |
-| Vault isolation test | `integrations/harvey-labs/tests/test_vault_isolation.py` |
-| GHA + OpenRouter | `.github/workflows/harvey-lab-firm-knowledge.yml`, `scripts/run-lab-gha.sh` |
+| ClawQL MCP + vault lifecycle | Shared `ClawQLLabSession`; `scripts/start-clawql-for-lab.sh`                      |
+| Wire into harness            | `scripts/apply_clawql_adapter.py` patches a harvey-labs checkout                  |
+| Startup script               | `scripts/start-clawql-for-lab.sh`                                                 |
+| Baseline / results ledgers   | `docs/benchmarks/harvey-lab-baseline.md`, `harvey-lab-clawql-results.md`          |
+| Vault isolation test         | `integrations/harvey-labs/tests/test_vault_isolation.py`                          |
+| GHA + OpenRouter             | `.github/workflows/harvey-lab-firm-knowledge.yml`, `scripts/run-lab-gha.sh`       |
 
 Harvey LAB itself stays upstream (`harveyai/harvey-labs`). ClawQL owns an **overlay**, not a fork of the harness into this repo root.
 
