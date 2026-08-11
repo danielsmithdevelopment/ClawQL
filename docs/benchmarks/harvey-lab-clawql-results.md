@@ -11,10 +11,10 @@ Judge: `openai/gpt-5.4-mini` (OpenRouter)
 
 Latest deliverable-guard + ontology run: [31539169062](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31539169062)
 
-| Arm | CPR | All-pass | Turns | Docs read | Notes |
-| --- | --- | -------- | ----- | --------- | ----- |
-| `nemotron` | **14.3%** (1/7) | 0% | 40 | 0 | Empty deliverable; vacuous C-007 |
-| `nemotron-clawql` | **57.1%** (4/7) | 0% | 16 | 7 | Ontology + `/workspace/output/matters-enumeration.md`; deliverable guard fired; missed C-002/C-005/C-006 (wrong Cascade label / wrong evidence docs) |
+| Arm               | CPR             | All-pass | Turns | Docs read | Notes                                                                                                                                                |
+| ----------------- | --------------- | -------- | ----- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nemotron`        | **14.3%** (1/7) | 0%       | 40    | 0         | Empty deliverable; vacuous C-007                                                                                                                     |
+| `nemotron-clawql` | **57.1%** (4/7) | 0%       | 16    | 7         | Ontology + `/workspace/output/matters-enumeration.md`; deliverable guard fired; missed C-002/C-005/C-006 (wrong Cascade label / wrong evidence docs) |
 
 **ClawQL lift on this task: 14.3% → 57.1% CPR** (same Nemotron model).
 
@@ -22,24 +22,24 @@ Publishable Opus A/B still blocked on Anthropic. Re-judge with Sonnet before any
 
 ## Arm A — Baseline (Opus, standard harness)
 
-| Metric | Value |
-| ------ | ----- |
+| Metric              | Value               |
+| ------------------- | ------------------- |
 | Criterion pass rate | _pending Anthropic_ |
-| All-pass rate | _pending_ |
+| All-pass rate       | _pending_           |
 
 ## Arm B — Opus + ClawQL
 
-| Metric | Value |
-| ------ | ----- |
+| Metric              | Value               |
+| ------------------- | ------------------- |
 | Criterion pass rate | _pending Anthropic_ |
-| All-pass rate | _pending_ |
+| All-pass rate       | _pending_           |
 
 ## Arm C pair — Nemotron ± ClawQL (OpenRouter)
 
-| Metric | `nemotron` | `nemotron-clawql` |
-| ------ | ---------- | ----------------- |
-| Criterion pass rate | 14.3% | **57.1%** |
-| All-pass rate | 0% | 0% |
+| Metric                                    | `nemotron`          | `nemotron-clawql`               |
+| ----------------------------------------- | ------------------- | ------------------------------- |
+| Criterion pass rate                       | 14.3%               | **57.1%**                       |
+| All-pass rate                             | 0%                  | 0%                              |
 | vs published Nemotron LAB (8.3% all-pass) | below (single task) | below (single task; CPR strong) |
 
 ### Ontology + deliverable evidence (run 31539169062)
