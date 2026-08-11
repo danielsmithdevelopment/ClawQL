@@ -1,4 +1,9 @@
-# Harvey LAB × ClawQL — firm-knowledge two-arm runs (GHA / OpenRouter).
+# Harvey LAB × ClawQL — firm-knowledge three-arm runs (GHA / OpenRouter).
+#
+# Arms:
+#   A baseline          — Claude (no ClawQL)
+#   B clawql            — Claude + ClawQL
+#   C nemotron-clawql   — Nemotron 3.5 Lightning + ClawQL (OpenRouter chat)
 #
 # Same secret pattern as OpenBench: OPENROUTER_API_KEY from repo secrets.
 # workflow_dispatch only — full firm-knowledge is 250 tasks; keep runs intentional.
@@ -14,10 +19,15 @@ on:
         type: string
         default: firm-knowledge/tasks/001
       model:
-        description: "Short Claude id (mapped to OpenRouter anthropic/*)"
+        description: "Claude short id for Arms A/B (OpenRouter anthropic/*)"
         required: true
         type: string
         default: claude-sonnet-4-6
+      nemotron_model:
+        description: "OpenRouter model id for Arm C (Nemotron + ClawQL)"
+        required: true
+        type: string
+        default: nvidia/nemotron-3.5-lightning:free
       max_turns:
         description: "Agent max turns (15 debug / 40 fuller)"
         required: true
@@ -29,8 +39,10 @@ on:
         type: choice
         options:
           - baseline,clawql
+          - baseline,clawql,nemotron-clawql
           - baseline
           - clawql
+          - nemotron-clawql
         default: baseline,clawql
       judge_model:
         description: "Judge model short id"
@@ -51,7 +63,7 @@ permissions:
   contents: read
 
 jobs:
-  lab-two-arm:
+  lab-arms:
     name: LAB ${{ inputs.task }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
@@ -63,6 +75,7 @@ jobs:
       CLAWQL_OPENROUTER_APP_TITLE: ClawQL Harvey LAB
       LAB_TASK: ${{ inputs.task }}
       LAB_MODEL: ${{ inputs.model }}
+      LAB_NEMOTRON_MODEL: ${{ inputs.nemotron_model }}
       LAB_MAX_TURNS: ${{ inputs.max_turns }}
       LAB_ARMS: ${{ inputs.arms }}
       LAB_JUDGE_MODEL: ${{ inputs.judge_model }}
@@ -78,6 +91,12 @@ jobs:
           if [ -z "${OPENROUTER_API_KEY:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
             echo "::error::Set repository secret OPENROUTER_API_KEY (preferred, same as OpenBench) or ANTHROPIC_API_KEY."
             exit 1
+          fi
+          if echo "${LAB_ARMS}" | grep -q 'nemotron'; then
+            if [ -z "${OPENROUTER_API_KEY:-}" ]; then
+              echo "::error::Arm C (nemotron-clawql) requires OPENROUTER_API_KEY."
+              exit 1
+            fi
           fi
           if [ -n "${OPENROUTER_API_KEY:-}" ]; then
             echo "::notice::Using OPENROUTER_API_KEY for Harvey LAB (GHA path)."

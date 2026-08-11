@@ -3,10 +3,11 @@
 #
 # Env (set by workflow):
 #   LAB_TASK          e.g. firm-knowledge/tasks/001
-#   LAB_MODEL         short id, e.g. claude-sonnet-4-6 (mapped to OpenRouter)
+#   LAB_MODEL         short Claude id for Arms A/B (e.g. claude-sonnet-4-6)
 #   LAB_MAX_TURNS     default 15 (Phase A) / 40 (full)
-#   LAB_ARMS          baseline,clawql  (comma-separated)
+#   LAB_ARMS          baseline,clawql[,nemotron-clawql]
 #   LAB_JUDGE_MODEL   default claude-sonnet-4-6
+#   LAB_NEMOTRON_MODEL  OpenRouter id for Arm C (default nvidia/nemotron-3.5-lightning:free)
 #   OPENROUTER_API_KEY
 #   CLAWQL_LAB_USE_OPENROUTER=1
 set -euo pipefail
@@ -19,6 +20,7 @@ MODEL="${LAB_MODEL:-claude-sonnet-4-6}"
 MAX_TURNS="${LAB_MAX_TURNS:-15}"
 ARMS="${LAB_ARMS:-baseline,clawql}"
 JUDGE="${LAB_JUDGE_MODEL:-claude-sonnet-4-6}"
+NEMOTRON_MODEL="${LAB_NEMOTRON_MODEL:-nvidia/nemotron-3.5-lightning:free}"
 RESULTS_OUT="${CLAWQL_ROOT}/integrations/harvey-labs/results"
 mkdir -p "${RESULTS_OUT}"
 
@@ -30,6 +32,7 @@ fi
 export CLAWQL_LAB_USE_OPENROUTER="${CLAWQL_LAB_USE_OPENROUTER:-1}"
 export CLAWQL_OPENROUTER_HTTP_REFERER="${CLAWQL_OPENROUTER_HTTP_REFERER:-https://clawql.com}"
 export CLAWQL_OPENROUTER_APP_TITLE="${CLAWQL_OPENROUTER_APP_TITLE:-ClawQL Harvey LAB}"
+export CLAWQL_LAB_NEMOTRON_MODEL="${NEMOTRON_MODEL}"
 
 echo "::group::Clone harvey-labs"
 mkdir -p "${WORK}"
@@ -48,7 +51,6 @@ if ! command -v uv >/dev/null 2>&1; then
   export PATH="${HOME}/.local/bin:${PATH}"
 fi
 cd "${HARVEY_LABS}"
-# Prefer targeted setup over full setup.sh when possible (faster on GHA).
 uv sync
 if ! command -v podman >/dev/null 2>&1; then
   sudo apt-get update -qq
@@ -58,7 +60,6 @@ if ! podman image exists lab-sandbox:latest; then
   podman pull ghcr.io/harveyai/lab-sandbox:latest
   podman tag ghcr.io/harveyai/lab-sandbox:latest lab-sandbox:latest
 fi
-# Pandoc helps docx paths outside the sandbox parsers.
 sudo apt-get install -y -qq pandoc >/dev/null 2>&1 || true
 echo "::endgroup::"
 
@@ -68,7 +69,18 @@ python3 "${CLAWQL_ROOT}/integrations/harvey-labs/scripts/apply_clawql_adapter.py
 echo "::endgroup::"
 
 SCORECARD="${RESULTS_OUT}/scorecard-${TASK//\//_}.json"
-echo '{"task":"'"${TASK}"'","model":"'"${MODEL}"'","arms":{}}' >"${SCORECARD}"
+echo '{"task":"'"${TASK}"'","model":"'"${MODEL}"'","nemotron_model":"'"${NEMOTRON_MODEL}"'","arms":{}}' >"${SCORECARD}"
+
+ensure_clawql_mcp() {
+  if [[ "${CLAWQL_MCP_STARTED:-0}" == "1" ]]; then
+    return 0
+  fi
+  echo "::group::Start ClawQL MCP (task-scoped vault)"
+  bash "${CLAWQL_ROOT}/scripts/start-clawql-for-lab.sh" "${TASK}" 8080
+  export CLAWQL_MCP_URL="http://127.0.0.1:8080/mcp"
+  CLAWQL_MCP_STARTED=1
+  echo "::endgroup::"
+}
 
 run_and_eval() {
   local arm="$1"
@@ -76,6 +88,7 @@ run_and_eval() {
   local run_log="${RESULTS_OUT}/${arm}-run.log"
 
   echo "::group::Arm ${arm} — agent (${model_flag})"
+  export CLAWQL_LAB_ARM="${arm}"
   set +e
   uv run python -m harness.run \
     --model "${model_flag}" \
@@ -105,7 +118,6 @@ run_and_eval() {
     --judge-model "${JUDGE}"
   echo "::endgroup::"
 
-  # Append arm metrics into scorecard
   uv run python - <<PY
 import json
 from pathlib import Path
@@ -121,6 +133,7 @@ all_pass = 1.0 if scores.get("score") == 1.0 or scores.get("all_pass") else 0.0
 card = json.loads(Path("${SCORECARD}").read_text())
 card["arms"]["${arm}"] = {
     "run_id": "${run_id}",
+    "model_flag": "${model_flag}",
     "criterion_pass_rate": cpr,
     "all_pass": all_pass,
     "n_passed": passed,
@@ -133,12 +146,12 @@ Path("${SCORECARD}").write_text(json.dumps(card, indent=2))
 print(json.dumps(card["arms"]["${arm}"], indent=2))
 PY
 
-  # Copy artifacts into ClawQL workspace for upload
   mkdir -p "${RESULTS_OUT}/${arm}"
   cp -a "${HARVEY_LABS}/results/${run_id}/." "${RESULTS_OUT}/${arm}/"
 }
 
 IFS=',' read -ra ARM_LIST <<<"${ARMS}"
+CLAWQL_MCP_STARTED=0
 for arm in "${ARM_LIST[@]}"; do
   arm="$(echo "${arm}" | xargs)"
   case "${arm}" in
@@ -146,14 +159,20 @@ for arm in "${ARM_LIST[@]}"; do
       run_and_eval baseline "anthropic/${MODEL}"
       ;;
     clawql)
-      echo "::group::Start ClawQL MCP (task-scoped vault)"
-      bash "${CLAWQL_ROOT}/scripts/start-clawql-for-lab.sh" "${TASK}" 8080
-      export CLAWQL_MCP_URL="http://127.0.0.1:8080/mcp"
-      echo "::endgroup::"
+      ensure_clawql_mcp
       run_and_eval clawql "clawql/${MODEL}"
+      ;;
+    nemotron-clawql|clawql-nemotron)
+      if [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
+        echo "::error::Arm C (Nemotron) requires OPENROUTER_API_KEY" >&2
+        exit 1
+      fi
+      ensure_clawql_mcp
+      run_and_eval nemotron-clawql "clawql-cc/${NEMOTRON_MODEL}"
       ;;
     *)
       echo "Unknown arm: ${arm}" >&2
+      echo "Supported: baseline, clawql, nemotron-clawql" >&2
       exit 1
       ;;
   esac
