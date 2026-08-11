@@ -83,6 +83,7 @@ gh workflow run harvey-lab-firm-knowledge.yml \
 ```
 
 **Credentials:** Nemotron pair + `gpt-5.4-mini` judge = **`OPENROUTER_API_KEY` only**. Claude arms still need Anthropic (or Claude-on-OpenRouter). Re-score with Sonnet later for publishable ledger parity with Opus A/B.
+
 ## Related OpenBench (mechanism, not LAB scores)
 
 | Cell                  | Note                                                |
