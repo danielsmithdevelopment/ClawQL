@@ -37,4 +37,19 @@ CLAWQL_CLIENT_ID=CLT-0017
       extractMatterFromClawqlFields("CLAWQL_MATTER_ID=matter-1\nCLAWQL_ESCROW_PCT=12")
     ).toBeNull();
   });
+
+  it("accepts Harvey LAB DMS matter ids", () => {
+    const extracted = extractMatterFromClawqlFields(`
+CLAWQL_MATTER_ID=1003-00001
+CLAWQL_TITLE=1003-00001 — Harrowgate PE — HSR_SECOND_REQUEST
+CLAWQL_PRACTICE_AREA=Other
+CLAWQL_STATUS=Active
+`);
+    expect(extracted?.fields).toMatchObject({
+      id: "1003-00001",
+      title: "1003-00001 — Harrowgate PE — HSR_SECOND_REQUEST",
+      practiceArea: "Other",
+      status: "Active",
+    });
+  });
 });

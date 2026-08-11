@@ -123,9 +123,11 @@ jobs:
             NEMO="nvidia/nemotron-3.5-lightning"
             TURNS="40"
             JUDGE="openai/gpt-5.4-mini"
-            MATTERS="5"
+            MATTERS="0"
           fi
           # Build JSON array for strategy.matrix.arm
+          # max_matters=0 → catalog all DMS matters into ontology; full-text
+          # extract still prioritizes HSR_SECOND_REQUEST-flagged matters.
           ARMS_JSON="$(
             ARMS_CSV="${ARMS_CSV}" python3 -c \
               'import json,os; print(json.dumps([a.strip() for a in os.environ["ARMS_CSV"].split(",") if a.strip()]))'

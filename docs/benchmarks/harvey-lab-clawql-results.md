@@ -47,6 +47,11 @@ Publishable Opus A/B still blocked on Anthropic. Re-judge with Sonnet before any
 - Nemotron: `openrouter/<id>` / `clawql-cc/<id>`; API maps to `:free`
 - Judge: `OpenRouterChatJudge` + `gpt-5.4-mini`
 - GHA builds ClawQL (`npm run build`) so MCP has `dist/server-http.js`
+- **Ontology (2026-08-11):** prior `nemotron-clawql` run used keyword-only
+  `memory_recall` (no `schema`/`filters`) — same failure mode as B-7 without
+  Pattern E. Fix: pre-ingest writes `CLAWQL_*` blocks (Harvey matter ids +
+  `HSR_SECOND_REQUEST` title token); system prompt forces
+  `schema=legal.Matter` + `filters.title.contains=HSR_SECOND_REQUEST`.
 
 ## Notes
 
