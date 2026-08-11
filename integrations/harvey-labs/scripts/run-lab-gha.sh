@@ -30,7 +30,7 @@ _arms_norm="$(echo "${ARMS}" | tr -d '[:space:]')"
 if [[ "${_arms_norm}" == "nemotron-clawql" || "${_arms_norm}" == "clawql-nemotron" ]]; then
   if [[ "${JUDGE}" == claude* ]] && [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
     if [[ "${CLAWQL_LAB_ALLOW_CLAUDE_JUDGE_VIA_OPENROUTER:-0}" != "1" ]]; then
-      JUDGE="${LAB_OPENROUTER_JUDGE_MODEL:-openai/gpt-4o-mini}"
+      JUDGE="${LAB_OPENROUTER_JUDGE_MODEL:-openai/gpt-5.4-mini}"
       echo "::notice::Arm C-only + no ANTHROPIC_API_KEY → judge=${JUDGE} (OpenRouter chat). Set CLAWQL_LAB_ALLOW_CLAUDE_JUDGE_VIA_OPENROUTER=1 to keep Claude via OpenRouter."
     fi
   fi

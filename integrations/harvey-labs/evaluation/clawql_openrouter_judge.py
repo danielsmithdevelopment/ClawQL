@@ -31,7 +31,7 @@ _VERDICT_SCHEMA_HINT = (
 class OpenRouterChatJudge:
     """Drop-in judge for OpenRouter chat models (Nemotron, GPT, etc.)."""
 
-    def __init__(self, model: str = "openai/gpt-4o-mini"):
+    def __init__(self, model: str = "openai/gpt-5.4-mini"):
         self.model = resolve_openrouter_chat_model(model)
         self.provider = "openrouter"
         self.client = make_openrouter_openai_client()
