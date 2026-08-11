@@ -123,6 +123,7 @@ export default function RootLayout({
                 <NavbarLink href="/#workflows" className="max-lg:hidden">
                   Workflows
                 </NavbarLink>
+                <NavbarLink href={site.urls.agents}>Agents</NavbarLink>
                 <NavbarLink href={site.urls.idp}>IDP</NavbarLink>
                 <NavbarLink href={site.urls.streams} className="max-lg:hidden">
                   Streams
@@ -174,6 +175,7 @@ export default function RootLayout({
                 <FooterCategory title="Product">
                   <FooterLink href="/#tools">Tools</FooterLink>
                   <FooterLink href="/#workflows">Workflows</FooterLink>
+                  <FooterLink href={site.urls.agents}>Agents</FooterLink>
                   <FooterLink href={site.urls.idp}>IDP</FooterLink>
                   <FooterLink href={site.urls.streams}>Streams</FooterLink>
                   <FooterLink href="/#security">Security</FooterLink>
