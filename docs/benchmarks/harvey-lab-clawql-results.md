@@ -11,10 +11,10 @@ Judge: `openai/gpt-5.4-mini` (OpenRouter)
 
 Latest ontology Pattern E run: [31533730043](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31533730043)
 
-| Arm | CPR | All-pass | Turns | Docs read | Notes |
-| --- | --- | -------- | ----- | --------- | ----- |
-| `nemotron` | **14.3%** (1/7) | 0% | 40 | 1 | Dir-walk / incomplete; only vacuous C-007 |
-| `nemotron-clawql` | **14.3%** (1/7) | 0% | 9 | 0 | **Ontology worked:** Pattern E recall + 6/266 `HSR_SECOND_REQUEST` flags; agent listed all 6 matters in chat but **did not write `/workspace/output/`** → judge saw empty deliverable |
+| Arm               | CPR             | All-pass | Turns | Docs read | Notes                                                                                                                                                                                 |
+| ----------------- | --------------- | -------- | ----- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nemotron`        | **14.3%** (1/7) | 0%       | 40    | 1         | Dir-walk / incomplete; only vacuous C-007                                                                                                                                             |
+| `nemotron-clawql` | **14.3%** (1/7) | 0%       | 9     | 0         | **Ontology worked:** Pattern E recall + 6/266 `HSR_SECOND_REQUEST` flags; agent listed all 6 matters in chat but **did not write `/workspace/output/`** → judge saw empty deliverable |
 
 Same CPR on the scorecard, but the failure mode changed: retrieval is solved; deliverable write is the blocker.
 
@@ -22,24 +22,24 @@ Publishable Opus A/B still blocked on Anthropic. Re-judge with Sonnet before any
 
 ## Arm A — Baseline (Opus, standard harness)
 
-| Metric | Value |
-| ------ | ----- |
+| Metric              | Value               |
+| ------------------- | ------------------- |
 | Criterion pass rate | _pending Anthropic_ |
-| All-pass rate | _pending_ |
+| All-pass rate       | _pending_           |
 
 ## Arm B — Opus + ClawQL
 
-| Metric | Value |
-| ------ | ----- |
+| Metric              | Value               |
+| ------------------- | ------------------- |
 | Criterion pass rate | _pending Anthropic_ |
-| All-pass rate | _pending_ |
+| All-pass rate       | _pending_           |
 
 ## Arm C pair — Nemotron ± ClawQL (OpenRouter)
 
-| Metric | `nemotron` | `nemotron-clawql` |
-| ------ | ---------- | ----------------- |
-| Criterion pass rate | 14.3% | 14.3% |
-| All-pass rate | 0% | 0% |
+| Metric                                    | `nemotron`                                   | `nemotron-clawql`                    |
+| ----------------------------------------- | -------------------------------------------- | ------------------------------------ |
+| Criterion pass rate                       | 14.3%                                        | 14.3%                                |
+| All-pass rate                             | 0%                                           | 0%                                   |
 | vs published Nemotron LAB (8.3% all-pass) | below (single task; empty/incomplete output) | below (retrieval OK; no output file) |
 
 ### Ontology Pattern E evidence (run 31533730043)
