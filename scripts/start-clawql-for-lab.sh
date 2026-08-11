@@ -50,10 +50,11 @@ if [[ -f "${ROOT}/dist/server-http.js" ]]; then
   nohup node "${ROOT}/bin/clawql-mcp-http.mjs" >"${LOG_FILE}" 2>&1 &
   CLAWQL_PID=$!
 else
-  echo "dist/server-http.js missing — starting published clawql-mcp-http via npx (clean dir)"
+  echo "dist/server-http.js missing — starting published clawql-mcp via npx (clean dir)"
   NPX_DIR="$(mktemp -d /tmp/clawql-mcp-npx.XXXXXX)"
   cd "${NPX_DIR}"
-  nohup npx --yes clawql-mcp-http >"${LOG_FILE}" 2>&1 &
+  # Package on npm is ``clawql-mcp`` (bin: clawql-mcp-http). Not ``clawql-mcp-http``.
+  nohup npx --yes --package=clawql-mcp clawql-mcp-http >"${LOG_FILE}" 2>&1 &
   CLAWQL_PID=$!
 fi
 echo "${CLAWQL_PID}" >"${PID_FILE}"

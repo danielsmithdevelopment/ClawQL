@@ -35,7 +35,7 @@ on:
         description: "Agent max turns (15 debug / 40 fuller)"
         required: true
         type: string
-        default: "15"
+        default: "40"
       arms:
         description: "Comma-separated arms (default = Nemotron ± ClawQL)"
         required: true
@@ -121,7 +121,7 @@ jobs:
             TASK="firm-knowledge/tasks/001"
             MODEL="claude-sonnet-4-6"
             NEMO="nvidia/nemotron-3.5-lightning"
-            TURNS="15"
+            TURNS="40"
             JUDGE="openai/gpt-5.4-mini"
             MATTERS="5"
           fi
@@ -196,6 +196,11 @@ jobs:
 
       - name: npm ci (for local clawql-mcp-http)
         run: npm ci --ignore-scripts
+
+      - name: Build ClawQL (MCP HTTP needs dist/server-http.js)
+        run: npm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
 
       - name: Run Harvey LAB arm
         run: bash integrations/harvey-labs/scripts/run-lab-gha.sh
