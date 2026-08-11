@@ -2,45 +2,34 @@
 
 Adapter overlay for [`harveyai/harvey-labs`](https://github.com/harveyai/harvey-labs) so ClawQL vault memory + MCP tools can be evaluated on the **`firm-knowledge`** task family (250 tasks, shared Calderwood & Harkness DMS).
 
-## Three arms
+## Three arms → Nemotron pair first
 
-| Arm | Model flag | Meaning |
-| --- | ---------- | ------- |
-| A `baseline` | `anthropic/<claude>` | No ClawQL |
-| B `clawql` | `clawql/<claude>` | Claude + ClawQL |
-| C `nemotron-clawql` | `clawql-cc/<openrouter-id>` | Nemotron 3.5 Lightning + ClawQL |
+| Arm | Model flag | Meaning | Needs Anthropic? |
+| --- | ---------- | ------- | ---------------- |
+| `nemotron` | `openrouter/<nemotron>` | Nemotron, no ClawQL | **No** |
+| `nemotron-clawql` | `clawql-cc/<nemotron>` | Nemotron + ClawQL | **No** |
+| `baseline` / `clawql` | Claude | Opus/Sonnet A/B | Yes |
 
-Publishable A/B is Opus vs Opus. Arm C compounds Harvey/Trajectory’s LAB post-train (published **8.3% all-pass**) with ClawQL retrieval.
-
+Publishable Claude A/B is Opus vs Opus (later). Nemotron pair compounds Harvey/Trajectory’s LAB post-train (published **8.3% all-pass**) with/without ClawQL retrieval — judge `openai/gpt-5.4-mini` via OpenRouter.
 ## Run path: GitHub Actions (preferred)
 
 Same as OpenBench: use repo secret **`OPENROUTER_API_KEY`**. Do not depend on Cursor Cloud Agent env secrets.
 
 ```bash
-# ★ Arm C first — OpenRouter only
+# ★ Nemotron ± ClawQL (OpenRouter only — no Anthropic)
 gh workflow run harvey-lab-firm-knowledge.yml \
   --ref cursor/harvey-lab-three-arm-nemotron-4ff0 \
   -f task=firm-knowledge/tasks/001 \
-  -f arms=nemotron-clawql \
+  -f arms=nemotron,nemotron-clawql \
   -f nemotron_model=nvidia/nemotron-3.5-lightning:free \
   -f judge_model=openai/gpt-5.4-mini \
   -f max_turns=15 \
   -f max_matters=5
-
-# Later: Sonnet A/B (needs Anthropic)
-gh workflow run harvey-lab-firm-knowledge.yml \
-  -f task=firm-knowledge/tasks/001 \
-  -f model=claude-sonnet-4-6 \
-  -f max_turns=15 \
-  -f arms=baseline,clawql \
-  -f judge_model=claude-sonnet-4-6 \
-  -f max_matters=5
 ```
 
-Workflow defaults are now **Arm C–first** (`nemotron-clawql` + OpenRouter judge).  
+Workflow defaults: **`nemotron,nemotron-clawql`** + **`openai/gpt-5.4-mini`** judge.  
 Pause / resume: [`docs/benchmarks/harvey-lab-pause-handoff.md`](../../docs/benchmarks/harvey-lab-pause-handoff.md)  
-Plan reconciliation: [`docs/benchmarks/harvey-lab-action-plan.md`](../../docs/benchmarks/harvey-lab-action-plan.md)
-## What this provides
+Plan reconciliation: [`docs/benchmarks/harvey-lab-action-plan.md`](../../docs/benchmarks/harvey-lab-action-plan.md)## What this provides
 
 | Path | Purpose |
 | ---- | ------- |

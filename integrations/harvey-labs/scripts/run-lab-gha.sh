@@ -18,20 +18,26 @@ HARVEY_LABS="${WORK}/harvey-labs"
 TASK="${LAB_TASK:-firm-knowledge/tasks/001}"
 MODEL="${LAB_MODEL:-claude-sonnet-4-6}"
 MAX_TURNS="${LAB_MAX_TURNS:-15}"
-ARMS="${LAB_ARMS:-baseline,clawql}"
-JUDGE="${LAB_JUDGE_MODEL:-claude-sonnet-4-6}"
+ARMS="${LAB_ARMS:-nemotron,nemotron-clawql}"
+JUDGE="${LAB_JUDGE_MODEL:-openai/gpt-5.4-mini}"
 NEMOTRON_MODEL="${LAB_NEMOTRON_MODEL:-nvidia/nemotron-3.5-lightning:free}"
 RESULTS_OUT="${CLAWQL_ROOT}/integrations/harvey-labs/results"
 mkdir -p "${RESULTS_OUT}"
 
-# Arm C–first: OpenRouter-only. Default Claude judge needs Anthropic — auto-switch
-# to an OpenRouter chat judge unless explicitly forced.
-_arms_norm="$(echo "${ARMS}" | tr -d '[:space:]')"
-if [[ "${_arms_norm}" == "nemotron-clawql" || "${_arms_norm}" == "clawql-nemotron" ]]; then
+# OpenRouter-only arms (Nemotron ± ClawQL): Claude judge needs Anthropic — auto-switch.
+_needs_claude_agent=0
+IFS=',' read -ra _ARM_PROBE <<<"${ARMS}"
+for _a in "${_ARM_PROBE[@]}"; do
+  _a="$(echo "${_a}" | xargs)"
+  case "${_a}" in
+    baseline|clawql) _needs_claude_agent=1 ;;
+  esac
+done
+if [[ "${_needs_claude_agent}" -eq 0 ]]; then
   if [[ "${JUDGE}" == claude* ]] && [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
     if [[ "${CLAWQL_LAB_ALLOW_CLAUDE_JUDGE_VIA_OPENROUTER:-0}" != "1" ]]; then
       JUDGE="${LAB_OPENROUTER_JUDGE_MODEL:-openai/gpt-5.4-mini}"
-      echo "::notice::Arm C-only + no ANTHROPIC_API_KEY → judge=${JUDGE} (OpenRouter chat). Set CLAWQL_LAB_ALLOW_CLAUDE_JUDGE_VIA_OPENROUTER=1 to keep Claude via OpenRouter."
+      echo "::notice::Nemotron-only arms + no ANTHROPIC_API_KEY → judge=${JUDGE} (OpenRouter). Set CLAWQL_LAB_ALLOW_CLAUDE_JUDGE_VIA_OPENROUTER=1 to keep Claude via OpenRouter."
     fi
   fi
 fi
@@ -174,9 +180,16 @@ for arm in "${ARM_LIST[@]}"; do
       ensure_clawql_mcp
       run_and_eval clawql "clawql/${MODEL}"
       ;;
+    nemotron|nemotron-baseline)
+      if [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
+        echo "::error::Nemotron baseline requires OPENROUTER_API_KEY" >&2
+        exit 1
+      fi
+      run_and_eval nemotron "openrouter/${NEMOTRON_MODEL}"
+      ;;
     nemotron-clawql|clawql-nemotron)
       if [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
-        echo "::error::Arm C (Nemotron) requires OPENROUTER_API_KEY" >&2
+        echo "::error::Nemotron + ClawQL requires OPENROUTER_API_KEY" >&2
         exit 1
       fi
       ensure_clawql_mcp
@@ -184,7 +197,7 @@ for arm in "${ARM_LIST[@]}"; do
       ;;
     *)
       echo "Unknown arm: ${arm}" >&2
-      echo "Supported: baseline, clawql, nemotron-clawql" >&2
+      echo "Supported: baseline, clawql, nemotron, nemotron-clawql" >&2
       exit 1
       ;;
   esac
