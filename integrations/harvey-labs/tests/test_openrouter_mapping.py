@@ -13,6 +13,7 @@ sys.path.insert(0, str(INTEGRATION / "harness" / "adapters"))
 from clawql_openrouter import (  # noqa: E402
     resolve_openrouter_chat_model,
     resolve_openrouter_model,
+    should_use_openrouter_chat_judge,
 )
 from clawql_lab_session import is_clawql_lab_adapter  # noqa: E402
 
@@ -47,6 +48,23 @@ class OpenRouterMappingTests(unittest.TestCase):
                 os.environ.pop("CLAWQL_LAB_NEMOTRON_MODEL", None)
             else:
                 os.environ["CLAWQL_LAB_NEMOTRON_MODEL"] = prev
+
+    def test_chat_judge_routing(self) -> None:
+        self.assertFalse(should_use_openrouter_chat_judge("claude-sonnet-4-6"))
+        self.assertTrue(should_use_openrouter_chat_judge("openai/gpt-4o-mini"))
+        self.assertTrue(
+            should_use_openrouter_chat_judge("nvidia/nemotron-3.5-lightning:free")
+        )
+        prev = os.environ.get("CLAWQL_LAB_JUDGE_VIA_OPENROUTER")
+        os.environ["CLAWQL_LAB_JUDGE_VIA_OPENROUTER"] = "1"
+        try:
+            # Env forces OpenRouter path even for Claude short ids.
+            self.assertTrue(should_use_openrouter_chat_judge("claude-sonnet-4-6"))
+        finally:
+            if prev is None:
+                os.environ.pop("CLAWQL_LAB_JUDGE_VIA_OPENROUTER", None)
+            else:
+                os.environ["CLAWQL_LAB_JUDGE_VIA_OPENROUTER"] = prev
 
 
 class AdapterDetectTests(unittest.TestCase):

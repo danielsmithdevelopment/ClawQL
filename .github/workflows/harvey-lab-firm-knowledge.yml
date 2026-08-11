@@ -34,26 +34,26 @@ on:
         type: string
         default: "15"
       arms:
-        description: "Comma-separated arms"
+        description: "Comma-separated arms (prefer nemotron-clawql first — OpenRouter-only)"
         required: true
         type: choice
         options:
+          - nemotron-clawql
           - baseline,clawql
           - baseline,clawql,nemotron-clawql
           - baseline
           - clawql
-          - nemotron-clawql
-        default: baseline,clawql
+        default: nemotron-clawql
       judge_model:
-        description: "Judge model short id"
+        description: "Judge id — openai/gpt-4o-mini for Arm C (OpenRouter); claude-sonnet-4-6 when Anthropic available"
         required: true
         type: string
-        default: claude-sonnet-4-6
+        default: openai/gpt-4o-mini
       max_matters:
         description: "Optional DMS ingest cap (0 = all matters). Use 5–20 for cheap smoke."
         required: true
         type: string
-        default: "0"
+        default: "5"
 
 concurrency:
   group: harvey-lab-fk-${{ github.workflow }}-${{ github.ref }}-${{ inputs.task }}
@@ -92,11 +92,22 @@ jobs:
             echo "::error::Set repository secret OPENROUTER_API_KEY (preferred, same as OpenBench) or ANTHROPIC_API_KEY."
             exit 1
           fi
+          if echo "${LAB_ARMS}" | grep -qE 'baseline|clawql'; then
+            # Arms A/B need Claude — Anthropic direct or Claude-capable OpenRouter.
+            if [ -z "${ANTHROPIC_API_KEY:-}" ] && [ -z "${OPENROUTER_API_KEY:-}" ]; then
+              echo "::error::Arms A/B require Anthropic (ANTHROPIC_API_KEY or Claude via OPENROUTER_API_KEY)."
+              exit 1
+            fi
+            if echo "${LAB_ARMS}" | grep -qv 'nemotron' && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+              echo "::notice::Arms A/B without ANTHROPIC_API_KEY — will attempt Claude via OpenRouter."
+            fi
+          fi
           if echo "${LAB_ARMS}" | grep -q 'nemotron'; then
             if [ -z "${OPENROUTER_API_KEY:-}" ]; then
               echo "::error::Arm C (nemotron-clawql) requires OPENROUTER_API_KEY."
               exit 1
             fi
+            echo "::notice::Arm C path uses OpenRouter for agent (+ OpenRouter chat judge if judge_model is non-Claude)."
           fi
           if [ -n "${OPENROUTER_API_KEY:-}" ]; then
             echo "::notice::Using OPENROUTER_API_KEY for Harvey LAB (GHA path)."

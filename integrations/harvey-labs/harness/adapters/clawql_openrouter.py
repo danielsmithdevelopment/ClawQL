@@ -121,3 +121,48 @@ def maybe_rewrite_model(model: str) -> str:
     if use_openrouter():
         return resolve_openrouter_model(model)
     return model
+
+
+def should_use_openrouter_chat_judge(model: str) -> bool:
+    """True when the judge should use OpenRouter Chat Completions (not Anthropic).
+
+    Used for Arm C–first runs that only have ``OPENROUTER_API_KEY`` (no Anthropic).
+    Triggers for:
+      - explicit ``openrouter/...`` ids
+      - provider-prefixed OpenRouter slugs (``nvidia/``, ``openai/``, ``meta/``, …)
+      - short Nemotron aliases
+      - ``CLAWQL_LAB_JUDGE_VIA_OPENROUTER=1``
+    Claude short ids stay on the Anthropic judge path.
+    """
+    if os.environ.get("CLAWQL_LAB_JUDGE_VIA_OPENROUTER", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }:
+        return True
+    name = (model or "").strip()
+    lower = name.lower()
+    if lower.startswith("claude"):
+        return False
+    if lower.startswith("openrouter/"):
+        return True
+    if lower in _OPENROUTER_CHAT_MODEL_MAP or lower in {
+        "nemotron",
+        "nemotron-lightning",
+    }:
+        return True
+    # OpenRouter-style provider/model (nvidia/..., openai/gpt-4o-mini, …)
+    if "/" in name and not lower.startswith("anthropic/"):
+        return True
+    return False
+
+
+def make_lab_judge(model: str):
+    """Factory used by patched ``run_eval`` — OpenRouter chat or stock Judge."""
+    if should_use_openrouter_chat_judge(model):
+        from evaluation.clawql_openrouter_judge import OpenRouterChatJudge
+
+        return OpenRouterChatJudge(model=model)
+    from evaluation.judge import Judge
+
+    return Judge(model=model)
