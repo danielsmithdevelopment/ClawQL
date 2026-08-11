@@ -71,7 +71,10 @@ Valid comparisons: **A vs B** (same Opus). Arm C is compared to Harvey’s publi
 ## Resume commands
 
 ```bash
-# ★ Nemotron with/without ClawQL — OpenRouter only (no Anthropic)
+# Preferred: push to the PR branch — matrix runs automatically (OpenBench-style)
+# Arms: nemotron + nemotron-clawql in parallel; judge openai/gpt-5.4-mini
+
+# Or manual dispatch (needs actions:write):
 gh workflow run harvey-lab-firm-knowledge.yml \
   --ref cursor/harvey-lab-three-arm-nemotron-4ff0 \
   -f task=firm-knowledge/tasks/001 \
