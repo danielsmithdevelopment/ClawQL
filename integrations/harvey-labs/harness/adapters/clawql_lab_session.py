@@ -31,20 +31,37 @@ MAX_DOCS_PER_MATTER = int(os.environ.get("CLAWQL_LAB_MAX_DOCS_PER_MATTER", "8"))
 MAX_MATTERS = int(os.environ.get("CLAWQL_LAB_MAX_MATTERS", "0"))
 INGEST_CACHE_NAME = ".clawql-lab-ingest-complete"
 
+# High-precision HSR Second Request evidence (firm-knowledge / Calderwood DMS).
+# Filename `second-request` (excluding preparation-only) OR the defined term
+# `(the "Second Request")` in body text — validated against task 001 allowlist.
+_HSR_SECOND_REQUEST_PAREN = re.compile(
+    r'\(the ["\u201c]Second Request["\u201d]\)',
+    re.IGNORECASE,
+)
+_ANTITRUST_PATH = re.compile(
+    r"antitrust|hsr|ftc|doj|regulatory",
+    re.IGNORECASE,
+)
+
 CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
     {
         "name": "clawql_memory_recall",
         "description": (
-            "Retrieve matter context from the ClawQL vault. Prefer this over "
-            "reading all documents sequentially when enumerating matters or "
-            "finding documents that match criteria. Returns ranked note snippets."
+            "Retrieve matter context from the ClawQL vault/ontology. For "
+            "enumeration or exact set membership (e.g. all HSR second-request "
+            "matters), you MUST pass schema='legal.Matter' and filters — "
+            "keyword-only recall near-misses fail graders. Example filters: "
+            '{"title":{"contains":"HSR_SECOND_REQUEST"}}.'
         ),
         "parameters": {
             "type": "object",
             "properties": {
                 "query": {
                     "type": "string",
-                    "description": "Natural language or keywords to search in vault notes",
+                    "description": (
+                        "Audit/logging hint (still required). Filters drive "
+                        "structured ontology recall when schema is set."
+                    ),
                 },
                 "limit": {
                     "type": "integer",
@@ -52,11 +69,17 @@ CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
                 },
                 "schema": {
                     "type": "string",
-                    "description": "Optional ontology schema (e.g. legal.Matter)",
+                    "description": (
+                        "Ontology schema for structured recall. Use "
+                        "'legal.Matter' for firm-knowledge enumeration."
+                    ),
                 },
                 "filters": {
                     "type": "object",
-                    "description": "Optional structured ontology filters",
+                    "description": (
+                        "Structured ontology filters (required with schema). "
+                        'e.g. {"title":{"contains":"HSR_SECOND_REQUEST"}}'
+                    ),
                 },
             },
             "required": ["query"],
@@ -187,6 +210,108 @@ def _priority_docs(matter_dir: Path) -> list[Path]:
     return [p for _, p in scored[:MAX_DOCS_PER_MATTER]]
 
 
+def _client_hint(matter_dir: Path) -> str:
+    """Best-effort client/matter name from engagement letter filenames."""
+    for p in matter_dir.rglob("*"):
+        if not p.is_file():
+            continue
+        name = p.name.lower()
+        if "engagement" not in name:
+            continue
+        stem = p.stem
+        stem = re.sub(r"(?i)engagement[-_ ]?letter[-_ ]?", "", stem)
+        stem = re.sub(r"[-_]+", " ", stem).strip()
+        if stem:
+            return stem.title()
+    return matter_dir.name
+
+
+def _has_antitrust_signal(matter_dir: Path) -> bool:
+    for p in matter_dir.rglob("*"):
+        if _ANTITRUST_PATH.search(str(p.relative_to(matter_dir))):
+            return True
+    return False
+
+
+def _second_request_filename_evidence(matter_dir: Path) -> list[str]:
+    """Non-preparation filenames containing second-request / second_request."""
+    hits: list[str] = []
+    for p in matter_dir.rglob("*"):
+        if not p.is_file():
+            continue
+        name = p.name.lower()
+        if "second-request" not in name and "second_request" not in name:
+            continue
+        if "preparation" in name:
+            continue
+        hits.append(str(p.relative_to(matter_dir)))
+    return hits
+
+
+def _second_request_defined_term_evidence(matter_dir: Path) -> list[str]:
+    """Docs whose body defines (the \"Second Request\") — high precision."""
+    hits: list[str] = []
+    for p in matter_dir.rglob("*"):
+        if not p.is_file() or p.suffix.lower() != ".docx":
+            continue
+        path_l = str(p).lower()
+        # Skip obviously unrelated binaries; still scan antitrust/HSR/FTC paths
+        # and any doc already looking like second-request evidence.
+        if not (
+            "second-request" in path_l
+            or "second_request" in path_l
+            or _ANTITRUST_PATH.search(path_l)
+            or "status" in path_l
+            or "case-assessment" in path_l
+            or "compliance" in path_l
+            or "closing" in path_l
+        ):
+            continue
+        text = _docx_to_text(p, max_chars=50000)
+        if _HSR_SECOND_REQUEST_PAREN.search(text):
+            hits.append(str(p.relative_to(matter_dir)))
+    return hits
+
+
+def detect_hsr_second_request(matter_dir: Path) -> dict[str, Any]:
+    """Return detection payload for HSR Second Request received evidence."""
+    file_hits = _second_request_filename_evidence(matter_dir)
+    # Defined-term body scan is expensive — skip when filename already hits.
+    # Path filter inside _second_request_defined_term_evidence keeps it bounded.
+    text_hits: list[str] = []
+    if not file_hits:
+        text_hits = _second_request_defined_term_evidence(matter_dir)
+    received = bool(file_hits or text_hits)
+    return {
+        "received": received,
+        "evidence_files": (file_hits + text_hits)[:12],
+        "antitrust_signal": _has_antitrust_signal(matter_dir),
+    }
+
+
+def _clawql_field_block(
+    matter_id: str,
+    *,
+    title: str,
+    practice_area: str,
+    matter_type: str,
+    status: str = "Active",
+) -> str:
+    """Machine-readable block synced into ontology.db on memory_ingest."""
+    return "\n".join(
+        [
+            "```",
+            f"CLAWQL_MATTER_ID={matter_id}",
+            f"CLAWQL_TITLE={title}",
+            f"CLAWQL_PRACTICE_AREA={practice_area}",
+            f"CLAWQL_MATTER_TYPE={matter_type}",
+            f"CLAWQL_STATUS={status}",
+            "```",
+            "",
+        ]
+    )
+
+
 def is_clawql_lab_adapter(adapter: Any) -> bool:
     """True for Anthropic or chat-completions ClawQL LAB adapters."""
     return getattr(adapter, "__class__", type(None)).__name__ in {
@@ -314,24 +439,54 @@ class ClawQLLabSession:
         )
 
     def _ingest_firm_knowledge_dms(self, matters_root: Path) -> None:
-        matter_dirs = sorted(p for p in matters_root.iterdir() if p.is_dir())
+        all_matter_dirs = sorted(p for p in matters_root.iterdir() if p.is_dir())
+        # Always classify the full DMS so ontology filters see the true set.
+        # MAX_MATTERS only caps *full text* extraction volume.
+        full_text_dirs = all_matter_dirs
         if MAX_MATTERS > 0:
-            matter_dirs = matter_dirs[:MAX_MATTERS]
+            full_text_dirs = all_matter_dirs[:MAX_MATTERS]
+
         print(
-            f"ClawQL pre-ingest: {len(matter_dirs)} matters "
-            f"(cap={MAX_MATTERS or 'none'}) from {matters_root}"
+            f"ClawQL pre-ingest: {len(all_matter_dirs)} matters catalogued "
+            f"(full-text cap={MAX_MATTERS or 'none'}) from {matters_root}"
         )
-        for matter_dir in matter_dirs:
+        full_text_set = set(full_text_dirs)
+        hsr_count = 0
+        for matter_dir in all_matter_dirs:
             matter_id = matter_dir.name
-            docs = _priority_docs(matter_dir)
+            detection = detect_hsr_second_request(matter_dir)
+            if detection["received"]:
+                hsr_count += 1
+            client = _client_hint(matter_dir)
+            title_parts = [matter_id, client]
+            if detection["received"]:
+                title_parts.append("HSR_SECOND_REQUEST")
+            title = " — ".join(title_parts)
+            practice = "Other"
+            matter_type = "Advisory" if detection["received"] else "Other"
+            extract_full = (
+                matter_dir in full_text_set or bool(detection["received"])
+            )
+
             sections: list[str] = [
                 f"# Matter {matter_id}",
                 "",
+                _clawql_field_block(
+                    matter_id,
+                    title=title,
+                    practice_area=practice,
+                    matter_type=matter_type,
+                ),
                 f"LAB task: {self.task_id}",
                 f"Matter path: matters/{matter_id}",
-                "",
-                "## Document inventory",
+                f"Client hint: {client}",
+                f"HSR second request received: {detection['received']}",
             ]
+            if detection["evidence_files"]:
+                sections.append("Evidence paths:")
+                for ev in detection["evidence_files"]:
+                    sections.append(f"- `matters/{matter_id}/{ev}`")
+            sections.extend(["", "## Document inventory"])
             all_files = sorted(
                 str(p.relative_to(matters_root.parent))
                 for p in matter_dir.rglob("*")
@@ -341,39 +496,53 @@ class ClawQLLabSession:
                 sections.append(f"- `{rel}`")
             if len(all_files) > 80:
                 sections.append(f"- … ({len(all_files) - 80} more)")
-            sections.append("")
-            sections.append("## Extracted key documents")
-            for doc in docs:
-                rel = doc.relative_to(matters_root.parent)
-                sections.append(f"### {rel}")
-                if doc.suffix.lower() == ".docx":
-                    sections.append(_docx_to_text(doc))
-                elif doc.suffix.lower() in {".md", ".txt"}:
-                    sections.append(_plain_text(doc))
-                else:
-                    sections.append(f"(binary skipped in seed: {doc.suffix})")
+
+            if extract_full:
                 sections.append("")
+                sections.append("## Extracted key documents")
+                for doc in _priority_docs(matter_dir):
+                    rel = doc.relative_to(matters_root.parent)
+                    sections.append(f"### {rel}")
+                    if doc.suffix.lower() == ".docx":
+                        sections.append(_docx_to_text(doc))
+                    elif doc.suffix.lower() in {".md", ".txt"}:
+                        sections.append(_plain_text(doc))
+                    else:
+                        sections.append(f"(binary skipped in seed: {doc.suffix})")
+                    sections.append("")
 
             content = "\n".join(sections)
+            insights = (
+                f"Firm-knowledge DMS matter {matter_id} seeded for "
+                f"LAB task {self.task_id}"
+            )
+            if detection["received"]:
+                insights += " | ontology flag HSR_SECOND_REQUEST"
             self._call_clawql_mcp(
                 "memory_ingest",
                 {
                     "title": f"[LAB:{self.task_id}] Matter {matter_id}",
                     "type": "entity",
-                    "insights": (
-                        f"Firm-knowledge DMS matter {matter_id} seeded for "
-                        f"LAB task {self.task_id}"
-                    ),
+                    "insights": insights,
                     "toolOutputs": content,
                     "wikilinks": [
                         f"LAB:{self.task_id}",
                         f"Matter:{matter_id}",
                         "HarveyLAB",
+                        *(
+                            ["HSR_SECOND_REQUEST"]
+                            if detection["received"]
+                            else []
+                        ),
                     ],
                     "sessionId": f"harvey-lab:{self.task_id}",
                     "append": True,
                 },
             )
+        print(
+            f"ClawQL pre-ingest: ontology HSR_SECOND_REQUEST flagged "
+            f"{hsr_count}/{len(all_matter_dirs)} matters"
+        )
 
     def _ingest_flat_documents(self, docs_dir: Path) -> None:
         for doc in sorted(docs_dir.rglob("*")):

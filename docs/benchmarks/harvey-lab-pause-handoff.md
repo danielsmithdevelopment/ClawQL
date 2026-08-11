@@ -61,7 +61,7 @@ Valid comparisons: **A vs B** (same Opus). Arm C is compared to Harvey’s publi
 
 ## Not done (resume here)
 
-1. **★ Nemotron ± ClawQL (OpenRouter only):** `arms=nemotron,nemotron-clawql`, judge `openai/gpt-5.4-mini`, `max_matters=5`, task `001` — **no Anthropic key**
+1. **★ Nemotron ± ClawQL (OpenRouter only):** `arms=nemotron,nemotron-clawql`, judge `openai/gpt-5.4-mini`, task `001` — **no Anthropic key**. Ontology Pattern E required on ClawQL arm (`schema`+`filters`; `HSR_SECOND_REQUEST` title flag). `max_matters=0` catalogues full DMS into ontology.
 2. **Phase A (Sonnet A/B):** needs Anthropic — `baseline,clawql`, judge Sonnet
 3. **Phases B–D:** 5-task sample, vault isolation live check, prompt tune — still Sonnet
 4. **Phase E:** Opus A/B (+ Nemotron) firm-knowledge sweep; prefer Sonnet judge for Claude arms

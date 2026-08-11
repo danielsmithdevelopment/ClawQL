@@ -1,40 +1,58 @@
-# ClawQL Memory and Retrieval
+# ClawQL Memory and Ontology
 
 You have access to ClawQL memory tools in addition to the standard harness tools.
-Matter documents (or a firm-knowledge DMS catalog) have been pre-ingested into the ClawQL vault for this task.
+Matter documents (firm-knowledge DMS) have been pre-ingested into the ClawQL vault
+for this task. Machine-readable `CLAWQL_*` fields are synced into `ontology.db`.
 
-## When to use clawql_memory_recall
+## Pattern E — REQUIRED for enumeration / set membership
 
-Use `clawql_memory_recall` INSTEAD OF reading documents sequentially when:
-- You need to find all documents or matters matching specific criteria
-- You need to enumerate entities with specific field values
-- You need to cross-reference information across multiple matter documents
-
-For firm-knowledge tasks, start with a recall query that names the practice area,
-regulatory event, matter number, or document type you care about. Example:
+When the task asks for **every** matter matching typed criteria (practice area,
+regulatory event, escrow, non-compete, HSR second request, etc.), you MUST use
+structured ontology recall. Do **not** start with keyword-only recall or a
+directory walk — that is the failure mode that misses the set.
 
 ```json
 {
-  "query": "Antitrust HSR Second Request matter closing memorandum",
-  "limit": 15
+  "query": "antitrust HSR second request matters",
+  "schema": "legal.Matter",
+  "filters": {
+    "title": { "contains": "HSR_SECOND_REQUEST" }
+  },
+  "limit": 50
 }
 ```
 
-If structured ontology filters are available, you may also pass `schema` and `filters`.
+Rules:
+- Always pass both `schema: "legal.Matter"` and a non-empty `filters` object.
+- `query` is an audit hint; **filters drive retrieval**.
+- Titles of qualifying HSR second-request matters include the token `HSR_SECOND_REQUEST`.
+- Treat ontology hits as **candidates**. Verify with `read` / `glob` on the cited
+  document paths before writing the deliverable. Do not invent matter numbers.
 
-## When to use the standard read tool
+Other useful filters (when the task criteria match):
 
-Use the standard `read` tool when:
-- Reading a specific known document path returned by recall or glob
-- The task requires full text of a document
-- Producing a deliverable that must cite specific document passages
+```json
+{
+  "query": "matters by practice or type",
+  "schema": "legal.Matter",
+  "filters": {
+    "practiceArea": { "eq": "Other" },
+    "matterType": { "eq": "Advisory" }
+  }
+}
+```
 
-## Recommended pattern for firm-knowledge
+## When keyword recall is OK
 
-1. Call `clawql_memory_recall` to identify relevant matters and document paths
-2. Use `glob` / `grep` / `read` on `/workspace/documents/...` for full text of those hits
-3. Write the deliverable under `/workspace/output/`
+Use keyword-only `clawql_memory_recall` only for narrative context after the
+structured set is known, or when looking up a single named matter you already have.
 
-Do not invent matter numbers. Only report matters supported by vault recall or document reads.
-Use `clawql_memory_ingest` to persist intermediate enumerations if helpful within this task.
+## Recommended firm-knowledge loop
+
+1. `clawql_memory_recall` with `schema` + `filters` (Pattern E) → candidate matter ids + vault paths
+2. `glob` / `grep` / `read` under `/workspace/documents/...` for second-request evidence docs
+3. Write the deliverable under `/workspace/output/` listing only verified matters
+4. Optionally `clawql_memory_ingest` intermediate enumerations within this task
+
+Do not invent matter numbers. Only report matters supported by ontology hits or document reads.
 Do not rely on memory from any other task — the vault is task-scoped.
