@@ -53,6 +53,13 @@ export CLAWQL_OPENROUTER_APP_TITLE="${CLAWQL_OPENROUTER_APP_TITLE:-ClawQL Harvey
 export CLAWQL_LAB_NEMOTRON_MODEL="${NEMOTRON_MODEL}"
 
 echo "::group::Clone harvey-labs"
+# GitHub Actions runners occasionally lack CA bundle → "CAfile: none" on clone.
+if [[ ! -f /etc/ssl/certs/ca-certificates.crt ]]; then
+  sudo apt-get update -qq
+  sudo apt-get install -y -qq ca-certificates
+fi
+export GIT_SSL_CAINFO="${GIT_SSL_CAINFO:-/etc/ssl/certs/ca-certificates.crt}"
+export SSL_CERT_FILE="${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}"
 mkdir -p "${WORK}"
 if [[ ! -d "${HARVEY_LABS}/.git" ]]; then
   git clone --depth 1 https://github.com/harveyai/harvey-labs.git "${HARVEY_LABS}"
