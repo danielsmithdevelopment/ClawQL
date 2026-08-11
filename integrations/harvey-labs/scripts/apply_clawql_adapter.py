@@ -302,29 +302,40 @@ def patch_openrouter_clients(harvey_labs: Path) -> None:
     judge = harvey_labs / "evaluation" / "judge.py"
     jtext = judge.read_text(encoding="utf-8")
     jbegin, jend = "# --- clawql-openrouter-judge begin ---", "# --- clawql-openrouter-judge end ---"
-    jblock = f"""{jbegin}
-        from harness.adapters.clawql_openrouter import (
-            make_anthropic_client,
-            maybe_rewrite_model,
-        )
-        self.model = maybe_rewrite_model(model)
-        self.client = make_anthropic_client()
-{jend}
+    # Body must stay indented under ``if self.provider == "anthropic":``
+    jblock = f"""        {jbegin}
+            from harness.adapters.clawql_openrouter import (
+                make_anthropic_client,
+                maybe_rewrite_model,
+            )
+            self.model = maybe_rewrite_model(model)
+            self.client = make_anthropic_client()
+        {jend}
 """
     if jbegin in jtext:
-        jtext = _replace_block(jtext, jbegin, jend, jblock)
+        # Re-apply from markers — find the if-anthropic block markers.
+        text_begin = jtext.find(jbegin)
+        text_end = jtext.find(jend)
+        if text_begin != -1 and text_end != -1:
+            # Expand to full line starts
+            line_begin = jtext.rfind("\n", 0, text_begin) + 1
+            line_end = jtext.find("\n", text_end)
+            if line_end == -1:
+                line_end = len(jtext)
+            else:
+                line_end += 1
+            jtext = jtext[:line_begin] + jblock + jtext[line_end:]
     else:
         old = '        if self.provider == "anthropic":\n            self.client = anthropic.Anthropic(max_retries=1)\n'
         if old not in jtext:
             raise SystemExit("judge.py anthropic client anchor not found")
         jtext = jtext.replace(
             old,
-            '        if self.provider == "anthropic":\n' + jblock + "\n",
+            '        if self.provider == "anthropic":\n' + jblock,
             1,
         )
     judge.write_text(jtext, encoding="utf-8")
     print(f"patched {judge}")
-
 
 def patch_run_eval_judge_factory(harvey_labs: Path) -> None:
     """Route Arm C / OpenRouter judge models through OpenRouterChatJudge."""
