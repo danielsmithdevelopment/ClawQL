@@ -1,81 +1,80 @@
 # Harvey LAB × ClawQL Results — firm-knowledge
 
 Date: 2026-08-12  
-Models: Nemotron 3.5 Lightning ± ClawQL (OpenRouter); Opus A/B validation via OpenRouter  
+Models: Nemotron 3.5 Lightning ± ClawQL; Opus 4.8 ± ClawQL (OpenRouter validation)  
 Tasks: 250 total; **live sample so far: `firm-knowledge/tasks/001` only**  
-Judge (Nemotron): `openai/gpt-5.4-mini` · Judge (Opus validation): `claude-sonnet-4-6` via OpenRouter
+Judges: Nemotron — `openai/gpt-5.4-mini`; Opus validation — `claude-sonnet-4-6` via OpenRouter
 
 ## Status
 
-**Nemotron ± ClawQL stabilized on task 001 (OpenRouter).**  
-**Opus A/B validation:** re-triggered via OpenRouter (same small task). Prior direct-Anthropic attempt [31553952902](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31553952902) skipped — no `ANTHROPIC_API_KEY`; staying on OpenRouter for these validation runs.
+**Nemotron ± ClawQL and Opus ± ClawQL both all-pass on task 001 (OpenRouter).**
 
-Latest Nemotron stability run: [31552128819](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31552128819)
+### Opus A/B (OpenRouter validation) — [31555668711](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31555668711)
 
-| Arm               | CPR            | All-pass | Turns | Notes                                                                            |
-| ----------------- | -------------- | -------- | ----- | -------------------------------------------------------------------------------- |
-| `nemotron`        | **0%** (0/7)   | 0%       | 40    | Empty deliverable (`response.md` missing)                                        |
-| `nemotron-clawql` | **100%** (7/7) | **100%** | 5     | ALL-PASS — rubric short names + preferred evidence + explicit “Qualifies” column |
+| Arm | CPR | All-pass | Turns | Input tokens | Wall (s) | Notes |
+| --- | --- | -------- | ----- | ------------ | -------- | ----- |
+| `baseline` (Opus 4.8) | **100%** (7/7) | **100%** | 35 | 1,869,702 | 437 | Sonnet 4.6 judge; no ClawQL |
+| `clawql` (Opus 4.8 + ClawQL) | **100%** (7/7) | **100%** | 5 | 95,893 | 43 | Ontology Pattern E; preferred evidence |
 
-Prior packaging run: [31550749489](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31550749489) — clawql **85.7%** (6/7; C-002 judge quirk).  
-Prior deliverable-guard run: [31539169062](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31539169062) — clawql **57.1%**.
+**Quality:** both arms saturate this task (all-pass).  
+**Efficiency:** ClawQL uses ~**20× fewer input tokens**, **7× fewer turns**, ~**10× less wall time** at the same Opus model + same judge.
 
-**ClawQL lift (stability): 0% → 100% CPR / all-pass on the same Nemotron model.**  
-Across the packaging series, clawql CPR moved **14.3% → 57.1% → 85.7% → 100%** while baseline stayed near-empty.
+Shared OpenRouter `max_tokens` cap: `CLAWQL_LAB_OPENROUTER_MAX_TOKENS=32768` (both arms). Prior attempt [31554303385](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31554303385) failed baseline on 128k reservation 402.
 
-## Arm A — Baseline (Opus, standard harness)
+### Nemotron ± ClawQL — [31552128819](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31552128819)
 
-| Metric              | Value                         |
-| ------------------- | ----------------------------- |
-| Criterion pass rate | _pending OpenRouter Opus run_ |
-| All-pass rate       | _pending_                     |
+| Arm | CPR | All-pass | Turns | Notes |
+| --- | --- | -------- | ----- | ----- |
+| `nemotron` | **0%** (0/7) | 0% | 40 | Empty deliverable |
+| `nemotron-clawql` | **100%** (7/7) | **100%** | 5 | ALL-PASS |
+
+ClawQL CPR progression (Nemotron): **14.3% → 57.1% → 85.7% → 100%**.
+
+## Arm A — Baseline (Opus)
+
+| Metric | Value (task 001, OpenRouter) |
+| ------ | ---------------------------- |
+| Criterion pass rate | **100%** (7/7) |
+| All-pass rate | **100%** |
+| Turns / input tokens | 35 / 1.87M |
 
 ## Arm B — Opus + ClawQL
 
-| Metric              | Value                         |
-| ------------------- | ----------------------------- |
-| Criterion pass rate | _pending OpenRouter Opus run_ |
-| All-pass rate       | _pending_                     |
+| Metric | Value (task 001, OpenRouter) |
+| ------ | ---------------------------- |
+| Criterion pass rate | **100%** (7/7) |
+| All-pass rate | **100%** |
+| Turns / input tokens | 5 / 96k |
 
 ## Arm C pair — Nemotron ± ClawQL (OpenRouter)
 
-| Metric                                    | `nemotron`          | `nemotron-clawql`                                          |
-| ----------------------------------------- | ------------------- | ---------------------------------------------------------- |
-| Criterion pass rate (stability)           | 0%                  | **100%**                                                   |
-| All-pass rate (stability)                 | 0%                  | **100%**                                                   |
-| CPR (packaging run)                       | 14.3%               | 85.7%                                                      |
-| vs published Nemotron LAB (8.3% all-pass) | below (single task) | **above on this task** (single-task smoke; not full suite) |
+| Metric | `nemotron` | `nemotron-clawql` |
+| ------ | ---------- | ----------------- |
+| Criterion pass rate (stability) | 0% | **100%** |
+| All-pass rate (stability) | 0% | **100%** |
 
-### Stability evidence (run 31552128819)
+## Interpretation
 
-- Pre-ingest continues to flag 6/266 HSR_SECOND_REQUEST matters
-- Deliverable: `output/matters-enumeration.md` titled “Qualifying HSR Second-Request Matters” with Qualifies column
-- Evidence: joint-status-report (1038-00001), substantial-compliance-certification (1041-00001), second-request-strategy-memo (1003-00001)
-- All seven criteria passed under `gpt-5.4-mini`
+On this single firm-knowledge task:
 
-## ClawQL bugs fixed this pass
-
-- Ontology `results[].reason` mislabeled `keyword` → `structured_predicate` (+ `RecallHit` union)
-- LAB recall enrichment: `sandboxDocumentRoot` + `labGuidance`
-- Empty-output finish: deliverable guard nudge
-- Rubric client short names + `preferredEvidence` / `evidenceRule`
-- Explicit “qualifies” deliverable wording (cleared C-002 judge flake)
+1. **Nemotron:** ClawQL is the difference between empty output and all-pass.
+2. **Opus:** baseline already all-passes; ClawQL’s win is **cost/latency**, not criterion lift.
+3. Story for Harvey outreach still needs a broader sample (and preferably direct Anthropic) before claiming suite-level numbers vs 8.3% all-pass.
 
 ## Implementation notes
 
 - Overlay: `integrations/harvey-labs/`
 - Matrix: `.github/workflows/harvey-lab-firm-knowledge.yml`
-- Nemotron: `openrouter/<id>` / `clawql-cc/<id>`; API maps to `:free`
-- Judge (PR smoke): `OpenRouterChatJudge` + `gpt-5.4-mini`
-- Harvey harness default judges: `claude-sonnet-4-6` and `gpt-5.5` — use Sonnet (prefer direct Anthropic) for publishable Opus ledger
+- OpenRouter Opus validation: `.run-opus-ledger` marker (removed after this run)
+- `CLAWQL_LAB_OPENROUTER_MAX_TOKENS=32768` shared on both Claude arms
 
 ## Next
 
-1. **Opus vs Opus (OpenRouter validation)** — marker `.run-opus-ledger` → Arm A/B Opus 4.8, Sonnet 4.6 judge via OpenRouter on task 001; shared `CLAWQL_LAB_OPENROUTER_MAX_TOKENS=32768` (avoids 128k reservation 402; same cap both arms)
-2. Larger Nemotron sweeps still on OpenRouter after this validation
-3. Direct Anthropic ledger later when `ANTHROPIC_API_KEY` is available (`use_openrouter=0`)
-4. No Harvey outreach until a publishable Opus ledger exists
+1. Larger Nemotron sweeps on OpenRouter
+2. Broader Opus sample (or full firm-knowledge) when budget allows
+3. Direct Anthropic ledger when `ANTHROPIC_API_KEY` is available
+4. No Harvey outreach until a multi-task Opus ledger exists
 
 ## Notes
 
-Do not outreach to Harvey until Opus A/B ledger exists. OpenRouter Opus A/B on one task is directional validation, not a Harvey-facing claim. Nemotron all-pass on one task is infrastructure proof, not a publishable full-suite LAB claim.
+OpenRouter Opus A/B on one task is directional validation. Do not outreach to Harvey on single-task all-pass alone.
