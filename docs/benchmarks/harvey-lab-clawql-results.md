@@ -11,10 +11,10 @@ Judge: `openai/gpt-5.4-mini` (OpenRouter)
 
 Latest packaging fix run: [31550749489](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31550749489)
 
-| Arm | CPR | All-pass | Turns | Notes |
-| --- | --- | -------- | ----- | ----- |
-| `nemotron` | **14.3%** (1/7) | 0% | — | Unchanged empty/near-empty baseline |
-| `nemotron-clawql` | **85.7%** (6/7) | 0% | 4 | Correct short names + rubric evidence; only C-002 failed (judge quirk — deliverable already lists `1038-00001 \| Cascade Retail`) |
+| Arm               | CPR             | All-pass | Turns | Notes                                                                                                                             |
+| ----------------- | --------------- | -------- | ----- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `nemotron`        | **14.3%** (1/7) | 0%       | —     | Unchanged empty/near-empty baseline                                                                                               |
+| `nemotron-clawql` | **85.7%** (6/7) | 0%       | 4     | Correct short names + rubric evidence; only C-002 failed (judge quirk — deliverable already lists `1038-00001 \| Cascade Retail`) |
 
 **ClawQL lift on this task: 14.3% → 85.7% CPR** (same Nemotron model; was 57.1% before packaging fix).
 
@@ -24,24 +24,24 @@ Publishable Opus A/B still needs direct Anthropic + Sonnet 4.6 judge before any 
 
 ## Arm A — Baseline (Opus, standard harness)
 
-| Metric | Value |
-| ------ | ----- |
+| Metric              | Value               |
+| ------------------- | ------------------- |
 | Criterion pass rate | _pending Anthropic_ |
-| All-pass rate | _pending_ |
+| All-pass rate       | _pending_           |
 
 ## Arm B — Opus + ClawQL
 
-| Metric | Value |
-| ------ | ----- |
+| Metric              | Value               |
+| ------------------- | ------------------- |
 | Criterion pass rate | _pending Anthropic_ |
-| All-pass rate | _pending_ |
+| All-pass rate       | _pending_           |
 
 ## Arm C pair — Nemotron ± ClawQL (OpenRouter)
 
-| Metric | `nemotron` | `nemotron-clawql` |
-| ------ | ---------- | ----------------- |
-| Criterion pass rate | 14.3% | **85.7%** |
-| All-pass rate | 0% | 0% |
+| Metric                                    | `nemotron`          | `nemotron-clawql`               |
+| ----------------------------------------- | ------------------- | ------------------------------- |
+| Criterion pass rate                       | 14.3%               | **85.7%**                       |
+| All-pass rate                             | 0%                  | 0%                              |
 | vs published Nemotron LAB (8.3% all-pass) | below (single task) | below (single task; CPR strong) |
 
 ### Packaging + ontology evidence (run 31550749489)
