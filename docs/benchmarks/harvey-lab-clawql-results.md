@@ -2,12 +2,14 @@
 
 Date: 2026-08-12  
 Models: Nemotron 3.5 Lightning ± ClawQL; Opus 4.8 ± ClawQL (OpenRouter validation)  
-Tasks: 250 total; **live sample so far: `firm-knowledge/tasks/001` only**  
+Tasks: 250 total; **Opus/Nemotron smoke: task 001**; **Nemotron sweep: first 25 in flight**  
 Judges: Nemotron — `openai/gpt-5.4-mini`; Opus validation — `claude-sonnet-4-6` via OpenRouter
 
 ## Status
 
-**Nemotron ± ClawQL and Opus ± ClawQL both all-pass on task 001 (OpenRouter).**
+**Nemotron 25-task sweep queued** via marker `.run-nemotron-sweep` (tasks `001`–`025`, arms `nemotron` + `nemotron-clawql`, OpenRouter, `gpt-5.4-mini` judge, `max-parallel: 4`).
+
+Prior single-task results remain below.
 
 ### Opus A/B (OpenRouter validation) — [31555668711](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31555668711)
 
@@ -70,11 +72,11 @@ On this single firm-knowledge task:
 
 ## Next
 
-1. Larger Nemotron sweeps on OpenRouter
-2. Broader Opus sample (or full firm-knowledge) when budget allows
-3. Direct Anthropic ledger when `ANTHROPIC_API_KEY` is available
-4. No Harvey outreach until a multi-task Opus ledger exists
+1. **Nemotron 25-task sweep in flight** — `.run-nemotron-sweep` (delete after completion)
+2. Scale to 50 / 250 if CPR/all-pass hold
+3. Broader Opus sample when budget allows; direct Anthropic for publishable ledger
+4. No Harvey outreach until multi-task Opus ledger exists
 
 ## Notes
 
-OpenRouter Opus A/B on one task is directional validation. Do not outreach to Harvey on single-task all-pass alone.
+OpenRouter Opus A/B on one task is directional validation. Do not outreach to Harvey on single-task all-pass alone. Avoid pushing this PR branch while a multi-task sweep is running (`cancel-in-progress` will kill it).
