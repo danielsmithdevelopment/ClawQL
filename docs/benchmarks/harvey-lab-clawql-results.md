@@ -55,18 +55,21 @@ Publishable Opus A/B still blocked on Anthropic. Re-judge with Sonnet before any
 - Ontology `results[].reason` mislabeled `keyword` → `structured_predicate` (+ `RecallHit` union)
 - LAB recall enrichment: `sandboxDocumentRoot` + `labGuidance` (vault `Memory/` not harness-readable)
 - Empty-output finish: one forced nudge when ClawQL arm has `CLAWQL_LAB_OUTPUT_DIR` set
+- Packaging (queued for next matrix): rubric client short names (`Cascade Retail` / `Harrowgate PE` / `Halcyon Semi`); seed + recall `preferredEvidence` / `evidenceRule` so C-005/C-006 cite joint-status / substantial-compliance rather than engagement or strategy memos
 
 ## Implementation notes
 
 - Overlay: `integrations/harvey-labs/`
 - Matrix: `.github/workflows/harvey-lab-firm-knowledge.yml`
 - Nemotron: `openrouter/<id>` / `clawql-cc/<id>`; API maps to `:free`
-- Judge: `OpenRouterChatJudge` + `gpt-5.4-mini`
+- Judge (PR smoke): `OpenRouterChatJudge` + `gpt-5.4-mini`
+- Harvey harness default judges: `claude-sonnet-4-6` and `gpt-5.5` (`JUDGE_MODELS` in `evaluation/run_eval.py`) — match Sonnet for publishable / Harvey-facing comparisons
 
 ## Next
 
-1. Prompt/evidence: prefer rubric-named second-request docs in deliverable (joint-status-report, substantial-compliance, etc.)
-2. Opus A/B when Anthropic available; Sonnet re-judge before Harvey outreach
+1. Re-run Nemotron ± ClawQL on task 001 after packaging fix; target >57.1% CPR / some all-pass
+2. Second Nemotron stability run, then Opus vs Opus (direct Anthropic, Sonnet 4.6 judge)
+3. No Harvey outreach until Opus ledger exists
 
 ## Notes
 

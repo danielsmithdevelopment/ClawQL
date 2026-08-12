@@ -129,6 +129,55 @@ class HsrSecondRequestDetectionTests(unittest.TestCase):
         self.assertEqual(enriched["results"][0]["reason"], "structured_predicate")
         self.assertIn("requiredDeliverable", enriched["labGuidance"])
         self.assertIn("/workspace/output/", enriched["labGuidance"]["requiredDeliverable"])
+        self.assertIn("evidenceRule", enriched["labGuidance"])
+
+    def test_client_hint_uses_rubric_short_names(self) -> None:
+        dms = Path(
+            "/tmp/harvey-labs-work/harvey-labs/tasks/firm-knowledge/dms/matters"
+        )
+        if not dms.is_dir():
+            self.skipTest("local harvey-labs DMS not available")
+        from clawql_lab_session import _client_hint, _preferred_evidence_paths
+
+        expected = {
+            "1003-00001": "Harrowgate PE",
+            "1038-00001": "Cascade Retail",
+            "1041-00001": "Solara Digital",
+            "1003-00003": "Harrowgate PE",
+            "1032-00005": "Halcyon Semi",
+            "1038-00009": "Cascade Retail",
+        }
+        for matter_id, short_name in expected.items():
+            self.assertEqual(
+                _client_hint(dms / matter_id),
+                short_name,
+                msg=matter_id,
+            )
+
+        prefs = _preferred_evidence_paths(dms / "1038-00001")
+        self.assertTrue(any("joint-status-report" in p for p in prefs))
+        prefs1041 = _preferred_evidence_paths(dms / "1041-00001")
+        self.assertTrue(
+            any(
+                "substantial-compliance" in p or "custodian-identification" in p
+                for p in prefs1041
+            )
+        )
+        # Engagement letters must never appear as preferred Second Request evidence.
+        for matter_id in expected:
+            for path in _preferred_evidence_paths(dms / matter_id):
+                self.assertNotIn("engagement", path.lower(), msg=path)
+
+    def test_client_hint_canonicalizes_truncated_body_match(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            matter = Path(tmp) / "1032-00005"
+            _write_docx(
+                matter / "engagement-letter-halcyon.docx",
+                "We are pleased to represent Halcyon in this matter.",
+            )
+            from clawql_lab_session import _client_hint
+
+            self.assertEqual(_client_hint(matter), "Halcyon Semi")
 
 
 if __name__ == "__main__":
