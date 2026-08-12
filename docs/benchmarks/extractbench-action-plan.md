@@ -12,10 +12,10 @@ Run LlamaIndex [ExtractBench](https://github.com/run-llama/ExtractBench) against
 
 ## Arms
 
-| Arm | Pipeline | Schema map |
-| --- | --- | --- |
-| A | `clawql_idp_qwen_extract` | Self-hosted Qwen3.6 35B over extracted text |
-| B | `clawql_idp_docling_extract` | Structural table/label mapping only |
+| Arm | Pipeline                     | Schema map                                  |
+| --- | ---------------------------- | ------------------------------------------- |
+| A   | `clawql_idp_qwen_extract`    | Self-hosted Qwen3.6 35B over extracted text |
+| B   | `clawql_idp_docling_extract` | Structural table/label mapping only         |
 
 ## Cost-safe sequence
 

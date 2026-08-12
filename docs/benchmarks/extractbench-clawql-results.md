@@ -20,40 +20,40 @@ Do **not** use Opus for the full ExtractBench corpus. Prefer self-hosted Qwen3.6
 
 ## Baselines (upstream leaderboard, August 2026)
 
-| System | Overall F1 | Long F1 | Cost/page |
-| --- | ---: | ---: | ---: |
-| LlamaExtract Agentic Plus | 95.59 | 94.41 | 8.11¢ |
-| Codex (GPT-5.5) | 93.57 | 78.88 | 27.83¢ |
-| Reducto Deep Extract | 90.44 | 92.01 | 34.44¢ |
-| Qwen3.6 35B (raw VLM oneshot) | 87.33 | 26.75 | — |
-| LlamaExtract Cost-Effective | 86.78 | 69.17 | 1.00¢ |
-| Gemini 3.5 Flash | 79.84 | 27.90 | 1.00¢ |
+| System                        | Overall F1 | Long F1 | Cost/page |
+| ----------------------------- | ---------: | ------: | --------: |
+| LlamaExtract Agentic Plus     |      95.59 |   94.41 |     8.11¢ |
+| Codex (GPT-5.5)               |      93.57 |   78.88 |    27.83¢ |
+| Reducto Deep Extract          |      90.44 |   92.01 |    34.44¢ |
+| Qwen3.6 35B (raw VLM oneshot) |      87.33 |   26.75 |         — |
+| LlamaExtract Cost-Effective   |      86.78 |   69.17 |     1.00¢ |
+| Gemini 3.5 Flash              |      79.84 |   27.90 |     1.00¢ |
 
 The internal comparison that proves pipeline value: **ClawQL IDP + Qwen** vs **raw Qwen oneshot** (`qwen3_6_35b_a3b_fp8_vllm_extract_oneshot_structured_output_file`), especially on the long split.
 
 ## Arm A — ClawQL IDP + Qwen3.6 35B
 
-| Split | Value F1 | Precision | Recall | Page grounding | Word grounding | Cost/page | Latency s/doc |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Overall | _pending_ | — | — | _pending_ | _pending_ | _pending_ | — |
-| Short | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |
-| Medium | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |
-| Long | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |
+| Split   |  Value F1 | Precision |    Recall | Page grounding | Word grounding | Cost/page | Latency s/doc |
+| ------- | --------: | --------: | --------: | -------------: | -------------: | --------: | ------------: |
+| Overall | _pending_ |         — |         — |      _pending_ |      _pending_ | _pending_ |             — |
+| Short   | _pending_ | _pending_ | _pending_ |      _pending_ |      _pending_ | _pending_ |     _pending_ |
+| Medium  | _pending_ | _pending_ | _pending_ |      _pending_ |      _pending_ | _pending_ |     _pending_ |
+| Long    | _pending_ | _pending_ | _pending_ |      _pending_ |      _pending_ | _pending_ |     _pending_ |
 
 ## Arm B — ClawQL IDP Docling-only (structural)
 
-| Split | Value F1 | Notes |
-| --- | ---: | --- |
+| Split   |  Value F1 | Notes             |
+| ------- | --------: | ----------------- |
 | Overall | _pending_ | No LLM schema map |
-| Long | _pending_ | Ablation vs Arm A |
+| Long    | _pending_ | Ablation vs Arm A |
 
 ## Delta vs raw Qwen oneshot
 
-| Metric | Raw Qwen | ClawQL IDP + Qwen | Δ |
-| --- | ---: | ---: | ---: |
-| Overall F1 | 87.33 | _pending_ | _pending_ |
-| Long F1 | 26.75 | _pending_ | _pending_ |
-| Cost/page | — | _pending_ | — |
+| Metric     | Raw Qwen | ClawQL IDP + Qwen |         Δ |
+| ---------- | -------: | ----------------: | --------: |
+| Overall F1 |    87.33 |         _pending_ | _pending_ |
+| Long F1    |    26.75 |         _pending_ | _pending_ |
+| Cost/page  |        — |         _pending_ |         — |
 
 ## Publishability checklist
 
@@ -66,9 +66,9 @@ The internal comparison that proves pipeline value: **ClawQL IDP + Qwen** vs **r
 
 ## Run diary
 
-| Date | Split | Pipeline | Notes |
-| --- | --- | --- | --- |
-| — | — | — | Overlay landed; scores TBD |
+| Date | Split | Pipeline | Notes                      |
+| ---- | ----- | -------- | -------------------------- |
+| —    | —     | —        | Overlay landed; scores TBD |
 
 ## Implementation notes
 

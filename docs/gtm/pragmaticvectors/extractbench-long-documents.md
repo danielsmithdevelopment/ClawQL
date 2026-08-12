@@ -25,13 +25,13 @@ ExtractBench is deterministic. No LLM judge. Schema-guided extraction, exact mat
 
 The long-document story from the public leaderboard is stark:
 
-| System | Short F1 | Long F1 |
-| --- | ---: | ---: |
-| LlamaExtract Agentic Plus | 96.56 | 94.41 |
-| Reducto Deep Extract | 94.20 | 92.01 |
-| Codex (GPT-5.5) | 95.68 | 78.88 |
-| Qwen3.6 35B | 93.11 | **26.75** |
-| Gemini 3.5 Flash | 87.87 | **27.90** |
+| System                    | Short F1 |   Long F1 |
+| ------------------------- | -------: | --------: |
+| LlamaExtract Agentic Plus |    96.56 |     94.41 |
+| Reducto Deep Extract      |    94.20 |     92.01 |
+| Codex (GPT-5.5)           |    95.68 |     78.88 |
+| Qwen3.6 35B               |    93.11 | **26.75** |
+| Gemini 3.5 Flash          |    87.87 | **27.90** |
 
 Specialized extraction pipelines hold. General VLMs and cheap flash models do not. Precision often stays respectable while recall falls off a cliff — classic silent list truncation on holdings tables, claim schedules, and multi-page repeated structures (ExtractBench challenge **T1**).
 
@@ -102,4 +102,4 @@ Until then: the integration lives at [`integrations/extractbench/`](https://gith
 
 ---
 
-*Draft for pragmaticvectors.com · update with measured ExtractBench scores before publish.*
+_Draft for pragmaticvectors.com · update with measured ExtractBench scores before publish._
