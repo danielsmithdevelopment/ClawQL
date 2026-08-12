@@ -286,8 +286,10 @@ def patch_openrouter_clients(harvey_labs: Path) -> None:
         from harness.adapters.clawql_openrouter import (
             make_anthropic_client,
             maybe_rewrite_model,
+            openrouter_max_tokens,
         )
         self.model = maybe_rewrite_model(model)
+        self.max_tokens = openrouter_max_tokens(self.max_tokens)
         self.client = make_anthropic_client()
 {end}
 """

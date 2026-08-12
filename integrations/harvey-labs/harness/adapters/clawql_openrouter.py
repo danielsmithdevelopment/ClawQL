@@ -45,6 +45,25 @@ def use_openrouter() -> bool:
     )
 
 
+def openrouter_max_tokens(requested: int | None) -> int | None:
+    """Cap Anthropic ``max_tokens`` on OpenRouter to avoid 402 reservation fails.
+
+    Opus defaults to 128k output in the Harvey adapter; OpenRouter keys often
+    cannot reserve that much even when the actual completion is small. Override
+    with ``CLAWQL_LAB_OPENROUTER_MAX_TOKENS`` (default 32768).
+    """
+    if requested is None or not use_openrouter():
+        return requested
+    raw = os.environ.get("CLAWQL_LAB_OPENROUTER_MAX_TOKENS", "32768").strip()
+    try:
+        cap = int(raw)
+    except ValueError:
+        cap = 32768
+    if cap <= 0:
+        return requested
+    return min(int(requested), cap)
+
+
 def resolve_openrouter_model(model: str) -> str:
     """Map a Harvey / short Claude id to an OpenRouter Anthropic model id."""
     if model.startswith("anthropic/"):

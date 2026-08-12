@@ -20,6 +20,7 @@ from harness.adapters.clawql_lab_session import ClawQLLabSession
 from harness.adapters.clawql_openrouter import (
     make_anthropic_client,
     maybe_rewrite_model,
+    openrouter_max_tokens,
 )
 
 
@@ -40,6 +41,7 @@ class ClawQLAdapter(AnthropicAdapter):
             temperature=temperature,
             reasoning_effort=reasoning_effort,
         )
+        self.max_tokens = openrouter_max_tokens(self.max_tokens)
         self.client = make_anthropic_client()
         self.task_id = task_id
         self.documents_dir = Path(documents_dir)
