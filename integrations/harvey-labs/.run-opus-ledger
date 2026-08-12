@@ -1,0 +1,14 @@
+# Opus A/B ledger trigger
+#
+# Presence of this file on a PR/push that touches integrations/harvey-labs/**
+# switches `.github/workflows/harvey-lab-firm-knowledge.yml` from the default
+# Nemotron OpenRouter smoke to:
+#
+#   Arms:   baseline, clawql
+#   Model:  claude-opus-4-8
+#   Judge:  claude-sonnet-4-6
+#   Route:  direct Anthropic (CLAWQL_LAB_USE_OPENROUTER=0)
+#   Task:   firm-knowledge/tasks/001
+#
+# Requires GitHub Actions secret ANTHROPIC_API_KEY.
+# Delete this file after the ledger run to restore Nemotron PR smoke.

@@ -72,7 +72,7 @@ Publishable Opus A/B still needs direct Anthropic + Sonnet 4.6 judge before any 
 
 ## Next
 
-1. **Opus vs Opus** on the same task — direct Anthropic, Sonnet 4.6 judge
+1. **Opus vs Opus in flight** — marker `integrations/harvey-labs/.run-opus-ledger` triggers Arm A (`baseline` / Opus 4.8) vs Arm B (`clawql` / Opus 4.8 + ClawQL) on task 001 with **direct Anthropic** + **Sonnet 4.6** judge (requires `ANTHROPIC_API_KEY` GHA secret)
 2. If Opus lift holds, expand firm-knowledge sample / full suite
 3. No Harvey outreach until Opus ledger exists
 

@@ -50,6 +50,7 @@ if [[ -z "${OPENROUTER_API_KEY:-}" && -z "${ANTHROPIC_API_KEY:-}" ]]; then
   exit 1
 fi
 
+# Default OpenRouter for Nemotron-first smoke; Opus ledger sets this to 0.
 export CLAWQL_LAB_USE_OPENROUTER="${CLAWQL_LAB_USE_OPENROUTER:-1}"
 export CLAWQL_OPENROUTER_HTTP_REFERER="${CLAWQL_OPENROUTER_HTTP_REFERER:-https://clawql.com}"
 export CLAWQL_OPENROUTER_APP_TITLE="${CLAWQL_OPENROUTER_APP_TITLE:-ClawQL Harvey LAB}"
@@ -57,6 +58,13 @@ export CLAWQL_LAB_NEMOTRON_MODEL="${NEMOTRON_MODEL}"
 # Ensure API resolution still prefers :free when harness id has no variant suffix.
 if [[ "${NEMOTRON_HARNESS_MODEL}" == "${NEMOTRON_MODEL}" ]]; then
   export CLAWQL_LAB_NEMOTRON_MODEL="${NEMOTRON_HARNESS_MODEL}"
+fi
+if [[ "${CLAWQL_LAB_USE_OPENROUTER}" == "0" || "${CLAWQL_LAB_USE_OPENROUTER}" == "false" ]]; then
+  echo "::notice::Direct Anthropic path (CLAWQL_LAB_USE_OPENROUTER=${CLAWQL_LAB_USE_OPENROUTER}); model=${MODEL} judge=${JUDGE}"
+  if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+    echo "::error::CLAWQL_LAB_USE_OPENROUTER=0 requires ANTHROPIC_API_KEY" >&2
+    exit 1
+  fi
 fi
 
 echo "::group::Clone harvey-labs"
