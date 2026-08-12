@@ -172,11 +172,11 @@ jobs:
             MODEL="claude-sonnet-4-6"
             NEMO="nvidia/nemotron-3.5-lightning"
             TURNS="40"
-            JUDGE="openai/gpt-5.4-mini"
+            JUDGE="claude-sonnet-4-6"
             MATTERS="0"
             USE_OR="1"
             MODE="nemotron-sweep"
-            echo "::notice::Detected .run-nemotron-sweep → Nemotron ± ClawQL first ${TASK_LIMIT} tasks"
+            echo "::notice::Detected .run-nemotron-sweep → Nemotron ± ClawQL first ${TASK_LIMIT} tasks, judge=claude-sonnet-4-6"
           else
             ARMS_CSV="nemotron,nemotron-clawql"
             TASK="firm-knowledge/tasks/001"
