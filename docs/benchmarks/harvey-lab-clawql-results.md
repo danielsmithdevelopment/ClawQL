@@ -71,7 +71,7 @@ Across the packaging series, clawql CPR moved **14.3% → 57.1% → 85.7% → 10
 
 ## Next
 
-1. **Opus vs Opus (OpenRouter validation)** — marker `.run-opus-ledger` → Arm A/B Opus 4.8, Sonnet 4.6 judge via OpenRouter on task 001
+1. **Opus vs Opus (OpenRouter validation)** — marker `.run-opus-ledger` → Arm A/B Opus 4.8, Sonnet 4.6 judge via OpenRouter on task 001; shared `CLAWQL_LAB_OPENROUTER_MAX_TOKENS=32768` (avoids 128k reservation 402; same cap both arms)
 2. Larger Nemotron sweeps still on OpenRouter after this validation
 3. Direct Anthropic ledger later when `ANTHROPIC_API_KEY` is available (`use_openrouter=0`)
 4. No Harvey outreach until a publishable Opus ledger exists

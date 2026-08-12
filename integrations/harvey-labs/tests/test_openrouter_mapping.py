@@ -11,6 +11,7 @@ INTEGRATION = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(INTEGRATION / "harness" / "adapters"))
 
 from clawql_openrouter import (  # noqa: E402
+    openrouter_max_tokens,
     resolve_openrouter_chat_model,
     resolve_openrouter_model,
     should_use_openrouter_chat_judge,
@@ -24,6 +25,31 @@ class OpenRouterMappingTests(unittest.TestCase):
             resolve_openrouter_model("claude-opus-4-8"),
             "anthropic/claude-opus-4.8",
         )
+
+    def test_openrouter_max_tokens_cap(self) -> None:
+        prev_use = os.environ.get("CLAWQL_LAB_USE_OPENROUTER")
+        prev_key = os.environ.get("OPENROUTER_API_KEY")
+        prev_cap = os.environ.get("CLAWQL_LAB_OPENROUTER_MAX_TOKENS")
+        os.environ["CLAWQL_LAB_USE_OPENROUTER"] = "1"
+        os.environ["OPENROUTER_API_KEY"] = "test-key"
+        os.environ["CLAWQL_LAB_OPENROUTER_MAX_TOKENS"] = "32768"
+        try:
+            self.assertEqual(openrouter_max_tokens(128000), 32768)
+            self.assertEqual(openrouter_max_tokens(16000), 16000)
+        finally:
+            for key, val in (
+                ("CLAWQL_LAB_USE_OPENROUTER", prev_use),
+                ("OPENROUTER_API_KEY", prev_key),
+                ("CLAWQL_LAB_OPENROUTER_MAX_TOKENS", prev_cap),
+            ):
+                if val is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = val
+        # Direct Anthropic path: no cap
+        os.environ.pop("CLAWQL_LAB_USE_OPENROUTER", None)
+        os.environ.pop("OPENROUTER_API_KEY", None)
+        self.assertEqual(openrouter_max_tokens(128000), 128000)
 
     def test_nemotron_aliases(self) -> None:
         self.assertEqual(

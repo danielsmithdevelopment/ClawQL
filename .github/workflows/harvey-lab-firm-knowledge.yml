@@ -247,6 +247,8 @@ jobs:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       CLAWQL_LAB_USE_OPENROUTER: ${{ needs.resolve-matrix.outputs.use_openrouter }}
       CLAWQL_LAB_ALLOW_CLAUDE_JUDGE_VIA_OPENROUTER: "1"
+      # Cap Opus/Sonnet output reservation on OpenRouter (avoids 128k → 402).
+      CLAWQL_LAB_OPENROUTER_MAX_TOKENS: "32768"
       CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
       CLAWQL_OPENROUTER_APP_TITLE: ClawQL Harvey LAB
       LAB_TASK: ${{ needs.resolve-matrix.outputs.task }}
