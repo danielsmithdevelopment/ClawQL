@@ -319,7 +319,8 @@ jobs:
     timeout-minutes: 360
     strategy:
       fail-fast: false
-      max-parallel: 4
+      # OpenRouter free-tier Nemotron: keep low to avoid daily request exhaustion.
+      max-parallel: 2
       matrix: ${{ fromJson(needs.resolve-matrix.outputs.matrix) }}
     env:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
