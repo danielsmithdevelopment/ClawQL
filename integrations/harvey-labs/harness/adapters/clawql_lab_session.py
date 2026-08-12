@@ -43,6 +43,75 @@ _ANTITRUST_PATH = re.compile(
     re.IGNORECASE,
 )
 
+# Rubric-friendly evidence filenames (task 001 C-004/C-005/C-006 and peers).
+# Prefer these over engagement letters when packaging the deliverable.
+_PREFERRED_SECOND_REQUEST_EVIDENCE = (
+    "second-request-strategy-memo",
+    "hsr-withdrawal-letter",
+    "joint-status-report",
+    "case-assessment-memo",
+    "letter-ftc-meet-and-confer",
+    "substantial-compliance-certification",
+    "custodian-identification-collection-protocol",
+    "second-request-response-strategy",
+    "second-request-compliance-cover",
+    "second-request-compliance-cost",
+    "second-request-compliance-strategy",
+)
+
+# Firm shorthand labels used in LAB criteria (prefer over truncated filename stems).
+_CLIENT_SHORT_NAMES = (
+    "Cascade Retail",
+    "Harrowgate PE",
+    "Solara Digital",
+    "Halcyon Semi",
+    "Harrowgate",
+    "Cascade",
+    "Solara",
+    "Halcyon",
+)
+
+# Map truncated / filename stems → rubric short names (task 001 C-001..C-007).
+_CLIENT_CANONICAL: dict[str, str] = {
+    "cascade": "Cascade Retail",
+    "cascade retail": "Cascade Retail",
+    "harrowgate": "Harrowgate PE",
+    "harrowgate pe": "Harrowgate PE",
+    "harrowgate hsr": "Harrowgate PE",
+    "hpe": "Harrowgate PE",
+    "hpe fund iv": "Harrowgate PE",
+    "solara": "Solara Digital",
+    "solara digital": "Solara Digital",
+    "sdilp": "Solara Digital",
+    "halcyon": "Halcyon Semi",
+    "halcyon semi": "Halcyon Semi",
+    "halcyon semiconductor": "Halcyon Semi",
+}
+
+
+def _canonicalize_client(label: str) -> str:
+    key = " ".join(label.strip().lower().split())
+    if key in _CLIENT_CANONICAL:
+        return _CLIENT_CANONICAL[key]
+    # Prefix upgrade: "Cascade …" / "Harrowgate …" when already long-form-ish
+    for stem, canon in (
+        ("cascade retail", "Cascade Retail"),
+        ("harrowgate pe", "Harrowgate PE"),
+        ("solara digital", "Solara Digital"),
+        ("halcyon semi", "Halcyon Semi"),
+    ):
+        if key.startswith(stem):
+            return canon
+    for stem, canon in (
+        ("cascade", "Cascade Retail"),
+        ("harrowgate", "Harrowgate PE"),
+        ("solara", "Solara Digital"),
+        ("halcyon", "Halcyon Semi"),
+    ):
+        if key == stem or key.startswith(stem + " "):
+            return canon
+    return label.strip()
+
 CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
     {
         "name": "clawql_memory_recall",
@@ -200,6 +269,13 @@ def _priority_docs(matter_dir: Path) -> list[Path]:
             score += 80
         if "hsr" in name:
             score += 30
+        for pref in _PREFERRED_SECOND_REQUEST_EVIDENCE:
+            if pref in name:
+                score += 120
+                break
+        # Explicit demote: engagement letters are not Second Request evidence.
+        if "engagement" in name:
+            score -= 20
         if name.endswith((".docx", ".md", ".txt")):
             score += 5
         if name.endswith((".xlsx", ".pptx", ".pdf")):
@@ -210,19 +286,83 @@ def _priority_docs(matter_dir: Path) -> list[Path]:
     return [p for _, p in scored[:MAX_DOCS_PER_MATTER]]
 
 
-def _client_hint(matter_dir: Path) -> str:
-    """Best-effort client/matter name from engagement letter filenames."""
+def _preferred_evidence_paths(matter_dir: Path) -> list[str]:
+    """Sandbox-relative preferred Second Request evidence paths (not engagement)."""
+    hits: list[tuple[int, str]] = []
     for p in matter_dir.rglob("*"):
-        if not p.is_file():
+        if not p.is_file() or p.suffix.lower() != ".docx":
             continue
         name = p.name.lower()
-        if "engagement" not in name:
+        if "engagement" in name:
             continue
-        stem = p.stem
-        stem = re.sub(r"(?i)engagement[-_ ]?letter[-_ ]?", "", stem)
+        for i, pref in enumerate(_PREFERRED_SECOND_REQUEST_EVIDENCE):
+            if pref in name:
+                rel = str(p.relative_to(matter_dir))
+                hits.append((i, f"matters/{matter_dir.name}/{rel}"))
+                break
+    hits.sort(key=lambda t: t[0])
+    # stable unique
+    seen: set[str] = set()
+    out: list[str] = []
+    for _, path in hits:
+        if path in seen:
+            continue
+        seen.add(path)
+        out.append(path)
+    return out[:8]
+
+
+def _client_hint_from_engagement_filename(path: Path) -> str | None:
+    stem = path.stem
+    stem = re.sub(r"(?i)engagement[-_ ]?letter[-_ ]?", "", stem)
+    stem = re.sub(r"[-_]+", " ", stem).strip()
+    if not stem:
+        return None
+    canon = _canonicalize_client(stem)
+    if canon != stem.strip():
+        return canon
+    # Known stems that title-case alone would miss (sdilp, hpe)
+    key = stem.lower()
+    if key in _CLIENT_CANONICAL:
+        return _CLIENT_CANONICAL[key]
+    return None
+
+
+def _client_hint(matter_dir: Path) -> str:
+    """Best-effort client short name for LAB criteria (never truncated stems)."""
+    engagement_docs = [
+        p
+        for p in matter_dir.rglob("*")
+        if p.is_file() and "engagement" in p.name.lower() and p.suffix.lower() == ".docx"
+    ]
+    # Filename stems first — engagement bodies often say "Harrowgate" / "Halcyon"
+    # without the rubric short form ("Harrowgate PE" / "Halcyon Semi").
+    for p in engagement_docs:
+        hint = _client_hint_from_engagement_filename(p)
+        if hint:
+            return hint
+
+    for p in engagement_docs:
+        text = _docx_to_text(p, max_chars=8000)
+        for label in sorted(_CLIENT_SHORT_NAMES, key=len, reverse=True):
+            if re.search(rf"\b{re.escape(label)}\b", text, re.IGNORECASE):
+                return _canonicalize_client(label)
+        m = re.search(
+            r"\b([A-Z][A-Za-z0-9&.'/-]+(?:\s+[A-Z][A-Za-z0-9&.'/-]+){0,4})\s+"
+            r"(?:Holdings|Semiconductor|Capital|Retail|Digital|Inc\.?|LLC|LP)\b",
+            text,
+        )
+        if m:
+            return _canonicalize_client(m.group(0))
+
+    for p in engagement_docs:
+        hint = _client_hint_from_engagement_filename(p)
+        if hint:
+            return hint
+        stem = re.sub(r"(?i)engagement[-_ ]?letter[-_ ]?", "", p.stem)
         stem = re.sub(r"[-_]+", " ", stem).strip()
         if stem:
-            return stem.title()
+            return _canonicalize_client(stem.title())
     return matter_dir.name
 
 
@@ -282,10 +422,13 @@ def detect_hsr_second_request(matter_dir: Path) -> dict[str, Any]:
     if not file_hits:
         text_hits = _second_request_defined_term_evidence(matter_dir)
     received = bool(file_hits or text_hits)
+    preferred = _preferred_evidence_paths(matter_dir) if received else []
     return {
         "received": received,
         "evidence_files": (file_hits + text_hits)[:12],
+        "preferred_evidence": preferred,
         "antitrust_signal": _has_antitrust_signal(matter_dir),
+        "client_hint": _client_hint(matter_dir),
     }
 
 
@@ -347,6 +490,13 @@ def _enrich_lab_memory_recall(result: Any) -> dict[str, Any]:
     if not isinstance(hits, list):
         hits = []
 
+    docs_root = Path(os.environ.get("CLAWQL_LAB_DOCUMENTS_DIR", "")).expanduser()
+    matters_root = docs_root / "matters" if docs_root.name else Path()
+    if docs_root.is_dir() and (docs_root / "matters").is_dir():
+        matters_root = docs_root / "matters"
+    elif docs_root.is_dir() and docs_root.name == "matters":
+        matters_root = docs_root
+
     enriched_hits: list[dict[str, Any]] = []
     matter_ids: list[str] = []
     for hit in hits:
@@ -371,6 +521,21 @@ def _enrich_lab_memory_recall(result: Any) -> dict[str, Any]:
             h["entityId"] = str(entity_id)
             h["sandboxDocumentRoot"] = f"/workspace/documents/matters/{entity_id}"
             fields = {**fields, "id": str(entity_id)}
+            matter_dir = matters_root / str(entity_id) if matters_root else Path()
+            if matter_dir.is_dir():
+                client = _client_hint(matter_dir)
+                preferred = _preferred_evidence_paths(matter_dir)
+                h["clientShortName"] = client
+                h["preferredEvidence"] = [
+                    (
+                        p
+                        if p.startswith("/workspace/")
+                        else f"/workspace/documents/{p}"
+                    )
+                    for p in preferred
+                ]
+                fields["title"] = fields.get("title") or f"{entity_id} — {client}"
+                fields["clientShortName"] = client
             h["fields"] = fields
             if payload.get("queryType") == "structured_predicate" or payload.get(
                 "indexUsed"
@@ -404,9 +569,19 @@ def _enrich_lab_memory_recall(result: Any) -> dict[str, Any]:
         "requiredDeliverable": (
             "Before finishing, call the harness `write` tool to create a file "
             "under /workspace/output/ (e.g. matters-enumeration.md). "
-            "Chat-only answers are not graded."
+            "For each matter use clientShortName (Cascade Retail, Harrowgate PE, "
+            "Solara Digital, Halcyon Semi) and cite preferredEvidence — not "
+            "engagement letters. Chat-only answers are not graded."
         ),
         "matterIds": matter_ids,
+        "evidenceRule": (
+            "Cite Second Request evidence docs "
+            "(joint-status-report, case-assessment-memo, letter-ftc-meet-and-confer, "
+            "second-request-strategy-memo, hsr-withdrawal-letter, "
+            "substantial-compliance-certification, "
+            "custodian-identification-collection-protocol). "
+            "Do not cite engagement letters as Second Request evidence."
+        ),
     }
     return payload
 
@@ -558,7 +733,7 @@ class ClawQLLabSession:
             detection = detect_hsr_second_request(matter_dir)
             if detection["received"]:
                 hsr_count += 1
-            client = _client_hint(matter_dir)
+            client = detection.get("client_hint") or _client_hint(matter_dir)
             title_parts = [matter_id, client]
             if detection["received"]:
                 title_parts.append("HSR_SECOND_REQUEST")
@@ -580,11 +755,23 @@ class ClawQLLabSession:
                 ),
                 f"LAB task: {self.task_id}",
                 f"Matter path: matters/{matter_id}",
-                f"Client hint: {client}",
+                f"Client short name: {client}",
                 f"HSR second request received: {detection['received']}",
+                "",
+                "IMPORTANT for deliverable packaging:",
+                "- Use the Client short name exactly (e.g. Cascade Retail, not Cascade).",
+                "- Cite a Preferred Second Request evidence document below — "
+                "do NOT cite engagement letters as Second Request evidence.",
             ]
+            preferred = detection.get("preferred_evidence") or []
+            if preferred:
+                sections.append("")
+                sections.append("## Preferred Second Request evidence (cite one)")
+                for ev in preferred:
+                    sections.append(f"- `{ev}`")
             if detection["evidence_files"]:
-                sections.append("Evidence paths:")
+                sections.append("")
+                sections.append("## Detection evidence paths")
                 for ev in detection["evidence_files"]:
                     sections.append(f"- `matters/{matter_id}/{ev}`")
             sections.extend(["", "## Document inventory"])
