@@ -71,11 +71,11 @@ Claims are auditable via public Actions run IDs + this repo’s adapter overlay 
 
 ## Next
 
-1. After OpenRouter reset: **smoke task 001 only** — confirm no ~180k/turn pin and healthy ~4–8 turns / ≲150k input on Nemotron+ClawQL  
-2. Then re-arm `.run-nemotron-sweep` (Sonnet judge, `max-parallel: 2`) for batch 2  
-3. Full Ouroboros Evaluate→Wonder→Reflect later; grounding Wonder is the first slice  
-4. Task 011 → Opus, not Nemotron prompt churn  
-5. Harvey outreach only with multi-task Sonnet ledger + linkable run IDs  
+1. After OpenRouter reset: **smoke task 001 only** — confirm no ~180k/turn pin and healthy ~4–8 turns / ≲150k input on Nemotron+ClawQL
+2. Then re-arm `.run-nemotron-sweep` (Sonnet judge, `max-parallel: 2`) for batch 2
+3. Full Ouroboros Evaluate→Wonder→Reflect later; grounding Wonder is the first slice
+4. Task 011 → Opus, not Nemotron prompt churn
+5. Harvey outreach only with multi-task Sonnet ledger + linkable run IDs
 
 ## Notes
 
