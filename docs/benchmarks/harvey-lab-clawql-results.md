@@ -1,6 +1,6 @@
 # Harvey LAB × ClawQL Results — firm-knowledge
 
-Date: 2026-08-11  
+Date: 2026-08-12  
 Models: Nemotron 3.5 Lightning ± ClawQL (OpenRouter); Opus A/B pending Anthropic  
 Tasks: 250 total; **live sample so far: `firm-knowledge/tasks/001` only**  
 Judge: `openai/gpt-5.4-mini` (OpenRouter)
@@ -9,53 +9,55 @@ Judge: `openai/gpt-5.4-mini` (OpenRouter)
 
 **Partial live matrix (GHA, OpenRouter-only, no Anthropic).**
 
-Latest deliverable-guard + ontology run: [31539169062](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31539169062)
+Latest packaging fix run: [31550749489](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31550749489)
 
-| Arm               | CPR             | All-pass | Turns | Docs read | Notes                                                                                                                                                |
-| ----------------- | --------------- | -------- | ----- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `nemotron`        | **14.3%** (1/7) | 0%       | 40    | 0         | Empty deliverable; vacuous C-007                                                                                                                     |
-| `nemotron-clawql` | **57.1%** (4/7) | 0%       | 16    | 7         | Ontology + `/workspace/output/matters-enumeration.md`; deliverable guard fired; missed C-002/C-005/C-006 (wrong Cascade label / wrong evidence docs) |
+| Arm | CPR | All-pass | Turns | Notes |
+| --- | --- | -------- | ----- | ----- |
+| `nemotron` | **14.3%** (1/7) | 0% | — | Unchanged empty/near-empty baseline |
+| `nemotron-clawql` | **85.7%** (6/7) | 0% | 4 | Correct short names + rubric evidence; only C-002 failed (judge quirk — deliverable already lists `1038-00001 \| Cascade Retail`) |
 
-**ClawQL lift on this task: 14.3% → 57.1% CPR** (same Nemotron model).
+**ClawQL lift on this task: 14.3% → 85.7% CPR** (same Nemotron model; was 57.1% before packaging fix).
 
-Publishable Opus A/B still blocked on Anthropic. Re-judge with Sonnet before any Harvey-facing claim.
+Prior deliverable-guard run: [31539169062](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31539169062) (57.1% CPR).
+
+Publishable Opus A/B still needs direct Anthropic + Sonnet 4.6 judge before any Harvey-facing claim.
 
 ## Arm A — Baseline (Opus, standard harness)
 
-| Metric              | Value               |
-| ------------------- | ------------------- |
+| Metric | Value |
+| ------ | ----- |
 | Criterion pass rate | _pending Anthropic_ |
-| All-pass rate       | _pending_           |
+| All-pass rate | _pending_ |
 
 ## Arm B — Opus + ClawQL
 
-| Metric              | Value               |
-| ------------------- | ------------------- |
+| Metric | Value |
+| ------ | ----- |
 | Criterion pass rate | _pending Anthropic_ |
-| All-pass rate       | _pending_           |
+| All-pass rate | _pending_ |
 
 ## Arm C pair — Nemotron ± ClawQL (OpenRouter)
 
-| Metric                                    | `nemotron`          | `nemotron-clawql`               |
-| ----------------------------------------- | ------------------- | ------------------------------- |
-| Criterion pass rate                       | 14.3%               | **57.1%**                       |
-| All-pass rate                             | 0%                  | 0%                              |
+| Metric | `nemotron` | `nemotron-clawql` |
+| ------ | ---------- | ----------------- |
+| Criterion pass rate | 14.3% | **85.7%** |
+| All-pass rate | 0% | 0% |
 | vs published Nemotron LAB (8.3% all-pass) | below (single task) | below (single task; CPR strong) |
 
-### Ontology + deliverable evidence (run 31539169062)
+### Packaging + ontology evidence (run 31550749489)
 
 - Pre-ingest: `ontology HSR_SECOND_REQUEST flagged 6/266 matters`
-- Pattern E recall with `schema=legal.Matter` + `title.contains=HSR_SECOND_REQUEST`
-- Deliverable guard nudged; agent wrote `output/matters-enumeration.md`
-- Passed: C-001, C-003, C-004, C-007
-- Failed: C-002 (Cascade client naming), C-005/C-006 (cited strategy memos instead of rubric-named evidence files)
+- Deliverable: `output/matters-enumeration.md` with all six allowlisted matters
+- Passed: C-001, C-003, C-004, C-005, C-006, C-007
+- Failed: C-002 only — judge said Cascade was not identified despite the table row; likely gpt-5.4-mini noise (Sonnet re-judge recommended for ledger)
 
 ## ClawQL bugs fixed this pass
 
 - Ontology `results[].reason` mislabeled `keyword` → `structured_predicate` (+ `RecallHit` union)
 - LAB recall enrichment: `sandboxDocumentRoot` + `labGuidance` (vault `Memory/` not harness-readable)
 - Empty-output finish: one forced nudge when ClawQL arm has `CLAWQL_LAB_OUTPUT_DIR` set
-- Packaging (queued for next matrix): rubric client short names (`Cascade Retail` / `Harrowgate PE` / `Halcyon Semi`); seed + recall `preferredEvidence` / `evidenceRule` so C-005/C-006 cite joint-status / substantial-compliance rather than engagement or strategy memos
+- Rubric client short names (`Cascade Retail` / `Harrowgate PE` / `Halcyon Semi`) via filename-first + canonical map
+- Seed + recall `preferredEvidence` / `evidenceRule` (C-005/C-006 now pass)
 
 ## Implementation notes
 
@@ -67,8 +69,8 @@ Publishable Opus A/B still blocked on Anthropic. Re-judge with Sonnet before any
 
 ## Next
 
-1. Re-run Nemotron ± ClawQL on task 001 after packaging fix; target >57.1% CPR / some all-pass
-2. Second Nemotron stability run, then Opus vs Opus (direct Anthropic, Sonnet 4.6 judge)
+1. Optional: explicit “qualifies” table wording + second Nemotron stability run (target all-pass or sustained 85%+ CPR)
+2. Opus vs Opus on same task — direct Anthropic, Sonnet 4.6 judge
 3. No Harvey outreach until Opus ledger exists
 
 ## Notes

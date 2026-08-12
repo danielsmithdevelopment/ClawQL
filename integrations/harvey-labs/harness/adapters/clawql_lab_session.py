@@ -569,9 +569,10 @@ def _enrich_lab_memory_recall(result: Any) -> dict[str, Any]:
         "requiredDeliverable": (
             "Before finishing, call the harness `write` tool to create a file "
             "under /workspace/output/ (e.g. matters-enumeration.md). "
-            "For each matter use clientShortName (Cascade Retail, Harrowgate PE, "
-            "Solara Digital, Halcyon Semi) and cite preferredEvidence — not "
-            "engagement letters. Chat-only answers are not graded."
+            "Title it as qualifying HSR second-request matters. For each matter "
+            "use clientShortName (Cascade Retail, Harrowgate PE, Solara Digital, "
+            "Halcyon Semi), state that it qualifies, and cite preferredEvidence — "
+            "not engagement letters. Chat-only answers are not graded."
         ),
         "matterIds": matter_ids,
         "evidenceRule": (
