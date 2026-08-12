@@ -1,0 +1,17 @@
+# Nemotron ± ClawQL multi-task sweep trigger
+#
+# Presence of this file on a PR/push that touches integrations/harvey-labs/**
+# switches the firm-knowledge workflow from single-task smoke to:
+#
+#   Arms:   nemotron, nemotron-clawql
+#   Tasks:  firm-knowledge/tasks/001 .. 00N
+#   Judge:  openai/gpt-5.4-mini (OpenRouter)
+#   Route:  OpenRouter
+#
+# Set N on the first non-comment line (1–250). Default if blank: 25.
+#
+# WARNING: concurrency cancel-in-progress is on — avoid pushing to this branch
+# while the sweep is running or the matrix will be cancelled.
+#
+# Delete this file when the sweep finishes to restore single-task PR smoke.
+25
