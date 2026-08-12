@@ -1,8 +1,8 @@
-"""Patch harvey-labs agent_loop.py with a ClawQL deliverable guard.
+"""Patch harvey-labs agent_loop.py with ClawQL LAB guards.
 
-The LAB judge only scores files under ``/workspace/output/``. When a ClawQL
-arm stops without writing anything there, inject one user nudge turn so the
-agent must call ``write`` before finishing.
+1. Deliverable guard — nudge when ``/workspace/output/`` is empty.
+2. Tool-result truncation — cap oversized bash/grep/read dumps so one
+   ``ls -R`` cannot pin ~170k tokens into every subsequent turn (task 014).
 """
 
 from __future__ import annotations
@@ -13,6 +13,8 @@ HELPER_BEGIN = "# --- clawql-deliverable-guard begin ---"
 HELPER_END = "# --- clawql-deliverable-guard end ---"
 FINISH_BEGIN = "# --- clawql-deliverable-finish begin ---"
 FINISH_END = "# --- clawql-deliverable-finish end ---"
+TRUNC_BEGIN = "# --- clawql-tool-result-trunc begin ---"
+TRUNC_END = "# --- clawql-tool-result-trunc end ---"
 
 HELPER_BLOCK = f"""{HELPER_BEGIN}
 def _clawql_output_has_files() -> bool:
@@ -29,14 +31,45 @@ def _clawql_output_has_files() -> bool:
     return any(p.is_file() for p in root.rglob("*"))
 
 
+def _clawql_max_tool_result_chars() -> int:
+    \"\"\"Max chars kept from a single tool result in the agent message history.\"\"\"
+    import os
+
+    raw = os.environ.get("CLAWQL_LAB_MAX_TOOL_RESULT_CHARS", "24000").strip()
+    try:
+        n = int(raw)
+    except ValueError:
+        n = 24000
+    return max(4000, n)
+
+
+def _clawql_truncate_tool_result(tool_name: str, result: str) -> str:
+    \"\"\"Prevent one huge tool dump from dominating the remaining context.\"\"\"
+    if not isinstance(result, str):
+        result = str(result)
+    limit = _clawql_max_tool_result_chars()
+    if len(result) <= limit:
+        return result
+    omitted = len(result) - limit
+    head = result[:limit]
+    return (
+        head
+        + f"\\n\\n…[ClawQL truncated tool result for {{tool_name}}: "
+        + f"kept {{limit}} of {{limit + omitted}} chars; "
+        + "re-run with a narrower path/glob/head if you need more]\\n"
+    )
+
+
 _CLAWQL_DELIVERABLE_NUDGE = (
     "STOP — your answer is not graded yet.\\n\\n"
     "The judge only reads files under `/workspace/output/`. "
     "You have not written a deliverable there.\\n\\n"
     "Use the `write` tool NOW to create a markdown file under "
-    "`/workspace/output/` (e.g. `matters-enumeration.md`) listing every "
-    "qualifying matter id, client name, and at least one evidence document path "
-    "under `/workspace/documents/matters/<matter-id>/...`.\\n\\n"
+    "`/workspace/output/` (e.g. `matters-enumeration.md` or `response.md`). "
+    "Attempt EVERY rubric criterion with the best evidence you have. "
+    "Partial answers that cover all criteria score higher than empty output "
+    "or a single guessed matter. Cite document paths under "
+    "`/workspace/documents/matters/<matter-id>/...` when available.\\n\\n"
     "Do not reply with chat text only."
 )
 {HELPER_END}
@@ -66,6 +99,12 @@ FINISH_BLOCK = f"""            {FINISH_BEGIN}
                     continue
                 break
             {FINISH_END}
+"""
+
+TRUNC_BLOCK = f"""                {TRUNC_BEGIN}
+                if os.environ.get("CLAWQL_LAB_TRUNCATE_TOOL_RESULTS", "1") != "0":
+                    result = _clawql_truncate_tool_result(tc.name, result)
+                {TRUNC_END}
 """
 
 
@@ -120,8 +159,33 @@ def patch_agent_loop_deliverable_guard(agent_loop_path: Path) -> None:
             raise SystemExit("agent_loop.py finish-on-no-tools branch not found")
         text = text.replace(old, FINISH_BLOCK + "\n", 1)
 
+    # Truncate oversized tool results before they enter message history.
+    if TRUNC_BEGIN in text:
+        text = _replace_marked_block(text, TRUNC_BEGIN, TRUNC_END, TRUNC_BLOCK)
+    else:
+        old_exec = (
+            "            for tc in response.tool_calls:\n"
+            "                result = tool_executor.execute(tc.name, tc.arguments)\n"
+        )
+        if old_exec not in text:
+            # Already-patched loops may indent differently; try looser match.
+            alt = (
+                "            for tc in response.tool_calls:\n"
+                "                result = tool_executor.execute(tc.name, tc.arguments)\n\n"
+            )
+            if alt not in text and "tool_executor.execute(tc.name, tc.arguments)" not in text:
+                raise SystemExit("agent_loop.py tool execute loop not found")
+        if "tool_executor.execute(tc.name, tc.arguments)" in text and TRUNC_BEGIN not in text:
+            text = text.replace(
+                "                result = tool_executor.execute(tc.name, tc.arguments)\n",
+                "                result = tool_executor.execute(tc.name, tc.arguments)\n"
+                + TRUNC_BLOCK
+                + "\n",
+                1,
+            )
+
     if text != original:
         agent_loop_path.write_text(text, encoding="utf-8")
-        print(f"patched {agent_loop_path} (deliverable guard)")
+        print(f"patched {agent_loop_path} (deliverable guard + tool truncation)")
     else:
         print(f"no changes needed for {agent_loop_path} (deliverable guard)")

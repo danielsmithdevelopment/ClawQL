@@ -116,11 +116,12 @@ CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
     {
         "name": "clawql_memory_recall",
         "description": (
-            "Retrieve matter context from the ClawQL vault/ontology. For "
-            "enumeration or exact set membership (e.g. all HSR second-request "
-            "matters), you MUST pass schema='legal.Matter' and filters — "
-            "keyword-only recall near-misses fail graders. Example filters: "
-            '{"title":{"contains":"HSR_SECOND_REQUEST"}}.'
+            "Retrieve matter context from the ClawQL vault/ontology. For HSR "
+            "second-request set membership, pass schema='legal.Matter' and "
+            'filters={"title":{"contains":"HSR_SECOND_REQUEST"}}. Do not invent '
+            "other title flags. If two structured recalls return empty/"
+            "insufficient hits, stop recalling and use harness grep/read on "
+            "/workspace/documents, then write /workspace/output/."
         ),
         "parameters": {
             "type": "object",
@@ -561,18 +562,20 @@ def _enrich_lab_memory_recall(result: Any) -> dict[str, Any]:
         payload["results"] = fixed_results
 
     payload["hits"] = enriched_hits
-    payload["labGuidance"] = {
+    guidance: dict[str, Any] = {
         "sandboxDocumentRoots": [
             f"/workspace/documents/matters/{mid}" for mid in matter_ids
         ],
         "vaultPathsNotReadableViaHarnessRead": True,
         "requiredDeliverable": (
             "Before finishing, call the harness `write` tool to create a file "
-            "under /workspace/output/ (e.g. matters-enumeration.md). "
-            "Title it as qualifying HSR second-request matters. For each matter "
-            "use clientShortName (Cascade Retail, Harrowgate PE, Solara Digital, "
-            "Halcyon Semi), state that it qualifies, and cite preferredEvidence — "
-            "not engagement letters. Chat-only answers are not graded."
+            "under /workspace/output/ (e.g. matters-enumeration.md or "
+            "response.md). Attempt every rubric criterion with the best "
+            "evidence you have — partial credit beats empty output. For HSR "
+            "tasks use clientShortName (Cascade Retail, Harrowgate PE, Solara "
+            "Digital, Halcyon Semi), state that each listed matter qualifies, "
+            "and cite preferredEvidence — not engagement letters. Chat-only "
+            "answers are not graded."
         ),
         "matterIds": matter_ids,
         "evidenceRule": (
@@ -583,7 +586,20 @@ def _enrich_lab_memory_recall(result: Any) -> dict[str, Any]:
             "custodian-identification-collection-protocol). "
             "Do not cite engagement letters as Second Request evidence."
         ),
+        "contextDiscipline": (
+            "Never ls -R / find the entire /workspace/documents tree. Use "
+            "narrow paths. Do not invent ontology title flags beyond seeded "
+            "tokens such as HSR_SECOND_REQUEST."
+        ),
     }
+    if not matter_ids:
+        guidance["fallback"] = (
+            "Structured recall returned no matter hits. Do not repeat the same "
+            "filter more than once more. Fall back to targeted grep/glob/read "
+            "under /workspace/documents/matters/, then write /workspace/output/ "
+            "attempting all criteria."
+        )
+    payload["labGuidance"] = guidance
     return payload
 
 

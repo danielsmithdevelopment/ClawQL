@@ -130,6 +130,24 @@ class HsrSecondRequestDetectionTests(unittest.TestCase):
         self.assertIn("requiredDeliverable", enriched["labGuidance"])
         self.assertIn("/workspace/output/", enriched["labGuidance"]["requiredDeliverable"])
         self.assertIn("evidenceRule", enriched["labGuidance"])
+        self.assertIn("contextDiscipline", enriched["labGuidance"])
+
+    def test_empty_recall_adds_fallback_guidance(self) -> None:
+        from clawql_lab_session import _enrich_lab_memory_recall
+
+        enriched = _enrich_lab_memory_recall(
+            {
+                "ok": True,
+                "query": "covenant-lite",
+                "hits": [],
+                "results": [],
+                "queryType": "structured_predicate",
+                "indexUsed": "ontology",
+            }
+        )
+        self.assertEqual(enriched["hits"], [])
+        self.assertIn("fallback", enriched["labGuidance"])
+        self.assertIn("grep", enriched["labGuidance"]["fallback"].lower())
 
     def test_client_hint_uses_rubric_short_names(self) -> None:
         dms = Path(
