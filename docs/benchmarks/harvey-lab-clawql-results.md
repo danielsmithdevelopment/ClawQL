@@ -25,17 +25,17 @@ Across the packaging series, clawql CPR moved **14.3% → 57.1% → 85.7% → 10
 
 ## Arm A — Baseline (Opus, standard harness)
 
-| Metric              | Value                          |
-| ------------------- | ------------------------------ |
-| Criterion pass rate | _pending OpenRouter Opus run_  |
-| All-pass rate       | _pending_                      |
+| Metric              | Value                         |
+| ------------------- | ----------------------------- |
+| Criterion pass rate | _pending OpenRouter Opus run_ |
+| All-pass rate       | _pending_                     |
 
 ## Arm B — Opus + ClawQL
 
-| Metric              | Value                          |
-| ------------------- | ------------------------------ |
-| Criterion pass rate | _pending OpenRouter Opus run_  |
-| All-pass rate       | _pending_                      |
+| Metric              | Value                         |
+| ------------------- | ----------------------------- |
+| Criterion pass rate | _pending OpenRouter Opus run_ |
+| All-pass rate       | _pending_                     |
 
 ## Arm C pair — Nemotron ± ClawQL (OpenRouter)
 
