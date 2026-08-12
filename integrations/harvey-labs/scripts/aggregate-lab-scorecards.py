@@ -35,6 +35,18 @@ def _mean(xs: list[float]) -> float | None:
     return statistics.fmean(xs) if xs else None
 
 
+def _median(xs: list[float]) -> float | None:
+    return float(statistics.median(xs)) if xs else None
+
+
+def _p90(xs: list[float]) -> float | None:
+    if not xs:
+        return None
+    ordered = sorted(xs)
+    idx = min(len(ordered) - 1, max(0, int(round(0.9 * (len(ordered) - 1)))))
+    return float(ordered[idx])
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--artifacts-root", type=Path, required=True)
@@ -43,6 +55,12 @@ def main() -> None:
     ap.add_argument("--task-count", type=int, default=0)
     ap.add_argument("--judge-model", default="")
     ap.add_argument("--nemotron-model", default="")
+    ap.add_argument(
+        "--turn-ceiling",
+        type=int,
+        default=40,
+        help="Treat turns >= this as hitting the agent turn ceiling",
+    )
     args = ap.parse_args()
 
     cards = _load_scorecards(args.artifacts_root)
@@ -61,23 +79,58 @@ def main() -> None:
                 continue
             entry = dict(row)
             entry["task"] = task
+            turns = entry.get("turns")
+            all_pass = float(entry.get("all_pass") or 0.0)
+            if isinstance(turns, int) and turns >= args.turn_ceiling:
+                entry["hit_turn_ceiling"] = True
+            else:
+                entry["hit_turn_ceiling"] = False
+            # Graded failure: finished under ceiling but not all-pass
+            entry["graded_fail"] = bool(
+                all_pass < 1.0 and not entry["hit_turn_ceiling"]
+            )
             by_arm[str(arm)].append(entry)
 
     summary_arms: dict[str, Any] = {}
     for arm, rows in sorted(by_arm.items()):
-        cprs = [float(r["criterion_pass_rate"]) for r in rows if r.get("criterion_pass_rate") is not None]
+        cprs = [
+            float(r["criterion_pass_rate"])
+            for r in rows
+            if r.get("criterion_pass_rate") is not None
+        ]
         alls = [float(r["all_pass"]) for r in rows if r.get("all_pass") is not None]
         turns = [int(r["turns"]) for r in rows if isinstance(r.get("turns"), int)]
-        ins = [int(r["input_tokens"]) for r in rows if isinstance(r.get("input_tokens"), int)]
-        outs = [int(r["output_tokens"]) for r in rows if isinstance(r.get("output_tokens"), int)]
+        turn_f = [float(t) for t in turns]
+        ins = [
+            int(r["input_tokens"])
+            for r in rows
+            if isinstance(r.get("input_tokens"), int)
+        ]
+        outs = [
+            int(r["output_tokens"])
+            for r in rows
+            if isinstance(r.get("output_tokens"), int)
+        ]
         n_all = sum(1 for a in alls if a >= 1.0)
+        ceiling_hits = [r for r in rows if r.get("hit_turn_ceiling")]
+        graded_fails = [r for r in rows if r.get("graded_fail")]
+        fails = [r for r in rows if float(r.get("all_pass") or 0.0) < 1.0]
         summary_arms[arm] = {
             "n_tasks": len(rows),
             "mean_criterion_pass_rate": _mean(cprs),
             "mean_all_pass": _mean(alls),
             "all_pass_count": n_all,
             "all_pass_rate": (n_all / len(rows)) if rows else None,
-            "mean_turns": _mean([float(t) for t in turns]),
+            "mean_turns": _mean(turn_f),
+            "median_turns": _median(turn_f),
+            "p90_turns": _p90(turn_f),
+            "turn_ceiling": args.turn_ceiling,
+            "turn_ceiling_hit_count": len(ceiling_hits),
+            "turn_ceiling_hit_rate": (len(ceiling_hits) / len(rows)) if rows else None,
+            "graded_fail_count": len(graded_fails),
+            "fail_tasks": sorted(
+                {str(r.get("task")) for r in fails if r.get("task")}
+            ),
             "sum_input_tokens": sum(ins) if ins else None,
             "sum_output_tokens": sum(outs) if outs else None,
             "tasks": sorted({str(r.get("task")) for r in rows if r.get("task")}),
@@ -92,6 +145,10 @@ def main() -> None:
         "n_scorecards": len(cards),
         "judge_model": args.judge_model,
         "nemotron_model": args.nemotron_model,
+        "harvey_parity_notes": {
+            "judge": "claude-sonnet-4-6 matches Harvey harness default JUDGE_MODELS",
+            "routing": "OpenRouter for this sweep; direct Anthropic preferred for final provenance",
+        },
         "arms": summary_arms,
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -100,7 +157,9 @@ def main() -> None:
     for arm, s in summary_arms.items():
         print(
             f"arm={arm} n={s['n_tasks']} mean_cpr={s['mean_criterion_pass_rate']} "
-            f"all_pass_rate={s['all_pass_rate']} mean_turns={s['mean_turns']}"
+            f"all_pass_rate={s['all_pass_rate']} median_turns={s['median_turns']} "
+            f"p90_turns={s['p90_turns']} ceiling_hits={s['turn_ceiling_hit_count']} "
+            f"graded_fails={s['graded_fail_count']}"
         )
 
 
