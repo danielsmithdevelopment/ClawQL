@@ -12,17 +12,17 @@ Judges: Harvey-parity — `claude-sonnet-4-6` via OpenRouter; earlier Nemotron s
 
 ### Batch 1 partial ledger (completed ClawQL vs baseline)
 
-| Task | ClawQL CPR | Baseline CPR | ClawQL All-pass | Notes |
-| ---- | ---------- | ------------ | --------------- | ----- |
-| 001 | 100% | 0% | yes | Clean win (Pattern E) |
-| 004 | 0% | 50% | no | Early write after empty/wrong strategy |
-| 007 | 33% | 0% | no | Partial |
-| 010 | 0% | 50% | no | Invented COVENANT-LITE ontology flag |
-| 011 | 0% | ~5% | no | 19 criteria — model ceiling |
-| 012 | 100% | 100% | yes | Both pass; ClawQL more tokens |
-| 013 | 0% | 25% | no | Long grind without pivot |
-| 014 | 33% | 33% | no | **4.3M token blowup** — see Bug 1 |
-| 015 | 0% | 33% | no | Baseline lucky 3-turn read |
+| Task | ClawQL CPR | Baseline CPR | ClawQL All-pass | Notes                                  |
+| ---- | ---------- | ------------ | --------------- | -------------------------------------- |
+| 001  | 100%       | 0%           | yes             | Clean win (Pattern E)                  |
+| 004  | 0%         | 50%          | no              | Early write after empty/wrong strategy |
+| 007  | 33%        | 0%           | no              | Partial                                |
+| 010  | 0%         | 50%          | no              | Invented COVENANT-LITE ontology flag   |
+| 011  | 0%         | ~5%          | no              | 19 criteria — model ceiling            |
+| 012  | 100%       | 100%         | yes             | Both pass; ClawQL more tokens          |
+| 013  | 0%         | 25%          | no              | Long grind without pivot               |
+| 014  | 33%        | 33%          | no              | **4.3M token blowup** — see Bug 1      |
+| 015  | 0%         | 33%          | no              | Baseline lucky 3-turn read             |
 
 ### Root cause — Bug 1 (task 014)
 
@@ -44,32 +44,32 @@ Baseline never did a full-tree dump (~47k peak / turn).
 
 ### Validity
 
-| Claim | Valid? |
-| ----- | ------ |
-| Internal ClawQL lift (same judge both arms) | **Yes** |
-| Harvey methodology judge (`claude-sonnet-4-6`) | **Yes** (batch 1) |
-| Direct Anthropic provenance | **Not yet** — OpenRouter routing |
+| Claim                                          | Valid?                           |
+| ---------------------------------------------- | -------------------------------- |
+| Internal ClawQL lift (same judge both arms)    | **Yes**                          |
+| Harvey methodology judge (`claude-sonnet-4-6`) | **Yes** (batch 1)                |
+| Direct Anthropic provenance                    | **Not yet** — OpenRouter routing |
 
 ### Opus A/B (OpenRouter validation) — [31555668711](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31555668711)
 
-| Arm | CPR | All-pass | Turns | Input tokens | Wall (s) | Notes |
-| --- | --- | -------- | ----- | ------------ | -------- | ----- |
-| `baseline` (Opus 4.8) | **100%** (7/7) | **100%** | 35 | 1,869,702 | 437 | Sonnet 4.6 judge; no ClawQL |
-| `clawql` (Opus 4.8 + ClawQL) | **100%** (7/7) | **100%** | 5 | 95,893 | 43 | Ontology Pattern E; preferred evidence |
+| Arm                          | CPR            | All-pass | Turns | Input tokens | Wall (s) | Notes                                  |
+| ---------------------------- | -------------- | -------- | ----- | ------------ | -------- | -------------------------------------- |
+| `baseline` (Opus 4.8)        | **100%** (7/7) | **100%** | 35    | 1,869,702    | 437      | Sonnet 4.6 judge; no ClawQL            |
+| `clawql` (Opus 4.8 + ClawQL) | **100%** (7/7) | **100%** | 5     | 95,893       | 43       | Ontology Pattern E; preferred evidence |
 
 ### Nemotron ± ClawQL (task 001 smoke) — [31552128819](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31552128819)
 
-| Arm | CPR | All-pass | Turns | Notes |
-| --- | --- | -------- | ----- | ----- |
-| `nemotron` | **0%** (0/7) | 0% | 40 | Empty deliverable; gpt-5.4-mini judge |
-| `nemotron-clawql` | **100%** (7/7) | **100%** | 5 | ALL-PASS |
+| Arm               | CPR            | All-pass | Turns | Notes                                 |
+| ----------------- | -------------- | -------- | ----- | ------------------------------------- |
+| `nemotron`        | **0%** (0/7)   | 0%       | 40    | Empty deliverable; gpt-5.4-mini judge |
+| `nemotron-clawql` | **100%** (7/7) | **100%** | 5     | ALL-PASS                              |
 
 ## Next
 
-1. Finish downloading batch 1 aggregate when run completes; publish mean CPR / all-pass  
-2. Re-arm `.run-nemotron-sweep` for batch 2 **after** UTC rate-limit reset (or local MLX Nemotron)  
-3. Defer full Ouroboros LAB loop; prompt + truncation first  
-4. Task 011 → Opus, not Nemotron prompt churn  
+1. Finish downloading batch 1 aggregate when run completes; publish mean CPR / all-pass
+2. Re-arm `.run-nemotron-sweep` for batch 2 **after** UTC rate-limit reset (or local MLX Nemotron)
+3. Defer full Ouroboros LAB loop; prompt + truncation first
+4. Task 011 → Opus, not Nemotron prompt churn
 
 ## Notes
 
