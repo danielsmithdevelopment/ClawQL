@@ -143,4 +143,4 @@ DAOS transport’s GET-everywhere-safe / POST-only-when-irreversible split exist
 
 ---
 
-*Related: [DAOS coordination / transport specification](https://docs.clawql.com/ouroboros/specification) · [Protocol reference (v2.1)](https://docs.clawql.com/reference/protocol) · [mcp-api-adapter](https://docs.clawql.com/mcp/mcp-api-adapter) · [memory_recall structured filters](https://docs.clawql.com/reference/memory) · [RFC 10008](https://www.rfc-editor.org/rfc/rfc10008)*
+*Related: [DAOS coordination / transport specification](https://docs.clawql.com/ouroboros/specification) · [Protocol reference (v2.1)](https://docs.clawql.com/reference/protocol) · [mcp-api-adapter](https://docs.clawql.com/mcp/mcp-api-adapter) · [memory_recall structured filters](https://docs.clawql.com/specs/memory/memory-recall-structured-filter) · [RFC 10008](https://www.rfc-editor.org/rfc/rfc10008)*
