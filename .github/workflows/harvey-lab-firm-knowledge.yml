@@ -3,12 +3,13 @@
 # OpenBench-style:
 #   - pull_request / push (path-filtered): default Nemotron ± ClawQL (OpenRouter)
 #   - Marker file integrations/harvey-labs/.run-opus-ledger on the PR branch:
-#       Opus 4.8 baseline vs Opus 4.8 + ClawQL, direct Anthropic, Sonnet 4.6 judge
-#   - workflow_dispatch: pick task / arms / models
+#       Opus 4.8 baseline vs Opus 4.8 + ClawQL via OpenRouter, Sonnet 4.6 judge
+#       (small validation; larger Nemotron sweeps also stay on OpenRouter)
+#   - workflow_dispatch: pick task / arms / models; use_openrouter=0 for direct Anthropic
 #
 # Secrets:
-#   OPENROUTER_API_KEY — Nemotron arms / OpenRouter judges
-#   ANTHROPIC_API_KEY  — Opus/Sonnet arms + Sonnet judge (direct API for ledger)
+#   OPENROUTER_API_KEY — Nemotron + OpenRouter Claude validation (default)
+#   ANTHROPIC_API_KEY  — optional; required only when use_openrouter=0
 
 name: Harvey LAB firm-knowledge (ClawQL vs baseline)
 
@@ -59,10 +60,10 @@ on:
         type: string
         default: "0"
       use_openrouter:
-        description: "1 = route Claude via OpenRouter; 0 = direct Anthropic (ledger)"
+        description: "1 = OpenRouter (validation default); 0 = direct Anthropic"
         required: true
         type: string
-        default: "0"
+        default: "1"
   pull_request:
     paths:
       - "integrations/harvey-labs/**"
@@ -134,7 +135,7 @@ jobs:
             MATTERS="${{ inputs.max_matters }}"
             USE_OR="${{ inputs.use_openrouter }}"
           elif [ -f integrations/harvey-labs/.run-opus-ledger ]; then
-            # PR / push Opus ledger — direct Anthropic, Sonnet 4.6 judge
+            # PR / push Opus validation — OpenRouter Opus ± ClawQL, Sonnet 4.6 judge
             ARMS_CSV="baseline,clawql"
             TASK="firm-knowledge/tasks/001"
             MODEL="claude-opus-4-8"
@@ -142,8 +143,8 @@ jobs:
             TURNS="40"
             JUDGE="claude-sonnet-4-6"
             MATTERS="0"
-            USE_OR="0"
-            echo "::notice::Detected integrations/harvey-labs/.run-opus-ledger → Opus A/B ledger mode"
+            USE_OR="1"
+            echo "::notice::Detected integrations/harvey-labs/.run-opus-ledger → Opus A/B via OpenRouter"
           else
             # PR / push smoke — Nemotron ± ClawQL only (OpenRouter-only)
             ARMS_CSV="nemotron,nemotron-clawql"
@@ -162,16 +163,26 @@ jobs:
           NEEDS_ANTHROPIC=false
           NEEDS_OPENROUTER=false
           case ",${ARMS_CSV}," in
-            *,baseline,*|*,clawql,*) NEEDS_ANTHROPIC=true ;;
+            *,baseline,*|*,clawql,*)
+              if [[ "${USE_OR}" == "1" ]]; then
+                NEEDS_OPENROUTER=true
+              else
+                NEEDS_ANTHROPIC=true
+              fi
+              ;;
           esac
           case ",${ARMS_CSV}," in
             *,nemotron,*|*,nemotron-clawql,*|*,nemotron-baseline,*|*,clawql-nemotron,*)
               NEEDS_OPENROUTER=true
               ;;
           esac
-          # Claude judge without OpenRouter path also needs Anthropic.
-          if [[ "${JUDGE}" == claude* ]] && [[ "${USE_OR}" != "1" ]]; then
-            NEEDS_ANTHROPIC=true
+          # Claude judge: OpenRouter path needs OR key; direct needs Anthropic.
+          if [[ "${JUDGE}" == claude* ]]; then
+            if [[ "${USE_OR}" == "1" ]]; then
+              NEEDS_OPENROUTER=true
+            else
+              NEEDS_ANTHROPIC=true
+            fi
           fi
           if [[ "${JUDGE}" == openai/* ]] || [[ "${JUDGE}" == openrouter/* ]]; then
             NEEDS_OPENROUTER=true
@@ -235,6 +246,7 @@ jobs:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       CLAWQL_LAB_USE_OPENROUTER: ${{ needs.resolve-matrix.outputs.use_openrouter }}
+      CLAWQL_LAB_ALLOW_CLAUDE_JUDGE_VIA_OPENROUTER: "1"
       CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
       CLAWQL_OPENROUTER_APP_TITLE: ClawQL Harvey LAB
       LAB_TASK: ${{ needs.resolve-matrix.outputs.task }}
@@ -277,6 +289,9 @@ jobs:
                 echo "::error::Sonnet/Claude judge with direct Anthropic requires ANTHROPIC_API_KEY."
                 exit 1
               fi
+            elif [ -z "${OPENROUTER_API_KEY:-}" ]; then
+              echo "::error::Sonnet/Claude judge via OpenRouter requires OPENROUTER_API_KEY."
+              exit 1
             fi
           fi
 
@@ -314,5 +329,5 @@ jobs:
     steps:
       - run: |
           echo "::warning::Skipped Harvey LAB live matrix — ${{ needs.resolve-matrix.outputs.skip_reason }}"
-          echo "::error::Set the missing GitHub Actions secret(s), then re-run. Opus ledger needs ANTHROPIC_API_KEY with CLAWQL_LAB_USE_OPENROUTER=0."
+          echo "::error::Set the missing GitHub Actions secret(s), then re-run. OpenRouter validation needs OPENROUTER_API_KEY; direct Anthropic ledger needs ANTHROPIC_API_KEY with use_openrouter=0."
           exit 1

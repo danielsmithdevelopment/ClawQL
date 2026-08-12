@@ -1,14 +1,14 @@
 # Harvey LAB × ClawQL Results — firm-knowledge
 
 Date: 2026-08-12  
-Models: Nemotron 3.5 Lightning ± ClawQL (OpenRouter); Opus A/B pending Anthropic  
+Models: Nemotron 3.5 Lightning ± ClawQL (OpenRouter); Opus A/B validation via OpenRouter  
 Tasks: 250 total; **live sample so far: `firm-knowledge/tasks/001` only**  
-Judge: `openai/gpt-5.4-mini` (OpenRouter)
+Judge (Nemotron): `openai/gpt-5.4-mini` · Judge (Opus validation): `claude-sonnet-4-6` via OpenRouter
 
 ## Status
 
 **Nemotron ± ClawQL stabilized on task 001 (OpenRouter).**  
-**Opus A/B ledger blocked:** [31553952902](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31553952902) detected `.run-opus-ledger` (Opus 4.8 ± ClawQL, Sonnet 4.6 judge, direct Anthropic) but **skipped — repo secret `ANTHROPIC_API_KEY` is unset**.
+**Opus A/B validation:** re-triggered via OpenRouter (same small task). Prior direct-Anthropic attempt [31553952902](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31553952902) skipped — no `ANTHROPIC_API_KEY`; staying on OpenRouter for these validation runs.
 
 Latest Nemotron stability run: [31552128819](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31552128819)
 
@@ -23,21 +23,19 @@ Prior deliverable-guard run: [31539169062](https://github.com/danielsmithdevelop
 **ClawQL lift (stability): 0% → 100% CPR / all-pass on the same Nemotron model.**  
 Across the packaging series, clawql CPR moved **14.3% → 57.1% → 85.7% → 100%** while baseline stayed near-empty.
 
-**Unblock Opus:** add GitHub Actions secret `ANTHROPIC_API_KEY` on `danielsmithdevelopment/ClawQL`, then re-run the Harvey LAB firm-knowledge workflow on PR #915 (marker already present). Do not use OpenRouter for this ledger.
-
 ## Arm A — Baseline (Opus, standard harness)
 
-| Metric              | Value               |
-| ------------------- | ------------------- |
-| Criterion pass rate | _pending Anthropic_ |
-| All-pass rate       | _pending_           |
+| Metric              | Value                          |
+| ------------------- | ------------------------------ |
+| Criterion pass rate | _pending OpenRouter Opus run_  |
+| All-pass rate       | _pending_                      |
 
 ## Arm B — Opus + ClawQL
 
-| Metric              | Value               |
-| ------------------- | ------------------- |
-| Criterion pass rate | _pending Anthropic_ |
-| All-pass rate       | _pending_           |
+| Metric              | Value                          |
+| ------------------- | ------------------------------ |
+| Criterion pass rate | _pending OpenRouter Opus run_  |
+| All-pass rate       | _pending_                      |
 
 ## Arm C pair — Nemotron ± ClawQL (OpenRouter)
 
@@ -73,10 +71,11 @@ Across the packaging series, clawql CPR moved **14.3% → 57.1% → 85.7% → 10
 
 ## Next
 
-1. **Opus vs Opus in flight** — marker `integrations/harvey-labs/.run-opus-ledger` triggers Arm A (`baseline` / Opus 4.8) vs Arm B (`clawql` / Opus 4.8 + ClawQL) on task 001 with **direct Anthropic** + **Sonnet 4.6** judge (requires `ANTHROPIC_API_KEY` GHA secret)
-2. If Opus lift holds, expand firm-knowledge sample / full suite
-3. No Harvey outreach until Opus ledger exists
+1. **Opus vs Opus (OpenRouter validation)** — marker `.run-opus-ledger` → Arm A/B Opus 4.8, Sonnet 4.6 judge via OpenRouter on task 001
+2. Larger Nemotron sweeps still on OpenRouter after this validation
+3. Direct Anthropic ledger later when `ANTHROPIC_API_KEY` is available (`use_openrouter=0`)
+4. No Harvey outreach until a publishable Opus ledger exists
 
 ## Notes
 
-Do not outreach to Harvey until Opus A/B ledger exists. Nemotron all-pass on one task is infrastructure proof, not a publishable full-suite LAB claim.
+Do not outreach to Harvey until Opus A/B ledger exists. OpenRouter Opus A/B on one task is directional validation, not a Harvey-facing claim. Nemotron all-pass on one task is infrastructure proof, not a publishable full-suite LAB claim.
