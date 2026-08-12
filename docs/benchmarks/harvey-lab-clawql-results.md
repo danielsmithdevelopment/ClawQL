@@ -7,9 +7,10 @@ Judge: `openai/gpt-5.4-mini` (OpenRouter)
 
 ## Status
 
-**Nemotron ± ClawQL stabilized on task 001 (OpenRouter-only, no Anthropic).**
+**Nemotron ± ClawQL stabilized on task 001 (OpenRouter).**  
+**Opus A/B ledger blocked:** [31553952902](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31553952902) detected `.run-opus-ledger` (Opus 4.8 ± ClawQL, Sonnet 4.6 judge, direct Anthropic) but **skipped — repo secret `ANTHROPIC_API_KEY` is unset**.
 
-Latest stability run: [31552128819](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31552128819)
+Latest Nemotron stability run: [31552128819](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31552128819)
 
 | Arm               | CPR            | All-pass | Turns | Notes                                                                            |
 | ----------------- | -------------- | -------- | ----- | -------------------------------------------------------------------------------- |
@@ -22,7 +23,7 @@ Prior deliverable-guard run: [31539169062](https://github.com/danielsmithdevelop
 **ClawQL lift (stability): 0% → 100% CPR / all-pass on the same Nemotron model.**  
 Across the packaging series, clawql CPR moved **14.3% → 57.1% → 85.7% → 100%** while baseline stayed near-empty.
 
-Publishable Opus A/B still needs direct Anthropic + Sonnet 4.6 judge before any Harvey-facing claim.
+**Unblock Opus:** add GitHub Actions secret `ANTHROPIC_API_KEY` on `danielsmithdevelopment/ClawQL`, then re-run the Harvey LAB firm-knowledge workflow on PR #915 (marker already present). Do not use OpenRouter for this ledger.
 
 ## Arm A — Baseline (Opus, standard harness)
 
