@@ -12,19 +12,19 @@ Marker `.run-nemotron-sweep` → tasks `001`–`025`, arms `nemotron` + `nemotro
 
 ### Validity of this sweep
 
-| Claim | Valid? |
-| ----- | ------ |
-| Internal ClawQL lift (nemotron vs nemotron-clawql, same judge) | **Yes** |
-| Harvey / leaderboard absolute all-pass | **Not yet** — need `claude-sonnet-4-6` judge (Harvey methodology) and preferably direct Anthropic for the publishable ledger |
+| Claim                                                          | Valid?                                                                                                                       |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Internal ClawQL lift (nemotron vs nemotron-clawql, same judge) | **Yes**                                                                                                                      |
+| Harvey / leaderboard absolute all-pass                         | **Not yet** — need `claude-sonnet-4-6` judge (Harvey methodology) and preferably direct Anthropic for the publishable ledger |
 
 Absolute all-pass will likely differ under Sonnet vs gpt-5.4-mini. Treat this batch as lift + efficiency measurement.
 
 ### Post-sweep analysis checklist
 
-1. **Headline:** all-pass rate and mean CPR per arm  
-2. **Turns:** median / p90 on ClawQL vs baseline — does the 5-turn ClawQL pattern hold, or is task 001 an outlier?  
-3. **Baseline failure modes:** turn-ceiling hits (e.g. 40/40) vs graded output that still fails criteria  
-4. **ClawQL failures:** cluster by task / practice area / criteria count → prompt work before leaderboard re-judge  
+1. **Headline:** all-pass rate and mean CPR per arm
+2. **Turns:** median / p90 on ClawQL vs baseline — does the 5-turn ClawQL pattern hold, or is task 001 an outlier?
+3. **Baseline failure modes:** turn-ceiling hits (e.g. 40/40) vs graded output that still fails criteria
+4. **ClawQL failures:** cluster by task / practice area / criteria count → prompt work before leaderboard re-judge
 5. **Rate limits:** scan logs for 429 / quota errors under `max-parallel: 4`; lower parallelism or add delay if needed
 
 Prior single-task results remain below.
