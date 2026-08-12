@@ -11,10 +11,10 @@ Judge: `openai/gpt-5.4-mini` (OpenRouter)
 
 Latest stability run: [31552128819](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31552128819)
 
-| Arm | CPR | All-pass | Turns | Notes |
-| --- | --- | -------- | ----- | ----- |
-| `nemotron` | **0%** (0/7) | 0% | 40 | Empty deliverable (`response.md` missing) |
-| `nemotron-clawql` | **100%** (7/7) | **100%** | 5 | ALL-PASS — rubric short names + preferred evidence + explicit “Qualifies” column |
+| Arm               | CPR            | All-pass | Turns | Notes                                                                            |
+| ----------------- | -------------- | -------- | ----- | -------------------------------------------------------------------------------- |
+| `nemotron`        | **0%** (0/7)   | 0%       | 40    | Empty deliverable (`response.md` missing)                                        |
+| `nemotron-clawql` | **100%** (7/7) | **100%** | 5     | ALL-PASS — rubric short names + preferred evidence + explicit “Qualifies” column |
 
 Prior packaging run: [31550749489](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31550749489) — clawql **85.7%** (6/7; C-002 judge quirk).  
 Prior deliverable-guard run: [31539169062](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31539169062) — clawql **57.1%**.
@@ -26,25 +26,25 @@ Publishable Opus A/B still needs direct Anthropic + Sonnet 4.6 judge before any 
 
 ## Arm A — Baseline (Opus, standard harness)
 
-| Metric | Value |
-| ------ | ----- |
+| Metric              | Value               |
+| ------------------- | ------------------- |
 | Criterion pass rate | _pending Anthropic_ |
-| All-pass rate | _pending_ |
+| All-pass rate       | _pending_           |
 
 ## Arm B — Opus + ClawQL
 
-| Metric | Value |
-| ------ | ----- |
+| Metric              | Value               |
+| ------------------- | ------------------- |
 | Criterion pass rate | _pending Anthropic_ |
-| All-pass rate | _pending_ |
+| All-pass rate       | _pending_           |
 
 ## Arm C pair — Nemotron ± ClawQL (OpenRouter)
 
-| Metric | `nemotron` | `nemotron-clawql` |
-| ------ | ---------- | ----------------- |
-| Criterion pass rate (stability) | 0% | **100%** |
-| All-pass rate (stability) | 0% | **100%** |
-| CPR (packaging run) | 14.3% | 85.7% |
+| Metric                                    | `nemotron`          | `nemotron-clawql`                                          |
+| ----------------------------------------- | ------------------- | ---------------------------------------------------------- |
+| Criterion pass rate (stability)           | 0%                  | **100%**                                                   |
+| All-pass rate (stability)                 | 0%                  | **100%**                                                   |
+| CPR (packaging run)                       | 14.3%               | 85.7%                                                      |
 | vs published Nemotron LAB (8.3% all-pass) | below (single task) | **above on this task** (single-task smoke; not full suite) |
 
 ### Stability evidence (run 31552128819)
