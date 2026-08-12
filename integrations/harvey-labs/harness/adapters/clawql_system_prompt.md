@@ -20,6 +20,9 @@ Before you stop making tool calls you MUST:
      **Solara Digital**, **Halcyon Semi** — do not truncate to “Cascade” / “Solara”)
    - One **Second Request evidence** document path under
      `/workspace/documents/matters/<matter-id>/...`
+   - Explicit language that the matter **qualifies** (received an HSR second request),
+     e.g. a table titled “Qualifying HSR second-request matters” with columns
+     `Matter ID | Client short name | Qualifies | Evidence`
 
 Do **not** end the turn with only an assistant text answer.
 
