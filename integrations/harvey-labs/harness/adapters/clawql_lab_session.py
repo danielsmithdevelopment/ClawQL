@@ -571,11 +571,12 @@ def _enrich_lab_memory_recall(result: Any) -> dict[str, Any]:
             "Before finishing, call the harness `write` tool to create a file "
             "under /workspace/output/ (e.g. matters-enumeration.md or "
             "response.md). Attempt every rubric criterion with the best "
-            "evidence you have — partial credit beats empty output. For HSR "
-            "tasks use clientShortName (Cascade Retail, Harrowgate PE, Solara "
-            "Digital, Halcyon Semi), state that each listed matter qualifies, "
-            "and cite preferredEvidence — not engagement letters. Chat-only "
-            "answers are not graded."
+            "evidence you have — partial credit beats empty output. Verify "
+            "distinctive terms against cited document text (guilty until "
+            "proven). For HSR tasks use clientShortName (Cascade Retail, "
+            "Harrowgate PE, Solara Digital, Halcyon Semi), state that each "
+            "listed matter qualifies, and cite preferredEvidence — not "
+            "engagement letters. Chat-only answers are not graded."
         ),
         "matterIds": matter_ids,
         "evidenceRule": (

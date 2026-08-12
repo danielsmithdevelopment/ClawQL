@@ -37,10 +37,15 @@ Baseline never did a full-tree dump (~47k peak / turn).
 ### Fixes shipped for batch 2
 
 1. **Tool-result truncation** in `clawql_agent_loop.py` (`CLAWQL_LAB_MAX_TOOL_RESULT_CHARS`, default 24k)
-2. **System prompt**: always write partial deliverable; ≤2 failed recalls then harness fallback; forbid `ls -R` / unbounded find
+2. **System prompt**: always write partial deliverable; ≤2 failed recalls then harness fallback; forbid `ls -R` / unbounded find; **guilty-until-proven** terminology
 3. **Empty-recall `labGuidance.fallback`** on enriched MCP payload
-4. Workflow **`max-parallel: 2`** (OpenRouter free-tier daily limit)
-5. Removed `.run-nemotron-sweep` until batch 2 is intentionally re-armed
+4. **Deliverable grounding Wonder** (one post-write nudge to grep claims against cited docs) — see [`harvey-lab-ouroboros-grounding-wonder.md`](harvey-lab-ouroboros-grounding-wonder.md)
+5. Workflow **`max-parallel: 2`** (OpenRouter free-tier daily limit)
+6. Removed `.run-nemotron-sweep` until batch 2 passes the **task 001 smoke gate**
+
+### Public reproducibility (Harvey outreach)
+
+Claims are auditable via public Actions run IDs + this repo’s adapter overlay + Harvey’s own harness/judge methodology. See the grounding-Wonder doc § “Public reproducibility”.
 
 ### Validity
 
@@ -66,10 +71,11 @@ Baseline never did a full-tree dump (~47k peak / turn).
 
 ## Next
 
-1. Finish downloading batch 1 aggregate when run completes; publish mean CPR / all-pass
-2. Re-arm `.run-nemotron-sweep` for batch 2 **after** UTC rate-limit reset (or local MLX Nemotron)
-3. Defer full Ouroboros LAB loop; prompt + truncation first
-4. Task 011 → Opus, not Nemotron prompt churn
+1. After OpenRouter reset: **smoke task 001 only** — confirm no ~180k/turn pin and healthy ~4–8 turns / ≲150k input on Nemotron+ClawQL  
+2. Then re-arm `.run-nemotron-sweep` (Sonnet judge, `max-parallel: 2`) for batch 2  
+3. Full Ouroboros Evaluate→Wonder→Reflect later; grounding Wonder is the first slice  
+4. Task 011 → Opus, not Nemotron prompt churn  
+5. Harvey outreach only with multi-task Sonnet ledger + linkable run IDs  
 
 ## Notes
 

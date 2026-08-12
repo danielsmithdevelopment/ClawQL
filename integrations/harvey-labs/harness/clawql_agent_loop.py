@@ -3,6 +3,8 @@
 1. Deliverable guard — nudge when ``/workspace/output/`` is empty.
 2. Tool-result truncation — cap oversized bash/grep/read dumps so one
    ``ls -R`` cannot pin ~170k tokens into every subsequent turn (task 014).
+3. Deliverable grounding Wonder — after a file exists, one nudge to verify
+   claims against source documents (zsec: findings start guilty until proven).
 """
 
 from __future__ import annotations
@@ -72,12 +74,26 @@ _CLAWQL_DELIVERABLE_NUDGE = (
     "`/workspace/documents/matters/<matter-id>/...` when available.\\n\\n"
     "Do not reply with chat text only."
 )
+
+_CLAWQL_GROUNDING_WONDER_NUDGE = (
+    "WONDER (deliverable grounding) — before you finish:\\n\\n"
+    "Findings start **guilty until proven by document evidence**. "
+    "Open your `/workspace/output/` file and, for each distinctive claim "
+    "(matter id, client name, legal term like 'covenant-lite' / 'MFN' / "
+    "'second request', ontology-style flags), run a targeted `grep` against "
+    "the **cited** document path(s) under `/workspace/documents/`.\\n\\n"
+    "If a term or matter is not found in source text, remove it or mark it "
+    "unconfirmed — do not invent plausible firm terminology.\\n\\n"
+    "Then `write` an updated deliverable if needed. Do not invent ontology "
+    "title flags (e.g. COVENANT-LITE) that never appeared in recall hits."
+)
 {HELPER_END}
 """
 
 FINISH_BLOCK = f"""            {FINISH_BEGIN}
             # If no tool calls, the agent is done — unless ClawQL overlay detects
-            # an empty /workspace/output and we have not nudged yet.
+            # an empty /workspace/output and we have not nudged yet, or we still
+            # owe one deliverable-grounding Wonder pass.
             if not response.tool_calls:
                 _clawql_guard_on = (
                     os.environ.get("CLAWQL_LAB_DELIVERABLE_GUARD", "1") != "0"
@@ -95,6 +111,24 @@ FINISH_BLOCK = f"""            {FINISH_BEGIN}
                     )
                     messages.append(
                         adapter.make_user_message(_CLAWQL_DELIVERABLE_NUDGE)
+                    )
+                    continue
+                _clawql_wonder_on = (
+                    os.environ.get("CLAWQL_LAB_GROUNDING_WONDER", "1") != "0"
+                    and bool(os.environ.get("CLAWQL_LAB_OUTPUT_DIR", "").strip())
+                )
+                if (
+                    _clawql_wonder_on
+                    and not _clawql_nudge_state.get("grounded", False)
+                    and _clawql_output_has_files()
+                    and turn_count < max_turns
+                ):
+                    _clawql_nudge_state["grounded"] = True
+                    print(
+                        "ClawQL grounding Wonder: nudging agent to verify deliverable vs docs"
+                    )
+                    messages.append(
+                        adapter.make_user_message(_CLAWQL_GROUNDING_WONDER_NUDGE)
                     )
                     continue
                 break
@@ -136,7 +170,7 @@ def patch_agent_loop_deliverable_guard(agent_loop_path: Path) -> None:
     state_begin = "# --- clawql-deliverable-state begin ---"
     state_end = "# --- clawql-deliverable-state end ---"
     state_block = f"""    {state_begin}
-    _clawql_nudge_state = {{"nudged": False}}
+    _clawql_nudge_state = {{"nudged": False, "grounded": False}}
     {state_end}
 """
     if state_begin in text:
@@ -163,19 +197,9 @@ def patch_agent_loop_deliverable_guard(agent_loop_path: Path) -> None:
     if TRUNC_BEGIN in text:
         text = _replace_marked_block(text, TRUNC_BEGIN, TRUNC_END, TRUNC_BLOCK)
     else:
-        old_exec = (
-            "            for tc in response.tool_calls:\n"
-            "                result = tool_executor.execute(tc.name, tc.arguments)\n"
-        )
-        if old_exec not in text:
-            # Already-patched loops may indent differently; try looser match.
-            alt = (
-                "            for tc in response.tool_calls:\n"
-                "                result = tool_executor.execute(tc.name, tc.arguments)\n\n"
-            )
-            if alt not in text and "tool_executor.execute(tc.name, tc.arguments)" not in text:
-                raise SystemExit("agent_loop.py tool execute loop not found")
-        if "tool_executor.execute(tc.name, tc.arguments)" in text and TRUNC_BEGIN not in text:
+        if "tool_executor.execute(tc.name, tc.arguments)" not in text:
+            raise SystemExit("agent_loop.py tool execute loop not found")
+        if TRUNC_BEGIN not in text:
             text = text.replace(
                 "                result = tool_executor.execute(tc.name, tc.arguments)\n",
                 "                result = tool_executor.execute(tc.name, tc.arguments)\n"
@@ -186,6 +210,9 @@ def patch_agent_loop_deliverable_guard(agent_loop_path: Path) -> None:
 
     if text != original:
         agent_loop_path.write_text(text, encoding="utf-8")
-        print(f"patched {agent_loop_path} (deliverable guard + tool truncation)")
+        print(
+            f"patched {agent_loop_path} "
+            "(deliverable guard + truncation + grounding Wonder)"
+        )
     else:
         print(f"no changes needed for {agent_loop_path} (deliverable guard)")

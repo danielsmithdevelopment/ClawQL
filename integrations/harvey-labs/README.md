@@ -65,7 +65,8 @@ Immediate LAB does **not** require our own DPO/GRPO — Arm C uses NVIDIA/Trajec
 
 - `docs/benchmarks/harvey-lab-baseline.md`
 - `docs/benchmarks/harvey-lab-clawql-results.md`
+- `docs/benchmarks/harvey-lab-ouroboros-grounding-wonder.md` — Wonder / anti-hallucination + batch-2 smoke gate + public run-ID framing
 - `docs/benchmarks/harvey-lab-pause-handoff.md`
 - `docs/benchmarks/harvey-lab-action-plan.md`
 
-Do not outreach to Harvey until the Opus two-arm ledger exists (Arm C preferred).
+Do not outreach to Harvey until a multi-task **Sonnet-judged** ledger exists with public Actions run IDs (Arm C Nemotron pair preferred for efficiency story; Opus for absolute quality).

@@ -18,6 +18,12 @@ for this task. Machine-readable `CLAWQL_*` fields are synced into `ontology.db`.
    the entire tree. Prefer targeted `glob` / `grep` with a matter path or a
    specific filename pattern. Oversized tool output is truncated, but you still
    waste turns.
+5. **Guilty until proven (deliverable grounding).** Distinctive legal terms,
+   ontology-style flags, and matter claims start **untrusted**. Before finishing,
+   verify each against cited source document text (targeted `grep` on the cited
+   path). If it is not in the documents, remove it or mark unconfirmed — do not
+   invent plausible firm language (batch-1 failure mode: fabricated
+   `COVENANT-LITE` ontology flags).
 
 ## HARD REQUIREMENT — graded deliverable
 

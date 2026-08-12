@@ -73,6 +73,8 @@ class DeliverableGuardPatchTests(unittest.TestCase):
             self.assertIn(TRUNC_BEGIN, once)
             self.assertIn("_clawql_output_has_files", once)
             self.assertIn("_clawql_truncate_tool_result", once)
+            self.assertIn("_CLAWQL_GROUNDING_WONDER_NUDGE", once)
+            self.assertIn("grounded", once)
             self.assertIn("import os", once)
             patch_agent_loop_deliverable_guard(path)
             twice = path.read_text(encoding="utf-8")
@@ -80,6 +82,9 @@ class DeliverableGuardPatchTests(unittest.TestCase):
             self.assertEqual(twice.count(HELPER_BEGIN), 1)
             self.assertEqual(twice.count(FINISH_BEGIN), 1)
             self.assertEqual(twice.count(TRUNC_BEGIN), 1)
+            self.assertEqual(twice.count("def _clawql_truncate_tool_result"), 1)
+            self.assertEqual(twice.count("_CLAWQL_GROUNDING_WONDER_NUDGE ="), 1)
+            self.assertIn("CLAWQL_LAB_GROUNDING_WONDER", twice)
 
     def test_truncate_helper_caps_ls_r_dump(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
