@@ -39,7 +39,7 @@ Next: tasks **016–025** (new signal) with Pattern E scope + kind-gated Wonder
 | Step 0 task-kind classification (enumeration / single_answer / …)        | **in** |
 | Kind-gated Wonder (1–2 greps on single_answer; fuller on enumeration)    | **in** |
 | Partial fallback hits = unresolved, not confirmed                        | **in** |
-| `max-parallel: 2`                                                        | **in** |
+| `max-parallel: 4` (was 2; daily quota binds more than concurrency)       | **in** |
 | Sweep marker supports `START-END` (e.g. `16-25`)                         | **in** |
 
 ## Plan
