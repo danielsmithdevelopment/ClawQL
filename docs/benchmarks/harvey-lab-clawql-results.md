@@ -7,8 +7,8 @@ Judges: Harvey-parity — `claude-sonnet-4-6` via OpenRouter; earlier Nemotron s
 
 ## Status
 
-**Batch 1 Sonnet-judged sweep** ([31562539617](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31562539617)) — finishing / rate-limited on free Nemotron tier.  
-**Batch 2 blocked until fixes below land** (sweep marker removed; `max-parallel` → 2).
+**Batch 1 Sonnet-judged sweep** ([31562539617](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31562539617)) — partial; hit OpenRouter free-tier daily cap.  
+**Batch 2 armed:** `.run-nemotron-sweep` → first **15** tasks × `nemotron`/`nemotron-clawql`, judge `claude-sonnet-4-6`, `max-parallel: 2` (post-reset; truncation + grounding Wonder).
 
 ### Batch 1 partial ledger (completed ClawQL vs baseline)
 
