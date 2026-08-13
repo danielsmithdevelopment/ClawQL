@@ -1,49 +1,53 @@
 # Harvey LAB × ClawQL Results — firm-knowledge
 
 Date: 2026-08-13  
-Models: Nemotron 3.5 Lightning ± ClawQL; Opus 4.8 ± ClawQL (OpenRouter validation)  
-Tasks: 250 total; batch 2 = first **15** (Sonnet 4.6 judge)  
-Judges: Harvey-parity — `claude-sonnet-4-6` via OpenRouter
+Models: Nemotron 3.5 Lightning ± ClawQL  
+Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479)  
+Next: tasks **016–025** (new signal) with Pattern E scope + kind-gated Wonder  
 
-## Status
+## Batch 2 final ledger (001–015)
 
-**Batch 2** ([31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479)): tasks **001–011** scored; **012–015** still finishing.  
-ClawQL all-pass so far **2/10+** (001, 002). Do **not** push overlay until the run completes.
+| Task | ClawQL | Baseline | Outcome |
+| ---- | ------ | -------- | ------- |
+| 001 | 100% | 14% | ClawQL all-pass |
+| 002 | 100% | 25% | ClawQL all-pass |
+| 003 | 33% | 33% | tie |
+| 004 | 0% | 50% | baseline win |
+| 005 | 33% | 17% | ClawQL win |
+| 006 | 33% | 33% | tie |
+| 007 | 0% | 0% | both fail |
+| 008 | 0% | 0% | both fail (wrong Pattern E + Wonder) |
+| 009 | 0% | 0% | both fail (19 criteria ceiling) |
+| 010 | 0% | 50% | baseline win |
+| 011 | 11% | 5% | ClawQL win (19 criteria) |
+| 012 | 100% | 0% | ClawQL all-pass |
+| 013 | 0% | 25% | baseline win |
+| 014 | 33% | 33% | tie |
+| 015 | 0% | 0% | both fail |
 
-### Batch 2 ledger (partial)
+**ClawQL all-pass: 3/15 (20%).** Baseline all-pass: 0/15.
 
-| Task | ClawQL CPR | Baseline CPR | Notes |
-| ---- | ---------- | ------------ | ----- |
-| 001 | 100% | 14% | All-pass; Wonder tax → ~630k cum. tokens (peak ~50k) |
-| 002 | 100% | 25% | All-pass |
-| 003 | 33% | 33% | Tie; ClawQL more efficient |
-| 004 | 0% | 50% | Baseline lucky brute force |
-| 005 | 33% | 17% | ClawQL wins |
-| 006 | 33% | 33% | Tie; ClawQL less efficient |
-| 007 | 0% | 0% | Both fail |
-| 008 | 0% | 0% | Wrong Pattern E framing + Wonder proved wrong list |
-| 009 | 0% | 0% | 19 criteria — model ceiling |
-| 010 | 0% | 50% | Fallback OK; overfit partial greps |
-| 011 | 11% | 5% | 19 criteria — model ceiling-ish |
+## Fixes in place (all of them)
 
-### Batch-2 diagnosis (tasks 008 / 010)
+| Fix | Status |
+| --- | ------ |
+| Tool-result truncation (`CLAWQL_LAB_MAX_TOOL_RESULT_CHARS`, default 24k) | **in** |
+| Always-write deliverable guard | **in** |
+| ≤2 empty recalls → grep/read fallback | **in** |
+| Empty-recall `labGuidance.fallback` | **in** |
+| Pattern E **only** when prompt explicitly mentions second request | **in** |
+| Step 0 task-kind classification (enumeration / single_answer / …) | **in** |
+| Kind-gated Wonder (1–2 greps on single_answer; fuller on enumeration) | **in** |
+| Partial fallback hits = unresolved, not confirmed | **in** |
+| `max-parallel: 2` | **in** |
+| Sweep marker supports `START-END` (e.g. `16-25`) | **in** |
 
-- **Not recall looping.** 008: one Pattern E call with hits, then Wonder ground-wrong-answer.
-- **HSR filing ≠ second request.** Pattern E must be scoped.
-- **Wonder token sink:** cumulative tokens ≈ sum(per-turn); peak context stayed ~43–50k (truncation OK).
-- **Batch-3 fixes (landed in tree, push after sweep):** task-kind classification, Pattern E scope gate, kind-gated Wonder (1–2 greps on single-answer), partial-hit = unresolved.
+## Plan
 
-### Batch 1 critical bugs (fixed earlier)
-
-Tool-result truncation (`ls -R` pin), deliverable guard, empty-recall fallback.
-
-## Next
-
-1. Let batch 2 finish → publish full 001–015 aggregate  
-2. Push kind-gated Wonder / Pattern E scope (no mid-sweep push)  
-3. Smoke 001 then batch 3 (N=15)  
-4. Harvey outreach only with multi-task Sonnet ledger + public run IDs  
+1. **016–025** first — new signal with fixed adapter (no re-run of 001–015 yet)  
+2. If rates hold → **clean canonical 001–025** sweep for the Nemotron ledger entry  
+3. Then Opus; Harvey outreach with public run IDs  
 
 ## Notes
 
-Avoid pushing `integrations/harvey-labs/**` or the LAB workflow while a sweep runs (`cancel-in-progress`).
+Do not push overlay mid-sweep (`cancel-in-progress`).
