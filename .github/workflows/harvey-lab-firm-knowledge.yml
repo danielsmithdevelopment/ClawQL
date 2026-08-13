@@ -140,6 +140,8 @@ jobs:
             ARMS_CSV="${{ inputs.arms }}"
             TASK="${{ inputs.task }}"
             TASK_LIMIT="${{ inputs.task_limit }}"
+            TASK_START=1
+            TASK_END="${TASK_LIMIT}"
             MODEL="${{ inputs.model }}"
             NEMO="${{ inputs.nemotron_model }}"
             TURNS="${{ inputs.max_turns }}"
@@ -350,8 +352,9 @@ jobs:
     timeout-minutes: 360
     strategy:
       fail-fast: false
-      # OpenRouter free-tier Nemotron: keep low to avoid daily request exhaustion.
-      max-parallel: 2
+      # Free-tier daily cap is the binding constraint (not concurrency). Prefer
+      # higher parallel for wall-clock; drop to 2 only if OpenRouter 429s return.
+      max-parallel: 4
       matrix: ${{ fromJson(needs.resolve-matrix.outputs.matrix) }}
     env:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
