@@ -1,0 +1,18 @@
+# Nemotron ± ClawQL multi-task sweep trigger (Harvey-parity judge)
+#
+# Presence of this file on a PR/push that touches integrations/harvey-labs/**
+# switches the firm-knowledge workflow from single-task smoke to:
+#
+#   Arms:   nemotron, nemotron-clawql
+#   Tasks:  firm-knowledge/tasks/001 .. 00N
+#   Judge:  claude-sonnet-4-6 (Harvey harness default; via OpenRouter)
+#   Route:  OpenRouter agents + OpenRouter Sonnet judge
+#
+# Batch 2: N=15 (trimmed vs batch-1's 25 for faster iteration after
+# truncation + grounding Wonder fixes). First non-comment line = N.
+#
+# WARNING: concurrency cancel-in-progress is on — avoid pushing to this branch
+# while the sweep is running or the matrix will be cancelled.
+#
+# Delete this file when the sweep finishes to restore single-task PR smoke.
+15
