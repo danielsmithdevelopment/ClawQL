@@ -4,7 +4,8 @@
 2. Tool-result truncation — cap oversized bash/grep/read dumps so one
    ``ls -R`` cannot pin ~170k tokens into every subsequent turn (task 014).
 3. Deliverable grounding Wonder — after a file exists, one nudge to verify
-   claims against source documents (zsec: findings start guilty until proven).
+   claims against source documents. Wonder text is **task-kind gated**:
+   single-answer tasks get a 1–2 grep budget; enumeration gets fuller checks.
 """
 
 from __future__ import annotations
@@ -62,6 +63,60 @@ def _clawql_truncate_tool_result(tool_name: str, result: str) -> str:
     )
 
 
+def _clawql_message_text(msg) -> str:
+    if msg is None:
+        return ""
+    if isinstance(msg, str):
+        return msg
+    if isinstance(msg, dict):
+        content = msg.get("content")
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            parts = []
+            for block in content:
+                if isinstance(block, str):
+                    parts.append(block)
+                elif isinstance(block, dict):
+                    parts.append(str(block.get("text") or block.get("content") or ""))
+            return "\\n".join(parts)
+        return str(msg.get("text") or "")
+    return str(getattr(msg, "content", "") or getattr(msg, "text", "") or "")
+
+
+def _clawql_infer_task_kind(messages) -> str:
+    \"\"\"Heuristic task kind from the user prompt (enumeration vs single_answer).
+
+    Prefer single_answer when mixed — Wonder-verifying a wrong list is the
+    expensive failure mode (batch-2 task 008).
+    \"\"\"
+    import os
+    import re
+
+    forced = os.environ.get("CLAWQL_LAB_TASK_KIND", "").strip().lower()
+    if forced in {{"enumeration", "single_answer", "comparison", "timeline"}}:
+        return forced
+
+    blob = " ".join(_clawql_message_text(m) for m in (messages or [])).lower()
+    enum_hits = len(
+        re.findall(
+            r"\\b(every|enumerate|enumeration|all matters|list (all|every)|"
+            r"which matters|each matter|set of matters)\\b",
+            blob,
+        )
+    )
+    single_hits = len(
+        re.findall(
+            r"\\b(most recent|latest|first|what's our|what is our|"
+            r"which matter|model (filing|document)|single)\\b",
+            blob,
+        )
+    )
+    if enum_hits > single_hits and enum_hits > 0:
+        return "enumeration"
+    return "single_answer"
+
+
 _CLAWQL_DELIVERABLE_NUDGE = (
     "STOP — your answer is not graded yet.\\n\\n"
     "The judge only reads files under `/workspace/output/`. "
@@ -75,17 +130,24 @@ _CLAWQL_DELIVERABLE_NUDGE = (
     "Do not reply with chat text only."
 )
 
-_CLAWQL_GROUNDING_WONDER_NUDGE = (
-    "WONDER (deliverable grounding) — before you finish:\\n\\n"
+_CLAWQL_GROUNDING_WONDER_ENUM = (
+    "WONDER (enumeration grounding) — before you finish:\\n\\n"
     "Findings start **guilty until proven by document evidence**. "
-    "Open your `/workspace/output/` file and, for each distinctive claim "
-    "(matter id, client name, legal term like 'covenant-lite' / 'MFN' / "
-    "'second request', ontology-style flags), run a targeted `grep` against "
-    "the **cited** document path(s) under `/workspace/documents/`.\\n\\n"
-    "If a term or matter is not found in source text, remove it or mark it "
-    "unconfirmed — do not invent plausible firm terminology.\\n\\n"
-    "Then `write` an updated deliverable if needed. Do not invent ontology "
-    "title flags (e.g. COVENANT-LITE) that never appeared in recall hits."
+    "For each matter in your `/workspace/output/` file, run a targeted `grep` "
+    "against the **cited** document path under `/workspace/documents/`.\\n\\n"
+    "If a claim is not found in source text, remove it or mark unconfirmed. "
+    "Do not invent ontology title flags (e.g. COVENANT-LITE)."
+)
+
+_CLAWQL_GROUNDING_WONDER_SINGLE = (
+    "WONDER (single-answer grounding) — budget: **at most 1–2 targeted greps**.\\n\\n"
+    "This task wants one answer (most recent / latest / specific), not a list. "
+    "If your deliverable enumerates many matters, that is a **framing error** — "
+    "rewrite to the single best-supported matter (or mark unresolved). "
+    "Do **not** verify a whole candidate list.\\n\\n"
+    "HSR filing ≠ HSR second request. Partial grep hits after fallback are "
+    "**unresolved**, not confirmed — do not Wonder-prove a weak match.\\n\\n"
+    "Then `write` an updated deliverable if needed."
 )
 {HELPER_END}
 """
@@ -93,7 +155,7 @@ _CLAWQL_GROUNDING_WONDER_NUDGE = (
 FINISH_BLOCK = f"""            {FINISH_BEGIN}
             # If no tool calls, the agent is done — unless ClawQL overlay detects
             # an empty /workspace/output and we have not nudged yet, or we still
-            # owe one deliverable-grounding Wonder pass.
+            # owe one deliverable-grounding Wonder pass (kind-gated).
             if not response.tool_calls:
                 _clawql_guard_on = (
                     os.environ.get("CLAWQL_LAB_DELIVERABLE_GUARD", "1") != "0"
@@ -124,12 +186,17 @@ FINISH_BLOCK = f"""            {FINISH_BEGIN}
                     and turn_count < max_turns
                 ):
                     _clawql_nudge_state["grounded"] = True
+                    _kind = _clawql_infer_task_kind(messages)
+                    _wonder = (
+                        _CLAWQL_GROUNDING_WONDER_ENUM
+                        if _kind == "enumeration"
+                        else _CLAWQL_GROUNDING_WONDER_SINGLE
+                    )
                     print(
-                        "ClawQL grounding Wonder: nudging agent to verify deliverable vs docs"
+                        f"ClawQL grounding Wonder (kind={{_kind}}): "
+                        "nudging agent to verify deliverable vs docs"
                     )
-                    messages.append(
-                        adapter.make_user_message(_CLAWQL_GROUNDING_WONDER_NUDGE)
-                    )
+                    messages.append(adapter.make_user_message(_wonder))
                     continue
                 break
             {FINISH_END}
@@ -212,7 +279,7 @@ def patch_agent_loop_deliverable_guard(agent_loop_path: Path) -> None:
         agent_loop_path.write_text(text, encoding="utf-8")
         print(
             f"patched {agent_loop_path} "
-            "(deliverable guard + truncation + grounding Wonder)"
+            "(deliverable guard + truncation + kind-gated Wonder)"
         )
     else:
         print(f"no changes needed for {agent_loop_path} (deliverable guard)")

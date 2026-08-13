@@ -19,16 +19,21 @@ deliverable; the judge rejected it because claims were not grounded in DMS text.
 This is the **zsec hallucination-bin principle** at deliverable level: findings
 start **guilty until proven by document evidence**.
 
-## Wonder step (LAB)
+## Wonder step (LAB) — kind-gated
 
 When `/workspace/output/` already has a file and the model stops tool use, the
 ClawQL agent-loop patch injects **one** user message
-(`CLAWQL_LAB_GROUNDING_WONDER`, default on):
+(`CLAWQL_LAB_GROUNDING_WONDER`, default on). The text depends on a heuristic
+task kind inferred from the user prompt (`CLAWQL_LAB_TASK_KIND` overrides):
 
-1. Re-open the deliverable.
-2. For each distinctive claim (matter id, client name, legal term, invented
-   ALLCAPS flag), `grep` the **cited** document path under `/workspace/documents/`.
-3. Rewrite: drop or mark unconfirmed anything not found in source text.
+| Kind | Wonder behavior |
+| ---- | --------------- |
+| `enumeration` | Verify each listed matter against cited paths |
+| `single_answer` (default) | **Budget 1–2 greps**; listing many matters is a framing error; HSR filing ≠ second request; partial hits = unresolved |
+
+Batch-2 task 008 failure mode: Pattern E second-request framing on a “most
+recent HSR **filing**” prompt, then Wonder spent ~19 turns proving the wrong
+list. Kind-gating + Pattern E scope in `clawql_system_prompt.md` address that.
 
 Disable with `CLAWQL_LAB_GROUNDING_WONDER=0` if needed for ablation.
 

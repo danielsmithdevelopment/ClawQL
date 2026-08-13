@@ -73,7 +73,9 @@ class DeliverableGuardPatchTests(unittest.TestCase):
             self.assertIn(TRUNC_BEGIN, once)
             self.assertIn("_clawql_output_has_files", once)
             self.assertIn("_clawql_truncate_tool_result", once)
-            self.assertIn("_CLAWQL_GROUNDING_WONDER_NUDGE", once)
+            self.assertIn("_CLAWQL_GROUNDING_WONDER_SINGLE", once)
+            self.assertIn("_CLAWQL_GROUNDING_WONDER_ENUM", once)
+            self.assertIn("_clawql_infer_task_kind", once)
             self.assertIn("grounded", once)
             self.assertIn("import os", once)
             patch_agent_loop_deliverable_guard(path)
@@ -83,8 +85,36 @@ class DeliverableGuardPatchTests(unittest.TestCase):
             self.assertEqual(twice.count(FINISH_BEGIN), 1)
             self.assertEqual(twice.count(TRUNC_BEGIN), 1)
             self.assertEqual(twice.count("def _clawql_truncate_tool_result"), 1)
-            self.assertEqual(twice.count("_CLAWQL_GROUNDING_WONDER_NUDGE ="), 1)
+            self.assertEqual(twice.count("_CLAWQL_GROUNDING_WONDER_SINGLE ="), 1)
             self.assertIn("CLAWQL_LAB_GROUNDING_WONDER", twice)
+
+    def test_infer_task_kind_prefers_single_answer_for_filing_prompt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "agent_loop.py"
+            path.write_text(STOCK_LOOP, encoding="utf-8")
+            patch_agent_loop_deliverable_guard(path)
+            text = path.read_text(encoding="utf-8")
+            begin = text.index("def _clawql_output_has_files")
+            end = text.index("def run_agent")
+            ns: dict = {"__name__": "clawql_helpers"}
+            exec(text[begin:end], ns)
+            filing = [
+                {
+                    "role": "user",
+                    "content": (
+                        "what's our most recent antitrust & competition matter "
+                        "where we made an HSR filing?"
+                    ),
+                }
+            ]
+            self.assertEqual(ns["_clawql_infer_task_kind"](filing), "single_answer")
+            enum = [
+                {
+                    "role": "user",
+                    "content": "Enumerate every matter that received an HSR second request.",
+                }
+            ]
+            self.assertEqual(ns["_clawql_infer_task_kind"](enum), "enumeration")
 
     def test_truncate_helper_caps_ls_r_dump(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
