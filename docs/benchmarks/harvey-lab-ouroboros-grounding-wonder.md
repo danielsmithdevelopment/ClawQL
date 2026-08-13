@@ -26,9 +26,9 @@ ClawQL agent-loop patch injects **one** user message
 (`CLAWQL_LAB_GROUNDING_WONDER`, default on). The text depends on a heuristic
 task kind inferred from the user prompt (`CLAWQL_LAB_TASK_KIND` overrides):
 
-| Kind | Wonder behavior |
-| ---- | --------------- |
-| `enumeration` | Verify each listed matter against cited paths |
+| Kind                      | Wonder behavior                                                                                                       |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `enumeration`             | Verify each listed matter against cited paths                                                                         |
 | `single_answer` (default) | **Budget 1–2 greps**; listing many matters is a framing error; HSR filing ≠ second request; partial hits = unresolved |
 
 Batch-2 task 008 failure mode: Pattern E second-request framing on a “most
