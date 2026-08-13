@@ -3,7 +3,7 @@
 # OpenBench-style:
 #   - pull_request / push (path-filtered): default Nemotron ± ClawQL on task 001
 #   - Marker integrations/harvey-labs/.run-nemotron-sweep:
-#       Nemotron ± ClawQL over first N firm-knowledge tasks (default 25)
+#       Nemotron ± ClawQL over task range (N or START-END, e.g. 16-25)
 #   - Marker integrations/harvey-labs/.run-opus-ledger:
 #       Opus 4.8 ± ClawQL on task 001 via OpenRouter
 #   - workflow_dispatch: pick task / task_limit / arms / models
@@ -151,6 +151,8 @@ jobs:
             ARMS_CSV="baseline,clawql"
             TASK="firm-knowledge/tasks/001"
             TASK_LIMIT=1
+            TASK_START=1
+            TASK_END=1
             MODEL="claude-opus-4-8"
             NEMO="nvidia/nemotron-3.5-lightning"
             TURNS="40"
@@ -162,13 +164,30 @@ jobs:
           elif [ -f integrations/harvey-labs/.run-nemotron-sweep ]; then
             ARMS_CSV="nemotron,nemotron-clawql"
             TASK="firm-knowledge/tasks/001"
-            # First non-comment/non-empty line may set limit (1–250); default 25.
-            TASK_LIMIT="$(
-              awk 'NF && $1 !~ /^#/ { print $1; exit }' integrations/harvey-labs/.run-nemotron-sweep || true
+            # First non-comment line: N  |  START-END  |  START END
+            #   N         → tasks 001..00N
+            #   START-END → tasks START..END (inclusive), e.g. 16-25
+            SWEEP_SPEC="$(
+              awk 'NF && $1 !~ /^#/ { print $0; exit }' integrations/harvey-labs/.run-nemotron-sweep || true
             )"
-            if [ -z "${TASK_LIMIT}" ]; then
-              TASK_LIMIT=25
+            TASK_START=1
+            TASK_END=25
+            if [ -n "${SWEEP_SPEC}" ]; then
+              if [[ "${SWEEP_SPEC}" =~ ^([0-9]+)[[:space:]]*-[[:space:]]*([0-9]+)[[:space:]]*$ ]]; then
+                TASK_START="${BASH_REMATCH[1]}"
+                TASK_END="${BASH_REMATCH[2]}"
+              elif [[ "${SWEEP_SPEC}" =~ ^([0-9]+)[[:space:]]+([0-9]+)[[:space:]]*$ ]]; then
+                TASK_START="${BASH_REMATCH[1]}"
+                TASK_END="${BASH_REMATCH[2]}"
+              elif [[ "${SWEEP_SPEC}" =~ ^([0-9]+)[[:space:]]*$ ]]; then
+                TASK_START=1
+                TASK_END="${BASH_REMATCH[1]}"
+              else
+                echo "::error::Invalid .run-nemotron-sweep spec (got '${SWEEP_SPEC}'). Use N or START-END."
+                exit 1
+              fi
             fi
+            TASK_LIMIT="${TASK_END}"
             MODEL="claude-sonnet-4-6"
             NEMO="nvidia/nemotron-3.5-lightning"
             TURNS="40"
@@ -176,11 +195,13 @@ jobs:
             MATTERS="0"
             USE_OR="1"
             MODE="nemotron-sweep"
-            echo "::notice::Detected .run-nemotron-sweep → Nemotron ± ClawQL first ${TASK_LIMIT} tasks, judge=claude-sonnet-4-6"
+            echo "::notice::Detected .run-nemotron-sweep → Nemotron ± ClawQL tasks ${TASK_START}–${TASK_END}, judge=claude-sonnet-4-6"
           else
             ARMS_CSV="nemotron,nemotron-clawql"
             TASK="firm-knowledge/tasks/001"
             TASK_LIMIT=1
+            TASK_START=1
+            TASK_END=1
             MODEL="claude-sonnet-4-6"
             NEMO="nvidia/nemotron-3.5-lightning"
             TURNS="40"
@@ -190,26 +211,36 @@ jobs:
             MODE="smoke"
           fi
 
-          # Clamp task_limit
-          if ! [[ "${TASK_LIMIT}" =~ ^[0-9]+$ ]]; then
-            echo "::error::task_limit must be an integer (got ${TASK_LIMIT})"
+          # Default start/end when not set by sweep marker
+          TASK_START="${TASK_START:-1}"
+          TASK_END="${TASK_END:-${TASK_LIMIT}}"
+
+          # Clamp task range
+          if ! [[ "${TASK_START}" =~ ^[0-9]+$ ]] || ! [[ "${TASK_END}" =~ ^[0-9]+$ ]]; then
+            echo "::error::task range must be integers (got ${TASK_START}–${TASK_END})"
             exit 1
           fi
-          if [ "${TASK_LIMIT}" -lt 1 ]; then TASK_LIMIT=1; fi
-          if [ "${TASK_LIMIT}" -gt 250 ]; then TASK_LIMIT=250; fi
+          if [ "${TASK_START}" -lt 1 ]; then TASK_START=1; fi
+          if [ "${TASK_END}" -gt 250 ]; then TASK_END=250; fi
+          if [ "${TASK_START}" -gt "${TASK_END}" ]; then
+            echo "::error::TASK_START (${TASK_START}) > TASK_END (${TASK_END})"
+            exit 1
+          fi
+          TASK_LIMIT="${TASK_END}"
 
           ARMS_JSON="$(
             ARMS_CSV="${ARMS_CSV}" python3 -c \
               'import json,os; print(json.dumps([a.strip() for a in os.environ["ARMS_CSV"].split(",") if a.strip()]))'
           )"
           TASKS_JSON="$(
-            TASK_LIMIT="${TASK_LIMIT}" TASK="${TASK}" python3 -c '
+            TASK_START="${TASK_START}" TASK_END="${TASK_END}" TASK="${TASK}" python3 -c '
           import json, os
-          limit = int(os.environ["TASK_LIMIT"])
-          if limit <= 1:
+          start = int(os.environ["TASK_START"])
+          end = int(os.environ["TASK_END"])
+          if start == end == 1:
               tasks = [os.environ.get("TASK") or "firm-knowledge/tasks/001"]
           else:
-              tasks = [f"firm-knowledge/tasks/{i:03d}" for i in range(1, limit + 1)]
+              tasks = [f"firm-knowledge/tasks/{i:03d}" for i in range(start, end + 1)]
           print(json.dumps(tasks))
           '
           )"
