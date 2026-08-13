@@ -116,12 +116,14 @@ CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
     {
         "name": "clawql_memory_recall",
         "description": (
-            "Retrieve matter context from the ClawQL vault/ontology. For HSR "
-            "second-request set membership, pass schema='legal.Matter' and "
-            'filters={"title":{"contains":"HSR_SECOND_REQUEST"}}. Do not invent '
-            "other title flags. If two structured recalls return empty/"
-            "insufficient hits, stop recalling and use harness grep/read on "
-            "/workspace/documents, then write /workspace/output/."
+            "Retrieve matter context from the ClawQL vault/ontology. "
+            "Use schema='legal.Matter' + filters title contains "
+            "HSR_SECOND_REQUEST ONLY when the task explicitly asks about "
+            "second requests / second-request compliance. For HSR filing, "
+            "covenant-lite, MFN, or 'most recent matter' questions, do NOT "
+            "use HSR_SECOND_REQUEST. If two structured recalls return "
+            "empty/insufficient hits, stop recalling and use harness "
+            "grep/read; treat partial grep hits as unresolved, not confirmed."
         ),
         "parameters": {
             "type": "object",
