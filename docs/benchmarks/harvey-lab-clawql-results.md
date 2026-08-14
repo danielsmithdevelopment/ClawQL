@@ -42,18 +42,18 @@ Sticky: default PR smoke ≠ Harvey-parity judge; Sonnet multi-task needs the sw
 
 ## Batch 3 ledger (016–025) — [31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774)
 
-| Task | ClawQL CPR | Baseline CPR | Notes |
-| ---- | ---------- | ------------ | ----- |
-| 016  | 0% (0/14)  | 0% (0/14)    | model ceiling; both hit turn cap |
-| 017  | 8% (1/12)  | 8% (1/12)    | model ceiling |
-| 018  | 0% (0/1)   | 0% (0/1)     | **negative-result miss** — ClawQL 40/40, 0 recalls, no write |
-| 019  | 8% (1/12)  | 8% (1/12)    | model ceiling |
-| 020  | 0% (0/3)   | 0% (0/3)     | both fail |
-| 021  | 4% (1/24)  | 4% (1/24)    | 24-criteria ceiling |
-| 022  | **46%** (6/13) | 8% (1/13) | ClawQL CPR win (not all-pass); high tokens |
-| 023  | 0% (0/4)   | 25% (1/4)    | baseline CPR win |
-| 024  | 0% (0/9)   | 11% (1/9)    | baseline CPR win |
-| 025  | 20% (1/5)  | 20% (1/5)    | tie |
+| Task | ClawQL CPR     | Baseline CPR | Notes                                                        |
+| ---- | -------------- | ------------ | ------------------------------------------------------------ |
+| 016  | 0% (0/14)      | 0% (0/14)    | model ceiling; both hit turn cap                             |
+| 017  | 8% (1/12)      | 8% (1/12)    | model ceiling                                                |
+| 018  | 0% (0/1)       | 0% (0/1)     | **negative-result miss** — ClawQL 40/40, 0 recalls, no write |
+| 019  | 8% (1/12)      | 8% (1/12)    | model ceiling                                                |
+| 020  | 0% (0/3)       | 0% (0/3)     | both fail                                                    |
+| 021  | 4% (1/24)      | 4% (1/24)    | 24-criteria ceiling                                          |
+| 022  | **46%** (6/13) | 8% (1/13)    | ClawQL CPR win (not all-pass); high tokens                   |
+| 023  | 0% (0/4)       | 25% (1/4)    | baseline CPR win                                             |
+| 024  | 0% (0/9)       | 11% (1/9)    | baseline CPR win                                             |
+| 025  | 20% (1/5)      | 20% (1/5)    | tie                                                          |
 
 **ClawQL all-pass: 0/10.** Baseline all-pass: 0/10.  
 Combined 001–025 all-pass (this slice + batch 2): **ClawQL 3/25 (12%)** until canonical re-run with 018 fixes.
