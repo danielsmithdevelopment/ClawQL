@@ -27,18 +27,22 @@ if [[ -f "${PID_FILE}" ]]; then
   rm -f "${PID_FILE}"
 fi
 
-# Clean vault for this task (Option A — delete and recreate).
-rm -rf "${VAULT_PATH}"
-mkdir -p "${VAULT_PATH}/Memory"
-
 export CLAWQL_OBSIDIAN_VAULT_PATH="${VAULT_PATH}"
 export CLAWQL_ENABLE_MEMORY="${CLAWQL_ENABLE_MEMORY:-1}"
 export CLAWQL_ONTOLOGY_DB="${CLAWQL_ONTOLOGY_DB:-1}"
 export CLAWQL_ONTOLOGY_LLM_EXTRACTION="${CLAWQL_ONTOLOGY_LLM_EXTRACTION:-0}"
+# Bulk Markdown import for LAB DMS pre-seed (ingest_external_knowledge).
+export CLAWQL_EXTERNAL_INGEST="${CLAWQL_EXTERNAL_INGEST:-1}"
 export CLAWQL_MCP_STATELESS="${CLAWQL_MCP_STATELESS:-0}"
 export CLAWQL_MCP_PROTOCOL_VERSION="${CLAWQL_MCP_PROTOCOL_VERSION:-2025-11-25}"
 export PORT
 export HOST="${HOST:-127.0.0.1}"
+
+# Clean vault unless a prebuilt vault artifact was restored (shared setup).
+if [[ "${CLAWQL_LAB_PRESERVE_VAULT:-0}" != "1" ]]; then
+  rm -rf "${VAULT_PATH}"
+fi
+mkdir -p "${VAULT_PATH}/Memory"
 
 echo "Vault: ${VAULT_PATH}"
 echo "Starting clawql-mcp-http on ${HOST}:${PORT}"

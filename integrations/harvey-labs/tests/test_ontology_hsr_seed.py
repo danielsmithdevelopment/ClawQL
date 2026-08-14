@@ -94,7 +94,10 @@ class HsrSecondRequestDetectionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             matter = Path(tmp) / "1005-00001"
             _write_docx(
-                matter / "documents" / "credit-agreement-execution-version.docx",
+                matter
+                / "Transaction Documents"
+                / "Credit Agreement"
+                / "credit-agreement-execution-version.docx",
                 "Senior secured revolving credit facility.",
             )
             det = detect_credit_facility(matter)
@@ -104,6 +107,38 @@ class HsrSecondRequestDetectionTests(unittest.TestCase):
             self.assertTrue(
                 any("credit-agreement" in e for e in det["evidence_files"])
             )
+
+    def test_bridge_and_term_loan_execution_flags_credit_facility(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bridge = Path(tmp) / "1010-00001"
+            _write_docx(
+                bridge / "Transaction Documents" / "bridge-loan-agreement-execution.docx",
+                "Bridge loan facility.",
+            )
+            self.assertTrue(detect_credit_facility(bridge)["is_credit_facility"])
+
+            term = Path(tmp) / "1042-00001"
+            _write_docx(
+                term / "Transaction Documents" / "term-loan-agreement-execution.docx",
+                "Term loan facility.",
+            )
+            self.assertTrue(detect_credit_facility(term)["is_credit_facility"])
+
+    def test_financing_draft_and_diligence_memo_are_not_credit_facility(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            financing = Path(tmp) / "1003-00003"
+            _write_docx(
+                financing / "Financing" / "credit-agreement-execution.docx",
+                "PE financing side letter book.",
+            )
+            self.assertFalse(detect_credit_facility(financing)["is_credit_facility"])
+
+            diligence = Path(tmp) / "1002-00004"
+            _write_docx(
+                diligence / "Diligence" / "credit-facility-review-memo.docx",
+                "Review of target credit facility.",
+            )
+            self.assertFalse(detect_credit_facility(diligence)["is_credit_facility"])
 
     def test_unrelated_matter_is_not_credit_facility(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

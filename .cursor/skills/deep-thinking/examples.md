@@ -147,3 +147,12 @@ Fill after [31764224376](https://github.com/danielsmithdevelopment/ClawQL/action
 - Sticky takeaway: **Do not prompt agents to filter on ontology fields you never seed.**
 - Process change: Fix 6 — detect credit-agreement paths → `CREDIT_FACILITY` + Banking & Finance; Pattern F; re-nudge ceiling every remaining turn.
 
+### After-action — 18-18 probe #3 [31769718249](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31769718249) (Fix 6)
+
+- Expected: Pattern F cohort ~12; deliverable `0 of 12`.
+- Observed: workflow green; seed `CREDIT_FACILITY flagged 36/266`; agent correctly recalled N=36, wrote **`0 of 36`**; judge wants **`0 of 12`**. ClawQL job ~31m vs baseline ~7.5m.
+- Assumptions died: “any credit-agreement path token ≈ Banking & Finance signed book” (27 FP; 3 FN on bridge/term loan execution names).
+- True root cause: **detector precision** (data layer), not packaging/control-flow. Agent used ontology N faithfully.
+- Sticky takeaway: **Calibrate cohort detectors offline against public gold; never hard-code gold IDs into seed.** Speed: bulk `ingest_external_knowledge` + gate Node to clawql arms; shared vault is the next slice.
+- Process change: Fix 7 execution-under-TD detector; ship bulk ingest + Node gate; **do not re-arm `18-18` until Fix 7 is in.**
+

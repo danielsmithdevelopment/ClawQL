@@ -411,21 +411,26 @@ jobs:
           fi
 
       - name: Setup Node (ClawQL MCP)
+        if: contains(matrix.arm, 'clawql')
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
 
       - name: npm ci (for local clawql-mcp-http)
+        if: contains(matrix.arm, 'clawql')
         run: npm ci --ignore-scripts
 
       - name: Build ClawQL (MCP HTTP needs dist/server-http.js)
+        if: contains(matrix.arm, 'clawql')
         run: npm run build
         env:
           NODE_OPTIONS: --max-old-space-size=8192
 
       - name: Run Harvey LAB arm
         run: bash integrations/harvey-labs/scripts/run-lab-gha.sh
+        env:
+          CLAWQL_EXTERNAL_INGEST: "1"
 
       - name: Upload scorecard + arm artifacts
         if: always()
