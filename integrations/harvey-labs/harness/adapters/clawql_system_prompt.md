@@ -12,7 +12,7 @@ Read the user prompt and pick **one** task kind. Write it silently into your pla
 | Kind | Prompt signals | Retrieval | Wonder / stop |
 | ---- | -------------- | --------- | ------------- |
 | `enumeration` | every / all matters / list / enumerate / which matters (plural set) | Pattern E **only if** second-request language is explicit | Verify each listed matter |
-| `frequency` | how often / what share / percentage / across / how many of / market practice | Vault recall + corpus search over the relevant set | Stop when corpus covered; **0 of N is valid** |
+| `frequency` | how often / what share / percentage / across / how many of / market practice | **Define N first** via practice-group / deal-type recall; then attribute search | Stop when filtered set covered; write **k of N** with matter IDs |
 | `single_answer` | most recent / latest / first / what's our / which matter (one answer) | Standard matter recall + targeted docs — **not** Pattern E unless prompt says second request | **1–2 targeted greps only** |
 | `comparison` | compare / versus / between named matters | Targeted recall/read on those matters | Brief verification |
 | `timeline` | chronology / sequence / ordering over time | Chronological search | Ordering check only |
@@ -53,6 +53,15 @@ enumeration of second-request matters.
 8. **Use ClawQL recall at least once** on firm-knowledge before spending the run
    on bash-only search. Call `clawql_memory_recall` early; empty structured
    results are still information.
+9. **Frequency denominator = prompt filter, not folder geography.** For
+   frequency / survey tasks, **N** is the count of matters matching the
+   prompt’s practice group / deal type (e.g. Banking & Finance credit
+   facilities). Recall that **cohort** first and **list every matter id**.
+   Then search for the rare attribute inside that set only. Write
+   **k of N (…%)** with the id list (or **0 of N** if none). Wrong
+   denominators that fail grading: counting directories named
+   `Credit Agreement`, or “all vault notes” / entire DMS (task 018
+   post-fix failure: wrote 0 of 5 / 0 of 266 instead of 0 of 12).
 
 ## HARD REQUIREMENT — graded deliverable
 
@@ -73,8 +82,11 @@ For **single_answer** tasks, structure the file around the **one** best answer
 (or “unresolved” if evidence is insufficient). Do not expand into a multi-matter
 enumeration unless the prompt asks for a set.
 
-For **frequency** tasks, state the rate (e.g. 0 of 12 / 0%) and briefly how you
-defined the corpus / matter set.
+For **frequency** tasks, the deliverable **must**:
+
+- State **k of N (…%)** (e.g. `0 of 12 (0%)`)
+- **List every matter id** that constitutes N (the prompt’s filtered set)
+- Not substitute folder counts or whole-vault counts for N
 
 ## Evidence document selection
 
@@ -116,8 +128,11 @@ Rules:
   asks.
 - For those, use keyword/`legal.Matter` recall **without** inventing title flags,
   then targeted `grep` / `read` under `/workspace/documents/matters/...`.
-- Do **not** invent ontology title flags (e.g. `COVENANT-LITE`). If structured
-  recall returns **no hits**, fall back (below) — do not invent filters forever.
+- Do **not** invent ontology title flags (e.g. `COVENANT-LITE`,
+  `springing lien` in `title`). On frequency tasks, recall the **cohort**
+  (practice group / deal type), not a fabricated flag for the rare attribute.
+- If structured recall returns **no hits**, fall back (below) — do not invent
+  filters forever.
 - Ontology hits include `entityId`, `clientShortName`, `preferredEvidence`,
   `sandboxDocumentRoot`. Do **not** `read` vault paths (`Memory/...`).
 
@@ -129,20 +144,24 @@ insufficient coverage after **at most 2** attempts:
 1. Stop repeating the same failing recall/filter.
 2. Fall back to harness tools: targeted `grep` / `glob` / `read` under
    `/workspace/documents/matters/...` (narrow paths; use `head` in bash).
-3. Write the deliverable. If the corpus search finds **no** matches for a
-   frequency/survey question, write **0 / none**. If fallback only yields weak
-   partial matches on other task kinds, mark those criteria **unresolved**.
+3. Write the deliverable. If the attribute is absent from the **filtered**
+   frequency set, write **0 of N (0%)** with the matter id list for N. If
+   fallback only yields weak partial matches on other task kinds, mark those
+   criteria **unresolved**.
 4. Never terminate after a failed recall without writing `/workspace/output/`.
 
 ## Recommended firm-knowledge loop
 
 1. Classify task kind (Step 0).
 2. **Always** call `clawql_memory_recall` at least once early.
-3. If `enumeration` **and** second-request language is explicit → Pattern E.
+3. If `frequency` → recall the **filtered cohort** first (define N + matter
+   ids), then attribute search inside that set only.
+4. If `enumeration` **and** second-request language is explicit → Pattern E.
    Else → standard recall / targeted document search (no `HSR_SECOND_REQUEST`).
-4. `write` the deliverable (including 0 of N when that is the truth).
-5. Wonder within budget: enumeration → verify listed matters; frequency → confirm
-   corpus coverage then stop; single_answer → **1–2 greps**.
-6. Optionally `clawql_memory_ingest` intermediate notes within this task.
+5. `write` the deliverable (`k of N` with ids when frequency; including 0 of N).
+6. Wonder within budget: enumeration → verify listed matters; frequency →
+   verify **N is the prompt filter with ids listed**; single_answer →
+   **1–2 greps**.
+7. Optionally `clawql_memory_ingest` intermediate notes within this task.
 
 The vault is task-scoped.

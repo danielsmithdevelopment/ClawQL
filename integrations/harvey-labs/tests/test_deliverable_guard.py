@@ -90,6 +90,7 @@ class DeliverableGuardPatchTests(unittest.TestCase):
             self.assertIn("_CLAWQL_GROUNDING_WONDER_FREQUENCY", once)
             self.assertIn("_CLAWQL_CEILING_FORCE_NUDGE", once)
             self.assertIn("_CLAWQL_REQUIRE_RECALL_NUDGE", once)
+            self.assertIn("_CLAWQL_REQUIRE_RECALL_FREQUENCY", once)
             self.assertIn("_clawql_infer_task_kind", once)
             self.assertIn("grounded", once)
             self.assertIn("ceiling", once)
@@ -109,6 +110,9 @@ class DeliverableGuardPatchTests(unittest.TestCase):
             self.assertIn("CLAWQL_LAB_GROUNDING_WONDER", twice)
             self.assertIn("CLAWQL_LAB_REQUIRE_RECALL", twice)
             self.assertIn("CLAWQL_LAB_CEILING_LEAD_TURNS", twice)
+            self.assertIn("_CLAWQL_REQUIRE_RECALL_FREQUENCY", twice)
+            self.assertIn("denominator", twice)
+            self.assertIn("0 of N", twice)
 
     def test_infer_task_kind_prefers_single_answer_for_filing_prompt(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

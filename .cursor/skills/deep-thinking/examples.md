@@ -137,3 +137,13 @@ When 001 clawql job completes: log contains `ClawQL require-recall`; deliverable
 
 ### After-action — (pending 001 replacement + 018 results)
 Fill after [31764224376](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31764224376) and a later `18-18` complete.
+
+### After-action — 18-18 probe [31765565825](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31765565825)
+
+- Expected: ClawQL writes `0 of 12 (0%)` with the Banking & Finance credit-facility matter set.
+- Observed: ClawQL **did write** (23 turns, require-recall + frequency Wonder); answer was **0 of 5** (Credit Agreement folders) / **0 of 266** (vault notes). Sonnet fail: criterion wants **0 of 12**. Baseline still empty-write at ceiling.
+- Assumptions died: “writing 0 / none is enough” — **N must match the prompt filter**.
+- True root cause: **logic / corpus definition** (wrong denominator), not lifecycle and not “won’t commit to zero.”
+- Sticky takeaway: **Frequency tasks fail when N is folder geography or whole-vault; N = prompt cohort with every matter id listed.**
+- Process change: Fix 5 — cohort-first require-recall + Wonder that rejects folder/vault denominators; re-probe `18-18` before `1-25`.
+

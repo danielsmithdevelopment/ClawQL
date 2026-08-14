@@ -198,6 +198,22 @@ _CLAWQL_REQUIRE_RECALL_NUDGE = (
     "to verify, then `write` your deliverable under `/workspace/output/`."
 )
 
+_CLAWQL_REQUIRE_RECALL_FREQUENCY = (
+    "FREQUENCY task — define denominator N **before** hunting the rare "
+    "attribute.\\n\\n"
+    "1. Call `clawql_memory_recall` for the prompt's **filtered matter set** "
+    "(practice group / deal type — e.g. Banking & Finance credit facilities). "
+    "Do **not** invent a title filter for the rare attribute "
+    "(e.g. title contains 'springing lien').\\n"
+    "2. List every matter id returned — that list is **N**.\\n"
+    "3. Search for the attribute only inside those matters "
+    "(targeted grep/read).\\n"
+    "4. `write` under `/workspace/output/` as **k of N (…%)** with the matter "
+    "id list. If none match: **0 of N (0%)**.\\n\\n"
+    "Denominators that fail grading: counting folders named "
+    "'Credit Agreement', or 'all vault notes' / entire DMS."
+)
+
 _CLAWQL_GROUNDING_WONDER_ENUM = (
     "WONDER (enumeration grounding) — before you finish:\\n\\n"
     "Findings start **guilty until proven by document evidence**. "
@@ -219,16 +235,15 @@ _CLAWQL_GROUNDING_WONDER_SINGLE = (
 )
 
 _CLAWQL_GROUNDING_WONDER_FREQUENCY = (
-    "WONDER (frequency / survey grounding) — corpus coverage is the stop "
-    "condition, not verifying a positive hit list.\\n\\n"
-    "(1) Did you search the complete corpus (or the full filtered subset the "
-    "prompt defines)?\\n"
-    "(2) If you found zero matches after covering that set, **0 of N / none** "
-    "is a complete answer — do not keep hunting for positive evidence.\\n"
-    "(3) Confirm any ontology / matter flags in the prompt appear in evidence "
-    "(do not invent flags).\\n"
-    "(4) If the count or share is wrong, `write` an updated deliverable, then "
-    "stop. One Wonder pass only."
+    "WONDER (frequency / survey grounding) — **denominator first**.\\n\\n"
+    "(1) List every matter ID in your denominator **N**. N must be the "
+    "prompt's filtered set (practice group / deal type), **not** "
+    "'Credit Agreement folder count' and **not** 'all vault notes'.\\n"
+    "(2) If zero attribute hits inside that set, rewrite to "
+    "**0 of N (0%)** with the ID list — do not keep hunting positives.\\n"
+    "(3) Do not invent ontology title flags for the rare attribute.\\n"
+    "(4) If N or k is wrong, `write` an updated deliverable, then stop. "
+    "One Wonder pass only."
 )
 {HELPER_END}
 """
@@ -315,16 +330,24 @@ CEILING_BLOCK = f"""            {CEILING_BEGIN}
 
 RECALL_BLOCK = f"""            {RECALL_BEGIN}
             # Steer ClawQL arm toward memory_recall before bash-only hunting.
+            # Frequency tasks get denominator-first guidance (task 018 class).
             if (
                 os.environ.get("CLAWQL_LAB_REQUIRE_RECALL", "1") != "0"
                 and not _clawql_nudge_state.get("recall", False)
                 and turn_count == 1
             ):
                 _clawql_nudge_state["recall"] = True
-                print("ClawQL require-recall: nudging clawql_memory_recall before bash/grep")
-                messages.append(
-                    adapter.make_user_message(_CLAWQL_REQUIRE_RECALL_NUDGE)
+                _recall_kind = _clawql_infer_task_kind(messages)
+                _recall_nudge = (
+                    _CLAWQL_REQUIRE_RECALL_FREQUENCY
+                    if _recall_kind == "frequency"
+                    else _CLAWQL_REQUIRE_RECALL_NUDGE
                 )
+                print(
+                    f"ClawQL require-recall (kind={{_recall_kind}}): "
+                    "nudging clawql_memory_recall before bash/grep"
+                )
+                messages.append(adapter.make_user_message(_recall_nudge))
             {RECALL_END}
 """
 
