@@ -14,7 +14,7 @@ Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/dan
 | 18-18 #1 [31765565825](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31765565825)  | Wrote **0 of 5 / 266** — wrong N                                                                                    |
 | 18-18 #2 [31767832459](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31767832459)  | **Regression:** 40/40, ceiling fired, **no write** — cohort recall empty because ingest hard-coded `practice=Other` |
 | 18-18 #3 [31769718249](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31769718249)  | Wrote **0 of 36** — Pattern F OK; detector over-flagged (36/266 vs gold 12)                                         |
-| 18-18 #4 [31772193789](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31772193789)  | Seed **12/266** (Fix 7 OK); bulk timed out→fallback; agent **OpenRouter 429** (daily free cap). No scorecard.      |
+| 18-18 #4 [31772193789](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31772193789)  | Seed **12/266** (Fix 7 OK); bulk timed out→fallback; agent **OpenRouter 429** (daily free cap). No scorecard.       |
 
 **Root cause (layer):** Fix 5 was prompt-level; vault never had Banking & Finance / credit-facility ontology. Structured `practiceArea` filters → 0 hits; agent hunted forever. Fix 6 seeded flags but path tokens were too broad (probe #3). Fix 7 precision held on probe #4 seed log; cell failed on **quota + bulk MCP timeout**, not denominator math.
 
