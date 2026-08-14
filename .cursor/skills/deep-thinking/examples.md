@@ -126,5 +126,14 @@ When 001 clawql job completes: log contains `ClawQL require-recall`; deliverable
 - 018 still 0% with no write after fixes → do not arm 1–25; re-open Fix 1/2.
 - 018 writes but wrong non-zero → Fix 2/4 prompt issue, not ceiling.
 
-### After-action — (pending 001 + 018 results)
-Fill after those runs complete.
+### After-action — doc/skill push cancelled live 001 smoke
+
+- Expected: Path filter skips harvey-lab when only `.cursor/` + `docs/` change.
+- Observed: Push `7ce9f686` re-fired LAB; [31764087476](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31764087476) **cancelled**; [31764224376](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31764224376) restarted 001 smoke.
+- Assumptions died: path filter protects mid-smoke “unrelated” pushes on this PR.
+- True root cause: **GHA lifecycle** — `pull_request` path filters use the **full PR diff vs base**; once the PR touches `integrations/harvey-labs/**`, every synchronize re-runs LAB + `cancel-in-progress`.
+- Sticky takeaway: **On a harvey-labs PR, never push while a LAB matrix is in progress — even docs/skills.**
+- Process change: before any `git push`, `gh run list --workflow=harvey-lab-firm-knowledge.yml` must show no `in_progress` on this branch.
+
+### After-action — (pending 001 replacement + 018 results)
+Fill after [31764224376](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31764224376) and a later `18-18` complete.
