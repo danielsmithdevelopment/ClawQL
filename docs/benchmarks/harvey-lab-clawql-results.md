@@ -8,11 +8,11 @@ Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/dan
 
 ### Next-run gate (deep think)
 
-| Probe | Result |
-| --- | --- |
-| 001 smoke [31764224376](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31764224376) | ClawQL 100% — patch apply OK |
-| 18-18 #1 [31765565825](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31765565825) | Wrote **0 of 5 / 266** — wrong N |
-| 18-18 #2 [31767832459](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31767832459) | **Regression:** 40/40, ceiling fired, **no write** — cohort recall empty because ingest hard-coded `practice=Other` |
+| Probe                                                                                              | Result                                                                                                              |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 001 smoke [31764224376](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31764224376) | ClawQL 100% — patch apply OK                                                                                        |
+| 18-18 #1 [31765565825](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31765565825)  | Wrote **0 of 5 / 266** — wrong N                                                                                    |
+| 18-18 #2 [31767832459](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31767832459)  | **Regression:** 40/40, ceiling fired, **no write** — cohort recall empty because ingest hard-coded `practice=Other` |
 
 **Root cause (layer):** Fix 5 was prompt-level; vault never had Banking & Finance / credit-facility ontology. Structured `practiceArea` filters → 0 hits; agent hunted forever.
 
@@ -62,24 +62,24 @@ Do **not** tune the Nemotron prompt stack against 016/017/019/021 — those are 
 
 ## Fixes in place (all of them)
 
-| Fix                                                                      | Status |
-| ------------------------------------------------------------------------ | ------ |
-| Tool-result truncation (`CLAWQL_LAB_MAX_TOOL_RESULT_CHARS`, default 24k) | **in** |
-| Always-write deliverable guard (clean stop)                              | **in** |
-| Turn-ceiling force-write (`CLAWQL_LAB_CEILING_LEAD_TURNS`, default 3)    | **in** |
-| Negative-result principle (`0 of N` / none is complete)                  | **in** |
-| Require ≥1 `clawql_memory_recall` (`CLAWQL_LAB_REQUIRE_RECALL`)          | **in** |
-| Frequency / survey task kind + corpus-coverage Wonder                    | **in** |
-| Frequency **denominator** = prompt cohort + matter-id list (Fix 5)       | **in** |
-| Seed `CREDIT_FACILITY` / Banking & Finance in ontology (Fix 6 / Pattern F)| **in** |
-| ≤2 empty recalls → grep/read fallback                                    | **in** |
-| Empty-recall `labGuidance.fallback`                                      | **in** |
-| Pattern E **only** when prompt explicitly mentions second request        | **in** |
-| Step 0 task-kind classification (enumeration / frequency / single / …)   | **in** |
-| Kind-gated Wonder (1–2 greps on single_answer; fuller on enumeration)    | **in** |
-| Partial fallback hits = unresolved, not confirmed                        | **in** |
-| `max-parallel: 4` (was 2; daily quota binds more than concurrency)       | **in** |
-| Sweep marker supports `START-END` (e.g. `16-25`)                         | **in** |
+| Fix                                                                        | Status |
+| -------------------------------------------------------------------------- | ------ |
+| Tool-result truncation (`CLAWQL_LAB_MAX_TOOL_RESULT_CHARS`, default 24k)   | **in** |
+| Always-write deliverable guard (clean stop)                                | **in** |
+| Turn-ceiling force-write (`CLAWQL_LAB_CEILING_LEAD_TURNS`, default 3)      | **in** |
+| Negative-result principle (`0 of N` / none is complete)                    | **in** |
+| Require ≥1 `clawql_memory_recall` (`CLAWQL_LAB_REQUIRE_RECALL`)            | **in** |
+| Frequency / survey task kind + corpus-coverage Wonder                      | **in** |
+| Frequency **denominator** = prompt cohort + matter-id list (Fix 5)         | **in** |
+| Seed `CREDIT_FACILITY` / Banking & Finance in ontology (Fix 6 / Pattern F) | **in** |
+| ≤2 empty recalls → grep/read fallback                                      | **in** |
+| Empty-recall `labGuidance.fallback`                                        | **in** |
+| Pattern E **only** when prompt explicitly mentions second request          | **in** |
+| Step 0 task-kind classification (enumeration / frequency / single / …)     | **in** |
+| Kind-gated Wonder (1–2 greps on single_answer; fuller on enumeration)      | **in** |
+| Partial fallback hits = unresolved, not confirmed                          | **in** |
+| `max-parallel: 4` (was 2; daily quota binds more than concurrency)         | **in** |
+| Sweep marker supports `START-END` (e.g. `16-25`)                           | **in** |
 
 Task **018** root cause (016–025 batch): not retrieval strategy — **zero**
 `memory_recall`, 40/40 bash turns hunting positive “springing lien” evidence,
