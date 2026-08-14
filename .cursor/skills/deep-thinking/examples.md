@@ -156,3 +156,12 @@ Fill after [31764224376](https://github.com/danielsmithdevelopment/ClawQL/action
 - Sticky takeaway: **Calibrate cohort detectors offline against public gold; never hard-code gold IDs into seed.** Speed: bulk `ingest_external_knowledge` + gate Node to clawql arms; shared vault is the next slice.
 - Process change: Fix 7 execution-under-TD detector; ship bulk ingest + Node gate; **do not re-arm `18-18` until Fix 7 is in.**
 
+### After-action — 18-18 probe #4 [31772193789](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31772193789) (Fix 7)
+
+- Expected: seed 12/266; bulk ingest; deliverable `0 of 12`.
+- Observed: **`CREDIT_FACILITY flagged 12/266`** (Fix 7 held); bulk batch 1–50 **Read timed out** → fallback `memory_ingest`; agent hit OpenRouter **429** free-tier daily (`Remaining: 0`, reset **2026-08-15 00:00 UTC**); empty clawql scorecard.
+- Assumptions died: same-UTC-day quota for another Sonnet 018; 50-doc bulk finishes within 180s MCP timeout.
+- True root cause: **infra** (quota + bulk timeout), not Fix 7 precision.
+- Sticky takeaway: **Seed-log N can be green while the cell still dies on OpenRouter 429 — do not interpret job failure as detector regression.**
+- Process change: clear marker; shrink bulk batch + raise ingest timeout; re-arm only after midnight UTC (or paid credits).
+

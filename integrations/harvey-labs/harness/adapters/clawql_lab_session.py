@@ -231,7 +231,10 @@ _TOOL_NAME_TO_MCP = {
 }
 
 # ingest_external_knowledge documents[] cap (see docs/mcp/external-ingest.md).
-_BULK_INGEST_BATCH = 50
+# LAB notes are large (full-text extracts); keep batches smaller than the tool
+# max so a single tools/call finishes under the MCP HTTP timeout.
+_BULK_INGEST_BATCH = 25
+_BULK_INGEST_HTTP_TIMEOUT_S = 600
 
 
 
@@ -1030,6 +1033,7 @@ class ClawQLLabSession:
                     result = self._call_clawql_mcp(
                         "ingest_external_knowledge",
                         {"documents": batch, "dryRun": False},
+                        timeout=_BULK_INGEST_HTTP_TIMEOUT_S,
                     )
                     if isinstance(result, dict) and result.get("isError"):
                         raise RuntimeError(result)
@@ -1153,7 +1157,9 @@ class ClawQLLabSession:
         self._rpc_id += 1
         return f"lab-{self._rpc_id}-{uuid.uuid4().hex[:8]}"
 
-    def _call_clawql_mcp(self, tool_name: str, arguments: dict) -> dict:
+    def _call_clawql_mcp(
+        self, tool_name: str, arguments: dict, *, timeout: int | None = None
+    ) -> dict:
         if "mcp-protocol-version" not in self._session_headers:
             self._ensure_mcp_session()
 
@@ -1168,7 +1174,7 @@ class ClawQLLabSession:
             CLAWQL_MCP_URL,
             json=payload,
             headers=self._session_headers,
-            timeout=180,
+            timeout=timeout if timeout is not None else 180,
         )
         if resp.status_code >= 400:
             raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:1000]}")
