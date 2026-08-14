@@ -29,11 +29,24 @@ task kind inferred from the user prompt (`CLAWQL_LAB_TASK_KIND` overrides):
 | Kind                      | Wonder behavior                                                                                                       |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `enumeration`             | Verify each listed matter against cited paths                                                                         |
+| `frequency`               | Stop condition = **corpus coverage**; `0 of N` / none is complete — do not hunt forever for positive hits             |
 | `single_answer` (default) | **Budget 1–2 greps**; listing many matters is a framing error; HSR filing ≠ second request; partial hits = unresolved |
 
 Batch-2 task 008 failure mode: Pattern E second-request framing on a “most
 recent HSR **filing**” prompt, then Wonder spent ~19 turns proving the wrong
 list. Kind-gating + Pattern E scope in `clawql_system_prompt.md` address that.
+
+Task 018 failure mode (distinct): ClawQL arm used **zero** `memory_recall`,
+bash/grep-hunted “springing lien” for 40/40 turns, never wrote, never
+inferred **0 of 12**. Clean-stop deliverable guard never fired (ceiling hit);
+Wonder never ran (needs a file). Fixes in the agent-loop patch:
+
+| Fix | Env / prompt | Effect |
+| --- | ------------ | ------ |
+| Turn-ceiling force-write | `CLAWQL_LAB_CEILING_LEAD_TURNS` (default 3) | Nudge Write before max turns if `/workspace/output/` empty |
+| Negative-result principle | `clawql_system_prompt.md` | Permission to conclude `0 of N` / none |
+| Require ≥1 recall | `CLAWQL_LAB_REQUIRE_RECALL` (default on) | Initial nudge toward `clawql_memory_recall` |
+| Frequency task kind | `CLAWQL_LAB_TASK_KIND` / heuristics | Wonder asks “did I cover the corpus?” |
 
 Disable with `CLAWQL_LAB_GROUNDING_WONDER=0` if needed for ablation.
 

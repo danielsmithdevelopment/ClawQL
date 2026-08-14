@@ -184,6 +184,8 @@ def patch_run_py(run_py: Path) -> None:
         adapter.pre_task_setup()
         os.environ["CLAWQL_LAB_OUTPUT_DIR"] = str(output_dir)
         os.environ.setdefault("CLAWQL_LAB_DELIVERABLE_GUARD", "1")
+        os.environ.setdefault("CLAWQL_LAB_REQUIRE_RECALL", "1")
+        os.environ.setdefault("CLAWQL_LAB_GROUNDING_WONDER", "1")
         tool_executor = ClawQLToolExecutor(
             clawql_adapter=adapter,
             sandbox=sandbox,

@@ -9,14 +9,15 @@ for this task. Machine-readable `CLAWQL_*` fields are synced into `ontology.db`.
 Read the user prompt and pick **one** task kind. Write it silently into your plan
 (do not invent ontology flags to match a wrong kind).
 
-| Kind | Prompt signals | Retrieval | Wonder budget |
+| Kind | Prompt signals | Retrieval | Wonder / stop |
 | ---- | -------------- | --------- | ------------- |
-| `enumeration` | every / all matters / list / enumerate / which matters (plural set) | Pattern E **only if** second-request language is explicit | Full grounding of each listed matter |
+| `enumeration` | every / all matters / list / enumerate / which matters (plural set) | Pattern E **only if** second-request language is explicit | Verify each listed matter |
+| `frequency` | how often / what share / percentage / across / how many of / market practice | Vault recall + corpus search over the relevant set | Stop when corpus covered; **0 of N is valid** |
 | `single_answer` | most recent / latest / first / what's our / which matter (one answer) | Standard matter recall + targeted docs — **not** Pattern E unless prompt says second request | **1–2 targeted greps only** |
-| `comparison` | compare / versus / between named matters | Targeted recall/read on those matters | Brief verification of cited claims |
-| `timeline` | chronology / sequence / ordering over time | Chronological search on relevant matters | Ordering check only |
+| `comparison` | compare / versus / between named matters | Targeted recall/read on those matters | Brief verification |
+| `timeline` | chronology / sequence / ordering over time | Chronological search | Ordering check only |
 
-If signals conflict, prefer `single_answer` over `enumeration` (safer).
+If signals conflict: `frequency` > `enumeration` > `single_answer` when “across / how often” is present; otherwise prefer `single_answer` over `enumeration`.
 
 **HSR filing ≠ HSR second request.** “Most recent matter where we made an HSR
 **filing**” is `single_answer` about a filing (transmittal / form), **not** an
@@ -29,21 +30,29 @@ enumeration of second-request matters.
 2. **Always write a deliverable that attempts every rubric criterion** with the
    best evidence you have. Partial credit beats silence. If something could not
    be confirmed, say so in the file — do not omit the criterion entirely.
-3. **Do not invent matter IDs.** Only report matters supported by ontology hits
+3. **Negative results are complete answers.** When searching for entities matching
+   a criterion and finding **none** after covering the relevant corpus (or the
+   stated matter set), write **0 of N / none / 0%** as the deliverable. Absence
+   of hits is evidence of absence for a complete search — do **not** keep
+   bash/grep hunting forever hoping for a positive hit (task 018 failure mode).
+4. **Do not invent matter IDs.** Only report matters supported by ontology hits
    or document reads.
-4. **Never dump the whole DMS into context.** Do **not** run `ls -R`,
+5. **Never dump the whole DMS into context.** Do **not** run `ls -R`,
    `find /workspace/documents` without a tight filter, or unbounded greps over
    the entire tree. Prefer targeted `glob` / `grep` with a matter path or a
    specific filename pattern. Oversized tool output is truncated, but you still
    waste turns.
-5. **Guilty until proven (deliverable grounding).** Distinctive legal terms and
+6. **Guilty until proven (deliverable grounding).** Distinctive legal terms and
    matter claims start **untrusted**. Verify against cited source text — but
    respect the Wonder budget for the task kind (above). Do not invent plausible
    firm language or ontology flags (batch-1 failure: fabricated `COVENANT-LITE`).
-6. **Partial hits after fallback are unresolved, not confirmed.** If grep/read
+7. **Partial hits after fallback are unresolved, not confirmed.** If grep/read
    after empty recall only finds weak/partial matches, mark criteria unresolved
    in the deliverable. Do not Wonder-verify a partial match into a confident
    wrong answer.
+8. **Use ClawQL recall at least once** on firm-knowledge before spending the run
+   on bash-only search. Call `clawql_memory_recall` early; empty structured
+   results are still information.
 
 ## HARD REQUIREMENT — graded deliverable
 
@@ -63,6 +72,9 @@ matter include:
 For **single_answer** tasks, structure the file around the **one** best answer
 (or “unresolved” if evidence is insufficient). Do not expand into a multi-matter
 enumeration unless the prompt asks for a set.
+
+For **frequency** tasks, state the rate (e.g. 0 of 12 / 0%) and briefly how you
+defined the corpus / matter set.
 
 ## Evidence document selection
 
@@ -100,7 +112,8 @@ Rules:
 - Always pass both `schema: "legal.Matter"` and a non-empty `filters` object when
   using Pattern E.
 - **Do not** use Pattern E for generic “HSR filing”, “most recent antitrust
-  matter”, covenant-lite, MFN, escrow, or other non–second-request asks.
+  matter”, covenant-lite, MFN, escrow, springing lien, or other non–second-request
+  asks.
 - For those, use keyword/`legal.Matter` recall **without** inventing title flags,
   then targeted `grep` / `read` under `/workspace/documents/matters/...`.
 - Do **not** invent ontology title flags (e.g. `COVENANT-LITE`). If structured
@@ -116,20 +129,20 @@ insufficient coverage after **at most 2** attempts:
 1. Stop repeating the same failing recall/filter.
 2. Fall back to harness tools: targeted `grep` / `glob` / `read` under
    `/workspace/documents/matters/...` (narrow paths; use `head` in bash).
-3. Write the deliverable. If fallback only yields **partial** matches, mark those
-   criteria **unresolved** — do not treat partial hits as confirmed and do not
-   spend a long Wonder loop proving them.
+3. Write the deliverable. If the corpus search finds **no** matches for a
+   frequency/survey question, write **0 / none**. If fallback only yields weak
+   partial matches on other task kinds, mark those criteria **unresolved**.
 4. Never terminate after a failed recall without writing `/workspace/output/`.
 
 ## Recommended firm-knowledge loop
 
 1. Classify task kind (Step 0).
-2. If `enumeration` **and** second-request language is explicit → Pattern E.
+2. **Always** call `clawql_memory_recall` at least once early.
+3. If `enumeration` **and** second-request language is explicit → Pattern E.
    Else → standard recall / targeted document search (no `HSR_SECOND_REQUEST`).
-3. `write` the deliverable (single answer vs set — match the kind).
-4. Wonder within budget: enumeration → verify listed matters; single_answer →
-   **1–2 greps** on the cited path for the one claim (or rewrite if you listed
-   many matters on a single-answer task — that is a framing error).
-5. Optionally `clawql_memory_ingest` intermediate notes within this task.
+4. `write` the deliverable (including 0 of N when that is the truth).
+5. Wonder within budget: enumeration → verify listed matters; frequency → confirm
+   corpus coverage then stop; single_answer → **1–2 greps**.
+6. Optionally `clawql_memory_ingest` intermediate notes within this task.
 
 The vault is task-scoped.

@@ -12,8 +12,10 @@ INTEGRATION = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(INTEGRATION / "harness"))
 
 from clawql_agent_loop import (  # noqa: E402
+    CEILING_BEGIN,
     FINISH_BEGIN,
     HELPER_BEGIN,
+    RECALL_BEGIN,
     TRUNC_BEGIN,
     patch_agent_loop_deliverable_guard,
 )
@@ -61,6 +63,14 @@ def run_agent(
 '''
 
 
+def _exec_helpers(patched_text: str) -> dict:
+    begin = patched_text.index("def _clawql_output_has_files")
+    end = patched_text.index("def run_agent")
+    ns: dict = {"__name__": "clawql_helpers"}
+    exec(patched_text[begin:end], ns)
+    return ns
+
+
 class DeliverableGuardPatchTests(unittest.TestCase):
     def test_patch_is_idempotent(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -71,12 +81,19 @@ class DeliverableGuardPatchTests(unittest.TestCase):
             self.assertIn(HELPER_BEGIN, once)
             self.assertIn(FINISH_BEGIN, once)
             self.assertIn(TRUNC_BEGIN, once)
+            self.assertIn(CEILING_BEGIN, once)
+            self.assertIn(RECALL_BEGIN, once)
             self.assertIn("_clawql_output_has_files", once)
             self.assertIn("_clawql_truncate_tool_result", once)
             self.assertIn("_CLAWQL_GROUNDING_WONDER_SINGLE", once)
             self.assertIn("_CLAWQL_GROUNDING_WONDER_ENUM", once)
+            self.assertIn("_CLAWQL_GROUNDING_WONDER_FREQUENCY", once)
+            self.assertIn("_CLAWQL_CEILING_FORCE_NUDGE", once)
+            self.assertIn("_CLAWQL_REQUIRE_RECALL_NUDGE", once)
             self.assertIn("_clawql_infer_task_kind", once)
             self.assertIn("grounded", once)
+            self.assertIn("ceiling", once)
+            self.assertIn("recall", once)
             self.assertIn("import os", once)
             patch_agent_loop_deliverable_guard(path)
             twice = path.read_text(encoding="utf-8")
@@ -84,20 +101,21 @@ class DeliverableGuardPatchTests(unittest.TestCase):
             self.assertEqual(twice.count(HELPER_BEGIN), 1)
             self.assertEqual(twice.count(FINISH_BEGIN), 1)
             self.assertEqual(twice.count(TRUNC_BEGIN), 1)
+            self.assertEqual(twice.count(CEILING_BEGIN), 1)
+            self.assertEqual(twice.count(RECALL_BEGIN), 1)
             self.assertEqual(twice.count("def _clawql_truncate_tool_result"), 1)
             self.assertEqual(twice.count("_CLAWQL_GROUNDING_WONDER_SINGLE ="), 1)
+            self.assertEqual(twice.count("_CLAWQL_GROUNDING_WONDER_FREQUENCY ="), 1)
             self.assertIn("CLAWQL_LAB_GROUNDING_WONDER", twice)
+            self.assertIn("CLAWQL_LAB_REQUIRE_RECALL", twice)
+            self.assertIn("CLAWQL_LAB_CEILING_LEAD_TURNS", twice)
 
     def test_infer_task_kind_prefers_single_answer_for_filing_prompt(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "agent_loop.py"
             path.write_text(STOCK_LOOP, encoding="utf-8")
             patch_agent_loop_deliverable_guard(path)
-            text = path.read_text(encoding="utf-8")
-            begin = text.index("def _clawql_output_has_files")
-            end = text.index("def run_agent")
-            ns: dict = {"__name__": "clawql_helpers"}
-            exec(text[begin:end], ns)
+            ns = _exec_helpers(path.read_text(encoding="utf-8"))
             filing = [
                 {
                     "role": "user",
@@ -116,6 +134,28 @@ class DeliverableGuardPatchTests(unittest.TestCase):
             ]
             self.assertEqual(ns["_clawql_infer_task_kind"](enum), "enumeration")
 
+    def test_infer_task_kind_frequency_for_springing_lien_style_prompt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "agent_loop.py"
+            path.write_text(STOCK_LOOP, encoding="utf-8")
+            patch_agent_loop_deliverable_guard(path)
+            ns = _exec_helpers(path.read_text(encoding="utf-8"))
+            freq = [
+                {
+                    "role": "user",
+                    "content": (
+                        "Across our Banking & Finance credit facilities, how often "
+                        "do springing liens appear? What share of matters include one?"
+                    ),
+                }
+            ]
+            self.assertEqual(ns["_clawql_infer_task_kind"](freq), "frequency")
+            os.environ["CLAWQL_LAB_TASK_KIND"] = "frequency"
+            try:
+                self.assertEqual(ns["_clawql_infer_task_kind"]([]), "frequency")
+            finally:
+                os.environ.pop("CLAWQL_LAB_TASK_KIND", None)
+
     def test_truncate_helper_caps_ls_r_dump(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "agent_loop.py"
@@ -123,11 +163,7 @@ class DeliverableGuardPatchTests(unittest.TestCase):
             patch_agent_loop_deliverable_guard(path)
             text = path.read_text(encoding="utf-8")
             self.assertIn("def _clawql_truncate_tool_result", text)
-            # Extract helpers only (avoid importing harvey-labs harness package).
-            begin = text.index("def _clawql_output_has_files")
-            end = text.index("def run_agent")
-            ns: dict = {"__name__": "clawql_helpers"}
-            exec(text[begin:end], ns)
+            ns = _exec_helpers(text)
             os.environ["CLAWQL_LAB_MAX_TOOL_RESULT_CHARS"] = "4000"
             huge = "matter-id\n" * 50000
             out = ns["_clawql_truncate_tool_result"]("bash", huge)
