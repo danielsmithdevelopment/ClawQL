@@ -15,6 +15,7 @@ sys.path.insert(0, str(INTEGRATION / "harness" / "adapters"))
 from clawql_lab_session import (  # noqa: E402
     _clawql_field_block,
     _enrich_lab_memory_recall,
+    detect_credit_facility,
     detect_hsr_second_request,
 )
 
@@ -88,6 +89,32 @@ class HsrSecondRequestDetectionTests(unittest.TestCase):
         )
         self.assertIn("CLAWQL_MATTER_ID=1003-00001", block)
         self.assertIn("HSR_SECOND_REQUEST", block)
+
+    def test_credit_agreement_docx_flags_credit_facility(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            matter = Path(tmp) / "1005-00001"
+            _write_docx(
+                matter / "documents" / "credit-agreement-execution-version.docx",
+                "Senior secured revolving credit facility.",
+            )
+            det = detect_credit_facility(matter)
+            self.assertTrue(det["is_credit_facility"])
+            self.assertEqual(det["practice_area"], "Banking & Finance")
+            self.assertEqual(det["matter_type"], "Credit Facility")
+            self.assertTrue(
+                any("credit-agreement" in e for e in det["evidence_files"])
+            )
+
+    def test_unrelated_matter_is_not_credit_facility(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            matter = Path(tmp) / "1001-00001"
+            _write_docx(
+                matter / "Engagement" / "engagement-letter.docx",
+                "Antitrust counseling engagement.",
+            )
+            det = detect_credit_facility(matter)
+            self.assertFalse(det["is_credit_facility"])
+            self.assertEqual(det["practice_area"], "Other")
 
     def test_enrich_recall_adds_sandbox_roots_and_guidance(self) -> None:
         raw = {

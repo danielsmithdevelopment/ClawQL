@@ -4,16 +4,19 @@ Date: 2026-08-14
 Models: Nemotron 3.5 Lightning ± ClawQL  
 Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479) (**20% ClawQL all-pass**)  
 Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774) (**0% ClawQL all-pass**; mean CPR ~9%)  
-**Next:** ~~001 smoke~~ → ~~`18-18` first probe~~ → **Fix 5 (denominator) + re-probe `18-18`** → canonical `1-25` only if 018 all-pass
+**Next:** Fix 6 (seed `CREDIT_FACILITY`) + re-probe `18-18` → canonical `1-25` only if all-pass
 
-### Next-run gate (deep think — do not skip)
+### Next-run gate (deep think)
 
-1. ~~Let **001 smoke** finish~~ **done** — [31764224376](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31764224376): ClawQL **100%** / 7 turns; `require-recall` + Wonder; deliverable written.
-2. ~~**`18-18` Sonnet probe**~~ **done** — [31765565825](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31765565825): ClawQL **wrote** (23 turns, graded fail) but said **0 of 5 / 0 of 266** instead of **0 of 12** with the rubric’s matter set. Baseline still empty-write / ceiling. Fixes 1–3 worked; failure is **denominator definition**.
-3. **Fix 5 shipped:** frequency cohort-first recall + list matter ids as N; Wonder rejects folder/vault denominators. **Re-arm `18-18`**.
-4. Canonical **`1-25`** only if 018 all-pass **and** quota healthy.
+| Probe | Result |
+| --- | --- |
+| 001 smoke [31764224376](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31764224376) | ClawQL 100% — patch apply OK |
+| 18-18 #1 [31765565825](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31765565825) | Wrote **0 of 5 / 266** — wrong N |
+| 18-18 #2 [31767832459](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31767832459) | **Regression:** 40/40, ceiling fired, **no write** — cohort recall empty because ingest hard-coded `practice=Other` |
 
-Sticky: on this PR, any push re-fires LAB and cancels live jobs — do not push mid-run.
+**Root cause (layer):** Fix 5 was prompt-level; vault never had Banking & Finance / credit-facility ontology. Structured `practiceArea` filters → 0 hits; agent hunted forever.
+
+**Fix 6:** DMS path seeding → `CREDIT_FACILITY` title flag + `CLAWQL_PRACTICE_AREA=Banking & Finance`; Pattern F; ceiling re-nudge every remaining turn.
 
 ## Batch 2 final ledger (001–015)
 
@@ -68,6 +71,7 @@ Do **not** tune the Nemotron prompt stack against 016/017/019/021 — those are 
 | Require ≥1 `clawql_memory_recall` (`CLAWQL_LAB_REQUIRE_RECALL`)          | **in** |
 | Frequency / survey task kind + corpus-coverage Wonder                    | **in** |
 | Frequency **denominator** = prompt cohort + matter-id list (Fix 5)       | **in** |
+| Seed `CREDIT_FACILITY` / Banking & Finance in ontology (Fix 6 / Pattern F)| **in** |
 | ≤2 empty recalls → grep/read fallback                                    | **in** |
 | Empty-recall `labGuidance.fallback`                                      | **in** |
 | Pattern E **only** when prompt explicitly mentions second request        | **in** |

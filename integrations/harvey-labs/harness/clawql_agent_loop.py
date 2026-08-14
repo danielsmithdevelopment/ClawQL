@@ -181,13 +181,12 @@ _CLAWQL_DELIVERABLE_NUDGE = (
 )
 
 _CLAWQL_CEILING_FORCE_NUDGE = (
-    "TURN CEILING — write your deliverable NOW.\\n\\n"
+    "TURN CEILING — your ONLY allowed next action is `write`.\\n\\n"
     "You are approaching the turn limit and `/workspace/output/` still has "
-    "no files. Write your best answer with whatever you have found, including "
-    "if the answer is zero or none. An empty deliverable scores 0%. A correct "
-    "'none found' / '0 of N' answer scores full marks.\\n\\n"
-    "Use the `write` tool under `/workspace/output/` immediately. Do not keep "
-    "searching for positive hits after you have covered the relevant corpus."
+    "no files. STOP all bash/grep/recall. Write your best answer NOW, "
+    "including if the answer is zero or none. An empty deliverable scores 0%. "
+    "A correct '0 of N' with matter ids scores full marks.\\n\\n"
+    "Call the `write` tool under `/workspace/output/` immediately — no other tools."
 )
 
 _CLAWQL_REQUIRE_RECALL_NUDGE = (
@@ -201,17 +200,17 @@ _CLAWQL_REQUIRE_RECALL_NUDGE = (
 _CLAWQL_REQUIRE_RECALL_FREQUENCY = (
     "FREQUENCY task — define denominator N **before** hunting the rare "
     "attribute.\\n\\n"
-    "1. Call `clawql_memory_recall` for the prompt's **filtered matter set** "
-    "(practice group / deal type — e.g. Banking & Finance credit facilities). "
-    "Do **not** invent a title filter for the rare attribute "
-    "(e.g. title contains 'springing lien').\\n"
-    "2. List every matter id returned — that list is **N**.\\n"
-    "3. Search for the attribute only inside those matters "
-    "(targeted grep/read).\\n"
-    "4. `write` under `/workspace/output/` as **k of N (…%)** with the matter "
-    "id list. If none match: **0 of N (0%)**.\\n\\n"
-    "Denominators that fail grading: counting folders named "
-    "'Credit Agreement', or 'all vault notes' / entire DMS."
+    "1. Call `clawql_memory_recall` with schema `legal.Matter` and filter "
+    "`title` contains `CREDIT_FACILITY` (or `practiceArea` contains "
+    "`Banking & Finance`). That hit list is **N** — list every matter id.\\n"
+    "2. Do **not** invent title filters for the rare attribute "
+    "(e.g. 'springing lien').\\n"
+    "3. Search for the attribute only inside those matters.\\n"
+    "4. `write` **k of N (…%)** with the matter id list (or **0 of N**).\\n"
+    "5. If cohort recall is empty twice, fall back to path signals "
+    "(`credit-agreement*.docx`), list those ids as N, **write immediately** "
+    "— do not bash until the turn ceiling.\\n\\n"
+    "Wrong N: 'Credit Agreement' folder count alone, or all vault notes."
 )
 
 _CLAWQL_GROUNDING_WONDER_ENUM = (
@@ -307,13 +306,13 @@ TRUNC_BLOCK = f"""                {TRUNC_BEGIN}
 
 CEILING_BLOCK = f"""            {CEILING_BEGIN}
             # Force-write before turn ceiling when still no deliverable (task 018).
+            # Re-inject every remaining turn — Nemotron often ignores a one-shot nudge.
             _clawql_ceiling_on = (
                 os.environ.get("CLAWQL_LAB_DELIVERABLE_GUARD", "1") != "0"
                 and bool(os.environ.get("CLAWQL_LAB_OUTPUT_DIR", "").strip())
             )
             if (
                 _clawql_ceiling_on
-                and not _clawql_nudge_state.get("ceiling", False)
                 and turn_count >= max(1, max_turns - _clawql_ceiling_lead_turns())
                 and not _clawql_output_has_files()
             ):

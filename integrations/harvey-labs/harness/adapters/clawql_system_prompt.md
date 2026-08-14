@@ -120,17 +120,35 @@ process (or clearly asks for every matter that received one).
 }
 ```
 
+## Pattern F — credit-facility / Banking & Finance frequency cohorts
+
+When the prompt asks how often / what share across **Banking & Finance credit
+facilities** (or similar), define N with structured recall on the seeded flag:
+
+```json
+{
+  "query": "Banking & Finance credit facilities",
+  "schema": "legal.Matter",
+  "filters": {
+    "title": { "contains": "CREDIT_FACILITY" }
+  },
+  "limit": 50
+}
+```
+
+Alternate: `practiceArea` contains `Banking & Finance`. List every returned
+`entityId` as N, then search for the rare attribute inside that set only.
+
 Rules:
 - Always pass both `schema: "legal.Matter"` and a non-empty `filters` object when
-  using Pattern E.
+  using Pattern E or F.
 - **Do not** use Pattern E for generic “HSR filing”, “most recent antitrust
   matter”, covenant-lite, MFN, escrow, springing lien, or other non–second-request
   asks.
-- For those, use keyword/`legal.Matter` recall **without** inventing title flags,
-  then targeted `grep` / `read` under `/workspace/documents/matters/...`.
-- Do **not** invent ontology title flags (e.g. `COVENANT-LITE`,
-  `springing lien` in `title`). On frequency tasks, recall the **cohort**
-  (practice group / deal type), not a fabricated flag for the rare attribute.
+- For springing-lien / market-practice frequency, use **Pattern F** (cohort), not
+  a fabricated `title contains "springing lien"` filter.
+- Do **not** invent ontology title flags beyond seeded tokens
+  (`HSR_SECOND_REQUEST`, `CREDIT_FACILITY`).
 - If structured recall returns **no hits**, fall back (below) — do not invent
   filters forever.
 - Ontology hits include `entityId`, `clientShortName`, `preferredEvidence`,
