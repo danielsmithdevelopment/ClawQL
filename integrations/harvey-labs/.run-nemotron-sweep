@@ -11,10 +11,11 @@
 #   N         → tasks 001..00N
 #   START-END → tasks START..END (e.g. 18-18 for task-018 negative-result probe)
 #
-# Gate: 001 smoke [31764224376] passed ClawQL all-pass + require-recall.
-# Probe [31765565825]: ClawQL wrote (Fixes 1–3 worked) but failed Sonnet —
-# wrong denominator (0 of 5 / 0 of 266 vs required 0 of 12). Fix 5 =
-# frequency cohort-first / list matter ids. Re-arm 18-18 only.
+# Probe [31765565825]: wrote wrong denominator (0 of 5 / 266 vs 0 of 12).
+# Re-probe [31767832459]: Fix 5 regress — cohort recall empty because vault
+# hard-coded practice=Other; agent hunted 40 turns, ceiling nudge ignored, no write.
+# Fix 6: seed CREDIT_FACILITY + Banking & Finance from DMS path signals;
+# Pattern F; ceiling re-nudge every remaining turn. Re-arm 18-18 only.
 #
 # WARNING: concurrency cancel-in-progress is on — do not push while this runs.
 #

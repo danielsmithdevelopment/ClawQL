@@ -435,6 +435,45 @@ def detect_hsr_second_request(matter_dir: Path) -> dict[str, Any]:
     }
 
 
+def detect_credit_facility(matter_dir: Path) -> dict[str, Any]:
+    """High-precision credit-facility / Banking & Finance deal signals from DMS paths.
+
+    Seeds ``CLAWQL_PRACTICE_AREA=Banking & Finance`` and title flag
+    ``CREDIT_FACILITY`` so frequency tasks can define denominator N via
+    ontology recall (task 018). Hard-coding practice=Other made cohort-first
+    prompts unsatisfiable.
+    """
+    evidence: list[str] = []
+    for p in matter_dir.rglob("*"):
+        rel = str(p.relative_to(matter_dir))
+        name_l = p.name.lower()
+        hit = False
+        if p.is_dir() and name_l in {"credit agreement", "credit-agreement"}:
+            hit = True
+        elif p.is_file():
+            if "credit-agreement" in name_l or "credit_agreement" in name_l:
+                hit = True
+            elif name_l.startswith("credit agreement"):
+                hit = True
+            elif "credit-facility" in name_l or "credit_facility" in name_l:
+                hit = True
+        if hit:
+            evidence.append(rel)
+    seen: set[str] = set()
+    uniq: list[str] = []
+    for e in evidence:
+        if e in seen:
+            continue
+        seen.add(e)
+        uniq.append(e)
+    return {
+        "is_credit_facility": bool(uniq),
+        "evidence_files": uniq[:16],
+        "practice_area": "Banking & Finance" if uniq else "Other",
+        "matter_type": "Credit Facility" if uniq else "Other",
+    }
+
+
 def _clawql_field_block(
     matter_id: str,
     *,
@@ -751,20 +790,32 @@ class ClawQLLabSession:
         )
         full_text_set = set(full_text_dirs)
         hsr_count = 0
+        credit_count = 0
         for matter_dir in all_matter_dirs:
             matter_id = matter_dir.name
             detection = detect_hsr_second_request(matter_dir)
+            credit = detect_credit_facility(matter_dir)
             if detection["received"]:
                 hsr_count += 1
+            if credit["is_credit_facility"]:
+                credit_count += 1
             client = detection.get("client_hint") or _client_hint(matter_dir)
             title_parts = [matter_id, client]
             if detection["received"]:
                 title_parts.append("HSR_SECOND_REQUEST")
+            if credit["is_credit_facility"]:
+                title_parts.append("CREDIT_FACILITY")
             title = " — ".join(title_parts)
-            practice = "Other"
-            matter_type = "Advisory" if detection["received"] else "Other"
+            practice = credit["practice_area"]
+            if detection["received"] and practice == "Other":
+                practice = "Antitrust"
+            matter_type = credit["matter_type"]
+            if detection["received"] and matter_type == "Other":
+                matter_type = "Advisory"
             extract_full = (
-                matter_dir in full_text_set or bool(detection["received"])
+                matter_dir in full_text_set
+                or bool(detection["received"])
+                or bool(credit["is_credit_facility"])
             )
 
             sections: list[str] = [
@@ -780,11 +831,14 @@ class ClawQLLabSession:
                 f"Matter path: matters/{matter_id}",
                 f"Client short name: {client}",
                 f"HSR second request received: {detection['received']}",
+                f"Credit facility (Banking & Finance signal): {credit['is_credit_facility']}",
                 "",
                 "IMPORTANT for deliverable packaging:",
                 "- Use the Client short name exactly (e.g. Cascade Retail, not Cascade).",
                 "- Cite a Preferred Second Request evidence document below — "
                 "do NOT cite engagement letters as Second Request evidence.",
+                "- For frequency/credit-facility surveys: filter ontology title "
+                "CREDIT_FACILITY (or practiceArea Banking & Finance) to define N.",
             ]
             preferred = detection.get("preferred_evidence") or []
             if preferred:
@@ -792,6 +846,11 @@ class ClawQLLabSession:
                 sections.append("## Preferred Second Request evidence (cite one)")
                 for ev in preferred:
                     sections.append(f"- `{ev}`")
+            if credit.get("evidence_files"):
+                sections.append("")
+                sections.append("## Credit facility evidence paths")
+                for ev in credit["evidence_files"]:
+                    sections.append(f"- `matters/{matter_id}/{ev}`")
             if detection["evidence_files"]:
                 sections.append("")
                 sections.append("## Detection evidence paths")
@@ -829,6 +888,20 @@ class ClawQLLabSession:
             )
             if detection["received"]:
                 insights += " | ontology flag HSR_SECOND_REQUEST"
+            if credit["is_credit_facility"]:
+                insights += (
+                    " | ontology flag CREDIT_FACILITY"
+                    " | practice=Banking & Finance"
+                )
+            wiki = [
+                f"LAB:{self.task_id}",
+                f"Matter:{matter_id}",
+                "HarveyLAB",
+            ]
+            if detection["received"]:
+                wiki.append("HSR_SECOND_REQUEST")
+            if credit["is_credit_facility"]:
+                wiki.append("CREDIT_FACILITY")
             self._call_clawql_mcp(
                 "memory_ingest",
                 {
@@ -836,23 +909,15 @@ class ClawQLLabSession:
                     "type": "entity",
                     "insights": insights,
                     "toolOutputs": content,
-                    "wikilinks": [
-                        f"LAB:{self.task_id}",
-                        f"Matter:{matter_id}",
-                        "HarveyLAB",
-                        *(
-                            ["HSR_SECOND_REQUEST"]
-                            if detection["received"]
-                            else []
-                        ),
-                    ],
+                    "wikilinks": wiki,
                     "sessionId": f"harvey-lab:{self.task_id}",
                     "append": True,
                 },
             )
         print(
             f"ClawQL pre-ingest: ontology HSR_SECOND_REQUEST flagged "
-            f"{hsr_count}/{len(all_matter_dirs)} matters"
+            f"{hsr_count}/{len(all_matter_dirs)} matters; "
+            f"CREDIT_FACILITY flagged {credit_count}/{len(all_matter_dirs)} matters"
         )
 
     def _ingest_flat_documents(self, docs_dir: Path) -> None:
