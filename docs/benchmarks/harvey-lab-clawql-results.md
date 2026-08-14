@@ -1,9 +1,9 @@
 # Harvey LAB × ClawQL Results — firm-knowledge
 
-Date: 2026-08-13  
+Date: 2026-08-14  
 Models: Nemotron 3.5 Lightning ± ClawQL  
-Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479)  
-Next: tasks **016–025** (new signal) with Pattern E scope + kind-gated Wonder
+Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479) (**20% ClawQL all-pass**)  
+**Now running:** tasks **016–025** (new signal, post rate-limit reset) with full fix stack · `max-parallel: 4`
 
 ## Batch 2 final ledger (001–015)
 
