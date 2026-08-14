@@ -3,7 +3,8 @@
 Date: 2026-08-14  
 Models: Nemotron 3.5 Lightning ± ClawQL  
 Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479) (**20% ClawQL all-pass**)  
-**Now running:** tasks **016–025** (new signal, post rate-limit reset) with full fix stack · `max-parallel: 4`
+Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774) (**0% ClawQL all-pass**; mean CPR ~9%)  
+**Next:** land task-018 control-flow fixes → optional 018 smoke → **clean canonical 001–025**
 
 ## Batch 2 final ledger (001–015)
 
@@ -26,6 +27,26 @@ Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/dan
 | 015  | 0%     | 0%       | both fail                            |
 
 **ClawQL all-pass: 3/15 (20%).** Baseline all-pass: 0/15.
+
+## Batch 3 ledger (016–025) — [31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774)
+
+| Task | ClawQL CPR | Baseline CPR | Notes |
+| ---- | ---------- | ------------ | ----- |
+| 016  | 0% (0/14)  | 0% (0/14)    | model ceiling; both hit turn cap |
+| 017  | 8% (1/12)  | 8% (1/12)    | model ceiling |
+| 018  | 0% (0/1)   | 0% (0/1)     | **negative-result miss** — ClawQL 40/40, 0 recalls, no write |
+| 019  | 8% (1/12)  | 8% (1/12)    | model ceiling |
+| 020  | 0% (0/3)   | 0% (0/3)     | both fail |
+| 021  | 4% (1/24)  | 4% (1/24)    | 24-criteria ceiling |
+| 022  | **46%** (6/13) | 8% (1/13) | ClawQL CPR win (not all-pass); high tokens |
+| 023  | 0% (0/4)   | 25% (1/4)    | baseline CPR win |
+| 024  | 0% (0/9)   | 11% (1/9)    | baseline CPR win |
+| 025  | 20% (1/5)  | 20% (1/5)    | tie |
+
+**ClawQL all-pass: 0/10.** Baseline all-pass: 0/10.  
+Combined 001–025 all-pass (this slice + batch 2): **ClawQL 3/25 (12%)** until canonical re-run with 018 fixes.
+
+Do **not** tune the Nemotron prompt stack against 016/017/019/021 — those are Opus-class criterion ceilings.
 
 ## Fixes in place (all of them)
 
@@ -55,10 +76,11 @@ ClawQL; frequency kind tunes Wonder.
 
 ## Plan
 
-1. **016–025** first — new signal with fixed adapter (no re-run of 001–015 yet)
-2. If rates hold → **clean canonical 001–025** sweep for the Nemotron ledger entry
-3. Then Opus; Harvey outreach with public run IDs
+1. ~~**016–025** first — new signal~~ **done** ([31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774))
+2. Land task-018 fixes (ceiling force-write, negative-result principle, require-recall, frequency kind)
+3. Optional **018 smoke** on ClawQL arm → then **clean canonical 001–025** for the Nemotron ledger
+4. Then Opus; Harvey outreach with public run IDs
 
 ## Notes
 
-Do not push overlay mid-sweep (`cancel-in-progress`).
+Do not push overlay mid-sweep (`cancel-in-progress`). Marker cleared after batch 3 so the next push does not re-arm 016–025.
