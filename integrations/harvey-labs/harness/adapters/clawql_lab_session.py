@@ -224,10 +224,15 @@ CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
 _TOOL_NAME_TO_MCP = {
     "clawql_memory_recall": "memory_recall",
     "clawql_memory_ingest": "memory_ingest",
+    "clawql_ingest_external_knowledge": "ingest_external_knowledge",
     "clawql_search": "search",
     "clawql_execute": "execute",
     "clawql_audit": "audit",
 }
+
+# ingest_external_knowledge documents[] cap (see docs/mcp/external-ingest.md).
+_BULK_INGEST_BATCH = 50
+
 
 
 def _docx_to_text(path: Path, max_chars: int = MAX_EXTRACT_CHARS) -> str:
@@ -435,30 +440,109 @@ def detect_hsr_second_request(matter_dir: Path) -> dict[str, Any]:
     }
 
 
+def _is_signed_facility_docx_name(name_l: str) -> bool:
+    """True for execution credit/loan agreement filenames (not memos/DIP/etc.)."""
+    if any(
+        tok in name_l
+        for tok in (
+            "dip",
+            "construction",
+            "building-loan",
+            "project-loan",
+            "mortgage",
+            "liquidity",
+            "memo",
+            "analysis",
+            "letter",
+            "issues",
+        )
+    ):
+        return False
+    if "execution" not in name_l:
+        return False
+    return (
+        "credit-agreement" in name_l
+        or "credit_agreement" in name_l
+        or name_l.startswith("credit agreement")
+        or "bridge-loan-agreement" in name_l
+        or "bridge_loan_agreement" in name_l
+        or "term-loan-agreement" in name_l
+        or "term_loan_agreement" in name_l
+        or "mezzanine-credit-agreement" in name_l
+        or (
+            "loan-agreement" in name_l
+            and "intercreditor" not in name_l
+            and "mezzanine-loan" not in name_l
+            and "senior-mortgage" not in name_l
+        )
+    )
+
+
 def detect_credit_facility(matter_dir: Path) -> dict[str, Any]:
-    """High-precision credit-facility / Banking & Finance deal signals from DMS paths.
+    """High-precision signed credit-facility signals from DMS paths.
 
     Seeds ``CLAWQL_PRACTICE_AREA=Banking & Finance`` and title flag
     ``CREDIT_FACILITY`` so frequency tasks can define denominator N via
-    ontology recall (task 018). Hard-coding practice=Other made cohort-first
-    prompts unsatisfiable.
+    ontology recall (task 018).
+
+    Calibrated offline against task-018 public gold set (N=12): prefer
+    execution credit / bridge / term / mezzanine loan agreements under
+    ``Transaction Documents/`` or ``documents/``, or a non-DIP
+    ``Credit Agreement`` folder that contains an execution .docx. Exclude
+    ``Financing/`` drafts, diligence memos, and DIP/construction loans.
+    Do **not** hard-code gold matter IDs into seeding.
     """
     evidence: list[str] = []
+
     for p in matter_dir.rglob("*"):
-        rel = str(p.relative_to(matter_dir))
+        if not p.is_dir():
+            continue
         name_l = p.name.lower()
-        hit = False
-        if p.is_dir() and name_l in {"credit agreement", "credit-agreement"}:
-            hit = True
-        elif p.is_file():
-            if "credit-agreement" in name_l or "credit_agreement" in name_l:
-                hit = True
-            elif name_l.startswith("credit agreement"):
-                hit = True
-            elif "credit-facility" in name_l or "credit_facility" in name_l:
-                hit = True
-        if hit:
+        if name_l not in {"credit agreement", "credit-agreement"}:
+            continue
+        rel = str(p.relative_to(matter_dir))
+        rel_l = rel.lower()
+        if "dip" in rel_l:
+            continue
+        execs = [
+            c
+            for c in p.rglob("*")
+            if c.is_file()
+            and c.suffix.lower() == ".docx"
+            and "execution" in c.name.lower()
+        ]
+        if execs:
             evidence.append(rel)
+            evidence.extend(str(e.relative_to(matter_dir)) for e in execs[:3])
+
+    for p in matter_dir.rglob("*"):
+        if not p.is_file() or p.suffix.lower() != ".docx":
+            continue
+        rel = str(p.relative_to(matter_dir))
+        rel_l = rel.lower()
+        name_l = p.name.lower()
+        if rel_l.startswith("financing/"):
+            continue
+        if "dip" in name_l or "dip " in rel_l or "/dip" in rel_l:
+            continue
+        under_primary = (
+            rel_l.startswith("transaction documents/")
+            or rel_l.startswith("documents/")
+            or "/credit agreement/" in rel_l
+            or "/credit-agreement/" in rel_l
+        )
+        if not under_primary:
+            continue
+        if _is_signed_facility_docx_name(name_l):
+            evidence.append(rel)
+            continue
+        # Fairwater-style signed book entry: loan agreement under TD without
+        # an "execution" token in the filename.
+        if name_l in {"draft-loan-agreement.docx", "loan-agreement.docx"} and (
+            rel_l.startswith("transaction documents/")
+        ):
+            evidence.append(rel)
+
     seen: set[str] = set()
     uniq: list[str] = []
     for e in evidence:
@@ -791,6 +875,7 @@ class ClawQLLabSession:
         full_text_set = set(full_text_dirs)
         hsr_count = 0
         credit_count = 0
+        bulk_docs: list[dict[str, str]] = []
         for matter_dir in all_matter_dirs:
             matter_id = matter_dir.name
             detection = detect_hsr_second_request(matter_dir)
@@ -893,32 +978,94 @@ class ClawQLLabSession:
                     " | ontology flag CREDIT_FACILITY"
                     " | practice=Banking & Finance"
                 )
-            wiki = [
-                f"LAB:{self.task_id}",
-                f"Matter:{matter_id}",
-                "HarveyLAB",
-            ]
-            if detection["received"]:
-                wiki.append("HSR_SECOND_REQUEST")
-            if credit["is_credit_facility"]:
-                wiki.append("CREDIT_FACILITY")
+            wiki_lines = "\n".join(
+                f"- [[{w}]]"
+                for w in [
+                    f"LAB:{self.task_id}",
+                    f"Matter:{matter_id}",
+                    "HarveyLAB",
+                    *(["HSR_SECOND_REQUEST"] if detection["received"] else []),
+                    *(["CREDIT_FACILITY"] if credit["is_credit_facility"] else []),
+                ]
+            )
+            # OKF-ish markdown body: CLAWQL_* block already in content for ontology sync.
+            markdown = (
+                f"# [LAB:{self.task_id}] Matter {matter_id}\n\n"
+                f"{insights}\n\n"
+                f"## Related\n\n{wiki_lines}\n\n"
+                f"{content}\n"
+            )
+            safe_task = re.sub(r"[^a-zA-Z0-9_-]+", "-", self.task_id)
+            bulk_docs.append(
+                {
+                    "path": f"Memory/lab-{safe_task}-matter-{matter_id}.md",
+                    "markdown": markdown,
+                }
+            )
+
+        self._flush_bulk_markdown_docs(bulk_docs)
+        print(
+            f"ClawQL pre-ingest: ontology HSR_SECOND_REQUEST flagged "
+            f"{hsr_count}/{len(all_matter_dirs)} matters; "
+            f"CREDIT_FACILITY flagged {credit_count}/{len(all_matter_dirs)} matters; "
+            f"bulk_docs={len(bulk_docs)}"
+        )
+
+    def _flush_bulk_markdown_docs(self, documents: list[dict[str, str]]) -> None:
+        """Write many vault notes via ingest_external_knowledge (≤50/call).
+
+        Falls back to per-matter memory_ingest if bulk import is unavailable.
+        """
+        if not documents:
+            return
+        use_bulk = os.environ.get("CLAWQL_EXTERNAL_INGEST", "1").strip() == "1"
+        if use_bulk:
+            try:
+                for i in range(0, len(documents), _BULK_INGEST_BATCH):
+                    batch = documents[i : i + _BULK_INGEST_BATCH]
+                    print(
+                        f"ClawQL pre-ingest: bulk ingest_external_knowledge "
+                        f"{i + 1}–{i + len(batch)} / {len(documents)}"
+                    )
+                    result = self._call_clawql_mcp(
+                        "ingest_external_knowledge",
+                        {"documents": batch, "dryRun": False},
+                    )
+                    if isinstance(result, dict) and result.get("isError"):
+                        raise RuntimeError(result)
+                    # tools/call wraps JSON in content[].text
+                    body = result
+                    if isinstance(result, dict) and isinstance(result.get("content"), list):
+                        for block in result["content"]:
+                            if isinstance(block, dict) and block.get("type") == "text":
+                                try:
+                                    body = json.loads(block.get("text") or "{}")
+                                except json.JSONDecodeError:
+                                    body = {"raw": block.get("text")}
+                                break
+                    if isinstance(body, dict) and body.get("ok") is False:
+                        raise RuntimeError(
+                            body.get("message") or body.get("error") or body
+                        )
+                return
+            except Exception as exc:  # noqa: BLE001
+                print(
+                    f"ClawQL pre-ingest: bulk ingest failed ({exc}); "
+                    "falling back to per-matter memory_ingest"
+                )
+        for doc in documents:
+            title = Path(doc["path"]).stem
             self._call_clawql_mcp(
                 "memory_ingest",
                 {
-                    "title": f"[LAB:{self.task_id}] Matter {matter_id}",
+                    "title": title,
                     "type": "entity",
-                    "insights": insights,
-                    "toolOutputs": content,
-                    "wikilinks": wiki,
+                    "insights": f"LAB seed {title}",
+                    "toolOutputs": doc["markdown"],
                     "sessionId": f"harvey-lab:{self.task_id}",
                     "append": True,
                 },
             )
-        print(
-            f"ClawQL pre-ingest: ontology HSR_SECOND_REQUEST flagged "
-            f"{hsr_count}/{len(all_matter_dirs)} matters; "
-            f"CREDIT_FACILITY flagged {credit_count}/{len(all_matter_dirs)} matters"
-        )
 
     def _ingest_flat_documents(self, docs_dir: Path) -> None:
         for doc in sorted(docs_dir.rglob("*")):
