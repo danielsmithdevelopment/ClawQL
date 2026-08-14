@@ -13,7 +13,7 @@ Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/dan
 | 001 smoke [31764224376](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31764224376) | ClawQL 100% — patch apply OK                                                                                        |
 | 18-18 #1 [31765565825](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31765565825)  | Wrote **0 of 5 / 266** — wrong N                                                                                    |
 | 18-18 #2 [31767832459](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31767832459)  | **Regression:** 40/40, ceiling fired, **no write** — cohort recall empty because ingest hard-coded `practice=Other` |
-| 18-18 #3 [31769718249](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31769718249)  | Wrote **0 of 36** — Pattern F OK; detector over-flagged (36/266 vs gold 12)                                          |
+| 18-18 #3 [31769718249](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31769718249)  | Wrote **0 of 36** — Pattern F OK; detector over-flagged (36/266 vs gold 12)                                         |
 
 **Root cause (layer):** Fix 5 was prompt-level; vault never had Banking & Finance / credit-facility ontology. Structured `practiceArea` filters → 0 hits; agent hunted forever. Fix 6 seeded flags but path tokens were too broad (probe #3).
 
