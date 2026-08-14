@@ -41,12 +41,12 @@ bash/grep-hunted “springing lien” for 40/40 turns, never wrote, never
 inferred **0 of 12**. Clean-stop deliverable guard never fired (ceiling hit);
 Wonder never ran (needs a file). Fixes in the agent-loop patch:
 
-| Fix | Env / prompt | Effect |
-| --- | ------------ | ------ |
-| Turn-ceiling force-write | `CLAWQL_LAB_CEILING_LEAD_TURNS` (default 3) | Nudge Write before max turns if `/workspace/output/` empty |
-| Negative-result principle | `clawql_system_prompt.md` | Permission to conclude `0 of N` / none |
-| Require ≥1 recall | `CLAWQL_LAB_REQUIRE_RECALL` (default on) | Initial nudge toward `clawql_memory_recall` |
-| Frequency task kind | `CLAWQL_LAB_TASK_KIND` / heuristics | Wonder asks “did I cover the corpus?” |
+| Fix                       | Env / prompt                                | Effect                                                     |
+| ------------------------- | ------------------------------------------- | ---------------------------------------------------------- |
+| Turn-ceiling force-write  | `CLAWQL_LAB_CEILING_LEAD_TURNS` (default 3) | Nudge Write before max turns if `/workspace/output/` empty |
+| Negative-result principle | `clawql_system_prompt.md`                   | Permission to conclude `0 of N` / none                     |
+| Require ≥1 recall         | `CLAWQL_LAB_REQUIRE_RECALL` (default on)    | Initial nudge toward `clawql_memory_recall`                |
+| Frequency task kind       | `CLAWQL_LAB_TASK_KIND` / heuristics         | Wonder asks “did I cover the corpus?”                      |
 
 Disable with `CLAWQL_LAB_GROUNDING_WONDER=0` if needed for ablation.
 
