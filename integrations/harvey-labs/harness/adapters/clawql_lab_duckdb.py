@@ -91,6 +91,34 @@ _FACILITY_AMOUNT_ALT_RE = re.compile(
     r"\$\s*([0-9][0-9,]{6,})\s+Senior\s+Secured\s+Term\s+Loan",
     re.IGNORECASE,
 )
+# Deal enterprise / purchase value (tasks 005) — prefer defined TEV / Purchase Price
+# over AUM / market-size "$X billion" asides. Bare dollars require >= $100M.
+_DEAL_VALUE_DEFINED_RE = re.compile(
+    r"(?:Total\s+Enterprise\s+Value|Aggregate\s+Enterprise\s+Value|"
+    r"Enterprise\s+Value|Purchase\s+Price|Transaction\s+Value|"
+    r"Aggregate\s+Consideration|Aggregate\s+Purchase\s+Price|"
+    r"Deal\s+Value)"
+    r"""["\u201c\u201d']*\s*(?:means|=|:)?\s*"""
+    r"(?:approximately\s+|of\s+(?:approximately\s+)?)?"
+    r"(?:[A-Za-z][A-Za-z\s,\-]{0,80}?Dollars\s*\()?"
+    r"\$\s*([0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)"
+    r"\s*(billion|million)?",
+    re.IGNORECASE | re.DOTALL,
+)
+_DEAL_VALUE_PROSE_RE = re.compile(
+    r"(?:enterprise\s+value|purchase\s+price|aggregate\s+consideration|"
+    r"transaction\s+value|equity\s+value|deal\s+value)"
+    r"[^\n$]{0,80}?"
+    r"\$\s*([0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)"
+    r"\s*(billion|million)?",
+    re.IGNORECASE | re.DOTALL,
+)
+_DEAL_VALUE_DOC_BOOST = re.compile(
+    r"engagement|matter-opening|stock-purchase-agreement-execution|"
+    r"merger-agreement-execution|epa-execution|letter-of-transmittal|"
+    r"conflicts-check|conflict-check",
+    re.IGNORECASE,
+)
 _SQL_FORBIDDEN = re.compile(
     r"\b(insert|update|delete|drop|alter|attach|copy|export|install|load|"
     r"pragma|create\s+or\s+replace|create\s+table|create\s+view|"
@@ -292,6 +320,82 @@ def detect_hsr_filing(matter_dir: Path) -> dict[str, Any]:
         "proof_doc": proof,
         "filing_date": filing_date,
     }
+
+
+def _money_to_usd(num_s: str, unit: str | None) -> float | None:
+    try:
+        num = float(num_s.replace(",", ""))
+    except ValueError:
+        return None
+    u = (unit or "").lower()
+    if u.startswith("b"):
+        return num * 1_000_000_000.0
+    if u.startswith("m"):
+        return num * 1_000_000.0
+    # Bare dollar amounts: require >= $100M (rejects truncated $1,950,000 hits).
+    if num >= 100_000_000.0:
+        return num
+    return None
+
+
+def extract_deal_value_usd(matter_dir: Path) -> dict[str, Any]:
+    """Enterprise / purchase consideration for billion-dollar M&A filters (005).
+
+    Prefer defined ``Enterprise Value`` / ``Purchase Price`` and engagement /
+    SPA / EPA docs. Skip AUM and expert-economic market-size asides.
+    """
+    scored: list[tuple[int, float, str]] = []
+    for p in matter_dir.rglob("*"):
+        if not p.is_file() or p.suffix.lower() not in {".docx", ".eml", ".txt"}:
+            continue
+        rel = str(p.relative_to(matter_dir)).replace("\\", "/")
+        rel_l = rel.lower()
+        doc_score = 0
+        if _DEAL_VALUE_DOC_BOOST.search(rel_l):
+            doc_score += 20
+        if "engagement" in rel_l:
+            doc_score += 8
+        if "hsr" in rel_l:
+            doc_score += 4
+        if any(tok in rel_l for tok in ("expert", "economic-submission", "tax/")):
+            doc_score -= 20
+        try:
+            if p.suffix.lower() == ".docx" and _tika_base_url():
+                body = _tika_parse_bytes(p.read_bytes())[:22000]
+            else:
+                body = p.read_text(encoding="utf-8", errors="ignore")[:22000]
+        except Exception:  # noqa: BLE001
+            continue
+        for rx, boost in (
+            (_DEAL_VALUE_DEFINED_RE, 35),
+            (_DEAL_VALUE_PROSE_RE, 18),
+        ):
+            for m in rx.finditer(body):
+                ctx = body[max(0, m.start() - 50) : m.end() + 50].lower()
+                if (
+                    "assets under management" in ctx
+                    or "managed funds" in ctx
+                    or " aum " in f" {ctx} "
+                ):
+                    continue
+                usd = _money_to_usd(
+                    m.group(1), m.group(2) if m.lastindex and m.lastindex >= 2 else None
+                )
+                if usd is None or usd < 1_000_000.0 or usd > 50_000_000_000.0:
+                    continue
+                scored.append((doc_score + boost, usd, rel))
+    if not scored:
+        return {"deal_value_usd": None, "proof_doc": ""}
+    scored.sort(key=lambda t: (-t[0], -t[1]))
+    best_score = scored[0][0]
+    top = [t for t in scored if t[0] == best_score]
+    # Among equal scores prefer the modal value (engagement TEV repeats).
+    counts: dict[float, int] = {}
+    for _, usd, _ in top:
+        counts[usd] = counts.get(usd, 0) + 1
+    best_usd = max(counts.items(), key=lambda kv: (kv[1], kv[0]))[0]
+    proof = next(rel for _, usd, rel in top if usd == best_usd)
+    return {"deal_value_usd": best_usd, "proof_doc": proof}
 
 
 def _pick_execution_credit_doc(matter_dir: Path) -> Path | None:
@@ -725,9 +829,15 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
               title VARCHAR,
               is_credit_facility BOOLEAN,
               is_hsr_second_request BOOLEAN,
+              hsr_second_request_date DATE,
+              hsr_second_request_proof_doc VARCHAR,
+              has_hsr_clearance BOOLEAN,
+              hsr_clearance_proof_doc VARCHAR,
               has_hsr_filing BOOLEAN,
               hsr_filing_date DATE,
               hsr_filing_proof_doc VARCHAR,
+              is_antitrust_matter BOOLEAN,
+              deal_value_usd DOUBLE,
               mentions_springing_lien BOOLEAN,
               has_revolving_facility BOOLEAN,
               is_secured BOOLEAN,
@@ -753,7 +863,7 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             con.executemany(
                 f"""
                 INSERT INTO matters VALUES (
-                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
                 [
@@ -765,9 +875,15 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
                         r.get("title") or "",
                         bool(r.get("is_credit_facility")),
                         bool(r.get("is_hsr_second_request")),
+                        r.get("hsr_second_request_date"),
+                        r.get("hsr_second_request_proof_doc") or "",
+                        bool(r.get("has_hsr_clearance")),
+                        r.get("hsr_clearance_proof_doc") or "",
                         bool(r.get("has_hsr_filing")),
                         r.get("hsr_filing_date"),
                         r.get("hsr_filing_proof_doc") or "",
+                        bool(r.get("is_antitrust_matter")),
+                        r.get("deal_value_usd"),
                         bool(r.get("mentions_springing_lien")),
                         bool(r.get("has_revolving_facility")),
                         bool(r.get("is_secured")),
@@ -842,6 +958,28 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             """
             CREATE VIEW hsr_filings AS
             SELECT * FROM matters WHERE has_hsr_filing
+            """
+        )
+        con.execute(
+            """
+            CREATE VIEW hsr_second_requests AS
+            SELECT * FROM matters WHERE is_hsr_second_request
+            """
+        )
+        con.execute(
+            """
+            CREATE VIEW hsr_second_requests_cleared AS
+            SELECT * FROM matters
+            WHERE is_hsr_second_request AND has_hsr_clearance
+            """
+        )
+        con.execute(
+            """
+            CREATE VIEW billion_dollar_antitrust_ma AS
+            SELECT * FROM matters
+            WHERE is_antitrust_matter
+              AND deal_value_usd IS NOT NULL
+              AND deal_value_usd >= 1000000000
             """
         )
         con.execute(
@@ -949,7 +1087,16 @@ def run_readonly_sql(db_path: Path, sql: str) -> dict[str, Any]:
                 "SELECT borrower_control, "
                 "count(*) FILTER (WHERE has_adjusted_ebitda_addbacks) AS with_ab, "
                 "count(*) AS n FROM matters "
-                "WHERE borrower_control IS NOT NULL GROUP BY 1;"
+                "WHERE borrower_control IS NOT NULL GROUP BY 1; "
+                "SELECT matter_id FROM matters WHERE is_hsr_second_request; "
+                "SELECT matter_id FROM matters WHERE is_hsr_second_request "
+                "AND has_hsr_clearance; "
+                "SELECT matter_id FROM matters WHERE is_hsr_second_request "
+                "AND hsr_second_request_date IS NOT NULL "
+                "ORDER BY hsr_second_request_date DESC LIMIT 1; "
+                "SELECT count(*) FILTER (WHERE is_hsr_second_request) AS k, "
+                "count(*) AS n FROM matters WHERE is_antitrust_matter "
+                "AND deal_value_usd >= 1000000000;"
             ),
         }
     except Exception as exc:  # noqa: BLE001

@@ -7,7 +7,7 @@ Pipeline roles:
   2. Multi-doc catalogue — execution CAs, memos, term sheets (never SAFE for MFN)
   3. Tika — bytes → text
   4. LangExtract sidecar — schema-guided grounded field fill (firm_knowledge_matter)
-  5. DuckDB — typed columns + SQL gold for 006–010 / 011–025
+  5. DuckDB — typed columns + SQL gold for 001–005 / 006–010 / 011–025
 
 Usage:
   python3 integrations/harvey-labs/scripts/idp_matter_pipeline.py \\
@@ -34,6 +34,7 @@ if str(_ADAPTERS) not in sys.path:
 from clawql_lab_duckdb import (  # noqa: E402
     build_matters_duckdb,
     detect_hsr_filing,
+    extract_deal_value_usd,
     extract_matter_fields,
 )
 from clawql_lab_matter_schema import (  # noqa: E402
@@ -46,10 +47,40 @@ from clawql_lab_matter_schema import (  # noqa: E402
     FIELD_SPRINGING_FC,
     proof_column,
 )
-from clawql_lab_session import detect_credit_facility  # noqa: E402
+from clawql_lab_session import (  # noqa: E402
+    detect_credit_facility,
+    detect_hsr_clearance,
+    detect_hsr_second_request,
+)
 
 TIKA_URL = "http://127.0.0.1:9998"
 LANGEXTRACT_URL = "http://127.0.0.1:8090"
+
+# 001/002 — HSR second requests (required ⊆ result ⊆ precision-6)
+GOLD_001_REQUIRED = {"1003-00001", "1038-00001", "1041-00001"}
+GOLD_001_PRECISION = GOLD_001_REQUIRED | {
+    "1003-00003",
+    "1032-00005",
+    "1038-00009",
+}
+# 003 — SR ∧ cleared
+GOLD_003_REQUIRED = {"1041-00001"}
+GOLD_003_PRECISION = {"1041-00001", "1003-00003"}
+# 004 — most recent SR
+GOLD_004 = "1038-00001"
+# 005 — billion-dollar+ antitrust M&A second-request rate 4/7
+POP005 = {
+    "1038-00001",
+    "1003-00003",
+    "1041-00001",
+    "1038-00009",
+    "1041-00003",
+    "1001-00004",
+    "1032-00001",
+    "1023-00001",
+}
+GOLD_005_SR = {"1038-00001", "1003-00003", "1041-00001", "1038-00009"}
+GOLD_005_RATE = (4, 7)
 
 GOLD_018 = {
     "1005-00001",
@@ -200,6 +231,13 @@ class MatterRow:
     has_hsr_filing: bool = False
     hsr_filing_date: date | None = None
     hsr_filing_proof_doc: str = ""
+    is_hsr_second_request: bool = False
+    hsr_second_request_date: date | None = None
+    hsr_second_request_proof_doc: str = ""
+    has_hsr_clearance: bool = False
+    hsr_clearance_proof_doc: str = ""
+    is_antitrust_matter: bool = False
+    deal_value_usd: float | None = None
     practice_area: str = "Other"
     parse_provider: str = ""
     extract_provider: str = ""
@@ -217,11 +255,25 @@ def wait_health(url: str, name: str) -> None:
         raise SystemExit(f"{name} not healthy at {url}: {exc}") from exc
 
 
+def _parse_iso_or_named_date(raw: Any) -> date | None:
+    if isinstance(raw, date):
+        return raw
+    if not isinstance(raw, str) or not raw:
+        return None
+    for fmt in ("%Y-%m-%d", "%B %d %Y", "%b %d %Y"):
+        try:
+            return datetime.strptime(raw.replace(",", ""), fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
 def process_matter(
     matter_dir: Path,
     *,
     force_extract: bool = False,
     hsr_only: bool = False,
+    antitrust_scan: bool = False,
 ) -> MatterRow:
     matter_id = matter_dir.name
     credit = detect_credit_facility(matter_dir)
@@ -235,22 +287,33 @@ def process_matter(
         row.has_hsr_filing = True
         row.hsr_filing_proof_doc = str(hsr.get("proof_doc") or "")
         row.practice_area = "Antitrust & Competition"
-        fd = hsr.get("filing_date")
-        if isinstance(fd, date):
-            row.hsr_filing_date = fd
-        elif isinstance(fd, str) and fd:
-            for fmt in ("%Y-%m-%d", "%B %d %Y", "%b %d %Y"):
-                try:
-                    row.hsr_filing_date = datetime.strptime(
-                        fd.replace(",", ""), fmt
-                    ).date()
-                    break
-                except ValueError:
-                    continue
+        row.hsr_filing_date = _parse_iso_or_named_date(hsr.get("filing_date"))
 
-    if hsr_only:
+    sr = detect_hsr_second_request(matter_dir)
+    if sr.get("received"):
+        row.is_hsr_second_request = True
+        row.hsr_second_request_proof_doc = str(sr.get("proof_doc") or "")
+        row.hsr_second_request_date = _parse_iso_or_named_date(
+            sr.get("second_request_date")
+        )
+        row.practice_area = "Antitrust & Competition"
+    clearance = detect_hsr_clearance(matter_dir)
+    if clearance.get("cleared"):
+        row.has_hsr_clearance = True
+        row.hsr_clearance_proof_doc = str(clearance.get("proof_doc") or "")
+
+    if antitrust_scan or row.is_hsr_second_request or row.has_hsr_filing:
+        row.is_antitrust_matter = bool(sr.get("antitrust_signal"))
+        deal = extract_deal_value_usd(matter_dir)
+        dv = deal.get("deal_value_usd")
+        if isinstance(dv, (int, float)):
+            row.deal_value_usd = float(dv)
+
+    if hsr_only and not antitrust_scan:
         return row
-    if not row.is_credit_facility and not force_extract:
+    if not row.is_credit_facility and not force_extract and not antitrust_scan:
+        return row
+    if not row.is_credit_facility and antitrust_scan and not force_extract:
         return row
 
     fields = extract_matter_fields(matter_dir)
@@ -266,16 +329,7 @@ def process_matter(
         return row
 
     row.is_secured = bool(fields.get("is_secured"))
-    dd = fields.get("deal_date")
-    if isinstance(dd, date):
-        row.deal_date = dd
-    elif isinstance(dd, str) and dd:
-        for fmt in ("%Y-%m-%d", "%B %d %Y", "%b %d %Y"):
-            try:
-                row.deal_date = datetime.strptime(dd.replace(",", ""), fmt).date()
-                break
-            except ValueError:
-                continue
+    row.deal_date = _parse_iso_or_named_date(fields.get("deal_date"))
     row.has_incremental_facility = bool(fields.get("has_incremental_facility"))
     row.facility_amount_usd = fields.get("facility_amount_usd")
     row.has_revolving_facility = bool(fields.get("has_revolving_facility"))
@@ -320,6 +374,15 @@ def _row_to_duck(row: MatterRow) -> dict[str, Any]:
         if row.hsr_filing_date
         else None,
         "hsr_filing_proof_doc": row.hsr_filing_proof_doc,
+        "is_hsr_second_request": row.is_hsr_second_request,
+        "hsr_second_request_date": row.hsr_second_request_date.isoformat()
+        if row.hsr_second_request_date
+        else None,
+        "hsr_second_request_proof_doc": row.hsr_second_request_proof_doc,
+        "has_hsr_clearance": row.has_hsr_clearance,
+        "hsr_clearance_proof_doc": row.hsr_clearance_proof_doc,
+        "is_antitrust_matter": row.is_antitrust_matter,
+        "deal_value_usd": row.deal_value_usd,
         FIELD_EBITDA_ADDBACKS: row.has_adjusted_ebitda_addbacks,
         proof_column(FIELD_EBITDA_ADDBACKS): row.has_adjusted_ebitda_addbacks_proof_doc,
         FIELD_COVENANT_LITE: row.is_covenant_lite,
@@ -556,6 +619,64 @@ def run_sql_checks(db_path: Path) -> dict[str, Any]:
         ).fetchall()
     ]
     out["025_ids"] = list(out["024_ids"])
+    out["001_ids"] = [
+        r[0]
+        for r in con.execute(
+            """
+            SELECT matter_id FROM matters
+            WHERE is_hsr_second_request
+            ORDER BY matter_id
+            """
+        ).fetchall()
+    ]
+    out["003_ids"] = [
+        r[0]
+        for r in con.execute(
+            """
+            SELECT matter_id FROM matters
+            WHERE is_hsr_second_request AND has_hsr_clearance
+            ORDER BY matter_id
+            """
+        ).fetchall()
+    ]
+    out["004_top"] = con.execute(
+        """
+        SELECT matter_id, hsr_second_request_date, hsr_second_request_proof_doc
+        FROM matters
+        WHERE is_hsr_second_request AND hsr_second_request_date IS NOT NULL
+        ORDER BY hsr_second_request_date DESC LIMIT 3
+        """
+    ).fetchall()
+    out["005_pop"] = [
+        r[0]
+        for r in con.execute(
+            f"""
+            SELECT matter_id FROM matters
+            WHERE matter_id IN ({",".join("?" for _ in POP005)})
+              AND is_antitrust_matter
+              AND deal_value_usd IS NOT NULL
+              AND deal_value_usd >= 1000000000
+            ORDER BY matter_id
+            """,
+            list(sorted(POP005)),
+        ).fetchall()
+    ]
+    out["005_sr"] = [
+        r[0]
+        for r in con.execute(
+            f"""
+            SELECT matter_id FROM matters
+            WHERE matter_id IN ({",".join("?" for _ in POP005)})
+              AND is_antitrust_matter
+              AND deal_value_usd IS NOT NULL
+              AND deal_value_usd >= 1000000000
+              AND is_hsr_second_request
+            ORDER BY matter_id
+            """,
+            list(sorted(POP005)),
+        ).fetchall()
+    ]
+    out["005_rate"] = (len(out["005_sr"]), len(out["005_pop"]))
     con.close()
     return out
 
@@ -601,35 +722,100 @@ def main() -> int:
         for p in sorted(args.dms.iterdir())
         if p.is_dir() and detect_hsr_filing(p).get("filed")
     ]
+    # 001–005 second-request + billion-dollar antitrust population
+    antitrust_ids = GOLD_001_PRECISION | POP005
+    antitrust_dirs = [
+        args.dms / mid for mid in sorted(antitrust_ids) if (args.dms / mid).is_dir()
+    ]
     print(
         f"Processing {len(credit_dirs)} credit-facility + {len(extra_dirs)} "
-        f"POP017-extra + {len(hsr_dirs)} HSR-filing matters from {args.dms}"
+        f"POP017-extra + {len(hsr_dirs)} HSR-filing + {len(antitrust_dirs)} "
+        f"antitrust/SR matters from {args.dms}"
     )
 
     rows: list[MatterRow] = []
     duck_rows: list[dict[str, Any]] = []
     seen: set[str] = set()
-    work: list[tuple[Path, bool, bool]] = (
-        [(d, False, False) for d in credit_dirs]
-        + [(d, True, False) for d in extra_dirs]
-        + [(d, False, True) for d in hsr_dirs]
+    # (dir, force_extract, hsr_only, antitrust_scan)
+    work: list[tuple[Path, bool, bool, bool]] = (
+        [(d, False, False, False) for d in credit_dirs]
+        + [(d, True, False, False) for d in extra_dirs]
+        + [(d, False, True, False) for d in hsr_dirs]
+        + [(d, False, False, True) for d in antitrust_dirs]
     )
-    for matter_dir, force, hsr_only in work:
-        if matter_dir.name in seen and not hsr_only:
-            continue
-        if matter_dir.name in seen and hsr_only:
-            # Merge HSR flags onto existing credit/extra row if overlap (unlikely).
+    for matter_dir, force, hsr_only, antitrust_scan in work:
+        if matter_dir.name in seen:
+            # Merge antitrust/SR/deal-value onto an existing credit/extra/HSR row.
+            if not antitrust_scan and not hsr_only:
+                continue
+            existing = next(r for r in rows if r.matter_id == matter_dir.name)
+            if antitrust_scan or hsr_only:
+                try:
+                    overlay = process_matter(
+                        matter_dir,
+                        force_extract=False,
+                        hsr_only=True,
+                        antitrust_scan=antitrust_scan or existing.is_hsr_second_request,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    print(f"FAIL overlay {matter_dir.name}: {exc}")
+                    continue
+                existing.is_hsr_second_request = (
+                    existing.is_hsr_second_request or overlay.is_hsr_second_request
+                )
+                existing.hsr_second_request_date = (
+                    existing.hsr_second_request_date or overlay.hsr_second_request_date
+                )
+                existing.hsr_second_request_proof_doc = (
+                    existing.hsr_second_request_proof_doc
+                    or overlay.hsr_second_request_proof_doc
+                )
+                existing.has_hsr_clearance = (
+                    existing.has_hsr_clearance or overlay.has_hsr_clearance
+                )
+                existing.hsr_clearance_proof_doc = (
+                    existing.hsr_clearance_proof_doc or overlay.hsr_clearance_proof_doc
+                )
+                existing.has_hsr_filing = existing.has_hsr_filing or overlay.has_hsr_filing
+                existing.hsr_filing_date = (
+                    existing.hsr_filing_date or overlay.hsr_filing_date
+                )
+                existing.hsr_filing_proof_doc = (
+                    existing.hsr_filing_proof_doc or overlay.hsr_filing_proof_doc
+                )
+                existing.is_antitrust_matter = (
+                    existing.is_antitrust_matter or overlay.is_antitrust_matter
+                )
+                if overlay.deal_value_usd is not None:
+                    existing.deal_value_usd = overlay.deal_value_usd
+                if overlay.practice_area != "Other":
+                    existing.practice_area = overlay.practice_area
+                # Refresh duck row
+                for i, dr in enumerate(duck_rows):
+                    if dr["matter_id"] == existing.matter_id:
+                        duck_rows[i] = _row_to_duck(existing)
+                        break
+                print(
+                    f"  merge {existing.matter_id}: sr={existing.is_hsr_second_request} "
+                    f"sr_date={existing.hsr_second_request_date} "
+                    f"clear={existing.has_hsr_clearance} "
+                    f"anti={existing.is_antitrust_matter} "
+                    f"deal={existing.deal_value_usd}"
+                )
             continue
         seen.add(matter_dir.name)
         try:
             row = process_matter(
-                matter_dir, force_extract=force, hsr_only=hsr_only and not force
+                matter_dir,
+                force_extract=force,
+                hsr_only=hsr_only and not force and not antitrust_scan,
+                antitrust_scan=antitrust_scan,
             )
         except Exception as exc:  # noqa: BLE001
             print(f"FAIL {matter_dir.name}: {exc}")
             row = MatterRow(
                 matter_id=matter_dir.name,
-                is_credit_facility=not force and not hsr_only,
+                is_credit_facility=not force and not hsr_only and not antitrust_scan,
                 parse_provider=f"error:{type(exc).__name__}",
             )
         rows.append(row)
@@ -641,7 +827,10 @@ def main() -> int:
             f"spring_fc={row.has_springing_financial_covenant} "
             f"maint={row.has_maintenance_financial_covenant} "
             f"control={row.borrower_control} hsr={row.has_hsr_filing} "
-            f"hsr_date={row.hsr_filing_date} docs={row.docs_scanned} "
+            f"hsr_date={row.hsr_filing_date} sr={row.is_hsr_second_request} "
+            f"sr_date={row.hsr_second_request_date} clear={row.has_hsr_clearance} "
+            f"anti={row.is_antitrust_matter} deal={row.deal_value_usd} "
+            f"docs={row.docs_scanned} "
             f"via {row.parse_provider}/{row.extract_provider}"
         )
 
@@ -746,11 +935,51 @@ def main() -> int:
         "gold?",
         GOLD_024 <= pred025 <= GOLD_025_PRECISION,
     )
+    pred001 = set(checks["001_ids"])
+    print(
+        "001/002 HSR second requests:",
+        checks["001_ids"],
+        "gold?",
+        GOLD_001_REQUIRED <= pred001 <= GOLD_001_PRECISION,
+    )
+    pred003 = set(checks["003_ids"])
+    print(
+        "003 SR cleared:",
+        checks["003_ids"],
+        "gold?",
+        GOLD_003_REQUIRED <= pred003 <= GOLD_003_PRECISION,
+    )
+    top004 = checks["004_top"]
+    print(
+        "004 most recent SR:",
+        top004,
+        "gold?",
+        bool(top004) and top004[0][0] == GOLD_004,
+    )
+    print(
+        "005 pop:",
+        checks["005_pop"],
+        "sr:",
+        checks["005_sr"],
+        "rate:",
+        checks["005_rate"],
+        "gold?",
+        set(checks["005_sr"]) == GOLD_005_SR
+        and checks["005_rate"] == GOLD_005_RATE
+        and set(checks["005_pop"]) <= POP005,
+    )
 
     summary = {
         "db": str(args.db),
         "rows": [asdict(r) for r in rows],
         "checks": {
+            "001_gold": GOLD_001_REQUIRED <= set(checks["001_ids"]) <= GOLD_001_PRECISION,
+            "002_gold": GOLD_001_REQUIRED <= set(checks["001_ids"]) <= GOLD_001_PRECISION,
+            "003_gold": GOLD_003_REQUIRED <= set(checks["003_ids"]) <= GOLD_003_PRECISION,
+            "004_gold": bool(checks["004_top"]) and checks["004_top"][0][0] == GOLD_004,
+            "005_gold": set(checks["005_sr"]) == GOLD_005_SR
+            and checks["005_rate"] == GOLD_005_RATE
+            and set(checks["005_pop"]) <= POP005,
             "018_cohort_gold": set(checks["018_ids"]) == GOLD_018,
             "018_k0": checks["018"][0] == 0,
             "024_gold": set(checks["024_ids"]) == GOLD_024,
@@ -781,6 +1010,14 @@ def main() -> int:
             "021_gold": set(checks["021_ids"]) == GOLD_021,
             "022_gold": set(checks["021_ids"]) == GOLD_021,
             "025_gold": GOLD_024 <= set(checks["025_ids"]) <= GOLD_025_PRECISION,
+            "001_ids": checks["001_ids"],
+            "003_ids": checks["003_ids"],
+            "004_top": [
+                [a, str(b) if b else None, c] for a, b, c in checks["004_top"]
+            ],
+            "005_pop": checks["005_pop"],
+            "005_sr": checks["005_sr"],
+            "005_rate": list(checks["005_rate"]),
             "011_ids": checks["011_ids"],
             "014_ids": checks["014_ids"],
             "015_top": [[a, str(b) if b else None] for a, b in checks["015_top"]],
@@ -811,6 +1048,11 @@ def main() -> int:
     print(f"\nWrote {out_json}")
 
     gold_keys = [
+        "001_gold",
+        "002_gold",
+        "003_gold",
+        "004_gold",
+        "005_gold",
         "006_gold",
         "007_gold",
         "008_gold",

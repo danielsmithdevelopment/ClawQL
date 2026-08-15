@@ -493,6 +493,107 @@ def _second_request_defined_term_evidence(matter_dir: Path) -> list[str]:
     return hits
 
 
+_SR_DATE_NEAR_RE = re.compile(
+    r"(?:Second\s+Request|second\s+request)[^\n.]{0,160}?"
+    r"((?:January|February|March|April|May|June|July|August|September|"
+    r"October|November|December)\s+\d{1,2},?\s+\d{4})",
+    re.IGNORECASE | re.DOTALL,
+)
+_SR_CALENDAR_DATE_RE = re.compile(
+    r"((?:January|February|March|April|May|June|July|August|September|"
+    r"October|November|December)\s+\d{1,2},?\s+\d{4})",
+    re.IGNORECASE,
+)
+
+
+def _parse_sr_calendar_date(raw: str) -> str | None:
+    from datetime import datetime
+
+    s = raw.replace(",", "").strip()
+    for fmt in ("%B %d %Y", "%b %d %Y"):
+        try:
+            return datetime.strptime(s, fmt).date().isoformat()
+        except ValueError:
+            continue
+    return None
+
+
+def _resolve_matter_rel(matter_dir: Path, rel: str) -> Path | None:
+    """Map evidence paths (relative or ``matters/<id>/…``) onto the matter dir."""
+    cleaned = rel.replace("\\", "/").lstrip("/")
+    if cleaned.startswith("matters/"):
+        parts = cleaned.split("/", 2)
+        if len(parts) >= 3:
+            cleaned = parts[2]
+    cand = matter_dir / cleaned
+    return cand if cand.is_file() else None
+
+
+def _second_request_event_date(
+    matter_dir: Path,
+    evidence_rels: list[str],
+    preferred_rels: list[str],
+) -> tuple[str | None, str]:
+    """Best-effort Second Request event date from evidence bodies.
+
+    Collects calendar dates from preferred + evidence docs (preferring dates
+    near ``Second Request`` wording). Returns the latest ISO date and the
+    relative proof path that supplied it — used for task-004 most-recent.
+    """
+    ordered: list[str] = []
+    for rel in list(preferred_rels) + list(evidence_rels):
+        if rel not in ordered:
+            ordered.append(rel)
+    dated: list[tuple[str, str, int]] = []  # date, rel, priority
+    for rel in ordered[:10]:
+        path = _resolve_matter_rel(matter_dir, rel)
+        if path is None:
+            continue
+        suffix = path.suffix.lower()
+        if suffix == ".docx":
+            body = _docx_to_text(path, max_chars=40000)
+        elif suffix in {".eml", ".txt", ".md"}:
+            body = _plain_text(path, max_chars=40000)
+        else:
+            continue
+        rel_out = str(path.relative_to(matter_dir)).replace("\\", "/")
+        for m in _SR_DATE_NEAR_RE.finditer(body):
+            iso = _parse_sr_calendar_date(m.group(1))
+            if iso:
+                dated.append((iso, rel_out, 2))
+        for m in _SR_CALENDAR_DATE_RE.finditer(body[:12000]):
+            iso = _parse_sr_calendar_date(m.group(1))
+            if iso:
+                dated.append((iso, rel_out, 1))
+    if not dated:
+        return None, ""
+    # Latest date wins; tie-break toward Second-Request-adjacent matches.
+    dated.sort(key=lambda t: (t[0], t[2]))
+    best_date, best_rel, _ = dated[-1]
+    return best_date, best_rel
+
+
+def detect_hsr_clearance(matter_dir: Path) -> dict[str, Any]:
+    """High-precision HSR/antitrust clearance proof (excludes conflicts-clearance)."""
+    for p in matter_dir.rglob("*"):
+        if not p.is_file():
+            continue
+        name = p.name.lower()
+        if "conflict" in name and "clearance" in name:
+            continue
+        if (
+            "post-clearance" in name
+            or "clearance-confirmation" in name
+            or ("clearance" in name and "status" in name)
+            or name.startswith("hsr-clearance")
+        ):
+            return {
+                "cleared": True,
+                "proof_doc": str(p.relative_to(matter_dir)).replace("\\", "/"),
+            }
+    return {"cleared": False, "proof_doc": ""}
+
+
 def detect_hsr_second_request(matter_dir: Path) -> dict[str, Any]:
     """Return detection payload for HSR Second Request received evidence."""
     file_hits = _second_request_filename_evidence(matter_dir)
@@ -503,10 +604,29 @@ def detect_hsr_second_request(matter_dir: Path) -> dict[str, Any]:
         text_hits = _second_request_defined_term_evidence(matter_dir)
     received = bool(file_hits or text_hits)
     preferred = _preferred_evidence_paths(matter_dir) if received else []
+    evidence = (file_hits + text_hits)[:12]
+    event_date: str | None = None
+    proof_doc = ""
+    if received:
+        event_date, proof_doc = _second_request_event_date(
+            matter_dir, evidence, preferred
+        )
+        if not proof_doc:
+            if preferred:
+                path = _resolve_matter_rel(matter_dir, preferred[0])
+                proof_doc = (
+                    str(path.relative_to(matter_dir)).replace("\\", "/")
+                    if path is not None
+                    else evidence[0]
+                )
+            elif evidence:
+                proof_doc = evidence[0]
     return {
         "received": received,
-        "evidence_files": (file_hits + text_hits)[:12],
+        "evidence_files": evidence,
         "preferred_evidence": preferred,
+        "second_request_date": event_date,
+        "proof_doc": proof_doc,
         "antitrust_signal": _has_antitrust_signal(matter_dir),
         "client_hint": _client_hint(matter_dir),
     }
