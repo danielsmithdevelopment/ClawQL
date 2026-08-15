@@ -10,15 +10,15 @@ Related: [`harvey-lab-duckdb-retrieval.md`](harvey-lab-duckdb-retrieval.md),
 
 ## Tool roles (this run)
 
-| Stage | Tool | Used? | Why |
-| ----- | ---- | ----- | --- |
-| Catalogue / path flags | DMS paths + Fix 7 `detect_credit_facility` | **Yes** | Cheap `is_credit_facility`, secured-doc filenames, revolving-note paths |
-| Bytes → text | **Apache Tika** `:9998` | **Yes** | Universal parse of execution `.docx` |
-| Layout / OCR parse | **Docling** | No | Born-digital docx — Tika sufficient; Docling when scans/complex PDF |
-| Office → PDF | **Gotenberg** | No | Not needed when source is already docx |
-| OCR / redact | **Stirling** | No | Clean text docs; no PII redact in this spike |
+| Stage                    | Tool                                                           | Used?   | Why                                                                          |
+| ------------------------ | -------------------------------------------------------------- | ------- | ---------------------------------------------------------------------------- |
+| Catalogue / path flags   | DMS paths + Fix 7 `detect_credit_facility`                     | **Yes** | Cheap `is_credit_facility`, secured-doc filenames, revolving-note paths      |
+| Bytes → text             | **Apache Tika** `:9998`                                        | **Yes** | Universal parse of execution `.docx`                                         |
+| Layout / OCR parse       | **Docling**                                                    | No      | Born-digital docx — Tika sufficient; Docling when scans/complex PDF          |
+| Office → PDF             | **Gotenberg**                                                  | No      | Not needed when source is already docx                                       |
+| OCR / redact             | **Stirling**                                                   | No      | Clean text docs; no PII redact in this spike                                 |
 | Schema-guided field fill | **LangExtract** `:8090` `schema_preset=credit_facility_matter` | **Yes** | Grounded `deal_date`, `$`, incremental / revolver / springing-lien / secured |
-| Query | **DuckDB** | **Yes** | Typed columns + ordinary SQL |
+| Query                    | **DuckDB**                                                     | **Yes** | Typed columns + ordinary SQL                                                 |
 
 Demo LangExtract mode uses deterministic grounded patterns with the **same
 extraction_class names** live mode would fill from examples. Swap
@@ -42,12 +42,12 @@ Matter {
 
 ## SQL possibility checks (real DMS, 12 credit facilities)
 
-| Task | Query | Result |
-| ---- | ----- | ------ |
-| **018** | `k,n` springing lien among credit facilities | **k=0 n=12**, cohort = gold-12 |
-| **020** | `ORDER BY facility_amount_usd DESC` where incremental | **1005-00001** ($1.4B) |
-| **023** | `is_secured ORDER BY deal_date DESC` | **1013-00001** (2026-03-06) |
-| **024** | `is_credit_facility AND has_revolving_facility` | gold-4 exact |
+| Task    | Query                                                 | Result                         |
+| ------- | ----------------------------------------------------- | ------------------------------ |
+| **018** | `k,n` springing lien among credit facilities          | **k=0 n=12**, cohort = gold-12 |
+| **020** | `ORDER BY facility_amount_usd DESC` where incremental | **1005-00001** ($1.4B)         |
+| **023** | `is_secured ORDER BY deal_date DESC`                  | **1013-00001** (2026-03-06)    |
+| **024** | `is_credit_facility AND has_revolving_facility`       | gold-4 exact                   |
 
 ## How to re-run locally
 
@@ -66,7 +66,7 @@ python3 integrations/harvey-labs/scripts/idp_matter_pipeline.py \
 
 Script: [`../../integrations/harvey-labs/scripts/idp_matter_pipeline.py`](../../integrations/harvey-labs/scripts/idp_matter_pipeline.py).
 
-## What this does *not* claim
+## What this does _not_ claim
 
 - Agent success on 020/023/024 in GHA (benchmark still to prove).
 - Live LangExtract LLM quality (demo grounding only in this spike).

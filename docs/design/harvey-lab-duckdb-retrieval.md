@@ -92,35 +92,35 @@ that is **Strategy C value** (index built once), not answer-key leak.
 
 ### `matters`
 
-| Column | Source |
-| ------ | ------ |
-| `matter_id` | DMS folder name |
-| `client_short_name` | existing `_client_hint` |
-| `practice_area` | detector / CLAWQL_PRACTICE_AREA |
-| `matter_type` | detector / CLAWQL_MATTER_TYPE |
-| `title` | CLAWQL_TITLE |
-| `is_credit_facility` | Fix 7 `detect_credit_facility` |
-| `is_hsr_second_request` | existing HSR detector |
-| `mentions_springing_lien` | mechanical text/path scan (task-018) |
-| `has_revolving_facility` | establish-language / revolving-note path (task-024) |
-| `vault_note_path` | seeded Memory/… path |
-| `sandbox_root` | `/workspace/documents/matters/<id>` |
+| Column                    | Source                                              |
+| ------------------------- | --------------------------------------------------- |
+| `matter_id`               | DMS folder name                                     |
+| `client_short_name`       | existing `_client_hint`                             |
+| `practice_area`           | detector / CLAWQL_PRACTICE_AREA                     |
+| `matter_type`             | detector / CLAWQL_MATTER_TYPE                       |
+| `title`                   | CLAWQL_TITLE                                        |
+| `is_credit_facility`      | Fix 7 `detect_credit_facility`                      |
+| `is_hsr_second_request`   | existing HSR detector                               |
+| `mentions_springing_lien` | mechanical text/path scan (task-018)                |
+| `has_revolving_facility`  | establish-language / revolving-note path (task-024) |
+| `vault_note_path`         | seeded Memory/… path                                |
+| `sandbox_root`            | `/workspace/documents/matters/<id>`                 |
 
 ### Offline SQL possibility checks (not agent success)
 
-| Task | Query shape | Local DMS result |
-| ---- | ----------- | ---------------- |
-| **018** | `COUNT` springing lien among `is_credit_facility` | **n=12 k=0**, ids = public gold-12 |
+| Task    | Query shape                                           | Local DMS result                                               |
+| ------- | ----------------------------------------------------- | -------------------------------------------------------------- |
+| **018** | `COUNT` springing lien among `is_credit_facility`     | **n=12 k=0**, ids = public gold-12                             |
 | **024** | `WHERE is_credit_facility AND has_revolving_facility` | **TP=4 FP=0 FN=0** vs gold `{1008,1012,1019-00002,1038-00002}` |
-| **020** | incremental + `ORDER BY facility_amount_usd DESC` | **1005-00001** via IDP→DuckDB spike |
-| **023** | `is_secured ORDER BY deal_date DESC` | **1013-00001** via IDP→DuckDB spike |
+| **020** | incremental + `ORDER BY facility_amount_usd DESC`     | **1005-00001** via IDP→DuckDB spike                            |
+| **023** | `is_secured ORDER BY deal_date DESC`                  | **1013-00001** via IDP→DuckDB spike                            |
 
 Full Tika → LangExtract → DuckDB flow:
 [`harvey-lab-idp-matter-pipeline.md`](harvey-lab-idp-matter-pipeline.md).
 
 Not every failed batch-3 cell is SQL-shaped: **016 / 017 / 019 / 021** are
 documented Nemotron criterion ceilings — do not expect DuckDB alone to lift
-those. **008** needs firm-made HSR *filing* chronology (distinct from
+those. **008** needs firm-made HSR _filing_ chronology (distinct from
 `is_hsr_second_request`).
 
 ### `documents` (optional v0.1)
