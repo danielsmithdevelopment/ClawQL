@@ -4,9 +4,11 @@ Date: 2026-08-14
 Models: Nemotron 3.5 Lightning ± ClawQL  
 Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479) (**20% ClawQL all-pass**)  
 Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774) (**0% ClawQL all-pass**; mean CPR ~9%)  
-**Next:** Canonical DuckDB+LangExtract **001–025** armed after smoke
-[31858328479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31858328479)
-(clawql all-pass). Do **not** push while the matrix runs (`cancel-in-progress`).
+**Next:** Matter generalization (011–015 fields + multi-doc) landed; marker
+back to smoke **18-18** (do not re-arm 001–025 until OpenRouter free-tier
+resets). Prior partial 1–25:
+[31865144197](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31865144197)
+(OR 429).
 
 ### Probe #7 headline (DuckDB)
 

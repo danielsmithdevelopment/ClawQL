@@ -255,7 +255,12 @@ CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
             "ORDER BY facility_amount_usd DESC LIMIT 1; "
             "SELECT matter_id FROM matters WHERE is_secured "
             "ORDER BY deal_date DESC LIMIT 1; "
-            "Also: is_hsr_second_request, practice_area, matter_type. "
+            "Also: is_hsr_second_request, practice_area, matter_type, "
+            "has_adjusted_ebitda_addbacks (+ _proof_doc), is_covenant_lite "
+            "(+ _proof_doc), has_mfn_in_credit_agreement (+ _proof_doc). "
+            "Views: credit_facilities, revolving_credit_facilities, "
+            "adjusted_ebitda_addback_matters, covenant_lite_credit_facilities, "
+            "mfn_credit_agreements. "
             "SELECT/WITH/DESCRIBE only — no writes."
         ),
         "parameters": {
@@ -1181,6 +1186,12 @@ class ClawQLLabSession:
             deal_date = None
             has_incremental = False
             facility_amount = None
+            has_ebitda_addbacks = False
+            ebitda_proof = ""
+            is_covenant_lite = False
+            covlite_proof = ""
+            has_mfn = False
+            mfn_proof = ""
             if credit["is_credit_facility"]:
                 fields = extract_credit_facility_matter_fields(
                     matter_dir,
@@ -1192,6 +1203,18 @@ class ClawQLLabSession:
                 deal_date = fields.get("deal_date")
                 has_incremental = bool(fields.get("has_incremental_facility"))
                 facility_amount = fields.get("facility_amount_usd")
+                has_ebitda_addbacks = bool(
+                    fields.get("has_adjusted_ebitda_addbacks")
+                )
+                ebitda_proof = str(
+                    fields.get("has_adjusted_ebitda_addbacks_proof_doc") or ""
+                )
+                is_covenant_lite = bool(fields.get("is_covenant_lite"))
+                covlite_proof = str(fields.get("is_covenant_lite_proof_doc") or "")
+                has_mfn = bool(fields.get("has_mfn_in_credit_agreement"))
+                mfn_proof = str(
+                    fields.get("has_mfn_in_credit_agreement_proof_doc") or ""
+                )
             duckdb_rows.append(
                 {
                     "matter_id": matter_id,
@@ -1207,6 +1230,12 @@ class ClawQLLabSession:
                     "deal_date": deal_date,
                     "has_incremental_facility": has_incremental,
                     "facility_amount_usd": facility_amount,
+                    "has_adjusted_ebitda_addbacks": has_ebitda_addbacks,
+                    "has_adjusted_ebitda_addbacks_proof_doc": ebitda_proof,
+                    "is_covenant_lite": is_covenant_lite,
+                    "is_covenant_lite_proof_doc": covlite_proof,
+                    "has_mfn_in_credit_agreement": has_mfn,
+                    "has_mfn_in_credit_agreement_proof_doc": mfn_proof,
                     "sandbox_root": f"/workspace/documents/matters/{matter_id}",
                     "vault_note_path": doc["path"],
                 }
