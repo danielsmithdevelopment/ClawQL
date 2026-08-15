@@ -9,17 +9,18 @@ Related: [`harvey-lab-duckdb-retrieval.md`](harvey-lab-duckdb-retrieval.md),
 
 ## Tool roles
 
-| Stage | Tool | Why |
-| ----- | ---- | --- |
-| Catalogue / path flags | DMS paths + Fix 7 `detect_credit_facility` | Cheap `is_credit_facility`, secured filenames, revolving-note paths |
-| Doc ranking | `clawql_lab_matter_schema.catalog_matter_docs` | Execution CAs, memos, term sheets, pro-formas — **not** SAFE for MFN |
-| Bytes → text | **Apache Tika** `:9998` (jar on runner, not Docker) | Universal `.docx` parse |
-| Schema-guided field fill | **LangExtract** `:8090` `schema_preset=firm_knowledge_matter` | Grounded spans → Matter columns + proof docs |
-| Query | **DuckDB** | Typed columns / views + ordinary SQL |
+| Stage                    | Tool                                                          | Why                                                                  |
+| ------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Catalogue / path flags   | DMS paths + Fix 7 `detect_credit_facility`                    | Cheap `is_credit_facility`, secured filenames, revolving-note paths  |
+| Doc ranking              | `clawql_lab_matter_schema.catalog_matter_docs`                | Execution CAs, memos, term sheets, pro-formas — **not** SAFE for MFN |
+| Bytes → text             | **Apache Tika** `:9998` (jar on runner, not Docker)           | Universal `.docx` parse                                              |
+| Schema-guided field fill | **LangExtract** `:8090` `schema_preset=firm_knowledge_matter` | Grounded spans → Matter columns + proof docs                         |
+| Query                    | **DuckDB**                                                    | Typed columns / views + ordinary SQL                                 |
 
 Demo LangExtract uses deterministic grounded patterns with the **same
 `extraction_class` names** live mode would fill. Swap `LANGEXTRACT_MODE=live`
-+ `OPENROUTER_API_KEY` without changing SQL.
+
+- `OPENROUTER_API_KEY` without changing SQL.
 
 ## Generalized Matter shape
 
@@ -50,20 +51,20 @@ always-on ∨ springing-gated.
 
 ## SQL gold (local DMS, 12 credit facilities + POP017 extras)
 
-| Task | Query idea | Result |
-| ---- | ---------- | ------ |
-| **011** | `has_adjusted_ebitda_addbacks` | gold-9 exact |
-| **012** | any `mentions_springing_lien` | **0** |
-| **013** | Lumos `1008-00001` ∧ MFN on execution CA | true (semantic accordion; not SAFE) |
-| **014** | `is_covenant_lite` | **{1005, 1021}** |
-| **015** | MFN ∧ `ORDER BY deal_date DESC` | **1019-00002** |
-| **016** | YoY always-on shares on credit-12 | 2021 1/1 … 2026 2/2 |
-| **017** | sponsor vs corporate add-back rates on POP017 | **6/8** and **3/4** |
-| **018** | springing among credit | **k=0 n=12** |
-| **019** | maintenance FC (incl. springing) | required-11 ⊆ result ⊆ precision-12 |
-| **020** | credit ∧ incremental `ORDER BY facility_amount_usd` | **1005-00001** |
-| **023** | secured `ORDER BY deal_date` | **1013-00001** |
-| **024** | credit ∧ revolver | gold-4 exact |
+| Task    | Query idea                                          | Result                              |
+| ------- | --------------------------------------------------- | ----------------------------------- |
+| **011** | `has_adjusted_ebitda_addbacks`                      | gold-9 exact                        |
+| **012** | any `mentions_springing_lien`                       | **0**                               |
+| **013** | Lumos `1008-00001` ∧ MFN on execution CA            | true (semantic accordion; not SAFE) |
+| **014** | `is_covenant_lite`                                  | **{1005, 1021}**                    |
+| **015** | MFN ∧ `ORDER BY deal_date DESC`                     | **1019-00002**                      |
+| **016** | YoY always-on shares on credit-12                   | 2021 1/1 … 2026 2/2                 |
+| **017** | sponsor vs corporate add-back rates on POP017       | **6/8** and **3/4**                 |
+| **018** | springing among credit                              | **k=0 n=12**                        |
+| **019** | maintenance FC (incl. springing)                    | required-11 ⊆ result ⊆ precision-12 |
+| **020** | credit ∧ incremental `ORDER BY facility_amount_usd` | **1005-00001**                      |
+| **023** | secured `ORDER BY deal_date`                        | **1013-00001**                      |
+| **024** | credit ∧ revolver                                   | gold-4 exact                        |
 
 **017 note:** population ≠ Fix-7 credit-12. Gold rates are asserted on
 POP017 = GOLD_011 ∪ `{1001-00007, 1041-00003, 1007-00001}` (IDs in the
