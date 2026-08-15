@@ -4,10 +4,9 @@ Date: 2026-08-14
 Models: Nemotron 3.5 Lightning ± ClawQL  
 Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479) (**20% ClawQL all-pass**)  
 Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774) (**0% ClawQL all-pass**; mean CPR ~9%)  
-**Next:** Canonical DuckDB-era **001–025** in flight —
-[31856880647](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31856880647)
-(50 arm×task jobs; empty `.run-nemotron-sweep` defaults to `1–25`). Do **not**
-push while it runs (`cancel-in-progress`).
+**Next:** Canonical DuckDB+LangExtract **001–025** armed after smoke
+[31858328479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31858328479)
+(clawql all-pass). Do **not** push while the matrix runs (`cancel-in-progress`).
 
 ### Probe #7 headline (DuckDB)
 
