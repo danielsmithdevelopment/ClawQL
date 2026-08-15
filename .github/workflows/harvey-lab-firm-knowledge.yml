@@ -169,12 +169,25 @@ jobs:
             # First non-comment line: N  |  START-END  |  START END
             #   N         → tasks 001..00N
             #   START-END → tasks START..END (inclusive), e.g. 16-25
+            # Empty / comment-only marker → smoke (do NOT default to 1–25).
             SWEEP_SPEC="$(
               awk 'NF && $1 !~ /^#/ { print $0; exit }' integrations/harvey-labs/.run-nemotron-sweep || true
             )"
-            TASK_START=1
-            TASK_END=25
-            if [ -n "${SWEEP_SPEC}" ]; then
+            if [ -z "${SWEEP_SPEC}" ]; then
+              echo "::warning::.run-nemotron-sweep present but empty — falling back to smoke (task 001 only). Put N or START-END on a non-comment line to arm a sweep."
+              TASK_LIMIT=1
+              TASK_START=1
+              TASK_END=1
+              MODEL="claude-sonnet-4-6"
+              NEMO="nvidia/nemotron-3.5-lightning"
+              TURNS="40"
+              JUDGE="openai/gpt-5.4-mini"
+              MATTERS="0"
+              USE_OR="1"
+              MODE="smoke"
+            else
+              TASK_START=1
+              TASK_END=25
               if [[ "${SWEEP_SPEC}" =~ ^([0-9]+)[[:space:]]*-[[:space:]]*([0-9]+)[[:space:]]*$ ]]; then
                 TASK_START="${BASH_REMATCH[1]}"
                 TASK_END="${BASH_REMATCH[2]}"
@@ -188,16 +201,16 @@ jobs:
                 echo "::error::Invalid .run-nemotron-sweep spec (got '${SWEEP_SPEC}'). Use N or START-END."
                 exit 1
               fi
+              TASK_LIMIT="${TASK_END}"
+              MODEL="claude-sonnet-4-6"
+              NEMO="nvidia/nemotron-3.5-lightning"
+              TURNS="40"
+              JUDGE="claude-sonnet-4-6"
+              MATTERS="0"
+              USE_OR="1"
+              MODE="nemotron-sweep"
+              echo "::notice::Detected .run-nemotron-sweep → Nemotron ± ClawQL tasks ${TASK_START}–${TASK_END}, judge=claude-sonnet-4-6"
             fi
-            TASK_LIMIT="${TASK_END}"
-            MODEL="claude-sonnet-4-6"
-            NEMO="nvidia/nemotron-3.5-lightning"
-            TURNS="40"
-            JUDGE="claude-sonnet-4-6"
-            MATTERS="0"
-            USE_OR="1"
-            MODE="nemotron-sweep"
-            echo "::notice::Detected .run-nemotron-sweep → Nemotron ± ClawQL tasks ${TASK_START}–${TASK_END}, judge=claude-sonnet-4-6"
           else
             ARMS_CSV="nemotron,nemotron-clawql"
             TASK="firm-knowledge/tasks/001"
