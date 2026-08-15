@@ -11,9 +11,9 @@
 #   N         → tasks 001..00N
 #   START-END → tasks START..END
 #
-# Probe #6 [31854444321] Fix8: ontology verify N=11 missing 1008; still 0 of 11.
-# Next: DuckDB clawql_sql — offline SQL returns exact gold-12 + k=0.
+# Probe #7 [31855811931] DuckDB: ClawQL all-pass on 018 (CPR 1.0). Cleared.
+# Next: wire IDP→DuckDB columns for 020/023/024 in harness; then canonical 1-25.
 #
 # WARNING: concurrency cancel-in-progress is on — do not push while this runs.
 #
-18-18
+# (no active sweep — uncomment a START-END line to re-arm)

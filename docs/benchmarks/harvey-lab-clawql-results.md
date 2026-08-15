@@ -4,7 +4,7 @@ Date: 2026-08-14
 Models: Nemotron 3.5 Lightning ± ClawQL  
 Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479) (**20% ClawQL all-pass**)  
 Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774) (**0% ClawQL all-pass**; mean CPR ~9%)  
-**Next:** Probe #5 graded fail (0 of 11 vs 0 of 12); Fix 8 recall/ontology surface → re-probe `18-18` → canonical `1-25` only if all-pass
+**Next:** Probe #7 DuckDB **ClawQL all-pass on 018** ([31855811931](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31855811931)). IDP→DuckDB local spike proves 020/023/024 SQL too. Prefer canonical `1-25` when OpenRouter healthy.
 
 ### Next-run gate (deep think)
 
@@ -16,6 +16,7 @@ Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/dan
 | 18-18 #3 [31769718249](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31769718249)  | Wrote **0 of 36** — Pattern F OK; detector over-flagged (36/266 vs gold 12)                                         |
 | 18-18 #4 [31772193789](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31772193789)  | Seed **12/266** (Fix 7 OK); bulk timed out→fallback; agent **OpenRouter 429** (daily free cap). No scorecard.       |
 | 18-18 #5 [31853395295](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31853395295)  | Bulk OK; seed 12/266; wrote **0 of 11** (missed 1008-00001). Graded fail. Baseline OR 504.                          |
+| 18-18 #7 [31855811931](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31855811931)  | **ClawQL all-pass** (CPR 1.0, 9 turns). DuckDB `n=12 k=0`; ontology N=12. Baseline still 0%.                        |
 
 **Root cause (layer):** Fix 5 was prompt-level; vault never had Banking & Finance / credit-facility ontology. Structured `practiceArea` filters → 0 hits; agent hunted forever. Fix 6 seeded flags but path tokens were too broad (probe #3). Fix 7 precision held on probe #4/#5 seed logs. Probe #5 failure is **cohort surface** (recall packaging / ontology visibility / agent dropping an id) — not detector math.
 
