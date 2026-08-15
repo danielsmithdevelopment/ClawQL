@@ -53,6 +53,31 @@ explicitly reframe the paper as A/B/C. That changes the claim.
 Ontology `memory_recall` filters are essentially a constrained SQL dialect the
 model does not already know. DuckDB is the same capability with a universal UI.
 
+## Methodology — is DuckDB cheating?
+
+**No.** Document this clearly for readers of the ledger.
+
+Baseline is allowed bash/grep over the same DMS. DuckDB is the same *category*
+of instrument (query the corpus), not a different corpus or a pre-baked answer.
+
+| Fair | Unfair |
+| ---- | ------ |
+| Same matter trees for both arms | Extra documents / external answer keys on ClawQL only |
+| Mechanical extract → typed columns, then SQL | Hard-coding gold matter IDs or rubric `0 of 12` into the table |
+| Extraction bugs that yield wrong SQL counts = ClawQL pipeline fails | Schema designed to emit the judge’s exact phrase |
+
+ClawQL’s measured value includes **unstructured → structured** ingest. Baseline
+skips that work and greps raw files. Wrong extraction is a real failure mode —
+task 018 passed because the boolean/cohort columns were correct, not because
+SQL is magic.
+
+Analogy: a human analyst asked for springing-lien frequency would load the
+corpus into a database and query it; they would not manually `grep` 266 trees
+for forty turns hoping absence becomes a deliverable.
+
+See also probe #7 scorecards in
+[`../benchmarks/harvey-lab-clawql-results.md`](../benchmarks/harvey-lab-clawql-results.md).
+
 ## Answer-key boundary (critical)
 
 Fair to precompute at ingest (mechanical index):
