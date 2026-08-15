@@ -193,6 +193,12 @@ class HsrSecondRequestDetectionTests(unittest.TestCase):
         self.assertIn("/workspace/output/", enriched["labGuidance"]["requiredDeliverable"])
         self.assertIn("evidenceRule", enriched["labGuidance"])
         self.assertIn("contextDiscipline", enriched["labGuidance"])
+        self.assertEqual(enriched["matterIds"], ["1003-00001"])
+        self.assertEqual(enriched["matterIdCount"], 1)
+        self.assertIn("cohortRule", enriched["labGuidance"])
+        # matterIds appear before hits in serialization order
+        keys = list(enriched.keys())
+        self.assertLess(keys.index("matterIds"), keys.index("hits"))
 
     def test_empty_recall_adds_fallback_guidance(self) -> None:
         from clawql_lab_session import _enrich_lab_memory_recall

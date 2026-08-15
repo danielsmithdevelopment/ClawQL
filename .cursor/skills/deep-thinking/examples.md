@@ -165,3 +165,12 @@ Fill after [31764224376](https://github.com/danielsmithdevelopment/ClawQL/action
 - Sticky takeaway: **Seed-log N can be green while the cell still dies on OpenRouter 429 — do not interpret job failure as detector regression.**
 - Process change: clear marker; shrink bulk batch + raise ingest timeout; re-arm only after midnight UTC (or paid credits).
 
+### After-action — 18-18 probe #5 [31853395295](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31853395295) (post-reset)
+
+- Expected: graded `0 of 12` all-pass with bulk + Fix 7.
+- Observed: bulk OK; seed 12/266; agent **0 of 11** missing 1008-00001; Sonnet fail; baseline OR 504; clawql ~14m / 7 turns.
+- Assumptions died: seed 12 ⇒ agent reports 12 (packaging/agent layer can still drop an id).
+- True root cause: **cohort surface** (ontology visibility and/or agent not treating full id list as authoritative) — not Fix 7 detector.
+- Sticky takeaway: **Always put matterIds/matterIdCount first on structured recalls and verify ontology N in the pre-ingest log before the agent loop.**
+- Process change: Fix 8 — compact matterIds-first enrich, force CREDIT_FACILITY memory_ingest upsert + verify log; clear marker; re-arm after push.
+
