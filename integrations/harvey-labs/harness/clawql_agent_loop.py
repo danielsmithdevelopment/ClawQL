@@ -200,16 +200,19 @@ _CLAWQL_REQUIRE_RECALL_NUDGE = (
 _CLAWQL_REQUIRE_RECALL_FREQUENCY = (
     "FREQUENCY task — define denominator N **before** hunting the rare "
     "attribute.\\n\\n"
-    "1. Call `clawql_memory_recall` with schema `legal.Matter` and filter "
-    "`title` contains `CREDIT_FACILITY` (or `practiceArea` contains "
-    "`Banking & Finance`, limit≤50). Use response **matterIds** / "
-    "**matterIdCount** (authoritative N) — list every matter id.\\n"
-    "2. Do **not** invent title filters for the rare attribute "
-    "(e.g. 'springing lien').\\n"
-    "3. Search for the attribute only inside those matters.\\n"
+    "1. Prefer `clawql_sql` (DuckDB). Example:\\n"
+    "   SELECT matter_id, client_short_name FROM matters "
+    "WHERE is_credit_facility ORDER BY matter_id;\\n"
+    "   That result set is **N** — list every matter_id.\\n"
+    "   Then: SELECT count(*) FILTER (WHERE mentions_springing_lien) AS k, "
+    "count(*) AS n FROM matters WHERE is_credit_facility;\\n"
+    "2. Fallback: `clawql_memory_recall` with schema `legal.Matter` and "
+    "`title` contains `CREDIT_FACILITY` (limit≤50). Use **matterIds**.\\n"
+    "3. Do **not** invent title filters for the rare attribute "
+    "(e.g. 'springing lien') in ontology.\\n"
     "4. `write` **k of N (…%)** with the matter id list (or **0 of N**). "
-    "Do not drop ids from matterIds.\\n"
-    "5. If cohort recall is empty twice, fall back to path signals "
+    "Do not drop ids.\\n"
+    "5. If cohort SQL/recall is empty twice, fall back to path signals "
     "(`credit-agreement*.docx`), list those ids as N, **write immediately** "
     "— do not bash until the turn ceiling.\\n\\n"
     "Wrong N: 'Credit Agreement' folder count alone, or all vault notes."
@@ -346,7 +349,7 @@ RECALL_BLOCK = f"""            {RECALL_BEGIN}
                 )
                 print(
                     f"ClawQL require-recall (kind={{_recall_kind}}): "
-                    "nudging clawql_memory_recall before bash/grep"
+                    "nudging clawql_sql / clawql_memory_recall before bash/grep"
                 )
                 messages.append(adapter.make_user_message(_recall_nudge))
             {RECALL_END}

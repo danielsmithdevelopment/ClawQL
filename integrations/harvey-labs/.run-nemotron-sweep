@@ -9,11 +9,10 @@
 #
 # Spec on first non-comment line:
 #   N         → tasks 001..00N
-#   START-END → tasks START..END (e.g. 18-18 for task-018 negative-result probe)
+#   START-END → tasks START..END
 #
-# Probe #5 [31853395295]: seed 12/266 + bulk OK; wrote 0 of 11 (missed 1008).
-# Fix 8: matterIds-first recall + CREDIT_FACILITY ontology upsert/verify.
-# Expect pre-ingest log N=12 and deliverable 0 of 12.
+# Probe #6 [31854444321] Fix8: ontology verify N=11 missing 1008; still 0 of 11.
+# Next: DuckDB clawql_sql — offline SQL returns exact gold-12 + k=0.
 #
 # WARNING: concurrency cancel-in-progress is on — do not push while this runs.
 #

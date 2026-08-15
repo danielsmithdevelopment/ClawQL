@@ -23,6 +23,23 @@ try:
 except ImportError:  # unit tests import adapters/ as a flat path
     from clawql_vault import resolve_task_vault, vault_root
 
+try:
+    from harness.adapters.clawql_lab_duckdb import (
+        build_matters_duckdb,
+        default_duckdb_path,
+        duckdb_available,
+        matter_mentions_springing_lien,
+        sql_tool_result_json,
+    )
+except ImportError:
+    from clawql_lab_duckdb import (  # type: ignore
+        build_matters_duckdb,
+        default_duckdb_path,
+        duckdb_available,
+        matter_mentions_springing_lien,
+        sql_tool_result_json,
+    )
+
 CLAWQL_MCP_URL = os.environ.get("CLAWQL_MCP_URL", "http://localhost:8080/mcp")
 CLAWQL_VAULT_ROOT = vault_root()
 
@@ -90,7 +107,11 @@ _CLIENT_CANONICAL: dict[str, str] = {
 
 
 def _canonicalize_client(label: str) -> str:
-    key = " ".join(label.strip().lower().split())
+    # Collapse newlines/tabs — engagement OCR/regex can glue lines; a raw
+    # newline in client breaks CLAWQL_TITLE=… so CREDIT_FACILITY falls off
+    # the title line (probe #6: 1008-00001 ontology N=11).
+    normalized = " ".join(str(label).strip().split())
+    key = normalized.lower()
     if key in _CLIENT_CANONICAL:
         return _CLIENT_CANONICAL[key]
     # Prefix upgrade: "Cascade …" / "Harrowgate …" when already long-form-ish
@@ -110,7 +131,7 @@ def _canonicalize_client(label: str) -> str:
     ):
         if key == stem or key.startswith(stem + " "):
             return canon
-    return label.strip()
+    return normalized
 
 CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
     {
@@ -217,6 +238,29 @@ CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
                 "payload": {"type": "object"},
             },
             "required": ["type"],
+        },
+    },
+    {
+        "name": "clawql_sql",
+        "description": (
+            "Run a read-only SQL query against the task DuckDB (matters table). "
+            "PREFERRED for exact enumeration / frequency cohorts. Examples: "
+            "SELECT matter_id, client_short_name FROM matters "
+            "WHERE is_credit_facility ORDER BY matter_id; "
+            "SELECT count(*) FILTER (WHERE mentions_springing_lien) AS k, "
+            "count(*) AS n FROM matters WHERE is_credit_facility; "
+            "Also: is_hsr_second_request, practice_area, matter_type. "
+            "SELECT/WITH/DESCRIBE only — no writes."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "sql": {
+                    "type": "string",
+                    "description": "Single read-only SQL statement",
+                },
+            },
+            "required": ["sql"],
         },
     },
 ]
@@ -380,7 +424,7 @@ def _client_hint(matter_dir: Path) -> str:
         stem = re.sub(r"[-_]+", " ", stem).strip()
         if stem:
             return _canonicalize_client(stem.title())
-    return matter_dir.name
+    return " ".join(matter_dir.name.strip().split())
 
 
 def _has_antitrust_signal(matter_dir: Path) -> bool:
@@ -905,6 +949,20 @@ class ClawQLLabSession:
                 return f"Error: invalid JSON arguments: {arguments}"
         mcp_name = _TOOL_NAME_TO_MCP.get(tool_name, tool_name.removeprefix("clawql_"))
         args = dict(arguments or {})
+        if tool_name in {"clawql_sql", "clawql_duckdb_query"} or mcp_name == "sql":
+            sql = str(args.get("sql") or args.get("query") or "")
+            db_path = Path(
+                os.environ.get("CLAWQL_LAB_DUCKDB_PATH")
+                or default_duckdb_path(self.vault_path)
+            )
+            if not duckdb_available():
+                return json.dumps(
+                    {
+                        "ok": False,
+                        "error": "duckdb package not installed in harness venv",
+                    }
+                )
+            return sql_tool_result_json(db_path, sql)
         if mcp_name == "memory_ingest" and "content" in args and "toolOutputs" not in args:
             args["toolOutputs"] = args.pop("content")
         if mcp_name == "memory_ingest" and "type" not in args:
@@ -971,6 +1029,7 @@ class ClawQLLabSession:
         credit_count = 0
         bulk_docs: list[dict[str, str]] = []
         credit_docs: list[dict[str, str]] = []
+        duckdb_rows: list[dict[str, Any]] = []
         for matter_dir in all_matter_dirs:
             matter_id = matter_dir.name
             detection = detect_hsr_second_request(matter_dir)
@@ -980,6 +1039,8 @@ class ClawQLLabSession:
             if credit["is_credit_facility"]:
                 credit_count += 1
             client = detection.get("client_hint") or _client_hint(matter_dir)
+            # Belt-and-suspenders: never put newlines into CLAWQL_TITLE.
+            client = " ".join(str(client).strip().split())
             title_parts = [matter_id, client]
             if detection["received"]:
                 title_parts.append("HSR_SECOND_REQUEST")
@@ -1017,8 +1078,9 @@ class ClawQLLabSession:
                 "- Use the Client short name exactly (e.g. Cascade Retail, not Cascade).",
                 "- Cite a Preferred Second Request evidence document below — "
                 "do NOT cite engagement letters as Second Request evidence.",
-                "- For frequency/credit-facility surveys: filter ontology title "
-                "CREDIT_FACILITY (or practiceArea Banking & Finance) to define N.",
+                "- For frequency/credit-facility surveys: prefer clawql_sql "
+                "SELECT … FROM matters WHERE is_credit_facility "
+                "(or ontology title CREDIT_FACILITY) to define N.",
             ]
             preferred = detection.get("preferred_evidence") or []
             if preferred:
@@ -1100,6 +1162,35 @@ class ClawQLLabSession:
             if credit["is_credit_facility"]:
                 credit_docs.append(doc)
 
+            def _extract(path: Path) -> str:
+                if path.suffix.lower() == ".docx":
+                    return _docx_to_text(path)
+                if path.suffix.lower() in {".md", ".txt"}:
+                    return _plain_text(path)
+                return ""
+
+            mentions_lien = False
+            if credit["is_credit_facility"]:
+                mentions_lien = matter_mentions_springing_lien(
+                    matter_dir,
+                    text_extractor=_extract,
+                    priority_docs=_priority_docs,
+                )
+            duckdb_rows.append(
+                {
+                    "matter_id": matter_id,
+                    "client_short_name": client,
+                    "practice_area": practice,
+                    "matter_type": matter_type,
+                    "title": title,
+                    "is_credit_facility": bool(credit["is_credit_facility"]),
+                    "is_hsr_second_request": bool(detection["received"]),
+                    "mentions_springing_lien": mentions_lien,
+                    "sandbox_root": f"/workspace/documents/matters/{matter_id}",
+                    "vault_note_path": doc["path"],
+                }
+            )
+
         self._flush_bulk_markdown_docs(bulk_docs)
         print(
             f"ClawQL pre-ingest: ontology HSR_SECOND_REQUEST flagged "
@@ -1108,6 +1199,7 @@ class ClawQLLabSession:
             f"bulk_docs={len(bulk_docs)}"
         )
         self._ensure_credit_facility_ontology(credit_docs, expected=credit_count)
+        self._build_lab_duckdb(duckdb_rows, expected_credit=credit_count)
 
     def _ensure_credit_facility_ontology(
         self, credit_docs: list[dict[str, str]], *, expected: int
@@ -1162,6 +1254,35 @@ class ClawQLLabSession:
             print(
                 "ClawQL pre-ingest: WARNING ontology cohort size mismatch — "
                 "agent may report wrong frequency denominator"
+            )
+
+    def _build_lab_duckdb(
+        self, rows: list[dict[str, Any]], *, expected_credit: int
+    ) -> None:
+        """Write task-scoped matters.duckdb for clawql_sql."""
+        if not duckdb_available():
+            print(
+                "ClawQL pre-ingest: duckdb not installed — clawql_sql disabled "
+                "(uv pip install duckdb)"
+            )
+            return
+        db_path = default_duckdb_path(self.vault_path)
+        build_matters_duckdb(db_path, rows)
+        os.environ["CLAWQL_LAB_DUCKDB_PATH"] = str(db_path)
+        credit_n = sum(1 for r in rows if r.get("is_credit_facility"))
+        lien_n = sum(
+            1
+            for r in rows
+            if r.get("is_credit_facility") and r.get("mentions_springing_lien")
+        )
+        print(
+            f"ClawQL pre-ingest: DuckDB {db_path} rows={len(rows)} "
+            f"is_credit_facility={credit_n} (expected {expected_credit}) "
+            f"credit_facilities.mentions_springing_lien={lien_n}"
+        )
+        if expected_credit and credit_n != expected_credit:
+            print(
+                "ClawQL pre-ingest: WARNING DuckDB credit_facility count mismatch"
             )
 
     def _flush_bulk_markdown_docs(self, documents: list[dict[str, str]]) -> None:

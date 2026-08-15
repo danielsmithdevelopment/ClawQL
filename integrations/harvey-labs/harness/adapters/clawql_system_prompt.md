@@ -123,24 +123,28 @@ process (or clearly asks for every matter that received one).
 ## Pattern F — credit-facility / Banking & Finance frequency cohorts
 
 When the prompt asks how often / what share across **Banking & Finance credit
-facilities** (or similar), define N with structured recall on the seeded flag:
+facilities** (or similar), define N with **SQL first** (`clawql_sql`):
 
-```json
-{
-  "query": "Banking & Finance credit facilities",
-  "schema": "legal.Matter",
-  "filters": {
-    "title": { "contains": "CREDIT_FACILITY" }
-  },
-  "limit": 50
-}
+```sql
+SELECT matter_id, client_short_name
+FROM matters
+WHERE is_credit_facility
+ORDER BY matter_id;
 ```
 
-Alternate: `practiceArea` contains `Banking & Finance` (keep `limit` ≤ **50**).
-Treat the recall response fields **`matterIds`** / **`matterIdCount`** (also under
-`labGuidance.matterIds`) as the **authoritative** denominator N — list every id,
-then search for the rare attribute inside that set only. Do not drop ids when
-writing `k of N`.
+Then measure the rare attribute (prefer SQL content index when present):
+
+```sql
+SELECT
+  count(*) FILTER (WHERE mentions_springing_lien) AS k,
+  count(*) AS n
+FROM matters
+WHERE is_credit_facility;
+```
+
+Fallback: structured `clawql_memory_recall` with `schema: legal.Matter` and
+`title` contains `CREDIT_FACILITY` (limit ≤ 50). Treat **`matterIds`** /
+**`matterIdCount`** as authoritative N.
 
 Rules:
 - Always pass both `schema: "legal.Matter"` and a non-empty `filters` object when

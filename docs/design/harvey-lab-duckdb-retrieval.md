@@ -1,8 +1,8 @@
 # Harvey LAB retrieval: DuckDB / SQL-first (maps to `clawql-data`)
 
-Status: **design** (2026-08-15). `clawql-data` is still 📋 Planned in the vision
-roadmap — this doc is the LAB-facing product of that package, plus a thin
-adapter path we can ship **before** the full horizontal package exists.
+Status: **LAB spike shipped** (2026-08-15) — `clawql_lab_duckdb.py` +
+`clawql_sql` tool + Pattern F SQL-first nudges. `clawql-data` remains 📋 Planned
+in the vision roadmap; this is the thin adapter path before that package.
 
 Related: [[Harvey LAB ontology Pattern E]], task-018 probe arc (Fix 5–8),
 `docs/vision/clawql-vision-roadmap.md` (`clawql-data`).
@@ -183,9 +183,8 @@ table names so agent skills transfer.
 
 | Phase | Scope | Depends on |
 | ----- | ----- | ---------- |
-| **P0** | Design (this doc) | — |
-| **P1** | LAB spike: build duckdb at pre-ingest; `clawql_sql` tool; Pattern F → SQL | Fix 7/8 stable on 018 |
-| **P2** | Content FTS / `mentions_*` columns for frequency attrs | P1 |
+| **P0** | Design (this doc) | — | **done** |
+| **P1** | LAB spike: build duckdb at pre-ingest; `clawql_sql` tool; Pattern F → SQL | Fix 7/8 | **in progress** || **P2** | Content FTS / `mentions_*` columns for frequency attrs | P1 |
 | **P3** | Optional matrix arm **B** (SQL-only, shared tables) | Product call on ledger framing |
 | **P4** | Promote into `packages/clawql-data` + MCP `data_query` | Package scaffold |
 
