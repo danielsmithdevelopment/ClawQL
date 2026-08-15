@@ -265,6 +265,17 @@ class HsrSecondRequestDetectionTests(unittest.TestCase):
 
             self.assertEqual(_client_hint(matter), "Halcyon Semi")
 
+    def test_canonicalize_client_strips_newlines(self) -> None:
+        from clawql_lab_session import _canonicalize_client
+
+        # Probe #6: body regex glued "MAIL AND DocuSign\nLumos Analytics Inc"
+        # into CLAWQL_TITLE and dropped CREDIT_FACILITY onto the next line.
+        self.assertEqual(
+            _canonicalize_client("MAIL AND DocuSign\nLumos Analytics Inc"),
+            "MAIL AND DocuSign Lumos Analytics Inc",
+        )
+        self.assertNotIn("\n", _canonicalize_client("foo\tbar\nbaz"))
+
 
 if __name__ == "__main__":
     unittest.main()

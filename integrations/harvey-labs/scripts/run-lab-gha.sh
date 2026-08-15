@@ -92,6 +92,9 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 cd "${HARVEY_LABS}"
 uv sync
+# LAB ClawQL SQL-first retrieval (matters.duckdb / clawql_sql)
+uv pip install duckdb >/dev/null
+echo "::notice::Installed duckdb for clawql_sql"
 if ! command -v podman >/dev/null 2>&1; then
   sudo apt-get update -qq
   sudo apt-get install -y -qq podman
