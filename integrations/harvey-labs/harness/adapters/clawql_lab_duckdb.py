@@ -43,6 +43,28 @@ _REVOLVER_DOC_EXCLUDE = (
     "term-loan-agreement",
     "dip-",
 )
+_SECURED_PATH_RE = re.compile(
+    r"security-agreement|ip-security|pledge-agreement|intercreditor-agreement",
+    re.IGNORECASE,
+)
+_INC_FACILITY_RE = re.compile(
+    r"(\"Incremental\s+Facility\"|Incremental\s+Facility\s+means|"
+    r"incremental\s+term\s+loan\s+facility)",
+    re.IGNORECASE,
+)
+_DEAL_DATE_RE = re.compile(
+    r"(?:Dated|dated)\s+as\s+of\s+([A-Z][a-z]+\s+\d{1,2},?\s+\d{4})",
+)
+_FACILITY_AMOUNT_RE = re.compile(
+    r"(?:aggregate\s+principal\s+amount\s+of\s+(?:up\s+to\s+)?|"
+    r"facility\s+in\s+an\s+aggregate\s+(?:principal\s+)?amount\s+of\s+(?:up\s+to\s+)?)"
+    r"\$\s*([0-9][0-9,]*)",
+    re.IGNORECASE,
+)
+_FACILITY_AMOUNT_ALT_RE = re.compile(
+    r"\$\s*([0-9][0-9,]{6,})\s+Senior\s+Secured\s+Term\s+Loan",
+    re.IGNORECASE,
+)
 _SQL_FORBIDDEN = re.compile(
     r"\b(insert|update|delete|drop|alter|attach|copy|export|install|load|"
     r"pragma|create\s+or\s+replace|create\s+table|create\s+view|"
@@ -147,6 +169,122 @@ def matter_has_revolving_facility(
     return False
 
 
+def matter_is_secured(matter_dir: Path) -> bool:
+    """Execution security / pledge / intercreditor path signal."""
+    for p in matter_dir.rglob("*"):
+        if (
+            p.is_file()
+            and _SECURED_PATH_RE.search(p.name)
+            and "execution" in p.name.lower()
+        ):
+            return True
+    return False
+
+
+def _pick_execution_credit_doc(matter_dir: Path) -> Path | None:
+    scored: list[tuple[int, Path]] = []
+    for p in matter_dir.rglob("*.docx"):
+        rel = str(p.relative_to(matter_dir)).replace("\\", "/")
+        name = p.name.lower()
+        under = (
+            rel.startswith("Transaction Documents/")
+            or "/Transaction Documents/" in f"/{rel}"
+            or rel.startswith("documents/")
+            or "/documents/" in f"/{rel}"
+        )
+        if not under or "execution" not in name:
+            continue
+        if any(x in name for x in ("memo", "letter", "issues", "redline", "draft")):
+            continue
+        if "credit-agreement" not in name and "loan-agreement" not in name:
+            continue
+        score = 10 if "credit-agreement" in name else 0
+        if "mezzanine" in name:
+            score -= 5
+        if "bridge" in name:
+            score -= 3
+        if "amendment" in name:
+            score += 2
+        scored.append((score, p))
+    if not scored:
+        return None
+    scored.sort(key=lambda x: (-x[0], str(x[1])))
+    return scored[0][1]
+
+
+def _parse_deal_date(raw: str) -> str | None:
+    from datetime import datetime
+
+    s = raw.replace(",", "").strip()
+    for fmt in ("%B %d %Y", "%b %d %Y"):
+        try:
+            return datetime.strptime(s, fmt).date().isoformat()
+        except ValueError:
+            continue
+    return None
+
+
+def _parse_money(num: str) -> float | None:
+    try:
+        return float(num.replace(",", ""))
+    except ValueError:
+        return None
+
+
+def extract_credit_facility_matter_fields(
+    matter_dir: Path,
+    *,
+    text_extractor: Callable[[Path], str] | None = None,
+) -> dict[str, Any]:
+    """Fill Matter typed fields (same extraction_class names as LangExtract preset).
+
+    Uses local docx text when ``text_extractor`` is provided (Tika-equivalent for
+    born-digital .docx in GHA). Live LangExtract/Tika sidecars are optional
+    upgrades via ``idp_matter_pipeline.py`` — same column contract.
+    """
+    out: dict[str, Any] = {
+        "is_secured": matter_is_secured(matter_dir),
+        "deal_date": None,
+        "has_incremental_facility": False,
+        "facility_amount_usd": None,
+        "has_revolving_facility": matter_has_revolving_facility(
+            matter_dir, text_extractor=text_extractor
+        ),
+        "mentions_springing_lien": matter_mentions_springing_lien(
+            matter_dir, text_extractor=text_extractor
+        ),
+        "source_doc": "",
+    }
+    if text_extractor is None:
+        return out
+    doc = _pick_execution_credit_doc(matter_dir)
+    if doc is None:
+        return out
+    out["source_doc"] = str(doc.relative_to(matter_dir))
+    try:
+        body = text_extractor(doc) or ""
+    except Exception:  # noqa: BLE001
+        return out
+    m = _DEAL_DATE_RE.search(body)
+    if m:
+        out["deal_date"] = _parse_deal_date(m.group(1))
+    if _INC_FACILITY_RE.search(body):
+        out["has_incremental_facility"] = True
+    head = body[:12000]
+    amt = _FACILITY_AMOUNT_RE.search(head) or _FACILITY_AMOUNT_ALT_RE.search(head)
+    if amt:
+        out["facility_amount_usd"] = _parse_money(amt.group(1))
+    # Mezzanine-only: do not trust text revolver (path revolver still OK)
+    if "mezzanine" in out["source_doc"].lower():
+        path_rev = any(
+            p.is_file() and _REVOLVER_PATH_RE.search(p.name)
+            for p in matter_dir.rglob("*")
+        )
+        if not path_rev:
+            out["has_revolving_facility"] = False
+    return out
+
+
 def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
     """Create/replace matters.duckdb from row dicts."""
     import duckdb
@@ -169,6 +307,10 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
               is_hsr_second_request BOOLEAN,
               mentions_springing_lien BOOLEAN,
               has_revolving_facility BOOLEAN,
+              is_secured BOOLEAN,
+              deal_date DATE,
+              has_incremental_facility BOOLEAN,
+              facility_amount_usd DOUBLE,
               sandbox_root VARCHAR,
               vault_note_path VARCHAR
             )
@@ -177,7 +319,9 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
         if rows:
             con.executemany(
                 """
-                INSERT INTO matters VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO matters VALUES (
+                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
                 """,
                 [
                     (
@@ -190,6 +334,10 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
                         bool(r.get("is_hsr_second_request")),
                         bool(r.get("mentions_springing_lien")),
                         bool(r.get("has_revolving_facility")),
+                        bool(r.get("is_secured")),
+                        r.get("deal_date"),
+                        bool(r.get("has_incremental_facility")),
+                        r.get("facility_amount_usd"),
                         r.get("sandbox_root") or "",
                         r.get("vault_note_path") or "",
                     )
@@ -266,12 +414,17 @@ def run_readonly_sql(db_path: Path, sql: str) -> dict[str, Any]:
             "truncated": truncated,
             "hint": (
                 "For frequency/cohort tasks: "
-                "SELECT matter_id, client_short_name FROM matters "
-                "WHERE is_credit_facility ORDER BY matter_id; "
+                "SELECT matter_id FROM matters WHERE is_credit_facility; "
                 "SELECT count(*) FILTER (WHERE mentions_springing_lien) AS k, "
                 "count(*) AS n FROM matters WHERE is_credit_facility; "
                 "SELECT matter_id FROM matters WHERE is_credit_facility "
-                "AND has_revolving_facility ORDER BY matter_id;"
+                "AND has_revolving_facility; "
+                "SELECT matter_id FROM matters WHERE has_incremental_facility "
+                "AND facility_amount_usd IS NOT NULL "
+                "ORDER BY facility_amount_usd DESC LIMIT 1; "
+                "SELECT matter_id FROM matters WHERE is_credit_facility "
+                "AND is_secured AND deal_date IS NOT NULL "
+                "ORDER BY deal_date DESC LIMIT 1;"
             ),
         }
     except Exception as exc:  # noqa: BLE001

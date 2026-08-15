@@ -28,8 +28,7 @@ try:
         build_matters_duckdb,
         default_duckdb_path,
         duckdb_available,
-        matter_has_revolving_facility,
-        matter_mentions_springing_lien,
+        extract_credit_facility_matter_fields,
         sql_tool_result_json,
     )
 except ImportError:
@@ -37,8 +36,7 @@ except ImportError:
         build_matters_duckdb,
         default_duckdb_path,
         duckdb_available,
-        matter_has_revolving_facility,
-        matter_mentions_springing_lien,
+        extract_credit_facility_matter_fields,
         sql_tool_result_json,
     )
 
@@ -253,6 +251,10 @@ CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
             "count(*) AS n FROM matters WHERE is_credit_facility; "
             "SELECT matter_id FROM matters WHERE is_credit_facility "
             "AND has_revolving_facility; "
+            "SELECT matter_id FROM matters WHERE has_incremental_facility "
+            "ORDER BY facility_amount_usd DESC LIMIT 1; "
+            "SELECT matter_id FROM matters WHERE is_secured "
+            "ORDER BY deal_date DESC LIMIT 1; "
             "Also: is_hsr_second_request, practice_area, matter_type. "
             "SELECT/WITH/DESCRIBE only — no writes."
         ),
@@ -1175,16 +1177,21 @@ class ClawQLLabSession:
 
             mentions_lien = False
             has_revolver = False
+            is_secured = False
+            deal_date = None
+            has_incremental = False
+            facility_amount = None
             if credit["is_credit_facility"]:
-                mentions_lien = matter_mentions_springing_lien(
-                    matter_dir,
-                    text_extractor=_extract,
-                    priority_docs=_priority_docs,
-                )
-                has_revolver = matter_has_revolving_facility(
+                fields = extract_credit_facility_matter_fields(
                     matter_dir,
                     text_extractor=_extract,
                 )
+                mentions_lien = bool(fields.get("mentions_springing_lien"))
+                has_revolver = bool(fields.get("has_revolving_facility"))
+                is_secured = bool(fields.get("is_secured"))
+                deal_date = fields.get("deal_date")
+                has_incremental = bool(fields.get("has_incremental_facility"))
+                facility_amount = fields.get("facility_amount_usd")
             duckdb_rows.append(
                 {
                     "matter_id": matter_id,
@@ -1196,6 +1203,10 @@ class ClawQLLabSession:
                     "is_hsr_second_request": bool(detection["received"]),
                     "mentions_springing_lien": mentions_lien,
                     "has_revolving_facility": has_revolver,
+                    "is_secured": is_secured,
+                    "deal_date": deal_date,
+                    "has_incremental_facility": has_incremental,
+                    "facility_amount_usd": facility_amount,
                     "sandbox_root": f"/workspace/documents/matters/{matter_id}",
                     "vault_note_path": doc["path"],
                 }
