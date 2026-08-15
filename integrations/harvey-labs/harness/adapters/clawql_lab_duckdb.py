@@ -231,40 +231,93 @@ def _parse_money(num: str) -> float | None:
         return None
 
 
-def extract_credit_facility_matter_fields(
-    matter_dir: Path,
-    *,
-    text_extractor: Callable[[Path], str] | None = None,
-) -> dict[str, Any]:
-    """Fill Matter typed fields (same extraction_class names as LangExtract preset).
+def _langextract_base_url() -> str | None:
+    url = (
+        os.environ.get("CLAWQL_LAB_LANGEXTRACT_URL")
+        or os.environ.get("LANGEXTRACT_BASE_URL")
+        or ""
+    ).strip()
+    return url.rstrip("/") or None
 
-    Uses local docx text when ``text_extractor`` is provided (Tika-equivalent for
-    born-digital .docx in GHA). Live LangExtract/Tika sidecars are optional
-    upgrades via ``idp_matter_pipeline.py`` — same column contract.
-    """
+
+def _tika_base_url() -> str | None:
+    url = (
+        os.environ.get("CLAWQL_LAB_TIKA_URL") or os.environ.get("TIKA_BASE_URL") or ""
+    ).strip()
+    return url.rstrip("/") or None
+
+
+def _tika_parse_bytes(data: bytes, *, timeout: float = 180) -> str:
+    import urllib.request
+
+    base = _tika_base_url()
+    if not base:
+        raise RuntimeError("Tika URL not configured")
+    req = urllib.request.Request(
+        f"{base}/tika",
+        data=data,
+        headers={
+            "Accept": "text/plain",
+            "Content-Type": "application/octet-stream",
+        },
+        method="PUT",
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read().decode("utf-8", errors="replace")
+
+
+def _langextract_matter_fields(text: str, *, doc_id: str) -> dict[str, Any]:
+    """POST schema_preset=credit_facility_matter; map grounded extractions."""
+    import json
+    import urllib.request
+
+    base = _langextract_base_url()
+    if not base:
+        raise RuntimeError("LangExtract URL not configured")
+    payload = {
+        "text": text[:180_000],
+        "schema_preset": "credit_facility_matter",
+        "doc_id": doc_id[:80],
+        "write_html": False,
+    }
+    req = urllib.request.Request(
+        f"{base}/extract",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"content-type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=180) as resp:
+        body = json.loads(resp.read().decode("utf-8"))
+    if not body.get("ok"):
+        raise RuntimeError(body.get("error") or "langextract failed")
+    fields: dict[str, Any] = {
+        "provider": body.get("provider") or body.get("backend") or "langextract",
+        "model_id": body.get("model_id"),
+    }
+    for e in body.get("extractions") or []:
+        cls = e.get("extraction_class")
+        text_v = str(e.get("extraction_text") or "")
+        if cls == "deal_date":
+            fields["deal_date"] = _parse_deal_date(text_v) or text_v
+        elif cls == "facility_amount_usd":
+            fields["facility_amount_usd"] = _parse_money(text_v)
+        elif cls in {
+            "has_incremental_facility",
+            "has_revolving_facility",
+            "mentions_springing_lien",
+            "is_secured",
+        }:
+            fields[cls] = text_v.strip().lower() in {"true", "yes", "1"}
+    return fields
+
+
+def _local_matter_fields_from_text(body: str, *, source_doc: str) -> dict[str, Any]:
     out: dict[str, Any] = {
-        "is_secured": matter_is_secured(matter_dir),
         "deal_date": None,
         "has_incremental_facility": False,
         "facility_amount_usd": None,
-        "has_revolving_facility": matter_has_revolving_facility(
-            matter_dir, text_extractor=text_extractor
-        ),
-        "mentions_springing_lien": matter_mentions_springing_lien(
-            matter_dir, text_extractor=text_extractor
-        ),
-        "source_doc": "",
+        "provider": "local-heuristic",
     }
-    if text_extractor is None:
-        return out
-    doc = _pick_execution_credit_doc(matter_dir)
-    if doc is None:
-        return out
-    out["source_doc"] = str(doc.relative_to(matter_dir))
-    try:
-        body = text_extractor(doc) or ""
-    except Exception:  # noqa: BLE001
-        return out
     m = _DEAL_DATE_RE.search(body)
     if m:
         out["deal_date"] = _parse_deal_date(m.group(1))
@@ -274,7 +327,103 @@ def extract_credit_facility_matter_fields(
     amt = _FACILITY_AMOUNT_RE.search(head) or _FACILITY_AMOUNT_ALT_RE.search(head)
     if amt:
         out["facility_amount_usd"] = _parse_money(amt.group(1))
-    # Mezzanine-only: do not trust text revolver (path revolver still OK)
+    if _REVOLVER_ESTABLISH_RE.search(body) and "mezzanine" not in source_doc.lower():
+        out["has_revolving_facility"] = True
+    if _SPRINGING_LIEN_RE.search(body):
+        out["mentions_springing_lien"] = True
+    return out
+
+
+def extract_credit_facility_matter_fields(
+    matter_dir: Path,
+    *,
+    text_extractor: Callable[[Path], str] | None = None,
+) -> dict[str, Any]:
+    """Fill Matter typed fields (LangExtract preset names).
+
+    Prefer LangExtract HTTP when ``CLAWQL_LAB_LANGEXTRACT_URL`` /
+    ``LANGEXTRACT_BASE_URL`` is set; otherwise local grounded heuristics.
+    Optional Tika (``CLAWQL_LAB_TIKA_URL``) for bytes→text when available.
+    """
+    out: dict[str, Any] = {
+        "is_secured": matter_is_secured(matter_dir),
+        "deal_date": None,
+        "has_incremental_facility": False,
+        "facility_amount_usd": None,
+        "has_revolving_facility": False,
+        "mentions_springing_lien": False,
+        "source_doc": "",
+        "extract_provider": "none",
+    }
+    # Path revolvers / springing filenames always apply.
+    out["has_revolving_facility"] = matter_has_revolving_facility(
+        matter_dir, text_extractor=None
+    )
+    out["mentions_springing_lien"] = matter_mentions_springing_lien(
+        matter_dir, text_extractor=None
+    )
+
+    doc = _pick_execution_credit_doc(matter_dir)
+    if doc is None:
+        # Still allow path-only revolver/secured.
+        out["extract_provider"] = "path-only"
+        return out
+    out["source_doc"] = str(doc.relative_to(matter_dir))
+
+    body = ""
+    parse_provider = "none"
+    if _tika_base_url():
+        try:
+            body = _tika_parse_bytes(doc.read_bytes())
+            parse_provider = "tika"
+        except Exception:  # noqa: BLE001
+            body = ""
+    if not body and text_extractor is not None:
+        try:
+            body = text_extractor(doc) or ""
+            parse_provider = "docx-local"
+        except Exception:  # noqa: BLE001
+            body = ""
+    if not body:
+        out["extract_provider"] = f"{parse_provider}/empty"
+        # Fall back to full-tree path+text scans when we have an extractor.
+        if text_extractor is not None:
+            out["has_revolving_facility"] = matter_has_revolving_facility(
+                matter_dir, text_extractor=text_extractor
+            )
+            out["mentions_springing_lien"] = matter_mentions_springing_lien(
+                matter_dir, text_extractor=text_extractor
+            )
+        return out
+
+    fields: dict[str, Any]
+    if _langextract_base_url():
+        try:
+            fields = _langextract_matter_fields(
+                body, doc_id=f"{matter_dir.name}-{doc.stem}"
+            )
+            out["extract_provider"] = f"{parse_provider}/langextract"
+        except Exception:  # noqa: BLE001
+            fields = _local_matter_fields_from_text(body, source_doc=out["source_doc"])
+            out["extract_provider"] = f"{parse_provider}/local-fallback"
+    else:
+        fields = _local_matter_fields_from_text(body, source_doc=out["source_doc"])
+        out["extract_provider"] = f"{parse_provider}/local"
+
+    if fields.get("deal_date"):
+        out["deal_date"] = fields["deal_date"]
+    if fields.get("facility_amount_usd") is not None:
+        out["facility_amount_usd"] = fields["facility_amount_usd"]
+    if "has_incremental_facility" in fields:
+        out["has_incremental_facility"] = bool(fields["has_incremental_facility"])
+    if fields.get("has_revolving_facility"):
+        out["has_revolving_facility"] = True
+    if fields.get("mentions_springing_lien"):
+        out["mentions_springing_lien"] = True
+    if fields.get("is_secured"):
+        out["is_secured"] = True
+
+    # Mezzanine-only docs: revolver only if path evidence (notes / ABL).
     if "mezzanine" in out["source_doc"].lower():
         path_rev = any(
             p.is_file() and _REVOLVER_PATH_RE.search(p.name)
@@ -282,6 +431,7 @@ def extract_credit_facility_matter_fields(
         )
         if not path_rev:
             out["has_revolving_facility"] = False
+
     return out
 
 

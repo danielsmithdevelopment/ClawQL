@@ -1301,11 +1301,14 @@ class ClawQLLabSession:
             for r in rows
             if r.get("is_credit_facility") and r.get("has_revolving_facility")
         )
+        secured_n = sum(
+            1 for r in rows if r.get("is_credit_facility") and r.get("is_secured")
+        )
         print(
             f"ClawQL pre-ingest: DuckDB {db_path} rows={len(rows)} "
             f"is_credit_facility={credit_n} (expected {expected_credit}) "
             f"credit_facilities.mentions_springing_lien={lien_n} "
-            f"has_revolving_facility={revolver_n}"
+            f"has_revolving_facility={revolver_n} is_secured={secured_n}"
         )
         if expected_credit and credit_n != expected_credit:
             print(

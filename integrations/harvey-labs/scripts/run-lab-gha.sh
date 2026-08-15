@@ -95,6 +95,53 @@ uv sync
 # LAB ClawQL SQL-first retrieval (matters.duckdb / clawql_sql)
 uv pip install duckdb >/dev/null
 echo "::notice::Installed duckdb for clawql_sql"
+
+start_lab_idp_sidecars() {
+  # Tika (parse) + LangExtract demo (Matter schema fill) for clawql arms only.
+  # Cheap local processes — no Docker. Demo LangExtract = grounded preset
+  # credit_facility_matter (same classes as live mode).
+  if [[ "${CLAWQL_LAB_IDP_SIDECARS:-1}" == "0" ]]; then
+    echo "::notice::CLAWQL_LAB_IDP_SIDECARS=0 — skipping Tika/LangExtract"
+    return 0
+  fi
+  echo "::group::Start LAB IDP sidecars (Tika + LangExtract)"
+  local idp_dir="${RUNNER_TEMP:-/tmp}/clawql-lab-idp"
+  mkdir -p "${idp_dir}"
+  if [[ ! -f "${idp_dir}/tika-server-standard.jar" ]]; then
+    curl -fsSL -o "${idp_dir}/tika-server-standard.jar" \
+      "https://repo1.maven.org/maven2/org/apache/tika/tika-server-standard/2.9.2/tika-server-standard-2.9.2.jar"
+  fi
+  if ! curl -fsS -m 2 "http://127.0.0.1:9998/version" >/dev/null 2>&1; then
+    nohup java -Xmx512m -jar "${idp_dir}/tika-server-standard.jar" \
+      --host 127.0.0.1 --port 9998 \
+      >"${idp_dir}/tika.log" 2>&1 &
+    echo $! >"${idp_dir}/tika.pid"
+    for _ in $(seq 1 30); do
+      curl -fsS -m 2 "http://127.0.0.1:9998/version" >/dev/null 2>&1 && break
+      sleep 1
+    done
+  fi
+  curl -fsS -m 5 "http://127.0.0.1:9998/version" | head -c 80
+  echo
+  export CLAWQL_LAB_TIKA_URL="http://127.0.0.1:9998"
+
+  if ! curl -fsS -m 2 "http://127.0.0.1:8090/health" >/dev/null 2>&1; then
+    nohup env LANGEXTRACT_MODE=demo PORT=8090 \
+      python3 "${CLAWQL_ROOT}/deployment/samples/langextract-http/server.py" \
+      >"${idp_dir}/langextract.log" 2>&1 &
+    echo $! >"${idp_dir}/langextract.pid"
+    for _ in $(seq 1 20); do
+      curl -fsS -m 2 "http://127.0.0.1:8090/health" >/dev/null 2>&1 && break
+      sleep 1
+    done
+  fi
+  curl -fsS -m 5 "http://127.0.0.1:8090/health" || true
+  echo
+  export CLAWQL_LAB_LANGEXTRACT_URL="http://127.0.0.1:8090"
+  echo "::notice::IDP sidecars ready TIKA=${CLAWQL_LAB_TIKA_URL} LANGEXTRACT=${CLAWQL_LAB_LANGEXTRACT_URL}"
+  echo "::endgroup::"
+}
+
 if ! command -v podman >/dev/null 2>&1; then
   sudo apt-get update -qq
   sudo apt-get install -y -qq podman
@@ -203,6 +250,7 @@ for arm in "${ARM_LIST[@]}"; do
       ;;
     clawql)
       ensure_clawql_mcp
+      start_lab_idp_sidecars
       run_and_eval clawql "clawql/${MODEL}"
       ;;
     nemotron|nemotron-baseline)
@@ -218,6 +266,7 @@ for arm in "${ARM_LIST[@]}"; do
         exit 1
       fi
       ensure_clawql_mcp
+      start_lab_idp_sidecars
       run_and_eval nemotron-clawql "clawql-cc/${NEMOTRON_HARNESS_MODEL}"
       ;;
     *)
