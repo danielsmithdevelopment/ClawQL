@@ -37,6 +37,10 @@ def find_span(text: str, needle: str) -> dict[str, int] | None:
 
 def demo_extract(body: dict[str, Any]) -> dict[str, Any]:
     text = str(body.get("text", ""))
+    preset = str(body.get("schema_preset") or "").strip().lower()
+    if preset in {"credit_facility_matter", "credit_facility", "harvey_matter"}:
+        return demo_extract_credit_facility(body)
+
     extractions: list[dict[str, Any]] = []
 
     wages = re.search(r"Box\s*1[^\d]*(\d[\d,]*\.\d{2})", text, re.I)
@@ -92,6 +96,162 @@ def demo_extract(body: dict[str, Any]) -> dict[str, Any]:
             span = e["char_interval"]
             html.append(
                 f"<li><strong>{e['extraction_class']}</strong>: {e['extraction_text']} "
+                f"<em>({span['start']}–{span['end']})</em></li>"
+            )
+        html.append("</ul></body></html>")
+        html_path.write_text("".join(html), encoding="utf-8")
+        result["artifact_paths"] = {
+            "jsonl_path": str(jsonl_path),
+            "html_path": str(html_path),
+        }
+
+    return result
+
+
+def _append_bool(
+    extractions: list[dict[str, Any]], text: str, cls: str, needle: str, value: str
+) -> None:
+    span = find_span(text, needle)
+    if not span:
+        return
+    extractions.append(
+        {
+            "extraction_class": cls,
+            "extraction_text": value,
+            "attributes": {"evidence": needle[:120]},
+            "char_interval": span,
+        }
+    )
+
+
+def demo_extract_credit_facility(body: dict[str, Any]) -> dict[str, Any]:
+    """Schema-guided Matter fill for Harvey LAB credit agreements (demo grounding).
+
+    Live LangExtract uses the same extraction_class names via examples; demo mode
+    grounds with deterministic patterns so the IDP→DuckDB path can be tested
+    offline without an LLM key.
+    """
+    text = str(body.get("text", ""))
+    extractions: list[dict[str, Any]] = []
+
+    # deal_date — prefer "Dated as of …" / "dated as of …"
+    m = re.search(
+        r"(?:Dated|dated)\s+as\s+of\s+([A-Z][a-z]+\s+\d{1,2},?\s+\d{4})",
+        text,
+    )
+    if m:
+        extractions.append(
+            {
+                "extraction_class": "deal_date",
+                "extraction_text": m.group(1).replace(",", ""),
+                "attributes": {},
+                "char_interval": find_span(text, m.group(1)),
+            }
+        )
+
+    # facility_amount_usd — aggregate principal in the opening pages
+    head = text[:12000]
+    amt = re.search(
+        r"(?:aggregate\s+principal\s+amount\s+of\s+(?:up\s+to\s+)?|"
+        r"facility\s+in\s+an\s+aggregate\s+(?:principal\s+)?amount\s+of\s+(?:up\s+to\s+)?)"
+        r"\$\s*([0-9][0-9,]*)",
+        head,
+        re.I,
+    )
+    if not amt:
+        amt = re.search(
+            r"\$\s*([0-9][0-9,]{6,})\s+Senior\s+Secured\s+Term\s+Loan",
+            head,
+            re.I,
+        )
+    if amt:
+        extractions.append(
+            {
+                "extraction_class": "facility_amount_usd",
+                "extraction_text": amt.group(1),
+                "attributes": {"currency": "USD"},
+                "char_interval": find_span(text, amt.group(1)),
+            }
+        )
+
+    # has_incremental_facility
+    inc = re.search(
+        r"(\"Incremental\s+Facility\"|Incremental\s+Facility\s+means|"
+        r"incremental\s+term\s+loan\s+facility)",
+        text,
+        re.I,
+    )
+    if inc:
+        _append_bool(
+            extractions, text, "has_incremental_facility", inc.group(1), "true"
+        )
+
+    # has_revolving_facility — establish language (not Existing-only)
+    rev = re.search(
+        r"(?:provide|providing|establish|establishing|"
+        r"request(?:ed|s)?\s+that\s+the\s+lenders?\s+provide)\s+"
+        r"(?:a\s+|an\s+|the\s+)?(?:senior\s+secured\s+)?"
+        r"(revolving\s+credit\s+facility)",
+        text,
+        re.I,
+    )
+    if not rev:
+        rev = re.search(
+            r"(\$[0-9,]+\s+(?:Senior\s+Secured\s+)?Revolving\s+Credit\s+Facility)",
+            text,
+            re.I,
+        )
+    if rev:
+        _append_bool(
+            extractions, text, "has_revolving_facility", rev.group(1), "true"
+        )
+
+    # mentions_springing_lien
+    lien = re.search(r"(springing\s+lien)", text, re.I)
+    if lien:
+        _append_bool(
+            extractions, text, "mentions_springing_lien", lien.group(1), "true"
+        )
+
+    # is_secured — textual grant language (path signals also applied upstream)
+    sec = re.search(
+        r"(grant\s+of\s+security\s+interest|Security\s+Agreement|"
+        r"first[- ]priority\s+(?:lien|security\s+interest))",
+        text,
+        re.I,
+    )
+    if sec:
+        _append_bool(extractions, text, "is_secured", sec.group(1), "true")
+
+    grounded = [e for e in extractions if e.get("char_interval")]
+    result = {
+        "ok": True,
+        "provider": "langextract-sidecar",
+        "backend": "demo",
+        "model_id": "demo-credit-facility-matter-v1",
+        "schema_preset": "credit_facility_matter",
+        "extractions": grounded,
+        "artifact_paths": {},
+    }
+
+    if body.get("write_html"):
+        ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+        doc_id = body.get("doc_id") or str(uuid.uuid4())[:8]
+        jsonl_path = ARTIFACTS_DIR / f"{doc_id}.jsonl"
+        html_path = ARTIFACTS_DIR / f"{doc_id}.html"
+        with jsonl_path.open("w", encoding="utf-8") as f:
+            for row in grounded:
+                f.write(json.dumps(row) + "\n")
+        html = [
+            "<!doctype html><html><head><meta charset=utf-8>"
+            "<title>LangExtract credit facility</title></head><body>",
+            "<h1>credit_facility_matter extractions</h1><ul>",
+        ]
+        for e in grounded:
+            span = e["char_interval"]
+            html.append(
+                f"<li><strong>{e['extraction_class']}</strong>: "
+                f"{e['extraction_text']} "
                 f"<em>({span['start']}–{span['end']})</em></li>"
             )
         html.append("</ul></body></html>")
