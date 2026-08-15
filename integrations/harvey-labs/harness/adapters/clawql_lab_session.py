@@ -27,6 +27,7 @@ try:
     from harness.adapters.clawql_lab_duckdb import (
         build_matters_duckdb,
         default_duckdb_path,
+        detect_hsr_filing,
         duckdb_available,
         extract_credit_facility_matter_fields,
         sql_tool_result_json,
@@ -35,6 +36,7 @@ except ImportError:
     from clawql_lab_duckdb import (  # type: ignore
         build_matters_duckdb,
         default_duckdb_path,
+        detect_hsr_filing,
         duckdb_available,
         extract_credit_facility_matter_fields,
         sql_tool_result_json,
@@ -260,11 +262,13 @@ CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
             "(+ _proof_doc), has_mfn_in_credit_agreement (+ _proof_doc), "
             "has_springing_financial_covenant, has_always_on_maintenance_covenant, "
             "has_maintenance_financial_covenant, borrower_control "
-            "(sponsor|corporate). "
+            "(sponsor|corporate), has_hsr_filing (+ date + proof_doc). "
             "Views: credit_facilities, revolving_credit_facilities, "
             "adjusted_ebitda_addback_matters, covenant_lite_credit_facilities, "
             "mfn_credit_agreements, always_on_maintenance_credit_facilities, "
-            "maintenance_financial_covenant_matters. "
+            "maintenance_financial_covenant_matters, hsr_filings, "
+            "secured_credit_facilities, live_maintenance_financings, "
+            "covenant_lite_no_always_on. "
             "SELECT/WITH/DESCRIBE only — no writes."
         ),
         "parameters": {
@@ -1200,6 +1204,12 @@ class ClawQLLabSession:
             has_always_on = False
             has_maintenance_fc = False
             borrower_control = None
+            hsr_filing = detect_hsr_filing(matter_dir)
+            has_hsr_filing = bool(hsr_filing.get("filed"))
+            hsr_filing_date = hsr_filing.get("filing_date")
+            hsr_filing_proof = str(hsr_filing.get("proof_doc") or "")
+            if has_hsr_filing and practice == "Other":
+                practice = "Antitrust & Competition"
             if credit["is_credit_facility"]:
                 fields = extract_credit_facility_matter_fields(
                     matter_dir,
@@ -1243,6 +1253,9 @@ class ClawQLLabSession:
                     "title": title,
                     "is_credit_facility": bool(credit["is_credit_facility"]),
                     "is_hsr_second_request": bool(detection["received"]),
+                    "has_hsr_filing": has_hsr_filing,
+                    "hsr_filing_date": hsr_filing_date,
+                    "hsr_filing_proof_doc": hsr_filing_proof,
                     "mentions_springing_lien": mentions_lien,
                     "has_revolving_facility": has_revolver,
                     "is_secured": is_secured,
