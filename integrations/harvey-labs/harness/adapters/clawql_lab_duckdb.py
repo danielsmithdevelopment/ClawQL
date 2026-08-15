@@ -272,6 +272,8 @@ def _langextract_matter_fields(text: str, *, doc_id: str) -> dict[str, Any]:
     import urllib.request
 
     from clawql_lab_matter_schema import (
+        FIELD_ALWAYS_ON_MAINT,
+        FIELD_BORROWER_CONTROL,
         FIELD_COVENANT_LITE,
         FIELD_DEAL_DATE,
         FIELD_EBITDA_ADDBACKS,
@@ -281,6 +283,7 @@ def _langextract_matter_fields(text: str, *, doc_id: str) -> dict[str, Any]:
         FIELD_REVOLVER,
         FIELD_SECURED,
         FIELD_SPRINGING,
+        FIELD_SPRINGING_FC,
     )
 
     base = _langextract_base_url()
@@ -314,14 +317,23 @@ def _langextract_matter_fields(text: str, *, doc_id: str) -> dict[str, Any]:
         FIELD_EBITDA_ADDBACKS,
         FIELD_COVENANT_LITE,
         FIELD_MFN_CREDIT,
+        FIELD_SPRINGING_FC,
+        FIELD_ALWAYS_ON_MAINT,
     }
     for e in body.get("extractions") or []:
         cls = e.get("extraction_class")
         text_v = str(e.get("extraction_text") or "")
+        attrs = e.get("attributes") if isinstance(e.get("attributes"), dict) else {}
         if cls == FIELD_DEAL_DATE:
             fields[FIELD_DEAL_DATE] = _parse_deal_date(text_v) or text_v
         elif cls == FIELD_FACILITY_AMOUNT:
             fields[FIELD_FACILITY_AMOUNT] = _parse_money(text_v)
+        elif cls == FIELD_BORROWER_CONTROL:
+            raw = str(attrs.get("value") or text_v).strip().lower()
+            if "corporate" in raw:
+                fields[FIELD_BORROWER_CONTROL] = "corporate"
+            elif "sponsor" in raw:
+                fields[FIELD_BORROWER_CONTROL] = "sponsor"
         elif cls in bool_classes:
             fields[cls] = text_v.strip().lower() in {"true", "yes", "1"}
     return fields
@@ -330,9 +342,12 @@ def _langextract_matter_fields(text: str, *, doc_id: str) -> dict[str, Any]:
 def _local_matter_fields_from_text(body: str, *, source_doc: str) -> dict[str, Any]:
     """Offline fallback mirroring demo LangExtract firm_knowledge_matter."""
     from clawql_lab_matter_schema import (
+        FIELD_ALWAYS_ON_MAINT,
+        FIELD_BORROWER_CONTROL,
         FIELD_COVENANT_LITE,
         FIELD_EBITDA_ADDBACKS,
         FIELD_MFN_CREDIT,
+        FIELD_SPRINGING_FC,
     )
 
     out: dict[str, Any] = {
@@ -374,7 +389,67 @@ def _local_matter_fields_from_text(body: str, *, source_doc: str) -> dict[str, A
         re.I | re.S,
     ):
         out[FIELD_MFN_CREDIT] = True
+    if re.search(
+        r"springing\s+financial\s+covenant|"
+        r"Springing\s+(?:Financial\s+Covenant|Fixed\s+Charge)|"
+        r"tested\s+only\s+when[^\n]{0,80}revolv|"
+        r"only\s+when\s+(?:the\s+)?aggregate\s+revolving|"
+        r"when\s+(?:and\s+only\s+when\s+)?(?:the\s+)?(?:aggregate\s+)?"
+        r"revolv(?:ing|er)\s+(?:credit\s+)?(?:exposure|utilization|outstandings)",
+        body,
+        re.I,
+    ):
+        out[FIELD_SPRINGING_FC] = True
+    if re.search(
+        r"always[- ]on|"
+        r"tested\s+quarterly(?!\s+only)|"
+        r"financial\s+maintenance\s+covenant|"
+        r"maintain\s+(?:a\s+|the\s+)?(?:Maximum\s+)?[^\n]{0,40}Leverage\s+Ratio|"
+        r"shall\s+not\s+permit[^\n]{0,80}Leverage\s+Ratio|"
+        r"financial\s+covenant|"
+        r"leverage\s+ratio\s+shall\s+not\s+exceed|"
+        r"maximum\s+total\s+net\s+leverage|"
+        r"interest\s+coverage\s+ratio",
+        body,
+        re.I,
+    ):
+        out[FIELD_ALWAYS_ON_MAINT] = True
+    if re.search(
+        r"(?:Borrower|Client|Company|Guarantor)\s+"
+        r"(?:is|whose\s+common\s+(?:stock|equity)\s+is)\s+publicly\s+traded|"
+        r"whose\s+common\s+(?:stock|equity)\s+is\s+publicly\s+traded|"
+        r"(?:is|are)\s+publicly\s+traded\s+on\s+(?:the\s+)?"
+        r"(?:New\s+York\s+Stock\s+Exchange|NYSE|Nasdaq)|"
+        r"(?:common\s+stock|ordinary\s+shares|American\s+Depositary\s+Shares)\s+"
+        r"(?:are|is)\s+listed\s+on\s+(?:the\s+)?"
+        r"(?:New\s+York\s+Stock\s+Exchange|NYSE|Nasdaq)|"
+        r"publicly\s+traded\s+on\s+(?:the\s+)?"
+        r"(?:New\s+York\s+Stock\s+Exchange|NYSE|Nasdaq)\s+under\s+the\s+ticker|"
+        r"listed\s+on\s+(?:the\s+)?(?:New\s+York\s+Stock\s+Exchange|NYSE|Nasdaq)"
+        r".{0,40}ticker\s+symbol",
+        body,
+        re.I,
+    ):
+        out[FIELD_BORROWER_CONTROL] = "corporate"
+    elif re.search(r"portfolio\s+company\s+of", body, re.I):
+        out[FIELD_BORROWER_CONTROL] = "sponsor"
     return out
+
+
+def _finalize_matter_fields(fields: dict[str, Any]) -> None:
+    """Derive maintenance flags after springing-gate / always-on merge."""
+    from clawql_lab_matter_schema import (
+        FIELD_ALWAYS_ON_MAINT,
+        FIELD_MAINTENANCE_FC,
+        FIELD_SPRINGING_FC,
+    )
+
+    springing = bool(fields.get(FIELD_SPRINGING_FC))
+    always = bool(fields.get(FIELD_ALWAYS_ON_MAINT))
+    if springing:
+        fields[FIELD_ALWAYS_ON_MAINT] = False
+        always = False
+    fields[FIELD_MAINTENANCE_FC] = always or springing
 
 
 def extract_credit_facility_matter_fields(
@@ -487,6 +562,8 @@ def extract_credit_facility_matter_fields(
     ):
         out.setdefault(proof_column(fname), "")
 
+    _finalize_matter_fields(out)
+
     if scanned == 0 and text_extractor is not None:
         out["has_revolving_facility"] = matter_has_revolving_facility(
             matter_dir, text_extractor=text_extractor
@@ -495,6 +572,7 @@ def extract_credit_facility_matter_fields(
             matter_dir, text_extractor=text_extractor
         )
         out["extract_provider"] = f"{parse_provider}/empty"
+        _finalize_matter_fields(out)
 
     return out
 
@@ -508,9 +586,13 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
     import duckdb
 
     from clawql_lab_matter_schema import (
+        FIELD_ALWAYS_ON_MAINT,
+        FIELD_BORROWER_CONTROL,
         FIELD_COVENANT_LITE,
         FIELD_EBITDA_ADDBACKS,
+        FIELD_MAINTENANCE_FC,
         FIELD_MFN_CREDIT,
+        FIELD_SPRINGING_FC,
         proof_column,
     )
 
@@ -542,6 +624,10 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
               {proof_column(FIELD_COVENANT_LITE)} VARCHAR,
               {FIELD_MFN_CREDIT} BOOLEAN,
               {proof_column(FIELD_MFN_CREDIT)} VARCHAR,
+              {FIELD_SPRINGING_FC} BOOLEAN,
+              {FIELD_ALWAYS_ON_MAINT} BOOLEAN,
+              {FIELD_MAINTENANCE_FC} BOOLEAN,
+              {FIELD_BORROWER_CONTROL} VARCHAR,
               sandbox_root VARCHAR,
               vault_note_path VARCHAR
             )
@@ -551,7 +637,7 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             con.executemany(
                 f"""
                 INSERT INTO matters VALUES (
-                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
                 [
@@ -575,6 +661,10 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
                         r.get(proof_column(FIELD_COVENANT_LITE)) or "",
                         bool(r.get(FIELD_MFN_CREDIT)),
                         r.get(proof_column(FIELD_MFN_CREDIT)) or "",
+                        bool(r.get(FIELD_SPRINGING_FC)),
+                        bool(r.get(FIELD_ALWAYS_ON_MAINT)),
+                        bool(r.get(FIELD_MAINTENANCE_FC)),
+                        r.get(FIELD_BORROWER_CONTROL),
                         r.get("sandbox_root") or "",
                         r.get("vault_note_path") or "",
                     )
@@ -613,6 +703,20 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             CREATE VIEW mfn_credit_agreements AS
             SELECT * FROM matters
             WHERE is_credit_facility AND {FIELD_MFN_CREDIT}
+            """
+        )
+        con.execute(
+            f"""
+            CREATE VIEW always_on_maintenance_credit_facilities AS
+            SELECT * FROM matters
+            WHERE is_credit_facility AND {FIELD_ALWAYS_ON_MAINT}
+            """
+        )
+        con.execute(
+            f"""
+            CREATE VIEW maintenance_financial_covenant_matters AS
+            SELECT * FROM matters
+            WHERE is_credit_facility AND {FIELD_MAINTENANCE_FC}
             """
         )
     finally:
@@ -682,7 +786,17 @@ def run_readonly_sql(db_path: Path, sql: str) -> dict[str, Any]:
                 "ORDER BY facility_amount_usd DESC LIMIT 1; "
                 "SELECT matter_id FROM matters WHERE is_credit_facility "
                 "AND is_secured AND deal_date IS NOT NULL "
-                "ORDER BY deal_date DESC LIMIT 1;"
+                "ORDER BY deal_date DESC LIMIT 1; "
+                "SELECT year(deal_date) AS y, "
+                "count(*) FILTER (WHERE has_always_on_maintenance_covenant) AS k, "
+                "count(*) AS n FROM matters WHERE is_credit_facility "
+                "AND deal_date IS NOT NULL GROUP BY 1 ORDER BY 1; "
+                "SELECT matter_id FROM matters WHERE is_credit_facility "
+                "AND has_maintenance_financial_covenant; "
+                "SELECT borrower_control, "
+                "count(*) FILTER (WHERE has_adjusted_ebitda_addbacks) AS with_ab, "
+                "count(*) AS n FROM matters "
+                "WHERE borrower_control IS NOT NULL GROUP BY 1;"
             ),
         }
     except Exception as exc:  # noqa: BLE001
