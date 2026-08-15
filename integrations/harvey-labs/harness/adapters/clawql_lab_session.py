@@ -28,6 +28,7 @@ try:
         build_matters_duckdb,
         default_duckdb_path,
         duckdb_available,
+        matter_has_revolving_facility,
         matter_mentions_springing_lien,
         sql_tool_result_json,
     )
@@ -36,6 +37,7 @@ except ImportError:
         build_matters_duckdb,
         default_duckdb_path,
         duckdb_available,
+        matter_has_revolving_facility,
         matter_mentions_springing_lien,
         sql_tool_result_json,
     )
@@ -249,6 +251,8 @@ CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
             "WHERE is_credit_facility ORDER BY matter_id; "
             "SELECT count(*) FILTER (WHERE mentions_springing_lien) AS k, "
             "count(*) AS n FROM matters WHERE is_credit_facility; "
+            "SELECT matter_id FROM matters WHERE is_credit_facility "
+            "AND has_revolving_facility; "
             "Also: is_hsr_second_request, practice_area, matter_type. "
             "SELECT/WITH/DESCRIBE only — no writes."
         ),
@@ -1170,11 +1174,16 @@ class ClawQLLabSession:
                 return ""
 
             mentions_lien = False
+            has_revolver = False
             if credit["is_credit_facility"]:
                 mentions_lien = matter_mentions_springing_lien(
                     matter_dir,
                     text_extractor=_extract,
                     priority_docs=_priority_docs,
+                )
+                has_revolver = matter_has_revolving_facility(
+                    matter_dir,
+                    text_extractor=_extract,
                 )
             duckdb_rows.append(
                 {
@@ -1186,6 +1195,7 @@ class ClawQLLabSession:
                     "is_credit_facility": bool(credit["is_credit_facility"]),
                     "is_hsr_second_request": bool(detection["received"]),
                     "mentions_springing_lien": mentions_lien,
+                    "has_revolving_facility": has_revolver,
                     "sandbox_root": f"/workspace/documents/matters/{matter_id}",
                     "vault_note_path": doc["path"],
                 }
@@ -1275,10 +1285,16 @@ class ClawQLLabSession:
             for r in rows
             if r.get("is_credit_facility") and r.get("mentions_springing_lien")
         )
+        revolver_n = sum(
+            1
+            for r in rows
+            if r.get("is_credit_facility") and r.get("has_revolving_facility")
+        )
         print(
             f"ClawQL pre-ingest: DuckDB {db_path} rows={len(rows)} "
             f"is_credit_facility={credit_n} (expected {expected_credit}) "
-            f"credit_facilities.mentions_springing_lien={lien_n}"
+            f"credit_facilities.mentions_springing_lien={lien_n} "
+            f"has_revolving_facility={revolver_n}"
         )
         if expected_credit and credit_n != expected_credit:
             print(
