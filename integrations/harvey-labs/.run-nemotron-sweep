@@ -1,0 +1,23 @@
+# Nemotron ± ClawQL single-task probe (Harvey-parity judge)
+#
+# Presence of this file on a PR/push that touches integrations/harvey-labs/**
+# switches the firm-knowledge workflow from single-task smoke to:
+#
+#   Arms:   nemotron, nemotron-clawql
+#   Tasks:  firm-knowledge/tasks/START .. END (inclusive)
+#   Judge:  claude-sonnet-4-6 (Harvey harness default; via OpenRouter)
+#
+# Spec on first non-comment line:
+#   N         → tasks 001..00N
+#   START-END → tasks START..END (e.g. 18-18 for task-018 negative-result probe)
+#
+# Probe arc:
+#   #1 [31765565825] wrong N (0 of 5/266)
+#   #2 [31767832459] Fix5 regress — practice=Other, empty cohort, no write
+#   #3 [31769718249] Fix6 — N=36, wrote 0 of 36
+#   #4 [31772193789] Fix7 seed 12/266 OK; bulk timeout; OpenRouter 429 (pre-reset)
+# Post-reset arming: Fix7 + bulk batch 25 / 600s timeout. Expect 12/266 + 0 of 12.
+#
+# WARNING: concurrency cancel-in-progress is on — do not push while this runs.
+#
+18-18
