@@ -128,7 +128,6 @@ MATTER_FIELD_REGISTRY: tuple[MatterFieldSpec, ...] = (
             DOC_ROLE_EXECUTION_CREDIT,
             DOC_ROLE_MEMO,
             DOC_ROLE_TERM_SHEET,
-            DOC_ROLE_OTHER,
         ),
         description="sponsor (PE portco) vs corporate (public borrower) — 017",
     ),
