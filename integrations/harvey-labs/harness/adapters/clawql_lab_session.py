@@ -257,10 +257,14 @@ CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
             "ORDER BY deal_date DESC LIMIT 1; "
             "Also: is_hsr_second_request, practice_area, matter_type, "
             "has_adjusted_ebitda_addbacks (+ _proof_doc), is_covenant_lite "
-            "(+ _proof_doc), has_mfn_in_credit_agreement (+ _proof_doc). "
+            "(+ _proof_doc), has_mfn_in_credit_agreement (+ _proof_doc), "
+            "has_springing_financial_covenant, has_always_on_maintenance_covenant, "
+            "has_maintenance_financial_covenant, borrower_control "
+            "(sponsor|corporate). "
             "Views: credit_facilities, revolving_credit_facilities, "
             "adjusted_ebitda_addback_matters, covenant_lite_credit_facilities, "
-            "mfn_credit_agreements. "
+            "mfn_credit_agreements, always_on_maintenance_credit_facilities, "
+            "maintenance_financial_covenant_matters. "
             "SELECT/WITH/DESCRIBE only — no writes."
         ),
         "parameters": {
@@ -1192,6 +1196,10 @@ class ClawQLLabSession:
             covlite_proof = ""
             has_mfn = False
             mfn_proof = ""
+            has_springing_fc = False
+            has_always_on = False
+            has_maintenance_fc = False
+            borrower_control = None
             if credit["is_credit_facility"]:
                 fields = extract_credit_facility_matter_fields(
                     matter_dir,
@@ -1215,6 +1223,17 @@ class ClawQLLabSession:
                 mfn_proof = str(
                     fields.get("has_mfn_in_credit_agreement_proof_doc") or ""
                 )
+                has_springing_fc = bool(
+                    fields.get("has_springing_financial_covenant")
+                )
+                has_always_on = bool(
+                    fields.get("has_always_on_maintenance_covenant")
+                )
+                has_maintenance_fc = bool(
+                    fields.get("has_maintenance_financial_covenant")
+                )
+                bc = fields.get("borrower_control")
+                borrower_control = str(bc).strip().lower() if bc else None
             duckdb_rows.append(
                 {
                     "matter_id": matter_id,
@@ -1236,6 +1255,10 @@ class ClawQLLabSession:
                     "is_covenant_lite_proof_doc": covlite_proof,
                     "has_mfn_in_credit_agreement": has_mfn,
                     "has_mfn_in_credit_agreement_proof_doc": mfn_proof,
+                    "has_springing_financial_covenant": has_springing_fc,
+                    "has_always_on_maintenance_covenant": has_always_on,
+                    "has_maintenance_financial_covenant": has_maintenance_fc,
+                    "borrower_control": borrower_control,
                     "sandbox_root": f"/workspace/documents/matters/{matter_id}",
                     "vault_note_path": doc["path"],
                 }

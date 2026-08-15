@@ -7,7 +7,7 @@ Pipeline roles:
   2. Multi-doc catalogue — execution CAs, memos, term sheets (never SAFE for MFN)
   3. Tika — bytes → text
   4. LangExtract sidecar — schema-guided grounded field fill (firm_knowledge_matter)
-  5. DuckDB — typed columns + SQL gold for 011–015 / 018 / 020 / 023 / 024
+  5. DuckDB — typed columns + SQL gold for 011–020 / 023 / 024
 
 Usage:
   python3 integrations/harvey-labs/scripts/idp_matter_pipeline.py \\
@@ -36,9 +36,13 @@ from clawql_lab_duckdb import (  # noqa: E402
     extract_matter_fields,
 )
 from clawql_lab_matter_schema import (  # noqa: E402
+    FIELD_ALWAYS_ON_MAINT,
+    FIELD_BORROWER_CONTROL,
     FIELD_COVENANT_LITE,
     FIELD_EBITDA_ADDBACKS,
+    FIELD_MAINTENANCE_FC,
     FIELD_MFN_CREDIT,
+    FIELD_SPRINGING_FC,
     proof_column,
 )
 from clawql_lab_session import detect_credit_facility  # noqa: E402
@@ -78,6 +82,56 @@ GOLD_014 = {"1005-00001", "1021-00001"}
 GOLD_013 = "1008-00001"
 GOLD_015 = "1019-00002"
 
+# 016 — always-on vs springing-only on Fix-7 credit-12
+GOLD_016_ALWAYS = {
+    "1006-00001",
+    "1042-00001",
+    "1012-00001",
+    "1010-00001",
+    "1043-00001",
+    "1036-00001",
+    "1013-00001",
+    "1019-00002",
+}
+GOLD_016_SPRINGING = {"1021-00001", "1008-00001", "1038-00002", "1005-00001"}
+GOLD_016_YOY = {
+    2021: (1, 1),
+    2022: (1, 2),
+    2023: (1, 3),
+    2024: (2, 2),
+    2025: (1, 2),
+    2026: (2, 2),
+}
+
+# 017 — population ≠ credit-12; rates proven on POP017 field fills
+POP017_EXTRA = {"1001-00007", "1041-00003", "1007-00001"}
+POP017 = GOLD_011 | POP017_EXTRA
+GOLD_017_SPONSOR_AB = {
+    "1005-00001",
+    "1006-00001",
+    "1012-00001",
+    "1043-00001",
+    "1019-00002",
+    "1042-00001",
+}
+GOLD_017_CORPORATE_AB = {"1021-00001", "1038-00002", "1010-00001"}
+
+# 019 — recall 11 required; precision allow-list includes springing-only 1005
+GOLD_019_REQUIRED = {
+    "1006-00001",
+    "1008-00001",
+    "1010-00001",
+    "1012-00001",
+    "1013-00001",
+    "1019-00002",
+    "1021-00001",
+    "1036-00001",
+    "1038-00002",
+    "1042-00001",
+    "1043-00001",
+}
+GOLD_019_PRECISION = GOLD_019_REQUIRED | {"1005-00001"}
+
 
 @dataclass
 class MatterRow:
@@ -95,6 +149,10 @@ class MatterRow:
     is_covenant_lite_proof_doc: str = ""
     has_mfn_in_credit_agreement: bool = False
     has_mfn_in_credit_agreement_proof_doc: str = ""
+    has_springing_financial_covenant: bool = False
+    has_always_on_maintenance_covenant: bool = False
+    has_maintenance_financial_covenant: bool = False
+    borrower_control: str | None = None
     parse_provider: str = ""
     extract_provider: str = ""
     source_doc: str = ""
@@ -111,17 +169,28 @@ def wait_health(url: str, name: str) -> None:
         raise SystemExit(f"{name} not healthy at {url}: {exc}") from exc
 
 
-def process_matter(matter_dir: Path) -> MatterRow:
+def process_matter(matter_dir: Path, *, force_extract: bool = False) -> MatterRow:
     matter_id = matter_dir.name
     credit = detect_credit_facility(matter_dir)
     row = MatterRow(
         matter_id=matter_id,
         is_credit_facility=bool(credit["is_credit_facility"]),
     )
-    if not row.is_credit_facility:
+    if not row.is_credit_facility and not force_extract:
         return row
 
     fields = extract_matter_fields(matter_dir)
+    # POP017 extras: only borrower_control for 017 rates — do not pollute
+    # credit-cohort SQL (020 incremental, 011 add-backs, etc.).
+    if force_extract and not row.is_credit_facility:
+        bc = fields.get(FIELD_BORROWER_CONTROL)
+        row.borrower_control = str(bc).strip().lower() if bc else None
+        row.parse_provider = str(fields.get("parse_provider") or "")
+        row.extract_provider = str(fields.get("extract_provider") or "")
+        row.source_doc = str(fields.get("source_doc") or "")
+        row.docs_scanned = int(fields.get("docs_scanned") or 0)
+        return row
+
     row.is_secured = bool(fields.get("is_secured"))
     dd = fields.get("deal_date")
     if isinstance(dd, date):
@@ -149,11 +218,39 @@ def process_matter(matter_dir: Path) -> MatterRow:
     row.has_mfn_in_credit_agreement_proof_doc = str(
         fields.get(proof_column(FIELD_MFN_CREDIT)) or ""
     )
+    row.has_springing_financial_covenant = bool(fields.get(FIELD_SPRINGING_FC))
+    row.has_always_on_maintenance_covenant = bool(fields.get(FIELD_ALWAYS_ON_MAINT))
+    row.has_maintenance_financial_covenant = bool(fields.get(FIELD_MAINTENANCE_FC))
+    bc = fields.get(FIELD_BORROWER_CONTROL)
+    row.borrower_control = str(bc).strip().lower() if bc else None
     row.parse_provider = str(fields.get("parse_provider") or "")
     row.extract_provider = str(fields.get("extract_provider") or "")
     row.source_doc = str(fields.get("source_doc") or "")
     row.docs_scanned = int(fields.get("docs_scanned") or 0)
     return row
+
+
+def _row_to_duck(row: MatterRow) -> dict[str, Any]:
+    return {
+        "matter_id": row.matter_id,
+        "is_credit_facility": row.is_credit_facility,
+        "is_secured": row.is_secured,
+        "deal_date": row.deal_date.isoformat() if row.deal_date else None,
+        "has_incremental_facility": row.has_incremental_facility,
+        "facility_amount_usd": row.facility_amount_usd,
+        "has_revolving_facility": row.has_revolving_facility,
+        "mentions_springing_lien": row.mentions_springing_lien,
+        FIELD_EBITDA_ADDBACKS: row.has_adjusted_ebitda_addbacks,
+        proof_column(FIELD_EBITDA_ADDBACKS): row.has_adjusted_ebitda_addbacks_proof_doc,
+        FIELD_COVENANT_LITE: row.is_covenant_lite,
+        proof_column(FIELD_COVENANT_LITE): row.is_covenant_lite_proof_doc,
+        FIELD_MFN_CREDIT: row.has_mfn_in_credit_agreement,
+        proof_column(FIELD_MFN_CREDIT): row.has_mfn_in_credit_agreement_proof_doc,
+        FIELD_SPRINGING_FC: row.has_springing_financial_covenant,
+        FIELD_ALWAYS_ON_MAINT: row.has_always_on_maintenance_covenant,
+        FIELD_MAINTENANCE_FC: row.has_maintenance_financial_covenant,
+        FIELD_BORROWER_CONTROL: row.borrower_control,
+    }
 
 
 def run_sql_checks(db_path: Path) -> dict[str, Any]:
@@ -187,7 +284,9 @@ def run_sql_checks(db_path: Path) -> dict[str, Any]:
     out["020_top"] = con.execute(
         """
         SELECT matter_id, facility_amount_usd FROM matters
-        WHERE has_incremental_facility AND facility_amount_usd IS NOT NULL
+        WHERE is_credit_facility
+          AND has_incremental_facility
+          AND facility_amount_usd IS NOT NULL
         ORDER BY facility_amount_usd DESC LIMIT 3
         """
     ).fetchall()
@@ -235,6 +334,93 @@ def run_sql_checks(db_path: Path) -> dict[str, Any]:
         ORDER BY deal_date DESC LIMIT 3
         """
     ).fetchall()
+    out["016_always"] = [
+        r[0]
+        for r in con.execute(
+            f"""
+            SELECT matter_id FROM matters
+            WHERE is_credit_facility AND {FIELD_ALWAYS_ON_MAINT}
+            ORDER BY matter_id
+            """
+        ).fetchall()
+    ]
+    out["016_springing"] = [
+        r[0]
+        for r in con.execute(
+            f"""
+            SELECT matter_id FROM matters
+            WHERE is_credit_facility AND {FIELD_SPRINGING_FC}
+              AND NOT {FIELD_ALWAYS_ON_MAINT}
+            ORDER BY matter_id
+            """
+        ).fetchall()
+    ]
+    out["016_yoy"] = {
+        int(y): (int(k), int(n))
+        for y, k, n in con.execute(
+            f"""
+            SELECT year(deal_date) AS y,
+                   count(*) FILTER (WHERE {FIELD_ALWAYS_ON_MAINT}) AS k,
+                   count(*) AS n
+            FROM matters
+            WHERE is_credit_facility AND deal_date IS NOT NULL
+            GROUP BY 1
+            ORDER BY 1
+            """
+        ).fetchall()
+    }
+    out["017_rates"] = {
+        str(bc): (int(with_ab), int(n))
+        for bc, with_ab, n in con.execute(
+            f"""
+            SELECT {FIELD_BORROWER_CONTROL} AS bc,
+                   count(*) FILTER (WHERE {FIELD_EBITDA_ADDBACKS}) AS with_ab,
+                   count(*) AS n
+            FROM matters
+            WHERE matter_id IN ({",".join("?" for _ in POP017)})
+              AND {FIELD_BORROWER_CONTROL} IS NOT NULL
+            GROUP BY 1
+            ORDER BY 1
+            """,
+            list(sorted(POP017)),
+        ).fetchall()
+    }
+    out["017_sponsor_ab"] = [
+        r[0]
+        for r in con.execute(
+            f"""
+            SELECT matter_id FROM matters
+            WHERE matter_id IN ({",".join("?" for _ in POP017)})
+              AND {FIELD_BORROWER_CONTROL} = 'sponsor'
+              AND {FIELD_EBITDA_ADDBACKS}
+            ORDER BY matter_id
+            """,
+            list(sorted(POP017)),
+        ).fetchall()
+    ]
+    out["017_corporate_ab"] = [
+        r[0]
+        for r in con.execute(
+            f"""
+            SELECT matter_id FROM matters
+            WHERE matter_id IN ({",".join("?" for _ in POP017)})
+              AND {FIELD_BORROWER_CONTROL} = 'corporate'
+              AND {FIELD_EBITDA_ADDBACKS}
+            ORDER BY matter_id
+            """,
+            list(sorted(POP017)),
+        ).fetchall()
+    ]
+    out["019_ids"] = [
+        r[0]
+        for r in con.execute(
+            f"""
+            SELECT matter_id FROM matters
+            WHERE is_credit_facility AND {FIELD_MAINTENANCE_FC}
+            ORDER BY matter_id
+            """
+        ).fetchall()
+    ]
     con.close()
     return out
 
@@ -268,43 +454,44 @@ def main() -> int:
     ]
     if args.limit_matters:
         credit_dirs = credit_dirs[: args.limit_matters]
-    print(f"Processing {len(credit_dirs)} credit-facility matters from {args.dms}")
+    # 017 population extras (Financing / non–Fix-7) — field fill only; not credit cohort
+    extra_dirs = [
+        args.dms / mid
+        for mid in sorted(POP017_EXTRA)
+        if (args.dms / mid).is_dir()
+    ]
+    print(
+        f"Processing {len(credit_dirs)} credit-facility + {len(extra_dirs)} "
+        f"POP017-extra matters from {args.dms}"
+    )
 
     rows: list[MatterRow] = []
     duck_rows: list[dict[str, Any]] = []
-    for matter_dir in credit_dirs:
+    seen: set[str] = set()
+    for matter_dir, force in [(d, False) for d in credit_dirs] + [
+        (d, True) for d in extra_dirs
+    ]:
+        if matter_dir.name in seen:
+            continue
+        seen.add(matter_dir.name)
         try:
-            row = process_matter(matter_dir)
+            row = process_matter(matter_dir, force_extract=force)
         except Exception as exc:  # noqa: BLE001
             print(f"FAIL {matter_dir.name}: {exc}")
             row = MatterRow(
                 matter_id=matter_dir.name,
-                is_credit_facility=True,
+                is_credit_facility=not force,
                 parse_provider=f"error:{type(exc).__name__}",
             )
         rows.append(row)
-        duck_rows.append(
-            {
-                "matter_id": row.matter_id,
-                "is_credit_facility": row.is_credit_facility,
-                "is_secured": row.is_secured,
-                "deal_date": row.deal_date.isoformat() if row.deal_date else None,
-                "has_incremental_facility": row.has_incremental_facility,
-                "facility_amount_usd": row.facility_amount_usd,
-                "has_revolving_facility": row.has_revolving_facility,
-                "mentions_springing_lien": row.mentions_springing_lien,
-                FIELD_EBITDA_ADDBACKS: row.has_adjusted_ebitda_addbacks,
-                proof_column(FIELD_EBITDA_ADDBACKS): row.has_adjusted_ebitda_addbacks_proof_doc,
-                FIELD_COVENANT_LITE: row.is_covenant_lite,
-                proof_column(FIELD_COVENANT_LITE): row.is_covenant_lite_proof_doc,
-                FIELD_MFN_CREDIT: row.has_mfn_in_credit_agreement,
-                proof_column(FIELD_MFN_CREDIT): row.has_mfn_in_credit_agreement_proof_doc,
-            }
-        )
+        duck_rows.append(_row_to_duck(row))
         print(
             f"  {row.matter_id}: secured={row.is_secured} date={row.deal_date} "
             f"ebitda={row.has_adjusted_ebitda_addbacks} covlite={row.is_covenant_lite} "
-            f"mfn={row.has_mfn_in_credit_agreement} docs={row.docs_scanned} "
+            f"mfn={row.has_mfn_in_credit_agreement} always={row.has_always_on_maintenance_covenant} "
+            f"spring_fc={row.has_springing_financial_covenant} "
+            f"maint={row.has_maintenance_financial_covenant} "
+            f"control={row.borrower_control} docs={row.docs_scanned} "
             f"via {row.parse_provider}/{row.extract_provider}"
         )
 
@@ -327,6 +514,45 @@ def main() -> int:
         "gold?",
         bool(checks["015_top"]) and checks["015_top"][0][0] == GOLD_015,
     )
+    print(
+        "016 always:",
+        checks["016_always"],
+        "gold?",
+        set(checks["016_always"]) == GOLD_016_ALWAYS,
+    )
+    print(
+        "016 springing-only:",
+        checks["016_springing"],
+        "gold?",
+        set(checks["016_springing"]) == GOLD_016_SPRINGING,
+    )
+    print("016 YoY:", checks["016_yoy"], "gold?", checks["016_yoy"] == GOLD_016_YOY)
+    print(
+        "017 rates:",
+        checks["017_rates"],
+        "gold 6/8+3/4?",
+        checks["017_rates"].get("sponsor") == (6, 8)
+        and checks["017_rates"].get("corporate") == (3, 4),
+    )
+    print(
+        "017 sponsor AB:",
+        checks["017_sponsor_ab"],
+        "gold?",
+        set(checks["017_sponsor_ab"]) == GOLD_017_SPONSOR_AB,
+    )
+    print(
+        "017 corporate AB:",
+        checks["017_corporate_ab"],
+        "gold?",
+        set(checks["017_corporate_ab"]) == GOLD_017_CORPORATE_AB,
+    )
+    pred019 = set(checks["019_ids"])
+    print(
+        "019 ids:",
+        checks["019_ids"],
+        "gold?",
+        GOLD_019_REQUIRED <= pred019 <= GOLD_019_PRECISION,
+    )
 
     summary = {
         "db": str(args.db),
@@ -342,9 +568,23 @@ def main() -> int:
             "014_gold": set(checks["014_ids"]) == GOLD_014,
             "013_gold": bool(checks["013_mfn"]),
             "015_gold": bool(checks["015_top"]) and checks["015_top"][0][0] == GOLD_015,
+            "016_always_gold": set(checks["016_always"]) == GOLD_016_ALWAYS,
+            "016_springing_gold": set(checks["016_springing"]) == GOLD_016_SPRINGING,
+            "016_yoy_gold": checks["016_yoy"] == GOLD_016_YOY,
+            "017_rates_gold": checks["017_rates"].get("sponsor") == (6, 8)
+            and checks["017_rates"].get("corporate") == (3, 4),
+            "017_sponsor_ab_gold": set(checks["017_sponsor_ab"]) == GOLD_017_SPONSOR_AB,
+            "017_corporate_ab_gold": set(checks["017_corporate_ab"])
+            == GOLD_017_CORPORATE_AB,
+            "019_gold": GOLD_019_REQUIRED <= set(checks["019_ids"]) <= GOLD_019_PRECISION,
             "011_ids": checks["011_ids"],
             "014_ids": checks["014_ids"],
             "015_top": [[a, str(b) if b else None] for a, b in checks["015_top"]],
+            "016_always": checks["016_always"],
+            "016_springing": checks["016_springing"],
+            "016_yoy": {str(k): list(v) for k, v in checks["016_yoy"].items()},
+            "017_rates": {k: list(v) for k, v in checks["017_rates"].items()},
+            "019_ids": checks["019_ids"],
         },
     }
 
@@ -370,6 +610,13 @@ def main() -> int:
         "014_gold",
         "013_gold",
         "015_gold",
+        "016_always_gold",
+        "016_springing_gold",
+        "016_yoy_gold",
+        "017_rates_gold",
+        "017_sponsor_ab_gold",
+        "017_corporate_ab_gold",
+        "019_gold",
     ]
     all_ok = all(summary["checks"][k] for k in gold_keys)
     print("ALL_GOLD", all_ok)

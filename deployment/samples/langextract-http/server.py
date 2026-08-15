@@ -286,12 +286,98 @@ def demo_extract_credit_facility(body: dict[str, Any]) -> dict[str, Any]:
             "true",
         )
 
+    # has_springing_financial_covenant (016 springing-only / 019)
+    spring_fc = re.search(
+        r"(springing\s+financial\s+covenant|"
+        r"Springing\s+(?:Financial\s+Covenant|Fixed\s+Charge)|"
+        r"tested\s+only\s+when[^\n]{0,80}revolv|"
+        r"only\s+when\s+(?:the\s+)?aggregate\s+revolving|"
+        r"when\s+(?:and\s+only\s+when\s+)?(?:the\s+)?(?:aggregate\s+)?"
+        r"revolv(?:ing|er)\s+(?:credit\s+)?(?:exposure|utilization|outstandings))",
+        text,
+        re.I,
+    )
+    if spring_fc:
+        _append_bool(
+            extractions,
+            text,
+            "has_springing_financial_covenant",
+            spring_fc.group(1)[:80],
+            "true",
+        )
+
+    # has_always_on_maintenance_covenant (016) — post-merge clears if springing-gated
+    always_on = re.search(
+        r"(always[- ]on|"
+        r"tested\s+quarterly(?!\s+only)|"
+        r"financial\s+maintenance\s+covenant|"
+        r"maintain\s+(?:a\s+|the\s+)?(?:Maximum\s+)?[^\n]{0,40}Leverage\s+Ratio|"
+        r"shall\s+not\s+permit[^\n]{0,80}Leverage\s+Ratio|"
+        r"financial\s+covenant|"
+        r"leverage\s+ratio\s+shall\s+not\s+exceed|"
+        r"maximum\s+total\s+net\s+leverage|"
+        r"interest\s+coverage\s+ratio)",
+        text,
+        re.I,
+    )
+    if always_on:
+        _append_bool(
+            extractions,
+            text,
+            "has_always_on_maintenance_covenant",
+            always_on.group(1)[:80],
+            "true",
+        )
+
+    # borrower_control (017) — corporate if public borrower; else PE portco → sponsor
+    # Keep tight: avoid "publicly traded securities" / ERISA generics / bare exchange names.
+    bpub = re.search(
+        r"((?:Borrower|Client|Company|Guarantor)\s+"
+        r"(?:is|whose\s+common\s+(?:stock|equity)\s+is)\s+publicly\s+traded|"
+        r"whose\s+common\s+(?:stock|equity)\s+is\s+publicly\s+traded|"
+        r"(?:is|are)\s+publicly\s+traded\s+on\s+(?:the\s+)?"
+        r"(?:New\s+York\s+Stock\s+Exchange|NYSE|Nasdaq)|"
+        r"(?:common\s+stock|ordinary\s+shares|American\s+Depositary\s+Shares)\s+"
+        r"(?:are|is)\s+listed\s+on\s+(?:the\s+)?"
+        r"(?:New\s+York\s+Stock\s+Exchange|NYSE|Nasdaq)|"
+        r"publicly\s+traded\s+on\s+(?:the\s+)?"
+        r"(?:New\s+York\s+Stock\s+Exchange|NYSE|Nasdaq)\s+under\s+the\s+ticker|"
+        r"listed\s+on\s+(?:the\s+)?(?:New\s+York\s+Stock\s+Exchange|NYSE|Nasdaq)"
+        r".{0,40}ticker\s+symbol)",
+        text,
+        re.I,
+    )
+    port = re.search(
+        r"((?:is\s+an?\s+|an\s+indirect\s+)?portfolio\s+company\s+of)",
+        text,
+        re.I,
+    )
+    if bpub:
+        extractions.append(
+            {
+                "extraction_class": "borrower_control",
+                "extraction_text": "corporate",
+                "attributes": {"evidence": bpub.group(1)[:120]},
+                "char_interval": find_span(text, bpub.group(1))
+                or find_span(text, "publicly traded"),
+            }
+        )
+    elif port:
+        extractions.append(
+            {
+                "extraction_class": "borrower_control",
+                "extraction_text": "sponsor",
+                "attributes": {"evidence": port.group(1)[:120]},
+                "char_interval": find_span(text, port.group(1)),
+            }
+        )
+
     grounded = [e for e in extractions if e.get("char_interval")]
     result = {
         "ok": True,
         "provider": "langextract-sidecar",
         "backend": "demo",
-        "model_id": "demo-firm-knowledge-matter-v2",
+        "model_id": "demo-firm-knowledge-matter-v3",
         "schema_preset": "firm_knowledge_matter",
         "extractions": grounded,
         "artifact_paths": {},

@@ -31,6 +31,10 @@ FIELD_SECURED = "is_secured"
 FIELD_EBITDA_ADDBACKS = "has_adjusted_ebitda_addbacks"
 FIELD_COVENANT_LITE = "is_covenant_lite"
 FIELD_MFN_CREDIT = "has_mfn_in_credit_agreement"
+FIELD_SPRINGING_FC = "has_springing_financial_covenant"
+FIELD_ALWAYS_ON_MAINT = "has_always_on_maintenance_covenant"
+FIELD_MAINTENANCE_FC = "has_maintenance_financial_covenant"
+FIELD_BORROWER_CONTROL = "borrower_control"  # sponsor | corporate
 
 
 @dataclass(frozen=True)
@@ -49,8 +53,8 @@ MATTER_FIELD_REGISTRY: tuple[MatterFieldSpec, ...] = (
     MatterFieldSpec(
         FIELD_DEAL_DATE,
         "date",
-        (DOC_ROLE_EXECUTION_CREDIT,),
-        description="Dated-as-of on executed credit/loan agreement",
+        (DOC_ROLE_EXECUTION_CREDIT, DOC_ROLE_MEMO, DOC_ROLE_TERM_SHEET),
+        description="Dated-as-of on executed credit/loan agreement (memo fallback)",
     ),
     MatterFieldSpec(
         FIELD_FACILITY_AMOUNT,
@@ -98,6 +102,35 @@ MATTER_FIELD_REGISTRY: tuple[MatterFieldSpec, ...] = (
         (DOC_ROLE_EXECUTION_CREDIT,),  # never SAFE — 013 trap
         stores_proof_doc=True,
         description="MFN in executed credit agreement, literal or accordion (013/015)",
+    ),
+    MatterFieldSpec(
+        FIELD_SPRINGING_FC,
+        "bool",
+        (DOC_ROLE_EXECUTION_CREDIT, DOC_ROLE_MEMO, DOC_ROLE_TERM_SHEET),
+        description="Springing-gated financial covenant (016 springing-only bucket)",
+    ),
+    MatterFieldSpec(
+        FIELD_ALWAYS_ON_MAINT,
+        "bool",
+        (DOC_ROLE_EXECUTION_CREDIT, DOC_ROLE_MEMO, DOC_ROLE_TERM_SHEET),
+        description="Always-on maintenance (016); excludes springing-gated-only",
+    ),
+    MatterFieldSpec(
+        FIELD_MAINTENANCE_FC,
+        "bool",
+        (DOC_ROLE_EXECUTION_CREDIT, DOC_ROLE_MEMO, DOC_ROLE_TERM_SHEET),
+        description="Any maintenance FC incl. springing (019 vs incurrence-only)",
+    ),
+    MatterFieldSpec(
+        FIELD_BORROWER_CONTROL,
+        "string",
+        (
+            DOC_ROLE_EXECUTION_CREDIT,
+            DOC_ROLE_MEMO,
+            DOC_ROLE_TERM_SHEET,
+            DOC_ROLE_OTHER,
+        ),
+        description="sponsor (PE portco) vs corporate (public borrower) — 017",
     ),
 )
 
@@ -235,6 +268,19 @@ def merge_extraction_hit(
                 fields["source_doc"] = rel_doc
     elif spec.kind == "number":
         if value is not None and fields.get(cls) is None:
+            fields[cls] = value
+    elif spec.kind == "string" and value:
+        val = str(value).strip().lower()
+        if cls == FIELD_BORROWER_CONTROL:
+            if val not in {"sponsor", "corporate"}:
+                return
+            cur = fields.get(cls)
+            if not cur:
+                fields[cls] = val
+            elif cur == "sponsor" and val == "corporate":
+                # Public borrower beats portco co-mention when both seen
+                fields[cls] = "corporate"
+        elif not fields.get(cls):
             fields[cls] = value
     elif value and not fields.get(cls):
         fields[cls] = value
