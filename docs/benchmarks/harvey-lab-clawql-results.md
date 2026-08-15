@@ -15,7 +15,7 @@ Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/dan
 | 18-18 #2 [31767832459](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31767832459)  | **Regression:** 40/40, ceiling fired, **no write** — cohort recall empty because ingest hard-coded `practice=Other` |
 | 18-18 #3 [31769718249](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31769718249)  | Wrote **0 of 36** — Pattern F OK; detector over-flagged (36/266 vs gold 12)                                         |
 | 18-18 #4 [31772193789](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31772193789)  | Seed **12/266** (Fix 7 OK); bulk timed out→fallback; agent **OpenRouter 429** (daily free cap). No scorecard.       |
-| 18-18 #5 [31853395295](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31853395295)  | Bulk OK; seed 12/266; wrote **0 of 11** (missed 1008-00001). Graded fail. Baseline OR 504.                         |
+| 18-18 #5 [31853395295](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31853395295)  | Bulk OK; seed 12/266; wrote **0 of 11** (missed 1008-00001). Graded fail. Baseline OR 504.                          |
 
 **Root cause (layer):** Fix 5 was prompt-level; vault never had Banking & Finance / credit-facility ontology. Structured `practiceArea` filters → 0 hits; agent hunted forever. Fix 6 seeded flags but path tokens were too broad (probe #3). Fix 7 precision held on probe #4/#5 seed logs. Probe #5 failure is **cohort surface** (recall packaging / ontology visibility / agent dropping an id) — not detector math.
 
@@ -80,7 +80,7 @@ Do **not** tune the Nemotron prompt stack against 016/017/019/021 — those are 
 | Frequency **denominator** = prompt cohort + matter-id list (Fix 5)         | **in** |
 | Seed `CREDIT_FACILITY` / Banking & Finance in ontology (Fix 6 / Pattern F) | **in** |
 | Fix 7: tighten credit-facility path detector toward N≈12 (no gold IDs)     | **in** |
-| Fix 8: matterIds-first recall + CREDIT_FACILITY ontology upsert/verify    | **in** |
+| Fix 8: matterIds-first recall + CREDIT_FACILITY ontology upsert/verify     | **in** |
 | Bulk DMS seed via `ingest_external_knowledge` (`CLAWQL_EXTERNAL_INGEST`)   | **in** |
 | Gate Node/npm/build to clawql matrix arms only                             | **in** |
 | `CLAWQL_LAB_PRESERVE_VAULT` hook (shared vault artifact, next slice)       | **in** |
