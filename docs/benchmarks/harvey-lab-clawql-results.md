@@ -4,7 +4,25 @@ Date: 2026-08-14
 Models: Nemotron 3.5 Lightning ± ClawQL  
 Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479) (**20% ClawQL all-pass**)  
 Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774) (**0% ClawQL all-pass**; mean CPR ~9%)  
-**Next:** Probe #7 DuckDB **ClawQL all-pass on 018** ([31855811931](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31855811931)). IDP→DuckDB local spike proves 020/023/024 SQL too. Prefer canonical `1-25` when OpenRouter healthy.
+**Next:** Canonical DuckDB-era **001–025** in flight —
+[31856880647](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31856880647)
+(50 arm×task jobs; empty `.run-nemotron-sweep` defaults to `1–25`). Do **not**
+push while it runs (`cancel-in-progress`).
+
+### Probe #7 headline (DuckDB)
+
+| Arm | CPR | All-pass | Turns | Input tokens | Output tokens |
+| --- | --- | -------- | ----- | ------------ | ------------- |
+| **nemotron-clawql** + DuckDB | **1.0** | **1.0** | **9** | **135,778** | 4,150 |
+| nemotron baseline | 0.0 | 0.0 | 40 | 769,251 | 8,801 |
+
+ClawQL ~**5.7×** fewer input tokens than baseline on 018; prior ClawQL 018
+probes burned ~1.05M tokens at 0% CPR. Agent wrote SQL → `0` springing-lien
+rows → deliverable **0 of 12**.
+
+**Methodology:** DuckDB is not cheating — same corpus, better instrument than
+grep; extraction quality is in-scope for ClawQL. See
+[`../design/harvey-lab-duckdb-retrieval.md`](../design/harvey-lab-duckdb-retrieval.md).
 
 ### Next-run gate (deep think)
 
