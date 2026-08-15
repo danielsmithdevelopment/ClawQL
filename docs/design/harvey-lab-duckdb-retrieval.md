@@ -22,16 +22,16 @@ failures, not inability to count.
 
 ## Three strategies (not two)
 
-| ID | Name | Agent tools | Who builds structure? |
-| -- | ---- | ----------- | --------------------- |
-| **A** | Baseline (Harvey-parity) | bash / grep / read over DMS | Nobody — raw files |
-| **B** | SQL-only | DuckDB SQL over preloaded tables | Shared preprocess (or ClawQL extract exported to both arms) |
-| **C** | ClawQL full stack | DuckDB SQL **+** vault memory **+** ontology **+** hybrid/Onyx | ClawQL ingest/extract pipeline |
+| ID    | Name                     | Agent tools                                                    | Who builds structure?                                       |
+| ----- | ------------------------ | -------------------------------------------------------------- | ----------------------------------------------------------- |
+| **A** | Baseline (Harvey-parity) | bash / grep / read over DMS                                    | Nobody — raw files                                          |
+| **B** | SQL-only                 | DuckDB SQL over preloaded tables                               | Shared preprocess (or ClawQL extract exported to both arms) |
+| **C** | ClawQL full stack        | DuckDB SQL **+** vault memory **+** ontology **+** hybrid/Onyx | ClawQL ingest/extract pipeline                              |
 
 **Recommendation for firm-knowledge ledger**
 
 - Keep **A** as the published baseline arm (matches Harvey harness narrative).
-- Make **C**’s *primary* structured path **SQL via DuckDB**, not filter-DSL
+- Make **C**’s _primary_ structured path **SQL via DuckDB**, not filter-DSL
   `memory_recall`, for exact enumeration / frequency.
 - Keep `memory_recall` for cross-session memory + hybrid semantic asks.
 - Add **B** later as an optional third matrix arm when we want the “honest SQL
@@ -92,26 +92,26 @@ that is **Strategy C value** (index built once), not answer-key leak.
 
 ### `matters`
 
-| Column | Source |
-| ------ | ------ |
-| `matter_id` | DMS folder name |
-| `client_short_name` | existing `_client_hint` |
-| `practice_area` | detector / CLAWQL_PRACTICE_AREA |
-| `matter_type` | detector / CLAWQL_MATTER_TYPE |
-| `title` | CLAWQL_TITLE |
-| `is_credit_facility` | Fix 7 `detect_credit_facility` |
-| `is_hsr_second_request` | existing HSR detector |
-| `vault_note_path` | seeded Memory/… path |
-| `sandbox_root` | `/workspace/documents/matters/<id>` |
+| Column                  | Source                              |
+| ----------------------- | ----------------------------------- |
+| `matter_id`             | DMS folder name                     |
+| `client_short_name`     | existing `_client_hint`             |
+| `practice_area`         | detector / CLAWQL_PRACTICE_AREA     |
+| `matter_type`           | detector / CLAWQL_MATTER_TYPE       |
+| `title`                 | CLAWQL_TITLE                        |
+| `is_credit_facility`    | Fix 7 `detect_credit_facility`      |
+| `is_hsr_second_request` | existing HSR detector               |
+| `vault_note_path`       | seeded Memory/… path                |
+| `sandbox_root`          | `/workspace/documents/matters/<id>` |
 
 ### `documents` (optional v0.1)
 
-| Column | Source |
-| ------ | ------ |
-| `matter_id` | parent |
-| `rel_path` | path under matter |
-| `ext` | suffix |
-| `extracted_text` | docx/txt extract (capped) |
+| Column                    | Source                                             |
+| ------------------------- | -------------------------------------------------- |
+| `matter_id`               | parent                                             |
+| `rel_path`                | path under matter                                  |
+| `ext`                     | suffix                                             |
+| `extracted_text`          | docx/txt extract (capped)                          |
 | `mentions_springing_lien` | regex over extracted_text (and siblings as needed) |
 
 FTS index on `extracted_text` enables ad-hoc rare-attribute SQL without a
@@ -149,13 +149,13 @@ Keep `clawql_memory_recall` for memory / hybrid; do not delete it.
 
 When `packages/clawql-data` lands, LAB should consume it rather than own DuckDB:
 
-| Concern | LAB adapter (near-term) | `clawql-data` (target) |
-| ------- | ----------------------- | ---------------------- |
-| Engine | `duckdb` Python in harness or sidecar | Shared Node/Python provider |
-| Load | Build `matters.duckdb` during ClawQL pre-ingest | `ingestStructured` / table sync from ontology + docs |
-| Query MCP | Thin `duckdb_query` in LAB overlay | First-class MCP tool `data_query` |
-| AuthZ | Task-scoped file, no network | Provider capabilities + tenant scope |
-| Operator | N/A | `spec.data.duckdb` in operator-target-architecture |
+| Concern   | LAB adapter (near-term)                         | `clawql-data` (target)                               |
+| --------- | ----------------------------------------------- | ---------------------------------------------------- |
+| Engine    | `duckdb` Python in harness or sidecar           | Shared Node/Python provider                          |
+| Load      | Build `matters.duckdb` during ClawQL pre-ingest | `ingestStructured` / table sync from ontology + docs |
+| Query MCP | Thin `duckdb_query` in LAB overlay              | First-class MCP tool `data_query`                    |
+| AuthZ     | Task-scoped file, no network                    | Provider capabilities + tenant scope                 |
+| Operator  | N/A                                             | `spec.data.duckdb` in operator-target-architecture   |
 
 **Near-term spike (unblock LAB without waiting for the full package):**
 
@@ -172,7 +172,7 @@ table names so agent skills transfer.
 ## Benchmark implications
 
 - **018-class frequency:** SQL cohort + content flag/FTS should collapse
-  40-turn loops toward a handful of turns — *if* ingest columns are correct
+  40-turn loops toward a handful of turns — _if_ ingest columns are correct
   (Fix 7 precision remains a data problem, not an SQL problem).
 - **001-class HSR enumeration:** SQL `WHERE is_hsr_second_request` + evidence
   paths columns; still need document cites (grep/read), not SQL alone.
@@ -181,12 +181,12 @@ table names so agent skills transfer.
 
 ## Phased delivery
 
-| Phase | Scope | Depends on |
-| ----- | ----- | ---------- |
-| **P0** | Design (this doc) | — | **done** |
-| **P1** | LAB spike: build duckdb at pre-ingest; `clawql_sql` tool; Pattern F → SQL | Fix 7/8 | **in progress** || **P2** | Content FTS / `mentions_*` columns for frequency attrs | P1 |
-| **P3** | Optional matrix arm **B** (SQL-only, shared tables) | Product call on ledger framing |
-| **P4** | Promote into `packages/clawql-data` + MCP `data_query` | Package scaffold |
+| Phase  | Scope                                                                     | Depends on                     |
+| ------ | ------------------------------------------------------------------------- | ------------------------------ |
+| **P0** | Design (this doc)                                                         | —                              | **done**        |
+| **P1** | LAB spike: build duckdb at pre-ingest; `clawql_sql` tool; Pattern F → SQL | Fix 7/8                        | **in progress** |     | **P2** | Content FTS / `mentions_*` columns for frequency attrs | P1  |
+| **P3** | Optional matrix arm **B** (SQL-only, shared tables)                       | Product call on ledger framing |
+| **P4** | Promote into `packages/clawql-data` + MCP `data_query`                    | Package scaffold               |
 
 ## Non-goals (P1)
 
