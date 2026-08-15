@@ -15,6 +15,34 @@ from pathlib import Path
 from typing import Any, Callable
 
 _SPRINGING_LIEN_RE = re.compile(r"springing\s+lien", re.IGNORECASE)
+# Task-024 calibration: establish a revolving facility in THIS deal (not
+# "Existing Revolving Credit Facility" cross-refs). Offline DMS: TP=4 FP=0 FN=0
+# vs public gold {1008,1012,1019-00002,1038-00002} — never seed those IDs.
+_REVOLVER_ESTABLISH_RE = re.compile(
+    r"(?:"
+    r"(?:provide|providing|establish|establishing|"
+    r"request(?:ed|s)?\s+that\s+the\s+lenders?\s+provide)\s+"
+    r"(?:a\s+|an\s+|the\s+)?(?:senior\s+secured\s+)?(?:asset[- ]based\s+)?"
+    r"revolving\s+credit\s+facility"
+    r"|"
+    r"(?:\$[0-9,]+|\$?\s*[0-9,]+\s*(?:million|billion)?)\s+"
+    r"(?:senior\s+secured\s+)?revolving\s+credit\s+facility"
+    r"|"
+    r"\"Revolving\s+Credit\s+Facility\"\s+and,?\s+together\s+with"
+    r")",
+    re.IGNORECASE | re.DOTALL,
+)
+_REVOLVER_PATH_RE = re.compile(
+    r"revolving-loan-note|abl-negotiation-issues-memo",
+    re.IGNORECASE,
+)
+_REVOLVER_DOC_EXCLUDE = (
+    "mezzanine",
+    "bridge-loan",
+    "bridge_loan",
+    "term-loan-agreement",
+    "dip-",
+)
 _SQL_FORBIDDEN = re.compile(
     r"\b(insert|update|delete|drop|alter|attach|copy|export|install|load|"
     r"pragma|create\s+or\s+replace|create\s+table|create\s+view|"
@@ -61,6 +89,64 @@ def matter_mentions_springing_lien(
     return False
 
 
+def _revolving_candidate_docs(matter_dir: Path) -> list[Path]:
+    """Execution senior/credit agreements under Transaction Documents/documents."""
+    out: list[Path] = []
+    for p in matter_dir.rglob("*"):
+        if not p.is_file() or p.suffix.lower() != ".docx":
+            continue
+        rel = str(p.relative_to(matter_dir)).replace("\\", "/")
+        name = p.name.lower()
+        under = (
+            rel.startswith("Transaction Documents/")
+            or "/Transaction Documents/" in f"/{rel}"
+            or rel.startswith("documents/")
+            or "/documents/" in f"/{rel}"
+        )
+        if not under:
+            continue
+        if any(tok in name for tok in _REVOLVER_DOC_EXCLUDE):
+            continue
+        if _REVOLVER_PATH_RE.search(name):
+            out.append(p)
+            continue
+        if "execution" not in name:
+            continue
+        if (
+            "credit-agreement" in name
+            or "credit_agreement" in name
+            or ("amendment" in name and "credit" in name)
+        ):
+            out.append(p)
+    return out
+
+
+def matter_has_revolving_facility(
+    matter_dir: Path,
+    *,
+    text_extractor: Callable[[Path], str] | None = None,
+) -> bool:
+    """Mechanical index: deal establishes a revolving credit facility.
+
+    Fair content/path scan for task-024-style enumeration. Excludes mezzanine /
+    bridge / term-loan-only filenames and ignores bare \"Existing Revolving…\"
+    cross-references (those need establish-language).
+    """
+    for p in matter_dir.rglob("*"):
+        if p.is_file() and _REVOLVER_PATH_RE.search(p.name):
+            return True
+    if text_extractor is None:
+        return False
+    for doc in _revolving_candidate_docs(matter_dir):
+        try:
+            body = text_extractor(doc)
+        except Exception:  # noqa: BLE001
+            continue
+        if body and _REVOLVER_ESTABLISH_RE.search(body):
+            return True
+    return False
+
+
 def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
     """Create/replace matters.duckdb from row dicts."""
     import duckdb
@@ -82,6 +168,7 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
               is_credit_facility BOOLEAN,
               is_hsr_second_request BOOLEAN,
               mentions_springing_lien BOOLEAN,
+              has_revolving_facility BOOLEAN,
               sandbox_root VARCHAR,
               vault_note_path VARCHAR
             )
@@ -90,7 +177,7 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
         if rows:
             con.executemany(
                 """
-                INSERT INTO matters VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO matters VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     (
@@ -102,6 +189,7 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
                         bool(r.get("is_credit_facility")),
                         bool(r.get("is_hsr_second_request")),
                         bool(r.get("mentions_springing_lien")),
+                        bool(r.get("has_revolving_facility")),
                         r.get("sandbox_root") or "",
                         r.get("vault_note_path") or "",
                     )
@@ -112,6 +200,13 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             """
             CREATE VIEW credit_facilities AS
             SELECT * FROM matters WHERE is_credit_facility
+            """
+        )
+        con.execute(
+            """
+            CREATE VIEW revolving_credit_facilities AS
+            SELECT * FROM matters
+            WHERE is_credit_facility AND has_revolving_facility
             """
         )
     finally:
@@ -170,12 +265,13 @@ def run_readonly_sql(db_path: Path, sql: str) -> dict[str, Any]:
             "rowCount": len(rows),
             "truncated": truncated,
             "hint": (
-                "For frequency tasks: "
+                "For frequency/cohort tasks: "
                 "SELECT matter_id, client_short_name FROM matters "
                 "WHERE is_credit_facility ORDER BY matter_id; "
-                "then "
                 "SELECT count(*) FILTER (WHERE mentions_springing_lien) AS k, "
-                "count(*) AS n FROM matters WHERE is_credit_facility;"
+                "count(*) AS n FROM matters WHERE is_credit_facility; "
+                "SELECT matter_id FROM matters WHERE is_credit_facility "
+                "AND has_revolving_facility ORDER BY matter_id;"
             ),
         }
     except Exception as exc:  # noqa: BLE001
