@@ -9,6 +9,7 @@ Related: [`harvey-lab-duckdb-retrieval.md`](harvey-lab-duckdb-retrieval.md),
 
 ## Tool roles
 
+<<<<<<< HEAD
 | Stage                    | Tool                                                          | Why                                                                  |
 | ------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------- |
 | Catalogue / path flags   | DMS paths + Fix 7 `detect_credit_facility`                    | Cheap `is_credit_facility`, secured filenames, revolving-note paths  |
@@ -16,6 +17,15 @@ Related: [`harvey-lab-duckdb-retrieval.md`](harvey-lab-duckdb-retrieval.md),
 | Bytes → text             | **Apache Tika** `:9998` (jar on runner, not Docker)           | Universal `.docx` parse                                              |
 | Schema-guided field fill | **LangExtract** `:8090` `schema_preset=firm_knowledge_matter` | Grounded spans → Matter columns + proof docs                         |
 | Query                    | **DuckDB**                                                    | Typed columns / views + ordinary SQL                                 |
+=======
+| Stage | Tool | Why |
+| ----- | ---- | --- |
+| Catalogue / path flags | DMS paths + Fix 7 `detect_credit_facility` / `detect_hsr_filing` | Cheap credit, secured, HSR-filing folder signals |
+| Doc ranking | `clawql_lab_matter_schema.catalog_matter_docs` | Execution CAs, memos, term sheets, pro-formas — **not** SAFE for MFN |
+| Bytes → text | **Apache Tika** `:9998` (jar on runner, not Docker) | Universal `.docx` parse |
+| Schema-guided field fill | **LangExtract** `:8090` `schema_preset=firm_knowledge_matter` | Grounded spans → Matter columns + proof docs |
+| Query | **DuckDB** | Typed columns / views + ordinary SQL |
+>>>>>>> c9548aa7 (Prove Harvey LAB SQL gold for tasks 006–010 and 021–025.)
 
 Demo LangExtract uses deterministic grounded patterns with the **same
 `extraction_class` names** live mode would fill. Swap `LANGEXTRACT_MODE=live`
@@ -30,15 +40,16 @@ Registry: `integrations/harvey-labs/harness/adapters/clawql_lab_matter_schema.py
 Matter {
   matter_id, is_credit_facility, is_secured, deal_date,
   has_incremental_facility, facility_amount_usd,
-  has_revolving_facility,           # execution CA + path only (024)
+  has_revolving_facility,           # execution CA + path only (024 / 025)
   mentions_springing_lien,          # 012 / 018
   has_adjusted_ebitda_addbacks,     # 011 (+ proof_doc)
-  is_covenant_lite,                 # 014 (+ proof_doc; TLB + "covenant-lite")
+  is_covenant_lite,                 # 014 / 010 (+ proof_doc; TLB + "covenant-lite")
   has_mfn_in_credit_agreement,      # 013 / 015 (+ proof_doc; never SAFE)
   has_springing_financial_covenant, # springing-gated FC (016 / 019)
   has_always_on_maintenance_covenant, # always-on only (016); cleared if springing-gated
   has_maintenance_financial_covenant, # always-on OR springing (019)
   borrower_control,                 # sponsor | corporate (017)
+  has_hsr_filing (+ date + proof),  # path: HSR Filing / Preparation folder (006–008)
 }
 ```
 
@@ -49,8 +60,12 @@ Post-merge rule: if `has_springing_financial_covenant`, clear
 `has_always_on_maintenance_covenant`; set maintenance =
 always-on ∨ springing-gated.
 
-## SQL gold (local DMS, 12 credit facilities + POP017 extras)
+**009** uses live maintenance = maintenance ∧ ¬(covenant-lite ∧ ¬always-on).
+**010** is the complement slice: covenant-lite ∧ ¬always-on.
 
+## SQL gold (local DMS)
+
+<<<<<<< HEAD
 | Task    | Query idea                                          | Result                              |
 | ------- | --------------------------------------------------- | ----------------------------------- |
 | **011** | `has_adjusted_ebitda_addbacks`                      | gold-9 exact                        |
@@ -65,11 +80,36 @@ always-on ∨ springing-gated.
 | **020** | credit ∧ incremental `ORDER BY facility_amount_usd` | **1005-00001**                      |
 | **023** | secured `ORDER BY deal_date`                        | **1013-00001**                      |
 | **024** | credit ∧ revolver                                   | gold-4 exact                        |
+=======
+| Task | Query idea | Result |
+| ---- | ---------- | ------ |
+| **006/007** | `has_hsr_filing` | required {1001, 1003} ⊆ result ⊆ precision-5 |
+| **008** | HSR `ORDER BY hsr_filing_date DESC` | **1003-00001** (2024-06-18) |
+| **009** | live maintenance financings | required-9 ⊆ result ⊆ precision-11 |
+| **010** | cov-lite ∧ ¬always-on | {1005, 1021} (⊆ precision-4) |
+| **011** | `has_adjusted_ebitda_addbacks` | gold-9 exact |
+| **012** | any `mentions_springing_lien` | **0** |
+| **013** | Lumos `1008-00001` ∧ MFN on execution CA | true (semantic accordion; not SAFE) |
+| **014** | `is_covenant_lite` | **{1005, 1021}** |
+| **015** | MFN ∧ `ORDER BY deal_date DESC` | **1019-00002** |
+| **016** | YoY always-on shares on credit-12 | 2021 1/1 … 2026 2/2 |
+| **017** | sponsor vs corporate add-back rates on POP017 | **6/8** and **3/4** |
+| **018** | springing among credit | **k=0 n=12** |
+| **019** | maintenance FC (incl. springing) | required-11 ⊆ result ⊆ precision-12 |
+| **020** | credit ∧ incremental `ORDER BY facility_amount_usd` | **1005-00001** |
+| **021/022** | credit ∧ `is_secured` (mortgage path OK for 1036) | exact-12 |
+| **023** | secured `ORDER BY deal_date` | **1013-00001** |
+| **024/025** | credit ∧ revolver | gold-4 (025 precision allows 1021) |
+>>>>>>> c9548aa7 (Prove Harvey LAB SQL gold for tasks 006–010 and 021–025.)
 
 **017 note:** population ≠ Fix-7 credit-12. Gold rates are asserted on
 POP017 = GOLD_011 ∪ `{1001-00007, 1041-00003, 1007-00001}` (IDs in the
 pipeline test only). Auto-discovering that population without gold IDs
 remains open.
+
+**006–008 note:** `detect_hsr_filing` keys off dedicated `HSR Filing` /
+`HSR Filing Preparation` folders (exact {1001, 1003} on the local DMS),
+not bare Regulatory HSR memos.
 
 ## How to re-run locally
 
@@ -81,13 +121,13 @@ LANGEXTRACT_MODE=demo PORT=8090 \
 
 python3 integrations/harvey-labs/scripts/idp_matter_pipeline.py \
   --dms /path/to/firm-knowledge/dms/matters
-# expects ALL_GOLD True (exit 0)
+# expects ALL_GOLD True (exit 0) for 006–025 wired tasks
 ```
 
 ## What this does _not_ claim
 
-- Agent/judge success on 011–020 in GHA (needs OR quota + Sonnet).
+- Agent/judge success on 006–025 in GHA (needs OR quota + Sonnet).
 - Live LangExtract LLM quality (demo grounding in CI today).
 - Automatic 017 population discovery without POP017 extras listed in the gold test.
-- Criterion-ceiling tasks beyond the wired Matter fields (e.g. 021+).
+- Tasks 001–005 / 026+ (not wired in this pipeline yet).
 - Tika Docker packaging (GHA still uses the 2.9.2 jar on the runner JDK).

@@ -7,7 +7,7 @@ Pipeline roles:
   2. Multi-doc catalogue — execution CAs, memos, term sheets (never SAFE for MFN)
   3. Tika — bytes → text
   4. LangExtract sidecar — schema-guided grounded field fill (firm_knowledge_matter)
-  5. DuckDB — typed columns + SQL gold for 011–020 / 023 / 024
+  5. DuckDB — typed columns + SQL gold for 006–010 / 011–025
 
 Usage:
   python3 integrations/harvey-labs/scripts/idp_matter_pipeline.py \\
@@ -33,6 +33,7 @@ if str(_ADAPTERS) not in sys.path:
 
 from clawql_lab_duckdb import (  # noqa: E402
     build_matters_duckdb,
+    detect_hsr_filing,
     extract_matter_fields,
 )
 from clawql_lab_matter_schema import (  # noqa: E402
@@ -65,6 +66,7 @@ GOLD_018 = {
     "1043-00001",
 }
 GOLD_024 = {"1008-00001", "1012-00001", "1019-00002", "1038-00002"}
+GOLD_025_PRECISION = GOLD_024 | {"1021-00001"}
 GOLD_020 = "1005-00001"
 GOLD_023 = "1013-00001"
 GOLD_011 = {
@@ -81,6 +83,46 @@ GOLD_011 = {
 GOLD_014 = {"1005-00001", "1021-00001"}
 GOLD_013 = "1008-00001"
 GOLD_015 = "1019-00002"
+
+# 006–008 — HSR filings (folder-precise; precision allows 3 more without requiring them)
+GOLD_006_REQUIRED = {"1001-00001", "1003-00001"}
+GOLD_006_PRECISION = {
+    "1001-00001",
+    "1003-00001",
+    "1032-00001",
+    "1038-00001",
+    "1041-00001",
+}
+GOLD_008 = "1003-00001"
+GOLD_008_DATE = "2024-06-18"
+
+# 009 — live maintenance (excl. cov-lite with no always-on); 010 — that cov-lite set
+GOLD_009_REQUIRED = {
+    "1006-00001",
+    "1010-00001",
+    "1012-00001",
+    "1013-00001",
+    "1019-00002",
+    "1036-00001",
+    "1038-00002",
+    "1042-00001",
+    "1043-00001",
+}
+GOLD_009_PRECISION = {
+    "1006-00001",
+    "1008-00001",
+    "1010-00001",
+    "1012-00001",
+    "1013-00001",
+    "1019-00002",
+    "1021-00001",
+    "1036-00001",
+    "1038-00002",
+    "1042-00001",
+    "1043-00001",
+}
+GOLD_010_REQUIRED_ANY = {"1005-00001", "1021-00001"}
+GOLD_010_PRECISION = {"1005-00001", "1021-00001", "1008-00001", "1038-00002"}
 
 # 016 — always-on vs springing-only on Fix-7 credit-12
 GOLD_016_ALWAYS = {
@@ -132,6 +174,8 @@ GOLD_019_REQUIRED = {
 }
 GOLD_019_PRECISION = GOLD_019_REQUIRED | {"1005-00001"}
 
+# 021 / 022 — secured credit facilities (incl. Fairwater without executed CA on file)
+GOLD_021 = set(GOLD_018)  # same 12 credit facilities, all secured
 
 @dataclass
 class MatterRow:
@@ -153,6 +197,10 @@ class MatterRow:
     has_always_on_maintenance_covenant: bool = False
     has_maintenance_financial_covenant: bool = False
     borrower_control: str | None = None
+    has_hsr_filing: bool = False
+    hsr_filing_date: date | None = None
+    hsr_filing_proof_doc: str = ""
+    practice_area: str = "Other"
     parse_provider: str = ""
     extract_provider: str = ""
     source_doc: str = ""
@@ -169,13 +217,39 @@ def wait_health(url: str, name: str) -> None:
         raise SystemExit(f"{name} not healthy at {url}: {exc}") from exc
 
 
-def process_matter(matter_dir: Path, *, force_extract: bool = False) -> MatterRow:
+def process_matter(
+    matter_dir: Path,
+    *,
+    force_extract: bool = False,
+    hsr_only: bool = False,
+) -> MatterRow:
     matter_id = matter_dir.name
     credit = detect_credit_facility(matter_dir)
     row = MatterRow(
         matter_id=matter_id,
         is_credit_facility=bool(credit["is_credit_facility"]),
+        practice_area=str(credit.get("practice_area") or "Other"),
     )
+    hsr = detect_hsr_filing(matter_dir)
+    if hsr.get("filed"):
+        row.has_hsr_filing = True
+        row.hsr_filing_proof_doc = str(hsr.get("proof_doc") or "")
+        row.practice_area = "Antitrust & Competition"
+        fd = hsr.get("filing_date")
+        if isinstance(fd, date):
+            row.hsr_filing_date = fd
+        elif isinstance(fd, str) and fd:
+            for fmt in ("%Y-%m-%d", "%B %d %Y", "%b %d %Y"):
+                try:
+                    row.hsr_filing_date = datetime.strptime(
+                        fd.replace(",", ""), fmt
+                    ).date()
+                    break
+                except ValueError:
+                    continue
+
+    if hsr_only:
+        return row
     if not row.is_credit_facility and not force_extract:
         return row
 
@@ -233,6 +307,7 @@ def process_matter(matter_dir: Path, *, force_extract: bool = False) -> MatterRo
 def _row_to_duck(row: MatterRow) -> dict[str, Any]:
     return {
         "matter_id": row.matter_id,
+        "practice_area": row.practice_area,
         "is_credit_facility": row.is_credit_facility,
         "is_secured": row.is_secured,
         "deal_date": row.deal_date.isoformat() if row.deal_date else None,
@@ -240,6 +315,11 @@ def _row_to_duck(row: MatterRow) -> dict[str, Any]:
         "facility_amount_usd": row.facility_amount_usd,
         "has_revolving_facility": row.has_revolving_facility,
         "mentions_springing_lien": row.mentions_springing_lien,
+        "has_hsr_filing": row.has_hsr_filing,
+        "hsr_filing_date": row.hsr_filing_date.isoformat()
+        if row.hsr_filing_date
+        else None,
+        "hsr_filing_proof_doc": row.hsr_filing_proof_doc,
         FIELD_EBITDA_ADDBACKS: row.has_adjusted_ebitda_addbacks,
         proof_column(FIELD_EBITDA_ADDBACKS): row.has_adjusted_ebitda_addbacks_proof_doc,
         FIELD_COVENANT_LITE: row.is_covenant_lite,
@@ -421,6 +501,61 @@ def run_sql_checks(db_path: Path) -> dict[str, Any]:
             """
         ).fetchall()
     ]
+    out["006_ids"] = [
+        r[0]
+        for r in con.execute(
+            """
+            SELECT matter_id FROM matters
+            WHERE has_hsr_filing
+            ORDER BY matter_id
+            """
+        ).fetchall()
+    ]
+    out["008_top"] = con.execute(
+        """
+        SELECT matter_id, hsr_filing_date, hsr_filing_proof_doc FROM matters
+        WHERE has_hsr_filing AND hsr_filing_date IS NOT NULL
+        ORDER BY hsr_filing_date DESC LIMIT 3
+        """
+    ).fetchall()
+    out["009_ids"] = [
+        r[0]
+        for r in con.execute(
+            f"""
+            SELECT matter_id FROM matters
+            WHERE is_credit_facility
+              AND {FIELD_MAINTENANCE_FC}
+              AND NOT (
+                {FIELD_COVENANT_LITE}
+                AND NOT {FIELD_ALWAYS_ON_MAINT}
+              )
+            ORDER BY matter_id
+            """
+        ).fetchall()
+    ]
+    out["010_ids"] = [
+        r[0]
+        for r in con.execute(
+            f"""
+            SELECT matter_id FROM matters
+            WHERE is_credit_facility
+              AND {FIELD_COVENANT_LITE}
+              AND NOT {FIELD_ALWAYS_ON_MAINT}
+            ORDER BY matter_id
+            """
+        ).fetchall()
+    ]
+    out["021_ids"] = [
+        r[0]
+        for r in con.execute(
+            """
+            SELECT matter_id FROM matters
+            WHERE is_credit_facility AND is_secured
+            ORDER BY matter_id
+            """
+        ).fetchall()
+    ]
+    out["025_ids"] = list(out["024_ids"])
     con.close()
     return out
 
@@ -460,27 +595,41 @@ def main() -> int:
         for mid in sorted(POP017_EXTRA)
         if (args.dms / mid).is_dir()
     ]
+    # 006–008 HSR filing matters (folder-precise path scan; no full IDP fill)
+    hsr_dirs = [
+        p
+        for p in sorted(args.dms.iterdir())
+        if p.is_dir() and detect_hsr_filing(p).get("filed")
+    ]
     print(
         f"Processing {len(credit_dirs)} credit-facility + {len(extra_dirs)} "
-        f"POP017-extra matters from {args.dms}"
+        f"POP017-extra + {len(hsr_dirs)} HSR-filing matters from {args.dms}"
     )
 
     rows: list[MatterRow] = []
     duck_rows: list[dict[str, Any]] = []
     seen: set[str] = set()
-    for matter_dir, force in [(d, False) for d in credit_dirs] + [
-        (d, True) for d in extra_dirs
-    ]:
-        if matter_dir.name in seen:
+    work: list[tuple[Path, bool, bool]] = (
+        [(d, False, False) for d in credit_dirs]
+        + [(d, True, False) for d in extra_dirs]
+        + [(d, False, True) for d in hsr_dirs]
+    )
+    for matter_dir, force, hsr_only in work:
+        if matter_dir.name in seen and not hsr_only:
+            continue
+        if matter_dir.name in seen and hsr_only:
+            # Merge HSR flags onto existing credit/extra row if overlap (unlikely).
             continue
         seen.add(matter_dir.name)
         try:
-            row = process_matter(matter_dir, force_extract=force)
+            row = process_matter(
+                matter_dir, force_extract=force, hsr_only=hsr_only and not force
+            )
         except Exception as exc:  # noqa: BLE001
             print(f"FAIL {matter_dir.name}: {exc}")
             row = MatterRow(
                 matter_id=matter_dir.name,
-                is_credit_facility=not force,
+                is_credit_facility=not force and not hsr_only,
                 parse_provider=f"error:{type(exc).__name__}",
             )
         rows.append(row)
@@ -491,7 +640,8 @@ def main() -> int:
             f"mfn={row.has_mfn_in_credit_agreement} always={row.has_always_on_maintenance_covenant} "
             f"spring_fc={row.has_springing_financial_covenant} "
             f"maint={row.has_maintenance_financial_covenant} "
-            f"control={row.borrower_control} docs={row.docs_scanned} "
+            f"control={row.borrower_control} hsr={row.has_hsr_filing} "
+            f"hsr_date={row.hsr_filing_date} docs={row.docs_scanned} "
             f"via {row.parse_provider}/{row.extract_provider}"
         )
 
@@ -553,6 +703,49 @@ def main() -> int:
         "gold?",
         GOLD_019_REQUIRED <= pred019 <= GOLD_019_PRECISION,
     )
+    pred006 = set(checks["006_ids"])
+    print(
+        "006/007 HSR filings:",
+        checks["006_ids"],
+        "gold?",
+        GOLD_006_REQUIRED <= pred006 <= GOLD_006_PRECISION,
+    )
+    top008 = checks["008_top"]
+    print(
+        "008 most recent HSR:",
+        top008,
+        "gold?",
+        bool(top008)
+        and top008[0][0] == GOLD_008
+        and str(top008[0][1]) == GOLD_008_DATE,
+    )
+    pred009 = set(checks["009_ids"])
+    print(
+        "009 live maintenance:",
+        checks["009_ids"],
+        "gold?",
+        GOLD_009_REQUIRED <= pred009 <= GOLD_009_PRECISION,
+    )
+    pred010 = set(checks["010_ids"])
+    print(
+        "010 cov-lite no always-on:",
+        checks["010_ids"],
+        "gold?",
+        bool(pred010 & GOLD_010_REQUIRED_ANY) and pred010 <= GOLD_010_PRECISION,
+    )
+    print(
+        "021/022 secured:",
+        checks["021_ids"],
+        "gold?",
+        set(checks["021_ids"]) == GOLD_021,
+    )
+    pred025 = set(checks["025_ids"])
+    print(
+        "025 revolver:",
+        checks["025_ids"],
+        "gold?",
+        GOLD_024 <= pred025 <= GOLD_025_PRECISION,
+    )
 
     summary = {
         "db": str(args.db),
@@ -577,6 +770,17 @@ def main() -> int:
             "017_corporate_ab_gold": set(checks["017_corporate_ab"])
             == GOLD_017_CORPORATE_AB,
             "019_gold": GOLD_019_REQUIRED <= set(checks["019_ids"]) <= GOLD_019_PRECISION,
+            "006_gold": GOLD_006_REQUIRED <= set(checks["006_ids"]) <= GOLD_006_PRECISION,
+            "007_gold": GOLD_006_REQUIRED <= set(checks["006_ids"]) <= GOLD_006_PRECISION,
+            "008_gold": bool(checks["008_top"])
+            and checks["008_top"][0][0] == GOLD_008
+            and str(checks["008_top"][0][1]) == GOLD_008_DATE,
+            "009_gold": GOLD_009_REQUIRED <= set(checks["009_ids"]) <= GOLD_009_PRECISION,
+            "010_gold": bool(set(checks["010_ids"]) & GOLD_010_REQUIRED_ANY)
+            and set(checks["010_ids"]) <= GOLD_010_PRECISION,
+            "021_gold": set(checks["021_ids"]) == GOLD_021,
+            "022_gold": set(checks["021_ids"]) == GOLD_021,
+            "025_gold": GOLD_024 <= set(checks["025_ids"]) <= GOLD_025_PRECISION,
             "011_ids": checks["011_ids"],
             "014_ids": checks["014_ids"],
             "015_top": [[a, str(b) if b else None] for a, b in checks["015_top"]],
@@ -585,6 +789,13 @@ def main() -> int:
             "016_yoy": {str(k): list(v) for k, v in checks["016_yoy"].items()},
             "017_rates": {k: list(v) for k, v in checks["017_rates"].items()},
             "019_ids": checks["019_ids"],
+            "006_ids": checks["006_ids"],
+            "008_top": [
+                [a, str(b) if b else None, c] for a, b, c in checks["008_top"]
+            ],
+            "009_ids": checks["009_ids"],
+            "010_ids": checks["010_ids"],
+            "021_ids": checks["021_ids"],
         },
     }
 
@@ -600,6 +811,11 @@ def main() -> int:
     print(f"\nWrote {out_json}")
 
     gold_keys = [
+        "006_gold",
+        "007_gold",
+        "008_gold",
+        "009_gold",
+        "010_gold",
         "018_cohort_gold",
         "018_k0",
         "024_gold",
@@ -617,9 +833,15 @@ def main() -> int:
         "017_sponsor_ab_gold",
         "017_corporate_ab_gold",
         "019_gold",
+        "021_gold",
+        "022_gold",
+        "025_gold",
     ]
     all_ok = all(summary["checks"][k] for k in gold_keys)
     print("ALL_GOLD", all_ok)
+    failed = [k for k in gold_keys if not summary["checks"][k]]
+    if failed:
+        print("FAILED", failed)
     return 0 if all_ok else 1
 
 

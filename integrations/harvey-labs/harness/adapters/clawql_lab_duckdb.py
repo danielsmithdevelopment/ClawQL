@@ -47,6 +47,32 @@ _SECURED_PATH_RE = re.compile(
     r"security-agreement|ip-security|pledge-agreement|intercreditor-agreement",
     re.IGNORECASE,
 )
+_SECURED_MORTGAGE_RE = re.compile(
+    r"mortgage|deed[-_]of[-_]trust",
+    re.IGNORECASE,
+)
+_HSR_FILING_FOLDER_RE = re.compile(
+    r"^hsr\s+filing(?:\s+preparation)?$",
+    re.IGNORECASE,
+)
+_HSR_FILING_DATE_RE = re.compile(
+    r"Filing\s+Date\s*:\s*"
+    r"((?:January|February|March|April|May|June|July|August|September|"
+    r"October|November|December)\s+\d{1,2},?\s+\d{4})",
+    re.IGNORECASE,
+)
+_HSR_FILED_WITH_AGENCY_RE = re.compile(
+    r"filed\s+with\s+the\s+(?:FTC|DOJ|Federal\s+Trade|Department\s+of\s+Justice)"
+    r"[^\n.]{0,80}?"
+    r"((?:January|February|March|April|May|June|July|August|September|"
+    r"October|November|December)\s+\d{1,2},?\s+\d{4})",
+    re.IGNORECASE | re.DOTALL,
+)
+_HSR_CALENDAR_DATE_RE = re.compile(
+    r"((?:January|February|March|April|May|June|July|August|September|"
+    r"October|November|December)\s+\d{1,2},?\s+\d{4})",
+    re.IGNORECASE,
+)
 _INC_FACILITY_RE = re.compile(
     r"(\"Incremental\s+Facility\"|Incremental\s+Facility\s+means|"
     r"incremental\s+term\s+loan\s+facility)",
@@ -170,15 +196,102 @@ def matter_has_revolving_facility(
 
 
 def matter_is_secured(matter_dir: Path) -> bool:
-    """Execution security / pledge / intercreditor path signal."""
+    """Execution security / pledge / intercreditor, or mortgage path signal.
+
+    Mortgage / deed-of-trust filenames count even without ``execution`` in the
+    name — task 021 Fairwater (1036) has no executed CA on file but form
+    mortgage / secured-bridge evidence.
+    """
     for p in matter_dir.rglob("*"):
-        if (
-            p.is_file()
-            and _SECURED_PATH_RE.search(p.name)
-            and "execution" in p.name.lower()
-        ):
+        if not p.is_file():
+            continue
+        name = p.name.lower()
+        if _SECURED_MORTGAGE_RE.search(name):
+            return True
+        if _SECURED_PATH_RE.search(name) and "execution" in name:
             return True
     return False
+
+
+def detect_hsr_filing(matter_dir: Path) -> dict[str, Any]:
+    """High-precision: firm made an HSR notification filing in this matter.
+
+    Calibrated to tasks 006–008: dedicated ``HSR Filing`` /
+    ``HSR Filing Preparation`` folder (exact {1001-00001, 1003-00001} on the
+    local DMS). Avoids Regulatory-only analysis memos and PE side-car HSR
+    workstreams that sit outside the Antitrust filing gold set.
+    """
+    folders: list[str] = []
+    for p in matter_dir.rglob("*"):
+        if not p.is_dir():
+            continue
+        if _HSR_FILING_FOLDER_RE.match(p.name.strip()):
+            folders.append(str(p.relative_to(matter_dir)).replace("\\", "/"))
+    filed = bool(folders)
+    proof = ""
+    filing_date: str | None = None
+    if filed:
+        # Prefer transmittal / final acquiring-person form as proof + date.
+        preferred: list[Path] = []
+        for p in matter_dir.rglob("*"):
+            if not p.is_file() or p.suffix.lower() not in {".docx", ".eml"}:
+                continue
+            n = p.name.lower()
+            score = 0
+            if "transmittal" in n and "hsr" in n:
+                score = 100
+            elif "acquiring-person" in n and "final" in n:
+                score = 90
+            elif "hsr-form-acquiring" in n or "acquiring-person-hsr-form" in n:
+                score = 80
+            elif "hsr-forms-filed" in n:
+                score = 70
+            elif "hsr-clearance" in n:
+                score = 40
+            if score:
+                preferred.append(p)
+        preferred.sort(
+            key=lambda p: (
+                -(
+                    100
+                    if "transmittal" in p.name.lower()
+                    else 90
+                    if "final" in p.name.lower()
+                    else 50
+                ),
+                str(p),
+            )
+        )
+        if preferred:
+            proof = str(preferred[0].relative_to(matter_dir)).replace("\\", "/")
+            try:
+                if _tika_base_url() and preferred[0].suffix.lower() == ".docx":
+                    body = _tika_parse_bytes(preferred[0].read_bytes())
+                    filing_date = None
+                    m = _HSR_FILING_DATE_RE.search(body)
+                    if m:
+                        filing_date = _parse_deal_date(m.group(1).replace(",", ""))
+                    if not filing_date:
+                        m = _HSR_FILED_WITH_AGENCY_RE.search(body)
+                        if m:
+                            filing_date = _parse_deal_date(
+                                m.group(1).replace(",", "")
+                            )
+                    if not filing_date and "transmittal" in preferred[0].name.lower():
+                        # Letterhead date at top of transmittal (task 008 gold).
+                        m = _HSR_CALENDAR_DATE_RE.search(body[:900])
+                        if m:
+                            filing_date = _parse_deal_date(
+                                m.group(1).replace(",", "")
+                            )
+            except Exception:  # noqa: BLE001
+                pass
+    return {
+        "filed": filed,
+        "folders": folders[:6],
+        "proof_doc": proof,
+        "filing_date": filing_date,
+    }
 
 
 def _pick_execution_credit_doc(matter_dir: Path) -> Path | None:
@@ -612,6 +725,9 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
               title VARCHAR,
               is_credit_facility BOOLEAN,
               is_hsr_second_request BOOLEAN,
+              has_hsr_filing BOOLEAN,
+              hsr_filing_date DATE,
+              hsr_filing_proof_doc VARCHAR,
               mentions_springing_lien BOOLEAN,
               has_revolving_facility BOOLEAN,
               is_secured BOOLEAN,
@@ -637,7 +753,7 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             con.executemany(
                 f"""
                 INSERT INTO matters VALUES (
-                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
                 [
@@ -649,6 +765,9 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
                         r.get("title") or "",
                         bool(r.get("is_credit_facility")),
                         bool(r.get("is_hsr_second_request")),
+                        bool(r.get("has_hsr_filing")),
+                        r.get("hsr_filing_date"),
+                        r.get("hsr_filing_proof_doc") or "",
                         bool(r.get("mentions_springing_lien")),
                         bool(r.get("has_revolving_facility")),
                         bool(r.get("is_secured")),
@@ -717,6 +836,40 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             CREATE VIEW maintenance_financial_covenant_matters AS
             SELECT * FROM matters
             WHERE is_credit_facility AND {FIELD_MAINTENANCE_FC}
+            """
+        )
+        con.execute(
+            """
+            CREATE VIEW hsr_filings AS
+            SELECT * FROM matters WHERE has_hsr_filing
+            """
+        )
+        con.execute(
+            """
+            CREATE VIEW secured_credit_facilities AS
+            SELECT * FROM matters
+            WHERE is_credit_facility AND is_secured
+            """
+        )
+        con.execute(
+            f"""
+            CREATE VIEW live_maintenance_financings AS
+            SELECT * FROM matters
+            WHERE is_credit_facility
+              AND {FIELD_MAINTENANCE_FC}
+              AND NOT (
+                {FIELD_COVENANT_LITE}
+                AND NOT {FIELD_ALWAYS_ON_MAINT}
+              )
+            """
+        )
+        con.execute(
+            f"""
+            CREATE VIEW covenant_lite_no_always_on AS
+            SELECT * FROM matters
+            WHERE is_credit_facility
+              AND {FIELD_COVENANT_LITE}
+              AND NOT {FIELD_ALWAYS_ON_MAINT}
             """
         )
     finally:
