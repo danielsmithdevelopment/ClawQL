@@ -136,8 +136,11 @@ facilities** (or similar), define N with structured recall on the seeded flag:
 }
 ```
 
-Alternate: `practiceArea` contains `Banking & Finance`. List every returned
-`entityId` as N, then search for the rare attribute inside that set only.
+Alternate: `practiceArea` contains `Banking & Finance` (keep `limit` ≤ **50**).
+Treat the recall response fields **`matterIds`** / **`matterIdCount`** (also under
+`labGuidance.matterIds`) as the **authoritative** denominator N — list every id,
+then search for the rare attribute inside that set only. Do not drop ids when
+writing `k of N`.
 
 Rules:
 - Always pass both `schema: "legal.Matter"` and a non-empty `filters` object when

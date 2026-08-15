@@ -4,7 +4,7 @@ Date: 2026-08-14
 Models: Nemotron 3.5 Lightning ± ClawQL  
 Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479) (**20% ClawQL all-pass**)  
 Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774) (**0% ClawQL all-pass**; mean CPR ~9%)  
-**Next:** Fix 7 seed log green (12/266); re-probe `18-18` **after OpenRouter midnight UTC** (or paid credits) → canonical `1-25` only if all-pass
+**Next:** Probe #5 graded fail (0 of 11 vs 0 of 12); Fix 8 recall/ontology surface → re-probe `18-18` → canonical `1-25` only if all-pass
 
 ### Next-run gate (deep think)
 
@@ -15,12 +15,15 @@ Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/dan
 | 18-18 #2 [31767832459](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31767832459)  | **Regression:** 40/40, ceiling fired, **no write** — cohort recall empty because ingest hard-coded `practice=Other` |
 | 18-18 #3 [31769718249](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31769718249)  | Wrote **0 of 36** — Pattern F OK; detector over-flagged (36/266 vs gold 12)                                         |
 | 18-18 #4 [31772193789](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31772193789)  | Seed **12/266** (Fix 7 OK); bulk timed out→fallback; agent **OpenRouter 429** (daily free cap). No scorecard.       |
+| 18-18 #5 [31853395295](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31853395295)  | Bulk OK; seed 12/266; wrote **0 of 11** (missed 1008-00001). Graded fail. Baseline OR 504.                         |
 
-**Root cause (layer):** Fix 5 was prompt-level; vault never had Banking & Finance / credit-facility ontology. Structured `practiceArea` filters → 0 hits; agent hunted forever. Fix 6 seeded flags but path tokens were too broad (probe #3). Fix 7 precision held on probe #4 seed log; cell failed on **quota + bulk MCP timeout**, not denominator math.
+**Root cause (layer):** Fix 5 was prompt-level; vault never had Banking & Finance / credit-facility ontology. Structured `practiceArea` filters → 0 hits; agent hunted forever. Fix 6 seeded flags but path tokens were too broad (probe #3). Fix 7 precision held on probe #4/#5 seed logs. Probe #5 failure is **cohort surface** (recall packaging / ontology visibility / agent dropping an id) — not detector math.
 
 **Fix 6:** DMS path seeding → `CREDIT_FACILITY` title flag + `CLAWQL_PRACTICE_AREA=Banking & Finance`; Pattern F; ceiling re-nudge every remaining turn.
 
 **Fix 7:** Tighten detector to execution credit/bridge/term/mezzanine loan agreements under `Transaction Documents/` / `documents/` (no gold-ID seeding).
+
+**Fix 8:** Authoritative `matterIds`/`matterIdCount` on structured recalls; post-bulk CREDIT_FACILITY `memory_ingest` upsert + ontology verify log; raise clawql-tool JSON cap.
 
 ## Batch 2 final ledger (001–015)
 
@@ -77,6 +80,7 @@ Do **not** tune the Nemotron prompt stack against 016/017/019/021 — those are 
 | Frequency **denominator** = prompt cohort + matter-id list (Fix 5)         | **in** |
 | Seed `CREDIT_FACILITY` / Banking & Finance in ontology (Fix 6 / Pattern F) | **in** |
 | Fix 7: tighten credit-facility path detector toward N≈12 (no gold IDs)     | **in** |
+| Fix 8: matterIds-first recall + CREDIT_FACILITY ontology upsert/verify    | **in** |
 | Bulk DMS seed via `ingest_external_knowledge` (`CLAWQL_EXTERNAL_INGEST`)   | **in** |
 | Gate Node/npm/build to clawql matrix arms only                             | **in** |
 | `CLAWQL_LAB_PRESERVE_VAULT` hook (shared vault artifact, next slice)       | **in** |
@@ -121,15 +125,23 @@ Bulk `1–50` **Read timed out** (180s) → fell back to per-matter `memory_inge
 Agent died on OpenRouter free-tier **429** (`Remaining: 0`, reset 2026-08-15 00:00 UTC)
 right after require-recall nudge — empty clawql scorecard. Not a rubric miss.
 
+### Probe #5 post-reset ([31853395295](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31853395295))
+
+Bulk ingest **succeeded** (batches through 266); seed again **12/266**; clawql job
+~14m (much faster). Agent wrote **0 of 11**, omitting **1008-00001** (Lumos).
+Judge fail (correct). Baseline died on OpenRouter **504** idle timeout.
+Fix 8: matterIds-first recall packaging + force ontology upsert for the
+CREDIT_FACILITY cohort + verify `N=` log before the agent loop.
+
 ## Plan
 
 1. ~~**016–025** first — new signal~~ **done** ([31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774))
 2. Land task-018 fixes (ceiling force-write, negative-result principle, require-recall, frequency kind)
-3. ~~Optional **018 smoke**~~ probe arc through Fix 6 ([31769718249](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31769718249)) — Fix 7 + bulk ingest shipped
-4. Re-arm **`18-18` after OpenRouter daily reset** (00:00 UTC) — probe #4 died on 429 with Fix 7 seed already correct; then **clean canonical 001–025**
+3. ~~Optional **018 smoke**~~ probe arc through Fix 7 ([31853395295](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31853395295))
+4. Ship Fix 8 (matterIds-first recall + CREDIT_FACILITY ontology upsert/verify); re-arm **`18-18`**; then **clean canonical 001–025** if all-pass
 5. Then Opus; Harvey outreach with public run IDs
 6. Shared vault prepare job (uses `CLAWQL_LAB_PRESERVE_VAULT`) — after 018 green
 
 ## Notes
 
-Do not push overlay mid-sweep (`cancel-in-progress`). Marker cleared after probe #4 — do **not** re-arm until quota resets. Do **not** hard-code gold matter IDs into seeding (answer-key leak).
+Do not push overlay mid-sweep (`cancel-in-progress`). Marker cleared after probe #5. Do **not** hard-code gold matter IDs into seeding (answer-key leak).

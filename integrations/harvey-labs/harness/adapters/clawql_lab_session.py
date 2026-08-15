@@ -235,6 +235,12 @@ _TOOL_NAME_TO_MCP = {
 # max so a single tools/call finishes under the MCP HTTP timeout.
 _BULK_INGEST_BATCH = 25
 _BULK_INGEST_HTTP_TIMEOUT_S = 600
+# Cap for JSON returned from execute_clawql_tool to the agent. Structured
+# cohort recalls must keep every matterId visible — 20k was too tight once
+# hits+results+guidance are pretty-printed.
+_CLAWQL_TOOL_JSON_CHARS = int(
+    os.environ.get("CLAWQL_LAB_CLAWQL_TOOL_JSON_CHARS", "100000")
+)
 
 
 
@@ -690,11 +696,65 @@ def _enrich_lab_memory_recall(result: Any) -> dict[str, Any]:
         payload["results"] = fixed_results
 
     payload["hits"] = enriched_hits
+    # Compact cohort summary FIRST so agents (and 20k-era truncations) always
+    # see N + every matter id before bulky hit/result bodies.
+    sorted_ids = sorted(set(matter_ids))
+    payload["matterIds"] = sorted_ids
+    payload["matterIdCount"] = len(sorted_ids)
+    if (
+        payload.get("queryType") == "structured_predicate"
+        or payload.get("indexUsed") == "ontology"
+    ):
+        # Shrink duplicate results[] snippets — hits[] already carries fields.
+        slim_results: list[dict[str, Any]] = []
+        for row in payload.get("results") or []:
+            if not isinstance(row, dict):
+                continue
+            path = str(row.get("path") or "")
+            mid_m = re.search(r"(\d{4}-\d{5}|MAT-\d{4})", path)
+            slim_results.append(
+                {
+                    "path": path,
+                    "score": row.get("score", 1),
+                    "depth": 0,
+                    "reason": "structured_predicate",
+                    "entityId": mid_m.group(1) if mid_m else None,
+                }
+            )
+        payload["results"] = slim_results
+        # Prefer short hit cards for frequency cohorts (ids + client + practice).
+        compact_hits: list[dict[str, Any]] = []
+        for h in enriched_hits:
+            fields = h.get("fields") if isinstance(h.get("fields"), dict) else {}
+            compact_hits.append(
+                {
+                    "entityId": h.get("entityId"),
+                    "path": h.get("path"),
+                    "score": h.get("score", 1),
+                    "clientShortName": h.get("clientShortName")
+                    or fields.get("clientShortName"),
+                    "fields": {
+                        "id": fields.get("id") or h.get("entityId"),
+                        "title": fields.get("title"),
+                        "practiceArea": fields.get("practiceArea"),
+                        "matterType": fields.get("matterType"),
+                        "status": fields.get("status"),
+                    },
+                    "sandboxDocumentRoot": h.get("sandboxDocumentRoot"),
+                    "preferredEvidence": (h.get("preferredEvidence") or [])[:4],
+                }
+            )
+        payload["hits"] = compact_hits
     guidance: dict[str, Any] = {
         "sandboxDocumentRoots": [
-            f"/workspace/documents/matters/{mid}" for mid in matter_ids
+            f"/workspace/documents/matters/{mid}" for mid in sorted_ids
         ],
         "vaultPathsNotReadableViaHarnessRead": True,
+        "cohortRule": (
+            "For frequency/survey tasks, treat matterIds (and matterIdCount) as "
+            "the authoritative denominator N. List every id. Do not drop ids "
+            "when writing k of N."
+        ),
         "requiredDeliverable": (
             "Before finishing, call the harness `write` tool to create a file "
             "under /workspace/output/ (e.g. matters-enumeration.md or "
@@ -709,7 +769,7 @@ def _enrich_lab_memory_recall(result: Any) -> dict[str, Any]:
             "listed matter qualifies, and cite preferredEvidence — not "
             "engagement letters. Chat-only answers are not graded."
         ),
-        "matterIds": matter_ids,
+        "matterIds": sorted_ids,
         "evidenceRule": (
             "Cite Second Request evidence docs "
             "(joint-status-report, case-assessment-memo, letter-ftc-meet-and-confer, "
@@ -721,10 +781,11 @@ def _enrich_lab_memory_recall(result: Any) -> dict[str, Any]:
         "contextDiscipline": (
             "Never ls -R / find the entire /workspace/documents tree. Use "
             "narrow paths. Do not invent ontology title flags beyond seeded "
-            "tokens such as HSR_SECOND_REQUEST."
+            "tokens such as HSR_SECOND_REQUEST. memory_recall limit must be "
+            "≤50."
         ),
     }
-    if not matter_ids:
+    if not sorted_ids:
         guidance["fallback"] = (
             "Structured recall returned no matter hits. Do not repeat the same "
             "filter more than once more. Fall back to targeted grep/glob/read "
@@ -732,7 +793,29 @@ def _enrich_lab_memory_recall(result: Any) -> dict[str, Any]:
             "attempting all criteria."
         )
     payload["labGuidance"] = guidance
-    return payload
+    # Re-order keys so matterIds appear before bulky arrays when serialized.
+    ordered: dict[str, Any] = {}
+    for key in (
+        "ok",
+        "query",
+        "matterIdCount",
+        "matterIds",
+        "filteredEntities",
+        "scannedEntities",
+        "queryType",
+        "indexUsed",
+        "schema",
+        "filters",
+        "hits",
+        "results",
+        "labGuidance",
+    ):
+        if key in payload:
+            ordered[key] = payload[key]
+    for key, val in payload.items():
+        if key not in ordered:
+            ordered[key] = val
+    return ordered
 
 
 def is_clawql_lab_adapter(adapter: Any) -> bool:
@@ -830,7 +913,15 @@ class ClawQLLabSession:
             result = self._call_clawql_mcp(mcp_name, args)
             if mcp_name == "memory_recall":
                 result = _enrich_lab_memory_recall(result)
-            return json.dumps(result, indent=2, default=str)[:20000]
+            dumped = json.dumps(result, indent=2, default=str)
+            if len(dumped) > _CLAWQL_TOOL_JSON_CHARS:
+                # Prefer keeping the cohort header even when truncating.
+                dumped = (
+                    dumped[:_CLAWQL_TOOL_JSON_CHARS]
+                    + "\n…[ClawQL clawql-tool JSON truncated; "
+                    "use matterIds / matterIdCount as authoritative N]"
+                )
+            return dumped
         except Exception as exc:  # noqa: BLE001
             return f"Error calling ClawQL MCP tool {mcp_name}: {exc}"
 
@@ -879,6 +970,7 @@ class ClawQLLabSession:
         hsr_count = 0
         credit_count = 0
         bulk_docs: list[dict[str, str]] = []
+        credit_docs: list[dict[str, str]] = []
         for matter_dir in all_matter_dirs:
             matter_id = matter_dir.name
             detection = detect_hsr_second_request(matter_dir)
@@ -999,12 +1091,14 @@ class ClawQLLabSession:
                 f"{content}\n"
             )
             safe_task = re.sub(r"[^a-zA-Z0-9_-]+", "-", self.task_id)
-            bulk_docs.append(
-                {
-                    "path": f"Memory/lab-{safe_task}-matter-{matter_id}.md",
-                    "markdown": markdown,
-                }
-            )
+            doc = {
+                "path": f"Memory/lab-{safe_task}-matter-{matter_id}.md",
+                "markdown": markdown,
+                "matter_id": matter_id,
+            }
+            bulk_docs.append(doc)
+            if credit["is_credit_facility"]:
+                credit_docs.append(doc)
 
         self._flush_bulk_markdown_docs(bulk_docs)
         print(
@@ -1013,6 +1107,62 @@ class ClawQLLabSession:
             f"CREDIT_FACILITY flagged {credit_count}/{len(all_matter_dirs)} matters; "
             f"bulk_docs={len(bulk_docs)}"
         )
+        self._ensure_credit_facility_ontology(credit_docs, expected=credit_count)
+
+    def _ensure_credit_facility_ontology(
+        self, credit_docs: list[dict[str, str]], *, expected: int
+    ) -> None:
+        """Force ontology upsert for CREDIT_FACILITY seeds + verify recall N.
+
+        Bulk ``ingest_external_knowledge`` writes vault Markdown but does not
+        call ``upsertOntologyFromVaultNote``. Lazy vault sync usually covers
+        this; probe #5 still surfaced N=11 vs seed 12, so we memory_ingest the
+        flagged cohort (append=false) then log structured recall ids.
+        """
+        if not credit_docs:
+            print("ClawQL pre-ingest: no CREDIT_FACILITY docs to ontology-verify")
+            return
+        for doc in credit_docs:
+            title = Path(doc["path"]).stem
+            self._call_clawql_mcp(
+                "memory_ingest",
+                {
+                    "title": title,
+                    "type": "entity",
+                    "insights": (
+                        f"LAB ontology upsert {doc.get('matter_id', title)} "
+                        "CREDIT_FACILITY"
+                    ),
+                    "toolOutputs": doc["markdown"],
+                    "sessionId": f"harvey-lab:{self.task_id}",
+                    "append": False,
+                },
+                timeout=_BULK_INGEST_HTTP_TIMEOUT_S,
+            )
+        try:
+            raw = self._call_clawql_mcp(
+                "memory_recall",
+                {
+                    "query": "CREDIT_FACILITY cohort verify",
+                    "schema": "legal.Matter",
+                    "filters": {"title": {"contains": "CREDIT_FACILITY"}},
+                    "limit": 50,
+                },
+            )
+        except Exception as exc:  # noqa: BLE001
+            print(f"ClawQL pre-ingest: CREDIT_FACILITY ontology verify failed ({exc})")
+            return
+        enriched = _enrich_lab_memory_recall(raw)
+        ids = enriched.get("matterIds") or []
+        print(
+            f"ClawQL pre-ingest: ontology CREDIT_FACILITY recall "
+            f"N={len(ids)} expected={expected} ids={ids}"
+        )
+        if expected and len(ids) != expected:
+            print(
+                "ClawQL pre-ingest: WARNING ontology cohort size mismatch — "
+                "agent may report wrong frequency denominator"
+            )
 
     def _flush_bulk_markdown_docs(self, documents: list[dict[str, str]]) -> None:
         """Write many vault notes via ingest_external_knowledge (≤50/call).
@@ -1021,14 +1171,16 @@ class ClawQLLabSession:
         """
         if not documents:
             return
+        # Strip helper keys before MCP (matter_id is LAB-only).
+        mcp_docs = [{"path": d["path"], "markdown": d["markdown"]} for d in documents]
         use_bulk = os.environ.get("CLAWQL_EXTERNAL_INGEST", "1").strip() == "1"
         if use_bulk:
             try:
-                for i in range(0, len(documents), _BULK_INGEST_BATCH):
-                    batch = documents[i : i + _BULK_INGEST_BATCH]
+                for i in range(0, len(mcp_docs), _BULK_INGEST_BATCH):
+                    batch = mcp_docs[i : i + _BULK_INGEST_BATCH]
                     print(
                         f"ClawQL pre-ingest: bulk ingest_external_knowledge "
-                        f"{i + 1}–{i + len(batch)} / {len(documents)}"
+                        f"{i + 1}–{i + len(batch)} / {len(mcp_docs)}"
                     )
                     result = self._call_clawql_mcp(
                         "ingest_external_knowledge",
@@ -1037,7 +1189,6 @@ class ClawQLLabSession:
                     )
                     if isinstance(result, dict) and result.get("isError"):
                         raise RuntimeError(result)
-                    # tools/call wraps JSON in content[].text
                     body = result
                     if isinstance(result, dict) and isinstance(result.get("content"), list):
                         for block in result["content"]:
@@ -1057,7 +1208,7 @@ class ClawQLLabSession:
                     f"ClawQL pre-ingest: bulk ingest failed ({exc}); "
                     "falling back to per-matter memory_ingest"
                 )
-        for doc in documents:
+        for doc in mcp_docs:
             title = Path(doc["path"]).stem
             self._call_clawql_mcp(
                 "memory_ingest",
