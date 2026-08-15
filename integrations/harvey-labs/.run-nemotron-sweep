@@ -1,19 +1,13 @@
-# Nemotron ± ClawQL single-task probe (Harvey-parity judge)
+# Nemotron ± ClawQL multi-task sweep (Harvey-parity judge)
 #
-# Presence of this file on a PR/push that touches integrations/harvey-labs/**
-# switches the firm-knowledge workflow from single-task smoke to:
+# Arms:   nemotron, nemotron-clawql
+# Judge:  claude-sonnet-4-6 (via OpenRouter)
 #
-#   Arms:   nemotron, nemotron-clawql
-#   Tasks:  firm-knowledge/tasks/START .. END (inclusive)
-#   Judge:  claude-sonnet-4-6 (Harvey harness default; via OpenRouter)
+# Spec on first non-comment line: N | START-END
 #
-# Spec on first non-comment line:
-#   N         → tasks 001..00N
-#   START-END → tasks START..END
+# Gate: LangExtract+Tika→DuckDB smoke 18-18 GREEN
+#   run 31858328479 — clawql CPR 1.0 / all-pass; baseline 0.0
 #
-# SMOKE: LangExtract+Tika→DuckDB on task-018 only (local gold passed).
-# Do NOT put 1-25 here until this smoke is green.
+# WARNING: cancel-in-progress — do not push while this matrix runs.
 #
-# WARNING: concurrency cancel-in-progress is on — do not push while this runs.
-#
-18-18
+1-25
