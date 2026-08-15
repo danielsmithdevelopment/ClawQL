@@ -38,7 +38,13 @@ def find_span(text: str, needle: str) -> dict[str, int] | None:
 def demo_extract(body: dict[str, Any]) -> dict[str, Any]:
     text = str(body.get("text", ""))
     preset = str(body.get("schema_preset") or "").strip().lower()
-    if preset in {"credit_facility_matter", "credit_facility", "harvey_matter"}:
+    if preset in {
+        "credit_facility_matter",
+        "credit_facility",
+        "harvey_matter",
+        "firm_knowledge_matter",
+        "matter_general",
+    }:
         return demo_extract_credit_facility(body)
 
     extractions: list[dict[str, Any]] = []
@@ -223,13 +229,70 @@ def demo_extract_credit_facility(body: dict[str, Any]) -> dict[str, Any]:
     if sec:
         _append_bool(extractions, text, "is_secured", sec.group(1), "true")
 
+    # has_adjusted_ebitda_addbacks (011) — explicit add-backs or structured
+    # "Adjusted EBITDA means … plus, to the extent deducted …"
+    ebitda = re.search(
+        r"(add[- ]?backs?\s+(?:to\s+)?(?:Consolidated\s+)?(?:Adjusted\s+)?EBITDA|"
+        r"Adjusted\s+EBITDA.{0,120}?add[- ]?backs?|"
+        r"EBITDA.{0,80}?add[- ]?backs?|"
+        r"add[- ]?backs?.{0,80}?EBITDA|"
+        r"customary\s+add[- ]?backs?|"
+        r"addbacks?\s+and\s+adjustments|"
+        r"include\s+appropriate\s+add[- ]?backs?|"
+        r"subject\s+to\s+certain\s+customary\s+addbacks?|"
+        r"Consolidated\s+Adjusted\s+EBITDA.{0,200}?add[- ]?backs?|"
+        r"[\"“]?Adjusted\s+EBITDA[\"”]?\s+means.{0,800}?plus,?\s+to\s+the\s+extent\s+deducted)",
+        text,
+        re.I | re.S,
+    )
+    if ebitda:
+        _append_bool(
+            extractions,
+            text,
+            "has_adjusted_ebitda_addbacks",
+            ebitda.group(1)[:80],
+            "true",
+        )
+
+    # is_covenant_lite (014) — market label + TLB / institutional term loan
+    cov = re.search(r"(covenant[- ]lite)", text, re.I)
+    tlb = re.search(
+        r"(Term\s+Loan\s+B|\bTLB\b|institutional\s+term\s+loan)",
+        text,
+        re.I,
+    )
+    if cov and tlb:
+        _append_bool(
+            extractions, text, "is_covenant_lite", cov.group(1), "true"
+        )
+
+    # has_mfn_in_credit_agreement (013/015) — literal MFN or accordion
+    # same-pricing / equal-treatment (Lumos 1008 has no "MFN" string).
+    # Caller must restrict to execution_credit docs (never SAFE).
+    mfn = re.search(
+        r"(\bMFN\b|Most\s+Favored\s+Nation|MFN\s+Provision|"
+        r"same\s+pricing\s*\([^)]*(?:Applicable\s+Rate|yield)|"
+        r"Equal\s+Treatment|"
+        r"Accordion\s+Commitment.{0,400}?same\s+pricing)",
+        text,
+        re.I | re.S,
+    )
+    if mfn:
+        _append_bool(
+            extractions,
+            text,
+            "has_mfn_in_credit_agreement",
+            mfn.group(1)[:80],
+            "true",
+        )
+
     grounded = [e for e in extractions if e.get("char_interval")]
     result = {
         "ok": True,
         "provider": "langextract-sidecar",
         "backend": "demo",
-        "model_id": "demo-credit-facility-matter-v1",
-        "schema_preset": "credit_facility_matter",
+        "model_id": "demo-firm-knowledge-matter-v2",
+        "schema_preset": "firm_knowledge_matter",
         "extractions": grounded,
         "artifact_paths": {},
     }

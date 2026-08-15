@@ -267,16 +267,28 @@ def _tika_parse_bytes(data: bytes, *, timeout: float = 180) -> str:
 
 
 def _langextract_matter_fields(text: str, *, doc_id: str) -> dict[str, Any]:
-    """POST schema_preset=credit_facility_matter; map grounded extractions."""
+    """POST schema_preset=firm_knowledge_matter; map grounded extractions."""
     import json
     import urllib.request
+
+    from clawql_lab_matter_schema import (
+        FIELD_COVENANT_LITE,
+        FIELD_DEAL_DATE,
+        FIELD_EBITDA_ADDBACKS,
+        FIELD_FACILITY_AMOUNT,
+        FIELD_INCREMENTAL,
+        FIELD_MFN_CREDIT,
+        FIELD_REVOLVER,
+        FIELD_SECURED,
+        FIELD_SPRINGING,
+    )
 
     base = _langextract_base_url()
     if not base:
         raise RuntimeError("LangExtract URL not configured")
     payload = {
         "text": text[:180_000],
-        "schema_preset": "credit_facility_matter",
+        "schema_preset": "firm_knowledge_matter",
         "doc_id": doc_id[:80],
         "write_html": False,
     }
@@ -294,24 +306,35 @@ def _langextract_matter_fields(text: str, *, doc_id: str) -> dict[str, Any]:
         "provider": body.get("provider") or body.get("backend") or "langextract",
         "model_id": body.get("model_id"),
     }
+    bool_classes = {
+        FIELD_INCREMENTAL,
+        FIELD_REVOLVER,
+        FIELD_SPRINGING,
+        FIELD_SECURED,
+        FIELD_EBITDA_ADDBACKS,
+        FIELD_COVENANT_LITE,
+        FIELD_MFN_CREDIT,
+    }
     for e in body.get("extractions") or []:
         cls = e.get("extraction_class")
         text_v = str(e.get("extraction_text") or "")
-        if cls == "deal_date":
-            fields["deal_date"] = _parse_deal_date(text_v) or text_v
-        elif cls == "facility_amount_usd":
-            fields["facility_amount_usd"] = _parse_money(text_v)
-        elif cls in {
-            "has_incremental_facility",
-            "has_revolving_facility",
-            "mentions_springing_lien",
-            "is_secured",
-        }:
+        if cls == FIELD_DEAL_DATE:
+            fields[FIELD_DEAL_DATE] = _parse_deal_date(text_v) or text_v
+        elif cls == FIELD_FACILITY_AMOUNT:
+            fields[FIELD_FACILITY_AMOUNT] = _parse_money(text_v)
+        elif cls in bool_classes:
             fields[cls] = text_v.strip().lower() in {"true", "yes", "1"}
     return fields
 
 
 def _local_matter_fields_from_text(body: str, *, source_doc: str) -> dict[str, Any]:
+    """Offline fallback mirroring demo LangExtract firm_knowledge_matter."""
+    from clawql_lab_matter_schema import (
+        FIELD_COVENANT_LITE,
+        FIELD_EBITDA_ADDBACKS,
+        FIELD_MFN_CREDIT,
+    )
+
     out: dict[str, Any] = {
         "deal_date": None,
         "has_incremental_facility": False,
@@ -331,6 +354,26 @@ def _local_matter_fields_from_text(body: str, *, source_doc: str) -> dict[str, A
         out["has_revolving_facility"] = True
     if _SPRINGING_LIEN_RE.search(body):
         out["mentions_springing_lien"] = True
+    if re.search(
+        r"(?:add[- ]?backs?.{0,80}?EBITDA|EBITDA.{0,80}?add[- ]?backs?|"
+        r"[\"“]?Adjusted\s+EBITDA[\"”]?\s+means.{0,800}?plus,?\s+to\s+the\s+extent\s+deducted)",
+        body,
+        re.I | re.S,
+    ):
+        out[FIELD_EBITDA_ADDBACKS] = True
+    if re.search(r"covenant[- ]lite", body, re.I) and re.search(
+        r"Term\s+Loan\s+B|\bTLB\b|institutional\s+term\s+loan", body, re.I
+    ):
+        out[FIELD_COVENANT_LITE] = True
+    if re.search(
+        r"\bMFN\b|Most\s+Favored\s+Nation|MFN\s+Provision|"
+        r"same\s+pricing\s*\([^)]*(?:Applicable\s+Rate|yield)|"
+        r"Equal\s+Treatment|"
+        r"Accordion\s+Commitment.{0,400}?same\s+pricing",
+        body,
+        re.I | re.S,
+    ):
+        out[FIELD_MFN_CREDIT] = True
     return out
 
 
@@ -338,93 +381,97 @@ def extract_credit_facility_matter_fields(
     matter_dir: Path,
     *,
     text_extractor: Callable[[Path], str] | None = None,
+    max_docs: int = 10,
 ) -> dict[str, Any]:
-    """Fill Matter typed fields (LangExtract preset names).
+    """Fill Matter typed fields across ranked multi-doc catalogue.
 
     Prefer LangExtract HTTP when ``CLAWQL_LAB_LANGEXTRACT_URL`` /
     ``LANGEXTRACT_BASE_URL`` is set; otherwise local grounded heuristics.
     Optional Tika (``CLAWQL_LAB_TIKA_URL``) for bytes→text when available.
+
+    Alias kept for callers; schema is now ``firm_knowledge_matter`` (general).
     """
-    out: dict[str, Any] = {
-        "is_secured": matter_is_secured(matter_dir),
-        "deal_date": None,
-        "has_incremental_facility": False,
-        "facility_amount_usd": None,
-        "has_revolving_facility": False,
-        "mentions_springing_lien": False,
-        "source_doc": "",
-        "extract_provider": "none",
-    }
-    # Path revolvers / springing filenames always apply.
+    from clawql_lab_matter_schema import (
+        DOC_ROLE_EXECUTION_CREDIT,
+        FIELD_COVENANT_LITE,
+        FIELD_EBITDA_ADDBACKS,
+        FIELD_MFN_CREDIT,
+        catalog_matter_docs,
+        empty_matter_fields,
+        merge_extraction_hit,
+        proof_column,
+    )
+
+    out = empty_matter_fields()
+    # Path revolvers / springing filenames / secured always apply.
     out["has_revolving_facility"] = matter_has_revolving_facility(
         matter_dir, text_extractor=None
     )
     out["mentions_springing_lien"] = matter_mentions_springing_lien(
         matter_dir, text_extractor=None
     )
+    out["is_secured"] = matter_is_secured(matter_dir)
 
-    doc = _pick_execution_credit_doc(matter_dir)
-    if doc is None:
-        # Still allow path-only revolver/secured.
+    docs = catalog_matter_docs(matter_dir, limit=max_docs)
+    if not docs:
+        # Single-doc fallback for sparse folders.
+        one = _pick_execution_credit_doc(matter_dir)
+        if one is not None:
+            docs = [(DOC_ROLE_EXECUTION_CREDIT, one)]
+    if not docs:
         out["extract_provider"] = "path-only"
         return out
-    out["source_doc"] = str(doc.relative_to(matter_dir))
 
-    body = ""
     parse_provider = "none"
-    if _tika_base_url():
-        try:
-            body = _tika_parse_bytes(doc.read_bytes())
-            parse_provider = "tika"
-        except Exception:  # noqa: BLE001
-            body = ""
-    if not body and text_extractor is not None:
-        try:
-            body = text_extractor(doc) or ""
-            parse_provider = "docx-local"
-        except Exception:  # noqa: BLE001
-            body = ""
-    if not body:
-        out["extract_provider"] = f"{parse_provider}/empty"
-        # Fall back to full-tree path+text scans when we have an extractor.
-        if text_extractor is not None:
-            out["has_revolving_facility"] = matter_has_revolving_facility(
-                matter_dir, text_extractor=text_extractor
-            )
-            out["mentions_springing_lien"] = matter_mentions_springing_lien(
-                matter_dir, text_extractor=text_extractor
-            )
-        return out
+    extract_provider = "none"
+    scanned = 0
+    for role, doc in docs:
+        rel = str(doc.relative_to(matter_dir)).replace("\\", "/")
+        body = ""
+        if _tika_base_url():
+            try:
+                body = _tika_parse_bytes(doc.read_bytes())
+                parse_provider = "tika"
+            except Exception:  # noqa: BLE001
+                body = ""
+        if not body and text_extractor is not None:
+            try:
+                body = text_extractor(doc) or ""
+                parse_provider = "docx-local"
+            except Exception:  # noqa: BLE001
+                body = ""
+        if not body:
+            continue
+        scanned += 1
+        if role == DOC_ROLE_EXECUTION_CREDIT and not out.get("source_doc"):
+            out["source_doc"] = rel
 
-    fields: dict[str, Any]
-    if _langextract_base_url():
-        try:
-            fields = _langextract_matter_fields(
-                body, doc_id=f"{matter_dir.name}-{doc.stem}"
-            )
-            out["extract_provider"] = f"{parse_provider}/langextract"
-        except Exception:  # noqa: BLE001
-            fields = _local_matter_fields_from_text(body, source_doc=out["source_doc"])
-            out["extract_provider"] = f"{parse_provider}/local-fallback"
-    else:
-        fields = _local_matter_fields_from_text(body, source_doc=out["source_doc"])
-        out["extract_provider"] = f"{parse_provider}/local"
+        fields: dict[str, Any]
+        if _langextract_base_url():
+            try:
+                fields = _langextract_matter_fields(
+                    body, doc_id=f"{matter_dir.name}-{doc.stem}"
+                )
+                extract_provider = f"{parse_provider}/langextract"
+            except Exception:  # noqa: BLE001
+                fields = _local_matter_fields_from_text(body, source_doc=rel)
+                extract_provider = f"{parse_provider}/local-fallback"
+        else:
+            fields = _local_matter_fields_from_text(body, source_doc=rel)
+            extract_provider = f"{parse_provider}/local"
 
-    if fields.get("deal_date"):
-        out["deal_date"] = fields["deal_date"]
-    if fields.get("facility_amount_usd") is not None:
-        out["facility_amount_usd"] = fields["facility_amount_usd"]
-    if "has_incremental_facility" in fields:
-        out["has_incremental_facility"] = bool(fields["has_incremental_facility"])
-    if fields.get("has_revolving_facility"):
-        out["has_revolving_facility"] = True
-    if fields.get("mentions_springing_lien"):
-        out["mentions_springing_lien"] = True
-    if fields.get("is_secured"):
-        out["is_secured"] = True
+        for cls, val in list(fields.items()):
+            if cls in {"provider", "model_id"}:
+                continue
+            merge_extraction_hit(out, cls=cls, value=val, rel_doc=rel, role=role)
 
-    # Mezzanine-only docs: revolver only if path evidence (notes / ABL).
-    if "mezzanine" in out["source_doc"].lower():
+    out["docs_scanned"] = scanned
+    out["extract_provider"] = extract_provider
+    out["parse_provider"] = parse_provider
+
+    # Mezzanine-only primary CA: revolver only with path evidence.
+    src = str(out.get("source_doc") or "")
+    if "mezzanine" in src.lower():
         path_rev = any(
             p.is_file() and _REVOLVER_PATH_RE.search(p.name)
             for p in matter_dir.rglob("*")
@@ -432,12 +479,40 @@ def extract_credit_facility_matter_fields(
         if not path_rev:
             out["has_revolving_facility"] = False
 
+    # Ensure proof columns exist even if false.
+    for fname in (
+        FIELD_EBITDA_ADDBACKS,
+        FIELD_COVENANT_LITE,
+        FIELD_MFN_CREDIT,
+    ):
+        out.setdefault(proof_column(fname), "")
+
+    if scanned == 0 and text_extractor is not None:
+        out["has_revolving_facility"] = matter_has_revolving_facility(
+            matter_dir, text_extractor=text_extractor
+        )
+        out["mentions_springing_lien"] = matter_mentions_springing_lien(
+            matter_dir, text_extractor=text_extractor
+        )
+        out["extract_provider"] = f"{parse_provider}/empty"
+
     return out
+
+
+# Public alias — schema is firm-wide, not credit-only.
+extract_matter_fields = extract_credit_facility_matter_fields
 
 
 def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
     """Create/replace matters.duckdb from row dicts."""
     import duckdb
+
+    from clawql_lab_matter_schema import (
+        FIELD_COVENANT_LITE,
+        FIELD_EBITDA_ADDBACKS,
+        FIELD_MFN_CREDIT,
+        proof_column,
+    )
 
     db_path = Path(db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -446,7 +521,7 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
     con = duckdb.connect(str(db_path))
     try:
         con.execute(
-            """
+            f"""
             CREATE TABLE matters (
               matter_id VARCHAR PRIMARY KEY,
               client_short_name VARCHAR,
@@ -461,6 +536,12 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
               deal_date DATE,
               has_incremental_facility BOOLEAN,
               facility_amount_usd DOUBLE,
+              {FIELD_EBITDA_ADDBACKS} BOOLEAN,
+              {proof_column(FIELD_EBITDA_ADDBACKS)} VARCHAR,
+              {FIELD_COVENANT_LITE} BOOLEAN,
+              {proof_column(FIELD_COVENANT_LITE)} VARCHAR,
+              {FIELD_MFN_CREDIT} BOOLEAN,
+              {proof_column(FIELD_MFN_CREDIT)} VARCHAR,
               sandbox_root VARCHAR,
               vault_note_path VARCHAR
             )
@@ -468,9 +549,9 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
         )
         if rows:
             con.executemany(
-                """
+                f"""
                 INSERT INTO matters VALUES (
-                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
                 [
@@ -488,6 +569,12 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
                         r.get("deal_date"),
                         bool(r.get("has_incremental_facility")),
                         r.get("facility_amount_usd"),
+                        bool(r.get(FIELD_EBITDA_ADDBACKS)),
+                        r.get(proof_column(FIELD_EBITDA_ADDBACKS)) or "",
+                        bool(r.get(FIELD_COVENANT_LITE)),
+                        r.get(proof_column(FIELD_COVENANT_LITE)) or "",
+                        bool(r.get(FIELD_MFN_CREDIT)),
+                        r.get(proof_column(FIELD_MFN_CREDIT)) or "",
                         r.get("sandbox_root") or "",
                         r.get("vault_note_path") or "",
                     )
@@ -505,6 +592,27 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             CREATE VIEW revolving_credit_facilities AS
             SELECT * FROM matters
             WHERE is_credit_facility AND has_revolving_facility
+            """
+        )
+        con.execute(
+            f"""
+            CREATE VIEW adjusted_ebitda_addback_matters AS
+            SELECT * FROM matters
+            WHERE is_credit_facility AND {FIELD_EBITDA_ADDBACKS}
+            """
+        )
+        con.execute(
+            f"""
+            CREATE VIEW covenant_lite_credit_facilities AS
+            SELECT * FROM matters
+            WHERE is_credit_facility AND {FIELD_COVENANT_LITE}
+            """
+        )
+        con.execute(
+            f"""
+            CREATE VIEW mfn_credit_agreements AS
+            SELECT * FROM matters
+            WHERE is_credit_facility AND {FIELD_MFN_CREDIT}
             """
         )
     finally:
