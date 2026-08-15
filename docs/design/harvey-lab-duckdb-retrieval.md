@@ -57,14 +57,14 @@ model does not already know. DuckDB is the same capability with a universal UI.
 
 **No.** Document this clearly for readers of the ledger.
 
-Baseline is allowed bash/grep over the same DMS. DuckDB is the same *category*
+Baseline is allowed bash/grep over the same DMS. DuckDB is the same _category_
 of instrument (query the corpus), not a different corpus or a pre-baked answer.
 
-| Fair | Unfair |
-| ---- | ------ |
-| Same matter trees for both arms | Extra documents / external answer keys on ClawQL only |
-| Mechanical extract → typed columns, then SQL | Hard-coding gold matter IDs or rubric `0 of 12` into the table |
-| Extraction bugs that yield wrong SQL counts = ClawQL pipeline fails | Schema designed to emit the judge’s exact phrase |
+| Fair                                                                | Unfair                                                         |
+| ------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Same matter trees for both arms                                     | Extra documents / external answer keys on ClawQL only          |
+| Mechanical extract → typed columns, then SQL                        | Hard-coding gold matter IDs or rubric `0 of 12` into the table |
+| Extraction bugs that yield wrong SQL counts = ClawQL pipeline fails | Schema designed to emit the judge’s exact phrase               |
 
 ClawQL’s measured value includes **unstructured → structured** ingest. Baseline
 skips that work and greps raw files. Wrong extraction is a real failure mode —

@@ -11,10 +11,10 @@ push while it runs (`cancel-in-progress`).
 
 ### Probe #7 headline (DuckDB)
 
-| Arm | CPR | All-pass | Turns | Input tokens | Output tokens |
-| --- | --- | -------- | ----- | ------------ | ------------- |
-| **nemotron-clawql** + DuckDB | **1.0** | **1.0** | **9** | **135,778** | 4,150 |
-| nemotron baseline | 0.0 | 0.0 | 40 | 769,251 | 8,801 |
+| Arm                          | CPR     | All-pass | Turns | Input tokens | Output tokens |
+| ---------------------------- | ------- | -------- | ----- | ------------ | ------------- |
+| **nemotron-clawql** + DuckDB | **1.0** | **1.0**  | **9** | **135,778**  | 4,150         |
+| nemotron baseline            | 0.0     | 0.0      | 40    | 769,251      | 8,801         |
 
 ClawQL ~**5.7×** fewer input tokens than baseline on 018; prior ClawQL 018
 probes burned ~1.05M tokens at 0% CPR. Agent wrote SQL → `0` springing-lien
