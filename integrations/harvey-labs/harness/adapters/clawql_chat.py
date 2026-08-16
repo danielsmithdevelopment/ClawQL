@@ -1,31 +1,23 @@
-"""ClawQL adapter for Harvey LAB (Anthropic / OpenRouter Anthropic path).
+"""ClawQL chat-completions adapter for Harvey LAB (OpenRouter / Nemotron).
 
-Extends the standard Anthropic adapter with task-scoped vault pre-ingest,
-ClawQL MCP tools, and post-task cleanup.
+Nemotron 3.5 Lightning and other OpenAI-compatible models cannot use the
+Anthropic Messages API. This adapter speaks Chat Completions via OpenRouter
+while sharing the same vault pre-ingest / MCP tools / cleanup as ClawQLAdapter.
 
-Model IDs: ``clawql/claude-sonnet-4-6``, ``clawql/claude-opus-4-8``.
-Requires a running ClawQL MCP HTTP server (see scripts/start-clawql-for-lab.sh).
-
-For Nemotron / OpenAI-compatible models use ``clawql-cc/...``
-(see ``clawql_chat.py``).
+Model IDs: ``clawql-cc/nvidia/nemotron-3.5-lightning`` (or ``:free``).
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from harness.adapters.anthropic import AnthropicAdapter
 from harness.adapters.base import ModelResponse
 from harness.adapters.clawql_lab_session import ClawQLLabSession
-from harness.adapters.clawql_openrouter import (
-    make_anthropic_client,
-    maybe_rewrite_model,
-    openrouter_max_tokens,
-)
+from harness.adapters.openrouter_chat import OpenRouterChatAdapter
 
 
-class ClawQLAdapter(AnthropicAdapter):
-    """Anthropic adapter + ClawQL MCP tools and vault lifecycle hooks."""
+class ClawQLChatAdapter(OpenRouterChatAdapter):
+    """OpenRouter chat-completions + ClawQL vault/MCP lifecycle."""
 
     def __init__(
         self,
@@ -33,16 +25,16 @@ class ClawQLAdapter(AnthropicAdapter):
         task_id: str,
         documents_dir: Path,
         temperature: float = 0.0,
+        max_tokens: int = 128000,
         reasoning_effort: str | None = None,
-        arm: str = "clawql",
+        arm: str = "nemotron-clawql",
     ):
         super().__init__(
-            model=maybe_rewrite_model(model),
+            model=model,
             temperature=temperature,
+            max_tokens=max_tokens,
             reasoning_effort=reasoning_effort,
         )
-        self.max_tokens = openrouter_max_tokens(self.max_tokens)
-        self.client = make_anthropic_client()
         self.task_id = task_id
         self.documents_dir = Path(documents_dir)
         self.arm = arm

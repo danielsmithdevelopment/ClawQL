@@ -30,7 +30,8 @@ export type ExtractedMatter = {
   fieldMeta: Partial<Record<keyof MatterFields, ExtractedFieldMeta>>;
 };
 
-const MATTER_ID_RE = /^MAT-\d{4}$/;
+/** Calderwood B-7 ids (`MAT-2401`) plus Harvey LAB DMS ids (`1003-00001`). */
+const MATTER_ID_RE = /^(?:MAT-\d{4}|\d{4}-\d{5})$/;
 const CLIENT_ID_RE = /^CLT-\d{4}$/;
 
 const KEY_MAP: Record<string, keyof MatterFields> = {

@@ -1,0 +1,11 @@
+# Nemotron ± ClawQL firm-knowledge sweep (Harvey-parity judge)
+#
+# Arms:   nemotron, nemotron-clawql
+# Judge:  claude-sonnet-4-6 (via OpenRouter)
+#
+# Spec on first non-comment line: N | START-END
+#
+# CANONICAL 001–025 — local ALL_GOLD proven for SQL/IDP; re-arm to see if
+# agent/judge replicates. cancel-in-progress — one push only.
+#
+1-25
