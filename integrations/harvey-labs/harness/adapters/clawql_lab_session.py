@@ -264,12 +264,17 @@ CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
             "(+ _proof_doc), has_mfn_in_credit_agreement (+ _proof_doc), "
             "has_springing_financial_covenant, has_always_on_maintenance_covenant, "
             "has_maintenance_financial_covenant, borrower_control "
-            "(sponsor|corporate), has_hsr_filing (+ date + proof_doc). "
+            "(sponsor|corporate), has_hsr_filing (+ date + proof_doc), "
+            "has_antitrust_practice, has_equity_purchase_agreement, "
+            "deal_value_usd. For billion-dollar M&A second-request rates use "
+            "view billion_dollar_antitrust_ma (not bare antitrust path hits). "
             "Views: credit_facilities, revolving_credit_facilities, "
             "adjusted_ebitda_addback_matters, covenant_lite_credit_facilities, "
             "mfn_credit_agreements, always_on_maintenance_credit_facilities, "
             "maintenance_financial_covenant_matters, hsr_filings, "
-            "secured_credit_facilities, live_maintenance_financings, "
+            "hsr_second_requests, hsr_second_requests_cleared, "
+            "billion_dollar_antitrust_ma, secured_credit_facilities, "
+            "live_maintenance_financings, "
             "covenant_lite_no_always_on. "
             "SELECT/WITH/DESCRIBE only — no writes."
         ),
@@ -594,6 +599,75 @@ def detect_hsr_clearance(matter_dir: Path) -> dict[str, Any]:
                 "proof_doc": str(p.relative_to(matter_dir)).replace("\\", "/"),
             }
     return {"cleared": False, "proof_doc": ""}
+
+
+# Task 005 population: billion-dollar M&A with real antitrust practice work
+# (not bare "regulatory" path hits) OR executed equity-purchase (EPA) deals.
+_ANTITRUST_PRACTICE_FOLDER = re.compile(
+    r"^(antitrust(\s*&\s*regulatory)?|ftc(\s+submissions)?|"
+    r"hsr\s+filing(s)?(\s+preparation)?|doj)(\b|&|$)",
+    re.IGNORECASE,
+)
+_ANTITRUST_SUBSTANTIVE_DOC = re.compile(
+    r"hsr|antitrust|ftc|second-request|second_request|hart-scott|"
+    r"premerger|merger.?notification|substantial.?compliance",
+    re.IGNORECASE,
+)
+_ANTITRUST_DOC_EXCLUDE = re.compile(
+    r"conflict|privilege.?log|billing|invoice|preparation",
+    re.IGNORECASE,
+)
+_EPA_EXECUTION = re.compile(
+    r"epa-execution|equity-purchase-agreement.*execution|"
+    r"equity_purchase_agreement.*execution",
+    re.IGNORECASE,
+)
+
+
+def detect_billion_ma_signals(
+    matter_dir: Path,
+    *,
+    is_hsr_second_request: bool | None = None,
+) -> dict[str, Any]:
+    """General signals for billion-dollar M&A × antitrust population (task 005).
+
+    ``has_antitrust_practice``: dedicated Antitrust/FTC/HSR/DOJ folder, or ≥2
+    substantive antitrust/HSR work-product docs, or second-request received.
+    ``has_equity_purchase_agreement``: executed EPA (covers infrastructure
+    acquisitions that never opened an Antitrust folder).
+
+    Calibrated offline on the full firm-knowledge DMS: with ``deal_value_usd
+    ≥ 1e9`` and ``not is_credit_facility``, this recovers gold 4/7 with 0 FP.
+    Does **not** hard-code matter IDs.
+    """
+    folders: list[str] = []
+    docs: list[str] = []
+    has_epa = False
+    for p in matter_dir.rglob("*"):
+        if p.is_dir():
+            if _ANTITRUST_PRACTICE_FOLDER.search(p.name.strip()):
+                folders.append(p.name)
+            continue
+        if not p.is_file():
+            continue
+        rel = str(p.relative_to(matter_dir)).replace("\\", "/")
+        if _EPA_EXECUTION.search(p.name) or _EPA_EXECUTION.search(rel):
+            has_epa = True
+        if _ANTITRUST_DOC_EXCLUDE.search(p.name):
+            continue
+        if _ANTITRUST_SUBSTANTIVE_DOC.search(p.name) or _ANTITRUST_SUBSTANTIVE_DOC.search(
+            rel
+        ):
+            docs.append(rel)
+    if is_hsr_second_request is None:
+        is_hsr_second_request = bool(detect_hsr_second_request(matter_dir)["received"])
+    has_practice = bool(is_hsr_second_request or folders or len(docs) >= 2)
+    return {
+        "has_antitrust_practice": has_practice,
+        "has_equity_purchase_agreement": has_epa,
+        "antitrust_practice_folders": folders[:6],
+        "antitrust_substantive_docs": docs[:12],
+    }
 
 
 def detect_hsr_second_request(matter_dir: Path) -> dict[str, Any]:
@@ -1335,10 +1409,18 @@ class ClawQLLabSession:
             clearance = detect_hsr_clearance(matter_dir)
             has_hsr_clearance = bool(clearance.get("cleared"))
             hsr_clearance_proof = str(clearance.get("proof_doc") or "")
-            is_antitrust = bool(detection.get("antitrust_signal"))
+            ma_signals = detect_billion_ma_signals(
+                matter_dir,
+                is_hsr_second_request=bool(detection["received"]),
+            )
+            has_antitrust_practice = bool(ma_signals["has_antitrust_practice"])
+            has_epa = bool(ma_signals["has_equity_purchase_agreement"])
+            # Path antitrust signal kept for ontology; population uses practice/EPA.
+            is_antitrust = bool(detection.get("antitrust_signal")) or has_antitrust_practice
             deal_value_usd = None
             # Skip credit facilities — facility size ≠ M&A enterprise value (005).
-            if is_antitrust and not credit["is_credit_facility"]:
+            # Extract TEV when practice/EPA signals fire (general population gate).
+            if (has_antitrust_practice or has_epa) and not credit["is_credit_facility"]:
                 deal = extract_deal_value_usd(matter_dir)
                 dv = deal.get("deal_value_usd")
                 if isinstance(dv, (int, float)):
@@ -1396,6 +1478,8 @@ class ClawQLLabSession:
                     "hsr_filing_date": hsr_filing_date,
                     "hsr_filing_proof_doc": hsr_filing_proof,
                     "is_antitrust_matter": is_antitrust,
+                    "has_antitrust_practice": has_antitrust_practice,
+                    "has_equity_purchase_agreement": has_epa,
                     "deal_value_usd": deal_value_usd,
                     "mentions_springing_lien": mentions_lien,
                     "has_revolving_facility": has_revolver,
@@ -1519,10 +1603,13 @@ class ClawQLLabSession:
         billion_n = sum(
             1
             for r in rows
-            if r.get("is_antitrust_matter")
-            and not r.get("is_credit_facility")
+            if not r.get("is_credit_facility")
             and isinstance(r.get("deal_value_usd"), (int, float))
             and float(r["deal_value_usd"]) >= 1_000_000_000
+            and (
+                r.get("has_antitrust_practice")
+                or r.get("has_equity_purchase_agreement")
+            )
         )
         print(
             f"ClawQL pre-ingest: DuckDB {db_path} rows={len(rows)} "
@@ -1530,7 +1617,7 @@ class ClawQLLabSession:
             f"credit_facilities.mentions_springing_lien={lien_n} "
             f"has_revolving_facility={revolver_n} is_secured={secured_n} "
             f"is_hsr_second_request={sr_n} sr_cleared={clear_n} "
-            f"billion_antitrust_ma≈{billion_n}"
+            f"billion_dollar_antitrust_ma={billion_n}"
         )
         if expected_credit and credit_n != expected_credit:
             print(

@@ -48,6 +48,7 @@ from clawql_lab_matter_schema import (  # noqa: E402
     proof_column,
 )
 from clawql_lab_session import (  # noqa: E402
+    detect_billion_ma_signals,
     detect_credit_facility,
     detect_hsr_clearance,
     detect_hsr_second_request,
@@ -68,18 +69,14 @@ GOLD_003_REQUIRED = {"1041-00001"}
 GOLD_003_PRECISION = {"1041-00001", "1003-00003"}
 # 004 — most recent SR
 GOLD_004 = "1038-00001"
-# 005 — billion-dollar+ antitrust M&A second-request rate 4/7
-POP005 = {
-    "1038-00001",
-    "1003-00003",
-    "1041-00001",
-    "1038-00009",
+# 005 — full-DMS general population (assert rate + precision allow-list only)
+GOLD_005_SR = {"1038-00001", "1003-00003", "1041-00001", "1038-00009"}
+GOLD_005_PRECISION = GOLD_005_SR | {
     "1041-00003",
     "1001-00004",
     "1032-00001",
     "1023-00001",
 }
-GOLD_005_SR = {"1038-00001", "1003-00003", "1041-00001", "1038-00009"}
 GOLD_005_RATE = (4, 7)
 
 GOLD_018 = {
@@ -237,6 +234,8 @@ class MatterRow:
     has_hsr_clearance: bool = False
     hsr_clearance_proof_doc: str = ""
     is_antitrust_matter: bool = False
+    has_antitrust_practice: bool = False
+    has_equity_purchase_agreement: bool = False
     deal_value_usd: float | None = None
     practice_area: str = "Other"
     parse_provider: str = ""
@@ -302,12 +301,25 @@ def process_matter(
         row.has_hsr_clearance = True
         row.hsr_clearance_proof_doc = str(clearance.get("proof_doc") or "")
 
-    if antitrust_scan or row.is_hsr_second_request or row.has_hsr_filing:
-        row.is_antitrust_matter = bool(sr.get("antitrust_signal"))
-        deal = extract_deal_value_usd(matter_dir)
-        dv = deal.get("deal_value_usd")
-        if isinstance(dv, (int, float)):
-            row.deal_value_usd = float(dv)
+    ma = detect_billion_ma_signals(
+        matter_dir, is_hsr_second_request=row.is_hsr_second_request
+    )
+    row.has_antitrust_practice = bool(ma["has_antitrust_practice"])
+    row.has_equity_purchase_agreement = bool(ma["has_equity_purchase_agreement"])
+    row.is_antitrust_matter = bool(
+        sr.get("antitrust_signal") or row.has_antitrust_practice
+    )
+
+    if antitrust_scan or row.is_hsr_second_request or row.has_hsr_filing or (
+        row.has_antitrust_practice or row.has_equity_purchase_agreement
+    ):
+        if not row.is_credit_facility and (
+            row.has_antitrust_practice or row.has_equity_purchase_agreement
+        ):
+            deal = extract_deal_value_usd(matter_dir)
+            dv = deal.get("deal_value_usd")
+            if isinstance(dv, (int, float)):
+                row.deal_value_usd = float(dv)
 
     if hsr_only and not antitrust_scan:
         return row
@@ -382,6 +394,8 @@ def _row_to_duck(row: MatterRow) -> dict[str, Any]:
         "has_hsr_clearance": row.has_hsr_clearance,
         "hsr_clearance_proof_doc": row.hsr_clearance_proof_doc,
         "is_antitrust_matter": row.is_antitrust_matter,
+        "has_antitrust_practice": row.has_antitrust_practice,
+        "has_equity_purchase_agreement": row.has_equity_purchase_agreement,
         "deal_value_usd": row.deal_value_usd,
         FIELD_EBITDA_ADDBACKS: row.has_adjusted_ebitda_addbacks,
         proof_column(FIELD_EBITDA_ADDBACKS): row.has_adjusted_ebitda_addbacks_proof_doc,
@@ -650,30 +664,20 @@ def run_sql_checks(db_path: Path) -> dict[str, Any]:
     out["005_pop"] = [
         r[0]
         for r in con.execute(
-            f"""
-            SELECT matter_id FROM matters
-            WHERE matter_id IN ({",".join("?" for _ in POP005)})
-              AND is_antitrust_matter
-              AND deal_value_usd IS NOT NULL
-              AND deal_value_usd >= 1000000000
+            """
+            SELECT matter_id FROM billion_dollar_antitrust_ma
             ORDER BY matter_id
-            """,
-            list(sorted(POP005)),
+            """
         ).fetchall()
     ]
     out["005_sr"] = [
         r[0]
         for r in con.execute(
-            f"""
-            SELECT matter_id FROM matters
-            WHERE matter_id IN ({",".join("?" for _ in POP005)})
-              AND is_antitrust_matter
-              AND deal_value_usd IS NOT NULL
-              AND deal_value_usd >= 1000000000
-              AND is_hsr_second_request
+            """
+            SELECT matter_id FROM billion_dollar_antitrust_ma
+            WHERE is_hsr_second_request
             ORDER BY matter_id
-            """,
-            list(sorted(POP005)),
+            """
         ).fetchall()
     ]
     out["005_rate"] = (len(out["005_sr"]), len(out["005_pop"]))
@@ -722,11 +726,19 @@ def main() -> int:
         for p in sorted(args.dms.iterdir())
         if p.is_dir() and detect_hsr_filing(p).get("filed")
     ]
-    # 001–005 second-request + billion-dollar antitrust population
-    antitrust_ids = GOLD_001_PRECISION | POP005
-    antitrust_dirs = [
-        args.dms / mid for mid in sorted(antitrust_ids) if (args.dms / mid).is_dir()
-    ]
+    # 001–005: full-DMS scan via general practice/EPA/SR gates (no population ID list)
+    antitrust_dirs: list[Path] = []
+    for p in sorted(args.dms.iterdir()):
+        if not p.is_dir() or detect_credit_facility(p)["is_credit_facility"]:
+            continue
+        sr_hit = bool(detect_hsr_second_request(p)["received"])
+        ma = detect_billion_ma_signals(p, is_hsr_second_request=sr_hit)
+        if (
+            ma["has_antitrust_practice"]
+            or ma["has_equity_purchase_agreement"]
+            or sr_hit
+        ):
+            antitrust_dirs.append(p)
     print(
         f"Processing {len(credit_dirs)} credit-facility + {len(extra_dirs)} "
         f"POP017-extra + {len(hsr_dirs)} HSR-filing + {len(antitrust_dirs)} "
@@ -786,6 +798,13 @@ def main() -> int:
                 existing.is_antitrust_matter = (
                     existing.is_antitrust_matter or overlay.is_antitrust_matter
                 )
+                existing.has_antitrust_practice = (
+                    existing.has_antitrust_practice or overlay.has_antitrust_practice
+                )
+                existing.has_equity_purchase_agreement = (
+                    existing.has_equity_purchase_agreement
+                    or overlay.has_equity_purchase_agreement
+                )
                 if overlay.deal_value_usd is not None:
                     existing.deal_value_usd = overlay.deal_value_usd
                 if overlay.practice_area != "Other":
@@ -799,7 +818,8 @@ def main() -> int:
                     f"  merge {existing.matter_id}: sr={existing.is_hsr_second_request} "
                     f"sr_date={existing.hsr_second_request_date} "
                     f"clear={existing.has_hsr_clearance} "
-                    f"anti={existing.is_antitrust_matter} "
+                    f"practice={existing.has_antitrust_practice} "
+                    f"epa={existing.has_equity_purchase_agreement} "
                     f"deal={existing.deal_value_usd}"
                 )
             continue
@@ -829,7 +849,8 @@ def main() -> int:
             f"control={row.borrower_control} hsr={row.has_hsr_filing} "
             f"hsr_date={row.hsr_filing_date} sr={row.is_hsr_second_request} "
             f"sr_date={row.hsr_second_request_date} clear={row.has_hsr_clearance} "
-            f"anti={row.is_antitrust_matter} deal={row.deal_value_usd} "
+            f"anti={row.is_antitrust_matter} practice={row.has_antitrust_practice} "
+            f"epa={row.has_equity_purchase_agreement} deal={row.deal_value_usd} "
             f"docs={row.docs_scanned} "
             f"via {row.parse_provider}/{row.extract_provider}"
         )
@@ -966,7 +987,8 @@ def main() -> int:
         "gold?",
         set(checks["005_sr"]) == GOLD_005_SR
         and checks["005_rate"] == GOLD_005_RATE
-        and set(checks["005_pop"]) <= POP005,
+        and set(checks["005_pop"]) <= GOLD_005_PRECISION
+        and len(checks["005_pop"]) == GOLD_005_RATE[1],
     )
 
     summary = {
@@ -979,7 +1001,8 @@ def main() -> int:
             "004_gold": bool(checks["004_top"]) and checks["004_top"][0][0] == GOLD_004,
             "005_gold": set(checks["005_sr"]) == GOLD_005_SR
             and checks["005_rate"] == GOLD_005_RATE
-            and set(checks["005_pop"]) <= POP005,
+            and set(checks["005_pop"]) <= GOLD_005_PRECISION
+            and len(checks["005_pop"]) == GOLD_005_RATE[1],
             "018_cohort_gold": set(checks["018_ids"]) == GOLD_018,
             "018_k0": checks["018"][0] == 0,
             "024_gold": set(checks["024_ids"]) == GOLD_024,

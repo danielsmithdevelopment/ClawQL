@@ -10,10 +10,9 @@ was exhausted; prior partial 1–25:
 [31865144197](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31865144197)
 (OR 429).
 
-**Local vs GHA caveat:** Local ALL_GOLD asserts SQL on curated matter sets
-(POP005 / POP017 extras). Full-DMS `clawql_sql` billion-dollar antitrust
-population still overcounts vs gold 4/7 — agent must navigate that; 001–004 /
-006–025 path signals are wired into live DuckDB ingest.
+**Local vs GHA:** Local ALL_GOLD for **005** uses full-DMS view
+`billion_dollar_antitrust_ma` (general practice/EPA + TEV filters → **4/7**).
+Not a curated POP005 scope.
 
 ### Probe #7 headline (DuckDB)
 

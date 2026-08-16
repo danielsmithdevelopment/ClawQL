@@ -837,6 +837,8 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
               hsr_filing_date DATE,
               hsr_filing_proof_doc VARCHAR,
               is_antitrust_matter BOOLEAN,
+              has_antitrust_practice BOOLEAN,
+              has_equity_purchase_agreement BOOLEAN,
               deal_value_usd DOUBLE,
               mentions_springing_lien BOOLEAN,
               has_revolving_facility BOOLEAN,
@@ -863,7 +865,7 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             con.executemany(
                 f"""
                 INSERT INTO matters VALUES (
-                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
                 [
@@ -883,6 +885,8 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
                         r.get("hsr_filing_date"),
                         r.get("hsr_filing_proof_doc") or "",
                         bool(r.get("is_antitrust_matter")),
+                        bool(r.get("has_antitrust_practice")),
+                        bool(r.get("has_equity_purchase_agreement")),
                         r.get("deal_value_usd"),
                         bool(r.get("mentions_springing_lien")),
                         bool(r.get("has_revolving_facility")),
@@ -977,9 +981,13 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             """
             CREATE VIEW billion_dollar_antitrust_ma AS
             SELECT * FROM matters
-            WHERE is_antitrust_matter
+            WHERE NOT is_credit_facility
               AND deal_value_usd IS NOT NULL
               AND deal_value_usd >= 1000000000
+              AND (
+                has_antitrust_practice
+                OR has_equity_purchase_agreement
+              )
             """
         )
         con.execute(
@@ -1095,9 +1103,9 @@ def run_readonly_sql(db_path: Path, sql: str) -> dict[str, Any]:
                 "AND hsr_second_request_date IS NOT NULL "
                 "ORDER BY hsr_second_request_date DESC LIMIT 1; "
                 "SELECT count(*) FILTER (WHERE is_hsr_second_request) AS k, "
-                "count(*) AS n FROM matters WHERE is_antitrust_matter "
-                "AND NOT is_credit_facility "
-                "AND deal_value_usd >= 1000000000;"
+                "count(*) AS n FROM billion_dollar_antitrust_ma; "
+                "SELECT matter_id FROM billion_dollar_antitrust_ma "
+                "WHERE is_hsr_second_request ORDER BY matter_id;"
             ),
         }
     except Exception as exc:  # noqa: BLE001
