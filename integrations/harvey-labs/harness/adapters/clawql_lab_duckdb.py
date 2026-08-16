@@ -1096,6 +1096,7 @@ def run_readonly_sql(db_path: Path, sql: str) -> dict[str, Any]:
                 "ORDER BY hsr_second_request_date DESC LIMIT 1; "
                 "SELECT count(*) FILTER (WHERE is_hsr_second_request) AS k, "
                 "count(*) AS n FROM matters WHERE is_antitrust_matter "
+                "AND NOT is_credit_facility "
                 "AND deal_value_usd >= 1000000000;"
             ),
         }

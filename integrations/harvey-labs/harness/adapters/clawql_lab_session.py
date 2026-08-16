@@ -30,6 +30,7 @@ try:
         detect_hsr_filing,
         duckdb_available,
         extract_credit_facility_matter_fields,
+        extract_deal_value_usd,
         sql_tool_result_json,
     )
 except ImportError:
@@ -39,6 +40,7 @@ except ImportError:
         detect_hsr_filing,
         duckdb_available,
         extract_credit_facility_matter_fields,
+        extract_deal_value_usd,
         sql_tool_result_json,
     )
 
@@ -1330,6 +1332,17 @@ class ClawQLLabSession:
             hsr_filing_proof = str(hsr_filing.get("proof_doc") or "")
             if has_hsr_filing and practice == "Other":
                 practice = "Antitrust & Competition"
+            clearance = detect_hsr_clearance(matter_dir)
+            has_hsr_clearance = bool(clearance.get("cleared"))
+            hsr_clearance_proof = str(clearance.get("proof_doc") or "")
+            is_antitrust = bool(detection.get("antitrust_signal"))
+            deal_value_usd = None
+            # Skip credit facilities — facility size ≠ M&A enterprise value (005).
+            if is_antitrust and not credit["is_credit_facility"]:
+                deal = extract_deal_value_usd(matter_dir)
+                dv = deal.get("deal_value_usd")
+                if isinstance(dv, (int, float)):
+                    deal_value_usd = float(dv)
             if credit["is_credit_facility"]:
                 fields = extract_credit_facility_matter_fields(
                     matter_dir,
@@ -1373,9 +1386,17 @@ class ClawQLLabSession:
                     "title": title,
                     "is_credit_facility": bool(credit["is_credit_facility"]),
                     "is_hsr_second_request": bool(detection["received"]),
+                    "hsr_second_request_date": detection.get("second_request_date"),
+                    "hsr_second_request_proof_doc": str(
+                        detection.get("proof_doc") or ""
+                    ),
+                    "has_hsr_clearance": has_hsr_clearance,
+                    "hsr_clearance_proof_doc": hsr_clearance_proof,
                     "has_hsr_filing": has_hsr_filing,
                     "hsr_filing_date": hsr_filing_date,
                     "hsr_filing_proof_doc": hsr_filing_proof,
+                    "is_antitrust_matter": is_antitrust,
+                    "deal_value_usd": deal_value_usd,
                     "mentions_springing_lien": mentions_lien,
                     "has_revolving_facility": has_revolver,
                     "is_secured": is_secured,
@@ -1489,11 +1510,27 @@ class ClawQLLabSession:
         secured_n = sum(
             1 for r in rows if r.get("is_credit_facility") and r.get("is_secured")
         )
+        sr_n = sum(1 for r in rows if r.get("is_hsr_second_request"))
+        clear_n = sum(
+            1
+            for r in rows
+            if r.get("is_hsr_second_request") and r.get("has_hsr_clearance")
+        )
+        billion_n = sum(
+            1
+            for r in rows
+            if r.get("is_antitrust_matter")
+            and not r.get("is_credit_facility")
+            and isinstance(r.get("deal_value_usd"), (int, float))
+            and float(r["deal_value_usd"]) >= 1_000_000_000
+        )
         print(
             f"ClawQL pre-ingest: DuckDB {db_path} rows={len(rows)} "
             f"is_credit_facility={credit_n} (expected {expected_credit}) "
             f"credit_facilities.mentions_springing_lien={lien_n} "
-            f"has_revolving_facility={revolver_n} is_secured={secured_n}"
+            f"has_revolving_facility={revolver_n} is_secured={secured_n} "
+            f"is_hsr_second_request={sr_n} sr_cleared={clear_n} "
+            f"billion_antitrust_ma≈{billion_n}"
         )
         if expected_credit and credit_n != expected_credit:
             print(

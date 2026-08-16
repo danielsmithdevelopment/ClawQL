@@ -1,14 +1,19 @@
 # Harvey LAB × ClawQL Results — firm-knowledge
 
-Date: 2026-08-14  
+Date: 2026-08-14 (updated 2026-08-16)  
 Models: Nemotron 3.5 Lightning ± ClawQL  
 Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479) (**20% ClawQL all-pass**)  
 Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774) (**0% ClawQL all-pass**; mean CPR ~9%)  
-**Next:** Matter generalization (011–015 fields + multi-doc) landed; marker
-back to smoke **18-18** (do not re-arm 001–025 until OpenRouter free-tier
-resets). Prior partial 1–25:
+**Next:** Marker re-armed to **`1-25`** (2026-08-16) after local IDP→DuckDB
+**ALL_GOLD** for 001–025. Prior smoke **18-18** held while OpenRouter free-tier
+was exhausted; prior partial 1–25:
 [31865144197](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31865144197)
 (OR 429).
+
+**Local vs GHA caveat:** Local ALL_GOLD asserts SQL on curated matter sets
+(POP005 / POP017 extras). Full-DMS `clawql_sql` billion-dollar antitrust
+population still overcounts vs gold 4/7 — agent must navigate that; 001–004 /
+006–025 path signals are wired into live DuckDB ingest.
 
 ### Probe #7 headline (DuckDB)
 
