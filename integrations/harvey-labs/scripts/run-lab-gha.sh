@@ -108,8 +108,38 @@ start_lab_idp_sidecars() {
   local idp_dir="${RUNNER_TEMP:-/tmp}/clawql-lab-idp"
   mkdir -p "${idp_dir}"
   if [[ ! -f "${idp_dir}/tika-server-standard.jar" ]]; then
-    curl -fsSL -o "${idp_dir}/tika-server-standard.jar" \
+    # GHA runners sometimes get Maven Central 403; try Apache archive first,
+    # then Maven mirrors, with a browser-like UA and no partial jar left behind.
+    local tika_tmp="${idp_dir}/tika-server-standard.jar.partial"
+    local tika_ok=0
+    local tika_url
+    for tika_url in \
+      "https://archive.apache.org/dist/tika/2.9.2/tika-server-standard-2.9.2.jar" \
+      "https://repo.maven.apache.org/maven2/org/apache/tika/tika-server-standard/2.9.2/tika-server-standard-2.9.2.jar" \
       "https://repo1.maven.org/maven2/org/apache/tika/tika-server-standard/2.9.2/tika-server-standard-2.9.2.jar"
+    do
+      echo "::notice::Downloading Tika from ${tika_url}"
+      if curl -fL --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 180 \
+        -A "ClawQL-Harvey-LAB/1.0 (+https://github.com/danielsmithdevelopment/ClawQL)" \
+        -o "${tika_tmp}" "${tika_url}"
+      then
+        # Reject tiny error bodies masquerading as a jar.
+        if [[ $(stat -c%s "${tika_tmp}" 2>/dev/null || echo 0) -gt 1000000 ]]; then
+          mv -f "${tika_tmp}" "${idp_dir}/tika-server-standard.jar"
+          tika_ok=1
+          break
+        fi
+      fi
+      rm -f "${tika_tmp}"
+    done
+    if [[ "${tika_ok}" -ne 1 ]]; then
+      echo "::error::Failed to download tika-server-standard 2.9.2 from all mirrors" >&2
+      return 1
+    fi
+  fi
+  if ! command -v java >/dev/null 2>&1; then
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq default-jre-headless
   fi
   if ! curl -fsS -m 2 "http://127.0.0.1:9998/version" >/dev/null 2>&1; then
     nohup java -Xmx512m -jar "${idp_dir}/tika-server-standard.jar" \
