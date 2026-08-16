@@ -249,6 +249,14 @@ class HsrSecondRequestDetectionTests(unittest.TestCase):
                 for p in prefs1041
             )
         )
+        # Citation proof_doc must follow preferred evidence (not date-source
+        # strategy memo) — task 001 C-006 only accepts substantial/custodian.
+        det1041 = detect_hsr_second_request(dms / "1041-00001")
+        proof = str(det1041.get("proof_doc") or "").lower()
+        self.assertTrue(
+            "substantial-compliance" in proof or "custodian-identification" in proof,
+            msg=f"unexpected proof_doc={det1041.get('proof_doc')!r}",
+        )
         # Engagement letters must never appear as preferred Second Request evidence.
         for matter_id in expected:
             for path in _preferred_evidence_paths(dms / matter_id):

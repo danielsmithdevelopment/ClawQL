@@ -97,6 +97,12 @@ Prefer: `second-request-strategy-memo`, `hsr-withdrawal-letter`,
 `joint-status-report`, `case-assessment-memo`, `letter-ftc-meet-and-confer`,
 `substantial-compliance-certification`, `custodian-identification-collection-protocol`.
 
+Do **not** rely on `find … -iname '*second*'` alone — that misses Solara-class
+proofs whose filenames lack `second` (e.g. `substantial-compliance-certification-letter`,
+`custodian-identification-collection-protocol`). Prefer DuckDB
+`hsr_second_request_proof_doc` / `preferred_evidence` when available. Avoid citing
+`second-request-*-strategy-memo` when a preferred rubric proof exists for that matter.
+
 ### HSR filing (model filing) tasks
 
 Cite filing artifacts such as `hsr-filing-transmittal-letter` or

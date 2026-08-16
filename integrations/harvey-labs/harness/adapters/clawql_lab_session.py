@@ -684,19 +684,21 @@ def detect_hsr_second_request(matter_dir: Path) -> dict[str, Any]:
     event_date: str | None = None
     proof_doc = ""
     if received:
-        event_date, proof_doc = _second_request_event_date(
+        # Date provenance may come from a strategy memo; rubric citation
+        # prefers preferred_evidence (substantial-compliance / custodian /
+        # joint-status / …) when present — see task 001 C-006.
+        event_date, date_proof = _second_request_event_date(
             matter_dir, evidence, preferred
         )
+        if preferred:
+            path = _resolve_matter_rel(matter_dir, preferred[0])
+            proof_doc = (
+                str(path.relative_to(matter_dir)).replace("\\", "/")
+                if path is not None
+                else ""
+            )
         if not proof_doc:
-            if preferred:
-                path = _resolve_matter_rel(matter_dir, preferred[0])
-                proof_doc = (
-                    str(path.relative_to(matter_dir)).replace("\\", "/")
-                    if path is not None
-                    else evidence[0]
-                )
-            elif evidence:
-                proof_doc = evidence[0]
+            proof_doc = date_proof or (evidence[0] if evidence else "")
     return {
         "received": received,
         "evidence_files": evidence,
