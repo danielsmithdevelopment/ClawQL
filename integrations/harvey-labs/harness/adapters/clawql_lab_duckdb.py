@@ -14,6 +14,49 @@ import re
 from pathlib import Path
 from typing import Any, Callable
 
+try:
+    from harness.adapters.clawql_lab_matter_schema import (
+        DOC_ROLE_EXECUTION_CREDIT,
+        FIELD_ALWAYS_ON_MAINT,
+        FIELD_BORROWER_CONTROL,
+        FIELD_COVENANT_LITE,
+        FIELD_DEAL_DATE,
+        FIELD_EBITDA_ADDBACKS,
+        FIELD_FACILITY_AMOUNT,
+        FIELD_INCREMENTAL,
+        FIELD_MAINTENANCE_FC,
+        FIELD_MFN_CREDIT,
+        FIELD_REVOLVER,
+        FIELD_SECURED,
+        FIELD_SPRINGING,
+        FIELD_SPRINGING_FC,
+        catalog_matter_docs,
+        empty_matter_fields,
+        merge_extraction_hit,
+        proof_column,
+    )
+except ImportError:  # unit tests / flat adapters path
+    from clawql_lab_matter_schema import (  # type: ignore
+        DOC_ROLE_EXECUTION_CREDIT,
+        FIELD_ALWAYS_ON_MAINT,
+        FIELD_BORROWER_CONTROL,
+        FIELD_COVENANT_LITE,
+        FIELD_DEAL_DATE,
+        FIELD_EBITDA_ADDBACKS,
+        FIELD_FACILITY_AMOUNT,
+        FIELD_INCREMENTAL,
+        FIELD_MAINTENANCE_FC,
+        FIELD_MFN_CREDIT,
+        FIELD_REVOLVER,
+        FIELD_SECURED,
+        FIELD_SPRINGING,
+        FIELD_SPRINGING_FC,
+        catalog_matter_docs,
+        empty_matter_fields,
+        merge_extraction_hit,
+        proof_column,
+    )
+
 _SPRINGING_LIEN_RE = re.compile(r"springing\s+lien", re.IGNORECASE)
 # Task-024 calibration: establish a revolving facility in THIS deal (not
 # "Existing Revolving Credit Facility" cross-refs). Offline DMS: TP=4 FP=0 FN=0
@@ -488,21 +531,6 @@ def _langextract_matter_fields(text: str, *, doc_id: str) -> dict[str, Any]:
     import json
     import urllib.request
 
-    from clawql_lab_matter_schema import (
-        FIELD_ALWAYS_ON_MAINT,
-        FIELD_BORROWER_CONTROL,
-        FIELD_COVENANT_LITE,
-        FIELD_DEAL_DATE,
-        FIELD_EBITDA_ADDBACKS,
-        FIELD_FACILITY_AMOUNT,
-        FIELD_INCREMENTAL,
-        FIELD_MFN_CREDIT,
-        FIELD_REVOLVER,
-        FIELD_SECURED,
-        FIELD_SPRINGING,
-        FIELD_SPRINGING_FC,
-    )
-
     base = _langextract_base_url()
     if not base:
         raise RuntimeError("LangExtract URL not configured")
@@ -558,15 +586,6 @@ def _langextract_matter_fields(text: str, *, doc_id: str) -> dict[str, Any]:
 
 def _local_matter_fields_from_text(body: str, *, source_doc: str) -> dict[str, Any]:
     """Offline fallback mirroring demo LangExtract firm_knowledge_matter."""
-    from clawql_lab_matter_schema import (
-        FIELD_ALWAYS_ON_MAINT,
-        FIELD_BORROWER_CONTROL,
-        FIELD_COVENANT_LITE,
-        FIELD_EBITDA_ADDBACKS,
-        FIELD_MFN_CREDIT,
-        FIELD_SPRINGING_FC,
-    )
-
     out: dict[str, Any] = {
         "deal_date": None,
         "has_incremental_facility": False,
@@ -655,12 +674,6 @@ def _local_matter_fields_from_text(body: str, *, source_doc: str) -> dict[str, A
 
 def _finalize_matter_fields(fields: dict[str, Any]) -> None:
     """Derive maintenance flags after springing-gate / always-on merge."""
-    from clawql_lab_matter_schema import (
-        FIELD_ALWAYS_ON_MAINT,
-        FIELD_MAINTENANCE_FC,
-        FIELD_SPRINGING_FC,
-    )
-
     springing = bool(fields.get(FIELD_SPRINGING_FC))
     always = bool(fields.get(FIELD_ALWAYS_ON_MAINT))
     if springing:
@@ -683,17 +696,6 @@ def extract_credit_facility_matter_fields(
 
     Alias kept for callers; schema is now ``firm_knowledge_matter`` (general).
     """
-    from clawql_lab_matter_schema import (
-        DOC_ROLE_EXECUTION_CREDIT,
-        FIELD_COVENANT_LITE,
-        FIELD_EBITDA_ADDBACKS,
-        FIELD_MFN_CREDIT,
-        catalog_matter_docs,
-        empty_matter_fields,
-        merge_extraction_hit,
-        proof_column,
-    )
-
     out = empty_matter_fields()
     # Path revolvers / springing filenames / secured always apply.
     out["has_revolving_facility"] = matter_has_revolving_facility(
@@ -801,17 +803,6 @@ extract_matter_fields = extract_credit_facility_matter_fields
 def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
     """Create/replace matters.duckdb from row dicts."""
     import duckdb
-
-    from clawql_lab_matter_schema import (
-        FIELD_ALWAYS_ON_MAINT,
-        FIELD_BORROWER_CONTROL,
-        FIELD_COVENANT_LITE,
-        FIELD_EBITDA_ADDBACKS,
-        FIELD_MAINTENANCE_FC,
-        FIELD_MFN_CREDIT,
-        FIELD_SPRINGING_FC,
-        proof_column,
-    )
 
     db_path = Path(db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
