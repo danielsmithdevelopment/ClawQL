@@ -1,0 +1,26 @@
+{
+  "run_id": "harvey-lab-local-fail-v3c",
+  "note": "005 denom + 009 enumeration kind",
+  "tasks": {
+    "firm-knowledge/tasks/005": {
+      "exit": 0,
+      "all_pass": 0.0,
+      "n_passed": 4,
+      "n_criteria": 6,
+      "summary": "4/6 criteria passed.  Missed 2 \u2014 task FAIL.",
+      "run_id": "firm-knowledge/tasks/005/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260816-143448"
+    },
+    "firm-knowledge/tasks/009": {
+      "exit": 0,
+      "all_pass": 0.0,
+      "n_passed": 18,
+      "n_criteria": 19,
+      "summary": "18/19 criteria passed.  Missed 1 \u2014 task FAIL.",
+      "run_id": "firm-knowledge/tasks/009/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260816-144309"
+    }
+  },
+  "summary": {
+    "done": 2,
+    "all_pass_count": 0
+  }
+}

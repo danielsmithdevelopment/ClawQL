@@ -11,6 +11,7 @@ CVE-2026-33671
 # Top-level postcss is patched to 8.5.22. Aligns with osv-scanner.toml IgnoredVulns.
 # Remove when Next ships nested postcss >= 8.5.18.
 CVE-2026-45623
+CVE-2026-73646
 GHSA-r28c-9q8g-f849
 
 # ─── docker-publish image gate (HIGH/CRITICAL) — residual OS / toolchain ─────

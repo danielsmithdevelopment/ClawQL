@@ -23,12 +23,36 @@ CREATE_ADAPTER_HOOK = '''
 
         # clawql/<model> or clawql/anthropic/<model>
         underlying = model_id
-        if "/" in underlying:
-            _p, underlying = underlying.split("/", 1)
+        if underlying.startswith("anthropic/"):
+            underlying = underlying.split("/", 1)[1]
         return ClawQLAdapter(
             model=underlying,
             task_id=os.environ.get("CLAWQL_LAB_TASK_ID", "unknown"),
             documents_dir=Path(os.environ.get("CLAWQL_LAB_DOCUMENTS_DIR", ".")),
+            temperature=temperature,
+            reasoning_effort=reasoning_effort,
+            arm=os.environ.get("CLAWQL_LAB_ARM", "clawql"),
+        )
+
+    if provider == "clawql-cc":
+        from harness.adapters.clawql_chat import ClawQLChatAdapter
+
+        # clawql-cc/<openrouter-model> — Nemotron Arm C / chat completions
+        return ClawQLChatAdapter(
+            model=model_id,
+            task_id=os.environ.get("CLAWQL_LAB_TASK_ID", "unknown"),
+            documents_dir=Path(os.environ.get("CLAWQL_LAB_DOCUMENTS_DIR", ".")),
+            temperature=temperature,
+            reasoning_effort=reasoning_effort,
+            arm=os.environ.get("CLAWQL_LAB_ARM", "nemotron-clawql"),
+        )
+
+    if provider == "openrouter":
+        from harness.adapters.openrouter_chat import OpenRouterChatAdapter
+
+        # openrouter/<model> — Nemotron baseline (no ClawQL)
+        return OpenRouterChatAdapter(
+            model=model_id,
             temperature=temperature,
             reasoning_effort=reasoning_effort,
         )
@@ -38,7 +62,8 @@ CREATE_ADAPTER_HOOK = '''
 MAIN_HOOK = '''
 {begin}
     clawql_adapter = None
-    if args.model.startswith("clawql/") or args.model.split("/", 1)[0] == "clawql":
+    _prov = args.model.split("/", 1)[0]
+    if _prov in {{"clawql", "clawql-cc"}}:
         os.environ["CLAWQL_LAB_TASK_ID"] = args.task
         os.environ["CLAWQL_LAB_DOCUMENTS_DIR"] = task["docs_dir"]
 {end}
@@ -50,6 +75,30 @@ def copy_files(src_root: Path, dest_root: Path) -> None:
         (
             src_root / "harness" / "adapters" / "clawql.py",
             dest_root / "harness" / "adapters" / "clawql.py",
+        ),
+        (
+            src_root / "harness" / "adapters" / "clawql_chat.py",
+            dest_root / "harness" / "adapters" / "clawql_chat.py",
+        ),
+        (
+            src_root / "harness" / "adapters" / "openrouter_chat.py",
+            dest_root / "harness" / "adapters" / "openrouter_chat.py",
+        ),
+        (
+            src_root / "harness" / "adapters" / "clawql_lab_session.py",
+            dest_root / "harness" / "adapters" / "clawql_lab_session.py",
+        ),
+        (
+            src_root / "harness" / "adapters" / "clawql_lab_duckdb.py",
+            dest_root / "harness" / "adapters" / "clawql_lab_duckdb.py",
+        ),
+        (
+            src_root / "harness" / "adapters" / "clawql_lab_matter_schema.py",
+            dest_root / "harness" / "adapters" / "clawql_lab_matter_schema.py",
+        ),
+        (
+            src_root / "harness" / "adapters" / "clawql_lab_evidence.py",
+            dest_root / "harness" / "adapters" / "clawql_lab_evidence.py",
         ),
         (
             src_root / "harness" / "adapters" / "clawql_system_prompt.md",
@@ -66,6 +115,14 @@ def copy_files(src_root: Path, dest_root: Path) -> None:
         (
             src_root / "harness" / "clawql_tools.py",
             dest_root / "harness" / "clawql_tools.py",
+        ),
+        (
+            src_root / "harness" / "clawql_agent_loop.py",
+            dest_root / "harness" / "clawql_agent_loop.py",
+        ),
+        (
+            src_root / "evaluation" / "clawql_openrouter_judge.py",
+            dest_root / "evaluation" / "clawql_openrouter_judge.py",
         ),
     ]
     for src, dest in pairs:
@@ -109,7 +166,8 @@ def patch_run_py(run_py: Path) -> None:
     main_end = MARKER_END + "-main"
     main_hook = (
         f"    {main_begin}\n"
-        "    if args.model.startswith(\"clawql/\") or args.model.split(\"/\", 1)[0] == \"clawql\":\n"
+        "    _prov = args.model.split(\"/\", 1)[0]\n"
+        "    if _prov in {\"clawql\", \"clawql-cc\"}:\n"
         "        os.environ[\"CLAWQL_LAB_TASK_ID\"] = args.task\n"
         "        os.environ[\"CLAWQL_LAB_DOCUMENTS_DIR\"] = task[\"docs_dir\"]\n"
         f"    {main_end}\n"
@@ -133,10 +191,13 @@ def patch_run_py(run_py: Path) -> None:
         reasoning_effort=args.reasoning_effort,
     )
 
-    if isinstance(adapter, object) and adapter.__class__.__name__ == "ClawQLAdapter":
-        from harness.adapters.clawql import ClawQLAdapter as _ClawQLAdapter
-        assert isinstance(adapter, _ClawQLAdapter)
+    from harness.adapters.clawql_lab_session import is_clawql_lab_adapter
+    if is_clawql_lab_adapter(adapter):
         adapter.pre_task_setup()
+        os.environ["CLAWQL_LAB_OUTPUT_DIR"] = str(output_dir)
+        os.environ.setdefault("CLAWQL_LAB_DELIVERABLE_GUARD", "1")
+        os.environ.setdefault("CLAWQL_LAB_REQUIRE_RECALL", "1")
+        os.environ.setdefault("CLAWQL_LAB_GROUNDING_WONDER", "1")
         tool_executor = ClawQLToolExecutor(
             clawql_adapter=adapter,
             sandbox=sandbox,
@@ -195,7 +256,8 @@ def patch_run_py(run_py: Path) -> None:
         )
     finally:
         sandbox.stop()
-        if adapter.__class__.__name__ == "ClawQLAdapter":
+        from harness.adapters.clawql_lab_session import is_clawql_lab_adapter as _is_clawql
+        if _is_clawql(adapter):
             try:
                 adapter.post_task_cleanup()
             except Exception as cleanup_exc:  # noqa: BLE001
@@ -238,8 +300,10 @@ def patch_openrouter_clients(harvey_labs: Path) -> None:
         from harness.adapters.clawql_openrouter import (
             make_anthropic_client,
             maybe_rewrite_model,
+            openrouter_max_tokens,
         )
         self.model = maybe_rewrite_model(model)
+        self.max_tokens = openrouter_max_tokens(self.max_tokens)
         self.client = make_anthropic_client()
 {end}
 """
@@ -260,28 +324,72 @@ def patch_openrouter_clients(harvey_labs: Path) -> None:
     judge = harvey_labs / "evaluation" / "judge.py"
     jtext = judge.read_text(encoding="utf-8")
     jbegin, jend = "# --- clawql-openrouter-judge begin ---", "# --- clawql-openrouter-judge end ---"
-    jblock = f"""{jbegin}
-        from harness.adapters.clawql_openrouter import (
-            make_anthropic_client,
-            maybe_rewrite_model,
-        )
-        self.model = maybe_rewrite_model(model)
-        self.client = make_anthropic_client()
-{jend}
+    # Body must stay indented under ``if self.provider == "anthropic":``
+    jblock = f"""        {jbegin}
+            from harness.adapters.clawql_openrouter import (
+                make_anthropic_client,
+                maybe_rewrite_model,
+            )
+            self.model = maybe_rewrite_model(model)
+            self.client = make_anthropic_client()
+        {jend}
 """
     if jbegin in jtext:
-        jtext = _replace_block(jtext, jbegin, jend, jblock)
+        # Re-apply from markers — find the if-anthropic block markers.
+        text_begin = jtext.find(jbegin)
+        text_end = jtext.find(jend)
+        if text_begin != -1 and text_end != -1:
+            # Expand to full line starts
+            line_begin = jtext.rfind("\n", 0, text_begin) + 1
+            line_end = jtext.find("\n", text_end)
+            if line_end == -1:
+                line_end = len(jtext)
+            else:
+                line_end += 1
+            jtext = jtext[:line_begin] + jblock + jtext[line_end:]
     else:
         old = '        if self.provider == "anthropic":\n            self.client = anthropic.Anthropic(max_retries=1)\n'
         if old not in jtext:
             raise SystemExit("judge.py anthropic client anchor not found")
         jtext = jtext.replace(
             old,
-            '        if self.provider == "anthropic":\n' + jblock + "\n",
+            '        if self.provider == "anthropic":\n' + jblock,
             1,
         )
     judge.write_text(jtext, encoding="utf-8")
     print(f"patched {judge}")
+
+def patch_run_eval_judge_factory(harvey_labs: Path) -> None:
+    """Route Arm C / OpenRouter judge models through OpenRouterChatJudge."""
+    run_eval = harvey_labs / "evaluation" / "run_eval.py"
+    text = run_eval.read_text(encoding="utf-8")
+    begin = "# --- clawql-judge-factory begin ---"
+    end = "# --- clawql-judge-factory end ---"
+    factory = f"""{begin}
+def _clawql_make_judge(model: str):
+    from harness.adapters.clawql_openrouter import make_lab_judge
+    return make_lab_judge(model)
+{end}
+"""
+    if begin in text:
+        text = _replace_block(text, begin, end, factory)
+    else:
+        anchor = "from evaluation.judge import Judge\n"
+        if anchor not in text:
+            raise SystemExit("run_eval.py Judge import anchor not found")
+        text = text.replace(anchor, anchor + "\n" + factory + "\n", 1)
+
+    # Prefer factory for CLI judge construction.
+    text = text.replace(
+        "judge = Judge(model=args.judge_model)",
+        "judge = _clawql_make_judge(args.judge_model)",
+    )
+    text = text.replace(
+        "judge = Judge(model=judge_model)",
+        "judge = _clawql_make_judge(judge_model)",
+    )
+    run_eval.write_text(text, encoding="utf-8")
+    print(f"patched {run_eval}")
 
 
 def main() -> int:
@@ -304,7 +412,12 @@ def main() -> int:
         return 1
     copy_files(args.integration_root, args.harvey_labs)
     patch_run_py(args.harvey_labs / "harness" / "run.py")
+    sys.path.insert(0, str(args.integration_root / "harness"))
+    from clawql_agent_loop import patch_agent_loop_deliverable_guard  # noqa: E402
+
+    patch_agent_loop_deliverable_guard(args.harvey_labs / "harness" / "agent_loop.py")
     patch_openrouter_clients(args.harvey_labs)
+    patch_run_eval_judge_factory(args.harvey_labs)
     return 0
 
 

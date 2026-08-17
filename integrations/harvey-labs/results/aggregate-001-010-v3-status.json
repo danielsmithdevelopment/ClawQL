@@ -1,0 +1,57 @@
+{
+  "run_id": "harvey-lab-001-010-after-v3d",
+  "v2_all_pass": [
+    "002",
+    "003",
+    "006",
+    "007",
+    "008",
+    "010"
+  ],
+  "v3_fixed": {
+    "firm-knowledge/tasks/001": {
+      "all_pass": 1.0,
+      "n_passed": 7,
+      "n_criteria": 7,
+      "summary": "7/7 ALL-PASS (v3)"
+    },
+    "firm-knowledge/tasks/004": {
+      "exit": 0,
+      "all_pass": 1.0,
+      "n_passed": 2,
+      "n_criteria": 2,
+      "summary": "2/2 criteria passed.  ALL-PASS.",
+      "run_id": "firm-knowledge/tasks/004/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260816-140042"
+    },
+    "firm-knowledge/tasks/005": {
+      "exit": 0,
+      "all_pass": 1.0,
+      "n_passed": 6,
+      "n_criteria": 6,
+      "summary": "6/6 criteria passed.  ALL-PASS.",
+      "run_id": "firm-knowledge/tasks/005/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260816-150503"
+    },
+    "firm-knowledge/tasks/009": {
+      "exit": 0,
+      "all_pass": 1.0,
+      "n_passed": 19,
+      "n_criteria": 19,
+      "summary": "19/19 criteria passed.  ALL-PASS.",
+      "run_id": "firm-knowledge/tasks/009/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260816-151141"
+    }
+  },
+  "all_pass_tasks": [
+    "001",
+    "002",
+    "003",
+    "004",
+    "005",
+    "006",
+    "007",
+    "008",
+    "009",
+    "010"
+  ],
+  "all_pass_count": 10,
+  "perfect": true
+}
