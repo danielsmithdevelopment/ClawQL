@@ -447,7 +447,7 @@ jobs:
 
       - name: Upload scorecard + arm artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: harvey-lab-${{ matrix.arm }}-${{ matrix.task_id }}-${{ github.run_id }}
           path: integrations/harvey-labs/results/
@@ -488,7 +488,7 @@ jobs:
           cat integrations/harvey-labs/results/sweep-summary.json
 
       - name: Upload sweep summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: harvey-lab-sweep-summary-${{ github.run_id }}
           path: integrations/harvey-labs/results/sweep-summary.json
