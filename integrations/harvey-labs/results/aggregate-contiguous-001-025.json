@@ -130,19 +130,48 @@
       "maintenance_fc_true": 9,
       "maintenance_fc_null": 0,
       "hsr_sr_dated": 6
+    },
+    "firm-knowledge/tasks/010": {
+      "exit": 0,
+      "all_pass": 1.0,
+      "criterion_pass_rate": 1.0,
+      "n_passed": 2,
+      "n_criteria": 2,
+      "run_id": "firm-knowledge/tasks/010/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260816-172838",
+      "summary": "2/2 criteria passed.  ALL-PASS.",
+      "wall_clock_seconds": 285.75,
+      "pre_ingest": "ClawQL pre-ingest: DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__010/lab/matters.duckdb rows=266 is_credit_facility=12 (expected 12) credit_facilities.mentions_springing_lien=0 has_revolving_facility=4 is_secured=10 maintenance_fc true=9 null=0 deal_value_usd nonnull=20 ge_1b=9 hsr_sr_dated=6 open_facts=2025",
+      "maintenance_fc_true": 9,
+      "maintenance_fc_null": 0,
+      "hsr_sr_dated": 6
+    },
+    "firm-knowledge/tasks/011": {
+      "exit": 0,
+      "all_pass": 0.0,
+      "criterion_pass_rate": 0.15789473684210525,
+      "n_passed": 3,
+      "n_criteria": 19,
+      "run_id": "firm-knowledge/tasks/011/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260816-173557",
+      "summary": "3/19 criteria passed.  Missed 16 \u2014 task FAIL.",
+      "wall_clock_seconds": 443.93,
+      "pre_ingest": "ClawQL pre-ingest: DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__011/lab/matters.duckdb rows=266 is_credit_facility=12 (expected 12) credit_facilities.mentions_springing_lien=0 has_revolving_facility=4 is_secured=10 maintenance_fc true=9 null=0 deal_value_usd nonnull=20 ge_1b=9 hsr_sr_dated=6 open_facts=2025",
+      "maintenance_fc_true": 9,
+      "maintenance_fc_null": 0,
+      "hsr_sr_dated": 6
     }
   },
   "summary": {
-    "done": 9,
-    "all_pass_count": 5,
-    "all_pass_rate": 0.5555555555555556,
+    "done": 11,
+    "all_pass_count": 6,
+    "all_pass_rate": 0.5454545454545454,
     "perfect_001_010": false,
     "perfect_001_025": false,
     "failed": [
       "firm-knowledge/tasks/001",
       "firm-knowledge/tasks/004",
       "firm-knowledge/tasks/006",
-      "firm-knowledge/tasks/008"
+      "firm-knowledge/tasks/008",
+      "firm-knowledge/tasks/011"
     ]
   }
 }
