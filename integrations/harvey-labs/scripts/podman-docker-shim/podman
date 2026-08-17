@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+DOCKER_BIN="${CLAWQL_LAB_DOCKER_BIN:-$(command -v docker)}"
+if [[ -z "${DOCKER_BIN}" ]]; then
+  echo "docker not found (needed by podman shim)" >&2
+  exit 127
+fi
+if [[ $# -eq 0 ]]; then
+  exec "${DOCKER_BIN}"
+fi
+case "$1" in
+  machine) exit 0 ;;
+  info) exec "${DOCKER_BIN}" info "${@:2}" ;;
+  image)
+    if [[ "${2:-}" == "exists" ]]; then
+      shift 2
+      "${DOCKER_BIN}" image inspect "$@" >/dev/null 2>&1
+      exit $?
+    fi
+    exec "${DOCKER_BIN}" image "${@:2}"
+    ;;
+  *) exec "${DOCKER_BIN}" "$@" ;;
+esac

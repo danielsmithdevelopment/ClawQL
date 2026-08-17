@@ -93,6 +93,14 @@ def copy_files(src_root: Path, dest_root: Path) -> None:
             dest_root / "harness" / "adapters" / "clawql_lab_duckdb.py",
         ),
         (
+            src_root / "harness" / "adapters" / "clawql_lab_matter_schema.py",
+            dest_root / "harness" / "adapters" / "clawql_lab_matter_schema.py",
+        ),
+        (
+            src_root / "harness" / "adapters" / "clawql_lab_evidence.py",
+            dest_root / "harness" / "adapters" / "clawql_lab_evidence.py",
+        ),
+        (
             src_root / "harness" / "adapters" / "clawql_system_prompt.md",
             dest_root / "harness" / "adapters" / "clawql_system_prompt.md",
         ),

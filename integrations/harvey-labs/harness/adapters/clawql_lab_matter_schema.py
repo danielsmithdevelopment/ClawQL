@@ -107,18 +107,21 @@ MATTER_FIELD_REGISTRY: tuple[MatterFieldSpec, ...] = (
         FIELD_SPRINGING_FC,
         "bool",
         (DOC_ROLE_EXECUTION_CREDIT, DOC_ROLE_MEMO, DOC_ROLE_TERM_SHEET),
+        stores_proof_doc=True,
         description="Springing-gated financial covenant (016 springing-only bucket)",
     ),
     MatterFieldSpec(
         FIELD_ALWAYS_ON_MAINT,
         "bool",
         (DOC_ROLE_EXECUTION_CREDIT, DOC_ROLE_MEMO, DOC_ROLE_TERM_SHEET),
+        stores_proof_doc=True,
         description="Always-on maintenance (016); excludes springing-gated-only",
     ),
     MatterFieldSpec(
         FIELD_MAINTENANCE_FC,
         "bool",
         (DOC_ROLE_EXECUTION_CREDIT, DOC_ROLE_MEMO, DOC_ROLE_TERM_SHEET),
+        stores_proof_doc=True,
         description="Any maintenance FC incl. springing (019 vs incurrence-only)",
     ),
     MatterFieldSpec(
@@ -222,18 +225,35 @@ def proof_column(field_name: str) -> str:
     return f"{field_name}_proof_doc"
 
 
+# Semantic booleans: default NULL (unknown). Path/structural detectors may still
+# set True/False explicitly. Never treat NULL as absence in SQL agents.
+SEMANTIC_BOOL_FIELDS: frozenset[str] = frozenset(
+    {
+        FIELD_EBITDA_ADDBACKS,
+        FIELD_COVENANT_LITE,
+        FIELD_MFN_CREDIT,
+        FIELD_SPRINGING_FC,
+        FIELD_ALWAYS_ON_MAINT,
+        FIELD_MAINTENANCE_FC,
+        FIELD_INCREMENTAL,
+        FIELD_SPRINGING,
+        FIELD_REVOLVER,
+        FIELD_SECURED,
+    }
+)
+
+
 def empty_matter_fields() -> dict[str, Any]:
     out: dict[str, Any] = {
         "source_doc": "",
         "docs_scanned": 0,
         "extract_provider": "none",
         "parse_provider": "none",
+        "_open_facts": [],
     }
     for spec in MATTER_FIELD_REGISTRY:
-        if spec.kind == "bool":
-            out[spec.name] = False
-        else:
-            out[spec.name] = None
+        # Unknown until positively evidenced (True) or explicitly ruled out (False).
+        out[spec.name] = None
         if spec.stores_proof_doc:
             out[proof_column(spec.name)] = ""
     return out
@@ -256,7 +276,7 @@ def merge_extraction_hit(
         return
     if spec.kind == "bool":
         truthy = value is True or str(value).strip().lower() in {"true", "yes", "1"}
-        if truthy and not fields.get(cls):
+        if truthy and fields.get(cls) is not True:
             fields[cls] = True
             if spec.stores_proof_doc and not fields.get(proof_column(cls)):
                 fields[proof_column(cls)] = rel_doc

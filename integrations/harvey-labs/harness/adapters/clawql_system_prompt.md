@@ -62,6 +62,16 @@ enumeration of second-request matters.
    denominators that fail grading: counting directories named
    `Credit Agreement`, or “all vault notes” / entire DMS (task 018
    post-fix failure: wrote 0 of 5 / 0 of 266 instead of 0 of 12).
+10. **DuckDB NULL ≠ false.** Semantic columns
+    (`has_maintenance_financial_covenant`, `is_covenant_lite`, MFN, EBITDA
+    add-backs, etc.) may be **NULL = unknown**. Do **not** conclude absence
+    from `WHERE col` empty / `col = false` when many rows are NULL. Instead:
+    `SELECT matter_id, <col>, <col>_proof_doc FROM matters WHERE …`,
+    query `open_facts` for surface hits, then `read` the proof / agreement
+    text before asserting k of N.
+11. **open_facts is L0 evidence, not a verdict.** Rows like
+    `surface.financial_maintenance_covenant` mean the phrase appeared — still
+    verify the governing document before marking a typed Matter flag true.
 
 ## HARD REQUIREMENT — graded deliverable
 
@@ -93,9 +103,53 @@ For **frequency** tasks, the deliverable **must**:
 ### HSR second-request tasks only
 
 Cite a document that **shows the Second Request**, not an engagement letter.
-Prefer: `second-request-strategy-memo`, `hsr-withdrawal-letter`,
-`joint-status-report`, `case-assessment-memo`, `letter-ftc-meet-and-confer`,
-`substantial-compliance-certification`, `custodian-identification-collection-protocol`.
+Prefer (and name one of these when present):
+**`substantial-compliance-certification-letter`**,
+**`custodian-identification-collection-protocol`**,
+`second-request-strategy-memo`, `hsr-withdrawal-letter`, `joint-status-report`,
+`case-assessment-memo`, `letter-ftc-meet-and-confer`.
+When SQL returns `hsr_second_request_proof_doc`, **cite that exact filename**
+in `response.md` (especially for Solara / 1041-00001).
+
+For **most recent / latest** second-request matter, treat as **single_answer**:
+name **only** the one latest matter (by `hsr_second_request_date DESC NULLS LAST`).
+Do **not** enumerate every second-request matter as a "qualifying set" or
+frequency denominator — that over-asserts matters the rubric rejects.
+
+### Billion-dollar-plus M&A frequency
+
+Define N with the view `billion_dollar_antitrust_ma` (or equivalent):
+
+```sql
+SELECT matter_id, client_short_name, deal_value_usd, is_hsr_second_request
+FROM billion_dollar_antitrust_ma
+ORDER BY deal_value_usd DESC;
+-- equivalent:
+-- WHERE deal_value_usd >= 1200000000
+--   AND (is_hsr_second_request OR has_ma_execution_agreement)
+```
+
+Do **not** require `is_hsr_second_request` when defining N (that is k).
+Never use the whole vault or every `deal_value_usd >= 1B` row as N.
+Report `k of N` and list every population member.
+
+### Maintenance-covenant / credit-facility enumeration
+
+This is an **enumeration** (not single_answer): list **every** live credit
+facility with `has_maintenance_financial_covenant = true`. Filter that column
+(not all credit facilities). **Precision:** do **not** list matters where
+maintenance is `false` or `NULL` (e.g. covenant-lite 1005/1008/1021) as
+qualifying. For each qualifying matter, cite
+`has_maintenance_financial_covenant_proof_doc` by **filename**. Use the
+`client_short_name` column as the client label. Do not collapse to one
+“most recent” matter.
+
+### HSR clearance / post-clearance tasks
+
+When asked for a clearance document, prefer filenames containing
+`post-clearance-status-memo` (or explicit early termination / grant of
+early termination). Do **not** substitute substantial-compliance letters
+for clearance unless the prompt asks for compliance certification.
 
 ### HSR filing (model filing) tasks
 

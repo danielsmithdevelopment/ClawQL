@@ -21,10 +21,25 @@ if [[ -f "${PID_FILE}" ]]; then
   OLD_PID="$(cat "${PID_FILE}" || true)"
   if [[ -n "${OLD_PID}" ]] && kill -0 "${OLD_PID}" 2>/dev/null; then
     echo "Stopping previous ClawQL MCP (pid ${OLD_PID})"
-    kill "${OLD_PID}" || true
+    kill "${OLD_PID}" 2>/dev/null || true
     sleep 1
+    if kill -0 "${OLD_PID}" 2>/dev/null; then
+      echo "Force-killing ClawQL MCP (pid ${OLD_PID})"
+      kill -KILL "${OLD_PID}" 2>/dev/null || true
+      sleep 1
+    fi
   fi
   rm -f "${PID_FILE}"
+fi
+# Also free the port if a stale listener remains (pid-file miss).
+if command -v lsof >/dev/null 2>&1; then
+  STALE_PIDS="$(lsof -nP -iTCP:"${PORT}" -sTCP:LISTEN -t 2>/dev/null || true)"
+  if [[ -n "${STALE_PIDS}" ]]; then
+    echo "Freeing :${PORT} (stale pids: ${STALE_PIDS})"
+    # shellcheck disable=SC2086
+    kill -KILL ${STALE_PIDS} 2>/dev/null || true
+    sleep 1
+  fi
 fi
 
 export CLAWQL_OBSIDIAN_VAULT_PATH="${VAULT_PATH}"

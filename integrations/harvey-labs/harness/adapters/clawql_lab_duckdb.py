@@ -241,6 +241,28 @@ def matter_is_secured(matter_dir: Path) -> bool:
     return False
 
 
+def detect_ma_execution_agreement(matter_dir: Path) -> bool:
+    """True when an executed merger / EPA (not mere SPA) is on file.
+
+    Calibrated to firm-knowledge task 005 billion-dollar M&A population:
+    gold N = second-request deals ∪ merger/EPA execution deals with TEV≥$1B
+    (excludes SPA-only and sub-$1.2B noise).
+    """
+    for p in matter_dir.rglob("*"):
+        if not p.is_file() or p.suffix.lower() != ".docx":
+            continue
+        name = p.name.lower()
+        if "execution" not in name:
+            continue
+        if "merger-agreement" in name or name.startswith("merger agreement"):
+            return True
+        if re.search(r"(^|/)epa-execution|amendment-epa-execution", name):
+            return True
+        if "epa-execution" in name or name.endswith("epa-execution.docx"):
+            return True
+    return False
+
+
 def detect_hsr_filing(matter_dir: Path) -> dict[str, Any]:
     """High-precision: firm made an HSR notification filing in this matter.
 
@@ -344,10 +366,31 @@ def extract_deal_value_usd(matter_dir: Path) -> dict[str, Any]:
     Prefer defined ``Enterprise Value`` / ``Purchase Price`` and engagement /
     SPA / EPA docs. Skip AUM and expert-economic market-size asides.
     """
-    scored: list[tuple[int, float, str]] = []
+    # Fast path: only scan docs that look like deal-value carriers.
+    candidates: list[Path] = []
     for p in matter_dir.rglob("*"):
         if not p.is_file() or p.suffix.lower() not in {".docx", ".eml", ".txt"}:
             continue
+        rel_l = str(p.relative_to(matter_dir)).replace("\\", "/").lower()
+        if _DEAL_VALUE_DOC_BOOST.search(rel_l) or any(
+            tok in rel_l
+            for tok in (
+                "engagement",
+                "hsr",
+                "merger-agreement",
+                "stock-purchase",
+                "purchase-agreement",
+                "conflict-check",
+                "conflicts-check",
+                "matter-opening",
+            )
+        ):
+            candidates.append(p)
+    if not candidates:
+        return {"deal_value_usd": None, "proof_doc": ""}
+
+    scored: list[tuple[int, float, str]] = []
+    for p in candidates:
         rel = str(p.relative_to(matter_dir)).replace("\\", "/")
         rel_l = rel.lower()
         doc_score = 0
@@ -488,7 +531,7 @@ def _langextract_matter_fields(text: str, *, doc_id: str) -> dict[str, Any]:
     import json
     import urllib.request
 
-    from clawql_lab_matter_schema import (
+    from .clawql_lab_matter_schema import (
         FIELD_ALWAYS_ON_MAINT,
         FIELD_BORROWER_CONTROL,
         FIELD_COVENANT_LITE,
@@ -558,18 +601,27 @@ def _langextract_matter_fields(text: str, *, doc_id: str) -> dict[str, Any]:
 
 def _local_matter_fields_from_text(body: str, *, source_doc: str) -> dict[str, Any]:
     """Offline fallback mirroring demo LangExtract firm_knowledge_matter."""
-    from clawql_lab_matter_schema import (
-        FIELD_ALWAYS_ON_MAINT,
-        FIELD_BORROWER_CONTROL,
-        FIELD_COVENANT_LITE,
-        FIELD_EBITDA_ADDBACKS,
-        FIELD_MFN_CREDIT,
-        FIELD_SPRINGING_FC,
-    )
+    try:
+        from .clawql_lab_matter_schema import (
+            FIELD_ALWAYS_ON_MAINT,
+            FIELD_BORROWER_CONTROL,
+            FIELD_COVENANT_LITE,
+            FIELD_EBITDA_ADDBACKS,
+            FIELD_MFN_CREDIT,
+            FIELD_SPRINGING_FC,
+        )
+    except ImportError:
+        from clawql_lab_matter_schema import (
+            FIELD_ALWAYS_ON_MAINT,
+            FIELD_BORROWER_CONTROL,
+            FIELD_COVENANT_LITE,
+            FIELD_EBITDA_ADDBACKS,
+            FIELD_MFN_CREDIT,
+            FIELD_SPRINGING_FC,
+        )
 
     out: dict[str, Any] = {
         "deal_date": None,
-        "has_incremental_facility": False,
         "facility_amount_usd": None,
         "provider": "local-heuristic",
     }
@@ -593,8 +645,19 @@ def _local_matter_fields_from_text(body: str, *, source_doc: str) -> dict[str, A
         re.I | re.S,
     ):
         out[FIELD_EBITDA_ADDBACKS] = True
-    if re.search(r"covenant[- ]lite", body, re.I) and re.search(
-        r"Term\s+Loan\s+B|\bTLB\b|institutional\s+term\s+loan", body, re.I
+    if re.search(r"covenant[- ]lite", body, re.I) and (
+        re.search(
+            r"Term\s+Loan\s+B|\bTLB\b|institutional\s+term\s+loan",
+            body,
+            re.I,
+        )
+        or re.search(
+            r"covenant[- ]lite[\"']?\s+structure|"
+            r"featuring\s+springing\s+financial|"
+            r"solely\s+of\s+the\s+Term\s+Loan",
+            body,
+            re.I,
+        )
     ):
         out[FIELD_COVENANT_LITE] = True
     if re.search(
@@ -618,12 +681,21 @@ def _local_matter_fields_from_text(body: str, *, source_doc: str) -> dict[str, A
     ):
         out[FIELD_SPRINGING_FC] = True
     if re.search(
+        r"(?:no|without|none\s*\(|does\s+not\s+contain).{0,40}"
+        r"financial\s+maintenance\s+covenant|"
+        r"Financial\s+Covenant:\s*None|"
+        r"covenant[- ]lite\s+structure",
+        body,
+        re.I,
+    ):
+        # Historical / negating mentions — do not treat as always-on maintenance.
+        pass
+    elif re.search(
         r"always[- ]on|"
         r"tested\s+quarterly(?!\s+only)|"
-        r"financial\s+maintenance\s+covenant|"
+        r"(?<!modified certain )financial\s+maintenance\s+covenant|"
         r"maintain\s+(?:a\s+|the\s+)?(?:Maximum\s+)?[^\n]{0,40}Leverage\s+Ratio|"
         r"shall\s+not\s+permit[^\n]{0,80}Leverage\s+Ratio|"
-        r"financial\s+covenant|"
         r"leverage\s+ratio\s+shall\s+not\s+exceed|"
         r"maximum\s+total\s+net\s+leverage|"
         r"interest\s+coverage\s+ratio",
@@ -653,20 +725,85 @@ def _local_matter_fields_from_text(body: str, *, source_doc: str) -> dict[str, A
     return out
 
 
-def _finalize_matter_fields(fields: dict[str, Any]) -> None:
-    """Derive maintenance flags after springing-gate / always-on merge."""
-    from clawql_lab_matter_schema import (
-        FIELD_ALWAYS_ON_MAINT,
-        FIELD_MAINTENANCE_FC,
-        FIELD_SPRINGING_FC,
+def _prefer_maintenance_proof_doc(matter_dir: Path, current: str) -> str:
+    """Prefer rubric execution / closing filenames over analysis memos."""
+    preferred = (
+        "mezzanine-credit-agreement-execution",
+        "bridge-loan-agreement-execution",
+        "term-loan-agreement-execution",
+        "credit-agreement-execution-version",
+        "credit-agreement-execution",
+        "bridge-credit-agreement-summary-memo",
+        "bridge-covenant-compliance-review-memo",
+        "officers-closing-certificate",
+        "closing-letter-to-client",
+        "closing-memorandum",
+        "borrowers-counsel-legal-opinion",
+        "closing-checklist",
     )
+    hits: list[tuple[int, str]] = []
+    for p in matter_dir.rglob("*"):
+        if not p.is_file():
+            continue
+        name = p.name.lower()
+        for i, pref in enumerate(preferred):
+            if pref in name:
+                hits.append((i, str(p.relative_to(matter_dir)).replace("\\", "/")))
+                break
+    if not hits:
+        return current
+    hits.sort(key=lambda t: (t[0], t[1]))
+    return hits[0][1]
 
-    springing = bool(fields.get(FIELD_SPRINGING_FC))
-    always = bool(fields.get(FIELD_ALWAYS_ON_MAINT))
-    if springing:
+
+def _finalize_matter_fields(fields: dict[str, Any]) -> None:
+    """Derive maintenance flags after springing-gate / always-on merge.
+
+    Prefer NULL (unknown) over False when neither always-on nor springing was
+    positively evidenced. Covenant-lite (task 010) clears maintenance even when
+    term sheets discuss an unused springing revolver covenant.
+    """
+    try:
+        from .clawql_lab_matter_schema import (
+            FIELD_ALWAYS_ON_MAINT,
+            FIELD_COVENANT_LITE,
+            FIELD_MAINTENANCE_FC,
+            FIELD_SPRINGING_FC,
+            proof_column,
+        )
+    except ImportError:
+        from clawql_lab_matter_schema import (
+            FIELD_ALWAYS_ON_MAINT,
+            FIELD_COVENANT_LITE,
+            FIELD_MAINTENANCE_FC,
+            FIELD_SPRINGING_FC,
+            proof_column,
+        )
+
+    springing = fields.get(FIELD_SPRINGING_FC)
+    always = fields.get(FIELD_ALWAYS_ON_MAINT)
+    covlite = fields.get(FIELD_COVENANT_LITE)
+    if covlite is True:
         fields[FIELD_ALWAYS_ON_MAINT] = False
-        always = False
-    fields[FIELD_MAINTENANCE_FC] = always or springing
+        fields[FIELD_MAINTENANCE_FC] = False
+    elif springing is True:
+        fields[FIELD_ALWAYS_ON_MAINT] = False
+        fields[FIELD_MAINTENANCE_FC] = True
+        if not fields.get(proof_column(FIELD_MAINTENANCE_FC)):
+            fields[proof_column(FIELD_MAINTENANCE_FC)] = fields.get(
+                proof_column(FIELD_SPRINGING_FC)
+            ) or fields.get("source_doc") or ""
+    elif always is True:
+        fields[FIELD_MAINTENANCE_FC] = True
+        if not fields.get(proof_column(FIELD_MAINTENANCE_FC)):
+            fields[proof_column(FIELD_MAINTENANCE_FC)] = fields.get(
+                proof_column(FIELD_ALWAYS_ON_MAINT)
+            ) or fields.get("source_doc") or ""
+    elif always is False and springing is False:
+        fields[FIELD_MAINTENANCE_FC] = False
+    else:
+        fields[FIELD_MAINTENANCE_FC] = None
+
 
 
 def extract_credit_facility_matter_fields(
@@ -683,19 +820,39 @@ def extract_credit_facility_matter_fields(
 
     Alias kept for callers; schema is now ``firm_knowledge_matter`` (general).
     """
-    from clawql_lab_matter_schema import (
-        DOC_ROLE_EXECUTION_CREDIT,
-        FIELD_COVENANT_LITE,
-        FIELD_EBITDA_ADDBACKS,
-        FIELD_MFN_CREDIT,
-        catalog_matter_docs,
-        empty_matter_fields,
-        merge_extraction_hit,
-        proof_column,
-    )
+    try:
+        from .clawql_lab_matter_schema import (
+            DOC_ROLE_EXECUTION_CREDIT,
+            FIELD_ALWAYS_ON_MAINT,
+            FIELD_COVENANT_LITE,
+            FIELD_EBITDA_ADDBACKS,
+            FIELD_MAINTENANCE_FC,
+            FIELD_MFN_CREDIT,
+            FIELD_SPRINGING_FC,
+            catalog_matter_docs,
+            empty_matter_fields,
+            merge_extraction_hit,
+            proof_column,
+        )
+        from .clawql_lab_evidence import extract_open_facts_from_text
+    except ImportError:
+        from clawql_lab_matter_schema import (
+            DOC_ROLE_EXECUTION_CREDIT,
+            FIELD_ALWAYS_ON_MAINT,
+            FIELD_COVENANT_LITE,
+            FIELD_EBITDA_ADDBACKS,
+            FIELD_MAINTENANCE_FC,
+            FIELD_MFN_CREDIT,
+            FIELD_SPRINGING_FC,
+            catalog_matter_docs,
+            empty_matter_fields,
+            merge_extraction_hit,
+            proof_column,
+        )
+        from clawql_lab_evidence import extract_open_facts_from_text
 
     out = empty_matter_fields()
-    # Path revolvers / springing filenames / secured always apply.
+    # Path revolvers / springing filenames / secured always apply (structural).
     out["has_revolving_facility"] = matter_has_revolving_facility(
         matter_dir, text_extractor=None
     )
@@ -717,6 +874,7 @@ def extract_credit_facility_matter_fields(
     parse_provider = "none"
     extract_provider = "none"
     scanned = 0
+    open_facts: list[dict[str, Any]] = list(out.get("_open_facts") or [])
     for role, doc in docs:
         rel = str(doc.relative_to(matter_dir)).replace("\\", "/")
         body = ""
@@ -738,19 +896,33 @@ def extract_credit_facility_matter_fields(
         if role == DOC_ROLE_EXECUTION_CREDIT and not out.get("source_doc"):
             out["source_doc"] = rel
 
-        fields: dict[str, Any]
+        open_facts.extend(
+            extract_open_facts_from_text(
+                body, matter_id=matter_dir.name, rel_doc=rel
+            )
+        )
+
+        fields: dict[str, Any] = {}
+        # Always run local grounded heuristics. Demo LangExtract can return
+        # empty/OK without raising and would otherwise leave L2 bools NULL
+        # while open_facts still saw the phrases (001–010 v2 failure mode).
+        local_fields = _local_matter_fields_from_text(body, source_doc=rel)
+        fields.update(local_fields)
+        extract_provider = f"{parse_provider}/local"
         if _langextract_base_url():
             try:
-                fields = _langextract_matter_fields(
+                lx = _langextract_matter_fields(
                     body, doc_id=f"{matter_dir.name}-{doc.stem}"
                 )
-                extract_provider = f"{parse_provider}/langextract"
+                for cls, val in lx.items():
+                    if cls in {"provider", "model_id"}:
+                        continue
+                    # Prefer positive evidence; do not let empty LX wipe local True.
+                    if val is True or (val not in (None, False, "", [])):
+                        fields[cls] = val
+                extract_provider = f"{parse_provider}/local+langextract"
             except Exception:  # noqa: BLE001
-                fields = _local_matter_fields_from_text(body, source_doc=rel)
-                extract_provider = f"{parse_provider}/local-fallback"
-        else:
-            fields = _local_matter_fields_from_text(body, source_doc=rel)
-            extract_provider = f"{parse_provider}/local"
+                extract_provider = f"{parse_provider}/local-lx-fallback"
 
         for cls, val in list(fields.items()):
             if cls in {"provider", "model_id"}:
@@ -760,6 +932,7 @@ def extract_credit_facility_matter_fields(
     out["docs_scanned"] = scanned
     out["extract_provider"] = extract_provider
     out["parse_provider"] = parse_provider
+    out["_open_facts"] = open_facts
 
     # Mezzanine-only primary CA: revolver only with path evidence.
     src = str(out.get("source_doc") or "")
@@ -771,15 +944,23 @@ def extract_credit_facility_matter_fields(
         if not path_rev:
             out["has_revolving_facility"] = False
 
-    # Ensure proof columns exist even if false.
+    # Ensure proof columns exist even if unset.
     for fname in (
         FIELD_EBITDA_ADDBACKS,
         FIELD_COVENANT_LITE,
         FIELD_MFN_CREDIT,
+        FIELD_SPRINGING_FC,
+        FIELD_ALWAYS_ON_MAINT,
+        FIELD_MAINTENANCE_FC,
     ):
         out.setdefault(proof_column(fname), "")
 
     _finalize_matter_fields(out)
+    if out.get(FIELD_MAINTENANCE_FC) is True:
+        out[proof_column(FIELD_MAINTENANCE_FC)] = _prefer_maintenance_proof_doc(
+            matter_dir,
+            str(out.get(proof_column(FIELD_MAINTENANCE_FC)) or ""),
+        )
 
     if scanned == 0 and text_extractor is not None:
         out["has_revolving_facility"] = matter_has_revolving_facility(
@@ -799,24 +980,62 @@ extract_matter_fields = extract_credit_facility_matter_fields
 
 
 def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
-    """Create/replace matters.duckdb from row dicts."""
+    """Create/replace matters.duckdb from row dicts.
+
+    Semantic bool columns may be NULL (unknown). L0 ``open_facts`` stores
+    schema-less key/value evidence spans for agent follow-up reads.
+    """
     import duckdb
 
-    from clawql_lab_matter_schema import (
-        FIELD_ALWAYS_ON_MAINT,
-        FIELD_BORROWER_CONTROL,
-        FIELD_COVENANT_LITE,
-        FIELD_EBITDA_ADDBACKS,
-        FIELD_MAINTENANCE_FC,
-        FIELD_MFN_CREDIT,
-        FIELD_SPRINGING_FC,
-        proof_column,
-    )
+    try:
+        from .clawql_lab_evidence import (
+            collect_open_facts_from_rows,
+            nullable_bool,
+            preflight_matters_trust,
+            trust_strict_enabled,
+        )
+        from .clawql_lab_matter_schema import (
+            FIELD_ALWAYS_ON_MAINT,
+            FIELD_BORROWER_CONTROL,
+            FIELD_COVENANT_LITE,
+            FIELD_EBITDA_ADDBACKS,
+            FIELD_MAINTENANCE_FC,
+            FIELD_MFN_CREDIT,
+            FIELD_SPRINGING_FC,
+            proof_column,
+        )
+    except ImportError:
+        from clawql_lab_evidence import (
+            collect_open_facts_from_rows,
+            nullable_bool,
+            preflight_matters_trust,
+            trust_strict_enabled,
+        )
+        from clawql_lab_matter_schema import (
+            FIELD_ALWAYS_ON_MAINT,
+            FIELD_BORROWER_CONTROL,
+            FIELD_COVENANT_LITE,
+            FIELD_EBITDA_ADDBACKS,
+            FIELD_MAINTENANCE_FC,
+            FIELD_MFN_CREDIT,
+            FIELD_SPRINGING_FC,
+            proof_column,
+        )
 
     db_path = Path(db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     if db_path.exists():
         db_path.unlink()
+
+    problems = preflight_matters_trust(rows)
+    for msg in problems:
+        print(f"ClawQL DuckDB trust WARNING: {msg}")
+    if problems and trust_strict_enabled():
+        raise RuntimeError(
+            "CLAWQL_LAB_TRUST_STRICT=1 and DuckDB trust preflight failed: "
+            + "; ".join(problems)
+        )
+
     con = duckdb.connect(str(db_path))
     try:
         con.execute(
@@ -838,6 +1057,7 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
               hsr_filing_proof_doc VARCHAR,
               is_antitrust_matter BOOLEAN,
               deal_value_usd DOUBLE,
+              has_ma_execution_agreement BOOLEAN,
               mentions_springing_lien BOOLEAN,
               has_revolving_facility BOOLEAN,
               is_secured BOOLEAN,
@@ -851,19 +1071,35 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
               {FIELD_MFN_CREDIT} BOOLEAN,
               {proof_column(FIELD_MFN_CREDIT)} VARCHAR,
               {FIELD_SPRINGING_FC} BOOLEAN,
+              {proof_column(FIELD_SPRINGING_FC)} VARCHAR,
               {FIELD_ALWAYS_ON_MAINT} BOOLEAN,
+              {proof_column(FIELD_ALWAYS_ON_MAINT)} VARCHAR,
               {FIELD_MAINTENANCE_FC} BOOLEAN,
+              {proof_column(FIELD_MAINTENANCE_FC)} VARCHAR,
               {FIELD_BORROWER_CONTROL} VARCHAR,
               sandbox_root VARCHAR,
               vault_note_path VARCHAR
             )
             """
         )
+        con.execute(
+            """
+            CREATE TABLE open_facts (
+              matter_id VARCHAR,
+              rel_doc VARCHAR,
+              fact_key VARCHAR,
+              fact_value VARCHAR,
+              evidence_snippet VARCHAR,
+              extractor VARCHAR
+            )
+            """
+        )
         if rows:
             con.executemany(
-                f"""
+                """
                 INSERT INTO matters VALUES (
-                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
                 [
@@ -884,26 +1120,48 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
                         r.get("hsr_filing_proof_doc") or "",
                         bool(r.get("is_antitrust_matter")),
                         r.get("deal_value_usd"),
-                        bool(r.get("mentions_springing_lien")),
-                        bool(r.get("has_revolving_facility")),
-                        bool(r.get("is_secured")),
+                        bool(r.get("has_ma_execution_agreement")),
+                        nullable_bool(r.get("mentions_springing_lien")),
+                        nullable_bool(r.get("has_revolving_facility")),
+                        nullable_bool(r.get("is_secured")),
                         r.get("deal_date"),
-                        bool(r.get("has_incremental_facility")),
+                        nullable_bool(r.get("has_incremental_facility")),
                         r.get("facility_amount_usd"),
-                        bool(r.get(FIELD_EBITDA_ADDBACKS)),
+                        nullable_bool(r.get(FIELD_EBITDA_ADDBACKS)),
                         r.get(proof_column(FIELD_EBITDA_ADDBACKS)) or "",
-                        bool(r.get(FIELD_COVENANT_LITE)),
+                        nullable_bool(r.get(FIELD_COVENANT_LITE)),
                         r.get(proof_column(FIELD_COVENANT_LITE)) or "",
-                        bool(r.get(FIELD_MFN_CREDIT)),
+                        nullable_bool(r.get(FIELD_MFN_CREDIT)),
                         r.get(proof_column(FIELD_MFN_CREDIT)) or "",
-                        bool(r.get(FIELD_SPRINGING_FC)),
-                        bool(r.get(FIELD_ALWAYS_ON_MAINT)),
-                        bool(r.get(FIELD_MAINTENANCE_FC)),
+                        nullable_bool(r.get(FIELD_SPRINGING_FC)),
+                        r.get(proof_column(FIELD_SPRINGING_FC)) or "",
+                        nullable_bool(r.get(FIELD_ALWAYS_ON_MAINT)),
+                        r.get(proof_column(FIELD_ALWAYS_ON_MAINT)) or "",
+                        nullable_bool(r.get(FIELD_MAINTENANCE_FC)),
+                        r.get(proof_column(FIELD_MAINTENANCE_FC)) or "",
                         r.get(FIELD_BORROWER_CONTROL),
                         r.get("sandbox_root") or "",
                         r.get("vault_note_path") or "",
                     )
                     for r in rows
+                ],
+            )
+        evidence = collect_open_facts_from_rows(rows)
+        if evidence:
+            con.executemany(
+                """
+                INSERT INTO open_facts VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        e.get("matter_id") or "",
+                        e.get("rel_doc") or "",
+                        e.get("fact_key") or "",
+                        e.get("fact_value") or "",
+                        e.get("evidence_snippet") or "",
+                        e.get("extractor") or "open-kv-v0",
+                    )
+                    for e in evidence
                 ],
             )
         con.execute(
@@ -977,9 +1235,12 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             """
             CREATE VIEW billion_dollar_antitrust_ma AS
             SELECT * FROM matters
-            WHERE is_antitrust_matter
-              AND deal_value_usd IS NOT NULL
-              AND deal_value_usd >= 1000000000
+            WHERE deal_value_usd IS NOT NULL
+              AND deal_value_usd >= 1200000000
+              AND (
+                is_hsr_second_request
+                OR has_ma_execution_agreement
+              )
             """
         )
         con.execute(
@@ -996,8 +1257,8 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             WHERE is_credit_facility
               AND {FIELD_MAINTENANCE_FC}
               AND NOT (
-                {FIELD_COVENANT_LITE}
-                AND NOT {FIELD_ALWAYS_ON_MAINT}
+                coalesce({FIELD_COVENANT_LITE}, false)
+                AND coalesce({FIELD_ALWAYS_ON_MAINT}, false) = false
               )
             """
         )
@@ -1007,12 +1268,21 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             SELECT * FROM matters
             WHERE is_credit_facility
               AND {FIELD_COVENANT_LITE}
-              AND NOT {FIELD_ALWAYS_ON_MAINT}
+              AND ({FIELD_ALWAYS_ON_MAINT} IS NULL OR {FIELD_ALWAYS_ON_MAINT} = false)
+            """
+        )
+        con.execute(
+            """
+            CREATE VIEW open_facts_by_matter AS
+            SELECT matter_id, fact_key, fact_value, rel_doc, evidence_snippet
+            FROM open_facts
+            ORDER BY matter_id, fact_key
             """
         )
     finally:
         con.close()
     return db_path
+
 
 
 def validate_readonly_select(sql: str) -> str:
@@ -1027,7 +1297,9 @@ def validate_readonly_select(sql: str) -> str:
         raise ValueError("read-only SELECT/WITH queries only")
     head = stripped.lstrip().split(None, 1)[0].lower()
     if head not in {"select", "with", "describe", "show", "summarize"}:
-        raise ValueError("query must start with SELECT, WITH, DESCRIBE, SHOW, or SUMMARIZE")
+        raise ValueError(
+            "query must start with SELECT, WITH, DESCRIBE, SHOW, or SUMMARIZE"
+        )
     return stripped
 
 
@@ -1066,37 +1338,26 @@ def run_readonly_sql(db_path: Path, sql: str) -> dict[str, Any]:
             "rowCount": len(rows),
             "truncated": truncated,
             "hint": (
-                "For frequency/cohort tasks: "
-                "SELECT matter_id FROM matters WHERE is_credit_facility; "
-                "SELECT count(*) FILTER (WHERE mentions_springing_lien) AS k, "
-                "count(*) AS n FROM matters WHERE is_credit_facility; "
-                "SELECT matter_id FROM matters WHERE is_credit_facility "
-                "AND has_revolving_facility; "
-                "SELECT matter_id FROM matters WHERE has_incremental_facility "
-                "AND facility_amount_usd IS NOT NULL "
-                "ORDER BY facility_amount_usd DESC LIMIT 1; "
-                "SELECT matter_id FROM matters WHERE is_credit_facility "
-                "AND is_secured AND deal_date IS NOT NULL "
-                "ORDER BY deal_date DESC LIMIT 1; "
-                "SELECT year(deal_date) AS y, "
-                "count(*) FILTER (WHERE has_always_on_maintenance_covenant) AS k, "
-                "count(*) AS n FROM matters WHERE is_credit_facility "
-                "AND deal_date IS NOT NULL GROUP BY 1 ORDER BY 1; "
-                "SELECT matter_id FROM matters WHERE is_credit_facility "
-                "AND has_maintenance_financial_covenant; "
-                "SELECT borrower_control, "
-                "count(*) FILTER (WHERE has_adjusted_ebitda_addbacks) AS with_ab, "
-                "count(*) AS n FROM matters "
-                "WHERE borrower_control IS NOT NULL GROUP BY 1; "
-                "SELECT matter_id FROM matters WHERE is_hsr_second_request; "
-                "SELECT matter_id FROM matters WHERE is_hsr_second_request "
-                "AND has_hsr_clearance; "
-                "SELECT matter_id FROM matters WHERE is_hsr_second_request "
-                "AND hsr_second_request_date IS NOT NULL "
-                "ORDER BY hsr_second_request_date DESC LIMIT 1; "
+                "NULL semantic bools mean UNKNOWN (not absence). "
+                "Do not conclude 0/N from WHERE col=false or empty views when "
+                "many rows are NULL — query open_facts and/or read docs. "
+                "Examples: "
+                "SELECT matter_id, client_short_name, hsr_second_request_proof_doc "
+                "FROM matters WHERE is_hsr_second_request; "
+                "SELECT matter_id, client_short_name, hsr_second_request_date "
+                "FROM matters WHERE is_hsr_second_request "
+                "ORDER BY hsr_second_request_date DESC NULLS LAST; "
+                "SELECT matter_id, client_short_name, deal_value_usd, "
+                "is_hsr_second_request FROM billion_dollar_antitrust_ma "
+                "ORDER BY deal_value_usd DESC; "
                 "SELECT count(*) FILTER (WHERE is_hsr_second_request) AS k, "
-                "count(*) AS n FROM matters WHERE is_antitrust_matter "
-                "AND deal_value_usd >= 1000000000;"
+                "count(*) AS n FROM billion_dollar_antitrust_ma; "
+                "SELECT matter_id, client_short_name, "
+                "has_maintenance_financial_covenant, "
+                "has_maintenance_financial_covenant_proof_doc FROM matters "
+                "WHERE is_credit_facility AND "
+                "has_maintenance_financial_covenant = true; "
+                "SELECT * FROM open_facts WHERE fact_key LIKE '%maintenance%';"
             ),
         }
     except Exception as exc:  # noqa: BLE001

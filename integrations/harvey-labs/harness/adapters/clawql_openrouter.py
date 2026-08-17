@@ -33,7 +33,18 @@ _OPENROUTER_CHAT_MODEL_MAP = {
 }
 
 
+def use_local_openai() -> bool:
+    """True when agent/judge should hit a local OpenAI-compatible server (no OpenRouter)."""
+    return os.environ.get("CLAWQL_LAB_LOCAL_INFERENCE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
+
 def use_openrouter() -> bool:
+    if use_local_openai():
+        return False
     if os.environ.get("CLAWQL_LAB_USE_OPENROUTER", "").strip().lower() in {
         "1",
         "true",
@@ -74,9 +85,19 @@ def resolve_openrouter_model(model: str) -> str:
 
 
 def resolve_openrouter_chat_model(model: str) -> str:
-    """Map Arm C short ids to OpenRouter chat-completions model ids."""
+    """Map Arm C short ids to OpenRouter (or local) chat-completions model ids."""
     if model.startswith("openrouter/"):
-        return model.removeprefix("openrouter/")
+        model = model.removeprefix("openrouter/")
+    if model.startswith("ollama/"):
+        return model.removeprefix("ollama/")
+    if use_local_openai():
+        # Local MLX / Ollama: never rewrite to OpenRouter :free slugs.
+        if model in {"nemotron", "nemotron-lightning"}:
+            return os.environ.get(
+                "CLAWQL_LAB_NEMOTRON_MODEL",
+                "openai/mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit",
+            )
+        return model
     mapped = _OPENROUTER_CHAT_MODEL_MAP.get(model)
     if mapped:
         return mapped
@@ -116,13 +137,43 @@ def make_anthropic_client() -> Any:
 
 
 def make_openrouter_openai_client() -> Any:
-    """OpenAI SDK client pointed at OpenRouter (Chat Completions / Arm C)."""
+    """OpenAI SDK client for Arm C / chat judge.
+
+    Local mode (``CLAWQL_LAB_LOCAL_INFERENCE=1``): points at
+    ``CLAWQL_LAB_OPENROUTER_OPENAI_BASE_URL`` (MLX or Ollama). No OpenRouter
+    network calls; API key is a dummy local token.
+    """
     import openai
+
+    if use_local_openai():
+        base = os.environ.get("CLAWQL_LAB_OPENROUTER_OPENAI_BASE_URL", "").strip()
+        if not base:
+            raise ValueError(
+                "CLAWQL_LAB_LOCAL_INFERENCE=1 requires "
+                "CLAWQL_LAB_OPENROUTER_OPENAI_BASE_URL "
+                "(clawql-inference, e.g. http://127.0.0.1:8091/v1)"
+            )
+        headers: dict[str, str] = {}
+        corr = os.environ.get("CLAWQL_LAB_CORRELATION_ID", "").strip()
+        if not corr:
+            prefix = os.environ.get("CLAWQL_LAB_CORRELATION_PREFIX", "").strip()
+            arm = os.environ.get("CLAWQL_LAB_ARM", "arm").strip() or "arm"
+            if prefix:
+                corr = f"{prefix}/{arm}"
+        if corr:
+            headers["x-correlation-id"] = corr
+        return openai.OpenAI(
+            api_key=os.environ.get("CLAWQL_LAB_LOCAL_API_KEY", "local"),
+            base_url=base,
+            default_headers=headers or None,
+            max_retries=1,
+        )
 
     key = os.environ.get("OPENROUTER_API_KEY")
     if not key:
         raise ValueError(
-            "OPENROUTER_API_KEY required for clawql-cc / Nemotron Arm C"
+            "OPENROUTER_API_KEY required for clawql-cc / Nemotron Arm C "
+            "(or set CLAWQL_LAB_LOCAL_INFERENCE=1 for local MLX/Ollama)"
         )
     return openai.OpenAI(
         api_key=key,
@@ -143,16 +194,20 @@ def maybe_rewrite_model(model: str) -> str:
 
 
 def should_use_openrouter_chat_judge(model: str) -> bool:
-    """True when the judge should use OpenRouter Chat Completions (not Anthropic).
+    """True when the judge should use OpenAI-compatible Chat Completions (not Anthropic).
 
-    Used for Arm C–first runs that only have ``OPENROUTER_API_KEY`` (no Anthropic).
+    Used for Arm C–first runs (OpenRouter *or* local Ollama/MLX) without Anthropic.
     Triggers for:
-      - explicit ``openrouter/...`` ids
+      - ``CLAWQL_LAB_LOCAL_INFERENCE=1``
+      - explicit ``openrouter/...`` / ``ollama/...`` ids
       - provider-prefixed OpenRouter slugs (``nvidia/``, ``openai/``, ``meta/``, …)
       - short Nemotron aliases
       - ``CLAWQL_LAB_JUDGE_VIA_OPENROUTER=1``
-    Claude short ids stay on the Anthropic judge path.
+      - Ollama-style ids with ``:`` (``qwen3.6:35b``)
+    Claude short ids stay on the Anthropic judge path unless local inference.
     """
+    if use_local_openai():
+        return True
     if os.environ.get("CLAWQL_LAB_JUDGE_VIA_OPENROUTER", "").strip().lower() in {
         "1",
         "true",
@@ -163,12 +218,15 @@ def should_use_openrouter_chat_judge(model: str) -> bool:
     lower = name.lower()
     if lower.startswith("claude"):
         return False
-    if lower.startswith("openrouter/"):
+    if lower.startswith("openrouter/") or lower.startswith("ollama/"):
         return True
     if lower in _OPENROUTER_CHAT_MODEL_MAP or lower in {
         "nemotron",
         "nemotron-lightning",
     }:
+        return True
+    # Ollama tags (qwen3.6:35b) — chat completions path
+    if ":" in name and "/" not in name:
         return True
     # OpenRouter-style provider/model (nvidia/..., openai/gpt-5.4-mini, …)
     if "/" in name and not lower.startswith("anthropic/"):
@@ -177,7 +235,7 @@ def should_use_openrouter_chat_judge(model: str) -> bool:
 
 
 def make_lab_judge(model: str):
-    """Factory used by patched ``run_eval`` — OpenRouter chat or stock Judge."""
+    """Factory used by patched ``run_eval`` — chat judge or stock Judge."""
     if should_use_openrouter_chat_judge(model):
         from evaluation.clawql_openrouter_judge import OpenRouterChatJudge
 

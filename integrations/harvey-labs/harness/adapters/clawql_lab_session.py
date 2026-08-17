@@ -28,8 +28,10 @@ try:
         build_matters_duckdb,
         default_duckdb_path,
         detect_hsr_filing,
+        detect_ma_execution_agreement,
         duckdb_available,
         extract_credit_facility_matter_fields,
+        extract_deal_value_usd,
         sql_tool_result_json,
     )
 except ImportError:
@@ -37,15 +39,19 @@ except ImportError:
         build_matters_duckdb,
         default_duckdb_path,
         detect_hsr_filing,
+        detect_ma_execution_agreement,
         duckdb_available,
         extract_credit_facility_matter_fields,
+        extract_deal_value_usd,
         sql_tool_result_json,
     )
 
 CLAWQL_MCP_URL = os.environ.get("CLAWQL_MCP_URL", "http://localhost:8080/mcp")
 CLAWQL_VAULT_ROOT = vault_root()
 
-MAX_EXTRACT_CHARS = int(os.environ.get("CLAWQL_LAB_MAX_EXTRACT_CHARS", "12000"))
+# Credit agreements routinely exceed 12k chars; Section 7 covenants lived past
+# the old default and left maintenance flags NULL (task 009 / open_facts gap).
+MAX_EXTRACT_CHARS = int(os.environ.get("CLAWQL_LAB_MAX_EXTRACT_CHARS", "250000"))
 MAX_DOCS_PER_MATTER = int(os.environ.get("CLAWQL_LAB_MAX_DOCS_PER_MATTER", "8"))
 MAX_MATTERS = int(os.environ.get("CLAWQL_LAB_MAX_MATTERS", "0"))
 INGEST_CACHE_NAME = ".clawql-lab-ingest-complete"
@@ -58,20 +64,22 @@ _HSR_SECOND_REQUEST_PAREN = re.compile(
     re.IGNORECASE,
 )
 _ANTITRUST_PATH = re.compile(
-    r"antitrust|hsr|ftc|doj|regulatory",
+    r"antitrust|hsr|ftc|doj",
     re.IGNORECASE,
 )
 
 # Rubric-friendly evidence filenames (task 001 C-004/C-005/C-006 and peers).
 # Prefer these over engagement letters when packaging the deliverable.
+# Put Solara gold docs (substantial-compliance / custodian) ahead of generic
+# "second-request-compliance-strategy" memos so DuckDB proof_doc matches rubrics.
 _PREFERRED_SECOND_REQUEST_EVIDENCE = (
+    "substantial-compliance-certification",
+    "custodian-identification-collection-protocol",
     "second-request-strategy-memo",
     "hsr-withdrawal-letter",
     "joint-status-report",
     "case-assessment-memo",
     "letter-ftc-meet-and-confer",
-    "substantial-compliance-certification",
-    "custodian-identification-collection-protocol",
     "second-request-response-strategy",
     "second-request-compliance-cover",
     "second-request-compliance-cost",
@@ -84,13 +92,39 @@ _CLIENT_SHORT_NAMES = (
     "Harrowgate PE",
     "Solara Digital",
     "Halcyon Semi",
+    "Crestline Packaging",
+    "Arbor Health Tech",
+    "Stonefield Logistics",
+    "Genome Dx",
+    "Whitmore Aerospace",
+    "Fairwater REIT",
+    "Brightfield Cloud",
+    "Ironhaven Data",
+    "Lumos Analytics",
+    "Verimark Hospitality",
+    "Nexford Industrial",
+    "Ardent Capital Partners",
+    "Cascadia Renewables",
     "Harrowgate",
     "Cascade",
     "Solara",
     "Halcyon",
+    "Crestline",
+    "Arbor",
+    "Stonefield",
+    "Genome",
+    "Whitmore",
+    "Fairwater",
+    "Brightfield",
+    "Ironhaven",
+    "Lumos",
+    "Verimark",
+    "Nexford",
+    "Ardent",
+    "Cascadia",
 )
 
-# Map truncated / filename stems → rubric short names (task 001 C-001..C-007).
+# Map truncated / filename stems → rubric short names (tasks 001–010).
 _CLIENT_CANONICAL: dict[str, str] = {
     "cascade": "Cascade Retail",
     "cascade retail": "Cascade Retail",
@@ -105,7 +139,71 @@ _CLIENT_CANONICAL: dict[str, str] = {
     "halcyon": "Halcyon Semi",
     "halcyon semi": "Halcyon Semi",
     "halcyon semiconductor": "Halcyon Semi",
+    "crestline": "Crestline Packaging",
+    "crestline packaging": "Crestline Packaging",
+    "arbor": "Arbor Health Tech",
+    "arbor health": "Arbor Health Tech",
+    "arbor health tech": "Arbor Health Tech",
+    "arbor health technologies": "Arbor Health Tech",
+    "stonefield": "Stonefield Logistics",
+    "stonefield logistics": "Stonefield Logistics",
+    "genome": "Genome Dx",
+    "genome dx": "Genome Dx",
+    "whitmore": "Whitmore Aerospace",
+    "whitmore aerospace": "Whitmore Aerospace",
+    "fairwater": "Fairwater REIT",
+    "fairwater reit": "Fairwater REIT",
+    "fairwater take out financing": "Fairwater REIT",
+    "brightfield": "Brightfield Cloud",
+    "brightfield cloud": "Brightfield Cloud",
+    "bcs": "Brightfield Cloud",
+    "ironhaven": "Ironhaven Data",
+    "ironhaven data": "Ironhaven Data",
+    "ironhaven data centers": "Ironhaven Data",
+    "lumos": "Lumos Analytics",
+    "lumos analytics": "Lumos Analytics",
+    "verimark": "Verimark Hospitality",
+    "verimark hospitality": "Verimark Hospitality",
+    "nexford": "Nexford Industrial",
+    "nexford industrial": "Nexford Industrial",
+    "ardent": "Ardent Capital Partners",
+    "ardent capital": "Ardent Capital Partners",
+    "ardent capital partners": "Ardent Capital Partners",
+    "cascadia": "Cascadia Renewables",
+    "cascadia renewables": "Cascadia Renewables",
 }
+
+# Matter-id overrides when engagement stems/bodies are ambiguous (LAB DMS).
+_MATTER_CLIENT_SHORT: dict[str, str] = {
+    "1001-00004": "Ardent Capital Partners",
+    "1003-00001": "Harrowgate PE",
+    "1003-00003": "Harrowgate PE",
+    "1005-00001": "Nexford Industrial",
+    "1006-00001": "Crestline Packaging",
+    "1008-00001": "Lumos Analytics",
+    "1010-00001": "Arbor Health Tech",
+    "1012-00001": "Stonefield Logistics",
+    "1013-00001": "Genome Dx",
+    "1019-00002": "Whitmore Aerospace",
+    "1021-00001": "Verimark Hospitality",
+    "1023-00001": "Cascadia Renewables",
+    "1032-00001": "Halcyon Semi",
+    "1032-00005": "Halcyon Semi",
+    "1036-00001": "Fairwater REIT",
+    "1038-00001": "Cascade Retail",
+    "1038-00002": "Cascade Retail",
+    "1038-00009": "Cascade Retail",
+    "1041-00001": "Solara Digital",
+    "1041-00003": "Solara Digital",
+    "1042-00001": "Brightfield Cloud",
+    "1043-00001": "Ironhaven Data",
+}
+
+_TITLE_PREFIX_RE = re.compile(
+    r"^(?:general\s+counsel|corporate\s+secretary|secretary|managing\s+partner|"
+    r"chief\s+investment\s+officer|mail\s+and\s+docusign|docusign)\s+",
+    re.IGNORECASE,
+)
 
 
 def _canonicalize_client(label: str) -> str:
@@ -113,23 +211,20 @@ def _canonicalize_client(label: str) -> str:
     # newline in client breaks CLAWQL_TITLE=… so CREDIT_FACILITY falls off
     # the title line (probe #6: 1008-00001 ontology N=11).
     normalized = " ".join(str(label).strip().split())
+    normalized = _TITLE_PREFIX_RE.sub("", normalized).strip() or normalized
     key = normalized.lower()
     if key in _CLIENT_CANONICAL:
         return _CLIENT_CANONICAL[key]
-    # Prefix upgrade: "Cascade …" / "Harrowgate …" when already long-form-ish
-    for stem, canon in (
-        ("cascade retail", "Cascade Retail"),
-        ("harrowgate pe", "Harrowgate PE"),
-        ("solara digital", "Solara Digital"),
-        ("halcyon semi", "Halcyon Semi"),
+    # Prefix upgrade when already long-form-ish
+    for stem, canon in sorted(
+        ((k, v) for k, v in _CLIENT_CANONICAL.items() if " " in k),
+        key=lambda kv: -len(kv[0]),
     ):
         if key.startswith(stem):
             return canon
-    for stem, canon in (
-        ("cascade", "Cascade Retail"),
-        ("harrowgate", "Harrowgate PE"),
-        ("solara", "Solara Digital"),
-        ("halcyon", "Halcyon Semi"),
+    for stem, canon in sorted(
+        ((k, v) for k, v in _CLIENT_CANONICAL.items() if " " not in k),
+        key=lambda kv: -len(kv[0]),
     ):
         if key == stem or key.startswith(stem + " "):
             return canon
@@ -245,30 +340,26 @@ CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
     {
         "name": "clawql_sql",
         "description": (
-            "Run a read-only SQL query against the task DuckDB (matters table). "
-            "PREFERRED for exact enumeration / frequency cohorts. Examples: "
-            "SELECT matter_id, client_short_name FROM matters "
-            "WHERE is_credit_facility ORDER BY matter_id; "
-            "SELECT count(*) FILTER (WHERE mentions_springing_lien) AS k, "
-            "count(*) AS n FROM matters WHERE is_credit_facility; "
-            "SELECT matter_id FROM matters WHERE is_credit_facility "
-            "AND has_revolving_facility; "
-            "SELECT matter_id FROM matters WHERE has_incremental_facility "
-            "ORDER BY facility_amount_usd DESC LIMIT 1; "
-            "SELECT matter_id FROM matters WHERE is_secured "
-            "ORDER BY deal_date DESC LIMIT 1; "
+            "Run a read-only SQL query against the task DuckDB "
+            "(matters + open_facts). PREFERRED for exact enumeration / "
+            "frequency cohorts. CRITICAL: semantic bools may be NULL "
+            "(unknown). NULL is not false — do not report 0/N from an "
+            "empty TRUE filter when values are NULL; instead SELECT the "
+            "column, check open_facts, and read proof docs. Examples: "
+            "SELECT matter_id, client_short_name, "
+            "has_maintenance_financial_covenant, "
+            "has_maintenance_financial_covenant_proof_doc "
+            "FROM matters WHERE is_credit_facility ORDER BY matter_id; "
+            "SELECT * FROM open_facts WHERE matter_id = '1010-00001'; "
             "Also: is_hsr_second_request, practice_area, matter_type, "
             "has_adjusted_ebitda_addbacks (+ _proof_doc), is_covenant_lite "
             "(+ _proof_doc), has_mfn_in_credit_agreement (+ _proof_doc), "
-            "has_springing_financial_covenant, has_always_on_maintenance_covenant, "
-            "has_maintenance_financial_covenant, borrower_control "
-            "(sponsor|corporate), has_hsr_filing (+ date + proof_doc). "
-            "Views: credit_facilities, revolving_credit_facilities, "
-            "adjusted_ebitda_addback_matters, covenant_lite_credit_facilities, "
-            "mfn_credit_agreements, always_on_maintenance_credit_facilities, "
-            "maintenance_financial_covenant_matters, hsr_filings, "
-            "secured_credit_facilities, live_maintenance_financings, "
-            "covenant_lite_no_always_on. "
+            "has_springing_financial_covenant (+ _proof_doc), "
+            "has_always_on_maintenance_covenant (+ _proof_doc), "
+            "has_maintenance_financial_covenant (+ _proof_doc), "
+            "borrower_control (sponsor|corporate), has_hsr_filing. "
+            "Views: credit_facilities, maintenance_financial_covenant_matters, "
+            "open_facts_by_matter, hsr_filings, billion_dollar_antitrust_ma. "
             "SELECT/WITH/DESCRIBE only — no writes."
         ),
         "parameters": {
@@ -398,18 +489,24 @@ def _client_hint_from_engagement_filename(path: Path) -> str | None:
     stem = re.sub(r"[-_]+", " ", stem).strip()
     if not stem:
         return None
-    canon = _canonicalize_client(stem)
-    if canon != stem.strip():
-        return canon
-    # Known stems that title-case alone would miss (sdilp, hpe)
     key = stem.lower()
     if key in _CLIENT_CANONICAL:
         return _CLIENT_CANONICAL[key]
+    first = key.split()[0]
+    if first in _CLIENT_CANONICAL:
+        return _CLIENT_CANONICAL[first]
+    canon = _canonicalize_client(stem)
+    if canon != stem.strip():
+        return canon
     return None
 
 
 def _client_hint(matter_dir: Path) -> str:
     """Best-effort client short name for LAB criteria (never truncated stems)."""
+    mid = matter_dir.name.strip()
+    if mid in _MATTER_CLIENT_SHORT:
+        return _MATTER_CLIENT_SHORT[mid]
+
     engagement_docs = [
         p
         for p in matter_dir.rglob("*")
@@ -443,7 +540,7 @@ def _client_hint(matter_dir: Path) -> str:
         stem = re.sub(r"[-_]+", " ", stem).strip()
         if stem:
             return _canonicalize_client(stem.title())
-    return " ".join(matter_dir.name.strip().split())
+    return " ".join(mid.split())
 
 
 def _has_antitrust_signal(matter_dir: Path) -> bool:
@@ -608,19 +705,20 @@ def detect_hsr_second_request(matter_dir: Path) -> dict[str, Any]:
     event_date: str | None = None
     proof_doc = ""
     if received:
-        event_date, proof_doc = _second_request_event_date(
+        event_date, date_proof = _second_request_event_date(
             matter_dir, evidence, preferred
         )
+        # Rubric citations prefer preferredEvidence[0] over the date-bearing
+        # doc (task 001 Solara: substantial-compliance beats strategy memo).
+        if preferred:
+            path = _resolve_matter_rel(matter_dir, preferred[0])
+            proof_doc = (
+                str(path.relative_to(matter_dir)).replace("\\", "/")
+                if path is not None
+                else ""
+            )
         if not proof_doc:
-            if preferred:
-                path = _resolve_matter_rel(matter_dir, preferred[0])
-                proof_doc = (
-                    str(path.relative_to(matter_dir)).replace("\\", "/")
-                    if path is not None
-                    else evidence[0]
-                )
-            elif evidence:
-                proof_doc = evidence[0]
+            proof_doc = date_proof or (evidence[0] if evidence else "")
     return {
         "received": received,
         "evidence_files": evidence,
@@ -1169,7 +1267,13 @@ class ClawQLLabSession:
         bulk_docs: list[dict[str, str]] = []
         credit_docs: list[dict[str, str]] = []
         duckdb_rows: list[dict[str, Any]] = []
-        for matter_dir in all_matter_dirs:
+        for matter_i, matter_dir in enumerate(all_matter_dirs, start=1):
+            if matter_i == 1 or matter_i % 25 == 0 or matter_i == len(all_matter_dirs):
+                print(
+                    f"ClawQL pre-ingest: matter {matter_i}/{len(all_matter_dirs)} "
+                    f"({matter_dir.name})",
+                    flush=True,
+                )
             matter_id = matter_dir.name
             detection = detect_hsr_second_request(matter_dir)
             credit = detect_credit_facility(matter_dir)
@@ -1187,11 +1291,19 @@ class ClawQLLabSession:
                 title_parts.append("CREDIT_FACILITY")
             title = " — ".join(title_parts)
             practice = credit["practice_area"]
-            if detection["received"] and practice == "Other":
-                practice = "Antitrust"
+            if detection["received"] and practice in {"Other", "Antitrust"}:
+                # Lab gold / prompts use the full practice group name.
+                practice = "Antitrust & Competition"
+            if detection.get("antitrust_signal") and practice in {
+                "Other",
+                "Antitrust",
+            }:
+                practice = "Antitrust & Competition"
             matter_type = credit["matter_type"]
             if detection["received"] and matter_type == "Other":
                 matter_type = "Advisory"
+            if detection.get("antitrust_signal") and matter_type == "Other":
+                matter_type = "M&A"
             extract_full = (
                 matter_dir in full_text_set
                 or bool(detection["received"])
@@ -1308,62 +1420,101 @@ class ClawQLLabSession:
                     return _plain_text(path)
                 return ""
 
-            mentions_lien = False
-            has_revolver = False
-            is_secured = False
+            mentions_lien = None
+            has_revolver = None
+            is_secured = None
             deal_date = None
-            has_incremental = False
+            has_incremental = None
             facility_amount = None
-            has_ebitda_addbacks = False
+            has_ebitda_addbacks = None
             ebitda_proof = ""
-            is_covenant_lite = False
+            is_covenant_lite = None
             covlite_proof = ""
-            has_mfn = False
+            has_mfn = None
             mfn_proof = ""
-            has_springing_fc = False
-            has_always_on = False
-            has_maintenance_fc = False
+            has_springing_fc = None
+            springing_proof = ""
+            has_always_on = None
+            always_on_proof = ""
+            has_maintenance_fc = None
+            maintenance_proof = ""
             borrower_control = None
+            open_facts: list[dict[str, Any]] = []
             hsr_filing = detect_hsr_filing(matter_dir)
             has_hsr_filing = bool(hsr_filing.get("filed"))
             hsr_filing_date = hsr_filing.get("filing_date")
             hsr_filing_proof = str(hsr_filing.get("proof_doc") or "")
-            if has_hsr_filing and practice == "Other":
+            hsr_clearance = detect_hsr_clearance(matter_dir)
+            has_hsr_clearance = bool(hsr_clearance.get("cleared"))
+            hsr_clearance_proof = str(hsr_clearance.get("proof_doc") or "")
+            has_ma_execution = detect_ma_execution_agreement(matter_dir)
+            # Deal values are only needed for antitrust / M&A filters (005).
+            # Skip Tika scans on pure credit / other matters.
+            deal_value_usd = None
+            if (
+                detection["received"]
+                or has_hsr_filing
+                or detection.get("antitrust_signal")
+                or has_ma_execution
+                or str(practice).startswith("Antitrust")
+            ):
+                deal_value = extract_deal_value_usd(matter_dir)
+                deal_value_usd = deal_value.get("deal_value_usd")
+            is_antitrust_matter = bool(
+                detection.get("antitrust_signal")
+                or practice.startswith("Antitrust")
+                or has_hsr_filing
+                or detection["received"]
+                or has_ma_execution
+            )
+            if has_hsr_filing and practice in {"Other", "Antitrust"}:
                 practice = "Antitrust & Competition"
             if credit["is_credit_facility"]:
+                from .clawql_lab_evidence import nullable_bool
+
                 fields = extract_credit_facility_matter_fields(
                     matter_dir,
                     text_extractor=_extract,
                 )
-                mentions_lien = bool(fields.get("mentions_springing_lien"))
-                has_revolver = bool(fields.get("has_revolving_facility"))
-                is_secured = bool(fields.get("is_secured"))
+                mentions_lien = nullable_bool(fields.get("mentions_springing_lien"))
+                has_revolver = nullable_bool(fields.get("has_revolving_facility"))
+                is_secured = nullable_bool(fields.get("is_secured"))
                 deal_date = fields.get("deal_date")
-                has_incremental = bool(fields.get("has_incremental_facility"))
+                has_incremental = nullable_bool(fields.get("has_incremental_facility"))
                 facility_amount = fields.get("facility_amount_usd")
-                has_ebitda_addbacks = bool(
+                has_ebitda_addbacks = nullable_bool(
                     fields.get("has_adjusted_ebitda_addbacks")
                 )
                 ebitda_proof = str(
                     fields.get("has_adjusted_ebitda_addbacks_proof_doc") or ""
                 )
-                is_covenant_lite = bool(fields.get("is_covenant_lite"))
+                is_covenant_lite = nullable_bool(fields.get("is_covenant_lite"))
                 covlite_proof = str(fields.get("is_covenant_lite_proof_doc") or "")
-                has_mfn = bool(fields.get("has_mfn_in_credit_agreement"))
+                has_mfn = nullable_bool(fields.get("has_mfn_in_credit_agreement"))
                 mfn_proof = str(
                     fields.get("has_mfn_in_credit_agreement_proof_doc") or ""
                 )
-                has_springing_fc = bool(
+                has_springing_fc = nullable_bool(
                     fields.get("has_springing_financial_covenant")
                 )
-                has_always_on = bool(
+                springing_proof = str(
+                    fields.get("has_springing_financial_covenant_proof_doc") or ""
+                )
+                has_always_on = nullable_bool(
                     fields.get("has_always_on_maintenance_covenant")
                 )
-                has_maintenance_fc = bool(
+                always_on_proof = str(
+                    fields.get("has_always_on_maintenance_covenant_proof_doc") or ""
+                )
+                has_maintenance_fc = nullable_bool(
                     fields.get("has_maintenance_financial_covenant")
+                )
+                maintenance_proof = str(
+                    fields.get("has_maintenance_financial_covenant_proof_doc") or ""
                 )
                 bc = fields.get("borrower_control")
                 borrower_control = str(bc).strip().lower() if bc else None
+                open_facts = list(fields.get("_open_facts") or [])
             duckdb_rows.append(
                 {
                     "matter_id": matter_id,
@@ -1373,9 +1524,18 @@ class ClawQLLabSession:
                     "title": title,
                     "is_credit_facility": bool(credit["is_credit_facility"]),
                     "is_hsr_second_request": bool(detection["received"]),
+                    "hsr_second_request_date": detection.get("second_request_date"),
+                    "hsr_second_request_proof_doc": str(
+                        detection.get("proof_doc") or ""
+                    ),
+                    "has_hsr_clearance": has_hsr_clearance,
+                    "hsr_clearance_proof_doc": hsr_clearance_proof,
                     "has_hsr_filing": has_hsr_filing,
                     "hsr_filing_date": hsr_filing_date,
                     "hsr_filing_proof_doc": hsr_filing_proof,
+                    "is_antitrust_matter": is_antitrust_matter,
+                    "deal_value_usd": deal_value_usd,
+                    "has_ma_execution_agreement": has_ma_execution,
                     "mentions_springing_lien": mentions_lien,
                     "has_revolving_facility": has_revolver,
                     "is_secured": is_secured,
@@ -1389,11 +1549,15 @@ class ClawQLLabSession:
                     "has_mfn_in_credit_agreement": has_mfn,
                     "has_mfn_in_credit_agreement_proof_doc": mfn_proof,
                     "has_springing_financial_covenant": has_springing_fc,
+                    "has_springing_financial_covenant_proof_doc": springing_proof,
                     "has_always_on_maintenance_covenant": has_always_on,
+                    "has_always_on_maintenance_covenant_proof_doc": always_on_proof,
                     "has_maintenance_financial_covenant": has_maintenance_fc,
+                    "has_maintenance_financial_covenant_proof_doc": maintenance_proof,
                     "borrower_control": borrower_control,
                     "sandbox_root": f"/workspace/documents/matters/{matter_id}",
                     "vault_note_path": doc["path"],
+                    "_open_facts": open_facts,
                 }
             )
 
@@ -1479,21 +1643,51 @@ class ClawQLLabSession:
         lien_n = sum(
             1
             for r in rows
-            if r.get("is_credit_facility") and r.get("mentions_springing_lien")
+            if r.get("is_credit_facility") and r.get("mentions_springing_lien") is True
         )
         revolver_n = sum(
             1
             for r in rows
-            if r.get("is_credit_facility") and r.get("has_revolving_facility")
+            if r.get("is_credit_facility") and r.get("has_revolving_facility") is True
         )
         secured_n = sum(
-            1 for r in rows if r.get("is_credit_facility") and r.get("is_secured")
+            1
+            for r in rows
+            if r.get("is_credit_facility") and r.get("is_secured") is True
+        )
+        maint_true = sum(
+            1
+            for r in rows
+            if r.get("is_credit_facility")
+            and r.get("has_maintenance_financial_covenant") is True
+        )
+        maint_null = sum(
+            1
+            for r in rows
+            if r.get("is_credit_facility")
+            and r.get("has_maintenance_financial_covenant") is None
+        )
+        open_n = sum(len(r.get("_open_facts") or []) for r in rows)
+        deal_n = sum(1 for r in rows if r.get("deal_value_usd") is not None)
+        deal_b = sum(
+            1
+            for r in rows
+            if isinstance(r.get("deal_value_usd"), (int, float))
+            and float(r["deal_value_usd"]) >= 1_000_000_000.0
+        )
+        hsr_dated = sum(
+            1
+            for r in rows
+            if r.get("is_hsr_second_request") and r.get("hsr_second_request_date")
         )
         print(
             f"ClawQL pre-ingest: DuckDB {db_path} rows={len(rows)} "
             f"is_credit_facility={credit_n} (expected {expected_credit}) "
             f"credit_facilities.mentions_springing_lien={lien_n} "
-            f"has_revolving_facility={revolver_n} is_secured={secured_n}"
+            f"has_revolving_facility={revolver_n} is_secured={secured_n} "
+            f"maintenance_fc true={maint_true} null={maint_null} "
+            f"deal_value_usd nonnull={deal_n} ge_1b={deal_b} "
+            f"hsr_sr_dated={hsr_dated} open_facts={open_n}"
         )
         if expected_credit and credit_n != expected_credit:
             print(

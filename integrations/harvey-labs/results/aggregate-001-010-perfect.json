@@ -1,0 +1,33 @@
+{
+  "run_id": "harvey-lab-001-010-perfect",
+  "perfect": true,
+  "all_pass_count": 10,
+  "all_pass_tasks": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010"],
+  "arms": "nemotron-clawql",
+  "agent_model": "openai/mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit",
+  "judge_model": "ollama/qwen3.6:35b",
+  "composition": {
+    "from_v2_batch": {
+      "002": "ALL-PASS",
+      "003": "ALL-PASS",
+      "006": "ALL-PASS",
+      "007": "ALL-PASS",
+      "008": "ALL-PASS",
+      "010": "ALL-PASS"
+    },
+    "from_v3_iteration": {
+      "001": "7/7 ALL-PASS (preferred Solara proof + wired HSR fields)",
+      "004": "2/2 ALL-PASS (single_answer kind; date-ordered latest)",
+      "005": "6/6 ALL-PASS (billion_dollar_antitrust_ma N=7 k=4)",
+      "009": "19/19 ALL-PASS (enumeration kind; maintenance=true only)"
+    }
+  },
+  "sticky_fixes": [
+    "Wire hsr_second_request_date/proof_doc and deal_value_usd into DuckDB rows",
+    "Prefer substantial-compliance/custodian over strategy memos for Solara proof",
+    "Task-kind inference from user messages only; enum patterns for pull-financings",
+    "billion_dollar view: TEV>=$1.2B AND (second_request OR merger/EPA execution)",
+    "Client short-name matter-id map; maintenance proof filename prefer list",
+    "Covenant-lite clears maintenance (exclude 1005 from qualifying set)"
+  ]
+}

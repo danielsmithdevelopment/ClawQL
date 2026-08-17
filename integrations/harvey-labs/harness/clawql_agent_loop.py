@@ -123,7 +123,18 @@ def _clawql_infer_task_kind(messages) -> str:
     }}:
         return forced
 
-    blob = " ".join(_clawql_message_text(m) for m in (messages or [])).lower()
+    blob = " ".join(
+        _clawql_message_text(m)
+        for m in (messages or [])
+        if (
+            (isinstance(m, dict) and str(m.get("role", "")).lower() == "user")
+            or str(getattr(m, "role", "")).lower() == "user"
+        )
+    ).lower()
+    # Fallback: if roles missing, use last message only (avoid system-prompt
+    # "across"/"how often" examples flipping single_answer → frequency).
+    if not blob.strip():
+        blob = _clawql_message_text((messages or [None])[-1]).lower()
     freq_hits = len(
         re.findall(
             r"\\b(how often|what share|what percentage|how many of|in how many|"
@@ -141,7 +152,8 @@ def _clawql_infer_task_kind(messages) -> str:
     enum_hits = len(
         re.findall(
             r"\\b(every|enumerate|enumeration|all matters|list (all|every)|"
-            r"which matters|each matter|set of matters|find all)\\b",
+            r"which matters|each matter|set of matters|find all|"
+            r"pull (?:our|all)|financings|matters whose|along with)\\b",
             blob,
         )
     )
@@ -162,6 +174,12 @@ def _clawql_infer_task_kind(messages) -> str:
         return "enumeration"
     if single_hits > 0:
         return "single_answer"
+    # Plural cohort asks without explicit "every/all" (e.g. task 009 "pull our
+    # … financings") must not default to single_answer.
+    if re.search(r"\\b(financings|matters|deals)\\b", blob) and re.search(
+        r"\\b(pull|whose|include|containing)\\b", blob
+    ):
+        return "enumeration"
     return "single_answer"
 
 
