@@ -1,12 +1,4 @@
-# Nemotron ± ClawQL single-task probe (Harvey-parity judge)
-#
-# Arms:   nemotron, nemotron-clawql
-# Judge:  claude-sonnet-4-6 (via OpenRouter)
-#
-# Spec on first non-comment line: N | START-END
-#
-# SMOKE after Matter generalization (011–015 fields + multi-doc).
-# Do NOT put 1-25 until OpenRouter free-tier resets (midnight UTC) and
-# you intentionally re-arm. cancel-in-progress — one push only.
-#
-18-18
+# Nemotron ± ClawQL firm-knowledge contiguous confirmation (GHA)
+# Arms: nemotron, nemotron-clawql | Judge: claude-sonnet-4-6 via OpenRouter
+# Spec: START-END inclusive
+1-25

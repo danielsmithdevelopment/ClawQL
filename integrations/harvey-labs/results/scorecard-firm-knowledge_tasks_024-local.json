@@ -1,0 +1,19 @@
+{
+  "task": "firm-knowledge/tasks/024",
+  "model": "openai/mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit",
+  "judge": "ollama/qwen3.6:35b",
+  "inference": "local",
+  "arms": {
+    "nemotron-clawql": {
+      "run_id": "firm-knowledge/tasks/024/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260816-194231",
+      "model_flag": "clawql-cc/openai/mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit",
+      "criterion_pass_rate": 0.7777777777777778,
+      "all_pass": 0.0,
+      "n_passed": 7,
+      "n_criteria": 9,
+      "turns": 40,
+      "input_tokens": 1724874,
+      "output_tokens": 11162
+    }
+  }
+}
