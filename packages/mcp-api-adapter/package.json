@@ -50,7 +50,7 @@
     "express": "^5.2.1",
     "graphql": "^16.14.0",
     "mcp-grpc-transport": "1.0.0",
-    "ws": "^8.21.0"
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
