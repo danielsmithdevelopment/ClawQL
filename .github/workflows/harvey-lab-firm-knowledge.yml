@@ -137,7 +137,21 @@ jobs:
           MODE="smoke"
           TASK_LIMIT=1
           SWEEP_INCLUDE_JSON=""
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ -f integrations/harvey-labs/.skip-lab-matrix ]; then
+            echo "::notice::.skip-lab-matrix present — dummy outputs only; gate sets can_run=false"
+            ARMS_CSV="nemotron"
+            TASK="firm-knowledge/tasks/001"
+            TASK_LIMIT=1
+            TASK_START=1
+            TASK_END=1
+            MODEL="claude-sonnet-4-6"
+            NEMO="nvidia/nemotron-3.5-lightning"
+            TURNS="40"
+            JUDGE="openai/gpt-5.4-mini"
+            MATTERS="0"
+            USE_OR="1"
+            MODE="skipped"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             ARMS_CSV="${{ inputs.arms }}"
             TASK="${{ inputs.task }}"
             TASK_LIMIT="${{ inputs.task_limit }}"
@@ -354,6 +368,12 @@ jobs:
           set -euo pipefail
           CAN=true
           REASON=""
+          if [ -f integrations/harvey-labs/.skip-lab-matrix ]; then
+            echo "can_run=false" >>"$GITHUB_OUTPUT"
+            echo "skip_reason=.skip-lab-matrix present (trace harvest / disarm — no live LAB cells)" >>"$GITHUB_OUTPUT"
+            echo "::notice::Skipped live Harvey LAB matrix (.skip-lab-matrix)"
+            exit 0
+          fi
           if [ "${NEED_AN}" = "true" ] && [ "${HAS_AN}" != "true" ]; then
             CAN=false
             REASON="ANTHROPIC_API_KEY missing (required for Opus/Sonnet arms or Sonnet judge)"

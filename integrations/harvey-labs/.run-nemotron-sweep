@@ -1,13 +1,5 @@
-# Nemotron ± ClawQL firm-knowledge — targeted 2-cell re-run
-# Arms/judge: nemotron ± clawql | claude-sonnet-4-6 via OpenRouter
-#
-# Campaign: PR #919  original 31989734158 (429 cancel) + resume 32083312814 (48/50 graded)
-# Missing grades (OpenRouter 504 idle timeout, not rubric):
-#   nemotron-clawql 009
-#   nemotron 022
-#
-# Do NOT re-spend already-graded cells.
-# Spec: ARM START-END (inclusive). Workflow uses sparse include (not cartesian).
-# cancel-in-progress — one push only; never push while this matrix is live.
-nemotron-clawql 9-9
-nemotron 22-22
+# DISARMED — do not run a live Nemotron matrix.
+# 2026-08-18: harvest every GHA transcript to Cloudflare R2 first.
+# Previously armed (do NOT uncomment until harvest is confirmed):
+#   nemotron-clawql 9-9
+#   nemotron 22-22

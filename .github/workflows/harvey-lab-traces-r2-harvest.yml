@@ -1,0 +1,52 @@
+# One-off (and repeatable) harvest of Harvey LAB GHA traces → Cloudflare R2.
+# Does NOT run the live Nemotron matrix.
+name: Harvey LAB traces → R2 harvest
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/harvey-lab-traces-r2-harvest.yml"
+      - "scripts/dev/harvest-harvey-lab-traces-to-r2.py"
+
+concurrency:
+  group: harvey-lab-r2-harvest-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  harvest:
+    name: Download GH artifacts and PUT to R2
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CLAWQL_R2_TRACES_BUCKET: ${{ secrets.CLAWQL_R2_TRACES_BUCKET }}
+      CLAWQL_OPENBENCH_R2_BUCKET: ${{ secrets.CLAWQL_OPENBENCH_R2_BUCKET }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLAWQL_CLOUDFLARE_API_TOKEN: ${{ secrets.CLAWQL_CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLAWQL_R2_ACCOUNT_ID: ${{ secrets.CLAWQL_R2_ACCOUNT_ID }}
+      CLAWQL_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLAWQL_CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Harvest all Harvey LAB artifacts to R2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 scripts/dev/harvest-harvey-lab-traces-to-r2.py
+
+      - name: Upload harvest index (warm GH copy)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harvey-lab-r2-harvest-index-${{ github.run_id }}
+          path: harvest-index.json
+          if-no-files-found: warn
+          retention-days: 30
