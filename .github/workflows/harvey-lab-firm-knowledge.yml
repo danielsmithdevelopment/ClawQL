@@ -136,6 +136,7 @@ jobs:
           set -euo pipefail
           MODE="smoke"
           TASK_LIMIT=1
+          SWEEP_INCLUDE_JSON=""
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             ARMS_CSV="${{ inputs.arms }}"
             TASK="${{ inputs.task }}"
@@ -166,15 +167,20 @@ jobs:
           elif [ -f integrations/harvey-labs/.run-nemotron-sweep ]; then
             ARMS_CSV="nemotron,nemotron-clawql"
             TASK="firm-knowledge/tasks/001"
-            # First non-comment line: N  |  START-END  |  START END
-            #   N         → tasks 001..00N
-            #   START-END → tasks START..END (inclusive), e.g. 16-25
+            # Marker spec (non-comment lines):
+            #   N | START-END              → both default arms over that range
+            #   ARM START-END              → that arm only (repeatable; resume)
             # Empty / comment-only marker → smoke (do NOT default to 1–25).
-            SWEEP_SPEC="$(
-              awk 'NF && $1 !~ /^#/ { print $0; exit }' integrations/harvey-labs/.run-nemotron-sweep || true
+            SWEEP_JSON="$(
+              python3 integrations/harvey-labs/scripts/parse_nemotron_sweep_marker.py \
+                --marker integrations/harvey-labs/.run-nemotron-sweep
             )"
-            if [ -z "${SWEEP_SPEC}" ]; then
-              echo "::warning::.run-nemotron-sweep present but empty — falling back to smoke (task 001 only). Put N or START-END on a non-comment line to arm a sweep."
+            SWEEP_EMPTY="$(
+              SWEEP_JSON="${SWEEP_JSON}" python3 -c \
+                'import json,os; print(json.loads(os.environ["SWEEP_JSON"] or "{}").get("empty", True))'
+            )"
+            if [ "${SWEEP_EMPTY}" = "True" ]; then
+              echo "::warning::.run-nemotron-sweep present but empty — falling back to smoke (task 001 only). Put N, START-END, or ARM START-END on a non-comment line to arm a sweep."
               TASK_LIMIT=1
               TASK_START=1
               TASK_END=1
@@ -186,21 +192,22 @@ jobs:
               USE_OR="1"
               MODE="smoke"
             else
-              TASK_START=1
-              TASK_END=25
-              if [[ "${SWEEP_SPEC}" =~ ^([0-9]+)[[:space:]]*-[[:space:]]*([0-9]+)[[:space:]]*$ ]]; then
-                TASK_START="${BASH_REMATCH[1]}"
-                TASK_END="${BASH_REMATCH[2]}"
-              elif [[ "${SWEEP_SPEC}" =~ ^([0-9]+)[[:space:]]+([0-9]+)[[:space:]]*$ ]]; then
-                TASK_START="${BASH_REMATCH[1]}"
-                TASK_END="${BASH_REMATCH[2]}"
-              elif [[ "${SWEEP_SPEC}" =~ ^([0-9]+)[[:space:]]*$ ]]; then
-                TASK_START=1
-                TASK_END="${BASH_REMATCH[1]}"
-              else
-                echo "::error::Invalid .run-nemotron-sweep spec (got '${SWEEP_SPEC}'). Use N or START-END."
-                exit 1
-              fi
+              TASK_START="$(
+                SWEEP_JSON="${SWEEP_JSON}" python3 -c \
+                  'import json,os; print(json.loads(os.environ["SWEEP_JSON"])["task_start"])'
+              )"
+              TASK_END="$(
+                SWEEP_JSON="${SWEEP_JSON}" python3 -c \
+                  'import json,os; print(json.loads(os.environ["SWEEP_JSON"])["task_end"])'
+              )"
+              ARMS_CSV="$(
+                SWEEP_JSON="${SWEEP_JSON}" python3 -c \
+                  'import json,os; print(",".join(json.loads(os.environ["SWEEP_JSON"])["arms"]))'
+              )"
+              SWEEP_INCLUDE_JSON="$(
+                SWEEP_JSON="${SWEEP_JSON}" python3 -c \
+                  'import json,os; print(json.dumps(json.loads(os.environ["SWEEP_JSON"])["include"]))'
+              )"
               TASK_LIMIT="${TASK_END}"
               MODEL="claude-sonnet-4-6"
               NEMO="nvidia/nemotron-3.5-lightning"
@@ -209,7 +216,7 @@ jobs:
               MATTERS="0"
               USE_OR="1"
               MODE="nemotron-sweep"
-              echo "::notice::Detected .run-nemotron-sweep → Nemotron ± ClawQL tasks ${TASK_START}–${TASK_END}, judge=claude-sonnet-4-6"
+              echo "::notice::Detected .run-nemotron-sweep → arms=${ARMS_CSV} tasks ${TASK_START}–${TASK_END} cells=$(echo "${SWEEP_JSON}" | python3 -c 'import json,sys; print(json.load(sys.stdin)["cell_count"])') judge=claude-sonnet-4-6"
             fi
           else
             ARMS_CSV="nemotron,nemotron-clawql"
@@ -259,8 +266,16 @@ jobs:
           print(json.dumps(tasks))
           '
           )"
-          MATRIX_JSON="$(
-            ARMS_JSON="${ARMS_JSON}" TASKS_JSON="${TASKS_JSON}" python3 -c '
+          if [ -n "${SWEEP_INCLUDE_JSON:-}" ]; then
+            MATRIX_JSON="$(
+              SWEEP_INCLUDE_JSON="${SWEEP_INCLUDE_JSON}" python3 -c '
+          import json, os
+          print(json.dumps({"include": json.loads(os.environ["SWEEP_INCLUDE_JSON"])}))
+          '
+            )"
+          else
+            MATRIX_JSON="$(
+              ARMS_JSON="${ARMS_JSON}" TASKS_JSON="${TASKS_JSON}" python3 -c '
           import json, os
           arms = json.loads(os.environ["ARMS_JSON"])
           tasks = json.loads(os.environ["TASKS_JSON"])
@@ -271,7 +286,8 @@ jobs:
                   include.append({"arm": arm, "task": task, "task_id": tid})
           print(json.dumps({"include": include}))
           '
-          )"
+            )"
+          fi
           TASK_COUNT="$(
             TASKS_JSON="${TASKS_JSON}" python3 -c 'import json,os; print(len(json.loads(os.environ["TASKS_JSON"])))'
           )"
