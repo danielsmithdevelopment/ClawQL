@@ -32,6 +32,15 @@ class HarvestNameParseTest(unittest.TestCase):
         mod = _load()
         self.assertIsNone(mod.parse_cell_artifact_name("harvey-lab-sweep-summary-32083312814"))
 
+    def test_zip_download_uses_stdout_not_output_flag(self) -> None:
+        mod = _load()
+        argv = mod.artifact_zip_gh_argv("danielsmithdevelopment/ClawQL", "9339645395")
+        self.assertNotIn("--output", argv)
+        self.assertNotIn("-t", argv)
+        self.assertEqual(argv[0], "gh")
+        self.assertEqual(argv[1], "api")
+        self.assertTrue(argv[-1].endswith("/artifacts/9339645395/zip"))
+
 
 if __name__ == "__main__":
     unittest.main()

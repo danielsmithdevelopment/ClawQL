@@ -159,6 +159,59 @@ def ensure_bucket(account: str, token: str, bucket: str) -> None:
         raise RuntimeError(f"R2 create bucket failed {exc.code}: {body[:400]}") from exc
 
 
+def artifact_zip_gh_argv(repo: str, artifact_id: int | str) -> list[str]:
+    """Download via stdout. `gh api --output` is not a valid flag (harvest 32180122956)."""
+    return [
+        "gh",
+        "api",
+        "-H",
+        "Accept: application/vnd.github+json",
+        "-H",
+        "X-GitHub-Api-Version: 2022-11-28",
+        f"repos/{repo}/actions/artifacts/{artifact_id}/zip",
+    ]
+
+
+def download_artifact_zip(repo: str, artifact_id: int | str, zip_path: Path, attempts: int = 3) -> str | None:
+    """Write artifact zip to zip_path. Return None on success, else last error snippet."""
+    argv = artifact_zip_gh_argv(repo, artifact_id)
+    last_err = "download failed"
+    for attempt in range(1, attempts + 1):
+        zip_path.unlink(missing_ok=True)
+        with zip_path.open("wb") as fh:
+            proc = subprocess.run(
+                argv,
+                check=False,
+                stdout=fh,
+                stderr=subprocess.PIPE,
+            )
+        err = (proc.stderr or b"").decode("utf-8", errors="replace")[-400:]
+        size = zip_path.stat().st_size if zip_path.exists() else 0
+        if proc.returncode == 0 and size >= 22 and zipfile.is_zipfile(zip_path):
+            return None
+        last_err = f"gh-exit={proc.returncode} size={size} attempt={attempt} {err}"
+        zip_path.unlink(missing_ok=True)
+        if "410" in err or "expired" in err.lower():
+            return last_err
+        time.sleep(attempt)
+    return last_err
+
+
+def download_artifact_via_run(repo: str, run_id: str, name: str, dest: Path) -> str | None:
+    """Fallback: `gh run download` extracts the named artifact (no --output zip)."""
+    dest.mkdir(parents=True, exist_ok=True)
+    proc = subprocess.run(
+        ["gh", "run", "download", str(run_id), "-n", name, "-D", str(dest), "-R", repo],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if proc.returncode == 0 and collect_trace_files(dest):
+        return None
+    err = (proc.stderr or b"").decode("utf-8", errors="replace")[-400:]
+    return f"gh-run-download-exit={proc.returncode} {err}"
+
+
 def collect_trace_files(root: Path) -> list[Path]:
     found: list[Path] = []
     for path in root.rglob("*"):
@@ -251,32 +304,24 @@ def main() -> int:
             if not artifact_id:
                 continue
             zip_path = dest.with_suffix(".zip")
-            # `gh api` follows the Azure redirect without forwarding GITHUB_TOKEN.
-            proc = subprocess.run(
-                [
-                    "gh",
-                    "api",
-                    f"repos/{args.repo}/actions/artifacts/{artifact_id}/zip",
-                    "--output",
-                    str(zip_path),
-                ],
-                check=False,
-                capture_output=True,
-                text=True,
-            )
-            if proc.returncode != 0 or not zip_path.exists() or zip_path.stat().st_size < 22:
-                print(
-                    f"warn: download {name} run={run_id} gh-exit={proc.returncode} {proc.stderr[-200:]}",
-                    flush=True,
-                )
-                continue
-            try:
-                with zipfile.ZipFile(zip_path) as zf:
-                    zf.extractall(dest)
-            except zipfile.BadZipFile:
-                print(f"warn: bad zip {name} run={run_id}", flush=True)
-                continue
+            dl_err = download_artifact_zip(args.repo, artifact_id, zip_path)
+            extracted = False
+            if dl_err is None:
+                try:
+                    with zipfile.ZipFile(zip_path) as zf:
+                        zf.extractall(dest)
+                    extracted = True
+                except zipfile.BadZipFile:
+                    dl_err = "bad zip after gh api download"
             zip_path.unlink(missing_ok=True)
+            if not extracted:
+                fb_err = download_artifact_via_run(args.repo, run_id, name, dest)
+                if fb_err is not None:
+                    print(
+                        f"warn: download {name} id={artifact_id} run={run_id} {dl_err}; fallback {fb_err}",
+                        flush=True,
+                    )
+                    continue
 
             parsed = parse_cell_artifact_name(name)
             files = collect_trace_files(dest)
@@ -343,6 +388,9 @@ def main() -> int:
         uploaded += 1
     print(json.dumps({k: index[k] for k in index if k != "items"}, indent=2))
     print(f"Index → r2://{bucket}/{index_key}", flush=True)
+    if transcripts == 0:
+        print("error: harvested 0 transcripts — refusing success", file=sys.stderr)
+        return 1
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text(
             f"## Harvey LAB → R2 harvest\n\n"
