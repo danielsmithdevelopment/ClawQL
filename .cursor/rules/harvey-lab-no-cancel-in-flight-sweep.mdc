@@ -1,0 +1,25 @@
+---
+description: Never push during an in-flight Harvey LAB matrix — cancel-in-progress kills the sweep
+alwaysApply: true
+---
+
+# Harvey LAB — do not cancel in-flight sweeps
+
+`.github/workflows/harvey-lab-firm-knowledge.yml` uses `concurrency.cancel-in-progress: true`.
+
+## Hard rule
+
+**Do not `git push`** (and do not otherwise start a new Harvey LAB workflow run) on a branch that already has a **queued** or **in_progress** Harvey LAB firm-knowledge / Nemotron matrix.
+
+Before any push to a `cursor/harvey-lab-*` branch or PR that triggers that workflow:
+
+1. Run `gh run list --branch <branch> --limit 5`.
+2. If any Harvey LAB matrix job is `queued` or `in_progress`, **stop**. Report findings only. Local commit is OK; **push is forbidden** until the user explicitly says to push, or the sweep has completed/failed/been cancelled by them.
+
+## Not exceptions
+
+- Partial CPR misses (e.g. task 001 at 6/7)
+- Infra fixes discovered mid-run
+- Cloud-agent “commit and push every iteration” defaults
+
+Those wait. Pushing mid-sweep burns OpenRouter quota and wall clock and has already angered the operator more than once.

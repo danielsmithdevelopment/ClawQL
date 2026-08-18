@@ -1,12 +1,13 @@
-# Nemotron ± ClawQL firm-knowledge resume after run 31989734158
+# Nemotron ± ClawQL firm-knowledge — targeted 2-cell re-run
 # Arms/judge: nemotron ± clawql | claude-sonnet-4-6 via OpenRouter
-# Stopped 2026-08-17 ~05:50Z on OpenRouter free-tier 429 (reset 2026-08-18 00:00 UTC)
 #
-# Already collected on SHA 73a3a0e1 — do NOT re-spend:
-#   nemotron-clawql 001–005 (001/002/004 all-pass; 003 2/3; 005 5/6)
-#   nemotron 001–009 (jobs completed; 0 all-pass)
-#   nemotron-clawql 006 died mid-agent on 429 → must re-run
+# Campaign: PR #919  original 31989734158 (429 cancel) + resume 32083312814 (48/50 graded)
+# Missing grades (OpenRouter 504 idle timeout, not rubric):
+#   nemotron-clawql 009
+#   nemotron 022
 #
-# Spec: ARM START-END (inclusive). cancel-in-progress — one push only.
-nemotron-clawql 6-25
-nemotron 10-25
+# Do NOT re-spend already-graded cells.
+# Spec: ARM START-END (inclusive). Workflow uses sparse include (not cartesian).
+# cancel-in-progress — one push only; never push while this matrix is live.
+nemotron-clawql 9-9
+nemotron 22-22

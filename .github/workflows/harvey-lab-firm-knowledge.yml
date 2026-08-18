@@ -170,6 +170,7 @@ jobs:
             # Marker spec (non-comment lines):
             #   N | START-END              → both default arms over that range
             #   ARM START-END              → that arm only (repeatable; resume)
+            #   ARM N-N                    → a single cell (sparse include; not cartesian)
             # Empty / comment-only marker → smoke (do NOT default to 1–25).
             SWEEP_JSON="$(
               python3 integrations/harvey-labs/scripts/parse_nemotron_sweep_marker.py \
