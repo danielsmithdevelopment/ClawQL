@@ -1,12 +1,98 @@
 # Harvey LAB × ClawQL Results — firm-knowledge
 
+**Canonical GHA 001–025 (2026-08-17/18):** Nemotron 3.5 Lightning ± ClawQL,
+judge Sonnet 4.6 via OpenRouter. Machine JSON:
+[`../../integrations/harvey-labs/results/aggregate-gha-001-025-nemotron-vs-clawql.json`](../../integrations/harvey-labs/results/aggregate-gha-001-025-nemotron-vs-clawql.json).
+PR [#919](https://github.com/danielsmithdevelopment/ClawQL/pull/919).
+
+ClawQL beats Nemotron-only by a wide margin: **11/25 vs 0/25 all-pass**, and
+**116/180 (64.4%) vs 17/180 (9.4%)** criterion pass rate. Same agent
+(`nvidia/nemotron-3.5-lightning`), same judge.
+
+## Headline (canonical 001–025)
+
+| Metric                | nemotron-clawql     | nemotron (baseline) | Lift           |
+| --------------------- | ------------------- | ------------------- | -------------- |
+| Cells graded          | 25/25               | 25/25               | 50/50 complete |
+| All-pass tasks        | **11/25 (44%)**     | **0/25 (0%)**       | +11 tasks      |
+| Aggregate CPR         | **116/180 (64.4%)** | **17/180 (9.4%)**   | +55.0 pp       |
+| Mean per-task CPR     | 67.6%               | 15.1%               | +52.5 pp       |
+| Tasks with higher CPR | 21                  | 2                   | 2 ties         |
+
+ClawQL all-pass: **001, 002, 004, 006, 007, 008, 009, 010, 012, 022, 023**.
+Baseline never all-passed a task. It only beat ClawQL CPR on **015** (1/3 vs
+0/3) and **020** (2/3 vs 0/3). Ties: **018** (0/1) and **025** (1/5).
+
+The two previously missing cells: clawql **009** 19/19 (run
+[32168856394](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/32168856394),
+28 turns, agent finished); baseline **022** 1/13 fail, 40-turn ceiling (same
+run).
+
+### Full 001–025 table
+
+| Task | ClawQL  | Baseline | Δ CPR     |
+| ---- | ------- | -------- | --------- |
+| 001  | 7/7 ✓   | 1/7      | +85.7 pp  |
+| 002  | 4/4 ✓   | 1/4      | +75.0 pp  |
+| 003  | 2/3     | 1/3      | +33.3 pp  |
+| 004  | 2/2 ✓   | 0/2      | +100.0 pp |
+| 005  | 5/6     | 1/6      | +66.7 pp  |
+| 006  | 3/3 ✓   | 0/3      | +100.0 pp |
+| 007  | 3/3 ✓   | 0/3      | +100.0 pp |
+| 008  | 4/4 ✓   | 0/4      | +100.0 pp |
+| 009  | 19/19 ✓ | 0/19     | +100.0 pp |
+| 010  | 2/2 ✓   | 1/2      | +50.0 pp  |
+| 011  | 3/19    | 1/19     | +10.5 pp  |
+| 012  | 1/1 ✓   | 0/1      | +100.0 pp |
+| 013  | 3/4     | 1/4      | +50.0 pp  |
+| 014  | 2/3     | 1/3      | +33.3 pp  |
+| 015  | 0/3     | 1/3      | −33.3 pp  |
+| 016  | 11/14   | 0/14     | +78.6 pp  |
+| 017  | 2/12    | 1/12     | +8.3 pp   |
+| 018  | 0/1     | 0/1      | 0         |
+| 019  | 10/12   | 1/12     | +75.0 pp  |
+| 020  | 0/3     | 2/3      | −66.7 pp  |
+| 021  | 12/24   | 1/24     | +45.8 pp  |
+| 022  | 13/13 ✓ | 1/13     | +92.3 pp  |
+| 023  | 4/4 ✓   | 1/4      | +75.0 pp  |
+| 024  | 3/9     | 0/9      | +33.3 pp  |
+| 025  | 1/5     | 1/5      | 0         |
+
+✓ = all criteria passed.
+
+### Provenance (three GHA runs, merged)
+
+| Run                                                                                      | SHA        | What it contributes                                                |
+| ---------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------ |
+| [31989734158](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31989734158) | `73a3a0e1` | ClawQL 001–005; baseline 001–009 (stopped on OpenRouter 429)       |
+| [32083312814](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/32083312814) | `9a0a318f` | ClawQL 006–008, 010–025; baseline 010–021, 023–025 (two 504 holes) |
+| [32168856394](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/32168856394) | `fef3f768` | ClawQL 009, baseline 022 — both jobs success                       |
+
+Scores use GHA-dated run IDs only (`20260817-*` / `20260818-*`). Leftover
+local 4bit scorecards in sweep-summary JSON were ignored.
+
+### How to read the gap
+
+ClawQL’s advantage is consistent on recall-heavy firm-knowledge work: 21 of 25
+tasks have higher criterion pass rate, including large-rubric wins (009 19/19
+vs 0/19, 022 13/13 vs 1/13, 016 11/14 vs 0/14). Baseline mostly dies at the
+40-turn ceiling without retrieving the right evidence.
+
+The two baseline-better tasks (**015**, **020**) and the two ties (**018**,
+**025**) are real misses, not infra. They belong in any honest write-up.
+
+Local contiguous MLX 4bit + Ollama judge was **8/25** all-pass and is **not**
+this ledger. Do not mix the two.
+
+---
+
+## Prior slices (superseded for 001–025 headline)
+
 Date: 2026-08-14  
 Models: Nemotron 3.5 Lightning ± ClawQL  
 Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479) (**20% ClawQL all-pass**)  
 Batch 3: tasks **016–025** Sonnet 4.6 — [31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774) (**0% ClawQL all-pass**; mean CPR ~9%)  
-**Next:** Matter generalization (011–015 fields + multi-doc) landed; marker
-back to smoke **18-18** (do not re-arm 001–025 until OpenRouter free-tier
-resets). Prior partial 1–25:
+Prior partial 1–25:
 [31865144197](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31865144197)
 (OR 429).
 
@@ -158,9 +244,9 @@ CREDIT_FACILITY cohort + verify `N=` log before the agent loop.
 1. ~~**016–025** first — new signal~~ **done** ([31757993774](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31757993774))
 2. Land task-018 fixes (ceiling force-write, negative-result principle, require-recall, frequency kind)
 3. ~~Optional **018 smoke**~~ probe arc through Fix 7 ([31853395295](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31853395295))
-4. Ship Fix 8 (matterIds-first recall + CREDIT_FACILITY ontology upsert/verify); re-arm **`18-18`**; then **clean canonical 001–025** if all-pass
-5. Then Opus; Harvey outreach with public run IDs
-6. Shared vault prepare job (uses `CLAWQL_LAB_PRESERVE_VAULT`) — after 018 green
+4. ~~Ship Fix 8; re-arm **`18-18`**; **canonical 001–025**~~ **done** — see headline (11/25 vs 0/25)
+5. Next: diagnose ClawQL misses **015 / 018 / 020 / 025** from GHA artifacts (no gold-ID spoilers); then Opus A/B
+6. Shared vault prepare job (uses `CLAWQL_LAB_PRESERVE_VAULT`) — optional after miss iteration
 
 ## Notes
 

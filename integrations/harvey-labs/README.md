@@ -29,7 +29,13 @@ gh workflow run harvey-lab-firm-knowledge.yml \
 
 Workflow defaults: **`nemotron,nemotron-clawql`** + **`openai/gpt-5.4-mini`** judge.  
 Pause / resume: [`docs/benchmarks/harvey-lab-pause-handoff.md`](../../docs/benchmarks/harvey-lab-pause-handoff.md)  
-Plan reconciliation: [`docs/benchmarks/harvey-lab-action-plan.md`](../../docs/benchmarks/harvey-lab-action-plan.md)## What this provides
+Plan reconciliation: [`docs/benchmarks/harvey-lab-action-plan.md`](../../docs/benchmarks/harvey-lab-action-plan.md)
+
+## Durable traces (Cloudflare R2)
+
+Every live GHA cell uploads `transcript.jsonl` (plus scores/metrics/config) to **`clawql-openbench-traces`** under `raw/harvey-lab/YYYY/MM/DD/run-<gha_run_id>/<arm>/<task_id>/`. GitHub artifacts stay a 30-day warm cache. Same Cloudflare secrets as OpenBench (`CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`). Local `run-lab-local.sh` uploads when those env vars are present (and also ships `calls.jsonl` from clawql-inference when it exists). Missing R2 secrets **fail the GHA cell**; locally they warn and continue unless `CLAWQL_HARVEY_LAB_REQUIRE_DURABLE_TRACES=1`.
+
+## What this provides
 
 | Path | Purpose |
 | ---- | ------- |
@@ -41,6 +47,8 @@ Plan reconciliation: [`docs/benchmarks/harvey-lab-action-plan.md`](../../docs/be
 | `harness/clawql_tools.py` | Routes `clawql_*` → MCP |
 | `scripts/apply_clawql_adapter.py` | Copies + patches into a harvey-labs checkout |
 | `scripts/run-lab-gha.sh` | GHA entrypoint (clone, arms, scorecard) |
+| `scripts/run-lab-local.sh` | Local Mac entrypoint (uploads traces to R2 when CF creds are set) |
+| `../../scripts/dev/upload-harvey-lab-cell-to-r2.py` | Per-cell Cloudflare R2 upload (same layout as harvest) |
 | `tests/test_vault_isolation.py` | Task-scoped vault isolation unit tests |
 | `../../scripts/start-clawql-for-lab.sh` | Task-scoped vault + MCP HTTP startup |
 

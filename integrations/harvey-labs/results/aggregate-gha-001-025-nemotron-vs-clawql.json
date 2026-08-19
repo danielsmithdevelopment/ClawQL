@@ -1,0 +1,75 @@
+{
+  "run_id": "harvey-lab-gha-001-025-merged",
+  "pipeline": "GHA Nemotron ± ClawQL firm-knowledge 001–025 (merged three runs)",
+  "pr": "https://github.com/danielsmithdevelopment/ClawQL/pull/919",
+  "agent_model": "nvidia/nemotron-3.5-lightning",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_via": "openrouter",
+  "score_policy": "GHA-dated run IDs only (20260817-* / 20260818-*); ignore leftover local 4bit scorecards in sweep-summary JSON",
+  "provenance": [
+    {
+      "run": 31989734158,
+      "sha": "73a3a0e1",
+      "url": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31989734158",
+      "contributes": "ClawQL 001–005; baseline 001–009 (stopped on OpenRouter 429)"
+    },
+    {
+      "run": 32083312814,
+      "sha": "9a0a318f",
+      "url": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/32083312814",
+      "contributes": "ClawQL 006–008, 010–025; baseline 010–021, 023–025 (two 504 holes)"
+    },
+    {
+      "run": 32168856394,
+      "sha": "fef3f768",
+      "url": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/32168856394",
+      "contributes": "ClawQL 009, baseline 022 — both jobs success"
+    }
+  ],
+  "summary": {
+    "cells_graded": "50/50",
+    "clawql_all_pass": 11,
+    "baseline_all_pass": 0,
+    "clawql_all_pass_rate": 0.44,
+    "baseline_all_pass_rate": 0.0,
+    "clawql_cpr": [116, 180],
+    "baseline_cpr": [17, 180],
+    "clawql_cpr_rate": 0.6444444444444444,
+    "baseline_cpr_rate": 0.09444444444444444,
+    "mean_per_task_cpr_clawql": 0.676,
+    "mean_per_task_cpr_baseline": 0.151,
+    "tasks_clawql_higher_cpr": 21,
+    "tasks_baseline_higher_cpr": 2,
+    "ties": 2,
+    "clawql_all_pass_tasks": ["001", "002", "004", "006", "007", "008", "009", "010", "012", "022", "023"],
+    "baseline_better": ["015", "020"],
+    "ties_tasks": ["018", "025"]
+  },
+  "tasks": {
+    "001": { "clawql": [7, 7], "baseline": [1, 7], "clawql_all_pass": true },
+    "002": { "clawql": [4, 4], "baseline": [1, 4], "clawql_all_pass": true },
+    "003": { "clawql": [2, 3], "baseline": [1, 3], "clawql_all_pass": false },
+    "004": { "clawql": [2, 2], "baseline": [0, 2], "clawql_all_pass": true },
+    "005": { "clawql": [5, 6], "baseline": [1, 6], "clawql_all_pass": false },
+    "006": { "clawql": [3, 3], "baseline": [0, 3], "clawql_all_pass": true },
+    "007": { "clawql": [3, 3], "baseline": [0, 3], "clawql_all_pass": true },
+    "008": { "clawql": [4, 4], "baseline": [0, 4], "clawql_all_pass": true },
+    "009": { "clawql": [19, 19], "baseline": [0, 19], "clawql_all_pass": true },
+    "010": { "clawql": [2, 2], "baseline": [1, 2], "clawql_all_pass": true },
+    "011": { "clawql": [3, 19], "baseline": [1, 19], "clawql_all_pass": false },
+    "012": { "clawql": [1, 1], "baseline": [0, 1], "clawql_all_pass": true },
+    "013": { "clawql": [3, 4], "baseline": [1, 4], "clawql_all_pass": false },
+    "014": { "clawql": [2, 3], "baseline": [1, 3], "clawql_all_pass": false },
+    "015": { "clawql": [0, 3], "baseline": [1, 3], "clawql_all_pass": false },
+    "016": { "clawql": [11, 14], "baseline": [0, 14], "clawql_all_pass": false },
+    "017": { "clawql": [2, 12], "baseline": [1, 12], "clawql_all_pass": false },
+    "018": { "clawql": [0, 1], "baseline": [0, 1], "clawql_all_pass": false },
+    "019": { "clawql": [10, 12], "baseline": [1, 12], "clawql_all_pass": false },
+    "020": { "clawql": [0, 3], "baseline": [2, 3], "clawql_all_pass": false },
+    "021": { "clawql": [12, 24], "baseline": [1, 24], "clawql_all_pass": false },
+    "022": { "clawql": [13, 13], "baseline": [1, 13], "clawql_all_pass": true },
+    "023": { "clawql": [4, 4], "baseline": [1, 4], "clawql_all_pass": true },
+    "024": { "clawql": [3, 9], "baseline": [0, 9], "clawql_all_pass": false },
+    "025": { "clawql": [1, 5], "baseline": [1, 5], "clawql_all_pass": false }
+  }
+}
