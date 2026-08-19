@@ -16,11 +16,11 @@ matters whose documents are **not** represented in the typed column set.
 
 Observed failure (ClawQL arm):
 
-| Task | Ask | Wrong answer | Root cause |
-| ---- | --- | ------------ | ---------- |
-| 028 | DIP financing matters (5 qualifying) | 1013-00001 Genome Dx (single) | Agent queried `matters`; only credit-facility rows are well-populated → wrong population |
-| 035 | Capital Markets + 180-day lock-up (2 matters + proof docs) | 1008-00002 Lumos, 1032-00003 Halcyon | Same — credit-facility matters asserted as CM offerings |
-| 040 | Most recent withdrawn offering | 1008-00002 Lumos | Same — well-indexed credit matter reused as false positive |
+| Task | Ask                                                        | Wrong answer                         | Root cause                                                                               |
+| ---- | ---------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------- |
+| 028  | DIP financing matters (5 qualifying)                       | 1013-00001 Genome Dx (single)        | Agent queried `matters`; only credit-facility rows are well-populated → wrong population |
+| 035  | Capital Markets + 180-day lock-up (2 matters + proof docs) | 1008-00002 Lumos, 1032-00003 Halcyon | Same — credit-facility matters asserted as CM offerings                                  |
+| 040  | Most recent withdrawn offering                             | 1008-00002 Lumos                     | Same — well-indexed credit matter reused as false positive                               |
 
 Baseline arm failed differently: no deliverable (`response.md` not found). Empty
 output passes precision (nothing asserted) but fails substance.
@@ -45,11 +45,11 @@ Generalize without rubric cheating:
 
 This maps to the three-layer meta-ontology model:
 
-| Layer | What | Harvey LAB today | After this spec |
-| ----- | ---- | ---------------- | --------------- |
-| L1 | Pre-built domain schemas | `matters` typed cols + views | Unchanged for B&F + HSR |
-| L2 | Runtime document inventory | Vault markdown list only (not SQL) | `matter_documents` + `key_terms` JSON |
-| L3 | Promotion from traces | Not implemented | Future: promote repeated `key_terms` patterns |
+| Layer | What                       | Harvey LAB today                   | After this spec                               |
+| ----- | -------------------------- | ---------------------------------- | --------------------------------------------- |
+| L1    | Pre-built domain schemas   | `matters` typed cols + views       | Unchanged for B&F + HSR                       |
+| L2    | Runtime document inventory | Vault markdown list only (not SQL) | `matter_documents` + `key_terms` JSON         |
+| L3    | Promotion from traces      | Not implemented                    | Future: promote repeated `key_terms` patterns |
 
 ## Architecture
 
@@ -74,13 +74,13 @@ Agent:
 Add practice-area-agnostic columns. Populate from existing detectors + folder
 metadata — **not** from rubric inspection.
 
-| Column | Type | Source | Notes |
-| ------ | ---- | ------ | ----- |
-| `matter_status` | VARCHAR | Path/filename heuristics + optional doc signals | `active`, `closed`, `withdrawn`, `pending`, NULL=unknown |
-| `matter_date` | DATE | Best available canonical date | `deal_date` fallback; offering/filing dates from docs |
-| `matter_amount_usd` | DOUBLE | Existing `deal_value_usd` / `facility_amount_usd` merge | Single “deal value” column for SQL ergonomics |
-| `document_count` | INTEGER | `COUNT(*)` from inventory at ingest | Sanity check for agent |
-| `indexed_doc_count` | INTEGER | Docs with non-empty `key_terms` or parsed text | Coverage signal |
+| Column              | Type    | Source                                                  | Notes                                                    |
+| ------------------- | ------- | ------------------------------------------------------- | -------------------------------------------------------- |
+| `matter_status`     | VARCHAR | Path/filename heuristics + optional doc signals         | `active`, `closed`, `withdrawn`, `pending`, NULL=unknown |
+| `matter_date`       | DATE    | Best available canonical date                           | `deal_date` fallback; offering/filing dates from docs    |
+| `matter_amount_usd` | DOUBLE  | Existing `deal_value_usd` / `facility_amount_usd` merge | Single “deal value” column for SQL ergonomics            |
+| `document_count`    | INTEGER | `COUNT(*)` from inventory at ingest                     | Sanity check for agent                                   |
+| `indexed_doc_count` | INTEGER | Docs with non-empty `key_terms` or parsed text          | Coverage signal                                          |
 
 **Rename mapping (non-breaking):** keep existing columns; add views that alias
 `matter_amount_usd := COALESCE(facility_amount_usd, deal_value_usd)`.
@@ -115,16 +115,16 @@ CREATE INDEX idx_matter_documents_doc_type ON matter_documents(doc_type);
 
 Mechanical rules — same category as path detectors, not rubric fields:
 
-| Signal (filename / path) | `doc_type` |
-| ------------------------ | ---------- |
-| `lock-up`, `lockup`, `lock_up` | `lock-up-agreement` |
-| `withdraw`, `withdrawal`, `notice-of-withdrawal` | `withdrawal-notice` |
-| `offering-memorandum`, `prospectus`, `424b`, `s-1`, `f-1` | `offering-document` |
-| `dip`, `debtor-in-possession`, `debtor_in_possession` | `dip-financing` |
-| `credit-agreement`, `loan-agreement`, `bridge`, `term-loan` | `credit-agreement` |
-| `hsr`, `second-request`, `second_request` | `hsr-filing` |
-| `form-of-`, `form_of_` | `form-document` |
-| default | `other` |
+| Signal (filename / path)                                    | `doc_type`          |
+| ----------------------------------------------------------- | ------------------- |
+| `lock-up`, `lockup`, `lock_up`                              | `lock-up-agreement` |
+| `withdraw`, `withdrawal`, `notice-of-withdrawal`            | `withdrawal-notice` |
+| `offering-memorandum`, `prospectus`, `424b`, `s-1`, `f-1`   | `offering-document` |
+| `dip`, `debtor-in-possession`, `debtor_in_possession`       | `dip-financing`     |
+| `credit-agreement`, `loan-agreement`, `bridge`, `term-loan` | `credit-agreement`  |
+| `hsr`, `second-request`, `second_request`                   | `hsr-filing`        |
+| `form-of-`, `form_of_`                                      | `form-document`     |
+| default                                                     | `other`             |
 
 `doc_type` is a **hint** for ranking and SQL filters, not a graded boolean.
 
@@ -155,12 +155,12 @@ Rules:
 
 ### Ingest scope and caps
 
-| Setting | Default | Purpose |
-| ------- | ------- | ------- |
-| `CLAWQL_LAB_DOC_INVENTORY_ALL_FILES` | `1` | Walk entire matter tree |
-| `CLAWQL_LAB_DOC_INVENTORY_PARSE_LIMIT` | `20` | Max docs/matter for Tika + key_terms |
-| `CLAWQL_LAB_DOC_INVENTORY_TEXT_CAP` | `500` | `text_snippet` char cap |
-| `CLAWQL_LAB_DOC_INVENTORY_SKIP_EXT` | `.png,.jpg,.pdf,.xlsx,.zip` | Skip binaries in v1 |
+| Setting                                | Default                     | Purpose                              |
+| -------------------------------------- | --------------------------- | ------------------------------------ |
+| `CLAWQL_LAB_DOC_INVENTORY_ALL_FILES`   | `1`                         | Walk entire matter tree              |
+| `CLAWQL_LAB_DOC_INVENTORY_PARSE_LIMIT` | `20`                        | Max docs/matter for Tika + key_terms |
+| `CLAWQL_LAB_DOC_INVENTORY_TEXT_CAP`    | `500`                       | `text_snippet` char cap              |
+| `CLAWQL_LAB_DOC_INVENTORY_SKIP_EXT`    | `.png,.jpg,.pdf,.xlsx,.zip` | Skip binaries in v1                  |
 
 **Every file gets a row** (filename inventory). **Parsing** is capped and ranked
 by `doc_score()` + `doc_type` priority (same ranking as `catalog_matter_docs`,
@@ -170,13 +170,13 @@ extended to non-docx where cheap).
 
 Extend existing L0/L2 semantics:
 
-| Situation | Agent behavior |
-| --------- | -------------- |
-| Cohort filter returns 0 rows | Write **0 of N** or “none found” — do **not** pick best credit-facility matter |
-| `matter_documents` join returns 0 rows | Same — absence is evidence after covering practice_area filter |
-| `key_terms` missing a key | NULL = unknown; do not infer from unrelated matters |
-| Filename match without content parse | Cite filename as weak evidence; prefer parsed `key_terms` |
-| Layer 1 bool NULL | Unchanged: NULL ≠ false (principle 10) |
+| Situation                              | Agent behavior                                                                 |
+| -------------------------------------- | ------------------------------------------------------------------------------ |
+| Cohort filter returns 0 rows           | Write **0 of N** or “none found” — do **not** pick best credit-facility matter |
+| `matter_documents` join returns 0 rows | Same — absence is evidence after covering practice_area filter                 |
+| `key_terms` missing a key              | NULL = unknown; do not infer from unrelated matters                            |
+| Filename match without content parse   | Cite filename as weak evidence; prefer parsed `key_terms`                      |
+| Layer 1 bool NULL                      | Unchanged: NULL ≠ false (principle 10)                                         |
 
 New preflight warning (not error unless strict):
 
@@ -298,14 +298,14 @@ WHERE d.doc_type = 'dip-financing';
 
 Files to change:
 
-| File | Change |
-| ---- | ------ |
+| File                          | Change                                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------------- |
 | `clawql_lab_matter_schema.py` | Add `infer_doc_type()`, `catalog_all_matter_files()`, `extract_key_terms_from_text()` |
-| `clawql_lab_duckdb.py` | Create/populate `matter_documents`; add core columns; helper views |
-| `clawql_lab_session.py` | Build document rows during `_ingest_firm_knowledge_dms`; pass to DuckDB |
-| `clawql_lab_evidence.py` | Optional: extend `open_facts` with `doc_inventory.*` keys |
-| `clawql_system_prompt.md` | Pattern G + “zero cohort → negative answer” rule |
-| `clawql_agent_loop.py` | Nudge when prompt mentions lock-up / withdrawn / DIP / offering |
+| `clawql_lab_duckdb.py`        | Create/populate `matter_documents`; add core columns; helper views                    |
+| `clawql_lab_session.py`       | Build document rows during `_ingest_firm_knowledge_dms`; pass to DuckDB               |
+| `clawql_lab_evidence.py`      | Optional: extend `open_facts` with `doc_inventory.*` keys                             |
+| `clawql_system_prompt.md`     | Pattern G + “zero cohort → negative answer” rule                                      |
+| `clawql_agent_loop.py`        | Nudge when prompt mentions lock-up / withdrawn / DIP / offering                       |
 
 New tests:
 
@@ -318,22 +318,22 @@ New tests:
 Extend path detectors in `clawql_lab_session.py` (same fairness class as
 `detect_credit_facility`):
 
-| Detector | Signals | Sets |
-| -------- | ------- | ---- |
-| `detect_capital_markets` | `Offering/`, `Capital Markets/`, prospectus/offering memo paths | `practice_area`, `matter_type` |
-| `detect_restructuring` | `Restructuring/`, `DIP/`, `Bankruptcy/` | `practice_area`, `matter_type` |
-| `detect_withdrawn_status` | withdrawal notice filename in inventory | `matter_status = 'withdrawn'` |
+| Detector                  | Signals                                                         | Sets                           |
+| ------------------------- | --------------------------------------------------------------- | ------------------------------ |
+| `detect_capital_markets`  | `Offering/`, `Capital Markets/`, prospectus/offering memo paths | `practice_area`, `matter_type` |
+| `detect_restructuring`    | `Restructuring/`, `DIP/`, `Bankruptcy/`                         | `practice_area`, `matter_type` |
+| `detect_withdrawn_status` | withdrawal notice filename in inventory                         | `matter_status = 'withdrawn'`  |
 
 Mechanical only — no gold matter IDs.
 
 ### Phase 3 — key_terms extractors
 
-| Doc type | Extractor | Example keys |
-| -------- | --------- | ------------- |
-| lock-up-agreement | regex + LangExtract optional | `lock_up_period_days`, `parties` |
-| withdrawal-notice | date regex | `withdrawal_date`, `offering_status` |
-| dip-financing | amount regex | `dip_amount_usd`, `dip_lender` |
-| offering-document | status regex | `offering_type`, `offering_status` |
+| Doc type          | Extractor                    | Example keys                         |
+| ----------------- | ---------------------------- | ------------------------------------ |
+| lock-up-agreement | regex + LangExtract optional | `lock_up_period_days`, `parties`     |
+| withdrawal-notice | date regex                   | `withdrawal_date`, `offering_status` |
+| dip-financing     | amount regex                 | `dip_amount_usd`, `dip_lender`       |
+| offering-document | status regex                 | `offering_type`, `offering_status`   |
 
 Reuse Tika path from existing IDP loop; share parse budget with
 `catalog_matter_docs` ranking.
@@ -367,11 +367,11 @@ After local validation on 028, 035, 040:
 
 ## Success criteria (028 / 035 / 040)
 
-| Task | Pass condition |
-| ---- | -------------- |
-| 028 | Agent lists all five DIP matters from `matter_documents` join — or 0/N with empty dip cohort, not Genome Dx |
-| 035 | Agent finds Arbor 1010-00002 + Solstice 1037-00001 via CM + lock-up doc join; cites `form-of-lock-up-agreement.docx` |
-| 040 | Agent returns Greenfield 1020-00003 via withdrawal doc / status + date ordering — not Lumos |
+| Task | Pass condition                                                                                                       |
+| ---- | -------------------------------------------------------------------------------------------------------------------- |
+| 028  | Agent lists all five DIP matters from `matter_documents` join — or 0/N with empty dip cohort, not Genome Dx          |
+| 035  | Agent finds Arbor 1010-00002 + Solstice 1037-00001 via CM + lock-up doc join; cites `form-of-lock-up-agreement.docx` |
+| 040  | Agent returns Greenfield 1020-00003 via withdrawal doc / status + date ordering — not Lumos                          |
 
 Precision failures should drop: wrong-practice-area assertions become preventable
 when cohort SQL returns empty.
