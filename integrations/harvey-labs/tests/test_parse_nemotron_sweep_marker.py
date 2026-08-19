@@ -57,6 +57,23 @@ class ParseNemotronSweepMarkerTest(unittest.TestCase):
             },
         )
 
+    def test_bare_26_50_is_fifty_cells(self) -> None:
+        payload = _parse("26-50\n")
+        self.assertFalse(payload["empty"])
+        self.assertEqual(payload["cell_count"], 50)
+        self.assertEqual(payload["task_start"], 26)
+        self.assertEqual(payload["task_end"], 50)
+        self.assertEqual(payload["arms"], ["nemotron", "nemotron-clawql"])
+        self.assertEqual(
+            {(c["arm"], c["task_id"]) for c in payload["include"] if c["task_id"] in {"026", "050"}},
+            {
+                ("nemotron", "026"),
+                ("nemotron-clawql", "026"),
+                ("nemotron", "050"),
+                ("nemotron-clawql", "050"),
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,6 @@
-# DISARMED — do not run a live Nemotron matrix.
-# 2026-08-18: harvest every GHA transcript to Cloudflare R2 first.
-# Previously armed (do NOT uncomment until harvest is confirmed):
-#   nemotron-clawql 9-9
-#   nemotron 22-22
+# Generalization test: firm-knowledge 026–050
+# Same protocol as 001–025: Nemotron baseline vs Nemotron+ClawQL.
+# Agent: nvidia/nemotron-3.5-lightning (OpenRouter)
+# Judge: claude-sonnet-4-6 (hardcoded for this marker in the GHA workflow)
+# 25 tasks × 2 arms = 50 cells
+26-50

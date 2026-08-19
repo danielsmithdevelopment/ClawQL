@@ -1,6 +1,0 @@
-# Presence of this file makes Harvey LAB GHA skip live cells (can_run=false).
-#
-# Added 2026-08-18 so we can push harvest/disarm work without re-burning
-# OpenRouter quota (cancel-in-progress + 009/022 marker).
-#
-# Delete this file only when a new live matrix is intentionally armed.
