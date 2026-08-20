@@ -140,7 +140,7 @@ jobs:
           TASK_LIMIT=1
           SWEEP_INCLUDE_JSON=""
           if [ -f integrations/harvey-labs/.skip-lab-matrix ]; then
-            echo "::notice::.skip-lab-matrix present — dummy outputs only; gate sets can_run=false"
+            echo "::notice::.skip-lab-matrix present — dummy outputs only; gate sets can_run=false (force cancel)"
             ARMS_CSV="nemotron"
             TASK="firm-knowledge/tasks/001"
             TASK_LIMIT=1
