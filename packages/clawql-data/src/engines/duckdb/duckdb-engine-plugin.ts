@@ -1,10 +1,13 @@
-import { realpath } from "node:fs/promises";
+import { readdir, realpath } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { Effect } from "effect";
+import { dataFromPromise, dataFromSync } from "../../effect/data-effect-utils.js";
+import type { DataError } from "../../effect/data-errors.js";
 import {
-  catalogMatterFiles,
+  catalogMatterFilesEffect,
   detectCapitalMarkets,
   detectRestructuring,
-  enrichInventoryRows,
+  enrichInventoryRowsEffect,
   extractKeyTermsFromText,
   inferDocType,
 } from "../../inventory.js";
@@ -19,13 +22,13 @@ import type {
   OpenFactRow,
 } from "../types.js";
 import {
-  closeDuckDb,
+  closeDuckDbEffect,
   maxCellChars,
   maxQueryRows,
-  openDuckDb,
-  queryDuckDb,
+  openDuckDbEffect,
+  queryDuckDbEffect,
   resolveDuckDbPath,
-  runSql,
+  runSqlEffect,
   type DuckDbHandle,
 } from "./duckdb-driver.js";
 
@@ -79,34 +82,39 @@ function isPathInside(root: string, candidate: string): boolean {
   return rel === "" || (!rel.startsWith(`..${sep}`) && rel !== ".." && !rel.startsWith(".."));
 }
 
-async function assertAllowedIngestRoot(mattersRoot: string, env: NodeJS.ProcessEnv): Promise<string> {
-  if (!mattersRoot || !isAbsolute(mattersRoot)) {
-    throw new Error("mattersRoot must be an absolute directory path");
-  }
-  const resolved = resolve(mattersRoot);
-  const real = await realpath(resolved);
-  const extra = (env.CLAWQL_DATA_INGEST_ROOTS ?? "")
-    .split(":")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const vault = env.CLAWQL_OBSIDIAN_VAULT_PATH?.trim();
-  const defaults = ["/workspace", "/tmp", join(env.HOME ?? "/home", ".ClawQL")];
-  const roots = [...defaults, ...extra, vault ? resolve(vault) : ""].filter(Boolean);
-  const allowed = await Promise.all(
-    roots.map(async (r) => {
-      try {
-        return await realpath(resolve(r));
-      } catch {
-        return resolve(r);
-      }
-    })
-  );
-  if (!allowed.some((root) => isPathInside(root, real))) {
-    throw new Error(
-      `mattersRoot ${real} is outside CLAWQL_DATA_INGEST_ROOTS (and /workspace, /tmp, vault)`
+function assertAllowedIngestRootEffect(
+  mattersRoot: string,
+  env: NodeJS.ProcessEnv
+): Effect.Effect<string, DataError> {
+  return dataFromPromise(async () => {
+    if (!mattersRoot || !isAbsolute(mattersRoot)) {
+      throw new Error("mattersRoot must be an absolute directory path");
+    }
+    const resolved = resolve(mattersRoot);
+    const real = await realpath(resolved);
+    const extra = (env.CLAWQL_DATA_INGEST_ROOTS ?? "")
+      .split(":")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const vault = env.CLAWQL_OBSIDIAN_VAULT_PATH?.trim();
+    const defaults = ["/workspace", "/tmp", join(env.HOME ?? "/home", ".ClawQL")];
+    const roots = [...defaults, ...extra, vault ? resolve(vault) : ""].filter(Boolean);
+    const allowed = await Promise.all(
+      roots.map(async (r) => {
+        try {
+          return await realpath(resolve(r));
+        } catch {
+          return resolve(r);
+        }
+      })
     );
-  }
-  return real;
+    if (!allowed.some((root) => isPathInside(root, real))) {
+      throw new Error(
+        `mattersRoot ${real} is outside CLAWQL_DATA_INGEST_ROOTS (and /workspace, /tmp, vault)`
+      );
+    }
+    return real;
+  });
 }
 
 function matterValues(row: Record<string, unknown>): unknown[] {
@@ -192,7 +200,7 @@ function documentInsert(d: Record<string, unknown>): unknown[] {
   ];
 }
 
-/** DuckDB engine plugin — registers under id `duckdb`. */
+/** DuckDB engine plugin — Effect-native domain; registers under id `duckdb`. */
 export class DuckDbEnginePlugin implements DataEnginePlugin {
   readonly id = ENGINE_ID;
   private handle: DuckDbHandle | null = null;
@@ -203,167 +211,206 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
     private readonly env: NodeJS.ProcessEnv
   ) {}
 
-  private async ensureOpen(): Promise<DuckDbHandle> {
-    if (this.handle) return this.handle;
-    this.handle = await openDuckDb(this.path);
-    return this.handle;
+  private ensureOpen(): Effect.Effect<DuckDbHandle, DataError> {
+    const self = this;
+    return Effect.gen(function* () {
+      if (self.handle) return self.handle;
+      self.handle = yield* openDuckDbEffect(self.path);
+      return self.handle;
+    });
   }
 
-  private async applySchema(replace: boolean): Promise<void> {
-    const handle = await this.ensureOpen();
-    if (replace || !this.schemaReady) {
-      for (const sql of DROP_LAB_SCHEMA_SQL) await runSql(handle, sql);
-      for (const sql of CREATE_LAB_SCHEMA_SQL) await runSql(handle, sql);
-      for (const sql of CREATE_LAB_VIEW_SQL) await runSql(handle, sql);
-      this.schemaReady = true;
-    }
+  private applySchema(replace: boolean): Effect.Effect<void, DataError> {
+    const self = this;
+    return Effect.gen(function* () {
+      const handle = yield* self.ensureOpen();
+      if (replace || !self.schemaReady) {
+        for (const sql of DROP_LAB_SCHEMA_SQL) yield* runSqlEffect(handle, sql);
+        for (const sql of CREATE_LAB_SCHEMA_SQL) yield* runSqlEffect(handle, sql);
+        for (const sql of CREATE_LAB_VIEW_SQL) yield* runSqlEffect(handle, sql);
+        self.schemaReady = true;
+      }
+    });
   }
 
-  async ingest(payload: IngestPayload): Promise<IngestResult> {
-    const replace = payload.replace !== false;
-    await this.applySchema(replace);
-    const handle = await this.ensureOpen();
-    const matters = [...(payload.matters ?? [])];
-    const openFacts = collectOpenFacts(matters, payload.openFacts);
-    const documents = collectDocuments(matters, payload.documents);
+  ingest(payload: IngestPayload): Effect.Effect<IngestResult, DataError> {
+    const self = this;
+    return Effect.gen(function* () {
+      const replace = payload.replace !== false;
+      yield* self.applySchema(replace);
+      const handle = yield* self.ensureOpen();
+      const matters = [...(payload.matters ?? [])];
+      const openFacts = collectOpenFacts(matters, payload.openFacts);
+      const documents = collectDocuments(matters, payload.documents);
 
-    if (payload.mattersRoot) {
-      const root = await assertAllowedIngestRoot(payload.mattersRoot, this.env);
-      const skipRaw = this.env.CLAWQL_DATA_INVENTORY_SKIP_EXT ?? ".png,.jpg,.jpeg,.gif,.webp,.xlsx,.xls,.zip,.gz";
-      const skipExt = new Set(
-        skipRaw
-          .split(",")
-          .map((s) => s.trim().toLowerCase())
-          .filter(Boolean)
-          .map((s) => (s.startsWith(".") ? s : `.${s}`))
-      );
-      const parseLimit = Number.parseInt(this.env.CLAWQL_DATA_INVENTORY_PARSE_LIMIT ?? "20", 10);
-      const textCap = Number.parseInt(this.env.CLAWQL_DATA_INVENTORY_TEXT_CAP ?? "500", 10);
-      const { readdir } = await import("node:fs/promises");
-      const dirs = (await readdir(root, { withFileTypes: true })).filter((d) => d.isDirectory());
-      const byId = new Map(matters.map((m) => [str(m.matter_id), m]));
-      for (const dirent of dirs) {
-        const matterId = dirent.name;
-        const matterDir = join(root, matterId);
-        let rows = await catalogMatterFiles(matterDir, { skipExt });
-        rows = await enrichInventoryRows(matterDir, rows, { parseLimit, textCap, skipExt });
-        const rels = rows.map((r) => r.rel_path);
-        const cm = detectCapitalMarkets(rels);
-        const re = detectRestructuring(rels);
-        const existing = byId.get(matterId);
-        if (existing) {
-          if (cm.practice_area && (!existing.practice_area || existing.practice_area === "Other")) {
-            existing.practice_area = cm.practice_area;
-            existing.matter_type = cm.matter_type ?? existing.matter_type;
+      if (payload.mattersRoot) {
+        const root = yield* assertAllowedIngestRootEffect(payload.mattersRoot, self.env);
+        const skipRaw = self.env.CLAWQL_DATA_INVENTORY_SKIP_EXT ?? ".png,.jpg,.jpeg,.gif,.webp,.xlsx,.xls,.zip,.gz";
+        const skipExt = new Set(
+          skipRaw
+            .split(",")
+            .map((s) => s.trim().toLowerCase())
+            .filter(Boolean)
+            .map((s) => (s.startsWith(".") ? s : `.${s}`))
+        );
+        const parseLimit = Number.parseInt(self.env.CLAWQL_DATA_INVENTORY_PARSE_LIMIT ?? "20", 10);
+        const textCap = Number.parseInt(self.env.CLAWQL_DATA_INVENTORY_TEXT_CAP ?? "500", 10);
+        const dirs = yield* dataFromPromise(async () =>
+          (await readdir(root, { withFileTypes: true })).filter((d) => d.isDirectory())
+        );
+        const byId = new Map(matters.map((m) => [str(m.matter_id), m]));
+        for (const dirent of dirs) {
+          const matterId = dirent.name;
+          const matterDir = join(root, matterId);
+          let rows = yield* catalogMatterFilesEffect(matterDir, { skipExt });
+          rows = yield* enrichInventoryRowsEffect(matterDir, rows, { parseLimit, textCap, skipExt });
+          const rels = rows.map((r) => r.rel_path);
+          const cm = detectCapitalMarkets(rels);
+          const re = detectRestructuring(rels);
+          const existing = byId.get(matterId);
+          if (existing) {
+            if (cm.practice_area && (!existing.practice_area || existing.practice_area === "Other")) {
+              existing.practice_area = cm.practice_area;
+              existing.matter_type = cm.matter_type ?? existing.matter_type;
+            }
+            if (re.practice_area && existing.practice_area !== "Capital Markets") {
+              existing.practice_area = re.practice_area;
+              existing.matter_type = re.matter_type ?? existing.matter_type;
+            }
+            existing.document_count = rows.length;
+            existing.indexed_doc_count = rows.filter((r) => r.parse_status === "ok").length;
+          } else {
+            const practice = cm.practice_area ?? re.practice_area ?? "Other";
+            const added: Record<string, unknown> = {
+              matter_id: matterId,
+              client_short_name: "",
+              practice_area: practice,
+              matter_type: cm.matter_type ?? re.matter_type ?? "Other",
+              title: matterId,
+              sandbox_root: matterDir,
+              document_count: rows.length,
+              indexed_doc_count: rows.filter((r) => r.parse_status === "ok").length,
+            };
+            matters.push(added);
+            byId.set(matterId, added);
           }
-          if (re.practice_area && existing.practice_area !== "Capital Markets") {
-            existing.practice_area = re.practice_area;
-            existing.matter_type = re.matter_type ?? existing.matter_type;
+          for (const row of rows) {
+            documents.push({ ...row, matter_id: matterId });
           }
-          existing.document_count = rows.length;
-          existing.indexed_doc_count = rows.filter((r) => r.parse_status === "ok").length;
-        } else {
-          const practice = cm.practice_area ?? re.practice_area ?? "Other";
-          const added: Record<string, unknown> = {
-            matter_id: matterId,
-            client_short_name: "",
-            practice_area: practice,
-            matter_type: cm.matter_type ?? re.matter_type ?? "Other",
-            title: matterId,
-            sandbox_root: matterDir,
-            document_count: rows.length,
-            indexed_doc_count: rows.filter((r) => r.parse_status === "ok").length,
-          };
-          matters.push(added);
-          byId.set(matterId, added);
-        }
-        for (const row of rows) {
-          documents.push({ ...row, matter_id: matterId });
         }
       }
-    }
 
-    const placeholders = MATTER_COLUMNS.map(() => "?").join(", ");
-    for (const row of matters) {
-      if (!row.matter_id) continue;
-      await runSql(
-        handle,
-        `INSERT INTO matters (${MATTER_COLUMNS.join(", ")}) VALUES (${placeholders})`,
-        matterValues(row)
-      );
-    }
-    for (const fact of openFacts) {
-      await runSql(handle, "INSERT INTO open_facts VALUES (?, ?, ?, ?, ?, ?)", [
-        str(fact.matter_id),
-        str(fact.rel_doc),
-        str(fact.fact_key),
-        str(fact.fact_value),
-        str(fact.evidence_snippet),
-        str(fact.extractor, "open-kv-v0"),
-      ]);
-    }
-    const seen = new Set<string>();
-    let documentCount = 0;
-    for (const d of documents) {
-      const mid = str(d.matter_id);
-      const rel = str(d.rel_path);
-      if (!mid || !rel) continue;
-      const key = `${mid}\0${rel}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      await runSql(
-        handle,
-        "INSERT INTO matter_documents VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        documentInsert(d)
-      );
-      documentCount += 1;
-    }
-    if (documentCount > 0) {
-      await runSql(handle, "CREATE INDEX IF NOT EXISTS idx_matter_documents_filename ON matter_documents(filename)");
-      await runSql(handle, "CREATE INDEX IF NOT EXISTS idx_matter_documents_doc_type ON matter_documents(doc_type)");
-    }
-    return {
-      ok: true,
-      engine: ENGINE_ID,
-      path: this.path,
-      matterCount: matters.filter((m) => m.matter_id).length,
-      documentCount,
-      openFactCount: openFacts.length,
-    };
+      const placeholders = MATTER_COLUMNS.map(() => "?").join(", ");
+      for (const row of matters) {
+        if (!row.matter_id) continue;
+        yield* runSqlEffect(
+          handle,
+          `INSERT INTO matters (${MATTER_COLUMNS.join(", ")}) VALUES (${placeholders})`,
+          matterValues(row)
+        );
+      }
+      for (const fact of openFacts) {
+        yield* runSqlEffect(handle, "INSERT INTO open_facts VALUES (?, ?, ?, ?, ?, ?)", [
+          str(fact.matter_id),
+          str(fact.rel_doc),
+          str(fact.fact_key),
+          str(fact.fact_value),
+          str(fact.evidence_snippet),
+          str(fact.extractor, "open-kv-v0"),
+        ]);
+      }
+      const seen = new Set<string>();
+      let documentCount = 0;
+      for (const d of documents) {
+        const mid = str(d.matter_id);
+        const rel = str(d.rel_path);
+        if (!mid || !rel) continue;
+        const key = `${mid}\0${rel}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        yield* runSqlEffect(
+          handle,
+          "INSERT INTO matter_documents VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          documentInsert(d)
+        );
+        documentCount += 1;
+      }
+      if (documentCount > 0) {
+        yield* runSqlEffect(
+          handle,
+          "CREATE INDEX IF NOT EXISTS idx_matter_documents_filename ON matter_documents(filename)"
+        );
+        yield* runSqlEffect(
+          handle,
+          "CREATE INDEX IF NOT EXISTS idx_matter_documents_doc_type ON matter_documents(doc_type)"
+        );
+      }
+      return {
+        ok: true as const,
+        engine: ENGINE_ID,
+        path: self.path,
+        matterCount: matters.filter((m) => m.matter_id).length,
+        documentCount,
+        openFactCount: openFacts.length,
+      };
+    });
   }
 
-  async query(sql: string): Promise<DataQueryResult> {
-    let safe: string;
-    try {
-      safe = validateReadonlySelect(sql);
-    } catch (err) {
-      return { ok: false, engine: ENGINE_ID, error: err instanceof Error ? err.message : String(err) };
-    }
-    try {
-      const handle = await this.ensureOpen();
-      return await queryDuckDb(handle, safe, {
-        maxRows: maxQueryRows(this.env),
-        maxChars: maxCellChars(this.env),
-      });
-    } catch (err) {
-      return {
-        ok: false,
-        engine: ENGINE_ID,
-        sql: safe,
-        error: err instanceof Error ? err.message : String(err),
-      };
-    }
+  query(sql: string): Effect.Effect<DataQueryResult, DataError> {
+    const self = this;
+    return Effect.gen(function* () {
+      const validated = yield* dataFromSync(() => validateReadonlySelect(sql)).pipe(
+        Effect.map((safeSql) => ({ ok: true as const, safeSql })),
+        Effect.catchAll((err) =>
+          Effect.succeed({
+            ok: false as const,
+            result: {
+              ok: false as const,
+              engine: ENGINE_ID,
+              error: err.cause instanceof Error ? err.cause.message : String(err.cause ?? err.reason),
+            } satisfies DataQueryResult,
+          })
+        )
+      );
+      if (!validated.ok) return validated.result;
+
+      const safeSql = validated.safeSql;
+      return yield* self.ensureOpen().pipe(
+        Effect.flatMap((handle) =>
+          queryDuckDbEffect(handle, safeSql, {
+            maxRows: maxQueryRows(self.env),
+            maxChars: maxCellChars(self.env),
+          })
+        ),
+        Effect.catchAll((err) =>
+          Effect.succeed({
+            ok: false as const,
+            engine: ENGINE_ID,
+            sql: safeSql,
+            error:
+              err.cause instanceof Error
+                ? err.cause.message
+                : typeof err.cause === "string"
+                  ? err.cause
+                  : err.reason,
+          } satisfies DataQueryResult)
+        )
+      );
+    });
   }
 
   status(): DataStatus {
     return { ok: true, engine: ENGINE_ID, path: this.path, enabled: true };
   }
 
-  async close(): Promise<void> {
-    if (!this.handle) return;
-    await closeDuckDb(this.handle);
-    this.handle = null;
-    this.schemaReady = false;
+  close(): Effect.Effect<void, DataError> {
+    const self = this;
+    return Effect.gen(function* () {
+      if (!self.handle) return;
+      yield* closeDuckDbEffect(self.handle);
+      self.handle = null;
+      self.schemaReady = false;
+    });
   }
 }
 

@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import "./engines/duckdb/index.js";
 import { resolveDataEnginePlugin } from "./engines/registry.js";
 import type {
@@ -12,7 +13,10 @@ import type { MatterDocumentRow } from "./inventory.js";
 
 export type { MatterDocumentRow };
 
-/** Facade over the active {@link DataEnginePlugin} (registry-selected). */
+/**
+ * Promise facade over the Effect-native {@link DataEnginePlugin}.
+ * Lab scripts and tests use this; MCP goes through {@link runDataEffect}.
+ */
 export class ClawqlDataStore {
   private readonly plugin: DataEnginePlugin;
 
@@ -29,11 +33,11 @@ export class ClawqlDataStore {
   }
 
   ingest(payload: IngestPayload): Promise<IngestResult> {
-    return this.plugin.ingest(payload);
+    return Effect.runPromise(this.plugin.ingest(payload));
   }
 
   query(sql: string): Promise<DataQueryResult> {
-    return this.plugin.query(sql);
+    return Effect.runPromise(this.plugin.query(sql));
   }
 
   status(): DataStatus {
@@ -41,7 +45,7 @@ export class ClawqlDataStore {
   }
 
   close(): Promise<void> {
-    return this.plugin.close();
+    return Effect.runPromise(this.plugin.close());
   }
 }
 

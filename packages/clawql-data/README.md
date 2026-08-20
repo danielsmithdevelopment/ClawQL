@@ -4,7 +4,8 @@ Structured data MCP tools (`data_query`, `data_ingest`, `data_status`) behind **
 
 ## Architecture
 
-- **Effect-TS** services (`src/effect/`) — same pattern as `clawql-sandbox`
+- **Effect-TS interior** (`src/effect/`, Effect-native `DataEnginePlugin`) — same pattern as `clawql-sandbox`
+- Promise edges: MCP `runDataEffect` + `ClawqlDataStore` for lab CLIs
 - **Engine plugins** (`src/engines/`) — register via `registerDataEngine(id, factory)`; select with **`CLAWQL_DATA_ENGINE`**
 - **`duckdb`** — first shipped engine plugin (`@duckdb/node-api`)
 

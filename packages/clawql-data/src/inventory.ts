@@ -1,6 +1,9 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { basename, extname, join, relative } from "node:path";
+import type { Effect } from "effect";
 import { unzipSync } from "fflate";
+import { dataFromPromise } from "./effect/data-effect-utils.js";
+import type { DataError } from "./effect/data-errors.js";
 
 const DOC_TYPE_RULES: readonly { signals: readonly string[]; docType: string }[] = [
   { signals: ["lock-up", "lockup", "lock_up"], docType: "lock-up-agreement" },
@@ -383,4 +386,21 @@ export async function enrichInventoryRows(
     }
   }
   return rows;
+}
+
+/** Effect wrapper — FS IO at the Promise edge. */
+export function catalogMatterFilesEffect(
+  matterDir: string,
+  opts: { skipExt?: Set<string> } = {}
+): Effect.Effect<MatterDocumentRow[], DataError> {
+  return dataFromPromise(() => catalogMatterFiles(matterDir, opts));
+}
+
+/** Effect wrapper — FS/parse IO at the Promise edge. */
+export function enrichInventoryRowsEffect(
+  matterDir: string,
+  rows: MatterDocumentRow[],
+  opts: { parseLimit?: number; textCap?: number; skipExt?: Set<string> } = {}
+): Effect.Effect<MatterDocumentRow[], DataError> {
+  return dataFromPromise(() => enrichInventoryRows(matterDir, rows, opts));
 }

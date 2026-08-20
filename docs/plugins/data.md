@@ -14,7 +14,9 @@ next: ouroboros
 **Plugin ID:** `clawql-data`  
 **Package:** `packages/clawql-data` — `DataPlugin`
 
-Structured SQL via **pluggable data engine plugins** (`CLAWQL_DATA_ENGINE`, default `duckdb`). Effect-TS services in `packages/clawql-data`.
+Structured SQL via **pluggable data engine plugins** (`CLAWQL_DATA_ENGINE`, default `duckdb`).
+
+**Effect-TS interior:** driver / inventory IO → `DataEnginePlugin` (`Effect.gen`) → `DataEngineService` Layer → `data_*Program` / `runDataEffect`. Promise facades remain only at MCP handlers and `ClawqlDataStore` (lab CLIs).
 
 ## MCP tools
 
