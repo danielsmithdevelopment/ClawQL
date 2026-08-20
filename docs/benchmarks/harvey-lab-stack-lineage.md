@@ -60,6 +60,7 @@ ClawQL pre-ingest: DuckDB /path/…/matters.duckdb rows=266 …
 
 ## Related
 
+- [`harvey-lab-rules-compliance.md`](harvey-lab-rules-compliance.md) — upstream LAB rules vs ClawQL arms
 - [`harvey-lab-pause-handoff.md`](harvey-lab-pause-handoff.md)
 - [`harvey-lab-clawql-results.md`](harvey-lab-clawql-results.md)
 - [`../design/harvey-lab-duckdb-retrieval.md`](../design/harvey-lab-duckdb-retrieval.md)

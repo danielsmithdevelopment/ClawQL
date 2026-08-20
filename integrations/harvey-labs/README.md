@@ -14,7 +14,9 @@ Adapter overlay for [`harveyai/harvey-labs`](https://github.com/harveyai/harvey-
 | `nemotron-clawql` | `clawql-cc/<nemotron>` | Nemotron + ClawQL | **No** |
 | `baseline` / `clawql` | Claude | Opus/Sonnet A/B | Yes |
 
-Publishable Claude A/B is Opus vs Opus (later). Nemotron pair compounds Harvey/Trajectory’s LAB post-train (published **8.3% all-pass**) with/without ClawQL retrieval — judge `openai/gpt-5.4-mini` via OpenRouter.
+Publishable Claude A/B is Opus vs Opus (later). Nemotron pair compounds Harvey/Trajectory’s LAB post-train work (model-only, stock harness) with/without ClawQL retrieval as an **agent-stack** delta.
+
+**Judges:** GHA debug default is `openai/gpt-5.4-mini` (OpenRouter). **Harvey-facing / publishable** scores must use **`claude-sonnet-4-6`** (upstream default) or `--dual`. See [`docs/benchmarks/harvey-lab-rules-compliance.md`](../../docs/benchmarks/harvey-lab-rules-compliance.md).
 
 ## Run path: GitHub Actions (preferred)
 
@@ -76,4 +78,4 @@ bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh
 - **Legacy (quarantined):** `results/legacy/python-duckdb-v1/` — do not publish or train on
 - Ledgers: `docs/benchmarks/harvey-lab-*.md`
 
-Do not outreach to Harvey until a **ts-clawql-data-v2** multi-task ledger exists with public Actions run IDs.
+Do not outreach to Harvey until a **ts-clawql-data-v2** multi-task ledger exists with public Actions run IDs **and** publishable-judge (Sonnet 4.6) scores. Rules audit: [`docs/benchmarks/harvey-lab-rules-compliance.md`](../../docs/benchmarks/harvey-lab-rules-compliance.md).
