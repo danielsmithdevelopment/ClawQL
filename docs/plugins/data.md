@@ -18,18 +18,18 @@ Structured SQL over **Node DuckDB**. This is a TypeScript package. It does **not
 
 ## MCP tools
 
-| Tool              | Purpose                                                                 |
-| ----------------- | ----------------------------------------------------------------------- |
-| **`data_query`**  | Read-only SQL (`SELECT` / `WITH` / `DESCRIBE` / `SHOW` / `SUMMARIZE`)   |
+| Tool              | Purpose                                                                      |
+| ----------------- | ---------------------------------------------------------------------------- |
+| **`data_query`**  | Read-only SQL (`SELECT` / `WITH` / `DESCRIBE` / `SHOW` / `SUMMARIZE`)        |
 | **`data_ingest`** | Load `matters` / `matter_documents` / `open_facts`; optional filesystem walk |
-| **`data_status`** | Engine + database path                                                  |
+| **`data_status`** | Engine + database path                                                       |
 
 ## Enable
 
-| Env                        | Default | Effect                                      |
-| -------------------------- | ------- | ------------------------------------------- |
-| **`CLAWQL_ENABLE_DATA=1`** | off     | Register `DataPlugin` and the `data_*` tools |
-| **`CLAWQL_DATA_PATH`**     | vault `lab/matters.duckdb` or `:memory:` | DuckDB file |
-| **`CLAWQL_DATA_ENGINE`**   | `duckdb` | Only `duckdb` is accepted |
+| Env                        | Default                                  | Effect                                       |
+| -------------------------- | ---------------------------------------- | -------------------------------------------- |
+| **`CLAWQL_ENABLE_DATA=1`** | off                                      | Register `DataPlugin` and the `data_*` tools |
+| **`CLAWQL_DATA_PATH`**     | vault `lab/matters.duckdb` or `:memory:` | DuckDB file                                  |
+| **`CLAWQL_DATA_ENGINE`**   | `duckdb`                                 | Only `duckdb` is accepted                    |
 
 Helm: `enableData: true`.
