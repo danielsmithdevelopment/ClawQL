@@ -96,6 +96,14 @@ class ExtractKeyTermsTests(unittest.TestCase):
         self.assertEqual(terms.get("lock_up_period_days"), 180)
         self.assertEqual(terms.get("lock_up_period"), "180 days")
 
+    def test_lock_up_hyphenated_180_day(self) -> None:
+        terms = extract_key_terms_from_text(
+            "Investors agree to a 180-day lock-up.",
+            doc_type="lock-up-agreement",
+            filename="form-of-lock-up-agreement.docx",
+        )
+        self.assertEqual(terms.get("lock_up_period_days"), 180)
+
 
 @unittest.skipUnless(HAS_DUCKDB, "duckdb not installed")
 class MatterDocumentsDuckdbTests(unittest.TestCase):
