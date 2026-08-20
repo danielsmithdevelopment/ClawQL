@@ -171,9 +171,7 @@ function extractDocxText(bytes: Uint8Array): string {
 
 /** OOXML word/document.xml → plain text via `<w:t>` runs (not HTML sanitization). */
 function ooxmlDocumentXmlToPlainText(xml: string): string {
-  const withBreaks = xml
-    .replace(/<w:tab\b[^/]*\/>/g, "\t")
-    .replace(/<\/w:p>/g, "\n");
+  const withBreaks = xml.replace(/<w:tab\b[^/]*\/>/g, "\t").replace(/<\/w:p>/g, "\n");
   const parts: string[] = [];
   const re = /<w:t\b[^>]*>([^<]*)<\/w:t>/g;
   let m: RegExpExecArray | null;
