@@ -96,6 +96,39 @@ class ExtractKeyTermsTests(unittest.TestCase):
         self.assertEqual(terms.get("lock_up_period_days"), 180)
         self.assertEqual(terms.get("lock_up_period"), "180 days")
 
+    def test_offering_pulled_date(self) -> None:
+        text = (
+            "The offering was pulled at launch on June 28, 2022 after "
+            "the book failed to build."
+        )
+        terms = extract_key_terms_from_text(
+            text, doc_type="other", filename="termination-memo.docx"
+        )
+        self.assertEqual(terms.get("offering_status"), "withdrawn")
+        self.assertEqual(terms.get("withdrawal_date"), "2022-06-28")
+
+    def test_hypothetical_withdraw_not_marked(self) -> None:
+        text = (
+            "In the event the Offering does not close — including a decision "
+            "by the Company to withdraw the Offering — fees may apply."
+        )
+        terms = extract_key_terms_from_text(
+            text, doc_type="offering-document", filename="engagement-letter.docx"
+        )
+        self.assertNotEqual(terms.get("offering_status"), "withdrawn")
+
+    def test_hypothetical_terminated_not_marked(self) -> None:
+        text = (
+            "Meridian Hale could unilaterally terminated the offering under "
+            "Section 9 without further obligation."
+        )
+        terms = extract_key_terms_from_text(
+            text,
+            doc_type="offering-document",
+            filename="underwriting-agreement-key-terms-memo.docx",
+        )
+        self.assertNotEqual(terms.get("offering_status"), "withdrawn")
+
     def test_lock_up_hyphenated_180_day(self) -> None:
         terms = extract_key_terms_from_text(
             "Investors agree to a 180-day lock-up.",

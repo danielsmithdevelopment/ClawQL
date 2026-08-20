@@ -323,6 +323,14 @@ _DOC_TYPE_RULES: tuple[tuple[tuple[str, ...], str], ...] = (
         ("offering-memorandum", "prospectus", "424b", "s-1", "f-1"),
         "offering-document",
     ),
+    (
+        (
+            "underwriting-agreement",
+            "private-placement",
+            "warrant-agreement",
+        ),
+        "offering-document",
+    ),
     (("dip", "debtor-in-possession", "debtor_in_possession"), "dip-financing"),
     (
         ("credit-agreement", "loan-agreement", "bridge", "term-loan"),
@@ -364,6 +372,19 @@ _WITHDRAWAL_DATE_RE = re.compile(
     r"|\d{4}-\d{2}-\d{2})",
     re.IGNORECASE,
 )
+_OFFERING_WITHDRAWN_RE = re.compile(
+    r"(?:offering (?:was|has been) withdrawn|"
+    r"(?:company|issuer) (?:has )?withdrawn the offering|"
+    r"withdrawal of the (?:offering|registration statement)|"
+    r"offering was pulled(?: at launch)?)",
+    re.IGNORECASE,
+)
+_OFFERING_PULLED_DATE_RE = re.compile(
+    r"offering was pulled(?: at launch)? on "
+    r"((?:January|February|March|April|May|June|July|August|September|"
+    r"October|November|December)\s+\d{1,2},?\s+\d{4}|\d{4}-\d{2}-\d{2})",
+    re.IGNORECASE,
+)
 _DIP_AMOUNT_RE = re.compile(
     r"(?:DIP|debtor[- ]in[- ]possession)[^\n$]{0,80}?"
     r"\$\s*([0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)"
@@ -379,6 +400,9 @@ _PARTY_RE = re.compile(
 def infer_doc_type(rel: str, name: str) -> str:
     """Filename/path heuristics → inventory doc_type hint."""
     blob = f"{rel.replace(chr(92), '/').lower()} {name.lower()}"
+    # HSR withdrawal letters are not Capital Markets offering withdrawals.
+    if "hsr" in blob and "withdraw" in blob:
+        return "hsr-filing"
     for signals, doc_type in _DOC_TYPE_RULES:
         if any(sig in blob for sig in signals):
             return doc_type
@@ -419,7 +443,7 @@ def catalog_all_matter_files(
             "doc_type": infer_doc_type(rel, name),
             "file_size_bytes": size,
             "doc_date": None,
-            "key_terms": {},
+            "key_terms": None,
             "text_snippet": "",
             "parse_status": "skipped",
         }
@@ -427,6 +451,32 @@ def catalog_all_matter_files(
             row["parse_status"] = "skipped"
         out.append(row)
     return out
+
+
+def _normalize_withdrawal_date(raw: str) -> str | None:
+    """Parse withdrawal/pull dates; reject implausible future years."""
+    raw = raw.replace(",", "").strip()
+    iso = raw
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", raw):
+        from datetime import datetime
+
+        parsed = None
+        for fmt in ("%B %d %Y", "%b %d %Y"):
+            try:
+                parsed = datetime.strptime(raw, fmt).date()
+                break
+            except ValueError:
+                continue
+        if parsed is None:
+            return None
+        iso = parsed.isoformat()
+    try:
+        year = int(iso[:4])
+    except ValueError:
+        return None
+    if year < 1990 or year > 2027:
+        return None
+    return iso
 
 
 def extract_key_terms_from_text(
@@ -452,7 +502,8 @@ def extract_key_terms_from_text(
     want_withdraw = (
         dt == "withdrawal-notice"
         or "withdraw" in fn
-        or "withdraw" in text_l
+        or _OFFERING_WITHDRAWN_RE.search(text) is not None
+        or _OFFERING_PULLED_DATE_RE.search(text) is not None
     )
     want_dip = (
         dt == "dip-financing"
@@ -478,21 +529,15 @@ def extract_key_terms_from_text(
                 pass
 
     if want_withdraw:
-        m = _WITHDRAWAL_DATE_RE.search(text)
+        if _OFFERING_WITHDRAWN_RE.search(text) or _OFFERING_PULLED_DATE_RE.search(text):
+            terms["offering_status"] = "withdrawn"
+        m = _OFFERING_PULLED_DATE_RE.search(text) or _WITHDRAWAL_DATE_RE.search(text)
         if m:
             raw = m.group(1).replace(",", "").strip()
-            iso = raw
-            if not re.match(r"^\d{4}-\d{2}-\d{2}$", raw):
-                from datetime import datetime
-
-                for fmt in ("%B %d %Y", "%b %d %Y"):
-                    try:
-                        iso = datetime.strptime(raw, fmt).date().isoformat()
-                        break
-                    except ValueError:
-                        continue
-            terms["withdrawal_date"] = iso
-            terms["offering_status"] = "withdrawn"
+            iso = _normalize_withdrawal_date(raw)
+            if iso:
+                terms["withdrawal_date"] = iso
+                terms["offering_status"] = "withdrawn"
 
     if want_dip:
         m = _DIP_AMOUNT_RE.search(text)

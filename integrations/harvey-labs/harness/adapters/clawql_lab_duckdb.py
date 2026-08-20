@@ -1220,11 +1220,11 @@ def build_matters_duckdb(
                 seen.add(key)
                 kt = d.get("key_terms")
                 if isinstance(kt, (dict, list)):
-                    kt_json = json.dumps(kt)
+                    kt_json = json.dumps(kt) if kt else None
                 elif kt is None or kt == "":
                     kt_json = None
                 else:
-                    kt_json = str(kt)
+                    kt_json = str(kt) if str(kt).strip() not in {"{}", "[]"} else None
                 insert_docs.append(
                     (
                         mid,

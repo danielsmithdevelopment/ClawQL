@@ -871,6 +871,14 @@ def detect_capital_markets(matter_dir: Path) -> dict[str, Any]:
                 "form-of-lock-up",
                 "lock-up-agreement",
                 "notice-of-withdrawal",
+                "underwriting-agreement",
+                "private-placement",
+                "warrant-agreement",
+                "registration-rights",
+                "insider-letter",
+                "s-1",
+                "f-1",
+                "form s-1",
                 "ipo/",
                 "/ipo",
             )
@@ -993,6 +1001,8 @@ def _build_matter_document_inventory(
             filename=row.get("filename") or "",
         )
         row["key_terms"] = terms
+        if terms.get("lock_up_period_days") and row.get("doc_type") != "lock-up-agreement":
+            row["doc_type"] = "lock-up-agreement"
         row["text_snippet"] = body[:text_cap]
         row["parse_status"] = "ok" if terms else "ok"
         parsed += 1
@@ -1701,7 +1711,13 @@ class ClawQLLabSession:
             matter_status = None
             if any(
                 (d.get("doc_type") == "withdrawal-notice")
-                or ("withdraw" in (d.get("filename") or "").lower())
+                and "hsr" not in (d.get("filename") or "").lower()
+                for d in matter_docs
+            ):
+                matter_status = "withdrawn"
+            elif any(
+                (d.get("key_terms") or {}).get("offering_status") == "withdrawn"
+                and (d.get("key_terms") or {}).get("withdrawal_date")
                 for d in matter_docs
             ):
                 matter_status = "withdrawn"
