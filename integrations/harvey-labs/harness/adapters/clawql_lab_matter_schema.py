@@ -345,12 +345,16 @@ _DOC_TYPE_PARSE_PRIORITY: dict[str, int] = {
 
 _LOCK_UP_DAYS_RE = re.compile(
     r"(?:lock[- ]?up\s+(?:period|restriction)?\s*(?:of|for|:)?\s*)?"
-    r"(\d{1,3})\s*(?:calendar\s+)?days?"
+    r"(\d{1,3})\s*-?\s*(?:calendar\s+)?days?"
     r"(?:\s+(?:lock[- ]?up|following|after))?",
     re.IGNORECASE,
 )
 _LOCK_UP_DAYS_ALT_RE = re.compile(
-    r"lock[- ]?up[^\n.]{0,80}?(\d{1,3})\s*(?:calendar\s+)?days?",
+    r"lock[- ]?up[^\n.]{0,80}?(\d{1,3})\s*-?\s*(?:calendar\s+)?days?",
+    re.IGNORECASE,
+)
+_LOCK_UP_DAYS_PREFIX_RE = re.compile(
+    r"(\d{1,3})\s*-?\s*(?:calendar\s+)?days?\s+lock[- ]?up",
     re.IGNORECASE,
 )
 _WITHDRAWAL_DATE_RE = re.compile(
@@ -459,7 +463,11 @@ def extract_key_terms_from_text(
     )
 
     if want_lock:
-        m = _LOCK_UP_DAYS_ALT_RE.search(text) or _LOCK_UP_DAYS_RE.search(text)
+        m = (
+            _LOCK_UP_DAYS_PREFIX_RE.search(text)
+            or _LOCK_UP_DAYS_ALT_RE.search(text)
+            or _LOCK_UP_DAYS_RE.search(text)
+        )
         if m:
             try:
                 days = int(m.group(1))
