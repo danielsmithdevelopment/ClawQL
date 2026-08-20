@@ -178,6 +178,23 @@ class DeliverableGuardPatchTests(unittest.TestCase):
             os.environ["CLAWQL_LAB_MAX_TOOL_RESULT_CHARS"] = "100"
             self.assertEqual(ns["_clawql_max_tool_result_chars"](), 4000)
 
+    def test_pattern_g_detector_imports_re_in_host_agent_loop(self) -> None:
+        """Host harvey-labs agent_loop.py does not import re; Pattern G must.
+
+        GHA 026/028 (run 32329764178) crashed:
+        NameError: name 're' is not defined in _clawql_prompt_needs_pattern_g.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "agent_loop.py"
+            path.write_text(STOCK_LOOP, encoding="utf-8")
+            patch_agent_loop_deliverable_guard(path)
+            ns = _exec_helpers(path.read_text(encoding="utf-8"))
+            self.assertNotIn("re", ns)
+            dip = [{"role": "user", "content": "Which DIP financing matters have we closed?"}]
+            self.assertTrue(ns["_clawql_prompt_needs_pattern_g"](dip))
+            generic = [{"role": "user", "content": "List HSR second request matters."}]
+            self.assertFalse(ns["_clawql_prompt_needs_pattern_g"](generic))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -255,6 +255,9 @@ _CLAWQL_REQUIRE_PATTERN_G = (
 
 def _clawql_prompt_needs_pattern_g(messages: list) -> bool:
     # Detect CM / Restructuring / lock-up / DIP / withdrawn offering asks.
+    # Local import: injected into harvey-labs agent_loop.py which may not import re.
+    import re
+
     blob = " ".join(
         str(getattr(m, "content", m) if not isinstance(m, dict) else m.get("content", ""))
         for m in (messages or [])
