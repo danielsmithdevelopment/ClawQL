@@ -335,6 +335,12 @@ jobs:
           NEED_AN: ${{ steps.set.outputs.needs_anthropic }}
         run: |
           set -euo pipefail
+          if [ -f integrations/harvey-labs/.skip-lab-matrix ]; then
+            echo "can_run=false" >>"$GITHUB_OUTPUT"
+            echo "skip_reason=.skip-lab-matrix present" >>"$GITHUB_OUTPUT"
+            echo "::notice::Skipped live Harvey LAB matrix (.skip-lab-matrix)"
+            exit 0
+          fi
           CAN=true
           REASON=""
           if [ "${NEED_AN}" = "true" ] && [ "${HAS_AN}" != "true" ]; then
