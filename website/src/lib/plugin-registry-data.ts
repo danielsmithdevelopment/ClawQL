@@ -174,6 +174,19 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
     keywords: ['kata', 'seatbelt', 'isolation'],
   },
   {
+    id: 'clawql-data',
+    name: 'Data',
+    description:
+      'Node DuckDB structured SQL — data_query / data_ingest. Not Python duckdb. Not chDB.',
+    category: 'horizontal',
+    status: 'opt-in',
+    package: 'clawql-data',
+    tools: ['data_query', 'data_ingest', 'data_status'],
+    enable: 'CLAWQL_ENABLE_DATA=1',
+    href: '/plugins/data',
+    keywords: ['duckdb', 'sql', 'data_query'],
+  },
+  {
     id: 'clawql-ouroboros',
     name: 'Ouroboros',
     description:

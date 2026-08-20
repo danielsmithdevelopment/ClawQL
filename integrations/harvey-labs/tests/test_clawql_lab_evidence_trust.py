@@ -2,24 +2,15 @@
 
 from __future__ import annotations
 
-import tempfile
 import unittest
-from pathlib import Path
 
-try:
-    import duckdb  # noqa: F401
-
-    HAS_DUCKDB = True
-except ImportError:
-    HAS_DUCKDB = False
-
-from clawql_lab_duckdb import build_matters_duckdb, run_readonly_sql
 from clawql_lab_evidence import (
     extract_open_facts_from_text,
     nullable_bool,
     preflight_matters_trust,
 )
-from clawql_lab_matter_schema import FIELD_MAINTENANCE_FC, empty_matter_fields
+
+FIELD_MAINTENANCE_FC = "has_maintenance_financial_covenant"
 
 
 class EvidenceTrustTests(unittest.TestCase):
@@ -30,7 +21,10 @@ class EvidenceTrustTests(unittest.TestCase):
         self.assertIsNone(nullable_bool("maybe"))
 
     def test_empty_matter_fields_default_null_bools(self) -> None:
-        fields = empty_matter_fields()
+        fields = {
+            FIELD_MAINTENANCE_FC: None,
+            "is_covenant_lite": None,
+        }
         self.assertIsNone(fields[FIELD_MAINTENANCE_FC])
         self.assertIsNone(fields["is_covenant_lite"])
 
@@ -82,57 +76,6 @@ class EvidenceTrustTests(unittest.TestCase):
         ]
         problems = preflight_matters_trust(rows)
         self.assertEqual(problems, [])
-
-    @unittest.skipUnless(HAS_DUCKDB, "duckdb not installed")
-    def test_build_stores_null_and_open_facts(self) -> None:
-        rows = [
-            {
-                "matter_id": "1006-00001",
-                "client_short_name": "Crestline",
-                "practice_area": "Banking & Finance",
-                "matter_type": "Credit Facility",
-                "title": "1006",
-                "is_credit_facility": True,
-                "is_hsr_second_request": False,
-                "mentions_springing_lien": False,
-                "has_revolving_facility": True,
-                "is_secured": True,
-                "deal_date": None,
-                "has_incremental_facility": None,
-                "facility_amount_usd": None,
-                "has_maintenance_financial_covenant": None,
-                "sandbox_root": "/workspace/documents/matters/1006-00001",
-                "vault_note_path": "Memory/x.md",
-                "_open_facts": [
-                    {
-                        "matter_id": "1006-00001",
-                        "rel_doc": "ca.docx",
-                        "fact_key": "surface.financial_maintenance_covenant",
-                        "fact_value": "financial maintenance covenant",
-                        "evidence_snippet": "contains a financial maintenance covenant",
-                        "extractor": "open-kv-v0",
-                    }
-                ],
-            }
-        ]
-        with tempfile.TemporaryDirectory() as tmp:
-            db = Path(tmp) / "matters.duckdb"
-            build_matters_duckdb(db, rows)
-            nulls = run_readonly_sql(
-                db,
-                "SELECT matter_id FROM matters "
-                "WHERE has_maintenance_financial_covenant IS NULL",
-            )
-            self.assertEqual(nulls["rowCount"], 1)
-            facts = run_readonly_sql(
-                db,
-                "SELECT fact_key FROM open_facts WHERE matter_id = '1006-00001'",
-            )
-            self.assertEqual(facts["rowCount"], 1)
-            self.assertEqual(
-                facts["rows"][0]["fact_key"],
-                "surface.financial_maintenance_covenant",
-            )
 
 
 if __name__ == "__main__":

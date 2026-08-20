@@ -34,6 +34,7 @@ export const clawqlInstanceSpecV1Alpha1Schema = z
       .strict()
       .optional(),
     sandbox: tierToggleSchema,
+    data: tierToggleSchema,
     ouroboros: z
       .object({
         enabled: z.boolean().optional(),
@@ -79,6 +80,7 @@ export function clawqlInstanceSpecToHorizontalTierSpec(
     documents: spec.documents,
     automation: spec.automation,
     sandbox: spec.sandbox,
+    data: spec.data,
     ouroboros: spec.ouroboros,
   };
 }

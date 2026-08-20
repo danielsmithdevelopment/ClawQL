@@ -385,6 +385,7 @@ jobs:
       LAB_JUDGE_MODEL: ${{ needs.resolve-matrix.outputs.judge_model }}
       CLAWQL_LAB_MAX_MATTERS: ${{ needs.resolve-matrix.outputs.max_matters }}
       CLAWQL_ENABLE_MEMORY: "1"
+      CLAWQL_ENABLE_DATA: "1"
       CLAWQL_ONTOLOGY_DB: "1"
       CLAWQL_ONTOLOGY_LLM_EXTRACTION: "0"
     steps:

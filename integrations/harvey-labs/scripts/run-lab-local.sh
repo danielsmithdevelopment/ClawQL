@@ -115,8 +115,6 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 cd "${HARVEY_LABS}"
 uv sync
-uv pip install duckdb >/dev/null
-echo "::notice::Installed duckdb for clawql_sql"
 
 start_lab_idp_sidecars() {
   if [[ "${CLAWQL_LAB_IDP_SIDECARS:-1}" == "0" ]]; then

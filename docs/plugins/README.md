@@ -20,6 +20,7 @@ cd website && node scripts/sync-clawql-plugin-pages.mjs
 | `bundled-providers.md` | `/plugins/bundled-providers` | Default install stack       |
 | `automation.md`        | `/plugins/automation`        | Opt in                      |
 | `sandbox.md`           | `/plugins/sandbox`           | Opt in                      |
+| `data.md`              | `/plugins/data`              | Opt in                      |
 | `ouroboros.md`         | `/plugins/ouroboros`         | Opt in                      |
 | `payments.md`          | `/plugins/payments`          | Shipped (`clawql-payments`) |
 | `hitl-label-studio.md` | `/plugins/hitl-label-studio` | Planned                     |

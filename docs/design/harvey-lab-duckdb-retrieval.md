@@ -230,11 +230,11 @@ table names so agent skills transfer.
 | **P0** | Design (this doc)                                                         | —                              | **done**        |
 | **P1** | LAB spike: build duckdb at pre-ingest; `clawql_sql` tool; Pattern F → SQL | Fix 7/8                        | **in progress** |     | **P2** | Content FTS / `mentions_*` columns for frequency attrs | P1  |
 | **P3** | Optional matrix arm **B** (SQL-only, shared tables)                       | Product call on ledger framing |
-| **P4** | Promote into `packages/clawql-data` + MCP `data_query`                    | Package scaffold               |
+| **P4** | **`packages/clawql-data` + MCP `data_query` / `data_ingest` (Node DuckDB)** | Shipped | **done** |
 
 ## Non-goals (P1)
 
-- ClickHouse / remote OLAP in GHA (DuckDB embedded is enough for 266 matters).
+- ClickHouse / chDB (Python). ClawQL uses Node DuckDB in `packages/clawql-data`.
 - Giving baseline arm DuckDB for Harvey-parity runs.
 - Replacing vault memory with DuckDB persistence.
 - Rubric-derived gold ID tables.

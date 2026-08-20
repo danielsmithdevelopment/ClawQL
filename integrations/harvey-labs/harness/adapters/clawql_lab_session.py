@@ -23,29 +23,6 @@ try:
 except ImportError:  # unit tests import adapters/ as a flat path
     from clawql_vault import resolve_task_vault, vault_root
 
-try:
-    from harness.adapters.clawql_lab_duckdb import (
-        build_matters_duckdb,
-        default_duckdb_path,
-        detect_hsr_filing,
-        detect_ma_execution_agreement,
-        duckdb_available,
-        extract_credit_facility_matter_fields,
-        extract_deal_value_usd,
-        sql_tool_result_json,
-    )
-except ImportError:
-    from clawql_lab_duckdb import (  # type: ignore
-        build_matters_duckdb,
-        default_duckdb_path,
-        detect_hsr_filing,
-        detect_ma_execution_agreement,
-        duckdb_available,
-        extract_credit_facility_matter_fields,
-        extract_deal_value_usd,
-        sql_tool_result_json,
-    )
-
 CLAWQL_MCP_URL = os.environ.get("CLAWQL_MCP_URL", "http://localhost:8080/mcp")
 CLAWQL_VAULT_ROOT = vault_root()
 
@@ -340,10 +317,11 @@ CLAWQL_TOOL_SPECS: list[dict[str, Any]] = [
     {
         "name": "clawql_sql",
         "description": (
-            "Run a read-only SQL query against the task DuckDB "
-            "(matters + open_facts). PREFERRED for exact enumeration / "
-            "frequency cohorts. CRITICAL: semantic bools may be NULL "
-            "(unknown). NULL is not false — do not report 0/N from an "
+            "Run a read-only SQL query via ClawQL MCP data_query "
+            "(Node DuckDB in packages/clawql-data — not Python duckdb). "
+            "Tables: matters, matter_documents, open_facts. PREFERRED for "
+            "exact enumeration / frequency cohorts. CRITICAL: semantic bools "
+            "may be NULL (unknown). NULL is not false — do not report 0/N from an "
             "empty TRUE filter when values are NULL; instead SELECT the "
             "column, check open_facts, and read proof docs. Examples: "
             "SELECT matter_id, client_short_name, "
@@ -382,9 +360,23 @@ _TOOL_NAME_TO_MCP = {
     "clawql_search": "search",
     "clawql_execute": "execute",
     "clawql_audit": "audit",
+    "clawql_sql": "data_query",
+    "clawql_duckdb_query": "data_query",
 }
 
-# ingest_external_knowledge documents[] cap (see docs/mcp/external-ingest.md).
+def _mcp_tool_text(result: object) -> str:
+    """Unwrap MCP tools/call content[] to the JSON body ClawQL tools return."""
+    if isinstance(result, dict):
+        content = result.get("content")
+        if isinstance(content, list) and content:
+            first = content[0]
+            if isinstance(first, dict) and first.get("type") == "text":
+                return str(first.get("text") or "")
+        return json.dumps(result, indent=2, default=str)
+    return json.dumps(result, indent=2, default=str)
+
+
+
 # LAB notes are large (full-text extracts); keep batches smaller than the tool
 # max so a single tools/call finishes under the MCP HTTP timeout.
 _BULK_INGEST_BATCH = 25
@@ -1186,20 +1178,26 @@ class ClawQLLabSession:
                 return f"Error: invalid JSON arguments: {arguments}"
         mcp_name = _TOOL_NAME_TO_MCP.get(tool_name, tool_name.removeprefix("clawql_"))
         args = dict(arguments or {})
-        if tool_name in {"clawql_sql", "clawql_duckdb_query"} or mcp_name == "sql":
+        if tool_name in {"clawql_sql", "clawql_duckdb_query"} or mcp_name in {
+            "sql",
+            "data_query",
+        }:
             sql = str(args.get("sql") or args.get("query") or "")
-            db_path = Path(
-                os.environ.get("CLAWQL_LAB_DUCKDB_PATH")
-                or default_duckdb_path(self.vault_path)
-            )
-            if not duckdb_available():
+            try:
+                result = self._call_clawql_mcp("data_query", {"sql": sql})
+                return _mcp_tool_text(result)
+            except Exception as exc:  # noqa: BLE001
                 return json.dumps(
                     {
                         "ok": False,
-                        "error": "duckdb package not installed in harness venv",
+                        "engine": "duckdb",
+                        "error": (
+                            "ClawQL data_query failed (Node DuckDB via "
+                            "CLAWQL_ENABLE_DATA=1). Python duckdb is not used. "
+                            f"{exc}"
+                        ),
                     }
                 )
-            return sql_tool_result_json(db_path, sql)
         if mcp_name == "memory_ingest" and "content" in args and "toolOutputs" not in args:
             args["toolOutputs"] = args.pop("content")
         if mcp_name == "memory_ingest" and "type" not in args:
@@ -1266,7 +1264,6 @@ class ClawQLLabSession:
         credit_count = 0
         bulk_docs: list[dict[str, str]] = []
         credit_docs: list[dict[str, str]] = []
-        duckdb_rows: list[dict[str, Any]] = []
         for matter_i, matter_dir in enumerate(all_matter_dirs, start=1):
             if matter_i == 1 or matter_i % 25 == 0 or matter_i == len(all_matter_dirs):
                 print(
@@ -1413,154 +1410,6 @@ class ClawQLLabSession:
             if credit["is_credit_facility"]:
                 credit_docs.append(doc)
 
-            def _extract(path: Path) -> str:
-                if path.suffix.lower() == ".docx":
-                    return _docx_to_text(path)
-                if path.suffix.lower() in {".md", ".txt"}:
-                    return _plain_text(path)
-                return ""
-
-            mentions_lien = None
-            has_revolver = None
-            is_secured = None
-            deal_date = None
-            has_incremental = None
-            facility_amount = None
-            has_ebitda_addbacks = None
-            ebitda_proof = ""
-            is_covenant_lite = None
-            covlite_proof = ""
-            has_mfn = None
-            mfn_proof = ""
-            has_springing_fc = None
-            springing_proof = ""
-            has_always_on = None
-            always_on_proof = ""
-            has_maintenance_fc = None
-            maintenance_proof = ""
-            borrower_control = None
-            open_facts: list[dict[str, Any]] = []
-            hsr_filing = detect_hsr_filing(matter_dir)
-            has_hsr_filing = bool(hsr_filing.get("filed"))
-            hsr_filing_date = hsr_filing.get("filing_date")
-            hsr_filing_proof = str(hsr_filing.get("proof_doc") or "")
-            hsr_clearance = detect_hsr_clearance(matter_dir)
-            has_hsr_clearance = bool(hsr_clearance.get("cleared"))
-            hsr_clearance_proof = str(hsr_clearance.get("proof_doc") or "")
-            has_ma_execution = detect_ma_execution_agreement(matter_dir)
-            # Deal values are only needed for antitrust / M&A filters (005).
-            # Skip Tika scans on pure credit / other matters.
-            deal_value_usd = None
-            if (
-                detection["received"]
-                or has_hsr_filing
-                or detection.get("antitrust_signal")
-                or has_ma_execution
-                or str(practice).startswith("Antitrust")
-            ):
-                deal_value = extract_deal_value_usd(matter_dir)
-                deal_value_usd = deal_value.get("deal_value_usd")
-            is_antitrust_matter = bool(
-                detection.get("antitrust_signal")
-                or practice.startswith("Antitrust")
-                or has_hsr_filing
-                or detection["received"]
-                or has_ma_execution
-            )
-            if has_hsr_filing and practice in {"Other", "Antitrust"}:
-                practice = "Antitrust & Competition"
-            if credit["is_credit_facility"]:
-                from .clawql_lab_evidence import nullable_bool
-
-                fields = extract_credit_facility_matter_fields(
-                    matter_dir,
-                    text_extractor=_extract,
-                )
-                mentions_lien = nullable_bool(fields.get("mentions_springing_lien"))
-                has_revolver = nullable_bool(fields.get("has_revolving_facility"))
-                is_secured = nullable_bool(fields.get("is_secured"))
-                deal_date = fields.get("deal_date")
-                has_incremental = nullable_bool(fields.get("has_incremental_facility"))
-                facility_amount = fields.get("facility_amount_usd")
-                has_ebitda_addbacks = nullable_bool(
-                    fields.get("has_adjusted_ebitda_addbacks")
-                )
-                ebitda_proof = str(
-                    fields.get("has_adjusted_ebitda_addbacks_proof_doc") or ""
-                )
-                is_covenant_lite = nullable_bool(fields.get("is_covenant_lite"))
-                covlite_proof = str(fields.get("is_covenant_lite_proof_doc") or "")
-                has_mfn = nullable_bool(fields.get("has_mfn_in_credit_agreement"))
-                mfn_proof = str(
-                    fields.get("has_mfn_in_credit_agreement_proof_doc") or ""
-                )
-                has_springing_fc = nullable_bool(
-                    fields.get("has_springing_financial_covenant")
-                )
-                springing_proof = str(
-                    fields.get("has_springing_financial_covenant_proof_doc") or ""
-                )
-                has_always_on = nullable_bool(
-                    fields.get("has_always_on_maintenance_covenant")
-                )
-                always_on_proof = str(
-                    fields.get("has_always_on_maintenance_covenant_proof_doc") or ""
-                )
-                has_maintenance_fc = nullable_bool(
-                    fields.get("has_maintenance_financial_covenant")
-                )
-                maintenance_proof = str(
-                    fields.get("has_maintenance_financial_covenant_proof_doc") or ""
-                )
-                bc = fields.get("borrower_control")
-                borrower_control = str(bc).strip().lower() if bc else None
-                open_facts = list(fields.get("_open_facts") or [])
-            duckdb_rows.append(
-                {
-                    "matter_id": matter_id,
-                    "client_short_name": client,
-                    "practice_area": practice,
-                    "matter_type": matter_type,
-                    "title": title,
-                    "is_credit_facility": bool(credit["is_credit_facility"]),
-                    "is_hsr_second_request": bool(detection["received"]),
-                    "hsr_second_request_date": detection.get("second_request_date"),
-                    "hsr_second_request_proof_doc": str(
-                        detection.get("proof_doc") or ""
-                    ),
-                    "has_hsr_clearance": has_hsr_clearance,
-                    "hsr_clearance_proof_doc": hsr_clearance_proof,
-                    "has_hsr_filing": has_hsr_filing,
-                    "hsr_filing_date": hsr_filing_date,
-                    "hsr_filing_proof_doc": hsr_filing_proof,
-                    "is_antitrust_matter": is_antitrust_matter,
-                    "deal_value_usd": deal_value_usd,
-                    "has_ma_execution_agreement": has_ma_execution,
-                    "mentions_springing_lien": mentions_lien,
-                    "has_revolving_facility": has_revolver,
-                    "is_secured": is_secured,
-                    "deal_date": deal_date,
-                    "has_incremental_facility": has_incremental,
-                    "facility_amount_usd": facility_amount,
-                    "has_adjusted_ebitda_addbacks": has_ebitda_addbacks,
-                    "has_adjusted_ebitda_addbacks_proof_doc": ebitda_proof,
-                    "is_covenant_lite": is_covenant_lite,
-                    "is_covenant_lite_proof_doc": covlite_proof,
-                    "has_mfn_in_credit_agreement": has_mfn,
-                    "has_mfn_in_credit_agreement_proof_doc": mfn_proof,
-                    "has_springing_financial_covenant": has_springing_fc,
-                    "has_springing_financial_covenant_proof_doc": springing_proof,
-                    "has_always_on_maintenance_covenant": has_always_on,
-                    "has_always_on_maintenance_covenant_proof_doc": always_on_proof,
-                    "has_maintenance_financial_covenant": has_maintenance_fc,
-                    "has_maintenance_financial_covenant_proof_doc": maintenance_proof,
-                    "borrower_control": borrower_control,
-                    "sandbox_root": f"/workspace/documents/matters/{matter_id}",
-                    "vault_note_path": doc["path"],
-                    "_open_facts": open_facts,
-                }
-            )
-
         self._flush_bulk_markdown_docs(bulk_docs)
         print(
             f"ClawQL pre-ingest: ontology HSR_SECOND_REQUEST flagged "
@@ -1569,7 +1418,10 @@ class ClawQLLabSession:
             f"bulk_docs={len(bulk_docs)}"
         )
         self._ensure_credit_facility_ontology(credit_docs, expected=credit_count)
-        self._build_lab_duckdb(duckdb_rows, expected_credit=credit_count)
+        self._build_lab_duckdb(
+            expected_credit=credit_count,
+            matters_root=matters_root,
+        )
 
     def _ensure_credit_facility_ontology(
         self, credit_docs: list[dict[str, str]], *, expected: int
@@ -1627,72 +1479,41 @@ class ClawQLLabSession:
             )
 
     def _build_lab_duckdb(
-        self, rows: list[dict[str, Any]], *, expected_credit: int
+        self,
+        *,
+        expected_credit: int,
+        matters_root: Path,
     ) -> None:
-        """Write task-scoped matters.duckdb for clawql_sql."""
-        if not duckdb_available():
-            print(
-                "ClawQL pre-ingest: duckdb not installed — clawql_sql disabled "
-                "(uv pip install duckdb)"
+        """Load DMS into Node DuckDB via MCP data_ingest (packages/clawql-data only)."""
+        payload: dict[str, Any] = {
+            "replace": True,
+            "mattersRoot": str(matters_root.resolve()),
+        }
+        try:
+            result = self._call_clawql_mcp(
+                "data_ingest", payload, timeout=_BULK_INGEST_HTTP_TIMEOUT_S
             )
-            return
-        db_path = default_duckdb_path(self.vault_path)
-        build_matters_duckdb(db_path, rows)
-        os.environ["CLAWQL_LAB_DUCKDB_PATH"] = str(db_path)
-        credit_n = sum(1 for r in rows if r.get("is_credit_facility"))
-        lien_n = sum(
-            1
-            for r in rows
-            if r.get("is_credit_facility") and r.get("mentions_springing_lien") is True
-        )
-        revolver_n = sum(
-            1
-            for r in rows
-            if r.get("is_credit_facility") and r.get("has_revolving_facility") is True
-        )
-        secured_n = sum(
-            1
-            for r in rows
-            if r.get("is_credit_facility") and r.get("is_secured") is True
-        )
-        maint_true = sum(
-            1
-            for r in rows
-            if r.get("is_credit_facility")
-            and r.get("has_maintenance_financial_covenant") is True
-        )
-        maint_null = sum(
-            1
-            for r in rows
-            if r.get("is_credit_facility")
-            and r.get("has_maintenance_financial_covenant") is None
-        )
-        open_n = sum(len(r.get("_open_facts") or []) for r in rows)
-        deal_n = sum(1 for r in rows if r.get("deal_value_usd") is not None)
-        deal_b = sum(
-            1
-            for r in rows
-            if isinstance(r.get("deal_value_usd"), (int, float))
-            and float(r["deal_value_usd"]) >= 1_000_000_000.0
-        )
-        hsr_dated = sum(
-            1
-            for r in rows
-            if r.get("is_hsr_second_request") and r.get("hsr_second_request_date")
-        )
+            body = _mcp_tool_text(result)
+        except Exception as exc:  # noqa: BLE001
+            raise RuntimeError(
+                "ClawQL data_ingest failed. Enable CLAWQL_ENABLE_DATA=1 on the "
+                f"MCP server (Node DuckDB). Python duckdb is not used. {exc}"
+            ) from exc
+        try:
+            parsed = json.loads(body) if body.strip().startswith("{") else {}
+        except json.JSONDecodeError:
+            parsed = {"raw": body}
+        if isinstance(parsed, dict) and parsed.get("ok") is False:
+            raise RuntimeError(f"ClawQL data_ingest error: {parsed.get('error') or body}")
+        matter_count = parsed.get("matterCount") if isinstance(parsed, dict) else None
+        doc_count = parsed.get("documentCount") if isinstance(parsed, dict) else None
+        open_n = parsed.get("openFactCount") if isinstance(parsed, dict) else None
+        db_path = parsed.get("path") if isinstance(parsed, dict) else "data_ingest"
         print(
-            f"ClawQL pre-ingest: DuckDB {db_path} rows={len(rows)} "
-            f"is_credit_facility={credit_n} (expected {expected_credit}) "
-            f"credit_facilities.mentions_springing_lien={lien_n} "
-            f"has_revolving_facility={revolver_n} is_secured={secured_n} "
-            f"maintenance_fc true={maint_true} null={maint_null} "
-            f"deal_value_usd nonnull={deal_n} ge_1b={deal_b} "
-            f"hsr_sr_dated={hsr_dated} open_facts={open_n}"
+            f"ClawQL pre-ingest: Node DuckDB {db_path} "
+            f"matters={matter_count} documents={doc_count} open_facts={open_n} "
+            f"(ontology CREDIT_FACILITY expected {expected_credit})"
         )
-        if expected_credit and credit_n != expected_credit:
-            print(
-                "ClawQL pre-ingest: WARNING DuckDB credit_facility count mismatch"
-            )
 
     def _flush_bulk_markdown_docs(self, documents: list[dict[str, str]]) -> None:
         """Write many vault notes via ingest_external_knowledge (≤50/call).
