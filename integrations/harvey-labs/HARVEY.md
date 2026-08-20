@@ -58,6 +58,10 @@ ClawQL product (SQL, vault, memory) runs in **Node / EffectTS** behind MCP. The 
 
 Current ClawQL stack: `ts-clawql-data-v2` — see [`stack-version.json`](stack-version.json).
 
+## Why old scores/traces were thrown out
+
+Shareable postmortem: [`docs/benchmarks/harvey-lab-python-duckdb-postmortem.md`](../../docs/benchmarks/harvey-lab-python-duckdb-postmortem.md).
+
 ## LAB rules / submission hygiene
 
 Full checklist: [`docs/benchmarks/harvey-lab-rules-compliance.md`](../../docs/benchmarks/harvey-lab-rules-compliance.md).
