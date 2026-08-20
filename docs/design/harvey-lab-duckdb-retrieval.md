@@ -1,8 +1,8 @@
-# Harvey LAB retrieval: DuckDB / SQL-first (maps to `clawql-data`)
+# Harvey LAB retrieval: DuckDB / SQL-first (`packages/clawql-data`)
 
-Status: **LAB spike shipped** (2026-08-15) — `clawql_lab_duckdb.py` +
-`clawql_sql` tool + Pattern F SQL-first nudges. `clawql-data` remains 📋 Planned
-in the vision roadmap; this is the thin adapter path before that package.
+Status: **Shipped** (2026-08-20) — `packages/clawql-data` + MCP `data_query` /
+`data_ingest` + Node pre-ingest (`lab-pre-ingest.mjs`). Python `clawql_lab_duckdb`
+is **removed**. See [`harvey-lab-stack-lineage.md`](../benchmarks/harvey-lab-stack-lineage.md).
 
 Related: [[Harvey LAB ontology Pattern E]], task-018 probe arc (Fix 5–8),
 `docs/vision/clawql-vision-roadmap.md` (`clawql-data`).
@@ -193,25 +193,19 @@ Keep `clawql_memory_recall` for memory / hybrid; do not delete it.
 
 When `packages/clawql-data` lands, LAB should consume it rather than own DuckDB:
 
-| Concern   | LAB adapter (near-term)                         | `clawql-data` (target)                               |
-| --------- | ----------------------------------------------- | ---------------------------------------------------- |
-| Engine    | `duckdb` Python in harness or sidecar           | Shared Node/Python provider                          |
-| Load      | Build `matters.duckdb` during ClawQL pre-ingest | `ingestStructured` / table sync from ontology + docs |
-| Query MCP | Thin `duckdb_query` in LAB overlay              | First-class MCP tool `data_query`                    |
-| AuthZ     | Task-scoped file, no network                    | Provider capabilities + tenant scope                 |
-| Operator  | N/A                                             | `spec.data.duckdb` in operator-target-architecture   |
+| Concern   | LAB adapter (current)                                    | `clawql-data`                         |
+| --------- | -------------------------------------------------------- | ------------------------------------- |
+| Engine    | Node DuckDB via MCP (`CLAWQL_ENABLE_DATA=1`)             | `packages/clawql-data` plugin registry |
+| Load      | `lab-pre-ingest.mjs` → MCP `data_ingest`                 | Same MCP tool                         |
+| Query MCP | `lab-mcp-proxy.mjs` → `data_query` as `clawql_sql`       | First-class MCP `data_query`          |
+| AuthZ     | Task-scoped file, no network                             | Provider capabilities + tenant scope  |
 
-**Near-term spike (unblock LAB without waiting for the full package):**
+**Current path (ts-clawql-data-v2):**
 
-1. In `clawql_lab_session._ingest_firm_knowledge_dms`, after detectors run, also
-   write Parquet/CSV or directly create `matters.duckdb`.
-2. Register `clawql_sql` beside existing clawql tools in the chat adapter.
-3. Switch Pattern F prompts to SQL-first.
-4. Log `SELECT count(*) FROM matters WHERE is_credit_facility` next to today’s
-   `CREDIT_FACILITY flagged 12/266` line — same N, better agent UX.
-
-**Later:** replace the spike with `clawql-data` and keep the same SQL dialect /
-table names so agent skills transfer.
+1. `lab-vault-seed.mjs` detectors run during `lab-pre-ingest.mjs`.
+2. MCP `data_ingest` creates `matters.duckdb` via `packages/clawql-data`.
+3. Agent calls `clawql_sql` → MCP `data_query`.
+4. Log line: `ClawQL pre-ingest: Node DuckDB … matters=N …`.
 
 ## Benchmark implications
 
@@ -246,8 +240,8 @@ table names so agent skills transfer.
 2. For rare attributes beyond springing lien, do we precompute booleans for a
    small phrase list, or only FTS?
 3. When `clawql-data` exists, is LAB allowed to depend on it in GHA (Node native
-   addons / Python duckdb wheel), or keep Python `duckdb` in the harvey-labs
-   venv only?
+   addons only — **not** Python `duckdb`)? **Yes — required.** GHA builds ClawQL
+   with `CLAWQL_ENABLE_DATA=1`; pre-ingest is Node-only.
 
 ## Suggested next action
 

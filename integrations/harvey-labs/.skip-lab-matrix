@@ -1,0 +1,3 @@
+# Matrix sweeps paused until ts-clawql-data-v2 baseline is green.
+# Remove this file after contiguous 001-025 re-run on Node pre-ingest validates parity.
+# Smoke (PR task 001) and workflow_dispatch still run.

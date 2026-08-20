@@ -52,7 +52,7 @@ async function auditStart() {
       operation: "append",
       category: "lab_run",
       action: "LAB_RUN_START",
-      summary: `harvey-lab-v1 arm=${arm} model=${model} task=${task}`,
+      summary: `harvey-lab-${process.env.CLAWQL_LAB_STACK_VERSION ?? "ts-clawql-data-v2"} arm=${arm} model=${model} task=${task}`,
       correlationId: `harvey-lab:${task}:${arm}`,
     });
   } catch (err) {

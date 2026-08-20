@@ -1,0 +1,12 @@
+{
+  "run_id": "harvey-lab-contiguous-001-025-ts-clawql-data-v2",
+  "stack_version": "ts-clawql-data-v2",
+  "pipeline": "pending clean rerun — run run-contiguous-001-025.sh",
+  "tasks": {},
+  "summary": {
+    "done": 0,
+    "all_pass_count": 0,
+    "perfect_001_010": false,
+    "perfect_001_025": false
+  }
+}

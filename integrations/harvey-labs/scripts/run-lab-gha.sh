@@ -13,6 +13,7 @@
 set -euo pipefail
 
 CLAWQL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+export CLAWQL_LAB_STACK_VERSION="${CLAWQL_LAB_STACK_VERSION:-$(node "${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-stack-version.mjs" | python3 -c 'import json,sys; print(json.load(sys.stdin)["stack_version"])')}"
 WORK="${RUNNER_TEMP:-/tmp}/harvey-labs-work"
 HARVEY_LABS="${WORK}/harvey-labs"
 TASK="${LAB_TASK:-firm-knowledge/tasks/001}"
@@ -156,7 +157,7 @@ python3 "${CLAWQL_ROOT}/integrations/harvey-labs/scripts/apply_clawql_adapter.py
 echo "::endgroup::"
 
 SCORECARD="${RESULTS_OUT}/scorecard-${TASK//\//_}.json"
-echo '{"task":"'"${TASK}"'","model":"'"${MODEL}"'","nemotron_model":"'"${NEMOTRON_MODEL}"'","arms":{}}' >"${SCORECARD}"
+echo '{"task":"'"${TASK}"'","stack_version":"'"${CLAWQL_LAB_STACK_VERSION}"'","model":"'"${MODEL}"'","nemotron_model":"'"${NEMOTRON_MODEL}"'","arms":{}}' >"${SCORECARD}"
 
 ensure_clawql_mcp() {
   if [[ "${CLAWQL_MCP_STARTED:-0}" == "1" ]]; then

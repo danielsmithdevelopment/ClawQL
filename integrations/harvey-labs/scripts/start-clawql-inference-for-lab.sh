@@ -38,6 +38,7 @@ export CLAWQL_INFERENCE_STORE_RUN_SCOPED="${CLAWQL_INFERENCE_STORE_RUN_SCOPED:-1
 export CLAWQL_INFERENCE_PORT="$PORT"
 export CLAWQL_LAB_RUN_ID="$RUN_ID"
 export CLAWQL_INFERENCE_RUN_ID="$RUN_ID"
+export CLAWQL_LAB_STACK_VERSION="${CLAWQL_LAB_STACK_VERSION:-$(node "${ROOT}/integrations/harvey-labs/scripts/lab-stack-version.mjs" | python3 -c 'import json,sys; print(json.load(sys.stdin)["stack_version"])')}"
 
 # MLX Nemotron as OpenAI-compatible upstream (provider id: openai/…)
 export CLAWQL_OPENAI_BASE_URL="${CLAWQL_OPENAI_BASE_URL:-http://127.0.0.1:8081/v1}"

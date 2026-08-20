@@ -180,7 +180,12 @@ def patch_run_py(run_py: Path) -> None:
         _pre = os.environ.get("CLAWQL_LAB_PREINGEST_SCRIPT", "").strip()
         if _pre:
             import subprocess
-            subprocess.run(["node", _pre], check=True, env=os.environ)
+            _env = os.environ.copy()
+            _env.setdefault(
+                "CLAWQL_LAB_STACK_VERSION",
+                "ts-clawql-data-v2",
+            )
+            subprocess.run(["node", _pre], check=True, env=_env)
         adapter.pre_task_setup()
         os.environ["CLAWQL_LAB_OUTPUT_DIR"] = str(output_dir)
         os.environ.setdefault("CLAWQL_LAB_DELIVERABLE_GUARD", "1")

@@ -1,5 +1,10 @@
 # Harvey LAB × ClawQL Results — firm-knowledge
 
+> **Stack reset (2026-08-20):** Pre-`ts-clawql-data-v2` numbers below used **Python DuckDB**
+> pre-ingest. They are **not** comparable to the current Node/`packages/clawql-data` stack.
+> See [`harvey-lab-stack-lineage.md`](harvey-lab-stack-lineage.md). Legacy artifacts:
+> [`../../integrations/harvey-labs/results/legacy/python-duckdb-v1/`](../../integrations/harvey-labs/results/legacy/python-duckdb-v1/).
+
 Date: 2026-08-14  
 Models: Nemotron 3.5 Lightning ± ClawQL  
 Batch 2: tasks **001–015** Sonnet 4.6 — [31653266479](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31653266479) (**20% ClawQL all-pass**)  

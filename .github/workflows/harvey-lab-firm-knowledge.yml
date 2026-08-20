@@ -333,10 +333,16 @@ jobs:
           HAS_AN: ${{ steps.secret.outputs.has_anthropic }}
           NEED_OR: ${{ steps.set.outputs.needs_openrouter }}
           NEED_AN: ${{ steps.set.outputs.needs_anthropic }}
+          MODE: ${{ steps.set.outputs.mode }}
         run: |
           set -euo pipefail
           CAN=true
           REASON=""
+          if [ -f integrations/harvey-labs/.skip-lab-matrix ] && [ "${MODE}" != "smoke" ] && [ "${MODE}" != "dispatch" ]; then
+            CAN=false
+            REASON="integrations/harvey-labs/.skip-lab-matrix present — matrix sweeps paused until ts-clawql-data-v2 baseline (remove file to resume)"
+            echo "::warning::${REASON}"
+          fi
           if [ "${NEED_AN}" = "true" ] && [ "${HAS_AN}" != "true" ]; then
             CAN=false
             REASON="ANTHROPIC_API_KEY missing (required for Opus/Sonnet arms or Sonnet judge)"

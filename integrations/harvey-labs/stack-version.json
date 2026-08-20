@@ -1,0 +1,11 @@
+{
+  "stack_version": "ts-clawql-data-v2",
+  "description": "Node/TypeScript Harvey LAB stack: lab-pre-ingest.mjs, lab-mcp-proxy.mjs, packages/clawql-data (MCP data_query/data_ingest), zero agent_loop.py diff",
+  "supersedes": "python-duckdb-v1",
+  "preingest": "integrations/harvey-labs/scripts/lab-pre-ingest.mjs",
+  "mcp_proxy": "integrations/harvey-labs/scripts/lab-mcp-proxy.mjs",
+  "data_engine": "packages/clawql-data (CLAWQL_ENABLE_DATA=1, CLAWQL_DATA_ENGINE=duckdb)",
+  "harness_diff": "run.py marker blocks only — no agent_loop.py patch",
+  "legacy_quarantine": "integrations/harvey-labs/results/legacy/python-duckdb-v1",
+  "training_use": "Only traces tagged ts-clawql-data-v2 may enter fine-tune buckets"
+}

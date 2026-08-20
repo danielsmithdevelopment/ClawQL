@@ -170,9 +170,9 @@ java -Xmx512m -jar tika-server-standard-2.9.2.jar --host 127.0.0.1 --port 9998
 LANGEXTRACT_MODE=demo PORT=8090 \
   python3 deployment/samples/langextract-http/server.py
 
-python3 integrations/harvey-labs/scripts/idp_matter_pipeline.py \
-  --dms /path/to/firm-knowledge/dms/matters
-# expects ALL_GOLD True (exit 0) for 001–025 wired tasks
+node integrations/harvey-labs/scripts/lab-pre-ingest.mjs
+# Requires CLAWQL_MCP_URL + CLAWQL_ENABLE_DATA=1 on MCP server (see start-clawql-for-lab.sh)
+# expects parity with legacy gold cohort counts (CREDIT_FACILITY=12, etc.)
 ```
 
 ## What this does _not_ claim
