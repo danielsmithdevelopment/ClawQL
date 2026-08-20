@@ -979,11 +979,19 @@ def extract_credit_facility_matter_fields(
 extract_matter_fields = extract_credit_facility_matter_fields
 
 
-def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
+def build_matters_duckdb(
+    db_path: Path,
+    rows: list[dict[str, Any]],
+    *,
+    document_rows: list[dict[str, Any]] | None = None,
+) -> Path:
     """Create/replace matters.duckdb from row dicts.
 
     Semantic bool columns may be NULL (unknown). L0 ``open_facts`` stores
     schema-less key/value evidence spans for agent follow-up reads.
+
+    Document inventory rows come from ``document_rows`` and/or each matter
+    row's ``_matter_documents`` list (Layer 2 — practice-area-agnostic).
     """
     import duckdb
 
@@ -1077,6 +1085,10 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
               {FIELD_MAINTENANCE_FC} BOOLEAN,
               {proof_column(FIELD_MAINTENANCE_FC)} VARCHAR,
               {FIELD_BORROWER_CONTROL} VARCHAR,
+              matter_status VARCHAR,
+              matter_date DATE,
+              document_count INTEGER,
+              indexed_doc_count INTEGER,
               sandbox_root VARCHAR,
               vault_note_path VARCHAR
             )
@@ -1094,12 +1106,29 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             )
             """
         )
+        con.execute(
+            """
+            CREATE TABLE matter_documents (
+              matter_id VARCHAR NOT NULL,
+              rel_path VARCHAR NOT NULL,
+              filename VARCHAR NOT NULL,
+              ext VARCHAR NOT NULL,
+              doc_type VARCHAR,
+              doc_date DATE,
+              file_size_bytes BIGINT,
+              key_terms JSON,
+              text_snippet VARCHAR,
+              parse_status VARCHAR,
+              PRIMARY KEY (matter_id, rel_path)
+            )
+            """
+        )
         if rows:
             con.executemany(
                 """
                 INSERT INTO matters VALUES (
                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
                 [
@@ -1140,6 +1169,10 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
                         nullable_bool(r.get(FIELD_MAINTENANCE_FC)),
                         r.get(proof_column(FIELD_MAINTENANCE_FC)) or "",
                         r.get(FIELD_BORROWER_CONTROL),
+                        r.get("matter_status"),
+                        r.get("matter_date") or r.get("deal_date"),
+                        r.get("document_count"),
+                        r.get("indexed_doc_count"),
                         r.get("sandbox_root") or "",
                         r.get("vault_note_path") or "",
                     )
@@ -1164,6 +1197,65 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
                     for e in evidence
                 ],
             )
+        doc_rows: list[dict[str, Any]] = list(document_rows or [])
+        for r in rows:
+            mid = r.get("matter_id") or ""
+            for d in r.get("_matter_documents") or []:
+                if not isinstance(d, dict):
+                    continue
+                row = dict(d)
+                row.setdefault("matter_id", mid)
+                doc_rows.append(row)
+        if doc_rows:
+            seen: set[tuple[str, str]] = set()
+            insert_docs: list[tuple[Any, ...]] = []
+            for d in doc_rows:
+                mid = str(d.get("matter_id") or "")
+                rel = str(d.get("rel_path") or "")
+                if not mid or not rel:
+                    continue
+                key = (mid, rel)
+                if key in seen:
+                    continue
+                seen.add(key)
+                kt = d.get("key_terms")
+                if isinstance(kt, (dict, list)):
+                    kt_json = json.dumps(kt)
+                elif kt is None or kt == "":
+                    kt_json = None
+                else:
+                    kt_json = str(kt)
+                insert_docs.append(
+                    (
+                        mid,
+                        rel,
+                        str(d.get("filename") or Path(rel).name),
+                        str(d.get("ext") or Path(rel).suffix.lstrip(".")).lower(),
+                        d.get("doc_type"),
+                        d.get("doc_date"),
+                        d.get("file_size_bytes"),
+                        kt_json,
+                        (str(d.get("text_snippet") or "")[:500] or None),
+                        d.get("parse_status") or "skipped",
+                    )
+                )
+            if insert_docs:
+                con.executemany(
+                    """
+                    INSERT INTO matter_documents VALUES (
+                      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    )
+                    """,
+                    insert_docs,
+                )
+                con.execute(
+                    "CREATE INDEX idx_matter_documents_filename "
+                    "ON matter_documents(filename)"
+                )
+                con.execute(
+                    "CREATE INDEX idx_matter_documents_doc_type "
+                    "ON matter_documents(doc_type)"
+                )
         con.execute(
             """
             CREATE VIEW credit_facilities AS
@@ -1279,6 +1371,20 @@ def build_matters_duckdb(db_path: Path, rows: list[dict[str, Any]]) -> Path:
             ORDER BY matter_id, fact_key
             """
         )
+        con.execute(
+            """
+            CREATE VIEW documents_by_type AS
+            SELECT
+              d.matter_id,
+              m.client_short_name,
+              m.practice_area,
+              d.filename,
+              d.doc_type,
+              d.rel_path
+            FROM matter_documents d
+            LEFT JOIN matters m ON m.matter_id = d.matter_id
+            """
+        )
     finally:
         con.close()
     return db_path
@@ -1341,6 +1447,11 @@ def run_readonly_sql(db_path: Path, sql: str) -> dict[str, Any]:
                 "NULL semantic bools mean UNKNOWN (not absence). "
                 "Do not conclude 0/N from WHERE col=false or empty views when "
                 "many rows are NULL — query open_facts and/or read docs. "
+                "Pattern G: for Capital Markets / Restructuring / lock-up / "
+                "withdrawal / DIP asks, filter practice_area first, then JOIN "
+                "matter_documents (filename / doc_type / key_terms JSON). "
+                "Zero cohort → write negative deliverable; never substitute "
+                "credit-facility matters. "
                 "Examples: "
                 "SELECT matter_id, client_short_name, hsr_second_request_proof_doc "
                 "FROM matters WHERE is_hsr_second_request; "
@@ -1357,7 +1468,13 @@ def run_readonly_sql(db_path: Path, sql: str) -> dict[str, Any]:
                 "has_maintenance_financial_covenant_proof_doc FROM matters "
                 "WHERE is_credit_facility AND "
                 "has_maintenance_financial_covenant = true; "
-                "SELECT * FROM open_facts WHERE fact_key LIKE '%maintenance%';"
+                "SELECT * FROM open_facts WHERE fact_key LIKE '%maintenance%'; "
+                "SELECT m.matter_id, d.filename, d.doc_type FROM matters m "
+                "JOIN matter_documents d ON m.matter_id = d.matter_id "
+                "WHERE d.doc_type = 'lock-up-agreement' OR "
+                "d.filename ILIKE '%lock-up%'; "
+                "SELECT d.key_terms->>'lock_up_period_days' FROM matter_documents d "
+                "WHERE d.doc_type = 'lock-up-agreement';"
             ),
         }
     except Exception as exc:  # noqa: BLE001
