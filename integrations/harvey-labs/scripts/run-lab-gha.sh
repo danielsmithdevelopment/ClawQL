@@ -152,8 +152,11 @@ sudo apt-get install -y -qq pandoc >/dev/null 2>&1 || true
 echo "::endgroup::"
 
 echo "::group::Apply ClawQL adapter overlay"
+# --openrouter-hooks: ClawQL GHA only (routes stock Anthropic/judge via OpenRouter).
+# Harvey using our adapter should apply WITHOUT this flag — see HARVEY.md.
 python3 "${CLAWQL_ROOT}/integrations/harvey-labs/scripts/apply_clawql_adapter.py" \
-  --harvey-labs "${HARVEY_LABS}"
+  --harvey-labs "${HARVEY_LABS}" \
+  --openrouter-hooks
 echo "::endgroup::"
 
 SCORECARD="${RESULTS_OUT}/scorecard-${TASK//\//_}.json"

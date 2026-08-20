@@ -4,6 +4,8 @@ Adapter overlay for [`harveyai/harvey-labs`](https://github.com/harveyai/harvey-
 
 **Stack:** `ts-clawql-data-v2` — Node pre-ingest + MCP `data_query`/`data_ingest` via [`packages/clawql-data`](../../packages/clawql-data). **No Python DuckDB.** See [`stack-version.json`](stack-version.json) and [`docs/benchmarks/harvey-lab-stack-lineage.md`](../../docs/benchmarks/harvey-lab-stack-lineage.md).
 
+**Harvey:** Read [`HARVEY.md`](HARVEY.md) first. We never touch `agent_loop.py`. Default `apply_clawql_adapter.py` copies our adapters + minimal `run.py` hooks only.
+
 ## Three arms → Nemotron pair first
 
 | Arm | Model flag | Meaning | Needs Anthropic? |

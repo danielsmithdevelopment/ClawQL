@@ -39,7 +39,8 @@ Path(os.environ["AGG"]).write_text(json.dumps({
 PY
 
 python3 "${WT}/integrations/harvey-labs/scripts/apply_clawql_adapter.py" \
-  --harvey-labs "${HARVEY_LABS}" || true
+  --harvey-labs "${HARVEY_LABS}" \
+  --openrouter-hooks || true
 
 for i in $(seq 1 25); do
   t=$(printf '%03d' "$i")

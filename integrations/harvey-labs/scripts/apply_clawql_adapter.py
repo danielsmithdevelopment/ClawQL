@@ -1,9 +1,19 @@
 #!/usr/bin/env python3
-"""Apply ClawQL adapter files + run.py wiring into a harvey-labs checkout.
+"""Apply ClawQL adapter overlay into a harvey-labs checkout.
+
+Harvey contract (non-negotiable):
+  - Never modify harness/agent_loop.py or other Harvey core logic.
+  - Default apply: copy OUR adapter files + minimal run.py marker hooks so
+    ``clawql/`` / ``clawql-cc/`` resolve and ClawQL tools route correctly.
+  - Do NOT rewrite Harvey-authored adapters (anthropic.py, judge.py, …)
+    unless ``--openrouter-hooks`` is explicitly requested (ClawQL GHA only).
 
 Usage:
   python integrations/harvey-labs/scripts/apply_clawql_adapter.py \\
       --harvey-labs /path/to/harvey-labs
+
+  # ClawQL OpenRouter GHA / local OR routing only:
+  python …/apply_clawql_adapter.py --harvey-labs … --openrouter-hooks
 """
 
 from __future__ import annotations
@@ -59,18 +69,9 @@ CREATE_ADAPTER_HOOK = '''
 {end}
 '''.format(begin=MARKER_BEGIN, end=MARKER_END)
 
-MAIN_HOOK = '''
-{begin}
-    clawql_adapter = None
-    _prov = args.model.split("/", 1)[0]
-    if _prov in {{"clawql", "clawql-cc"}}:
-        os.environ["CLAWQL_LAB_TASK_ID"] = args.task
-        os.environ["CLAWQL_LAB_DOCUMENTS_DIR"] = task["docs_dir"]
-{end}
-'''.format(begin=MARKER_BEGIN + "-main", end=MARKER_END + "-main")
-
 
 def copy_files(src_root: Path, dest_root: Path) -> None:
+    """Copy ClawQL-authored overlay files only (never overwrite Harvey core)."""
     pairs = [
         (
             src_root / "harness" / "adapters" / "clawql.py",
@@ -124,10 +125,14 @@ def _replace_block(text: str, begin: str, end: str, replacement: str) -> str:
 
 
 def patch_run_py(run_py: Path) -> None:
+    """Minimal run.py hooks — register ClawQL providers + tool executor.
+
+    Does not touch agent_loop.py. Does not change baseline ToolExecutor path
+    except when the selected model is a ClawQL adapter.
+    """
     text = run_py.read_text(encoding="utf-8")
     original = text
 
-    # Ensure imports we need are present (os/Path already used in run.py).
     if "from harness.clawql_tools import ClawQLToolExecutor" not in text:
         text = text.replace(
             "from harness.tools import ToolExecutor, get_all_tool_definitions",
@@ -135,7 +140,6 @@ def patch_run_py(run_py: Path) -> None:
             "from harness.clawql_tools import ClawQLToolExecutor",
         )
 
-    # Inject clawql provider into create_adapter after provider split.
     create_hook = CREATE_ADAPTER_HOOK.strip() + "\n"
     if MARKER_BEGIN in text:
         text = _replace_block(text, MARKER_BEGIN, MARKER_END, create_hook)
@@ -145,7 +149,6 @@ def patch_run_py(run_py: Path) -> None:
             raise SystemExit("create_adapter anchor not found in run.py")
         text = text.replace(anchor, anchor + "\n" + create_hook + "\n", 1)
 
-    # After task load, set env for ClawQLAdapter factory.
     main_begin = MARKER_BEGIN + "-main"
     main_end = MARKER_END + "-main"
     main_hook = (
@@ -164,7 +167,6 @@ def patch_run_py(run_py: Path) -> None:
             raise SystemExit("main task-load anchor not found in run.py")
         text = text.replace(anchor, anchor + "\n" + main_hook + "\n", 1)
 
-    # Replace adapter create + tool executor block for clawql models.
     adapter_begin = MARKER_BEGIN + "-adapter"
     adapter_end = MARKER_END + "-adapter"
     adapter_block = f'''    {adapter_begin}
@@ -180,17 +182,9 @@ def patch_run_py(run_py: Path) -> None:
         _pre = os.environ.get("CLAWQL_LAB_PREINGEST_SCRIPT", "").strip()
         if _pre:
             import subprocess
-            _env = os.environ.copy()
-            _env.setdefault(
-                "CLAWQL_LAB_STACK_VERSION",
-                "ts-clawql-data-v2",
-            )
-            subprocess.run(["node", _pre], check=True, env=_env)
+            subprocess.run(["node", _pre], check=True, env=os.environ)
         adapter.pre_task_setup()
         os.environ["CLAWQL_LAB_OUTPUT_DIR"] = str(output_dir)
-        os.environ.setdefault("CLAWQL_LAB_DELIVERABLE_GUARD", "1")
-        os.environ.setdefault("CLAWQL_LAB_REQUIRE_RECALL", "1")
-        os.environ.setdefault("CLAWQL_LAB_GROUNDING_WONDER", "1")
         tool_executor = ClawQLToolExecutor(
             clawql_adapter=adapter,
             sandbox=sandbox,
@@ -225,7 +219,6 @@ def patch_run_py(run_py: Path) -> None:
             raise SystemExit("adapter/tool_executor block not found in run.py")
         text = text.replace(old, adapter_block + "\n", 1)
 
-    # Append system prompt extension for ClawQL.
     if "system_prompt_extra" not in text.split("system_prompt = SYSTEM_PROMPT_PREAMBLE", 1)[-1][:400]:
         text = text.replace(
             "    system_prompt = SYSTEM_PROMPT_PREAMBLE\n",
@@ -233,7 +226,6 @@ def patch_run_py(run_py: Path) -> None:
             1,
         )
 
-    # Cleanup after run.
     cleanup_begin = MARKER_BEGIN + "-cleanup"
     cleanup_end = MARKER_END + "-cleanup"
     cleanup_block = f'''    {cleanup_begin}
@@ -279,13 +271,13 @@ def patch_run_py(run_py: Path) -> None:
 
     if text != original:
         run_py.write_text(text, encoding="utf-8")
-        print(f"patched {run_py}")
+        print(f"patched {run_py} (ClawQL marker hooks only)")
     else:
         print(f"no changes needed for {run_py}")
 
 
 def patch_openrouter_clients(harvey_labs: Path) -> None:
-    """Route Anthropic agent + judge clients through OpenRouter when configured."""
+    """OPTIONAL — ClawQL GHA only. Mutates Harvey-authored anthropic.py / judge.py."""
     anth = harvey_labs / "harness" / "adapters" / "anthropic.py"
     text = anth.read_text(encoding="utf-8")
     begin, end = "# --- clawql-openrouter begin ---", "# --- clawql-openrouter end ---"
@@ -312,12 +304,11 @@ def patch_openrouter_clients(harvey_labs: Path) -> None:
             1,
         )
     anth.write_text(text, encoding="utf-8")
-    print(f"patched {anth}")
+    print(f"patched {anth} (--openrouter-hooks)")
 
     judge = harvey_labs / "evaluation" / "judge.py"
     jtext = judge.read_text(encoding="utf-8")
     jbegin, jend = "# --- clawql-openrouter-judge begin ---", "# --- clawql-openrouter-judge end ---"
-    # Body must stay indented under ``if self.provider == "anthropic":``
     jblock = f"""        {jbegin}
             from harness.adapters.clawql_openrouter import (
                 make_anthropic_client,
@@ -328,11 +319,9 @@ def patch_openrouter_clients(harvey_labs: Path) -> None:
         {jend}
 """
     if jbegin in jtext:
-        # Re-apply from markers — find the if-anthropic block markers.
         text_begin = jtext.find(jbegin)
         text_end = jtext.find(jend)
         if text_begin != -1 and text_end != -1:
-            # Expand to full line starts
             line_begin = jtext.rfind("\n", 0, text_begin) + 1
             line_end = jtext.find("\n", text_end)
             if line_end == -1:
@@ -350,10 +339,11 @@ def patch_openrouter_clients(harvey_labs: Path) -> None:
             1,
         )
     judge.write_text(jtext, encoding="utf-8")
-    print(f"patched {judge}")
+    print(f"patched {judge} (--openrouter-hooks)")
+
 
 def patch_run_eval_judge_factory(harvey_labs: Path) -> None:
-    """Route Arm C / OpenRouter judge models through OpenRouterChatJudge."""
+    """OPTIONAL — ClawQL GHA only. Mutates Harvey-authored run_eval.py."""
     run_eval = harvey_labs / "evaluation" / "run_eval.py"
     text = run_eval.read_text(encoding="utf-8")
     begin = "# --- clawql-judge-factory begin ---"
@@ -372,7 +362,6 @@ def _clawql_make_judge(model: str):
             raise SystemExit("run_eval.py Judge import anchor not found")
         text = text.replace(anchor, anchor + "\n" + factory + "\n", 1)
 
-    # Prefer factory for CLI judge construction.
     text = text.replace(
         "judge = Judge(model=args.judge_model)",
         "judge = _clawql_make_judge(args.judge_model)",
@@ -382,11 +371,25 @@ def _clawql_make_judge(model: str):
         "judge = _clawql_make_judge(judge_model)",
     )
     run_eval.write_text(text, encoding="utf-8")
-    print(f"patched {run_eval}")
+    print(f"patched {run_eval} (--openrouter-hooks)")
+
+
+def assert_no_agent_loop_patch(harvey_labs: Path) -> None:
+    agent_loop = harvey_labs / "harness" / "agent_loop.py"
+    if not agent_loop.exists():
+        return
+    text = agent_loop.read_text(encoding="utf-8")
+    if "clawql" in text.lower() or MARKER_BEGIN in text:
+        raise SystemExit(
+            "REFUSING: agent_loop.py contains ClawQL markers — Harvey core must stay stock. "
+            "Restore from upstream harvey-labs and re-apply."
+        )
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Apply ClawQL overlay into harvey-labs (Harvey core untouched)."
+    )
     parser.add_argument(
         "--harvey-labs",
         type=Path,
@@ -399,14 +402,33 @@ def main() -> int:
         default=Path(__file__).resolve().parents[1],
         help="Path to integrations/harvey-labs in ClawQL",
     )
+    parser.add_argument(
+        "--openrouter-hooks",
+        action="store_true",
+        help=(
+            "Also patch Harvey-authored anthropic.py / judge.py / run_eval.py "
+            "for ClawQL OpenRouter GHA. Off by default — Harvey should not need this."
+        ),
+    )
     args = parser.parse_args()
     if not (args.harvey_labs / "harness" / "run.py").exists():
         print("Not a harvey-labs checkout:", args.harvey_labs, file=sys.stderr)
         return 1
+
     copy_files(args.integration_root, args.harvey_labs)
     patch_run_py(args.harvey_labs / "harness" / "run.py")
-    patch_openrouter_clients(args.harvey_labs)
-    patch_run_eval_judge_factory(args.harvey_labs)
+    assert_no_agent_loop_patch(args.harvey_labs)
+
+    if args.openrouter_hooks:
+        patch_openrouter_clients(args.harvey_labs)
+        patch_run_eval_judge_factory(args.harvey_labs)
+    else:
+        print(
+            "skip openrouter hooks (default) — Harvey-authored anthropic.py / "
+            "judge.py / run_eval.py left stock"
+        )
+
+    print("OK: overlay applied. agent_loop.py untouched.")
     return 0
 
 

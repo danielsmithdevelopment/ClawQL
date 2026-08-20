@@ -194,8 +194,11 @@ command -v pandoc >/dev/null 2>&1 || true
 echo "::endgroup::"
 
 echo "::group::Apply ClawQL adapter overlay"
+# Local inference uses our OpenRouter-compat clients; GHA-style hooks enabled.
+# Harvey stock apply: omit --openrouter-hooks (see HARVEY.md).
 python3 "${CLAWQL_ROOT}/integrations/harvey-labs/scripts/apply_clawql_adapter.py" \
-  --harvey-labs "${HARVEY_LABS}"
+  --harvey-labs "${HARVEY_LABS}" \
+  --openrouter-hooks
 echo "::endgroup::"
 
 SCORECARD="${RESULTS_OUT}/scorecard-${TASK//\//_}-local.json"
