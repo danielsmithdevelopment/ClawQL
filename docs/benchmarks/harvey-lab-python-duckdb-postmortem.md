@@ -103,13 +103,13 @@ We did **not** “re-label” old scores as v2. That would have been a second li
 | Local pre-v2 call-store                         | Quarantine; do not train                                    |
 | Harvey outreach                                 | Blocked until clean v2 ledger + preferably Sonnet 4.6 judge |
 
-Operator recovery:
+Operator recovery (full checklist): [`harvey-lab-ts-v2-smoke-gate.md`](harvey-lab-ts-v2-smoke-gate.md).
 
 ```bash
 # Quarantine local call-store shards from the Python era
 bash integrations/harvey-labs/scripts/quarantine-legacy-call-store.sh
 
-# Clean measurement on the real stack
+# Clean measurement on the real stack (only after task 001 smoke gate)
 bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh
 # → results/ts-v2/aggregate-contiguous-001-025.json with stack_version ts-clawql-data-v2
 ```
