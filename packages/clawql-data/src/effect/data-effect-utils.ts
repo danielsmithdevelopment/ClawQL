@@ -1,9 +1,26 @@
 import { Effect } from "effect";
+import { DataError } from "./data-errors.js";
 
-/** Lift Promise IO into Effect (errors become defects at MCP boundary). */
-export function dataFromPromise<A>(fn: () => Promise<A>): Effect.Effect<A, never> {
+/** Lift a Promise into Effect with {@link DataError} on failure. */
+export function dataFromPromise<A>(tryFn: () => Promise<A>): Effect.Effect<A, DataError> {
   return Effect.tryPromise({
-    try: fn,
-    catch: (cause) => cause,
-  }).pipe(Effect.catchAll((cause) => Effect.die(cause)));
+    try: tryFn,
+    catch: (cause) =>
+      new DataError({
+        reason: "data async operation failed",
+        cause,
+      }),
+  });
+}
+
+/** Lift sync work that may throw into Effect with {@link DataError}. */
+export function dataFromSync<A>(tryFn: () => A): Effect.Effect<A, DataError> {
+  return Effect.try({
+    try: tryFn,
+    catch: (cause) =>
+      new DataError({
+        reason: "data sync operation failed",
+        cause,
+      }),
+  });
 }
