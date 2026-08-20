@@ -1,0 +1,3 @@
+Stop Python DuckDB 026-050. ClawQL is TypeScript; structured SQL lives in
+packages/clawql-data (Node DuckDB + MCP data_query). chDB is Python and is
+not the engine. Do not burn OpenRouter on the Python sidecar.
