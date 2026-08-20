@@ -15,11 +15,11 @@ We optimized and scored ClawQL on Harvey LAB using a **wrong product architectur
 
 ## What we were supposed to build
 
-| Layer | Language | Role |
-| ----- | -------- | ---- |
-| Harvey harness (`agent_loop`, sandbox, six tools, `run_eval`, stock adapters) | **Their** Python — **untouched** | Benchmark |
-| ClawQL adapters (`clawql.py`, `clawql_chat.py`, …) | Python | Unavoidable glue so Harvey can clone + apply overlay |
-| Vault, DuckDB, memory, ontology, pre-ingest | **Node / EffectTS** via MCP (`packages/clawql-data`, lab `*.mjs`) | The actual product |
+| Layer                                                                         | Language                                                          | Role                                                 |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------- |
+| Harvey harness (`agent_loop`, sandbox, six tools, `run_eval`, stock adapters) | **Their** Python — **untouched**                                  | Benchmark                                            |
+| ClawQL adapters (`clawql.py`, `clawql_chat.py`, …)                            | Python                                                            | Unavoidable glue so Harvey can clone + apply overlay |
+| Vault, DuckDB, memory, ontology, pre-ingest                                   | **Node / EffectTS** via MCP (`packages/clawql-data`, lab `*.mjs`) | The actual product                                   |
 
 That contract was non-negotiable once stated clearly. It matches how ClawQL is sold and how Harvey expects third-party agent-stack submissions: same tasks and grading; extras labeled as stack improvements; core loop not rewritten.
 
@@ -63,14 +63,14 @@ Local `run-lab-local.sh` + clawql-inference wrote call-store JSONL under `$CLAWQ
 
 Taint is about **tool observations and the retrieval path**, not “the LLM said words once.”
 
-| Artifact | Discard for publishable ClawQL claims? | Discard for fine-tune / preference data? | Why |
-| -------- | -------------------------------------- | ---------------------------------------- | --- |
-| Scorecards / aggregates under `results/legacy/python-duckdb-v1/` | **Yes** | N/A (scores, not traces) | Wrong pre-ingest + SQL path; may include loop patches |
-| Harvey `transcript.jsonl` from those runs | **Yes** (as ClawQL evidence) | **Yes** if used as tool-use demos | Tool results ≠ MCP stack |
-| Local `HarveyLAB/call-store/*.jsonl` collected before `ts-clawql-data-v2` | N/A | **Yes** | Tool obs are Python DuckDB; training would teach dead APIs |
-| GHA firm-knowledge matrices on pre-v2 branches | **Yes** | Usually no call-store, but **scores are still wrong-stack** | Same architecture |
-| Domain notes (HSR flags, gold IDs, NULL≠false lessons) | Keep as **engineering knowledge** | Not traces | Ported into Node; numbers still need re-measure |
-| OpenBench B-7 / other OpenBench traces | **No** (separate pipeline) | **No** unless they depended on the deleted Python LAB DuckDB path | Different harness |
+| Artifact                                                                  | Discard for publishable ClawQL claims? | Discard for fine-tune / preference data?                          | Why                                                        |
+| ------------------------------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------- |
+| Scorecards / aggregates under `results/legacy/python-duckdb-v1/`          | **Yes**                                | N/A (scores, not traces)                                          | Wrong pre-ingest + SQL path; may include loop patches      |
+| Harvey `transcript.jsonl` from those runs                                 | **Yes** (as ClawQL evidence)           | **Yes** if used as tool-use demos                                 | Tool results ≠ MCP stack                                   |
+| Local `HarveyLAB/call-store/*.jsonl` collected before `ts-clawql-data-v2` | N/A                                    | **Yes**                                                           | Tool obs are Python DuckDB; training would teach dead APIs |
+| GHA firm-knowledge matrices on pre-v2 branches                            | **Yes**                                | Usually no call-store, but **scores are still wrong-stack**       | Same architecture                                          |
+| Domain notes (HSR flags, gold IDs, NULL≠false lessons)                    | Keep as **engineering knowledge**      | Not traces                                                        | Ported into Node; numbers still need re-measure            |
+| OpenBench B-7 / other OpenBench traces                                    | **No** (separate pipeline)             | **No** unless they depended on the deleted Python LAB DuckDB path | Different harness                                          |
 
 **Nuance people get wrong:** “LLM turns are fine, only tool rows are bad.” For SFT/DPO on **agent** trajectories, the interleaved tool results are the point. Keeping prompt text and dropping tools still leaves a broken episode. Quarantine the shard; do not cherry-pick turns into training buckets unless a human has proven the episode never called the dead path (rare — don’t bother).
 
@@ -95,13 +95,13 @@ We did **not** “re-label” old scores as v2. That would have been a second li
 
 ## Current state (honest)
 
-| Item | State |
-| ---- | ----- |
-| Correct architecture on `main` | Yes (`ts-clawql-data-v2`) |
-| Publishable firm-knowledge ledger on that stack | **No** — must re-run |
-| Legacy 001–010 / 001–025 “perfect” aggregates | Archaeology only |
-| Local pre-v2 call-store | Quarantine; do not train |
-| Harvey outreach | Blocked until clean v2 ledger + preferably Sonnet 4.6 judge |
+| Item                                            | State                                                       |
+| ----------------------------------------------- | ----------------------------------------------------------- |
+| Correct architecture on `main`                  | Yes (`ts-clawql-data-v2`)                                   |
+| Publishable firm-knowledge ledger on that stack | **No** — must re-run                                        |
+| Legacy 001–010 / 001–025 “perfect” aggregates   | Archaeology only                                            |
+| Local pre-v2 call-store                         | Quarantine; do not train                                    |
+| Harvey outreach                                 | Blocked until clean v2 ledger + preferably Sonnet 4.6 judge |
 
 Operator recovery:
 
@@ -145,8 +145,8 @@ The agent work did not merely “take a detour.” It **built the wrong system**
 
 ## Related
 
-- [`harvey-lab-stack-lineage.md`](harvey-lab-stack-lineage.md) — taint matrix  
-- [`harvey-lab-rules-compliance.md`](harvey-lab-rules-compliance.md) — upstream LAB rules  
-- [`integrations/harvey-labs/HARVEY.md`](../../integrations/harvey-labs/HARVEY.md) — overlay contract  
-- [`integrations/harvey-labs/results/legacy/python-duckdb-v1/`](../../integrations/harvey-labs/results/legacy/python-duckdb-v1/) — quarantined artifacts  
+- [`harvey-lab-stack-lineage.md`](harvey-lab-stack-lineage.md) — taint matrix
+- [`harvey-lab-rules-compliance.md`](harvey-lab-rules-compliance.md) — upstream LAB rules
+- [`integrations/harvey-labs/HARVEY.md`](../../integrations/harvey-labs/HARVEY.md) — overlay contract
+- [`integrations/harvey-labs/results/legacy/python-duckdb-v1/`](../../integrations/harvey-labs/results/legacy/python-duckdb-v1/) — quarantined artifacts
 - PR [#936](https://github.com/danielsmithdevelopment/ClawQL/pull/936) — architecture reset merged to `main`
