@@ -1,7 +1,7 @@
-# Pattern G / document-inventory theory test — clawql-only 026–050.
-# Baseline already scored this range; do not re-run nemotron arm.
-# Agent: nvidia/nemotron-3.5-lightning (OpenRouter)
-# Judge: claude-sonnet-4-6 (GHA default for nemotron-sweep marker)
-# 25 cells
-# After this matrix completes, re-arm nemotron-clawql 1-25 for regression.
-nemotron-clawql 26-50
+# Fix-only branch — do NOT arm a sweep here.
+# Live 026–050 theory test is on cursor/harvey-lab-inventory-sweep-4ff0
+# (run 32329764178). Pushing a 26-50 marker on this branch would start a
+# second matrix and burn OpenRouter quota.
+#
+# After 32329764178 finishes, overlay this import-re fix onto the sweep
+# branch and resume failed cells only.
