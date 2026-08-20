@@ -17,6 +17,7 @@ export const TIER_PRESET_SPECS: Record<
       hitlLabelStudio: { enabled: false },
     },
     sandbox: { enabled: false },
+    data: { enabled: false },
     ouroboros: { enabled: false },
   },
   standard: {
@@ -31,6 +32,7 @@ export const TIER_PRESET_SPECS: Record<
       hitlLabelStudio: { enabled: false },
     },
     sandbox: { enabled: false },
+    data: { enabled: false },
     ouroboros: { enabled: false },
   },
   enterprise: {
@@ -51,6 +53,7 @@ export const TIER_PRESET_SPECS: Record<
       hitlLabelStudio: { enabled: false },
     },
     sandbox: { enabled: false },
+    data: { enabled: false },
     ouroboros: { enabled: false },
   },
 };
@@ -116,6 +119,7 @@ export function applyTierPreset(spec: ClawQLInstanceSpecV1Alpha1): ClawQLInstanc
     documents: mergeDocuments(preset.documents, spec.documents),
     automation: mergeAutomation(preset.automation, spec.automation),
     sandbox: mergeToggleSection(preset.sandbox, spec.sandbox),
+    data: mergeToggleSection(preset.data, spec.data),
     ouroboros: mergeOuroboros(preset.ouroboros, spec.ouroboros),
     mcp: spec.mcp,
   };

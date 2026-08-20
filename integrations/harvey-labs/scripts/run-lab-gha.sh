@@ -13,6 +13,7 @@
 set -euo pipefail
 
 CLAWQL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+export CLAWQL_LAB_STACK_VERSION="${CLAWQL_LAB_STACK_VERSION:-$(node "${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-stack-version.mjs" | python3 -c 'import json,sys; print(json.load(sys.stdin)["stack_version"])')}"
 WORK="${RUNNER_TEMP:-/tmp}/harvey-labs-work"
 HARVEY_LABS="${WORK}/harvey-labs"
 TASK="${LAB_TASK:-firm-knowledge/tasks/001}"
@@ -92,9 +93,6 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 cd "${HARVEY_LABS}"
 uv sync
-# LAB ClawQL SQL-first retrieval (matters.duckdb / clawql_sql)
-uv pip install duckdb >/dev/null
-echo "::notice::Installed duckdb for clawql_sql"
 
 start_lab_idp_sidecars() {
   # Tika (parse) + LangExtract demo (Matter schema fill) for clawql arms only.
@@ -154,12 +152,15 @@ sudo apt-get install -y -qq pandoc >/dev/null 2>&1 || true
 echo "::endgroup::"
 
 echo "::group::Apply ClawQL adapter overlay"
+# --openrouter-hooks: ClawQL GHA only (routes stock Anthropic/judge via OpenRouter).
+# Harvey using our adapter should apply WITHOUT this flag — see HARVEY.md.
 python3 "${CLAWQL_ROOT}/integrations/harvey-labs/scripts/apply_clawql_adapter.py" \
-  --harvey-labs "${HARVEY_LABS}"
+  --harvey-labs "${HARVEY_LABS}" \
+  --openrouter-hooks
 echo "::endgroup::"
 
 SCORECARD="${RESULTS_OUT}/scorecard-${TASK//\//_}.json"
-echo '{"task":"'"${TASK}"'","model":"'"${MODEL}"'","nemotron_model":"'"${NEMOTRON_MODEL}"'","arms":{}}' >"${SCORECARD}"
+echo '{"task":"'"${TASK}"'","stack_version":"'"${CLAWQL_LAB_STACK_VERSION}"'","model":"'"${MODEL}"'","nemotron_model":"'"${NEMOTRON_MODEL}"'","arms":{}}' >"${SCORECARD}"
 
 ensure_clawql_mcp() {
   if [[ "${CLAWQL_MCP_STARTED:-0}" == "1" ]]; then
@@ -168,6 +169,11 @@ ensure_clawql_mcp() {
   echo "::group::Start ClawQL MCP (task-scoped vault)"
   bash "${CLAWQL_ROOT}/scripts/start-clawql-for-lab.sh" "${TASK}" 8080
   export CLAWQL_MCP_URL="http://127.0.0.1:8080/mcp"
+  # start-clawql-for-lab.sh sets vault for the MCP child only — re-export for pre-ingest.
+  SAFE_TASK_ID="${TASK//\//__}"
+  export CLAWQL_OBSIDIAN_VAULT_PATH="${CLAWQL_LAB_VAULT_ROOT:-$HOME/.ClawQL/HarveyLABVault}/${SAFE_TASK_ID}"
+  export CLAWQL_LAB_PREINGEST_SCRIPT="${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-pre-ingest.mjs"
+  export CLAWQL_LAB_MCP_PROXY="${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-mcp-proxy.mjs"
   CLAWQL_MCP_STARTED=1
   echo "::endgroup::"
 }

@@ -216,6 +216,12 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
   return runMemoryEffect(memoryRecallProgram(input));
 }
 
+export {
+  harveyLabRecallEnabled,
+  maybeEnrichHarveyLabRecall,
+  enrichLabMemoryRecall,
+} from "./harvey-lab-enrich.js";
+
 /** @deprecated Prefer {@link runMemoryRecall} — routes through Effect services. */
 export async function executeMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {
   return runMemoryRecall(input);

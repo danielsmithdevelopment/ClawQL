@@ -66,7 +66,7 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 | clawql-operator      | Kubernetes `ClawQLInstance` CRD, tier-spec, layer composition | 🚧 Scaffold shipped (7.0) — full operator roadmap                              |
 | clawql-release       | Immutable release manifests (Layer 0)                         | ✅ Pipeline shipped (workspaces, IPFS, Lit/x402, Arweave dry-run + live hooks) |
 | clawql-telemetry     | OTEL/Langfuse emission package (never imported by others)     | 📋 Planned — OTEL at MCP transport today                                       |
-| clawql-data          | Structured data / DuckDB leg                                  | 📋 Planned                                                                     |
+| clawql-data          | Structured data / Node DuckDB (`data_query`)                  | ✅ Shipped (opt-in `CLAWQL_ENABLE_DATA=1`)                                     |
 | clawql-printingpress | Document generation                                           | 📋 Planned                                                                     |
 | clawql-goose         | Migrations                                                    | 📋 Planned                                                                     |
 

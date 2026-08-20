@@ -1,5 +1,11 @@
 # Firm-knowledge 001–010 — clawql all-pass handoff (2026-08-16)
 
+> **⚠️ SUPERSEDED — `python-duckdb-v1` only.** These scorecards used Python DuckDB pre-ingest
+> and patched harness paths. They are **quarantined** under
+> [`../results/legacy/python-duckdb-v1/`](../results/legacy/python-duckdb-v1/).
+> Do not cite for current ClawQL claims. Re-run on **`ts-clawql-data-v2`** — see
+> [`../../../docs/benchmarks/harvey-lab-stack-lineage.md`](../../../docs/benchmarks/harvey-lab-stack-lineage.md).
+
 **Audience:** Claude (benchmark review) + operators deciding whether to launch a contiguous “real” run today.  
 **Arm:** `nemotron-clawql` only  
 **Agent:** `openai/mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit` via clawql-inference `:8091` → MLX `:8081`  
@@ -18,7 +24,7 @@ We have a **composed 10/10 all-pass** on firm-knowledge tasks **001–010** for 
 | Single contiguous batch of 001–010 on the *final* overlay, same vault/ingest generation | **Not yet** |
 | Ready to start a contiguous confirmation / “real” run today | **Yes, with that one caveat** |
 
-Artifact: [`../results/aggregate-001-010-perfect.json`](../results/aggregate-001-010-perfect.json)
+Artifact (legacy): [`../results/legacy/python-duckdb-v1/aggregate-001-010-perfect.json`](../results/legacy/python-duckdb-v1/aggregate-001-010-perfect.json)
 
 ---
 

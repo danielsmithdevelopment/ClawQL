@@ -26,6 +26,8 @@ def _load_scorecards(root: Path) -> list[dict[str, Any]]:
             continue
         if not isinstance(data, dict) or "arms" not in data:
             continue
+        if "/legacy/" in str(path) or data.get("stack_version") == "python-duckdb-v1":
+            continue
         data["_source"] = str(path)
         cards.append(data)
     return cards
@@ -61,7 +63,20 @@ def main() -> None:
         default=40,
         help="Treat turns >= this as hitting the agent turn ceiling",
     )
+    ap.add_argument(
+        "--stack-version",
+        default="",
+        help="Harvey LAB stack version tag (default: read stack-version.json)",
+    )
     args = ap.parse_args()
+
+    stack_version = args.stack_version.strip()
+    if not stack_version:
+        sv_path = Path(__file__).resolve().parents[1] / "stack-version.json"
+        if sv_path.exists():
+            stack_version = json.loads(sv_path.read_text(encoding="utf-8")).get(
+                "stack_version", ""
+            )
 
     cards = _load_scorecards(args.artifacts_root)
     by_arm: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -138,6 +153,7 @@ def main() -> None:
         }
 
     out = {
+        "stack_version": stack_version or None,
         "mode": args.mode,
         "task_count_requested": args.task_count,
         "tasks_scored": sorted(tasks_seen),

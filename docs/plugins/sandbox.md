@@ -6,7 +6,7 @@ status: opt-in
 package: clawql-sandbox
 order: 7
 prev: automation
-next: ouroboros
+next: data
 ---
 
 # Sandbox

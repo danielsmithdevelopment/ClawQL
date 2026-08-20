@@ -274,6 +274,9 @@ enableAws: false
 # MCP sandbox_exec — isolated snippets (Kata default in-cluster, Docker, Seatbelt, bridge; #207). Default off.
 enableSandbox: false
 
+# MCP data_query / data_ingest — Node DuckDB (clawql-data). Default off.
+enableData: false
+
 # sandbox_exec **Kata Containers** backend (recommended production): ephemeral Jobs with runtimeClassName.
 # Requires enableSandbox: true, cluster RuntimeClass (e.g. kata-qemu), and RBAC for Jobs/ConfigMaps/Pods/logs.
 # When security.kata.enabled is true and sandboxDocker.enabled is false, chart sets CLAWQL_SANDBOX_BACKEND=kata.

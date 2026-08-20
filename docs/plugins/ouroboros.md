@@ -4,8 +4,8 @@ description: Evolutionary loop MCP tools — seed documents, run loops, inspect 
 slug: ouroboros
 status: opt-in
 package: clawql-ouroboros
-order: 8
-prev: sandbox
+order: 9
+prev: data
 next: payments
 ---
 

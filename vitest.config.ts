@@ -31,6 +31,7 @@ export default defineConfig({
       "packages/clawql-documents/src/**/*.test.ts",
       "packages/clawql-automation/src/**/*.test.ts",
       "packages/clawql-sandbox/src/**/*.test.ts",
+      "packages/clawql-data/src/**/*.test.ts",
       "packages/clawql-ouroboros/src/**/*.test.ts",
       "packages/clawql-operator/src/**/*.test.ts",
       "packages/clawql-inference/src/**/*.test.ts",

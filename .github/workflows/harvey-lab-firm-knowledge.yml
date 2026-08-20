@@ -333,10 +333,16 @@ jobs:
           HAS_AN: ${{ steps.secret.outputs.has_anthropic }}
           NEED_OR: ${{ steps.set.outputs.needs_openrouter }}
           NEED_AN: ${{ steps.set.outputs.needs_anthropic }}
+          MODE: ${{ steps.set.outputs.mode }}
         run: |
           set -euo pipefail
           CAN=true
           REASON=""
+          if [ -f integrations/harvey-labs/.skip-lab-matrix ] && [ "${MODE}" != "dispatch" ]; then
+            CAN=false
+            REASON="integrations/harvey-labs/.skip-lab-matrix present — matrix sweeps paused until ts-clawql-data-v2 baseline (remove file to resume; workflow_dispatch still allowed)"
+            echo "::warning::${REASON}"
+          fi
           if [ "${NEED_AN}" = "true" ] && [ "${HAS_AN}" != "true" ]; then
             CAN=false
             REASON="ANTHROPIC_API_KEY missing (required for Opus/Sonnet arms or Sonnet judge)"
@@ -385,6 +391,7 @@ jobs:
       LAB_JUDGE_MODEL: ${{ needs.resolve-matrix.outputs.judge_model }}
       CLAWQL_LAB_MAX_MATTERS: ${{ needs.resolve-matrix.outputs.max_matters }}
       CLAWQL_ENABLE_MEMORY: "1"
+      CLAWQL_ENABLE_DATA: "1"
       CLAWQL_ONTOLOGY_DB: "1"
       CLAWQL_ONTOLOGY_LLM_EXTRACTION: "0"
     steps:
@@ -496,12 +503,24 @@ jobs:
           retention-days: 30
 
   lab-skip:
-    name: Skip (missing credentials)
+    name: Skip (matrix paused or missing credentials)
     needs: resolve-matrix
     if: needs.resolve-matrix.outputs.can_run != 'true'
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "::warning::Skipped Harvey LAB live matrix — ${{ needs.resolve-matrix.outputs.skip_reason }}"
-          echo "::error::Set the missing GitHub Actions secret(s), then re-run."
-          exit 1
+      - name: Report skip
+        env:
+          REASON: ${{ needs.resolve-matrix.outputs.skip_reason }}
+        run: |
+          set -euo pipefail
+          echo "::warning::Skipped Harvey LAB live matrix — ${REASON}"
+          case "${REASON}" in
+            *".skip-lab-matrix"*)
+              echo "::notice::Intentional pause (.skip-lab-matrix). Not a credential failure."
+              exit 0
+              ;;
+            *)
+              echo "::error::Set the missing GitHub Actions secret(s), then re-run."
+              exit 1
+              ;;
+          esac

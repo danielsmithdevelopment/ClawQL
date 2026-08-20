@@ -14,6 +14,7 @@ import { makeMemoryLayer } from "clawql-memory/plugin";
 import { makeOntologyLayer } from "clawql-ontology/plugin";
 import { makeOuroborosLayer } from "clawql-ouroboros/plugin";
 import { makeSandboxLayer } from "clawql-sandbox/plugin";
+import { makeDataLayer } from "clawql-data/plugin";
 import { makeWebLayer } from "clawql-web/plugin";
 import {
   optionalFlagsFromHorizontalTierSpec,
@@ -74,6 +75,9 @@ export function composeHorizontalPluginLayers(
   }
   if (flags.enableSandbox) {
     layers.push(makeSandboxLayer());
+  }
+  if (flags.enableData) {
+    layers.push(makeDataLayer());
   }
   if (flags.enableWeb) {
     layers.push(makeWebLayer());

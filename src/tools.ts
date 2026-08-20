@@ -3,6 +3,7 @@
  *
  * Core tools: search, execute, then immediately cache + audit (non-negotiable; must not follow optional branches that could throw). audit = in-process ring buffer (#89); cache = in-process LRU KV (#75).
  * Optional: **`sandbox_exec`** when **`CLAWQL_ENABLE_SANDBOX=1`** — Kata (default in-cluster), Docker, Seatbelt, Cloudflare bridge (`CLAWQL_SANDBOX_BACKEND`).
+ * Optional: **`data_query` / `data_ingest` / `data_status`** when **`CLAWQL_ENABLE_DATA=1`** — Node DuckDB (`clawql-data`). Not Python duckdb. Not chDB.
  * memory_ingest / memory_recall / memory_sync — Obsidian vault notes (default on; set CLAWQL_ENABLE_MEMORY=0 to hide; writable vault). memory_sync requires team bucket config (CLAWQL_SYNC_*).
  * Optional: ingest_external_knowledge — bulk Markdown + optional URL fetch (GitHub #40); default on; **`CLAWQL_ENABLE_DOCUMENTS=0`** to hide.
  * Optional: knowledge_search_onyx — Onyx when CLAWQL_ENABLE_ONYX and documents enabled; **`CLAWQL_ENABLE_DOCUMENTS=0`** hides (GitHub #118).

@@ -39,18 +39,22 @@ Valid comparisons: **A vs B** (same Opus). Arm C is compared to Harvey’s publi
 
 ## What’s landed
 
-| Path                                                              | Status                                   |
-| ----------------------------------------------------------------- | ---------------------------------------- |
-| `integrations/harvey-labs/harness/adapters/clawql.py`             | Anthropic + ClawQL (Arms B)              |
-| `integrations/harvey-labs/harness/adapters/clawql_chat.py`        | OpenRouter chat + ClawQL (Arm C)         |
-| `integrations/harvey-labs/harness/adapters/clawql_lab_session.py` | Shared vault / MCP / ingest              |
-| `integrations/harvey-labs/harness/adapters/clawql_openrouter.py`  | Anthropic + OpenAI OpenRouter clients    |
-| `integrations/harvey-labs/scripts/apply_clawql_adapter.py`        | Overlay + `clawql` / `clawql-cc` routing |
-| `integrations/harvey-labs/scripts/run-lab-gha.sh`                 | GHA entrypoint (3 arms)                  |
-| `.github/workflows/harvey-lab-firm-knowledge.yml`                 | `workflow_dispatch`                      |
-| `scripts/start-clawql-for-lab.sh`                                 | Task-scoped MCP + vault                  |
-| `integrations/harvey-labs/tests/test_vault_isolation.py`          | Unit tests                               |
-| `docs/benchmarks/harvey-lab-*.md`                                 | Ledgers + this handoff                   |
+| Path                                                              | Status                                    |
+| ----------------------------------------------------------------- | ----------------------------------------- |
+| `integrations/harvey-labs/harness/adapters/clawql.py`             | Anthropic + ClawQL (Arms B)               |
+| `integrations/harvey-labs/harness/adapters/clawql_chat.py`        | OpenRouter chat + ClawQL (Arm C)          |
+| `integrations/harvey-labs/harness/adapters/clawql_lab_session.py` | Node MCP proxy subprocess (~100 lines)    |
+| `integrations/harvey-labs/scripts/lab-pre-ingest.mjs`             | Node vault seed + MCP `data_ingest`       |
+| `integrations/harvey-labs/scripts/lab-mcp-proxy.mjs`              | Runtime MCP tool execution                |
+| `integrations/harvey-labs/stack-version.json`                     | Canonical stack tag (`ts-clawql-data-v2`) |
+| `docs/benchmarks/harvey-lab-stack-lineage.md`                     | Legacy quarantine + trace taint matrix    |
+| `integrations/harvey-labs/harness/adapters/clawql_openrouter.py`  | Anthropic + OpenAI OpenRouter clients     |
+| `integrations/harvey-labs/scripts/apply_clawql_adapter.py`        | Overlay + `clawql` / `clawql-cc` routing  |
+| `integrations/harvey-labs/scripts/run-lab-gha.sh`                 | GHA entrypoint (3 arms)                   |
+| `.github/workflows/harvey-lab-firm-knowledge.yml`                 | `workflow_dispatch`                       |
+| `scripts/start-clawql-for-lab.sh`                                 | Task-scoped MCP + vault                   |
+| `integrations/harvey-labs/tests/test_openrouter_mapping.py`       | OpenRouter model mapping unit tests       |
+| `docs/benchmarks/harvey-lab-*.md`                                 | Ledgers + this handoff                    |
 
 ## Verified before pause (still true)
 

@@ -39,6 +39,11 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_ONYX: z.string().optional(),
   CLAWQL_ENABLE_OUROBOROS: z.string().optional(),
   CLAWQL_ENABLE_SANDBOX: z.string().optional(),
+  /**
+   * Structured data / Node DuckDB MCP tools (`data_query`, `data_ingest`). Default false —
+   * register with `CLAWQL_ENABLE_DATA=1`. Not Python duckdb and not chDB.
+   */
+  CLAWQL_ENABLE_DATA: z.string().optional(),
   /** Web search/fetch MCP tools (`web_*`). Auto-on when a provider/key is set; `0` forces off. */
   CLAWQL_ENABLE_WEB: z.string().optional(),
   CLAWQL_WEB_SEARCH_PROVIDER: z.string().optional(),
@@ -154,6 +159,11 @@ export type ClawqlOptionalToolFlags = {
    */
   enableSandbox: boolean;
   /**
+   * MCP **`data_query` / `data_ingest` / `data_status`** (`clawql-data`, Node DuckDB).
+   * Default false — register with **`CLAWQL_ENABLE_DATA=1`**.
+   */
+  enableData: boolean;
+  /**
    * MCP **`web_search` / `web_fetch` / `web_screenshot` / `web_interact`** (`clawql-web`).
    * Default false unless `CLAWQL_ENABLE_WEB=1` or a web provider/API key is configured.
    */
@@ -248,6 +258,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
     enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
+    enableData: envTruthy(raw.CLAWQL_ENABLE_DATA),
     enableWeb: resolveEnableWeb(raw),
     enableCodeGraph: envTruthy(raw.CLAWQL_ENABLE_CODEGRAPH),
     enableOntology:

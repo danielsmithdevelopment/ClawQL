@@ -19,6 +19,7 @@ export function isolatedStdioChildEnv(
   // Pin optional tools off so a polluted host clawql.env cannot leak into assertions.
   childEnv.CLAWQL_ENABLE_OUROBOROS = "0";
   childEnv.CLAWQL_ENABLE_SANDBOX = "0";
+  childEnv.CLAWQL_ENABLE_DATA = "0";
   childEnv.CLAWQL_ENABLE_NOTIFY = "0";
   childEnv.CLAWQL_ENABLE_ONYX = "0";
   childEnv.CLAWQL_ENABLE_HITL_LABEL_STUDIO = "0";
