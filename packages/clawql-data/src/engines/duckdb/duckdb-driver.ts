@@ -1,56 +1,16 @@
-/**
- * Node DuckDB is the only structured-data engine in ClawQL.
- * chDB is a Python package and is not supported.
- */
+/** DuckDB driver (`@duckdb/node-api`) — implementation detail of the `duckdb` engine plugin. */
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DuckDBConnection, DuckDBInstance, type DuckDBValue } from "@duckdb/node-api";
+import type { DataQueryOk } from "../types.js";
 
-export type ClawqlDataEngineKind = "duckdb";
-
-export type DataQueryOk = {
-  readonly ok: true;
-  readonly engine: ClawqlDataEngineKind;
-  readonly sql: string;
-  readonly columns: string[];
-  readonly rows: Record<string, unknown>[];
-  readonly rowCount: number;
-  readonly truncated: boolean;
-  readonly hint: string;
-};
-
-export type DataQueryErr = {
-  readonly ok: false;
-  readonly engine?: ClawqlDataEngineKind;
-  readonly sql?: string;
-  readonly error: string;
-};
-
-export type DataQueryResult = DataQueryOk | DataQueryErr;
-
-export const DATA_QUERY_HINT =
-  "Engine is Node DuckDB (packages/clawql-data). NULL semantic bools mean UNKNOWN, not absence. " +
-  "Do not conclude 0/N from WHERE col=false when many rows are NULL — query open_facts and/or read docs. " +
-  "Pattern G: for Capital Markets / Restructuring / lock-up / withdrawal / DIP, filter practice_area first, then JOIN matter_documents " +
-  "(filename / doc_type / json_extract_string(key_terms, '$.…')). Zero cohort → write a negative deliverable; never substitute credit-facility matters. " +
+export const DUCKDB_QUERY_HINT =
+  "NULL semantic bools mean UNKNOWN, not absence. Do not conclude 0/N from WHERE col=false when many rows are NULL — query open_facts and/or read docs. " +
+  "Pattern G: filter practice_area first, then JOIN matter_documents (doc_type / key_terms). " +
   "Examples: SELECT matter_id FROM matters WHERE is_hsr_second_request; " +
-  "SELECT m.matter_id, d.filename, d.doc_type FROM matters m JOIN matter_documents d ON m.matter_id = d.matter_id " +
-  "WHERE d.doc_type = 'lock-up-agreement' OR d.filename ILIKE '%lock-up%'; " +
   "SELECT json_extract_string(d.key_terms, '$.lock_up_period_days') FROM matter_documents d WHERE d.doc_type = 'lock-up-agreement';";
 
-export function resolveDataEngine(env: NodeJS.ProcessEnv = process.env): ClawqlDataEngineKind {
-  const raw = (env.CLAWQL_DATA_ENGINE ?? "duckdb").trim().toLowerCase();
-  if (raw === "" || raw === "duckdb") return "duckdb";
-  if (raw === "chdb" || raw === "clickhouse" || raw === "python" || raw === "python-duckdb") {
-    throw new Error(
-      `CLAWQL_DATA_ENGINE=${raw} is not supported. chDB and Python DuckDB are Python packages. ` +
-        "ClawQL uses Node DuckDB in packages/clawql-data. Set CLAWQL_DATA_ENGINE=duckdb or omit it."
-    );
-  }
-  throw new Error(`Unknown CLAWQL_DATA_ENGINE=${raw}; only duckdb is supported.`);
-}
-
-export function resolveDataPath(env: NodeJS.ProcessEnv = process.env): string {
+export function resolveDuckDbPath(env: NodeJS.ProcessEnv = process.env): string {
   const explicit = env.CLAWQL_DATA_PATH?.trim();
   if (explicit) return explicit;
   const vault = env.CLAWQL_OBSIDIAN_VAULT_PATH?.trim();
@@ -143,7 +103,7 @@ export async function queryDuckDb(
     rows,
     rowCount: rows.length,
     truncated,
-    hint: DATA_QUERY_HINT,
+    hint: DUCKDB_QUERY_HINT,
   };
 }
 

@@ -2,7 +2,12 @@ import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import type { Plugin } from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
-import { getClawqlDataStore } from "../store.js";
+import {
+  dataIngestProgram,
+  dataQueryProgram,
+  dataStatusProgram,
+  runDataEffect,
+} from "../effect/index.js";
 
 export const DATA_PLUGIN_ID = "clawql-data";
 
@@ -12,19 +17,19 @@ export const dataQuerySchema = {
   sql: z
     .string()
     .describe(
-      "Single read-only DuckDB statement (SELECT / WITH / DESCRIBE / SHOW / SUMMARIZE). " +
-        "Node DuckDB only — not Python duckdb and not chDB."
+      "Single read-only SQL statement (SELECT / WITH / DESCRIBE / SHOW / SUMMARIZE). " +
+        "Engine is selected via CLAWQL_DATA_ENGINE (registered plugins in clawql-data)."
     ),
 };
 
 export const dataIngestSchema = {
   matters: z.array(jsonRecord).optional().describe("Matter rows (typed columns + optional _open_facts / _matter_documents)"),
-  documents: z.array(jsonRecord).optional().describe("matter_documents rows; doc_type/key_terms filled in TypeScript when text is present"),
+  documents: z.array(jsonRecord).optional().describe("matter_documents rows"),
   openFacts: z.array(jsonRecord).optional(),
   mattersRoot: z
     .string()
     .optional()
-    .describe("Absolute DMS matters directory. ClawQL walks files and classifies inventory in TypeScript."),
+    .describe("Absolute DMS matters directory — inventory classification runs in clawql-data."),
   replace: z.boolean().optional().describe("Replace existing tables (default true)"),
 };
 
@@ -34,8 +39,8 @@ function textResult(payload: unknown): { content: { type: "text"; text: string }
 
 export async function handleDataQueryToolInput(params: { sql: string }) {
   logMcpToolShape("data_query", { sqlLen: params.sql.length });
-  const store = getClawqlDataStore();
-  return textResult(await store.query(params.sql));
+  const result = await runDataEffect(dataQueryProgram(params.sql));
+  return textResult(result);
 }
 
 export async function handleDataIngestToolInput(params: {
@@ -50,15 +55,16 @@ export async function handleDataIngestToolInput(params: {
     documentCount: params.documents?.length ?? 0,
     hasRoot: Boolean(params.mattersRoot),
   });
-  const store = getClawqlDataStore();
   try {
-    const result = await store.ingest({
-      matters: params.matters,
-      documents: params.documents,
-      openFacts: params.openFacts as never,
-      mattersRoot: params.mattersRoot,
-      replace: params.replace,
-    });
+    const result = await runDataEffect(
+      dataIngestProgram({
+        matters: params.matters,
+        documents: params.documents,
+        openFacts: params.openFacts as never,
+        mattersRoot: params.mattersRoot,
+        replace: params.replace,
+      })
+    );
     return textResult(result);
   } catch (err) {
     return {
@@ -78,7 +84,8 @@ export async function handleDataIngestToolInput(params: {
 }
 
 export async function handleDataStatusToolInput() {
-  return textResult(getClawqlDataStore().status());
+  const status = await runDataEffect(dataStatusProgram());
+  return textResult(status);
 }
 
 export function createDataPlugin(): Plugin {

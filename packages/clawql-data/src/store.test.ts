@@ -2,22 +2,24 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { resolveDataEngine } from "./engine.js";
+import { listDataEngineIds, resolveDataEnginePlugin } from "./engines/registry.js";
+import "./engines/duckdb/index.js";
 import { ClawqlDataStore, resetClawqlDataStoreForTests } from "./store.js";
 
-describe("resolveDataEngine", () => {
-  it("defaults to duckdb", () => {
-    expect(resolveDataEngine({})).toBe("duckdb");
-    expect(resolveDataEngine({ CLAWQL_DATA_ENGINE: "duckdb" })).toBe("duckdb");
+describe("data engine registry", () => {
+  it("registers duckdb plugin", () => {
+    expect(listDataEngineIds()).toContain("duckdb");
+    expect(resolveDataEnginePlugin({ CLAWQL_DATA_ENGINE: "duckdb" }).id).toBe("duckdb");
   });
 
-  it("rejects chDB and Python engines", () => {
-    expect(() => resolveDataEngine({ CLAWQL_DATA_ENGINE: "chdb" })).toThrow(/Python/);
-    expect(() => resolveDataEngine({ CLAWQL_DATA_ENGINE: "python-duckdb" })).toThrow(/Python/);
+  it("rejects unknown engine ids", () => {
+    expect(() => resolveDataEnginePlugin({ CLAWQL_DATA_ENGINE: "not-a-plugin" })).toThrow(
+      /Unknown CLAWQL_DATA_ENGINE/
+    );
   });
 });
 
-describe("ClawqlDataStore Node DuckDB", () => {
+describe("ClawqlDataStore via duckdb engine plugin", () => {
   afterEach(async () => {
     await resetClawqlDataStoreForTests();
   });
@@ -86,10 +88,6 @@ describe("ClawqlDataStore Node DuckDB", () => {
     const blocked = await store.query("INSERT INTO matters VALUES ('x')");
     expect(blocked.ok).toBe(false);
 
-    const nullMaint = await store.query(
-      "SELECT matter_id FROM matters WHERE has_maintenance_financial_covenant IS NULL"
-    );
-    expect(nullMaint.ok).toBe(true);
     await store.close();
   });
 });

@@ -1,26 +1,17 @@
 # clawql-data
 
-Structured data for ClawQL: **Node DuckDB** plus MCP **`data_query`** / **`data_ingest`** / **`data_status`**.
+Structured data MCP tools (`data_query`, `data_ingest`, `data_status`) behind **`CLAWQL_ENABLE_DATA=1`**.
 
-This is a TypeScript package. It does **not** use Python `duckdb` and it does **not** use chDB (ClickHouse-in-process, a Python package).
+## Architecture
 
-## Enable
+- **Effect-TS** services (`src/effect/`) — same pattern as `clawql-sandbox`
+- **Engine plugins** (`src/engines/`) — register via `registerDataEngine(id, factory)`; select with **`CLAWQL_DATA_ENGINE`**
+- **`duckdb`** — first shipped engine plugin (`@duckdb/node-api`)
 
 ```bash
-CLAWQL_ENABLE_DATA=1
-# optional: file path (default `$CLAWQL_OBSIDIAN_VAULT_PATH/lab/matters.duckdb` or `:memory:`)
-# CLAWQL_DATA_PATH=/path/to/matters.duckdb
-# CLAWQL_DATA_ENGINE=duckdb
+export CLAWQL_ENABLE_DATA=1
+export CLAWQL_DATA_ENGINE=duckdb   # optional; default duckdb
+export CLAWQL_DATA_PATH=/tmp/lab.duckdb
 ```
 
-`CLAWQL_DATA_ENGINE=chdb` (or `python`) is rejected on purpose.
-
-## MCP tools
-
-| Tool | Purpose |
-| --- | --- |
-| **`data_query`** | Read-only SQL (`SELECT` / `WITH` / `DESCRIBE` / `SHOW` / `SUMMARIZE`) |
-| **`data_ingest`** | Load `matters` / `matter_documents` / `open_facts`; optional `mattersRoot` filesystem walk |
-| **`data_status`** | Engine (`duckdb`) + database path |
-
-Document inventory classification (`doc_type`, lock-up days, offering withdrawal dates) runs in this package, not in the Harvey LAB Python adapter.
+Harvey LAB vault pre-ingest: `integrations/harvey-labs/scripts/lab-pre-ingest.mjs` (Node, not Python).

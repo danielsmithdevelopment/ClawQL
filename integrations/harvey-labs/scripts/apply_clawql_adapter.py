@@ -89,10 +89,6 @@ def copy_files(src_root: Path, dest_root: Path) -> None:
             dest_root / "harness" / "adapters" / "clawql_lab_session.py",
         ),
         (
-            src_root / "harness" / "adapters" / "clawql_lab_evidence.py",
-            dest_root / "harness" / "adapters" / "clawql_lab_evidence.py",
-        ),
-        (
             src_root / "harness" / "adapters" / "clawql_system_prompt.md",
             dest_root / "harness" / "adapters" / "clawql_system_prompt.md",
         ),
@@ -185,6 +181,10 @@ def patch_run_py(run_py: Path) -> None:
 
     from harness.adapters.clawql_lab_session import is_clawql_lab_adapter
     if is_clawql_lab_adapter(adapter):
+        _pre = os.environ.get("CLAWQL_LAB_PREINGEST_SCRIPT", "").strip()
+        if _pre:
+            import subprocess
+            subprocess.run(["node", _pre], check=True, env=os.environ)
         adapter.pre_task_setup()
         os.environ["CLAWQL_LAB_OUTPUT_DIR"] = str(output_dir)
         os.environ.setdefault("CLAWQL_LAB_DELIVERABLE_GUARD", "1")

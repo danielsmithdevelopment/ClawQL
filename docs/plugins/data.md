@@ -14,7 +14,7 @@ next: ouroboros
 **Plugin ID:** `clawql-data`  
 **Package:** `packages/clawql-data` — `DataPlugin`
 
-Structured SQL over **Node DuckDB**. This is a TypeScript package. It does **not** use Python `duckdb` and it does **not** use chDB.
+Structured SQL via **pluggable data engine plugins** (`CLAWQL_DATA_ENGINE`, default `duckdb`). Effect-TS services in `packages/clawql-data`.
 
 ## MCP tools
 
@@ -29,7 +29,7 @@ Structured SQL over **Node DuckDB**. This is a TypeScript package. It does **not
 | Env                        | Default | Effect                                      |
 | -------------------------- | ------- | ------------------------------------------- |
 | **`CLAWQL_ENABLE_DATA=1`** | off     | Register `DataPlugin` and the `data_*` tools |
-| **`CLAWQL_DATA_PATH`**     | vault `lab/matters.duckdb` or `:memory:` | DuckDB file |
-| **`CLAWQL_DATA_ENGINE`**   | `duckdb` | Only `duckdb` is accepted |
+| **`CLAWQL_DATA_PATH`**     | vault `lab/matters.duckdb` or `:memory:` | Backend database path (engine-specific) |
+| **`CLAWQL_DATA_ENGINE`**   | `duckdb` | Registered engine plugin id (`registerDataEngine`) |
 
 Helm: `enableData: true`.
