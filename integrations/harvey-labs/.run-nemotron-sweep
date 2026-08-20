@@ -1,6 +1,7 @@
-# Generalization test: firm-knowledge 026–050
-# Same protocol as 001–025: Nemotron baseline vs Nemotron+ClawQL.
+# Resume 026–050 generalization sweep — rate-limit failures only.
+# Baseline (nemotron) already scored 042 + 044–050; rerun ClawQL arm only.
 # Agent: nvidia/nemotron-3.5-lightning (OpenRouter)
-# Judge: claude-sonnet-4-6 (hardcoded for this marker in the GHA workflow)
-# 25 tasks × 2 arms = 50 cells
-26-50
+# Judge: claude-sonnet-4-6 (GHA default for nemotron-sweep marker)
+# 8 cells
+nemotron-clawql 42-42
+nemotron-clawql 44-50
