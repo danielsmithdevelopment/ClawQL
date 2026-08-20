@@ -163,6 +163,10 @@ spec:
             - name: CLAWQL_ENABLE_SANDBOX
               value: "1"
             {{- end }}
+            {{- if .Values.enableData }}
+            - name: CLAWQL_ENABLE_DATA
+              value: "1"
+            {{- end }}
             {{- if and .Values.enableSandbox .Values.sandboxKata.enabled (not .Values.sandboxDocker.enabled) }}
             - name: CLAWQL_SANDBOX_BACKEND
               value: "kata"

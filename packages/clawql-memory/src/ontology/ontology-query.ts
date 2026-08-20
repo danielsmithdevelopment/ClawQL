@@ -58,7 +58,8 @@ export type OntologyRecallResult = {
     path: string;
     score: number;
     depth: number;
-    reason: "keyword";
+    /** Structured recalls use `structured_predicate`; never mislabel as keyword. */
+    reason: "structured_predicate" | "keyword";
     snippet: string;
   }>;
   queryType: "structured_predicate";
@@ -328,7 +329,7 @@ export async function runOntologyRecall(
         path: h.path,
         score: h.score,
         depth: 0,
-        reason: "keyword" as const,
+        reason: "structured_predicate" as const,
         snippet: h.snippet,
       })),
       queryType: "structured_predicate",

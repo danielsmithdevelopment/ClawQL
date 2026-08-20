@@ -69,5 +69,6 @@ describe("runOntologyRecall B-7.1", () => {
     expect(result.hits.map((h) => h.entityId)).not.toContain("MAT-2441");
     expect(result.hits.every((h) => (h.fields.escrowPct as number) >= 10)).toBe(true);
     expect(result.hits.every((h) => (h.fields.nonCompeteMonths as number) > 18)).toBe(true);
+    expect(result.results.every((r) => r.reason === "structured_predicate")).toBe(true);
   });
 });

@@ -15,6 +15,8 @@ TypeScript workspace package at [`packages/clawql-ouroboros`](../packages/clawql
 
 **Compensation bridge (payments):** Financial high-impact tools (agent deposits / cash-outs for future SGDOP recruitment) use a DAOS-aligned two-phase commit in [`clawql-payments` AgentCompensationService](../payments/agent-compensation.md) today — file-backed `PENDING_ACTIONS` with `approval_url` / confirm / cancel. MCP naming: `agent_compensation_*_stage` (safe entry) then `*_confirm` (high-impact). A future SGDOP Coordinator should **stage only**; operators / PEP confirm. Interface proposal (port, `recruitmentId`, bounty vs dividends): [`sgdop-coordinator-compensation-bridge.md`](../payments/sgdop-coordinator-compensation-bridge.md). When PEP + NATS KV land (build plan P0-B), swap that store; do not put money movement inside the evolutionary loop package.
 
+**Harvey LAB (simplified Wonder):** firm-knowledge arms use a post-write **deliverable grounding Wonder** nudge (grep claims against cited DMS paths — findings guilty until proven). See [`docs/benchmarks/harvey-lab-ouroboros-grounding-wonder.md`](../benchmarks/harvey-lab-ouroboros-grounding-wonder.md). This is not yet a full `EvolutionaryLoop` on LAB.
+
 ---
 
 ## Install

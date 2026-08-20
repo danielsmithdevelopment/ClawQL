@@ -80,7 +80,7 @@ export function mapVaultResultToNormalizedHit(hit: {
   path: string;
   score: number;
   depth: number;
-  reason: "keyword" | "link" | "vector" | "codegraph";
+  reason: "keyword" | "link" | "vector" | "codegraph" | "structured_predicate";
   linkFrom?: string;
   snippet: string;
 }): NormalizedRecallHit {

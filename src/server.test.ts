@@ -200,6 +200,15 @@ describe("server (stdio)", () => {
     expect(names.has("sandbox_exec")).toBe(true);
   }, 20_000);
 
+  it("registers data_query when CLAWQL_ENABLE_DATA=1", async () => {
+    const names = await listToolNames(
+      isolatedStdioChildEnv(minimalSpec, { CLAWQL_ENABLE_DATA: "1" }),
+      "clawql-stdio-data-on"
+    );
+    expect(names.has("data_query")).toBe(true);
+    expect(names.has("data_ingest")).toBe(true);
+  }, 20_000);
+
   it("hides memory_ingest and memory_recall when CLAWQL_ENABLE_MEMORY=0", async () => {
     const names = await listToolNames(
       isolatedStdioChildEnv(minimalSpec, {

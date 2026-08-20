@@ -13,6 +13,8 @@
 
 ### Added
 
+- **`clawql-data` (Node DuckDB)** — workspace package `packages/clawql-data` registers MCP **`data_query`**, **`data_ingest`**, and **`data_status`** when **`CLAWQL_ENABLE_DATA=1`**. Engine is **Node DuckDB** (`@duckdb/node-api`). Python `duckdb` and chDB are not supported. Harvey LAB `clawql_sql` calls **`data_query`**. Docs: [`docs/plugins/data.md`](docs/plugins/data.md).
+
 - **Helm `managedGateway` hardening** — non-root nginx (uid 101), read-only root + emptyDir, stderr/stdout logs, tunable probes, default NetworkPolicy (DNS + MCP + inference egress). JWT ATR remains on MCP/proxy upstream.
 - **Edge gateway Phase 2 (IDP proxy)** — Worker resolves Shared+/IDP upstream from per-tenant `feature_flags.idp_proxy_origin` or `CLAWQL_IDP_PROXY_ORIGIN`; Pulumi `clawql:idpProxyOrigin` plain_text binding; hop headers `X-ClawQL-Tenant-Id` / `X-Correlation-Id`. Fabric ladder: [`docs/deployment/gateway-fabric.md`](docs/deployment/gateway-fabric.md).
 - **Dedicated VG Managed Edge Gateway boot** — Packer/Pulumi dedicated hosts sync the team vault then start `clawql gateway` (`/mcp` + `/v1` on `:8080`) via `bootstrap-dedicated-gateway.sh`. Package-safe `--profile process` resolves MCP/inference/proxy from checkout or npm `clawql-mcp`; published `bin/clawql-gateway-proxy.mjs`. Config: `clawql:startManagedGateway` (default on for dedicated/enterprise).

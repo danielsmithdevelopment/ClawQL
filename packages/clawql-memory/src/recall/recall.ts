@@ -53,7 +53,7 @@ export type RecallHit = {
   path: string;
   score: number;
   depth: number;
-  reason: "keyword" | "link" | "vector" | "codegraph";
+  reason: "keyword" | "link" | "vector" | "codegraph" | "structured_predicate";
   linkFrom?: string;
   snippet: string;
 };
@@ -215,6 +215,12 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
     await import("../effect/memory-effect-runtime.js");
   return runMemoryEffect(memoryRecallProgram(input));
 }
+
+export {
+  harveyLabRecallEnabled,
+  maybeEnrichHarveyLabRecall,
+  enrichLabMemoryRecall,
+} from "./harvey-lab-enrich.js";
 
 /** @deprecated Prefer {@link runMemoryRecall} — routes through Effect services. */
 export async function executeMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {

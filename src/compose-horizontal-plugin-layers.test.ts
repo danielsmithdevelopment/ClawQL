@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MEMORY_PLUGIN_ID } from "clawql-memory/plugin";
 import { SANDBOX_PLUGIN_ID } from "clawql-sandbox/plugin";
+import { DATA_PLUGIN_ID } from "clawql-data/plugin";
 import { createClawQLApi } from "clawql-api";
 import {
   composeHorizontalPluginLayers,
@@ -14,6 +15,7 @@ describe("composeHorizontalPluginLayers", () => {
       enableMemory: true,
       enableDocuments: false,
       enableSandbox: true,
+      enableData: true,
       enableWeb: false,
       enableOuroboros: false,
       enableSchedule: false,
@@ -44,6 +46,7 @@ describe("composeHorizontalPluginLayers", () => {
     const ids = api.registry.list().map((p) => p.id);
     expect(ids).toContain(MEMORY_PLUGIN_ID);
     expect(ids).toContain(SANDBOX_PLUGIN_ID);
+    expect(ids).toContain(DATA_PLUGIN_ID);
   });
 
   it("maps tier spec to flags and composes layers", () => {

@@ -11,6 +11,8 @@ depends_on: "clawql-inference (gateway, PAL routing, virtual keys) · clawql-str
 
 **Related:** [clawql-inference](./clawql-inference.md) · [PorTAL flywheel](./portal-flywheel.md) · [Harvey LAB pause handoff](../benchmarks/harvey-lab-pause-handoff.md) · [OpenBench B-7](../benchmarks/openbench-b7-calderwood.md) · TypeScript scaffold: [`packages/clawql-inference/src/training/`](../../packages/clawql-inference/src/training/)
 
+> **Harvey LAB (Aug 2026):** Do **not** block the first publishable LAB ledger on this fine-tune flywheel. Arm C uses **Nemotron 3.5 Lightning** (already LAB post-trained by NVIDIA/Trajectory to 8.3% all-pass) **+ ClawQL retrieval**. Run training rounds after Opus A/B (+ Arm C) scores exist, or for domains without a specialized base model.
+
 ---
 
 ## 1. What This Is
