@@ -202,17 +202,40 @@ export function extractDocxText(bytes) {
     const xmlBytes = files["word/document.xml"];
     if (!xmlBytes) return "";
     const xml = new TextDecoder("utf-8", { fatal: false }).decode(xmlBytes);
-    return xml
-      .replace(/<w:tab[^/]*\/>/g, "\t")
-      .replace(/<\/w:p>/g, "\n")
-      .replace(/<[^>]+>/g, "")
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"');
+    return ooxmlDocumentXmlToPlainText(xml);
   } catch {
     return "";
   }
+}
+
+/** OOXML word/document.xml → plain text via `<w:t>` runs (not HTML sanitization). */
+function ooxmlDocumentXmlToPlainText(xml) {
+  const withBreaks = xml
+    .replace(/<w:tab\b[^/]*\/>/g, "\t")
+    .replace(/<\/w:p>/g, "\n");
+  const parts = [];
+  const re = /<w:t\b[^>]*>([^<]*)<\/w:t>/g;
+  let m;
+  let last = 0;
+  while ((m = re.exec(withBreaks)) !== null) {
+    const between = withBreaks.slice(last, m.index);
+    if (between.includes("\n")) parts.push("\n".repeat(between.split("\n").length - 1));
+    if (between.includes("\t")) parts.push("\t");
+    parts.push(decodeXmlTextEntities(m[1]));
+    last = m.index + m[0].length;
+  }
+  return parts.join("");
+}
+
+function decodeXmlTextEntities(s) {
+  return s
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/&amp;/g, "&");
 }
 
 /**
