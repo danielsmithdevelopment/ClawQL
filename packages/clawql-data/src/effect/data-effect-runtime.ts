@@ -5,7 +5,9 @@ import type { DataQueryResult, DataStatus, IngestPayload, IngestResult } from ".
 
 export type DataServices = DataEngineService;
 
-export function dataServicesLiveLayer(env: NodeJS.ProcessEnv = process.env): Layer.Layer<DataServices> {
+export function dataServicesLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<DataServices> {
   return dataEngineLiveLayer(env);
 }
 
@@ -20,19 +22,25 @@ export async function runDataEffect<A>(
   program: Effect.Effect<A, DataError | unknown, DataServices>,
   env?: NodeJS.ProcessEnv
 ): Promise<A> {
-  const exit = await Effect.runPromiseExit(program.pipe(Effect.provide(dataServicesLiveLayer(env))));
+  const exit = await Effect.runPromiseExit(
+    program.pipe(Effect.provide(dataServicesLiveLayer(env)))
+  );
   if (Exit.isSuccess(exit)) return exit.value;
   throwDataFailure(exit.cause);
 }
 
-export function dataQueryProgram(sql: string): Effect.Effect<DataQueryResult, DataError, DataServices> {
+export function dataQueryProgram(
+  sql: string
+): Effect.Effect<DataQueryResult, DataError, DataServices> {
   return Effect.gen(function* () {
     const svc = yield* DataEngineService;
     return yield* svc.query(sql);
   });
 }
 
-export function dataIngestProgram(payload: IngestPayload): Effect.Effect<IngestResult, DataError, DataServices> {
+export function dataIngestProgram(
+  payload: IngestPayload
+): Effect.Effect<IngestResult, DataError, DataServices> {
   return Effect.gen(function* () {
     const svc = yield* DataEngineService;
     return yield* svc.ingest(payload);

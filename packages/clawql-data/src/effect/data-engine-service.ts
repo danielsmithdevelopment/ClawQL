@@ -17,7 +17,9 @@ export class DataEngineService extends Context.Tag("clawql/DataEngineService")<
   }
 >() {}
 
-export function dataEngineLiveLayer(env: NodeJS.ProcessEnv = process.env): Layer.Layer<DataEngineService> {
+export function dataEngineLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<DataEngineService> {
   const plugin = resolveDataEnginePlugin(env);
   return Layer.succeed(
     DataEngineService,

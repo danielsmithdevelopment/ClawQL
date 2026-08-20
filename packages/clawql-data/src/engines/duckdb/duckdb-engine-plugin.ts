@@ -11,7 +11,12 @@ import {
   extractKeyTermsFromText,
   inferDocType,
 } from "../../inventory.js";
-import { CREATE_LAB_SCHEMA_SQL, CREATE_LAB_VIEW_SQL, DROP_LAB_SCHEMA_SQL, MATTER_COLUMNS } from "../../schema.js";
+import {
+  CREATE_LAB_SCHEMA_SQL,
+  CREATE_LAB_VIEW_SQL,
+  DROP_LAB_SCHEMA_SQL,
+  MATTER_COLUMNS,
+} from "../../schema.js";
 import { validateReadonlySelect } from "../../sql-guard.js";
 import type {
   DataEnginePlugin,
@@ -133,7 +138,10 @@ function matterValues(row: Record<string, unknown>): unknown[] {
   });
 }
 
-function collectOpenFacts(matters: readonly Record<string, unknown>[], extra?: readonly OpenFactRow[]): OpenFactRow[] {
+function collectOpenFacts(
+  matters: readonly Record<string, unknown>[],
+  extra?: readonly OpenFactRow[]
+): OpenFactRow[] {
   const out: OpenFactRow[] = [...(extra ?? [])];
   for (const row of matters) {
     const mid = str(row.matter_id);
@@ -159,7 +167,10 @@ function collectDocuments(
     if (!Array.isArray(docs)) continue;
     for (const d of docs) {
       if (!d || typeof d !== "object") continue;
-      out.push({ ...(d as Record<string, unknown>), matter_id: (d as { matter_id?: string }).matter_id || mid });
+      out.push({
+        ...(d as Record<string, unknown>),
+        matter_id: (d as { matter_id?: string }).matter_id || mid,
+      });
     }
   }
   return out;
@@ -168,14 +179,26 @@ function collectDocuments(
 function documentInsert(d: Record<string, unknown>): unknown[] {
   const rel = str(d.rel_path);
   const filename = str(d.filename, rel.split("/").pop() ?? "");
-  const ext = str(d.ext, filename.includes(".") ? filename.split(".").pop() ?? "" : "").toLowerCase();
+  const ext = str(
+    d.ext,
+    filename.includes(".") ? (filename.split(".").pop() ?? "") : ""
+  ).toLowerCase();
   let docType = d.doc_type ? str(d.doc_type) : inferDocType(rel, filename);
   let keyTerms = d.key_terms;
   const text = str(d.text ?? d.text_snippet);
-  if (text && (!keyTerms || (typeof keyTerms === "object" && !Array.isArray(keyTerms) && Object.keys(keyTerms as object).length === 0))) {
+  if (
+    text &&
+    (!keyTerms ||
+      (typeof keyTerms === "object" &&
+        !Array.isArray(keyTerms) &&
+        Object.keys(keyTerms as object).length === 0))
+  ) {
     const extracted = extractKeyTermsFromText(text, { docType, filename });
     keyTerms = Object.keys(extracted).length ? extracted : null;
-    if ((extracted as { lock_up_period_days?: number }).lock_up_period_days && docType !== "lock-up-agreement") {
+    if (
+      (extracted as { lock_up_period_days?: number }).lock_up_period_days &&
+      docType !== "lock-up-agreement"
+    ) {
       docType = "lock-up-agreement";
     }
   }
@@ -183,7 +206,12 @@ function documentInsert(d: Record<string, unknown>): unknown[] {
   if (keyTerms && typeof keyTerms === "object") {
     const keys = Object.keys(keyTerms as object);
     ktJson = keys.length ? JSON.stringify(keyTerms) : null;
-  } else if (typeof keyTerms === "string" && keyTerms.trim() && keyTerms.trim() !== "{}" && keyTerms.trim() !== "[]") {
+  } else if (
+    typeof keyTerms === "string" &&
+    keyTerms.trim() &&
+    keyTerms.trim() !== "{}" &&
+    keyTerms.trim() !== "[]"
+  ) {
     ktJson = keyTerms;
   }
   return [
@@ -212,40 +240,39 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
   ) {}
 
   private ensureOpen(): Effect.Effect<DuckDbHandle, DataError> {
-    const self = this;
-    return Effect.gen(function* () {
-      if (self.handle) return self.handle;
-      self.handle = yield* openDuckDbEffect(self.path);
-      return self.handle;
+    return Effect.gen(this, function* () {
+      if (this.handle) return this.handle;
+      this.handle = yield* openDuckDbEffect(this.path);
+      return this.handle;
     });
   }
 
   private applySchema(replace: boolean): Effect.Effect<void, DataError> {
-    const self = this;
-    return Effect.gen(function* () {
-      const handle = yield* self.ensureOpen();
-      if (replace || !self.schemaReady) {
+    return Effect.gen(this, function* () {
+      const handle = yield* this.ensureOpen();
+      if (replace || !this.schemaReady) {
         for (const sql of DROP_LAB_SCHEMA_SQL) yield* runSqlEffect(handle, sql);
         for (const sql of CREATE_LAB_SCHEMA_SQL) yield* runSqlEffect(handle, sql);
         for (const sql of CREATE_LAB_VIEW_SQL) yield* runSqlEffect(handle, sql);
-        self.schemaReady = true;
+        this.schemaReady = true;
       }
     });
   }
 
   ingest(payload: IngestPayload): Effect.Effect<IngestResult, DataError> {
-    const self = this;
-    return Effect.gen(function* () {
+    return Effect.gen(this, function* () {
       const replace = payload.replace !== false;
-      yield* self.applySchema(replace);
-      const handle = yield* self.ensureOpen();
+      yield* this.applySchema(replace);
+      const handle = yield* this.ensureOpen();
       const matters = [...(payload.matters ?? [])];
       const openFacts = collectOpenFacts(matters, payload.openFacts);
       const documents = collectDocuments(matters, payload.documents);
 
       if (payload.mattersRoot) {
-        const root = yield* assertAllowedIngestRootEffect(payload.mattersRoot, self.env);
-        const skipRaw = self.env.CLAWQL_DATA_INVENTORY_SKIP_EXT ?? ".png,.jpg,.jpeg,.gif,.webp,.xlsx,.xls,.zip,.gz";
+        const root = yield* assertAllowedIngestRootEffect(payload.mattersRoot, this.env);
+        const skipRaw =
+          this.env.CLAWQL_DATA_INVENTORY_SKIP_EXT ??
+          ".png,.jpg,.jpeg,.gif,.webp,.xlsx,.xls,.zip,.gz";
         const skipExt = new Set(
           skipRaw
             .split(",")
@@ -253,8 +280,8 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
             .filter(Boolean)
             .map((s) => (s.startsWith(".") ? s : `.${s}`))
         );
-        const parseLimit = Number.parseInt(self.env.CLAWQL_DATA_INVENTORY_PARSE_LIMIT ?? "20", 10);
-        const textCap = Number.parseInt(self.env.CLAWQL_DATA_INVENTORY_TEXT_CAP ?? "500", 10);
+        const parseLimit = Number.parseInt(this.env.CLAWQL_DATA_INVENTORY_PARSE_LIMIT ?? "20", 10);
+        const textCap = Number.parseInt(this.env.CLAWQL_DATA_INVENTORY_TEXT_CAP ?? "500", 10);
         const dirs = yield* dataFromPromise(async () =>
           (await readdir(root, { withFileTypes: true })).filter((d) => d.isDirectory())
         );
@@ -263,13 +290,20 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
           const matterId = dirent.name;
           const matterDir = join(root, matterId);
           let rows = yield* catalogMatterFilesEffect(matterDir, { skipExt });
-          rows = yield* enrichInventoryRowsEffect(matterDir, rows, { parseLimit, textCap, skipExt });
+          rows = yield* enrichInventoryRowsEffect(matterDir, rows, {
+            parseLimit,
+            textCap,
+            skipExt,
+          });
           const rels = rows.map((r) => r.rel_path);
           const cm = detectCapitalMarkets(rels);
           const re = detectRestructuring(rels);
           const existing = byId.get(matterId);
           if (existing) {
-            if (cm.practice_area && (!existing.practice_area || existing.practice_area === "Other")) {
+            if (
+              cm.practice_area &&
+              (!existing.practice_area || existing.practice_area === "Other")
+            ) {
               existing.practice_area = cm.practice_area;
               existing.matter_type = cm.matter_type ?? existing.matter_type;
             }
@@ -348,7 +382,7 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
       return {
         ok: true as const,
         engine: ENGINE_ID,
-        path: self.path,
+        path: this.path,
         matterCount: matters.filter((m) => m.matter_id).length,
         documentCount,
         openFactCount: openFacts.length,
@@ -357,8 +391,7 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
   }
 
   query(sql: string): Effect.Effect<DataQueryResult, DataError> {
-    const self = this;
-    return Effect.gen(function* () {
+    return Effect.gen(this, function* () {
       const validated = yield* dataFromSync(() => validateReadonlySelect(sql)).pipe(
         Effect.map((safeSql) => ({ ok: true as const, safeSql })),
         Effect.catchAll((err) =>
@@ -367,7 +400,8 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
             result: {
               ok: false as const,
               engine: ENGINE_ID,
-              error: err.cause instanceof Error ? err.cause.message : String(err.cause ?? err.reason),
+              error:
+                err.cause instanceof Error ? err.cause.message : String(err.cause ?? err.reason),
             } satisfies DataQueryResult,
           })
         )
@@ -375,11 +409,11 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
       if (!validated.ok) return validated.result;
 
       const safeSql = validated.safeSql;
-      return yield* self.ensureOpen().pipe(
+      return yield* this.ensureOpen().pipe(
         Effect.flatMap((handle) =>
           queryDuckDbEffect(handle, safeSql, {
-            maxRows: maxQueryRows(self.env),
-            maxChars: maxCellChars(self.env),
+            maxRows: maxQueryRows(this.env),
+            maxChars: maxCellChars(this.env),
           })
         ),
         Effect.catchAll((err) =>
@@ -404,12 +438,11 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
   }
 
   close(): Effect.Effect<void, DataError> {
-    const self = this;
-    return Effect.gen(function* () {
-      if (!self.handle) return;
-      yield* closeDuckDbEffect(self.handle);
-      self.handle = null;
-      self.schemaReady = false;
+    return Effect.gen(this, function* () {
+      if (!this.handle) return;
+      yield* closeDuckDbEffect(this.handle);
+      this.handle = null;
+      this.schemaReady = false;
     });
   }
 }
