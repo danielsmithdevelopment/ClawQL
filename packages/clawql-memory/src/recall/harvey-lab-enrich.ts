@@ -330,9 +330,7 @@ export async function enrichLabMemoryRecall(
     if (!hit || typeof hit !== "object") continue;
     const h: Record<string, unknown> = { ...(hit as Record<string, unknown>) };
     const meta =
-      h.meta && typeof h.meta === "object"
-        ? { ...(h.meta as Record<string, unknown>) }
-        : {};
+      h.meta && typeof h.meta === "object" ? { ...(h.meta as Record<string, unknown>) } : {};
     const fieldsFromMeta =
       meta.fields && typeof meta.fields === "object"
         ? (meta.fields as Record<string, unknown>)
@@ -411,7 +409,8 @@ export async function enrichLabMemoryRecall(
 
     const compactHits: Record<string, unknown>[] = [];
     for (const h of enrichedHits) {
-      const f = h.fields && typeof h.fields === "object" ? (h.fields as Record<string, unknown>) : {};
+      const f =
+        h.fields && typeof h.fields === "object" ? (h.fields as Record<string, unknown>) : {};
       compactHits.push({
         entityId: h.entityId,
         path: h.path,

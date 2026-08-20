@@ -225,12 +225,12 @@ table names so agent skills transfer.
 
 ## Phased delivery
 
-| Phase  | Scope                                                                     | Depends on                     |
-| ------ | ------------------------------------------------------------------------- | ------------------------------ |
-| **P0** | Design (this doc)                                                         | —                              | **done**        |
-| **P1** | LAB spike: build duckdb at pre-ingest; `clawql_sql` tool; Pattern F → SQL | Fix 7/8                        | **in progress** |     | **P2** | Content FTS / `mentions_*` columns for frequency attrs | P1  |
-| **P3** | Optional matrix arm **B** (SQL-only, shared tables)                       | Product call on ledger framing |
-| **P4** | **`packages/clawql-data` + MCP `data_query` / `data_ingest` (Node DuckDB)** | Shipped | **done** |
+| Phase  | Scope                                                                       | Depends on                     |
+| ------ | --------------------------------------------------------------------------- | ------------------------------ |
+| **P0** | Design (this doc)                                                           | —                              | **done**        |
+| **P1** | LAB spike: build duckdb at pre-ingest; `clawql_sql` tool; Pattern F → SQL   | Fix 7/8                        | **in progress** |     | **P2** | Content FTS / `mentions_*` columns for frequency attrs | P1  |
+| **P3** | Optional matrix arm **B** (SQL-only, shared tables)                         | Product call on ledger framing |
+| **P4** | **`packages/clawql-data` + MCP `data_query` / `data_ingest` (Node DuckDB)** | Shipped                        | **done**        |
 
 ## Non-goals (P1)
 
