@@ -72,12 +72,12 @@ bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh
 
 ## Likely smoke failures
 
-| Symptom                                       | Likely cause                 | Fix                                                                                                                                                          |
-| --------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Legacy `matters.duckdb rows=266` line         | npx fallback / old overlay   | `npm run build`; confirm `dist/server-http.js`; restart MCP (`start-clawql-for-lab.sh` **exits** if dist missing under `CLAWQL_ENABLE_DATA=1`)               |
-| Fingerprint OK, no `clawql_sql` in call-store | MCP proxy / tool merge / env | `CLAWQL_LAB_MCP_PROXY` → `lab-mcp-proxy.mjs`; `CLAWQL_MCP_URL`; overlay applied for `clawql-cc/…`                                                            |
-| `data_ingest` / `CLAWQL_ENABLE_DATA!=1`       | MCP started without data     | `CLAWQL_ENABLE_DATA=1` in `start-clawql-for-lab.sh` (default on) + rebuild                                                                                   |
-| Pre-ingest can’t find matters                 | Wrong DMS path               | `CLAWQL_LAB_DOCUMENTS_DIR` set from task `docs_dir` in overlay `run.py`                                                                                      |
+| Symptom                                       | Likely cause                 | Fix                                                                                                                                            |
+| --------------------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Legacy `matters.duckdb rows=266` line         | npx fallback / old overlay   | `npm run build`; confirm `dist/server-http.js`; restart MCP (`start-clawql-for-lab.sh` **exits** if dist missing under `CLAWQL_ENABLE_DATA=1`) |
+| Fingerprint OK, no `clawql_sql` in call-store | MCP proxy / tool merge / env | `CLAWQL_LAB_MCP_PROXY` → `lab-mcp-proxy.mjs`; `CLAWQL_MCP_URL`; overlay applied for `clawql-cc/…`                                              |
+| `data_ingest` / `CLAWQL_ENABLE_DATA!=1`       | MCP started without data     | `CLAWQL_ENABLE_DATA=1` in `start-clawql-for-lab.sh` (default on) + rebuild                                                                     |
+| Pre-ingest can’t find matters                 | Wrong DMS path               | `CLAWQL_LAB_DOCUMENTS_DIR` set from task `docs_dir` in overlay `run.py`                                                                        |
 
 ## After contiguous is green
 
