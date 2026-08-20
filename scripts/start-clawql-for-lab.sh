@@ -67,12 +67,19 @@ echo "Vault: ${VAULT_PATH}"
 echo "Starting clawql-mcp-http on ${HOST}:${PORT}"
 
 # Prefer built local dist; the bin alone is not enough (imports dist/server-http.js).
-# npx from the ClawQL repo root resolves the *local* bin — use a clean temp dir.
+# Harvey LAB + CLAWQL_ENABLE_DATA require repo build: clawql-data is not on npm, and
+# published clawql-mcp does not ship Node DuckDB. Never fall back to npx in that case.
 if [[ -f "${ROOT}/dist/server-http.js" ]]; then
   cd "${ROOT}"
   nohup node "${ROOT}/bin/clawql-mcp-http.mjs" >"${LOG_FILE}" 2>&1 &
   CLAWQL_PID=$!
 else
+  if [[ "${CLAWQL_ENABLE_DATA:-0}" == "1" ]] || [[ "${CLAWQL_HARVEY_LAB:-0}" == "1" ]]; then
+    echo "ERROR: ${ROOT}/dist/server-http.js missing." >&2
+    echo "Harvey LAB / CLAWQL_ENABLE_DATA=1 requires a local build (clawql-data is not published)." >&2
+    echo "Run: npm run build" >&2
+    exit 1
+  fi
   echo "dist/server-http.js missing — starting published clawql-mcp via npx (clean dir)"
   NPX_DIR="$(mktemp -d /tmp/clawql-mcp-npx.XXXXXX)"
   cd "${NPX_DIR}"

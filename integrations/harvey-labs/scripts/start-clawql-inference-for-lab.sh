@@ -24,7 +24,13 @@ if [[ ! -f "${ROOT}/packages/clawql-inference/package.json" ]]; then
   exit 1
 fi
 
-HOME_DIR="${CLAWQL_HOME:-$HOME/.clawql}"
+HOME_DIR="${CLAWQL_HOME:-}"
+if [[ -z "$HOME_DIR" ]]; then
+  if [[ -d "${HOME}/.ClawQL" ]]; then HOME_DIR="${HOME}/.ClawQL"
+  elif [[ -d "${HOME}/.clawql" ]]; then HOME_DIR="${HOME}/.clawql"
+  else HOME_DIR="${HOME}/.ClawQL"
+  fi
+fi
 STORE_DEFAULT="$HOME_DIR/HarveyLAB/call-store/calls.jsonl"
 STORE="${CLAWQL_INFERENCE_STORE_PATH:-$STORE_DEFAULT}"
 mkdir -p "$(dirname "$STORE")"

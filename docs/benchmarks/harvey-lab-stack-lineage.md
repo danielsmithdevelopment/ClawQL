@@ -63,7 +63,7 @@ ClawQL pre-ingest: DuckDB /path/…/matters.duckdb rows=266 …
 ## Related
 
 - [`harvey-lab-rules-compliance.md`](harvey-lab-rules-compliance.md) — upstream LAB rules vs ClawQL arms
-- [`harvey-lab-python-duckdb-postmortem.md`](harvey-lab-python-duckdb-postmortem.md) — why legacy runs/traces are scrap
+- [`harvey-lab-ts-v2-smoke-gate.md`](harvey-lab-ts-v2-smoke-gate.md) — quarantine → build → task 001 gate → contiguous
 - [`harvey-lab-pause-handoff.md`](harvey-lab-pause-handoff.md)
 - [`harvey-lab-clawql-results.md`](harvey-lab-clawql-results.md)
 - [`../design/harvey-lab-duckdb-retrieval.md`](../design/harvey-lab-duckdb-retrieval.md)

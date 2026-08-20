@@ -54,6 +54,8 @@ Stack lineage: [`docs/benchmarks/harvey-lab-stack-lineage.md`](../../docs/benchm
 | `scripts/run-lab-gha.sh` | GHA entrypoint |
 | `scripts/run-lab-local.sh` | Local MLX + clawql-inference + call-store |
 | `scripts/run-contiguous-001-025.sh` | Clean baseline batch (ts-v2) |
+| `scripts/preflight-ts-v2-smoke.sh` | Build + path checks before task 001 smoke |
+| `scripts/quarantine-legacy-call-store.sh` | Move pre-v2 call-store out of training path |
 | `../../scripts/start-clawql-for-lab.sh` | Task-scoped vault + MCP (`CLAWQL_ENABLE_DATA=1`) |
 
 Harvey harness diff: **zero** changes to upstream `agent_loop.py`.
