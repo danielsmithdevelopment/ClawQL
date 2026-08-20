@@ -215,6 +215,73 @@ Rules:
 - Ontology hits include `entityId`, `clientShortName`, `preferredEvidence`,
   `sandboxDocumentRoot`. Do **not** `read` vault paths (`Memory/...`).
 
+## Pattern G — document inventory SQL (Capital Markets / Restructuring / unfamiliar docs)
+
+When the prompt asks about lock-up agreements, withdrawn offerings, DIP financing,
+prospectuses, or other documents outside credit-facility Layer-1 columns, use
+`matter_documents` — **always filter by `practice_area` / `matter_type` first**.
+
+### G1 — Practice-area cohort (always first)
+
+```sql
+SELECT practice_area, matter_type, count(*) AS n
+FROM matters
+GROUP BY 1, 2
+ORDER BY n DESC;
+
+SELECT matter_id, client_short_name, matter_status, matter_date
+FROM matters
+WHERE lower(practice_area) LIKE '%capital%market%'
+ORDER BY matter_date DESC NULLS LAST, matter_id;
+```
+
+If the cohort returns **zero rows**, write a **negative deliverable** (0 of N /
+none found). **Never** substitute `WHERE is_credit_facility` matters as a stand-in
+for Capital Markets or Restructuring.
+
+### G2 — Filename / doc_type joins (lock-up, withdrawal, DIP)
+
+```sql
+SELECT m.matter_id, m.client_short_name, m.practice_area,
+       d.rel_path, d.doc_type, d.key_terms
+FROM matters m
+JOIN matter_documents d ON m.matter_id = d.matter_id
+WHERE d.filename ILIKE '%lock-up%'
+   OR d.filename ILIKE '%lockup%'
+   OR d.doc_type = 'lock-up-agreement'
+ORDER BY m.matter_id, d.rel_path;
+
+SELECT m.matter_id, m.client_short_name, d.filename, d.key_terms
+FROM matters m
+JOIN matter_documents d ON m.matter_id = d.matter_id
+WHERE lower(m.practice_area) LIKE '%capital%market%'
+  AND (d.filename ILIKE '%lock-up%' OR d.doc_type = 'lock-up-agreement');
+
+SELECT DISTINCT m.matter_id, m.client_short_name, d.rel_path, d.doc_type
+FROM matters m
+JOIN matter_documents d ON m.matter_id = d.matter_id
+WHERE d.doc_type = 'dip-financing'
+   OR d.filename ILIKE '%dip%'
+   OR d.rel_path ILIKE '%debtor-in-possession%'
+ORDER BY m.matter_id;
+```
+
+Also useful: `SELECT * FROM documents_by_type WHERE doc_type = 'withdrawal-notice';`
+
+### G3 — key_terms JSON
+
+```sql
+SELECT m.matter_id, m.client_short_name, d.filename,
+       d.key_terms->>'lock_up_period_days' AS lock_days
+FROM matters m
+JOIN matter_documents d ON m.matter_id = d.matter_id
+WHERE d.doc_type = 'lock-up-agreement'
+  AND CAST(d.key_terms->>'lock_up_period_days' AS INTEGER) = 180;
+```
+
+When `key_terms` lacks a key, treat as unknown — fall back to filename hits +
+`read` the proof doc. Do not invent terms from unrelated practice areas.
+
 ## Fallback when structured recall is insufficient (REQUIRED)
 
 If `clawql_memory_recall` with schema/filters returns no results or clearly
@@ -236,6 +303,8 @@ insufficient coverage after **at most 2** attempts:
 3. If `frequency` → recall the **filtered cohort** first (define N + matter
    ids), then attribute search inside that set only.
 4. If `enumeration` **and** second-request language is explicit → Pattern E.
+   Else if Capital Markets / Restructuring / lock-up / DIP / offering language →
+   Pattern G (`practice_area` filter + `matter_documents` join).
    Else → standard recall / targeted document search (no `HSR_SECOND_REQUEST`).
 5. `write` the deliverable (`k of N` with ids when frequency; including 0 of N).
 6. Wonder within budget: enumeration → verify listed matters; frequency →

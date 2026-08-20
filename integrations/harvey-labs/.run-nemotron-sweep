@@ -1,7 +1,7 @@
-# Resume 026–050 generalization sweep — rate-limit failures only.
-# Baseline (nemotron) already scored 042 + 044–050; rerun ClawQL arm only.
+# Pattern G / document-inventory theory test — clawql-only 026–050.
+# Baseline already scored this range; do not re-run nemotron arm.
 # Agent: nvidia/nemotron-3.5-lightning (OpenRouter)
 # Judge: claude-sonnet-4-6 (GHA default for nemotron-sweep marker)
-# 8 cells
-nemotron-clawql 42-42
-nemotron-clawql 44-50
+# 25 cells
+# After this matrix completes, re-arm nemotron-clawql 1-25 for regression.
+nemotron-clawql 26-50

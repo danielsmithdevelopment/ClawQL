@@ -236,6 +236,38 @@ _CLAWQL_REQUIRE_RECALL_FREQUENCY = (
     "Wrong N: 'Credit Agreement' folder count alone, or all vault notes."
 )
 
+_CLAWQL_REQUIRE_PATTERN_G = (
+    "Pattern G — document inventory (Capital Markets / Restructuring / "
+    "lock-up / withdrawn / DIP / offering).\\n\\n"
+    "1. `clawql_sql` first — filter by practice_area / matter_type, then JOIN "
+    "`matter_documents` on filename / doc_type / key_terms.\\n"
+    "   Example: SELECT m.matter_id, m.client_short_name, d.filename "
+    "FROM matters m JOIN matter_documents d ON m.matter_id = d.matter_id "
+    "WHERE lower(m.practice_area) LIKE '%capital%market%' "
+    "AND (d.filename ILIKE '%lock-up%' OR d.doc_type = 'lock-up-agreement');\\n"
+    "2. If the practice-area / document cohort is **empty**, write a negative "
+    "deliverable (none / 0 of N). Do **not** pick the best credit-facility "
+    "matter as a substitute.\\n"
+    "3. Cite proof docs from `matter_documents.rel_path` / filename.\\n"
+    "4. `write` under `/workspace/output/` attempting every criterion."
+)
+
+
+def _clawql_prompt_needs_pattern_g(messages: list) -> bool:
+    # Detect CM / Restructuring / lock-up / DIP / withdrawn offering asks.
+    blob = " ".join(
+        str(getattr(m, "content", m) if not isinstance(m, dict) else m.get("content", ""))
+        for m in (messages or [])
+    ).lower()
+    return bool(
+        re.search(
+            r"\\b(lock[- ]?up|capital markets|withdrawn|withdrawal|"
+            r"\\bdip\\b|debtor[- ]in[- ]possession|offering memorandum|"
+            r"prospectus|underwriter|use of proceeds)\\b",
+            blob,
+        )
+    )
+
 _CLAWQL_GROUNDING_WONDER_ENUM = (
     "WONDER (enumeration grounding) — before you finish:\\n\\n"
     "Findings start **guilty until proven by document evidence**. "
@@ -351,8 +383,8 @@ CEILING_BLOCK = f"""            {CEILING_BEGIN}
 """
 
 RECALL_BLOCK = f"""            {RECALL_BEGIN}
-            # Steer ClawQL arm toward memory_recall before bash-only hunting.
-            # Frequency tasks get denominator-first guidance (task 018 class).
+            # Steer ClawQL arm toward memory_recall / SQL before bash-only hunting.
+            # Frequency → denominator-first; CM/Restructuring → Pattern G inventory.
             if (
                 os.environ.get("CLAWQL_LAB_REQUIRE_RECALL", "1") != "0"
                 and not _clawql_nudge_state.get("recall", False)
@@ -360,11 +392,13 @@ RECALL_BLOCK = f"""            {RECALL_BEGIN}
             ):
                 _clawql_nudge_state["recall"] = True
                 _recall_kind = _clawql_infer_task_kind(messages)
-                _recall_nudge = (
-                    _CLAWQL_REQUIRE_RECALL_FREQUENCY
-                    if _recall_kind == "frequency"
-                    else _CLAWQL_REQUIRE_RECALL_NUDGE
-                )
+                if _clawql_prompt_needs_pattern_g(messages):
+                    _recall_nudge = _CLAWQL_REQUIRE_PATTERN_G
+                    _recall_kind = f"{{_recall_kind}}+pattern_g"
+                elif _recall_kind == "frequency":
+                    _recall_nudge = _CLAWQL_REQUIRE_RECALL_FREQUENCY
+                else:
+                    _recall_nudge = _CLAWQL_REQUIRE_RECALL_NUDGE
                 print(
                     f"ClawQL require-recall (kind={{_recall_kind}}): "
                     "nudging clawql_sql / clawql_memory_recall before bash/grep"
