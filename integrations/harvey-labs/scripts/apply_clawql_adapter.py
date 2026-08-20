@@ -93,8 +93,8 @@ def copy_files(src_root: Path, dest_root: Path) -> None:
             dest_root / "harness" / "adapters" / "clawql_system_prompt.md",
         ),
         (
-            src_root / "harness" / "adapters" / "clawql_vault.py",
-            dest_root / "harness" / "adapters" / "clawql_vault.py",
+            src_root / "harness" / "adapters" / "clawql_tools.json",
+            dest_root / "harness" / "adapters" / "clawql_tools.json",
         ),
         (
             src_root / "harness" / "adapters" / "clawql_openrouter.py",
@@ -103,10 +103,6 @@ def copy_files(src_root: Path, dest_root: Path) -> None:
         (
             src_root / "harness" / "clawql_tools.py",
             dest_root / "harness" / "clawql_tools.py",
-        ),
-        (
-            src_root / "harness" / "clawql_agent_loop.py",
-            dest_root / "harness" / "clawql_agent_loop.py",
         ),
         (
             src_root / "evaluation" / "clawql_openrouter_judge.py",
@@ -404,10 +400,6 @@ def main() -> int:
         return 1
     copy_files(args.integration_root, args.harvey_labs)
     patch_run_py(args.harvey_labs / "harness" / "run.py")
-    sys.path.insert(0, str(args.integration_root / "harness"))
-    from clawql_agent_loop import patch_agent_loop_deliverable_guard  # noqa: E402
-
-    patch_agent_loop_deliverable_guard(args.harvey_labs / "harness" / "agent_loop.py")
     patch_openrouter_clients(args.harvey_labs)
     patch_run_eval_judge_factory(args.harvey_labs)
     return 0

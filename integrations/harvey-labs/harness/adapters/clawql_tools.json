@@ -1,0 +1,79 @@
+{
+  "tools": [
+    {
+      "name": "clawql_memory_recall",
+      "description": "Retrieve matter context from the ClawQL vault/ontology. Use schema='legal.Matter' + filters title contains HSR_SECOND_REQUEST ONLY when the task explicitly asks about second requests.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" },
+          "limit": { "type": "integer" },
+          "schema": { "type": "string" },
+          "filters": { "type": "object" }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "clawql_memory_ingest",
+      "description": "Persist a finding into the ClawQL vault.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "insights": { "type": "string" },
+          "content": { "type": "string" },
+          "toolOutputs": { "type": "string" },
+          "wikilinks": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["title"]
+      }
+    },
+    {
+      "name": "clawql_search",
+      "description": "Discover operations across indexed APIs.",
+      "parameters": {
+        "type": "object",
+        "properties": { "query": { "type": "string" }, "limit": { "type": "integer" } },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "clawql_execute",
+      "description": "Execute a discovered API operation.",
+      "parameters": {
+        "type": "object",
+        "properties": { "operationId": { "type": "string" }, "arguments": { "type": "object" } },
+        "required": ["operationId"]
+      }
+    },
+    {
+      "name": "clawql_audit",
+      "description": "Append an audit / RTP lineage entry.",
+      "parameters": {
+        "type": "object",
+        "properties": { "type": { "type": "string" }, "payload": { "type": "object" } },
+        "required": ["type"]
+      }
+    },
+    {
+      "name": "clawql_sql",
+      "description": "Read-only SQL via ClawQL MCP data_query (clawql-data engine plugin). Tables: matters, matter_documents, open_facts.",
+      "parameters": {
+        "type": "object",
+        "properties": { "sql": { "type": "string" } },
+        "required": ["sql"]
+      }
+    }
+  ],
+  "mcp_map": {
+    "clawql_memory_recall": "memory_recall",
+    "clawql_memory_ingest": "memory_ingest",
+    "clawql_ingest_external_knowledge": "ingest_external_knowledge",
+    "clawql_search": "search",
+    "clawql_execute": "execute",
+    "clawql_audit": "audit",
+    "clawql_sql": "data_query",
+    "clawql_duckdb_query": "data_query"
+  }
+}
