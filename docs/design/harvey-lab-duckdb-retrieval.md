@@ -193,12 +193,12 @@ Keep `clawql_memory_recall` for memory / hybrid; do not delete it.
 
 When `packages/clawql-data` lands, LAB should consume it rather than own DuckDB:
 
-| Concern   | LAB adapter (current)                                    | `clawql-data`                         |
-| --------- | -------------------------------------------------------- | ------------------------------------- |
-| Engine    | Node DuckDB via MCP (`CLAWQL_ENABLE_DATA=1`)             | `packages/clawql-data` plugin registry |
-| Load      | `lab-pre-ingest.mjs` → MCP `data_ingest`                 | Same MCP tool                         |
-| Query MCP | `lab-mcp-proxy.mjs` → `data_query` as `clawql_sql`       | First-class MCP `data_query`          |
-| AuthZ     | Task-scoped file, no network                             | Provider capabilities + tenant scope  |
+| Concern   | LAB adapter (current)                              | `clawql-data`                          |
+| --------- | -------------------------------------------------- | -------------------------------------- |
+| Engine    | Node DuckDB via MCP (`CLAWQL_ENABLE_DATA=1`)       | `packages/clawql-data` plugin registry |
+| Load      | `lab-pre-ingest.mjs` → MCP `data_ingest`           | Same MCP tool                          |
+| Query MCP | `lab-mcp-proxy.mjs` → `data_query` as `clawql_sql` | First-class MCP `data_query`           |
+| AuthZ     | Task-scoped file, no network                       | Provider capabilities + tenant scope   |
 
 **Current path (ts-clawql-data-v2):**
 
