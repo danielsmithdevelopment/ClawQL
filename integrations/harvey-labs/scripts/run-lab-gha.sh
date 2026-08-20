@@ -169,6 +169,9 @@ ensure_clawql_mcp() {
   echo "::group::Start ClawQL MCP (task-scoped vault)"
   bash "${CLAWQL_ROOT}/scripts/start-clawql-for-lab.sh" "${TASK}" 8080
   export CLAWQL_MCP_URL="http://127.0.0.1:8080/mcp"
+  # start-clawql-for-lab.sh sets vault for the MCP child only — re-export for pre-ingest.
+  SAFE_TASK_ID="${TASK//\//__}"
+  export CLAWQL_OBSIDIAN_VAULT_PATH="${CLAWQL_LAB_VAULT_ROOT:-$HOME/.ClawQL/HarveyLABVault}/${SAFE_TASK_ID}"
   export CLAWQL_LAB_PREINGEST_SCRIPT="${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-pre-ingest.mjs"
   export CLAWQL_LAB_MCP_PROXY="${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-mcp-proxy.mjs"
   CLAWQL_MCP_STARTED=1
