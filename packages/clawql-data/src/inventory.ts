@@ -43,7 +43,7 @@ const OFFERING_PULLED_DATE_RE =
 const DIP_AMOUNT_RE =
   /(?:DIP|debtor[- ]in[- ]possession)[^\n$]{0,80}?\$\s*([0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)\s*(billion|million)?/is;
 const PARTY_RE =
-  /(?:between|among)\s+([A-Z][A-Za-z0-9&.,' \-]{2,60}?)\s+and\s+([A-Z][A-Za-z0-9&.,' \-]{2,60}?)(?:\s*[,.(]|$)/g;
+  /(?:between|among)\s+([A-Z][A-Za-z0-9&.,' -]{2,60}?)\s+and\s+([A-Z][A-Za-z0-9&.,' -]{2,60}?)(?:\s*[,.(]|$)/g;
 
 const CM_TOKENS = [
   "capital markets",
@@ -247,7 +247,7 @@ export async function catalogMatterFiles(
     const rel = relative(matterDir, abs).replaceAll("\\", "/");
     const ext = extname(abs).toLowerCase().replace(/^\./, "");
     const name = basename(abs);
-    let size: number | null = null;
+    let size: number | null;
     try {
       size = (await stat(abs)).size;
     } catch {

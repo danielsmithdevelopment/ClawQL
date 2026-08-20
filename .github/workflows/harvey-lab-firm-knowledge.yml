@@ -503,12 +503,24 @@ jobs:
           retention-days: 30
 
   lab-skip:
-    name: Skip (missing credentials)
+    name: Skip (matrix paused or missing credentials)
     needs: resolve-matrix
     if: needs.resolve-matrix.outputs.can_run != 'true'
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "::warning::Skipped Harvey LAB live matrix — ${{ needs.resolve-matrix.outputs.skip_reason }}"
-          echo "::error::Set the missing GitHub Actions secret(s), then re-run."
-          exit 1
+      - name: Report skip
+        env:
+          REASON: ${{ needs.resolve-matrix.outputs.skip_reason }}
+        run: |
+          set -euo pipefail
+          echo "::warning::Skipped Harvey LAB live matrix — ${REASON}"
+          case "${REASON}" in
+            *".skip-lab-matrix"*)
+              echo "::notice::Intentional pause (.skip-lab-matrix). Not a credential failure."
+              exit 0
+              ;;
+            *)
+              echo "::error::Set the missing GitHub Actions secret(s), then re-run."
+              exit 1
+              ;;
+          esac
