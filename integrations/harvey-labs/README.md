@@ -69,7 +69,7 @@ Harvey harness diff: **zero** changes to upstream `agent_loop.py`.
 
 ## Local clean baseline (001–025)
 
-**Blocked on smoke gate:** [`docs/benchmarks/harvey-lab-ts-v2-smoke-gate.md`](../../docs/benchmarks/harvey-lab-ts-v2-smoke-gate.md) — quarantine call-store, `npm run build`, task 001 with Node DuckDB fingerprint + `clawql_sql` in call-store, then contiguous.
+**Blocked on smoke gate:** [`docs/benchmarks/harvey-lab-ts-v2-smoke-gate.md`](../../docs/benchmarks/harvey-lab-ts-v2-smoke-gate.md) — Mac mini MLX copy/paste (services → quarantine → task 001 fingerprint + `clawql_sql` → contiguous).
 
 ```bash
 bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh

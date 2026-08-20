@@ -72,5 +72,5 @@ fi
 
 echo ""
 echo "Preflight passed (services may still need starting — see WARNs)."
-echo "Next: bash integrations/harvey-labs/scripts/quarantine-legacy-call-store.sh"
+echo "Next: see docs/benchmarks/harvey-lab-ts-v2-smoke-gate.md (Mac mini MLX paste guide)"
 echo "Then: LAB_TASK=firm-knowledge/tasks/001 LAB_ARMS=nemotron-clawql bash integrations/harvey-labs/scripts/run-lab-local.sh"
