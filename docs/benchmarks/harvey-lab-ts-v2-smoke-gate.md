@@ -2,20 +2,24 @@
 
 **Status:** Contiguous 001–025, Harvey outreach, training flywheel, and any publishable / PragmaticVectors LAB numbers are **blocked** until this gate is green.
 
-Architectural work (clawql-audit, agents specs, homelab docs, benchmark *design*) does **not** depend on this gate.
+Architectural work (clawql-audit, agents specs, homelab docs, benchmark _design_) does **not** depend on this gate.
 
 ## Gate criterion (task 001)
 
 Single local run of `firm-knowledge/tasks/001` must show:
 
 1. Pre-ingest fingerprint:
+
    ```text
    ClawQL pre-ingest: Node DuckDB … matters=…
    ```
+
    **Fail** if you see the legacy Python line:
+
    ```text
    ClawQL pre-ingest: DuckDB …/matters.duckdb rows=266
    ```
+
    That usually means `dist/server-http.js` was missing and `start-clawql-for-lab.sh` fell back to `npx clawql-mcp` (published package has **no** `clawql-data`).
 
 2. Call-store shows **`clawql_sql`** (MCP path via `lab-mcp-proxy.mjs`).  
@@ -64,12 +68,12 @@ bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh
 
 ## Likely smoke failures
 
-| Symptom | Likely cause | Fix |
-| ------- | ------------ | --- |
-| Legacy `matters.duckdb rows=266` line | npx fallback / old overlay | `npm run build`; confirm `dist/server-http.js`; restart MCP from repo |
+| Symptom                                       | Likely cause                 | Fix                                                                                               |
+| --------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| Legacy `matters.duckdb rows=266` line         | npx fallback / old overlay   | `npm run build`; confirm `dist/server-http.js`; restart MCP from repo                             |
 | Fingerprint OK, no `clawql_sql` in call-store | MCP proxy / tool merge / env | `CLAWQL_LAB_MCP_PROXY` → `lab-mcp-proxy.mjs`; `CLAWQL_MCP_URL`; overlay applied for `clawql-cc/…` |
-| `data_ingest` / `CLAWQL_ENABLE_DATA!=1` | MCP started without data | `CLAWQL_ENABLE_DATA=1` in `start-clawql-for-lab.sh` (default on) + rebuild |
-| Pre-ingest can’t find matters | Wrong DMS path | `CLAWQL_LAB_DOCUMENTS_DIR` set from task `docs_dir` in overlay `run.py` |
+| `data_ingest` / `CLAWQL_ENABLE_DATA!=1`       | MCP started without data     | `CLAWQL_ENABLE_DATA=1` in `start-clawql-for-lab.sh` (default on) + rebuild                        |
+| Pre-ingest can’t find matters                 | Wrong DMS path               | `CLAWQL_LAB_DOCUMENTS_DIR` set from task `docs_dir` in overlay `run.py`                           |
 
 ## After contiguous is green
 
