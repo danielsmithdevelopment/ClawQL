@@ -4,6 +4,8 @@
 > pre-ingest. They are **not** comparable to the current Node/`packages/clawql-data` stack.
 > See [`harvey-lab-stack-lineage.md`](harvey-lab-stack-lineage.md). Legacy artifacts:
 > [`../../integrations/harvey-labs/results/legacy/python-duckdb-v1/`](../../integrations/harvey-labs/results/legacy/python-duckdb-v1/).
+> **Rules:** ClawQL is an **agent-stack** arm (extra tools); publishable judge is
+> `claude-sonnet-4-6` — see [`harvey-lab-rules-compliance.md`](harvey-lab-rules-compliance.md).
 
 Date: 2026-08-14  
 Models: Nemotron 3.5 Lightning ± ClawQL  

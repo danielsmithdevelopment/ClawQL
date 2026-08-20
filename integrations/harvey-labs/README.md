@@ -14,7 +14,9 @@ Adapter overlay for [`harveyai/harvey-labs`](https://github.com/harveyai/harvey-
 | `nemotron-clawql` | `clawql-cc/<nemotron>` | Nemotron + ClawQL | **No** |
 | `baseline` / `clawql` | Claude | Opus/Sonnet A/B | Yes |
 
-Publishable Claude A/B is Opus vs Opus (later). Nemotron pair compounds Harvey/Trajectory’s LAB post-train (published **8.3% all-pass**) with/without ClawQL retrieval — judge `openai/gpt-5.4-mini` via OpenRouter.
+Publishable Claude A/B is Opus vs Opus (later). Nemotron pair compounds Harvey/Trajectory’s LAB post-train work (model-only, stock harness) with/without ClawQL retrieval as an **agent-stack** delta.
+
+**Judges:** GHA debug default is `openai/gpt-5.4-mini` (OpenRouter). **Harvey-facing / publishable** scores must use **`claude-sonnet-4-6`** (upstream default) or `--dual`. See [`docs/benchmarks/harvey-lab-rules-compliance.md`](../../docs/benchmarks/harvey-lab-rules-compliance.md).
 
 ## Run path: GitHub Actions (preferred)
 
@@ -52,6 +54,8 @@ Stack lineage: [`docs/benchmarks/harvey-lab-stack-lineage.md`](../../docs/benchm
 | `scripts/run-lab-gha.sh` | GHA entrypoint |
 | `scripts/run-lab-local.sh` | Local MLX + clawql-inference + call-store |
 | `scripts/run-contiguous-001-025.sh` | Clean baseline batch (ts-v2) |
+| `scripts/preflight-ts-v2-smoke.sh` | Build + path checks before task 001 smoke |
+| `scripts/quarantine-legacy-call-store.sh` | Move pre-v2 call-store out of training path |
 | `../../scripts/start-clawql-for-lab.sh` | Task-scoped vault + MCP (`CLAWQL_ENABLE_DATA=1`) |
 
 Harvey harness diff: **zero** changes to upstream `agent_loop.py`.
@@ -65,6 +69,8 @@ Harvey harness diff: **zero** changes to upstream `agent_loop.py`.
 
 ## Local clean baseline (001–025)
 
+**Blocked on smoke gate:** [`docs/benchmarks/harvey-lab-ts-v2-smoke-gate.md`](../../docs/benchmarks/harvey-lab-ts-v2-smoke-gate.md) — quarantine call-store, `npm run build`, task 001 with Node DuckDB fingerprint + `clawql_sql` in call-store, then contiguous.
+
 ```bash
 bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh
 # → results/ts-v2/aggregate-contiguous-001-025.json
@@ -76,4 +82,4 @@ bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh
 - **Legacy (quarantined):** `results/legacy/python-duckdb-v1/` — do not publish or train on
 - Ledgers: `docs/benchmarks/harvey-lab-*.md`
 
-Do not outreach to Harvey until a **ts-clawql-data-v2** multi-task ledger exists with public Actions run IDs.
+Do not outreach to Harvey until a **ts-clawql-data-v2** multi-task ledger exists with public Actions run IDs **and** publishable-judge (Sonnet 4.6) scores. Rules audit: [`docs/benchmarks/harvey-lab-rules-compliance.md`](../../docs/benchmarks/harvey-lab-rules-compliance.md).

@@ -57,3 +57,17 @@ ClawQL product (SQL, vault, memory) runs in **Node / EffectTS** behind MCP. The 
 ## Stack tag
 
 Current ClawQL stack: `ts-clawql-data-v2` — see [`stack-version.json`](stack-version.json).
+
+Legacy Python DuckDB scorecards and pre-v2 call-store are quarantined — see [`docs/benchmarks/harvey-lab-stack-lineage.md`](../../docs/benchmarks/harvey-lab-stack-lineage.md). Do not cite them as current ClawQL performance. Re-measure via [`docs/benchmarks/harvey-lab-ts-v2-smoke-gate.md`](../../docs/benchmarks/harvey-lab-ts-v2-smoke-gate.md).
+
+## LAB rules / submission hygiene
+
+Full checklist: [`docs/benchmarks/harvey-lab-rules-compliance.md`](../../docs/benchmarks/harvey-lab-rules-compliance.md).
+
+Short version:
+
+- **Baseline arm** = your six tools + same model + same judge (model / stock harness claim).
+- **ClawQL arm** = agent-stack claim (extra `clawql_*` tools + Node pre-ingest). Always pair with baseline.
+- Headline metric = **all-pass**; CPR is diagnostic only.
+- Publishable judge = **`claude-sonnet-4-6`** (Harvey default). OpenRouter mini / local Ollama judges are debug only.
+- Do not cite `python-duckdb-v1` or pre-`ts-clawql-data-v2` scorecards as current ClawQL performance.

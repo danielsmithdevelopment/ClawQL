@@ -53,6 +53,8 @@ ClawQL pre-ingest: DuckDB /path/…/matters.duckdb rows=266 …
 
 ## Recovery
 
+**Canonical operator path:** [`harvey-lab-ts-v2-smoke-gate.md`](harvey-lab-ts-v2-smoke-gate.md) (quarantine → `npm run build` → task 001 fingerprint + `clawql_sql` → contiguous 001–025).
+
 1. Remove [`integrations/harvey-labs/.skip-lab-matrix`](../../integrations/harvey-labs/.skip-lab-matrix) after clean baseline passes.
 2. Re-run contiguous 001–025: `bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh`
 3. Tag all new artifacts with `"stack_version": "ts-clawql-data-v2"`.
@@ -60,6 +62,8 @@ ClawQL pre-ingest: DuckDB /path/…/matters.duckdb rows=266 …
 
 ## Related
 
+- [`harvey-lab-rules-compliance.md`](harvey-lab-rules-compliance.md) — upstream LAB rules vs ClawQL arms
+- [`harvey-lab-ts-v2-smoke-gate.md`](harvey-lab-ts-v2-smoke-gate.md) — quarantine → build → task 001 gate → contiguous
 - [`harvey-lab-pause-handoff.md`](harvey-lab-pause-handoff.md)
 - [`harvey-lab-clawql-results.md`](harvey-lab-clawql-results.md)
 - [`../design/harvey-lab-duckdb-retrieval.md`](../design/harvey-lab-duckdb-retrieval.md)

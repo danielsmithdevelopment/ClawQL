@@ -6,7 +6,8 @@
 #   LAB_MODEL         short Claude id for Arms A/B (e.g. claude-sonnet-4-6)
 #   LAB_MAX_TURNS     default 15 (Phase A) / 40 (full)
 #   LAB_ARMS          baseline,clawql[,nemotron-clawql]
-#   LAB_JUDGE_MODEL   default claude-sonnet-4-6
+#   LAB_JUDGE_MODEL   publishable: claude-sonnet-4-6 (Harvey default);
+#                     debug/GHA often openai/gpt-5.4-mini via OpenRouter
 #   LAB_NEMOTRON_MODEL  OpenRouter id for Arm C (default nvidia/nemotron-3.5-lightning:free)
 #   OPENROUTER_API_KEY
 #   CLAWQL_LAB_USE_OPENROUTER=1
