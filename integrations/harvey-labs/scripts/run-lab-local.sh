@@ -279,6 +279,34 @@ PY
 
   mkdir -p "${RESULTS_OUT}/${arm}-local"
   cp -a "${HARVEY_LABS}/results/${run_id}/." "${RESULTS_OUT}/${arm}-local/"
+  upload_lab_traces_to_r2 "${arm}"
+}
+
+upload_lab_traces_to_r2() {
+  local arm="$1"
+  local extra=()
+  local store="${CLAWQL_INFERENCE_STORE_PATH:-}"
+  local scoped=""
+  if [[ -n "${store}" && -f "${store}" ]]; then
+    extra+=(--call-store "${store}")
+  fi
+  if [[ -n "${store}" ]]; then
+    scoped="$(dirname "${store}")/runs/${LAB_RUN_ID}/calls.jsonl"
+    if [[ -f "${scoped}" ]]; then
+      extra+=(--call-store "${scoped}")
+    fi
+  fi
+  if [[ "${CLAWQL_HARVEY_LAB_REQUIRE_DURABLE_TRACES:-0}" != "1" ]]; then
+    extra+=(--allow-missing-r2)
+  fi
+  python3 "${CLAWQL_ROOT}/scripts/dev/upload-harvey-lab-cell-to-r2.py" \
+    --results-dir "${RESULTS_OUT}" \
+    --arm "${arm}" \
+    --task-id "${TASK##*/}" \
+    --run-id "${GITHUB_RUN_ID:-local-${LAB_RUN_ID}}" \
+    --source local \
+    "${extra[@]}" \
+    || echo "::warning::durable R2 upload failed for arm=${arm} (GH/local results still on disk)"
 }
 
 IFS=',' read -ra ARM_LIST <<<"${ARMS}"

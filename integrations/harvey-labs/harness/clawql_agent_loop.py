@@ -353,6 +353,8 @@ CEILING_BLOCK = f"""            {CEILING_BEGIN}
 RECALL_BLOCK = f"""            {RECALL_BEGIN}
             # Steer ClawQL arm toward memory_recall before bash-only hunting.
             # Frequency tasks get denominator-first guidance (task 018 class).
+            # Do not inject Pattern G / inventory regex into Harvey's agent_loop.
+            # CM/Restructuring SQL lives in the ClawQL adapter system prompt.
             if (
                 os.environ.get("CLAWQL_LAB_REQUIRE_RECALL", "1") != "0"
                 and not _clawql_nudge_state.get("recall", False)

@@ -848,6 +848,167 @@ def detect_credit_facility(matter_dir: Path) -> dict[str, Any]:
     }
 
 
+def detect_capital_markets(matter_dir: Path) -> dict[str, Any]:
+    """Path/filename signals for Capital Markets offerings (Phase 2 lite).
+
+    Mechanical only — no gold matter IDs. Prefer folder/path tokens such as
+    Offering/, Capital Markets/, prospectus, offering memorandum.
+    """
+    evidence: list[str] = []
+    for p in matter_dir.rglob("*"):
+        rel = str(p.relative_to(matter_dir)).replace("\\", "/")
+        blob = f"{rel} {p.name}".lower()
+        if any(
+            tok in blob
+            for tok in (
+                "capital markets",
+                "capital-markets",
+                "/offering/",
+                "offering-memorandum",
+                "offering memorandum",
+                "prospectus",
+                "424b",
+                "form-of-lock-up",
+                "lock-up-agreement",
+                "notice-of-withdrawal",
+                "underwriting-agreement",
+                "private-placement",
+                "warrant-agreement",
+                "registration-rights",
+                "insider-letter",
+                "s-1",
+                "f-1",
+                "form s-1",
+                "ipo/",
+                "/ipo",
+            )
+        ):
+            evidence.append(rel if p.is_file() else rel + "/")
+            if len(evidence) >= 12:
+                break
+    return {
+        "is_capital_markets": bool(evidence),
+        "evidence_files": evidence[:12],
+        "practice_area": "Capital Markets" if evidence else None,
+        "matter_type": "Offering" if evidence else None,
+    }
+
+
+def detect_restructuring(matter_dir: Path) -> dict[str, Any]:
+    """Path/filename signals for Restructuring / DIP matters (Phase 2 lite)."""
+    evidence: list[str] = []
+    for p in matter_dir.rglob("*"):
+        rel = str(p.relative_to(matter_dir)).replace("\\", "/")
+        blob = f"{rel} {p.name}".lower()
+        if any(
+            tok in blob
+            for tok in (
+                "restructuring",
+                "/dip/",
+                "dip-",
+                "dip financing",
+                "debtor-in-possession",
+                "debtor_in_possession",
+                "bankruptcy",
+                "chapter-11",
+                "chapter_11",
+            )
+        ):
+            evidence.append(rel if p.is_file() else rel + "/")
+            if len(evidence) >= 12:
+                break
+    return {
+        "is_restructuring": bool(evidence),
+        "evidence_files": evidence[:12],
+        "practice_area": "Restructuring" if evidence else None,
+        "matter_type": "DIP Financing" if evidence else None,
+    }
+
+
+def _build_matter_document_inventory(
+    matter_dir: Path,
+    *,
+    text_extractor: Any | None = None,
+) -> list[dict[str, Any]]:
+    """Catalog all matter files; optionally parse a priority subset for key_terms."""
+    try:
+        from harness.adapters.clawql_lab_matter_schema import (
+            catalog_all_matter_files,
+            doc_type_parse_priority,
+            extract_key_terms_from_text,
+        )
+    except ImportError:
+        from clawql_lab_matter_schema import (  # type: ignore
+            catalog_all_matter_files,
+            doc_type_parse_priority,
+            extract_key_terms_from_text,
+        )
+
+    inventory_on = os.environ.get("CLAWQL_LAB_DOC_INVENTORY_ALL_FILES", "1").strip()
+    if inventory_on in {"0", "false", "no", "off"}:
+        return []
+
+    skip_raw = os.environ.get(
+        "CLAWQL_LAB_DOC_INVENTORY_SKIP_EXT",
+        ".png,.jpg,.jpeg,.gif,.webp,.xlsx,.xls,.zip,.gz",
+    )
+    skip_ext = {
+        e.strip().lower() if e.strip().startswith(".") else f".{e.strip().lower()}"
+        for e in skip_raw.split(",")
+        if e.strip()
+    }
+    parse_limit = int(os.environ.get("CLAWQL_LAB_DOC_INVENTORY_PARSE_LIMIT", "20"))
+    text_cap = int(os.environ.get("CLAWQL_LAB_DOC_INVENTORY_TEXT_CAP", "500"))
+
+    rows = catalog_all_matter_files(matter_dir, skip_ext=skip_ext)
+    # Rank for optional key_terms parse: high doc_type priority, prefer text-ish.
+    parse_candidates = sorted(
+        rows,
+        key=lambda r: (
+            -doc_type_parse_priority(r.get("doc_type")),
+            0 if r.get("ext") in {"docx", "txt", "md", "eml"} else 1,
+            r.get("rel_path") or "",
+        ),
+    )
+    parsed = 0
+    for row in parse_candidates:
+        if parsed >= parse_limit:
+            break
+        ext = f".{row.get('ext') or ''}"
+        if ext in skip_ext:
+            row["parse_status"] = "skipped"
+            continue
+        if (row.get("ext") or "") not in {"docx", "txt", "md", "eml"}:
+            row["parse_status"] = "skipped"
+            continue
+        rel = row["rel_path"]
+        path = matter_dir / rel
+        body = ""
+        try:
+            if text_extractor is not None:
+                body = text_extractor(path) or ""
+            elif path.suffix.lower() in {".txt", ".md"}:
+                body = path.read_text(encoding="utf-8", errors="ignore")
+        except Exception:  # noqa: BLE001
+            row["parse_status"] = "failed"
+            continue
+        if not body:
+            row["parse_status"] = "skipped"
+            continue
+        terms = extract_key_terms_from_text(
+            body,
+            doc_type=row.get("doc_type"),
+            filename=row.get("filename") or "",
+        )
+        row["key_terms"] = terms
+        if terms.get("lock_up_period_days") and row.get("doc_type") != "lock-up-agreement":
+            row["doc_type"] = "lock-up-agreement"
+        row["text_snippet"] = body[:text_cap]
+        row["parse_status"] = "ok" if terms else "ok"
+        parsed += 1
+    return rows
+
+
 def _clawql_field_block(
     matter_id: str,
     *,
@@ -1277,6 +1438,8 @@ class ClawQLLabSession:
             matter_id = matter_dir.name
             detection = detect_hsr_second_request(matter_dir)
             credit = detect_credit_facility(matter_dir)
+            capital_markets = detect_capital_markets(matter_dir)
+            restructuring = detect_restructuring(matter_dir)
             if detection["received"]:
                 hsr_count += 1
             if credit["is_credit_facility"]:
@@ -1299,15 +1462,27 @@ class ClawQLLabSession:
                 "Antitrust",
             }:
                 practice = "Antitrust & Competition"
+            # Phase 2 lite: path detectors for CM / Restructuring (no gold IDs).
+            # Prefer credit / antitrust when already classified; fill Other only.
+            if practice in {"Other", ""} and capital_markets.get("is_capital_markets"):
+                practice = capital_markets["practice_area"]
+            if practice in {"Other", ""} and restructuring.get("is_restructuring"):
+                practice = restructuring["practice_area"]
             matter_type = credit["matter_type"]
             if detection["received"] and matter_type == "Other":
                 matter_type = "Advisory"
             if detection.get("antitrust_signal") and matter_type == "Other":
                 matter_type = "M&A"
+            if matter_type in {"Other", ""} and capital_markets.get("is_capital_markets"):
+                matter_type = capital_markets["matter_type"] or "Offering"
+            if matter_type in {"Other", ""} and restructuring.get("is_restructuring"):
+                matter_type = restructuring["matter_type"] or "Restructuring"
             extract_full = (
                 matter_dir in full_text_set
                 or bool(detection["received"])
                 or bool(credit["is_credit_facility"])
+                or bool(capital_markets.get("is_capital_markets"))
+                or bool(restructuring.get("is_restructuring"))
             )
 
             sections: list[str] = [
@@ -1515,6 +1690,37 @@ class ClawQLLabSession:
                 bc = fields.get("borrower_control")
                 borrower_control = str(bc).strip().lower() if bc else None
                 open_facts = list(fields.get("_open_facts") or [])
+
+            def _extract_inv(path: Path) -> str:
+                if path.suffix.lower() == ".docx":
+                    return _docx_to_text(path)
+                if path.suffix.lower() in {".md", ".txt", ".eml"}:
+                    return _plain_text(path)
+                return ""
+
+            matter_docs = _build_matter_document_inventory(
+                matter_dir, text_extractor=_extract_inv
+            )
+            document_count = len(matter_docs)
+            indexed_doc_count = sum(
+                1
+                for d in matter_docs
+                if d.get("parse_status") == "ok"
+                and (d.get("key_terms") or d.get("text_snippet"))
+            )
+            matter_status = None
+            if any(
+                (d.get("doc_type") == "withdrawal-notice")
+                and "hsr" not in (d.get("filename") or "").lower()
+                for d in matter_docs
+            ):
+                matter_status = "withdrawn"
+            elif any(
+                (d.get("key_terms") or {}).get("offering_status") == "withdrawn"
+                and (d.get("key_terms") or {}).get("withdrawal_date")
+                for d in matter_docs
+            ):
+                matter_status = "withdrawn"
             duckdb_rows.append(
                 {
                     "matter_id": matter_id,
@@ -1555,9 +1761,14 @@ class ClawQLLabSession:
                     "has_maintenance_financial_covenant": has_maintenance_fc,
                     "has_maintenance_financial_covenant_proof_doc": maintenance_proof,
                     "borrower_control": borrower_control,
+                    "matter_status": matter_status,
+                    "matter_date": deal_date,
+                    "document_count": document_count,
+                    "indexed_doc_count": indexed_doc_count,
                     "sandbox_root": f"/workspace/documents/matters/{matter_id}",
                     "vault_note_path": doc["path"],
                     "_open_facts": open_facts,
+                    "_matter_documents": matter_docs,
                 }
             )
 

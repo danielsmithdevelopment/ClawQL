@@ -11,6 +11,8 @@
 # Secrets:
 #   OPENROUTER_API_KEY — Nemotron + OpenRouter Claude (default)
 #   ANTHROPIC_API_KEY  — optional; required only when use_openrouter=0
+#   CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID — durable traces → R2
+#     (same as OpenBench; optional CLAWQL_* aliases / CLAWQL_R2_TRACES_BUCKET)
 
 name: Harvey LAB firm-knowledge (ClawQL vs baseline)
 
@@ -136,7 +138,22 @@ jobs:
           set -euo pipefail
           MODE="smoke"
           TASK_LIMIT=1
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          SWEEP_INCLUDE_JSON=""
+          if [ -f integrations/harvey-labs/.skip-lab-matrix ]; then
+            echo "::notice::.skip-lab-matrix present — dummy outputs only; gate sets can_run=false"
+            ARMS_CSV="nemotron"
+            TASK="firm-knowledge/tasks/001"
+            TASK_LIMIT=1
+            TASK_START=1
+            TASK_END=1
+            MODEL="claude-sonnet-4-6"
+            NEMO="nvidia/nemotron-3.5-lightning"
+            TURNS="40"
+            JUDGE="openai/gpt-5.4-mini"
+            MATTERS="0"
+            USE_OR="1"
+            MODE="skipped"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             ARMS_CSV="${{ inputs.arms }}"
             TASK="${{ inputs.task }}"
             TASK_LIMIT="${{ inputs.task_limit }}"
@@ -166,15 +183,21 @@ jobs:
           elif [ -f integrations/harvey-labs/.run-nemotron-sweep ]; then
             ARMS_CSV="nemotron,nemotron-clawql"
             TASK="firm-knowledge/tasks/001"
-            # First non-comment line: N  |  START-END  |  START END
-            #   N         → tasks 001..00N
-            #   START-END → tasks START..END (inclusive), e.g. 16-25
+            # Marker spec (non-comment lines):
+            #   N | START-END              → both default arms over that range
+            #   ARM START-END              → that arm only (repeatable; resume)
+            #   ARM N-N                    → a single cell (sparse include; not cartesian)
             # Empty / comment-only marker → smoke (do NOT default to 1–25).
-            SWEEP_SPEC="$(
-              awk 'NF && $1 !~ /^#/ { print $0; exit }' integrations/harvey-labs/.run-nemotron-sweep || true
+            SWEEP_JSON="$(
+              python3 integrations/harvey-labs/scripts/parse_nemotron_sweep_marker.py \
+                --marker integrations/harvey-labs/.run-nemotron-sweep
             )"
-            if [ -z "${SWEEP_SPEC}" ]; then
-              echo "::warning::.run-nemotron-sweep present but empty — falling back to smoke (task 001 only). Put N or START-END on a non-comment line to arm a sweep."
+            SWEEP_EMPTY="$(
+              SWEEP_JSON="${SWEEP_JSON}" python3 -c \
+                'import json,os; print(json.loads(os.environ["SWEEP_JSON"] or "{}").get("empty", True))'
+            )"
+            if [ "${SWEEP_EMPTY}" = "True" ]; then
+              echo "::warning::.run-nemotron-sweep present but empty — falling back to smoke (task 001 only). Put N, START-END, or ARM START-END on a non-comment line to arm a sweep."
               TASK_LIMIT=1
               TASK_START=1
               TASK_END=1
@@ -186,21 +209,22 @@ jobs:
               USE_OR="1"
               MODE="smoke"
             else
-              TASK_START=1
-              TASK_END=25
-              if [[ "${SWEEP_SPEC}" =~ ^([0-9]+)[[:space:]]*-[[:space:]]*([0-9]+)[[:space:]]*$ ]]; then
-                TASK_START="${BASH_REMATCH[1]}"
-                TASK_END="${BASH_REMATCH[2]}"
-              elif [[ "${SWEEP_SPEC}" =~ ^([0-9]+)[[:space:]]+([0-9]+)[[:space:]]*$ ]]; then
-                TASK_START="${BASH_REMATCH[1]}"
-                TASK_END="${BASH_REMATCH[2]}"
-              elif [[ "${SWEEP_SPEC}" =~ ^([0-9]+)[[:space:]]*$ ]]; then
-                TASK_START=1
-                TASK_END="${BASH_REMATCH[1]}"
-              else
-                echo "::error::Invalid .run-nemotron-sweep spec (got '${SWEEP_SPEC}'). Use N or START-END."
-                exit 1
-              fi
+              TASK_START="$(
+                SWEEP_JSON="${SWEEP_JSON}" python3 -c \
+                  'import json,os; print(json.loads(os.environ["SWEEP_JSON"])["task_start"])'
+              )"
+              TASK_END="$(
+                SWEEP_JSON="${SWEEP_JSON}" python3 -c \
+                  'import json,os; print(json.loads(os.environ["SWEEP_JSON"])["task_end"])'
+              )"
+              ARMS_CSV="$(
+                SWEEP_JSON="${SWEEP_JSON}" python3 -c \
+                  'import json,os; print(",".join(json.loads(os.environ["SWEEP_JSON"])["arms"]))'
+              )"
+              SWEEP_INCLUDE_JSON="$(
+                SWEEP_JSON="${SWEEP_JSON}" python3 -c \
+                  'import json,os; print(json.dumps(json.loads(os.environ["SWEEP_JSON"])["include"]))'
+              )"
               TASK_LIMIT="${TASK_END}"
               MODEL="claude-sonnet-4-6"
               NEMO="nvidia/nemotron-3.5-lightning"
@@ -209,7 +233,7 @@ jobs:
               MATTERS="0"
               USE_OR="1"
               MODE="nemotron-sweep"
-              echo "::notice::Detected .run-nemotron-sweep → Nemotron ± ClawQL tasks ${TASK_START}–${TASK_END}, judge=claude-sonnet-4-6"
+              echo "::notice::Detected .run-nemotron-sweep → arms=${ARMS_CSV} tasks ${TASK_START}–${TASK_END} cells=$(echo "${SWEEP_JSON}" | python3 -c 'import json,sys; print(json.load(sys.stdin)["cell_count"])') judge=claude-sonnet-4-6"
             fi
           else
             ARMS_CSV="nemotron,nemotron-clawql"
@@ -259,8 +283,16 @@ jobs:
           print(json.dumps(tasks))
           '
           )"
-          MATRIX_JSON="$(
-            ARMS_JSON="${ARMS_JSON}" TASKS_JSON="${TASKS_JSON}" python3 -c '
+          if [ -n "${SWEEP_INCLUDE_JSON:-}" ]; then
+            MATRIX_JSON="$(
+              SWEEP_INCLUDE_JSON="${SWEEP_INCLUDE_JSON}" python3 -c '
+          import json, os
+          print(json.dumps({"include": json.loads(os.environ["SWEEP_INCLUDE_JSON"])}))
+          '
+            )"
+          else
+            MATRIX_JSON="$(
+              ARMS_JSON="${ARMS_JSON}" TASKS_JSON="${TASKS_JSON}" python3 -c '
           import json, os
           arms = json.loads(os.environ["ARMS_JSON"])
           tasks = json.loads(os.environ["TASKS_JSON"])
@@ -271,7 +303,8 @@ jobs:
                   include.append({"arm": arm, "task": task, "task_id": tid})
           print(json.dumps({"include": include}))
           '
-          )"
+            )"
+          fi
           TASK_COUNT="$(
             TASKS_JSON="${TASKS_JSON}" python3 -c 'import json,os; print(len(json.loads(os.environ["TASKS_JSON"])))'
           )"
@@ -337,6 +370,12 @@ jobs:
           set -euo pipefail
           CAN=true
           REASON=""
+          if [ -f integrations/harvey-labs/.skip-lab-matrix ]; then
+            echo "can_run=false" >>"$GITHUB_OUTPUT"
+            echo "skip_reason=.skip-lab-matrix present (trace harvest / disarm — no live LAB cells)" >>"$GITHUB_OUTPUT"
+            echo "::notice::Skipped live Harvey LAB matrix (.skip-lab-matrix)"
+            exit 0
+          fi
           if [ "${NEED_AN}" = "true" ] && [ "${HAS_AN}" != "true" ]; then
             CAN=false
             REASON="ANTHROPIC_API_KEY missing (required for Opus/Sonnet arms or Sonnet judge)"
@@ -454,6 +493,25 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      - name: Sync traces to Cloudflare R2
+        if: always()
+        env:
+          CLAWQL_R2_TRACES_BUCKET: ${{ secrets.CLAWQL_R2_TRACES_BUCKET }}
+          CLAWQL_OPENBENCH_R2_BUCKET: ${{ secrets.CLAWQL_OPENBENCH_R2_BUCKET }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLAWQL_CLOUDFLARE_API_TOKEN: ${{ secrets.CLAWQL_CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLAWQL_R2_ACCOUNT_ID: ${{ secrets.CLAWQL_R2_ACCOUNT_ID }}
+          CLAWQL_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLAWQL_CLOUDFLARE_ACCOUNT_ID }}
+        uses: ./.github/actions/harvey-lab-durable-traces
+        with:
+          results_dir: ${{ github.workspace }}/integrations/harvey-labs/results
+          arm: ${{ matrix.arm }}
+          task_id: ${{ matrix.task_id }}
+          run_id: ${{ github.run_id }}
+          source: gha
+          require_durable: ${{ vars.CLAWQL_HARVEY_LAB_REQUIRE_DURABLE_TRACES || '1' }}
+
   aggregate:
     name: Aggregate sweep scorecard
     needs: [resolve-matrix, lab-arm]
@@ -494,6 +552,25 @@ jobs:
           path: integrations/harvey-labs/results/sweep-summary.json
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Sync sweep summary to Cloudflare R2
+        env:
+          CLAWQL_R2_TRACES_BUCKET: ${{ secrets.CLAWQL_R2_TRACES_BUCKET }}
+          CLAWQL_OPENBENCH_R2_BUCKET: ${{ secrets.CLAWQL_OPENBENCH_R2_BUCKET }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLAWQL_CLOUDFLARE_API_TOKEN: ${{ secrets.CLAWQL_CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLAWQL_R2_ACCOUNT_ID: ${{ secrets.CLAWQL_R2_ACCOUNT_ID }}
+          CLAWQL_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLAWQL_CLOUDFLARE_ACCOUNT_ID }}
+        uses: ./.github/actions/harvey-lab-durable-traces
+        with:
+          results_dir: ${{ github.workspace }}/integrations/harvey-labs/results
+          arm: _other
+          task_id: "000"
+          run_id: ${{ github.run_id }}
+          source: gha
+          other_name: harvey-lab-sweep-summary-${{ github.run_id }}
+          require_durable: ${{ vars.CLAWQL_HARVEY_LAB_REQUIRE_DURABLE_TRACES || '1' }}
 
   lab-skip:
     name: Skip (missing credentials)
