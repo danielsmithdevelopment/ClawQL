@@ -18,6 +18,8 @@ CLAWQL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 export CLAWQL_LAB_STACK_VERSION="${CLAWQL_LAB_STACK_VERSION:-$(node "${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-stack-version.mjs" | python3 -c 'import json,sys; print(json.load(sys.stdin)["stack_version"])')}"
 export CLAWQL_LAB_PREINGEST_SCRIPT="${CLAWQL_LAB_PREINGEST_SCRIPT:-${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-pre-ingest.mjs}"
 export CLAWQL_LAB_MCP_PROXY="${CLAWQL_LAB_MCP_PROXY:-${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-mcp-proxy.mjs}"
+# Pre-ingest client gates data_ingest on this; MCP also needs it (start-clawql-for-lab.sh).
+export CLAWQL_ENABLE_DATA="${CLAWQL_ENABLE_DATA:-1}"
 WORK="${RUNNER_TEMP:-/tmp}/harvey-labs-work"
 # Override with an existing checkout (e.g. sparse clone) via HARVEY_LABS=
 HARVEY_LABS="${HARVEY_LABS:-${WORK}/harvey-labs}"

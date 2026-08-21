@@ -20,6 +20,7 @@ export CLAWQL_LAB_MCP_PORT="${CLAWQL_LAB_MCP_PORT:-8082}"
 export CLAWQL_LAB_STACK_VERSION="${STACK_VERSION}"
 export CLAWQL_LAB_PREINGEST_SCRIPT="${WT}/integrations/harvey-labs/scripts/lab-pre-ingest.mjs"
 export CLAWQL_LAB_MCP_PROXY="${WT}/integrations/harvey-labs/scripts/lab-mcp-proxy.mjs"
+export CLAWQL_ENABLE_DATA="${CLAWQL_ENABLE_DATA:-1}"
 export PYTHONUNBUFFERED=1
 
 mkdir -p "$(dirname "$AGG")"

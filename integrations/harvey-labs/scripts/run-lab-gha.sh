@@ -15,6 +15,8 @@ set -euo pipefail
 
 CLAWQL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 export CLAWQL_LAB_STACK_VERSION="${CLAWQL_LAB_STACK_VERSION:-$(node "${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-stack-version.mjs" | python3 -c 'import json,sys; print(json.load(sys.stdin)["stack_version"])')}"
+# Pre-ingest client gates data_ingest on this; MCP also needs it (start-clawql-for-lab.sh).
+export CLAWQL_ENABLE_DATA="${CLAWQL_ENABLE_DATA:-1}"
 WORK="${RUNNER_TEMP:-/tmp}/harvey-labs-work"
 HARVEY_LABS="${WORK}/harvey-labs"
 TASK="${LAB_TASK:-firm-knowledge/tasks/001}"
