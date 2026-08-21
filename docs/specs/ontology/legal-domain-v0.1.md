@@ -13,6 +13,8 @@ Companion to: ClawQL Streams Spec v0.2, B-7 Suite Spec, [memory_recall Structure
 
 **Essay (value + OpenBench proof):** [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/) — why typed predicates beat semantic vault recall for firm-knowledge enumeration.
 
+**Roadmap (negative path + history):** `FailedStrategy` records, append-only field versions for evidentiary fields, and per-type coverage lint — [`security-ontology-knowledge-loop.md`](../../security/security-ontology-knowledge-loop.md) §3.
+
 ## Repo alignment
 
 | Draft path                       | Shipped path                                                                              |

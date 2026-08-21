@@ -3,6 +3,8 @@
 **Issue:** [#272](https://github.com/danielsmithdevelopment/ClawQL/issues/272)  
 **Narrative:** [`clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md`](clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md) **§3** (JWT ATR session tokens) and **§5** (MCP runtime protection).
 
+Silent rejection of invalid ATR is unsafe for operations: prefer **structured WORM escalation events** (e.g. signature OK but scope/budget fail) so denials feed a typed known-defence / adversarial-pattern store — see [`security-ontology-knowledge-loop.md`](security-ontology-knowledge-loop.md).
+
 ## Goal
 
 Every MCP tool request must pass through a **single chokepoint** that validates **cryptographically bound scope** (JWT carrying **ATR** — Access-Task-Resource claims). The agent **cannot** widen its own claims; only the identity gateway / IdP path can issue or refresh tokens.
