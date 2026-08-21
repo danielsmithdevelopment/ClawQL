@@ -70,8 +70,7 @@ export class SQLiteSecretStore extends PathSecretStore {
 
   async getSecret(path: string): Promise<string | null> {
     const row = this.db.prepare("SELECT value FROM secrets WHERE path = ?").get(path) as
-      | { value: string }
-      | undefined;
+      { value: string } | undefined;
     return row?.value ?? null;
   }
 
