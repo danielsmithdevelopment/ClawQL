@@ -94,16 +94,10 @@ Both agents connect to the ClawQL MCP server running on the Mac Mini at `:8080`.
 
 ```json
 {
-  "tools": [
-    "memory_recall",
-    "memory_ingest",
-    "clawql_think",
-    "clawql_sql",
-    "web_search"
-  ],
+  "tools": ["memory_recall", "memory_ingest", "clawql_think", "clawql_sql", "web_search"],
   "budget": {
     "maxTokens": 500000,
-    "maxUsd": 5.00
+    "maxUsd": 5.0
   }
 }
 ```
@@ -122,7 +116,7 @@ Both agents connect to the ClawQL MCP server running on the Mac Mini at `:8080`.
   ],
   "budget": {
     "maxTokens": 200000,
-    "maxUsd": 2.00
+    "maxUsd": 2.0
   }
 }
 ```
@@ -252,7 +246,7 @@ hermes init --workspace ~/.hermes/personal
 agent:
   name: "ClawQL Assistant"
   model: "openai/ornith-1.5-35b-a3b"
-  base_url: "http://localhost:8091/v1"  # routes through clawql-inference
+  base_url: "http://localhost:8091/v1" # routes through clawql-inference
   api_key: "local"
   temperature: 0.6
 
@@ -266,17 +260,17 @@ memory:
 skills:
   path: "~/.hermes/personal/skills/"
   auto_generate: true
-  review_before_save: false  # trust Ornith's skill generation
+  review_before_save: false # trust Ornith's skill generation
 
 learning:
   enabled: true
-  min_task_complexity: 3    # only generate skills for non-trivial tasks
-  batch_mode: false         # immediate skill updates, not async
+  min_task_complexity: 3 # only generate skills for non-trivial tasks
+  batch_mode: false # immediate skill updates, not async
 
 subagents:
   cline:
     type: "acp"
-    endpoint: "http://localhost:8095/acp"  # Cline ACP server
+    endpoint: "http://localhost:8095/acp" # Cline ACP server
     model: "openai/nemotron-3.5-lightning"
     base_url: "http://localhost:8091/v1"
     capabilities:
@@ -310,11 +304,13 @@ honcho:
 # ClawQL Assistant — SOUL.md
 
 ## Identity
+
 You are a personal AI assistant for Daniel Smith, a solo developer building ClawQL.
 You manage his development workflows, benchmark runs, and infrastructure.
 You communicate via Telegram and terminal.
 
 ## Communication style
+
 - Terse. Lead with the answer.
 - Status updates: one line per active task, full table for benchmark results.
 - Failures: say what failed, why, and what you did about it.
@@ -322,6 +318,7 @@ You communicate via Telegram and terminal.
 - Non-urgent updates can wait until morning. Failures wake him up.
 
 ## What you know about Daniel's work
+
 - ClawQL: AI agent infrastructure — vault memory, ontology, Panguard, WORM audit trail.
 - Harvey LAB: legal agent benchmark; publishable scores require ts-clawql-data-v2 agent gate.
 - ExtractBench: document extraction benchmark, 80.1% current mean, target 95.59%.
@@ -330,13 +327,16 @@ You communicate via Telegram and terminal.
 - RockYourLobster: hardened agent deployments for regulated enterprise.
 
 ## Delegation policy
+
 Delegate to Cline when the task requires:
+
 - Reading or modifying files in the ClawQL codebase
 - Running terminal commands on the Mac Mini
 - Executing benchmark harness scripts
 - Git operations
 
 Handle directly when the task requires:
+
 - Memory recall or vault queries
 - Benchmark result analysis and interpretation
 - Status reporting to Daniel
@@ -344,6 +344,7 @@ Handle directly when the task requires:
 - Scheduling and cron management
 
 ## What not to do
+
 - Never push to main without Daniel's explicit approval.
 - Never modify values-homelab.yaml or tier-map.json without approval.
 - Never send external emails or messages on Daniel's behalf without approval.
@@ -501,7 +502,7 @@ trigger:
     - service health
     - is everything up
     - infrastructure status
-  schedule: "0 */4 * * *"  # also triggered by cron.yaml
+  schedule: "0 */4 * * *" # also triggered by cron.yaml
 
 acceptance_criteria:
   - All critical endpoints respond within 5s
@@ -834,11 +835,7 @@ Register in `~/.cline/config.json`:
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
-type WormKind =
-  | "FILE_WRITE"
-  | "TERMINAL_EXEC"
-  | "SESSION_START"
-  | "SESSION_END";
+type WormKind = "FILE_WRITE" | "TERMINAL_EXEC" | "SESSION_START" | "SESSION_END";
 
 interface WormEntry {
   id: string;
@@ -869,8 +866,7 @@ async function appendWorm(entry: Omit<WormEntry, "id" | "ts" | "merkleHash">): P
   };
   payload.merkleHash = merkleHash(payload);
 
-  const localEndpoint =
-    process.env.WORM_LOCAL_ENDPOINT ?? "http://n5-pro.tailnet:9000";
+  const localEndpoint = process.env.WORM_LOCAL_ENDPOINT ?? "http://n5-pro.tailnet:9000";
   const bucket = process.env.WORM_LOCAL_BUCKET ?? "clawql-worm-personal";
   const key = `sessions/${payload.sessionId}/${payload.ts}-${payload.kind.toLowerCase()}.json`;
 
@@ -905,10 +901,7 @@ export async function beforeFileWrite(ctx: {
   });
 }
 
-export async function afterFileWrite(ctx: {
-  path: string;
-  success: boolean;
-}): Promise<void> {
+export async function afterFileWrite(ctx: { path: string; success: boolean }): Promise<void> {
   const { sessionId, delegationId } = getSessionContext();
   await appendWorm({
     sessionId,
@@ -919,10 +912,7 @@ export async function afterFileWrite(ctx: {
   });
 }
 
-export async function beforeTerminalExec(ctx: {
-  command: string;
-  cwd: string;
-}): Promise<void> {
+export async function beforeTerminalExec(ctx: { command: string; cwd: string }): Promise<void> {
   const { sessionId, delegationId } = getSessionContext();
   await appendWorm({
     sessionId,
@@ -1080,10 +1070,10 @@ jobs:
     skill: homelab-service-check
     notify: telegram
     params:
-      mode: alert-only  # suppress if all green
+      mode: alert-only # suppress if all green
 
   - name: benchmark-monitor
-    schedule: "0 9 * * 1"  # Monday 09:00 — check if sweep overdue
+    schedule: "0 9 * * 1" # Monday 09:00 — check if sweep overdue
     action: direct
     task: |
       If no Harvey LAB sweep in 14 days, remind Daniel
@@ -1098,7 +1088,7 @@ jobs:
       Alert if drift > 10 objects or any Merkle chain break
 
   - name: worm-completeness
-    schedule: "0 4 * * 0"  # Sunday 04:00
+    schedule: "0 4 * * 0" # Sunday 04:00
     action: delegate
     agent: cline
     task: python ~/.hermes/personal/scripts/verify_worm_completeness.py --days 7
@@ -1527,4 +1517,4 @@ After one to two weeks of live use, run Harvey LAB / Agents OpenBench **Family M
 
 ---
 
-*ClawQL Personal Agent Setup · August 2026*
+_ClawQL Personal Agent Setup · August 2026_
