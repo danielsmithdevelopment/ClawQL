@@ -54,7 +54,7 @@ packages/clawql-auth/
 │   ├── policy.ts                   # ✅ shipped — MFA / financial tool gates
 │   ├── provider-auth-headers.ts    # ✅ shipped — static upstream headers
 │   ├── aws-sigv4.ts                # ✅ shipped
-│   ├── step-up/                    # ✅ shipped — TOTP / WebAuthn interfaces
+│   ├── step-up/                    # ✅ shipped — TOTP / WebAuthn + passkey selection helpers
 │   ├── inbound/
 │   │   ├── api-key/
 │   │   │   └── validator.ts        # APIKeyValidator (extends shipped gateway)
@@ -246,6 +246,34 @@ export interface ATRClaims {
 ### 4.4 OIDC / SSO note
 
 Shipped **`oidc`** mode remains the path for enterprise human SSO: customer IdP issues JWT → ClawQL verifies JWKS → ATR. **Do not conflate** with `MCPOAuthServer` (MCP-native client credentials) or outbound Google/Microsoft OAuth (upstream API access). SAML/LDAP _client_ modes are roadmap-only; they map external assertions into `ATRClaims` the same way OIDC does today.
+
+### 4.5 Passkeys / WebAuthn (Face ID, Touch ID, YubiKey)
+
+Face ID / Touch ID / Windows Hello and external FIDO2 keys (YubiKey, Titan, …) are covered by the **same** WebAuthn passkey surface — not separate SDKs.
+
+| Authenticators | WebAuthn term | `authenticatorAttachment` |
+| -------------- | ------------- | ------------------------- |
+| Face ID, Touch ID, Windows Hello, Android biometric | Platform | `platform` |
+| YubiKey, Titan, Feitian, other FIDO2 | Roaming / cross-platform | `cross-platform` |
+
+Shipped helpers in `step-up/passkey-options.ts`:
+
+```typescript
+import { buildPasskeyAuthenticatorSelection } from "clawql-auth";
+
+/**
+ * authenticatorSelection for registration:
+ * - residentKey + userVerification required → OS biometric / PIN for platform authenticators
+ * - omit authenticatorAttachment → browser offers both (recommended default)
+ * - requirement: 'hardware-only' → cross-platform only (enterprise hardware-token policy)
+ * - requirement: 'biometric-only' → platform only
+ */
+buildPasskeyAuthenticatorSelection();
+buildPasskeyAuthenticatorSelection({ requirement: "hardware-only" });
+buildPasskeyAuthenticatorSelection({ requirement: "biometric-only" });
+```
+
+ClawQL never touches biometric raw data; private keys remain in Secure Enclave / TPM / the hardware token. Prefer IdP passkeys for human SSO; inject `WebAuthnStepUpVerifier` when hosts need ClawQL-side step-up. See [`clawql-auth-oidc-stepup.md`](./clawql-auth-oidc-stepup.md#passkeys-face-id--touch-id--yubikey).
 
 ---
 

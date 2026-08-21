@@ -113,6 +113,21 @@ if (claims.ok) {
 
 WebAuthn is a **pluggable** `WebAuthnStepUpVerifier` (fails closed until injected). Prefer IdP passkeys for human login.
 
+**Face ID / Touch ID / Windows Hello** and **YubiKey / Titan** are the same WebAuthn surface — platform vs roaming authenticators. ClawQL never sees biometric bytes; keys stay in Secure Enclave / TPM / the hardware token.
+
+```ts
+import { buildPasskeyAuthenticatorSelection } from "clawql-auth";
+
+// Default: browser offers biometrics *and* hardware keys
+buildPasskeyAuthenticatorSelection();
+
+// Enterprise: force YubiKey / FIDO2 roaming only
+buildPasskeyAuthenticatorSelection({ requirement: "hardware-only" });
+
+// Device biometric only (Face ID / Touch ID / Windows Hello)
+buildPasskeyAuthenticatorSelection({ requirement: "biometric-only" });
+```
+
 ## Related
 
 - MCP proxy JWT ATR (mesh / Panguard): [`docs/security/mcp-proxy-jwt-atr.md`](../../docs/security/mcp-proxy-jwt-atr.md)

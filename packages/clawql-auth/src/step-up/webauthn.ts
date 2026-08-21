@@ -5,6 +5,11 @@
  * This package exposes a hook so high-impact tools (payments, etc.) can require a
  * second factor when the host wires a verifier (e.g. @simplewebauthn/server).
  *
+ * **Face ID / Touch ID / Windows Hello** are WebAuthn *platform* authenticators.
+ * **YubiKey / Titan / other FIDO2 keys** are *roaming* (cross-platform) authenticators.
+ * Both use the same ceremony — see {@link buildPasskeyAuthenticatorSelection}.
+ * ClawQL never receives biometric raw data; keys stay in Secure Enclave / TPM / hardware.
+ *
  * Effect is the only public surface: {@link requireWebAuthnStepUpEffect} fails on the typed
  * {@link WebAuthnStepUpError} channel. The injected {@link WebAuthnStepUpVerifier} is a host
  * boundary (external authenticators are inherently Promise-based).

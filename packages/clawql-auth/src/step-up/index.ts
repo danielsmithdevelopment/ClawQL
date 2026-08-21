@@ -22,3 +22,11 @@ export {
   type WebAuthnAssertionInput,
   type WebAuthnStepUpVerifier,
 } from "./webauthn.js";
+export {
+  buildPasskeyAuthenticatorSelection,
+  PASSKEY_AUTHENTICATOR_CATALOG,
+  resolveAuthenticatorAttachment,
+  type AuthenticatorAttachment,
+  type PasskeyAuthenticatorRequirement,
+  type PasskeyAuthenticatorSelection,
+} from "./passkey-options.js";
