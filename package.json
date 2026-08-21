@@ -153,7 +153,7 @@
     "clawql-data": "7.2.0",
     "clawql-web": "7.2.0",
     "dotenv": "^17.4.2",
-    "effect": "3.22.0",
+    "effect": "3.22.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "graphql": "^16.14.2",
@@ -218,7 +218,7 @@
     "@opentelemetry/propagator-jaeger": "2.9.0",
     "sharp": "0.35.3",
     "brace-expansion": "5.0.9",
-    "effect": "3.22.0",
+    "effect": "3.22.1",
     "@aws-sdk/credential-provider-login": "3.972.73"
   }
 }
