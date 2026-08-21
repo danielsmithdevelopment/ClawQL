@@ -255,6 +255,8 @@ Gateway creates AgentSessionDO id + asks clawql-inference for virtual key
          └─ spawn DO with VIRTUAL_KEY binding (never log plaintext)
 ```
 
+**Power of 10 / correctness:** `maxTurns` and `budgetTokens` (or equivalent USD→token budget) must be **required** on autonomous subscriptions — not optional soft defaults. An unbound consumer loop is the agentic equivalent of an unbounded flight-software loop. See [`correctness-by-construction.md`](../design/correctness-by-construction.md) §2 / §6. Failed WORM append after session start → **fail closed** (halt cell), never continue unaudited.
+
 ```text
 Session completes (converged / budget / timeout / eviction)
          │
