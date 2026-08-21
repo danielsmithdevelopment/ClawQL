@@ -101,4 +101,4 @@ if (result.ok) {
 - User registration, password reset, email OTP delivery
 - Replacing Okta / Entra / Auth0
 
-See also: [`clawql-defense-in-depth-security-guide.md`](./clawql-defense-in-depth-security-guide.md), package README [`packages/clawql-auth/README.md`](../../packages/clawql-auth/README.md).
+See also: [`clawql-defense-in-depth-security-guide.md`](./clawql-defense-in-depth-security-guide.md), package README [`packages/clawql-auth/README.md`](../../packages/clawql-auth/README.md), OAuth / MCP OAuth 2.1 package roadmap [`clawql-auth-package-spec.md`](./clawql-auth-package-spec.md).

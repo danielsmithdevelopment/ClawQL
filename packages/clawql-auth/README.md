@@ -78,5 +78,7 @@ const auth = createClawQLAuth({ mode: "noAuth" });
 ## Related
 
 - MCP proxy JWT ATR (mesh / Panguard): [`docs/security/mcp-proxy-jwt-atr.md`](../../docs/security/mcp-proxy-jwt-atr.md)
+- OIDC consumer + step-up: [`docs/security/clawql-auth-oidc-stepup.md`](../../docs/security/clawql-auth-oidc-stepup.md)
+- **OAuth / MCP OAuth 2.1 roadmap** (outbound refresh mutex, inbound AS): [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-auth-package-spec.md)
 - Payments P2P step-up: [`docs/payments/credits-ach.md`](../../docs/payments/credits-ach.md)
 - Design: modularization §4.3
