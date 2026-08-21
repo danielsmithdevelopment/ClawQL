@@ -42,6 +42,45 @@ const check = auth.resolveClaims({ "x-api-key": secret });
 - Gateway wires `asClaimsResolver()` automatically when `apiKeyStorePath` is set
 - Optional `authEventSink` for WORM (`API_KEY_ISSUED` / `USED` / `REVOKED` / `INVALID`)
 
+## SecretStore (pluggable backends)
+
+One interface — swap SQLite (default), OpenBao, HashiCorp Vault, Infisical, Vaultwarden, 1Password, or env without touching OAuth / API-key code:
+
+```ts
+import {
+  createClawQLAuth,
+  createSQLiteSecretStore,
+  createOpenBaoStore,
+  createHashiCorpVaultStore,
+  createInfisicalStore,
+  resolveSecretStore,
+} from "clawql-auth";
+
+// Homelab / Hermes default
+const auth = createClawQLAuth({
+  secretStore: createSQLiteSecretStore({ path: "~/.clawql/secrets.db" }),
+});
+
+// Prefer OpenBao for OSS self-host (Vault-compatible, Apache 2.0)
+createClawQLAuth({
+  secretStore: createOpenBaoStore({
+    endpoint: process.env.BAO_ADDR!,
+    token: process.env.BAO_TOKEN!,
+  }),
+});
+
+// Or resolve from CLAWQL_SECRET_STORE=openbao|hashicorp-vault|infisical|…
+createClawQLAuth({ secretStore: resolveSecretStore() });
+```
+
+| Backend | Role |
+| ------- | ---- |
+| SQLite | Local / homelab / Hermes |
+| OpenBao | Self-hosted OSS TEE (preferred over HashiCorp BSL) |
+| HashiCorp Vault | Enterprise already on Vault |
+| Infisical / 1Password / Vaultwarden | Customer-owned secret managers |
+| env | CI only |
+
 ## Outbound OAuth token store
 
 Mutex-protected proactive refresh (60s before expiry) — one refresh per token key even under concurrent agent sessions:

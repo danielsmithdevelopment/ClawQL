@@ -36,6 +36,11 @@ import {
 } from "./step-up/index.js";
 import { createIssuedApiKeyStore, type IssuedApiKeyStore } from "./api-keys/index.js";
 import type { AuthEventSink } from "./audit/auth-events.js";
+import {
+  resolveSecretStore,
+  type ResolveSecretStoreOptions,
+  type SecretStore,
+} from "./stores/index.js";
 
 export type CreateClawQLAuthOptions = {
   mode?: AuthMode;
@@ -50,6 +55,11 @@ export type CreateClawQLAuthOptions = {
    * primary path for enterprise org/team key management.
    */
   apiKeyStorePath?: string;
+  /**
+   * Swappable secret backend (SQLite default via {@link resolveSecretStore}).
+   * Pass an explicit `SecretStore` or `{ kind: "openbao" | "hashicorp-vault" | … }`.
+   */
+  secretStore?: SecretStore | ResolveSecretStoreOptions;
   /** Optional auth event sink (WORM / audit). */
   authEventSink?: AuthEventSink;
   webauthnVerifier?: WebAuthnStepUpVerifier;
@@ -61,6 +71,8 @@ export type ClawQLAuth = {
   readonly config: GatewayAuthConfig;
   /** Issued API key registry when `apiKeyStorePath` was provided. */
   readonly apiKeys: IssuedApiKeyStore | undefined;
+  /** Pluggable secret backend (OAuth tokens, keys, nonces). */
+  readonly secretStore: SecretStore;
   /** Sync claim resolution for `noAuth` / `apiKey`; `oidc` requires the Effect/async forms. */
   resolveClaims(
     headers?: AuthHeaderSource
@@ -106,6 +118,16 @@ function composeApiKeyClaimsResolver(
   };
 }
 
+function resolveAuthSecretStore(
+  input: CreateClawQLAuthOptions["secretStore"]
+): SecretStore {
+  if (!input) return resolveSecretStore();
+  if (typeof input === "object" && "getSecret" in input && typeof input.getSecret === "function") {
+    return input as SecretStore;
+  }
+  return resolveSecretStore(input as ResolveSecretStoreOptions);
+}
+
 export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLAuth {
   const base = loadGatewayAuthConfig();
   const apiKeys = options.apiKeyStorePath
@@ -114,6 +136,7 @@ export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLA
         eventSink: options.authEventSink,
       })
     : undefined;
+  const secretStore = resolveAuthSecretStore(options.secretStore);
 
   const config: GatewayAuthConfig = {
     mode: options.mode ?? base.mode,
@@ -133,6 +156,7 @@ export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLA
     mode: config.mode,
     config,
     apiKeys,
+    secretStore,
     resolveClaims(headers = {}) {
       return resolveAtrClaimsFromHeaders(headers, config);
     },

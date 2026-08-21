@@ -2,7 +2,7 @@
 
 **Status:** Design / roadmap · August 2026 · v0.1  
 **Package:** [`packages/clawql-auth/`](../../packages/clawql-auth/)  
-**Shipped today:** gateway `noAuth` / `apiKey` / `oidc` (JWT **consumer**), ATR claims, provider upstream headers, AWS SigV4 helpers, shared TOTP/WebAuthn step-up — see [`clawql-auth-oidc-stepup.md`](./clawql-auth-oidc-stepup.md) and [`packages/clawql-auth/README.md`](../../packages/clawql-auth/README.md).
+**Shipped today:** gateway `noAuth` / `apiKey` / `oidc` (JWT **consumer**), ATR claims, provider upstream headers, AWS SigV4 helpers, shared TOTP/WebAuthn step-up, **SecretStore** plugins (SQLite default, OpenBao/Vault/Infisical/…) — see [`clawql-auth-oidc-stepup.md`](./clawql-auth-oidc-stepup.md) and [`packages/clawql-auth/README.md`](../../packages/clawql-auth/README.md).
 
 > **Scope of this spec:** grow `clawql-auth` into the single home for **inbound MCP OAuth 2.1** (gateway-facing) and **outbound** OAuth to upstreams — especially the **mutex-protected proactive refresh** pattern that avoids the MCP ecosystem’s constant re-auth failure mode ([Daniel Lockyer / X](https://x.com/daniellockyer/status/2090501527215468682)). This does **not** make ClawQL a full human IdP (login UI / user directory). Prefer API keys / PATs / Vault dynamic secrets when the use case allows; add user-delegated OAuth only where required.
 
@@ -29,7 +29,7 @@ ClawQL remains an **OAuth consumer** for human SSO (see shipped `oidc` mode) and
 
 ## 2. Core Design Principles
 
-1. **Vault-first secrets** — long-lived refresh tokens, client secrets, and API keys live in HashiCorp Vault (KV v2 or dynamic secrets engine). Process env holds references (`vault:secret/data/clawql/oauth/google#refresh_token`), not raw tokens. Local dev may use `$CLAWQL_HOME/Auth/` with `0600` permissions; production must not.
+1. **Vault-first secrets (pluggable)** — long-lived refresh tokens, client secrets, and API keys live behind a **`SecretStore`** interface. Default local/homelab/Hermes backend is **SQLite**. Enterprise TEE uses **OpenBao** (preferred OSS, Apache 2.0 Vault fork) or HashiCorp Vault. Optional adapters: Infisical, Vaultwarden, 1Password Secrets Automation, env (CI only). Process env holds references or Connect tokens — not raw refresh tokens in production.
 
 2. **Proactive refresh (60 s window)** — refresh access tokens when `expires_at - now < 60_000` ms, not when the upstream returns `401`. Reactive refresh under concurrent load is the root cause of MCP OAuth flakiness.
 
@@ -55,6 +55,7 @@ packages/clawql-auth/
 │   ├── provider-auth-headers.ts    # ✅ shipped — static upstream headers
 │   ├── aws-sigv4.ts                # ✅ shipped
 │   ├── step-up/                    # ✅ shipped — TOTP / WebAuthn + passkey selection helpers
+│   ├── stores/                     # ✅ shipped — SecretStore + sqlite/vault/openbao/… plugins
 │   ├── inbound/
 │   │   ├── api-key/
 │   │   │   └── validator.ts        # APIKeyValidator (extends shipped gateway)
@@ -76,7 +77,7 @@ packages/clawql-auth/
 │   │           ├── microsoft.ts
 │   │           └── slack.ts
 │   ├── vault/
-│   │   └── dynamic-secrets.ts      # VaultDynamicSecretProvider
+│   │   └── dynamic-secrets.ts      # VaultDynamicSecretProvider (leases — distinct from SecretStore KV)
 │   ├── outbound-api-keys.ts        # OutboundAPIKeyManager
 │   └── audit/
 │       └── worm-types.ts           # AuthWORMEntryType union
@@ -84,7 +85,7 @@ packages/clawql-auth/
 └── README.md
 ```
 
-**Dependency rule:** `clawql-auth` may depend on `clawql-audit` and `jose`; it must not import `clawql-api`, vertical packages, or MCP transport. Host processes inject Vault clients and WORM appenders via Effect `Layer`.
+**Dependency rule:** `clawql-auth` may depend on `clawql-audit` and `jose`; it must not import `clawql-api`, vertical packages, or MCP transport. Host processes inject **`SecretStore`**, Vault clients, and WORM appenders via Effect `Layer` / factory options.
 
 ---
 
@@ -646,9 +647,109 @@ Integrates with shipped **`CLAWQL_PROVIDER_AUTH_JSON`** for dev; production keys
 
 ---
 
-## 9. Vault Dynamic Secrets
+## 9. SecretStore plugins
 
-Short-lived credentials from Vault engines (DB, AWS, PKI) — distinct from OAuth refresh tokens:
+`clawql-auth` defines a single **`SecretStore`** interface. Every backend is a thin plugin — OAuth, issued API keys, nonces, and opaque secrets never import a specific vault SDK.
+
+```typescript
+// packages/clawql-auth/src/stores/types.ts
+export interface SecretStore {
+  getSecret(path: string): Promise<string | null>;
+  setSecret(path: string, value: string): Promise<void>;
+  deleteSecret(path: string): Promise<void>;
+  listSecrets(prefix: string): Promise<string[]>;
+
+  getOAuthToken(providerId: string): Promise<TokenSet | null>;
+  setOAuthToken(providerId: string, token: TokenSet): Promise<void>;
+  markRequiresReauth(providerId: string): Promise<void>;
+
+  getAPIKeyRecord(keyId: string): Promise<APIKeyRecord | null>;
+  saveAPIKeyRecord(record: APIKeyRecord): Promise<void>;
+  setRevokedAt(keyId: string, revokedAt: Date): Promise<void>;
+
+  storeNonce(nonce: string, data: NonceRecord): Promise<void>;
+  getNonce(nonce: string): Promise<NonceRecord | null>;
+  markNonceConsumed(nonce: string): Promise<void>;
+  storeDomainChallenge(domain: string, challenge: DomainChallenge): Promise<void>;
+  getDomainChallenge(domain: string): Promise<DomainChallenge | null>;
+  deleteDomainChallenge(domain: string): Promise<void>;
+}
+```
+
+### Layout
+
+```
+packages/clawql-auth/src/stores/
+  types.ts              — SecretStore + TokenSet / NonceRecord / …
+  base.ts               — PathSecretStore (JSON under oauth/ api-keys/ nonces/ …)
+  sqlite.ts             — Default (local dev, homelab, Hermes)
+  hashicorp-vault.ts    — HashiCorp Vault KV v2
+  openbao.ts            — OpenBao (Vault fork, Apache 2.0 / BSL-free)
+  infisical.ts          — Infisical
+  vaultwarden.ts        — Vaultwarden (Bitwarden-compatible)
+  onepassword.ts        — 1Password Connect / Secrets Automation
+  env.ts                — Environment variables (minimal, CI only)
+  memory.ts             — In-process (tests)
+  resolve.ts            — CLAWQL_SECRET_STORE factory
+```
+
+### Backend choice
+
+| Backend | When to use |
+| ------- | ----------- |
+| **SQLite** | Local dev, homelab, Hermes personal agent (default) |
+| **OpenBao** | Self-hosted OSS / commercial without HashiCorp BSL friction — **preferred** Vault-compatible recommendation |
+| **HashiCorp Vault** | Enterprise TEE already standardized on Vault |
+| **Infisical** | Customer already on Infisical |
+| **1Password** | Customer on 1Password Teams/Business — no credential migration |
+| **Vaultwarden** | Bitwarden-compatible self-host |
+| **env** | CI smoke only — not for refresh tokens in production |
+
+OpenBao’s adapter is API-identical to Vault (same KV v2 HTTP) — different endpoint / license.
+
+### Registration
+
+```typescript
+import {
+  createClawQLAuth,
+  createSQLiteSecretStore,
+  createOpenBaoStore,
+  createHashiCorpVaultStore,
+  createInfisicalStore,
+  createOnePasswordStore,
+  resolveSecretStore,
+} from "clawql-auth";
+
+// Default: SQLite under $CLAWQL_HOME/secrets.db (or ~/.clawql/secrets.db)
+const auth = createClawQLAuth({
+  secretStore: createSQLiteSecretStore({ path: "~/.clawql/secrets.db" }),
+});
+
+// Enterprise TEE — prefer OpenBao for OSS self-host
+createClawQLAuth({
+  secretStore: createOpenBaoStore({
+    endpoint: process.env.BAO_ADDR!,
+    token: process.env.BAO_TOKEN!,
+    mountPath: "secret",
+    pathPrefix: "clawql",
+  }),
+});
+
+// Or HashiCorp Vault / Infisical / 1Password / env via resolveSecretStore()
+createClawQLAuth({
+  secretStore: resolveSecretStore({ kind: "infisical" }),
+});
+```
+
+`CLAWQL_SECRET_STORE=sqlite|openbao|hashicorp-vault|infisical|vaultwarden|onepassword|env|memory` selects the backend when using `resolveSecretStore()` / `createClawQLAuth()` without an explicit instance.
+
+Path layout (all backends via `PathSecretStore`): `oauth/{providerId}`, `api-keys/{keyId}`, `nonces/{nonce}`, `domain-challenges/{domain}`.
+
+---
+
+## 10. Vault / OpenBao dynamic secrets (leases)
+
+Short-lived credentials from Vault/OpenBao engines (DB, AWS, PKI) — **distinct** from `SecretStore` KV (OAuth refresh tokens and issued API key hashes):
 
 ```typescript
 export type VaultDynamicLease = {
@@ -703,13 +804,13 @@ export class VaultDynamicSecretProvider {
 }
 ```
 
-OAuth refresh tokens stored in Vault KV use **`OAuthTokenStore`**; dynamic secrets use this provider. Never mix the two in one code path.
+OAuth refresh tokens use **`SecretStore` / `OAuthTokenStore`**; dynamic leases use this provider. Never mix the two in one code path.
 
 ---
 
-## 10. WORM Audit Types & Re-authorization Flow
+## 11. WORM Audit Types & Re-authorization Flow
 
-### 10.1 `AuthWORMEntryType` union
+### 11.1 `AuthWORMEntryType` union
 
 Complete auth WORM event taxonomy (append-only via `clawql-audit`):
 
@@ -782,7 +883,7 @@ export type AuthWORMEntryType =
 export type AuthWORMAppend = (entry: AuthWORMEntryType) => Effect.Effect<void, never, never>;
 ```
 
-### 10.2 `ReauthRequiredError`
+### 11.2 `ReauthRequiredError`
 
 ```typescript
 export class ReauthRequiredError extends Error {
@@ -795,7 +896,7 @@ export class ReauthRequiredError extends Error {
 }
 ```
 
-### 10.3 Re-authorization flow (11 steps)
+### 11.3 Re-authorization flow (11 steps)
 
 When **`invalid_grant`** or missing refresh token surfaces **`ReauthRequiredError`**:
 
@@ -891,6 +992,7 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 
 ## Implementation Sequence
 
+<<<<<<< HEAD
 | Phase                         | Scope                                                                                   | Exit criteria                                                   | Status                                                                                                   |
 | ----------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | **1 — Foundation**            | Auth event sink + issued API key registry (`cqk_`)                                      | Unit tests for issue/validate/revoke; gateway resolver          | **Shipped** (`api-keys/`, `audit/auth-events.ts`)                                                        |
@@ -898,6 +1000,15 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 | **3 — Auth Code + providers** | PKCE `AuthorizationCodeFlow`; Google/Microsoft/Slack catalogs; outbound API key manager | PKCE start/callback tests; provider matrix                      | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`, `oauth/outbound-api-key.ts`)                    |
 | **4 — Inbound MCP OAuth**     | `MCPOAuthServer` client_credentials + refresh rotation                                  | Issue/validate/refresh tests                                    | **Shipped** (`inbound/mcp-oauth.ts`) — HTTP route wiring in `mcp-api-adapter` / `server-http` still open |
 | **5 — Vault + re-auth UX**    | HashiCorp Vault dynamic secrets; Hermes Telegram re-auth                                | Enterprise TEE + personal agent                                 | Spec                                                                                                     |
+=======
+| Phase | Scope | Exit criteria | Status |
+| ----- | ----- | ------------- | ------ |
+| **1 — Foundation** | Auth event sink + issued API key registry (`cqk_`) | Unit tests for issue/validate/revoke; gateway resolver | **Shipped** (`api-keys/`, `audit/auth-events.ts`) |
+| **2 — Outbound core** | `OAuthTokenStore` mutex + 60s proactive refresh; `ClientCredentialsFlow` | Concurrent refresh N=50 → one IdP call; client-creds unit tests | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`) |
+| **3 — Auth Code + providers** | PKCE `AuthorizationCodeFlow`; Google/Microsoft/Slack catalogs; outbound API key manager | PKCE start/callback tests; provider matrix | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`, `oauth/outbound-api-key.ts`) |
+| **4 — Inbound MCP OAuth** | `MCPOAuthServer` client_credentials + refresh rotation | Issue/validate/refresh tests | **Shipped** (`inbound/mcp-oauth.ts`) — HTTP route wiring in `mcp-api-adapter` / `server-http` still open |
+| **5 — SecretStore + re-auth UX** | `SecretStore` plugins (SQLite/OpenBao/Vault/…); dynamic leases; Hermes Telegram re-auth | Interface + SQLite/Vault/OpenBao shipped; Hermes UX open | **Partial** (`stores/` shipped; dynamic leases + Telegram UX still open) |
+>>>>>>> 1e236428 (feat(clawql-auth): SecretStore interface with swappable backends)
 
 ### Shipped slice (August 2026)
 
@@ -911,7 +1022,7 @@ Phases may land independently of full Vault / Hermes Telegram UX. Shipped OIDC *
 
 ---
 
-## 11. Package Dependencies
+## 12. Package Dependencies
 
 Target `package.json` additions (v0.1 outbound OAuth milestone):
 
@@ -937,7 +1048,7 @@ Target `package.json` additions (v0.1 outbound OAuth milestone):
 | --------------------------- | ---------------------------------------------------------------- |
 | **`clawql-audit`**          | Append-only auth WORM (`MCP_TOKEN_ISSUED`, `OAUTH_*`, `VAULT_*`) |
 | **`jose`**                  | JWT sign/verify for `MCPOAuthServer` and shipped OIDC consumer   |
-| **`node-vault`** (optional) | `VaultDynamicSecretProvider` — omit in slim browser/edge builds  |
+| **`node-vault`** (optional) | Legacy optional — preferred path is fetch-based `HashiCorpVaultStore` / `OpenBaoStore` |
 | **`effect`**                | Existing — all new services expose `Effect` + `Layer`            |
 
 Existing AWS SigV4 dependencies remain for bundled AWS provider slugs.
