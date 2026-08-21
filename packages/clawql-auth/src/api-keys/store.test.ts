@@ -47,7 +47,9 @@ describe("IssuedApiKeyStore", () => {
     expect(parseApiKeySecret(issued.secret)?.id).toBe(issued.record.id);
 
     const raw = await import("node:fs/promises").then((fs) => fs.readFile(path, "utf8"));
-    expect(raw).not.toContain(issued.secret.split("_").pop());
+    const secretPart = issued.secret.slice(issued.record.id.length + 1);
+    expect(secretPart.length).toBeGreaterThan(8);
+    expect(raw).not.toContain(secretPart);
     expect(raw).toContain(issued.record.secretHash);
 
     const ok = store.validate(issued.secret);

@@ -56,6 +56,38 @@ export type AuthEvent =
       tokenKey: string;
       reason: string;
       timestamp: string;
+    }
+  | {
+      type: "OAUTH_AUTHORIZATION_COMPLETED";
+      providerId: string;
+      scope: string[];
+      expiresAt: string;
+      timestamp: string;
+    }
+  | {
+      type: "MCP_TOKEN_ISSUED";
+      clientId: string;
+      grantType: string;
+      scope: string[];
+      expiresAt: string;
+      timestamp: string;
+    }
+  | {
+      type: "MCP_TOKEN_REFRESHED";
+      clientId: string;
+      expiresAt: string;
+      timestamp: string;
+    }
+  | {
+      type: "MCP_TOKEN_REVOKED";
+      clientId: string;
+      reason: string;
+      timestamp: string;
+    }
+  | {
+      type: "MCP_TOKEN_VALIDATION_FAILED";
+      reason: string;
+      timestamp: string;
     };
 
 export type AuthEventSink = (event: AuthEvent) => void | Promise<void>;

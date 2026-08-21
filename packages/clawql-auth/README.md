@@ -50,19 +50,22 @@ Mutex-protected proactive refresh (60s before expiry) — one refresh per token 
 import {
   createOAuthTokenStore,
   createMemoryOAuthPersistence,
-  ReauthRequiredError,
+  ClientCredentialsFlow,
+  createAuthorizationCodeFlow,
+  createMCPOAuthServer,
 } from "clawql-auth";
 
 const store = createOAuthTokenStore({
-  persistence: createMemoryOAuthPersistence(), // or Vault-backed adapters
+  persistence: createMemoryOAuthPersistence(),
   refresh: async (_key, _current) => {
-    /* POST token endpoint; throw { error: "invalid_grant" } on death */
     return { accessToken: "…", refreshToken: "…", expiresAtMs: Date.now() + 3600_000 };
   },
 });
 
 const token = await store.getValidToken("acme:google:alice");
 ```
+
+Also shipped: **`ClientCredentialsFlow`**, **`AuthorizationCodeFlow` (PKCE)**, provider catalogs (Google/Microsoft/Slack), **`OutboundAPIKeyManager`**, and inbound **`MCPOAuthServer`** (client_credentials + refresh rotation). HTTP `/oauth/token` wiring into `server-http` / `mcp-api-adapter` is the next host integration step.
 
 See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-auth-package-spec.md).
 
