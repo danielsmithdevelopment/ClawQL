@@ -193,7 +193,10 @@ describe("clawql-auth step-up", () => {
   });
 
   it("createClawQLAuth exposes step-up + policy", () => {
-    const auth = createClawQLAuth({ mode: "noAuth" });
+    const auth = createClawQLAuth({
+      mode: "noAuth",
+      secretStore: { kind: "memory" },
+    });
     expect(auth.mode).toBe("noAuth");
     const r = auth.resolveClaims({});
     expect(r.ok).toBe(true);
