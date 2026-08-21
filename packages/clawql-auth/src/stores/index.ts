@@ -24,11 +24,7 @@ export {
   type VaultHttpResponse,
 } from "./hashicorp-vault.js";
 export { OpenBaoStore, createOpenBaoStore, type OpenBaoStoreOptions } from "./openbao.js";
-export {
-  InfisicalStore,
-  createInfisicalStore,
-  type InfisicalStoreOptions,
-} from "./infisical.js";
+export { InfisicalStore, createInfisicalStore, type InfisicalStoreOptions } from "./infisical.js";
 export {
   VaultwardenStore,
   createVaultwardenStore,

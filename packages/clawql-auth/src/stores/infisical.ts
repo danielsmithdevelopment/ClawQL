@@ -57,17 +57,14 @@ export class InfisicalStore extends PathSecretStore {
     if (this.token && this.token.expiresAtMs > Date.now() + 30_000) {
       return this.token.accessToken;
     }
-    const res = await this.opts.fetchImpl(
-      `${this.opts.endpoint}/v1/auth/universal-auth/login`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: this.opts.clientId,
-          clientSecret: this.opts.clientSecret,
-        }),
-      }
-    );
+    const res = await this.opts.fetchImpl(`${this.opts.endpoint}/v1/auth/universal-auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clientId: this.opts.clientId,
+        clientSecret: this.opts.clientSecret,
+      }),
+    });
     if (!res.ok) throw new Error(`infisical_auth_failed:${res.status}`);
     const json = (await res.json()) as { accessToken: string; expiresIn?: number };
     this.token = {

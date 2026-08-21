@@ -118,9 +118,7 @@ function composeApiKeyClaimsResolver(
   };
 }
 
-function resolveAuthSecretStore(
-  input: CreateClawQLAuthOptions["secretStore"]
-): SecretStore {
+function resolveAuthSecretStore(input: CreateClawQLAuthOptions["secretStore"]): SecretStore {
   if (!input) return resolveSecretStore();
   if (typeof input === "object" && "getSecret" in input && typeof input.getSecret === "function") {
     return input as SecretStore;

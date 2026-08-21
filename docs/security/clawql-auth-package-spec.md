@@ -695,15 +695,15 @@ packages/clawql-auth/src/stores/
 
 ### Backend choice
 
-| Backend | When to use |
-| ------- | ----------- |
-| **SQLite** | Local dev, homelab, Hermes personal agent (default) |
-| **OpenBao** | Self-hosted OSS / commercial without HashiCorp BSL friction — **preferred** Vault-compatible recommendation |
-| **HashiCorp Vault** | Enterprise TEE already standardized on Vault |
-| **Infisical** | Customer already on Infisical |
-| **1Password** | Customer on 1Password Teams/Business — no credential migration |
-| **Vaultwarden** | Bitwarden-compatible self-host |
-| **env** | CI smoke only — not for refresh tokens in production |
+| Backend             | When to use                                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **SQLite**          | Local dev, homelab, Hermes personal agent (default)                                                         |
+| **OpenBao**         | Self-hosted OSS / commercial without HashiCorp BSL friction — **preferred** Vault-compatible recommendation |
+| **HashiCorp Vault** | Enterprise TEE already standardized on Vault                                                                |
+| **Infisical**       | Customer already on Infisical                                                                               |
+| **1Password**       | Customer on 1Password Teams/Business — no credential migration                                              |
+| **Vaultwarden**     | Bitwarden-compatible self-host                                                                              |
+| **env**             | CI smoke only — not for refresh tokens in production                                                        |
 
 OpenBao’s adapter is API-identical to Vault (same KV v2 HTTP) — different endpoint / license.
 
@@ -992,13 +992,13 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 
 ## Implementation Sequence
 
-| Phase | Scope | Exit criteria | Status |
-| ----- | ----- | ------------- | ------ |
-| **1 — Foundation** | Auth event sink + issued API key registry (`cqk_`) | Unit tests for issue/validate/revoke; gateway resolver | **Shipped** (`api-keys/`, `audit/auth-events.ts`) |
-| **2 — Outbound core** | `OAuthTokenStore` mutex + 60s proactive refresh; `ClientCredentialsFlow` | Concurrent refresh N=50 → one IdP call; client-creds unit tests | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`) |
-| **3 — Auth Code + providers** | PKCE `AuthorizationCodeFlow`; Google/Microsoft/Slack catalogs; outbound API key manager | PKCE start/callback tests; provider matrix | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`, `oauth/outbound-api-key.ts`) |
-| **4 — Inbound MCP OAuth** | `MCPOAuthServer` client_credentials + refresh rotation | Issue/validate/refresh tests | **Shipped** (`inbound/mcp-oauth.ts`) — HTTP route wiring in `mcp-api-adapter` / `server-http` still open |
-| **5 — SecretStore + re-auth UX** | `SecretStore` plugins (SQLite/OpenBao/Vault/…); dynamic leases; Hermes Telegram re-auth | Interface + SQLite/Vault/OpenBao shipped; Hermes UX open | **Partial** (`stores/` shipped; dynamic leases + Telegram UX still open) |
+| Phase                            | Scope                                                                                   | Exit criteria                                                   | Status                                                                                                   |
+| -------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **1 — Foundation**               | Auth event sink + issued API key registry (`cqk_`)                                      | Unit tests for issue/validate/revoke; gateway resolver          | **Shipped** (`api-keys/`, `audit/auth-events.ts`)                                                        |
+| **2 — Outbound core**            | `OAuthTokenStore` mutex + 60s proactive refresh; `ClientCredentialsFlow`                | Concurrent refresh N=50 → one IdP call; client-creds unit tests | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                            |
+| **3 — Auth Code + providers**    | PKCE `AuthorizationCodeFlow`; Google/Microsoft/Slack catalogs; outbound API key manager | PKCE start/callback tests; provider matrix                      | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`, `oauth/outbound-api-key.ts`)                    |
+| **4 — Inbound MCP OAuth**        | `MCPOAuthServer` client_credentials + refresh rotation                                  | Issue/validate/refresh tests                                    | **Shipped** (`inbound/mcp-oauth.ts`) — HTTP route wiring in `mcp-api-adapter` / `server-http` still open |
+| **5 — SecretStore + re-auth UX** | `SecretStore` plugins (SQLite/OpenBao/Vault/…); dynamic leases; Hermes Telegram re-auth | Interface + SQLite/Vault/OpenBao shipped; Hermes UX open        | **Partial** (`stores/` shipped; dynamic leases + Telegram UX still open)                                 |
 
 ### Shipped slice (August 2026)
 
@@ -1034,12 +1034,12 @@ Target `package.json` additions (v0.1 outbound OAuth milestone):
 }
 ```
 
-| Dependency                  | Role                                                             |
-| --------------------------- | ---------------------------------------------------------------- |
-| **`clawql-audit`**          | Append-only auth WORM (`MCP_TOKEN_ISSUED`, `OAUTH_*`, `VAULT_*`) |
-| **`jose`**                  | JWT sign/verify for `MCPOAuthServer` and shipped OIDC consumer   |
+| Dependency                  | Role                                                                                   |
+| --------------------------- | -------------------------------------------------------------------------------------- |
+| **`clawql-audit`**          | Append-only auth WORM (`MCP_TOKEN_ISSUED`, `OAUTH_*`, `VAULT_*`)                       |
+| **`jose`**                  | JWT sign/verify for `MCPOAuthServer` and shipped OIDC consumer                         |
 | **`node-vault`** (optional) | Legacy optional — preferred path is fetch-based `HashiCorpVaultStore` / `OpenBaoStore` |
-| **`effect`**                | Existing — all new services expose `Effect` + `Layer`            |
+| **`effect`**                | Existing — all new services expose `Effect` + `Layer`                                  |
 
 Existing AWS SigV4 dependencies remain for bundled AWS provider slugs.
 

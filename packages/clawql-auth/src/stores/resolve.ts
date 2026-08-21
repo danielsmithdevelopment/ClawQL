@@ -13,10 +13,7 @@ import { createInfisicalStore } from "./infisical.js";
 import { createMemorySecretStore } from "./memory.js";
 import { createOnePasswordStore } from "./onepassword.js";
 import { createOpenBaoStore } from "./openbao.js";
-import {
-  createSQLiteSecretStore,
-  defaultSQLiteSecretPath,
-} from "./sqlite.js";
+import { createSQLiteSecretStore, defaultSQLiteSecretPath } from "./sqlite.js";
 import type { SecretStore, SecretStoreKind } from "./types.js";
 import { createVaultwardenStore } from "./vaultwarden.js";
 
@@ -27,9 +24,7 @@ export type ResolveSecretStoreOptions = {
   sqlitePath?: string;
 };
 
-export function resolveSecretStoreKind(
-  explicit?: SecretStoreKind
-): SecretStoreKind {
+export function resolveSecretStoreKind(explicit?: SecretStoreKind): SecretStoreKind {
   if (explicit) return explicit;
   const raw = process.env.CLAWQL_SECRET_STORE?.trim().toLowerCase();
   if (raw === "vault" || raw === "hashicorp-vault") return "hashicorp-vault";
@@ -73,8 +68,7 @@ export function resolveSecretStore(options: ResolveSecretStoreOptions = {}): Sec
       });
     }
     case "openbao": {
-      const endpoint =
-        process.env.BAO_ADDR?.trim() || process.env.VAULT_ADDR?.trim();
+      const endpoint = process.env.BAO_ADDR?.trim() || process.env.VAULT_ADDR?.trim();
       const token = process.env.BAO_TOKEN?.trim() || process.env.VAULT_TOKEN?.trim();
       if (!endpoint || !token) {
         throw new Error("openbao_requires_BAO_ADDR_and_BAO_TOKEN");

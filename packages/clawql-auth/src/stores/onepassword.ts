@@ -84,10 +84,9 @@ export class OnePasswordStore extends PathSecretStore {
     await this.refreshIndex();
     const id = this.titleToId.get(this.titleFor(path));
     if (!id) return null;
-    const res = await this.fetchImpl(
-      `${this.endpoint}/v1/vaults/${this.vaultId}/items/${id}`,
-      { headers: this.headers() }
-    );
+    const res = await this.fetchImpl(`${this.endpoint}/v1/vaults/${this.vaultId}/items/${id}`, {
+      headers: this.headers(),
+    });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`onepassword_get_failed:${res.status}`);
     return this.extractValue((await res.json()) as { fields?: Array<{ value?: string }> });
@@ -100,9 +99,7 @@ export class OnePasswordStore extends PathSecretStore {
     const body = {
       title,
       category: "LOGIN",
-      fields: [
-        { id: "value", type: "CONCEALED", purpose: "PASSWORD", label: "value", value },
-      ],
+      fields: [{ id: "value", type: "CONCEALED", purpose: "PASSWORD", label: "value", value }],
       vault: { id: this.vaultId },
     };
     if (existingId) {
@@ -129,10 +126,10 @@ export class OnePasswordStore extends PathSecretStore {
     await this.refreshIndex();
     const id = this.titleToId.get(this.titleFor(path));
     if (!id) return;
-    const res = await this.fetchImpl(
-      `${this.endpoint}/v1/vaults/${this.vaultId}/items/${id}`,
-      { method: "DELETE", headers: this.headers() }
-    );
+    const res = await this.fetchImpl(`${this.endpoint}/v1/vaults/${this.vaultId}/items/${id}`, {
+      method: "DELETE",
+      headers: this.headers(),
+    });
     if (res.status === 404) return;
     if (!res.ok) throw new Error(`onepassword_delete_failed:${res.status}`);
   }

@@ -73,13 +73,13 @@ createClawQLAuth({
 createClawQLAuth({ secretStore: resolveSecretStore() });
 ```
 
-| Backend | Role |
-| ------- | ---- |
-| SQLite | Local / homelab / Hermes |
-| OpenBao | Self-hosted OSS TEE (preferred over HashiCorp BSL) |
-| HashiCorp Vault | Enterprise already on Vault |
-| Infisical / 1Password / Vaultwarden | Customer-owned secret managers |
-| env | CI only |
+| Backend                             | Role                                               |
+| ----------------------------------- | -------------------------------------------------- |
+| SQLite                              | Local / homelab / Hermes                           |
+| OpenBao                             | Self-hosted OSS TEE (preferred over HashiCorp BSL) |
+| HashiCorp Vault                     | Enterprise already on Vault                        |
+| Infisical / 1Password / Vaultwarden | Customer-owned secret managers                     |
+| env                                 | CI only                                            |
 
 ## Outbound OAuth token store
 

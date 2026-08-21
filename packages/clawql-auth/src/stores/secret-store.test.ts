@@ -52,9 +52,7 @@ describe("SecretStore", () => {
     });
     expect((await store.getAPIKeyRecord("cqk_abc"))?.id).toBe("cqk_abc");
     await store.setRevokedAt("cqk_abc", new Date("2026-08-21T00:00:00.000Z"));
-    expect((await store.getAPIKeyRecord("cqk_abc"))?.revokedAt).toBe(
-      "2026-08-21T00:00:00.000Z"
-    );
+    expect((await store.getAPIKeyRecord("cqk_abc"))?.revokedAt).toBe("2026-08-21T00:00:00.000Z");
 
     await store.storeNonce("n1", {
       nonce: "n1",

@@ -2,13 +2,7 @@
  * PathSecretStore — implement only KV CRUD; OAuth / API keys / nonces use path prefixes.
  */
 
-import type {
-  APIKeyRecord,
-  DomainChallenge,
-  NonceRecord,
-  SecretStore,
-  TokenSet,
-} from "./types.js";
+import type { APIKeyRecord, DomainChallenge, NonceRecord, SecretStore, TokenSet } from "./types.js";
 import { SECRET_PATH } from "./types.js";
 
 function oauthPath(providerId: string): string {
@@ -112,10 +106,7 @@ export abstract class PathSecretStore implements SecretStore {
   }
 
   async storeDomainChallenge(domain: string, challenge: DomainChallenge): Promise<void> {
-    await this.setSecret(
-      domainChallengePath(domain),
-      JSON.stringify({ ...challenge, domain })
-    );
+    await this.setSecret(domainChallengePath(domain), JSON.stringify({ ...challenge, domain }));
   }
 
   async getDomainChallenge(domain: string): Promise<DomainChallenge | null> {
