@@ -6,7 +6,7 @@
 
 > **Scope of this spec:** grow `clawql-auth` into the single home for **inbound MCP OAuth 2.1** (gateway-facing) and **outbound** OAuth to upstreams — especially the **mutex-protected proactive refresh** pattern that avoids the MCP ecosystem’s constant re-auth failure mode ([Daniel Lockyer / X](https://x.com/daniellockyer/status/2090501527215468682)). This does **not** make ClawQL a full human IdP (login UI / user directory). Prefer API keys / PATs / Vault dynamic secrets when the use case allows; add user-delegated OAuth only where required.
 
-**Non-goals for v0.1 implementation:** replacing existing OIDC *consumer* mode; inventing per-adapter refresh logic outside this package.
+**Non-goals for v0.1 implementation:** replacing existing OIDC _consumer_ mode; inventing per-adapter refresh logic outside this package.
 
 ---
 
@@ -16,9 +16,9 @@
 
 This specification extends the package along two axes that must stay distinct:
 
-| Direction | Question answered | Examples |
-| --------- | ----------------- | -------- |
-| **Inbound** | Who may call **our** MCP gateway? | MCP OAuth 2.1 token endpoint, API keys, OIDC JWT consumer (shipped), future SAML/LDAP *client* modes |
+| Direction    | Question answered                    | Examples                                                                                                              |
+| ------------ | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| **Inbound**  | Who may call **our** MCP gateway?    | MCP OAuth 2.1 token endpoint, API keys, OIDC JWT consumer (shipped), future SAML/LDAP _client_ modes                  |
 | **Outbound** | How does ClawQL call **their** APIs? | OAuth refresh to Google/Microsoft/Slack, Vault dynamic secrets, PAT rotation, client-credentials for service accounts |
 
 **Inbound** auth is synchronous on the request path — fail closed before tool dispatch. **Outbound** auth is asynchronous background refresh with mutex coalescing — never block every `execute` on a token refresh race.
@@ -92,7 +92,7 @@ packages/clawql-auth/
 
 ### 4.1 MCP OAuth 2.1 server (`MCPOAuthServer`)
 
-Implements the authorization-server surface required for MCP clients that obtain tokens against ClawQL (distinct from OIDC *consumer* mode, which verifies customer IdP JWTs).
+Implements the authorization-server surface required for MCP clients that obtain tokens against ClawQL (distinct from OIDC _consumer_ mode, which verifies customer IdP JWTs).
 
 ```typescript
 import { createHash, randomUUID } from "node:crypto";
@@ -245,7 +245,7 @@ export interface ATRClaims {
 
 ### 4.4 OIDC / SSO note
 
-Shipped **`oidc`** mode remains the path for enterprise human SSO: customer IdP issues JWT → ClawQL verifies JWKS → ATR. **Do not conflate** with `MCPOAuthServer` (MCP-native client credentials) or outbound Google/Microsoft OAuth (upstream API access). SAML/LDAP *client* modes are roadmap-only; they map external assertions into `ATRClaims` the same way OIDC does today.
+Shipped **`oidc`** mode remains the path for enterprise human SSO: customer IdP issues JWT → ClawQL verifies JWKS → ATR. **Do not conflate** with `MCPOAuthServer` (MCP-native client credentials) or outbound Google/Microsoft OAuth (upstream API access). SAML/LDAP _client_ modes are roadmap-only; they map external assertions into `ATRClaims` the same way OIDC does today.
 
 ---
 
@@ -346,11 +346,11 @@ export class OAuthTokenStore {
 
 **WORM events:**
 
-| Event | When |
-| ----- | ---- |
-| `OAUTH_TOKEN_REFRESHED` | Successful proactive or reactive refresh |
-| `OAUTH_REFRESH_FAILED` | IdP returned error (includes `invalid_grant`) |
-| `OAUTH_REAUTH_REQUIRED` | Surfaced to operator/agent — see §10 |
+| Event                   | When                                          |
+| ----------------------- | --------------------------------------------- |
+| `OAUTH_TOKEN_REFRESHED` | Successful proactive or reactive refresh      |
+| `OAUTH_REFRESH_FAILED`  | IdP returned error (includes `invalid_grant`) |
+| `OAUTH_REAUTH_REQUIRED` | Surfaced to operator/agent — see §10          |
 
 On **`invalid_grant`**, the store throws **`ReauthRequiredError`** — refresh token revoked, password changed, or consent withdrawn. No silent retry loops.
 
@@ -427,9 +427,7 @@ export class AuthorizationCodeFlow {
 
   constructor(private readonly config: AuthorizationCodeConfig) {
     this.codeVerifier = randomBytes(32).toString("base64url");
-    this.codeChallenge = createHash("sha256")
-      .update(this.codeVerifier)
-      .digest("base64url");
+    this.codeChallenge = createHash("sha256").update(this.codeVerifier).digest("base64url");
   }
 
   buildAuthorizationUrl(state: string): string {
@@ -510,7 +508,9 @@ Both flows persist tokens through **`OAuthTokenStore.save`** (Vault-backed) — 
 ### 7.1 Google
 
 ```typescript
-export const googleOAuthConfig = (overrides?: Partial<AuthorizationCodeConfig>): AuthorizationCodeConfig => ({
+export const googleOAuthConfig = (
+  overrides?: Partial<AuthorizationCodeConfig>
+): AuthorizationCodeConfig => ({
   authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
   tokenUrl: "https://oauth2.googleapis.com/token",
   clientId: process.env.CLAWQL_OAUTH_GOOGLE_CLIENT_ID!,
@@ -547,7 +547,9 @@ export const microsoftOAuthConfig = (
 ### 7.3 Slack
 
 ```typescript
-export const slackOAuthConfig = (overrides?: Partial<AuthorizationCodeConfig>): AuthorizationCodeConfig => ({
+export const slackOAuthConfig = (
+  overrides?: Partial<AuthorizationCodeConfig>
+): AuthorizationCodeConfig => ({
   authorizationUrl: "https://slack.com/oauth/v2/authorize",
   tokenUrl: "https://slack.com/api/oauth.v2.access",
   clientId: process.env.CLAWQL_OAUTH_SLACK_CLIENT_ID!,
@@ -567,12 +569,7 @@ Provider modules export config factories only — **`OAuthTokenStore`** owns ref
 Static PATs and API keys for providers that do not use OAuth refresh:
 
 ```typescript
-export type ProviderAuthMethod =
-  | "oauth"
-  | "api_key"
-  | "vault_dynamic"
-  | "aws_sigv4"
-  | "none";
+export type ProviderAuthMethod = "oauth" | "api_key" | "vault_dynamic" | "aws_sigv4" | "none";
 
 /** Per-provider default auth method — override via CLAWQL_PROVIDER_AUTH_METHOD JSON */
 export const PROVIDER_AUTH_METHOD: Record<string, ProviderAuthMethod> = {
@@ -590,9 +587,7 @@ export const PROVIDER_AUTH_METHOD: Record<string, ProviderAuthMethod> = {
 };
 
 export class OutboundAPIKeyManager {
-  constructor(
-    private readonly vaultPathPrefix = "secret/data/clawql/providers"
-  ) {}
+  constructor(private readonly vaultPathPrefix = "secret/data/clawql/providers") {}
 
   async getApiKey(provider: string, tenantId: string): Promise<string> {
     const method = PROVIDER_AUTH_METHOD[provider] ?? "api_key";
@@ -765,9 +760,7 @@ export type AuthWORMAppend = (entry: AuthWORMEntryType) => Effect.Effect<void, n
 export class ReauthRequiredError extends Error {
   readonly code = "OAUTH_REAUTH_REQUIRED" as const;
 
-  constructor(
-    readonly detail: { key: string; reason: string; authorizationUrl?: string }
-  ) {
+  constructor(readonly detail: { key: string; reason: string; authorizationUrl?: string }) {
     super(`Re-authorization required: ${detail.reason} (${detail.key})`);
     this.name = "ReauthRequiredError";
   }
@@ -796,20 +789,20 @@ When **`invalid_grant`** or missing refresh token surfaces **`ReauthRequiredErro
 
 ## Provider Decision Matrix
 
-| Provider / use case | Preferred auth | OAuth flow | Notes |
-| ------------------- | -------------- | ---------- | ----- |
-| GitHub API | API key (PAT) | — | Fine-grained PAT in Vault; rotate on leak |
-| Cloudflare | API token | — | Scoped token per zone |
-| Google Workspace (Gmail, Drive) | OAuth | Authorization code + PKCE | **`OAuthTokenStore`** + Google config |
-| Microsoft 365 / Graph | OAuth | Authorization code + PKCE | Tenant-specific Entra app |
-| Slack (bot + user) | OAuth | Authorization code | v2 OAuth for `chat:write` |
-| AWS APIs | SigV4 | — | Shipped **`aws-sigv4.ts`**; IRSA in cluster |
-| Ramp / payments | OAuth | Client credentials + scopes | Existing `clawql-payments` pattern |
-| HashiCorp Vault | Token / K8s auth | — | **`VaultDynamicSecretProvider`** for leases |
-| Self-hosted (Paperless, Onyx) | API key | — | Static token in Vault KV |
-| **SeeTheGreens LOS** | Mixed | Service OAuth + operator PKCE | Regulated lending vertical: service accounts for pipeline automation; **operator re-auth via PKCE** when user-delegated Google/Microsoft tokens expire — never store borrower PII in OAuth state. Prefer API keys for internal microservices; OAuth only for external SaaS (e.g. credit bureau APIs requiring user consent). |
+| Provider / use case             | Preferred auth   | OAuth flow                    | Notes                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------- | ---------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub API                      | API key (PAT)    | —                             | Fine-grained PAT in Vault; rotate on leak                                                                                                                                                                                                                                                                                    |
+| Cloudflare                      | API token        | —                             | Scoped token per zone                                                                                                                                                                                                                                                                                                        |
+| Google Workspace (Gmail, Drive) | OAuth            | Authorization code + PKCE     | **`OAuthTokenStore`** + Google config                                                                                                                                                                                                                                                                                        |
+| Microsoft 365 / Graph           | OAuth            | Authorization code + PKCE     | Tenant-specific Entra app                                                                                                                                                                                                                                                                                                    |
+| Slack (bot + user)              | OAuth            | Authorization code            | v2 OAuth for `chat:write`                                                                                                                                                                                                                                                                                                    |
+| AWS APIs                        | SigV4            | —                             | Shipped **`aws-sigv4.ts`**; IRSA in cluster                                                                                                                                                                                                                                                                                  |
+| Ramp / payments                 | OAuth            | Client credentials + scopes   | Existing `clawql-payments` pattern                                                                                                                                                                                                                                                                                           |
+| HashiCorp Vault                 | Token / K8s auth | —                             | **`VaultDynamicSecretProvider`** for leases                                                                                                                                                                                                                                                                                  |
+| Self-hosted (Paperless, Onyx)   | API key          | —                             | Static token in Vault KV                                                                                                                                                                                                                                                                                                     |
+| **SeeTheGreens LOS**            | Mixed            | Service OAuth + operator PKCE | Regulated lending vertical: service accounts for pipeline automation; **operator re-auth via PKCE** when user-delegated Google/Microsoft tokens expire — never store borrower PII in OAuth state. Prefer API keys for internal microservices; OAuth only for external SaaS (e.g. credit bureau APIs requiring user consent). |
 
-**Rule:** default to **`api_key`** or **`vault_dynamic`** unless the upstream *requires* user-delegated OAuth scopes.
+**Rule:** default to **`api_key`** or **`vault_dynamic`** unless the upstream _requires_ user-delegated OAuth scopes.
 
 ---
 
@@ -870,13 +863,13 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 
 ## Implementation Sequence
 
-| Phase | Scope | Exit criteria |
-| ----- | ----- | ------------- |
-| **1 — Foundation** | `AuthWORMEntryType`, `clawql-audit` wiring, Vault read helpers | WORM append for auth events; unit tests for types |
-| **2 — Outbound core** | `OAuthTokenStore`, `refreshLock`, `60_000` window, `ReauthRequiredError` | Concurrent refresh test (N=50) → single IdP call |
-| **3 — Flows + providers** | `ClientCredentialsFlow`, `AuthorizationCodeFlow`, Google/Microsoft/Slack configs | Integration test against mock OAuth server |
-| **4 — Inbound MCP OAuth** | `MCPOAuthServer`, `APIKeyValidator` registry | MCP client obtains token; `MCP_TOKEN_ISSUED` in WORM |
-| **5 — Agent integration** | `getOutboundCredential`, Hermes Telegram re-auth, SeeTheGreens service accounts | Personal stack end-to-end; lending vertical pilot |
+| Phase                     | Scope                                                                            | Exit criteria                                        |
+| ------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **1 — Foundation**        | `AuthWORMEntryType`, `clawql-audit` wiring, Vault read helpers                   | WORM append for auth events; unit tests for types    |
+| **2 — Outbound core**     | `OAuthTokenStore`, `refreshLock`, `60_000` window, `ReauthRequiredError`         | Concurrent refresh test (N=50) → single IdP call     |
+| **3 — Flows + providers** | `ClientCredentialsFlow`, `AuthorizationCodeFlow`, Google/Microsoft/Slack configs | Integration test against mock OAuth server           |
+| **4 — Inbound MCP OAuth** | `MCPOAuthServer`, `APIKeyValidator` registry                                     | MCP client obtains token; `MCP_TOKEN_ISSUED` in WORM |
+| **5 — Agent integration** | `getOutboundCredential`, Hermes Telegram re-auth, SeeTheGreens service accounts  | Personal stack end-to-end; lending vertical pilot    |
 
 Phases 1–2 may ship independently of MCP OAuth 2.1 AS (phase 4). Shipped OIDC consumer mode is untouched throughout.
 
@@ -904,12 +897,12 @@ Target `package.json` additions (v0.1 outbound OAuth milestone):
 }
 ```
 
-| Dependency | Role |
-| ---------- | ---- |
-| **`clawql-audit`** | Append-only auth WORM (`MCP_TOKEN_ISSUED`, `OAUTH_*`, `VAULT_*`) |
-| **`jose`** | JWT sign/verify for `MCPOAuthServer` and shipped OIDC consumer |
-| **`node-vault`** (optional) | `VaultDynamicSecretProvider` — omit in slim browser/edge builds |
-| **`effect`** | Existing — all new services expose `Effect` + `Layer` |
+| Dependency                  | Role                                                             |
+| --------------------------- | ---------------------------------------------------------------- |
+| **`clawql-audit`**          | Append-only auth WORM (`MCP_TOKEN_ISSUED`, `OAUTH_*`, `VAULT_*`) |
+| **`jose`**                  | JWT sign/verify for `MCPOAuthServer` and shipped OIDC consumer   |
+| **`node-vault`** (optional) | `VaultDynamicSecretProvider` — omit in slim browser/edge builds  |
+| **`effect`**                | Existing — all new services expose `Effect` + `Layer`            |
 
 Existing AWS SigV4 dependencies remain for bundled AWS provider slugs.
 
@@ -923,5 +916,5 @@ Existing AWS SigV4 dependencies remain for bundled AWS provider slugs.
 
 ---
 
-*clawql-auth Package Specification · v0.1 · August 2026*  
-*Location: packages/clawql-auth/ · Contact: daniel@clawql.com*
+_clawql-auth Package Specification · v0.1 · August 2026_  
+_Location: packages/clawql-auth/ · Contact: daniel@clawql.com_
