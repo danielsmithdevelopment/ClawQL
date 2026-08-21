@@ -10,4 +10,6 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   noExternal: ["clawql-auth"],
+  // Node built-in used by clawql-auth SQLite SecretStore — leave unresolved in the bundle.
+  external: ["node:sqlite", "sqlite"],
 });

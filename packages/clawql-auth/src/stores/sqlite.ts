@@ -1,11 +1,13 @@
 /**
  * SQLite SecretStore — default for local dev, homelab, and Hermes personal agent.
- * Uses Node.js built-in `node:sqlite` (no native addon).
+ * Uses Node.js built-in `node:sqlite` (no native addon), loaded lazily so
+ * consumers that bundle clawql-auth (e.g. clawql-api Docker builds) do not need
+ * to resolve `sqlite` at bundle time unless this store is constructed.
  */
 
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { createRequire } from "node:module";
 
 import { PathSecretStore } from "./base.js";
 
@@ -13,6 +15,31 @@ export type SQLiteSecretStoreOptions = {
   /** Absolute or tilde-expanded path to the SQLite file. */
   path: string;
 };
+
+type DatabaseSyncInstance = {
+  exec(sql: string): void;
+  prepare(sql: string): {
+    get(...params: unknown[]): unknown;
+    run(...params: unknown[]): unknown;
+    all(...params: unknown[]): unknown[];
+  };
+  close(): void;
+};
+
+type DatabaseSyncCtor = new (path: string) => DatabaseSyncInstance;
+
+function loadDatabaseSync(): DatabaseSyncCtor {
+  // Prefer node: protocol; fall back for runtimes that strip the prefix.
+  try {
+    const req = createRequire(import.meta.url);
+    const mod = req("node:sqlite") as { DatabaseSync: DatabaseSyncCtor };
+    return mod.DatabaseSync;
+  } catch {
+    const req = createRequire(import.meta.url);
+    const mod = req("sqlite") as { DatabaseSync: DatabaseSyncCtor };
+    return mod.DatabaseSync;
+  }
+}
 
 function expandHome(p: string): string {
   if (p.startsWith("~/")) {
@@ -23,12 +50,13 @@ function expandHome(p: string): string {
 }
 
 export class SQLiteSecretStore extends PathSecretStore {
-  private readonly db: DatabaseSync;
+  private readonly db: DatabaseSyncInstance;
 
   constructor(options: SQLiteSecretStoreOptions) {
     super();
     const path = expandHome(options.path);
     mkdirSync(dirname(path), { recursive: true });
+    const DatabaseSync = loadDatabaseSync();
     this.db = new DatabaseSync(path);
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS secrets (
@@ -42,7 +70,8 @@ export class SQLiteSecretStore extends PathSecretStore {
 
   async getSecret(path: string): Promise<string | null> {
     const row = this.db.prepare("SELECT value FROM secrets WHERE path = ?").get(path) as
-      { value: string } | undefined;
+      | { value: string }
+      | undefined;
     return row?.value ?? null;
   }
 
