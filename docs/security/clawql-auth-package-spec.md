@@ -863,6 +863,7 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 
 ## Implementation Sequence
 
+<<<<<<< HEAD
 | Phase                     | Scope                                                                            | Exit criteria                                        |
 | ------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------- |
 | **1 — Foundation**        | `AuthWORMEntryType`, `clawql-audit` wiring, Vault read helpers                   | WORM append for auth events; unit tests for types    |
@@ -870,8 +871,23 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 | **3 — Flows + providers** | `ClientCredentialsFlow`, `AuthorizationCodeFlow`, Google/Microsoft/Slack configs | Integration test against mock OAuth server           |
 | **4 — Inbound MCP OAuth** | `MCPOAuthServer`, `APIKeyValidator` registry                                     | MCP client obtains token; `MCP_TOKEN_ISSUED` in WORM |
 | **5 — Agent integration** | `getOutboundCredential`, Hermes Telegram re-auth, SeeTheGreens service accounts  | Personal stack end-to-end; lending vertical pilot    |
+=======
+| Phase | Scope | Exit criteria | Status |
+| ----- | ----- | ------------- | ------ |
+| **1 — Foundation** | Auth event types + optional sink (no hard `clawql-audit` dep), issued API key registry | Unit tests for issue/validate/revoke; gateway resolver | **Shipped** in `clawql-auth` (`api-keys/`, `audit/auth-events.ts`) |
+| **2 — Outbound core** | `OAuthTokenStore`, `refreshLock`, `60_000` window, `ReauthRequiredError` | Concurrent refresh test (N=50) → single IdP call | **Shipped** (`oauth/token-store.ts`) |
+| **3 — Flows + providers** | `ClientCredentialsFlow`, `AuthorizationCodeFlow`, Google/Microsoft/Slack configs | Integration test against mock OAuth server | Spec |
+| **4 — Inbound MCP OAuth** | `MCPOAuthServer` | MCP client obtains token; `MCP_TOKEN_ISSUED` in WORM | Spec |
+| **5 — Agent integration** | `getOutboundCredential`, Hermes Telegram re-auth, SeeTheGreens service accounts | Personal stack end-to-end; lending vertical pilot | Spec |
+>>>>>>> 9b5b6385 (feat(clawql-auth): issued API keys + mutex OAuth token store)
 
 Phases 1–2 may ship independently of MCP OAuth 2.1 AS (phase 4). Shipped OIDC consumer mode is untouched throughout.
+
+### Shipped slice (August 2026)
+
+- **`IssuedApiKeyStore`**: issue `cqk_<id>_<secret>` once; persist salted SHA-256 only; validate / revoke / `listActive({ orgId, teamId })`; wire via `createClawQLAuth({ apiKeyStorePath })`.
+- **`OAuthTokenStore`**: proactive refresh + single-flight mutex; `invalid_grant` → `ReauthRequiredError` + auth events.
+- Hosts inject **`AuthEventSink`** for WORM; package does not depend on `clawql-audit` yet.
 
 ---
 

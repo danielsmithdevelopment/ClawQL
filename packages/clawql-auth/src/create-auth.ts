@@ -34,6 +34,11 @@ import {
   verifyTotpEffect,
   type WebAuthnStepUpVerifier,
 } from "./step-up/index.js";
+import {
+  createIssuedApiKeyStore,
+  type IssuedApiKeyStore,
+} from "./api-keys/index.js";
+import type { AuthEventSink } from "./audit/auth-events.js";
 
 export type CreateClawQLAuthOptions = {
   mode?: AuthMode;
@@ -42,6 +47,14 @@ export type CreateClawQLAuthOptions = {
   oidc?: GatewayAuthConfig["oidc"];
   /** Optional path for file-backed TOTP enrollments. */
   stepUpStorePath?: string;
+  /**
+   * Optional path for issued API keys (`cqk_…`).
+   * When set, wires a claims resolver that validates active (non-revoked) keys —
+   * primary path for enterprise org/team key management.
+   */
+  apiKeyStorePath?: string;
+  /** Optional auth event sink (WORM / audit). */
+  authEventSink?: AuthEventSink;
   webauthnVerifier?: WebAuthnStepUpVerifier;
   rbac?: { enabled?: boolean };
 };
@@ -49,6 +62,8 @@ export type CreateClawQLAuthOptions = {
 export type ClawQLAuth = {
   readonly mode: AuthMode;
   readonly config: GatewayAuthConfig;
+  /** Issued API key registry when `apiKeyStorePath` was provided. */
+  readonly apiKeys: IssuedApiKeyStore | undefined;
   /** Sync claim resolution for `noAuth` / `apiKey`; `oidc` requires the Effect/async forms. */
   resolveClaims(
     headers?: AuthHeaderSource
@@ -79,12 +94,37 @@ export type ClawQLAuth = {
   };
 };
 
+function composeApiKeyClaimsResolver(
+  issued: IssuedApiKeyStore | undefined,
+  explicit: GatewayAuthConfig["apiKeyClaimsResolver"] | undefined
+): GatewayAuthConfig["apiKeyClaimsResolver"] | undefined {
+  if (!issued && !explicit) return undefined;
+  if (issued && !explicit) return issued.asClaimsResolver();
+  if (!issued && explicit) return explicit;
+  const issuedResolver = issued!.asClaimsResolver();
+  return (presented, headers) => {
+    const fromIssued = issuedResolver(presented, headers);
+    if (fromIssued !== null) return fromIssued;
+    return explicit!(presented, headers);
+  };
+}
+
 export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLAuth {
   const base = loadGatewayAuthConfig();
+  const apiKeys = options.apiKeyStorePath
+    ? createIssuedApiKeyStore({
+        path: options.apiKeyStorePath,
+        eventSink: options.authEventSink,
+      })
+    : undefined;
+
   const config: GatewayAuthConfig = {
     mode: options.mode ?? base.mode,
     apiKey: options.apiKey ?? base.apiKey,
-    apiKeyClaimsResolver: options.apiKeyClaimsResolver ?? base.apiKeyClaimsResolver,
+    apiKeyClaimsResolver: composeApiKeyClaimsResolver(
+      apiKeys,
+      options.apiKeyClaimsResolver ?? base.apiKeyClaimsResolver
+    ),
     oidc: options.oidc ?? base.oidc,
   };
 
@@ -95,6 +135,7 @@ export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLA
   return {
     mode: config.mode,
     config,
+    apiKeys,
     resolveClaims(headers = {}) {
       return resolveAtrClaimsFromHeaders(headers, config);
     },

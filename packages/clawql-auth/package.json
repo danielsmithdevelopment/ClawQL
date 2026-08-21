@@ -1,7 +1,7 @@
 {
   "name": "clawql-auth",
   "version": "7.2.0",
-  "description": "ClawQL gateway auth (noAuth/apiKey/oidc JWT consumer, ATR claims, step-up TOTP) and upstream provider credential headers",
+  "description": "ClawQL gateway auth (noAuth/apiKey/oidc JWT consumer, issued API keys, ATR claims, step-up TOTP) plus outbound OAuth token store with mutex refresh",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -20,7 +20,7 @@
     "build": "npm run clean && tsup",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --config ../../vitest.config.ts packages/clawql-auth"
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",

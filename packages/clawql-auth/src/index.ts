@@ -82,3 +82,11 @@ export {
   AwsSigV4ServiceLive,
   type AwsSignableRequestInit,
 } from "./aws-sigv4.js";
+export {
+  emitAuthEvent,
+  noopAuthEventSink,
+  type AuthEvent,
+  type AuthEventSink,
+} from "./audit/auth-events.js";
+export * from "./api-keys/index.js";
+export * from "./oauth/index.js";
