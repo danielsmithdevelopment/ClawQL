@@ -34,10 +34,7 @@ import {
   verifyTotpEffect,
   type WebAuthnStepUpVerifier,
 } from "./step-up/index.js";
-import {
-  createIssuedApiKeyStore,
-  type IssuedApiKeyStore,
-} from "./api-keys/index.js";
+import { createIssuedApiKeyStore, type IssuedApiKeyStore } from "./api-keys/index.js";
 import type { AuthEventSink } from "./audit/auth-events.js";
 
 export type CreateClawQLAuthOptions = {

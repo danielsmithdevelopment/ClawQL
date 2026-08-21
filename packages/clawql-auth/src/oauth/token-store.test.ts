@@ -2,10 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { AuthEvent } from "../audit/auth-events.js";
 import { ReauthRequiredError } from "./errors.js";
-import {
-  createMemoryOAuthPersistence,
-  createOAuthTokenStore,
-} from "./token-store.js";
+import { createMemoryOAuthPersistence, createOAuthTokenStore } from "./token-store.js";
 import type { StoredOAuthToken } from "./types.js";
 
 describe("OAuthTokenStore", () => {
@@ -120,9 +117,7 @@ describe("OAuthTokenStore", () => {
       expiresAtMs: 1_000_000 + 5_000,
     });
 
-    await expect(store.getValidToken("t:microsoft:u")).rejects.toBeInstanceOf(
-      ReauthRequiredError
-    );
+    await expect(store.getValidToken("t:microsoft:u")).rejects.toBeInstanceOf(ReauthRequiredError);
     expect(events.some((e) => e.type === "OAUTH_REFRESH_FAILED")).toBe(true);
     expect(events.some((e) => e.type === "OAUTH_REAUTH_REQUIRED")).toBe(true);
   });

@@ -8,11 +8,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { Data, Effect } from "effect";
 
-import {
-  emitAuthEvent,
-  noopAuthEventSink,
-  type AuthEventSink,
-} from "../audit/auth-events.js";
+import { emitAuthEvent, noopAuthEventSink, type AuthEventSink } from "../audit/auth-events.js";
 import type { AtrClaims, ApiKeyClaimsResolver } from "../gateway.js";
 import {
   formatApiKeySecret,

@@ -1,8 +1,4 @@
-export {
-  OAuthTokenStoreError,
-  ReauthRequiredError,
-  oauthErrorCode,
-} from "./errors.js";
+export { OAuthTokenStoreError, ReauthRequiredError, oauthErrorCode } from "./errors.js";
 export {
   createMemoryOAuthPersistence,
   createOAuthTokenStore,

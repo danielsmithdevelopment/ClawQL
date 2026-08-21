@@ -4,11 +4,7 @@
  * invalid_grant races on single-use refresh tokens (MCP ecosystem failure mode).
  */
 
-import {
-  emitAuthEvent,
-  noopAuthEventSink,
-  type AuthEventSink,
-} from "../audit/auth-events.js";
+import { emitAuthEvent, noopAuthEventSink, type AuthEventSink } from "../audit/auth-events.js";
 import { oauthErrorCode, ReauthRequiredError } from "./errors.js";
 import {
   OAUTH_PROACTIVE_REFRESH_MS,
@@ -85,10 +81,7 @@ export class OAuthTokenStore {
   }
 
   /** Mutex-protected refresh — all waiters share the in-flight promise. */
-  async executeRefresh(
-    key: OAuthTokenKey,
-    current: StoredOAuthToken
-  ): Promise<StoredOAuthToken> {
+  async executeRefresh(key: OAuthTokenKey, current: StoredOAuthToken): Promise<StoredOAuthToken> {
     const inflight = this.refreshLock.get(key);
     if (inflight) return inflight;
 
