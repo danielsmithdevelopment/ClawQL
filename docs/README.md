@@ -87,6 +87,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - **LangExtract onboarding** ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)): [`providers/langextract-onboarding.md`](providers/langextract-onboarding.md)
 - **Fine-tuned classifier runbook**: [`runbooks/fine-tuned-classifier.md`](runbooks/fine-tuned-classifier.md)
 
+- **Personal agent (Hermes/Ornith + Cline/Nemotron)** on Mac Mini: [`homelab/personal-agent-hermes-cline.md`](homelab/personal-agent-hermes-cline.md) — orchestrator/executor pairing, ATR scopes, dual MLX ports, WORM hooks (not the multi-channel OpenClaw path)
 - `openclaw/using-openclaw-with-clawql.md` — **full guide:** OpenClaw CLI + ClawQL MCP (install, `openclaw mcp set`, HTTP/stdio, validation, remote); website **`/openclaw`**
 - `openclaw/clawql-bootstrap.md` — register ClawQL in OpenClaw, env matrix, smoke checklist ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226))
 - `openclaw/openclaw-idp-skill-profile.md` — **OpenClaw IDP** canonical tools, provider matrix, workflow contract ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227))
