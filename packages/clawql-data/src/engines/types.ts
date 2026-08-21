@@ -1,3 +1,6 @@
+import type { Effect } from "effect";
+import type { DataError } from "../effect/data-errors.js";
+
 export type DataEngineId = string;
 
 export type DataQueryOk = {
@@ -53,14 +56,17 @@ export type DataStatus = {
   enabled: true;
 };
 
-/** Pluggable structured-data backend (DuckDB today; more engines register here). */
+/**
+ * Pluggable structured-data backend (DuckDB today; more engines register here).
+ * Domain methods are Effect-native; Promise facades live on {@link ClawqlDataStore} / MCP.
+ */
 export interface DataEnginePlugin {
   readonly id: DataEngineId;
   readonly path: string;
-  query(sql: string): Promise<DataQueryResult>;
-  ingest(payload: IngestPayload): Promise<IngestResult>;
+  query(sql: string): Effect.Effect<DataQueryResult, DataError>;
+  ingest(payload: IngestPayload): Effect.Effect<IngestResult, DataError>;
   status(): DataStatus;
-  close(): Promise<void>;
+  close(): Effect.Effect<void, DataError>;
 }
 
 export type DataEngineFactory = (env: NodeJS.ProcessEnv) => DataEnginePlugin;

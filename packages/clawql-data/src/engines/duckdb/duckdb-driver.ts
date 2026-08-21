@@ -1,7 +1,10 @@
-/** DuckDB driver (`@duckdb/node-api`) — implementation detail of the `duckdb` engine plugin. */
+/** DuckDB driver (`@duckdb/node-api`) — Promise IO + Effect wrappers. */
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DuckDBConnection, DuckDBInstance, type DuckDBValue } from "@duckdb/node-api";
+import type { Effect } from "effect";
+import { dataFromPromise, dataFromSync } from "../../effect/data-effect-utils.js";
+import type { DataError } from "../../effect/data-errors.js";
 import type { DataQueryOk } from "../types.js";
 
 export const DUCKDB_QUERY_HINT =
@@ -43,6 +46,10 @@ export async function openDuckDb(path: string): Promise<DuckDbHandle> {
   return { path, instance, connection };
 }
 
+export function openDuckDbEffect(path: string): Effect.Effect<DuckDbHandle, DataError> {
+  return dataFromPromise(() => openDuckDb(path));
+}
+
 export async function runSql(
   handle: DuckDbHandle,
   sql: string,
@@ -53,6 +60,14 @@ export async function runSql(
     return;
   }
   await handle.connection.run(sql);
+}
+
+export function runSqlEffect(
+  handle: DuckDbHandle,
+  sql: string,
+  params?: readonly unknown[]
+): Effect.Effect<void, DataError> {
+  return dataFromPromise(() => runSql(handle, sql, params));
 }
 
 function serializeCell(value: unknown, maxChars: number): unknown {
@@ -107,6 +122,14 @@ export async function queryDuckDb(
   };
 }
 
+export function queryDuckDbEffect(
+  handle: DuckDbHandle,
+  sql: string,
+  options: { maxRows?: number; maxChars?: number } = {}
+): Effect.Effect<DataQueryOk, DataError> {
+  return dataFromPromise(() => queryDuckDb(handle, sql, options));
+}
+
 export async function closeDuckDb(handle: DuckDbHandle): Promise<void> {
   try {
     handle.connection.closeSync();
@@ -118,4 +141,19 @@ export async function closeDuckDb(handle: DuckDbHandle): Promise<void> {
   } catch {
     /* already closed */
   }
+}
+
+export function closeDuckDbEffect(handle: DuckDbHandle): Effect.Effect<void, DataError> {
+  return dataFromSync(() => {
+    try {
+      handle.connection.closeSync();
+    } catch {
+      /* already closed */
+    }
+    try {
+      handle.instance.closeSync();
+    } catch {
+      /* already closed */
+    }
+  });
 }

@@ -1,6 +1,9 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { basename, extname, join, relative } from "node:path";
+import type { Effect } from "effect";
 import { unzipSync } from "fflate";
+import { dataFromPromise } from "./effect/data-effect-utils.js";
+import type { DataError } from "./effect/data-errors.js";
 
 const DOC_TYPE_RULES: readonly { signals: readonly string[]; docType: string }[] = [
   { signals: ["lock-up", "lockup", "lock_up"], docType: "lock-up-agreement" },
@@ -14,7 +17,10 @@ const DOC_TYPE_RULES: readonly { signals: readonly string[]; docType: string }[]
     docType: "offering-document",
   },
   { signals: ["dip", "debtor-in-possession", "debtor_in_possession"], docType: "dip-financing" },
-  { signals: ["credit-agreement", "loan-agreement", "bridge", "term-loan"], docType: "credit-agreement" },
+  {
+    signals: ["credit-agreement", "loan-agreement", "bridge", "term-loan"],
+    docType: "credit-agreement",
+  },
   { signals: ["hsr", "second-request", "second_request"], docType: "hsr-filing" },
   { signals: ["form-of-", "form_of_"], docType: "form-document" },
 ];
@@ -153,7 +159,9 @@ export function extractKeyTermsFromText(
 
   if (wantLock) {
     const m =
-      LOCK_UP_DAYS_PREFIX_RE.exec(text) || LOCK_UP_DAYS_ALT_RE.exec(text) || LOCK_UP_DAYS_RE.exec(text);
+      LOCK_UP_DAYS_PREFIX_RE.exec(text) ||
+      LOCK_UP_DAYS_ALT_RE.exec(text) ||
+      LOCK_UP_DAYS_RE.exec(text);
     if (m) {
       const days = Number.parseInt(m[1] ?? "", 10);
       if (days >= 1 && days <= 730) {
@@ -194,7 +202,10 @@ export function extractKeyTermsFromText(
   let pm: RegExpExecArray | null;
   while ((pm = PARTY_RE.exec(head)) && parties.length < 4) {
     for (const g of pm.slice(1)) {
-      const party = g.replace(/\s+/g, " ").replace(/^[ ,.]|[ ,.]$/g, "").trim();
+      const party = g
+        .replace(/\s+/g, " ")
+        .replace(/^[ ,.]|[ ,.]$/g, "")
+        .trim();
       if (party.length >= 3 && !parties.includes(party)) parties.push(party);
       if (parties.length >= 4) break;
     }
@@ -220,9 +231,7 @@ export function extractDocxText(bytes: Uint8Array): string {
 
 /** OOXML word/document.xml → plain text via `<w:t>` runs (not HTML sanitization). */
 function ooxmlDocumentXmlToPlainText(xml: string): string {
-  const withBreaks = xml
-    .replace(/<w:tab\b[^/]*\/>/g, "\t")
-    .replace(/<\/w:p>/g, "\n");
+  const withBreaks = xml.replace(/<w:tab\b[^/]*\/>/g, "\t").replace(/<\/w:p>/g, "\n");
   const parts: string[] = [];
   const re = /<w:t\b[^>]*>([^<]*)<\/w:t>/g;
   let m: RegExpExecArray | null;
@@ -338,7 +347,9 @@ export async function enrichInventoryRows(
 ): Promise<MatterDocumentRow[]> {
   const parseLimit = opts.parseLimit ?? 20;
   const textCap = opts.textCap ?? 500;
-  const skip = opts.skipExt ?? new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".xlsx", ".xls", ".zip", ".gz"]);
+  const skip =
+    opts.skipExt ??
+    new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".xlsx", ".xls", ".zip", ".gz"]);
   const ranked = [...rows].sort((a, b) => {
     const pd = docTypeParsePriority(b.doc_type) - docTypeParsePriority(a.doc_type);
     if (pd !== 0) return pd;
@@ -383,4 +394,21 @@ export async function enrichInventoryRows(
     }
   }
   return rows;
+}
+
+/** Effect wrapper — FS IO at the Promise edge. */
+export function catalogMatterFilesEffect(
+  matterDir: string,
+  opts: { skipExt?: Set<string> } = {}
+): Effect.Effect<MatterDocumentRow[], DataError> {
+  return dataFromPromise(() => catalogMatterFiles(matterDir, opts));
+}
+
+/** Effect wrapper — FS/parse IO at the Promise edge. */
+export function enrichInventoryRowsEffect(
+  matterDir: string,
+  rows: MatterDocumentRow[],
+  opts: { parseLimit?: number; textCap?: number; skipExt?: Set<string> } = {}
+): Effect.Effect<MatterDocumentRow[], DataError> {
+  return dataFromPromise(() => enrichInventoryRows(matterDir, rows, opts));
 }

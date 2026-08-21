@@ -17,18 +17,25 @@ export {
   inferDocType,
   extractKeyTermsFromText,
   catalogMatterFiles,
+  catalogMatterFilesEffect,
   detectCapitalMarkets,
   detectRestructuring,
   enrichInventoryRows,
+  enrichInventoryRowsEffect,
 } from "./inventory.js";
 export { ClawqlDataStore, getClawqlDataStore, resetClawqlDataStoreForTests } from "./store.js";
 export { MATTER_COLUMNS } from "./schema.js";
 export {
+  DataError,
+  dataFromPromise,
+  dataFromSync,
   runDataEffect,
   dataQueryProgram,
   dataIngestProgram,
   dataStatusProgram,
   resetDataEngineForTests,
+  DataEngineService,
+  dataEngineLiveLayer,
 } from "./effect/index.js";
 
 /** @deprecated Use {@link DUCKDB_QUERY_HINT} or engine plugin hint. */
