@@ -863,17 +863,6 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 
 ## Implementation Sequence
 
-<<<<<<< HEAD
-| Phase                     | Scope                                                                                  | Exit criteria                                          | Status                                                             |
-| ------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------ |
-| **1 — Foundation**        | Auth event types + optional sink (no hard `clawql-audit` dep), issued API key registry | Unit tests for issue/validate/revoke; gateway resolver | **Shipped** in `clawql-auth` (`api-keys/`, `audit/auth-events.ts`) |
-| **2 — Outbound core**     | `OAuthTokenStore`, `refreshLock`, `60_000` window, `ReauthRequiredError`               | Concurrent refresh test (N=50) → single IdP call       | **Shipped** (`oauth/token-store.ts`)                               |
-| **3 — Flows + providers** | `ClientCredentialsFlow`, `AuthorizationCodeFlow`, Google/Microsoft/Slack configs       | Integration test against mock OAuth server             | Spec                                                               |
-| **4 — Inbound MCP OAuth** | `MCPOAuthServer`                                                                       | MCP client obtains token; `MCP_TOKEN_ISSUED` in WORM   | Spec                                                               |
-| **5 — Agent integration** | `getOutboundCredential`, Hermes Telegram re-auth, SeeTheGreens service accounts        | Personal stack end-to-end; lending vertical pilot      | Spec                                                               |
-
-Phases 1–2 may ship independently of MCP OAuth 2.1 AS (phase 4). Shipped OIDC consumer mode is untouched throughout.
-=======
 | Phase | Scope | Exit criteria | Status |
 | ----- | ----- | ------------- | ------ |
 | **1 — Foundation** | Auth event sink + issued API key registry (`cqk_`) | Unit tests for issue/validate/revoke; gateway resolver | **Shipped** (`api-keys/`, `audit/auth-events.ts`) |
@@ -881,7 +870,6 @@ Phases 1–2 may ship independently of MCP OAuth 2.1 AS (phase 4). Shipped OIDC 
 | **3 — Auth Code + providers** | PKCE `AuthorizationCodeFlow`; Google/Microsoft/Slack catalogs; outbound API key manager | PKCE start/callback tests; provider matrix | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`, `oauth/outbound-api-key.ts`) |
 | **4 — Inbound MCP OAuth** | `MCPOAuthServer` client_credentials + refresh rotation | Issue/validate/refresh tests | **Shipped** (`inbound/mcp-oauth.ts`) — HTTP route wiring in `mcp-api-adapter` / `server-http` still open |
 | **5 — Vault + re-auth UX** | HashiCorp Vault dynamic secrets; Hermes Telegram re-auth | Enterprise TEE + personal agent | Spec |
->>>>>>> 58c3a065 (feat(clawql-auth): MCP OAuth AS, PKCE, client-credentials, providers)
 
 ### Shipped slice (August 2026)
 
