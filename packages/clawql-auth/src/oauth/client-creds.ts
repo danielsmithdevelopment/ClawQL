@@ -88,8 +88,6 @@ export class ClientCredentialsFlow {
   }
 }
 
-export function createClientCredentialsFlow(
-  fetchImpl?: typeof fetch
-): ClientCredentialsFlow {
+export function createClientCredentialsFlow(fetchImpl?: typeof fetch): ClientCredentialsFlow {
   return new ClientCredentialsFlow(fetchImpl);
 }

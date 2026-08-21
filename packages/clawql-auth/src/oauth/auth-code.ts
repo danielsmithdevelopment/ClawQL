@@ -6,11 +6,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { Data } from "effect";
 
-import {
-  emitAuthEvent,
-  noopAuthEventSink,
-  type AuthEventSink,
-} from "../audit/auth-events.js";
+import { emitAuthEvent, noopAuthEventSink, type AuthEventSink } from "../audit/auth-events.js";
 import { OAuthFlowError } from "./client-creds.js";
 import type { StoredOAuthToken } from "./types.js";
 

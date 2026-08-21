@@ -74,10 +74,7 @@ export const SLACK_CONFIG: SlackProviderConfig = {
 };
 
 export type OutboundAuthMethod =
-  | "api_key"
-  | "oauth_client_credentials"
-  | "oauth_code"
-  | "vault_dynamic";
+  "api_key" | "oauth_client_credentials" | "oauth_code" | "vault_dynamic";
 
 /** Which outbound auth method to prefer per provider slug. */
 export const PROVIDER_AUTH_METHOD: Record<string, OutboundAuthMethod> = {

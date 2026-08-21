@@ -80,10 +80,10 @@ Payments path: `$CLAWQL_HOME/Payments/step-up-totp.json` via `clawql payments cr
 
 Face ID, Touch ID, Windows Hello, and hardware keys (YubiKey, Titan, …) are **not** separate ClawQL features. They are WebAuthn authenticators under one ceremony:
 
-| Category | Examples | WebAuthn `authenticatorAttachment` |
-| -------- | -------- | ---------------------------------- |
-| **Platform** (built-in) | Face ID, Touch ID, Windows Hello, Android biometric | `platform` |
-| **Roaming** (external FIDO2) | YubiKey 5 / Bio, Google Titan, Feitian | `cross-platform` |
+| Category                     | Examples                                            | WebAuthn `authenticatorAttachment` |
+| ---------------------------- | --------------------------------------------------- | ---------------------------------- |
+| **Platform** (built-in)      | Face ID, Touch ID, Windows Hello, Android biometric | `platform`                         |
+| **Roaming** (external FIDO2) | YubiKey 5 / Bio, Google Titan, Feitian              | `cross-platform`                   |
 
 `residentKey: 'required'` + `userVerification: 'required'` is what triggers the OS biometric / PIN prompt for platform authenticators. The browser or OS owns that prompt — ClawQL never receives biometric raw data; private keys stay in Secure Enclave, TPM, or the hardware token.
 

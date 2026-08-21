@@ -35,12 +35,8 @@ describe("passkey authenticator selection", () => {
   });
 
   it("documents both platform and roaming authenticators", () => {
-    expect(PASSKEY_AUTHENTICATOR_CATALOG.platform.some((s) => s.includes("Face ID"))).toBe(
-      true
-    );
-    expect(PASSKEY_AUTHENTICATOR_CATALOG.platform.some((s) => s.includes("Touch ID"))).toBe(
-      true
-    );
+    expect(PASSKEY_AUTHENTICATOR_CATALOG.platform.some((s) => s.includes("Face ID"))).toBe(true);
+    expect(PASSKEY_AUTHENTICATOR_CATALOG.platform.some((s) => s.includes("Touch ID"))).toBe(true);
     expect(PASSKEY_AUTHENTICATOR_CATALOG.roaming.some((s) => s.includes("YubiKey"))).toBe(true);
   });
 });

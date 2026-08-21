@@ -5,11 +5,7 @@
 
 import { Data } from "effect";
 
-import {
-  emitAuthEvent,
-  noopAuthEventSink,
-  type AuthEventSink,
-} from "../audit/auth-events.js";
+import { emitAuthEvent, noopAuthEventSink, type AuthEventSink } from "../audit/auth-events.js";
 
 export class OutboundApiKeyError extends Data.TaggedError("OutboundApiKeyError")<{
   readonly reason: string;
@@ -35,8 +31,7 @@ export class OutboundAPIKeyManager {
 
   constructor(private readonly options: OutboundAPIKeyManagerOptions) {
     this.eventSink = options.eventSink ?? noopAuthEventSink;
-    this.pathTemplate =
-      options.pathTemplate ?? "vault://clawql/providers/{providerId}/api-key";
+    this.pathTemplate = options.pathTemplate ?? "vault://clawql/providers/{providerId}/api-key";
     this.now = options.now ?? (() => new Date());
   }
 

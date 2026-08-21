@@ -9,11 +9,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 
-import {
-  emitAuthEvent,
-  noopAuthEventSink,
-  type AuthEventSink,
-} from "../audit/auth-events.js";
+import { emitAuthEvent, noopAuthEventSink, type AuthEventSink } from "../audit/auth-events.js";
 import type { AtrClaims } from "../gateway.js";
 
 export type McpGrantType = "authorization_code" | "client_credentials" | "refresh_token";

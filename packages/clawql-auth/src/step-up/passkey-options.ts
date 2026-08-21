@@ -11,10 +11,7 @@
  */
 
 /** Controls which authenticator category the browser offers during registration. */
-export type PasskeyAuthenticatorRequirement =
-  | "hardware-only"
-  | "biometric-only"
-  | undefined;
+export type PasskeyAuthenticatorRequirement = "hardware-only" | "biometric-only" | undefined;
 
 /**
  * WebAuthn `authenticatorAttachment`:

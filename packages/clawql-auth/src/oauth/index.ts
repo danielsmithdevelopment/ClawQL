@@ -18,11 +18,7 @@ export {
   OAuthFlowError,
   type ClientCredentialsConfig,
 } from "./client-creds.js";
-export {
-  OAuthTokenStoreError,
-  ReauthRequiredError,
-  oauthErrorCode,
-} from "./errors.js";
+export { OAuthTokenStoreError, ReauthRequiredError, oauthErrorCode } from "./errors.js";
 export {
   createOutboundAPIKeyManager,
   createMemorySecretSource,

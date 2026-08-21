@@ -251,10 +251,10 @@ Shipped **`oidc`** mode remains the path for enterprise human SSO: customer IdP 
 
 Face ID / Touch ID / Windows Hello and external FIDO2 keys (YubiKey, Titan, …) are covered by the **same** WebAuthn passkey surface — not separate SDKs.
 
-| Authenticators | WebAuthn term | `authenticatorAttachment` |
-| -------------- | ------------- | ------------------------- |
-| Face ID, Touch ID, Windows Hello, Android biometric | Platform | `platform` |
-| YubiKey, Titan, Feitian, other FIDO2 | Roaming / cross-platform | `cross-platform` |
+| Authenticators                                      | WebAuthn term            | `authenticatorAttachment` |
+| --------------------------------------------------- | ------------------------ | ------------------------- |
+| Face ID, Touch ID, Windows Hello, Android biometric | Platform                 | `platform`                |
+| YubiKey, Titan, Feitian, other FIDO2                | Roaming / cross-platform | `cross-platform`          |
 
 Shipped helpers in `step-up/passkey-options.ts`:
 
@@ -891,13 +891,13 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 
 ## Implementation Sequence
 
-| Phase | Scope | Exit criteria | Status |
-| ----- | ----- | ------------- | ------ |
-| **1 — Foundation** | Auth event sink + issued API key registry (`cqk_`) | Unit tests for issue/validate/revoke; gateway resolver | **Shipped** (`api-keys/`, `audit/auth-events.ts`) |
-| **2 — Outbound core** | `OAuthTokenStore` mutex + 60s proactive refresh; `ClientCredentialsFlow` | Concurrent refresh N=50 → one IdP call; client-creds unit tests | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`) |
-| **3 — Auth Code + providers** | PKCE `AuthorizationCodeFlow`; Google/Microsoft/Slack catalogs; outbound API key manager | PKCE start/callback tests; provider matrix | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`, `oauth/outbound-api-key.ts`) |
-| **4 — Inbound MCP OAuth** | `MCPOAuthServer` client_credentials + refresh rotation | Issue/validate/refresh tests | **Shipped** (`inbound/mcp-oauth.ts`) — HTTP route wiring in `mcp-api-adapter` / `server-http` still open |
-| **5 — Vault + re-auth UX** | HashiCorp Vault dynamic secrets; Hermes Telegram re-auth | Enterprise TEE + personal agent | Spec |
+| Phase                         | Scope                                                                                   | Exit criteria                                                   | Status                                                                                                   |
+| ----------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **1 — Foundation**            | Auth event sink + issued API key registry (`cqk_`)                                      | Unit tests for issue/validate/revoke; gateway resolver          | **Shipped** (`api-keys/`, `audit/auth-events.ts`)                                                        |
+| **2 — Outbound core**         | `OAuthTokenStore` mutex + 60s proactive refresh; `ClientCredentialsFlow`                | Concurrent refresh N=50 → one IdP call; client-creds unit tests | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                            |
+| **3 — Auth Code + providers** | PKCE `AuthorizationCodeFlow`; Google/Microsoft/Slack catalogs; outbound API key manager | PKCE start/callback tests; provider matrix                      | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`, `oauth/outbound-api-key.ts`)                    |
+| **4 — Inbound MCP OAuth**     | `MCPOAuthServer` client_credentials + refresh rotation                                  | Issue/validate/refresh tests                                    | **Shipped** (`inbound/mcp-oauth.ts`) — HTTP route wiring in `mcp-api-adapter` / `server-http` still open |
+| **5 — Vault + re-auth UX**    | HashiCorp Vault dynamic secrets; Hermes Telegram re-auth                                | Enterprise TEE + personal agent                                 | Spec                                                                                                     |
 
 ### Shipped slice (August 2026)
 
