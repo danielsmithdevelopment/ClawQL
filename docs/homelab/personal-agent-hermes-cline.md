@@ -69,10 +69,10 @@ Hermes's Honcho user modelling system builds an evolving profile of your prefere
 
 **Per-role sampling** (same server, different request params):
 
-| Agent | Temperature | Notes |
-| ----- | ----------- | ----- |
-| Hermes | `0.6` | Matches Ornith published bench conditions; multi-turn planning |
-| Cline | `0.2` (start) | Colder for edits/SQL; A/B warmer (~1.0 / top_p 0.95) if tool-calling flakes |
+| Agent  | Temperature   | Notes                                                                       |
+| ------ | ------------- | --------------------------------------------------------------------------- |
+| Hermes | `0.6`         | Matches Ornith published bench conditions; multi-turn planning              |
+| Cline  | `0.2` (start) | Colder for edits/SQL; A/B warmer (~1.0 / top_p 0.95) if tool-calling flakes |
 
 **Fallback:** Nemotron 3.5 Lightning on a **separate** MLX process at `:8081` if Ornith smoke (§10.1) regresses vs the known Nemotron/Harvey path (prior GHA ledger 11/25 on legacy stack — lineage note above; failure modes documented). Bring Nemotron back for concurrent Hermes+Cline load or SQL-domain specialization — not as day-one default.
 
@@ -1379,10 +1379,10 @@ done
 echo "=== Ornith smoke complete — keep Cline on Ornith, or fall back to Nemotron ==="
 ```
 
-| Smoke result | Cline default |
-| ------------ | ------------- |
-| Ornith pass | Keep `ornith-1.5-35b-a3b` for both Hermes and Cline |
-| Ornith fail | Switch Cline to Nemotron `:8081`; re-run smoke; document in vault |
+| Smoke result | Cline default                                                     |
+| ------------ | ----------------------------------------------------------------- |
+| Ornith pass  | Keep `ornith-1.5-35b-a3b` for both Hermes and Cline               |
+| Ornith fail  | Switch Cline to Nemotron `:8081`; re-run smoke; document in vault |
 
 Pass criteria: all five tasks pass under Sonnet 4.6 judge (or internal Ollama baseline for smoke-only); pre-ingest fingerprint shows Node DuckDB; call-store contains `clawql_sql` rows.
 
@@ -1548,10 +1548,10 @@ hermes chat --message "Send Telegram test: stack validation complete"
 
 Use the same Harvey LAB SQL gold set for both agents so results are comparable.
 
-| Agent | Model path | What to log |
-| ----- | ---------- | ----------- |
-| **Hermes** | Ornith via `:8091` (required) | Case id, pass/fail, latency, tool-call count |
-| **Cline** | Ornith via `:8091` (default); Nemotron only if §10.1 failed | Same + whether edit/PR path was used |
+| Agent      | Model path                                                  | What to log                                  |
+| ---------- | ----------------------------------------------------------- | -------------------------------------------- |
+| **Hermes** | Ornith via `:8091` (required)                               | Case id, pass/fail, latency, tool-call count |
+| **Cline**  | Ornith via `:8091` (default); Nemotron only if §10.1 failed | Same + whether edit/PR path was used         |
 
 **Protocol:** warm Ornith; pin model ids; run **001, 004, 007, 018, 022** then expand; both agents on Ornith unless smoke forced Nemotron for Cline. Store summaries under `docs/benchmarks/results/` and/or ClawQL vault. Do not change gold expected SQL to make a model pass.
 
@@ -1574,15 +1574,15 @@ After one to two weeks of live use, also run OpenBench **Family M** (cross-sessi
 
 ## Decision log (locked)
 
-| Decision | Choice |
-| -------- | ------ |
-| Hermes model | **Ornith** (`ornith-1.5-35b-a3b` on `:8082`) |
-| Cline model | **Ornith by default**; Nemotron only if smoke fails |
-| Control plane | Mac Mini M4 Pro |
-| IDP / GPU | MS-A2 (Blackwell) |
-| Storage / enrich | N5 Pro (ClickHouse, MinIO WORM, Tika, NPU) |
-| Laptops | Transient clients only |
-| Open question | Ornith smoke on **001, 004, 007, 018, 022** → keep Ornith for Cline vs switch to Nemotron |
+| Decision         | Choice                                                                                    |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| Hermes model     | **Ornith** (`ornith-1.5-35b-a3b` on `:8082`)                                              |
+| Cline model      | **Ornith by default**; Nemotron only if smoke fails                                       |
+| Control plane    | Mac Mini M4 Pro                                                                           |
+| IDP / GPU        | MS-A2 (Blackwell)                                                                         |
+| Storage / enrich | N5 Pro (ClickHouse, MinIO WORM, Tika, NPU)                                                |
+| Laptops          | Transient clients only                                                                    |
+| Open question    | Ornith smoke on **001, 004, 007, 018, 022** → keep Ornith for Cline vs switch to Nemotron |
 
 ---
 
