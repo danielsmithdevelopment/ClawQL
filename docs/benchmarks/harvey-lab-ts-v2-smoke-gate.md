@@ -91,4 +91,4 @@ bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh
 - [`harvey-lab-stack-lineage.md`](harvey-lab-stack-lineage.md)
 - [`harvey-lab-rules-compliance.md`](harvey-lab-rules-compliance.md)
 - [`integrations/harvey-labs/HARVEY.md`](../../integrations/harvey-labs/HARVEY.md)
-- [`../homelab/personal-agent-hermes-cline.md`](../homelab/personal-agent-hermes-cline.md) — personal Hermes/Ornith + Cline/Nemotron stack (shares Mac mini `:8081` / `:8091`; adds Ornith `:8082` + Cline ACP `:8095`)
+- [`../homelab/personal-agent-hermes-cline.md`](../homelab/personal-agent-hermes-cline.md) — personal Hermes/Ornith + Cline/Ornith stack (default `:8082` / `:8091`; optional Nemotron `:8081`; Cline ACP `:8095`)

@@ -1,23 +1,55 @@
-# ClawQL Personal Agent Setup — Hermes/Ornith + Cline/Nemotron
+# ClawQL Personal Agent Setup — Hermes/Ornith + Cline/Ornith
 
-**Status:** Design / operator target · August 2026 · Mac Mini M4 Pro  
-**Author:** Daniel Smith (@danielsmithdev)
+**Status:** Design / operator target · August 2026 · Mac Mini M4 Pro (64GB)  
+**Author:** Daniel Smith (@danielsmithdev)  
+**Default:** both Hermes and Cline use **Ornith-1.5-35B-A3B** (one MLX server). Nemotron is the fallback worker if Ornith smoke regresses Harvey LAB cells.
 
-> **Repo lineage note:** Harvey LAB “11/25 all-pass” in §2.2 is the prior GHA / Nemotron+ClawQL ledger on legacy `python-duckdb-v1`. Current product path is **`ts-clawql-data-v2`**: SQL gold **25/25** (no inference); **agent** contiguous 001–025 is still gated on Mac mini smoke — see [`harvey-lab-ts-v2-smoke-gate.md`](../benchmarks/harvey-lab-ts-v2-smoke-gate.md) and [`harvey-lab-stack-lineage.md`](../benchmarks/harvey-lab-stack-lineage.md). Do not cite legacy scores as current ClawQL agent performance.
+> **Repo lineage note:** Harvey LAB “11/25 all-pass” below is the prior GHA / Nemotron+ClawQL ledger on legacy `python-duckdb-v1`. Current product path is **`ts-clawql-data-v2`**: SQL gold **25/25** (no inference); **agent** contiguous 001–025 is still gated on Mac mini smoke — see [`harvey-lab-ts-v2-smoke-gate.md`](../benchmarks/harvey-lab-ts-v2-smoke-gate.md) and [`harvey-lab-stack-lineage.md`](../benchmarks/harvey-lab-stack-lineage.md). Do not cite legacy scores as current ClawQL agent performance.
 
 ---
 
 ## 1. Overview
 
-This document describes the complete setup for a personal AI agent assistant running on the Mac Mini M4 Pro. The architecture uses two agents in a hierarchical relationship:
+This document describes the personal AI agent assistant on the Mac Mini M4 Pro, in the context of the locked homelab topology (Mini control plane, MS-A2 GPU IDP, N5 Pro storage/enrich).
 
-**Hermes** (powered by Ornith-1.5-35B-A3B) acts as the orchestrator — understanding goals, decomposing tasks, delegating to Cline, evaluating results, maintaining persistent memory, updating its skill library, and communicating status via Telegram.
+**Hermes** (Ornith-1.5-35B-A3B) is the orchestrator — goals, decomposition, delegation, evaluation, skill library, Telegram.
 
-**Cline** (powered by Nemotron 3.5 Lightning) acts as the executor — reading and writing code, running terminal commands, calling ClawQL MCP tools, and returning structured results to Hermes.
+**Cline** (Ornith by default; Nemotron optional) is the executor — code, terminal, ClawQL MCP tools, structured results back to Hermes.
 
-**ClawQL MCP** sits beneath both agents — providing vault memory, structured SQL retrieval via clawql_sql, Panguard enforcement, and WORM audit trail on every action regardless of whether an inference call was involved.
+**ClawQL MCP** sits beneath both — vault memory, `clawql_sql`, Panguard, WORM. Same-weights does **not** mean same agent: ATR scopes, tools, and verification gates keep the role split.
 
-The two-layer trace capture design covers the full action space: clawql-inference captures every model call for the training flywheel, and the WORM audit trail captures every consequential action including non-inference events like Hermes skill library updates, Cline filesystem writes, and inter-agent delegation messages.
+Two-layer traces: clawql-inference captures model calls; WORM captures consequential non-inference actions (skills, FS writes, delegation).
+
+### 1.1 Homelab topology (locked)
+
+```
+MAC MINI M4 PRO (64GB unified) — Control plane + primary inference
+  k3s control plane (Rancher)
+  ClawQL MCP server :8080
+  clawql-inference gateway :8091
+  Hermes agent (Ornith-1.5-35B-A3B via MLX) :8082
+  Cline agent (Ornith default — same :8082; or Nemotron on :8081)
+  Cline ACP :8095
+  Headscale · Omada Controller
+
+MS-A2 + RTX 5090 — GPU compute (k3s worker)
+  vLLM Qwen3.8-27B (ExtractBench) · SAM 3.1 · Dolphin-v2
+  DPO/GRPO · PorTAL
+
+N5 PRO TRUENAS (96GB ECC) — Storage + always-on enrich (k3s worker)
+  ClickHouse :8123 · MinIO :9000 (WORM + R2) · Tika :9998 · LangExtract :8090
+  890M / 50 TOPS: PP-DocLayout · dots.ocr · nomic-embed · Presidio · classifier · ontology auto-tag
+
+MACBOOK AIR M4 / PRO M3 PRO — docked overflow MLX + transient k3s workers
+```
+
+**IDP path (context for Hermes skills):** N5 layout/PII/classify → TextBased=Tika | Complex=MS-A2 Dolphin(±SAM) → N5 tag/embed → Qwen field map → WORM.
+
+**Secrets:** Telegram tokens and OAuth material via `clawql-auth` **SecretStore** (SQLite default on Mini) — see [`clawql-auth-package-spec.md`](../security/clawql-auth-package-spec.md).
+
+### 1.2 Only open question (model)
+
+Ornith smoke on Harvey LAB tasks **001, 004, 007, 018, 022** decides whether Cline stays on Ornith (shared MLX server, serialized) or switches to Nemotron (separate `:8081`, concurrent, domain-calibrated). Until that smoke fails, **assume Ornith for both**.
 
 ---
 
@@ -25,19 +57,26 @@ The two-layer trace capture design covers the full action space: clawql-inferenc
 
 ### 2.1 Hermes + Ornith-1.5-35B-A3B
 
-Ornith-1.5-35B-A3B was trained with a three-stage self-improvement loop: the model proposes new tasks, generates task-specific scaffolds, and produces solution rollouts for reinforcement learning. This training makes it stronger at the orchestration layer — decomposing complex goals into subtasks, recognizing reusable patterns, and formalizing them into skill documents — compared to models that were not trained this way.
+Ornith-1.5-35B-A3B was trained with a three-stage self-improvement loop: the model proposes new tasks, generates task-specific scaffolds, and produces solution rollouts for reinforcement learning. That loop strengthens orchestration (decompose, recognize patterns, formalize skills) **and** agentic coding (SWE-bench / Terminal-Bench class workloads) — so one checkpoint can power both Hermes and Cline without forcing a weaker worker.
 
 Hermes's runtime self-improvement loop compounds on top of this. After every completed task, Hermes evaluates its own performance and writes a reusable skill document. The next time a similar task arrives, Hermes queries its skill library instead of reasoning from scratch. Over weeks and months, the skill library grows to cover your specific workflows — benchmark sweep initiation, ExtractBench optimization, Harvey LAB result analysis, homelab service management — and the agent gets measurably faster and more accurate on those tasks.
 
 Hermes's Honcho user modelling system builds an evolving profile of your preferences, communication style, and work patterns through conversational interaction. This is not a static profile — it refines continuously as you interact. After several weeks, Hermes understands that you prefer terse status updates, that benchmark results should include the full per-task table not just the aggregate, and that infrastructure alerts should come at any hour but non-urgent status updates should wait until morning.
 
-### 2.2 Cline + Nemotron 3.5 Lightning
+### 2.2 Cline + Ornith (default) · Nemotron (fallback)
 
-Nemotron 3.5 Lightning is proven on your actual workloads — prior GHA ledger 11/25 all-pass on Harvey LAB firm-knowledge under Sonnet 4.6 judging (see lineage note above), correct SQL generation for frequency and enumeration tasks, working trust layer integration. Its failure modes are known and documented. At 3B active parameters it runs fast on the Mac Mini via MLX at near-zero cost.
+**Default:** Cline uses the same Ornith-1.5-35B-A3B weights as Hermes, typically via the **same** MLX server on `:8082` (routed through clawql-inference `:8091`). Benefits on a 64GB Mini: one model resident in unified memory, simpler ops, strong published agentic-coding scores. Role split stays in ATR, ACP, and SOUL — not in which `.safetensors` you load.
 
-Cline is Apache 2.0, 8M installs, VS Code and CLI native, with an SDK that exposes hooks for tool execution events — which is exactly what the WORM instrumentation needs. Its native MCP support means ClawQL tools are available without custom bridging.
+**Per-role sampling** (same server, different request params):
 
-The pairing keeps each model in its appropriate role. Ornith never touches the codebase directly. Nemotron never makes planning decisions. Hermes is the brain, Cline is the hands.
+| Agent  | Temperature   | Notes                                                                       |
+| ------ | ------------- | --------------------------------------------------------------------------- |
+| Hermes | `0.6`         | Matches Ornith published bench conditions; multi-turn planning              |
+| Cline  | `0.2` (start) | Colder for edits/SQL; A/B warmer (~1.0 / top_p 0.95) if tool-calling flakes |
+
+**Fallback:** Nemotron 3.5 Lightning on a **separate** MLX process at `:8081` if Ornith smoke (§10.1) regresses vs the known Nemotron/Harvey path (prior GHA ledger 11/25 on legacy stack — lineage note above; failure modes documented). Bring Nemotron back for concurrent Hermes+Cline load or SQL-domain specialization — not as day-one default.
+
+Cline is Apache 2.0, VS Code/CLI native, ACP + SDK hooks for WORM, native MCP for ClawQL. Hermes is the brain, Cline is the hands — even when both speak Ornith.
 
 ### 2.3 Why Not OpenClaw
 
@@ -57,9 +96,9 @@ Related OpenClaw docs (enterprise / multi-channel, not this personal stack): [`u
 You (Telegram or terminal)
         │
         ▼
-Hermes (Ornith-1.5-35B-A3B, Mac Mini MLX)
-  ├── Queries skill library (SQLite, no inference call)
-  ├── Reads vault memory via clawql memory_recall
+Hermes (Ornith-1.5-35B-A3B, Mac Mini MLX :8082)
+  ├── Queries skill library (SQLite on N5 NFS, no inference call)
+  ├── Reads vault memory via clawql memory_recall → ClickHouse
   ├── Decomposes goal into subtasks
   ├── Decides: handle directly or delegate to Cline
   │
@@ -70,15 +109,14 @@ Hermes (Ornith-1.5-35B-A3B, Mac Mini MLX)
   └── DELEGATION (Cline executes)
             │
             ▼
-        Cline (Nemotron 3.5 Lightning, Mac Mini MLX)
-          ├── Reads and writes codebase files
+        Cline (Ornith default via :8082 / :8091; Nemotron optional :8081)
+          ├── Reads and writes codebase files (ACP)
           ├── Runs terminal commands
           ├── Calls ClawQL MCP tools (clawql_sql, memory_recall)
           └── Returns structured result to Hermes
                     │
                     ▼
-        Hermes evaluates result
-          ├── Did it satisfy acceptance criteria?
+        Hermes evaluates result (mechanical done-criteria — exit codes / tests)
           ├── If yes: write skill document, report to you
           └── If no: replan, re-delegate, or escalate to you
                     │
@@ -88,7 +126,7 @@ Hermes (Ornith-1.5-35B-A3B, Mac Mini MLX)
 
 ### 3.2 ClawQL MCP Tool Availability
 
-Both agents connect to the ClawQL MCP server running on the Mac Mini at `:8080`. Tool availability is controlled per agent via ATR scoping at session creation.
+Both agents connect to the ClawQL MCP server running on the Mac Mini at `:8080`. Tool availability is controlled per agent via ATR scoping at session creation. Prefer **ACP for filesystem/shell**; MCP for ClawQL tools (`memory_*`, `clawql_sql`, …).
 
 **Hermes ATR scope (orchestration tasks):**
 
@@ -106,14 +144,7 @@ Both agents connect to the ClawQL MCP server running on the Mac Mini at `:8080`.
 
 ```json
 {
-  "tools": [
-    "clawql_sql",
-    "memory_recall",
-    "clawql_think",
-    "file_read",
-    "file_write",
-    "terminal_exec"
-  ],
+  "tools": ["clawql_sql", "memory_recall", "clawql_think"],
   "budget": {
     "maxTokens": 200000,
     "maxUsd": 2.0
@@ -127,21 +158,21 @@ Panguard enforces these scopes at the infrastructure layer. A tool call outside 
 
 ```
 :8080  — ClawQL MCP server (primary)
-:8081  — MLX Nemotron server (Cline's model)
-:8082  — MLX Ornith-1.5-35B-A3B server (Hermes's model)
-:8091  — clawql-inference gateway (routes both models, captures traces)
+:8082  — MLX Ornith-1.5-35B-A3B (Hermes + default Cline)
+:8081  — MLX Nemotron (optional Cline fallback / concurrent worker)
+:8091  — clawql-inference gateway (routes agents, captures traces)
 :8095  — Cline ACP server (Hermes subagent delegation)
 ```
 
-Both models run as separate MLX server instances on the Mac Mini. The clawql-inference gateway sits in front of both, routing requests based on the calling agent and capturing traces for the training flywheel.
+**Default:** one Ornith MLX instance on `:8082`; Hermes and Cline both reach it through `:8091` with different agent labels and temperatures. **Optional:** start Nemotron on `:8081` and retarget Cline after a failed Ornith smoke (§10.1).
 
-Harvey LAB smoke currently uses `:8081` (Nemotron) + `:8091` (inference) — see the [ts-v2 smoke gate](../benchmarks/harvey-lab-ts-v2-smoke-gate.md). Ornith on `:8082` is additive for this personal orchestrator stack.
+Harvey LAB smoke historically used `:8081` (Nemotron) + `:8091` — see the [ts-v2 smoke gate](../benchmarks/harvey-lab-ts-v2-smoke-gate.md). Personal-agent default flips to Ornith on `:8082` for both roles.
 
 ---
 
 ## 4. Model Setup
 
-### 4.1 Ornith-1.5-35B-A3B (Hermes model)
+### 4.1 Ornith-1.5-35B-A3B (Hermes + default Cline)
 
 ```bash
 # Pull MLX weights
@@ -158,7 +189,7 @@ huggingface-cli download \
 cp /tmp/sharp-template/chat_template.jinja \
   ~/models/ornith-1.5-35b-a3b/
 
-# Start MLX server for Hermes
+# Single MLX server — Hermes and Cline (default)
 mlx_lm.server \
   --model ~/models/ornith-1.5-35b-a3b \
   --port 8082 \
@@ -167,16 +198,14 @@ mlx_lm.server \
   --seed 42
 ```
 
-Temperature 0.6 matches Ornith's published benchmark conditions. The Sharp chat template reduces thinking tokens while maintaining accuracy and enables thinking retention across turns — important for Hermes's multi-turn planning sessions.
+Set Hermes context ≥ **64K** via `hermes config set` (tool calling is unreliable below that). Temperature 0.6 matches Ornith published bench conditions for the orchestrator; Cline overrides per-request via clawql-inference.
 
-### 4.2 Nemotron 3.5 Lightning (Cline model)
+### 4.2 Nemotron 3.5 Lightning (optional Cline fallback)
+
+Only if §10.1 Ornith smoke fails Harvey criteria or you need a second concurrent worker:
 
 ```bash
-# Already running for Harvey LAB — same instance
-# Confirm it's running at :8081
-curl http://localhost:8081/v1/models
-
-# If not running:
+curl http://localhost:8081/v1/models || \
 mlx_lm.server \
   --model mlx-community/Llama-3.1-Nemotron-3.5-Lightning-30B-A3B-4bit \
   --port 8081 \
@@ -185,12 +214,13 @@ mlx_lm.server \
   --seed 42
 ```
 
-Temperature 0.0 for Nemotron on execution tasks — deterministic behavior is preferable for code generation and SQL queries where reproducibility matters.
+Then point Cline / clawql-inference `cline` route at `:8081` / `nemotron-3.5-lightning`. Temperature 0.0 favors deterministic SQL/code paths.
 
 ### 4.3 clawql-inference Gateway Configuration
 
 ```yaml
 # clawql-inference/config/personal-agent.yaml
+# Default: both agents → Ornith on :8082
 
 models:
   hermes:
@@ -202,12 +232,16 @@ models:
     worm_enabled: true
 
   cline:
-    endpoint: "http://localhost:8081/v1"
-    model: "nemotron-3.5-lightning"
-    temperature: 0.0
+    endpoint: "http://localhost:8082/v1" # same Ornith server (default)
+    model: "ornith-1.5-35b-a3b"
+    temperature: 0.2
     agent: "cline"
     trace_capture: true
     worm_enabled: true
+    # Fallback after failed Ornith smoke:
+    # endpoint: "http://localhost:8081/v1"
+    # model: "nemotron-3.5-lightning"
+    # temperature: 0.0
 
 trace_output:
   local: "~/.clawql/traces/personal-agent/"
@@ -271,7 +305,9 @@ subagents:
   cline:
     type: "acp"
     endpoint: "http://localhost:8095/acp" # Cline ACP server
-    model: "openai/nemotron-3.5-lightning"
+    # Ornith by default (same Mini weights as Hermes). Switch to
+    # openai/nemotron-3.5-lightning only if Ornith smoke fails (§10.1).
+    model: "openai/ornith-1.5-35b-a3b"
     base_url: "http://localhost:8091/v1"
     capabilities:
       - "code_edit"
@@ -386,7 +422,8 @@ steps:
     task: |
       Run bash integrations/harvey-labs/scripts/preflight-ts-v2-smoke.sh
       Confirm dist/server-http.js exists (npm run build if missing)
-      Confirm MLX Nemotron at :8081 and clawql-inference at :8091
+      Confirm MLX Ornith at :8082 and clawql-inference at :8091
+      (Nemotron :8081 only if Ornith smoke failed — §10.1)
 
   - id: quarantine
     action: delegate
@@ -397,7 +434,7 @@ steps:
     action: delegate
     agent: cline
     task: |
-      LAB_TASK=firm-knowledge/tasks/001 LAB_ARMS=nemotron-clawql \
+      LAB_TASK=firm-knowledge/tasks/001 LAB_ARMS=ornith-clawql \
       bash integrations/harvey-labs/scripts/run-lab-local.sh
     gate: must pass before contiguous
 
@@ -513,9 +550,6 @@ services:
   - name: clawql-mcp
     url: http://localhost:8080/health
     critical: true
-  - name: mlx-nemotron
-    url: http://localhost:8081/v1/models
-    critical: true
   - name: mlx-ornith
     url: http://localhost:8082/v1/models
     critical: true
@@ -525,6 +559,9 @@ services:
   - name: cline-acp
     url: http://localhost:8095/acp/health
     critical: false
+  - name: mlx-nemotron
+    url: http://localhost:8081/v1/models
+    critical: false # optional Cline fallback after failed Ornith smoke
   - name: n5-minio
     url: http://n5-pro.tailnet:9000/minio/health/live
     critical: true
@@ -581,7 +618,7 @@ cline server --port 8095 --acp-enabled
     "provider": "openai-compatible",
     "baseUrl": "http://localhost:8091/v1",
     "apiKey": "local",
-    "modelId": "nemotron-3.5-lightning"
+    "modelId": "ornith-1.5-35b-a3b"
   },
   "mcp": {
     "servers": [
@@ -1046,7 +1083,7 @@ Hypothesis confirmed. Vault ingested. Reverting not needed.
 
 ```
 Morning brief — all green
-MCP ✓ Nemotron ✓ Ornith ✓ Inference ✓ MinIO ✓
+MCP ✓ Ornith ✓ Inference ✓ MinIO ✓
 Active: none | Last sweep: 3d ago (25/25)
 ```
 
@@ -1314,9 +1351,9 @@ kubectl get pods -n clawql-homelab -o wide
 
 Run this checklist before treating the stack as production-ready on the Mac Mini.
 
-### 10.1 Ornith Smoke (five Harvey tasks)
+### 10.1 Ornith Smoke (five Harvey tasks) — decides Cline model
 
-Before locking Hermes to Ornith, confirm Ornith matches Nemotron on representative cells under current stack rules:
+Hermes and Cline both **start on Ornith**. Run this gate before treating the personal agent as production-ready. Pass → keep Ornith for Cline. Fail → switch Cline (and optionally coding paths) to Nemotron `:8081`, re-run, document in vault.
 
 ```bash
 #!/usr/bin/env bash
@@ -1339,8 +1376,13 @@ for task in "${TASKS[@]}"; do
   bash integrations/harvey-labs/scripts/run-lab-local.sh
 done
 
-echo "=== Ornith smoke complete — compare call-store vs Nemotron baseline ==="
+echo "=== Ornith smoke complete — keep Cline on Ornith, or fall back to Nemotron ==="
 ```
+
+| Smoke result | Cline default                                                     |
+| ------------ | ----------------------------------------------------------------- |
+| Ornith pass  | Keep `ornith-1.5-35b-a3b` for both Hermes and Cline               |
+| Ornith fail  | Switch Cline to Nemotron `:8081`; re-run smoke; document in vault |
 
 Pass criteria: all five tasks pass under Sonnet 4.6 judge (or internal Ollama baseline for smoke-only); pre-ingest fingerprint shows Node DuckDB; call-store contains `clawql_sql` rows.
 
@@ -1363,9 +1405,9 @@ curl -s http://localhost:8080/mcp \
 
 # Expected: clawql_sql, memory_recall, clawql_think, file_read, file_write, terminal_exec
 
-# clawql-inference lists both models
+# clawql-inference lists Ornith (required); Nemotron only if fallback enabled
 curl -s http://localhost:8091/v1/models | jq '.data[].id'
-# Expected: ornith-1.5-35b-a3b, nemotron-3.5-lightning
+# Expected: ornith-1.5-35b-a3b (+ nemotron-3.5-lightning if §10.1 forced fallback)
 ```
 
 ### 10.3 WORM Completeness Verification
@@ -1504,16 +1546,43 @@ hermes chat --message "Send Telegram test: stack validation complete"
 
 ## 11. Benchmarking the Setup
 
-After one to two weeks of live use, run Harvey LAB / Agents OpenBench **Family M** (cross-session memory) against Hermes + ClawQL vault vs bare Nemotron. Family M measures whether the agent recalls prior vault context across sessions — exactly what Hermes's skill library + ClawQL vault sync is designed to improve. Compare: (1) Hermes orchestrating Cline with vault enabled, (2) bare Nemotron + ClawQL MCP without Hermes memory layer, (3) Hermes with vault sync disabled (ablation). Traces from all arms feed the training flywheel (recall → use → correct result).
+Use the same Harvey LAB SQL gold set for both agents so results are comparable.
+
+| Agent      | Model path                                                  | What to log                                  |
+| ---------- | ----------------------------------------------------------- | -------------------------------------------- |
+| **Hermes** | Ornith via `:8091` (required)                               | Case id, pass/fail, latency, tool-call count |
+| **Cline**  | Ornith via `:8091` (default); Nemotron only if §10.1 failed | Same + whether edit/PR path was used         |
+
+**Protocol:** warm Ornith; pin model ids; run **001, 004, 007, 018, 022** then expand; both agents on Ornith unless smoke forced Nemotron for Cline. Store summaries under `docs/benchmarks/results/` and/or ClawQL vault. Do not change gold expected SQL to make a model pass.
+
+After one to two weeks of live use, also run OpenBench **Family M** (cross-session memory): (1) Hermes+Cline with vault, (2) bare Ornith/Nemotron + ClawQL MCP without Hermes memory, (3) Hermes with vault sync disabled (ablation).
 
 ---
 
 ## Related repo docs
 
-- [`harvey-lab-ts-v2-smoke-gate.md`](../benchmarks/harvey-lab-ts-v2-smoke-gate.md)
-- [`harvey-lab-stack-lineage.md`](../benchmarks/harvey-lab-stack-lineage.md)
-- [`using-openclaw-with-clawql.md`](../openclaw/using-openclaw-with-clawql.md)
-- [`clawql-buzz-nostr.md`](../gtm/pragmaticvectors/clawql-buzz-nostr.md)
+- Homelab overview: [`README.md`](README.md)
+- Inference ports: [`inference-stack.md`](inference-stack.md)
+- MCP on Mac Mini: [`mcp-mac-mini.md`](mcp-mac-mini.md)
+- Harvey LAB smoke gate (Ornith decision): [`harvey-lab-ts-v2-smoke-gate.md`](../benchmarks/harvey-lab-ts-v2-smoke-gate.md)
+- Stack lineage: [`harvey-lab-stack-lineage.md`](../benchmarks/harvey-lab-stack-lineage.md)
+- Benchmark index: [`../benchmarks/README.md`](../benchmarks/README.md)
+- ATR / JWT proxy: [`../security/mcp-proxy-jwt-atr.md`](../security/mcp-proxy-jwt-atr.md)
+- Auth package / SecretStore: [`../security/clawql-auth-package-spec.md`](../security/clawql-auth-package-spec.md)
+- OpenClaw (distinct path): [`using-openclaw-with-clawql.md`](../openclaw/using-openclaw-with-clawql.md)
+- Agent behavior when tools are denied: [`../../AGENTS.md`](../../AGENTS.md)
+
+## Decision log (locked)
+
+| Decision         | Choice                                                                                    |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| Hermes model     | **Ornith** (`ornith-1.5-35b-a3b` on `:8082`)                                              |
+| Cline model      | **Ornith by default**; Nemotron only if smoke fails                                       |
+| Control plane    | Mac Mini M4 Pro                                                                           |
+| IDP / GPU        | MS-A2 (Blackwell)                                                                         |
+| Storage / enrich | N5 Pro (ClickHouse, MinIO WORM, Tika, NPU)                                                |
+| Laptops          | Transient clients only                                                                    |
+| Open question    | Ornith smoke on **001, 004, 007, 018, 022** → keep Ornith for Cline vs switch to Nemotron |
 
 ---
 
