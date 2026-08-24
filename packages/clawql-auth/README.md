@@ -138,36 +138,36 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 
 ## Environment
 
-| Variable                                 | Purpose                                                    |
-| ---------------------------------------- | ---------------------------------------------------------- |
-| `CLAWQL_AUTH_MODE`                       | `noAuth` \| `apiKey` \| `oidc` \| `mcpOAuth`               |
-| `CLAWQL_API_KEY`                         | Bootstrap when mode is `apiKey` (unless VK / issued keys)  |
-| `CLAWQL_PROVIDER_AUTH_JSON`              | Per-provider upstream headers for `execute`                |
-| `CLAWQL_AUTH_OIDC_JWKS_URL`              | OIDC JWKS URL (RS256)                                      |
-| `CLAWQL_AUTH_OIDC_PUBLIC_KEY_PEM_PATH`   | PEM public key path (RS256)                                |
-| `CLAWQL_AUTH_OIDC_HS256_SECRET`          | **Tests/dev only** HS256 secret                            |
-| `CLAWQL_AUTH_OIDC_ISSUER`                | Optional `iss` check                                       |
-| `CLAWQL_AUTH_OIDC_AUDIENCE`              | Optional `aud` (comma-separated)                           |
-| `CLAWQL_AUTH_OIDC_ATR_CLAIM`             | Claim holding ATR object (default `atr`)                   |
-| `CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS` | Company SSO allowlist (`acme.com,acme.co.uk`)              |
-| `CLAWQL_AUTH_OIDC_REQUIRE_EMAIL_DOMAIN`  | Force email/hd even without allowlist                      |
-| `CLAWQL_AUTH_OIDC_EMAIL_CLAIM`           | Email claim name (default `email`)                         |
-| `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL`  | Require MFA-class `acr`/`amr` for financial MCP tools      |
-| `CLAWQL_AUTH_FINANCIAL_TOOLS`            | Override financial tool name list (comma-separated)        |
-| `CLAWQL_MCP_OAUTH_ENABLED`               | Enable inbound MCP OAuth AS on HTTP hosts                  |
-| `CLAWQL_MCP_OAUTH_SIGNING_SECRET`        | HS256 secret for issued MCP access JWTs (dev / single-node) |
-| `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM` | RS256 PKCS#8 private key PEM (production — preferred)     |
-| `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH` | Path to RS256 private key PEM                        |
-| `CLAWQL_MCP_OAUTH_SIGNING_PUBLIC_KEY_PEM_PATH`  | Optional verify-only public key (defaults to private) |
-| `CLAWQL_MCP_OAUTH_SIGNING_KEY_ID`        | Optional `kid` for RS256 tokens and JWKS                   |
-| `CLAWQL_MCP_OAUTH_ISSUER`                | Token `iss` (default `CLAWQL_PUBLIC_ORIGIN`)               |
-| `CLAWQL_MCP_OAUTH_RESOURCE_AUDIENCE`     | ID-JAG `aud` when org config omits audience                |
-| `CLAWQL_MCP_OAUTH_CLIENTS_JSON`          | Bootstrap registered MCP clients (JSON)                    |
-| `CLAWQL_MCP_OAUTH_CLIENTS_PATH`          | File path for MCP client registry JSON                     |
-| `CLAWQL_EMA_ORGS_JSON`                   | Bootstrap EMA org configs (JSON) into SecretStore          |
-| `CLAWQL_EMA_ORGS_PATH`                   | File path for EMA org configs JSON                         |
-| `CLAWQL_AUTH_AUDIT_STORE`                | Auth WORM backend: `sqlite` (default) \| `memory` \| `off` |
-| `CLAWQL_AUTH_AUDIT_PATH`                 | SQLite path (default `$CLAWQL_HOME/auth-audit.db`)         |
+| Variable                                        | Purpose                                                     |
+| ----------------------------------------------- | ----------------------------------------------------------- |
+| `CLAWQL_AUTH_MODE`                              | `noAuth` \| `apiKey` \| `oidc` \| `mcpOAuth`                |
+| `CLAWQL_API_KEY`                                | Bootstrap when mode is `apiKey` (unless VK / issued keys)   |
+| `CLAWQL_PROVIDER_AUTH_JSON`                     | Per-provider upstream headers for `execute`                 |
+| `CLAWQL_AUTH_OIDC_JWKS_URL`                     | OIDC JWKS URL (RS256)                                       |
+| `CLAWQL_AUTH_OIDC_PUBLIC_KEY_PEM_PATH`          | PEM public key path (RS256)                                 |
+| `CLAWQL_AUTH_OIDC_HS256_SECRET`                 | **Tests/dev only** HS256 secret                             |
+| `CLAWQL_AUTH_OIDC_ISSUER`                       | Optional `iss` check                                        |
+| `CLAWQL_AUTH_OIDC_AUDIENCE`                     | Optional `aud` (comma-separated)                            |
+| `CLAWQL_AUTH_OIDC_ATR_CLAIM`                    | Claim holding ATR object (default `atr`)                    |
+| `CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS`        | Company SSO allowlist (`acme.com,acme.co.uk`)               |
+| `CLAWQL_AUTH_OIDC_REQUIRE_EMAIL_DOMAIN`         | Force email/hd even without allowlist                       |
+| `CLAWQL_AUTH_OIDC_EMAIL_CLAIM`                  | Email claim name (default `email`)                          |
+| `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL`         | Require MFA-class `acr`/`amr` for financial MCP tools       |
+| `CLAWQL_AUTH_FINANCIAL_TOOLS`                   | Override financial tool name list (comma-separated)         |
+| `CLAWQL_MCP_OAUTH_ENABLED`                      | Enable inbound MCP OAuth AS on HTTP hosts                   |
+| `CLAWQL_MCP_OAUTH_SIGNING_SECRET`               | HS256 secret for issued MCP access JWTs (dev / single-node) |
+| `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM`      | RS256 PKCS#8 private key PEM (production — preferred)       |
+| `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH` | Path to RS256 private key PEM                               |
+| `CLAWQL_MCP_OAUTH_SIGNING_PUBLIC_KEY_PEM_PATH`  | Optional verify-only public key (defaults to private)       |
+| `CLAWQL_MCP_OAUTH_SIGNING_KEY_ID`               | Optional `kid` for RS256 tokens and JWKS                    |
+| `CLAWQL_MCP_OAUTH_ISSUER`                       | Token `iss` (default `CLAWQL_PUBLIC_ORIGIN`)                |
+| `CLAWQL_MCP_OAUTH_RESOURCE_AUDIENCE`            | ID-JAG `aud` when org config omits audience                 |
+| `CLAWQL_MCP_OAUTH_CLIENTS_JSON`                 | Bootstrap registered MCP clients (JSON)                     |
+| `CLAWQL_MCP_OAUTH_CLIENTS_PATH`                 | File path for MCP client registry JSON                      |
+| `CLAWQL_EMA_ORGS_JSON`                          | Bootstrap EMA org configs (JSON) into SecretStore           |
+| `CLAWQL_EMA_ORGS_PATH`                          | File path for EMA org configs JSON                          |
+| `CLAWQL_AUTH_AUDIT_STORE`                       | Auth WORM backend: `sqlite` (default) \| `memory` \| `off`  |
+| `CLAWQL_AUTH_AUDIT_PATH`                        | SQLite path (default `$CLAWQL_HOME/auth-audit.db`)          |
 
 Setting `CLAWQL_AUTH_AUDIT_STORE=off` while MCP OAuth is enabled logs a **SECURITY WARNING** at `server-http` boot — auth is live but issuance is not persisted.
 

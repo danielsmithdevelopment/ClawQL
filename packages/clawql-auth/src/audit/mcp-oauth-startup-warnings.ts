@@ -17,8 +17,8 @@ function isMcpOAuthEnabledEnv(env: NodeJS.ProcessEnv): boolean {
   if (legacyFlag === "1" || legacyFlag === "true" || legacyFlag === "yes") return true;
   return Boolean(
     env.CLAWQL_MCP_OAUTH_SIGNING_SECRET?.trim() ||
-      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
-      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
+    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
+    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
   );
 }
 

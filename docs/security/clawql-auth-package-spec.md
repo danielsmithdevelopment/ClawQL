@@ -240,18 +240,20 @@ Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery
 For regulated / air-gapped customers who cannot use Okta Cross App Access, ClawQL can act as a **self-hosted ID-JAG issuer** while remaining an auth _consumer_ everywhere else — not a full human IdP.
 
 <<<<<<< HEAD
-| Layer               | Scope                                                                | Blocker                                        |
-| ------------------- | -------------------------------------------------------------------- | ---------------------------------------------- |
-| **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish            | Consumer WORM audit + RS256 AS signing (P2)    |
-| **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | Layer A                                        |
-| **C — TEE signing** | `clawql-tee` hardening for key material                              | Layer A validated against org-controlled RS256 |
-=======
-| Layer | Scope | Blocker |
-| ----- | ----- | ------- |
-| **A — Issuer** | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish | Consumer WORM audit (shipped); RS256 AS signing (shipped) |
-| **B — Registry** | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | Layer A |
-| **C — TEE signing** | `clawql-tee` hardening for key material | Layer A validated against org-controlled RS256 |
->>>>>>> f34897fd (Add RS256 MCP OAuth AS signing with JWKS discovery)
+
+| Layer               | Scope                                                                | Blocker                                                   |
+| ------------------- | -------------------------------------------------------------------- | --------------------------------------------------------- |
+| **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish            | Consumer WORM audit + RS256 AS signing (P2)               |
+| **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | Layer A                                                   |
+| **C — TEE signing** | `clawql-tee` hardening for key material                              | Layer A validated against org-controlled RS256            |
+| =======             |
+| Layer               | Scope                                                                | Blocker                                                   |
+| -----               | -----                                                                | -------                                                   |
+| **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish            | Consumer WORM audit (shipped); RS256 AS signing (shipped) |
+| **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | Layer A                                                   |
+| **C — TEE signing** | `clawql-tee` hardening for key material                              | Layer A validated against org-controlled RS256            |
+
+> > > > > > > f34897fd (Add RS256 MCP OAuth AS signing with JWKS discovery)
 
 **Never:** Okta competitor, password/SSO IdP, SAML/LDAP server, per-user connector consent UI.
 
@@ -1069,15 +1071,15 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 
 ### Canonical §13 → repo status
 
-| Canonical phase               | Scope (from full spec)                                   | Repo status                                                                                                 | Next priority                                                                                                                                                 |
-| ----------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1 — Inbound core**          | API key validate/issue, MCP OAuth 2.1 AS, **EMA ID-JAG** | **Partial** — library + **`server-http` HTTP wiring shipped**; `authorization_code` open | **P0 done:** token endpoint; **P0 done:** persistent `EmaConfigStore`; **P1 done:** Okta JWKS preset; **P1 done:** auth WORM audit; **P1 done:** RS256 AS signing + JWKS; **P2 open:** interactive auth-code |
-| **2 — Outbound OAuth core**   | Mutex token store, proactive refresh, client credentials | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                               | Maintain; no new work unless regressions                                                                                                                      |
-| **3 — Auth Code + providers** | PKCE, Google/Microsoft/Slack                             | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`)                                                    | Hermes user-delegated flows consume this                                                                                                                      |
-| **4 — Team / org**            | Team model, domain TXT, offboarding                      | **Partial** — issued keys have org/team; domain TXT / wallet / passkey inbound modules not started          | After Phase 1 completion                                                                                                                                      |
-| **5 — Alt inbound**           | SIWE, TOTP, passkey as primary login                     | **Partial** — step-up TOTP/WebAuthn shipped; not primary inbound login surfaces                             | Phase 5 per canonical spec                                                                                                                                    |
-| **6 — Vault dynamic secrets** | DB cred leases                                           | **Partial** — `SecretStore` plugins shipped; dynamic lease provider open                                    | Enterprise TEE tier                                                                                                                                           |
-| **7 — Re-auth UX**            | Hermes Telegram, reauth URLs                             | **Partial** — `ReauthRequiredError` + WORM events shipped; Telegram UX open                                 | Production Hermes                                                                                                                                             |
+| Canonical phase               | Scope (from full spec)                                   | Repo status                                                                                        | Next priority                                                                                                                                                                                                |
+| ----------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **1 — Inbound core**          | API key validate/issue, MCP OAuth 2.1 AS, **EMA ID-JAG** | **Partial** — library + **`server-http` HTTP wiring shipped**; `authorization_code` open           | **P0 done:** token endpoint; **P0 done:** persistent `EmaConfigStore`; **P1 done:** Okta JWKS preset; **P1 done:** auth WORM audit; **P1 done:** RS256 AS signing + JWKS; **P2 open:** interactive auth-code |
+| **2 — Outbound OAuth core**   | Mutex token store, proactive refresh, client credentials | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                      | Maintain; no new work unless regressions                                                                                                                                                                     |
+| **3 — Auth Code + providers** | PKCE, Google/Microsoft/Slack                             | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`)                                           | Hermes user-delegated flows consume this                                                                                                                                                                     |
+| **4 — Team / org**            | Team model, domain TXT, offboarding                      | **Partial** — issued keys have org/team; domain TXT / wallet / passkey inbound modules not started | After Phase 1 completion                                                                                                                                                                                     |
+| **5 — Alt inbound**           | SIWE, TOTP, passkey as primary login                     | **Partial** — step-up TOTP/WebAuthn shipped; not primary inbound login surfaces                    | Phase 5 per canonical spec                                                                                                                                                                                   |
+| **6 — Vault dynamic secrets** | DB cred leases                                           | **Partial** — `SecretStore` plugins shipped; dynamic lease provider open                           | Enterprise TEE tier                                                                                                                                                                                          |
+| **7 — Re-auth UX**            | Hermes Telegram, reauth URLs                             | **Partial** — `ReauthRequiredError` + WORM events shipped; Telegram UX open                        | Production Hermes                                                                                                                                                                                            |
 
 ### Phase 1 inbound — remaining work (ordered)
 

@@ -6,12 +6,7 @@
 import { readFileSync } from "node:fs";
 import { createPublicKey } from "node:crypto";
 import { Data, Effect } from "effect";
-import {
-  exportJWK,
-  importPKCS8,
-  importSPKI,
-  type JWK,
-} from "jose";
+import { exportJWK, importPKCS8, importSPKI, type JWK } from "jose";
 
 type McpOAuthSigningKey = CryptoKey | Uint8Array;
 
@@ -63,8 +58,7 @@ export function loadMcpOAuthSigningMaterialEffect(input: {
     return Effect.gen(function* () {
       const privateKey = yield* Effect.tryPromise({
         try: () => importPKCS8(privatePem, "RS256"),
-        catch: (cause) =>
-          new McpOAuthSigningError({ reason: "invalid_rs256_private_key", cause }),
+        catch: (cause) => new McpOAuthSigningError({ reason: "invalid_rs256_private_key", cause }),
       });
 
       let verifyKey: McpOAuthSigningKey;
@@ -72,8 +66,7 @@ export function loadMcpOAuthSigningMaterialEffect(input: {
       if (publicPem) {
         verifyKey = yield* Effect.tryPromise({
           try: () => importSPKI(publicPem, "RS256"),
-          catch: (cause) =>
-            new McpOAuthSigningError({ reason: "invalid_rs256_public_key", cause }),
+          catch: (cause) => new McpOAuthSigningError({ reason: "invalid_rs256_public_key", cause }),
         });
         jwkSource = verifyKey;
       } else {
@@ -120,8 +113,8 @@ export function loadMcpOAuthSigningMaterialEffect(input: {
 export function mcpOAuthSigningConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
   return Boolean(
     env.CLAWQL_MCP_OAUTH_SIGNING_SECRET?.trim() ||
-      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
-      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
+    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
+    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
   );
 }
 

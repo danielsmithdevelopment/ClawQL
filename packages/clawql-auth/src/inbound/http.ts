@@ -157,9 +157,7 @@ export function attachMcpOAuthRoutes(
         grant_types_supported: ["client_credentials", "refresh_token", ID_JAG_JWT_BEARER_GRANT],
         token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
         scopes_supported: ["execute", "search", "memory", "mcp:tools"],
-        ...(options.jwks?.keys.length
-          ? { jwks_uri: `${origin}/.well-known/jwks.json` }
-          : {}),
+        ...(options.jwks?.keys.length ? { jwks_uri: `${origin}/.well-known/jwks.json` } : {}),
         agent_auth: {
           identity_assertion: {
             assertion_types_supported: ["urn:ietf:params:oauth:token-type:id-jag"],
