@@ -240,18 +240,20 @@ Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery
 Positioning: ClawQL can act as a **self-hosted, attestation-backed identity provider for organizations that need EMA without third-party session-token custody** — the same Enterprise-Managed Authorization path Okta Cross App Access provides, without Okta's centralized custody surface. ClawQL remains an auth _consumer_ everywhere else (not a full human IdP).
 
 <<<<<<< HEAD
-| Layer               | Scope                                                                | Status                                                      |
-| ------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------- |
-| **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish            | **Shipped**                                                 |
-| **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | **Shipped**                                                 |
-| **C — TEE signing** | `clawql-tee` hardening for key material                              | Open — Layer A validated against org-controlled RS256 first |
-=======
-| Layer | Scope | Status |
-| ----- | ----- | ------ |
-| **A — Issuer** | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish | **Shipped** ([#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961)) |
-| **B — Registry** | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | **Shipped** ([#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961)) |
-| **C — TEE signing** | `clawql-tee` hardening for key material | Open — protocol proven against org-controlled RS256; TEE is hardening, not a ship blocker |
->>>>>>> bd1c1d42 (Correlate ID-JAG and MCP token WORM entries; document key separation)
+
+| Layer               | Scope                                                                | Status                                                                                    |
+| ------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish            | **Shipped**                                                                               |
+| **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | **Shipped**                                                                               |
+| **C — TEE signing** | `clawql-tee` hardening for key material                              | Open — Layer A validated against org-controlled RS256 first                               |
+| =======             |
+| Layer               | Scope                                                                | Status                                                                                    |
+| -----               | -----                                                                | ------                                                                                    |
+| **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish            | **Shipped** ([#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961))           |
+| **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | **Shipped** ([#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961))           |
+| **C — TEE signing** | `clawql-tee` hardening for key material                              | Open — protocol proven against org-controlled RS256; TEE is hardening, not a ship blocker |
+
+> > > > > > > bd1c1d42 (Correlate ID-JAG and MCP token WORM entries; document key separation)
 
 **Flow:** Admin `PUT /oauth/ema/connectors/:orgId/:connectorId` → service `POST /oauth/id-jag/issue` with subject + groups → consumer `verifyIdJagAssertionEffect` / `POST /oauth/token` (jwt-bearer) maps groups → ATR scope.
 

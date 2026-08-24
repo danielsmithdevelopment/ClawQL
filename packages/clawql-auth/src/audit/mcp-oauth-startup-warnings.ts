@@ -44,14 +44,14 @@ export const ID_JAG_ISSUER_SHARED_KEY_WARNING =
 export function warnIfIdJagIssuerSharesMcpOAuthKey(env: NodeJS.ProcessEnv = process.env): void {
   const hasDedicated = Boolean(
     env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM?.trim() ||
-      env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim() ||
-      env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim()
+    env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim() ||
+    env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim()
   );
   if (hasDedicated) return;
   const hasMcpFallback = Boolean(
     env.CLAWQL_MCP_OAUTH_SIGNING_SECRET?.trim() ||
-      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
-      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
+    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
+    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
   );
   if (!hasMcpFallback) return;
   console.warn(ID_JAG_ISSUER_SHARED_KEY_WARNING);
