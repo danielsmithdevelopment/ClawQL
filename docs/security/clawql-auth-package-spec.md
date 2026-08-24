@@ -106,12 +106,17 @@ export type GrantType =
   | "client_credentials" // machine-to-machine (agents)
   | "refresh_token"
   | "id_jag"; // EMA — wire: urn:ietf:params:oauth:grant-type:jwt-bearer + assertion
-  client_id: string;
+
+export type MCPTokenRequest = {
+  grant_type: GrantType;
+  client_id?: string;
   client_secret?: string;
   code?: string;
   refresh_token?: string;
   scope?: string;
   code_verifier?: string;
+  assertion?: string; // ID-JAG identity assertion JWT
+  org_id?: string; // EMA org lookup for group→scope mapping
 };
 
 export type MCPTokenResponse = {
@@ -1034,26 +1039,26 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 
 ## Implementation Sequence
 
-> **Alignment note (August 2026 GA):** The canonical spec (§13) orders phases as inbound-first. The repo shipped **outbound OAuth (Phases 2–3)** ahead of inbound HTTP wiring because Hermes/Cline needed mutex refresh first. **EMA / ID-JAG is Phase 1 inbound** — table stakes for enterprise MCP adoption — and is **library-shipped**; what remains is wiring + persistence + Okta production trust.
+> **Alignment note (August 2026 GA):** The canonical spec (§13) orders phases as inbound-first. The repo shipped **outbound OAuth (Phases 2–3)** ahead of inbound HTTP wiring because Hermes/Cline needed mutex refresh first. **EMA / ID-JAG is Phase 1 inbound** — HTTP token route, persistent org config, and Okta JWKS preset are **shipped** on `server-http`.
 
 ### Canonical §13 → repo status
 
-| Canonical phase               | Scope (from full spec)                                   | Repo status                                                                                                                     | Next priority                                                                                           |
-| ----------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **1 — Inbound core**          | API key validate/issue, MCP OAuth 2.1 AS, **EMA ID-JAG** | **Partial** — `api-keys/`, `inbound/mcp-oauth.ts`, `inbound/id-jag.ts` shipped; `authorization_code` + HTTP `/oauth/token` open | **P0:** token endpoint HTTP wiring; **P0:** persistent `EmaConfigStore`; **P1:** Okta JWKS verification |
-| **2 — Outbound OAuth core**   | Mutex token store, proactive refresh, client credentials | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                                                   | Maintain; no new work unless regressions                                                                |
-| **3 — Auth Code + providers** | PKCE, Google/Microsoft/Slack                             | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`)                                                                        | Hermes user-delegated flows consume this                                                                |
-| **4 — Team / org**            | Team model, domain TXT, offboarding                      | **Partial** — issued keys have org/team; domain TXT / wallet / passkey inbound modules not started                              | After Phase 1 HTTP + EMA persistence                                                                    |
-| **5 — Alt inbound**           | SIWE, TOTP, passkey as primary login                     | **Partial** — step-up TOTP/WebAuthn shipped; not primary inbound login surfaces                                                 | Phase 5 per canonical spec                                                                              |
-| **6 — Vault dynamic secrets** | DB cred leases                                           | **Partial** — `SecretStore` plugins shipped; dynamic lease provider open                                                        | Enterprise TEE tier                                                                                     |
-| **7 — Re-auth UX**            | Hermes Telegram, reauth URLs                             | **Partial** — `ReauthRequiredError` + WORM events shipped; Telegram UX open                                                     | Production Hermes                                                                                       |
+| Canonical phase               | Scope (from full spec)                                   | Repo status                                                                                                                                 | Next priority                                                                                                                                                  |
+| ----------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1 — Inbound core**          | API key validate/issue, MCP OAuth 2.1 AS, **EMA ID-JAG** | **Partial** — library + **`server-http` HTTP wiring shipped**; `authorization_code` + RS256 AS signing open                                 | **P0 done:** token endpoint; **P0 done:** persistent `EmaConfigStore`; **P1 done:** Okta JWKS preset; **P2 open:** interactive auth-code, RS256 issued tokens |
+| **2 — Outbound OAuth core**   | Mutex token store, proactive refresh, client credentials | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                                                               | Maintain; no new work unless regressions                                                                                                                       |
+| **3 — Auth Code + providers** | PKCE, Google/Microsoft/Slack                             | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`)                                                                                    | Hermes user-delegated flows consume this                                                                                                                       |
+| **4 — Team / org**            | Team model, domain TXT, offboarding                      | **Partial** — issued keys have org/team; domain TXT / wallet / passkey inbound modules not started                                          | After Phase 1 completion                                                                                                                                       |
+| **5 — Alt inbound**           | SIWE, TOTP, passkey as primary login                     | **Partial** — step-up TOTP/WebAuthn shipped; not primary inbound login surfaces                                                             | Phase 5 per canonical spec                                                                                                                                     |
+| **6 — Vault dynamic secrets** | DB cred leases                                           | **Partial** — `SecretStore` plugins shipped; dynamic lease provider open                                                                    | Enterprise TEE tier                                                                                                                                            |
+| **7 — Re-auth UX**            | Hermes Telegram, reauth URLs                             | **Partial** — `ReauthRequiredError` + WORM events shipped; Telegram UX open                                                                 | Production Hermes                                                                                                                                              |
 
 ### Phase 1 inbound — remaining work (ordered)
 
-1. **HTTP `/oauth/token` route** — `mcp-api-adapter` / `server-http` must accept `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=…` (discovery already advertises ID-JAG).
-2. **Persistent `EmaConfigStore`** — SecretStore/SQLite backing for `{ orgId, idpJwksUri, idpIssuer, audience, groupMappings[] }`; in-memory store is proof-only today.
-3. **Okta production JWKS path** — harden `verifyIdJagAssertionEffect` for Okta Cross App Access claim shapes (groups, `token_type`, audience binding); drop HS256 except tests.
-4. **`authorization_code` grant** — interactive MCP login for non-EMA deployments; lower urgency now that EMA is GA.
+1. ~~**HTTP `/oauth/token` route**~~ — **Shipped** in `server-http` via `attachMcpOAuthRoutes`.
+2. ~~**Persistent `EmaConfigStore`**~~ — **Shipped** (`ema-config-store.ts` + SecretStore `ema-orgs/` prefix + admin API).
+3. ~~**Okta production JWKS path**~~ — **Shipped** (`okta-id-jag.ts` preset + group claim fallbacks).
+4. **`authorization_code` grant** — interactive MCP login for non-EMA deployments.
 5. **RS256 issued access tokens + JWKS** — production AS signing (HS256 is dev/single-node today).
 
 ### Three inbound paths (do not conflate)
@@ -1061,18 +1066,18 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 | Path                                        | When                                                               | Token source                      | Shipped                    |
 | ------------------------------------------- | ------------------------------------------------------------------ | --------------------------------- | -------------------------- |
 | **OIDC consumer** (`CLAWQL_AUTH_MODE=oidc`) | Enterprise puts IdP JWT on every MCP request                       | Customer IdP                      | Yes — `oidc.ts`            |
-| **MCP OAuth AS** (`MCPOAuthServer`)         | MCP clients obtain ClawQL-issued bearer                            | ClawQL signs JWT with `atr`       | Library yes; HTTP route no |
-| **EMA ID-JAG** (grant on MCP AS)            | Org admin pre-authorizes connector at IdP; zero-touch user inherit | IdP assertion → ClawQL access JWT | Library yes — `id-jag.ts`  |
+| **MCP OAuth AS** (`MCPOAuthServer`)         | MCP clients obtain ClawQL-issued bearer                            | ClawQL signs JWT with `atr`       | Yes — library + **`server-http` `/oauth/token`** |
+| **EMA ID-JAG** (grant on MCP AS)            | Org admin pre-authorizes connector at IdP; zero-touch user inherit | IdP assertion → ClawQL access JWT | Yes — `id-jag.ts` + token endpoint             |
 
 All three produce **`AtrClaims`** for the same Panguard enforcement path. EMA does not replace OIDC consumer mode — it replaces per-user OAuth consent on the **issuance** side for MCP connectors.
 
-| Phase                            | Scope                                                                                   | Exit criteria                                                   | Status                                                                                                                        |
-| -------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| **1 — Foundation**               | Auth event sink + issued API key registry (`cqk_`)                                      | Unit tests for issue/validate/revoke; gateway resolver          | **Shipped** (`api-keys/`, `audit/auth-events.ts`)                                                                             |
-| **2 — Outbound core**            | `OAuthTokenStore` mutex + 60s proactive refresh; `ClientCredentialsFlow`                | Concurrent refresh N=50 → one IdP call; client-creds unit tests | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                                                 |
-| **3 — Auth Code + providers**    | PKCE `AuthorizationCodeFlow`; Google/Microsoft/Slack catalogs; outbound API key manager | PKCE start/callback tests; provider matrix                      | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`, `oauth/outbound-api-key.ts`)                                         |
-| **4 — Inbound MCP OAuth**        | `MCPOAuthServer` client_credentials + refresh rotation + **EMA ID-JAG**                 | Issue/validate/refresh/id-jag tests                             | **Shipped** (`inbound/mcp-oauth.ts`, `inbound/id-jag.ts`) — HTTP route wiring in `mcp-api-adapter` / `server-http` still open |
-| **5 — SecretStore + re-auth UX** | `SecretStore` plugins (SQLite/OpenBao/Vault/…); dynamic leases; Hermes Telegram re-auth | Interface + SQLite/Vault/OpenBao shipped; Hermes UX open        | **Partial** (`stores/` shipped; dynamic leases + Telegram UX still open)                                                      |
+| Phase                            | Scope                                                                                   | Exit criteria                                                   | Status                                                                                                   |
+| -------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **1 — Foundation**               | Auth event sink + issued API key registry (`cqk_`)                                      | Unit tests for issue/validate/revoke; gateway resolver          | **Shipped** (`api-keys/`, `audit/auth-events.ts`)                                                        |
+| **2 — Outbound core**            | `OAuthTokenStore` mutex + 60s proactive refresh; `ClientCredentialsFlow`                | Concurrent refresh N=50 → one IdP call; client-creds unit tests | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                            |
+| **3 — Auth Code + providers**    | PKCE `AuthorizationCodeFlow`; Google/Microsoft/Slack catalogs; outbound API key manager | PKCE start/callback tests; provider matrix                      | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`, `oauth/outbound-api-key.ts`)                    |
+| **4 — Inbound MCP OAuth**        | `MCPOAuthServer` + **EMA ID-JAG** + HTTP `/oauth/token` + EMA admin API                 | Issue/validate/refresh/id-jag + HTTP integration tests          | **Shipped** (`inbound/*`, `server-http` wiring) — `mcp-api-adapter` optional follow-up                   |
+| **5 — SecretStore + re-auth UX** | `SecretStore` plugins (SQLite/OpenBao/Vault/…); dynamic leases; Hermes Telegram re-auth | Interface + SQLite/Vault/OpenBao shipped; Hermes UX open        | **Partial** (`stores/` shipped; dynamic leases + Telegram UX still open)                                 |
 
 ### Shipped slice (August 2026)
 

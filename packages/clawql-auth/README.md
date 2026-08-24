@@ -104,7 +104,31 @@ const store = createOAuthTokenStore({
 const token = await store.getValidToken("acme:google:alice");
 ```
 
-Also shipped: **`ClientCredentialsFlow`**, **`AuthorizationCodeFlow` (PKCE)**, provider catalogs (Google/Microsoft/Slack), **`OutboundAPIKeyManager`**, and inbound **`MCPOAuthServer`** (client_credentials + refresh rotation). HTTP `/oauth/token` wiring into `server-http` / `mcp-api-adapter` is the next host integration step.
+Also shipped: **`ClientCredentialsFlow`**, **`AuthorizationCodeFlow` (PKCE)**, provider catalogs (Google/Microsoft/Slack), **`OutboundAPIKeyManager`**, and inbound **`MCPOAuthServer`** with **EMA / ID-JAG** (`id_jag` grant). Enable on the MCP HTTP host with `CLAWQL_MCP_OAUTH_ENABLED=1` — see environment table below.
+
+## Inbound MCP OAuth + EMA (Enterprise-Managed Authorization)
+
+When `CLAWQL_MCP_OAUTH_ENABLED=1`, `server-http` exposes:
+
+- `POST /oauth/token` — `client_credentials`, `refresh_token`, and ID-JAG (`urn:ietf:params:oauth:grant-type:jwt-bearer`)
+- `GET /.well-known/oauth-authorization-server` — discovery with `token_endpoint`
+- `PUT/GET/DELETE /oauth/ema/orgs/:orgId` — admin API (requires `CLAWQL_API_KEY`)
+
+EMA org config (IdP JWKS + group→scope mappings) persists in **SecretStore** (`ema-orgs/{orgId}`). Bootstrap from `CLAWQL_EMA_ORGS_JSON` or `CLAWQL_EMA_ORGS_PATH`. Okta shorthand:
+
+```json
+{
+  "orgs": [{
+    "provider": "okta",
+    "orgId": "acme",
+    "oktaDomain": "acme.okta.com",
+    "audience": "https://mcp.example.com/",
+    "groupMappings": [{ "idpGroup": "engineering", "scope": ["execute", "search", "memory"] }]
+  }]
+}
+```
+
+Set `CLAWQL_AUTH_MODE=mcpOAuth` to accept only ClawQL-issued MCP JWTs, or keep `apiKey`/`oidc` — when MCP OAuth is enabled, issued bearer tokens are accepted in **hybrid** mode automatically on `server-http`.
 
 See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-auth-package-spec.md).
 
@@ -112,7 +136,7 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 
 | Variable                                 | Purpose                                                   |
 | ---------------------------------------- | --------------------------------------------------------- |
-| `CLAWQL_AUTH_MODE`                       | `noAuth` \| `apiKey` \| `oidc`                            |
+| `CLAWQL_AUTH_MODE`                       | `noAuth` \| `apiKey` \| `oidc` \| `mcpOAuth`              |
 | `CLAWQL_API_KEY`                         | Bootstrap when mode is `apiKey` (unless VK / issued keys) |
 | `CLAWQL_PROVIDER_AUTH_JSON`              | Per-provider upstream headers for `execute`               |
 | `CLAWQL_AUTH_OIDC_JWKS_URL`              | OIDC JWKS URL (RS256)                                     |
@@ -126,6 +150,14 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 | `CLAWQL_AUTH_OIDC_EMAIL_CLAIM`           | Email claim name (default `email`)                        |
 | `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL`  | Require MFA-class `acr`/`amr` for financial MCP tools     |
 | `CLAWQL_AUTH_FINANCIAL_TOOLS`            | Override financial tool name list (comma-separated)       |
+| `CLAWQL_MCP_OAUTH_ENABLED`               | Enable inbound MCP OAuth AS on HTTP hosts                 |
+| `CLAWQL_MCP_OAUTH_SIGNING_SECRET`        | HS256 secret for issued MCP access JWTs                   |
+| `CLAWQL_MCP_OAUTH_ISSUER`                | Token `iss` (default `CLAWQL_PUBLIC_ORIGIN`)              |
+| `CLAWQL_MCP_OAUTH_RESOURCE_AUDIENCE`     | ID-JAG `aud` when org config omits audience               |
+| `CLAWQL_MCP_OAUTH_CLIENTS_JSON`          | Bootstrap registered MCP clients (JSON)                   |
+| `CLAWQL_MCP_OAUTH_CLIENTS_PATH`          | File path for MCP client registry JSON                    |
+| `CLAWQL_EMA_ORGS_JSON`                   | Bootstrap EMA org configs (JSON) into SecretStore         |
+| `CLAWQL_EMA_ORGS_PATH`                   | File path for EMA org configs JSON                        |
 
 ## Per-org IdP routing (multi-tenant)
 
