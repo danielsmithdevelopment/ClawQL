@@ -90,6 +90,7 @@ describe("ID-JAG issuer + connector registry", () => {
       connectorId: "claude-desktop",
       subjectId: "user-42",
       groups: ["engineering", "guests"],
+      jti: issued.jti,
     });
 
     const disabled = await Effect.runPromise(
@@ -131,6 +132,7 @@ describe("ID-JAG issuer + connector registry", () => {
     const hsSecret = "test-id-jag-issuer-hs256-secret-32chars!!";
     const audience = "https://mcp.clawql.test/";
     const issuerUri = "https://idp.clawql.test/acme";
+    const events: AuthEvent[] = [];
 
     const signing = await Effect.runPromise(
       loadMcpOAuthSigningMaterialEffect({ signingSecret: hsSecret })
@@ -152,6 +154,9 @@ describe("ID-JAG issuer + connector registry", () => {
         jwksUri: "https://idp.clawql.test/jwks",
         signing,
       }),
+      eventSink: (e) => {
+        events.push(e);
+      },
     });
 
     const issued = await Effect.runPromise(
@@ -179,6 +184,7 @@ describe("ID-JAG issuer + connector registry", () => {
     expect(consumerVerified.sub).toBe("user-42");
     expect(consumerVerified.groups).toEqual(["engineering"]);
     expect(consumerVerified.email).toBe("dev@acme.com");
+    expect(consumerVerified.jti).toBe(issued.jti);
 
     const mcp = createMCPOAuthServer(
       {
@@ -201,6 +207,9 @@ describe("ID-JAG issuer + connector registry", () => {
             ],
           },
         ]),
+        eventSink: (e) => {
+          events.push(e);
+        },
       },
       createMemoryMcpClientRegistry([]),
       createMemoryMcpRefreshStore()
@@ -216,5 +225,17 @@ describe("ID-JAG issuer + connector registry", () => {
     expect(claims.sub).toBe("user-42");
     expect(claims.idpGroups).toEqual(["engineering"]);
     expect(claims.role).toBe("operator");
+
+    const assertionEvent = events.find((e) => e.type === "ID_JAG_ASSERTION_ISSUED");
+    const tokenEvent = events.find((e) => e.type === "MCP_TOKEN_ISSUED");
+    expect(assertionEvent).toMatchObject({
+      type: "ID_JAG_ASSERTION_ISSUED",
+      jti: issued.jti,
+    });
+    expect(tokenEvent).toMatchObject({
+      type: "MCP_TOKEN_ISSUED",
+      grantType: "id_jag",
+      idJagJti: issued.jti,
+    });
   });
 });

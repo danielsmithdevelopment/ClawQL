@@ -31,3 +31,28 @@ export function warnIfMcpOAuthAuditDisabled(env: NodeJS.ProcessEnv = process.env
   if (resolveAuthAuditStoreMode(env) !== "off") return;
   console.warn(MCP_OAUTH_AUDIT_DISABLED_WARNING);
 }
+
+export const ID_JAG_ISSUER_SHARED_KEY_WARNING =
+  "[clawql-auth] SECURITY WARNING: ID-JAG issuer is using the MCP OAuth AS signing key " +
+  "(no CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM(_PATH) / CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET). " +
+  "Compromise of one role forges both MCP access tokens and ID-JAG assertions. " +
+  "Production deployments should configure a dedicated issuer key to limit blast radius.";
+
+/**
+ * Warn when the ID-JAG issuer falls back to MCP OAuth signing material.
+ */
+export function warnIfIdJagIssuerSharesMcpOAuthKey(env: NodeJS.ProcessEnv = process.env): void {
+  const hasDedicated = Boolean(
+    env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM?.trim() ||
+      env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim() ||
+      env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim()
+  );
+  if (hasDedicated) return;
+  const hasMcpFallback = Boolean(
+    env.CLAWQL_MCP_OAUTH_SIGNING_SECRET?.trim() ||
+      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
+      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
+  );
+  if (!hasMcpFallback) return;
+  console.warn(ID_JAG_ISSUER_SHARED_KEY_WARNING);
+}

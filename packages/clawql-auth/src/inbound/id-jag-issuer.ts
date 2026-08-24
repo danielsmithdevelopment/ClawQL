@@ -188,6 +188,7 @@ export function issueIdJagAssertionEffect(
           subjectId,
           audience: firstAudience(audience),
           groups,
+          jti,
           expiresAt: issued.expiresAt,
           timestamp: new Date(nowMs).toISOString(),
         }),

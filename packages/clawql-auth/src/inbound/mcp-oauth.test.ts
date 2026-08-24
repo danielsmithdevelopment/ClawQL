@@ -178,6 +178,7 @@ describe("MCPOAuthServer", () => {
       .setSubject("user-42")
       .setIssuer("https://idp.test/")
       .setAudience(resourceAudience)
+      .setJti("assertion-jti-42")
       .setIssuedAt(Math.floor(Date.now() / 1000))
       .setExpirationTime(Math.floor(Date.now() / 1000) + 300)
       .sign(new TextEncoder().encode(idpSecret));
@@ -210,6 +211,7 @@ describe("MCPOAuthServer", () => {
       scope: ["execute", "search", "memory"],
       idpGroups: ["engineering"],
       matchedIdpGroups: ["engineering"],
+      idJagJti: "assertion-jti-42",
     });
   });
 

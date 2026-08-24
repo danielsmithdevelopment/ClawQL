@@ -248,6 +248,7 @@ export class MCPOAuthServer {
         idpGroups: verified.groups,
         matchedIdpGroups: resolved.matchedGroups,
         role: resolved.role,
+        idJagJti: verified.jti,
       },
     });
   }
@@ -345,6 +346,7 @@ export class MCPOAuthServer {
         idpGroups?: string[];
         matchedIdpGroups?: string[];
         role?: string;
+        idJagJti?: string;
       };
     }
   ): Promise<McpTokenResponse> {
@@ -386,6 +388,7 @@ export class MCPOAuthServer {
       role: options.audit?.role ?? claims.role,
       idpGroups: options.audit?.idpGroups ?? claims.idpGroups,
       matchedIdpGroups: options.audit?.matchedIdpGroups,
+      idJagJti: options.audit?.idJagJti,
     });
 
     return {

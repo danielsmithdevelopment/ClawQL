@@ -80,6 +80,11 @@ export type AuthEvent =
       idpGroups?: string[];
       /** IdP groups that matched admin-configured mappings and drove this scope. */
       matchedIdpGroups?: string[];
+      /**
+       * ID-JAG assertion `jti` when `grantType` is `id_jag`.
+       * Correlates this entry with the matching {@link AuthEvent} `ID_JAG_ASSERTION_ISSUED`.
+       */
+      idJagJti?: string;
     }
   | {
       type: "MCP_TOKEN_REFRESHED";
@@ -105,6 +110,8 @@ export type AuthEvent =
       subjectId: string;
       audience: string;
       groups: string[];
+      /** Assertion JWT `jti` — join key with {@link AuthEvent} `MCP_TOKEN_ISSUED.idJagJti`. */
+      jti: string;
       expiresAt: string;
       timestamp: string;
     };

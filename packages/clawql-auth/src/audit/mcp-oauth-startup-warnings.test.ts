@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  ID_JAG_ISSUER_SHARED_KEY_WARNING,
   MCP_OAUTH_AUDIT_DISABLED_WARNING,
+  warnIfIdJagIssuerSharesMcpOAuthKey,
   warnIfMcpOAuthAuditDisabled,
 } from "./mcp-oauth-startup-warnings.js";
 
@@ -30,6 +32,27 @@ describe("warnIfMcpOAuthAuditDisabled", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     warnIfMcpOAuthAuditDisabled({
       CLAWQL_AUTH_AUDIT_STORE: "off",
+    });
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
+
+describe("warnIfIdJagIssuerSharesMcpOAuthKey", () => {
+  it("warns when issuer falls back to MCP OAuth signing material", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    warnIfIdJagIssuerSharesMcpOAuthKey({
+      CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH: "/keys/as.pem",
+    });
+    expect(warn).toHaveBeenCalledWith(ID_JAG_ISSUER_SHARED_KEY_WARNING);
+    warn.mockRestore();
+  });
+
+  it("does not warn when dedicated issuer key is configured", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    warnIfIdJagIssuerSharesMcpOAuthKey({
+      CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH: "/keys/issuer.pem",
+      CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH: "/keys/as.pem",
     });
     expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();

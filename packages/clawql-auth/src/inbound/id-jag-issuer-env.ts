@@ -6,6 +6,7 @@ import { Effect } from "effect";
 
 import type { AuthEventSink } from "../audit/auth-events.js";
 import { createAuthEventSinkFromEnv } from "../audit/auth-worm-sink.js";
+import { warnIfIdJagIssuerSharesMcpOAuthKey } from "../audit/mcp-oauth-startup-warnings.js";
 import type { SecretStore } from "../stores/index.js";
 import {
   createSecretStoreEmaConnectorRegistry,
@@ -57,6 +58,8 @@ export async function createIdJagIssuerFromEnv(options: {
 }): Promise<IdJagIssuerRuntime | null> {
   const env = options.env ?? process.env;
   if (!isIdJagIssuerEnabled(env)) return null;
+
+  warnIfIdJagIssuerSharesMcpOAuthKey(env);
 
   const orgId = env.CLAWQL_ID_JAG_ISSUER_ORG_ID?.trim() || env.CLAWQL_DEFAULT_ORG_ID?.trim();
   if (!orgId) {

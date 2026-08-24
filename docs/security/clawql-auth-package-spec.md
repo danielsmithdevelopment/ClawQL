@@ -235,21 +235,33 @@ Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery
 
 #### 4.1.2 ClawQL as EMA IdP (ID-JAG issuer)
 
-**Shipped (Layers A + B):** `inbound/id-jag-issuer.ts`, `inbound/ema-connector-registry.ts`, HTTP routes under `/oauth/id-jag/*` and `/.well-known/id-jag-jwks.json`.
+**Shipped (Layers A + B)** in [#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961): `inbound/id-jag-issuer.ts`, `inbound/ema-connector-registry.ts`, HTTP routes under `/oauth/id-jag/*` and `/.well-known/id-jag-jwks.json`.
 
-For regulated / air-gapped customers who cannot use Okta Cross App Access, ClawQL can act as a **self-hosted ID-JAG issuer** while remaining an auth _consumer_ everywhere else — not a full human IdP.
+Positioning: ClawQL can act as a **self-hosted, attestation-backed identity provider for organizations that need EMA without third-party session-token custody** — the same Enterprise-Managed Authorization path Okta Cross App Access provides, without Okta's centralized custody surface. ClawQL remains an auth _consumer_ everywhere else (not a full human IdP).
 
+<<<<<<< HEAD
 | Layer               | Scope                                                                | Status                                                      |
 | ------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------- |
 | **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish            | **Shipped**                                                 |
 | **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | **Shipped**                                                 |
 | **C — TEE signing** | `clawql-tee` hardening for key material                              | Open — Layer A validated against org-controlled RS256 first |
+=======
+| Layer | Scope | Status |
+| ----- | ----- | ------ |
+| **A — Issuer** | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish | **Shipped** ([#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961)) |
+| **B — Registry** | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | **Shipped** ([#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961)) |
+| **C — TEE signing** | `clawql-tee` hardening for key material | Open — protocol proven against org-controlled RS256; TEE is hardening, not a ship blocker |
+>>>>>>> bd1c1d42 (Correlate ID-JAG and MCP token WORM entries; document key separation)
 
-**Flow:** Admin `PUT /oauth/ema/connectors/:orgId/:connectorId` → service `POST /oauth/id-jag/issue` with subject + groups → consumer `verifyIdJagAssertionEffect` / `POST /oauth/token` (jwt-bearer) maps groups → ATR scope. Every issuance emits **`ID_JAG_ASSERTION_ISSUED`** to the auth WORM sink.
+**Flow:** Admin `PUT /oauth/ema/connectors/:orgId/:connectorId` → service `POST /oauth/id-jag/issue` with subject + groups → consumer `verifyIdJagAssertionEffect` / `POST /oauth/token` (jwt-bearer) maps groups → ATR scope.
+
+**Audit correlation:** Every issuance emits **`ID_JAG_ASSERTION_ISSUED`** with assertion `jti`. The subsequent MCP exchange emits **`MCP_TOKEN_ISSUED`** with the same value as `idJagJti`. Security review can walk issuance → session as one chain: `ID_JAG_ASSERTION_ISSUED.jti === MCP_TOKEN_ISSUED.idJagJti`.
+
+**Signing keys (blast radius):** Dedicated issuer material via `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM(_PATH)` is the production recommendation. Falling back to the MCP OAuth AS signing key is allowed for v0 / single-node convenience, but **production deployments concerned about blast radius must use separate keys** — a compromise of the AS signing key must not also mint forged ID-JAG assertions (and vice versa). Shared keys quietly becoming the default would recreate the single-point-of-failure the self-hosted positioning argument is against.
 
 **Never:** Okta competitor, password/SSO IdP, SAML/LDAP server, per-user connector consent UI.
 
-**Env:** `CLAWQL_ID_JAG_ISSUER_ENABLED=1`, `CLAWQL_ID_JAG_ISSUER_ORG_ID`, signing via `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM(_PATH)` (or shared MCP OAuth RS256 keys).
+**Env:** `CLAWQL_ID_JAG_ISSUER_ENABLED=1`, `CLAWQL_ID_JAG_ISSUER_ORG_ID`, signing via `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM(_PATH)` (prefer dedicated; MCP OAuth key fallback is convenience only).
 
 ### 4.2 API key validator (`APIKeyValidator`)
 

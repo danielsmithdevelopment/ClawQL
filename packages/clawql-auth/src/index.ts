@@ -112,7 +112,9 @@ export {
 } from "./audit/auth-worm-sink.js";
 export {
   MCP_OAUTH_AUDIT_DISABLED_WARNING,
+  ID_JAG_ISSUER_SHARED_KEY_WARNING,
   warnIfMcpOAuthAuditDisabled,
+  warnIfIdJagIssuerSharesMcpOAuthKey,
 } from "./audit/mcp-oauth-startup-warnings.js";
 export * from "./api-keys/index.js";
 export * from "./oauth/index.js";

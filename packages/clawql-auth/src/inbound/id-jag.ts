@@ -65,6 +65,8 @@ export type VerifiedIdJagClaims = {
   groups: string[];
   email?: string;
   emailVerified?: boolean;
+  /** Assertion JWT `jti` when present — audit correlation with MCP token issuance. */
+  jti?: string;
   payload: JWTPayload;
 };
 
@@ -268,6 +270,9 @@ export function verifyIdJagAssertionEffect(
         ? emailRaw.trim().toLowerCase()
         : undefined;
 
+    const jtiRaw = payload.jti;
+    const jti = typeof jtiRaw === "string" && jtiRaw.trim() ? jtiRaw.trim() : undefined;
+
     return {
       sub,
       orgId,
@@ -275,6 +280,7 @@ export function verifyIdJagAssertionEffect(
       email,
       emailVerified:
         typeof payload.email_verified === "boolean" ? payload.email_verified : undefined,
+      jti,
       payload,
     };
   });
