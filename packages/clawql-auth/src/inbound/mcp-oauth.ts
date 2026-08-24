@@ -24,11 +24,7 @@ import {
   type EmaConfigStore,
 } from "./id-jag.js";
 
-export type McpGrantType =
-  | "authorization_code"
-  | "client_credentials"
-  | "refresh_token"
-  | "id_jag";
+export type McpGrantType = "authorization_code" | "client_credentials" | "refresh_token" | "id_jag";
 
 /** Wire-format grant types accepted at the token endpoint. */
 export type McpGrantTypeInput = McpGrantType | typeof ID_JAG_JWT_BEARER_GRANT;

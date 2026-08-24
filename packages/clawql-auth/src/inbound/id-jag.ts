@@ -6,12 +6,7 @@
  */
 
 import { Data, Effect } from "effect";
-import {
-  createRemoteJWKSet,
-  jwtVerify,
-  type JWTPayload,
-  type JWTVerifyGetKey,
-} from "jose";
+import { createRemoteJWKSet, jwtVerify, type JWTPayload, type JWTVerifyGetKey } from "jose";
 
 import type { AtrClaims } from "../gateway.js";
 
@@ -225,9 +220,7 @@ export function verifyIdJagAssertionEffect(
     });
 
     if (!audienceMatches(payload, config.audience)) {
-      return yield* Effect.fail(
-        new IdJagAuthError({ reason: "id_jag_audience_mismatch" })
-      );
+      return yield* Effect.fail(new IdJagAuthError({ reason: "id_jag_audience_mismatch" }));
     }
 
     const tokenType = readClaim(payload, "token_type") ?? readClaim(payload, "typ");
@@ -258,8 +251,7 @@ export function verifyIdJagAssertionEffect(
 
     const orgIdClaim = config.orgIdClaim ?? "org_id";
     const orgFromClaim = readClaim(payload, orgIdClaim);
-    const orgId =
-      (typeof orgFromClaim === "string" && orgFromClaim.trim()) || config.orgId;
+    const orgId = (typeof orgFromClaim === "string" && orgFromClaim.trim()) || config.orgId;
 
     const emailRaw = readClaim(payload, "email");
     const email =
