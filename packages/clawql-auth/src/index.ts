@@ -110,6 +110,10 @@ export {
   createAuthEventSinkFromEnv,
   resetAuthEventSinkCacheForTests,
 } from "./audit/auth-worm-sink.js";
+export {
+  MCP_OAUTH_AUDIT_DISABLED_WARNING,
+  warnIfMcpOAuthAuditDisabled,
+} from "./audit/mcp-oauth-startup-warnings.js";
 export * from "./api-keys/index.js";
 export * from "./oauth/index.js";
 export * from "./inbound/index.js";

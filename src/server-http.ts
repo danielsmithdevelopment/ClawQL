@@ -50,6 +50,7 @@ import {
   isMcpOAuthEnabled,
   loadGatewayAuthConfig,
   resolveAtrClaimsFromHeadersEffect,
+  warnIfMcpOAuthAuditDisabled,
   type ApiKeyClaimsResolver,
   type GatewayAuthConfig,
   type McpOAuthRuntime,
@@ -240,11 +241,13 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     mcpOAuthRuntime = await createMcpOAuthFromEnv();
   }
   if (mcpOAuthRuntime) {
+    warnIfMcpOAuthAuditDisabled(process.env);
     attachMcpOAuthRoutes(app, mcpOAuthRuntime.server, {
       wellKnown: {
         issuer: mcpOAuthRuntime.config.issuer,
         resourceAudience: mcpOAuthRuntime.config.resourceAudience,
       },
+      jwks: mcpOAuthRuntime.jwks,
       emaAdmin: process.env.CLAWQL_API_KEY?.trim()
         ? {
             store: mcpOAuthRuntime.emaStore,

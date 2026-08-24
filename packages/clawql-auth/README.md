@@ -155,7 +155,11 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 | `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL`  | Require MFA-class `acr`/`amr` for financial MCP tools      |
 | `CLAWQL_AUTH_FINANCIAL_TOOLS`            | Override financial tool name list (comma-separated)        |
 | `CLAWQL_MCP_OAUTH_ENABLED`               | Enable inbound MCP OAuth AS on HTTP hosts                  |
-| `CLAWQL_MCP_OAUTH_SIGNING_SECRET`        | HS256 secret for issued MCP access JWTs                    |
+| `CLAWQL_MCP_OAUTH_SIGNING_SECRET`        | HS256 secret for issued MCP access JWTs (dev / single-node) |
+| `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM` | RS256 PKCS#8 private key PEM (production — preferred)     |
+| `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH` | Path to RS256 private key PEM                        |
+| `CLAWQL_MCP_OAUTH_SIGNING_PUBLIC_KEY_PEM_PATH`  | Optional verify-only public key (defaults to private) |
+| `CLAWQL_MCP_OAUTH_SIGNING_KEY_ID`        | Optional `kid` for RS256 tokens and JWKS                   |
 | `CLAWQL_MCP_OAUTH_ISSUER`                | Token `iss` (default `CLAWQL_PUBLIC_ORIGIN`)               |
 | `CLAWQL_MCP_OAUTH_RESOURCE_AUDIENCE`     | ID-JAG `aud` when org config omits audience                |
 | `CLAWQL_MCP_OAUTH_CLIENTS_JSON`          | Bootstrap registered MCP clients (JSON)                    |
@@ -164,6 +168,8 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 | `CLAWQL_EMA_ORGS_PATH`                   | File path for EMA org configs JSON                         |
 | `CLAWQL_AUTH_AUDIT_STORE`                | Auth WORM backend: `sqlite` (default) \| `memory` \| `off` |
 | `CLAWQL_AUTH_AUDIT_PATH`                 | SQLite path (default `$CLAWQL_HOME/auth-audit.db`)         |
+
+Setting `CLAWQL_AUTH_AUDIT_STORE=off` while MCP OAuth is enabled logs a **SECURITY WARNING** at `server-http` boot — auth is live but issuance is not persisted.
 
 ## Per-org IdP routing (multi-tenant)
 
