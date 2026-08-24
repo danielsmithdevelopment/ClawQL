@@ -1,5 +1,7 @@
-# DISARMED — do not run a live Nemotron matrix.
-# 2026-08-18: harvest every GHA transcript to Cloudflare R2 first.
-# Previously armed (do NOT uncomment until harvest is confirmed):
-#   nemotron-clawql 9-9
-#   nemotron 22-22
+# Resume 026–050 generalization sweep — rate-limit failures only.
+# Baseline (nemotron) already scored 042 + 044–050; rerun ClawQL arm only.
+# Agent: nvidia/nemotron-3.5-lightning (OpenRouter)
+# Judge: claude-sonnet-4-6 (GHA default for nemotron-sweep marker)
+# 8 cells
+nemotron-clawql 42-42
+nemotron-clawql 44-50
