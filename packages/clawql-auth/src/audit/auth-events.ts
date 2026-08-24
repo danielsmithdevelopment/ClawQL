@@ -74,7 +74,12 @@ export type AuthEvent =
       /** Human subject when issued via EMA / ID-JAG (same as ATR sub). */
       subjectId?: string;
       orgId?: string;
+      /** Resolved ATR role when issued via EMA / ID-JAG group mapping. */
+      role?: string;
+      /** All IdP group claims on the ID-JAG assertion. */
       idpGroups?: string[];
+      /** IdP groups that matched admin-configured mappings and drove this scope. */
+      matchedIdpGroups?: string[];
     }
   | {
       type: "MCP_TOKEN_REFRESHED";

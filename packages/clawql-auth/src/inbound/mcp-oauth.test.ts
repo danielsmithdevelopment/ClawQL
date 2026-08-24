@@ -204,7 +204,10 @@ describe("MCPOAuthServer", () => {
       grantType: "id_jag",
       subjectId: "user-42",
       orgId: "acme",
+      role: "operator",
+      scope: ["execute", "search", "memory"],
       idpGroups: ["engineering"],
+      matchedIdpGroups: ["engineering"],
     });
   });
 

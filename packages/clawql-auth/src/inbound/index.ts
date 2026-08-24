@@ -57,6 +57,15 @@ export {
   type OktaEmaOrgParams,
 } from "./okta-id-jag.js";
 export {
+  CLAWQL_ID_JAG_ISSUER_TAG,
+  IdJagIssuerError,
+  idJagIssuerJwksEffect,
+  issueIdJagAssertionEffect,
+  type EmaConnectorRegistration,
+  type IssueIdJagAssertionInput,
+  type IssuedIdJagAssertion,
+} from "./id-jag-issuer.js";
+export {
   createMcpOAuthForTests,
   createMcpOAuthFromEnv,
   isMcpOAuthEnabled,

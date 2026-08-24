@@ -5,6 +5,7 @@
 import { readFileSync } from "node:fs";
 
 import type { AuthEventSink } from "../audit/auth-events.js";
+import { createAuthEventSinkFromEnv } from "../audit/auth-worm-sink.js";
 import { resolveSecretStore, type SecretStore } from "../stores/index.js";
 import { createMemorySecretStore } from "../stores/memory.js";
 import {
@@ -188,7 +189,7 @@ export async function createMcpOAuthFromEnv(
     tokenTtlSeconds: envConfig.tokenTtlSeconds,
     refreshTokenTtlSeconds: envConfig.refreshTokenTtlSeconds,
     emaConfigStore,
-    eventSink: options.eventSink,
+    eventSink: options.eventSink ?? createAuthEventSinkFromEnv(env),
   };
 
   const server = createMCPOAuthServer(config, clients, refreshStore);

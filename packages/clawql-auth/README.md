@@ -114,7 +114,7 @@ When `CLAWQL_MCP_OAUTH_ENABLED=1`, `server-http` exposes:
 - `GET /.well-known/oauth-authorization-server` — discovery with `token_endpoint`
 - `PUT/GET/DELETE /oauth/ema/orgs/:orgId` — admin API (requires `CLAWQL_API_KEY`)
 
-EMA org config (IdP JWKS + group→scope mappings) persists in **SecretStore** (`ema-orgs/{orgId}`). Bootstrap from `CLAWQL_EMA_ORGS_JSON` or `CLAWQL_EMA_ORGS_PATH`. Okta shorthand:
+EMA org config (IdP JWKS + group→scope mappings) persists in **SecretStore** (`ema-orgs/{orgId}`). Bootstrap from `CLAWQL_EMA_ORGS_JSON` or `CLAWQL_EMA_ORGS_PATH`. Every successful token issue appends **`MCP_TOKEN_ISSUED`** to a hash-chained auth WORM log (SQLite by default via `createAuthEventSinkFromEnv`).
 
 ```json
 {
@@ -160,6 +160,8 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 | `CLAWQL_MCP_OAUTH_CLIENTS_PATH`          | File path for MCP client registry JSON                    |
 | `CLAWQL_EMA_ORGS_JSON`                   | Bootstrap EMA org configs (JSON) into SecretStore         |
 | `CLAWQL_EMA_ORGS_PATH`                   | File path for EMA org configs JSON                        |
+| `CLAWQL_AUTH_AUDIT_STORE`                | Auth WORM backend: `sqlite` (default) \| `memory` \| `off` |
+| `CLAWQL_AUTH_AUDIT_PATH`                 | SQLite path (default `$CLAWQL_HOME/auth-audit.db`)        |
 
 ## Per-org IdP routing (multi-tenant)
 

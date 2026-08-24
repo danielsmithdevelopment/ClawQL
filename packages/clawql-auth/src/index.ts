@@ -88,6 +88,28 @@ export {
   type AuthEvent,
   type AuthEventSink,
 } from "./audit/auth-events.js";
+export {
+  AUTH_WORM_GENESIS_HASH,
+  AuthWormError,
+  AuthWormService,
+  authWormLayerForTests,
+  authWormLayerFromEnv,
+  defaultAuthAuditDbPath,
+  hashAuthWormLink,
+  listAuthWormRecords,
+  resetAuthWormStoreForTests,
+  resolveAuthAuditStoreMode,
+  sealAuthWormRecord,
+  verifyAuthWormChain,
+  verifyAuthWormLog,
+  type AuthWormRecord,
+  type AuthWormStoreMode,
+  type AuthWormVerifyResult,
+} from "./audit/auth-worm.js";
+export {
+  createAuthEventSinkFromEnv,
+  resetAuthEventSinkCacheForTests,
+} from "./audit/auth-worm-sink.js";
 export * from "./api-keys/index.js";
 export * from "./oauth/index.js";
 export * from "./inbound/index.js";

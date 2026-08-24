@@ -238,6 +238,8 @@ export class MCPOAuthServer {
         subjectId: verified.sub,
         orgId: verified.orgId,
         idpGroups: verified.groups,
+        matchedIdpGroups: resolved.matchedGroups,
+        role: resolved.role,
       },
     });
   }
@@ -329,7 +331,13 @@ export class MCPOAuthServer {
     options: {
       grantType: string;
       includeRefresh: boolean;
-      audit?: { subjectId?: string; orgId?: string; idpGroups?: string[] };
+      audit?: {
+        subjectId?: string;
+        orgId?: string;
+        idpGroups?: string[];
+        matchedIdpGroups?: string[];
+        role?: string;
+      };
     }
   ): Promise<McpTokenResponse> {
     const expiresAt = this.now() + this.tokenTtlSeconds * 1000;
@@ -364,7 +372,9 @@ export class MCPOAuthServer {
       timestamp: new Date(this.now()).toISOString(),
       subjectId: options.audit?.subjectId,
       orgId: options.audit?.orgId ?? claims.orgId,
+      role: options.audit?.role ?? claims.role,
       idpGroups: options.audit?.idpGroups ?? claims.idpGroups,
+      matchedIdpGroups: options.audit?.matchedIdpGroups,
     });
 
     return {
