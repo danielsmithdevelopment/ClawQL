@@ -1,10 +1,12 @@
 import express from "express";
-import { SignJWT } from "jose";
+import { Effect } from "effect";
+import { SignJWT, exportPKCS8, generateKeyPair } from "jose";
 import { describe, expect, it } from "vitest";
 
 import { ID_JAG_ASSERTION_TYPE } from "./id-jag.js";
 import { attachMcpOAuthRoutes, parseMcpOAuthTokenBody, MCP_OAUTH_TOKEN_PATH } from "./http.js";
 import { createMcpOAuthForTests } from "./mcp-oauth-env.js";
+import { loadMcpOAuthSigningMaterialEffect } from "./mcp-oauth-signing.js";
 
 async function withTestApp(
   fn: (
@@ -141,5 +143,41 @@ describe("attachMcpOAuthRoutes", () => {
       },
       { adminApiKey: "admin-test-key" }
     );
+  });
+
+  it("GET /.well-known/jwks.json publishes RS256 verifying keys", async () => {
+    const { privateKey } = await generateKeyPair("RS256", { extractable: true });
+    const signing = await Effect.runPromise(
+      loadMcpOAuthSigningMaterialEffect({
+        privateKeyPem: await exportPKCS8(privateKey),
+      })
+    );
+    const audience = "https://mcp.clawql.test/";
+    const runtime = await createMcpOAuthForTests({
+      issuer: "https://auth.clawql.test",
+      signing,
+      resourceAudience: audience,
+    });
+
+    const app = express();
+    attachMcpOAuthRoutes(app, runtime.server, {
+      wellKnown: { issuer: runtime.config.issuer, resourceAudience: audience },
+      jwks: runtime.jwks,
+    });
+
+    const server = app.listen(0);
+    const addr = server.address();
+    const port = typeof addr === "object" && addr ? addr.port : 0;
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/.well-known/jwks.json`);
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as { keys: Array<{ alg?: string; kid?: string }> };
+      expect(body.keys.length).toBeGreaterThan(0);
+      expect(body.keys[0]?.alg).toBe("RS256");
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve()))
+      );
+    }
   });
 });

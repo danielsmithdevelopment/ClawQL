@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
-import { SignJWT } from "jose";
+import { Effect } from "effect";
+import { SignJWT, exportPKCS8, generateKeyPair } from "jose";
 import { describe, expect, it } from "vitest";
 
 import type { AuthEvent } from "../audit/auth-events.js";
@@ -15,6 +16,7 @@ import {
   createMemoryMcpRefreshStore,
   hashMcpClientSecret,
 } from "./mcp-oauth.js";
+import { loadMcpOAuthSigningMaterialEffect } from "./mcp-oauth-signing.js";
 
 describe("MCPOAuthServer", () => {
   const secret = "test-mcp-oauth-signing-secret-32b!!";
@@ -254,5 +256,49 @@ describe("MCPOAuthServer", () => {
         orgId: "acme",
       })
     ).rejects.toThrow(/no_matching_idp_groups/);
+  });
+
+  it("issues and validates RS256 access tokens with JWKS metadata", async () => {
+    const { privateKey } = await generateKeyPair("RS256", { extractable: true });
+    const signing = await Effect.runPromise(
+      loadMcpOAuthSigningMaterialEffect({
+        privateKeyPem: await exportPKCS8(privateKey),
+        keyId: "rs256-test",
+      })
+    );
+    const salt = randomBytes(8).toString("hex");
+    const clientSecret = "client-secret-value";
+    const rsServer = createMCPOAuthServer(
+      {
+        issuer: "https://auth.clawql.test",
+        signing,
+      },
+      createMemoryMcpClientRegistry([
+        {
+          clientId: "cline-agent",
+          salt,
+          clientSecretHash: hashMcpClientSecret(salt, clientSecret),
+          defaultScope: ["execute"],
+        },
+      ]),
+      createMemoryMcpRefreshStore()
+    );
+
+    const token = await rsServer.issueToken({
+      grantType: "client_credentials",
+      clientId: "cline-agent",
+      clientSecret,
+    });
+    expect(token.access_token.split(".")).toHaveLength(3);
+
+    const header = JSON.parse(
+      Buffer.from(token.access_token.split(".")[0]!, "base64url").toString("utf8")
+    ) as { alg: string; kid?: string };
+    expect(header.alg).toBe("RS256");
+    expect(header.kid).toBe("rs256-test");
+
+    const claims = await rsServer.validateToken(token.access_token);
+    expect(claims.scope).toEqual(["execute"]);
+    expect(rsServer.getJwks().keys).toHaveLength(1);
   });
 });

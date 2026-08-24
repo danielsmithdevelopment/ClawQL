@@ -75,6 +75,14 @@ export {
   type McpOAuthRuntime,
 } from "./mcp-oauth-env.js";
 export {
+  loadMcpOAuthSigningFromEnvEffect,
+  loadMcpOAuthSigningMaterialEffect,
+  mcpOAuthSigningConfigured,
+  McpOAuthSigningError,
+  type McpOAuthSigningAlg,
+  type McpOAuthSigningMaterial,
+} from "./mcp-oauth-signing.js";
+export {
   attachMcpOAuthRoutes,
   handleMcpOAuthTokenRequest,
   MCP_OAUTH_TOKEN_PATH,

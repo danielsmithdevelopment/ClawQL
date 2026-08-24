@@ -23,6 +23,8 @@ export type AttachMcpOAuthRoutesOptions = {
     issuer: string;
     resourceAudience?: string;
   };
+  /** When set, publishes GET /.well-known/jwks.json and `jwks_uri` in discovery. */
+  jwks?: { keys: import("jose").JWK[] };
 };
 
 type TokenBody = Record<string, string | undefined>;
@@ -155,6 +157,9 @@ export function attachMcpOAuthRoutes(
         grant_types_supported: ["client_credentials", "refresh_token", ID_JAG_JWT_BEARER_GRANT],
         token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
         scopes_supported: ["execute", "search", "memory", "mcp:tools"],
+        ...(options.jwks?.keys.length
+          ? { jwks_uri: `${origin}/.well-known/jwks.json` }
+          : {}),
         agent_auth: {
           identity_assertion: {
             assertion_types_supported: ["urn:ietf:params:oauth:token-type:id-jag"],
@@ -164,6 +169,14 @@ export function attachMcpOAuthRoutes(
           ? { resource_audience: options.wellKnown!.resourceAudience }
           : {}),
       });
+    });
+  }
+
+  if (options.jwks?.keys.length) {
+    app.get("/.well-known/jwks.json", (_req, res) => {
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.setHeader("Cache-Control", "public, max-age=300");
+      res.status(200).json(options.jwks);
     });
   }
 

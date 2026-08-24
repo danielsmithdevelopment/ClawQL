@@ -15,6 +15,7 @@ import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 
 import { emitAuthEvent, noopAuthEventSink, type AuthEventSink } from "../audit/auth-events.js";
 import type { AtrClaims } from "../gateway.js";
+import type { McpOAuthSigningMaterial } from "./mcp-oauth-signing.js";
 import {
   ID_JAG_JWT_BEARER_GRANT,
   IdJagAuthError,
@@ -36,8 +37,10 @@ export type MCPOAuthConfig = {
   /** Refresh token TTL (default 3600s). */
   refreshTokenTtlSeconds?: number;
   allowedGrantTypes?: McpGrantType[];
-  /** HS256 secret (dev / single-node). Prefer asymmetric keys in production. */
-  signingSecret: string | Uint8Array;
+  /** HS256 secret (dev / single-node). Prefer `signing` RS256 in production. */
+  signingSecret?: string | Uint8Array;
+  /** Resolved signing + verify keys (RS256 production or explicit HS256). */
+  signing?: McpOAuthSigningMaterial;
   eventSink?: AuthEventSink;
   now?: () => number;
   /**
@@ -119,7 +122,7 @@ export class MCPOAuthServer {
   private readonly allowedGrantTypes: Set<McpGrantType>;
   private readonly eventSink: AuthEventSink;
   private readonly now: () => number;
-  private readonly key: Uint8Array;
+  private readonly signing: McpOAuthSigningMaterial;
   private readonly emaConfigStore?: EmaConfigStore;
 
   constructor(
@@ -134,8 +137,13 @@ export class MCPOAuthServer {
     );
     this.eventSink = config.eventSink ?? noopAuthEventSink;
     this.now = config.now ?? Date.now;
-    this.key = toKey(config.signingSecret);
+    this.signing = resolveSigningMaterial(config);
     this.emaConfigStore = config.emaConfigStore;
+  }
+
+  /** JWKS for RS256 verification (empty for HS256). */
+  getJwks(): McpOAuthSigningMaterial["jwks"] {
+    return this.signing.jwks;
   }
 
   async issueToken(request: McpTokenRequest): Promise<McpTokenResponse> {
@@ -346,12 +354,15 @@ export class MCPOAuthServer {
       scope: scope.join(" "),
       jti: randomBytes(12).toString("hex"),
     } as JWTPayload)
-      .setProtectedHeader({ alg: "HS256" })
+      .setProtectedHeader({
+        alg: this.signing.algorithm,
+        ...(this.signing.keyId ? { kid: this.signing.keyId } : {}),
+      })
       .setSubject(claims.sub)
       .setIssuer(this.config.issuer)
       .setIssuedAt(Math.floor(this.now() / 1000))
       .setExpirationTime(Math.floor(expiresAt / 1000))
-      .sign(this.key);
+      .sign(this.signing.signKey);
 
     let refresh_token: string | undefined;
     if (options.includeRefresh) {
@@ -391,8 +402,9 @@ export class MCPOAuthServer {
    */
   async validateToken(bearerToken: string): Promise<AtrClaims> {
     try {
-      const { payload } = await jwtVerify(bearerToken, this.key, {
+      const { payload } = await jwtVerify(bearerToken, this.signing.verifyKey, {
         issuer: this.config.issuer,
+        algorithms: [this.signing.algorithm],
       });
       const atr = payload.atr as AtrClaims | undefined;
       if (!atr || typeof atr !== "object" || !atr.sub) {
@@ -413,6 +425,20 @@ export class MCPOAuthServer {
 function intersectScopes(allowed: string[], requested: string[]): string[] {
   const allow = new Set(allowed);
   return requested.filter((s) => allow.has(s));
+}
+
+function resolveSigningMaterial(config: MCPOAuthConfig): McpOAuthSigningMaterial {
+  if (config.signing) return config.signing;
+  if (config.signingSecret) {
+    const key = toKey(config.signingSecret);
+    return {
+      algorithm: "HS256",
+      signKey: key,
+      verifyKey: key,
+      jwks: { keys: [] },
+    };
+  }
+  throw new Error("MCPOAuthConfig requires signing or signingSecret");
 }
 
 export function createMCPOAuthServer(

@@ -227,7 +227,7 @@ type EmaOrgConfig = {
 };
 ```
 
-ID-JAG exchange verifies the IdP assertion (JWKS / HS256 dev), maps groups → ATR scope, mints the same HS256 access JWT + `atr` claim used by `client_credentials`, and emits **`MCP_TOKEN_ISSUED`** with `grantType: "id_jag"`, `subjectId`, `orgId`, `role`, `scope`, `idpGroups` (all assertion groups), and `matchedIdpGroups` (groups that drove the mapping). No refresh token is issued — token lifetime follows IdP policy (same downstream Panguard enforcement path).
+ID-JAG exchange verifies the IdP assertion (JWKS / HS256 dev), maps groups → ATR scope, mints RS256 (production) or HS256 (dev) access JWT + `atr` claim used by `client_credentials`, and emits **`MCP_TOKEN_ISSUED`** with `grantType: "id_jag"`, `subjectId`, `orgId`, `role`, `scope`, `idpGroups` (all assertion groups), and `matchedIdpGroups` (groups that drove the mapping). RS256 deployments publish verifying keys at `GET /.well-known/jwks.json` with `jwks_uri` in OAuth AS discovery. No refresh token is issued — token lifetime follows IdP policy (same downstream Panguard enforcement path).
 
 **Auth WORM (shipped):** `createMcpOAuthFromEnv()` wires `createAuthEventSinkFromEnv()` by default. Entries append to a hash-chained SQLite log at `$CLAWQL_HOME/auth-audit.db` unless overridden. Set `CLAWQL_AUTH_AUDIT_STORE=off` to disable; `memory` for tests. Intentionally **no** `accessTokenHash` on events until a token→entry lookup path exists.
 
@@ -239,11 +239,19 @@ Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery
 
 For regulated / air-gapped customers who cannot use Okta Cross App Access, ClawQL can act as a **self-hosted ID-JAG issuer** while remaining an auth _consumer_ everywhere else — not a full human IdP.
 
+<<<<<<< HEAD
 | Layer               | Scope                                                                | Blocker                                        |
 | ------------------- | -------------------------------------------------------------------- | ---------------------------------------------- |
 | **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish            | Consumer WORM audit + RS256 AS signing (P2)    |
 | **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | Layer A                                        |
 | **C — TEE signing** | `clawql-tee` hardening for key material                              | Layer A validated against org-controlled RS256 |
+=======
+| Layer | Scope | Blocker |
+| ----- | ----- | ------- |
+| **A — Issuer** | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish | Consumer WORM audit (shipped); RS256 AS signing (shipped) |
+| **B — Registry** | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | Layer A |
+| **C — TEE signing** | `clawql-tee` hardening for key material | Layer A validated against org-controlled RS256 |
+>>>>>>> f34897fd (Add RS256 MCP OAuth AS signing with JWKS discovery)
 
 **Never:** Okta competitor, password/SSO IdP, SAML/LDAP server, per-user connector consent UI.
 
@@ -1063,7 +1071,7 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 
 | Canonical phase               | Scope (from full spec)                                   | Repo status                                                                                                 | Next priority                                                                                                                                                 |
 | ----------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1 — Inbound core**          | API key validate/issue, MCP OAuth 2.1 AS, **EMA ID-JAG** | **Partial** — library + **`server-http` HTTP wiring shipped**; `authorization_code` + RS256 AS signing open | **P0 done:** token endpoint; **P0 done:** persistent `EmaConfigStore`; **P1 done:** Okta JWKS preset; **P2 open:** interactive auth-code, RS256 issued tokens |
+| **1 — Inbound core**          | API key validate/issue, MCP OAuth 2.1 AS, **EMA ID-JAG** | **Partial** — library + **`server-http` HTTP wiring shipped**; `authorization_code` open | **P0 done:** token endpoint; **P0 done:** persistent `EmaConfigStore`; **P1 done:** Okta JWKS preset; **P1 done:** auth WORM audit; **P1 done:** RS256 AS signing + JWKS; **P2 open:** interactive auth-code |
 | **2 — Outbound OAuth core**   | Mutex token store, proactive refresh, client credentials | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                               | Maintain; no new work unless regressions                                                                                                                      |
 | **3 — Auth Code + providers** | PKCE, Google/Microsoft/Slack                             | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`)                                                    | Hermes user-delegated flows consume this                                                                                                                      |
 | **4 — Team / org**            | Team model, domain TXT, offboarding                      | **Partial** — issued keys have org/team; domain TXT / wallet / passkey inbound modules not started          | After Phase 1 completion                                                                                                                                      |
@@ -1077,7 +1085,7 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 2. ~~**Persistent `EmaConfigStore`**~~ — **Shipped** (`ema-config-store.ts` + SecretStore `ema-orgs/` prefix + admin API).
 3. ~~**Okta production JWKS path**~~ — **Shipped** (`okta-id-jag.ts` preset + group claim fallbacks).
 4. **`authorization_code` grant** — interactive MCP login for non-EMA deployments.
-5. **RS256 issued access tokens + JWKS** — production AS signing (HS256 is dev/single-node today).
+5. ~~**RS256 issued access tokens + JWKS**~~ — **Shipped** (`mcp-oauth-signing.ts`, `GET /.well-known/jwks.json`).
 
 ### Three inbound paths (do not conflate)
 

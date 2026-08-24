@@ -6,6 +6,12 @@ import { readFileSync } from "node:fs";
 
 import type { AuthEventSink } from "../audit/auth-events.js";
 import { createAuthEventSinkFromEnv } from "../audit/auth-worm-sink.js";
+import { warnIfMcpOAuthAuditDisabled } from "../audit/mcp-oauth-startup-warnings.js";
+import {
+  loadMcpOAuthSigningFromEnvEffect,
+  mcpOAuthSigningConfigured,
+  type McpOAuthSigningMaterial,
+} from "./mcp-oauth-signing.js";
 import { resolveSecretStore, type SecretStore } from "../stores/index.js";
 import { createMemorySecretStore } from "../stores/memory.js";
 import {
@@ -34,6 +40,7 @@ import {
   type McpRegisteredClient,
 } from "./mcp-oauth.js";
 import { createMemoryEmaConfigStore, type EmaOrgConfig } from "./id-jag.js";
+import { Effect } from "effect";
 
 export type McpOAuthEnvConfig = {
   enabled: boolean;
@@ -59,7 +66,7 @@ export function loadMcpOAuthEnvConfig(env: NodeJS.ProcessEnv = process.env): Mcp
   const enabled =
     envFlag("CLAWQL_MCP_OAUTH_ENABLED", env) ||
     envFlag("CLAWQL_MCP_OAUTH", env) ||
-    Boolean(env.CLAWQL_MCP_OAUTH_SIGNING_SECRET?.trim());
+    mcpOAuthSigningConfigured(env);
 
   const tokenTtlRaw = env.CLAWQL_MCP_OAUTH_TOKEN_TTL_SECONDS?.trim();
   const refreshTtlRaw = env.CLAWQL_MCP_OAUTH_REFRESH_TTL_SECONDS?.trim();
@@ -96,6 +103,8 @@ export type McpOAuthRuntime = {
   clientRegistry: SecretStoreMcpClientRegistry;
   /** Validates ClawQL-issued MCP access tokens → ATR claims. */
   validateBearer: (token: string) => Promise<import("../gateway.js").AtrClaims>;
+  /** JWKS document when RS256 signing is configured. */
+  jwks?: McpOAuthSigningMaterial["jwks"];
 };
 
 function loadEmaBootstrapConfigs(env: NodeJS.ProcessEnv): EmaOrgConfig[] {
@@ -157,12 +166,9 @@ export async function createMcpOAuthFromEnv(
   const envConfig = loadMcpOAuthEnvConfig(env);
   if (!envConfig.enabled) return null;
 
-  const signingSecret = envConfig.signingSecret;
-  if (!signingSecret) {
-    throw new Error(
-      "CLAWQL_MCP_OAUTH_ENABLED requires CLAWQL_MCP_OAUTH_SIGNING_SECRET (min 32 chars recommended)"
-    );
-  }
+  warnIfMcpOAuthAuditDisabled(env);
+
+  const signing = await Effect.runPromise(loadMcpOAuthSigningFromEnvEffect(env));
 
   const secretStore = options.secretStore ?? resolveSecretStore();
   const emaStore = createSecretStoreEmaConfigStore(secretStore);
@@ -184,7 +190,7 @@ export async function createMcpOAuthFromEnv(
 
   const config: MCPOAuthConfig = {
     issuer,
-    signingSecret,
+    signing: signing,
     resourceAudience: envConfig.resourceAudience,
     tokenTtlSeconds: envConfig.tokenTtlSeconds,
     refreshTokenTtlSeconds: envConfig.refreshTokenTtlSeconds,
@@ -200,13 +206,15 @@ export async function createMcpOAuthFromEnv(
     emaStore,
     clientRegistry,
     validateBearer: (token) => server.validateToken(token),
+    jwks: signing.jwks.keys.length ? signing.jwks : undefined,
   };
 }
 
 /** In-memory MCP OAuth for tests (MemorySecretStore-backed EMA + clients). */
 export async function createMcpOAuthForTests(input: {
   issuer: string;
-  signingSecret: string;
+  signingSecret?: string;
+  signing?: McpOAuthSigningMaterial;
   resourceAudience?: string;
   clients?: McpRegisteredClient[];
   emaOrgs?: EmaOrgConfig[];
@@ -223,6 +231,7 @@ export async function createMcpOAuthForTests(input: {
   const config: MCPOAuthConfig = {
     issuer: input.issuer,
     signingSecret: input.signingSecret,
+    signing: input.signing,
     resourceAudience: input.resourceAudience,
     emaConfigStore: emaStore,
     eventSink: input.eventSink,
@@ -232,11 +241,22 @@ export async function createMcpOAuthForTests(input: {
     createCompositeMcpClientRegistry(clientRegistry),
     refreshStore
   );
+  const resolvedSigning =
+    input.signing ??
+    (input.signingSecret
+      ? {
+          algorithm: "HS256" as const,
+          signKey: new TextEncoder().encode(input.signingSecret),
+          verifyKey: new TextEncoder().encode(input.signingSecret),
+          jwks: { keys: [] as import("jose").JWK[] },
+        }
+      : undefined);
   return {
     server,
     config,
     emaStore,
     clientRegistry,
     validateBearer: (token) => server.validateToken(token),
+    jwks: resolvedSigning?.jwks.keys.length ? resolvedSigning.jwks : undefined,
   };
 }
