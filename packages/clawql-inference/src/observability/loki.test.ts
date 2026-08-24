@@ -60,7 +60,10 @@ describe("inference Loki push", () => {
       job: "clawql-inference-test",
       service: "clawql-inference",
     });
-    const line = JSON.parse(payload.streams[0]?.values[0]?.[1] ?? "{}") as { kind: string; id: string };
+    const line = JSON.parse(payload.streams[0]?.values[0]?.[1] ?? "{}") as {
+      kind: string;
+      id: string;
+    };
     expect(line.kind).toBe("inference_call");
     expect(line.id).toBe("r2");
   });

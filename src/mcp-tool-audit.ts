@@ -27,8 +27,7 @@ function envFlagOff(raw: string | undefined): boolean {
 /** Default on; set **`CLAWQL_AUDIT_TOOL_CALLS=0`** to opt out. */
 export const isMcpToolCallAuditEnabled = (
   env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<boolean> =>
-  Effect.sync(() => !envFlagOff(env.CLAWQL_AUDIT_TOOL_CALLS));
+): Effect.Effect<boolean> => Effect.sync(() => !envFlagOff(env.CLAWQL_AUDIT_TOOL_CALLS));
 
 function truncate(s: string, max: number): string {
   if (s.length <= max) return s;
@@ -121,10 +120,7 @@ export const buildMcpToolAuditAppend = (
     const argsPart = summarizeMcpToolArgs(toolName, event.args);
     const errPart = event.errorMessage ? ` error=${truncate(event.errorMessage, 80)}` : "";
     const resultPart = resultSnippet(event.result);
-    const summary = truncate(
-      `${event.outcome} ${argsPart}${resultPart}${errPart}`.trim(),
-      512
-    );
+    const summary = truncate(`${event.outcome} ${argsPart}${resultPart}${errPart}`.trim(), 512);
     const correlationId = correlationIdFromArgs(event.args);
     return {
       operation: "append" as const,

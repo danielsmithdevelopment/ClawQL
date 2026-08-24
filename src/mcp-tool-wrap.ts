@@ -77,12 +77,7 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
     }
     try {
       const result = await handler(...args);
-      await auditWrappedTool(
-        toolName,
-        args[0],
-        resultLooksError(result) ? "error" : "ok",
-        result
-      );
+      await auditWrappedTool(toolName, args[0], resultLooksError(result) ? "error" : "ok", result);
       return result;
     } catch (err: unknown) {
       await auditWrappedTool(
