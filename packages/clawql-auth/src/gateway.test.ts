@@ -1,12 +1,15 @@
+import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
   defaultAdminAtrClaims,
   loadGatewayAuthConfig,
   resolveAtrClaimsFromHeaders,
+  resolveAtrClaimsFromHeadersEffect,
   resolveAuthMode,
   type GatewayAuthConfig,
 } from "./gateway.js";
+import { createMcpOAuthForTests } from "./inbound/mcp-oauth-env.js";
 
 describe("clawql-auth gateway", () => {
   const prevMode = process.env.CLAWQL_AUTH_MODE;
@@ -168,5 +171,41 @@ describe("clawql-auth gateway", () => {
       role: "admin",
       scope: ["*"],
     });
+  });
+
+  it("mcpOAuthValidator accepts ClawQL-issued bearer tokens in hybrid mode", async () => {
+    const runtime = await createMcpOAuthForTests({
+      issuer: "https://auth.clawql.test",
+      signingSecret: "test-mcp-oauth-signing-secret-32b!!",
+      clients: [
+        {
+          clientId: "mcp-client",
+          defaultScope: ["execute", "search"],
+          defaultRole: "operator",
+        },
+      ],
+    });
+    const issued = await runtime.server.issueToken({
+      grantType: "client_credentials",
+      clientId: "mcp-client",
+    });
+
+    const claims = await Effect.runPromise(
+      resolveAtrClaimsFromHeadersEffect(
+        { authorization: `Bearer ${issued.access_token}` },
+        {
+          mode: "apiKey",
+          apiKey: "unused",
+          mcpOAuthValidator: runtime.validateBearer,
+        }
+      )
+    );
+    expect(claims.sub).toBe("mcp-client");
+    expect(claims.scope).toEqual(["execute", "search"]);
+  });
+
+  it("resolveAuthMode recognizes mcpOAuth", () => {
+    process.env.CLAWQL_AUTH_MODE = "mcpOAuth";
+    expect(resolveAuthMode()).toBe("mcpOAuth");
   });
 });

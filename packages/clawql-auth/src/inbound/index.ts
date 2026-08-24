@@ -28,3 +28,47 @@ export {
   type ResolvedEmaScope,
   type VerifiedIdJagClaims,
 } from "./id-jag.js";
+export {
+  bootstrapEmaOrgsToStore,
+  createCompositeEmaConfigStore,
+  createSecretStoreEmaConfigStore,
+  EMA_ORG_SECRET_PREFIX,
+  loadEmaOrgsFromJson,
+  loadEmaOrgsFromJsonFile,
+  type EmaOrgConfigInput,
+  type SecretStoreEmaConfigStore,
+} from "./ema-config-store.js";
+export {
+  bootstrapMcpClientsToStore,
+  createCompositeMcpClientRegistry,
+  createSecretStoreMcpClientRegistry,
+  createSecretStoreMcpRefreshStore,
+  loadMcpClientsFromJson,
+  loadMcpClientsFromJsonFile,
+  MCP_OAUTH_CLIENT_PREFIX,
+  MCP_OAUTH_REFRESH_PREFIX,
+  type SecretStoreMcpClientRegistry,
+} from "./mcp-oauth-stores.js";
+export {
+  buildOktaEmaOrgConfig,
+  extractOktaGroupsFromPayload,
+  OKTA_DEFAULT_AUTH_SERVER,
+  OKTA_GROUPS_CLAIM,
+  type OktaEmaOrgParams,
+} from "./okta-id-jag.js";
+export {
+  createMcpOAuthForTests,
+  createMcpOAuthFromEnv,
+  isMcpOAuthEnabled,
+  loadMcpOAuthEnvConfig,
+  type CreateMcpOAuthFromEnvOptions,
+  type McpOAuthEnvConfig,
+  type McpOAuthRuntime,
+} from "./mcp-oauth-env.js";
+export {
+  attachMcpOAuthRoutes,
+  handleMcpOAuthTokenRequest,
+  MCP_OAUTH_TOKEN_PATH,
+  parseMcpOAuthTokenBody,
+  type AttachMcpOAuthRoutesOptions,
+} from "./http.js";

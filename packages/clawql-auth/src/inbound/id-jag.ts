@@ -9,6 +9,7 @@ import { Data, Effect } from "effect";
 import { createRemoteJWKSet, jwtVerify, type JWTPayload, type JWTVerifyGetKey } from "jose";
 
 import type { AtrClaims } from "../gateway.js";
+import { extractOktaGroupsFromPayload } from "./okta-id-jag.js";
 
 /** OAuth wire grant type for ID-JAG exchange (RFC 7523 jwt-bearer). */
 export const ID_JAG_JWT_BEARER_GRANT = "urn:ietf:params:oauth:grant-type:jwt-bearer" as const;
@@ -50,6 +51,8 @@ export type EmaOrgConfig = {
   orgIdClaim?: string;
   /** Dev/tests only — verify HS256 assertions with this secret instead of JWKS. */
   hs256Secret?: string;
+  /** When `okta`, applies Okta Cross App Access group extraction fallbacks. */
+  idpProvider?: "okta" | "custom";
 };
 
 export type EmaConfigStore = {
@@ -247,6 +250,9 @@ export function verifyIdJagAssertionEffect(
       if (roles.length > 0) {
         groups.push(...roles);
       }
+    }
+    if (groups.length === 0 && (config.idpProvider === "okta" || config.idpJwksUri.includes("okta"))) {
+      groups.push(...extractOktaGroupsFromPayload(payload as Record<string, unknown>));
     }
 
     const orgIdClaim = config.orgIdClaim ?? "org_id";
