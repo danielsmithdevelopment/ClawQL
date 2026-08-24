@@ -45,10 +45,14 @@ import { handleIdpPipelineRunRequest } from "./idp-pipeline-run-http.js";
 import { handleLangfuseEvalWebhookRequest } from "./langfuse-eval-webhook.js";
 import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
 import {
+  attachMcpOAuthRoutes,
+  createMcpOAuthFromEnv,
+  isMcpOAuthEnabled,
   loadGatewayAuthConfig,
   resolveAtrClaimsFromHeadersEffect,
   type ApiKeyClaimsResolver,
   type GatewayAuthConfig,
+  type McpOAuthRuntime,
 } from "clawql-auth";
 import { Effect } from "effect";
 import { validateVirtualKey } from "clawql-inference";
@@ -90,11 +94,16 @@ export function createInferenceVirtualKeyClaimsResolver(
   };
 }
 
-function buildGatewayAuthConfig(env: NodeJS.ProcessEnv = process.env): GatewayAuthConfig {
+function buildGatewayAuthConfig(
+  env: NodeJS.ProcessEnv = process.env,
+  mcpOAuthValidator?: (bearer: string) => Promise<import("clawql-auth").AtrClaims>
+): GatewayAuthConfig {
   const config = loadGatewayAuthConfig(env);
-  if (config.mode !== "apiKey") return config;
+  const withMcp =
+    mcpOAuthValidator != null ? { ...config, mcpOAuthValidator } : config;
+  if (withMcp.mode !== "apiKey") return withMcp;
   return {
-    ...config,
+    ...withMcp,
     apiKeyClaimsResolver: createInferenceVirtualKeyClaimsResolver(env),
   };
 }
@@ -196,6 +205,10 @@ export type CreateMcpHttpAppOptions = {
     | "enableDocuments"
     | "enableIdpPipeline"
   >;
+  /** Skip MCP OAuth token route (tests). */
+  skipMcpOAuth?: boolean;
+  /** Inject MCP OAuth runtime (tests). */
+  mcpOAuthRuntime?: McpOAuthRuntime;
 };
 
 /**
@@ -220,14 +233,41 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
   app.use(applyCorsIfConfigured);
 
+  app.use("/oauth/token", express.urlencoded({ extended: false }));
+  app.use("/oauth/ema", express.json());
+
+  let mcpOAuthRuntime: McpOAuthRuntime | null =
+    options.mcpOAuthRuntime ?? null;
+  if (!options.skipMcpOAuth && !mcpOAuthRuntime && isMcpOAuthEnabled(process.env)) {
+    mcpOAuthRuntime = await createMcpOAuthFromEnv();
+  }
+  if (mcpOAuthRuntime) {
+    attachMcpOAuthRoutes(app, mcpOAuthRuntime.server, {
+      wellKnown: {
+        issuer: mcpOAuthRuntime.config.issuer,
+        resourceAudience: mcpOAuthRuntime.config.resourceAudience,
+      },
+      emaAdmin: process.env.CLAWQL_API_KEY?.trim()
+        ? {
+            store: mcpOAuthRuntime.emaStore,
+            adminApiKey: process.env.CLAWQL_API_KEY.trim(),
+          }
+        : undefined,
+    });
+  }
+
   attachPaymentsWellKnownRoutes(app, { serverName: "ClawQL MCP" });
   // HTMX forms on /credits/* (invite claim / accept / decline)
   app.use("/credits", express.urlencoded({ extended: false }));
   /**
-   * Gateway auth: `noAuth` | `apiKey` (static + inference VKs) | `oidc` (JWT consumer).
-   * OIDC verifies IdP-issued bearer tokens asynchronously — ClawQL is not an IdP.
+   * Gateway auth: `noAuth` | `apiKey` (static + inference VKs) | `oidc` (JWT consumer)
+   * | `mcpOAuth` (ClawQL-issued MCP JWT). When MCP OAuth is enabled, Bearer tokens
+   * from `/oauth/token` are also accepted in hybrid mode alongside apiKey/oidc.
    */
-  const gatewayAuthConfig = buildGatewayAuthConfig();
+  const gatewayAuthConfig = buildGatewayAuthConfig(
+    process.env,
+    mcpOAuthRuntime?.validateBearer
+  );
   attachCreditsHateoasRoutes(app, { authConfig: gatewayAuthConfig });
   if (isMppOpenApiEnabled(process.env)) {
     attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });
