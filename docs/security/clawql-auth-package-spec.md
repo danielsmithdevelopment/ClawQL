@@ -227,9 +227,27 @@ type EmaOrgConfig = {
 };
 ```
 
-ID-JAG exchange verifies the IdP assertion (JWKS / HS256 dev), maps groups → ATR scope, mints the same HS256 access JWT + `atr` claim used by `client_credentials`, and emits **`MCP_TOKEN_ISSUED`** with `grantType: "id_jag"`, `subjectId`, `orgId`, and `idpGroups`. No refresh token is issued — token lifetime follows IdP policy (same downstream Panguard enforcement path).
+ID-JAG exchange verifies the IdP assertion (JWKS / HS256 dev), maps groups → ATR scope, mints the same HS256 access JWT + `atr` claim used by `client_credentials`, and emits **`MCP_TOKEN_ISSUED`** with `grantType: "id_jag"`, `subjectId`, `orgId`, `role`, `scope`, `idpGroups` (all assertion groups), and `matchedIdpGroups` (groups that drove the mapping). No refresh token is issued — token lifetime follows IdP policy (same downstream Panguard enforcement path).
+
+**Auth WORM (shipped):** `createMcpOAuthFromEnv()` wires `createAuthEventSinkFromEnv()` by default. Entries append to a hash-chained SQLite log at `$CLAWQL_HOME/auth-audit.db` unless overridden. Set `CLAWQL_AUTH_AUDIT_STORE=off` to disable; `memory` for tests. Intentionally **no** `accessTokenHash` on events until a token→entry lookup path exists.
 
 Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery-metadata.ts` (`assertion_types_supported: id-jag`).
+
+#### 4.1.2 ClawQL as EMA IdP (ID-JAG issuer) — roadmap
+
+**Not shipped.** Scaffold: `inbound/id-jag-issuer.ts`.
+
+For regulated / air-gapped customers who cannot use Okta Cross App Access, ClawQL can act as a **self-hosted ID-JAG issuer** while remaining an auth *consumer* everywhere else — not a full human IdP.
+
+| Layer | Scope | Blocker |
+| ----- | ----- | ------- |
+| **A — Issuer** | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish | Consumer WORM audit + RS256 AS signing (P2) |
+| **B — Registry** | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | Layer A |
+| **C — TEE signing** | `clawql-tee` hardening for key material | Layer A validated against org-controlled RS256 |
+
+**Never:** Okta competitor, password/SSO IdP, SAML/LDAP server, per-user connector consent UI.
+
+**Phase placement:** After RS256 + JWKS for the MCP authorization server and durable consumer-side audit (this PR). TEE is a later hardening pass — do not gate protocol validation on `clawql-tee` maturity.
 
 ### 4.2 API key validator (`APIKeyValidator`)
 

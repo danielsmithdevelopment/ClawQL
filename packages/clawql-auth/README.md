@@ -116,6 +116,8 @@ When `CLAWQL_MCP_OAUTH_ENABLED=1`, `server-http` exposes:
 
 EMA org config (IdP JWKS + group→scope mappings) persists in **SecretStore** (`ema-orgs/{orgId}`). Bootstrap from `CLAWQL_EMA_ORGS_JSON` or `CLAWQL_EMA_ORGS_PATH`. Every successful token issue appends **`MCP_TOKEN_ISSUED`** to a hash-chained auth WORM log (SQLite by default via `createAuthEventSinkFromEnv`).
 
+Okta shorthand:
+
 ```json
 {
   "orgs": [
