@@ -71,6 +71,10 @@ export type AuthEvent =
       scope: string[];
       expiresAt: string;
       timestamp: string;
+      /** Human subject when issued via EMA / ID-JAG (same as ATR sub). */
+      subjectId?: string;
+      orgId?: string;
+      idpGroups?: string[];
     }
   | {
       type: "MCP_TOKEN_REFRESHED";

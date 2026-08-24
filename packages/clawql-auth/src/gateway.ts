@@ -54,6 +54,8 @@ export type AtrClaims = {
   emailDomain?: string;
   /** Company org id when resolved from email domain / claim. */
   orgId?: string;
+  /** IdP group membership from EMA / ID-JAG (audit + policy hooks). */
+  idpGroups?: string[];
 };
 
 /**
