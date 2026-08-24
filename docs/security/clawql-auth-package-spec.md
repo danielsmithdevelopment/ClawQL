@@ -101,8 +101,11 @@ import { Effect } from "effect";
 import type { AtrClaims } from "../gateway.js";
 import type { AuthWORMAppend } from "../audit/worm-types.js";
 
-export type MCPTokenRequest = {
-  grant_type: "client_credentials" | "authorization_code" | "refresh_token";
+export type GrantType =
+  | "authorization_code" // human operators (interactive — open)
+  | "client_credentials" // machine-to-machine (agents)
+  | "refresh_token"
+  | "id_jag"; // EMA — wire: urn:ietf:params:oauth:grant-type:jwt-bearer + assertion
   client_id: string;
   client_secret?: string;
   code?: string;
@@ -1030,6 +1033,38 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 ---
 
 ## Implementation Sequence
+
+> **Alignment note (August 2026 GA):** The canonical spec (§13) orders phases as inbound-first. The repo shipped **outbound OAuth (Phases 2–3)** ahead of inbound HTTP wiring because Hermes/Cline needed mutex refresh first. **EMA / ID-JAG is Phase 1 inbound** — table stakes for enterprise MCP adoption — and is **library-shipped**; what remains is wiring + persistence + Okta production trust.
+
+### Canonical §13 → repo status
+
+| Canonical phase | Scope (from full spec) | Repo status | Next priority |
+| --------------- | ------------------------ | ----------- | ------------- |
+| **1 — Inbound core** | API key validate/issue, MCP OAuth 2.1 AS, **EMA ID-JAG** | **Partial** — `api-keys/`, `inbound/mcp-oauth.ts`, `inbound/id-jag.ts` shipped; `authorization_code` + HTTP `/oauth/token` open | **P0:** token endpoint HTTP wiring; **P0:** persistent `EmaConfigStore`; **P1:** Okta JWKS verification |
+| **2 — Outbound OAuth core** | Mutex token store, proactive refresh, client credentials | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`) | Maintain; no new work unless regressions |
+| **3 — Auth Code + providers** | PKCE, Google/Microsoft/Slack | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`) | Hermes user-delegated flows consume this |
+| **4 — Team / org** | Team model, domain TXT, offboarding | **Partial** — issued keys have org/team; domain TXT / wallet / passkey inbound modules not started | After Phase 1 HTTP + EMA persistence |
+| **5 — Alt inbound** | SIWE, TOTP, passkey as primary login | **Partial** — step-up TOTP/WebAuthn shipped; not primary inbound login surfaces | Phase 5 per canonical spec |
+| **6 — Vault dynamic secrets** | DB cred leases | **Partial** — `SecretStore` plugins shipped; dynamic lease provider open | Enterprise TEE tier |
+| **7 — Re-auth UX** | Hermes Telegram, reauth URLs | **Partial** — `ReauthRequiredError` + WORM events shipped; Telegram UX open | Production Hermes |
+
+### Phase 1 inbound — remaining work (ordered)
+
+1. **HTTP `/oauth/token` route** — `mcp-api-adapter` / `server-http` must accept `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=…` (discovery already advertises ID-JAG).
+2. **Persistent `EmaConfigStore`** — SecretStore/SQLite backing for `{ orgId, idpJwksUri, idpIssuer, audience, groupMappings[] }`; in-memory store is proof-only today.
+3. **Okta production JWKS path** — harden `verifyIdJagAssertionEffect` for Okta Cross App Access claim shapes (groups, `token_type`, audience binding); drop HS256 except tests.
+4. **`authorization_code` grant** — interactive MCP login for non-EMA deployments; lower urgency now that EMA is GA.
+5. **RS256 issued access tokens + JWKS** — production AS signing (HS256 is dev/single-node today).
+
+### Three inbound paths (do not conflate)
+
+| Path | When | Token source | Shipped |
+| ---- | ---- | ------------ | ------- |
+| **OIDC consumer** (`CLAWQL_AUTH_MODE=oidc`) | Enterprise puts IdP JWT on every MCP request | Customer IdP | Yes — `oidc.ts` |
+| **MCP OAuth AS** (`MCPOAuthServer`) | MCP clients obtain ClawQL-issued bearer | ClawQL signs JWT with `atr` | Library yes; HTTP route no |
+| **EMA ID-JAG** (grant on MCP AS) | Org admin pre-authorizes connector at IdP; zero-touch user inherit | IdP assertion → ClawQL access JWT | Library yes — `id-jag.ts` |
+
+All three produce **`AtrClaims`** for the same Panguard enforcement path. EMA does not replace OIDC consumer mode — it replaces per-user OAuth consent on the **issuance** side for MCP connectors.
 
 | Phase                            | Scope                                                                                   | Exit criteria                                                   | Status                                                                                                   |
 | -------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
