@@ -67,6 +67,12 @@ export const OPENAI_COMPAT_BYOK_PROVIDERS: readonly OpenAiCompatProviderSpec[] =
     // Gemini OpenAI-compatible endpoint
     defaultBaseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
   },
+  {
+    id: "mlx",
+    apiKeyEnv: "MLX_API_KEY",
+    baseUrlEnv: "CLAWQL_MLX_BASE_URL",
+    defaultBaseUrl: "http://127.0.0.1:8082/v1",
+  },
 ];
 
 export function createOpenAiProviderPlugin(): InferenceProviderPlugin {
@@ -146,11 +152,12 @@ export function createOpenAiCompatByokProviderPlugin(
     version: "1.0.0",
     builtin: true,
     onRegister({ env, registry }) {
+      const localDefaultKey = spec.id === "mlx" ? "local" : undefined;
       registry.set(
         spec.id,
         createOpenAiCompatibleAdapter({
           provider: spec.id,
-          apiKey: env[spec.apiKeyEnv]?.trim() || undefined,
+          apiKey: env[spec.apiKeyEnv]?.trim() || localDefaultKey,
           baseUrl: env[spec.baseUrlEnv]?.trim() || spec.defaultBaseUrl,
           apiKeyEnvName: spec.apiKeyEnv,
         })

@@ -5,17 +5,18 @@ import { describe, expect, it } from "vitest";
 import { DATA_PLUGIN_ID, createDataPlugin, makeDataLayer } from "./index.js";
 
 describe("createDataPlugin", () => {
-  it("registers data_query, data_ingest, and data_status", () => {
+  it("registers data_query, clawql_sql, data_ingest, and data_status", () => {
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
     const plugin = createDataPlugin();
     expect(plugin.id).toBe(DATA_PLUGIN_ID);
     Effect.runSync(plugin.onRegister!(api));
-    expect(registry.list().map((t) => t.name).sort()).toEqual([
-      "data_ingest",
-      "data_query",
-      "data_status",
-    ]);
+    expect(
+      registry
+        .list()
+        .map((t) => t.name)
+        .sort()
+    ).toEqual(["clawql_sql", "data_ingest", "data_query", "data_status"]);
   });
 });
 

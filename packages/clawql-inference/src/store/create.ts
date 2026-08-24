@@ -4,6 +4,7 @@ import { JsonlInferenceStore } from "./jsonl.js";
 import { PostgresInferenceStore } from "./postgres.js";
 import { getInferencePgPool, registerInferencePoolShutdownHooks } from "./postgres-pool.js";
 import type { InferenceStore, InferenceStoreBackend } from "./types.js";
+import { withInferenceLokiPush } from "../observability/loki-store.js";
 
 export type CreateInferenceStoreOptions = {
   env?: NodeJS.ProcessEnv;
@@ -36,8 +37,11 @@ export function createInferenceStore(
   const env = options.env ?? process.env;
   const backend = options.backend ?? resolveInferenceStoreBackend(env);
   if (backend === "off") return null;
-  if (backend === "memory") return new InMemoryInferenceStore();
-  if (backend === "postgres") {
+
+  let inner: InferenceStore;
+  if (backend === "memory") {
+    inner = new InMemoryInferenceStore();
+  } else if (backend === "postgres") {
     const pool = getInferencePgPool(env);
     if (!pool) {
       throw new Error(
@@ -45,7 +49,9 @@ export function createInferenceStore(
       );
     }
     registerInferencePoolShutdownHooks();
-    return new PostgresInferenceStore(pool, env);
+    inner = new PostgresInferenceStore(pool, env);
+  } else {
+    inner = new JsonlInferenceStore(options.jsonlPath ?? resolveInferenceStorePath(env));
   }
-  return new JsonlInferenceStore(options.jsonlPath ?? resolveInferenceStorePath(env));
+  return withInferenceLokiPush(inner, env);
 }

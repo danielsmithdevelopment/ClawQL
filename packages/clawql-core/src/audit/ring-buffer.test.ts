@@ -26,5 +26,9 @@ describe("audit ring buffer", () => {
     expect(dropped).toBe(1);
     const list = buffer.list(10);
     expect(list.entries.map((e) => e.summary)).toEqual(["second", "third"]);
+    const verification = buffer.verify();
+    expect(verification.ok).toBe(true);
+    expect(verification.fromGenesis).toBe(false);
+    expect(list.entries[1]?.prev_hash).toBe(list.entries[0]?.hash);
   });
 });

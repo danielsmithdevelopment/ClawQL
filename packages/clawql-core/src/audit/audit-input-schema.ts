@@ -6,7 +6,7 @@
 import { Effect, ParseResult, Schema } from "effect";
 
 export const AUDIT_OPERATION_DESCRIPTION =
-  "append — record a redacted audit line; list — recent events; clear — empty buffer (operator/test).";
+  "append — record a redacted hash-chained audit line; list — recent events; verify — check the retained-window hash chain; clear — empty buffer and start a new chain (operator/test).";
 
 export const AUDIT_CATEGORY_DESCRIPTION =
   "For append: short category (e.g. tool_call, payment, policy).";
@@ -36,6 +36,9 @@ export const AuditInputSchema = Schema.Union(
     limit: Schema.optionalWith(Schema.Number.pipe(Schema.int(), Schema.between(1, 100)), {
       default: () => 20,
     }).annotations({ description: AUDIT_LIMIT_DESCRIPTION }),
+  }),
+  Schema.Struct({
+    operation: Schema.Literal("verify"),
   }),
   Schema.Struct({
     operation: Schema.Literal("clear"),

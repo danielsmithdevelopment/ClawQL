@@ -1,0 +1,10 @@
+export type { BackendAck, WORMAppendInput, WORMEntry, WORMEntryType, WORMFilter } from "./entry.js";
+export { WormChainGapError, WormStorageError } from "./errors.js";
+export { MerkleBatchLayer } from "./merkle.js";
+export { DualAckReplicator } from "./replication/dual-ack.js";
+export { createFailingRemoteBackend, createMemoryBackend } from "./storage/memory.js";
+export { openSqliteBackend } from "./storage/sql-js.js";
+export type { SqliteBackendHandle } from "./storage/sql-js.js";
+export type { StorageBackend } from "./storage/types.js";
+export { WORMAuditTrail, createWORMAuditTrail, makeWORMAuditTrailLayer } from "./trail.js";
+export type { WORMAuditTrailConfig } from "./trail.js";

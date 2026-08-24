@@ -12,21 +12,27 @@ FROM node:22-alpine AS clawql-builder
 WORKDIR /app
 RUN apk upgrade --no-cache
 COPY package.json package-lock.json ./
+COPY packages/clawql-merkle/package.json packages/clawql-merkle/
+COPY packages/clawql-audit/package.json packages/clawql-audit/
+COPY packages/clawql-agents/package.json packages/clawql-agents/
 COPY packages/clawql-core/package.json packages/clawql-core/
 COPY packages/clawql-auth/package.json packages/clawql-auth/
 COPY packages/clawql-api/package.json packages/clawql-api/
-RUN npm ci --ignore-scripts -w clawql-core -w clawql-auth -w clawql-api
+RUN npm ci --ignore-scripts -w clawql-merkle -w clawql-core -w clawql-auth -w clawql-api
 COPY tsconfig.json ./
+COPY packages/clawql-merkle packages/clawql-merkle
 COPY packages/clawql-core packages/clawql-core
 COPY packages/clawql-auth packages/clawql-auth
 COPY packages/clawql-api packages/clawql-api
-RUN npm run build -w clawql-core -w clawql-auth -w clawql-api
+RUN npm run build -w clawql-merkle -w clawql-core -w clawql-auth -w clawql-api
 
 FROM node:22-alpine AS deps
 WORKDIR /app/dashboard
 RUN apk upgrade --no-cache
 COPY dashboard/package.json dashboard/package-lock.json ./
 # package.json only — avoid overlaying workspace node_modules before dashboard npm ci
+COPY --from=clawql-builder /app/packages/clawql-merkle/package.json /app/packages/clawql-merkle/package.json
+COPY --from=clawql-builder /app/packages/clawql-merkle/dist /app/packages/clawql-merkle/dist
 COPY --from=clawql-builder /app/packages/clawql-core/package.json /app/packages/clawql-core/package.json
 COPY --from=clawql-builder /app/packages/clawql-core/dist /app/packages/clawql-core/dist
 COPY --from=clawql-builder /app/packages/clawql-auth/package.json /app/packages/clawql-auth/package.json

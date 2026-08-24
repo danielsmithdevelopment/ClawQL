@@ -324,7 +324,10 @@ These vision items are **not** done by package extraction alone:
 
 | Package                      | npm name            | Version     |
 | ---------------------------- | ------------------- | ----------- |
+| `packages/clawql-merkle`     | `clawql-merkle`     | 7.2.0       |
 | `packages/clawql-core`       | `clawql-core`       | 7.2.0       |
+| `packages/clawql-audit`      | `clawql-audit`      | 7.2.0       |
+| `packages/clawql-agents`     | `clawql-agents`     | 7.2.0       |
 | `packages/clawql-auth`       | `clawql-auth`       | 7.2.0       |
 | `packages/clawql-pageindex`  | `clawql-pageindex`  | 7.2.0 (MIT) |
 | `packages/clawql-codegraph`  | `clawql-codegraph`  | 7.2.0       |

@@ -13,6 +13,9 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
+COPY packages/clawql-merkle/package.json ./packages/clawql-merkle/package.json
+COPY packages/clawql-audit/package.json ./packages/clawql-audit/package.json
+COPY packages/clawql-agents/package.json ./packages/clawql-agents/package.json
 COPY packages/clawql-core/package.json ./packages/clawql-core/package.json
 COPY packages/clawql-api/package.json ./packages/clawql-api/package.json
 COPY packages/clawql-memory/package.json ./packages/clawql-memory/package.json

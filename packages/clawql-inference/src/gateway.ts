@@ -99,6 +99,7 @@ export class ConfiguredInferenceGateway implements InferenceGateway {
 
     const response = await adapter.complete(model, request.messages, {
       promptCacheEnabled: request.promptCacheEnabled,
+      maxTokens: request.maxTokens,
     });
     return {
       ...response,

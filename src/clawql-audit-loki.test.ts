@@ -44,7 +44,7 @@ describe("clawql-audit-loki", () => {
       correlationId: "corr-1",
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("http://127.0.0.1:9/loki/api/v1/push");
     expect(init.method).toBe("POST");
