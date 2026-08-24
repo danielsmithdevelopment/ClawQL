@@ -237,13 +237,13 @@ Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery
 
 **Not shipped.** Scaffold: `inbound/id-jag-issuer.ts`.
 
-For regulated / air-gapped customers who cannot use Okta Cross App Access, ClawQL can act as a **self-hosted ID-JAG issuer** while remaining an auth *consumer* everywhere else — not a full human IdP.
+For regulated / air-gapped customers who cannot use Okta Cross App Access, ClawQL can act as a **self-hosted ID-JAG issuer** while remaining an auth _consumer_ everywhere else — not a full human IdP.
 
-| Layer | Scope | Blocker |
-| ----- | ----- | ------- |
-| **A — Issuer** | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish | Consumer WORM audit + RS256 AS signing (P2) |
-| **B — Registry** | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | Layer A |
-| **C — TEE signing** | `clawql-tee` hardening for key material | Layer A validated against org-controlled RS256 |
+| Layer               | Scope                                                                | Blocker                                        |
+| ------------------- | -------------------------------------------------------------------- | ---------------------------------------------- |
+| **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish            | Consumer WORM audit + RS256 AS signing (P2)    |
+| **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | Layer A                                        |
+| **C — TEE signing** | `clawql-tee` hardening for key material                              | Layer A validated against org-controlled RS256 |
 
 **Never:** Okta competitor, password/SSO IdP, SAML/LDAP server, per-user connector consent UI.
 

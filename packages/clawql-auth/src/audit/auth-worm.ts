@@ -200,8 +200,7 @@ function sqliteAuthWormBackend(path: string): AuthWormService["Type"] {
 
   const readMeta = (): { seq: number; last_hash: string } => {
     const row = db.prepare("SELECT seq, last_hash FROM auth_worm_meta WHERE id = 1").get() as
-      | { seq: number; last_hash: string }
-      | undefined;
+      { seq: number; last_hash: string } | undefined;
     return row ?? { seq: 0, last_hash: AUTH_WORM_GENESIS_HASH };
   };
 
@@ -285,10 +284,16 @@ function sqliteAuthWormBackend(path: string): AuthWormService["Type"] {
 let defaultLayer: Layer.Layer<AuthWormService> | null = null;
 let defaultLayerKey: string | null = null;
 
-export function authWormLayerFromEnv(env: NodeJS.ProcessEnv = process.env): Layer.Layer<AuthWormService> {
+export function authWormLayerFromEnv(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<AuthWormService> {
   const mode = resolveAuthAuditStoreMode(env);
   const key =
-    mode === "sqlite" ? `sqlite:${defaultAuthAuditDbPath(env)}` : mode === "memory" ? "memory" : "off";
+    mode === "sqlite"
+      ? `sqlite:${defaultAuthAuditDbPath(env)}`
+      : mode === "memory"
+        ? "memory"
+        : "off";
   if (defaultLayer && defaultLayerKey === key) return defaultLayer;
 
   if (mode === "off") {
@@ -298,13 +303,17 @@ export function authWormLayerFromEnv(env: NodeJS.ProcessEnv = process.env): Laye
   }
 
   const service =
-    mode === "memory" ? memoryAuthWormBackend() : sqliteAuthWormBackend(defaultAuthAuditDbPath(env));
+    mode === "memory"
+      ? memoryAuthWormBackend()
+      : sqliteAuthWormBackend(defaultAuthAuditDbPath(env));
   defaultLayer = Layer.succeed(AuthWormService, service);
   defaultLayerKey = key;
   return defaultLayer;
 }
 
-export function authWormLayerForTests(mode: AuthWormStoreMode = "memory"): Layer.Layer<AuthWormService> {
+export function authWormLayerForTests(
+  mode: AuthWormStoreMode = "memory"
+): Layer.Layer<AuthWormService> {
   if (mode === "off") {
     return Layer.die(new AuthWormError({ reason: "auth_audit_store_off" }));
   }
@@ -313,7 +322,9 @@ export function authWormLayerForTests(mode: AuthWormStoreMode = "memory"): Layer
   return Layer.succeed(AuthWormService, service);
 }
 
-export async function resetAuthWormStoreForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+export async function resetAuthWormStoreForTests(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<void> {
   defaultLayer = null;
   defaultLayerKey = null;
   const mode = resolveAuthAuditStoreMode(env);
