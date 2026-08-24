@@ -7,8 +7,13 @@ import type { Express, Request, Response } from "express";
 import { ID_JAG_JWT_BEARER_GRANT } from "./id-jag.js";
 import type { MCPOAuthServer, McpGrantTypeInput, McpTokenRequest } from "./mcp-oauth.js";
 import type { SecretStoreEmaConfigStore } from "./ema-config-store.js";
+import type { EmaConnectorRegistry } from "./ema-connector-registry.js";
+import type { IdJagIssuerService } from "./id-jag-issuer.js";
+import { Effect } from "effect";
 
 export const MCP_OAUTH_TOKEN_PATH = "/oauth/token";
+export const ID_JAG_ISSUER_JWKS_PATH = "/.well-known/id-jag-jwks.json";
+export const ID_JAG_ISSUE_PATH = "/oauth/id-jag/issue";
 
 export type AttachMcpOAuthRoutesOptions = {
   tokenPath?: string;
@@ -25,6 +30,17 @@ export type AttachMcpOAuthRoutesOptions = {
   };
   /** When set, publishes GET /.well-known/jwks.json and `jwks_uri` in discovery. */
   jwks?: { keys: import("jose").JWK[] };
+  /**
+   * Self-hosted ID-JAG issuer (ClawQL as EMA IdP).
+   * Publishes JWKS, connector admin routes, and POST /oauth/id-jag/issue.
+   */
+  idJagIssuer?: {
+    service: IdJagIssuerService["Type"];
+    connectors: EmaConnectorRegistry;
+    /** Default org when `?orgId=` omitted on JWKS (single-tenant). */
+    defaultOrgId?: string;
+    adminApiKey?: string;
+  };
 };
 
 type TokenBody = Record<string, string | undefined>;
@@ -124,23 +140,25 @@ function assertEmaAdmin(req: Request, res: Response, adminApiKey: string | undef
 
 export function attachMcpOAuthRoutes(
   app: Express,
-  server: MCPOAuthServer,
+  server: MCPOAuthServer | null,
   options: AttachMcpOAuthRoutesOptions = {}
 ): void {
   const tokenPath = options.tokenPath?.trim() || MCP_OAUTH_TOKEN_PATH;
 
-  app.post(tokenPath, (req, res) => {
-    void handleMcpOAuthTokenRequest(server, (req.body ?? {}) as TokenBody, res).catch(
-      (err: unknown) => {
-        console.error("[clawql-auth] POST oauth/token error:", err);
-        if (!res.headersSent) {
-          oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
+  if (server) {
+    app.post(tokenPath, (req, res) => {
+      void handleMcpOAuthTokenRequest(server, (req.body ?? {}) as TokenBody, res).catch(
+        (err: unknown) => {
+          console.error("[clawql-auth] POST oauth/token error:", err);
+          if (!res.headersSent) {
+            oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
+          }
         }
-      }
-    );
-  });
+      );
+    });
+  }
 
-  if (options.wellKnown) {
+  if (options.wellKnown && server) {
     const discoveryPath = "/.well-known/oauth-authorization-server";
     app.get(discoveryPath, (req, res) => {
       const proto = req.get("x-forwarded-proto") ?? req.protocol;
@@ -225,6 +243,117 @@ export function attachMcpOAuthRoutes(
         .then(() => res.status(204).end())
         .catch((err: unknown) => {
           oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
+        });
+    });
+  }
+
+  if (options.idJagIssuer) {
+    const { service, connectors, defaultOrgId, adminApiKey } = options.idJagIssuer;
+
+    app.get(ID_JAG_ISSUER_JWKS_PATH, (req, res) => {
+      const orgId =
+        (typeof req.query.orgId === "string" && req.query.orgId.trim()) ||
+        (typeof req.query.org === "string" && req.query.org.trim()) ||
+        defaultOrgId;
+      if (!orgId) {
+        oauthError(res, 400, "invalid_request", "missing_org_id");
+        return;
+      }
+      void Effect.runPromise(service.jwks(orgId))
+        .then((jwks) => {
+          res.setHeader("Content-Type", "application/json; charset=utf-8");
+          res.setHeader("Cache-Control", "public, max-age=300");
+          res.status(200).json(jwks);
+        })
+        .catch((err: unknown) => {
+          const reason =
+            err && typeof err === "object" && "reason" in err
+              ? String((err as { reason: string }).reason)
+              : err instanceof Error
+                ? err.message
+                : String(err);
+          oauthError(res, 404, "invalid_request", reason);
+        });
+    });
+
+    app.get("/oauth/ema/connectors/:orgId", (req, res) => {
+      if (!assertEmaAdmin(req, res, adminApiKey)) return;
+      void connectors
+        .list(req.params.orgId!)
+        .then((list) => res.status(200).json({ connectors: list }))
+        .catch((err: unknown) => {
+          oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
+        });
+    });
+
+    app.put("/oauth/ema/connectors/:orgId/:connectorId", (req, res) => {
+      if (!assertEmaAdmin(req, res, adminApiKey)) return;
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      void connectors
+        .save({
+          ...body,
+          orgId: req.params.orgId!,
+          connectorId: req.params.connectorId!,
+          audience: (body.audience as string | string[]) ?? "",
+          enabled: body.enabled !== false,
+          createdAt:
+            typeof body.createdAt === "string" ? body.createdAt : new Date().toISOString(),
+        })
+        .then((saved) => res.status(200).json(saved))
+        .catch((err: unknown) => {
+          oauthError(res, 400, "invalid_request", err instanceof Error ? err.message : String(err));
+        });
+    });
+
+    app.delete("/oauth/ema/connectors/:orgId/:connectorId", (req, res) => {
+      if (!assertEmaAdmin(req, res, adminApiKey)) return;
+      void connectors
+        .delete(req.params.orgId!, req.params.connectorId!)
+        .then(() => res.status(204).end())
+        .catch((err: unknown) => {
+          oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
+        });
+    });
+
+    app.post(ID_JAG_ISSUE_PATH, (req, res) => {
+      if (!assertEmaAdmin(req, res, adminApiKey)) return;
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const groupsRaw = body.groups;
+      const groups = Array.isArray(groupsRaw)
+        ? groupsRaw.filter((g): g is string => typeof g === "string")
+        : typeof groupsRaw === "string"
+          ? groupsRaw.split(/[\s,]+/).filter(Boolean)
+          : [];
+      void Effect.runPromise(
+        service.issueAssertion({
+          orgId: String(body.orgId ?? body.org_id ?? ""),
+          subjectId: String(body.subjectId ?? body.subject_id ?? body.sub ?? ""),
+          connectorId: String(body.connectorId ?? body.connector_id ?? ""),
+          groups,
+          email: typeof body.email === "string" ? body.email : undefined,
+          emailVerified:
+            typeof body.emailVerified === "boolean"
+              ? body.emailVerified
+              : typeof body.email_verified === "boolean"
+                ? body.email_verified
+                : undefined,
+          ttlSeconds:
+            typeof body.ttlSeconds === "number"
+              ? body.ttlSeconds
+              : typeof body.ttl_seconds === "number"
+                ? body.ttl_seconds
+                : undefined,
+        })
+      )
+        .then((issued) => res.status(200).json(issued))
+        .catch((err: unknown) => {
+          const reason =
+            err && typeof err === "object" && "reason" in err
+              ? String((err as { reason: string }).reason)
+              : err instanceof Error
+                ? err.message
+                : String(err);
+          oauthError(res, 400, "invalid_request", reason);
         });
     });
   }

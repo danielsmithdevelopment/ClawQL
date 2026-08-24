@@ -40,6 +40,7 @@ import {
   type McpRegisteredClient,
 } from "./mcp-oauth.js";
 import { createMemoryEmaConfigStore, type EmaOrgConfig } from "./id-jag.js";
+import { createIdJagIssuerFromEnv, type IdJagIssuerRuntime } from "./id-jag-issuer-env.js";
 import { Effect } from "effect";
 
 export type McpOAuthEnvConfig = {
@@ -105,6 +106,8 @@ export type McpOAuthRuntime = {
   validateBearer: (token: string) => Promise<import("../gateway.js").AtrClaims>;
   /** JWKS document when RS256 signing is configured. */
   jwks?: McpOAuthSigningMaterial["jwks"];
+  /** Self-hosted ID-JAG issuer when `CLAWQL_ID_JAG_ISSUER_ENABLED=1`. */
+  idJagIssuer?: IdJagIssuerRuntime;
 };
 
 function loadEmaBootstrapConfigs(env: NodeJS.ProcessEnv): EmaOrgConfig[] {
@@ -188,6 +191,8 @@ export async function createMcpOAuthFromEnv(
     env.CLAWQL_PUBLIC_ORIGIN?.trim()?.replace(/\/$/, "") ??
     "https://clawql.local";
 
+  const eventSink = options.eventSink ?? createAuthEventSinkFromEnv(env);
+
   const config: MCPOAuthConfig = {
     issuer,
     signing: signing,
@@ -195,10 +200,17 @@ export async function createMcpOAuthFromEnv(
     tokenTtlSeconds: envConfig.tokenTtlSeconds,
     refreshTokenTtlSeconds: envConfig.refreshTokenTtlSeconds,
     emaConfigStore,
-    eventSink: options.eventSink ?? createAuthEventSinkFromEnv(env),
+    eventSink,
   };
 
   const server = createMCPOAuthServer(config, clients, refreshStore);
+
+  const idJagIssuer = await createIdJagIssuerFromEnv({
+    env,
+    secretStore,
+    eventSink,
+    publicOrigin: issuer,
+  });
 
   return {
     server,
@@ -207,6 +219,7 @@ export async function createMcpOAuthFromEnv(
     clientRegistry,
     validateBearer: (token) => server.validateToken(token),
     jwks: signing.jwks.keys.length ? signing.jwks : undefined,
+    idJagIssuer: idJagIssuer ?? undefined,
   };
 }
 

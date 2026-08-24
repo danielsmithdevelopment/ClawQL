@@ -97,6 +97,16 @@ export type AuthEvent =
       type: "MCP_TOKEN_VALIDATION_FAILED";
       reason: string;
       timestamp: string;
+    }
+  | {
+      type: "ID_JAG_ASSERTION_ISSUED";
+      orgId: string;
+      connectorId: string;
+      subjectId: string;
+      audience: string;
+      groups: string[];
+      expiresAt: string;
+      timestamp: string;
     };
 
 export type AuthEventSink = (event: AuthEvent) => void | Promise<void>;

@@ -59,12 +59,39 @@ export {
 export {
   CLAWQL_ID_JAG_ISSUER_TAG,
   IdJagIssuerError,
+  IdJagIssuerService,
+  createIdJagIssuerLayer,
+  createIdJagIssuerService,
+  fixedOrgMaterialResolver,
   idJagIssuerJwksEffect,
   issueIdJagAssertionEffect,
   type EmaConnectorRegistration,
+  type IdJagIssuerDeps,
+  type IdJagIssuerOrgMaterial,
   type IssueIdJagAssertionInput,
   type IssuedIdJagAssertion,
 } from "./id-jag-issuer.js";
+export {
+  createIdJagIssuerFromEnv,
+  isIdJagIssuerEnabled,
+  type IdJagIssuerRuntime,
+} from "./id-jag-issuer-env.js";
+export {
+  EMA_CONNECTOR_SECRET_PREFIX,
+  createMemoryEmaConnectorRegistry,
+  createSecretStoreEmaConnectorRegistry,
+  type EmaConnectorRegistry,
+  type SecretStoreEmaConnectorRegistry,
+} from "./ema-connector-registry.js";
+export {
+  attachMcpOAuthRoutes,
+  handleMcpOAuthTokenRequest,
+  ID_JAG_ISSUE_PATH,
+  ID_JAG_ISSUER_JWKS_PATH,
+  MCP_OAUTH_TOKEN_PATH,
+  parseMcpOAuthTokenBody,
+  type AttachMcpOAuthRoutesOptions,
+} from "./http.js";
 export {
   createMcpOAuthForTests,
   createMcpOAuthFromEnv,
@@ -82,10 +109,3 @@ export {
   type McpOAuthSigningAlg,
   type McpOAuthSigningMaterial,
 } from "./mcp-oauth-signing.js";
-export {
-  attachMcpOAuthRoutes,
-  handleMcpOAuthTokenRequest,
-  MCP_OAUTH_TOKEN_PATH,
-  parseMcpOAuthTokenBody,
-  type AttachMcpOAuthRoutesOptions,
-} from "./http.js";

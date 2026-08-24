@@ -233,31 +233,23 @@ ID-JAG exchange verifies the IdP assertion (JWKS / HS256 dev), maps groups → A
 
 Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery-metadata.ts` (`assertion_types_supported: id-jag`).
 
-#### 4.1.2 ClawQL as EMA IdP (ID-JAG issuer) — roadmap
+#### 4.1.2 ClawQL as EMA IdP (ID-JAG issuer)
 
-**Not shipped.** Scaffold: `inbound/id-jag-issuer.ts`.
+**Shipped (Layers A + B):** `inbound/id-jag-issuer.ts`, `inbound/ema-connector-registry.ts`, HTTP routes under `/oauth/id-jag/*` and `/.well-known/id-jag-jwks.json`.
 
 For regulated / air-gapped customers who cannot use Okta Cross App Access, ClawQL can act as a **self-hosted ID-JAG issuer** while remaining an auth _consumer_ everywhere else — not a full human IdP.
 
-<<<<<<< HEAD
+| Layer | Scope | Status |
+| ----- | ----- | ------ |
+| **A — Issuer** | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish | **Shipped** |
+| **B — Registry** | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | **Shipped** |
+| **C — TEE signing** | `clawql-tee` hardening for key material | Open — Layer A validated against org-controlled RS256 first |
 
-| Layer               | Scope                                                                | Blocker                                                   |
-| ------------------- | -------------------------------------------------------------------- | --------------------------------------------------------- |
-| **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish            | Consumer WORM audit + RS256 AS signing (P2)               |
-| **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | Layer A                                                   |
-| **C — TEE signing** | `clawql-tee` hardening for key material                              | Layer A validated against org-controlled RS256            |
-| =======             |
-| Layer               | Scope                                                                | Blocker                                                   |
-| -----               | -----                                                                | -------                                                   |
-| **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish            | Consumer WORM audit (shipped); RS256 AS signing (shipped) |
-| **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | Layer A                                                   |
-| **C — TEE signing** | `clawql-tee` hardening for key material                              | Layer A validated against org-controlled RS256            |
-
-> > > > > > > f34897fd (Add RS256 MCP OAuth AS signing with JWKS discovery)
+**Flow:** Admin `PUT /oauth/ema/connectors/:orgId/:connectorId` → service `POST /oauth/id-jag/issue` with subject + groups → consumer `verifyIdJagAssertionEffect` / `POST /oauth/token` (jwt-bearer) maps groups → ATR scope. Every issuance emits **`ID_JAG_ASSERTION_ISSUED`** to the auth WORM sink.
 
 **Never:** Okta competitor, password/SSO IdP, SAML/LDAP server, per-user connector consent UI.
 
-**Phase placement:** After RS256 + JWKS for the MCP authorization server and durable consumer-side audit (this PR). TEE is a later hardening pass — do not gate protocol validation on `clawql-tee` maturity.
+**Env:** `CLAWQL_ID_JAG_ISSUER_ENABLED=1`, `CLAWQL_ID_JAG_ISSUER_ORG_ID`, signing via `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM(_PATH)` (or shared MCP OAuth RS256 keys).
 
 ### 4.2 API key validator (`APIKeyValidator`)
 

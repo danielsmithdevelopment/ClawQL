@@ -46,13 +46,17 @@ import { handleLangfuseEvalWebhookRequest } from "./langfuse-eval-webhook.js";
 import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
 import {
   attachMcpOAuthRoutes,
+  createIdJagIssuerFromEnv,
   createMcpOAuthFromEnv,
+  isIdJagIssuerEnabled,
   isMcpOAuthEnabled,
   loadGatewayAuthConfig,
   resolveAtrClaimsFromHeadersEffect,
+  resolveSecretStore,
   warnIfMcpOAuthAuditDisabled,
   type ApiKeyClaimsResolver,
   type GatewayAuthConfig,
+  type IdJagIssuerRuntime,
   type McpOAuthRuntime,
 } from "clawql-auth";
 import { Effect } from "effect";
@@ -235,23 +239,45 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
   app.use("/oauth/token", express.urlencoded({ extended: false }));
   app.use("/oauth/ema", express.json());
+  app.use("/oauth/id-jag", express.json());
 
   let mcpOAuthRuntime: McpOAuthRuntime | null = options.mcpOAuthRuntime ?? null;
   if (!options.skipMcpOAuth && !mcpOAuthRuntime && isMcpOAuthEnabled(process.env)) {
     mcpOAuthRuntime = await createMcpOAuthFromEnv();
   }
-  if (mcpOAuthRuntime) {
-    warnIfMcpOAuthAuditDisabled(process.env);
-    attachMcpOAuthRoutes(app, mcpOAuthRuntime.server, {
-      wellKnown: {
-        issuer: mcpOAuthRuntime.config.issuer,
-        resourceAudience: mcpOAuthRuntime.config.resourceAudience,
-      },
-      jwks: mcpOAuthRuntime.jwks,
-      emaAdmin: process.env.CLAWQL_API_KEY?.trim()
+
+  let idJagIssuer: IdJagIssuerRuntime | null = mcpOAuthRuntime?.idJagIssuer ?? null;
+  if (!idJagIssuer && isIdJagIssuerEnabled(process.env)) {
+    idJagIssuer = await createIdJagIssuerFromEnv({
+      secretStore: resolveSecretStore(),
+    });
+  }
+
+  if (mcpOAuthRuntime || idJagIssuer) {
+    if (mcpOAuthRuntime) {
+      warnIfMcpOAuthAuditDisabled(process.env);
+    }
+    attachMcpOAuthRoutes(app, mcpOAuthRuntime?.server ?? null, {
+      wellKnown: mcpOAuthRuntime
         ? {
-            store: mcpOAuthRuntime.emaStore,
-            adminApiKey: process.env.CLAWQL_API_KEY.trim(),
+            issuer: mcpOAuthRuntime.config.issuer,
+            resourceAudience: mcpOAuthRuntime.config.resourceAudience,
+          }
+        : undefined,
+      jwks: mcpOAuthRuntime?.jwks,
+      emaAdmin:
+        mcpOAuthRuntime && process.env.CLAWQL_API_KEY?.trim()
+          ? {
+              store: mcpOAuthRuntime.emaStore,
+              adminApiKey: process.env.CLAWQL_API_KEY.trim(),
+            }
+          : undefined,
+      idJagIssuer: idJagIssuer
+        ? {
+            service: idJagIssuer.service,
+            connectors: idJagIssuer.connectors,
+            defaultOrgId: idJagIssuer.material.orgId,
+            adminApiKey: process.env.CLAWQL_API_KEY?.trim(),
           }
         : undefined,
     });

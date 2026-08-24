@@ -134,7 +134,16 @@ Okta shorthand:
 
 Set `CLAWQL_AUTH_MODE=mcpOAuth` to accept only ClawQL-issued MCP JWTs, or keep `apiKey`/`oidc` — when MCP OAuth is enabled, issued bearer tokens are accepted in **hybrid** mode automatically on `server-http`.
 
-See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-auth-package-spec.md).
+### Self-hosted ID-JAG issuer (ClawQL as EMA IdP)
+
+For air-gapped / regulated deployments without Okta Cross App Access:
+
+1. Enable with `CLAWQL_ID_JAG_ISSUER_ENABLED=1` + `CLAWQL_ID_JAG_ISSUER_ORG_ID`
+2. Admin: `PUT /oauth/ema/connectors/:orgId/:connectorId` (audience = MCP resource origin)
+3. Issue: `POST /oauth/id-jag/issue` with `{ orgId, subjectId, connectorId, groups }`
+4. Consumers verify via `GET /.well-known/id-jag-jwks.json?orgId=…` then exchange at `/oauth/token`
+
+See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-auth-package-spec.md) §4.1.2.
 
 ## Environment
 
@@ -168,6 +177,11 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 | `CLAWQL_EMA_ORGS_PATH`                          | File path for EMA org configs JSON                          |
 | `CLAWQL_AUTH_AUDIT_STORE`                       | Auth WORM backend: `sqlite` (default) \| `memory` \| `off`  |
 | `CLAWQL_AUTH_AUDIT_PATH`                        | SQLite path (default `$CLAWQL_HOME/auth-audit.db`)          |
+| `CLAWQL_ID_JAG_ISSUER_ENABLED`                  | Enable ClawQL self-hosted ID-JAG issuer (EMA IdP)           |
+| `CLAWQL_ID_JAG_ISSUER_ORG_ID`                   | Org id for single-tenant issuer material                    |
+| `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH`     | RS256 PKCS#8 for ID-JAG (falls back to MCP OAuth key)       |
+| `CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET`           | HS256 issuer secret (tests/dev)                             |
+| `CLAWQL_ID_JAG_ISSUER_URI`                      | Assertion `iss` (default `$ORIGIN/oauth/id-jag/{orgId}`)    |
 
 Setting `CLAWQL_AUTH_AUDIT_STORE=off` while MCP OAuth is enabled logs a **SECURITY WARNING** at `server-http` boot — auth is live but issuance is not persisted.
 
