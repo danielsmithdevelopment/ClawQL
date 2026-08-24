@@ -1,0 +1,16 @@
+{
+  "model": "clawql-cc/openai/mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit",
+  "task": "firm-knowledge/tasks/002",
+  "run_id": "firm-knowledge/tasks/002/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260820-194419",
+  "max_turns": 40,
+  "temperature": 0.0,
+  "shell_timeout": 60,
+  "reasoning_effort": null,
+  "skills": [
+    "docx",
+    "pptx",
+    "xlsx"
+  ],
+  "sandbox_image": "lab-sandbox:latest",
+  "started_at": "2026-08-21T02:44:19.836344+00:00"
+}

@@ -23,6 +23,15 @@ export {
   enrichInventoryRows,
   enrichInventoryRowsEffect,
 } from "./inventory.js";
+export {
+  detectHsrFromRelPaths,
+  detectCreditFromRelPaths,
+  detectClearanceFromRelPaths,
+  detectHsrSecondRequest,
+  detectCreditFacility,
+  detectHsrClearance,
+  applyStructuralPathFlags,
+} from "./path-detectors.js";
 export { ClawqlDataStore, getClawqlDataStore, resetClawqlDataStoreForTests } from "./store.js";
 export { MATTER_COLUMNS } from "./schema.js";
 export {

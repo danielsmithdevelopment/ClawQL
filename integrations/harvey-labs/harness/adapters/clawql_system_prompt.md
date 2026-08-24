@@ -159,9 +159,19 @@ prompt asks about second requests.
 
 ## Pattern E — ONLY when the prompt explicitly concerns second requests
 
-Use structured ontology recall with `HSR_SECOND_REQUEST` **only if** the task
+Use **SQL first** for the cohort + proof paths (DuckDB flags are set at ingest):
+
+```sql
+SELECT matter_id, client_short_name, hsr_second_request_proof_doc
+FROM matters
+WHERE is_hsr_second_request
+ORDER BY matter_id;
+```
+
+Then structured ontology recall with `HSR_SECOND_REQUEST` **only if** the task
 explicitly mentions second request / second-request compliance / Second Request
-process (or clearly asks for every matter that received one).
+process (or clearly asks for every matter that received one) — and SQL is empty
+or you need `preferredEvidence` / `clientShortName` enrichment:
 
 ```json
 {
@@ -174,6 +184,14 @@ process (or clearly asks for every matter that received one).
 }
 ```
 
+**Evidence citation (hard rule):** For each listed matter, cite a path from
+`preferredEvidence` on the recall hit (or `hsr_second_request_proof_doc` from
+SQL). `read` that file under `/workspace/documents/...` before writing the
+deliverable. Do **not** invent or substitute other `second-request*.docx` paths
+from sibling matters. Gold-style proofs include `joint-status-report`,
+`case-assessment-memo`, `letter-ftc-meet-and-confer`,
+`substantial-compliance-certification`, `custodian-identification-collection-protocol`,
+and `second-request-strategy-memo` (Harrowgate).
 ## Pattern F — credit-facility / Banking & Finance frequency cohorts
 
 When the prompt asks how often / what share across **Banking & Finance credit

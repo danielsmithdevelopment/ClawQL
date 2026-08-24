@@ -50,10 +50,13 @@ test -f dist/server-http.js && test -f packages/clawql-data/dist/index.js && ech
 **T1 — MLX Nemotron (must listen on :8081)**
 
 ```bash
-# Start mlx_lm.server with Nemotron-3.5 Lightning 4bit as you normally do.
-# Confirm:
+bash integrations/harvey-labs/scripts/start-mlx-nemotron-for-lab.sh
 curl -fsS http://127.0.0.1:8081/v1/models | head
+# Chat probe (GET /v1/models stays 200 after metal::malloc):
+bash integrations/harvey-labs/scripts/probe-lab-agent-chat.sh
 ```
+
+`499000` is Apple’s **Metal buffer-count** cap, not RAM. Bigger unified memory / `set_memory_limit` does not raise it. After that abort, recycle MLX (`CLAWQL_LAB_RESTART_MLX=1`) — do not keep issuing chat against a dead generate thread.
 
 **T2 — clawql-inference (:8091 → MLX agent + Ollama judge)**
 
@@ -125,10 +128,14 @@ export HARVEY_LABS="${HARVEY_LABS:-/tmp/harvey-labs-work2/harvey-labs}"
 export CLAWQL_LAB_SKIP_CLONE=1
 export CLAWQL_LAB_PODMAN_VIA_DOCKER=1
 export CLAWQL_LAB_RUN_ID=harvey-lab-contiguous-ts-v2-$(date +%Y%m%d)
+# Resume after 001/002, skipping already-green tasks:
+# export CLAWQL_LAB_CONTIGUOUS_START=3
 
 bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh
 # → integrations/harvey-labs/results/ts-v2/aggregate-contiguous-001-025.json
 ```
+
+Contiguous **recycles MLX on chat-probe / 502** (once per task) and **aborts after 2 consecutive infra failures**. `GET /v1/models` alone is not a health check.
 
 ### Short checklist (same flow)
 
@@ -154,6 +161,7 @@ bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh
 | `data_ingest` / `CLAWQL_ENABLE_DATA!=1`       | MCP started without data     | `CLAWQL_ENABLE_DATA=1` in `start-clawql-for-lab.sh` (default on) + rebuild                                                                     |
 | Pre-ingest can’t find matters                 | Wrong DMS path               | `CLAWQL_LAB_DOCUMENTS_DIR` set from task `docs_dir` in overlay `run.py`                                                                        |
 | `clawql-inference not reachable`              | T2 not up / MLX down         | Start MLX :8081 first, then `start-clawql-inference-for-lab.sh 8091 …`                                                                         |
+| `502 fetch failed` / Metal `499000`           | MLX generate thread dead     | `GET /v1/models` can still be 200. Recycle: `CLAWQL_LAB_RESTART_MLX=1 bash integrations/harvey-labs/scripts/start-mlx-nemotron-for-lab.sh`. Contiguous retries once then aborts. |
 | Wrong harvey path                             | Clone / DMS missing          | Set `HARVEY_LABS=…`; confirm `tasks/firm-knowledge/dms/matters`                                                                                |
 
 ## After contiguous is green

@@ -769,10 +769,12 @@ export async function seedFirmKnowledgeDms({ mattersRoot, taskId, env = process.
 
   let hsrCount = 0;
   let creditCount = 0;
-  /** @type {{ path: string; markdown: string; matter_id: string }[]} */
+  /** @type {{ path: string; markdown: string; matter_id: string; title: string }[]} */
   const bulkDocs = [];
-  /** @type {{ path: string; markdown: string; matter_id: string }[]} */
+  /** @type {{ path: string; markdown: string; matter_id: string; title: string }[]} */
   const creditDocs = [];
+  /** @type {{ path: string; markdown: string; matter_id: string; title: string }[]} */
+  const hsrDocs = [];
 
   const mattersParent = join(mattersRoot, "..");
   const safeTask = taskId.replace(/[^a-zA-Z0-9_-]+/g, "-");
@@ -902,8 +904,11 @@ export async function seedFirmKnowledgeDms({ mattersRoot, taskId, env = process.
       path: `Memory/lab-${safeTask}-matter-${matterId}.md`,
       markdown,
       matter_id: matterId,
+      /** Ontology title for memory_ingest — must include HSR_SECOND_REQUEST / CREDIT_FACILITY for structured recall filters. */
+      title,
     };
     bulkDocs.push(doc);
+    if (detection.received) hsrDocs.push(doc);
     if (credit.isCreditFacility) creditDocs.push(doc);
   }
 
@@ -912,7 +917,7 @@ export async function seedFirmKnowledgeDms({ mattersRoot, taskId, env = process.
       `CREDIT_FACILITY flagged ${creditCount}/${allMatterDirs.length} matters; bulk_docs=${bulkDocs.length}`
   );
 
-  return { hsrCount, creditCount, creditDocs, bulkDocs };
+  return { hsrCount, creditCount, hsrDocs, creditDocs, bulkDocs };
 }
 
 // Legacy snake_case aliases for tests / parity

@@ -11,6 +11,7 @@ import {
   extractKeyTermsFromText,
   inferDocType,
 } from "../../inventory.js";
+import { applyStructuralPathFlags } from "../../path-detectors.js";
 import {
   CREATE_LAB_SCHEMA_SQL,
   CREATE_LAB_VIEW_SQL,
@@ -327,6 +328,45 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
             };
             matters.push(added);
             byId.set(matterId, added);
+          }
+          // Path / defined-term detectors (HSR, credit, clearance) — parity with lab-vault-seed.
+          // Skip when CLAWQL_DATA_PATH_DETECTORS=0 (tests / explicit opt-out).
+          const detectorsOff =
+            (this.env.CLAWQL_DATA_PATH_DETECTORS ?? "1").trim().toLowerCase() === "0" ||
+            (this.env.CLAWQL_DATA_PATH_DETECTORS ?? "1").trim().toLowerCase() === "false";
+          if (!detectorsOff) {
+            const target = byId.get(matterId)!;
+            const flags = yield* dataFromPromise(() => applyStructuralPathFlags(matterDir, target));
+            // Path detectors win when true; do not clobber explicit true from payload.matters.
+            if (flags.is_hsr_second_request || target.is_hsr_second_request !== true) {
+              target.is_hsr_second_request = flags.is_hsr_second_request || target.is_hsr_second_request === true;
+            }
+            if (flags.is_hsr_second_request) {
+              target.hsr_second_request_proof_doc =
+                flags.hsr_second_request_proof_doc || target.hsr_second_request_proof_doc;
+              if (flags.hsr_second_request_date) {
+                target.hsr_second_request_date = flags.hsr_second_request_date;
+              }
+            }
+            if (flags.has_hsr_clearance || target.has_hsr_clearance === true) {
+              target.has_hsr_clearance = flags.has_hsr_clearance || target.has_hsr_clearance === true;
+              if (flags.has_hsr_clearance) {
+                target.hsr_clearance_proof_doc = flags.hsr_clearance_proof_doc;
+              }
+            }
+            if (flags.is_credit_facility || target.is_credit_facility === true) {
+              target.is_credit_facility = flags.is_credit_facility || target.is_credit_facility === true;
+            }
+            if (flags.is_antitrust_matter || target.is_antitrust_matter === true) {
+              target.is_antitrust_matter = flags.is_antitrust_matter || target.is_antitrust_matter === true;
+            }
+            if (flags.client_short_name && !str(target.client_short_name)) {
+              target.client_short_name = flags.client_short_name;
+            }
+            if (flags.practice_area && (!target.practice_area || target.practice_area === "Other")) {
+              target.practice_area = flags.practice_area;
+              target.matter_type = flags.matter_type ?? target.matter_type;
+            }
           }
           for (const row of rows) {
             documents.push({ ...row, matter_id: matterId });

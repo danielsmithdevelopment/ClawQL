@@ -22,9 +22,29 @@ export CLAWQL_LAB_PREINGEST_SCRIPT="${WT}/integrations/harvey-labs/scripts/lab-p
 export CLAWQL_LAB_MCP_PROXY="${WT}/integrations/harvey-labs/scripts/lab-mcp-proxy.mjs"
 export CLAWQL_ENABLE_DATA="${CLAWQL_ENABLE_DATA:-1}"
 export PYTHONUNBUFFERED=1
+# Local 502s are Metal-dead, not flaky OpenRouter — fail the task so we can recycle MLX.
+export CLAWQL_LAB_CHAT_MAX_RETRIES="${CLAWQL_LAB_CHAT_MAX_RETRIES:-1}"
+START="${CLAWQL_LAB_CONTIGUOUS_START:-1}"
+END="${CLAWQL_LAB_CONTIGUOUS_END:-25}"
+RECOVER_MLX="${CLAWQL_LAB_RECOVER_MLX:-1}"
+RESTART_BETWEEN="${CLAWQL_LAB_RESTART_MLX_BETWEEN_TASKS:-0}"
+MAX_INFRA_FAILS="${CLAWQL_LAB_MAX_CONSECUTIVE_INFRA_FAILS:-2}"
+
+ensure_agent_chat() {
+  bash "${WT}/integrations/harvey-labs/scripts/probe-lab-agent-chat.sh"
+}
+
+recycle_mlx() {
+  echo "::warning::Recycling MLX (chat probe/502) — GET /v1/models is not sufficient after metal::malloc"
+  CLAWQL_LAB_RESTART_MLX=1 bash "${WT}/integrations/harvey-labs/scripts/start-mlx-nemotron-for-lab.sh"
+  # Weights reload can take a minute; chat probe waits on first token.
+  ensure_agent_chat
+}
+export -f ensure_agent_chat recycle_mlx
 
 mkdir -p "$(dirname "$AGG")"
-AGG="$AGG" STACK_VERSION="$STACK_VERSION" python3 - <<'PY'
+if [[ "${START}" == "1" ]] || [[ ! -f "$AGG" ]]; then
+  AGG="$AGG" STACK_VERSION="$STACK_VERSION" python3 - <<'PY'
 import json, os
 from pathlib import Path
 Path(os.environ["AGG"]).write_text(json.dumps({
@@ -38,12 +58,15 @@ Path(os.environ["AGG"]).write_text(json.dumps({
   "summary": {"done": 0, "all_pass_count": 0, "perfect_001_010": False, "perfect_001_025": False},
 }, indent=2))
 PY
+else
+  echo "::notice::Resuming contiguous from ${START}; keeping existing ${AGG}"
+fi
 
 python3 "${WT}/integrations/harvey-labs/scripts/apply_clawql_adapter.py" \
   --harvey-labs "${HARVEY_LABS}" \
   --openrouter-hooks || true
 
-for i in $(seq 1 25); do
+for i in $(seq "${START}" "${END}"); do
   t=$(printf '%03d' "$i")
   vault="${VAULT_ROOT}/firm-knowledge__tasks__${t}"
   if [[ -d "$vault" ]]; then
@@ -53,17 +76,60 @@ for i in $(seq 1 25); do
 done
 
 {
-  echo "CONTIGUOUS 001-025 START stack=${STACK_VERSION} $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  for i in $(seq 1 25); do
+  echo "CONTIGUOUS ${START}-${END} START stack=${STACK_VERSION} recover_mlx=${RECOVER_MLX} $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  infra_fails=0
+  for i in $(seq "${START}" "${END}"); do
     t=$(printf '%03d' "$i")
     echo "======== TASK firm-knowledge/tasks/${t} $(date -u +%Y-%m-%dT%H:%M:%SZ) ========"
+    if [[ "${RESTART_BETWEEN}" == "1" ]]; then
+      recycle_mlx || true
+    fi
+    if ! ensure_agent_chat; then
+      if [[ "${RECOVER_MLX}" == "1" ]]; then
+        recycle_mlx
+      else
+        echo "::error::Agent chat probe failed and CLAWQL_LAB_RECOVER_MLX=0 — aborting contiguous"
+        infra_fails=$((infra_fails + 1))
+        break
+      fi
+    fi
     export LAB_TASK="firm-knowledge/tasks/${t}"
     export CLAWQL_LAB_RUN_ID="harvey-lab-contiguous-001-025-${STACK_VERSION}-${t}"
+    task_log="/tmp/harvey-lab-task-${t}.log"
     set +e
-    bash "${WT}/integrations/harvey-labs/scripts/run-lab-local.sh"
+    bash "${WT}/integrations/harvey-labs/scripts/run-lab-local.sh" >"${task_log}" 2>&1
     ec=$?
     set -e
+    cat "${task_log}"
+    task_is_infra=0
+    if [[ "$ec" -ne 0 ]] && grep -Eq 'Error code: 502|fetch failed|metal::malloc' "${task_log}"; then
+      task_is_infra=1
+    fi
+    if [[ "$task_is_infra" -eq 1 && "${RECOVER_MLX}" == "1" ]]; then
+      echo "::warning::Task ${t} looks like MLX 502 — recycle + one retry"
+      if recycle_mlx; then
+        set +e
+        bash "${WT}/integrations/harvey-labs/scripts/run-lab-local.sh" >"${task_log}" 2>&1
+        ec=$?
+        set -e
+        cat "${task_log}"
+        task_is_infra=0
+        if [[ "$ec" -ne 0 ]] && grep -Eq 'Error code: 502|fetch failed|metal::malloc' "${task_log}"; then
+          task_is_infra=1
+        fi
+      fi
+    fi
     echo "TASK firm-knowledge/tasks/${t} exit=${ec} $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    if [[ "$task_is_infra" -eq 1 ]]; then
+      infra_fails=$((infra_fails + 1))
+    else
+      infra_fails=0
+    fi
+    if [[ "$infra_fails" -ge "${MAX_INFRA_FAILS}" ]]; then
+      echo "::error::Aborting contiguous after ${infra_fails} consecutive MLX/502 infra failures (limit ${MAX_INFRA_FAILS})"
+      echo "Resume with CLAWQL_LAB_CONTIGUOUS_START=$((i + 1)) after recycling MLX."
+      break
+    fi
     TASK="$t" EC="$ec" AGG="$AGG" LOG="$LOG" STACK_VERSION="$STACK_VERSION" python3 - <<'PY'
 import json, os, re
 from pathlib import Path
@@ -124,6 +190,6 @@ agg_path.write_text(json.dumps(agg, indent=2))
 print(json.dumps({"task": task, **entry}, indent=2)[:1200])
 PY
   done
-  echo "CONTIGUOUS 001-025 END stack=${STACK_VERSION} $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  echo "CONTIGUOUS ${START}-${END} END stack=${STACK_VERSION} $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   cat "$AGG"
 } 2>&1 | tee "$LOG"

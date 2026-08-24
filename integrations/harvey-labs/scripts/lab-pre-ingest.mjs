@@ -66,7 +66,10 @@ async function flushBulkMarkdownDocs(mcpClient, documents) {
     }
   }
   for (const doc of mcpDocs) {
-    const title = doc.path.split("/").pop()?.replace(/\.md$/i, "") ?? doc.path;
+    const title =
+      (typeof doc.title === "string" && doc.title.trim()) ||
+      doc.path.split("/").pop()?.replace(/\.md$/i, "") ||
+      doc.path;
     await mcpClient.callTool("memory_ingest", {
       title,
       type: "entity",
@@ -79,24 +82,31 @@ async function flushBulkMarkdownDocs(mcpClient, documents) {
 }
 
 /**
+ * Re-upsert ontology pages with titles that include HSR_SECOND_REQUEST / CREDIT_FACILITY
+ * so structured memory_recall filters on `title.contains` work (bulk path uses filename titles).
+ *
  * @param {import('./lab-mcp-client.mjs').LabMcpClient} mcpClient
- * @param {{ path: string; markdown: string; matter_id?: string }[]} creditDocs
+ * @param {{ path: string; markdown: string; matter_id?: string; title?: string }[]} docs
+ * @param {string} flag
  * @param {number} expected
  * @param {string} taskId
  */
-async function ensureCreditFacilityOntology(mcpClient, creditDocs, expected, taskId) {
-  if (!creditDocs.length) {
-    console.log("ClawQL pre-ingest: no CREDIT_FACILITY docs to ontology-verify");
+async function ensureOntologyFlagTitles(mcpClient, docs, flag, expected, taskId) {
+  if (!docs.length) {
+    console.log(`ClawQL pre-ingest: no ${flag} docs to ontology-verify`);
     return;
   }
-  for (const doc of creditDocs) {
-    const title = doc.path.split("/").pop()?.replace(/\.md$/i, "") ?? doc.path;
+  for (const doc of docs) {
+    const title =
+      (typeof doc.title === "string" && doc.title.trim()) ||
+      doc.path.split("/").pop()?.replace(/\.md$/i, "") ||
+      doc.path;
     await mcpClient.callTool(
       "memory_ingest",
       {
         title,
         type: "entity",
-        insights: `LAB ontology upsert ${doc.matter_id ?? title} CREDIT_FACILITY`,
+        insights: `LAB ontology upsert ${doc.matter_id ?? title} ${flag}`,
         toolOutputs: doc.markdown,
         sessionId: `harvey-lab:${taskId}`,
         append: false,
@@ -106,9 +116,9 @@ async function ensureCreditFacilityOntology(mcpClient, creditDocs, expected, tas
   }
   try {
     const raw = await mcpClient.callTool("memory_recall", {
-      query: "CREDIT_FACILITY cohort verify",
+      query: `${flag} cohort verify`,
       schema: "legal.Matter",
-      filters: { title: { contains: "CREDIT_FACILITY" } },
+      filters: { title: { contains: flag } },
       limit: 50,
     });
     const enriched = unwrapMcpToolPayload(raw);
@@ -117,16 +127,36 @@ async function ensureCreditFacilityOntology(mcpClient, creditDocs, expected, tas
         ? enriched.matterIds
         : [];
     console.log(
-      `ClawQL pre-ingest: ontology CREDIT_FACILITY recall N=${ids.length} expected=${expected} ids=${JSON.stringify(ids)}`
+      `ClawQL pre-ingest: ontology ${flag} recall N=${ids.length} expected=${expected} ids=${JSON.stringify(ids)}`
     );
     if (expected && ids.length !== expected) {
       console.log(
-        "ClawQL pre-ingest: WARNING ontology cohort size mismatch — agent may report wrong frequency denominator"
+        `ClawQL pre-ingest: WARNING ontology ${flag} cohort size mismatch — agent may report wrong frequency denominator`
       );
     }
   } catch (exc) {
-    console.log(`ClawQL pre-ingest: CREDIT_FACILITY ontology verify failed (${exc})`);
+    console.log(`ClawQL pre-ingest: ${flag} ontology verify failed (${exc})`);
   }
+}
+
+/**
+ * @param {import('./lab-mcp-client.mjs').LabMcpClient} mcpClient
+ * @param {{ path: string; markdown: string; matter_id?: string; title?: string }[]} creditDocs
+ * @param {number} expected
+ * @param {string} taskId
+ */
+async function ensureCreditFacilityOntology(mcpClient, creditDocs, expected, taskId) {
+  return ensureOntologyFlagTitles(mcpClient, creditDocs, "CREDIT_FACILITY", expected, taskId);
+}
+
+/**
+ * @param {import('./lab-mcp-client.mjs').LabMcpClient} mcpClient
+ * @param {{ path: string; markdown: string; matter_id?: string; title?: string }[]} hsrDocs
+ * @param {number} expected
+ * @param {string} taskId
+ */
+async function ensureHsrSecondRequestOntology(mcpClient, hsrDocs, expected, taskId) {
+  return ensureOntologyFlagTitles(mcpClient, hsrDocs, "HSR_SECOND_REQUEST", expected, taskId);
 }
 
 /**
@@ -162,6 +192,21 @@ async function buildLabDuckdbViaMcp(mcpClient, mattersRoot, expectedCredit) {
         `matters=${parsed.matterCount} documents=${parsed.documentCount} open_facts=${parsed.openFactCount} ` +
         `(ontology CREDIT_FACILITY expected ${expectedCredit})`
     );
+    try {
+      const hq = await mcpClient.callTool(
+        "data_query",
+        {
+          sql: "SELECT COUNT(*) AS n FROM matters WHERE is_hsr_second_request",
+        },
+        { timeout: 60_000 }
+      );
+      const hbody = mcpToolText(hq);
+      const hparsed = hbody.trim().startsWith("{") ? JSON.parse(hbody) : {};
+      const n = hparsed?.rows?.[0]?.n ?? hparsed?.rows?.[0]?.N;
+      console.log(`ClawQL pre-ingest: DuckDB is_hsr_second_request count=${n}`);
+    } catch (exc) {
+      console.log(`ClawQL pre-ingest: HSR count probe failed (${exc})`);
+    }
   } catch (exc) {
     throw new Error(
       `ClawQL data_ingest failed. Enable CLAWQL_ENABLE_DATA=1 on the MCP server (Node DuckDB). ${exc}`
@@ -212,7 +257,7 @@ async function main() {
   const mcpClient = new LabMcpClient();
   await mcpClient.ensureSession();
 
-  const { hsrCount, creditCount, creditDocs, bulkDocs } = await seedFirmKnowledgeDms({
+  const { hsrCount, creditCount, hsrDocs, creditDocs, bulkDocs } = await seedFirmKnowledgeDms({
     mattersRoot,
     taskId,
     mcpClient,
@@ -220,6 +265,7 @@ async function main() {
   });
 
   await flushBulkMarkdownDocs(mcpClient, bulkDocs);
+  await ensureHsrSecondRequestOntology(mcpClient, hsrDocs, hsrCount, taskId);
   await ensureCreditFacilityOntology(mcpClient, creditDocs, creditCount, taskId);
   await buildLabDuckdbViaMcp(mcpClient, mattersRoot, creditCount);
 

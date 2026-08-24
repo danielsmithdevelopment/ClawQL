@@ -63,6 +63,13 @@ check_url() {
 check_url "MLX / agent upstream" "http://127.0.0.1:8081/v1/models"
 check_url "clawql-inference" "http://127.0.0.1:8091/v1/models"
 check_url "Ollama" "http://127.0.0.1:11434/api/tags"
+if [[ -x "${ROOT}/integrations/harvey-labs/scripts/probe-lab-agent-chat.sh" ]]; then
+  if bash "${ROOT}/integrations/harvey-labs/scripts/probe-lab-agent-chat.sh"; then
+    ok "agent chat probe (not just /v1/models)"
+  else
+    echo "WARN agent chat probe failed — recycle MLX before smoke (metal::malloc can leave /v1/models 200)"
+  fi
+fi
 
 if [[ "$fail" -ne 0 ]]; then
   echo ""

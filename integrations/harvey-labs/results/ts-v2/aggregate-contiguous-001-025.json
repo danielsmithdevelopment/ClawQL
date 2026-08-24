@@ -1,12 +1,231 @@
 {
   "run_id": "harvey-lab-contiguous-001-025-ts-clawql-data-v2",
   "stack_version": "ts-clawql-data-v2",
-  "pipeline": "pending clean rerun — run run-contiguous-001-025.sh",
-  "tasks": {},
+  "pipeline": "ts-clawql-data-v2 contiguous 001-025",
+  "arms": "nemotron-clawql",
+  "agent_model": "openai/mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit",
+  "judge_model": "ollama/qwen3.6:35b",
+  "tasks": {
+    "firm-knowledge/tasks/001": {
+      "exit": 0,
+      "stack_version": "ts-clawql-data-v2",
+      "all_pass": 1.0,
+      "criterion_pass_rate": 1.0,
+      "n_passed": 7,
+      "n_criteria": 7,
+      "run_id": "firm-knowledge/tasks/001/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260820-193339",
+      "summary": "7/7 criteria passed.  ALL-PASS.",
+      "wall_clock_seconds": 404.78,
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/002": {
+      "exit": 0,
+      "stack_version": "ts-clawql-data-v2",
+      "all_pass": 1.0,
+      "criterion_pass_rate": 1.0,
+      "n_passed": 4,
+      "n_criteria": 4,
+      "run_id": "firm-knowledge/tasks/002/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260820-194419",
+      "summary": "4/4 criteria passed.  ALL-PASS.",
+      "wall_clock_seconds": 664.88,
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/003": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/004": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/005": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/006": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/007": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/008": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/009": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/010": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/011": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/012": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/013": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/014": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/015": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/016": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/017": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/018": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/019": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/020": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/021": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/022": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/023": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/024": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    },
+    "firm-knowledge/tasks/025": {
+      "exit": 1,
+      "stack_version": "ts-clawql-data-v2",
+      "pre_ingest": "ClawQL pre-ingest: Node DuckDB /Users/danielsmith/.ClawQL/HarveyLABVault/firm-knowledge__tasks__001/lab/matters.duckdb matters=266 documents=9288 open_facts=0 (ontology CREDIT_FACILITY expected 12)",
+      "matter_count": 266,
+      "open_facts": 0
+    }
+  },
   "summary": {
-    "done": 0,
-    "all_pass_count": 0,
+    "done": 25,
+    "all_pass_count": 2,
+    "all_pass_rate": 0.08,
     "perfect_001_010": false,
-    "perfect_001_025": false
+    "perfect_001_025": false,
+    "failed": [
+      "firm-knowledge/tasks/003",
+      "firm-knowledge/tasks/004",
+      "firm-knowledge/tasks/005",
+      "firm-knowledge/tasks/006",
+      "firm-knowledge/tasks/007",
+      "firm-knowledge/tasks/008",
+      "firm-knowledge/tasks/009",
+      "firm-knowledge/tasks/010",
+      "firm-knowledge/tasks/011",
+      "firm-knowledge/tasks/012",
+      "firm-knowledge/tasks/013",
+      "firm-knowledge/tasks/014",
+      "firm-knowledge/tasks/015",
+      "firm-knowledge/tasks/016",
+      "firm-knowledge/tasks/017",
+      "firm-knowledge/tasks/018",
+      "firm-knowledge/tasks/019",
+      "firm-knowledge/tasks/020",
+      "firm-knowledge/tasks/021",
+      "firm-knowledge/tasks/022",
+      "firm-knowledge/tasks/023",
+      "firm-knowledge/tasks/024",
+      "firm-knowledge/tasks/025"
+    ]
   }
 }

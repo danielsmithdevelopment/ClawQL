@@ -6,6 +6,7 @@ Model IDs: ``openrouter/nvidia/nemotron-3.5-lightning`` (or ``:free``).
 
 from __future__ import annotations
 
+import os
 import random
 import time
 
@@ -18,6 +19,27 @@ from harness.adapters.clawql_openrouter import (
 )
 
 _MAX_RETRIES = 5
+
+
+def _chat_retry_budget() -> int:
+    """Local MLX 502s are not transient — retrying them burns ~50 min per task.
+
+    OpenRouter rate limits still get the full budget. Override with
+    ``CLAWQL_LAB_CHAT_MAX_RETRIES``.
+    """
+    raw = os.environ.get("CLAWQL_LAB_CHAT_MAX_RETRIES", "").strip()
+    if raw:
+        try:
+            return max(1, int(raw))
+        except ValueError:
+            pass
+    if os.environ.get("CLAWQL_LAB_LOCAL_INFERENCE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }:
+        return 1
+    return _MAX_RETRIES
 
 
 class OpenRouterChatAdapter(ModelAdapter):
@@ -51,13 +73,14 @@ class OpenRouterChatAdapter(ModelAdapter):
 
         response = None
         last_err: Exception | None = None
-        for attempt in range(_MAX_RETRIES):
+        retries = _chat_retry_budget()
+        for attempt in range(retries):
             try:
                 response = self.client.chat.completions.create(**kwargs)
                 if response is None or not getattr(response, "choices", None):
                     raise RuntimeError(
                         f"OpenRouter returned empty choices for model={self.model} "
-                        f"(attempt {attempt + 1}/{_MAX_RETRIES}): {response!r}"
+                        f"(attempt {attempt + 1}/{retries}): {response!r}"
                     )
                 break
             except (
@@ -67,13 +90,13 @@ class OpenRouterChatAdapter(ModelAdapter):
                 RuntimeError,
             ) as e:
                 last_err = e
-                if attempt == _MAX_RETRIES - 1:
+                if attempt == retries - 1:
                     raise
                 time.sleep(min(30, 2**attempt) + random.uniform(0, 1))
 
         if response is None or not response.choices:
             raise RuntimeError(
-                f"OpenRouter chat failed after {_MAX_RETRIES} attempts: {last_err}"
+                f"OpenRouter chat failed after {retries} attempts: {last_err}"
             )
 
         message_obj = response.choices[0].message
