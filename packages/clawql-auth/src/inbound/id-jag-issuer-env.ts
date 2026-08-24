@@ -38,8 +38,8 @@ export function isIdJagIssuerEnabled(env: NodeJS.ProcessEnv = process.env): bool
     envFlag("CLAWQL_ID_JAG_ISSUER_ENABLED", env) ||
     Boolean(
       env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM?.trim() ||
-        env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim() ||
-        env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim()
+      env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim() ||
+      env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim()
     )
   );
 }
@@ -96,8 +96,7 @@ export async function createIdJagIssuerFromEnv(options: {
     "https://clawql.local"
   ).replace(/\/$/, "");
 
-  const issuer =
-    env.CLAWQL_ID_JAG_ISSUER_URI?.trim() || `${publicOrigin}/oauth/id-jag/${orgId}`;
+  const issuer = env.CLAWQL_ID_JAG_ISSUER_URI?.trim() || `${publicOrigin}/oauth/id-jag/${orgId}`;
   const jwksUri =
     env.CLAWQL_ID_JAG_ISSUER_JWKS_URI?.trim() ||
     `${publicOrigin}/.well-known/id-jag-jwks.json?orgId=${encodeURIComponent(orgId)}`;

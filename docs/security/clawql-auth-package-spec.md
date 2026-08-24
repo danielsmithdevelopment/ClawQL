@@ -239,11 +239,11 @@ Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery
 
 For regulated / air-gapped customers who cannot use Okta Cross App Access, ClawQL can act as a **self-hosted ID-JAG issuer** while remaining an auth _consumer_ everywhere else — not a full human IdP.
 
-| Layer | Scope | Status |
-| ----- | ----- | ------ |
-| **A — Issuer** | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish | **Shipped** |
-| **B — Registry** | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | **Shipped** |
-| **C — TEE signing** | `clawql-tee` hardening for key material | Open — Layer A validated against org-controlled RS256 first |
+| Layer               | Scope                                                                | Status                                                      |
+| ------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------- |
+| **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish            | **Shipped**                                                 |
+| **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | **Shipped**                                                 |
+| **C — TEE signing** | `clawql-tee` hardening for key material                              | Open — Layer A validated against org-controlled RS256 first |
 
 **Flow:** Admin `PUT /oauth/ema/connectors/:orgId/:connectorId` → service `POST /oauth/id-jag/issue` with subject + groups → consumer `verifyIdJagAssertionEffect` / `POST /oauth/token` (jwt-bearer) maps groups → ATR scope. Every issuance emits **`ID_JAG_ASSERTION_ISSUED`** to the auth WORM sink.
 

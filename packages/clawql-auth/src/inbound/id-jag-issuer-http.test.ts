@@ -4,15 +4,8 @@ import { exportPKCS8, generateKeyPair } from "jose";
 import { describe, expect, it } from "vitest";
 
 import { createMemoryEmaConnectorRegistry } from "./ema-connector-registry.js";
-import {
-  attachMcpOAuthRoutes,
-  ID_JAG_ISSUE_PATH,
-  ID_JAG_ISSUER_JWKS_PATH,
-} from "./http.js";
-import {
-  createIdJagIssuerService,
-  fixedOrgMaterialResolver,
-} from "./id-jag-issuer.js";
+import { attachMcpOAuthRoutes, ID_JAG_ISSUE_PATH, ID_JAG_ISSUER_JWKS_PATH } from "./http.js";
+import { createIdJagIssuerService, fixedOrgMaterialResolver } from "./id-jag-issuer.js";
 import { loadMcpOAuthSigningMaterialEffect } from "./mcp-oauth-signing.js";
 
 describe("ID-JAG issuer HTTP routes", () => {

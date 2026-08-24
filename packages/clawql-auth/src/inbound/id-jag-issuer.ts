@@ -78,9 +78,7 @@ export type IdJagIssuerDeps = {
    * Resolve org issuer URI + signing keys.
    * Fail with `unknown_org` / `issuer_not_configured` when the org has no issuer material.
    */
-  resolveOrgMaterial: (
-    orgId: string
-  ) => Effect.Effect<IdJagIssuerOrgMaterial, IdJagIssuerError>;
+  resolveOrgMaterial: (orgId: string) => Effect.Effect<IdJagIssuerOrgMaterial, IdJagIssuerError>;
   eventSink?: AuthEventSink;
   now?: () => number;
 };

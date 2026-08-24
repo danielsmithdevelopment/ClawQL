@@ -296,8 +296,7 @@ export function attachMcpOAuthRoutes(
           connectorId: req.params.connectorId!,
           audience: (body.audience as string | string[]) ?? "",
           enabled: body.enabled !== false,
-          createdAt:
-            typeof body.createdAt === "string" ? body.createdAt : new Date().toISOString(),
+          createdAt: typeof body.createdAt === "string" ? body.createdAt : new Date().toISOString(),
         })
         .then((saved) => res.status(200).json(saved))
         .catch((err: unknown) => {
