@@ -251,7 +251,10 @@ export function verifyIdJagAssertionEffect(
         groups.push(...roles);
       }
     }
-    if (groups.length === 0 && (config.idpProvider === "okta" || config.idpJwksUri.includes("okta"))) {
+    if (
+      groups.length === 0 &&
+      (config.idpProvider === "okta" || config.idpJwksUri.includes("okta"))
+    ) {
       groups.push(...extractOktaGroupsFromPayload(payload as Record<string, unknown>));
     }
 

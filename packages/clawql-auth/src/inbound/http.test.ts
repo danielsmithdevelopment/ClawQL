@@ -3,15 +3,14 @@ import { SignJWT } from "jose";
 import { describe, expect, it } from "vitest";
 
 import { ID_JAG_ASSERTION_TYPE } from "./id-jag.js";
-import {
-  attachMcpOAuthRoutes,
-  parseMcpOAuthTokenBody,
-  MCP_OAUTH_TOKEN_PATH,
-} from "./http.js";
+import { attachMcpOAuthRoutes, parseMcpOAuthTokenBody, MCP_OAUTH_TOKEN_PATH } from "./http.js";
 import { createMcpOAuthForTests } from "./mcp-oauth-env.js";
 
 async function withTestApp(
-  fn: (baseUrl: string, runtime: Awaited<ReturnType<typeof createMcpOAuthForTests>>) => Promise<void>,
+  fn: (
+    baseUrl: string,
+    runtime: Awaited<ReturnType<typeof createMcpOAuthForTests>>
+  ) => Promise<void>,
   options?: { adminApiKey?: string }
 ): Promise<void> {
   const idpSecret = "test-idp-hs256-secret-at-least-32-chars!!";
@@ -105,11 +104,12 @@ describe("attachMcpOAuthRoutes", () => {
     await withTestApp(async (baseUrl) => {
       const res = await fetch(`${baseUrl}/.well-known/oauth-authorization-server`);
       expect(res.status).toBe(200);
-      const body = (await res.json()) as { token_endpoint: string; grant_types_supported: string[] };
+      const body = (await res.json()) as {
+        token_endpoint: string;
+        grant_types_supported: string[];
+      };
       expect(body.token_endpoint).toContain("/oauth/token");
-      expect(body.grant_types_supported).toContain(
-        "urn:ietf:params:oauth:grant-type:jwt-bearer"
-      );
+      expect(body.grant_types_supported).toContain("urn:ietf:params:oauth:grant-type:jwt-bearer");
     });
   });
 

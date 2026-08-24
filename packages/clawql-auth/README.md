@@ -118,13 +118,15 @@ EMA org config (IdP JWKS + group→scope mappings) persists in **SecretStore** (
 
 ```json
 {
-  "orgs": [{
-    "provider": "okta",
-    "orgId": "acme",
-    "oktaDomain": "acme.okta.com",
-    "audience": "https://mcp.example.com/",
-    "groupMappings": [{ "idpGroup": "engineering", "scope": ["execute", "search", "memory"] }]
-  }]
+  "orgs": [
+    {
+      "provider": "okta",
+      "orgId": "acme",
+      "oktaDomain": "acme.okta.com",
+      "audience": "https://mcp.example.com/",
+      "groupMappings": [{ "idpGroup": "engineering", "scope": ["execute", "search", "memory"] }]
+    }
+  ]
 }
 ```
 

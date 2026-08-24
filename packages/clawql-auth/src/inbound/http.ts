@@ -27,12 +27,7 @@ export type AttachMcpOAuthRoutesOptions = {
 
 type TokenBody = Record<string, string | undefined>;
 
-function oauthError(
-  res: Response,
-  status: number,
-  error: string,
-  description?: string
-): void {
+function oauthError(res: Response, status: number, error: string, description?: string): void {
   res.status(status).json({
     error,
     ...(description ? { error_description: description } : {}),
@@ -48,8 +43,8 @@ function parseScope(raw: string | undefined): string[] | undefined {
 }
 
 export function parseMcpOAuthTokenBody(body: TokenBody): McpTokenRequest {
-  const grantType = (body.grant_type?.trim() ||
-    body.grantType?.trim()) as McpGrantTypeInput | undefined;
+  const grantType = (body.grant_type?.trim() || body.grantType?.trim()) as
+    McpGrantTypeInput | undefined;
   if (!grantType) {
     throw new Error("invalid_request: missing grant_type");
   }
@@ -133,16 +128,14 @@ export function attachMcpOAuthRoutes(
   const tokenPath = options.tokenPath?.trim() || MCP_OAUTH_TOKEN_PATH;
 
   app.post(tokenPath, (req, res) => {
-    void handleMcpOAuthTokenRequest(
-      server,
-      (req.body ?? {}) as TokenBody,
-      res
-    ).catch((err: unknown) => {
-      console.error("[clawql-auth] POST oauth/token error:", err);
-      if (!res.headersSent) {
-        oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
+    void handleMcpOAuthTokenRequest(server, (req.body ?? {}) as TokenBody, res).catch(
+      (err: unknown) => {
+        console.error("[clawql-auth] POST oauth/token error:", err);
+        if (!res.headersSent) {
+          oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
+        }
       }
-    });
+    );
   });
 
   if (options.wellKnown) {
@@ -159,11 +152,7 @@ export function attachMcpOAuthRoutes(
       res.status(200).json({
         issuer,
         token_endpoint: tokenEndpoint,
-        grant_types_supported: [
-          "client_credentials",
-          "refresh_token",
-          ID_JAG_JWT_BEARER_GRANT,
-        ],
+        grant_types_supported: ["client_credentials", "refresh_token", ID_JAG_JWT_BEARER_GRANT],
         token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
         scopes_supported: ["execute", "search", "memory", "mcp:tools"],
         agent_auth: {

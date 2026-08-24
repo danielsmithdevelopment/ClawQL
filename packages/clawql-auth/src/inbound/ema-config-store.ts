@@ -11,8 +11,7 @@ import { buildOktaEmaOrgConfig, type OktaEmaOrgParams } from "./okta-id-jag.js";
 export const EMA_ORG_SECRET_PREFIX = "ema-orgs/";
 
 export type EmaOrgConfigInput =
-  | EmaOrgConfig
-  | (OktaEmaOrgParams & { provider?: "okta" | "custom" });
+  EmaOrgConfig | (OktaEmaOrgParams & { provider?: "okta" | "custom" });
 
 function normalizeOrgInput(input: EmaOrgConfigInput): EmaOrgConfig {
   if ("idpJwksUri" in input && input.idpJwksUri) {

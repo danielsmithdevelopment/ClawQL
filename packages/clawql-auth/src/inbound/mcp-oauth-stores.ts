@@ -50,7 +50,9 @@ export type SecretStoreMcpClientRegistry = McpClientRegistry & {
   listClientIds: () => Promise<string[]>;
 };
 
-export function createSecretStoreMcpClientRegistry(store: SecretStore): SecretStoreMcpClientRegistry {
+export function createSecretStoreMcpClientRegistry(
+  store: SecretStore
+): SecretStoreMcpClientRegistry {
   return {
     async getClient(clientId) {
       const raw = await store.getSecret(clientPath(clientId));
@@ -69,7 +71,10 @@ export function createSecretStoreMcpClientRegistry(store: SecretStore): SecretSt
     },
     async listClientIds() {
       const paths = await store.listSecrets(MCP_OAUTH_CLIENT_PREFIX);
-      return paths.map((p) => p.slice(MCP_OAUTH_CLIENT_PREFIX.length)).filter(Boolean).sort();
+      return paths
+        .map((p) => p.slice(MCP_OAUTH_CLIENT_PREFIX.length))
+        .filter(Boolean)
+        .sort();
     },
   };
 }
@@ -104,7 +109,9 @@ export async function bootstrapMcpClientsToStore(
 /**
  * Composite client registry — static/env clients first, then SecretStore.
  */
-export function createCompositeMcpClientRegistry(...registries: McpClientRegistry[]): McpClientRegistry {
+export function createCompositeMcpClientRegistry(
+  ...registries: McpClientRegistry[]
+): McpClientRegistry {
   return {
     async getClient(clientId) {
       for (const registry of registries) {

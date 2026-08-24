@@ -99,8 +99,7 @@ function buildGatewayAuthConfig(
   mcpOAuthValidator?: (bearer: string) => Promise<import("clawql-auth").AtrClaims>
 ): GatewayAuthConfig {
   const config = loadGatewayAuthConfig(env);
-  const withMcp =
-    mcpOAuthValidator != null ? { ...config, mcpOAuthValidator } : config;
+  const withMcp = mcpOAuthValidator != null ? { ...config, mcpOAuthValidator } : config;
   if (withMcp.mode !== "apiKey") return withMcp;
   return {
     ...withMcp,
@@ -236,8 +235,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   app.use("/oauth/token", express.urlencoded({ extended: false }));
   app.use("/oauth/ema", express.json());
 
-  let mcpOAuthRuntime: McpOAuthRuntime | null =
-    options.mcpOAuthRuntime ?? null;
+  let mcpOAuthRuntime: McpOAuthRuntime | null = options.mcpOAuthRuntime ?? null;
   if (!options.skipMcpOAuth && !mcpOAuthRuntime && isMcpOAuthEnabled(process.env)) {
     mcpOAuthRuntime = await createMcpOAuthFromEnv();
   }
@@ -264,10 +262,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
    * | `mcpOAuth` (ClawQL-issued MCP JWT). When MCP OAuth is enabled, Bearer tokens
    * from `/oauth/token` are also accepted in hybrid mode alongside apiKey/oidc.
    */
-  const gatewayAuthConfig = buildGatewayAuthConfig(
-    process.env,
-    mcpOAuthRuntime?.validateBearer
-  );
+  const gatewayAuthConfig = buildGatewayAuthConfig(process.env, mcpOAuthRuntime?.validateBearer);
   attachCreditsHateoasRoutes(app, { authConfig: gatewayAuthConfig });
   if (isMppOpenApiEnabled(process.env)) {
     attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });

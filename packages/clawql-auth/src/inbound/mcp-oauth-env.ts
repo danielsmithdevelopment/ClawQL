@@ -172,10 +172,7 @@ export async function createMcpOAuthFromEnv(
   await bootstrapMcpClientsToStore(clientRegistry, loadMcpClientBootstrap(env));
 
   const memoryClients = createMemoryMcpClientRegistry([]);
-  const emaConfigStore = createCompositeEmaConfigStore(
-    emaStore,
-    createMemoryEmaConfigStore([])
-  );
+  const emaConfigStore = createCompositeEmaConfigStore(emaStore, createMemoryEmaConfigStore([]));
   const clients = createCompositeMcpClientRegistry(memoryClients, clientRegistry);
 
   const issuer =
