@@ -146,3 +146,32 @@ export {
   type McpOAuthSigningAlg,
   type McpOAuthSigningMaterial,
 } from "./mcp-oauth-signing.js";
+export {
+  DomainTxtError,
+  createDomainChallengeEffect,
+  domainTxtHostname,
+  verifyDomainTxtEffect,
+  type DomainTxtConfig,
+  type DomainTxtResolve,
+} from "./domain-txt.js";
+export {
+  SiweError,
+  buildSiweMessage,
+  issueSiweNonceEffect,
+  parseSiweMessage,
+  verifySiweLoginEffect,
+  type SiweConfig,
+  type SiweNonceIssue,
+  type SiweVerifyInput,
+} from "./siwe.js";
+export {
+  PrimaryTotpError,
+  primaryTotpLoginEffect,
+  type PrimaryTotpLoginInput,
+} from "./primary-totp.js";
+export {
+  createLocalIdJagAssertionSigner,
+  createTeeIdJagAssertionSigner,
+  type IdJagAssertionSigner,
+  type IdJagSignRequest,
+} from "./id-jag-tee-signer.js";

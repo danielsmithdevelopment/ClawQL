@@ -123,6 +123,25 @@ export type AuthEvent =
       jti: string;
       expiresAt: string;
       timestamp: string;
+    }
+  | {
+      type: "VAULT_LEASE_ISSUED";
+      leaseId: string;
+      rolePath: string;
+      leaseDurationSec: number;
+      timestamp: string;
+    }
+  | {
+      type: "VAULT_LEASE_RENEWED";
+      leaseId: string;
+      rolePath: string;
+      leaseDurationSec: number;
+      timestamp: string;
+    }
+  | {
+      type: "DOMAIN_TXT_VERIFIED";
+      domain: string;
+      timestamp: string;
     };
 
 /** Effect-primary sink — hosts inject WORM / logging without Promise domain APIs. */

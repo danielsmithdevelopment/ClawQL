@@ -35,6 +35,17 @@ export type OAuthTokenStoreOptions = {
   eventSink?: AuthEventSink;
   proactiveRefreshMs?: number;
   now?: () => number;
+  /**
+   * When re-auth is required, build a PKCE/consent URL (no secrets).
+   * Hermes / Telegram hosts use {@link ReauthRequiredError.reauthUrl}.
+   */
+  buildReauthUrl?: (input: {
+    providerId: string;
+    tokenKey: OAuthTokenKey;
+    reason: "no_token" | "invalid_grant" | "refresh_failed";
+  }) => Effect.Effect<string | undefined>;
+  /** When set, marks the provider token as `needs_reauth` on invalid_grant / no_token. */
+  markRequiresReauth?: (providerId: string) => Effect.Effect<void>;
 };
 
 function defaultProviderId(key: OAuthTokenKey): string {
@@ -89,11 +100,18 @@ export class OAuthTokenStore {
           reason: "no_token",
           timestamp: new Date(this.now()).toISOString(),
         });
+        if (this.options.markRequiresReauth) {
+          yield* this.options.markRequiresReauth(providerId).pipe(Effect.catchAll(() => Effect.void));
+        }
+        const reauthUrl = this.options.buildReauthUrl
+          ? yield* this.options.buildReauthUrl({ providerId, tokenKey: key, reason: "no_token" })
+          : undefined;
         return yield* Effect.fail(
           new ReauthRequiredError({
             tokenKey: key,
             providerId,
             reason: "no_token",
+            reauthUrl,
           })
         );
       }
@@ -150,11 +168,24 @@ export class OAuthTokenStore {
                   reason: "invalid_grant",
                   timestamp: new Date(this.now()).toISOString(),
                 });
+                if (this.options.markRequiresReauth) {
+                  yield* this.options
+                    .markRequiresReauth(providerId)
+                    .pipe(Effect.catchAll(() => Effect.void));
+                }
+                const reauthUrl = this.options.buildReauthUrl
+                  ? yield* this.options.buildReauthUrl({
+                      providerId,
+                      tokenKey: key,
+                      reason: "invalid_grant",
+                    })
+                  : undefined;
                 return yield* Effect.fail(
                   new ReauthRequiredError({
                     tokenKey: key,
                     providerId,
                     reason: "invalid_grant",
+                    reauthUrl,
                   })
                 );
               }

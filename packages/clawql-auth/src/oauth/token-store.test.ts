@@ -150,4 +150,26 @@ describe("OAuthTokenStore", () => {
       expect((exit.cause.error as ReauthRequiredError).reason).toBe("no_token");
     }
   });
+
+  it("attaches reauthUrl and calls markRequiresReauth on no_token", async () => {
+    const marked: string[] = [];
+    const store = createOAuthTokenStore({
+      persistence: createMemoryOAuthPersistence(),
+      refresh: () => Effect.die("should not refresh"),
+      markRequiresReauth: (providerId) =>
+        Effect.sync(() => {
+          marked.push(providerId);
+        }),
+      buildReauthUrl: ({ providerId, tokenKey }) =>
+        Effect.succeed(`https://auth.test/reauth?provider=${providerId}&key=${tokenKey}`),
+    });
+    const exit = await Effect.runPromiseExit(store.getValidToken("acme:google:user"));
+    expect(exit._tag).toBe("Failure");
+    if (exit._tag === "Failure" && exit.cause._tag === "Fail") {
+      const err = exit.cause.error as ReauthRequiredError;
+      expect(err.reauthUrl).toBe("https://auth.test/reauth?provider=google&key=acme:google:user");
+      expect(err.providerId).toBe("google");
+    }
+    expect(marked).toEqual(["google"]);
+  });
 });

@@ -243,4 +243,59 @@ describe("ID-JAG issuer + connector registry", () => {
       idJagJti: issued.jti,
     });
   });
+
+  it("Layer C: uses injected TEE assertionSigner when provided", async () => {
+    const { privateKey } = await generateKeyPair("RS256", { extractable: true });
+    const signing = await Effect.runPromise(
+      loadMcpOAuthSigningMaterialEffect({
+        privateKeyPem: await exportPKCS8(privateKey),
+        keyId: "tee-kid",
+      })
+    );
+    const connectors = createMemoryEmaConnectorRegistry([
+      {
+        orgId: "acme",
+        connectorId: "claude-desktop",
+        audience: "https://mcp.clawql.test/",
+        enabled: true,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+
+    let teeCalls = 0;
+    const { createTeeIdJagAssertionSigner, createLocalIdJagAssertionSigner } = await import(
+      "./id-jag-tee-signer.js"
+    );
+    const local = createLocalIdJagAssertionSigner(signing);
+    const tee = createTeeIdJagAssertionSigner({
+      teeSign: (req) => {
+        teeCalls += 1;
+        return local.sign(req);
+      },
+    });
+    expect(tee.kind).toBe("tee");
+
+    const issued = await Effect.runPromise(
+      issueIdJagAssertionEffect(
+        {
+          orgId: "acme",
+          subjectId: "user-tee",
+          connectorId: "claude-desktop",
+          groups: ["engineering"],
+        },
+        {
+          connectors,
+          resolveOrgMaterial: fixedOrgMaterialResolver({
+            orgId: "acme",
+            issuer: "https://idp.clawql.test/acme",
+            jwksUri: "https://idp.clawql.test/jwks",
+            signing,
+          }),
+          assertionSigner: tee,
+        }
+      )
+    );
+    expect(teeCalls).toBe(1);
+    expect(issued.assertion.split(".")).toHaveLength(3);
+  });
 });

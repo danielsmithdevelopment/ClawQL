@@ -56,6 +56,10 @@ export type AtrClaims = {
   orgId?: string;
   /** IdP group membership from EMA / ID-JAG (audit + policy hooks). */
   idpGroups?: string[];
+  /** Ethereum address when auth succeeded via SIWE. */
+  walletAddress?: string;
+  /** True when primary TOTP / step-up MFA succeeded. */
+  mfa?: boolean;
 };
 
 /**

@@ -62,3 +62,12 @@ export {
   type OAuthTokenPersistence,
   type StoredOAuthToken,
 } from "./types.js";
+export {
+  ReauthNotifyError,
+  buildOAuthReauthUrlEffect,
+  noopReauthNotifier,
+  notifyReauthRequiredEffect,
+  type ReauthNotifyChannel,
+  type ReauthNotifyPayload,
+  type ReauthNotifier,
+} from "./reauth-notify.js";

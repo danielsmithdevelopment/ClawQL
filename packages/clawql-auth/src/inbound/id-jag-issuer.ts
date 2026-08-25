@@ -25,6 +25,7 @@ import {
 } from "../audit/auth-events.js";
 import { ID_JAG_ASSERTION_TYPE } from "./id-jag.js";
 import type { EmaConnectorRegistry } from "./ema-connector-registry.js";
+import type { IdJagAssertionSigner } from "./id-jag-tee-signer.js";
 import type { McpOAuthSigningMaterial } from "./mcp-oauth-signing.js";
 
 export const CLAWQL_ID_JAG_ISSUER_TAG = "clawql/IdJagIssuer" as const;
@@ -85,6 +86,11 @@ export type IdJagIssuerDeps = {
   resolveOrgMaterial: (orgId: string) => Effect.Effect<IdJagIssuerOrgMaterial, IdJagIssuerError>;
   eventSink?: AuthEventSink;
   now?: () => number;
+  /**
+   * Layer C — optional TEE / HSM signer. When set, assertions are signed via this
+   * interface instead of local jose (`material.signing.signKey`).
+   */
+  assertionSigner?: IdJagAssertionSigner;
 };
 
 function firstAudience(audience: string | string[]): string {
@@ -153,22 +159,37 @@ export function issueIdJagAssertionEffect(
       claims.email_verified = input.emailVerified;
     }
 
-    const assertion = yield* Effect.tryPromise({
-      try: () =>
-        new SignJWT(claims)
-          .setProtectedHeader({
-            alg: material.signing.algorithm,
-            ...(material.signing.keyId ? { kid: material.signing.keyId } : {}),
-          })
-          .setSubject(subjectId)
-          .setIssuer(material.issuer)
-          .setAudience(audience)
-          .setIssuedAt(Math.floor(nowMs / 1000))
-          .setExpirationTime(Math.floor(expiresAtMs / 1000))
-          .setJti(jti)
-          .sign(material.signing.signKey),
-      catch: (cause) => new IdJagIssuerError({ reason: "assertion_sign_failed", cause }),
-    });
+    const assertion = yield* (() => {
+      const header = {
+        alg: material.signing.algorithm,
+        ...(material.signing.keyId ? { kid: material.signing.keyId } : {}),
+      };
+      const jwtClaims = {
+        ...claims,
+        sub: subjectId,
+        iss: material.issuer,
+        aud: audience,
+        iat: Math.floor(nowMs / 1000),
+        exp: Math.floor(expiresAtMs / 1000),
+        jti,
+      };
+      if (deps.assertionSigner) {
+        return deps.assertionSigner.sign({ claims: jwtClaims, header });
+      }
+      return Effect.tryPromise({
+        try: () =>
+          new SignJWT(claims)
+            .setProtectedHeader(header)
+            .setSubject(subjectId)
+            .setIssuer(material.issuer)
+            .setAudience(audience)
+            .setIssuedAt(Math.floor(nowMs / 1000))
+            .setExpirationTime(Math.floor(expiresAtMs / 1000))
+            .setJti(jti)
+            .sign(material.signing.signKey),
+        catch: (cause) => new IdJagIssuerError({ reason: "assertion_sign_failed", cause }),
+      });
+    })();
 
     const issued: IssuedIdJagAssertion = {
       assertion,

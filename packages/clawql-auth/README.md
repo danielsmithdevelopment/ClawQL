@@ -237,6 +237,18 @@ WebAuthn is a **pluggable** `WebAuthnStepUpVerifier` (fails closed until injecte
 
 **Face ID / Touch ID / Windows Hello** and **YubiKey / Titan** are the same WebAuthn surface — platform vs roaming authenticators. ClawQL never sees biometric bytes; keys stay in Secure Enclave / TPM / the hardware token.
 
+## Phase 4–7 surfaces (library)
+
+| Area | Entry points |
+|------|----------------|
+| Domain TXT | `createDomainChallengeEffect` / `verifyDomainTxtEffect` |
+| Offboarding | `offboardSubjectEffect` (revoke `cqk_` keys + mark OAuth re-auth) |
+| SIWE login | `issueSiweNonceEffect` / `verifySiweLoginEffect` → ATR |
+| Primary TOTP | `primaryTotpLoginEffect` (uses `StepUpStoreService` enrollments) |
+| Vault leases | `VaultDynamicSecretProvider` / `VaultDynamicSecretService` |
+| Re-auth UX | `buildReauthUrl` on `OAuthTokenStore` + `notifyReauthRequiredEffect` (Hermes sends Telegram) |
+| ID-JAG TEE | `assertionSigner` on issuer deps (`createTeeIdJagAssertionSigner`) |
+
 ```ts
 import { buildPasskeyAuthenticatorSelection } from "clawql-auth";
 
