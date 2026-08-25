@@ -18,28 +18,31 @@ Prefer issued keys over a single shared env secret when multiple teams or machin
 
 ```ts
 import { createClawQLAuth } from "clawql-auth";
+import { Effect } from "effect";
 
 const auth = createClawQLAuth({
   mode: "apiKey",
   apiKeyStorePath: `${process.env.CLAWQL_HOME}/Auth/api-keys.json`,
 });
 
-const { secret, record } = await auth.apiKeys!.issue({
-  subjectId: "alice@acme.com",
-  orgId: "acme",
-  teamId: "platform",
-  role: "operator",
-  scope: ["execute", "search", "memory"],
-  label: "ci-runner",
-});
+const { secret, record } = await Effect.runPromise(
+  auth.apiKeys!.issue({
+    subjectId: "alice@acme.com",
+    orgId: "acme",
+    teamId: "platform",
+    role: "operator",
+    scope: ["execute", "search", "memory"],
+    label: "ci-runner",
+  })
+);
 // `secret` shown once — format `cqk_<id>_<random>`; only salted hash is stored.
 
 const check = auth.resolveClaims({ "x-api-key": secret });
 // → ATR claims with orgId / virtualKeyId / scope
 ```
 
-- **Issue / validate / revoke / listActive** live in `IssuedApiKeyStore`
-- Gateway wires `asClaimsResolver()` automatically when `apiKeyStorePath` is set
+- **Issue / validate / revoke / listActive** live in `IssuedApiKeyStore` — Effect-primary; run with `Effect.runPromise` (or `IssuedApiKeyStoreService` + `createIssuedApiKeyStoreLayer` for `Effect.provide`)
+- Gateway wires `asClaimsResolver()` automatically when `apiKeyStorePath` is set (stays a synchronous façade for `gateway.ts`'s sync host boundary)
 - Optional `authEventSink` for WORM (`API_KEY_ISSUED` / `USED` / `REVOKED` / `INVALID`)
 
 ## SecretStore (pluggable backends)
