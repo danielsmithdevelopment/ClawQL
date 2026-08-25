@@ -39,7 +39,59 @@ export {
   hermesRuntimeClassHint,
 } from "./adapters/hermes/mcp-bridge.js";
 
-export { getAdapterBundle } from "./get-adapter.js";
+export {
+  appendGooseHook,
+  makeGooseAdapterLayer,
+  makeGooseWormLayer,
+  GoosePathDenyError,
+  gateGooseFileWrite,
+  gooseHookToWormAppend,
+  isPathInScope,
+} from "./adapters/goose/index.js";
+export { GOOSE_ATR_TEMPLATES } from "./adapters/goose/atr-templates.js";
+export type { GooseAtrScope, GooseAtrTemplateName } from "./adapters/goose/atr-templates.js";
+export type { GooseHookEvent, GooseHookKind } from "./adapters/goose/worm-hooks.js";
+export { planGooseMcpToolRegistration } from "./adapters/goose/mcp-bridge.js";
+
+export {
+  appendOpenHandsHook,
+  makeOpenHandsAdapterLayer,
+  makeOpenHandsWormLayer,
+} from "./adapters/openhands/index.js";
+export { OPENHANDS_ATR_TEMPLATES } from "./adapters/openhands/atr-templates.js";
+export type { OpenHandsAtrTemplateName } from "./adapters/openhands/atr-templates.js";
+export { openHandsHookToWormAppend } from "./adapters/openhands/worm-hooks.js";
+export type { OpenHandsHookEvent, OpenHandsHookKind } from "./adapters/openhands/worm-hooks.js";
+export {
+  BudgetExhaustedError,
+  makeOpenHandsBudgetEnforcer,
+} from "./adapters/openhands/budget-enforcer.js";
+export { planOpenHandsMcpInjection } from "./adapters/openhands/mcp-bridge.js";
+
+export { appendPiHook, makePiAdapterLayer, makePiWormLayer } from "./adapters/pi/index.js";
+export { PI_ATR_TEMPLATES } from "./adapters/pi/atr-templates.js";
+export type { PiAtrTemplateName } from "./adapters/pi/atr-templates.js";
+export { piHookToWormAppend } from "./adapters/pi/worm-hooks.js";
+export type { PiHookEvent, PiHookKind } from "./adapters/pi/worm-hooks.js";
+export { buildPiSessionMemoryPlan } from "./adapters/pi/mcp-bridge.js";
+
+export {
+  appendDeepSeekHook,
+  makeDeepSeekAdapterLayer,
+  makeDeepSeekWormLayer,
+  DeepSeekPluginDenyError,
+  gateDeepSeekPluginLoad,
+  deepSeekHookToWormAppend,
+} from "./adapters/deepseek/index.js";
+export { DEEPSEEK_ATR_TEMPLATES } from "./adapters/deepseek/atr-templates.js";
+export type {
+  DeepSeekAtrScope,
+  DeepSeekAtrTemplateName,
+} from "./adapters/deepseek/atr-templates.js";
+export type { DeepSeekHookEvent, DeepSeekHookKind } from "./adapters/deepseek/worm-hooks.js";
+export { planDeepSeekMcpRegistration } from "./adapters/deepseek/mcp-bridge.js";
+
+export { getAdapterBundle, IMPLEMENTED_AGENTS } from "./get-adapter.js";
 export {
   AgentAdapter,
   AgentAdapterLive,

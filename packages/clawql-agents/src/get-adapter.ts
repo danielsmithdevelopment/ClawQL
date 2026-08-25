@@ -1,7 +1,11 @@
 import { Effect, Layer } from "effect";
 import { makeClineAdapterLayer, makeClineWormLayer } from "./adapters/cline/index.js";
+import { makeDeepSeekAdapterLayer, makeDeepSeekWormLayer } from "./adapters/deepseek/index.js";
+import { makeGooseAdapterLayer, makeGooseWormLayer } from "./adapters/goose/index.js";
 import { makeHermesAdapterLayer, makeHermesWormLayer } from "./adapters/hermes/index.js";
 import { makeOpenClawAdapterLayer, makeOpenClawWormLayer } from "./adapters/openclaw/index.js";
+import { makeOpenHandsAdapterLayer, makeOpenHandsWormLayer } from "./adapters/openhands/index.js";
+import { makePiAdapterLayer, makePiWormLayer } from "./adapters/pi/index.js";
 import type { AgentName } from "./shared/types.js";
 import { AgentAdapter } from "./shared/types.js";
 
@@ -10,9 +14,19 @@ export type AdapterBundle = {
   readonly adapterLayer: Layer.Layer<AgentAdapter>;
 };
 
+/** All seven RockYourLobster catalog agents (Phases 1–4). */
+export const IMPLEMENTED_AGENTS: readonly AgentName[] = [
+  "cline",
+  "openclaw",
+  "hermes",
+  "goose",
+  "openhands",
+  "pi",
+  "deepseek",
+];
+
 /**
  * Resolve adapter + local WORM layers for a catalog agent.
- * Phase 1–2: cline | openclaw | hermes. Later phases raise.
  */
 export const getAdapterBundle = (
   agentName: AgentName,
@@ -35,9 +49,29 @@ export const getAdapterBundle = (
           wormLayer: makeHermesWormLayer(wormDbPath),
           adapterLayer: makeHermesAdapterLayer(),
         };
-      default:
-        throw new Error(
-          `Adapter for ${agentName} is not implemented yet (Phase 3–4). Use cline | openclaw | hermes.`
-        );
+      case "goose":
+        return {
+          wormLayer: makeGooseWormLayer(wormDbPath),
+          adapterLayer: makeGooseAdapterLayer(),
+        };
+      case "openhands":
+        return {
+          wormLayer: makeOpenHandsWormLayer(wormDbPath),
+          adapterLayer: makeOpenHandsAdapterLayer(),
+        };
+      case "pi":
+        return {
+          wormLayer: makePiWormLayer(wormDbPath),
+          adapterLayer: makePiAdapterLayer(),
+        };
+      case "deepseek":
+        return {
+          wormLayer: makeDeepSeekWormLayer(wormDbPath),
+          adapterLayer: makeDeepSeekAdapterLayer(),
+        };
+      default: {
+        const _exhaustive: never = agentName;
+        throw new Error(`Unknown agent: ${String(_exhaustive)}`);
+      }
     }
   });

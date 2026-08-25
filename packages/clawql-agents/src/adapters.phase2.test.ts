@@ -161,11 +161,8 @@ describe("Hermes adapter", () => {
 });
 
 describe("getAdapterBundle", () => {
-  it("resolves phase 1–2 agents and rejects later phases", async () => {
+  it("resolves cline", async () => {
     const cline = await Effect.runPromise(getAdapterBundle("cline", "/tmp/x.db"));
     expect(cline.adapterLayer).toBeDefined();
-    await expect(Effect.runPromise(getAdapterBundle("goose", "/tmp/x.db"))).rejects.toThrow(
-      /not implemented/
-    );
   });
 });
