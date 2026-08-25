@@ -3,10 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import type { AuthEvent } from "../audit/auth-events.js";
 import type { VaultHttpClient } from "../stores/hashicorp-vault.js";
-import {
-  VaultDynamicSecretError,
-  createVaultDynamicSecretProvider,
-} from "./dynamic-secrets.js";
+import { VaultDynamicSecretError, createVaultDynamicSecretProvider } from "./dynamic-secrets.js";
 
 function mockHttp(handlers: Record<string, { status: number; json: unknown }>): VaultHttpClient {
   return {
@@ -104,9 +101,7 @@ describe("VaultDynamicSecretProvider", () => {
         },
       }),
     });
-    const exit = await Effect.runPromiseExit(
-      provider.getDynamicSecret("database/creds/readonly")
-    );
+    const exit = await Effect.runPromiseExit(provider.getDynamicSecret("database/creds/readonly"));
     expect(exit._tag).toBe("Failure");
     if (exit._tag === "Failure" && exit.cause._tag === "Fail") {
       expect(exit.cause.error).toBeInstanceOf(VaultDynamicSecretError);

@@ -239,15 +239,15 @@ WebAuthn is a **pluggable** `WebAuthnStepUpVerifier` (fails closed until injecte
 
 ## Phase 4–7 surfaces (library)
 
-| Area | Entry points |
-|------|----------------|
-| Domain TXT | `createDomainChallengeEffect` / `verifyDomainTxtEffect` |
-| Offboarding | `offboardSubjectEffect` (revoke `cqk_` keys + mark OAuth re-auth) |
-| SIWE login | `issueSiweNonceEffect` / `verifySiweLoginEffect` → ATR |
-| Primary TOTP | `primaryTotpLoginEffect` (uses `StepUpStoreService` enrollments) |
-| Vault leases | `VaultDynamicSecretProvider` / `VaultDynamicSecretService` |
-| Re-auth UX | `buildReauthUrl` on `OAuthTokenStore` + `notifyReauthRequiredEffect` (Hermes sends Telegram) |
-| ID-JAG TEE | `assertionSigner` on issuer deps (`createTeeIdJagAssertionSigner`) |
+| Area         | Entry points                                                                                 |
+| ------------ | -------------------------------------------------------------------------------------------- |
+| Domain TXT   | `createDomainChallengeEffect` / `verifyDomainTxtEffect`                                      |
+| Offboarding  | `offboardSubjectEffect` (revoke `cqk_` keys + mark OAuth re-auth)                            |
+| SIWE login   | `issueSiweNonceEffect` / `verifySiweLoginEffect` → ATR                                       |
+| Primary TOTP | `primaryTotpLoginEffect` (uses `StepUpStoreService` enrollments)                             |
+| Vault leases | `VaultDynamicSecretProvider` / `VaultDynamicSecretService`                                   |
+| Re-auth UX   | `buildReauthUrl` on `OAuthTokenStore` + `notifyReauthRequiredEffect` (Hermes sends Telegram) |
+| ID-JAG TEE   | `assertionSigner` on issuer deps (`createTeeIdJagAssertionSigner`)                           |
 
 ```ts
 import { buildPasskeyAuthenticatorSelection } from "clawql-auth";

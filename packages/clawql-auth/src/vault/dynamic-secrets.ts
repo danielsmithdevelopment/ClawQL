@@ -86,9 +86,7 @@ export class VaultDynamicSecretProvider {
     this.token = options.vaultToken;
   }
 
-  getDynamicSecret(
-    rolePath: string
-  ): Effect.Effect<VaultDynamicLease, VaultDynamicSecretError> {
+  getDynamicSecret(rolePath: string): Effect.Effect<VaultDynamicLease, VaultDynamicSecretError> {
     return Effect.gen(this, function* () {
       const path = rolePath.replace(/^\/+/, "");
       const res = yield* Effect.tryPromise({
@@ -98,8 +96,7 @@ export class VaultDynamicSecretProvider {
             url: `${this.addr}/v1/${path}`,
             headers: { "X-Vault-Token": this.token },
           }),
-        catch: (cause) =>
-          new VaultDynamicSecretError({ reason: "vault_request_failed", cause }),
+        catch: (cause) => new VaultDynamicSecretError({ reason: "vault_request_failed", cause }),
       });
       if (res.status < 200 || res.status >= 300) {
         return yield* Effect.fail(

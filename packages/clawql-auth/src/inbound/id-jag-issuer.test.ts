@@ -263,9 +263,8 @@ describe("ID-JAG issuer + connector registry", () => {
     ]);
 
     let teeCalls = 0;
-    const { createTeeIdJagAssertionSigner, createLocalIdJagAssertionSigner } = await import(
-      "./id-jag-tee-signer.js"
-    );
+    const { createTeeIdJagAssertionSigner, createLocalIdJagAssertionSigner } =
+      await import("./id-jag-tee-signer.js");
     const local = createLocalIdJagAssertionSigner(signing);
     const tee = createTeeIdJagAssertionSigner({
       teeSign: (req) => {

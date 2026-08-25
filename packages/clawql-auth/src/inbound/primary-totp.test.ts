@@ -40,9 +40,7 @@ describe("primaryTotpLoginEffect", () => {
     try {
       const layer = createStepUpStoreLayer(join(dir, "step-up.json"));
       const missing = await Effect.runPromiseExit(
-        primaryTotpLoginEffect({ tenantId: "nobody", code: "000000" }).pipe(
-          Effect.provide(layer)
-        )
+        primaryTotpLoginEffect({ tenantId: "nobody", code: "000000" }).pipe(Effect.provide(layer))
       );
       expect(missing._tag).toBe("Failure");
       if (missing._tag === "Failure" && missing.cause._tag === "Fail") {

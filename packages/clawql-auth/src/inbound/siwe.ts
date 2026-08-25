@@ -99,11 +99,7 @@ export function buildSiweMessage(input: {
   issuedAt?: string;
 }): string {
   const address = normalizeAddress(input.address);
-  const lines = [
-    `${input.domain} wants you to sign in with your Ethereum account:`,
-    address,
-    "",
-  ];
+  const lines = [`${input.domain} wants you to sign in with your Ethereum account:`, address, ""];
   if (input.statement) {
     lines.push(input.statement, "");
   }

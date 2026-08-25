@@ -27,8 +27,7 @@ describe("domain TXT challenge", () => {
     const verified = await Effect.runPromise(
       verifyDomainTxtEffect(store, "example.com", {
         now: () => 1_000_000,
-        resolveTxt: () =>
-          Effect.succeed([["v=spf1"], [challenge.challenge, "extra"]]),
+        resolveTxt: () => Effect.succeed([["v=spf1"], [challenge.challenge, "extra"]]),
         eventSink: (e) =>
           Effect.sync(() => {
             events.push(e);
@@ -75,9 +74,7 @@ describe("domain TXT challenge", () => {
 
   it("rejects invalid domains", async () => {
     const store = createMemorySecretStore();
-    const exit = await Effect.runPromiseExit(
-      createDomainChallengeEffect(store, "nodots")
-    );
+    const exit = await Effect.runPromiseExit(createDomainChallengeEffect(store, "nodots"));
     expect(exit._tag).toBe("Failure");
   });
 });

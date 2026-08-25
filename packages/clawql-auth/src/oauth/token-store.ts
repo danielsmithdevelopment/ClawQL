@@ -101,7 +101,9 @@ export class OAuthTokenStore {
           timestamp: new Date(this.now()).toISOString(),
         });
         if (this.options.markRequiresReauth) {
-          yield* this.options.markRequiresReauth(providerId).pipe(Effect.catchAll(() => Effect.void));
+          yield* this.options
+            .markRequiresReauth(providerId)
+            .pipe(Effect.catchAll(() => Effect.void));
         }
         const reauthUrl = this.options.buildReauthUrl
           ? yield* this.options.buildReauthUrl({ providerId, tokenKey: key, reason: "no_token" })

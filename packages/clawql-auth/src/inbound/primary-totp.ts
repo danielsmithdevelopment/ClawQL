@@ -32,11 +32,13 @@ export function primaryTotpLoginEffect(
 ): Effect.Effect<AtrClaims, PrimaryTotpError, StepUpStoreService> {
   return Effect.gen(function* () {
     const store = yield* StepUpStoreService;
-    const enrollment = yield* store.getEnrollment(input.tenantId).pipe(
-      Effect.mapError(
-        (cause) => new PrimaryTotpError({ reason: "enrollment_lookup_failed", cause })
-      )
-    );
+    const enrollment = yield* store
+      .getEnrollment(input.tenantId)
+      .pipe(
+        Effect.mapError(
+          (cause) => new PrimaryTotpError({ reason: "enrollment_lookup_failed", cause })
+        )
+      );
     if (!enrollment?.secretBase32) {
       return yield* Effect.fail(new PrimaryTotpError({ reason: "not_enrolled" }));
     }
