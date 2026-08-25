@@ -14,10 +14,7 @@ import {
 } from "./family-s-stub-catalog.js";
 
 export type FamilySCheckName =
-  | "memory_recall_allowed"
-  | "execute_denied"
-  | "email_send_denied"
-  | "email_read_allowed";
+  "memory_recall_allowed" | "execute_denied" | "email_send_denied" | "email_read_allowed";
 
 export type FamilySCheckDetail = {
   readonly name: FamilySCheckName;

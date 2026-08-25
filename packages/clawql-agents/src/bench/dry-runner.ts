@@ -85,8 +85,7 @@ export const runAgentBenchmarkDry = (input: {
     const results: TaskResult[] = [];
 
     for (const task of input.tasks) {
-      const useScopeChecks =
-        task.scopeChecks ?? (task.family === "S" || input.family === "S");
+      const useScopeChecks = task.scopeChecks ?? (task.family === "S" || input.family === "S");
       const atrScope: ATRScope = task.atrScope;
 
       const taskResult = yield* Effect.gen(function* () {

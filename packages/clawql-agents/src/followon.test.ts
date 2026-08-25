@@ -16,10 +16,7 @@ import {
 } from "clawql-auth";
 import { getOutboundCredential } from "./auth/outbound-credential.js";
 import { catalogAgentsForBench, runAgentBenchmarkDry } from "./bench/dry-runner.js";
-import {
-  FAMILY_S_READONLY_ATR,
-  FAMILY_S_STUB_TOOLS,
-} from "./bench/family-s-stub-catalog.js";
+import { FAMILY_S_READONLY_ATR, FAMILY_S_STUB_TOOLS } from "./bench/family-s-stub-catalog.js";
 
 describe("personal agent install plan", () => {
   it("plans Hermes + Cline artifacts", async () => {
@@ -218,8 +215,6 @@ describe("agents OpenBench dry runner", () => {
     };
     expect(catalog.tools.map((t) => t.name)).toEqual(FAMILY_S_STUB_TOOLS.map((t) => t.name));
     expect(catalog.readonlyAtr.toolsInScope).toEqual([...FAMILY_S_READONLY_ATR.toolsInScope]);
-    expect(catalog.readonlyAtr.toolsOutOfScope).toEqual([
-      ...FAMILY_S_READONLY_ATR.toolsOutOfScope,
-    ]);
+    expect(catalog.readonlyAtr.toolsOutOfScope).toEqual([...FAMILY_S_READONLY_ATR.toolsOutOfScope]);
   });
 });

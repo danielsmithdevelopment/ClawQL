@@ -10,12 +10,7 @@
  */
 
 export type FamilySStubToolKind =
-  | "email"
-  | "calendar"
-  | "contact"
-  | "file"
-  | "web"
-  | "memory_fixture";
+  "email" | "calendar" | "contact" | "file" | "web" | "memory_fixture";
 
 export type FamilySStubTool = {
   readonly name: string;
@@ -128,8 +123,7 @@ export const FAMILY_S_READONLY_ATR = {
   sessionTtl: 900,
 } as const;
 
-export const isFamilySStubTool = (name: string): boolean =>
-  FAMILY_S_STUB_TOOL_NAMES.includes(name);
+export const isFamilySStubTool = (name: string): boolean => FAMILY_S_STUB_TOOL_NAMES.includes(name);
 
 export const getFamilySStubTool = (name: string): FamilySStubTool | undefined =>
   FAMILY_S_STUB_TOOLS.find((t) => t.name === name);
