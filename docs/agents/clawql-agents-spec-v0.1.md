@@ -9,7 +9,7 @@ package: "packages/clawql-agents/"
 
 **August 2026 · v0.1**
 
-> **Status (repo, 2026-08-22):** Phase 1 scaffold exists at `packages/clawql-agents/` (Cline adapter + WORM hooks). Durable WORM is `packages/clawql-audit` (sql.js). Personal-agent operator guide: [`../homelab/personal-agent-hermes-cline.md`](../homelab/personal-agent-hermes-cline.md).
+> **Status (repo, 2026-08-25):** Phase 1 (Cline) + Phase 2 (OpenClaw, Hermes) adapters ship in `packages/clawql-agents/` — ATR templates, shared Panguard helpers, WORM hooks; Hermes includes `python/hermes/worm_agent.py`. Durable WORM is `packages/clawql-audit` (sql.js). Personal-agent operator guide: [`../homelab/personal-agent-hermes-cline.md`](../homelab/personal-agent-hermes-cline.md).
 >
 > **Related:** [Agents index](README.md) · [Personal Hermes/Cline setup](../homelab/personal-agent-hermes-cline.md) · [Agents OpenBench spec](../benchmarks/agents-openbench-spec-v0.1.md) · [OpenBench plan](../benchmarks/agents-openbench-plan.md) · [Modularization status](../design/modularization-implementation-status.md) · [clawql-tee](../streams/clawql-tee.md) (draft) · [MCP tools](../mcp/mcp-tools.md)
 
@@ -17,7 +17,7 @@ package: "packages/clawql-agents/"
 
 | Name in this document                                 | In this repository today                                                                                                                                                                    |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/clawql-agents/`                             | **Scaffolded** — Cline adapter + WORM hooks                                                                                                                                                 |
+| `packages/clawql-agents/`                             | **Phase 1–2** — Cline + OpenClaw + Hermes adapters, ATR templates, shared Panguard; Phase 3–4 not started                                                                                    |
 | npm `@clawql/agents`, `@clawql/core`, `@clawql/audit` | Packages are **unscoped** `clawql-*`. MCP audit ring lives in **`clawql-core`**. Durable WORM is **spec only**: [`../audit/clawql-audit-spec-v0.1.md`](../audit/clawql-audit-spec-v0.1.md). |
 | Adapter `initialize` / `start` as `Promise`           | Production domain APIs **must** be Effect (`Context.Tag` + `Layer`). Sketches below are contracts, not the implementation shape.                                                            |
 | OpenClaw MCP wiring                                   | Docs + operator guides in [`docs/openclaw/`](../openclaw/using-openclaw-with-clawql.md); no adapter package                                                                                 |

@@ -1,46 +1,55 @@
 import { WORMAuditTrail } from "clawql-audit";
 import { Effect, Layer, Ref } from "effect";
+import { enforceToolCall } from "../../shared/panguard.js";
 import { createAgentSession } from "../../shared/session.js";
-import type { AgentHealth, AgentSession, ClawQLAgentConfig } from "../../shared/types.js";
+import type { AgentHealth, AgentSession, ATRScope, ClawQLAgentConfig } from "../../shared/types.js";
 import { AgentAdapter } from "../../shared/types.js";
 import { makeAgentWormLayer } from "../../shared/worm.js";
-import type { ClineHookEvent } from "./worm-hooks.js";
-import { clineHookToWormAppend } from "./worm-hooks.js";
+import type { OpenClawHookEvent } from "./worm-hooks.js";
+import { openClawHookToWormAppend } from "./worm-hooks.js";
 
-export type ClineAdapterState = {
+export type OpenClawAdapterState = {
   readonly config: ClawQLAgentConfig | null;
   readonly session: AgentSession | null;
+  readonly atrScope: ATRScope | null;
 };
 
-/** @deprecated Prefer makeAgentWormLayer from shared/worm.js */
-export const makeClineWormLayer = makeAgentWormLayer;
+export const makeOpenClawWormLayer = makeAgentWormLayer;
 
-export const makeClineAdapterLayer = () =>
+export const makeOpenClawAdapterLayer = () =>
   Layer.effect(
     AgentAdapter,
     Effect.gen(function* () {
-      const stateRef = yield* Ref.make<ClineAdapterState>({ config: null, session: null });
+      const stateRef = yield* Ref.make<OpenClawAdapterState>({
+        config: null,
+        session: null,
+        atrScope: null,
+      });
 
       return AgentAdapter.of({
-        name: "cline",
+        name: "openclaw",
         version: "0.1.0",
         initialize: (config) =>
-          Ref.update(stateRef, () => ({ config, session: null })).pipe(Effect.asVoid),
+          Ref.update(stateRef, () => ({
+            config,
+            session: null,
+            atrScope: null,
+          })).pipe(Effect.asVoid),
 
         start: (atrScope) =>
           Effect.gen(function* () {
             const state = yield* Ref.get(stateRef);
             if (!state.config) {
-              return yield* Effect.die(new Error("Cline adapter not initialized"));
+              return yield* Effect.die(new Error("OpenClaw adapter not initialized"));
             }
-            const session = yield* createAgentSession("cline");
-            yield* Ref.update(stateRef, (s) => ({ ...s, session }));
+            const session = yield* createAgentSession("openclaw");
+            yield* Ref.update(stateRef, (s) => ({ ...s, session, atrScope }));
             const worm = yield* WORMAuditTrail;
             yield* worm.append({
-              type: "CLINE_SESSION_START",
+              type: "SESSION_START",
               timestamp: session.startedAt,
               sessionId: session.sessionId,
-              agentName: "cline",
+              agentName: "openclaw",
               virtualKeyId: state.config.virtualKeyId,
               metadata: {
                 atrToolsInScope: [...atrScope.toolsInScope],
@@ -54,12 +63,16 @@ export const makeClineAdapterLayer = () =>
           Effect.gen(function* () {
             const worm = yield* WORMAuditTrail;
             yield* worm.append({
-              type: "CLINE_SESSION_END",
+              type: "SESSION_END",
               timestamp: new Date().toISOString(),
               sessionId: session.sessionId,
-              agentName: "cline",
+              agentName: "openclaw",
             });
-            yield* Ref.update(stateRef, (s) => ({ ...s, session: null }));
+            yield* Ref.update(stateRef, (s) => ({
+              ...s,
+              session: null,
+              atrScope: null,
+            }));
           }),
 
         health: () =>
@@ -79,9 +92,26 @@ export const makeClineAdapterLayer = () =>
     })
   );
 
-/** Append a Cline SDK hook event to the durable WORM trail. */
-export const appendClineHook = (event: ClineHookEvent) =>
+export const appendOpenClawHook = (event: OpenClawHookEvent) =>
   Effect.gen(function* () {
     const worm = yield* WORMAuditTrail;
-    return yield* worm.append(clineHookToWormAppend(event));
+    return yield* worm.append(openClawHookToWormAppend(event));
+  });
+
+/**
+ * Gateway skill:invoke gate — WORM + Panguard before the skill runs.
+ */
+export const gateOpenClawSkillInvoke = (input: {
+  readonly skillName: string;
+  readonly atrScope: ATRScope;
+  readonly sessionId: string;
+  readonly virtualKeyId?: string;
+}) =>
+  enforceToolCall({
+    toolName: input.skillName.replace(/^clawql_/, ""),
+    atrScope: input.atrScope,
+    sessionId: input.sessionId,
+    agentName: "openclaw",
+    virtualKeyId: input.virtualKeyId,
+    metadata: { skillName: input.skillName },
   });

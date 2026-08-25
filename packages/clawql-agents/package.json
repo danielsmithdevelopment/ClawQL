@@ -1,7 +1,7 @@
 {
   "name": "clawql-agents",
   "version": "7.2.0",
-  "description": "ClawQL hardened adapters for open-source agents (Cline first)",
+  "description": "ClawQL hardened adapters for open-source agents (Cline, OpenClaw, Hermes)",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -26,6 +26,14 @@
     "clawql-audit": "7.2.0",
     "effect": "^3.21.4"
   },
+  "peerDependencies": {
+    "openclaw": ">=2026.4.0",
+    "hermes-agent": ">=0.14.0"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": { "optional": true },
+    "hermes-agent": { "optional": true }
+  },
   "devDependencies": {
     "@types/node": "^26.1.1",
     "tsup": "^8.3.0",
@@ -34,6 +42,7 @@
   },
   "files": [
     "dist",
+    "python",
     "README.md"
   ],
   "engines": {
