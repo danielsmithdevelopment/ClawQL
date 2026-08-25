@@ -27,7 +27,6 @@ import { pricing } from '@/lib/pricing'
 import { securityEnforcementLayers, securityPillars } from '@/lib/security-marketing'
 import { pageMetadata } from '@/lib/seo'
 import { site } from '@/lib/site'
-import Image from 'next/image'
 
 const closedLoopSteps = [
   {
@@ -112,19 +111,18 @@ export default function Page() {
           </div>
         }
       >
-        <figure className="overflow-hidden rounded-xl border border-mist-950/10 bg-mist-950/2.5 dark:border-white/10 dark:bg-white/5">
-          <Image
-            src={protocolFabricSurfaces.diagramSrc}
-            alt={protocolFabricSurfaces.diagramAlt}
-            width={1400}
-            height={933}
-            className="h-auto w-full"
-            priority={false}
-          />
-          <figcaption className="px-4 py-3 text-sm text-mist-600 dark:text-mist-400">
-            ClawQL Protocol Fabric — Anything to MCP to Anything
-          </figcaption>
-        </figure>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="flex flex-col gap-2 rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
+            <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">In</p>
+            <h3 className="text-base font-semibold text-mist-950 dark:text-white">ClawQL Core → MCP</h3>
+            <p className="text-sm/7 text-mist-700 dark:text-mist-400">{protocolFabricSurfaces.inbound}</p>
+          </div>
+          <div className="flex flex-col gap-2 rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
+            <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">Out</p>
+            <h3 className="text-base font-semibold text-mist-950 dark:text-white">mcp-api-adapter → any surface</h3>
+            <p className="text-sm/7 text-mist-700 dark:text-mist-400">{protocolFabricSurfaces.outbound}</p>
+          </div>
+        </div>
       </Section>
 
       <Section

@@ -229,8 +229,6 @@ export const openBenchMiniFirm = {
 export const protocolFabricSurfaces = {
   inbound: 'REST · GraphQL · gRPC · WebSocket · MCP · generated CLI · QR stream',
   outbound: 'OpenAPI · GraphQL · Streamable HTTP · gRPC · gen-cli · WebSocket · QR · /mcp-ui',
-  diagramSrc: '/mcp/protocol-fabric/clawql-protocol-fabric.webp',
-  diagramAlt: 'ClawQL Protocol Fabric — Anything to MCP to Anything',
   docsHref: 'https://docs.clawql.com/mcp/protocol-fabric',
   adapterHref: 'https://docs.clawql.com/mcp/mcp-api-adapter',
 } as const
