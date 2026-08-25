@@ -35,6 +35,8 @@ export const site = {
     idpGtm: '/idp/gtm',
     /** ClawQL Streams — event-driven autonomous agents / Protocol Fabric. */
     streams: '/streams',
+    /** Protocol Fabric — any protocol ↔ any protocol via MCP (Core + mcp-api-adapter). */
+    protocolFabric: '/protocol-fabric',
     /** Agentic Platform marketing landing — Streams + ontology + /mcp-ui + TEE. */
     agents: '/agents',
     /** Secondary enterprise / Palantir-facing GTM motion. */

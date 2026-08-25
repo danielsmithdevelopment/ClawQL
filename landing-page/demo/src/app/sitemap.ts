@@ -17,6 +17,7 @@ const ROUTES: Array<{
   { path: '/idp', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/idp/gtm', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/agents', changeFrequency: 'weekly', priority: 0.95 },
+  { path: '/protocol-fabric', changeFrequency: 'monthly', priority: 0.92 },
   { path: '/streams', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/enterprise/gtm', changeFrequency: 'monthly', priority: 0.75 },
   { path: '/privacy-policy', changeFrequency: 'yearly', priority: 0.3 },
