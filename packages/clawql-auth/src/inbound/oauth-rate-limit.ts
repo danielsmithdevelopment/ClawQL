@@ -1,10 +1,11 @@
 /**
- * In-process rate limit for MCP OAuth AS endpoints (token / authorize / revoke / id-jag).
- * Mirrors webhook-rate-limit: callable from handlers for CodeQL js/missing-rate-limiting
- * when routes are analyzed in isolation. Hosts may also attach express-rate-limit middleware.
+ * Rate limit for MCP OAuth AS endpoints (token / authorize / revoke / id-jag / EMA admin).
+ * Uses express-rate-limit so CodeQL js/missing-rate-limiting recognizes the middleware,
+ * plus {@link enforceMcpOAuthRateLimit} for handlers analyzed in isolation.
  */
 
 import type { Request, Response } from "express";
+import rateLimit from "express-rate-limit";
 import { Effect } from "effect";
 
 type Bucket = { count: number; resetAt: number };
@@ -32,9 +33,24 @@ function oauthRateLimitExceeded(res: Response): void {
   });
 }
 
+/** Express middleware factory — preferred for CodeQL recognition on route registration. */
+export function createMcpOAuthRateLimiter(env: NodeJS.ProcessEnv = process.env) {
+  const max = Effect.runSync(mcpOAuthRateLimitPerMinute(env));
+  return rateLimit({
+    windowMs: 60_000,
+    max,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => clientKey(req as Request),
+    handler: (_req, res) => {
+      oauthRateLimitExceeded(res as Response);
+    },
+  });
+}
+
 /**
  * Returns false after sending 429 when the client IP exceeded the OAuth quota.
- * Call at the top of token / authorize / revoke / id-jag handlers.
+ * Call at the top of token / authorize / revoke / id-jag / EMA admin handlers.
  */
 export function enforceMcpOAuthRateLimit(
   req: Request,

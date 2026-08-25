@@ -9,7 +9,7 @@ import {
   verifyEdgeCredential,
   type McpApiAdapterJwtAuthOptions,
 } from "./edge-auth.js";
-import { enforceEdgeAuthRateLimit } from "./edge-rate-limit.js";
+import { createEdgeAuthRateLimiter } from "./edge-rate-limit.js";
 import { attachGraphqlRoutes } from "./graphql-http.js";
 import { attachMcpHttpRoutes } from "./mcp-http.js";
 import { buildOpenApiDocument } from "./openapi.js";
@@ -71,9 +71,9 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
 
   const verifyJwt = createJwtVerifier(options.jwtAuth ?? {});
   if (edgeAuthConfigured({ apiKey: options.apiKey, jwt: options.jwtAuth })) {
+    app.use(createEdgeAuthRateLimiter());
     app.use((req: Request, res: Response, next: NextFunction) => {
       if (req.path === "/healthz") return next();
-      if (!enforceEdgeAuthRateLimit(req, res)) return;
       void verifyEdgeCredential(
         readApiKey(req),
         { apiKey: options.apiKey, jwt: options.jwtAuth },

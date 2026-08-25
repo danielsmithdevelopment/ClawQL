@@ -124,6 +124,7 @@ export {
   type McpOAuthAdminAuth,
 } from "./http.js";
 export {
+  createMcpOAuthRateLimiter,
   enforceMcpOAuthRateLimit,
   mcpOAuthRateLimitPerMinute,
   resetMcpOAuthRateLimitBucketsForTests,

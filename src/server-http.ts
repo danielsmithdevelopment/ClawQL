@@ -285,6 +285,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   app.use("/oauth/revoke", mcpOAuthRateLimiter);
   app.use("/oauth/authorize", mcpOAuthRateLimiter);
   app.use("/oauth/id-jag", mcpOAuthRateLimiter);
+  app.use("/oauth/ema", mcpOAuthRateLimiter);
 
   const injectedMcpOAuth = options.mcpOAuthRuntime != null;
   let mcpOAuthRuntime: McpOAuthRuntime | null = options.mcpOAuthRuntime ?? null;

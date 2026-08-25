@@ -28,6 +28,7 @@
     "@smithy/signature-v4": "^5.6.9",
     "@types/express": "^5.0.6",
     "effect": "^3.21.4",
+    "express-rate-limit": "^8.5.2",
     "jose": "^6.2.8",
     "viem": "^2.55.4"
   },

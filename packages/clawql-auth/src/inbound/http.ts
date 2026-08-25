@@ -20,7 +20,7 @@ import type { SecretStoreEmaConfigStore } from "./ema-config-store.js";
 import type { EmaConnectorRegistry } from "./ema-connector-registry.js";
 import type { IdJagIssuerService } from "./id-jag-issuer.js";
 import type { SecretStoreMcpClientRegistry } from "./mcp-oauth-stores.js";
-import { enforceMcpOAuthRateLimit } from "./oauth-rate-limit.js";
+import { createMcpOAuthRateLimiter, enforceMcpOAuthRateLimit } from "./oauth-rate-limit.js";
 import { Effect } from "effect";
 
 export const MCP_OAUTH_TOKEN_PATH = "/oauth/token";
@@ -94,6 +94,12 @@ function parseScope(raw: string | undefined): string[] | undefined {
     .split(/[\s,]+/)
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+function routeParam(req: Request, name: string): string {
+  const raw = req.params[name];
+  if (Array.isArray(raw)) return String(raw[0] ?? "");
+  return String(raw ?? "");
 }
 
 function queryParam(req: Request, name: string): string | undefined {
@@ -418,6 +424,7 @@ export function attachMcpOAuthRoutes(
   const tokenPath = options.tokenPath?.trim() || MCP_OAUTH_TOKEN_PATH;
   const authorizePath = options.authorizePath?.trim() || MCP_OAUTH_AUTHORIZE_PATH;
   const revokePath = MCP_OAUTH_REVOKE_PATH;
+  const mcpOAuthRouteRateLimit = createMcpOAuthRateLimiter();
   const supportsAuthCode =
     !!server &&
     !!options.resolveAuthorizeClaims &&
@@ -521,7 +528,7 @@ export function attachMcpOAuthRoutes(
     const admin = options.emaAdmin;
     const { store } = admin;
 
-    app.get("/oauth/ema/orgs", (req, res) => {
+    app.get("/oauth/ema/orgs", mcpOAuthRouteRateLimit, (req, res) => {
       if (!enforceMcpOAuthRateLimit(req, res)) return;
       void assertMcpOAuthAdmin(req, res, admin).then((ok) => {
         if (!ok) return;
@@ -533,11 +540,11 @@ export function attachMcpOAuthRoutes(
       });
     });
 
-    app.get("/oauth/ema/orgs/:orgId", (req, res) => {
+    app.get("/oauth/ema/orgs/:orgId", mcpOAuthRouteRateLimit, (req, res) => {
       if (!enforceMcpOAuthRateLimit(req, res)) return;
       void assertMcpOAuthAdmin(req, res, admin).then((ok) => {
         if (!ok) return;
-        void Effect.runPromise(store.getOrgConfig(req.params.orgId!))
+        void Effect.runPromise(store.getOrgConfig(routeParam(req, "orgId")))
           .then((config) => {
             if (!config) {
               oauthError(res, 404, "invalid_request", "unknown_org");
@@ -551,12 +558,14 @@ export function attachMcpOAuthRoutes(
       });
     });
 
-    app.put("/oauth/ema/orgs/:orgId", (req, res) => {
+    app.put("/oauth/ema/orgs/:orgId", mcpOAuthRouteRateLimit, (req, res) => {
       if (!enforceMcpOAuthRateLimit(req, res)) return;
       void assertMcpOAuthAdmin(req, res, admin).then((ok) => {
         if (!ok) return;
         const body = req.body as Record<string, unknown>;
-        void Effect.runPromise(store.saveOrgConfig({ ...body, orgId: req.params.orgId } as never))
+        void Effect.runPromise(
+          store.saveOrgConfig({ ...body, orgId: routeParam(req, "orgId") } as never)
+        )
           .then((saved) => res.status(200).json(saved))
           .catch((err: unknown) => {
             oauthError(
@@ -569,11 +578,11 @@ export function attachMcpOAuthRoutes(
       });
     });
 
-    app.delete("/oauth/ema/orgs/:orgId", (req, res) => {
+    app.delete("/oauth/ema/orgs/:orgId", mcpOAuthRouteRateLimit, (req, res) => {
       if (!enforceMcpOAuthRateLimit(req, res)) return;
       void assertMcpOAuthAdmin(req, res, admin).then((ok) => {
         if (!ok) return;
-        void Effect.runPromise(store.deleteOrgConfig(req.params.orgId!))
+        void Effect.runPromise(store.deleteOrgConfig(routeParam(req, "orgId")))
           .then(() => res.status(204).end())
           .catch((err: unknown) => {
             oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
@@ -587,7 +596,7 @@ export function attachMcpOAuthRoutes(
     const { registry } = admin;
     const base = MCP_OAUTH_CLIENTS_ADMIN_PATH;
 
-    app.get(base, (req, res) => {
+    app.get(base, mcpOAuthRouteRateLimit, (req, res) => {
       if (!enforceMcpOAuthRateLimit(req, res)) return;
       void assertMcpOAuthAdmin(req, res, admin).then((ok) => {
         if (!ok) return;
@@ -609,11 +618,11 @@ export function attachMcpOAuthRoutes(
       });
     });
 
-    app.get(`${base}/:clientId`, (req, res) => {
+    app.get(`${base}/:clientId`, mcpOAuthRouteRateLimit, (req, res) => {
       if (!enforceMcpOAuthRateLimit(req, res)) return;
       void assertMcpOAuthAdmin(req, res, admin).then((ok) => {
         if (!ok) return;
-        void Effect.runPromise(registry.getClient(req.params.clientId!))
+        void Effect.runPromise(registry.getClient(routeParam(req, "clientId")))
           .then((client) => {
             if (!client) {
               oauthError(res, 404, "invalid_request", "unknown_client");
@@ -627,12 +636,12 @@ export function attachMcpOAuthRoutes(
       });
     });
 
-    app.put(`${base}/:clientId`, (req, res) => {
+    app.put(`${base}/:clientId`, mcpOAuthRouteRateLimit, (req, res) => {
       if (!enforceMcpOAuthRateLimit(req, res)) return;
       void assertMcpOAuthAdmin(req, res, admin).then((ok) => {
         if (!ok) return;
         const parsed = parseClientBody(
-          req.params.clientId!,
+          routeParam(req, "clientId"),
           (req.body ?? {}) as Record<string, unknown>
         );
         if ("error" in parsed) {
@@ -652,11 +661,11 @@ export function attachMcpOAuthRoutes(
       });
     });
 
-    app.delete(`${base}/:clientId`, (req, res) => {
+    app.delete(`${base}/:clientId`, mcpOAuthRouteRateLimit, (req, res) => {
       if (!enforceMcpOAuthRateLimit(req, res)) return;
       void assertMcpOAuthAdmin(req, res, admin).then((ok) => {
         if (!ok) return;
-        void Effect.runPromise(registry.deleteClient(req.params.clientId!))
+        void Effect.runPromise(registry.deleteClient(routeParam(req, "clientId")))
           .then(() => res.status(204).end())
           .catch((err: unknown) => {
             oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
@@ -695,11 +704,11 @@ export function attachMcpOAuthRoutes(
         });
     });
 
-    app.get("/oauth/ema/connectors/:orgId", (req, res) => {
+    app.get("/oauth/ema/connectors/:orgId", mcpOAuthRouteRateLimit, (req, res) => {
       if (!enforceMcpOAuthRateLimit(req, res)) return;
       void assertMcpOAuthAdmin(req, res, issuer).then((ok) => {
         if (!ok) return;
-        void Effect.runPromise(connectors.list(req.params.orgId!))
+        void Effect.runPromise(connectors.list(routeParam(req, "orgId")))
           .then((list) => res.status(200).json({ connectors: list }))
           .catch((err: unknown) => {
             oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
@@ -707,7 +716,7 @@ export function attachMcpOAuthRoutes(
       });
     });
 
-    app.put("/oauth/ema/connectors/:orgId/:connectorId", (req, res) => {
+    app.put("/oauth/ema/connectors/:orgId/:connectorId", mcpOAuthRouteRateLimit, (req, res) => {
       if (!enforceMcpOAuthRateLimit(req, res)) return;
       void assertMcpOAuthAdmin(req, res, issuer).then((ok) => {
         if (!ok) return;
@@ -715,8 +724,8 @@ export function attachMcpOAuthRoutes(
         void Effect.runPromise(
           connectors.save({
             ...body,
-            orgId: req.params.orgId!,
-            connectorId: req.params.connectorId!,
+            orgId: routeParam(req, "orgId"),
+            connectorId: routeParam(req, "connectorId"),
             audience: (body.audience as string | string[]) ?? "",
             enabled: body.enabled !== false,
             createdAt:
@@ -735,11 +744,13 @@ export function attachMcpOAuthRoutes(
       });
     });
 
-    app.delete("/oauth/ema/connectors/:orgId/:connectorId", (req, res) => {
+    app.delete("/oauth/ema/connectors/:orgId/:connectorId", mcpOAuthRouteRateLimit, (req, res) => {
       if (!enforceMcpOAuthRateLimit(req, res)) return;
       void assertMcpOAuthAdmin(req, res, issuer).then((ok) => {
         if (!ok) return;
-        void Effect.runPromise(connectors.delete(req.params.orgId!, req.params.connectorId!))
+        void Effect.runPromise(
+          connectors.delete(routeParam(req, "orgId"), routeParam(req, "connectorId"))
+        )
           .then(() => res.status(204).end())
           .catch((err: unknown) => {
             oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
@@ -747,7 +758,7 @@ export function attachMcpOAuthRoutes(
       });
     });
 
-    app.post(ID_JAG_ISSUE_PATH, (req, res) => {
+    app.post(ID_JAG_ISSUE_PATH, mcpOAuthRouteRateLimit, (req, res) => {
       if (!enforceMcpOAuthRateLimit(req, res)) return;
       void assertMcpOAuthAdmin(req, res, issuer).then((ok) => {
         if (!ok) return;
