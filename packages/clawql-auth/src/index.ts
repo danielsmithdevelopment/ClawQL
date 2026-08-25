@@ -113,9 +113,13 @@ export {
 export {
   MCP_OAUTH_AUDIT_DISABLED_WARNING,
   MCP_OAUTH_HS256_ONLY_WARNING,
+  MCP_OAUTH_ADMIN_KEY_MISSING_WARNING,
+  MCP_OAUTH_BOOTSTRAP_INVALID_WARNING,
   ID_JAG_ISSUER_SHARED_KEY_WARNING,
   warnIfMcpOAuthAuditDisabled,
   warnIfMcpOAuthHs256Only,
+  warnIfMcpOAuthAdminKeyMissing,
+  warnIfMcpOAuthBootstrapInvalid,
   warnIfIdJagIssuerSharesMcpOAuthKey,
 } from "./audit/mcp-oauth-startup-warnings.js";
 export * from "./api-keys/index.js";

@@ -8,6 +8,7 @@ import type { AuthEventSink } from "../audit/auth-events.js";
 import { createAuthEventSinkFromEnv } from "../audit/auth-worm-sink.js";
 import {
   warnIfMcpOAuthAuditDisabled,
+  warnIfMcpOAuthBootstrapInvalid,
   warnIfMcpOAuthHs256Only,
 } from "../audit/mcp-oauth-startup-warnings.js";
 import {
@@ -122,7 +123,8 @@ function loadEmaBootstrapConfigs(env: NodeJS.ProcessEnv): EmaOrgConfig[] {
   if (inline) {
     try {
       return loadEmaOrgsFromJson(inline);
-    } catch {
+    } catch (cause) {
+      warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_JSON", cause);
       return [];
     }
   }
@@ -130,15 +132,22 @@ function loadEmaBootstrapConfigs(env: NodeJS.ProcessEnv): EmaOrgConfig[] {
   if (path) {
     try {
       return loadEmaOrgsFromJsonFile(path);
-    } catch {
+    } catch (cause) {
+      warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_PATH", cause);
       return [];
     }
   }
-  const fileRaw = readOptionalFile(env, "CLAWQL_EMA_ORGS_FILE");
-  if (fileRaw) {
+  const filePath = env.CLAWQL_EMA_ORGS_FILE?.trim();
+  if (filePath) {
     try {
+      const fileRaw = readOptionalFile(env, "CLAWQL_EMA_ORGS_FILE");
+      if (!fileRaw) {
+        warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_FILE", "empty_or_unreadable");
+        return [];
+      }
       return loadEmaOrgsFromJson(fileRaw);
-    } catch {
+    } catch (cause) {
+      warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_FILE", cause);
       return [];
     }
   }
@@ -150,7 +159,8 @@ function loadMcpClientBootstrap(env: NodeJS.ProcessEnv): McpRegisteredClient[] {
   if (inline) {
     try {
       return loadMcpClientsFromJson(inline);
-    } catch {
+    } catch (cause) {
+      warnIfMcpOAuthBootstrapInvalid("CLAWQL_MCP_OAUTH_CLIENTS_JSON", cause);
       return [];
     }
   }
@@ -158,7 +168,8 @@ function loadMcpClientBootstrap(env: NodeJS.ProcessEnv): McpRegisteredClient[] {
   if (path) {
     try {
       return loadMcpClientsFromJsonFile(path);
-    } catch {
+    } catch (cause) {
+      warnIfMcpOAuthBootstrapInvalid("CLAWQL_MCP_OAUTH_CLIENTS_PATH", cause);
       return [];
     }
   }

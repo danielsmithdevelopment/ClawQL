@@ -1,7 +1,7 @@
 {
   "name": "clawql-auth",
   "version": "7.2.0",
-  "description": "ClawQL gateway auth (noAuth/apiKey/oidc JWT consumer, issued API keys, ATR claims, step-up TOTP) plus outbound OAuth token store with mutex refresh",
+  "description": "ClawQL gateway auth (noAuth/apiKey/oidc JWT consumer), inbound MCP OAuth 2.1 AS + EMA/ID-JAG, issued API keys, ATR claims, step-up TOTP/WebAuthn, outbound OAuth token store with mutex refresh",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",

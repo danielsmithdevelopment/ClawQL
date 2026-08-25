@@ -9,7 +9,7 @@
  * against this gateway, not end-user login/password accounts.
  */
 
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { Effect } from "effect";
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 
@@ -121,14 +121,21 @@ export type McpClientRegistry = {
   getClient: (clientId: string) => Promise<McpRegisteredClient | null>;
 };
 
+/** Persisted refresh-token record (hash-keyed). */
+export type McpRefreshRecord = {
+  clientId: string;
+  scope: string[];
+  expiresAtMs: number;
+  /**
+   * ATR claims snapshot from issuance (required for `authorization_code` so refresh
+   * does not collapse the human subject back to the client id).
+   */
+  claims?: AtrClaims;
+};
+
 export type McpRefreshStore = {
-  save: (
-    refreshTokenHash: string,
-    record: { clientId: string; scope: string[]; expiresAtMs: number }
-  ) => Promise<void>;
-  get: (
-    refreshTokenHash: string
-  ) => Promise<{ clientId: string; scope: string[]; expiresAtMs: number } | null>;
+  save: (refreshTokenHash: string, record: McpRefreshRecord) => Promise<void>;
+  get: (refreshTokenHash: string) => Promise<McpRefreshRecord | null>;
   revoke: (refreshTokenHash: string) => Promise<void>;
 };
 
@@ -138,6 +145,16 @@ function hashSecret(salt: string, value: string): string {
 
 function hashRefreshToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
+}
+
+function secretsEqual(a: string, b: string): boolean {
+  const ba = Buffer.from(a, "utf8");
+  const bb = Buffer.from(b, "utf8");
+  if (ba.length !== bb.length) {
+    timingSafeEqual(ba, ba);
+    return false;
+  }
+  return timingSafeEqual(ba, bb);
 }
 
 function toKey(secret: string | Uint8Array): Uint8Array {
@@ -294,7 +311,7 @@ export class MCPOAuthServer {
     if (client.clientSecretHash) {
       if (!request.clientSecret || !client.salt) throw new Error("invalid_client");
       const hash = hashSecret(client.salt, request.clientSecret);
-      if (hash !== client.clientSecretHash) throw new Error("invalid_client");
+      if (!secretsEqual(hash, client.clientSecretHash)) throw new Error("invalid_client");
     }
 
     const codeHash = hashRefreshToken(request.code.trim());
@@ -438,7 +455,7 @@ export class MCPOAuthServer {
     if (client.clientSecretHash) {
       if (!request.clientSecret || !client.salt) throw new Error("invalid_client");
       const hash = hashSecret(client.salt, request.clientSecret);
-      if (hash !== client.clientSecretHash) throw new Error("invalid_client");
+      if (!secretsEqual(hash, client.clientSecretHash)) throw new Error("invalid_client");
     }
 
     const scope = request.scope?.length ? request.scope : client.defaultScope;
@@ -466,14 +483,31 @@ export class MCPOAuthServer {
 
     const client = await this.clients.getClient(request.clientId);
     if (!client) throw new Error("invalid_client");
+    if (client.clientSecretHash) {
+      if (!request.clientSecret || !client.salt) throw new Error("invalid_client");
+      const secretHash = hashSecret(client.salt, request.clientSecret);
+      if (!secretsEqual(secretHash, client.clientSecretHash)) throw new Error("invalid_client");
+    }
 
     await this.refreshStore.revoke(hash);
 
-    const scope = request.scope?.length ? request.scope : stored.scope;
-    const claims = this.buildAtrClaims(client, scope);
+    const scope = request.scope?.length
+      ? intersectScopes(stored.scope, request.scope)
+      : stored.scope;
+    if (scope.length === 0) throw new Error("invalid_scope");
+
+    const claims: AtrClaims = stored.claims
+      ? { ...stored.claims, scope }
+      : this.buildAtrClaims(client, scope);
+
     const response = await this.mintTokens(client.clientId, claims, scope, {
       grantType: "refresh_token",
       includeRefresh: true,
+      audit: {
+        subjectId: claims.sub,
+        orgId: claims.orgId,
+        role: claims.role,
+      },
     });
 
     await emitAuthEvent(this.eventSink, {
@@ -537,6 +571,7 @@ export class MCPOAuthServer {
         clientId,
         scope,
         expiresAtMs: this.now() + this.refreshTokenTtlSeconds * 1000,
+        claims: { ...claims, scope },
       });
     }
 
@@ -587,6 +622,41 @@ export class MCPOAuthServer {
       throw cause;
     }
   }
+
+  /**
+   * RFC 7009-style refresh-token revocation. Unknown / already-revoked tokens succeed
+   * (no information leak). Access JWTs are short-lived and not denylisted here.
+   */
+  async revokeToken(input: {
+    token: string;
+    clientId?: string;
+    clientSecret?: string;
+  }): Promise<void> {
+    const token = input.token?.trim();
+    if (!token) throw new Error("invalid_request: missing token");
+
+    const hash = hashRefreshToken(token);
+    const stored = await this.refreshStore.get(hash);
+    if (!stored) return;
+
+    const clientId = input.clientId?.trim() || stored.clientId;
+    if (stored.clientId !== clientId) throw new Error("invalid_grant");
+
+    const client = await this.clients.getClient(clientId);
+    if (client?.clientSecretHash) {
+      if (!input.clientSecret || !client.salt) throw new Error("invalid_client");
+      const secretHash = hashSecret(client.salt, input.clientSecret);
+      if (!secretsEqual(secretHash, client.clientSecretHash)) throw new Error("invalid_client");
+    }
+
+    await this.refreshStore.revoke(hash);
+    await emitAuthEvent(this.eventSink, {
+      type: "MCP_TOKEN_REVOKED",
+      clientId,
+      reason: "client_revoke",
+      timestamp: new Date(this.now()).toISOString(),
+    });
+  }
 }
 
 function intersectScopes(allowed: string[], requested: string[]): string[] {
@@ -633,9 +703,9 @@ export function createMemoryMcpClientRegistry(
 }
 
 export function createMemoryMcpRefreshStore(): McpRefreshStore & {
-  readonly map: Map<string, { clientId: string; scope: string[]; expiresAtMs: number }>;
+  readonly map: Map<string, McpRefreshRecord>;
 } {
-  const map = new Map<string, { clientId: string; scope: string[]; expiresAtMs: number }>();
+  const map = new Map<string, McpRefreshRecord>();
   return {
     map,
     async save(hash, record) {

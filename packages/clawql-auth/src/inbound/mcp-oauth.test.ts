@@ -84,6 +84,7 @@ describe("MCPOAuthServer", () => {
     const second = await server.issueToken({
       grantType: "refresh_token",
       clientId: "cline-agent",
+      clientSecret,
       refreshToken: first.refresh_token!,
     });
 
@@ -97,6 +98,7 @@ describe("MCPOAuthServer", () => {
       server.issueToken({
         grantType: "refresh_token",
         clientId: "cline-agent",
+        clientSecret,
         refreshToken: first.refresh_token!,
       })
     ).rejects.toThrow(/invalid_grant/);
@@ -385,6 +387,88 @@ describe("MCPOAuthServer", () => {
         code: authorized.code,
         codeVerifier: verifier,
         redirectUri,
+      })
+    ).rejects.toThrow(/invalid_grant/);
+  });
+
+  it("preserves human ATR claims across authorization_code refresh", async () => {
+    const { generateCodeChallenge, generateCodeVerifier } = await import("../oauth/auth-code.js");
+    const { createMemoryMcpAuthorizationCodeStore } = await import("./mcp-auth-code-store.js");
+
+    const redirectUri = "http://127.0.0.1:9999/callback";
+    const server = createMCPOAuthServer(
+      {
+        issuer: "https://auth.clawql.test",
+        signingSecret: secret,
+        authCodeStore: createMemoryMcpAuthorizationCodeStore(),
+      },
+      createMemoryMcpClientRegistry([
+        {
+          clientId: "cursor-desktop",
+          defaultScope: ["execute", "search"],
+          defaultRole: "operator",
+          orgId: "acme",
+          redirectUris: [redirectUri],
+        },
+      ]),
+      createMemoryMcpRefreshStore()
+    );
+
+    const verifier = generateCodeVerifier();
+    const authorized = await server.createAuthorizationCode({
+      clientId: "cursor-desktop",
+      redirectUri,
+      codeChallenge: generateCodeChallenge(verifier),
+      claims: {
+        sub: "alice@acme.test",
+        role: "operator",
+        scope: ["execute", "search"],
+        orgId: "acme",
+      },
+    });
+
+    const first = await server.issueToken({
+      grantType: "authorization_code",
+      clientId: "cursor-desktop",
+      code: authorized.code,
+      codeVerifier: verifier,
+      redirectUri,
+    });
+
+    const refreshed = await server.issueToken({
+      grantType: "refresh_token",
+      clientId: "cursor-desktop",
+      refreshToken: first.refresh_token!,
+    });
+
+    const claims = await server.validateToken(refreshed.access_token);
+    expect(claims.sub).toBe("alice@acme.test");
+    expect(claims.orgId).toBe("acme");
+    expect(claims.scope).toEqual(["execute", "search"]);
+  });
+
+  it("revokes refresh tokens and emits MCP_TOKEN_REVOKED", async () => {
+    const events: AuthEvent[] = [];
+    const { server, clientSecret } = setup(events);
+    const token = await server.issueToken({
+      grantType: "client_credentials",
+      clientId: "cline-agent",
+      clientSecret,
+    });
+
+    await server.revokeToken({
+      token: token.refresh_token!,
+      clientId: "cline-agent",
+      clientSecret,
+    });
+
+    expect(events.some((e) => e.type === "MCP_TOKEN_REVOKED")).toBe(true);
+    await expect(
+      server.issueToken({
+        grantType: "refresh_token",
+        clientId: "cline-agent",
+        clientSecret,
+        refreshToken: token.refresh_token!,
       })
     ).rejects.toThrow(/invalid_grant/);
   });

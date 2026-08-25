@@ -12,6 +12,7 @@ export {
   type McpGrantType,
   type McpGrantTypeInput,
   type McpRefreshStore,
+  type McpRefreshRecord,
   type McpRegisteredClient,
   type McpTokenRequest,
   type McpTokenResponse,
@@ -95,11 +96,14 @@ export {
 export {
   attachMcpOAuthRoutes,
   handleMcpOAuthAuthorizeRequest,
+  handleMcpOAuthRevokeRequest,
   handleMcpOAuthTokenRequest,
   ID_JAG_ISSUE_PATH,
   ID_JAG_ISSUER_JWKS_PATH,
   MCP_OAUTH_AUTHORIZE_PATH,
+  MCP_OAUTH_REVOKE_PATH,
   MCP_OAUTH_TOKEN_PATH,
+  parseHttpBasicClientAuth,
   parseMcpOAuthTokenBody,
   type AttachMcpOAuthRoutesOptions,
 } from "./http.js";

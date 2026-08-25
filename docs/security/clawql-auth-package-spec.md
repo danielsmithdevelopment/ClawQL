@@ -180,19 +180,21 @@ export class MCPOAuthServer {
   }
 
   private async authenticateClient(req: MCPTokenRequest): Promise<string> {
-    // Registered MCP clients in Vault / DB — v0.1 stub
+    // See `inbound/mcp-oauth.ts` — SecretStore / memory client registry + optional client secret.
     if (!req.client_id) throw new Error("invalid_client");
     return `${req.client_id}:service`;
   }
 
   private async verifyAccessToken(_token: string): Promise<AtrClaims> {
-    // jose verify — same key material as issueToken
-    throw new Error("not_implemented");
+    // See `MCPOAuthServer.validateToken` — jose verify against AS signing material (RS256 JWKS / HS256).
+    throw new Error("see_implementation:packages/clawql-auth/src/inbound/mcp-oauth.ts");
   }
 }
 ```
 
-Every successful `issueToken` emits **`MCP_TOKEN_ISSUED`** to the auth WORM (hashes only).
+> **Implementation note:** The TypeScript sketch above is illustrative. The shipped authorization server is `packages/clawql-auth/src/inbound/mcp-oauth.ts` (`MCPOAuthServer`) with HTTP wiring in `inbound/http.ts` and `server-http` — not a separate stub class.
+
+Every successful `issueToken` emits **`MCP_TOKEN_ISSUED`** to the auth WORM (no `accessTokenHash` until a token→entry lookup path exists).
 
 #### 4.1.1 Enterprise-Managed Authorization (EMA / ID-JAG)
 
@@ -231,7 +233,7 @@ ID-JAG exchange verifies the IdP assertion (JWKS / HS256 dev), maps groups → A
 
 **Auth WORM (shipped):** `createMcpOAuthFromEnv()` wires `createAuthEventSinkFromEnv()` by default. Entries append to a hash-chained SQLite log at `$CLAWQL_HOME/auth-audit.db` unless overridden. Set `CLAWQL_AUTH_AUDIT_STORE=off` to disable; `memory` for tests. Intentionally **no** `accessTokenHash` on events until a token→entry lookup path exists.
 
-**Boot SECURITY WARNINGs (same convention):** audit store `off`; ID-JAG issuer sharing the MCP AS signing key; **HS256-only AS signing** (`CLAWQL_MCP_OAUTH_SIGNING_SECRET` without RS256 PEM) — JWKS cannot be published and every verifier must share the secret. Prefer `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM(_PATH)` in production.
+**Boot SECURITY WARNINGs (same convention):** audit store `off`; ID-JAG issuer sharing the MCP AS signing key; **HS256-only AS signing** (`CLAWQL_MCP_OAUTH_SIGNING_SECRET` without RS256 PEM) — JWKS cannot be published and every verifier must share the secret (prefer `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM(_PATH)`); **missing `CLAWQL_API_KEY`** while MCP OAuth / ID-JAG issuer is enabled — EMA admin and `/oauth/id-jag/issue` return 503; **invalid `CLAWQL_EMA_ORGS_*` / `CLAWQL_MCP_OAUTH_CLIENTS_*` bootstrap** — warn instead of silently empty registries.
 
 Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery-metadata.ts` (`assertion_types_supported: id-jag`).
 
@@ -1087,6 +1089,7 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 4. ~~**`authorization_code` grant**~~ — **Shipped** (`GET /oauth/authorize` + PKCE S256 + one-time code store). ClawQL is not a login IdP: authorize requires already-resolved ATR claims (API key / OIDC / MCP JWT).
 5. ~~**RS256 issued access tokens + JWKS**~~ — **Shipped** (`mcp-oauth-signing.ts`, `GET /.well-known/jwks.json`).
 6. ~~**`mcp-api-adapter` Bearer / JWKS**~~ — **Shipped** (`edge-auth.ts`: static API key and/or ClawQL MCP JWT via JWKS / HS256).
+7. ~~**AS hardening wrap-up**~~ — **Shipped**: refresh ATR claim snapshot; `client_secret_basic`; `POST /oauth/revoke` + `MCP_TOKEN_REVOKED`; timing-safe secret compares; admin-key / bootstrap SECURITY WARNINGs.
 
 ### Three inbound paths (do not conflate)
 
@@ -1111,7 +1114,7 @@ All three produce **`AtrClaims`** for the same Panguard enforcement path. EMA do
 - **`IssuedApiKeyStore`**: issue `cqk_<id>_<secret>` once; salted SHA-256 only; org/team filters; `createClawQLAuth({ apiKeyStorePath })`.
 - **`OAuthTokenStore`**: proactive refresh + single-flight mutex; `invalid_grant` → `ReauthRequiredError`.
 - **`ClientCredentialsFlow` / `AuthorizationCodeFlow` (PKCE)** + provider catalogs.
-- **`MCPOAuthServer`**: HS256 access JWTs with ATR claims; refresh-token rotation; **EMA ID-JAG** group→scope exchange (`id_jag` grant).
+- **`MCPOAuthServer`**: HS256/RS256 access JWTs with ATR claims; refresh-token rotation with ATR claim snapshot; **EMA ID-JAG** group→scope exchange (`id_jag` grant); `client_secret_basic`; `POST /oauth/revoke`.
 - Hosts inject **`AuthEventSink`** for WORM (no hard `clawql-audit` dependency yet).
 
 Phases may land independently of full Vault / Hermes Telegram UX. Shipped OIDC **consumer** mode is untouched.

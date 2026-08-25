@@ -110,10 +110,11 @@ Also shipped: **`ClientCredentialsFlow`**, **`AuthorizationCodeFlow` (PKCE)**, p
 
 When `CLAWQL_MCP_OAUTH_ENABLED=1`, `server-http` exposes:
 
-- `POST /oauth/token` — `client_credentials`, `refresh_token`, `authorization_code` (+ PKCE S256), and ID-JAG (`urn:ietf:params:oauth:grant-type:jwt-bearer`)
+- `POST /oauth/token` — `client_credentials`, `refresh_token`, `authorization_code` (+ PKCE S256), and ID-JAG (`urn:ietf:params:oauth:grant-type:jwt-bearer`). Client auth: `client_secret_post` or `Authorization: Basic`.
+- `POST /oauth/revoke` — RFC 7009-style refresh-token revocation (`MCP_TOKEN_REVOKED`)
 - `GET /oauth/authorize` — interactive auth-code start (requires already-authenticated gateway identity: API key / OIDC / MCP JWT). ClawQL is **not** a login IdP.
-- `GET /.well-known/oauth-authorization-server` — discovery with `token_endpoint` (+ `authorization_endpoint` / `code_challenge_methods_supported` when auth-code is live)
-- `PUT/GET/DELETE /oauth/ema/orgs/:orgId` — admin API (requires `CLAWQL_API_KEY`)
+- `GET /.well-known/oauth-authorization-server` — discovery with `token_endpoint` / `revocation_endpoint` (+ `authorization_endpoint` / `code_challenge_methods_supported` when auth-code is live)
+- `PUT/GET/DELETE /oauth/ema/orgs/:orgId` — admin API (**requires `CLAWQL_API_KEY`**)
 
 EMA org config (IdP JWKS + group→scope mappings) persists in **SecretStore** (`ema-orgs/{orgId}`). Bootstrap from `CLAWQL_EMA_ORGS_JSON` or `CLAWQL_EMA_ORGS_PATH`. Every successful token issue appends **`MCP_TOKEN_ISSUED`** to a hash-chained auth WORM log (SQLite by default via `createAuthEventSinkFromEnv`).
 
@@ -168,30 +169,44 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 | `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL`         | Require MFA-class `acr`/`amr` for financial MCP tools                                    |
 | `CLAWQL_AUTH_FINANCIAL_TOOLS`                   | Override financial tool name list (comma-separated)                                      |
 | `CLAWQL_MCP_OAUTH_ENABLED`                      | Enable inbound MCP OAuth AS on HTTP hosts                                                |
+| `CLAWQL_MCP_OAUTH`                              | Legacy alias for enabling MCP OAuth                                                      |
 | `CLAWQL_MCP_OAUTH_SIGNING_SECRET`               | HS256 secret for issued MCP access JWTs (dev / single-node)                              |
-| `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM`      | RS256 PKCS#8 private key PEM (production — preferred)                                    |
+| `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM`      | Inline RS256 PKCS#8 private key PEM (production — preferred)                             |
 | `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH` | Path to RS256 private key PEM                                                            |
-| `CLAWQL_MCP_OAUTH_SIGNING_PUBLIC_KEY_PEM_PATH`  | Optional verify-only public key (defaults to private)                                    |
+| `CLAWQL_MCP_OAUTH_SIGNING_PUBLIC_KEY_PEM`       | Optional inline verify-only public key                                                   |
+| `CLAWQL_MCP_OAUTH_SIGNING_PUBLIC_KEY_PEM_PATH`  | Optional verify-only public key path (defaults to private)                               |
 | `CLAWQL_MCP_OAUTH_SIGNING_KEY_ID`               | Optional `kid` for RS256 tokens and JWKS                                                 |
 | `CLAWQL_MCP_OAUTH_ISSUER`                       | Token `iss` (default `CLAWQL_PUBLIC_ORIGIN`)                                             |
 | `CLAWQL_MCP_OAUTH_RESOURCE_AUDIENCE`            | ID-JAG `aud` when org config omits audience                                              |
+| `CLAWQL_MCP_OAUTH_AUDIENCE`                     | Alias for resource audience                                                              |
+| `CLAWQL_MCP_OAUTH_TOKEN_TTL_SECONDS`            | Access token TTL (default 300)                                                           |
+| `CLAWQL_MCP_OAUTH_REFRESH_TTL_SECONDS`          | Refresh token TTL (default 3600)                                                         |
 | `CLAWQL_MCP_OAUTH_CLIENTS_JSON`                 | Bootstrap registered MCP clients (JSON)                                                  |
 | `CLAWQL_MCP_OAUTH_CLIENTS_PATH`                 | File path for MCP client registry JSON                                                   |
 | `CLAWQL_EMA_ORGS_JSON`                          | Bootstrap EMA org configs (JSON) into SecretStore                                        |
 | `CLAWQL_EMA_ORGS_PATH`                          | File path for EMA org configs JSON                                                       |
+| `CLAWQL_EMA_ORGS_FILE`                          | Alternate file path env for EMA org configs                                              |
 | `CLAWQL_AUTH_AUDIT_STORE`                       | Auth WORM backend: `sqlite` (default) \| `memory` \| `off`                               |
 | `CLAWQL_AUTH_AUDIT_PATH`                        | SQLite path (default `$CLAWQL_HOME/auth-audit.db`)                                       |
 | `CLAWQL_ID_JAG_ISSUER_ENABLED`                  | Enable ClawQL self-hosted ID-JAG issuer (EMA IdP)                                        |
-| `CLAWQL_ID_JAG_ISSUER_ORG_ID`                   | Org id for single-tenant issuer material                                                 |
+| `CLAWQL_ID_JAG_ISSUER_ORG_ID`                   | Org id for single-tenant issuer material (or `CLAWQL_DEFAULT_ORG_ID`)                    |
+| `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM`          | Inline dedicated RS256 PKCS#8 for ID-JAG                                                 |
 | `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH`     | **Preferred** dedicated RS256 PKCS#8 for ID-JAG (avoid sharing MCP OAuth AS key in prod) |
 | `CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET`           | HS256 issuer secret (tests/dev)                                                          |
+| `CLAWQL_ID_JAG_ISSUER_KEY_ID`                   | Optional `kid` for issuer JWKS                                                           |
 | `CLAWQL_ID_JAG_ISSUER_URI`                      | Assertion `iss` (default `$ORIGIN/oauth/id-jag/{orgId}`)                                 |
+| `CLAWQL_ID_JAG_ISSUER_JWKS_URI`                 | Override published issuer JWKS URI                                                       |
+| `CLAWQL_ID_JAG_ISSUER_ORIGIN`                   | Override public origin for issuer URIs                                                   |
 
 Setting `CLAWQL_AUTH_AUDIT_STORE=off` while MCP OAuth is enabled logs a **SECURITY WARNING** at `server-http` boot — auth is live but issuance is not persisted.
 
 Signing with only `CLAWQL_MCP_OAUTH_SIGNING_SECRET` (HS256, no RS256 PEM) logs a **SECURITY WARNING** at boot — JWKS cannot be published and every verifier must share the secret. Prefer `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM(_PATH)` in production.
 
-Registered MCP clients may include `redirectUris` for the interactive `authorization_code` path. Bootstrap via `CLAWQL_MCP_OAUTH_CLIENTS_JSON` / `_PATH`.
+Missing `CLAWQL_API_KEY` while MCP OAuth / ID-JAG issuer is enabled logs a **SECURITY WARNING** — EMA admin and `/oauth/id-jag/issue` return 503 until set.
+
+Invalid `CLAWQL_EMA_ORGS_*` / `CLAWQL_MCP_OAUTH_CLIENTS_*` bootstrap values log a **SECURITY WARNING** (silent empty registry is no longer quiet).
+
+Registered MCP clients may include `redirectUris` for the interactive `authorization_code` path. Bootstrap via `CLAWQL_MCP_OAUTH_CLIENTS_JSON` / `_PATH`. Refresh tokens persist an ATR claims snapshot so `authorization_code` subjects survive refresh.
 
 ## Per-org IdP routing (multi-tenant)
 

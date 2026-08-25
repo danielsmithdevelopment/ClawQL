@@ -2,6 +2,7 @@
  * Express HTTP routes for inbound MCP OAuth 2.1 + EMA admin API.
  */
 
+import { timingSafeEqual } from "node:crypto";
 import type { Express, Request, Response } from "express";
 
 import type { AtrClaims } from "../gateway.js";
@@ -19,6 +20,7 @@ import { Effect } from "effect";
 
 export const MCP_OAUTH_TOKEN_PATH = "/oauth/token";
 export const MCP_OAUTH_AUTHORIZE_PATH = "/oauth/authorize";
+export const MCP_OAUTH_REVOKE_PATH = "/oauth/revoke";
 export const ID_JAG_ISSUER_JWKS_PATH = "/.well-known/id-jag-jwks.json";
 export const ID_JAG_ISSUE_PATH = "/oauth/id-jag/issue";
 
@@ -86,9 +88,37 @@ function grantTypesForDiscovery(supported: McpGrantType[]): string[] {
   return supported.map((g) => (g === "id_jag" ? ID_JAG_JWT_BEARER_GRANT : g));
 }
 
+/** Parse RFC 6749 `Authorization: Basic` client credentials. */
+export function parseHttpBasicClientAuth(
+  authorizationHeader: string | undefined
+): { clientId?: string; clientSecret?: string } {
+  if (!authorizationHeader?.toLowerCase().startsWith("basic ")) return {};
+  try {
+    const decoded = Buffer.from(authorizationHeader.slice(6).trim(), "base64").toString("utf8");
+    const idx = decoded.indexOf(":");
+    if (idx < 0) return { clientId: decoded.trim() || undefined };
+    return {
+      clientId: decoded.slice(0, idx).trim() || undefined,
+      clientSecret: decoded.slice(idx + 1),
+    };
+  } catch {
+    return {};
+  }
+}
+
+function mergeClientAuthFromBasic(body: TokenBody, req?: Request): TokenBody {
+  const basic = parseHttpBasicClientAuth(req?.get("authorization") ?? undefined);
+  return {
+    ...body,
+    client_id: body.client_id?.trim() || body.clientId?.trim() || basic.clientId,
+    client_secret: body.client_secret?.trim() || body.clientSecret?.trim() || basic.clientSecret,
+  };
+}
+
 export function parseMcpOAuthTokenBody(body: TokenBody): McpTokenRequest {
   const grantType = (body.grant_type?.trim() || body.grantType?.trim()) as
-    McpGrantTypeInput | undefined;
+    | McpGrantTypeInput
+    | undefined;
   if (!grantType) {
     throw new Error("invalid_request: missing grant_type");
   }
@@ -120,14 +150,25 @@ function mapIssueTokenError(err: unknown): { status: number; error: string; desc
   return { status: 500, error: "server_error", description: message };
 }
 
+function secretsEqual(a: string, b: string): boolean {
+  const ba = Buffer.from(a, "utf8");
+  const bb = Buffer.from(b, "utf8");
+  if (ba.length !== bb.length) {
+    timingSafeEqual(ba, ba);
+    return false;
+  }
+  return timingSafeEqual(ba, bb);
+}
+
 export async function handleMcpOAuthTokenRequest(
   server: MCPOAuthServer,
   body: TokenBody,
-  res: Response
+  res: Response,
+  req?: Request
 ): Promise<void> {
   let request: McpTokenRequest;
   try {
-    request = parseMcpOAuthTokenBody(body);
+    request = parseMcpOAuthTokenBody(mergeClientAuthFromBasic(body, req));
   } catch (err) {
     const mapped = mapIssueTokenError(err);
     oauthError(res, mapped.status, mapped.error, mapped.description);
@@ -137,6 +178,31 @@ export async function handleMcpOAuthTokenRequest(
   try {
     const token = await server.issueToken(request);
     res.status(200).json(token);
+  } catch (err) {
+    const mapped = mapIssueTokenError(err);
+    oauthError(res, mapped.status, mapped.error, mapped.description);
+  }
+}
+
+export async function handleMcpOAuthRevokeRequest(
+  server: MCPOAuthServer,
+  body: TokenBody,
+  res: Response,
+  req?: Request
+): Promise<void> {
+  const merged = mergeClientAuthFromBasic(body, req);
+  const token = merged.token?.trim() || merged.refresh_token?.trim() || merged.refreshToken?.trim();
+  if (!token) {
+    oauthError(res, 400, "invalid_request", "missing token");
+    return;
+  }
+  try {
+    await server.revokeToken({
+      token,
+      clientId: merged.client_id?.trim() || merged.clientId?.trim(),
+      clientSecret: merged.client_secret?.trim() || merged.clientSecret?.trim(),
+    });
+    res.status(200).json({});
   } catch (err) {
     const mapped = mapIssueTokenError(err);
     oauthError(res, mapped.status, mapped.error, mapped.description);
@@ -200,7 +266,7 @@ function assertEmaAdmin(req: Request, res: Response, adminApiKey: string | undef
     return false;
   }
   const presented = readAdminCredential(req);
-  if (!presented || presented !== adminApiKey) {
+  if (!presented || !secretsEqual(presented, adminApiKey)) {
     oauthError(res, 401, "invalid_client", "ema_admin_unauthorized");
     return false;
   }
@@ -214,6 +280,7 @@ export function attachMcpOAuthRoutes(
 ): void {
   const tokenPath = options.tokenPath?.trim() || MCP_OAUTH_TOKEN_PATH;
   const authorizePath = options.authorizePath?.trim() || MCP_OAUTH_AUTHORIZE_PATH;
+  const revokePath = MCP_OAUTH_REVOKE_PATH;
   const supportsAuthCode =
     !!server &&
     !!options.resolveAuthorizeClaims &&
@@ -221,9 +288,20 @@ export function attachMcpOAuthRoutes(
 
   if (server) {
     app.post(tokenPath, (req, res) => {
-      void handleMcpOAuthTokenRequest(server, (req.body ?? {}) as TokenBody, res).catch(
+      void handleMcpOAuthTokenRequest(server, (req.body ?? {}) as TokenBody, res, req).catch(
         (err: unknown) => {
           console.error("[clawql-auth] POST oauth/token error:", err);
+          if (!res.headersSent) {
+            oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
+          }
+        }
+      );
+    });
+
+    app.post(revokePath, (req, res) => {
+      void handleMcpOAuthRevokeRequest(server, (req.body ?? {}) as TokenBody, res, req).catch(
+        (err: unknown) => {
+          console.error("[clawql-auth] POST oauth/revoke error:", err);
           if (!res.headersSent) {
             oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
           }
@@ -267,6 +345,7 @@ export function attachMcpOAuthRoutes(
       res.status(200).json({
         issuer,
         token_endpoint: tokenEndpoint,
+        revocation_endpoint: `${origin}${revokePath}`,
         ...(authCodeEnabled
           ? {
               authorization_endpoint: `${origin}${authorizePath}`,

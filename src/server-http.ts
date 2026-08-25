@@ -55,6 +55,7 @@ import {
   resolveSecretStore,
   warnIfMcpOAuthAuditDisabled,
   warnIfMcpOAuthHs256Only,
+  warnIfMcpOAuthAdminKeyMissing,
   type ApiKeyClaimsResolver,
   type GatewayAuthConfig,
   type IdJagIssuerRuntime,
@@ -239,9 +240,11 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   app.use(applyCorsIfConfigured);
 
   app.use("/oauth/token", express.urlencoded({ extended: false }));
+  app.use("/oauth/revoke", express.urlencoded({ extended: false }));
   app.use("/oauth/ema", express.json());
   app.use("/oauth/id-jag", express.json());
 
+  const injectedMcpOAuth = options.mcpOAuthRuntime != null;
   let mcpOAuthRuntime: McpOAuthRuntime | null = options.mcpOAuthRuntime ?? null;
   if (!options.skipMcpOAuth && !mcpOAuthRuntime && isMcpOAuthEnabled(process.env)) {
     mcpOAuthRuntime = await createMcpOAuthFromEnv();
@@ -262,10 +265,15 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   const gatewayAuthConfig = buildGatewayAuthConfig(process.env, mcpOAuthRuntime?.validateBearer);
 
   if (mcpOAuthRuntime || idJagIssuer) {
-    if (mcpOAuthRuntime) {
+    // createMcpOAuthFromEnv already warns; only re-warn for injected test/runtime hosts.
+    if (mcpOAuthRuntime && injectedMcpOAuth) {
       warnIfMcpOAuthAuditDisabled(process.env);
       warnIfMcpOAuthHs256Only(process.env);
     }
+    warnIfMcpOAuthAdminKeyMissing(process.env, {
+      mcpOAuthEnabled: !!mcpOAuthRuntime,
+      idJagIssuerEnabled: !!idJagIssuer,
+    });
     attachMcpOAuthRoutes(app, mcpOAuthRuntime?.server ?? null, {
       wellKnown: mcpOAuthRuntime
         ? {

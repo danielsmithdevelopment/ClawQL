@@ -7,12 +7,15 @@ import { generateCodeChallenge, generateCodeVerifier } from "../oauth/auth-code.
 import { ID_JAG_ASSERTION_TYPE } from "./id-jag.js";
 import {
   attachMcpOAuthRoutes,
+  parseHttpBasicClientAuth,
   parseMcpOAuthTokenBody,
   MCP_OAUTH_AUTHORIZE_PATH,
+  MCP_OAUTH_REVOKE_PATH,
   MCP_OAUTH_TOKEN_PATH,
 } from "./http.js";
 import { createMcpOAuthForTests } from "./mcp-oauth-env.js";
 import { loadMcpOAuthSigningMaterialEffect } from "./mcp-oauth-signing.js";
+import { hashMcpClientSecret } from "./mcp-oauth.js";
 
 async function withTestApp(
   fn: (
@@ -29,6 +32,8 @@ async function withTestApp(
   const signingSecret = "test-mcp-oauth-signing-secret-32b!!";
   const audience = "https://mcp.clawql.test/";
   const redirectUri = options?.redirectUri ?? "http://127.0.0.1:9999/callback";
+  const confidentialSalt = "http-basic-test-salt";
+  const confidentialSecret = "client-secret-value";
 
   const runtime = await createMcpOAuthForTests({
     issuer: "https://auth.clawql.test",
@@ -41,6 +46,14 @@ async function withTestApp(
         defaultRole: "operator",
         orgId: "acme",
         redirectUris: [redirectUri],
+      },
+      {
+        clientId: "cline-agent",
+        salt: confidentialSalt,
+        clientSecretHash: hashMcpClientSecret(confidentialSalt, confidentialSecret),
+        defaultScope: ["execute", "search", "memory"],
+        defaultRole: "operator",
+        orgId: "acme",
       },
     ],
   });
@@ -56,6 +69,7 @@ async function withTestApp(
 
   const app = express();
   app.use(MCP_OAUTH_TOKEN_PATH, express.urlencoded({ extended: false }));
+  app.use(MCP_OAUTH_REVOKE_PATH, express.urlencoded({ extended: false }));
   app.use("/oauth/ema", express.json());
   attachMcpOAuthRoutes(app, runtime.server, {
     wellKnown: { issuer: runtime.config.issuer, resourceAudience: audience },
@@ -110,6 +124,76 @@ describe("attachMcpOAuthRoutes", () => {
     expect(req.redirectUri).toBe("http://127.0.0.1:9999/callback");
   });
 
+  it("parses HTTP Basic client credentials", () => {
+    const encoded = Buffer.from("cline-agent:client-secret-value", "utf8").toString("base64");
+    expect(parseHttpBasicClientAuth(`Basic ${encoded}`)).toEqual({
+      clientId: "cline-agent",
+      clientSecret: "client-secret-value",
+    });
+  });
+
+  it("POST /oauth/token accepts client_secret_basic without body credentials", async () => {
+    await withTestApp(async (baseUrl, runtime) => {
+      const basic = Buffer.from("cline-agent:client-secret-value", "utf8").toString("base64");
+      const res = await fetch(`${baseUrl}${MCP_OAUTH_TOKEN_PATH}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${basic}`,
+        },
+        body: new URLSearchParams({ grant_type: "client_credentials" }),
+      });
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as { access_token: string; refresh_token?: string };
+      expect(body.access_token).toBeTruthy();
+      const claims = await runtime.validateBearer(body.access_token);
+      expect(claims.sub).toBe("cline-agent");
+      expect(claims.orgId).toBe("acme");
+    });
+  });
+
+  it("POST /oauth/revoke revokes refresh tokens and rejects reuse", async () => {
+    await withTestApp(async (baseUrl) => {
+      const basic = Buffer.from("cline-agent:client-secret-value", "utf8").toString("base64");
+      const issued = await fetch(`${baseUrl}${MCP_OAUTH_TOKEN_PATH}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${basic}`,
+        },
+        body: new URLSearchParams({ grant_type: "client_credentials" }),
+      });
+      expect(issued.status).toBe(200);
+      const tokenBody = (await issued.json()) as { refresh_token: string };
+
+      const revoked = await fetch(`${baseUrl}${MCP_OAUTH_REVOKE_PATH}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${basic}`,
+        },
+        body: new URLSearchParams({ token: tokenBody.refresh_token }),
+      });
+      expect(revoked.status).toBe(200);
+      expect(await revoked.json()).toEqual({});
+
+      const reuse = await fetch(`${baseUrl}${MCP_OAUTH_TOKEN_PATH}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${basic}`,
+        },
+        body: new URLSearchParams({
+          grant_type: "refresh_token",
+          refresh_token: tokenBody.refresh_token,
+        }),
+      });
+      expect(reuse.status).toBe(400);
+      const err = (await reuse.json()) as { error: string };
+      expect(err.error).toBe("invalid_grant");
+    });
+  });
+
   it("POST /oauth/token exchanges ID-JAG assertions", async () => {
     const idpSecret = "test-idp-hs256-secret-at-least-32-chars!!";
     const audience = "https://mcp.clawql.test/";
@@ -150,10 +234,14 @@ describe("attachMcpOAuthRoutes", () => {
       expect(res.status).toBe(200);
       const body = (await res.json()) as {
         token_endpoint: string;
+        revocation_endpoint: string;
         grant_types_supported: string[];
         authorization_endpoint?: string;
+        token_endpoint_auth_methods_supported: string[];
       };
       expect(body.token_endpoint).toContain("/oauth/token");
+      expect(body.revocation_endpoint).toContain(MCP_OAUTH_REVOKE_PATH);
+      expect(body.token_endpoint_auth_methods_supported).toContain("client_secret_basic");
       expect(body.grant_types_supported).toContain("urn:ietf:params:oauth:grant-type:jwt-bearer");
       expect(body.grant_types_supported).toContain("authorization_code");
       expect(body.authorization_endpoint).toBeUndefined();

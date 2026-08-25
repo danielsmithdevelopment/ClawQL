@@ -66,6 +66,16 @@ export const ID_JAG_ISSUER_SHARED_KEY_WARNING =
   "Compromise of one role forges both MCP access tokens and ID-JAG assertions. " +
   "Production deployments should configure a dedicated issuer key to limit blast radius.";
 
+export const MCP_OAUTH_ADMIN_KEY_MISSING_WARNING =
+  "[clawql-auth] SECURITY WARNING: MCP OAuth / ID-JAG issuer is enabled but CLAWQL_API_KEY is unset — " +
+  "EMA org/connector admin routes and POST /oauth/id-jag/issue require CLAWQL_API_KEY and will return 503. " +
+  "Set CLAWQL_API_KEY (or disable issuer/admin surfaces) before production.";
+
+export const MCP_OAUTH_BOOTSTRAP_INVALID_WARNING =
+  "[clawql-auth] SECURITY WARNING: MCP OAuth bootstrap config failed to load — " +
+  "the configured CLAWQL_EMA_ORGS_* / CLAWQL_MCP_OAUTH_CLIENTS_* value was ignored (empty registry). " +
+  "Fix the JSON/path or remove the env var; silent empty bootstrap leaves EMA/clients unconfigured.";
+
 /**
  * Warn when the ID-JAG issuer falls back to MCP OAuth signing material.
  */
@@ -83,4 +93,28 @@ export function warnIfIdJagIssuerSharesMcpOAuthKey(env: NodeJS.ProcessEnv = proc
   );
   if (!hasMcpFallback) return;
   console.warn(ID_JAG_ISSUER_SHARED_KEY_WARNING);
+}
+
+/**
+ * Warn when EMA/issuer admin routes cannot authenticate because CLAWQL_API_KEY is missing.
+ */
+export function warnIfMcpOAuthAdminKeyMissing(
+  env: NodeJS.ProcessEnv = process.env,
+  flags: { mcpOAuthEnabled?: boolean; idJagIssuerEnabled?: boolean } = {}
+): void {
+  if (!flags.mcpOAuthEnabled && !flags.idJagIssuerEnabled) return;
+  if (env.CLAWQL_API_KEY?.trim()) return;
+  console.warn(MCP_OAUTH_ADMIN_KEY_MISSING_WARNING);
+}
+
+/** Warn when an explicit bootstrap env var was set but failed to parse/load. */
+export function warnIfMcpOAuthBootstrapInvalid(
+  source: string,
+  cause?: unknown
+): void {
+  const detail = cause instanceof Error ? cause.message : cause ? String(cause) : "";
+  console.warn(
+    `${MCP_OAUTH_BOOTSTRAP_INVALID_WARNING} source=${source}` +
+      (detail ? ` cause=${detail}` : "")
+  );
 }

@@ -2,10 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   ID_JAG_ISSUER_SHARED_KEY_WARNING,
+  MCP_OAUTH_ADMIN_KEY_MISSING_WARNING,
   MCP_OAUTH_AUDIT_DISABLED_WARNING,
+  MCP_OAUTH_BOOTSTRAP_INVALID_WARNING,
   MCP_OAUTH_HS256_ONLY_WARNING,
   warnIfIdJagIssuerSharesMcpOAuthKey,
+  warnIfMcpOAuthAdminKeyMissing,
   warnIfMcpOAuthAuditDisabled,
+  warnIfMcpOAuthBootstrapInvalid,
   warnIfMcpOAuthHs256Only,
 } from "./mcp-oauth-startup-warnings.js";
 
@@ -106,6 +110,36 @@ describe("warnIfIdJagIssuerSharesMcpOAuthKey", () => {
       CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH: "/keys/as.pem",
     });
     expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
+
+describe("warnIfMcpOAuthAdminKeyMissing", () => {
+  it("warns when MCP OAuth is on without CLAWQL_API_KEY", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    warnIfMcpOAuthAdminKeyMissing({}, { mcpOAuthEnabled: true });
+    expect(warn).toHaveBeenCalledWith(MCP_OAUTH_ADMIN_KEY_MISSING_WARNING);
+    warn.mockRestore();
+  });
+
+  it("does not warn when CLAWQL_API_KEY is set", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    warnIfMcpOAuthAdminKeyMissing(
+      { CLAWQL_API_KEY: "admin" },
+      { mcpOAuthEnabled: true, idJagIssuerEnabled: true }
+    );
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
+
+describe("warnIfMcpOAuthBootstrapInvalid", () => {
+  it("warns with source detail", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_JSON", new Error("bad json"));
+    expect(warn).toHaveBeenCalled();
+    expect(String(warn.mock.calls[0]?.[0])).toContain(MCP_OAUTH_BOOTSTRAP_INVALID_WARNING);
+    expect(String(warn.mock.calls[0]?.[0])).toContain("CLAWQL_EMA_ORGS_JSON");
     warn.mockRestore();
   });
 });

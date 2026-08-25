@@ -5,16 +5,15 @@
 import { readFileSync } from "node:fs";
 
 import type { SecretStore } from "../stores/types.js";
-import type { McpClientRegistry, McpRefreshStore, McpRegisteredClient } from "./mcp-oauth.js";
+import type {
+  McpClientRegistry,
+  McpRefreshRecord,
+  McpRefreshStore,
+  McpRegisteredClient,
+} from "./mcp-oauth.js";
 
 export const MCP_OAUTH_CLIENT_PREFIX = "mcp-oauth/clients/";
 export const MCP_OAUTH_REFRESH_PREFIX = "mcp-oauth/refresh/";
-
-type RefreshRecord = {
-  clientId: string;
-  scope: string[];
-  expiresAtMs: number;
-};
 
 function clientPath(clientId: string): string {
   return `${MCP_OAUTH_CLIENT_PREFIX}${clientId.trim()}`;
@@ -27,13 +26,13 @@ function refreshPath(hash: string): string {
 export function createSecretStoreMcpRefreshStore(store: SecretStore): McpRefreshStore {
   return {
     async save(hash, record) {
-      await store.setSecret(refreshPath(hash), JSON.stringify(record satisfies RefreshRecord));
+      await store.setSecret(refreshPath(hash), JSON.stringify(record satisfies McpRefreshRecord));
     },
     async get(hash) {
       const raw = await store.getSecret(refreshPath(hash));
       if (!raw) return null;
       try {
-        return JSON.parse(raw) as RefreshRecord;
+        return JSON.parse(raw) as McpRefreshRecord;
       } catch {
         return null;
       }
