@@ -152,3 +152,20 @@ export type {
   BenchmarkTask,
   TaskResult,
 } from "./bench/dry-runner.js";
+
+export {
+  FAMILY_S_STUB_TOOLS,
+  FAMILY_S_STUB_TOOL_NAMES,
+  FAMILY_S_READONLY_ATR,
+  isFamilySStubTool,
+  getFamilySStubTool,
+} from "./bench/family-s-stub-catalog.js";
+export type { FamilySStubTool, FamilySStubToolKind } from "./bench/family-s-stub-catalog.js";
+
+export { runFamilySScopeChecks, invokeHarnessStub } from "./bench/family-s-checks.js";
+export type {
+  FamilySCheckDetail,
+  FamilySCheckName,
+  FamilySCheckReport,
+  InvokeHarnessStubResult,
+} from "./bench/family-s-checks.js";

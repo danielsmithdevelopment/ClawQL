@@ -23,8 +23,8 @@ This is **not** the MCP Track A/B harness under [`openbench/`](../../openbench/)
 | Adapters Phase 1–4   | All seven agents in `packages/clawql-agents`                               | **Shipped** (#945)         |
 | Harvey LAB publish   | Contiguous firm-knowledge results ledger published                         | **Pending**                |
 | ExtractBench publish | ExtractBench action plan results usable as Family M seed                   | **Pending**                |
-| Stub-tool catalog    | Family S tools (`email_*`, …) defined as harness stubs, not fake MCP names | **Pending**                |
-| Dry runner           | `runAgentBenchmarkDry` + `integrations/agents-bench`                       | **Shipped (this PR)**      |
+| Stub-tool catalog    | Family S tools (`email_*`, …) defined as harness stubs, not fake MCP names | **Shipped** (this PR)      |
+| Dry runner           | `runAgentBenchmarkDry` + `integrations/agents-bench`                       | **Shipped**                |
 | Live A/B CI          | Matrix jobs with spend caps                                                | **Blocked on gates above** |
 
 ## Layout
@@ -44,7 +44,7 @@ Do **not** add `packages/clawql-agents/bench/runner.ts` as a second live harness
 ## Phased delivery
 
 1. **Dry scorecard** — session lifecycle + stub CPR/token delta (done).
-2. **Family S smoke** — readonly ATR deny of `execute`; memory recall success path (fixture shipped).
+2. **Family S smoke** — readonly ATR deny of `execute` + `email_send`; allow `memory_recall` + `email_read` via `runFamilySScopeChecks` (done).
 3. **Family M/P** — after ExtractBench / Harvey gates; wire real model calls through clawql-inference.
 4. **Cline ledger revision** — OpenBench v0.1 is six agents; adding Cline is +15 tasks or Family S MVP (explicit spec bump).
 

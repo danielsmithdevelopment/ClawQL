@@ -7,6 +7,7 @@ import {
   type ATRScope,
   type ClawQLAgentConfig,
 } from "../shared/types.js";
+import { runFamilySScopeChecks, type FamilySCheckReport } from "./family-s-checks.js";
 
 export type BenchmarkFamily = "S" | "M" | "P";
 
@@ -15,6 +16,8 @@ export type BenchmarkTask = {
   readonly family: BenchmarkFamily;
   readonly title: string;
   readonly atrScope: ATRScope;
+  /** When true (default for family S), run ATR deny/allow checkers instead of stub CPR. */
+  readonly scopeChecks?: boolean;
 };
 
 export type ArmResult = {
@@ -23,6 +26,7 @@ export type ArmResult = {
   readonly cpr: number;
   readonly wormComplete: boolean;
   readonly notes?: string;
+  readonly familyS?: FamilySCheckReport;
 };
 
 export type TaskResult = {
@@ -50,8 +54,21 @@ const stubArm = (wormComplete: boolean): ArmResult => ({
   notes: "stub arm — replace when Agents OpenBench live gates clear",
 });
 
+const armFromFamilyS = (report: FamilySCheckReport, tokens: number): ArmResult => ({
+  ok: report.enforce ? report.wormComplete : true,
+  tokens,
+  cpr: report.cpr,
+  wormComplete: report.wormComplete,
+  notes: report.enforce
+    ? "Family S: ATR enforceToolCall + harness stubs"
+    : "Family S baseline: no ATR gate",
+  familyS: report,
+});
+
 /**
- * Dry-run OpenBench-shaped scorecard: session start/stop under ATR + stub CPR/token arms.
+ * Dry-run OpenBench-shaped scorecard.
+ * Family S tasks with scope checks (default) exercise real ATR deny/allow via Panguard + harness stubs.
+ * M/P (and S with scopeChecks:false) keep stub CPR/token arms until live gates clear.
  */
 export const runAgentBenchmarkDry = (input: {
   readonly agentName: AgentName;
@@ -68,13 +85,41 @@ export const runAgentBenchmarkDry = (input: {
     const results: TaskResult[] = [];
 
     for (const task of input.tasks) {
+      const useScopeChecks =
+        task.scopeChecks ?? (task.family === "S" || input.family === "S");
+      const atrScope: ATRScope = task.atrScope;
+
       const taskResult = yield* Effect.gen(function* () {
         const adapter = yield* AgentAdapter;
         yield* adapter.initialize(input.config);
-        const session = yield* adapter.start(task.atrScope);
+        const session = yield* adapter.start(atrScope);
+
+        let baseline: ArmResult;
+        let clawql: ArmResult;
+
+        if (useScopeChecks) {
+          const baselineReport = yield* runFamilySScopeChecks({
+            atrScope,
+            sessionId: session.sessionId,
+            agentName: input.agentName,
+            virtualKeyId: input.config.virtualKeyId,
+            enforce: false,
+          });
+          const clawqlReport = yield* runFamilySScopeChecks({
+            atrScope,
+            sessionId: session.sessionId,
+            agentName: input.agentName,
+            virtualKeyId: input.config.virtualKeyId,
+            enforce: true,
+          });
+          baseline = armFromFamilyS(baselineReport, 1200);
+          clawql = armFromFamilyS(clawqlReport, 800);
+        } else {
+          baseline = stubArm(false);
+          clawql = stubArm(true);
+        }
+
         yield* adapter.stop(session);
-        const baseline = stubArm(false);
-        const clawql = stubArm(true);
         return {
           taskId: task.id,
           baseline,

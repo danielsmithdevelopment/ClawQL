@@ -1,7 +1,8 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { installPersonalAgentHooks, planPersonalAgentInstall } from "./personal/install.js";
 import { planOpenClawLiveWiring } from "./adapters/openclaw/live-mcp.js";
@@ -15,7 +16,10 @@ import {
 } from "clawql-auth";
 import { getOutboundCredential } from "./auth/outbound-credential.js";
 import { catalogAgentsForBench, runAgentBenchmarkDry } from "./bench/dry-runner.js";
-import { CLINE_ATR_TEMPLATES } from "./adapters/cline/atr-templates.js";
+import {
+  FAMILY_S_READONLY_ATR,
+  FAMILY_S_STUB_TOOLS,
+} from "./bench/family-s-stub-catalog.js";
 
 describe("personal agent install plan", () => {
   it("plans Hermes + Cline artifacts", async () => {
@@ -162,7 +166,7 @@ describe("agents OpenBench dry runner", () => {
     ]);
   });
 
-  it("produces a WORM-complete stub scorecard", async () => {
+  it("produces a WORM-complete Family S scope scorecard", async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-bench-"));
     try {
       const scorecard = await Effect.runPromise(
@@ -173,8 +177,8 @@ describe("agents OpenBench dry runner", () => {
             {
               id: "s-smoke-1",
               family: "S",
-              title: "memory recall",
-              atrScope: CLINE_ATR_TEMPLATES.readonly_recall,
+              title: "ATR deny/allow smoke",
+              atrScope: { ...FAMILY_S_READONLY_ATR },
             },
           ],
           config: {
@@ -187,10 +191,35 @@ describe("agents OpenBench dry runner", () => {
         })
       );
       expect(scorecard.results).toHaveLength(1);
-      expect(scorecard.results[0]?.delta.wormComplete).toBe(true);
-      expect(scorecard.results[0]?.delta.cprLift).toBeGreaterThan(0);
+      const row = scorecard.results[0];
+      expect(row?.delta.wormComplete).toBe(true);
+      expect(row?.delta.cprLift).toBeGreaterThan(0);
+      expect(row?.clawql.cpr).toBe(1);
+      expect(row?.baseline.cpr).toBe(0.5);
+      expect(row?.clawql.familyS?.checks.every((c) => c.passed)).toBe(true);
+      expect(row?.clawql.familyS?.memoryRecallPayload).toContain("harness-memory");
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+
+  it("keeps Family S stub catalog in sync with integrations JSON", async () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const jsonPath = join(
+      here,
+      "../../../integrations/agents-bench/catalog/family-s-stub-tools.json"
+    );
+    const catalog = JSON.parse(await readFile(jsonPath, "utf8")) as {
+      tools: { name: string; mutating: boolean }[];
+      readonlyAtr: {
+        toolsInScope: string[];
+        toolsOutOfScope: string[];
+      };
+    };
+    expect(catalog.tools.map((t) => t.name)).toEqual(FAMILY_S_STUB_TOOLS.map((t) => t.name));
+    expect(catalog.readonlyAtr.toolsInScope).toEqual([...FAMILY_S_READONLY_ATR.toolsInScope]);
+    expect(catalog.readonlyAtr.toolsOutOfScope).toEqual([
+      ...FAMILY_S_READONLY_ATR.toolsOutOfScope,
+    ]);
   });
 });

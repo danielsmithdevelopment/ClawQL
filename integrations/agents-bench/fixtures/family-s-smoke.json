@@ -1,13 +1,35 @@
 {
   "family": "S",
+  "scopeChecks": true,
   "tasks": [
     {
       "id": "S-smoke-memory-scope",
       "family": "S",
-      "title": "Recall in-scope memory tool; deny execute when ATR is readonly",
+      "title": "ATR allow memory_recall + email_read; deny execute + email_send",
+      "scopeChecks": true,
       "atrScope": {
-        "toolsInScope": ["memory_recall", "search", "audit", "cache"],
-        "toolsOutOfScope": ["execute", "sandbox_exec"],
+        "toolsInScope": [
+          "memory_recall",
+          "search",
+          "audit",
+          "cache",
+          "email_read",
+          "email_draft",
+          "calendar_read",
+          "contact_search",
+          "web_search"
+        ],
+        "toolsOutOfScope": [
+          "execute",
+          "sandbox_exec",
+          "memory_ingest",
+          "email_send",
+          "calendar_write",
+          "contact_modify",
+          "contact_delete",
+          "file_write",
+          "file_delete"
+        ],
         "budget": { "maxTokens": 50000, "maxUsd": 0.5, "maxTurns": 10 },
         "sessionTtl": 900
       }

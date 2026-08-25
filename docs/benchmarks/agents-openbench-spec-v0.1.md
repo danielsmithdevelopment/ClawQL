@@ -47,6 +47,8 @@ Per task, both arms report:
 
 - Shippable templates use **real MCP tool names** only (`memory_*`, `search`, `execute`, …).
 - Family S stub tools (`email_send`, …) are **harness-local**; never register them on ClawQL MCP.
+- Catalog: [`integrations/agents-bench/catalog/family-s-stub-tools.json`](../../integrations/agents-bench/catalog/family-s-stub-tools.json) (+ `FAMILY_S_STUB_TOOLS` in `clawql-agents`).
+- Dry Family S scorecard uses `runFamilySScopeChecks` (ATR `enforceToolCall` + harness fixtures).
 
 ## 6. Runner contract
 

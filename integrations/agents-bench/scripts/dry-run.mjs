@@ -36,3 +36,11 @@ console.log(JSON.stringify(scorecard, null, 2));
 if (!scorecard.results.every((r) => r.delta.wormComplete)) {
   process.exit(1);
 }
+if (family === "S") {
+  for (const r of scorecard.results) {
+    if (r.clawql.cpr !== 1 || !r.clawql.familyS?.checks.every((c) => c.passed)) {
+      console.error("Family S clawql arm failed scope checks", r.clawql.familyS);
+      process.exit(1);
+    }
+  }
+}
