@@ -6,7 +6,10 @@ import { readFileSync } from "node:fs";
 
 import type { AuthEventSink } from "../audit/auth-events.js";
 import { createAuthEventSinkFromEnv } from "../audit/auth-worm-sink.js";
-import { warnIfMcpOAuthAuditDisabled, warnIfMcpOAuthHs256Only } from "../audit/mcp-oauth-startup-warnings.js";
+import {
+  warnIfMcpOAuthAuditDisabled,
+  warnIfMcpOAuthHs256Only,
+} from "../audit/mcp-oauth-startup-warnings.js";
 import {
   loadMcpOAuthSigningFromEnvEffect,
   mcpOAuthSigningConfigured,
