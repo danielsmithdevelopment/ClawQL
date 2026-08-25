@@ -9,6 +9,7 @@ import {
   verifyEdgeCredential,
   type McpApiAdapterJwtAuthOptions,
 } from "./edge-auth.js";
+import { enforceEdgeAuthRateLimit } from "./edge-rate-limit.js";
 import { attachGraphqlRoutes } from "./graphql-http.js";
 import { attachMcpHttpRoutes } from "./mcp-http.js";
 import { buildOpenApiDocument } from "./openapi.js";
@@ -20,11 +21,7 @@ import type {
   StartedMcpApiAdapter,
   ToolCatalog,
 } from "./types.js";
-import {
-  buildCatalogFromUpstream,
-  connectUpstream,
-  type UpstreamConnection,
-} from "./upstream.js";
+import { buildCatalogFromUpstream, connectUpstream, type UpstreamConnection } from "./upstream.js";
 import { attachWebSocketSurface, DEFAULT_WS_PATH } from "./websocket.js";
 
 function readApiKey(req: Request): string | undefined {
@@ -76,7 +73,12 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
   if (edgeAuthConfigured({ apiKey: options.apiKey, jwt: options.jwtAuth })) {
     app.use((req: Request, res: Response, next: NextFunction) => {
       if (req.path === "/healthz") return next();
-      void verifyEdgeCredential(readApiKey(req), { apiKey: options.apiKey, jwt: options.jwtAuth }, verifyJwt)
+      if (!enforceEdgeAuthRateLimit(req, res)) return;
+      void verifyEdgeCredential(
+        readApiKey(req),
+        { apiKey: options.apiKey, jwt: options.jwtAuth },
+        verifyJwt
+      )
         .then((ok) => {
           if (!ok) {
             res.status(401).json({ error: "unauthorized" });
@@ -222,8 +224,7 @@ async function listenHttp(
     s.on("error", reject);
   });
   const addr = server.address();
-  const boundPort =
-    typeof addr === "object" && addr && "port" in addr ? addr.port : port;
+  const boundPort = typeof addr === "object" && addr && "port" in addr ? addr.port : port;
   return { server, boundPort };
 }
 
