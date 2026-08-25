@@ -70,7 +70,11 @@ function extractFields(schema: JSONSchema): Effect.Effect<CQEField[]> {
     const required = new Set(schema.required ?? []);
     for (const [name, def] of Object.entries(schema.properties ?? {})) {
       if (!def || typeof def !== "object") continue;
-      if (primaryType(def.type) === "array" && def.items && primaryType(def.items.type) === "object") {
+      if (
+        primaryType(def.type) === "array" &&
+        def.items &&
+        primaryType(def.items.type) === "object"
+      ) {
         continue;
       }
       // Nested object (non-array) → flatten as string JSON for v0.1 scalar index
@@ -99,13 +103,19 @@ function extractFields(schema: JSONSchema): Effect.Effect<CQEField[]> {
 function extractRelationships(
   schema: JSONSchema,
   parentId: string,
-  registerNested: (entity: CQEEntity) => Effect.Effect<CQEEntity, OntologyError, OntologyIndexServiceType>
+  registerNested: (
+    entity: CQEEntity
+  ) => Effect.Effect<CQEEntity, OntologyError, OntologyIndexServiceType>
 ): Effect.Effect<CQERelationship[], OntologyError, OntologyIndexServiceType> {
   return Effect.gen(function* () {
     const relationships: CQERelationship[] = [];
     for (const [name, def] of Object.entries(schema.properties ?? {})) {
       if (!def || typeof def !== "object") continue;
-      if (primaryType(def.type) !== "array" || !def.items || primaryType(def.items.type) !== "object") {
+      if (
+        primaryType(def.type) !== "array" ||
+        !def.items ||
+        primaryType(def.items.type) !== "object"
+      ) {
         continue;
       }
       const nestedId = `${parentId}__${name}_record`;
@@ -139,7 +149,9 @@ export function scaffoldFromJsonSchema(
   return Effect.gen(function* () {
     const cfg: OntologyMetaConfig = yield* readOntologyMetaConfig();
     if (!cfg.scaffoldEnabled) {
-      return yield* ontologyFail("Layer 2 scaffolding disabled (CLAWQL_ONTOLOGY_SCAFFOLD_ENABLED=0)");
+      return yield* ontologyFail(
+        "Layer 2 scaffolding disabled (CLAWQL_ONTOLOGY_SCAFFOLD_ENABLED=0)"
+      );
     }
     const index = yield* OntologyIndexService;
     const entityId =

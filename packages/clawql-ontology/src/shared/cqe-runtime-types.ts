@@ -16,11 +16,7 @@ export type CQEFieldType =
   | "Percentage";
 
 export type CQEEntitySource =
-  | "layer1"
-  | "json_schema"
-  | "json_schema_cold"
-  | "document_structure"
-  | "meta_ontology";
+  "layer1" | "json_schema" | "json_schema_cold" | "document_structure" | "meta_ontology";
 
 export type CQEField = {
   name: string;

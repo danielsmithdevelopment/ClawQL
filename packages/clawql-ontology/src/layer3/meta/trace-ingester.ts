@@ -6,12 +6,7 @@ import { Effect } from "effect";
 import { readOntologyMetaConfig } from "../../effect/ontology-meta-config.js";
 import { OntologyError } from "../../effect/ontology-errors.js";
 import { MetaOntologyStoreService } from "./store.js";
-import type {
-  FieldObservation,
-  OBTRecord,
-  OntologyEvidence,
-  QueryObservation,
-} from "./types.js";
+import type { FieldObservation, OBTRecord, OntologyEvidence, QueryObservation } from "./types.js";
 
 function didContributeToPass(passRate: number): boolean {
   return passRate >= 0.5;

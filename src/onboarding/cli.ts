@@ -1775,8 +1775,7 @@ async function main(): Promise<void> {
           ? flags.documentType
           : undefined,
       ttl: typeof flags.ttl === "string" && flags.ttl ? flags.ttl : undefined,
-      entityId:
-        typeof flags.entityId === "string" && flags.entityId ? flags.entityId : undefined,
+      entityId: typeof flags.entityId === "string" && flags.entityId ? flags.entityId : undefined,
       check: Boolean(flags.check),
       metaSub: rest[0],
     };

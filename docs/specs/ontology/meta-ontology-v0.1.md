@@ -14,11 +14,11 @@ Layer 1 hand-written `.cqe` packs (e.g. `packs/legal/`) are highest quality but 
 
 ## Three layers
 
-| Layer | Source | Quality | Coverage |
-| ----- | ------ | ------- | -------- |
-| **1** Pre-built | Human `.cqe` packs | Highest | Defined domains |
-| **2** Runtime scaffold | JSON Schema / Docling structure | Good | Any known output schema |
-| **3** Meta-learned | RTP/OBT traces | Improves with evidence | Domains with trace history |
+| Layer                  | Source                          | Quality                | Coverage                   |
+| ---------------------- | ------------------------------- | ---------------------- | -------------------------- |
+| **1** Pre-built        | Human `.cqe` packs              | Highest                | Defined domains            |
+| **2** Runtime scaffold | JSON Schema / Docling structure | Good                   | Any known output schema    |
+| **3** Meta-learned     | RTP/OBT traces                  | Improves with evidence | Domains with trace history |
 
 All layers share runtime `CQEEntity` shapes, a dynamic ontology index, and (for Layer 1 legal) `memory_recall` structured filters over `ontology.db`. Layer 3 persists learning in `meta-ontology.db` (sql.js).
 
@@ -35,17 +35,17 @@ packages/clawql-ontology/src/
 
 ## Environment
 
-| Variable | Default | Meaning |
-| -------- | ------- | ------- |
-| `CLAWQL_ONTOLOGY_SCAFFOLD_ENABLED` | on | Layer 2 scaffolding |
-| `CLAWQL_ONTOLOGY_SCAFFOLD_TTL` | `session` | `session` \| `permanent` \| seconds |
-| `CLAWQL_ONTOLOGY_META_ENABLED` | on | Layer 3 learning |
-| `CLAWQL_ONTOLOGY_META_DB_PATH` | `~/.ClawQL/meta-ontology.db` | Meta store |
-| `CLAWQL_ONTOLOGY_META_MIN_EVIDENCE` | `10` | Sessions before Layer 3 scaffolds |
-| `CLAWQL_ONTOLOGY_META_PROMOTION_EVIDENCE` | `50` | Promotion threshold |
-| `CLAWQL_ONTOLOGY_META_PROMOTION_QUALITY` | `0.85` | Min avg criterion pass rate |
-| `CLAWQL_ONTOLOGY_META_LEARN_FAILURES` | on | Learn from low-CPR traces |
-| `CLAWQL_ONTOLOGY_META_MAX_PATTERNS` | `1000` | Cap query patterns per entity |
+| Variable                                  | Default                      | Meaning                             |
+| ----------------------------------------- | ---------------------------- | ----------------------------------- |
+| `CLAWQL_ONTOLOGY_SCAFFOLD_ENABLED`        | on                           | Layer 2 scaffolding                 |
+| `CLAWQL_ONTOLOGY_SCAFFOLD_TTL`            | `session`                    | `session` \| `permanent` \| seconds |
+| `CLAWQL_ONTOLOGY_META_ENABLED`            | on                           | Layer 3 learning                    |
+| `CLAWQL_ONTOLOGY_META_DB_PATH`            | `~/.ClawQL/meta-ontology.db` | Meta store                          |
+| `CLAWQL_ONTOLOGY_META_MIN_EVIDENCE`       | `10`                         | Sessions before Layer 3 scaffolds   |
+| `CLAWQL_ONTOLOGY_META_PROMOTION_EVIDENCE` | `50`                         | Promotion threshold                 |
+| `CLAWQL_ONTOLOGY_META_PROMOTION_QUALITY`  | `0.85`                       | Min avg criterion pass rate         |
+| `CLAWQL_ONTOLOGY_META_LEARN_FAILURES`     | on                           | Learn from low-CPR traces           |
+| `CLAWQL_ONTOLOGY_META_MAX_PATTERNS`       | `1000`                       | Cap query patterns per entity       |
 
 ## CLI
 

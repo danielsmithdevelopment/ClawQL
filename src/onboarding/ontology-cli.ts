@@ -240,9 +240,7 @@ export async function runOntologyMeta(opts: OntologyCliOptions): Promise<number>
           ? (JSON.parse(learned.entity_json) as { id: string }).id
           : documentType;
         const failures = yield* store.getFailurePatterns(entityId);
-        const best = learned
-          ? yield* store.getBestQueryPattern(entityId, "enumerate_all")
-          : null;
+        const best = learned ? yield* store.getBestQueryPattern(entityId, "enumerate_all") : null;
         return { learned, failures, best };
       }).pipe(Effect.provide(layer))
     );

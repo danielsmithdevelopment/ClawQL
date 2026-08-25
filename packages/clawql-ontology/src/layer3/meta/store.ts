@@ -19,12 +19,7 @@ import type {
   QueryGoal,
   QueryPattern,
 } from "../../shared/cqe-runtime-types.js";
-import type {
-  EntityObservation,
-  FieldObservation,
-  OBTRecord,
-  QueryObservation,
-} from "./types.js";
+import type { EntityObservation, FieldObservation, OBTRecord, QueryObservation } from "./types.js";
 
 const META_SCHEMA = `
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -81,8 +76,7 @@ let sqlJsPromise: ReturnType<typeof initSqlJs> | null = null;
 async function loadSqlJs(): Promise<Awaited<ReturnType<typeof initSqlJs>>> {
   if (!sqlJsPromise) {
     // tsup CJS empties import.meta.url — fall back to cwd package.json for resolve.
-    const metaUrl =
-      typeof import.meta !== "undefined" && import.meta.url ? import.meta.url : "";
+    const metaUrl = typeof import.meta !== "undefined" && import.meta.url ? import.meta.url : "";
     const require = createRequire(metaUrl || join(process.cwd(), "package.json"));
     const sqlEntry = require.resolve("sql.js");
     const wasmPath = join(dirname(sqlEntry), "sql-wasm.wasm");
@@ -147,11 +141,7 @@ function queryOne(
   return row;
 }
 
-function queryAll(
-  db: Database,
-  sql: string,
-  params: SqlValue[] = []
-): Record<string, SqlValue>[] {
+function queryAll(db: Database, sql: string, params: SqlValue[] = []): Record<string, SqlValue>[] {
   const stmt = db.prepare(sql);
   stmt.bind(params);
   const rows: Record<string, SqlValue>[] = [];
@@ -351,10 +341,10 @@ export function makeMetaOntologyStoreLive(
                 [obs.entityId, excess]
               );
               for (const d of toDelete) {
-                db.run(
-                  `DELETE FROM query_patterns WHERE entity_id = ? AND filter_signature = ?`,
-                  [obs.entityId, String(d.filter_signature)]
-                );
+                db.run(`DELETE FROM query_patterns WHERE entity_id = ? AND filter_signature = ?`, [
+                  obs.entityId,
+                  String(d.filter_signature),
+                ]);
               }
             }
           });
@@ -461,9 +451,7 @@ export function makeMetaOntologyStoreLive(
           const entityId = obt.taskMeta?.entityId ?? obt.taskMeta?.documentType ?? "unknown";
           const cpr = obt.verdict?.criterionPassRate ?? 0;
           const description =
-            cpr < 0.5
-              ? `low_criterion_pass_rate:${cpr.toFixed(2)}`
-              : "unspecified_failure";
+            cpr < 0.5 ? `low_criterion_pass_rate:${cpr.toFixed(2)}` : "unspecified_failure";
           const patternType = cpr < 0.25 ? "wrong_strategy" : "null_fields";
           const existing = queryOne(
             db,

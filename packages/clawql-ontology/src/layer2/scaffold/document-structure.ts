@@ -49,7 +49,9 @@ export function scaffoldFromDocling(
   return Effect.gen(function* () {
     const cfg = yield* readOntologyMetaConfig();
     if (!cfg.scaffoldEnabled) {
-      return yield* ontologyFail("Layer 2 scaffolding disabled (CLAWQL_ONTOLOGY_SCAFFOLD_ENABLED=0)");
+      return yield* ontologyFail(
+        "Layer 2 scaffolding disabled (CLAWQL_ONTOLOGY_SCAFFOLD_ENABLED=0)"
+      );
     }
     const index = yield* OntologyIndexService;
     const entityId =

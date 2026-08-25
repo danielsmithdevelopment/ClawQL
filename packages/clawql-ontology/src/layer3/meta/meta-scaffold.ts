@@ -90,11 +90,7 @@ export function scaffoldWithMeta(
   jsonSchema: JSONSchema,
   documentType: string,
   options: ScaffoldOptions = {}
-): Effect.Effect<
-  ScaffoldResult,
-  OntologyError,
-  MetaOntologyStoreService | OntologyIndexService
-> {
+): Effect.Effect<ScaffoldResult, OntologyError, MetaOntologyStoreService | OntologyIndexService> {
   return Effect.gen(function* () {
     const cfg = yield* readOntologyMetaConfig();
     const store = yield* MetaOntologyStoreService;
@@ -103,10 +99,7 @@ export function scaffoldWithMeta(
     if (cfg.metaEnabled) {
       const learned = yield* store.getLearnedEntity(documentType);
       if (learned && learned.evidence_count >= cfg.minEvidence) {
-        const entity = mergeWithSchema(
-          JSON.parse(learned.entity_json) as CQEEntity,
-          jsonSchema
-        );
+        const entity = mergeWithSchema(JSON.parse(learned.entity_json) as CQEEntity, jsonSchema);
         entity.documentType = documentType;
         entity.id = options.entityId ?? entity.id;
         yield* index.registerDynamic(entity, {

@@ -9,11 +9,7 @@ export {
   type LearnedEntityRow,
 } from "./meta/store.js";
 export { ingestOBTTrace, extractOntologyEvidence } from "./meta/trace-ingester.js";
-export {
-  scaffoldWithMeta,
-  mergeWithSchema,
-  getBestQueryStrategy,
-} from "./meta/meta-scaffold.js";
+export { scaffoldWithMeta, mergeWithSchema, getBestQueryStrategy } from "./meta/meta-scaffold.js";
 export {
   checkPromotionCandidates,
   promoteDocumentType,

@@ -15,10 +15,7 @@ import {
 import { readOntologyMetaConfigSync } from "./effect/ontology-meta-config.js";
 import { OntologyIndexLive } from "./shared/ontology-index.js";
 import { scaffoldFromJsonSchema } from "./layer2/scaffold/json-schema.js";
-import {
-  checkPromotionCandidates,
-  promoteDocumentType,
-} from "./layer3/meta/promote.js";
+import { checkPromotionCandidates, promoteDocumentType } from "./layer3/meta/promote.js";
 import { metaStoreLayerForPath, MetaOntologyStoreService } from "./layer3/meta/store.js";
 import type { JSONSchema } from "./shared/cqe-runtime-types.js";
 
@@ -244,8 +241,7 @@ async function main(): Promise<void> {
       const jsonSchema = JSON.parse(raw) as JSONSchema;
       const result = await Effect.runPromise(
         scaffoldFromJsonSchema(jsonSchema, {
-          documentType:
-            typeof flags.documentType === "string" ? flags.documentType : undefined,
+          documentType: typeof flags.documentType === "string" ? flags.documentType : undefined,
           entityId: typeof flags.entityId === "string" ? flags.entityId : undefined,
           ttl: parseTtlFlag(flags.ttl),
           overwrite: true,
@@ -288,8 +284,7 @@ async function main(): Promise<void> {
     }
 
     if (sub === "patterns") {
-      const documentType =
-        typeof flags.documentType === "string" ? flags.documentType.trim() : "";
+      const documentType = typeof flags.documentType === "string" ? flags.documentType.trim() : "";
       if (!documentType) {
         console.error("Usage: clawql-ontology meta patterns --document-type TYPE");
         process.exitCode = 1;
@@ -325,7 +320,9 @@ async function main(): Promise<void> {
             );
           }
           for (const f of payload.failures) {
-            console.log(`  failure ${f.patternType}: ${f.patternDescription} (n=${f.occurrenceCount})`);
+            console.log(
+              `  failure ${f.patternType}: ${f.patternDescription} (n=${f.occurrenceCount})`
+            );
           }
         }
       }
@@ -355,8 +352,7 @@ async function main(): Promise<void> {
         return;
       }
 
-      const documentType =
-        typeof flags.documentType === "string" ? flags.documentType.trim() : "";
+      const documentType = typeof flags.documentType === "string" ? flags.documentType.trim() : "";
       const out =
         typeof flags.out === "string" && flags.out.trim() ? resolve(flags.out.trim()) : "";
       if (!documentType || !out) {

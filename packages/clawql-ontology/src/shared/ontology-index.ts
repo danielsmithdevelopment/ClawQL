@@ -53,10 +53,7 @@ export class OntologyIndexService extends Context.Tag("clawql/OntologyIndexServi
       recordId: string,
       record: Record<string, unknown>
     ) => Effect.Effect<DynamicRecord, OntologyError>;
-    readonly getRecord: (
-      entityId: string,
-      recordId: string
-    ) => Effect.Effect<DynamicRecord | null>;
+    readonly getRecord: (entityId: string, recordId: string) => Effect.Effect<DynamicRecord | null>;
     readonly listRecords: (entityId: string) => Effect.Effect<DynamicRecord[]>;
     readonly clearSession: () => Effect.Effect<void>;
     readonly resetForTests: () => Effect.Effect<void>;

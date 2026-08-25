@@ -10,9 +10,7 @@ import { OntologyIndexService, makeOntologyIndexLive } from "./shared/ontology-i
 import { scaffoldFromJsonSchema } from "./layer2/scaffold/json-schema.js";
 import { scaffoldFromDocling } from "./layer2/scaffold/document-structure.js";
 import { populateFromDocling } from "./layer2/scaffold/populate.js";
-import {
-  metaStoreLayerForPath,
-} from "./layer3/meta/store.js";
+import { metaStoreLayerForPath } from "./layer3/meta/store.js";
 import { ingestOBTTrace, extractOntologyEvidence } from "./layer3/meta/trace-ingester.js";
 import { scaffoldWithMeta, mergeWithSchema } from "./layer3/meta/meta-scaffold.js";
 import { checkPromotionCandidates, promoteDocumentType } from "./layer3/meta/promote.js";
