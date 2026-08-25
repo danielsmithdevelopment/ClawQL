@@ -33,6 +33,18 @@ export type McpApiAdapterHttpOptions = {
   port?: number;
   /** Optional edge API key (`Authorization: Bearer` or `X-API-Key`). */
   apiKey?: string;
+  /**
+   * Accept ClawQL-issued MCP access JWTs (with `atr` claim) via JWKS and/or HS256.
+   * When set alongside `apiKey`, either credential is accepted.
+   */
+  jwtAuth?: {
+    /** ClawQL AS JWKS URL (`/.well-known/jwks.json`). */
+    jwksUrl?: string;
+    /** Expected JWT `iss`. */
+    issuer?: string;
+    /** HS256 secret for tests / single-node (prefer JWKS in production). */
+    hs256Secret?: string;
+  };
   /** Optional catalog poll interval in ms (0 / unset = no poll). */
   refreshMs?: number;
   /** OpenAPI / GraphiQL title. */

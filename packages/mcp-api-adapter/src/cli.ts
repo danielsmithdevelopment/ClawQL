@@ -36,6 +36,8 @@ HTTP APIs:
   --ws-path <path>       WebSocket tool-call path (default /ws)
   --no-ws                Disable WebSocket surface
   --api-key <key>        Optional edge API key
+  --jwks-url <url>       Accept ClawQL MCP JWTs via JWKS (/.well-known/jwks.json)
+  --jwt-issuer <iss>     Expected JWT iss when verifying MCP tokens
   --refresh-ms <n>       Catalog poll interval (default 0 = off)
   --title <string>       Docs / GraphiQL title
 
@@ -137,6 +139,8 @@ const sharedOpts = {
   "no-ws": { type: "boolean", default: false },
   listen: { type: "string" },
   "api-key": { type: "string" },
+  "jwks-url": { type: "string" },
+  "jwt-issuer": { type: "string" },
   "refresh-ms": { type: "string" },
   title: { type: "string" },
   out: { type: "string" },
@@ -201,6 +205,24 @@ async function runServe(argv: string[]): Promise<void> {
     values["api-key"]?.trim() ||
     envFirst("MCP_API_ADAPTER_API_KEY", "MCP_OPENAPI_GATEWAY_API_KEY") ||
     undefined;
+  const jwksUrl =
+    values["jwks-url"]?.trim() ||
+    envFirst("MCP_API_ADAPTER_JWKS_URL", "CLAWQL_MCP_OAUTH_JWKS_URL") ||
+    undefined;
+  const jwtIssuer =
+    values["jwt-issuer"]?.trim() ||
+    envFirst("MCP_API_ADAPTER_JWT_ISSUER", "CLAWQL_MCP_OAUTH_ISSUER") ||
+    undefined;
+  const jwtHs256Secret =
+    envFirst("MCP_API_ADAPTER_JWT_HS256_SECRET", "CLAWQL_MCP_OAUTH_SIGNING_SECRET") || undefined;
+  const jwtAuth =
+    jwksUrl || jwtHs256Secret
+      ? {
+          jwksUrl,
+          issuer: jwtIssuer,
+          hs256Secret: jwksUrl ? undefined : jwtHs256Secret,
+        }
+      : undefined;
   const refreshMs = Number.parseInt(
     values["refresh-ms"]?.trim() ||
       envFirst("MCP_API_ADAPTER_REFRESH_MS", "MCP_OPENAPI_GATEWAY_REFRESH_MS") ||
@@ -233,6 +255,7 @@ async function runServe(argv: string[]): Promise<void> {
     host,
     port,
     apiKey,
+    jwtAuth,
     refreshMs: Number.isFinite(refreshMs) ? refreshMs : 0,
     title: values.title?.trim(),
     grpcListen,
