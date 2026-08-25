@@ -1,6 +1,13 @@
 /**
  * One-time authorization codes for inbound MCP OAuth `authorization_code` + PKCE.
+ *
+ * `mcp-oauth.ts` (owned elsewhere) requires the `McpAuthorizationCodeStore` Promise
+ * interface, so {@link createSecretStoreMcpAuthorizationCodeStore} is a thin
+ * `Effect.runPromise` façade — every {@link SecretStore} call inside it runs through
+ * Effect via `yield*`.
  */
+
+import { Effect } from "effect";
 
 import type { SecretStore } from "../stores/types.js";
 import type { AtrClaims } from "../gateway.js";
@@ -31,20 +38,22 @@ export function createSecretStoreMcpAuthorizationCodeStore(
   store: SecretStore
 ): McpAuthorizationCodeStore {
   return {
-    async save(hash, record) {
-      await store.setSecret(codePath(hash), JSON.stringify(record));
-    },
-    async consume(hash) {
-      const path = codePath(hash);
-      const raw = await store.getSecret(path);
-      if (!raw) return null;
-      await store.deleteSecret(path);
-      try {
-        return JSON.parse(raw) as McpAuthorizationCodeRecord;
-      } catch {
-        return null;
-      }
-    },
+    save: (hash, record) =>
+      Effect.runPromise(store.setSecret(codePath(hash), JSON.stringify(record))),
+    consume: (hash) =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const path = codePath(hash);
+          const raw = yield* store.getSecret(path);
+          if (!raw) return null;
+          yield* store.deleteSecret(path);
+          try {
+            return JSON.parse(raw) as McpAuthorizationCodeRecord;
+          } catch {
+            return null;
+          }
+        })
+      ),
   };
 }
 

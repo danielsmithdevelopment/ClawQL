@@ -6,7 +6,7 @@ export type {
   SecretStoreKind,
   TokenSet,
 } from "./types.js";
-export { SECRET_PATH } from "./types.js";
+export { SECRET_PATH, SecretStoreError } from "./types.js";
 export { PathSecretStore } from "./base.js";
 export { MemorySecretStore, createMemorySecretStore } from "./memory.js";
 export {
@@ -38,5 +38,6 @@ export {
 export {
   resolveSecretStore,
   resolveSecretStoreKind,
+  resolveSecretStoreKindEffect,
   type ResolveSecretStoreOptions,
 } from "./resolve.js";

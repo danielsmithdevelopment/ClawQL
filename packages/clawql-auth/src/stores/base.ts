@@ -1,9 +1,13 @@
 /**
  * PathSecretStore — implement only KV CRUD; OAuth / API keys / nonces use path prefixes.
+ * Lifecycle helpers are Effect-primary (`Effect.gen` + `yield* this.getSecret(...)`), so
+ * every backend automatically gets the same JSON-over-KV semantics for free.
  */
 
+import { Effect } from "effect";
+
 import type { APIKeyRecord, DomainChallenge, NonceRecord, SecretStore, TokenSet } from "./types.js";
-import { SECRET_PATH } from "./types.js";
+import { SECRET_PATH, SecretStoreError } from "./types.js";
 
 function oauthPath(providerId: string): string {
   return `${SECRET_PATH.oauth}${providerId}`;
@@ -35,85 +39,110 @@ function parseJson<T>(raw: string | null): T | null {
  * {@link SECRET_PATH} prefixes so every backend shares the same logical layout.
  */
 export abstract class PathSecretStore implements SecretStore {
-  abstract getSecret(path: string): Promise<string | null>;
-  abstract setSecret(path: string, value: string): Promise<void>;
-  abstract deleteSecret(path: string): Promise<void>;
-  abstract listSecrets(prefix: string): Promise<string[]>;
+  abstract getSecret(path: string): Effect.Effect<string | null, SecretStoreError>;
+  abstract setSecret(path: string, value: string): Effect.Effect<void, SecretStoreError>;
+  abstract deleteSecret(path: string): Effect.Effect<void, SecretStoreError>;
+  abstract listSecrets(prefix: string): Effect.Effect<string[], SecretStoreError>;
 
-  async getOAuthToken(providerId: string): Promise<TokenSet | null> {
-    return parseJson<TokenSet>(await this.getSecret(oauthPath(providerId)));
-  }
-
-  async setOAuthToken(providerId: string, token: TokenSet): Promise<void> {
-    const next: TokenSet = {
-      ...token,
-      providerId,
-      status: token.status ?? "active",
-      updatedAtMs: token.updatedAtMs ?? Date.now(),
-    };
-    await this.setSecret(oauthPath(providerId), JSON.stringify(next));
-  }
-
-  async markRequiresReauth(providerId: string): Promise<void> {
-    const current = (await this.getOAuthToken(providerId)) ?? {
-      accessToken: "",
-      expiresAtMs: 0,
-      providerId,
-    };
-    await this.setOAuthToken(providerId, {
-      ...current,
-      status: "needs_reauth",
-      updatedAtMs: Date.now(),
+  getOAuthToken(providerId: string): Effect.Effect<TokenSet | null, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const raw = yield* this.getSecret(oauthPath(providerId));
+      return parseJson<TokenSet>(raw);
     });
   }
 
-  async getAPIKeyRecord(keyId: string): Promise<APIKeyRecord | null> {
-    return parseJson<APIKeyRecord>(await this.getSecret(apiKeyPath(keyId)));
-  }
-
-  async saveAPIKeyRecord(record: APIKeyRecord): Promise<void> {
-    await this.setSecret(apiKeyPath(record.id), JSON.stringify(record));
-  }
-
-  async setRevokedAt(keyId: string, revokedAt: Date): Promise<void> {
-    const current = await this.getAPIKeyRecord(keyId);
-    if (!current) {
-      throw new Error(`api_key_not_found:${keyId}`);
-    }
-    await this.saveAPIKeyRecord({
-      ...current,
-      revokedAt: revokedAt.toISOString(),
+  setOAuthToken(providerId: string, token: TokenSet): Effect.Effect<void, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const next: TokenSet = {
+        ...token,
+        providerId,
+        status: token.status ?? "active",
+        updatedAtMs: token.updatedAtMs ?? Date.now(),
+      };
+      yield* this.setSecret(oauthPath(providerId), JSON.stringify(next));
     });
   }
 
-  async storeNonce(nonce: string, data: NonceRecord): Promise<void> {
-    await this.setSecret(noncePath(nonce), JSON.stringify({ ...data, nonce }));
-  }
-
-  async getNonce(nonce: string): Promise<NonceRecord | null> {
-    return parseJson<NonceRecord>(await this.getSecret(noncePath(nonce)));
-  }
-
-  async markNonceConsumed(nonce: string): Promise<void> {
-    const current = await this.getNonce(nonce);
-    if (!current) {
-      throw new Error(`nonce_not_found:${nonce}`);
-    }
-    await this.storeNonce(nonce, {
-      ...current,
-      consumedAtMs: Date.now(),
+  markRequiresReauth(providerId: string): Effect.Effect<void, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const current = (yield* this.getOAuthToken(providerId)) ?? {
+        accessToken: "",
+        expiresAtMs: 0,
+        providerId,
+      };
+      yield* this.setOAuthToken(providerId, {
+        ...current,
+        status: "needs_reauth",
+        updatedAtMs: Date.now(),
+      });
     });
   }
 
-  async storeDomainChallenge(domain: string, challenge: DomainChallenge): Promise<void> {
-    await this.setSecret(domainChallengePath(domain), JSON.stringify({ ...challenge, domain }));
+  getAPIKeyRecord(keyId: string): Effect.Effect<APIKeyRecord | null, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const raw = yield* this.getSecret(apiKeyPath(keyId));
+      return parseJson<APIKeyRecord>(raw);
+    });
   }
 
-  async getDomainChallenge(domain: string): Promise<DomainChallenge | null> {
-    return parseJson<DomainChallenge>(await this.getSecret(domainChallengePath(domain)));
+  saveAPIKeyRecord(record: APIKeyRecord): Effect.Effect<void, SecretStoreError> {
+    return this.setSecret(apiKeyPath(record.id), JSON.stringify(record));
   }
 
-  async deleteDomainChallenge(domain: string): Promise<void> {
-    await this.deleteSecret(domainChallengePath(domain));
+  setRevokedAt(keyId: string, revokedAt: Date): Effect.Effect<void, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const current = yield* this.getAPIKeyRecord(keyId);
+      if (!current) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `api_key_not_found:${keyId}` })
+        );
+      }
+      yield* this.saveAPIKeyRecord({
+        ...current,
+        revokedAt: revokedAt.toISOString(),
+      });
+    });
+  }
+
+  storeNonce(nonce: string, data: NonceRecord): Effect.Effect<void, SecretStoreError> {
+    return this.setSecret(noncePath(nonce), JSON.stringify({ ...data, nonce }));
+  }
+
+  getNonce(nonce: string): Effect.Effect<NonceRecord | null, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const raw = yield* this.getSecret(noncePath(nonce));
+      return parseJson<NonceRecord>(raw);
+    });
+  }
+
+  markNonceConsumed(nonce: string): Effect.Effect<void, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const current = yield* this.getNonce(nonce);
+      if (!current) {
+        return yield* Effect.fail(new SecretStoreError({ reason: `nonce_not_found:${nonce}` }));
+      }
+      yield* this.storeNonce(nonce, {
+        ...current,
+        consumedAtMs: Date.now(),
+      });
+    });
+  }
+
+  storeDomainChallenge(
+    domain: string,
+    challenge: DomainChallenge
+  ): Effect.Effect<void, SecretStoreError> {
+    return this.setSecret(domainChallengePath(domain), JSON.stringify({ ...challenge, domain }));
+  }
+
+  getDomainChallenge(domain: string): Effect.Effect<DomainChallenge | null, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const raw = yield* this.getSecret(domainChallengePath(domain));
+      return parseJson<DomainChallenge>(raw);
+    });
+  }
+
+  deleteDomainChallenge(domain: string): Effect.Effect<void, SecretStoreError> {
+    return this.deleteSecret(domainChallengePath(domain));
   }
 }

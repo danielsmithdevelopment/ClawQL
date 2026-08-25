@@ -9,6 +9,8 @@
  * Vaultwarden, 1Password Secrets Automation, env (CI only).
  */
 
+import { Data, type Effect } from "effect";
+
 import type { IssuedApiKeyRecord } from "../api-keys/types.js";
 import type { StoredOAuthToken } from "../oauth/types.js";
 
@@ -40,31 +42,44 @@ export type DomainChallenge = {
   meta?: Record<string, string>;
 };
 
+/** Typed failure for SecretStore IO (Effect failure channel). IO backends should fail with this. */
+export class SecretStoreError extends Data.TaggedError("SecretStoreError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
 /**
  * Pluggable secret backend. Hosts inject one instance into `createClawQLAuth`.
  * Adding a new store never requires changes to OAuth / API-key / MCP OAuth logic.
+ *
+ * Effect-primary: every method returns an `Effect`. Purely in-memory backends may
+ * narrow the error channel to `never` (still assignable here since `E` is covariant);
+ * IO backends (fs/net) should fail with {@link SecretStoreError}.
  */
 export interface SecretStore {
-  getSecret(path: string): Promise<string | null>;
-  setSecret(path: string, value: string): Promise<void>;
-  deleteSecret(path: string): Promise<void>;
-  listSecrets(prefix: string): Promise<string[]>;
+  getSecret(path: string): Effect.Effect<string | null, SecretStoreError>;
+  setSecret(path: string, value: string): Effect.Effect<void, SecretStoreError>;
+  deleteSecret(path: string): Effect.Effect<void, SecretStoreError>;
+  listSecrets(prefix: string): Effect.Effect<string[], SecretStoreError>;
 
-  getOAuthToken(providerId: string): Promise<TokenSet | null>;
-  setOAuthToken(providerId: string, token: TokenSet): Promise<void>;
-  markRequiresReauth(providerId: string): Promise<void>;
+  getOAuthToken(providerId: string): Effect.Effect<TokenSet | null, SecretStoreError>;
+  setOAuthToken(providerId: string, token: TokenSet): Effect.Effect<void, SecretStoreError>;
+  markRequiresReauth(providerId: string): Effect.Effect<void, SecretStoreError>;
 
-  getAPIKeyRecord(keyId: string): Promise<APIKeyRecord | null>;
-  saveAPIKeyRecord(record: APIKeyRecord): Promise<void>;
-  setRevokedAt(keyId: string, revokedAt: Date): Promise<void>;
+  getAPIKeyRecord(keyId: string): Effect.Effect<APIKeyRecord | null, SecretStoreError>;
+  saveAPIKeyRecord(record: APIKeyRecord): Effect.Effect<void, SecretStoreError>;
+  setRevokedAt(keyId: string, revokedAt: Date): Effect.Effect<void, SecretStoreError>;
 
   /** Short-lived; may be memory-backed on single-node deployments. */
-  storeNonce(nonce: string, data: NonceRecord): Promise<void>;
-  getNonce(nonce: string): Promise<NonceRecord | null>;
-  markNonceConsumed(nonce: string): Promise<void>;
-  storeDomainChallenge(domain: string, challenge: DomainChallenge): Promise<void>;
-  getDomainChallenge(domain: string): Promise<DomainChallenge | null>;
-  deleteDomainChallenge(domain: string): Promise<void>;
+  storeNonce(nonce: string, data: NonceRecord): Effect.Effect<void, SecretStoreError>;
+  getNonce(nonce: string): Effect.Effect<NonceRecord | null, SecretStoreError>;
+  markNonceConsumed(nonce: string): Effect.Effect<void, SecretStoreError>;
+  storeDomainChallenge(
+    domain: string,
+    challenge: DomainChallenge
+  ): Effect.Effect<void, SecretStoreError>;
+  getDomainChallenge(domain: string): Effect.Effect<DomainChallenge | null, SecretStoreError>;
+  deleteDomainChallenge(domain: string): Effect.Effect<void, SecretStoreError>;
 }
 
 /** Well-known path prefixes used by {@link PathSecretStore}. */

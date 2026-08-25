@@ -1,8 +1,14 @@
 /**
  * Persistent EMA org configuration — IdP trust + group→scope mappings.
+ *
+ * `id-jag.ts` / `http.ts` (owned elsewhere) consume {@link SecretStoreEmaConfigStore}
+ * as a Promise interface (`EmaConfigStore` plus admin CRUD), so
+ * {@link createSecretStoreEmaConfigStore} is a thin `Effect.runPromise` façade —
+ * every {@link SecretStore} call inside it runs through Effect via `yield*`.
  */
 
 import { readFileSync } from "node:fs";
+import { Effect } from "effect";
 
 import type { SecretStore } from "../stores/types.js";
 import type { EmaConfigStore, EmaOrgConfig } from "./id-jag.js";
@@ -42,33 +48,40 @@ export type SecretStoreEmaConfigStore = EmaConfigStore & {
  */
 export function createSecretStoreEmaConfigStore(store: SecretStore): SecretStoreEmaConfigStore {
   return {
-    async getOrgConfig(orgId) {
-      const raw = await store.getSecret(emaOrgPath(orgId));
-      if (!raw) return null;
-      try {
-        return normalizeOrgInput(JSON.parse(raw) as EmaOrgConfigInput);
-      } catch {
-        return null;
-      }
-    },
+    getOrgConfig: (orgId) =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const raw = yield* store.getSecret(emaOrgPath(orgId));
+          if (!raw) return null;
+          try {
+            return normalizeOrgInput(JSON.parse(raw) as EmaOrgConfigInput);
+          } catch {
+            return null;
+          }
+        })
+      ),
 
-    async saveOrgConfig(input) {
+    saveOrgConfig: (input) => {
       const config = normalizeOrgInput(input);
-      await store.setSecret(emaOrgPath(config.orgId), JSON.stringify(config));
-      return config;
+      return Effect.runPromise(
+        store.setSecret(emaOrgPath(config.orgId), JSON.stringify(config)).pipe(
+          Effect.map(() => config)
+        )
+      );
     },
 
-    async deleteOrgConfig(orgId) {
-      await store.deleteSecret(emaOrgPath(orgId));
-    },
+    deleteOrgConfig: (orgId) => Effect.runPromise(store.deleteSecret(emaOrgPath(orgId))),
 
-    async listOrgIds() {
-      const paths = await store.listSecrets(EMA_ORG_SECRET_PREFIX);
-      return paths
-        .map((p) => p.slice(EMA_ORG_SECRET_PREFIX.length))
-        .filter(Boolean)
-        .sort();
-    },
+    listOrgIds: () =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const paths = yield* store.listSecrets(EMA_ORG_SECRET_PREFIX);
+          return paths
+            .map((p) => p.slice(EMA_ORG_SECRET_PREFIX.length))
+            .filter(Boolean)
+            .sort();
+        })
+      ),
   };
 }
 

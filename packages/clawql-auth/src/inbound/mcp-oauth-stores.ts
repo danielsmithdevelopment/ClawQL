@@ -1,8 +1,13 @@
 /**
  * Persistent MCP OAuth client registry and refresh-token store (SecretStore-backed).
+ *
+ * `mcp-oauth.ts` (owned elsewhere) requires the `McpClientRegistry` / `McpRefreshStore`
+ * Promise interfaces, so the factories below are thin `Effect.runPromise` façades —
+ * every {@link SecretStore} call inside them runs through Effect via `yield*`.
  */
 
 import { readFileSync } from "node:fs";
+import { Effect } from "effect";
 
 import type { SecretStore } from "../stores/types.js";
 import type {
@@ -25,21 +30,23 @@ function refreshPath(hash: string): string {
 
 export function createSecretStoreMcpRefreshStore(store: SecretStore): McpRefreshStore {
   return {
-    async save(hash, record) {
-      await store.setSecret(refreshPath(hash), JSON.stringify(record satisfies McpRefreshRecord));
-    },
-    async get(hash) {
-      const raw = await store.getSecret(refreshPath(hash));
-      if (!raw) return null;
-      try {
-        return JSON.parse(raw) as McpRefreshRecord;
-      } catch {
-        return null;
-      }
-    },
-    async revoke(hash) {
-      await store.deleteSecret(refreshPath(hash));
-    },
+    save: (hash, record) =>
+      Effect.runPromise(
+        store.setSecret(refreshPath(hash), JSON.stringify(record satisfies McpRefreshRecord))
+      ),
+    get: (hash) =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const raw = yield* store.getSecret(refreshPath(hash));
+          if (!raw) return null;
+          try {
+            return JSON.parse(raw) as McpRefreshRecord;
+          } catch {
+            return null;
+          }
+        })
+      ),
+    revoke: (hash) => Effect.runPromise(store.deleteSecret(refreshPath(hash))),
   };
 }
 
@@ -53,28 +60,31 @@ export function createSecretStoreMcpClientRegistry(
   store: SecretStore
 ): SecretStoreMcpClientRegistry {
   return {
-    async getClient(clientId) {
-      const raw = await store.getSecret(clientPath(clientId));
-      if (!raw) return null;
-      try {
-        return JSON.parse(raw) as McpRegisteredClient;
-      } catch {
-        return null;
-      }
-    },
-    async saveClient(client) {
-      await store.setSecret(clientPath(client.clientId), JSON.stringify(client));
-    },
-    async deleteClient(clientId) {
-      await store.deleteSecret(clientPath(clientId));
-    },
-    async listClientIds() {
-      const paths = await store.listSecrets(MCP_OAUTH_CLIENT_PREFIX);
-      return paths
-        .map((p) => p.slice(MCP_OAUTH_CLIENT_PREFIX.length))
-        .filter(Boolean)
-        .sort();
-    },
+    getClient: (clientId) =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const raw = yield* store.getSecret(clientPath(clientId));
+          if (!raw) return null;
+          try {
+            return JSON.parse(raw) as McpRegisteredClient;
+          } catch {
+            return null;
+          }
+        })
+      ),
+    saveClient: (client) =>
+      Effect.runPromise(store.setSecret(clientPath(client.clientId), JSON.stringify(client))),
+    deleteClient: (clientId) => Effect.runPromise(store.deleteSecret(clientPath(clientId))),
+    listClientIds: () =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const paths = yield* store.listSecrets(MCP_OAUTH_CLIENT_PREFIX);
+          return paths
+            .map((p) => p.slice(MCP_OAUTH_CLIENT_PREFIX.length))
+            .filter(Boolean)
+            .sort();
+        })
+      ),
   };
 }
 

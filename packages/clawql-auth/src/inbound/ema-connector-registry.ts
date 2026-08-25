@@ -1,7 +1,14 @@
 /**
  * EMA connector registry — admin-authorized MCP connectors per org.
  * Persists in SecretStore so the same backend as EMA org config applies.
+ *
+ * `id-jag-issuer.ts` / `http.ts` (owned elsewhere) consume {@link EmaConnectorRegistry}
+ * as a Promise interface, so {@link createSecretStoreEmaConnectorRegistry} is a thin
+ * `Effect.runPromise` façade — every {@link SecretStore} call inside it runs through
+ * Effect via `yield*`.
  */
+
+import { Effect } from "effect";
 
 import type { SecretStore } from "../stores/types.js";
 import type { EmaConnectorRegistration } from "./id-jag-issuer.js";
@@ -54,43 +61,51 @@ export function createSecretStoreEmaConnectorRegistry(
   store: SecretStore
 ): SecretStoreEmaConnectorRegistry {
   return {
-    async get(orgId, connectorId) {
-      const raw = await store.getSecret(connectorPath(orgId, connectorId));
-      if (!raw) return null;
-      try {
-        return normalizeRegistration(JSON.parse(raw) as EmaConnectorRegistration);
-      } catch {
-        return null;
-      }
-    },
+    get: (orgId, connectorId) =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const raw = yield* store.getSecret(connectorPath(orgId, connectorId));
+          if (!raw) return null;
+          try {
+            return normalizeRegistration(JSON.parse(raw) as EmaConnectorRegistration);
+          } catch {
+            return null;
+          }
+        })
+      ),
 
-    async save(input) {
+    save: (input) => {
       const registration = normalizeRegistration(input);
-      await store.setSecret(
-        connectorPath(registration.orgId, registration.connectorId),
-        JSON.stringify(registration)
+      return Effect.runPromise(
+        store
+          .setSecret(
+            connectorPath(registration.orgId, registration.connectorId),
+            JSON.stringify(registration)
+          )
+          .pipe(Effect.map(() => registration))
       );
-      return registration;
     },
 
-    async delete(orgId, connectorId) {
-      await store.deleteSecret(connectorPath(orgId, connectorId));
-    },
+    delete: (orgId, connectorId) =>
+      Effect.runPromise(store.deleteSecret(connectorPath(orgId, connectorId))),
 
-    async list(orgId) {
-      const paths = await store.listSecrets(orgPrefix(orgId));
-      const out: EmaConnectorRegistration[] = [];
-      for (const path of paths) {
-        const raw = await store.getSecret(path);
-        if (!raw) continue;
-        try {
-          out.push(normalizeRegistration(JSON.parse(raw) as EmaConnectorRegistration));
-        } catch {
-          // skip corrupt entries
-        }
-      }
-      return out.sort((a, b) => a.connectorId.localeCompare(b.connectorId));
-    },
+    list: (orgId) =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const paths = yield* store.listSecrets(orgPrefix(orgId));
+          const out: EmaConnectorRegistration[] = [];
+          for (const path of paths) {
+            const raw = yield* store.getSecret(path);
+            if (!raw) continue;
+            try {
+              out.push(normalizeRegistration(JSON.parse(raw) as EmaConnectorRegistration));
+            } catch {
+              // skip corrupt entries
+            }
+          }
+          return out.sort((a, b) => a.connectorId.localeCompare(b.connectorId));
+        })
+      ),
   };
 }
 

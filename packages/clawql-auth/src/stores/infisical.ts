@@ -1,9 +1,14 @@
 /**
  * Infisical SecretStore — enterprise customers already on Infisical.
  * Uses the Infisical REST API (machine identity) without a hard SDK dependency.
+ * All network IO runs via `Effect.tryPromise` inside Effect methods, failing with
+ * {@link SecretStoreError}.
  */
 
+import { Effect } from "effect";
+
 import { PathSecretStore } from "./base.js";
+import { SecretStoreError } from "./types.js";
 
 export type InfisicalStoreOptions = {
   clientId: string;
@@ -18,6 +23,10 @@ export type InfisicalStoreOptions = {
 };
 
 type TokenCache = { accessToken: string; expiresAtMs: number };
+
+function errMsg(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause);
+}
 
 /**
  * Maps ClawQL logical paths to Infisical secret names under `secretPath`.
@@ -53,102 +62,158 @@ export class InfisicalStore extends PathSecretStore {
     return path.replace(/^\/+/, "").replace(/\//g, "__");
   }
 
-  private async accessToken(): Promise<string> {
-    if (this.token && this.token.expiresAtMs > Date.now() + 30_000) {
+  private accessToken(): Effect.Effect<string, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      if (this.token && this.token.expiresAtMs > Date.now() + 30_000) {
+        return this.token.accessToken;
+      }
+      const res = yield* Effect.tryPromise({
+        try: () =>
+          this.opts.fetchImpl(`${this.opts.endpoint}/v1/auth/universal-auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              clientId: this.opts.clientId,
+              clientSecret: this.opts.clientSecret,
+            }),
+          }),
+        catch: (cause) =>
+          new SecretStoreError({ reason: `infisical_auth_failed: ${errMsg(cause)}`, cause }),
+      });
+      if (!res.ok) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `infisical_auth_failed:${res.status}` })
+        );
+      }
+      const json = yield* Effect.tryPromise({
+        try: () => res.json() as Promise<{ accessToken: string; expiresIn?: number }>,
+        catch: (cause) =>
+          new SecretStoreError({ reason: `infisical_auth_parse_failed: ${errMsg(cause)}`, cause }),
+      });
+      this.token = {
+        accessToken: json.accessToken,
+        expiresAtMs: Date.now() + (json.expiresIn ?? 3600) * 1000,
+      };
       return this.token.accessToken;
-    }
-    const res = await this.opts.fetchImpl(`${this.opts.endpoint}/v1/auth/universal-auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        clientId: this.opts.clientId,
-        clientSecret: this.opts.clientSecret,
-      }),
     });
-    if (!res.ok) throw new Error(`infisical_auth_failed:${res.status}`);
-    const json = (await res.json()) as { accessToken: string; expiresIn?: number };
-    this.token = {
-      accessToken: json.accessToken,
-      expiresAtMs: Date.now() + (json.expiresIn ?? 3600) * 1000,
-    };
-    return this.token.accessToken;
   }
 
-  async getSecret(path: string): Promise<string | null> {
-    const token = await this.accessToken();
-    const name = this.secretName(path);
-    const url = new URL(`${this.opts.endpoint}/v3/secrets/raw/${encodeURIComponent(name)}`);
-    url.searchParams.set("workspaceId", this.opts.projectId);
-    url.searchParams.set("environment", this.opts.environment);
-    url.searchParams.set("secretPath", this.opts.secretPath);
-    const res = await this.opts.fetchImpl(url, {
-      headers: { Authorization: `Bearer ${token}` },
+  getSecret(path: string): Effect.Effect<string | null, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const token = yield* this.accessToken();
+      const name = this.secretName(path);
+      const url = new URL(`${this.opts.endpoint}/v3/secrets/raw/${encodeURIComponent(name)}`);
+      url.searchParams.set("workspaceId", this.opts.projectId);
+      url.searchParams.set("environment", this.opts.environment);
+      url.searchParams.set("secretPath", this.opts.secretPath);
+      const res = yield* Effect.tryPromise({
+        try: () => this.opts.fetchImpl(url, { headers: { Authorization: `Bearer ${token}` } }),
+        catch: (cause) =>
+          new SecretStoreError({ reason: `infisical_get_failed: ${errMsg(cause)}`, cause }),
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `infisical_get_failed:${res.status}` })
+        );
+      }
+      const json = yield* Effect.tryPromise({
+        try: () => res.json() as Promise<{ secret?: { secretValue?: string } }>,
+        catch: (cause) =>
+          new SecretStoreError({ reason: `infisical_get_parse_failed: ${errMsg(cause)}`, cause }),
+      });
+      return json.secret?.secretValue ?? null;
     });
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`infisical_get_failed:${res.status}`);
-    const json = (await res.json()) as { secret?: { secretValue?: string } };
-    return json.secret?.secretValue ?? null;
   }
 
-  async setSecret(path: string, value: string): Promise<void> {
-    const token = await this.accessToken();
-    const name = this.secretName(path);
-    const body = {
-      workspaceId: this.opts.projectId,
-      environment: this.opts.environment,
-      secretPath: this.opts.secretPath,
-      secretKey: name,
-      secretValue: value,
-    };
-    const existing = await this.getSecret(path);
-    const method = existing == null ? "POST" : "PATCH";
-    const url =
-      method === "POST"
-        ? `${this.opts.endpoint}/v3/secrets/raw/${encodeURIComponent(name)}`
-        : `${this.opts.endpoint}/v3/secrets/raw/${encodeURIComponent(name)}`;
-    const res = await this.opts.fetchImpl(url, {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
+  setSecret(path: string, value: string): Effect.Effect<void, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const token = yield* this.accessToken();
+      const name = this.secretName(path);
+      const body = {
+        workspaceId: this.opts.projectId,
+        environment: this.opts.environment,
+        secretPath: this.opts.secretPath,
+        secretKey: name,
+        secretValue: value,
+      };
+      const existing = yield* this.getSecret(path);
+      const method = existing == null ? "POST" : "PATCH";
+      const url = `${this.opts.endpoint}/v3/secrets/raw/${encodeURIComponent(name)}`;
+      const res = yield* Effect.tryPromise({
+        try: () =>
+          this.opts.fetchImpl(url, {
+            method,
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+          }),
+        catch: (cause) =>
+          new SecretStoreError({ reason: `infisical_set_failed: ${errMsg(cause)}`, cause }),
+      });
+      if (!res.ok) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `infisical_set_failed:${res.status}` })
+        );
+      }
     });
-    if (!res.ok) throw new Error(`infisical_set_failed:${res.status}`);
   }
 
-  async deleteSecret(path: string): Promise<void> {
-    const token = await this.accessToken();
-    const name = this.secretName(path);
-    const url = new URL(`${this.opts.endpoint}/v3/secrets/raw/${encodeURIComponent(name)}`);
-    url.searchParams.set("workspaceId", this.opts.projectId);
-    url.searchParams.set("environment", this.opts.environment);
-    url.searchParams.set("secretPath", this.opts.secretPath);
-    const res = await this.opts.fetchImpl(url, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
+  deleteSecret(path: string): Effect.Effect<void, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const token = yield* this.accessToken();
+      const name = this.secretName(path);
+      const url = new URL(`${this.opts.endpoint}/v3/secrets/raw/${encodeURIComponent(name)}`);
+      url.searchParams.set("workspaceId", this.opts.projectId);
+      url.searchParams.set("environment", this.opts.environment);
+      url.searchParams.set("secretPath", this.opts.secretPath);
+      const res = yield* Effect.tryPromise({
+        try: () =>
+          this.opts.fetchImpl(url, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        catch: (cause) =>
+          new SecretStoreError({ reason: `infisical_delete_failed: ${errMsg(cause)}`, cause }),
+      });
+      if (res.status === 404) return;
+      if (!res.ok) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `infisical_delete_failed:${res.status}` })
+        );
+      }
     });
-    if (res.status === 404) return;
-    if (!res.ok) throw new Error(`infisical_delete_failed:${res.status}`);
   }
 
-  async listSecrets(prefix: string): Promise<string[]> {
-    const token = await this.accessToken();
-    const url = new URL(`${this.opts.endpoint}/v3/secrets/raw`);
-    url.searchParams.set("workspaceId", this.opts.projectId);
-    url.searchParams.set("environment", this.opts.environment);
-    url.searchParams.set("secretPath", this.opts.secretPath);
-    const res = await this.opts.fetchImpl(url, {
-      headers: { Authorization: `Bearer ${token}` },
+  listSecrets(prefix: string): Effect.Effect<string[], SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const token = yield* this.accessToken();
+      const url = new URL(`${this.opts.endpoint}/v3/secrets/raw`);
+      url.searchParams.set("workspaceId", this.opts.projectId);
+      url.searchParams.set("environment", this.opts.environment);
+      url.searchParams.set("secretPath", this.opts.secretPath);
+      const res = yield* Effect.tryPromise({
+        try: () => this.opts.fetchImpl(url, { headers: { Authorization: `Bearer ${token}` } }),
+        catch: (cause) =>
+          new SecretStoreError({ reason: `infisical_list_failed: ${errMsg(cause)}`, cause }),
+      });
+      if (!res.ok) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `infisical_list_failed:${res.status}` })
+        );
+      }
+      const json = yield* Effect.tryPromise({
+        try: () => res.json() as Promise<{ secrets?: Array<{ secretKey?: string }> }>,
+        catch: (cause) =>
+          new SecretStoreError({ reason: `infisical_list_parse_failed: ${errMsg(cause)}`, cause }),
+      });
+      const keys = (json.secrets ?? [])
+        .map((s) => (s.secretKey ?? "").replace(/__/g, "/"))
+        .filter((p) => p.startsWith(prefix));
+      return keys.sort();
     });
-    if (!res.ok) throw new Error(`infisical_list_failed:${res.status}`);
-    const json = (await res.json()) as {
-      secrets?: Array<{ secretKey?: string }>;
-    };
-    const keys = (json.secrets ?? [])
-      .map((s) => (s.secretKey ?? "").replace(/__/g, "/"))
-      .filter((p) => p.startsWith(prefix));
-    return keys.sort();
   }
 }
 
