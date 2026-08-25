@@ -10,7 +10,6 @@ import {
   jwtVerify,
   type JWTPayload,
   type JWTVerifyGetKey,
-  type KeyLike,
 } from "jose";
 
 export type McpApiAdapterJwtAuthOptions = {
