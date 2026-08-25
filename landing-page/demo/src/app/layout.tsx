@@ -24,7 +24,7 @@ import { getSiteOrigin } from '@/lib/site-url'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
-const defaultTitle = 'ClawQL — Agentic Gateway for Auditable Production AI'
+const defaultTitle = 'ClawQL — Agentic Infrastructure for Regulated Industries'
 
 export const metadata: Metadata = {
   metadataBase: getSiteOrigin(),
@@ -119,9 +119,9 @@ export default function RootLayout({
             id="navbar"
             links={
               <>
-                <NavbarLink href="/#tools">Tools</NavbarLink>
-                <NavbarLink href="/#workflows" className="max-lg:hidden">
-                  Workflows
+                <NavbarLink href="/#fabric">Fabric</NavbarLink>
+                <NavbarLink href="/#autonomous" className="max-lg:hidden">
+                  Autonomous
                 </NavbarLink>
                 <NavbarLink href={site.urls.agents}>Agents</NavbarLink>
                 <NavbarLink href={site.urls.idp}>IDP</NavbarLink>
@@ -173,8 +173,10 @@ export default function RootLayout({
             links={
               <>
                 <FooterCategory title="Product">
-                  <FooterLink href="/#tools">Tools</FooterLink>
-                  <FooterLink href="/#workflows">Workflows</FooterLink>
+                  <FooterLink href="/#fabric">Protocol Fabric</FooterLink>
+                  <FooterLink href="/#autonomous">Autonomous agents</FooterLink>
+                  <FooterLink href="/#proof">OpenBench proof</FooterLink>
+                  <FooterLink href="/#tools">Core tools</FooterLink>
                   <FooterLink href={site.urls.agents}>Agents</FooterLink>
                   <FooterLink href={site.urls.idp}>IDP</FooterLink>
                   <FooterLink href={site.urls.streams}>Streams</FooterLink>

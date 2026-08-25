@@ -6,44 +6,66 @@ import { Link } from '@/components/elements/link'
 import { Section } from '@/components/elements/section'
 import { ArrowNarrowRightIcon } from '@/components/icons/arrow-narrow-right-icon'
 import { CallToActionSimple } from '@/components/sections/call-to-action-simple'
-import { IdpStageCard, ToolTierSection } from '@/components/sections/clawql-marketing'
+import {
+  ClosedLoopSteps,
+  OpenBenchProofTable,
+  ProofChipRow,
+  ToolTierSection,
+} from '@/components/sections/clawql-marketing'
 import { FAQsTwoColumnAccordion, Faq } from '@/components/sections/faqs-two-column-accordion'
 import { HeroTwoColumnWithPhoto } from '@/components/sections/hero-two-column-with-photo'
 import { Plan, PricingMultiTier } from '@/components/sections/pricing-multi-tier'
 import { SecuritySection } from '@/components/sections/security-section'
-import { Stat, StatsFourColumns } from '@/components/sections/stats-four-columns'
-import { WorkflowFeedSection } from '@/components/sections/workflow-feed'
-import { idpPipelineStages, mcpToolTiers, multiProviderBenchmark } from '@/lib/marketing'
+import {
+  clawqlTeeSummary,
+  homepageProofChips,
+  mcpToolTiers,
+  openBenchMiniFirm,
+  protocolFabricSurfaces,
+} from '@/lib/marketing'
 import { pricing } from '@/lib/pricing'
 import { securityEnforcementLayers, securityPillars } from '@/lib/security-marketing'
 import { pageMetadata } from '@/lib/seo'
 import { site } from '@/lib/site'
-import { workflowFeeds } from '@/lib/workflow-feeds'
+
+const closedLoopSteps = [
+  {
+    title: 'Recall',
+    body: 'Pull prior vault notes and structured ontology matches — institutional context, not a blank session.',
+  },
+  {
+    title: 'Search',
+    body: 'Rank API operations by intent. Specs stay server-side; agents get operation IDs and parameter hints.',
+  },
+  {
+    title: 'Execute',
+    body: 'Run validated calls over REST, GraphQL, or gRPC. Lean responses keep results out of your context budget.',
+  },
+  {
+    title: 'Ingest',
+    body: 'Persist decisions with memory_ingest so the next session — Cursor, OpenClaw, or K8s — continues the trail.',
+  },
+] as const
 
 export const metadata = pageMetadata({
   title: 'Home',
-  absoluteTitle: 'ClawQL — Agentic Gateway for Auditable Production AI',
-  description:
-    'Token-efficient search → execute workflows over OpenAPI, Google Discovery, GraphQL, and gRPC — with vault memory, documents, and enterprise tooling.',
+  absoluteTitle: 'ClawQL — Agentic Infrastructure for Regulated Industries',
+  description: site.description,
   path: '/',
 })
 
 export default function Page() {
   return (
     <>
-      {/* Hero */}
       <HeroTwoColumnWithPhoto
         id="hero"
         eyebrow={<AnnouncementBadge href={site.urls.signup} text={site.earlyAccess.badge} cta="Start trial" />}
-        headline="AI agents that work your entire stack, without filling your context window."
+        headline="Anything to MCP. MCP to anything."
         subheadline={
           <p>
-            ClawQL is the open-source MCP core for production agent work: <code className="text-sm">search</code>,{' '}
-            <code className="text-sm">execute</code>, vault memory, and optional IDP. Self-host free on Apache 2.0, or
-            start a 14-day Developer trial with full persistent memory and unlimited executions. Connect agents to your
-            APIs, documents, and institutional memory in one closed loop — <strong>recall</strong>,{' '}
-            <strong>search</strong>, <strong>execute</strong>, and <strong>ingest</strong> — with specs server-side
-            rather than in your prompt.
+            ClawQL is agentic infrastructure for production work in regulated industries. Autonomous event-driven
+            agents. Structured institutional knowledge recall. Hardware-verified trusted execution. A WORM audit trail
+            on every action — before every acknowledgment.
           </p>
         }
         cta={
@@ -57,156 +79,206 @@ export default function Page() {
               </PlainButtonLink>
             </div>
             <InstallCommand className="w-full max-w-lg" snippet={site.installCommand} />
+            <ProofChipRow chips={homepageProofChips} />
           </div>
         }
         photo={<ClawQLHeroLogo />}
         photoFrame={false}
       />
 
-      {/* Workflow feeds — proof before tool grid */}
-      <WorkflowFeedSection
-        id="workflows"
-        eyebrow="Workflows in practice"
-        headline="What a real ClawQL session looks like."
+      <Section
+        id="fabric"
+        eyebrow="The protocol fabric"
+        headline="Any protocol in. Any protocol out. MCP in the middle."
         subheadline={
           <p>
-            Published case studies document the same pattern: agents call MCP tools in sequence — recall context,
-            discover operations with <code className="text-sm">search</code>, act with{' '}
-            <code className="text-sm">execute</code>, then persist outcomes with{' '}
-            <code className="text-sm">memory_ingest</code>. These feeds show the chronology without pasting specs into
-            the chat.
-          </p>
-        }
-        feeds={workflowFeeds}
-      />
-
-      {/* Token savings benchmark — lead differentiator */}
-      <StatsFourColumns
-        id="proof"
-        eyebrow="Context compression"
-        headline={`${multiProviderBenchmark.compressionRatio} compression — ${multiProviderBenchmark.indexedOperations} endpoints indexed, ${multiProviderBenchmark.workflowOperations} surfaced per workflow.`}
-        subheadline={
-          <p>
-            The answer to &ldquo;won&apos;t this just fill up my context?&rdquo; Offline benchmark across{' '}
-            {multiProviderBenchmark.providers}: stand up GKE, configure Cloudflare DNS, and draft a Jira rollout — with
-            planning tokens dropping from {multiProviderBenchmark.planningTokensBefore} to{' '}
-            {multiProviderBenchmark.planningTokensAfter}.
+            ClawQL Core turns API surfaces into MCP tools — {protocolFabricSurfaces.inbound}. mcp-api-adapter exposes
+            any MCP server outward — {protocolFabricSurfaces.outbound}. A gRPC service talks to a GraphQL consumer. A QR
+            stream from an air-gapped system becomes agent-callable without a network path across the boundary.
           </p>
         }
         cta={
-          <Link href={multiProviderBenchmark.href}>
-            Read the benchmark <ArrowNarrowRightIcon />
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <Link href={protocolFabricSurfaces.docsHref}>
+              Protocol Fabric docs <ArrowNarrowRightIcon />
+            </Link>
+            <Link href={protocolFabricSurfaces.adapterHref}>
+              mcp-api-adapter <ArrowNarrowRightIcon />
+            </Link>
+            <Link href={site.urls.agents}>
+              Agentic platform <ArrowNarrowRightIcon />
+            </Link>
+          </div>
         }
       >
-        <Stat
-          stat={multiProviderBenchmark.compressionRatio}
-          text="Compression ratio on the three-provider benchmark — measured with ceil(bytes ÷ 4) token estimates."
-        />
-        <Stat
-          stat={multiProviderBenchmark.indexedOperations}
-          text="API operations indexed across Google Cloud (4,141), Cloudflare (2,697), and Jira (336) — specs stay in the MCP server."
-        />
-        <Stat
-          stat={multiProviderBenchmark.workflowOperations}
-          text="Unique operations returned by search across 14 workflow steps."
-        />
-        <Stat
-          stat={`${multiProviderBenchmark.planningTokensBefore} → ${multiProviderBenchmark.planningTokensAfter}`}
-          text="Planning-context tokens: full-spec paste vs compact workflow artifact (~99.9% reduction)."
-        />
-      </StatsFourColumns>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="flex flex-col gap-2 rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
+            <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">In</p>
+            <h3 className="text-base font-semibold text-mist-950 dark:text-white">ClawQL Core → MCP</h3>
+            <p className="text-sm/7 text-mist-700 dark:text-mist-400">{protocolFabricSurfaces.inbound}</p>
+          </div>
+          <div className="flex flex-col gap-2 rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
+            <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">Out</p>
+            <h3 className="text-base font-semibold text-mist-950 dark:text-white">mcp-api-adapter → any surface</h3>
+            <p className="text-sm/7 text-mist-700 dark:text-mist-400">{protocolFabricSurfaces.outbound}</p>
+          </div>
+        </div>
+      </Section>
 
-      {/* Closed loop summary before tool grid */}
+      <Section
+        id="autonomous"
+        eyebrow="ClawQL Streams"
+        headline="Agents that don't wait for you."
+        subheadline={
+          <p>
+            Every other agent platform requires a human to start the session. A{' '}
+            <code className="text-sm">stream_subscribe</code> call points at any event source — WebSocket, NATS,
+            webhook, cron, polled API, or QR stream. When an event crosses the significance threshold, an agent session
+            spawns: memory recall, ontology queries, tool execution, optional Ouroboros convergence — then a human
+            reviews via <code className="text-sm">/mcp-ui</code>. The decision lands in the WORM trail. No human starts
+            the session. No developer builds the interface.
+          </p>
+        }
+        cta={
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <Link href={site.urls.streams}>
+              Streams <ArrowNarrowRightIcon />
+            </Link>
+            <Link href={`${site.urls.docs}/mcp/mcp-ui`}>
+              /mcp-ui <ArrowNarrowRightIcon />
+            </Link>
+            <Link href={site.urls.agents}>
+              Agents landing <ArrowNarrowRightIcon />
+            </Link>
+          </div>
+        }
+      />
+
+      <Section
+        id="proof"
+        eyebrow="OpenBench proof"
+        headline="Memory that closes sets, not approximates them."
+        subheadline={
+          <p>
+            Semantic recall returns what looks relevant. Structured ontology recall returns what matches — exactly, with
+            no extras. We rebuilt the Calderwood &amp; Harkness near-miss failure mode as an OpenBench mini-firm harness
+            (B-7), then fixed it structurally with CQE-typed predicates.
+          </p>
+        }
+        cta={
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <Link href={openBenchMiniFirm.essayUrl}>
+              Memory Finds. Ontology Decides. <ArrowNarrowRightIcon />
+            </Link>
+            <Link href={openBenchMiniFirm.runUrl}>
+              GitHub Actions run {openBenchMiniFirm.runId} <ArrowNarrowRightIcon />
+            </Link>
+            <Link href="https://docs.clawql.com/benchmarks">
+              Context-compression benchmark <ArrowNarrowRightIcon />
+            </Link>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <OpenBenchProofTable caption={openBenchMiniFirm.caption} rows={openBenchMiniFirm.rows} />
+          <p className="text-sm text-mist-600 dark:text-mist-400">{openBenchMiniFirm.caption}</p>
+        </div>
+      </Section>
+
       <Section
         id="how-it-works"
         eyebrow="How it fits together"
-        headline="Memory, APIs, and documents in one closed loop."
+        headline="Recall → search → execute → ingest."
         subheadline={
           <p>
-            A typical session: an agent <strong>recalls</strong> prior vault notes about a deployment,{' '}
-            <strong>searches</strong> Cloudflare and GCP for the right DNS and cluster operations,{' '}
-            <strong>executes</strong> them with validated args, then <strong>ingests</strong> the outcome so the next
-            session — in Cursor, OpenClaw, or your cluster — picks up where this one left off. Document workflows follow
-            the same pattern through the IDP pipeline.
+            One closed loop for APIs, memory, and documents. Case studies on docs.clawql.com show the same pattern
+            shipping Cloudflare Workers, recalling Cursor roadmaps from OpenClaw, and filing GitHub issues from vault
+            context — without pasting specs into the chat.
           </p>
         }
-      />
+        cta={
+          <Link href={`${site.urls.docs}/case-studies/cloudflare-docs-mcp`}>
+            Example case study <ArrowNarrowRightIcon />
+          </Link>
+        }
+      >
+        <ClosedLoopSteps steps={closedLoopSteps} />
+      </Section>
 
-      {/* MCP tool tiers */}
       <Section
         id="tools"
         eyebrow="MCP tools"
-        headline="Every tool has a job and a clear boundary."
+        headline="Core discovery and execution — always on."
         subheadline={
           <p>
-            Core discovery and execution are always on. Memory, documents, automation, and the IDP pipeline opt in when
-            you need them — same surface in Cursor, OpenClaw, or your Kubernetes cluster.
-          </p>
-        }
-      >
-        <div className="flex flex-col gap-10">
-          <ToolTierSection {...mcpToolTiers.core} />
-          <ToolTierSection {...mcpToolTiers.memory} />
-          <ToolTierSection {...mcpToolTiers.automation} />
-          <ToolTierSection {...mcpToolTiers.idp} />
-        </div>
-      </Section>
-
-      {/* IDP pipeline */}
-      <Section
-        id="idp"
-        eyebrow="Intelligent document processing"
-        headline="Eight vendors. One agent-composable pipeline."
-        subheadline={
-          <p>
-            Drop a file in Nextcloud; agents orchestrate layout parsing, PDF normalization, PII redaction, archival,
-            hybrid search, and secure sharing — via <code className="text-sm">search</code> →{' '}
-            <code className="text-sm">execute</code> or automated <code className="text-sm">run_idp_pipeline</code>.
-            Self-host the full stack with Helm; managed accounts run the ClawQL Archive Layer (Nextcloud + Onyx-indexed
-            metadata) by default.
+            Memory, documents, automation, and the IDP pipeline opt in when you need them — same surface in Cursor,
+            OpenClaw, or your Kubernetes cluster. Document workflows (Nextcloud → OCR → redaction → Onyx → VDR) live on
+            the{' '}
+            <Link href={site.urls.idp} className="font-medium underline underline-offset-2">
+              IDP page
+            </Link>
+            .
           </p>
         }
         cta={
-          <Link href={`${site.urls.docs}/providers/idp-pipeline`}>
-            IDP pipeline reference <ArrowNarrowRightIcon />
+          <Link href={`${site.urls.docs}/tools`}>
+            Full tool reference <ArrowNarrowRightIcon />
           </Link>
         }
       >
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {idpPipelineStages.map((stage) => (
-            <IdpStageCard key={stage.vendor} {...stage} />
-          ))}
-        </div>
+        <ToolTierSection {...mcpToolTiers.core} />
       </Section>
 
-      {/* Security */}
       <SecuritySection
         id="security"
-        eyebrow="Security"
-        headline="Security: documented and reproducible"
+        eyebrow="Security & TEE"
+        headline="Documented, reproducible — and TEE-ready."
         subheadline={
           <p>
             ClawQL documents how container images are scanned, signed, and enforced from CI through Kubernetes admission
-            — plus a 32-module curriculum for agentic AI deployments. Same controls on self-hosted Helm and dedicated
-            managed accounts.
+            — plus a 32-module curriculum for agentic AI deployments. ATR scoping limits what each agent can call;
+            Panguard fails closed when scope is unclear.
           </p>
         }
         cta={
-          <Link href={`${site.urls.docs}/security`}>
-            Read the security hub <ArrowNarrowRightIcon />
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <Link href={`${site.urls.docs}/security`}>
+              Security hub <ArrowNarrowRightIcon />
+            </Link>
+            <Link href={`${site.urls.docs}/security/best-practices`}>
+              32-module curriculum <ArrowNarrowRightIcon />
+            </Link>
+            <Link href={clawqlTeeSummary.href}>
+              clawql-tee specification <ArrowNarrowRightIcon />
+            </Link>
+          </div>
         }
         pillars={securityPillars}
         enforcementLayers={securityEnforcementLayers}
       />
 
-      {/* FAQs */}
+      <Section
+        id="tee"
+        eyebrow="clawql-tee"
+        headline="Hardware-verified agent execution."
+        subheadline={<p>{clawqlTeeSummary.body}</p>}
+        cta={
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <Link href={clawqlTeeSummary.href}>
+              clawql-tee specification <ArrowNarrowRightIcon />
+            </Link>
+            <Link href="https://rockyourlobster.com">
+              RockYourLobster deployments <ArrowNarrowRightIcon />
+            </Link>
+          </div>
+        }
+      />
+
       <FAQsTwoColumnAccordion id="faqs" headline="Questions & Answers">
         <Faq
           id="faq-1"
           question="What's the difference between cache, audit, and memory_*?"
-          answer="cache is ephemeral LRU scratch for the active session — gone on restart. audit is an in-process ring buffer for structured operator events. memory_ingest and memory_recall persist Markdown in your Obsidian vault with wikilinks — durable institutional knowledge across sessions."
+          answer="cache is ephemeral LRU scratch for the active session — gone on restart. audit is an in-process ring buffer for structured operator events. memory_ingest and memory_recall persist Markdown in your Obsidian vault with wikilinks — durable institutional knowledge across sessions. Structured ontology filters on memory_recall close exact entity sets instead of approximating with semantic search."
         />
         <Faq
           id="faq-2"
@@ -215,34 +287,31 @@ export default function Page() {
         />
         <Faq
           id="faq-3"
-          question="Can OpenClaw or Cursor use the same vault?"
-          answer="Yes. Point CLAWQL_OBSIDIAN_VAULT_PATH at a shared vault mount. OpenClaw agents call memory_recall over Streamable HTTP and get notes ingested from prior Cursor sessions — validated in our June 2026 case study."
+          question="How is this different from managed agent platforms?"
+          answer="Managed platforms wait for a human to start a session and keep audit on their side. ClawQL Streams wakes agents from event sources, Protocol Fabric connects any protocol via MCP, and the WORM trail stays on your bucket or cluster. Self-host on Apache 2.0, or use clawql-tee when the operator itself cannot be in the trust model."
         />
         <Faq
           id="faq-4"
           question="Do you offer enterprise contracts?"
-          answer={`Yes — Enterprise starts from ${pricing.enterprise.priceFrom}${pricing.enterprise.period} for dedicated nodes, custom fine-tuning, EU multi-region, DPA/BAA, and a dedicated CSM. Contact sales to scope annual terms.`}
+          answer={`Yes — Enterprise starts from ${pricing.enterprise.priceFrom}${pricing.enterprise.period} for dedicated nodes, custom fine-tuning, multi-region, DPA/BAA, and a dedicated CSM. Contact sales to scope annual terms. Hardened agent deployments with TEE are also available via RockYourLobster.`}
         />
         <Faq
           id="faq-5"
           question="Is managed hosting available today?"
-          answer="The open-source MCP core is production-ready today — npm, Helm, case studies, and a Kubernetes operator. Self-host free on Apache 2.0, or start a 14-day Developer trial. Managed IDP hosting is early access with founder-led onboarding. We are pre-revenue on managed hosting; the architecture is shipped, references and compliance history are still building."
+          answer="The open-source MCP core is production-ready today — npm, Helm, case studies, and a Kubernetes operator. Self-host free on Apache 2.0, or start a 14-day Developer trial. Managed IDP hosting is early access with founder-led onboarding."
         />
         <Faq
           id="faq-6"
           question="How does ClawQL handle supply chain and runtime security?"
-          answer="Container images pass OSV, Trivy, and SBOM gates in CI, are Cosign-signed, and Kyverno verifyImages rejects unsigned digests at deploy time by default. Runtime layers — MCP ATR scoping, audit, sandbox isolation, PII redaction in the IDP pipeline — are documented in the 32-module security curriculum and defense-in-depth guide on docs.clawql.com/security."
+          answer="Container images pass OSV, Trivy, and SBOM gates in CI, are Cosign-signed, and Kyverno verifyImages rejects unsigned digests at deploy time by default. Runtime layers — MCP ATR scoping, audit, sandbox isolation, PII redaction in the IDP pipeline — are documented in the 32-module security curriculum on docs.clawql.com/security."
         />
       </FAQsTwoColumnAccordion>
 
-      {/* Pricing teaser — full grid on /pricing */}
       <PricingMultiTier
         id="pricing"
         headline="Pricing"
         subheadline={
-          <p className="text-center text-sm/7 text-mist-600 dark:text-mist-400">
-            {site.earlyAccess.pricingNote}
-          </p>
+          <p className="text-center text-sm/7 text-mist-600 dark:text-mist-400">{site.earlyAccess.pricingNote}</p>
         }
         plans={
           <>

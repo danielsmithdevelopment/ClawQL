@@ -115,10 +115,10 @@ Hosted accounts: [${origin}/signup/](${origin}/signup/). Self-hosted: \`npm inst
 
 function getAgentMarkdownMap() {
   const description =
-    'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Regional Hubs, Dedicated Virtual Gateways, and Edge swarm. Self-host free or start a trial.'
+    'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric (anything to MCP to anything), Streams, structured memory, and TEE-ready WORM audit. Self-host free on Apache 2.0 or start a trial.'
 
   return {
-    '/': `# ClawQL — Agentic Gateway for Auditable Production AI
+    '/': `# ClawQL — Agentic Infrastructure for Regulated Industries
 
 ${description}
 
@@ -133,6 +133,8 @@ npm install -g clawql-mcp
 - Documentation: ${docs}
 - Sign up: ${origin}/signup/
 - Pricing: ${origin}/pricing/
+- Agents: ${origin}/agents/
+- Streams: ${origin}/streams/
 `,
     '/pricing': `# Pricing\n\nSee ${origin}/pricing/ for ClawQL tiers.`,
     '/about': `# About\n\nSee ${origin}/about/.`,
