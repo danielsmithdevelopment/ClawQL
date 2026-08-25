@@ -18,7 +18,7 @@ import { randomBytes } from "node:crypto";
 import { Context, Data, Effect, Layer } from "effect";
 import { SignJWT, type JWK } from "jose";
 
-import { emitAuthEvent, noopAuthEventSink, type AuthEventSink } from "../audit/auth-events.js";
+import { emitAuthEventEffect, noopAuthEventSink, type AuthEventSink } from "../audit/auth-events.js";
 import { ID_JAG_ASSERTION_TYPE } from "./id-jag.js";
 import type { EmaConnectorRegistry } from "./ema-connector-registry.js";
 import type { McpOAuthSigningMaterial } from "./mcp-oauth-signing.js";
@@ -113,10 +113,7 @@ export function issueIdJagAssertionEffect(
       return yield* Effect.fail(new IdJagIssuerError({ reason: "missing_groups" }));
     }
 
-    const connector = yield* Effect.tryPromise({
-      try: () => deps.connectors.get(orgId, connectorId),
-      catch: (cause) => new IdJagIssuerError({ reason: "connector_lookup_failed", cause }),
-    });
+    const connector = yield* deps.connectors.get(orgId, connectorId);
     if (!connector) {
       return yield* Effect.fail(new IdJagIssuerError({ reason: "unknown_connector" }));
     }
@@ -179,20 +176,16 @@ export function issueIdJagAssertionEffect(
     };
 
     const sink = deps.eventSink ?? noopAuthEventSink;
-    yield* Effect.tryPromise({
-      try: () =>
-        emitAuthEvent(sink, {
-          type: "ID_JAG_ASSERTION_ISSUED",
-          orgId,
-          connectorId,
-          subjectId,
-          audience: firstAudience(audience),
-          groups,
-          jti,
-          expiresAt: issued.expiresAt,
-          timestamp: new Date(nowMs).toISOString(),
-        }),
-      catch: (cause) => new IdJagIssuerError({ reason: "audit_emit_failed", cause }),
+    yield* emitAuthEventEffect(sink, {
+      type: "ID_JAG_ASSERTION_ISSUED",
+      orgId,
+      connectorId,
+      subjectId,
+      audience: firstAudience(audience),
+      groups,
+      jti,
+      expiresAt: issued.expiresAt,
+      timestamp: new Date(nowMs).toISOString(),
     });
 
     return issued;

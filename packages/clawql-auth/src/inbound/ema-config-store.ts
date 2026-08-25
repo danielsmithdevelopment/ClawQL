@@ -1,10 +1,11 @@
 /**
  * Persistent EMA org configuration — IdP trust + group→scope mappings.
  *
- * `id-jag.ts` / `http.ts` (owned elsewhere) consume {@link SecretStoreEmaConfigStore}
- * as a Promise interface (`EmaConfigStore` plus admin CRUD), so
- * {@link createSecretStoreEmaConfigStore} is a thin `Effect.runPromise` façade —
- * every {@link SecretStore} call inside it runs through Effect via `yield*`.
+ * Effect-primary: `id-jag.ts`'s {@link EmaConfigStore.getOrgConfig} is `yield*`ed by
+ * `mcp-oauth.ts` (owned elsewhere) without a `mapError`, so it (and the admin CRUD added
+ * by {@link SecretStoreEmaConfigStore}) declare `Effect.Effect<A>` (never-erroring) —
+ * every {@link SecretStore} call runs through Effect via `yield*`, with IO failures
+ * lifted to a defect via `Effect.orDie` rather than surfaced through the error channel.
  */
 
 import { readFileSync } from "node:fs";
@@ -38,9 +39,9 @@ function emaOrgPath(orgId: string): string {
 }
 
 export type SecretStoreEmaConfigStore = EmaConfigStore & {
-  saveOrgConfig: (config: EmaOrgConfigInput) => Promise<EmaOrgConfig>;
-  deleteOrgConfig: (orgId: string) => Promise<void>;
-  listOrgIds: () => Promise<string[]>;
+  saveOrgConfig: (config: EmaOrgConfigInput) => Effect.Effect<EmaOrgConfig>;
+  deleteOrgConfig: (orgId: string) => Effect.Effect<void>;
+  listOrgIds: () => Effect.Effect<string[]>;
 };
 
 /**
@@ -49,39 +50,36 @@ export type SecretStoreEmaConfigStore = EmaConfigStore & {
 export function createSecretStoreEmaConfigStore(store: SecretStore): SecretStoreEmaConfigStore {
   return {
     getOrgConfig: (orgId) =>
-      Effect.runPromise(
-        Effect.gen(function* () {
-          const raw = yield* store.getSecret(emaOrgPath(orgId));
-          if (!raw) return null;
-          try {
-            return normalizeOrgInput(JSON.parse(raw) as EmaOrgConfigInput);
-          } catch {
-            return null;
-          }
-        })
-      ),
+      Effect.gen(function* () {
+        const raw = yield* store.getSecret(emaOrgPath(orgId));
+        if (!raw) return null;
+        try {
+          return normalizeOrgInput(JSON.parse(raw) as EmaOrgConfigInput);
+        } catch {
+          return null;
+        }
+      }).pipe(Effect.orDie),
 
     saveOrgConfig: (input) => {
       const config = normalizeOrgInput(input);
-      return Effect.runPromise(
-        store
-          .setSecret(emaOrgPath(config.orgId), JSON.stringify(config))
-          .pipe(Effect.map(() => config))
-      );
+      return store
+        .setSecret(emaOrgPath(config.orgId), JSON.stringify(config))
+        .pipe(
+          Effect.map(() => config),
+          Effect.orDie
+        );
     },
 
-    deleteOrgConfig: (orgId) => Effect.runPromise(store.deleteSecret(emaOrgPath(orgId))),
+    deleteOrgConfig: (orgId) => store.deleteSecret(emaOrgPath(orgId)).pipe(Effect.orDie),
 
     listOrgIds: () =>
-      Effect.runPromise(
-        Effect.gen(function* () {
-          const paths = yield* store.listSecrets(EMA_ORG_SECRET_PREFIX);
-          return paths
-            .map((p) => p.slice(EMA_ORG_SECRET_PREFIX.length))
-            .filter(Boolean)
-            .sort();
-        })
-      ),
+      Effect.gen(function* () {
+        const paths = yield* store.listSecrets(EMA_ORG_SECRET_PREFIX);
+        return paths
+          .map((p) => p.slice(EMA_ORG_SECRET_PREFIX.length))
+          .filter(Boolean)
+          .sort();
+      }).pipe(Effect.orDie),
   };
 }
 
@@ -93,13 +91,14 @@ export function createCompositeEmaConfigStore(
   ...fallbacks: EmaConfigStore[]
 ): EmaConfigStore {
   return {
-    async getOrgConfig(orgId) {
-      for (const store of [primary, ...fallbacks]) {
-        const found = await store.getOrgConfig(orgId);
-        if (found) return found;
-      }
-      return null;
-    },
+    getOrgConfig: (orgId) =>
+      Effect.gen(function* () {
+        for (const store of [primary, ...fallbacks]) {
+          const found = yield* store.getOrgConfig(orgId);
+          if (found) return found;
+        }
+        return null;
+      }),
   };
 }
 
@@ -114,20 +113,22 @@ export function loadEmaOrgsFromJsonFile(path: string): EmaOrgConfig[] {
 }
 
 /** Bootstrap org configs from JSON into SecretStore (skip existing unless `overwrite`). */
-export async function bootstrapEmaOrgsToStore(
+export function bootstrapEmaOrgsToStoreEffect(
   store: SecretStoreEmaConfigStore,
   configs: EmaOrgConfigInput[],
   options?: { overwrite?: boolean }
-): Promise<number> {
-  let written = 0;
-  for (const input of configs) {
-    const config = normalizeOrgInput(input);
-    if (!options?.overwrite) {
-      const existing = await store.getOrgConfig(config.orgId);
-      if (existing) continue;
+): Effect.Effect<number> {
+  return Effect.gen(function* () {
+    let written = 0;
+    for (const input of configs) {
+      const config = normalizeOrgInput(input);
+      if (!options?.overwrite) {
+        const existing = yield* store.getOrgConfig(config.orgId);
+        if (existing) continue;
+      }
+      yield* store.saveOrgConfig(config);
+      written += 1;
     }
-    await store.saveOrgConfig(config);
-    written += 1;
-  }
-  return written;
+    return written;
+  });
 }

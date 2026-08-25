@@ -2,10 +2,10 @@
  * EMA connector registry — admin-authorized MCP connectors per org.
  * Persists in SecretStore so the same backend as EMA org config applies.
  *
- * `id-jag-issuer.ts` / `http.ts` (owned elsewhere) consume {@link EmaConnectorRegistry}
- * as a Promise interface, so {@link createSecretStoreEmaConnectorRegistry} is a thin
- * `Effect.runPromise` façade — every {@link SecretStore} call inside it runs through
- * Effect via `yield*`.
+ * Effect-primary: `id-jag-issuer.ts` `yield*`s {@link EmaConnectorRegistry.get} directly
+ * without a `mapError`, so every method declares `Effect.Effect<A>` (never-erroring) —
+ * {@link createSecretStoreEmaConnectorRegistry} runs every {@link SecretStore} call through
+ * Effect via `yield*`, lifting IO failures to a defect via `Effect.orDie`.
  */
 
 import { Effect } from "effect";
@@ -24,10 +24,10 @@ function orgPrefix(orgId: string): string {
 }
 
 export type EmaConnectorRegistry = {
-  get: (orgId: string, connectorId: string) => Promise<EmaConnectorRegistration | null>;
-  save: (registration: EmaConnectorRegistration) => Promise<EmaConnectorRegistration>;
-  delete: (orgId: string, connectorId: string) => Promise<void>;
-  list: (orgId: string) => Promise<EmaConnectorRegistration[]>;
+  get: (orgId: string, connectorId: string) => Effect.Effect<EmaConnectorRegistration | null>;
+  save: (registration: EmaConnectorRegistration) => Effect.Effect<EmaConnectorRegistration>;
+  delete: (orgId: string, connectorId: string) => Effect.Effect<void>;
+  list: (orgId: string) => Effect.Effect<EmaConnectorRegistration[]>;
 };
 
 export type SecretStoreEmaConnectorRegistry = EmaConnectorRegistry;
@@ -62,50 +62,47 @@ export function createSecretStoreEmaConnectorRegistry(
 ): SecretStoreEmaConnectorRegistry {
   return {
     get: (orgId, connectorId) =>
-      Effect.runPromise(
-        Effect.gen(function* () {
-          const raw = yield* store.getSecret(connectorPath(orgId, connectorId));
-          if (!raw) return null;
-          try {
-            return normalizeRegistration(JSON.parse(raw) as EmaConnectorRegistration);
-          } catch {
-            return null;
-          }
-        })
-      ),
+      Effect.gen(function* () {
+        const raw = yield* store.getSecret(connectorPath(orgId, connectorId));
+        if (!raw) return null;
+        try {
+          return normalizeRegistration(JSON.parse(raw) as EmaConnectorRegistration);
+        } catch {
+          return null;
+        }
+      }).pipe(Effect.orDie),
 
     save: (input) => {
       const registration = normalizeRegistration(input);
-      return Effect.runPromise(
-        store
-          .setSecret(
-            connectorPath(registration.orgId, registration.connectorId),
-            JSON.stringify(registration)
-          )
-          .pipe(Effect.map(() => registration))
-      );
+      return store
+        .setSecret(
+          connectorPath(registration.orgId, registration.connectorId),
+          JSON.stringify(registration)
+        )
+        .pipe(
+          Effect.map(() => registration),
+          Effect.orDie
+        );
     },
 
     delete: (orgId, connectorId) =>
-      Effect.runPromise(store.deleteSecret(connectorPath(orgId, connectorId))),
+      store.deleteSecret(connectorPath(orgId, connectorId)).pipe(Effect.orDie),
 
     list: (orgId) =>
-      Effect.runPromise(
-        Effect.gen(function* () {
-          const paths = yield* store.listSecrets(orgPrefix(orgId));
-          const out: EmaConnectorRegistration[] = [];
-          for (const path of paths) {
-            const raw = yield* store.getSecret(path);
-            if (!raw) continue;
-            try {
-              out.push(normalizeRegistration(JSON.parse(raw) as EmaConnectorRegistration));
-            } catch {
-              // skip corrupt entries
-            }
+      Effect.gen(function* () {
+        const paths = yield* store.listSecrets(orgPrefix(orgId));
+        const out: EmaConnectorRegistration[] = [];
+        for (const path of paths) {
+          const raw = yield* store.getSecret(path);
+          if (!raw) continue;
+          try {
+            out.push(normalizeRegistration(JSON.parse(raw) as EmaConnectorRegistration));
+          } catch {
+            // skip corrupt entries
           }
-          return out.sort((a, b) => a.connectorId.localeCompare(b.connectorId));
-        })
-      ),
+        }
+        return out.sort((a, b) => a.connectorId.localeCompare(b.connectorId));
+      }).pipe(Effect.orDie),
   };
 }
 
@@ -120,23 +117,25 @@ export function createMemoryEmaConnectorRegistry(
   }
   return {
     map,
-    async get(orgId, connectorId) {
-      return map.get(`${orgId.trim()}/${connectorId.trim()}`) ?? null;
-    },
-    async save(input) {
-      const registration = normalizeRegistration(input);
-      map.set(`${registration.orgId}/${registration.connectorId}`, registration);
-      return registration;
-    },
-    async delete(orgId, connectorId) {
-      map.delete(`${orgId.trim()}/${connectorId.trim()}`);
-    },
-    async list(orgId) {
-      const prefix = `${orgId.trim()}/`;
-      return [...map.entries()]
-        .filter(([key]) => key.startsWith(prefix))
-        .map(([, value]) => value)
-        .sort((a, b) => a.connectorId.localeCompare(b.connectorId));
-    },
+    get: (orgId, connectorId) =>
+      Effect.sync(() => map.get(`${orgId.trim()}/${connectorId.trim()}`) ?? null),
+    save: (input) =>
+      Effect.sync(() => {
+        const registration = normalizeRegistration(input);
+        map.set(`${registration.orgId}/${registration.connectorId}`, registration);
+        return registration;
+      }),
+    delete: (orgId, connectorId) =>
+      Effect.sync(() => {
+        map.delete(`${orgId.trim()}/${connectorId.trim()}`);
+      }),
+    list: (orgId) =>
+      Effect.sync(() => {
+        const prefix = `${orgId.trim()}/`;
+        return [...map.entries()]
+          .filter(([key]) => key.startsWith(prefix))
+          .map(([, value]) => value)
+          .sort((a, b) => a.connectorId.localeCompare(b.connectorId));
+      }),
   };
 }

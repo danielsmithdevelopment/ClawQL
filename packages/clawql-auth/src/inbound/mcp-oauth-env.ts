@@ -19,7 +19,7 @@ import {
 import { resolveSecretStore, type SecretStore } from "../stores/index.js";
 import { createMemorySecretStore } from "../stores/memory.js";
 import {
-  bootstrapEmaOrgsToStore,
+  bootstrapEmaOrgsToStoreEffect,
   createCompositeEmaConfigStore,
   createSecretStoreEmaConfigStore,
   loadEmaOrgsFromJson,
@@ -27,7 +27,7 @@ import {
   type SecretStoreEmaConfigStore,
 } from "./ema-config-store.js";
 import {
-  bootstrapMcpClientsToStore,
+  bootstrapMcpClientsToStoreEffect,
   createCompositeMcpClientRegistry,
   createSecretStoreMcpClientRegistry,
   createSecretStoreMcpRefreshStore,
@@ -197,8 +197,10 @@ export async function createMcpOAuthFromEnv(
   const clientRegistry = createSecretStoreMcpClientRegistry(secretStore);
   const refreshStore = createSecretStoreMcpRefreshStore(secretStore);
 
-  await bootstrapEmaOrgsToStore(emaStore, loadEmaBootstrapConfigs(env));
-  await bootstrapMcpClientsToStore(clientRegistry, loadMcpClientBootstrap(env));
+  await Effect.runPromise(bootstrapEmaOrgsToStoreEffect(emaStore, loadEmaBootstrapConfigs(env)));
+  await Effect.runPromise(
+    bootstrapMcpClientsToStoreEffect(clientRegistry, loadMcpClientBootstrap(env))
+  );
 
   const memoryClients = createMemoryMcpClientRegistry([]);
   const emaConfigStore = createCompositeEmaConfigStore(emaStore, createMemoryEmaConfigStore([]));
@@ -239,7 +241,7 @@ export async function createMcpOAuthFromEnv(
     config,
     emaStore,
     clientRegistry,
-    validateBearer: (token) => server.validateToken(token),
+    validateBearer: (token) => Effect.runPromise(server.validateToken(token)),
     jwks: signing.jwks.keys.length ? signing.jwks : undefined,
     idJagIssuer: idJagIssuer ?? undefined,
   };
@@ -260,8 +262,12 @@ export async function createMcpOAuthForTests(input: {
   const clientRegistry = createSecretStoreMcpClientRegistry(secretStore);
   const refreshStore = createSecretStoreMcpRefreshStore(secretStore);
 
-  await bootstrapEmaOrgsToStore(emaStore, input.emaOrgs ?? [], { overwrite: true });
-  await bootstrapMcpClientsToStore(clientRegistry, input.clients ?? [], { overwrite: true });
+  await Effect.runPromise(
+    bootstrapEmaOrgsToStoreEffect(emaStore, input.emaOrgs ?? [], { overwrite: true })
+  );
+  await Effect.runPromise(
+    bootstrapMcpClientsToStoreEffect(clientRegistry, input.clients ?? [], { overwrite: true })
+  );
 
   const config: MCPOAuthConfig = {
     issuer: input.issuer,
@@ -292,7 +298,7 @@ export async function createMcpOAuthForTests(input: {
     config,
     emaStore,
     clientRegistry,
-    validateBearer: (token) => server.validateToken(token),
+    validateBearer: (token) => Effect.runPromise(server.validateToken(token)),
     jwks: resolvedSigning?.jwks.keys.length ? resolvedSigning.jwks : undefined,
   };
 }

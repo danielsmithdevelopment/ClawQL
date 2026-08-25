@@ -1,10 +1,11 @@
 /**
  * One-time authorization codes for inbound MCP OAuth `authorization_code` + PKCE.
  *
- * `mcp-oauth.ts` (owned elsewhere) requires the `McpAuthorizationCodeStore` Promise
- * interface, so {@link createSecretStoreMcpAuthorizationCodeStore} is a thin
- * `Effect.runPromise` façade — every {@link SecretStore} call inside it runs through
- * Effect via `yield*`.
+ * Effect-primary: `mcp-oauth.ts` (owned elsewhere) `yield*`s
+ * {@link McpAuthorizationCodeStore.save} / `.consume` directly without a `mapError`, so
+ * both methods declare `Effect.Effect<A>` (never-erroring) — {@link SecretStore} IO
+ * failures inside {@link createSecretStoreMcpAuthorizationCodeStore} are lifted to a
+ * defect via `Effect.orDie` rather than surfaced through the error channel.
  */
 
 import { Effect } from "effect";
@@ -26,8 +27,8 @@ export type McpAuthorizationCodeRecord = {
 };
 
 export type McpAuthorizationCodeStore = {
-  save: (codeHash: string, record: McpAuthorizationCodeRecord) => Promise<void>;
-  consume: (codeHash: string) => Promise<McpAuthorizationCodeRecord | null>;
+  save: (codeHash: string, record: McpAuthorizationCodeRecord) => Effect.Effect<void>;
+  consume: (codeHash: string) => Effect.Effect<McpAuthorizationCodeRecord | null>;
 };
 
 function codePath(hash: string): string {
@@ -39,21 +40,19 @@ export function createSecretStoreMcpAuthorizationCodeStore(
 ): McpAuthorizationCodeStore {
   return {
     save: (hash, record) =>
-      Effect.runPromise(store.setSecret(codePath(hash), JSON.stringify(record))),
+      store.setSecret(codePath(hash), JSON.stringify(record)).pipe(Effect.orDie),
     consume: (hash) =>
-      Effect.runPromise(
-        Effect.gen(function* () {
-          const path = codePath(hash);
-          const raw = yield* store.getSecret(path);
-          if (!raw) return null;
-          yield* store.deleteSecret(path);
-          try {
-            return JSON.parse(raw) as McpAuthorizationCodeRecord;
-          } catch {
-            return null;
-          }
-        })
-      ),
+      Effect.gen(function* () {
+        const path = codePath(hash);
+        const raw = yield* store.getSecret(path);
+        if (!raw) return null;
+        yield* store.deleteSecret(path);
+        try {
+          return JSON.parse(raw) as McpAuthorizationCodeRecord;
+        } catch {
+          return null;
+        }
+      }).pipe(Effect.orDie),
   };
 }
 
@@ -63,13 +62,15 @@ export function createMemoryMcpAuthorizationCodeStore(): McpAuthorizationCodeSto
   const map = new Map<string, McpAuthorizationCodeRecord>();
   return {
     map,
-    async save(hash, record) {
-      map.set(hash, record);
-    },
-    async consume(hash) {
-      const record = map.get(hash) ?? null;
-      if (record) map.delete(hash);
-      return record;
-    },
+    save: (hash, record) =>
+      Effect.sync(() => {
+        map.set(hash, record);
+      }),
+    consume: (hash) =>
+      Effect.sync(() => {
+        const record = map.get(hash) ?? null;
+        if (record) map.delete(hash);
+        return record;
+      }),
   };
 }

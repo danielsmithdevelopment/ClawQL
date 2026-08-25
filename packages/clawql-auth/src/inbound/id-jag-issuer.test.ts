@@ -58,9 +58,10 @@ describe("ID-JAG issuer + connector registry", () => {
         jwksUri: "https://idp.clawql.test/.well-known/id-jag-jwks.json?orgId=acme",
         signing,
       }),
-      eventSink: (e: AuthEvent) => {
-        events.push(e);
-      },
+      eventSink: (e: AuthEvent) =>
+        Effect.sync(() => {
+          events.push(e);
+        }),
     };
 
     const issued = await Effect.runPromise(
@@ -154,9 +155,10 @@ describe("ID-JAG issuer + connector registry", () => {
         jwksUri: "https://idp.clawql.test/jwks",
         signing,
       }),
-      eventSink: (e) => {
-        events.push(e);
-      },
+      eventSink: (e) =>
+        Effect.sync(() => {
+          events.push(e);
+        }),
     });
 
     const issued = await Effect.runPromise(
@@ -207,21 +209,24 @@ describe("ID-JAG issuer + connector registry", () => {
             ],
           },
         ]),
-        eventSink: (e) => {
-          events.push(e);
-        },
+        eventSink: (e) =>
+          Effect.sync(() => {
+            events.push(e);
+          }),
       },
       createMemoryMcpClientRegistry([]),
       createMemoryMcpRefreshStore()
     );
 
-    const token = await mcp.issueToken({
-      grantType: "id_jag",
-      assertion: issued.assertion,
-      orgId: "acme",
-    });
+    const token = await Effect.runPromise(
+      mcp.issueToken({
+        grantType: "id_jag",
+        assertion: issued.assertion,
+        orgId: "acme",
+      })
+    );
     expect(token.scope).toBe("execute search memory");
-    const claims = await mcp.validateToken(token.access_token);
+    const claims = await Effect.runPromise(mcp.validateToken(token.access_token));
     expect(claims.sub).toBe("user-42");
     expect(claims.idpGroups).toEqual(["engineering"]);
     expect(claims.role).toBe("operator");

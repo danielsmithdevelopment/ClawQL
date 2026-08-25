@@ -39,7 +39,7 @@ export {
   type VerifiedIdJagClaims,
 } from "./id-jag.js";
 export {
-  bootstrapEmaOrgsToStore,
+  bootstrapEmaOrgsToStoreEffect,
   createCompositeEmaConfigStore,
   createSecretStoreEmaConfigStore,
   EMA_ORG_SECRET_PREFIX,
@@ -49,7 +49,7 @@ export {
   type SecretStoreEmaConfigStore,
 } from "./ema-config-store.js";
 export {
-  bootstrapMcpClientsToStore,
+  bootstrapMcpClientsToStoreEffect,
   createCompositeMcpClientRegistry,
   createSecretStoreMcpClientRegistry,
   createSecretStoreMcpRefreshStore,

@@ -55,8 +55,13 @@ export type EmaOrgConfig = {
   idpProvider?: "okta" | "custom";
 };
 
+/**
+ * Effect-primary: `mcp-oauth.ts` (owned elsewhere) `yield*`s {@link getOrgConfig} directly
+ * without a `mapError`, so it declares `Effect.Effect<A>` (never-erroring) — IO failures
+ * from a SecretStore-backed implementation are lifted to a defect via `Effect.orDie`.
+ */
 export type EmaConfigStore = {
-  getOrgConfig: (orgId: string) => Promise<EmaOrgConfig | null>;
+  getOrgConfig: (orgId: string) => Effect.Effect<EmaOrgConfig | null>;
 };
 
 export type VerifiedIdJagClaims = {
@@ -292,9 +297,7 @@ export function createMemoryEmaConfigStore(
   const map = new Map(configs.map((c) => [c.orgId, c]));
   return {
     list: configs,
-    async getOrgConfig(orgId) {
-      return map.get(orgId) ?? null;
-    },
+    getOrgConfig: (orgId) => Effect.sync(() => map.get(orgId) ?? null),
   };
 }
 

@@ -1,8 +1,9 @@
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
 import { createMemorySecretStore } from "../stores/memory.js";
 import {
-  bootstrapEmaOrgsToStore,
+  bootstrapEmaOrgsToStoreEffect,
   createSecretStoreEmaConfigStore,
   loadEmaOrgsFromJson,
 } from "./ema-config-store.js";
@@ -10,18 +11,20 @@ import {
 describe("ema-config-store", () => {
   it("persists and loads org config from SecretStore", async () => {
     const store = createSecretStoreEmaConfigStore(createMemorySecretStore());
-    await store.saveOrgConfig({
-      orgId: "acme",
-      idpJwksUri: "https://idp.test/jwks",
-      idpIssuer: "https://idp.test/",
-      audience: "https://mcp.test/",
-      groupMappings: [{ idpGroup: "engineering", scope: ["execute"] }],
-    });
+    await Effect.runPromise(
+      store.saveOrgConfig({
+        orgId: "acme",
+        idpJwksUri: "https://idp.test/jwks",
+        idpIssuer: "https://idp.test/",
+        audience: "https://mcp.test/",
+        groupMappings: [{ idpGroup: "engineering", scope: ["execute"] }],
+      })
+    );
 
-    const loaded = await store.getOrgConfig("acme");
+    const loaded = await Effect.runPromise(store.getOrgConfig("acme"));
     expect(loaded?.orgId).toBe("acme");
     expect(loaded?.groupMappings[0]?.idpGroup).toBe("engineering");
-    expect(await store.listOrgIds()).toEqual(["acme"]);
+    expect(await Effect.runPromise(store.listOrgIds())).toEqual(["acme"]);
   });
 
   it("bootstraps Okta shorthand from JSON", async () => {
@@ -42,7 +45,7 @@ describe("ema-config-store", () => {
     expect(configs[0]?.idpProvider).toBe("okta");
 
     const store = createSecretStoreEmaConfigStore(createMemorySecretStore());
-    expect(await bootstrapEmaOrgsToStore(store, configs)).toBe(1);
-    expect(await store.getOrgConfig("acme")).toBeTruthy();
+    expect(await Effect.runPromise(bootstrapEmaOrgsToStoreEffect(store, configs))).toBe(1);
+    expect(await Effect.runPromise(store.getOrgConfig("acme"))).toBeTruthy();
   });
 });
