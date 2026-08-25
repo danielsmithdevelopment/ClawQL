@@ -213,7 +213,7 @@ Registered MCP clients may include `redirectUris` for the interactive `authoriza
 
 ## Per-org IdP routing (multi-tenant)
 
-For SaaS with one IdP per company, inject an `OrgIdpRouter` (e.g. from `createOrgCreditsIdpRouter` in `clawql-payments`) and call `verifyOidcBearerTokenWithOrgRouting`. The router selects JWKS/issuer/domains from the JWT email domain (or `iss`). ClawQL still does **not** issue login tokens.
+For SaaS with one IdP per company, inject an `OrgIdpRouter` (e.g. from `createOrgCreditsIdpRouter` in `clawql-payments`) and call `verifyOidcBearerTokenWithOrgRoutingEffect`. The router selects JWKS/issuer/domains from the JWT email domain (or `iss`). ClawQL still does **not** issue login tokens.
 
 ## Step-up (not SSO)
 
@@ -226,12 +226,12 @@ import { createClawQLAuth, createStepUpStoreLayer, StepUpStoreService } from "cl
 
 const auth = createClawQLAuth({ mode: "oidc", stepUpStorePath: "/path/step-up.json" });
 
-const claims = await auth.resolveClaimsAsync({ authorization: `Bearer ${jwt}` });
-if (claims.ok) {
-  await Effect.runPromise(
-    auth.assertToolAccessEffect(claims.claims, "payments_credits_transfer_confirm")
-  );
-}
+const claims = await Effect.runPromise(
+  auth.resolveClaimsEffect({ authorization: `Bearer ${jwt}` })
+);
+await Effect.runPromise(
+  auth.assertToolAccessEffect(claims, "payments_credits_transfer_confirm")
+);
 ```
 
 WebAuthn is a **pluggable** `WebAuthnStepUpVerifier` (fails closed until injected). Prefer IdP passkeys for human login.

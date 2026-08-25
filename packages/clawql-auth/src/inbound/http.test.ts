@@ -20,7 +20,7 @@ import { hashMcpClientSecret } from "./mcp-oauth.js";
 async function withTestApp(
   fn: (
     baseUrl: string,
-    runtime: Awaited<ReturnType<typeof createMcpOAuthForTests>>
+    runtime: import("./mcp-oauth-env.js").McpOAuthRuntime
   ) => Promise<void>,
   options?: {
     adminApiKey?: string;
@@ -35,7 +35,7 @@ async function withTestApp(
   const confidentialSalt = "http-basic-test-salt";
   const confidentialSecret = "client-secret-value";
 
-  const runtime = await createMcpOAuthForTests({
+  const runtime = await Effect.runPromise(createMcpOAuthForTests({
     issuer: "https://auth.clawql.test",
     signingSecret,
     resourceAudience: audience,
@@ -56,7 +56,7 @@ async function withTestApp(
         orgId: "acme",
       },
     ],
-  });
+  }));
 
   await Effect.runPromise(
     runtime.emaStore.saveOrgConfig({
@@ -148,7 +148,7 @@ describe("attachMcpOAuthRoutes", () => {
       expect(res.status).toBe(200);
       const body = (await res.json()) as { access_token: string; refresh_token?: string };
       expect(body.access_token).toBeTruthy();
-      const claims = await runtime.validateBearer(body.access_token);
+      const claims = await Effect.runPromise(runtime.validateBearer(body.access_token));
       expect(claims.sub).toBe("cline-agent");
       expect(claims.orgId).toBe("acme");
     });
@@ -296,7 +296,7 @@ describe("attachMcpOAuthRoutes", () => {
         });
         expect(tokenRes.status).toBe(200);
         const tokenBody = (await tokenRes.json()) as { access_token: string; scope: string };
-        const claims = await runtime.validateBearer(tokenBody.access_token);
+        const claims = await Effect.runPromise(runtime.validateBearer(tokenBody.access_token));
         expect(claims.sub).toBe("alice@acme.test");
         expect(claims.scope).toEqual(["execute"]);
       },
@@ -342,11 +342,11 @@ describe("attachMcpOAuthRoutes", () => {
       })
     );
     const audience = "https://mcp.clawql.test/";
-    const runtime = await createMcpOAuthForTests({
+    const runtime = await Effect.runPromise(createMcpOAuthForTests({
       issuer: "https://auth.clawql.test",
       signing,
       resourceAudience: audience,
-    });
+    }));
 
     const app = express();
     attachMcpOAuthRoutes(app, runtime.server, {

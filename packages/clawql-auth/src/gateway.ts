@@ -78,26 +78,33 @@ export type GatewayAuthConfig = {
   /**
    * When set, Bearer tokens issued by {@link MCPOAuthServer} are accepted.
    * Used for `mcpOAuth` mode or hybrid acceptance alongside apiKey/oidc.
+   * Effect-primary — no Promise domain API.
    */
-  mcpOAuthValidator?: (bearerToken: string) => Promise<AtrClaims>;
+  mcpOAuthValidator?: (bearerToken: string) => Effect.Effect<AtrClaims, unknown>;
 };
 
-export function resolveAuthMode(env: NodeJS.ProcessEnv = process.env): AuthMode {
-  const raw = env.CLAWQL_AUTH_MODE?.trim().toLowerCase();
-  if (raw === "apikey" || raw === "api_key" || raw === "api-key") return "apiKey";
-  if (raw === "oidc" || raw === "oauth2") return "oidc";
-  if (raw === "mcpoauth" || raw === "mcp_oauth" || raw === "mcp-oauth") return "mcpOAuth";
-  return "noAuth";
+export function resolveAuthMode(env: NodeJS.ProcessEnv = process.env): Effect.Effect<AuthMode> {
+  return Effect.sync(() => {
+    const raw = env.CLAWQL_AUTH_MODE?.trim().toLowerCase();
+    if (raw === "apikey" || raw === "api_key" || raw === "api-key") return "apiKey";
+    if (raw === "oidc" || raw === "oauth2") return "oidc";
+    if (raw === "mcpoauth" || raw === "mcp_oauth" || raw === "mcp-oauth") return "mcpOAuth";
+    return "noAuth";
+  });
 }
 
-export function loadGatewayAuthConfig(env: NodeJS.ProcessEnv = process.env): GatewayAuthConfig {
-  const mode = resolveAuthMode(env);
-  const apiKey = env.CLAWQL_API_KEY?.trim();
-  return {
-    mode,
-    apiKey: apiKey || undefined,
-    oidc: mode === "oidc" ? loadOidcAuthConfig(env) : undefined,
-  };
+export function loadGatewayAuthConfig(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<GatewayAuthConfig> {
+  return Effect.gen(function* () {
+    const mode = yield* resolveAuthMode(env);
+    const apiKey = env.CLAWQL_API_KEY?.trim();
+    return {
+      mode,
+      apiKey: apiKey || undefined,
+      oidc: mode === "oidc" ? loadOidcAuthConfig(env) : undefined,
+    };
+  });
 }
 
 /** Permissive default when gateway auth is noAuth (modularization §4.3). */
@@ -118,19 +125,17 @@ function extractBearer(headers: AuthHeaderSource): string | undefined {
   return m?.[1] ?? (bearer.includes(" ") ? undefined : bearer);
 }
 
-async function tryMcpOAuthValidator(
+function tryMcpOAuthValidator(
   headers: AuthHeaderSource,
   config: GatewayAuthConfig
-): Promise<AtrClaims | null> {
-  const validator = config.mcpOAuthValidator;
-  if (!validator) return null;
-  const token = extractBearer(headers);
-  if (!token) return null;
-  try {
-    return await validator(token);
-  } catch {
-    return null;
-  }
+): Effect.Effect<AtrClaims | null> {
+  return Effect.gen(function* () {
+    const validator = config.mcpOAuthValidator;
+    if (!validator) return null;
+    const token = extractBearer(headers);
+    if (!token) return null;
+    return yield* validator(token).pipe(Effect.catchAll(() => Effect.succeed(null)));
+  });
 }
 
 function headerValue(headers: AuthHeaderSource, name: string): string | undefined {
@@ -145,7 +150,7 @@ function headerValue(headers: AuthHeaderSource, name: string): string | undefine
  */
 export function resolveAtrClaimsFromHeaders(
   headers: AuthHeaderSource = {},
-  config: GatewayAuthConfig = loadGatewayAuthConfig()
+  config: GatewayAuthConfig = Effect.runSync(loadGatewayAuthConfig())
 ): { ok: true; claims: AtrClaims } | { ok: false; error: string } {
   if (config.mode === "oidc" || config.mode === "mcpOAuth") {
     return {
@@ -202,18 +207,11 @@ export function resolveAtrClaimsFromHeaders(
  */
 export function resolveAtrClaimsFromHeadersEffect(
   headers: AuthHeaderSource = {},
-  config: GatewayAuthConfig = loadGatewayAuthConfig()
+  config: GatewayAuthConfig = Effect.runSync(loadGatewayAuthConfig())
 ): Effect.Effect<AtrClaims, GatewayAuthError> {
   return Effect.gen(function* () {
     if (config.mcpOAuthValidator) {
-      const fromMcp = yield* Effect.tryPromise({
-        try: () => tryMcpOAuthValidator(headers, config),
-        catch: (cause) =>
-          new GatewayAuthError({
-            reason: cause instanceof Error ? cause.message : "mcp_oauth_verify_failed",
-            cause,
-          }),
-      });
+      const fromMcp = yield* tryMcpOAuthValidator(headers, config);
       if (fromMcp) return fromMcp;
       if (config.mode === "mcpOAuth") {
         return yield* Effect.fail(
@@ -240,7 +238,7 @@ export function resolveAtrClaimsFromHeadersEffect(
 /** Assert gateway auth (Effect form) — fails with {@link GatewayAuthError}. */
 export function assertGatewayAuthEffect(
   headers: AuthHeaderSource = {},
-  config: GatewayAuthConfig = loadGatewayAuthConfig()
+  config: GatewayAuthConfig = Effect.runSync(loadGatewayAuthConfig())
 ): Effect.Effect<AtrClaims, GatewayAuthError> {
   return resolveAtrClaimsFromHeadersEffect(headers, config);
 }

@@ -103,9 +103,9 @@ export function createInferenceVirtualKeyClaimsResolver(
 
 function buildGatewayAuthConfig(
   env: NodeJS.ProcessEnv = process.env,
-  mcpOAuthValidator?: (bearer: string) => Promise<import("clawql-auth").AtrClaims>
+  mcpOAuthValidator?: (bearer: string) => Effect.Effect<import("clawql-auth").AtrClaims, unknown>
 ): GatewayAuthConfig {
-  const config = loadGatewayAuthConfig(env);
+  const config = Effect.runSync(loadGatewayAuthConfig(env));
   const withMcp = mcpOAuthValidator != null ? { ...config, mcpOAuthValidator } : config;
   if (withMcp.mode !== "apiKey") return withMcp;
   return {
@@ -246,15 +246,17 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
   const injectedMcpOAuth = options.mcpOAuthRuntime != null;
   let mcpOAuthRuntime: McpOAuthRuntime | null = options.mcpOAuthRuntime ?? null;
-  if (!options.skipMcpOAuth && !mcpOAuthRuntime && isMcpOAuthEnabled(process.env)) {
-    mcpOAuthRuntime = await createMcpOAuthFromEnv();
+  if (!options.skipMcpOAuth && !mcpOAuthRuntime && Effect.runSync(isMcpOAuthEnabled(process.env))) {
+    mcpOAuthRuntime = await Effect.runPromise(createMcpOAuthFromEnv());
   }
 
   let idJagIssuer: IdJagIssuerRuntime | null = mcpOAuthRuntime?.idJagIssuer ?? null;
-  if (!idJagIssuer && isIdJagIssuerEnabled(process.env)) {
-    idJagIssuer = await createIdJagIssuerFromEnv({
-      secretStore: resolveSecretStore(),
-    });
+  if (!idJagIssuer && Effect.runSync(isIdJagIssuerEnabled(process.env))) {
+    idJagIssuer = await Effect.runPromise(
+      createIdJagIssuerFromEnv({
+        secretStore: resolveSecretStore(),
+      })
+    );
   }
 
   /**
@@ -267,13 +269,15 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (mcpOAuthRuntime || idJagIssuer) {
     // createMcpOAuthFromEnv already warns; only re-warn for injected test/runtime hosts.
     if (mcpOAuthRuntime && injectedMcpOAuth) {
-      warnIfMcpOAuthAuditDisabled(process.env);
-      warnIfMcpOAuthHs256Only(process.env);
+      Effect.runSync(warnIfMcpOAuthAuditDisabled(process.env));
+      Effect.runSync(warnIfMcpOAuthHs256Only(process.env));
     }
-    warnIfMcpOAuthAdminKeyMissing(process.env, {
-      mcpOAuthEnabled: !!mcpOAuthRuntime,
-      idJagIssuerEnabled: !!idJagIssuer,
-    });
+    Effect.runSync(
+      warnIfMcpOAuthAdminKeyMissing(process.env, {
+        mcpOAuthEnabled: !!mcpOAuthRuntime,
+        idJagIssuerEnabled: !!idJagIssuer,
+      })
+    );
     attachMcpOAuthRoutes(app, mcpOAuthRuntime?.server ?? null, {
       wellKnown: mcpOAuthRuntime
         ? {

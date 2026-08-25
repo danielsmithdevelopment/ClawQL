@@ -1,6 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Effect } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { appendCreditEntry, getCreditAccount, resetCreditsLedgerForTests } from "./ledger.js";
 import {
@@ -214,7 +215,7 @@ describe("enterprise next slices: seats, manager, waterfall, idp router", () => 
       process.env
     );
     const router = createOrgCreditsIdpRouter(process.env);
-    const route = await router.resolveByEmailDomain("acme.com");
+    const route = await Effect.runPromise(router.resolveByEmailDomain("acme.com"));
     expect(route?.orgId).toBe("acme");
     expect(route?.jwksUrl).toBe("https://idp.acme.com/jwks");
   });

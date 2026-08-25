@@ -322,44 +322,43 @@ export function authWormLayerForTests(
   return Layer.succeed(AuthWormService, service);
 }
 
-export async function resetAuthWormStoreForTests(
+export function resetAuthWormStoreForTests(
   env: NodeJS.ProcessEnv = process.env
-): Promise<void> {
-  defaultLayer = null;
-  defaultLayerKey = null;
-  const mode = resolveAuthAuditStoreMode(env);
-  if (mode === "off") return;
-  await Effect.runPromise(
-    Effect.gen(function* () {
-      const worm = yield* AuthWormService;
-      yield* worm.reset();
-    }).pipe(Effect.provide(authWormLayerFromEnv(env)))
-  );
+): Effect.Effect<void, AuthWormError> {
+  return Effect.gen(function* () {
+    defaultLayer = null;
+    defaultLayerKey = null;
+    const mode = resolveAuthAuditStoreMode(env);
+    if (mode === "off") return;
+    const worm = yield* AuthWormService;
+    yield* worm.reset();
+  }).pipe(Effect.provide(authWormLayerFromEnv(env)));
 }
 
-export async function listAuthWormRecords(
+export function listAuthWormRecords(
   limit = 100,
   env: NodeJS.ProcessEnv = process.env
-): Promise<AuthWormRecord[]> {
-  if (resolveAuthAuditStoreMode(env) === "off") return [];
-  return Effect.runPromise(
-    Effect.gen(function* () {
-      const worm = yield* AuthWormService;
-      return yield* worm.list(limit);
-    }).pipe(Effect.provide(authWormLayerFromEnv(env)))
-  );
+): Effect.Effect<AuthWormRecord[], AuthWormError> {
+  if (resolveAuthAuditStoreMode(env) === "off") return Effect.succeed([]);
+  return Effect.gen(function* () {
+    const worm = yield* AuthWormService;
+    return yield* worm.list(limit);
+  }).pipe(Effect.provide(authWormLayerFromEnv(env)));
 }
 
-export async function verifyAuthWormLog(
+export function verifyAuthWormLog(
   env: NodeJS.ProcessEnv = process.env
-): Promise<AuthWormVerifyResult> {
+): Effect.Effect<AuthWormVerifyResult, AuthWormError> {
   if (resolveAuthAuditStoreMode(env) === "off") {
-    return { ok: true, records: 0, head_hash: AUTH_WORM_GENESIS_HASH, issues: [] };
+    return Effect.succeed({
+      ok: true,
+      records: 0,
+      head_hash: AUTH_WORM_GENESIS_HASH,
+      issues: [],
+    });
   }
-  return Effect.runPromise(
-    Effect.gen(function* () {
-      const worm = yield* AuthWormService;
-      return yield* worm.verify();
-    }).pipe(Effect.provide(authWormLayerFromEnv(env)))
-  );
+  return Effect.gen(function* () {
+    const worm = yield* AuthWormService;
+    return yield* worm.verify();
+  }).pipe(Effect.provide(authWormLayerFromEnv(env)));
 }

@@ -1,6 +1,9 @@
 /**
  * Startup warnings for MCP OAuth deployments with risky configuration.
+ * Effect-primary: every warner returns `Effect.Effect<void>` (`Effect.sync`).
  */
+
+import { Effect } from "effect";
 
 import { resolveAuthAuditStoreMode } from "./auth-worm.js";
 
@@ -23,15 +26,15 @@ function isMcpOAuthEnabledEnv(env: NodeJS.ProcessEnv): boolean {
   if (legacyFlag === "1" || legacyFlag === "true" || legacyFlag === "yes") return true;
   return Boolean(
     env.CLAWQL_MCP_OAUTH_SIGNING_SECRET?.trim() ||
-    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
-    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
+      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
+      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
   );
 }
 
 function hasRs256SigningMaterial(env: NodeJS.ProcessEnv): boolean {
   return Boolean(
     env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
-    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
+      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
   );
 }
 
@@ -43,21 +46,27 @@ function hasHs256SigningSecret(env: NodeJS.ProcessEnv): boolean {
  * Log a loud warning when MCP OAuth is enabled without auth audit persistence.
  * Intended for `server-http` boot — not a debug line.
  */
-export function warnIfMcpOAuthAuditDisabled(env: NodeJS.ProcessEnv = process.env): void {
-  if (!isMcpOAuthEnabledEnv(env)) return;
-  if (resolveAuthAuditStoreMode(env) !== "off") return;
-  console.warn(MCP_OAUTH_AUDIT_DISABLED_WARNING);
+export function warnIfMcpOAuthAuditDisabled(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void> {
+  return Effect.sync(() => {
+    if (!isMcpOAuthEnabledEnv(env)) return;
+    if (resolveAuthAuditStoreMode(env) !== "off") return;
+    console.warn(MCP_OAUTH_AUDIT_DISABLED_WARNING);
+  });
 }
 
 /**
  * Warn when the AS will mint HS256 access tokens (shared secret) with no RS256 key.
  * Matches {@link loadMcpOAuthSigningFromEnvEffect}: RS256 PEM wins when both are set.
  */
-export function warnIfMcpOAuthHs256Only(env: NodeJS.ProcessEnv = process.env): void {
-  if (!isMcpOAuthEnabledEnv(env)) return;
-  if (hasRs256SigningMaterial(env)) return;
-  if (!hasHs256SigningSecret(env)) return;
-  console.warn(MCP_OAUTH_HS256_ONLY_WARNING);
+export function warnIfMcpOAuthHs256Only(env: NodeJS.ProcessEnv = process.env): Effect.Effect<void> {
+  return Effect.sync(() => {
+    if (!isMcpOAuthEnabledEnv(env)) return;
+    if (hasRs256SigningMaterial(env)) return;
+    if (!hasHs256SigningSecret(env)) return;
+    console.warn(MCP_OAUTH_HS256_ONLY_WARNING);
+  });
 }
 
 export const ID_JAG_ISSUER_SHARED_KEY_WARNING =
@@ -79,20 +88,24 @@ export const MCP_OAUTH_BOOTSTRAP_INVALID_WARNING =
 /**
  * Warn when the ID-JAG issuer falls back to MCP OAuth signing material.
  */
-export function warnIfIdJagIssuerSharesMcpOAuthKey(env: NodeJS.ProcessEnv = process.env): void {
-  const hasDedicated = Boolean(
-    env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM?.trim() ||
-    env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim() ||
-    env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim()
-  );
-  if (hasDedicated) return;
-  const hasMcpFallback = Boolean(
-    env.CLAWQL_MCP_OAUTH_SIGNING_SECRET?.trim() ||
-    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
-    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
-  );
-  if (!hasMcpFallback) return;
-  console.warn(ID_JAG_ISSUER_SHARED_KEY_WARNING);
+export function warnIfIdJagIssuerSharesMcpOAuthKey(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void> {
+  return Effect.sync(() => {
+    const hasDedicated = Boolean(
+      env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM?.trim() ||
+        env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim() ||
+        env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim()
+    );
+    if (hasDedicated) return;
+    const hasMcpFallback = Boolean(
+      env.CLAWQL_MCP_OAUTH_SIGNING_SECRET?.trim() ||
+        env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
+        env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
+    );
+    if (!hasMcpFallback) return;
+    console.warn(ID_JAG_ISSUER_SHARED_KEY_WARNING);
+  });
 }
 
 /**
@@ -101,16 +114,24 @@ export function warnIfIdJagIssuerSharesMcpOAuthKey(env: NodeJS.ProcessEnv = proc
 export function warnIfMcpOAuthAdminKeyMissing(
   env: NodeJS.ProcessEnv = process.env,
   flags: { mcpOAuthEnabled?: boolean; idJagIssuerEnabled?: boolean } = {}
-): void {
-  if (!flags.mcpOAuthEnabled && !flags.idJagIssuerEnabled) return;
-  if (env.CLAWQL_API_KEY?.trim()) return;
-  console.warn(MCP_OAUTH_ADMIN_KEY_MISSING_WARNING);
+): Effect.Effect<void> {
+  return Effect.sync(() => {
+    if (!flags.mcpOAuthEnabled && !flags.idJagIssuerEnabled) return;
+    if (env.CLAWQL_API_KEY?.trim()) return;
+    console.warn(MCP_OAUTH_ADMIN_KEY_MISSING_WARNING);
+  });
 }
 
 /** Warn when an explicit bootstrap env var was set but failed to parse/load. */
-export function warnIfMcpOAuthBootstrapInvalid(source: string, cause?: unknown): void {
-  const detail = cause instanceof Error ? cause.message : cause ? String(cause) : "";
-  console.warn(
-    `${MCP_OAUTH_BOOTSTRAP_INVALID_WARNING} source=${source}` + (detail ? ` cause=${detail}` : "")
-  );
+export function warnIfMcpOAuthBootstrapInvalid(
+  source: string,
+  cause?: unknown
+): Effect.Effect<void> {
+  return Effect.sync(() => {
+    const detail = cause instanceof Error ? cause.message : cause ? String(cause) : "";
+    console.warn(
+      `${MCP_OAUTH_BOOTSTRAP_INVALID_WARNING} source=${source}` +
+        (detail ? ` cause=${detail}` : "")
+    );
+  });
 }

@@ -20,7 +20,7 @@ describe("auth-worm", () => {
       ...process.env,
       CLAWQL_AUTH_AUDIT_STORE: "memory",
     };
-    await resetAuthWormStoreForTests(env);
+    await Effect.runPromise(resetAuthWormStoreForTests(env));
     resetAuthEventSinkCacheForTests();
 
     const sink = createAuthEventSinkFromEnv(env);
@@ -39,11 +39,11 @@ describe("auth-worm", () => {
     };
     await Effect.runPromise(sink(event));
 
-    const records = await listAuthWormRecords(10, env);
+    const records = await Effect.runPromise(listAuthWormRecords(10, env));
     expect(records).toHaveLength(1);
     expect(records[0]?.event).toMatchObject(event);
 
-    const verified = await verifyAuthWormLog(env);
+    const verified = await Effect.runPromise(verifyAuthWormLog(env));
     expect(verified.ok).toBe(true);
     expect(verified.records).toBe(1);
   });
@@ -55,7 +55,7 @@ describe("auth-worm", () => {
       CLAWQL_HOME: dir,
       CLAWQL_AUTH_AUDIT_STORE: "sqlite",
     };
-    await resetAuthWormStoreForTests(env);
+    await Effect.runPromise(resetAuthWormStoreForTests(env));
     resetAuthEventSinkCacheForTests();
 
     const sink = createAuthEventSinkFromEnv(env);
@@ -70,10 +70,10 @@ describe("auth-worm", () => {
       })
     );
 
-    const records = await listAuthWormRecords(10, env);
+    const records = await Effect.runPromise(listAuthWormRecords(10, env));
     expect(records).toHaveLength(1);
     expect(records[0]?.event.type).toBe("MCP_TOKEN_ISSUED");
-    expect((await verifyAuthWormLog(env)).ok).toBe(true);
+    expect((await Effect.runPromise(verifyAuthWormLog(env))).ok).toBe(true);
   });
 
   it("append via AuthWormService increments seq", async () => {

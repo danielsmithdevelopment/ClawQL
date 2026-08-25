@@ -31,7 +31,7 @@ describe("server-http MCP OAuth", () => {
       else process.env[k] = v;
     }
     resetAuthEventSinkCacheForTests();
-    await resetAuthWormStoreForTests(process.env);
+    await Effect.runPromise(resetAuthWormStoreForTests(process.env));
   });
 
   function stash(key: string) {
@@ -48,11 +48,11 @@ describe("server-http MCP OAuth", () => {
     const idpSecret = "test-idp-hs256-secret-at-least-32-chars!!";
     const audience = "https://mcp.clawql.test/";
 
-    const mcpOAuthRuntime = await createMcpOAuthForTests({
+    const mcpOAuthRuntime = await Effect.runPromise(createMcpOAuthForTests({
       issuer: "https://auth.clawql.test",
       signingSecret,
       resourceAudience: audience,
-    });
+    }));
     await Effect.runPromise(
       mcpOAuthRuntime.emaStore.saveOrgConfig({
         orgId: "acme",
@@ -154,7 +154,7 @@ describe("server-http MCP OAuth", () => {
       },
     ]);
 
-    await resetAuthWormStoreForTests(process.env);
+    await Effect.runPromise(resetAuthWormStoreForTests(process.env));
     resetAuthEventSinkCacheForTests();
 
     const app = await createMcpHttpApp({
@@ -191,7 +191,7 @@ describe("server-http MCP OAuth", () => {
       });
       expect(tokenRes.status).toBe(200);
 
-      const records = await listAuthWormRecords(10, process.env);
+      const records = await Effect.runPromise(listAuthWormRecords(10, process.env));
       expect(records.length).toBeGreaterThanOrEqual(1);
       const issued = records.find((r) => r.event.type === "MCP_TOKEN_ISSUED");
       expect(issued?.event).toMatchObject({
@@ -205,7 +205,7 @@ describe("server-http MCP OAuth", () => {
         matchedIdpGroups: ["engineering"],
       });
 
-      const verified = await verifyAuthWormLog(process.env);
+      const verified = await Effect.runPromise(verifyAuthWormLog(process.env));
       expect(verified.ok).toBe(true);
     } finally {
       await closeHttpServer(server);

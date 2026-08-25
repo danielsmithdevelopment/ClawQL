@@ -135,7 +135,7 @@ describe("clawql-auth Effect services", () => {
     const claims = await Effect.runPromise(
       resolveAtrClaimsFromHeadersEffect(
         { authorization: `Bearer ${token}` },
-        loadGatewayAuthConfig()
+        Effect.runSync(loadGatewayAuthConfig())
       )
     );
     expect(claims.sub).toBe("u");
