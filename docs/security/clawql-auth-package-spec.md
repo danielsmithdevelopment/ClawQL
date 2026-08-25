@@ -231,6 +231,8 @@ ID-JAG exchange verifies the IdP assertion (JWKS / HS256 dev), maps groups → A
 
 **Auth WORM (shipped):** `createMcpOAuthFromEnv()` wires `createAuthEventSinkFromEnv()` by default. Entries append to a hash-chained SQLite log at `$CLAWQL_HOME/auth-audit.db` unless overridden. Set `CLAWQL_AUTH_AUDIT_STORE=off` to disable; `memory` for tests. Intentionally **no** `accessTokenHash` on events until a token→entry lookup path exists.
 
+**Boot SECURITY WARNINGs (same convention):** audit store `off`; ID-JAG issuer sharing the MCP AS signing key; **HS256-only AS signing** (`CLAWQL_MCP_OAUTH_SIGNING_SECRET` without RS256 PEM) — JWKS cannot be published and every verifier must share the secret. Prefer `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM(_PATH)` in production.
+
 Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery-metadata.ts` (`assertion_types_supported: id-jag`).
 
 #### 4.1.2 ClawQL as EMA IdP (ID-JAG issuer)
