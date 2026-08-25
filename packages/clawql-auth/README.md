@@ -189,6 +189,8 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 
 Setting `CLAWQL_AUTH_AUDIT_STORE=off` while MCP OAuth is enabled logs a **SECURITY WARNING** at `server-http` boot — auth is live but issuance is not persisted.
 
+Signing with only `CLAWQL_MCP_OAUTH_SIGNING_SECRET` (HS256, no RS256 PEM) logs a **SECURITY WARNING** at boot — JWKS cannot be published and every verifier must share the secret. Prefer `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM(_PATH)` in production.
+
 Registered MCP clients may include `redirectUris` for the interactive `authorization_code` path. Bootstrap via `CLAWQL_MCP_OAUTH_CLIENTS_JSON` / `_PATH`.
 
 ## Per-org IdP routing (multi-tenant)

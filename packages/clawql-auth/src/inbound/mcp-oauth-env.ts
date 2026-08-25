@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 
 import type { AuthEventSink } from "../audit/auth-events.js";
 import { createAuthEventSinkFromEnv } from "../audit/auth-worm-sink.js";
-import { warnIfMcpOAuthAuditDisabled } from "../audit/mcp-oauth-startup-warnings.js";
+import { warnIfMcpOAuthAuditDisabled, warnIfMcpOAuthHs256Only } from "../audit/mcp-oauth-startup-warnings.js";
 import {
   loadMcpOAuthSigningFromEnvEffect,
   mcpOAuthSigningConfigured,
@@ -174,6 +174,7 @@ export async function createMcpOAuthFromEnv(
   if (!envConfig.enabled) return null;
 
   warnIfMcpOAuthAuditDisabled(env);
+  warnIfMcpOAuthHs256Only(env);
 
   const signing = await Effect.runPromise(loadMcpOAuthSigningFromEnvEffect(env));
 

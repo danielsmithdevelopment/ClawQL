@@ -54,6 +54,7 @@ import {
   resolveAtrClaimsFromHeadersEffect,
   resolveSecretStore,
   warnIfMcpOAuthAuditDisabled,
+  warnIfMcpOAuthHs256Only,
   type ApiKeyClaimsResolver,
   type GatewayAuthConfig,
   type IdJagIssuerRuntime,
@@ -263,6 +264,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (mcpOAuthRuntime || idJagIssuer) {
     if (mcpOAuthRuntime) {
       warnIfMcpOAuthAuditDisabled(process.env);
+      warnIfMcpOAuthHs256Only(process.env);
     }
     attachMcpOAuthRoutes(app, mcpOAuthRuntime?.server ?? null, {
       wellKnown: mcpOAuthRuntime
