@@ -62,12 +62,10 @@ export function createSecretStoreEmaConfigStore(store: SecretStore): SecretStore
 
     saveOrgConfig: (input) => {
       const config = normalizeOrgInput(input);
-      return store
-        .setSecret(emaOrgPath(config.orgId), JSON.stringify(config))
-        .pipe(
-          Effect.map(() => config),
-          Effect.orDie
-        );
+      return store.setSecret(emaOrgPath(config.orgId), JSON.stringify(config)).pipe(
+        Effect.map(() => config),
+        Effect.orDie
+      );
     },
 
     deleteOrgConfig: (orgId) => store.deleteSecret(emaOrgPath(orgId)).pipe(Effect.orDie),

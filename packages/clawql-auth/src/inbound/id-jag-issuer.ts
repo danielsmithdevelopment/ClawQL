@@ -18,7 +18,11 @@ import { randomBytes } from "node:crypto";
 import { Context, Data, Effect, Layer } from "effect";
 import { SignJWT, type JWK } from "jose";
 
-import { emitAuthEventEffect, noopAuthEventSink, type AuthEventSink } from "../audit/auth-events.js";
+import {
+  emitAuthEventEffect,
+  noopAuthEventSink,
+  type AuthEventSink,
+} from "../audit/auth-events.js";
 import { ID_JAG_ASSERTION_TYPE } from "./id-jag.js";
 import type { EmaConnectorRegistry } from "./ema-connector-registry.js";
 import type { McpOAuthSigningMaterial } from "./mcp-oauth-signing.js";
