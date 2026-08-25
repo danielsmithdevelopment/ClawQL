@@ -35,11 +35,13 @@
     "clawql-api": "7.2.0",
     "clawql-core": "7.2.0",
     "effect": "^3.21.4",
+    "sql.js": "^1.14.2",
     "yaml": "^2.9.0",
     "zod": "4.3.6"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
+    "@types/sql.js": "^1.4.11",
     "tsup": "^8.3.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.1"
