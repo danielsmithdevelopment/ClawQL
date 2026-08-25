@@ -88,8 +88,7 @@ function grantTypesForDiscovery(supported: McpGrantType[]): string[] {
 
 export function parseMcpOAuthTokenBody(body: TokenBody): McpTokenRequest {
   const grantType = (body.grant_type?.trim() || body.grantType?.trim()) as
-    | McpGrantTypeInput
-    | undefined;
+    McpGrantTypeInput | undefined;
   if (!grantType) {
     throw new Error("invalid_request: missing grant_type");
   }
@@ -154,12 +153,7 @@ export async function handleMcpOAuthAuthorizeRequest(
   try {
     claims = await resolveClaims(req);
   } catch (err) {
-    oauthError(
-      res,
-      401,
-      "invalid_client",
-      err instanceof Error ? err.message : "unauthorized"
-    );
+    oauthError(res, 401, "invalid_client", err instanceof Error ? err.message : "unauthorized");
     return;
   }
 
@@ -266,8 +260,7 @@ export function attachMcpOAuthRoutes(
       const issuer = options.wellKnown!.issuer.replace(/\/$/, "");
       const tokenEndpoint = `${origin}${tokenPath}`;
       const supported = server.getSupportedGrantTypes();
-      const authCodeEnabled =
-        supportsAuthCode && supported.includes("authorization_code");
+      const authCodeEnabled = supportsAuthCode && supported.includes("authorization_code");
 
       res.setHeader("Content-Type", "application/json; charset=utf-8");
       res.setHeader("Cache-Control", "public, max-age=300");

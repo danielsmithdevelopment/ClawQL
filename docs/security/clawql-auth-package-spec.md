@@ -202,11 +202,11 @@ Enterprise-Managed Authorization is the stable MCP extension for org-wide connec
 
 Grant types:
 
-| Grant                | Wire value                                                  | Status                          |
-| -------------------- | ----------------------------------------------------------- | ------------------------------- |
-| `client_credentials` | `client_credentials`                                        | Shipped                         |
-| `refresh_token`      | `refresh_token`                                             | Shipped                         |
-| `id_jag`             | `urn:ietf:params:oauth:grant-type:jwt-bearer` + `assertion` | **Shipped**                     |
+| Grant                | Wire value                                                  | Status                                                                       |
+| -------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `client_credentials` | `client_credentials`                                        | Shipped                                                                      |
+| `refresh_token`      | `refresh_token`                                             | Shipped                                                                      |
+| `id_jag`             | `urn:ietf:params:oauth:grant-type:jwt-bearer` + `assertion` | **Shipped**                                                                  |
 | `authorization_code` | `authorization_code`                                        | **Shipped** — PKCE S256; `/oauth/authorize` requires pre-resolved ATR claims |
 
 Admin configuration (`EmaConfigStore`):
@@ -255,13 +255,13 @@ Positioning: ClawQL can act as a **self-hosted, attestation-backed identity prov
 | **C — TEE signing** | `clawql-tee` hardening for key material                              | Open — protocol proven against org-controlled RS256; TEE is hardening, not a ship blocker |
 
 > > > > > > > bd1c1d42 (Correlate ID-JAG and MCP token WORM entries; document key separation)
-=======
-| Layer               | Scope                                                                | Status                                                                                          |
-| ------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish            | **Shipped** ([#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961))                 |
-| **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | **Shipped** ([#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961))                 |
-| **C — TEE signing** | `clawql-tee` hardening for key material                              | Open — protocol proven against org-controlled RS256; TEE is hardening, not a ship blocker       |
->>>>>>> 8e6a08ed (Add inbound MCP OAuth authorization_code + PKCE S256)
+> > > > > > > \=======
+> > > > > > > | Layer | Scope | Status |
+> > > > > > > | ------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+> > > > > > > | **A — Issuer** | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish | **Shipped** ([#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961)) |
+> > > > > > > | **B — Registry** | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`) | **Shipped** ([#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961)) |
+> > > > > > > | **C — TEE signing** | `clawql-tee` hardening for key material | Open — protocol proven against org-controlled RS256; TEE is hardening, not a ship blocker |
+> > > > > > > 8e6a08ed (Add inbound MCP OAuth authorization_code + PKCE S256)
 
 **Flow:** Admin `PUT /oauth/ema/connectors/:orgId/:connectorId` → service `POST /oauth/id-jag/issue` with subject + groups → consumer `verifyIdJagAssertionEffect` / `POST /oauth/token` (jwt-bearer) maps groups → ATR scope.
 
@@ -1085,15 +1085,15 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 
 ### Canonical §13 → repo status
 
-| Canonical phase               | Scope (from full spec)                                   | Repo status                                                                                        | Next priority                                                                                                                                                                                                |
-| ----------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **1 — Inbound core**          | API key validate/issue, MCP OAuth 2.1 AS, **EMA ID-JAG** | **Shipped** — library + **`server-http` HTTP wiring**; interactive auth-code + PKCE | **P0 done:** token endpoint; **P0 done:** persistent `EmaConfigStore`; **P1 done:** Okta JWKS preset; **P1 done:** auth WORM audit; **P1 done:** RS256 AS signing + JWKS; **P2 done:** interactive auth-code + PKCE; **follow-on:** `mcp-api-adapter` JWKS bearer |
-| **2 — Outbound OAuth core**   | Mutex token store, proactive refresh, client credentials | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                      | Maintain; no new work unless regressions                                                                                                                                                                     |
-| **3 — Auth Code + providers** | PKCE, Google/Microsoft/Slack                             | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`)                                           | Hermes user-delegated flows consume this                                                                                                                                                                     |
-| **4 — Team / org**            | Team model, domain TXT, offboarding                      | **Partial** — issued keys have org/team; domain TXT / wallet / passkey inbound modules not started | After Phase 1 completion                                                                                                                                                                                     |
-| **5 — Alt inbound**           | SIWE, TOTP, passkey as primary login                     | **Partial** — step-up TOTP/WebAuthn shipped; not primary inbound login surfaces                    | Phase 5 per canonical spec                                                                                                                                                                                   |
-| **6 — Vault dynamic secrets** | DB cred leases                                           | **Partial** — `SecretStore` plugins shipped; dynamic lease provider open                           | Enterprise TEE tier                                                                                                                                                                                          |
-| **7 — Re-auth UX**            | Hermes Telegram, reauth URLs                             | **Partial** — `ReauthRequiredError` + WORM events shipped; Telegram UX open                        | Production Hermes                                                                                                                                                                                            |
+| Canonical phase               | Scope (from full spec)                                   | Repo status                                                                                        | Next priority                                                                                                                                                                                                                                                     |
+| ----------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1 — Inbound core**          | API key validate/issue, MCP OAuth 2.1 AS, **EMA ID-JAG** | **Shipped** — library + **`server-http` HTTP wiring**; interactive auth-code + PKCE                | **P0 done:** token endpoint; **P0 done:** persistent `EmaConfigStore`; **P1 done:** Okta JWKS preset; **P1 done:** auth WORM audit; **P1 done:** RS256 AS signing + JWKS; **P2 done:** interactive auth-code + PKCE; **follow-on:** `mcp-api-adapter` JWKS bearer |
+| **2 — Outbound OAuth core**   | Mutex token store, proactive refresh, client credentials | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                      | Maintain; no new work unless regressions                                                                                                                                                                                                                          |
+| **3 — Auth Code + providers** | PKCE, Google/Microsoft/Slack                             | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`)                                           | Hermes user-delegated flows consume this                                                                                                                                                                                                                          |
+| **4 — Team / org**            | Team model, domain TXT, offboarding                      | **Partial** — issued keys have org/team; domain TXT / wallet / passkey inbound modules not started | After Phase 1 completion                                                                                                                                                                                                                                          |
+| **5 — Alt inbound**           | SIWE, TOTP, passkey as primary login                     | **Partial** — step-up TOTP/WebAuthn shipped; not primary inbound login surfaces                    | Phase 5 per canonical spec                                                                                                                                                                                                                                        |
+| **6 — Vault dynamic secrets** | DB cred leases                                           | **Partial** — `SecretStore` plugins shipped; dynamic lease provider open                           | Enterprise TEE tier                                                                                                                                                                                                                                               |
+| **7 — Re-auth UX**            | Hermes Telegram, reauth URLs                             | **Partial** — `ReauthRequiredError` + WORM events shipped; Telegram UX open                        | Production Hermes                                                                                                                                                                                                                                                 |
 
 ### Phase 1 inbound — remaining work (ordered)
 
@@ -1106,11 +1106,11 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 
 ### Three inbound paths (do not conflate)
 
-| Path                                        | When                                                               | Token source                      | Shipped                                          |
-| ------------------------------------------- | ------------------------------------------------------------------ | --------------------------------- | ------------------------------------------------ |
-| **OIDC consumer** (`CLAWQL_AUTH_MODE=oidc`) | Enterprise puts IdP JWT on every MCP request                       | Customer IdP                      | Yes — `oidc.ts`                                  |
+| Path                                        | When                                                               | Token source                      | Shipped                                                               |
+| ------------------------------------------- | ------------------------------------------------------------------ | --------------------------------- | --------------------------------------------------------------------- |
+| **OIDC consumer** (`CLAWQL_AUTH_MODE=oidc`) | Enterprise puts IdP JWT on every MCP request                       | Customer IdP                      | Yes — `oidc.ts`                                                       |
 | **MCP OAuth AS** (`MCPOAuthServer`)         | MCP clients obtain ClawQL-issued bearer                            | ClawQL signs JWT with `atr`       | Yes — library + **`server-http` `/oauth/token` + `/oauth/authorize`** |
-| **EMA ID-JAG** (grant on MCP AS)            | Org admin pre-authorizes connector at IdP; zero-touch user inherit | IdP assertion → ClawQL access JWT | Yes — `id-jag.ts` + token endpoint               |
+| **EMA ID-JAG** (grant on MCP AS)            | Org admin pre-authorizes connector at IdP; zero-touch user inherit | IdP assertion → ClawQL access JWT | Yes — `id-jag.ts` + token endpoint                                    |
 
 All three produce **`AtrClaims`** for the same Panguard enforcement path. EMA does not replace OIDC consumer mode — it replaces per-user OAuth consent on the **issuance** side for MCP connectors.
 
