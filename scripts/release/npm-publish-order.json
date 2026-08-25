@@ -4,8 +4,8 @@
     "clawql-merkle",
     "clawql-core",
     "clawql-audit",
-    "clawql-agents",
     "clawql-auth",
+    "clawql-agents",
     "clawql-pageindex",
     "clawql-codegraph",
     "clawql-api",
@@ -20,6 +20,7 @@
     "clawql-payments",
     "clawql-inference",
     "clawql-ouroboros",
+    "clawql-harness",
     "clawql-operator",
     "clawql-mcp"
   ],
@@ -36,6 +37,7 @@
     "clawql-ontology has no clawql-* deps (ajv/yaml only) — safe early in the order.",
     "clawql-web before clawql-documents (documents depends on web for IDP URL fetch).",
     "clawql-payments before clawql-inference (inference depends on payments for entitlements/credits).",
+    "clawql-harness after clawql-ouroboros (Ouroboros harness plugin imports convergence patterns).",
     "npm publish replaces workspace:* with concrete versions in published package.json.",
     "Monorepo dev uses matching 7.2.0 semver; npm workspaces link packages locally."
   ]
