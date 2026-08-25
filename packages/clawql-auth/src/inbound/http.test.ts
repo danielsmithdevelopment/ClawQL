@@ -3,8 +3,14 @@ import { Effect } from "effect";
 import { SignJWT, exportPKCS8, generateKeyPair } from "jose";
 import { describe, expect, it } from "vitest";
 
+import { generateCodeChallenge, generateCodeVerifier } from "../oauth/auth-code.js";
 import { ID_JAG_ASSERTION_TYPE } from "./id-jag.js";
-import { attachMcpOAuthRoutes, parseMcpOAuthTokenBody, MCP_OAUTH_TOKEN_PATH } from "./http.js";
+import {
+  attachMcpOAuthRoutes,
+  parseMcpOAuthTokenBody,
+  MCP_OAUTH_AUTHORIZE_PATH,
+  MCP_OAUTH_TOKEN_PATH,
+} from "./http.js";
 import { createMcpOAuthForTests } from "./mcp-oauth-env.js";
 import { loadMcpOAuthSigningMaterialEffect } from "./mcp-oauth-signing.js";
 
@@ -13,16 +19,30 @@ async function withTestApp(
     baseUrl: string,
     runtime: Awaited<ReturnType<typeof createMcpOAuthForTests>>
   ) => Promise<void>,
-  options?: { adminApiKey?: string }
+  options?: {
+    adminApiKey?: string;
+    resolveAuthorizeClaims?: true;
+    redirectUri?: string;
+  }
 ): Promise<void> {
   const idpSecret = "test-idp-hs256-secret-at-least-32-chars!!";
   const signingSecret = "test-mcp-oauth-signing-secret-32b!!";
   const audience = "https://mcp.clawql.test/";
+  const redirectUri = options?.redirectUri ?? "http://127.0.0.1:9999/callback";
 
   const runtime = await createMcpOAuthForTests({
     issuer: "https://auth.clawql.test",
     signingSecret,
     resourceAudience: audience,
+    clients: [
+      {
+        clientId: "cursor-desktop",
+        defaultScope: ["execute", "search"],
+        defaultRole: "operator",
+        orgId: "acme",
+        redirectUris: [redirectUri],
+      },
+    ],
   });
 
   await runtime.emaStore.saveOrgConfig({
@@ -39,6 +59,14 @@ async function withTestApp(
   app.use("/oauth/ema", express.json());
   attachMcpOAuthRoutes(app, runtime.server, {
     wellKnown: { issuer: runtime.config.issuer, resourceAudience: audience },
+    resolveAuthorizeClaims: options?.resolveAuthorizeClaims
+      ? async () => ({
+          sub: "alice@acme.test",
+          role: "operator",
+          scope: ["execute", "search", "memory"],
+          orgId: "acme",
+        })
+      : undefined,
     emaAdmin: options?.adminApiKey
       ? { store: runtime.emaStore, adminApiKey: options.adminApiKey }
       : undefined,
@@ -66,6 +94,20 @@ describe("attachMcpOAuthRoutes", () => {
     expect(req.grantType).toBe("urn:ietf:params:oauth:grant-type:jwt-bearer");
     expect(req.assertion).toBe("jwt-here");
     expect(req.orgId).toBe("acme");
+  });
+
+  it("parses authorization_code token bodies", () => {
+    const req = parseMcpOAuthTokenBody({
+      grant_type: "authorization_code",
+      client_id: "cursor-desktop",
+      code: "mca_abc",
+      code_verifier: "verifier",
+      redirect_uri: "http://127.0.0.1:9999/callback",
+    });
+    expect(req.grantType).toBe("authorization_code");
+    expect(req.code).toBe("mca_abc");
+    expect(req.codeVerifier).toBe("verifier");
+    expect(req.redirectUri).toBe("http://127.0.0.1:9999/callback");
   });
 
   it("POST /oauth/token exchanges ID-JAG assertions", async () => {
@@ -109,10 +151,67 @@ describe("attachMcpOAuthRoutes", () => {
       const body = (await res.json()) as {
         token_endpoint: string;
         grant_types_supported: string[];
+        authorization_endpoint?: string;
       };
       expect(body.token_endpoint).toContain("/oauth/token");
       expect(body.grant_types_supported).toContain("urn:ietf:params:oauth:grant-type:jwt-bearer");
+      expect(body.grant_types_supported).toContain("authorization_code");
+      expect(body.authorization_endpoint).toBeUndefined();
     });
+  });
+
+  it("authorize → token PKCE round-trip redirects and mints ATR JWT", async () => {
+    const redirectUri = "http://127.0.0.1:9999/callback";
+    await withTestApp(
+      async (baseUrl, runtime) => {
+        const discovery = await fetch(`${baseUrl}/.well-known/oauth-authorization-server`);
+        const meta = (await discovery.json()) as {
+          authorization_endpoint: string;
+          code_challenge_methods_supported: string[];
+        };
+        expect(meta.authorization_endpoint).toContain(MCP_OAUTH_AUTHORIZE_PATH);
+        expect(meta.code_challenge_methods_supported).toEqual(["S256"]);
+
+        const verifier = generateCodeVerifier();
+        const challenge = generateCodeChallenge(verifier);
+        const authorizeUrl = new URL(`${baseUrl}${MCP_OAUTH_AUTHORIZE_PATH}`);
+        authorizeUrl.searchParams.set("client_id", "cursor-desktop");
+        authorizeUrl.searchParams.set("redirect_uri", redirectUri);
+        authorizeUrl.searchParams.set("response_type", "code");
+        authorizeUrl.searchParams.set("code_challenge", challenge);
+        authorizeUrl.searchParams.set("code_challenge_method", "S256");
+        authorizeUrl.searchParams.set("scope", "execute");
+        authorizeUrl.searchParams.set("state", "s1");
+
+        const authRes = await fetch(authorizeUrl, { redirect: "manual" });
+        expect(authRes.status).toBe(302);
+        const location = authRes.headers.get("location");
+        expect(location).toBeTruthy();
+        const redirected = new URL(location!);
+        expect(redirected.origin + redirected.pathname).toBe(redirectUri);
+        const code = redirected.searchParams.get("code");
+        expect(code).toMatch(/^mca_/);
+        expect(redirected.searchParams.get("state")).toBe("s1");
+
+        const tokenRes = await fetch(`${baseUrl}${MCP_OAUTH_TOKEN_PATH}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            grant_type: "authorization_code",
+            client_id: "cursor-desktop",
+            code: code!,
+            code_verifier: verifier,
+            redirect_uri: redirectUri,
+          }),
+        });
+        expect(tokenRes.status).toBe(200);
+        const tokenBody = (await tokenRes.json()) as { access_token: string; scope: string };
+        const claims = await runtime.validateBearer(tokenBody.access_token);
+        expect(claims.sub).toBe("alice@acme.test");
+        expect(claims.scope).toEqual(["execute"]);
+      },
+      { resolveAuthorizeClaims: true, redirectUri }
+    );
   });
 
   it("PUT /oauth/ema/orgs/:orgId persists org config when admin key matches", async () => {

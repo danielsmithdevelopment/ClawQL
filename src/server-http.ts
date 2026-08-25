@@ -253,6 +253,13 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     });
   }
 
+  /**
+   * Gateway auth: `noAuth` | `apiKey` (static + inference VKs) | `oidc` (JWT consumer)
+   * | `mcpOAuth` (ClawQL-issued MCP JWT). When MCP OAuth is enabled, Bearer tokens
+   * from `/oauth/token` are also accepted in hybrid mode alongside apiKey/oidc.
+   */
+  const gatewayAuthConfig = buildGatewayAuthConfig(process.env, mcpOAuthRuntime?.validateBearer);
+
   if (mcpOAuthRuntime || idJagIssuer) {
     if (mcpOAuthRuntime) {
       warnIfMcpOAuthAuditDisabled(process.env);
@@ -265,6 +272,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           }
         : undefined,
       jwks: mcpOAuthRuntime?.jwks,
+      resolveAuthorizeClaims: mcpOAuthRuntime
+        ? async (req) =>
+            Effect.runPromise(resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig))
+        : undefined,
       emaAdmin:
         mcpOAuthRuntime && process.env.CLAWQL_API_KEY?.trim()
           ? {
@@ -286,12 +297,6 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   attachPaymentsWellKnownRoutes(app, { serverName: "ClawQL MCP" });
   // HTMX forms on /credits/* (invite claim / accept / decline)
   app.use("/credits", express.urlencoded({ extended: false }));
-  /**
-   * Gateway auth: `noAuth` | `apiKey` (static + inference VKs) | `oidc` (JWT consumer)
-   * | `mcpOAuth` (ClawQL-issued MCP JWT). When MCP OAuth is enabled, Bearer tokens
-   * from `/oauth/token` are also accepted in hybrid mode alongside apiKey/oidc.
-   */
-  const gatewayAuthConfig = buildGatewayAuthConfig(process.env, mcpOAuthRuntime?.validateBearer);
   attachCreditsHateoasRoutes(app, { authConfig: gatewayAuthConfig });
   if (isMppOpenApiEnabled(process.env)) {
     attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });

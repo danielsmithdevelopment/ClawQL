@@ -6,6 +6,8 @@ export {
   ID_JAG_JWT_BEARER_GRANT,
   MCPOAuthServer,
   type MCPOAuthConfig,
+  type McpAuthorizeRequest,
+  type McpAuthorizeResult,
   type McpClientRegistry,
   type McpGrantType,
   type McpGrantTypeInput,
@@ -14,6 +16,13 @@ export {
   type McpTokenRequest,
   type McpTokenResponse,
 } from "./mcp-oauth.js";
+export {
+  MCP_OAUTH_AUTH_CODE_PREFIX,
+  createMemoryMcpAuthorizationCodeStore,
+  createSecretStoreMcpAuthorizationCodeStore,
+  type McpAuthorizationCodeRecord,
+  type McpAuthorizationCodeStore,
+} from "./mcp-auth-code-store.js";
 export {
   ID_JAG_ASSERTION_TYPE,
   IdJagAuthError,
@@ -85,9 +94,11 @@ export {
 } from "./ema-connector-registry.js";
 export {
   attachMcpOAuthRoutes,
+  handleMcpOAuthAuthorizeRequest,
   handleMcpOAuthTokenRequest,
   ID_JAG_ISSUE_PATH,
   ID_JAG_ISSUER_JWKS_PATH,
+  MCP_OAUTH_AUTHORIZE_PATH,
   MCP_OAUTH_TOKEN_PATH,
   parseMcpOAuthTokenBody,
   type AttachMcpOAuthRoutesOptions,

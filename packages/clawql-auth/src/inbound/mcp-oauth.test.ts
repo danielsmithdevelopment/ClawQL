@@ -303,4 +303,119 @@ describe("MCPOAuthServer", () => {
     expect(claims.scope).toEqual(["execute"]);
     expect(rsServer.getJwks().keys).toHaveLength(1);
   });
+
+  it("issues authorization_code tokens via PKCE S256", async () => {
+    const { generateCodeChallenge, generateCodeVerifier } = await import("../oauth/auth-code.js");
+    const { createMemoryMcpAuthorizationCodeStore } = await import("./mcp-auth-code-store.js");
+
+    const events: AuthEvent[] = [];
+    const redirectUri = "http://127.0.0.1:9999/callback";
+    const clients = createMemoryMcpClientRegistry([
+      {
+        clientId: "cursor-desktop",
+        defaultScope: ["execute", "search"],
+        defaultRole: "operator",
+        orgId: "acme",
+        redirectUris: [redirectUri],
+      },
+    ]);
+    const server = createMCPOAuthServer(
+      {
+        issuer: "https://auth.clawql.test",
+        signingSecret: secret,
+        authCodeStore: createMemoryMcpAuthorizationCodeStore(),
+        eventSink: (e) => {
+          events.push(e);
+        },
+      },
+      clients,
+      createMemoryMcpRefreshStore()
+    );
+
+    expect(server.getSupportedGrantTypes()).toContain("authorization_code");
+
+    const verifier = generateCodeVerifier();
+    const challenge = generateCodeChallenge(verifier);
+    const authorized = await server.createAuthorizationCode({
+      clientId: "cursor-desktop",
+      redirectUri,
+      codeChallenge: challenge,
+      scope: ["execute"],
+      state: "xyz",
+      claims: {
+        sub: "alice@acme.test",
+        role: "operator",
+        scope: ["execute", "search", "memory"],
+        orgId: "acme",
+      },
+    });
+
+    expect(authorized.code).toMatch(/^mca_/);
+    expect(authorized.redirectUrl).toContain(`code=${authorized.code}`);
+    expect(authorized.redirectUrl).toContain("state=xyz");
+
+    const token = await server.issueToken({
+      grantType: "authorization_code",
+      clientId: "cursor-desktop",
+      code: authorized.code,
+      codeVerifier: verifier,
+      redirectUri,
+    });
+
+    const claims = await server.validateToken(token.access_token);
+    expect(claims.sub).toBe("alice@acme.test");
+    expect(claims.scope).toEqual(["execute"]);
+    expect(token.refresh_token).toMatch(/^mcr_/);
+    expect(events.some((e) => e.type === "MCP_TOKEN_ISSUED")).toBe(true);
+
+    await expect(
+      server.issueToken({
+        grantType: "authorization_code",
+        clientId: "cursor-desktop",
+        code: authorized.code,
+        codeVerifier: verifier,
+        redirectUri,
+      })
+    ).rejects.toThrow(/invalid_grant/);
+  });
+
+  it("rejects authorization_code with bad PKCE verifier", async () => {
+    const { generateCodeChallenge, generateCodeVerifier } = await import("../oauth/auth-code.js");
+    const { createMemoryMcpAuthorizationCodeStore } = await import("./mcp-auth-code-store.js");
+
+    const redirectUri = "http://127.0.0.1:9999/callback";
+    const server = createMCPOAuthServer(
+      {
+        issuer: "https://auth.clawql.test",
+        signingSecret: secret,
+        authCodeStore: createMemoryMcpAuthorizationCodeStore(),
+      },
+      createMemoryMcpClientRegistry([
+        {
+          clientId: "cursor-desktop",
+          defaultScope: ["execute"],
+          redirectUris: [redirectUri],
+        },
+      ]),
+      createMemoryMcpRefreshStore()
+    );
+
+    const verifier = generateCodeVerifier();
+    const authorized = await server.createAuthorizationCode({
+      clientId: "cursor-desktop",
+      redirectUri,
+      codeChallenge: generateCodeChallenge(verifier),
+      claims: { sub: "bob", role: "operator", scope: ["execute"] },
+    });
+
+    await expect(
+      server.issueToken({
+        grantType: "authorization_code",
+        clientId: "cursor-desktop",
+        code: authorized.code,
+        codeVerifier: generateCodeVerifier(),
+        redirectUri,
+      })
+    ).rejects.toThrow(/pkce_failed/);
+  });
 });

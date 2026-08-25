@@ -32,6 +32,10 @@ import {
   type SecretStoreMcpClientRegistry,
 } from "./mcp-oauth-stores.js";
 import {
+  createSecretStoreMcpAuthorizationCodeStore,
+  createMemoryMcpAuthorizationCodeStore,
+} from "./mcp-auth-code-store.js";
+import {
   createMCPOAuthServer,
   createMemoryMcpClientRegistry,
   createMemoryMcpRefreshStore,
@@ -193,6 +197,8 @@ export async function createMcpOAuthFromEnv(
 
   const eventSink = options.eventSink ?? createAuthEventSinkFromEnv(env);
 
+  const authCodeStore = createSecretStoreMcpAuthorizationCodeStore(secretStore);
+
   const config: MCPOAuthConfig = {
     issuer,
     signing: signing,
@@ -200,6 +206,7 @@ export async function createMcpOAuthFromEnv(
     tokenTtlSeconds: envConfig.tokenTtlSeconds,
     refreshTokenTtlSeconds: envConfig.refreshTokenTtlSeconds,
     emaConfigStore,
+    authCodeStore,
     eventSink,
   };
 
@@ -247,6 +254,7 @@ export async function createMcpOAuthForTests(input: {
     signing: input.signing,
     resourceAudience: input.resourceAudience,
     emaConfigStore: emaStore,
+    authCodeStore: createMemoryMcpAuthorizationCodeStore(),
     eventSink: input.eventSink,
   };
   const server = createMCPOAuthServer(

@@ -110,8 +110,9 @@ Also shipped: **`ClientCredentialsFlow`**, **`AuthorizationCodeFlow` (PKCE)**, p
 
 When `CLAWQL_MCP_OAUTH_ENABLED=1`, `server-http` exposes:
 
-- `POST /oauth/token` — `client_credentials`, `refresh_token`, and ID-JAG (`urn:ietf:params:oauth:grant-type:jwt-bearer`)
-- `GET /.well-known/oauth-authorization-server` — discovery with `token_endpoint`
+- `POST /oauth/token` — `client_credentials`, `refresh_token`, `authorization_code` (+ PKCE S256), and ID-JAG (`urn:ietf:params:oauth:grant-type:jwt-bearer`)
+- `GET /oauth/authorize` — interactive auth-code start (requires already-authenticated gateway identity: API key / OIDC / MCP JWT). ClawQL is **not** a login IdP.
+- `GET /.well-known/oauth-authorization-server` — discovery with `token_endpoint` (+ `authorization_endpoint` / `code_challenge_methods_supported` when auth-code is live)
 - `PUT/GET/DELETE /oauth/ema/orgs/:orgId` — admin API (requires `CLAWQL_API_KEY`)
 
 EMA org config (IdP JWKS + group→scope mappings) persists in **SecretStore** (`ema-orgs/{orgId}`). Bootstrap from `CLAWQL_EMA_ORGS_JSON` or `CLAWQL_EMA_ORGS_PATH`. Every successful token issue appends **`MCP_TOKEN_ISSUED`** to a hash-chained auth WORM log (SQLite by default via `createAuthEventSinkFromEnv`).
@@ -188,7 +189,7 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 
 Setting `CLAWQL_AUTH_AUDIT_STORE=off` while MCP OAuth is enabled logs a **SECURITY WARNING** at `server-http` boot — auth is live but issuance is not persisted.
 
-Setting `CLAWQL_AUTH_AUDIT_STORE=off` while MCP OAuth is enabled logs a **SECURITY WARNING** at `server-http` boot — auth is live but issuance is not persisted.
+Registered MCP clients may include `redirectUris` for the interactive `authorization_code` path. Bootstrap via `CLAWQL_MCP_OAUTH_CLIENTS_JSON` / `_PATH`.
 
 ## Per-org IdP routing (multi-tenant)
 

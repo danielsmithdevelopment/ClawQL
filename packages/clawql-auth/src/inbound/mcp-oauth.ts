@@ -15,7 +15,9 @@ import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 
 import { emitAuthEvent, noopAuthEventSink, type AuthEventSink } from "../audit/auth-events.js";
 import type { AtrClaims } from "../gateway.js";
+import { generateCodeChallenge } from "../oauth/auth-code.js";
 import type { McpOAuthSigningMaterial } from "./mcp-oauth-signing.js";
+import type { McpAuthorizationCodeStore } from "./mcp-auth-code-store.js";
 import {
   ID_JAG_JWT_BEARER_GRANT,
   IdJagAuthError,
@@ -50,6 +52,10 @@ export type MCPOAuthConfig = {
   resourceAudience?: string;
   /** Org-level EMA config (IdP JWKS, group→scope mappings). Required for `id_jag`. */
   emaConfigStore?: EmaConfigStore;
+  /** One-time auth codes for `authorization_code` + PKCE (non-EMA interactive path). */
+  authCodeStore?: McpAuthorizationCodeStore;
+  /** Auth code TTL seconds (default 300). */
+  authCodeTtlSeconds?: number;
 };
 
 export type McpRegisteredClient = {
@@ -61,11 +67,13 @@ export type McpRegisteredClient = {
   defaultRole?: string;
   orgId?: string;
   teamId?: string;
+  /** Allowed redirect URIs for `authorization_code` (exact match). */
+  redirectUris?: string[];
 };
 
 export type McpTokenRequest = {
   grantType: McpGrantTypeInput;
-  /** Required for client_credentials / refresh_token; optional for id_jag. */
+  /** Required for client_credentials / refresh_token / authorization_code; optional for id_jag. */
   clientId?: string;
   clientSecret?: string;
   scope?: string[];
@@ -74,6 +82,31 @@ export type McpTokenRequest = {
   assertion?: string;
   /** Org id for EMA group→scope lookup (falls back to assertion claim). */
   orgId?: string;
+  /** Authorization code from `/oauth/authorize`. */
+  code?: string;
+  /** PKCE code_verifier pairing the authorize `code_challenge`. */
+  codeVerifier?: string;
+  /** Must match the redirect_uri used at authorize time. */
+  redirectUri?: string;
+};
+
+export type McpAuthorizeRequest = {
+  clientId: string;
+  redirectUri: string;
+  codeChallenge: string;
+  codeChallengeMethod?: "S256";
+  scope?: string[];
+  state?: string;
+  /** ATR claims already resolved from the human/session (API key / OIDC / MCP JWT). */
+  claims: AtrClaims;
+};
+
+export type McpAuthorizeResult = {
+  code: string;
+  redirectUri: string;
+  state?: string;
+  /** Full redirect URL including code (+ state when present). */
+  redirectUrl: string;
 };
 
 export type McpTokenResponse = {
@@ -119,11 +152,13 @@ function normalizeGrantType(grantType: McpGrantTypeInput): McpGrantType {
 export class MCPOAuthServer {
   private readonly tokenTtlSeconds: number;
   private readonly refreshTokenTtlSeconds: number;
+  private readonly authCodeTtlSeconds: number;
   private readonly allowedGrantTypes: Set<McpGrantType>;
   private readonly eventSink: AuthEventSink;
   private readonly now: () => number;
   private readonly signing: McpOAuthSigningMaterial;
   private readonly emaConfigStore?: EmaConfigStore;
+  private readonly authCodeStore?: McpAuthorizationCodeStore;
 
   constructor(
     private readonly config: MCPOAuthConfig,
@@ -132,18 +167,25 @@ export class MCPOAuthServer {
   ) {
     this.tokenTtlSeconds = config.tokenTtlSeconds ?? 300;
     this.refreshTokenTtlSeconds = config.refreshTokenTtlSeconds ?? 3600;
-    this.allowedGrantTypes = new Set(
-      config.allowedGrantTypes ?? ["client_credentials", "refresh_token", "id_jag"]
-    );
+    this.authCodeTtlSeconds = config.authCodeTtlSeconds ?? 300;
+    const defaults: McpGrantType[] = ["client_credentials", "refresh_token", "id_jag"];
+    if (config.authCodeStore) defaults.push("authorization_code");
+    this.allowedGrantTypes = new Set(config.allowedGrantTypes ?? defaults);
     this.eventSink = config.eventSink ?? noopAuthEventSink;
     this.now = config.now ?? Date.now;
     this.signing = resolveSigningMaterial(config);
     this.emaConfigStore = config.emaConfigStore;
+    this.authCodeStore = config.authCodeStore;
   }
 
   /** JWKS for RS256 verification (empty for HS256). */
   getJwks(): McpOAuthSigningMaterial["jwks"] {
     return this.signing.jwks;
+  }
+
+  /** Grant types this AS will accept (includes `authorization_code` when a code store is wired). */
+  getSupportedGrantTypes(): McpGrantType[] {
+    return [...this.allowedGrantTypes];
   }
 
   async issueToken(request: McpTokenRequest): Promise<McpTokenResponse> {
@@ -164,7 +206,129 @@ export class MCPOAuthServer {
       return this.exchangeIdJag(request);
     }
 
-    throw new Error("authorization_code grant requires the interactive auth-code path");
+    if (grantType === "authorization_code") {
+      return this.exchangeAuthorizationCode(request);
+    }
+
+    throw new Error("unsupported_grant_type");
+  }
+
+  /**
+   * Start interactive `authorization_code` (PKCE S256).
+   * ClawQL is not a login IdP — caller must already supply ATR claims from API key / OIDC / MCP JWT.
+   */
+  async createAuthorizationCode(request: McpAuthorizeRequest): Promise<McpAuthorizeResult> {
+    if (!this.authCodeStore) {
+      throw new Error("invalid_request: authorization_code_not_configured");
+    }
+    if (!this.allowedGrantTypes.has("authorization_code")) {
+      throw new Error("unsupported_grant_type: authorization_code");
+    }
+
+    const clientId = request.clientId?.trim();
+    const redirectUri = request.redirectUri?.trim();
+    const codeChallenge = request.codeChallenge?.trim();
+    if (!clientId) throw new Error("invalid_request: missing client_id");
+    if (!redirectUri) throw new Error("invalid_request: missing redirect_uri");
+    if (!codeChallenge) throw new Error("invalid_request: missing code_challenge");
+    if (request.codeChallengeMethod && request.codeChallengeMethod !== "S256") {
+      throw new Error("invalid_request: code_challenge_method_must_be_S256");
+    }
+    if (!request.claims?.sub) throw new Error("invalid_request: missing_subject_claims");
+
+    const client = await this.clients.getClient(clientId);
+    if (!client) throw new Error("invalid_client");
+    const allowed = client.redirectUris ?? [];
+    if (allowed.length === 0 || !allowed.includes(redirectUri)) {
+      throw new Error("invalid_request: redirect_uri_not_registered");
+    }
+
+    const scope =
+      request.scope?.length && request.scope.length > 0
+        ? intersectScopes(
+            request.claims.scope?.length ? request.claims.scope : client.defaultScope,
+            request.scope
+          )
+        : request.claims.scope?.length
+          ? request.claims.scope
+          : client.defaultScope;
+    if (scope.length === 0) throw new Error("invalid_scope");
+
+    const code = `mca_${randomBytes(24).toString("base64url")}`;
+    const codeHash = hashRefreshToken(code);
+    const nowMs = this.now();
+    await this.authCodeStore.save(codeHash, {
+      clientId,
+      redirectUri,
+      codeChallenge,
+      codeChallengeMethod: "S256",
+      scope,
+      claims: { ...request.claims, scope },
+      expiresAtMs: nowMs + this.authCodeTtlSeconds * 1000,
+      createdAtMs: nowMs,
+    });
+
+    const redirect = new URL(redirectUri);
+    redirect.searchParams.set("code", code);
+    if (request.state?.trim()) redirect.searchParams.set("state", request.state.trim());
+
+    return {
+      code,
+      redirectUri,
+      state: request.state?.trim() || undefined,
+      redirectUrl: redirect.toString(),
+    };
+  }
+
+  private async exchangeAuthorizationCode(request: McpTokenRequest): Promise<McpTokenResponse> {
+    if (!this.authCodeStore) {
+      throw new Error("invalid_request: authorization_code_not_configured");
+    }
+    if (!request.clientId?.trim()) throw new Error("invalid_client");
+    if (!request.code?.trim()) throw new Error("invalid_request: missing code");
+    if (!request.codeVerifier?.trim()) throw new Error("invalid_request: missing code_verifier");
+    if (!request.redirectUri?.trim()) throw new Error("invalid_request: missing redirect_uri");
+
+    const client = await this.clients.getClient(request.clientId.trim());
+    if (!client) throw new Error("invalid_client");
+    if (client.clientSecretHash) {
+      if (!request.clientSecret || !client.salt) throw new Error("invalid_client");
+      const hash = hashSecret(client.salt, request.clientSecret);
+      if (hash !== client.clientSecretHash) throw new Error("invalid_client");
+    }
+
+    const codeHash = hashRefreshToken(request.code.trim());
+    const stored = await this.authCodeStore.consume(codeHash);
+    if (!stored || stored.expiresAtMs <= this.now()) {
+      throw new Error("invalid_grant: code_expired_or_missing");
+    }
+    if (stored.clientId !== request.clientId.trim()) {
+      throw new Error("invalid_grant: client_mismatch");
+    }
+    if (stored.redirectUri !== request.redirectUri.trim()) {
+      throw new Error("invalid_grant: redirect_uri_mismatch");
+    }
+
+    const challenge = generateCodeChallenge(request.codeVerifier.trim());
+    if (challenge !== stored.codeChallenge) {
+      throw new Error("invalid_grant: pkce_failed");
+    }
+
+    const scope = request.scope?.length
+      ? intersectScopes(stored.scope, request.scope)
+      : stored.scope;
+    if (scope.length === 0) throw new Error("invalid_scope");
+
+    const claims: AtrClaims = { ...stored.claims, scope };
+    return this.mintTokens(request.clientId.trim(), claims, scope, {
+      grantType: "authorization_code",
+      includeRefresh: true,
+      audit: {
+        subjectId: claims.sub,
+        orgId: claims.orgId,
+        role: claims.role,
+      },
+    });
   }
 
   /**

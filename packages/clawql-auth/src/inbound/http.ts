@@ -4,19 +4,34 @@
 
 import type { Express, Request, Response } from "express";
 
+import type { AtrClaims } from "../gateway.js";
 import { ID_JAG_JWT_BEARER_GRANT } from "./id-jag.js";
-import type { MCPOAuthServer, McpGrantTypeInput, McpTokenRequest } from "./mcp-oauth.js";
+import type {
+  MCPOAuthServer,
+  McpGrantType,
+  McpGrantTypeInput,
+  McpTokenRequest,
+} from "./mcp-oauth.js";
 import type { SecretStoreEmaConfigStore } from "./ema-config-store.js";
 import type { EmaConnectorRegistry } from "./ema-connector-registry.js";
 import type { IdJagIssuerService } from "./id-jag-issuer.js";
 import { Effect } from "effect";
 
 export const MCP_OAUTH_TOKEN_PATH = "/oauth/token";
+export const MCP_OAUTH_AUTHORIZE_PATH = "/oauth/authorize";
 export const ID_JAG_ISSUER_JWKS_PATH = "/.well-known/id-jag-jwks.json";
 export const ID_JAG_ISSUE_PATH = "/oauth/id-jag/issue";
 
 export type AttachMcpOAuthRoutesOptions = {
   tokenPath?: string;
+  authorizePath?: string;
+  /**
+   * Resolve ATR claims for `GET /oauth/authorize`.
+   * ClawQL is not a login IdP — the caller must already be authenticated
+   * (API key / OIDC / MCP JWT). When set and the AS supports `authorization_code`,
+   * the authorize endpoint and discovery metadata are enabled.
+   */
+  resolveAuthorizeClaims?: (req: Request) => Promise<AtrClaims>;
   /** When set, enables GET/PUT admin routes for EMA org config. */
   emaAdmin?: {
     store: SecretStoreEmaConfigStore;
@@ -60,9 +75,21 @@ function parseScope(raw: string | undefined): string[] | undefined {
     .filter(Boolean);
 }
 
+function queryParam(req: Request, name: string): string | undefined {
+  const raw = req.query[name];
+  if (typeof raw === "string") return raw.trim() || undefined;
+  if (Array.isArray(raw) && typeof raw[0] === "string") return raw[0].trim() || undefined;
+  return undefined;
+}
+
+function grantTypesForDiscovery(supported: McpGrantType[]): string[] {
+  return supported.map((g) => (g === "id_jag" ? ID_JAG_JWT_BEARER_GRANT : g));
+}
+
 export function parseMcpOAuthTokenBody(body: TokenBody): McpTokenRequest {
   const grantType = (body.grant_type?.trim() || body.grantType?.trim()) as
-    McpGrantTypeInput | undefined;
+    | McpGrantTypeInput
+    | undefined;
   if (!grantType) {
     throw new Error("invalid_request: missing grant_type");
   }
@@ -75,6 +102,9 @@ export function parseMcpOAuthTokenBody(body: TokenBody): McpTokenRequest {
     assertion: body.assertion?.trim(),
     orgId: body.org_id?.trim() || body.orgId?.trim(),
     scope: parseScope(body.scope),
+    code: body.code?.trim(),
+    codeVerifier: body.code_verifier?.trim() || body.codeVerifier?.trim(),
+    redirectUri: body.redirect_uri?.trim() || body.redirectUri?.trim(),
   };
 }
 
@@ -88,9 +118,6 @@ function mapIssueTokenError(err: unknown): { status: number; error: string; desc
   if (code === "invalid_grant") return { status: 400, error: code, description };
   if (code === "invalid_scope") return { status: 400, error: code, description };
   if (code === "invalid_request") return { status: 400, error: code, description };
-  if (message.includes("authorization_code")) {
-    return { status: 501, error: "unsupported_grant_type", description: message };
-  }
   return { status: 500, error: "server_error", description: message };
 }
 
@@ -111,6 +138,54 @@ export async function handleMcpOAuthTokenRequest(
   try {
     const token = await server.issueToken(request);
     res.status(200).json(token);
+  } catch (err) {
+    const mapped = mapIssueTokenError(err);
+    oauthError(res, mapped.status, mapped.error, mapped.description);
+  }
+}
+
+export async function handleMcpOAuthAuthorizeRequest(
+  server: MCPOAuthServer,
+  req: Request,
+  res: Response,
+  resolveClaims: (req: Request) => Promise<AtrClaims>
+): Promise<void> {
+  let claims: AtrClaims;
+  try {
+    claims = await resolveClaims(req);
+  } catch (err) {
+    oauthError(
+      res,
+      401,
+      "invalid_client",
+      err instanceof Error ? err.message : "unauthorized"
+    );
+    return;
+  }
+
+  const clientId = queryParam(req, "client_id");
+  const redirectUri = queryParam(req, "redirect_uri");
+  const codeChallenge = queryParam(req, "code_challenge");
+  const codeChallengeMethod = queryParam(req, "code_challenge_method") ?? "S256";
+  const state = queryParam(req, "state");
+  const scope = parseScope(queryParam(req, "scope"));
+
+  if (codeChallengeMethod !== "S256") {
+    oauthError(res, 400, "invalid_request", "code_challenge_method_must_be_S256");
+    return;
+  }
+
+  try {
+    const result = await server.createAuthorizationCode({
+      clientId: clientId ?? "",
+      redirectUri: redirectUri ?? "",
+      codeChallenge: codeChallenge ?? "",
+      codeChallengeMethod: "S256",
+      scope,
+      state,
+      claims,
+    });
+    res.redirect(302, result.redirectUrl);
   } catch (err) {
     const mapped = mapIssueTokenError(err);
     oauthError(res, mapped.status, mapped.error, mapped.description);
@@ -144,6 +219,11 @@ export function attachMcpOAuthRoutes(
   options: AttachMcpOAuthRoutesOptions = {}
 ): void {
   const tokenPath = options.tokenPath?.trim() || MCP_OAUTH_TOKEN_PATH;
+  const authorizePath = options.authorizePath?.trim() || MCP_OAUTH_AUTHORIZE_PATH;
+  const supportsAuthCode =
+    !!server &&
+    !!options.resolveAuthorizeClaims &&
+    server.getSupportedGrantTypes().includes("authorization_code");
 
   if (server) {
     app.post(tokenPath, (req, res) => {
@@ -156,6 +236,25 @@ export function attachMcpOAuthRoutes(
         }
       );
     });
+
+    if (supportsAuthCode && options.resolveAuthorizeClaims) {
+      const resolveClaims = options.resolveAuthorizeClaims;
+      app.get(authorizePath, (req, res) => {
+        void handleMcpOAuthAuthorizeRequest(server, req, res, resolveClaims).catch(
+          (err: unknown) => {
+            console.error("[clawql-auth] GET oauth/authorize error:", err);
+            if (!res.headersSent) {
+              oauthError(
+                res,
+                500,
+                "server_error",
+                err instanceof Error ? err.message : String(err)
+              );
+            }
+          }
+        );
+      });
+    }
   }
 
   if (options.wellKnown && server) {
@@ -166,14 +265,27 @@ export function attachMcpOAuthRoutes(
       const origin = `${proto}://${host}`.replace(/\/$/, "");
       const issuer = options.wellKnown!.issuer.replace(/\/$/, "");
       const tokenEndpoint = `${origin}${tokenPath}`;
+      const supported = server.getSupportedGrantTypes();
+      const authCodeEnabled =
+        supportsAuthCode && supported.includes("authorization_code");
 
       res.setHeader("Content-Type", "application/json; charset=utf-8");
       res.setHeader("Cache-Control", "public, max-age=300");
       res.status(200).json({
         issuer,
         token_endpoint: tokenEndpoint,
-        grant_types_supported: ["client_credentials", "refresh_token", ID_JAG_JWT_BEARER_GRANT],
-        token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
+        ...(authCodeEnabled
+          ? {
+              authorization_endpoint: `${origin}${authorizePath}`,
+              code_challenge_methods_supported: ["S256"],
+            }
+          : {}),
+        grant_types_supported: grantTypesForDiscovery(supported),
+        token_endpoint_auth_methods_supported: [
+          "client_secret_post",
+          "client_secret_basic",
+          "none",
+        ],
         scopes_supported: ["execute", "search", "memory", "mcp:tools"],
         ...(options.jwks?.keys.length ? { jwks_uri: `${origin}/.well-known/jwks.json` } : {}),
         agent_auth: {
