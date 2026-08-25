@@ -11,12 +11,12 @@ package: "packages/clawql-harness/"
 
 See the canonical narrative in the product spec (agents vs harness split). **Implementation status (this repo):**
 
-| Phase | Scope | Status |
-| --- | --- | --- |
-| 1 | `HarnessPlugin`, `HarnessContext`, registry, tool/WORM bridges, `ClawQLHarness.create` | **Shipped** |
-| 2 | `OuroborosPlugin` under `plugins/ouroboros/` (stagnation + personas + `clawql_think`) | **Shipped** (harness path; MCP `ouroboros_*` still separate) |
-| 3 | `OpenCode2Plugin` embed stub (optional `@opencode-ai/sdk` peer) | **Shipped stub** — full bridge when SDK ctx lands |
-| 4 | `compareHarnesses` + `integrations/harness-bench/` | **Shipped dry compare** |
+| Phase | Scope                                                                                  | Status                                                       |
+| ----- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 1     | `HarnessPlugin`, `HarnessContext`, registry, tool/WORM bridges, `ClawQLHarness.create` | **Shipped**                                                  |
+| 2     | `OuroborosPlugin` under `plugins/ouroboros/` (stagnation + personas + `clawql_think`)  | **Shipped** (harness path; MCP `ouroboros_*` still separate) |
+| 3     | `OpenCode2Plugin` embed stub (optional `@opencode-ai/sdk` peer)                        | **Shipped stub** — full bridge when SDK ctx lands            |
+| 4     | `compareHarnesses` + `integrations/harness-bench/`                                     | **Shipped dry compare**                                      |
 
 ## Distinction from clawql-agents
 
@@ -56,4 +56,4 @@ integrations/harness-bench/  — CLI compare script
 
 ---
 
-*clawql-harness Package Specification · v0.1 · August 2026*
+_clawql-harness Package Specification · v0.1 · August 2026_
