@@ -31,7 +31,9 @@ function closeHttpServer(server: Server): Promise<void> {
   });
 }
 
-async function listen(app: ReturnType<typeof createMcpApiAdapterApp> | import("express").Express): Promise<{
+async function listen(
+  app: ReturnType<typeof createMcpApiAdapterApp> | import("express").Express
+): Promise<{
   server: Server;
   base: string;
 }> {
