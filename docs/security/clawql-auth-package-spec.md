@@ -101,14 +101,22 @@ import { Effect } from "effect";
 import type { AtrClaims } from "../gateway.js";
 import type { AuthWORMAppend } from "../audit/worm-types.js";
 
+export type GrantType =
+  | "authorization_code" // human operators (interactive — PKCE S256 shipped)
+  | "client_credentials" // machine-to-machine (agents)
+  | "refresh_token"
+  | "id_jag"; // EMA — wire: urn:ietf:params:oauth:grant-type:jwt-bearer + assertion
+
 export type MCPTokenRequest = {
-  grant_type: "client_credentials" | "authorization_code" | "refresh_token";
-  client_id: string;
+  grant_type: GrantType;
+  client_id?: string;
   client_secret?: string;
   code?: string;
   refresh_token?: string;
   scope?: string;
   code_verifier?: string;
+  assertion?: string; // ID-JAG identity assertion JWT
+  org_id?: string; // EMA org lookup for group→scope mapping
 };
 
 export type MCPTokenResponse = {
@@ -172,19 +180,84 @@ export class MCPOAuthServer {
   }
 
   private async authenticateClient(req: MCPTokenRequest): Promise<string> {
-    // Registered MCP clients in Vault / DB — v0.1 stub
+    // See `inbound/mcp-oauth.ts` — SecretStore / memory client registry + optional client secret.
     if (!req.client_id) throw new Error("invalid_client");
     return `${req.client_id}:service`;
   }
 
   private async verifyAccessToken(_token: string): Promise<AtrClaims> {
-    // jose verify — same key material as issueToken
-    throw new Error("not_implemented");
+    // See `MCPOAuthServer.validateToken` — jose verify against AS signing material (RS256 JWKS / HS256).
+    throw new Error("see_implementation:packages/clawql-auth/src/inbound/mcp-oauth.ts");
   }
 }
 ```
 
-Every successful `issueToken` emits **`MCP_TOKEN_ISSUED`** to the auth WORM (hashes only).
+> **Implementation note:** The TypeScript sketch above is illustrative. The shipped authorization server is `packages/clawql-auth/src/inbound/mcp-oauth.ts` (`MCPOAuthServer`) with HTTP wiring in `inbound/http.ts` and `server-http` — not a separate stub class.
+
+Every successful `issueToken` emits **`MCP_TOKEN_ISSUED`** to the auth WORM (no `accessTokenHash` until a token→entry lookup path exists).
+
+#### 4.1.1 Enterprise-Managed Authorization (EMA / ID-JAG)
+
+**Shipped** in `inbound/id-jag.ts` + `inbound/mcp-oauth.ts` (`exchangeIdJag`).
+
+Enterprise-Managed Authorization is the stable MCP extension for org-wide connector authorization via the identity provider (Okta Cross App Access at launch). Admins map IdP groups → ATR scopes once; users inherit MCP access on first login with no per-connector consent.
+
+Grant types:
+
+| Grant                | Wire value                                                  | Status                                                                       |
+| -------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `client_credentials` | `client_credentials`                                        | Shipped                                                                      |
+| `refresh_token`      | `refresh_token`                                             | Shipped                                                                      |
+| `id_jag`             | `urn:ietf:params:oauth:grant-type:jwt-bearer` + `assertion` | **Shipped**                                                                  |
+| `authorization_code` | `authorization_code`                                        | **Shipped** — PKCE S256; `/oauth/authorize` requires pre-resolved ATR claims |
+
+Admin configuration (`EmaConfigStore`):
+
+```typescript
+type EmaGroupScopeMapping = {
+  idpGroup: string; // e.g. "engineering"
+  role?: string; // ATR role when matched
+  scope: string[]; // MCP tool scopes (unioned across matches)
+};
+
+type EmaOrgConfig = {
+  orgId: string;
+  idpJwksUri: string;
+  idpIssuer: string;
+  audience: string; // ClawQL MCP resource origin (ID-JAG aud)
+  groupMappings: EmaGroupScopeMapping[];
+};
+```
+
+ID-JAG exchange verifies the IdP assertion (JWKS / HS256 dev), maps groups → ATR scope, mints RS256 (production) or HS256 (dev) access JWT + `atr` claim used by `client_credentials`, and emits **`MCP_TOKEN_ISSUED`** with `grantType: "id_jag"`, `subjectId`, `orgId`, `role`, `scope`, `idpGroups` (all assertion groups), and `matchedIdpGroups` (groups that drove the mapping). RS256 deployments publish verifying keys at `GET /.well-known/jwks.json` with `jwks_uri` in OAuth AS discovery. No refresh token is issued — token lifetime follows IdP policy (same downstream Panguard enforcement path).
+
+**Auth WORM (shipped):** `createMcpOAuthFromEnv()` wires `createAuthEventSinkFromEnv()` by default. Entries append to a hash-chained SQLite log at `$CLAWQL_HOME/auth-audit.db` unless overridden. Set `CLAWQL_AUTH_AUDIT_STORE=off` to disable; `memory` for tests. `MCP_TOKEN_ISSUED` includes `accessTokenHash` (SHA-256 of the access JWT); revoke-by-access-token writes a denylist record and rejects subsequent `validateToken`.
+
+**Boot SECURITY WARNINGs (same convention):** audit store `off`; ID-JAG issuer sharing the MCP AS signing key; **HS256-only AS signing** (`CLAWQL_MCP_OAUTH_SIGNING_SECRET` without RS256 PEM) — JWKS cannot be published and every verifier must share the secret (prefer `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM(_PATH)`); **missing `CLAWQL_API_KEY`** while MCP OAuth / ID-JAG issuer is enabled — EMA admin and `/oauth/id-jag/issue` return 503 unless ATR admin claims (`cqk_` via `CLAWQL_API_KEYS_PATH` / MCP JWT with `role=admin` or scope `ema:admin`) succeed; **invalid `CLAWQL_EMA_ORGS_*` / `CLAWQL_MCP_OAUTH_CLIENTS_*` bootstrap** — warn + empty registry by default, or fail boot when `CLAWQL_MCP_OAUTH_BOOTSTRAP_STRICT=1`.
+
+Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery-metadata.ts` (`assertion_types_supported: id-jag`).
+
+#### 4.1.2 ClawQL as EMA IdP (ID-JAG issuer)
+
+**Shipped (Layers A + B)** in [#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961): `inbound/id-jag-issuer.ts`, `inbound/ema-connector-registry.ts`, HTTP routes under `/oauth/id-jag/*` and `/.well-known/id-jag-jwks.json`.
+
+Positioning: ClawQL can act as a **self-hosted, attestation-backed identity provider for organizations that need EMA without third-party session-token custody** — the same Enterprise-Managed Authorization path Okta Cross App Access provides, without Okta's centralized custody surface. ClawQL remains an auth _consumer_ everywhere else (not a full human IdP).
+
+| Layer               | Scope                                                                             | Status                                                                                                                              |
+| ------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **A — Issuer**      | `issueIdJagAssertionEffect`, org RS256 keys, JWKS publish                         | **Shipped** ([#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961))                                                     |
+| **B — Registry**    | Admin-authorized MCP connectors per org (`EmaConnectorRegistration`)              | **Shipped** ([#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961))                                                     |
+| **C — TEE signing** | Pluggable `IdJagAssertionSigner` (`local` / `tee`); host injects clawql-tee / HSM | **Shipped seam** ([#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961)) — real `clawql-tee` package optional hardening |
+
+**Flow:** Admin `PUT /oauth/ema/connectors/:orgId/:connectorId` → service `POST /oauth/id-jag/issue` with subject + groups → consumer `verifyIdJagAssertionEffect` / `POST /oauth/token` (jwt-bearer) maps groups → ATR scope.
+
+**Audit correlation:** Every issuance emits **`ID_JAG_ASSERTION_ISSUED`** with assertion `jti`. The subsequent MCP exchange emits **`MCP_TOKEN_ISSUED`** with the same value as `idJagJti`. Security review can walk issuance → session as one chain: `ID_JAG_ASSERTION_ISSUED.jti === MCP_TOKEN_ISSUED.idJagJti`.
+
+**Signing keys (blast radius):** Dedicated issuer material via `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM(_PATH)` is the production recommendation. Falling back to the MCP OAuth AS signing key is allowed for v0 / single-node convenience, but **production deployments concerned about blast radius must use separate keys** — a compromise of the AS signing key must not also mint forged ID-JAG assertions (and vice versa). Shared keys quietly becoming the default would recreate the single-point-of-failure the self-hosted positioning argument is against.
+
+**Never:** Okta competitor, password/SSO IdP, SAML/LDAP server, per-user connector consent UI.
+
+**Env:** `CLAWQL_ID_JAG_ISSUER_ENABLED=1`, `CLAWQL_ID_JAG_ISSUER_ORG_ID`, signing via `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM(_PATH)` (prefer dedicated; MCP OAuth key fallback is convenience only).
 
 ### 4.2 API key validator (`APIKeyValidator`)
 
@@ -246,7 +319,9 @@ export interface ATRClaims {
 
 ### 4.4 OIDC / SSO note
 
-Shipped **`oidc`** mode remains the path for enterprise human SSO: customer IdP issues JWT → ClawQL verifies JWKS → ATR. **Do not conflate** with `MCPOAuthServer` (MCP-native client credentials) or outbound Google/Microsoft OAuth (upstream API access). SAML/LDAP _client_ modes are roadmap-only; they map external assertions into `ATRClaims` the same way OIDC does today.
+Shipped **`oidc`** mode remains the path for enterprise human SSO: customer IdP issues JWT → ClawQL verifies JWKS → ATR. **Do not conflate** with `MCPOAuthServer` (MCP-native client credentials + **EMA ID-JAG exchange**) or outbound Google/Microsoft OAuth (upstream API access). SAML/LDAP _client_ modes are roadmap-only; they map external assertions into `ATRClaims` the same way OIDC does today.
+
+**EMA vs OIDC consumer:** OIDC mode verifies bearer JWTs on every inbound MCP request (gateway consumer). EMA ID-JAG is a **token issuance** grant on the MCP authorization server — the IdP assertion is exchanged once at `/oauth/token` for a ClawQL access JWT. Both produce identical `AtrClaims` for Panguard; only the issuance path differs.
 
 ### 4.5 Passkeys / WebAuthn (Face ID, Touch ID, YubiKey)
 
@@ -992,21 +1067,56 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 
 ## Implementation Sequence
 
-| Phase                            | Scope                                                                                   | Exit criteria                                                   | Status                                                                                                   |
-| -------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| **1 — Foundation**               | Auth event sink + issued API key registry (`cqk_`)                                      | Unit tests for issue/validate/revoke; gateway resolver          | **Shipped** (`api-keys/`, `audit/auth-events.ts`)                                                        |
-| **2 — Outbound core**            | `OAuthTokenStore` mutex + 60s proactive refresh; `ClientCredentialsFlow`                | Concurrent refresh N=50 → one IdP call; client-creds unit tests | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                            |
-| **3 — Auth Code + providers**    | PKCE `AuthorizationCodeFlow`; Google/Microsoft/Slack catalogs; outbound API key manager | PKCE start/callback tests; provider matrix                      | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`, `oauth/outbound-api-key.ts`)                    |
-| **4 — Inbound MCP OAuth**        | `MCPOAuthServer` client_credentials + refresh rotation                                  | Issue/validate/refresh tests                                    | **Shipped** (`inbound/mcp-oauth.ts`) — HTTP route wiring in `mcp-api-adapter` / `server-http` still open |
-| **5 — SecretStore + re-auth UX** | `SecretStore` plugins (SQLite/OpenBao/Vault/…); dynamic leases; Hermes Telegram re-auth | Interface + SQLite/Vault/OpenBao shipped; Hermes UX open        | **Partial** (`stores/` shipped; dynamic leases + Telegram UX still open)                                 |
+> **Alignment note (August 2026 GA):** The canonical spec (§13) orders phases as inbound-first. The repo shipped **outbound OAuth (Phases 2–3)** ahead of inbound HTTP wiring because Hermes/Cline needed mutex refresh first. **EMA / ID-JAG is Phase 1 inbound** — HTTP token route, persistent org config, and Okta JWKS preset are **shipped** on `server-http`.
+
+### Canonical §13 → repo status
+
+| Canonical phase               | Scope (from full spec)                                   | Repo status                                                                                               | Next priority                                                                                                                                                                                                                                                   |
+| ----------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1 — Inbound core**          | API key validate/issue, MCP OAuth 2.1 AS, **EMA ID-JAG** | **Shipped** — library + **`server-http` HTTP wiring**; interactive auth-code + PKCE; adapter JWKS         | **P0 done:** token endpoint; **P0 done:** persistent `EmaConfigStore`; **P1 done:** Okta JWKS preset; **P1 done:** auth WORM audit; **P1 done:** RS256 AS signing + JWKS; **P2 done:** interactive auth-code + PKCE; **P2 done:** `mcp-api-adapter` JWKS bearer |
+| **2 — Outbound OAuth core**   | Mutex token store, proactive refresh, client credentials | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                             | Maintain; no new work unless regressions                                                                                                                                                                                                                        |
+| **3 — Auth Code + providers** | PKCE, Google/Microsoft/Slack                             | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`)                                                  | Hermes user-delegated flows consume this                                                                                                                                                                                                                        |
+| **4 — Team / org**            | Team model, domain TXT, offboarding                      | **Shipped** — issued keys org/team; `domain-txt.ts` DNS TXT verify; `offboardSubjectEffect`               | Maintain; passkey inbound still open                                                                                                                                                                                                                            |
+| **5 — Alt inbound**           | SIWE, TOTP, passkey as primary login                     | **Partial** — SIWE + primary TOTP shipped; passkey primary still open                                     | Passkey primary login surface                                                                                                                                                                                                                                   |
+| **6 — Vault dynamic secrets** | DB cred leases                                           | **Shipped** — `VaultDynamicSecretProvider` + renew-if-needed + WORM events                                | Wire enterprise hosts to OpenBao/Vault                                                                                                                                                                                                                          |
+| **7 — Re-auth UX**            | Hermes Telegram, reauth URLs                             | **Shipped contract** — `buildReauthUrl` / `markRequiresReauth` + `reauth-notify` (no in-package Telegram) | Hermes host sends Telegram DMs via `ReauthNotifier`                                                                                                                                                                                                             |
+
+### Phase 1 inbound — remaining work (ordered)
+
+1. ~~**HTTP `/oauth/token` route**~~ — **Shipped** in `server-http` via `attachMcpOAuthRoutes`.
+2. ~~**Persistent `EmaConfigStore`**~~ — **Shipped** (`ema-config-store.ts` + SecretStore `ema-orgs/` prefix + admin API).
+3. ~~**Okta production JWKS path**~~ — **Shipped** (`okta-id-jag.ts` preset + group claim fallbacks).
+4. ~~**`authorization_code` grant**~~ — **Shipped** (`GET /oauth/authorize` + PKCE S256 + one-time code store). ClawQL is not a login IdP: authorize requires already-resolved ATR claims (API key / OIDC / MCP JWT).
+5. ~~**RS256 issued access tokens + JWKS**~~ — **Shipped** (`mcp-oauth-signing.ts`, `GET /.well-known/jwks.json`).
+6. ~~**`mcp-api-adapter` Bearer / JWKS**~~ — **Shipped** (`edge-auth.ts`: static API key and/or ClawQL MCP JWT via JWKS / HS256).
+7. ~~**AS hardening wrap-up**~~ — **Shipped**: refresh ATR claim snapshot; `client_secret_basic`; `POST /oauth/revoke` + `MCP_TOKEN_REVOKED`; timing-safe secret compares; admin-key / bootstrap SECURITY WARNINGs.
+8. ~~**Phase 1 hygiene**~~ — **Shipped**: OAuth rate limits (`CLAWQL_MCP_OAUTH_RATE_LIMIT_PER_MIN`); MCP client admin CRUD (`/oauth/ema/clients`); fail-closed bootstrap (`CLAWQL_MCP_OAUTH_BOOTSTRAP_STRICT=1`); EMA admin via static key **or** ATR claims (`cqk_` / MCP JWT with `admin` / `ema:admin`); `accessTokenHash` WORM + access-token denylist revoke.
+
+### Three inbound paths (do not conflate)
+
+| Path                                        | When                                                               | Token source                      | Shipped                                                               |
+| ------------------------------------------- | ------------------------------------------------------------------ | --------------------------------- | --------------------------------------------------------------------- |
+| **OIDC consumer** (`CLAWQL_AUTH_MODE=oidc`) | Enterprise puts IdP JWT on every MCP request                       | Customer IdP                      | Yes — `oidc.ts`                                                       |
+| **MCP OAuth AS** (`MCPOAuthServer`)         | MCP clients obtain ClawQL-issued bearer                            | ClawQL signs JWT with `atr`       | Yes — library + **`server-http` `/oauth/token` + `/oauth/authorize`** |
+| **EMA ID-JAG** (grant on MCP AS)            | Org admin pre-authorizes connector at IdP; zero-touch user inherit | IdP assertion → ClawQL access JWT | Yes — `id-jag.ts` + token endpoint                                    |
+
+All three produce **`AtrClaims`** for the same Panguard enforcement path. EMA does not replace OIDC consumer mode — it replaces per-user OAuth consent on the **issuance** side for MCP connectors.
+
+| Phase                            | Scope                                                                                    | Exit criteria                                                              | Status                                                                                                              |
+| -------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **1 — Foundation**               | Auth event sink + issued API key registry (`cqk_`)                                       | Unit tests for issue/validate/revoke; gateway resolver                     | **Shipped** (`api-keys/`, `audit/auth-events.ts`)                                                                   |
+| **2 — Outbound core**            | `OAuthTokenStore` mutex + 60s proactive refresh; `ClientCredentialsFlow`                 | Concurrent refresh N=50 → one IdP call; client-creds unit tests            | **Shipped** (`oauth/token-store.ts`, `oauth/client-creds.ts`)                                                       |
+| **3 — Auth Code + providers**    | PKCE `AuthorizationCodeFlow`; Google/Microsoft/Slack catalogs; outbound API key manager  | PKCE start/callback tests; provider matrix                                 | **Shipped** (`oauth/auth-code.ts`, `oauth/providers.ts`, `oauth/outbound-api-key.ts`)                               |
+| **4 — Inbound MCP OAuth**        | `MCPOAuthServer` + **EMA ID-JAG** + HTTP `/oauth/token` + `/oauth/authorize` + EMA admin | Issue/validate/refresh/id-jag/auth-code + HTTP integration tests           | **Shipped** (`inbound/*`, `server-http` wiring; `mcp-api-adapter` JWKS edge auth)                                   |
+| **5 — SecretStore + re-auth UX** | `SecretStore` plugins (SQLite/OpenBao/Vault/…); dynamic leases; Hermes Telegram re-auth  | Interface + SQLite/Vault/OpenBao + dynamic leases + reauth-notify contract | **Shipped** (`stores/`, `vault/dynamic-secrets.ts`, `oauth/reauth-notify.ts`; Hermes Telegram send stays host-side) |
 
 ### Shipped slice (August 2026)
 
 - **`IssuedApiKeyStore`**: issue `cqk_<id>_<secret>` once; salted SHA-256 only; org/team filters; `createClawQLAuth({ apiKeyStorePath })`.
 - **`OAuthTokenStore`**: proactive refresh + single-flight mutex; `invalid_grant` → `ReauthRequiredError`.
 - **`ClientCredentialsFlow` / `AuthorizationCodeFlow` (PKCE)** + provider catalogs.
-- **`MCPOAuthServer`**: HS256 access JWTs with ATR claims; refresh-token rotation.
-- Hosts inject **`AuthEventSink`** for WORM (no hard `clawql-audit` dependency yet).
+- **`MCPOAuthServer`**: Effect-primary AS (`issueToken` / `validateToken` / `revokeToken` / `createAuthorizationCode` return `Effect`); HS256/RS256 access JWTs with ATR claims; refresh-token rotation with ATR claim snapshot; **EMA ID-JAG** group→scope exchange (`id_jag` grant); `client_secret_basic`; `POST /oauth/revoke`. Express hosts use thin `Effect.runPromise` façades only.
+- Hosts inject **`AuthEventSink`** for WORM (Effect-primary; no hard `clawql-audit` dependency yet).
 
 Phases may land independently of full Vault / Hermes Telegram UX. Shipped OIDC **consumer** mode is untouched.
 

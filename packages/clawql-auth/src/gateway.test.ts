@@ -1,12 +1,15 @@
+import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
   defaultAdminAtrClaims,
   loadGatewayAuthConfig,
   resolveAtrClaimsFromHeaders,
+  resolveAtrClaimsFromHeadersEffect,
   resolveAuthMode,
   type GatewayAuthConfig,
 } from "./gateway.js";
+import { createMcpOAuthForTests } from "./inbound/mcp-oauth-env.js";
 
 describe("clawql-auth gateway", () => {
   const prevMode = process.env.CLAWQL_AUTH_MODE;
@@ -21,7 +24,7 @@ describe("clawql-auth gateway", () => {
 
   it("defaults to noAuth with admin claims", () => {
     delete process.env.CLAWQL_AUTH_MODE;
-    expect(resolveAuthMode()).toBe("noAuth");
+    expect(Effect.runSync(resolveAuthMode())).toBe("noAuth");
     const r = resolveAtrClaimsFromHeaders({});
     expect(r.ok).toBe(true);
     if (r.ok) {
@@ -33,12 +36,12 @@ describe("clawql-auth gateway", () => {
   it("apiKey mode rejects missing key", () => {
     process.env.CLAWQL_AUTH_MODE = "apiKey";
     process.env.CLAWQL_API_KEY = "secret";
-    const bad = resolveAtrClaimsFromHeaders({}, loadGatewayAuthConfig());
+    const bad = resolveAtrClaimsFromHeaders({}, Effect.runSync(loadGatewayAuthConfig()));
     expect(bad.ok).toBe(false);
 
     const good = resolveAtrClaimsFromHeaders(
       { authorization: "Bearer secret" },
-      loadGatewayAuthConfig()
+      Effect.runSync(loadGatewayAuthConfig())
     );
     expect(good.ok).toBe(true);
   });
@@ -46,11 +49,14 @@ describe("clawql-auth gateway", () => {
   it("apiKey mode rejects wrong-length and wrong-value keys (timing-safe compare)", () => {
     process.env.CLAWQL_AUTH_MODE = "apiKey";
     process.env.CLAWQL_API_KEY = "correct-length-key!!";
-    const short = resolveAtrClaimsFromHeaders({ "x-api-key": "short" }, loadGatewayAuthConfig());
+    const short = resolveAtrClaimsFromHeaders(
+      { "x-api-key": "short" },
+      Effect.runSync(loadGatewayAuthConfig())
+    );
     expect(short.ok).toBe(false);
     const wrong = resolveAtrClaimsFromHeaders(
       { "x-api-key": "correct-length-key!?" },
-      loadGatewayAuthConfig()
+      Effect.runSync(loadGatewayAuthConfig())
     );
     expect(wrong.ok).toBe(false);
   });
@@ -60,7 +66,7 @@ describe("clawql-auth gateway", () => {
     process.env.CLAWQL_API_KEY = "secret";
     const spoof = resolveAtrClaimsFromHeaders(
       { "x-clawql-role": "admin", "x-api-key": "nope" },
-      loadGatewayAuthConfig()
+      Effect.runSync(loadGatewayAuthConfig())
     );
     expect(spoof.ok).toBe(false);
   });
@@ -168,5 +174,45 @@ describe("clawql-auth gateway", () => {
       role: "admin",
       scope: ["*"],
     });
+  });
+
+  it("mcpOAuthValidator accepts ClawQL-issued bearer tokens in hybrid mode", async () => {
+    const runtime = await Effect.runPromise(
+      createMcpOAuthForTests({
+        issuer: "https://auth.clawql.test",
+        signingSecret: "test-mcp-oauth-signing-secret-32b!!",
+        clients: [
+          {
+            clientId: "mcp-client",
+            defaultScope: ["execute", "search"],
+            defaultRole: "operator",
+          },
+        ],
+      })
+    );
+    const issued = await Effect.runPromise(
+      runtime.server.issueToken({
+        grantType: "client_credentials",
+        clientId: "mcp-client",
+      })
+    );
+
+    const claims = await Effect.runPromise(
+      resolveAtrClaimsFromHeadersEffect(
+        { authorization: `Bearer ${issued.access_token}` },
+        {
+          mode: "apiKey",
+          apiKey: "unused",
+          mcpOAuthValidator: runtime.validateBearer,
+        }
+      )
+    );
+    expect(claims.sub).toBe("mcp-client");
+    expect(claims.scope).toEqual(["execute", "search"]);
+  });
+
+  it("resolveAuthMode recognizes mcpOAuth", () => {
+    process.env.CLAWQL_AUTH_MODE = "mcpOAuth";
+    expect(Effect.runSync(resolveAuthMode())).toBe("mcpOAuth");
   });
 });

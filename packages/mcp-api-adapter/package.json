@@ -48,7 +48,9 @@
     "@grpc/grpc-js": "^1.14.4",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
     "graphql": "^16.14.0",
+    "jose": "^6.2.10",
     "mcp-grpc-transport": "1.0.0",
     "ws": "^8.21.0"
   },

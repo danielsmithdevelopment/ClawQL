@@ -2,9 +2,15 @@
  * 1Password Secrets Automation — enterprise customers already on 1Password
  * Teams/Business. No credential migration: ClawQL reads vault items via the
  * Connect / Secrets Automation API.
+ *
+ * All network IO runs via `Effect.tryPromise` inside Effect methods, failing with
+ * {@link SecretStoreError}.
  */
 
+import { Effect } from "effect";
+
 import { PathSecretStore } from "./base.js";
+import { SecretStoreError } from "./types.js";
 
 export type OnePasswordStoreOptions = {
   /** 1Password Connect host, e.g. http://op-connect:8080 */
@@ -17,6 +23,10 @@ export type OnePasswordStoreOptions = {
   itemPrefix?: string;
   fetchImpl?: typeof fetch;
 };
+
+function errMsg(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause);
+}
 
 /**
  * Stores each logical path as a 1Password item title under `itemPrefix`,
@@ -52,16 +62,34 @@ export class OnePasswordStore extends PathSecretStore {
     return `${this.itemPrefix}${path.replace(/^\/+/, "")}`;
   }
 
-  private async refreshIndex(): Promise<void> {
-    const res = await this.fetchImpl(`${this.endpoint}/v1/vaults/${this.vaultId}/items`, {
-      headers: this.headers(),
+  private refreshIndex(): Effect.Effect<void, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const res = yield* Effect.tryPromise({
+        try: () =>
+          this.fetchImpl(`${this.endpoint}/v1/vaults/${this.vaultId}/items`, {
+            headers: this.headers(),
+          }),
+        catch: (cause) =>
+          new SecretStoreError({ reason: `onepassword_list_failed: ${errMsg(cause)}`, cause }),
+      });
+      if (!res.ok) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `onepassword_list_failed:${res.status}` })
+        );
+      }
+      const items = yield* Effect.tryPromise({
+        try: () => res.json() as Promise<Array<{ id: string; title?: string }>>,
+        catch: (cause) =>
+          new SecretStoreError({
+            reason: `onepassword_list_parse_failed: ${errMsg(cause)}`,
+            cause,
+          }),
+      });
+      this.titleToId.clear();
+      for (const item of items) {
+        if (item.title) this.titleToId.set(item.title, item.id);
+      }
     });
-    if (!res.ok) throw new Error(`onepassword_list_failed:${res.status}`);
-    const items = (await res.json()) as Array<{ id: string; title?: string }>;
-    this.titleToId.clear();
-    for (const item of items) {
-      if (item.title) this.titleToId.set(item.title, item.id);
-    }
   }
 
   private extractValue(item: {
@@ -80,67 +108,116 @@ export class OnePasswordStore extends PathSecretStore {
     );
   }
 
-  async getSecret(path: string): Promise<string | null> {
-    await this.refreshIndex();
-    const id = this.titleToId.get(this.titleFor(path));
-    if (!id) return null;
-    const res = await this.fetchImpl(`${this.endpoint}/v1/vaults/${this.vaultId}/items/${id}`, {
-      headers: this.headers(),
+  getSecret(path: string): Effect.Effect<string | null, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      yield* this.refreshIndex();
+      const id = this.titleToId.get(this.titleFor(path));
+      if (!id) return null;
+      const res = yield* Effect.tryPromise({
+        try: () =>
+          this.fetchImpl(`${this.endpoint}/v1/vaults/${this.vaultId}/items/${id}`, {
+            headers: this.headers(),
+          }),
+        catch: (cause) =>
+          new SecretStoreError({ reason: `onepassword_get_failed: ${errMsg(cause)}`, cause }),
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `onepassword_get_failed:${res.status}` })
+        );
+      }
+      const json = yield* Effect.tryPromise({
+        try: () => res.json() as Promise<{ fields?: Array<{ value?: string }> }>,
+        catch: (cause) =>
+          new SecretStoreError({
+            reason: `onepassword_get_parse_failed: ${errMsg(cause)}`,
+            cause,
+          }),
+      });
+      return this.extractValue(json);
     });
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`onepassword_get_failed:${res.status}`);
-    return this.extractValue((await res.json()) as { fields?: Array<{ value?: string }> });
   }
 
-  async setSecret(path: string, value: string): Promise<void> {
-    await this.refreshIndex();
-    const title = this.titleFor(path);
-    const existingId = this.titleToId.get(title);
-    const body = {
-      title,
-      category: "LOGIN",
-      fields: [{ id: "value", type: "CONCEALED", purpose: "PASSWORD", label: "value", value }],
-      vault: { id: this.vaultId },
-    };
-    if (existingId) {
-      const res = await this.fetchImpl(
-        `${this.endpoint}/v1/vaults/${this.vaultId}/items/${existingId}`,
-        {
-          method: "PUT",
-          headers: this.headers(true),
-          body: JSON.stringify({ ...body, id: existingId }),
+  setSecret(path: string, value: string): Effect.Effect<void, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      yield* this.refreshIndex();
+      const title = this.titleFor(path);
+      const existingId = this.titleToId.get(title);
+      const body = {
+        title,
+        category: "LOGIN",
+        fields: [{ id: "value", type: "CONCEALED", purpose: "PASSWORD", label: "value", value }],
+        vault: { id: this.vaultId },
+      };
+      if (existingId) {
+        const res = yield* Effect.tryPromise({
+          try: () =>
+            this.fetchImpl(`${this.endpoint}/v1/vaults/${this.vaultId}/items/${existingId}`, {
+              method: "PUT",
+              headers: this.headers(true),
+              body: JSON.stringify({ ...body, id: existingId }),
+            }),
+          catch: (cause) =>
+            new SecretStoreError({ reason: `onepassword_set_failed: ${errMsg(cause)}`, cause }),
+        });
+        if (!res.ok) {
+          return yield* Effect.fail(
+            new SecretStoreError({ reason: `onepassword_set_failed:${res.status}` })
+          );
         }
-      );
-      if (!res.ok) throw new Error(`onepassword_set_failed:${res.status}`);
-      return;
-    }
-    const res = await this.fetchImpl(`${this.endpoint}/v1/vaults/${this.vaultId}/items`, {
-      method: "POST",
-      headers: this.headers(true),
-      body: JSON.stringify(body),
+        return;
+      }
+      const res = yield* Effect.tryPromise({
+        try: () =>
+          this.fetchImpl(`${this.endpoint}/v1/vaults/${this.vaultId}/items`, {
+            method: "POST",
+            headers: this.headers(true),
+            body: JSON.stringify(body),
+          }),
+        catch: (cause) =>
+          new SecretStoreError({ reason: `onepassword_create_failed: ${errMsg(cause)}`, cause }),
+      });
+      if (!res.ok) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `onepassword_create_failed:${res.status}` })
+        );
+      }
     });
-    if (!res.ok) throw new Error(`onepassword_create_failed:${res.status}`);
   }
 
-  async deleteSecret(path: string): Promise<void> {
-    await this.refreshIndex();
-    const id = this.titleToId.get(this.titleFor(path));
-    if (!id) return;
-    const res = await this.fetchImpl(`${this.endpoint}/v1/vaults/${this.vaultId}/items/${id}`, {
-      method: "DELETE",
-      headers: this.headers(),
+  deleteSecret(path: string): Effect.Effect<void, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      yield* this.refreshIndex();
+      const id = this.titleToId.get(this.titleFor(path));
+      if (!id) return;
+      const res = yield* Effect.tryPromise({
+        try: () =>
+          this.fetchImpl(`${this.endpoint}/v1/vaults/${this.vaultId}/items/${id}`, {
+            method: "DELETE",
+            headers: this.headers(),
+          }),
+        catch: (cause) =>
+          new SecretStoreError({ reason: `onepassword_delete_failed: ${errMsg(cause)}`, cause }),
+      });
+      if (res.status === 404) return;
+      if (!res.ok) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `onepassword_delete_failed:${res.status}` })
+        );
+      }
     });
-    if (res.status === 404) return;
-    if (!res.ok) throw new Error(`onepassword_delete_failed:${res.status}`);
   }
 
-  async listSecrets(prefix: string): Promise<string[]> {
-    await this.refreshIndex();
-    const fullPrefix = this.titleFor(prefix);
-    return [...this.titleToId.keys()]
-      .filter((t) => t.startsWith(fullPrefix))
-      .map((t) => t.slice(this.itemPrefix.length))
-      .sort();
+  listSecrets(prefix: string): Effect.Effect<string[], SecretStoreError> {
+    return Effect.gen(this, function* () {
+      yield* this.refreshIndex();
+      const fullPrefix = this.titleFor(prefix);
+      return [...this.titleToId.keys()]
+        .filter((t) => t.startsWith(fullPrefix))
+        .map((t) => t.slice(this.itemPrefix.length))
+        .sort();
+    });
   }
 }
 

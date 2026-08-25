@@ -1,11 +1,12 @@
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
 import type { AuthEvent } from "../audit/auth-events.js";
 import {
   createAuthorizationCodeFlow,
   createMemoryAuthFlowPersistence,
-  generateCodeChallenge,
-  generateCodeVerifier,
+  generateCodeChallengeEffect,
+  generateCodeVerifierEffect,
 } from "./auth-code.js";
 import { ClientCredentialsFlow, OAuthFlowError } from "./client-creds.js";
 import { createMemorySecretSource, createOutboundAPIKeyManager } from "./outbound-api-key.js";
@@ -28,12 +29,14 @@ describe("ClientCredentialsFlow", () => {
       );
     });
 
-    const token = await flow.getToken({
-      tokenEndpoint: "https://example.test/token",
-      clientId: "cid",
-      clientSecret: "csecret",
-      scope: ["Mail.Read"],
-    });
+    const token = await Effect.runPromise(
+      flow.getToken({
+        tokenEndpoint: "https://example.test/token",
+        clientId: "cid",
+        clientSecret: "csecret",
+        scope: ["Mail.Read"],
+      })
+    );
 
     expect(token.accessToken).toBe("atok");
     expect(token.refreshToken).toBeUndefined();
@@ -42,13 +45,17 @@ describe("ClientCredentialsFlow", () => {
 
   it("surfaces HTTP failures as OAuthFlowError", async () => {
     const flow = new ClientCredentialsFlow(async () => new Response("nope", { status: 401 }));
-    await expect(
+    const exit = await Effect.runPromiseExit(
       flow.getToken({
         tokenEndpoint: "https://example.test/token",
         clientId: "cid",
         clientSecret: "bad",
       })
-    ).rejects.toBeInstanceOf(OAuthFlowError);
+    );
+    expect(exit._tag).toBe("Failure");
+    if (exit._tag === "Failure" && exit.cause._tag === "Fail") {
+      expect(exit.cause.error).toBeInstanceOf(OAuthFlowError);
+    }
   });
 });
 
@@ -77,21 +84,23 @@ describe("AuthorizationCodeFlow + PKCE", () => {
       },
     });
 
-    const start = await flow.startFlow({
-      providerId: "google",
-      authEndpoint: GOOGLE_OAUTH_CONFIG.authEndpoint,
-      tokenEndpoint: GOOGLE_OAUTH_CONFIG.tokenEndpoint,
-      clientId: "google-client",
-      clientSecret: "google-secret",
-      redirectUri: "http://127.0.0.1:8787/callback",
-      scope: GOOGLE_OAUTH_CONFIG.scopes.gmail_read!,
-    });
+    const start = await Effect.runPromise(
+      flow.startFlow({
+        providerId: "google",
+        authEndpoint: GOOGLE_OAUTH_CONFIG.authEndpoint,
+        tokenEndpoint: GOOGLE_OAUTH_CONFIG.tokenEndpoint,
+        clientId: "google-client",
+        clientSecret: "google-secret",
+        redirectUri: "http://127.0.0.1:8787/callback",
+        scope: GOOGLE_OAUTH_CONFIG.scopes.gmail_read!,
+      })
+    );
 
     expect(start.authorizationUrl).toContain("code_challenge=");
     expect(start.authorizationUrl).toContain("code_challenge_method=S256");
     expect(persistence.flows.has(start.state)).toBe(true);
 
-    const token = await flow.handleCallback("auth-code-xyz", start.state);
+    const token = await Effect.runPromise(flow.handleCallback("auth-code-xyz", start.state));
     expect(token.accessToken).toBe("user-atok");
     expect(token.refreshToken).toBe("user-rtok");
     expect(persistence.tokens.get("google")?.accessToken).toBe("user-atok");
@@ -103,15 +112,19 @@ describe("AuthorizationCodeFlow + PKCE", () => {
     const flow = createAuthorizationCodeFlow({
       persistence: createMemoryAuthFlowPersistence(),
     });
-    await expect(flow.handleCallback("code", "missing")).rejects.toMatchObject({
-      _tag: "AuthCodeError",
-      reason: "INVALID_STATE",
-    });
+    const exit = await Effect.runPromiseExit(flow.handleCallback("code", "missing"));
+    expect(exit._tag).toBe("Failure");
+    if (exit._tag === "Failure" && exit.cause._tag === "Fail") {
+      expect(exit.cause.error).toMatchObject({ _tag: "AuthCodeError", reason: "INVALID_STATE" });
+    }
   });
 
-  it("S256 challenge is deterministic for a verifier", () => {
-    const v = generateCodeVerifier();
-    expect(generateCodeChallenge(v)).toBe(generateCodeChallenge(v));
+  it("S256 challenge is deterministic for a verifier", async () => {
+    const v = await Effect.runPromise(generateCodeVerifierEffect());
+    const [a, b] = await Effect.runPromise(
+      Effect.all([generateCodeChallengeEffect(v), generateCodeChallengeEffect(v)])
+    );
+    expect(a).toBe(b);
   });
 });
 
@@ -121,10 +134,12 @@ describe("OutboundAPIKeyManager + provider matrix", () => {
       "vault://clawql/providers/linear/api-key": "lin_xxx",
     });
     const mgr = createOutboundAPIKeyManager({ secrets });
-    await expect(mgr.getKey("linear", "sess-1")).resolves.toBe("lin_xxx");
-    await expect(mgr.getKey("missing", "sess-1")).rejects.toMatchObject({
-      _tag: "OutboundApiKeyError",
-    });
+    await expect(Effect.runPromise(mgr.getKey("linear", "sess-1"))).resolves.toBe("lin_xxx");
+    const exit = await Effect.runPromiseExit(mgr.getKey("missing", "sess-1"));
+    expect(exit._tag).toBe("Failure");
+    if (exit._tag === "Failure" && exit.cause._tag === "Fail") {
+      expect(exit.cause.error).toMatchObject({ _tag: "OutboundApiKeyError" });
+    }
   });
 
   it("maps common providers to preferred methods", () => {

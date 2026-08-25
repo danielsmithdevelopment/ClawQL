@@ -3,6 +3,13 @@ import type { Server } from "node:http";
 import { httpBodyFromCollapsed } from "./call.js";
 import { refreshCatalog } from "./catalog.js";
 import { swaggerDocsHtml } from "./docs-html.js";
+import {
+  createJwtVerifier,
+  edgeAuthConfigured,
+  verifyEdgeCredential,
+  type McpApiAdapterJwtAuthOptions,
+} from "./edge-auth.js";
+import { createEdgeAuthRateLimiter } from "./edge-rate-limit.js";
 import { attachGraphqlRoutes } from "./graphql-http.js";
 import { attachMcpHttpRoutes } from "./mcp-http.js";
 import { buildOpenApiDocument } from "./openapi.js";
@@ -14,11 +21,7 @@ import type {
   StartedMcpApiAdapter,
   ToolCatalog,
 } from "./types.js";
-import {
-  buildCatalogFromUpstream,
-  connectUpstream,
-  type UpstreamConnection,
-} from "./upstream.js";
+import { buildCatalogFromUpstream, connectUpstream, type UpstreamConnection } from "./upstream.js";
 import { attachWebSocketSurface, DEFAULT_WS_PATH } from "./websocket.js";
 
 function readApiKey(req: Request): string | undefined {
@@ -51,6 +54,7 @@ export type CreateMcpApiAdapterAppOptions = {
   getCatalog: () => ToolCatalog;
   callTool: CallToolFn;
   apiKey?: string;
+  jwtAuth?: McpApiAdapterJwtAuthOptions;
   title?: string;
   serverName?: string;
   grpcAddress?: string;
@@ -65,16 +69,26 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
   const app = express();
   app.use(express.json({ limit: "2mb" }));
 
-  const apiKey = options.apiKey?.trim();
-  if (apiKey) {
+  const verifyJwt = createJwtVerifier(options.jwtAuth ?? {});
+  if (edgeAuthConfigured({ apiKey: options.apiKey, jwt: options.jwtAuth })) {
+    app.use(createEdgeAuthRateLimiter());
     app.use((req: Request, res: Response, next: NextFunction) => {
       if (req.path === "/healthz") return next();
-      const provided = readApiKey(req);
-      if (provided !== apiKey) {
-        res.status(401).json({ error: "unauthorized" });
-        return;
-      }
-      next();
+      void verifyEdgeCredential(
+        readApiKey(req),
+        { apiKey: options.apiKey, jwt: options.jwtAuth },
+        verifyJwt
+      )
+        .then((ok) => {
+          if (!ok) {
+            res.status(401).json({ error: "unauthorized" });
+            return;
+          }
+          next();
+        })
+        .catch(() => {
+          res.status(401).json({ error: "unauthorized" });
+        });
     });
   }
 
@@ -210,8 +224,7 @@ async function listenHttp(
     s.on("error", reject);
   });
   const addr = server.address();
-  const boundPort =
-    typeof addr === "object" && addr && "port" in addr ? addr.port : port;
+  const boundPort = typeof addr === "object" && addr && "port" in addr ? addr.port : port;
   return { server, boundPort };
 }
 
@@ -253,6 +266,7 @@ export async function startMcpApiAdapter(
     getCatalog: () => catalog,
     callTool: upstream.callTool,
     apiKey: options.apiKey,
+    jwtAuth: options.jwtAuth,
     title: options.title,
     serverName: options.serverName,
     grpcAddress: upstream.grpcAddress ?? options.grpcAddress,
@@ -273,6 +287,7 @@ export async function startMcpApiAdapter(
           getCatalog: () => catalog,
           callTool: upstream.callTool,
           apiKey: options.apiKey,
+          jwtAuth: options.jwtAuth,
         })
       : undefined;
 

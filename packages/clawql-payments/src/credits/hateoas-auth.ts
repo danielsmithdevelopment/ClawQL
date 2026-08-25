@@ -45,7 +45,7 @@ export function isCreditsHateoasAuthRequired(env: NodeJS.ProcessEnv = process.en
   if (envFlag("CLAWQL_CREDITS_HATEOAS_PUBLIC", env)) return false;
   if (envFalsey("CLAWQL_CREDITS_HATEOAS_REQUIRE_AUTH", env)) return false;
   if (envFlag("CLAWQL_CREDITS_HATEOAS_REQUIRE_AUTH", env)) return true;
-  const mode = resolveAuthMode(env);
+  const mode = Effect.runSync(resolveAuthMode(env));
   return mode === "apiKey" || mode === "oidc";
 }
 
@@ -145,7 +145,7 @@ export function createCreditsHateoasAuthMiddleware(
   options: CreditsHateoasAuthOptions = {}
 ): (req: Request, res: Response, next: NextFunction) => void {
   const env = options.env ?? process.env;
-  const authConfig = options.authConfig ?? loadGatewayAuthConfig(env);
+  const authConfig = options.authConfig ?? Effect.runSync(loadGatewayAuthConfig(env));
 
   return (req: Request, res: Response, next: NextFunction): void => {
     void (async () => {

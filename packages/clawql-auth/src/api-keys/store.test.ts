@@ -1,11 +1,12 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { AuthEvent } from "../audit/auth-events.js";
 import { createIssuedApiKeyStore } from "./store.js";
-import { parseApiKeySecret } from "./crypto.js";
+import { parseApiKeySecretEffect } from "./crypto.js";
 import { resolveAtrClaimsFromHeaders } from "../gateway.js";
 
 describe("IssuedApiKeyStore", () => {
@@ -34,17 +35,21 @@ describe("IssuedApiKeyStore", () => {
     const events: AuthEvent[] = [];
     const { store, path } = await tempStore(events);
 
-    const issued = await store.issue({
-      subjectId: "user-1",
-      orgId: "org-acme",
-      teamId: "eng",
-      role: "operator",
-      label: "ci",
-    });
+    const issued = await Effect.runPromise(
+      store.issue({
+        subjectId: "user-1",
+        orgId: "org-acme",
+        teamId: "eng",
+        role: "operator",
+        label: "ci",
+      })
+    );
 
     expect(issued.record.id).toMatch(/^cqk_[a-f0-9]{16}$/);
     expect(issued.secret.startsWith(issued.record.id + "_")).toBe(true);
-    expect(parseApiKeySecret(issued.secret)?.id).toBe(issued.record.id);
+    expect((await Effect.runPromise(parseApiKeySecretEffect(issued.secret)))?.id).toBe(
+      issued.record.id
+    );
 
     const raw = await import("node:fs/promises").then((fs) => fs.readFile(path, "utf8"));
     const secretPart = issued.secret.slice(issued.record.id.length + 1);
@@ -52,7 +57,7 @@ describe("IssuedApiKeyStore", () => {
     expect(raw).not.toContain(secretPart);
     expect(raw).toContain(issued.record.secretHash);
 
-    const ok = store.validate(issued.secret);
+    const ok = await Effect.runPromise(store.validate(issued.secret));
     expect(ok.ok).toBe(true);
     if (ok.ok) {
       expect(ok.record.orgId).toBe("org-acme");
@@ -60,46 +65,60 @@ describe("IssuedApiKeyStore", () => {
     }
 
     expect(events.some((e) => e.type === "API_KEY_ISSUED")).toBe(true);
-    expect(events.some((e) => e.type === "API_KEY_USED")).toBe(true);
+    await Effect.runPromise(
+      Effect.sleep("20 millis").pipe(
+        Effect.map(() => expect(events.some((e) => e.type === "API_KEY_USED")).toBe(true))
+      )
+    );
   });
 
   it("rejects wrong secret, revoked, and expired keys", async () => {
     const { store } = await tempStore();
-    const issued = await store.issue({ subjectId: "u", orgId: "o" });
+    const issued = await Effect.runPromise(store.issue({ subjectId: "u", orgId: "o" }));
 
-    expect(store.validate("not-a-key").ok).toBe(false);
-    expect(store.validate(`${issued.record.id}_wrongsecret`).ok).toBe(false);
+    expect((await Effect.runPromise(store.validate("not-a-key"))).ok).toBe(false);
+    expect((await Effect.runPromise(store.validate(`${issued.record.id}_wrongsecret`))).ok).toBe(
+      false
+    );
 
-    await store.revoke(issued.record.id);
-    expect(store.validate(issued.secret).ok).toBe(false);
+    await Effect.runPromise(store.revoke(issued.record.id));
+    expect((await Effect.runPromise(store.validate(issued.secret))).ok).toBe(false);
 
-    const expired = await store.issue({
-      subjectId: "u2",
-      expiresAt: new Date(Date.now() - 60_000),
-    });
-    expect(store.validate(expired.secret).ok).toBe(false);
+    const expired = await Effect.runPromise(
+      store.issue({
+        subjectId: "u2",
+        expiresAt: new Date(Date.now() - 60_000),
+      })
+    );
+    expect((await Effect.runPromise(store.validate(expired.secret))).ok).toBe(false);
   });
 
   it("lists active keys filtered by org/team", async () => {
     const { store } = await tempStore();
-    await store.issue({ subjectId: "a", orgId: "org1", teamId: "t1" });
-    await store.issue({ subjectId: "b", orgId: "org1", teamId: "t2" });
-    await store.issue({ subjectId: "c", orgId: "org2", teamId: "t1" });
-    const rev = await store.issue({ subjectId: "d", orgId: "org1", teamId: "t1" });
-    await store.revoke(rev.record.id);
+    await Effect.runPromise(store.issue({ subjectId: "a", orgId: "org1", teamId: "t1" }));
+    await Effect.runPromise(store.issue({ subjectId: "b", orgId: "org1", teamId: "t2" }));
+    await Effect.runPromise(store.issue({ subjectId: "c", orgId: "org2", teamId: "t1" }));
+    const rev = await Effect.runPromise(
+      store.issue({ subjectId: "d", orgId: "org1", teamId: "t1" })
+    );
+    await Effect.runPromise(store.revoke(rev.record.id));
 
-    expect(store.listActive({ orgId: "org1" })).toHaveLength(2);
-    expect(store.listActive({ orgId: "org1", teamId: "t1" })).toHaveLength(1);
+    expect(await Effect.runPromise(store.listActive({ orgId: "org1" }))).toHaveLength(2);
+    expect(await Effect.runPromise(store.listActive({ orgId: "org1", teamId: "t1" }))).toHaveLength(
+      1
+    );
   });
 
   it("wires as gateway ApiKeyClaimsResolver", async () => {
     const { store } = await tempStore();
-    const issued = await store.issue({
-      subjectId: "alice",
-      orgId: "acme",
-      role: "admin",
-      scope: ["execute", "search"],
-    });
+    const issued = await Effect.runPromise(
+      store.issue({
+        subjectId: "alice",
+        orgId: "acme",
+        role: "admin",
+        scope: ["execute", "search"],
+      })
+    );
 
     const result = resolveAtrClaimsFromHeaders(
       { "x-api-key": issued.secret },
@@ -124,12 +143,15 @@ describe("IssuedApiKeyStore", () => {
 
   it("serializes concurrent issue without losing keys", async () => {
     const { store } = await tempStore();
-    const results = await Promise.all(
-      Array.from({ length: 20 }, (_, i) =>
-        store.issue({ subjectId: `u${i}`, orgId: "org", teamId: "team" })
+    const results = await Effect.runPromise(
+      Effect.all(
+        Array.from({ length: 20 }, (_, i) =>
+          store.issue({ subjectId: `u${i}`, orgId: "org", teamId: "team" })
+        ),
+        { concurrency: "unbounded" }
       )
     );
     expect(new Set(results.map((r) => r.record.id)).size).toBe(20);
-    expect(store.listActive({ orgId: "org" })).toHaveLength(20);
+    expect(await Effect.runPromise(store.listActive({ orgId: "org" }))).toHaveLength(20);
   });
 });

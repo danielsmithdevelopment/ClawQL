@@ -1,7 +1,12 @@
 /**
  * Auth event taxonomy for optional WORM / audit sinks.
  * clawql-auth stays free of a clawql-audit dependency — hosts inject a sink.
+ *
+ * Effect-primary: sinks return `Effect`; {@link emitAuthEventEffect} is the domain API.
+ * Absolute host boundaries may `Effect.runPromise(emitAuthEventEffect(...))`.
  */
+
+import { Effect } from "effect";
 
 export type AuthEvent =
   | {
@@ -71,6 +76,22 @@ export type AuthEvent =
       scope: string[];
       expiresAt: string;
       timestamp: string;
+      /** Human subject when issued via EMA / ID-JAG (same as ATR sub). */
+      subjectId?: string;
+      orgId?: string;
+      /** Resolved ATR role when issued via EMA / ID-JAG group mapping. */
+      role?: string;
+      /** All IdP group claims on the ID-JAG assertion. */
+      idpGroups?: string[];
+      /** IdP groups that matched admin-configured mappings and drove this scope. */
+      matchedIdpGroups?: string[];
+      /**
+       * ID-JAG assertion `jti` when `grantType` is `id_jag`.
+       * Correlates this entry with the matching {@link AuthEvent} `ID_JAG_ASSERTION_ISSUED`.
+       */
+      idJagJti?: string;
+      /** SHA-256 hex of the access JWT — join key for revoke / denylist lookup. */
+      accessTokenHash?: string;
     }
   | {
       type: "MCP_TOKEN_REFRESHED";
@@ -83,22 +104,63 @@ export type AuthEvent =
       clientId: string;
       reason: string;
       timestamp: string;
+      /** Present when an access JWT (not refresh) was revoked via hash denylist. */
+      accessTokenHash?: string;
     }
   | {
       type: "MCP_TOKEN_VALIDATION_FAILED";
       reason: string;
       timestamp: string;
+    }
+  | {
+      type: "ID_JAG_ASSERTION_ISSUED";
+      orgId: string;
+      connectorId: string;
+      subjectId: string;
+      audience: string;
+      groups: string[];
+      /** Assertion JWT `jti` — join key with {@link AuthEvent} `MCP_TOKEN_ISSUED.idJagJti`. */
+      jti: string;
+      expiresAt: string;
+      timestamp: string;
+    }
+  | {
+      type: "VAULT_LEASE_ISSUED";
+      leaseId: string;
+      rolePath: string;
+      leaseDurationSec: number;
+      timestamp: string;
+    }
+  | {
+      type: "VAULT_LEASE_RENEWED";
+      leaseId: string;
+      rolePath: string;
+      leaseDurationSec: number;
+      timestamp: string;
+    }
+  | {
+      type: "DOMAIN_TXT_VERIFIED";
+      domain: string;
+      timestamp: string;
     };
 
-export type AuthEventSink = (event: AuthEvent) => void | Promise<void>;
+/** Effect-primary sink — hosts inject WORM / logging without Promise domain APIs. */
+export type AuthEventSink = (event: AuthEvent) => Effect.Effect<void, unknown>;
 
 /** No-op sink (tests / hosts that log elsewhere). */
-export const noopAuthEventSink: AuthEventSink = () => undefined;
+export const noopAuthEventSink: AuthEventSink = () => Effect.void;
 
-export async function emitAuthEvent(
+/** Append an auth event through the injected sink (no-op when unset). */
+export function emitAuthEventEffect(
   sink: AuthEventSink | undefined,
   event: AuthEvent
-): Promise<void> {
-  if (!sink) return;
-  await sink(event);
+): Effect.Effect<void> {
+  if (!sink) return Effect.void;
+  return Effect.gen(function* () {
+    const result = sink(event);
+    // Effect-primary sinks return Effect; sync push-style test sinks return void.
+    if (result != null && Effect.isEffect(result)) {
+      yield* result.pipe(Effect.catchAll(() => Effect.void));
+    }
+  });
 }

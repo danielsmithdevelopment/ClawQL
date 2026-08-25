@@ -44,13 +44,29 @@ import { handleNextcloudWebhookRequest } from "./nextcloud-webhook.js";
 import { handleIdpPipelineRunRequest } from "./idp-pipeline-run-http.js";
 import { handleLangfuseEvalWebhookRequest } from "./langfuse-eval-webhook.js";
 import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
+import { createMcpOAuthRateLimiter } from "./mcp-oauth-rate-limit.js";
 import {
+  attachMcpOAuthRoutes,
+  createIdJagIssuerFromEnv,
+  createIssuedApiKeyStore,
+  createMcpOAuthFromEnv,
+  isIdJagIssuerEnabled,
+  isMcpOAuthEnabled,
   loadGatewayAuthConfig,
   resolveAtrClaimsFromHeadersEffect,
+  resolveSecretStore,
+  warnIfMcpOAuthAuditDisabled,
+  warnIfMcpOAuthHs256Only,
+  warnIfMcpOAuthAdminKeyMissing,
   type ApiKeyClaimsResolver,
+  type AtrClaims,
   type GatewayAuthConfig,
+  type IdJagIssuerRuntime,
+  type McpOAuthRuntime,
 } from "clawql-auth";
 import { Effect } from "effect";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { validateVirtualKey } from "clawql-inference";
 import { attachCreditsHateoasRoutes } from "clawql-payments";
 import { attachPaymentsWellKnownRoutes } from "clawql-payments/discovery";
@@ -90,13 +106,48 @@ export function createInferenceVirtualKeyClaimsResolver(
   };
 }
 
-function buildGatewayAuthConfig(env: NodeJS.ProcessEnv = process.env): GatewayAuthConfig {
-  const config = loadGatewayAuthConfig(env);
-  if (config.mode !== "apiKey") return config;
-  return {
-    ...config,
-    apiKeyClaimsResolver: createInferenceVirtualKeyClaimsResolver(env),
+function composeApiKeyClaimsResolvers(
+  ...resolvers: Array<ApiKeyClaimsResolver | undefined>
+): ApiKeyClaimsResolver | undefined {
+  const active = resolvers.filter((r): r is ApiKeyClaimsResolver => r != null);
+  if (!active.length) return undefined;
+  if (active.length === 1) return active[0];
+  return (presented, headers) => {
+    for (const resolver of active) {
+      const result = resolver(presented, headers);
+      if (result !== null) return result;
+    }
+    return null;
   };
+}
+
+function issuedApiKeyClaimsResolver(
+  env: NodeJS.ProcessEnv = process.env
+): ApiKeyClaimsResolver | undefined {
+  const explicit = env.CLAWQL_API_KEYS_PATH?.trim();
+  const homeDefault =
+    env.CLAWQL_HOME?.trim() != null
+      ? join(env.CLAWQL_HOME.trim(), "Auth", "api-keys.json")
+      : undefined;
+  const path = explicit || homeDefault;
+  if (!path) return undefined;
+  // Only auto-load $CLAWQL_HOME default when the file already exists (avoid creating empty store on boot).
+  if (!explicit && homeDefault && !existsSync(homeDefault)) return undefined;
+  return createIssuedApiKeyStore({ path }).asClaimsResolver();
+}
+
+function buildGatewayAuthConfig(
+  env: NodeJS.ProcessEnv = process.env,
+  mcpOAuthValidator?: (bearer: string) => Effect.Effect<AtrClaims, unknown>
+): GatewayAuthConfig {
+  const config = Effect.runSync(loadGatewayAuthConfig(env));
+  const withMcp = mcpOAuthValidator != null ? { ...config, mcpOAuthValidator } : config;
+  const issued = issuedApiKeyClaimsResolver(env);
+  const inference =
+    withMcp.mode === "apiKey" ? createInferenceVirtualKeyClaimsResolver(env) : undefined;
+  const composed = composeApiKeyClaimsResolvers(issued, inference, withMcp.apiKeyClaimsResolver);
+  if (!composed) return withMcp;
+  return { ...withMcp, apiKeyClaimsResolver: composed };
 }
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
@@ -196,6 +247,10 @@ export type CreateMcpHttpAppOptions = {
     | "enableDocuments"
     | "enableIdpPipeline"
   >;
+  /** Skip MCP OAuth token route (tests). */
+  skipMcpOAuth?: boolean;
+  /** Inject MCP OAuth runtime (tests). */
+  mcpOAuthRuntime?: McpOAuthRuntime;
 };
 
 /**
@@ -220,14 +275,105 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
   app.use(applyCorsIfConfigured);
 
+  app.use("/oauth/token", express.urlencoded({ extended: false }));
+  app.use("/oauth/revoke", express.urlencoded({ extended: false }));
+  app.use("/oauth/ema", express.json());
+  app.use("/oauth/id-jag", express.json());
+
+  const mcpOAuthRateLimiter = createMcpOAuthRateLimiter();
+  app.use("/oauth/token", mcpOAuthRateLimiter);
+  app.use("/oauth/revoke", mcpOAuthRateLimiter);
+  app.use("/oauth/authorize", mcpOAuthRateLimiter);
+  app.use("/oauth/id-jag", mcpOAuthRateLimiter);
+  app.use("/oauth/ema", mcpOAuthRateLimiter);
+
+  const injectedMcpOAuth = options.mcpOAuthRuntime != null;
+  let mcpOAuthRuntime: McpOAuthRuntime | null = options.mcpOAuthRuntime ?? null;
+  if (!options.skipMcpOAuth && !mcpOAuthRuntime && Effect.runSync(isMcpOAuthEnabled(process.env))) {
+    mcpOAuthRuntime = await Effect.runPromise(createMcpOAuthFromEnv());
+  }
+
+  let idJagIssuer: IdJagIssuerRuntime | null = mcpOAuthRuntime?.idJagIssuer ?? null;
+  if (!idJagIssuer && Effect.runSync(isIdJagIssuerEnabled(process.env))) {
+    idJagIssuer = await Effect.runPromise(
+      createIdJagIssuerFromEnv({
+        secretStore: resolveSecretStore(),
+      })
+    );
+  }
+
+  /**
+   * Gateway auth: `noAuth` | `apiKey` (static + inference VKs) | `oidc` (JWT consumer)
+   * | `mcpOAuth` (ClawQL-issued MCP JWT). When MCP OAuth is enabled, Bearer tokens
+   * from `/oauth/token` are also accepted in hybrid mode alongside apiKey/oidc.
+   */
+  const gatewayAuthConfig = buildGatewayAuthConfig(process.env, mcpOAuthRuntime?.validateBearer);
+
+  const resolveEmaAdminClaims = (req: import("express").Request) =>
+    resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig).pipe(
+      Effect.map((claims) => claims),
+      Effect.catchAll(() => Effect.succeed(null as AtrClaims | null))
+    );
+
+  const emaAdminAuth = {
+    adminApiKey: process.env.CLAWQL_API_KEY?.trim(),
+    resolveAdminClaims: resolveEmaAdminClaims,
+    requiredRole: process.env.CLAWQL_EMA_ADMIN_REQUIRED_ROLE?.trim() || "admin",
+  };
+  const emaAdminConfigured = Boolean(emaAdminAuth.adminApiKey || mcpOAuthRuntime || idJagIssuer);
+
+  if (mcpOAuthRuntime || idJagIssuer) {
+    // createMcpOAuthFromEnv already warns; only re-warn for injected test/runtime hosts.
+    if (mcpOAuthRuntime && injectedMcpOAuth) {
+      Effect.runSync(warnIfMcpOAuthAuditDisabled(process.env));
+      Effect.runSync(warnIfMcpOAuthHs256Only(process.env));
+    }
+    Effect.runSync(
+      warnIfMcpOAuthAdminKeyMissing(process.env, {
+        mcpOAuthEnabled: !!mcpOAuthRuntime,
+        idJagIssuerEnabled: !!idJagIssuer,
+      })
+    );
+    attachMcpOAuthRoutes(app, mcpOAuthRuntime?.server ?? null, {
+      wellKnown: mcpOAuthRuntime
+        ? {
+            issuer: mcpOAuthRuntime.config.issuer,
+            resourceAudience: mcpOAuthRuntime.config.resourceAudience,
+          }
+        : undefined,
+      jwks: mcpOAuthRuntime?.jwks,
+      resolveAuthorizeClaims: mcpOAuthRuntime
+        ? async (req) =>
+            Effect.runPromise(resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig))
+        : undefined,
+      emaAdmin:
+        mcpOAuthRuntime && emaAdminConfigured
+          ? {
+              store: mcpOAuthRuntime.emaStore,
+              ...emaAdminAuth,
+            }
+          : undefined,
+      mcpClientsAdmin:
+        mcpOAuthRuntime && emaAdminConfigured
+          ? {
+              registry: mcpOAuthRuntime.clientRegistry,
+              ...emaAdminAuth,
+            }
+          : undefined,
+      idJagIssuer: idJagIssuer
+        ? {
+            service: idJagIssuer.service,
+            connectors: idJagIssuer.connectors,
+            defaultOrgId: idJagIssuer.material.orgId,
+            ...emaAdminAuth,
+          }
+        : undefined,
+    });
+  }
+
   attachPaymentsWellKnownRoutes(app, { serverName: "ClawQL MCP" });
   // HTMX forms on /credits/* (invite claim / accept / decline)
   app.use("/credits", express.urlencoded({ extended: false }));
-  /**
-   * Gateway auth: `noAuth` | `apiKey` (static + inference VKs) | `oidc` (JWT consumer).
-   * OIDC verifies IdP-issued bearer tokens asynchronously — ClawQL is not an IdP.
-   */
-  const gatewayAuthConfig = buildGatewayAuthConfig();
   attachCreditsHateoasRoutes(app, { authConfig: gatewayAuthConfig });
   if (isMppOpenApiEnabled(process.env)) {
     attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });

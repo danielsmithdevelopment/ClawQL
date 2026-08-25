@@ -35,6 +35,16 @@ export {
   asObjectRequestSchema,
 } from "./schema-convert.js";
 export { runCli } from "./cli.js";
+export {
+  createJwtVerifier,
+  edgeAuthConfigured,
+  verifyEdgeCredential,
+} from "./edge-auth.js";
+export type {
+  McpApiAdapterJwtAuthOptions,
+  McpApiAdapterEdgeAuthOptions,
+  VerifiedMcpAdapterAtr,
+} from "./edge-auth.js";
 export type {
   McpApiAdapterOptions,
   McpApiAdapterHttpOptions,
