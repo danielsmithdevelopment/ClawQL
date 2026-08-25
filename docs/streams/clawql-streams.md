@@ -13,7 +13,7 @@ ClawQL Streams is the event-driven autonomous agent execution layer for ClawQL. 
 
 Together with ClawQL Core (any protocol → MCP) and [`mcp-api-adapter`](../mcp/mcp-api-adapter.md) (MCP → any protocol), Streams completes the **Protocol Fabric**: MCP as the common intermediate representation, plus an event loop that can act on world events — not only interactive agent sessions.
 
-![ClawQL Streams architecture — Event Stream into Core + mcp-api-adapter + NATS JetStream; API sources and transport layers; WORM audit and RTP finetune exports; HTMX / MCP-UI](/streams/clawql-streams-architecture.webp)
+![ClawQL Streams architecture — Event Stream into Core + mcp-api-adapter + NATS JetStream; API sources and transport layers; WORM audit and RTP finetune exports; HTMX / MCP-UI](/images/streams/clawql-streams-architecture.webp)
 
 Marketing landing: [clawql.com/streams](https://clawql.com/streams).
 

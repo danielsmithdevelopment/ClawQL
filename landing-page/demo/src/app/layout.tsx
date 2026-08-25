@@ -119,7 +119,7 @@ export default function RootLayout({
             id="navbar"
             links={
               <>
-                <NavbarLink href="/#fabric">Fabric</NavbarLink>
+                <NavbarLink href={site.urls.protocolFabric}>Fabric</NavbarLink>
                 <NavbarLink href="/#autonomous" className="max-lg:hidden">
                   Autonomous
                 </NavbarLink>
@@ -173,7 +173,7 @@ export default function RootLayout({
             links={
               <>
                 <FooterCategory title="Product">
-                  <FooterLink href="/#fabric">Protocol Fabric</FooterLink>
+                  <FooterLink href={site.urls.protocolFabric}>Protocol Fabric</FooterLink>
                   <FooterLink href="/#autonomous">Autonomous agents</FooterLink>
                   <FooterLink href="/#proof">OpenBench proof</FooterLink>
                   <FooterLink href="/#tools">Core tools</FooterLink>

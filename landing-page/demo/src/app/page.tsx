@@ -99,14 +99,14 @@ export default function Page() {
         }
         cta={
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <Link href={protocolFabricSurfaces.pageHref}>
+              Protocol Fabric <ArrowNarrowRightIcon />
+            </Link>
             <Link href={protocolFabricSurfaces.docsHref}>
-              Protocol Fabric docs <ArrowNarrowRightIcon />
+              Fabric docs <ArrowNarrowRightIcon />
             </Link>
             <Link href={protocolFabricSurfaces.adapterHref}>
               mcp-api-adapter <ArrowNarrowRightIcon />
-            </Link>
-            <Link href={site.urls.agents}>
-              Agentic platform <ArrowNarrowRightIcon />
             </Link>
           </div>
         }
