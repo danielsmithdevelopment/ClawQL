@@ -48,12 +48,17 @@ import {
 import {
   bootstrapMcpClientsToStoreEffect,
   createCompositeMcpClientRegistry,
+  createSecretStoreMcpAccessTokenStore,
   createSecretStoreMcpClientRegistry,
   createSecretStoreMcpRefreshStore,
   loadMcpClientsFromJson,
   loadMcpClientsFromJsonFile,
   type SecretStoreMcpClientRegistry,
 } from "./mcp-oauth-stores.js";
+import {
+  isMcpOAuthBootstrapStrict,
+  McpOAuthBootstrapError,
+} from "./mcp-oauth-bootstrap.js";
 
 export type McpOAuthEnvConfig = {
   enabled: boolean;
@@ -126,7 +131,9 @@ export type McpOAuthRuntime = {
   idJagIssuer?: IdJagIssuerRuntime;
 };
 
-function loadEmaBootstrapConfigs(env: NodeJS.ProcessEnv): Effect.Effect<EmaOrgConfig[]> {
+function loadEmaBootstrapConfigs(
+  env: NodeJS.ProcessEnv
+): Effect.Effect<EmaOrgConfig[], McpOAuthBootstrapError> {
   return Effect.gen(function* () {
     const inline = env.CLAWQL_EMA_ORGS_JSON?.trim();
     if (inline) {
@@ -135,9 +142,11 @@ function loadEmaBootstrapConfigs(env: NodeJS.ProcessEnv): Effect.Effect<EmaOrgCo
         catch: (cause) => cause,
       }).pipe(
         Effect.catchAll((cause) =>
-          warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_JSON", cause).pipe(
-            Effect.as([] as EmaOrgConfig[])
-          )
+          isMcpOAuthBootstrapStrict(env)
+            ? Effect.fail(new McpOAuthBootstrapError({ source: "CLAWQL_EMA_ORGS_JSON", cause }))
+            : warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_JSON", cause).pipe(
+                Effect.as([] as EmaOrgConfig[])
+              )
         )
       );
     }
@@ -148,9 +157,11 @@ function loadEmaBootstrapConfigs(env: NodeJS.ProcessEnv): Effect.Effect<EmaOrgCo
         catch: (cause) => cause,
       }).pipe(
         Effect.catchAll((cause) =>
-          warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_PATH", cause).pipe(
-            Effect.as([] as EmaOrgConfig[])
-          )
+          isMcpOAuthBootstrapStrict(env)
+            ? Effect.fail(new McpOAuthBootstrapError({ source: "CLAWQL_EMA_ORGS_PATH", cause }))
+            : warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_PATH", cause).pipe(
+                Effect.as([] as EmaOrgConfig[])
+              )
         )
       );
     }
@@ -165,9 +176,11 @@ function loadEmaBootstrapConfigs(env: NodeJS.ProcessEnv): Effect.Effect<EmaOrgCo
         catch: (cause) => cause,
       }).pipe(
         Effect.catchAll((cause) =>
-          warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_FILE", cause).pipe(
-            Effect.as([] as EmaOrgConfig[])
-          )
+          isMcpOAuthBootstrapStrict(env)
+            ? Effect.fail(new McpOAuthBootstrapError({ source: "CLAWQL_EMA_ORGS_FILE", cause }))
+            : warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_FILE", cause).pipe(
+                Effect.as([] as EmaOrgConfig[])
+              )
         )
       );
     }
@@ -175,7 +188,9 @@ function loadEmaBootstrapConfigs(env: NodeJS.ProcessEnv): Effect.Effect<EmaOrgCo
   });
 }
 
-function loadMcpClientBootstrap(env: NodeJS.ProcessEnv): Effect.Effect<McpRegisteredClient[]> {
+function loadMcpClientBootstrap(
+  env: NodeJS.ProcessEnv
+): Effect.Effect<McpRegisteredClient[], McpOAuthBootstrapError> {
   return Effect.gen(function* () {
     const inline = env.CLAWQL_MCP_OAUTH_CLIENTS_JSON?.trim();
     if (inline) {
@@ -184,9 +199,13 @@ function loadMcpClientBootstrap(env: NodeJS.ProcessEnv): Effect.Effect<McpRegist
         catch: (cause) => cause,
       }).pipe(
         Effect.catchAll((cause) =>
-          warnIfMcpOAuthBootstrapInvalid("CLAWQL_MCP_OAUTH_CLIENTS_JSON", cause).pipe(
-            Effect.as([] as McpRegisteredClient[])
-          )
+          isMcpOAuthBootstrapStrict(env)
+            ? Effect.fail(
+                new McpOAuthBootstrapError({ source: "CLAWQL_MCP_OAUTH_CLIENTS_JSON", cause })
+              )
+            : warnIfMcpOAuthBootstrapInvalid("CLAWQL_MCP_OAUTH_CLIENTS_JSON", cause).pipe(
+                Effect.as([] as McpRegisteredClient[])
+              )
         )
       );
     }
@@ -197,9 +216,13 @@ function loadMcpClientBootstrap(env: NodeJS.ProcessEnv): Effect.Effect<McpRegist
         catch: (cause) => cause,
       }).pipe(
         Effect.catchAll((cause) =>
-          warnIfMcpOAuthBootstrapInvalid("CLAWQL_MCP_OAUTH_CLIENTS_PATH", cause).pipe(
-            Effect.as([] as McpRegisteredClient[])
-          )
+          isMcpOAuthBootstrapStrict(env)
+            ? Effect.fail(
+                new McpOAuthBootstrapError({ source: "CLAWQL_MCP_OAUTH_CLIENTS_PATH", cause })
+              )
+            : warnIfMcpOAuthBootstrapInvalid("CLAWQL_MCP_OAUTH_CLIENTS_PATH", cause).pipe(
+                Effect.as([] as McpRegisteredClient[])
+              )
         )
       );
     }
@@ -213,7 +236,7 @@ function loadMcpClientBootstrap(env: NodeJS.ProcessEnv): Effect.Effect<McpRegist
  */
 export function createMcpOAuthFromEnv(
   options: CreateMcpOAuthFromEnvOptions = {}
-): Effect.Effect<McpOAuthRuntime | null, McpOAuthSigningError> {
+): Effect.Effect<McpOAuthRuntime | null, McpOAuthSigningError | McpOAuthBootstrapError> {
   return Effect.gen(function* () {
     const env = options.env ?? process.env;
     const envConfig = yield* loadMcpOAuthEnvConfig(env);
@@ -228,6 +251,7 @@ export function createMcpOAuthFromEnv(
     const emaStore = createSecretStoreEmaConfigStore(secretStore);
     const clientRegistry = createSecretStoreMcpClientRegistry(secretStore);
     const refreshStore = createSecretStoreMcpRefreshStore(secretStore);
+    const accessTokenStore = createSecretStoreMcpAccessTokenStore(secretStore);
 
     yield* bootstrapEmaOrgsToStoreEffect(emaStore, yield* loadEmaBootstrapConfigs(env));
     yield* bootstrapMcpClientsToStoreEffect(clientRegistry, yield* loadMcpClientBootstrap(env));
@@ -254,6 +278,7 @@ export function createMcpOAuthFromEnv(
       refreshTokenTtlSeconds: envConfig.refreshTokenTtlSeconds,
       emaConfigStore,
       authCodeStore,
+      accessTokenStore,
       eventSink,
     };
 
@@ -306,6 +331,7 @@ export function createMcpOAuthForTests(input: {
       resourceAudience: input.resourceAudience,
       emaConfigStore: emaStore,
       authCodeStore: createMemoryMcpAuthorizationCodeStore(),
+      accessTokenStore: createSecretStoreMcpAccessTokenStore(secretStore),
       eventSink: input.eventSink,
     };
     const server = createMCPOAuthServer(

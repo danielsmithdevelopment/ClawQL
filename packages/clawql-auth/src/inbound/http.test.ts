@@ -85,6 +85,9 @@ async function withTestApp(
     emaAdmin: options?.adminApiKey
       ? { store: runtime.emaStore, adminApiKey: options.adminApiKey }
       : undefined,
+    mcpClientsAdmin: options?.adminApiKey
+      ? { registry: runtime.clientRegistry, adminApiKey: options.adminApiKey }
+      : undefined,
   });
 
   const server = app.listen(0);
@@ -368,6 +371,115 @@ describe("attachMcpOAuthRoutes", () => {
       await new Promise<void>((resolve, reject) =>
         server.close((err) => (err ? reject(err) : resolve()))
       );
+    }
+  });
+
+  it("CRUD MCP clients under /oauth/ema/clients with admin key", async () => {
+    await withTestApp(
+      async (baseUrl) => {
+        const put = await fetch(`${baseUrl}/oauth/ema/clients/new-agent`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": "admin-test-key",
+          },
+          body: JSON.stringify({
+            defaultScope: ["execute", "search"],
+            defaultRole: "operator",
+            orgId: "acme",
+            clientSecret: "super-secret-client",
+          }),
+        });
+        expect(put.status).toBe(200);
+        const saved = (await put.json()) as {
+          clientId: string;
+          hasClientSecret: boolean;
+          clientSecretHash?: string;
+        };
+        expect(saved.clientId).toBe("new-agent");
+        expect(saved.hasClientSecret).toBe(true);
+        expect(saved.clientSecretHash).toBeUndefined();
+
+        const list = await fetch(`${baseUrl}/oauth/ema/clients`, {
+          headers: { "x-api-key": "admin-test-key" },
+        });
+        expect(list.status).toBe(200);
+        const listed = (await list.json()) as { clients: Array<{ clientId: string }> };
+        expect(listed.clients.some((c) => c.clientId === "new-agent")).toBe(true);
+
+        const del = await fetch(`${baseUrl}/oauth/ema/clients/new-agent`, {
+          method: "DELETE",
+          headers: { "x-api-key": "admin-test-key" },
+        });
+        expect(del.status).toBe(204);
+      },
+      { adminApiKey: "admin-test-key" }
+    );
+  });
+
+  it("accepts EMA admin via resolveAdminClaims with admin role", async () => {
+    const idpSecret = "test-idp-hs256-secret-at-least-32-chars!!";
+    const signingSecret = "test-mcp-oauth-signing-secret-32b!!";
+    const audience = "https://mcp.clawql.test/";
+    const runtime = await Effect.runPromise(
+      createMcpOAuthForTests({
+        issuer: "https://auth.clawql.test",
+        signingSecret,
+        resourceAudience: audience,
+      })
+    );
+
+    const app = express();
+    app.use("/oauth/ema", express.json());
+    attachMcpOAuthRoutes(app, runtime.server, {
+      emaAdmin: {
+        store: runtime.emaStore,
+        resolveAdminClaims: () =>
+          Effect.succeed({
+            sub: "cqk-admin",
+            role: "admin",
+            scope: ["ema:admin"],
+          }),
+      },
+    });
+    const server = app.listen(0);
+    const addr = server.address();
+    const port = typeof addr === "object" && addr ? addr.port : 0;
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/oauth/ema/orgs`, {
+        headers: { authorization: "Bearer ignored-for-resolver" },
+      });
+      expect(res.status).toBe(200);
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve()))
+      );
+    }
+    void idpSecret;
+  });
+
+  it("rate-limits oauth/token when quota exceeded", async () => {
+    const { resetMcpOAuthRateLimitBucketsForTests } = await import("./oauth-rate-limit.js");
+    resetMcpOAuthRateLimitBucketsForTests();
+    const prev = process.env.CLAWQL_MCP_OAUTH_RATE_LIMIT_PER_MIN;
+    process.env.CLAWQL_MCP_OAUTH_RATE_LIMIT_PER_MIN = "2";
+    try {
+      await withTestApp(async (baseUrl) => {
+        const body = new URLSearchParams({
+          grant_type: "client_credentials",
+          client_id: "cursor-desktop",
+        });
+        const a = await fetch(`${baseUrl}/oauth/token`, { method: "POST", body });
+        const b = await fetch(`${baseUrl}/oauth/token`, { method: "POST", body });
+        const c = await fetch(`${baseUrl}/oauth/token`, { method: "POST", body });
+        expect(a.status).toBe(200);
+        expect(b.status).toBe(200);
+        expect(c.status).toBe(429);
+      });
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_MCP_OAUTH_RATE_LIMIT_PER_MIN;
+      else process.env.CLAWQL_MCP_OAUTH_RATE_LIMIT_PER_MIN = prev;
+      resetMcpOAuthRateLimitBucketsForTests();
     }
   });
 });

@@ -12,6 +12,8 @@ import { Effect } from "effect";
 
 import type { SecretStore } from "../stores/types.js";
 import type {
+  McpAccessTokenRecord,
+  McpAccessTokenStore,
   McpClientRegistry,
   McpRefreshRecord,
   McpRefreshStore,
@@ -20,6 +22,7 @@ import type {
 
 export const MCP_OAUTH_CLIENT_PREFIX = "mcp-oauth/clients/";
 export const MCP_OAUTH_REFRESH_PREFIX = "mcp-oauth/refresh/";
+export const MCP_OAUTH_ACCESS_PREFIX = "mcp-oauth/access/";
 
 function clientPath(clientId: string): string {
   return `${MCP_OAUTH_CLIENT_PREFIX}${clientId.trim()}`;
@@ -27,6 +30,10 @@ function clientPath(clientId: string): string {
 
 function refreshPath(hash: string): string {
   return `${MCP_OAUTH_REFRESH_PREFIX}${hash}`;
+}
+
+function accessPath(hash: string): string {
+  return `${MCP_OAUTH_ACCESS_PREFIX}${hash}`;
 }
 
 export function createSecretStoreMcpRefreshStore(store: SecretStore): McpRefreshStore {
@@ -46,6 +53,39 @@ export function createSecretStoreMcpRefreshStore(store: SecretStore): McpRefresh
         }
       }).pipe(Effect.orDie),
     revoke: (hash) => store.deleteSecret(refreshPath(hash)).pipe(Effect.orDie),
+  };
+}
+
+export function createSecretStoreMcpAccessTokenStore(store: SecretStore): McpAccessTokenStore {
+  return {
+    save: (hash, record) =>
+      store
+        .setSecret(accessPath(hash), JSON.stringify(record satisfies McpAccessTokenRecord))
+        .pipe(Effect.orDie),
+    get: (hash) =>
+      Effect.gen(function* () {
+        const raw = yield* store.getSecret(accessPath(hash));
+        if (!raw) return null;
+        try {
+          return JSON.parse(raw) as McpAccessTokenRecord;
+        } catch {
+          return null;
+        }
+      }).pipe(Effect.orDie),
+    revoke: (hash) =>
+      Effect.gen(function* () {
+        const existing = yield* store.getSecret(accessPath(hash));
+        if (!existing) return;
+        try {
+          const record = JSON.parse(existing) as McpAccessTokenRecord;
+          yield* store.setSecret(
+            accessPath(hash),
+            JSON.stringify({ ...record, revokedAtMs: Date.now() } satisfies McpAccessTokenRecord)
+          );
+        } catch {
+          yield* store.deleteSecret(accessPath(hash));
+        }
+      }).pipe(Effect.orDie),
   };
 }
 

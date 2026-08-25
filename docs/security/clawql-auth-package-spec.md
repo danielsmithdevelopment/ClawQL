@@ -231,9 +231,9 @@ type EmaOrgConfig = {
 
 ID-JAG exchange verifies the IdP assertion (JWKS / HS256 dev), maps groups → ATR scope, mints RS256 (production) or HS256 (dev) access JWT + `atr` claim used by `client_credentials`, and emits **`MCP_TOKEN_ISSUED`** with `grantType: "id_jag"`, `subjectId`, `orgId`, `role`, `scope`, `idpGroups` (all assertion groups), and `matchedIdpGroups` (groups that drove the mapping). RS256 deployments publish verifying keys at `GET /.well-known/jwks.json` with `jwks_uri` in OAuth AS discovery. No refresh token is issued — token lifetime follows IdP policy (same downstream Panguard enforcement path).
 
-**Auth WORM (shipped):** `createMcpOAuthFromEnv()` wires `createAuthEventSinkFromEnv()` by default. Entries append to a hash-chained SQLite log at `$CLAWQL_HOME/auth-audit.db` unless overridden. Set `CLAWQL_AUTH_AUDIT_STORE=off` to disable; `memory` for tests. Intentionally **no** `accessTokenHash` on events until a token→entry lookup path exists.
+**Auth WORM (shipped):** `createMcpOAuthFromEnv()` wires `createAuthEventSinkFromEnv()` by default. Entries append to a hash-chained SQLite log at `$CLAWQL_HOME/auth-audit.db` unless overridden. Set `CLAWQL_AUTH_AUDIT_STORE=off` to disable; `memory` for tests. `MCP_TOKEN_ISSUED` includes `accessTokenHash` (SHA-256 of the access JWT); revoke-by-access-token writes a denylist record and rejects subsequent `validateToken`.
 
-**Boot SECURITY WARNINGs (same convention):** audit store `off`; ID-JAG issuer sharing the MCP AS signing key; **HS256-only AS signing** (`CLAWQL_MCP_OAUTH_SIGNING_SECRET` without RS256 PEM) — JWKS cannot be published and every verifier must share the secret (prefer `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM(_PATH)`); **missing `CLAWQL_API_KEY`** while MCP OAuth / ID-JAG issuer is enabled — EMA admin and `/oauth/id-jag/issue` return 503; **invalid `CLAWQL_EMA_ORGS_*` / `CLAWQL_MCP_OAUTH_CLIENTS_*` bootstrap** — warn instead of silently empty registries.
+**Boot SECURITY WARNINGs (same convention):** audit store `off`; ID-JAG issuer sharing the MCP AS signing key; **HS256-only AS signing** (`CLAWQL_MCP_OAUTH_SIGNING_SECRET` without RS256 PEM) — JWKS cannot be published and every verifier must share the secret (prefer `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM(_PATH)`); **missing `CLAWQL_API_KEY`** while MCP OAuth / ID-JAG issuer is enabled — EMA admin and `/oauth/id-jag/issue` return 503 unless ATR admin claims (`cqk_` via `CLAWQL_API_KEYS_PATH` / MCP JWT with `role=admin` or scope `ema:admin`) succeed; **invalid `CLAWQL_EMA_ORGS_*` / `CLAWQL_MCP_OAUTH_CLIENTS_*` bootstrap** — warn + empty registry by default, or fail boot when `CLAWQL_MCP_OAUTH_BOOTSTRAP_STRICT=1`.
 
 Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery-metadata.ts` (`assertion_types_supported: id-jag`).
 
@@ -1090,6 +1090,7 @@ Agents **must not** implement provider-specific refresh — delegate to **`OAuth
 5. ~~**RS256 issued access tokens + JWKS**~~ — **Shipped** (`mcp-oauth-signing.ts`, `GET /.well-known/jwks.json`).
 6. ~~**`mcp-api-adapter` Bearer / JWKS**~~ — **Shipped** (`edge-auth.ts`: static API key and/or ClawQL MCP JWT via JWKS / HS256).
 7. ~~**AS hardening wrap-up**~~ — **Shipped**: refresh ATR claim snapshot; `client_secret_basic`; `POST /oauth/revoke` + `MCP_TOKEN_REVOKED`; timing-safe secret compares; admin-key / bootstrap SECURITY WARNINGs.
+8. ~~**Phase 1 hygiene**~~ — **Shipped**: OAuth rate limits (`CLAWQL_MCP_OAUTH_RATE_LIMIT_PER_MIN`); MCP client admin CRUD (`/oauth/ema/clients`); fail-closed bootstrap (`CLAWQL_MCP_OAUTH_BOOTSTRAP_STRICT=1`); EMA admin via static key **or** ATR claims (`cqk_` / MCP JWT with `admin` / `ema:admin`); `accessTokenHash` WORM + access-token denylist revoke.
 
 ### Three inbound paths (do not conflate)
 

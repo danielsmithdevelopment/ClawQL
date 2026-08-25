@@ -1,8 +1,11 @@
 export {
   createMCPOAuthServer,
+  createMemoryMcpAccessTokenStore,
   createMemoryMcpClientRegistry,
   createMemoryMcpRefreshStore,
   createMcpOAuthServiceLayer,
+  hashMcpAccessToken,
+  hashMcpAccessTokenEffect,
   hashMcpClientSecret,
   hashMcpClientSecretEffect,
   mcpOAuthServiceFromServer,
@@ -12,6 +15,8 @@ export {
   McpOAuthService,
   CLAWQL_MCP_OAUTH_SERVICE_TAG,
   type MCPOAuthConfig,
+  type McpAccessTokenRecord,
+  type McpAccessTokenStore,
   type McpAuthorizeRequest,
   type McpAuthorizeResult,
   type McpClientRegistry,
@@ -57,10 +62,12 @@ export {
 export {
   bootstrapMcpClientsToStoreEffect,
   createCompositeMcpClientRegistry,
+  createSecretStoreMcpAccessTokenStore,
   createSecretStoreMcpClientRegistry,
   createSecretStoreMcpRefreshStore,
   loadMcpClientsFromJson,
   loadMcpClientsFromJsonFile,
+  MCP_OAUTH_ACCESS_PREFIX,
   MCP_OAUTH_CLIENT_PREFIX,
   MCP_OAUTH_REFRESH_PREFIX,
   type SecretStoreMcpClientRegistry,
@@ -101,18 +108,30 @@ export {
 } from "./ema-connector-registry.js";
 export {
   attachMcpOAuthRoutes,
+  assertMcpOAuthAdmin,
   handleMcpOAuthAuthorizeRequest,
   handleMcpOAuthRevokeRequest,
   handleMcpOAuthTokenRequest,
   ID_JAG_ISSUE_PATH,
   ID_JAG_ISSUER_JWKS_PATH,
   MCP_OAUTH_AUTHORIZE_PATH,
+  MCP_OAUTH_CLIENTS_ADMIN_PATH,
   MCP_OAUTH_REVOKE_PATH,
   MCP_OAUTH_TOKEN_PATH,
   parseHttpBasicClientAuth,
   parseMcpOAuthTokenBody,
   type AttachMcpOAuthRoutesOptions,
+  type McpOAuthAdminAuth,
 } from "./http.js";
+export {
+  enforceMcpOAuthRateLimit,
+  mcpOAuthRateLimitPerMinute,
+  resetMcpOAuthRateLimitBucketsForTests,
+} from "./oauth-rate-limit.js";
+export {
+  isMcpOAuthBootstrapStrict,
+  McpOAuthBootstrapError,
+} from "./mcp-oauth-bootstrap.js";
 export {
   createMcpOAuthForTests,
   createMcpOAuthFromEnv,

@@ -114,12 +114,13 @@ Also shipped: **`ClientCredentialsFlow`**, **`AuthorizationCodeFlow` (PKCE)**, p
 When `CLAWQL_MCP_OAUTH_ENABLED=1`, `server-http` exposes:
 
 - `POST /oauth/token` — `client_credentials`, `refresh_token`, `authorization_code` (+ PKCE S256), and ID-JAG (`urn:ietf:params:oauth:grant-type:jwt-bearer`). Client auth: `client_secret_post` or `Authorization: Basic`.
-- `POST /oauth/revoke` — RFC 7009-style refresh-token revocation (`MCP_TOKEN_REVOKED`)
+- `POST /oauth/revoke` — RFC 7009-style refresh **or** access-token revocation (`MCP_TOKEN_REVOKED`; access JWTs use hash denylist)
 - `GET /oauth/authorize` — interactive auth-code start (requires already-authenticated gateway identity: API key / OIDC / MCP JWT). ClawQL is **not** a login IdP.
 - `GET /.well-known/oauth-authorization-server` — discovery with `token_endpoint` / `revocation_endpoint` (+ `authorization_endpoint` / `code_challenge_methods_supported` when auth-code is live)
-- `PUT/GET/DELETE /oauth/ema/orgs/:orgId` — admin API (**requires `CLAWQL_API_KEY`**)
+- `PUT/GET/DELETE /oauth/ema/orgs/:orgId` — EMA org admin (**`CLAWQL_API_KEY`** or ATR claims with `role=admin` / scope `ema:admin`, including issued `cqk_` keys via `CLAWQL_API_KEYS_PATH`)
+- `PUT/GET/DELETE /oauth/ema/clients/:clientId` — MCP client registry admin (same auth as EMA orgs)
 
-EMA org config (IdP JWKS + group→scope mappings) persists in **SecretStore** (`ema-orgs/{orgId}`). Bootstrap from `CLAWQL_EMA_ORGS_JSON` or `CLAWQL_EMA_ORGS_PATH`. Every successful token issue appends **`MCP_TOKEN_ISSUED`** to a hash-chained auth WORM log (SQLite by default via `createAuthEventSinkFromEnv`).
+EMA org config (IdP JWKS + group→scope mappings) persists in **SecretStore** (`ema-orgs/{orgId}`). Bootstrap from `CLAWQL_EMA_ORGS_JSON` or `CLAWQL_EMA_ORGS_PATH` (set `CLAWQL_MCP_OAUTH_BOOTSTRAP_STRICT=1` to fail boot on bad JSON). Every successful token issue appends **`MCP_TOKEN_ISSUED`** (with `accessTokenHash`) to a hash-chained auth WORM log. Token/authorize/revoke/id-jag routes are rate-limited (`CLAWQL_MCP_OAUTH_RATE_LIMIT_PER_MIN`, default 120).
 
 Okta shorthand:
 

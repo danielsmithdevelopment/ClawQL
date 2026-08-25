@@ -26,15 +26,15 @@ function isMcpOAuthEnabledEnv(env: NodeJS.ProcessEnv): boolean {
   if (legacyFlag === "1" || legacyFlag === "true" || legacyFlag === "yes") return true;
   return Boolean(
     env.CLAWQL_MCP_OAUTH_SIGNING_SECRET?.trim() ||
-    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
-    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
+      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
+      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
   );
 }
 
 function hasRs256SigningMaterial(env: NodeJS.ProcessEnv): boolean {
   return Boolean(
     env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
-    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
+      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
   );
 }
 
@@ -77,13 +77,15 @@ export const ID_JAG_ISSUER_SHARED_KEY_WARNING =
 
 export const MCP_OAUTH_ADMIN_KEY_MISSING_WARNING =
   "[clawql-auth] SECURITY WARNING: MCP OAuth / ID-JAG issuer is enabled but CLAWQL_API_KEY is unset — " +
-  "EMA org/connector admin routes and POST /oauth/id-jag/issue require CLAWQL_API_KEY and will return 503. " +
-  "Set CLAWQL_API_KEY (or disable issuer/admin surfaces) before production.";
+  "EMA org/connector/client admin and POST /oauth/id-jag/issue will 401/503 unless ATR admin claims succeed " +
+  "(issued cqk_ keys via CLAWQL_API_KEYS_PATH, or MCP JWT with role=admin / scope ema:admin). " +
+  "Set CLAWQL_API_KEY for a static admin credential before production.";
 
 export const MCP_OAUTH_BOOTSTRAP_INVALID_WARNING =
   "[clawql-auth] SECURITY WARNING: MCP OAuth bootstrap config failed to load — " +
   "the configured CLAWQL_EMA_ORGS_* / CLAWQL_MCP_OAUTH_CLIENTS_* value was ignored (empty registry). " +
-  "Fix the JSON/path or remove the env var; silent empty bootstrap leaves EMA/clients unconfigured.";
+  "Fix the JSON/path or remove the env var; silent empty bootstrap leaves EMA/clients unconfigured. " +
+  "Set CLAWQL_MCP_OAUTH_BOOTSTRAP_STRICT=1 to fail boot instead.";
 
 /**
  * Warn when the ID-JAG issuer falls back to MCP OAuth signing material.
@@ -94,14 +96,14 @@ export function warnIfIdJagIssuerSharesMcpOAuthKey(
   return Effect.sync(() => {
     const hasDedicated = Boolean(
       env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM?.trim() ||
-      env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim() ||
-      env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim()
+        env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim() ||
+        env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim()
     );
     if (hasDedicated) return;
     const hasMcpFallback = Boolean(
       env.CLAWQL_MCP_OAUTH_SIGNING_SECRET?.trim() ||
-      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
-      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
+        env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
+        env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
     );
     if (!hasMcpFallback) return;
     console.warn(ID_JAG_ISSUER_SHARED_KEY_WARNING);
@@ -109,7 +111,8 @@ export function warnIfIdJagIssuerSharesMcpOAuthKey(
 }
 
 /**
- * Warn when EMA/issuer admin routes cannot authenticate because CLAWQL_API_KEY is missing.
+ * Warn when EMA/issuer admin routes have no static admin key configured.
+ * Skipped when `CLAWQL_API_KEYS_PATH` is set (issued-key admin path available).
  */
 export function warnIfMcpOAuthAdminKeyMissing(
   env: NodeJS.ProcessEnv = process.env,
@@ -118,6 +121,7 @@ export function warnIfMcpOAuthAdminKeyMissing(
   return Effect.sync(() => {
     if (!flags.mcpOAuthEnabled && !flags.idJagIssuerEnabled) return;
     if (env.CLAWQL_API_KEY?.trim()) return;
+    if (env.CLAWQL_API_KEYS_PATH?.trim()) return;
     console.warn(MCP_OAUTH_ADMIN_KEY_MISSING_WARNING);
   });
 }

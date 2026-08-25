@@ -58,6 +58,11 @@ export type MCPOAuthConfig = {
   emaConfigStore?: EmaConfigStore;
   /** One-time auth codes for `authorization_code` + PKCE (non-EMA interactive path). */
   authCodeStore?: McpAuthorizationCodeStore;
+  /**
+   * Access-token hash index for revoke / denylist lookup.
+   * When unset, a memory store is used so `accessTokenHash` WORM + revoke-by-access work in-process.
+   */
+  accessTokenStore?: McpAccessTokenStore;
   /** Auth code TTL seconds (default 300). */
   authCodeTtlSeconds?: number;
 };
@@ -143,6 +148,20 @@ export type McpRefreshStore = {
   revoke: (refreshTokenHash: string) => Effect.Effect<void>;
 };
 
+/** Persisted access-token record (hash-keyed) for revoke / denylist lookup. */
+export type McpAccessTokenRecord = {
+  clientId: string;
+  jti: string;
+  expiresAtMs: number;
+  revokedAtMs?: number;
+};
+
+export type McpAccessTokenStore = {
+  save: (accessTokenHash: string, record: McpAccessTokenRecord) => Effect.Effect<void>;
+  get: (accessTokenHash: string) => Effect.Effect<McpAccessTokenRecord | null>;
+  revoke: (accessTokenHash: string) => Effect.Effect<void>;
+};
+
 /** OAuth AS domain failure — maps to RFC 6749 error codes at the HTTP boundary. */
 export class McpOAuthError extends Data.TaggedError("McpOAuthError")<{
   readonly error: string;
@@ -163,6 +182,15 @@ function hashSecret(salt: string, value: string): string {
 
 function hashRefreshToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
+}
+
+/** SHA-256 hex of an access JWT — WORM correlation + revoke lookup key. */
+export function hashMcpAccessToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+export function hashMcpAccessTokenEffect(token: string): Effect.Effect<string> {
+  return Effect.sync(() => hashMcpAccessToken(token));
 }
 
 function secretsEqual(a: string, b: string): boolean {
@@ -194,6 +222,7 @@ export class MCPOAuthServer {
   private readonly signing: McpOAuthSigningMaterial;
   private readonly emaConfigStore?: EmaConfigStore;
   private readonly authCodeStore?: McpAuthorizationCodeStore;
+  private readonly accessTokenStore: McpAccessTokenStore;
 
   constructor(
     private readonly config: MCPOAuthConfig,
@@ -211,6 +240,7 @@ export class MCPOAuthServer {
     this.signing = resolveSigningMaterial(config);
     this.emaConfigStore = config.emaConfigStore;
     this.authCodeStore = config.authCodeStore;
+    this.accessTokenStore = config.accessTokenStore ?? createMemoryMcpAccessTokenStore();
   }
 
   /** JWKS for RS256 verification (empty for HS256). */
@@ -583,12 +613,13 @@ export class MCPOAuthServer {
   ): Effect.Effect<McpTokenResponse, McpOAuthError> {
     return Effect.gen(this, function* () {
       const expiresAt = this.now() + this.tokenTtlSeconds * 1000;
+      const jti = randomBytes(12).toString("hex");
       const accessToken = yield* Effect.tryPromise({
         try: () =>
           new SignJWT({
             atr: claims,
             scope: scope.join(" "),
-            jti: randomBytes(12).toString("hex"),
+            jti,
           } as JWTPayload)
             .setProtectedHeader({
               alg: this.signing.algorithm,
@@ -604,6 +635,13 @@ export class MCPOAuthServer {
             error: "server_error",
             description: cause instanceof Error ? cause.message : "sign_failed",
           }),
+      });
+
+      const accessTokenHash = hashMcpAccessToken(accessToken);
+      yield* this.accessTokenStore.save(accessTokenHash, {
+        clientId,
+        jti,
+        expiresAtMs: expiresAt,
       });
 
       let refresh_token: string | undefined;
@@ -630,6 +668,7 @@ export class MCPOAuthServer {
         idpGroups: options.audit?.idpGroups ?? claims.idpGroups,
         matchedIdpGroups: options.audit?.matchedIdpGroups,
         idJagJti: options.audit?.idJagJti,
+        accessTokenHash,
       });
 
       return {
@@ -644,6 +683,7 @@ export class MCPOAuthServer {
 
   /**
    * Validate Bearer access token; returns ATR claims for Panguard / gateway.
+   * Rejects tokens present in the access-token store as revoked.
    */
   validateToken(bearerToken: string): Effect.Effect<AtrClaims, McpOAuthError> {
     return Effect.gen(this, function* () {
@@ -673,13 +713,25 @@ export class MCPOAuthServer {
           })
         )
       );
+
+      const accessHash = hashMcpAccessToken(bearerToken);
+      const indexed = yield* this.accessTokenStore.get(accessHash);
+      if (indexed?.revokedAtMs != null) {
+        yield* emitAuthEventEffect(this.eventSink, {
+          type: "MCP_TOKEN_VALIDATION_FAILED",
+          reason: "token_revoked",
+          timestamp: new Date(this.now()).toISOString(),
+        });
+        return yield* fail("invalid_token", "token_revoked");
+      }
+
       return atr;
     });
   }
 
   /**
-   * RFC 7009-style refresh-token revocation. Unknown / already-revoked tokens succeed
-   * (no information leak). Access JWTs are short-lived and not denylisted here.
+   * RFC 7009-style revocation for refresh tokens **and** access JWTs (hash denylist).
+   * Unknown / already-revoked tokens succeed (no information leak).
    */
   revokeToken(input: {
     token: string;
@@ -690,24 +742,46 @@ export class MCPOAuthServer {
       const token = input.token?.trim();
       if (!token) return yield* fail("invalid_request", "missing token");
 
-      const hash = hashRefreshToken(token);
-      const stored = yield* this.refreshStore.get(hash);
-      if (!stored) return;
+      const refreshHash = hashRefreshToken(token);
+      const refreshStored = yield* this.refreshStore.get(refreshHash);
+      if (refreshStored) {
+        const clientId = input.clientId?.trim() || refreshStored.clientId;
+        if (refreshStored.clientId !== clientId) return yield* fail("invalid_grant");
 
-      const clientId = input.clientId?.trim() || stored.clientId;
-      if (stored.clientId !== clientId) return yield* fail("invalid_grant");
+        const client = yield* this.clients.getClient(clientId);
+        if (client?.clientSecretHash) {
+          yield* this.assertClientSecret(client, input.clientSecret);
+        }
+
+        yield* this.refreshStore.revoke(refreshHash);
+        yield* emitAuthEventEffect(this.eventSink, {
+          type: "MCP_TOKEN_REVOKED",
+          clientId,
+          reason: "client_revoke",
+          timestamp: new Date(this.now()).toISOString(),
+        });
+        return;
+      }
+
+      const accessHash = hashMcpAccessToken(token);
+      const accessStored = yield* this.accessTokenStore.get(accessHash);
+      if (!accessStored) return;
+
+      const clientId = input.clientId?.trim() || accessStored.clientId;
+      if (accessStored.clientId !== clientId) return yield* fail("invalid_grant");
 
       const client = yield* this.clients.getClient(clientId);
       if (client?.clientSecretHash) {
         yield* this.assertClientSecret(client, input.clientSecret);
       }
 
-      yield* this.refreshStore.revoke(hash);
+      yield* this.accessTokenStore.revoke(accessHash);
       yield* emitAuthEventEffect(this.eventSink, {
         type: "MCP_TOKEN_REVOKED",
         clientId,
-        reason: "client_revoke",
+        reason: "client_revoke_access",
         timestamp: new Date(this.now()).toISOString(),
+        accessTokenHash: accessHash,
       });
     });
   }
@@ -812,6 +886,27 @@ export function createMemoryMcpRefreshStore(): McpRefreshStore & {
     revoke: (hash) =>
       Effect.sync(() => {
         map.delete(hash);
+      }),
+  };
+}
+
+export function createMemoryMcpAccessTokenStore(): McpAccessTokenStore & {
+  readonly map: Map<string, McpAccessTokenRecord>;
+} {
+  const map = new Map<string, McpAccessTokenRecord>();
+  return {
+    map,
+    save: (hash, record) =>
+      Effect.sync(() => {
+        map.set(hash, record);
+      }),
+    get: (hash) => Effect.sync(() => map.get(hash) ?? null),
+    revoke: (hash) =>
+      Effect.sync(() => {
+        const existing = map.get(hash);
+        if (existing) {
+          map.set(hash, { ...existing, revokedAtMs: Date.now() });
+        }
       }),
   };
 }

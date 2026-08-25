@@ -90,6 +90,8 @@ export type AuthEvent =
        * Correlates this entry with the matching {@link AuthEvent} `ID_JAG_ASSERTION_ISSUED`.
        */
       idJagJti?: string;
+      /** SHA-256 hex of the access JWT — join key for revoke / denylist lookup. */
+      accessTokenHash?: string;
     }
   | {
       type: "MCP_TOKEN_REFRESHED";
@@ -102,6 +104,8 @@ export type AuthEvent =
       clientId: string;
       reason: string;
       timestamp: string;
+      /** Present when an access JWT (not refresh) was revoked via hash denylist. */
+      accessTokenHash?: string;
     }
   | {
       type: "MCP_TOKEN_VALIDATION_FAILED";

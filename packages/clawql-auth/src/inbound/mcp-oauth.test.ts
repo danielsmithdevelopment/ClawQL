@@ -510,6 +510,44 @@ describe("MCPOAuthServer", () => {
     ).rejects.toThrow(/invalid_grant/);
   });
 
+  it("indexes accessTokenHash and rejects revoked access JWTs", async () => {
+    const events: AuthEvent[] = [];
+    const { server, clientSecret } = setup(events);
+    const token = await Effect.runPromise(
+      server.issueToken({
+        grantType: "client_credentials",
+        clientId: "cline-agent",
+        clientSecret,
+      })
+    );
+
+    const issued = events.find((e) => e.type === "MCP_TOKEN_ISSUED");
+    expect(issued && issued.type === "MCP_TOKEN_ISSUED" && issued.accessTokenHash).toMatch(
+      /^[a-f0-9]{64}$/
+    );
+
+    await Effect.runPromise(
+      server.validateToken(token.access_token)
+    );
+
+    await Effect.runPromise(
+      server.revokeToken({
+        token: token.access_token,
+        clientId: "cline-agent",
+        clientSecret,
+      })
+    );
+
+    await expect(Effect.runPromise(server.validateToken(token.access_token))).rejects.toThrow(
+      /token_revoked|invalid_token/
+    );
+    expect(
+      events.some(
+        (e) => e.type === "MCP_TOKEN_REVOKED" && e.reason === "client_revoke_access" && e.accessTokenHash
+      )
+    ).toBe(true);
+  });
+
   it("rejects authorization_code with bad PKCE verifier", async () => {
     const { generateCodeChallenge, generateCodeVerifier } = await import("../oauth/auth-code.js");
     const { createMemoryMcpAuthorizationCodeStore } = await import("./mcp-auth-code-store.js");
