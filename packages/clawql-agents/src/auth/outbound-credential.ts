@@ -10,6 +10,7 @@ import {
   ReauthRequiredError,
   type OAuthTokenStore,
   type OutboundAuthMethod,
+  type StoredOAuthToken,
 } from "clawql-auth";
 import { Data, Effect } from "effect";
 
@@ -54,8 +55,8 @@ export const getOutboundCredential = (
     if (method === "oauth_code" || method === "oauth_client_credentials") {
       const key = `${input.tenantId}:${input.provider}:${input.subject}`;
       const result = yield* Effect.tryPromise({
-        try: () => input.tokenStore.getValidToken(key),
-        catch: (err) => err,
+        try: (): Promise<StoredOAuthToken> => input.tokenStore.getValidToken(key),
+        catch: (err): unknown => err,
       }).pipe(Effect.either);
 
       if (result._tag === "Left") {
@@ -78,7 +79,8 @@ export const getOutboundCredential = (
         );
       }
 
-      return { kind: "bearer" as const, token: result.right.accessToken };
+      const token: StoredOAuthToken = result.right;
+      return { kind: "bearer" as const, token: token.accessToken };
     }
 
     if (method === "api_key") {
