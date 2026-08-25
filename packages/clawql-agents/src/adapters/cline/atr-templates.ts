@@ -1,9 +1,6 @@
 import type { ATRScope } from "../../shared/types.js";
 
-export type ClineAtrTemplateName =
-  | "execution_worker"
-  | "readonly_recall"
-  | "sql_plus_memory";
+export type ClineAtrTemplateName = "execution_worker" | "readonly_recall" | "sql_plus_memory";
 
 /**
  * Shippable ATR templates for Cline (real MCP tool names only).

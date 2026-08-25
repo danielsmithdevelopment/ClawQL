@@ -17,7 +17,7 @@ package: "packages/clawql-agents/"
 
 | Name in this document                                 | In this repository today                                                                                                                                                                    |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/clawql-agents/`                             | **Phase 1–2** — Cline + OpenClaw + Hermes adapters, ATR templates, shared Panguard; Phase 3–4 not started                                                                                    |
+| `packages/clawql-agents/`                             | **Phase 1–2** — Cline + OpenClaw + Hermes adapters, ATR templates, shared Panguard; Phase 3–4 not started                                                                                   |
 | npm `@clawql/agents`, `@clawql/core`, `@clawql/audit` | Packages are **unscoped** `clawql-*`. MCP audit ring lives in **`clawql-core`**. Durable WORM is **spec only**: [`../audit/clawql-audit-spec-v0.1.md`](../audit/clawql-audit-spec-v0.1.md). |
 | Adapter `initialize` / `start` as `Promise`           | Production domain APIs **must** be Effect (`Context.Tag` + `Layer`). Sketches below are contracts, not the implementation shape.                                                            |
 | OpenClaw MCP wiring                                   | Docs + operator guides in [`docs/openclaw/`](../openclaw/using-openclaw-with-clawql.md); no adapter package                                                                                 |

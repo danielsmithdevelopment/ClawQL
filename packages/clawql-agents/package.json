@@ -31,8 +31,12 @@
     "hermes-agent": ">=0.14.0"
   },
   "peerDependenciesMeta": {
-    "openclaw": { "optional": true },
-    "hermes-agent": { "optional": true }
+    "openclaw": {
+      "optional": true
+    },
+    "hermes-agent": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

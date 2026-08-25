@@ -59,7 +59,11 @@ export {
 } from "./shared/panguard.js";
 export { createAgentSession } from "./shared/session.js";
 export { makeAgentWormLayer } from "./shared/worm.js";
-export { TIER_CAPABILITIES, type RockYourLobsterTier, type TierCapabilities } from "./shared/tiers.js";
+export {
+  TIER_CAPABILITIES,
+  type RockYourLobsterTier,
+  type TierCapabilities,
+} from "./shared/tiers.js";
 export {
   CORE_MCP_TOOLS,
   DEFAULT_MEMORY_TOOLS,

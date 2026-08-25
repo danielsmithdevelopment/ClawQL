@@ -1,9 +1,7 @@
 import type { ATRScope } from "../../shared/types.js";
 
 export type OpenClawAtrTemplateName =
-  | "readonly_assistant"
-  | "drafting_assistant"
-  | "full_automation";
+  "readonly_assistant" | "drafting_assistant" | "full_automation";
 
 /**
  * Shippable OpenClaw ATR templates — real MCP tools only (no Family S email stubs).

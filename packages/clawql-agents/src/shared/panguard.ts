@@ -23,9 +23,7 @@ export const assertToolInScope = (
 ): Effect.Effect<void, PanguardDenyError> =>
   Effect.gen(function* () {
     if (atrScope.toolsOutOfScope.includes(toolName)) {
-      return yield* Effect.fail(
-        new PanguardDenyError({ toolName, reason: "explicitly_denied" })
-      );
+      return yield* Effect.fail(new PanguardDenyError({ toolName, reason: "explicitly_denied" }));
     }
     if (!atrScope.toolsInScope.includes(toolName)) {
       return yield* Effect.fail(new PanguardDenyError({ toolName, reason: "out_of_scope" }));
