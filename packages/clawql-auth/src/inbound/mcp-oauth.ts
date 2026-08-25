@@ -13,7 +13,11 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { Context, Data, Effect, Layer } from "effect";
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 
-import { emitAuthEventEffect, noopAuthEventSink, type AuthEventSink } from "../audit/auth-events.js";
+import {
+  emitAuthEventEffect,
+  noopAuthEventSink,
+  type AuthEventSink,
+} from "../audit/auth-events.js";
 import type { AtrClaims } from "../gateway.js";
 import { generateCodeChallengeEffect } from "../oauth/auth-code.js";
 import type { McpOAuthSigningMaterial } from "./mcp-oauth-signing.js";
@@ -404,7 +408,10 @@ export class MCPOAuthServer {
         ...emaConfig,
         audience,
       }).pipe(
-        Effect.mapError((err: IdJagAuthError) => new McpOAuthError({ error: "invalid_grant", description: err.reason }))
+        Effect.mapError(
+          (err: IdJagAuthError) =>
+            new McpOAuthError({ error: "invalid_grant", description: err.reason })
+        )
       );
 
       let resolved;
@@ -768,9 +775,7 @@ export function mcpOAuthServiceFromServer(server: MCPOAuthServer) {
   });
 }
 
-export function createMcpOAuthServiceLayer(
-  server: MCPOAuthServer
-): Layer.Layer<McpOAuthService> {
+export function createMcpOAuthServiceLayer(server: MCPOAuthServer): Layer.Layer<McpOAuthService> {
   return Layer.succeed(McpOAuthService, mcpOAuthServiceFromServer(server));
 }
 
