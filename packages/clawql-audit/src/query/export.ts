@@ -1,35 +1,36 @@
 import { Effect } from "effect";
 import type { WORMEntry, WORMFilter } from "../entry.js";
 import { AuditError } from "../errors.js";
+import { exportToQR, type QRExportResult } from "./qr-export.js";
 
 export type ExportFormat = "json" | "csv" | "qr";
 
 export type ExportResult =
   | { format: "json"; body: string; entryCount: number }
   | { format: "csv"; body: string; entryCount: number }
-  | {
-      format: "qr";
-      unavailable: true;
-      reason: string;
-      entryCount: number;
-    };
+  | ({ format: "qr" } & QRExportResult & { entryCount: number });
 
 const csvEscape = (v: string): string => `"${v.replace(/"/g, '""')}"`;
 
+export type ExportOptions = {
+  qr?: {
+    chunkSizeBytes?: number;
+    redundancy?: number;
+    qrVersion?: number;
+    encryptionKeyHex?: string;
+    hmacKeyHex?: string;
+  };
+};
+
 export const exportEntries = (
   entries: readonly WORMEntry[],
-  format: ExportFormat
+  format: ExportFormat,
+  options: ExportOptions = {}
 ): Effect.Effect<ExportResult, AuditError> =>
   Effect.gen(function* () {
     if (format === "qr") {
-      // Phase 2 — QR fountain / ChaCha20 / HMAC (keys from env/KMS only).
-      return {
-        format: "qr" as const,
-        unavailable: true as const,
-        reason:
-          "QR air-gap export ships in Phase 2 (requires CLAWQL_AUDIT_QR_* keys and RaptorQ)",
-        entryCount: entries.length,
-      };
+      const qr = yield* exportToQR(entries, options.qr ?? {});
+      return { format: "qr" as const, entryCount: entries.length, ...qr };
     }
     if (format === "json") {
       return {

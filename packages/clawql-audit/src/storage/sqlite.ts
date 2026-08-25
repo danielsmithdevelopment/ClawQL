@@ -8,6 +8,7 @@ import { dirname } from "node:path";
 import { Effect } from "effect";
 import type { WORMEntry, WORMFilter } from "../entry.js";
 import { AuditError } from "../errors.js";
+import type { MerkleRoot } from "../merkle.js";
 import type { LocalStorageBackend } from "./types.js";
 
 type DatabaseSyncInstance = {
@@ -58,6 +59,14 @@ export class SQLiteBackend implements LocalStorageBackend {
         id TEXT PRIMARY KEY,
         entry_json TEXT NOT NULL,
         enqueued_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS worm_merkle_roots (
+        root_hex TEXT NOT NULL,
+        from_chain_index INTEGER NOT NULL,
+        to_chain_index INTEGER NOT NULL,
+        entry_count INTEGER NOT NULL,
+        computed_at TEXT NOT NULL,
+        PRIMARY KEY (from_chain_index, to_chain_index)
       );
       CREATE INDEX IF NOT EXISTS idx_session ON worm_entries
         ((json_extract(entry_json, '$.sessionId')));
@@ -143,6 +152,54 @@ export class SQLiteBackend implements LocalStorageBackend {
       },
       catch: (cause) =>
         new AuditError({ reason: "SQLite outboxDelete failed", cause }),
+    });
+
+  storeMerkleRoot = (root: MerkleRoot): Effect.Effect<void, AuditError> =>
+    Effect.try({
+      try: () => {
+        this.db
+          .prepare(
+            `INSERT OR REPLACE INTO worm_merkle_roots
+              (root_hex, from_chain_index, to_chain_index, entry_count, computed_at)
+             VALUES (?, ?, ?, ?, ?)`
+          )
+          .run(
+            root.rootHex,
+            root.fromChainIndex,
+            root.toChainIndex,
+            root.entryCount,
+            root.computedAt
+          );
+      },
+      catch: (cause) =>
+        new AuditError({ reason: "SQLite storeMerkleRoot failed", cause }),
+    });
+
+  listMerkleRoots = (): Effect.Effect<MerkleRoot[], AuditError> =>
+    Effect.try({
+      try: () => {
+        const rows = this.db
+          .prepare(
+            `SELECT root_hex, from_chain_index, to_chain_index, entry_count, computed_at
+             FROM worm_merkle_roots ORDER BY from_chain_index ASC`
+          )
+          .all() as Array<{
+          root_hex: string;
+          from_chain_index: number;
+          to_chain_index: number;
+          entry_count: number;
+          computed_at: string;
+        }>;
+        return rows.map((r) => ({
+          rootHex: r.root_hex,
+          fromChainIndex: r.from_chain_index,
+          toChainIndex: r.to_chain_index,
+          entryCount: r.entry_count,
+          computedAt: r.computed_at,
+        }));
+      },
+      catch: (cause) =>
+        new AuditError({ reason: "SQLite listMerkleRoots failed", cause }),
     });
 
   query = (filter: WORMFilter): Effect.Effect<WORMEntry[], AuditError> =>

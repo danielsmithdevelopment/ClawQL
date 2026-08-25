@@ -43,6 +43,13 @@ describe("package constraint", () => {
   });
 });
 
+const trailDefaults = {
+  retryMaxAttempts: 2,
+  retryBackoffMs: 1,
+  reconcileIntervalMs: 0,
+  merkleBatchSize: 0,
+} as const;
+
 describe("sealHashChainRecord", () => {
   it("seals genesis and links the next entry", async () => {
     const first = await Effect.runPromise(
@@ -83,8 +90,7 @@ describe("WORMAuditTrail (memory dual-ack)", () => {
     const worm = await WORMAuditTrail.create({
       local: new MemoryBackend(),
       remote: new MemoryBackend(),
-      retryMaxAttempts: 2,
-      retryBackoffMs: 1,
+      ...trailDefaults,
     });
 
     const a = await worm.append({
@@ -141,8 +147,7 @@ describe("WORMAuditTrail (memory dual-ack)", () => {
     const worm = await WORMAuditTrail.create({
       local,
       remote,
-      retryMaxAttempts: 2,
-      retryBackoffMs: 1,
+      ...trailDefaults,
     });
 
     await worm.append({
@@ -166,8 +171,8 @@ describe("WORMAuditTrail (memory dual-ack)", () => {
     const worm = await WORMAuditTrail.create({
       local: new MemoryBackend(),
       remote: new MemoryBackend(),
+      ...trailDefaults,
       retryMaxAttempts: 1,
-      retryBackoffMs: 1,
     });
     const entry = await worm.append({
       type: "AGENT_ACTION",
@@ -194,8 +199,7 @@ describe("SQLiteBackend", () => {
       const worm = await WORMAuditTrail.create({
         local,
         remote,
-        retryMaxAttempts: 2,
-        retryBackoffMs: 1,
+        ...trailDefaults,
       });
       await worm.append({
         type: "SESSION_START",
@@ -208,8 +212,7 @@ describe("SQLiteBackend", () => {
       const worm2 = await WORMAuditTrail.create({
         local: local2,
         remote: new MemoryBackend(),
-        retryMaxAttempts: 2,
-        retryBackoffMs: 1,
+        ...trailDefaults,
       });
       const next = await worm2.append({
         type: "SESSION_END",

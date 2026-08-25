@@ -20,14 +20,13 @@ export {
   type MerkleInclusionProof,
   type MerkleRoot,
 } from "./merkle.js";
-export {
-  DualAckReplicator,
-} from "./replication/dual-ack.js";
+export { DualAckReplicator } from "./replication/dual-ack.js";
 export {
   defaultRetryConfig,
   withRetry,
   type RetryConfig,
 } from "./replication/retry.js";
+export { startOutboxReconciler, type ReconcilerHandle } from "./replication/reconciler.js";
 export {
   createWORMAuditTrailEffect,
   makeWORMAuditTrailLayer,
@@ -35,13 +34,23 @@ export {
   WORMAuditTrailService,
   type WORMAuditTrailConfig,
 } from "./trail.js";
-export { exportEntries, type ExportFormat, type ExportResult } from "./query/export.js";
+export {
+  exportEntries,
+  type ExportFormat,
+  type ExportOptions,
+  type ExportResult,
+} from "./query/export.js";
+export { applyWORMFilter, matchesWORMFilter } from "./query/filter.js";
+export { exportToQR, type QRExportConfig, type QRExportResult } from "./query/qr-export.js";
 export type { LocalStorageBackend, StorageBackend } from "./storage/types.js";
 export { MemoryBackend } from "./storage/memory.js";
 export { SQLiteBackend, type SQLiteBackendOptions } from "./storage/sqlite.js";
 export { S3Backend, type S3BackendConfig } from "./storage/s3.js";
+export { PostgresBackend, type PostgresBackendOptions } from "./storage/postgres.js";
 export {
   verifyTEESignature,
   type TEEAttestationReport,
   type TEESigner,
 } from "./tee/signer.js";
+export { handleAuditHttpRequest, authorizeApiKey, type HttpRequest, type HttpResponse } from "./http/routes.js";
+export { startAuditHttpServer, type AuditHttpServerHandle } from "./http/server.js";
