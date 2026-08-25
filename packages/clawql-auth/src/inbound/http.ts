@@ -89,9 +89,10 @@ function grantTypesForDiscovery(supported: McpGrantType[]): string[] {
 }
 
 /** Parse RFC 6749 `Authorization: Basic` client credentials. */
-export function parseHttpBasicClientAuth(
-  authorizationHeader: string | undefined
-): { clientId?: string; clientSecret?: string } {
+export function parseHttpBasicClientAuth(authorizationHeader: string | undefined): {
+  clientId?: string;
+  clientSecret?: string;
+} {
   if (!authorizationHeader?.toLowerCase().startsWith("basic ")) return {};
   try {
     const decoded = Buffer.from(authorizationHeader.slice(6).trim(), "base64").toString("utf8");
@@ -117,8 +118,7 @@ function mergeClientAuthFromBasic(body: TokenBody, req?: Request): TokenBody {
 
 export function parseMcpOAuthTokenBody(body: TokenBody): McpTokenRequest {
   const grantType = (body.grant_type?.trim() || body.grantType?.trim()) as
-    | McpGrantTypeInput
-    | undefined;
+    McpGrantTypeInput | undefined;
   if (!grantType) {
     throw new Error("invalid_request: missing grant_type");
   }

@@ -108,13 +108,9 @@ export function warnIfMcpOAuthAdminKeyMissing(
 }
 
 /** Warn when an explicit bootstrap env var was set but failed to parse/load. */
-export function warnIfMcpOAuthBootstrapInvalid(
-  source: string,
-  cause?: unknown
-): void {
+export function warnIfMcpOAuthBootstrapInvalid(source: string, cause?: unknown): void {
   const detail = cause instanceof Error ? cause.message : cause ? String(cause) : "";
   console.warn(
-    `${MCP_OAUTH_BOOTSTRAP_INVALID_WARNING} source=${source}` +
-      (detail ? ` cause=${detail}` : "")
+    `${MCP_OAUTH_BOOTSTRAP_INVALID_WARNING} source=${source}` + (detail ? ` cause=${detail}` : "")
   );
 }
