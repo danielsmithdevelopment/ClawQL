@@ -366,7 +366,17 @@ describe("MCPOAuthServer", () => {
     expect(claims.sub).toBe("alice@acme.test");
     expect(claims.scope).toEqual(["execute"]);
     expect(token.refresh_token).toMatch(/^mcr_/);
-    expect(events.some((e) => e.type === "MCP_TOKEN_ISSUED")).toBe(true);
+
+    const issued = events.find((e) => e.type === "MCP_TOKEN_ISSUED");
+    expect(issued).toMatchObject({
+      type: "MCP_TOKEN_ISSUED",
+      grantType: "authorization_code",
+      clientId: "cursor-desktop",
+      subjectId: "alice@acme.test",
+      orgId: "acme",
+      role: "operator",
+      scope: ["execute"],
+    });
 
     await expect(
       server.issueToken({

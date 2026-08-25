@@ -79,6 +79,35 @@ describe("mcp-api-adapter edge auth", () => {
       });
       expect(withJwt.status).toBe(200);
 
+      const expired = await new SignJWT({
+        atr: { sub: "alice", role: "operator", scope: ["execute"] },
+      })
+        .setProtectedHeader({ alg: "HS256" })
+        .setSubject("alice")
+        .setIssuer(issuer)
+        .setIssuedAt(Math.floor(Date.now() / 1000) - 600)
+        .setExpirationTime(Math.floor(Date.now() / 1000) - 30)
+        .sign(new TextEncoder().encode(secret));
+
+      const expiredRes = await fetch(`http://127.0.0.1:${port}/tools`, {
+        headers: { authorization: `Bearer ${expired}` },
+      });
+      expect(expiredRes.status).toBe(401);
+
+      const wrongKey = await new SignJWT({
+        atr: { sub: "alice", role: "operator", scope: ["execute"] },
+      })
+        .setProtectedHeader({ alg: "HS256" })
+        .setSubject("alice")
+        .setIssuer(issuer)
+        .setExpirationTime("5m")
+        .sign(new TextEncoder().encode("different-hs256-secret-not-trusted!!"));
+
+      const wrongRes = await fetch(`http://127.0.0.1:${port}/tools`, {
+        headers: { authorization: `Bearer ${wrongKey}` },
+      });
+      expect(wrongRes.status).toBe(401);
+
       const health = await fetch(`http://127.0.0.1:${port}/healthz`);
       expect(health.status).toBe(200);
     } finally {
