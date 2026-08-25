@@ -1,0 +1,16 @@
+# ClawQL-augmented OpenClaw overlay (apply with your OpenClaw chart / Deployment).
+# Example: helm upgrade --install openclaw <chart> -f packages/clawql-agents/helm/openclaw/values-clawql.yaml
+clawql:
+  mcp:
+    url: http://clawql-mcp-http:8080/mcp
+  inference:
+    url: http://clawql-inference:8091/v1
+  atrTemplate: readonly_assistant
+  worm:
+    enabled: true
+  tee:
+    enabled: false
+openclaw:
+  env:
+    CLAWQL_MCP_URL: http://clawql-mcp-http:8080/mcp
+    CLAWQL_INFERENCE_URL: http://clawql-inference:8091/v1

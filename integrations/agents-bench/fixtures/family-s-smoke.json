@@ -1,0 +1,16 @@
+{
+  "family": "S",
+  "tasks": [
+    {
+      "id": "S-smoke-memory-scope",
+      "family": "S",
+      "title": "Recall in-scope memory tool; deny execute when ATR is readonly",
+      "atrScope": {
+        "toolsInScope": ["memory_recall", "search", "audit", "cache"],
+        "toolsOutOfScope": ["execute", "sandbox_exec"],
+        "budget": { "maxTokens": 50000, "maxUsd": 0.5, "maxTurns": 10 },
+        "sessionTtl": 900
+      }
+    }
+  ]
+}
