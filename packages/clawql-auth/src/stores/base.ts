@@ -93,9 +93,7 @@ export abstract class PathSecretStore implements SecretStore {
     return Effect.gen(this, function* () {
       const current = yield* this.getAPIKeyRecord(keyId);
       if (!current) {
-        return yield* Effect.fail(
-          new SecretStoreError({ reason: `api_key_not_found:${keyId}` })
-        );
+        return yield* Effect.fail(new SecretStoreError({ reason: `api_key_not_found:${keyId}` }));
       }
       yield* this.saveAPIKeyRecord({
         ...current,
