@@ -148,49 +148,31 @@ export function StreamsLanding() {
       <Section
         id="fabric"
         className="streams-surface"
-        eyebrow="Protocol Fabric"
-        headline="Anything in. Anything out. MCP as the IR."
+        eyebrow="Architecture"
+        headline="Anything in. Anything out. Events on the bus."
         subheadline={
           <p>
             ClawQL Core turns any API into MCP. <Link href={ADAPTER_DOCS}>mcp-api-adapter</Link> turns MCP back into
-            OpenAPI, GraphQL, gRPC, CLI, or WebSocket. Streams wraps that fabric in an event loop so the bus can act
-            without a human at the console.
+            OpenAPI, GraphQL, gRPC, CLI, WebSocket, QR, or <code className="font-mono text-[0.9em]">/mcp-ui</code>.
+            Streams wraps that fabric with NATS JetStream so the bus can act without a human at the console — Event
+            Stream in, WORM and RTP out.
           </p>
         }
       >
-        <div className="streams-fabric max-w-3xl">
-          <div className="streams-fabric__row">
-            <span className="streams-fabric__chip">OpenAPI</span>
-            <span className="streams-fabric__chip">GraphQL</span>
-            <span className="streams-fabric__chip">gRPC</span>
-            <span className="streams-fabric__chip">WebSocket</span>
-            <span className="streams-fabric__chip">CLI</span>
-            <span className="streams-fabric__arrow" aria-hidden="true">
-              →
-            </span>
-            <span className="streams-fabric__core">ClawQL Core</span>
-          </div>
-          <div className="streams-fabric__row">
-            <span className="streams-fabric__arrow" aria-hidden="true">
-              ↓
-            </span>
-            <span className="streams-fabric__core">MCP · common IR</span>
-            <span className="streams-fabric__arrow" aria-hidden="true">
-              ↓
-            </span>
-          </div>
-          <div className="streams-fabric__row">
-            <span className="streams-fabric__core">mcp-api-adapter</span>
-            <span className="streams-fabric__arrow" aria-hidden="true">
-              →
-            </span>
-            <span className="streams-fabric__chip">OpenAPI</span>
-            <span className="streams-fabric__chip">GraphQL</span>
-            <span className="streams-fabric__chip">gRPC</span>
-            <span className="streams-fabric__chip">WebSocket</span>
-            <span className="streams-fabric__chip">CLI</span>
-          </div>
-        </div>
+        <figure className="streams-diagram">
+          <picture>
+            <source type="image/webp" srcSet="/streams/clawql-streams-architecture.webp" />
+            <img
+              src="/streams/clawql-streams-architecture.png"
+              alt="ClawQL Streams architecture — Event Stream into ClawQL Core + mcp-api-adapter + NATS JetStream, API sources and transport layers on both sides, WORM audit and RTP finetune exports below, HTMX / MCP-UI beside the hub"
+              width={1400}
+              height={933}
+              loading="lazy"
+              decoding="async"
+            />
+          </picture>
+          <figcaption>ClawQL Streams — observable event-driven autonomous agents</figcaption>
+        </figure>
         <p className="streams-mode__detail mt-10 max-w-2xl">
           ESB lesson, agent era: N×M protocol integrations collapse to N+M. Streams is how the fabric reacts to
           webhooks, NATS topics, cron, and live sockets — not only interactive MCP clients.
@@ -204,10 +186,9 @@ export function StreamsLanding() {
         headline="Infinite session scale without losing the audit trail"
         subheadline={
           <p>
-            Write-once Durable Object code runs on Cloudflare or{' '}
-            <Link href={CELLD_SPEC}>celld</Link> — Deno&apos;s self-hosted DO runtime with LTX replication to your
-            bucket (~$0.05 per resident cell-month). Regulated tenants keep{' '}
-            <Link href={DO_SPEC}>Kubernetes HPA</Link> until celld is production-stable.
+            Write-once Durable Object code runs on Cloudflare or <Link href={CELLD_SPEC}>celld</Link> — Deno&apos;s
+            self-hosted DO runtime with LTX replication to your bucket (~$0.05 per resident cell-month). Regulated
+            tenants keep <Link href={DO_SPEC}>Kubernetes HPA</Link> until celld is production-stable.
           </p>
         }
       >
