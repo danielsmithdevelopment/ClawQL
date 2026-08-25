@@ -9,12 +9,13 @@ package: "packages/clawql-agents/"
 
 **August 2026 · v0.1**
 
-> **Status (repo, 2026-08-25):** Phases 1–4 adapters ship in `packages/clawql-agents/` (all seven catalog agents + ATR templates + shared Panguard). Phase 5 OpenBench harness and Helm overlays remain gated. Durable WORM is `packages/clawql-audit` (sql.js). Personal-agent operator guide: [`../homelab/personal-agent-hermes-cline.md`](../homelab/personal-agent-hermes-cline.md).
+> **Status (repo, 2026-08-25):** Phases 1–4 adapters shipped. Follow-on: personal-agent install hooks, OpenClaw live MCP plans, `getOutboundCredential`, Helm overlays, Agents OpenBench **dry** runner (`integrations/agents-bench/`). Live OpenBench A/B remains gated (Harvey / ExtractBench). Durable WORM: `packages/clawql-audit`.
 >
 > **Related:** [Agents index](README.md) · [Personal Hermes/Cline setup](../homelab/personal-agent-hermes-cline.md) · [Agents OpenBench spec](../benchmarks/agents-openbench-spec-v0.1.md) · [OpenBench plan](../benchmarks/agents-openbench-plan.md) · [Modularization status](../design/modularization-implementation-status.md) · [clawql-tee](../streams/clawql-tee.md) (draft) · [MCP tools](../mcp/mcp-tools.md)
 
 ### Repo mapping
 
+<<<<<<< HEAD
 | Name in this document                                 | In this repository today                                                                                                                                                                                     |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `packages/clawql-agents/`                             | **Phases 1–4** — all seven adapters + ATR templates + shared Panguard; Phase 5 (bench/Helm) still gated                                                                                                      |
@@ -26,16 +27,28 @@ package: "packages/clawql-agents/"
 | `bench/` in this package                              | OpenBench plan puts the harness at **`integrations/agents-bench/`**, gated — do not duplicate a second harness here until that plan is revised                                                               |
 | clawql-tee attestation                                | **Draft** spec ([`docs/streams/clawql-tee.md`](../streams/clawql-tee.md)); not a runtime flag you can flip                                                                                                   |
 | RockYourLobster tiers / prices                        | GTM target in this spec; not encoded in Helm or payments packages                                                                                                                                            |
+=======
+| Name in this document                                 | In this repository today                                                                                                                                                                    |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/clawql-agents/`                             | **Phases 1–4 + follow-on** — adapters, personal install, OpenClaw live MCP plans, outbound credentials, Helm overlays, dry OpenBench runner. Live A/B still gated.                          |
+| `bench/` in this package                              | Dry runner lives at `src/bench/dry-runner.ts`; live harness entry is **`integrations/agents-bench/`**                                                                                       |
+| npm `@clawql/agents`, `@clawql/core`, `@clawql/audit` | Packages are **unscoped** `clawql-*`. MCP audit ring lives in **`clawql-core`**. Durable WORM is **spec only**: [`../audit/clawql-audit-spec-v0.1.md`](../audit/clawql-audit-spec-v0.1.md). |
+| Adapter `initialize` / `start` as `Promise`           | Production domain APIs **must** be Effect (`Context.Tag` + `Layer`). Sketches below are contracts, not the implementation shape.                                                            |
+| OpenClaw MCP wiring                                   | Adapter live MCP plans + `scripts/dev/openclaw-register-clawql.sh`; operator docs in [`docs/openclaw/`](../openclaw/using-openclaw-with-clawql.md)                                          |
+| Hermes                                                | Package ships `python/hermes/worm_agent.py` + adapter; inference coordination stub remains in clawql-inference                                                                              |
+| Cline WORM SDK hooks                                  | `installPersonalAgentHooks` materializes hooks; full ACP wiring still operator-side                                                                                                         |
+| clawql-tee attestation                                | **Draft** spec ([`docs/streams/clawql-tee.md`](../streams/clawql-tee.md)); not a runtime flag you can flip                                                                                  |
+| RockYourLobster tiers / prices                        | GTM target in this spec; tier capability map exported from package (no payment gating)                                                                                                      |
+>>>>>>> fb86ec1f (docs: Agents OpenBench plan/spec and auth→agents wiring)
 
 ### Catalog vs OpenBench
 
 This spec catalogs **seven** agents (adds **Cline**). Agents OpenBench v0.1 is **six** agents × S/M/P = **90** tasks (OpenClaw, Hermes, Pi, Goose, DeepSeek Harness, OpenHands). Adding Cline is a **spec revision** (+15 tasks, or a Cline Family S MVP). Do not silently expand the ledger.
 
-### Do not implement yet
+### Still gated
 
-1. No Helm overlays or `bench/runner.ts` inside `packages/clawql-agents`.
-2. No `integrations/agents-bench/` (OpenBench §10 / plan still gated).
-3. Keep shippable MCP tool names (`memory_*`, `search`, `execute`, `audit`, `cache`, `data_query` / `clawql_sql`, optional `web_search`). Do not invent `clawql_think` until a real tool exists.
+1. Live Agents OpenBench A/B (Harvey LAB + ExtractBench publish — see [plan](../benchmarks/agents-openbench-plan.md)).
+2. Keep shippable MCP tool names (`memory_*`, `search`, `execute`, `audit`, `cache`, `data_query` / `clawql_sql`, optional `web_search`). Do not invent `clawql_think` until a real tool exists.
 
 ---
 
