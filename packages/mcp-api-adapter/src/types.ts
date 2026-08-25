@@ -5,7 +5,7 @@ export type { ListedMcpTool };
 
 export type UpstreamKind = "grpc" | "stdio" | "http";
 
-export type ApiSurface = "openapi" | "graphql" | "mcp" | "grpc" | "websocket";
+export type ApiSurface = "openapi" | "graphql" | "mcp" | "grpc" | "websocket" | "mcp-ui";
 
 export type ToolCatalog = {
   tools: ListedMcpTool[];
@@ -14,6 +14,8 @@ export type ToolCatalog = {
   grpcAddress?: string;
   /** Streamable HTTP MCP path when enabled (e.g. `/mcp`). */
   mcpPath?: string;
+  /** HTMX MCP UI path when enabled (e.g. `/mcp-ui`). */
+  mcpUiPath?: string;
   /** Human-readable upstream label (command, URL, or host:port). */
   upstream: string;
   upstreamKind: UpstreamKind;
@@ -98,6 +100,11 @@ export type McpApiAdapterOptions = McpApiAdapterHttpOptions & {
    * Set `false` to disable the WebSocket surface.
    */
   wsPath?: string | false;
+  /**
+   * HTMX MCP UI playground path (default `/mcp-ui`).
+   * Set `false` to disable the browser UI surface.
+   */
+  mcpUiPath?: string | false;
 };
 
 export type StartedMcpApiAdapter = {
@@ -108,6 +115,8 @@ export type StartedMcpApiAdapter = {
   grpcAddress?: string;
   /** Streamable HTTP MCP path when enabled. */
   mcpPath?: string;
+  /** HTMX MCP UI path when enabled (e.g. `/mcp-ui`). */
+  mcpUiPath?: string;
   /** WebSocket tool-call path when enabled (e.g. `/ws`). */
   wsPath?: string;
   /** `ws://host:port/ws` when the WebSocket surface is enabled. */

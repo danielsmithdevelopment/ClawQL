@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **`/mcp-ui` surface (v0):** HTMX playground auto-generated from the tool catalog — `GET /mcp-ui`, `POST /mcp-ui/execute/{toolName}`. Flat forms for string/number/boolean/enum; JSON textarea fallback for complex schemas. `--mcp-ui-path`, `--no-mcp-ui`.
+
 ## 0.6.0
 
 - **WebSocket surface** (`/ws`): JSON tool-call messages over a persistent connection (sixth surface). `--ws-path`, `--no-ws`.

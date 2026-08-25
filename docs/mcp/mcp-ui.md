@@ -1,9 +1,9 @@
 # `/mcp-ui` — Swagger UI for MCP (HTMX / HATEOAS)
 
-**Status:** Draft · August 2026 · planned **8th surface** of [`mcp-api-adapter`](./mcp-api-adapter.md)  
+**Status:** v0 shipped · August 2026 · **8th surface** of [`mcp-api-adapter`](./mcp-api-adapter.md)  
 **Path:** `GET /mcp-ui` (adapter HTTP process)  
 **Depends on:** `ListTools` + tool `inputSchema` (same catalog as `/docs` and `/graphiql`)  
-**Proof pattern in-repo:** clawql-payments credits mini UI (`/credits/*` HTMX fragments)
+**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment (flat string/number/boolean/enum + JSON bag fallback). Deferred: nested objects/arrays UI, file upload/IDP, SSE progress, templates, agent-generated UIs, ATR scoping.
 
 ---
 

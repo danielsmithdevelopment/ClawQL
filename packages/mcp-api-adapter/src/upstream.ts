@@ -77,32 +77,37 @@ export function catalogSurfaces(options: {
   grpcAddress?: string;
   mcpPath?: string;
   wsPath?: string;
+  mcpUiPath?: string;
 }): ApiSurface[] {
   const surfaces: ApiSurface[] = ["openapi", "graphql"];
   if (options.mcpPath) surfaces.push("mcp");
   if (options.grpcAddress) surfaces.push("grpc");
   if (options.wsPath) surfaces.push("websocket");
+  if (options.mcpUiPath) surfaces.push("mcp-ui");
   return surfaces;
 }
 
 export function buildCatalogFromUpstream(
   upstream: UpstreamConnection,
-  extras?: { tools?: ListedMcpTool[]; mcpPath?: string; wsPath?: string }
+  extras?: { tools?: ListedMcpTool[]; mcpPath?: string; wsPath?: string; mcpUiPath?: string }
 ): ToolCatalog {
   const list = extras?.tools ?? upstream.tools;
   const mcpPath = extras?.mcpPath;
   const wsPath = extras?.wsPath;
+  const mcpUiPath = extras?.mcpUiPath;
   return {
     tools: list,
     fetchedAt: new Date().toISOString(),
     grpcAddress: upstream.grpcAddress,
     mcpPath,
+    mcpUiPath,
     upstream: upstream.label,
     upstreamKind: upstream.kind,
     surfaces: catalogSurfaces({
       grpcAddress: upstream.grpcAddress,
       mcpPath,
       wsPath,
+      mcpUiPath,
     }),
   };
 }

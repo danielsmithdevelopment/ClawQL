@@ -12,6 +12,7 @@ import {
 import { createEdgeAuthRateLimiter } from "./edge-rate-limit.js";
 import { attachGraphqlRoutes } from "./graphql-http.js";
 import { attachMcpHttpRoutes } from "./mcp-http.js";
+import { attachMcpUiRoutes, DEFAULT_MCP_UI_PATH } from "./mcp-ui-http.js";
 import { buildOpenApiDocument } from "./openapi.js";
 import { isSafeToolPathName } from "./schema-convert.js";
 import type {
@@ -50,6 +51,14 @@ function resolveWsPath(wsPath: string | false | undefined): string | undefined {
   return trimmed.startsWith("/") ? trimmed.replace(/\/$/, "") || DEFAULT_WS_PATH : `/${trimmed}`;
 }
 
+function resolveMcpUiPath(mcpUiPath: string | false | undefined): string | undefined {
+  if (mcpUiPath === false) return undefined;
+  if (mcpUiPath === undefined) return DEFAULT_MCP_UI_PATH;
+  const trimmed = mcpUiPath.trim();
+  if (!trimmed || trimmed === "/") return DEFAULT_MCP_UI_PATH;
+  return trimmed.startsWith("/") ? trimmed.replace(/\/$/, "") || DEFAULT_MCP_UI_PATH : `/${trimmed}`;
+}
+
 export type CreateMcpApiAdapterAppOptions = {
   getCatalog: () => ToolCatalog;
   callTool: CallToolFn;
@@ -62,6 +71,8 @@ export type CreateMcpApiAdapterAppOptions = {
   mcpPath?: string;
   /** WebSocket path when enabled (advertised on /healthz). */
   wsPath?: string;
+  /** HTMX MCP UI path when enabled (advertised on /healthz). */
+  mcpUiPath?: string;
   createBridgedMcpServer?: () => import("@modelcontextprotocol/sdk/server/mcp.js").McpServer;
 };
 
@@ -102,6 +113,7 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
       grpcAddress: catalog.grpcAddress ?? options.grpcAddress,
       mcpPath: catalog.mcpPath ?? options.mcpPath,
       wsPath: options.wsPath,
+      mcpUiPath: catalog.mcpUiPath ?? options.mcpUiPath,
       toolCount: catalog.tools.length,
       fetchedAt: catalog.fetchedAt,
       surfaces: catalog.surfaces,
@@ -140,6 +152,15 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
     grpcAddress: options.grpcAddress,
   });
 
+  if (options.mcpUiPath) {
+    attachMcpUiRoutes(app, {
+      getCatalog: options.getCatalog,
+      callTool: options.callTool,
+      title: options.title,
+      path: options.mcpUiPath,
+    });
+  }
+
   if (options.mcpPath && options.createBridgedMcpServer) {
     attachMcpHttpRoutes(app, {
       path: options.mcpPath,
@@ -148,8 +169,9 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
   }
 
   const reserved = new Set(
-    ["tools", "docs", "openapi.json", "healthz", "graphql", "graphiql", "mcp", "ws"].concat(
-      options.mcpPath ? [options.mcpPath.replace(/^\//, "")] : []
+    ["tools", "docs", "openapi.json", "healthz", "graphql", "graphiql", "mcp", "ws", "mcp-ui"].concat(
+      options.mcpPath ? [options.mcpPath.replace(/^\//, "")] : [],
+      options.mcpUiPath ? [options.mcpUiPath.replace(/^\//, "")] : []
     )
   );
 
@@ -232,12 +254,13 @@ function attachRefreshTimer(
   upstream: UpstreamConnection,
   mcpPath: string | undefined,
   wsPath: string | undefined,
+  mcpUiPath: string | undefined,
   setCatalog: (c: ToolCatalog) => void,
   refreshMs: number
 ): ReturnType<typeof setInterval> | undefined {
   if (refreshMs <= 0) return undefined;
   const timer = setInterval(() => {
-    void refreshCatalog(upstream, mcpPath, wsPath)
+    void refreshCatalog(upstream, mcpPath, wsPath, mcpUiPath)
       .then((next) => setCatalog(next))
       .catch((err) => {
         console.error("[mcp-api-adapter] catalog refresh failed:", err);
@@ -256,11 +279,12 @@ export async function startMcpApiAdapter(
 ): Promise<StartedMcpApiAdapter> {
   const mcpPath = resolveMcpPath(options.mcpPath);
   const wsPath = resolveWsPath(options.wsPath);
+  const mcpUiPath = resolveMcpUiPath(options.mcpUiPath);
   const upstream = await connectUpstream(options.upstream, {
     grpcListen: options.grpcListen,
   });
 
-  let catalog = buildCatalogFromUpstream(upstream, { mcpPath, wsPath });
+  let catalog = buildCatalogFromUpstream(upstream, { mcpPath, wsPath, mcpUiPath });
 
   const app = createMcpApiAdapterApp({
     getCatalog: () => catalog,
@@ -272,6 +296,7 @@ export async function startMcpApiAdapter(
     grpcAddress: upstream.grpcAddress ?? options.grpcAddress,
     mcpPath,
     wsPath,
+    mcpUiPath,
     createBridgedMcpServer: mcpPath ? upstream.createBridgedMcpServer : undefined,
   });
 
@@ -295,6 +320,7 @@ export async function startMcpApiAdapter(
     upstream,
     mcpPath,
     wsPath,
+    mcpUiPath,
     (next) => {
       catalog = next;
     },
@@ -312,13 +338,14 @@ export async function startMcpApiAdapter(
     grpcAddress: upstream.grpcAddress,
     mcpPath,
     wsPath: ws?.path,
+    mcpUiPath,
     wsUrl,
     upstream: upstream.label,
     upstreamKind: upstream.kind,
     getCatalog: () => catalog,
     refreshCatalog: async () => {
       const tools = await upstream.refreshTools();
-      catalog = buildCatalogFromUpstream(upstream, { tools, mcpPath, wsPath });
+      catalog = buildCatalogFromUpstream(upstream, { tools, mcpPath, wsPath, mcpUiPath });
       return catalog;
     },
     close: async () => {
