@@ -21,6 +21,7 @@ export const EDGE_HEAVY_HTML_CACHE_CONTROL =
 
 /** Path patterns that get EDGE_HEAVY_HTML_CACHE_CONTROL in next.config headers(). */
 export const HEAVY_HTML_ROUTE_SOURCES = [
+  '/mcp/protocol-fabric',
   '/case-studies/:path*',
   '/vision/:path*',
   '/deployment/operations-guide',
