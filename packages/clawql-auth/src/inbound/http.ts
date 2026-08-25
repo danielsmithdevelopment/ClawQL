@@ -340,10 +340,9 @@ export async function assertMcpOAuthAdmin(
   return false;
 }
 
-function publicMcpClient(client: McpRegisteredClient): Omit<
-  McpRegisteredClient,
-  "clientSecretHash" | "salt"
-> & { hasClientSecret: boolean } {
+function publicMcpClient(
+  client: McpRegisteredClient
+): Omit<McpRegisteredClient, "clientSecretHash" | "salt"> & { hasClientSecret: boolean } {
   const { clientSecretHash: _h, salt: _s, ...rest } = client;
   return { ...rest, hasClientSecret: Boolean(client.clientSecretHash) };
 }
@@ -393,9 +392,18 @@ function parseClientBody(
         : typeof body.default_role === "string"
           ? body.default_role
           : undefined,
-    orgId: typeof body.orgId === "string" ? body.orgId : typeof body.org_id === "string" ? body.org_id : undefined,
+    orgId:
+      typeof body.orgId === "string"
+        ? body.orgId
+        : typeof body.org_id === "string"
+          ? body.org_id
+          : undefined,
     teamId:
-      typeof body.teamId === "string" ? body.teamId : typeof body.team_id === "string" ? body.team_id : undefined,
+      typeof body.teamId === "string"
+        ? body.teamId
+        : typeof body.team_id === "string"
+          ? body.team_id
+          : undefined,
     redirectUris,
     salt,
     clientSecretHash,
@@ -616,7 +624,10 @@ export function attachMcpOAuthRoutes(
     app.put(`${base}/:clientId`, (req, res) => {
       void assertMcpOAuthAdmin(req, res, admin).then((ok) => {
         if (!ok) return;
-        const parsed = parseClientBody(req.params.clientId!, (req.body ?? {}) as Record<string, unknown>);
+        const parsed = parseClientBody(
+          req.params.clientId!,
+          (req.body ?? {}) as Record<string, unknown>
+        );
         if ("error" in parsed) {
           oauthError(res, 400, "invalid_request", parsed.error);
           return;
@@ -698,7 +709,8 @@ export function attachMcpOAuthRoutes(
             connectorId: req.params.connectorId!,
             audience: (body.audience as string | string[]) ?? "",
             enabled: body.enabled !== false,
-            createdAt: typeof body.createdAt === "string" ? body.createdAt : new Date().toISOString(),
+            createdAt:
+              typeof body.createdAt === "string" ? body.createdAt : new Date().toISOString(),
           })
         )
           .then((saved) => res.status(200).json(saved))

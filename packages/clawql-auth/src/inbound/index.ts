@@ -128,10 +128,7 @@ export {
   mcpOAuthRateLimitPerMinute,
   resetMcpOAuthRateLimitBucketsForTests,
 } from "./oauth-rate-limit.js";
-export {
-  isMcpOAuthBootstrapStrict,
-  McpOAuthBootstrapError,
-} from "./mcp-oauth-bootstrap.js";
+export { isMcpOAuthBootstrapStrict, McpOAuthBootstrapError } from "./mcp-oauth-bootstrap.js";
 export {
   createMcpOAuthForTests,
   createMcpOAuthFromEnv,

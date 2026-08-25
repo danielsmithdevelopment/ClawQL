@@ -526,9 +526,7 @@ describe("MCPOAuthServer", () => {
       /^[a-f0-9]{64}$/
     );
 
-    await Effect.runPromise(
-      server.validateToken(token.access_token)
-    );
+    await Effect.runPromise(server.validateToken(token.access_token));
 
     await Effect.runPromise(
       server.revokeToken({
@@ -543,7 +541,8 @@ describe("MCPOAuthServer", () => {
     );
     expect(
       events.some(
-        (e) => e.type === "MCP_TOKEN_REVOKED" && e.reason === "client_revoke_access" && e.accessTokenHash
+        (e) =>
+          e.type === "MCP_TOKEN_REVOKED" && e.reason === "client_revoke_access" && e.accessTokenHash
       )
     ).toBe(true);
   });

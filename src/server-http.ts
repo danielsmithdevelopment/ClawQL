@@ -126,7 +126,9 @@ function issuedApiKeyClaimsResolver(
 ): ApiKeyClaimsResolver | undefined {
   const explicit = env.CLAWQL_API_KEYS_PATH?.trim();
   const homeDefault =
-    env.CLAWQL_HOME?.trim() != null ? join(env.CLAWQL_HOME.trim(), "Auth", "api-keys.json") : undefined;
+    env.CLAWQL_HOME?.trim() != null
+      ? join(env.CLAWQL_HOME.trim(), "Auth", "api-keys.json")
+      : undefined;
   const path = explicit || homeDefault;
   if (!path) return undefined;
   // Only auto-load $CLAWQL_HOME default when the file already exists (avoid creating empty store on boot).
@@ -143,11 +145,7 @@ function buildGatewayAuthConfig(
   const issued = issuedApiKeyClaimsResolver(env);
   const inference =
     withMcp.mode === "apiKey" ? createInferenceVirtualKeyClaimsResolver(env) : undefined;
-  const composed = composeApiKeyClaimsResolvers(
-    issued,
-    inference,
-    withMcp.apiKeyClaimsResolver
-  );
+  const composed = composeApiKeyClaimsResolvers(issued, inference, withMcp.apiKeyClaimsResolver);
   if (!composed) return withMcp;
   return { ...withMcp, apiKeyClaimsResolver: composed };
 }

@@ -55,10 +55,7 @@ import {
   loadMcpClientsFromJsonFile,
   type SecretStoreMcpClientRegistry,
 } from "./mcp-oauth-stores.js";
-import {
-  isMcpOAuthBootstrapStrict,
-  McpOAuthBootstrapError,
-} from "./mcp-oauth-bootstrap.js";
+import { isMcpOAuthBootstrapStrict, McpOAuthBootstrapError } from "./mcp-oauth-bootstrap.js";
 
 export type McpOAuthEnvConfig = {
   enabled: boolean;
