@@ -13,8 +13,7 @@ import { stripVaultFrontmatter } from "../vault/markdown.js";
 /** Re-export for tests and callers that imported from this module. */
 export { extractWikilinkTargets } from "../vault/markdown.js";
 
-export type OntologySchemaName =
-  "legal.Matter" | "legal.Client" | "legal.Attorney" | "legal.Document";
+export type OntologySchemaName = string;
 
 export type OntologyFilterPredicate = Record<string, unknown>;
 export type OntologyFilterMap = Record<string, OntologyFilterPredicate>;

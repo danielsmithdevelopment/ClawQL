@@ -69,6 +69,7 @@ import {
   scaffoldWithMeta,
   ingestOBTTrace,
   metaStoreLayerForPath,
+  runExtractBenchOntologyPipeline,
 } from "clawql-ontology";
 
 const program = scaffoldWithMeta(jsonSchema, "invoice").pipe(
@@ -76,6 +77,10 @@ const program = scaffoldWithMeta(jsonSchema, "invoice").pipe(
   Effect.provide(metaStoreLayerForPath("/tmp/meta-ontology.db"))
 );
 ```
+
+## memory_recall integration
+
+Dynamic Layer 2/3 entity ids (e.g. `invoice`) are durable in vault `ontology.db` (`dynamic_entities` / `dynamic_records`, schema v2) and queryable via `memory_recall({ schema, filters })`. Sync helpers: `syncEntityToMemoryOntology` / `syncDocumentToMemoryOntology`. ExtractBench path: `runExtractBenchOntologyPipeline`.
 
 ## Promotion path
 

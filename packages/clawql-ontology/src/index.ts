@@ -84,6 +84,17 @@ export {
   type IndexedEntity,
 } from "./shared/ontology-index.js";
 export { cqeEntityToYaml, cqeEntityToYamlSync } from "./shared/cqe-to-yaml.js";
+export {
+  syncEntityToMemoryOntology,
+  syncDocumentToMemoryOntology,
+  toDynamicEntityDef,
+} from "./shared/memory-bridge.js";
+export {
+  runExtractBenchOntologyPipeline,
+  runExtractBenchOntologyPipelinePromise,
+  type ExtractBenchOntologyPipelineInput,
+  type ExtractBenchOntologyPipelineResult,
+} from "./shared/extractbench-pipeline.js";
 export { OntologyError, ontologyFromPromise, ontologySync } from "./effect/ontology-errors.js";
 export {
   readOntologyMetaConfig,
@@ -96,6 +107,7 @@ export {
   scaffoldFromDocling,
   inferTypeFromValue,
   populateFromDocling,
+  populateFromRecord,
   normalizeValue,
 } from "./layer2/index.js";
 export {

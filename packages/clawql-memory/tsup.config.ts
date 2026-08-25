@@ -25,6 +25,7 @@ const library = defineConfig({
     "vector/pgvector": "src/vector/pgvector.ts",
     "plugin/index": "src/plugin/index.ts",
     "sync/vault-sync-hooks": "src/sync/vault-sync-hooks.ts",
+    "ontology/index": "src/ontology/index.ts",
   },
   format: ["esm", "cjs"],
   dts: true,

@@ -133,7 +133,9 @@ export const memoryRecallToolZodShape = {
     .optional()
     .describe(MEMORY_RECALL_SOURCES_DESCRIPTION),
   schema: z
-    .enum(["legal.Matter", "legal.Client", "legal.Attorney", "legal.Document"])
+    .string()
+    .min(1)
+    .max(200)
     .optional()
     .describe(MEMORY_RECALL_SCHEMA_DESCRIPTION),
   filters: z

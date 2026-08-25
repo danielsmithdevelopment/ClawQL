@@ -86,3 +86,4 @@ uv run extract-bench compare \
 - [pdf-inspector](../../docs/providers/pdf-inspector-onboarding.md)
 - [Docling](../../docs/providers/docling-onboarding.md)
 - [Harvey LAB parallel stream](../harvey-labs/README.md)
+- [Meta-ontology v0.1](../../docs/specs/ontology/meta-ontology-v0.1.md) — Layer 2/3 scaffold + `runExtractBenchOntologyPipeline` (T1 completeness via `ontology.db`)

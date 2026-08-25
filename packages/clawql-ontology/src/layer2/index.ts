@@ -6,3 +6,4 @@ export {
   inferTypeFromColumn,
 } from "./scaffold/document-structure.js";
 export { populateFromDocling, normalizeValue } from "./scaffold/populate.js";
+export { populateFromRecord } from "./scaffold/populate-record.js";
