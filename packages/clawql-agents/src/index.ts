@@ -126,3 +126,29 @@ export {
   DEFAULT_MEMORY_TOOLS,
   SHIPPABLE_MCP_TOOLS,
 } from "./shared/shippable-tools.js";
+
+export {
+  buildOpenClawMcpSetHttpJson,
+  buildOpenClawMcpSetStdioJson,
+  formatOpenClawMcpSetCommands,
+  planOpenClawLiveWiring,
+} from "./adapters/openclaw/live-mcp.js";
+
+export {
+  installPersonalAgentHooks,
+  planPersonalAgentInstall,
+  CLINE_WORM_HOOK_STUB,
+} from "./personal/install.js";
+export type { PersonalAgentInstallPaths, PersonalAgentInstallPlan } from "./personal/install.js";
+
+export { getOutboundCredential, OutboundCredentialError } from "./auth/outbound-credential.js";
+export type { GetOutboundCredentialInput, OutboundCredential } from "./auth/outbound-credential.js";
+
+export { runAgentBenchmarkDry, catalogAgentsForBench } from "./bench/dry-runner.js";
+export type {
+  ArmResult,
+  BenchmarkFamily,
+  BenchmarkScorecard,
+  BenchmarkTask,
+  TaskResult,
+} from "./bench/dry-runner.js";

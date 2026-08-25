@@ -2,23 +2,19 @@
 
 Effect-based hardened adapters for all seven RockYourLobster catalog agents.
 
-| Phase | Agents           | Status                                                                           |
-| ----- | ---------------- | -------------------------------------------------------------------------------- |
-| 1     | Cline            | Adapter + WORM hooks + ATR templates + MCP settings fragment                     |
-| 2     | OpenClaw, Hermes | Adapter + WORM hooks + ATR templates; Hermes ships `python/hermes/worm_agent.py` |
-| 3     | Goose, OpenHands | Path ATR (Goose) + budget enforcer (OpenHands)                                   |
-| 4     | Pi, DeepSeek     | API memory plan (Pi) + Cordis plugin gate (DeepSeek)                             |
-| 5     | Agents OpenBench | **Gated** — do not scaffold `bench/` / Helm overlays here yet                    |
-
-WORM writes go through **`clawql-audit`** only.
+| Phase                  | Status                                                                      |
+| ---------------------- | --------------------------------------------------------------------------- |
+| 1–4 Adapters           | Shipped (Cline, OpenClaw, Hermes, Goose, OpenHands, Pi, DeepSeek)           |
+| Personal-agent install | `installPersonalAgentHooks` + `scripts/dev/install-personal-agent-hooks.sh` |
+| OpenClaw live MCP      | `planOpenClawLiveWiring` / `scripts/dev/openclaw-register-clawql.sh`        |
+| Outbound credentials   | `getOutboundCredential` (clawql-auth)                                       |
+| Phase 5 dry bench      | `runAgentBenchmarkDry` + `integrations/agents-bench/`                       |
+| Helm overlays          | `helm/<agent>/values-clawql.yaml`                                           |
+| Live OpenBench A/B     | Gated — see `docs/benchmarks/agents-openbench-plan.md`                      |
 
 ```ts
-import { Effect, Layer } from "effect";
-import { getAdapterBundle, CLINE_ATR_TEMPLATES, AgentAdapter } from "clawql-agents";
-
-const { wormLayer, adapterLayer } = await Effect.runPromise(
-  getAdapterBundle("cline", "/tmp/worm.db")
-);
+import { Effect } from "effect";
+import { getAdapterBundle, getOutboundCredential, planOpenClawLiveWiring } from "clawql-agents";
 ```
 
 Spec: [`docs/agents/clawql-agents-spec-v0.1.md`](../../docs/agents/clawql-agents-spec-v0.1.md)

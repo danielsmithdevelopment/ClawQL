@@ -4,12 +4,12 @@ Operator guide: [`docs/homelab/personal-agent-hermes-cline.md`](../../docs/homel
 
 ## Ports
 
-| Port | Process                                                                       |
-| ---- | ----------------------------------------------------------------------------- |
-| 8080 | ClawQL MCP (`scripts/dev/start-clawql-for-personal-agent.sh`)                 |
+| Port | Process                                                                                                  |
+| ---- | -------------------------------------------------------------------------------------------------------- |
+| 8080 | ClawQL MCP (`scripts/dev/start-clawql-for-personal-agent.sh`)                                            |
 | 8082 | MLX Ornith (`scripts/dev/start-ornith-mlx-for-personal-agent.sh`) — do **not** start Harvey LAB MCP here |
-| 8091 | clawql-inference (`scripts/dev/start-clawql-inference-for-personal-agent.sh`) |
-| 8081 | optional Nemotron fallback (leave running if already up)                      |
+| 8091 | clawql-inference (`scripts/dev/start-clawql-inference-for-personal-agent.sh`)                            |
+| 8081 | optional Nemotron fallback (leave running if already up)                                                 |
 
 ## Cline MCP snippet
 
@@ -61,3 +61,20 @@ Set **`CLAWQL_ENABLE_LOKI_PUSH=0`** to disable. Inference still writes `~/.ClawQ
 ## MCP tools Cline/Hermes can call today
 
 With `CLAWQL_ENABLE_DATA=1` and `CLAWQL_ENABLE_WEB=1`: `memory_recall`, `memory_ingest`, `data_query` / **`clawql_sql`**, `web_search`, `search`, `execute`, `audit`, `cache`.
+
+## Install packaged hooks (from clawql-agents)
+
+```bash
+# After npm run build -w clawql-agents
+HERMES_EXTENSIONS_DIR=~/.hermes/personal/extensions \
+CLINE_CONFIG_PATH=~/.cline/config.json \
+bash scripts/dev/install-personal-agent-hooks.sh
+```
+
+Copies `worm_agent.py`, writes Cline MCP config + hook stub, and drops `hermes.runtime.snippet.yaml` to merge into `hermes.yaml`.
+
+Offline soak (no Mac Mini required):
+
+```bash
+bash scripts/dev/soak-personal-agent-adapters.sh
+```
