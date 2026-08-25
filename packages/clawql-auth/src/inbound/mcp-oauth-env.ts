@@ -135,7 +135,9 @@ function loadEmaBootstrapConfigs(env: NodeJS.ProcessEnv): Effect.Effect<EmaOrgCo
         catch: (cause) => cause,
       }).pipe(
         Effect.catchAll((cause) =>
-          warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_JSON", cause).pipe(Effect.as([] as EmaOrgConfig[]))
+          warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_JSON", cause).pipe(
+            Effect.as([] as EmaOrgConfig[])
+          )
         )
       );
     }
@@ -146,7 +148,9 @@ function loadEmaBootstrapConfigs(env: NodeJS.ProcessEnv): Effect.Effect<EmaOrgCo
         catch: (cause) => cause,
       }).pipe(
         Effect.catchAll((cause) =>
-          warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_PATH", cause).pipe(Effect.as([] as EmaOrgConfig[]))
+          warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_PATH", cause).pipe(
+            Effect.as([] as EmaOrgConfig[])
+          )
         )
       );
     }
@@ -161,7 +165,9 @@ function loadEmaBootstrapConfigs(env: NodeJS.ProcessEnv): Effect.Effect<EmaOrgCo
         catch: (cause) => cause,
       }).pipe(
         Effect.catchAll((cause) =>
-          warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_FILE", cause).pipe(Effect.as([] as EmaOrgConfig[]))
+          warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_FILE", cause).pipe(
+            Effect.as([] as EmaOrgConfig[])
+          )
         )
       );
     }

@@ -49,7 +49,10 @@ describe("clawql-auth gateway", () => {
   it("apiKey mode rejects wrong-length and wrong-value keys (timing-safe compare)", () => {
     process.env.CLAWQL_AUTH_MODE = "apiKey";
     process.env.CLAWQL_API_KEY = "correct-length-key!!";
-    const short = resolveAtrClaimsFromHeaders({ "x-api-key": "short" }, Effect.runSync(loadGatewayAuthConfig()));
+    const short = resolveAtrClaimsFromHeaders(
+      { "x-api-key": "short" },
+      Effect.runSync(loadGatewayAuthConfig())
+    );
     expect(short.ok).toBe(false);
     const wrong = resolveAtrClaimsFromHeaders(
       { "x-api-key": "correct-length-key!?" },
@@ -174,17 +177,19 @@ describe("clawql-auth gateway", () => {
   });
 
   it("mcpOAuthValidator accepts ClawQL-issued bearer tokens in hybrid mode", async () => {
-    const runtime = await Effect.runPromise(createMcpOAuthForTests({
-      issuer: "https://auth.clawql.test",
-      signingSecret: "test-mcp-oauth-signing-secret-32b!!",
-      clients: [
-        {
-          clientId: "mcp-client",
-          defaultScope: ["execute", "search"],
-          defaultRole: "operator",
-        },
-      ],
-    }));
+    const runtime = await Effect.runPromise(
+      createMcpOAuthForTests({
+        issuer: "https://auth.clawql.test",
+        signingSecret: "test-mcp-oauth-signing-secret-32b!!",
+        clients: [
+          {
+            clientId: "mcp-client",
+            defaultScope: ["execute", "search"],
+            defaultRole: "operator",
+          },
+        ],
+      })
+    );
     const issued = await Effect.runPromise(
       runtime.server.issueToken({
         grantType: "client_credentials",

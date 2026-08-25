@@ -229,9 +229,7 @@ const auth = createClawQLAuth({ mode: "oidc", stepUpStorePath: "/path/step-up.js
 const claims = await Effect.runPromise(
   auth.resolveClaimsEffect({ authorization: `Bearer ${jwt}` })
 );
-await Effect.runPromise(
-  auth.assertToolAccessEffect(claims, "payments_credits_transfer_confirm")
-);
+await Effect.runPromise(auth.assertToolAccessEffect(claims, "payments_credits_transfer_confirm"));
 ```
 
 WebAuthn is a **pluggable** `WebAuthnStepUpVerifier` (fails closed until injected). Prefer IdP passkeys for human login.

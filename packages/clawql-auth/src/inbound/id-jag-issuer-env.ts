@@ -36,16 +36,14 @@ function envFlag(name: string, env: NodeJS.ProcessEnv): boolean {
   return v === "1" || v === "true" || v === "yes";
 }
 
-export function isIdJagIssuerEnabled(
-  env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<boolean> {
+export function isIdJagIssuerEnabled(env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> {
   return Effect.sync(
     () =>
       envFlag("CLAWQL_ID_JAG_ISSUER_ENABLED", env) ||
       Boolean(
         env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM?.trim() ||
-          env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim() ||
-          env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim()
+        env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim() ||
+        env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim()
       )
   );
 }

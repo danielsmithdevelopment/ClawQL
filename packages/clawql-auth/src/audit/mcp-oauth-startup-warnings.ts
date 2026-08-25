@@ -26,15 +26,15 @@ function isMcpOAuthEnabledEnv(env: NodeJS.ProcessEnv): boolean {
   if (legacyFlag === "1" || legacyFlag === "true" || legacyFlag === "yes") return true;
   return Boolean(
     env.CLAWQL_MCP_OAUTH_SIGNING_SECRET?.trim() ||
-      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
-      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
+    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
+    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
   );
 }
 
 function hasRs256SigningMaterial(env: NodeJS.ProcessEnv): boolean {
   return Boolean(
     env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
-      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
+    env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
   );
 }
 
@@ -94,14 +94,14 @@ export function warnIfIdJagIssuerSharesMcpOAuthKey(
   return Effect.sync(() => {
     const hasDedicated = Boolean(
       env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM?.trim() ||
-        env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim() ||
-        env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim()
+      env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim() ||
+      env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim()
     );
     if (hasDedicated) return;
     const hasMcpFallback = Boolean(
       env.CLAWQL_MCP_OAUTH_SIGNING_SECRET?.trim() ||
-        env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
-        env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
+      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim() ||
+      env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim()
     );
     if (!hasMcpFallback) return;
     console.warn(ID_JAG_ISSUER_SHARED_KEY_WARNING);
@@ -130,8 +130,7 @@ export function warnIfMcpOAuthBootstrapInvalid(
   return Effect.sync(() => {
     const detail = cause instanceof Error ? cause.message : cause ? String(cause) : "";
     console.warn(
-      `${MCP_OAUTH_BOOTSTRAP_INVALID_WARNING} source=${source}` +
-        (detail ? ` cause=${detail}` : "")
+      `${MCP_OAUTH_BOOTSTRAP_INVALID_WARNING} source=${source}` + (detail ? ` cause=${detail}` : "")
     );
   });
 }

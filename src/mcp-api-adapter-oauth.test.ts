@@ -65,20 +65,22 @@ describe("mcp-api-adapter ClawQL MCP JWT / JWKS enforcement", () => {
     const issuer = "https://auth.clawql.test";
     const salt = "aabbccddee";
     const clientSecret = "client-secret-value";
-    const runtime = await Effect.runPromise(createMcpOAuthForTests({
-      issuer,
-      signing,
-      clients: [
-        {
-          clientId: "cline-agent",
-          salt,
-          clientSecretHash: hashMcpClientSecret(salt, clientSecret),
-          defaultScope: ["execute", "search"],
-          defaultRole: "operator",
-          orgId: "acme",
-        },
-      ],
-    }));
+    const runtime = await Effect.runPromise(
+      createMcpOAuthForTests({
+        issuer,
+        signing,
+        clients: [
+          {
+            clientId: "cline-agent",
+            salt,
+            clientSecretHash: hashMcpClientSecret(salt, clientSecret),
+            defaultScope: ["execute", "search"],
+            defaultRole: "operator",
+            orgId: "acme",
+          },
+        ],
+      })
+    );
 
     // Publish the same JWKS the AS would serve at /.well-known/jwks.json
     const jwksApp = (await import("express")).default();

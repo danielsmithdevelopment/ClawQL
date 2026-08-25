@@ -18,10 +18,7 @@ import { loadMcpOAuthSigningMaterialEffect } from "./mcp-oauth-signing.js";
 import { hashMcpClientSecret } from "./mcp-oauth.js";
 
 async function withTestApp(
-  fn: (
-    baseUrl: string,
-    runtime: import("./mcp-oauth-env.js").McpOAuthRuntime
-  ) => Promise<void>,
+  fn: (baseUrl: string, runtime: import("./mcp-oauth-env.js").McpOAuthRuntime) => Promise<void>,
   options?: {
     adminApiKey?: string;
     resolveAuthorizeClaims?: true;
@@ -35,28 +32,30 @@ async function withTestApp(
   const confidentialSalt = "http-basic-test-salt";
   const confidentialSecret = "client-secret-value";
 
-  const runtime = await Effect.runPromise(createMcpOAuthForTests({
-    issuer: "https://auth.clawql.test",
-    signingSecret,
-    resourceAudience: audience,
-    clients: [
-      {
-        clientId: "cursor-desktop",
-        defaultScope: ["execute", "search"],
-        defaultRole: "operator",
-        orgId: "acme",
-        redirectUris: [redirectUri],
-      },
-      {
-        clientId: "cline-agent",
-        salt: confidentialSalt,
-        clientSecretHash: hashMcpClientSecret(confidentialSalt, confidentialSecret),
-        defaultScope: ["execute", "search", "memory"],
-        defaultRole: "operator",
-        orgId: "acme",
-      },
-    ],
-  }));
+  const runtime = await Effect.runPromise(
+    createMcpOAuthForTests({
+      issuer: "https://auth.clawql.test",
+      signingSecret,
+      resourceAudience: audience,
+      clients: [
+        {
+          clientId: "cursor-desktop",
+          defaultScope: ["execute", "search"],
+          defaultRole: "operator",
+          orgId: "acme",
+          redirectUris: [redirectUri],
+        },
+        {
+          clientId: "cline-agent",
+          salt: confidentialSalt,
+          clientSecretHash: hashMcpClientSecret(confidentialSalt, confidentialSecret),
+          defaultScope: ["execute", "search", "memory"],
+          defaultRole: "operator",
+          orgId: "acme",
+        },
+      ],
+    })
+  );
 
   await Effect.runPromise(
     runtime.emaStore.saveOrgConfig({
@@ -342,11 +341,13 @@ describe("attachMcpOAuthRoutes", () => {
       })
     );
     const audience = "https://mcp.clawql.test/";
-    const runtime = await Effect.runPromise(createMcpOAuthForTests({
-      issuer: "https://auth.clawql.test",
-      signing,
-      resourceAudience: audience,
-    }));
+    const runtime = await Effect.runPromise(
+      createMcpOAuthForTests({
+        issuer: "https://auth.clawql.test",
+        signing,
+        resourceAudience: audience,
+      })
+    );
 
     const app = express();
     attachMcpOAuthRoutes(app, runtime.server, {

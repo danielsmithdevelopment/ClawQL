@@ -117,10 +117,7 @@ export function verifyOidcBearerTokenWithOrgRoutingEffect(
     baseConfig?: OidcAuthConfig;
     router?: OrgIdpRouter;
   } = {}
-): Effect.Effect<
-  { claims: AtrClaims; payload: JWTPayload; route?: OrgIdpRoute },
-  OidcAuthError
-> {
+): Effect.Effect<{ claims: AtrClaims; payload: JWTPayload; route?: OrgIdpRoute }, OidcAuthError> {
   return Effect.gen(function* () {
     const base = options.baseConfig ?? loadOidcAuthConfig();
     let route: OrgIdpRoute | undefined;

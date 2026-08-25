@@ -48,11 +48,13 @@ describe("server-http MCP OAuth", () => {
     const idpSecret = "test-idp-hs256-secret-at-least-32-chars!!";
     const audience = "https://mcp.clawql.test/";
 
-    const mcpOAuthRuntime = await Effect.runPromise(createMcpOAuthForTests({
-      issuer: "https://auth.clawql.test",
-      signingSecret,
-      resourceAudience: audience,
-    }));
+    const mcpOAuthRuntime = await Effect.runPromise(
+      createMcpOAuthForTests({
+        issuer: "https://auth.clawql.test",
+        signingSecret,
+        resourceAudience: audience,
+      })
+    );
     await Effect.runPromise(
       mcpOAuthRuntime.emaStore.saveOrgConfig({
         orgId: "acme",
