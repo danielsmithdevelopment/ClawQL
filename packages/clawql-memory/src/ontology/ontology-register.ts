@@ -14,12 +14,10 @@ import {
 } from "./ontology-dynamic.js";
 
 export type RegisterDynamicOntologyResult =
-  | { ok: true; entityId: string; path: string }
-  | { ok: false; error: string };
+  { ok: true; entityId: string; path: string } | { ok: false; error: string };
 
 export type UpsertDynamicOntologyRecordResult =
-  | { ok: true; entityId: string; recordId: string }
-  | { ok: false; error: string };
+  { ok: true; entityId: string; recordId: string } | { ok: false; error: string };
 
 /** Persist a scaffolded entity definition into ontology.db (Layer 2/3). */
 export async function registerDynamicOntologyEntity(
@@ -101,7 +99,9 @@ export async function syncDynamicOntologyDocument(
     try {
       upsertDynamicEntity(handle.db, entity);
       for (const rel of entity.relationships ?? []) {
-        const probe = handle.db.prepare(`SELECT 1 AS ok FROM dynamic_entities WHERE id = ? LIMIT 1`);
+        const probe = handle.db.prepare(
+          `SELECT 1 AS ok FROM dynamic_entities WHERE id = ? LIMIT 1`
+        );
         probe.bind([rel.targetEntity]);
         const exists = probe.step();
         probe.free();

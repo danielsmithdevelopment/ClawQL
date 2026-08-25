@@ -20,11 +20,7 @@ import {
   type MatterRow,
 } from "./ontology-db.js";
 import { syncOntologyMattersFromVault } from "./ontology-sync.js";
-import {
-  countDynamicRecords,
-  getDynamicEntity,
-  listDynamicRecords,
-} from "./ontology-dynamic.js";
+import { countDynamicRecords, getDynamicEntity, listDynamicRecords } from "./ontology-dynamic.js";
 import { matchDynamicFilters } from "./dynamic-filter.js";
 
 export type OntologySchema = string;

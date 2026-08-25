@@ -115,10 +115,7 @@ const MemoryRebuildSchema = Schema.Struct({
 }).annotations({ description: MEMORY_INGEST_REBUILD_DESCRIPTION });
 
 const MemoryRecallSourceSchema = Schema.Literal(...MEMORY_RECALL_SOURCES);
-const OntologySchemaNameSchema = Schema.String.pipe(
-  Schema.minLength(1),
-  Schema.maxLength(200)
-);
+const OntologySchemaNameSchema = Schema.String.pipe(Schema.minLength(1), Schema.maxLength(200));
 const OntologyConfidenceSchema = Schema.Literal("EXTRACTED", "INFERRED", "AMBIGUOUS");
 /** Predicate object — keys like gte/gt/eq; values validated at query time. */
 const OntologyFilterPredicateSchema = Schema.Record({

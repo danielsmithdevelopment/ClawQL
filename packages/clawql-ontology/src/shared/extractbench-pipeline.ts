@@ -9,11 +9,7 @@ import { OntologyIndexLive, OntologyIndexService } from "./ontology-index.js";
 import { scaffoldWithMeta } from "../layer3/meta/meta-scaffold.js";
 import { MetaOntologyStoreLive } from "../layer3/meta/store.js";
 import { populateFromRecord } from "../layer2/scaffold/populate-record.js";
-import type {
-  JSONSchema,
-  ScaffoldOptions,
-  ScaffoldResult,
-} from "./cqe-runtime-types.js";
+import type { JSONSchema, ScaffoldOptions, ScaffoldResult } from "./cqe-runtime-types.js";
 import { syncDocumentToMemoryOntology, syncEntityToMemoryOntology } from "./memory-bridge.js";
 
 export type ExtractBenchOntologyPipelineInput = {
@@ -72,11 +68,7 @@ export function runExtractBenchOntologyPipeline(
       overwrite: input.scaffoldOptions?.overwrite ?? true,
     });
 
-    const populated = yield* populateFromRecord(
-      input.extracted,
-      scaffold.entity,
-      input.documentId
-    );
+    const populated = yield* populateFromRecord(input.extracted, scaffold.entity, input.documentId);
 
     const index = yield* OntologyIndexService;
     const primary = yield* index.getRecord(scaffold.entityId, input.documentId);

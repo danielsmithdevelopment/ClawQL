@@ -37,9 +37,7 @@ export function matchDynamicPredicate(value: unknown, predicate: FilterPredicate
     predicate.between.length === 2
   ) {
     const n = asNumber(value);
-    return (
-      n !== null && n >= Number(predicate.between[0]) && n <= Number(predicate.between[1])
-    );
+    return n !== null && n >= Number(predicate.between[0]) && n <= Number(predicate.between[1]);
   }
   if ("in" in predicate && Array.isArray(predicate.in)) {
     return predicate.in.includes(value as never);
@@ -59,9 +57,7 @@ export function matchDynamicPredicate(value: unknown, predicate: FilterPredicate
   }
   if ("isNull" in predicate) {
     const isNull =
-      value === null ||
-      value === undefined ||
-      (Array.isArray(value) && value.length === 0);
+      value === null || value === undefined || (Array.isArray(value) && value.length === 0);
     return predicate.isNull ? isNull : !isNull;
   }
   return false;

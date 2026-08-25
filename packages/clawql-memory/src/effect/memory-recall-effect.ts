@@ -123,8 +123,8 @@ export function executeMemoryRecallCoreEffect(
     }
 
     // Structured ontology path — exact predicate evaluation (B-7.1 / legal + Layer 2/3 dynamic).
-    const { wantsStructuredOntologyRecall } = yield* memoryFromPromise(async () =>
-      import("../ontology/ontology-query.js")
+    const { wantsStructuredOntologyRecall } = yield* memoryFromPromise(
+      async () => import("../ontology/ontology-query.js")
     );
     if (wantsStructuredOntologyRecall({ schema: input.schema, filters: input.filters })) {
       const ontologyResult = yield* memoryFromPromise(async () => {

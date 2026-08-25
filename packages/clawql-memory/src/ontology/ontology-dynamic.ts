@@ -59,11 +59,7 @@ function queryOne(
   return row;
 }
 
-function queryAll(
-  db: Database,
-  sql: string,
-  params: SqlValue[] = []
-): Record<string, SqlValue>[] {
+function queryAll(db: Database, sql: string, params: SqlValue[] = []): Record<string, SqlValue>[] {
   const stmt = db.prepare(sql);
   stmt.bind(params);
   const rows: Record<string, SqlValue>[] = [];
@@ -104,8 +100,7 @@ export function migrateDynamicOntologyTables(db: Database): void {
 
 export function upsertDynamicEntity(db: Database, entity: DynamicEntityDef): void {
   const now = isoNow();
-  const ttl =
-    entity.ttl === undefined || entity.ttl === null ? null : String(entity.ttl);
+  const ttl = entity.ttl === undefined || entity.ttl === null ? null : String(entity.ttl);
   db.run(
     `INSERT INTO dynamic_entities(
       id, source, fields_json, relationships_json, document_type, ttl,
@@ -145,9 +140,7 @@ export function getDynamicEntity(db: Database, entityId: string): DynamicEntityD
     id: String(row.id),
     source: String(row.source),
     fields: JSON.parse(String(row.fields_json || "[]")) as DynamicFieldDef[],
-    relationships: JSON.parse(
-      String(row.relationships_json || "[]")
-    ) as DynamicRelationshipDef[],
+    relationships: JSON.parse(String(row.relationships_json || "[]")) as DynamicRelationshipDef[],
     documentType: row.document_type != null ? String(row.document_type) : undefined,
     ttl: row.ttl != null ? String(row.ttl) : undefined,
     vaultNotePath: row.vault_note_path != null ? String(row.vault_note_path) : undefined,
@@ -188,11 +181,9 @@ export function listDynamicRecords(db: Database, entityId: string): DynamicRecor
 }
 
 export function countDynamicRecords(db: Database, entityId: string): number {
-  const row = queryOne(
-    db,
-    `SELECT COUNT(*) AS c FROM dynamic_records WHERE entity_id = ?`,
-    [entityId]
-  );
+  const row = queryOne(db, `SELECT COUNT(*) AS c FROM dynamic_records WHERE entity_id = ?`, [
+    entityId,
+  ]);
   return Number(row?.c ?? 0);
 }
 

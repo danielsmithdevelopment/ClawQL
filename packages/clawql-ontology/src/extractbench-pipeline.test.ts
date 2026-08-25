@@ -65,9 +65,7 @@ describe("runExtractBenchOntologyPipeline", () => {
 
     expect(result.scaffold.entityId).toBe("invoice");
     expect(result.rowsPopulated.lineItems).toBe(47);
-    expect(result.populatedFields).toEqual(
-      expect.arrayContaining(["invoiceNumber", "vendorName"])
-    );
+    expect(result.populatedFields).toEqual(expect.arrayContaining(["invoiceNumber", "vendorName"]));
     expect(result.recall.ok).toBe(true);
     if (!result.recall.ok) return;
     expect(result.recall.filteredEntities).toBe(1);

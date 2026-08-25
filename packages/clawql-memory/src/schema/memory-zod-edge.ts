@@ -132,12 +132,7 @@ export const memoryRecallToolZodShape = {
     .min(1)
     .optional()
     .describe(MEMORY_RECALL_SOURCES_DESCRIPTION),
-  schema: z
-    .string()
-    .min(1)
-    .max(200)
-    .optional()
-    .describe(MEMORY_RECALL_SCHEMA_DESCRIPTION),
+  schema: z.string().min(1).max(200).optional().describe(MEMORY_RECALL_SCHEMA_DESCRIPTION),
   filters: z
     .record(z.string(), z.record(z.string(), z.unknown()))
     .optional()
