@@ -58,14 +58,16 @@ async function withTestApp(
     ],
   });
 
-  await runtime.emaStore.saveOrgConfig({
-    orgId: "acme",
-    idpJwksUri: "https://idp.test/jwks",
-    idpIssuer: "https://idp.test/",
-    audience,
-    hs256Secret: idpSecret,
-    groupMappings: [{ idpGroup: "engineering", scope: ["execute", "search"] }],
-  });
+  await Effect.runPromise(
+    runtime.emaStore.saveOrgConfig({
+      orgId: "acme",
+      idpJwksUri: "https://idp.test/jwks",
+      idpIssuer: "https://idp.test/",
+      audience,
+      hs256Secret: idpSecret,
+      groupMappings: [{ idpGroup: "engineering", scope: ["execute", "search"] }],
+    })
+  );
 
   const app = express();
   app.use(MCP_OAUTH_TOKEN_PATH, express.urlencoded({ extended: false }));

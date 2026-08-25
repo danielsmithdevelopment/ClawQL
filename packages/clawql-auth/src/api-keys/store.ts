@@ -15,7 +15,7 @@ import { dirname } from "node:path";
 import { Context, Data, Effect, Layer } from "effect";
 
 import {
-  emitAuthEvent,
+  emitAuthEventEffect,
   noopAuthEventSink,
   type AuthEvent,
   type AuthEventSink,
@@ -83,17 +83,8 @@ export function saveIssuedApiKeyStoreEffect(
   });
 }
 
-/**
- * `auth-events.ts` still exposes a Promise-based `emitAuthEvent` — wrap with `Effect.tryPromise`
- * here. TODO(effect-ts-everywhere): switch to an `emitAuthEventEffect` once `audit/auth-events.ts`
- * grows one; re-check that file before assuming this wrapper is still needed.
- */
-function emitEffect(sink: AuthEventSink, event: AuthEvent): Effect.Effect<void, ApiKeyStoreError> {
-  return Effect.tryPromise({
-    try: () => Promise.resolve(emitAuthEvent(sink, event)),
-    catch: (cause) =>
-      new ApiKeyStoreError({ reason: `Failed to emit auth event: ${errMsg(cause)}`, cause }),
-  });
+function emitEffect(sink: AuthEventSink, event: AuthEvent): Effect.Effect<void> {
+  return emitAuthEventEffect(sink, event);
 }
 
 export type IssuedApiKeyStoreOptions = {

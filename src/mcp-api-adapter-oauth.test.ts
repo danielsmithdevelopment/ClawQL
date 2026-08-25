@@ -102,11 +102,13 @@ describe("mcp-api-adapter ClawQL MCP JWT / JWKS enforcement", () => {
     const noAuth = await fetch(`${adapter.base}/tools`);
     expect(noAuth.status).toBe(401);
 
-    const minted = await runtime.server.issueToken({
-      grantType: "client_credentials",
-      clientId: "cline-agent",
-      clientSecret,
-    });
+    const minted = await Effect.runPromise(
+      runtime.server.issueToken({
+        grantType: "client_credentials",
+        clientId: "cline-agent",
+        clientSecret,
+      })
+    );
 
     const ok = await fetch(`${adapter.base}/tools`, {
       headers: { Authorization: `Bearer ${minted.access_token}` },

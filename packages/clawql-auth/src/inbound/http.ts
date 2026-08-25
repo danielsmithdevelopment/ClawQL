@@ -7,11 +7,12 @@ import type { Express, Request, Response } from "express";
 
 import type { AtrClaims } from "../gateway.js";
 import { ID_JAG_JWT_BEARER_GRANT } from "./id-jag.js";
-import type {
-  MCPOAuthServer,
-  McpGrantType,
-  McpGrantTypeInput,
-  McpTokenRequest,
+import {
+  McpOAuthError,
+  type MCPOAuthServer,
+  type McpGrantType,
+  type McpGrantTypeInput,
+  type McpTokenRequest,
 } from "./mcp-oauth.js";
 import type { SecretStoreEmaConfigStore } from "./ema-config-store.js";
 import type { EmaConnectorRegistry } from "./ema-connector-registry.js";
@@ -138,6 +139,18 @@ export function parseMcpOAuthTokenBody(body: TokenBody): McpTokenRequest {
 }
 
 function mapIssueTokenError(err: unknown): { status: number; error: string; description: string } {
+  if (err instanceof McpOAuthError) {
+    const code = err.error;
+    const description = err.description?.trim() || err.message;
+    if (code === "unsupported_grant_type") return { status: 400, error: code, description };
+    if (code === "invalid_client") return { status: 401, error: code, description };
+    if (code === "invalid_grant") return { status: 400, error: code, description };
+    if (code === "invalid_scope") return { status: 400, error: code, description };
+    if (code === "invalid_request") return { status: 400, error: code, description };
+    if (code === "invalid_token") return { status: 401, error: code, description };
+    return { status: 500, error: "server_error", description };
+  }
+
   const message = err instanceof Error ? err.message : String(err);
   const [code, ...rest] = message.split(":");
   const description = rest.join(":").trim() || message;
@@ -176,7 +189,7 @@ export async function handleMcpOAuthTokenRequest(
   }
 
   try {
-    const token = await server.issueToken(request);
+    const token = await Effect.runPromise(server.issueToken(request));
     res.status(200).json(token);
   } catch (err) {
     const mapped = mapIssueTokenError(err);
@@ -197,11 +210,13 @@ export async function handleMcpOAuthRevokeRequest(
     return;
   }
   try {
-    await server.revokeToken({
-      token,
-      clientId: merged.client_id?.trim() || merged.clientId?.trim(),
-      clientSecret: merged.client_secret?.trim() || merged.clientSecret?.trim(),
-    });
+    await Effect.runPromise(
+      server.revokeToken({
+        token,
+        clientId: merged.client_id?.trim() || merged.clientId?.trim(),
+        clientSecret: merged.client_secret?.trim() || merged.clientSecret?.trim(),
+      })
+    );
     res.status(200).json({});
   } catch (err) {
     const mapped = mapIssueTokenError(err);
@@ -236,15 +251,17 @@ export async function handleMcpOAuthAuthorizeRequest(
   }
 
   try {
-    const result = await server.createAuthorizationCode({
-      clientId: clientId ?? "",
-      redirectUri: redirectUri ?? "",
-      codeChallenge: codeChallenge ?? "",
-      codeChallengeMethod: "S256",
-      scope,
-      state,
-      claims,
-    });
+    const result = await Effect.runPromise(
+      server.createAuthorizationCode({
+        clientId: clientId ?? "",
+        redirectUri: redirectUri ?? "",
+        codeChallenge: codeChallenge ?? "",
+        codeChallengeMethod: "S256",
+        scope,
+        state,
+        claims,
+      })
+    );
     res.redirect(302, result.redirectUrl);
   } catch (err) {
     const mapped = mapIssueTokenError(err);
@@ -385,8 +402,7 @@ export function attachMcpOAuthRoutes(
 
     app.get("/oauth/ema/orgs", (req, res) => {
       if (!assertEmaAdmin(req, res, adminApiKey)) return;
-      void store
-        .listOrgIds()
+      void Effect.runPromise(store.listOrgIds())
         .then((orgIds) => res.status(200).json({ orgIds }))
         .catch((err: unknown) => {
           oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
@@ -395,8 +411,7 @@ export function attachMcpOAuthRoutes(
 
     app.get("/oauth/ema/orgs/:orgId", (req, res) => {
       if (!assertEmaAdmin(req, res, adminApiKey)) return;
-      void store
-        .getOrgConfig(req.params.orgId!)
+      void Effect.runPromise(store.getOrgConfig(req.params.orgId!))
         .then((config) => {
           if (!config) {
             oauthError(res, 404, "invalid_request", "unknown_org");
@@ -412,8 +427,7 @@ export function attachMcpOAuthRoutes(
     app.put("/oauth/ema/orgs/:orgId", (req, res) => {
       if (!assertEmaAdmin(req, res, adminApiKey)) return;
       const body = req.body as Record<string, unknown>;
-      void store
-        .saveOrgConfig({ ...body, orgId: req.params.orgId } as never)
+      void Effect.runPromise(store.saveOrgConfig({ ...body, orgId: req.params.orgId } as never))
         .then((saved) => res.status(200).json(saved))
         .catch((err: unknown) => {
           oauthError(res, 400, "invalid_request", err instanceof Error ? err.message : String(err));
@@ -422,8 +436,7 @@ export function attachMcpOAuthRoutes(
 
     app.delete("/oauth/ema/orgs/:orgId", (req, res) => {
       if (!assertEmaAdmin(req, res, adminApiKey)) return;
-      void store
-        .deleteOrgConfig(req.params.orgId!)
+      void Effect.runPromise(store.deleteOrgConfig(req.params.orgId!))
         .then(() => res.status(204).end())
         .catch((err: unknown) => {
           oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
@@ -462,8 +475,7 @@ export function attachMcpOAuthRoutes(
 
     app.get("/oauth/ema/connectors/:orgId", (req, res) => {
       if (!assertEmaAdmin(req, res, adminApiKey)) return;
-      void connectors
-        .list(req.params.orgId!)
+      void Effect.runPromise(connectors.list(req.params.orgId!))
         .then((list) => res.status(200).json({ connectors: list }))
         .catch((err: unknown) => {
           oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
@@ -473,8 +485,8 @@ export function attachMcpOAuthRoutes(
     app.put("/oauth/ema/connectors/:orgId/:connectorId", (req, res) => {
       if (!assertEmaAdmin(req, res, adminApiKey)) return;
       const body = (req.body ?? {}) as Record<string, unknown>;
-      void connectors
-        .save({
+      void Effect.runPromise(
+        connectors.save({
           ...body,
           orgId: req.params.orgId!,
           connectorId: req.params.connectorId!,
@@ -482,6 +494,7 @@ export function attachMcpOAuthRoutes(
           enabled: body.enabled !== false,
           createdAt: typeof body.createdAt === "string" ? body.createdAt : new Date().toISOString(),
         })
+      )
         .then((saved) => res.status(200).json(saved))
         .catch((err: unknown) => {
           oauthError(res, 400, "invalid_request", err instanceof Error ? err.message : String(err));
@@ -490,8 +503,7 @@ export function attachMcpOAuthRoutes(
 
     app.delete("/oauth/ema/connectors/:orgId/:connectorId", (req, res) => {
       if (!assertEmaAdmin(req, res, adminApiKey)) return;
-      void connectors
-        .delete(req.params.orgId!, req.params.connectorId!)
+      void Effect.runPromise(connectors.delete(req.params.orgId!, req.params.connectorId!))
         .then(() => res.status(204).end())
         .catch((err: unknown) => {
           oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));

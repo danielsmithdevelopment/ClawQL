@@ -185,10 +185,12 @@ describe("clawql-auth gateway", () => {
         },
       ],
     });
-    const issued = await runtime.server.issueToken({
-      grantType: "client_credentials",
-      clientId: "mcp-client",
-    });
+    const issued = await Effect.runPromise(
+      runtime.server.issueToken({
+        grantType: "client_credentials",
+        clientId: "mcp-client",
+      })
+    );
 
     const claims = await Effect.runPromise(
       resolveAtrClaimsFromHeadersEffect(

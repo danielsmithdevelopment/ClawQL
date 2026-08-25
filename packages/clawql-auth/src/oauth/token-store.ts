@@ -13,7 +13,7 @@
 import { Context, Effect, Fiber, Layer } from "effect";
 
 import {
-  emitAuthEvent,
+  emitAuthEventEffect,
   noopAuthEventSink,
   type AuthEvent,
   type AuthEventSink,
@@ -46,16 +46,8 @@ function defaultProviderId(key: OAuthTokenKey): string {
   return parts[0]!;
 }
 
-/**
- * `auth-events.ts` still exposes a Promise-based `emitAuthEvent` — wrap with `Effect.tryPromise`
- * here. TODO(effect-ts-everywhere): switch to an `emitAuthEventEffect` once `audit/auth-events.ts`
- * grows one; re-check that file before assuming this wrapper is still needed.
- */
 function emitEffect(sink: AuthEventSink, event: AuthEvent): Effect.Effect<void> {
-  return Effect.tryPromise({
-    try: () => Promise.resolve(emitAuthEvent(sink, event)),
-    catch: () => undefined,
-  }).pipe(Effect.catchAll(() => Effect.void));
+  return emitAuthEventEffect(sink, event);
 }
 
 export class OAuthTokenStore {

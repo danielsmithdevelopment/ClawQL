@@ -17,7 +17,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { Context, Data, Effect, Layer } from "effect";
 
 import {
-  emitAuthEvent,
+  emitAuthEventEffect,
   noopAuthEventSink,
   type AuthEvent,
   type AuthEventSink,
@@ -65,12 +65,12 @@ export class AuthCodeError extends Data.TaggedError("AuthCodeError")<{
   readonly cause?: unknown;
 }> {}
 
-/** Kept as a plain sync export — see file header (`inbound/mcp-oauth.ts` direct import). */
+/** Kept as a plain sync export — prefer {@link generateCodeVerifierEffect}. */
 export function generateCodeVerifier(): string {
   return randomBytes(32).toString("base64url");
 }
 
-/** Kept as a plain sync export — see file header (`inbound/mcp-oauth.ts` direct import). */
+/** Kept as a plain sync export — prefer {@link generateCodeChallengeEffect}. */
 export function generateCodeChallenge(verifier: string): string {
   return createHash("sha256").update(verifier).digest("base64url");
 }
@@ -95,16 +95,8 @@ function errMsg(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause);
 }
 
-/**
- * `auth-events.ts` still exposes a Promise-based `emitAuthEvent` — wrap with `Effect.tryPromise`
- * here. TODO(effect-ts-everywhere): switch to an `emitAuthEventEffect` once `audit/auth-events.ts`
- * grows one; re-check that file before assuming this wrapper is still needed.
- */
 function emitEffect(sink: AuthEventSink, event: AuthEvent): Effect.Effect<void> {
-  return Effect.tryPromise({
-    try: () => Promise.resolve(emitAuthEvent(sink, event)),
-    catch: () => undefined,
-  }).pipe(Effect.catchAll(() => Effect.void));
+  return emitAuthEventEffect(sink, event);
 }
 
 export type AuthorizationCodeFlowOptions = {

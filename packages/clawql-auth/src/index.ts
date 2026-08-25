@@ -83,7 +83,7 @@ export {
   type AwsSignableRequestInit,
 } from "./aws-sigv4.js";
 export {
-  emitAuthEvent,
+  emitAuthEventEffect,
   noopAuthEventSink,
   type AuthEvent,
   type AuthEventSink,

@@ -37,7 +37,7 @@ describe("auth-worm", () => {
       idpGroups: ["engineering", "guests"],
       matchedIdpGroups: ["engineering"],
     };
-    await sink(event);
+    await Effect.runPromise(sink(event));
 
     const records = await listAuthWormRecords(10, env);
     expect(records).toHaveLength(1);
@@ -59,14 +59,16 @@ describe("auth-worm", () => {
     resetAuthEventSinkCacheForTests();
 
     const sink = createAuthEventSinkFromEnv(env);
-    await sink({
-      type: "MCP_TOKEN_ISSUED",
-      clientId: "svc-1",
-      grantType: "client_credentials",
-      scope: ["execute"],
-      expiresAt: new Date().toISOString(),
-      timestamp: new Date().toISOString(),
-    });
+    await Effect.runPromise(
+      sink({
+        type: "MCP_TOKEN_ISSUED",
+        clientId: "svc-1",
+        grantType: "client_credentials",
+        scope: ["execute"],
+        expiresAt: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
+      })
+    );
 
     const records = await listAuthWormRecords(10, env);
     expect(records).toHaveLength(1);

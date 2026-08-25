@@ -1,7 +1,12 @@
 /**
  * Auth event taxonomy for optional WORM / audit sinks.
  * clawql-auth stays free of a clawql-audit dependency — hosts inject a sink.
+ *
+ * Effect-primary: sinks return `Effect`; {@link emitAuthEventEffect} is the domain API.
+ * Absolute host boundaries may `Effect.runPromise(emitAuthEventEffect(...))`.
  */
+
+import { Effect } from "effect";
 
 export type AuthEvent =
   | {
@@ -116,15 +121,23 @@ export type AuthEvent =
       timestamp: string;
     };
 
-export type AuthEventSink = (event: AuthEvent) => void | Promise<void>;
+/** Effect-primary sink — hosts inject WORM / logging without Promise domain APIs. */
+export type AuthEventSink = (event: AuthEvent) => Effect.Effect<void, unknown>;
 
 /** No-op sink (tests / hosts that log elsewhere). */
-export const noopAuthEventSink: AuthEventSink = () => undefined;
+export const noopAuthEventSink: AuthEventSink = () => Effect.void;
 
-export async function emitAuthEvent(
+/** Append an auth event through the injected sink (no-op when unset). */
+export function emitAuthEventEffect(
   sink: AuthEventSink | undefined,
   event: AuthEvent
-): Promise<void> {
-  if (!sink) return;
-  await sink(event);
+): Effect.Effect<void> {
+  if (!sink) return Effect.void;
+  return Effect.gen(function* () {
+    const result = sink(event);
+    // Effect-primary sinks return Effect; sync push-style test sinks return void.
+    if (result != null && Effect.isEffect(result)) {
+      yield* result.pipe(Effect.catchAll(() => Effect.void));
+    }
+  });
 }

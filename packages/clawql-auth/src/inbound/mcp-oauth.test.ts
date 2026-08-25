@@ -42,9 +42,10 @@ describe("MCPOAuthServer", () => {
         signingSecret: secret,
         tokenTtlSeconds: 300,
         refreshTokenTtlSeconds: 3600,
-        eventSink: (e) => {
-          events.push(e);
-        },
+        eventSink: (e) =>
+          Effect.sync(() => {
+            events.push(e);
+          }),
       },
       clients,
       refreshStore
@@ -56,17 +57,17 @@ describe("MCPOAuthServer", () => {
     const events: AuthEvent[] = [];
     const { server, clientSecret } = setup(events);
 
-    const token = await server.issueToken({
+    const token = await Effect.runPromise(server.issueToken({
       grantType: "client_credentials",
       clientId: "cline-agent",
       clientSecret,
-    });
+    }));
 
     expect(token.token_type).toBe("Bearer");
     expect(token.expires_in).toBe(300);
     expect(token.refresh_token).toMatch(/^mcr_/);
 
-    const claims = await server.validateToken(token.access_token);
+    const claims = await Effect.runPromise(server.validateToken(token.access_token));
     expect(claims.sub).toBe("cline-agent");
     expect(claims.orgId).toBe("acme");
     expect(claims.scope).toEqual(["execute", "search", "memory"]);
@@ -75,18 +76,18 @@ describe("MCPOAuthServer", () => {
 
   it("rotates refresh tokens and rejects reused hashes", async () => {
     const { server, clientSecret, refreshStore } = setup();
-    const first = await server.issueToken({
+    const first = await Effect.runPromise(server.issueToken({
       grantType: "client_credentials",
       clientId: "cline-agent",
       clientSecret,
-    });
+    }));
 
-    const second = await server.issueToken({
+    const second = await Effect.runPromise(server.issueToken({
       grantType: "refresh_token",
       clientId: "cline-agent",
       clientSecret,
       refreshToken: first.refresh_token!,
-    });
+    }));
 
     expect(second.access_token).not.toBe(first.access_token);
     expect(second.refresh_token).not.toBe(first.refresh_token);
@@ -95,26 +96,25 @@ describe("MCPOAuthServer", () => {
     expect(refreshStore.map.has(oldHash)).toBe(false);
 
     await expect(
-      server.issueToken({
+      Effect.runPromise(server.issueToken({
         grantType: "refresh_token",
         clientId: "cline-agent",
         clientSecret,
         refreshToken: first.refresh_token!,
-      })
-    ).rejects.toThrow(/invalid_grant/);
+      }))).rejects.toThrow(/invalid_grant/);
   });
 
   it("rejects bad client secrets and invalid access tokens", async () => {
     const { server } = setup();
     await expect(
-      server.issueToken({
+      Effect.runPromise(server.issueToken({
         grantType: "client_credentials",
         clientId: "cline-agent",
         clientSecret: "wrong",
-      })
-    ).rejects.toThrow(/invalid_client/);
+      }))).rejects.toThrow(/invalid_client/);
 
-    await expect(server.validateToken("not.a.jwt")).rejects.toBeTruthy();
+    await expect(
+      Effect.runPromise(server.validateToken("not.a.jwt"))).rejects.toBeTruthy();
   });
 
   it("exchanges ID-JAG assertions for access tokens scoped by IdP groups", async () => {
@@ -162,9 +162,10 @@ describe("MCPOAuthServer", () => {
         signingSecret: secret,
         resourceAudience,
         emaConfigStore: emaStore,
-        eventSink: (e) => {
-          events.push(e);
-        },
+        eventSink: (e) =>
+          Effect.sync(() => {
+            events.push(e);
+          }),
       },
       clients,
       refreshStore
@@ -185,17 +186,17 @@ describe("MCPOAuthServer", () => {
       .setExpirationTime(Math.floor(Date.now() / 1000) + 300)
       .sign(new TextEncoder().encode(idpSecret));
 
-    const token = await server.issueToken({
+    const token = await Effect.runPromise(server.issueToken({
       grantType: ID_JAG_JWT_BEARER_GRANT,
       assertion,
       orgId: "acme",
-    });
+    }));
 
     expect(token.token_type).toBe("Bearer");
     expect(token.refresh_token).toBeUndefined();
     expect(token.scope).toBe("execute search memory");
 
-    const claims = await server.validateToken(token.access_token);
+    const claims = await Effect.runPromise(server.validateToken(token.access_token));
     expect(claims.sub).toBe("user-42");
     expect(claims.orgId).toBe("acme");
     expect(claims.role).toBe("operator");
@@ -254,12 +255,11 @@ describe("MCPOAuthServer", () => {
       .sign(new TextEncoder().encode(idpSecret));
 
     await expect(
-      server.issueToken({
+      Effect.runPromise(server.issueToken({
         grantType: "id_jag",
         assertion,
         orgId: "acme",
-      })
-    ).rejects.toThrow(/no_matching_idp_groups/);
+      }))).rejects.toThrow(/no_matching_idp_groups/);
   });
 
   it("issues and validates RS256 access tokens with JWKS metadata", async () => {
@@ -288,11 +288,13 @@ describe("MCPOAuthServer", () => {
       createMemoryMcpRefreshStore()
     );
 
-    const token = await rsServer.issueToken({
-      grantType: "client_credentials",
-      clientId: "cline-agent",
-      clientSecret,
-    });
+    const token = await Effect.runPromise(
+      rsServer.issueToken({
+        grantType: "client_credentials",
+        clientId: "cline-agent",
+        clientSecret,
+      })
+    );
     expect(token.access_token.split(".")).toHaveLength(3);
 
     const header = JSON.parse(
@@ -301,7 +303,7 @@ describe("MCPOAuthServer", () => {
     expect(header.alg).toBe("RS256");
     expect(header.kid).toBe("rs256-test");
 
-    const claims = await rsServer.validateToken(token.access_token);
+    const claims = await Effect.runPromise(rsServer.validateToken(token.access_token));
     expect(claims.scope).toEqual(["execute"]);
     expect(rsServer.getJwks().keys).toHaveLength(1);
   });
@@ -326,9 +328,10 @@ describe("MCPOAuthServer", () => {
         issuer: "https://auth.clawql.test",
         signingSecret: secret,
         authCodeStore: createMemoryMcpAuthorizationCodeStore(),
-        eventSink: (e) => {
-          events.push(e);
-        },
+        eventSink: (e) =>
+          Effect.sync(() => {
+            events.push(e);
+          }),
       },
       clients,
       createMemoryMcpRefreshStore()
@@ -338,7 +341,7 @@ describe("MCPOAuthServer", () => {
 
     const verifier = generateCodeVerifier();
     const challenge = generateCodeChallenge(verifier);
-    const authorized = await server.createAuthorizationCode({
+    const authorized = await Effect.runPromise(server.createAuthorizationCode({
       clientId: "cursor-desktop",
       redirectUri,
       codeChallenge: challenge,
@@ -350,21 +353,21 @@ describe("MCPOAuthServer", () => {
         scope: ["execute", "search", "memory"],
         orgId: "acme",
       },
-    });
+    }));
 
     expect(authorized.code).toMatch(/^mca_/);
     expect(authorized.redirectUrl).toContain(`code=${authorized.code}`);
     expect(authorized.redirectUrl).toContain("state=xyz");
 
-    const token = await server.issueToken({
+    const token = await Effect.runPromise(server.issueToken({
       grantType: "authorization_code",
       clientId: "cursor-desktop",
       code: authorized.code,
       codeVerifier: verifier,
       redirectUri,
-    });
+    }));
 
-    const claims = await server.validateToken(token.access_token);
+    const claims = await Effect.runPromise(server.validateToken(token.access_token));
     expect(claims.sub).toBe("alice@acme.test");
     expect(claims.scope).toEqual(["execute"]);
     expect(token.refresh_token).toMatch(/^mcr_/);
@@ -381,14 +384,13 @@ describe("MCPOAuthServer", () => {
     });
 
     await expect(
-      server.issueToken({
+      Effect.runPromise(server.issueToken({
         grantType: "authorization_code",
         clientId: "cursor-desktop",
         code: authorized.code,
         codeVerifier: verifier,
         redirectUri,
-      })
-    ).rejects.toThrow(/invalid_grant/);
+      }))).rejects.toThrow(/invalid_grant/);
   });
 
   it("preserves human ATR claims across authorization_code refresh", async () => {
@@ -415,7 +417,7 @@ describe("MCPOAuthServer", () => {
     );
 
     const verifier = generateCodeVerifier();
-    const authorized = await server.createAuthorizationCode({
+    const authorized = await Effect.runPromise(server.createAuthorizationCode({
       clientId: "cursor-desktop",
       redirectUri,
       codeChallenge: generateCodeChallenge(verifier),
@@ -425,23 +427,23 @@ describe("MCPOAuthServer", () => {
         scope: ["execute", "search"],
         orgId: "acme",
       },
-    });
+    }));
 
-    const first = await server.issueToken({
+    const first = await Effect.runPromise(server.issueToken({
       grantType: "authorization_code",
       clientId: "cursor-desktop",
       code: authorized.code,
       codeVerifier: verifier,
       redirectUri,
-    });
+    }));
 
-    const refreshed = await server.issueToken({
+    const refreshed = await Effect.runPromise(server.issueToken({
       grantType: "refresh_token",
       clientId: "cursor-desktop",
       refreshToken: first.refresh_token!,
-    });
+    }));
 
-    const claims = await server.validateToken(refreshed.access_token);
+    const claims = await Effect.runPromise(server.validateToken(refreshed.access_token));
     expect(claims.sub).toBe("alice@acme.test");
     expect(claims.orgId).toBe("acme");
     expect(claims.scope).toEqual(["execute", "search"]);
@@ -450,27 +452,26 @@ describe("MCPOAuthServer", () => {
   it("revokes refresh tokens and emits MCP_TOKEN_REVOKED", async () => {
     const events: AuthEvent[] = [];
     const { server, clientSecret } = setup(events);
-    const token = await server.issueToken({
+    const token = await Effect.runPromise(server.issueToken({
       grantType: "client_credentials",
       clientId: "cline-agent",
       clientSecret,
-    });
+    }));
 
-    await server.revokeToken({
+    await Effect.runPromise(server.revokeToken({
       token: token.refresh_token!,
       clientId: "cline-agent",
       clientSecret,
-    });
+    }));
 
     expect(events.some((e) => e.type === "MCP_TOKEN_REVOKED")).toBe(true);
     await expect(
-      server.issueToken({
+      Effect.runPromise(server.issueToken({
         grantType: "refresh_token",
         clientId: "cline-agent",
         clientSecret,
         refreshToken: token.refresh_token!,
-      })
-    ).rejects.toThrow(/invalid_grant/);
+      }))).rejects.toThrow(/invalid_grant/);
   });
 
   it("rejects authorization_code with bad PKCE verifier", async () => {
@@ -495,21 +496,20 @@ describe("MCPOAuthServer", () => {
     );
 
     const verifier = generateCodeVerifier();
-    const authorized = await server.createAuthorizationCode({
+    const authorized = await Effect.runPromise(server.createAuthorizationCode({
       clientId: "cursor-desktop",
       redirectUri,
       codeChallenge: generateCodeChallenge(verifier),
       claims: { sub: "bob", role: "operator", scope: ["execute"] },
-    });
+    }));
 
     await expect(
-      server.issueToken({
+      Effect.runPromise(server.issueToken({
         grantType: "authorization_code",
         clientId: "cursor-desktop",
         code: authorized.code,
         codeVerifier: generateCodeVerifier(),
         redirectUri,
-      })
-    ).rejects.toThrow(/pkce_failed/);
+      }))).rejects.toThrow(/pkce_failed/);
   });
 });

@@ -1,6 +1,7 @@
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Effect } from "effect";
 import { SignJWT } from "jose";
 import { createServer, type Server } from "node:http";
 import { afterEach, describe, expect, it } from "vitest";
@@ -52,14 +53,16 @@ describe("server-http MCP OAuth", () => {
       signingSecret,
       resourceAudience: audience,
     });
-    await mcpOAuthRuntime.emaStore.saveOrgConfig({
-      orgId: "acme",
-      idpJwksUri: "https://idp.test/jwks",
-      idpIssuer: "https://idp.test/",
-      audience,
-      hs256Secret: idpSecret,
-      groupMappings: [{ idpGroup: "engineering", scope: ["execute", "search", "memory"] }],
-    });
+    await Effect.runPromise(
+      mcpOAuthRuntime.emaStore.saveOrgConfig({
+        orgId: "acme",
+        idpJwksUri: "https://idp.test/jwks",
+        idpIssuer: "https://idp.test/",
+        audience,
+        hs256Secret: idpSecret,
+        groupMappings: [{ idpGroup: "engineering", scope: ["execute", "search", "memory"] }],
+      })
+    );
 
     const assertion = await new SignJWT({
       groups: ["engineering"],

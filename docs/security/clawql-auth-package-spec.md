@@ -1114,8 +1114,8 @@ All three produce **`AtrClaims`** for the same Panguard enforcement path. EMA do
 - **`IssuedApiKeyStore`**: issue `cqk_<id>_<secret>` once; salted SHA-256 only; org/team filters; `createClawQLAuth({ apiKeyStorePath })`.
 - **`OAuthTokenStore`**: proactive refresh + single-flight mutex; `invalid_grant` → `ReauthRequiredError`.
 - **`ClientCredentialsFlow` / `AuthorizationCodeFlow` (PKCE)** + provider catalogs.
-- **`MCPOAuthServer`**: HS256/RS256 access JWTs with ATR claims; refresh-token rotation with ATR claim snapshot; **EMA ID-JAG** group→scope exchange (`id_jag` grant); `client_secret_basic`; `POST /oauth/revoke`.
-- Hosts inject **`AuthEventSink`** for WORM (no hard `clawql-audit` dependency yet).
+- **`MCPOAuthServer`**: Effect-primary AS (`issueToken` / `validateToken` / `revokeToken` / `createAuthorizationCode` return `Effect`); HS256/RS256 access JWTs with ATR claims; refresh-token rotation with ATR claim snapshot; **EMA ID-JAG** group→scope exchange (`id_jag` grant); `client_secret_basic`; `POST /oauth/revoke`. Express hosts use thin `Effect.runPromise` façades only.
+- Hosts inject **`AuthEventSink`** for WORM (Effect-primary; no hard `clawql-audit` dependency yet).
 
 Phases may land independently of full Vault / Hermes Telegram UX. Shipped OIDC **consumer** mode is untouched.
 
