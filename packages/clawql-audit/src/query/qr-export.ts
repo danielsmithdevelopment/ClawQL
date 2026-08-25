@@ -7,7 +7,7 @@ import { createCipheriv, createHmac, randomBytes } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { encode as cborEncode } from "cbor";
+import cbor from "cbor";
 import { Effect } from "effect";
 import QRCode from "qrcode";
 import type { WORMEntry } from "../entry.js";
@@ -128,7 +128,7 @@ export const exportToQR = (
     const encryptionKey = Buffer.from(encryptionKeyHex, "hex");
     const hmacKey = Buffer.from(hmacKeyHex, "hex");
 
-    const payload = Buffer.from(cborEncode(entries));
+    const payload = Buffer.from(cbor.encode(entries));
     const mtu = Math.max(MIN_MTU, config.chunkSizeBytes ?? 1200);
     const redundancy = config.redundancy ?? 1.5;
 

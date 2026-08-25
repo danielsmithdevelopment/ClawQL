@@ -54,3 +54,41 @@ export {
 } from "./tee/signer.js";
 export { handleAuditHttpRequest, authorizeApiKey, type HttpRequest, type HttpResponse } from "./http/routes.js";
 export { startAuditHttpServer, type AuditHttpServerHandle } from "./http/server.js";
+export {
+  createWormTrailConfigFromEnvEffect,
+  defaultWormAgentName,
+  defaultWormSessionId,
+  wormEnabledFromEnv,
+} from "./env-config.js";
+export {
+  appendProcessWorm,
+  appendProcessWormEffect,
+  bootProcessWormFromEnv,
+  bootProcessWormFromEnvEffect,
+  getProcessWormService,
+  processWormBootState,
+  processWormReady,
+  resetProcessWormForTests,
+  stopProcessWorm,
+  stopProcessWormEffect,
+  withProcessWormDefaults,
+} from "./process-worm.js";
+export {
+  appendAuthEventToWormEffect,
+  appendMemoryEventToWormEffect,
+  appendPaymentEventToWormEffect,
+  appendWebEventToWormEffect,
+  createAuthEventWormSink,
+  createMemoryWormSink,
+  wormInputFromAuthEvent,
+  wormInputFromMemoryEvent,
+  wormInputFromPanguardDeny,
+  wormInputFromPaymentEvent,
+  wormInputFromToolAttempt,
+  wormInputFromToolResult,
+  wormInputFromWebEvent,
+  type AuthWormEvent,
+  type MemoryWormEventLike,
+  type PaymentWormEventLike,
+  type WebWormEventLike,
+} from "./sinks.js";

@@ -49,6 +49,22 @@ Routes: `POST/GET /entries`, `GET /entries/:id`, `GET /chain/verify`, `GET /chai
 
 Set `CLAWQL_AUDIT_QR_ENCRYPTION_KEY` and `CLAWQL_AUDIT_QR_HMAC_KEY` (32-byte hex each). Pipeline: CBOR → RaptorQ → ChaCha20-Poly1305 → HMAC-SHA256 → QR ECC M.
 
+## Env (process host)
+
+Set `CLAWQL_WORM_ENABLED=1` to boot a process-scoped trail. Callers dual-write via `appendProcessWormEffect` / sink helpers:
+
+| Variable | Role |
+| --- | --- |
+| `CLAWQL_WORM_LOCAL` | `memory` \| `sqlite` \| `postgres` |
+| `CLAWQL_WORM_SQLITE_PATH` | SQLite file (implies local=sqlite when unset) |
+| `CLAWQL_WORM_POSTGRES_URL` | Postgres DSN |
+| `CLAWQL_WORM_REMOTE` | `memory` \| `s3` |
+| `CLAWQL_WORM_S3_BUCKET` / `_ENDPOINT` / `_…` | S3/R2 remote |
+| `CLAWQL_WORM_SESSION_ID` | Default `sessionId` on append |
+| `CLAWQL_WORM_RECONCILE_MS` | Outbox drain interval (`0` disables) |
+
+Host boots via `bootProcessWormFromEnv` / `ensureProcessWormHostBooted` (MCP). Auth injects `createAuthEventWormSink()`; memory uses `createMemoryWormSink()` + `registerMemoryWormSink`.
+
 ## Effect API
 
 Prefer `makeWORMAuditTrailLayer` / `WORMAuditTrailService` inside ClawQL. The `WORMAuditTrail` class is a thin host façade.
