@@ -35,6 +35,18 @@ describe("clawql-audit", () => {
     expect(jb.entries).toHaveLength(1);
     expect(jb.entries[0].category).toBe("tool");
     expect(jb.entries[0].correlationId).toBe("c1");
+    expect(jb.entries[0]).toMatchObject({ seq: 1 });
+    expect(jb.entries[0].hash).toMatch(/^[0-9a-f]{64}$/);
+
+    const v = await handleAuditToolInput({ operation: "verify" });
+    const jv = JSON.parse(v.content[0].text) as {
+      ok: boolean;
+      fromGenesis: boolean;
+      records: number;
+    };
+    expect(jv.ok).toBe(true);
+    expect(jv.fromGenesis).toBe(true);
+    expect(jv.records).toBe(1);
   });
 
   it("evicts oldest when over CLAWQL_AUDIT_MAX_ENTRIES", async () => {

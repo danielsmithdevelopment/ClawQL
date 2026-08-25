@@ -17,6 +17,16 @@ export type ResolvedModel = {
   publicModelId: string;
 };
 
+export type ResolveRequestModelOptions = {
+  /** mlx_lm.server expects the local weights path, not a Hugging Face slug. */
+  readonly mlxUpstreamModel?: string;
+};
+
+function mlxUpstream(catalogUpstream: string, options?: ResolveRequestModelOptions): string {
+  const override = options?.mlxUpstreamModel?.trim();
+  return override || catalogUpstream;
+}
+
 function bareOpenAiModel(model: string): boolean {
   return /^(gpt-|o\d|text-|chatgpt-)/i.test(model);
 }
@@ -33,7 +43,8 @@ export function toPublicModelId(provider: string, model: string): string {
 export function resolveRequestModel(
   model: string,
   registry: ProviderRegistry,
-  catalog: InferenceModelCatalog = DEFAULT_INFERENCE_MODEL_CATALOG
+  catalog: InferenceModelCatalog = DEFAULT_INFERENCE_MODEL_CATALOG,
+  options?: ResolveRequestModelOptions
 ): ResolvedModel | null {
   const trimmed = model.trim();
   if (!trimmed) return null;
@@ -52,9 +63,13 @@ export function resolveRequestModel(
   const aliased = resolveCatalogAlias(trimmed, catalog);
   const catalogEntry = findCatalogModel(aliased, catalog);
   if (catalogEntry && registry.has(catalogEntry.provider)) {
+    const upstream =
+      catalogEntry.provider === "mlx"
+        ? mlxUpstream(catalogEntry.upstream_model, options)
+        : catalogEntry.upstream_model;
     return {
       provider: catalogEntry.provider,
-      model: catalogEntry.upstream_model,
+      model: upstream,
       gatewayModelId: catalogEntry.id,
       publicModelId: toPublicModelId(catalogEntry.provider, catalogEntry.upstream_model),
     };

@@ -53,7 +53,9 @@ export class TokenEfficiencyGateway implements InferenceGateway {
       prefillEnabled: this.config.prefill.enabled,
       prefillOpener: this.config.prefill.opener,
     });
-    messages = extensions.messages;
+    // Qwen/Ornith MLX rejects a system message anywhere except index 0, and
+    // rejects a second system even when it is still leading. Merge after layers.
+    messages = applyPromptCacheMarkers(extensions.messages).messages;
 
     const model = routing?.modelId ?? request.model;
     const response = await this.inner.complete({

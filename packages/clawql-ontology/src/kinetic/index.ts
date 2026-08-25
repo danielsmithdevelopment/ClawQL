@@ -16,6 +16,7 @@ export {
   appendKineticAudit,
   listKineticAudit,
   resetKineticAuditForTests,
+  verifyKineticAudit,
   type KineticAuditEntry,
   type KineticAuditAction,
 } from "./worm-audit.js";

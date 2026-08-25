@@ -14,6 +14,8 @@ describe("collectListedModels", () => {
     const ids = models.map((m) => m.id);
     expect(ids).toContain("deepseek/deepseek-chat");
     expect(ids).toContain("clawql/cheap-chat");
+    expect(ids).toContain("mlx/ornith-1.5-35b-a3b");
+    expect(ids).toContain("openai/ornith-1.5-35b-a3b");
     expect(ids).not.toContain("openrouter/deepseek/deepseek-chat");
   });
 

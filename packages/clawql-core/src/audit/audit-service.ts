@@ -9,6 +9,7 @@ import type {
   AuditAppendResult,
   AuditClearResult,
   AuditListResult,
+  AuditVerifyResult,
   ClawqlAuditEntry,
 } from "./types.js";
 
@@ -28,6 +29,7 @@ export class AuditService extends Context.Tag("clawql/AuditService")<
     readonly append: (input: AuditAppendInput) => Effect.Effect<AuditAppendWithEntry>;
     readonly list: (limit: number) => Effect.Effect<AuditListResult>;
     readonly clear: () => Effect.Effect<AuditClearResult>;
+    readonly verify: () => Effect.Effect<AuditVerifyResult>;
     readonly resetForTests: () => Effect.Effect<void>;
   }
 >() {}
@@ -40,19 +42,18 @@ function serviceFromBuffer(
   return AuditService.of({
     getMaxEntries,
     append: (input) =>
-      Effect.sync(() => {
-        const entry: ClawqlAuditEntry = {
+      Effect.sync(() =>
+        buffer.append({
           ts: new Date().toISOString(),
           category: input.category,
           action: input.action,
           summary: input.summary,
           correlationId: input.correlationId,
-        };
-        const result = buffer.append(entry);
-        return { ...result, entry };
-      }),
+        })
+      ),
     list: (limit: number) => Effect.sync(() => buffer.list(limit)),
     clear: () => Effect.sync(() => buffer.clear()),
+    verify: () => Effect.sync(() => buffer.verify()),
     resetForTests: () => Effect.sync(() => resetBuffer()),
   });
 }

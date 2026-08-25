@@ -10,7 +10,7 @@ import type { ClawqlAuditEntry } from "./types.js";
 
 /** @deprecated Prefer {@link AuditInputDecoded} from Effect Schema. */
 export type AuditToolParams = {
-  operation: "append" | "list" | "clear";
+  operation: "append" | "list" | "verify" | "clear";
   category?: string;
   action?: string;
   summary?: string;
@@ -56,11 +56,28 @@ export function executeAuditToolEffect(
           correlationId: parsed.correlationId,
         });
         sideEffects.onAppend?.(entry, total, dropped);
-        return jsonResponse({ ok: true, total, dropped });
+        return jsonResponse({
+          ok: true,
+          total,
+          dropped,
+          seq: entry.seq,
+          hash: entry.hash,
+          prev_hash: entry.prev_hash,
+        });
       }
       case "list": {
         const { total, maxEntries, entries } = yield* audit.list(parsed.limit);
         return jsonResponse({ ok: true, total, maxEntries, entries });
+      }
+      case "verify": {
+        const verification = yield* audit.verify();
+        return jsonResponse({
+          ok: verification.ok,
+          records: verification.records,
+          head_hash: verification.head_hash,
+          fromGenesis: verification.fromGenesis,
+          issues: verification.issues,
+        });
       }
       case "clear": {
         const { cleared } = yield* audit.clear();

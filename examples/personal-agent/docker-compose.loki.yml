@@ -1,0 +1,11 @@
+# Local Loki for personal-agent MCP audit + inference call-store streams.
+# Push URL: http://127.0.0.1:3100/loki/api/v1/push
+#
+#   docker compose -f examples/personal-agent/docker-compose.loki.yml up -d
+services:
+  loki:
+    image: grafana/loki:3.4.2
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped

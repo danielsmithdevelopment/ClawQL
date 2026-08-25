@@ -92,5 +92,8 @@ describe("token efficiency layers", () => {
     });
     expect(hints.tokenBudgetHint).toContain("200");
     expect(messages.some((message) => message.content.includes("structured output"))).toBe(true);
+    const merged = applyPromptCacheMarkers(messages).messages;
+    expect(merged.filter((message) => message.role === "system")).toHaveLength(1);
+    expect(merged[0]?.role).toBe("system");
   });
 });

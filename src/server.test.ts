@@ -206,6 +206,7 @@ describe("server (stdio)", () => {
       "clawql-stdio-data-on"
     );
     expect(names.has("data_query")).toBe(true);
+    expect(names.has("clawql_sql")).toBe(true);
     expect(names.has("data_ingest")).toBe(true);
   }, 20_000);
 

@@ -58,7 +58,7 @@ export function providerCredentialPresent(
   env: NodeJS.ProcessEnv = process.env
 ): boolean {
   const id = provider.trim().toLowerCase();
-  if (id === "ollama") return true; // local runtime — no cloud key
+  if (id === "ollama" || id === "mlx") return true; // local runtime — no cloud key
   const envName = PROVIDER_API_KEY_ENV[id];
   if (!envName) return Boolean(env[`${id.toUpperCase()}_API_KEY`]?.trim());
   return Boolean(env[envName]?.trim());
