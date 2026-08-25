@@ -1,7 +1,7 @@
 {
-  "name": "clawql-core",
-  "version": "7.2.0",
-  "description": "ClawQL primitives: Effect-TS services, Merkle/Cuckoo modules, audit ring buffer \u2014 foundation for modular clawql-mcp",
+  "name": "clawql-audit",
+  "version": "0.1.0",
+  "description": "Tamper-evident WORM audit trail for AI agent deployments",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -13,6 +13,21 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./storage/sqlite": {
+      "types": "./dist/storage/sqlite.d.ts",
+      "import": "./dist/storage/sqlite.js",
+      "require": "./dist/storage/sqlite.cjs"
+    },
+    "./storage/s3": {
+      "types": "./dist/storage/s3.d.ts",
+      "import": "./dist/storage/s3.js",
+      "require": "./dist/storage/s3.cjs"
+    },
+    "./storage/memory": {
+      "types": "./dist/storage/memory.d.ts",
+      "import": "./dist/storage/memory.js",
+      "require": "./dist/storage/memory.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -23,9 +38,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1090.0",
     "clawql-merkle": "0.1.0",
     "effect": "^3.21.4"
   },
+  "peerDependencies": {},
   "devDependencies": {
     "@types/node": "^26.1.1",
     "tsup": "^8.3.0",
@@ -34,7 +51,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=22"
@@ -42,14 +60,15 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
-    "directory": "packages/clawql-core"
+    "directory": "packages/clawql-audit"
   },
   "keywords": [
-    "clawql",
-    "effect",
-    "mcp",
-    "audit",
-    "merkle"
+    "audit-trail",
+    "worm",
+    "ai-agents",
+    "compliance",
+    "merkle",
+    "tamper-evident"
   ],
   "publishConfig": {
     "access": "public"

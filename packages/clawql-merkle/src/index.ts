@@ -1,4 +1,3 @@
-/** Re-export Merkle primitives from the standalone `clawql-merkle` package. */
 export {
   buildMerkleSnapshot,
   leafHash,
@@ -7,4 +6,4 @@ export {
   verifyMerkleProof,
   type MerkleDocumentRow,
   type MerkleSnapshot,
-} from "clawql-merkle";
+} from "./merkle-tree.js";

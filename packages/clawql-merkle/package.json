@@ -1,7 +1,7 @@
 {
-  "name": "clawql-core",
-  "version": "7.2.0",
-  "description": "ClawQL primitives: Effect-TS services, Merkle/Cuckoo modules, audit ring buffer \u2014 foundation for modular clawql-mcp",
+  "name": "clawql-merkle",
+  "version": "0.1.0",
+  "description": "Zero-dependency Merkle tree snapshots and inclusion proofs (path + body SHA-256 leaves)",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -22,10 +22,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
-  "dependencies": {
-    "clawql-merkle": "0.1.0",
-    "effect": "^3.21.4"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^26.1.1",
     "tsup": "^8.3.0",
@@ -34,7 +31,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=22"
@@ -42,14 +40,14 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
-    "directory": "packages/clawql-core"
+    "directory": "packages/clawql-merkle"
   },
   "keywords": [
-    "clawql",
-    "effect",
-    "mcp",
-    "audit",
-    "merkle"
+    "merkle",
+    "merkle-tree",
+    "inclusion-proof",
+    "tamper-evident",
+    "clawql"
   ],
   "publishConfig": {
     "access": "public"
