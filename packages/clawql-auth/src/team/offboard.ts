@@ -7,7 +7,7 @@ import { Effect } from "effect";
 
 import type { AuthEventSink } from "../audit/auth-events.js";
 import { emitAuthEventEffect } from "../audit/auth-events.js";
-import type { IssuedApiKeyStore } from "../api-keys/store.js";
+import { ApiKeyStoreError, type IssuedApiKeyStore } from "../api-keys/store.js";
 import type { SecretStore } from "../stores/types.js";
 
 export type OffboardSubjectInput = {
@@ -35,7 +35,7 @@ export function offboardSubjectEffect(
     secretStore?: SecretStore;
     eventSink?: AuthEventSink;
   } = {}
-): Effect.Effect<OffboardSubjectResult> {
+): Effect.Effect<OffboardSubjectResult, ApiKeyStoreError> {
   return Effect.gen(function* () {
     const active = yield* apiKeys.listActive({
       orgId: input.orgId,
