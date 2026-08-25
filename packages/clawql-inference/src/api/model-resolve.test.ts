@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveRequestModel, toPublicModelId } from "./model-resolve.js";
+import { resolveRequestModel } from "./model-resolve.js";
 import { createProviderRegistry } from "../providers/registry.js";
 import { composeDefaultProviderPlugins } from "../plugin/compose.js";
 import { DEFAULT_INFERENCE_MODEL_CATALOG } from "../catalog/index.js";
