@@ -681,7 +681,7 @@ async function resolveMultiSpecItems(): Promise<ProviderGroupItem[] | "empty" | 
     process.env.CLAWQL_ENABLE_CLOUDFLARE?.trim()
   ) {
     console.error(
-      "[spec-loader] CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE no longer select the provider stack. " +
+      "[spec-loader] BREAKING (8.0.0): CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE no longer select the provider stack. " +
         "Use providers.pack / providers.enabled in CLAWQL_INSTANCE_SPEC, or CLAWQL_PROVIDER=default|google|aws|…"
     );
   }
@@ -859,8 +859,10 @@ async function loadSpecUncached(): Promise<LoadedSpec> {
     const stub = buildStubLoadedSpec();
     const loaded = await mergeNativeProtocolOperations(stub);
     console.error(
-      `[spec-loader] No providers configured — native protocols only (${loaded.operations.length} operation(s)). ` +
-        `Opt in with providers.pack / providers.enabled in CLAWQL_INSTANCE_SPEC, or CLAWQL_PROVIDER / CLAWQL_BUNDLED_PROVIDERS.`
+      `[spec-loader] BREAKING (8.0.0): No providers configured — native protocols only (${loaded.operations.length} operation(s)). ` +
+        `ClawQL 7.x auto-loaded pack "default" (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). ` +
+        `Restore with CLAWQL_PROVIDER=default or CLAWQL_INSTANCE_SPEC={"providers":{"pack":"default"}}. ` +
+        `See RELEASE_NOTES_v8.0.0.md / docs/plugins/bundled-providers.md.`
     );
     return loaded;
   }

@@ -1,6 +1,6 @@
 {
   "name": "clawql-tee",
-  "version": "7.2.0",
+  "version": "8.0.0",
   "description": "TEE-shaped signing bridge for ClawQL ID-JAG issuer (Layer C)",
   "license": "Apache-2.0",
   "type": "module",
@@ -26,7 +26,7 @@
     "effect": "^3.21.4"
   },
   "peerDependencies": {
-    "clawql-auth": "7.2.0"
+    "clawql-auth": "8.0.0"
   },
   "peerDependenciesMeta": {
     "clawql-auth": {
@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
-    "clawql-auth": "7.2.0",
+    "clawql-auth": "8.0.0",
     "tsup": "^8.3.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.1"

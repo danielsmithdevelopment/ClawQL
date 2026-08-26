@@ -318,31 +318,35 @@ These vision items are **not** done by package extraction alone:
 
 ---
 
-## 11. npm distribution (7.2.0 — separate packages)
+## 11. npm distribution (8.0.0 — separate packages)
 
-**Model:** Each horizontal **`clawql-*`** package is a **separate publishable unit** at **`7.2.0`**, linked in the monorepo via matching semver (npm workspaces). **`clawql-mcp`** depends on them as normal registry dependencies — **not** `bundledDependencies`.
+**Model:** Each horizontal **`clawql-*`** package is a **separate publishable unit** at **`8.0.0`**, linked in the monorepo via matching semver (npm workspaces). **`clawql-mcp`** depends on them as normal registry dependencies — **not** `bundledDependencies`.
 
 | Package                      | npm name            | Version     |
 | ---------------------------- | ------------------- | ----------- |
-| `packages/clawql-merkle`     | `clawql-merkle`     | 7.2.0       |
-| `packages/clawql-core`       | `clawql-core`       | 7.2.0       |
-| `packages/clawql-audit`      | `clawql-audit`      | 7.2.0       |
-| `packages/clawql-agents`     | `clawql-agents`     | 7.2.0       |
-| `packages/clawql-auth`       | `clawql-auth`       | 7.2.0       |
-| `packages/clawql-pageindex`  | `clawql-pageindex`  | 7.2.0 (MIT) |
-| `packages/clawql-codegraph`  | `clawql-codegraph`  | 7.2.0       |
-| `packages/clawql-api`        | `clawql-api`        | 7.2.0       |
-| `packages/clawql-memory`     | `clawql-memory`     | 7.2.0       |
-| `packages/clawql-ontology`   | `clawql-ontology`   | 7.2.0       |
-| `packages/clawql-documents`  | `clawql-documents`  | 7.2.0       |
-| `packages/clawql-automation` | `clawql-automation` | 7.2.0       |
-| `packages/clawql-sandbox`    | `clawql-sandbox`    | 7.2.0       |
-| `packages/clawql-inference`  | `clawql-inference`  | 7.2.0       |
-| `packages/clawql-payments`   | `clawql-payments`   | 7.2.0       |
-| `packages/clawql-ouroboros`  | `clawql-ouroboros`  | 7.2.0       |
-| `packages/clawql-operator`   | `clawql-operator`   | 7.2.0       |
-| `packages/clawql-release`    | `clawql-release`    | 7.2.0       |
-| Root                         | `clawql-mcp`        | 7.2.0       |
+| `packages/clawql-merkle`     | `clawql-merkle`     | 8.0.0       |
+| `packages/clawql-core`       | `clawql-core`       | 8.0.0       |
+| `packages/clawql-audit`      | `clawql-audit`      | 8.0.0       |
+| `packages/clawql-agents`     | `clawql-agents`     | 8.0.0       |
+| `packages/clawql-auth`       | `clawql-auth`       | 8.0.0       |
+| `packages/clawql-pageindex`  | `clawql-pageindex`  | 8.0.0 (MIT) |
+| `packages/clawql-codegraph`  | `clawql-codegraph`  | 8.0.0       |
+| `packages/clawql-api`        | `clawql-api`        | 8.0.0       |
+| `packages/clawql-memory`     | `clawql-memory`     | 8.0.0       |
+| `packages/clawql-ontology`   | `clawql-ontology`   | 8.0.0       |
+| `packages/clawql-documents`  | `clawql-documents`  | 8.0.0       |
+| `packages/clawql-web`        | `clawql-web`        | 8.0.0       |
+| `packages/clawql-data`       | `clawql-data`       | 8.0.0       |
+| `packages/clawql-harness`    | `clawql-harness`    | 8.0.0       |
+| `packages/clawql-tee`        | `clawql-tee`        | 8.0.0       |
+| `packages/clawql-automation` | `clawql-automation` | 8.0.0       |
+| `packages/clawql-sandbox`    | `clawql-sandbox`    | 8.0.0       |
+| `packages/clawql-inference`  | `clawql-inference`  | 8.0.0       |
+| `packages/clawql-payments`   | `clawql-payments`   | 8.0.0       |
+| `packages/clawql-ouroboros`  | `clawql-ouroboros`  | 8.0.0       |
+| `packages/clawql-operator`   | `clawql-operator`   | 8.0.0       |
+| `packages/clawql-release`    | `clawql-release`    | 8.0.0       |
+| Root                         | `clawql-mcp`        | 8.0.0       |
 
 **Publish order:** [`scripts/release/npm-publish-order.json`](../../scripts/release/npm-publish-order.json) — dependencies before dependents; **`clawql-mcp` last**.
 
@@ -352,4 +356,4 @@ These vision items are **not** done by package extraction alone:
 
 **Adjacent package:** `mcp-api-adapter` (`0.4.0`) — any MCP upstream (stdio / Streamable HTTP / gRPC) → OpenAPI + GraphQL + gRPC scaffold (funnel onto `mcp-grpc-transport`). User guide: [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md). Design: [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md). Example: [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/). Independent npm cadence; does **not** depend on `clawql-api`.
 
-**npm publish:** workflow [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) + [`scripts/release/npm-publish-workspace.mjs`](../../scripts/release/npm-publish-workspace.mjs). Tag **`v7.2.0`** when ready — see [`docs/release/v7.2.0-checklist.md`](../release/v7.2.0-checklist.md).
+**npm publish:** workflow [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) + [`scripts/release/npm-publish-workspace.mjs`](../../scripts/release/npm-publish-workspace.mjs). Tag **`v8.0.0`** when ready — see [`docs/release/v8.0.0-checklist.md`](../release/v8.0.0-checklist.md).

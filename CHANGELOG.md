@@ -1,5 +1,30 @@
 ## [Unreleased]
 
+## [8.0.0] - 2026-08-26
+
+Semver-**major** on the Agentic Gateway line: **empty-by-default bundled provider catalog**, instance-first plugin composition, Managed Edge Gateway / enterprise control plane, payments + Effect hardening, `clawql-web` / `clawql-data` / MCP UI, OpenBench B-7, and personal-agent / Protocol Fabric work since **`v7.2.0`**. Release notes: **[`RELEASE_NOTES_v8.0.0.md`](RELEASE_NOTES_v8.0.0.md)**. Announcement drafts: **[`docs/announcements/announcement-drafts-v8.0.0.md`](docs/announcements/announcement-drafts-v8.0.0.md)**. Checklist: **[`docs/release/v8.0.0-checklist.md`](docs/release/v8.0.0-checklist.md)**. Inventory: **~785 commits**, **~114 merge PRs** after `v7.2.0` (product + Dependabot).
+
+### Breaking
+
+- **Bundled providers opt-in (default empty).** Fresh install with no `CLAWQL_PROVIDER` / `CLAWQL_BUNDLED_PROVIDERS` / `CLAWQL_SPEC_*` / instance `providers` loads **no** OpenAPI catalog (native GraphQL/gRPC only when configured). **7.x** auto-loaded pack **`default`** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). **Migration:** `CLAWQL_PROVIDER=default` or `CLAWQL_INSTANCE_SPEC={"providers":{"pack":"default"}}`. Helm: set `providers.pack: default` (chart default is **`none`**). Boot logs `BREAKING (8.0.0)` when the catalog is empty. See [`docs/plugins/bundled-providers.md`](docs/plugins/bundled-providers.md).
+- **`CLAWQL_ENABLE_GOOGLE` / `CLAWQL_ENABLE_AWS` / `CLAWQL_ENABLE_CLOUDFLARE` no longer select the provider stack.** Use `providers.pack` / `providers.enabled` or `CLAWQL_PROVIDER`.
+- **Horizontal `CLAWQL_ENABLE_*` ignored without `CLAWQL_INSTANCE_SPEC`.** Composition uses `CLAWQL_TIER` (default **`standard`**). Helm still maps `enable*` → instance JSON. Put toggles in `CLAWQL_INSTANCE_SPEC` or set `CLAWQL_TIER`. Boot warns when legacy ENABLE flags are set without instance JSON.
+- **Workspace Effect-only public APIs** (`clawql-auth`, `clawql-payments`): sync/Promise façades removed for deep importers of workspace packages (not a separate npm surface for most `clawql-mcp` consumers).
+
+### Migration (7.2.0 → 8.0.0)
+
+```bash
+export CLAWQL_PROVIDER=default
+# or
+export CLAWQL_INSTANCE_SPEC='{"providers":{"pack":"default"}}'
+
+npm install clawql-mcp@8.0.0
+
+helm upgrade --install clawql ./charts/clawql-mcp \
+  --set image.tag=8.0.0 \
+  --set providers.pack=default
+```
+
 ### Changed
 
 - **Payments compliance posture** — prepaid cross-tenant P2P and agent compensation default **off**; forced off when `CLAWQL_MANAGED_HOSTING=1`. Closed-loop **company org credits** (role budgets, CFO allocate, within-org transfer) allowed on managed — [`docs/payments/org-credits.md`](docs/payments/org-credits.md), [`hosted-vs-self-hosted-compliance.md`](docs/payments/hosted-vs-self-hosted-compliance.md).
