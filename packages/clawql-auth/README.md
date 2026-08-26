@@ -155,11 +155,11 @@ buildAuth0EmaOrgConfig({
 
 Three roles — see spec §4.1.1:
 
-| Role | Who | ClawQL |
-| ---- | --- | ------ |
-| Requesting App | Claude, Cursor, agent host | Not clawql-auth |
-| Enterprise IdP | Okta / Auth0 XAA policy | Optional self-hosted issuer (`CLAWQL_ID_JAG_ISSUER_ENABLED=1`) |
-| Resource App AS | MCP gateway token endpoint | **Default** — `POST /oauth/token` jwt-bearer grant |
+| Role            | Who                        | ClawQL                                                         |
+| --------------- | -------------------------- | -------------------------------------------------------------- |
+| Requesting App  | Claude, Cursor, agent host | Not clawql-auth                                                |
+| Enterprise IdP  | Okta / Auth0 XAA policy    | Optional self-hosted issuer (`CLAWQL_ID_JAG_ISSUER_ENABLED=1`) |
+| Resource App AS | MCP gateway token endpoint | **Default** — `POST /oauth/token` jwt-bearer grant             |
 
 **Resource-App-only (typical):**
 
@@ -275,16 +275,16 @@ WebAuthn is a **pluggable** `WebAuthnStepUpVerifier` (fails closed until injecte
 
 ## Phase 4–7 surfaces (library)
 
-| Area         | Entry points                                                                                 |
-| ------------ | -------------------------------------------------------------------------------------------- |
-| Domain TXT   | `createDomainChallengeEffect` / `verifyDomainTxtEffect`                                      |
-| Offboarding  | `offboardSubjectEffect` (revoke `cqk_` keys + mark OAuth re-auth)                            |
-| SIWE login   | `issueSiweNonceEffect` / `verifySiweLoginEffect` → ATR                                       |
-| Primary TOTP | `primaryTotpLoginEffect` (uses `StepUpStoreService` enrollments)                             |
+| Area            | Entry points                                                                                                                  |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Domain TXT      | `createDomainChallengeEffect` / `verifyDomainTxtEffect`                                                                       |
+| Offboarding     | `offboardSubjectEffect` (revoke `cqk_` keys + mark OAuth re-auth)                                                             |
+| SIWE login      | `issueSiweNonceEffect` / `verifySiweLoginEffect` → ATR                                                                        |
+| Primary TOTP    | `primaryTotpLoginEffect` (uses `StepUpStoreService` enrollments)                                                              |
 | Primary passkey | `issuePasskeyLoginChallengeEffect` + `primaryPasskeyLoginEffect` (inject `WebAuthnStepUpVerifier` + `PasskeyCredentialStore`) |
-| Vault leases | `VaultDynamicSecretProvider` / `VaultDynamicSecretService`                                   |
-| Re-auth UX   | `buildReauthUrl` on `OAuthTokenStore` + `notifyReauthRequiredEffect` (Hermes sends Telegram) |
-| ID-JAG TEE   | `assertionSigner` on issuer deps (`createTeeIdJagAssertionSigner`)                           |
+| Vault leases    | `VaultDynamicSecretProvider` / `VaultDynamicSecretService`                                                                    |
+| Re-auth UX      | `buildReauthUrl` on `OAuthTokenStore` + `notifyReauthRequiredEffect` (Hermes sends Telegram)                                  |
+| ID-JAG TEE      | `assertionSigner` on issuer deps (`createTeeIdJagAssertionSigner`)                                                            |
 
 ```ts
 import { buildPasskeyAuthenticatorSelection } from "clawql-auth";

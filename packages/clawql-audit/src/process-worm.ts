@@ -10,9 +10,7 @@ import { makeWORMAuditTrailLayer, WORMAuditTrail } from "./trail.js";
 
 let booted = false;
 let disabled = false;
-let appendEffect:
-  | ((input: WORMAppendInput) => Effect.Effect<WORMEntry, unknown>)
-  | null = null;
+let appendEffect: ((input: WORMAppendInput) => Effect.Effect<WORMEntry, unknown>) | null = null;
 
 export function resetProcessWormForTests(): void {
   booted = false;
@@ -50,9 +48,7 @@ export function bootProcessWormFromEnvEffect(
 }
 
 /** Best-effort append; returns null when trail disabled or append fails. */
-export function appendProcessWormEffect(
-  input: WORMAppendInput
-): Effect.Effect<WORMEntry | null> {
+export function appendProcessWormEffect(input: WORMAppendInput): Effect.Effect<WORMEntry | null> {
   return Effect.gen(function* () {
     if (!booted && !disabled) {
       yield* bootProcessWormFromEnvEffect();

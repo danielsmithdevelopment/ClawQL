@@ -44,8 +44,7 @@ function normalizeAuth0Domain(domain: string): string {
 export function buildAuth0EmaOrgConfig(params: Auth0EmaOrgParams): EmaOrgConfig {
   const domain = normalizeAuth0Domain(params.auth0Domain);
   const issuer = `https://${domain}/`;
-  const groupsClaim =
-    params.groupsClaim?.trim() || "https://schemas.auth0.com/groups";
+  const groupsClaim = params.groupsClaim?.trim() || "https://schemas.auth0.com/groups";
 
   return {
     orgId: params.orgId,

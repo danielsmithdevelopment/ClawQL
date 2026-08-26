@@ -28,7 +28,9 @@ export type PasskeyCredentialStore = {
   getByCredentialId: (
     credentialId: string
   ) => Effect.Effect<PasskeyCredentialRecord | null, PrimaryPasskeyError>;
-  listBySubject: (subjectId: string) => Effect.Effect<PasskeyCredentialRecord[], PrimaryPasskeyError>;
+  listBySubject: (
+    subjectId: string
+  ) => Effect.Effect<PasskeyCredentialRecord[], PrimaryPasskeyError>;
 };
 
 export type PasskeyLoginChallenge = {
@@ -65,10 +67,8 @@ export function createMemoryPasskeyCredentialStore(
     bySubject.set(row.subjectId, list);
   }
   return {
-    getByCredentialId: (credentialId) =>
-      Effect.sync(() => byCred.get(credentialId) ?? null),
-    listBySubject: (subjectId) =>
-      Effect.sync(() => bySubject.get(subjectId) ?? []),
+    getByCredentialId: (credentialId) => Effect.sync(() => byCred.get(credentialId) ?? null),
+    listBySubject: (subjectId) => Effect.sync(() => bySubject.get(subjectId) ?? []),
   };
 }
 
@@ -124,7 +124,9 @@ export function primaryPasskeyLoginEffect(input: {
 
     const stored = yield* input.store.getNonce(input.challenge);
     if (!stored || stored.purpose !== NONCE_PURPOSE) {
-      return yield* Effect.fail(new PrimaryPasskeyError({ reason: "challenge_expired_or_missing" }));
+      return yield* Effect.fail(
+        new PrimaryPasskeyError({ reason: "challenge_expired_or_missing" })
+      );
     }
     const now = input.now?.() ?? Date.now();
     if (stored.consumedAtMs != null) {

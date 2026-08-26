@@ -2,10 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
 import type { AuthEvent } from "./auth-events.js";
-import {
-  createAuthEventSinkFromEnv,
-  resetAuthEventSinkCacheForTests,
-} from "./auth-worm-sink.js";
+import { createAuthEventSinkFromEnv, resetAuthEventSinkCacheForTests } from "./auth-worm-sink.js";
 import { resetProcessWormForTests } from "../../../clawql-audit/src/process-worm.js";
 import { resetAuthWormStoreForTests } from "./auth-worm.js";
 

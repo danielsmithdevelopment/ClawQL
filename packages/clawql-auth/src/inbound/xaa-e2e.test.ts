@@ -14,10 +14,7 @@ import {
   resetIdJagJwksCacheForTests,
 } from "./id-jag.js";
 import { createMemoryEmaConnectorRegistry } from "./ema-connector-registry.js";
-import {
-  fixedOrgMaterialResolver,
-  issueIdJagAssertionEffect,
-} from "./id-jag-issuer.js";
+import { fixedOrgMaterialResolver, issueIdJagAssertionEffect } from "./id-jag-issuer.js";
 import { buildOktaEmaOrgConfig } from "./okta-id-jag.js";
 import { loadMcpOAuthSigningMaterialEffect } from "./mcp-oauth-signing.js";
 import {
