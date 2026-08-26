@@ -92,8 +92,9 @@ export function ProtocolFabricLanding() {
         headline="Seven in. Hub. Seven out."
         subheadline={
           <p>
-            API sources on the left, <strong>ClawQL Core + mcp-api-adapter</strong> at the center, transport layers on
-            the right. WORM audit and HTMX / MCP-UI sit under the hub — every hop is agent-native and auditable.
+            API sources on the left — including <strong>WebMCP (preview)</strong> — feed{' '}
+            <strong>ClawQL Core + mcp-api-adapter</strong> at the center; transport layers on the right. WORM audit sits
+            below; <strong>HTMX / MCP-UI</strong> exposes the catalog to humans on the surface side.
           </p>
         }
       >
@@ -102,7 +103,7 @@ export function ProtocolFabricLanding() {
             <source type="image/webp" srcSet="/protocol-fabric/clawql-protocol-fabric.webp" />
             <img
               src="/protocol-fabric/clawql-protocol-fabric.png"
-              alt="ClawQL Protocol Fabric — seven API sources into ClawQL Core + mcp-api-adapter, seven transport layers out, WORM audit log and HTMX / MCP-UI below the hub"
+              alt="ClawQL Protocol Fabric — API sources including WebMCP into ClawQL Core + mcp-api-adapter, transport layers out including HTMX / MCP-UI, WORM audit log below"
               width={1400}
               height={933}
               loading="eager"
