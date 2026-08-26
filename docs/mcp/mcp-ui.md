@@ -73,16 +73,15 @@ Disable with `--no-mcp-ui`. Override path with `--mcp-ui-path` / `MCP_API_ADAPTE
 
 Auth: same API key gate as `/docs` and `/graphiql` when configured. With JWT edge auth, `/mcp-ui` **ATR-scopes** the catalog and execute path by default (`--no-mcp-ui-atr-scoped` to disable):
 
-| ATR grant | Visible tools |
-| --- | --- |
-| `role: admin` or scope/tools `*` | All tools |
-| Capability scopes `search` / `execute` / `memory` / `audit` / `cache` | Mapped public tools only |
-| Exact tool name in `scope` or `tools` | That tool |
-| Family scopes `pageindex` / `ouroboros` | Matching internal prefixes |
-| (default) | `ouroboros_*` and `pageindex_*` are **not** granted by generic capability scopes |
+| ATR grant                                                             | Visible tools                                                                    |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `role: admin` or scope/tools `*`                                      | All tools                                                                        |
+| Capability scopes `search` / `execute` / `memory` / `audit` / `cache` | Mapped public tools only                                                         |
+| Exact tool name in `scope` or `tools`                                 | That tool                                                                        |
+| Family scopes `pageindex` / `ouroboros`                               | Matching internal prefixes                                                       |
+| (default)                                                             | `ouroboros_*` and `pageindex_*` are **not** granted by generic capability scopes |
 
 API keys are treated as admin for `/mcp-ui` visibility.
-
 
 ### 3.2 Catalog → form mapping
 
