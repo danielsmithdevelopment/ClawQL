@@ -75,10 +75,7 @@ export {
 } from "./store/create.js";
 export { InMemoryInferenceStore } from "./store/in-memory.js";
 export { JsonlInferenceStore } from "./store/jsonl.js";
-export {
-  tokenizeChatMessagesAsync,
-  tokenizeChatMessagesSync,
-} from "./tokenize/messages.js";
+export { tokenizeChatMessagesAsync, tokenizeChatMessagesSync } from "./tokenize/messages.js";
 export { ObservedInferenceGateway, withInferenceStore } from "./observability/observed-gateway.js";
 export { TracedInferenceGateway, withInferenceTracing } from "./observability/traced-gateway.js";
 export {

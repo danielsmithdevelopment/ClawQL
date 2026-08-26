@@ -173,14 +173,14 @@ Render and execute paths stay Effect-based inside the adapter package; Express (
 
 `GET /mcp-ui/trace/{sessionId}` visualizes **where tokens came from** turn by turn — harness prompt, vault/system-seed memory, tool schemas, tool results, agent reasoning, and model output — stacked like a CPU flamegraph.
 
-| Piece                          | Role                                                                                                                                               |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Piece                          | Role                                                                                                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `buildContextFlamegraph`       | Groups inference-shaped records (`messages[]`, `usage`, `response`) by turn × source; non-tool sources keep stable counts; `tool_result` absorbs metered remainder |
-| `listTraceCalls(sessionId)`    | Optional host hook (e.g. clawql-inference store keyed by **correlation id**). Adapter stays standalone — no hard npm dependency                    |
-| `resolveListTraceCallsFromEnv` | CLI / programmatic wiring when `clawql-inference` is installed and store env is set (see below)                                                    |
-| `demo-compressed` / `demo-fat` | Built-in same-task fixtures with **cl100k_base tiktoken** counts — for the dual-side compression argument                                          |
-| `GET /mcp-ui/trace/compare`    | Side-by-side compressed vs fat on shared scale                                                                                                     |
-| `?format=json`                 | Machine-readable graph for `harness-bench` / CI artifacts                                                                                          |
+| `listTraceCalls(sessionId)`    | Optional host hook (e.g. clawql-inference store keyed by **correlation id**). Adapter stays standalone — no hard npm dependency                                    |
+| `resolveListTraceCallsFromEnv` | CLI / programmatic wiring when `clawql-inference` is installed and store env is set (see below)                                                                    |
+| `demo-compressed` / `demo-fat` | Built-in same-task fixtures with **cl100k_base tiktoken** counts — for the dual-side compression argument                                                          |
+| `GET /mcp-ui/trace/compare`    | Side-by-side compressed vs fat on shared scale                                                                                                                     |
+| `?format=json`                 | Machine-readable graph for `harness-bench` / CI artifacts                                                                                                          |
 
 Catalog nav links the compressed demo and compare view.
 
@@ -213,10 +213,9 @@ import {
 import { createInferenceStore } from "clawql-inference";
 
 const listTraceCalls =
-  (await resolveListTraceCallsFromEnv()) ??
-  createListTraceCallsFromStore(createInferenceStore()!);
+  (await resolveListTraceCallsFromEnv()) ?? createListTraceCallsFromStore(createInferenceStore()!);
 
-await startMcpApiAdapter({ upstream, listTraceCalls, /* … */ });
+await startMcpApiAdapter({ upstream, listTraceCalls /* … */ });
 ```
 
 ---
