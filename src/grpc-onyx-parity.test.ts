@@ -1,5 +1,6 @@
 /**
- * gRPC ListTools: optional **`knowledge_search_onyx`** appears when **`CLAWQL_ENABLE_ONYX=1`** (#144).
+ * gRPC ListTools: optional **`knowledge_search_onyx`** appears when instance
+ * `documents.onyx.enabled` (#144).
  */
 
 import { mkdtempSync } from "node:fs";
@@ -15,6 +16,7 @@ import { createRegisteredMcpServer } from "./mcp-server-factory.js";
 import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
 import { resetSpecCache } from "clawql-api";
 import { resetSchemaFieldCache } from "./tools.js";
+import { instanceSpecWith } from "./server-stdio-env.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
@@ -52,7 +54,9 @@ describe("gRPC ListTools onyx parity (#144)", () => {
     delete process.env.CLAWQL_PROVIDER;
     delete process.env.CLAWQL_SPEC_PATHS;
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-grpc-onyx-"));
-    process.env.CLAWQL_ENABLE_ONYX = "1";
+    process.env.CLAWQL_INSTANCE_SPEC = instanceSpecWith({
+      documents: { enabled: true, onyx: { enabled: true } },
+    });
     resetSpecCache();
     resetSchemaFieldCache();
   });
@@ -63,7 +67,7 @@ describe("gRPC ListTools onyx parity (#144)", () => {
     resetSchemaFieldCache();
   });
 
-  it("ListTools includes knowledge_search_onyx when CLAWQL_ENABLE_ONYX=1", async () => {
+  it("ListTools includes knowledge_search_onyx when documents.onyx.enabled", async () => {
     const started = await maybeStartGrpcMcpServer({
       createMcpServer: createRegisteredMcpServer,
       bindAddress: "127.0.0.1:0",
