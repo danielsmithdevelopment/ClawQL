@@ -42,10 +42,7 @@ export type ClawQLHorizontalTierSpec = {
   };
 };
 
-const toggle = z
-  .object({ enabled: z.boolean().optional() })
-  .strict()
-  .optional();
+const toggle = z.object({ enabled: z.boolean().optional() }).strict().optional();
 
 /** Loose instance body for flag resolution (providers schema validated elsewhere). */
 const instanceBodyForFlagsSchema = z
@@ -319,10 +316,9 @@ export function readInstanceBodyForFlagsFromEnv(
   }
 }
 
-function transportFromEnv(env: NodeJS.ProcessEnv): Pick<
-  ClawqlOptionalToolFlags,
-  "enableGrpc" | "enableGrpcReflection" | "externalIngestPreview"
-> {
+function transportFromEnv(
+  env: NodeJS.ProcessEnv
+): Pick<ClawqlOptionalToolFlags, "enableGrpc" | "enableGrpcReflection" | "externalIngestPreview"> {
   const t = (v: string | undefined) => {
     const s = v?.trim().toLowerCase();
     return s === "1" || s === "true" || s === "yes";
