@@ -339,7 +339,7 @@ These vision items are **not** done by package extraction alone:
 | `packages/clawql-sandbox`    | `clawql-sandbox`    | 0.1.0             |
 | `packages/clawql-inference`  | `clawql-inference`  | 0.1.0             |
 | `packages/clawql-payments`   | `clawql-payments`   | 0.1.0             |
-| `packages/clawql-ouroboros`  | `clawql-ouroboros`  | 0.1.2 (npm has 0.1.1) |
+| `packages/clawql-ouroboros`  | `clawql-ouroboros`  | 0.1.1 (matches npm) |
 | `packages/clawql-operator`   | `clawql-operator`   | 0.1.0             |
 | `packages/clawql-release`    | `clawql-release`    | 0.1.0             |
 | `packages/clawql-web`        | `clawql-web`        | 0.1.0             |
