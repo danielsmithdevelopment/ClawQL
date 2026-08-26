@@ -1,7 +1,13 @@
 /**
  * Okta Cross App Access / ID-JAG trust presets for Enterprise-Managed Authorization.
  *
+ * OIDC verification preset only — configures IdP JWKS + issuer for finished ID-JAG
+ * assertions at the Resource App AS (`exchangeIdJag`). Does not implement the SAML
+ * interoperability layer (SAML assertion → OAuth refresh token → ID-JAG); that is
+ * handled by Okta/Auth0 and the Requesting App before the assertion reaches ClawQL.
+ *
  * @see https://blog.modelcontextprotocol.io/posts/enterprise-managed-auth/
+ * @see https://auth0.com/docs/ai-agents-mcp/cross-app-access
  */
 
 import type { EmaGroupScopeMapping, EmaOrgConfig } from "./id-jag.js";

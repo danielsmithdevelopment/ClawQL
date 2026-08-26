@@ -200,7 +200,25 @@ Every successful `issueToken` emits **`MCP_TOKEN_ISSUED`** to the auth WORM (no 
 
 **Shipped** in `inbound/id-jag.ts` + `inbound/mcp-oauth.ts` (`exchangeIdJag`).
 
-Enterprise-Managed Authorization is the stable MCP extension for org-wide connector authorization via the identity provider (Okta Cross App Access at launch). Admins map IdP groups → ATR scopes once; users inherit MCP access on first login with no per-connector consent.
+Enterprise-Managed Authorization is the stable MCP extension for org-wide connector authorization via the identity provider. The wire protocol is **Cross App Access (XAA)** — formally the **identity assertion authorization grant (ID-JAG)** — as implemented by Okta, Auth0 ([Cross App Access docs](https://auth0.com/docs/ai-agents-mcp/cross-app-access)), and other enterprise IdPs. Admins map IdP groups → ATR scopes once; users inherit MCP access on first login with no per-connector consent.
+
+**XAA roles (terminology):** XAA defines three parties. `clawql-auth` participates in **one or two** of them depending on deployment — never as the Requesting App.
+
+| Role                | Responsibility                                                                                                                                                                               | `clawql-auth`                                                                                                                                     |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Requesting App**  | App the user is logged into (Claude, Cursor, ClawQL-embedded agent product). Obtains an ID-JAG from the enterprise IdP via RFC 8693 token exchange, then presents it to the Resource App AS. | **Not clawql-auth** — upstream MCP client / agent host.                                                                                           |
+| **Enterprise IdP**  | Mints ID-JAG assertions after enterprise policy checks (Okta XAA, Auth0 tenant, or self-hosted issuer).                                                                                      | **Optional (Layer A)** — `id-jag-issuer.ts` when `CLAWQL_ID_JAG_ISSUER_ENABLED=1`. Typical deployments use Okta/Auth0 instead.                    |
+| **Resource App AS** | Verifies the ID-JAG (IdP JWKS), maps groups → scopes, issues its own access token for its API/MCP gateway. Grant: `urn:ietf:params:oauth:grant-type:jwt-bearer` (RFC 7523).                  | **Shipped (primary)** — `mcp-oauth.ts` `exchangeIdJag` on `POST /oauth/token`. Mirrors Auth0’s “Resource App Authorization Server” documentation. |
+
+**Deployment modes:**
+
+| Mode              | IdP                     | Resource App AS        | Typical customer                                                          |
+| ----------------- | ----------------------- | ---------------------- | ------------------------------------------------------------------------- |
+| Resource-App-only | Okta / Auth0 / Azure AD | ClawQL MCP OAuth AS    | Enterprise MCP gateway behind existing IdP (**default, shipped today**)   |
+| IdP-only          | ClawQL ID-JAG issuer    | Third-party MCP server | Self-hosted EMA without Okta custody                                      |
+| Both              | ClawQL ID-JAG issuer    | ClawQL MCP OAuth AS    | Air-gapped or self-contained AI/MCP slice with no third-party IdP for EMA |
+
+**SAML interoperability (IdP / Requesting App — not Resource App AS):** When enterprise SSO is SAML rather than OIDC, XAA profiles a **pre-step before ID-JAG**: the Requesting App exchanges a SAML assertion for an OAuth refresh token at the IdP (`grant_type=token-exchange`, `subject_token_type=saml2`), then exchanges that refresh token for an ID-JAG. `clawql-auth` does **not** implement this bridge — it only receives a finished ID-JAG JWT at `/oauth/token`. SAML-only enterprises rely on their IdP (Okta SAML XAA guide, Auth0 [Okta as SAML IdP](https://auth0.com/docs/ai-agents-mcp/cross-app-access/idp/okta-as-saml-idp)) and Requesting App to perform SAML→refresh→ID-JAG. The Okta preset (`okta-id-jag.ts` → `buildOktaEmaOrgConfig`) configures **OIDC JWKS verification only** (`/oauth2/{authServerId}/v1/keys`).
 
 Grant types:
 
@@ -241,7 +259,9 @@ Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery
 
 **Shipped (Layers A + B)** in [#961](https://github.com/danielsmithdevelopment/ClawQL/pull/961): `inbound/id-jag-issuer.ts`, `inbound/ema-connector-registry.ts`, HTTP routes under `/oauth/id-jag/*` and `/.well-known/id-jag-jwks.json`.
 
-Positioning: ClawQL can act as a **self-hosted, attestation-backed identity provider for organizations that need EMA without third-party session-token custody** — the same Enterprise-Managed Authorization path Okta Cross App Access provides, without Okta's centralized custody surface. ClawQL remains an auth _consumer_ everywhere else (not a full human IdP).
+This section covers the **Enterprise IdP** XAA role only. The **Resource App AS** role (verify external ID-JAG → mint ClawQL MCP access JWT) is §4.1.1 and is independent: a deployment can enable either, or both.
+
+Positioning: ClawQL can act as a **self-hosted, attestation-backed identity provider for organizations that need EMA without third-party session-token custody** — the same Enterprise-Managed Authorization path Okta Cross App Access provides, without Okta's centralized custody surface. This is **not** a replacement for Okta/Auth0 human SSO (password, SAML SP, OIDC login UI). ClawQL remains an auth _consumer_ for human inbound paths (`oidc` JWT mode) and outbound provider OAuth everywhere else.
 
 | Layer               | Scope                                                                             | Status                                                                                                                              |
 | ------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
@@ -255,7 +275,7 @@ Positioning: ClawQL can act as a **self-hosted, attestation-backed identity prov
 
 **Signing keys (blast radius):** Dedicated issuer material via `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM(_PATH)` is the production recommendation. Falling back to the MCP OAuth AS signing key is allowed for v0 / single-node convenience, but **production deployments concerned about blast radius must use separate keys** — a compromise of the AS signing key must not also mint forged ID-JAG assertions (and vice versa). Shared keys quietly becoming the default would recreate the single-point-of-failure the self-hosted positioning argument is against.
 
-**Never:** Okta competitor, password/SSO IdP, SAML/LDAP server, per-user connector consent UI.
+**Never:** Okta competitor, password/SSO IdP, SAML/LDAP server, SAML→refresh-token interoperability layer, per-user connector consent UI. SAML bridge and Requesting-App token exchange stay with the enterprise IdP and agent host; Resource App AS accepts only finished ID-JAG JWTs.
 
 **Env:** `CLAWQL_ID_JAG_ISSUER_ENABLED=1`, `CLAWQL_ID_JAG_ISSUER_ORG_ID`, signing via `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM(_PATH)` (prefer dedicated; MCP OAuth key fallback is convenience only).
 
