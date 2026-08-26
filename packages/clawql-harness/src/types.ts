@@ -48,6 +48,8 @@ export type HarnessToolHandler = (
 export type HarnessTool = {
   readonly name: string;
   readonly description: string;
+  /** Opaque Zod shape / JSON Schema fields for MCP bridge registration. */
+  readonly inputSchema?: Record<string, unknown>;
   readonly handler: HarnessToolHandler;
 };
 

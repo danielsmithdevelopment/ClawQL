@@ -1,5 +1,8 @@
 # Ouroboros harness plugin
 
-`OuroborosPlugin` registers **`clawql_think`** and attaches Wonder/Reflect-style stagnation detection on the harness evaluate phase. Enable via explicit plugin list — no `CLAWQL_ENABLE_OUROBOROS` env gate on this path.
+`createOuroborosHarnessPlugin` / `OuroborosPlugin` is the **sole** ClawQL enablement surface for Ouroboros tools:
 
-MCP `ouroboros_*` tools remain in `clawql-ouroboros` for horizontal MCP registration when operators opt in separately.
+- `clawql_think` + Wonder/Reflect evaluate hooks (stagnation / personas)
+- `ouroboros_create_seed_from_document`, `ouroboros_run_evolutionary_loop`, `ouroboros_get_lineage_status`, `ouroboros_measure_drift` (and Langfuse propose when opted in)
+
+Tool implementations are shared with `clawql-ouroboros` (`buildOuroborosMcpToolDefinitions`). MCP loads this plugin via `makeHarnessLayer` — not via a parallel `makeOuroborosLayer` path.

@@ -13,6 +13,10 @@ export type OuroborosLayerError =
 
 /**
  * Effect Layer that wires Ouroboros search/execute deps and registers {@link createOuroborosPlugin}.
+ *
+ * @deprecated MCP composes `makeHarnessLayer` from `clawql-harness/plugin` with
+ * `createOuroborosHarnessPlugin` instead. Kept for library embedders that register the
+ * clawql-core Plugin without a harness.
  */
 export function makeOuroborosLayer(
   options: OuroborosPluginOptions = {}

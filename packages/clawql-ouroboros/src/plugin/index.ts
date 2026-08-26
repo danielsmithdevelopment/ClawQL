@@ -7,9 +7,13 @@ export {
   type OuroborosPluginSearchParams,
 } from "./deps.js";
 
-export { createOuroborosPlugin, OUROBOROS_PLUGIN_ID } from "./ouroboros-plugin.js";
+export { createOuroborosPlugin, OUROBOROS_PLUGIN_ID, type OuroborosPluginOptions } from "./ouroboros-plugin.js";
+export {
+  buildOuroborosMcpToolDefinitions,
+  type OuroborosToolDefOptions,
+} from "./ouroboros-tool-defs.js";
 
-export { getOuroborosContext, resetOuroborosContextForTests } from "./context.js";
+export { getOuroborosContext, resetOuroborosContextForTests, ensureOuroborosPoolShutdownHooks } from "./context.js";
 
 export { closeOuroborosPgPool, getOuroborosPgPool } from "../glue/postgres-pool.js";
 export { ouroborosPgPoolScopedEffect } from "../glue/postgres-pool-effect.js";

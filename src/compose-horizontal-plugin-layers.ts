@@ -12,7 +12,7 @@ import { natsConfiguredForConsumer } from "clawql-automation/nats/env";
 import { makeDocumentsLayer } from "clawql-documents/plugin";
 import { makeMemoryLayer } from "clawql-memory/plugin";
 import { makeOntologyLayer } from "clawql-ontology/plugin";
-import { makeOuroborosLayer } from "clawql-ouroboros/plugin";
+import { createOuroborosHarnessPlugin, makeHarnessLayer } from "clawql-harness/plugin";
 import { makeSandboxLayer } from "clawql-sandbox/plugin";
 import { makeDataLayer } from "clawql-data/plugin";
 import { makeWebLayer } from "clawql-web/plugin";
@@ -86,7 +86,14 @@ export function composeHorizontalPluginLayers(
     layers.push(makeOntologyLayer({ enableWrites: flags.enableOntologyWrites }));
   }
   if (flags.enableOuroboros) {
-    layers.push(makeOuroborosLayer({ enableLangfuseEval: flags.enableLangfuseEval }));
+    // Ouroboros is a clawql-harness plugin; MCP bridges harness tools (no separate makeOuroborosLayer path).
+    layers.push(
+      makeHarnessLayer({
+        plugins: [
+          createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval }),
+        ],
+      })
+    );
   }
   return layers;
 }

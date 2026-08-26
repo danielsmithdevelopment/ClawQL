@@ -25,7 +25,7 @@ describe("ClawQLHarness core", () => {
     expect(result.turns).toBe(1);
   });
 
-  it("registers Ouroboros clawql_think and completes WORM verify", async () => {
+  it("registers Ouroboros clawql_think + ouroboros_* and completes WORM verify", async () => {
     const harness = await Effect.runPromise(
       ClawQLHarness.create({
         plugins: [OuroborosPlugin],
@@ -33,6 +33,10 @@ describe("ClawQLHarness core", () => {
       })
     );
     expect(harness.state.tools.has("clawql_think")).toBe(true);
+    expect(harness.state.tools.has("ouroboros_create_seed_from_document")).toBe(true);
+    expect(harness.state.tools.has("ouroboros_run_evolutionary_loop")).toBe(true);
+    expect(harness.state.tools.has("ouroboros_get_lineage_status")).toBe(true);
+    expect(harness.state.tools.has("ouroboros_measure_drift")).toBe(true);
 
     const result = await Effect.runPromise(
       harness.run({ id: "t2", title: "ouroboros smoke", maxTurns: 1 })
@@ -45,6 +49,7 @@ describe("ClawQLHarness core", () => {
     expect(think).toEqual({ acknowledged: true });
     await Effect.runPromise(harness.teardown());
     expect(result.registeredTools).toContain("clawql_think");
+    expect(result.registeredTools).toContain("ouroboros_run_evolutionary_loop");
     expect(result.wormComplete).toBe(true);
   });
 });

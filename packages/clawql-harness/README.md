@@ -1,26 +1,26 @@
 # clawql-harness
 
-Model-agnostic execution-loop harness for ClawQL — distinct from **`clawql-agents`**, which wraps finished agent products at the process boundary.
+Model-agnostic execution-loop harness. Plugins register tools and loop hooks in-process.
 
-| Piece | Location |
+| Surface | Import |
 | --- | --- |
-| Spec | [`docs/agents/clawql-harness-spec-v0.1.md`](../../docs/agents/clawql-harness-spec-v0.1.md) |
-| Core API | `ClawQLHarness.create`, `HarnessPlugin`, `HarnessContext` |
-| Ouroboros plugin | `clawql-harness/plugins/ouroboros` → `OuroborosPlugin` |
-| OpenCode2 plugin | `clawql-harness/plugins/opencode2` → `OpenCode2Plugin` (optional SDK peer) |
+| Core | `clawql-harness` → `ClawQLHarness` |
+| MCP bridge | `clawql-harness/plugin` → `makeHarnessLayer`, `createOuroborosHarnessPlugin` |
+| Ouroboros plugin | `clawql-harness/plugins/ouroboros` → `OuroborosPlugin` / `createOuroborosHarnessPlugin` |
+| OpenCode2 plugin | `clawql-harness/plugins/opencode2` → `OpenCode2Plugin` |
 | Compare bench | `clawql-harness/bench` → `compareHarnesses` |
 
-```ts
+```typescript
 import { Effect } from "effect";
 import { ClawQLHarness } from "clawql-harness";
-import { OuroborosPlugin } from "clawql-harness/plugins/ouroboros";
+import { createOuroborosHarnessPlugin } from "clawql-harness/plugins/ouroboros";
 
 const harness = await Effect.runPromise(
   ClawQLHarness.create({
-    plugins: [OuroborosPlugin],
-    model: { provider: "mlx", name: "nemotron-stub" },
+    plugins: [createOuroborosHarnessPlugin()],
+    model: { provider: "stub", name: "bench-model" },
   })
 );
 ```
 
-**MCP note:** Horizontal MCP `ouroboros_*` tools remain in `clawql-ouroboros` behind `CLAWQL_ENABLE_OUROBOROS`. The harness plugin path is explicit plugin-list only — no env gate.
+**Ouroboros enablement:** include `createOuroborosHarnessPlugin()` in the plugin list. That registers `clawql_think` and the full `ouroboros_*` tool set (shared with `clawql-ouroboros`). MCP uses `makeHarnessLayer` to bridge those harness tools — there is no separate MCP-only registration path.

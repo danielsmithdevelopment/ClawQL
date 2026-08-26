@@ -13,6 +13,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./plugin": {
+      "types": "./dist/plugin/index.d.ts",
+      "import": "./dist/plugin/index.js",
+      "require": "./dist/plugin/index.cjs"
+    },
     "./plugins/ouroboros": {
       "types": "./dist/plugins/ouroboros/index.d.ts",
       "import": "./dist/plugins/ouroboros/index.js",
@@ -38,10 +43,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "clawql-api": "7.2.0",
     "clawql-audit": "7.2.0",
     "clawql-core": "7.2.0",
     "clawql-ouroboros": "7.2.0",
-    "effect": "^3.21.4"
+    "effect": "^3.21.4",
+    "zod": "^4.3.6"
   },
   "peerDependenciesMeta": {
     "@opencode-ai/sdk": {
