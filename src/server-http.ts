@@ -45,13 +45,9 @@ import { handleIdpPipelineRunRequest } from "./idp-pipeline-run-http.js";
 import { handleLangfuseEvalWebhookRequest } from "./langfuse-eval-webhook.js";
 import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
 import {
-  loadGatewayAuthConfig,
   resolveAtrClaimsFromHeadersEffect,
-  type ApiKeyClaimsResolver,
-  type GatewayAuthConfig,
 } from "clawql-auth";
 import { Effect } from "effect";
-import { validateVirtualKey } from "clawql-inference";
 import { attachCreditsHateoasRoutes } from "clawql-payments";
 import { attachPaymentsWellKnownRoutes } from "clawql-payments/discovery";
 import { attachMppOpenApiRoutes, isMppOpenApiEnabled } from "clawql-payments/mpp";
@@ -60,44 +56,13 @@ import {
   registerMcpX402TransportHooks,
   runWithMcpX402Context,
 } from "./mcp-x402-transport.js";
+import { buildGatewayAuthConfig } from "./gateway-auth.js";
 
 /**
- * Map clawql-inference virtual keys to ATR claims (tenantId = key.team).
- * Returns null when the secret is not a known virtual key so static CLAWQL_API_KEY can apply.
+ * @deprecated Use {@link buildGatewayAuthConfig} from `./gateway-auth.js`.
+ * Re-exported for tests that imported from server-http.
  */
-export function createInferenceVirtualKeyClaimsResolver(
-  env: NodeJS.ProcessEnv = process.env
-): ApiKeyClaimsResolver {
-  return (presented) => {
-    const result = validateVirtualKey(presented, env);
-    if (!result.ok) {
-      // Budget / rate-limit are hard failures for a recognized key path.
-      if (result.status === 402 || result.status === 429) {
-        return { ok: false, error: result.message };
-      }
-      return null;
-    }
-    return {
-      ok: true,
-      claims: {
-        sub: result.context.id,
-        role: "operator",
-        scope: ["execute", "search", "memory"],
-        tenantId: result.context.team,
-        virtualKeyId: result.context.id,
-      },
-    };
-  };
-}
-
-function buildGatewayAuthConfig(env: NodeJS.ProcessEnv = process.env): GatewayAuthConfig {
-  const config = loadGatewayAuthConfig(env);
-  if (config.mode !== "apiKey") return config;
-  return {
-    ...config,
-    apiKeyClaimsResolver: createInferenceVirtualKeyClaimsResolver(env),
-  };
-}
+export { createInferenceVirtualKeyClaimsResolver } from "./gateway-auth.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
