@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  resolveCompositionFlagsFromEnv,
-  type ClawQLHorizontalTierSpec,
-} from "./horizontal-composition.js";
+import { resolveCompositionFlagsFromEnv } from "./horizontal-composition.js";
 
 export type { ClawQLHorizontalTierSpec } from "./horizontal-composition.js";
 export {

@@ -17,7 +17,9 @@ type PromptResult = {
 /** v2 client uses flat params (`sessionID`, `parts`, …). v1 uses nested `path`/`body`. */
 type OpencodeClient = {
   session: {
-    create: (opts?: Record<string, unknown>) => Promise<{ data?: OpencodeSession; error?: unknown }>;
+    create: (
+      opts?: Record<string, unknown>
+    ) => Promise<{ data?: OpencodeSession; error?: unknown }>;
     prompt: (opts: Record<string, unknown>) => Promise<{ data?: PromptResult; error?: unknown }>;
   };
 };
@@ -124,9 +126,10 @@ const ensureEmbedded = (state: OpenCode2State): Effect.Effect<OpencodeHandle | n
     const hostname = process.env.CLAWQL_OPENCODE_HOSTNAME?.trim() || "127.0.0.1";
     const portRaw = process.env.CLAWQL_OPENCODE_PORT?.trim();
     const configuredPort = portRaw ? Number(portRaw) : NaN;
-    const port = Number.isFinite(configuredPort) && configuredPort >= 0
-      ? configuredPort
-      : yield* allocateEphemeralPort();
+    const port =
+      Number.isFinite(configuredPort) && configuredPort >= 0
+        ? configuredPort
+        : yield* allocateEphemeralPort();
     const timeout = Number(process.env.CLAWQL_OPENCODE_TIMEOUT_MS?.trim() || "20000") || 20000;
     const started = yield* Effect.tryPromise({
       try: () =>
@@ -372,7 +375,8 @@ export const OpenCode2Plugin: HarnessPlugin = {
 
   teardown: (ctx: HarnessContext) =>
     Effect.sync(() => {
-      const state = (ctx as HarnessContext & { __opencode2State?: OpenCode2State }).__opencode2State;
+      const state = (ctx as HarnessContext & { __opencode2State?: OpenCode2State })
+        .__opencode2State;
       try {
         state?.embedded?.server.close();
       } catch {

@@ -271,19 +271,6 @@ function mergeHorizontal(
   };
 }
 
-function instanceBodyToHorizontal(body: InstanceBodyForFlags): ClawQLHorizontalTierSpec {
-  return {
-    memory: body.memory,
-    documents: body.documents,
-    automation: body.automation,
-    sandbox: body.sandbox,
-    data: body.data,
-    web: body.web,
-    ontology: body.ontology,
-    ouroboros: body.ouroboros,
-  };
-}
-
 function parseInstanceDocument(raw: unknown): InstanceBodyForFlags | undefined {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
   const root = raw as Record<string, unknown>;

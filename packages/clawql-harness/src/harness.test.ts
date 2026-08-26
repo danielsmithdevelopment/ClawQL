@@ -81,9 +81,9 @@ describe("compareHarnesses", () => {
         "clawql-ouroboros",
         "opencode2",
       ]);
-      expect(comparison.plugins.find((p) => p.pluginId === "clawql-ouroboros")?.result.wormComplete).toBe(
-        true
-      );
+      expect(
+        comparison.plugins.find((p) => p.pluginId === "clawql-ouroboros")?.result.wormComplete
+      ).toBe(true);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -127,7 +127,7 @@ describe("OpenCode2Plugin", () => {
       await access(join(dirname(pkg), "bin/opencode.exe"));
       hasPeers = true;
     } catch {
-      hasPeers = false;
+      /* peers not installed — skip live path */
     }
     if (!hasPeers) return;
 
