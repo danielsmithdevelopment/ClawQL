@@ -53,7 +53,8 @@ export async function handleLangfuseEvalWebhookRequest(req: Request, res: Respon
   if (!flags.enableLangfuseEval) {
     res.status(503).json({
       ok: false,
-      error: "Enable ouroboros.langfuseEval in ClawQLInstance / CLAWQL_INSTANCE_SPEC for Langfuse eval → seed revision.",
+      error:
+        "Enable ouroboros.langfuseEval in ClawQLInstance / CLAWQL_INSTANCE_SPEC for Langfuse eval → seed revision.",
     });
     return;
   }

@@ -1,7 +1,4 @@
-import {
-  basePluginCompositionFlags,
-  type ClawqlOptionalToolFlags,
-} from "clawql-api";
+import { basePluginCompositionFlags, type ClawqlOptionalToolFlags } from "clawql-api";
 import {
   applyTierPreset,
   clawqlInstanceSpecToHorizontalTierSpec,
@@ -45,7 +42,8 @@ export function resolvePluginCompositionFlags(
       env.CLAWQL_ENABLE_GOOGLE?.trim() === "1" ||
       env.CLAWQL_ENABLE_GOOGLE?.trim().toLowerCase() === "true",
     enableAws:
-      env.CLAWQL_ENABLE_AWS?.trim() === "1" || env.CLAWQL_ENABLE_AWS?.trim().toLowerCase() === "true",
+      env.CLAWQL_ENABLE_AWS?.trim() === "1" ||
+      env.CLAWQL_ENABLE_AWS?.trim().toLowerCase() === "true",
     enableCloudflare: (() => {
       const v = env.CLAWQL_ENABLE_CLOUDFLARE?.trim().toLowerCase();
       if (v === undefined || v === "") return true;

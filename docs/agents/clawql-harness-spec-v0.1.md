@@ -25,13 +25,13 @@ Horizontal MCP plugins (memory, documents, sandbox, data, automation, …) are e
 
 ## Implementation status
 
-| Phase | Scope | Status |
-| --- | --- | --- |
-| 1 | `HarnessPlugin`, `HarnessContext`, registry, tool/WORM bridges, `ClawQLHarness.create` | **Shipped** |
-| 2 | `OuroborosPlugin` (`clawql_think` + full `ouroboros_*`) | **Shipped** |
-| 3 | `OpenCode2Plugin` stub | **Shipped stub** |
-| 4 | `compareHarnesses` + `integrations/harness-bench/` | **Shipped dry compare** |
-| MCP | `makeHarnessLayer` bridges harness tools; composition from instance/tier config | **Shipped** |
+| Phase | Scope                                                                                  | Status                  |
+| ----- | -------------------------------------------------------------------------------------- | ----------------------- |
+| 1     | `HarnessPlugin`, `HarnessContext`, registry, tool/WORM bridges, `ClawQLHarness.create` | **Shipped**             |
+| 2     | `OuroborosPlugin` (`clawql_think` + full `ouroboros_*`)                                | **Shipped**             |
+| 3     | `OpenCode2Plugin` stub                                                                 | **Shipped stub**        |
+| 4     | `compareHarnesses` + `integrations/harness-bench/`                                     | **Shipped dry compare** |
+| MCP   | `makeHarnessLayer` bridges harness tools; composition from instance/tier config        | **Shipped**             |
 
 ## Distinction from clawql-agents
 
@@ -53,4 +53,4 @@ const harness = await Effect.runPromise(
 
 ---
 
-*clawql-harness Package Specification · v0.1 · August 2026*
+_clawql-harness Package Specification · v0.1 · August 2026_

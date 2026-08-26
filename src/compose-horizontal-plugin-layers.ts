@@ -88,9 +88,7 @@ export function composeHorizontalPluginLayers(
   // Ouroboros is always a clawql-harness plugin (no env / tier enable gate).
   layers.push(
     makeHarnessLayer({
-      plugins: [
-        createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval }),
-      ],
+      plugins: [createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval })],
     })
   );
   return layers;
