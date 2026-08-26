@@ -4,6 +4,7 @@ import type {
   RoutingFailureSignal,
 } from "../routing/types.js";
 import { buildAgentCoordinationAuditEntry } from "../audit/events.js";
+import { appendInferenceAuditToProcessWorm } from "../audit/process-worm.js";
 import { invokeAgentCoordination } from "./hermes-adapter.js";
 
 export type AgentCoordinationEvaluation = {
@@ -39,5 +40,6 @@ export async function evaluateAgentCoordination(input: {
     signals: input.signals,
     env: input.env,
   });
+  await appendInferenceAuditToProcessWorm(auditEntry);
   return { triggered: true, auditEntry, result };
 }

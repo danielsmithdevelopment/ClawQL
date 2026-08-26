@@ -110,6 +110,10 @@ export {
   buildAgentCoordinationAuditEntry,
   type InferenceAuditEntry,
 } from "./audit/events.js";
+export {
+  appendInferenceAuditToProcessWorm,
+  appendInferenceAuditToProcessWormEffect,
+} from "./audit/process-worm.js";
 export { runInferenceEscalationShow, runInferenceEscalationSetTier } from "./cli/escalation.js";
 export {
   runInferencePipelineEnable,
