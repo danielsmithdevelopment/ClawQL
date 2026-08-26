@@ -117,13 +117,6 @@ function inputTypeForString(propSchema: Record<string, unknown>): string {
   return "text";
 }
 
-function shortPlaceholder(description: string | undefined, max = 90): string {
-  if (!description) return "";
-  const oneLine = description.replace(/\s+/g, " ").trim();
-  if (oneLine.length <= max) return oneLine;
-  return `${oneLine.slice(0, max - 1)}…`;
-}
-
 /** True when a flat string field should render as `<input type="file">`. */
 export function looksLikeFileField(
   name: string,
@@ -195,11 +188,9 @@ export function renderFieldControl(options: RenderFieldOptions): string {
         : propSchema.default;
   const reqAttr = required && propSchema.type !== "boolean" ? " required" : "";
   const errClass = errorMessage ? " field--error" : "";
-  const placeholder = shortPlaceholder(description);
-  const placeholderAttr = placeholder ? ` placeholder="${escHtml(placeholder)}"` : "";
   const hintHtml = hint
     ? `<p class="field-help">${escHtml(hint)}</p>`
-    : description && description.length > 90
+    : description
       ? `<p class="field-help">${escHtml(description)}</p>`
       : "";
   const errHtml = errorMessage
@@ -277,7 +268,7 @@ export function renderFieldControl(options: RenderFieldOptions): string {
       defaultValue !== undefined && defaultValue !== null ? String(defaultValue) : "";
     return `<label class="field${errClass}">
   <span class="field-label">${escHtml(label)} ${labelBadge(required)}</span>
-  <textarea name="${escHtml(name)}" rows="4"${reqAttr}${placeholderAttr}>${escHtml(text)}</textarea>
+  <textarea name="${escHtml(name)}" rows="4"${reqAttr}>${escHtml(text)}</textarea>
   ${hintHtml}${errHtml}
 </label>`;
   }
@@ -290,7 +281,7 @@ export function renderFieldControl(options: RenderFieldOptions): string {
       : "";
   return `<label class="field${errClass}">
   <span class="field-label">${escHtml(label)} ${labelBadge(required)}</span>
-  <input type="${inputType}" name="${escHtml(name)}"${valueAttr}${placeholderAttr}${reqAttr} />
+  <input type="${inputType}" name="${escHtml(name)}"${valueAttr}${reqAttr} />
   ${hintHtml}${errHtml}
 </label>`;
 }
