@@ -25,10 +25,7 @@
     "clawql-operator",
     "clawql-mcp"
   ],
-  "localPackExtras": [
-    "mcp-grpc-transport",
-    "mcp-api-adapter"
-  ],
+  "localPackExtras": ["mcp-grpc-transport", "mcp-api-adapter"],
   "notes": [
     "Each clawql-* package uses independent semver. Do NOT lockstep package versions to clawql-mcp.",
     "clawql-mcp (root) has its own version line (currently 7.2.0 on npm). Workspace claws start at 0.1.0 until first publish; clawql-ouroboros stays on its published line (0.1.1 in-tree matches npm).",
