@@ -3,6 +3,7 @@
  * Effect-primary — no Promise domain API.
  */
 
+import { spawn } from "node:child_process";
 import { Effect } from "effect";
 
 import type { AuthEventSink } from "../audit/auth-events.js";
@@ -20,6 +21,12 @@ import {
   type IdJagIssuerService,
 } from "./id-jag-issuer.js";
 import {
+  createLocalIdJagAssertionSigner,
+  createTeeIdJagAssertionSigner,
+  type IdJagAssertionSigner,
+  type IdJagSignRequest,
+} from "./id-jag-tee-signer.js";
+import {
   loadMcpOAuthSigningMaterialEffect,
   type McpOAuthSigningError,
   type McpOAuthSigningMaterial,
@@ -29,11 +36,93 @@ export type IdJagIssuerRuntime = {
   service: IdJagIssuerService["Type"];
   connectors: EmaConnectorRegistry;
   material: IdJagIssuerOrgMaterial;
+  /** Layer C signer when TEE env flags / host inject `assertionSigner`. */
+  assertionSigner?: IdJagAssertionSigner;
 };
 
 function envFlag(name: string, env: NodeJS.ProcessEnv): boolean {
   const v = env[name]?.trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes";
+}
+
+function parseCmdLine(cmd: string): { bin: string; args: string[] } | null {
+  const parts = cmd.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return null;
+  return { bin: parts[0]!, args: parts.slice(1) };
+}
+
+/** Spawn external TEE/HSM signer: JSON `{claims,header}` on stdin → compact JWS on stdout. */
+export function createExternalCmdIdJagAssertionSigner(cmdLine: string): IdJagAssertionSigner {
+  const parsed = parseCmdLine(cmdLine);
+  if (!parsed) {
+    return createTeeIdJagAssertionSigner({
+      teeSign: () => Effect.fail(new Error("empty_tee_sign_cmd")),
+    });
+  }
+  return createTeeIdJagAssertionSigner({
+    teeSign: (request: IdJagSignRequest) =>
+      Effect.tryPromise({
+        try: () =>
+          new Promise<string>((resolve, reject) => {
+            const child = spawn(parsed.bin, parsed.args, {
+              stdio: ["pipe", "pipe", "pipe"],
+            });
+            let stdout = "";
+            let stderr = "";
+            const timer = setTimeout(() => {
+              child.kill("SIGKILL");
+              reject(new Error("tee_sign_cmd_timeout"));
+            }, 30_000);
+            child.stdout.on("data", (chunk: Buffer) => {
+              stdout += chunk.toString("utf8");
+            });
+            child.stderr.on("data", (chunk: Buffer) => {
+              stderr += chunk.toString("utf8");
+            });
+            child.on("error", (err) => {
+              clearTimeout(timer);
+              reject(err);
+            });
+            child.on("close", (code) => {
+              clearTimeout(timer);
+              if (code !== 0) {
+                reject(
+                  new Error(`tee_sign_cmd_exit_${code}${stderr ? `: ${stderr.slice(0, 200)}` : ""}`)
+                );
+                return;
+              }
+              const jwt = stdout.trim();
+              if (!jwt || jwt.split(".").length !== 3) {
+                reject(new Error("tee_sign_cmd_invalid_jwt"));
+                return;
+              }
+              resolve(jwt);
+            });
+            child.stdin.write(JSON.stringify({ claims: request.claims, header: request.header }));
+            child.stdin.end();
+          }),
+        catch: (cause) => cause,
+      }),
+  });
+}
+
+function resolveAssertionSignerFromEnv(
+  env: NodeJS.ProcessEnv,
+  signing: McpOAuthSigningMaterial,
+  injected?: IdJagAssertionSigner
+): IdJagAssertionSigner | undefined {
+  if (injected) return injected;
+  const signCmd = env.CLAWQL_ID_JAG_TEE_SIGN_CMD?.trim();
+  if (signCmd) {
+    return createExternalCmdIdJagAssertionSigner(signCmd);
+  }
+  if (envFlag("CLAWQL_ID_JAG_TEE_SIGNER", env)) {
+    const local = createLocalIdJagAssertionSigner(signing);
+    return createTeeIdJagAssertionSigner({
+      teeSign: (request) => local.sign(request),
+    });
+  }
+  return undefined;
 }
 
 export function isIdJagIssuerEnabled(env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> {
@@ -51,6 +140,11 @@ export function isIdJagIssuerEnabled(env: NodeJS.ProcessEnv = process.env): Effe
 /**
  * Build a single-org ID-JAG issuer from env when enabled.
  * Prefers dedicated issuer key material; falls back to MCP OAuth RS256/HS256 keys.
+ *
+ * Layer C:
+ * - `CLAWQL_ID_JAG_TEE_SIGN_CMD` — external attested signer (stdin JSON → stdout JWS)
+ * - `CLAWQL_ID_JAG_TEE_SIGNER=1` — wrap local jose as TEE-shaped (`kind: "tee"`)
+ * - `assertionSigner` option — host inject (`clawql-tee` / HSM)
  */
 export function createIdJagIssuerFromEnv(options: {
   env?: NodeJS.ProcessEnv;
@@ -58,6 +152,11 @@ export function createIdJagIssuerFromEnv(options: {
   eventSink?: AuthEventSink;
   /** Public origin used to derive jwksUri when unset. */
   publicOrigin?: string;
+  /**
+   * Host-injected Layer C signer (e.g. `createDevTeeIdJagSigner` from `clawql-tee`).
+   * When unset, see `CLAWQL_ID_JAG_TEE_SIGN_CMD` / `CLAWQL_ID_JAG_TEE_SIGNER`.
+   */
+  assertionSigner?: IdJagAssertionSigner;
 }): Effect.Effect<IdJagIssuerRuntime | null, McpOAuthSigningError> {
   return Effect.gen(function* () {
     const env = options.env ?? process.env;
@@ -113,13 +212,16 @@ export function createIdJagIssuerFromEnv(options: {
       signing,
     };
 
+    const assertionSigner = resolveAssertionSignerFromEnv(env, signing, options.assertionSigner);
+
     const connectors = createSecretStoreEmaConnectorRegistry(options.secretStore);
     const service = createIdJagIssuerService({
       connectors,
       resolveOrgMaterial: fixedOrgMaterialResolver(material),
       eventSink: options.eventSink ?? createAuthEventSinkFromEnv(env),
+      assertionSigner,
     });
 
-    return { service, connectors, material };
+    return { service, connectors, material, assertionSigner };
   });
 }

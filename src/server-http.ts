@@ -280,6 +280,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   app.use("/oauth/revoke", express.urlencoded({ extended: false }));
   app.use("/oauth/ema", express.json());
   app.use("/oauth/id-jag", express.json());
+  app.use("/oauth/passkey", express.json());
 
   const mcpOAuthRateLimiter = createMcpOAuthRateLimiter();
   app.use("/oauth/token", mcpOAuthRateLimiter);
@@ -287,6 +288,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   app.use("/oauth/authorize", mcpOAuthRateLimiter);
   app.use("/oauth/id-jag", mcpOAuthRateLimiter);
   app.use("/oauth/ema", mcpOAuthRateLimiter);
+  app.use("/oauth/passkey", mcpOAuthRateLimiter);
 
   const injectedMcpOAuth = options.mcpOAuthRuntime != null;
   let mcpOAuthRuntime: McpOAuthRuntime | null = options.mcpOAuthRuntime ?? null;
@@ -376,6 +378,12 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         : undefined,
     });
   }
+
+  const { attachHostPasskeyRoutes } = await import("./passkey-http-host.js");
+  attachHostPasskeyRoutes(app, {
+    adminAuth:
+      emaAdminAuth.adminApiKey || mcpOAuthRuntime || idJagIssuer ? emaAdminAuth : undefined,
+  });
 
   attachPaymentsWellKnownRoutes(app, { serverName: "ClawQL MCP" });
   // HTMX forms on /credits/* (invite claim / accept / decline)

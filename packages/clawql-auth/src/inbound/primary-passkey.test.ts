@@ -11,6 +11,24 @@ import {
 import type { WebAuthnStepUpVerifier } from "../step-up/webauthn.js";
 
 describe("primaryPasskeyLoginEffect", () => {
+  it("enrolls and deletes credentials via memory store", async () => {
+    const credentials = createMemoryPasskeyCredentialStore();
+    const enrolled = await Effect.runPromise(
+      credentials.enroll({
+        subjectId: "user-1",
+        credentialId: "cred-new",
+        label: "MacBook",
+      })
+    );
+    expect(enrolled.credentialId).toBe("cred-new");
+    expect(enrolled.enrolledAt).toBeTruthy();
+    const listed = await Effect.runPromise(credentials.listBySubject("user-1"));
+    expect(listed).toHaveLength(1);
+    const deleted = await Effect.runPromise(credentials.delete("cred-new"));
+    expect(deleted).toBe(true);
+    expect(await Effect.runPromise(credentials.listBySubject("user-1"))).toEqual([]);
+  });
+
   it("issues challenge and verifies assertion via injected verifier", async () => {
     const store = createMemorySecretStore();
     const credentials = createMemoryPasskeyCredentialStore([
