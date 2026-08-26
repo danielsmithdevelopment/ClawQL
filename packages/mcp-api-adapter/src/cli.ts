@@ -35,6 +35,8 @@ HTTP APIs:
   --no-mcp               Disable Streamable HTTP /mcp surface
   --ws-path <path>       WebSocket tool-call path (default /ws)
   --no-ws                Disable WebSocket surface
+  --mcp-ui-path <path>   HTMX MCP UI playground path (default /mcp-ui)
+  --no-mcp-ui            Disable /mcp-ui browser surface
   --api-key <key>        Optional edge API key
   --jwks-url <url>       Accept ClawQL MCP JWTs via JWKS (/.well-known/jwks.json)
   --jwt-issuer <iss>     Expected JWT iss when verifying MCP tokens
@@ -137,6 +139,8 @@ const sharedOpts = {
   "no-mcp": { type: "boolean", default: false },
   "ws-path": { type: "string" },
   "no-ws": { type: "boolean", default: false },
+  "mcp-ui-path": { type: "string" },
+  "no-mcp-ui": { type: "boolean", default: false },
   listen: { type: "string" },
   "api-key": { type: "string" },
   "jwks-url": { type: "string" },
@@ -250,6 +254,12 @@ async function runServe(argv: string[]): Promise<void> {
       envFirst("MCP_API_ADAPTER_WS_PATH") ||
       "/ws";
 
+  const mcpUiPath: string | false = values["no-mcp-ui"]
+    ? false
+    : values["mcp-ui-path"]?.trim() ||
+      envFirst("MCP_API_ADAPTER_MCP_UI_PATH") ||
+      "/mcp-ui";
+
   const started = await startMcpApiAdapter({
     upstream,
     host,
@@ -261,6 +271,7 @@ async function runServe(argv: string[]): Promise<void> {
     grpcListen,
     mcpPath,
     wsPath,
+    mcpUiPath,
     protocolVersion: process.env.MCP_PROTOCOL_VERSION?.trim(),
   });
 
@@ -282,6 +293,9 @@ async function runServe(argv: string[]): Promise<void> {
   }
   if (started.wsUrl) {
     console.log(`[mcp-api-adapter] websocket: ${started.wsUrl}`);
+  }
+  if (started.mcpUiPath) {
+    console.log(`[mcp-api-adapter] mcp-ui:   ${started.url}${started.mcpUiPath}`);
   }
   if (started.grpcAddress) {
     console.log(

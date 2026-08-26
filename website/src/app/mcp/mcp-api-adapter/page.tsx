@@ -5,9 +5,9 @@ import McpApiAdapterBody from '@/generated/mcp-api-adapter-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'mcp-api-adapter — six surfaces today, eight planned',
+  title: 'mcp-api-adapter — seven surfaces today, eight with QR planned',
   description:
-    'Language-agnostic MCP → APIs adapter: wrap any MCP server and expose OpenAPI, GraphQL, /mcp, gRPC, WebSocket, and gen-cli today; QR and /mcp-ui (Swagger UI for MCP) planned. In-repo at 0.6.0; npm publish pending.',
+    'Language-agnostic MCP → APIs adapter: wrap any MCP server and expose OpenAPI, GraphQL, /mcp, gRPC, WebSocket, gen-cli, and /mcp-ui today; QR stream planned. In-repo at 0.6.0; npm publish pending.',
   path: '/mcp/mcp-api-adapter',
   ogType: 'article',
 })

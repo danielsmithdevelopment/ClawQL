@@ -1,7 +1,7 @@
 {
   "name": "mcp-api-adapter",
   "version": "0.6.0",
-  "description": "Standalone adapter: point at any MCP server and instantly serve OpenAPI + GraphQL + Streamable HTTP /mcp + gRPC + WebSocket, plus gen-cli for a thin tool CLI",
+  "description": "Standalone adapter: point at any MCP server and instantly serve OpenAPI + GraphQL + Streamable HTTP /mcp + gRPC + WebSocket + HTMX /mcp-ui, plus gen-cli for a thin tool CLI",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",

@@ -346,14 +346,14 @@ export const referenceHubCards: Array<ReferenceCard> = [
     href: '/mcp/mcp-api-adapter',
     name: 'mcp-api-adapter',
     description:
-      'Any MCP → OpenAPI, GraphQL, /mcp, gRPC, /ws, gen-cli; QR + /mcp-ui planned.',
+      'Any MCP → OpenAPI, GraphQL, /mcp, gRPC, /ws, gen-cli, /mcp-ui; QR planned.',
     icon: PackageIcon,
   }),
   card({
     href: '/mcp/mcp-ui',
     name: '/mcp-ui',
     description:
-      'Swagger UI for MCP — HTMX forms from inputSchema (planned 8th surface).',
+      'Swagger UI for MCP — HTMX forms from inputSchema (8th surface, shipped).',
     icon: DocumentIcon,
   }),
   card({

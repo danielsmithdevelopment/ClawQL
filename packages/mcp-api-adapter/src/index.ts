@@ -1,5 +1,5 @@
 /**
- * mcp-api-adapter — standalone adapter: any MCP server → OpenAPI + GraphQL + /mcp + gRPC + WebSocket.
+ * mcp-api-adapter — standalone adapter: any MCP server → OpenAPI + GraphQL + /mcp + gRPC + WebSocket + /mcp-ui.
  */
 
 export {
@@ -14,6 +14,8 @@ export { buildOpenApiDocument } from "./openapi.js";
 export { buildGraphqlSchemaFromCatalog, toolArgsFromInputSchema } from "./graphql-schema.js";
 export { attachGraphqlRoutes } from "./graphql-http.js";
 export { attachMcpHttpRoutes } from "./mcp-http.js";
+export { attachMcpUiRoutes, DEFAULT_MCP_UI_PATH } from "./mcp-ui-http.js";
+export { formHintsForTool, listMcpUiTemplates, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
 export {
   attachWebSocketSurface,
   parseWsToolCall,
@@ -68,6 +70,7 @@ export type { UpstreamConnection } from "./upstream.js";
 export type { CreateMcpApiAdapterAppOptions } from "./server.js";
 export type { GenCliOptions } from "./gen-cli.js";
 export type { AttachMcpHttpOptions } from "./mcp-http.js";
+export type { AttachMcpUiOptions } from "./mcp-ui-http.js";
 export type {
   AttachWebSocketSurfaceOptions,
   AttachedWebSocketSurface,
