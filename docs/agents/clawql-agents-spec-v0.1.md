@@ -18,7 +18,7 @@ package: "packages/clawql-agents/"
 | Name in this document                                 | In this repository today                                                                                                                                                                    |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/clawql-agents/`                             | **Phases 1–4** — all seven adapters + ATR templates + shared Panguard; Phase 5 (bench/Helm) still gated                                                                                     |
-| npm `@clawql/agents`, `@clawql/core`, `@clawql/audit` | Packages are **unscoped** `clawql-*`. MCP audit ring lives in **`clawql-core`**. Durable WORM is **spec only**: [`../audit/clawql-audit-spec-v0.1.md`](../audit/clawql-audit-spec-v0.1.md). |
+| npm `@clawql/agents`, `@clawql/core`, `@clawql/audit` | Packages are **unscoped** `clawql-*`. MCP audit ring lives in **`clawql-core`**. Durable WORM ships in **`clawql-audit@0.1.0`**: [`../audit/clawql-audit-spec-v0.1.md`](../audit/clawql-audit-spec-v0.1.md). |
 | Adapter `initialize` / `start` as `Promise`           | Production domain APIs **must** be Effect (`Context.Tag` + `Layer`). Sketches below are contracts, not the implementation shape.                                                            |
 | OpenClaw MCP wiring                                   | Docs + operator guides in [`docs/openclaw/`](../openclaw/using-openclaw-with-clawql.md); no adapter package                                                                                 |
 | Hermes                                                | Inference **coordination stub** only (`packages/clawql-inference/src/coordination/hermes-adapter.ts`)                                                                                       |
@@ -659,7 +659,7 @@ npm names in this monorepo are unscoped. Target `package.json`:
 }
 ```
 
-There is no `clawql-audit` workspace package yet. Spec: [`../audit/clawql-audit-spec-v0.1.md`](../audit/clawql-audit-spec-v0.1.md). Agents should import `clawql-audit` once it exists — not a parallel WORM client. MCP `audit` remains the ephemeral ring.
+`packages/clawql-audit/` ships at **0.1.0** (see [`../audit/clawql-audit-spec-v0.1.md`](../audit/clawql-audit-spec-v0.1.md)). Agents import `clawql-audit` for durable WORM — not a parallel WORM client. MCP `audit` remains the ephemeral ring.
 
 All agent dependencies are optional peer dependencies. Installing `clawql-agents` without any agent framework installed is valid — you only pull in the agent framework you actually use.
 
