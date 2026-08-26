@@ -72,7 +72,7 @@ npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- npx -y @modelcontextprotoc
 | `GET /tools`           | Catalog                          |
 | `GET /healthz`         | Liveness                         |
 
-Disable MCP with `--no-mcp`. Disable WebSocket with `--no-ws`. Disable `/mcp-ui` with `--no-mcp-ui`. Change paths with `--mcp-path` / `--ws-path` / `--mcp-ui-path`.
+Disable MCP with `--no-mcp`. Disable WebSocket with `--no-ws`. Disable `/mcp-ui` with `--no-mcp-ui`. Disable ATR catalog filtering with `--no-mcp-ui-atr-scoped`. Change paths with `--mcp-path` / `--ws-path` / `--mcp-ui-path`.
 
 ## Programmatic API
 

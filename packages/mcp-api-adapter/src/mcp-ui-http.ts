@@ -1,10 +1,12 @@
 import express, { type Express, type Request } from "express";
 import { httpBodyFromCollapsed } from "./call.js";
+import type { VerifiedMcpAdapterAtr } from "./edge-auth.js";
 import {
   FormValidationError,
   fieldErrorFromMessage,
   parseFormArgs,
 } from "./mcp-ui-form.js";
+import { filterToolsForAtr } from "./mcp-ui-atr.js";
 import {
   renderMcpUiCatalogPage,
   renderMcpUiErrorResult,
@@ -20,7 +22,11 @@ export type AttachMcpUiOptions = {
   callTool: CallToolFn;
   title?: string;
   path?: string;
+  /** Filter catalog/execute by `req.mcpAtr` (default true). */
+  atrScoped?: boolean;
 };
+
+type RequestWithAtr = Request & { mcpAtr?: VerifiedMcpAdapterAtr };
 
 function asFormBody(req: Request): Record<string, unknown> {
   const body = req.body;
@@ -30,19 +36,26 @@ function asFormBody(req: Request): Record<string, unknown> {
   return {};
 }
 
+function atrFromRequest(req: Request): VerifiedMcpAdapterAtr | undefined {
+  return (req as RequestWithAtr).mcpAtr;
+}
+
 export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): string {
   const basePath =
     (options.path?.trim() || DEFAULT_MCP_UI_PATH).replace(/\/$/, "") || DEFAULT_MCP_UI_PATH;
+  const atrScoped = options.atrScoped !== false;
   const router = express.Router();
 
   router.use(express.urlencoded({ extended: false, limit: "2mb" }));
 
-  router.get("/", (_req, res) => {
+  router.get("/", (req, res) => {
     const catalog = options.getCatalog();
+    const atr = atrFromRequest(req);
+    const tools = filterToolsForAtr(catalog.tools, atr, atrScoped);
     res.type("html").send(
       renderMcpUiCatalogPage({
         title: options.title ?? "MCP API Adapter",
-        tools: catalog.tools,
+        tools,
         fetchedAt: catalog.fetchedAt,
         upstream: catalog.upstream,
         basePath,
@@ -61,12 +74,22 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
     }
 
     const catalog = options.getCatalog();
-    const tool = catalog.tools.find((t) => t.name === toolName);
+    const atr = atrFromRequest(req);
+    const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
+    const tool = authorized.find((t) => t.name === toolName);
     if (!tool) {
+      const exists = catalog.tools.some((t) => t.name === toolName);
       res
-        .status(404)
+        .status(exists ? 403 : 404)
         .type("html")
-        .send(renderMcpUiErrorResult({ toolName, message: "Unknown tool" }));
+        .send(
+          renderMcpUiErrorResult({
+            toolName,
+            message: exists
+              ? "Forbidden — this tool is outside your ATR scope"
+              : "Unknown tool",
+          })
+        );
       return;
     }
 

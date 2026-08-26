@@ -29,7 +29,13 @@ export type McpApiAdapterEdgeAuthOptions = {
 export type VerifiedMcpAdapterAtr = {
   sub: string;
   role?: string;
+  /** Capability scopes and/or exact tool names (e.g. `search`, `memory`, `memory_recall`). */
   scope?: string[];
+  /**
+   * Optional explicit tool-name allowlist (unioned with `scope` mapping).
+   * Use for least-privilege demos: `tools: ["search", "memory_recall"]`.
+   */
+  tools?: string[];
   orgId?: string;
 };
 
@@ -71,7 +77,19 @@ export function createJwtVerifier(
     if (!atr || typeof atr !== "object" || typeof atr.sub !== "string" || !atr.sub.trim()) {
       throw new Error("missing atr claim");
     }
-    return atr;
+    const scope = Array.isArray(atr.scope)
+      ? atr.scope.map((s) => String(s))
+      : undefined;
+    const tools = Array.isArray(atr.tools)
+      ? atr.tools.map((s) => String(s))
+      : undefined;
+    return {
+      sub: atr.sub.trim(),
+      ...(atr.role != null ? { role: String(atr.role) } : {}),
+      ...(scope ? { scope } : {}),
+      ...(tools ? { tools } : {}),
+      ...(atr.orgId != null ? { orgId: String(atr.orgId) } : {}),
+    };
   };
 }
 
@@ -85,6 +103,33 @@ export function edgeAuthConfigured(options: McpApiAdapterEdgeAuthOptions): boole
 
 /**
  * Accept static API key (exact match) or a ClawQL-issued MCP Bearer JWT.
+ * Returns verified ATR for JWT, a sentinel admin ATR for API key, or null.
+ */
+export async function resolveEdgeCredential(
+  presented: string | undefined,
+  options: McpApiAdapterEdgeAuthOptions,
+  verifyJwt?: ((token: string) => Promise<VerifiedMcpAdapterAtr>) | null
+): Promise<VerifiedMcpAdapterAtr | null> {
+  if (!presented?.trim()) return null;
+  const token = presented.trim();
+  const apiKey = options.apiKey?.trim();
+  if (apiKey && token === apiKey) {
+    return {
+      sub: "api-key",
+      role: "admin",
+      scope: ["*"],
+    };
+  }
+  if (!verifyJwt) return null;
+  try {
+    return await verifyJwt(token);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Accept static API key (exact match) or a ClawQL-issued MCP Bearer JWT.
  * Returns true when the credential is valid.
  */
 export async function verifyEdgeCredential(
@@ -92,15 +137,5 @@ export async function verifyEdgeCredential(
   options: McpApiAdapterEdgeAuthOptions,
   verifyJwt?: ((token: string) => Promise<VerifiedMcpAdapterAtr>) | null
 ): Promise<boolean> {
-  if (!presented?.trim()) return false;
-  const token = presented.trim();
-  const apiKey = options.apiKey?.trim();
-  if (apiKey && token === apiKey) return true;
-  if (!verifyJwt) return false;
-  try {
-    await verifyJwt(token);
-    return true;
-  } catch {
-    return false;
-  }
+  return (await resolveEdgeCredential(presented, options, verifyJwt)) != null;
 }

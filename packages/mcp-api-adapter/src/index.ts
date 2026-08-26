@@ -41,12 +41,19 @@ export {
   createJwtVerifier,
   edgeAuthConfigured,
   verifyEdgeCredential,
+  resolveEdgeCredential,
 } from "./edge-auth.js";
 export type {
   McpApiAdapterJwtAuthOptions,
   McpApiAdapterEdgeAuthOptions,
   VerifiedMcpAdapterAtr,
 } from "./edge-auth.js";
+export {
+  filterToolsForAtr,
+  isInternalToolName,
+  isToolAuthorizedForAtr,
+  INTERNAL_TOOL_PREFIXES,
+} from "./mcp-ui-atr.js";
 export type {
   McpApiAdapterOptions,
   McpApiAdapterHttpOptions,

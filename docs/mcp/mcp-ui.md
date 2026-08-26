@@ -3,7 +3,7 @@
 **Status:** v0 shipped · August 2026 · **8th surface** of [`mcp-api-adapter`](./mcp-api-adapter.md)  
 **Path:** `GET /mcp-ui` (adapter HTTP process)  
 **Depends on:** `ListTools` + tool `inputSchema` (same catalog as `/docs` and `/graphiql`)  
-**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), templates for `search` / `memory_*` / `cache` / `audit`. Deferred: nested object/array UIs, file upload/IDP, SSE progress, agent-generated UIs, ATR scoping.
+**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), templates for `search` / `memory_*` / `cache` / `audit`, ATR-scoped catalog when JWT edge auth is configured. Deferred: nested object/array UIs, file upload/IDP, SSE progress, agent-generated UIs.
 
 ---
 
@@ -71,7 +71,18 @@ What nobody ships today:
 
 Disable with `--no-mcp-ui`. Override path with `--mcp-ui-path` / `MCP_API_ADAPTER_MCP_UI_PATH` (default `/mcp-ui`).
 
-Auth: same API key gate as `/docs` and `/graphiql` when configured.
+Auth: same API key gate as `/docs` and `/graphiql` when configured. With JWT edge auth, `/mcp-ui` **ATR-scopes** the catalog and execute path by default (`--no-mcp-ui-atr-scoped` to disable):
+
+| ATR grant | Visible tools |
+| --- | --- |
+| `role: admin` or scope/tools `*` | All tools |
+| Capability scopes `search` / `execute` / `memory` / `audit` / `cache` | Mapped public tools only |
+| Exact tool name in `scope` or `tools` | That tool |
+| Family scopes `pageindex` / `ouroboros` | Matching internal prefixes |
+| (default) | `ouroboros_*` and `pageindex_*` are **not** granted by generic capability scopes |
+
+API keys are treated as admin for `/mcp-ui` visibility.
+
 
 ### 3.2 Catalog → form mapping
 
