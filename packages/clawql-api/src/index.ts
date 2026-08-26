@@ -6,6 +6,8 @@ export * from "./plugins/presidio-gateway-plugin.js";
 export * from "./plugins/privacy-filter-gateway-plugin.js";
 export * from "./clawql-api-service.js";
 export * from "./config/optional-flags.js";
+export * from "./config/providers-composition.js";
+export * from "./config/horizontal-composition.js";
 export * from "./create-api.js";
 export * from "./plugins/compose-default-plugins.js";
 export * from "./execute/index.js";

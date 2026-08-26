@@ -32,7 +32,8 @@ import {
   validateOrDegradeObsidianVaultAtStartup,
 } from "./vault-config.js";
 import { registerPostgresPoolShutdownHooks } from "clawql-memory/vector/pgvector";
-import { getClawqlOptionalToolFlags, type ClawqlOptionalToolFlags } from "clawql-api";
+import { type ClawqlOptionalToolFlags } from "clawql-api";
+import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
 import { getNativeProtocolMetricsSnapshot, nativeProtocolMetricsEnabled } from "clawql-api";
 import { httpMetricsEnabledForHttp, renderPrometheusMetrics } from "clawql-api";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
@@ -461,7 +462,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     res.json(base);
   });
 
-  const optionalFlags = options.optionalFlagsSnapshot ?? getClawqlOptionalToolFlags();
+  const optionalFlags = options.optionalFlagsSnapshot ?? resolvePluginCompositionFlags();
 
   if (optionalFlags.enableHitlLabelStudio) {
     app.post("/hitl/label-studio/webhook", async (req, res) => {

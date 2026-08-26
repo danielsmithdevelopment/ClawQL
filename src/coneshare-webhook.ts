@@ -1,12 +1,12 @@
 /**
  * ConeShare viewer / share webhook ingestion ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)).
- * Opt-in via **`CLAWQL_ENABLE_CONESHARE=1`**. Configure ConeShare automations to POST to
- * **`POST /idp/coneshare/webhook`** on the MCP HTTP server.
+ * Opt-in via ClawQLInstance `documents.coneshare.enabled` (Helm: idpCollaboration.coneshare).
+ * Configure ConeShare automations to POST to **`POST /idp/coneshare/webhook`** on the MCP HTTP server.
  */
 
 import type { Request, Response } from "express";
 import { handleAuditToolInput } from "./clawql-audit.js";
-import { getClawqlOptionalToolFlags } from "clawql-api";
+import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { getObsidianVaultPath } from "./vault-config.js";
 import { publishConeshareViewerEvent } from "clawql-automation/nats/publish-hooks";
@@ -113,7 +113,7 @@ export async function handleConeshareWebhookRequest(req: Request, res: Response)
     resume = await resumeWorkflowFromHitlRef(clawqlShare);
   }
 
-  const flags = getClawqlOptionalToolFlags();
+  const flags = resolvePluginCompositionFlags();
   const vault = getObsidianVaultPath();
 
   const insights = [

@@ -207,45 +207,27 @@ describe("provider-registry", () => {
     }
   });
 
-  it("resolveDefaultBundledProvidersItems loads opinionated default stack", async () => {
-    vi.stubEnv("CLAWQL_ENABLE_GOOGLE", "0");
-    vi.stubEnv("CLAWQL_ENABLE_AWS", "0");
-    delete process.env.CLAWQL_ENABLE_CLOUDFLARE;
-    try {
-      const items = await resolveDefaultBundledProvidersItems();
-      const labels = new Set(items.map((x) => x.label));
-      for (const id of DEFAULT_BUNDLED_PROVIDER_IDS) {
-        expect(labels.has(id)).toBe(true);
-      }
-      expect(labels.has("compute-v1")).toBe(false);
-      expect(labels.has("sts-2011-06-15")).toBe(false);
-    } finally {
-      vi.unstubAllEnvs();
+  it("resolveDefaultBundledProvidersItems loads curated default pack", async () => {
+    const items = await resolveDefaultBundledProvidersItems();
+    const labels = new Set(items.map((x) => x.label));
+    for (const id of DEFAULT_BUNDLED_PROVIDER_IDS) {
+      expect(labels.has(id)).toBe(true);
     }
+    expect(labels.has("compute-v1")).toBe(false);
+    expect(labels.has("sts-2011-06-15")).toBe(false);
   });
 
-  it("resolveDefaultBundledProvidersItems omits cloudflare when CLAWQL_ENABLE_CLOUDFLARE=0", async () => {
+  it("resolveDefaultBundledProvidersItems ignores CLAWQL_ENABLE_* cloud flags", async () => {
     vi.stubEnv("CLAWQL_ENABLE_CLOUDFLARE", "0");
-    try {
-      const items = await resolveDefaultBundledProvidersItems();
-      const labels = new Set(items.map((x) => x.label));
-      expect(labels.has("cloudflare")).toBe(false);
-      expect(labels.has("github")).toBe(true);
-      expect(labels.has("notion")).toBe(true);
-    } finally {
-      vi.unstubAllEnvs();
-    }
-  });
-
-  it("resolveDefaultBundledProvidersItems adds google and aws when enabled", async () => {
     vi.stubEnv("CLAWQL_ENABLE_GOOGLE", "1");
     vi.stubEnv("CLAWQL_ENABLE_AWS", "1");
     try {
       const items = await resolveDefaultBundledProvidersItems();
       const labels = new Set(items.map((x) => x.label));
-      expect(labels.has("compute-v1")).toBe(true);
-      expect(labels.has("sts-2011-06-15")).toBe(true);
+      expect(labels.has("cloudflare")).toBe(true);
       expect(labels.has("github")).toBe(true);
+      expect(labels.has("compute-v1")).toBe(false);
+      expect(labels.has("sts-2011-06-15")).toBe(false);
     } finally {
       vi.unstubAllEnvs();
     }

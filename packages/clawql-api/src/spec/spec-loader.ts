@@ -5,11 +5,13 @@
  * - Local file (JSON or YAML OpenAPI 3 / Swagger 2), or
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
- * - Default: opinionated bundled stack — **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**; optional
- *   **`CLAWQL_ENABLE_GOOGLE`** / **`CLAWQL_ENABLE_AWS`** add-ons; omit Cloudflare with **`CLAWQL_ENABLE_CLOUDFLARE=0`**.
- *   Use **`CLAWQL_PROVIDER=all-providers`** for literally every bundled vendor plus GCP and AWS manifests.
- * - Custom merge: **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`** (bundled vendor ids and/or **`google`** / **`aws`**) or **`CLAWQL_SPEC_PATHS=…`**.
- * - Optional merged **`CLAWQL_PROVIDER`** presets: **`google`**, **`aws`**, **`atlassian`**, **`all-providers`**.
+ * - **Opt-in** bundled packs via instance `providers` (`pack` / `enabled`) or legacy
+ *   **`CLAWQL_PROVIDER`** / **`CLAWQL_BUNDLED_PROVIDERS`** / **`CLAWQL_SPEC_PATHS`**.
+ * - **No-config default:** empty provider stack (native GraphQL/gRPC only when configured) —
+ *   catalog stays available; nothing is auto-loaded.
+ *
+ * Curated pack **`default`** = Cloudflare, GitHub, Slack, Linear, Notion, Onyx.
+ * **`all-providers`** = every bundled vendor plus GCP and AWS manifests.
  *
  * Produces a flattened Operation list for search + OpenAPI 3 for GraphQL.
  */
@@ -33,12 +35,16 @@ import { resetMcpSourceRegistry } from "./mcp-source-registry.js";
 import { operationsFromOpenAPI } from "./openapi-operations.js";
 import { getPackageRoot } from "./package-root.js";
 import {
+  isEmptyProvidersComposition,
+  readProvidersCompositionFromEnv,
+  type ClawqlProvidersComposition,
+} from "../config/providers-composition.js";
+import {
   listBundledProviderGroupIds,
   listBundledProviderIds,
   isBundledGraphqlProvider,
   resolveBundledProvider,
   resolveBundledProviderGroup,
-  resolveDefaultBundledProvidersItems,
   resolveItemsFromBundledProviderEnvList,
   type BundledGraphqlProvider,
   type BundledOpenApiProvider,
@@ -365,6 +371,7 @@ function resolveSpecSource(): SpecSource {
     );
   }
 
+  // Should not be reached when resolveMultiSpecItems returns "empty" first.
   return { kind: "default" };
 }
 
@@ -435,42 +442,9 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
       }
     }
     case "default": {
-      const entry = resolveBundledProvider(DEFAULT_PROVIDER_ID);
-      if (!entry || isBundledGraphqlProvider(entry)) {
-        throw new Error(
-          `[spec-loader] Default provider "${DEFAULT_PROVIDER_ID}" is missing or not an OpenAPI bundled provider.`
-        );
-      }
-      console.error(
-        `[spec-loader] No spec env / CLAWQL_PROVIDER — using default bundled provider "${entry.id}" (${entry.bundledSpecPath})`
+      throw new Error(
+        '[spec-loader] Internal error: empty provider stack should resolve via multi-spec "empty" path, not single-spec default.'
       );
-      const root = getPackageRoot();
-      const abs = resolvePath(root, entry.bundledSpecPath);
-      try {
-        const text = await readFile(abs, "utf-8");
-        console.error(`[spec-loader] Using bundled local OpenAPI (no network): ${abs}`);
-        return parseSpecText(text);
-      } catch (e: unknown) {
-        const err = e as NodeJS.ErrnoException;
-        if (err?.code !== "ENOENT") throw e;
-        if (bundledOfflineNoRemoteFetch()) {
-          throw new Error(
-            `Bundled spec file missing: ${abs}. ` +
-              `Run \`npm run fetch-provider-specs\` or clear CLAWQL_BUNDLED_OFFLINE.`,
-            { cause: e }
-          );
-        }
-        console.error(
-          `[spec-loader] Bundled file missing; fetching fallback: ${entry.fallbackUrl}`
-        );
-        const res = await fetch(entry.fallbackUrl);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch provider fallback (${entry.id}): ${res.status}`, {
-            cause: e,
-          });
-        }
-        return parseSpecText(await res.text());
-      }
     }
     case "discovery": {
       console.error(`[spec-loader] discovery URL: ${source.url}`);
@@ -623,7 +597,48 @@ export function labelFromSpecPath(relOrAbs: string): string {
   return last.replace(/\.(yaml|yml|json)$/i, "");
 }
 
-async function resolveMultiSpecItems(): Promise<ProviderGroupItem[] | null> {
+async function resolveItemsFromProvidersComposition(
+  composition: ClawqlProvidersComposition
+): Promise<ProviderGroupItem[]> {
+  if (isEmptyProvidersComposition(composition)) return [];
+
+  const pack = composition.pack?.trim().toLowerCase();
+  const enabled = (composition.enabled ?? []).map((s) => s.trim()).filter(Boolean);
+  const parts: ProviderGroupItem[] = [];
+
+  if (pack && pack !== "none") {
+    const grouped = await resolveBundledProviderGroup(pack);
+    if (!grouped) {
+      throw new Error(
+        `Unknown providers.pack="${composition.pack}". ` +
+          `Known packs: none, ${listBundledProviderGroupIds().join(", ")}`
+      );
+    }
+    parts.push(...grouped);
+  }
+
+  if (enabled.length > 0) {
+    parts.push(...(await resolveItemsFromBundledProviderEnvList(enabled.join(","))));
+  }
+
+  // De-dupe by label (pack + enabled may overlap)
+  const seen = new Set<string>();
+  const out: ProviderGroupItem[] = [];
+  for (const item of parts) {
+    if (seen.has(item.label)) continue;
+    seen.add(item.label);
+    out.push(item);
+  }
+  return out;
+}
+
+/**
+ * Multi-spec resolution.
+ * - `ProviderGroupItem[]` — load those specs
+ * - `"empty"` — no bundled providers (stub + native protocols)
+ * - `null` — fall through to single-spec `resolveSpecSource()`
+ */
+async function resolveMultiSpecItems(): Promise<ProviderGroupItem[] | "empty" | null> {
   const filePath =
     process.env.CLAWQL_SPEC_PATH || process.env.OPENAPI_SPEC_PATH || process.env.OPENAPI_FILE;
   const specUrl = process.env.CLAWQL_SPEC_URL;
@@ -631,6 +646,7 @@ async function resolveMultiSpecItems(): Promise<ProviderGroupItem[] | null> {
   const providerRaw = process.env.CLAWQL_PROVIDER?.trim().toLowerCase();
   const pathsEnv = process.env.CLAWQL_SPEC_PATHS?.trim();
   const bundledListEnv = process.env.CLAWQL_BUNDLED_PROVIDERS?.trim();
+
   if (pathsEnv) {
     const parts = pathsEnv
       .split(/[,;\n]/)
@@ -645,22 +661,34 @@ async function resolveMultiSpecItems(): Promise<ProviderGroupItem[] | null> {
   if (bundledListEnv) {
     return await resolveItemsFromBundledProviderEnvList(bundledListEnv);
   }
+
+  const fromInstance = readProvidersCompositionFromEnv();
+  if (fromInstance !== undefined) {
+    const items = await resolveItemsFromProvidersComposition(fromInstance);
+    return items.length === 0 ? "empty" : items;
+  }
+
   if (providerRaw) {
+    if (providerRaw === "none") return "empty";
     const grouped = await resolveBundledProviderGroup(providerRaw);
     if (grouped) return grouped;
   }
-  // No config: default merge — opinionated bundled stack (see DEFAULT_BUNDLED_PROVIDER_IDS).
-  if (!filePath && !specUrl && !discoveryUrl && !providerRaw) {
-    const defaultItems = await resolveDefaultBundledProvidersItems();
-    if (defaultItems.length === 0) {
-      throw new Error(
-        "No bundled providers in default stack. Set CLAWQL_ENABLE_CLOUDFLARE=1 (default), add CLAWQL_ENABLE_GOOGLE=1 and/or CLAWQL_ENABLE_AWS=1, or use CLAWQL_PROVIDER / CLAWQL_BUNDLED_PROVIDERS / CLAWQL_SPEC_PATHS."
-      );
-    }
+
+  // Deprecated env add-ons alone no longer imply the curated pack.
+  if (
+    process.env.CLAWQL_ENABLE_GOOGLE?.trim() ||
+    process.env.CLAWQL_ENABLE_AWS?.trim() ||
+    process.env.CLAWQL_ENABLE_CLOUDFLARE?.trim()
+  ) {
     console.error(
-      `[spec-loader] No spec env/provider set — using default bundled stack (${defaultItems.length} spec(s); cloud add-ons: google=${process.env.CLAWQL_ENABLE_GOOGLE ?? "0"}, aws=${process.env.CLAWQL_ENABLE_AWS ?? "0"}; cloudflare=${process.env.CLAWQL_ENABLE_CLOUDFLARE ?? "1"})`
+      "[spec-loader] CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE no longer select the provider stack. " +
+        "Use providers.pack / providers.enabled in CLAWQL_INSTANCE_SPEC, or CLAWQL_PROVIDER=default|google|aws|…"
     );
-    return defaultItems;
+  }
+
+  // No config: slim server — catalog available, nothing loaded.
+  if (!filePath && !specUrl && !discoveryUrl && !providerRaw) {
+    return "empty";
   }
   return null;
 }
@@ -816,8 +844,8 @@ async function loadSpecUncached(): Promise<LoadedSpec> {
       throw new Error(
         "[spec-loader] Could not load the provider(s) configured via CLAWQL_GRAPHQL_* / CLAWQL_GRPC_SOURCES. " +
           "Check endpoints, credentials, and on-disk schema/proto paths. " +
-          "For bundled providers use CLAWQL_PROVIDER (e.g. linear + LINEAR_API_KEY). " +
-          "When no provider env is set, the default stack loads automatically."
+          "For bundled providers use providers.pack / CLAWQL_PROVIDER (e.g. linear + LINEAR_API_KEY). " +
+          "With no provider config, only native protocols are loaded (no bundled OpenAPI catalog)."
       );
     }
     console.error(
@@ -827,6 +855,15 @@ async function loadSpecUncached(): Promise<LoadedSpec> {
   }
 
   const multiItems = await resolveMultiSpecItems();
+  if (multiItems === "empty") {
+    const stub = buildStubLoadedSpec();
+    const loaded = await mergeNativeProtocolOperations(stub);
+    console.error(
+      `[spec-loader] No providers configured — native protocols only (${loaded.operations.length} operation(s)). ` +
+        `Opt in with providers.pack / providers.enabled in CLAWQL_INSTANCE_SPEC, or CLAWQL_PROVIDER / CLAWQL_BUNDLED_PROVIDERS.`
+    );
+    return loaded;
+  }
   if (multiItems) {
     const merged = await loadMultiSpecFromItems(multiItems);
     const loaded = await mergeNativeProtocolOperations(merged);

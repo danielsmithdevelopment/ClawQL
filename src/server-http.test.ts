@@ -13,6 +13,7 @@ import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
 import { getClawqlOptionalToolFlags, resetSpecCache } from "clawql-api";
 import { createMcpHttpApp, type CreateMcpHttpAppOptions } from "./server-http.js";
 import { resetSchemaFieldCache } from "./tools.js";
+import { instanceSpecWith } from "./server-stdio-env.js";
 
 /** Optional-flag / webhook HTTP tests — cold `loadSpec()` is unnecessary and flaky on CI. */
 const FAST_HTTP_APP_OPTS: CreateMcpHttpAppOptions = {
@@ -445,12 +446,12 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
   });
 
   it(
-    "streamable HTTP listTools includes sandbox_exec when CLAWQL_ENABLE_SANDBOX=1",
+    "streamable HTTP listTools includes sandbox_exec when instance sandbox.enabled",
     async () => {
       const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-sandbox-"));
-      const savedSandbox = process.env.CLAWQL_ENABLE_SANDBOX;
+      const savedInstance = process.env.CLAWQL_INSTANCE_SPEC;
       const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      process.env.CLAWQL_ENABLE_SANDBOX = "1";
+      process.env.CLAWQL_INSTANCE_SPEC = instanceSpecWith({ sandbox: { enabled: true } });
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
       resetOptionalToolHttpTestState();
@@ -472,8 +473,8 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
         }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
-        if (savedSandbox === undefined) delete process.env.CLAWQL_ENABLE_SANDBOX;
-        else process.env.CLAWQL_ENABLE_SANDBOX = savedSandbox;
+        if (savedInstance === undefined) delete process.env.CLAWQL_INSTANCE_SPEC;
+        else process.env.CLAWQL_INSTANCE_SPEC = savedInstance;
         if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
         else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
         resetSpecCache();
@@ -485,12 +486,14 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
   );
 
   it(
-    "streamable HTTP listTools includes notify when CLAWQL_ENABLE_NOTIFY=1 (#140)",
+    "streamable HTTP listTools includes notify when instance automation.notify.enabled (#140)",
     async () => {
       const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-notify-"));
-      const savedNotify = process.env.CLAWQL_ENABLE_NOTIFY;
+      const savedInstance = process.env.CLAWQL_INSTANCE_SPEC;
       const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      process.env.CLAWQL_ENABLE_NOTIFY = "1";
+      process.env.CLAWQL_INSTANCE_SPEC = instanceSpecWith({
+        automation: { notify: { enabled: true } },
+      });
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
       resetOptionalToolHttpTestState();
@@ -512,8 +515,8 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
         }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
-        if (savedNotify === undefined) delete process.env.CLAWQL_ENABLE_NOTIFY;
-        else process.env.CLAWQL_ENABLE_NOTIFY = savedNotify;
+        if (savedInstance === undefined) delete process.env.CLAWQL_INSTANCE_SPEC;
+        else process.env.CLAWQL_INSTANCE_SPEC = savedInstance;
         if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
         else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
         resetSpecCache();
@@ -525,12 +528,14 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
   );
 
   it(
-    "streamable HTTP listTools includes knowledge_search_onyx when CLAWQL_ENABLE_ONYX=1 (#144)",
+    "streamable HTTP listTools includes knowledge_search_onyx when documents.onyx.enabled (#144)",
     async () => {
       const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-onyx-"));
-      const savedOnyx = process.env.CLAWQL_ENABLE_ONYX;
+      const savedInstance = process.env.CLAWQL_INSTANCE_SPEC;
       const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      process.env.CLAWQL_ENABLE_ONYX = "1";
+      process.env.CLAWQL_INSTANCE_SPEC = instanceSpecWith({
+        documents: { enabled: true, onyx: { enabled: true } },
+      });
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
       resetOptionalToolHttpTestState({ enableDocuments: true });
@@ -552,8 +557,8 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
         }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
-        if (savedOnyx === undefined) delete process.env.CLAWQL_ENABLE_ONYX;
-        else process.env.CLAWQL_ENABLE_ONYX = savedOnyx;
+        if (savedInstance === undefined) delete process.env.CLAWQL_INSTANCE_SPEC;
+        else process.env.CLAWQL_INSTANCE_SPEC = savedInstance;
         if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
         else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
         resetSpecCache();
@@ -565,12 +570,11 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
   );
 
   it(
-    "streamable HTTP listTools includes ouroboros_* when CLAWQL_ENABLE_OUROBOROS=1 (#141)",
+    "streamable HTTP listTools includes ouroboros_* via clawql-harness by default (#141)",
     async () => {
       const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-ouroboros-"));
-      const savedOuro = process.env.CLAWQL_ENABLE_OUROBOROS;
       const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      process.env.CLAWQL_ENABLE_OUROBOROS = "1";
+      delete process.env.CLAWQL_ENABLE_OUROBOROS;
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
       resetOptionalToolHttpTestState();
@@ -589,14 +593,13 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
             expect(names.has("ouroboros_run_evolutionary_loop")).toBe(true);
             expect(names.has("ouroboros_get_lineage_status")).toBe(true);
             expect(names.has("ouroboros_measure_drift")).toBe(true);
+            expect(names.has("clawql_think")).toBe(true);
           } finally {
             await closeMcpClient(client);
           }
         }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
-        if (savedOuro === undefined) delete process.env.CLAWQL_ENABLE_OUROBOROS;
-        else process.env.CLAWQL_ENABLE_OUROBOROS = savedOuro;
         if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
         else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
         resetSpecCache();
@@ -608,12 +611,14 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
   );
 
   it(
-    "streamable HTTP listTools includes hitl_enqueue_label_studio when CLAWQL_ENABLE_HITL_LABEL_STUDIO=1 (#228)",
+    "streamable HTTP listTools includes hitl_enqueue_label_studio when hitlLabelStudio.enabled (#228)",
     async () => {
       const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-hitl-"));
-      const savedHitl = process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
+      const savedInstance = process.env.CLAWQL_INSTANCE_SPEC;
       const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = "1";
+      process.env.CLAWQL_INSTANCE_SPEC = instanceSpecWith({
+        automation: { hitlLabelStudio: { enabled: true } },
+      });
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
       resetOptionalToolHttpTestState();
@@ -635,8 +640,8 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
         }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
-        if (savedHitl === undefined) delete process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
-        else process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = savedHitl;
+        if (savedInstance === undefined) delete process.env.CLAWQL_INSTANCE_SPEC;
+        else process.env.CLAWQL_INSTANCE_SPEC = savedInstance;
         if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
         else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
         resetSpecCache();

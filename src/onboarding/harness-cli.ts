@@ -130,11 +130,8 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
   if (process.env.CLAWQL_ENABLE_DOCUMENTS?.trim()) {
     env.CLAWQL_ENABLE_DOCUMENTS = process.env.CLAWQL_ENABLE_DOCUMENTS.trim();
   }
-  // Forward Ouroboros enablement + generation ceiling into the MCP child.
+  // Forward Ouroboros generation ceiling into the MCP child (tools always on via harness).
   // Parent env alone is not inherited by OpenCode's local MCP `environment` map.
-  if (process.env.CLAWQL_ENABLE_OUROBOROS?.trim()) {
-    env.CLAWQL_ENABLE_OUROBOROS = process.env.CLAWQL_ENABLE_OUROBOROS.trim();
-  }
   if (process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS?.trim()) {
     env.CLAWQL_OUROBOROS_MAX_GENERATIONS = process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS.trim();
   }
