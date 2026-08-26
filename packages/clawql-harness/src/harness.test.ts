@@ -121,8 +121,8 @@ describe("OpenCode2Plugin", () => {
     const { createRequire } = await import("node:module");
     let hasPeers = false;
     try {
+      await import("@opencode-ai/sdk/v2");
       const require = createRequire(import.meta.url);
-      require.resolve("@opencode-ai/sdk/v2");
       const pkg = require.resolve("opencode-ai/package.json");
       await access(join(dirname(pkg), "bin/opencode.exe"));
       hasPeers = true;

@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { createServer } from "node:net";
 import { dirname, join } from "node:path";
 import { Effect } from "effect";
 import type { HarnessContext, HarnessPlugin } from "../../src/types.js";
@@ -97,6 +98,22 @@ function extractAssistantText(data: PromptResult | undefined): string | null {
   return texts.length ? texts.join("\n") : null;
 }
 
+function allocateEphemeralPort(): Effect.Effect<number, never> {
+  return Effect.tryPromise({
+    try: () =>
+      new Promise<number>((resolve, reject) => {
+        const server = createServer();
+        server.once("error", reject);
+        server.listen(0, "127.0.0.1", () => {
+          const addr = server.address();
+          const port = typeof addr === "object" && addr ? addr.port : 0;
+          server.close((err) => (err ? reject(err) : resolve(port)));
+        });
+      }),
+    catch: (err) => err,
+  }).pipe(Effect.catchAll(() => Effect.succeed(0)));
+}
+
 const ensureEmbedded = (state: OpenCode2State): Effect.Effect<OpencodeHandle | null, never> =>
   Effect.gen(function* () {
     if (state.embedded) return state.embedded;
@@ -104,12 +121,19 @@ const ensureEmbedded = (state: OpenCode2State): Effect.Effect<OpencodeHandle | n
 
     ensureOpencodeOnPath();
     const model = modelFromEnv();
+    const hostname = process.env.CLAWQL_OPENCODE_HOSTNAME?.trim() || "127.0.0.1";
+    const portRaw = process.env.CLAWQL_OPENCODE_PORT?.trim();
+    const configuredPort = portRaw ? Number(portRaw) : NaN;
+    const port = Number.isFinite(configuredPort) && configuredPort >= 0
+      ? configuredPort
+      : yield* allocateEphemeralPort();
+    const timeout = Number(process.env.CLAWQL_OPENCODE_TIMEOUT_MS?.trim() || "20000") || 20000;
     const started = yield* Effect.tryPromise({
       try: () =>
         state.loaded!.mod.createOpencode!({
-          hostname: process.env.CLAWQL_OPENCODE_HOSTNAME?.trim() || "127.0.0.1",
-          port: Number(process.env.CLAWQL_OPENCODE_PORT?.trim() || "0") || undefined,
-          timeout: Number(process.env.CLAWQL_OPENCODE_TIMEOUT_MS?.trim() || "20000") || 20000,
+          hostname,
+          ...(port > 0 ? { port } : {}),
+          timeout,
           config: {
             model: `${model.providerID}/${model.modelID}`,
           },

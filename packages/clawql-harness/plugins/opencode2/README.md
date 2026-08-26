@@ -23,7 +23,7 @@ npm install @opencode-ai/sdk opencode-ai
 | Var | Purpose |
 | --- | --- |
 | `CLAWQL_OPENCODE_HOSTNAME` | Bind host (default `127.0.0.1`) |
-| `CLAWQL_OPENCODE_PORT` | Bind port (`0` / unset = SDK default) |
+| `CLAWQL_OPENCODE_PORT` | Bind port (default: ephemeral free port; avoids 4096 clashes) |
 | `CLAWQL_OPENCODE_TIMEOUT_MS` | Server start timeout (default `20000`) |
 | `CLAWQL_OPENCODE_PROVIDER_ID` | Model provider (default `opencode`) |
 | `CLAWQL_OPENCODE_MODEL_ID` | Model id (default `big-pickle`) |
