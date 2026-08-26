@@ -1,6 +1,6 @@
 {
   "name": "clawql-core",
-  "version": "7.2.0",
+  "version": "0.1.0",
   "description": "ClawQL primitives: Effect-TS services, Merkle/Cuckoo modules, audit ring buffer \u2014 foundation for modular clawql-mcp",
   "license": "Apache-2.0",
   "type": "module",

@@ -39,7 +39,20 @@ export { MemoryBackend } from "./storage/memory.js";
 export { SQLiteBackend, type SQLiteBackendOptions } from "./storage/sqlite.js";
 export { S3Backend, type S3BackendConfig } from "./storage/s3.js";
 export { PostgresBackend, type PostgresBackendOptions } from "./storage/postgres.js";
-export { verifyTEESignature, type TEEAttestationReport, type TEESigner } from "./tee/signer.js";
+export {
+  verifyTEESignature,
+  createEcdsaTeeSigner,
+  createSimulatedTeeSigner,
+  generateTeeKeyPairPem,
+  signEntryHashEcdsa,
+  verifyEntryHashEcdsa,
+  TEE_ECDSA_CURVE,
+  type TEEAttestationReport,
+  type TEESigner,
+  type TEEKeyPairPem,
+  type CreateEcdsaTeeSignerOptions,
+  type VerifyTeeSignatureResult,
+} from "./tee/signer.js";
 export {
   handleAuditHttpRequest,
   authorizeApiKey,
