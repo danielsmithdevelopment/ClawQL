@@ -151,9 +151,7 @@ export type AuthEventSink = (event: AuthEvent) => Effect.Effect<void, unknown>;
 export const noopAuthEventSink: AuthEventSink = () => Effect.void;
 
 /** Adapt a Promise-based host sink (e.g. clawql-audit `createAuthEventWormSink`). */
-export function authEventSinkFromPromise(
-  fn: (event: AuthEvent) => Promise<void>
-): AuthEventSink {
+export function authEventSinkFromPromise(fn: (event: AuthEvent) => Promise<void>): AuthEventSink {
   return (event) =>
     Effect.tryPromise({
       try: () => fn(event),
