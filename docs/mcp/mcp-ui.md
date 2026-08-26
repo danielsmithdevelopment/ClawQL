@@ -3,7 +3,7 @@
 **Status:** v0 shipped · August 2026 · **8th surface** of [`mcp-api-adapter`](./mcp-api-adapter.md)  
 **Path:** `GET /mcp-ui` (adapter HTTP process)  
 **Depends on:** `ListTools` + tool `inputSchema` (same catalog as `/docs` and `/graphiql`)  
-**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), templates for `search` / `memory_*` / `cache` / `audit` / `run_idp_pipeline`, ATR-scoped catalog when JWT edge auth is configured, multipart file upload (document-processing ATR), SSE progress for long tools, and `POST /mcp-ui/generate` multi-step custom UIs. Deferred: nested object/array UIs.
+**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), nested object fieldsets + array add/remove rows, templates for `search` / `memory_*` / `cache` / `audit` / `run_idp_pipeline`, ATR-scoped catalog when JWT edge auth is configured, multipart file upload (document-processing ATR), SSE progress for long tools, and `POST /mcp-ui/generate` multi-step custom UIs.
 
 ---
 

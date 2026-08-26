@@ -1,5 +1,7 @@
 import type { ListedMcpTool } from "mcp-grpc-transport";
 
+const MAX_NEST_DEPTH = 2;
+
 function escHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -36,6 +38,37 @@ function isFlatFormField(propSchema: Record<string, unknown>): boolean {
   return t === "string" || t === "number" || t === "integer" || t === "boolean";
 }
 
+function asPropSchema(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+/** Whether a schema node can be rendered as structured HTML (flat / object / array). */
+export function isRenderableSchema(
+  propSchema: Record<string, unknown>,
+  depth = 0
+): boolean {
+  if (depth > MAX_NEST_DEPTH) return false;
+  if (isFlatFormField(propSchema)) return true;
+
+  if (propSchema.type === "object" || propSchema.properties) {
+    const props = propSchema.properties as Record<string, unknown> | undefined;
+    if (!props || typeof props !== "object") return false;
+    return Object.entries(props).some(
+      ([key, child]) => isSafeFieldName(key) && isRenderableSchema(asPropSchema(child), depth + 1)
+    );
+  }
+
+  if (propSchema.type === "array") {
+    const items = asPropSchema(propSchema.items);
+    if (!propSchema.items || typeof propSchema.items !== "object") return false;
+    return isRenderableSchema(items, depth + 1);
+  }
+
+  return false;
+}
+
 /** Flat-safe properties only (string/number/boolean/enum with safe names). */
 export function flatPropertiesFromInputSchema(
   inputSchema: Record<string, unknown>
@@ -51,14 +84,28 @@ export function flatPropertiesFromInputSchema(
   return out;
 }
 
+/** Top-level properties that have a structured HTML control (including nested). */
+export function structuredPropertiesFromInputSchema(
+  inputSchema: Record<string, unknown>
+): Record<string, Record<string, unknown>> {
+  const props = inputSchema.properties as Record<string, Record<string, unknown>> | undefined;
+  if (!props || typeof props !== "object") return {};
+  const out: Record<string, Record<string, unknown>> = {};
+  for (const [key, propSchema] of Object.entries(props)) {
+    if (!isSafeFieldName(key)) continue;
+    if (!isRenderableSchema(propSchema ?? {}, 0)) continue;
+    out[key] = propSchema ?? {};
+  }
+  return out;
+}
+
 /**
- * Prefer flat forms when at least one property is renderable as a control.
- * Complex properties (object/array) are omitted from the form in flat mode.
- * Fall back to a JSON bag when nothing flat is available.
+ * Prefer structured forms when at least one property is renderable.
+ * Fall back to a JSON bag when nothing structured is available.
  */
 export function formModeFromInputSchema(inputSchema: Record<string, unknown>): McpUiFormMode {
-  const flat = flatPropertiesFromInputSchema(inputSchema);
-  return Object.keys(flat).length > 0 ? "flat" : "jsonBag";
+  const structured = structuredPropertiesFromInputSchema(inputSchema);
+  return Object.keys(structured).length > 0 ? "flat" : "jsonBag";
 }
 
 function inputTypeForString(propSchema: Record<string, unknown>): string {
@@ -86,9 +133,10 @@ export function looksLikeFileField(
   if (asFile) return true;
   if (propSchema.format === "binary" || propSchema.format === "byte") return true;
   if (propSchema.contentMediaType != null) return true;
-  // Exact arg names used by IDP / document tools (not *File path strings).
-  if (/^(file|upload|pdf_base64|base64)$/i.test(name)) return true;
-  if (/_base64$/i.test(name)) return true;
+  const leaf = name.includes(".") ? name.slice(name.lastIndexOf(".") + 1) : name;
+  const leafClean = leaf.replace(/\[\d+\]/g, "");
+  if (/^(file|upload|pdf_base64|base64)$/i.test(leafClean)) return true;
+  if (/_base64$/i.test(leafClean)) return true;
   return false;
 }
 
@@ -112,14 +160,39 @@ export type RenderFieldOptions = {
   hint?: string;
   /** Highlight this field after a validation error. */
   errorMessage?: string;
+  /** Nesting depth (root = 0). */
+  depth?: number;
 };
 
+function childPath(parent: string, child: string): string {
+  return parent ? `${parent}.${child}` : child;
+}
+
+function arrayItemPath(parent: string, index: number): string {
+  return `${parent}[${index}]`;
+}
+
 export function renderFieldControl(options: RenderFieldOptions): string {
-  const { name, propSchema, required, prefills, asTextarea, asFile, hint, errorMessage } = options;
-  const label = typeof propSchema.title === "string" ? propSchema.title : name;
+  const {
+    name,
+    propSchema,
+    required,
+    prefills,
+    asTextarea,
+    asFile,
+    hint,
+    errorMessage,
+    depth = 0,
+  } = options;
+  const label = typeof propSchema.title === "string" ? propSchema.title : name.split(".").pop()!;
   const description =
     typeof propSchema.description === "string" ? propSchema.description : undefined;
-  const defaultValue = prefills && name in prefills ? prefills[name] : propSchema.default;
+  const defaultValue =
+    prefills && name in prefills
+      ? prefills[name]
+      : prefills && Object.prototype.hasOwnProperty.call(prefills, name.split(".").pop()!)
+        ? prefills[name.split(".").pop()!]
+        : propSchema.default;
   const reqAttr = required && propSchema.type !== "boolean" ? " required" : "";
   const errClass = errorMessage ? " field--error" : "";
   const placeholder = shortPlaceholder(description);
@@ -132,6 +205,32 @@ export function renderFieldControl(options: RenderFieldOptions): string {
   const errHtml = errorMessage
     ? `<p class="field-error" role="alert">${escHtml(errorMessage)}</p>`
     : "";
+
+  if (depth <= MAX_NEST_DEPTH && (propSchema.type === "object" || propSchema.properties)) {
+    return renderObjectFieldset({
+      name,
+      propSchema,
+      required,
+      prefills,
+      asTextarea,
+      asFile,
+      hint,
+      errorMessage,
+      depth,
+    });
+  }
+
+  if (depth <= MAX_NEST_DEPTH && propSchema.type === "array") {
+    return renderArrayField({
+      name,
+      propSchema,
+      required,
+      prefills,
+      depth,
+      hint,
+      errorMessage,
+    });
+  }
 
   if (looksLikeFileField(name, propSchema, asFile)) {
     return `<label class="field${errClass}">
@@ -147,7 +246,7 @@ export function renderFieldControl(options: RenderFieldOptions): string {
       required
         ? `<option value="" disabled${defaultValue === undefined ? " selected" : ""}>— select —</option>`
         : `<option value=""${defaultValue === undefined ? " selected" : ""}>—</option>`;
-    const options = enumValues
+    const optionsHtml = enumValues
       .map((value) => {
         const selected =
           defaultValue !== undefined && String(defaultValue) === String(value)
@@ -158,7 +257,7 @@ export function renderFieldControl(options: RenderFieldOptions): string {
       .join("");
     return `<label class="field${errClass}">
   <span class="field-label">${escHtml(label)} ${labelBadge(required)}</span>
-  <select name="${escHtml(name)}"${reqAttr}>${blank}${options}</select>
+  <select name="${escHtml(name)}"${reqAttr}>${blank}${optionsHtml}</select>
   ${hintHtml}${errHtml}
 </label>`;
   }
@@ -173,28 +272,18 @@ export function renderFieldControl(options: RenderFieldOptions): string {
 </label>`;
   }
 
-  if (type === "number" || type === "integer") {
-    const step = type === "integer" ? ' step="1"' : ' step="any"';
-    const valueAttr =
-      typeof defaultValue === "number" ? ` value="${escHtml(String(defaultValue))}"` : "";
+  if (asTextarea || (typeof description === "string" && description.length > 160)) {
+    const text =
+      defaultValue !== undefined && defaultValue !== null ? String(defaultValue) : "";
     return `<label class="field${errClass}">
   <span class="field-label">${escHtml(label)} ${labelBadge(required)}</span>
-  <input type="number" name="${escHtml(name)}"${step}${valueAttr}${placeholderAttr}${reqAttr} />
+  <textarea name="${escHtml(name)}" rows="4"${reqAttr}${placeholderAttr}>${escHtml(text)}</textarea>
   ${hintHtml}${errHtml}
 </label>`;
   }
 
-  if (asTextarea || (typeof description === "string" && /transcript|markdown|body|insights|summary|conversation/i.test(description + name))) {
-    const body =
-      defaultValue !== undefined && defaultValue !== null ? escHtml(String(defaultValue)) : "";
-    return `<label class="field${errClass}">
-  <span class="field-label">${escHtml(label)} ${labelBadge(required)}</span>
-  <textarea name="${escHtml(name)}" rows="5"${placeholderAttr}${reqAttr}>${body}</textarea>
-  ${hintHtml}${errHtml}
-</label>`;
-  }
-
-  const inputType = inputTypeForString(propSchema);
+  const inputType =
+    type === "number" || type === "integer" ? "number" : inputTypeForString(propSchema);
   const valueAttr =
     defaultValue !== undefined && defaultValue !== null
       ? ` value="${escHtml(String(defaultValue))}"`
@@ -205,6 +294,186 @@ export function renderFieldControl(options: RenderFieldOptions): string {
   ${hintHtml}${errHtml}
 </label>`;
 }
+
+function renderObjectFieldset(options: RenderFieldOptions): string {
+  const { name, propSchema, required, prefills, depth = 0, hint, errorMessage } = options;
+  const label = typeof propSchema.title === "string" ? propSchema.title : name.split(".").pop()!;
+  const props = (propSchema.properties as Record<string, unknown>) ?? {};
+  const requiredList = Array.isArray(propSchema.required)
+    ? (propSchema.required as string[])
+    : [];
+  const nestedPrefill =
+    prefills && name in prefills && prefills[name] && typeof prefills[name] === "object"
+      ? (prefills[name] as Record<string, unknown>)
+      : prefills;
+
+  const children = Object.entries(props)
+    .filter(([key, child]) => isSafeFieldName(key) && isRenderableSchema(asPropSchema(child), depth + 1))
+    .map(([key, child]) =>
+      renderFieldControl({
+        name: childPath(name, key),
+        propSchema: asPropSchema(child),
+        required: requiredList.includes(key),
+        prefills: nestedPrefill,
+        depth: depth + 1,
+      })
+    )
+    .join("\n");
+
+  const omitted = Object.keys(props).filter(
+    (key) =>
+      !isSafeFieldName(key) || !isRenderableSchema(asPropSchema(props[key]), depth + 1)
+  );
+  const omitNote =
+    omitted.length > 0
+      ? `<p class="field-help">Nested fields as JSON only: ${escHtml(omitted.join(", "))}</p>`
+      : "";
+
+  return `<fieldset class="fieldset" data-object="${escHtml(name)}">
+  <legend>${escHtml(label)} ${labelBadge(required)}</legend>
+  ${hint ? `<p class="field-help">${escHtml(hint)}</p>` : ""}
+  ${children}
+  ${omitNote}
+  ${errorMessage ? `<p class="field-error" role="alert">${escHtml(errorMessage)}</p>` : ""}
+</fieldset>`;
+}
+
+function renderArrayRow(
+  baseName: string,
+  index: number,
+  itemSchema: Record<string, unknown>,
+  depth: number
+): string {
+  const path = arrayItemPath(baseName, index);
+  const leafLabel = baseName.split(".").pop()!;
+  if (isFlatFormField(itemSchema)) {
+    return `<div class="array-row" data-index="${index}">
+  ${renderFieldControl({
+    name: path,
+    propSchema: { ...itemSchema, title: `${leafLabel}[${index}]` },
+    required: false,
+    depth: depth + 1,
+  })}
+  <button type="button" class="array-remove" data-role="remove" aria-label="Remove row">Remove</button>
+</div>`;
+  }
+
+  // Object items: render nested fields under steps[0].tool style names
+  const props = (itemSchema.properties as Record<string, unknown>) ?? {};
+  const requiredList = Array.isArray(itemSchema.required)
+    ? (itemSchema.required as string[])
+    : [];
+  const children = Object.entries(props)
+    .filter(([key, child]) => isSafeFieldName(key) && isRenderableSchema(asPropSchema(child), depth + 1))
+    .map(([key, child]) =>
+      renderFieldControl({
+        name: childPath(path, key),
+        propSchema: asPropSchema(child),
+        required: requiredList.includes(key),
+        depth: depth + 1,
+      })
+    )
+    .join("\n");
+
+  return `<div class="array-row" data-index="${index}">
+  <fieldset class="fieldset fieldset--row">
+    <legend>${escHtml(leafLabel)}[${index}]</legend>
+    ${children}
+  </fieldset>
+  <button type="button" class="array-remove" data-role="remove" aria-label="Remove row">Remove</button>
+</div>`;
+}
+
+function renderArrayField(options: {
+  name: string;
+  propSchema: Record<string, unknown>;
+  required: boolean;
+  prefills?: Record<string, unknown>;
+  depth: number;
+  hint?: string;
+  errorMessage?: string;
+}): string {
+  const { name, propSchema, required, depth, hint, errorMessage } = options;
+  const itemSchema = asPropSchema(propSchema.items);
+  const label = typeof propSchema.title === "string" ? propSchema.title : name.split(".").pop()!;
+  const seed = renderArrayRow(name, 0, itemSchema, depth);
+  const templateRow = seed
+    .replaceAll(`${name}[0]`, `${name}[__INDEX__]`)
+    .replaceAll(`data-index="0"`, `data-index="__INDEX__"`)
+    .replaceAll(`${escHtml(label)}[0]`, `${escHtml(label)}[__INDEX__]`);
+
+  return `<div class="array-field" data-array="${escHtml(name)}">
+  <div class="array-field__header">
+    <span class="field-label">${escHtml(label)} ${labelBadge(required)}</span>
+    <button type="button" class="array-add" data-role="add">Add ${escHtml(label)}</button>
+  </div>
+  ${hint ? `<p class="field-help">${escHtml(hint)}</p>` : ""}
+  <div class="array-rows" data-role="rows">${seed}</div>
+  <template data-role="row-template">${templateRow}</template>
+  ${errorMessage ? `<p class="field-error" role="alert">${escHtml(errorMessage)}</p>` : ""}
+</div>`;
+}
+
+/** Small script once per catalog page — wires array add/remove buttons. */
+export const MCP_UI_ARRAY_SCRIPT = `
+(function () {
+  function reindex(field) {
+    var rows = field.querySelector('[data-role="rows"]');
+    if (!rows) return;
+    var base = field.getAttribute('data-array') || '';
+    Array.prototype.forEach.call(rows.children, function (row, i) {
+      row.setAttribute('data-index', String(i));
+      Array.prototype.forEach.call(row.querySelectorAll('[name]'), function (el) {
+        var n = el.getAttribute('name') || '';
+        var prefix = base + '[';
+        var start = n.indexOf(prefix);
+        if (start !== 0) return;
+        var rest = n.slice(prefix.length);
+        var close = rest.indexOf(']');
+        if (close < 0) return;
+        el.setAttribute('name', base + '[' + i + ']' + rest.slice(close + 1));
+      });
+      Array.prototype.forEach.call(row.querySelectorAll('legend'), function (el) {
+        el.textContent = (el.textContent || '').replace(/\\[\\d+\\]/, '[' + i + ']');
+      });
+      Array.prototype.forEach.call(row.querySelectorAll('.field-label'), function (el) {
+        // leave badges alone; only rewrite "[n]" leaf titles when present
+        el.childNodes.forEach(function (node) {
+          if (node.nodeType === 3) {
+            node.textContent = (node.textContent || '').replace(/\\[\\d+\\]/, '[' + i + ']');
+          }
+        });
+      });
+    });
+  }
+  document.addEventListener('click', function (ev) {
+    var t = ev.target;
+    if (!t || !t.closest) return;
+    var add = t.closest('[data-role="add"]');
+    if (add) {
+      var field = add.closest('.array-field');
+      if (!field) return;
+      var rows = field.querySelector('[data-role="rows"]');
+      var tpl = field.querySelector('template[data-role="row-template"]');
+      if (!rows || !tpl) return;
+      var html = tpl.innerHTML.split('__INDEX__').join(String(rows.children.length));
+      var wrap = document.createElement('div');
+      wrap.innerHTML = html.trim();
+      var node = wrap.firstElementChild;
+      if (node) rows.appendChild(node);
+      reindex(field);
+      return;
+    }
+    var rem = t.closest('[data-role="remove"]');
+    if (rem) {
+      var field2 = rem.closest('.array-field');
+      var row = rem.closest('.array-row');
+      if (row && row.parentNode) row.parentNode.removeChild(row);
+      if (field2) reindex(field2);
+    }
+  });
+})();
+`;
 
 export type FormRenderHints = {
   /** Fields shown outside the Advanced disclosure. */
@@ -222,20 +491,20 @@ export type FormRenderHints = {
 };
 
 function partitionFields(
-  flatProps: Record<string, Record<string, unknown>>,
+  structuredProps: Record<string, Record<string, unknown>>,
   requiredList: string[],
   primary?: string[]
 ): { primaryKeys: string[]; advancedKeys: string[] } {
-  const keys = Object.keys(flatProps);
+  const keys = Object.keys(structuredProps);
   if (primary && primary.length > 0) {
-    const primaryKeys = primary.filter((k) => k in flatProps);
+    const primaryKeys = primary.filter((k) => k in structuredProps);
     const advancedKeys = keys.filter((k) => !primaryKeys.includes(k));
     return { primaryKeys, advancedKeys };
   }
 
   const requiredKeys = keys.filter((k) => requiredList.includes(k));
   const withDefaults = keys.filter(
-    (k) => !requiredList.includes(k) && flatProps[k]?.default !== undefined
+    (k) => !requiredList.includes(k) && structuredProps[k]?.default !== undefined
   );
   const rest = keys.filter((k) => !requiredKeys.includes(k) && !withDefaults.includes(k));
   return {
@@ -265,27 +534,32 @@ export function renderToolFormFields(
     };
   }
 
-  const flatProps = flatPropertiesFromInputSchema(inputSchema);
+  const structuredProps = structuredPropertiesFromInputSchema(inputSchema);
   const allProps = (inputSchema.properties as Record<string, unknown>) ?? {};
-  const omitted = Object.keys(allProps).filter((k) => !(k in flatProps));
+  const omitted = Object.keys(allProps).filter((k) => !(k in structuredProps));
   const requiredList = Array.isArray(inputSchema.required)
     ? (inputSchema.required as string[])
     : [];
   const prefills = { ...(hints.defaults ?? {}) };
-  const { primaryKeys, advancedKeys } = partitionFields(flatProps, requiredList, hints.primary);
+  const { primaryKeys, advancedKeys } = partitionFields(
+    structuredProps,
+    requiredList,
+    hints.primary
+  );
 
   const renderKeys = (keys: string[]) =>
     keys
       .map((key) =>
         renderFieldControl({
           name: key,
-          propSchema: flatProps[key] ?? {},
+          propSchema: structuredProps[key] ?? {},
           required: requiredList.includes(key),
           prefills,
           asTextarea: hints.textareas?.includes(key),
           asFile: hints.fileFields?.includes(key),
           hint: hints.hints?.[key],
           errorMessage: hints.fieldErrors?.[key],
+          depth: 0,
         })
       )
       .join("\n");
@@ -303,22 +577,27 @@ export function renderToolFormFields(
 
   const omitNote =
     omitted.length > 0
-      ? `<p class="field-help">Complex fields omitted: ${escHtml(omitted.join(", "))}. Use REST <code>POST /${escHtml(tool.name)}</code> for full args.</p>`
+      ? `<p class="field-help">Unsupported fields omitted: ${escHtml(omitted.join(", "))}. Use REST <code>POST /${escHtml(tool.name)}</code> or the JSON bag for full args.</p>`
       : "";
 
   const hasFileFields =
     (hints.fileFields?.length ?? 0) > 0 ||
-    Object.entries(flatProps).some(([key, schema]) =>
+    Object.entries(structuredProps).some(([key, schema]) =>
       looksLikeFileField(key, schema, hints.fileFields?.includes(key))
-    );
+    ) ||
+    Object.values(structuredProps).some((schema) => {
+      if (schema.type === "object" && schema.properties) {
+        return Object.entries(schema.properties as Record<string, unknown>).some(([k, child]) =>
+          looksLikeFileField(k, asPropSchema(child))
+        );
+      }
+      return false;
+    });
 
   return { mode, hasFileFields, html: `${primaryHtml}\n${advancedHtml}\n${omitNote}` };
 }
 
-function parseFieldValue(
-  propSchema: Record<string, unknown>,
-  raw: unknown
-): unknown {
+function parseFieldValue(propSchema: Record<string, unknown>, raw: unknown): unknown {
   const type = propSchema.type;
   if (type === "boolean") {
     if (raw === "true" || raw === true || raw === "on") return true;
@@ -347,6 +626,155 @@ function parseFieldValue(
   return text.length === 0 ? undefined : text;
 }
 
+/** Parse `a.b[0].c` style form names into path segments. */
+export function parseFormPath(key: string): Array<string | number> {
+  const parts: Array<string | number> = [];
+  const re = /([A-Za-z0-9_-]+)|\[(\d+)\]/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(key)) !== null) {
+    if (match[1]) parts.push(match[1]);
+    else if (match[2] !== undefined) parts.push(Number.parseInt(match[2], 10));
+  }
+  return parts;
+}
+
+function setPath(
+  root: Record<string, unknown>,
+  path: Array<string | number>,
+  value: unknown
+): void {
+  if (path.length === 0) return;
+  let cursor: unknown = root;
+  for (let i = 0; i < path.length - 1; i++) {
+    const seg = path[i]!;
+    const next = path[i + 1]!;
+    if (typeof seg === "number") {
+      const arr = cursor as unknown[];
+      if (arr[seg] == null) {
+        arr[seg] = typeof next === "number" ? [] : {};
+      }
+      cursor = arr[seg];
+    } else {
+      const obj = cursor as Record<string, unknown>;
+      if (obj[seg] == null || typeof obj[seg] !== "object") {
+        obj[seg] = typeof next === "number" ? [] : {};
+      }
+      cursor = obj[seg];
+    }
+  }
+  const last = path[path.length - 1]!;
+  if (typeof last === "number") {
+    (cursor as unknown[])[last] = value;
+  } else {
+    (cursor as Record<string, unknown>)[last] = value;
+  }
+}
+
+/** Expand flat form keys (`a.b`, `items[0].x`) into a nested tree. */
+export function expandFormBodyTree(body: Record<string, unknown>): Record<string, unknown> {
+  const root: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(body)) {
+    if (key === "__json_args" || key.startsWith("__")) continue;
+    const path = parseFormPath(key);
+    if (path.length === 0) continue;
+    setPath(root, path, value);
+  }
+  return root;
+}
+
+function coerceValue(
+  propSchema: Record<string, unknown>,
+  raw: unknown,
+  fieldPath: string,
+  required: boolean,
+  fieldErrors: FormFieldError[],
+  depth: number
+): unknown {
+  if (depth > MAX_NEST_DEPTH) {
+    return raw;
+  }
+
+  if (propSchema.type === "object" || propSchema.properties) {
+    if (raw == null || typeof raw !== "object" || Array.isArray(raw)) {
+      if (required) {
+        fieldErrors.push({ field: fieldPath, message: `Missing required field: ${fieldPath}` });
+      }
+      return undefined;
+    }
+    const props = (propSchema.properties as Record<string, unknown>) ?? {};
+    const requiredList = Array.isArray(propSchema.required)
+      ? (propSchema.required as string[])
+      : [];
+    const out: Record<string, unknown> = {};
+    let any = false;
+    for (const [key, child] of Object.entries(props)) {
+      if (!isSafeFieldName(key) || !isRenderableSchema(asPropSchema(child), depth + 1)) continue;
+      const childRaw = (raw as Record<string, unknown>)[key];
+      const coerced = coerceValue(
+        asPropSchema(child),
+        childRaw,
+        childPath(fieldPath, key),
+        requiredList.includes(key),
+        fieldErrors,
+        depth + 1
+      );
+      if (coerced !== undefined) {
+        out[key] = coerced;
+        any = true;
+      }
+    }
+    if (!any && !required) return undefined;
+    return out;
+  }
+
+  if (propSchema.type === "array") {
+    const items = asPropSchema(propSchema.items);
+    const list = Array.isArray(raw) ? raw : raw == null ? [] : [raw];
+    // Compact sparse arrays from setPath
+    const dense = list.filter((_, i) => Object.prototype.hasOwnProperty.call(list, i));
+    const out: unknown[] = [];
+    for (let i = 0; i < dense.length; i++) {
+      const coerced = coerceValue(
+        items,
+        dense[i],
+        arrayItemPath(fieldPath, i),
+        false,
+        fieldErrors,
+        depth + 1
+      );
+      if (coerced !== undefined) out.push(coerced);
+    }
+    if (out.length === 0) {
+      if (required) {
+        fieldErrors.push({ field: fieldPath, message: `Missing required field: ${fieldPath}` });
+      }
+      return undefined;
+    }
+    return out;
+  }
+
+  if (propSchema.type === "boolean") {
+    if (raw === undefined || raw === null) {
+      if (required) return false;
+      return undefined;
+    }
+    return parseFieldValue(propSchema, raw);
+  }
+
+  if (raw === undefined || raw === null) {
+    if (required) {
+      fieldErrors.push({ field: fieldPath, message: `Missing required field: ${fieldPath}` });
+    }
+    return undefined;
+  }
+
+  const value = parseFieldValue(propSchema, raw);
+  if (value === undefined && required) {
+    fieldErrors.push({ field: fieldPath, message: `Missing required field: ${fieldPath}` });
+  }
+  return value;
+}
+
 export function parseFormArgs(
   body: Record<string, unknown>,
   inputSchema: Record<string, unknown>
@@ -371,42 +799,24 @@ export function parseFormArgs(
     }
   }
 
-  const flatProps = flatPropertiesFromInputSchema(inputSchema);
+  const tree = expandFormBodyTree(body);
+  const structuredProps = structuredPropertiesFromInputSchema(inputSchema);
   const requiredList = Array.isArray(inputSchema.required)
     ? (inputSchema.required as string[])
     : [];
   const args: Record<string, unknown> = {};
   const fieldErrors: FormFieldError[] = [];
 
-  for (const [key, propSchema] of Object.entries(flatProps)) {
-    const hasValue = Object.prototype.hasOwnProperty.call(body, key);
-    const required = requiredList.includes(key);
-
-    if (propSchema.type === "boolean") {
-      if (hasValue) {
-        args[key] = true;
-      } else if (required) {
-        args[key] = false;
-      }
-      // optional unchecked → omit
-      continue;
-    }
-
-    if (!hasValue) {
-      if (required) {
-        fieldErrors.push({ field: key, message: `Missing required field: ${key}` });
-      }
-      continue;
-    }
-
-    const value = parseFieldValue(propSchema, body[key]);
-    if (value === undefined) {
-      if (required) {
-        fieldErrors.push({ field: key, message: `Missing required field: ${key}` });
-      }
-      continue;
-    }
-    args[key] = value;
+  for (const [key, propSchema] of Object.entries(structuredProps)) {
+    const coerced = coerceValue(
+      propSchema,
+      tree[key],
+      key,
+      requiredList.includes(key),
+      fieldErrors,
+      0
+    );
+    if (coerced !== undefined) args[key] = coerced;
   }
 
   if (fieldErrors.length > 0) {
