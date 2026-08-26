@@ -81,6 +81,13 @@ export {
   TRACE_SOURCE_ORDER,
 } from "./mcp-ui-trace.js";
 export {
+  createListTraceCallsFromStore,
+  inferenceRecordsToTraceCalls,
+  liveTraceTokenizationMeta,
+  resolveListTraceCallsFromEnv,
+} from "./inference-trace-bridge.js";
+export type { InferenceRecordLike } from "./inference-trace-bridge.js";
+export {
   renderContextFlamegraphPage,
   renderTraceComparePage,
   renderTraceNotFoundPage,

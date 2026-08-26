@@ -60,10 +60,19 @@
     "@types/express": "^5.0.3",
     "@types/node": "^26.1.1",
     "@types/ws": "^8.18.1",
+    "clawql-inference": "7.2.0",
     "js-tiktoken": "^1.0.21",
     "typescript": "^6.0.3",
     "vitest": "^4.1.1",
     "zod": "^3.24.0"
+  },
+  "peerDependencies": {
+    "clawql-inference": ">=7.0.0"
+  },
+  "peerDependenciesMeta": {
+    "clawql-inference": {
+      "optional": true
+    }
   },
   "scripts": {
     "clean": "rm -rf dist",

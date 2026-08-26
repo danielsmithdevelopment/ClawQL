@@ -71,7 +71,7 @@ After Act 2, open:
 /mcp-ui/trace/<correlationId>
 ```
 
-Requires `listTraceCalls` wired to `clawql-inference` store (`getByCorrelationId`). Not wired in default stack yet.
+Requires `listTraceCalls` wired to `clawql-inference` store (`getByCorrelationId`). **Wired in CLI** when `MCP_API_ADAPTER_INFERENCE_TRACE=1` and a **shared** store path is set (`CLAWQL_INFERENCE_STORE=jsonl` + `CLAWQL_INFERENCE_STORE_PATH`, or Postgres). See [`mcp-ui.md`](./mcp-ui.md) §5b and `examples/mcp-api-adapter/clawql-with-trace.mjs`.
 
 ### Fallback (guaranteed — use for recording until live is proven)
 

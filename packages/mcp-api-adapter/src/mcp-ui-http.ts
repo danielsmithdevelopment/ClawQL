@@ -43,6 +43,7 @@ import {
   resolveTraceRecords,
   type TraceCallRecord,
 } from "./mcp-ui-trace.js";
+import { liveTraceTokenizationMeta } from "./inference-trace-bridge.js";
 import {
   renderContextFlamegraphPage,
   renderTraceComparePage,
@@ -52,6 +53,26 @@ import { isSafeToolPathName } from "./schema-convert.js";
 import type { CallToolFn, ListedMcpTool, ToolCatalog } from "./types.js";
 
 export const DEFAULT_MCP_UI_PATH = "/mcp-ui";
+
+function traceTokenizationMeta(
+  sessionId: string,
+  records: TraceCallRecord[]
+): { label: string; encoding?: string; method?: string } {
+  if (sessionId === DEMO_TRACE_SESSION_COMPRESSED || sessionId === DEMO_TRACE_SESSION_FAT) {
+    return demoTraceTokenizationMeta() ?? { label: "cl100k_base (OpenAI tiktoken)" };
+  }
+  if (records.some((r) => r.messages.some((m) => m.tokens != null))) {
+    return liveTraceTokenizationMeta();
+  }
+  if (records.some((r) => r.usage?.inputTokens != null)) {
+    return {
+      ...liveTraceTokenizationMeta(),
+      label:
+        "Live inference — provider usage totals; per-message estimated (chars ÷ 4) where not tokenized",
+    };
+  }
+  return { label: "Estimated (chars ÷ 4)" };
+}
 
 export type AttachMcpUiOptions = {
   getCatalog: () => ToolCatalog;
@@ -333,12 +354,7 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
     }
 
     const graph = buildContextFlamegraph(sessionId, records, {
-      tokenization:
-        sessionId === DEMO_TRACE_SESSION_COMPRESSED || sessionId === DEMO_TRACE_SESSION_FAT
-          ? demoTraceTokenizationMeta()
-          : records.some((r) => r.messages.some((m) => m.tokens != null))
-            ? { label: "Per-message tokens from inference record" }
-            : { label: "Estimated (chars ÷ 4); totals from provider usage when present" },
+      tokenization: traceTokenizationMeta(sessionId, records),
     });
     const wantJson =
       String(req.query.format ?? "").toLowerCase() === "json" ||
