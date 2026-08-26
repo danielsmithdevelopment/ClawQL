@@ -152,10 +152,10 @@ export function StreamsLanding() {
         headline="Anything in. Anything out. Events on the bus."
         subheadline={
           <p>
-            ClawQL Core turns any API into MCP. <Link href={ADAPTER_DOCS}>mcp-api-adapter</Link> turns MCP back into
-            OpenAPI, GraphQL, gRPC, CLI, WebSocket, QR, or <code className="font-mono text-[0.9em]">/mcp-ui</code>.
-            Streams wraps that fabric with NATS JetStream so the bus can act without a human at the console — Event
-            Stream in, WORM and RTP out.
+            ClawQL Core turns any API — or a page&apos;s own WebMCP tools — into MCP.{' '}
+            <Link href={ADAPTER_DOCS}>mcp-api-adapter</Link> turns MCP back into OpenAPI, GraphQL, gRPC, CLI,
+            WebSocket, QR, or <code className="font-mono text-[0.9em]">/mcp-ui</code>. Streams wraps that fabric with
+            NATS JetStream so the bus can act without a human at the console — Event Stream in, WORM and RTP out.
           </p>
         }
       >
@@ -164,7 +164,7 @@ export function StreamsLanding() {
             <source type="image/webp" srcSet="/streams/clawql-streams-architecture.webp" />
             <img
               src="/streams/clawql-streams-architecture.png"
-              alt="ClawQL Streams architecture — Event Stream into ClawQL Core + mcp-api-adapter + NATS JetStream, API sources and transport layers on both sides, WORM audit and RTP finetune exports below, HTMX / MCP-UI beside the hub"
+              alt="ClawQL Streams architecture — Event Stream into ClawQL Core + mcp-api-adapter + NATS JetStream; API sources including WebMCP on the left, transport layers including HTMX / MCP-UI on the right, WORM audit and RTP finetune exports below"
               width={1400}
               height={933}
               loading="lazy"
