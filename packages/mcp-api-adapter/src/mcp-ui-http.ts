@@ -36,11 +36,15 @@ import {
 import { formHintsForTool } from "./mcp-ui-templates.js";
 import {
   buildContextFlamegraph,
+  DEMO_TRACE_SESSION_COMPRESSED,
+  DEMO_TRACE_SESSION_FAT,
+  demoCompressedVsFatRecords,
   resolveTraceRecords,
   type TraceCallRecord,
 } from "./mcp-ui-trace.js";
 import {
   renderContextFlamegraphPage,
+  renderTraceComparePage,
   renderTraceNotFoundPage,
 } from "./mcp-ui-trace-html.js";
 import { isSafeToolPathName } from "./schema-convert.js";
@@ -266,6 +270,18 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
         basePath,
       })
     );
+  });
+
+  router.get("/trace/compare", (req, res) => {
+    const { compressed, fat } = demoCompressedVsFatRecords("compare");
+    const cGraph = buildContextFlamegraph(DEMO_TRACE_SESSION_COMPRESSED, compressed);
+    const fGraph = buildContextFlamegraph(DEMO_TRACE_SESSION_FAT, fat);
+    const wantJson = String(req.query.format ?? "").toLowerCase() === "json";
+    if (wantJson) {
+      res.status(200).json({ compressed: cGraph, fat: fGraph });
+      return;
+    }
+    res.status(200).type("html").send(renderTraceComparePage(cGraph, fGraph, { basePath }));
   });
 
   router.get("/trace/:sessionId", async (req, res) => {

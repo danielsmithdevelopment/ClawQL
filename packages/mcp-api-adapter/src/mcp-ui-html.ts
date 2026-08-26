@@ -463,7 +463,7 @@ export function renderMcpUiCatalogPage(options: {
       <a href="/docs">OpenAPI /docs</a>
       <a href="/graphiql">GraphiQL</a>
       <a href="/tools">Tool catalog JSON</a>
-      <a href="${escapeMcpUiHtml(basePath)}/trace/demo-compressed">Context flamegraph (demo)</a>
+      <a href="${escapeMcpUiHtml(basePath)}/trace/compare">Context flamegraph (compare)</a>
     </nav>
     <main class="tool-grid">${cards}</main>
   </div>

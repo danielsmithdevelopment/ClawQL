@@ -50,7 +50,7 @@ function renderStackBar(
     .map((f) => {
       const segPct = (f.tokens / totalTokens) * 100;
       const color = SOURCE_COLORS[f.source];
-      return `<span class="fg-seg" style="width:${segPct.toFixed(2)}%;background:${color}" title="${escapeMcpUiHtml(frameTitle(f))}"></span>`;
+      return `<span class="fg-seg" style="width:${segPct.toFixed(2)}%;background:${color}" data-source="${f.source}" title="${escapeMcpUiHtml(frameTitle(f))}"></span>`;
     })
     .join("");
   return `<div class="fg-bar" style="width:${widthPct.toFixed(1)}%" role="img" aria-label="${escapeMcpUiHtml(`${totalTokens} tokens`)}">${segments}</div>`;
@@ -100,6 +100,15 @@ function flamegraphStyles(): string {
   .fg-call-h { font-weight: 600; margin-bottom: 0.35rem; }
   .fg-nav a { color: #0f766e; }
   .fg-err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 1rem; border-radius: 8px; }
+  .fg-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
+  @media (max-width: 720px) { .fg-compare { grid-template-columns: 1fr; } }
+  .fg-panel { border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem; background: #fff; }
+  .fg-panel h2 { font-size: 1rem; margin: 0 0 0.75rem; }
+  .fg-panel--fat { border-color: #fdba74; background: #fff7ed; }
+  .fg-callout { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; padding: 0.85rem 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: 0.95rem; }
+  .fg-callout strong { color: #047857; }
+  .fg-bar { height: 1.75rem; }
+  .fg-bar--emphasis .fg-seg[data-source="tool_result"] { box-shadow: inset 0 0 0 2px #7c2d12; }
 </style>`;
 }
 
@@ -172,7 +181,8 @@ export function renderContextFlamegraphPage(
     <h2 style="font-size:1.05rem">Per-turn breakdown</h2>
     ${callDetails || "<p class=\"fg-meta\">No calls.</p>"}
     <p class="fg-meta">JSON: <a href="${escapeMcpUiHtml(base)}/trace/${encodeURIComponent(graph.sessionId)}?format=json"><code>?format=json</code></a>
-      · Compare demos: <a href="${escapeMcpUiHtml(base)}/trace/demo-compressed">compressed</a> · <a href="${escapeMcpUiHtml(base)}/trace/demo-fat">fat (no search/execute)</a></p>
+      · Side-by-side: <a href="${escapeMcpUiHtml(base)}/trace/compare"><strong>compare demos</strong></a>
+      · <a href="${escapeMcpUiHtml(base)}/trace/demo-compressed">compressed</a> · <a href="${escapeMcpUiHtml(base)}/trace/demo-fat">fat</a></p>
   </div>
 </body>
 </html>`;
@@ -198,7 +208,98 @@ export function renderTraceNotFoundPage(
       <p><strong>No trace for session</strong> <code>${escapeMcpUiHtml(sessionId)}</code></p>
       <p>${escapeMcpUiHtml(opts?.hint ?? "Provide listTraceCalls on AttachMcpUiOptions, or open a demo session.")}</p>
     </div>
-    <p class="fg-meta">Try demos: <a href="${escapeMcpUiHtml(base)}/trace/demo-compressed">demo-compressed</a> · <a href="${escapeMcpUiHtml(base)}/trace/demo-fat">demo-fat</a></p>
+    <p class="fg-meta">Try: <a href="${escapeMcpUiHtml(base)}/trace/compare">compare demos</a> · <a href="${escapeMcpUiHtml(base)}/trace/demo-compressed">demo-compressed</a> · <a href="${escapeMcpUiHtml(base)}/trace/demo-fat">demo-fat</a></p>
+  </div>
+</body>
+</html>`;
+}
+
+function renderComparePanel(
+  graph: ContextFlamegraph,
+  maxTokens: number,
+  opts: { title: string; subtitle: string; emphasis?: boolean }
+): string {
+  const totalTokens = graph.totalInputTokens + graph.totalOutputTokens;
+  const toolResult = graph.bySource.tool_result ?? 0;
+  const toolPct = totalTokens > 0 ? Math.round((toolResult / totalTokens) * 100) : 0;
+  const rows = graph.turns
+    .map((t) => {
+      const turnTok = t.inputTokens + t.outputTokens;
+      const barClass = opts.emphasis ? "fg-bar fg-bar--emphasis" : "fg-bar";
+      const barInner = renderStackBar(t.frames, turnTok, maxTokens).replace(
+        'class="fg-bar"',
+        `class="${barClass}"`
+      );
+      return `<div class="fg-row">
+  <div class="fg-turn">Turn ${t.turn}</div>
+  ${barInner}
+  <div class="fg-tok">${turnTok.toLocaleString()} tok</div>
+</div>`;
+    })
+    .join("\n");
+
+  return `<div class="fg-panel${opts.emphasis ? " fg-panel--fat" : ""}">
+  <h2>${escapeMcpUiHtml(opts.title)}</h2>
+  <p class="fg-meta">${escapeMcpUiHtml(opts.subtitle)} · <strong>${totalTokens.toLocaleString()}</strong> total · tool result <strong>${toolPct}%</strong></p>
+  <div class="fg-rows">${rows}</div>
+  ${renderBySourceTable(graph.bySource)}
+</div>`;
+}
+
+/**
+ * Side-by-side compressed vs fat — Act 3 closer with shared scale.
+ */
+export function renderTraceComparePage(
+  compressed: ContextFlamegraph,
+  fat: ContextFlamegraph,
+  opts?: { basePath?: string }
+): string {
+  const base = (opts?.basePath ?? "/mcp-ui").replace(/\/$/, "") || "/mcp-ui";
+  const cTotal = compressed.totalInputTokens + compressed.totalOutputTokens;
+  const fTotal = fat.totalInputTokens + fat.totalOutputTokens;
+  const cTool = compressed.bySource.tool_result ?? 0;
+  const fTool = fat.bySource.tool_result ?? 0;
+  const ratio = cTotal > 0 ? (fTotal / cTotal).toFixed(1) : "—";
+  const maxTokens = Math.max(
+    1,
+    ...compressed.turns.map((t) => t.inputTokens + t.outputTokens),
+    ...fat.turns.map((t) => t.inputTokens + t.outputTokens),
+    cTotal,
+    fTotal
+  );
+  const legend = TRACE_SOURCE_ORDER.map(
+    (src) =>
+      `<span><span class="fg-swatch" style="background:${SOURCE_COLORS[src]}"></span>${escapeMcpUiHtml(SOURCE_LABELS[src])}</span>`
+  ).join("\n");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Context flamegraph — compressed vs fat</title>
+  ${flamegraphStyles()}
+</head>
+<body>
+  <div class="fg-wrap" style="max-width:1100px">
+    <p class="fg-nav"><a href="${escapeMcpUiHtml(base)}/">← MCP UI catalog</a></p>
+    <h1>Both-sides compression — same task, two contexts</h1>
+    <p class="fg-meta">Shared scale · left = search/execute projection · right = naive full tool dumps</p>
+    <div class="fg-callout"><strong>At a glance:</strong> fat uses <strong>${ratio}×</strong> tokens (${fTotal.toLocaleString()} vs ${cTotal.toLocaleString()}). Tool result is <strong>${Math.round((fTool / fTotal) * 100)}%</strong> of fat (${fTool.toLocaleString()} tok) vs <strong>${Math.round((cTool / cTotal) * 100)}%</strong> compressed — the orange bar should dominate the right column only.</div>
+    <div class="fg-legend">${legend}</div>
+    <div class="fg-compare">
+      ${renderComparePanel(compressed, maxTokens, {
+        title: "demo-compressed (search → execute)",
+        subtitle: "Projected tool results",
+      })}
+      ${renderComparePanel(fat, maxTokens, {
+        title: "demo-fat (naive dumps)",
+        subtitle: "Untrimmed OpenAPI / page context",
+        emphasis: true,
+      })}
+    </div>
+    <p class="fg-meta">JSON: <a href="${escapeMcpUiHtml(base)}/trace/demo-compressed?format=json">compressed</a> · <a href="${escapeMcpUiHtml(base)}/trace/demo-fat?format=json">fat</a>
+      · Live session: <code>/mcp-ui/trace/:sessionId</code> when <code>listTraceCalls</code> is wired</p>
   </div>
 </body>
 </html>`;

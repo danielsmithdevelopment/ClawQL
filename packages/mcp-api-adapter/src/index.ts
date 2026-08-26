@@ -79,6 +79,7 @@ export {
 } from "./mcp-ui-trace.js";
 export {
   renderContextFlamegraphPage,
+  renderTraceComparePage,
   renderTraceNotFoundPage,
 } from "./mcp-ui-trace-html.js";
 export type {

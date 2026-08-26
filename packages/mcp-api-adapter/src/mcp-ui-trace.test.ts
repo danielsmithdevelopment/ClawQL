@@ -179,4 +179,25 @@ describe("GET /mcp-ui/trace/:sessionId", () => {
       await close();
     }
   });
+
+  it("GET /mcp-ui/trace/compare side-by-side JSON", async () => {
+    const { base, close } = await listen();
+    try {
+      const res = await fetch(`${base}/mcp-ui/trace/compare?format=json`);
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as {
+        compressed: { totalInputTokens: number };
+        fat: { totalInputTokens: number; bySource: { tool_result: number } };
+      };
+      expect(data.fat.totalInputTokens).toBeGreaterThan(data.compressed.totalInputTokens * 5);
+      expect(data.fat.bySource.tool_result).toBeGreaterThan(10_000);
+      const html = await fetch(`${base}/mcp-ui/trace/compare`);
+      expect(html.status).toBe(200);
+      const body = await html.text();
+      expect(body).toContain("Both-sides compression");
+      expect(body).toContain("fg-compare");
+    } finally {
+      await close();
+    }
+  });
 });
