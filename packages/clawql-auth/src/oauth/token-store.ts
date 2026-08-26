@@ -46,6 +46,11 @@ export type OAuthTokenStoreOptions = {
   }) => Effect.Effect<string | undefined>;
   /** When set, marks the provider token as `needs_reauth` on invalid_grant / no_token. */
   markRequiresReauth?: (providerId: string) => Effect.Effect<void>;
+  /**
+   * Host hook fired immediately before failing with {@link ReauthRequiredError}
+   * (e.g. Hermes Telegram via `notifyReauthRequiredEffect`). Errors are swallowed.
+   */
+  onReauthRequired?: (error: ReauthRequiredError) => Effect.Effect<void>;
 };
 
 function defaultProviderId(key: OAuthTokenKey): string {
@@ -108,14 +113,16 @@ export class OAuthTokenStore {
         const reauthUrl = this.options.buildReauthUrl
           ? yield* this.options.buildReauthUrl({ providerId, tokenKey: key, reason: "no_token" })
           : undefined;
-        return yield* Effect.fail(
-          new ReauthRequiredError({
-            tokenKey: key,
-            providerId,
-            reason: "no_token",
-            reauthUrl,
-          })
-        );
+        const error = new ReauthRequiredError({
+          tokenKey: key,
+          providerId,
+          reason: "no_token",
+          reauthUrl,
+        });
+        if (this.options.onReauthRequired) {
+          yield* this.options.onReauthRequired(error).pipe(Effect.catchAll(() => Effect.void));
+        }
+        return yield* Effect.fail(error);
       }
 
       if (!this.isExpiringSoon(current.expiresAtMs)) {
@@ -182,14 +189,18 @@ export class OAuthTokenStore {
                       reason: "invalid_grant",
                     })
                   : undefined;
-                return yield* Effect.fail(
-                  new ReauthRequiredError({
-                    tokenKey: key,
-                    providerId,
-                    reason: "invalid_grant",
-                    reauthUrl,
-                  })
-                );
+                const error = new ReauthRequiredError({
+                  tokenKey: key,
+                  providerId,
+                  reason: "invalid_grant",
+                  reauthUrl,
+                });
+                if (this.options.onReauthRequired) {
+                  yield* this.options
+                    .onReauthRequired(error)
+                    .pipe(Effect.catchAll(() => Effect.void));
+                }
+                return yield* Effect.fail(error);
               }
               return yield* Effect.fail(err);
             })

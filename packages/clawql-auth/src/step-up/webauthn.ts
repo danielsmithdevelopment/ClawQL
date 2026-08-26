@@ -17,6 +17,12 @@
 
 import { Data, Effect } from "effect";
 
+export type WebAuthnStepUpVerifier = {
+  verifyAssertion(
+    input: WebAuthnAssertionInput
+  ): Promise<{ ok: true; userHandle?: string; newCounter?: number }>;
+};
+
 export type WebAuthnAssertionInput = {
   /** Credential / assertion JSON from the authenticator. */
   assertion: unknown;
@@ -26,10 +32,16 @@ export type WebAuthnAssertionInput = {
   rpId?: string;
   /** Origin (e.g. https://clawql.example.com). */
   origin?: string;
-};
-
-export type WebAuthnStepUpVerifier = {
-  verifyAssertion(input: WebAuthnAssertionInput): Promise<{ ok: true; userHandle?: string }>;
+  /**
+   * Stored authenticator material (required for SimpleWebAuthn verification).
+   * Primary passkey login fills this from {@link PasskeyCredentialStore}.
+   */
+  credential?: {
+    id: string;
+    publicKey: Uint8Array;
+    counter: number;
+    transports?: string[];
+  };
 };
 
 /**

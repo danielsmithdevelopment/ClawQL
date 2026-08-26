@@ -101,6 +101,7 @@ export {
 } from "./id-jag-issuer.js";
 export {
   createIdJagIssuerFromEnv,
+  createExternalCmdIdJagAssertionSigner,
   isIdJagIssuerEnabled,
   type IdJagIssuerRuntime,
 } from "./id-jag-issuer-env.js";
@@ -128,6 +129,13 @@ export {
   type AttachMcpOAuthRoutesOptions,
   type McpOAuthAdminAuth,
 } from "./http.js";
+export {
+  attachPasskeyRoutes,
+  PASSKEY_CHALLENGE_PATH,
+  PASSKEY_ENROLL_PATH,
+  PASSKEY_LOGIN_PATH,
+  type AttachPasskeyRoutesOptions,
+} from "./passkey-http.js";
 export {
   createMcpOAuthRateLimiter,
   enforceMcpOAuthRateLimit,
@@ -178,11 +186,14 @@ export {
 export {
   PrimaryPasskeyError,
   createMemoryPasskeyCredentialStore,
+  issuePasskeyEnrollChallengeEffect,
   issuePasskeyLoginChallengeEffect,
+  primaryPasskeyEnrollEffect,
   primaryPasskeyLoginEffect,
   type PasskeyCredentialRecord,
   type PasskeyCredentialStore,
   type PasskeyLoginChallenge,
+  type PrimaryPasskeyEnrollInput,
   type PrimaryPasskeyLoginInput,
 } from "./primary-passkey.js";
 export {
