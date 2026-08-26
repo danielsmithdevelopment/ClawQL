@@ -2,15 +2,14 @@
  * tools.ts
  *
  * Core tools: search, execute, then immediately cache + audit (non-negotiable; must not follow optional branches that could throw). audit = in-process ring buffer (#89); cache = in-process LRU KV (#75).
- * Optional: **`sandbox_exec`** when **`CLAWQL_ENABLE_SANDBOX=1`** — Kata (default in-cluster), Docker, Seatbelt, Cloudflare bridge (`CLAWQL_SANDBOX_BACKEND`).
- * Optional: **`data_query` / `data_ingest` / `data_status`** when **`CLAWQL_ENABLE_DATA=1`** — Node DuckDB (`clawql-data`). Not Python duckdb. Not chDB.
- * memory_ingest / memory_recall / memory_sync — Obsidian vault notes (default on; set CLAWQL_ENABLE_MEMORY=0 to hide; writable vault). memory_sync requires team bucket config (CLAWQL_SYNC_*).
- * Optional: ingest_external_knowledge — bulk Markdown + optional URL fetch (GitHub #40); default on; **`CLAWQL_ENABLE_DOCUMENTS=0`** to hide.
- * Optional: knowledge_search_onyx — Onyx when CLAWQL_ENABLE_ONYX and documents enabled; **`CLAWQL_ENABLE_DOCUMENTS=0`** hides (GitHub #118).
- * Optional: schedule — persisted jobs + manual synthetic trigger when CLAWQL_ENABLE_SCHEDULE (GitHub #76).
- * Optional: notify — Slack chat.postMessage when CLAWQL_ENABLE_NOTIFY (GitHub #77); requires Slack in loaded spec + bot token.
- * Optional: hitl_enqueue_label_studio — Label Studio review queue when CLAWQL_ENABLE_HITL_LABEL_STUDIO (GitHub #228); registered via AutomationPlugin.
- * Optional: ouroboros_* — evolutionary loop tools when CLAWQL_ENABLE_OUROBOROS (GitHub #141); optional CLAWQL_OUROBOROS_DATABASE_URL for Postgres lineage (#142).
+ * Optional: **`sandbox_exec`** via ClawQLInstance `sandbox.enabled` (Kata / Docker / Seatbelt / bridge).
+ * Optional: **`data_query` / `data_ingest` / `data_status`** via instance `data.enabled` — Node DuckDB (`clawql-data`).
+ * memory_ingest / memory_recall / memory_sync — Obsidian vault notes (`memory.enabled` in instance/tier config).
+ * Optional: ingest_external_knowledge — documents tier (`documents.enabled`).
+ * Optional: knowledge_search_onyx — `documents.onyx.enabled`.
+ * Optional: schedule / notify / workflow — `automation.*` in instance/tier config.
+ * Always: ouroboros_* + clawql_think via clawql-harness (GitHub #141); optional CLAWQL_OUROBOROS_DATABASE_URL for Postgres lineage (#142).
+ * Plugin enablement: {@link resolvePluginCompositionFlags} / ClawQLInstance — not CLAWQL_ENABLE_*.
  * Single-spec `execute` runs OpenAPI→GraphQL in-process; field resolution uses `graphql-execute-helpers`.
  */
 
@@ -23,7 +22,6 @@ import {
   decodeSearchInput,
   executeToolZodShape,
   ExecuteService,
-  getClawqlOptionalToolFlags,
   getPackageRoot,
   loadSpec,
   resolveBundledProvider,
@@ -40,6 +38,7 @@ import {
   operationIdToRunStyleName,
 } from "clawql-api";
 import { getClawqlApi } from "./clawql-api-adapters.js";
+import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
 import { handleCacheToolInput } from "./clawql-cache.js";
 import { handleAuditToolInput } from "./clawql-audit.js";
@@ -182,7 +181,7 @@ export function registerTools(server: McpServer) {
 
   registerPluginMcpTools(server);
 
-  if (getClawqlOptionalToolFlags().enableMemory) {
+  if (resolvePluginCompositionFlags().enableMemory) {
     server.tool(
       "memory_sync",
       memorySyncToolSchema,

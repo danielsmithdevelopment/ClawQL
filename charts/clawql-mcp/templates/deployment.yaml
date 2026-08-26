@@ -111,6 +111,9 @@ spec:
               value: {{ .Values.bundledOffline | quote }}
             - name: NODE_OPTIONS
               value: {{ .Values.nodeOptions | quote }}
+            # Authoritative plugin list (ClawQLInstance). Horizontal plugins are NOT gated by CLAWQL_ENABLE_*.
+            - name: CLAWQL_INSTANCE_SPEC
+              value: {{ include "clawql-mcp.instanceSpecJson" . | quote }}
             {{- $enableGrpc := or .Values.enableGrpc (dig "clawql-mcp-grpc" "enabled" false .Values) }}
             {{- if $enableGrpc }}
             - name: ENABLE_GRPC
@@ -291,10 +294,6 @@ spec:
             {{- if .Values.webAuditStore }}
             - name: CLAWQL_WEB_AUDIT_STORE
               value: {{ .Values.webAuditStore | quote }}
-            {{- end }}
-            {{- if .Values.enableOuroboros }}
-            - name: CLAWQL_ENABLE_OUROBOROS
-              value: "1"
             {{- end }}
             {{- if .Values.enableLangfuseEval }}
             - name: CLAWQL_ENABLE_LANGFUSE_EVAL

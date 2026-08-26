@@ -565,12 +565,11 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
   );
 
   it(
-    "streamable HTTP listTools includes ouroboros_* when CLAWQL_ENABLE_OUROBOROS=1 (#141)",
+    "streamable HTTP listTools includes ouroboros_* via clawql-harness by default (#141)",
     async () => {
       const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-ouroboros-"));
-      const savedOuro = process.env.CLAWQL_ENABLE_OUROBOROS;
       const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      process.env.CLAWQL_ENABLE_OUROBOROS = "1";
+      delete process.env.CLAWQL_ENABLE_OUROBOROS;
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
       resetOptionalToolHttpTestState();
@@ -589,14 +588,13 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
             expect(names.has("ouroboros_run_evolutionary_loop")).toBe(true);
             expect(names.has("ouroboros_get_lineage_status")).toBe(true);
             expect(names.has("ouroboros_measure_drift")).toBe(true);
+            expect(names.has("clawql_think")).toBe(true);
           } finally {
             await closeMcpClient(client);
           }
         }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
-        if (savedOuro === undefined) delete process.env.CLAWQL_ENABLE_OUROBOROS;
-        else process.env.CLAWQL_ENABLE_OUROBOROS = savedOuro;
         if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
         else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
         resetSpecCache();

@@ -37,7 +37,6 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_ARGO_CD: z.string().optional(),
   CLAWQL_ENABLE_VISION: z.string().optional(),
   CLAWQL_ENABLE_ONYX: z.string().optional(),
-  CLAWQL_ENABLE_OUROBOROS: z.string().optional(),
   CLAWQL_ENABLE_SANDBOX: z.string().optional(),
   /**
    * Structured data / Node DuckDB MCP tools (`data_query`, `data_ingest`). Default false —
@@ -151,10 +150,6 @@ export type ClawqlOptionalToolFlags = {
    */
   enableOnyxKnowledge: boolean;
   /**
-   * ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)): Ouroboros MCP tools (`ouroboros_*`). Default false.
-   */
-  enableOuroboros: boolean;
-  /**
    * ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)): MCP **`sandbox_exec`** (bridge / Seatbelt / Docker). Default false — register with **`CLAWQL_ENABLE_SANDBOX=1`**.
    */
   enableSandbox: boolean;
@@ -256,7 +251,6 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableArgoCd: envTruthy(raw.CLAWQL_ENABLE_ARGO_CD),
     enableVision: envTruthy(raw.CLAWQL_ENABLE_VISION),
     enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
-    enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
     enableData: envTruthy(raw.CLAWQL_ENABLE_DATA),
     enableWeb: resolveEnableWeb(raw),
@@ -280,10 +274,52 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
 
 /**
  * Parsed optional tool flags from the given env (default `process.env`).
+ *
+ * @deprecated For **plugin composition**, use `resolvePluginCompositionFlags` /
+ * `ClawQLInstance` / `HorizontalTierSpec` — plugins are not enabled via `CLAWQL_ENABLE_*`.
+ * This helper remains for transport/provider knobs (`ENABLE_GRPC`, Google/AWS stack) and
+ * transitional call sites.
  */
 export function getClawqlOptionalToolFlags(
   env: NodeJS.ProcessEnv = process.env
 ): ClawqlOptionalToolFlags {
   const raw = rawOptionalFlagsSchema.parse(env);
   return rawToFlags(raw);
+}
+
+/**
+ * Hard defaults for horizontal plugin composition (no env). Matches the `standard`
+ * tier preset baseline before overlays: memory + documents on; opt-in tiers off.
+ */
+export function basePluginCompositionFlags(): ClawqlOptionalToolFlags {
+  return {
+    enableGrpc: false,
+    enableGrpcReflection: false,
+    externalIngestPreview: false,
+    enableMemory: true,
+    enableDocuments: true,
+    enableSchedule: false,
+    enableNotify: false,
+    enableWorkflow: false,
+    enableArgoCd: false,
+    enableVision: false,
+    enableOnyxKnowledge: false,
+    enableSandbox: false,
+    enableData: false,
+    enableWeb: false,
+    enableCodeGraph: false,
+    enableOntology: false,
+    enableOntologyWrites: false,
+    enableHitlLabelStudio: false,
+    enableConeshare: false,
+    enableIdpPipeline: false,
+    enableIdpClassifier: false,
+    enableLangextract: false,
+    enablePdfInspector: false,
+    enableAnydoc: false,
+    enableLangfuseEval: false,
+    enableGoogle: false,
+    enableCloudflare: true,
+    enableAws: false,
+  };
 }

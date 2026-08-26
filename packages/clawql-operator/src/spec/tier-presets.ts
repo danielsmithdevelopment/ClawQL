@@ -63,7 +63,7 @@ function mergeToggleSection<T extends { enabled?: boolean }>(
   override: T | undefined
 ): T | undefined {
   if (!base && !override) return undefined;
-  return { ...base, ...override };
+  return { ...base, ...override } as T;
 }
 
 function mergeDocuments(

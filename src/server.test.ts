@@ -3,7 +3,7 @@
  * `npm test` runs `pretest` → `build` so the entry exists.
  */
 
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,7 +11,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resetSpecCache } from "clawql-api";
-import { isolatedStdioChildEnv } from "./server-stdio-env.js";
+import { isolatedStdioChildEnv, instanceSpecWith } from "./server-stdio-env.js";
 import { resetSchemaFieldCache } from "./tools.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -102,10 +102,11 @@ describe("server (stdio)", () => {
       expect(names.has("notify")).toBe(false);
       expect(names.has("hitl_enqueue_label_studio")).toBe(false);
       expect(names.has("knowledge_search_onyx")).toBe(false);
-      expect(names.has("ouroboros_create_seed_from_document")).toBe(false);
-      expect(names.has("ouroboros_run_evolutionary_loop")).toBe(false);
-      expect(names.has("ouroboros_get_lineage_status")).toBe(false);
-      expect(names.has("ouroboros_measure_drift")).toBe(false);
+      expect(names.has("ouroboros_create_seed_from_document")).toBe(true);
+      expect(names.has("ouroboros_run_evolutionary_loop")).toBe(true);
+      expect(names.has("ouroboros_get_lineage_status")).toBe(true);
+      expect(names.has("ouroboros_measure_drift")).toBe(true);
+      expect(names.has("clawql_think")).toBe(true);
     } finally {
       await client.close();
     }
@@ -170,39 +171,32 @@ describe("server (stdio)", () => {
     }
   }, 30_000);
 
-  it("does not inherit CLAWQL_ENABLE_OUROBOROS from host when CLAWQL_HOME is isolated", async () => {
+  it("exposes ouroboros_* tools by default via clawql-harness (no CLAWQL_ENABLE_OUROBOROS)", async () => {
     // Regression: load-env.ts loads $CLAWQL_HOME/clawql.env with override:false.
-    // Without CLAWQL_HOME isolation, a developer/CI ~/.ClawQL/clawql.env can enable optional tools.
+    // Isolated CLAWQL_HOME must still get harness Ouroboros tools (always on).
     const names = await listToolNames(
       isolatedStdioChildEnv(minimalSpec),
       "clawql-stdio-home-isolated"
     );
-    expect(names.has("ouroboros_create_seed_from_document")).toBe(false);
-  }, 20_000);
-
-  it("loads CLAWQL_ENABLE_OUROBOROS from CLAWQL_HOME clawql.env when process env unset", async () => {
-    const home = mkdtempSync(join(tmpdir(), "clawql-home-env-"));
-    writeFileSync(join(home, "clawql.env"), "CLAWQL_ENABLE_OUROBOROS=1\n", "utf8");
-    const childEnv = isolatedStdioChildEnv(minimalSpec, {
-      CLAWQL_HOME: home,
-      CLAWQL_ENABLE_OUROBOROS: undefined,
-      CLAWQL_OBSIDIAN_VAULT_PATH: mkdtempSync(join(tmpdir(), "clawql-vault-")),
-    });
-    const names = await listToolNames(childEnv, "clawql-stdio-home-env-ouro");
     expect(names.has("ouroboros_create_seed_from_document")).toBe(true);
+    expect(names.has("clawql_think")).toBe(true);
   }, 20_000);
 
-  it("registers sandbox_exec when CLAWQL_ENABLE_SANDBOX=1", async () => {
+  it("registers sandbox_exec when instance spec enables sandbox", async () => {
     const names = await listToolNames(
-      isolatedStdioChildEnv(minimalSpec, { CLAWQL_ENABLE_SANDBOX: "1" }),
+      isolatedStdioChildEnv(minimalSpec, {
+        CLAWQL_INSTANCE_SPEC: instanceSpecWith({ sandbox: { enabled: true } }),
+      }),
       "clawql-stdio-sandbox-on"
     );
     expect(names.has("sandbox_exec")).toBe(true);
   }, 20_000);
 
-  it("registers data_query when CLAWQL_ENABLE_DATA=1", async () => {
+  it("registers data_query when instance spec enables data", async () => {
     const names = await listToolNames(
-      isolatedStdioChildEnv(minimalSpec, { CLAWQL_ENABLE_DATA: "1" }),
+      isolatedStdioChildEnv(minimalSpec, {
+        CLAWQL_INSTANCE_SPEC: instanceSpecWith({ data: { enabled: true } }),
+      }),
       "clawql-stdio-data-on"
     );
     expect(names.has("data_query")).toBe(true);
@@ -210,11 +204,11 @@ describe("server (stdio)", () => {
     expect(names.has("data_ingest")).toBe(true);
   }, 20_000);
 
-  it("hides memory_ingest and memory_recall when CLAWQL_ENABLE_MEMORY=0", async () => {
+  it("hides memory_ingest and memory_recall when instance spec disables memory", async () => {
     const names = await listToolNames(
       isolatedStdioChildEnv(minimalSpec, {
         CLAWQL_OBSIDIAN_VAULT_PATH: mkdtempSync(join(tmpdir(), "clawql-vault-")),
-        CLAWQL_ENABLE_MEMORY: "0",
+        CLAWQL_INSTANCE_SPEC: instanceSpecWith({ memory: { enabled: false } }),
       }),
       "clawql-stdio-memory-off"
     );
@@ -224,12 +218,13 @@ describe("server (stdio)", () => {
     expect(names.has("cache")).toBe(true);
   }, 20_000);
 
-  it("hides ingest_external_knowledge and knowledge_search_onyx when CLAWQL_ENABLE_DOCUMENTS=0", async () => {
+  it("hides ingest_external_knowledge and knowledge_search_onyx when documents disabled", async () => {
     const names = await listToolNames(
       isolatedStdioChildEnv(minimalSpec, {
         CLAWQL_OBSIDIAN_VAULT_PATH: mkdtempSync(join(tmpdir(), "clawql-vault-")),
-        CLAWQL_ENABLE_DOCUMENTS: "0",
-        CLAWQL_ENABLE_ONYX: "1",
+        CLAWQL_INSTANCE_SPEC: instanceSpecWith({
+          documents: { enabled: false, onyx: { enabled: true } },
+        }),
       }),
       "clawql-stdio-documents-off"
     );
@@ -237,33 +232,36 @@ describe("server (stdio)", () => {
     expect(names.has("knowledge_search_onyx")).toBe(false);
   }, 20_000);
 
-  it("exposes notify when CLAWQL_ENABLE_NOTIFY=1", async () => {
+  it("exposes notify when instance spec enables automation.notify", async () => {
     const names = await listToolNames(
       isolatedStdioChildEnv(minimalSpec, {
         CLAWQL_OBSIDIAN_VAULT_PATH: mkdtempSync(join(tmpdir(), "clawql-vault-")),
-        CLAWQL_ENABLE_NOTIFY: "1",
+        CLAWQL_INSTANCE_SPEC: instanceSpecWith({
+          automation: { notify: { enabled: true } },
+        }),
       }),
       "clawql-stdio-notify"
     );
     expect(names.has("notify")).toBe(true);
   }, 20_000);
 
-  it("exposes knowledge_search_onyx when CLAWQL_ENABLE_ONYX=1", async () => {
+  it("exposes knowledge_search_onyx when documents.onyx enabled", async () => {
     const names = await listToolNames(
       isolatedStdioChildEnv(minimalSpec, {
         CLAWQL_OBSIDIAN_VAULT_PATH: mkdtempSync(join(tmpdir(), "clawql-vault-")),
-        CLAWQL_ENABLE_ONYX: "1",
+        CLAWQL_INSTANCE_SPEC: instanceSpecWith({
+          documents: { enabled: true, onyx: { enabled: true } },
+        }),
       }),
       "clawql-stdio-onyx"
     );
     expect(names.has("knowledge_search_onyx")).toBe(true);
   }, 20_000);
 
-  it("exposes ouroboros_* tools when CLAWQL_ENABLE_OUROBOROS=1 (#141)", async () => {
+  it("exposes ouroboros_* and clawql_think via clawql-harness by default (#141)", async () => {
     const names = await listToolNames(
       isolatedStdioChildEnv(minimalSpec, {
         CLAWQL_OBSIDIAN_VAULT_PATH: mkdtempSync(join(tmpdir(), "clawql-vault-")),
-        CLAWQL_ENABLE_OUROBOROS: "1",
       }),
       "clawql-stdio-ouroboros"
     );
@@ -271,12 +269,12 @@ describe("server (stdio)", () => {
     expect(names.has("ouroboros_run_evolutionary_loop")).toBe(true);
     expect(names.has("ouroboros_get_lineage_status")).toBe(true);
     expect(names.has("ouroboros_measure_drift")).toBe(true);
+    expect(names.has("clawql_think")).toBe(true);
   }, 20_000);
 
   it("stdio ouroboros_run_evolutionary_loop routes through internal execute hint", async () => {
     const childEnv = isolatedStdioChildEnv(minimalSpec, {
       CLAWQL_OBSIDIAN_VAULT_PATH: mkdtempSync(join(tmpdir(), "clawql-vault-")),
-      CLAWQL_ENABLE_OUROBOROS: "1",
     });
 
     const transport = new StdioClientTransport({
@@ -361,7 +359,7 @@ describe("server (stdio)", () => {
       CLAWQL_SPEC_PATH: undefined,
       CLAWQL_SPEC_PATHS: [slackOpenapi, petstoreFixture].join(","),
       CLAWQL_OBSIDIAN_VAULT_PATH: mkdtempSync(join(tmpdir(), "clawql-stdio-notify-calltool-")),
-      CLAWQL_ENABLE_NOTIFY: "1",
+      CLAWQL_INSTANCE_SPEC: instanceSpecWith({ automation: { notify: { enabled: true } } }),
       CLAWQL_SLACK_TOKEN: "xoxb-test-stub",
       CLAWQL_TEST_SLACK_FETCH_STUB: "1",
       CLAWQL_TEST_SLACK_FETCH_BODY: JSON.stringify({
@@ -407,7 +405,7 @@ describe("server (stdio)", () => {
       CLAWQL_SPEC_PATH: undefined,
       CLAWQL_SPEC_PATHS: [slackOpenapi, petstoreFixture].join(","),
       CLAWQL_OBSIDIAN_VAULT_PATH: mkdtempSync(join(tmpdir(), "clawql-stdio-notify-okfalse-")),
-      CLAWQL_ENABLE_NOTIFY: "1",
+      CLAWQL_INSTANCE_SPEC: instanceSpecWith({ automation: { notify: { enabled: true } } }),
       CLAWQL_SLACK_TOKEN: "xoxb-test-stub",
       CLAWQL_TEST_SLACK_FETCH_STUB: "1",
       CLAWQL_TEST_SLACK_FETCH_BODY: JSON.stringify({
@@ -457,7 +455,9 @@ describe("server (stdio)", () => {
       GOOGLE_DISCOVERY_URL: undefined,
       CLAWQL_PROVIDER: "onyx",
       CLAWQL_OBSIDIAN_VAULT_PATH: mkdtempSync(join(tmpdir(), "clawql-stdio-onyx-calltool-")),
-      CLAWQL_ENABLE_ONYX: "1",
+      CLAWQL_INSTANCE_SPEC: instanceSpecWith({
+        documents: { enabled: true, onyx: { enabled: true } },
+      }),
       ONYX_BASE_URL: "http://127.0.0.1:9",
       ONYX_API_TOKEN: "test-onyx-token",
       CLAWQL_TEST_ONYX_FETCH_STUB: "1",

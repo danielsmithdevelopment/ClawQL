@@ -1,4 +1,4 @@
-import { getClawqlOptionalToolFlags, type ClawqlOptionalToolFlags } from "clawql-api";
+import { basePluginCompositionFlags, type ClawqlOptionalToolFlags } from "clawql-api";
 
 /** Horizontal tier toggles shared by ClawQLInstance CRD and Layer composition. */
 export type ClawQLHorizontalTierSpec = {
@@ -27,6 +27,7 @@ export type ClawQLHorizontalTierSpec = {
     readonly writes?: { readonly enabled?: boolean };
   };
   readonly ouroboros?: {
+    /** @deprecated Ignored — Ouroboros tools always load via clawql-harness. */
     readonly enabled?: boolean;
     readonly langfuseEval?: { readonly enabled?: boolean };
   };
@@ -45,7 +46,7 @@ function tierEnabled(
  */
 export function optionalFlagsFromHorizontalTierSpec(
   spec: ClawQLHorizontalTierSpec,
-  defaults: ClawqlOptionalToolFlags = getClawqlOptionalToolFlags()
+  defaults: ClawqlOptionalToolFlags = basePluginCompositionFlags()
 ): ClawqlOptionalToolFlags {
   return {
     ...defaults,
@@ -70,7 +71,7 @@ export function optionalFlagsFromHorizontalTierSpec(
     enableWeb: tierEnabled(spec.web, defaults.enableWeb),
     enableOntology: tierEnabled(spec.ontology, defaults.enableOntology),
     enableOntologyWrites: tierEnabled(spec.ontology?.writes, defaults.enableOntologyWrites),
-    enableOuroboros: tierEnabled(spec.ouroboros, defaults.enableOuroboros),
+    // `spec.ouroboros.enabled` is ignored — Ouroboros ships via clawql-harness always.
     enableLangfuseEval: tierEnabled(spec.ouroboros?.langfuseEval, defaults.enableLangfuseEval),
   };
 }

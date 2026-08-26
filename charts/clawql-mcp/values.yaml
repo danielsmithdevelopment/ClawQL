@@ -259,11 +259,16 @@ enablePdfInspector: false
 enableAnydoc: false
 enableIdpPipeline: false
 
-# Optional ClawQLInstance tier-spec overlay (#255). Default off — Helm `enable*` env flags remain authoritative unless this mount is enabled.
+# Optional ClawQLInstance tier-spec overlay (#255). Chart always injects CLAWQL_INSTANCE_SPEC from
+# Helm enable* values via clawql-mcp.instanceSpecJson. This mount is for operator-managed ConfigMaps.
 instanceSpec:
   enabled: false
   configMapName: ""
   mountPath: /etc/clawql/instance
+
+# Default tier when building CLAWQL_INSTANCE_SPEC from Helm enable* values.
+pluginTier:
+  tier: standard
 
 # Bundled cloud APIs — add Google/AWS to the default install stack; omit Cloudflare with enableCloudflare: false.
 # all-providers always includes Google, AWS, and Cloudflare regardless of these values.
@@ -573,8 +578,10 @@ onyx:
       memory: 2Gi
 
 # MCP ouroboros_* tools — clawql-ouroboros evolutionary loop (#141). Optional Postgres for durable events (#142).
+# Deprecated: Ouroboros tools always load via clawql-harness (no CLAWQL_ENABLE_OUROBOROS).
+# Kept so older values files do not break; ignored for tool registration.
 enableOuroboros: false
-# Langfuse eval webhook + ouroboros_propose_seed_revision_from_eval (#250). Requires enableOuroboros.
+# Langfuse eval webhook + ouroboros_propose_seed_revision_from_eval (#250).
 enableLangfuseEval: false
 # When set, injects CLAWQL_OUROBOROS_DATABASE_URL. Prefer envFromSecret / extraEnv if the URL contains credentials.
 ouroborosDatabaseUrl: ""

@@ -2,7 +2,7 @@
  * Dynamic horizontal tier Layer composition for MCP transport and Operator reconciliation (#255).
  */
 import {
-  getClawqlOptionalToolFlags,
+  basePluginCompositionFlags,
   type ClawqlOptionalToolFlags,
   type ClawQLApiRuntimeError,
   type ClawQLApiRuntimeServices,
@@ -85,22 +85,21 @@ export function composeHorizontalPluginLayers(
   if (flags.enableOntology) {
     layers.push(makeOntologyLayer({ enableWrites: flags.enableOntologyWrites }));
   }
-  if (flags.enableOuroboros) {
-    // Ouroboros is a clawql-harness plugin; MCP bridges harness tools (no separate makeOuroborosLayer path).
-    layers.push(
-      makeHarnessLayer({
-        plugins: [createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval })],
-      })
-    );
-  }
+  // Ouroboros is always a clawql-harness plugin (no env / tier enable gate).
+  layers.push(
+    makeHarnessLayer({
+      plugins: [
+        createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval }),
+      ],
+    })
+  );
   return layers;
 }
 
-/** Composes horizontal plugin Layers from a CRD-style tier spec plus optional env defaults. */
+/** Composes horizontal plugin Layers from a CRD-style tier spec (config — not CLAWQL_ENABLE_*). */
 export function composeHorizontalPluginLayersFromTierSpec(
-  spec: ClawQLHorizontalTierSpec,
-  env: NodeJS.ProcessEnv = process.env
+  spec: ClawQLHorizontalTierSpec
 ): readonly Layer.Layer<never, ClawQLApiRuntimeError, ClawQLApiRuntimeServices>[] {
-  const flags = optionalFlagsFromHorizontalTierSpec(spec, getClawqlOptionalToolFlags(env));
+  const flags = optionalFlagsFromHorizontalTierSpec(spec, basePluginCompositionFlags());
   return composeHorizontalPluginLayers(flags);
 }

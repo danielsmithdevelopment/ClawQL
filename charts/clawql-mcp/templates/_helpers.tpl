@@ -408,3 +408,35 @@ annotations:
 {{- toYaml . | nindent 2 }}
 {{- end }}
 {{- end }}
+
+{{/*
+ClawQLInstance-shaped plugin config (authoritative for MCP plugin composition).
+Helm enable* values map here — not CLAWQL_ENABLE_* for horizontal plugins.
+*/}}
+{{- define "clawql-mcp.instanceSpecJson" -}}
+{{- $tier := .Values.pluginTier.tier | default "standard" -}}
+{{- $spec := dict
+  "tier" $tier
+  "memory" (dict "enabled" (.Values.enableMemory | default true))
+  "documents" (dict
+    "enabled" (.Values.enableDocuments | default true)
+    "onyx" (dict "enabled" (.Values.enableOnyx | default false))
+    "idpPipeline" (dict "enabled" (.Values.enableIdpPipeline | default false))
+    "idpClassifier" (dict "enabled" (.Values.enableIdpClassifier | default false))
+    "langextract" (dict "enabled" (.Values.enableLangextract | default false))
+  )
+  "automation" (dict
+    "schedule" (dict "enabled" (.Values.enableSchedule | default false))
+    "notify" (dict "enabled" (.Values.enableNotify | default false))
+    "workflow" (dict "enabled" (.Values.enableWorkflow | default false))
+    "argocd" (dict "enabled" (.Values.enableArgoCd | default false))
+    "hitlLabelStudio" (dict "enabled" (.Values.enableHitlLabelStudio | default false))
+  )
+  "sandbox" (dict "enabled" (.Values.enableSandbox | default false))
+  "data" (dict "enabled" (.Values.enableData | default false))
+  "ouroboros" (dict
+    "langfuseEval" (dict "enabled" (.Values.enableLangfuseEval | default false))
+  )
+ -}}
+{{- $spec | toJson -}}
+{{- end }}
