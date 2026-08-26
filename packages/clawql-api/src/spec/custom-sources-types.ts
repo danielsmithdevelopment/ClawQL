@@ -5,7 +5,8 @@
 
 import { assertSafeSourceId } from "./custom-sources-security.js";
 
-export type CustomSourceKind = "openapi" | "discovery" | "graphql" | "grpc" | "mcp" | "cli" | "webmcp";
+export type CustomSourceKind =
+  "openapi" | "discovery" | "graphql" | "grpc" | "mcp" | "cli" | "webmcp";
 
 export type CustomSourceEntry = {
   /** Stable slug (directory name under ~/.ClawQL/sources/). */

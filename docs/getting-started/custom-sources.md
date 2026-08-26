@@ -83,14 +83,14 @@ In **ClawQL Desktop** mode, the dashboard exposes **`GET/POST/DELETE /api/local/
 
 ## Source kinds
 
-| Kind                | How it loads                                                   |
-| ------------------- | -------------------------------------------------------------- |
-| OpenAPI / Discovery | Cached spec under `~/.ClawQL/sources/<id>/`                    |
-| GraphQL             | SDL or introspection file + `graphqlEndpoint`                  |
-| gRPC                | `.proto` on disk + `grpcEndpoint`                              |
-| **MCP**             | Proxies `tools/list` / `tools/call` from the remote MCP server |
+| Kind                | How it loads                                                                |
+| ------------------- | --------------------------------------------------------------------------- |
+| OpenAPI / Discovery | Cached spec under `~/.ClawQL/sources/<id>/`                                 |
+| GraphQL             | SDL or introspection file + `graphqlEndpoint`                               |
+| gRPC                | `.proto` on disk + `grpcEndpoint`                                           |
+| **MCP**             | Proxies `tools/list` / `tools/call` from the remote MCP server              |
 | **WebMCP**          | Discovers page tools via `navigator.modelContext` over CDP (Chrome preview) |
-| CLI                 | One `execute` op runs configured command + args                |
+| CLI                 | One `execute` op runs configured command + args                             |
 
 Bundled providers and custom sources share the same **`search` / `execute`** index. Custom sources extend that index; they do not require a second MCP client entry in Cursor/Claude.
 

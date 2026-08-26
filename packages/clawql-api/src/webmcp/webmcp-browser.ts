@@ -68,7 +68,11 @@ export function resolveCdpWebSocketUrlEffect(
 }
 
 async function connectCdp(wsUrl: string): Promise<{
-  send(method: string, params?: Record<string, unknown>, sessionId?: string): Promise<Record<string, unknown>>;
+  send(
+    method: string,
+    params?: Record<string, unknown>,
+    sessionId?: string
+  ): Promise<Record<string, unknown>>;
   on(event: string, handler: (params: Record<string, unknown>) => void): void;
   close(): Promise<void>;
 }> {
@@ -181,7 +185,9 @@ export function openWebmcpPageSessionEffect(
     const wsUrl = yield* resolveCdpWebSocketUrlEffect(cdpUrl, fetchImpl);
     const browser = yield* fromPromise(() => connectCdp(wsUrl));
 
-    const created = yield* fromPromise(() => browser.send("Target.createTarget", { url: "about:blank" }));
+    const created = yield* fromPromise(() =>
+      browser.send("Target.createTarget", { url: "about:blank" })
+    );
     const targetId = String(created.targetId ?? "");
     if (!targetId) {
       yield* fromPromise(() => browser.close());
@@ -245,12 +251,13 @@ export function discoverWebmcpToolsEffect(
         returnByValue: true,
       })
     );
-    const value = (evaluated.result as { value?: { ok?: boolean; error?: string; tools?: WebmcpDiscoveredTool[] } })
-      ?.value;
+    const value = (
+      evaluated.result as {
+        value?: { ok?: boolean; error?: string; tools?: WebmcpDiscoveredTool[] };
+      }
+    )?.value;
     if (!value?.ok) {
-      return yield* Effect.fail(
-        new Error(value?.error ?? "WebMCP tool discovery failed")
-      );
+      return yield* Effect.fail(new Error(value?.error ?? "WebMCP tool discovery failed"));
     }
     return value.tools ?? [];
   });

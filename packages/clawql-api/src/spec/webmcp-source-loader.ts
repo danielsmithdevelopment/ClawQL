@@ -17,7 +17,11 @@ import {
 } from "../webmcp/webmcp-browser.js";
 import { registerWebmcpSourceBinding } from "./webmcp-source-registry.js";
 
-function toolToOperation(entry: CustomSourceEntry, toolName: string, description: string): Operation {
+function toolToOperation(
+  entry: CustomSourceEntry,
+  toolName: string,
+  description: string
+): Operation {
   const id = normalizeOperationId("webmcp", entry.id, toolName);
   return {
     id,
@@ -80,9 +84,10 @@ function loadWebmcpSourceOperationsEffect(
           `[spec-loader] WebMCP source "${entry.id}" discovery failed:`,
           toolsResult.left.message
         );
-        yield* Effect.tryPromise({ try: () => session.close(), catch: () => new Error("close failed") }).pipe(
-          Effect.catchAll(() => Effect.void)
-        );
+        yield* Effect.tryPromise({
+          try: () => session.close(),
+          catch: () => new Error("close failed"),
+        }).pipe(Effect.catchAll(() => Effect.void));
         continue;
       }
 
@@ -108,6 +113,8 @@ function loadWebmcpSourceOperationsEffect(
 }
 
 /** Load WebMCP page tools into the operation index (async host boundary). */
-export async function loadWebmcpSourceOperations(entries: CustomSourceEntry[]): Promise<Operation[]> {
+export async function loadWebmcpSourceOperations(
+  entries: CustomSourceEntry[]
+): Promise<Operation[]> {
   return Effect.runPromise(loadWebmcpSourceOperationsEffect(entries));
 }
